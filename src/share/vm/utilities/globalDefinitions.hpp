@@ -326,12 +326,18 @@ typedef jlong  s8;
 
 const int max_method_code_size = 64*K - 1;  // JVM spec, 2nd ed. section 4.8.1 (p.134)
 
+// Default ProtectionDomainCacheSize values
+
+const int defaultProtectionDomainCacheSize = NOT_LP64(137) LP64_ONLY(2017);
 
 //----------------------------------------------------------------------------------------------------
 // Default and minimum StringTableSize values
 
 const int defaultStringTableSize = NOT_LP64(1009) LP64_ONLY(60013);
-const int minimumStringTableSize=1009;
+const int minimumStringTableSize = 1009;
+
+const int defaultSymbolTableSize = 20011;
+const int minimumSymbolTableSize = 1009;
 
 
 //----------------------------------------------------------------------------------------------------
@@ -361,8 +367,6 @@ const int KlassAlignment           = KlassAlignmentInBytes / HeapWordSize;
 
 // Klass encoding metaspace max size
 const uint64_t KlassEncodingMetaspaceMax = (uint64_t(max_juint) + 1) << LogKlassAlignmentInBytes;
-
-const jlong CompressedKlassPointersBase = NOT_LP64(0) LP64_ONLY(CONST64(0x800000000));  // 32*G
 
 // Machine dependent stuff
 
@@ -450,6 +454,13 @@ inline intptr_t align_object_offset(intptr_t offset) {
 
 inline void* align_pointer_up(const void* addr, size_t size) {
   return (void*) align_size_up_((uintptr_t)addr, size);
+}
+
+// Align down with a lower bound. If the aligning results in 0, return 'alignment'.
+
+inline size_t align_size_down_bounded(size_t size, size_t alignment) {
+  size_t aligned_size = align_size_down_(size, alignment);
+  return aligned_size > 0 ? aligned_size : alignment;
 }
 
 // Clamp an address to be within a specific page
@@ -967,9 +978,9 @@ const int      badCodeHeapFreeVal = 0xDD;                   // value used to zap
 // (These must be implemented as #defines because C++ compilers are
 // not obligated to inline non-integral constants!)
 #define       badAddress        ((address)::badAddressVal)
-#define       badOop            ((oop)::badOopVal)
+#define       badOop            (cast_to_oop(::badOopVal))
 #define       badHeapWord       (::badHeapWordVal)
-#define       badJNIHandle      ((oop)::badJNIHandleVal)
+#define       badJNIHandle      (cast_to_oop(::badJNIHandleVal))
 
 // Default TaskQueue size is 16K (32-bit) or 128K (64-bit)
 #define TASKQUEUE_SIZE (NOT_LP64(1<<14) LP64_ONLY(1<<17))

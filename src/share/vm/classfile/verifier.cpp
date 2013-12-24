@@ -189,6 +189,8 @@ bool Verifier::is_eligible_for_verification(instanceKlassHandle klass, bool shou
   Symbol* name = klass->name();
   Klass* refl_magic_klass = SystemDictionary::reflect_MagicAccessorImpl_klass();
 
+  bool is_reflect = refl_magic_klass != NULL && klass->is_subtype_of(refl_magic_klass);
+
   return (should_verify_for(klass->class_loader(), should_verify_class) &&
     // return if the class is a bootstrapping class
     // or defineClass specified not to verify by default (flags override passed arg)
@@ -210,10 +212,8 @@ bool Verifier::is_eligible_for_verification(instanceKlassHandle klass, bool shou
     // sun/reflect/SerializationConstructorAccessor.
     // NOTE: this is called too early in the bootstrapping process to be
     // guarded by Universe::is_gte_jdk14x_version()/UseNewReflection.
-    (refl_magic_klass == NULL ||
-     !klass->is_subtype_of(refl_magic_klass) ||
-     VerifyReflectionBytecodes)
-  );
+    // Also for lambda generated code, gte jdk8
+    (!is_reflect || VerifyReflectionBytecodes));
 }
 
 Symbol* Verifier::inference_verify(
@@ -2302,6 +2302,24 @@ void ClassVerifier::verify_invoke_init(
   }
 }
 
+bool ClassVerifier::is_same_or_direct_interface(
+    instanceKlassHandle klass,
+    VerificationType klass_type,
+    VerificationType ref_class_type) {
+  if (ref_class_type.equals(klass_type)) return true;
+  Array<Klass*>* local_interfaces = klass->local_interfaces();
+  if (local_interfaces != NULL) {
+    for (int x = 0; x < local_interfaces->length(); x++) {
+      Klass* k = local_interfaces->at(x);
+      assert (k != NULL && k->is_interface(), "invalid interface");
+      if (ref_class_type.equals(VerificationType::reference_type(k->name()))) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 void ClassVerifier::verify_invoke_instructions(
     RawBytecodeStream* bcs, u4 code_length, StackMapFrame* current_frame,
     bool *this_uninit, VerificationType return_type,
@@ -2318,9 +2336,6 @@ void ClassVerifier::verify_invoke_instructions(
       types = 1 << JVM_CONSTANT_InvokeDynamic;
       break;
     case Bytecodes::_invokespecial:
-      types = (1 << JVM_CONSTANT_InterfaceMethodref) |
-              (1 << JVM_CONSTANT_Methodref);
-      break;
     case Bytecodes::_invokestatic:
       types = (_klass->major_version() < STATIC_METHOD_IN_INTERFACE_MAJOR_VERSION) ?
         (1 << JVM_CONSTANT_Methodref) :
@@ -2435,17 +2450,38 @@ void ClassVerifier::verify_invoke_instructions(
       return;
     }
   } else if (opcode == Bytecodes::_invokespecial
-             && !ref_class_type.equals(current_type())
+             && !is_same_or_direct_interface(current_class(), current_type(), ref_class_type)
              && !ref_class_type.equals(VerificationType::reference_type(
                   current_class()->super()->name()))) {
-    bool subtype = ref_class_type.is_assignable_from(
-      current_type(), this, CHECK_VERIFY(this));
+    bool subtype = false;
+    bool have_imr_indirect = cp->tag_at(index).value() == JVM_CONSTANT_InterfaceMethodref;
+    if (!current_class()->is_anonymous()) {
+      subtype = ref_class_type.is_assignable_from(
+                 current_type(), this, CHECK_VERIFY(this));
+    } else {
+      VerificationType host_klass_type =
+                        VerificationType::reference_type(current_class()->host_klass()->name());
+      subtype = ref_class_type.is_assignable_from(host_klass_type, this, CHECK_VERIFY(this));
+
+      // If invokespecial of IMR, need to recheck for same or
+      // direct interface relative to the host class
+      have_imr_indirect = (have_imr_indirect &&
+                           !is_same_or_direct_interface(
+                             InstanceKlass::cast(current_class()->host_klass()),
+                             host_klass_type, ref_class_type));
+    }
     if (!subtype) {
       verify_error(ErrorContext::bad_code(bci),
           "Bad invokespecial instruction: "
           "current class isn't assignable to reference class.");
        return;
+    } else if (have_imr_indirect) {
+      verify_error(ErrorContext::bad_code(bci),
+          "Bad invokespecial instruction: "
+          "interface method reference is in an indirect superinterface.");
+      return;
     }
+
   }
   // Match method descriptor with operand stack
   for (int i = nargs - 1; i >= 0; i--) {  // Run backwards
@@ -2460,7 +2496,24 @@ void ClassVerifier::verify_invoke_instructions(
     } else {   // other methods
       // Ensures that target class is assignable to method class.
       if (opcode == Bytecodes::_invokespecial) {
-        current_frame->pop_stack(current_type(), CHECK_VERIFY(this));
+        if (!current_class()->is_anonymous()) {
+          current_frame->pop_stack(current_type(), CHECK_VERIFY(this));
+        } else {
+          // anonymous class invokespecial calls: check if the
+          // objectref is a subtype of the host_klass of the current class
+          // to allow an anonymous class to reference methods in the host_klass
+          VerificationType top = current_frame->pop_stack(CHECK_VERIFY(this));
+          VerificationType hosttype =
+            VerificationType::reference_type(current_class()->host_klass()->name());
+          bool subtype = hosttype.is_assignable_from(top, this, CHECK_VERIFY(this));
+          if (!subtype) {
+            verify_error( ErrorContext::bad_type(current_frame->offset(),
+              current_frame->stack_top_ctx(),
+              TypeOrigin::implicit(top)),
+              "Bad type on operand stack");
+            return;
+          }
+        }
       } else if (opcode == Bytecodes::_invokevirtual) {
         VerificationType stack_object_type =
           current_frame->pop_stack(ref_class_type, CHECK_VERIFY(this));

@@ -47,6 +47,7 @@
 #include "opto/machnode.hpp"
 #include "opto/macro.hpp"
 #include "opto/matcher.hpp"
+#include "opto/mathexactnode.hpp"
 #include "opto/memnode.hpp"
 #include "opto/mulnode.hpp"
 #include "opto/node.hpp"
@@ -654,7 +655,8 @@ Compile::Compile( ciEnv* ci_env, C2Compiler* compiler, ciMethod* target, int osr
                   _inlining_progress(false),
                   _inlining_incrementally(false),
                   _print_inlining_list(NULL),
-                  _print_inlining(0) {
+                  _print_inlining_idx(0),
+                  _preserve_jvm_state(0) {
   C = this;
 
   CompileWrapper cw(this);
@@ -679,6 +681,8 @@ Compile::Compile( ciEnv* ci_env, C2Compiler* compiler, ciMethod* target, int osr
   set_print_assembly(print_opto_assembly);
   set_parsed_irreducible_loop(false);
 #endif
+  set_print_inlining(PrintInlining || method()->has_option("PrintInlining") NOT_PRODUCT( || PrintOptoInlining));
+  set_print_intrinsics(PrintIntrinsics || method()->has_option("PrintIntrinsics"));
 
   if (ProfileTraps) {
     // Make sure the method being compiled gets its own MDO,
@@ -710,7 +714,7 @@ Compile::Compile( ciEnv* ci_env, C2Compiler* compiler, ciMethod* target, int osr
   PhaseGVN gvn(node_arena(), estimated_size);
   set_initial_gvn(&gvn);
 
-  if (PrintInlining  || PrintIntrinsics NOT_PRODUCT( || PrintOptoInlining)) {
+  if (print_inlining() || print_intrinsics()) {
     _print_inlining_list = new (comp_arena())GrowableArray<PrintInliningBuffer>(comp_arena(), 1, 1, PrintInliningBuffer());
   }
   { // Scope for timing the parser
@@ -760,7 +764,7 @@ Compile::Compile( ciEnv* ci_env, C2Compiler* compiler, ciMethod* target, int osr
       return;
     }
     JVMState* jvms = build_start_state(start(), tf());
-    if ((jvms = cg->generate(jvms)) == NULL) {
+    if ((jvms = cg->generate(jvms, NULL)) == NULL) {
       record_method_not_compilable("method parse failed");
       return;
     }
@@ -844,6 +848,7 @@ Compile::Compile( ciEnv* ci_env, C2Compiler* compiler, ciMethod* target, int osr
   }
 #endif
 
+  NOT_PRODUCT( verify_barriers(); )
   // Now that we know the size of all the monitors we can add a fixed slot
   // for the original deopt pc.
 
@@ -937,7 +942,8 @@ Compile::Compile( ciEnv* ci_env,
     _inlining_progress(false),
     _inlining_incrementally(false),
     _print_inlining_list(NULL),
-    _print_inlining(0) {
+    _print_inlining_idx(0),
+    _preserve_jvm_state(0) {
   C = this;
 
 #ifndef PRODUCT
@@ -1297,6 +1303,10 @@ const TypePtr *Compile::flatten_alias_type( const TypePtr *tj ) const {
 
   // Array pointers need some flattening
   const TypeAryPtr *ta = tj->isa_aryptr();
+  if (ta && ta->is_stable()) {
+    // Erase stability property for alias analysis.
+    tj = ta = ta->cast_to_stable(false);
+  }
   if( ta && is_known_inst ) {
     if ( offset != Type::OffsetBot &&
          offset > arrayOopDesc::length_offset_in_bytes() ) {
@@ -1351,7 +1361,7 @@ const TypePtr *Compile::flatten_alias_type( const TypePtr *tj ) const {
     // During the 2nd round of IterGVN, NotNull castings are removed.
     // Make sure the Bottom and NotNull variants alias the same.
     // Also, make sure exact and non-exact variants alias the same.
-    if( ptr == TypePtr::NotNull || ta->klass_is_exact() ) {
+    if (ptr == TypePtr::NotNull || ta->klass_is_exact() || ta->speculative() != NULL) {
       tj = ta = TypeAryPtr::make(TypePtr::BotPTR,ta->ary(),ta->klass(),false,offset);
     }
   }
@@ -1375,6 +1385,9 @@ const TypePtr *Compile::flatten_alias_type( const TypePtr *tj ) const {
       // Make sure the Bottom and NotNull variants alias the same.
       // Also, make sure exact and non-exact variants alias the same.
       tj = to = TypeInstPtr::make(TypePtr::BotPTR,to->klass(),false,0,offset);
+    }
+    if (to->speculative() != NULL) {
+      tj = to = TypeInstPtr::make(to->ptr(),to->klass(),to->klass_is_exact(),to->const_oop(),to->offset(), to->instance_id());
     }
     // Canonicalize the holder of this field
     if (offset >= 0 && offset < instanceOopDesc::base_offset_in_bytes()) {
@@ -1497,6 +1510,7 @@ void Compile::AliasType::Init(int i, const TypePtr* at) {
   _index = i;
   _adr_type = at;
   _field = NULL;
+  _element = NULL;
   _is_rewritable = true; // default
   const TypeOopPtr *atoop = (at != NULL) ? at->isa_oopptr() : NULL;
   if (atoop != NULL && atoop->is_known_instance()) {
@@ -1615,6 +1629,16 @@ Compile::AliasType* Compile::find_alias_type(const TypePtr* adr_type, bool no_cr
           && flat->is_instptr()->klass() == env()->Class_klass())
         alias_type(idx)->set_rewritable(false);
     }
+    if (flat->isa_aryptr()) {
+#ifdef ASSERT
+      const int header_size_min  = arrayOopDesc::base_offset_in_bytes(T_BYTE);
+      // (T_BYTE has the weakest alignment and size restrictions...)
+      assert(flat->offset() < header_size_min, "array body reference must be OffsetBot");
+#endif
+      if (flat->offset() == TypePtr::OffsetBot) {
+        alias_type(idx)->set_element(flat->is_aryptr()->elem());
+      }
+    }
     if (flat->isa_klassptr()) {
       if (flat->offset() == in_bytes(Klass::super_check_offset_offset()))
         alias_type(idx)->set_rewritable(false);
@@ -1677,7 +1701,7 @@ Compile::AliasType* Compile::alias_type(ciField* field) {
   else
     t = TypeOopPtr::make_from_klass_raw(field->holder());
   AliasType* atp = alias_type(t->add_offset(field->offset_in_bytes()), field);
-  assert(field->is_final() == !atp->is_rewritable(), "must get the rewritable bits correct");
+  assert((field->is_final() || field->is_stable()) == !atp->is_rewritable(), "must get the rewritable bits correct");
   return atp;
 }
 
@@ -1993,6 +2017,12 @@ void Compile::Optimize() {
     if (failing())  return;
   }
 
+  // Remove the speculative part of types and clean up the graph from
+  // the extra CastPP nodes whose only purpose is to carry them. Do
+  // that early so that optimizations are not disrupted by the extra
+  // CastPP nodes.
+  remove_speculative_types(igvn);
+
   // No more new expensive nodes will be added to the list from here
   // so keep only the actual candidates for optimizations.
   cleanup_expensive_nodes(igvn);
@@ -2258,7 +2288,7 @@ void Compile::dump_asm(int *pcs, uint pc_limit) {
     if (block->is_connector() && !Verbose) {
       continue;
     }
-    n = block->_nodes[0];
+    n = block->head();
     if (pcs && n->_idx < pc_limit) {
       tty->print("%3.3x   ", pcs[n->_idx]);
     } else {
@@ -2273,12 +2303,12 @@ void Compile::dump_asm(int *pcs, uint pc_limit) {
 
     // For all instructions
     Node *delay = NULL;
-    for (uint j = 0; j < block->_nodes.size(); j++) {
+    for (uint j = 0; j < block->number_of_nodes(); j++) {
       if (VMThread::should_terminate()) {
         cut_short = true;
         break;
       }
-      n = block->_nodes[j];
+      n = block->get_node(j);
       if (valid_bundle_info(n)) {
         Bundle* bundle = node_bundling(n);
         if (bundle->used_in_unconditional_delay()) {
@@ -2631,7 +2661,7 @@ void Compile::final_graph_reshaping_impl( Node *n, Final_Reshape_Counts &frc) {
             addp->in(AddPNode::Base) == n->in(AddPNode::Base),
             "Base pointers must match" );
 #ifdef _LP64
-    if ((UseCompressedOops || UseCompressedKlassPointers) &&
+    if ((UseCompressedOops || UseCompressedClassPointers) &&
         addp->Opcode() == Op_ConP &&
         addp == n->in(AddPNode::Base) &&
         n->in(AddPNode::Offset)->is_Con()) {
@@ -2969,6 +2999,42 @@ void Compile::final_graph_reshaping_impl( Node *n, Final_Reshape_Counts &frc) {
       n->set_req(MemBarNode::Precedent, top());
     }
     break;
+    // Must set a control edge on all nodes that produce a FlagsProj
+    // so they can't escape the block that consumes the flags.
+    // Must also set the non throwing branch as the control
+    // for all nodes that depends on the result. Unless the node
+    // already have a control that isn't the control of the
+    // flag producer
+  case Op_FlagsProj:
+    {
+      MathExactNode* math = (MathExactNode*)  n->in(0);
+      Node* ctrl = math->control_node();
+      Node* non_throwing = math->non_throwing_branch();
+      math->set_req(0, ctrl);
+
+      Node* result = math->result_node();
+      if (result != NULL) {
+        for (DUIterator_Fast jmax, j = result->fast_outs(jmax); j < jmax; j++) {
+          Node* out = result->fast_out(j);
+          // Phi nodes shouldn't be moved. They would only match below if they
+          // had the same control as the MathExactNode. The only time that
+          // would happen is if the Phi is also an input to the MathExact
+          //
+          // Cmp nodes shouldn't have control set at all.
+          if (out->is_Phi() ||
+              out->is_Cmp()) {
+            continue;
+          }
+
+          if (out->in(0) == NULL) {
+            out->set_req(0, non_throwing);
+          } else if (out->in(0) == ctrl) {
+            out->set_req(0, non_throwing);
+          }
+        }
+      }
+    }
+    break;
   default:
     assert( !n->is_Call(), "" );
     assert( !n->is_Mem(), "" );
@@ -3018,7 +3084,7 @@ void Compile::final_graph_reshaping_walk( Node_Stack &nstack, Node *root, Final_
 
   // Skip next transformation if compressed oops are not used.
   if ((UseCompressedOops && !Matcher::gen_narrow_oop_implicit_null_checks()) ||
-      (!UseCompressedOops && !UseCompressedKlassPointers))
+      (!UseCompressedOops && !UseCompressedClassPointers))
     return;
 
   // Go over safepoints nodes to skip DecodeN/DecodeNKlass nodes for debug edges.
@@ -3308,6 +3374,72 @@ void Compile::verify_graph_edges(bool no_dead_code) {
     }
   }
 }
+
+// Verify GC barriers consistency
+// Currently supported:
+// - G1 pre-barriers (see GraphKit::g1_write_barrier_pre())
+void Compile::verify_barriers() {
+  if (UseG1GC) {
+    // Verify G1 pre-barriers
+    const int marking_offset = in_bytes(JavaThread::satb_mark_queue_offset() + PtrQueue::byte_offset_of_active());
+
+    ResourceArea *area = Thread::current()->resource_area();
+    Unique_Node_List visited(area);
+    Node_List worklist(area);
+    // We're going to walk control flow backwards starting from the Root
+    worklist.push(_root);
+    while (worklist.size() > 0) {
+      Node* x = worklist.pop();
+      if (x == NULL || x == top()) continue;
+      if (visited.member(x)) {
+        continue;
+      } else {
+        visited.push(x);
+      }
+
+      if (x->is_Region()) {
+        for (uint i = 1; i < x->req(); i++) {
+          worklist.push(x->in(i));
+        }
+      } else {
+        worklist.push(x->in(0));
+        // We are looking for the pattern:
+        //                            /->ThreadLocal
+        // If->Bool->CmpI->LoadB->AddP->ConL(marking_offset)
+        //              \->ConI(0)
+        // We want to verify that the If and the LoadB have the same control
+        // See GraphKit::g1_write_barrier_pre()
+        if (x->is_If()) {
+          IfNode *iff = x->as_If();
+          if (iff->in(1)->is_Bool() && iff->in(1)->in(1)->is_Cmp()) {
+            CmpNode *cmp = iff->in(1)->in(1)->as_Cmp();
+            if (cmp->Opcode() == Op_CmpI && cmp->in(2)->is_Con() && cmp->in(2)->bottom_type()->is_int()->get_con() == 0
+                && cmp->in(1)->is_Load()) {
+              LoadNode* load = cmp->in(1)->as_Load();
+              if (load->Opcode() == Op_LoadB && load->in(2)->is_AddP() && load->in(2)->in(2)->Opcode() == Op_ThreadLocal
+                  && load->in(2)->in(3)->is_Con()
+                  && load->in(2)->in(3)->bottom_type()->is_intptr_t()->get_con() == marking_offset) {
+
+                Node* if_ctrl = iff->in(0);
+                Node* load_ctrl = load->in(0);
+
+                if (if_ctrl != load_ctrl) {
+                  // Skip possible CProj->NeverBranch in infinite loops
+                  if ((if_ctrl->is_Proj() && if_ctrl->Opcode() == Op_CProj)
+                      && (if_ctrl->in(0)->is_MultiBranch() && if_ctrl->in(0)->Opcode() == Op_NeverBranch)) {
+                    if_ctrl = if_ctrl->in(0)->in(0);
+                  }
+                }
+                assert(load_ctrl != NULL && if_ctrl == load_ctrl, "controls must match");
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
 #endif
 
 // The Compile object keeps track of failure reasons separately from the ciEnv.
@@ -3596,7 +3728,7 @@ void Compile::ConstantTable::fill_jump_table(CodeBuffer& cb, MachConstantNode* n
 }
 
 void Compile::dump_inlining() {
-  if (PrintInlining || PrintIntrinsics NOT_PRODUCT( || PrintOptoInlining)) {
+  if (print_inlining() || print_intrinsics()) {
     // Print inlining message for candidates that we couldn't inline
     // for lack of space or non constant receiver
     for (int i = 0; i < _late_inlines.length(); i++) {
@@ -3620,7 +3752,7 @@ void Compile::dump_inlining() {
       }
     }
     for (int i = 0; i < _print_inlining_list->length(); i++) {
-      tty->print(_print_inlining_list->at(i).ss()->as_string());
+      tty->print(_print_inlining_list->adr_at(i)->ss()->as_string());
     }
   }
 }
@@ -3745,6 +3877,45 @@ void Compile::add_expensive_node(Node * n) {
     // Clear control input and let IGVN optimize expensive nodes if
     // OptimizeExpensiveOps is off.
     n->set_req(0, NULL);
+  }
+}
+
+/**
+ * Remove the speculative part of types and clean up the graph
+ */
+void Compile::remove_speculative_types(PhaseIterGVN &igvn) {
+  if (UseTypeSpeculation) {
+    Unique_Node_List worklist;
+    worklist.push(root());
+    int modified = 0;
+    // Go over all type nodes that carry a speculative type, drop the
+    // speculative part of the type and enqueue the node for an igvn
+    // which may optimize it out.
+    for (uint next = 0; next < worklist.size(); ++next) {
+      Node *n  = worklist.at(next);
+      if (n->is_Type() && n->as_Type()->type()->isa_oopptr() != NULL &&
+          n->as_Type()->type()->is_oopptr()->speculative() != NULL) {
+        TypeNode* tn = n->as_Type();
+        const TypeOopPtr* t = tn->type()->is_oopptr();
+        bool in_hash = igvn.hash_delete(n);
+        assert(in_hash, "node should be in igvn hash table");
+        tn->set_type(t->remove_speculative());
+        igvn.hash_insert(n);
+        igvn._worklist.push(n); // give it a chance to go away
+        modified++;
+      }
+      uint max = n->len();
+      for( uint i = 0; i < max; ++i ) {
+        Node *m = n->in(i);
+        if (not_a_node(m))  continue;
+        worklist.push(m);
+      }
+    }
+    // Drop the speculative part of all types in the igvn's type table
+    igvn.remove_speculative_types();
+    if (modified > 0) {
+      igvn.optimize();
+    }
   }
 }
 

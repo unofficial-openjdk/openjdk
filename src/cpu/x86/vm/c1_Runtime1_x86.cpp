@@ -38,6 +38,9 @@
 #include "runtime/vframeArray.hpp"
 #include "utilities/macros.hpp"
 #include "vmreg_x86.inline.hpp"
+#if INCLUDE_ALL_GCS
+#include "gc_implementation/g1/g1SATBCardTableModRefBS.hpp"
+#endif
 
 
 // Implementation of StubAssembler
@@ -1499,6 +1502,13 @@ OopMapSet* Runtime1::generate_code_for(StubID id, StubAssembler* sasm) {
       }
       break;
 
+    case load_appendix_patching_id:
+      { StubFrame f(sasm, "load_appendix_patching", dont_gc_arguments);
+        // we should set up register map
+        oop_maps = generate_patching(sasm, CAST_FROM_FN_PTR(address, move_appendix_patching));
+      }
+      break;
+
     case dtrace_object_alloc_id:
       { // rax,: object
         StubFrame f(sasm, "dtrace_object_alloc", dont_gc_arguments);
@@ -1709,10 +1719,12 @@ OopMapSet* Runtime1::generate_code_for(StubID id, StubAssembler* sasm) {
 
         BarrierSet* bs = Universe::heap()->barrier_set();
         CardTableModRefBS* ct = (CardTableModRefBS*)bs;
+        assert(sizeof(*ct->byte_map_base) == sizeof(jbyte), "adjust this code");
+
         Label done;
         Label runtime;
 
-        // At this point we know new_value is non-NULL and the new_value crosses regsion.
+        // At this point we know new_value is non-NULL and the new_value crosses regions.
         // Must check to see if card is already dirty
 
         const Register thread = NOT_LP64(rax) LP64_ONLY(r15_thread);
@@ -1725,34 +1737,29 @@ OopMapSet* Runtime1::generate_code_for(StubID id, StubAssembler* sasm) {
         __ push(rax);
         __ push(rcx);
 
-        NOT_LP64(__ get_thread(thread);)
-        ExternalAddress cardtable((address)ct->byte_map_base);
-        assert(sizeof(*ct->byte_map_base) == sizeof(jbyte), "adjust this code");
-
+        const Register cardtable = rax;
         const Register card_addr = rcx;
-#ifdef _LP64
-        const Register tmp = rscratch1;
+
         f.load_argument(0, card_addr);
-        __ shrq(card_addr, CardTableModRefBS::card_shift);
-        __ lea(tmp, cardtable);
-        // get the address of the card
-        __ addq(card_addr, tmp);
-#else
-        const Register card_index = rcx;
-        f.load_argument(0, card_index);
-        __ shrl(card_index, CardTableModRefBS::card_shift);
+        __ shrptr(card_addr, CardTableModRefBS::card_shift);
+        // Do not use ExternalAddress to load 'byte_map_base', since 'byte_map_base' is NOT
+        // a valid address and therefore is not properly handled by the relocation code.
+        __ movptr(cardtable, (intptr_t)ct->byte_map_base);
+        __ addptr(card_addr, cardtable);
 
-        Address index(noreg, card_index, Address::times_1);
-        __ leal(card_addr, __ as_Address(ArrayAddress(cardtable, index)));
-#endif
+        NOT_LP64(__ get_thread(thread);)
 
-        __ cmpb(Address(card_addr, 0), 0);
+        __ cmpb(Address(card_addr, 0), (int)G1SATBCardTableModRefBS::g1_young_card_val());
+        __ jcc(Assembler::equal, done);
+
+        __ membar(Assembler::Membar_mask_bits(Assembler::StoreLoad));
+        __ cmpb(Address(card_addr, 0), (int)CardTableModRefBS::dirty_card_val());
         __ jcc(Assembler::equal, done);
 
         // storing region crossing non-NULL, card is clean.
         // dirty card and log.
 
-        __ movb(Address(card_addr, 0), 0);
+        __ movb(Address(card_addr, 0), (int)CardTableModRefBS::dirty_card_val());
 
         __ cmpl(queue_index, 0);
         __ jcc(Assembler::equal, runtime);

@@ -1381,8 +1381,12 @@ void MacroAssembler::bang_stack_size(Register size, Register tmp) {
   jcc(Assembler::greater, loop);
 
   // Bang down shadow pages too.
-  // The -1 because we already subtracted 1 page.
-  for (int i = 0; i< StackShadowPages-1; i++) {
+  // At this point, (tmp-0) is the last address touched, so don't
+  // touch it again.  (It was touched as (tmp-pagesize) but then tmp
+  // was post-decremented.)  Skip this address by starting at i=1, and
+  // touch a few more pages below.  N.B.  It is important to touch all
+  // the way down to and including i=StackShadowPages.
+  for (int i = 1; i <= StackShadowPages; i++) {
     // this could be any sized move but this is can be a debugging crumb
     // so the bigger the better.
     movptr(Address(tmp, (-i*os::vm_page_size())), size );
@@ -1635,7 +1639,7 @@ void MacroAssembler::call_VM_base(Register oop_result,
 #ifdef ASSERT
   // TraceBytecodes does not use r12 but saves it over the call, so don't verify
   // r12 is the heapbase.
-  LP64_ONLY(if ((UseCompressedOops || UseCompressedKlassPointers) && !TraceBytecodes) verify_heapbase("call_VM_base: heap base corrupted?");)
+  LP64_ONLY(if ((UseCompressedOops || UseCompressedClassPointers) && !TraceBytecodes) verify_heapbase("call_VM_base: heap base corrupted?");)
 #endif // ASSERT
 
   assert(java_thread != oop_result  , "cannot use the same register for java_thread & oop_result");
@@ -3350,6 +3354,8 @@ void MacroAssembler::g1_write_barrier_post(Register store_addr,
 
   BarrierSet* bs = Universe::heap()->barrier_set();
   CardTableModRefBS* ct = (CardTableModRefBS*)bs;
+  assert(sizeof(*ct->byte_map_base) == sizeof(jbyte), "adjust this code");
+
   Label done;
   Label runtime;
 
@@ -3367,35 +3373,28 @@ void MacroAssembler::g1_write_barrier_post(Register store_addr,
 
   // storing region crossing non-NULL, is card already dirty?
 
-  ExternalAddress cardtable((address) ct->byte_map_base);
-  assert(sizeof(*ct->byte_map_base) == sizeof(jbyte), "adjust this code");
-#ifdef _LP64
   const Register card_addr = tmp;
+  const Register cardtable = tmp2;
 
-  movq(card_addr, store_addr);
-  shrq(card_addr, CardTableModRefBS::card_shift);
+  movptr(card_addr, store_addr);
+  shrptr(card_addr, CardTableModRefBS::card_shift);
+  // Do not use ExternalAddress to load 'byte_map_base', since 'byte_map_base' is NOT
+  // a valid address and therefore is not properly handled by the relocation code.
+  movptr(cardtable, (intptr_t)ct->byte_map_base);
+  addptr(card_addr, cardtable);
 
-  lea(tmp2, cardtable);
-
-  // get the address of the card
-  addq(card_addr, tmp2);
-#else
-  const Register card_index = tmp;
-
-  movl(card_index, store_addr);
-  shrl(card_index, CardTableModRefBS::card_shift);
-
-  Address index(noreg, card_index, Address::times_1);
-  const Register card_addr = tmp;
-  lea(card_addr, as_Address(ArrayAddress(cardtable, index)));
-#endif
-  cmpb(Address(card_addr, 0), 0);
+  cmpb(Address(card_addr, 0), (int)G1SATBCardTableModRefBS::g1_young_card_val());
   jcc(Assembler::equal, done);
+
+  membar(Assembler::Membar_mask_bits(Assembler::StoreLoad));
+  cmpb(Address(card_addr, 0), (int)CardTableModRefBS::dirty_card_val());
+  jcc(Assembler::equal, done);
+
 
   // storing a region crossing, non-NULL oop, card is clean.
   // dirty card and log.
 
-  movb(Address(card_addr, 0), 0);
+  movb(Address(card_addr, 0), (int)CardTableModRefBS::dirty_card_val());
 
   cmpl(queue_index, 0);
   jcc(Assembler::equal, runtime);
@@ -3407,7 +3406,7 @@ void MacroAssembler::g1_write_barrier_post(Register store_addr,
   movq(Address(tmp2, 0), card_addr);
 #else
   addl(tmp2, queue_index);
-  movl(Address(tmp2, 0), card_index);
+  movl(Address(tmp2, 0), card_addr);
 #endif
   jmp(done);
 
@@ -3459,25 +3458,19 @@ void MacroAssembler::store_check_part_2(Register obj) {
 
   // The calculation for byte_map_base is as follows:
   // byte_map_base = _byte_map - (uintptr_t(low_bound) >> card_shift);
-  // So this essentially converts an address to a displacement and
-  // it will never need to be relocated. On 64bit however the value may be too
-  // large for a 32bit displacement
-
+  // So this essentially converts an address to a displacement and it will
+  // never need to be relocated. On 64bit however the value may be too
+  // large for a 32bit displacement.
   intptr_t disp = (intptr_t) ct->byte_map_base;
   if (is_simm32(disp)) {
     Address cardtable(noreg, obj, Address::times_1, disp);
     movb(cardtable, 0);
   } else {
-    // By doing it as an ExternalAddress disp could be converted to a rip-relative
-    // displacement and done in a single instruction given favorable mapping and
-    // a smarter version of as_Address. Worst case it is two instructions which
-    // is no worse off then loading disp into a register and doing as a simple
-    // Address() as above.
-    // We can't do as ExternalAddress as the only style since if disp == 0 we'll
-    // assert since NULL isn't acceptable in a reloci (see 6644928). In any case
-    // in some cases we'll get a single instruction version.
-
-    ExternalAddress cardtable((address)disp);
+    // By doing it as an ExternalAddress 'disp' could be converted to a rip-relative
+    // displacement and done in a single instruction given favorable mapping and a
+    // smarter version of as_Address. However, 'ExternalAddress' generates a relocation
+    // entry and that entry is not properly handled by the relocation code.
+    AddressLiteral cardtable((address)ct->byte_map_base, relocInfo::none);
     Address index(noreg, obj, Address::times_1);
     movb(as_Address(ArrayAddress(cardtable, index)), 0);
   }
@@ -4802,7 +4795,7 @@ void MacroAssembler::restore_cpu_control_state_after_jni() {
 
 void MacroAssembler::load_klass(Register dst, Register src) {
 #ifdef _LP64
-  if (UseCompressedKlassPointers) {
+  if (UseCompressedClassPointers) {
     movl(dst, Address(src, oopDesc::klass_offset_in_bytes()));
     decode_klass_not_null(dst);
   } else
@@ -4817,7 +4810,7 @@ void MacroAssembler::load_prototype_header(Register dst, Register src) {
 
 void MacroAssembler::store_klass(Register dst, Register src) {
 #ifdef _LP64
-  if (UseCompressedKlassPointers) {
+  if (UseCompressedClassPointers) {
     encode_klass_not_null(src);
     movl(Address(dst, oopDesc::klass_offset_in_bytes()), src);
   } else
@@ -4892,7 +4885,7 @@ void MacroAssembler::store_heap_oop_null(Address dst) {
 
 #ifdef _LP64
 void MacroAssembler::store_klass_gap(Register dst, Register src) {
-  if (UseCompressedKlassPointers) {
+  if (UseCompressedClassPointers) {
     // Store to klass gap in destination
     movl(Address(dst, oopDesc::klass_gap_offset_in_bytes()), src);
   }
@@ -5044,25 +5037,32 @@ void  MacroAssembler::decode_heap_oop_not_null(Register dst, Register src) {
 }
 
 void MacroAssembler::encode_klass_not_null(Register r) {
-  assert(Universe::narrow_klass_base() != NULL, "Base should be initialized");
-  // Use r12 as a scratch register in which to temporarily load the narrow_klass_base.
-  assert(r != r12_heapbase, "Encoding a klass in r12");
-  mov64(r12_heapbase, (int64_t)Universe::narrow_klass_base());
-  subq(r, r12_heapbase);
+  if (Universe::narrow_klass_base() != NULL) {
+    // Use r12 as a scratch register in which to temporarily load the narrow_klass_base.
+    assert(r != r12_heapbase, "Encoding a klass in r12");
+    mov64(r12_heapbase, (int64_t)Universe::narrow_klass_base());
+    subq(r, r12_heapbase);
+  }
   if (Universe::narrow_klass_shift() != 0) {
     assert (LogKlassAlignmentInBytes == Universe::narrow_klass_shift(), "decode alg wrong");
     shrq(r, LogKlassAlignmentInBytes);
   }
-  reinit_heapbase();
+  if (Universe::narrow_klass_base() != NULL) {
+    reinit_heapbase();
+  }
 }
 
 void MacroAssembler::encode_klass_not_null(Register dst, Register src) {
   if (dst == src) {
     encode_klass_not_null(src);
   } else {
-    mov64(dst, (int64_t)Universe::narrow_klass_base());
-    negq(dst);
-    addq(dst, src);
+    if (Universe::narrow_klass_base() != NULL) {
+      mov64(dst, (int64_t)Universe::narrow_klass_base());
+      negq(dst);
+      addq(dst, src);
+    } else {
+      movptr(dst, src);
+    }
     if (Universe::narrow_klass_shift() != 0) {
       assert (LogKlassAlignmentInBytes == Universe::narrow_klass_shift(), "decode alg wrong");
       shrq(dst, LogKlassAlignmentInBytes);
@@ -5075,17 +5075,21 @@ void MacroAssembler::encode_klass_not_null(Register dst, Register src) {
 // when (Universe::heap() != NULL).  Hence, if the instructions they
 // generate change, then this method needs to be updated.
 int MacroAssembler::instr_size_for_decode_klass_not_null() {
-  assert (UseCompressedKlassPointers, "only for compressed klass ptrs");
-  // mov64 + addq + shlq? + mov64  (for reinit_heapbase()).
-  return (Universe::narrow_klass_shift() == 0 ? 20 : 24);
+  assert (UseCompressedClassPointers, "only for compressed klass ptrs");
+  if (Universe::narrow_klass_base() != NULL) {
+    // mov64 + addq + shlq? + mov64  (for reinit_heapbase()).
+    return (Universe::narrow_klass_shift() == 0 ? 20 : 24);
+  } else {
+    // longest load decode klass function, mov64, leaq
+    return 16;
+  }
 }
 
 // !!! If the instructions that get generated here change then function
 // instr_size_for_decode_klass_not_null() needs to get updated.
 void  MacroAssembler::decode_klass_not_null(Register r) {
   // Note: it will change flags
-  assert(Universe::narrow_klass_base() != NULL, "Base should be initialized");
-  assert (UseCompressedKlassPointers, "should only be used for compressed headers");
+  assert (UseCompressedClassPointers, "should only be used for compressed headers");
   assert(r != r12_heapbase, "Decoding a klass in r12");
   // Cannot assert, unverified entry point counts instructions (see .ad file)
   // vtableStubs also counts instructions in pd_code_size_limit.
@@ -5095,22 +5099,22 @@ void  MacroAssembler::decode_klass_not_null(Register r) {
     shlq(r, LogKlassAlignmentInBytes);
   }
   // Use r12 as a scratch register in which to temporarily load the narrow_klass_base.
-  mov64(r12_heapbase, (int64_t)Universe::narrow_klass_base());
-  addq(r, r12_heapbase);
-  reinit_heapbase();
+  if (Universe::narrow_klass_base() != NULL) {
+    mov64(r12_heapbase, (int64_t)Universe::narrow_klass_base());
+    addq(r, r12_heapbase);
+    reinit_heapbase();
+  }
 }
 
 void  MacroAssembler::decode_klass_not_null(Register dst, Register src) {
   // Note: it will change flags
-  assert(Universe::narrow_klass_base() != NULL, "Base should be initialized");
-  assert (UseCompressedKlassPointers, "should only be used for compressed headers");
+  assert (UseCompressedClassPointers, "should only be used for compressed headers");
   if (dst == src) {
     decode_klass_not_null(dst);
   } else {
     // Cannot assert, unverified entry point counts instructions (see .ad file)
     // vtableStubs also counts instructions in pd_code_size_limit.
     // Also do not verify_oop as this is called by verify_oop.
-
     mov64(dst, (int64_t)Universe::narrow_klass_base());
     if (Universe::narrow_klass_shift() != 0) {
       assert(LogKlassAlignmentInBytes == Universe::narrow_klass_shift(), "decode alg wrong");
@@ -5141,7 +5145,7 @@ void  MacroAssembler::set_narrow_oop(Address dst, jobject obj) {
 }
 
 void  MacroAssembler::set_narrow_klass(Register dst, Klass* k) {
-  assert (UseCompressedKlassPointers, "should only be used for compressed headers");
+  assert (UseCompressedClassPointers, "should only be used for compressed headers");
   assert (oop_recorder() != NULL, "this assembler needs an OopRecorder");
   int klass_index = oop_recorder()->find_index(k);
   RelocationHolder rspec = metadata_Relocation::spec(klass_index);
@@ -5149,7 +5153,7 @@ void  MacroAssembler::set_narrow_klass(Register dst, Klass* k) {
 }
 
 void  MacroAssembler::set_narrow_klass(Address dst, Klass* k) {
-  assert (UseCompressedKlassPointers, "should only be used for compressed headers");
+  assert (UseCompressedClassPointers, "should only be used for compressed headers");
   assert (oop_recorder() != NULL, "this assembler needs an OopRecorder");
   int klass_index = oop_recorder()->find_index(k);
   RelocationHolder rspec = metadata_Relocation::spec(klass_index);
@@ -5175,7 +5179,7 @@ void  MacroAssembler::cmp_narrow_oop(Address dst, jobject obj) {
 }
 
 void  MacroAssembler::cmp_narrow_klass(Register dst, Klass* k) {
-  assert (UseCompressedKlassPointers, "should only be used for compressed headers");
+  assert (UseCompressedClassPointers, "should only be used for compressed headers");
   assert (oop_recorder() != NULL, "this assembler needs an OopRecorder");
   int klass_index = oop_recorder()->find_index(k);
   RelocationHolder rspec = metadata_Relocation::spec(klass_index);
@@ -5183,7 +5187,7 @@ void  MacroAssembler::cmp_narrow_klass(Register dst, Klass* k) {
 }
 
 void  MacroAssembler::cmp_narrow_klass(Address dst, Klass* k) {
-  assert (UseCompressedKlassPointers, "should only be used for compressed headers");
+  assert (UseCompressedClassPointers, "should only be used for compressed headers");
   assert (oop_recorder() != NULL, "this assembler needs an OopRecorder");
   int klass_index = oop_recorder()->find_index(k);
   RelocationHolder rspec = metadata_Relocation::spec(klass_index);
@@ -5191,7 +5195,7 @@ void  MacroAssembler::cmp_narrow_klass(Address dst, Klass* k) {
 }
 
 void MacroAssembler::reinit_heapbase() {
-  if (UseCompressedOops || UseCompressedKlassPointers) {
+  if (UseCompressedOops || UseCompressedClassPointers) {
     if (Universe::heap() != NULL) {
       if (Universe::narrow_oop_base() == NULL) {
         MacroAssembler::xorptr(r12_heapbase, r12_heapbase);

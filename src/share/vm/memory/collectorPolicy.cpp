@@ -47,73 +47,107 @@
 
 // CollectorPolicy methods.
 
+CollectorPolicy::CollectorPolicy() :
+    _space_alignment(0),
+    _heap_alignment(0),
+    _initial_heap_byte_size(InitialHeapSize),
+    _max_heap_byte_size(MaxHeapSize),
+    _min_heap_byte_size(Arguments::min_heap_size()),
+    _max_heap_size_cmdline(false),
+    _size_policy(NULL),
+    _should_clear_all_soft_refs(false),
+    _all_soft_refs_clear(false)
+{}
+
+#ifdef ASSERT
+void CollectorPolicy::assert_flags() {
+  assert(InitialHeapSize <= MaxHeapSize, "Ergonomics decided on incompatible initial and maximum heap sizes");
+  assert(InitialHeapSize % _heap_alignment == 0, "InitialHeapSize alignment");
+  assert(MaxHeapSize % _heap_alignment == 0, "MaxHeapSize alignment");
+}
+
+void CollectorPolicy::assert_size_info() {
+  assert(InitialHeapSize == _initial_heap_byte_size, "Discrepancy between InitialHeapSize flag and local storage");
+  assert(MaxHeapSize == _max_heap_byte_size, "Discrepancy between MaxHeapSize flag and local storage");
+  assert(_max_heap_byte_size >= _min_heap_byte_size, "Ergonomics decided on incompatible minimum and maximum heap sizes");
+  assert(_initial_heap_byte_size >= _min_heap_byte_size, "Ergonomics decided on incompatible initial and minimum heap sizes");
+  assert(_max_heap_byte_size >= _initial_heap_byte_size, "Ergonomics decided on incompatible initial and maximum heap sizes");
+  assert(_min_heap_byte_size % _heap_alignment == 0, "min_heap_byte_size alignment");
+  assert(_initial_heap_byte_size % _heap_alignment == 0, "initial_heap_byte_size alignment");
+  assert(_max_heap_byte_size % _heap_alignment == 0, "max_heap_byte_size alignment");
+}
+#endif // ASSERT
+
 void CollectorPolicy::initialize_flags() {
-  assert(max_alignment() >= min_alignment(),
-      err_msg("max_alignment: " SIZE_FORMAT " less than min_alignment: " SIZE_FORMAT,
-          max_alignment(), min_alignment()));
-  assert(max_alignment() % min_alignment() == 0,
-      err_msg("max_alignment: " SIZE_FORMAT " not aligned by min_alignment: " SIZE_FORMAT,
-          max_alignment(), min_alignment()));
+  assert(_space_alignment != 0, "Space alignment not set up properly");
+  assert(_heap_alignment != 0, "Heap alignment not set up properly");
+  assert(_heap_alignment >= _space_alignment,
+         err_msg("heap_alignment: " SIZE_FORMAT " less than space_alignment: " SIZE_FORMAT,
+                 _heap_alignment, _space_alignment));
+  assert(_heap_alignment % _space_alignment == 0,
+         err_msg("heap_alignment: " SIZE_FORMAT " not aligned by space_alignment: " SIZE_FORMAT,
+                 _heap_alignment, _space_alignment));
 
-  if (MaxHeapSize < InitialHeapSize) {
-    vm_exit_during_initialization("Incompatible initial and maximum heap sizes specified");
+  if (FLAG_IS_CMDLINE(MaxHeapSize)) {
+    if (FLAG_IS_CMDLINE(InitialHeapSize) && InitialHeapSize > MaxHeapSize) {
+      vm_exit_during_initialization("Initial heap size set to a larger value than the maximum heap size");
+    }
+    if (_min_heap_byte_size != 0 && MaxHeapSize < _min_heap_byte_size) {
+      vm_exit_during_initialization("Incompatible minimum and maximum heap sizes specified");
+    }
+    _max_heap_size_cmdline = true;
   }
 
-  if (MetaspaceSize > MaxMetaspaceSize) {
-    MaxMetaspaceSize = MetaspaceSize;
+  // Check heap parameter properties
+  if (InitialHeapSize < M) {
+    vm_exit_during_initialization("Too small initial heap");
   }
-  MetaspaceSize = MAX2(min_alignment(), align_size_down_(MetaspaceSize, min_alignment()));
-  // Don't increase Metaspace size limit above specified.
-  MaxMetaspaceSize = align_size_down(MaxMetaspaceSize, max_alignment());
-  if (MetaspaceSize > MaxMetaspaceSize) {
-    MetaspaceSize = MaxMetaspaceSize;
+  if (_min_heap_byte_size < M) {
+    vm_exit_during_initialization("Too small minimum heap");
   }
 
-  MinMetaspaceExpansion = MAX2(min_alignment(), align_size_down_(MinMetaspaceExpansion, min_alignment()));
-  MaxMetaspaceExpansion = MAX2(min_alignment(), align_size_down_(MaxMetaspaceExpansion, min_alignment()));
+  // User inputs from -Xmx and -Xms must be aligned
+  _min_heap_byte_size = align_size_up(_min_heap_byte_size, _heap_alignment);
+  uintx aligned_initial_heap_size = align_size_up(InitialHeapSize, _heap_alignment);
+  uintx aligned_max_heap_size = align_size_up(MaxHeapSize, _heap_alignment);
 
-  MinHeapDeltaBytes = align_size_up(MinHeapDeltaBytes, min_alignment());
-
-  assert(MetaspaceSize    % min_alignment() == 0, "metapace alignment");
-  assert(MaxMetaspaceSize % max_alignment() == 0, "maximum metaspace alignment");
-  if (MetaspaceSize < 256*K) {
-    vm_exit_during_initialization("Too small initial Metaspace size");
+  // Write back to flags if the values changed
+  if (aligned_initial_heap_size != InitialHeapSize) {
+    FLAG_SET_ERGO(uintx, InitialHeapSize, aligned_initial_heap_size);
   }
+  if (aligned_max_heap_size != MaxHeapSize) {
+    FLAG_SET_ERGO(uintx, MaxHeapSize, aligned_max_heap_size);
+  }
+
+  if (FLAG_IS_CMDLINE(InitialHeapSize) && _min_heap_byte_size != 0 &&
+      InitialHeapSize < _min_heap_byte_size) {
+    vm_exit_during_initialization("Incompatible minimum and initial heap sizes specified");
+  }
+  if (!FLAG_IS_DEFAULT(InitialHeapSize) && InitialHeapSize > MaxHeapSize) {
+    FLAG_SET_ERGO(uintx, MaxHeapSize, InitialHeapSize);
+  } else if (!FLAG_IS_DEFAULT(MaxHeapSize) && InitialHeapSize > MaxHeapSize) {
+    FLAG_SET_ERGO(uintx, InitialHeapSize, MaxHeapSize);
+    if (InitialHeapSize < _min_heap_byte_size) {
+      _min_heap_byte_size = InitialHeapSize;
+    }
+  }
+
+  _initial_heap_byte_size = InitialHeapSize;
+  _max_heap_byte_size = MaxHeapSize;
+
+  FLAG_SET_ERGO(uintx, MinHeapDeltaBytes, align_size_up(MinHeapDeltaBytes, _space_alignment));
+
+  DEBUG_ONLY(CollectorPolicy::assert_flags();)
 }
 
 void CollectorPolicy::initialize_size_info() {
-  // User inputs from -mx and ms must be aligned
-  set_min_heap_byte_size(align_size_up(Arguments::min_heap_size(), min_alignment()));
-  set_initial_heap_byte_size(align_size_up(InitialHeapSize, min_alignment()));
-  set_max_heap_byte_size(align_size_up(MaxHeapSize, max_alignment()));
-
-  // Check heap parameter properties
-  if (initial_heap_byte_size() < M) {
-    vm_exit_during_initialization("Too small initial heap");
-  }
-  // Check heap parameter properties
-  if (min_heap_byte_size() < M) {
-    vm_exit_during_initialization("Too small minimum heap");
-  }
-  if (initial_heap_byte_size() <= NewSize) {
-     // make sure there is at least some room in old space
-    vm_exit_during_initialization("Too small initial heap for new size specified");
-  }
-  if (max_heap_byte_size() < min_heap_byte_size()) {
-    vm_exit_during_initialization("Incompatible minimum and maximum heap sizes specified");
-  }
-  if (initial_heap_byte_size() < min_heap_byte_size()) {
-    vm_exit_during_initialization("Incompatible minimum and initial heap sizes specified");
-  }
-  if (max_heap_byte_size() < initial_heap_byte_size()) {
-    vm_exit_during_initialization("Incompatible initial and maximum heap sizes specified");
-  }
-
   if (PrintGCDetails && Verbose) {
     gclog_or_tty->print_cr("Minimum heap " SIZE_FORMAT "  Initial heap "
       SIZE_FORMAT "  Maximum heap " SIZE_FORMAT,
-      min_heap_byte_size(), initial_heap_byte_size(), max_heap_byte_size());
+      _min_heap_byte_size, _initial_heap_byte_size, _max_heap_byte_size);
   }
+
+  DEBUG_ONLY(CollectorPolicy::assert_size_info();)
 }
 
 bool CollectorPolicy::use_should_clear_all_soft_refs(bool v) {
@@ -124,15 +158,7 @@ bool CollectorPolicy::use_should_clear_all_soft_refs(bool v) {
 
 GenRemSet* CollectorPolicy::create_rem_set(MemRegion whole_heap,
                                            int max_covered_regions) {
-  switch (rem_set_name()) {
-  case GenRemSet::CardTable: {
-    CardTableRS* res = new CardTableRS(whole_heap, max_covered_regions);
-    return res;
-  }
-  default:
-    guarantee(false, "unrecognized GenRemSet::Name");
-    return NULL;
-  }
+  return new CardTableRS(whole_heap, max_covered_regions);
 }
 
 void CollectorPolicy::cleared_all_soft_refs() {
@@ -145,43 +171,17 @@ void CollectorPolicy::cleared_all_soft_refs() {
   _all_soft_refs_clear = true;
 }
 
-
-// GenCollectorPolicy methods.
-
-size_t GenCollectorPolicy::scale_by_NewRatio_aligned(size_t base_size) {
-  size_t x = base_size / (NewRatio+1);
-  size_t new_gen_size = x > min_alignment() ?
-                     align_size_down(x, min_alignment()) :
-                     min_alignment();
-  return new_gen_size;
-}
-
-size_t GenCollectorPolicy::bound_minus_alignment(size_t desired_size,
-                                                 size_t maximum_size) {
-  size_t alignment = min_alignment();
-  size_t max_minus = maximum_size - alignment;
-  return desired_size < max_minus ? desired_size : max_minus;
-}
-
-
-void GenCollectorPolicy::initialize_size_policy(size_t init_eden_size,
-                                                size_t init_promo_size,
-                                                size_t init_survivor_size) {
-  const double max_gc_pause_sec = ((double) MaxGCPauseMillis)/1000.0;
-  _size_policy = new AdaptiveSizePolicy(init_eden_size,
-                                        init_promo_size,
-                                        init_survivor_size,
-                                        max_gc_pause_sec,
-                                        GCTimeRatio);
-}
-
-size_t GenCollectorPolicy::compute_max_alignment() {
+size_t CollectorPolicy::compute_heap_alignment() {
   // The card marking array and the offset arrays for old generations are
   // committed in os pages as well. Make sure they are entirely full (to
   // avoid partial page problems), e.g. if 512 bytes heap corresponds to 1
   // byte entry and the os page size is 4096, the maximum heap size should
   // be 512*4096 = 2MB aligned.
-  size_t alignment = GenRemSet::max_alignment_constraint(rem_set_name());
+
+  // There is only the GenRemSet in Hotspot and only the GenRemSet::CardTable
+  // is supported.
+  // Requirements of any new remembered set implementations must be added here.
+  size_t alignment = GenRemSet::max_alignment_constraint(GenRemSet::CardTable);
 
   // Parallel GC does its own alignment of the generations to avoid requiring a
   // large page (256M on some platforms) for the permanent generation.  The
@@ -193,105 +193,216 @@ size_t GenCollectorPolicy::compute_max_alignment() {
       alignment = lcm(os::large_page_size(), alignment);
   }
 
-  assert(alignment >= min_alignment(), "Must be");
-
   return alignment;
 }
 
-void GenCollectorPolicy::initialize_flags() {
-  // All sizes must be multiples of the generation granularity.
-  set_min_alignment((uintx) Generation::GenGrain);
-  set_max_alignment(compute_max_alignment());
+// GenCollectorPolicy methods.
 
+GenCollectorPolicy::GenCollectorPolicy() :
+    _min_gen0_size(0),
+    _initial_gen0_size(0),
+    _max_gen0_size(0),
+    _gen_alignment(0),
+    _generations(NULL)
+{}
+
+size_t GenCollectorPolicy::scale_by_NewRatio_aligned(size_t base_size) {
+  return align_size_down_bounded(base_size / (NewRatio + 1), _gen_alignment);
+}
+
+size_t GenCollectorPolicy::bound_minus_alignment(size_t desired_size,
+                                                 size_t maximum_size) {
+  size_t max_minus = maximum_size - _gen_alignment;
+  return desired_size < max_minus ? desired_size : max_minus;
+}
+
+
+void GenCollectorPolicy::initialize_size_policy(size_t init_eden_size,
+                                                size_t init_promo_size,
+                                                size_t init_survivor_size) {
+  const double max_gc_pause_sec = ((double) MaxGCPauseMillis) / 1000.0;
+  _size_policy = new AdaptiveSizePolicy(init_eden_size,
+                                        init_promo_size,
+                                        init_survivor_size,
+                                        max_gc_pause_sec,
+                                        GCTimeRatio);
+}
+
+size_t GenCollectorPolicy::young_gen_size_lower_bound() {
+  // The young generation must be aligned and have room for eden + two survivors
+  return align_size_up(3 * _space_alignment, _gen_alignment);
+}
+
+#ifdef ASSERT
+void GenCollectorPolicy::assert_flags() {
+  CollectorPolicy::assert_flags();
+  assert(NewSize >= _min_gen0_size, "Ergonomics decided on a too small young gen size");
+  assert(NewSize <= MaxNewSize, "Ergonomics decided on incompatible initial and maximum young gen sizes");
+  assert(FLAG_IS_DEFAULT(MaxNewSize) || MaxNewSize < MaxHeapSize, "Ergonomics decided on incompatible maximum young gen and heap sizes");
+  assert(NewSize % _gen_alignment == 0, "NewSize alignment");
+  assert(FLAG_IS_DEFAULT(MaxNewSize) || MaxNewSize % _gen_alignment == 0, "MaxNewSize alignment");
+}
+
+void TwoGenerationCollectorPolicy::assert_flags() {
+  GenCollectorPolicy::assert_flags();
+  assert(OldSize + NewSize <= MaxHeapSize, "Ergonomics decided on incompatible generation and heap sizes");
+  assert(OldSize % _gen_alignment == 0, "OldSize alignment");
+}
+
+void GenCollectorPolicy::assert_size_info() {
+  CollectorPolicy::assert_size_info();
+  // GenCollectorPolicy::initialize_size_info may update the MaxNewSize
+  assert(MaxNewSize < MaxHeapSize, "Ergonomics decided on incompatible maximum young and heap sizes");
+  assert(NewSize == _initial_gen0_size, "Discrepancy between NewSize flag and local storage");
+  assert(MaxNewSize == _max_gen0_size, "Discrepancy between MaxNewSize flag and local storage");
+  assert(_min_gen0_size <= _initial_gen0_size, "Ergonomics decided on incompatible minimum and initial young gen sizes");
+  assert(_initial_gen0_size <= _max_gen0_size, "Ergonomics decided on incompatible initial and maximum young gen sizes");
+  assert(_min_gen0_size % _gen_alignment == 0, "_min_gen0_size alignment");
+  assert(_initial_gen0_size % _gen_alignment == 0, "_initial_gen0_size alignment");
+  assert(_max_gen0_size % _gen_alignment == 0, "_max_gen0_size alignment");
+}
+
+void TwoGenerationCollectorPolicy::assert_size_info() {
+  GenCollectorPolicy::assert_size_info();
+  assert(OldSize == _initial_gen1_size, "Discrepancy between OldSize flag and local storage");
+  assert(_min_gen1_size <= _initial_gen1_size, "Ergonomics decided on incompatible minimum and initial old gen sizes");
+  assert(_initial_gen1_size <= _max_gen1_size, "Ergonomics decided on incompatible initial and maximum old gen sizes");
+  assert(_max_gen1_size % _gen_alignment == 0, "_max_gen1_size alignment");
+  assert(_initial_gen1_size % _gen_alignment == 0, "_initial_gen1_size alignment");
+  assert(_max_heap_byte_size <= (_max_gen0_size + _max_gen1_size), "Total maximum heap sizes must be sum of generation maximum sizes");
+}
+#endif // ASSERT
+
+void GenCollectorPolicy::initialize_flags() {
   CollectorPolicy::initialize_flags();
 
-  // All generational heaps have a youngest gen; handle those flags here.
+  assert(_gen_alignment != 0, "Generation alignment not set up properly");
+  assert(_heap_alignment >= _gen_alignment,
+         err_msg("heap_alignment: " SIZE_FORMAT " less than gen_alignment: " SIZE_FORMAT,
+                 _heap_alignment, _gen_alignment));
+  assert(_gen_alignment % _space_alignment == 0,
+         err_msg("gen_alignment: " SIZE_FORMAT " not aligned by space_alignment: " SIZE_FORMAT,
+                 _gen_alignment, _space_alignment));
+  assert(_heap_alignment % _gen_alignment == 0,
+         err_msg("heap_alignment: " SIZE_FORMAT " not aligned by gen_alignment: " SIZE_FORMAT,
+                 _heap_alignment, _gen_alignment));
 
-  // Adjust max size parameters
+  // All generational heaps have a youngest gen; handle those flags here
+
+  // Make sure the heap is large enough for two generations
+  uintx smallest_new_size = young_gen_size_lower_bound();
+  uintx smallest_heap_size = align_size_up(smallest_new_size + align_size_up(_space_alignment, _gen_alignment),
+                                           _heap_alignment);
+  if (MaxHeapSize < smallest_heap_size) {
+    FLAG_SET_ERGO(uintx, MaxHeapSize, smallest_heap_size);
+    _max_heap_byte_size = MaxHeapSize;
+  }
+  // If needed, synchronize _min_heap_byte size and _initial_heap_byte_size
+  if (_min_heap_byte_size < smallest_heap_size) {
+    _min_heap_byte_size = smallest_heap_size;
+    if (InitialHeapSize < _min_heap_byte_size) {
+      FLAG_SET_ERGO(uintx, InitialHeapSize, smallest_heap_size);
+      _initial_heap_byte_size = smallest_heap_size;
+    }
+  }
+
+  // Now take the actual NewSize into account. We will silently increase NewSize
+  // if the user specified a smaller value.
+  smallest_new_size = MAX2(smallest_new_size, (uintx)align_size_down(NewSize, _gen_alignment));
+  if (smallest_new_size != NewSize) {
+    FLAG_SET_ERGO(uintx, NewSize, smallest_new_size);
+  }
+  _initial_gen0_size = NewSize;
+
+  if (!FLAG_IS_DEFAULT(MaxNewSize)) {
+    uintx min_new_size = MAX2(_gen_alignment, _min_gen0_size);
+
+    if (MaxNewSize >= MaxHeapSize) {
+      // Make sure there is room for an old generation
+      uintx smaller_max_new_size = MaxHeapSize - _gen_alignment;
+      if (FLAG_IS_CMDLINE(MaxNewSize)) {
+        warning("MaxNewSize (" SIZE_FORMAT "k) is equal to or greater than the entire "
+                "heap (" SIZE_FORMAT "k).  A new max generation size of " SIZE_FORMAT "k will be used.",
+                MaxNewSize/K, MaxHeapSize/K, smaller_max_new_size/K);
+      }
+      FLAG_SET_ERGO(uintx, MaxNewSize, smaller_max_new_size);
+      if (NewSize > MaxNewSize) {
+        FLAG_SET_ERGO(uintx, NewSize, MaxNewSize);
+        _initial_gen0_size = NewSize;
+      }
+    } else if (MaxNewSize < min_new_size) {
+      FLAG_SET_ERGO(uintx, MaxNewSize, min_new_size);
+    } else if (!is_size_aligned(MaxNewSize, _gen_alignment)) {
+      FLAG_SET_ERGO(uintx, MaxNewSize, align_size_down(MaxNewSize, _gen_alignment));
+    }
+    _max_gen0_size = MaxNewSize;
+  }
+
   if (NewSize > MaxNewSize) {
-    MaxNewSize = NewSize;
+    // At this point this should only happen if the user specifies a large NewSize and/or
+    // a small (but not too small) MaxNewSize.
+    if (FLAG_IS_CMDLINE(MaxNewSize)) {
+      warning("NewSize (" SIZE_FORMAT "k) is greater than the MaxNewSize (" SIZE_FORMAT "k). "
+              "A new max generation size of " SIZE_FORMAT "k will be used.",
+              NewSize/K, MaxNewSize/K, NewSize/K);
+    }
+    FLAG_SET_ERGO(uintx, MaxNewSize, NewSize);
+    _max_gen0_size = MaxNewSize;
   }
-  NewSize = align_size_down(NewSize, min_alignment());
-  MaxNewSize = align_size_down(MaxNewSize, min_alignment());
 
-  // Check validity of heap flags
-  assert(NewSize     % min_alignment() == 0, "eden space alignment");
-  assert(MaxNewSize  % min_alignment() == 0, "survivor space alignment");
-
-  if (NewSize < 3*min_alignment()) {
-     // make sure there room for eden and two survivor spaces
-    vm_exit_during_initialization("Too small new size specified");
-  }
   if (SurvivorRatio < 1 || NewRatio < 1) {
-    vm_exit_during_initialization("Invalid heap ratio specified");
+    vm_exit_during_initialization("Invalid young gen ratio specified");
   }
+
+  DEBUG_ONLY(GenCollectorPolicy::assert_flags();)
 }
 
 void TwoGenerationCollectorPolicy::initialize_flags() {
   GenCollectorPolicy::initialize_flags();
 
-  OldSize = align_size_down(OldSize, min_alignment());
+  if (!is_size_aligned(OldSize, _gen_alignment)) {
+    FLAG_SET_ERGO(uintx, OldSize, align_size_down(OldSize, _gen_alignment));
+  }
 
-  if (FLAG_IS_CMDLINE(OldSize) && FLAG_IS_DEFAULT(NewSize)) {
+  if (FLAG_IS_CMDLINE(OldSize) && FLAG_IS_DEFAULT(MaxHeapSize)) {
     // NewRatio will be used later to set the young generation size so we use
     // it to calculate how big the heap should be based on the requested OldSize
     // and NewRatio.
     assert(NewRatio > 0, "NewRatio should have been set up earlier");
     size_t calculated_heapsize = (OldSize / NewRatio) * (NewRatio + 1);
 
-    calculated_heapsize = align_size_up(calculated_heapsize, max_alignment());
-    MaxHeapSize = calculated_heapsize;
-    InitialHeapSize = calculated_heapsize;
+    calculated_heapsize = align_size_up(calculated_heapsize, _heap_alignment);
+    FLAG_SET_ERGO(uintx, MaxHeapSize, calculated_heapsize);
+    _max_heap_byte_size = MaxHeapSize;
+    FLAG_SET_ERGO(uintx, InitialHeapSize, calculated_heapsize);
+    _initial_heap_byte_size = InitialHeapSize;
   }
-  MaxHeapSize = align_size_up(MaxHeapSize, max_alignment());
 
   // adjust max heap size if necessary
   if (NewSize + OldSize > MaxHeapSize) {
-    if (FLAG_IS_CMDLINE(MaxHeapSize)) {
+    if (_max_heap_size_cmdline) {
       // somebody set a maximum heap size with the intention that we should not
       // exceed it. Adjust New/OldSize as necessary.
       uintx calculated_size = NewSize + OldSize;
       double shrink_factor = (double) MaxHeapSize / calculated_size;
-      // align
-      NewSize = align_size_down((uintx) (NewSize * shrink_factor), min_alignment());
-      // OldSize is already aligned because above we aligned MaxHeapSize to
-      // max_alignment(), and we just made sure that NewSize is aligned to
-      // min_alignment(). In initialize_flags() we verified that max_alignment()
-      // is a multiple of min_alignment().
-      OldSize = MaxHeapSize - NewSize;
-    } else {
-      MaxHeapSize = NewSize + OldSize;
-    }
-  }
-  // need to do this again
-  MaxHeapSize = align_size_up(MaxHeapSize, max_alignment());
+      uintx smaller_new_size = align_size_down((uintx)(NewSize * shrink_factor), _gen_alignment);
+      FLAG_SET_ERGO(uintx, NewSize, MAX2(young_gen_size_lower_bound(), smaller_new_size));
+      _initial_gen0_size = NewSize;
 
-  // adjust max heap size if necessary
-  if (NewSize + OldSize > MaxHeapSize) {
-    if (FLAG_IS_CMDLINE(MaxHeapSize)) {
-      // somebody set a maximum heap size with the intention that we should not
-      // exceed it. Adjust New/OldSize as necessary.
-      uintx calculated_size = NewSize + OldSize;
-      double shrink_factor = (double) MaxHeapSize / calculated_size;
-      // align
-      NewSize = align_size_down((uintx) (NewSize * shrink_factor), min_alignment());
       // OldSize is already aligned because above we aligned MaxHeapSize to
-      // max_alignment(), and we just made sure that NewSize is aligned to
-      // min_alignment(). In initialize_flags() we verified that max_alignment()
-      // is a multiple of min_alignment().
-      OldSize = MaxHeapSize - NewSize;
+      // _heap_alignment, and we just made sure that NewSize is aligned to
+      // _gen_alignment. In initialize_flags() we verified that _heap_alignment
+      // is a multiple of _gen_alignment.
+      FLAG_SET_ERGO(uintx, OldSize, MaxHeapSize - NewSize);
     } else {
-      MaxHeapSize = NewSize + OldSize;
+      FLAG_SET_ERGO(uintx, MaxHeapSize, align_size_up(NewSize + OldSize, _heap_alignment));
+      _max_heap_byte_size = MaxHeapSize;
     }
   }
-  // need to do this again
-  MaxHeapSize = align_size_up(MaxHeapSize, max_alignment());
 
   always_do_update_barrier = UseConcMarkSweepGC;
 
-  // Check validity of heap flags
-  assert(OldSize     % min_alignment() == 0, "old space alignment");
-  assert(MaxHeapSize % max_alignment() == 0, "maximum heap alignment");
+  DEBUG_ONLY(TwoGenerationCollectorPolicy::assert_flags();)
 }
 
 // Values set on the command line win over any ergonomically
@@ -306,7 +417,7 @@ void TwoGenerationCollectorPolicy::initialize_flags() {
 void GenCollectorPolicy::initialize_size_info() {
   CollectorPolicy::initialize_size_info();
 
-  // min_alignment() is used for alignment within a generation.
+  // _space_alignment is used for alignment within a generation.
   // There is additional alignment done down stream for some
   // collectors that sometimes causes unwanted rounding up of
   // generations sizes.
@@ -314,37 +425,10 @@ void GenCollectorPolicy::initialize_size_info() {
   // Determine maximum size of gen0
 
   size_t max_new_size = 0;
-  if (FLAG_IS_CMDLINE(MaxNewSize) || FLAG_IS_ERGO(MaxNewSize)) {
-    if (MaxNewSize < min_alignment()) {
-      max_new_size = min_alignment();
-    }
-    if (MaxNewSize >= max_heap_byte_size()) {
-      max_new_size = align_size_down(max_heap_byte_size() - min_alignment(),
-                                     min_alignment());
-      warning("MaxNewSize (" SIZE_FORMAT "k) is equal to or "
-        "greater than the entire heap (" SIZE_FORMAT "k).  A "
-        "new generation size of " SIZE_FORMAT "k will be used.",
-        MaxNewSize/K, max_heap_byte_size()/K, max_new_size/K);
-    } else {
-      max_new_size = align_size_down(MaxNewSize, min_alignment());
-    }
-
-  // The case for FLAG_IS_ERGO(MaxNewSize) could be treated
-  // specially at this point to just use an ergonomically set
-  // MaxNewSize to set max_new_size.  For cases with small
-  // heaps such a policy often did not work because the MaxNewSize
-  // was larger than the entire heap.  The interpretation given
-  // to ergonomically set flags is that the flags are set
-  // by different collectors for their own special needs but
-  // are not allowed to badly shape the heap.  This allows the
-  // different collectors to decide what's best for themselves
-  // without having to factor in the overall heap shape.  It
-  // can be the case in the future that the collectors would
-  // only make "wise" ergonomics choices and this policy could
-  // just accept those choices.  The choices currently made are
-  // not always "wise".
+  if (!FLAG_IS_DEFAULT(MaxNewSize)) {
+    max_new_size = MaxNewSize;
   } else {
-    max_new_size = scale_by_NewRatio_aligned(max_heap_byte_size());
+    max_new_size = scale_by_NewRatio_aligned(_max_heap_byte_size);
     // Bound the maximum size by NewSize below (since it historically
     // would have been NewSize and because the NewRatio calculation could
     // yield a size that is too small) and bound it by MaxNewSize above.
@@ -357,13 +441,13 @@ void GenCollectorPolicy::initialize_size_info() {
   // Given the maximum gen0 size, determine the initial and
   // minimum gen0 sizes.
 
-  if (max_heap_byte_size() == min_heap_byte_size()) {
+  if (_max_heap_byte_size == _min_heap_byte_size) {
     // The maximum and minimum heap sizes are the same so
     // the generations minimum and initial must be the
     // same as its maximum.
-    set_min_gen0_size(max_new_size);
-    set_initial_gen0_size(max_new_size);
-    set_max_gen0_size(max_new_size);
+    _min_gen0_size = max_new_size;
+    _initial_gen0_size = max_new_size;
+    _max_gen0_size = max_new_size;
   } else {
     size_t desired_new_size = 0;
     if (!FLAG_IS_DEFAULT(NewSize)) {
@@ -384,44 +468,49 @@ void GenCollectorPolicy::initialize_size_info() {
       // Use the default NewSize as the floor for these values.  If
       // NewRatio is overly large, the resulting sizes can be too
       // small.
-      _min_gen0_size = MAX2(scale_by_NewRatio_aligned(min_heap_byte_size()),
-                          NewSize);
+      _min_gen0_size = MAX2(scale_by_NewRatio_aligned(_min_heap_byte_size), NewSize);
       desired_new_size =
-        MAX2(scale_by_NewRatio_aligned(initial_heap_byte_size()),
-             NewSize);
+        MAX2(scale_by_NewRatio_aligned(_initial_heap_byte_size), NewSize);
     }
 
     assert(_min_gen0_size > 0, "Sanity check");
-    set_initial_gen0_size(desired_new_size);
-    set_max_gen0_size(max_new_size);
+    _initial_gen0_size = desired_new_size;
+    _max_gen0_size = max_new_size;
 
     // At this point the desirable initial and minimum sizes have been
     // determined without regard to the maximum sizes.
 
     // Bound the sizes by the corresponding overall heap sizes.
-    set_min_gen0_size(
-      bound_minus_alignment(_min_gen0_size, min_heap_byte_size()));
-    set_initial_gen0_size(
-      bound_minus_alignment(_initial_gen0_size, initial_heap_byte_size()));
-    set_max_gen0_size(
-      bound_minus_alignment(_max_gen0_size, max_heap_byte_size()));
+    _min_gen0_size = bound_minus_alignment(_min_gen0_size, _min_heap_byte_size);
+    _initial_gen0_size = bound_minus_alignment(_initial_gen0_size, _initial_heap_byte_size);
+    _max_gen0_size = bound_minus_alignment(_max_gen0_size, _max_heap_byte_size);
 
     // At this point all three sizes have been checked against the
     // maximum sizes but have not been checked for consistency
     // among the three.
 
     // Final check min <= initial <= max
-    set_min_gen0_size(MIN2(_min_gen0_size, _max_gen0_size));
-    set_initial_gen0_size(
-      MAX2(MIN2(_initial_gen0_size, _max_gen0_size), _min_gen0_size));
-    set_min_gen0_size(MIN2(_min_gen0_size, _initial_gen0_size));
+    _min_gen0_size = MIN2(_min_gen0_size, _max_gen0_size);
+    _initial_gen0_size = MAX2(MIN2(_initial_gen0_size, _max_gen0_size), _min_gen0_size);
+    _min_gen0_size = MIN2(_min_gen0_size, _initial_gen0_size);
+  }
+
+  // Write back to flags if necessary
+  if (NewSize != _initial_gen0_size) {
+    FLAG_SET_ERGO(uintx, NewSize, _initial_gen0_size);
+  }
+
+  if (MaxNewSize != _max_gen0_size) {
+    FLAG_SET_ERGO(uintx, MaxNewSize, _max_gen0_size);
   }
 
   if (PrintGCDetails && Verbose) {
     gclog_or_tty->print_cr("1: Minimum gen0 " SIZE_FORMAT "  Initial gen0 "
       SIZE_FORMAT "  Maximum gen0 " SIZE_FORMAT,
-      min_gen0_size(), initial_gen0_size(), max_gen0_size());
+      _min_gen0_size, _initial_gen0_size, _max_gen0_size);
   }
+
+  DEBUG_ONLY(GenCollectorPolicy::assert_size_info();)
 }
 
 // Call this method during the sizing of the gen1 to make
@@ -434,25 +523,18 @@ void GenCollectorPolicy::initialize_size_info() {
 // keeping it simple also seems a worthwhile goal.
 bool TwoGenerationCollectorPolicy::adjust_gen0_sizes(size_t* gen0_size_ptr,
                                                      size_t* gen1_size_ptr,
-                                                     const size_t heap_size,
-                                                     const size_t min_gen1_size) {
+                                                     const size_t heap_size) {
   bool result = false;
 
-  if ((*gen1_size_ptr + *gen0_size_ptr) > heap_size) {
-    if ((heap_size < (*gen0_size_ptr + min_gen1_size)) &&
-        (heap_size >= min_gen1_size + min_alignment())) {
-      // Adjust gen0 down to accommodate min_gen1_size
-      *gen0_size_ptr = heap_size - min_gen1_size;
-      *gen0_size_ptr =
-        MAX2((uintx)align_size_down(*gen0_size_ptr, min_alignment()),
-             min_alignment());
-      assert(*gen0_size_ptr > 0, "Min gen0 is too large");
+  if ((*gen0_size_ptr + *gen1_size_ptr) > heap_size) {
+    uintx smallest_new_size = young_gen_size_lower_bound();
+    if ((heap_size < (*gen0_size_ptr + _min_gen1_size)) &&
+        (heap_size >= _min_gen1_size + smallest_new_size)) {
+      // Adjust gen0 down to accommodate _min_gen1_size
+      *gen0_size_ptr = align_size_down_bounded(heap_size - _min_gen1_size, _gen_alignment);
       result = true;
     } else {
-      *gen1_size_ptr = heap_size - *gen0_size_ptr;
-      *gen1_size_ptr =
-        MAX2((uintx)align_size_down(*gen1_size_ptr, min_alignment()),
-                       min_alignment());
+      *gen1_size_ptr = align_size_down_bounded(heap_size - *gen0_size_ptr, _gen_alignment);
     }
   }
   return result;
@@ -473,83 +555,87 @@ void TwoGenerationCollectorPolicy::initialize_size_info() {
   // The maximum gen1 size can be determined from the maximum gen0
   // and maximum heap size since no explicit flags exits
   // for setting the gen1 maximum.
-  _max_gen1_size = max_heap_byte_size() - _max_gen0_size;
-  _max_gen1_size =
-    MAX2((uintx)align_size_down(_max_gen1_size, min_alignment()),
-         min_alignment());
+  _max_gen1_size = MAX2(_max_heap_byte_size - _max_gen0_size, _gen_alignment);
+
   // If no explicit command line flag has been set for the
   // gen1 size, use what is left for gen1.
-  if (FLAG_IS_DEFAULT(OldSize) || FLAG_IS_ERGO(OldSize)) {
-    // The user has not specified any value or ergonomics
-    // has chosen a value (which may or may not be consistent
+  if (!FLAG_IS_CMDLINE(OldSize)) {
+    // The user has not specified any value but the ergonomics
+    // may have chosen a value (which may or may not be consistent
     // with the overall heap size).  In either case make
     // the minimum, maximum and initial sizes consistent
     // with the gen0 sizes and the overall heap sizes.
-    assert(min_heap_byte_size() > _min_gen0_size,
-      "gen0 has an unexpected minimum size");
-    set_min_gen1_size(min_heap_byte_size() - min_gen0_size());
-    set_min_gen1_size(
-      MAX2((uintx)align_size_down(_min_gen1_size, min_alignment()),
-           min_alignment()));
-    set_initial_gen1_size(initial_heap_byte_size() - initial_gen0_size());
-    set_initial_gen1_size(
-      MAX2((uintx)align_size_down(_initial_gen1_size, min_alignment()),
-           min_alignment()));
-
+    _min_gen1_size = MAX2(_min_heap_byte_size - _min_gen0_size, _gen_alignment);
+    _initial_gen1_size = MAX2(_initial_heap_byte_size - _initial_gen0_size, _gen_alignment);
+    // _max_gen1_size has already been made consistent above
+    FLAG_SET_ERGO(uintx, OldSize, _initial_gen1_size);
   } else {
     // It's been explicitly set on the command line.  Use the
     // OldSize and then determine the consequences.
-    set_min_gen1_size(OldSize);
-    set_initial_gen1_size(OldSize);
+    _min_gen1_size = MIN2(OldSize, _min_heap_byte_size - _min_gen0_size);
+    _initial_gen1_size = OldSize;
 
     // If the user has explicitly set an OldSize that is inconsistent
     // with other command line flags, issue a warning.
     // The generation minimums and the overall heap mimimum should
-    // be within one heap alignment.
-    if ((_min_gen1_size + _min_gen0_size + min_alignment()) <
-           min_heap_byte_size()) {
+    // be within one generation alignment.
+    if ((_min_gen1_size + _min_gen0_size + _gen_alignment) < _min_heap_byte_size) {
       warning("Inconsistency between minimum heap size and minimum "
-          "generation sizes: using minimum heap = " SIZE_FORMAT,
-          min_heap_byte_size());
+              "generation sizes: using minimum heap = " SIZE_FORMAT,
+              _min_heap_byte_size);
     }
-    if ((OldSize > _max_gen1_size)) {
+    if (OldSize > _max_gen1_size) {
       warning("Inconsistency between maximum heap size and maximum "
-          "generation sizes: using maximum heap = " SIZE_FORMAT
-          " -XX:OldSize flag is being ignored",
-          max_heap_byte_size());
+              "generation sizes: using maximum heap = " SIZE_FORMAT
+              " -XX:OldSize flag is being ignored",
+              _max_heap_byte_size);
     }
     // If there is an inconsistency between the OldSize and the minimum and/or
     // initial size of gen0, since OldSize was explicitly set, OldSize wins.
-    if (adjust_gen0_sizes(&_min_gen0_size, &_min_gen1_size,
-                          min_heap_byte_size(), OldSize)) {
+    if (adjust_gen0_sizes(&_min_gen0_size, &_min_gen1_size, _min_heap_byte_size)) {
       if (PrintGCDetails && Verbose) {
         gclog_or_tty->print_cr("2: Minimum gen0 " SIZE_FORMAT "  Initial gen0 "
               SIZE_FORMAT "  Maximum gen0 " SIZE_FORMAT,
-              min_gen0_size(), initial_gen0_size(), max_gen0_size());
+              _min_gen0_size, _initial_gen0_size, _max_gen0_size);
       }
     }
     // Initial size
     if (adjust_gen0_sizes(&_initial_gen0_size, &_initial_gen1_size,
-                         initial_heap_byte_size(), OldSize)) {
+                          _initial_heap_byte_size)) {
       if (PrintGCDetails && Verbose) {
         gclog_or_tty->print_cr("3: Minimum gen0 " SIZE_FORMAT "  Initial gen0 "
           SIZE_FORMAT "  Maximum gen0 " SIZE_FORMAT,
-          min_gen0_size(), initial_gen0_size(), max_gen0_size());
+          _min_gen0_size, _initial_gen0_size, _max_gen0_size);
       }
     }
   }
   // Enforce the maximum gen1 size.
-  set_min_gen1_size(MIN2(_min_gen1_size, _max_gen1_size));
+  _min_gen1_size = MIN2(_min_gen1_size, _max_gen1_size);
 
   // Check that min gen1 <= initial gen1 <= max gen1
-  set_initial_gen1_size(MAX2(_initial_gen1_size, _min_gen1_size));
-  set_initial_gen1_size(MIN2(_initial_gen1_size, _max_gen1_size));
+  _initial_gen1_size = MAX2(_initial_gen1_size, _min_gen1_size);
+  _initial_gen1_size = MIN2(_initial_gen1_size, _max_gen1_size);
+
+  // Write back to flags if necessary
+  if (NewSize != _initial_gen0_size) {
+    FLAG_SET_ERGO(uintx, NewSize, _initial_gen0_size);
+  }
+
+  if (MaxNewSize != _max_gen0_size) {
+    FLAG_SET_ERGO(uintx, MaxNewSize, _max_gen0_size);
+  }
+
+  if (OldSize != _initial_gen1_size) {
+    FLAG_SET_ERGO(uintx, OldSize, _initial_gen1_size);
+  }
 
   if (PrintGCDetails && Verbose) {
     gclog_or_tty->print_cr("Minimum gen1 " SIZE_FORMAT "  Initial gen1 "
       SIZE_FORMAT "  Maximum gen1 " SIZE_FORMAT,
-      min_gen1_size(), initial_gen1_size(), max_gen1_size());
+      _min_gen1_size, _initial_gen1_size, _max_gen1_size);
   }
+
+  DEBUG_ONLY(TwoGenerationCollectorPolicy::assert_size_info();)
 }
 
 HeapWord* GenCollectorPolicy::mem_allocate_work(size_t size,
@@ -643,9 +729,7 @@ HeapWord* GenCollectorPolicy::mem_allocate_work(size_t size,
       gc_count_before = Universe::heap()->total_collections();
     }
 
-    VM_GenCollectForAllocation op(size,
-                                  is_tlab,
-                                  gc_count_before);
+    VM_GenCollectForAllocation op(size, is_tlab, gc_count_before);
     VMThread::execute(&op);
     if (op.prologue_succeeded()) {
       result = op.result();
@@ -874,14 +958,16 @@ bool GenCollectorPolicy::should_try_older_generation_allocation(
 // MarkSweepPolicy methods
 //
 
-MarkSweepPolicy::MarkSweepPolicy() {
-  initialize_all();
+void MarkSweepPolicy::initialize_alignments() {
+  _space_alignment = _gen_alignment = (uintx)Generation::GenGrain;
+  _heap_alignment = compute_heap_alignment();
 }
 
 void MarkSweepPolicy::initialize_generations() {
   _generations = NEW_C_HEAP_ARRAY3(GenerationSpecPtr, number_of_generations(), mtGC, 0, AllocFailStrategy::RETURN_NULL);
-  if (_generations == NULL)
+  if (_generations == NULL) {
     vm_exit_during_initialization("Unable to allocate gen spec");
+  }
 
   if (UseParNewGC) {
     _generations[0] = new GenerationSpec(Generation::ParNew, _initial_gen0_size, _max_gen0_size);
@@ -890,8 +976,9 @@ void MarkSweepPolicy::initialize_generations() {
   }
   _generations[1] = new GenerationSpec(Generation::MarkSweepCompact, _initial_gen1_size, _max_gen1_size);
 
-  if (_generations[0] == NULL || _generations[1] == NULL)
+  if (_generations[0] == NULL || _generations[1] == NULL) {
     vm_exit_during_initialization("Unable to allocate gen spec");
+  }
 }
 
 void MarkSweepPolicy::initialize_gc_policy_counters() {

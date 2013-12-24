@@ -28,6 +28,7 @@
 #include "gc_implementation/shared/gcTrace.hpp"
 #include "gc_implementation/shared/gcWhen.hpp"
 #include "gc_implementation/shared/copyFailedInfo.hpp"
+#include "runtime/os.hpp"
 #include "trace/tracing.hpp"
 #include "trace/traceBackend.hpp"
 #if INCLUDE_ALL_GCS
@@ -282,8 +283,6 @@ class PhaseSender : public PhaseVisitor {
       default: /* Ignore sending this phase */ break;
     }
   }
-
-#undef send_phase
 };
 
 void GCTracer::send_phase_events(TimePartitions* time_partitions) const {

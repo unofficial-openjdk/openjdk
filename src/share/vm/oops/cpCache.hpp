@@ -31,6 +31,10 @@
 
 class PSPromotionManager;
 
+// The ConstantPoolCache is not a cache! It is the resolution table that the
+// interpreter uses to avoid going into the runtime and a way to access resolved
+// values.
+
 // A ConstantPoolCacheEntry describes an individual entry of the constant
 // pool cache. There's 2 principal kinds of entries: field entries for in-
 // stance & static field access, and method entries for invokes. Some of
@@ -219,15 +223,29 @@ class ConstantPoolCacheEntry VALUE_OBJ_CLASS_SPEC {
     Klass*          root_klass                   // needed by the GC to dirty the klass
   );
 
-  void set_method(                               // sets entry to resolved method entry
+ private:
+  void set_direct_or_vtable_call(
     Bytecodes::Code invoke_code,                 // the bytecode used for invoking the method
     methodHandle    method,                      // the method/prototype if any (NULL, otherwise)
     int             vtable_index                 // the vtable index if any, else negative
   );
 
-  void set_interface_call(
-    methodHandle method,                         // Resolved method
-    int index                                    // Method index into interface
+ public:
+  void set_direct_call(                          // sets entry to exact concrete method entry
+    Bytecodes::Code invoke_code,                 // the bytecode used for invoking the method
+    methodHandle    method                       // the method to call
+  );
+
+  void set_vtable_call(                          // sets entry to vtable index
+    Bytecodes::Code invoke_code,                 // the bytecode used for invoking the method
+    methodHandle    method,                      // resolved method which declares the vtable index
+    int             vtable_index                 // the vtable index
+  );
+
+  void set_itable_call(
+    Bytecodes::Code invoke_code,                 // the bytecode used; must be invokeinterface
+    methodHandle method,                         // the resolved interface method
+    int itable_index                             // index into itable for the method
   );
 
   void set_method_handle(
@@ -378,26 +396,33 @@ class ConstantPoolCache: public MetaspaceObj {
   friend class MetadataFactory;
  private:
   int             _length;
-  ConstantPool* _constant_pool;                // the corresponding constant pool
+  ConstantPool*   _constant_pool;          // the corresponding constant pool
 
   // Sizing
   debug_only(friend class ClassVerifier;)
 
   // Constructor
-  ConstantPoolCache(int length, const intStack& inverse_index_map,
+  ConstantPoolCache(int length,
+                    const intStack& inverse_index_map,
+                    const intStack& invokedynamic_inverse_index_map,
                     const intStack& invokedynamic_references_map) :
-                                        _length(length), _constant_pool(NULL) {
-    initialize(inverse_index_map, invokedynamic_references_map);
+                          _length(length),
+                          _constant_pool(NULL) {
+    initialize(inverse_index_map, invokedynamic_inverse_index_map,
+               invokedynamic_references_map);
     for (int i = 0; i < length; i++) {
       assert(entry_at(i)->is_f1_null(), "Failed to clear?");
     }
   }
 
   // Initialization
-  void initialize(const intArray& inverse_index_map, const intArray& invokedynamic_references_map);
+  void initialize(const intArray& inverse_index_map,
+                  const intArray& invokedynamic_inverse_index_map,
+                  const intArray& invokedynamic_references_map);
  public:
-  static ConstantPoolCache* allocate(ClassLoaderData* loader_data, int length,
-                                     const intStack& inverse_index_map,
+  static ConstantPoolCache* allocate(ClassLoaderData* loader_data,
+                                     const intStack& cp_cache_map,
+                                     const intStack& invokedynamic_cp_cache_map,
                                      const intStack& invokedynamic_references_map, TRAPS);
   bool is_constantPoolCache() const { return true; }
 

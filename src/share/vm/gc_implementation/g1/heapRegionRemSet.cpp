@@ -91,8 +91,8 @@ protected:
       gclog_or_tty->print_cr("    PRT::Add_reference_work(" PTR_FORMAT "->" PTR_FORMAT").",
                              from,
                              UseCompressedOops
-                             ? oopDesc::load_decode_heap_oop((narrowOop*)from)
-                             : oopDesc::load_decode_heap_oop((oop*)from));
+                             ? (void *)oopDesc::load_decode_heap_oop((narrowOop*)from)
+                             : (void *)oopDesc::load_decode_heap_oop((oop*)from));
     }
 
     HeapRegion* loc_hr = hr();
@@ -403,8 +403,8 @@ void OtherRegionsTable::add_reference(OopOrNarrowOopStar from, int tid) {
     gclog_or_tty->print_cr("ORT::add_reference_work(" PTR_FORMAT "->" PTR_FORMAT ").",
                                                     from,
                                                     UseCompressedOops
-                                                    ? oopDesc::load_decode_heap_oop((narrowOop*)from)
-                                                    : oopDesc::load_decode_heap_oop((oop*)from));
+                                                    ? (void *)oopDesc::load_decode_heap_oop((narrowOop*)from)
+                                                    : (void *)oopDesc::load_decode_heap_oop((oop*)from));
   }
 
   int from_card = (int)(uintptr_t(from) >> CardTableModRefBS::card_shift);
@@ -1004,7 +1004,9 @@ public:
 
 void HeapRegionRemSet::migrate_strong_code_roots() {
   assert(hr()->in_collection_set(), "only collection set regions");
-  assert(!hr()->isHumongous(), "not humongous regions");
+  assert(!hr()->isHumongous(),
+         err_msg("humongous region "HR_FORMAT" should not have been added to the collection set",
+                 HR_FORMAT_PARAMS(hr())));
 
   ResourceMark rm;
 

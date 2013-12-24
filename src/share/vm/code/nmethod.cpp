@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -93,18 +93,21 @@ HS_DTRACE_PROBE_DECL6(hotspot, compiled__method__unload,
 #endif
 
 bool nmethod::is_compiled_by_c1() const {
-  if (compiler() == NULL || method() == NULL)  return false;  // can happen during debug printing
-  if (is_native_method()) return false;
+  if (compiler() == NULL) {
+    return false;
+  }
   return compiler()->is_c1();
 }
 bool nmethod::is_compiled_by_c2() const {
-  if (compiler() == NULL || method() == NULL)  return false;  // can happen during debug printing
-  if (is_native_method()) return false;
+  if (compiler() == NULL) {
+    return false;
+  }
   return compiler()->is_c2();
 }
 bool nmethod::is_compiled_by_shark() const {
-  if (is_native_method()) return false;
-  assert(compiler() != NULL, "must be");
+  if (compiler() == NULL) {
+    return false;
+  }
   return compiler()->is_shark();
 }
 
@@ -459,7 +462,6 @@ void nmethod::init_defaults() {
   _state                      = alive;
   _marked_for_reclamation     = 0;
   _has_flushed_dependencies   = 0;
-  _speculatively_disconnected = 0;
   _has_unsafe_access          = 0;
   _has_method_handle_invokes  = 0;
   _lazy_critical_native       = 0;
@@ -478,7 +480,6 @@ void nmethod::init_defaults() {
   _osr_link                = NULL;
   _scavenge_root_link      = NULL;
   _scavenge_root_state     = 0;
-  _saved_nmethod_link      = NULL;
   _compiler                = NULL;
 
 #ifdef HAVE_DTRACE_H
@@ -617,21 +618,18 @@ nmethod* nmethod::new_nmethod(methodHandle method,
         // record this nmethod as dependent on this klass
         InstanceKlass::cast(klass)->add_dependent_nmethod(nm);
       }
-    }
-    NOT_PRODUCT(if (nm != NULL)  nmethod_stats.note_nmethod(nm));
-    if (PrintAssembly && nm != NULL) {
-      Disassembler::decode(nm);
+      NOT_PRODUCT(nmethod_stats.note_nmethod(nm));
+      if (PrintAssembly) {
+        Disassembler::decode(nm);
+      }
     }
   }
-
-  // verify nmethod
-  debug_only(if (nm) nm->verify();) // might block
-
+  // Do verification and logging outside CodeCache_lock.
   if (nm != NULL) {
+    // Safepoints in nmethod::verify aren't allowed because nm hasn't been installed yet.
+    DEBUG_ONLY(nm->verify();)
     nm->log_new_nmethod();
   }
-
-  // done
   return nm;
 }
 
@@ -683,6 +681,7 @@ nmethod::nmethod(
     _osr_entry_point         = NULL;
     _exception_cache         = NULL;
     _pc_desc_cache.reset_to(NULL);
+    _hotness_counter         = NMethodSweeper::hotness_counter_reset_val();
 
     code_buffer->copy_values_to(this);
     if (ScavengeRootsInCode && detect_scavenge_root_oops()) {
@@ -767,6 +766,7 @@ nmethod::nmethod(
     _osr_entry_point         = NULL;
     _exception_cache         = NULL;
     _pc_desc_cache.reset_to(NULL);
+    _hotness_counter         = NMethodSweeper::hotness_counter_reset_val();
 
     code_buffer->copy_values_to(this);
     debug_only(verify_scavenge_root_oops());
@@ -800,7 +800,7 @@ nmethod::nmethod(
 }
 #endif // def HAVE_DTRACE_H
 
-void* nmethod::operator new(size_t size, int nmethod_size) throw () {
+void* nmethod::operator new(size_t size, int nmethod_size) throw() {
   // Not critical, may return null if there is too little continuous memory
   return CodeCache::allocate(nmethod_size);
 }
@@ -839,6 +839,7 @@ nmethod::nmethod(
     _comp_level              = comp_level;
     _compiler                = compiler;
     _orig_pc_offset          = orig_pc_offset;
+    _hotness_counter         = NMethodSweeper::hotness_counter_reset_val();
 
     // Section offsets
     _consts_offset           = content_offset()      + code_buffer->total_offset_of(code_buffer->consts());
@@ -1173,7 +1174,7 @@ void nmethod::cleanup_inline_caches() {
 
 // This is a private interface with the sweeper.
 void nmethod::mark_as_seen_on_stack() {
-  assert(is_not_entrant(), "must be a non-entrant method");
+  assert(is_alive(), "Must be an alive method");
   // Set the traversal mark to ensure that the sweeper does 2
   // cleaning passes before moving to zombie.
   set_stack_traversal_mark(NMethodSweeper::traversal_count());
@@ -1258,7 +1259,7 @@ void nmethod::make_unloaded(BoolObjectClosure* is_alive, oop cause) {
 
   set_osr_link(NULL);
   //set_scavenge_root_link(NULL); // done by prune_scavenge_root_nmethods
-  NMethodSweeper::notify(this);
+  NMethodSweeper::report_state_change(this);
 }
 
 void nmethod::invalidate_osr_method() {
@@ -1292,7 +1293,9 @@ void nmethod::log_state_change() const {
   }
 }
 
-// Common functionality for both make_not_entrant and make_zombie
+/**
+ * Common functionality for both make_not_entrant and make_zombie
+ */
 bool nmethod::make_not_entrant_or_zombie(unsigned int state) {
   assert(state == zombie || state == not_entrant, "must be zombie or not_entrant");
   assert(!is_zombie(), "should not already be a zombie");
@@ -1348,6 +1351,15 @@ bool nmethod::make_not_entrant_or_zombie(unsigned int state) {
       nmethod_needs_unregister = true;
     }
 
+    // Must happen before state change. Otherwise we have a race condition in
+    // nmethod::can_not_entrant_be_converted(). I.e., a method can immediately
+    // transition its state from 'not_entrant' to 'zombie' without having to wait
+    // for stack scanning.
+    if (state == not_entrant) {
+      mark_as_seen_on_stack();
+      OrderAccess::storestore();
+    }
+
     // Change state
     _state = state;
 
@@ -1366,11 +1378,6 @@ bool nmethod::make_not_entrant_or_zombie(unsigned int state) {
       HandleMark hm;
       method()->clear_code();
     }
-
-    if (state == not_entrant) {
-      mark_as_seen_on_stack();
-    }
-
   } // leave critical region under Patching_lock
 
   // When the nmethod becomes zombie it is no longer alive so the
@@ -1401,6 +1408,9 @@ bool nmethod::make_not_entrant_or_zombie(unsigned int state) {
     // nmethods aren't scanned for GC.
     _oops_are_stale = true;
 #endif
+     // the Method may be reclaimed by class unloading now that the
+     // nmethod is in zombie state
+    set_method(NULL);
   } else {
     assert(state == not_entrant, "other cases may need to be handled differently");
   }
@@ -1409,9 +1419,7 @@ bool nmethod::make_not_entrant_or_zombie(unsigned int state) {
     tty->print_cr("nmethod <" INTPTR_FORMAT "> code made %s", this, (state == not_entrant) ? "not entrant" : "zombie");
   }
 
-  // Make sweeper aware that there is a zombie method that needs to be removed
-  NMethodSweeper::notify(this);
-
+  NMethodSweeper::report_state_change(this);
   return true;
 }
 
@@ -1443,10 +1451,6 @@ void nmethod::flush() {
 
   if (on_scavenge_root_list()) {
     CodeCache::drop_scavenge_root_nmethod(this);
-  }
-
-  if (is_speculatively_disconnected()) {
-    CodeCache::remove_saved_code(this);
   }
 
 #ifdef SHARK
@@ -1959,7 +1963,7 @@ public:
     if (!_detected_scavenge_root)  _print_nm->print_on(tty, "new scavenge root");
     tty->print_cr(""PTR_FORMAT"[offset=%d] detected scavengable oop "PTR_FORMAT" (found at "PTR_FORMAT")",
                   _print_nm, (int)((intptr_t)p - (intptr_t)_print_nm),
-                  (intptr_t)(*p), (intptr_t)p);
+                  (void *)(*p), (intptr_t)p);
     (*p)->print();
   }
 #endif //PRODUCT
@@ -2339,7 +2343,7 @@ public:
       _ok = false;
     }
     tty->print_cr("*** non-oop "PTR_FORMAT" found at "PTR_FORMAT" (offset %d)",
-                  (intptr_t)(*p), (intptr_t)p, (int)((intptr_t)p - (intptr_t)_nm));
+                  (void *)(*p), (intptr_t)p, (int)((intptr_t)p - (intptr_t)_nm));
   }
   virtual void do_oop(narrowOop* p) { ShouldNotReachHere(); }
 };
@@ -2388,20 +2392,23 @@ void nmethod::verify() {
 
 
 void nmethod::verify_interrupt_point(address call_site) {
-  // This code does not work in release mode since
-  // owns_lock only is available in debug mode.
-  CompiledIC* ic = NULL;
-  Thread *cur = Thread::current();
-  if (CompiledIC_lock->owner() == cur ||
-      ((cur->is_VM_thread() || cur->is_ConcurrentGC_thread()) &&
-       SafepointSynchronize::is_at_safepoint())) {
-    ic = CompiledIC_at(this, call_site);
-    CHECK_UNHANDLED_OOPS_ONLY(Thread::current()->clear_unhandled_oops());
-  } else {
-    MutexLocker ml_verify (CompiledIC_lock);
-    ic = CompiledIC_at(this, call_site);
+  // Verify IC only when nmethod installation is finished.
+  bool is_installed = (method()->code() == this) // nmethod is in state 'alive' and installed
+                      || !this->is_in_use();     // nmethod is installed, but not in 'alive' state
+  if (is_installed) {
+    Thread *cur = Thread::current();
+    if (CompiledIC_lock->owner() == cur ||
+        ((cur->is_VM_thread() || cur->is_ConcurrentGC_thread()) &&
+         SafepointSynchronize::is_at_safepoint())) {
+      CompiledIC_at(this, call_site);
+      CHECK_UNHANDLED_OOPS_ONLY(Thread::current()->clear_unhandled_oops());
+    } else {
+      MutexLocker ml_verify (CompiledIC_lock);
+      CompiledIC_at(this, call_site);
+    }
   }
-  PcDesc* pd = pc_desc_at(ic->end_of_call());
+
+  PcDesc* pd = pc_desc_at(nativeCall_at(call_site)->return_address());
   assert(pd != NULL, "PcDesc must exist");
   for (ScopeDesc* sd = new ScopeDesc(this, pd->scope_decode_offset(),
                                      pd->obj_decode_offset(), pd->should_reexecute(),
@@ -2460,7 +2467,7 @@ public:
       _ok = false;
     }
     tty->print_cr("*** scavengable oop "PTR_FORMAT" found at "PTR_FORMAT" (offset %d)",
-                  (intptr_t)(*p), (intptr_t)p, (int)((intptr_t)p - (intptr_t)_nm));
+                  (void *)(*p), (intptr_t)p, (int)((intptr_t)p - (intptr_t)_nm));
     (*p)->print();
   }
   virtual void do_oop(narrowOop* p) { ShouldNotReachHere(); }

@@ -149,6 +149,8 @@ class Universe: AllStatic {
   static LatestMethodCache* _loader_addClass_cache;    // method for registering loaded classes in class loader vector
   static LatestMethodCache* _pd_implies_cache;         // method for checking protection domain attributes
 
+  static Method* _throw_illegal_access_error;
+
   // preallocated error objects (no backtrace)
   static oop          _out_of_memory_error_java_heap;
   static oop          _out_of_memory_error_metaspace;
@@ -179,9 +181,11 @@ class Universe: AllStatic {
   // The particular choice of collected heap.
   static CollectedHeap* _collectedHeap;
 
+  static intptr_t _non_oop_bits;
+
   // For UseCompressedOops.
   static struct NarrowPtrStruct _narrow_oop;
-  // For UseCompressedKlassPointers.
+  // For UseCompressedClassPointers.
   static struct NarrowPtrStruct _narrow_klass;
   static address _narrow_ptrs_base;
 
@@ -229,7 +233,7 @@ class Universe: AllStatic {
     _narrow_oop._base    = base;
   }
   static void     set_narrow_klass_base(address base) {
-    assert(UseCompressedKlassPointers, "no compressed klass ptrs?");
+    assert(UseCompressedClassPointers, "no compressed klass ptrs?");
     _narrow_klass._base   = base;
   }
   static void     set_narrow_oop_use_implicit_null_checks(bool use) {
@@ -303,6 +307,7 @@ class Universe: AllStatic {
   static oop          arithmetic_exception_instance() { return _arithmetic_exception_instance; }
   static oop          virtual_machine_error_instance() { return _virtual_machine_error_instance; }
   static oop          vm_exception()                  { return _vm_exception; }
+  static Method*      throw_illegal_access_error()    { return _throw_illegal_access_error; }
 
   static Array<int>*       the_empty_int_array()    { return _the_empty_int_array; }
   static Array<u2>*        the_empty_short_array()  { return _the_empty_short_array; }
@@ -353,7 +358,7 @@ class Universe: AllStatic {
   static int      narrow_oop_shift()                      { return  _narrow_oop._shift; }
   static bool     narrow_oop_use_implicit_null_checks()   { return  _narrow_oop._use_implicit_null_checks; }
 
-  // For UseCompressedKlassPointers
+  // For UseCompressedClassPointers
   static address  narrow_klass_base()                     { return  _narrow_klass._base; }
   static bool  is_narrow_klass_base(void* addr)           { return (narrow_klass_base() == (address)addr); }
   static int      narrow_klass_shift()                    { return  _narrow_klass._shift; }

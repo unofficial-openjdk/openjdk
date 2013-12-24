@@ -27,7 +27,6 @@
 #include "code/codeCache.hpp"
 #include "gc_implementation/parallelScavenge/cardTableExtension.hpp"
 #include "gc_implementation/parallelScavenge/gcTaskManager.hpp"
-#include "gc_implementation/parallelScavenge/generationSizer.hpp"
 #include "gc_implementation/parallelScavenge/parallelScavengeHeap.hpp"
 #include "gc_implementation/parallelScavenge/psAdaptiveSizePolicy.hpp"
 #include "gc_implementation/parallelScavenge/psMarkSweep.hpp"
@@ -264,7 +263,7 @@ bool PSScavenge::invoke_no_policy() {
   assert(_preserved_mark_stack.is_empty(), "should be empty");
   assert(_preserved_oop_stack.is_empty(), "should be empty");
 
-  _gc_timer.register_gc_start(os::elapsed_counter());
+  _gc_timer.register_gc_start();
 
   TimeStamp scavenge_entry;
   TimeStamp scavenge_midpoint;
@@ -692,7 +691,7 @@ bool PSScavenge::invoke_no_policy() {
 #endif
 
 
-  _gc_timer.register_gc_end(os::elapsed_counter());
+  _gc_timer.register_gc_end();
 
   _gc_tracer.report_gc_end(_gc_timer.gc_end(), _gc_timer.time_partitions());
 

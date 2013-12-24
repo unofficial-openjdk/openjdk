@@ -31,6 +31,7 @@
 #include "gc_implementation/g1/g1HRPrinter.hpp"
 #include "gc_implementation/g1/g1MonitoringSupport.hpp"
 #include "gc_implementation/g1/g1RemSet.hpp"
+#include "gc_implementation/g1/g1SATBCardTableModRefBS.hpp"
 #include "gc_implementation/g1/g1YCTypes.hpp"
 #include "gc_implementation/g1/heapRegionSeq.hpp"
 #include "gc_implementation/g1/heapRegionSets.hpp"
@@ -71,6 +72,7 @@ class G1NewTracer;
 class G1OldTracer;
 class EvacuationFailedInfo;
 class nmethod;
+class Ticks;
 
 typedef OverflowTaskQueue<StarTask, mtGC>         RefToScanQueue;
 typedef GenericTaskQueueSet<RefToScanQueue, mtGC> RefToScanQueueSet;
@@ -703,7 +705,7 @@ public:
     if (_g1_committed.contains((HeapWord*) obj)) {
       // no need to subtract the bottom of the heap from obj,
       // _in_cset_fast_test is biased
-      uintx index = (uintx) obj >> HeapRegion::LogOfHRGrainBytes;
+      uintx index = cast_from_oop<uintx>(obj) >> HeapRegion::LogOfHRGrainBytes;
       bool ret = _in_cset_fast_test[index];
       // let's make sure the result is consistent with what the slower
       // test returns
@@ -745,7 +747,7 @@ public:
     return _old_marking_cycles_completed;
   }
 
-  void register_concurrent_cycle_start(jlong start_time);
+  void register_concurrent_cycle_start(const Ticks& start_time);
   void register_concurrent_cycle_end();
   void trace_heap_after_concurrent_cycle();
 
@@ -791,8 +793,6 @@ protected:
 
   // The g1 remembered set of the heap.
   G1RemSet* _g1_rem_set;
-  // And it's mod ref barrier set, used to track updates for the above.
-  ModRefBarrierSet* _mr_bs;
 
   // A set of cards that cover the objects for which the Rsets should be updated
   // concurrently after the collection.
@@ -1092,6 +1092,9 @@ public:
   // specified by the policy object.
   jint initialize();
 
+  // Return the (conservative) maximum heap alignment for any G1 heap
+  static size_t conservative_max_heap_alignment();
+
   // Initialize weak reference processing.
   virtual void ref_processing_init();
 
@@ -1124,7 +1127,6 @@ public:
 
   // The rem set and barrier set.
   G1RemSet* g1_rem_set() const { return _g1_rem_set; }
-  ModRefBarrierSet* mr_bs() const { return _mr_bs; }
 
   unsigned get_gc_time_stamp() {
     return _gc_time_stamp;
@@ -1342,6 +1344,10 @@ public:
   }
 
   virtual bool is_in_closed_subset(const void* p) const;
+
+  G1SATBCardTableModRefBS* g1_barrier_set() {
+    return (G1SATBCardTableModRefBS*) barrier_set();
+  }
 
   // This resets the card table to all zeros.  It is used after
   // a collection pause which used the card table to claim cards.
@@ -1872,7 +1878,7 @@ protected:
   G1CollectedHeap* _g1h;
   RefToScanQueue*  _refs;
   DirtyCardQueue   _dcq;
-  CardTableModRefBS* _ct_bs;
+  G1SATBCardTableModRefBS* _ct_bs;
   G1RemSet* _g1_rem;
 
   G1ParGCAllocBufferContainer  _surviving_alloc_buffer;
@@ -1911,7 +1917,7 @@ protected:
   void   add_to_undo_waste(size_t waste)         { _undo_waste += waste; }
 
   DirtyCardQueue& dirty_card_queue()             { return _dcq;  }
-  CardTableModRefBS* ctbs()                      { return _ct_bs; }
+  G1SATBCardTableModRefBS* ctbs()                { return _ct_bs; }
 
   template <class T> void immediate_rs_update(HeapRegion* from, T* p, int tid) {
     if (!from->is_survivor()) {

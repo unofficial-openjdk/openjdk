@@ -61,6 +61,8 @@ public class WhiteBox {
     registerNatives();
   }
 
+  // Get the maximum heap size supporting COOPs
+  public native long getCompressedOopsMaxHeapSize();
   // Arguments
   public native void printHeapSizes();
 
@@ -142,4 +144,10 @@ public class WhiteBox {
 
   // force Full GC
   public native void fullGC();
+
+  // Tests on ReservedSpace/VirtualSpace classes
+  public native int stressVirtualSpaceResize(long reservedSpaceSize, long magnitude, long iterations);
+  public native void runMemoryUnitTests();
+  public native void readFromNoaccessArea();
+
 }
