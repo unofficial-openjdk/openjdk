@@ -233,6 +233,12 @@ $(eval $(call add_properties_to_compile,COM_SUN_TOOLS_JDI, \
 $(eval $(call add_properties_to_clean,JAVAX_SQL_ROWSET, \
     $(filter %.properties, \
     $(call CacheFind, $(JDK_TOPDIR)/src/share/classes/javax/sql/rowset))))
+
+#jdk/jigsaw/tools/jlink/resources
+$(eval $(call add_properties_to_clean,JIGSAW_TOOLS_JLINK,\
+    $(filter %.properties,\
+    $(call CacheFind,$(JDK_TOPDIR)/src/share/classes/jdk/jigsaw/tools/jlink/resources))))
+
 #sun/awt/resources
 $(eval $(call add_properties_to_compile,SUN_AWT, \
     $(filter %.properties, \

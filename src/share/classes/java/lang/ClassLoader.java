@@ -509,6 +509,47 @@ public abstract class ClassLoader {
     }
 
     /**
+     * Set access control so that public and protected types defined by this
+     * {@code ClassLoader} in package {@code pkg} are accessible only to the
+     * given set of runtime packages. Runtime packages are specified as a
+     * {@code ClassLoader} and named package pair.
+     *
+     * @apiNote This is currently an experimental method to make it possible
+     * to experiment with extending the access control in the VM. It is primarly
+     * intended to allow launchers to setup access control and establish
+     * boundaries at startup.
+     *
+     * @param   pkg
+     *          The package to set access control on
+     *
+     * @param   loaders
+     *          The class loaders that define types in the packages named by
+     *          {@code pkgs} that are allowed to access public and protected
+     *          types in {@code pkg}. May be empty.
+     *
+     * @param   pkgs
+     *          The named packages. Must be of identical length to the
+     *          {@code loaders} array
+     *
+     * @throws  IllegalStateException
+     *          If access control has alreset been set for this package
+     *          (a discussion point)
+     *
+     * @throws  SecurityException
+     *          If a security manager is set and denies the  operation (permission
+     *          check details needs discussion)
+     *
+     * @throws  NullPointerException
+     *          If any of the arguments are {@code null}, or any of the elements
+     *          in {@code pkgs} is {@code null}
+     *
+     * @since 1.9
+     */
+    public void setPackageAccess(String pkg, ClassLoader[] loaders, String[] pkgs) {
+        VM.setPackageAccess(this, pkg, loaders, pkgs);
+    }
+
+    /**
      * Finds the class with the specified <a href="#name">binary name</a>.
      * This method should be overridden by class loader implementations that
      * follow the delegation model for loading classes, and will be invoked by

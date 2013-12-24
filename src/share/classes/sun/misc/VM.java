@@ -29,6 +29,7 @@ import static java.lang.Thread.State.*;
 import java.util.Properties;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 public class VM {
@@ -400,6 +401,68 @@ public class VM {
      * or null if only code from the null class loader is on the stack.
      */
     public static native ClassLoader latestUserDefinedLoader();
+
+
+    /**
+     * Set access control so that public and protected types defined by
+     * {@code loader} in package {@code pkg} are accessible only to the
+     * given set of runtime packages.
+     *
+     * @see ClassLoader#setPackageAccess
+     */
+    public static void setPackageAccess(ClassLoader loader, String pkg,
+                                        ClassLoader[] loaders, String[] pkgs)
+    {
+        // check args
+        Objects.requireNonNull(pkg);
+        loaders = loaders.clone();
+        pkgs = pkgs.clone();
+        if (loaders.length != pkgs.length)
+            throw new IllegalArgumentException("Arrays are of different length");
+        for (String p: pkgs) {
+            Objects.requireNonNull(p);
+        }
+
+        // permission check
+        SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            // not specified yet
+        }
+
+        // restrict pkg to the given loaders/packages
+        setPackageAccess0(loader, pkg, loaders, pkgs);
+    }
+
+    /**
+     * Augment the access control so thaht types defined by {@code loader}
+     * in package {@code pkg} are accessible to the given set of runtime
+     * packages.
+     *
+     * @return {@code true} if the access control is updated
+     */
+    public static boolean addPackageAccess(ClassLoader loader, String pkg,
+                                           ClassLoader[] loaders, String[] pkgs)
+    {
+        // check args
+        Objects.requireNonNull(pkg);
+        loaders = loaders.clone();
+        pkgs = pkgs.clone();
+        if (loaders.length != pkgs.length)
+            throw new IllegalArgumentException("Arrays are of different length");
+        for (String p: pkgs) {
+            Objects.requireNonNull(p);
+        }
+
+        // augment access to pkg
+        return addPackageAccess0(loader, pkg, loaders, pkgs);
+    }
+
+    private static native void setPackageAccess0(ClassLoader loader, String pkg,
+                                                 ClassLoader[] loaders, String[] pkgs);
+
+    private static native boolean addPackageAccess0(ClassLoader loader, String pkg,
+                                                    ClassLoader[] loaders, String[] pkgs);
+
 
     static {
         initialize();

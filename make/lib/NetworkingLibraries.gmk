@@ -81,7 +81,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBNET, \
 
 $(BUILD_LIBNET): $(BUILD_LIBJAVA)
 
-BUILD_LIBRARIES += $(BUILD_LIBNET)
+BASE_LIBRARIES += $(BUILD_LIBNET)
 
 $(JDK_OUTPUTDIR)/lib/net.properties: $(JDK_TOPDIR)/src/share/lib/net.properties
 	$(ECHO) $(LOG_INFO) Copying $(@F)

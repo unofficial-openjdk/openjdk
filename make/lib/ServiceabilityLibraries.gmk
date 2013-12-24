@@ -60,7 +60,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBATTACH, \
 
 $(BUILD_LIBATTACH): $(BUILD_LIBJAVA)
 
-BUILD_LIBRARIES += $(BUILD_LIBATTACH)
+ATTACH_LIBRARIES += $(BUILD_LIBATTACH)
 
 ##########################################################################################
 
@@ -93,7 +93,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBDT_SOCKET, \
 
 $(BUILD_LIBDT_SOCKET): $(BUILD_LIBJAVA)
 
-BUILD_LIBRARIES += $(BUILD_LIBDT_SOCKET)
+JDWP_LIBRARIES += $(BUILD_LIBDT_SOCKET)
 
 ##########################################################################################
 
@@ -123,7 +123,7 @@ ifeq ($(OPENJDK_TARGET_OS), windows)
       OBJECT_DIR := $(JDK_OUTPUTDIR)/objs/libdt_shmem, \
       DEBUG_SYMBOLS := $(DEBUG_ALL_BINARIES)))
 
-  BUILD_LIBRARIES += $(BUILD_LIBDT_SHMEM)
+  JDWP_LIBRARIES += $(BUILD_LIBDT_SHMEM)
 
 endif # OPENJDK_TARGET_OS
 
@@ -160,7 +160,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBJDWP, \
 
 $(BUILD_LIBJDWP): $(BUILD_LIBJAVA)
 
-BUILD_LIBRARIES += $(BUILD_LIBJDWP)
+JDWP_LIBRARIES += $(BUILD_LIBJDWP)
 
 ##########################################################################################
 
@@ -190,7 +190,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBJSDT, \
 
 $(BUILD_LIBJSDT): $(BUILD_LIBJAVA)
 
-BUILD_LIBRARIES += $(BUILD_LIBJSDT)
+JSDT_LIBRARIES += $(BUILD_LIBJSDT)
 
 ##########################################################################################
 
@@ -270,7 +270,7 @@ else
 endif
 $(BUILD_LIBINSTRUMENT): $(BUILD_LIBJAVA)
 
-BUILD_LIBRARIES += $(BUILD_LIBINSTRUMENT)
+INSTRUMENT_LIBRARIES += $(BUILD_LIBINSTRUMENT)
 
 ##########################################################################################
 
@@ -324,7 +324,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBMANAGEMENT, \
 
 $(BUILD_LIBMANAGEMENT): $(BUILD_LIBJAVA)
 
-BUILD_LIBRARIES += $(BUILD_LIBMANAGEMENT)
+MANAGEMENT_LIBRARIES += $(BUILD_LIBMANAGEMENT)
 
 ##########################################################################################
 
@@ -367,7 +367,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBHPROF, \
     OBJECT_DIR := $(JDK_OUTPUTDIR)/objs/libhprof_jvmti, \
     DEBUG_SYMBOLS := true))
 
-BUILD_LIBRARIES += $(BUILD_LIBHPROF)
+HPROF_LIBRARIES += $(BUILD_LIBHPROF)
 
 ##########################################################################################
 
@@ -391,7 +391,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBJAVA_CRW_DEMO, \
     OBJECT_DIR := $(JDK_OUTPUTDIR)/objs/libjava_crw_demo, \
     DEBUG_SYMBOLS := true))
 
-BUILD_LIBRARIES += $(BUILD_LIBJAVA_CRW_DEMO)
+INSTRUMENT_LIBRARIES += $(BUILD_LIBJAVA_CRW_DEMO)
 
 ##########################################################################################
 
@@ -418,7 +418,7 @@ ifndef OPENJDK
         OBJECT_DIR := $(JDK_OUTPUTDIR)/objs/libjfr, \
         DEBUG_SYMBOLS := $(DEBUG_ALL_BINARIES)))
 
-    BUILD_LIBRARIES += $(BUILD_LIBJFR)
+    JFR_LIBRARIES += $(BUILD_LIBJFR)
 
   endif
 endif

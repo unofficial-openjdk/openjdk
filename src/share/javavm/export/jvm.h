@@ -416,6 +416,16 @@ JVM_DefineClassWithSource(JNIEnv *env, const char *name, jobject loader,
                           const jbyte *buf, jsize len, jobject pd,
                           const char *source);
 
+/* Set package access so that loader/pkg can only be acessed by loaders/pkgs */
+JNIEXPORT void JNICALL
+JVM_SetPackageAccess(JNIEnv *env, jobject loader, jstring pkg,
+                     jobjectArray loaders, jobjectArray pkgs);
+
+/* Augment access control so that loader/pkg can be acessed by loaders/pkgs */
+JNIEXPORT jboolean JNICALL
+JVM_AddPackageAccess(JNIEnv *env, jobject loader, jstring pkg,
+                     jobjectArray loaders, jobjectArray pkgs);
+
 /*
  * Reflection support functions
  */

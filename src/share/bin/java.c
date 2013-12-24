@@ -69,6 +69,7 @@ static jboolean showVersion = JNI_FALSE;  /* print but continue */
 static jboolean printUsage = JNI_FALSE;   /* print and exit*/
 static jboolean printXUsage = JNI_FALSE;  /* print and exit*/
 static char     *showSettings = NULL;      /* print but continue */
+static char     *listModules = NULL;
 
 static const char *_program_name;
 static const char *_launcher_name;
@@ -97,6 +98,7 @@ static int numOptions, maxOptions;
  * Prototypes for functions internal to launcher.
  */
 static void SetClassPath(const char *s);
+static void SetModulesProp(const char *mods);
 static void SelectVersion(int argc, char **argv, char **main_class);
 static jboolean ParseArguments(int *pargc, char ***pargv,
                                int *pmode, char **pwhat,
@@ -114,6 +116,7 @@ static void SetApplicationClassPath(const char**);
 static void PrintJavaVersion(JNIEnv *env, jboolean extraLF);
 static void PrintUsage(JNIEnv* env, jboolean doXUsage);
 static void ShowSettings(JNIEnv* env, char *optString);
+static void ListModules(JNIEnv* env, char *optString);
 
 static void SetPaths(int argc, char **argv);
 
@@ -166,6 +169,39 @@ static jboolean IsWildCardEnabled();
 static jlong threadStackSize    = 0;  /* stack size of the new thread */
 static jlong maxHeapSize        = 0;  /* max heap size */
 static jlong initialHeapSize    = 0;  /* inital heap size */
+
+// Read the main app class name, if it exists, and set the classpath.
+// This will only be the case if the image was created by jlink.
+static void
+AddModuleAppOptions(int *pmode, char **pwhat, const char* jrepath)
+{
+    FILE *file;
+    char* cn;
+    char* read;
+    char appCls[MAXPATHLEN];
+    char jarPath[MAXPATHLEN];
+
+    JLI_StrCpy(appCls, jrepath);
+    JLI_StrCat(appCls, APP_CLASS);
+    if ((file = fopen(appCls, "r")) == NULL)
+        return;
+
+    cn = (char *)JLI_MemAlloc(256);
+    memset(cn, 0, sizeof(cn));
+    read = fgets(cn, 256, file);
+    fclose(file);
+    if (read == NULL || JLI_StrLen(cn) < 1) {
+        JLI_MemFree(cn);
+        return;
+    }
+
+    *pwhat = cn;
+    *pmode = LM_CLASS;
+
+    JLI_StrCpy(jarPath, jrepath);
+    JLI_StrCat(jarPath, APP_JAR);
+    SetClassPath(jarPath);
+}
 
 /*
  * Entry point.
@@ -282,6 +318,10 @@ JLI_Launch(int argc, char ** argv,              /* main argc, argc */
         return(ret);
     }
 
+    if (ret == 1) {
+        AddModuleAppOptions(&mode, &what, jrepath);
+    }
+
     /* Override class path if -jar flag was specified */
     if (mode == LM_JAR) {
         SetClassPath(what);     /* Override class path */
@@ -376,6 +416,12 @@ JavaMain(void * _args)
     if (showSettings != NULL) {
         ShowSettings(env, showSettings);
         CHECK_EXCEPTION_LEAVE(1);
+    }
+
+    if (listModules != NULL) {
+        ListModules(env, listModules);
+        CHECK_EXCEPTION_LEAVE(1);
+        LEAVE();
     }
 
     if (printVersion || showVersion) {
@@ -741,6 +787,14 @@ SetClassPath(const char *s)
         JLI_MemFree((char *) s);
 }
 
+static void
+SetModulesProp(const char *mods) {
+    size_t buflen = JLI_StrLen(mods) + 40;
+    char *prop = (char *)JLI_MemAlloc(buflen);
+    JLI_Snprintf(prop, buflen, "-Djdk.launcher.modules=%s", mods);
+    AddOption(prop, NULL);
+}
+
 /*
  * The SelectVersion() routine ensures that an appropriate version of
  * the JRE is running.  The specification for the appropriate version
@@ -1010,6 +1064,10 @@ ParseArguments(int *pargc, char ***pargv,
         } else if (JLI_StrCmp(arg, "-jar") == 0) {
             ARG_CHECK (argc, ARG_ERROR2, arg);
             mode = LM_JAR;
+        } else if (JLI_StrCmp(arg, "-mods") == 0 || JLI_StrCmp(arg, "-modules") == 0) {
+            ARG_CHECK (argc, ARG_ERROR4, arg);
+            SetModulesProp(*argv);
+            argv++; --argc;
         } else if (JLI_StrCmp(arg, "-help") == 0 ||
                    JLI_StrCmp(arg, "-h") == 0 ||
                    JLI_StrCmp(arg, "-?") == 0) {
@@ -1030,6 +1088,9 @@ ParseArguments(int *pargc, char ***pargv,
         } else if (JLI_StrCmp(arg, "-XshowSettings") == 0 ||
                 JLI_StrCCmp(arg, "-XshowSettings:") == 0) {
             showSettings = arg;
+        } else if (JLI_StrCmp(arg, "-XlistModules") == 0 |
+                JLI_StrCCmp(arg, "-XlistModules:") == 0) {
+            listModules = arg;
         } else if (JLI_StrCmp(arg, "-Xdiag") == 0) {
             AddOption("-Dsun.java.launcher.diag=true", NULL);
 /*
@@ -1041,6 +1102,8 @@ ParseArguments(int *pargc, char ***pargv,
             return JNI_FALSE;
         } else if (JLI_StrCmp(arg, "-verbosegc") == 0) {
             AddOption("-verbose:gc", NULL);
+        } else if (JLI_StrCmp(arg, "-verbose:mods") == 0) {
+            AddOption("-Djdk.launcher.modules.verbose=true", NULL);
         } else if (JLI_StrCmp(arg, "-t") == 0) {
             AddOption("-Xt", NULL);
         } else if (JLI_StrCmp(arg, "-tm") == 0) {
@@ -1488,6 +1551,24 @@ ShowSettings(JNIEnv *env, char *optString)
                                  (jlong)maxHeapSize,
                                  (jlong)threadStackSize,
                                  ServerClassMachine());
+}
+
+/**
+ * List modules supported by the runtime
+ */
+static void
+ListModules(JNIEnv *env, char *optString)
+{
+    jmethodID listModulesID;
+    jstring joptString;
+    jclass cls = GetLauncherHelperClass(env);
+    NULL_CHECK(cls);
+    NULL_CHECK(listModulesID = (*env)->GetStaticMethodID(env, cls,
+            "listModules", "(ZLjava/lang/String;)V"));
+    joptString = (*env)->NewStringUTF(env, optString);
+    (*env)->CallStaticVoidMethod(env, cls, listModulesID,
+                                 USE_STDERR,
+                                 joptString);
 }
 
 /*

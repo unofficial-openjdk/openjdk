@@ -68,7 +68,7 @@ else
 
 endif
 
-BUILD_LIBRARIES += $(BUILD_LIBFDLIBM)
+BASE_LIBRARIES += $(BUILD_LIBFDLIBM)
 
 ##########################################################################################
 
@@ -109,7 +109,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBVERIFY, \
     OBJECT_DIR := $(JDK_OUTPUTDIR)/objs/libverify, \
     DEBUG_SYMBOLS := true))
 
-BUILD_LIBRARIES += $(BUILD_LIBVERIFY)
+BASE_LIBRARIES += $(BUILD_LIBVERIFY)
 
 ##########################################################################################
 
@@ -215,7 +215,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBJAVA, \
     OBJECT_DIR := $(JDK_OUTPUTDIR)/objs/libjava, \
     DEBUG_SYMBOLS := $(DEBUG_ALL_BINARIES)))
 
-BUILD_LIBRARIES += $(BUILD_LIBJAVA)
+BASE_LIBRARIES += $(BUILD_LIBJAVA)
 
 $(BUILD_LIBJAVA): $(LIBJLI_BINARY)
 
@@ -278,7 +278,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBZIP, \
 
 $(BUILD_LIBZIP): $(BUILD_LIBJAVA)
 
-BUILD_LIBRARIES += $(BUILD_LIBZIP)
+BASE_LIBRARIES += $(BUILD_LIBZIP)
 
 ##########################################################################################
 
@@ -308,7 +308,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBUNPACK, \
 
 $(BUILD_LIBUNPACK): $(BUILD_LIBJAVA)
 
-BUILD_LIBRARIES += $(BUILD_LIBUNPACK)
+UNPACK_LIBRARIES += $(BUILD_LIBUNPACK)
 
 ifeq ($(OPENJDK_TARGET_OS), windows)
   $(INSTALL_LIBRARIES_HERE)/$(LIBRARY_PREFIX)unpack.map: $(BUILD_LIBUNPACK)
@@ -438,7 +438,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBJLI, \
     OBJECT_DIR := $(JDK_OUTPUTDIR)/objs/libjli, \
     DEBUG_SYMBOLS := $(DEBUG_ALL_BINARIES)))
 
-BUILD_LIBRARIES += $(BUILD_LIBJLI)
+BASE_LIBRARIES += $(BUILD_LIBJLI)
 
 # On windows, the static library has the same suffix as the import library created by
 # with the shared library, so the static library is given a different name. No harm
@@ -456,7 +456,7 @@ ifeq ($(OPENJDK_TARGET_OS), windows)
       OBJECT_DIR := $(JDK_OUTPUTDIR)/objs/libjli_static, \
       DEBUG_SYMBOLS := $(DEBUG_ALL_BINARIES)))
 
-  BUILD_LIBRARIES += $(BUILD_LIBJLI_STATIC)
+  BASE_LIBRARIES += $(BUILD_LIBJLI_STATIC)
 
 else ifeq ($(OPENJDK_TARGET_OS), macosx)
   #
@@ -478,7 +478,7 @@ else ifeq ($(OPENJDK_TARGET_OS), macosx)
   $(JDK_OUTPUTDIR)/objs/libjli_static.a: $(BUILD_LIBJLI_STATIC)
 	$(call install-file)
 
-  BUILD_LIBRARIES += $(JDK_OUTPUTDIR)/objs/libjli_static.a
+  BASE_LIBRARIES += $(JDK_OUTPUTDIR)/objs/libjli_static.a
 endif
 
 ##########################################################################################
@@ -506,4 +506,4 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBNPT, \
     OBJECT_DIR := $(JDK_OUTPUTDIR)/objs/libnpt, \
     DEBUG_SYMBOLS := true))
 
-BUILD_LIBRARIES += $(BUILD_LIBNPT)
+BASE_LIBRARIES += $(BUILD_LIBNPT)

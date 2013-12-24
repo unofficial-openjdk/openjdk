@@ -74,6 +74,12 @@ launchers-only:
         # Finally compile the launchers.
 	+$(MAKE) -f CompileLaunchers.gmk
 
+genmodules-only:
+#       Generate static module graph
+	+$(MAKE) -f GenerateModules.gmk
+
+genmodules: genmodules-only
+
 genclasses: launchers genclasses-only
 genclasses-only:
         # Generate classes that have other sources. Needs
@@ -84,7 +90,7 @@ securityjars: genclasses securityjars-only
 securityjars-only:
 	+$(MAKE) -f CreateSecurityJars.gmk
 
-jdk: securityjars
+jdk: securityjars genmodules
         # Now we have a complete jdk, which you can run.
         # It is not yet wrapped up as an installed image.
 
@@ -93,6 +99,10 @@ demos:
 	+$(MAKE) -f CompileDemos.gmk
         # Now copy the sample sources into the jdk.
 	+$(MAKE) -f CopySamples.gmk
+
+jmods:
+#       Generate jmod files 
+	+$(MAKE) -f CreateJmods.gmk
 
 # Create the final jdk and jre images, to be wrapped up
 # into packages, or installed. Ensure PROFILE is not set

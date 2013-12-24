@@ -1,0 +1,111 @@
+#
+# Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+#
+# This code is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License version 2 only, as
+# published by the Free Software Foundation.  Oracle designates this
+# particular file as subject to the "Classpath" exception as provided
+# by Oracle in the LICENSE file that accompanied this code.
+#
+# This code is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# version 2 for more details (a copy is included in the LICENSE file that
+# accompanied this code).
+#
+# You should have received a copy of the GNU General Public License version
+# 2 along with this work; if not, write to the Free Software Foundation,
+# Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+#
+# Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+# or visit www.oracle.com if you need additional information or have any
+# questions.
+#
+
+POLICY_JAR_TARGET_FILES=
+
+US_EXPORT_POLICY_JAR_DST := $(IMAGES_OUTPUTDIR)/lib/security/US_export_policy.jar
+US_EXPORT_POLICY_JAR_UNSIGNED := $(JDK_OUTPUTDIR)/unsigned/US_export_policy.jar
+
+LOCAL_POLICY_JAR_DST := $(IMAGES_OUTPUTDIR)/lib/security/local_policy.jar
+LOCAL_POLICY_JAR_UNSIGNED := $(JDK_OUTPUTDIR)/unsigned/local_policy.jar
+
+ifneq ($(BUILD_CRYPTO),no)
+  #
+  # TODO fix so that SetupArchive does not write files into SRCS
+  #   then we don't need this extra copying
+
+  # NOTE:  We currently do not place restrictions on our limited export
+  # policy.  This was not a typo.
+  #
+  US_EXPORT_POLICY_JAR_SRC_DIR := $(JDK_TOPDIR)/make/javax/crypto/policy/unlimited
+  US_EXPORT_POLICY_JAR_TMP := $(JDK_OUTPUTDIR)/unsigned/US_export_policy_jar.tmp
+
+  $(US_EXPORT_POLICY_JAR_TMP)/% : $(US_EXPORT_POLICY_JAR_SRC_DIR)/%
+	$(install-file)
+
+  US_EXPORT_POLICY_JAR_DEPS := $(US_EXPORT_POLICY_JAR_TMP)/default_US_export.policy
+
+  $(eval $(call SetupArchive,BUILD_US_EXPORT_POLICY_JAR,$(US_EXPORT_POLICY_JAR_DEPS),\
+		SRCS:=$(US_EXPORT_POLICY_JAR_TMP), \
+		SUFFIXES:= .policy,\
+		JAR:=$(US_EXPORT_POLICY_JAR_UNSIGNED), \
+		EXTRA_MANIFEST_ATTR := Crypto-Strength: unlimited, \
+		SKIP_METAINF := true))
+
+  POLICY_JAR_TARGET_FILES += $(US_EXPORT_POLICY_JAR_UNSIGNED)
+endif
+
+ifndef OPENJDK
+  $(US_EXPORT_POLICY_JAR_DST): $(JDK_TOPDIR)/make/closed/tools/crypto/jce/US_export_policy.jar
+	$(ECHO) $(LOG_INFO) Copying $(@F)
+	$(install-file)
+else
+  $(US_EXPORT_POLICY_JAR_DST): $(US_EXPORT_POLICY_JAR_UNSIGNED)
+	$(install-file)
+endif
+
+##########################################################################################
+
+
+ifneq ($(BUILD_CRYPTO),no)
+  #
+  # TODO fix so that SetupArchive does not write files into SRCS
+  #   then we don't need this extra copying
+  #
+  LOCAL_POLICY_JAR_TMP := $(JDK_OUTPUTDIR)/unsigned/local_policy_jar.tmp
+
+  ifeq ($(UNLIMITED_CRYPTO), true)
+    LOCAL_POLICY_JAR_SRC_DIR := $(JDK_TOPDIR)/make/javax/crypto/policy/unlimited
+    LOCAL_POLICY_JAR_DEPS := $(LOCAL_POLICY_JAR_TMP)/default_local.policy
+    LOCAL_POLICY_JAR_ATTR := Crypto-Strength: unlimited
+  else
+    LOCAL_POLICY_JAR_SRC_DIR := $(JDK_TOPDIR)/make/javax/crypto/policy/limited
+    LOCAL_POLICY_JAR_DEPS := $(LOCAL_POLICY_JAR_TMP)/exempt_local.policy \
+                             $(LOCAL_POLICY_JAR_TMP)/default_local.policy
+    LOCAL_POLICY_JAR_ATTR := Crypto-Strength: limited
+  endif
+
+  $(LOCAL_POLICY_JAR_TMP)/% : $(LOCAL_POLICY_JAR_SRC_DIR)/%
+	$(install-file)
+
+  $(eval $(call SetupArchive,BUILD_LOCAL_POLICY_JAR,$(LOCAL_POLICY_JAR_DEPS),\
+		SRCS:=$(LOCAL_POLICY_JAR_TMP),\
+		SUFFIXES:= .policy,\
+		JAR:=$(LOCAL_POLICY_JAR_UNSIGNED), \
+		EXTRA_MANIFEST_ATTR := $(LOCAL_POLICY_JAR_ATTR), \
+		SKIP_METAINF := true))
+
+  POLICY_JAR_TARGET_FILES += $(LOCAL_POLICY_JAR_UNSIGNED)
+endif
+
+ifndef OPENJDK
+  $(LOCAL_POLICY_JAR_DST): $(JDK_TOPDIR)/make/closed/tools/crypto/jce/local_policy.jar
+	$(ECHO) $(LOG_INFO) Copying $(@F)
+	$(install-file)
+else
+  $(LOCAL_POLICY_JAR_DST): $(LOCAL_POLICY_JAR_UNSIGNED)
+	$(install-file)
+endif
+
