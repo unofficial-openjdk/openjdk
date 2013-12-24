@@ -23,4 +23,30 @@
 # questions.
 #
 
-include ../../NewMakefile.gmk
+# Include the legacy hotspot-spec.gmk (which in turns includes spec.gmk)
+BASE_SPEC:=$(SPEC)
+include $(dir $(SPEC))hotspot-spec.gmk
+include MakeBase.gmk
+
+# Inclusion of this pseudo-target will cause make to execute this file
+# serially, regardless of -j. Recursively called makefiles will not be
+# affected, however. This is required for correct dependency management.
+.NOTPARALLEL:
+
+default: all
+
+# Get all files except .hg in the hotspot directory.
+HOTSPOT_FILES := $(shell $(FIND) -L $(HOTSPOT_TOPDIR) -name ".hg" -prune -o -print)
+
+# The old build creates hotspot output dir before calling hotspot and
+# not doing it breaks builds on msys.
+$(HOTSPOT_OUTPUTDIR)/_hotspot.timestamp: $(HOTSPOT_FILES)
+	@$(MKDIR) -p $(HOTSPOT_OUTPUTDIR)
+	@($(CD) $(HOTSPOT_TOPDIR)/make && $(MAKE) -j1 $(HOTSPOT_MAKE_ARGS) SPEC=$(HOTSPOT_SPEC) BASE_SPEC=$(BASE_SPEC))
+	$(TOUCH) $@
+
+hotspot: $(HOTSPOT_OUTPUTDIR)/_hotspot.timestamp
+
+all: hotspot
+
+.PHONY: default all hotspot

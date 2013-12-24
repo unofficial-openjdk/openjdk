@@ -76,13 +76,13 @@ diff_text() {
     TMP=1
 
     if [[ "$THIS_FILE" = *"META-INF/MANIFEST.MF" ]]; then
-        TMP=$(LANG=C $DIFF $OTHER_FILE $THIS_FILE | \
+        TMP=$(LC_ALL=C $DIFF $OTHER_FILE $THIS_FILE | \
             $GREP '^[<>]' | \
             $SED -e '/[<>] Ant-Version: Apache Ant .*/d' \
 	         -e '/[<>] Created-By: .* (Oracle Corporation).*/d')
     fi
     if test "x$SUFFIX" = "xjava"; then
-        TMP=$(LANG=C $DIFF $OTHER_FILE $THIS_FILE | \
+        TMP=$(LC_ALL=C $DIFF $OTHER_FILE $THIS_FILE | \
             $GREP '^[<>]' | \
             $SED -e '/[<>] \* from.*\.idl/d' \
                  -e '/[<>] \*.*[0-9]\{4\}_[0-9]\{2\}_[0-9]\{2\}_[0-9]\{2\}_[0-9]\{2\}-b[0-9]\{2\}.*/d' \
@@ -121,8 +121,8 @@ diff_text() {
 #  	    | $SED -e '/^#/d' -e '/^$/d' \
 #            -e :a -e '/\\$/N; s/\\\n//; ta' \
 #  	    -e 's/^[ \t]*//;s/[ \t]*$//' \
-#	    -e 's/\\=/=/' | LANG=C $SORT > $OTHER_FILE.cleaned
-        TMP=$(LANG=C $DIFF $OTHER_FILE.cleaned $THIS_FILE)
+#	    -e 's/\\=/=/' | LC_ALL=C $SORT > $OTHER_FILE.cleaned
+        TMP=$(LC_ALL=C $DIFF $OTHER_FILE.cleaned $THIS_FILE)
     fi
     if test -n "$TMP"; then
         echo Files $OTHER_FILE and $THIS_FILE differ
@@ -410,11 +410,11 @@ compare_zip_file() {
     CONTENTS_DIFF_FILE=$WORK_DIR/$ZIP_FILE.diff
     # On solaris, there is no -q option.
     if [ "$OPENJDK_TARGET_OS" = "solaris" ]; then
-        LANG=C $DIFF -r $OTHER_UNZIPDIR $THIS_UNZIPDIR \
+        LC_ALL=C $DIFF -r $OTHER_UNZIPDIR $THIS_UNZIPDIR \
             | $GREP -v -e "^<" -e "^>" -e "^Common subdirectories:" \
             > $CONTENTS_DIFF_FILE
     else
-        LANG=C $DIFF -rq $OTHER_UNZIPDIR $THIS_UNZIPDIR > $CONTENTS_DIFF_FILE
+        LC_ALL=C $DIFF -rq $OTHER_UNZIPDIR $THIS_UNZIPDIR > $CONTENTS_DIFF_FILE
     fi
 
     ONLY_OTHER=$($GREP "^Only in $OTHER_UNZIPDIR" $CONTENTS_DIFF_FILE)
@@ -459,11 +459,11 @@ compare_zip_file() {
         if [ -n "$SHOW_DIFFS" ]; then
             for i in $(cat $WORK_DIR/$ZIP_FILE.difflist) ; do
                 if [ -f "${OTHER_UNZIPDIR}/$i.javap" ]; then
-                    LANG=C $DIFF ${OTHER_UNZIPDIR}/$i.javap ${THIS_UNZIPDIR}/$i.javap
+                    LC_ALL=C $DIFF ${OTHER_UNZIPDIR}/$i.javap ${THIS_UNZIPDIR}/$i.javap
                 elif [ -f "${OTHER_UNZIPDIR}/$i.cleaned" ]; then
-                    LANG=C $DIFF ${OTHER_UNZIPDIR}/$i.cleaned ${THIS_UNZIPDIR}/$i
+                    LC_ALL=C $DIFF ${OTHER_UNZIPDIR}/$i.cleaned ${THIS_UNZIPDIR}/$i
                 else
-                    LANG=C $DIFF ${OTHER_UNZIPDIR}/$i ${THIS_UNZIPDIR}/$i
+                    LC_ALL=C $DIFF ${OTHER_UNZIPDIR}/$i ${THIS_UNZIPDIR}/$i
                 fi
             done
         fi
@@ -703,7 +703,7 @@ compare_bin_file() {
 	$NM -a $ORIG_THIS_FILE  2> /dev/null | $GREP -v $NAME | $AWK '{print $2, $3, $4, $5}' | $SYM_SORT_CMD > $WORK_FILE_BASE.symbols.this
     fi
     
-    LANG=C $DIFF $WORK_FILE_BASE.symbols.other $WORK_FILE_BASE.symbols.this > $WORK_FILE_BASE.symbols.diff
+    LC_ALL=C $DIFF $WORK_FILE_BASE.symbols.other $WORK_FILE_BASE.symbols.this > $WORK_FILE_BASE.symbols.diff
     if [ -s $WORK_FILE_BASE.symbols.diff ]; then
         SYM_MSG=" diff  "
         if [[ "$ACCEPTED_SYM_DIFF" != *"$BIN_FILE"* ]]; then
@@ -732,8 +732,8 @@ compare_bin_file() {
 	(cd $FILE_WORK_DIR && $CP $THIS_FILE . && $LDD_CMD $NAME 2</dev/null | $AWK '{ print $1;}' | $SORT | $TEE $WORK_FILE_BASE.deps.this | $UNIQ > $WORK_FILE_BASE.deps.this.uniq)
 	(cd $FILE_WORK_DIR && $RM -f $NAME)
 	
-	LANG=C $DIFF $WORK_FILE_BASE.deps.other $WORK_FILE_BASE.deps.this > $WORK_FILE_BASE.deps.diff
-	LANG=C $DIFF $WORK_FILE_BASE.deps.other.uniq $WORK_FILE_BASE.deps.this.uniq > $WORK_FILE_BASE.deps.diff.uniq
+	LC_ALL=C $DIFF $WORK_FILE_BASE.deps.other $WORK_FILE_BASE.deps.this > $WORK_FILE_BASE.deps.diff
+	LC_ALL=C $DIFF $WORK_FILE_BASE.deps.other.uniq $WORK_FILE_BASE.deps.this.uniq > $WORK_FILE_BASE.deps.diff.uniq
 	
 	if [ -s $WORK_FILE_BASE.deps.diff ]; then
             if [ -s $WORK_FILE_BASE.deps.diff.uniq ]; then
@@ -768,7 +768,7 @@ compare_bin_file() {
     if [ -n "$FULLDUMP_CMD" ] && [ -z "$SKIP_FULLDUMP_DIFF" ]; then
         $FULLDUMP_CMD $OTHER_FILE > $WORK_FILE_BASE.fulldump.other 2>&1
         $FULLDUMP_CMD $THIS_FILE > $WORK_FILE_BASE.fulldump.this 2>&1
-        LANG=C $DIFF $WORK_FILE_BASE.fulldump.other $WORK_FILE_BASE.fulldump.this > $WORK_FILE_BASE.fulldump.diff
+        LC_ALL=C $DIFF $WORK_FILE_BASE.fulldump.other $WORK_FILE_BASE.fulldump.this > $WORK_FILE_BASE.fulldump.diff
         
         if [ -s $WORK_FILE_BASE.fulldump.diff ]; then
             ELF_DIFF_SIZE=$(ls -n $WORK_FILE_BASE.fulldump.diff | awk '{print $5}')
@@ -802,7 +802,7 @@ compare_bin_file() {
         $DIS_CMD $OTHER_FILE | $GREP -v $NAME | $DIS_DIFF_FILTER > $WORK_FILE_BASE.dis.other 2>&1
         $DIS_CMD $THIS_FILE  | $GREP -v $NAME | $DIS_DIFF_FILTER > $WORK_FILE_BASE.dis.this  2>&1
         
-        LANG=C $DIFF $WORK_FILE_BASE.dis.other $WORK_FILE_BASE.dis.this > $WORK_FILE_BASE.dis.diff
+        LC_ALL=C $DIFF $WORK_FILE_BASE.dis.other $WORK_FILE_BASE.dis.this > $WORK_FILE_BASE.dis.diff
         
         if [ -s $WORK_FILE_BASE.dis.diff ]; then
             DIS_DIFF_SIZE=$(ls -n $WORK_FILE_BASE.dis.diff | awk '{print $5}')
@@ -1113,14 +1113,15 @@ fi
 if [ -d "$THIS/install/j2sdk-image" ]; then
     THIS_J2SDK="$THIS/install/j2sdk-image"
     THIS_J2RE="$THIS/install/j2re-image"
-    echo "Comparing install images"
+    echo "Selecting install images in this build"
 elif [ -d "$THIS/deploy/j2sdk-image" ]; then
     THIS_J2SDK="$THIS/deploy/j2sdk-image"
     THIS_J2RE="$THIS/deploy/j2re-image"
-    echo "Comparing deploy images"
+    echo "Selecting deploy images in this build"
 elif [ -d "$THIS/images/j2sdk-image" ]; then
     THIS_J2SDK="$THIS/images/j2sdk-image"
     THIS_J2RE="$THIS/images/j2re-image"
+    echo "Selecting jdk images in this build"
 fi
 
 if [ -d "$THIS/images/j2sdk-overlay-image" ]; then
@@ -1128,15 +1129,18 @@ if [ -d "$THIS/images/j2sdk-overlay-image" ]; then
         # If there is an install image, prefer that, it's also overlay
         THIS_J2SDK_OVERLAY="$THIS/install/j2sdk-image"
         THIS_J2RE_OVERLAY="$THIS/install/j2re-image"
+        echo "Selecting install overlay images in this build"
     else
         THIS_J2SDK_OVERLAY="$THIS/images/j2sdk-overlay-image"
         THIS_J2RE_OVERLAY="$THIS/images/j2re-overlay-image"
+        echo "Selecting jdk overlay images in this build"
     fi
 fi
 
 if [ -d "$THIS/images/j2sdk-bundle" ]; then
     THIS_J2SDK_BUNDLE="$THIS/images/j2sdk-bundle"
     THIS_J2RE_BUNDLE="$THIS/images/j2re-bundle"
+    echo "Selecting bundles in this build"
 fi
 
 # Figure out the layout of the other build (old or new, normal or overlay image)
@@ -1144,21 +1148,34 @@ if [ -d "$OTHER/j2sdk-image" ]; then
     if [ -f "$OTHER/j2sdk-image/LICENSE" ]; then
         OTHER_J2SDK="$OTHER/j2sdk-image"
         OTHER_J2RE="$OTHER/j2re-image"
+        echo "Selecting old-style images in other build"
     else
         OTHER_J2SDK_OVERLAY="$OTHER/j2sdk-image"
         OTHER_J2RE_OVERLAY="$OTHER/j2re-image"
+        echo "Selecting overlay images in other build"
     fi
+elif [ -d "$OTHER/install/j2sdk-image" ]; then
+    OTHER_J2SDK="$OTHER/install/j2sdk-image"
+    OTHER_J2RE="$OTHER/install/j2re-image"
+    echo "Selecting install images in other build"
+elif [ -d "$OTHER/deploy/j2sdk-image" ]; then
+    OTHER_J2SDK="$OTHER/deploy/j2sdk-image"
+    OTHER_J2RE="$OTHER/deploy/j2re-image"
+    echo "Selecting deploy images in other build"
 elif [ -d "$OTHER/images/j2sdk-image" ]; then
     OTHER_J2SDK="$OTHER/images/j2sdk-image"
     OTHER_J2RE="$OTHER/images/j2re-image"
+    echo "Selecting jdk images in other build"
 fi
 
 if [ -d "$OTHER/j2sdk-bundle" ]; then
     OTHER_J2SDK_BUNDLE="$OTHER/j2sdk-bundle"
     OTHER_J2RE_BUNDLE="$OTHER/j2re-bundle"
+    echo "Selecting bundles in other build"
 elif [ -d "$OTHER/images/j2sdk-bundle" ]; then
     OTHER_J2SDK_BUNDLE="$OTHER/images/j2sdk-bundle"
     OTHER_J2RE_BUNDLE="$OTHER/images/j2re-bundle"
+    echo "Selecting jdk bundles in other build"
 fi
 
 if [ -z "$THIS_J2SDK" ] || [ -z "$THIS_J2RE" ]; then
