@@ -1,0 +1,6 @@
+grant {
+    permission java.lang.RuntimePermission "createSecurityManager";
+    permission java.lang.RuntimePermission "setSecurityManager";
+    permission java.io.FilePermission "<<ALL FILES>>", "read,write,delete";
+    permission java.util.PropertyPermission "*", "read";
+};

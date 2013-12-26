@@ -57,6 +57,16 @@
 
 #include "java_awt_event_MouseWheelEvent.h"
 
+/*
+ * Called by "ToolkitErrorHandler" function in "XlibWrapper.c" file.
+ */
+XErrorHandler current_native_xerror_handler = NULL;
+
+/*
+ * A place for error handler to report the error code.
+ */
+unsigned char xerror_code = Success;
+
 extern jint getModifiers(uint32_t state, jint button, jint keyCode);
 extern jint getButton(uint32_t button);
 
