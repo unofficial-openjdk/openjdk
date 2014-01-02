@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -43,11 +43,13 @@
 # include "thread_bsd.inline.hpp"
 #endif
 
+#include "utilities/ticks.inline.hpp"
+
 
 GCTraceTime::GCTraceTime(const char* title, bool doit, bool print_cr, GCTimer* timer) :
-    _title(title), _doit(doit), _print_cr(print_cr), _timer(timer) {
+    _title(title), _doit(doit), _print_cr(print_cr), _timer(timer), _start_counter() {
   if (_doit || _timer != NULL) {
-    _start_counter = os::elapsed_counter();
+    _start_counter.stamp();
   }
 
   if (_timer != NULL) {
@@ -66,10 +68,10 @@ GCTraceTime::GCTraceTime(const char* title, bool doit, bool print_cr, GCTimer* t
 }
 
 GCTraceTime::~GCTraceTime() {
-  jlong stop_counter = 0;
+  Ticks stop_counter;
 
   if (_doit || _timer != NULL) {
-    stop_counter = os::elapsed_counter();
+    stop_counter.stamp();
   }
 
   if (_timer != NULL) {
@@ -77,11 +79,12 @@ GCTraceTime::~GCTraceTime() {
   }
 
   if (_doit) {
-    double seconds = TimeHelper::counter_to_seconds(stop_counter - _start_counter);
+    const Tickspan duration = stop_counter - _start_counter;
+    double duration_in_seconds = TicksToTimeHelper::seconds(duration);
     if (_print_cr) {
-      gclog_or_tty->print_cr(", %3.7f secs]", seconds);
+      gclog_or_tty->print_cr(", %3.7f secs]", duration_in_seconds);
     } else {
-      gclog_or_tty->print(", %3.7f secs]", seconds);
+      gclog_or_tty->print(", %3.7f secs]", duration_in_seconds);
     }
     gclog_or_tty->flush();
   }

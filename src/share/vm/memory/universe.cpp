@@ -826,17 +826,23 @@ static const uint64_t NarrowOopHeapMax = (uint64_t(max_juint) + 1);
 // 32Gb
 // OopEncodingHeapMax == NarrowOopHeapMax << LogMinObjAlignmentInBytes;
 
-char* Universe::preferred_heap_base(size_t heap_size, NARROW_OOP_MODE mode) {
+char* Universe::preferred_heap_base(size_t heap_size, size_t alignment, NARROW_OOP_MODE mode) {
+  assert(is_size_aligned((size_t)OopEncodingHeapMax, alignment), "Must be");
+  assert(is_size_aligned((size_t)NarrowOopHeapMax, alignment), "Must be");
+  assert(is_size_aligned(heap_size, alignment), "Must be");
+
+  uintx heap_base_min_address_aligned = align_size_up(HeapBaseMinAddress, alignment);
+
   size_t base = 0;
 #ifdef _LP64
   if (UseCompressedOops) {
     assert(mode == UnscaledNarrowOop  ||
            mode == ZeroBasedNarrowOop ||
            mode == HeapBasedNarrowOop, "mode is invalid");
-    const size_t total_size = heap_size + HeapBaseMinAddress;
+    const size_t total_size = heap_size + heap_base_min_address_aligned;
     // Return specified base for the first request.
     if (!FLAG_IS_DEFAULT(HeapBaseMinAddress) && (mode == UnscaledNarrowOop)) {
-      base = HeapBaseMinAddress;
+      base = heap_base_min_address_aligned;
     } else if (total_size <= OopEncodingHeapMax && (mode != HeapBasedNarrowOop)) {
       if (total_size <= NarrowOopHeapMax && (mode == UnscaledNarrowOop) &&
           (Universe::narrow_oop_shift() == 0)) {
@@ -882,6 +888,8 @@ char* Universe::preferred_heap_base(size_t heap_size, NARROW_OOP_MODE mode) {
     }
   }
 #endif
+
+  assert(is_ptr_aligned((char*)base, alignment), "Must be");
   return (char*)base; // also return NULL (don't care) for 32-bit VM
 }
 

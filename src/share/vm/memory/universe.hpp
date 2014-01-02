@@ -380,7 +380,7 @@ class Universe: AllStatic {
 
   static NARROW_OOP_MODE narrow_oop_mode();
 
-  static char* preferred_heap_base(size_t heap_size, NARROW_OOP_MODE mode);
+  static char* preferred_heap_base(size_t heap_size, size_t alignment, NARROW_OOP_MODE mode);
 
   // Historic gc information
   static size_t get_heap_capacity_at_last_gc()         { return _heap_capacity_at_last_gc; }

@@ -3434,7 +3434,9 @@ void os::large_page_init() {
 #endif
 #endif
 
-char* os::reserve_memory_special(size_t bytes, char* req_addr, bool exec) {
+char* os::reserve_memory_special(size_t bytes, size_t alignment, char* req_addr, bool exec) {
+  fatal("This code is not used or maintained.");
+
   // "exec" is passed in but not used.  Creating the shared image for
   // the code cache doesn't have an SHM_X executable permission to check.
   assert(UseLargePages && UseSHM, "only for SHM large pages");
@@ -6104,4 +6106,10 @@ int os::get_core_path(char* buffer, size_t bufferSize) {
 
   return n;
 }
+
+#ifndef PRODUCT
+void TestReserveMemorySpecial_test() {
+  // No tests available for this platform
+}
+#endif
 
