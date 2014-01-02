@@ -68,8 +68,6 @@ else
 
 endif
 
-BASE_LIBRARIES += $(BUILD_LIBFDLIBM)
-
 ##########################################################################################
 
 BUILD_LIBVERIFY_SRC := check_code.c check_format.c
@@ -456,8 +454,6 @@ ifeq ($(OPENJDK_TARGET_OS), windows)
       OBJECT_DIR := $(JDK_OUTPUTDIR)/objs/libjli_static, \
       DEBUG_SYMBOLS := $(DEBUG_ALL_BINARIES)))
 
-  BASE_LIBRARIES += $(BUILD_LIBJLI_STATIC)
-
 else ifeq ($(OPENJDK_TARGET_OS), macosx)
   #
   # On macosx they do partial (incremental) linking of libjli_static.a
@@ -478,7 +474,6 @@ else ifeq ($(OPENJDK_TARGET_OS), macosx)
   $(JDK_OUTPUTDIR)/objs/libjli_static.a: $(BUILD_LIBJLI_STATIC)
 	$(call install-file)
 
-  BASE_LIBRARIES += $(JDK_OUTPUTDIR)/objs/libjli_static.a
 endif
 
 ##########################################################################################
