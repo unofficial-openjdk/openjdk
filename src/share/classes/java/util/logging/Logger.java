@@ -1557,6 +1557,9 @@ public class Logger {
         if (parent == null) {
             throw new NullPointerException();
         }
+        if (manager == null) {
+            manager = LogManager.getLogManager();
+        }
         manager.checkPermission();
         doSetParent(parent);
     }

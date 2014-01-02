@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2013 Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,7 @@
  */
 
 /* @test
- * @bug 7006126
+ * @bug 7006126 8020669
  * @summary Unit test for methods for Files readAllBytes, readAllLines and
  *     and write methods.
  */
@@ -82,6 +82,16 @@ public class BytesAndLines {
             write(file, lines, Charset.defaultCharset(), opts);
             throw new RuntimeException("NullPointerException expected");
         } catch (NullPointerException ignore) { }
+
+        // read from procfs
+        if (System.getProperty("os.name").equals("Linux")) {
+            // Refer to the Linux proc(5) man page for details about /proc/self/stat file
+            // procfs reports it to be zero sized, even though data can be read from it
+            String statFile = "/proc/self/stat";
+            Path pathStat = Paths.get(statFile);
+            byte[] data = Files.readAllBytes(pathStat);
+            assertTrue(data.length > 0, "Files.readAllBytes('" + statFile + "') failed to read");
+        }
     }
 
 
@@ -173,6 +183,16 @@ public class BytesAndLines {
                 readAllLines(tmpfile, null);
                 throw new RuntimeException("NullPointerException expected");
             } catch (NullPointerException ignore) { }
+
+            // read from procfs
+            if (System.getProperty("os.name").equals("Linux")) {
+                // Refer to the Linux proc(5) man page for details about /proc/self/status file
+                // procfs reports this file to be zero sized, even though data can be read from it
+                String statusFile = "/proc/self/status";
+                Path pathStatus = Paths.get(statusFile);
+                lines = Files.readAllLines(pathStatus, US_ASCII);
+                assertTrue(lines.size() > 0, "Files.readAllLines('" + pathStatus + "') failed to read");
+            }
 
         } finally {
             delete(tmpfile);
