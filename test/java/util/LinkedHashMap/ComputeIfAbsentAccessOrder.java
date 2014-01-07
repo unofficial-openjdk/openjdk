@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,29 +21,27 @@
  * questions.
  */
 
-/* @test
- * @bug 8004931
- * @compile NoBeans.java
- * @summary A compile-only test to ensure that implementations of Packer
- *   and Unpacker can be compiled without implementating the
- *   addPropertyChangeListener and removePropertyChangeListener methods.
+/**
+ * @test
+ * @bug 8030016
+ * @summary computeIfAbsent would generate spurious access
  */
 
-import java.io.*;
 import java.util.*;
-import java.util.jar.*;
 
-public class NoBeans {
+public class ComputeIfAbsentAccessOrder {
+    public static void main(String args[]) throws Throwable {
+        LinkedHashMap<String,Object> map = new LinkedHashMap<>(2, 0.75f, true);
+        map.put("first", null);
+        map.put("second", null);
 
-    static class MyPacker implements Pack200.Packer {
-        public SortedMap<String,String> properties() { return null; }
-        public void pack(JarFile in, OutputStream out) { }
-        public void pack(JarInputStream in, OutputStream out) { }
-    }
+        map.computeIfAbsent("first", l -> null); // should do nothing
 
-    static class MyUnpacker implements Pack200.Unpacker {
-        public SortedMap<String,String> properties() { return null; }
-        public void unpack(InputStream in, JarOutputStream out) { }
-        public void unpack(File in, JarOutputStream out) { }
+        String key = map.keySet().stream()
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("no value"));
+        if(!"first".equals(key)) {
+            throw new RuntimeException("not expected value " + "first" + "!=" + key);
+        }
     }
 }
