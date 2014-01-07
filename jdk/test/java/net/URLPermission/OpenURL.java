@@ -1,12 +1,10 @@
 /*
- * Copyright (c) 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Oracle designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Oracle in the LICENSE file that accompanied this code.
+ * published by the Free Software Foundation.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -23,20 +21,28 @@
  * questions.
  */
 
-package sun.awt;
-
-import java.awt.AWTPermission;
-import sun.security.util.PermissionFactory;
-
-/**
- * A factory object for AWTPermission objects.
+/*
+ * @test
+ * @bug 8029354
+ * @run main/othervm OpenURL
  */
 
-public class AWTPermissionFactory
-    implements PermissionFactory<AWTPermission>
-{
-    @Override
-    public AWTPermission newPermission(String name) {
-        return new AWTPermission(name);
+import java.net.*;
+import java.io.*;
+
+public class OpenURL {
+
+    public static void main (String[] args) throws Exception {
+
+        System.setSecurityManager(new SecurityManager());
+
+        try {
+            URL url = new URL ("http://joe@127.0.0.1/a/b");
+            HttpURLConnection urlc = (HttpURLConnection)url.openConnection();
+            InputStream is = urlc.getInputStream();
+            // error will throw exception other than SecurityException
+        } catch (SecurityException e) {
+            System.out.println("OK");
+        }
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,27 +21,25 @@
  * questions.
  */
 
-/* @test
- * @summary Invoke getDeclaredMethods on Packer and Unpacker to ensure
- *    that all types referenced in the method signatures is present.
+/*
+ * @test
+ * @bug 8028780
+ * @summary JDK KRB5 module throws OutOfMemoryError when CCache is corrupt
+ * @run main/othervm -Xmx8m CorruptedCC
  */
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import sun.security.krb5.internal.ccache.CredentialsCache;
 
-import java.util.jar.Pack200;
-import java.util.jar.Pack200.Packer;
-import java.util.jar.Pack200.Unpacker;
-import java.lang.reflect.Method;
-
-public class Reflect {
-    static void printMethods(Class<?> c) {
-        System.out.println(c);
-        for (Method m: c.getDeclaredMethods()) {
-            System.out.println("    " + m);
+public class CorruptedCC {
+    public static void main(String[] args) throws Exception {
+        for (int i=0; i<TimeInCCache.ccache.length; i++) {
+            byte old = TimeInCCache.ccache[i];
+            TimeInCCache.ccache[i] = 0x7f;
+            Files.write(Paths.get("tmpcc"), TimeInCCache.ccache);
+            // The next line will return null for I/O issues. That's OK.
+            CredentialsCache.getInstance("tmpcc");
+            TimeInCCache.ccache[i] = old;
         }
-    }
-    public static void main(String[] args) {
-        printMethods(Pack200.Packer.class);
-        printMethods(Pack200.Unpacker.class);
-        printMethods(Pack200.newPacker().getClass());
-        printMethods(Pack200.newUnpacker().getClass());
     }
 }
