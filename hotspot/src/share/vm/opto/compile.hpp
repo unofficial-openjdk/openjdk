@@ -592,6 +592,7 @@ class Compile : public Phase {
   bool          trace_opto_output() const       { return _trace_opto_output; }
   bool              parsed_irreducible_loop() const { return _parsed_irreducible_loop; }
   void          set_parsed_irreducible_loop(bool z) { _parsed_irreducible_loop = z; }
+  int _in_dump_cnt;  // Required for dumping ir nodes.
 #endif
 
   // JSR 292
@@ -853,6 +854,11 @@ class Compile : public Phase {
                       ciMethodData* logmd = NULL);
   // Report if there were too many recompiles at a method and bci.
   bool too_many_recompiles(ciMethod* method, int bci, Deoptimization::DeoptReason reason);
+  // Return a bitset with the reasons where deoptimization is allowed,
+  // i.e., where there were not too many uncommon traps.
+  int _allowed_reasons;
+  int      allowed_deopt_reasons() { return _allowed_reasons; }
+  void set_allowed_deopt_reasons();
 
   // Parsing, optimization
   PhaseGVN*         initial_gvn()               { return _initial_gvn; }
