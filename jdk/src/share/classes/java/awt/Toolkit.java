@@ -57,7 +57,7 @@ import sun.awt.NullComponentPeer;
 import sun.awt.PeerEvent;
 import sun.awt.SunToolkit;
 import sun.awt.AWTAccessor;
-import sun.security.util.SecurityConstants;
+import sun.awt.AWTPermissions;
 
 import sun.util.CoreResourceBundleControl;
 
@@ -80,19 +80,19 @@ import sun.util.CoreResourceBundleControl;
  * <br>For example, calling <code>ScrollPane.setScrollPosition</code>
  *     and then <code>getScrollPosition</code> may return an incorrect
  *     value if the original request has not yet been processed.
- * <p>
+ *
  * <li>Moving the focus from one component to another.
  * <br>For more information, see
  * <a href="http://docs.oracle.com/javase/tutorial/uiswing/misc/focus.html#transferTiming">Timing
  * Focus Transfers</a>, a section in
  * <a href="http://java.sun.com/docs/books/tutorial/uiswing/">The Swing
  * Tutorial</a>.
- * <p>
+ *
  * <li>Making a top-level container visible.
  * <br>Calling <code>setVisible(true)</code> on a <code>Window</code>,
  *     <code>Frame</code> or <code>Dialog</code> may occur
  *     asynchronously.
- * <p>
+ *
  * <li>Setting the size or location of a top-level container.
  * <br>Calls to <code>setSize</code>, <code>setBounds</code> or
  *     <code>setLocation</code> on a <code>Window</code>,
@@ -1731,7 +1731,7 @@ public abstract class Toolkit {
     public final EventQueue getSystemEventQueue() {
         SecurityManager security = System.getSecurityManager();
         if (security != null) {
-            security.checkPermission(SecurityConstants.AWT.CHECK_AWT_EVENTQUEUE_PERMISSION);
+            security.checkPermission(AWTPermissions.CHECK_AWT_EVENTQUEUE_PERMISSION);
         }
         return getSystemEventQueueImpl();
     }
@@ -2063,7 +2063,7 @@ public abstract class Toolkit {
         }
         SecurityManager security = System.getSecurityManager();
         if (security != null) {
-          security.checkPermission(SecurityConstants.AWT.ALL_AWT_EVENTS_PERMISSION);
+          security.checkPermission(AWTPermissions.ALL_AWT_EVENTS_PERMISSION);
         }
         synchronized (this) {
             SelectiveAWTEventListener selectiveListener =
@@ -2132,7 +2132,7 @@ public abstract class Toolkit {
         }
         SecurityManager security = System.getSecurityManager();
         if (security != null) {
-            security.checkPermission(SecurityConstants.AWT.ALL_AWT_EVENTS_PERMISSION);
+            security.checkPermission(AWTPermissions.ALL_AWT_EVENTS_PERMISSION);
         }
 
         synchronized (this) {
@@ -2197,7 +2197,7 @@ public abstract class Toolkit {
     public AWTEventListener[] getAWTEventListeners() {
         SecurityManager security = System.getSecurityManager();
         if (security != null) {
-            security.checkPermission(SecurityConstants.AWT.ALL_AWT_EVENTS_PERMISSION);
+            security.checkPermission(AWTPermissions.ALL_AWT_EVENTS_PERMISSION);
         }
         synchronized (this) {
             EventListener[] la = ToolkitEventMulticaster.getListeners(eventListener,AWTEventListener.class);
@@ -2249,7 +2249,7 @@ public abstract class Toolkit {
     public AWTEventListener[] getAWTEventListeners(long eventMask) {
         SecurityManager security = System.getSecurityManager();
         if (security != null) {
-            security.checkPermission(SecurityConstants.AWT.ALL_AWT_EVENTS_PERMISSION);
+            security.checkPermission(AWTPermissions.ALL_AWT_EVENTS_PERMISSION);
         }
         synchronized (this) {
             EventListener[] la = ToolkitEventMulticaster.getListeners(eventListener,AWTEventListener.class);

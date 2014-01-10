@@ -105,6 +105,12 @@ import sun.util.ResourceBundleEnumeration;
  * }
  * </pre>
  * </blockquote>
+ *
+ * <p>
+ * The implementation of a {@code ListResourceBundle} subclass must be thread-safe
+ * if it's simultaneously used by multiple threads. The default implementations
+ * of the methods in this class are thread-safe.
+ *
  * @see ResourceBundle
  * @see PropertyResourceBundle
  * @since JDK1.1
@@ -188,10 +194,10 @@ public abstract class ListResourceBundle extends ResourceBundle {
 
         Object[][] contents = getContents();
         HashMap<String,Object> temp = new HashMap<>(contents.length);
-        for (int i = 0; i < contents.length; ++i) {
+        for (Object[] content : contents) {
             // key must be non-null String, value must be non-null
-            String key = (String) contents[i][0];
-            Object value = contents[i][1];
+            String key = (String) content[0];
+            Object value = content[1];
             if (key == null || value == null) {
                 throw new NullPointerException();
             }

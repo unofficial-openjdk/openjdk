@@ -222,9 +222,10 @@ public abstract class XMLOutputFactory {
    *   If {@code factoryId} is "javax.xml.stream.XMLOutputFactory",
    *   use the service-provider loading facilities, defined by the
    *   {@link java.util.ServiceLoader} class, to attempt to locate and load an
-   *   implementation of the service using the {@linkplain
-   *   java.util.ServiceLoader#load(java.lang.Class) default loading mechanism}:
-   *   the service-provider loading facility will use the {@linkplain
+   *   implementation of the service using the specified {@code ClassLoader}.
+   *   If {@code classLoader} is null, the {@linkplain
+   *   java.util.ServiceLoader#load(java.lang.Class) default loading mechanism} will apply:
+   *   That is, the service-provider loading facility will use the {@linkplain
    *   java.lang.Thread#getContextClassLoader() current thread's context class loader}
    *   to attempt to load the service. If the context class
    *   loader is null, the {@linkplain
@@ -235,12 +236,15 @@ public abstract class XMLOutputFactory {
    * </li>
    * </ul>
    *
+   * @apiNote The parameter factoryId defined here is inconsistent with that
+   * of other JAXP factories where the first parameter is fully qualified
+   * factory class name that provides implementation of the factory.
+   *
    * <p>
-   * Note that this is a new method that replaces the deprecated
+   *   Note that this is a new method that replaces the deprecated
    *   {@link #newInstance(java.lang.String, java.lang.ClassLoader)
    *   newInstance(String factoryId, ClassLoader classLoader)} method.
-   * No changes in behavior are defined by this replacement method relative
-   * to the deprecated method.
+   *   The original method was incorrectly defined to return XMLInputFactory.
    * </p>
    *
    * @param factoryId             Name of the factory to find, same as

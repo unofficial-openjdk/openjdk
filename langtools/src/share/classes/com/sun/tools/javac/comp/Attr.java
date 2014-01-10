@@ -28,7 +28,6 @@ package com.sun.tools.javac.comp;
 import java.util.*;
 
 import javax.lang.model.element.ElementKind;
-import javax.lang.model.type.TypeKind;
 import javax.tools.JavaFileObject;
 
 import com.sun.source.tree.IdentifierTree;
@@ -74,8 +73,7 @@ import static com.sun.tools.javac.tree.JCTree.Tag.*;
  *  deletion without notice.</b>
  */
 public class Attr extends JCTree.Visitor {
-    protected static final Context.Key<Attr> attrKey =
-        new Context.Key<Attr>();
+    protected static final Context.Key<Attr> attrKey = new Context.Key<>();
 
     final Names names;
     final Log log;
@@ -669,7 +667,7 @@ public class Attr extends JCTree.Visitor {
     /** Attribute a list of expressions, returning a list of types.
      */
     List<Type> attribExprs(List<JCExpression> trees, Env<AttrContext> env, Type pt) {
-        ListBuffer<Type> ts = new ListBuffer<Type>();
+        ListBuffer<Type> ts = new ListBuffer<>();
         for (List<JCExpression> l = trees; l.nonEmpty(); l = l.tail)
             ts.append(attribExpr(l.head, env, pt));
         return ts.toList();
@@ -703,7 +701,7 @@ public class Attr extends JCTree.Visitor {
      *  Caller is responsible for calling checkRefTypes.
      */
     List<Type> attribAnyTypes(List<JCExpression> trees, Env<AttrContext> env) {
-        ListBuffer<Type> argtypes = new ListBuffer<Type>();
+        ListBuffer<Type> argtypes = new ListBuffer<>();
         for (List<JCExpression> l = trees; l.nonEmpty(); l = l.tail)
             argtypes.append(attribType(l.head, env));
         return argtypes.toList();
@@ -1239,7 +1237,7 @@ public class Attr extends JCTree.Visitor {
 
             // Attribute all cases and
             // check that there are no duplicate case labels or default clauses.
-            Set<Object> labels = new HashSet<Object>(); // The set of case labels.
+            Set<Object> labels = new HashSet<>(); // The set of case labels.
             boolean hasDefault = false;      // Is there a default label?
             for (List<JCCase> l = tree.cases; l.nonEmpty(); l = l.tail) {
                 JCCase c = l.head;
@@ -2164,11 +2162,6 @@ public class Attr extends JCTree.Visitor {
                     tree.constructor,
                     localEnv,
                     new ResultInfo(pkind, newMethodTemplate(syms.voidType, argtypes, typeargtypes)));
-            } else {
-                if (tree.clazz.hasTag(ANNOTATED_TYPE)) {
-                    checkForDeclarationAnnotations(((JCAnnotatedType) tree.clazz).annotations,
-                            tree.clazz.type.tsym);
-                }
             }
 
             if (tree.constructor != null && tree.constructor.kind == MTH)
@@ -2230,21 +2223,6 @@ public class Attr extends JCTree.Visitor {
                 }
             }
 
-    private void checkForDeclarationAnnotations(List<? extends JCAnnotation> annotations,
-            Symbol sym) {
-        // Ensure that no declaration annotations are present.
-        // Note that a tree type might be an AnnotatedType with
-        // empty annotations, if only declaration annotations were given.
-        // This method will raise an error for such a type.
-        for (JCAnnotation ai : annotations) {
-            if (!ai.type.isErroneous() &&
-                typeAnnotations.annotationType(ai.attribute, sym) == TypeAnnotations.AnnotationType.DECLARATION) {
-                log.error(ai.pos(), "annotation.type.not.applicable");
-            }
-        }
-    }
-
-
     /** Make an attributed null check tree.
      */
     public JCExpression makeNullCheck(JCExpression arg) {
@@ -2270,10 +2248,6 @@ public class Attr extends JCTree.Visitor {
             for (List<JCExpression> l = tree.dims; l.nonEmpty(); l = l.tail) {
                 attribExpr(l.head, localEnv, syms.intType);
                 owntype = new ArrayType(owntype, syms.arrayClass);
-            }
-            if (tree.elemtype.hasTag(ANNOTATED_TYPE)) {
-                checkForDeclarationAnnotations(((JCAnnotatedType) tree.elemtype).annotations,
-                        tree.elemtype.type.tsym);
             }
         } else {
             // we are seeing an untyped aggregate { ... }
@@ -2615,15 +2589,61 @@ public class Attr extends JCTree.Visitor {
             }
         }
 
+        /* Map to hold 'fake' clinit methods. If a lambda is used to initialize a
+         * static field and that lambda has type annotations, these annotations will
+         * also be stored at these fake clinit methods.
+         *
+         * LambdaToMethod also use fake clinit methods so they can be reused.
+         * Also as LTM is a phase subsequent to attribution, the methods from
+         * clinits can be safely removed by LTM to save memory.
+         */
+        private Map<ClassSymbol, MethodSymbol> clinits = new HashMap<>();
+
+        public MethodSymbol removeClinit(ClassSymbol sym) {
+            return clinits.remove(sym);
+        }
+
+        /* This method returns an environment to be used to attribute a lambda
+         * expression.
+         *
+         * The owner of this environment is a method symbol. If the current owner
+         * is not a method, for example if the lambda is used to initialize
+         * a field, then if the field is:
+         *
+         * - an instance field, we use the first constructor.
+         * - a static field, we create a fake clinit method.
+         */
         private Env<AttrContext> lambdaEnv(JCLambda that, Env<AttrContext> env) {
             Env<AttrContext> lambdaEnv;
             Symbol owner = env.info.scope.owner;
             if (owner.kind == VAR && owner.owner.kind == TYP) {
                 //field initializer
                 lambdaEnv = env.dup(that, env.info.dup(env.info.scope.dupUnshared()));
-                lambdaEnv.info.scope.owner =
-                    new MethodSymbol((owner.flags() & STATIC) | BLOCK, names.empty, null,
-                                     env.info.scope.owner);
+                ClassSymbol enclClass = owner.enclClass();
+                /* if the field isn't static, then we can get the first constructor
+                 * and use it as the owner of the environment. This is what
+                 * LTM code is doing to look for type annotations so we are fine.
+                 */
+                if ((owner.flags() & STATIC) == 0) {
+                    for (Symbol s : enclClass.members_field.getElementsByName(names.init)) {
+                        lambdaEnv.info.scope.owner = s;
+                        break;
+                    }
+                } else {
+                    /* if the field is static then we need to create a fake clinit
+                     * method, this method can later be reused by LTM.
+                     */
+                    MethodSymbol clinit = clinits.get(enclClass);
+                    if (clinit == null) {
+                        Type clinitType = new MethodType(List.<Type>nil(),
+                                syms.voidType, List.<Type>nil(), syms.methodClass);
+                        clinit = new MethodSymbol(STATIC | SYNTHETIC | PRIVATE,
+                                names.clinit, clinitType, enclClass);
+                        clinit.params = List.<VarSymbol>nil();
+                        clinits.put(enclClass, clinit);
+                    }
+                    lambdaEnv.info.scope.owner = clinit;
+                }
             } else {
                 lambdaEnv = env.dup(that, env.info.dup(env.info.scope.dup()));
             }
@@ -3794,7 +3814,7 @@ public class Attr extends JCTree.Visitor {
             Resolve.InapplicableSymbolError errSym = rs.new InapplicableSymbolError(null) {
                 @Override
                 protected Pair<Symbol, JCDiagnostic> errCandidate() {
-                    return new Pair<Symbol, JCDiagnostic>(sym, diag);
+                    return new Pair<>(sym, diag);
                 }
             };
             List<Type> argtypes2 = Type.map(argtypes,
@@ -3947,7 +3967,7 @@ public class Attr extends JCTree.Visitor {
     }
 
     Type checkIntersection(JCTree tree, List<JCExpression> bounds) {
-        Set<Type> boundSet = new HashSet<Type>();
+        Set<Type> boundSet = new HashSet<>();
         if (bounds.nonEmpty()) {
             // accept class or interface or typevar as first bound.
             bounds.head.type = checkBase(bounds.head.type, bounds.head, env, false, false, false);
@@ -4419,7 +4439,7 @@ public class Attr extends JCTree.Visitor {
         }
         public void visitMethodDef(JCMethodDecl tree) {
             if (tree.recvparam != null &&
-                    tree.recvparam.vartype.type.getKind() != TypeKind.ERROR) {
+                    !tree.recvparam.vartype.type.isErroneous()) {
                 checkForDeclarationAnnotations(tree.recvparam.mods.annotations,
                         tree.recvparam.vartype.type.tsym);
             }
@@ -4458,17 +4478,28 @@ public class Attr extends JCTree.Visitor {
             super.visitTypeTest(tree);
         }
         public void visitNewClass(JCNewClass tree) {
-            if (tree.clazz.type != null)
+            if (tree.clazz.hasTag(ANNOTATED_TYPE)) {
+                checkForDeclarationAnnotations(((JCAnnotatedType) tree.clazz).annotations,
+                        tree.clazz.type.tsym);
+            }
+            if (tree.def != null) {
+                checkForDeclarationAnnotations(tree.def.mods.annotations, tree.clazz.type.tsym);
+            }
+            if (tree.clazz.type != null) {
                 validateAnnotatedType(tree.clazz, tree.clazz.type);
+            }
             super.visitNewClass(tree);
         }
         public void visitNewArray(JCNewArray tree) {
-            if (tree.elemtype != null && tree.elemtype.type != null)
+            if (tree.elemtype != null && tree.elemtype.type != null) {
+                if (tree.elemtype.hasTag(ANNOTATED_TYPE)) {
+                    checkForDeclarationAnnotations(((JCAnnotatedType) tree.elemtype).annotations,
+                            tree.elemtype.type.tsym);
+                }
                 validateAnnotatedType(tree.elemtype, tree.elemtype.type);
+            }
             super.visitNewArray(tree);
         }
-
-        @Override
         public void visitClassDef(JCClassDecl tree) {
             if (sigOnly) {
                 scan(tree.mods);
@@ -4483,8 +4514,6 @@ public class Attr extends JCTree.Visitor {
                 scan(member);
             }
         }
-
-        @Override
         public void visitBlock(JCBlock tree) {
             if (!sigOnly) {
                 scan(tree.stats);
@@ -4543,7 +4572,7 @@ public class Attr extends JCTree.Visitor {
                         if (at.getAnnotations().size() == 1) {
                             log.error(at.underlyingType.pos(), "cant.type.annotate.scoping.1", at.getAnnotations().head.attribute);
                         } else {
-                            ListBuffer<Attribute.Compound> comps = new ListBuffer<Attribute.Compound>();
+                            ListBuffer<Attribute.Compound> comps = new ListBuffer<>();
                             for (JCAnnotation an : at.getAnnotations()) {
                                 comps.add(an.attribute);
                             }
@@ -4590,7 +4619,21 @@ public class Attr extends JCTree.Visitor {
                 }
             }
         }
-    };
+
+        private void checkForDeclarationAnnotations(List<? extends JCAnnotation> annotations,
+                Symbol sym) {
+            // Ensure that no declaration annotations are present.
+            // Note that a tree type might be an AnnotatedType with
+            // empty annotations, if only declaration annotations were given.
+            // This method will raise an error for such a type.
+            for (JCAnnotation ai : annotations) {
+                if (!ai.type.isErroneous() &&
+                        typeAnnotations.annotationType(ai.attribute, sym) == TypeAnnotations.AnnotationType.DECLARATION) {
+                    log.error(ai.pos(), "annotation.type.not.applicable");
+                }
+            }
+        }
+    }
 
     // <editor-fold desc="post-attribution visitor">
 
