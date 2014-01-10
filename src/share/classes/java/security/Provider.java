@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1996, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -336,6 +336,8 @@ public abstract class Provider extends Properties {
      *          if a security manager exists and its {@link
      *          java.lang.SecurityManager#checkSecurityAccess} method
      *          denies access to set property values.
+     *
+     * @since 1.8
      */
     @Override
     public synchronized Object putIfAbsent(Object key, Object value) {
@@ -385,6 +387,8 @@ public abstract class Provider extends Properties {
      *          if a security manager exists and its {@link
      *          java.lang.SecurityManager#checkSecurityAccess} method
      *          denies access to remove this provider's properties.
+     *
+     * @since 1.8
      */
     @Override
     public synchronized boolean remove(Object key, Object value) {
@@ -408,6 +412,8 @@ public abstract class Provider extends Properties {
      *          if a security manager exists and its {@link
      *          java.lang.SecurityManager#checkSecurityAccess} method
      *          denies access to set property values.
+     *
+     * @since 1.8
      */
     @Override
     public synchronized boolean replace(Object key, Object oldValue,
@@ -433,6 +439,8 @@ public abstract class Provider extends Properties {
      *          if a security manager exists and its {@link
      *          java.lang.SecurityManager#checkSecurityAccess} method
      *          denies access to set property values.
+     *
+     * @since 1.8
      */
     @Override
     public synchronized Object replace(Object key, Object value) {
@@ -459,6 +467,8 @@ public abstract class Provider extends Properties {
      *          if a security manager exists and its {@link
      *          java.lang.SecurityManager#checkSecurityAccess} method
      *          denies access to set property values.
+     *
+     * @since 1.8
      */
     @Override
     public synchronized void replaceAll(BiFunction<? super Object, ? super Object, ? extends Object> function) {
@@ -485,6 +495,8 @@ public abstract class Provider extends Properties {
      *          if a security manager exists and its {@link
      *          java.lang.SecurityManager#checkSecurityAccess} method
      *          denies access to set property values or remove properties.
+     *
+     * @since 1.8
      */
     @Override
     public synchronized Object compute(Object key,
@@ -514,6 +526,8 @@ public abstract class Provider extends Properties {
      *          if a security manager exists and its {@link
      *          java.lang.SecurityManager#checkSecurityAccess} method
      *          denies access to set property values and remove properties.
+     *
+     * @since 1.8
      */
     @Override
     public synchronized Object computeIfAbsent(Object key, Function<? super Object, ? extends Object> mappingFunction) {
@@ -541,6 +555,8 @@ public abstract class Provider extends Properties {
      *          if a security manager exists and its {@link
      *          java.lang.SecurityManager#checkSecurityAccess} method
      *          denies access to set property values or remove properties.
+     *
+     * @since 1.8
      */
     @Override
     public synchronized Object computeIfPresent(Object key, BiFunction<? super Object, ? super Object, ? extends Object> remappingFunction) {
@@ -571,6 +587,8 @@ public abstract class Provider extends Properties {
      *          if a security manager exists and its {@link
      *          java.lang.SecurityManager#checkSecurityAccess} method
      *          denies access to set property values or remove properties.
+     *
+     * @since 1.8
      */
     @Override
     public synchronized Object merge(Object key, Object value,  BiFunction<? super Object, ? super Object, ? extends Object>  remappingFunction) {
@@ -589,13 +607,18 @@ public abstract class Provider extends Properties {
         checkInitialized();
         return super.get(key);
     }
-
+    /**
+     * @since 1.8
+     */
     @Override
     public synchronized Object getOrDefault(Object key, Object defaultValue) {
         checkInitialized();
         return super.getOrDefault(key, defaultValue);
     }
 
+    /**
+     * @since 1.8
+     */
     @Override
     public synchronized void forEach(BiConsumer<? super Object, ? super Object> action) {
         checkInitialized();
@@ -1382,7 +1405,7 @@ public abstract class Provider extends Properties {
         private String[] supportedFormats;
 
         // names of the supported key (super) classes
-        private Class[] supportedClasses;
+        private Class<?>[] supportedClasses;
 
         // whether this service has been registered with the Provider
         private boolean registered;
@@ -1633,7 +1656,7 @@ public abstract class Provider extends Properties {
                 return o;
             }
             Class<?> argClass = constructorParameter.getClass();
-            Constructor[] cons = clazz.getConstructors();
+            Constructor<?>[] cons = clazz.getConstructors();
             // find first public constructor that can take the
             // argument as parameter
             for (int i = 0; i < cons.length; i++) {

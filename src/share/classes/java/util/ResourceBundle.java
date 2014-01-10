@@ -184,6 +184,13 @@ import sun.util.locale.LocaleObjectCache;
  * subclass.  Your subclasses must override two methods: <code>handleGetObject</code>
  * and <code>getKeys()</code>.
  *
+ * <p>
+ * The implementation of a {@code ResourceBundle} subclass must be thread-safe
+ * if it's simultaneously used by multiple threads. The default implementations
+ * of the non-abstract methods in this class, and the methods in the direct
+ * known concrete subclasses {@code ListResourceBundle} and
+ * {@code PropertyResourceBundle} are thread-safe.
+ *
  * <h3>ResourceBundle.Control</h3>
  *
  * The {@link ResourceBundle.Control} class provides information necessary
@@ -1487,19 +1494,15 @@ public abstract class ResourceBundle {
         Locale targetLocale = cacheKey.getLocale();
 
         ResourceBundle bundle = null;
-        int size = formats.size();
-        for (int i = 0; i < size; i++) {
-            String format = formats.get(i);
+        for (String format : formats) {
             try {
                 bundle = control.newBundle(cacheKey.getName(), targetLocale, format,
                                            cacheKey.getLoader(), reload);
-            } catch (LinkageError error) {
+            } catch (LinkageError | Exception error) {
                 // We need to handle the LinkageError case due to
                 // inconsistent case-sensitivity in ClassLoader.
                 // See 6572242 for details.
                 cacheKey.setCause(error);
-            } catch (Exception cause) {
-                cacheKey.setCause(cause);
             }
             if (bundle != null) {
                 // Set the format in the cache key so that it can be
