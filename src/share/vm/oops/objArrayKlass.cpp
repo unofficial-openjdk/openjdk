@@ -149,7 +149,7 @@ template <class T> void objArrayKlass::do_copy(arrayOop s, T* src,
         if (element_is_null ||
             Klass::cast((new_val->klass()))->is_subtype_of(bound)) {
           bs->write_ref_field_pre(p, new_val);
-          *p = *from;
+          *p = element;
         } else {
           // We must do a barrier to cover the partial copy.
           const size_t pd = pointer_delta(p, dst, (size_t)heapOopSize);
