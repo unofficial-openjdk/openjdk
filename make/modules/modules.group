@@ -608,7 +608,6 @@ module java.compact2 {
 }
 
 module java.compact3 {
-    requires public java.compact1;
     requires public java.compact2;
 
     // SE APIs
