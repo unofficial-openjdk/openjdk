@@ -69,6 +69,9 @@ module jdk.base {
     requires service sun.net.spi.nameservice.NameServiceDescriptor;
     requires service sun.util.spi.XmlPropertiesProvider;
 
+    // @jdk.Exported
+    exports jdk;
+
     // ## workaround for reflection
     //
     // ## reflection generated code is a subclass of sun.reflect.MethodAccessorImpl
