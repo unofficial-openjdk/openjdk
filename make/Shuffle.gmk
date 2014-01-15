@@ -1,0 +1,154 @@
+#
+# Copyright 2014 Sun Microsystems, Inc.  All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+#
+# This code is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License version 2 only, as
+# published by the Free Software Foundation.  Sun designates this
+# particular file as subject to the "Classpath" exception as provided
+# by Sun in the LICENSE file that accompanied this code.
+#
+# This code is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# version 2 for more details (a copy is included in the LICENSE file that
+# accompanied this code).
+#
+# You should have received a copy of the GNU General Public License version
+# 2 along with this work; if not, write to the Free Software Foundation,
+# Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+#
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
+# CA 95054 USA or visit www.sun.com if you need additional information or
+# have any questions.
+#
+
+default: all
+
+include $(SPEC)
+include MakeBase.gmk
+include Setup.gmk
+include Modules.gmk
+
+# Use this definition to just copy files around really fast.
+define module-copy-file
+  $(call install-file)
+endef
+
+# Use this definition to do actual hg copies, very slow.
+#define module-copy-file
+#  $(ECHO) hg copy to $@
+#  cd $(<D) && hg copy '$<' '$@'
+#endef
+# hg copy does not support parallel execution.
+#.NOTPARALLEL:
+
+SRC_ROOTS := \
+    $(JDK_TOPDIR)/src/share/classes \
+    $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/classes \
+    $(JAXP_TOPDIR)/src \
+    $(JAXWS_TOPDIR)/src/share/jaxws_classes \
+    $(JAXWS_TOPDIR)/src/share/jaf_classes \
+    $(CORBA_TOPDIR)/src/share/classes \
+    $(LANGTOOLS_TOPDIR)/src/share/classes \
+    #
+
+# Need to make the contents of the sa-jdi.jar available for shuffle.
+SA_JAR := $(JDK_OUTPUTDIR)/lib/sa-jdi.jar
+SA_CLASSES := $(JDK_OUTPUTDIR)/lib/classes_sa
+
+$(SA_CLASSES)/_the.sa.jar.unpacked: $(SA_JAR)
+	$(ECHO) $(LOG_INFO) Unzipping $(<F)
+	$(RM) -r $(@D)
+	$(MKDIR) -p $(@D)
+	$(CD) $(@D) && $(UNZIP) $< $(LOG_DEBUG)
+	$(TOUCH) $@
+
+# This macro sets up rules for copying the contents for one module
+# Param 1 : name of module
+define CopyModule
+  $1_CLASS_LIST := $$(shell $(CAT) $(MODULE_CLASSLIST_DIR)/$1.classlist)
+  $1_SRC_LIST := $$(patsubst %.class, %.java, $$($1_CLASS_LIST))
+  $1_SRC_LIST += $$(patsubst %.class, %.properties, $$($1_CLASS_LIST))
+  $1_SRC_FILES := $$(wildcard $$(foreach i,$(SRC_ROOTS),$$(addprefix $$i/, $$($1_SRC_LIST))))
+
+  ifneq ($(wildcard $(MODULE_CLASSLIST_DIR)/$1.resources), )
+    $1_RESOURCE_LIST := $$(shell $(CAT) $(MODULE_CLASSLIST_DIR)/$1.resources)
+    $1_SRC_FILES += $$(wildcard $$(foreach i,$(SRC_ROOTS),$$(addprefix $$i/, $$($1_RESOURCE_LIST))))
+  endif
+
+ # Rules for copying class files in the build output
+  $(JDK_OUTPUTDIR)/modules/$1/%: $(JDK_OUTPUTDIR)/classes/%
+	$$(install-file)
+
+  $(JDK_OUTPUTDIR)/modules/$1/%: $(JDK_OUTPUTDIR)/classes_security/%
+	$$(install-file)
+
+  $(JDK_OUTPUTDIR)/modules/$1/%: $(JDK_OUTPUTDIR)/classes_sa/%
+	$$(install-file)
+
+  BUILD_TARGET_FILES += $$(addprefix $(JDK_OUTPUTDIR)/modules/$1/, \
+      $$($1_CLASS_LIST) $$($1_RESOURCE_LIST))
+
+
+  # Rules for copying sources
+  $(JDK_TOPDIR)/src/share/modules/$1/%: $(JDK_TOPDIR)/src/share/classes/%
+	$$(module-copy-file)
+
+  $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/modules/$1/%: \
+      $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/classes/%
+	$$(module-copy-file)
+
+  $(JAXP_TOPDIR)/src/share/modules/$1/%: $(JAXP_TOPDIR)/src/%
+	$$(module-copy-file)
+
+  $(JAXWS_TOPDIR)/src/share/modules/$1/%: $(JAXWS_TOPDIR)/src/share/jaxws_classes/%
+	$$(module-copy-file)
+
+  $(JAXWS_TOPDIR)/src/share/modules/$1/%: $(JAXWS_TOPDIR)/src/share/jaf_classes/%
+	$$(module-copy-file)
+
+  $(CORBA_TOPDIR)/src/share/modules/$1/%: $(CORBA_TOPDIR)/src/share/classes/%
+	$$(module-copy-file)
+
+  $(LANGTOOLS_TOPDIR)/src/share/modules/$1/%: $(LANGTOOLS_TOPDIR)/src/share/classes/%
+	$$(module-copy-file)
+
+  SRC_TARGET_FILES += \
+      $$(patsubst $(JDK_TOPDIR)/src/share/classes/%,$(JDK_TOPDIR)/src/share/modules/$1/%, \
+      $$(patsubst $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/classes/%, \
+          $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/modules/$1/%, \
+      $$(patsubst $(JAXP_TOPDIR)/src/share/modules/%,$(JAXP_TOPDIR)/modules/$1/%,\
+      $$(patsubst $(JAXWS_TOPDIR)/src/share/jaxws_classes/%,$(JAXWS_TOPDIR)/src/share/modules/$1/%,\
+      $$(patsubst $(JAXWS_TOPDIR)/src/share/jaf_classes/%,$(JAXWS_TOPDIR)/src/share/modules/$1/%,\
+      $$(patsubst $(CORBA_TOPDIR)/src/share/classes/%,$(CORBA_TOPDIR)/src/share/modules/$1/%,\
+      $$(patsubst $(LANGTOOLS_TOPDIR)/src/share/classes/%,$(LANGTOOLS_TOPDIR)/src/share/modules/$1/%,\
+          $$($1_SRC_FILES))))))))
+endef
+
+# Find all modules that have classes and iterate over them
+MODULE_LIST := $(patsubst $(MODULE_CLASSLIST_DIR)/%.classlist,%, \
+    $(shell $(LS) $(MODULE_CLASSLIST_DIR)/*.classlist))
+
+$(foreach m,$(MODULE_LIST),$(eval $(call CopyModule,$m)))
+
+
+$(BUILD_TARGET_FILES): $(SA_CLASSES)/_the.sa.jar.unpacked
+shuffle-src: $(SRC_TARGET_FILES)
+shuffle-build: $(BUILD_TARGET_FILES)
+
+all: shuffle-src shuffle-build
+
+clean: clean-src clean-build
+
+clean-src:
+	$(RM) -r $(JDK_TOPDIR)/src/share/modules
+	$(RM) -r $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/modules
+	$(RM) -r $(JAXP_TOPDIR)/src/share/modules
+	$(RM) -r $(JAXWS_TOPDIR)/src/share/modules
+	$(RM) -r $(CORBA_TOPDIR)/src/share/modules
+	$(RM) -r $(LANGTOOLS_TOPDIR)/src/share/modules
+
+clean-build:
+	$(RM) -r $(JDK_OUTPUTDIR)/modules
+	$(RM) -r $(JDK_OUTPUTDIR)/classes_sa
