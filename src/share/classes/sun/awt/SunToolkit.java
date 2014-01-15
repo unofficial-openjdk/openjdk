@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1127,20 +1127,6 @@ public abstract class SunToolkit extends Toolkit
         return startupLocale;
     }
 
-    protected static ThreadGroup getRootThreadGroup() {
-        return AccessController.doPrivileged(new PrivilegedAction<ThreadGroup>() {
-            @Override
-            public ThreadGroup run() {
-                ThreadGroup currentTG = Thread.currentThread().getThreadGroup();
-                ThreadGroup parentTG = currentTG.getParent();
-                while (parentTG != null) {
-                    currentTG = parentTG;
-                    parentTG = currentTG.getParent();
-                }
-                return currentTG;
-            }
-        });
-    }
     /**
      * Returns the default keyboard locale of the underlying operating system
      */
