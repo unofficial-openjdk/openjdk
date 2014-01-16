@@ -46,6 +46,7 @@ $(eval $(call SetupJavaCompilation,BUILD_JAXP, \
     SETUP := GENERATE_NEWBYTECODE_DEBUG, \
     SRC := $(JAXP_TOPDIR)/src, \
     BIN := $(JAXP_OUTPUTDIR)/classes, \
+    EXCLUDES := share/modules,\
     SRCZIP := $(JAXP_OUTPUTDIR)/dist/lib/src.zip))
 
 # Imitate the property cleaning mechanism in the old build. This will likely be replaced
