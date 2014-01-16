@@ -55,7 +55,7 @@ SRC_ROOTS := \
 
 # Need to make the contents of the sa-jdi.jar available for shuffle.
 SA_JAR := $(JDK_OUTPUTDIR)/lib/sa-jdi.jar
-SA_CLASSES := $(JDK_OUTPUTDIR)/lib/classes_sa
+SA_CLASSES := $(JDK_OUTPUTDIR)/classes_sa
 
 $(SA_CLASSES)/_the.sa.jar.unpacked: $(SA_JAR)
 	$(ECHO) $(LOG_INFO) Unzipping $(<F)
