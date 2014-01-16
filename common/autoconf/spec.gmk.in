@@ -453,8 +453,8 @@ BUILD_JAVA_FLAGS:=-Xms64M -Xmx1100M
 BUILD_JAVA=@FIXPATH@ $(BUILD_JDK)/bin/java $(BUILD_JAVA_FLAGS)
 
 # You run the new javac using the boot jdk with $(BOOT_JDK)/bin/java $(NEW_JAVAC) ...
-BOOTSTRAP_JAVAC_JAR:=$(LANGTOOLS_OUTPUTDIR)/dist/bootstrap/lib/javac.jar
-BOOTSTRAP_JAVAC_ARGS:="-Xbootclasspath/p:$(BOOTSTRAP_JAVAC_JAR)" -cp $(BOOTSTRAP_JAVAC_JAR)
+BOOTSTRAP_JAVAC_JAR := $(LANGTOOLS_OUTPUTDIR)/dist/bootstrap/lib/javac.jar
+BOOTSTRAP_JAVAC_ARGS ="-Xbootclasspath/p:$(BOOTSTRAP_JAVAC_JAR)" -cp $(BOOTSTRAP_JAVAC_JAR)
 NEW_JAVAC   = $(BOOTSTRAP_JAVAC_ARGS) com.sun.tools.javac.Main
 NEW_JAVADOC = $(BOOTSTRAP_JAVAC_ARGS) com.sun.tools.javadoc.Main
 

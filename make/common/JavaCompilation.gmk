@@ -35,6 +35,9 @@
 # of removing duplicates. It is actually this side effect that is
 # desired whenever sort is used below!
 
+ifndef _JAVA_COMPILATION_GMK
+_JAVA_COMPILATION_GMK := 1
+
 ifeq (,$(_MAKEBASE_GMK))
   $(error You must include MakeBase.gmk prior to including JavaCompilation.gmk)
 endif
@@ -590,3 +593,5 @@ define SetupJavaCompilation
   endif
 
 endef
+
+endif
