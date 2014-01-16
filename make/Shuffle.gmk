@@ -133,8 +133,62 @@ MODULE_LIST := $(patsubst $(MODULE_CLASSLIST_DIR)/%.classlist,%, \
 $(foreach m,$(MODULE_LIST),$(eval $(call CopyModule,$m)))
 
 
+################################################################################
+
+# General copy file macros should probably be moved to make/common in the root.
+define AddFileToCopy
+  # Helper macro for SetupCopyFiles
+  # 1 : Source root dir
+  # 2 : Dest root dir
+  # 3 : File path relative to source root
+  # 4 : Variable to add targets to
+
+  $2/$3: $1/$3
+	$(ECHO) $(LOG_INFO) Copying $$(patsubst $(OUTPUT_ROOT)/%,%,$$@)
+	$$(module-copy-file)
+
+  $4 += $2/$3
+endef
+
+define SetupCopyFiles
+  # param 1 is for example COPY_MYFILES
+  # param 2,3,4,5 are named args.
+  #   SRC   : Source root dir
+  #   DEST  : Dest root dir
+  #   FILES : List of files to copy with absolute paths, or path relative to SRC. Must be in SRC.
+  $(foreach i,2 3 4 5, $(if $($i),$1_$(strip $($i)))$(NEWLINE))
+  $(call LogSetupMacroEntry,SetupCopyFiles($1),$2,$3,$4,$5)
+  $(if $(6),$(error Internal makefile error: Too many arguments to SetupCopyFiles))
+
+  $$(foreach f, $$(patsubst $$($1_SRC)/%,%,$$($1_FILES)), \
+      $$(eval $$(call AddFileToCopy,$$($1_SRC),$$($1_DEST),$$f,$1)))
+
+endef
+
+################################################################################
+
+# Copy logutil in corba to make/tools
+$(eval $(call SetupCopyFiles,COPY_CORBA_LOGUTIL, \
+    SRC := $(CORBA_TOPDIR)/src/share/classes, \
+    DEST := $(CORBA_TOPDIR)/make/tools/src, \
+    FILES := $(wildcard $(CORBA_TOPDIR)/src/share/classes/com/sun/tools/corba/se/logutil/*.java)))
+
+# Copy *.mc files in corba
+$(eval $(call SetupCopyFiles,COPY_CORBA_MC, \
+    SRC := $(CORBA_TOPDIR)/src/share/classes, \
+    DEST := $(CORBA_TOPDIR)/src/share/modules/jdk.corba, \
+    FILES := $(wildcard $(CORBA_TOPDIR)/src/share/classes/com/sun/corba/se/spi/logging/data/*.mc)))
+
+# Copy services in jaxws
+$(eval $(call SetupCopyFiles,COPY_JAXWS_SERVICES, \
+    SRC := $(JAXWS_TOPDIR)/src/share/jaxws_classes, \
+    DEST := $(JAXWS_TOPDIR)/src/share/modules/jdk.tools.jaxws, \
+    FILES := $(wildcard $(JAXWS_TOPDIR)/src/share/jaxws_classes/com/sun/tools/etc/META-INF/services/*Plugin)))
+
+################################################################################
+
 $(BUILD_TARGET_FILES): $(SA_CLASSES)/_the.sa.jar.unpacked
-shuffle-src: $(SRC_TARGET_FILES)
+shuffle-src: $(SRC_TARGET_FILES) $(COPY_CORBA_LOGUTIL) $(COPY_CORBA_MC) $(COPY_JAXWS_SERVICES)
 shuffle-build: $(BUILD_TARGET_FILES)
 
 all: shuffle-src shuffle-build
@@ -148,6 +202,7 @@ clean-src:
 	$(RM) -r $(JAXWS_TOPDIR)/src/share/modules
 	$(RM) -r $(CORBA_TOPDIR)/src/share/modules
 	$(RM) -r $(LANGTOOLS_TOPDIR)/src/share/modules
+	$(RM) -r $(CORBA_TOPDIR)/make/tools/src/com
 
 clean-build:
 	$(RM) -r $(JDK_OUTPUTDIR)/modules
