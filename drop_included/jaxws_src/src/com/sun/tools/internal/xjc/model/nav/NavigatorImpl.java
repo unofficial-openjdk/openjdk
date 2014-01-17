@@ -299,7 +299,6 @@ public final class NavigatorImpl implements Navigator<NType,NClass,Void,Void> {
         throw new UnsupportedOperationException();
     }
 
-    @Override
     public NClass loadObjectFactory(NClass referencePoint, String pkg) {
         throw new UnsupportedOperationException();
     }

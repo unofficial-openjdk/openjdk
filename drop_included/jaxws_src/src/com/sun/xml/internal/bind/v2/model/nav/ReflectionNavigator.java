@@ -507,7 +507,6 @@ import com.sun.xml.internal.bind.v2.runtime.Location;
         else        return name.substring(0,idx);
     }
 
-    @Override
     public Class loadObjectFactory(Class referencePoint, String pkg) {
         String clName = pkg + ".ObjectFactory";
         checkPackageAccess(clName);

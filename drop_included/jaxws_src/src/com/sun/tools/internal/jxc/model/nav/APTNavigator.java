@@ -272,7 +272,6 @@ public final class APTNavigator implements Navigator<TypeMirror,TypeDeclaration,
         return clazz.getPackage().getQualifiedName();
     }
 
-    @Override
     public TypeDeclaration loadObjectFactory(TypeDeclaration referencePoint, String packageName) {
         return env.getTypeDeclaration(packageName + ".ObjectFactory");
     }
