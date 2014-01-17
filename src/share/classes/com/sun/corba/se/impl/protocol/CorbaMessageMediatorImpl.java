@@ -1666,7 +1666,9 @@ public class CorbaMessageMediatorImpl
         ((CDRInputObject)messageMediator.getInputObject()).unmarshalHeader();
 
         ORB orb = (ORB)messageMediator.getBroker();
-        orb.checkShutdownState();
+        synchronized (orb) {
+            orb.checkShutdownState();
+        }
 
         ObjectKey okey = messageMediator.getObjectKey();
         if (orb.subcontractDebugFlag) {

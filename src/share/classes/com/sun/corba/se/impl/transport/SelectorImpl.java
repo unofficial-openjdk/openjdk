@@ -68,8 +68,8 @@ class SelectorImpl
     private HashMap listenerThreads;
     private HashMap readerThreads;
     private boolean selectorStarted;
-    private boolean closed;
-    private ORBUtilSystemException wrapper ;
+    private volatile boolean closed;
+    private ORBUtilSystemException wrapper;
 
 
     public SelectorImpl(ORB orb)
