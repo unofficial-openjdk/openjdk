@@ -87,7 +87,6 @@ public class AnyImpl extends Any
                     .create_input_stream();
             AnyInputStream aIS = AccessController
                     .doPrivileged(new PrivilegedAction<AnyInputStream>() {
-                        @Override
                         public AnyInputStream run() {
                             return new AnyInputStream(
                                     (com.sun.corba.se.impl.encoding.EncapsInputStream) is);

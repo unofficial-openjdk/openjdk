@@ -52,7 +52,6 @@ public abstract class InputStream extends org.omg.CORBA.portable.InputStream {
 
     private static final boolean allowSubclass = AccessController.doPrivileged(
         new PrivilegedAction<Boolean>() {
-            @Override
             public Boolean run() {
             String prop = System.getProperty(ALLOW_SUBCLASS_PROP);
                 return prop == null ? false :

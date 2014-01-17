@@ -38,7 +38,6 @@ public class StubFactoryFactoryProxyImpl extends StubFactoryFactoryDynamicBase
     {
         return AccessController
                 .doPrivileged(new PrivilegedAction<StubFactoryProxyImpl>() {
-                    @Override
                     public StubFactoryProxyImpl run() {
                         return new StubFactoryProxyImpl(classData, classLoader);
                     }

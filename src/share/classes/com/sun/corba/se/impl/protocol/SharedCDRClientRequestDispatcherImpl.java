@@ -163,7 +163,6 @@ public class SharedCDRClientRequestDispatcherImpl
         final Message inMsg = cdrOutputObject.getMessageHeader();
         CDRInputObject cdrInputObject = AccessController
                 .doPrivileged(new PrivilegedAction<CDRInputObject>() {
-                    @Override
                     public CDRInputObject run() {
                         return new CDRInputObject(inOrb, null, inBuffer,
                                 inMsg);
@@ -206,7 +205,6 @@ public class SharedCDRClientRequestDispatcherImpl
         final Message inMsg2 = cdrOutputObject.getMessageHeader();
         cdrInputObject = AccessController
                 .doPrivileged(new PrivilegedAction<CDRInputObject>() {
-                    @Override
                     public CDRInputObject run() {
                         return new CDRInputObject(inOrb2, null, inBuffer2,
                                 inMsg2);
