@@ -244,7 +244,14 @@ public class ORBImpl extends com.sun.corba.se.spi.orb.ORB
     // All access to resolver, localResolver, and urlOperation must be protected using
     // resolverLock.  Do not hold the ORBImpl lock while accessing
     // resolver, or deadlocks may occur.
-    private Object resolverLock ;
+    // Note that we now have separate locks for each resolver type.  This is due
+    // to bug 6980681 and 6238477, which was caused by a deadlock while resolving a
+    // corbaname: URL that contained a reference to the same ORB as the
+    // ORB making the call to string_to_object.  This caused a deadlock between the
+    // client thread holding the single lock for access to the urlOperation,
+    // and the server thread handling the client is_a request waiting on the
+    // same lock to access the localResolver.
+
 
     // Used for resolver_initial_references and list_initial_services
     private Resolver resolver ;
@@ -254,8 +261,14 @@ public class ORBImpl extends com.sun.corba.se.spi.orb.ORB
 
     // Converts strings to object references for resolvers and string_to_object
     private Operation urlOperation ;
+    private final Object urlOperationLock = new java.lang.Object() ;
 
     private CorbaServerRequestDispatcher insNamingDelegate ;
+    // resolverLock must be used for all access to either resolver or
+    // localResolver, since it is possible for the resolver to indirectly
+    // refer to the localResolver.  Also used to protect access to
+    // insNamingDelegate.
+    private final Object resolverLock = new Object() ;
 
     private TaggedComponentFactoryFinder taggedComponentFactoryFinder ;
 
@@ -395,7 +408,6 @@ public class ORBImpl extends com.sun.corba.se.spi.orb.ORB
             }
         };
 
-        resolverLock = new java.lang.Object() ;
 
         requestDispatcherRegistry = new RequestDispatcherRegistryImpl(
             this, ORBConstants.DEFAULT_SCID);
@@ -831,7 +843,7 @@ public class ORBImpl extends com.sun.corba.se.spi.orb.ORB
         if (str == null)
             throw wrapper.nullParam() ;
 
-        synchronized (resolverLock) {
+        synchronized (urlOperationLock) {
             org.omg.CORBA.Object obj = (org.omg.CORBA.Object)op.operate( str ) ;
             return obj ;
         }
@@ -1777,7 +1789,7 @@ public class ORBImpl extends com.sun.corba.se.spi.orb.ORB
      */
     public void setURLOperation( Operation stringToObject )
     {
-        synchronized (resolverLock) {
+        synchronized (urlOperationLock) {
             urlOperation = stringToObject ;
         }
     }
@@ -1787,7 +1799,7 @@ public class ORBImpl extends com.sun.corba.se.spi.orb.ORB
      */
     public Operation getURLOperation()
     {
-        synchronized (resolverLock) {
+        synchronized (urlOperationLock) {
             return urlOperation ;
         }
     }
