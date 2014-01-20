@@ -197,9 +197,6 @@ public class SharedSecrets {
     public static JavaAWTAccess getJavaAWTAccess() {
         // this may return null in which case calling code needs to
         // provision for.
-        if (javaAWTAccess == null || javaAWTAccess.getContext() == null) {
-            return null;
-        }
         return javaAWTAccess;
     }
 }
