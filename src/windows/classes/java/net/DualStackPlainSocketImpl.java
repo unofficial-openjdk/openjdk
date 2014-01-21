@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -162,8 +162,9 @@ class DualStackPlainSocketImpl extends AbstractPlainSocketImpl
         if (!fd.valid())
             return;
 
-        close0(fdAccess.get(fd));
+        final int nativefd = fdAccess.get(fd);
         fdAccess.set(fd, -1);
+        close0(nativefd);
     }
 
     void socketShutdown(int howto) throws IOException {

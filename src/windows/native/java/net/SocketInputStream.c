@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2003, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -134,32 +134,34 @@ Java_java_net_SocketInputStream_socketRead0(JNIEnv *env, jobject this,
         (*env)->SetByteArrayRegion(env, data, off, nread, (jbyte *)bufP);
     } else {
         if (nread < 0) {
-            /*
-             * Recv failed.
-             */
-            switch (WSAGetLastError()) {
-                case WSAEINTR:
-                    JNU_ThrowByName(env, JNU_JAVANETPKG "SocketException",
-                        "socket closed");
-                    break;
+            // Check if the socket has been closed since we last checked.
+            // This could be a reason for recv failing.
+            if ((*env)->GetIntField(env, fdObj, IO_fd_fdID) == -1) {
+                NET_ThrowSocketException(env, "Socket closed");
+            } else {
+                switch (WSAGetLastError()) {
+                    case WSAEINTR:
+                        JNU_ThrowByName(env, JNU_JAVANETPKG "SocketException",
+                            "socket closed");
+                        break;
+                    case WSAECONNRESET:
+                    case WSAESHUTDOWN:
+                        /*
+                         * Connection has been reset - Windows sometimes reports
+                         * the reset as a shutdown error.
+                         */
+                        JNU_ThrowByName(env, "sun/net/ConnectionResetException",
+                            "");
+                        break;
 
-                case WSAECONNRESET:
-                case WSAESHUTDOWN:
-                    /*
-                     * Connection has been reset - Windows sometimes reports
-                     * the reset as a shutdown error.
-                     */
-                    JNU_ThrowByName(env, "sun/net/ConnectionResetException",
-                        "");
-                    break;
+                    case WSAETIMEDOUT :
+                        JNU_ThrowByName(env, JNU_JAVANETPKG "SocketTimeoutException",
+                                       "Read timed out");
+                        break;
 
-                case WSAETIMEDOUT :
-                    JNU_ThrowByName(env, JNU_JAVANETPKG "SocketTimeoutException",
-                                   "Read timed out");
-                    break;
-
-                default:
-                    NET_ThrowCurrent(env, "recv failed");
+                    default:
+                        NET_ThrowCurrent(env, "recv failed");
+                }
             }
         }
     }
