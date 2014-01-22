@@ -67,13 +67,20 @@ $(SA_CLASSES)/_the.sa.jar.unpacked: $(SA_JAR)
 # This macro sets up rules for copying the contents for one module
 # Param 1 : name of module
 define CopyModule
-  $1_CLASS_LIST := $$(shell $(CAT) $(MODULE_CLASSLIST_DIR)/$1.classlist)
+  $1_CLASS_LIST := $$(subst \,/, \
+      $$(shell $(CAT) $(MODULE_CLASSLIST_DIR)/$1.classlist))
   $1_SRC_LIST := $$(patsubst %.class, %.java, $$($1_CLASS_LIST))
   $1_SRC_LIST += $$(patsubst %.class, %.properties, $$($1_CLASS_LIST))
   $1_SRC_FILES := $$(wildcard $$(foreach i,$(SRC_ROOTS),$$(addprefix $$i/, $$($1_SRC_LIST))))
+  # On windows, because wildcard is case insensitive, a couple of
+  # classes are mistakenly matched as property files too. Filter
+  # out these explicitly.
+  $1_SRC_FILES := $$(filter-out %/Version.properties %/SerialVer.properties, \
+      $$($1_SRC_FILES))
 
-  ifneq ($(wildcard $(MODULE_CLASSLIST_DIR)/$1.resources), )
-    $1_RESOURCE_LIST := $$(shell $(CAT) $(MODULE_CLASSLIST_DIR)/$1.resources)
+  ifneq ($$(wildcard $(MODULE_CLASSLIST_DIR)/$1.resources), )
+    $1_RESOURCE_LIST := $$(subst \,/, \
+        $$(shell $(CAT) $(MODULE_CLASSLIST_DIR)/$1.resources))
     $1_SRC_FILES += $$(wildcard $$(foreach i,$(SRC_ROOTS),$$(addprefix $$i/, $$($1_RESOURCE_LIST))))
   endif
 
