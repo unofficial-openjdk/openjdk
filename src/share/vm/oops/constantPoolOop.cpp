@@ -1101,7 +1101,7 @@ void constantPoolOopDesc::copy_operands(constantPoolHandle from_cp,
                                    (len = old_off) * sizeof(u2));
       fillp += len;
       // first part of src
-      Copy::conjoint_memory_atomic(to_cp->operands()->short_at_addr(0),
+      Copy::conjoint_memory_atomic(from_cp->operands()->short_at_addr(0),
                                    new_operands->short_at_addr(fillp),
                                    (len = from_off) * sizeof(u2));
       fillp += len;
@@ -1111,7 +1111,7 @@ void constantPoolOopDesc::copy_operands(constantPoolHandle from_cp,
                                    (len = old_len - old_off) * sizeof(u2));
       fillp += len;
       // second part of src
-      Copy::conjoint_memory_atomic(to_cp->operands()->short_at_addr(from_off),
+      Copy::conjoint_memory_atomic(from_cp->operands()->short_at_addr(from_off),
                                    new_operands->short_at_addr(fillp),
                                    (len = from_len - from_off) * sizeof(u2));
       fillp += len;
