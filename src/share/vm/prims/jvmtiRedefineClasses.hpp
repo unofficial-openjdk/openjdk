@@ -474,7 +474,7 @@ class VM_RedefineClasses: public VM_Operation {
          address& stackmap_addr_ref, address stackmap_end, u2 frame_i,
          u1 frame_size, TRAPS);
   void set_new_constant_pool(instanceKlassHandle scratch_class,
-    constantPoolHandle scratch_cp, int scratch_cp_length, bool shrink, TRAPS);
+    constantPoolHandle scratch_cp, int scratch_cp_length, TRAPS);
 
   void flush_dependent_code(instanceKlassHandle k_h, TRAPS);
 

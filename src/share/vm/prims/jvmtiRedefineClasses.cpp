@@ -1113,6 +1113,8 @@ bool VM_RedefineClasses::merge_constant_pools(constantPoolHandle old_cp,
       }
     } // end for each old_cp entry
 
+    constantPoolOopDesc::copy_operands(old_cp, *merge_cp_p, CHECK_0);
+
     // We don't need to sanity check that *merge_cp_length_p is within
     // *merge_cp_p bounds since we have the minimum on-entry check above.
     (*merge_cp_length_p) = old_i;
@@ -1282,8 +1284,12 @@ jvmtiError VM_RedefineClasses::merge_cp_and_rewrite(
   _index_map_count = 0;
   _index_map_p = new intArray(scratch_cp->length(), -1);
 
+  // reference to the cp holder is needed for copy_operands()
+  merge_cp->set_pool_holder(scratch_class());
   bool result = merge_constant_pools(old_cp, scratch_cp, &merge_cp,
                   &merge_cp_length, THREAD);
+  merge_cp->set_pool_holder(NULL);
+
   if (!result) {
     // The merge can fail due to memory allocation failure or due
     // to robustness checks.
@@ -1326,7 +1332,7 @@ jvmtiError VM_RedefineClasses::merge_cp_and_rewrite(
       // Replace the new constant pool with a shrunken copy of the
       // merged constant pool; the previous new constant pool will
       // get GCed.
-      set_new_constant_pool(scratch_class, merge_cp, merge_cp_length, true,
+      set_new_constant_pool(scratch_class, merge_cp, merge_cp_length,
         THREAD);
       // drop local ref to the merged constant pool
       merge_cp()->set_is_conc_safe(true);
@@ -1357,7 +1363,7 @@ jvmtiError VM_RedefineClasses::merge_cp_and_rewrite(
     // merged constant pool so now the rewritten bytecodes have
     // valid references; the previous new constant pool will get
     // GCed.
-    set_new_constant_pool(scratch_class, merge_cp, merge_cp_length, true,
+    set_new_constant_pool(scratch_class, merge_cp, merge_cp_length,
       THREAD);
     merge_cp()->set_is_conc_safe(true);
   }
@@ -2343,30 +2349,30 @@ void VM_RedefineClasses::rewrite_cp_refs_in_verification_type_info(
 // smaller constant pool is associated with scratch_class.
 void VM_RedefineClasses::set_new_constant_pool(
        instanceKlassHandle scratch_class, constantPoolHandle scratch_cp,
-       int scratch_cp_length, bool shrink, TRAPS) {
-  assert(!shrink || scratch_cp->length() >= scratch_cp_length, "sanity check");
+       int scratch_cp_length, TRAPS) {
+  assert(scratch_cp->length() >= scratch_cp_length, "sanity check");
 
-  if (shrink) {
-    // scratch_cp is a merged constant pool and has enough space for a
-    // worst case merge situation. We want to associate the minimum
-    // sized constant pool with the klass to save space.
-    constantPoolHandle smaller_cp(THREAD,
-      oopFactory::new_constantPool(scratch_cp_length,
-                                   oopDesc::IsUnsafeConc,
-                                   THREAD));
-    // preserve orig_length() value in the smaller copy
-    int orig_length = scratch_cp->orig_length();
-    assert(orig_length != 0, "sanity check");
-    smaller_cp->set_orig_length(orig_length);
-    scratch_cp->copy_cp_to(1, scratch_cp_length - 1, smaller_cp, 1, THREAD);
-    scratch_cp = smaller_cp;
-    smaller_cp()->set_is_conc_safe(true);
-  }
-
-  // attach new constant pool to klass
-  scratch_cp->set_pool_holder(scratch_class());
+  // scratch_cp is a merged constant pool and has enough space for a
+  // worst case merge situation. We want to associate the minimum
+  // sized constant pool with the klass to save space.
+  constantPoolHandle smaller_cp(THREAD,
+    oopFactory::new_constantPool(scratch_cp_length,
+                                 oopDesc::IsUnsafeConc,
+                                 THREAD));
+  // preserve orig_length() value in the smaller copy
+  int orig_length = scratch_cp->orig_length();
+  assert(orig_length != 0, "sanity check");
+  smaller_cp->set_orig_length(orig_length);
 
   // attach klass to new constant pool
+  // reference to the cp holder is needed for copy_operands()
+  smaller_cp->set_pool_holder(scratch_class());
+
+  scratch_cp->copy_cp_to(1, scratch_cp_length - 1, smaller_cp, 1, THREAD);
+  scratch_cp = smaller_cp;
+  smaller_cp()->set_is_conc_safe(true);
+
+  // attach new constant pool to klass
   scratch_class->set_constants(scratch_cp());
 
   int i;  // for portability
