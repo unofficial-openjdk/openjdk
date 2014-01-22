@@ -267,7 +267,8 @@ public:
                             ScanningOption so,
                             OopClosure* roots,
                             CodeBlobClosure* code_roots,
-                            OopsInGenClosure* perm_blk);
+                            OopsInGenClosure* perm_blk,
+                            bool manages_code_roots = false);
 
   // Apply "blk" to all the weak roots of the system.  These include
   // JNI weak roots, the code cache, system dictionary, symbol table,
