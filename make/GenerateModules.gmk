@@ -31,24 +31,20 @@ include Modules.gmk
 include MakeBase.gmk
 include Setup.gmk
 
-MODULES_CONFIG      := $(JDK_TOPDIR)/make/modules/modules.config
-MODULES_GROUP       := $(JDK_TOPDIR)/make/modules/modules.group
-MODULES_PROPERTIES  := $(JDK_TOPDIR)/make/modules/modules.properties
 CLASSANALYZER_CLASSES  := $(GENMODULES_DIR)/bt_classanalyzer_classes
 CLASSANALYZER_RESOURCES := $(CLASSANALYZER_CLASSES)/com/sun/tools/classanalyzer/resources
 
 $(CLASSANALYZER_CLASSES)/com/sun/tools/classanalyzer/resources/% : $(JDK_TOPDIR)/make/modules/tools/src/com/sun/tools/classanalyzer/resources/%
 	$(call install-file)
 
-all: $(MODULES_CONFIG) $(MODULES_GROUP) $(MODULES_PROPERTIES) \
-     $(BUILD_CLASSANALYZER) $(CLASSANALYZER_RESOURCES)/classanalyzer.properties
+all: $(BUILD_CLASSANALYZER) \
+     $(CLASSANALYZER_RESOURCES)/classanalyzer.properties \
+     $(CLASSANALYZER_RESOURCES)/modules.def \
+     $(CLASSANALYZER_RESOURCES)/modules.properties
 	$(RM) -rf $(MODULE_CLASSLIST_DIR) \
 		  $(MODULEINFO_DIR) \
                   $(MODULES_SER_OUT)
 	$(TOOL_CLASSANALYZER) \
-                --config $(MODULES_CONFIG) \
-                --config $(MODULES_GROUP) \
-                --properties $(MODULES_PROPERTIES) \
                 --version $(MODULE_VERSION) \
                 --classlist $(MODULE_CLASSLIST_DIR) \
                 --out $(MODULES_SER_OUT) \

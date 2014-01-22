@@ -183,7 +183,7 @@ $(eval $(call SetupCopyFiles,COPY_CORBA_LOGUTIL, \
 # Copy *.mc files in corba
 $(eval $(call SetupCopyFiles,COPY_CORBA_MC, \
     SRC := $(CORBA_TOPDIR)/src/share/classes, \
-    DEST := $(CORBA_TOPDIR)/src/share/modules/jdk.corba, \
+    DEST := $(CORBA_TOPDIR)/src/share/modules/javax.corba, \
     FILES := $(wildcard $(CORBA_TOPDIR)/src/share/classes/com/sun/corba/se/spi/logging/data/*.mc)))
 
 # Copy services in jaxws

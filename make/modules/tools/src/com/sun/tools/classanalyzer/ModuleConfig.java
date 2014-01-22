@@ -25,6 +25,7 @@ package com.sun.tools.classanalyzer;
 import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -95,7 +96,7 @@ public class ModuleConfig {
     }
 
     static ModuleConfig moduleConfigForUnknownModule() {
-        ModuleConfig mc = new ModuleConfig("unknown", "unknown");
+        ModuleConfig mc = new ModuleConfig("unknown", "0");
         mc.includes.add("**");
         return mc;
     }
@@ -429,12 +430,16 @@ public class ModuleConfig {
     // TODO: we shall remove "-" from the regex once we define
     // the naming convention for the module names without dashes
     static final Pattern classNamePattern = Pattern.compile("[\\w\\.\\*_$-/]+");
-
     static List<ModuleConfig> readConfigurationFile(String file, String version) throws IOException {
+        try (FileInputStream in = new FileInputStream(file)) {
+            return readConfigurationFile(file, in, version);
+        }
+    }
+
+    static List<ModuleConfig> readConfigurationFile(String file, InputStream in, String version) throws IOException {
         List<ModuleConfig> result = new ArrayList<>();
         // parse configuration file
-        try (FileInputStream in = new FileInputStream(file);
-             BufferedReader reader = new BufferedReader(new InputStreamReader(in)))
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(in)))
         {
             String line;
             int lineNumber = 0;

@@ -26,6 +26,8 @@ package com.sun.tools.classanalyzer;
 
 import com.sun.tools.classanalyzer.Module.ModuleVisitor;
 import java.io.*;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.*;
 
 import java.nio.file.Path;
@@ -89,16 +91,38 @@ class ClassAnalyzer extends Task {
 
 
     protected boolean validateOptions() {
-        return !options.configs.isEmpty() && options.version != null;
+        return options.version != null;
     }
 
     protected boolean run() throws IOException {
+        // initialize module properties
         if (options.props != null) {
-            Module.setModuleProperties(options.props);
+            try (FileInputStream fin = new FileInputStream(new File(options.props))) {
+                Module.initModuleProperties(fin);
+            }
+        } else {
+            try (InputStream in = ClassAnalyzer.class.getResourceAsStream("resources/modules.properties")) {
+                Module.initModuleProperties(in);
+            }
         }
-        final ModuleBuilder builder = new ModuleBuilder(options.configs,
-                                                  ClassPath.getArchives(options.javahome),
-                                                  options.version);
+        // initialize module definition
+        List<ModuleConfig> mconfigs;
+        if (options.configs.isEmpty()) {
+            URL url = ClassAnalyzer.class.getResource("resources/modules.def");
+            try (InputStream in = url.openStream()) {
+                mconfigs = ModuleConfig.readConfigurationFile(url.toString(), in, options.version);
+            }
+        } else {
+            mconfigs = new ArrayList<>();
+            for (String file : options.configs) {
+                mconfigs.addAll(ModuleConfig.readConfigurationFile(file, options.version));
+            }
+        }
+
+        final ModuleBuilder builder =
+            new ModuleBuilder(mconfigs,
+                              ClassPath.getArchives(options.javahome),
+                              options.version);
         builder.run();
 
         final Path dir = Paths.get(options.classlistDir);

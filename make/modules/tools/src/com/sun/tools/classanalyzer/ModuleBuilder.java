@@ -46,7 +46,7 @@ import java.util.*;
  * @see DependencyConfig
  */
 public class ModuleBuilder {
-    protected final List<ModuleConfig> mconfigs = new ArrayList<ModuleConfig>();
+    protected final List<ModuleConfig> mconfigs = new ArrayList<>();
     protected final String version;
     private final List<Archive> archives;
     private final Map<String, Klass> classes = new HashMap<>();
@@ -54,14 +54,10 @@ public class ModuleBuilder {
     private final Map<String, Service> services = new HashMap<>();
     private final Map<Module, Map<String,Dependence>> dependencesForModule = new HashMap<>();
     private final JigsawModules graph = new JigsawModules();
-    public ModuleBuilder(List<String> configs,
+    public ModuleBuilder(List<ModuleConfig> configs,
                          List<Archive> archives,
                          String version) throws IOException {
-        if (configs != null) {
-            for (String file : configs) {
-                mconfigs.addAll(ModuleConfig.readConfigurationFile(file, version));
-            }
-        }
+        this.mconfigs.addAll(configs);
         this.archives = archives;
         this.version = version;
     }

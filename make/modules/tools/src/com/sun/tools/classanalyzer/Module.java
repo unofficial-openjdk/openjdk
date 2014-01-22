@@ -23,10 +23,8 @@
  */
 package com.sun.tools.classanalyzer;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -38,7 +36,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.function.BiFunction;
-import java.util.function.Function;
 
 /**
  * Module contains a list of classes and resources.
@@ -57,17 +54,8 @@ public class Module implements Comparable<Module> {
             return value;
     }
 
-    static void setModuleProperties(String file) throws IOException {
-        File f = new File(file);
-        BufferedReader reader = null;
-        try {
-            reader = new BufferedReader(new FileReader(f));
-            moduleProps.load(reader);
-        } finally {
-            if (reader != null) {
-                reader.close();
-            }
-        }
+    static void initModuleProperties(InputStream in) throws IOException {
+        moduleProps.load(in);
     }
 
     private final String name;
@@ -110,6 +98,14 @@ public class Module implements Comparable<Module> {
 
         // create an internal view
         this.internalView = addView(name + ".internal");
+
+        // add to the resources if defined in the modules.properties
+        String res = getModuleProperty(name + ".resources");
+        if (res != null) {
+            for (String n : res.split("\\s+")) {
+                this.resources.add(new Resource(n));
+            }
+        }
     }
 
     String name() {
