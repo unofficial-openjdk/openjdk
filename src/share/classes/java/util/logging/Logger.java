@@ -174,11 +174,11 @@ import sun.reflect.Reflection;
 public class Logger {
     private static final Handler emptyHandlers[] = new Handler[0];
     private static final int offValue = Level.OFF.intValue();
-    private LogManager manager;
+    private volatile LogManager manager;
     private String name;
     private final CopyOnWriteArrayList<Handler> handlers =
         new CopyOnWriteArrayList<>();
-    private String resourceBundleName;
+    private volatile String resourceBundleName;
     private volatile boolean useParentHandlers = true;
     private volatile Filter filter;
     private boolean anonymous;
