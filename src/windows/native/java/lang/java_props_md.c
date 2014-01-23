@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -448,6 +448,7 @@ GetJavaProperties(JNIEnv* env)
                     case  0: sprops.os_name = "Windows Vista";        break;
                     case  1: sprops.os_name = "Windows 7";            break;
                     case  2: sprops.os_name = "Windows 8";            break;
+                    case  3: sprops.os_name = "Windows 8.1";          break;
                     default: sprops.os_name = "Windows NT (unknown)";
                     }
                 } else {
@@ -455,6 +456,7 @@ GetJavaProperties(JNIEnv* env)
                     case  0: sprops.os_name = "Windows Server 2008";    break;
                     case  1: sprops.os_name = "Windows Server 2008 R2"; break;
                     case  2: sprops.os_name = "Windows Server 2012";    break;
+                    case  3: sprops.os_name = "Windows Server 2012 R2"; break;
                     default: sprops.os_name = "Windows NT (unknown)";
                     }
                 }
