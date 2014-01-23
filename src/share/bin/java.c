@@ -98,6 +98,8 @@ static int numOptions, maxOptions;
  * Prototypes for functions internal to launcher.
  */
 static void SetClassPath(const char *s);
+static void SetBootClassPath(const char *s);
+static void ExpandToBootClassPath(const char* pathname);
 static void SetModulesProp(const char *mods);
 static void SelectVersion(int argc, char **argv, char **main_class);
 static jboolean ParseArguments(int *pargc, char ***pargv,
@@ -321,6 +323,9 @@ JLI_Launch(int argc, char ** argv,              /* main argc, argc */
     if (ret == 1) {
         AddModuleAppOptions(&mode, &what, jrepath);
     }
+
+    /* Setup bcp when running with shuffled classes or modules image */
+    SetBootClassPath(jrepath);
 
     /* Override class path if -jar flag was specified */
     if (mode == LM_JAR) {
@@ -783,6 +788,72 @@ SetClassPath(const char *s)
                        + JLI_StrLen(s));
     sprintf(def, format, s);
     AddOption(def, NULL);
+    if (s != orig)
+        JLI_MemFree((char *) s);
+}
+
+static void
+SetBootClassPath(const char *jrepath) {
+    const char separator[] = { FILE_SEPARATOR, '\0' };
+    char pathname[MAXPATHLEN];
+    struct stat statbuf;
+
+    /* modules image */
+    JLI_Snprintf(pathname, sizeof(pathname), "%s%slib%smodules", jrepath, separator, separator);
+    if (stat(pathname, &statbuf) == 0) {
+        JLI_Snprintf(pathname, sizeof(pathname), "%s%slib%smodules%s*", jrepath, separator, separator, separator);
+        ExpandToBootClassPath(pathname);
+        return;
+    }
+
+    /* exploded modules */
+    JLI_Snprintf(pathname, sizeof(pathname), "%s%smodules", jrepath, separator);
+    if (stat(pathname, &statbuf) == 0) {
+        JLI_Snprintf(pathname, sizeof(pathname), "%s%smodules%s*", jrepath, separator, separator);
+        ExpandToBootClassPath(pathname);
+        return;
+    }
+}
+
+static void
+ExpandToBootClassPath(const char* pathname) {
+    const char separator[] = { FILE_SEPARATOR, '\0' };
+    static const char vmoption[] = "-Xbootclasspath/p:";
+    const int vmoption_len = JLI_StrLen(vmoption);
+    const char *orig = pathname;
+    char *def, *s;
+    int slen = 0;
+
+    s = (char *) JLI_WildcardExpandDirectory(pathname);
+    slen = JLI_StrLen(s);
+    def = JLI_MemAlloc(vmoption_len+slen+1);
+    memcpy(def, vmoption, vmoption_len);
+    memcpy(def+vmoption_len, s, slen);
+    def[vmoption_len+slen] = '\0';
+
+    // Must be added before the user-specified -Xbootclasspath/p: arguments.
+    // Hotspot VM prepends the given -Xbootclasspath/p: argument
+    // to the bootclasspath in the order of the input VM arguments.
+    // The second -Xbootclasspath/p: argument will be prepended
+    // to the first -Xbootclasspath/p: if multiple ones are given.
+
+    if (numOptions == 0) {
+        AddOption(def, NULL);
+    } else {
+        int newMaxOptions = maxOptions + 1;
+        JavaVMOption *new = JLI_MemAlloc(newMaxOptions * sizeof(JavaVMOption));
+        JavaVMOption *orig = new+1;
+        // Set the -Xbootclasspath/p option to be the first VM argument
+
+        new[0].optionString = def;
+        new[0].extraInfo = NULL;
+        memcpy(orig, options, numOptions * sizeof(JavaVMOption));
+        JLI_MemFree(options);
+        options = new;
+        maxOptions = newMaxOptions;
+        numOptions++;
+    }
+
     if (s != orig)
         JLI_MemFree((char *) s);
 }
