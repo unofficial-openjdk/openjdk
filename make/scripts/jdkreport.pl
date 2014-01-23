@@ -118,10 +118,11 @@ ould not run hg log for $i \n";
    }
  }
 
+ if($#bugs >= 0) { #print the bugs for the last changeset in the file
+   print_bugs();
+ }
+
  if($first == 0) {
-   if($#bugs >= 0) { #print the bugs for the last changeset in the file
-     print_bugs();
-   }
    print "</table>"; #close table only if first is false
  }
 }
