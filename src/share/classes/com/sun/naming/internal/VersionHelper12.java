@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2006, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,7 +35,6 @@ import java.security.PrivilegedAction;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.util.Enumeration;
-import java.util.Hashtable;
 import java.util.NoSuchElementException;
 import java.util.Properties;
 
@@ -54,21 +53,24 @@ import javax.naming.*;
 
 final class VersionHelper12 extends VersionHelper {
 
-    private boolean getSystemPropsFailed = false;
-
-    VersionHelper12() {} // Disallow external from creating one of these.
+    // Disallow external from creating one of these.
+    VersionHelper12() {
+    }
 
     public Class loadClass(String className) throws ClassNotFoundException {
-        ClassLoader cl = getContextClassLoader();
-        return Class.forName(className, true, cl);
+        return loadClass(className, getContextClassLoader());
     }
 
     /**
-      * Package private.
-      */
+     * Package private.
+     *
+     * This internal method is used with Thread Context Class Loader (TCCL),
+     * please don't expose this method as public.
+     */
     Class loadClass(String className, ClassLoader cl)
         throws ClassNotFoundException {
-        return Class.forName(className, true, cl);
+        Class<?> cls = Class.forName(className, true, cl);
+        return cls;
     }
 
     /**
@@ -77,12 +79,12 @@ final class VersionHelper12 extends VersionHelper {
      */
     public Class loadClass(String className, String codebase)
         throws ClassNotFoundException, MalformedURLException {
-        ClassLoader cl;
 
         ClassLoader parent = getContextClassLoader();
-        cl = URLClassLoader.newInstance(getUrlArray(codebase), parent);
+        ClassLoader cl =
+                 URLClassLoader.newInstance(getUrlArray(codebase), parent);
 
-        return Class.forName(className, true, cl);
+        return loadClass(className, cl);
     }
 
     String getJndiProperty(final int i) {
@@ -100,16 +102,12 @@ final class VersionHelper12 extends VersionHelper {
     }
 
     String[] getJndiProperties() {
-        if (getSystemPropsFailed) {
-            return null;        // after one failure, don't bother trying again
-        }
         Properties sysProps = (Properties) AccessController.doPrivileged(
             new PrivilegedAction() {
                 public Object run() {
                     try {
                         return System.getProperties();
                     } catch (SecurityException e) {
-                        getSystemPropsFailed = true;
                         return null;
                     }
                 }
@@ -175,16 +173,30 @@ final class VersionHelper12 extends VersionHelper {
         return new InputStreamEnumeration(urls);
     }
 
+    /**
+     * Package private.
+     *
+     * This internal method returns Thread Context Class Loader (TCCL),
+     * if null, returns the system Class Loader.
+     *
+     * Please don't expose this method as public.
+     */
     ClassLoader getContextClassLoader() {
         return (ClassLoader) AccessController.doPrivileged(
             new PrivilegedAction() {
                 public Object run() {
-                    return Thread.currentThread().getContextClassLoader();
+                    ClassLoader loader =
+                            Thread.currentThread().getContextClassLoader();
+                    if (loader == null) {
+                        // Don't use bootstrap class loader directly!
+                        loader = ClassLoader.getSystemClassLoader();
+                    }
+
+                    return loader;
                 }
             }
         );
     }
-
 
     /**
      * Given an enumeration of URLs, an instance of this class represents

@@ -41,14 +41,13 @@
 U_NAMESPACE_BEGIN
 
 GlyphIterator::GlyphIterator(LEGlyphStorage &theGlyphStorage, GlyphPositionAdjustments *theGlyphPositionAdjustments, le_bool rightToLeft, le_uint16 theLookupFlags,
-                             FeatureMask theFeatureMask, const LEReferenceTo<GlyphDefinitionTableHeader> &theGlyphDefinitionTableHeader)
+                             FeatureMask theFeatureMask, const LEReferenceTo<GlyphDefinitionTableHeader> &theGlyphDefinitionTableHeader, LEErrorCode &success)
   : direction(1), position(-1), nextLimit(-1), prevLimit(-1),
     glyphStorage(theGlyphStorage), glyphPositionAdjustments(theGlyphPositionAdjustments),
     srcIndex(-1), destIndex(-1), lookupFlags(theLookupFlags), featureMask(theFeatureMask), glyphGroup(0),
     glyphClassDefinitionTable(), markAttachClassDefinitionTable()
 
 {
-  LEErrorCode success = LE_NO_ERROR; // TODO
     le_int32 glyphCount = glyphStorage.getGlyphCount();
 
     if (theGlyphDefinitionTableHeader.isValid()) {

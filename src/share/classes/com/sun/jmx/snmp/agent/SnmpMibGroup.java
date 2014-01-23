@@ -116,7 +116,7 @@ public abstract class SnmpMibGroup extends SnmpMibOid
     public void validateVarId(long arc, Object userData)
         throws SnmpStatusException {
         if (isVariable(arc) == false)
-            throw noSuchObjectException;
+            throw new SnmpStatusException(SnmpStatusException.noSuchObject);
     }
 
 
@@ -365,16 +365,16 @@ public abstract class SnmpMibGroup extends SnmpMibOid
 
             // The trailing .0 is missing in the OID
             if (depth+2 > length)
-                throw noSuchInstanceException;
+                throw new SnmpStatusException(SnmpStatusException.noSuchInstance);
 
             // There are too many arcs left in the OID (there should remain
             // a single trailing .0)
             if (depth+2 < length)
-                throw noSuchInstanceException;
+                throw new SnmpStatusException(SnmpStatusException.noSuchInstance);
 
             // The last trailing arc is not .0
             if (oid[depth+1] != 0L)
-                throw noSuchInstanceException;
+                throw new SnmpStatusException(SnmpStatusException.noSuchInstance);
 
             // It's one of our variable, register this node.
             handlers.add(this,depth,varbind);
@@ -397,7 +397,7 @@ public abstract class SnmpMibGroup extends SnmpMibOid
             // abort the whole request, so we're going to throw
             // a noSuchObject...
             //
-            throw noSuchObjectException;
+            throw new SnmpStatusException(SnmpStatusException.noSuchObject);
 
         final Object data = handlers.getUserData();
         final int pduVersion = handlers.getRequestPduVersion();
@@ -433,7 +433,7 @@ public abstract class SnmpMibGroup extends SnmpMibOid
                                                         depth+1,handlers,
                                                         checker);
                 }catch(SnmpStatusException ex) {
-                    throw noSuchObjectException;
+                    throw new SnmpStatusException(SnmpStatusException.noSuchObject);
                 } finally {
                     checker.remove(depth);
                 }
@@ -458,7 +458,7 @@ public abstract class SnmpMibGroup extends SnmpMibOid
                     try {
                         checker.checkCurrentOid();
                     } catch(SnmpStatusException e) {
-                        throw noSuchObjectException;
+                        throw new SnmpStatusException(SnmpStatusException.noSuchObject);
                     } finally {
                         checker.remove(depth,2);
                     }
@@ -503,7 +503,7 @@ public abstract class SnmpMibGroup extends SnmpMibOid
             // The oid is not valid, we will throw an exception in order
             // to try with the next valid identifier...
             //
-            throw noSuchObjectException;
+            throw new SnmpStatusException(SnmpStatusException.noSuchObject);
 
         } catch (SnmpStatusException e) {
             // We didn't find anything at the given arc, so we're going

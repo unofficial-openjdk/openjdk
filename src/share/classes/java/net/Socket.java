@@ -624,6 +624,10 @@ class Socket implements java.io.Closeable {
         InetAddress addr = epoint.getAddress();
         int port = epoint.getPort();
         checkAddress (addr, "bind");
+        SecurityManager security = System.getSecurityManager();
+        if (security != null) {
+            security.checkListen(port);
+        }
         getImpl().bind (addr, port);
         bound = true;
     }
