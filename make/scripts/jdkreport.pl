@@ -23,22 +23,29 @@
 # questions.
 #
 
+use warnings;
+#use strict;
+
 $| = 1; #set buffer flushing on, so that messages are printed immediately
 
-if ($#ARGV != 1) {
- # print "Sampel: jdkreport.pl /p/dolphin/jdk7/TAGS/jdk7 jdk7-b42:jdk7-b43 | tee reportx.html \n";
- # print "This should contain ONLY open repos\n";
- print "Usage: $0 repo date\n";   print "Usage: $0 repo <prev-tag:curr-tag>\n";
- print "Usage: $0 repo jdk7-b40:jdk7-b41>\n";
- print "Usage: $0 repo jdk7-b50:tip>\n";
- # print "Usage: $0 media \"2008-10-29 13:00 to 2008-10-29 18:00\" \n";
- # print "or   : $0 media 2008-10-29\n";   exit;
+if ($#ARGV != 2) {
+ print "Usage: $0 <repo> <prev-tag> <curr-tag>\n";
+ print "\n";
+ print "Example: $0 repo jdk7-b40 jdk7-b41\n";
+ print "Exmaple: $0 repo jdk7-b50 tip\n";
+ print "\n";
+ print "Generates a report for changes in repo (and its sup repos).\n";
+ print "<prev-tag> is exclusive and <curr-tag> is inclusive. A report\n";
+ print "from jdk7-b40 to jdk7-b41 will include all changes after the\n";
+ print "jdk7-b40 tag until (and including) the change tagged as jdk7-b41.\n";
+ exit 1;
 }
 
-$path = $ARGV[0];
 chdir ("$ARGV[0]");
 @list = `hg ftrees`;
 chomp(@list);
+my $start_tag = $ARGV[1];
+my $end_tag = $ARGV[2];
 
 sub print_bugs() {
  if($first) { #print repo line if it encounters first results in prev line
@@ -92,9 +99,8 @@ sub print_bugs() {
 
 foreach $i (@list) {
  chdir("$i");
-#  system("hg log -r $ARGV[1] --no-merges > /tmp/jdk7report.$$") and die "Could not run hg log for $i \n";
-system("hg log -r $ARGV[1] --no-merges --template 'changeset: {node|short}\n{desc}\n' > /tmp/jdk7report.$$") and die "C
-ould not run hg log for $i \n";
+ my $log_command = "hg log -r \'::tag(\"$end_tag\") - ::tag(\"$start_tag\")\' --no-merges --template 'changeset: {node|short}\n{desc}\n' > /tmp/jdk7report.$$";
+ system($log_command) and die "Could not run hg log for $i \n";
 
  open(FILE, "/tmp/jdk7report.$$") or die "Could not openfile\n";
 
