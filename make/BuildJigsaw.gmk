@@ -59,7 +59,14 @@ jdk-gensrc: jdk-build-tools langtools-interim
 
 ################################################################################
 
-all: langtools-gensrc corba-gensrc jdk-gensrc
+java-compile: jdk-gensrc langtools-gensrc corba-gensrc
+	+($(CD) $(SRC_ROOT)/make && $(MAKE) -f CompileJavaModules.gmk JIGSAW=true)
+
+.PHONY: java-compile
+
+################################################################################
+
+all: java-compile
 
 .PHONY: default all
 

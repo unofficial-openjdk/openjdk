@@ -40,7 +40,7 @@ ifeq ($(JIGSAW), true)
   JAVA_LOGGING_SUBDIR := /java.logging
   JAVA_MANAGEMENT_SUBDIR := /java.management
   JAVA_RMI_SUBDIR := /java.rmi
-  JAVA_JDBC_ROWSET_SUBDIR := /jdk.jdbc.rowset
+  JAVA_JDBC_ROWSET_SUBDIR := /java.jdbc.rowset
 
   JAVAX_AUTH_SUBDIR := /javax.auth
   JAVAX_COMPILER_SUBDIR := /javax.compiler

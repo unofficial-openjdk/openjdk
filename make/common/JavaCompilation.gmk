@@ -539,11 +539,13 @@ define SetupJavaCompilation
 
       $$($1_HEADERS)/_the.$1_headers: $$($1_BIN)/_the.$1_batch
 		$(MKDIR) -p $$(@D)
-		for f in `ls $$($1_HEADERS).tmp`; do \
-		  if [ ! -f "$$($1_HEADERS)/$$$$f" ] || [ "`$(DIFF) $$($1_HEADERS)/$$$$f $$($1_HEADERS).tmp/$$$$f`" != "" ]; then \
-		    $(CP) -f $$($1_HEADERS).tmp/$$$$f $$($1_HEADERS)/$$$$f; \
-		  fi; \
-		done
+		if [ -e $$($1_HEADERS).tmp ]; then \
+		  for f in `ls $$($1_HEADERS).tmp`; do \
+		    if [ ! -f "$$($1_HEADERS)/$$$$f" ] || [ "`$(DIFF) $$($1_HEADERS)/$$$$f $$($1_HEADERS).tmp/$$$$f`" != "" ]; then \
+		      $(CP) -f $$($1_HEADERS).tmp/$$$$f $$($1_HEADERS)/$$$$f; \
+		    fi; \
+		  done; \
+		fi
 		$(RM) -r $$($1_HEADERS).tmp
 		$(TOUCH) $$@
 
