@@ -29,7 +29,8 @@ import java.security.*;
 import java.io.FileDescriptor;
 import java.io.File;
 import java.io.FilePermission;
-import java.awt.AWTPermission;
+// Cannot compile java.base with this import. Only used for javadoc.
+//import java.awt.AWTPermission;
 import java.util.PropertyPermission;
 import java.lang.RuntimePermission;
 import java.net.SocketPermission;

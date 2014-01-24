@@ -47,7 +47,7 @@ $(GENSRC_TMP)/_the.charsetmapping.dir:
 GENSRC_SB := $(GENSRC_TMP)/_the.charsetmapping.sbcs
 
 $(GENSRC_SB): $(GENSRC_DATA)/sbcs $(GENSRC_TEMPLATES) $(GENSRC_TMP)/_the.charsetmapping.dir
-	$(TOOL_CHARSETMAPPING) $(LOG_INFO) $(GENSRC_DATA) $(GENSRC_DST_SC) sbcs
+	$(TOOL_CHARSETMAPPING) $(LOG_INFO) $(GENSRC_DATA) $(GENSRC_DST_BASE) sbcs
 	$(TOUCH) $@
 
 GENSRC_CHARSETMAPPING += $(GENSRC_SB)
