@@ -29,14 +29,38 @@ default: all
 include $(SPEC)
 include JigsawSpecMod.gmk
 include MakeBase.gmk
-include JavaCompilation.gmk
 
-include $(LANGTOOLS_TOPDIR)/make/JigsawBuildLangtools.gmk
-all: interim-langtools
+################################################################################
 
-include $(CORBA_TOPDIR)/make/JigsawBuildCorba.gmk
-all: $(CORBA_TARGETS)
+langtools-gensrc:
+	+($(CD) $(LANGTOOLS_TOPDIR)/make && $(MAKE) -f GensrcLangtools.gmk JIGSAW=true)
 
-# Declare an order dependency from all dependents on the interim javac
-$(NEW_JAVAC_DEPENDENTS): | interim-langtools
+langtools-interim: langtools-gensrc
+	+($(CD) $(LANGTOOLS_TOPDIR)/make && $(MAKE) -f CompileInterim.gmk JIGSAW=true)
 
+.PHONY: langtools-gensrc langtools-interim
+
+################################################################################
+
+corba-gensrc: langtools-interim
+	+($(CD) $(CORBA_TOPDIR)/make && $(MAKE) -f GensrcCorba.gmk JIGSAW=true)
+
+.PHONY: corba-gensrc
+
+################################################################################
+
+jdk-build-tools: langtools-interim
+	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f Tools.gmk java-tools JIGSAW=true)
+
+jdk-gensrc: jdk-build-tools langtools-interim
+	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f GenerateSources.gmk JIGSAW=true)
+
+.PHONY: jdk-build-tools jdk-gensrc
+
+################################################################################
+
+all: langtools-gensrc corba-gensrc jdk-gensrc
+
+.PHONY: default all
+
+FRC: # Force target

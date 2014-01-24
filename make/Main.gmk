@@ -81,7 +81,8 @@ start-make: $(SPEC)
 jigsaw: shuffle jigsaw-only
 jigsaw-only: start-make
 	@$(call TargetEnter)
-	@($(CD) $(SRC_ROOT)/make && $(BUILD_LOG_WRAPPER) $(MAKE) $(MAKE_ARGS) -f BuildJigsaw.gmk)
+	@($(CD) $(SRC_ROOT)/make && $(BUILD_LOG_WRAPPER) $(MAKE) $(MAKE_ARGS) \
+	    -f BuildJigsaw.gmk $(JIGSAW_TARGET))
 	@$(call TargetExit)
 
 langtools: langtools-only

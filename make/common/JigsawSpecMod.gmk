@@ -26,8 +26,34 @@
 # Include this file after SPEC to rewrite some variable values to redirect
 # output into temporary jigsaw subdirectories. 
 
+ifeq ($(JIGSAW), true)
+  LANGTOOLS_OUTPUTDIR := $(patsubst $(OUTPUT_ROOT)/%,$(OUTPUT_ROOT)/jigsaw/%,$(LANGTOOLS_OUTPUTDIR))
+  CORBA_OUTPUTDIR := $(patsubst $(OUTPUT_ROOT)/%,$(OUTPUT_ROOT)/jigsaw/%,$(CORBA_OUTPUTDIR))
+  JDK_OUTPUTDIR := $(patsubst $(OUTPUT_ROOT)/%,$(OUTPUT_ROOT)/jigsaw/%,$(JDK_OUTPUTDIR))
 
-LANGTOOLS_OUTPUTDIR := $(patsubst $(OUTPUT_ROOT)/%,$(OUTPUT_ROOT)/jigsaw/%,$(LANGTOOLS_OUTPUTDIR))
-CORBA_OUTPUTDIR := $(patsubst $(OUTPUT_ROOT)/%,$(OUTPUT_ROOT)/jigsaw/%,$(CORBA_OUTPUTDIR))
+  BOOTSTRAP_JAVAC_JAR := $(LANGTOOLS_OUTPUTDIR)/dist/interim/lib/javac.jar
 
-BOOTSTRAP_JAVAC_JAR := $(LANGTOOLS_OUTPUTDIR)/dist/interim/lib/javac.jar
+  MODULES_SUBDIR := modules
+
+  JAVA_BASE_SUBDIR := /java.base
+  JAVA_DESKTOP_SUBDIR := /java.desktop
+  JAVA_LOGGING_SUBDIR := /java.logging
+  JAVA_MANAGEMENT_SUBDIR := /java.management
+  JAVA_RMI_SUBDIR := /java.rmi
+  JAVA_JDBC_ROWSET_SUBDIR := /jdk.jdbc.rowset
+
+  JAVAX_AUTH_SUBDIR := /javax.auth
+  JAVAX_COMPILER_SUBDIR := /javax.compiler
+  JAVAX_CORBA_SUBDIR := /javax.corba
+  JAVAX_JNDI_SUBDIR := /javax.jndi
+  JAVAX_XMLDSIG_SUBDIR := /javax.xmldsig
+
+  JDK_DEVTOOLS_SUBDIR := /jdk.devtools
+  JDK_TOOLS_SUBDIR := /jdk.tools
+  JDK_TOOLS_BASE_SUBDIR := /jdk.tools.base
+
+  SUN_CHARSETS_SUBDIR := /sun.charsets
+
+else
+  MODULES_SUBDIR := classes
+endif
