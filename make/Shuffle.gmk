@@ -135,7 +135,7 @@ endef
 
 # Find all modules that have classes and iterate over them
 MODULE_LIST := $(patsubst $(MODULE_CLASSLIST_DIR)/%.classlist,%, \
-    $(shell $(LS) $(MODULE_CLASSLIST_DIR)/*.classlist))
+    $(wildcard $(MODULE_CLASSLIST_DIR)/*.classlist))
 
 $(foreach m,$(MODULE_LIST),$(eval $(call CopyModule,$m)))
 
@@ -180,11 +180,12 @@ $(eval $(call SetupCopyFiles,COPY_CORBA_LOGUTIL, \
     DEST := $(CORBA_TOPDIR)/make/tools/src, \
     FILES := $(wildcard $(CORBA_TOPDIR)/src/share/classes/com/sun/tools/corba/se/logutil/*.java)))
 
-# Copy *.mc files in corba
+# Copy *.mc and *.properties files in corba
 $(eval $(call SetupCopyFiles,COPY_CORBA_MC, \
     SRC := $(CORBA_TOPDIR)/src/share/classes, \
     DEST := $(CORBA_TOPDIR)/src/share/modules/javax.corba, \
-    FILES := $(wildcard $(CORBA_TOPDIR)/src/share/classes/com/sun/corba/se/spi/logging/data/*.mc)))
+    FILES := $(wildcard $(CORBA_TOPDIR)/src/share/classes/com/sun/corba/se/spi/logging/data/*.mc \
+        $(CORBA_TOPDIR)/src/share/classes/com/sun/corba/se/impl/orbutil/resources/*.properties)))
 
 # Copy services in jaxws
 $(eval $(call SetupCopyFiles,COPY_JAXWS_SERVICES, \
@@ -192,10 +193,108 @@ $(eval $(call SetupCopyFiles,COPY_JAXWS_SERVICES, \
     DEST := $(JAXWS_TOPDIR)/src/share/modules/jdk.tools.jaxws, \
     FILES := $(wildcard $(JAXWS_TOPDIR)/src/share/jaxws_classes/com/sun/tools/etc/META-INF/services/*Plugin)))
 
+# Copy WrapperGenerator to a source dir in build tools where it belongs
+$(eval $(call SetupCopyFiles,COPY_X11_WRAPPER_GENERATOR, \
+    SRC := $(JDK_TOPDIR)/src/solaris/classes/sun/awt/X11/generator, \
+    DEST := $(JDK_TOPDIR)/make/src/classes/build/tools/x11wrappergenerator, \
+    FILES := $(JDK_TOPDIR)/src/solaris/classes/sun/awt/X11/generator/WrapperGenerator.java))
+
+# Copy WrapperGenerator data files
+$(eval $(call SetupCopyFiles,COPY_X11_WRAPPER_DATA, \
+    SRC := $(JDK_TOPDIR)/src/solaris/classes/sun/awt/X11/generator, \
+    DEST := $(JDK_TOPDIR)/make/data/x11wrappergenerator, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/solaris/classes/sun/awt/X11/generator/*.txt) \
+        $(wildcard $(JDK_TOPDIR)/src/solaris/classes/sun/awt/X11/generator/sizes*)))
+
+# Copy nimbus templates
+$(eval $(call SetupCopyFiles,COPY_NIMBUS_RESOURCES, \
+    SRC := $(JDK_TOPDIR)/src/share/classes/javax/swing/plaf/nimbus, \
+    DEST := $(JDK_TOPDIR)/src/share/modules/java.desktop/javax/swing/plaf/nimbus/, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/share/classes/javax/swing/plaf/nimbus/*.template)))
+
+# Copy *XLocales.java.template to JAVA_base
+$(eval $(call SetupCopyFiles,COPY_LOCALE_TEMPLATES, \
+    SRC := $(JDK_TOPDIR)/src/share/classes, \
+    DEST := $(JDK_TOPDIR)/src/share/modules/java.base, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/share/classes/sun/util/*XLocales.java.template \
+        $(JDK_TOPDIR)/src/share/classes/sun/util/locale/provider/*XLocales.java.template)))
+
+$(eval $(call SetupCopyFiles,COPY_MISC_VERSION, \
+    SRC := $(JDK_TOPDIR)/src/share/classes, \
+    DEST := $(JDK_TOPDIR)/src/share/modules/java.base, \
+    FILES := $(JDK_TOPDIR)/src/share/classes/sun/misc/Version.java.template))
+
+$(eval $(call SetupCopyFiles,COPY_JCONSOLE_VERSION, \
+    SRC := $(JDK_TOPDIR)/src/share/classes, \
+    DEST := $(JDK_TOPDIR)/src/share/modules/jdk.tools, \
+    FILES := $(JDK_TOPDIR)/src/share/classes/sun/tools/jconsole/Version.java.template))
+
+$(eval $(call SetupCopyFiles,COPY_UNIX_PROCESS, \
+    SRC := $(JDK_TOPDIR)/src/solaris/classes, \
+    DEST := $(JDK_TOPDIR)/src/solaris/modules/java.base, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/solaris/classes/java/lang/UNIXProcess.java*)))
+
+$(eval $(call SetupCopyFiles,COPY_STANDARD_CHARSETS, \
+    SRC := $(JDK_TOPDIR)/src/share/classes, \
+    DEST := $(JDK_TOPDIR)/src/share/modules/java.base, \
+    FILES := $(JDK_TOPDIR)/src/share/classes/sun/nio/cs/standard-charsets))
+
+$(eval $(call SetupCopyFiles,COPY_NIO_TEMPLATES, \
+    SRC := $(JDK_TOPDIR)/src/share/classes, \
+    DEST := $(JDK_TOPDIR)/src/share/modules/java.base, \
+    FILES := $(JDK_TOPDIR)/src/share/classes/java/nio/charset/Charset-X-Coder.java.template \
+        $(wildcard $(JDK_TOPDIR)/src/share/classes/java/nio/*.template)))
+
+$(eval $(call SetupCopyFiles,COPY_NIO_EXCEPTIONS, \
+    SRC := $(JDK_TOPDIR)/src/share/classes, \
+    DEST := $(JDK_TOPDIR)/src/share/modules/java.base, \
+    FILES := $(JDK_TOPDIR)/src/share/classes/java/nio/exceptions \
+        $(wildcard $(JDK_TOPDIR)/src/share/classes/java/nio/*/exceptions)))
+
+$(eval $(call SetupCopyFiles,COPY_SOLARIS_ICONS, \
+    SRC := $(JDK_TOPDIR)/src/solaris/classes, \
+    DEST := $(JDK_TOPDIR)/src/solaris/modules/java.desktop, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/solaris/classes/sun/awt/X11/*.png)))
+
+$(eval $(call SetupCopyFiles,COPY_SHARE_ICONS, \
+    SRC := $(JDK_TOPDIR)/src/share/classes, \
+    DEST := $(JDK_TOPDIR)/src/share/modules/java.desktop, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/share/classes/sun/awt/resources/*.png)))
+
+$(eval $(call SetupCopyFiles,COPY_CLDR, \
+    SRC := $(JDK_TOPDIR)/src/share/classes, \
+    DEST := $(JDK_TOPDIR)/src/share/modules/java.base, \
+    FILES := $(shell $(FIND) $(JDK_TOPDIR)/src/share/classes/sun/util/cldr/resources -type f)))
+
+$(eval $(call SetupCopyFiles,COPY_SWING_LAF, \
+    SRC := $(JDK_TOPDIR)/src/share/classes, \
+    DEST := $(JDK_TOPDIR)/src/share/modules/java.desktop, \
+    FILES := $(JDK_TOPDIR)/src/share/classes/javax/swing/plaf/nimbus/skin.laf))
+
 ################################################################################
 
 $(BUILD_TARGET_FILES): $(SA_CLASSES)/_the.sa.jar.unpacked
-shuffle-src: $(SRC_TARGET_FILES) $(COPY_CORBA_LOGUTIL) $(COPY_CORBA_MC) $(COPY_JAXWS_SERVICES)
+
+shuffle-src: \
+    $(SRC_TARGET_FILES) \
+    $(COPY_CORBA_LOGUTIL) \
+    $(COPY_CORBA_MC) \
+    $(COPY_JAXWS_SERVICES) \
+    $(COPY_X11_WRAPPER_GENERATOR) \
+    $(COPY_X11_WRAPPER_DATA) \
+    $(COPY_NIMBUS_RESOURCES) \
+    $(COPY_LOCALE_TEMPLATES) \
+    $(COPY_MISC_VERSION) \
+    $(COPY_JCONSOLE_VERSION) \
+    $(COPY_UNIX_PROCESS) \
+    $(COPY_STANDARD_CHARSETS) \
+    $(COPY_NIO_TEMPLATES) \
+    $(COPY_NIO_EXCEPTIONS) \
+    $(COPY_SOLARIS_ICONS) \
+    $(COPY_SHARE_ICONS) \
+    $(COPY_CLDR) \
+    $(COPY_SWING_LAF)
+
 shuffle-build: $(BUILD_TARGET_FILES)
 
 all: shuffle-src shuffle-build
@@ -210,6 +309,8 @@ clean-src:
 	$(RM) -r $(CORBA_TOPDIR)/src/share/modules
 	$(RM) -r $(LANGTOOLS_TOPDIR)/src/share/modules
 	$(RM) -r $(CORBA_TOPDIR)/make/tools/src/com
+	$(RM) -r $(JDK_TOPDIR)/make/src/classes/build/tools/x11wrappergenerator
+	$(RM) -r $(JDK_TOPDIR)/make/data/x11wrappergenerator
 
 clean-build:
 	$(RM) -r $(JDK_OUTPUTDIR)/modules

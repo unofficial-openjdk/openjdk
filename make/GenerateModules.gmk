@@ -37,13 +37,15 @@ CLASSANALYZER_RESOURCES := $(CLASSANALYZER_CLASSES)/com/sun/tools/classanalyzer/
 $(CLASSANALYZER_CLASSES)/com/sun/tools/classanalyzer/resources/% : $(JDK_TOPDIR)/make/modules/tools/src/com/sun/tools/classanalyzer/resources/%
 	$(call install-file)
 
-all: $(BUILD_CLASSANALYZER) \
-     $(CLASSANALYZER_RESOURCES)/classanalyzer.properties \
-     $(CLASSANALYZER_RESOURCES)/modules.def \
-     $(CLASSANALYZER_RESOURCES)/modules.properties
+$(MODULES_SER_OUT): $(BUILD_CLASSANALYZER) \
+    $(CLASSANALYZER_RESOURCES)/classanalyzer.properties \
+    $(CLASSANALYZER_RESOURCES)/modules.def \
+    $(CLASSANALYZER_RESOURCES)/modules.properties \
+    $(wildcard $(JDK_OUTPUTDIR)/classes/_the*)
 	$(RM) -rf $(MODULE_CLASSLIST_DIR) \
 		  $(MODULEINFO_DIR) \
-                  $(MODULES_SER_OUT)
+                  $(MODULES_SER_OUT) \
+	          $(JDK_OUTPUTDIR)/modules
 	$(TOOL_CLASSANALYZER) \
                 --version $(MODULE_VERSION) \
                 --classlist $(MODULE_CLASSLIST_DIR) \
@@ -53,5 +55,7 @@ all: $(BUILD_CLASSANALYZER) \
 	    $(ECHO) "ERROR: Check module \"other\". modules.config possibly requires update." ; \
 	    exit 2; \
 	fi
+
+all: $(MODULES_SER_OUT)
 
 .PHONY: all
