@@ -305,9 +305,9 @@ final public class Messages {
     public static String WRITABLE;
     public static String CONNECTION_FAILED1;
     public static String CONNECTION_FAILED2;
+    public static String CONNECTION_FAILED_SSL1;
+    public static String CONNECTION_FAILED_SSL2;
     public static String CONNECTION_LOST1;
-    public static String CONNECTION_INSECURE1;
-    public static String CONNECTION_INSECURE2;
     public static String CONNECTING_TO1;
     public static String CONNECTING_TO2;
     public static String DEADLOCK_TAB;
