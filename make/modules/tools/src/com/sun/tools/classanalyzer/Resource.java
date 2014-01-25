@@ -91,6 +91,9 @@ public class Resource implements Comparable<Resource> {
         if (name.contains("META-INF/JCE_RSA.")) {
             return false;
         }
+        if (name.contains("META-INF/INDEX.LIST")) {
+            return false;
+        }
         if (name.contains("META-INF/") &&
                 (name.endsWith(".RSA") || name.endsWith(".SF"))) {
             return false;
