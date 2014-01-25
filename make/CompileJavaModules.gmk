@@ -31,6 +31,8 @@ include JigsawSpecMod.gmk
 include MakeBase.gmk
 include JavaCompilation.gmk
 
+#JAVAC_WARNINGS := -Xlint:-unchecked,-deprecation,-overrides,auxiliaryclass,classfile,dep-ann,divzero,empty,try,varargs -Werror
+
 $(eval $(call SetupJavaCompiler,GENERATE_JDKBYTECODE, \
     JVM := $(JAVA), \
     JAVAC := $(NEW_JAVAC), \
@@ -54,44 +56,39 @@ ALL_SRC_DIRS := \
 # Find all modules with java sources by looking in the source dirs
 JAVA_MODULES := $(sort $(notdir $(wildcard $(patsubst %,%/*,$(filter %modules, $(ALL_SRC_DIRS))))))
 
-# These modules currently won't compile.
-BROKEN_JAVA_MODULES := \
-    jdk.sctp java.logging java.prefs jdk.crypto sun.charsets \
-    java.desktop jdk.crypto.pkcs11 jdk.tools.jre java.rmi java.jdbc javax.jndi javax.auth \
-    javax.saaj javax.xmldsig java.management javax.corba java.jdbc.rowset jdk.tools.base \
-    javax.jaxws jdk.tools.jaxws jdk.tools
-
-JAVA_MODULES := $(filter-out $(BROKEN_JAVA_MODULES), $(JAVA_MODULES))
-
 MODULE_INFO_DIR := $(OUTPUT_ROOT)/jdk/genmodules/src
 
 # This macro sets up compilation of a module and declares dependencies for it.
 # Param 1 - module name
 define SetupModuleCompilation
-
   # Find the module dependencies by parsing the module-info.java file
-  $1_DEPS := $(filter $(JAVA_MODULES),$(subst ;,,\
-      $(shell $(AWK) '/requires/ { print $2 }' $(MODULE_INFO_DIR)/$1/module-info.java)))
+  $1_DEPS := $(filter $(JAVA_MODULES),$(sort $(subst .internal,,$(subst ;,,\
+      $(shell $(AWK) '/requires/ { print $2 }' $(MODULE_INFO_DIR)/$1/module-info.java)))))
   ifneq ($$($1_DEPS), )
     $1_CLASSPATH := $$(addprefix $(JDK_OUTPUTDIR)/modules/,$$($1_DEPS))
     $1_CLASSPATH := $$(subst $$(SPACE),$$(PATH_SEP),$$($1_CLASSPATH))
-    $1_JAVAC_FLAGS := -classpath "$$($1_CLASSPATH)"
-#    $$(info $1_JAVAC_FLAGS $$($1_JAVAC_FLAGS))
+    $1_JAVAC_FLAGS := -bootclasspath "$$($1_CLASSPATH)"
   endif
 
-  $$(eval $$(call SetupJavaCompilation,BUILD_$1, \
+  $$(eval $$(call SetupJavaCompilation,$1, \
       SETUP := GENERATE_JDKBYTECODE, \
       SRC := $(wildcard $(patsubst %,%/$1,$(ALL_SRC_DIRS))), \
       BIN := $(JDK_OUTPUTDIR)/modules/$1, \
       HEADERS := $(JDK_OUTPUTDIR)/gensrc_headers/$1, \
       ADD_JAVAC_FLAGS := $$($1_JAVAC_FLAGS)))
 
-  $1: $$(BUILD_$1)
-  $$(BUILD_$1): $$($1_DEPS)
+  $1: $$($1)
+endef
+
+# This macro declares the dependencies in make. This needs to happen in 
+# a separate call when all the module name variables have been defined.
+define DeclareModuleDependencies
+  $$($1): $$(foreach d,$$($1_DEPS),$$($$d))
 endef
 
 # Setup compilation for each module
 $(foreach m,$(JAVA_MODULES),$(eval $(call SetupModuleCompilation,$m)))
+$(foreach m,$(JAVA_MODULES),$(eval $(call DeclareModuleDependencies,$m)))
 
 all: $(JAVA_MODULES)
 
