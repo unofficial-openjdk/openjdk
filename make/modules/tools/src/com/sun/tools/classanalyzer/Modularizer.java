@@ -158,7 +158,7 @@ class Modularizer extends Task {
             jmodules.load(in);
         }
 
-        for (String name : jmodules.modules()) {
+        for (String name : jmodules.moduleNames()) {
             ModuleContent mc = modules.get(name);
             if (mc == null) {
                 modules.put(name, mc = new ModuleContent(name));

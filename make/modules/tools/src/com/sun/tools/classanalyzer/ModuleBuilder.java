@@ -35,6 +35,7 @@ import com.sun.tools.classfile.Dependency.Location;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.*;
+import java.util.function.Function;
 
 /**
  * Module builder that creates modules as defined in the given
@@ -77,6 +78,26 @@ public class ModuleBuilder {
         return Module.getFactory();
     }
 
+    private TopoSorter<Module> moduleSorter;
+    public synchronized Iterable<Module> modules() {
+        if (moduleSorter == null) {
+            // sort modules in topological order
+            moduleSorter = new TopoSorter<>(dependencesForModule.keySet(),
+                    this::getModuleDependences);
+        }
+        return moduleSorter.result();
+    }
+
+    private Set<Module> getModuleDependences(Module m) {
+        Set<Module> deps = new HashSet<>();
+        for (Dependence d : dependencesForModule.get(m).values()) {
+            if (!d.requiresService()) {
+                deps.add(factory().getModuleForView(d.name()));
+            }
+        }
+        return deps;
+    }
+
     /**
      * This method assigns the classes and resource files
      * to modules and generates the package information and
@@ -90,8 +111,8 @@ public class ModuleBuilder {
         buildModules();
 
         // build jigsaw modules
-        for (Map.Entry<Module, Map<String,Dependence>> e : dependencesForModule.entrySet()) {
-            graph.build(e.getKey(), e.getValue().values());
+        for (Module m : modules()) {
+            graph.build(m, dependencesForModule.get(m).values());
         }
         System.out.format("%d modules %d classes analyzed%n",
                           dependencesForModule.size(), classes.size());
@@ -497,8 +518,57 @@ public class ModuleBuilder {
     }
 
     public <R, P> void visit(Visitor<R, P> visitor) throws IOException {
-        for (Module m : dependencesForModule.keySet()) {
+        for (Module m : modules()) {
             visitor.visitModule(m);
+        }
+    }
+
+    public static class TopoSorter<T> {
+        final Deque<T> result = new LinkedList<>();
+        final Deque<T> nodes = new LinkedList<>();
+        final Function<T,Set<T>> edges;
+        TopoSorter(Collection<T> nodes, Function<T,Set<T>> edges) {
+            for (T n : nodes) {
+                // filter duplicated nodes
+                if (!this.nodes.contains(n)) {
+                    this.nodes.add(n);
+                }
+            }
+            this.edges = edges;
+            sort();
+        }
+
+        public Iterable<T> result() {
+            return result;
+        }
+
+        private void sort() {
+            Deque<T> visited = new LinkedList<>();
+            Deque<T> done = new LinkedList<>();
+            T node;
+            while ((node = nodes.poll()) != null) {
+                if (!visited.contains(node)) {
+                    visit(node, visited, done);
+                }
+            }
+        }
+
+        private void visit(T m,
+                           Deque<T> visited,
+                           Deque<T> done) {
+            if (visited.contains(m)) {
+                if (!done.contains(m)) {
+                    throw new IllegalArgumentException("Cyclic detected: " +
+                        m + " " + edges.apply(m));
+                }
+                return;
+            }
+            visited.add(m);
+            for (T e : edges.apply(m)) {
+                visit(e, visited, done);
+            }
+            done.add(m);
+            result.addLast(m);
         }
     }
 }

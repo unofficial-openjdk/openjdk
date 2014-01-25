@@ -771,6 +771,7 @@ module java.compact3 {
 
     requires public jdk.httpserver;
     requires public jdk.sctp;
+    requires public jdk.crypto;
     requires public jdk.crypto.ec;
     requires public jdk.crypto.mscapi;
     requires public jdk.crypto.pkcs11;

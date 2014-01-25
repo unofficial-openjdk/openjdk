@@ -36,15 +36,11 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
-import java.util.Deque;
 import java.util.EnumSet;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -59,23 +55,14 @@ public class JigsawModules {
     public static final String MODULE_GRAPH = "jdk/jigsaw/module/resources/modules.ser";
     private final Map<String,jdk.jigsaw.module.Module> modules;
     public JigsawModules() {
-        this.modules = new HashMap<>();
+        this.modules = new LinkedHashMap<>();
     }
 
     public jdk.jigsaw.module.Module get(String name) {
         return modules.get(name);
     }
 
-    /**
-     * Returns a topological ordered list of modules.
-     */
-    public List<jdk.jigsaw.module.Module> topSortedModules() {
-        TopSorter topsorter = new TopSorter(modules.values());
-        topsorter.sort();
-        return topsorter.modules();
-    }
-
-    public Set<String> modules() {
+    public Set<String> moduleNames() {
         return modules.keySet();
     }
 
@@ -170,7 +157,7 @@ public class JigsawModules {
             mconfigWriter.format("// %d total number of modules for %s%n%n",
                                  modules.size(),
                                  System.getProperty("os.name"));
-            for (jdk.jigsaw.module.Module m : topSortedModules()) {
+            for (jdk.jigsaw.module.Module m : modules.values()) {
                 Path mdir = Paths.get(minfoDir, m.id().name());
                 mdir.toFile().mkdirs();
                 try (PrintWriter writer = new PrintWriter(mdir.resolve("module-info.java").toFile())) {
@@ -305,68 +292,10 @@ public class JigsawModules {
                 graph.load(in);
             }
         }
-        List<jdk.jigsaw.module.Module> modules = graph.topSortedModules();
-        System.out.format("%d modules:%n", modules.size());
         PrintWriter writer = new PrintWriter(System.out);
-        for (jdk.jigsaw.module.Module m : modules) {
+        for (jdk.jigsaw.module.Module m : graph.modules.values()) {
             graph.printModule(writer, m);
         }
         writer.flush();
-    }
-
-    static class TopSorter {
-        final Map<String, jdk.jigsaw.module.Module> viewToModules = new HashMap<>();
-        final Deque<String> result = new LinkedList<>();
-        final Deque<jdk.jigsaw.module.Module> nodes = new LinkedList<>();
-        TopSorter(Collection<jdk.jigsaw.module.Module> modules) {
-            for (jdk.jigsaw.module.Module m : modules) {
-                for (View v : m.views()) {
-                    viewToModules.put(v.id().name(), m);
-                }
-            }
-            nodes.addAll(modules);
-        }
-        public List<jdk.jigsaw.module.Module> modules() {
-            List<jdk.jigsaw.module.Module> modules = new ArrayList<>();
-            for (String name : result) {
-                modules.add(viewToModules.get(name));
-            }
-            return modules;
-        }
-        public void sort() {
-            Deque<jdk.jigsaw.module.Module> visited = new LinkedList<>();
-            Deque<jdk.jigsaw.module.Module> done = new LinkedList<>();
-            jdk.jigsaw.module.Module module;
-            while ((module = nodes.poll()) != null) {
-                if (!visited.contains(module)) {
-                    visit(module, visited, done);
-                }
-            }
-        }
-
-        private void visit(jdk.jigsaw.module.Module m,
-                           Deque<jdk.jigsaw.module.Module> visited,
-                           Deque<jdk.jigsaw.module.Module> done) {
-            if (visited.contains(m)) {
-                if (!done.contains(m)) {
-                    throw new IllegalArgumentException("Cyclic detected: " +
-                        m.id().name() + " " + m.viewDependences());
-                }
-                return;
-            }
-            visited.add(m);
-            Set<jdk.jigsaw.module.Module> edges = new HashSet<>();
-            for (ViewDependence vd : m.viewDependences()) {
-                jdk.jigsaw.module.Module dm = viewToModules.get(vd.query().name());
-                if (!edges.contains(dm)) {
-                    edges.add(dm);
-                }
-            }
-            for (jdk.jigsaw.module.Module e : edges) {
-                visit(e, visited, done);
-            }
-            done.add(m);
-            result.addLast(m.id().name());
-        }
     }
 }
