@@ -125,7 +125,7 @@ define CopyModule
       $$(patsubst $(JDK_TOPDIR)/src/share/classes/%,$(JDK_TOPDIR)/src/share/modules/$1/%, \
       $$(patsubst $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/classes/%, \
           $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/modules/$1/%, \
-      $$(patsubst $(JAXP_TOPDIR)/src/share/modules/%,$(JAXP_TOPDIR)/modules/$1/%,\
+      $$(patsubst $(JAXP_TOPDIR)/src/%,$(JAXP_TOPDIR)/src/share/modules/$1/%,\
       $$(patsubst $(JAXWS_TOPDIR)/src/share/jaxws_classes/%,$(JAXWS_TOPDIR)/src/share/modules/$1/%,\
       $$(patsubst $(JAXWS_TOPDIR)/src/share/jaf_classes/%,$(JAXWS_TOPDIR)/src/share/modules/$1/%,\
       $$(patsubst $(CORBA_TOPDIR)/src/share/classes/%,$(CORBA_TOPDIR)/src/share/modules/$1/%,\
@@ -185,7 +185,8 @@ $(eval $(call SetupCopyFiles,COPY_CORBA_MC, \
     SRC := $(CORBA_TOPDIR)/src/share/classes, \
     DEST := $(CORBA_TOPDIR)/src/share/modules/javax.corba, \
     FILES := $(wildcard $(CORBA_TOPDIR)/src/share/classes/com/sun/corba/se/spi/logging/data/*.mc \
-        $(CORBA_TOPDIR)/src/share/classes/com/sun/corba/se/impl/orbutil/resources/*.properties)))
+        $(CORBA_TOPDIR)/src/share/classes/com/sun/corba/se/impl/orbutil/resources/*.properties) \
+        $(shell $(FIND) $(CORBA_TOPDIR)/src/share/classes -name *.idl)))
 
 # Copy services in jaxws
 $(eval $(call SetupCopyFiles,COPY_JAXWS_SERVICES, \
