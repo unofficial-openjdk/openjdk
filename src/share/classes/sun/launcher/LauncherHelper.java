@@ -80,6 +80,8 @@ import jdk.jigsaw.module.SimpleResolver;
 import jdk.jigsaw.module.View;
 import jdk.jigsaw.module.ViewDependence;
 
+import sun.misc.Launcher;
+
 public enum LauncherHelper {
     INSTANCE;
     private static final String MAIN_CLASS = "Main-Class";
@@ -877,28 +879,6 @@ public enum LauncherHelper {
     }
 
     /**
-     * Temporary list of packages for types defined by the extensions class
-     * loader. This list is needed to map packages to loaders, otherwise
-     * sun.* and other JDK internal APIs will not be accessible to the
-     * extensions.
-     */
-    private static final List<String> EXT_PKGS_LIST = Arrays.asList(
-        "com.sun.crypto.provider",
-        "sun.security.ec",
-        "sun.security.pkcs11",
-        "sun.security.wrapper"
-    );
-
-    private static final Set<String> EXT_PKGS =
-        Collections.unmodifiableSet(new HashSet<>(EXT_PKGS_LIST));
-
-    private static ClassLoader loaderFor(String pkg) {
-        if (EXT_PKGS.contains(pkg))
-            return sun.misc.Launcher.getExtClassLoader();
-        return null;
-    }
-
-    /**
      * Module definitions, serialized in modules.ser for now
      */
     private static final String MODULES_SER = "jdk/jigsaw/module/resources/modules.ser";
@@ -918,19 +898,53 @@ public enum LauncherHelper {
     }
 
     /**
+     * Returns a mapping of API package to class loader for class loaders that
+     * aren't the null loader.
+     */
+    private static Map<String, ClassLoader> generateLoaderMap(Module[] modules) throws IOException {
+        Map<String, Module> mods = new HashMap<>();
+        for (Module m: modules) {
+            mods.put(m.mainView().id().name(), m);
+        }
+        Map<String, ClassLoader> pkgToLoaders = new HashMap<>();
+        Launcher launcher = Launcher.getLauncher();
+
+        // extensions class loader
+        ClassLoader extcl = launcher.getExtClassLoader();
+        for (String name: launcher.getExtModules()) {
+            Module m = mods.get(name);
+            if (m != null) {
+                m.packages().forEach(p -> pkgToLoaders.put(p, extcl));
+            }
+        }
+
+        // system/application class loader
+        ClassLoader cl = launcher.getClassLoader();
+        for (String name: launcher.getAppModules()) {
+            Module m = mods.get(name);
+            if (m != null) {
+                m.packages().forEach(p -> pkgToLoaders.put(p, cl));
+            }
+        }
+
+        return pkgToLoaders;
+    }
+
+    /**
      * Setup access control to restrict access to the packages that are the keys
      * in the given map. For each key {@code p} then its value in the map is the
      * set of packages that have access to {@code p}.
      */
-    private static void setupPackageAccess(Map<String,Set<String>> restricted) {
+    private static void setupPackageAccess(Map<String, Set<String>> restricted,
+                                           Map<String, ClassLoader> pkgToLoaders) {
         for (Map.Entry<String,Set<String>> entry: restricted.entrySet()) {
             String pkg = entry.getKey();
-            ClassLoader loader = loaderFor(pkg);
+            ClassLoader loader = pkgToLoaders.get(pkg);
             String[] pkgs = entry.getValue().toArray(new String[0]);
             ClassLoader[] loaders = new ClassLoader[pkgs.length];
             int i=0;
             while (i < pkgs.length) {
-                loaders[i] = loaderFor(pkgs[i]);
+                loaders[i] = pkgToLoaders.get(pkgs[i]);
                 i++;
             }
             sun.misc.VM.setPackageAccess(loader, pkg, loaders, pkgs);
@@ -1042,7 +1056,7 @@ public enum LauncherHelper {
         }
 
         // compute and set the access control
-        Map<String,Set<String>> restricted = computePackageAccess(modules, modulesNeeded);
-        setupPackageAccess(restricted);
+        Map<String, Set<String>> restricted = computePackageAccess(modules, modulesNeeded);
+        setupPackageAccess(restricted, generateLoaderMap(modules));
     }
 }

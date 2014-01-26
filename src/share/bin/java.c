@@ -99,6 +99,7 @@ static int numOptions, maxOptions;
  */
 static void SetClassPath(const char *s);
 static void SetBootClassPath(const char *s);
+static char* ReadModuleList(const char* fn, const char* prefix, const char* suffix);
 static void ExpandToBootClassPath(const char* pathname);
 static void SetModulesProp(const char *mods);
 static void SelectVersion(int argc, char **argv, char **main_class);
@@ -795,24 +796,95 @@ SetClassPath(const char *s)
 static void
 SetBootClassPath(const char *jrepath) {
     const char separator[] = { FILE_SEPARATOR, '\0' };
-    char pathname[MAXPATHLEN];
+    char module_list[MAXPATHLEN];
+    char dir[MAXPATHLEN];
     struct stat statbuf;
 
+    JLI_Snprintf(module_list, sizeof(module_list), "%s%slib%sboot.modules", jrepath, separator, separator);
+
     /* modules image */
-    JLI_Snprintf(pathname, sizeof(pathname), "%s%slib%smodules", jrepath, separator, separator);
-    if (stat(pathname, &statbuf) == 0) {
-        JLI_Snprintf(pathname, sizeof(pathname), "%s%slib%smodules%s*", jrepath, separator, separator, separator);
-        ExpandToBootClassPath(pathname);
+    JLI_Snprintf(dir, sizeof(dir), "%s%slib%smodules%s", jrepath, separator, separator, separator);
+    if (stat(dir, &statbuf) == 0) {
+        char *s;
+        char classes[16];
+        JLI_Snprintf(classes, sizeof(classes), "%sclasses", separator);
+        s = ReadModuleList(module_list, dir, classes);
+        if (s != NULL) {
+            ExpandToBootClassPath(s);
+            JLI_MemFree(s);
+        } else {
+            JLI_Snprintf(dir, sizeof(dir), "%s%slib%smodules%s*", jrepath, separator, separator, separator);
+            ExpandToBootClassPath(dir);
+        }
         return;
     }
 
     /* exploded modules */
-    JLI_Snprintf(pathname, sizeof(pathname), "%s%smodules", jrepath, separator);
-    if (stat(pathname, &statbuf) == 0) {
-        JLI_Snprintf(pathname, sizeof(pathname), "%s%smodules%s*", jrepath, separator, separator);
-        ExpandToBootClassPath(pathname);
+    JLI_Snprintf(dir, sizeof(dir), "%s%smodules%s", jrepath, separator, separator);
+    if (stat(dir, &statbuf) == 0) {
+        char* s = ReadModuleList(module_list, dir, "");
+        if (s != NULL) {
+            ExpandToBootClassPath(s);
+            JLI_MemFree(s);
+        } else {
+            JLI_Snprintf(dir, sizeof(dir), "%s%smodules%s*", jrepath, separator, separator);
+            ExpandToBootClassPath(dir);
+        }
         return;
     }
+}
+
+/**
+ * Read the module names from the given file and return a module path formed by
+ * combining each module name with the given prefix and suffix.
+ */
+static char*
+ReadModuleList(const char* filename, const char* prefix, const char* suffix) {
+    const char path_separator[] = { PATH_SEPARATOR, '\0' };
+    const int prefix_len = JLI_StrLen(prefix);
+    const int suffix_len = JLI_StrLen(suffix);
+    int result_size, result_len;
+    char* result;
+    char module[64];
+    int module_len, space_needed;
+    FILE* fp;
+
+    if ((fp = fopen(filename, "r")) == NULL)
+        return NULL;
+
+    result_size = 1024;
+    result_len = 0;
+    result = (char*)JLI_MemAlloc(result_size);
+
+    while (fgets(module, sizeof(module), fp) != NULL) {
+        module_len = JLI_StrLen(module);
+        module[module_len-1] = '\0';
+
+        space_needed = prefix_len + module_len + suffix_len + 2;
+        if ((result_len + space_needed) > result_size) {
+            // grow
+            char* s;
+            result_size += space_needed + 128;
+            s = (char*)JLI_MemAlloc(result_size);
+            JLI_StrCpy(s, result);
+            JLI_MemFree(result);
+            result = s;
+        }
+
+        // add prefix+module+[suffix] to result
+        if (result_len > 0) {
+            JLI_StrCat(result, path_separator);
+            result_len++;
+        }
+        JLI_StrCat(result, prefix);
+        JLI_StrCat(result, module);
+        JLI_StrCat(result, suffix);
+        result_len += prefix_len + module_len + suffix_len;
+    }
+
+    fclose(fp);
+
+    return result;
 }
 
 static void

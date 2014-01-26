@@ -597,4 +597,18 @@ COPY_FILES += $(JDK_OUTPUTDIR)/lib/sound.properties
 
 ##########################################################################################
 
+$(JDK_OUTPUTDIR)/lib/%.modules: $(JDK_TOPDIR)/src/share/lib/%.modules
+	$(call install-file)
+
+MODULES_CONF_FILES = \
+	$(JDK_OUTPUTDIR)/lib/boot.modules \
+	$(JDK_OUTPUTDIR)/lib/ext.modules \
+	$(JDK_OUTPUTDIR)/lib/system.modules
+
+COPY_FILES += $(MODULES_CONF_FILES)
+
+BASE_CONF_FILES += $(MODULES_CONF_FILES)
+
+##########################################################################################
+
 -include $(CUSTOM_MAKE_DIR)/CopyFiles.gmk

@@ -33,7 +33,11 @@ import java.net.URLClassLoader;
 import java.net.MalformedURLException;
 import java.net.URLStreamHandler;
 import java.net.URLStreamHandlerFactory;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashSet;
+import java.util.List;
 import java.util.StringTokenizer;
 import java.util.Set;
 import java.util.Vector;
@@ -51,11 +55,10 @@ import sun.net.www.ParseUtil;
 
 /**
  * This class is used by the system to launch the main application.
-Launcher */
+ */
 public class Launcher {
     private static URLStreamHandlerFactory factory = new Factory();
     private static Launcher launcher = new Launcher();
-    private static ClassLoader extcl;
     private static String bootClassPath =
         System.getProperty("sun.boot.class.path");
 
@@ -63,7 +66,8 @@ public class Launcher {
         return launcher;
     }
 
-    private ClassLoader loader;
+    private final ExtClassLoader extcl;
+    private final AppClassLoader loader;
 
     public Launcher() {
         // Create the extension class loader
@@ -116,21 +120,43 @@ public class Launcher {
         return loader;
     }
 
+    /**
+     * Returns the extensions class loader.
+     */
+    public ClassLoader getExtClassLoader() {
+        return extcl;
+    }
+
+    /**
+     * Returns a list of the module names for the modules on the system/application
+     * class path.
+     */
+    public List<String> getAppModules() {
+        return loader.modules();
+    }
+
+    /**
+     * Returns a list of the module names for the modules on the extensions
+     * class path.
+     */
+    public List<String> getExtModules() {
+        return extcl.modules();
+    }
+
     /*
      * The class loader used for loading installed extensions.
      */
     static class ExtClassLoader extends URLClassLoader {
-
         static {
             ClassLoader.registerAsParallelCapable();
         }
+        static final List<String> modules = Launcher.readModulesList("ext.modules");
 
         /**
          * create an ExtClassLoader. The ExtClassLoader is created
          * within a context that limits which files it can read
          */
-        public static ExtClassLoader getExtClassLoader() throws IOException
-        {
+        static ExtClassLoader getExtClassLoader() throws IOException {
             final File[] dirs = getExtDirs();
 
             try {
@@ -157,6 +183,10 @@ public class Launcher {
             super.addURL(url);
         }
 
+        public List<String> modules() {
+            return modules;
+        }
+
         /*
          * Creates a new ExtClassLoader for the specified directories.
          */
@@ -165,7 +195,15 @@ public class Launcher {
         }
 
         private static File[] getExtDirs() {
-            String s = System.getProperty("java.ext.dirs");
+            String extDirs = System.getProperty("java.ext.dirs");
+            String moduleDirs = Launcher.toModuleDirs(modules);
+            String s;
+            if (moduleDirs.length() > 0) {
+                // ## FIXME should we update java.ext.dirs
+                s = moduleDirs + File.pathSeparator + extDirs;
+            } else {
+                s = extDirs;
+            }
             File[] dirs;
             if (s != null) {
                 StringTokenizer st =
@@ -253,27 +291,27 @@ public class Launcher {
     }
 
     /**
-     * Returns the extensions class loader
-     */
-    public static ClassLoader getExtClassLoader() {
-        assert extcl != null;
-        return extcl;
-    }
-
-    /**
      * The class loader used for loading from java.class.path.
      * runs in a restricted security context.
      */
     static class AppClassLoader extends URLClassLoader {
-
         static {
             ClassLoader.registerAsParallelCapable();
         }
+        static final List<String> modules = Launcher.readModulesList("system.modules");
 
-        public static ClassLoader getAppClassLoader(final ClassLoader extcl)
+        public static AppClassLoader getAppClassLoader(final ClassLoader extcl)
             throws IOException
         {
-            final String s = System.getProperty("java.class.path");
+            String cp = System.getProperty("java.class.path");
+            String mp = Launcher.toModulePath(modules);
+            String s;
+            if (mp.length() > 0) {
+                // ## FIXME should we update java.class.path
+                s = mp + File.pathSeparator + cp;
+            } else {
+                s = cp;
+            }
             final File[] path = (s == null) ? new File[0] : getClassPath(s);
 
             // Note: on bugid 4256530
@@ -291,6 +329,10 @@ public class Launcher {
                     return new AppClassLoader(urls, extcl);
                 }
             });
+        }
+
+        public List<String> modules() {
+            return modules;
         }
 
         /*
@@ -488,6 +530,59 @@ public class Launcher {
                                         "system protocol handler", e);
             }
         }
+    }
+
+    /**
+     * Reads the contents of the given modules file in {@code ${java.home}/lib}.
+     */
+    private static List<String> readModulesList(String name) {
+        Path file = Paths.get(System.getProperty("java.home"), "lib", name);
+        try {
+            return Files.readAllLines(file);
+        } catch (IOException ioe) {
+            throw new java.io.UncheckedIOException(ioe);
+        }
+    }
+
+    /**
+     * Expands the given set of modules to a path of directories.
+     */
+    private static String toModuleDirs(List<String> modules) {
+        return expandToPath(modules, false);
+    }
+
+    /**
+     * Expands the given set of modules to a path of zipped or exploded classes.
+     */
+    private static String toModulePath(List<String> modules) {
+        return expandToPath(modules, true);
+    }
+
+    private static String expandToPath(List<String> modules, boolean classes) {
+        String home = System.getProperty("java.home");
+        Path dir = Paths.get(home, "lib", "modules");
+        String suffix = null;
+        if (Files.exists(dir)) {
+            if (classes)
+                suffix = "classes";
+        } else {
+            dir = Paths.get(home, "modules");
+            if (Files.notExists(dir))
+                return "";
+        }
+        StringBuilder sb = new StringBuilder();
+        for (String module : modules) {
+            if (sb.length() > 0)
+                sb.append(File.pathSeparator);
+            sb.append(dir.toString());
+            sb.append(File.separator);
+            sb.append(module);
+            if (suffix != null) {
+                sb.append(File.separator);
+                sb.append(suffix);
+            }
+        }
+        return sb.toString();
     }
 }
 
