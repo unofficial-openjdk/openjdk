@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2003, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,6 +25,10 @@
 
 package com.sun.jndi.ldap;
 
+import java.security.AccessControlContext;
+import java.security.AccessController;
+import java.security.PrivilegedActionException;
+import java.security.PrivilegedExceptionAction;
 import java.util.Vector;
 import javax.naming.*;
 import javax.naming.directory.*;
@@ -34,6 +38,8 @@ import com.sun.jndi.toolkit.ctx.Continuation;
 
 final class LdapBindingEnumeration extends LdapNamingEnumeration {
 
+    private final AccessControlContext acc = AccessController.getContext();
+
     LdapBindingEnumeration(LdapCtx homeCtx, LdapResult answer, Name remain,
         Continuation cont) throws NamingException
     {
@@ -41,7 +47,7 @@ final class LdapBindingEnumeration extends LdapNamingEnumeration {
     }
 
     protected NameClassPair
-      createItem(String dn, Attributes attrs, Vector respCtls)
+      createItem(String dn, final Attributes attrs, Vector respCtls)
         throws NamingException {
 
         Object obj = null;
@@ -49,7 +55,16 @@ final class LdapBindingEnumeration extends LdapNamingEnumeration {
 
         if (attrs.get(Obj.JAVA_ATTRIBUTES[Obj.CLASSNAME]) != null) {
             // serialized object or object reference
-            obj = Obj.decodeObject(attrs);
+            try {
+                obj = AccessController.doPrivileged(new PrivilegedExceptionAction<Object>() {
+                    @Override
+                    public Object run() throws NamingException {
+                        return Obj.decodeObject(attrs);
+                    }
+                }, acc);
+            } catch (PrivilegedActionException e) {
+                throw (NamingException)e.getException();
+            }
         }
         if (obj == null) {
             // DirContext object
