@@ -42,6 +42,168 @@ $(eval $(call SetupJavaCompiler,GENERATE_JDKBYTECODE, \
     SERVER_DIR := $(SJAVAC_SERVER_DIR), \
     SERVER_JVM := $(SJAVAC_SERVER_JAVA)))
 
+################################################################################
+# Module specific build settings
+
+################################################################################
+
+java.base_COPY := .icu .dat .spp
+
+java.base_EXCLUDE_FILES := sun/text/resources/BreakIteratorRules.java
+
+################################################################################
+
+java.desktop_COPY := .gif .png .wav .txt .xml .css
+
+COPY_EXTRA += $(patsubst $(JDK_TOPDIR)/make/data/swingbeaninfo/images/%, \
+    $(JDK_OUTPUTDIR)/modules/java.desktop/javax/swing/beaninfo/images/%,\
+    $(wildcard $(JDK_TOPDIR)/make/data/swingbeaninfo/images/*.gif))
+
+# The exception handling of swing beaninfo
+# These resources violates the convention of having code and resources together under
+# $(JDK_TOPDIR)/src/.../classes directories
+$(JDK_OUTPUTDIR)/modules/java.desktop/javax/swing/beaninfo/images/%.gif: \
+    $(JDK_TOPDIR)/make/data/swingbeaninfo/images/%.gif
+	$(call install-file)
+
+java.desktop_EXCLUDE_FILES := \
+    javax/swing/plaf/nimbus/InternalFrameTitlePanePainter.java \
+    javax/swing/plaf/nimbus/OptionPaneMessageAreaPainter.java \
+    javax/swing/plaf/nimbus/ScrollBarPainter.java \
+    javax/swing/plaf/nimbus/SliderPainter.java \
+    javax/swing/plaf/nimbus/SpinnerPainter.java \
+    javax/swing/plaf/nimbus/SplitPanePainter.java \
+    javax/swing/plaf/nimbus/TabbedPanePainter.java \
+    sun/awt/resources/security-icon-bw16.png \
+    sun/awt/resources/security-icon-bw24.png \
+    sun/awt/resources/security-icon-bw32.png \
+    sun/awt/resources/security-icon-bw48.png \
+    sun/awt/resources/security-icon-interim16.png \
+    sun/awt/resources/security-icon-interim24.png \
+    sun/awt/resources/security-icon-interim32.png \
+    sun/awt/resources/security-icon-interim48.png \
+    sun/awt/resources/security-icon-yellow16.png \
+    sun/awt/resources/security-icon-yellow24.png \
+    sun/awt/resources/security-icon-yellow32.png \
+    sun/awt/resources/security-icon-yellow48.png \
+    sun/awt/X11/java-icon16.png \
+    sun/awt/X11/java-icon24.png \
+    sun/awt/X11/java-icon32.png \
+    sun/awt/X11/java-icon48.png \
+    #
+
+ifeq ($(OPENJDK_TARGET_OS), macosx)
+  # exclude all X11 on Mac, we can't exclude some like below or we'll have compilation errors
+  java.desktop_EXCLUDES += sun/awt/X11
+else
+  # TBD: figure out how to eliminate this long list
+  java.desktop_EXCLUDE_FILES += \
+      sun/awt/X11/ScreenFormat.java \
+      sun/awt/X11/XArc.java \
+      sun/awt/X11/XChar2b.java \
+      sun/awt/X11/XCharStruct.java \
+      sun/awt/X11/XClassHint.java \
+      sun/awt/X11/XComposeStatus.java \
+      sun/awt/X11/XExtCodes.java \
+      sun/awt/X11/XFontProp.java \
+      sun/awt/X11/XFontSetExtents.java \
+      sun/awt/X11/XFontStruct.java \
+      sun/awt/X11/XGCValues.java \
+      sun/awt/X11/XHostAddress.java \
+      sun/awt/X11/XIMCallback.java \
+      sun/awt/X11/XIMHotKeyTrigger.java \
+      sun/awt/X11/XIMHotKeyTriggers.java \
+      sun/awt/X11/XIMPreeditCaretCallbackStruct.java \
+      sun/awt/X11/XIMPreeditDrawCallbackStruct.java \
+      sun/awt/X11/XIMPreeditStateNotifyCallbackStruct.java \
+      sun/awt/X11/XIMStatusDrawCallbackStruct.java \
+      sun/awt/X11/XIMStringConversionCallbackStruct.java \
+      sun/awt/X11/XIMStringConversionText.java \
+      sun/awt/X11/XIMStyles.java \
+      sun/awt/X11/XIMText.java \
+      sun/awt/X11/XIMValuesList.java \
+      sun/awt/X11/XImage.java \
+      sun/awt/X11/XKeyboardControl.java \
+      sun/awt/X11/XKeyboardState.java \
+      sun/awt/X11/XOMCharSetList.java \
+      sun/awt/X11/XOMFontInfo.java \
+      sun/awt/X11/XOMOrientation.java \
+      sun/awt/X11/XPoint.java \
+      sun/awt/X11/XRectangle.java \
+      sun/awt/X11/XSegment.java \
+      sun/awt/X11/XStandardColormap.java \
+      sun/awt/X11/XTextItem.java \
+      sun/awt/X11/XTextItem16.java \
+      sun/awt/X11/XTextProperty.java \
+      sun/awt/X11/XTimeCoord.java \
+      sun/awt/X11/XWindowChanges.java \
+      sun/awt/X11/XdbeSwapInfo.java \
+      sun/awt/X11/XmbTextItem.java \
+      sun/awt/X11/XwcTextItem.java
+endif
+
+################################################################################
+
+javax.corba_COPY := .prp LogStrings.properties
+
+javax.corba_EXCLUDES := \
+    com/sun/corba/se/PortableActivationIDL \
+    com/sun/tools/corba/se/logutil \
+    #
+javax.corba_EXCLUDE_FILES := \
+    com/sun/corba/se/impl/presentation/rmi/JNDIStateFactoryImpl.java \
+    com/sun/corba/se/spi/presentation/rmi/StubWrapper.java \
+    com/sun/org/omg/CORBA/IDLTypeOperations.java \
+    com/sun/org/omg/CORBA/IRObjectOperations.java \
+    org/omg/PortableInterceptor/UNKNOWN.java \
+    com/sun/tools/corba/se/idl/ResourceBundleUtil.java \
+    com/sun/corba/se/impl/presentation/rmi/jndi.properties \
+    #
+
+################################################################################
+
+javax.jaxb_COPY := .properties
+
+################################################################################
+
+javax.jaxp_CLEAN := .properties
+
+################################################################################
+
+javax.jaxws_CLEAN := .properties .xml
+
+################################################################################
+
+javax.saaj_CLEAN := .properties
+
+################################################################################
+
+javax.xmldsig_COPY := .dtd .xml
+
+################################################################################
+
+jdk.devtools_COPY := .gif .xml .css .js javax.tools.JavaCompilerTool
+
+################################################################################
+
+jdk.tools_COPY := .gif .png .js .html .txt aliasmap _options messages.properties
+
+################################################################################
+
+jdk.tools.jaxws_CLEAN := .properties
+jdk.tools.jaxws_COPY := .xsd JAXBContextFactory.java ZeroOneBooleanAdapter.java
+
+################################################################################
+
+sun.charsets_COPY := .dat
+
+################################################################################
+
+sun.localedata_COPY := _dict _th
+
+################################################################################
+# Setup the compilation of each module
+
 ALL_SRC_DIRS := \
     $(JDK_TOPDIR)/src/share/modules \
     $(LANGTOOLS_TOPDIR)/src/share/modules \
@@ -51,7 +213,8 @@ ALL_SRC_DIRS := \
     $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/modules \
     $(JDK_OUTPUTDIR)/gensrc \
     $(LANGTOOLS_OUTPUTDIR)/gensrc \
-    $(CORBA_OUTPUTDIR)/gensrc
+    $(CORBA_OUTPUTDIR)/gensrc \
+    $(JDK_OUTPUTDIR)/gensrc_no_srczip
 
 # Find all modules with java sources by looking in the source dirs
 JAVA_MODULES := $(sort $(notdir $(wildcard $(patsubst %,%/*,$(filter %modules, $(ALL_SRC_DIRS))))))
@@ -90,6 +253,8 @@ endef
 $(foreach m,$(JAVA_MODULES),$(eval $(call SetupModuleCompilation,$m)))
 $(foreach m,$(JAVA_MODULES),$(eval $(call DeclareModuleDependencies,$m)))
 
-all: $(JAVA_MODULES)
+################################################################################
+
+all: $(JAVA_MODULES) $(COPY_EXTRA)
 
 .PHONY: all $(JAVA_MODULES)

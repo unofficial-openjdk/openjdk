@@ -31,16 +31,14 @@ ifeq ($(JIGSAW), true)
   CORBA_OUTPUTDIR := $(patsubst $(OUTPUT_ROOT)/%,$(OUTPUT_ROOT)/jigsaw/%,$(CORBA_OUTPUTDIR))
   JDK_OUTPUTDIR := $(patsubst $(OUTPUT_ROOT)/%,$(OUTPUT_ROOT)/jigsaw/%,$(JDK_OUTPUTDIR))
 
-  BOOTSTRAP_JAVAC_JAR := $(LANGTOOLS_OUTPUTDIR)/dist/interim/lib/javac.jar
-
   MODULES_SUBDIR := modules
 
   JAVA_BASE_SUBDIR := /java.base
   JAVA_DESKTOP_SUBDIR := /java.desktop
+  JAVA_JDBC_ROWSET_SUBDIR := /java.jdbc.rowset
   JAVA_LOGGING_SUBDIR := /java.logging
   JAVA_MANAGEMENT_SUBDIR := /java.management
   JAVA_RMI_SUBDIR := /java.rmi
-  JAVA_JDBC_ROWSET_SUBDIR := /java.jdbc.rowset
 
   JAVAX_AUTH_SUBDIR := /javax.auth
   JAVAX_COMPILER_SUBDIR := /javax.compiler
@@ -53,6 +51,7 @@ ifeq ($(JIGSAW), true)
   JDK_TOOLS_BASE_SUBDIR := /jdk.tools.base
 
   SUN_CHARSETS_SUBDIR := /sun.charsets
+  SUN_LOCALEDATA_SUBDIR := /sun.localedata
 
 else
   MODULES_SUBDIR := classes

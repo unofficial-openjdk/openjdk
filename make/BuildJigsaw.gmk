@@ -55,6 +55,12 @@ jdk-build-tools: langtools-interim
 jdk-gensrc: jdk-build-tools langtools-interim
 	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f GenerateSources.gmk JIGSAW=true)
 
+jdk-gendata: langtools-interim jdk-build-tools
+	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f GenerateData.gmk JIGSAW=true)
+
+jdk-genclasses: langtools-interim corba-gensrc java-compile
+	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f GenerateClasses.gmk JIGSAW=true)
+
 .PHONY: jdk-build-tools jdk-gensrc
 
 ################################################################################
@@ -65,8 +71,23 @@ java-compile: jdk-gensrc langtools-gensrc corba-gensrc
 .PHONY: java-compile
 
 ################################################################################
+# Build hotspot into the legacy build output dir for now.
 
-all: java-compile
+hotspot:
+	($(CD) $(SRC_ROOT)/make && $(MAKE) $(MAKE_ARGS) -f HotspotWrapper.gmk JIGSAW=true)
+
+.PHONY: hotspot
+
+################################################################################
+
+import-hotspot: hotspot
+	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f Import.gmk hotspot JIGSAW=true)
+
+.PHONY: import-hotspot
+
+################################################################################
+
+all: java-compile import-hotspot jdk-gendata jdk-genclasses
 
 .PHONY: default all
 
