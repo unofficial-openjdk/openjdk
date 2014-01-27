@@ -434,7 +434,7 @@ public class VM {
     }
 
     /**
-     * Augment the access control so thaht types defined by {@code loader}
+     * Augment the access control so that types defined by {@code loader}
      * in package {@code pkg} are accessible to the given set of runtime
      * packages.
      *
