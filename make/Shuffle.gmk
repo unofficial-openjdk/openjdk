@@ -53,17 +53,6 @@ SRC_ROOTS := \
     $(LANGTOOLS_TOPDIR)/src/share/classes \
     #
 
-# Need to make the contents of the sa-jdi.jar available for shuffle.
-SA_JAR := $(JDK_OUTPUTDIR)/lib/sa-jdi.jar
-SA_CLASSES := $(JDK_OUTPUTDIR)/classes_sa
-
-$(SA_CLASSES)/_the.sa.jar.unpacked: $(SA_JAR)
-	$(ECHO) $(LOG_INFO) Unzipping $(<F)
-	$(RM) -r $(@D)
-	$(MKDIR) -p $(@D)
-	$(CD) $(@D) && $(UNZIP) $< $(LOG_DEBUG)
-	$(TOUCH) $@
-
 # This macro sets up rules for copying the contents for one module
 # Param 1 : name of module
 define CopyModule
@@ -264,7 +253,7 @@ $(eval $(call SetupCopyFiles,COPY_SHARE_ICONS, \
 
 $(eval $(call SetupCopyFiles,COPY_CLDR, \
     SRC := $(JDK_TOPDIR)/src/share/classes, \
-    DEST := $(JDK_TOPDIR)/src/share/modules/java.base, \
+    DEST := $(JDK_TOPDIR)/src/share/modules/sun.localedata, \
     FILES := $(shell $(FIND) $(JDK_TOPDIR)/src/share/classes/sun/util/cldr/resources -type f)))
 
 $(eval $(call SetupCopyFiles,COPY_SWING_LAF, \
@@ -272,9 +261,17 @@ $(eval $(call SetupCopyFiles,COPY_SWING_LAF, \
     DEST := $(JDK_TOPDIR)/src/share/modules/java.desktop, \
     FILES := $(JDK_TOPDIR)/src/share/classes/javax/swing/plaf/nimbus/skin.laf))
 
-################################################################################
+$(eval $(call SetupCopyFiles,COPY_SERIAL_VER, \
+    SRC := $(JDK_TOPDIR)/src/share/classes, \
+    DEST := $(JDK_TOPDIR)/src/share/modules/jdk.tools, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/share/classes/sun/tools/serialver/*.properties)))
 
-$(BUILD_TARGET_FILES): $(SA_CLASSES)/_the.sa.jar.unpacked
+$(eval $(call SetupCopyFiles,COPY_BREAK_ITERATOR_RULES, \
+    SRC := $(JDK_TOPDIR)/src/share/classes, \
+    DEST := $(JDK_TOPDIR)/src/share/modules/java.base, \
+    FILES := $(JDK_TOPDIR)/src/share/classes/sun/text/resources/BreakIteratorRules.java))
+
+################################################################################
 
 shuffle-src: \
     $(SRC_TARGET_FILES) \
@@ -294,7 +291,9 @@ shuffle-src: \
     $(COPY_SOLARIS_ICONS) \
     $(COPY_SHARE_ICONS) \
     $(COPY_CLDR) \
-    $(COPY_SWING_LAF)
+    $(COPY_SWING_LAF) \
+    $(COPY_SERIAL_VER) \
+    $(COPY_BREAK_ITERATOR_RULES)
 
 shuffle-build: $(BUILD_TARGET_FILES)
 
@@ -315,4 +314,3 @@ clean-src:
 
 clean-build:
 	$(RM) -r $(JDK_OUTPUTDIR)/modules
-	$(RM) -r $(JDK_OUTPUTDIR)/classes_sa

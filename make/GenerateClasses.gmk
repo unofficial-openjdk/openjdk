@@ -26,6 +26,7 @@
 default: all
 
 include $(SPEC)
+include JigsawSpecMod.gmk
 include MakeBase.gmk
 include RMICompilation.gmk
 include JavaCompilation.gmk
@@ -44,22 +45,22 @@ RMIC_PKGS := \
 
 $(eval $(call SetupJavaCompilation,BUILD_BOOTSTRAP_RMIC, \
     SETUP := GENERATE_OLDBYTECODE, \
-    SRC := $(JDK_TOPDIR)/src/share/classes, \
+    SRC := $(JDK_TOPDIR)/src/share/$(MODULES_SUBDIR)$(JDK_TOOLS_SUBDIR), \
     INCLUDES := $(RMIC_PKGS), \
     BIN := $(JDK_OUTPUTDIR)/btclasses_rmic, \
     COPY := .properties, \
-    JAVAC_SOURCE_PATH_OVERRIDE := $(addprefix $(JDK_TOPDIR)/src/share/classes/, $(RMIC_PKGS))))
+    JAVAC_SOURCE_PATH_OVERRIDE := $(addprefix $(JDK_TOPDIR)/src/share/$(MODULES_SUBDIR)$(JDK_TOOLS_SUBDIR)/, $(RMIC_PKGS))))
 
 ##########################################################################################
 
-BTRMIC_CP := $(CORBA_OUTPUTDIR)/btjars/btcorba.jar$(PATH_SEP)$(JDK_OUTPUTDIR)/btclasses_rmic$(PATH_SEP)$(BOOTSTRAP_JAVAC_JAR)
+BTRMIC_CP := $(INTERIM_CORBA_JAR)$(PATH_SEP)$(JDK_OUTPUTDIR)/btclasses_rmic$(PATH_SEP)$(INTERIM_LANGTOOLS_JAR)
 BTRMIC_ARGS := "-Xbootclasspath/p:$(BTRMIC_CP)" -cp "$(BTRMIC_CP)"
 RMIC := $(JAVA) $(BTRMIC_ARGS) sun.rmi.rmic.Main
 
-CLASSES_DIR := $(JDK_OUTPUTDIR)/classes
+CLASSES_DIR := $(JDK_OUTPUTDIR)/$(MODULES_SUBDIR)
 # NOTE: If the smart javac dependency management is reintroduced, these classes risk
 # interfering with the dependency checking. In that case they will need to be kept separate.
-STUB_CLASSES_DIR := $(JDK_OUTPUTDIR)/classes
+STUB_CLASSES_DIR := $(JDK_OUTPUTDIR)/$(MODULES_SUBDIR)
 RMIC_GENSRC_DIR := $(JDK_OUTPUTDIR)/gendocsrc_rmic
 
 GENCLASSES := 
@@ -72,20 +73,26 @@ GENRMIIIOPCLASSES :=
 # Generate RMI stubs
 #
 
-$(eval $(call SetupRMICompilation,RMI_12, \
+$(eval $(call SetupRMICompilation,RMI_12_RMI, \
     CLASSES := sun.rmi.server.Activation$$$$ActivationSystemImpl \
-        java.rmi.activation.ActivationGroup \
-        com.sun.jndi.rmi.registry.ReferenceWrapper, \
-    CLASSES_DIR := $(CLASSES_DIR), \
-    STUB_CLASSES_DIR := $(STUB_CLASSES_DIR), \
+        java.rmi.activation.ActivationGroup, \
+    CLASSES_DIR := $(CLASSES_DIR)$(JAVA_RMI_SUBDIR), \
+    STUB_CLASSES_DIR := $(STUB_CLASSES_DIR)$(JAVA_RMI_SUBDIR), \
     RUN_V12 := true))
-GENCLASSES += $(RMI_12)
+GENCLASSES += $(RMI_12_RMI)
+
+$(eval $(call SetupRMICompilation,RMI_12_JNDI, \
+    CLASSES := com.sun.jndi.rmi.registry.ReferenceWrapper, \
+    CLASSES_DIR := $(CLASSES_DIR)$(JAVAX_JNDI_SUBDIR), \
+    STUB_CLASSES_DIR := $(STUB_CLASSES_DIR)$(JAVAX_JNDI_SUBDIR), \
+    RUN_V12 := true))
+GENCLASSES += $(RMI_12_JNDI)
 
 $(eval $(call SetupRMICompilation,RMI_11, \
     CLASSES := sun.rmi.registry.RegistryImpl \
         sun.rmi.transport.DGCImpl, \
-    CLASSES_DIR := $(CLASSES_DIR), \
-    STUB_CLASSES_DIR := $(STUB_CLASSES_DIR), \
+    CLASSES_DIR := $(CLASSES_DIR)$(JAVA_RMI_SUBDIR), \
+    STUB_CLASSES_DIR := $(STUB_CLASSES_DIR)$(JAVA_RMI_SUBDIR), \
     RUN_V11 := true))
 GENCLASSES += $(RMI_11)
 
@@ -96,8 +103,8 @@ JMAN_RMI_CLASSES := javax.management.remote.rmi.RMIConnectionImpl \
     javax.management.remote.rmi.RMIServerImpl
 $(eval $(call SetupRMICompilation,RMI_IIOP, \
     CLASSES := $(JMAN_RMI_CLASSES), \
-    CLASSES_DIR := $(CLASSES_DIR), \
-    STUB_CLASSES_DIR := $(STUB_CLASSES_DIR), \
+    CLASSES_DIR := $(CLASSES_DIR)$(JAVA_MANAGEMENT_SUBDIR), \
+    STUB_CLASSES_DIR := $(STUB_CLASSES_DIR)$(JAVA_MANAGEMENT_SUBDIR), \
     RUN_V12 := true, \
     RUN_IIOP := $(GENRMIIIOPCLASSES),\
     RUN_IIOP_STDPKG := $(GENRMIIIOPCLASSES)))
@@ -107,7 +114,7 @@ GENCLASSES += $(RMI_IIOP)
 # so that javadoc can include them in the API (4997471)
 $(eval $(call SetupRMICompilation,RMI_SRC, \
     CLASSES := $(JMAN_RMI_CLASSES), \
-    CLASSES_DIR := $(CLASSES_DIR), \
+    CLASSES_DIR := $(CLASSES_DIR)$(JAVA_MANAGEMENT_SUBDIR), \
     STUB_CLASSES_DIR := $(RMIC_GENSRC_DIR), \
     RUN_V12 := true, \
     KEEP_GENERATED := true))
@@ -115,7 +122,7 @@ GENCLASSES += $(filter %.java, $(RMI_SRC))
 
 ##########################################################################################
 
-$(RMI_12) $(RMI_11) $(RMI_IIOP) $(RMI_SRC): $(BUILD_BOOTSTRAP_RMIC)
+$(RMI_12_RMI) $(RMI_12_JNDI) $(RMI_11) $(RMI_IIOP) $(RMI_SRC): $(BUILD_BOOTSTRAP_RMIC)
 
 $(RMIC_GENSRC_DIR)/_the.classes.removed: $(GENCLASSES)
 	$(FIND) $(RMIC_GENSRC_DIR) -name "*.class" $(FIND_DELETE)

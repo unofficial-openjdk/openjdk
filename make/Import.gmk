@@ -26,6 +26,7 @@
 default: all
 
 include $(SPEC)
+include JigsawSpecMod.gmk
 include MakeBase.gmk
 
 #######
@@ -110,7 +111,7 @@ define link-file-in-parent-dir
 	$(LN) -s ../$(@F) $@
 endef
 
-IMPORT_TARGET_FILES += $(HOTSPOT_LIBRARIES) $(SAJDI_JAR) $(SAJDI_LIBRARIES)
+HOTSPOT_IMPORT_TARGET_FILES += $(HOTSPOT_LIBRARIES) $(SAJDI_LIBRARIES)
 
 $(JDK_OUTPUTDIR)/lib/%: $(HOTSPOT_DIST)/lib/%
 	$(install-file)
@@ -193,6 +194,29 @@ ifneq ($(OPENJDK_TARGET_OS), macosx)
 	$(MV) $@.tmp $@
 endif
 
+ifeq ($(JIGSAW), true)
+  $(JDK_OUTPUTDIR)/modules/jdk.tools/_sajdi.unpacked: $(SRC_SAJDI_JAR)
+	$(ECHO) $(LOG_INFO) Unzipping $(<F)
+	$(RM) -r $(@D)
+	$(MKDIR) -p $(@D)
+	$(CD) $(@D) && $(UNZIP) $< $(LOG_DEBUG)
+	$(TOUCH) $@
+
+  HOTSPOT_IMPORT_TARGET_FILES += $(JDK_OUTPUTDIR)/modules/jdk.tools/_sajdi.unpacked
+else
+  # Unzip sa-jdi.jar for the shuffle target.
+  SA_CLASSES := $(JDK_OUTPUTDIR)/classes_sa
+
+  $(SA_CLASSES)/_the.sa.jar.unpacked: $(SRC_SAJDI_JAR)
+	$(ECHO) $(LOG_INFO) Unzipping $(<F)
+	$(RM) -r $(@D)
+	$(MKDIR) -p $(@D)
+	$(CD) $(@D) && $(UNZIP) $< $(LOG_DEBUG)
+	$(TOUCH) $@
+
+  HOTSPOT_IMPORT_TARGET_FILES += $(SAJDI_JAR) $(SA_CLASSES)/_the.sa.jar.unpacked
+endif
+
 ##########################################################################################
 # Unpack the binary distributions of the crypto classes if they exist.
 SEC_FILES_ZIP := $(JDK_TOPDIR)/make/tools/crypto/sec-bin.zip
@@ -235,4 +259,7 @@ endif
 
 ##########################################################################################
 
-all: $(IMPORT_TARGET_FILES)
+hotspot: $(HOTSPOT_IMPORT_TARGET_FILES)
+
+all: $(IMPORT_TARGET_FILES) hotspot
+

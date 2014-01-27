@@ -360,6 +360,10 @@ $(eval $(call add_properties_to_compile,SUN_UTIL, \
     $(filter %.properties, \
     $(call CacheFind, $(JDK_TOPDIR)/src/share/$(MODULES_SUBDIR)$(JAVA_BASE_SUBDIR)/sun/util/resources)), \
     sun.util.resources.LocaleNamesBundle))
+$(eval $(call add_properties_to_compile,SUN_UTIL_LOCALEDATA, \
+    $(filter %.properties, \
+    $(call CacheFind, $(JDK_TOPDIR)/src/share/$(MODULES_SUBDIR)$(SUN_LOCALEDATA_SUBDIR)/sun/util/resources)), \
+    sun.util.resources.LocaleNamesBundle))
 
 # Now setup the rule for the generation of the resource bundles.
 $(JDK_OUTPUTDIR)/gensrc/_the.compiled_properties: $(ALL_COMPILED_PROPSOURCES) $(BUILD_TOOLS)
