@@ -298,6 +298,9 @@ class Modularizer extends Task {
         public String toString() {
             StringBuilder sb = new StringBuilder();
             sb.append("module ").append(modulename);
+            for (String s : cmds.values()) {
+                sb.append("\n").append("  -cmds ").append(s);
+            }
             for (String s : natives.values()) {
                 sb.append("\n").append("  -native ").append(s);
             }

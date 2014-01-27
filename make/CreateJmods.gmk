@@ -73,32 +73,32 @@ all: $(BUILD_CLASSANALYZER)
             --classlist $(MODULE_CLASSLIST_DIR) \
             --graph $(MODULES_SER_OUT) \
             --jmods $(JMODS_DIR) \
-            --module jdk.auth \
+            --module javax.auth \
                 --native="$(SECURITY_AUTH_LIBRARIES)" \
-            --module jdk.base \
+            --module java.base \
                 --native="$(BASE_LIBRARIES) $(MSVCR_TARGET) $(HOTSPOT_LIBRARIES) $(JVMCFG)" \
                 --cmds="$(BASE_LAUNCHERS)" \
                 --conf="$(BASE_CONF_FILES) $(GENDATA_TZDB) $(GENDATA_CURDATA)" \
 		--conf="$(BASE_POLICY_JAR_FILES)" \
-            --module jdk.desktop \
+            --module java.desktop \
                 --native="$(DESKTOP_LIBRARIES) $(FREETYPE_LIB)" \
                 --conf="$(DESKTOP_CONF_FILES)" \
                 --conf="$(GENDATA_FONT_CONFIG)" \
-            --module jdk.logging \
+            --module java.logging \
                 --native="$(LOGGING_LIBRARIES)" \
                 --conf="$(LOGGING_CONF_FILES)" \
-            --module jdk.instrument \
+            --module java.instrument \
                 --native="$(INSTRUMENT_LIBRARIES)" \
             --module jdk.kerberos \
                 --native="$(SECURITY_KERBEROS_LIBRARIES)" \
-            --module jdk.management \
+            --module java.management \
                 --native="$(MANAGEMENT_LIBRARIES) $(JFR_LIBRARIES)" \
                 --conf="$(MANAGEMENT_CONF_FILES)" \
             --module jdk.scripting \
                 --native="$(SCRIPT_LIBRARIES)" \
             --module jdk.sctp \
                 --native="$(SCTP_LIBRARIES)" \
-            --module jdk.smartcardio \
+            --module javax.smartcardio \
                 --native="$(SECURITY_SMARTCARDIO_LIBRARIES)" \
             --module jdk.crypto.ec \
                 --native="$(SECURITY_SUNEC_LIBRARIES)" \

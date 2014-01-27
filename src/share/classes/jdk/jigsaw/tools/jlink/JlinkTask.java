@@ -346,7 +346,7 @@ class JlinkTask {
 
     private static final String APP_DIR = "lib" + File.separator + "app";
 
-        /**
+    /**
      * Module definitions, serialized in modules.ser for now
      */
     private static final String MODULES_SER = "jdk/jigsaw/module/resources/modules.ser";
@@ -385,16 +385,21 @@ class JlinkTask {
         // the set of modules required
         Set<Path> jmods = modulesNeeded(options.jmods);
 
-        Path libPath = output.resolve("lib");
-        Files.createDirectories(libPath);
-        Map<String, String> env = new HashMap<>();
-        env.put("create", "true");
-        Path classes = libPath.resolve(Section.CLASSES.imageDir());
-        URI uri = URI.create("jar:file:" + classes.toUri().getPath());
+        Path modPath = output.resolve("lib/modules");
+        Files.createDirectories(modPath);
+        for (Path jmod : jmods) {
+            String fileName = jmod.getFileName().toString();
+            String modName = fileName.substring(0, fileName.indexOf(".jmod"));
+            Path mPath = modPath.resolve(modName);
+            Files.createDirectories(mPath);
+            Map<String, String> env = new HashMap<>();
+            env.put("create", "true");
+            Path classes = mPath.resolve(Section.CLASSES.imageDir());
+            URI uri = URI.create("jar:file:" + classes.toUri().getPath());
 
-        try (FileSystem classesfs = FileSystems.newFileSystem(uri, env)) {
-            for (Path jmod : jmods)
+            try (FileSystem classesfs = FileSystems.newFileSystem(uri, env)) {
                 unzip(jmod, output, classesfs);
+            }
         }
 
         Path appJar = output.resolve(APP_DIR).resolve("app.jar");
@@ -523,13 +528,14 @@ class JlinkTask {
         }
     }
 
-    private static final String CLASSES_JAR = "jake.jar";
+    //private static final String CLASSES_JAR = "jake.jar";
+
     private static enum Section {
         NATIVE_LIBS("native", "lib"),
         NATIVE_CMDS("bin", "bin"),
-        CLASSES("classes", CLASSES_JAR),
+        CLASSES("classes", "classes"),
         CONFIG("conf", "lib"),
-        MODULE_SERVICES("module/services", CLASSES_JAR),
+        MODULE_SERVICES("module/services", "classes"),
         MODULE_NAME("module", "lib/module"),
         UNKNOWN("unknown", "unknown");
 
