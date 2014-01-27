@@ -92,7 +92,7 @@ all: $(BUILD_CLASSANALYZER)
             --module java.management \
                 --native="$(MANAGEMENT_LIBRARIES) $(JFR_LIBRARIES)" \
                 --conf="$(MANAGEMENT_CONF_FILES)" \
-            --module jdk.scripting \
+            --module javax.script \
                 --native="$(SCRIPT_LIBRARIES)" \
             --module jdk.sctp \
                 --native="$(SCTP_LIBRARIES)" \
