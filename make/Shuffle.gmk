@@ -83,6 +83,9 @@ define CopyModule
   $(JDK_OUTPUTDIR)/modules/$1/%: $(JDK_OUTPUTDIR)/classes_sa/%
 	$$(install-file)
 
+  $(JDK_OUTPUTDIR)/modules/$1/%: $(JDK_OUTPUTDIR)/jobjc_classes/%
+	$$(install-file)
+
   BUILD_TARGET_FILES += $$(addprefix $(JDK_OUTPUTDIR)/modules/$1/, \
       $$($1_CLASS_LIST) $$($1_RESOURCE_LIST))
 
