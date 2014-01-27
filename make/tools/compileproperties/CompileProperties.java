@@ -351,7 +351,7 @@ public class CompileProperties {
         int j = outEnd;
         while (i >= 0 && j >= 0) {
             if (!inputs[i].equals(outputs[j]) ||
-                    (inputs[i].equals("gensrc") && inputs[j].equals("gensrc"))) {
+                    (inputs[i].equals("gensrc") && outputs[j].equals("gensrc"))) {
                 ++i;
                 ++j;
                 break;
@@ -367,6 +367,10 @@ public class CompileProperties {
                 ++i;
             }
             if (i > 0 && inputs[i-1].equals("modules")) {
+                ++i;
+            }
+            // A dot in the dir name indicates a module name.
+            if (inputs[i].contains(".")) {
                 ++i;
             }
             inStart = i;
