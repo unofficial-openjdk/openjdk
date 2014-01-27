@@ -42,6 +42,7 @@ class ClassPath {
     /**
      * Returns a list of JAR files and directories as follows:
      *    javahome/classes
+     *    javahome/classes_security
      *    javahome/lib/*.jar
      *    javahome/lib/ext/*.jar
      *    javahome/../lib/*.jar
@@ -63,6 +64,11 @@ class ClassPath {
             if (classes.exists() && classes.isDirectory()) {
                 // jdk build outputdir
                 result.add(new Archive(classes, ClassFileReader.newInstance(classes)));
+            }
+            File securityClasses = home.resolve("classes_security").toFile();
+            if (securityClasses.exists() && securityClasses.isDirectory()) {
+                // jdk build outputdir
+                result.add(new Archive(securityClasses, ClassFileReader.newInstance(securityClasses)));
             }
             // add other JAR files
             result.addAll(addJarFiles(home.resolve("lib")));
