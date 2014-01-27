@@ -74,7 +74,7 @@ all: $(BUILD_CLASSANALYZER)
             --graph $(MODULES_SER_OUT) \
             --jmods $(JMODS_DIR) \
             --module javax.auth \
-                --native="$(SECURITY_AUTH_LIBRARIES)" \
+                --native="$(SECURITY_AUTH_LIBRARIES) $(SECURITY_KERBEROS_LIBRARIES)" \
             --module java.base \
                 --native="$(BASE_LIBRARIES) $(MSVCR_TARGET) $(HOTSPOT_LIBRARIES) $(JVMCFG)" \
                 --cmds="$(BASE_LAUNCHERS)" \
@@ -89,8 +89,6 @@ all: $(BUILD_CLASSANALYZER)
                 --conf="$(LOGGING_CONF_FILES)" \
             --module java.instrument \
                 --native="$(INSTRUMENT_LIBRARIES)" \
-            --module jdk.kerberos \
-                --native="$(SECURITY_KERBEROS_LIBRARIES)" \
             --module java.management \
                 --native="$(MANAGEMENT_LIBRARIES) $(JFR_LIBRARIES)" \
                 --conf="$(MANAGEMENT_CONF_FILES)" \
