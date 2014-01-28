@@ -748,8 +748,8 @@ CXXFLAGS
 CXX
 ac_ct_PROPER_COMPILER_CXX
 PROPER_COMPILER_CXX
-POTENTIAL_CXX
 TOOLS_DIR_CXX
+POTENTIAL_CXX
 COMPILER_TARGET_BITS_FLAG
 OBJEXT
 EXEEXT
@@ -760,8 +760,8 @@ CFLAGS
 CC
 ac_ct_PROPER_COMPILER_CC
 PROPER_COMPILER_CC
-POTENTIAL_CC
 TOOLS_DIR_CC
+POTENTIAL_CC
 BUILD_LD
 BUILD_CXX
 BUILD_CC
@@ -3868,7 +3868,7 @@ fi
 #CUSTOM_AUTOCONF_INCLUDE
 
 # Do not change or remove the following line, it is needed for consistency checks:
-DATE_WHEN_GENERATED=1390429099
+DATE_WHEN_GENERATED=1390947033
 
 ###############################################################################
 #
@@ -7914,7 +7914,7 @@ $as_echo "$with_jvm_variants" >&6; }
   fi
 
   # Replace the commas with AND for use in the build directory name.
-  ANDED_JVM_VARIANTS=`$ECHO "$JVM_VARIANTS" | $SED -e 's/^,//' -e 's/,$//' -e 's/,/AND/'`
+  ANDED_JVM_VARIANTS=`$ECHO "$JVM_VARIANTS" | $SED -e 's/^,//' -e 's/,$//' -e 's/,/AND/g'`
   COUNT_VARIANTS=`$ECHO "$JVM_VARIANTS" | $SED -e 's/server,/1/' -e 's/client,/1/' -e 's/minimal1,/1/' -e 's/kernel,/1/' -e 's/zero,/1/' -e 's/zeroshark,/1/' -e 's/core,/1/'`
   if test "x$COUNT_VARIANTS" != "x,1"; then
     BUILDING_MULTIPLE_JVM_VARIANTS=yes
@@ -11210,6 +11210,12 @@ fi
     as_fn_error $? "Update version must have a value" "$LINENO" 5
   elif test "x$with_update_version" != x; then
     JDK_UPDATE_VERSION="$with_update_version"
+    # On macosx 10.7, it's not possible to set --with-update-version=0X due
+    # to a bug in expr (which reduces it to just X). To work around this, we
+    # always add a 0 to one digit update versions.
+    if test "${#JDK_UPDATE_VERSION}" = "1"; then
+      JDK_UPDATE_VERSION="0${JDK_UPDATE_VERSION}"
+    fi
   fi
 
 
@@ -16120,36 +16126,6 @@ fi
     # When is adding -client something that speeds up the JVM?
     # ADD_JVM_ARG_IF_OK([-client],boot_jdk_jvmargs,[$JAVA])
 
-  $ECHO "Check if jvm arg is ok: -XX:PermSize=32m" >&5
-  $ECHO "Command: $JAVA -XX:PermSize=32m -version" >&5
-  OUTPUT=`$JAVA -XX:PermSize=32m -version 2>&1`
-  FOUND_WARN=`$ECHO "$OUTPUT" | grep -i warn`
-  FOUND_VERSION=`$ECHO $OUTPUT | grep " version \""`
-  if test "x$FOUND_VERSION" != x && test "x$FOUND_WARN" = x; then
-    boot_jdk_jvmargs="$boot_jdk_jvmargs -XX:PermSize=32m"
-    JVM_ARG_OK=true
-  else
-    $ECHO "Arg failed:" >&5
-    $ECHO "$OUTPUT" >&5
-    JVM_ARG_OK=false
-  fi
-
-
-  $ECHO "Check if jvm arg is ok: -XX:MaxPermSize=160m" >&5
-  $ECHO "Command: $JAVA -XX:MaxPermSize=160m -version" >&5
-  OUTPUT=`$JAVA -XX:MaxPermSize=160m -version 2>&1`
-  FOUND_WARN=`$ECHO "$OUTPUT" | grep -i warn`
-  FOUND_VERSION=`$ECHO $OUTPUT | grep " version \""`
-  if test "x$FOUND_VERSION" != x && test "x$FOUND_WARN" = x; then
-    boot_jdk_jvmargs="$boot_jdk_jvmargs -XX:MaxPermSize=160m"
-    JVM_ARG_OK=true
-  else
-    $ECHO "Arg failed:" >&5
-    $ECHO "$OUTPUT" >&5
-    JVM_ARG_OK=false
-  fi
-
-
   $ECHO "Check if jvm arg is ok: -XX:ThreadStackSize=$STACK_SIZE" >&5
   $ECHO "Command: $JAVA -XX:ThreadStackSize=$STACK_SIZE -version" >&5
   OUTPUT=`$JAVA -XX:ThreadStackSize=$STACK_SIZE -version 2>&1`
@@ -19149,9 +19125,7 @@ $as_echo "$as_me: Downloading build dependency devkit from $with_builddeps_serve
   # On Solaris, cc is preferred to gcc.
   # Elsewhere, gcc is preferred to cc.
 
-  if test "x$CC" != x; then
-    COMPILER_CHECK_LIST="$CC"
-  elif test "x$OPENJDK_TARGET_OS" = "xwindows"; then
+  if test "x$OPENJDK_TARGET_OS" = "xwindows"; then
     COMPILER_CHECK_LIST="cl"
   elif test "x$OPENJDK_TARGET_OS" = "xsolaris"; then
     COMPILER_CHECK_LIST="cc gcc"
@@ -19164,66 +19138,16 @@ $as_echo "$as_me: Downloading build dependency devkit from $with_builddeps_serve
 
 
   COMPILER_NAME=C
+  SEARCH_LIST="$COMPILER_CHECK_LIST"
 
-  CC=
-  # If TOOLS_DIR is set, check for all compiler names in there first
-  # before checking the rest of the PATH.
-  if test -n "$TOOLS_DIR"; then
-    PATH_save="$PATH"
-    PATH="$TOOLS_DIR"
-    for ac_prog in $COMPILER_CHECK_LIST
-do
-  # Extract the first word of "$ac_prog", so it can be a program name with args.
-set dummy $ac_prog; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_path_TOOLS_DIR_CC+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  case $TOOLS_DIR_CC in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_TOOLS_DIR_CC="$TOOLS_DIR_CC" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_path_TOOLS_DIR_CC="$as_dir/$ac_word$ac_exec_ext"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
+  if test "x$CC" != x; then
+    # User has supplied compiler name already, always let that override.
+    { $as_echo "$as_me:${as_lineno-$LINENO}: Will use user supplied compiler CC=$CC" >&5
+$as_echo "$as_me: Will use user supplied compiler CC=$CC" >&6;}
+    if test "x`basename $CC`" = "x$CC"; then
+      # A command without a complete path is provided, search $PATH.
 
-  ;;
-esac
-fi
-TOOLS_DIR_CC=$ac_cv_path_TOOLS_DIR_CC
-if test -n "$TOOLS_DIR_CC"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $TOOLS_DIR_CC" >&5
-$as_echo "$TOOLS_DIR_CC" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-
-  test -n "$TOOLS_DIR_CC" && break
-done
-
-    CC=$TOOLS_DIR_CC
-    PATH="$PATH_save"
-  fi
-
-  # AC_PATH_PROGS can't be run multiple times with the same variable,
-  # so create a new name for this run.
-  if test "x$CC" = x; then
-    for ac_prog in $COMPILER_CHECK_LIST
+      for ac_prog in $CC
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
@@ -19268,10 +19192,126 @@ fi
   test -n "$POTENTIAL_CC" && break
 done
 
-    CC=$POTENTIAL_CC
+      if test "x$POTENTIAL_CC" != x; then
+        CC=$POTENTIAL_CC
+      else
+        as_fn_error $? "User supplied compiler CC=$CC could not be found" "$LINENO" 5
+      fi
+    else
+      # Otherwise it might already be a complete path
+      if test ! -x "$CC"; then
+        as_fn_error $? "User supplied compiler CC=$CC does not exist" "$LINENO" 5
+      fi
+    fi
+  else
+    # No user supplied value. Locate compiler ourselves
+    CC=
+    # If TOOLS_DIR is set, check for all compiler names in there first
+    # before checking the rest of the PATH.
+    if test -n "$TOOLS_DIR"; then
+      PATH_save="$PATH"
+      PATH="$TOOLS_DIR"
+      for ac_prog in $SEARCH_LIST
+do
+  # Extract the first word of "$ac_prog", so it can be a program name with args.
+set dummy $ac_prog; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_path_TOOLS_DIR_CC+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  case $TOOLS_DIR_CC in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_TOOLS_DIR_CC="$TOOLS_DIR_CC" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_TOOLS_DIR_CC="$as_dir/$ac_word$ac_exec_ext"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
   fi
+done
+  done
+IFS=$as_save_IFS
 
-  if test "x$CC" = x; then
+  ;;
+esac
+fi
+TOOLS_DIR_CC=$ac_cv_path_TOOLS_DIR_CC
+if test -n "$TOOLS_DIR_CC"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $TOOLS_DIR_CC" >&5
+$as_echo "$TOOLS_DIR_CC" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+  test -n "$TOOLS_DIR_CC" && break
+done
+
+      CC=$TOOLS_DIR_CC
+      PATH="$PATH_save"
+    fi
+
+    # AC_PATH_PROGS can't be run multiple times with the same variable,
+    # so create a new name for this run.
+    if test "x$CC" = x; then
+      for ac_prog in $SEARCH_LIST
+do
+  # Extract the first word of "$ac_prog", so it can be a program name with args.
+set dummy $ac_prog; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_path_POTENTIAL_CC+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  case $POTENTIAL_CC in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_POTENTIAL_CC="$POTENTIAL_CC" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_POTENTIAL_CC="$as_dir/$ac_word$ac_exec_ext"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  ;;
+esac
+fi
+POTENTIAL_CC=$ac_cv_path_POTENTIAL_CC
+if test -n "$POTENTIAL_CC"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $POTENTIAL_CC" >&5
+$as_echo "$POTENTIAL_CC" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+  test -n "$POTENTIAL_CC" && break
+done
+
+      CC=$POTENTIAL_CC
+    fi
+
+    if test "x$CC" = x; then
 
   # Print a helpful message on how to acquire the necessary build dependency.
   # devkit is the help tag: freetype, cups, pulse, alsa etc
@@ -19302,8 +19342,11 @@ done
     fi
   fi
 
-    as_fn_error $? "Could not find a $COMPILER_NAME compiler. $HELP_MSG" "$LINENO" 5
+      as_fn_error $? "Could not find a $COMPILER_NAME compiler. $HELP_MSG" "$LINENO" 5
+    fi
   fi
+
+  # Now we have a compiler binary in CC. Make sure it's okay.
 
   if test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.cygwin"; then
 
@@ -20068,8 +20111,8 @@ $as_echo "$PROPER_COMPILER_CC" >&6; }
   else
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: no, keeping CC" >&5
 $as_echo "no, keeping CC" >&6; }
-    CC="$TEST_COMPILER"
   fi
+
 
   COMPILER=$CC
   COMPILER_NAME=$COMPILER_NAME
@@ -20750,9 +20793,7 @@ ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
 
   ### Locate C++ compiler (CXX)
 
-  if test "x$CXX" != x; then
-    COMPILER_CHECK_LIST="$CXX"
-  elif test "x$OPENJDK_TARGET_OS" = "xwindows"; then
+  if test "x$OPENJDK_TARGET_OS" = "xwindows"; then
     COMPILER_CHECK_LIST="cl"
   elif test "x$OPENJDK_TARGET_OS" = "xsolaris"; then
     COMPILER_CHECK_LIST="CC g++"
@@ -20765,66 +20806,16 @@ ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
 
 
   COMPILER_NAME=C++
+  SEARCH_LIST="$COMPILER_CHECK_LIST"
 
-  CXX=
-  # If TOOLS_DIR is set, check for all compiler names in there first
-  # before checking the rest of the PATH.
-  if test -n "$TOOLS_DIR"; then
-    PATH_save="$PATH"
-    PATH="$TOOLS_DIR"
-    for ac_prog in $COMPILER_CHECK_LIST
-do
-  # Extract the first word of "$ac_prog", so it can be a program name with args.
-set dummy $ac_prog; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_path_TOOLS_DIR_CXX+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  case $TOOLS_DIR_CXX in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_TOOLS_DIR_CXX="$TOOLS_DIR_CXX" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_path_TOOLS_DIR_CXX="$as_dir/$ac_word$ac_exec_ext"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
+  if test "x$CXX" != x; then
+    # User has supplied compiler name already, always let that override.
+    { $as_echo "$as_me:${as_lineno-$LINENO}: Will use user supplied compiler CXX=$CXX" >&5
+$as_echo "$as_me: Will use user supplied compiler CXX=$CXX" >&6;}
+    if test "x`basename $CXX`" = "x$CXX"; then
+      # A command without a complete path is provided, search $PATH.
 
-  ;;
-esac
-fi
-TOOLS_DIR_CXX=$ac_cv_path_TOOLS_DIR_CXX
-if test -n "$TOOLS_DIR_CXX"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $TOOLS_DIR_CXX" >&5
-$as_echo "$TOOLS_DIR_CXX" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-
-  test -n "$TOOLS_DIR_CXX" && break
-done
-
-    CXX=$TOOLS_DIR_CXX
-    PATH="$PATH_save"
-  fi
-
-  # AC_PATH_PROGS can't be run multiple times with the same variable,
-  # so create a new name for this run.
-  if test "x$CXX" = x; then
-    for ac_prog in $COMPILER_CHECK_LIST
+      for ac_prog in $CXX
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
@@ -20869,10 +20860,126 @@ fi
   test -n "$POTENTIAL_CXX" && break
 done
 
-    CXX=$POTENTIAL_CXX
+      if test "x$POTENTIAL_CXX" != x; then
+        CXX=$POTENTIAL_CXX
+      else
+        as_fn_error $? "User supplied compiler CXX=$CXX could not be found" "$LINENO" 5
+      fi
+    else
+      # Otherwise it might already be a complete path
+      if test ! -x "$CXX"; then
+        as_fn_error $? "User supplied compiler CXX=$CXX does not exist" "$LINENO" 5
+      fi
+    fi
+  else
+    # No user supplied value. Locate compiler ourselves
+    CXX=
+    # If TOOLS_DIR is set, check for all compiler names in there first
+    # before checking the rest of the PATH.
+    if test -n "$TOOLS_DIR"; then
+      PATH_save="$PATH"
+      PATH="$TOOLS_DIR"
+      for ac_prog in $SEARCH_LIST
+do
+  # Extract the first word of "$ac_prog", so it can be a program name with args.
+set dummy $ac_prog; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_path_TOOLS_DIR_CXX+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  case $TOOLS_DIR_CXX in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_TOOLS_DIR_CXX="$TOOLS_DIR_CXX" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_TOOLS_DIR_CXX="$as_dir/$ac_word$ac_exec_ext"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
   fi
+done
+  done
+IFS=$as_save_IFS
 
-  if test "x$CXX" = x; then
+  ;;
+esac
+fi
+TOOLS_DIR_CXX=$ac_cv_path_TOOLS_DIR_CXX
+if test -n "$TOOLS_DIR_CXX"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $TOOLS_DIR_CXX" >&5
+$as_echo "$TOOLS_DIR_CXX" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+  test -n "$TOOLS_DIR_CXX" && break
+done
+
+      CXX=$TOOLS_DIR_CXX
+      PATH="$PATH_save"
+    fi
+
+    # AC_PATH_PROGS can't be run multiple times with the same variable,
+    # so create a new name for this run.
+    if test "x$CXX" = x; then
+      for ac_prog in $SEARCH_LIST
+do
+  # Extract the first word of "$ac_prog", so it can be a program name with args.
+set dummy $ac_prog; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_path_POTENTIAL_CXX+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  case $POTENTIAL_CXX in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_POTENTIAL_CXX="$POTENTIAL_CXX" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_POTENTIAL_CXX="$as_dir/$ac_word$ac_exec_ext"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  ;;
+esac
+fi
+POTENTIAL_CXX=$ac_cv_path_POTENTIAL_CXX
+if test -n "$POTENTIAL_CXX"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $POTENTIAL_CXX" >&5
+$as_echo "$POTENTIAL_CXX" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+  test -n "$POTENTIAL_CXX" && break
+done
+
+      CXX=$POTENTIAL_CXX
+    fi
+
+    if test "x$CXX" = x; then
 
   # Print a helpful message on how to acquire the necessary build dependency.
   # devkit is the help tag: freetype, cups, pulse, alsa etc
@@ -20903,8 +21010,11 @@ done
     fi
   fi
 
-    as_fn_error $? "Could not find a $COMPILER_NAME compiler. $HELP_MSG" "$LINENO" 5
+      as_fn_error $? "Could not find a $COMPILER_NAME compiler. $HELP_MSG" "$LINENO" 5
+    fi
   fi
+
+  # Now we have a compiler binary in CXX. Make sure it's okay.
 
   if test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.cygwin"; then
 
@@ -21669,8 +21779,8 @@ $as_echo "$PROPER_COMPILER_CXX" >&6; }
   else
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: no, keeping CXX" >&5
 $as_echo "no, keeping CXX" >&6; }
-    CXX="$TEST_COMPILER"
   fi
+
 
   COMPILER=$CXX
   COMPILER_NAME=$COMPILER_NAME
