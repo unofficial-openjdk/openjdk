@@ -102,6 +102,7 @@ FILES_java += 	java/util/prefs/MacOSXPreferences.java \
 		java/util/prefs/MacOSXPreferencesFactory.java
 
 CFLAGS_$(VARIANT)/java_props_md.o = -Os -x objective-c
+CFLAGS_$(VARIANT)/java_props_macosx.o = -Os -x objective-c
 endif
 
 #
@@ -222,6 +223,7 @@ OTHER_LDLIBS += $(JVMLIB) -lverify $(LIBSOCKET) $(LIBNSL) $(LIBSCF) $(LIBDL) \
 ifeq ($(PLATFORM), macosx)
 OTHER_LDLIBS += \
         -framework CoreFoundation \
+        -framework Foundation \
         -framework Security \
         -framework SystemConfiguration
 endif
