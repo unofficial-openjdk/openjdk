@@ -92,8 +92,12 @@ all: $(BUILD_CLASSANALYZER)
             --module java.management \
                 --native="$(MANAGEMENT_LIBRARIES) $(JFR_LIBRARIES)" \
                 --conf="$(MANAGEMENT_CONF_FILES)" \
+            --module java.rmi \
+                --cmds="$(RMI_LAUNCHERS)" \
             --module javax.script \
                 --native="$(SCRIPT_LIBRARIES)" \
+            --module javax.corba \
+                --cmds="$(CORBA_LAUNCHERS)" \
             --module jdk.sctp \
                 --native="$(SCTP_LIBRARIES)" \
             --module javax.smartcardio \
@@ -109,11 +113,16 @@ all: $(BUILD_CLASSANALYZER)
                 --native="$(SECURITY_UCRYPTO_LIBRARIES)" \
                 --conf="$(SECURITY_UCRYPTO_CONF_FILES)" \
             --module jdk.tools.base \
+                --cmds="$(DEVTOOLS_LAUNCHERS) $(TOOLS_BASE_LAUNCHERS)" \
                 --native="$(UNPACK_LIBRARIES)" \
+            --module jdk.tools.jaxws \
+                --cmds="$(TOOLS_JAXWS_LAUNCHERS)" \
             --module jdk.tools.jre \
+                --cmds="$(TOOLS_JRE_LAUNCHERS)" \
                 --native="$(HPROF_LIBRARIES) $(JSDT_LIBRARIES)" \
                 --conf="$(HPROF_CONF_FILES)" \
             --module jdk.tools \
+                --cmds="$(TOOLS_LAUNCHERS)" \
                 --native="$(ATTACH_LIBRARIES) $(JDWP_LIBRARIES) $(SAJDI_LIBRARIES)"
 
 .PHONY: all
