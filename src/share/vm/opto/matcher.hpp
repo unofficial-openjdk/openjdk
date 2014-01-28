@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -285,6 +285,9 @@ public:
 
   // CPU supports misaligned vectors store/load.
   static const bool misaligned_vectors_ok();
+
+  // Should original key array reference be passed to AES stubs
+  static const bool pass_original_key_for_aes();
 
   // Used to determine a "low complexity" 64-bit constant.  (Zero is simple.)
   // The standard of comparison is one (StoreL ConL) vs. two (StoreI ConI).

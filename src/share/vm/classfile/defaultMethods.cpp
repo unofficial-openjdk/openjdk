@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -349,6 +349,7 @@ class MethodFamily : public ResourceObj {
   }
 
   Symbol* generate_no_defaults_message(TRAPS) const;
+  Symbol* generate_method_message(Symbol *klass_name, Method* method, TRAPS) const;
   Symbol* generate_conflicts_message(GrowableArray<Method*>* methods, TRAPS) const;
 
  public:
@@ -389,6 +390,20 @@ class MethodFamily : public ResourceObj {
   Symbol* get_exception_message() { return _exception_message; }
   Symbol* get_exception_name() { return _exception_name; }
 
+  // Return true if the specified klass has a static method that matches
+  // the name and signature of the target method.
+  bool has_matching_static(InstanceKlass* root) {
+    if (_members.length() > 0) {
+      Pair<Method*,QualifiedState> entry = _members.at(0);
+      Method* impl = root->find_method(entry.first->name(),
+                                       entry.first->signature());
+      if ((impl != NULL) && impl->is_static()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   // Either sets the target or the exception error message
   void determine_target(InstanceKlass* root, TRAPS) {
     if (has_target() || throws_exception()) {
@@ -414,13 +429,25 @@ class MethodFamily : public ResourceObj {
       }
     }
 
-    if (qualified_methods.length() == 0) {
-      _exception_message = generate_no_defaults_message(CHECK);
-      _exception_name = vmSymbols::java_lang_AbstractMethodError();
+    if (num_defaults == 0) {
+      // If the root klass has a static method with matching name and signature
+      // then do not generate an overpass method because it will hide the
+      // static method during resolution.
+      if (!has_matching_static(root)) {
+        if (qualified_methods.length() == 0) {
+          _exception_message = generate_no_defaults_message(CHECK);
+        } else {
+          assert(root != NULL, "Null root class");
+          _exception_message = generate_method_message(root->name(), qualified_methods.at(0), CHECK);
+        }
+        _exception_name = vmSymbols::java_lang_AbstractMethodError();
+      }
+
     // If only one qualified method is default, select that
     } else if (num_defaults == 1) {
         _selected_target = qualified_methods.at(default_index);
-    } else if (num_defaults > 1) {
+
+    } else if (num_defaults > 1 && !has_matching_static(root)) {
       _exception_message = generate_conflicts_message(&qualified_methods,CHECK);
       _exception_name = vmSymbols::java_lang_IncompatibleClassChangeError();
       if (TraceDefaultMethods) {
@@ -428,7 +455,6 @@ class MethodFamily : public ResourceObj {
         tty->print_cr("");
       }
     }
-    // leave abstract methods alone, they will be found via normal search path
   }
 
   bool contains_signature(Symbol* query) {
@@ -484,6 +510,19 @@ class MethodFamily : public ResourceObj {
 
 Symbol* MethodFamily::generate_no_defaults_message(TRAPS) const {
   return SymbolTable::new_symbol("No qualifying defaults found", CHECK_NULL);
+}
+
+Symbol* MethodFamily::generate_method_message(Symbol *klass_name, Method* method, TRAPS) const {
+  stringStream ss;
+  ss.print("Method ");
+  Symbol* name = method->name();
+  Symbol* signature = method->signature();
+  ss.write((const char*)klass_name->bytes(), klass_name->utf8_length());
+  ss.print(".");
+  ss.write((const char*)name->bytes(), name->utf8_length());
+  ss.write((const char*)signature->bytes(), signature->utf8_length());
+  ss.print(" is abstract");
+  return SymbolTable::new_symbol(ss.base(), (int)ss.size(), CHECK_NULL);
 }
 
 Symbol* MethodFamily::generate_conflicts_message(GrowableArray<Method*>* methods, TRAPS) const {
@@ -1026,7 +1065,8 @@ static void merge_in_new_methods(InstanceKlass* klass,
   Array<Method*>* merged_methods = MetadataFactory::new_array<Method*>(
       klass->class_loader_data(), new_size, NULL, CHECK);
 
-  if (original_ordering != NULL && original_ordering->length() > 0) {
+  // original_ordering might be empty if this class has no methods of its own
+  if (JvmtiExport::can_maintain_original_method_order() || DumpSharedSpaces) {
     merged_ordering = MetadataFactory::new_array<int>(
         klass->class_loader_data(), new_size, CHECK);
   }
@@ -1053,6 +1093,8 @@ static void merge_in_new_methods(InstanceKlass* klass,
       merged_methods->at_put(i, orig_method);
       original_methods->at_put(orig_idx, NULL);
       if (merged_ordering->length() > 0) {
+        assert(original_ordering != NULL && original_ordering->length() > 0,
+               "should have original order information for this method");
         merged_ordering->at_put(i, original_ordering->at(orig_idx));
       }
       ++orig_idx;
@@ -1081,13 +1123,14 @@ static void merge_in_new_methods(InstanceKlass* klass,
   // Replace klass methods with new merged lists
   klass->set_methods(merged_methods);
   klass->set_initial_method_idnum(new_size);
+  klass->set_method_ordering(merged_ordering);
 
+  // Free metadata
   ClassLoaderData* cld = klass->class_loader_data();
-  if (original_methods ->length() > 0) {
+  if (original_methods->length() > 0) {
     MetadataFactory::free_array(cld, original_methods);
   }
-  if (original_ordering->length() > 0) {
-    klass->set_method_ordering(merged_ordering);
+  if (original_ordering != NULL && original_ordering->length() > 0) {
     MetadataFactory::free_array(cld, original_ordering);
   }
 }
