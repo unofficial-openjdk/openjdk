@@ -231,6 +231,9 @@ define SetupModuleCompilation
     $1_CLASSPATH := $$(addprefix $(JDK_OUTPUTDIR)/modules/,$$($1_DEPS))
     $1_CLASSPATH := $$(subst $$(SPACE),$$(PATH_SEP),$$($1_CLASSPATH))
     $1_JAVAC_FLAGS := -bootclasspath "$$($1_CLASSPATH)"
+  else
+    # Need to set the bootclasspath for java.base too.
+    $1_JAVAC_FLAGS := -bootclasspath $(JDK_OUTPUTDIR)/modules/$1
   endif
 
   $$(eval $$(call SetupJavaCompilation,$1, \
