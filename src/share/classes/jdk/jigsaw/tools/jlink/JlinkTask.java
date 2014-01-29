@@ -33,6 +33,12 @@ import java.nio.file.spi.*;
 import java.nio.file.attribute.*;;
 import java.text.MessageFormat;
 import java.util.*;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 import jdk.jigsaw.module.Module;
 import jdk.jigsaw.module.SimpleResolver;
 
@@ -252,7 +258,7 @@ class JlinkTask {
         List<Path> configs;
         List<Path> libs;
         Set<String> jmods = new TreeSet<>();
-        Format format = Format.IMAGE;  // default to create an image for J1 demo
+        Format format = null;
         Path output;
         Map<String,String> launchers = new HashMap<>();
         String moduleName;
@@ -437,99 +443,132 @@ class JlinkTask {
         final Path output = options.output;
         final String moduleName = options.moduleName;
 
-        //assert hasZipFileProvider(): "Zip File System Provider not available";
-        if (!hasZipFileProvider())
-            throw new InternalError("Zip File System Provider not available");
-
-        Map<String, String> env = new HashMap<>();
-        env.put("create", "true");
-        URI uri = URI.create("jar:file:" + output.toUri().getPath());
-
-        try (FileSystem jmodfs = FileSystems.newFileSystem(uri, env)) {
-            // module name
-            Path path = jmodfs.getPath("module");
-            Files.createDirectory(path);
-            path = path.resolve("name");
-            try (BufferedWriter writer = Files.newBufferedWriter(path,
-                                                                 StandardCharsets.ISO_8859_1,
-                                                                 StandardOpenOption.CREATE_NEW)) {
-                writer.write(moduleName, 0, moduleName.length());
-            }
-            // classes / services
-            processSection(Section.CLASSES, classes, jmodfs);
-
-            processSection(Section.NATIVE_CMDS, cmds, jmodfs);
-            processSection(Section.NATIVE_LIBS, libs, jmodfs);
-            processSection(Section.CONFIG, configs, jmodfs);
+        JmodFile jmod = new JmodFile(moduleName);
+        try (OutputStream os = Files.newOutputStream(output)) {
+            jmod.write(os, classes, libs, configs, cmds);
         }
     }
 
-    static void processSection(Section section, List<Path> paths, FileSystem jmodfs)
-        throws IOException
-    {
-        String prefix = section.jmodDir();
-        if (paths == null)
-            return;
-        for (Path p : paths)
-            Files.walkFileTree(p, new CopyFileVisitor(p.toString(),
-                                                      jmodfs.getPath(prefix)));
+    class JmodFile {
+        final String modulename;
+        JmodFile(String moduleName) {
+            this.modulename = moduleName;
+        }
+
+        void write(OutputStream os, List<Path> classes,
+                   List<Path> libs, List<Path> configs, List<Path> cmds)
+            throws IOException
+        {
+            try (ZipOutputStream zos = new ZipOutputStream(os)) {
+                // write module/name
+                String mn = modulename + "\n";
+                writeZipEntry(zos, mn.getBytes(), "module", "name");
+
+                // classes / services
+                processClasses(zos, classes);
+
+                processSection(zos, Section.NATIVE_CMDS, cmds);
+                processSection(zos, Section.NATIVE_LIBS, libs);
+                processSection(zos, Section.CONFIG, configs);
+            }
+        }
+
+        void processClasses(ZipOutputStream zos, List<Path> classpaths)
+            throws IOException
+        {
+            if (classpaths == null) {
+                return;
+            }
+            for (Path p : classpaths) {
+                if (Files.isDirectory(p)) {
+                    processSection(zos, Section.CLASSES, p);
+                } else if (Files.exists(p) && p.toString().endsWith(".jar")) {
+                    JarFile jf = new JarFile(p.toFile());
+                    JarEntryConsumer jec = new JarEntryConsumer(zos, jf);
+                    jf.stream().filter(jec).forEach(jec);
+                }
+            }
+        }
+
+        void processSection(ZipOutputStream zos, Section section, List<Path> paths)
+                throws IOException
+        {
+            if (paths == null) {
+                return;
+            }
+            for (Path p : paths) {
+                processSection(zos, section, p);
+            }
+        }
+
+        void processSection(ZipOutputStream zos, final Section section, Path p)
+            throws IOException
+        {
+            final String pathPrefix = p.toString();
+            final int pathPrefixLength = pathPrefix.length();
+            Files.walkFileTree(p, new SimpleFileVisitor<Path>() {
+                @Override
+                public FileVisitResult visitFile(Path file,
+                                                 BasicFileAttributes attrs)
+                        throws IOException
+                {
+                    assert file.toString().startsWith(pathPrefix);
+                    String f = file.toString().substring(pathPrefixLength + 1);
+                    String prefix = section.jmodDir();
+                    // ## TODO: module services
+                    /*
+                    if (f.startsWith(SERVICES)) {
+                        f = f.toString().substring(SERVICES.length() + 1);
+                        prefix = Section.MODULE_SERVICES.jmodDir();
+                    }
+                    */
+                    byte[] data = Files.readAllBytes(file);
+                    writeZipEntry(zos, data, prefix, f);
+                    return FileVisitResult.CONTINUE;
+                }
+            });
+        }
+
+        void writeZipEntry(ZipOutputStream zos, byte[] data, String prefix, String other)
+            throws IOException
+        {
+            String name = Paths.get(prefix, other).toString()
+                               .replace(File.separatorChar, '/');
+            ZipEntry ze = new ZipEntry(name);
+            zos.putNextEntry(ze);
+            zos.write(data, 0, data.length);
+            zos.closeEntry();
+        }
+
+        class JarEntryConsumer implements Consumer<JarEntry>, Predicate<JarEntry> {
+            final ZipOutputStream zos;
+            final JarFile jarfile;
+            JarEntryConsumer(ZipOutputStream zos, JarFile jarfile) {
+                this.zos = zos;
+                this.jarfile = jarfile;
+            }
+            @Override
+            public void accept(JarEntry je) {
+                try (InputStream in = jarfile.getInputStream(je);
+                     DataInputStream din = new DataInputStream(in)) {
+                    int size = (int)je.getSize();
+                    byte[] data = new byte[size];
+                    din.readFully(data);
+                    writeZipEntry(zos, data, Section.CLASSES.jmodDir(), je.getName());
+                } catch (IOException e) {
+                    throw new UncheckedIOException(e);
+                }
+            }
+            @Override
+            public boolean test(JarEntry je) {
+                String name = je.getName();
+                return !je.isDirectory()
+                        && (!name.startsWith("META-INF") || name.startsWith(SERVICES));
+            }
+        }
     }
 
     private static String SERVICES = "META-INF/services";
-
-    static class CopyFileVisitor extends SimpleFileVisitor<Path> {
-
-        final String pathPrefix;
-        final int pathPrefixLength;
-        final Path jmodPrefix;
-
-        CopyFileVisitor(String pathPrefix, Path jmodPrefix) {
-            this.pathPrefix = pathPrefix;
-            this.jmodPrefix = jmodPrefix;
-            this.pathPrefixLength = pathPrefix.length();
-        }
-
-        @Override
-        public FileVisitResult visitFile(Path file,
-                                         BasicFileAttributes attrs)
-            throws IOException
-        {
-            assert file.toString().startsWith(pathPrefix);
-            String f = file.toString().substring(pathPrefixLength + 1);
-            if (f.startsWith(SERVICES))
-                f = "../" + JlinkTask.Section.MODULE_SERVICES.jmodDir()
-                    + "/" + f.toString().substring(SERVICES.length() + 1);
-            Path dstFile = jmodPrefix.resolve(f);
-            Files.copy(file, dstFile);
-            return FileVisitResult.CONTINUE;
-        }
-
-        @Override
-        public FileVisitResult preVisitDirectory(Path dir,
-                                                 BasicFileAttributes attrs)
-            throws IOException
-        {
-            Path dirToCreate;
-            if (dir.toString().equals(pathPrefix)) {
-                dirToCreate = jmodPrefix;
-            } else {
-                assert dir.toString().startsWith(pathPrefix);
-                String d = dir.toString().substring(pathPrefixLength + 1);
-                if (d.equals(SERVICES))
-                    d = "../" + JlinkTask.Section.MODULE_SERVICES.jmodDir();
-                else if (d.startsWith(SERVICES))
-                    d = "../" + JlinkTask.Section.MODULE_SERVICES.jmodDir()
-                        + d.toString().substring(SERVICES.length() + 1);
-                dirToCreate = jmodPrefix.resolve(d);
-            }
-            if (Files.notExists(dirToCreate))
-                Files.createDirectories(dirToCreate);
-            return FileVisitResult.CONTINUE;
-        }
-    }
-
-    //private static final String CLASSES_JAR = "jake.jar";
-
     private static enum Section {
         NATIVE_LIBS("native", "lib"),
         NATIVE_CMDS("bin", "bin"),
