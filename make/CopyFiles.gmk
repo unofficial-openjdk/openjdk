@@ -393,6 +393,7 @@ $(PROPS_DST): $(PROPS_SRC)
 
 endif
 
+BASE_CONF_FILES += $(PROPS_DST)
 COPY_FILES += $(PROPS_DST)
 
 ##########################################################################################
