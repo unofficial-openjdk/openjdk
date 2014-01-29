@@ -41,6 +41,7 @@ include Tools.gmk
 BASE_LAUNCHERS=
 CORBA_LAUNCHERS=
 DEVTOOLS_LAUNCHERS=
+KERBEROS_LAUNCHERS=
 RMI_LAUNCHERS=
 TOOLS_LAUNCHERS=
 TOOLS_BASE_LAUNCHERS=
@@ -297,7 +298,7 @@ $(eval $(call SetupLauncher,jdeps, \
 $(eval $(call SetupLauncher,jlink,\
     -DEXPAND_CLASSPATH_WILDCARDS \
     -DNEVER_ACT_AS_SERVER_CLASS_MACHINE \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "jdk.jigsaw.tools.jlink.Main"$(COMMA) }',,,,,,,,,,DEVTOOLS))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "jdk.jigsaw.tools.jlink.Main"$(COMMA) }',,,,,,,,,,TOOLS_BASE))
 
 BUILD_LAUNCHER_jconsole_CFLAGS_windows := -DJAVAW
 BUILD_LAUNCHER_jconsole_LDFLAGS_windows := user32.lib
@@ -341,7 +342,7 @@ $(eval $(call SetupLauncher,jjs, \
 $(eval $(call SetupLauncher,jsadebugd, \
     -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.jvm.hotspot.jdi.SADebugServer"$(COMMA) }' \
     -DAPP_CLASSPATH='{ "/lib/tools.jar"$(COMMA) "/lib/sa-jdi.jar"$(COMMA) "/classes" }' \
-    ,,,,,,,,,Info-privileged.plist))   ## TODO: which module, TOOLS?
+    ,,,,,,,,,Info-privileged.plist,TOOLS))
 
 $(eval $(call SetupLauncher,jstack, \
     -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) \
@@ -374,7 +375,7 @@ $(eval $(call SetupLauncher,rmic, \
     -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.rmi.rmic.Main"$(COMMA) }',,,,,,,,,,TOOLS))
 
 $(eval $(call SetupLauncher,schemagen, \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "com.sun.tools.internal.jxc.SchemaGenerator"$(COMMA) }'))  ## TODO: which module
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "com.sun.tools.internal.jxc.SchemaGenerator"$(COMMA) }',,,,,,,,,,TOOLS_JAXWS))
 
 $(eval $(call SetupLauncher,serialver, \
     -DEXPAND_CLASSPATH_WILDCARDS \
@@ -407,7 +408,7 @@ $(eval $(call SetupLauncher,tnameserv, \
         "com.sun.corba.se.impl.naming.cosnaming.TransientNameServer"$(COMMA) }',,,,,,,,,,CORBA))
 
 $(eval $(call SetupLauncher,pack200, \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "com.sun.java.util.jar.pack.Driver"$(COMMA) }',,,,,,,,,,BASE))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "com.sun.java.util.jar.pack.Driver"$(COMMA) }',,,,,,,,,,TOOLS_BASE))
 
 $(eval $(call SetupLauncher,rmid, \
     -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.rmi.server.Activation"$(COMMA) }',,,,,,,,,,RMI))
@@ -420,13 +421,13 @@ $(eval $(call SetupLauncher,jcmd, \
 
 ifeq ($(OPENJDK_TARGET_OS), windows)
   $(eval $(call SetupLauncher,kinit, \
-      -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.security.krb5.internal.tools.Kinit"$(COMMA) }'))  ## TODO: which module
+      -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.security.krb5.internal.tools.Kinit"$(COMMA) }',,,,,,,,,,KERBEROS))
 
   $(eval $(call SetupLauncher,klist, \
-      -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.security.krb5.internal.tools.Klist"$(COMMA) }'))  ## TODO: which module
+      -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.security.krb5.internal.tools.Klist"$(COMMA) }',,,,,,,,,,KERBEROS))
 
   $(eval $(call SetupLauncher,ktab, \
-      -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.security.krb5.internal.tools.Ktab"$(COMMA) }'))   ## TODO: which module
+      -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.security.krb5.internal.tools.Ktab"$(COMMA) }',,,,,,,,,,KERBEROS))
 endif
 
 ##########################################################################################

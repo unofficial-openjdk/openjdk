@@ -74,6 +74,7 @@ all: $(BUILD_CLASSANALYZER)
             --graph $(MODULES_SER_OUT) \
             --jmods $(JMODS_DIR) \
             --module javax.auth \
+                --cmds="$(KERBEROS_LAUNCHERS)" \
                 --native="$(SECURITY_AUTH_LIBRARIES) $(SECURITY_KERBEROS_LIBRARIES)" \
             --module java.base \
                 --native="$(BASE_LIBRARIES) $(MSVCR_TARGET) $(HOTSPOT_LIBRARIES) $(JVMCFG)" \
@@ -112,8 +113,10 @@ all: $(BUILD_CLASSANALYZER)
             --module jdk.ucrytpo \
                 --native="$(SECURITY_UCRYPTO_LIBRARIES)" \
                 --conf="$(SECURITY_UCRYPTO_CONF_FILES)" \
+            --module jdk.devtools \
+                --cmds="$(DEVTOOLS_LAUNCHERS)" \
             --module jdk.tools.base \
-                --cmds="$(DEVTOOLS_LAUNCHERS) $(TOOLS_BASE_LAUNCHERS)" \
+                --cmds="$(TOOLS_BASE_LAUNCHERS)" \
                 --native="$(UNPACK_LIBRARIES)" \
             --module jdk.tools.jaxws \
                 --cmds="$(TOOLS_JAXWS_LAUNCHERS)" \
