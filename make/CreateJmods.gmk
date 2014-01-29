@@ -77,7 +77,7 @@ all: $(BUILD_CLASSANALYZER)
                 --cmds="$(KERBEROS_LAUNCHERS)" \
                 --native="$(SECURITY_AUTH_LIBRARIES) $(SECURITY_KERBEROS_LIBRARIES)" \
             --module java.base \
-                --native="$(BASE_LIBRARIES) $(MSVCR_TARGET) $(HOTSPOT_LIBRARIES) $(JVMCFG)" \
+                --native="$(BASE_LIBRARIES) $(MSVCR_TARGET) $(JVM_LIBRARIES) $(JVMCFG)" \
                 --cmds="$(BASE_LAUNCHERS)" \
                 --conf="$(BASE_CONF_FILES) $(GENDATA_TZDB) $(GENDATA_CURDATA)" \
 		--conf="$(BASE_POLICY_JAR_FILES)" \
@@ -126,6 +126,6 @@ all: $(BUILD_CLASSANALYZER)
                 --conf="$(HPROF_CONF_FILES)" \
             --module jdk.tools \
                 --cmds="$(TOOLS_LAUNCHERS)" \
-                --native="$(ATTACH_LIBRARIES) $(JDWP_LIBRARIES) $(SAJDI_LIBRARIES)"
+                --native="$(ATTACH_LIBRARIES) $(JDWP_LIBRARIES) $(JDI_SA_LIBRARIES)"
 
 .PHONY: all

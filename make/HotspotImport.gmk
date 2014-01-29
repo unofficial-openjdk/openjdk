@@ -45,6 +45,9 @@ SAJDI_LIBRARIES = $(patsubst $(HOTSPOT_LIB_DIR)/%,$(INSTALL_LIBRARIES_HERE)/%,\
                   $(patsubst $(HOTSPOT_DIST)/lib/%,$(JDK_OUTPUTDIR)/lib/%,\
                   $(HOTSPOT_IMPORT_FILES_SAJDI)))
 
+JVM_LIBRARIES := $(filter-out %.debuginfo %.diz, $(HOTSPOT_LIBRARIES))
+JDI_SA_LIBRARIES := $(filter-out %.debuginfo %.diz %.pdb, $(SAJDI_LIBRARIES))
+
 SAJDI_JAR = $(JDK_OUTPUTDIR)/lib/sa-jdi.jar
 SRC_SAJDI_JAR = $(HOTSPOT_DIST)/lib/sa-jdi.jar
 
