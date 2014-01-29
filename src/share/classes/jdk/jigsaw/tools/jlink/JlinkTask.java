@@ -26,10 +26,8 @@
 package jdk.jigsaw.tools.jlink;
 
 import java.io.*;
-import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
-import java.nio.file.spi.*;
 import java.nio.file.attribute.*;;
 import java.text.MessageFormat;
 import java.util.*;
@@ -37,16 +35,15 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import java.util.jar.JarOutputStream;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 import jdk.jigsaw.module.Module;
 import jdk.jigsaw.module.SimpleResolver;
 
 /**
  * Implementation for the jlink tool.
- *
- * ## Current implementation depends on zipfs which is a demo and not
- * ## part of the jdk built.
  *
  * ## Should use jdk.joptsimple some day.
  */
@@ -384,28 +381,19 @@ class JlinkTask {
         final List<Path> jars = options.classpath;
         final Path output = options.output;
 
-        //assert hasZipFileProvider(): "Zip File System Provider not available";
-        if (!hasZipFileProvider())
-            throw new InternalError("Zip File System Provider not available");
-
         // the set of modules required
         Set<Path> jmods = modulesNeeded(options.jmods);
 
-        Path modPath = output.resolve("lib/modules");
-        Files.createDirectories(modPath);
+        Path modulesPath = output.resolve("lib/modules");
+        Files.createDirectories(modulesPath);
         for (Path jmod : jmods) {
             String fileName = jmod.getFileName().toString();
             String modName = fileName.substring(0, fileName.indexOf(".jmod"));
-            Path mPath = modPath.resolve(modName);
-            Files.createDirectories(mPath);
-            Map<String, String> env = new HashMap<>();
-            env.put("create", "true");
-            Path classes = mPath.resolve(Section.CLASSES.imageDir());
-            URI uri = URI.create("jar:file:" + classes.toUri().getPath());
+            Path modPath = modulesPath.resolve(modName);
+            Files.createDirectories(modPath);
 
-            try (FileSystem classesfs = FileSystems.newFileSystem(uri, env)) {
-                unzip(jmod, output, classesfs);
-            }
+            JmodFileReader reader = new JmodFileReader(jmod, modPath, output);
+            reader.extract();
         }
 
         Path appJar = output.resolve(APP_DIR).resolve("app.jar");
@@ -435,6 +423,113 @@ class JlinkTask {
         }
     }
 
+    private class JmodFileReader {
+        final ZipFile moduleFile;
+        final Path output;
+        final Path classesPath;
+        JarOutputStream classesJar;  //lazy
+
+        JmodFileReader(Path jmod, Path modulePrivatePath, Path outputDir)
+            throws IOException
+        {
+            moduleFile = new ZipFile(jmod.toFile());
+            output = outputDir;
+            classesPath = modulePrivatePath.resolve(Section.CLASSES.imageDir());
+        }
+
+        void extract() throws IOException {
+            ZipEntryConsumer zec = new ZipEntryConsumer();
+            try {
+                moduleFile.stream().forEach(zec);
+            } finally {
+                if (classesJar != null)
+                    classesJar.close();
+                moduleFile.close();
+            }
+        }
+
+        private class ZipEntryConsumer implements Consumer<ZipEntry> {
+            @Override
+            public void accept(ZipEntry ze) {
+                try {
+                    if (!ze.isDirectory())
+                        visitFile(ze);
+                } catch (IOException x) {
+                    throw new UncheckedIOException(x);
+                }
+            }
+        }
+
+        private void visitFile(ZipEntry ze) throws IOException {
+            String fullFilename = ze.getName();
+            if (fullFilename.toString().endsWith("module-info.class")) // ## hack remove
+                return;
+
+            Section section = Section.getSectionFromName(fullFilename);
+            if (Section.UNKNOWN.equals(section))
+                return; // skip unknown data
+
+             // Remove jmod prefix, native, conf, classes, etc
+            String filename = fullFilename.substring(fullFilename.indexOf('/') + 1);
+            if (Section.CLASSES.equals(section)
+                || Section.MODULE_SERVICES.equals(section)) {
+                if (Section.MODULE_SERVICES.equals(section))
+                    filename = "META-INF/" + filename;
+                writeJarEntry(moduleFile.getInputStream(ze), filename);
+            } else {
+                Path dstFile = output.resolve(section.imageDir()).resolve(filename);
+                writeFile(moduleFile.getInputStream(ze), dstFile, section);
+                setExecutable(section, dstFile);
+            }
+        }
+
+        private void writeJarEntry(InputStream is, String filename)
+            throws IOException
+        {
+            if (classesJar == null) // lazy creation of classes archive
+                classesJar = new JarOutputStream(new FileOutputStream(classesPath.toFile()));
+
+            classesJar.putNextEntry(new JarEntry(filename));
+            copy(is, classesJar);
+            classesJar.closeEntry();
+        }
+
+        private void writeFile(InputStream is, Path dstFile, Section section)
+            throws IOException
+        {
+            if (Files.exists(dstFile) && Section.MODULE_NAME.equals(section))
+                append(is, dstFile);
+            else {
+                if (Files.notExists(dstFile.getParent()))
+                    Files.createDirectories(dstFile.getParent());
+                Files.copy(is, dstFile);
+            }
+        }
+
+        private void append(InputStream is, Path dstFile)
+            throws IOException
+        {
+            try (OutputStream out = Files.newOutputStream(dstFile,
+                                                          StandardOpenOption.APPEND)) {
+                copy(is, out);
+            }
+        }
+
+        private void copy(InputStream is, OutputStream os)
+            throws IOException
+        {
+            byte[] buf = new byte[8192];
+            int n;
+            while ((n = is.read(buf)) > 0)
+                os.write(buf, 0, n);
+        }
+
+        private void setExecutable(Section section, Path path) {
+            if (Section.NATIVE_CMDS.equals(section))
+                path.toFile().setExecutable(true);
+        }
+    }
+
     private void createJmod() throws IOException {
         final List<Path> cmds = options.cmds;
         final List<Path> libs = options.libs;
@@ -443,15 +538,15 @@ class JlinkTask {
         final Path output = options.output;
         final String moduleName = options.moduleName;
 
-        JmodFile jmod = new JmodFile(moduleName);
+        JmodFileWriter jmod = new JmodFileWriter(moduleName);
         try (OutputStream os = Files.newOutputStream(output)) {
             jmod.write(os, classes, libs, configs, cmds);
         }
     }
 
-    class JmodFile {
+    private class JmodFileWriter {
         final String modulename;
-        JmodFile(String moduleName) {
+        JmodFileWriter(String moduleName) {
             this.modulename = moduleName;
         }
 
@@ -491,7 +586,7 @@ class JlinkTask {
         }
 
         void processSection(ZipOutputStream zos, Section section, List<Path> paths)
-                throws IOException
+            throws IOException
         {
             if (paths == null) {
                 return;
@@ -589,11 +684,11 @@ class JlinkTask {
         String imageDir() { return imageDir; }
         String jmodDir() { return jmodDir; }
 
-        boolean matches(Path path) {
-            return path.startsWith("/" + jmodDir);
+        boolean matches(String path) {
+            return path.startsWith(jmodDir);
         }
 
-        static Section getSectionFromPath(Path dir) {
+        static Section getSectionFromName(String dir) {
             if (Section.NATIVE_LIBS.matches(dir))
                 return Section.NATIVE_LIBS;
             else if (Section.NATIVE_CMDS.matches(dir))
@@ -610,104 +705,6 @@ class JlinkTask {
                 return Section.UNKNOWN;
         }
     }
-
-    static void unzip(Path zipFile, final Path dstDir, final FileSystem classes)
-        throws IOException
-    {
-        try (FileSystem zipFs = FileSystems.newFileSystem(zipFile, null)){
-            Files.walkFileTree(zipFs.getPath("/"), new SimpleFileVisitor<Path>(){
-                @Override
-                public FileVisitResult visitFile(Path file,
-                                                 BasicFileAttributes attrs)
-                    throws IOException
-                {
-                    if (file.toString().endsWith("module-info.class")) // ## hack remove
-                        return FileVisitResult.CONTINUE;
-
-                    Section section = Section.getSectionFromPath(file);
-                    if (Section.UNKNOWN.equals(section))
-                        return FileVisitResult.CONTINUE; // skip unknown data
-
-                    Path dstFile;
-                    String filename = file.subpath(1, file.getNameCount()).toString();
-                    switch (section) {
-                        case CLASSES:
-                            dstFile = classes.getPath(filename);
-                            break;
-                        case MODULE_SERVICES:
-                            dstFile = classes.getPath("META-INF").resolve(filename);
-                            break;
-                        default:
-                            Path path = Paths.get(section.imageDir()).resolve(filename);
-                            dstFile = dstDir.resolve(path);
-                    }
-
-                    if (Files.exists(dstFile) && Section.MODULE_NAME.equals(section))
-                        append(dstFile, file);
-                    else
-                        Files.copy(file, dstFile);
-
-                    setExecutable(section, dstFile);
-                    return FileVisitResult.CONTINUE;
-                }
-
-                @Override
-                public FileVisitResult preVisitDirectory(Path dir,
-                                                         BasicFileAttributes attrs)
-                    throws IOException
-                {
-                    Section section = Section.getSectionFromPath(dir);
-                    if (Section.UNKNOWN.equals(section))
-                        return FileVisitResult.CONTINUE; // skip unknown data
-
-                    Path dirToCreate;
-                    String subdir = dir.getNameCount() > 1
-                                        ? dir.subpath(1, dir.getNameCount()).toString()
-                                        : "";
-                    switch (section) {
-                        case CLASSES:
-                            if (dir.getNameCount() <= 1)
-                                return FileVisitResult.CONTINUE;
-                            dirToCreate = classes.getPath(subdir);
-                            break;
-                        case MODULE_SERVICES:
-                            if (dir.getNameCount() <= 1)
-                                return FileVisitResult.CONTINUE;
-                            dirToCreate = classes.getPath("META-INF").resolve(subdir);
-                            break;
-                        default:
-                            Path path = Paths.get(section.imageDir());
-                            if (dir.getNameCount() > 1)
-                                path = path.resolve(subdir);
-                            dirToCreate = dstDir.resolve(path);
-                            break;
-                    }
-                    if (Files.notExists(dirToCreate))
-                        Files.createDirectories(dirToCreate);
-                    return FileVisitResult.CONTINUE;
-                }
-            });
-        }
-    }
-
-    static void append(Path dstFile, Path file) throws IOException {
-        try (OutputStream out = Files.newOutputStream(dstFile, StandardOpenOption.APPEND)) {
-            Files.copy(file, out);
-        }
-    }
-
-    private static void setExecutable(Section section, Path path) {
-        if (Section.NATIVE_CMDS.equals(section))
-            path.toFile().setExecutable(true);
-    }
-
-    static boolean hasZipFileProvider() {
-        for (FileSystemProvider provider: FileSystemProvider.installedProviders())
-             if (provider.getScheme().equalsIgnoreCase("jar"))
-                 return true;
-        return false;
-    }
-
 
     public void handleOptions(String[] args) throws BadArgs {
         // process options
