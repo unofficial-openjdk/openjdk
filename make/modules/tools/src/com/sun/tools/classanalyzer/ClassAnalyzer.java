@@ -32,6 +32,7 @@ import java.util.*;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.stream.Collectors;
 
 /**
  * Implementation for the ClassAnalyzer tool
@@ -132,8 +133,10 @@ class ClassAnalyzer extends Task {
             builder.visit(new ModuleBuilder.Visitor<Void, Void>() {
                 @Override
                 public Void visitModule(Module m) throws IOException {
+                    String deps = builder.getModuleDependences(m).stream()
+                                      .map(Module::name).collect(Collectors.joining(" "));
+                    writer.format("%s: %s%n", m.name(), deps);
                     printModulePackages(m, dir);
-                    printModuleGroup(m, writer);
                     printModuleSummary(m, dir, builder);
                     return null;
                 }

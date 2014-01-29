@@ -88,7 +88,7 @@ public class ModuleBuilder {
         return moduleSorter.result();
     }
 
-    private Set<Module> getModuleDependences(Module m) {
+    public Set<Module> getModuleDependences(Module m) {
         Set<Module> deps = new HashSet<>();
         for (Dependence d : dependencesForModule.get(m).values()) {
             if (!d.requiresService()) {
