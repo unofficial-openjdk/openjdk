@@ -570,7 +570,7 @@ public class DataFlavor implements Externalizable, Cloneable {
         if (DataTransferer.isFlavorCharsetTextType(this) &&
             (isRepresentationClassInputStream() ||
              isRepresentationClassByteBuffer() ||
-             DataTransferer.byteArrayClass.equals(representationClass)))
+             byte[].class.equals(representationClass)))
         {
             params += ";charset=" + DataTransferer.getTextCharset(this);
         }
@@ -1014,7 +1014,7 @@ public class DataFlavor implements Externalizable, Cloneable {
                     !(isRepresentationClassReader() ||
                         String.class.equals(representationClass) ||
                         isRepresentationClassCharBuffer() ||
-                        DataTransferer.charArrayClass.equals(representationClass)))
+                        char[].class.equals(representationClass)))
                 {
                     String thisCharset =
                         DataTransferer.canonicalName(getParameter("charset"));
@@ -1099,8 +1099,7 @@ public class DataFlavor implements Externalizable, Cloneable {
                 !(isRepresentationClassReader() ||
                   String.class.equals(representationClass) ||
                   isRepresentationClassCharBuffer() ||
-                  DataTransferer.charArrayClass.equals
-                  (representationClass)))
+                  char[].class.equals(representationClass)))
             {
                 String charset =
                     DataTransferer.canonicalName(getParameter("charset"));
