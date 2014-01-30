@@ -217,16 +217,16 @@ ALL_SRC_DIRS := \
     $(JDK_OUTPUTDIR)/gensrc_no_srczip
 
 # Find all modules with java sources by looking in the source dirs
-JAVA_MODULES := $(sort $(notdir $(wildcard $(patsubst %,%/*,$(filter %modules, $(ALL_SRC_DIRS))))))
+JAVA_MODULES := $(sort $(notdir $(wildcard \
+    $(patsubst %,%/*,$(filter %modules, $(ALL_SRC_DIRS))))))
 
-MODULE_INFO_DIR := $(OUTPUT_ROOT)/jdk/genmodules/src
+MODULES_LIST_FILE := $(OUTPUT_ROOT)/jdk/genmodules/classlist/modules.list
 
 # This macro sets up compilation of a module and declares dependencies for it.
 # Param 1 - module name
 define SetupModuleCompilation
-  # Find the module dependencies by parsing the module-info.java file
-  $1_DEPS := $(filter $(JAVA_MODULES),$(sort $(subst .internal,,$(subst ;,,\
-      $(shell $(AWK) '/requires/ { print $2 }' $(MODULE_INFO_DIR)/$1/module-info.java)))))
+  # Find the module dependencies by parsing modules.list file
+  $1_DEPS := $(wordlist 2, 100, $(shell $(GREP) '^$1:' $(MODULES_LIST_FILE)))
   ifneq ($$($1_DEPS), )
     $1_CLASSPATH := $$(addprefix $(JDK_OUTPUTDIR)/modules/,$$($1_DEPS))
     $1_CLASSPATH := $$(subst $$(SPACE),$$(PATH_SEP),$$($1_CLASSPATH))
