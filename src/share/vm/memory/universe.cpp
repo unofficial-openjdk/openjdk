@@ -1374,7 +1374,7 @@ void Universe::print_heap_after_gc(outputStream* st, bool ignore_extended) {
   st->print_cr("}");
 }
 
-void Universe::verify(bool silent, VerifyOption option) {
+void Universe::verify(VerifyOption option, const char* prefix, bool silent) {
   if (SharedSkipVerify) {
     return;
   }
@@ -1395,11 +1395,12 @@ void Universe::verify(bool silent, VerifyOption option) {
   HandleMark hm;  // Handles created during verification can be zapped
   _verify_count++;
 
+  if (!silent) gclog_or_tty->print(prefix);
   if (!silent) gclog_or_tty->print("[Verifying ");
   if (!silent) gclog_or_tty->print("threads ");
   Threads::verify();
+  if (!silent) gclog_or_tty->print("heap ");
   heap()->verify(silent, option);
-
   if (!silent) gclog_or_tty->print("syms ");
   SymbolTable::verify();
   if (!silent) gclog_or_tty->print("strs ");

@@ -544,8 +544,7 @@ void GenCollectedHeap::do_collection(bool  full,
             prepare_for_verify();
             prepared_for_verification = true;
           }
-          gclog_or_tty->print(" VerifyBeforeGC:");
-          Universe::verify();
+          Universe::verify(" VerifyBeforeGC:");
         }
         COMPILER2_PRESENT(DerivedPointerTable::clear());
 
@@ -616,8 +615,7 @@ void GenCollectedHeap::do_collection(bool  full,
         if (VerifyAfterGC && i >= VerifyGCLevel &&
             total_collections() >= VerifyGCStartAt) {
           HandleMark hm;  // Discard invalid handles created during verification
-          gclog_or_tty->print(" VerifyAfterGC:");
-          Universe::verify();
+          Universe::verify(" VerifyAfterGC:");
         }
 
         if (PrintGCDetails) {
@@ -938,12 +936,13 @@ bool GenCollectedHeap::is_in_young(oop p) {
 // Returns "TRUE" iff "p" points into the committed areas of the heap.
 bool GenCollectedHeap::is_in(const void* p) const {
   #ifndef ASSERT
-  guarantee(VerifyBeforeGC   ||
-            VerifyDuringGC   ||
-            VerifyBeforeExit ||
-            PrintAssembly    ||
-            tty->count() != 0 ||   // already printing
-            VerifyAfterGC    ||
+  guarantee(VerifyBeforeGC      ||
+            VerifyDuringGC      ||
+            VerifyBeforeExit    ||
+            VerifyDuringStartup ||
+            PrintAssembly       ||
+            tty->count() != 0   ||   // already printing
+            VerifyAfterGC       ||
     VMError::fatal_error_in_progress(), "too expensive");
 
   #endif

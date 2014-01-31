@@ -23,6 +23,7 @@
  */
 
 #include "precompiled.hpp"
+#include "code/codeCache.hpp"
 #include "code/icBuffer.hpp"
 #include "gc_implementation/g1/bufferingOopClosure.hpp"
 #include "gc_implementation/g1/concurrentG1Refine.hpp"
@@ -1159,20 +1160,27 @@ class PostMCRemSetClearClosure: public HeapRegionClosure {
   ModRefBarrierSet* _mr_bs;
 public:
   PostMCRemSetClearClosure(G1CollectedHeap* g1h, ModRefBarrierSet* mr_bs) :
-    _g1h(g1h), _mr_bs(mr_bs) { }
+    _g1h(g1h), _mr_bs(mr_bs) {}
+
   bool doHeapRegion(HeapRegion* r) {
+    HeapRegionRemSet* hrrs = r->rem_set();
+
     if (r->continuesHumongous()) {
+      // We'll assert that the strong code root list and RSet is empty
+      assert(hrrs->strong_code_roots_list_length() == 0, "sanity");
+      assert(hrrs->occupied() == 0, "RSet should be empty");
       return false;
     }
+
     _g1h->reset_gc_time_stamps(r);
-    HeapRegionRemSet* hrrs = r->rem_set();
-    if (hrrs != NULL) hrrs->clear();
+    hrrs->clear();
     // You might think here that we could clear just the cards
     // corresponding to the used region.  But no: if we leave a dirty card
     // in a region we might allocate into, then it would prevent that card
     // from being enqueued, and cause it to be missed.
     // Re: the performance cost: we shouldn't be doing full GC anyway!
     _mr_bs->clear(MemRegion(r->bottom(), r->end()));
+
     return false;
   }
 };
@@ -1250,31 +1258,6 @@ public:
 void G1CollectedHeap::print_hrs_post_compaction() {
   PostCompactionPrinterClosure cl(hr_printer());
   heap_region_iterate(&cl);
-}
-
-double G1CollectedHeap::verify(bool guard, const char* msg) {
-  double verify_time_ms = 0.0;
-
-  if (guard && total_collections() >= VerifyGCStartAt) {
-    double verify_start = os::elapsedTime();
-    HandleMark hm;  // Discard invalid handles created during verification
-    gclog_or_tty->print(msg);
-    prepare_for_verify();
-    Universe::verify(false /* silent */, VerifyOption_G1UsePrevMarking);
-    verify_time_ms = (os::elapsedTime() - verify_start) * 1000;
-  }
-
-  return verify_time_ms;
-}
-
-void G1CollectedHeap::verify_before_gc() {
-  double verify_time_ms = verify(VerifyBeforeGC, " VerifyBeforeGC:");
-  g1_policy()->phase_times()->record_verify_before_time_ms(verify_time_ms);
-}
-
-void G1CollectedHeap::verify_after_gc() {
-  double verify_time_ms = verify(VerifyAfterGC, " VerifyAfterGC:");
-  g1_policy()->phase_times()->record_verify_after_time_ms(verify_time_ms);
 }
 
 bool G1CollectedHeap::do_collection(bool explicit_gc,
@@ -1409,8 +1392,6 @@ bool G1CollectedHeap::do_collection(bool explicit_gc,
 
       MemoryService::track_memory_usage();
 
-      verify_after_gc();
-
       assert(!ref_processor_stw()->discovery_enabled(), "Postcondition");
       ref_processor_stw()->verify_no_references_recorded();
 
@@ -1483,6 +1464,9 @@ bool G1CollectedHeap::do_collection(bool explicit_gc,
         heap_region_iterate(&rebuild_rs);
       }
 
+      // Rebuild the strong code root lists for each region
+      rebuild_strong_code_roots();
+
       if (true) { // FIXME
         // Ask the permanent generation to adjust size for full collections
         perm()->compute_new_size();
@@ -1509,6 +1493,8 @@ bool G1CollectedHeap::do_collection(bool explicit_gc,
 
       _hrs.verify_optional();
       verify_region_sets_optional();
+
+      verify_after_gc();
 
       // Start a new incremental collection set for the next pause
       assert(g1_policy()->collection_set() == NULL, "must be");
@@ -3163,6 +3149,119 @@ const char* G1CollectedHeap::top_at_mark_start_str(VerifyOption vo) {
   return NULL; // keep some compilers happy
 }
 
+// TODO: VerifyRootsClosure extends OopsInGenClosure so that we can
+//       pass it as the perm_blk to SharedHeap::process_strong_roots.
+//       When process_strong_roots stop calling perm_blk->younger_refs_iterate
+//       we can change this closure to extend the simpler OopClosure.
+class VerifyRootsClosure: public OopsInGenClosure {
+private:
+  G1CollectedHeap* _g1h;
+  VerifyOption     _vo;
+  bool             _failures;
+public:
+  // _vo == UsePrevMarking -> use "prev" marking information,
+  // _vo == UseNextMarking -> use "next" marking information,
+  // _vo == UseMarkWord    -> use mark word from object header.
+  VerifyRootsClosure(VerifyOption vo) :
+    _g1h(G1CollectedHeap::heap()),
+    _vo(vo),
+    _failures(false) { }
+
+  bool failures() { return _failures; }
+
+  template <class T> void do_oop_nv(T* p) {
+    T heap_oop = oopDesc::load_heap_oop(p);
+    if (!oopDesc::is_null(heap_oop)) {
+      oop obj = oopDesc::decode_heap_oop_not_null(heap_oop);
+      if (_g1h->is_obj_dead_cond(obj, _vo)) {
+        gclog_or_tty->print_cr("Root location "PTR_FORMAT" "
+                              "points to dead obj "PTR_FORMAT, p, (void*) obj);
+        if (_vo == VerifyOption_G1UseMarkWord) {
+          gclog_or_tty->print_cr("  Mark word: "PTR_FORMAT, (void*)(obj->mark()));
+        }
+        obj->print_on(gclog_or_tty);
+        _failures = true;
+      }
+    }
+  }
+
+  void do_oop(oop* p)       { do_oop_nv(p); }
+  void do_oop(narrowOop* p) { do_oop_nv(p); }
+};
+
+class G1VerifyCodeRootOopClosure: public OopsInGenClosure {
+  G1CollectedHeap* _g1h;
+  OopClosure* _root_cl;
+  nmethod* _nm;
+  VerifyOption _vo;
+  bool _failures;
+
+  template <class T> void do_oop_work(T* p) {
+    // First verify that this root is live
+    _root_cl->do_oop(p);
+
+    if (!G1VerifyHeapRegionCodeRoots) {
+      // We're not verifying the code roots attached to heap region.
+      return;
+    }
+
+    // Don't check the code roots during marking verification in a full GC
+    if (_vo == VerifyOption_G1UseMarkWord) {
+      return;
+    }
+
+    // Now verify that the current nmethod (which contains p) is
+    // in the code root list of the heap region containing the
+    // object referenced by p.
+
+    T heap_oop = oopDesc::load_heap_oop(p);
+    if (!oopDesc::is_null(heap_oop)) {
+      oop obj = oopDesc::decode_heap_oop_not_null(heap_oop);
+
+      if (_g1h->is_in_g1_reserved(obj)) {
+        // Now fetch the region containing the object
+        HeapRegion* hr = _g1h->heap_region_containing(obj);
+        HeapRegionRemSet* hrrs = hr->rem_set();
+        // Verify that the strong code root list for this region
+        // contains the nmethod
+        if (!hrrs->strong_code_roots_list_contains(_nm)) {
+          gclog_or_tty->print_cr("Code root location "PTR_FORMAT" "
+                                "from nmethod "PTR_FORMAT" not in strong "
+                                "code roots for region ["PTR_FORMAT","PTR_FORMAT")",
+                                p, _nm, hr->bottom(), hr->end());
+          _failures = true;
+        }
+      }
+    }
+  }
+
+public:
+  G1VerifyCodeRootOopClosure(G1CollectedHeap* g1h, OopClosure* root_cl, VerifyOption vo):
+    _g1h(g1h), _root_cl(root_cl), _vo(vo), _nm(NULL), _failures(false) {}
+
+  void do_oop(oop* p) { do_oop_work(p); }
+  void do_oop(narrowOop* p) { do_oop_work(p); }
+
+  void set_nmethod(nmethod* nm) { _nm = nm; }
+  bool failures() { return _failures; }
+};
+
+class G1VerifyCodeRootBlobClosure: public CodeBlobClosure {
+  G1VerifyCodeRootOopClosure* _oop_cl;
+
+public:
+  G1VerifyCodeRootBlobClosure(G1VerifyCodeRootOopClosure* oop_cl):
+    _oop_cl(oop_cl) {}
+
+  void do_code_blob(CodeBlob* cb) {
+    nmethod* nm = cb->as_nmethod_or_null();
+    if (nm != NULL) {
+      _oop_cl->set_nmethod(nm);
+      nm->oops_do(_oop_cl);
+    }
+  }
+};
+
 class VerifyLivenessOopClosure: public OopClosure {
   G1CollectedHeap* _g1h;
   VerifyOption _vo;
@@ -3296,42 +3395,6 @@ public:
   }
 };
 
-class VerifyRootsClosure: public OopsInGenClosure {
-private:
-  G1CollectedHeap* _g1h;
-  VerifyOption     _vo;
-  bool             _failures;
-public:
-  // _vo == UsePrevMarking -> use "prev" marking information,
-  // _vo == UseNextMarking -> use "next" marking information,
-  // _vo == UseMarkWord    -> use mark word from object header.
-  VerifyRootsClosure(VerifyOption vo) :
-    _g1h(G1CollectedHeap::heap()),
-    _vo(vo),
-    _failures(false) { }
-
-  bool failures() { return _failures; }
-
-  template <class T> void do_oop_nv(T* p) {
-    T heap_oop = oopDesc::load_heap_oop(p);
-    if (!oopDesc::is_null(heap_oop)) {
-      oop obj = oopDesc::decode_heap_oop_not_null(heap_oop);
-      if (_g1h->is_obj_dead_cond(obj, _vo)) {
-        gclog_or_tty->print_cr("Root location "PTR_FORMAT" "
-                              "points to dead obj "PTR_FORMAT, p, (void*) obj);
-        if (_vo == VerifyOption_G1UseMarkWord) {
-          gclog_or_tty->print_cr("  Mark word: "PTR_FORMAT, (void*)(obj->mark()));
-        }
-        obj->print_on(gclog_or_tty);
-        _failures = true;
-      }
-    }
-  }
-
-  void do_oop(oop* p)       { do_oop_nv(p); }
-  void do_oop(narrowOop* p) { do_oop_nv(p); }
-};
-
 // This is the task used for parallel heap verification.
 
 class G1ParVerifyTask: public AbstractGangTask {
@@ -3366,21 +3429,16 @@ public:
   }
 };
 
-void G1CollectedHeap::verify(bool silent) {
-  verify(silent, VerifyOption_G1UsePrevMarking);
-}
-
-void G1CollectedHeap::verify(bool silent,
-                             VerifyOption vo) {
+void G1CollectedHeap::verify(bool silent, VerifyOption vo) {
   if (SafepointSynchronize::is_at_safepoint()) {
-    if (!silent) { gclog_or_tty->print("Roots (excluding permgen) "); }
-    VerifyRootsClosure rootsCl(vo);
-
     assert(Thread::current()->is_VM_thread(),
            "Expected to be executed serially by the VM thread at this point");
 
-    CodeBlobToOopClosure blobsCl(&rootsCl, /*do_marking=*/ false);
+    if (!silent) { gclog_or_tty->print("Roots (excluding permgen) "); }
+    VerifyRootsClosure rootsCl(vo);
 
+    G1VerifyCodeRootOopClosure codeRootsCl(this, &rootsCl, vo);
+    G1VerifyCodeRootBlobClosure blobsCl(&codeRootsCl);
     // We apply the relevant closures to all the oops in the
     // system dictionary, the string table and the code cache.
     const int so = SO_AllClasses | SO_Strings | SO_CodeCache;
@@ -3473,6 +3531,34 @@ void G1CollectedHeap::verify(bool silent,
     if (!silent)
       gclog_or_tty->print("(SKIPPING roots, heapRegionSets, heapRegions, remset) ");
   }
+}
+
+void G1CollectedHeap::verify(bool silent) {
+  verify(silent, VerifyOption_G1UsePrevMarking);
+}
+
+double G1CollectedHeap::verify(bool guard, const char* msg) {
+  double verify_time_ms = 0.0;
+
+  if (guard && total_collections() >= VerifyGCStartAt) {
+    double verify_start = os::elapsedTime();
+    HandleMark hm;  // Discard invalid handles created during verification
+    prepare_for_verify();
+    Universe::verify(VerifyOption_G1UsePrevMarking, msg);
+    verify_time_ms = (os::elapsedTime() - verify_start) * 1000;
+  }
+
+  return verify_time_ms;
+}
+
+void G1CollectedHeap::verify_before_gc() {
+  double verify_time_ms = verify(VerifyBeforeGC, " VerifyBeforeGC:");
+  g1_policy()->phase_times()->record_verify_before_time_ms(verify_time_ms);
+}
+
+void G1CollectedHeap::verify_after_gc() {
+  double verify_time_ms = verify(VerifyAfterGC, " VerifyAfterGC:");
+  g1_policy()->phase_times()->record_verify_after_time_ms(verify_time_ms);
 }
 
 class PrintRegionClosure: public HeapRegionClosure {
@@ -3618,9 +3704,22 @@ void G1CollectedHeap::gc_prologue(bool full /* Ignored */) {
   AllocationProfiler::iterate_since_last_gc();
   // Fill TLAB's and such
   ensure_parsability(true);
+
+  if (G1SummarizeRSetStats && (G1SummarizeRSetStatsPeriod > 0) &&
+      (total_collections() % G1SummarizeRSetStatsPeriod == 0)) {
+    g1_rem_set()->print_periodic_summary_info("Before GC RS summary");
+  }
 }
 
 void G1CollectedHeap::gc_epilogue(bool full /* Ignored */) {
+
+  if (G1SummarizeRSetStats &&
+      (G1SummarizeRSetStatsPeriod > 0) &&
+      // we are at the end of the GC. Total collections has already been increased.
+      ((total_collections() - 1) % G1SummarizeRSetStatsPeriod == 0)) {
+    g1_rem_set()->print_periodic_summary_info("After GC RS summary");
+  }
+
   // FIXME: what is this about?
   // I'm ignoring the "fill_newgen()" call if "alloc_event_enabled"
   // is set.
@@ -3882,8 +3981,9 @@ G1CollectedHeap::do_collection_pause_at_safepoint(double target_pause_time_ms) {
       append_secondary_free_list_if_not_empty_with_lock();
     }
 
-    assert(check_young_list_well_formed(),
-      "young list should be well formed");
+    assert(check_young_list_well_formed(), "young list should be well formed");
+    assert(check_heap_region_claim_values(HeapRegion::InitialClaimValue),
+           "sanity check");
 
     // Don't dynamically change the number of GC threads this early.  A value of
     // 0 is used to indicate serial work.  When parallel work is done,
@@ -4199,11 +4299,6 @@ G1CollectedHeap::do_collection_pause_at_safepoint(double target_pause_time_ms) {
     _gc_tracer_stw->report_gc_end(_gc_timer_stw->gc_end(), _gc_timer_stw->time_partitions());
   }
 
-  if (G1SummarizeRSetStats &&
-      (G1SummarizeRSetStatsPeriod > 0) &&
-      (total_collections() % G1SummarizeRSetStatsPeriod == 0)) {
-    g1_rem_set()->print_summary_info();
-  }
   // It should now be safe to tell the concurrent mark thread to start
   // without its logging output interfering with the logging output
   // that came from the pause.
@@ -4977,7 +5072,8 @@ public:
                                     scan_root_cl,
                                     &push_heap_rs_cl,
                                     scan_perm_cl,
-                                    worker_id);
+                                    worker_id,
+                                    /* manages_code_roots */ true);
       pss.end_strong_roots();
 
       {
@@ -5011,67 +5107,6 @@ public:
 
 // *** Common G1 Evacuation Stuff
 
-// Closures that support the filtering of CodeBlobs scanned during
-// external root scanning.
-
-// Closure applied to reference fields in code blobs (specifically nmethods)
-// to determine whether an nmethod contains references that point into
-// the collection set. Used as a predicate when walking code roots so
-// that only nmethods that point into the collection set are added to the
-// 'marked' list.
-
-class G1FilteredCodeBlobToOopClosure : public CodeBlobToOopClosure {
-
-  class G1PointsIntoCSOopClosure : public OopClosure {
-    G1CollectedHeap* _g1;
-    bool _points_into_cs;
-  public:
-    G1PointsIntoCSOopClosure(G1CollectedHeap* g1) :
-      _g1(g1), _points_into_cs(false) { }
-
-    bool points_into_cs() const { return _points_into_cs; }
-
-    template <class T>
-    void do_oop_nv(T* p) {
-      if (!_points_into_cs) {
-        T heap_oop = oopDesc::load_heap_oop(p);
-        if (!oopDesc::is_null(heap_oop) &&
-            _g1->in_cset_fast_test(oopDesc::decode_heap_oop_not_null(heap_oop))) {
-          _points_into_cs = true;
-        }
-      }
-    }
-
-    virtual void do_oop(oop* p)        { do_oop_nv(p); }
-    virtual void do_oop(narrowOop* p)  { do_oop_nv(p); }
-  };
-
-  G1CollectedHeap* _g1;
-
-public:
-  G1FilteredCodeBlobToOopClosure(G1CollectedHeap* g1, OopClosure* cl) :
-    CodeBlobToOopClosure(cl, true), _g1(g1) { }
-
-  virtual void do_code_blob(CodeBlob* cb) {
-    nmethod* nm = cb->as_nmethod_or_null();
-    if (nm != NULL && !(nm->test_oops_do_mark())) {
-      G1PointsIntoCSOopClosure predicate_cl(_g1);
-      nm->oops_do(&predicate_cl);
-
-      if (predicate_cl.points_into_cs()) {
-        // At least one of the reference fields or the oop relocations
-        // in the nmethod points into the collection set. We have to
-        // 'mark' this nmethod.
-        // Note: Revisit the following if CodeBlobToOopClosure::do_code_blob()
-        // or MarkingCodeBlobClosure::do_code_blob() change.
-        if (!nm->test_set_oops_do_mark()) {
-          do_newly_marked_nmethod(nm);
-        }
-      }
-    }
-  }
-};
-
 // This method is run in a GC worker.
 
 void
@@ -5081,7 +5116,8 @@ g1_process_strong_roots(bool collecting_perm_gen,
                         OopClosure* scan_non_heap_roots,
                         OopsInHeapRegionClosure* scan_rs,
                         OopsInGenClosure* scan_perm,
-                        int worker_i) {
+                        int worker_i,
+                        bool manages_code_roots) {
 
   // First scan the strong roots, including the perm gen.
   double ext_roots_start = os::elapsedTime();
@@ -5091,15 +5127,17 @@ g1_process_strong_roots(bool collecting_perm_gen,
   BufferingOopsInGenClosure buf_scan_perm(scan_perm);
   buf_scan_perm.set_generation(perm_gen());
 
-  // Walk the code cache w/o buffering, because StarTask cannot handle
-  // unaligned oop locations.
-  G1FilteredCodeBlobToOopClosure eager_scan_code_roots(this, scan_non_heap_roots);
+  assert(so & SO_CodeCache || scan_rs != NULL, "must scan code roots somehow");
+  // Walk the code cache/strong code roots w/o buffering, because StarTask
+  // cannot handle unaligned oop locations.
+  CodeBlobToOopClosure eager_scan_code_roots(scan_non_heap_roots, true /* do_marking */);
 
   process_strong_roots(false, // no scoping; this is parallel code
                        collecting_perm_gen, so,
                        &buf_scan_non_heap_roots,
                        &eager_scan_code_roots,
-                       &buf_scan_perm);
+                       &buf_scan_perm,
+                       manages_code_roots);
 
   // Now the CM ref_processor roots.
   if (!_process_strong_tasks->is_task_claimed(G1H_PS_refProcessor_oops_do)) {
@@ -5138,9 +5176,22 @@ g1_process_strong_roots(bool collecting_perm_gen,
   }
   g1_policy()->phase_times()->record_satb_filtering_time(worker_i, satb_filtering_ms);
 
+  // If this is an initial mark pause, and we're not scanning
+  // the entire code cache, we need to mark the oops in the
+  // strong code root lists for the regions that are not in
+  // the collection set.
+  // Note all threads participate in this set of root tasks.
+  double mark_strong_code_roots_ms = 0.0;
+  if (g1_policy()->during_initial_mark_pause() && !(so & SO_CodeCache)) {
+    double mark_strong_roots_start = os::elapsedTime();
+    mark_strong_code_roots(worker_i);
+    mark_strong_code_roots_ms = (os::elapsedTime() - mark_strong_roots_start) * 1000.0;
+  }
+  g1_policy()->phase_times()->record_strong_code_root_mark_time(worker_i, mark_strong_code_roots_ms);
+
   // Now scan the complement of the collection set.
   if (scan_rs != NULL) {
-    g1_rem_set()->oops_into_collection_set_do(scan_rs, worker_i);
+    g1_rem_set()->oops_into_collection_set_do(scan_rs, &eager_scan_code_roots, worker_i);
   }
 
   _process_strong_tasks->all_tasks_completed();
@@ -5151,6 +5202,100 @@ G1CollectedHeap::g1_process_weak_roots(OopClosure* root_closure,
                                        OopClosure* non_root_closure) {
   CodeBlobToOopClosure roots_in_blobs(root_closure, /*do_marking=*/ false);
   SharedHeap::process_weak_roots(root_closure, &roots_in_blobs, non_root_closure);
+}
+
+class G1StringSymbolTableUnlinkTask : public AbstractGangTask {
+private:
+  BoolObjectClosure* _is_alive;
+  int _initial_string_table_size;
+  int _initial_symbol_table_size;
+
+  bool  _process_strings;
+  int _strings_processed;
+  int _strings_removed;
+
+  bool  _process_symbols;
+  int _symbols_processed;
+  int _symbols_removed;
+public:
+  G1StringSymbolTableUnlinkTask(BoolObjectClosure* is_alive, bool process_strings, bool process_symbols) :
+    AbstractGangTask("Par String/Symbol table unlink"), _is_alive(is_alive),
+    _process_strings(process_strings), _strings_processed(0), _strings_removed(0),
+    _process_symbols(process_symbols), _symbols_processed(0), _symbols_removed(0) {
+
+    _initial_string_table_size = StringTable::the_table()->table_size();
+    _initial_symbol_table_size = SymbolTable::the_table()->table_size();
+    if (process_strings) {
+      StringTable::clear_parallel_claimed_index();
+    }
+    if (process_symbols) {
+      SymbolTable::clear_parallel_claimed_index();
+    }
+  }
+
+  ~G1StringSymbolTableUnlinkTask() {
+    guarantee(!_process_strings || StringTable::parallel_claimed_index() >= _initial_string_table_size,
+              err_msg("claim value "INT32_FORMAT" after unlink less than initial string table size "INT32_FORMAT,
+                      StringTable::parallel_claimed_index(), _initial_string_table_size));
+    guarantee(!_process_symbols || SymbolTable::parallel_claimed_index() >= _initial_symbol_table_size,
+              err_msg("claim value "INT32_FORMAT" after unlink less than initial symbol table size "INT32_FORMAT,
+                      SymbolTable::parallel_claimed_index(), _initial_symbol_table_size));
+
+  }
+
+  void work(uint worker_id) {
+    if (G1CollectedHeap::use_parallel_gc_threads()) {
+      int strings_processed = 0;
+      int strings_removed = 0;
+      int symbols_processed = 0;
+      int symbols_removed = 0;
+      if (_process_strings) {
+        StringTable::possibly_parallel_unlink(_is_alive, &strings_processed, &strings_removed);
+        Atomic::add(strings_processed, &_strings_processed);
+        Atomic::add(strings_removed, &_strings_removed);
+      }
+      if (_process_symbols) {
+        SymbolTable::possibly_parallel_unlink(&symbols_processed, &symbols_removed);
+        Atomic::add(symbols_processed, &_symbols_processed);
+        Atomic::add(symbols_removed, &_symbols_removed);
+      }
+    } else {
+      if (_process_strings) {
+        StringTable::unlink(_is_alive, &_strings_processed, &_strings_removed);
+      }
+      if (_process_symbols) {
+        SymbolTable::unlink(&_symbols_processed, &_symbols_removed);
+      }
+    }
+  }
+
+  size_t strings_processed() const { return (size_t)_strings_processed; }
+  size_t strings_removed()   const { return (size_t)_strings_removed; }
+
+  size_t symbols_processed() const { return (size_t)_symbols_processed; }
+  size_t symbols_removed()   const { return (size_t)_symbols_removed; }
+};
+
+void G1CollectedHeap::unlink_string_and_symbol_table(BoolObjectClosure* is_alive,
+                                                     bool process_strings, bool process_symbols) {
+  uint n_workers = (G1CollectedHeap::use_parallel_gc_threads() ?
+                   _g1h->workers()->active_workers() : 1);
+
+  G1StringSymbolTableUnlinkTask g1_unlink_task(is_alive, process_strings, process_symbols);
+  if (G1CollectedHeap::use_parallel_gc_threads()) {
+    set_par_threads(n_workers);
+    workers()->run_task(&g1_unlink_task);
+    set_par_threads(0);
+  } else {
+    g1_unlink_task.work(0);
+  }
+  if (G1TraceStringSymbolTableScrubbing) {
+    gclog_or_tty->print_cr("Cleaned string and symbol table, "
+                           "strings: "SIZE_FORMAT" processed, "SIZE_FORMAT" removed, "
+                           "symbols: "SIZE_FORMAT" processed, "SIZE_FORMAT" removed",
+                           g1_unlink_task.strings_processed(), g1_unlink_task.strings_removed(),
+                           g1_unlink_task.symbols_processed(), g1_unlink_task.symbols_removed());
+  }
 }
 
 // Weak Reference Processing support
@@ -5763,9 +5908,6 @@ void G1CollectedHeap::evacuate_collection_set(EvacuationInfo& evacuation_info) {
   process_discovered_references(n_workers);
 
   // Weak root processing.
-  // Note: when JSR 292 is enabled and code blobs can contain
-  // non-perm oops then we will need to process the code blobs
-  // here too.
   {
     G1STWIsAliveClosure is_alive(this);
     G1KeepAliveClosure keep_alive(this);
@@ -5780,6 +5922,17 @@ void G1CollectedHeap::evacuate_collection_set(EvacuationInfo& evacuation_info) {
   // collection set are reset when the collection set is freed.
   hot_card_cache->reset_hot_cache();
   hot_card_cache->set_use_cache(true);
+
+  // Migrate the strong code roots attached to each region in
+  // the collection set. Ideally we would like to do this
+  // after we have finished the scanning/evacuation of the
+  // strong code roots for a particular heap region.
+  migrate_strong_code_roots();
+
+  if (g1_policy()->during_initial_mark_pause()) {
+    // Reset the claim values set during marking the strong code roots
+    reset_heap_region_claim_values();
+  }
 
   finalize_for_evac_failure();
 
@@ -6576,4 +6729,235 @@ void G1CollectedHeap::verify_region_sets() {
   _old_set.verify_end();
   _humongous_set.verify_end();
   _free_list.verify_end();
+}
+
+// Optimized nmethod scanning
+
+class RegisterNMethodOopClosure: public OopClosure {
+  G1CollectedHeap* _g1h;
+  nmethod* _nm;
+
+  template <class T> void do_oop_work(T* p) {
+    T heap_oop = oopDesc::load_heap_oop(p);
+    if (!oopDesc::is_null(heap_oop)) {
+      oop obj = oopDesc::decode_heap_oop_not_null(heap_oop);
+      HeapRegion* hr = _g1h->heap_region_containing(obj);
+      if (hr == NULL) {
+        // reference into perm gen - ignore.
+        assert(_g1h->is_in_permanent(obj), "must be a reference into perm gen");
+        return;
+      }
+      assert(!hr->continuesHumongous(),
+             err_msg("trying to add code root "PTR_FORMAT" in continuation of humongous region "HR_FORMAT
+                     " starting at "HR_FORMAT,
+                     _nm, HR_FORMAT_PARAMS(hr), HR_FORMAT_PARAMS(hr->humongous_start_region())));
+
+      // HeapRegion::add_strong_code_root() avoids adding duplicate
+      // entries but having duplicates is  OK since we "mark" nmethods
+      // as visited when we scan the strong code root lists during the GC.
+      hr->add_strong_code_root(_nm);
+      assert(hr->rem_set()->strong_code_roots_list_contains(_nm),
+             err_msg("failed to add code root "PTR_FORMAT" to remembered set of region "HR_FORMAT,
+                     _nm, HR_FORMAT_PARAMS(hr)));
+    }
+  }
+
+public:
+  RegisterNMethodOopClosure(G1CollectedHeap* g1h, nmethod* nm) :
+    _g1h(g1h), _nm(nm) {}
+
+  void do_oop(oop* p)       { do_oop_work(p); }
+  void do_oop(narrowOop* p) { do_oop_work(p); }
+};
+
+class UnregisterNMethodOopClosure: public OopClosure {
+  G1CollectedHeap* _g1h;
+  nmethod* _nm;
+
+  template <class T> void do_oop_work(T* p) {
+    T heap_oop = oopDesc::load_heap_oop(p);
+    if (!oopDesc::is_null(heap_oop)) {
+      oop obj = oopDesc::decode_heap_oop_not_null(heap_oop);
+      HeapRegion* hr = _g1h->heap_region_containing(obj);
+      if (hr == NULL) {
+        // reference into perm gen - ignore.
+        assert(_g1h->is_in_permanent(obj), "must be a reference into perm gen");
+        return;
+      }
+      assert(!hr->continuesHumongous(),
+             err_msg("trying to remove code root "PTR_FORMAT" in continuation of humongous region "HR_FORMAT
+                     " starting at "HR_FORMAT,
+                     _nm, HR_FORMAT_PARAMS(hr), HR_FORMAT_PARAMS(hr->humongous_start_region())));
+
+      hr->remove_strong_code_root(_nm);
+      assert(!hr->rem_set()->strong_code_roots_list_contains(_nm),
+             err_msg("failed to remove code root "PTR_FORMAT" of region "HR_FORMAT,
+                     _nm, HR_FORMAT_PARAMS(hr)));    }
+  }
+
+public:
+  UnregisterNMethodOopClosure(G1CollectedHeap* g1h, nmethod* nm) :
+    _g1h(g1h), _nm(nm) {}
+
+  void do_oop(oop* p)       { do_oop_work(p); }
+  void do_oop(narrowOop* p) { do_oop_work(p); }
+};
+
+void G1CollectedHeap::register_nmethod(nmethod* nm) {
+  CollectedHeap::register_nmethod(nm);
+
+  guarantee(nm != NULL, "sanity");
+  RegisterNMethodOopClosure reg_cl(this, nm);
+  nm->oops_do(&reg_cl);
+}
+
+void G1CollectedHeap::unregister_nmethod(nmethod* nm) {
+  CollectedHeap::unregister_nmethod(nm);
+
+  guarantee(nm != NULL, "sanity");
+  UnregisterNMethodOopClosure reg_cl(this, nm);
+  nm->oops_do(&reg_cl, false, true);
+}
+
+class MigrateCodeRootsHeapRegionClosure: public HeapRegionClosure {
+public:
+  bool doHeapRegion(HeapRegion *hr) {
+    assert(!hr->isHumongous(),
+           err_msg("humongous region "HR_FORMAT" should not have been added to collection set",
+                   HR_FORMAT_PARAMS(hr)));
+    hr->migrate_strong_code_roots();
+    return false;
+  }
+};
+
+void G1CollectedHeap::migrate_strong_code_roots() {
+  MigrateCodeRootsHeapRegionClosure cl;
+  double migrate_start = os::elapsedTime();
+  collection_set_iterate(&cl);
+  double migration_time_ms = (os::elapsedTime() - migrate_start) * 1000.0;
+  g1_policy()->phase_times()->record_strong_code_root_migration_time(migration_time_ms);
+}
+
+// Mark all the code roots that point into regions *not* in the
+// collection set.
+//
+// Note we do not want to use a "marking" CodeBlobToOopClosure while
+// walking the the code roots lists of regions not in the collection
+// set. Suppose we have an nmethod (M) that points to objects in two
+// separate regions - one in the collection set (R1) and one not (R2).
+// Using a "marking" CodeBlobToOopClosure here would result in "marking"
+// nmethod M when walking the code roots for R1. When we come to scan
+// the code roots for R2, we would see that M is already marked and it
+// would be skipped and the objects in R2 that are referenced from M
+// would not be evacuated.
+
+class MarkStrongCodeRootCodeBlobClosure: public CodeBlobClosure {
+
+  class MarkStrongCodeRootOopClosure: public OopClosure {
+    ConcurrentMark* _cm;
+    HeapRegion* _hr;
+    uint _worker_id;
+
+    template <class T> void do_oop_work(T* p) {
+      T heap_oop = oopDesc::load_heap_oop(p);
+      if (!oopDesc::is_null(heap_oop)) {
+        oop obj = oopDesc::decode_heap_oop_not_null(heap_oop);
+        // Only mark objects in the region (which is assumed
+        // to be not in the collection set).
+        if (_hr->is_in(obj)) {
+          _cm->grayRoot(obj, (size_t) obj->size(), _worker_id);
+        }
+      }
+    }
+
+  public:
+    MarkStrongCodeRootOopClosure(ConcurrentMark* cm, HeapRegion* hr, uint worker_id) :
+      _cm(cm), _hr(hr), _worker_id(worker_id) {
+      assert(!_hr->in_collection_set(), "sanity");
+    }
+
+    void do_oop(narrowOop* p) { do_oop_work(p); }
+    void do_oop(oop* p)       { do_oop_work(p); }
+  };
+
+  MarkStrongCodeRootOopClosure _oop_cl;
+
+public:
+  MarkStrongCodeRootCodeBlobClosure(ConcurrentMark* cm, HeapRegion* hr, uint worker_id):
+    _oop_cl(cm, hr, worker_id) {}
+
+  void do_code_blob(CodeBlob* cb) {
+    nmethod* nm = (cb == NULL) ? NULL : cb->as_nmethod_or_null();
+    if (nm != NULL) {
+      nm->oops_do(&_oop_cl);
+    }
+  }
+};
+
+class MarkStrongCodeRootsHRClosure: public HeapRegionClosure {
+  G1CollectedHeap* _g1h;
+  uint _worker_id;
+
+public:
+  MarkStrongCodeRootsHRClosure(G1CollectedHeap* g1h, uint worker_id) :
+    _g1h(g1h), _worker_id(worker_id) {}
+
+  bool doHeapRegion(HeapRegion *hr) {
+    HeapRegionRemSet* hrrs = hr->rem_set();
+    if (hr->continuesHumongous()) {
+      // Code roots should never be attached to a continuation of a humongous region
+      assert(hrrs->strong_code_roots_list_length() == 0,
+             err_msg("code roots should never be attached to continuations of humongous region "HR_FORMAT
+                     " starting at "HR_FORMAT", but has "INT32_FORMAT,
+                     HR_FORMAT_PARAMS(hr), HR_FORMAT_PARAMS(hr->humongous_start_region()),
+                     hrrs->strong_code_roots_list_length()));
+      return false;
+    }
+
+    if (hr->in_collection_set()) {
+      // Don't mark code roots into regions in the collection set here.
+      // They will be marked when we scan them.
+      return false;
+    }
+
+    MarkStrongCodeRootCodeBlobClosure cb_cl(_g1h->concurrent_mark(), hr, _worker_id);
+    hr->strong_code_roots_do(&cb_cl);
+    return false;
+  }
+};
+
+void G1CollectedHeap::mark_strong_code_roots(uint worker_id) {
+  MarkStrongCodeRootsHRClosure cl(this, worker_id);
+  if (G1CollectedHeap::use_parallel_gc_threads()) {
+    heap_region_par_iterate_chunked(&cl,
+                                    worker_id,
+                                    workers()->active_workers(),
+                                    HeapRegion::ParMarkRootClaimValue);
+  } else {
+    heap_region_iterate(&cl);
+  }
+}
+
+class RebuildStrongCodeRootClosure: public CodeBlobClosure {
+  G1CollectedHeap* _g1h;
+
+public:
+  RebuildStrongCodeRootClosure(G1CollectedHeap* g1h) :
+    _g1h(g1h) {}
+
+  void do_code_blob(CodeBlob* cb) {
+    nmethod* nm = (cb != NULL) ? cb->as_nmethod_or_null() : NULL;
+    if (nm == NULL) {
+      return;
+    }
+
+    if (ScavengeRootsInCode && nm->detect_scavenge_root_oops()) {
+      _g1h->register_nmethod(nm);
+    }
+  }
+};
+
+void G1CollectedHeap::rebuild_strong_code_roots() {
+  RebuildStrongCodeRootClosure blob_cl(this);
+  CodeCache::blobs_do(&blob_cl);
 }
