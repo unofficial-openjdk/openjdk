@@ -1495,7 +1495,6 @@ public:
   }
 };
 
-
 class G1ParVerifyFinalCountTask: public AbstractGangTask {
 protected:
   G1CollectedHeap* _g1h;
@@ -2407,10 +2406,7 @@ void ConcurrentMark::weakRefsWork(bool clear_all_soft_refs) {
     assert(!rp->discovery_enabled(), "Post condition");
   }
 
-  // Now clean up stale oops in StringTable
-  StringTable::unlink(&g1_is_alive);
-  // Clean up unreferenced symbols in symbol table.
-  SymbolTable::unlink();
+  g1h->unlink_string_and_symbol_table(&g1_is_alive);
 }
 
 void ConcurrentMark::swapMarkBitMaps() {

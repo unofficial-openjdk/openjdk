@@ -86,8 +86,8 @@ private:
   static bool _needs_rehashing;
 
   // For statistics
-  static int symbols_removed;
-  static int symbols_counted;
+  static int _symbols_removed;
+  static int _symbols_counted;
 
   Symbol* allocate_symbol(const u1* name, int len, bool c_heap, TRAPS); // Assumes no characters larger than 0x7F
 
@@ -126,6 +126,11 @@ private:
   static Arena* arena() { return _arena; }  // called for statistics
 
   static void initialize_symbols(int arena_alloc_size = 0);
+
+  static volatile int _parallel_claimed_idx;
+
+  // Release any dead symbols
+  static void buckets_unlink(int start_idx, int end_idx, int* processed, int* removed, size_t* memory_total);
 public:
   enum {
     symbol_alloc_batch_size = 8,
@@ -175,7 +180,19 @@ public:
                   unsigned int* hashValues, TRAPS);
 
   // Release any dead symbols
-  static void unlink();
+  static void unlink() {
+    int processed = 0;
+    int removed = 0;
+    unlink(&processed, &removed);
+  }
+  static void unlink(int* processed, int* removed);
+  // Release any dead symbols, possibly parallel version
+  static void possibly_parallel_unlink() {
+    int processed = 0;
+    int removed = 0;
+    possibly_parallel_unlink(&processed, &removed);
+  }
+  static void possibly_parallel_unlink(int* processed, int* removed);
 
   // iterate over symbols
   static void symbols_do(SymbolClosure *cl);
@@ -233,6 +250,9 @@ public:
   // Rehash the symbol table if it gets out of balance
   static void rehash_table();
   static bool needs_rehashing()         { return _needs_rehashing; }
+  // Parallel chunked scanning
+  static void clear_parallel_claimed_index() { _parallel_claimed_idx = 0; }
+  static int parallel_claimed_index() { return _parallel_claimed_idx; }
 };
 
 class StringTable : public Hashtable<oop, mtSymbol> {
@@ -256,7 +276,9 @@ private:
 
   // Apply the give oop closure to the entries to the buckets
   // in the range [start_idx, end_idx).
-  static void buckets_do(OopClosure* f, int start_idx, int end_idx);
+  static void buckets_oops_do(OopClosure* f, int start_idx, int end_idx);
+  // Unlink the entries to the buckets in the range [start_idx, end_idx).
+  static void buckets_unlink(BoolObjectClosure* is_alive, int start_idx, int end_idx, int* processed, int* removed);
 
   StringTable() : Hashtable<oop, mtSymbol>((int)StringTableSize,
                               sizeof (HashtableEntry<oop, mtSymbol>)) {}
@@ -283,13 +305,21 @@ public:
 
   // GC support
   //   Delete pointers to otherwise-unreachable objects.
-  static void unlink(BoolObjectClosure* cl);
+  static void unlink(BoolObjectClosure* cl) {
+    int processed = 0;
+    int removed = 0;
+    unlink(cl, &processed, &removed);
+  }
+
+  static void unlink(BoolObjectClosure* cl, int* processed, int* removed);
 
   // Serially invoke "f->do_oop" on the locations of all oops in the table.
   static void oops_do(OopClosure* f);
 
   // Possibly parallel version of the above
   static void possibly_parallel_oops_do(OopClosure* f);
+
+  static void possibly_parallel_unlink(BoolObjectClosure* cl, int* processed, int* removed);
 
   // Hashing algorithm, used as the hash value used by the
   //     StringTable for bucket selection and comparison (stored in the
@@ -328,5 +358,6 @@ public:
 
   // Parallel chunked scanning
   static void clear_parallel_claimed_index() { _parallel_claimed_idx = 0; }
+  static int parallel_claimed_index() { return _parallel_claimed_idx; }
 };
 #endif // SHARE_VM_CLASSFILE_SYMBOLTABLE_HPP
