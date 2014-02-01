@@ -266,4 +266,6 @@ clean-shuffle:
 .PHONY: clean-jigsaw clean-langtools clean-corba clean-jaxp clean-jaxws clean-hotspot clean-jdk clean-nashorn clean-images clean-docs clean-test clean-overlay-images clean-bootcycle-build
 .PHONY: profiles profiles-only profiles-oscheck
 
+include $(root_dir)/make/Jprt.gmk
+
 FRC: # Force target
