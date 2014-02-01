@@ -60,7 +60,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBJAAS, \
 
 $(BUILD_LIBJAAS): $(BUILD_LIBJAVA)
 
-BUILD_LIBRARIES += $(BUILD_LIBJAAS)
+SECURITY_AUTH_LIBRARIES += $(BUILD_LIBJAAS)
 
 ##########################################################################################
 
@@ -90,7 +90,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBJ2PCSC, \
     OBJECT_DIR := $(JDK_OUTPUTDIR)/objs/libj2pcsc, \
     DEBUG_SYMBOLS := $(DEBUG_ALL_BINARIES)))
 
-BUILD_LIBRARIES += $(BUILD_LIBJ2PCSC)
+SECURITY_SMARTCARDIO_LIBRARIES += $(BUILD_LIBJ2PCSC)
 
 ##########################################################################################
 
@@ -113,7 +113,7 @@ ifneq ($(OPENJDK_TARGET_OS), windows)
       OBJECT_DIR := $(JDK_OUTPUTDIR)/objs/libj2gss, \
       DEBUG_SYMBOLS := $(DEBUG_ALL_BINARIES)))
 
-  BUILD_LIBRARIES += $(BUILD_LIBJ2GSS)
+  SECURITY_KERBEROS_LIBRARIES += $(BUILD_LIBJ2GSS)
 endif
 
 ##########################################################################################
@@ -153,7 +153,7 @@ ifneq ($(BUILD_CRYPTO), no)
         OBJECT_DIR := $(JDK_OUTPUTDIR)/objs/libkrb5, \
         DEBUG_SYMBOLS := $(DEBUG_ALL_BINARIES)))
 
-    BUILD_LIBRARIES += $(BUILD_LIBKRB5)
+    SECURITY_KERBEROS_LIBRARIES += $(BUILD_LIBKRB5)
   endif
 endif
 
@@ -180,7 +180,7 @@ ifeq ($(OPENJDK_TARGET_OS), windows)
       OBJECT_DIR := $(JDK_OUTPUTDIR)/objs/libsunmscapi, \
       DEBUG_SYMBOLS := $(DEBUG_ALL_BINARIES)))
 
-  BUILD_LIBRARIES += $(BUILD_LIBSUNMSCAPI)
+  SECURITY_MSCAPI_LIBRARIES += $(BUILD_LIBSUNMSCAPI)
 endif
 
 ##########################################################################################
@@ -212,7 +212,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBJ2PKCS11, \
     OBJECT_DIR := $(JDK_OUTPUTDIR)/objs/libj2pkcs11, \
     DEBUG_SYMBOLS := $(DEBUG_ALL_BINARIES)))
 
-BUILD_LIBRARIES += $(BUILD_LIBJ2PKCS11)
+SECURITY_PKCS11_LIBRARIES += $(BUILD_LIBJ2PKCS11)
 
 ##########################################################################################
 
@@ -258,7 +258,7 @@ ifeq ($(ENABLE_INTREE_EC), yes)
       OBJECT_DIR := $(JDK_OUTPUTDIR)/objs/libsunec, \
       DEBUG_SYMBOLS := $(DEBUG_ALL_BINARIES)))
 
-  BUILD_LIBRARIES += $(BUILD_LIBSUNEC)
+  SECURITY_SUNEC_LIBRARIES += $(BUILD_LIBSUNEC)
 endif
 
 ##########################################################################################
@@ -283,7 +283,7 @@ ifeq ($(OPENJDK_TARGET_OS), solaris)
 
     $(BUILD_LIBJ2UCRYPTO): $(BUILD_LIBJAVA)
 
-    BUILD_LIBRARIES += $(BUILD_LIBJ2UCRYPTO)
+    SECURITY_UCRYPTO_LIBRARIES += $(BUILD_LIBJ2UCRYPTO)
 
   endif
 endif

@@ -1,0 +1,319 @@
+#
+# Copyright 2014 Sun Microsystems, Inc.  All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+#
+# This code is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License version 2 only, as
+# published by the Free Software Foundation.  Sun designates this
+# particular file as subject to the "Classpath" exception as provided
+# by Sun in the LICENSE file that accompanied this code.
+#
+# This code is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# version 2 for more details (a copy is included in the LICENSE file that
+# accompanied this code).
+#
+# You should have received a copy of the GNU General Public License version
+# 2 along with this work; if not, write to the Free Software Foundation,
+# Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+#
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
+# CA 95054 USA or visit www.sun.com if you need additional information or
+# have any questions.
+#
+
+default: all
+
+include $(SPEC)
+include MakeBase.gmk
+include Setup.gmk
+include Modules.gmk
+
+# Use this definition to just copy files around really fast.
+define module-copy-file
+  $(call install-file)
+endef
+
+# Use this definition to do actual hg copies, very slow.
+#define module-copy-file
+#  $(ECHO) hg copy to $@
+#  cd $(<D) && hg copy '$<' '$@'
+#endef
+# hg copy does not support parallel execution.
+#.NOTPARALLEL:
+
+SRC_ROOTS := \
+    $(JDK_TOPDIR)/src/share/classes \
+    $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/classes \
+    $(JAXP_TOPDIR)/src \
+    $(JAXWS_TOPDIR)/src/share/jaxws_classes \
+    $(JAXWS_TOPDIR)/src/share/jaf_classes \
+    $(CORBA_TOPDIR)/src/share/classes \
+    $(LANGTOOLS_TOPDIR)/src/share/classes \
+    #
+
+# This macro sets up rules for copying the contents for one module
+# Param 1 : name of module
+define CopyModule
+  $1_CLASS_LIST := $$(subst \,/, \
+      $$(shell $(CAT) $(MODULE_CLASSLIST_DIR)/$1.classlist))
+  $1_SRC_LIST := $$(patsubst %.class, %.java, $$($1_CLASS_LIST))
+  $1_SRC_LIST += $$(patsubst %.class, %.properties, $$($1_CLASS_LIST))
+  $1_SRC_FILES := $$(wildcard $$(foreach i,$(SRC_ROOTS),$$(addprefix $$i/, $$($1_SRC_LIST))))
+  # On windows, because wildcard is case insensitive, a couple of
+  # classes are mistakenly matched as property files too. Filter
+  # out these explicitly.
+  $1_SRC_FILES := $$(filter-out %/Version.properties %/SerialVer.properties, \
+      $$($1_SRC_FILES))
+
+  ifneq ($$(wildcard $(MODULE_CLASSLIST_DIR)/$1.resources), )
+    $1_RESOURCE_LIST := $$(subst \,/, \
+        $$(shell $(CAT) $(MODULE_CLASSLIST_DIR)/$1.resources))
+    $1_SRC_FILES += $$(wildcard $$(foreach i,$(SRC_ROOTS),$$(addprefix $$i/, $$($1_RESOURCE_LIST))))
+  endif
+
+ # Rules for copying class files in the build output
+  $(JDK_OUTPUTDIR)/modules/$1/%: $(JDK_OUTPUTDIR)/classes/%
+	$$(install-file)
+
+  $(JDK_OUTPUTDIR)/modules/$1/%: $(JDK_OUTPUTDIR)/classes_security/%
+	$$(install-file)
+
+  $(JDK_OUTPUTDIR)/modules/$1/%: $(JDK_OUTPUTDIR)/classes_sa/%
+	$$(install-file)
+
+  $(JDK_OUTPUTDIR)/modules/$1/%: $(JDK_OUTPUTDIR)/jobjc_classes/%
+	$$(install-file)
+
+  BUILD_TARGET_FILES += $$(addprefix $(JDK_OUTPUTDIR)/modules/$1/, \
+      $$($1_CLASS_LIST) $$($1_RESOURCE_LIST))
+
+
+  # Rules for copying sources
+  $(JDK_TOPDIR)/src/share/modules/$1/%: $(JDK_TOPDIR)/src/share/classes/%
+	$$(module-copy-file)
+
+  $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/modules/$1/%: \
+      $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/classes/%
+	$$(module-copy-file)
+
+  $(JAXP_TOPDIR)/src/share/modules/$1/%: $(JAXP_TOPDIR)/src/%
+	$$(module-copy-file)
+
+  $(JAXWS_TOPDIR)/src/share/modules/$1/%: $(JAXWS_TOPDIR)/src/share/jaxws_classes/%
+	$$(module-copy-file)
+
+  $(JAXWS_TOPDIR)/src/share/modules/$1/%: $(JAXWS_TOPDIR)/src/share/jaf_classes/%
+	$$(module-copy-file)
+
+  $(CORBA_TOPDIR)/src/share/modules/$1/%: $(CORBA_TOPDIR)/src/share/classes/%
+	$$(module-copy-file)
+
+  $(LANGTOOLS_TOPDIR)/src/share/modules/$1/%: $(LANGTOOLS_TOPDIR)/src/share/classes/%
+	$$(module-copy-file)
+
+  SRC_TARGET_FILES += \
+      $$(patsubst $(JDK_TOPDIR)/src/share/classes/%,$(JDK_TOPDIR)/src/share/modules/$1/%, \
+      $$(patsubst $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/classes/%, \
+          $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/modules/$1/%, \
+      $$(patsubst $(JAXP_TOPDIR)/src/%,$(JAXP_TOPDIR)/src/share/modules/$1/%,\
+      $$(patsubst $(JAXWS_TOPDIR)/src/share/jaxws_classes/%,$(JAXWS_TOPDIR)/src/share/modules/$1/%,\
+      $$(patsubst $(JAXWS_TOPDIR)/src/share/jaf_classes/%,$(JAXWS_TOPDIR)/src/share/modules/$1/%,\
+      $$(patsubst $(CORBA_TOPDIR)/src/share/classes/%,$(CORBA_TOPDIR)/src/share/modules/$1/%,\
+      $$(patsubst $(LANGTOOLS_TOPDIR)/src/share/classes/%,$(LANGTOOLS_TOPDIR)/src/share/modules/$1/%,\
+          $$($1_SRC_FILES))))))))
+endef
+
+# Find all modules that have classes and iterate over them
+MODULE_LIST := $(patsubst $(MODULE_CLASSLIST_DIR)/%.classlist,%, \
+    $(wildcard $(MODULE_CLASSLIST_DIR)/*.classlist))
+
+$(foreach m,$(MODULE_LIST),$(eval $(call CopyModule,$m)))
+
+
+################################################################################
+
+# General copy file macros should probably be moved to make/common in the root.
+define AddFileToCopy
+  # Helper macro for SetupCopyFiles
+  # 1 : Source root dir
+  # 2 : Dest root dir
+  # 3 : File path relative to source root
+  # 4 : Variable to add targets to
+
+  $2/$3: $1/$3
+	$(ECHO) $(LOG_INFO) Copying $$(patsubst $(OUTPUT_ROOT)/%,%,$$@)
+	$$(module-copy-file)
+
+  $4 += $2/$3
+endef
+
+define SetupCopyFiles
+  # param 1 is for example COPY_MYFILES
+  # param 2,3,4,5 are named args.
+  #   SRC   : Source root dir
+  #   DEST  : Dest root dir
+  #   FILES : List of files to copy with absolute paths, or path relative to SRC. Must be in SRC.
+  $(foreach i,2 3 4 5, $(if $($i),$1_$(strip $($i)))$(NEWLINE))
+  $(call LogSetupMacroEntry,SetupCopyFiles($1),$2,$3,$4,$5)
+  $(if $(6),$(error Internal makefile error: Too many arguments to SetupCopyFiles))
+
+  $$(foreach f, $$(patsubst $$($1_SRC)/%,%,$$($1_FILES)), \
+      $$(eval $$(call AddFileToCopy,$$($1_SRC),$$($1_DEST),$$f,$1)))
+
+endef
+
+################################################################################
+
+# Copy logutil in corba to make/tools
+$(eval $(call SetupCopyFiles,COPY_CORBA_LOGUTIL, \
+    SRC := $(CORBA_TOPDIR)/src/share/classes, \
+    DEST := $(CORBA_TOPDIR)/make/tools/src, \
+    FILES := $(wildcard $(CORBA_TOPDIR)/src/share/classes/com/sun/tools/corba/se/logutil/*.java)))
+
+# Copy *.mc and *.properties files in corba
+$(eval $(call SetupCopyFiles,COPY_CORBA_MC, \
+    SRC := $(CORBA_TOPDIR)/src/share/classes, \
+    DEST := $(CORBA_TOPDIR)/src/share/modules/javax.corba, \
+    FILES := $(wildcard $(CORBA_TOPDIR)/src/share/classes/com/sun/corba/se/spi/logging/data/*.mc \
+        $(CORBA_TOPDIR)/src/share/classes/com/sun/corba/se/impl/orbutil/resources/*.properties) \
+        $(shell $(FIND) $(CORBA_TOPDIR)/src/share/classes -name *.idl)))
+
+# Copy services in jaxws
+$(eval $(call SetupCopyFiles,COPY_JAXWS_SERVICES, \
+    SRC := $(JAXWS_TOPDIR)/src/share/jaxws_classes, \
+    DEST := $(JAXWS_TOPDIR)/src/share/modules/jdk.tools.jaxws, \
+    FILES := $(wildcard $(JAXWS_TOPDIR)/src/share/jaxws_classes/com/sun/tools/etc/META-INF/services/*Plugin)))
+
+# Copy WrapperGenerator to a source dir in build tools where it belongs
+$(eval $(call SetupCopyFiles,COPY_X11_WRAPPER_GENERATOR, \
+    SRC := $(JDK_TOPDIR)/src/solaris/classes/sun/awt/X11/generator, \
+    DEST := $(JDK_TOPDIR)/make/src/classes/build/tools/x11wrappergenerator, \
+    FILES := $(JDK_TOPDIR)/src/solaris/classes/sun/awt/X11/generator/WrapperGenerator.java))
+
+# Copy WrapperGenerator data files
+$(eval $(call SetupCopyFiles,COPY_X11_WRAPPER_DATA, \
+    SRC := $(JDK_TOPDIR)/src/solaris/classes/sun/awt/X11/generator, \
+    DEST := $(JDK_TOPDIR)/make/data/x11wrappergenerator, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/solaris/classes/sun/awt/X11/generator/*.txt) \
+        $(wildcard $(JDK_TOPDIR)/src/solaris/classes/sun/awt/X11/generator/sizes*)))
+
+# Copy nimbus templates
+$(eval $(call SetupCopyFiles,COPY_NIMBUS_RESOURCES, \
+    SRC := $(JDK_TOPDIR)/src/share/classes/javax/swing/plaf/nimbus, \
+    DEST := $(JDK_TOPDIR)/src/share/modules/java.desktop/javax/swing/plaf/nimbus/, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/share/classes/javax/swing/plaf/nimbus/*.template)))
+
+# Copy *XLocales.java.template to JAVA_base
+$(eval $(call SetupCopyFiles,COPY_LOCALE_TEMPLATES, \
+    SRC := $(JDK_TOPDIR)/src/share/classes, \
+    DEST := $(JDK_TOPDIR)/src/share/modules/java.base, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/share/classes/sun/util/*XLocales.java.template \
+        $(JDK_TOPDIR)/src/share/classes/sun/util/locale/provider/*XLocales.java.template)))
+
+$(eval $(call SetupCopyFiles,COPY_MISC_VERSION, \
+    SRC := $(JDK_TOPDIR)/src/share/classes, \
+    DEST := $(JDK_TOPDIR)/src/share/modules/java.base, \
+    FILES := $(JDK_TOPDIR)/src/share/classes/sun/misc/Version.java.template))
+
+$(eval $(call SetupCopyFiles,COPY_JCONSOLE_VERSION, \
+    SRC := $(JDK_TOPDIR)/src/share/classes, \
+    DEST := $(JDK_TOPDIR)/src/share/modules/jdk.tools, \
+    FILES := $(JDK_TOPDIR)/src/share/classes/sun/tools/jconsole/Version.java.template))
+
+$(eval $(call SetupCopyFiles,COPY_UNIX_PROCESS, \
+    SRC := $(JDK_TOPDIR)/src/solaris/classes, \
+    DEST := $(JDK_TOPDIR)/src/solaris/modules/java.base, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/solaris/classes/java/lang/UNIXProcess.java*)))
+
+$(eval $(call SetupCopyFiles,COPY_STANDARD_CHARSETS, \
+    SRC := $(JDK_TOPDIR)/src/share/classes, \
+    DEST := $(JDK_TOPDIR)/src/share/modules/java.base, \
+    FILES := $(JDK_TOPDIR)/src/share/classes/sun/nio/cs/standard-charsets))
+
+$(eval $(call SetupCopyFiles,COPY_NIO_TEMPLATES, \
+    SRC := $(JDK_TOPDIR)/src/share/classes, \
+    DEST := $(JDK_TOPDIR)/src/share/modules/java.base, \
+    FILES := $(JDK_TOPDIR)/src/share/classes/java/nio/charset/Charset-X-Coder.java.template \
+        $(wildcard $(JDK_TOPDIR)/src/share/classes/java/nio/*.template)))
+
+$(eval $(call SetupCopyFiles,COPY_NIO_EXCEPTIONS, \
+    SRC := $(JDK_TOPDIR)/src/share/classes, \
+    DEST := $(JDK_TOPDIR)/src/share/modules/java.base, \
+    FILES := $(JDK_TOPDIR)/src/share/classes/java/nio/exceptions \
+        $(wildcard $(JDK_TOPDIR)/src/share/classes/java/nio/*/exceptions)))
+
+$(eval $(call SetupCopyFiles,COPY_SOLARIS_ICONS, \
+    SRC := $(JDK_TOPDIR)/src/solaris/classes, \
+    DEST := $(JDK_TOPDIR)/src/solaris/modules/java.desktop, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/solaris/classes/sun/awt/X11/*.png)))
+
+$(eval $(call SetupCopyFiles,COPY_SHARE_ICONS, \
+    SRC := $(JDK_TOPDIR)/src/share/classes, \
+    DEST := $(JDK_TOPDIR)/src/share/modules/java.desktop, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/share/classes/sun/awt/resources/*.png)))
+
+$(eval $(call SetupCopyFiles,COPY_CLDR, \
+    SRC := $(JDK_TOPDIR)/src/share/classes, \
+    DEST := $(JDK_TOPDIR)/src/share/modules/sun.localedata, \
+    FILES := $(shell $(FIND) $(JDK_TOPDIR)/src/share/classes/sun/util/cldr/resources -type f)))
+
+$(eval $(call SetupCopyFiles,COPY_SWING_LAF, \
+    SRC := $(JDK_TOPDIR)/src/share/classes, \
+    DEST := $(JDK_TOPDIR)/src/share/modules/java.desktop, \
+    FILES := $(JDK_TOPDIR)/src/share/classes/javax/swing/plaf/nimbus/skin.laf))
+
+$(eval $(call SetupCopyFiles,COPY_SERIAL_VER, \
+    SRC := $(JDK_TOPDIR)/src/share/classes, \
+    DEST := $(JDK_TOPDIR)/src/share/modules/jdk.tools, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/share/classes/sun/tools/serialver/*.properties)))
+
+$(eval $(call SetupCopyFiles,COPY_BREAK_ITERATOR_RULES, \
+    SRC := $(JDK_TOPDIR)/src/share/classes, \
+    DEST := $(JDK_TOPDIR)/src/share/modules/java.base, \
+    FILES := $(JDK_TOPDIR)/src/share/classes/sun/text/resources/BreakIteratorRules.java))
+
+################################################################################
+
+shuffle-src: \
+    $(SRC_TARGET_FILES) \
+    $(COPY_CORBA_LOGUTIL) \
+    $(COPY_CORBA_MC) \
+    $(COPY_JAXWS_SERVICES) \
+    $(COPY_X11_WRAPPER_GENERATOR) \
+    $(COPY_X11_WRAPPER_DATA) \
+    $(COPY_NIMBUS_RESOURCES) \
+    $(COPY_LOCALE_TEMPLATES) \
+    $(COPY_MISC_VERSION) \
+    $(COPY_JCONSOLE_VERSION) \
+    $(COPY_UNIX_PROCESS) \
+    $(COPY_STANDARD_CHARSETS) \
+    $(COPY_NIO_TEMPLATES) \
+    $(COPY_NIO_EXCEPTIONS) \
+    $(COPY_SOLARIS_ICONS) \
+    $(COPY_SHARE_ICONS) \
+    $(COPY_CLDR) \
+    $(COPY_SWING_LAF) \
+    $(COPY_SERIAL_VER) \
+    $(COPY_BREAK_ITERATOR_RULES)
+
+shuffle-build: $(BUILD_TARGET_FILES)
+
+all: shuffle-src shuffle-build
+
+clean: clean-src clean-build
+
+clean-src:
+	$(RM) -r $(JDK_TOPDIR)/src/share/modules
+	$(RM) -r $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/modules
+	$(RM) -r $(JAXP_TOPDIR)/src/share/modules
+	$(RM) -r $(JAXWS_TOPDIR)/src/share/modules
+	$(RM) -r $(CORBA_TOPDIR)/src/share/modules
+	$(RM) -r $(LANGTOOLS_TOPDIR)/src/share/modules
+	$(RM) -r $(CORBA_TOPDIR)/make/tools/src/com
+	$(RM) -r $(JDK_TOPDIR)/make/src/classes/build/tools/x11wrappergenerator
+	$(RM) -r $(JDK_TOPDIR)/make/data/x11wrappergenerator
+
+clean-build:
+	$(RM) -r $(JDK_OUTPUTDIR)/modules

@@ -164,7 +164,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBJSOUND, \
 
 $(BUILD_LIBJSOUND): $(BUILD_LIBJAVA)
 
-BUILD_LIBRARIES += $(BUILD_LIBJSOUND)
+DESKTOP_LIBRARIES += $(BUILD_LIBJSOUND)
 
 ##########################################################################################
 
@@ -200,7 +200,7 @@ ifneq ($(filter jsoundalsa, $(EXTRA_SOUND_JNI_LIBS)), )
 
   $(BUILD_LIBJSOUNDALSA): $(BUILD_LIBJAVA)
 
-  BUILD_LIBRARIES += $(BUILD_LIBJSOUNDALSA)
+  DESKTOP_LIBRARIES += $(BUILD_LIBJSOUNDALSA)
 
 endif
 
@@ -232,6 +232,6 @@ ifneq ($(filter jsoundds, $(EXTRA_SOUND_JNI_LIBS)), )
 
   $(BUILD_LIBJSOUNDDS): $(BUILD_LIBJAVA)
 
-  BUILD_LIBRARIES += $(BUILD_LIBJSOUNDDS)
+  DESKTOP_LIBRARIES += $(BUILD_LIBJSOUNDDS)
 
 endif

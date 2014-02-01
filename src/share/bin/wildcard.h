@@ -27,5 +27,6 @@
 #define WILDCARD_H_
 
 const char *JLI_WildcardExpandClasspath(const char *classpath);
+const char *JLI_WildcardExpandDirectory(const char *classpath);
 
 #endif /* include guard */

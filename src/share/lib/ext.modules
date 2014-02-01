@@ -1,0 +1,8 @@
+jdk.crypto
+jdk.crypto.ec
+jdk.crypto.pkcs11
+jdk.crypto.mscapi
+jdk.ucrypto
+jdk.nashorn
+jdk.zipfs
+sun.localedata

@@ -73,7 +73,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBMLIB_IMAGE, \
 
 $(BUILD_LIBMLIB_IMAGE): $(BUILD_LIBJAVA)
 
-BUILD_LIBRARIES += $(BUILD_LIBMLIB_IMAGE)
+DESKTOP_LIBRARIES += $(BUILD_LIBMLIB_IMAGE)
 
 ##########################################################################################
 
@@ -197,7 +197,7 @@ ifeq ($(OPENJDK_TARGET_OS)-$(OPENJDK_TARGET_CPU_ARCH), solaris-sparc)
 
   $(BUILD_LIBMLIB_IMAGE_V): $(BUILD_LIBJAVA)
 
-  BUILD_LIBRARIES += $(BUILD_LIBMLIB_IMAGE_V)
+  DESKTOP_LIBRARIES += $(BUILD_LIBMLIB_IMAGE_V)
 
 endif
 
@@ -505,7 +505,7 @@ ifeq ($(OPENJDK_TARGET_OS), macosx)
   $(BUILD_LIBAWT): $(BUILD_LIBMLIB_IMAGE)
 endif
 
-BUILD_LIBRARIES += $(BUILD_LIBAWT)
+DESKTOP_LIBRARIES += $(BUILD_LIBAWT)
 
 ##########################################################################################
 
@@ -653,7 +653,7 @@ ifeq ($(findstring $(OPENJDK_TARGET_OS),windows macosx),)
 
     $(BUILD_LIBAWT_XAWT): $(BUILD_LIBAWT)
 
-    BUILD_LIBRARIES += $(BUILD_LIBAWT_XAWT)
+    DESKTOP_LIBRARIES += $(BUILD_LIBAWT_XAWT)
 
   endif
 endif
@@ -689,7 +689,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBLCMS, \
     OBJECT_DIR := $(JDK_OUTPUTDIR)/objs/liblcms, \
     DEBUG_SYMBOLS := $(DEBUG_ALL_BINARIES)))
 
-BUILD_LIBRARIES += $(BUILD_LIBLCMS)
+DESKTOP_LIBRARIES += $(BUILD_LIBLCMS)
 
 $(BUILD_LIBLCMS): $(BUILD_LIBAWT)
 
@@ -751,7 +751,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBJPEG, \
 
 $(BUILD_LIBJPEG): $(BUILD_LIBJAVA)
 
-BUILD_LIBRARIES += $(BUILD_LIBJPEG)
+DESKTOP_LIBRARIES += $(BUILD_LIBJPEG)
 
 ##########################################################################################
 
@@ -837,7 +837,7 @@ ifeq ($(OPENJDK_TARGET_OS), solaris)
   $(BUILD_LIBFONTMANAGER): $(BUILD_LIBAWT_XAWT)
 endif
 
-BUILD_LIBRARIES += $(BUILD_LIBFONTMANAGER)
+DESKTOP_LIBRARIES += $(BUILD_LIBFONTMANAGER)
 
 ##########################################################################################
 
@@ -891,7 +891,7 @@ ifndef OPENJDK
   # t2k is linked against fontmanager
   $(BUILD_LIBT2K): $(BUILD_LIBFONTMANAGER)
 
-  BUILD_LIBRARIES += $(BUILD_LIBT2K)
+  DESKTOP_LIBRARIES += $(BUILD_LIBT2K)
 endif
 
 ##########################################################################################
@@ -931,7 +931,7 @@ ifeq ($(OPENJDK_TARGET_OS), windows)
 	$(ECHO) Copying $(@F)
 	$(CP) $(JDK_OUTPUTDIR)/objs/libjawt/$(LIBRARY_PREFIX)jawt$(STATIC_LIBRARY_SUFFIX) $@
 
-  BUILD_LIBRARIES += $(JDK_OUTPUTDIR)/lib/$(LIBRARY_PREFIX)jawt$(STATIC_LIBRARY_SUFFIX)
+  DESKTOP_LIBRARIES += $(JDK_OUTPUTDIR)/lib/$(LIBRARY_PREFIX)jawt$(STATIC_LIBRARY_SUFFIX)
 
 else # OPENJDK_TARGET_OS not windows
 
@@ -986,7 +986,7 @@ else # OPENJDK_TARGET_OS not windows
 
 endif # OPENJDK_TARGET_OS
 
-BUILD_LIBRARIES += $(BUILD_LIBJAWT)
+DESKTOP_LIBRARIES += $(BUILD_LIBJAWT)
 
 ##########################################################################################
 
@@ -1037,7 +1037,7 @@ ifndef OPENJDK
 
   $(BUILD_LIBKCMS): $(BUILD_LIBJAVA)
 
-  BUILD_LIBRARIES += $(BUILD_LIBKCMS)
+  DESKTOP_LIBRARIES += $(BUILD_LIBKCMS)
 
 endif
 
@@ -1071,7 +1071,7 @@ ifndef OPENJDK
             OBJECT_DIR := $(JDK_OUTPUTDIR)/objs/libsunwjdga, \
             DEBUG_SYMBOLS := $(DEBUG_ALL_BINARIES)))
 
-        BUILD_LIBRARIES += $(BUILD_LIBSUNWJDGA)
+        DESKTOP_LIBRARIES += $(BUILD_LIBSUNWJDGA)
 
       endif
     endif
@@ -1174,7 +1174,7 @@ ifeq ($(BUILD_HEADLESS), true)
 
     $(BUILD_LIBAWT_HEADLESS): $(BUILD_LIBAWT)
 
-    BUILD_LIBRARIES += $(BUILD_LIBAWT_HEADLESS)
+    DESKTOP_LIBRARIES += $(BUILD_LIBAWT_HEADLESS)
 
   endif
 endif
@@ -1270,7 +1270,7 @@ ifndef BUILD_HEADLESS_ONLY
       OBJECT_DIR := $(JDK_OUTPUTDIR)/objs/libsplashscreen, \
       DEBUG_SYMBOLS := $(DEBUG_ALL_BINARIES)))
 
-  BUILD_LIBRARIES += $(LIBSPLASHSCREEN)
+  DESKTOP_LIBRARIES += $(LIBSPLASHSCREEN)
 
   ifeq ($(OPENJDK_TARGET_OS), macosx)
     $(LIBSPLASHSCREEN): $(INSTALL_LIBRARIES_HERE)/$(LIBRARY_PREFIX)osxapp$(SHARED_LIBRARY_SUFFIX)
@@ -1314,7 +1314,7 @@ ifndef OPENJDK
 
   $(BUILD_LIBDCPR): $(BUILD_LIBJAVA)
 
-  BUILD_LIBRARIES += $(BUILD_LIBDCPR)
+  DESKTOP_LIBRARIES += $(BUILD_LIBDCPR)
 
 endif
 
@@ -1444,7 +1444,7 @@ ifeq ($(OPENJDK_TARGET_OS), macosx)
       OBJECT_DIR := $(JDK_OUTPUTDIR)/objs/libawt_lwawt, \
       DEBUG_SYMBOLS := $(DEBUG_ALL_BINARIES)))
 
-  BUILD_LIBRARIES += $(BUILD_LIBAWT_LWAWT)
+  DESKTOP_LIBRARIES += $(BUILD_LIBAWT_LWAWT)
 
   $(BUILD_LIBAWT_LWAWT): $(BUILD_LIBAWT)
 
@@ -1485,7 +1485,7 @@ ifeq ($(OPENJDK_TARGET_OS), macosx)
       OBJECT_DIR := $(JDK_OUTPUTDIR)/objs/libosxui, \
       DEBUG_SYMBOLS := $(DEBUG_ALL_BINARIES)))
 
-  BUILD_LIBRARIES += $(BUILD_LIBOSXUI)
+  DESKTOP_LIBRARIES += $(BUILD_LIBOSXUI)
 
   $(BUILD_LIBOSXUI): $(BUILD_LIBAWT)
 

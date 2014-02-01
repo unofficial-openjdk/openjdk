@@ -23,6 +23,11 @@
 # questions.
 #
 
+ifndef _SETUP_GMK
+_SETUP_GMK := 1
+
+include JavaCompilation.gmk
+
 DISABLE_WARNINGS := -Xlint:all,-deprecation,-unchecked,-rawtypes,-cast,-serial,-dep-ann,-static,-fallthrough,-try,-varargs,-empty,-finally
 
 # To build with all warnings enabled, do the following:
@@ -65,3 +70,5 @@ $(eval $(call SetupJavaCompiler,GENERATE_USINGJDKBYTECODE, \
     FLAGS := -bootclasspath $(JDK_OUTPUTDIR)/classes $(DISABLE_WARNINGS), \
     SERVER_DIR := $(SJAVAC_SERVER_DIR), \
     SERVER_JVM := $(SJAVAC_SERVER_JAVA)))
+
+endif # _SETUP_GMK

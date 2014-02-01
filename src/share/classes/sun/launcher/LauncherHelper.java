@@ -41,6 +41,8 @@ package sun.launcher;
  */
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInputStream;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Method;
@@ -54,18 +56,31 @@ import java.nio.file.Path;
 import java.text.Normalizer;
 import java.util.ResourceBundle;
 import java.text.MessageFormat;
+import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Locale.Category;
 import java.util.Properties;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
+
+import jdk.jigsaw.module.Module;
+import jdk.jigsaw.module.ServiceDependence;
+import jdk.jigsaw.module.SimpleResolver;
+import jdk.jigsaw.module.View;
+import jdk.jigsaw.module.ViewDependence;
+
+import sun.misc.Launcher;
 
 public enum LauncherHelper {
     INSTANCE;
@@ -474,8 +489,12 @@ public enum LauncherHelper {
      */
     public static Class<?> checkAndLoadMain(boolean printToStderr,
                                             int mode,
-                                            String what) {
+                                            String what)
+        throws Exception
+    {
         initOutput(printToStderr);
+        initModules();
+
         // get the class name
         String cn = null;
         switch (mode) {
@@ -767,5 +786,277 @@ public enum LauncherHelper {
             fxLauncherMethod.invoke(null,
                     new Object[] {fxLaunchName, fxLaunchMode, args});
         }
+    }
+
+    private static void formatCommaList(PrintStream out,
+                                        String prefix,
+                                        Collection<?> list)
+    {
+        if (list.isEmpty())
+            return;
+        out.format("  %s", prefix);
+        boolean first = true;
+        for (Object ob : list) {
+            if (first) {
+                out.format(" %s", ob);
+                first = false;
+            } else {
+                out.format(", %s", ob);
+            }
+        }
+        out.format("%n");
+    }
+
+    private static void formatModuleView(PrintStream out,
+                                         View view,
+                                         String indent)
+    {
+        formatCommaList(out, indent + "provides",
+                        view.aliases());
+        formatCommaList(out, indent + "permits",
+                        view.permits());
+        Map<String,Set<String>> services = view.services();
+        for (Map.Entry<String,Set<String>> entry: services.entrySet()) {
+            String sn = entry.getKey();
+            for (String impl: entry.getValue()) {
+                out.format("%s  provides service %s with %s%n", indent, sn, impl);
+            }
+        }
+
+        if (!view.exports().isEmpty()) {
+            out.format("  %sexports%n", indent);
+            Set<String> exports = new TreeSet<>(view.exports());
+            for (String pn : exports) {
+                out.format("  %s  %s%n", indent, pn);
+            }
+        }
+    }
+
+    /**
+     * Called by the launcher to list the installed modules.
+     * If called without any sub-options then it the output is a simple
+     * list of the moduels. If called with the verbose sub-option
+     * (-XlistModules:verbose) then the dependences and other details
+     * are also printed.
+     */
+    static void listModules(boolean printToStderr, String optionFlag)
+        throws IOException, ClassNotFoundException
+    {
+        initOutput(printToStderr);
+
+        boolean verbose = false;
+        int colon = optionFlag.indexOf(':');
+        if (colon >= 0) {
+            String[] subOptions = optionFlag.substring(colon+1).split(",");
+            for (String subOption: subOptions) {
+                 switch (subOption) {
+                     case "verbose" : verbose = true; break;
+                     default : /* do nothing for now */
+                 }
+            }
+        }
+
+        Module[] mods = readModules();
+        Arrays.sort(mods);
+        for (Module m: mods) {
+            ostream.println(m.id().name());
+            if (verbose) {
+                for (ViewDependence d: m.viewDependences()) {
+                    ostream.format("  %s%n", d);
+                }
+                for (ServiceDependence d: m.serviceDependences()) {
+                    ostream.format("  %s%n", d);
+                }
+                formatModuleView(ostream, m.mainView(), "");
+                for (View v: m.views()) {
+                    if (v != m.mainView()) {
+                        ostream.format("  view %s%n", v.id().name());
+                        formatModuleView(ostream, v, "  ");
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Module definitions, serialized in modules.ser for now
+     */
+    private static final String MODULES_SER = "jdk/jigsaw/module/resources/modules.ser";
+
+    private static Module[] readModules() throws IOException, ClassNotFoundException {
+        // ## FIXME: rmic is run in the build before modules.ser is generated
+        InputStream stream = ClassLoader.getSystemResourceAsStream(MODULES_SER);
+        if (stream == null) {
+            System.err.format("WARNING: %s not found%n", MODULES_SER);
+            return new Module[0];
+        }
+        try (InputStream in = stream) {
+           ObjectInputStream ois = new ObjectInputStream(in);
+           Module[] mods = (Module[]) ois.readObject();
+           return mods;
+        }
+    }
+
+    /**
+     * Returns a mapping of API package to class loader for class loaders that
+     * aren't the null loader.
+     */
+    private static Map<String, ClassLoader> generateLoaderMap(Module[] modules) throws IOException {
+        Map<String, Module> mods = new HashMap<>();
+        for (Module m: modules) {
+            mods.put(m.mainView().id().name(), m);
+        }
+        Map<String, ClassLoader> pkgToLoaders = new HashMap<>();
+        Launcher launcher = Launcher.getLauncher();
+
+        // extensions class loader
+        ClassLoader extcl = launcher.getExtClassLoader();
+        for (String name: launcher.getExtModules()) {
+            Module m = mods.get(name);
+            if (m != null) {
+                m.packages().forEach(p -> pkgToLoaders.put(p, extcl));
+            }
+        }
+
+        // system/application class loader
+        ClassLoader cl = launcher.getClassLoader();
+        for (String name: launcher.getAppModules()) {
+            Module m = mods.get(name);
+            if (m != null) {
+                m.packages().forEach(p -> pkgToLoaders.put(p, cl));
+            }
+        }
+
+        return pkgToLoaders;
+    }
+
+    /**
+     * Setup access control to restrict access to the packages that are the keys
+     * in the given map. For each key {@code p} then its value in the map is the
+     * set of packages that have access to {@code p}.
+     */
+    private static void setupPackageAccess(Map<String, Set<String>> restricted,
+                                           Map<String, ClassLoader> pkgToLoaders) {
+        for (Map.Entry<String,Set<String>> entry: restricted.entrySet()) {
+            String pkg = entry.getKey();
+            ClassLoader loader = pkgToLoaders.get(pkg);
+            String[] pkgs = entry.getValue().toArray(new String[0]);
+            ClassLoader[] loaders = new ClassLoader[pkgs.length];
+            int i=0;
+            while (i < pkgs.length) {
+                loaders[i] = pkgToLoaders.get(pkgs[i]);
+                i++;
+            }
+            sun.misc.VM.setPackageAccess(loader, pkg, loaders, pkgs);
+        }
+    }
+
+    /**
+     * Given the module graph and the modules actually needed, return a map
+     * of the access control that needs to be setup. The map key is a package
+     * name, the map value the set of packages that are permitted to access
+     * types in the package.
+     */
+    private static Map<String,Set<String>>
+        computePackageAccess(Module[] modules, Set<Module> modulesNeeded)
+    {
+        Map<String, Set<String>> restricted = new HashMap<>();
+
+        // Step 1: hide all packages that are not in the selected modules
+        for (Module m: modules) {
+            if (!modulesNeeded.contains(m)) {
+                for (String p: m.packages()) {
+                    // ## FIXME - can't use emptySet due to split package issues
+                    restricted.put(p, new HashSet<>());
+                }
+            }
+        }
+
+        // Step 2: hide on all non-exported packages in selected modules so
+        // that they are only accessible from within the module
+        for (Module m: modulesNeeded) {
+            Set<String> packages = m.packages();
+
+            // compute the set of packages that private to the module
+            Set<String> local = new HashSet<>(packages);
+            for (View v: m.views()) {
+                local.removeAll(v.exports());
+            }
+
+            // every package in the module gets access to the packages
+            // that are module-private
+            for (String p: local) {
+                // ## FIXME - due split package issues it may already be in map
+                restricted.computeIfAbsent(p, k -> new HashSet<>()).addAll(packages);
+            }
+        }
+
+        // Step 3: restrict access to packages that are exported to a permits
+        // list
+        Map<String,Set<String>> contents = new HashMap<>();
+        for (Module m: modules) {
+            contents.put(m.id().name(), m.packages());
+        }
+        for (Module m: modulesNeeded) {
+            for (View v: m.views()) {
+                Set<String> permits = v.permits();
+                if (!permits.isEmpty()) {
+                    for (String p: v.exports()) {
+                        Set<String> packages = restricted.get(p);
+                        if (packages == null) {
+                            packages = new HashSet<>();
+                            restricted.put(p, packages);
+                        }
+
+                        // packages in current module get access
+                        packages.addAll(m.packages());
+
+                        // packages in friends get access
+                        for (String friend: permits) {
+                            packages.addAll(contents.get(friend));
+                        }
+                    }
+                }
+            }
+        }
+
+        return restricted;
+    }
+
+    /**
+     * Load compiled module graph, resolve the modules specified on the command
+     * line (if any) and setup the access control.
+     */
+    private static void initModules() throws IOException, ClassNotFoundException {
+        Module[] modules = readModules();
+        if (modules == null || modules.length == 0) {
+            // do nothing for now
+            return;
+        }
+
+        String propValue = System.getProperty("jdk.launcher.modules");
+        String[] requested;
+        if (propValue == null) {
+            requested = new String[]{ "jdk" };
+        } else {
+            requested = propValue.split(",");
+        }
+
+        boolean verbose = false;
+        propValue = System.getProperty("jdk.launcher.modules.verbose");
+        if (propValue != null)
+            verbose = Boolean.parseBoolean(propValue);
+
+        // find set of modules required
+        SimpleResolver resolver = new SimpleResolver(modules);
+        Set<Module> modulesNeeded = resolver.resolve(requested);
+        if (verbose) {
+            Set<Module> sorted = new TreeSet<>(modulesNeeded);
+            sorted.forEach(m -> System.out.println(m.id().name()));
+        }
+
+        // compute and set the access control
+        Map<String, Set<String>> restricted = computePackageAccess(modules, modulesNeeded);
+        setupPackageAccess(restricted, generateLoaderMap(modules));
     }
 }

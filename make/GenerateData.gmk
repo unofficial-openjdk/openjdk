@@ -26,6 +26,7 @@
 default: all
 
 include $(SPEC)
+include JigsawSpecMod.gmk
 include MakeBase.gmk
 include JavaCompilation.gmk
 
@@ -52,7 +53,7 @@ GENDATA += $(GENDATA_HTML32DTD)
 
 ##########################################################################################
 
-GENDATA_UNINAME := $(JDK_OUTPUTDIR)/classes/java/lang/uniName.dat
+GENDATA_UNINAME := $(JDK_OUTPUTDIR)/$(MODULES_SUBDIR)$(JAVA_BASE_SUBDIR)/java/lang/uniName.dat
 
 $(GENDATA_UNINAME): $(JDK_TOPDIR)/make/data/unicodedata/UnicodeData.txt $(BUILD_TOOLS)
 	$(MKDIR) -p $(@D)
@@ -77,9 +78,6 @@ GENDATA += $(GENDATA_CURDATA)
 
 $(GENDATA): $(BUILD_TOOLS)
 
-$(JDK_OUTPUTDIR)/classes/_the.gendata: $(GENDATA)
-	$(TOUCH) $@
-
-all: $(JDK_OUTPUTDIR)/classes/_the.gendata
+all: $(GENDATA)
 
 .PHONY: all

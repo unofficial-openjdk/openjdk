@@ -26,6 +26,7 @@
 default: all
 
 include $(SPEC)
+include JigsawSpecMod.gmk
 include MakeBase.gmk
 include JavaCompilation.gmk
 include NativeCompilation.gmk
@@ -88,6 +89,5 @@ GENSRC += $(GENSRC_SWING_BEANINFO) $(GENSRC_SWING_NIMBUS)
 $(GENSRC): $(BUILD_TOOLS)
 
 all: $(GENSRC)
-
 
 .PHONY: all
