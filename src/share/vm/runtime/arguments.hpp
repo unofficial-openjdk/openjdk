@@ -27,6 +27,7 @@
 
 #include "runtime/java.hpp"
 #include "runtime/perfData.hpp"
+#include "utilities/debug.hpp"
 #include "utilities/top.hpp"
 
 // Arguments parses the command line and recognizes options
@@ -350,6 +351,9 @@ class Arguments : AllStatic {
   static bool is_bad_option(const JavaVMOption* option, jboolean ignore) {
     return is_bad_option(option, ignore, NULL);
   }
+  static bool is_percentage(uintx val) {
+    return val <= 100;
+  }
   static bool verify_interval(uintx val, uintx min,
                               uintx max, const char* name);
   static bool verify_min_value(intx val, intx min, const char* name);
@@ -411,6 +415,12 @@ class Arguments : AllStatic {
  public:
   // Parses the arguments
   static jint parse(const JavaVMInitArgs* args);
+  // Verifies that the given value will fit as a MinHeapFreeRatio. If not, an error
+  // message is returned in the provided buffer.
+  static bool verify_MinHeapFreeRatio(FormatBuffer<80>& err_msg, uintx min_heap_free_ratio);
+  // Verifies that the given value will fit as a MaxHeapFreeRatio. If not, an error
+  // message is returned in the provided buffer.
+  static bool verify_MaxHeapFreeRatio(FormatBuffer<80>& err_msg, uintx max_heap_free_ratio);
   // Check for consistency in the selection of the garbage collector.
   static bool check_gc_consistency();
   // Check consistecy or otherwise of VM argument settings
