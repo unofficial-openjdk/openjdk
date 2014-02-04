@@ -1447,6 +1447,17 @@ void Arguments::set_parallel_gc_flags() {
   }
   FLAG_SET_DEFAULT(UseParallelGC, true);
 
+  if (UseAdaptiveSizePolicy) {
+    // We don't want to limit adaptive heap sizing's freedom to adjust the heap
+    // unless the user actually sets these flags.
+    if (FLAG_IS_DEFAULT(MinHeapFreeRatio)) {
+      FLAG_SET_DEFAULT(MinHeapFreeRatio, 0);
+    }
+    if (FLAG_IS_DEFAULT(MaxHeapFreeRatio)) {
+      FLAG_SET_DEFAULT(MaxHeapFreeRatio, 100);
+    }
+  }
+
   // If no heap maximum was requested explicitly, use some reasonable fraction
   // of the physical memory, up to a maximum of 1GB.
   if (UseParallelGC) {
@@ -1719,7 +1730,7 @@ bool Arguments::verify_min_value(intx val, intx min, const char* name) {
 }
 
 bool Arguments::verify_percentage(uintx value, const char* name) {
-  if (value <= 100) {
+  if (is_percentage(value)) {
     return true;
   }
   jio_fprintf(defaultStream::error_stream(),
@@ -1766,6 +1777,34 @@ void check_gclog_consistency() {
         jio_fprintf(defaultStream::output_stream(),
                     "GCLogFileSize changed to minimum 8K\n");
   }
+}
+
+bool Arguments::verify_MinHeapFreeRatio(FormatBuffer<80>& err_msg, uintx min_heap_free_ratio) {
+  if (!is_percentage(min_heap_free_ratio)) {
+    err_msg.print("MinHeapFreeRatio must have a value between 0 and 100");
+    return false;
+  }
+  if (min_heap_free_ratio > MaxHeapFreeRatio) {
+    err_msg.print("MinHeapFreeRatio (" UINTX_FORMAT ") must be less than or "
+                  "equal to MaxHeapFreeRatio (" UINTX_FORMAT ")", min_heap_free_ratio,
+                  MaxHeapFreeRatio);
+    return false;
+  }
+  return true;
+}
+
+bool Arguments::verify_MaxHeapFreeRatio(FormatBuffer<80>& err_msg, uintx max_heap_free_ratio) {
+  if (!is_percentage(max_heap_free_ratio)) {
+    err_msg.print("MaxHeapFreeRatio must have a value between 0 and 100");
+    return false;
+  }
+  if (max_heap_free_ratio < MinHeapFreeRatio) {
+    err_msg.print("MaxHeapFreeRatio (" UINTX_FORMAT ") must be greater than or "
+                  "equal to MinHeapFreeRatio (" UINTX_FORMAT ")", max_heap_free_ratio,
+                  MinHeapFreeRatio);
+    return false;
+  }
+  return true;
 }
 
 // Check consistency of GC selection
@@ -1852,15 +1891,19 @@ bool Arguments::check_vm_args_consistency() {
                               "AdaptiveSizePolicyWeight");
   status = status && verify_percentage(AdaptivePermSizeWeight, "AdaptivePermSizeWeight");
   status = status && verify_percentage(ThresholdTolerance, "ThresholdTolerance");
-  status = status && verify_percentage(MinHeapFreeRatio, "MinHeapFreeRatio");
-  status = status && verify_percentage(MaxHeapFreeRatio, "MaxHeapFreeRatio");
 
-  if (MinHeapFreeRatio > MaxHeapFreeRatio) {
-    jio_fprintf(defaultStream::error_stream(),
-                "MinHeapFreeRatio (" UINTX_FORMAT ") must be less than or "
-                "equal to MaxHeapFreeRatio (" UINTX_FORMAT ")\n",
-                MinHeapFreeRatio, MaxHeapFreeRatio);
-    status = false;
+  {
+    // Using "else if" below to avoid printing two error messages if min > max.
+    // This will also prevent us from reporting both min>100 and max>100 at the
+    // same time, but that is less annoying than printing two identical errors IMHO.
+    FormatBuffer<80> err_msg("");
+    if (!verify_MinHeapFreeRatio(err_msg, MinHeapFreeRatio)) {
+      jio_fprintf(defaultStream::error_stream(), "%s\n", err_msg.buffer());
+      status = false;
+    } else if (!verify_MaxHeapFreeRatio(err_msg, MaxHeapFreeRatio)) {
+      jio_fprintf(defaultStream::error_stream(), "%s\n", err_msg.buffer());
+      status = false;
+    }
   }
   // Keeping the heap 100% free is hard ;-) so limit it to 99%.
   MinHeapFreeRatio = MIN2(MinHeapFreeRatio, (uintx) 99);
