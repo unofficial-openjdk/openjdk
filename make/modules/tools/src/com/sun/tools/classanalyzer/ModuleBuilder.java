@@ -34,6 +34,7 @@ import com.sun.tools.classfile.Dependency;
 import com.sun.tools.classfile.Dependency.Location;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.PrintWriter;
 import java.util.*;
 import java.util.function.Function;
 
@@ -63,29 +64,11 @@ public class ModuleBuilder {
         this.version = version;
     }
 
-    public void store(OutputStream out) throws IOException {
-        graph.store(out);
-    }
-
-    public void printModuleInfos(String minfoDir) throws IOException {
-        graph.printModuleInfos(minfoDir);
-    }
-
     /**
      * Returns the module factory.
      */
     protected Factory factory() {
         return Module.getFactory();
-    }
-
-    private TopoSorter<Module> moduleSorter;
-    public synchronized Iterable<Module> modules() {
-        if (moduleSorter == null) {
-            // sort modules in topological order
-            moduleSorter = new TopoSorter<>(dependencesForModule.keySet(),
-                    this::getModuleDependences);
-        }
-        return moduleSorter.result();
     }
 
     public Set<Module> getModuleDependences(Module m) {
@@ -111,11 +94,25 @@ public class ModuleBuilder {
         buildModules();
 
         // build jigsaw modules
-        for (Module m : modules()) {
+        for (Module m : dependencesForModule.keySet()) {
             graph.build(m, dependencesForModule.get(m).values());
         }
         System.out.format("%d modules %d classes analyzed%n",
                           dependencesForModule.size(), classes.size());
+    }
+
+    public void store(OutputStream out) throws IOException {
+        graph.store(out);
+    }
+
+    public void printModuleInfo(PrintWriter writer, Module m) throws IOException {
+        graph.printModuleInfo(writer, m);
+    }
+
+    public Iterable<Module> sort() {
+        TopoSorter<Module> sorter = new TopoSorter<>(dependencesForModule.keySet(),
+                                                     this::getModuleDependences);
+        return sorter.result();
     }
 
     /**
@@ -518,7 +515,7 @@ public class ModuleBuilder {
     }
 
     public <R, P> void visit(Visitor<R, P> visitor) throws IOException {
-        for (Module m : modules()) {
+        for (Module m : dependencesForModule.keySet()) {
             visitor.visitModule(m);
         }
     }
