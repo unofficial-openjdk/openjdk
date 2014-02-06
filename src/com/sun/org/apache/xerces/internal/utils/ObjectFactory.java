@@ -48,7 +48,8 @@ public final class ObjectFactory {
     //
     // Constants
     //
-    private static final String DEFAULT_INTERNAL_CLASSES = "com.sun.org.apache.";
+    private static final String JAXP_INTERNAL = "com.sun.org.apache";
+    private static final String STAX_INTERNAL = "com.sun.xml.internal";
 
     // name of default properties file to look for in JDK's jre/lib directory
     private static final String DEFAULT_PROPERTIES_FILENAME = "xerces.properties";
@@ -288,12 +289,8 @@ public final class ObjectFactory {
     public static Class findProviderClass(String className, boolean doFallback)
         throws ClassNotFoundException, ConfigurationError
     {
-        if (System.getSecurityManager()!=null) {
-            return Class.forName(className);
-        } else {
-            return findProviderClass (className,
+        return findProviderClass (className,
                 findClassLoader (), doFallback);
-        }
     }
     /**
      * Find a Class using the specified ClassLoader
@@ -306,7 +303,8 @@ public final class ObjectFactory {
         //restrict the access to package as speicified in java.security policy
         SecurityManager security = System.getSecurityManager();
         if (security != null) {
-            if (className.startsWith(DEFAULT_INTERNAL_CLASSES)) {
+            if (className.startsWith(JAXP_INTERNAL) ||
+                    className.startsWith(STAX_INTERNAL)) {
                 cl = null;
             } else {
                 final int lastDot = className.lastIndexOf(".");
@@ -318,7 +316,7 @@ public final class ObjectFactory {
         Class providerClass;
         if (cl == null) {
             //use the bootstrap ClassLoader.
-            providerClass = Class.forName(className);
+            providerClass = Class.forName(className, false, ObjectFactory.class.getClassLoader());
         } else {
             try {
                 providerClass = cl.loadClass(className);
