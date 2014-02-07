@@ -304,17 +304,20 @@ BASE_LIBRARIES += $(BUILD_LIBZIP)
 ##########################################################################################
 
 ifeq ($(JIGSAW), true)
-  LIBUNPACK_SRC := $(JDK_TOPDIR)/src/share/native/libunpack
-  LIBUNPACK_CPPFLAGS := -I$(JDK_OUTPUTDIR)/gensrc_headers/java.base
+  LIBUNPACK_SRC := $(JDK_TOPDIR)/src/share/native/libunpack \
+      $(JDK_TOPDIR)/src/share/native/common-unpack
+  LIBUNPACK_CPPFLAGS := -I$(JDK_OUTPUTDIR)/gensrc_headers/java.base \
+      -I$(JDK_TOPDIR)/src/share/native/common-unpack
 else
   LIBUNPACK_SRC := $(JDK_TOPDIR)/src/share/native/com/sun/java/util/jar/pack
+  LIBUNPACK_EXFILES := main.cpp
 endif
 
 $(eval $(call SetupNativeCompilation,BUILD_LIBUNPACK, \
     LIBRARY := unpack, \
     OUTPUT_DIR := $(INSTALL_LIBRARIES_HERE), \
     SRC := $(LIBUNPACK_SRC), \
-    EXCLUDE_FILES := main.cpp, \
+    EXCLUDE_FILES := $(LIBUNPACK_EXFILES), \
     LANG := C++, \
     OPTIMIZATION := LOW, \
     CFLAGS := $(CXXFLAGS_JDKLIB) \

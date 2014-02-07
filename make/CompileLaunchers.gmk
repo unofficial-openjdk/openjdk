@@ -26,6 +26,7 @@
 default: all
 
 include $(SPEC)
+include JigsawSpecMod.gmk
 include MakeBase.gmk
 include NativeCompilation.gmk
 
@@ -33,7 +34,11 @@ include NativeCompilation.gmk
 include Setup.gmk
 
 # Prepare the find cache. Only used on windows.
+ifeq ($(JIGSAW), true)
+  $(eval $(call FillCacheFind, $(JDK_TOPDIR)/src/share/native/launchers))
+else
 $(eval $(call FillCacheFind, $(JDK_TOPDIR)/src/share/bin))
+endif
 
 # Build tools
 include Tools.gmk
@@ -72,6 +77,12 @@ endif
 #
 ifneq ($(findstring $(OPENJDK_TARGET_OS), linux solaris), )
   ORIGIN_ARG += $(call SET_EXECUTABLE_ORIGIN,$(ORIGIN_ROOT)/lib$(OPENJDK_TARGET_CPU_LIBDIR))
+endif
+
+ifeq ($(JIGSAW), true)
+  LAUNCHER_SRC := $(JDK_TOPDIR)/src/share/native/launchers
+else
+  LAUNCHER_SRC := $(JDK_TOPDIR)/src/share/bin
 endif
 
 define SetupLauncher
@@ -146,7 +157,7 @@ define SetupLauncher
   endif
 
   $(call SetupNativeCompilation,BUILD_LAUNCHER_$1, \
-      SRC := $(JDK_TOPDIR)/src/share/bin, \
+      SRC := $(LAUNCHER_SRC), \
       INCLUDE_FILES := main.c, \
       LANG := C, \
       OPTIMIZATION := $$($1_OPTIMIZATION_ARG), \
@@ -433,11 +444,25 @@ endif
 ##########################################################################################
 # The order of the object files on the link command line affects the size of the resulting
 # binary (at least on linux) which causes the size to differ between old and new build.
+
+ifeq ($(JIGSAW), true)
+  UNPACKEXE_SRC := $(JDK_TOPDIR)/src/share/native/common-unpack \
+      $(JDK_TOPDIR)/src/share/native/unpack200
+  UNPACKEXE_CFLAGS := -I$(JDK_TOPDIR)/src/share/native/common-unpack
+else
+  UNPACKEXE_SRC := $(JDK_TOPDIR)/src/share/native/com/sun/java/util/jar/pack
+  UNPACKEXE_EXFILES := jni.cpp
+endif
+
 ifeq ($(USE_EXTERNAL_LIBZ), true)
-  UNPACKEXE_CFLAGS := -DSYSTEM_ZLIB
+  UNPACKEXE_CFLAGS += -DSYSTEM_ZLIB
   UNPACKEXE_ZIPOBJS := -lz
 else
-  UNPACKEXE_CFLAGS := -I$(JDK_TOPDIR)/src/share/native/java/util/zip/zlib-1.2.5
+  ifeq ($(JIGSAW), true)
+    UNPACKEXE_CFLAGS += -I$(JDK_TOPDIR)/src/share/native/libzip/zlib-1.2.5
+  else
+    UNPACKEXE_CFLAGS += -I$(JDK_TOPDIR)/src/share/native/java/util/zip/zlib-1.2.5
+  endif
   UNPACKEXE_ZIPOBJS := $(JDK_OUTPUTDIR)/objs/libzip/zcrc32$(OBJ_SUFFIX) \
       $(JDK_OUTPUTDIR)/objs/libzip/deflate$(OBJ_SUFFIX) \
       $(JDK_OUTPUTDIR)/objs/libzip/trees$(OBJ_SUFFIX) \
@@ -474,8 +499,8 @@ ifeq ($(OPENJDK_TARGET_OS), windows)
   UNPACKEXE_DEBUG_SYMBOLS :=
 endif
 $(eval $(call SetupNativeCompilation,BUILD_UNPACKEXE, \
-    SRC := $(JDK_TOPDIR)/src/share/native/com/sun/java/util/jar/pack, \
-    EXCLUDE_FILES := jni.cpp, \
+    SRC := $(UNPACKEXE_SRC), \
+    EXCLUDE_FILES := $(UNPACKEXE_EXFILES), \
     LANG := $(UNPACKEXE_LANG), \
     OPTIMIZATION := LOW, \
     CFLAGS := $(UNPACKEXE_CFLAGS) $(CXXFLAGS_JDKEXE) \
@@ -557,9 +582,17 @@ ifeq ($(BUILD_JEXEC), 1)
 
   ifeq ($(OPENJDK_TARGET_OS), windows)
   else ifeq ($(OPENJDK_TARGET_OS), macosx)
+    ifeq ($(JIGSAW), true)
+      BUILD_JEXEC_SRC := $(JDK_TOPDIR)/src/macosx/native/launchers
+    else
     BUILD_JEXEC_SRC := $(JDK_TOPDIR)/src/macosx/bin
+    endif
+  else
+    ifeq ($(JIGSAW), true)
+      BUILD_JEXEC_SRC := $(JDK_TOPDIR)/src/solaris/native/launchers
   else
     BUILD_JEXEC_SRC := $(JDK_TOPDIR)/src/solaris/bin
+  endif
   endif
 
   ifeq ($(OPENJDK_TARGET_OS), linux)
@@ -624,7 +657,12 @@ endif
 ##########################################################################################
 
 BUILD_JSPAWNHELPER :=
+ifeq ($(JIGSAW), true)
+  BUILD_JSPAWNHELPER_SRC := $(JDK_TOPDIR)/src/solaris/native/jspawnhelper
+  JSPAWNHELPER_CFLAGS := -I$(JDK_TOPDIR)/src/solaris/native/libjava
+else
 BUILD_JSPAWNHELPER_SRC := $(JDK_TOPDIR)/src/solaris/native/java/lang
+endif
 BUILD_JSPAWNHELPER_DST_DIR := $(JDK_OUTPUTDIR)/lib$(OPENJDK_TARGET_CPU_LIBDIR)
 LINK_JSPAWNHELPER_OBJECTS := $(JDK_OUTPUTDIR)/objs/libjava/childproc.o
 LINK_JSPAWNHELPER_FLAGS :=
@@ -647,7 +685,7 @@ ifeq ($(BUILD_JSPAWNHELPER), 1)
       INCLUDE_FILES := jspawnhelper.c, \
       LANG := C, \
       OPTIMIZATION := LOW, \
-      CFLAGS := $(CFLAGS_JDKEXE), \
+      CFLAGS := $(CFLAGS_JDKEXE) $(JSPAWNHELPER_CFLAGS), \
       LDFLAGS := $(LDFLAGS_JDKEXE) $(LINK_JSPAWNHELPER_FLAGS), \
       LDFLAGS_SUFFIX := $(LINK_JSPAWNHELPER_OBJECTS), \
       OBJECT_DIR := $(JDK_OUTPUTDIR)/objs/jspawnhelper, \
@@ -661,7 +699,7 @@ endif
 
 ##########################################################################################
 # jabswitch
-
+# TODO JIGSAW
 ifndef OPENJDK
   ifeq ($(OPENJDK_TARGET_OS), windows)
 
@@ -682,7 +720,7 @@ ifndef OPENJDK
         RC_FLAGS := $(RC_FLAGS), \
         MANIFEST := $(JDK_TOPDIR)/src/closed/windows/native/sun/bridge/jabswitch.manifest))
 
-    BUILD_LAUNCHERS += $(BUILD_JABSWITCH)
+#    BUILD_LAUNCHERS += $(BUILD_JABSWITCH)
 
   endif
 endif
