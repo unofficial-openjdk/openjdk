@@ -441,7 +441,7 @@ endif
 define CacheFind
   $(if $(filter-out $(addsuffix %,- $(FIND_CACHE_DIR)),$1), \
     $(shell $(FIND) $1 -type f -o -type l), \
-    $(filter $(addsuffix %,$1),$(FIND_CACHE)))
+    $(filter $(addsuffix /%,$1) $1,$(FIND_CACHE)))
 endef
 
 ################################################################################

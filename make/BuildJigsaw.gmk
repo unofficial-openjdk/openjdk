@@ -83,11 +83,14 @@ hotspot:
 import-hotspot: hotspot
 	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f Import.gmk hotspot JIGSAW=true)
 
+jdk-libs: import-hotspot java-compile
+	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f CompileNativeLibraries.gmk JIGSAW=true)
+
 .PHONY: import-hotspot
 
 ################################################################################
 
-all: java-compile import-hotspot jdk-gendata jdk-genclasses
+all: java-compile import-hotspot jdk-gendata jdk-genclasses jdk-libs
 
 .PHONY: default all
 

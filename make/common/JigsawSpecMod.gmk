@@ -53,6 +53,8 @@ ifeq ($(JIGSAW), true)
   SUN_CHARSETS_SUBDIR := /sun.charsets
   SUN_LOCALEDATA_SUBDIR := /sun.localedata
 
+  LDFLAGS_JDKLIB := $(subst $(OUTPUT_ROOT),$(OUTPUT_ROOT)/jigsaw,$(LDFLAGS_JDKLIB))
+
 else
   MODULES_SUBDIR := classes
 endif

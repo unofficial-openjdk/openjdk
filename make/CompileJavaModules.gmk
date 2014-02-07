@@ -51,6 +51,16 @@ java.base_COPY := .icu .dat .spp
 
 java.base_EXCLUDE_FILES := sun/text/resources/BreakIteratorRules.java
 
+ifeq ($(OPENJDK_TARGET_OS), macosx)
+  JAVA_BASE_SOLARIS_DIR := $(JDK_TOPDIR)/src/solaris/modules/java.base
+  java.base_EXCLUDE_FILES := \
+      $(JAVA_BASE_SOLARIS_DIR)/sun/util/locale/provider/HostLocaleProviderAdapterImpl.java \
+      $(JAVA_BASE_SOLARIS_DIR)/java/net/DefaultInterface.java \
+      $(JAVA_BASE_SOLARIS_DIR)/java/lang/ClassLoaderHelper.java \
+      $(JAVA_BASE_SOLARIS_DIR)/sun/nio/ch/DefaultSelectorProvider.java \
+      #
+endif
+
 ################################################################################
 
 java.desktop_COPY := .gif .png .wav .txt .xml .css
@@ -95,6 +105,9 @@ java.desktop_EXCLUDE_FILES := \
 ifeq ($(OPENJDK_TARGET_OS), macosx)
   # exclude all X11 on Mac, we can't exclude some like below or we'll have compilation errors
   java.desktop_EXCLUDES += sun/awt/X11
+  java.desktop_EXCLUDE_FILES += \
+      $(JDK_TOPDIR)/src/solaris/modules/java.desktop/sun/java2d/BackBufferCapsProvider.java \
+      #
 else
   # TBD: figure out how to eliminate this long list
   java.desktop_EXCLUDE_FILES += \
@@ -186,6 +199,16 @@ jdk.devtools_COPY := .gif .xml .css .js javax.tools.JavaCompilerTool
 
 ################################################################################
 
+ifeq ($(OPENJDK_TARGET_OS), macosx)
+  jdk.sctp_EXCLUDE_FILES := \
+      $(JDK_TOPDIR)/src/solaris/modules/jdk.sctp/sun/nio/ch/sctp/SctpChannelImpl.java \
+      $(JDK_TOPDIR)/src/solaris/modules/jdk.sctp/sun/nio/ch/sctp/SctpMultiChannelImpl.java \
+      $(JDK_TOPDIR)/src/solaris/modules/jdk.sctp/sun/nio/ch/sctp/SctpServerChannelImpl.java \
+      #
+endif
+
+################################################################################
+
 jdk.tools_COPY := .gif .png .js .html .txt aliasmap _options messages.properties
 
 ################################################################################
@@ -215,6 +238,10 @@ ALL_SRC_DIRS := \
     $(LANGTOOLS_OUTPUTDIR)/gensrc \
     $(CORBA_OUTPUTDIR)/gensrc \
     $(JDK_OUTPUTDIR)/gensrc_no_srczip
+
+ifeq ($(OPENJDK_TARGET_OS), macosx)
+  ALL_SRC_DIRS += $(JDK_TOPDIR)/src/macosx/modules
+endif
 
 # Find all modules with java sources by looking in the source dirs
 JAVA_MODULES := $(sort $(notdir $(wildcard \
