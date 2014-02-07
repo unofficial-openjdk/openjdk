@@ -61,7 +61,7 @@ jdk-gendata: langtools-interim jdk-build-tools
 jdk-genclasses: langtools-interim corba-gensrc java-compile
 	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f GenerateClasses.gmk JIGSAW=true)
 
-.PHONY: jdk-build-tools jdk-gensrc
+.PHONY: jdk-build-tools jdk-gensrc jdk-gendata jdk-genclasses
 
 ################################################################################
 
@@ -89,11 +89,13 @@ jdk-libs: import-hotspot java-compile
 jdk-launchers: jdk-libs
 	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f CompileLaunchers.gmk JIGSAW=true)
 
-.PHONY: import-hotspot
+jdk: java-compile jdk-gendata jdk-genclasses jdk-libs jdk-launchers
+
+.PHONY: import-hotspot jdk-libs jdk-launchers jdk
 
 ################################################################################
 
-all: java-compile import-hotspot jdk-gendata jdk-genclasses jdk-libs jdk-launchers
+all: jdk
 
 .PHONY: default all
 
