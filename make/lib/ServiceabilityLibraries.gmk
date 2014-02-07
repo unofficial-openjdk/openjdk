@@ -250,21 +250,25 @@ JSDT_LIBRARIES += $(BUILD_LIBJSDT)
 ifeq ($(JIGSAW), true)
   LIBINSTRUMENT_SRC := $(JDK_TOPDIR)/src/share/native/libinstrument \
       $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/libinstrument \
-      $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/libjava/canonicalize_md.c \
       #
   LIBINSTRUMENT_CFLAGS := $(CFLAGS_JDKLIB) \
       $(addprefix -I, $(LIBINSTRUMENT_SRC)) \
       -I$(JDK_TOPDIR)/src/share/native/libjli \
       -I$(JDK_OUTPUTDIR)/gensrc_headers/java.instrument \
       #
+  LIBINSTRUMENT_SRC += \
+      $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/libjava/canonicalize_md.c \
+      #
 else
   LIBINSTRUMENT_SRC := $(JDK_TOPDIR)/src/share/instrument \
       $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/instrument \
-      $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/java/io/canonicalize_md.c \
       #
   LIBINSTRUMENT_CFLAGS := $(CFLAGS_JDKLIB) \
       $(addprefix -I, $(LIBINSTRUMENT_SRC)) \
       -I$(JDK_TOPDIR)/src/share/bin \
+      #
+  LIBINSTRUMENT_SRC += \
+      $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/java/io/canonicalize_md.c \
       #
 endif
 
