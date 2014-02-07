@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -272,9 +272,10 @@ public class Bytecodes {
   public static final int _fast_aldc            = 229;
   public static final int _fast_aldc_w          = 230;
   public static final int _return_register_finalizer = 231;
-  public static final int _shouldnotreachhere   = 232; // For debugging
+  public static final int _invokehandle         = 232;
+  public static final int _shouldnotreachhere   = 233; // For debugging
 
-  public static final int number_of_codes       = 233;
+  public static final int number_of_codes       = 234;
 
   // Flag bits derived from format strings, can_trap, can_rewrite, etc.:
   // semantic flags:
@@ -797,6 +798,9 @@ public class Bytecodes {
     def(_fast_binaryswitch   , "fast_binaryswitch"   , ""     , null    , BasicType.getTVoid()   , -1, false, _lookupswitch   );
 
     def(_return_register_finalizer, "return_register_finalizer", "b"    , null    , BasicType.getTVoid()   , 0, true, _return );
+
+    def(_invokehandle        , "invokehandle"        , "bJJ"  , null    , BasicType.getTIllegal(), -1, true, _invokevirtual   );
+
 
     def(_fast_aldc           , "fast_aldc"           , "bj"   , null    , BasicType.getTObject(),   1, true,  _ldc   );
     def(_fast_aldc_w         , "fast_aldc_w"         , "bJJ"  , null    , BasicType.getTObject(),   1, true,  _ldc_w );
