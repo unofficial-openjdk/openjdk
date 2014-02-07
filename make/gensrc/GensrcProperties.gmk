@@ -122,7 +122,7 @@ endef
 ifeq ($(OPENJDK_TARGET_OS), macosx)
   $(eval $(call add_properties_to_compile,COM_APPLE_LAF, \
       $(filter %.properties, \
-      $(call CacheFind, $(JDK_TOPDIR)/src/macosx/$(MODULES_SUBDIR)/com/apple/laf/resources)), \
+      $(call CacheFind, $(JDK_TOPDIR)/src/macosx/$(MODULES_SUBDIR)$(JAVA_DESKTOP_SUBDIR)/com/apple/laf/resources)), \
       ListResourceBundle))
 endif
 

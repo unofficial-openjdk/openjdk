@@ -45,7 +45,9 @@ endef
 
 SRC_ROOTS := \
     $(JDK_TOPDIR)/src/share/classes \
-    $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/classes \
+    $(JDK_TOPDIR)/src/macosx/classes \
+    $(JDK_TOPDIR)/src/solaris/classes \
+    $(JDK_TOPDIR)/src/windows/classes \
     $(JAXP_TOPDIR)/src \
     $(JAXWS_TOPDIR)/src/share/jaxws_classes \
     $(JAXWS_TOPDIR)/src/share/jaf_classes \
@@ -94,8 +96,13 @@ define CopyModule
   $(JDK_TOPDIR)/src/share/modules/$1/%: $(JDK_TOPDIR)/src/share/classes/%
 	$$(module-copy-file)
 
-  $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/modules/$1/%: \
-      $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/classes/%
+  $(JDK_TOPDIR)/src/macosx/modules/$1/%: $(JDK_TOPDIR)/src/macosx/classes/%
+	$$(module-copy-file)
+
+  $(JDK_TOPDIR)/src/solaris/modules/$1/%: $(JDK_TOPDIR)/src/solaris/classes/%
+	$$(module-copy-file)
+
+  $(JDK_TOPDIR)/src/windows/modules/$1/%: $(JDK_TOPDIR)/src/windows/classes/%
 	$$(module-copy-file)
 
   $(JAXP_TOPDIR)/src/share/modules/$1/%: $(JAXP_TOPDIR)/src/%
@@ -115,14 +122,15 @@ define CopyModule
 
   SRC_TARGET_FILES += \
       $$(patsubst $(JDK_TOPDIR)/src/share/classes/%,$(JDK_TOPDIR)/src/share/modules/$1/%, \
-      $$(patsubst $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/classes/%, \
-          $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/modules/$1/%, \
+      $$(patsubst $(JDK_TOPDIR)/src/macosx/classes/%, $(JDK_TOPDIR)/src/macosx/modules/$1/%, \
+      $$(patsubst $(JDK_TOPDIR)/src/solaris/classes/%, $(JDK_TOPDIR)/src/solaris/modules/$1/%, \
+      $$(patsubst $(JDK_TOPDIR)/src/windows/classes/%, $(JDK_TOPDIR)/src/windows/modules/$1/%, \
       $$(patsubst $(JAXP_TOPDIR)/src/%,$(JAXP_TOPDIR)/src/share/modules/$1/%,\
       $$(patsubst $(JAXWS_TOPDIR)/src/share/jaxws_classes/%,$(JAXWS_TOPDIR)/src/share/modules/$1/%,\
       $$(patsubst $(JAXWS_TOPDIR)/src/share/jaf_classes/%,$(JAXWS_TOPDIR)/src/share/modules/$1/%,\
       $$(patsubst $(CORBA_TOPDIR)/src/share/classes/%,$(CORBA_TOPDIR)/src/share/modules/$1/%,\
       $$(patsubst $(LANGTOOLS_TOPDIR)/src/share/classes/%,$(LANGTOOLS_TOPDIR)/src/share/modules/$1/%,\
-          $$($1_SRC_FILES))))))))
+          $$($1_SRC_FILES))))))))))
 endef
 
 # Find all modules that have classes and iterate over them
@@ -137,16 +145,15 @@ $(foreach m,$(MODULE_LIST),$(eval $(call CopyModule,$m)))
 # General copy file macros should probably be moved to make/common in the root.
 define AddFileToCopy
   # Helper macro for SetupCopyFiles
-  # 1 : Source root dir
-  # 2 : Dest root dir
-  # 3 : File path relative to source root
-  # 4 : Variable to add targets to
+  # 1 : Source file
+  # 2 : Dest file
+  # 3 : Variable to add targets to
 
-  $2/$3: $1/$3
+  $2: $1
 	$(ECHO) $(LOG_INFO) Copying $$(patsubst $(OUTPUT_ROOT)/%,%,$$@)
 	$$(module-copy-file)
 
-  $4 += $2/$3
+  $3 += $2
 endef
 
 define SetupCopyFiles
@@ -155,12 +162,14 @@ define SetupCopyFiles
   #   SRC   : Source root dir
   #   DEST  : Dest root dir
   #   FILES : List of files to copy with absolute paths, or path relative to SRC. Must be in SRC.
+  #   FLATTEN : Set to flatten the directory structure in the DEST dir.
   $(foreach i,2 3 4 5, $(if $($i),$1_$(strip $($i)))$(NEWLINE))
   $(call LogSetupMacroEntry,SetupCopyFiles($1),$2,$3,$4,$5)
   $(if $(6),$(error Internal makefile error: Too many arguments to SetupCopyFiles))
 
   $$(foreach f, $$(patsubst $$($1_SRC)/%,%,$$($1_FILES)), \
-      $$(eval $$(call AddFileToCopy,$$($1_SRC),$$($1_DEST),$$f,$1)))
+      $$(eval $$(call AddFileToCopy, $$($1_SRC)/$$f, \
+      $$($1_DEST)/$$(if $$($1_FLATTEN),$$(notdir $$f),$$f), $1,)))
 
 endef
 
@@ -192,7 +201,7 @@ $(eval $(call SetupCopyFiles,COPY_X11_WRAPPER_GENERATOR, \
     DEST := $(JDK_TOPDIR)/make/src/classes/build/tools/x11wrappergenerator, \
     FILES := $(JDK_TOPDIR)/src/solaris/classes/sun/awt/X11/generator/WrapperGenerator.java))
 
-# Copy WrapperGenerator data files
+# Copy WrapperGenerator data files to proper dir in make/data
 $(eval $(call SetupCopyFiles,COPY_X11_WRAPPER_DATA, \
     SRC := $(JDK_TOPDIR)/src/solaris/classes/sun/awt/X11/generator, \
     DEST := $(JDK_TOPDIR)/make/data/x11wrappergenerator, \
@@ -254,6 +263,12 @@ $(eval $(call SetupCopyFiles,COPY_SHARE_ICONS, \
     DEST := $(JDK_TOPDIR)/src/share/modules/java.desktop, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/share/classes/sun/awt/resources/*.png)))
 
+# Integrate to jdk9
+$(eval $(call SetupCopyFiles,COPY_MACOSX_ICONS, \
+    SRC := $(JDK_TOPDIR)/src/macosx/native/sun/osxapp/resource/icons, \
+    DEST := $(JDK_TOPDIR)/make/data/macosxicons, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/macosx/native/sun/osxapp/resource/icons/JavaApp.icns)))
+
 $(eval $(call SetupCopyFiles,COPY_CLDR, \
     SRC := $(JDK_TOPDIR)/src/share/classes, \
     DEST := $(JDK_TOPDIR)/src/share/modules/sun.localedata, \
@@ -274,6 +289,755 @@ $(eval $(call SetupCopyFiles,COPY_BREAK_ITERATOR_RULES, \
     DEST := $(JDK_TOPDIR)/src/share/modules/java.base, \
     FILES := $(JDK_TOPDIR)/src/share/classes/sun/text/resources/BreakIteratorRules.java))
 
+$(eval $(call SetupCopyFiles,COPY_APPLE_LAF, \
+    SRC := $(JDK_TOPDIR)/src/macosx/classes, \
+    DEST := $(JDK_TOPDIR)/src/macosx/modules/java.desktop, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/macosx/classes/com/apple/laf/resources/*.properties)))
+
+$(eval $(call SetupCopyFiles,COPY_AWT_RESOURCES_MACOSX, \
+    SRC := $(JDK_TOPDIR)/src/macosx/classes, \
+    DEST := $(JDK_TOPDIR)/src/macosx/modules/java.desktop, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/macosx/classes/sun/awt/resources/*.properties)))
+
+################################################################################
+
+# fdlibm
+$(eval $(call SetupCopyFiles,COPY_LIBFDLIBM, \
+    SRC := $(JDK_TOPDIR)/src/share/native, \
+    DEST := $(JDK_TOPDIR)/src/share/native/libfdlibm, \
+    FLATTEN := true, \
+    FILES := $(shell $(FIND) $(JDK_TOPDIR)/src/share/native/java/lang/fdlibm -type f)))
+
+# verify
+$(eval $(call SetupCopyFiles,COPY_LIBVERIFY, \
+    SRC := $(JDK_TOPDIR)/src/share/native/common, \
+    DEST := $(JDK_TOPDIR)/src/share/native/libverify, \
+    FILES := $(JDK_TOPDIR)/src/share/native/common/check_code.c \
+        $(JDK_TOPDIR)/src/share/native/common/check_format.c))
+
+# java
+$(eval $(call SetupCopyFiles,COPY_LIBJAVA_SOLARIS, \
+    SRC := $(JDK_TOPDIR)/src/solaris/native, \
+    DEST := $(JDK_TOPDIR)/src/solaris/native/libjava, \
+    FLATTEN := true, \
+    FILES := $(filter-out %jspawnhelper.c, \
+        $(shell $(FIND) $(JDK_TOPDIR)/src/solaris/native/java/lang \
+        $(JDK_TOPDIR)/src/solaris/native/java/io \
+        $(JDK_TOPDIR)/src/solaris/native/common \
+        $(JDK_TOPDIR)/src/solaris/native/java/util \
+        $(JDK_TOPDIR)/src/solaris/native/sun/util/locale/provider \
+        -type f))))
+
+$(eval $(call SetupCopyFiles,COPY_LIBJAVA_WINDOWS, \
+    SRC := $(JDK_TOPDIR)/src/windows/native, \
+    DEST := $(JDK_TOPDIR)/src/windows/native/libjava, \
+    FLATTEN := true, \
+    FILES := $(shell $(FIND) $(JDK_TOPDIR)/src/windows/native/java/lang \
+        $(JDK_TOPDIR)/src/windows/native/java/io \
+        $(JDK_TOPDIR)/src/windows/native/common \
+        $(JDK_TOPDIR)/src/windows/native/java/util \
+        $(JDK_TOPDIR)/src/windows/native/sun/security/provider \
+        $(JDK_TOPDIR)/src/windows/native/sun/util/locale/provider \
+        $(JDK_TOPDIR)/src/windows/native/sun/io \
+        -type f)))
+
+$(eval $(call SetupCopyFiles,COPY_LIBJAVA_MACOSX, \
+    SRC := $(JDK_TOPDIR)/src/macosx/native, \
+    DEST := $(JDK_TOPDIR)/src/macosx/native/libjava, \
+    FLATTEN := true, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/macosx/native/sun/util/locale/provider/*)))
+
+$(eval $(call SetupCopyFiles,COPY_LIBJAVA_SHARE, \
+    SRC := $(JDK_TOPDIR)/src/share/native, \
+    DEST := $(JDK_TOPDIR)/src/share/native/libjava, \
+    FLATTEN := true, \
+    FILES := $(shell $(FIND) $(JDK_TOPDIR)/src/share/native/java/lang \
+        $(JDK_TOPDIR)/src/share/native/java/io \
+        $(JDK_TOPDIR)/src/share/native/java/nio \
+        $(JDK_TOPDIR)/src/share/native/java/security \
+        $(JDK_TOPDIR)/src/share/native/common \
+        $(JDK_TOPDIR)/src/share/native/sun/misc \
+        $(JDK_TOPDIR)/src/share/native/sun/reflect \
+        $(JDK_TOPDIR)/src/share/native/java/util -type f \
+        | $(GREP) -v -e /zip/ -e /fdlibm/ -e /check_format -e /check_code)))
+
+# zip
+$(eval $(call SetupCopyFiles,COPY_LIBZIP, \
+    SRC := $(JDK_TOPDIR)/src/share/native/java/util/zip, \
+    DEST := $(JDK_TOPDIR)/src/share/native/libzip, \
+    FILES := $(shell $(FIND) $(JDK_TOPDIR)/src/share/native/java/util/zip -type f)))
+
+# unpack
+$(eval $(call SetupCopyFiles,COPY_LIBUNPACK, \
+    SRC := $(JDK_TOPDIR)/src/share/native/com/sun/java/util/jar/pack, \
+    DEST := $(JDK_TOPDIR)/src/share/native/libunpack, \
+    FILES := $(filter-out %main.cpp, $(wildcard \
+        $(JDK_TOPDIR)/src/share/native/com/sun/java/util/jar/pack/*))))
+
+# jli
+$(eval $(call SetupCopyFiles,COPY_LIBJLI_SHARE, \
+    SRC := $(JDK_TOPDIR)/src/share/bin, \
+    DEST := $(JDK_TOPDIR)/src/share/native/libjli, \
+    FILES := $(filter %java.c %java.h \
+        %splashscreen_stubs.c %splashscreen.h \
+        %parse_manifest.c %manifest_info.h \
+        %version_comp.c %version_comp.h \
+        %wildcard.c %wildcard.h \
+        %jli_util.c %jli_util.h \
+        %emessages.h, \
+        $(wildcard $(JDK_TOPDIR)/src/share/bin/*))))
+
+$(eval $(call SetupCopyFiles,COPY_LIBJLI_SOLARIS, \
+    SRC := $(JDK_TOPDIR)/src/solaris/bin, \
+    DEST := $(JDK_TOPDIR)/src/solaris/native/libjli, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/solaris/bin/java_md* \
+        $(JDK_TOPDIR)/src/solaris/bin/ergo*)))
+
+$(eval $(call SetupCopyFiles,COPY_LIBJLI_MACOSX, \
+    SRC := $(JDK_TOPDIR)/src/macosx/bin, \
+    DEST := $(JDK_TOPDIR)/src/macosx/native/libjli, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/macosx/bin/java_md*)))
+
+$(eval $(call SetupCopyFiles,COPY_LIBJLI_WINDOWS, \
+    SRC := $(JDK_TOPDIR)/src/windows/bin, \
+    DEST := $(JDK_TOPDIR)/src/windows/native/libjli, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/windows/bin/java_md.* \
+        $(JDK_TOPDIR)/src/windows/bin/cmdtoargs.c)))
+
+# npt
+$(eval $(call SetupCopyFiles,COPY_LIBNPT_SHARE, \
+    SRC := $(JDK_TOPDIR)/src/share/npt, \
+    DEST := $(JDK_TOPDIR)/src/share/native/libnpt, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/share/npt/*)))
+
+$(eval $(call SetupCopyFiles,COPY_LIBNPT_SOLARIS, \
+    SRC := $(JDK_TOPDIR)/src/solaris/npt, \
+    DEST := $(JDK_TOPDIR)/src/solaris/native/libnpt, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/solaris/npt/*)))
+
+$(eval $(call SetupCopyFiles,COPY_LIBNPT_WINDOWS, \
+    SRC := $(JDK_TOPDIR)/src/windows/npt, \
+    DEST := $(JDK_TOPDIR)/src/windows/native/libnpt, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/windows/npt/*)))
+
+# net
+$(eval $(call SetupCopyFiles,COPY_LIBNET_SHARE, \
+    SRC := $(JDK_TOPDIR)/src/share/native/java/net, \
+    DEST := $(JDK_TOPDIR)/src/share/native/libnet, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/share/native/java/net/*)))
+
+$(eval $(call SetupCopyFiles,COPY_LIBNET_SOLARIS, \
+    SRC := $(JDK_TOPDIR)/src/solaris/native, \
+    DEST := $(JDK_TOPDIR)/src/solaris/native/libnet, \
+    FLATTEN := true, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/solaris/native/java/net/* \
+        $(JDK_TOPDIR)/src/solaris/native/sun/net/*.c \
+        $(JDK_TOPDIR)/src/solaris/native/sun/net/dns/* \
+        $(JDK_TOPDIR)/src/solaris/native/sun/net/spi/* \
+        $(JDK_TOPDIR)/src/solaris/native/sun/net/sdp/*)))
+
+$(eval $(call SetupCopyFiles,COPY_LIBNET_WINDOWS, \
+    SRC := $(JDK_TOPDIR)/src/windows/native, \
+    DEST := $(JDK_TOPDIR)/src/windows/native/libnet, \
+    FLATTEN := true, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/windows/native/java/net/* \
+        $(JDK_TOPDIR)/src/windows/native/sun/net/*.c \
+        $(JDK_TOPDIR)/src/windows/native/sun/net/dns/* \
+        $(JDK_TOPDIR)/src/windows/native/sun/net/spi/* \
+        $(JDK_TOPDIR)/src/windows/native/sun/net/www/protocol/http/ntlm/*)))
+
+# nio
+$(eval $(call SetupCopyFiles,COPY_LIBNIO_SHARE, \
+    SRC := $(JDK_TOPDIR)/src/share/native, \
+    DEST := $(JDK_TOPDIR)/src/share/native/libnio, \
+    FLATTEN := true, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/share/native/sun/nio/ch/*.h)))
+
+$(eval $(call SetupCopyFiles,COPY_LIBNIO_SOLARIS, \
+    SRC := $(JDK_TOPDIR)/src/solaris/native, \
+    DEST := $(JDK_TOPDIR)/src/solaris/native/libnio, \
+    FLATTEN := true, \
+    FILES := $(shell $(FIND) $(JDK_TOPDIR)/src/solaris/native/sun/nio \
+        $(JDK_TOPDIR)/src/solaris/native/java/nio -type f \
+        | $(GREP) -v -e /sctp/ -e Constants.c)))
+
+$(eval $(call SetupCopyFiles,COPY_LIBNIO_WINDOWS, \
+    SRC := $(JDK_TOPDIR)/src/windows/native, \
+    DEST := $(JDK_TOPDIR)/src/windows/native/libnio, \
+    FLATTEN := true, \
+    FILES := $(shell $(FIND) $(JDK_TOPDIR)/src/windows/native/sun/nio \
+        $(JDK_TOPDIR)/src/windows/native/java/nio -type f)))
+
+# Move gen*Constants.c to make/src
+$(eval $(call SetupCopyFiles,COPY_LIBNIO_TOOLS, \
+    SRC := $(JDK_TOPDIR)/src/solaris/native/sun/nio/fs, \
+    DEST := $(JDK_TOPDIR)/make/src/native/genconstants, \
+    FLATTEN := true, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/solaris/native/sun/nio/fs/gen*Constants.c)))
+
+# sctp
+$(eval $(call SetupCopyFiles,COPY_LIBSCTP_SOLARIS, \
+    SRC := $(JDK_TOPDIR)/src/solaris/native/sun/nio/ch/sctp, \
+    DEST := $(JDK_TOPDIR)/src/solaris/native/libsctp, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/solaris/native/sun/nio/ch/sctp/*)))
+
+# jaas
+$(eval $(call SetupCopyFiles,COPY_LIBJAAS_SOLARIS, \
+    SRC := $(JDK_TOPDIR)/src/solaris/native/com/sun/security/auth/module, \
+    DEST := $(JDK_TOPDIR)/src/solaris/native/libjaas, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/solaris/native/com/sun/security/auth/module/*)))
+
+$(eval $(call SetupCopyFiles,COPY_LIBJAAS_WINDOWS, \
+    SRC := $(JDK_TOPDIR)/src/windows/native/com/sun/security/auth/module, \
+    DEST := $(JDK_TOPDIR)/src/windows/native/libjaas, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/windows/native/com/sun/security/auth/module/*)))
+
+# j2pcsc
+$(eval $(call SetupCopyFiles,COPY_LIBJ2PCSC_SHARE, \
+    SRC := $(JDK_TOPDIR)/src/share/native/sun/security/smartcardio, \
+    DEST := $(JDK_TOPDIR)/src/share/native/libj2pcsc, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/share/native/sun/security/smartcardio/*)))
+
+$(eval $(call SetupCopyFiles,COPY_LIBJ2PCSC_SOLARIS, \
+    SRC := $(JDK_TOPDIR)/src/solaris/native/sun/security/smartcardio, \
+    DEST := $(JDK_TOPDIR)/src/solaris/native/libj2pcsc, \
+    FILES := $(shell $(FIND) $(JDK_TOPDIR)/src/solaris/native/sun/security/smartcardio -type f)))
+
+$(eval $(call SetupCopyFiles,COPY_LIBJ2PCSC_WINDOWS, \
+    SRC := $(JDK_TOPDIR)/src/windows/native/sun/security/smartcardio, \
+    DEST := $(JDK_TOPDIR)/src/windows/native/libj2pcsc, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/windows/native/sun/security/smartcardio/*)))
+
+# gss
+$(eval $(call SetupCopyFiles,COPY_LIBJ2GSS_SHARE, \
+    SRC := $(JDK_TOPDIR)/src/share/native/sun/security/jgss/wrapper, \
+    DEST := $(JDK_TOPDIR)/src/share/native/libj2gss, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/share/native/sun/security/jgss/wrapper/*)))
+
+$(eval $(call SetupCopyFiles,COPY_LIBJ2GSS_SOLARIS, \
+    SRC := $(JDK_TOPDIR)/src/solaris/native/sun/security/jgss/wrapper, \
+    DEST := $(JDK_TOPDIR)/src/solaris/native/libj2gss, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/solaris/native/sun/security/jgss/wrapper/*)))
+
+# krb5
+$(eval $(call SetupCopyFiles,COPY_LIBKRB5_SHARE, \
+    SRC := $(JDK_TOPDIR)/src/share/native/sun/security/krb5, \
+    DEST := $(JDK_TOPDIR)/src/share/native/libkrb5, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/share/native/sun/security/krb5/*)))
+
+$(eval $(call SetupCopyFiles,COPY_LIBKRB5_WINDOWS, \
+    SRC := $(JDK_TOPDIR)/src/windows/native/sun/security/krb5, \
+    DEST := $(JDK_TOPDIR)/src/windows/native/libkrb5, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/windows/native/sun/security/krb5/*)))
+
+# sunmscapi
+$(eval $(call SetupCopyFiles,COPY_LIBSUNMSCAPI_WINDOWS, \
+    SRC := $(JDK_TOPDIR)/src/windows/native/sun/security/mscapi, \
+    DEST := $(JDK_TOPDIR)/src/windows/native/libsunmscapi, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/windows/native/sun/security/mscapi/*)))
+
+# j2pkcs11
+$(eval $(call SetupCopyFiles,COPY_LIBJ2PKCS11_SHARE, \
+    SRC := $(JDK_TOPDIR)/src/share/native/sun/security/pkcs11, \
+    DEST := $(JDK_TOPDIR)/src/share/native/libj2pkcs11, \
+    FLATTEN := true, \
+    FILES := $(shell $(FIND) $(JDK_TOPDIR)/src/share/native/sun/security/pkcs11 -type f)))
+
+$(eval $(call SetupCopyFiles,COPY_LIBJ2PKCS11_SOLARIS, \
+    SRC := $(JDK_TOPDIR)/src/solaris/native/sun/security/pkcs11, \
+    DEST := $(JDK_TOPDIR)/src/solaris/native/libj2pkcs11, \
+    FLATTEN := true, \
+    FILES := $(shell $(FIND) $(JDK_TOPDIR)/src/solaris/native/sun/security/pkcs11 -type f)))
+
+$(eval $(call SetupCopyFiles,COPY_LIBJ2PKCS11_WINDOWS, \
+    SRC := $(JDK_TOPDIR)/src/windows/native/sun/security/pkcs11, \
+    DEST := $(JDK_TOPDIR)/src/windows/native/libj2pkcs11, \
+    FLATTEN := true, \
+    FILES := $(shell $(FIND) $(JDK_TOPDIR)/src/windows/native/sun/security/pkcs11 -type f)))
+
+# sunec
+$(eval $(call SetupCopyFiles,COPY_LIBSUNEC_SHARE, \
+    SRC := $(JDK_TOPDIR)/src/share/native/sun/security/ec, \
+    DEST := $(JDK_TOPDIR)/src/share/native/libsunec, \
+    FILES := $(shell $(FIND) $(JDK_TOPDIR)/src/share/native/sun/security/ec -type f)))
+
+# attach
+$(eval $(call SetupCopyFiles,COPY_LIBATTACH_SOLARIS, \
+    SRC := $(JDK_TOPDIR)/src/solaris/native/sun/tools/attach, \
+    DEST := $(JDK_TOPDIR)/src/solaris/native/libattach, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/solaris/native/sun/tools/attach/*)))
+
+$(eval $(call SetupCopyFiles,COPY_LIBATTACH_WINDOWS, \
+    SRC := $(JDK_TOPDIR)/src/windows/native/sun/tools/attach, \
+    DEST := $(JDK_TOPDIR)/src/windows/native/libattach, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/windows/native/sun/tools/attach/*)))
+
+# dt_socket
+$(eval $(call SetupCopyFiles,COPY_LIBDT_SOCKET_SHARE, \
+    SRC := $(JDK_TOPDIR)/src/share/transport/socket, \
+    DEST := $(JDK_TOPDIR)/src/share/native/libdt_socket, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/share/transport/socket/*)))
+
+$(eval $(call SetupCopyFiles,COPY_LIBDT_SOCKET_SOLARIS, \
+    SRC := $(JDK_TOPDIR)/src/solaris/transport/socket, \
+    DEST := $(JDK_TOPDIR)/src/solaris/native/libdt_socket, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/solaris/transport/socket/*)))
+
+$(eval $(call SetupCopyFiles,COPY_LIBDT_SOCKET_WINDOWS, \
+    SRC := $(JDK_TOPDIR)/src/windows/transport/socket, \
+    DEST := $(JDK_TOPDIR)/src/windows/native/libdt_socket, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/windows/transport/socket/*)))
+
+# libdt_shmem
+$(eval $(call SetupCopyFiles,COPY_LIBDT_SHMEM_SHARE_JDI, \
+    SRC := $(JDK_TOPDIR)/src/share/native/com/sun/tools/jdi, \
+    DEST := $(JDK_TOPDIR)/src/share/native/libdt_shmem, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/share/native/com/sun/tools/jdi/*)))
+
+$(eval $(call SetupCopyFiles,COPY_LIBDT_SHMEM_SHARE, \
+    SRC := $(JDK_TOPDIR)/src/share/transport/shmem, \
+    DEST := $(JDK_TOPDIR)/src/share/native/libdt_shmem, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/share/transport/shmem/*)))
+
+$(eval $(call SetupCopyFiles,COPY_LIBDT_SHMEM_WINDOWS, \
+    SRC := $(JDK_TOPDIR)/src/windows/transport/shmem, \
+    DEST := $(JDK_TOPDIR)/src/windows/native/libdt_shmem, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/windows/transport/shmem/*)))
+
+# jdwp
+$(eval $(call SetupCopyFiles,COPY_LIBJDWP_SHARE, \
+    SRC := $(JDK_TOPDIR)/src/share/back, \
+    DEST := $(JDK_TOPDIR)/src/share/native/libjdwp, \
+    FILES := $(shell $(FIND) $(JDK_TOPDIR)/src/share/back -type f)))
+
+$(eval $(call SetupCopyFiles,COPY_LIBJDWP_SOLARIS, \
+    SRC := $(JDK_TOPDIR)/src/solaris/back, \
+    DEST := $(JDK_TOPDIR)/src/solaris/native/libjdwp, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/solaris/back/*)))
+
+$(eval $(call SetupCopyFiles,COPY_LIBJDWP_WINDOWS, \
+    SRC := $(JDK_TOPDIR)/src/windows/back, \
+    DEST := $(JDK_TOPDIR)/src/windows/native/libjdwp, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/windows/back/*)))
+
+# jsdt
+$(eval $(call SetupCopyFiles,COPY_LIBJSDT_SHARE, \
+    SRC := $(JDK_TOPDIR)/src/share/native/sun/tracing/dtrace, \
+    DEST := $(JDK_TOPDIR)/src/share/native/libjsdt, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/share/native/sun/tracing/dtrace/*)))
+
+$(eval $(call SetupCopyFiles,COPY_LIBJSDT_SOLARIS, \
+    SRC := $(JDK_TOPDIR)/src/solaris/native/sun/tracing/dtrace, \
+    DEST := $(JDK_TOPDIR)/src/solaris/native/libjsdt, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/solaris/native/sun/tracing/dtrace/*)))
+
+$(eval $(call SetupCopyFiles,COPY_LIBJSDT_WINDOWS, \
+    SRC := $(JDK_TOPDIR)/src/windows/native/sun/tracing/dtrace, \
+    DEST := $(JDK_TOPDIR)/src/windows/native/libjsdt, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/windows/native/sun/tracing/dtrace/*)))
+
+# instrument
+$(eval $(call SetupCopyFiles,COPY_LIBINSTRUMENT_SHARE, \
+    SRC := $(JDK_TOPDIR)/src/share/instrument, \
+    DEST := $(JDK_TOPDIR)/src/share/native/libinstrument, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/share/instrument/*)))
+
+$(eval $(call SetupCopyFiles,COPY_LIBINSTRUMENT_SOLARIS, \
+    SRC := $(JDK_TOPDIR)/src/solaris/instrument, \
+    DEST := $(JDK_TOPDIR)/src/solaris/native/libinstrument, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/solaris/instrument/*)))
+
+$(eval $(call SetupCopyFiles,COPY_LIBINSTRUMENT_WINDOWS, \
+    SRC := $(JDK_TOPDIR)/src/windows/instrument, \
+    DEST := $(JDK_TOPDIR)/src/windows/native/libinstrument, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/windows/instrument/*)))
+
+# management
+$(eval $(call SetupCopyFiles,COPY_LIBMANAGEMENT_SHARE, \
+    SRC := $(JDK_TOPDIR)/src/share/native/sun/management, \
+    DEST := $(JDK_TOPDIR)/src/share/native/libmanagement, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/share/native/sun/management/*)))
+
+$(eval $(call SetupCopyFiles,COPY_LIBMANAGEMENT_SOLARIS, \
+    SRC := $(JDK_TOPDIR)/src/solaris/native/sun/management, \
+    DEST := $(JDK_TOPDIR)/src/solaris/native/libmanagement, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/solaris/native/sun/management/*)))
+
+$(eval $(call SetupCopyFiles,COPY_LIBMANAGEMENT_WINDOWS, \
+    SRC := $(JDK_TOPDIR)/src/windows/native/sun/management, \
+    DEST := $(JDK_TOPDIR)/src/windows/native/libmanagement, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/windows/native/sun/management/*)))
+
+# hprof
+# only copy native code that goes into library, leave the demo
+# meta data in place.
+$(eval $(call SetupCopyFiles,COPY_LIBHPROF_SHARE, \
+    SRC := $(JDK_TOPDIR)/src/share/demo/jvmti/hprof, \
+    DEST := $(JDK_TOPDIR)/src/share/native/libhprof, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/share/demo/jvmti/hprof/*.c \
+        $(JDK_TOPDIR)/src/share/demo/jvmti/hprof/*.h)))
+
+$(eval $(call SetupCopyFiles,COPY_LIBHPROF_SOLARIS, \
+    SRC := $(JDK_TOPDIR)/src/solaris/demo/jvmti/hprof, \
+    DEST := $(JDK_TOPDIR)/src/solaris/native/libhprof, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/solaris/demo/jvmti/hprof/*.c \
+        $(JDK_TOPDIR)/src/solaris/demo/jvmti/hprof/*.h)))
+
+$(eval $(call SetupCopyFiles,COPY_LIBHPROF_WINDOWS, \
+    SRC := $(JDK_TOPDIR)/src/windows/demo/jvmti/hprof, \
+    DEST := $(JDK_TOPDIR)/src/windows/native/libhprof, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/windows/demo/jvmti/hprof/*.c \
+        $(JDK_TOPDIR)/src/windows/demo/jvmti/hprof/*.h)))
+
+# java_crw_demo
+$(eval $(call SetupCopyFiles,COPY_LIBJAVA_CRW_DEMO_SHARE, \
+    SRC := $(JDK_TOPDIR)/src/share/demo/jvmti/java_crw_demo, \
+    DEST := $(JDK_TOPDIR)/src/share/native/libjava_crw_demo, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/share/demo/jvmti/java_crw_demo/*.c \
+        $(JDK_TOPDIR)/src/share/demo/jvmti/java_crw_demo/*.h)))
+
+# mlib_image/mlib_image_v
+$(eval $(call SetupCopyFiles,COPY_LIBMLIB_IMAGE_SHARE, \
+    SRC := $(JDK_TOPDIR)/src/share/native/sun/awt/medialib, \
+    DEST := $(JDK_TOPDIR)/src/share/native/libmlib_image, \
+    FILES := $(filter-out \
+        %awt_ImagingLib.c \
+        %mlib_c_ImageBlendTable.c \
+        %mlib_ImageCopy_Bit.c \
+        %mlib_ImageCreate.c \
+        %mlib_sys.c \
+        ,$(wildcard $(JDK_TOPDIR)/src/share/native/sun/awt/medialib/*))))
+
+$(eval $(call SetupCopyFiles,COPY_LIBMLIB_IMAGE_SOLARIS, \
+    SRC := $(JDK_TOPDIR)/src/solaris/native/sun/awt/medialib, \
+    DEST := $(JDK_TOPDIR)/src/solaris/native/libmlib_image, \
+    FILES := $(filter-out %mlib_v_ImageChannelExtract.c \
+        %mlib_v_ImageChannelExtract_f.c \
+        %mlib_v_ImageChannelInsert_34.c \
+        %mlib_v_ImageChannelInsert.c \
+        %mlib_v_ImageConvIndex3_8_16nw.c \
+        %mlib_v_ImageConvIndex3_8_8nw.c \
+        %mlib_v_ImageCopy.c \
+        %mlib_v_ImageCopy_f.c \
+        %mlib_v_ImageCopy_f.h \
+        %mlib_v_ImageCopy_blk.s \
+        %vis_asi.h \
+        $vis_proto.h \
+        ,$(wildcard $(JDK_TOPDIR)/src/solaris/native/sun/awt/medialib/*))))
+
+# awt
+$(eval $(call SetupCopyFiles,COPY_LIBAWT_SHARE, \
+    SRC := $(JDK_TOPDIR)/src/share/native, \
+    DEST := $(JDK_TOPDIR)/src/share/native/libawt, \
+    FILES := $(filter-out \
+        %GLXSurfaceData.c \
+        %GLXGraphicsConfig.c \
+        , $(wildcard \
+        $(JDK_TOPDIR)/src/share/native/sun/awt/image/*.c \
+        $(JDK_TOPDIR)/src/share/native/sun/awt/image/*.h \
+        $(JDK_TOPDIR)/src/share/native/sun/awt/image/gif/* \
+        $(JDK_TOPDIR)/src/share/native/sun/awt/image/cvutils/* \
+        $(JDK_TOPDIR)/src/share/native/sun/awt/medialib/awt_ImagingLib.* \
+        $(JDK_TOPDIR)/src/share/native/sun/java2d/*.c \
+        $(JDK_TOPDIR)/src/share/native/sun/java2d/*.h \
+        $(JDK_TOPDIR)/src/share/native/sun/java2d/loops/* \
+        $(JDK_TOPDIR)/src/share/native/sun/java2d/pipe/*))))
+
+$(eval $(call SetupCopyFiles,COPY_LIBAWT_SOLARIS, \
+    SRC := $(JDK_TOPDIR)/src/solaris/native, \
+    DEST := $(JDK_TOPDIR)/src/solaris/native/libawt, \
+    FILES := $(wildcard \
+        $(JDK_TOPDIR)/src/solaris/native/sun/java2d/*.c \
+        $(JDK_TOPDIR)/src/solaris/native/sun/java2d/*.h \
+        $(JDK_TOPDIR)/src/solaris/native/sun/awt/awt_LoadLibrary.c \
+        $(JDK_TOPDIR)/src/solaris/native/sun/awt/awt_Mlib.c \
+        $(JDK_TOPDIR)/src/solaris/native/sun/awt/medialib/mlib_v_ImageCopy_blk.s \
+        $(JDK_TOPDIR)/src/solaris/native/sun/awt/medialib/mlib_v_ImageCopy.c \
+        $(JDK_TOPDIR)/src/solaris/native/sun/awt/medialib/vis_asi.h \
+        $(JDK_TOPDIR)/src/solaris/native/sun/awt/medialib/vis_proto.h \
+        $(JDK_TOPDIR)/src/solaris/native/sun/java2d/loops/* \
+        )))
+
+$(eval $(call SetupCopyFiles,COPY_LIBAWT_WINDOWS, \
+    SRC := $(JDK_TOPDIR)/src/windows/native, \
+    DEST := $(JDK_TOPDIR)/src/windows/native/libawt, \
+    FILES := $(filter-out \
+        %jawt.cpp \
+        ,$(wildcard \
+        $(JDK_TOPDIR)/src/windows/native/sun/java2d/*.c \
+        $(JDK_TOPDIR)/src/windows/native/sun/java2d/*.h \
+        $(JDK_TOPDIR)/src/windows/native/sun/java2d/opengl/*.c \
+        $(JDK_TOPDIR)/src/windows/native/sun/java2d/opengl/*.h \
+        $(JDK_TOPDIR)/src/windows/native/sun/windows/* \
+        $(JDK_TOPDIR)/src/windows/native/sun/java2d/windows/* \
+        $(JDK_TOPDIR)/src/windows/native/sun/java2d/d3d/*))))
+
+# awt-common
+$(eval $(call SetupCopyFiles,COPY_AWT_COMMON_SHARE, \
+    SRC := $(JDK_TOPDIR)/src/share/native, \
+    DEST := $(JDK_TOPDIR)/src/share/native/awt-common, \
+    FILES := $(wildcard \
+        $(JDK_TOPDIR)/src/share/native/sun/awt/debug/* \
+        $(JDK_TOPDIR)/src/share/native/sun/awt/utility/* \
+        $(JDK_TOPDIR)/src/share/native/sun/java2d/opengl/*.c \
+        $(JDK_TOPDIR)/src/share/native/sun/java2d/opengl/*.h \
+        $(JDK_TOPDIR)/src/share/native/sun/java2d/opengl/J2D_GL/* \
+        $(JDK_TOPDIR)/src/share/native/sun/font/AccelGlyphCache.* \
+        $(JDK_TOPDIR)/src/share/native/sun/font/fontscalerdefs.h \
+        $(JDK_TOPDIR)/src/share/native/sun/font/sunfontids.h \
+        $(JDK_TOPDIR)/src/share/native/sun/awt/medialib/mlib_ImageCopy_Bit.c \
+        $(JDK_TOPDIR)/src/share/native/sun/awt/medialib/mlib_ImageCreate.c \
+        $(JDK_TOPDIR)/src/share/native/sun/awt/medialib/mlib_sys.c \
+        )))
+
+$(eval $(call SetupCopyFiles,COPY_AWT_COMMON_SOLARIS, \
+    SRC := $(JDK_TOPDIR)/src/solaris/native, \
+    DEST := $(JDK_TOPDIR)/src/solaris/native/awt-common, \
+    FILES := $(wildcard \
+        $(JDK_TOPDIR)/src/solaris/native/sun/awt/utility/*.h \
+        $(JDK_TOPDIR)/src/solaris/native/sun/awt/initIDs.c \
+        $(JDK_TOPDIR)/src/solaris/native/sun/awt/colordata.h \
+        $(JDK_TOPDIR)/src/solaris/native/sun/awt/img_util_md.h \
+        $(JDK_TOPDIR)/src/solaris/native/sun/awt/color.h \
+        $(JDK_TOPDIR)/src/solaris/native/sun/awt/awt.h \
+        $(JDK_TOPDIR)/src/solaris/native/sun/awt/awt_Mlib.h \
+        $(JDK_TOPDIR)/src/solaris/native/sun/awt/awt_DrawingSurface.h \
+        $(JDK_TOPDIR)/src/solaris/native/sun/awt/awt_Plugin.h \
+        $(JDK_TOPDIR)/src/solaris/native/sun/awt/awt_Font.* \
+        $(JDK_TOPDIR)/src/solaris/native/sun/awt/awt_util.h \
+        $(JDK_TOPDIR)/src/solaris/native/sun/awt/awt_GraphicsEnv.h \
+        $(JDK_TOPDIR)/src/solaris/native/sun/awt/awt_Component.h \
+        $(JDK_TOPDIR)/src/solaris/native/sun/awt/fontpath.c \
+        $(JDK_TOPDIR)/src/solaris/native/sun/awt/fontconfig.h \
+        $(JDK_TOPDIR)/src/solaris/native/sun/awt/CUPSfuncs.c \
+        $(JDK_TOPDIR)/src/solaris/native/sun/awt/X11Color.c \
+        $(JDK_TOPDIR)/src/solaris/native/sun/awt/awt_p.h \
+        $(JDK_TOPDIR)/src/solaris/native/sun/java2d/opengl/*.c \
+        $(JDK_TOPDIR)/src/solaris/native/sun/java2d/opengl/*.h \
+        $(JDK_TOPDIR)/src/solaris/native/sun/java2d/opengl/J2D_GL/* \
+        $(JDK_TOPDIR)/src/solaris/native/sun/java2d/x11/X11* \
+        $(JDK_TOPDIR)/src/solaris/native/sun/font/X11FontScaler.h \
+        $(JDK_TOPDIR)/src/solaris/native/sun/awt/medialib/mlib_v_ImageCopy_f.* \
+        )))
+
+$(eval $(call SetupCopyFiles,COPY_AWT_COMMON_WINDOWS, \
+    SRC := $(JDK_TOPDIR)/src/windows/native, \
+    DEST := $(JDK_TOPDIR)/src/windows/native/awt-common, \
+    FILES := $(wildcard \
+        $(JDK_TOPDIR)/src/windows/native/sun/awt/utility/*.h \
+        $(JDK_TOPDIR)/src/windows/native/sun/java2d/opengl/*.c \
+        $(JDK_TOPDIR)/src/windows/native/sun/java2d/opengl/*.h \
+        $(JDK_TOPDIR)/src/windows/native/sun/java2d/opengl/J2D_GL/* \
+        $(JDK_TOPDIR)/src/windows/native/sun/awt/colordata.h \
+        $(JDK_TOPDIR)/src/windows/native/sun/awt/img_util_md.h \
+        $(JDK_TOPDIR)/src/windows/native/sun/awt/awt.h \
+        )))
+
+# awt_xawt
+$(eval $(call SetupCopyFiles,COPY_LIBAWT_XAWT_SOLARIS, \
+    SRC := $(JDK_TOPDIR)/src/solaris/native, \
+    DEST := $(JDK_TOPDIR)/src/solaris/native/libawt_xawt, \
+    FILES := $(wildcard \
+        $(JDK_TOPDIR)/src/solaris/native/sun/java2d/x11/XR* \
+        $(JDK_TOPDIR)/src/solaris/native/sun/xawt/* \
+        $(JDK_TOPDIR)/src/solaris/native/sun/awt/awt_AWTEvent.* \
+        $(JDK_TOPDIR)/src/solaris/native/sun/awt/awt_DrawingSurface.c \
+        $(JDK_TOPDIR)/src/solaris/native/sun/awt/awt_Event.* \
+        $(JDK_TOPDIR)/src/solaris/native/sun/awt/awt_GraphicsEnv.c \
+        $(JDK_TOPDIR)/src/solaris/native/sun/awt/awt_InputMethod.c \
+        $(JDK_TOPDIR)/src/solaris/native/sun/awt/awt_Insets.* \
+        $(JDK_TOPDIR)/src/solaris/native/sun/awt/awt_Plugin.c \
+        $(JDK_TOPDIR)/src/solaris/native/sun/awt/awt_Robot.c \
+        $(JDK_TOPDIR)/src/solaris/native/sun/awt/awt_UNIXToolkit.c \
+        $(JDK_TOPDIR)/src/solaris/native/sun/awt/awt_util.c \
+        $(JDK_TOPDIR)/src/solaris/native/sun/awt/gtk2_interface.* \
+        $(JDK_TOPDIR)/src/solaris/native/sun/awt/list.* \
+        $(JDK_TOPDIR)/src/solaris/native/sun/awt/multiVis.* \
+        $(JDK_TOPDIR)/src/solaris/native/sun/awt/multi_font.* \
+        $(JDK_TOPDIR)/src/solaris/native/sun/awt/robot_common.* \
+        $(JDK_TOPDIR)/src/solaris/native/sun/awt/sun_awt_X11_GtkFileDialogPeer.c \
+        $(JDK_TOPDIR)/src/solaris/native/sun/awt/swing_GTKEngine.c \
+        $(JDK_TOPDIR)/src/solaris/native/sun/awt/swing_GTKStyle.c \
+        $(JDK_TOPDIR)/src/solaris/native/sun/awt/wsutils.h \
+        $(JDK_TOPDIR)/src/solaris/native/sun/awt/Xrandr.h \
+        $(JDK_TOPDIR)/src/solaris/native/sun/awt/randr.h \
+        $(JDK_TOPDIR)/src/solaris/native/sun/awt/HPkeysym.h \
+        $(JDK_TOPDIR)/src/solaris/native/sun/awt/awt_MenuComponent.h \
+        $(JDK_TOPDIR)/src/solaris/native/sun/awt/canvas.h \
+        )))
+
+# fontmanager
+$(eval $(call SetupCopyFiles,COPY_LIBFONTMANAGER_SHARE, \
+    SRC := $(JDK_TOPDIR)/src/share/native/sun/font, \
+    DEST := $(JDK_TOPDIR)/src/share/native/libfontmanager, \
+    FILES := $(filter-out \
+        %AccelGlyphCache.c \
+        %AccelGlyphCache.h \
+        %fontscalerdefs.h \
+        %sunfontids.h, \
+        $(wildcard \
+        $(JDK_TOPDIR)/src/share/native/sun/font/*.c \
+        $(JDK_TOPDIR)/src/share/native/sun/font/*.h \
+        $(JDK_TOPDIR)/src/share/native/sun/font/layout/* \
+        ))))
+
+$(eval $(call SetupCopyFiles,COPY_LIBFONTMANAGER_SOLARIS, \
+    SRC := $(JDK_TOPDIR)/src/solaris/native/sun/font, \
+    DEST := $(JDK_TOPDIR)/src/solaris/native/libfontmanager, \
+    FILES := $(filter-out \
+        %X11FontScaler.h, \
+        $(wildcard \
+        $(JDK_TOPDIR)/src/solaris/native/sun/font/*.c \
+        $(JDK_TOPDIR)/src/solaris/native/sun/font/*.h \
+        ))))
+
+$(eval $(call SetupCopyFiles,COPY_LIBFONTMANAGER_WINDOWS, \
+    SRC := $(JDK_TOPDIR)/src/windows/native/sun/font, \
+    DEST := $(JDK_TOPDIR)/src/windows/native/libfontmanager, \
+    FILES := $(filter-out %AccelGlyphCache.c %AccelGlyphCache.h, \
+        $(wildcard \
+        $(JDK_TOPDIR)/src/windows/native/sun/font/*.c \
+        $(JDK_TOPDIR)/src/windows/native/sun/font/*.h \
+        ))))
+
+# sunwjdga
+$(eval $(call SetupCopyFiles,COPY_LIBSUNWJDGA_SOLARIS, \
+    SRC := $(JDK_TOPDIR)/src/solaris/native/sun/jdga, \
+    DEST := $(JDK_TOPDIR)/src/solaris/native/libsunwjdga, \
+    FILES := $(wildcard \
+        $(JDK_TOPDIR)/src/solaris/native/sun/jdga/*)))
+
+# lcms
+$(eval $(call SetupCopyFiles,COPY_LIBLCMS_SHARE, \
+    SRC := $(JDK_TOPDIR)/src/share/native/sun/java2d/cmm/lcms, \
+    DEST := $(JDK_TOPDIR)/src/share/native/liblcms, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/share/native/sun/java2d/cmm/lcms/*)))
+
+# jpeg
+$(eval $(call SetupCopyFiles,COPY_LIBJPEG_SHARE, \
+    SRC := $(JDK_TOPDIR)/src/share/native/sun/awt/image/jpeg, \
+    DEST := $(JDK_TOPDIR)/src/share/native/libjpeg, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/share/native/sun/awt/image/jpeg/*)))
+
+# jawt
+$(eval $(call SetupCopyFiles,COPY_LIBJAWT_SOLARIS, \
+    SRC := $(JDK_TOPDIR)/src/solaris/native/sun/awt, \
+    DEST := $(JDK_TOPDIR)/src/solaris/native/libjawt, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/solaris/native/sun/awt/jawt.c)))
+
+$(eval $(call SetupCopyFiles,COPY_LIBJAWT_WINDOWS, \
+    SRC := $(JDK_TOPDIR)/src/windows/native/sun/windows, \
+    DEST := $(JDK_TOPDIR)/src/windows/native/libjawt, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/windows/native/sun/windows/jawt.cpp)))
+
+$(eval $(call SetupCopyFiles,COPY_LIBJAWT_MACOSX, \
+    SRC := $(JDK_TOPDIR)/src/macosx/native/sun/awt, \
+    DEST := $(JDK_TOPDIR)/src/macosx/native/libjawt, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/macosx/native/sun/awt/jawt.m)))
+
+# awt_headless
+$(eval $(call SetupCopyFiles,COPY_LIBAWT_HEADLESS_SOLARIS, \
+    SRC := $(JDK_TOPDIR)/src/solaris/native, \
+    DEST := $(JDK_TOPDIR)/src/solaris/native/libawt_headless, \
+    FILES := $(wildcard \
+        $(JDK_TOPDIR)/src/solaris/native/sun/awt/HeadlessToolkit.c \
+        $(JDK_TOPDIR)/src/solaris/native/sun/awt/VDrawingArea.c \
+        )))
+
+# splashscreen
+$(eval $(call SetupCopyFiles,COPY_LIBSPLASHSCREEN_SHARE, \
+    SRC := $(JDK_TOPDIR)/src/share/native/sun/awt/splashscreen, \
+    DEST := $(JDK_TOPDIR)/src/share/native/libsplashscreen, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/share/native/sun/awt/splashscreen/*)))
+
+$(eval $(call SetupCopyFiles,COPY_LIBSPLASHSCREEN_PNG_GIF_SHARE, \
+    SRC := $(JDK_TOPDIR)/src/share/native/sun/awt, \
+    DEST := $(JDK_TOPDIR)/src/share/native/libsplashscreen, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/share/native/sun/awt/libpng/* \
+        $(JDK_TOPDIR)/src/share/native/sun/awt/giflib/* )))
+
+$(eval $(call SetupCopyFiles,COPY_LIBSPLASHSCREEN_SOLARIS, \
+    SRC := $(JDK_TOPDIR)/src/solaris/native/sun/awt/splashscreen, \
+    DEST := $(JDK_TOPDIR)/src/solaris/native/libsplashscreen, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/solaris/native/sun/awt/splashscreen/*)))
+
+$(eval $(call SetupCopyFiles,COPY_LIBSPLASHSCREEN_WINDOWS, \
+    SRC := $(JDK_TOPDIR)/src/windows/native/sun/awt/splashscreen, \
+    DEST := $(JDK_TOPDIR)/src/windows/native/libsplashscreen, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/windows/native/sun/awt/splashscreen/*)))
+
+$(eval $(call SetupCopyFiles,COPY_LIBSPLASHSCREEN_MACOSX, \
+    SRC := $(JDK_TOPDIR)/src/macosx/native/sun/awt/splashscreen, \
+    DEST := $(JDK_TOPDIR)/src/macosx/native/libsplashscreen, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/macosx/native/sun/awt/splashscreen/*)))
+
+# osxui
+$(eval $(call SetupCopyFiles,COPY_LIBOSXUI_MACOSX, \
+    SRC := $(JDK_TOPDIR)/src/macosx/native/com/apple/laf, \
+    DEST := $(JDK_TOPDIR)/src/macosx/native/libosxui, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/macosx/native/com/apple/laf/*)))
+
+# osxapp
+$(eval $(call SetupCopyFiles,COPY_LIBOSXAPP_MACOSX, \
+    SRC := $(JDK_TOPDIR)/src/macosx/native/sun/osxapp, \
+    DEST := $(JDK_TOPDIR)/src/macosx/native/libosxapp, \
+    FILES := $(wildcard \
+        $(JDK_TOPDIR)/src/macosx/native/sun/osxapp/*.m \
+        $(JDK_TOPDIR)/src/macosx/native/sun/osxapp/*.h \
+        )))
+
+# osx
+$(eval $(call SetupCopyFiles,COPY_LIBOSX_MACOSX, \
+    SRC := $(JDK_TOPDIR)/src/macosx/native, \
+    DEST := $(JDK_TOPDIR)/src/macosx/native/libosx, \
+    FLATTEN := true, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/macosx/native/com/apple/concurrent/* \
+        $(JDK_TOPDIR)/src/macosx/native/java/util/* \
+        $(JDK_TOPDIR)/src/macosx/native/com/apple/eio/* \
+        $(JDK_TOPDIR)/src/macosx/native/apple/security/* \
+        $(JDK_TOPDIR)/src/macosx/native/apple/launcher/*)))
+
+# applescriptengine
+$(eval $(call SetupCopyFiles,COPY_LIBAPPLESCRIPTENGINE_MACOSX, \
+    SRC := $(JDK_TOPDIR)/src/macosx/native/apple/applescript, \
+    DEST := $(JDK_TOPDIR)/src/macosx/native/libapplescriptengine, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/macosx/native/apple/applescript/*)))
+
+# awt_lwawt
+$(eval $(call SetupCopyFiles,COPY_LIBAWT_LWAWT_MACOSX, \
+    SRC := $(JDK_TOPDIR)/src/macosx/native, \
+    DEST := $(JDK_TOPDIR)/src/macosx/native/libawt_lwawt, \
+    FILES := $(filter-out %jawt.m \
+        ,$(wildcard \
+        $(JDK_TOPDIR)/src/macosx/native/sun/awt/*.m \
+        $(JDK_TOPDIR)/src/macosx/native/sun/awt/*.h \
+        $(JDK_TOPDIR)/src/macosx/native/sun/font/* \
+        $(JDK_TOPDIR)/src/macosx/native/sun/java2d/opengl/*.m \
+        $(JDK_TOPDIR)/src/macosx/native/sun/java2d/opengl/*.h \
+        $(JDK_TOPDIR)/src/macosx/native/sun/java2d/opengl/J2D_GL/* \
+        ))))
+
+# jsound
+$(eval $(call SetupCopyFiles,COPY_LIBJSOUND_SHARE, \
+    SRC := $(JDK_TOPDIR)/src/share/native/com/sun/media/sound, \
+    DEST := $(JDK_TOPDIR)/src/share/native/libjsound, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/share/native/com/sun/media/sound/*)))
+
+$(eval $(call SetupCopyFiles,COPY_LIBJSOUND_SOLARIS, \
+    SRC := $(JDK_TOPDIR)/src/solaris/native/com/sun/media/sound, \
+    DEST := $(JDK_TOPDIR)/src/solaris/native/libjsound, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/solaris/native/com/sun/media/sound/*)))
+
+$(eval $(call SetupCopyFiles,COPY_LIBJSOUND_WINDOWS, \
+    SRC := $(JDK_TOPDIR)/src/windows/native/com/sun/media/sound, \
+    DEST := $(JDK_TOPDIR)/src/windows/native/libjsound, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/windows/native/com/sun/media/sound/*)))
+
+$(eval $(call SetupCopyFiles,COPY_LIBJSOUND_MACOSX, \
+    SRC := $(JDK_TOPDIR)/src/macosx/native/com/sun/media/sound, \
+    DEST := $(JDK_TOPDIR)/src/macosx/native/libjsound, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/macosx/native/com/sun/media/sound/*)))
+
 ################################################################################
 
 shuffle-src: \
@@ -293,10 +1057,107 @@ shuffle-src: \
     $(COPY_NIO_EXCEPTIONS) \
     $(COPY_SOLARIS_ICONS) \
     $(COPY_SHARE_ICONS) \
+    $(COPY_MACOSX_ICONS) \
     $(COPY_CLDR) \
     $(COPY_SWING_LAF) \
     $(COPY_SERIAL_VER) \
-    $(COPY_BREAK_ITERATOR_RULES)
+    $(COPY_BREAK_ITERATOR_RULES) \
+    $(COPY_APPLE_LAF) \
+    $(COPY_AWT_RESOURCES_MACOSX) \
+    $(COPY_LIBFDLIBM) \
+    $(COPY_LIBVERIFY) \
+    $(COPY_LIBJAVA_SOLARIS) \
+    $(COPY_LIBJAVA_WINDOWS) \
+    $(COPY_LIBJAVA_MACOSX) \
+    $(COPY_LIBJAVA_SHARE) \
+    $(COPY_LIBZIP) \
+    $(COPY_LIBUNPACK) \
+    $(COPY_LIBJLI_SHARE) \
+    $(COPY_LIBJLI_SOLARIS) \
+    $(COPY_LIBJLI_MACOSX) \
+    $(COPY_LIBJLI_WINDOWS) \
+    $(COPY_LIBNPT_SHARE) \
+    $(COPY_LIBNPT_SOLARIS) \
+    $(COPY_LIBNPT_WINDOWS) \
+    $(COPY_LIBNET_SHARE) \
+    $(COPY_LIBNET_SOLARIS) \
+    $(COPY_LIBNET_WINDOWS) \
+    $(COPY_LIBNIO_SHARE) \
+    $(COPY_LIBNIO_SOLARIS) \
+    $(COPY_LIBNIO_WINDOWS) \
+    $(COPY_LIBNIO_TOOLS) \
+    $(COPY_LIBSCTP_SOLARIS) \
+    $(COPY_LIBJAAS_SOLARIS) \
+    $(COPY_LIBJAAS_WINDOWS) \
+    $(COPY_LIBJ2PCSC_SHARE) \
+    $(COPY_LIBJ2PCSC_SOLARIS) \
+    $(COPY_LIBJ2PCSC_WINDOWS) \
+    $(COPY_LIBJ2GSS_SHARE) \
+    $(COPY_LIBJ2GSS_SOLARIS) \
+    $(COPY_LIBKRB5_SHARE) \
+    $(COPY_LIBKRB5_WINDOWS) \
+    $(COPY_LIBSUNMSCAPI_WINDOWS) \
+    $(COPY_LIBJ2PKCS11_SHARE) \
+    $(COPY_LIBJ2PKCS11_SOLARIS) \
+    $(COPY_LIBJ2PKCS11_WINDOWS) \
+    $(COPY_LIBSUNEC_SHARE) \
+    $(COPY_LIBATTACH_SOLARIS) \
+    $(COPY_LIBATTACH_WINDOWS) \
+    $(COPY_LIBDT_SOCKET_SHARE) \
+    $(COPY_LIBDT_SOCKET_SOLARIS) \
+    $(COPY_LIBDT_SOCKET_WINDOWS) \
+    $(COPY_LIBDT_SHMEM_SHARE_JDI) \
+    $(COPY_LIBDT_SHMEM_SHARE) \
+    $(COPY_LIBDT_SHMEM_WINDOWS) \
+    $(COPY_LIBJDWP_SHARE) \
+    $(COPY_LIBJDWP_SOLARIS) \
+    $(COPY_LIBJDWP_WINDOWS) \
+    $(COPY_LIBJSDT_SHARE) \
+    $(COPY_LIBJSDT_SOLARIS) \
+    $(COPY_LIBJSDT_WINDOWS) \
+    $(COPY_LIBINSTRUMENT_SHARE) \
+    $(COPY_LIBINSTRUMENT_SOLARIS) \
+    $(COPY_LIBINSTRUMENT_WINDOWS) \
+    $(COPY_LIBMANAGEMENT_SHARE) \
+    $(COPY_LIBMANAGEMENT_SOLARIS) \
+    $(COPY_LIBMANAGEMENT_WINDOWS) \
+    $(COPY_LIBHPROF_SHARE) \
+    $(COPY_LIBHPROF_SOLARIS) \
+    $(COPY_LIBHPROF_WINDOWS) \
+    $(COPY_LIBJAVA_CRW_DEMO_SHARE) \
+    $(COPY_LIBMLIB_IMAGE_SHARE) \
+    $(COPY_LIBMLIB_IMAGE_SOLARIS) \
+    $(COPY_LIBAWT_SHARE) \
+    $(COPY_LIBAWT_SOLARIS) \
+    $(COPY_LIBAWT_WINDOWS) \
+    $(COPY_AWT_COMMON_SHARE) \
+    $(COPY_AWT_COMMON_SOLARIS) \
+    $(COPY_AWT_COMMON_WINDOWS) \
+    $(COPY_LIBAWT_XAWT_SOLARIS) \
+    $(COPY_LIBFONTMANAGER_SHARE) \
+    $(COPY_LIBFONTMANAGER_SOLARIS) \
+    $(COPY_LIBFONTMANAGER_WINDOWS) \
+    $(COPY_LIBSUNWJDGA_SOLARIS) \
+    $(COPY_LIBLCMS_SHARE) \
+    $(COPY_LIBJPEG_SHARE) \
+    $(COPY_LIBJAWT_SOLARIS) \
+    $(COPY_LIBJAWT_WINDOWS) \
+    $(COPY_LIBJAWT_MACOSX) \
+    $(COPY_LIBAWT_HEADLESS_SOLARIS) \
+    $(COPY_LIBSPLASHSCREEN_SHARE) \
+    $(COPY_LIBSPLASHSCREEN_SOLARIS) \
+    $(COPY_LIBSPLASHSCREEN_WINDOWS) \
+    $(COPY_LIBSPLASHSCREEN_MACOSX) \
+    $(COPY_LIBSPLASHSCREEN_PNG_GIF_SHARE) \
+    $(COPY_LIBOSXUI_MACOSX) \
+    $(COPY_LIBOSXAPP_MACOSX) \
+    $(COPY_LIBOSX_MACOSX) \
+    $(COPY_LIBAPPLESCRIPTENGINE_MACOSX) \
+    $(COPY_LIBAWT_LWAWT_MACOSX) \
+    $(COPY_LIBJSOUND_SHARE) \
+    $(COPY_LIBJSOUND_SOLARIS) \
+    $(COPY_LIBJSOUND_WINDOWS) \
+    $(COPY_LIBJSOUND_MACOSX) \
 
 shuffle-build: $(BUILD_TARGET_FILES)
 
@@ -306,7 +1167,9 @@ clean: clean-src clean-build
 
 clean-src:
 	$(RM) -r $(JDK_TOPDIR)/src/share/modules
-	$(RM) -r $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/modules
+	$(RM) -r $(JDK_TOPDIR)/src/macosx/modules
+	$(RM) -r $(JDK_TOPDIR)/src/solaris/modules
+	$(RM) -r $(JDK_TOPDIR)/src/windows/modules
 	$(RM) -r $(JAXP_TOPDIR)/src/share/modules
 	$(RM) -r $(JAXWS_TOPDIR)/src/share/modules
 	$(RM) -r $(CORBA_TOPDIR)/src/share/modules
@@ -314,6 +1177,9 @@ clean-src:
 	$(RM) -r $(CORBA_TOPDIR)/make/tools/src/com
 	$(RM) -r $(JDK_TOPDIR)/make/src/classes/build/tools/x11wrappergenerator
 	$(RM) -r $(JDK_TOPDIR)/make/data/x11wrappergenerator
+	$(RM) -r $(JDK_TOPDIR)/src/*/native/lib*
+	$(RM) -r $(JDK_TOPDIR)/src/*/native/awt-common
+	$(RM) -r $(JDK_TOPDIR)/make/src/native/genconstants
 
 clean-build:
 	$(RM) -r $(JDK_OUTPUTDIR)/modules

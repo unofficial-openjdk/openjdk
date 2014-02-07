@@ -23,6 +23,12 @@
 # questions.
 #
 
+ifeq ($(JIGSAW), true)
+  LIBJAAS_SRC := $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/libjaas
+else
+  LIBJAAS_SRC := $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/com/sun/security/auth/module
+endif
+
 LIBJAAS_MAPFILE :=
 ifneq ($(OPENJDK_TARGET_OS), solaris)
   LIBJAAS_EXCLUDE_FILES := Solaris.c
@@ -39,10 +45,10 @@ endif
 $(eval $(call SetupNativeCompilation,BUILD_LIBJAAS, \
     LIBRARY := $(LIBJAAS_NAME), \
     OUTPUT_DIR := $(INSTALL_LIBRARIES_HERE), \
-    SRC := $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/com/sun/security/auth/module, \
+    SRC := $(LIBJAAS_SRC), \
     LANG := C, \
     OPTIMIZATION := LOW, \
-    CFLAGS := $(CFLAGS_JDKLIB), \
+    CFLAGS := $(CFLAGS_JDKLIB) -I$(JDK_OUTPUTDIR)/gensrc_headers/javax.auth, \
     MAPFILE := $(LIBJAAS_MAPFILE), \
     LDFLAGS := $(filter-out -ljava, $(LDFLAGS_JDKLIB)) \
         $(call SET_SHARED_LIBRARY_ORIGIN), \
@@ -64,18 +70,27 @@ SECURITY_AUTH_LIBRARIES += $(BUILD_LIBJAAS)
 
 ##########################################################################################
 
+ifeq ($(JIGSAW), true)
+  LIBJ2PCSC_SRC := $(JDK_TOPDIR)/src/share/native/libj2pcsc \
+      $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/libj2pcsc
+  LIBJ2PCSC_CPPFLAGS := $(addprefix -I,$(LIBJ2PCSC_SRC)) \
+      -I$(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/libj2pcsc/MUSCLE \
+      -I$(JDK_OUTPUTDIR)/gensrc_headers/javax.smartcardio
+else
+  LIBJ2PCSC_SRC := $(JDK_TOPDIR)/src/share/native/sun/security/smartcardio \
+      $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/sun/security/smartcardio
+  LIBJ2PCSC_CPPFLAGS := $(addprefix -I,$(LIBJ2PCSC_SRC)) \
+      -I$(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/sun/security/smartcardio/MUSCLE
+endif
+
 $(eval $(call SetupNativeCompilation,BUILD_LIBJ2PCSC, \
     LIBRARY := j2pcsc, \
     OUTPUT_DIR := $(INSTALL_LIBRARIES_HERE), \
-    SRC := $(JDK_TOPDIR)/src/share/native/sun/security/smartcardio \
-        $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/sun/security/smartcardio, \
+    SRC := $(LIBJ2PCSC_SRC), \
     LANG := C, \
     CFLAGS_posix := -D__sun_jdk, \
     OPTIMIZATION := LOW, \
-    CFLAGS := $(CFLAGS_JDKLIB) \
-        -I$(JDK_TOPDIR)/src/share/native/sun/security/smartcardio \
-        -I$(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/sun/security/smartcardio \
-        -I$(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/sun/security/smartcardio/MUSCLE, \
+    CFLAGS := $(CFLAGS_JDKLIB) $(LIBJ2PCSC_CPPFLAGS), \
     MAPFILE := $(JDK_TOPDIR)/make/mapfiles/libj2pcsc/mapfile-vers, \
     LDFLAGS := $(LDFLAGS_JDKLIB) \
         $(call SET_SHARED_LIBRARY_ORIGIN), \
@@ -95,16 +110,23 @@ SECURITY_SMARTCARDIO_LIBRARIES += $(BUILD_LIBJ2PCSC)
 ##########################################################################################
 
 ifneq ($(OPENJDK_TARGET_OS), windows)
+
+  ifeq ($(JIGSAW), true)
+    LIBJ2GSS_SRC := $(JDK_TOPDIR)/src/share/native/libj2gss \
+        $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/libj2gss
+  else
+    LIBJ2GSS_SRC := $(JDK_TOPDIR)/src/share/native/sun/security/jgss/wrapper \
+        $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/sun/security/jgss/wrapper
+  endif
+
   $(eval $(call SetupNativeCompilation,BUILD_LIBJ2GSS, \
       LIBRARY := j2gss, \
       OUTPUT_DIR := $(INSTALL_LIBRARIES_HERE), \
-      SRC := $(JDK_TOPDIR)/src/share/native/sun/security/jgss/wrapper \
-          $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/sun/security/jgss/wrapper, \
+      SRC := $(LIBJ2GSS_SRC), \
       LANG := C, \
       OPTIMIZATION := LOW, \
-      CFLAGS := $(CFLAGS_JDKLIB) \
-          -I$(JDK_TOPDIR)/src/share/native/sun/security/jgss/wrapper \
-          -I$(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/sun/security/jgss/wrapper, \
+      CFLAGS := $(CFLAGS_JDKLIB) $(addprefix -I,$(LIBJ2GSS_SRC)) \
+          -I$(JDK_OUTPUTDIR)/gensrc_headers/javax.auth, \
       MAPFILE := $(JDK_TOPDIR)/make/mapfiles/libj2gss/mapfile-vers, \
       LDFLAGS := $(LDFLAGS_JDKLIB) \
           $(call SET_SHARED_LIBRARY_ORIGIN), \
@@ -141,7 +163,8 @@ ifneq ($(BUILD_CRYPTO), no)
         OPTIMIZATION := LOW, \
         CFLAGS := $(CFLAGS_JDKLIB) \
             -I$(JDK_TOPDIR)/src/share/native/sun/security/krb5 \
-            -I$(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/sun/security/krb5, \
+            -I$(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/sun/security/krb5 \
+            -I$(JDK_OUTPUTDIR)/gensrc_headers/javax.auth, \
         LDFLAGS := $(LDFLAGS_JDKLIB) \
             $(call SET_SHARED_LIBRARY_ORIGIN), \
         LDFLAGS_SUFFIX := $(BUILD_LIBKRB5_LIBS), \
@@ -161,14 +184,20 @@ endif
 
 ifeq ($(OPENJDK_TARGET_OS), windows)
 
+  ifeq ($(JIGSAW), true)
+    LIBSUNMSCAPI_SRC := $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/libsunmscapi
+  else
+    LIBSUNMSCAPI_SRC := $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/sun/security/mscapi
+  endif
+
   $(eval $(call SetupNativeCompilation,BUILD_LIBSUNMSCAPI, \
       LIBRARY := sunmscapi, \
       OUTPUT_DIR := $(INSTALL_LIBRARIES_HERE), \
-      SRC := $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/sun/security/mscapi, \
+      SRC := $(LIBSUNMSCAPI_SRC), \
       LANG := C++, \
       OPTIMIZATION := LOW, \
       CFLAGS := $(CFLAGS_JDKLIB) \
-          -I$(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/sun/security/mscapi, \
+          -I$(LIBSUNMSCAPI_SRC), \
       LDFLAGS := $(LDFLAGS_JDKLIB) $(LDFLAGS_CXX_JDK) \
           $(call SET_SHARED_LIBRARY_ORIGIN), \
       LDFLAGS_SUFFIX := Crypt32.Lib advapi32.lib, \
@@ -185,20 +214,24 @@ endif
 
 ##########################################################################################
 
+ifeq ($(JIGSAW), true)
+  LIBJ2PKCS11_SRC := $(JDK_TOPDIR)/src/share/native/libj2pkcs11 \
+      $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/libj2pkcs11
+else
+  LIBJ2PKCS11_SRC := $(JDK_TOPDIR)/src/share/native/sun/security/pkcs11 \
+      $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/sun/security/pkcs11 \
+      $(JDK_TOPDIR)/src/share/native/sun/security/pkcs11/wrapper \
+      $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/sun/security/pkcs11/wrapper
+endif
+
 $(eval $(call SetupNativeCompilation,BUILD_LIBJ2PKCS11, \
     LIBRARY := j2pkcs11, \
     OUTPUT_DIR := $(INSTALL_LIBRARIES_HERE), \
-    SRC := $(JDK_TOPDIR)/src/share/native/sun/security/pkcs11 \
-        $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/sun/security/pkcs11 \
-        $(JDK_TOPDIR)/src/share/native/sun/security/pkcs11/wrapper \
-        $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/sun/security/pkcs11/wrapper, \
+    SRC := $(LIBJ2PKCS11_SRC), \
     LANG := C, \
     OPTIMIZATION := LOW, \
-    CFLAGS := $(CFLAGS_JDKLIB) \
-        -I$(JDK_TOPDIR)/src/share/native/sun/security/pkcs11 \
-        -I$(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/sun/security/pkcs11 \
-        -I$(JDK_TOPDIR)/src/share/native/sun/security/pkcs11/wrapper \
-        -I$(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/sun/security/pkcs11/wrapper, \
+    CFLAGS := $(CFLAGS_JDKLIB) $(addprefix -I,$(LIBJ2PKCS11_SRC)) \
+        -I$(JDK_OUTPUTDIR)/gensrc_headers/jdk.crypto.pkcs11, \
     MAPFILE := $(JDK_TOPDIR)/make/mapfiles/libj2pkcs11/mapfile-vers, \
     LDFLAGS := $(LDFLAGS_JDKLIB) \
         $(call SET_SHARED_LIBRARY_ORIGIN), \
@@ -218,8 +251,13 @@ SECURITY_PKCS11_LIBRARIES += $(BUILD_LIBJ2PKCS11)
 
 ifeq ($(ENABLE_INTREE_EC), yes)
 
-  BUILD_LIBSUNEC_FLAGS := -I$(JDK_TOPDIR)/src/share/native/sun/security/ec \
-      -I$(JDK_TOPDIR)/src/share/native/sun/security/ec/impl
+  ifeq ($(JIGSAW), true)
+    LIBSUNEC_SRC := $(JDK_TOPDIR)/src/share/native/libsunec
+  else
+    LIBSUNEC_SRC := $(JDK_TOPDIR)/src/share/native/sun/security/ec
+  endif
+
+  BUILD_LIBSUNEC_FLAGS := $(addprefix -I, $(SUNEC_SRC))
 
   #
   # On sol-sparc...all libraries are compiled with -xregs=no%appl
@@ -235,8 +273,7 @@ ifeq ($(ENABLE_INTREE_EC), yes)
   $(eval $(call SetupNativeCompilation,BUILD_LIBSUNEC, \
       LIBRARY := sunec, \
       OUTPUT_DIR := $(INSTALL_LIBRARIES_HERE), \
-      SRC := $(JDK_TOPDIR)/src/share/native/sun/security/ec \
-          $(JDK_TOPDIR)/src/share/native/sun/security/ec/impl, \
+      SRC := $(LIBSUNEC_SRC), \
       LANG := C++, \
       OPTIMIZATION := LOW, \
       CFLAGS := $(filter-out $(ECC_JNI_SOLSPARC_FILTER), $(CFLAGS_JDKLIB)) \
@@ -265,6 +302,12 @@ endif
 
 ifeq ($(OPENJDK_TARGET_OS), solaris)
   ifndef OPENJDK
+
+    ifeq ($(JIGSAW), true)
+      LIBJ2UCRYPTO_SRC := $(JDK_TOPDIR)/src/closed/solaris/native/libj2ucrypto
+    else
+      LIBJ2UCRYPTO_SRC := $(JDK_TOPDIR)/src/closed/solaris/native/com/oracle/security/ucrypto
+    endif
 
     $(eval $(call SetupNativeCompilation,BUILD_LIBJ2UCRYPTO, \
         LIBRARY := j2ucrypto, \

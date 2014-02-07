@@ -25,14 +25,21 @@
 
 ifeq ($(OPENJDK_TARGET_OS), macosx)
 
+  ifeq ($(JIGSAW), true)
+    LIBAPPLESCRIPTENGINE_SRC := $(JDK_TOPDIR)/src/macosx/native/libapplescriptengine
+  else
+    LIBAPPLESCRIPTENGINE_SRC := $(JDK_TOPDIR)/src/macosx/native/apple/applescript
+  endif
+
   $(eval $(call SetupNativeCompilation,BUILD_LIBAPPLESCRIPTENGINE, \
       LIBRARY := AppleScriptEngine, \
       OUTPUT_DIR := $(INSTALL_LIBRARIES_HERE), \
-      SRC := $(JDK_TOPDIR)/src/macosx/native/apple/applescript, \
+      SRC := $(LIBAPPLESCRIPTENGINE_SRC), \
       LANG := C, \
       OPTIMIZATION := LOW, \
       CFLAGS := $(CFLAGS_JDKLIB) \
-          -I$(JDK_TOPDIR)/src/macosx/native/apple/applescript \
+          -I$(LIBAPPLESCRIPTENGINE_SRC) \
+          -I$(JDK_OUTPUTDIR)/gensrc_headers/jdk.deploy \
           -F/System/Library/Frameworks/JavaVM.framework/Frameworks \
           -F/System/Library/Frameworks/ApplicationServices.framework/Frameworks, \
       LDFLAGS := $(LDFLAGS_JDKLIB) \
@@ -55,15 +62,21 @@ endif
 
 ifeq ($(OPENJDK_TARGET_OS), macosx)
 
+  ifeq ($(JIGSAW), true)
+    LIBOSXAPP_SRC := $(JDK_TOPDIR)/src/macosx/native/libosxapp
+  else
+    LIBOSXAPP_SRC := $(JDK_TOPDIR)/src/macosx/native/sun/osxapp
+  endif
+
   $(eval $(call SetupNativeCompilation,BUILD_LIBOSXAPP, \
       LIBRARY := osxapp, \
       OUTPUT_DIR := $(INSTALL_LIBRARIES_HERE), \
-      SRC := $(JDK_TOPDIR)/src/macosx/native/sun/osxapp, \
+      SRC := $(LIBOSXAPP_SRC), \
       LANG := C, \
       OPTIMIZATION := LOW, \
       CFLAGS := $(CFLAGS_JDKLIB) \
           -I$(JDK_TOPDIR)/src/macosx/native/sun/osxapp \
-          -I$(JDK_OUTPUTDIR)/gensrc/sun/osxapp \
+          -I$(JDK_OUTPUTDIR)/gensrc_icon_headers \
           -F/System/Library/Frameworks/JavaVM.framework/Frameworks \
           -F/System/Library/Frameworks/ApplicationServices.framework/Frameworks, \
       LDFLAGS := $(LDFLAGS_JDKLIB) \
@@ -93,12 +106,27 @@ endif
 
 ifeq ($(OPENJDK_TARGET_OS), macosx)
 
-  LIBOSX_DIRS := \
+  ifeq ($(JIGSAW), true)
+    # TODO JIGSAW: Why is libosx dependant on java.desktop?
+    LIBOSX_DIRS := $(JDK_TOPDIR)/src/macosx/native/libosx
+    LIBOSX_CFLAGS := -I$(LIBOSX_DIRS) \
+        -I$(JDK_TOPDIR)/src/macosx/native/libosxapp \
+        -I$(JDK_OUTPUTDIR)/gensrc_headers/java.desktop \
+        -I$(JDK_OUTPUTDIR)/gensrc_headers/jdk.deploy \
+        #
+  else
+    LIBOSX_DIRS := \
       $(JDK_TOPDIR)/src/macosx/native/com/apple/concurrent \
       $(JDK_TOPDIR)/src/macosx/native/java/util \
       $(JDK_TOPDIR)/src/macosx/native/com/apple/eio \
       $(JDK_TOPDIR)/src/macosx/native/apple/security \
-      $(JDK_TOPDIR)/src/macosx/native/apple/launcher
+        $(JDK_TOPDIR)/src/macosx/native/apple/launcher \
+        #
+    LIBOSX_CFLAGS := \
+        $(addprefix -I, $(LIBOSX_DIRS)) \
+        -I$(JDK_TOPDIR)/src/macosx/native/sun/osxapp \
+        #
+  endif
 
   $(eval $(call SetupNativeCompilation,BUILD_LIBOSX, \
       LIBRARY := osx, \
@@ -107,8 +135,7 @@ ifeq ($(OPENJDK_TARGET_OS), macosx)
       LANG := C, \
       OPTIMIZATION := LOW, \
       CFLAGS := $(CFLAGS_JDKLIB) \
-          $(foreach dir, $(LIBOSX_DIRS), -I$(dir)) \
-          -I$(JDK_TOPDIR)/src/macosx/native/sun/osxapp \
+          $(LIBOSX_CFLAGS) \
           -F/System/Library/Frameworks/JavaVM.framework/Frameworks \
           -F/System/Library/Frameworks/ApplicationServices.framework/Frameworks, \
       LDFLAGS := $(LDFLAGS_JDKLIB) \
