@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -2495,6 +2495,13 @@ void java_lang_invoke_MemberName::set_flags(oop mname, int flags) {
 oop java_lang_invoke_MemberName::vmtarget(oop mname) {
   assert(is_instance(mname), "wrong type");
   return mname->obj_field(_vmtarget_offset);
+}
+
+// Can be executed on VM thread only
+void java_lang_invoke_MemberName::adjust_vmtarget(oop mname, oop ref) {
+  assert((is_instance(mname) && (flags(mname) & (MN_IS_METHOD | MN_IS_CONSTRUCTOR)) > 0), "wrong type");
+  assert(Thread::current()->is_VM_thread(), "not VM thread");
+  mname->address_field_put(_vmtarget_offset, (address)ref);
 }
 
 void java_lang_invoke_MemberName::set_vmtarget(oop mname, oop ref) {

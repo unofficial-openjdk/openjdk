@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -988,6 +988,7 @@ class java_lang_invoke_MemberName: AllStatic {
 
   static oop            vmtarget(oop mname);
   static void       set_vmtarget(oop mname, oop target);
+  static void       adjust_vmtarget(oop mname, oop target);
 
   static intptr_t       vmindex(oop mname);
   static void       set_vmindex(oop mname, intptr_t index);

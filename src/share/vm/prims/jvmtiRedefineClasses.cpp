@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,6 +35,7 @@
 #include "prims/jvmtiImpl.hpp"
 #include "prims/jvmtiRedefineClasses.hpp"
 #include "prims/methodComparator.hpp"
+#include "prims/methodHandles.hpp"
 #include "runtime/deoptimization.hpp"
 #include "runtime/relocator.hpp"
 #include "utilities/bitMap.inline.hpp"
@@ -3293,6 +3294,16 @@ void VM_RedefineClasses::redefine_single_class(jclass the_jclass,
   // Adjust constantpool caches and vtables for all classes
   // that reference methods of the evolved class.
   SystemDictionary::classes_do(adjust_cpool_cache_and_vtable, THREAD);
+
+  // JSR-292 support
+  MemberNameTable* mnt = the_class->member_names();
+  if (mnt != NULL) {
+    bool trace_name_printed = false;
+    mnt->adjust_method_entries(_matching_old_methods,
+                               _matching_new_methods,
+                               _matching_methods_length,
+                               &trace_name_printed);
+  }
 
   if (the_class->oop_map_cache() != NULL) {
     // Flush references to any obsolete methods from the oop map cache
