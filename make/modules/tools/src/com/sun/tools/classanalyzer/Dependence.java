@@ -92,11 +92,15 @@ public class Dependence implements Comparable<Dependence> {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append("requires");
-        for (Dependence.Identifier id : identifiers) {
-            sb.append(" ").append(id.name().toLowerCase());
+        if (identifiers.contains(Identifier.SERVICE)) {
+            sb.append("uses").append(" ").append(name).append(";");
+        } else {
+            sb.append("requires");
+            for (Dependence.Identifier id : identifiers) {
+                sb.append(" ").append(id.name().toLowerCase());
+            }
+            sb.append(" ").append(name).append(";");
         }
-        sb.append(" ").append(name).append(";");
         return sb.toString();
     }
 }

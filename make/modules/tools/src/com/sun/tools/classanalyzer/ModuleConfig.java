@@ -450,6 +450,7 @@ public class ModuleConfig {
             boolean inPermits = false;
             boolean inRequires = false;
             boolean inProvides = false;
+            boolean inUses = false;
             boolean inExports = false;
             boolean inView = false;
             Set<Dependence.Identifier> identifiers = new HashSet<>();
@@ -507,6 +508,7 @@ public class ModuleConfig {
                         inRequires = false;
                         inPermits = false;
                         inProvides = false;
+                        inUses = false;
                         inExports = false;
                         inView = false;
                         continue;
@@ -529,14 +531,17 @@ public class ModuleConfig {
                         inPermits = true;
                     } else if (keyword.equals("provides")) {
                         inProvides = true;
-                        if ((s.length != 2 && s.length != 5) ||
-                            (s.length == 5 &&
-                                (!s[1].trim().equals("service") || !s[3].trim().equals("with")))) {
+                        if (s.length != 4 || !s[2].trim().equals("with")) {
                             throw new RuntimeException(file + ", line "
                                     + lineNumber + ", is malformed");
                         }
                     } else if (keyword.equals("exports")) {
                         inExports = true;
+                    } else if (keyword.equals("uses")) {
+                        inUses = true;
+                        identifiers.clear();
+                        identifiers.add(Dependence.Identifier.OPTIONAL);
+                        identifiers.add(Dependence.Identifier.SERVICE);
                     } else if (keyword.equals("requires")) {
                         inRequires = true;
                         identifiers.clear();
@@ -549,11 +554,6 @@ public class ModuleConfig {
                                     break;
                                 case "optional":
                                     identifiers.add(Dependence.Identifier.OPTIONAL);
-                                    break;
-                                case "service":
-                                    // default to requires optional service
-                                    identifiers.add(Dependence.Identifier.OPTIONAL);
-                                    identifiers.add(Dependence.Identifier.SERVICE);
                                     break;
                                 default:
                                     name = ss;
@@ -631,21 +631,17 @@ public class ModuleConfig {
                         } else if (inPermits) {
                             view.permits.add(s);
                         } else if (inProvides) {
-                            if (s.startsWith("service")) {
-                                String[] names = values.split("\\s+");
-                                assert names.length == 4;
-                                Set<String> providers = view.providers.get(names[1]);
-                                if (providers == null) {
-                                    view.providers.put(names[1], providers = new LinkedHashSet<>());
-                                }
-                                providers.add(names[3]);
-                            } else {
-                                view.aliases.add(s);
+                            String[] names = values.split("\\s+");
+                            assert names.length == 3;
+                            Set<String> providers = view.providers.get(names[0]);
+                            if (providers == null) {
+                                view.providers.put(names[0], providers = new LinkedHashSet<>());
                             }
+                            providers.add(names[2]);
                         } else if (inExports) {
                             String e = s.equals("**") ? "*" : s;
                             view.exports.add(e);
-                        } else if (inRequires) {
+                        } else if (inUses || inRequires) {
                             if (config.requires.containsKey(s)) {
                                 throw new RuntimeException(file + ", line "
                                         + lineNumber + " duplicated requires: \"" + s + "\"");
@@ -662,6 +658,7 @@ public class ModuleConfig {
                     inAllows = false;
                     inPermits = false;
                     inProvides = false;
+                    inUses = false;
                     inRequires = false;
                     inExports = false;
                 }
@@ -689,12 +686,11 @@ public class ModuleConfig {
         StringBuilder sb = new StringBuilder();
         String format = level == 1 ? "%4s%-9s" : "%8s%-9s";
         String spaces = String.format(format, "", "");
-        sb.append(String.format(format, "", keyword));
-        int count = 0;
         for (Map.Entry<String, Set<String>> e : services.entrySet()) {
-            String s = " service " + e.getKey() + " with ";
             for (String v : e.getValue()) {
-                sb.append(keyword).append(s).append(v).append(";\n");
+                sb.append(String.format(format, "", keyword))
+                  .append(e.getKey()).append(" with ")
+                  .append(v).append(";\n");
             }
         }
         return sb.toString();
@@ -734,9 +730,8 @@ public class ModuleConfig {
         sb.append(format(1, "exclude", filter.exclude));
         Set<String> reqs = new TreeSet<>();
         for (Dependence rm : requires.values()) {
-            reqs.add(rm.toString());
+            sb.append("    ").append(rm.toString()).append("\n");
         }
-        sb.append(format(1, "requires", reqs));
         for (View v : viewForName.values()) {
             sb.append("    ").append("view ").append(v.name).append(" {\n");
             sb.append(format(2, "permits", v.permits));

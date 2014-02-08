@@ -168,22 +168,22 @@ module java.base {
     include java/lang/uniName.dat;
 
     // no META-INF/services
-    requires service java.nio.channels.spi.AsynchronousChannelProvider;
-    requires service java.nio.channels.spi.SelectorProvider;
-    requires service java.nio.charset.spi.CharsetProvider;
-    requires service java.nio.file.spi.FileSystemProvider;
-    requires service java.nio.file.spi.FileTypeDetector;
-    requires service java.text.spi.BreakIteratorProvider;
-    requires service java.text.spi.CollatorProvider;
-    requires service java.text.spi.DateFormatProvider;
-    requires service java.text.spi.DateFormatSymbolsProvider;
-    requires service java.text.spi.DecimalFormatSymbolsProvider;
-    requires service java.text.spi.NumberFormatProvider;
-    requires service java.time.zone.ZoneRulesProvider;
-    requires service java.util.spi.CurrencyNameProvider;
-    requires service java.util.spi.LocaleNameProvider;
-    requires service sun.net.spi.nameservice.NameServiceDescriptor;
-    requires service sun.util.spi.XmlPropertiesProvider;
+    uses java.nio.channels.spi.AsynchronousChannelProvider;
+    uses java.nio.channels.spi.SelectorProvider;
+    uses java.nio.charset.spi.CharsetProvider;
+    uses java.nio.file.spi.FileSystemProvider;
+    uses java.nio.file.spi.FileTypeDetector;
+    uses java.text.spi.BreakIteratorProvider;
+    uses java.text.spi.CollatorProvider;
+    uses java.text.spi.DateFormatProvider;
+    uses java.text.spi.DateFormatSymbolsProvider;
+    uses java.text.spi.DecimalFormatSymbolsProvider;
+    uses java.text.spi.NumberFormatProvider;
+    uses java.time.zone.ZoneRulesProvider;
+    uses java.util.spi.CurrencyNameProvider;
+    uses java.util.spi.LocaleNameProvider;
+    uses sun.net.spi.nameservice.NameServiceDescriptor;
+    uses sun.util.spi.XmlPropertiesProvider;
 
     // @jdk.Exported
     exports jdk;
@@ -243,26 +243,26 @@ module java.desktop {
     include sun.net.www.content.audio.**,
             sun.net.www.content.image.**;
 
-    requires service java.awt.im.spi.InputMethodDescriptor;
-    requires service javax.imageio.spi.IIOServiceProvider;
-    requires service javax.imageio.spi.ImageInputStreamSpi;
-    requires service javax.imageio.spi.ImageOutputStreamSpi;
-    requires service javax.imageio.spi.ImageReaderSpi;
-    requires service javax.imageio.spi.ImageReaderWriterSpi;
-    requires service javax.imageio.spi.ImageTranscoderSpi;
-    requires service javax.imageio.spi.ImageWriterSpi;
-    requires service javax.print.PrintServiceLookup;
-    requires service javax.print.StreamPrintServiceFactory;
-    requires service javax.sound.midi.spi.MidiDeviceProvider;
-    requires service javax.sound.midi.spi.MidiFileReader;
-    requires service javax.sound.midi.spi.MidiFileWriter;
-    requires service javax.sound.midi.spi.SoundbankReader;
-    requires service javax.sound.sampled.spi.AudioFileReader;
-    requires service javax.sound.sampled.spi.AudioFileWriter;
-    requires service javax.sound.sampled.spi.FormatConversionProvider;
-    requires service javax.sound.sampled.spi.MixerProvider;
-    requires service sun.java2d.cmm.PCMM;
-    requires service sun.java2d.pipe.RenderingEngine;
+    uses java.awt.im.spi.InputMethodDescriptor;
+    uses javax.imageio.spi.IIOServiceProvider;
+    uses javax.imageio.spi.ImageInputStreamSpi;
+    uses javax.imageio.spi.ImageOutputStreamSpi;
+    uses javax.imageio.spi.ImageReaderSpi;
+    uses javax.imageio.spi.ImageReaderWriterSpi;
+    uses javax.imageio.spi.ImageTranscoderSpi;
+    uses javax.imageio.spi.ImageWriterSpi;
+    uses javax.print.PrintServiceLookup;
+    uses javax.print.StreamPrintServiceFactory;
+    uses javax.sound.midi.spi.MidiDeviceProvider;
+    uses javax.sound.midi.spi.MidiFileReader;
+    uses javax.sound.midi.spi.MidiFileWriter;
+    uses javax.sound.midi.spi.SoundbankReader;
+    uses javax.sound.sampled.spi.AudioFileReader;
+    uses javax.sound.sampled.spi.AudioFileWriter;
+    uses javax.sound.sampled.spi.FormatConversionProvider;
+    uses javax.sound.sampled.spi.MixerProvider;
+    uses sun.java2d.cmm.PCMM;
+    uses sun.java2d.pipe.RenderingEngine;
 
     // Swing Look & Feels (no need to export com.sun.java.swing.plaf.nimbus)
     exports com.sun.java.swing.plaf.gtk;
@@ -273,7 +273,7 @@ module java.desktop {
 // ## the Preferences implementation for Unix to XML (currently stored as a XML file)
 module java.prefs {
     include java.util.prefs.*;
-    requires service java.util.prefs.PreferencesFactory;
+    uses java.util.prefs.PreferencesFactory;
 }
 
 module jdk.snmp {
@@ -306,13 +306,13 @@ module javax.corba {
 
 module java.jdbc {
     include java.sql.**, javax.sql.*;
-    requires service java.sql.Driver;
+    uses java.sql.Driver;
 }
 
 module java.jdbc.rowset {
     include javax.sql.rowset.**;
     include com.sun.rowset.**;
-    requires service javax.sql.rowset.RowSetFactory;
+    uses javax.sql.rowset.RowSetFactory;
     exports com.sun.sql.rowset;
 }
 
@@ -426,15 +426,15 @@ module javax.jaxp {
             com.sun.org.apache.regexp.internal.**,
             com.sun.java_cup.internal.**;
 
-    requires service javax.xml.datatype.DatatypeFactory;
-    requires service javax.xml.parsers.DocumentBuilderFactory;
-    requires service javax.xml.parsers.SAXParserFactory;
-    requires service javax.xml.stream.XMLEventFactory;
-    requires service javax.xml.stream.XMLInputFactory;
-    requires service javax.xml.stream.XMLOutputFactory;
-    requires service javax.xml.transform.TransformerFactory;
-    requires service javax.xml.validation.SchemaFactory;
-    requires service javax.xml.xpath.XPathFactory;
+    uses javax.xml.datatype.DatatypeFactory;
+    uses javax.xml.parsers.DocumentBuilderFactory;
+    uses javax.xml.parsers.SAXParserFactory;
+    uses javax.xml.stream.XMLEventFactory;
+    uses javax.xml.stream.XMLInputFactory;
+    uses javax.xml.stream.XMLOutputFactory;
+    uses javax.xml.transform.TransformerFactory;
+    uses javax.xml.validation.SchemaFactory;
+    uses javax.xml.xpath.XPathFactory;
 }
 
 module javax.jndi {
@@ -464,7 +464,7 @@ module javax.jndi {
             sun.net.dns.**,
             sun.net.spi.nameservice.dns.**;
 
-    requires service javax.naming.ldap.StartTlsResponse;
+    uses javax.naming.ldap.StartTlsResponse;
 }
 
 module java.rmi {
@@ -478,7 +478,7 @@ module java.rmi {
 
     include rmi-activation;
 
-    requires service java.rmi.server.RMIClassLoaderSpi;
+    uses java.rmi.server.RMIClassLoaderSpi;
 }
 
 // Implementation for xjc, wsgen, wsimport, and schemagen tools
@@ -495,8 +495,8 @@ module jdk.tools.jaxws {
             com.sun.tools.internal.jxc.**,
             org.relaxng.datatype.**;
 
-    requires service com.sun.tools.internal.ws.wscompile.Plugin;
-    requires service com.sun.tools.internal.xjc.Plugin;
+    uses com.sun.tools.internal.ws.wscompile.Plugin;
+    uses com.sun.tools.internal.xjc.Plugin;
 }
 
 // standalone technology (JSR-250)
@@ -544,7 +544,7 @@ module javax.jaf {
 module javax.script {
     include javax.script.**;
 
-    requires service javax.script.ScriptEngineFactory;
+    uses javax.script.ScriptEngineFactory;
 }
 
 module javax.compiler {
@@ -627,7 +627,7 @@ module jdk.zipfs {
 
 module jdk.httpserver {
     include com.sun.net.httpserver.**, sun.net.httpserver.**;
-    requires service com.sun.net.httpserver.spi.HttpServerProvider;
+    uses com.sun.net.httpserver.spi.HttpServerProvider;
 }
 
 module jdk.devtools {
@@ -726,9 +726,9 @@ module jdk.tools {
             sun.tools.native2ascii.**,
             sun.tools.serialver.**;
 
-    requires service com.sun.jdi.connect.Connector;
-    requires service com.sun.jdi.connect.spi.TransportService;
-    requires service com.sun.tools.attach.spi.AttachProvider;
+    uses com.sun.jdi.connect.Connector;
+    uses com.sun.jdi.connect.spi.TransportService;
+    uses com.sun.tools.attach.spi.AttachProvider;
 
     view jdk.attach {
         exports com.sun.tools.attach;
