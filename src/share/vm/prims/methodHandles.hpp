@@ -232,13 +232,14 @@ public:
 //------------------------------------------------------------------------------
 // MemberNameTable
 //
+
 class MemberNameTable : public GrowableArray<jweak> {
  public:
-  MemberNameTable();
+  MemberNameTable(int methods_cnt);
   ~MemberNameTable();
-  void add_member_name(jweak mem_name_wref);
- private:
-  int find_member_name(oop mem_name);
+
+  void add_member_name(int index, jweak mem_name_ref);
+  oop  get_member_name(int index);
 
  public:
   // RedefineClasses() API support:
