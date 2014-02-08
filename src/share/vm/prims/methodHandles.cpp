@@ -252,7 +252,8 @@ oop MethodHandles::init_method_MemberName(Handle mname, methodOop m, bool do_dis
   // If relevant, the vtable or itable value is stored as vmindex.
   // This is done eagerly, since it is readily available without
   // constructing any new objects.
-  instanceKlass::cast(m->method_holder())->add_member_name(mname);
+  instanceKlass::cast(m->method_holder())->add_member_name(m->method_idnum(), mname);
+
   return mname();
 }
 
@@ -305,7 +306,6 @@ oop MethodHandles::init_field_MemberName(Handle mname, KlassHandle field_holder,
   // because they unambiguously identify the field.
   // Although the fieldDescriptor::_index would also identify the field,
   // we do not use it, because it is harder to decode.
-  instanceKlass::cast(field_holder())->add_member_name(mname);
   return mname();
 }
 
@@ -978,7 +978,8 @@ int MethodHandles::find_MemberNames(KlassHandle k,
 // MemberNameTable
 //
 
-MemberNameTable::MemberNameTable() : GrowableArray<jweak>(10, true) {
+MemberNameTable::MemberNameTable(int methods_cnt)
+                  : GrowableArray<jweak>(methods_cnt, true) {
   assert_locked_or_safepoint(MemberNameTable_lock);
 }
 
@@ -992,29 +993,17 @@ MemberNameTable::~MemberNameTable() {
   }
 }
 
-// Return entry index if found, return -1 otherwise.
-int MemberNameTable::find_member_name(oop mem_name) {
+void MemberNameTable::add_member_name(int index, jweak mem_name_wref) {
   assert_locked_or_safepoint(MemberNameTable_lock);
-  int len = this->length();
-
-  for (int idx = 0; idx < len; idx++) {
-    jweak ref = this->at(idx);
-    oop entry = JNIHandles::resolve(ref);
-    if (entry == mem_name) {
-      return idx;
-    }
-  }
-  return -1;
+  this->at_put_grow(index, mem_name_wref);
 }
 
-void MemberNameTable::add_member_name(jweak mem_name_wref) {
+// Return a member name oop or NULL.
+oop MemberNameTable::get_member_name(int index) {
   assert_locked_or_safepoint(MemberNameTable_lock);
-  oop mem_name = JNIHandles::resolve(mem_name_wref);
-
-  // Each member name may appear just once: add only if not found
-  if (find_member_name(mem_name) == -1) {
-    this->append(mem_name_wref);
-  }
+  jweak ref = this->at(index);
+  oop mem_name = JNIHandles::resolve(ref);
+  return mem_name;
 }
 
 oop MemberNameTable::find_member_name_by_method(methodOop old_method) {
