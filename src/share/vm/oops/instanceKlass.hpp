@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -94,6 +94,7 @@ class DepChange;
 class nmethodBucket;
 class PreviousVersionNode;
 class JvmtiCachedClassFieldMap;
+class MemberNameTable;
 
 // This is used in iterators below.
 class FieldClosure: public StackObj {
@@ -265,6 +266,7 @@ class instanceKlass: public Klass {
   int             _vtable_len;           // length of Java vtable (in words)
   int             _itable_len;           // length of Java itable (in words)
   OopMapCache*    volatile _oop_map_cache;   // OopMapCache for all methods in the klass (allocated lazily)
+  MemberNameTable* _member_names;        // Member names
   JNIid*          _jni_ids;              // First JNI identifier for static fields in this class
   jmethodID*      _methods_jmethod_ids;  // jmethodIDs corresponding to method_idnum, or NULL if none
   int*            _methods_cached_itable_indices;  // itable_index cache for JNI invoke corresponding to methods idnum, or NULL
@@ -971,6 +973,11 @@ public:
 
   // jvm support
   jint compute_modifier_flags(TRAPS) const;
+
+  // JSR-292 support
+  MemberNameTable* member_names() { return _member_names; }
+  void set_member_names(MemberNameTable* member_names) { _member_names = member_names; }
+  void add_member_name(Handle member_name);
 
 public:
   // JVMTI support
