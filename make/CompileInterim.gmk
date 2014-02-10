@@ -53,6 +53,7 @@ $(eval $(call SetupJavaCompilation,BUILD_INTERIM_LANGTOOLS, \
     DISABLE_SJAVAC := true, \
     SRC := $(SRC), \
     EXCLUDES := com/sun/tools/javac/nio compileproperties anttasks crules, \
+    EXCLUDE_FILES := module-info.java, \
     COPY := $(RESOURCE_SUFFIXES), \
     BIN := $(LANGTOOLS_OUTPUTDIR)/interim_classes, \
     JAR := $(INTERIM_LANGTOOLS_JAR)))
