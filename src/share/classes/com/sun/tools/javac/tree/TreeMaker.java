@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -125,6 +125,7 @@ public class TreeMaker implements JCTree.Factory {
         for (JCTree node : defs)
             Assert.check(node instanceof JCClassDecl
                 || node instanceof JCImport
+                || node instanceof JCModuleDecl
                 || node instanceof JCSkip
                 || node instanceof JCErroneous
                 || (node instanceof JCExpressionStatement
@@ -527,6 +528,14 @@ public class TreeMaker implements JCTree.Factory {
     public JCModifiers Modifiers(long flags) {
         return Modifiers(flags, List.<JCAnnotation>nil());
     }
+
+    @Override
+    public JCModuleDecl Module(Name name, List<JCModuleDirective> directives) {
+        JCModuleDecl tree = new JCModuleDecl(name, directives);
+        tree.pos = pos;
+        return tree;
+    }
+
 
     public JCAnnotatedType AnnotatedType(List<JCAnnotation> annotations, JCExpression underlyingType) {
         JCAnnotatedType tree = new JCAnnotatedType(annotations, underlyingType);

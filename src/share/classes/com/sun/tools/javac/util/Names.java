@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -63,6 +63,9 @@ public class Names {
     public final Name _default;
     public final Name _super;
     public final Name _this;
+    public final Name exports;
+    public final Name module;
+    public final Name requires;
 
     // field and method names
     public final Name _name;
@@ -170,6 +173,7 @@ public class Names {
     public final Name T;
     public final Name deprecated;
     public final Name ex;
+    public final Name module_info;
     public final Name package_info;
 
     //lambda-related
@@ -199,6 +203,9 @@ public class Names {
         _default = fromString("default");
         _super = fromString("super");
         _this = fromString("this");
+        exports = fromString("exports");
+        module = fromString("module");
+        requires = fromString("requires");
 
         // field and method names
         _name = fromString("name");
@@ -306,6 +313,7 @@ public class Names {
         T = fromString("T");
         deprecated = fromString("deprecated");
         ex = fromString("ex");
+        module_info = fromString("module-info");
         package_info = fromString("package-info");
 
         //lambda-related

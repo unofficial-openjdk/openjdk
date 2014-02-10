@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -161,6 +161,7 @@ public class JavacParser implements Parser {
         this.allowStaticInterfaceMethods = source.allowStaticInterfaceMethods();
         this.allowIntersectionTypesInCast = source.allowIntersectionTypesInCast();
         this.allowTypeAnnotations = source.allowTypeAnnotations();
+        this.allowModules = source.allowModules();
         this.keepDocComments = keepDocComments;
         docComments = newDocCommentTable(keepDocComments, fac);
         this.keepLineMap = keepLineMap;
@@ -229,6 +230,10 @@ public class JavacParser implements Parser {
     /** Switch: should we allow method/constructor references?
      */
     boolean allowMethodReferences;
+
+    /** Switch: should we recognize modules?
+     */
+    boolean allowModules;
 
     /** Switch: should we allow default methods in interfaces?
      */
@@ -3066,54 +3071,61 @@ public class JavacParser implements Parser {
     public JCTree.JCCompilationUnit parseCompilationUnit() {
         Token firstToken = token;
         JCExpression pid = null;
+        List<JCAnnotation> packageAnnotations = List.nil();
         JCModifiers mods = null;
         boolean consumedToplevelDoc = false;
-        boolean seenImport = false;
-        boolean seenPackage = false;
-        List<JCAnnotation> packageAnnotations = List.nil();
-        if (token.kind == MONKEYS_AT)
-            mods = modifiersOpt();
-
-        if (token.kind == PACKAGE) {
-            seenPackage = true;
-            if (mods != null) {
-                checkNoMods(mods.flags);
-                packageAnnotations = mods.annotations;
-                mods = null;
-            }
-            nextToken();
-            pid = qualident(false);
-            accept(SEMI);
-        }
         ListBuffer<JCTree> defs = new ListBuffer<>();
-        boolean checkForImports = true;
-        boolean firstTypeDecl = true;
-        while (token.kind != EOF) {
-            if (token.pos > 0 && token.pos <= endPosTable.errorEndPos) {
-                // error recovery
-                skip(checkForImports, false, false, false);
-                if (token.kind == EOF)
-                    break;
-            }
-            if (checkForImports && mods == null && token.kind == IMPORT) {
-                seenImport = true;
-                defs.append(importDeclaration());
-            } else {
-                Comment docComment = token.comment(CommentStyle.JAVADOC);
-                if (firstTypeDecl && !seenImport && !seenPackage) {
-                    docComment = firstToken.comment(CommentStyle.JAVADOC);
-                    consumedToplevelDoc = true;
+
+        if (token.kind == IDENTIFIER && token.name() == names.module) {
+            defs.append(moduleDecl(token.comment(CommentStyle.JAVADOC)));
+            consumedToplevelDoc = true;
+        } else {
+            boolean seenImport = false;
+            boolean seenPackage = false;
+            if (token.kind == MONKEYS_AT)
+                mods = modifiersOpt();
+
+            if (token.kind == PACKAGE) {
+                seenPackage = true;
+                if (mods != null) {
+                    checkNoMods(mods.flags);
+                    packageAnnotations = mods.annotations;
+                    mods = null;
                 }
-                JCTree def = typeDeclaration(mods, docComment);
-                if (def instanceof JCExpressionStatement)
-                    def = ((JCExpressionStatement)def).expr;
-                defs.append(def);
-                if (def instanceof JCClassDecl)
-                    checkForImports = false;
-                mods = null;
-                firstTypeDecl = false;
+                nextToken();
+                pid = qualident(false);
+                accept(SEMI);
+            }
+            boolean checkForImports = true;
+            boolean firstTypeDecl = true;
+            while (token.kind != EOF) {
+                if (token.pos > 0 && token.pos <= endPosTable.errorEndPos) {
+                    // error recovery
+                    skip(checkForImports, false, false, false);
+                    if (token.kind == EOF)
+                        break;
+                }
+                if (checkForImports && mods == null && token.kind == IMPORT) {
+                    seenImport = true;
+                    defs.append(importDeclaration());
+                } else {
+                    Comment docComment = token.comment(CommentStyle.JAVADOC);
+                    if (firstTypeDecl && !seenImport && !seenPackage) {
+                        docComment = firstToken.comment(CommentStyle.JAVADOC);
+                        consumedToplevelDoc = true;
+                    }
+                    JCTree def = typeDeclaration(mods, docComment);
+                    if (def instanceof JCExpressionStatement)
+                        def = ((JCExpressionStatement)def).expr;
+                    defs.append(def);
+                    if (def instanceof JCClassDecl)
+                        checkForImports = false;
+                    mods = null;
+                    firstTypeDecl = false;
+                }
             }
         }
+
         JCTree.JCCompilationUnit toplevel = F.at(firstToken.pos).TopLevel(packageAnnotations, pid, defs.toList());
         if (!consumedToplevelDoc)
             attach(toplevel, firstToken.comment(CommentStyle.JAVADOC));
@@ -3126,6 +3138,18 @@ public class JavacParser implements Parser {
         this.endPosTable.setParser(null); // remove reference to parser
         toplevel.endPositions = this.endPosTable;
         return toplevel;
+    }
+
+    JCModuleDecl moduleDecl(Comment dc) {
+        int pos = token.pos;
+        if (!allowModules) {
+            log.error(pos, "modules.not.supported.in.source", source.name);
+            allowModules = true;
+        }
+
+        JCModuleDecl result = toP(F.at(pos).Module(null, null));
+        attach(result, dc);
+        return result;
     }
 
     /** ImportDeclaration = IMPORT [ STATIC ] Ident { "." Ident } [ "." "*" ] ";"

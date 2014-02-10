@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -340,6 +340,8 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
         MUL_ASG(MUL),                    // *=
         DIV_ASG(DIV),                    // /=
         MOD_ASG(MOD),                    // %=
+
+        MODULE,
 
         /** A synthetic let expression, of type LetExpr.
          */
@@ -2383,6 +2385,50 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
         }
     }
 
+    public static class JCModuleDecl extends JCTree /*implements ModuleTree*/ {
+        public Name name;
+        public List<JCModuleDirective> directives;
+//        public ModuleSymbol sym;
+
+        protected JCModuleDecl(Name name, List<JCModuleDirective> directives) {
+            this.name = name;
+            this.directives = directives;
+        }
+
+        @Override
+        public void accept(Visitor v) { v.visitModuleDef(this); }
+
+        @Override
+        public Kind getKind() {
+            throw new UnsupportedOperationException();
+//            return Kind.MODULE;
+        }
+
+//        @Override
+        public Name getName() {
+            return name;
+        }
+
+//        @Override
+//        public List<JCModuleDirective> getDirectives() {
+//            return directives;
+//        }
+
+        @Override
+        public <R, D> R accept(TreeVisitor<R, D> v, D d) {
+            throw new UnsupportedOperationException();
+//            return v.visitModule(this, d);
+        }
+
+        @Override
+        public Tag getTag() {
+            return MODULE;
+        }
+    }
+
+    public static abstract class JCModuleDirective extends JCTree /*implements ModuleDirectiveTree*/ {
+    }
+
     public static class JCErroneous extends JCExpression
             implements com.sun.source.tree.ErroneousTree {
         public List<? extends JCTree> errs;
@@ -2518,6 +2564,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
         JCAnnotation Annotation(JCTree annotationType, List<JCExpression> args);
         JCModifiers Modifiers(long flags, List<JCAnnotation> annotations);
         JCErroneous Erroneous(List<? extends JCTree> errs);
+        JCModuleDecl Module(Name name, List<JCModuleDirective> directives);
         LetExpr LetExpr(List<JCVariableDecl> defs, JCTree expr);
     }
 
@@ -2577,6 +2624,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
         public void visitModifiers(JCModifiers that)         { visitTree(that); }
         public void visitAnnotatedType(JCAnnotatedType that) { visitTree(that); }
         public void visitErroneous(JCErroneous that)         { visitTree(that); }
+        public void visitModuleDef(JCModuleDecl that)        { visitTree(that); }
         public void visitLetExpr(LetExpr that)               { visitTree(that); }
 
         public void visitTree(JCTree that)                   { Assert.error(); }
