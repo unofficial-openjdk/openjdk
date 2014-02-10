@@ -67,6 +67,7 @@ $(eval $(call SetupJavaCompilation,BUILD_NASHORN, \
     SETUP := GENERATE_NEWBYTECODE_DEBUG, \
     SRC := $(NASHORN_SRC), \
     EXCLUDES := share, \
+    EXCLUDE_FILES := module-info.java, \
     COPY := .properties .js, \
     BIN := $(NASHORN_OUTPUTDIR)/nashorn_classes))
 
