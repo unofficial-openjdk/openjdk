@@ -71,6 +71,13 @@ java-compile: jdk-gensrc langtools-gensrc corba-gensrc
 .PHONY: java-compile
 
 ################################################################################
+
+nashorn: java-compile
+	+($(CD) $(NASHORN_TOPDIR)/make && $(MAKE) -f BuildNashorn.gmk JIGSAW=true)
+
+.PHONY: nashorn
+
+################################################################################
 # Build hotspot into the legacy build output dir for now.
 
 hotspot:
@@ -95,7 +102,7 @@ jdk: java-compile jdk-gendata jdk-genclasses jdk-libs jdk-launchers
 
 ################################################################################
 
-all: jdk
+all: jdk nashorn
 
 .PHONY: default all
 

@@ -30,6 +30,7 @@ ifeq ($(JIGSAW), true)
   LANGTOOLS_OUTPUTDIR := $(patsubst $(OUTPUT_ROOT)/%,$(OUTPUT_ROOT)/jigsaw/%,$(LANGTOOLS_OUTPUTDIR))
   CORBA_OUTPUTDIR := $(patsubst $(OUTPUT_ROOT)/%,$(OUTPUT_ROOT)/jigsaw/%,$(CORBA_OUTPUTDIR))
   JDK_OUTPUTDIR := $(patsubst $(OUTPUT_ROOT)/%,$(OUTPUT_ROOT)/jigsaw/%,$(JDK_OUTPUTDIR))
+  NASHORN_OUTPUTDIR := $(patsubst $(OUTPUT_ROOT)/%,$(OUTPUT_ROOT)/jigsaw/%,$(NASHORN_OUTPUTDIR))
 
   MODULES_SUBDIR := modules
 

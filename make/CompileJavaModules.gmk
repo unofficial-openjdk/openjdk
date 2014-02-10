@@ -226,7 +226,8 @@ sun.localedata_COPY := _dict _th
 
 ################################################################################
 # Setup the compilation of each module
-
+# Do not include nashorn src here since it needs to be compiled separately due
+# to nasgen.
 ALL_SRC_DIRS := \
     $(JDK_TOPDIR)/src/share/modules \
     $(LANGTOOLS_TOPDIR)/src/share/modules \
