@@ -36,11 +36,11 @@ import java.net.URLStreamHandlerFactory;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.StringTokenizer;
 import java.util.Set;
-import java.util.Vector;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.security.PrivilegedExceptionAction;
@@ -171,7 +171,7 @@ public class Launcher {
                             for (int i = 0; i < len; i++) {
                                 MetaIndex.registerDirectory(dirs[i]);
                             }
-                            return new ExtClassLoader(dirs);
+                            return new ExtClassLoader(toModuleLocations(modules), dirs);
                         }
                     });
             } catch (java.security.PrivilegedActionException e) {
@@ -188,22 +188,15 @@ public class Launcher {
         }
 
         /*
-         * Creates a new ExtClassLoader for the specified directories.
+         * Creates a new ExtClassLoader for the specified module locations and
+         * ext  directories.
          */
-        public ExtClassLoader(File[] dirs) throws IOException {
-            super(getExtURLs(dirs), null, factory);
+        public ExtClassLoader(List<String> modLocations, File[] dirs) throws IOException {
+            super(getExtURLs(modLocations, dirs), null, factory);
         }
 
         private static File[] getExtDirs() {
-            String extDirs = System.getProperty("java.ext.dirs");
-            String moduleDirs = Launcher.toModuleDirs(modules);
-            String s;
-            if (moduleDirs.length() > 0) {
-                // ## FIXME should we update java.ext.dirs
-                s = moduleDirs + File.pathSeparator + extDirs;
-            } else {
-                s = extDirs;
-            }
+            String s = System.getProperty("java.ext.dirs");
             File[] dirs;
             if (s != null) {
                 StringTokenizer st =
@@ -219,8 +212,11 @@ public class Launcher {
             return dirs;
         }
 
-        private static URL[] getExtURLs(File[] dirs) throws IOException {
-            Vector<URL> urls = new Vector<URL>();
+        private static URL[] getExtURLs(List<String> modLocations, File[] dirs) throws IOException {
+            List<URL> urls = new ArrayList<>();
+            for (String loc : modLocations) {
+                urls.add(getFileURL(new File(loc)));
+            }
             for (int i = 0; i < dirs.length; i++) {
                 String[] files = dirs[i].list();
                 if (files != null) {
@@ -232,9 +228,7 @@ public class Launcher {
                     }
                 }
             }
-            URL[] ua = new URL[urls.size()];
-            urls.copyInto(ua);
-            return ua;
+            return urls.toArray(new URL[0]);
         }
 
         /*
@@ -304,7 +298,7 @@ public class Launcher {
             throws IOException
         {
             String cp = System.getProperty("java.class.path");
-            String mp = Launcher.toModulePath(modules);
+            String mp = Launcher.toClassPath(modules);
             String s;
             if (mp.length() > 0) {
                 // ## FIXME should we update java.class.path
@@ -545,26 +539,14 @@ public class Launcher {
     }
 
     /**
-     * Expands the given set of modules to a path of directories.
+     * Expand the given list of modules to a class path.
      */
-    private static String toModuleDirs(List<String> modules) {
-        return expandToPath(modules, false);
-    }
-
-    /**
-     * Expands the given set of modules to a path of zipped or exploded classes.
-     */
-    private static String toModulePath(List<String> modules) {
-        return expandToPath(modules, true);
-    }
-
-    private static String expandToPath(List<String> modules, boolean classes) {
+    private static String toClassPath(List<String> modules) {
         String home = System.getProperty("java.home");
         Path dir = Paths.get(home, "lib", "modules");
         String suffix = null;
         if (Files.exists(dir)) {
-            if (classes)
-                suffix = "classes";
+            suffix = "classes";
         } else {
             dir = Paths.get(home, "modules");
             if (Files.notExists(dir))
@@ -583,6 +565,39 @@ public class Launcher {
             }
         }
         return sb.toString();
+    }
+
+    /**
+     * Expand the given list of modules to a list of module locations.
+     */
+    private static List<String> toModuleLocations(List<String> modules) {
+        List<String> result = new ArrayList<>();
+        String home = System.getProperty("java.home");
+        Path dir = Paths.get(home, "lib", "modules");
+        boolean image;
+        if (Files.exists(dir)) {
+            image = true;
+        } else {
+            dir = Paths.get(home, "modules");
+            if (Files.notExists(dir))
+                return result;
+            image = false;
+        }
+        for (String m: modules) {
+            if (image) {
+                StringBuilder sb = new StringBuilder();
+                sb.append(dir);
+                sb.append(File.separator);
+                sb.append(m);
+                sb.append(File.separator);
+                sb.append("classes");
+                String s = sb.toString();
+                result.add(s);
+            } else {
+                result.add(dir.resolve(m).toString());
+            }
+        }
+        return result;
     }
 }
 
