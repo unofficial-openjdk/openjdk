@@ -59,9 +59,32 @@ public class ResourceBundleSearchTest {
     private static int numFail = 0;
     private static List<String> msgs = new ArrayList<>();
 
+    // This test has been falling in timeout - so we're adding some
+    // time stamp here and there to help diagnose whether it's a
+    // simple system slowness or whether there's a deeper issue,
+    // like a deadlock. The timeout issue should be fixed now,
+    // but we leave the time stamps in case it reappears.
+    //
+    static final long stamp = System.currentTimeMillis();
+    private static String getTimeStamp() {
+        long time = System.currentTimeMillis();
+        long delta = time - stamp;
+        long min = delta/60000;
+        long sec = (delta - min * 60000) / 10000;
+        long msec = delta - min * 60000 - sec * 1000;
+        return (min == 0 ? "" : (min + " min. ")) +
+               (sec == 0 ? "" : (sec + " sec. ")) +
+               (msec == 0 ? "" : (msec + "ms."));
+    }
+
     public static void main(String[] args) throws Throwable {
+        System.out.println("ResourceBundleSearchTest starting: "+getTimeStamp());
         ResourceBundleSearchTest test = new ResourceBundleSearchTest();
-        test.runTests();
+        try {
+            test.runTests();
+        } finally {
+            System.out.println("ResourceBundleSearchTest terminated: "+getTimeStamp());
+        }
     }
 
     private void runTests() throws Throwable {
@@ -82,7 +105,8 @@ public class ResourceBundleSearchTest {
         // Test 1 - can we find a Logger bundle from doing a stack search?
         // We shouldn't be able to
         // unless -Djdk.logging.allowStackWalkSearch=true is set
-
+        int testnb = 1;
+        System.out.println("ResourceBundleSearchTest starting test #"+(testnb++)+": "+getTimeStamp());
         boolean allowStackWalkSearch = Boolean.getBoolean("jdk.logging.allowStackWalkSearch");
         if (allowStackWalkSearch) {
             assertTrue(testGetBundleFromStackSearch(), "1-testGetBundleFromStackSearch");
@@ -93,6 +117,7 @@ public class ResourceBundleSearchTest {
 
         // Test 2 - can we find a Logger bundle off of the Thread context class
         // loader? We should be able to.
+        System.out.println("ResourceBundleSearchTest starting test #"+(testnb++)+": "+getTimeStamp());
         assertTrue(testGetBundleFromTCCL(TCCL_TEST_BUNDLE, rbClassLoader),
                    "2-testGetBundleFromTCCL");
 
@@ -100,6 +125,7 @@ public class ResourceBundleSearchTest {
         // able to.  We'll first check to make sure the setup is correct and
         // it actually is on the classpath before checking whether logging
         // can see it there.
+        System.out.println("ResourceBundleSearchTest starting test #"+(testnb++)+": "+getTimeStamp());
         if (isOnClassPath(PROP_RB_NAME, myClassLoader)) {
             debug("We should be able to see " + PROP_RB_NAME + " on the classpath");
             assertTrue(testGetBundleFromSystemClassLoader(PROP_RB_NAME),
@@ -111,17 +137,20 @@ public class ResourceBundleSearchTest {
 
         // Test 4 - we should be able to find a bundle from the caller's
         // classloader, but only one level up.
+        System.out.println("ResourceBundleSearchTest starting test #"+(testnb++)+": "+getTimeStamp());
         assertTrue(testGetBundleFromCallersClassLoader(),
                    "4-testGetBundleFromCallersClassLoader");
 
         // Test 5 - this ensures that getAnonymousLogger(String rbName)
         // can find the bundle from the caller's classloader
+        System.out.println("ResourceBundleSearchTest starting test #"+(testnb++)+": "+getTimeStamp());
         assertTrue(testGetAnonymousLogger(), "5-testGetAnonymousLogger");
 
         // Test 6 - first call getLogger("myLogger").
         // Then call getLogger("myLogger","bundleName") from a different ClassLoader
         // Make sure we find the bundle
         if (!allowStackWalkSearch) {
+            System.out.println("ResourceBundleSearchTest starting test #"+(testnb++)+": "+getTimeStamp());
             assertTrue(testGetBundleFromSecondCallersClassLoader(),
                        "6-testGetBundleFromSecondCallersClassLoader");
         }
@@ -144,6 +173,7 @@ public class ResourceBundleSearchTest {
     public void assertTrue(boolean testResult, String testName) {
         if (testResult) {
             numPass++;
+            System.out.println("PASSED: " + testName);
         } else {
             numFail++;
             System.out.println("FAILED: " + testName
@@ -154,6 +184,7 @@ public class ResourceBundleSearchTest {
     public void assertFalse(boolean testResult, String testName) {
         if (!testResult) {
             numPass++;
+            System.out.println("PASSED: " + testName);
         } else {
             numFail++;
             System.out.println("FAILED: " + testName
@@ -182,12 +213,10 @@ public class ResourceBundleSearchTest {
         debug("Looking for " + bundleName + " using TCCL");
         LoggingThread lr = new LoggingThread(bundleName, setOnTCCL);
         lr.start();
-        synchronized (lr) {
-            try {
-                lr.wait();
-            } catch (InterruptedException ex) {
-                throw ex;
-            }
+        try {
+            lr.join();
+        } catch (InterruptedException ex) {
+            throw ex;
         }
         msgs.add(lr.msg);
         return lr.foundBundle;

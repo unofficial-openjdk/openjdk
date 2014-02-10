@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -68,7 +68,7 @@ static ReleasePixmapBgFunc X11SD_ReleasePixmapWithBg;
 #ifndef XAWT
 extern struct MComponentPeerIDs mComponentPeerIDs;
 #endif
-extern int J2DXErrHandler(Display *display, XErrorEvent *xerr);
+extern int XShmAttachXErrHandler(Display *display, XErrorEvent *xerr);
 extern AwtGraphicsConfigDataPtr
     getGraphicsConfigFromComponentPeer(JNIEnv *env, jobject this);
 extern struct X11GraphicsConfigIDs x11GraphicsConfigIDs;
@@ -591,7 +591,7 @@ XImage* X11SD_CreateSharedImage(X11SDOps *xsdo,
     shminfo->readOnly = False;
 
     resetXShmAttachFailed();
-    EXEC_WITH_XERROR_HANDLER(J2DXErrHandler,
+    EXEC_WITH_XERROR_HANDLER(XShmAttachXErrHandler,
                              XShmAttach(awt_display, shminfo));
 
     /*

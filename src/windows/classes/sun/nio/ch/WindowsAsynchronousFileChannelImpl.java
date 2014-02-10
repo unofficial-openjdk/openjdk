@@ -230,6 +230,7 @@ public class WindowsAsynchronousFileChannelImpl
         @Override
         public void run() {
             long overlapped = 0L;
+            boolean pending = false;
             try {
                 begin();
 
@@ -243,6 +244,7 @@ public class WindowsAsynchronousFileChannelImpl
                                      overlapped);
                     if (n == IOStatus.UNAVAILABLE) {
                         // I/O is pending
+                        pending = true;
                         return;
                     }
                     // acquired lock immediately
@@ -252,10 +254,10 @@ public class WindowsAsynchronousFileChannelImpl
             } catch (Throwable x) {
                 // lock failed or channel closed
                 removeFromFileLockTable(fli);
-                if (overlapped != 0L)
-                    ioCache.remove(overlapped);
                 result.setFailure(toIOException(x));
             } finally {
+                if (!pending && overlapped != 0L)
+                    ioCache.remove(overlapped);
                 end();
             }
 
