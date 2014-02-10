@@ -149,6 +149,39 @@ $(foreach m,$(MODULE_LIST),$(eval $(call CopyModule,$m)))
 
 
 ################################################################################
+# Copy the generated module-info.java files into the shuffled source.
+define DeclareModuleInfoRule
+  $1/src/share/modules/%/module-info.java: \
+      $(JDK_OUTPUTDIR)/genmodules/src/%/module-info.java
+	$$(install-file)
+endef
+
+$(foreach d, $(LANGTOOLS_TOPDIR) $(CORBA_TOPDIR) $(JAXP_TOPDIR) \
+    $(JAXWS_TOPDIR) $(JDK_TOPDIR) $(NASHORN_TOPDIR), \
+    $(eval $(call DeclareModuleInfoRule, $d)))
+
+FULL_MODULE_LIST := $(filter-out modules.config, $(notdir $(wildcard $(MODULEINFO_DIR)/*)))
+
+LANGTOOLS_MODULE_LIST := javax.compiler jdk.devtools
+CORBA_MODULE_LIST := javax.corba javax.jta
+JAXP_MODULE_LIST := javax.jaxp
+JAXWS_MODULE_LIST := javax.annotations.common javax.jaf javax.jaxb javax.jaxws \
+    javax.saaj jdk.tools.jaxws
+NASHORN_MODULE_LIST := jdk.nashorn
+JDK_MODULE_LIST := $(filter-out $(CORBA_MODULE_LIST) $(JAXP_MODULE_LIST) \
+    $(JAXWS_MODULE_LIST) $(LANGTOOLS_MODULE_LIST) $(NASHORN_MODULE_LIST), \
+    $(FULL_MODULE_LIST))
+
+MODULE_INFO_TARGETS := \
+    $(patsubst %, $(LANGTOOLS_TOPDIR)/src/share/modules/%/module-info.java, $(LANGTOOLS_MODULE_LIST)) \
+    $(patsubst %, $(CORBA_TOPDIR)/src/share/modules/%/module-info.java, $(CORBA_MODULE_LIST)) \
+    $(patsubst %, $(JAXP_TOPDIR)/src/share/modules/%/module-info.java, $(JAXP_MODULE_LIST)) \
+    $(patsubst %, $(JAXWS_TOPDIR)/src/share/modules/%/module-info.java, $(JAXWS_MODULE_LIST)) \
+    $(patsubst %, $(NASHORN_TOPDIR)/src/share/modules/%/module-info.java, $(NASHORN_MODULE_LIST)) \
+    $(patsubst %, $(JDK_TOPDIR)/src/share/modules/%/module-info.java, $(JDK_MODULE_LIST)) \
+    #
+
+################################################################################
 
 # General copy file macros should probably be moved to make/common in the root.
 define AddFileToCopy
@@ -1210,6 +1243,7 @@ shuffle-src: \
     $(COPY_LAUNCHERS_SOLARIS) \
     $(COPY_LAUNCHERS_MACOSX) \
     $(COPY_JSPAWNHELPER_SOLARIS) \
+    $(MODULE_INFO_TARGETS) \
     #
 
 shuffle-build: $(BUILD_TARGET_FILES)
@@ -1238,6 +1272,7 @@ clean-src:
 	$(RM) -r $(JDK_TOPDIR)/src/*/native/launchers
 	$(RM) -r $(JDK_TOPDIR)/make/src/native/genconstants
 	$(RM) -r $(JDK_TOPDIR)/make/data/macosxicons
+	$(RM) -r $(JDK_TOPDIR)/src/solaris/native/jspawnhelper
 
 clean-build:
 	$(RM) -r $(JDK_OUTPUTDIR)/modules

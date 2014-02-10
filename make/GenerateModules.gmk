@@ -27,39 +27,60 @@
 default: all
 
 include $(SPEC)
+include JigsawSpecMod.gmk
 include Modules.gmk
 include MakeBase.gmk
 include Setup.gmk
 
-CLASSANALYZER_CLASSES  := $(GENMODULES_DIR)/bt_classanalyzer_classes
-CLASSANALYZER_RESOURCES := $(CLASSANALYZER_CLASSES)/com/sun/tools/classanalyzer/resources
+ifeq ($(JIGSAW), true)
 
-$(CLASSANALYZER_CLASSES)/com/sun/tools/classanalyzer/resources/% : $(JDK_TOPDIR)/make/modules/tools/src/com/sun/tools/classanalyzer/resources/%
-	$(call install-file)
+  ALL_SRC_DIRS := \
+      $(JDK_TOPDIR)/src/share/modules \
+      $(LANGTOOLS_TOPDIR)/src/share/modules \
+      $(CORBA_TOPDIR)/src/share/modules \
+      $(JAXP_TOPDIR)/src/share/modules \
+      $(JAXWS_TOPDIR)/src/share/modules \
+      $(NASHORN_TOPDIR)/src/share/modules \
+      $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/modules \
+      $(JDK_OUTPUTDIR)/gensrc \
+      $(LANGTOOLS_OUTPUTDIR)/gensrc \
+      $(CORBA_OUTPUTDIR)/gensrc \
+      $(JDK_OUTPUTDIR)/gensrc_no_srczip \
+      #
 
-# Import nashorn.jar from nashorn dist dir.
-$(JDK_OUTPUTDIR)/lib/ext/nashorn.jar: $(NASHORN_DIST)/nashorn.jar
+  $(MODULES_SER_OUT): $(BUILD_CLASSANALYZER) \
+      $(wildcard $(JDK_OUTPUTDIR)/modules/_* $(JDK_OUTPUTDIR)/modules/*/_*)
+	$(RM) $@
+	$(MKDIR) -p $(@D)
+	$(TOOL_GENMODULEGRAPH) \
+	  -sourcepath "$(subst $(SPACE),$(PATH_SEP),$(ALL_SRC_DIRS))" \
+	  -buildmodules $(JDK_OUTPUTDIR)/modules \
+	  -o $@
+
+else
+
+  # Import nashorn.jar from nashorn dist dir.
+  $(JDK_OUTPUTDIR)/lib/ext/nashorn.jar: $(NASHORN_DIST)/nashorn.jar
 	$(install-file)
 
-$(MODULES_SER_OUT): $(BUILD_CLASSANALYZER) \
-    $(CLASSANALYZER_RESOURCES)/classanalyzer.properties \
-    $(CLASSANALYZER_RESOURCES)/modules.def \
-    $(CLASSANALYZER_RESOURCES)/modules.properties \
-    $(wildcard $(JDK_OUTPUTDIR)/classes/_the*) \
-    $(JDK_OUTPUTDIR)/lib/ext/nashorn.jar
+  $(MODULES_SER_OUT): $(BUILD_CLASSANALYZER) \
+      $(wildcard $(JDK_OUTPUTDIR)/classes/_the*) \
+      $(JDK_OUTPUTDIR)/lib/ext/nashorn.jar
 	$(RM) -rf $(MODULE_CLASSLIST_DIR) \
-		  $(MODULEINFO_DIR) \
-                  $(MODULES_SER_OUT) \
-	          $(JDK_OUTPUTDIR)/modules
+	  $(MODULEINFO_DIR) \
+	  $(MODULES_SER_OUT) \
+	  $(JDK_OUTPUTDIR)/modules
 	$(TOOL_CLASSANALYZER) \
-                --version $(MODULE_VERSION) \
-                --classlist $(MODULE_CLASSLIST_DIR) \
-                --out $(MODULES_SER_OUT) \
-                --moduleinfo $(MODULEINFO_DIR)
+	  --version $(MODULE_VERSION) \
+	  --classlist $(MODULE_CLASSLIST_DIR) \
+	  --out $(MODULES_SER_OUT) \
+	  --moduleinfo $(MODULEINFO_DIR)
 	if [ -f $(MODULE_CLASSLIST_DIR)/other.summary ] ; then \
-	    $(ECHO) "ERROR: Check module \"other\". modules.config possibly requires update." ; \
-	    exit 2; \
+	  $(ECHO) "ERROR: Check module \"other\". modules.config possibly requires update." ; \
+	  exit 2; \
 	fi
+
+endif
 
 all: $(MODULES_SER_OUT)
 

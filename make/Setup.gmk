@@ -60,6 +60,12 @@ $(eval $(call SetupJavaCompiler,GENERATE_JDKBYTECODE, \
     SERVER_DIR := $(SJAVAC_SERVER_DIR), \
     SERVER_JVM := $(SJAVAC_SERVER_JAVA)))
 
+ifeq ($(JIGSAW), true)
+  JDK_BOOTCLASSPATH := $(subst $(SPACE),$(PATH_SEP),\
+      $(filter-out $(JDK_OUTPUTDIR)/modules/_%, $(wildcard $(JDK_OUTPUTDIR)/modules/*)))
+else
+  JDK_BOOTCLASSPATH := $(JDK_OUTPUTDIR)/classes
+endif
 # After the jdk is built, we want to build demos using only the recently
 # generated jdk classes and nothing else, no jdk source, etc etc.
 # I.e. the rt.jar, but since rt.jar has not yet been generated
@@ -67,7 +73,7 @@ $(eval $(call SetupJavaCompiler,GENERATE_JDKBYTECODE, \
 $(eval $(call SetupJavaCompiler,GENERATE_USINGJDKBYTECODE, \
     JVM := $(JAVA), \
     JAVAC := $(NEW_JAVAC), \
-    FLAGS := -bootclasspath $(JDK_OUTPUTDIR)/classes $(DISABLE_WARNINGS), \
+    FLAGS := -bootclasspath "$(JDK_BOOTCLASSPATH)" $(DISABLE_WARNINGS), \
     SERVER_DIR := $(SJAVAC_SERVER_DIR), \
     SERVER_JVM := $(SJAVAC_SERVER_JAVA)))
 
