@@ -102,7 +102,14 @@ jdk: java-compile jdk-gendata jdk-genclasses jdk-libs jdk-launchers
 
 ################################################################################
 
-all: jdk nashorn
+java-modules: java-compile nashorn
+	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f GenerateModules.gmk JIGSAW=true)
+
+.PHONY: java-modules
+
+################################################################################
+
+all: jdk java-modules
 
 .PHONY: default all
 

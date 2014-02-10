@@ -245,8 +245,13 @@ ifeq ($(OPENJDK_TARGET_OS), macosx)
 endif
 
 # Find all modules with java sources by looking in the source dirs
-JAVA_MODULES := $(sort $(notdir $(wildcard \
+#JAVA_MODULES := $(sort $(notdir $(wildcard \
     $(patsubst %,%/*,$(filter %modules, $(ALL_SRC_DIRS))))))
+# For now we must only include modules that has actual source in them. When
+# javac accepts module-info.java, revert back to the line above.
+JAVA_MODULES := $(sort $(notdir $(patsubst %/,%, $(dir \
+    $(filter-out %module-info.java, $(wildcard \
+    $(patsubst %,%/*/*,$(filter %modules, $(ALL_SRC_DIRS)))))))))
 
 MODULES_LIST_FILE := $(OUTPUT_ROOT)/jdk/genmodules/classlist/modules.list
 
@@ -263,6 +268,9 @@ define SetupModuleCompilation
     # Need to set the bootclasspath for java.base too.
     $1_JAVAC_FLAGS := -bootclasspath $(JDK_OUTPUTDIR)/modules/$1
   endif
+
+  # Remove this line to let javac see module-info.java files.
+  $1_EXCLUDE_FILES += module-info.java
 
   $$(eval $$(call SetupJavaCompilation,$1, \
       SETUP := GENERATE_JDKBYTECODE, \
