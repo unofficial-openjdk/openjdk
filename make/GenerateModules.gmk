@@ -37,11 +37,16 @@ CLASSANALYZER_RESOURCES := $(CLASSANALYZER_CLASSES)/com/sun/tools/classanalyzer/
 $(CLASSANALYZER_CLASSES)/com/sun/tools/classanalyzer/resources/% : $(JDK_TOPDIR)/make/modules/tools/src/com/sun/tools/classanalyzer/resources/%
 	$(call install-file)
 
+# Import nashorn.jar from nashorn dist dir.
+$(JDK_OUTPUTDIR)/lib/ext/nashorn.jar: $(NASHORN_DIST)/nashorn.jar
+	$(install-file)
+
 $(MODULES_SER_OUT): $(BUILD_CLASSANALYZER) \
     $(CLASSANALYZER_RESOURCES)/classanalyzer.properties \
     $(CLASSANALYZER_RESOURCES)/modules.def \
     $(CLASSANALYZER_RESOURCES)/modules.properties \
-    $(wildcard $(JDK_OUTPUTDIR)/classes/_the*)
+    $(wildcard $(JDK_OUTPUTDIR)/classes/_the*) \
+    $(JDK_OUTPUTDIR)/lib/ext/nashorn.jar
 	$(RM) -rf $(MODULE_CLASSLIST_DIR) \
 		  $(MODULEINFO_DIR) \
                   $(MODULES_SER_OUT) \

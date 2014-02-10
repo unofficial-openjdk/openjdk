@@ -53,6 +53,7 @@ SRC_ROOTS := \
     $(JAXWS_TOPDIR)/src/share/jaf_classes \
     $(CORBA_TOPDIR)/src/share/classes \
     $(LANGTOOLS_TOPDIR)/src/share/classes \
+    $(NASHORN_TOPDIR)/src \
     #
 
 # This macro sets up rules for copying the contents for one module
@@ -88,6 +89,9 @@ define CopyModule
   $(JDK_OUTPUTDIR)/modules/$1/%: $(JDK_OUTPUTDIR)/jobjc_classes/%
 	$$(install-file)
 
+  $(JDK_OUTPUTDIR)/modules/$1/%: $(NASHORN_OUTPUTDIR)/classes/%
+	$$(install-file)
+
   BUILD_TARGET_FILES += $$(addprefix $(JDK_OUTPUTDIR)/modules/$1/, \
       $$($1_CLASS_LIST) $$($1_RESOURCE_LIST))
 
@@ -120,6 +124,9 @@ define CopyModule
   $(LANGTOOLS_TOPDIR)/src/share/modules/$1/%: $(LANGTOOLS_TOPDIR)/src/share/classes/%
 	$$(module-copy-file)
 
+  $(NASHORN_TOPDIR)/src/share/modules/$1/%: $(NASHORN_TOPDIR)/src/%
+	$$(module-copy-file)
+
   SRC_TARGET_FILES += \
       $$(patsubst $(JDK_TOPDIR)/src/share/classes/%,$(JDK_TOPDIR)/src/share/modules/$1/%, \
       $$(patsubst $(JDK_TOPDIR)/src/macosx/classes/%, $(JDK_TOPDIR)/src/macosx/modules/$1/%, \
@@ -130,7 +137,8 @@ define CopyModule
       $$(patsubst $(JAXWS_TOPDIR)/src/share/jaf_classes/%,$(JAXWS_TOPDIR)/src/share/modules/$1/%,\
       $$(patsubst $(CORBA_TOPDIR)/src/share/classes/%,$(CORBA_TOPDIR)/src/share/modules/$1/%,\
       $$(patsubst $(LANGTOOLS_TOPDIR)/src/share/classes/%,$(LANGTOOLS_TOPDIR)/src/share/modules/$1/%,\
-          $$($1_SRC_FILES))))))))))
+      $$(patsubst $(NASHORN_TOPDIR)/src/%,$(NASHORN_TOPDIR)/src/share/modules/$1/%,\
+          $$($1_SRC_FILES)))))))))))
 endef
 
 # Find all modules that have classes and iterate over them
@@ -298,6 +306,11 @@ $(eval $(call SetupCopyFiles,COPY_AWT_RESOURCES_MACOSX, \
     SRC := $(JDK_TOPDIR)/src/macosx/classes, \
     DEST := $(JDK_TOPDIR)/src/macosx/modules/java.desktop, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/macosx/classes/sun/awt/resources/*.properties)))
+
+$(eval $(call SetupCopyFiles,COPY_NASHORN_RESOURCES, \
+    SRC := $(NASHORN_TOPDIR)/src, \
+    DEST := $(NASHORN_TOPDIR)/src/share/modules/jdk.nashorn, \
+    FILES := $(NASHORN_TOPDIR)/src/jdk/nashorn/internal/runtime/resources/version.properties-template))
 
 ################################################################################
 
@@ -1096,6 +1109,7 @@ shuffle-src: \
     $(COPY_BREAK_ITERATOR_RULES) \
     $(COPY_APPLE_LAF) \
     $(COPY_AWT_RESOURCES_MACOSX) \
+    $(COPY_NASHORN_RESOURCES) \
     $(COPY_LIBFDLIBM) \
     $(COPY_LIBVERIFY) \
     $(COPY_LIBJAVA_SOLARIS) \
@@ -1213,6 +1227,7 @@ clean-src:
 	$(RM) -r $(JAXWS_TOPDIR)/src/share/modules
 	$(RM) -r $(CORBA_TOPDIR)/src/share/modules
 	$(RM) -r $(LANGTOOLS_TOPDIR)/src/share/modules
+	$(RM) -r $(NASHORN_TOPDIR)/src/share/modules
 	$(RM) -r $(CORBA_TOPDIR)/make/tools/src/com
 	$(RM) -r $(JDK_TOPDIR)/make/src/classes/build/tools/x11wrappergenerator
 	$(RM) -r $(JDK_TOPDIR)/make/data/x11wrappergenerator
@@ -1222,6 +1237,7 @@ clean-src:
 	$(RM) -r $(JDK_TOPDIR)/src/*/native/unpack200
 	$(RM) -r $(JDK_TOPDIR)/src/*/native/launchers
 	$(RM) -r $(JDK_TOPDIR)/make/src/native/genconstants
+	$(RM) -r $(JDK_TOPDIR)/make/data/macosxicons
 
 clean-build:
 	$(RM) -r $(JDK_OUTPUTDIR)/modules
