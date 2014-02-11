@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1012,23 +1012,10 @@ public class Types {
                     }
                 }
 
-                if (t.isCompound()) {
-                    Warner oldWarner = warnStack.head;
-                    warnStack.head = Warner.noWarnings;
-                    if (!visit(supertype(t), s))
-                        return false;
-                    for (Type intf : interfaces(t)) {
-                        if (!visit(intf, s))
-                            return false;
-                    }
-                    if (warnStack.head.hasLint(LintCategory.UNCHECKED))
-                        oldWarner.warn(LintCategory.UNCHECKED);
-                    return true;
-                }
-
-                if (s.isCompound()) {
-                    // call recursively to reuse the above code
-                    return visitClassType((ClassType)s, t);
+                if (t.isCompound() || s.isCompound()) {
+                    return !t.isCompound() ?
+                            visitIntersectionType((ClassType)s, t, true) :
+                            visitIntersectionType(t, s, false);
                 }
 
                 if (s.tag == CLASS || s.tag == ARRAY) {
@@ -1104,6 +1091,18 @@ public class Types {
                     }
                 }
                 return false;
+            }
+
+            boolean visitIntersectionType(ClassType ict, Type s, boolean reverse) {
+                Warner warn = Warner.noWarnings;
+                for (Type c : ict.getComponents()) {
+                    warn.clear();
+                    if (reverse ? !isCastable(s, c, warn) : !isCastable(c, s, warn))
+                        return false;
+                }
+                if (warn.hasLint(LintCategory.UNCHECKED))
+                    warnStack.head.warn(LintCategory.UNCHECKED);
+                return true;
             }
 
             @Override
@@ -3369,11 +3368,18 @@ public class Types {
     }
 
     private boolean giveWarning(Type from, Type to) {
-        Type subFrom = asSub(from, to.tsym);
-        return to.isParameterized() &&
-                (!(isUnbounded(to) ||
-                isSubtype(from, to) ||
-                ((subFrom != null) && containsType(to.allparams(), subFrom.allparams()))));
+        List<Type> bounds = to.isCompound() ?
+                ((ClassType)to).getComponents() : List.of(to);
+        for (Type b : bounds) {
+            Type subFrom = asSub(from, b.tsym);
+            if (b.isParameterized() &&
+                    (!(isUnbounded(b) ||
+                    isSubtype(from, b) ||
+                    ((subFrom != null) && containsType(b.allparams(), subFrom.allparams()))))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private List<Type> superClosure(Type t, Type s) {
