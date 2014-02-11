@@ -623,8 +623,6 @@ bool IdealLoopTree::policy_maximally_unroll( PhaseIdealLoop *phase ) const {
 }
 
 
-#define MAX_UNROLL 16 // maximum number of unrolls for main loop
-
 //------------------------------policy_unroll----------------------------------
 // Return TRUE or FALSE if the loop should be unrolled or not.  Unroll if
 // the loop is a CountedLoop and the body is small enough.
@@ -641,7 +639,7 @@ bool IdealLoopTree::policy_unroll( PhaseIdealLoop *phase ) const {
   if (cl->trip_count() <= (uint)(cl->is_normal_loop() ? 2 : 1)) return false;
 
   int future_unroll_ct = cl->unrolled_count() * 2;
-  if (future_unroll_ct > MAX_UNROLL) return false;
+  if (future_unroll_ct > LoopMaxUnroll) return false;
 
   // Check for initial stride being a small enough constant
   if (abs(cl->stride_con()) > (1<<2)*future_unroll_ct) return false;
@@ -1956,7 +1954,7 @@ void PhaseIdealLoop::do_range_check( IdealLoopTree *loop, Node_List &old_new ) {
       // Find loads off the surviving projection; remove their control edge
       for (DUIterator_Fast imax, i = dp->fast_outs(imax); i < imax; i++) {
         Node* cd = dp->fast_out(i); // Control-dependent node
-        if( cd->is_Load() ) {   // Loads can now float around in the loop
+        if (cd->is_Load() && cd->depends_only_on_test()) {   // Loads can now float around in the loop
           // Allow the load to float around in the loop, or before it
           // but NOT before the pre-loop.
           _igvn.replace_input_of(cd, 0, ctrl); // ctrl, not NULL

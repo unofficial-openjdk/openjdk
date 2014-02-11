@@ -90,14 +90,16 @@ jint ParallelScavengeHeap::initialize() {
                   og_min_size, og_max_size,
                   yg_min_size, yg_max_size);
 
-  // The ReservedSpace ctor used below requires that the page size for the perm
-  // gen is <= the page size for the rest of the heap (young + old gens).
   const size_t og_page_sz = os::page_size_for_region(yg_min_size + og_min_size,
                                                      yg_max_size + og_max_size,
                                                      8);
-  const size_t pg_page_sz = MIN2(os::page_size_for_region(pg_min_size,
-                                                          pg_max_size, 16),
-                                 og_page_sz);
+
+  // Use the same page size for both perm gen and old gen,
+  // to allow large pages to be allocated when the heap is reserved
+  // for the implementations that can't 'commit' large pages.
+  // NEEDS_CLEANUP. ReservedHeapSpace/ReservedSpace that takes both
+  // a prefix and a suffix alignment can now be removed.
+  const size_t pg_page_sz = og_page_sz;
 
   const size_t pg_align = set_alignment(_perm_gen_alignment,  pg_page_sz);
   const size_t og_align = set_alignment(_old_gen_alignment,   og_page_sz);
@@ -138,12 +140,9 @@ jint ParallelScavengeHeap::initialize() {
   total_reserved = add_and_check_overflow(total_reserved, og_max_size);
   total_reserved = add_and_check_overflow(total_reserved, yg_max_size);
 
-  char* addr = Universe::preferred_heap_base(total_reserved, Universe::UnscaledNarrowOop);
+  assert(is_size_aligned(total_reserved, og_align), "Must be");
 
-  // The main part of the heap (old gen + young gen) can often use a larger page
-  // size than is needed or wanted for the perm gen.  Use the "compound
-  // alignment" ReservedSpace ctor to avoid having to use the same page size for
-  // all gens.
+  char* addr = Universe::preferred_heap_base(total_reserved, og_align, Universe::UnscaledNarrowOop);
 
   ReservedHeapSpace heap_rs(pg_max_size, pg_align, og_max_size + yg_max_size,
                             og_align, addr);
@@ -153,12 +152,12 @@ jint ParallelScavengeHeap::initialize() {
       // Failed to reserve at specified address - the requested memory
       // region is taken already, for example, by 'java' launcher.
       // Try again to reserver heap higher.
-      addr = Universe::preferred_heap_base(total_reserved, Universe::ZeroBasedNarrowOop);
+      addr = Universe::preferred_heap_base(total_reserved, og_align, Universe::ZeroBasedNarrowOop);
       ReservedHeapSpace heap_rs0(pg_max_size, pg_align, og_max_size + yg_max_size,
                                  og_align, addr);
       if (addr != NULL && !heap_rs0.is_reserved()) {
         // Failed to reserve at specified address again - give up.
-        addr = Universe::preferred_heap_base(total_reserved, Universe::HeapBasedNarrowOop);
+        addr = Universe::preferred_heap_base(total_reserved, og_align, Universe::HeapBasedNarrowOop);
         assert(addr == NULL, "");
         ReservedHeapSpace heap_rs1(pg_max_size, pg_align, og_max_size + yg_max_size,
                                    og_align, addr);

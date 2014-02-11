@@ -3530,10 +3530,14 @@ bool os::Solaris::set_mpss_range(caddr_t start, size_t bytes, size_t align) {
   return true;
 }
 
-char* os::reserve_memory_special(size_t size, char* addr, bool exec) {
+char* os::reserve_memory_special(size_t size, size_t alignment, char* addr, bool exec) {
   // "exec" is passed in but not used.  Creating the shared image for
   // the code cache doesn't have an SHM_X executable permission to check.
   assert(UseLargePages && UseISM, "only for ISM large pages");
+
+  if (!is_size_aligned(size, os::large_page_size()) || alignment > os::large_page_size()) {
+    return NULL; // Fallback to small pages.
+  }
 
   char* retAddr = NULL;
   int shmid;
@@ -6862,3 +6866,9 @@ int os::get_core_path(char* buffer, size_t bufferSize) {
 
   return strlen(buffer);
 }
+
+#ifndef PRODUCT
+void TestReserveMemorySpecial_test() {
+  // No tests available for this platform
+}
+#endif

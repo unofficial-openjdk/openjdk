@@ -1997,7 +1997,7 @@ void CMSCollector::do_compaction_work(bool clear_all_soft_refs) {
   GenCollectedHeap* gch = GenCollectedHeap::heap();
 
   STWGCTimer* gc_timer = GenMarkSweep::gc_timer();
-  gc_timer->register_gc_start(os::elapsed_counter());
+  gc_timer->register_gc_start();
 
   SerialOldTracer* gc_tracer = GenMarkSweep::gc_tracer();
   gc_tracer->report_gc_start(gch->gc_cause(), gc_timer->gc_start());
@@ -2094,7 +2094,7 @@ void CMSCollector::do_compaction_work(bool clear_all_soft_refs) {
     size_policy()->msc_collection_end(gch->gc_cause());
   }
 
-  gc_timer->register_gc_end(os::elapsed_counter());
+  gc_timer->register_gc_end();
 
   gc_tracer->report_gc_end(gc_timer->gc_end(), gc_timer->time_partitions());
 
@@ -2443,7 +2443,7 @@ void CMSCollector::register_foreground_gc_start(GCCause::Cause cause) {
 
 void CMSCollector::register_gc_start(GCCause::Cause cause) {
   _cms_start_registered = true;
-  _gc_timer_cm->register_gc_start(os::elapsed_counter());
+  _gc_timer_cm->register_gc_start();
   _gc_tracer_cm->report_gc_start(cause, _gc_timer_cm->gc_start());
 }
 
@@ -2451,7 +2451,7 @@ void CMSCollector::register_gc_end() {
   if (_cms_start_registered) {
     report_heap_summary(GCWhen::AfterGC);
 
-    _gc_timer_cm->register_gc_end(os::elapsed_counter());
+    _gc_timer_cm->register_gc_end();
     _gc_tracer_cm->report_gc_end(_gc_timer_cm->gc_end(), _gc_timer_cm->time_partitions());
     _cms_start_registered = false;
   }
@@ -2510,8 +2510,7 @@ void CMSCollector::collect_in_foreground(bool clear_all_soft_refs, GCCause::Caus
         // initial marking in checkpointRootsInitialWork has been completed
         if (VerifyDuringGC &&
             GenCollectedHeap::heap()->total_collections() >= VerifyGCStartAt) {
-          gclog_or_tty->print("Verify before initial mark: ");
-          Universe::verify();
+          Universe::verify("Verify before initial mark: ");
         }
         {
           bool res = markFromRoots(false);
@@ -2522,8 +2521,7 @@ void CMSCollector::collect_in_foreground(bool clear_all_soft_refs, GCCause::Caus
       case FinalMarking:
         if (VerifyDuringGC &&
             GenCollectedHeap::heap()->total_collections() >= VerifyGCStartAt) {
-          gclog_or_tty->print("Verify before re-mark: ");
-          Universe::verify();
+          Universe::verify("Verify before re-mark: ");
         }
         checkpointRootsFinal(false, clear_all_soft_refs,
                              init_mark_was_synchronous);
@@ -2534,8 +2532,7 @@ void CMSCollector::collect_in_foreground(bool clear_all_soft_refs, GCCause::Caus
         // final marking in checkpointRootsFinal has been completed
         if (VerifyDuringGC &&
             GenCollectedHeap::heap()->total_collections() >= VerifyGCStartAt) {
-          gclog_or_tty->print("Verify before sweep: ");
-          Universe::verify();
+          Universe::verify("Verify before sweep: ");
         }
         sweep(false);
         assert(_collectorState == Resizing, "Incorrect state");
@@ -2550,8 +2547,7 @@ void CMSCollector::collect_in_foreground(bool clear_all_soft_refs, GCCause::Caus
         // The heap has been resized.
         if (VerifyDuringGC &&
             GenCollectedHeap::heap()->total_collections() >= VerifyGCStartAt) {
-          gclog_or_tty->print("Verify before reset: ");
-          Universe::verify();
+          Universe::verify("Verify before reset: ");
         }
         save_heap_summary();
         reset(false);
@@ -2890,8 +2886,8 @@ class VerifyMarkedClosure: public BitMapClosure {
   bool failed() { return _failed; }
 };
 
-bool CMSCollector::verify_after_remark() {
-  gclog_or_tty->print(" [Verifying CMS Marking... ");
+bool CMSCollector::verify_after_remark(bool silent) {
+  if (!silent) gclog_or_tty->print(" [Verifying CMS Marking... ");
   MutexLockerEx ml(verification_mark_bm()->lock(), Mutex::_no_safepoint_check_flag);
   static bool init = false;
 
@@ -2952,7 +2948,7 @@ bool CMSCollector::verify_after_remark() {
     warning("Unrecognized value %d for CMSRemarkVerifyVariant",
             CMSRemarkVerifyVariant);
   }
-  gclog_or_tty->print(" done] ");
+  if (!silent) gclog_or_tty->print(" done] ");
   return true;
 }
 
@@ -9432,4 +9428,3 @@ TraceCMSMemoryManagerStats::TraceCMSMemoryManagerStats(CMSCollector::CollectorSt
       ShouldNotReachHere();
   }
 }
-

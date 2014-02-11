@@ -1078,11 +1078,66 @@ bool constantPoolOopDesc::compare_entry_to(int index1, constantPoolHandle cp2,
 } // end compare_entry_to()
 
 
+void constantPoolOopDesc::copy_operands(constantPoolHandle from_cp,
+                                        constantPoolHandle to_cp,
+                                        TRAPS) {
+
+  int from_oplen = operand_array_length(from_cp->operands());
+  int old_oplen  = operand_array_length(to_cp->operands());
+  if (from_oplen != 0) {
+    // append my operands to the target's operands array
+    if (old_oplen == 0) {
+      to_cp->set_operands(from_cp->operands());  // reuse; do not merge
+    } else {
+      int old_len  = to_cp->operands()->length();
+      int from_len = from_cp->operands()->length();
+      int old_off  = old_oplen * sizeof(u2);
+      int from_off = from_oplen * sizeof(u2);
+      typeArrayHandle new_operands = oopFactory::new_permanent_shortArray(old_len + from_len, CHECK);
+      int fillp = 0, len = 0;
+      // first part of dest
+      Copy::conjoint_memory_atomic(to_cp->operands()->short_at_addr(0),
+                                   new_operands->short_at_addr(fillp),
+                                   (len = old_off) * sizeof(u2));
+      fillp += len;
+      // first part of src
+      Copy::conjoint_memory_atomic(from_cp->operands()->short_at_addr(0),
+                                   new_operands->short_at_addr(fillp),
+                                   (len = from_off) * sizeof(u2));
+      fillp += len;
+      // second part of dest
+      Copy::conjoint_memory_atomic(to_cp->operands()->short_at_addr(old_off),
+                                   new_operands->short_at_addr(fillp),
+                                   (len = old_len - old_off) * sizeof(u2));
+      fillp += len;
+      // second part of src
+      Copy::conjoint_memory_atomic(from_cp->operands()->short_at_addr(from_off),
+                                   new_operands->short_at_addr(fillp),
+                                   (len = from_len - from_off) * sizeof(u2));
+      fillp += len;
+      assert(fillp == new_operands->length(), "");
+
+      // Adjust indexes in the first part of the copied operands array.
+      for (int j = 0; j < from_oplen; j++) {
+        int offset = operand_offset_at(new_operands(), old_oplen + j);
+        assert(offset == operand_offset_at(from_cp->operands(), j), "correct copy");
+        offset += old_len;  // every new tuple is preceded by old_len extra u2's
+        operand_offset_at_put(new_operands(), old_oplen + j, offset);
+      }
+
+      // replace target operands array with combined array
+      to_cp->set_operands(new_operands());
+    }
+  }
+} // end copy_operands()
+
+
 // Copy this constant pool's entries at start_i to end_i (inclusive)
 // to the constant pool to_cp's entries starting at to_i. A total of
 // (end_i - start_i) + 1 entries are copied.
 void constantPoolOopDesc::copy_cp_to_impl(constantPoolHandle from_cp, int start_i, int end_i,
        constantPoolHandle to_cp, int to_i, TRAPS) {
+
 
   int dest_i = to_i;  // leave original alone for debug purposes
 
@@ -1104,56 +1159,9 @@ void constantPoolOopDesc::copy_cp_to_impl(constantPoolHandle from_cp, int start_
       break;
     }
   }
+  copy_operands(from_cp, to_cp, CHECK);
 
-  int from_oplen = operand_array_length(from_cp->operands());
-  int old_oplen  = operand_array_length(to_cp->operands());
-  if (from_oplen != 0) {
-    // append my operands to the target's operands array
-    if (old_oplen == 0) {
-      to_cp->set_operands(from_cp->operands());  // reuse; do not merge
-    } else {
-      int old_len  = to_cp->operands()->length();
-      int from_len = from_cp->operands()->length();
-      int old_off  = old_oplen * sizeof(u2);
-      int from_off = from_oplen * sizeof(u2);
-      typeArrayHandle new_operands = oopFactory::new_permanent_shortArray(old_len + from_len, CHECK);
-      int fillp = 0, len = 0;
-      // first part of dest
-      Copy::conjoint_memory_atomic(to_cp->operands()->short_at_addr(0),
-                                   new_operands->short_at_addr(fillp),
-                                   (len = old_off) * sizeof(u2));
-      fillp += len;
-      // first part of src
-      Copy::conjoint_memory_atomic(to_cp->operands()->short_at_addr(0),
-                                   new_operands->short_at_addr(fillp),
-                                   (len = from_off) * sizeof(u2));
-      fillp += len;
-      // second part of dest
-      Copy::conjoint_memory_atomic(to_cp->operands()->short_at_addr(old_off),
-                                   new_operands->short_at_addr(fillp),
-                                   (len = old_len - old_off) * sizeof(u2));
-      fillp += len;
-      // second part of src
-      Copy::conjoint_memory_atomic(to_cp->operands()->short_at_addr(from_off),
-                                   new_operands->short_at_addr(fillp),
-                                   (len = from_len - from_off) * sizeof(u2));
-      fillp += len;
-      assert(fillp == new_operands->length(), "");
-
-      // Adjust indexes in the first part of the copied operands array.
-      for (int j = 0; j < from_oplen; j++) {
-        int offset = operand_offset_at(new_operands(), old_oplen + j);
-        assert(offset == operand_offset_at(from_cp->operands(), j), "correct copy");
-        offset += old_len;  // every new tuple is preceded by old_len extra u2's
-        operand_offset_at_put(new_operands(), old_oplen + j, offset);
-      }
-
-      // replace target operands array with combined array
-      to_cp->set_operands(new_operands());
-    }
-  }
-
-} // end copy_cp_to()
+} // end copy_cp_to_impl()
 
 
 // Copy this constant pool's entry at from_i to the constant pool

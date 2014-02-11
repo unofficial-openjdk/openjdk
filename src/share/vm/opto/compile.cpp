@@ -642,7 +642,7 @@ Compile::Compile( ciEnv* ci_env, C2Compiler* compiler, ciMethod* target, int osr
                   _inlining_progress(false),
                   _inlining_incrementally(false),
                   _print_inlining_list(NULL),
-                  _print_inlining(0) {
+                  _print_inlining_idx(0) {
   C = this;
 
   CompileWrapper cw(this);
@@ -667,6 +667,8 @@ Compile::Compile( ciEnv* ci_env, C2Compiler* compiler, ciMethod* target, int osr
   set_print_assembly(print_opto_assembly);
   set_parsed_irreducible_loop(false);
 #endif
+  set_print_inlining(PrintInlining || method()->has_option("PrintInlining") NOT_PRODUCT( || PrintOptoInlining));
+  set_print_intrinsics(PrintIntrinsics || method()->has_option("PrintIntrinsics"));
 
   if (ProfileTraps) {
     // Make sure the method being compiled gets its own MDO,
@@ -698,7 +700,7 @@ Compile::Compile( ciEnv* ci_env, C2Compiler* compiler, ciMethod* target, int osr
   PhaseGVN gvn(node_arena(), estimated_size);
   set_initial_gvn(&gvn);
 
-  if (PrintInlining  || PrintIntrinsics NOT_PRODUCT( || PrintOptoInlining)) {
+  if (print_inlining() || print_intrinsics()) {
     _print_inlining_list = new (comp_arena())GrowableArray<PrintInliningBuffer>(comp_arena(), 1, 1, PrintInliningBuffer());
   }
   { // Scope for timing the parser
@@ -832,6 +834,7 @@ Compile::Compile( ciEnv* ci_env, C2Compiler* compiler, ciMethod* target, int osr
   }
 #endif
 
+  NOT_PRODUCT( verify_barriers(); )
   // Now that we know the size of all the monitors we can add a fixed slot
   // for the original deopt pc.
 
@@ -924,7 +927,7 @@ Compile::Compile( ciEnv* ci_env,
     _inlining_progress(false),
     _inlining_incrementally(false),
     _print_inlining_list(NULL),
-    _print_inlining(0) {
+    _print_inlining_idx(0) {
   C = this;
 
 #ifndef PRODUCT
@@ -3237,6 +3240,72 @@ void Compile::verify_graph_edges(bool no_dead_code) {
     }
   }
 }
+
+// Verify GC barriers consistency
+// Currently supported:
+// - G1 pre-barriers (see GraphKit::g1_write_barrier_pre())
+void Compile::verify_barriers() {
+  if (UseG1GC) {
+    // Verify G1 pre-barriers
+    const int marking_offset = in_bytes(JavaThread::satb_mark_queue_offset() + PtrQueue::byte_offset_of_active());
+
+    ResourceArea *area = Thread::current()->resource_area();
+    Unique_Node_List visited(area);
+    Node_List worklist(area);
+    // We're going to walk control flow backwards starting from the Root
+    worklist.push(_root);
+    while (worklist.size() > 0) {
+      Node* x = worklist.pop();
+      if (x == NULL || x == top()) continue;
+      if (visited.member(x)) {
+        continue;
+      } else {
+        visited.push(x);
+      }
+
+      if (x->is_Region()) {
+        for (uint i = 1; i < x->req(); i++) {
+          worklist.push(x->in(i));
+        }
+      } else {
+        worklist.push(x->in(0));
+        // We are looking for the pattern:
+        //                            /->ThreadLocal
+        // If->Bool->CmpI->LoadB->AddP->ConL(marking_offset)
+        //              \->ConI(0)
+        // We want to verify that the If and the LoadB have the same control
+        // See GraphKit::g1_write_barrier_pre()
+        if (x->is_If()) {
+          IfNode *iff = x->as_If();
+          if (iff->in(1)->is_Bool() && iff->in(1)->in(1)->is_Cmp()) {
+            CmpNode *cmp = iff->in(1)->in(1)->as_Cmp();
+            if (cmp->Opcode() == Op_CmpI && cmp->in(2)->is_Con() && cmp->in(2)->bottom_type()->is_int()->get_con() == 0
+                && cmp->in(1)->is_Load()) {
+              LoadNode* load = cmp->in(1)->as_Load();
+              if (load->Opcode() == Op_LoadB && load->in(2)->is_AddP() && load->in(2)->in(2)->Opcode() == Op_ThreadLocal
+                  && load->in(2)->in(3)->is_Con()
+                  && load->in(2)->in(3)->bottom_type()->is_intptr_t()->get_con() == marking_offset) {
+
+                Node* if_ctrl = iff->in(0);
+                Node* load_ctrl = load->in(0);
+
+                if (if_ctrl != load_ctrl) {
+                  // Skip possible CProj->NeverBranch in infinite loops
+                  if ((if_ctrl->is_Proj() && if_ctrl->Opcode() == Op_CProj)
+                      && (if_ctrl->in(0)->is_MultiBranch() && if_ctrl->in(0)->Opcode() == Op_NeverBranch)) {
+                    if_ctrl = if_ctrl->in(0)->in(0);
+                  }
+                }
+                assert(load_ctrl != NULL && if_ctrl == load_ctrl, "controls must match");
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
 #endif
 
 // The Compile object keeps track of failure reasons separately from the ciEnv.
@@ -3510,7 +3579,7 @@ void Compile::ConstantTable::fill_jump_table(CodeBuffer& cb, MachConstantNode* n
 }
 
 void Compile::dump_inlining() {
-  if (PrintInlining || PrintIntrinsics NOT_PRODUCT( || PrintOptoInlining)) {
+  if (print_inlining() || print_intrinsics()) {
     // Print inlining message for candidates that we couldn't inline
     // for lack of space or non constant receiver
     for (int i = 0; i < _late_inlines.length(); i++) {
@@ -3534,7 +3603,7 @@ void Compile::dump_inlining() {
       }
     }
     for (int i = 0; i < _print_inlining_list->length(); i++) {
-      tty->print(_print_inlining_list->at(i).ss()->as_string());
+      tty->print(_print_inlining_list->adr_at(i)->ss()->as_string());
     }
   }
 }

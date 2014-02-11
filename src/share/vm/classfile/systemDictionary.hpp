@@ -33,7 +33,7 @@
 #include "runtime/reflectionUtils.hpp"
 #include "utilities/hashtable.hpp"
 #include "utilities/hashtable.inline.hpp"
-#include "trace/traceTime.hpp"
+#include "utilities/ticks.hpp"
 
 // The system dictionary stores all loaded classes and maps:
 //
@@ -616,7 +616,7 @@ private:
   static void add_to_hierarchy(instanceKlassHandle k, TRAPS);
 
   // event based tracing
-  static void post_class_load_event(TracingTime start_time, instanceKlassHandle k,
+  static void post_class_load_event(const Ticks& start_time, instanceKlassHandle k,
                                     Handle initiating_loader);
   static void post_class_unload_events(BoolObjectClosure* is_alive);
 
@@ -678,7 +678,7 @@ private:
   static bool _has_checkPackageAccess;
 
 #if INCLUDE_TRACE
-  static TracingTime _class_unload_time;
+  static Ticks _class_unload_time;
   static BoolObjectClosure* _is_alive;
   static int _no_of_classes_unloading;
   static bool _should_write_unload_events;

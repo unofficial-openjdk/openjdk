@@ -3596,7 +3596,7 @@ void GraphKit::g1_write_barrier_pre(bool do_load,
   Node* marking = __ load(__ ctrl(), marking_adr, TypeInt::INT, active_type, Compile::AliasIdxRaw);
 
   // if (!marking)
-  __ if_then(marking, BoolTest::ne, zero); {
+  __ if_then(marking, BoolTest::ne, zero, unlikely); {
     BasicType index_bt = TypeX_X->basic_type();
     assert(sizeof(size_t) == type2aelembytes(index_bt), "Loading G1 PtrQueue::_index with wrong size.");
     Node* index   = __ load(__ ctrl(), index_adr, TypeX_X, index_bt, Compile::AliasIdxRaw);
@@ -3604,7 +3604,7 @@ void GraphKit::g1_write_barrier_pre(bool do_load,
     if (do_load) {
       // load original value
       // alias_idx correct??
-      pre_val = __ load(no_ctrl, adr, val_type, bt, alias_idx);
+      pre_val = __ load(__ ctrl(), adr, val_type, bt, alias_idx);
     }
 
     // if (pre_val != NULL)

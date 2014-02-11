@@ -266,7 +266,7 @@ bool PSScavenge::invoke_no_policy() {
   assert(_preserved_mark_stack.is_empty(), "should be empty");
   assert(_preserved_oop_stack.is_empty(), "should be empty");
 
-  _gc_timer.register_gc_start(os::elapsed_counter());
+  _gc_timer.register_gc_start();
 
   TimeStamp scavenge_entry;
   TimeStamp scavenge_midpoint;
@@ -325,8 +325,7 @@ bool PSScavenge::invoke_no_policy() {
 
   if (VerifyBeforeGC && heap->total_collections() >= VerifyGCStartAt) {
     HandleMark hm;  // Discard invalid handles created during verification
-    gclog_or_tty->print(" VerifyBeforeGC:");
-    Universe::verify();
+    Universe::verify(" VerifyBeforeGC:");
   }
 
   {
@@ -661,8 +660,7 @@ bool PSScavenge::invoke_no_policy() {
 
   if (VerifyAfterGC && heap->total_collections() >= VerifyGCStartAt) {
     HandleMark hm;  // Discard invalid handles created during verification
-    gclog_or_tty->print(" VerifyAfterGC:");
-    Universe::verify();
+    Universe::verify(" VerifyAfterGC:");
   }
 
   heap->print_heap_after_gc();
@@ -689,7 +687,7 @@ bool PSScavenge::invoke_no_policy() {
 #endif
 
 
-  _gc_timer.register_gc_end(os::elapsed_counter());
+  _gc_timer.register_gc_end();
 
   _gc_tracer.report_gc_end(_gc_timer.gc_end(), _gc_timer.time_partitions());
 

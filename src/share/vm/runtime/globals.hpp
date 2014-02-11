@@ -1917,6 +1917,9 @@ class CommandLineFlags {
   notproduct(bool, ExecuteInternalVMTests, false,                           \
           "Enable execution of internal VM tests.")                         \
                                                                             \
+  notproduct(bool, VerboseInternalVMTests, false,                           \
+          "Turn on logging for internal VM tests.")                         \
+                                                                            \
   product_pd(bool, UseTLAB, "Use thread-local object allocation")           \
                                                                             \
   product_pd(bool, ResizeTLAB,                                              \
@@ -2125,6 +2128,13 @@ class CommandLineFlags {
                                                                             \
   product(intx, PrefetchFieldsAhead, -1,                                    \
           "How many fields ahead to prefetch in oop scan (<= 0 means off)") \
+                                                                            \
+  diagnostic(bool, VerifySilently, false,                                   \
+          "Don't print print the verification progress")                    \
+                                                                            \
+  diagnostic(bool, VerifyDuringStartup, false,                              \
+          "Verify memory system before executing any Java code "            \
+          "during VM initialization")                                       \
                                                                             \
   diagnostic(bool, VerifyBeforeExit, trueInDebug,                           \
           "Verify system before exiting")                                   \
