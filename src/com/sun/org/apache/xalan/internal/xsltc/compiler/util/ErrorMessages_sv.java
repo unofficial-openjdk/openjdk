@@ -90,7 +90,13 @@ public class ErrorMessages_sv extends ListResourceBundle {
  */
 
     // These message should be read from a locale-specific resource bundle
-    private static final Object[][] _contents =  new Object[][] {
+    /** Get the lookup table for error messages.
+     *
+     * @return The message lookup table.
+     */
+    public Object[][] getContents()
+    {
+      return new Object[][] {
         {ErrorMsg.MULTIPLE_STYLESHEET_ERR,
         "Fler \u00E4n en formatmall har definierats i samma fil."},
 
@@ -913,12 +919,5 @@ public class ErrorMessages_sv extends ListResourceBundle {
         "FEATURE_SECURE_PROCESSING: Funktionen kan inte anges till false om s\u00E4kerhetshanteraren anv\u00E4nds."}
     };
 
-    /** Get the lookup table for error messages.
-     *
-     * @return The message lookup table.
-     */
-    public Object[][] getContents()
-    {
-        return _contents;
     }
 }
