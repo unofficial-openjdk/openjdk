@@ -52,11 +52,11 @@ TOOL_COMPILEPROPS_CMD := $(JAVA) -cp $(LANGTOOLS_OUTPUTDIR)/buildtools_classes \
     compileproperties.CompileProperties -quiet
 
 # Lookup the properties that need to be compiled into resource bundles.
-PROPSOURCES := $(shell $(FIND) $(LANGTOOLS_TOPDIR)/src/share/$(MODULES_SUBDIR) -name "*.properties")
+PROPSOURCES := $(shell $(FIND) $(LANGTOOLS_TOPDIR)/$(SRC_SUBDIR)/share/$(MODULES_SUBDIR) -name "*.properties")
 
 # Strip away prefix and suffix, leaving for example only: 
 # "com/sun/tools/javac/resources/javac_zh_CN"
-PROPPATHS := $(patsubst $(LANGTOOLS_TOPDIR)/src/share/$(MODULES_SUBDIR)/%.properties, %, $(PROPSOURCES))
+PROPPATHS := $(patsubst $(LANGTOOLS_TOPDIR)/$(SRC_SUBDIR)/share/$(MODULES_SUBDIR)/%.properties, %, $(PROPSOURCES))
 
 # Generate the list of java files to be created.
 PROPJAVAS := $(patsubst %, $(LANGTOOLS_OUTPUTDIR)/gensrc/%.java, $(PROPPATHS))
