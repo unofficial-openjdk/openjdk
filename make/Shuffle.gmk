@@ -763,6 +763,7 @@ $(eval $(call SetupCopyFiles,COPY_LIBMLIB_IMAGE_SHARE, \
     DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/native/libmlib_image, \
     FILES := $(filter-out \
         %awt_ImagingLib.c \
+        %awt_ImagingLib.h \
         %mlib_c_ImageBlendTable.c \
         %mlib_ImageCopy_Bit.c \
         %mlib_ImageCreate.c \
