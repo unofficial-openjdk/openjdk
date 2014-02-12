@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1034,8 +1034,7 @@ void PSParallelCompact::pre_compact(PreGCValues* pre_gc_values)
 
   if (VerifyBeforeGC && heap->total_collections() >= VerifyGCStartAt) {
     HandleMark hm;  // Discard invalid handles created during verification
-    gclog_or_tty->print(" VerifyBeforeGC:");
-    Universe::verify();
+    Universe::verify(" VerifyBeforeGC:");
   }
 
   // Verify object start arrays
@@ -2041,7 +2040,7 @@ bool PSParallelCompact::invoke_no_policy(bool maximum_heap_compaction) {
 
   ParallelScavengeHeap* heap = gc_heap();
 
-  _gc_timer.register_gc_start(os::elapsed_counter());
+  _gc_timer.register_gc_start();
   _gc_tracer.report_gc_start(heap->gc_cause(), _gc_timer.gc_start());
 
   TimeStamp marking_start;
@@ -2248,8 +2247,7 @@ bool PSParallelCompact::invoke_no_policy(bool maximum_heap_compaction) {
 
   if (VerifyAfterGC && heap->total_collections() >= VerifyGCStartAt) {
     HandleMark hm;  // Discard invalid handles created during verification
-    gclog_or_tty->print(" VerifyAfterGC:");
-    Universe::verify();
+    Universe::verify(" VerifyAfterGC:");
   }
 
   // Re-verify object start arrays
@@ -2285,7 +2283,7 @@ bool PSParallelCompact::invoke_no_policy(bool maximum_heap_compaction) {
   ParallelTaskTerminator::print_termination_counts();
 #endif
 
-  _gc_timer.register_gc_end(os::elapsed_counter());
+  _gc_timer.register_gc_end();
 
   _gc_tracer.report_dense_prefix(dense_prefix(old_space_id));
   _gc_tracer.report_gc_end(_gc_timer.gc_end(), _gc_timer.time_partitions());

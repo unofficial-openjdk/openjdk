@@ -99,17 +99,19 @@ jint GenCollectedHeap::initialize() {
   guarantee(HeapWordSize == wordSize, "HeapWordSize must equal wordSize");
 
   // The heap must be at least as aligned as generations.
-  size_t alignment = Generation::GenGrain;
+  size_t gen_alignment = Generation::GenGrain;
 
   _gen_specs = gen_policy()->generations();
   PermanentGenerationSpec *perm_gen_spec =
                                 collector_policy()->permanent_generation();
 
+  size_t heap_alignment = collector_policy()->max_alignment();
+
   // Make sure the sizes are all aligned.
   for (i = 0; i < _n_gens; i++) {
-    _gen_specs[i]->align(alignment);
+    _gen_specs[i]->align(gen_alignment);
   }
-  perm_gen_spec->align(alignment);
+  perm_gen_spec->align(heap_alignment);
 
   // If we are dumping the heap, then allocate a wasted block of address
   // space in order to push the heap to a lower address.  This extra
@@ -130,9 +132,9 @@ jint GenCollectedHeap::initialize() {
   char* heap_address;
   size_t total_reserved = 0;
   int n_covered_regions = 0;
-  ReservedSpace heap_rs(0);
+  ReservedSpace heap_rs;
 
-  heap_address = allocate(alignment, perm_gen_spec, &total_reserved,
+  heap_address = allocate(heap_alignment, perm_gen_spec, &total_reserved,
                           &n_covered_regions, &heap_rs);
 
   if (UseSharedSpaces) {
@@ -142,7 +144,7 @@ jint GenCollectedHeap::initialize() {
       }
       FileMapInfo* mapinfo = FileMapInfo::current_info();
       mapinfo->fail_continue("Unable to reserve shared region.");
-      allocate(alignment, perm_gen_spec, &total_reserved, &n_covered_regions,
+      allocate(heap_alignment, perm_gen_spec, &total_reserved, &n_covered_regions,
                &heap_rs);
     }
   }
@@ -207,19 +209,21 @@ char* GenCollectedHeap::allocate(size_t alignment,
   const size_t pageSize = UseLargePages ?
       os::large_page_size() : os::vm_page_size();
 
+  assert(alignment % pageSize == 0, "Must be");
+
   for (int i = 0; i < _n_gens; i++) {
     total_reserved = add_and_check_overflow(total_reserved, _gen_specs[i]->max_size());
     n_covered_regions += _gen_specs[i]->n_covered_regions();
   }
 
-  assert(total_reserved % pageSize == 0,
-         err_msg("Gen size; total_reserved=" SIZE_FORMAT ", pageSize="
-                 SIZE_FORMAT, total_reserved, pageSize));
+  assert(total_reserved % alignment == 0,
+         err_msg("Gen size; total_reserved=" SIZE_FORMAT ", alignment="
+                 SIZE_FORMAT, total_reserved, alignment));
   total_reserved = add_and_check_overflow(total_reserved, perm_gen_spec->max_size());
-  assert(total_reserved % pageSize == 0,
-         err_msg("Perm size; total_reserved=" SIZE_FORMAT ", pageSize="
+  assert(total_reserved % alignment == 0,
+         err_msg("Perm size; total_reserved=" SIZE_FORMAT ", alignment="
                  SIZE_FORMAT ", perm gen max=" SIZE_FORMAT, total_reserved,
-                 pageSize, perm_gen_spec->max_size()));
+                 alignment, perm_gen_spec->max_size()));
 
   n_covered_regions += perm_gen_spec->n_covered_regions();
 
@@ -229,7 +233,9 @@ char* GenCollectedHeap::allocate(size_t alignment,
   total_reserved = add_and_check_overflow(total_reserved, misc);
 
   if (UseLargePages) {
+    assert(misc == 0, "CDS does not support Large Pages");
     assert(total_reserved != 0, "total_reserved cannot be 0");
+    assert(is_size_aligned(total_reserved, os::large_page_size()), "Must be");
     total_reserved = round_up_and_check_overflow(total_reserved, os::large_page_size());
   }
 
@@ -250,7 +256,7 @@ char* GenCollectedHeap::allocate(size_t alignment,
   } else {
     heap_address = NULL;  // any address will do.
     if (UseCompressedOops) {
-      heap_address = Universe::preferred_heap_base(total_reserved, Universe::UnscaledNarrowOop);
+      heap_address = Universe::preferred_heap_base(total_reserved, alignment, Universe::UnscaledNarrowOop);
       *_total_reserved = total_reserved;
       *_n_covered_regions = n_covered_regions;
       *heap_rs = ReservedHeapSpace(total_reserved, alignment,
@@ -260,13 +266,13 @@ char* GenCollectedHeap::allocate(size_t alignment,
         // Failed to reserve at specified address - the requested memory
         // region is taken already, for example, by 'java' launcher.
         // Try again to reserver heap higher.
-        heap_address = Universe::preferred_heap_base(total_reserved, Universe::ZeroBasedNarrowOop);
+        heap_address = Universe::preferred_heap_base(total_reserved, alignment, Universe::ZeroBasedNarrowOop);
         *heap_rs = ReservedHeapSpace(total_reserved, alignment,
                                      UseLargePages, heap_address);
 
         if (heap_address != NULL && !heap_rs->is_reserved()) {
           // Failed to reserve at specified address again - give up.
-          heap_address = Universe::preferred_heap_base(total_reserved, Universe::HeapBasedNarrowOop);
+          heap_address = Universe::preferred_heap_base(total_reserved, alignment, Universe::HeapBasedNarrowOop);
           assert(heap_address == NULL, "");
           *heap_rs = ReservedHeapSpace(total_reserved, alignment,
                                        UseLargePages, heap_address);
@@ -538,8 +544,7 @@ void GenCollectedHeap::do_collection(bool  full,
             prepare_for_verify();
             prepared_for_verification = true;
           }
-          gclog_or_tty->print(" VerifyBeforeGC:");
-          Universe::verify();
+          Universe::verify(" VerifyBeforeGC:");
         }
         COMPILER2_PRESENT(DerivedPointerTable::clear());
 
@@ -610,8 +615,7 @@ void GenCollectedHeap::do_collection(bool  full,
         if (VerifyAfterGC && i >= VerifyGCLevel &&
             total_collections() >= VerifyGCStartAt) {
           HandleMark hm;  // Discard invalid handles created during verification
-          gclog_or_tty->print(" VerifyAfterGC:");
-          Universe::verify();
+          Universe::verify(" VerifyAfterGC:");
         }
 
         if (PrintGCDetails) {
@@ -932,12 +936,13 @@ bool GenCollectedHeap::is_in_young(oop p) {
 // Returns "TRUE" iff "p" points into the committed areas of the heap.
 bool GenCollectedHeap::is_in(const void* p) const {
   #ifndef ASSERT
-  guarantee(VerifyBeforeGC   ||
-            VerifyDuringGC   ||
-            VerifyBeforeExit ||
-            PrintAssembly    ||
-            tty->count() != 0 ||   // already printing
-            VerifyAfterGC    ||
+  guarantee(VerifyBeforeGC      ||
+            VerifyDuringGC      ||
+            VerifyBeforeExit    ||
+            VerifyDuringStartup ||
+            PrintAssembly       ||
+            tty->count() != 0   ||   // already printing
+            VerifyAfterGC       ||
     VMError::fatal_error_in_progress(), "too expensive");
 
   #endif

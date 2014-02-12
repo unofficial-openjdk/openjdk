@@ -1943,11 +1943,12 @@ bool Arguments::check_vm_args_consistency() {
   // than just disable the lock verification. This will be fixed under
   // bug 4788986.
   if (UseConcMarkSweepGC && FLSVerifyAllHeapReferences) {
-    if (VerifyGCStartAt == 0) {
+    if (VerifyDuringStartup) {
       warning("Heap verification at start-up disabled "
               "(due to current incompatibility with FLSVerifyAllHeapReferences)");
-      VerifyGCStartAt = 1;      // Disable verification at start-up
+      VerifyDuringStartup = false; // Disable verification at start-up
     }
+
     if (VerifyBeforeExit) {
       warning("Heap verification at shutdown disabled "
               "(due to current incompatibility with FLSVerifyAllHeapReferences)");
@@ -2549,7 +2550,9 @@ jint Arguments::parse_each_vm_init_arg(const JavaVMInitArgs* args,
          FLAG_SET_CMDLINE(uintx, MaxNewSize, NewSize);
       }
 
+#ifndef _ALLBSD_SOURCE  // UseLargePages is not yet supported on BSD.
       FLAG_SET_DEFAULT(UseLargePages, true);
+#endif
 
       // Increase some data structure sizes for efficiency
       FLAG_SET_CMDLINE(uintx, BaseFootPrintEstimate, MaxHeapSize);
@@ -3109,6 +3112,10 @@ jint Arguments::parse(const JavaVMInitArgs* args) {
 
 #if (defined JAVASE_EMBEDDED || defined ARM)
   UNSUPPORTED_OPTION(UseG1GC, "G1 GC");
+#endif
+
+#ifdef _ALLBSD_SOURCE  // UseLargePages is not yet supported on BSD.
+  UNSUPPORTED_OPTION(UseLargePages, "-XX:+UseLargePages");
 #endif
 
 #ifndef PRODUCT

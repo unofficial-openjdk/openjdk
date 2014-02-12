@@ -194,6 +194,7 @@ template<class E> class GrowableArray : public GenericGrowableArray {
 
   void  clear()                 { _len = 0; }
   int   length() const          { return _len; }
+  int   max_length() const      { return _max; }
   void  trunc_to(int l)         { assert(l <= _len,"cannot increase length"); _len = l; }
   bool  is_empty() const        { return _len == 0; }
   bool  is_nonempty() const     { return _len != 0; }
@@ -276,6 +277,13 @@ template<class E> class GrowableArray : public GenericGrowableArray {
 
   int  find(const E& elem) const {
     for (int i = 0; i < _len; i++) {
+      if (_data[i] == elem) return i;
+    }
+    return -1;
+  }
+
+  int  find_from_end(const E& elem) const {
+    for (int i = _len-1; i >= 0; i--) {
       if (_data[i] == elem) return i;
     }
     return -1;

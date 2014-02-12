@@ -32,6 +32,7 @@ typedef int (*pthread_getattr_func_type) (pthread_t, pthread_attr_t *);
 
 class Linux {
   friend class os;
+  friend class TestReserveMemorySpecial;
 
   // For signal-chaining
 #define MAXSIGNUM 32
@@ -92,7 +93,20 @@ class Linux {
   static void rebuild_cpu_to_node_map();
   static GrowableArray<int>* cpu_to_node()    { return _cpu_to_node; }
 
+  static size_t find_large_page_size();
+  static size_t setup_large_page_size();
+
+  static bool setup_large_page_type(size_t page_size);
+  static bool transparent_huge_pages_sanity_check(bool warn, size_t pages_size);
   static bool hugetlbfs_sanity_check(bool warn, size_t page_size);
+
+  static char* reserve_memory_special_shm(size_t bytes, size_t alignment, char* req_addr, bool exec);
+  static char* reserve_memory_special_huge_tlbfs(size_t bytes, size_t alignment, char* req_addr, bool exec);
+  static char* reserve_memory_special_huge_tlbfs_only(size_t bytes, char* req_addr, bool exec);
+  static char* reserve_memory_special_huge_tlbfs_mixed(size_t bytes, size_t alignment, char* req_addr, bool exec);
+
+  static bool release_memory_special_shm(char* base, size_t bytes);
+  static bool release_memory_special_huge_tlbfs(char* base, size_t bytes);
 
   static void print_full_memory_info(outputStream* st);
   static void print_distro_info(outputStream* st);
@@ -100,7 +114,6 @@ class Linux {
 
  public:
   static bool _stack_is_executable;
-  static volatile jint num_largepage_commit_fails;
   static void *dlopen_helper(const char *name, char *ebuf, int ebuflen);
   static void *dll_load_in_vmthread(const char *name, char *ebuf, int ebuflen);
 
@@ -208,6 +221,13 @@ class Linux {
 
   static jlong fast_thread_cpu_time(clockid_t clockid);
 
+  // pthread_cond clock suppport
+  private:
+  static pthread_condattr_t _condattr[1];
+
+  public:
+  static pthread_condattr_t* condAttr() { return _condattr; }
+
   // Stack repair handling
 
   // none present
@@ -274,7 +294,7 @@ class PlatformEvent : public CHeapObj<mtInternal> {
   public:
     PlatformEvent() {
       int status;
-      status = pthread_cond_init (_cond, NULL);
+      status = pthread_cond_init (_cond, os::Linux::condAttr());
       assert_status(status == 0, status, "cond_init");
       status = pthread_mutex_init (_mutex, NULL);
       assert_status(status == 0, status, "mutex_init");
@@ -289,14 +309,19 @@ class PlatformEvent : public CHeapObj<mtInternal> {
     void park () ;
     void unpark () ;
     int  TryPark () ;
-    int  park (jlong millis) ;
+    int  park (jlong millis) ; // relative timed-wait only
     void SetAssociation (Thread * a) { _Assoc = a ; }
 } ;
 
 class PlatformParker : public CHeapObj<mtInternal> {
   protected:
+    enum {
+      REL_INDEX = 0,
+      ABS_INDEX = 1
+    };
+    int _cur_index; // which cond is in use: -1, 0, 1
     pthread_mutex_t _mutex [1] ;
-    pthread_cond_t  _cond  [1] ;
+    pthread_cond_t _cond [2] ; // one for relative times and one for abs.
 
   public:       // TODO-FIXME: make dtor private
     ~PlatformParker() { guarantee (0, "invariant") ; }
@@ -304,10 +329,13 @@ class PlatformParker : public CHeapObj<mtInternal> {
   public:
     PlatformParker() {
       int status;
-      status = pthread_cond_init (_cond, NULL);
-      assert_status(status == 0, status, "cond_init");
+      status = pthread_cond_init (&_cond[REL_INDEX], os::Linux::condAttr());
+      assert_status(status == 0, status, "cond_init rel");
+      status = pthread_cond_init (&_cond[ABS_INDEX], NULL);
+      assert_status(status == 0, status, "cond_init abs");
       status = pthread_mutex_init (_mutex, NULL);
       assert_status(status == 0, status, "mutex_init");
+      _cur_index = -1; // mark as unused
     }
 };
 

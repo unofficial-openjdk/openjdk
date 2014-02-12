@@ -380,7 +380,7 @@ class Universe: AllStatic {
 
   static NARROW_OOP_MODE narrow_oop_mode();
 
-  static char* preferred_heap_base(size_t heap_size, NARROW_OOP_MODE mode);
+  static char* preferred_heap_base(size_t heap_size, size_t alignment, NARROW_OOP_MODE mode);
 
   // Historic gc information
   static size_t get_heap_capacity_at_last_gc()         { return _heap_capacity_at_last_gc; }
@@ -419,12 +419,12 @@ class Universe: AllStatic {
 
   // Debugging
   static bool verify_in_progress() { return _verify_in_progress; }
-  static void verify(bool silent, VerifyOption option);
-  static void verify(bool silent) {
-    verify(silent, VerifyOption_Default /* option */);
+  static void verify(VerifyOption option, const char* prefix, bool silent = VerifySilently);
+  static void verify(const char* prefix, bool silent = VerifySilently) {
+    verify(VerifyOption_Default, prefix, silent);
   }
-  static void verify() {
-    verify(false /* silent */);
+  static void verify(bool silent = VerifySilently) {
+    verify("", silent);
   }
 
   static int  verify_count()       { return _verify_count; }

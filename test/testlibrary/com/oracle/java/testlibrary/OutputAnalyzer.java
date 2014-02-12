@@ -241,7 +241,38 @@ public final class OutputAnalyzer {
   }
 
   /**
-   * Verifiy the exit value of the process
+   * Get the captured group of the first string matching the pattern.
+   * stderr is searched before stdout.
+   *
+   * @param pattern The multi-line pattern to match
+   * @param group The group to capture
+   * @return The matched string or null if no match was found
+   */
+  public String firstMatch(String pattern, int group) {
+    Matcher stderrMatcher = Pattern.compile(pattern, Pattern.MULTILINE).matcher(stderr);
+    Matcher stdoutMatcher = Pattern.compile(pattern, Pattern.MULTILINE).matcher(stdout);
+    if (stderrMatcher.find()) {
+      return stderrMatcher.group(group);
+    }
+    if (stdoutMatcher.find()) {
+      return stdoutMatcher.group(group);
+    }
+    return null;
+  }
+
+  /**
+   * Get the first string matching the pattern.
+   * stderr is searched before stdout.
+   *
+   * @param pattern The multi-line pattern to match
+   * @return The matched string or null if no match was found
+   */
+  public String firstMatch(String pattern) {
+    return firstMatch(pattern, 0);
+  }
+
+  /**
+   * Verify the exit value of the process
    *
    * @param expectedExitValue Expected exit value from process
    * @throws RuntimeException If the exit value from the process did not match the expected value

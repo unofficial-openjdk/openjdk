@@ -755,6 +755,7 @@ class constantPoolOopDesc : public oopDesc {
     copy_cp_to_impl(h_this, start_i, end_i, to_cp, to_i, THREAD);
   }
   static void copy_cp_to_impl(constantPoolHandle from_cp, int start_i, int end_i, constantPoolHandle to_cp, int to_i, TRAPS);
+  static void copy_operands(constantPoolHandle from_cp, constantPoolHandle to_cp, TRAPS);
   static void copy_entry_to(constantPoolHandle from_cp, int from_i, constantPoolHandle to_cp, int to_i, TRAPS);
   int  find_matching_entry(int pattern_i, constantPoolHandle search_cp, TRAPS);
   int  orig_length() const                { return _orig_length; }

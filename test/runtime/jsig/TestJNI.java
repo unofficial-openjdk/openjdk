@@ -21,25 +21,22 @@
  * questions.
  */
 
-/* @test TestVerifyBeforeGCDuringStartup.java
- * @key gc
- * @bug 8010463
- * @summary Simple test run with -XX:+VerifyBeforeGC -XX:-UseTLAB to verify 8010463
- * @library /testlibrary
- */
-
-import com.oracle.java.testlibrary.OutputAnalyzer;
-import com.oracle.java.testlibrary.ProcessTools;
-
-public class TestVerifyBeforeGCDuringStartup {
-  public static void main(String args[]) throws Exception {
-    ProcessBuilder pb =
-      ProcessTools.createJavaProcessBuilder(System.getProperty("test.vm.opts"),
-                                            "-XX:-UseTLAB",
-                                            "-XX:+UnlockDiagnosticVMOptions",
-                                            "-XX:+VerifyBeforeGC", "-version");
-    OutputAnalyzer output = new OutputAnalyzer(pb.start());
-    output.shouldContain("[Verifying");
-    output.shouldHaveExitValue(0);
-  }
+public class TestJNI {
+    static {
+        System.loadLibrary("TestJNI");
+    }
+    public static native void doSomething(int val);
+    public static void main(String[] args) {
+        int intArg = 43;
+        if (args.length > 0) {
+            try {
+                intArg = Integer.parseInt(args[0]);
+            } catch (NumberFormatException e) {
+                System.err.println("arg " + args[0] + " must be an integer");
+                System.exit(1);
+            }
+        }
+        TestJNI.doSomething(intArg);
+    }
 }
+
