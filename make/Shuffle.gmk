@@ -938,6 +938,7 @@ $(eval $(call SetupCopyFiles,COPY_LIBFONTMANAGER_SHARE, \
         %sunfontids.h, \
         $(wildcard \
         $(JDK_TOPDIR)/src/share/native/sun/font/*.c \
+        $(JDK_TOPDIR)/src/share/native/sun/font/*.cpp \
         $(JDK_TOPDIR)/src/share/native/sun/font/*.h \
         $(JDK_TOPDIR)/src/share/native/sun/font/layout/* \
         ))))
