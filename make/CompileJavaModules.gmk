@@ -52,7 +52,7 @@ java.base_COPY := .icu .dat .spp
 java.base_EXCLUDE_FILES := sun/text/resources/BreakIteratorRules.java
 
 ifeq ($(OPENJDK_TARGET_OS), macosx)
-  JAVA_BASE_SOLARIS_DIR := $(JDK_TOPDIR)/src/solaris/modules/java.base
+  JAVA_BASE_SOLARIS_DIR := $(JDK_TOPDIR)/$(SRC_SUBDIR)/solaris/modules/java.base
   java.base_EXCLUDE_FILES := \
       $(JAVA_BASE_SOLARIS_DIR)/sun/util/locale/provider/HostLocaleProviderAdapterImpl.java \
       $(JAVA_BASE_SOLARIS_DIR)/java/net/DefaultInterface.java \
@@ -106,7 +106,7 @@ ifeq ($(OPENJDK_TARGET_OS), macosx)
   # exclude all X11 on Mac, we can't exclude some like below or we'll have compilation errors
   java.desktop_EXCLUDES += sun/awt/X11
   java.desktop_EXCLUDE_FILES += \
-      $(JDK_TOPDIR)/src/solaris/modules/java.desktop/sun/java2d/BackBufferCapsProvider.java \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/solaris/modules/java.desktop/sun/java2d/BackBufferCapsProvider.java \
       #
 else
   # TBD: figure out how to eliminate this long list
@@ -201,9 +201,9 @@ jdk.devtools_COPY := .gif .xml .css .js javax.tools.JavaCompilerTool
 
 ifeq ($(OPENJDK_TARGET_OS), macosx)
   jdk.sctp_EXCLUDE_FILES := \
-      $(JDK_TOPDIR)/src/solaris/modules/jdk.sctp/sun/nio/ch/sctp/SctpChannelImpl.java \
-      $(JDK_TOPDIR)/src/solaris/modules/jdk.sctp/sun/nio/ch/sctp/SctpMultiChannelImpl.java \
-      $(JDK_TOPDIR)/src/solaris/modules/jdk.sctp/sun/nio/ch/sctp/SctpServerChannelImpl.java \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/solaris/modules/jdk.sctp/sun/nio/ch/sctp/SctpChannelImpl.java \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/solaris/modules/jdk.sctp/sun/nio/ch/sctp/SctpMultiChannelImpl.java \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/solaris/modules/jdk.sctp/sun/nio/ch/sctp/SctpServerChannelImpl.java \
       #
 endif
 
