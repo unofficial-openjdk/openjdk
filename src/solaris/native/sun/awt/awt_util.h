@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 2004, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1995, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -82,7 +82,7 @@ Boolean awt_util_processEventForEmbeddedFrame(XEvent *ev);
 #define WITH_XERROR_HANDLER(f) do {             \
     XSync(awt_display, False);                  \
     xerror_code = Success;                      \
-    xerror_saved_handler = XSetErrorHandler(f); \
+    current_native_xerror_handler = (f);        \
 } while (0)
 
 /* Convenience macro for handlers to use */
@@ -92,7 +92,7 @@ Boolean awt_util_processEventForEmbeddedFrame(XEvent *ev);
 
 #define RESTORE_XERROR_HANDLER do {             \
     XSync(awt_display, False);                  \
-    XSetErrorHandler(xerror_saved_handler);     \
+    current_native_xerror_handler = NULL;       \
 } while (0)
 
 #define EXEC_WITH_XERROR_HANDLER(f, code) do {  \
@@ -104,11 +104,9 @@ Boolean awt_util_processEventForEmbeddedFrame(XEvent *ev);
 } while (0)
 
 /*
- * Since X reports protocol errors asynchronously, we often need to
- * install an error handler that acts like a callback.  While that
- * specialized handler is installed we save original handler here.
+ * Called by "ToolkitErrorHandler" function in "XlibWrapper.c" file.
  */
-extern XErrorHandler xerror_saved_handler;
+extern XErrorHandler current_native_xerror_handler;
 
 /*
  * A place for error handler to report the error code.

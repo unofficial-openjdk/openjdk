@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -483,7 +483,7 @@ public final class TimeZoneNames_sv extends TimeZoneNamesBundle {
             {"Asia/Aden", ARAST},
             {"Asia/Almaty", new String[] {"Alma-Ata, normaltid", "ALMT",
                                           "Alma-Ata, sommartid", "ALMST"}},
-            {"Asia/Amman", ARAST},
+            {"Asia/Amman", EET},
             {"Asia/Anadyr", new String[] {"Anadyr, normaltid", "ANAT",
                                           "Anadyr, sommartid", "ANAST"}},
             {"Asia/Aqtau", new String[] {"Aqtau, normaltid", "AQTT",

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2006, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -382,13 +382,9 @@ xerror_ignore_bad_window(Display *dpy, XErrorEvent *err)
     XERROR_SAVE(err);
     if (err->error_code == BadWindow) {
         DTRACE_PRINTLN("IGNORING BadWindow");
-        return 0; /* ok to fail */
     }
-    else {
-        return (*xerror_saved_handler)(dpy, err);
-    }
+    return 0; /* ok to fail */
 }
-
 
 /*
  * Convenience wrapper for XGetWindowProperty for XA_ATOM properties.
@@ -1011,7 +1007,6 @@ awt_wm_isMetacity(void)
     return awt_wm_isNetWMName("Metacity");
 }
 
-
 /*
  * Temporary error handler that ensures that we know if
  * XChangeProperty succeeded or not.
@@ -1020,14 +1015,9 @@ static int /* but ignored */
 xerror_verify_change_property(Display *dpy, XErrorEvent *err)
 {
     XERROR_SAVE(err);
-    if (err->request_code == X_ChangeProperty) {
-        return 0;
-    }
-    else {
-        return (*xerror_saved_handler)(dpy, err);
-    }
+    if (err->request_code == X_ChangeProperty) { }
+    return 0;
 }
-
 
 /*
  * Prepare IceWM check.
@@ -1159,8 +1149,6 @@ awt_wm_isOpenLook(void)
     return True;
 }
 
-
-
 static Boolean winmgr_running = False;
 
 /*
@@ -1176,13 +1164,9 @@ xerror_detect_wm(Display *dpy, XErrorEvent *err)
     {
         DTRACE_PRINTLN("some WM is running (hmm, we'll see)");
         winmgr_running = True;
-        return 0;
     }
-    else {
-        return (*xerror_saved_handler)(dpy, err);
-    }
+    return 0;
 }
-
 
 /*
  * Make an educated guess about running window manager.
