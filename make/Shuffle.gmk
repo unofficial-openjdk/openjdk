@@ -31,18 +31,28 @@ include MakeBase.gmk
 include Setup.gmk
 include Modules.gmk
 
-# Use this definition to just copy files around really fast.
-define module-copy-file
-  $(call install-file)
-endef
-
-# Use this definition to do actual hg copies, very slow.
-#define module-copy-file
-#  $(ECHO) hg copy to $@
-#  cd $(<D) && hg copy '$<' '$@'
-#endef
-# hg copy does not support parallel execution.
-#.NOTPARALLEL:
+# Use SHUFFLE_MODE to change the method used to shuffle the source
+ifeq ($(SHUFFLE_MODE), move)
+  $(info SHUFFLE_MODE set to move files)
+  define module-copy-file
+    $(MKDIR) -p $(@D)
+    $(MV) '$<' '$@'
+  endef
+else ifeq ($(SHUFFLE_MODE), hg)
+  # Use this definition to do actual hg copies, very slow.
+  $(info SHUFFLE_MODE hg copy files (takes a long time))
+  define module-copy-file
+    $(ECHO) hg copy to $@
+    cd $(<D) && hg copy '$<' '$@'
+  endef
+  # hg copy does not support parallel execution.
+  .NOTPARALLEL:
+else
+  $(info SHUFFLE_MODE set to default just copy files)
+  define module-copy-file
+    $(call install-file)
+  endef
+endif
 
 SRC_ROOTS := \
     $(JDK_TOPDIR)/src/share/classes \
@@ -784,7 +794,7 @@ $(eval $(call SetupCopyFiles,COPY_LIBMLIB_IMAGE_SOLARIS, \
         %mlib_v_ImageCopy_f.h \
         %mlib_v_ImageCopy_blk.s \
         %vis_asi.h \
-        $vis_proto.h \
+        %vis_proto.h \
         ,$(wildcard $(JDK_TOPDIR)/src/solaris/native/sun/awt/medialib/*))))
 
 # awt
@@ -816,7 +826,6 @@ $(eval $(call SetupCopyFiles,COPY_LIBAWT_SOLARIS, \
         $(JDK_TOPDIR)/src/solaris/native/sun/awt/medialib/mlib_v_ImageCopy_blk.s \
         $(JDK_TOPDIR)/src/solaris/native/sun/awt/medialib/mlib_v_ImageCopy.c \
         $(JDK_TOPDIR)/src/solaris/native/sun/awt/medialib/vis_asi.h \
-        $(JDK_TOPDIR)/src/solaris/native/sun/awt/medialib/vis_proto.h \
         $(JDK_TOPDIR)/src/solaris/native/sun/java2d/loops/* \
         )))
 
@@ -830,6 +839,7 @@ $(eval $(call SetupCopyFiles,COPY_LIBAWT_WINDOWS, \
         $(JDK_TOPDIR)/src/windows/native/sun/java2d/*.h \
         $(JDK_TOPDIR)/src/windows/native/sun/java2d/opengl/*.c \
         $(JDK_TOPDIR)/src/windows/native/sun/java2d/opengl/*.h \
+        $(JDK_TOPDIR)/src/windows/native/sun/java2d/opengl/J2D_GL/* \
         $(JDK_TOPDIR)/src/windows/native/sun/windows/* \
         $(JDK_TOPDIR)/src/windows/native/sun/java2d/windows/* \
         $(JDK_TOPDIR)/src/windows/native/sun/java2d/d3d/*))))
@@ -880,6 +890,7 @@ $(eval $(call SetupCopyFiles,COPY_COMMON_AWT_SOLARIS, \
         $(JDK_TOPDIR)/src/solaris/native/sun/java2d/x11/X11* \
         $(JDK_TOPDIR)/src/solaris/native/sun/font/X11FontScaler.h \
         $(JDK_TOPDIR)/src/solaris/native/sun/awt/medialib/mlib_v_ImageCopy_f.* \
+        $(JDK_TOPDIR)/src/solaris/native/sun/awt/medialib/vis_proto.h \
         )))
 
 $(eval $(call SetupCopyFiles,COPY_COMMON_AWT_WINDOWS, \
@@ -887,9 +898,6 @@ $(eval $(call SetupCopyFiles,COPY_COMMON_AWT_WINDOWS, \
     DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/windows/native/common-awt, \
     FILES := $(wildcard \
         $(JDK_TOPDIR)/src/windows/native/sun/awt/utility/*.h \
-        $(JDK_TOPDIR)/src/windows/native/sun/java2d/opengl/*.c \
-        $(JDK_TOPDIR)/src/windows/native/sun/java2d/opengl/*.h \
-        $(JDK_TOPDIR)/src/windows/native/sun/java2d/opengl/J2D_GL/* \
         $(JDK_TOPDIR)/src/windows/native/sun/awt/colordata.h \
         $(JDK_TOPDIR)/src/windows/native/sun/awt/img_util_md.h \
         $(JDK_TOPDIR)/src/windows/native/sun/awt/awt.h \
