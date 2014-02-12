@@ -43,7 +43,7 @@ ifneq ($(JIGSAW), true)
   ifeq ($(findstring $(OPENJDK_TARGET_OS),windows macosx),)
     TOOLS_SRC += $(JDK_TOPDIR)/src/solaris/classes/sun/awt/X11/generator
   endif
-  TOOLS_EXCLUDE := build/tools/x11wrappergenerator
+  TOOLS_EXCLUDE := build/tools/x11wrappergen
 endif
 
 # The exception handling of swing beaninfo which have the own tool directory
@@ -56,10 +56,10 @@ ifeq (, $(BUILD_TOOLS))
 endif
 
 $(JDK_OUTPUTDIR)/btclasses/build/tools/generatenimbus/resources/%.template: \
-    $(JDK_TOPDIR)/src/share/$(MODULES_SUBDIR)$(JAVA_DESKTOP_SUBDIR)/javax/swing/plaf/nimbus/%.template
+    $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/$(MODULES_SUBDIR)$(JAVA_DESKTOP_SUBDIR)/javax/swing/plaf/nimbus/%.template
 	$(call install-file)
 
-BUILD_TOOLS += $(foreach i, $(wildcard $(JDK_TOPDIR)/src/share/$(MODULES_SUBDIR)$(JAVA_DESKTOP_SUBDIR)/javax/swing/plaf/nimbus/*.template), $(JDK_OUTPUTDIR)/btclasses/build/tools/generatenimbus/resources/$(notdir $i))
+BUILD_TOOLS += $(foreach i, $(wildcard $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/$(MODULES_SUBDIR)$(JAVA_DESKTOP_SUBDIR)/javax/swing/plaf/nimbus/*.template), $(JDK_OUTPUTDIR)/btclasses/build/tools/generatenimbus/resources/$(notdir $i))
 
 # Resource used by CheckDeps tool
 $(JDK_OUTPUTDIR)/btclasses/build/tools/deps/refs.allowed: \

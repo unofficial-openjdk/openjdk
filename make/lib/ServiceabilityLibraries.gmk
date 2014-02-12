@@ -24,7 +24,7 @@
 #
 
 ifeq ($(JIGSAW), true)
-  LIBATTACH_SRC := $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/libattach
+  LIBATTACH_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/native/libattach
 else
   LIBATTACH_SRC := $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/sun/tools/attach
 endif
@@ -43,7 +43,7 @@ endif
 $(eval $(call SetupNativeCompilation,BUILD_LIBATTACH, \
     LIBRARY := attach, \
     OUTPUT_DIR := $(INSTALL_LIBRARIES_HERE), \
-    SRC := $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/sun/tools/attach, \
+    SRC := $(LIBATTACH_SRC), \
     EXCLUDE_FILES := $(LIBATTACH_EXCLUDE_FILES), \
     LANG := C, \
     OPTIMIZATION := LOW, \
@@ -71,13 +71,13 @@ ATTACH_LIBRARIES += $(BUILD_LIBATTACH)
 ##########################################################################################
 
 ifeq ($(JIGSAW), true)
-  LIBDT_SOCKET_SRC := $(JDK_TOPDIR)/src/share/native/libdt_socket \
-      $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/libdt_socket
+  LIBDT_SOCKET_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libdt_socket \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/native/libdt_socket
   LIBDT_SOCKET_CPPFLAGS := \
       -I$(INCLUDEDIR) -I$(JDK_OUTPUTDIR)/include/$(OPENJDK_TARGET_OS) \
       $(addprefix -I, $(LIBDT_SOCKET_SRC)) \
-      -I$(JDK_TOPDIR)/src/share/native/libjdwp/export \
-      -I$(JDK_TOPDIR)/src/share/native/libjdwp
+      -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libjdwp/export \
+      -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libjdwp
 else
   LIBDT_SOCKET_SRC := $(JDK_TOPDIR)/src/share/transport/socket \
       $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/transport/socket
@@ -119,12 +119,12 @@ JDWP_LIBRARIES += $(BUILD_LIBDT_SOCKET)
 ifeq ($(OPENJDK_TARGET_OS), windows)
 
   ifeq ($(JIGSAW), true)
-    LIBDT_SHMEM_SRC := $(JDK_TOPDIR)/src/share/native/libdt_shmem \
-        $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/libdt_shmem \
+    LIBDT_SHMEM_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libdt_shmem \
+        $(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/native/libdt_shmem \
         #
     LIBDT_SHMEM_CPPFLAGS := -I$(INCLUDEDIR) -I$(JDK_OUTPUTDIR)/include/$(OPENJDK_TARGET_OS) \
         $(addprefix -I, $(LIBDT_SHMEM_SRC)) \
-        -I$(JDK_TOPDIR)/src/share/native/libjdwp/export \
+        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libjdwp/export \
         -I$(JDK_OUTPUTDIR)/gensrc_headers/jdk.tools \
         #
   else
@@ -162,12 +162,12 @@ endif # OPENJDK_TARGET_OS
 ##########################################################################################
 
 ifeq ($(JIGSAW), true)
-  LIBJDWP_SRC := $(JDK_TOPDIR)/src/share/native/libjdwp \
-      $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/libjdwp
+  LIBJDWP_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libjdwp \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/native/libjdwp
   LIBJDWP_CPPFLAGS := \
-        -I$(JDK_TOPDIR)/src/share/native/libjdwp/export \
-        -I$(JDK_TOPDIR)/src/share/native/libnpt \
-        -I$(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/libnpt \
+        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libjdwp/export \
+        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libnpt \
+        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/native/libnpt \
         $(addprefix -I, $(LIBJDWP_SRC))
 else
   LIBJDWP_SRC := $(JDK_TOPDIR)/src/share/back \
@@ -211,8 +211,8 @@ JDWP_LIBRARIES += $(BUILD_LIBJDWP)
 ##########################################################################################
 
 ifeq ($(JIGSAW), true)
-  LIBJSDT_SRC := $(JDK_TOPDIR)/src/share/native/libjsdt \
-      $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/libjsdt
+  LIBJSDT_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libjsdt \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/native/libjsdt
 else
   LIBJSDT_SRC := $(JDK_TOPDIR)/src/share/native/sun/tracing/dtrace \
       $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/sun/tracing/dtrace
@@ -248,16 +248,16 @@ JSDT_LIBRARIES += $(BUILD_LIBJSDT)
 ##########################################################################################
 
 ifeq ($(JIGSAW), true)
-  LIBINSTRUMENT_SRC := $(JDK_TOPDIR)/src/share/native/libinstrument \
-      $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/libinstrument \
+  LIBINSTRUMENT_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libinstrument \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/native/libinstrument \
       #
   LIBINSTRUMENT_CFLAGS := $(CFLAGS_JDKLIB) \
       $(addprefix -I, $(LIBINSTRUMENT_SRC)) \
-      -I$(JDK_TOPDIR)/src/share/native/libjli \
+      -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libjli \
       -I$(JDK_OUTPUTDIR)/gensrc_headers/java.instrument \
       #
   LIBINSTRUMENT_SRC += \
-      $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/libjava/canonicalize_md.c \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/native/libjava/canonicalize_md.c \
       #
 else
   LIBINSTRUMENT_SRC := $(JDK_TOPDIR)/src/share/instrument \
@@ -327,8 +327,8 @@ INSTRUMENT_LIBRARIES += $(BUILD_LIBINSTRUMENT)
 ##########################################################################################
 
 ifeq ($(JIGSAW), true)
-  BUILD_LIBMANAGEMENT_SRC := $(JDK_TOPDIR)/src/share/native/libmanagement \
-      $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/libmanagement
+  BUILD_LIBMANAGEMENT_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libmanagement \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/native/libmanagement
 else
 BUILD_LIBMANAGEMENT_SRC := $(JDK_TOPDIR)/src/share/native/sun/management \
     $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/sun/management
@@ -388,12 +388,12 @@ MANAGEMENT_LIBRARIES += $(BUILD_LIBMANAGEMENT)
 
 ifeq ($(JIGSAW), true)
   # TODO JIGSAW: What to do about source that is both demo and product?
-  BUILD_LIBHPROF_SRC := $(JDK_TOPDIR)/src/share/native/libhprof \
-      $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/libhprof
+  BUILD_LIBHPROF_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libhprof \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/native/libhprof
   BUILD_LIBHPROF_CFLAGS := $(addprefix -I, $(BUILD_LIBHPROF_SRC)) \
-      -I$(JDK_TOPDIR)/src/share/native/libnpt \
-      -I$(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/libnpt \
-      -I$(JDK_TOPDIR)/src/share/native/libjava_crw_demo
+      -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libnpt \
+      -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/native/libnpt \
+      -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libjava_crw_demo
 else
   BUILD_LIBHPROF_SRC := $(JDK_TOPDIR)/src/share/demo/jvmti/hprof \
       $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/demo/jvmti/hprof
@@ -441,7 +441,7 @@ HPROF_LIBRARIES += $(BUILD_LIBHPROF)
 ##########################################################################################
 
 ifeq ($(JIGSAW), true)
-  LIBJAVA_CRW_DEMO_SRC := $(JDK_TOPDIR)/src/share/native/libjava_crw_demo
+  LIBJAVA_CRW_DEMO_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libjava_crw_demo
 else
   LIBJAVA_CRW_DEMO_SRC := $(JDK_TOPDIR)/src/share/demo/jvmti/java_crw_demo
 endif
@@ -474,7 +474,7 @@ ifndef OPENJDK
   ifeq ($(ENABLE_JFR), true)
 
     ifeq ($(JIGSAW), true)
-      LIBJFR_SRC := $(JDK_TOPDIR)/src/closed/share/native/libjfr
+      LIBJFR_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/share/native/libjfr
     else
       LIBJFR_SRC := $(JDK_TOPDIR)/src/closed/share/native/oracle/jfr
     endif

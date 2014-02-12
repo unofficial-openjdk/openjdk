@@ -34,9 +34,11 @@ ifneq ($(OPENJDK_TARGET_OS), solaris)
 endif
 
 ifeq ($(JIGSAW), true)
-  LIBFDLIBM_SRC := $(JDK_TOPDIR)/src/share/native/libfdlibm
+  LIBFDLIBM_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libfdlibm
+  LIBFDLIBM_CFLAGS := -I$(LIBFDLIBM_SRC)
 else
   LIBFDLIBM_SRC := $(JDK_TOPDIR)/src/share/native/java/lang/fdlibm/src
+  LIBFDLIBM_CFLAGS := -I$(JDK_TOPDIR)/src/share/native/java/lang/fdlibm/include
 endif
 
 ifneq ($(OPENJDK_TARGET_OS), macosx)
@@ -46,8 +48,7 @@ ifneq ($(OPENJDK_TARGET_OS), macosx)
       SRC := $(LIBFDLIBM_SRC), \
       LANG := C, \
       OPTIMIZATION := $(BUILD_LIBFDLIBM_OPTIMIZATION), \
-      CFLAGS := $(CFLAGS_JDKLIB) \
-          -I$(JDK_TOPDIR)/src/share/native/java/lang/fdlibm/include, \
+      CFLAGS := $(CFLAGS_JDKLIB) $(LIBFDLIBM_CFLAGS), \
       CFLAGS_windows_debug := -DLOGGING, \
       ARFLAGS := $(ARFLAGS), \
       OBJECT_DIR := $(JDK_OUTPUTDIR)/objs/libfdlibm, \
@@ -62,8 +63,7 @@ else
       OUTPUT_DIR := $(JDK_OUTPUTDIR)/objs/libfdlibm, \
       SRC := $(LIBFDLIBM_SRC), \
       LANG := C, \
-      CFLAGS := $(CFLAGS_JDKLIB) \
-          -I$(JDK_TOPDIR)/src/share/native/java/lang/fdlibm/include, \
+      CFLAGS := $(CFLAGS_JDKLIB) $(LIBFDLIBM_CFLAGS), \
       LDFLAGS := -nostdlib -r -arch x86_64, \
       OBJECT_DIR := $(JDK_OUTPUTDIR)/objs/libfdlibm, \
       DEBUG_SYMBOLS := $(DEBUG_ALL_BINARIES)))
@@ -77,7 +77,7 @@ endif
 ##########################################################################################
 
 ifeq ($(JIGSAW), true)
-  LIBVERIFY_SRC := $(JDK_TOPDIR)/src/share/native/libverify
+  LIBVERIFY_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libverify
 else
   LIBVERIFY_SRC := $(JDK_TOPDIR)/src/share/native/common
   BUILD_LIBVERIFY_INCLUDE := check_code.c check_format.c
@@ -124,15 +124,15 @@ BASE_LIBRARIES += $(BUILD_LIBVERIFY)
 
 ifeq ($(JIGSAW), true)
   ifeq ($(OPENJDK_TARGET_OS), macosx)
-    LIBJAVA_SRC_DIRS += $(JDK_TOPDIR)/src/macosx/native/libjava
-    LIBJAVA_EXCLUDE_FILES += $(JDK_TOPDIR)/src/solaris/native/libjava/HostLocaleProviderAdapter_md.c
+    LIBJAVA_SRC_DIRS += $(JDK_TOPDIR)/$(SRC_SUBDIR)/macosx/native/libjava
+    LIBJAVA_EXCLUDE_FILES += $(JDK_TOPDIR)/$(SRC_SUBDIR)/solaris/native/libjava/HostLocaleProviderAdapter_md.c
   endif
 
-  LIBJAVA_SRC_DIRS += $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/libjava \
-      $(JDK_TOPDIR)/src/share/native/libjava
+  LIBJAVA_SRC_DIRS += $(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/native/libjava \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libjava
 
   LIBJAVA_CFLAGS := $(foreach dir, $(LIBJAVA_SRC_DIRS), -I$(dir)) \
-      -I$(JDK_TOPDIR)/src/share/native/libfdlibm \
+      -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libfdlibm \
       -I$(JDK_OUTPUTDIR)/gensrc_headers/java.base \
       -DARCHPROPNAME='"$(OPENJDK_TARGET_CPU_OSARCH)"'
 else
@@ -233,9 +233,9 @@ $(BUILD_LIBJAVA): $(BUILD_LIBFDLIBM)
 ##########################################################################################
 
 ifeq ($(JIGSAW), true)
-  LIBZIP_SRC := $(JDK_TOPDIR)/src/share/native/libzip
-  LIBZIP_CPPFLAGS := -I$(JDK_TOPDIR)/src/share/native/libjava \
-      -I$(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/libjava \
+  LIBZIP_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libzip
+  LIBZIP_CPPFLAGS := -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libjava \
+      -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/native/libjava \
       -I$(JDK_OUTPUTDIR)/gensrc_headers/java.base
 else
   LIBZIP_SRC := $(JDK_TOPDIR)/src/share/native/java/util/zip
@@ -249,7 +249,7 @@ ifeq ($(USE_EXTERNAL_LIBZ), true)
   LIBZIP_EXCLUDES += zlib-1.2.5
 else
   ifeq ($(JIGSAW), true)
-    ZLIB_CPPFLAGS := -I$(JDK_TOPDIR)/src/share/native/libzip/zlib-1.2.5
+    ZLIB_CPPFLAGS := -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libzip/zlib-1.2.5
   else
     ZLIB_CPPFLAGS := -I$(JDK_TOPDIR)/src/share/native/java/util/zip/zlib-1.2.5
   endif
@@ -304,10 +304,10 @@ BASE_LIBRARIES += $(BUILD_LIBZIP)
 ##########################################################################################
 
 ifeq ($(JIGSAW), true)
-  LIBUNPACK_SRC := $(JDK_TOPDIR)/src/share/native/libunpack \
-      $(JDK_TOPDIR)/src/share/native/common-unpack
+  LIBUNPACK_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libunpack \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/common-unpack
   LIBUNPACK_CPPFLAGS := -I$(JDK_OUTPUTDIR)/gensrc_headers/java.base \
-      -I$(JDK_TOPDIR)/src/share/native/common-unpack
+      -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/common-unpack
 else
   LIBUNPACK_SRC := $(JDK_TOPDIR)/src/share/native/com/sun/java/util/jar/pack
   LIBUNPACK_EXFILES := main.cpp
@@ -345,8 +345,8 @@ UNPACK_LIBRARIES += $(BUILD_LIBUNPACK)
 ##########################################################################################
 
 ifeq ($(JIGSAW), true)
-  BUILD_LIBJLI_SRC_DIRS := $(JDK_TOPDIR)/src/share/native/libjli \
-      $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/libjli
+  BUILD_LIBJLI_SRC_DIRS := $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libjli \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/native/libjli
 else
   BUILD_LIBJLI_SRC_DIRS := $(JDK_TOPDIR)/src/share/bin \
       $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/bin
@@ -374,7 +374,7 @@ endif
 
 ifeq ($(OPENJDK_TARGET_OS), macosx)
   ifeq ($(JIGSAW), true)
-    BUILD_LIBJLI_SRC_DIRS += $(JDK_TOPDIR)/src/macosx/native/libjli
+    BUILD_LIBJLI_SRC_DIRS += $(JDK_TOPDIR)/$(SRC_SUBDIR)/macosx/native/libjli
   else
     BUILD_LIBJLI_SRC_DIRS += $(JDK_TOPDIR)/src/macosx/bin
     LIBJLI_CFLAGS += -I$(JDK_TOPDIR)/src/macosx/bin
@@ -417,7 +417,7 @@ endif
 
 ifneq ($(USE_EXTERNAL_LIBZ), true)
   ifeq ($(JIGSAW), true)
-    BUILD_LIBJLI_SRC_DIRS += $(JDK_TOPDIR)/src/share/native/libzip/zlib-1.2.5
+    BUILD_LIBJLI_SRC_DIRS += $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libzip/zlib-1.2.5
   else
     BUILD_LIBJLI_SRC_DIRS += $(JDK_TOPDIR)/src/share/native/java/util/zip/zlib-1.2.5
   endif
@@ -528,13 +528,13 @@ endif
 $(eval $(call SetupNativeCompilation,BUILD_LIBNPT, \
     LIBRARY := npt, \
     OUTPUT_DIR := $(INSTALL_LIBRARIES_HERE), \
-    SRC := $(JDK_TOPDIR)/src/share/$(LIBNPT_SUBDIR) \
-         $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/$(LIBNPT_SUBDIR), \
+    SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/$(LIBNPT_SUBDIR) \
+         $(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/$(LIBNPT_SUBDIR), \
     LANG := C, \
     OPTIMIZATION := LOW, \
     CFLAGS := $(CFLAGS_JDKLIB) \
-        -I$(JDK_TOPDIR)/src/share/$(LIBNPT_SUBDIR) \
-        -I$(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/$(LIBNPT_SUBDIR), \
+        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/share/$(LIBNPT_SUBDIR) \
+        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/$(LIBNPT_SUBDIR), \
     MAPFILE := $(JDK_TOPDIR)/make/mapfiles/libnpt/mapfile-vers, \
     LDFLAGS := $(LDFLAGS_JDKLIB) \
         $(call SET_SHARED_LIBRARY_ORIGIN), \

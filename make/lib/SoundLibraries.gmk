@@ -25,8 +25,8 @@
 
 ifeq ($(JIGSAW), true)
   LIBJSOUND_SRC_DIRS := \
-      $(JDK_TOPDIR)/src/share/native/libjsound \
-      $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/libjsound \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libjsound \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/native/libjsound \
       #
   LIBJSOUND_CFLAGS := -I$(JDK_OUTPUTDIR)/gensrc_headers/java.desktop
 else
@@ -87,7 +87,7 @@ ifeq ($(OPENJDK_TARGET_OS), macosx)
       -DUSE_PLATFORM_MIDI_OUT=TRUE \
       -DUSE_PLATFORM_MIDI_IN=TRUE
   ifeq ($(JIGSAW), true)
-    LIBJSOUND_SRC_DIRS += $(JDK_TOPDIR)/src/macosx/native/libjsound
+    LIBJSOUND_SRC_DIRS += $(JDK_TOPDIR)/$(SRC_SUBDIR)/macosx/native/libjsound
   else
     LIBJSOUND_SRC_DIRS += $(JDK_TOPDIR)/src/macosx/native/com/sun/media/sound
   endif

@@ -24,8 +24,8 @@
 #
 
 ifeq ($(JIGSAW), true)
-  LIBNET_SRC_DIRS := $(JDK_TOPDIR)/src/share/native/libnet \
-      $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/libnet
+  LIBNET_SRC_DIRS := $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libnet \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/native/libnet
   LIBNET_CFLAGS += -I$(JDK_OUTPUTDIR)/gensrc_headers/java.base
 else
   LIBNET_SRC_DIRS := $(JDK_TOPDIR)/src/share/native/java/net \

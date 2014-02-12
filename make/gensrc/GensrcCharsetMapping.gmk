@@ -94,7 +94,7 @@ GENSRC_CHARSETMAPPING += $(GENSRC_TMP)/gensrc_the.charsetmapping.dbcs
 GENSRC_CHARSET_PROVIDER_CMD := $(JDK_TOPDIR)/make/scripts/genCharsetProvider.sh
 
 $(GENSRC_DST_BASE)/StandardCharsets.java: \
-    $(JDK_TOPDIR)/src/share/$(MODULES_SUBDIR)$(JAVA_BASE_SUBDIR)/sun/nio/cs/standard-charsets \
+    $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/$(MODULES_SUBDIR)$(JAVA_BASE_SUBDIR)/sun/nio/cs/standard-charsets \
     $(GENSRC_CHARSET_PROVIDER_CMD) \
     $(GENSRC_TMP)/_the.charsetmapping.dir
 	NAWK="$(NAWK)" TEMPDIR="$(GENSRC_TMP)" SH="$(SH)" \

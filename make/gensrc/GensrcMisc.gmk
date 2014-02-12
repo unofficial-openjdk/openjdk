@@ -32,7 +32,7 @@ include ProfileNames.gmk
 
 $(JDK_OUTPUTDIR)/gensrc$(JAVA_BASE_SUBDIR)/sun/misc/Version.java \
 $(PROFILE_VERSION_JAVA_TARGETS): \
-    $(JDK_TOPDIR)/src/share/$(MODULES_SUBDIR)$(JAVA_BASE_SUBDIR)/sun/misc/Version.java.template
+    $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/$(MODULES_SUBDIR)$(JAVA_BASE_SUBDIR)/sun/misc/Version.java.template
 	$(MKDIR) -p $(@D)
 	$(RM) $@ $@.tmp
 	$(ECHO) Generating sun/misc/Version.java $(call profile_version_name, $@)
@@ -51,7 +51,7 @@ GENSRC_MISC += $(JDK_OUTPUTDIR)/gensrc$(JAVA_BASE_SUBDIR)/sun/misc/Version.java 
 # Version file for jconsole
 
 $(JDK_OUTPUTDIR)/gensrc$(JDK_TOOLS_SUBDIR)/sun/tools/jconsole/Version.java: \
-    $(JDK_TOPDIR)/src/share/$(MODULES_SUBDIR)$(JDK_TOOLS_SUBDIR)/sun/tools/jconsole/Version.java.template
+    $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/$(MODULES_SUBDIR)$(JDK_TOOLS_SUBDIR)/sun/tools/jconsole/Version.java.template
 	$(MKDIR) -p $(@D)
 	$(RM) $@ $@.tmp
 	$(ECHO) $(LOG_INFO) Generating sun/tools/jconsole/Version.java
@@ -71,7 +71,7 @@ ifeq ($(OPENJDK_TARGET_OS_API), posix)
   # the correct UNIXProcess.java over to $(JDK_OUTPUTDIR)/gensrc/java/lang/.
 
   $(JDK_OUTPUTDIR)/gensrc$(JAVA_BASE_SUBDIR)/java/lang/UNIXProcess.java: \
-      $(JDK_TOPDIR)/src/solaris/$(MODULES_SUBDIR)$(JAVA_BASE_SUBDIR)/java/lang/UNIXProcess.java.$(UPSUFFIX)
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/solaris/$(MODULES_SUBDIR)$(JAVA_BASE_SUBDIR)/java/lang/UNIXProcess.java.$(UPSUFFIX)
 	$(ECHO) $(LOG_INFO) Copying UNIXProcess.java.$(OPENJDK_TARGET_OS) to java/lang/UNIXProcess.java
 	$(call install-file)
 	$(CHMOD) u+rw $@
@@ -83,7 +83,11 @@ endif
 
 GENSRC_MISC += $(JDK_OUTPUTDIR)/gensrc$(JAVA_BASE_SUBDIR)/sun/nio/ch/SocketOptionRegistry.java
 
-GENSRC_SOR_SRC := $(JDK_TOPDIR)/src/share/native/sun/nio/ch
+ifeq ($(JIGSAW), true)
+  GENSRC_SOR_SRC := $(JDK_TOPDIR)/make/src/native/genconstants/ch
+else
+  GENSRC_SOR_SRC := $(JDK_TOPDIR)/src/share/native/sun/nio/ch
+endif
 GENSRC_SOR_SRC_FILE := genSocketOptionRegistry.c
 GENSRC_SOR_BIN := $(JDK_OUTPUTDIR)/gensrc/genSocketOptionRegistry
 
@@ -123,7 +127,7 @@ ifneq ($(OPENJDK_TARGET_OS), windows)
   GENSRC_MISC += $(JDK_OUTPUTDIR)/gensrc$(JAVA_BASE_SUBDIR)/sun/nio/fs/UnixConstants.java
 
   ifeq ($(JIGSAW), true)
-    GENSRC_UC_SRC := $(JDK_TOPDIR)/make/src/native/genconstants
+    GENSRC_UC_SRC := $(JDK_TOPDIR)/make/src/native/genconstants/fs
   else
     GENSRC_UC_SRC := $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/sun/nio/fs
   endif
@@ -169,9 +173,9 @@ ifeq ($(OPENJDK_TARGET_OS), solaris)
   GENSRC_MISC += $(JDK_OUTPUTDIR)/gensrc$(JAVA_BASE_SUBDIR)/sun/nio/fs/SolarisConstants.java
 
   ifeq ($(JIGSAW), true)
-    GENSRC_SOL_SRC := $(JDK_TOPDIR)/make/src/native/genconstants
+    GENSRC_SOL_SRC := $(JDK_TOPDIR)/make/src/native/genconstants/fs
   else
-  GENSRC_SOL_SRC := $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/sun/nio/fs
+    GENSRC_SOL_SRC := $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/sun/nio/fs
   endif
   GENSRC_SOL_SRC_FILE := genSolarisConstants.c
   GENSRC_SOL_BIN := $(JDK_OUTPUTDIR)/gensrc/genSolarisConstants

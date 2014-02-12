@@ -26,7 +26,7 @@
 ifeq ($(OPENJDK_TARGET_OS), macosx)
 
   ifeq ($(JIGSAW), true)
-    LIBAPPLESCRIPTENGINE_SRC := $(JDK_TOPDIR)/src/macosx/native/libapplescriptengine
+    LIBAPPLESCRIPTENGINE_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/macosx/native/libapplescriptengine
   else
     LIBAPPLESCRIPTENGINE_SRC := $(JDK_TOPDIR)/src/macosx/native/apple/applescript
   endif
@@ -63,7 +63,7 @@ endif
 ifeq ($(OPENJDK_TARGET_OS), macosx)
 
   ifeq ($(JIGSAW), true)
-    LIBOSXAPP_SRC := $(JDK_TOPDIR)/src/macosx/native/libosxapp
+    LIBOSXAPP_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/macosx/native/libosxapp
   else
     LIBOSXAPP_SRC := $(JDK_TOPDIR)/src/macosx/native/sun/osxapp
   endif
@@ -75,7 +75,7 @@ ifeq ($(OPENJDK_TARGET_OS), macosx)
       LANG := C, \
       OPTIMIZATION := LOW, \
       CFLAGS := $(CFLAGS_JDKLIB) \
-          -I$(JDK_TOPDIR)/src/macosx/native/sun/osxapp \
+          $(addprefix -I, $(LIBOSXAPP_SRC)) \
           -I$(JDK_OUTPUTDIR)/gensrc_icon_headers \
           -F/System/Library/Frameworks/JavaVM.framework/Frameworks \
           -F/System/Library/Frameworks/ApplicationServices.framework/Frameworks, \
@@ -108,9 +108,9 @@ ifeq ($(OPENJDK_TARGET_OS), macosx)
 
   ifeq ($(JIGSAW), true)
     # TODO JIGSAW: Why is libosx dependant on java.desktop?
-    LIBOSX_DIRS := $(JDK_TOPDIR)/src/macosx/native/libosx
+    LIBOSX_DIRS := $(JDK_TOPDIR)/$(SRC_SUBDIR)/macosx/native/libosx
     LIBOSX_CFLAGS := -I$(LIBOSX_DIRS) \
-        -I$(JDK_TOPDIR)/src/macosx/native/libosxapp \
+        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/macosx/native/libosxapp \
         -I$(JDK_OUTPUTDIR)/gensrc_headers/java.desktop \
         -I$(JDK_OUTPUTDIR)/gensrc_headers/jdk.deploy \
         #
