@@ -130,7 +130,7 @@ ifeq ($(OPENJDK_TARGET_OS)-$(OPENJDK_TARGET_CPU_ARCH), solaris-sparc)
       mlib_v_ImageCopy_blk.s \
       #
 
-  BUILD_LIBMLIB_V_CFLAGS += $(filter-out -DMLIB_NO_LIBSUNMATH, $(BUILD_LIBMLIB_CFLAGS))
+  LIBMLIB_IMAGE_V_CFLAGS += $(filter-out -DMLIB_NO_LIBSUNMATH, $(BUILD_LIBMLIB_CFLAGS))
 
   $(eval $(call SetupNativeCompilation,BUILD_LIBMLIB_IMAGE_V, \
       LIBRARY := mlib_image_v, \
@@ -140,7 +140,7 @@ ifeq ($(OPENJDK_TARGET_OS)-$(OPENJDK_TARGET_CPU_ARCH), solaris-sparc)
       EXCLUDE_FILES := $(BUILD_LIBMLIB_IMAGE_V_EXFILES), \
       OPTIMIZATION := HIGHEST, \
       CFLAGS := -xarch=sparcvis \
-          $(BUILD_LIBMLIB_V_CFLAGS) \
+          $(LIBMLIB_IMAGE_V_CFLAGS) \
           $(CFLAGS_JDKLIB), \
       MAPFILE := $(BUILD_LIBMLIB_IMAGE_MAPFILE), \
       LDFLAGS := $(LDFLAGS_JDKLIB) \
