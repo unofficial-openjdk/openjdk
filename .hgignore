@@ -25,3 +25,4 @@ jcov2/*
 test/lib/testng.jar
 test/script/external/*
 .project
+src_shuffled/*
