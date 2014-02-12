@@ -46,7 +46,7 @@ TOOL_STRIPPROP_CMD := $(JAVA) -cp $(CORBA_OUTPUTDIR)/stripprop_classes \
 
 $(eval $(call SetupJavaCompilation,BUILD_IDLJ, \
     SETUP := GENERATE_OLDBYTECODE, \
-    SRC := $(CORBA_TOPDIR)/src/share/$(MODULES_SUBDIR)$(JAVAX_CORBA_SUBDIR), \
+    SRC := $(CORBA_TOPDIR)/$(SRC_SUBDIR)/share/$(MODULES_SUBDIR)$(JAVAX_CORBA_SUBDIR), \
     BIN := $(CORBA_OUTPUTDIR)/idlj_classes, \
     COPY := .prp, \
     INCLUDES := com/sun/tools/corba/se/idl, \
@@ -74,7 +74,7 @@ TOOL_LOGUTIL_CMD := $(JAVA) -cp $(CORBA_OUTPUTDIR)/logutil_classes \
 
 # Generate LogWrapper classes
 $(CORBA_OUTPUTDIR)/gensrc$(JAVAX_CORBA_SUBDIR)/com/sun/corba/se/impl/logging/%SystemException.java: \
-    $(CORBA_TOPDIR)/src/share/$(MODULES_SUBDIR)$(JAVAX_CORBA_SUBDIR)/com/sun/corba/se/spi/logging/data/%.mc \
+    $(CORBA_TOPDIR)/$(SRC_SUBDIR)/share/$(MODULES_SUBDIR)$(JAVAX_CORBA_SUBDIR)/com/sun/corba/se/spi/logging/data/%.mc \
     $(BUILD_LOGUTIL)
 	$(MKDIR) -p $(@D)
 	$(RM) -f $(@D)/_the_wrappers.d
@@ -97,7 +97,7 @@ $(CORBA_OUTPUTDIR)/gensrc$(JAVAX_CORBA_SUBDIR)/com/sun/corba/se/impl/logging/Log
 
 # The resources files are generated from lisp-like .mc files.
 $(CORBA_OUTPUTDIR)/logwrappers/%SystemException.resource: \
-    $(CORBA_TOPDIR)/src/share/$(MODULES_SUBDIR)$(JAVAX_CORBA_SUBDIR)/com/sun/corba/se/spi/logging/data/%.mc \
+    $(CORBA_TOPDIR)/$(SRC_SUBDIR)/share/$(MODULES_SUBDIR)$(JAVAX_CORBA_SUBDIR)/com/sun/corba/se/spi/logging/data/%.mc \
     $(BUILD_LOGUTIL)
 	$(MKDIR) -p $(@D)
 	$(RM) -f $(@D)/_the_wrappers.d
@@ -121,7 +121,7 @@ LOGWRAPPER_TARGETS := \
 
 $(eval $(call SetupIdlCompilation,BUILD_IDLS, \
     IDLJ := $(TOOL_IDLJ_CMD), \
-    SRC := $(CORBA_TOPDIR)/src/share/$(MODULES_SUBDIR)$(JAVAX_CORBA_SUBDIR), \
+    SRC := $(CORBA_TOPDIR)/$(SRC_SUBDIR)/share/$(MODULES_SUBDIR)$(JAVAX_CORBA_SUBDIR), \
     BIN := $(CORBA_OUTPUTDIR)/gensrc$(JAVAX_CORBA_SUBDIR), \
     EXCLUDES := com/sun/tools/corba/se/idl/% \
         org/omg/CORBA/% \
@@ -143,13 +143,13 @@ else
   STRIPPROP_OUTPUT_DIR := $(CORBA_OUTPUTDIR)/classes
 endif
 
-STRIP_PROP_SRC_FILES := $(shell $(FIND) $(CORBA_TOPDIR)/src/share/$(MODULES_SUBDIR) -name "sunorb*.properties")
-STRIP_PROP_FILES := $(patsubst $(CORBA_TOPDIR)/src/share/$(MODULES_SUBDIR)/%, $(STRIPPROP_OUTPUT_DIR)/%, \
+STRIP_PROP_SRC_FILES := $(shell $(FIND) $(CORBA_TOPDIR)/$(SRC_SUBDIR)/share/$(MODULES_SUBDIR) -name "sunorb*.properties")
+STRIP_PROP_FILES := $(patsubst $(CORBA_TOPDIR)/$(SRC_SUBDIR)/share/$(MODULES_SUBDIR)/%, $(STRIPPROP_OUTPUT_DIR)/%, \
     $(STRIP_PROP_SRC_FILES))
 # Simple delivery of zh_HK properties files just copies zh_TW properties files
-STRIP_PROP_SRC_FILE_ZH_TW := $(shell $(FIND) $(CORBA_TOPDIR)/src/share/$(MODULES_SUBDIR) -name "sunorb_zh_TW.properties")
+STRIP_PROP_SRC_FILE_ZH_TW := $(shell $(FIND) $(CORBA_TOPDIR)/$(SRC_SUBDIR)/share/$(MODULES_SUBDIR) -name "sunorb_zh_TW.properties")
 STRIP_PROP_SRC_FILES += $(STRIP_PROP_SRC_FILE_ZH_TW)
-STRIP_PROP_FILES += $(patsubst $(CORBA_TOPDIR)/src/share/$(MODULES_SUBDIR)/%_zh_TW.properties, \
+STRIP_PROP_FILES += $(patsubst $(CORBA_TOPDIR)/$(SRC_SUBDIR)/share/$(MODULES_SUBDIR)/%_zh_TW.properties, \
     $(STRIPPROP_OUTPUT_DIR)/%_zh_HK.properties, $(STRIP_PROP_SRC_FILE_ZH_TW))
 STRIP_PROP_CMDLINE := $(subst _SPACE_, $(SPACE), \
     $(join $(addprefix -clean_SPACE_, $(STRIP_PROP_SRC_FILES)), \
