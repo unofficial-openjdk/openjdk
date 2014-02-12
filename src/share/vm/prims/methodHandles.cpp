@@ -1260,11 +1260,12 @@ JVM_ENTRY(jobject, MHN_getMemberVMInfo(JNIEnv *env, jobject igcls, jobject mname
   } else if (vmtarget->is_klass()) {
     x = Klass::cast((klassOop) vmtarget())->java_mirror();
   } else {
-    Handle mname2 = MethodHandles::new_MemberName(CHECK_NULL);
-    if (vmtarget->is_method())
-      x = MethodHandles::init_method_MemberName(mname2, methodOop(vmtarget()), false, KlassHandle());
-    else
+    if (vmtarget->is_method()) {
+      x = mname();
+    } else {
+      Handle mname2 = MethodHandles::new_MemberName(CHECK_NULL);
       x = MethodHandles::init_MemberName(mname2(), vmtarget());
+    }
   }
   result->obj_at_put(1, x);
   return JNIHandles::make_local(env, result());
