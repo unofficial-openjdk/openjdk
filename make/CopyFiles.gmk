@@ -33,6 +33,7 @@ BASE_CONF_FILES=
 DESKTOP_CONF_FILES=
 HPROF_CONF_FILES=
 MANAGEMENT_CONF_FILES=
+NET_CONF_FILES=
 LOGGING_CONF_FILES=
 SECURITY_PKCS11_CONF_FILES=
 SECURITY_UCRYPTO_CONF_FILES=
@@ -70,10 +71,11 @@ LIBDIR = $(JDK_OUTPUTDIR)/lib
 
 ifndef OPENJDK
   ifeq ($(OPENJDK_TARGET_OS), windows)
-    DESKTOP_CONF_FILES += $(OPENJDK_TARGET_OS_INCLUDE)/bridge/AccessBridgeCallbacks.h \
+    DESKTOP_CONF_FILES += $(JDK_OUTPUTDIR)/lib/accessibility.properties
+    COPY_FILES += $(OPENJDK_TARGET_OS_INCLUDE)/bridge/AccessBridgeCallbacks.h \
         $(OPENJDK_TARGET_OS_INCLUDE)/bridge/AccessBridgeCalls.h \
         $(OPENJDK_TARGET_OS_INCLUDE)/bridge/AccessBridgePackages.h \
-        $(OPENJDK_TARGET_OS_INCLUDE)/bridge/AccessBridgeCalls.c \
+        $(OPENJDK_TARGET_OS_INCLUDE)/bridge/AccessBridgeCalls.c
         $(JDK_OUTPUTDIR)/lib/accessibility.properties
 
     $(OPENJDK_TARGET_OS_INCLUDE)/bridge/%: \
