@@ -229,19 +229,19 @@ sun.localedata_COPY := _dict _th
 # Do not include nashorn src here since it needs to be compiled separately due
 # to nasgen.
 ALL_SRC_DIRS := \
-    $(JDK_TOPDIR)/src/share/modules \
-    $(LANGTOOLS_TOPDIR)/src/share/modules \
-    $(CORBA_TOPDIR)/src/share/modules \
-    $(JAXP_TOPDIR)/src/share/modules \
-    $(JAXWS_TOPDIR)/src/share/modules \
-    $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/modules \
+    $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/modules \
+    $(LANGTOOLS_TOPDIR)/$(SRC_SUBDIR)/share/modules \
+    $(CORBA_TOPDIR)/$(SRC_SUBDIR)/share/modules \
+    $(JAXP_TOPDIR)/$(SRC_SUBDIR)/share/modules \
+    $(JAXWS_TOPDIR)/$(SRC_SUBDIR)/share/modules \
+    $(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/modules \
     $(JDK_OUTPUTDIR)/gensrc \
     $(LANGTOOLS_OUTPUTDIR)/gensrc \
     $(CORBA_OUTPUTDIR)/gensrc \
     $(JDK_OUTPUTDIR)/gensrc_no_srczip
 
 ifeq ($(OPENJDK_TARGET_OS), macosx)
-  ALL_SRC_DIRS += $(JDK_TOPDIR)/src/macosx/modules
+  ALL_SRC_DIRS += $(JDK_TOPDIR)/$(SRC_SUBDIR)/macosx/modules
 endif
 
 # Find all modules with java sources by looking in the source dirs

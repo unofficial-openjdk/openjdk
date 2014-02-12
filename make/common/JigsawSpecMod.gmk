@@ -26,6 +26,8 @@
 # Include this file after SPEC to rewrite some variable values to redirect
 # output into temporary jigsaw subdirectories. 
 
+SHUFFLED_SRC_SUBDIR := src_shuffled
+
 ifeq ($(JIGSAW), true)
   LANGTOOLS_OUTPUTDIR := $(patsubst $(OUTPUT_ROOT)/%,$(OUTPUT_ROOT)/jigsaw/%,$(LANGTOOLS_OUTPUTDIR))
   CORBA_OUTPUTDIR := $(patsubst $(OUTPUT_ROOT)/%,$(OUTPUT_ROOT)/jigsaw/%,$(CORBA_OUTPUTDIR))
@@ -56,6 +58,12 @@ ifeq ($(JIGSAW), true)
 
   LDFLAGS_JDKLIB := $(subst $(OUTPUT_ROOT),$(OUTPUT_ROOT)/jigsaw,$(LDFLAGS_JDKLIB))
 
+  SRC_SUBDIR := $(SHUFFLED_SRC_SUBDIR)
+
+  # Reset these now that the outputdirs have changed
+  INTERIM_LANGTOOLS_JAR := $(LANGTOOLS_OUTPUTDIR)/dist/interim_langtools.jar
+  INTERIM_CORBA_JAR := $(CORBA_OUTPUTDIR)/btjars/btcorba.jar
 else
   MODULES_SUBDIR := classes
+  SRC_SUBDIR := src
 endif

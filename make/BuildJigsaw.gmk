@@ -45,6 +45,9 @@ langtools-interim: langtools-gensrc
 corba-gensrc: langtools-interim
 	+($(CD) $(CORBA_TOPDIR)/make && $(MAKE) -f GensrcCorba.gmk JIGSAW=true)
 
+corba-interim: corba-gensrc
+	+($(CD) $(CORBA_TOPDIR)/make && $(MAKE) -f CompileCorba.gmk JIGSAW=true)
+
 .PHONY: corba-gensrc
 
 ################################################################################
@@ -58,7 +61,7 @@ jdk-gensrc: jdk-build-tools langtools-interim
 jdk-gendata: langtools-interim jdk-build-tools
 	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f GenerateData.gmk JIGSAW=true)
 
-jdk-genclasses: langtools-interim corba-gensrc java-compile
+jdk-genclasses: langtools-interim corba-interim java-compile
 	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f GenerateClasses.gmk JIGSAW=true)
 
 .PHONY: jdk-build-tools jdk-gensrc jdk-gendata jdk-genclasses
