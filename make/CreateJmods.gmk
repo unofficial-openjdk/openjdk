@@ -77,9 +77,10 @@ all: $(BUILD_CLASSANALYZER)
                 --cmds="$(KERBEROS_LAUNCHERS)" \
                 --native="$(SECURITY_AUTH_LIBRARIES) $(SECURITY_KERBEROS_LIBRARIES)" \
             --module java.base \
-                --native="$(BASE_LIBRARIES) $(MSVCR_TARGET) $(JVM_LIBRARIES) $(JVMCFG)" \
+                --native="$(BASE_LIBRARIES) $(MSVCR_TARGET) $(JVM_LIBRARIES)" \
                 --cmds="$(BASE_LAUNCHERS)" \
-                --conf="$(BASE_CONF_FILES) $(GENDATA_TZDB) $(GENDATA_CURDATA)" \
+		--conf="$(JVMCFG)" \
+                --conf="$(BASE_CONF_FILES) $(NET_CONF_FILES) $(GENDATA_TZDB) $(GENDATA_CURDATA)" \
 		--conf="$(BASE_POLICY_JAR_FILES)" \
             --module java.desktop \
                 --native="$(DESKTOP_LIBRARIES) $(FREETYPE_LIB)" \

@@ -35,13 +35,13 @@ include Setup.gmk
 ifeq ($(JIGSAW), true)
 
   ALL_SRC_DIRS := \
-      $(JDK_TOPDIR)/src/share/modules \
-      $(LANGTOOLS_TOPDIR)/src/share/modules \
-      $(CORBA_TOPDIR)/src/share/modules \
-      $(JAXP_TOPDIR)/src/share/modules \
-      $(JAXWS_TOPDIR)/src/share/modules \
-      $(NASHORN_TOPDIR)/src/share/modules \
-      $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/modules \
+      $(JDK_TOPDIR)/src_shuffled/share/modules \
+      $(LANGTOOLS_TOPDIR)/src_shuffled/share/modules \
+      $(CORBA_TOPDIR)/src_shuffled/share/modules \
+      $(JAXP_TOPDIR)/src_shuffled/share/modules \
+      $(JAXWS_TOPDIR)/src_shuffled/share/modules \
+      $(NASHORN_TOPDIR)/src_shuffled/share/modules \
+      $(JDK_TOPDIR)/src_shuffled/$(OPENJDK_TARGET_OS_API_DIR)/modules \
       $(JDK_OUTPUTDIR)/gensrc \
       $(LANGTOOLS_OUTPUTDIR)/gensrc \
       $(CORBA_OUTPUTDIR)/gensrc \
