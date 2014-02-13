@@ -94,7 +94,9 @@ ifeq ($(OPENJDK_TARGET_OS)-$(OPENJDK_TARGET_CPU_ARCH), solaris-sparc)
         $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/common-awt/sun/awt/medialib \
         $(JDK_TOPDIR)/$(SRC_SUBDIR)/solaris/native/common-awt/sun/awt/medialib \
         #
-    LIBMLIB_IMAGE_V_CFLAGS := $(JDK_TOPDIR)/$(SRC_SUBDIR)/solaris/native/libmlib_image/vis_$(OPENJDK_TARGET_CPU_BITS).il
+    LIBMLIB_IMAGE_V_CFLAGS := $(JDK_TOPDIR)/$(SRC_SUBDIR)/solaris/native/libmlib_image/vis_$(OPENJDK_TARGET_CPU_BITS).il \
+        $(addprefix -I, $(LIBMLIB_IMAGE_V_SRC)) \
+        #
   else
     LIBMLIB_IMAGE_V_SRC := $(JDK_TOPDIR)/src/share/native/sun/awt/medialib \
         $(JDK_TOPDIR)/src/solaris/native/sun/awt/medialib
