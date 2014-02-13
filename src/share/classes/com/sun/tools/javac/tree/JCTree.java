@@ -342,6 +342,12 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
         MOD_ASG(MOD),                    // %=
 
         MODULE,
+        EXPORTS,
+        PERMITS,
+        PROVIDES,
+        REQUIRES,
+        USES,
+        VIEW,
 
         /** A synthetic let expression, of type LetExpr.
          */
@@ -2385,13 +2391,17 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
         }
     }
 
-    public static class JCModuleDecl extends JCTree /*implements ModuleTree*/ {
-        public Name name;
-        public List<JCModuleDirective> directives;
+    public static abstract class JCDirective extends JCTree
+        implements DirectiveTree {
+    }
+
+    public static class JCModuleDecl extends JCTree implements ModuleTree {
+        public JCExpression qualId;
+        public List<JCDirective> directives;
 //        public ModuleSymbol sym;
 
-        protected JCModuleDecl(Name name, List<JCModuleDirective> directives) {
-            this.name = name;
+        protected JCModuleDecl(JCExpression qualId, List<JCDirective> directives) {
+            this.qualId = qualId;
             this.directives = directives;
         }
 
@@ -2400,24 +2410,22 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
 
         @Override
         public Kind getKind() {
-            throw new UnsupportedOperationException();
-//            return Kind.MODULE;
+            return Kind.MODULE;
         }
 
 //        @Override
-        public Name getName() {
-            return name;
+        public JCExpression getName() {
+            return qualId;
         }
 
-//        @Override
-//        public List<JCModuleDirective> getDirectives() {
-//            return directives;
-//        }
+        @Override
+        public List<JCDirective> getDirectives() {
+            return directives;
+        }
 
         @Override
         public <R, D> R accept(TreeVisitor<R, D> v, D d) {
-            throw new UnsupportedOperationException();
-//            return v.visitModule(this, d);
+            return v.visitModule(this, d);
         }
 
         @Override
@@ -2426,11 +2434,222 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
         }
     }
 
-    public static abstract class JCModuleDirective extends JCTree /*implements ModuleDirectiveTree*/ {
+    public static class JCViewDecl extends JCDirective
+            implements ViewTree {
+        public JCExpression name;
+        public List<JCDirective> directives;
+
+        protected JCViewDecl(JCExpression name, List<JCDirective> directives) {
+            this.name = name;
+            this.directives = directives;
+        }
+
+        @Override
+        public void accept(Visitor v) { v.visitViewDef(this); }
+
+        @Override
+        public Kind getKind() {
+            return Kind.VIEW;
+        }
+
+        @Override
+        public JCExpression getName() {
+            return name;
+        }
+
+        @Override
+        public List<JCDirective> getDirectives() {
+            return directives;
+        }
+
+        @Override
+        public <R, D> R accept(TreeVisitor<R, D> v, D d) {
+            throw new UnsupportedOperationException();
+//            return v.visitView(this, d);
+        }
+
+        @Override
+        public Tag getTag() {
+            return VIEW;
+        }
+    }
+
+    public static class JCExports extends JCDirective
+            implements ExportsTree {
+        public JCExpression qualid;
+
+        protected JCExports(JCExpression qualId) {
+            this.qualid = qualId;
+        }
+
+        @Override
+        public void accept(Visitor v) { v.visitExports(this); }
+
+        @Override
+        public Kind getKind() {
+            return Kind.EXPORTS;
+        }
+
+        @Override
+        public JCExpression getExportName() {
+            return qualid;
+        }
+
+        @Override
+        public <R, D> R accept(TreeVisitor<R, D> v, D d) {
+            return v.visitExports(this, d);
+        }
+
+        @Override
+        public Tag getTag() {
+            return EXPORTS;
+        }
+    }
+
+    public static class JCPermits extends JCDirective
+            implements PermitsTree {
+        public JCExpression qualid;
+
+        protected JCPermits(JCExpression qualId) {
+            this.qualid = qualId;
+        }
+
+        @Override
+        public void accept(Visitor v) { v.visitPermits(this); }
+
+        @Override
+        public Kind getKind() {
+            return Kind.PERMITS;
+        }
+
+        @Override
+        public JCExpression getModuleName() {
+            return qualid;
+        }
+
+        @Override
+        public <R, D> R accept(TreeVisitor<R, D> v, D d) {
+            return v.visitPermits(this, d);
+        }
+
+        @Override
+        public Tag getTag() {
+            return PERMITS;
+        }
+    }
+
+    public static class JCProvides extends JCDirective
+            implements ProvidesTree {
+        public JCExpression serviceName;
+        public JCExpression implName;
+
+        protected JCProvides(JCExpression serviceName, JCExpression implName) {
+            this.serviceName = serviceName;
+            this.implName = implName;
+        }
+
+        @Override
+        public void accept(Visitor v) { v.visitProvides(this); }
+
+        @Override
+        public Kind getKind() {
+            return Kind.PROVIDES;
+        }
+
+        @Override
+        public <R, D> R accept(TreeVisitor<R, D> v, D d) {
+            return v.visitProvides(this, d);
+        }
+
+        @Override
+        public JCExpression getServiceName() {
+            return serviceName;
+        }
+
+        @Override
+        public JCExpression getImplementationName() {
+            return implName;
+        }
+
+        @Override
+        public Tag getTag() {
+            return PROVIDES;
+        }
+    }
+
+    public static class JCRequires extends JCDirective
+            implements RequiresTree {
+        public boolean isPublic;
+        public JCExpression viewName;
+
+        protected JCRequires(boolean isPublic, JCExpression viewName) {
+            this.isPublic = isPublic;
+            this.viewName = viewName;
+        }
+
+        @Override
+        public void accept(Visitor v) { v.visitRequires(this); }
+
+        @Override
+        public Kind getKind() {
+            return Kind.REQUIRES;
+        }
+
+        @Override
+        public <R, D> R accept(TreeVisitor<R, D> v, D d) {
+            return v.visitRequires(this, d);
+        }
+
+        @Override
+        public boolean isPublic() {
+            return isPublic;
+        }
+
+        @Override
+        public JCExpression getViewName() {
+            return viewName;
+        }
+
+        @Override
+        public Tag getTag() {
+            return REQUIRES;
+        }
+    }
+
+    public static class JCUses extends JCDirective
+            implements UsesTree {
+        public JCExpression qualid;
+
+        protected JCUses(JCExpression qualId) {
+            this.qualid = qualId;
+        }
+
+        @Override
+        public void accept(Visitor v) { v.visitUses(this); }
+
+        @Override
+        public Kind getKind() {
+            return Kind.USES;
+        }
+
+        @Override
+        public JCExpression getServiceName() {
+            return qualid;
+        }
+
+        @Override
+        public <R, D> R accept(TreeVisitor<R, D> v, D d) {
+            return v.visitUses(this, d);
+        }
+
+        @Override
+        public Tag getTag() {
+            return USES;
+        }
     }
 
     public static class JCErroneous extends JCExpression
-            implements com.sun.source.tree.ErroneousTree {
+            implements ErroneousTree {
         public List<? extends JCTree> errs;
         protected JCErroneous(List<? extends JCTree> errs) {
             this.errs = errs;
@@ -2564,7 +2783,13 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
         JCAnnotation Annotation(JCTree annotationType, List<JCExpression> args);
         JCModifiers Modifiers(long flags, List<JCAnnotation> annotations);
         JCErroneous Erroneous(List<? extends JCTree> errs);
-        JCModuleDecl Module(Name name, List<JCModuleDirective> directives);
+        JCModuleDecl ModuleDef(JCExpression qualId, List<JCDirective> directives);
+        JCExports Exports(JCExpression qualId);
+        JCPermits Permits(JCExpression qualId);
+        JCProvides Provides(JCExpression serviceName, JCExpression implName);
+        JCRequires Requires(boolean isPublic, JCExpression qualId);
+        JCUses Uses(JCExpression qualId);
+        JCViewDecl ViewDef(JCExpression qualId, List<JCDirective> directives);
         LetExpr LetExpr(List<JCVariableDecl> defs, JCTree expr);
     }
 
@@ -2625,6 +2850,12 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
         public void visitAnnotatedType(JCAnnotatedType that) { visitTree(that); }
         public void visitErroneous(JCErroneous that)         { visitTree(that); }
         public void visitModuleDef(JCModuleDecl that)        { visitTree(that); }
+        public void visitExports(JCExports that)    { visitTree(that); }
+        public void visitPermits(JCPermits that)    { visitTree(that); }
+        public void visitProvides(JCProvides that)  { visitTree(that); }
+        public void visitRequires(JCRequires that)  { visitTree(that); }
+        public void visitUses(JCUses that)          { visitTree(that); }
+        public void visitViewDef(JCViewDecl that)          { visitTree(that); }
         public void visitLetExpr(LetExpr that)               { visitTree(that); }
 
         public void visitTree(JCTree that)                   { Assert.error(); }

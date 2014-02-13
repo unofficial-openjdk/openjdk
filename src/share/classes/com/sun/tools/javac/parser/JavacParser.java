@@ -3147,9 +3147,74 @@ public class JavacParser implements Parser {
             allowModules = true;
         }
 
-        JCModuleDecl result = toP(F.at(pos).Module(null, null));
+        nextToken();
+        JCExpression name = qualident(false);
+        List<JCDirective> directives = null;
+
+        accept(LBRACE);
+        directives = moduleDirectiveList();
+        if (token.kind != RBRACE) {
+            setErrorEndPos(token.pos);
+            reportSyntaxError(S.prevToken().endPos, "expected", RBRACE);
+        }
+
+        JCModuleDecl result = toP(F.at(pos).ModuleDef(name, directives));
         attach(result, dc);
         return result;
+    }
+
+    List<JCDirective> moduleDirectiveList() {
+        ListBuffer<JCDirective> defs = new ListBuffer<>();
+        while (token.kind == IDENTIFIER) {
+            int pos = token.pos;
+            if (token.name() == names.requires) {
+                nextToken();
+                boolean isPublic = false;
+                if (token.kind == PUBLIC) {
+                    isPublic = true;
+                    nextToken();
+                }
+                JCExpression viewName = qualident(false);
+                accept(SEMI);
+                defs.append(toP(F.at(pos).Requires(isPublic, viewName)));
+            } else if (token.name() == names.permits) {
+                nextToken();
+                JCExpression moduleName = qualident(false);
+                accept(SEMI);
+                defs.append(toP(F.at(pos).Permits(moduleName)));
+            } else if (token.name() == names.exports) {
+                nextToken();
+                JCExpression pkgName = qualident(false);
+                accept(SEMI);
+                defs.append(toP(F.at(pos).Exports(pkgName)));
+            } else if (token.name() == names.provides) {
+                nextToken();
+                JCExpression serviceName = qualident(false);
+                if (token.kind == IDENTIFIER && token.name() == names.with) {
+                    nextToken();
+                    JCExpression implName = qualident(false);
+                    accept(SEMI);
+                    defs.append(toP(F.at(pos).Provides(serviceName, implName)));
+                } else {
+                    log.error("with.expected");
+                }
+            } else if (token.name() == names.uses) {
+                nextToken();
+                JCExpression service = qualident(false);
+                accept(SEMI);
+                defs.append(toP(F.at(pos).Uses(service)));
+            } else if (token.name() == names.view) {
+                nextToken();
+                JCExpression qualId = qualident(false);
+                accept(LBRACE);
+                List<JCDirective> directives = moduleDirectiveList();
+                accept(RBRACE);
+                defs.append(toP(F.at(pos).ViewDef(qualId, directives)));
+            } else {
+                break;
+            }
+        }
+        return defs.toList();
     }
 
     /** ImportDeclaration = IMPORT [ STATIC ] Ident { "." Ident } [ "." "*" ] ";"

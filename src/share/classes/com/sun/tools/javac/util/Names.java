@@ -65,7 +65,12 @@ public class Names {
     public final Name _this;
     public final Name exports;
     public final Name module;
+    public final Name permits;
+    public final Name provides;
     public final Name requires;
+    public final Name uses;
+    public final Name view;
+    public final Name with;
 
     // field and method names
     public final Name _name;
@@ -205,7 +210,12 @@ public class Names {
         _this = fromString("this");
         exports = fromString("exports");
         module = fromString("module");
+        permits = fromString("permits");
+        provides = fromString("provides");
         requires = fromString("requires");
+        uses = fromString("uses");
+        view = fromString("view");
+        with = fromString("with");
 
         // field and method names
         _name = fromString("name");

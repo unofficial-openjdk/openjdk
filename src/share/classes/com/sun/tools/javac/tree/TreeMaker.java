@@ -530,12 +530,54 @@ public class TreeMaker implements JCTree.Factory {
     }
 
     @Override
-    public JCModuleDecl Module(Name name, List<JCModuleDirective> directives) {
-        JCModuleDecl tree = new JCModuleDecl(name, directives);
+    public JCModuleDecl ModuleDef(JCExpression qualid, List<JCDirective> directives) {
+        JCModuleDecl tree = new JCModuleDecl(qualid, directives);
         tree.pos = pos;
         return tree;
     }
 
+    @Override
+    public JCExports Exports(JCExpression qualId) {
+        JCExports tree = new JCExports(qualId);
+        tree.pos = pos;
+        return tree;
+    }
+
+    @Override
+    public JCPermits Permits(JCExpression qualId) {
+        JCPermits tree = new JCPermits(qualId);
+        tree.pos = pos;
+        return tree;
+    }
+
+    @Override
+    public JCProvides Provides(JCExpression serviceName, JCExpression implName) {
+        JCProvides tree = new JCProvides(serviceName, implName);
+        tree.pos = pos;
+        return tree;
+    }
+
+    @Override
+    public JCRequires Requires(boolean isPublic, JCExpression qualId) {
+        JCRequires tree = new JCRequires(isPublic, qualId);
+        tree.pos = pos;
+        return tree;
+    }
+
+    @Override
+    public JCUses Uses(JCExpression qualId) {
+        JCUses tree = new JCUses(qualId);
+        tree.pos = pos;
+        return tree;
+    }
+
+    @Override
+    public JCViewDecl ViewDef(JCExpression name,
+            List<JCDirective> directives) {
+        JCViewDecl tree = new JCViewDecl(name, directives);
+        tree.pos = pos;
+        return tree;
+    }
 
     public JCAnnotatedType AnnotatedType(List<JCAnnotation> annotations, JCExpression underlyingType) {
         JCAnnotatedType tree = new JCAnnotatedType(annotations, underlyingType);
