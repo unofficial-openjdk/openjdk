@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -151,6 +151,7 @@ class BoolObjectClosure;
   do_klass(MemberName_klass,                            java_lang_invoke_MemberName,               Pre_JSR292          ) \
   do_klass(MethodHandleNatives_klass,                   java_lang_invoke_MethodHandleNatives,      Pre_JSR292          ) \
   do_klass(LambdaForm_klass,                            java_lang_invoke_LambdaForm,               Opt                 ) \
+  do_klass(DirectMethodHandle_klass,                    java_lang_invoke_DirectMethodHandle,       Opt                 ) \
   do_klass(MethodType_klass,                            java_lang_invoke_MethodType,               Pre_JSR292          ) \
   do_klass(BootstrapMethodError_klass,                  java_lang_BootstrapMethodError,            Pre_JSR292          ) \
   do_klass(CallSite_klass,                              java_lang_invoke_CallSite,                 Pre_JSR292          ) \

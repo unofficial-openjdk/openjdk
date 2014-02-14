@@ -1078,7 +1078,7 @@ void constantPoolOopDesc::resize_operands(int delta_len, int delta_size, TRAPS) 
   int new_size = old_size + delta_size;
   int min_size = (delta_size > 0) ? old_size : new_size;
 
-  typeArrayHandle new_ops = oopFactory::new_permanent_shortArray(new_size, CHECK);
+  typeArrayHandle new_ops = oopFactory::new_permanent_intArray(new_size, CHECK);
 
   // Set index in the resized array for existing elements only
   for (int idx = 0; idx < min_len; idx++) {
@@ -1106,7 +1106,7 @@ void constantPoolOopDesc::extend_operands(constantPoolHandle ext_cp, TRAPS) {
   assert(delta_len  > 0 && delta_size > 0, "extended operands array must be bigger");
 
   if (operand_array_length(operands()) == 0) {
-    typeArrayHandle new_ops = oopFactory::new_permanent_shortArray(delta_size, CHECK);
+    typeArrayHandle new_ops = oopFactory::new_permanent_intArray(delta_size, CHECK);
     // The first element index defines the offset of second part
     operand_offset_at_put(new_ops(), 0, 2*delta_len); // offset in new array
     set_operands(new_ops());
@@ -1150,7 +1150,7 @@ void constantPoolOopDesc::copy_operands(constantPoolHandle from_cp,
       int from_len = from_cp->operands()->length();
       int old_off  = old_oplen * sizeof(u2);
       int from_off = from_oplen * sizeof(u2);
-      typeArrayHandle new_operands = oopFactory::new_permanent_shortArray(old_len + from_len, CHECK);
+      typeArrayHandle new_operands = oopFactory::new_permanent_intArray(old_len + from_len, CHECK);
       int fillp = 0, len = 0;
       // first part of dest
       Copy::conjoint_memory_atomic(to_cp->operands()->short_at_addr(0),
