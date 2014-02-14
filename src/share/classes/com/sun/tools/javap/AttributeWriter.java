@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -62,6 +62,9 @@ import com.sun.tools.classfile.StackMap_attribute;
 import com.sun.tools.classfile.Synthetic_attribute;
 
 import static com.sun.tools.classfile.AccessFlags.*;
+import com.sun.tools.classfile.ModuleProvides_attribute;
+import com.sun.tools.classfile.ModuleRequires_attribute;
+import com.sun.tools.classfile.Module_attribute;
 import com.sun.tools.javac.util.StringUtils;
 
 /*
@@ -414,6 +417,75 @@ public class AttributeWriter extends BasicWriter
         }
         indent(-1);
         return null;
+    }
+
+    public Void visitModule(Module_attribute attr, Void ignore) {
+        println("Module: " + constantWriter.stringValue(attr.module_name_index));
+        return null;
+    }
+
+    public Void visitModuleProvides(ModuleProvides_attribute attr, Void ignore) {
+        println("ModuleProvides: ");
+        indent(+1);
+        for (int i = 0; i < attr.view_table.length; i++) {
+            println("View " + i);
+            indent(+1);
+            ModuleProvides_attribute.View v = attr.view_table[i];
+            String view_name = (v.view_name_index == 0)
+                    ? "(default)" : constantWriter.stringValue(v.view_name_index);
+            println("#" + v.view_name_index + "\t// view " + view_name);
+            println(v.service_length + "\t// services ");
+            indent(+1);
+            for (int si = 0; si < v.service_length; si++) {
+                ModuleProvides_attribute.Service s = v.service_table[si];
+                println("#" + s.service_index + ", " + "#" + s.impl_index
+                        +"\t// provides " + constantWriter.stringValue(s.service_index)
+                        + " with " + constantWriter.stringValue(s.impl_index));
+            }
+            indent(-1);
+            println(v.export_length + "\t// exports ");
+            indent(+1);
+            for (int ei = 0; ei < v.export_length; ei++) {
+                int e = v.export_table[ei];
+                println("#" + e + "\t// exports " + constantWriter.stringValue(e));
+            }
+            indent(-1);
+            println(v.permit_length + "\t// permits ");
+            indent(+1);
+            for (int pi = 0; pi < v.permit_length; pi++) {
+                int p = v.permit_table[pi];
+                println("#" + p +"\t// permits " + constantWriter.stringValue(p));
+            }
+            indent(-1); // end of permits
+            indent(-1); // end of ModuleProvides
+        }
+        indent(-1);
+        return null;
+    }
+
+    public Void visitModuleRequires(ModuleRequires_attribute attr, Void ignore) {
+        println("ModuleRequires: ");
+        indent(+1);
+        writeRequiresTable(attr.module_table, false);
+        writeRequiresTable(attr.service_table, true);
+        indent(-1);
+        return null;
+    }
+
+    protected void writeRequiresTable(ModuleRequires_attribute.Entry[] entries,
+            boolean service) {
+        println(entries.length + "\t// " + (service ? "services" : "modules"));
+        indent(+1);
+        for (ModuleRequires_attribute.Entry e: entries) {
+            print("#" + e.index + "," + String.format("%x", e.flags)+ "\t// "
+                + (service ? "uses" : "requires"));
+            if ((e.flags & ModuleRequires_attribute.ACC_PUBLIC) != 0)
+                print(" public");
+            if ((e.flags & ModuleRequires_attribute.ACC_MANDATED) != 0)
+                print(" mandated");
+            println(" " + constantWriter.stringValue(e.index));
+        }
+        indent(-1);
     }
 
     public Void visitRuntimeVisibleAnnotations(RuntimeVisibleAnnotations_attribute attr, Void ignore) {

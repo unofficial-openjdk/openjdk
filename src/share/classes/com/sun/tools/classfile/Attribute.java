@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -52,6 +52,9 @@ public abstract class Attribute {
     public static final String LocalVariableTable       = "LocalVariableTable";
     public static final String LocalVariableTypeTable   = "LocalVariableTypeTable";
     public static final String MethodParameters         = "MethodParameters";
+    public static final String Module                   = "Module";
+    public static final String ModuleProvides           = "ModuleProvides";
+    public static final String ModuleRequires           = "ModuleRequires";
     public static final String RuntimeVisibleAnnotations = "RuntimeVisibleAnnotations";
     public static final String RuntimeInvisibleAnnotations = "RuntimeInvisibleAnnotations";
     public static final String RuntimeVisibleParameterAnnotations = "RuntimeVisibleParameterAnnotations";
@@ -120,6 +123,9 @@ public abstract class Attribute {
             standardAttributes.put(LineNumberTable,   LineNumberTable_attribute.class);
             standardAttributes.put(LocalVariableTable, LocalVariableTable_attribute.class);
             standardAttributes.put(LocalVariableTypeTable, LocalVariableTypeTable_attribute.class);
+            standardAttributes.put(Module,            Module_attribute.class);
+            standardAttributes.put(ModuleProvides,    ModuleProvides_attribute.class);
+            standardAttributes.put(ModuleRequires,    ModuleRequires_attribute.class);
 
             if (!compat) { // old javap does not recognize recent attributes
                 standardAttributes.put(MethodParameters, MethodParameters_attribute.class);
@@ -184,6 +190,9 @@ public abstract class Attribute {
         R visitLocalVariableTable(LocalVariableTable_attribute attr, P p);
         R visitLocalVariableTypeTable(LocalVariableTypeTable_attribute attr, P p);
         R visitMethodParameters(MethodParameters_attribute attr, P p);
+        R visitModule(Module_attribute attr, P p);
+        R visitModuleProvides(ModuleProvides_attribute attr, P p);
+        R visitModuleRequires(ModuleRequires_attribute attr, P p);
         R visitRuntimeVisibleAnnotations(RuntimeVisibleAnnotations_attribute attr, P p);
         R visitRuntimeInvisibleAnnotations(RuntimeInvisibleAnnotations_attribute attr, P p);
         R visitRuntimeVisibleParameterAnnotations(RuntimeVisibleParameterAnnotations_attribute attr, P p);
