@@ -43,6 +43,7 @@ import com.sun.tools.javac.util.*;
 import com.sun.tools.javac.util.JCDiagnostic.DiagnosticPosition;
 import com.sun.tools.javac.util.List;
 import static com.sun.tools.javac.tree.JCTree.Tag.*;
+import javax.tools.JavaFileManager.Location;
 
 /**
  * Root class for abstract syntax tree nodes. It provides definitions
@@ -491,8 +492,12 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
         public JCExpression pid;
         /** All definitions in this file (ClassDef, Import, and Skip) */
         public List<JCTree> defs;
-        /* The source file name. */
+        /** The source file name. */
         public JavaFileObject sourcefile;
+        /** The module to which this compilation unit belongs. */
+        public ModuleSymbol modle;
+        /** The location in which this compilation unit was found. */
+        public Location locn;
         /** The package to which this compilation unit belongs. */
         public PackageSymbol packge;
         /** A scope for all named imports. */
@@ -2398,7 +2403,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
     public static class JCModuleDecl extends JCTree implements ModuleTree {
         public JCExpression qualId;
         public List<JCDirective> directives;
-//        public ModuleSymbol sym;
+        public ModuleSymbol sym;
 
         protected JCModuleDecl(JCExpression qualId, List<JCDirective> directives) {
             this.qualId = qualId;

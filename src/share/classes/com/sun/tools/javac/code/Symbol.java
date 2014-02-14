@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,6 +31,7 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 
 import javax.lang.model.element.*;
+import javax.tools.JavaFileManager;
 import javax.tools.JavaFileObject;
 
 import com.sun.tools.javac.code.Type.*;
@@ -808,6 +809,37 @@ public abstract class Symbol extends AnnoConstruct implements Element {
             return v.visitTypeParameter(this, p);
         }
     }
+    /** A class for module symbols.
+     */
+    public static class ModuleSymbol extends TypeSymbol // JIGSAW need TypeSymbol?
+            /*implements ModuleElement*/ {
+
+        public Name fullname;
+
+//        /** All directives, in natural order. */
+//        public List<Directive> directives;
+
+        public ClassSymbol module_info;
+
+        public JavaFileManager.Location location;
+
+        public ModuleSymbol() {
+            super(MDL, 0, null, null, null);
+            this.type = new ModuleType(this);
+        }
+
+        public ModuleSymbol(Name name, Symbol owner) {
+            super(MDL, 0, name, null, owner);
+            this.type = new ModuleType(this);
+            this.fullname = formFullName(name, owner);
+        }
+
+        @Override
+        public <R, P> R accept(ElementVisitor<R, P> v, P p) {
+            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        }
+
+    }
 
     /** A class for package symbols
      */
@@ -896,6 +928,10 @@ public abstract class Symbol extends AnnoConstruct implements Element {
     /** A class for class symbols
      */
     public static class ClassSymbol extends TypeSymbol implements TypeElement {
+        /**
+         * The module for the class.
+         */
+        public ModuleSymbol modle;
 
         /** a scope for all class members; variables, methods and inner classes
          *  type parameters are not part of this scope
