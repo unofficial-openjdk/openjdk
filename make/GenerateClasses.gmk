@@ -83,8 +83,8 @@ GENCLASSES += $(RMI_12_RMI)
 
 $(eval $(call SetupRMICompilation,RMI_12_JNDI, \
     CLASSES := com.sun.jndi.rmi.registry.ReferenceWrapper, \
-    CLASSES_DIR := $(CLASSES_DIR)$(JAVAX_JNDI_SUBDIR), \
-    STUB_CLASSES_DIR := $(STUB_CLASSES_DIR)$(JAVAX_JNDI_SUBDIR), \
+    CLASSES_DIR := $(CLASSES_DIR)$(JDK_JNDI_RMI_SUBDIR), \
+    STUB_CLASSES_DIR := $(STUB_CLASSES_DIR)$(JDK_JNDI_RMI_SUBDIR), \
     RUN_V12 := true))
 GENCLASSES += $(RMI_12_JNDI)
 

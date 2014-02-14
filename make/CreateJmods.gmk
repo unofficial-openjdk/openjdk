@@ -73,9 +73,6 @@ all: $(BUILD_CLASSANALYZER)
             --classlist $(MODULE_CLASSLIST_DIR) \
             --graph $(MODULES_SER_OUT) \
             --jmods $(JMODS_DIR) \
-            --module javax.auth \
-                --cmds="$(KERBEROS_LAUNCHERS)" \
-                --native="$(SECURITY_AUTH_LIBRARIES) $(SECURITY_KERBEROS_LIBRARIES)" \
             --module java.base \
                 --native="$(BASE_LIBRARIES) $(MSVCR_TARGET) $(JVM_LIBRARIES)" \
                 --cmds="$(BASE_LAUNCHERS)" \
@@ -86,6 +83,9 @@ all: $(BUILD_CLASSANALYZER)
                 --native="$(DESKTOP_LIBRARIES) $(FREETYPE_LIB)" \
                 --conf="$(DESKTOP_CONF_FILES)" \
                 --conf="$(GENDATA_FONT_CONFIG)" \
+            --module javax.kerberos \
+                --cmds="$(KERBEROS_LAUNCHERS)" \
+                --native="$(SECURITY_KERBEROS_LIBRARIES)" \
             --module java.logging \
                 --native="$(LOGGING_LIBRARIES)" \
                 --conf="$(LOGGING_CONF_FILES)" \
@@ -116,6 +116,8 @@ all: $(BUILD_CLASSANALYZER)
                 --conf="$(SECURITY_UCRYPTO_CONF_FILES)" \
             --module jdk.devtools \
                 --cmds="$(DEVTOOLS_LAUNCHERS)" \
+            --module jdk.jaas \
+                --native="$(SECURITY_JAAS_LIBRARIES)" \
             --module jdk.tools.base \
                 --cmds="$(TOOLS_BASE_LAUNCHERS)" \
                 --native="$(UNPACK_LIBRARIES)" \

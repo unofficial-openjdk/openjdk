@@ -48,7 +48,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBJAAS, \
     SRC := $(LIBJAAS_SRC), \
     LANG := C, \
     OPTIMIZATION := LOW, \
-    CFLAGS := $(CFLAGS_JDKLIB) -I$(JDK_OUTPUTDIR)/gensrc_headers/javax.auth, \
+    CFLAGS := $(CFLAGS_JDKLIB) -I$(JDK_OUTPUTDIR)/gensrc_headers/jdk.jaas, \
     MAPFILE := $(LIBJAAS_MAPFILE), \
     LDFLAGS := $(filter-out -ljava, $(LDFLAGS_JDKLIB)) \
         $(call SET_SHARED_LIBRARY_ORIGIN), \
@@ -66,7 +66,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBJAAS, \
 
 $(BUILD_LIBJAAS): $(BUILD_LIBJAVA)
 
-SECURITY_AUTH_LIBRARIES += $(BUILD_LIBJAAS)
+SECURITY_JAAS_LIBRARIES += $(BUILD_LIBJAAS)
 
 ##########################################################################################
 
@@ -126,7 +126,7 @@ ifneq ($(OPENJDK_TARGET_OS), windows)
       LANG := C, \
       OPTIMIZATION := LOW, \
       CFLAGS := $(CFLAGS_JDKLIB) $(addprefix -I,$(LIBJ2GSS_SRC)) \
-          -I$(JDK_OUTPUTDIR)/gensrc_headers/javax.auth, \
+          -I$(JDK_OUTPUTDIR)/gensrc_headers/javax.kerberos, \
       MAPFILE := $(JDK_TOPDIR)/make/mapfiles/libj2gss/mapfile-vers, \
       LDFLAGS := $(LDFLAGS_JDKLIB) \
           $(call SET_SHARED_LIBRARY_ORIGIN), \
@@ -170,7 +170,7 @@ ifneq ($(BUILD_CRYPTO), no)
         LANG := C, \
         OPTIMIZATION := LOW, \
         CFLAGS := $(CFLAGS_JDKLIB) \
-            -I$(JDK_OUTPUTDIR)/gensrc_headers/javax.auth, \
+            -I$(JDK_OUTPUTDIR)/gensrc_headers/javax.kerberos, \
         LDFLAGS := $(LDFLAGS_JDKLIB) \
             $(call SET_SHARED_LIBRARY_ORIGIN), \
         LDFLAGS_SUFFIX := $(BUILD_LIBKRB5_LIBS), \

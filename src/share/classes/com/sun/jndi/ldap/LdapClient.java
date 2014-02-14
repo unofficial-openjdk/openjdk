@@ -34,11 +34,10 @@ import javax.naming.*;
 import javax.naming.directory.*;
 import javax.naming.ldap.*;
 
-import java.lang.reflect.Method;
-import java.lang.reflect.InvocationTargetException;
-
 import com.sun.jndi.ldap.pool.PooledConnection;
 import com.sun.jndi.ldap.pool.PoolCallback;
+import com.sun.jndi.ldap.sasl.LdapSasl;
+import com.sun.jndi.ldap.sasl.SaslInputStream;
 
 /**
  * LDAP (RFC-1777) and LDAPv3 (RFC-2251) compliant client
@@ -231,10 +230,10 @@ public final class LdapClient implements PooledConnection {
                         }
                     }
                 }
-            } else if (isLdapv3 && Sasl.isPresent()) {
+            } else if (isLdapv3) {
                 // SASL authentication
                 try {
-                    res = Sasl.bind(this, conn, conn.host, name, pw,
+                    res = LdapSasl.saslBind(this, conn, conn.host, name, pw,
                         authMechanism, env, ctls);
                     if (res.status == LdapClient.LDAP_SUCCESS) {
                         conn.setBound();
@@ -394,7 +393,7 @@ public final class LdapClient implements PooledConnection {
      * close the channel and open a new one.
      */
     boolean usingSaslStreams() {
-        return Sasl.isSaslInputStream(conn.inStream);
+        return (conn.inStream instanceof SaslInputStream);
     }
 
     synchronized void incRefCount() {
@@ -1613,90 +1612,5 @@ public final class LdapClient implements PooledConnection {
         }
         return new LdapClient(hostname, port, factory, connectTimeout,
                                         readTimeout, trace, null);
-    }
-
-    /**
-     * A class that provides access to the com.sun.jndi.ldap.sasl without
-     * creating a static dependency.
-     *
-     * ## FIXME: This should be replaced by using a service provider interface
-     *    for authentication mechanisms.
-     */
-    private static class Sasl {
-        private static Class<?> getClass(String name) {
-            try {
-                return Class.forName(name, true, Sasl.class.getClassLoader());
-            } catch (ClassNotFoundException e) {
-                return null;
-            }
-        }
-
-        private static Method getMethod(Class<?> c, String name, Class<?>... types) {
-            try {
-                return (c == null) ? null : c.getMethod(name, types);
-            } catch (NoSuchMethodException e) {
-                throw new AssertionError(e);
-            }
-        }
-
-        static final Class<?> LDAPSASL_CLASS = getClass("com.sun.jndi.ldap.sasl.LdapSasl");
-
-        static final Class<?> SASLINPUTSTREAM_CLASS = getClass("com.sun.jndi.ldap.sasl.SaslInputStream");
-
-        static final Method SASLBIND_METHOD = getMethod(LDAPSASL_CLASS,
-                                                        "saslBind",
-                                                        LdapClient.class,
-                                                        Connection.class,
-                                                        String.class,
-                                                        String.class,
-                                                        Object.class,
-                                                        String.class,
-                                                        Hashtable.class,
-                                                        Control[].class);
-
-        /**
-         * Returns true if SASL authnetication present.
-         */
-        static boolean isPresent() {
-            return LDAPSASL_CLASS != null;
-        }
-
-        /**
-         * Perform SASL bind. See com.sun.jndi.ldap.sasl.LdapSasl for details.
-         */
-        static LdapResult bind(LdapClient clnt,
-                               Connection conn,
-                               String server,
-                               String dn,
-                               Object pw,
-                               String authMech,
-                               Hashtable<?,?> env,
-                               Control[] bindCtls)
-            throws IOException, NamingException
-        {
-            try {
-                return (LdapResult)SASLBIND_METHOD.invoke(null, clnt, conn, server, dn, pw, authMech, env, bindCtls);
-            } catch (IllegalAccessException x) {
-                throw new AssertionError(x);
-            } catch (InvocationTargetException x) {
-                Throwable cause = x.getCause();
-                if (cause instanceof IOException)
-                    throw (IOException)cause;
-                if (cause instanceof NamingException)
-                    throw (NamingException)cause;
-                if (cause instanceof Error)
-                    throw (Error)cause;
-                if (cause instanceof RuntimeException)
-                    throw (RuntimeException)cause;
-                throw new AssertionError(x);
-            }
-        }
-
-        /**
-         * Returns true if the given InputStream is a SASL InputStream.
-         */
-        static boolean isSaslInputStream(InputStream in) {
-            return (SASLINPUTSTREAM_CLASS == null) ? false : SASLINPUTSTREAM_CLASS.isInstance(in);
-        }
     }
 }

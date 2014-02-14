@@ -136,6 +136,7 @@ module java.base {
     include sun.misc.resources.*;
 
     include sun.net.*,
+            sun.net.dns.*,
             sun.net.sdp.*,
             sun.net.spi.*,
             sun.net.idn.*,
@@ -333,19 +334,31 @@ module jdk.crypto.pkcs11 {
     include sun.security.pkcs11.**;
 }
 
-// Aggregator module for authentication protocols and APIs
-module javax.auth {
-    // SASL and NTLM authentication support
+module javax.sasl {
     include javax.security.sasl.**,
-            com.sun.security.sasl.**,
-            com.sun.jndi.ldap.sasl.**;
+            com.sun.security.sasl.**;
+
+    // GSSAPI mechanism in Kerberos module for now
+    exclude com.sun.security.sasl.gsskerb.*;
+
+    // NTLM
     include com.sun.security.ntlm.**,
-            com.sun.security.sasl.ntlm.**,
             sun.net.www.protocol.http.ntlm.*;
 
+    exports javax.security.sasl;
+}
+
+module jdk.jaas {
+    // JDK-specific API to JAAS
     include com.sun.security.auth.**;
 
-    // kerberos
+    exports com.sun.security.auth;
+    exports com.sun.security.auth.callback;
+    exports com.sun.security.auth.login;
+    exports com.sun.security.auth.module;
+}
+
+module javax.kerberos {
     include javax.security.auth.kerberos.*,
             com.sun.security.jgss.**,
             com.sun.security.sasl.gsskerb.**,             // GSSAPI SASL mechanism
@@ -355,23 +368,9 @@ module javax.auth {
             org.ietf.jgss.**,
             sun.net.www.protocol.http.spnego.*;
 
-    view jdk.kerberos {
-        exports javax.security.auth.kerberos;
-        exports org.ietf.jgss;
-        exports com.sun.security.jgss;
-    }
-
-    view jdk.sasl {
-        exports javax.security.sasl;
-    }
-
-    // JDK-specific API for JAAS
-    view jdk.jaas {
-        exports com.sun.security.auth;
-        exports com.sun.security.auth.callback;
-        exports com.sun.security.auth.login;
-        exports com.sun.security.auth.module;
-    }
+    exports javax.security.auth.kerberos;
+    exports org.ietf.jgss;
+    exports com.sun.security.jgss;
 }
 
 module jdk.ucrypto {
@@ -438,7 +437,7 @@ module javax.jaxp {
 }
 
 module javax.jndi {
-    // framework/API and classes used by providers
+    // framework/API 
     include javax.naming.**,
             com.sun.naming.**,
             com.sun.jndi.toolkit.ctx.**,
@@ -446,25 +445,24 @@ module javax.jndi {
             com.sun.jndi.toolkit.url.**;
 
     // LDAP provider
-    include javax.naming.ldap.**,
-            com.sun.jndi.ldap.**,
+    include com.sun.jndi.ldap.**,
             com.sun.jndi.url.ldap.*,
             com.sun.jndi.url.ldaps.*,
             sun.security.provider.certpath.ldap.**;
 
-    // SASL support in auth module
-    exclude com.sun.jndi.ldap.sasl.*;
+    uses javax.naming.ldap.StartTlsResponse;
+ }
 
+module jdk.jndi.rmi {
     // RMI registry provider
     include com.sun.jndi.rmi.**, com.sun.jndi.url.rmi.**;
+}
 
+module jdk.jndi.dns {
     // DNS provider
     include com.sun.jndi.dns.**,
             com.sun.jndi.url.dns.**,
-            sun.net.dns.**,
             sun.net.spi.nameservice.dns.**;
-
-    uses javax.naming.ldap.StartTlsResponse;
 }
 
 module java.rmi {
@@ -763,18 +761,27 @@ module java.compact3 {
     requires public java.management;
     requires public java.prefs;
     requires public java.security.acl;
-    requires public javax.auth;
     requires public javax.jndi;
-    requires public javax.smartcardio;
+    requires public javax.kerberos;
+    requires public javax.sasl;
     requires public javax.compiler;
     requires public javax.xmldsig;
 
+    // JSR 168 (not in Java SE)
+    requires public javax.smartcardio;
+
+    // JDK-specific APIs
+    requires public jdk.jaas;
     requires public jdk.httpserver;
     requires public jdk.sctp;
+
+    // service and security providers
     requires public jdk.crypto;
     requires public jdk.crypto.ec;
     requires public jdk.crypto.mscapi;
     requires public jdk.crypto.pkcs11;
+    requires public jdk.jndi.dns;
+    requires public jdk.jndi.rmi;
     requires public jdk.ucrypto;
 }
 
