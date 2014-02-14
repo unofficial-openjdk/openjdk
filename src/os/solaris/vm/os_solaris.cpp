@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1889,9 +1889,6 @@ void os::die() {
   _exit(-1);
 }
 
-// unused
-void os::set_error_file(const char *logfile) {}
-
 // DLL functions
 
 const char* os::dll_file_extension() { return ".so"; }
@@ -2548,6 +2545,7 @@ void os::jvm_path(char *buf, jint buflen) {
         // determine if this is a legacy image or modules image
         // modules image doesn't have "jre" subdirectory
         len = strlen(buf);
+        assert(len < buflen, "Ran out of buffer space");
         jrelib_p = buf + len;
         snprintf(jrelib_p, buflen-len, "/jre/lib/%s", cpu_arch);
         if (0 != access(buf, F_OK)) {
@@ -2568,7 +2566,7 @@ void os::jvm_path(char *buf, jint buflen) {
     }
   }
 
-  strcpy(saved_jvm_path, buf);
+  strncpy(saved_jvm_path, buf, MAXPATHLEN);
 }
 
 
