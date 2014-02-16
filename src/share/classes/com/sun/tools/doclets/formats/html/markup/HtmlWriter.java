@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -362,6 +362,12 @@ public class HtmlWriter extends PrintWriter {
                 "    if (targetPage.indexOf(\":\") != -1 || (targetPage != \"\" && !validURL(targetPage)))" + DocletConstants.NL +
                 "        targetPage = \"undefined\";" + DocletConstants.NL +
                 "    function validURL(url) {" + DocletConstants.NL +
+                "        try {" + DocletConstants.NL +
+                "            url = decodeURIComponent(url);" + DocletConstants.NL +
+                "        }" + DocletConstants.NL +
+                "        catch (error) {" + DocletConstants.NL +
+                "            return false;" + DocletConstants.NL +
+                "        }" + DocletConstants.NL +
                 "        var pos = url.indexOf(\".html\");" + DocletConstants.NL +
                 "        if (pos == -1 || pos != url.length - 5)" + DocletConstants.NL +
                 "            return false;" + DocletConstants.NL +
@@ -373,7 +379,8 @@ public class HtmlWriter extends PrintWriter {
                 "            if ('a' <= ch && ch <= 'z' ||" + DocletConstants.NL +
                 "                    'A' <= ch && ch <= 'Z' ||" + DocletConstants.NL +
                 "                    ch == '$' ||" + DocletConstants.NL +
-                "                    ch == '_') {" + DocletConstants.NL +
+                "                    ch == '_' ||" + DocletConstants.NL +
+                "                    ch.charCodeAt(0) > 127) {" + DocletConstants.NL +
                 "                allowNumber = true;" + DocletConstants.NL +
                 "                allowSep = true;" + DocletConstants.NL +
                 "            } else if ('0' <= ch && ch <= '9'" + DocletConstants.NL +
