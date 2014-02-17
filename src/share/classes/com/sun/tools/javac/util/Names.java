@@ -142,6 +142,9 @@ public class Names {
     public final Name LocalVariableTable;
     public final Name LocalVariableTypeTable;
     public final Name MethodParameters;
+    public final Name Module;
+    public final Name ModuleProvides;
+    public final Name ModuleRequires;
     public final Name RuntimeInvisibleAnnotations;
     public final Name RuntimeInvisibleParameterAnnotations;
     public final Name RuntimeInvisibleTypeAnnotations;
@@ -287,6 +290,9 @@ public class Names {
         LocalVariableTable = fromString("LocalVariableTable");
         LocalVariableTypeTable = fromString("LocalVariableTypeTable");
         MethodParameters = fromString("MethodParameters");
+        Module = fromString("Module");
+        ModuleProvides = fromString("ModuleProvides");
+        ModuleRequires = fromString("ModuleRequires");
         RuntimeInvisibleAnnotations = fromString("RuntimeInvisibleAnnotations");
         RuntimeInvisibleParameterAnnotations = fromString("RuntimeInvisibleParameterAnnotations");
         RuntimeInvisibleTypeAnnotations = fromString("RuntimeInvisibleTypeAnnotations");

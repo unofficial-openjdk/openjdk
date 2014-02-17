@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,6 +37,7 @@ import javax.tools.JavaFileObject;
 
 import com.sun.tools.javac.code.*;
 import com.sun.tools.javac.code.Attribute.RetentionPolicy;
+import com.sun.tools.javac.code.Directive.*;
 import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.code.Type.*;
 import com.sun.tools.javac.code.Types.UniqueType;
@@ -980,6 +981,80 @@ public class ClassWriter extends ClassFile {
             for (int i : loc)
                 databuf.appendByte((byte)i);
         }
+    }
+
+/**********************************************************************
+ * Writing module attributes
+ **********************************************************************/
+
+    /** Write the Module attribute if needed.
+     *  Returns the number of attributes written (0 or 1).
+     */
+    int writeModuleAttribute(ClassSymbol c) {
+        if (c.modle == null)
+            return 0;
+
+        int alenIdx = writeAttr(names.Module);
+        databuf.appendChar(pool.put(c.modle));
+        endAttr(alenIdx);
+        return 1;
+    }
+
+    int writeModuleMetadata(ModuleSymbol sym) {
+        int n = 0;
+
+        if (sym.hasRequires()) {
+            int alenIdx = writeAttr(names.ModuleRequires);
+                // modules
+                List<RequiresDirective> modules = sym.getRequiredModules();
+                databuf.appendChar(modules.size());
+                for (RequiresDirective m: modules) {
+                    databuf.appendChar(pool.put(m.viewName));
+                    databuf.appendInt(RequiresFlag.value(m.flags));
+                }
+                // services
+                List<UsesDirective> services = sym.getRequiredServices();
+                databuf.appendChar(services.size());
+                for (UsesDirective s: services) {
+                    databuf.appendChar(pool.put(s.service));
+                    databuf.appendInt(0);
+                }
+            endAttr(alenIdx);
+            n++;
+        }
+
+        if (sym.hasViews()) {
+            int alenIdx = writeAttr(names.ModuleProvides);
+            List<ViewDeclaration> views = sym.getViews();
+            databuf.appendChar(views.size());
+            for (ViewDeclaration v: views) {
+                // name
+                databuf.appendChar(v.isDefault() ? 0 : pool.put(names.fromUtf(externalize(v.name))));
+                // services
+                List<ProvidesDirective> services = v.getServices();
+                databuf.appendChar(services.size());
+                for (ProvidesDirective s: services) {
+                    databuf.appendChar(pool.put(s.service));
+                    databuf.appendChar(pool.put(s.impl));
+                }
+                // exports
+                Set<PackageSymbol> exports = sym.getExports(v);
+                databuf.appendChar(exports.size());
+                for (PackageSymbol e: exports) {
+                    databuf.appendChar(pool.put(names.fromUtf(externalize(e.flatName()))));
+                }
+                // permits
+                List<PermitsDirective> permits = v.getPermits();
+                databuf.appendChar(permits.size());
+                for (PermitsDirective p: permits) {
+                    databuf.appendChar(pool.put(p.moduleName));
+                }
+            }
+            endAttr(alenIdx);
+            n++;
+        }
+
+        return n;
     }
 
 /**********************************************************************

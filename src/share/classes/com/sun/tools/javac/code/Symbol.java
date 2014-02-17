@@ -42,12 +42,14 @@ import com.sun.tools.javac.comp.Env;
 import com.sun.tools.javac.jvm.*;
 import com.sun.tools.javac.util.*;
 import com.sun.tools.javac.util.Name;
+import static com.sun.tools.javac.code.Directive.*;
 import static com.sun.tools.javac.code.Flags.*;
 import static com.sun.tools.javac.code.Kinds.*;
 import static com.sun.tools.javac.code.TypeTag.CLASS;
 import static com.sun.tools.javac.code.TypeTag.FORALL;
 import static com.sun.tools.javac.code.TypeTag.TYPEVAR;
 import com.sun.tools.javac.tree.JCTree.JCVariableDecl;
+import java.util.LinkedHashSet;
 
 /** Root class for Java symbols. It contains subclasses
  *  for specific sorts of symbols, such as variables, methods and operators,
@@ -816,8 +818,8 @@ public abstract class Symbol extends AnnoConstruct implements Element {
 
         public Name fullname;
 
-//        /** All directives, in natural order. */
-//        public List<Directive> directives;
+        /** All directives, in natural order. */
+        public List<Directive> directives;
 
         public ClassSymbol module_info;
 
@@ -832,6 +834,99 @@ public abstract class Symbol extends AnnoConstruct implements Element {
             super(MDL, 0, name, null, owner);
             this.type = new ModuleType(this);
             this.fullname = formFullName(name, owner);
+        }
+
+        public boolean hasRequires() {
+            for (Directive d: directives) {
+                switch (d.getKind()) {
+                    case REQUIRES:
+                    case USES:
+                        return true;
+                }
+            }
+            return false;
+        }
+
+        public List<RequiresDirective> getRequiredModules() {
+            return Directive.filter(directives, Directive.Kind.REQUIRES,
+                    RequiresDirective.class);
+        }
+
+        public List<UsesDirective> getRequiredServices() {
+            return Directive.filter(directives, Directive.Kind.USES,
+                    UsesDirective.class);
+        }
+
+        public boolean hasViews() {
+            for (Directive d: directives) {
+                switch (d.getKind()) {
+                    case REQUIRES:
+                    case USES:
+                        continue;
+                    default:
+                        return true;
+                }
+            }
+            return false;
+        }
+
+        public ViewDeclaration getDefaultView() {
+            ListBuffer<Directive> defaultViewDirectives = new ListBuffer<>();
+            for (Directive d: directives) {
+                switch (d.getKind()) {
+                    case PROVIDES:
+                    case EXPORTS:
+                    case PERMITS:
+                        defaultViewDirectives.add(d);
+                }
+            }
+            return new ViewDeclaration(defaultViewDirectives.toList());
+        }
+
+        public List<ViewDeclaration> getViews() {
+            ListBuffer<Directive> defaultViewDirectives = new ListBuffer<>();
+            for (Directive d: directives) {
+                switch (d.getKind()) {
+                    case PROVIDES:
+                    case EXPORTS:
+                    case PERMITS:
+                        defaultViewDirectives.add(d);
+                }
+            }
+            List<ViewDeclaration> views =
+                    Directive.filter(directives, Directive.Kind.VIEW,
+                        ViewDeclaration.class);
+            if (defaultViewDirectives.nonEmpty())
+                views = views.prepend(new ViewDeclaration(defaultViewDirectives.toList()));
+            return views;
+        }
+
+        public Set<PackageSymbol> getExports(final ViewDeclaration viewDecl) {
+            final Set<PackageSymbol> exports = new LinkedHashSet<PackageSymbol>();
+            Directive.Scanner<Void,Void> s = new Directive.Scanner<Void,Void>() {
+                @Override
+                public Void visitExports(Directive.ExportsDirective d, Void p) {
+                    exports.add(d.sym);
+                    return null;
+                }
+                @Override
+                public Void visitView(Directive.ViewDeclaration d, Void p) {
+                    if (d == viewDecl)
+                        scan(d.directives, null);
+                    return null;
+                }
+            };
+            s.scan(directives, null);
+            return exports;
+        }
+
+        @Override
+        public String toString() {
+            // the following strings should be localized
+            String n = (fullname == null) ? "<unknown>"
+                    : (fullname.isEmpty()) ? "<unnamed>"
+                    : String.valueOf(fullname);
+            return n;
         }
 
         @Override
