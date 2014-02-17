@@ -55,6 +55,7 @@ public class ModuleProvides_attribute extends Attribute {
         this.view_table = view_table;
     }
 
+    @Override
     public <R, D> R accept(Visitor<R, D> visitor, D data) {
         return visitor.visitModuleProvides(this, data);
     }

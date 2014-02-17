@@ -64,6 +64,7 @@ public class ModuleRequires_attribute extends Attribute {
         this.service_table = service_table;
     }
 
+    @Override
     public <R, D> R accept(Visitor<R, D> visitor, D data) {
         return visitor.visitModuleRequires(this, data);
     }
