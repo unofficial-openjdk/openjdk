@@ -1571,6 +1571,7 @@ ifeq ($(OPENJDK_TARGET_OS), macosx)
         -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libawt/sun/java2d/loops \
         -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libawt/sun/java2d/pipe \
         -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/common-awt/sun/awt/debug \
+        $(addprefix -I, $(BUILD_LIBJAVA_SRC)) \
         #
 
     LIBAWT_LWAWT_EXFILES := fontpath.c awt_Font.c X11Color.c initIDs.c

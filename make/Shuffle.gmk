@@ -1201,6 +1201,13 @@ $(eval $(call SetupCopyFiles,COPY_CONF_DESKTOP_WINDOWS, \
         $(JDK_TOPDIR)/src/windows/lib/flavormap.properties \
         $(JDK_TOPDIR)/src/windows/lib/content-types.properties))
 
+$(eval $(call SetupCopyFiles,COPY_CONF_DESKTOP_MACOSX, \
+    SRC := $(JDK_TOPDIR)/src/macosx/lib, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/macosx/conf/java.desktop, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/macosx/lib/images/cursors/*) \
+        $(JDK_TOPDIR)/src/macosx/lib/flavormap.properties \
+        $(JDK_TOPDIR)/src/macosx/lib/content-types.properties))
+
 ################################################################################
 
 shuffle-src: \
@@ -1340,6 +1347,7 @@ shuffle-src: \
     $(COPY_CONF_DESKTOP) \
     $(COPY_CONF_DESKTOP_SOLARIS) \
     $(COPY_CONF_DESKTOP_WINDOWS) \
+    $(COPY_CONF_DESKTOP_MACOSX) \
     #
 
 shuffle-build: $(BUILD_TARGET_FILES)
