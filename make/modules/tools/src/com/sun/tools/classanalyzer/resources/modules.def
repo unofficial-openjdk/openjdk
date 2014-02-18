@@ -55,7 +55,7 @@ module java.base {
             javax.security.cert.*;
 
     // jigsaw
-    include jdk.jigsaw.**,
+    include jdk.jigsaw.module.**,
             jdk.joptsimple.**;
 
     // Oracle-private APIs
@@ -103,6 +103,7 @@ module java.base {
             sun.security.jca.*,
             sun.security.pkcs.*,
             sun.security.pkcs12.*,
+            sun.security.pkcs10.*,
             sun.security.provider.*,
             sun.security.provider.certpath.*,
             sun.security.rsa.*,
@@ -110,6 +111,10 @@ module java.base {
             sun.security.validator.*,
             sun.security.x509.*,
             sun.security.timestamp.*;
+
+    // keytool
+    include sun.security.tools.*,
+            sun.security.tools.keytool.**;
 
     // Kerberos not needed
     exclude javax.security.auth.kerberos.**,
@@ -645,22 +650,20 @@ module jdk.devtools {
             com.sun.tools.classfile.**;
 
     include com.sun.tools.jdeps.**;
-    include com.sun.tools.jlink.**;
 }
 
 // developer tools
 module jdk.tools.base {
     requires public jdk.devtools;
 
-    // jar, jarsigner, keytool
+    // jar, jarsigner
     include sun.tools.jar.**;
 
     include sun.security.tools.jarsigner.**,
             com.sun.jarsigner.**;
 
-    include sun.security.pkcs10.*,
-            sun.security.tools.*,
-            sun.security.tools.keytool.**;
+    // jlink
+    include jdk.jigsaw.tools.jlink.**;
 }
 
 // JRE tools
@@ -742,6 +745,9 @@ module java.compact1 {
     requires public java.base;
     requires public java.logging;
     requires public javax.script;
+   
+    // Need SunJCE provider in compact1
+    requires jdk.crypto;
 }
 
 module java.compact2 {
@@ -775,14 +781,9 @@ module java.compact3 {
     requires public jdk.httpserver;
     requires public jdk.sctp;
 
-    // service and security providers
-    requires public jdk.crypto;
-    requires public jdk.crypto.ec;
-    requires public jdk.crypto.mscapi;
-    requires public jdk.crypto.pkcs11;
+    // service providers
     requires public jdk.jndi.dns;
     requires public jdk.jndi.rmi;
-    requires public jdk.ucrypto;
 }
 
 module jdk.jre {
@@ -801,6 +802,10 @@ module jdk.jre {
     // JDK-specific providers
     requires jdk.nashorn;
     requires jdk.zipfs;
+    requires jdk.crypto.ec;
+    requires jdk.crypto.mscapi;
+    requires jdk.crypto.pkcs11;
+    requires jdk.ucrypto;
 
     requires java.base.internal;
     requires sun.charsets;
