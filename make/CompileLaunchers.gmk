@@ -455,7 +455,9 @@ endif
 ifeq ($(JIGSAW), true)
   UNPACKEXE_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/common-unpack \
       $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/unpack200
-  UNPACKEXE_CFLAGS := -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/common-unpack
+  UNPACKEXE_CFLAGS := -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/common-unpack \
+      -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libjava \
+      -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/native/libjava
 else
   UNPACKEXE_SRC := $(JDK_TOPDIR)/src/share/native/com/sun/java/util/jar/pack
   UNPACKEXE_EXFILES := jni.cpp

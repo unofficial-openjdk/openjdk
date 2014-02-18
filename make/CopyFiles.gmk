@@ -94,7 +94,11 @@ endif
 LIBDIR = $(JDK_OUTPUTDIR)/lib
 
 MGMT_LIBDIR = $(LIBDIR)/management
-MGMT_LIB_SRC = $(JDK_TOPDIR)/src/share/lib/management
+ifeq ($(JIGSAW), true)
+  MGMT_LIB_SRC = $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/conf/java.management
+else
+  MGMT_LIB_SRC = $(JDK_TOPDIR)/src/share/lib/management
+endif
 MGMT_SRC_FILES = $(wildcard $(MGMT_LIB_SRC)/*)
 MGMT_TARGET_FILES = $(subst $(MGMT_LIB_SRC),$(MGMT_LIBDIR),$(MGMT_SRC_FILES))
 
@@ -116,36 +120,49 @@ COPY_FILES += $(MGMT_TARGET_FILES)
 
 ##########################################################################################
 
-LOGGING_LIB_SRC = $(JDK_TOPDIR)/src/share/lib
+ifeq ($(JIGSAW), true)
+  LOGGING_LIB_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/conf/java.logging
+else
+  LOGGING_LIB_SRC := $(JDK_TOPDIR)/src/share/lib
+endif
 
 $(LIBDIR)/logging.properties: $(LOGGING_LIB_SRC)/logging.properties
 	$(call install-file)
 
-LOGGING_CONF_FILES = $(LIBDIR)/logging.properties
+LOGGING_CONF_FILES := $(LIBDIR)/logging.properties
 COPY_FILES += $(LIBDIR)/logging.properties
 
 ##########################################################################################
 #
 # Copy property files from sun/print to LIBDIR
 #
-PSFONTPROPFILE_SRC_DIR = $(JDK_TOPDIR)/src/share/classes/sun/print
-PSFONTPROPFILE_SRCS = $(wildcard $(PSFONTPROPFILE_SRC_DIR)/*.properties*)
-PSFONTPROPFILE_TARGET_FILES = $(subst $(PSFONTPROPFILE_SRC_DIR),$(LIBDIR),$(PSFONTPROPFILE_SRCS))
+ifeq ($(JIGSAW), true)
+  PSFONTPROPFILE_SRC_DIR := $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/conf/java.desktop
+else
+  PSFONTPROPFILE_SRC_DIR := $(JDK_TOPDIR)/src/share/classes/sun/print
+endif
+PSFONTPROPFILE_SRCS := $(wildcard $(PSFONTPROPFILE_SRC_DIR)/*.properties*)
+PSFONTPROPFILE_TARGET_FILES := $(subst $(PSFONTPROPFILE_SRC_DIR),$(LIBDIR),$(PSFONTPROPFILE_SRCS))
 
 $(LIBDIR)/%: $(PSFONTPROPFILE_SRC_DIR)/%
 	$(call install-file)
 
-DESKTOP_CONF_FILES = $(PSFONTPROPFILE_TARGET_FILES)
+DESKTOP_CONF_FILES := $(PSFONTPROPFILE_TARGET_FILES)
 COPY_FILES += $(PSFONTPROPFILE_TARGET_FILES)
 
 ##########################################################################################
 #
 # Copy flavormap.properties, cursor.properties and cursors gif files to LIBDIR
 #
-ifneq ($(OPENJDK_TARGET_OS), macosx)
-  OPENJDK_TARGET_OS_LIB_SRC = $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/lib
+ifeq ($(JIGSAW), true)
+  DESKTOP_SUBDIR := conf/java.desktop
 else
-  OPENJDK_TARGET_OS_LIB_SRC = $(JDK_TOPDIR)/src/macosx/lib
+  DESKTOP_SUBDIR := lib
+endif
+ifneq ($(OPENJDK_TARGET_OS), macosx)
+  OPENJDK_TARGET_OS_LIB_SRC = $(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/$(DESKTOP_SUBDIR)
+else
+  OPENJDK_TARGET_OS_LIB_SRC = $(JDK_TOPDIR)/$(SRC_SUBDIR)/macosx/$(DESKTOP_SUBDIR)
 endif
 
 $(LIBDIR)/flavormap.properties: $(OPENJDK_TARGET_OS_LIB_SRC)/flavormap.properties
@@ -155,7 +172,7 @@ DESKTOP_CONF_FILES += $(LIBDIR)/flavormap.properties
 COPY_FILES += $(LIBDIR)/flavormap.properties
 
 CURSORS_DEST_DIR = $(LIBDIR)/images/cursors
-CURSORS_OPENJDK_TARGET_OS_LIB_SRC = $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/lib/images/cursors
+CURSORS_OPENJDK_TARGET_OS_LIB_SRC = $(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/$(DESKTOP_SUBDIR)/images/cursors
 
 $(CURSORS_DEST_DIR)/cursors.properties: $(CURSORS_OPENJDK_TARGET_OS_LIB_SRC)/cursors.properties
 	$(call install-file)
@@ -163,7 +180,7 @@ $(CURSORS_DEST_DIR)/cursors.properties: $(CURSORS_OPENJDK_TARGET_OS_LIB_SRC)/cur
 DESKTOP_CONF_FILES += $(CURSORS_DEST_DIR)/cursors.properties
 COPY_FILES += $(CURSORS_DEST_DIR)/cursors.properties
 
-CURSORS_LIB_SRC = $(JDK_TOPDIR)/src/share/lib/images/cursors
+CURSORS_LIB_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/$(DESKTOP_SUBDIR)/images/cursors
 ifeq ($(OPENJDK_TARGET_OS), windows)
   CURSORS_SRC_FILES = $(CURSORS_LIB_SRC)/invalid32x32.gif $(wildcard $(CURSORS_LIB_SRC)/win32_*.gif)
 else # OPENJDK_TARGET_OS
@@ -179,7 +196,7 @@ COPY_FILES += $(CURSORS_TARGET_FILES)
 
 ##########################################################################################
 
-CONTENT_TYPES_SRC = $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/lib
+CONTENT_TYPES_SRC = $(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/$(DESKTOP_SUBDIR)
 
 $(LIBDIR)/content-types.properties: $(CONTENT_TYPES_SRC)/content-types.properties
 	$(call install-file)
@@ -189,7 +206,13 @@ COPY_FILES += $(LIBDIR)/content-types.properties
 
 ##########################################################################################
 
-CALENDARS_SRC := $(JDK_TOPDIR)/src/share/lib
+ifeq ($(JIGSAW), true)
+  BASE_SUBDIR := conf/java.base
+else
+  BASE_SUBDIR := lib
+endif
+
+CALENDARS_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/$(BASE_SUBDIR)
 
 $(LIBDIR)/calendars.properties: $(CALENDARS_SRC)/calendars.properties
 	$(call install-file)
@@ -209,7 +232,7 @@ COPY_FILES += $(LIBDIR)/hijrah-config-umalqura.properties
 
 ifeq ($(OPENJDK_TARGET_OS), windows)
 
-  TZMAPPINGS_SRC := $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/lib
+  TZMAPPINGS_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/$(BASE_SUBDIR)
 
   $(LIBDIR)/tzmappings: $(TZMAPPINGS_SRC)/tzmappings
 	$(call install-file)
@@ -223,9 +246,9 @@ endif
 ICCPROFILE_DEST_DIR := $(LIBDIR)/cmm
 
 ifdef OPENJDK
-  ICCPROFILE_SRC_DIR := $(JDK_TOPDIR)/src/share/lib/cmm/lcms
+  ICCPROFILE_SRC_DIR := $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/$(DESKTOP_SUBDIR)/cmm/lcms
 else
-  ICCPROFILE_SRC_DIR := $(JDK_TOPDIR)/src/closed/share/lib/cmm/kcms
+  ICCPROFILE_SRC_DIR := $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/share/$(DESKTOP_SUBDIR)/cmm/kcms
 endif
 
 ICCPROFILE_SRCS := $(wildcard $(ICCPROFILE_SRC_DIR)/*.pf)
@@ -375,15 +398,15 @@ COPY_FILES += $(JVMCFG)
 
 ##########################################################################################
 
-PROPS_SRC := $(JDK_TOPDIR)/src/share/lib/security/java.security-$(OPENJDK_TARGET_OS)
+PROPS_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/$(BASE_SUBDIR)/security/java.security-$(OPENJDK_TARGET_OS)
 PROPS_DST := $(JDK_OUTPUTDIR)/lib/security/java.security
 
 ifndef OPENJDK
 
-RESTRICTED_PKGS_SRC := $(JDK_TOPDIR)/src/closed/share/lib/security/restricted.pkgs
-RESTRICTED_PKGS := $(shell $(CAT) $(RESTRICTED_PKGS_SRC) | $(TR) "\n" " ")
+  RESTRICTED_PKGS_SRC := $(JDK_TOPDIR)/src/closed/share/$(BASE_SUBDIR)/security/restricted.pkgs
+  RESTRICTED_PKGS := $(shell $(CAT) $(RESTRICTED_PKGS_SRC) | $(TR) "\n" " ")
 
-$(PROPS_DST): $(PROPS_SRC)
+  $(PROPS_DST): $(PROPS_SRC)
 	$(MKDIR) -p $(@D)
 	$(TOOL_ADDTORESTRICTEDPKGS) $^ $@.tmp $(RESTRICTED_PKGS)
 	$(MV) $@.tmp $@
@@ -400,7 +423,7 @@ COPY_FILES += $(PROPS_DST)
 
 ##########################################################################################
 
-POLICY_SRC := $(JDK_TOPDIR)/src/share/lib/security/java.policy
+POLICY_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/$(BASE_SUBDIR)/security/java.policy
 POLICY_DST := $(JDK_OUTPUTDIR)/lib/security/java.policy
 
 $(POLICY_DST): $(POLICY_SRC)
@@ -422,27 +445,29 @@ COPY_FILES += $(CACERTS_DST)
 
 ##########################################################################################
 
-BLACKLISTED_CERTS_SRC := $(JDK_TOPDIR)/src/share/lib/security/blacklisted.certs
+BLACKLISTED_CERTS_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/$(BASE_SUBDIR)/security/blacklisted.certs
 BLACKLISTED_CERTS_DST := $(JDK_OUTPUTDIR)/lib/security/blacklisted.certs
 
 ifndef OPENJDK
 
-  BLACKLIST_SRC := $(JDK_TOPDIR)/src/closed/share/lib/security/blacklist
+  BLACKLIST_SRC := $(JDK_TOPDIR)/src/closed/share/$(BASE_SUBDIR)/security/blacklist
   BLACKLIST_DST := $(JDK_OUTPUTDIR)/lib/security/blacklist
 
   BLACKLISTED_CERTS_SRC += $(wildcard $(JDK_TOPDIR)/src/closed/share/lib/security/blacklisted.certs)
 
-  TRUSTEDLIBS_SRC := $(JDK_TOPDIR)/src/closed/share/lib/security/trusted.libraries
+  TRUSTEDLIBS_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/share/$(BASE_SUBDIR)/security/trusted.libraries
   TRUSTEDLIBS_DST := $(JDK_OUTPUTDIR)/lib/security/trusted.libraries
 
   $(BLACKLIST_DST): $(BLACKLIST_SRC)
 	$(call install-file)
 
+  BASE_CONF_FILES += $(BLACKLIST_DST)
   COPY_FILES += $(BLACKLIST_DST)
 
   $(TRUSTEDLIBS_DST): $(TRUSTEDLIBS_SRC)
 	$(call install-file)
 
+  BASE_CONF_FILES += $(TRUSTEDLIBS_DST)
   COPY_FILES += $(TRUSTEDLIBS_DST)
 
 endif
@@ -459,13 +484,14 @@ $(BLACKLISTED_CERTS_DST): $(BLACKLISTED_CERTS_SRC)
 	$(GREP) -iv Algorithm $@.tmp >> $@
 	$(RM) $@.tmp
 
+BASE_CONF_FILES += $(BLACKLISTED_CERTS_DST)
 COPY_FILES += $(BLACKLISTED_CERTS_DST)
 
 ##########################################################################################
 
 ifndef OPENJDK
 
-  SHARED_FONTS_SRC_DIR := $(JDK_TOPDIR)/src/closed/share/lib/fonts
+  SHARED_FONTS_SRC_DIR := $(JDK_TOPDIR)/src/closed/share/$(DESKTOP_SUBDIR)/fonts
   SHARED_FONTS_DST_DIR := $(JDK_OUTPUTDIR)/lib/fonts
   SHARED_FONTS_FILES := \
       LucidaTypewriterRegular.ttf \
@@ -496,7 +522,7 @@ ifndef OPENJDK
 
   # The oblique fonts are only needed/wanted on Linux.
 
-    OBL_FONTS_SRC_DIR := $(JDK_TOPDIR)/src/closed/share/lib/fonts/oblique
+    OBL_FONTS_SRC_DIR := $(JDK_TOPDIR)/src/closed/share/$(DESKTOP_SUBDIR)/fonts/oblique
     OBL_FONTS_DST_DIR := $(JDK_OUTPUTDIR)/lib/oblique-fonts
     OBL_FONTS_FILES := LucidaTypewriterOblique.ttf LucidaTypewriterBoldOblique.ttf \
         LucidaSansOblique.ttf LucidaSansDemiOblique.ttf
@@ -564,12 +590,13 @@ endif
 
 ifeq ($(OPENJDK_TARGET_OS), solaris)
 
-  SUNPKCS11_CFG_SRC := $(JDK_TOPDIR)/src/share/lib/security/sunpkcs11-solaris.cfg
+  SUNPKCS11_CFG_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/$(BASE_SUBDIR)/security/sunpkcs11-solaris.cfg
   SUNPKCS11_CFG_DST := $(JDK_OUTPUTDIR)/lib/security/sunpkcs11-solaris.cfg
 
   $(SUNPKCS11_CFG_DST): $(SUNPKCS11_CFG_SRC)
 	$(call install-file)
 
+  BASE_CONF_FILES += $(SUNPKCS11_CFG_DST)
   COPY_FILES += $(SUNPKCS11_CFG_DST)
 
 endif
@@ -592,7 +619,7 @@ endif
 
 ##########################################################################################
 
-$(JDK_OUTPUTDIR)/lib/sound.properties: $(JDK_TOPDIR)/src/share/lib/sound.properties
+$(JDK_OUTPUTDIR)/lib/sound.properties: $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/$(DESKTOP_SUBDIR)/sound.properties
 	$(call install-file)
 
 DESKTOP_CONF_FILES += $(JDK_OUTPUTDIR)/lib/sound.properties
@@ -600,7 +627,7 @@ COPY_FILES += $(JDK_OUTPUTDIR)/lib/sound.properties
 
 ##########################################################################################
 
-$(JDK_OUTPUTDIR)/lib/%.modules: $(JDK_TOPDIR)/src/share/lib/%.modules
+$(JDK_OUTPUTDIR)/lib/%.modules: $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/$(BASE_SUBDIR)/%.modules
 	$(call install-file)
 
 MODULES_CONF_FILES = \

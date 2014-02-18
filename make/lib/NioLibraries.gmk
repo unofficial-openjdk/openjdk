@@ -25,14 +25,14 @@
 
 ifeq ($(JIGSAW), true)
   BUILD_LIBNIO_SRC := \
-      $(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/native/libnio
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libnio \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/native/libnio \
+      #
 
   BUILD_LIBNIO_CFLAGS := \
-      -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libnio \
-      -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libnet \
-      -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libjava \
-      -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/native/libnet \
-      -I$(JDK_OUTPUTDIR)/gensrc_headers/java.base
+      $(addprefix -I, $(BUILD_LIBNIO_SRC)) \
+      -I$(JDK_OUTPUTDIR)/gensrc_headers/java.base \
+      $(addprefix -I, $(BUILD_LIBJAVA_SRC) $(BUILD_LIBNET_SRC))
 else
   BUILD_LIBNIO_SRC := \
     $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/java/nio \
@@ -138,10 +138,7 @@ ifeq ($(OPENJDK_TARGET_OS_API), posix)
 
     ifeq ($(JIGSAW), true)
       LIBSCTP_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/native/libsctp
-      LIBSCTP_CFLAGS := -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libnio \
-          -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libnet \
-          -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/native/libnio \
-          -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/native/libnet \
+      LIBSCTP_CFLAGS := $(addprefix -I, $(BUILD_LIBNIO_SRC) $(BUILD_LIBNET_SRC) $(BUILD_LIBJAVA_SRC)) \
           -I$(JDK_OUTPUTDIR)/gensrc_headers/jdk.sctp \
           -I$(JDK_OUTPUTDIR)/gensrc_headers/java.base
     else

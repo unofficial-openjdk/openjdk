@@ -356,6 +356,12 @@ $(eval $(call SetupCopyFiles,COPY_NASHORN_RESOURCES, \
     DEST := $(NASHORN_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/modules/jdk.nashorn, \
     FILES := $(NASHORN_TOPDIR)/src/jdk/nashorn/internal/runtime/resources/version.properties-template))
 
+# Copy CurrencyData.properties to make/data
+$(eval $(call SetupCopyFiles,COPY_CURRENCY_DATA, \
+    SRC := $(JDK_TOPDIR)/src/share/classes/java/util, \
+    DEST := $(JDK_TOPDIR)/make/data/currency, \
+    FILES := $(JDK_TOPDIR)/src/share/classes/java/util/CurrencyData.properties))
+
 ################################################################################
 
 # fdlibm
@@ -370,7 +376,8 @@ $(eval $(call SetupCopyFiles,COPY_LIBVERIFY, \
     SRC := $(JDK_TOPDIR)/src/share/native/common, \
     DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/native/libverify, \
     FILES := $(JDK_TOPDIR)/src/share/native/common/check_code.c \
-        $(JDK_TOPDIR)/src/share/native/common/check_format.c))
+        $(JDK_TOPDIR)/src/share/native/common/check_format.c \
+        $(JDK_TOPDIR)/src/share/native/common/opcodes.in_out))
 
 # java
 $(eval $(call SetupCopyFiles,COPY_LIBJAVA_SOLARIS, \
@@ -1133,6 +1140,64 @@ $(eval $(call SetupCopyFiles,COPY_JSPAWNHELPER_SOLARIS, \
     FILES := $(JDK_TOPDIR)/src/solaris/native/java/lang/jspawnhelper.c))
 
 ################################################################################
+# Copy to src/share/conf/%m
+
+$(eval $(call SetupCopyFiles,COPY_CONF_BASE, \
+    SRC := $(JDK_TOPDIR)/src/share/lib, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/conf/java.base, \
+    FILES := $(JDK_TOPDIR)/src/share/lib/calendars.properties \
+        $(JDK_TOPDIR)/src/share/lib/hijrah-config-umalqura.properties \
+        $(JDK_TOPDIR)/src/share/lib/security/java.policy \
+        $(JDK_TOPDIR)/src/share/lib/security/cacerts \
+        $(JDK_TOPDIR)/src/share/lib/security/blacklisted.certs \
+        $(JDK_TOPDIR)/src/share/lib/security/sunpkcs11-solaris.cfg \
+        $(wildcard $(JDK_TOPDIR)/src/share/lib/security/java.security-*) \
+        $(wildcard $(JDK_TOPDIR)/src/share/lib/*.modules) \
+        $(JDK_TOPDIR)/src/share/lib/net.properties))
+
+$(eval $(call SetupCopyFiles,COPY_CONF_BASE_SOLARIS, \
+    SRC := $(JDK_TOPDIR)/src/solaris/lib, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/solaris/conf/java.base, \
+    FILES := $(JDK_TOPDIR)/src/solaris/lib/sdp/sdp.conf.template))
+
+$(eval $(call SetupCopyFiles,COPY_CONF_MANAGEMENT, \
+    SRC := $(JDK_TOPDIR)/src/share/lib/management, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/conf/java.management, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/share/lib/management/*)))
+
+$(eval $(call SetupCopyFiles,COPY_CONF_LOGGING, \
+    SRC := $(JDK_TOPDIR)/src/share/lib, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/conf/java.logging, \
+    FILES := $(JDK_TOPDIR)/src/share/lib/logging.properties))
+
+$(eval $(call SetupCopyFiles,COPY_CONF_DESKTOP_PRINT, \
+    SRC := $(JDK_TOPDIR)/src/share/classes/sun/print, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/conf/java.desktop, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/share/classes/sun/print/*.properties*)))
+
+$(eval $(call SetupCopyFiles,COPY_CONF_DESKTOP, \
+    SRC := $(JDK_TOPDIR)/src/share/lib, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/conf/java.desktop, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/share/lib/images/cursors/* \
+        $(JDK_TOPDIR)/src/share/lib/cmm/lcms/*) \
+        $(JDK_TOPDIR)/src/share/lib/sound.properties))
+
+$(eval $(call SetupCopyFiles,COPY_CONF_DESKTOP_SOLARIS, \
+    SRC := $(JDK_TOPDIR)/src/solaris/lib, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/solaris/conf/java.desktop, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/solaris/lib/images/cursors/*) \
+        $(JDK_TOPDIR)/src/solaris/lib/flavormap.properties \
+        $(JDK_TOPDIR)/src/solaris/lib/content-types.properties))
+
+$(eval $(call SetupCopyFiles,COPY_CONF_DESKTOP_WINDOWS, \
+    SRC := $(JDK_TOPDIR)/src/windows/lib, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/windows/conf/java.desktop, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/windows/lib/images/cursors/*) \
+        $(JDK_TOPDIR)/src/windows/lib/flavormap.properties \
+        $(JDK_TOPDIR)/src/windows/lib/content-types.properties \
+        $(JDK_TOPDIR)/src/windows/lib/tzmappings))
+
+################################################################################
 
 shuffle-src: \
     $(SRC_TARGET_FILES) \
@@ -1159,6 +1224,7 @@ shuffle-src: \
     $(COPY_APPLE_LAF) \
     $(COPY_AWT_RESOURCES_MACOSX) \
     $(COPY_NASHORN_RESOURCES) \
+    $(COPY_CURRENCY_DATA) \
     $(COPY_LIBFDLIBM) \
     $(COPY_LIBVERIFY) \
     $(COPY_LIBJAVA_SOLARIS) \
@@ -1261,6 +1327,14 @@ shuffle-src: \
     $(COPY_LAUNCHERS_MACOSX) \
     $(COPY_JSPAWNHELPER_SOLARIS) \
     $(MODULE_INFO_TARGETS) \
+    $(COPY_CONF_BASE) \
+    $(COPY_CONF_BASE_SOLARIS) \
+    $(COPY_CONF_MANAGEMENT) \
+    $(COPY_CONF_LOGGING) \
+    $(COPY_CONF_DESKTOP_PRINT) \
+    $(COPY_CONF_DESKTOP) \
+    $(COPY_CONF_DESKTOP_SOLARIS) \
+    $(COPY_CONF_DESKTOP_WINDOWS) \
     #
 
 shuffle-build: $(BUILD_TARGET_FILES)

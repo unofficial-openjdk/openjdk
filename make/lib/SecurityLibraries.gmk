@@ -125,7 +125,7 @@ ifneq ($(OPENJDK_TARGET_OS), windows)
       SRC := $(LIBJ2GSS_SRC), \
       LANG := C, \
       OPTIMIZATION := LOW, \
-      CFLAGS := $(CFLAGS_JDKLIB) $(addprefix -I,$(LIBJ2GSS_SRC)) \
+      CFLAGS := $(CFLAGS_JDKLIB) $(addprefix -I, $(LIBJ2GSS_SRC) $(BUILD_LIBJAVA_SRC)) \
           -I$(JDK_OUTPUTDIR)/gensrc_headers/javax.kerberos, \
       MAPFILE := $(JDK_TOPDIR)/make/mapfiles/libj2gss/mapfile-vers, \
       LDFLAGS := $(LDFLAGS_JDKLIB) \
@@ -236,7 +236,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBJ2PKCS11, \
     SRC := $(LIBJ2PKCS11_SRC), \
     LANG := C, \
     OPTIMIZATION := LOW, \
-    CFLAGS := $(CFLAGS_JDKLIB) $(addprefix -I,$(LIBJ2PKCS11_SRC)) \
+    CFLAGS := $(CFLAGS_JDKLIB) $(addprefix -I, $(LIBJ2PKCS11_SRC) $(BUILD_LIBJAVA_SRC)) \
         -I$(JDK_OUTPUTDIR)/gensrc_headers/jdk.crypto.pkcs11, \
     MAPFILE := $(JDK_TOPDIR)/make/mapfiles/libj2pkcs11/mapfile-vers, \
     LDFLAGS := $(LDFLAGS_JDKLIB) \

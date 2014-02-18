@@ -307,7 +307,9 @@ ifeq ($(JIGSAW), true)
   LIBUNPACK_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libunpack \
       $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/common-unpack
   LIBUNPACK_CPPFLAGS := -I$(JDK_OUTPUTDIR)/gensrc_headers/java.base \
-      -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/common-unpack
+      -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/common-unpack \
+      $(addprefix -I, $(BUILD_LIBJAVA_SRC)) \
+      #
 else
   LIBUNPACK_SRC := $(JDK_TOPDIR)/src/share/native/com/sun/java/util/jar/pack
   LIBUNPACK_EXFILES := main.cpp
