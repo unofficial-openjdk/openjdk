@@ -64,6 +64,13 @@ ifeq ($(JIGSAW), true)
   # Reset these now that the outputdirs have changed
   INTERIM_LANGTOOLS_JAR := $(LANGTOOLS_OUTPUTDIR)/dist/interim_langtools.jar
   INTERIM_CORBA_JAR := $(CORBA_OUTPUTDIR)/btjars/btcorba.jar
+
+  # Filter out */native/common from CFLAGS
+  CFLAGS_JDKLIB := $(filter-out %native/common, $(CFLAGS_JDKLIB))
+  CFLAGS_JDKEXE := $(filter-out %native/common, $(CFLAGS_JDKEXE))
+
+  # CACERTS_FILE is set in configure. Override here for now.
+  CACERTS_FILE := $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/conf/java.base/security/cacerts
 else
   MODULES_SUBDIR := classes
   SRC_SUBDIR := src
