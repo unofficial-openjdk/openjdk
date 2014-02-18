@@ -441,7 +441,9 @@ endif
 define CacheFind
   $(if $(filter-out $(addsuffix %,- $(FIND_CACHE_DIR)),$1), \
     $(shell $(FIND) $1 -type f -o -type l), \
-    $(filter $(addsuffix /%,$1) $1,$(FIND_CACHE)))
+    # $1 can be either a directory or a file. If it's a directory, make
+    # sure we have exactly one trailing slash before the wildcard.
+    $(filter $(addsuffix /%,$(patsubst %/,%,$1)) $1,$(FIND_CACHE)))
 endef
 
 ################################################################################
