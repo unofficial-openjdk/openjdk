@@ -91,6 +91,13 @@ public final class XalanConstants {
      */
     public static final String JDK_XML_NAME_LIMIT =
             ORACLE_JAXP_PROPERTY_PREFIX + "maxXMLNameLimit";
+
+    /**
+     * JDK maxElementDepth limit
+     */
+    public static final String JDK_MAX_ELEMENT_DEPTH =
+            ORACLE_JAXP_PROPERTY_PREFIX + "maxElementDepth";
+
     /**
      * JDK property indicating whether the parser shall print out entity
      * count information
@@ -139,6 +146,11 @@ public final class XalanConstants {
      */
     public static final String SP_XML_NAME_LIMIT = "jdk.xml.maxXMLNameLimit";
 
+    /**
+     * JDK maxElementDepth limit
+     */
+    public static final String SP_MAX_ELEMENT_DEPTH = "jdk.xml.maxElementDepth";
+
     //legacy System Properties
     public final static String ENTITY_EXPANSION_LIMIT = "entityExpansionLimit";
     public static final String ELEMENT_ATTRIBUTE_LIMIT = "elementAttributeLimit" ;
@@ -186,6 +198,19 @@ public final class XalanConstants {
 
     public static final String XML_SECURITY_PROPERTY_MANAGER =
             ORACLE_JAXP_PROPERTY_PREFIX + "xmlSecurityPropertyManager";
+
+    /**
+     * Feature enableExtensionFunctions
+     */
+    public static final String ORACLE_ENABLE_EXTENSION_FUNCTION =
+            ORACLE_JAXP_PROPERTY_PREFIX + "enableExtensionFunctions";
+    public static final String SP_ORACLE_ENABLE_EXTENSION_FUNCTION = "javax.xml.enableExtensionFunctions";
+
+    /**
+     * Values for a feature
+     */
+    public static final String FEATURE_TRUE = "true";
+    public static final String FEATURE_FALSE = "false";
 
     /**
      * Check if we're in jdk8 or above
