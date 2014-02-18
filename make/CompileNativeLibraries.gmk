@@ -37,7 +37,11 @@ include Setup.gmk
 include CopyFiles.gmk
 
 # Prepare the find cache. Only used if running on windows.
-$(eval $(call FillCacheFind, $(JDK_TOPDIR)/src))
+ifeq ($(JIGSAW), true)
+  $(eval $(call FillCacheFind, $(JDK_TOPDIR)/src_shuffled))
+else
+  $(eval $(call FillCacheFind, $(JDK_TOPDIR)/src))
+endif
 
 # Build tools
 include Tools.gmk

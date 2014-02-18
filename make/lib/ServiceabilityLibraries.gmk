@@ -256,6 +256,7 @@ ifeq ($(JIGSAW), true)
       $(addprefix -I, $(LIBINSTRUMENT_SRC)) \
       -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libjli \
       -I$(JDK_OUTPUTDIR)/gensrc_headers/java.instrument \
+      -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libjava \
       #
   LIBINSTRUMENT_SRC += \
       $(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/native/libjava/canonicalize_md.c \

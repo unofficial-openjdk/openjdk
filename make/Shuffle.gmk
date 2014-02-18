@@ -1160,6 +1160,11 @@ $(eval $(call SetupCopyFiles,COPY_CONF_BASE_SOLARIS, \
     DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/solaris/conf/java.base, \
     FILES := $(JDK_TOPDIR)/src/solaris/lib/sdp/sdp.conf.template))
 
+$(eval $(call SetupCopyFiles,COPY_CONF_BASE_WINDOWS, \
+    SRC := $(JDK_TOPDIR)/src/windows/lib, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/windows/conf/java.base, \
+    FILES := $(JDK_TOPDIR)/src/windows/lib/tzmappings))
+
 $(eval $(call SetupCopyFiles,COPY_CONF_MANAGEMENT, \
     SRC := $(JDK_TOPDIR)/src/share/lib/management, \
     DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/conf/java.management, \
@@ -1194,8 +1199,7 @@ $(eval $(call SetupCopyFiles,COPY_CONF_DESKTOP_WINDOWS, \
     DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/windows/conf/java.desktop, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/windows/lib/images/cursors/*) \
         $(JDK_TOPDIR)/src/windows/lib/flavormap.properties \
-        $(JDK_TOPDIR)/src/windows/lib/content-types.properties \
-        $(JDK_TOPDIR)/src/windows/lib/tzmappings))
+        $(JDK_TOPDIR)/src/windows/lib/content-types.properties))
 
 ################################################################################
 
@@ -1329,6 +1333,7 @@ shuffle-src: \
     $(MODULE_INFO_TARGETS) \
     $(COPY_CONF_BASE) \
     $(COPY_CONF_BASE_SOLARIS) \
+    $(COPY_CONF_BASE_WINDOWS) \
     $(COPY_CONF_MANAGEMENT) \
     $(COPY_CONF_LOGGING) \
     $(COPY_CONF_DESKTOP_PRINT) \
