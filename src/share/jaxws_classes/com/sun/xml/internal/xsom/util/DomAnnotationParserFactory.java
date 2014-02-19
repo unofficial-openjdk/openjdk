@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -60,7 +60,12 @@ public class DomAnnotationParserFactory implements AnnotationParserFactory {
         return new AnnotationParserImpl();
     }
 
-    private static final SAXTransformerFactory stf = (SAXTransformerFactory) SAXTransformerFactory.newInstance();
+    private static final ContextClassloaderLocal<SAXTransformerFactory> stf = new ContextClassloaderLocal<SAXTransformerFactory>() {
+        @Override
+        protected SAXTransformerFactory initialValue() throws Exception {
+            return (SAXTransformerFactory) SAXTransformerFactory.newInstance();
+        }
+    };
 
     private static class AnnotationParserImpl extends AnnotationParser {
 
@@ -72,7 +77,7 @@ public class DomAnnotationParserFactory implements AnnotationParserFactory {
 
         AnnotationParserImpl() {
             try {
-                transformer = stf.newTransformerHandler();
+                transformer = stf.get().newTransformerHandler();
             } catch (TransformerConfigurationException e) {
                 throw new Error(e); // impossible
             }
