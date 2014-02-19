@@ -282,6 +282,20 @@ static jint set_uintx_flag(const char* name, AttachOperation* op, outputStream* 
       return JNI_ERR;
     }
   }
+
+  if (strncmp(name, "MaxHeapFreeRatio", 17) == 0) {
+    FormatBuffer<80> err_msg("");
+    if (!Arguments::verify_MaxHeapFreeRatio(err_msg, value)) {
+      out->print_cr(err_msg.buffer());
+      return JNI_ERR;
+    }
+  } else if (strncmp(name, "MinHeapFreeRatio", 17) == 0) {
+    FormatBuffer<80> err_msg("");
+    if (!Arguments::verify_MinHeapFreeRatio(err_msg, value)) {
+      out->print_cr(err_msg.buffer());
+      return JNI_ERR;
+    }
+  }
   bool res = CommandLineFlags::uintxAtPut((char*)name, &value, Flag::ATTACH_ON_DEMAND);
   if (! res) {
     out->print_cr("setting flag %s failed", name);
@@ -518,7 +532,7 @@ void AttachListener::init() {
     // Check that thread and osthread were created
     if (listener_thread == NULL || listener_thread->osthread() == NULL) {
       vm_exit_during_initialization("java.lang.OutOfMemoryError",
-                                    "unable to create new native thread");
+                                    os::native_thread_creation_failed_msg());
     }
 
     java_lang_Thread::set_thread(thread_oop(), listener_thread);

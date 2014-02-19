@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,10 +25,10 @@
 #ifndef SHARE_VM_GC_IMPLEMENTATION_G1_BUFFERINGOOPCLOSURE_HPP
 #define SHARE_VM_GC_IMPLEMENTATION_G1_BUFFERINGOOPCLOSURE_HPP
 
-#include "memory/genOopClosures.hpp"
-#include "memory/generation.hpp"
+#include "memory/iterator.hpp"
+#include "oops/oopsHierarchy.hpp"
 #include "runtime/os.hpp"
-#include "utilities/taskqueue.hpp"
+#include "utilities/debug.hpp"
 
 // A BufferingOops closure tries to separate out the cost of finding roots
 // from the cost of applying closures to them.  It maintains an array of
@@ -39,174 +39,105 @@
 // up, the wrapped closure is applied to all elements, keeping track of
 // this elapsed time of this process, and leaving the array empty.
 // The caller must be sure to call "done" to process any unprocessed
-// buffered entriess.
-
-class Generation;
-class HeapRegion;
+// buffered entries.
 
 class BufferingOopClosure: public OopClosure {
+  friend class TestBufferingOopClosure;
 protected:
-  enum PrivateConstants {
-    BufferLength = 1024
-  };
+  static const size_t BufferLength = 1024;
 
-  StarTask  _buffer[BufferLength];
-  StarTask* _buffer_top;
-  StarTask* _buffer_curr;
+  // We need to know if the buffered addresses contain oops or narrowOops.
+  // We can't tag the addresses the way StarTask does, because we need to
+  // be able to handle unaligned addresses coming from oops embedded in code.
+  //
+  // The addresses for the full-sized oops are filled in from the bottom,
+  // while the addresses for the narrowOops are filled in from the top.
+  OopOrNarrowOopStar  _buffer[BufferLength];
+  OopOrNarrowOopStar* _oop_top;
+  OopOrNarrowOopStar* _narrowOop_bottom;
 
   OopClosure* _oc;
   double      _closure_app_seconds;
 
-  void process_buffer () {
-    double start = os::elapsedTime();
-    for (StarTask* curr = _buffer; curr < _buffer_curr; ++curr) {
-      if (curr->is_narrow()) {
-        assert(UseCompressedOops, "Error");
-        _oc->do_oop((narrowOop*)(*curr));
-      } else {
-        _oc->do_oop((oop*)(*curr));
-      }
+
+  bool is_buffer_empty() {
+    return _oop_top == _buffer && _narrowOop_bottom == (_buffer + BufferLength - 1);
+  }
+
+  bool is_buffer_full() {
+    return _narrowOop_bottom < _oop_top;
+  }
+
+  // Process addresses containing full-sized oops.
+  void process_oops() {
+    for (OopOrNarrowOopStar* curr = _buffer; curr < _oop_top; ++curr) {
+      _oc->do_oop((oop*)(*curr));
     }
-    _buffer_curr = _buffer;
+    _oop_top = _buffer;
+  }
+
+  // Process addresses containing narrow oops.
+  void process_narrowOops() {
+    for (OopOrNarrowOopStar* curr = _buffer + BufferLength - 1; curr > _narrowOop_bottom; --curr) {
+      _oc->do_oop((narrowOop*)(*curr));
+    }
+    _narrowOop_bottom = _buffer + BufferLength - 1;
+  }
+
+  // Apply the closure to all oops and clear the buffer.
+  // Accumulate the time it took.
+  void process_buffer() {
+    double start = os::elapsedTime();
+
+    process_oops();
+    process_narrowOops();
+
     _closure_app_seconds += (os::elapsedTime() - start);
   }
 
-  template <class T> inline void do_oop_work(T* p) {
-    if (_buffer_curr == _buffer_top) {
+  void process_buffer_if_full() {
+    if (is_buffer_full()) {
       process_buffer();
     }
-    StarTask new_ref(p);
-    *_buffer_curr = new_ref;
-    ++_buffer_curr;
+  }
+
+  void add_narrowOop(narrowOop* p) {
+    assert(!is_buffer_full(), "Buffer should not be full");
+    *_narrowOop_bottom = (OopOrNarrowOopStar)p;
+    _narrowOop_bottom--;
+  }
+
+  void add_oop(oop* p) {
+    assert(!is_buffer_full(), "Buffer should not be full");
+    *_oop_top = (OopOrNarrowOopStar)p;
+    _oop_top++;
   }
 
 public:
-  virtual void do_oop(narrowOop* p) { do_oop_work(p); }
-  virtual void do_oop(oop* p)       { do_oop_work(p); }
-
-  void done () {
-    if (_buffer_curr > _buffer) {
-      process_buffer();
-    }
+  virtual void do_oop(narrowOop* p) {
+    process_buffer_if_full();
+    add_narrowOop(p);
   }
-  double closure_app_seconds () {
-    return _closure_app_seconds;
-  }
-  BufferingOopClosure (OopClosure *oc) :
-    _oc(oc),
-    _buffer_curr(_buffer), _buffer_top(_buffer + BufferLength),
-    _closure_app_seconds(0.0) { }
-};
 
-class BufferingOopsInGenClosure: public OopsInGenClosure {
-  BufferingOopClosure _boc;
-  OopsInGenClosure* _oc;
- protected:
-  template <class T> inline void do_oop_work(T* p) {
-    assert(generation()->is_in_reserved((void*)p), "Must be in!");
-    _boc.do_oop(p);
+  virtual void do_oop(oop* p)       {
+    process_buffer_if_full();
+    add_oop(p);
   }
- public:
-  BufferingOopsInGenClosure(OopsInGenClosure *oc) :
-    _boc(oc), _oc(oc) {}
-
-  virtual void do_oop(narrowOop* p) { do_oop_work(p); }
-  virtual void do_oop(oop* p)       { do_oop_work(p); }
 
   void done() {
-    _boc.done();
-  }
-
-  double closure_app_seconds () {
-    return _boc.closure_app_seconds();
-  }
-
-  void set_generation(Generation* gen) {
-    OopsInGenClosure::set_generation(gen);
-    _oc->set_generation(gen);
-  }
-
-  void reset_generation() {
-    // Make sure we finish the current work with the current generation.
-    _boc.done();
-    OopsInGenClosure::reset_generation();
-    _oc->reset_generation();
-  }
-
-};
-
-
-class BufferingOopsInHeapRegionClosure: public OopsInHeapRegionClosure {
-private:
-  enum PrivateConstants {
-    BufferLength = 1024
-  };
-
-  StarTask     _buffer[BufferLength];
-  StarTask*    _buffer_top;
-  StarTask*    _buffer_curr;
-
-  HeapRegion*  _hr_buffer[BufferLength];
-  HeapRegion** _hr_curr;
-
-  OopsInHeapRegionClosure*  _oc;
-  double                    _closure_app_seconds;
-
-  void process_buffer () {
-
-    assert((_hr_curr - _hr_buffer) == (_buffer_curr - _buffer),
-           "the two lengths should be the same");
-
-    double start = os::elapsedTime();
-    HeapRegion** hr_curr = _hr_buffer;
-    HeapRegion*  hr_prev = NULL;
-    for (StarTask* curr = _buffer; curr < _buffer_curr; ++curr) {
-      HeapRegion* region = *hr_curr;
-      if (region != hr_prev) {
-        _oc->set_region(region);
-        hr_prev = region;
-      }
-      if (curr->is_narrow()) {
-        assert(UseCompressedOops, "Error");
-        _oc->do_oop((narrowOop*)(*curr));
-      } else {
-        _oc->do_oop((oop*)(*curr));
-      }
-      ++hr_curr;
-    }
-    _buffer_curr = _buffer;
-    _hr_curr = _hr_buffer;
-    _closure_app_seconds += (os::elapsedTime() - start);
-  }
-
-public:
-  virtual void do_oop(narrowOop* p) { do_oop_work(p); }
-  virtual void do_oop(      oop* p) { do_oop_work(p); }
-
-  template <class T> void do_oop_work(T* p) {
-    if (_buffer_curr == _buffer_top) {
-      assert(_hr_curr > _hr_buffer, "_hr_curr should be consistent with _buffer_curr");
-      process_buffer();
-    }
-    StarTask new_ref(p);
-    *_buffer_curr = new_ref;
-    ++_buffer_curr;
-    *_hr_curr = _from;
-    ++_hr_curr;
-  }
-  void done () {
-    if (_buffer_curr > _buffer) {
-      assert(_hr_curr > _hr_buffer, "_hr_curr should be consistent with _buffer_curr");
+    if (!is_buffer_empty()) {
       process_buffer();
     }
   }
-  double closure_app_seconds () {
+
+  double closure_app_seconds() {
     return _closure_app_seconds;
   }
-  BufferingOopsInHeapRegionClosure (OopsInHeapRegionClosure *oc) :
+
+  BufferingOopClosure(OopClosure *oc) :
     _oc(oc),
-    _buffer_curr(_buffer), _buffer_top(_buffer + BufferLength),
-    _hr_curr(_hr_buffer),
+    _oop_top(_buffer),
+    _narrowOop_bottom(_buffer + BufferLength - 1),
     _closure_app_seconds(0.0) { }
 };
 

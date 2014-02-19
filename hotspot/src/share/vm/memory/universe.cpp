@@ -816,6 +816,8 @@ jint Universe::initialize_heap() {
     Universe::_collectedHeap = new GenCollectedHeap(gc_policy);
   }
 
+  ThreadLocalAllocBuffer::set_max_size(Universe::heap()->max_tlab_size());
+
   jint status = Universe::heap()->initialize();
   if (status != JNI_OK) {
     return status;
@@ -1141,7 +1143,7 @@ bool universe_post_init() {
       SystemDictionary::ProtectionDomain_klass(), m);;
   }
 
-  // The folowing is initializing converter functions for serialization in
+  // The following is initializing converter functions for serialization in
   // JVM.cpp. If we clean up the StrictMath code above we may want to find
   // a better solution for this as well.
   initialize_converter_functions();
@@ -1183,7 +1185,7 @@ void Universe::flush_dependents_on(instanceKlassHandle dependee) {
   if (CodeCache::number_of_nmethods_with_dependencies() == 0) return;
 
   // CodeCache can only be updated by a thread_in_VM and they will all be
-  // stopped dring the safepoint so CodeCache will be safe to update without
+  // stopped during the safepoint so CodeCache will be safe to update without
   // holding the CodeCache_lock.
 
   KlassDepChange changes(dependee);
@@ -1204,7 +1206,7 @@ void Universe::flush_dependents_on(Handle call_site, Handle method_handle) {
   if (CodeCache::number_of_nmethods_with_dependencies() == 0) return;
 
   // CodeCache can only be updated by a thread_in_VM and they will all be
-  // stopped dring the safepoint so CodeCache will be safe to update without
+  // stopped during the safepoint so CodeCache will be safe to update without
   // holding the CodeCache_lock.
 
   CallSiteDepChange changes(call_site(), method_handle());
@@ -1235,7 +1237,7 @@ void Universe::flush_evol_dependents_on(instanceKlassHandle ev_k_h) {
   if (CodeCache::number_of_nmethods_with_dependencies() == 0) return;
 
   // CodeCache can only be updated by a thread_in_VM and they will all be
-  // stopped dring the safepoint so CodeCache will be safe to update without
+  // stopped during the safepoint so CodeCache will be safe to update without
   // holding the CodeCache_lock.
 
   // Compute the dependent nmethods

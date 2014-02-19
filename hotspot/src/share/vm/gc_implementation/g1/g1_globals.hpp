@@ -71,6 +71,9 @@
   diagnostic(bool, G1TraceConcRefinement, false,                            \
           "Trace G1 concurrent refinement")                                 \
                                                                             \
+  experimental(bool, G1TraceStringSymbolTableScrubbing, false,              \
+          "Trace information string and symbol table scrubbing.")           \
+                                                                            \
   product(double, G1ConcMarkStepDurationMillis, 10.0,                       \
           "Target duration of individual concurrent marking steps "         \
           "in milliseconds.")                                               \
@@ -180,7 +183,7 @@
           "When true, record recent calls to rem set operations.")          \
                                                                             \
   develop(intx, G1MaxVerifyFailures, -1,                                    \
-          "The maximum number of verification failrues to print.  "         \
+          "The maximum number of verification failures to print.  "         \
           "-1 means print all.")                                            \
                                                                             \
   develop(bool, G1ScrubRemSets, true,                                       \

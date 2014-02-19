@@ -746,7 +746,7 @@ void VirtualSpaceNode::inc_container_count() {
   assert_lock_strong(SpaceManager::expand_lock());
   _container_count++;
   assert(_container_count == container_count_slow(),
-         err_msg("Inconsistency in countainer_count _container_count " SIZE_FORMAT
+         err_msg("Inconsistency in container_count _container_count " SIZE_FORMAT
                  " container_count_slow() " SIZE_FORMAT,
                  _container_count, container_count_slow()));
 }
@@ -759,7 +759,7 @@ void VirtualSpaceNode::dec_container_count() {
 #ifdef ASSERT
 void VirtualSpaceNode::verify_container_count() {
   assert(_container_count == container_count_slow(),
-    err_msg("Inconsistency in countainer_count _container_count " SIZE_FORMAT
+    err_msg("Inconsistency in container_count _container_count " SIZE_FORMAT
             " container_count_slow() " SIZE_FORMAT, _container_count, container_count_slow()));
 }
 #endif
@@ -2399,7 +2399,7 @@ bool SpaceManager::contains(const void *ptr) {
 
 void SpaceManager::verify() {
   // If there are blocks in the dictionary, then
-  // verfication of chunks does not work since
+  // verification of chunks does not work since
   // being in the dictionary alters a chunk.
   if (block_freelists()->total_size() == 0) {
     for (ChunkIndex i = ZeroIndex; i < NumberOfInUseLists; i = next_chunk_index(i)) {
@@ -2868,7 +2868,7 @@ void Metaspace::set_narrow_klass_base_and_shift(address metaspace_base, address 
     uint64_t klass_encoding_max = UnscaledClassSpaceMax << LogKlassAlignmentInBytes;
     // If compressed class space fits in lower 32G, we don't need a base.
     if (higher_address <= (address)klass_encoding_max) {
-      lower_base = 0; // effectively lower base is zero.
+      lower_base = 0; // Effectively lower base is zero.
     }
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -82,6 +82,9 @@ ConstantPool::ConstantPool(Array<u1>* tags) {
 void ConstantPool::deallocate_contents(ClassLoaderData* loader_data) {
   MetadataFactory::free_metadata(loader_data, cache());
   set_cache(NULL);
+  MetadataFactory::free_array<u2>(loader_data, reference_map());
+  set_reference_map(NULL);
+
   MetadataFactory::free_array<jushort>(loader_data, operands());
   set_operands(NULL);
 
@@ -1874,7 +1877,6 @@ void ConstantPool::preload_and_initialize_all_classes(ConstantPool* obj, TRAPS) 
 // Printing
 
 void ConstantPool::print_on(outputStream* st) const {
-  EXCEPTION_MARK;
   assert(is_constantPool(), "must be constantPool");
   st->print_cr(internal_name());
   if (flags() != 0) {

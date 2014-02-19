@@ -104,7 +104,7 @@ bool   Arguments::_xdebug_mode                  = false;
 const char*  Arguments::_java_vendor_url_bug    = DEFAULT_VENDOR_URL_BUG;
 const char*  Arguments::_sun_java_launcher      = DEFAULT_JAVA_LAUNCHER;
 int    Arguments::_sun_java_launcher_pid        = -1;
-bool   Arguments::_created_by_gamma_launcher    = false;
+bool   Arguments::_sun_java_launcher_is_altjvm  = false;
 
 // These parameters are reset in method parse_vm_init_args(JavaVMInitArgs*)
 bool   Arguments::_AlwaysCompileLoopMethods     = AlwaysCompileLoopMethods;
@@ -154,7 +154,8 @@ static void logOption(const char* opt) {
 
 // Process java launcher properties.
 void Arguments::process_sun_java_launcher_properties(JavaVMInitArgs* args) {
-  // See if sun.java.launcher or sun.java.launcher.pid is defined.
+  // See if sun.java.launcher, sun.java.launcher.is_altjvm or
+  // sun.java.launcher.pid is defined.
   // Must do this before setting up other system properties,
   // as some of them may depend on launcher type.
   for (int index = 0; index < args->nOptions; index++) {
@@ -163,6 +164,12 @@ void Arguments::process_sun_java_launcher_properties(JavaVMInitArgs* args) {
 
     if (match_option(option, "-Dsun.java.launcher=", &tail)) {
       process_java_launcher_argument(tail, option->extraInfo);
+      continue;
+    }
+    if (match_option(option, "-Dsun.java.launcher.is_altjvm=", &tail)) {
+      if (strcmp(tail, "true") == 0) {
+        _sun_java_launcher_is_altjvm = true;
+      }
       continue;
     }
     if (match_option(option, "-Dsun.java.launcher.pid=", &tail)) {
@@ -181,7 +188,7 @@ void Arguments::init_system_properties() {
   PropertyList_add(&_system_properties, new SystemProperty("java.vm.name", VM_Version::vm_name(),  false));
   PropertyList_add(&_system_properties, new SystemProperty("java.vm.info", VM_Version::vm_info_string(),  true));
 
-  // following are JVMTI agent writeable properties.
+  // Following are JVMTI agent writable properties.
   // Properties values are set to NULL and they are
   // os specific they are initialized in os::init_system_properties_values().
   _java_ext_dirs = new SystemProperty("java.ext.dirs", NULL,  true);
@@ -882,7 +889,7 @@ bool Arguments::process_argument(const char* arg,
     arg_len = equal_sign - argname;
   }
 
-  Flag* found_flag = Flag::find_flag((const char*)argname, arg_len, true);
+  Flag* found_flag = Flag::find_flag((const char*)argname, arg_len, true, true);
   if (found_flag != NULL) {
     char locked_message_buf[BUFLEN];
     found_flag->get_locked_message(locked_message_buf, BUFLEN);
@@ -1017,9 +1024,10 @@ bool Arguments::add_property(const char* prop) {
     _java_command = value;
 
     // Record value in Arguments, but let it get passed to Java.
-  } else if (strcmp(key, "sun.java.launcher.pid") == 0) {
-    // launcher.pid property is private and is processed
-    // in process_sun_java_launcher_properties();
+  } else if (strcmp(key, "sun.java.launcher.is_altjvm") == 0 ||
+             strcmp(key, "sun.java.launcher.pid") == 0) {
+    // sun.java.launcher.is_altjvm and sun.java.launcher.pid property are
+    // private and are processed in process_sun_java_launcher_properties();
     // the sun.java.launcher property is passed on to the java application
     FreeHeap(key);
     if (eq != NULL) {
@@ -1310,7 +1318,7 @@ void Arguments::set_cms_and_parnew_gc_flags() {
   if (!FLAG_IS_DEFAULT(OldPLABSize)) {
     if (FLAG_IS_DEFAULT(CMSParPromoteBlocksToClaim)) {
       // OldPLABSize is not the default value but CMSParPromoteBlocksToClaim
-      // is.  In this situtation let CMSParPromoteBlocksToClaim follow
+      // is.  In this situation let CMSParPromoteBlocksToClaim follow
       // the value (either from the command line or ergonomics) of
       // OldPLABSize.  Following OldPLABSize is an ergonomics decision.
       FLAG_SET_ERGO(uintx, CMSParPromoteBlocksToClaim, OldPLABSize);
@@ -1573,6 +1581,16 @@ void Arguments::set_parallel_gc_flags() {
     vm_exit(1);
   }
 
+  if (UseAdaptiveSizePolicy) {
+    // We don't want to limit adaptive heap sizing's freedom to adjust the heap
+    // unless the user actually sets these flags.
+    if (FLAG_IS_DEFAULT(MinHeapFreeRatio)) {
+      FLAG_SET_DEFAULT(MinHeapFreeRatio, 0);
+    }
+    if (FLAG_IS_DEFAULT(MaxHeapFreeRatio)) {
+      FLAG_SET_DEFAULT(MaxHeapFreeRatio, 100);
+    }
+  }
 
   // If InitialSurvivorRatio or MinSurvivorRatio were not specified, but the
   // SurvivorRatio has been set, reset their default values to SurvivorRatio +
@@ -1804,9 +1822,6 @@ void Arguments::process_java_compiler_argument(char* arg) {
 
 void Arguments::process_java_launcher_argument(const char* launcher, void* extra_info) {
   _sun_java_launcher = strdup(launcher);
-  if (strcmp("gamma", _sun_java_launcher) == 0) {
-    _created_by_gamma_launcher = true;
-  }
 }
 
 bool Arguments::created_by_java_launcher() {
@@ -1814,8 +1829,8 @@ bool Arguments::created_by_java_launcher() {
   return strcmp(DEFAULT_JAVA_LAUNCHER, _sun_java_launcher) != 0;
 }
 
-bool Arguments::created_by_gamma_launcher() {
-  return _created_by_gamma_launcher;
+bool Arguments::sun_java_launcher_is_altjvm() {
+  return _sun_java_launcher_is_altjvm;
 }
 
 //===========================================================================================================
@@ -1848,7 +1863,7 @@ bool Arguments::verify_min_value(intx val, intx min, const char* name) {
 }
 
 bool Arguments::verify_percentage(uintx value, const char* name) {
-  if (value <= 100) {
+  if (is_percentage(value)) {
     return true;
   }
   jio_fprintf(defaultStream::error_stream(),
@@ -1934,6 +1949,34 @@ bool is_filename_valid(const char *file_name) {
     return false;
   }
   return count_p < 2 && count_t < 2;
+}
+
+bool Arguments::verify_MinHeapFreeRatio(FormatBuffer<80>& err_msg, uintx min_heap_free_ratio) {
+  if (!is_percentage(min_heap_free_ratio)) {
+    err_msg.print("MinHeapFreeRatio must have a value between 0 and 100");
+    return false;
+  }
+  if (min_heap_free_ratio > MaxHeapFreeRatio) {
+    err_msg.print("MinHeapFreeRatio (" UINTX_FORMAT ") must be less than or "
+                  "equal to MaxHeapFreeRatio (" UINTX_FORMAT ")", min_heap_free_ratio,
+                  MaxHeapFreeRatio);
+    return false;
+  }
+  return true;
+}
+
+bool Arguments::verify_MaxHeapFreeRatio(FormatBuffer<80>& err_msg, uintx max_heap_free_ratio) {
+  if (!is_percentage(max_heap_free_ratio)) {
+    err_msg.print("MaxHeapFreeRatio must have a value between 0 and 100");
+    return false;
+  }
+  if (max_heap_free_ratio < MinHeapFreeRatio) {
+    err_msg.print("MaxHeapFreeRatio (" UINTX_FORMAT ") must be greater than or "
+                  "equal to MinHeapFreeRatio (" UINTX_FORMAT ")", max_heap_free_ratio,
+                  MinHeapFreeRatio);
+    return false;
+  }
+  return true;
 }
 
 // Check consistency of GC selection
@@ -2041,8 +2084,6 @@ bool Arguments::check_vm_args_consistency() {
   status = status && verify_interval(AdaptiveSizePolicyWeight, 0, 100,
                               "AdaptiveSizePolicyWeight");
   status = status && verify_percentage(ThresholdTolerance, "ThresholdTolerance");
-  status = status && verify_percentage(MinHeapFreeRatio, "MinHeapFreeRatio");
-  status = status && verify_percentage(MaxHeapFreeRatio, "MaxHeapFreeRatio");
 
   // Divide by bucket size to prevent a large size from causing rollover when
   // calculating amount of memory needed to be allocated for the String table.
@@ -2052,15 +2093,19 @@ bool Arguments::check_vm_args_consistency() {
   status = status && verify_interval(SymbolTableSize, minimumSymbolTableSize,
     (max_uintx / SymbolTable::bucket_size()), "SymbolTable size");
 
-  if (MinHeapFreeRatio > MaxHeapFreeRatio) {
-    jio_fprintf(defaultStream::error_stream(),
-                "MinHeapFreeRatio (" UINTX_FORMAT ") must be less than or "
-                "equal to MaxHeapFreeRatio (" UINTX_FORMAT ")\n",
-                MinHeapFreeRatio, MaxHeapFreeRatio);
-    status = false;
+  {
+    // Using "else if" below to avoid printing two error messages if min > max.
+    // This will also prevent us from reporting both min>100 and max>100 at the
+    // same time, but that is less annoying than printing two identical errors IMHO.
+    FormatBuffer<80> err_msg("");
+    if (!verify_MinHeapFreeRatio(err_msg, MinHeapFreeRatio)) {
+      jio_fprintf(defaultStream::error_stream(), "%s\n", err_msg.buffer());
+      status = false;
+    } else if (!verify_MaxHeapFreeRatio(err_msg, MaxHeapFreeRatio)) {
+      jio_fprintf(defaultStream::error_stream(), "%s\n", err_msg.buffer());
+      status = false;
+    }
   }
-  // Keeping the heap 100% free is hard ;-) so limit it to 99%.
-  MinHeapFreeRatio = MIN2(MinHeapFreeRatio, (uintx) 99);
 
   // Min/MaxMetaspaceFreeRatio
   status = status && verify_percentage(MinMetaspaceFreeRatio, "MinMetaspaceFreeRatio");
@@ -2693,7 +2738,7 @@ jint Arguments::parse_each_vm_init_arg(const JavaVMInitArgs* args,
     } else if (match_option(option, "-Xmaxf", &tail)) {
       char* err;
       int maxf = (int)(strtod(tail, &err) * 100);
-      if (*err != '\0' || maxf < 0 || maxf > 100) {
+      if (*err != '\0' || *tail == '\0' || maxf < 0 || maxf > 100) {
         jio_fprintf(defaultStream::error_stream(),
                     "Bad max heap free percentage size: %s\n",
                     option->optionString);
@@ -2705,7 +2750,7 @@ jint Arguments::parse_each_vm_init_arg(const JavaVMInitArgs* args,
     } else if (match_option(option, "-Xminf", &tail)) {
       char* err;
       int minf = (int)(strtod(tail, &err) * 100);
-      if (*err != '\0' || minf < 0 || minf > 100) {
+      if (*err != '\0' || *tail == '\0' || minf < 0 || minf > 100) {
         jio_fprintf(defaultStream::error_stream(),
                     "Bad min heap free percentage size: %s\n",
                     option->optionString);
@@ -3650,9 +3695,9 @@ jint Arguments::apply_ergo() {
   // Set per-collector flags
   if (UseParallelGC || UseParallelOldGC) {
     set_parallel_gc_flags();
-  } else if (UseConcMarkSweepGC) { // should be done before ParNew check below
+  } else if (UseConcMarkSweepGC) { // Should be done before ParNew check below
     set_cms_and_parnew_gc_flags();
-  } else if (UseParNewGC) {  // skipped if CMS is set above
+  } else if (UseParNewGC) {  // Skipped if CMS is set above
     set_parnew_gc_flags();
   } else if (UseG1GC) {
     set_g1_gc_flags();
@@ -3666,22 +3711,26 @@ jint Arguments::apply_ergo() {
               " using -XX:ParallelGCThreads=N");
     }
   }
+  if (MinHeapFreeRatio == 100) {
+    // Keeping the heap 100% free is hard ;-) so limit it to 99%.
+    FLAG_SET_ERGO(uintx, MinHeapFreeRatio, 99);
+  }
 #else // INCLUDE_ALL_GCS
   assert(verify_serial_gc_flags(), "SerialGC unset");
 #endif // INCLUDE_ALL_GCS
 
-  // Initialize Metaspace flags and alignments.
+  // Initialize Metaspace flags and alignments
   Metaspace::ergo_initialize();
 
   // Set bytecode rewriting flags
   set_bytecode_flags();
 
-  // Set flags if Aggressive optimization flags (-XX:+AggressiveOpts) enabled.
+  // Set flags if Aggressive optimization flags (-XX:+AggressiveOpts) enabled
   set_aggressive_opts_flags();
 
   // Turn off biased locking for locking debug mode flags,
-  // which are subtlely different from each other but neither works with
-  // biased locking.
+  // which are subtly different from each other but neither works with
+  // biased locking
   if (UseHeavyMonitors
 #ifdef COMPILER1
       || !UseFastLocking
@@ -3769,32 +3818,28 @@ jint Arguments::apply_ergo() {
     }
   }
 
-  // set PauseAtExit if the gamma launcher was used and a debugger is attached
-  // but only if not already set on the commandline
-  if (Arguments::created_by_gamma_launcher() && os::is_debugger_attached()) {
-    bool set = false;
-    CommandLineFlags::wasSetOnCmdline("PauseAtExit", &set);
-    if (!set) {
-      FLAG_SET_DEFAULT(PauseAtExit, true);
-    }
-  }
-
   return JNI_OK;
 }
 
 jint Arguments::adjust_after_os() {
-#if INCLUDE_ALL_GCS
-  if (UseParallelGC || UseParallelOldGC) {
-    if (UseNUMA) {
+  if (UseNUMA) {
+    if (UseParallelGC || UseParallelOldGC) {
       if (FLAG_IS_DEFAULT(MinHeapDeltaBytes)) {
-        FLAG_SET_DEFAULT(MinHeapDeltaBytes, 64*M);
+         FLAG_SET_DEFAULT(MinHeapDeltaBytes, 64*M);
       }
-      // For those collectors or operating systems (eg, Windows) that do
-      // not support full UseNUMA, we will map to UseNUMAInterleaving for now
-      UseNUMAInterleaving = true;
+    }
+    // UseNUMAInterleaving is set to ON for all collectors and
+    // platforms when UseNUMA is set to ON. NUMA-aware collectors
+    // such as the parallel collector for Linux and Solaris will
+    // interleave old gen and survivor spaces on top of NUMA
+    // allocation policy for the eden space.
+    // Non NUMA-aware collectors such as CMS, G1 and Serial-GC on
+    // all platforms and ParallelGC on Windows will interleave all
+    // of the heap spaces across NUMA nodes.
+    if (FLAG_IS_DEFAULT(UseNUMAInterleaving)) {
+      FLAG_SET_ERGO(bool, UseNUMAInterleaving, true);
     }
   }
-#endif // INCLUDE_ALL_GCS
   return JNI_OK;
 }
 

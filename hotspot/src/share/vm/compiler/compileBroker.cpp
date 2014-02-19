@@ -98,7 +98,7 @@ HS_DTRACE_PROBE_DECL9(hotspot, method__compile__end,
     Symbol* name = (method)->name();                                     \
     Symbol* signature = (method)->signature();                           \
     HOTSPOT_METHOD_COMPILE_BEGIN(                                        \
-      comp_name, strlen(comp_name),                                      \
+      (char *) comp_name, strlen(comp_name),                             \
       (char *) klass_name->bytes(), klass_name->utf8_length(),           \
       (char *) name->bytes(), name->utf8_length(),                       \
       (char *) signature->bytes(), signature->utf8_length());            \
@@ -110,7 +110,7 @@ HS_DTRACE_PROBE_DECL9(hotspot, method__compile__end,
     Symbol* name = (method)->name();                                     \
     Symbol* signature = (method)->signature();                           \
     HOTSPOT_METHOD_COMPILE_END(                                          \
-      comp_name, strlen(comp_name),                                      \
+      (char *) comp_name, strlen(comp_name),                             \
       (char *) klass_name->bytes(), klass_name->utf8_length(),           \
       (char *) name->bytes(), name->utf8_length(),                       \
       (char *) signature->bytes(), signature->utf8_length(), (success)); \
@@ -955,7 +955,7 @@ CompilerThread* CompileBroker::make_compiler_thread(const char* name, CompileQue
 
     if (compiler_thread == NULL || compiler_thread->osthread() == NULL){
       vm_exit_during_initialization("java.lang.OutOfMemoryError",
-                                    "unable to create new native thread");
+                                    os::native_thread_creation_failed_msg());
     }
 
     java_lang_Thread::set_thread(thread_oop(), compiler_thread);

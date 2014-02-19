@@ -218,9 +218,9 @@ void ReservedSpace::initialize(size_t size, size_t alignment, bool large,
          noaccess_prefix == _alignment, "noaccess prefix wrong");
 
   assert(markOopDesc::encode_pointer_as_mark(_base)->decode_pointer() == _base,
-         "area must be distinguisable from marks for mark-sweep");
+         "area must be distinguishable from marks for mark-sweep");
   assert(markOopDesc::encode_pointer_as_mark(&_base[size])->decode_pointer() == &_base[size],
-         "area must be distinguisable from marks for mark-sweep");
+         "area must be distinguishable from marks for mark-sweep");
 }
 
 
@@ -554,10 +554,10 @@ bool VirtualSpace::expand_by(size_t bytes, bool pre_touch) {
 
   // Determine which regions need to grow in this expand_by call.
   // If you are growing in the lower region, high() must be in that
-  // region so calcuate the size based on high().  For the middle and
+  // region so calculate the size based on high().  For the middle and
   // upper regions, determine the starting point of growth based on the
   // location of high().  By getting the MAX of the region's low address
-  // (or the prevoius region's high address) and high(), we can tell if it
+  // (or the previous region's high address) and high(), we can tell if it
   // is an intra or inter region growth.
   size_t lower_needs = 0;
   if (aligned_lower_new_high > lower_high()) {

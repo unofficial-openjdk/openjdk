@@ -73,7 +73,7 @@ default: vm_build_preliminaries the_vm
 	@echo All done.
 
 # This is an explicit dependency for the sake of parallel makes.
-vm_build_preliminaries:  checks $(Cached_plat) $(AD_Files_If_Required) jvmti_stuff trace_stuff sa_stuff
+vm_build_preliminaries:  checks $(Cached_plat) $(AD_Files_If_Required) jvmti_stuff trace_stuff sa_stuff dtrace_stuff
 	@# We need a null action here, so implicit rules don't get consulted.
 
 $(Cached_plat): $(Plat_File)
@@ -95,6 +95,9 @@ trace_stuff: jvmti_stuff $(Cached_plat) $(adjust-mflags)
 sa_stuff:
 	@$(MAKE) -f sa.make $(MFLAGS-adjusted)
 
+dtrace_stuff: $(Cached_plat) $(adjust-mflags)
+	@$(MAKE) -f dtrace.make dtrace_gen_headers $(MFLAGS-adjusted) GENERATED=$(GENERATED)
+
 # and the VM: must use other makefile with dependencies included
 
 # We have to go to great lengths to get control over the -jN argument
@@ -111,7 +114,7 @@ $(adjust-mflags): $(GAMMADIR)/make/$(Platform_os_family)/makefiles/adjust-mflags
 the_vm: vm_build_preliminaries $(adjust-mflags)
 	@$(MAKE) -f vm.make $(MFLAGS-adjusted)
 
-install gamma: the_vm
+install: the_vm
 	@$(MAKE) -f vm.make $@
 
 # next rules support "make foo.[oi]"

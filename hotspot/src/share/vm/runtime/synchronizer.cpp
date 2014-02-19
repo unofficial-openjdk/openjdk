@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -373,23 +373,24 @@ ObjectLocker::~ObjectLocker() {
 // -----------------------------------------------------------------------------
 //  Wait/Notify/NotifyAll
 // NOTE: must use heavy weight monitor to handle wait()
-void ObjectSynchronizer::wait(Handle obj, jlong millis, TRAPS) {
+int ObjectSynchronizer::wait(Handle obj, jlong millis, TRAPS) {
   if (UseBiasedLocking) {
     BiasedLocking::revoke_and_rebias(obj, false, THREAD);
     assert(!obj->mark()->has_bias_pattern(), "biases should be revoked by now");
   }
   if (millis < 0) {
     TEVENT (wait - throw IAX) ;
-    THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(), "timeout value is negative");
+    THROW_MSG_0(vmSymbols::java_lang_IllegalArgumentException(), "timeout value is negative");
   }
   ObjectMonitor* monitor = ObjectSynchronizer::inflate(THREAD, obj());
   DTRACE_MONITOR_WAIT_PROBE(monitor, obj(), THREAD, millis);
   monitor->wait(millis, true, THREAD);
 
-  /* This dummy call is in place to get around dtrace bug 6254741.  Once
-     that's fixed we can uncomment the following line and remove the call */
+  // This dummy call is in place to get around dtrace bug 6254741.  Once
+  // that's fixed we can uncomment the following line, remove the call
+  // and change this function back into a "void" func.
   // DTRACE_MONITOR_PROBE(waited, monitor, obj(), THREAD);
-  dtrace_waited_probe(monitor, obj, THREAD);
+  return dtrace_waited_probe(monitor, obj, THREAD);
 }
 
 void ObjectSynchronizer::waitUninterruptibly (Handle obj, jlong millis, TRAPS) {
@@ -737,10 +738,10 @@ bool ObjectSynchronizer::current_thread_holds_lock(JavaThread* thread,
 }
 
 // Be aware of this method could revoke bias of the lock object.
-// This method querys the ownership of the lock handle specified by 'h_obj'.
+// This method queries the ownership of the lock handle specified by 'h_obj'.
 // If the current thread owns the lock, it returns owner_self. If no
 // thread owns the lock, it returns owner_none. Otherwise, it will return
-// ower_other.
+// owner_other.
 ObjectSynchronizer::LockOwnership ObjectSynchronizer::query_lock_ownership
 (JavaThread *self, Handle h_obj) {
   // The caller must beware this method can revoke bias, and

@@ -31,6 +31,7 @@
 #include "runtime/interfaceSupport.hpp"
 #include "runtime/java.hpp"
 #include "runtime/javaCalls.hpp"
+#include "runtime/os.hpp"
 
 // CopyrightVersion 1.2
 
@@ -54,7 +55,7 @@ void ConcurrentGCThread::safepoint_desynchronize() {
 void ConcurrentGCThread::create_and_start() {
   if (os::create_thread(this, os::cgc_thread)) {
     // XXX: need to set this to low priority
-    // unless "agressive mode" set; priority
+    // unless "aggressive mode" set; priority
     // should be just less than that of VMThread.
     os::set_priority(this, NearMaxPriority);
     if (!_should_terminate && !DisableStartThread) {
@@ -206,7 +207,7 @@ SurrogateLockerThread* SurrogateLockerThread::make(TRAPS) {
     // exceptions anyway, check and abort if this fails.
     if (res == NULL || res->osthread() == NULL) {
       vm_exit_during_initialization("java.lang.OutOfMemoryError",
-                                    "unable to create new native thread");
+                                    os::native_thread_creation_failed_msg());
     }
     java_lang_Thread::set_thread(thread_oop(), res);
     java_lang_Thread::set_priority(thread_oop(), NearMaxPriority);
