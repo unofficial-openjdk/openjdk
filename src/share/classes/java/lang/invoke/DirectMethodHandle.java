@@ -53,7 +53,8 @@ class DirectMethodHandle extends MethodHandle {
         if (!member.isResolved())
             throw new InternalError();
 
-        if (member.getDeclaringClass().isInterface() && !member.isAbstract()) {
+        if (member.getDeclaringClass().isInterface() &&
+                member.isMethod() && !member.isAbstract()) {
            // Check for corner case: invokeinterface of Object method
             MemberName m = new MemberName(Object.class, member.getName(), member.getMethodType(), member.getReferenceKind());
             m = MemberName.getFactory().resolveOrNull(m.getReferenceKind(), m, null);

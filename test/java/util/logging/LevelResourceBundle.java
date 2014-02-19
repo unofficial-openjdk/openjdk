@@ -33,14 +33,18 @@ import java.util.logging.*;
 
 public class LevelResourceBundle {
     public static void main(String args[]) throws Exception {
-        final String name = "SEVERE";
-        String en = getLocalizedMessage(Locale.getDefault(), name);
-        String fr = getLocalizedMessage(Locale.FRANCE, name);
+        final String key = "SEVERE";
+        final String name = "Severe";
+        String en = getLocalizedMessage(Locale.getDefault(), key);
+        String fr = getLocalizedMessage(Locale.FRANCE, key);
         if (!name.equals(en)) {
              throw new RuntimeException("Expect " + name + " equals " + en);
         }
         if (name.equals(fr)) {
              throw new RuntimeException("Expect " + name + " not equals " + fr);
+        }
+        if (key.equals(fr)) {
+             throw new RuntimeException("Expect " + key + " not equals " + fr);
         }
     }
 

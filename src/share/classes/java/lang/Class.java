@@ -2207,13 +2207,52 @@ public final
      */
     static native Class getPrimitiveClass(String name);
 
-    private static boolean isCheckMemberAccessOverridden(SecurityManager smgr) {
-        if (smgr.getClass() == SecurityManager.class) return false;
+    private static class SecurityManagerHelper {
+        final SecurityManager sm;
+        final boolean overrideCheckMemberAccess;
+        SecurityManagerHelper(SecurityManager sm) {
+            this.sm = sm;
 
-        Class<?>[] paramTypes = new Class<?>[] {Class.class, int.class};
-        return smgr.getClass().getMethod0("checkMemberAccess", paramTypes).
-                getDeclaringClass() != SecurityManager.class;
+            boolean overridden = false;
+            if (sm.getClass() != SecurityManager.class) {
+                try {
+                    overridden = getCheckMemberAccessMethod(sm.getClass()).
+                                     getDeclaringClass() != SecurityManager.class;
+                } catch (NoSuchMethodError e) {
+                    // fall back to invoke sm.checkMemberAccess for the member access check
+                }
+            }
+            this.overrideCheckMemberAccess = overridden;
+        }
+
     }
+
+    private static volatile SecurityManagerHelper smHelper;
+    private static boolean isCheckMemberAccessOverridden(SecurityManager sm) {
+        if (sm.getClass() == SecurityManager.class)  return false;
+
+        SecurityManagerHelper helper = smHelper;
+        if (helper == null || helper.sm != sm) {
+            helper = new SecurityManagerHelper(sm);
+            smHelper = helper;
+        }
+        return helper.overrideCheckMemberAccess;
+    }
+
+    /**
+     * Finds the checkMemberAccess method of the given SecurityManager class.
+     *
+     * This method calls JNI_GetMethodID to look up the checkMemberAccess method
+     * instead of Class.getMethod0 that may cause loading of classes referenced
+     * by the SecurityManager subclass and cause ClassCircularityError.
+     *
+     * JNI_GetMethodID may throw NoSuchMethodError if the given class
+     * has a static checkMemberAccess method.
+     *
+     * @throws NoSuchMethodError if the method cannot be found.
+     */
+    private static native Method getCheckMemberAccessMethod(Class<? extends SecurityManager> c)
+        throws NoSuchMethodError;
 
 
     /*

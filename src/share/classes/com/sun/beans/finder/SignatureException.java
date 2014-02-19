@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 1998, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,21 +22,20 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+package com.sun.beans.finder;
 
-#include "jni.h"
-#include "java_lang_ref_Finalizer.h"
+final class SignatureException extends RuntimeException {
+    SignatureException(Throwable cause) {
+        super(cause);
+    }
 
-
-JNIEXPORT void JNICALL
-Java_java_lang_ref_Finalizer_invokeFinalizeMethod(JNIEnv *env, jclass clazz,
-                                                  jobject ob)
-{
-    jclass cls;
-    jmethodID mid;
-
-    cls = (*env)->GetObjectClass(env, ob);
-    if (cls == NULL) return;
-    mid = (*env)->GetMethodID(env, cls, "finalize", "()V");
-    if (mid == NULL) return;
-    (*env)->CallVoidMethod(env, ob, mid);
+    NoSuchMethodException toNoSuchMethodException(String message) {
+        Throwable throwable = getCause();
+        if (throwable instanceof NoSuchMethodException) {
+            return (NoSuchMethodException) throwable;
+        }
+        NoSuchMethodException exception = new NoSuchMethodException(message);
+        exception.initCause(throwable);
+        return exception;
+    }
 }
