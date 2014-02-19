@@ -3020,10 +3020,10 @@ class CommandLineFlags {
   product_pd(uintx, MaxPermSize,                                            \
           "Maximum size of permanent generation (in bytes)")                \
                                                                             \
-  product(uintx, MinHeapFreeRatio,    40,                                   \
+  manageable(uintx, MinHeapFreeRatio,    40,                                \
           "Min percentage of heap free after GC to avoid expansion")        \
                                                                             \
-  product(uintx, MaxHeapFreeRatio,    70,                                   \
+  manageable(uintx, MaxHeapFreeRatio,    70,                                \
           "Max percentage of heap free after GC to avoid shrinking")        \
                                                                             \
   product(intx, SoftRefLRUPolicyMSPerMB, 1000,                              \
