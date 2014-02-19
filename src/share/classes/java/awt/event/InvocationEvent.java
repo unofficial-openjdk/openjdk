@@ -98,7 +98,7 @@ public class InvocationEvent extends AWTEvent implements ActiveEvent {
      *
      * @see #isDispatched
      */
-    protected volatile Object notifier;
+    protected Object notifier;
 
     /**
      * The (potentially null) Runnable whose run() method will be called
