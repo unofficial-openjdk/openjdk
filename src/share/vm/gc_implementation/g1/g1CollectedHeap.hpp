@@ -31,6 +31,7 @@
 #include "gc_implementation/g1/g1HRPrinter.hpp"
 #include "gc_implementation/g1/g1MonitoringSupport.hpp"
 #include "gc_implementation/g1/g1RemSet.hpp"
+#include "gc_implementation/g1/g1SATBCardTableModRefBS.hpp"
 #include "gc_implementation/g1/g1YCTypes.hpp"
 #include "gc_implementation/g1/heapRegionSeq.hpp"
 #include "gc_implementation/g1/heapRegionSets.hpp"
@@ -795,8 +796,6 @@ protected:
 
   // The g1 remembered set of the heap.
   G1RemSet* _g1_rem_set;
-  // And it's mod ref barrier set, used to track updates for the above.
-  ModRefBarrierSet* _mr_bs;
 
   // A set of cards that cover the objects for which the Rsets should be updated
   // concurrently after the collection.
@@ -1131,7 +1130,6 @@ public:
 
   // The rem set and barrier set.
   G1RemSet* g1_rem_set() const { return _g1_rem_set; }
-  ModRefBarrierSet* mr_bs() const { return _mr_bs; }
 
   // The rem set iterator.
   HeapRegionRemSetIterator* rem_set_iterator(int i) {
@@ -1364,6 +1362,10 @@ public:
   }
 
   virtual bool is_in_closed_subset(const void* p) const;
+
+  G1SATBCardTableModRefBS* g1_barrier_set() {
+    return (G1SATBCardTableModRefBS*) barrier_set();
+  }
 
   // This resets the card table to all zeros.  It is used after
   // a collection pause which used the card table to claim cards.
@@ -1834,7 +1836,7 @@ protected:
   G1CollectedHeap* _g1h;
   RefToScanQueue*  _refs;
   DirtyCardQueue   _dcq;
-  CardTableModRefBS* _ct_bs;
+  G1SATBCardTableModRefBS* _ct_bs;
   G1RemSet* _g1_rem;
 
   G1ParGCAllocBuffer  _surviving_alloc_buffer;
@@ -1873,7 +1875,7 @@ protected:
   void   add_to_undo_waste(size_t waste)         { _undo_waste += waste; }
 
   DirtyCardQueue& dirty_card_queue()             { return _dcq;  }
-  CardTableModRefBS* ctbs()                      { return _ct_bs; }
+  G1SATBCardTableModRefBS* ctbs()                { return _ct_bs; }
 
   template <class T> void immediate_rs_update(HeapRegion* from, T* p, int tid) {
     if (!from->is_survivor()) {

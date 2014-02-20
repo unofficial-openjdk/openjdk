@@ -5045,6 +5045,7 @@ _JNI_IMPORT_OR_EXPORT_ jint JNICALL JNI_GetDefaultJavaVMInitArgs(void *args_) {
 // Forward declaration
 void TestReservedSpace_test();
 void TestReserveMemorySpecial_test();
+void TestOldFreeSpaceCalculation_test();
 
 void execute_internal_vm_tests() {
   if (ExecuteInternalVMTests) {
@@ -5056,6 +5057,7 @@ void execute_internal_vm_tests() {
     run_unit_test(CollectedHeap::test_is_in());
     run_unit_test(QuickSort::test_quick_sort());
     run_unit_test(AltHashing::test_alt_hash());
+    run_unit_test(TestOldFreeSpaceCalculation_test());
     tty->print_cr("All internal VM tests passed");
   }
 }
