@@ -1,5 +1,6 @@
 #
 # Copyright (c) 2005, 2011, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2013 Red Hat, Inc.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -59,7 +60,7 @@
 # needs to be set here since this Makefile doesn't include defs.make
 OS_VENDOR:=$(shell uname -s)
 
--include $(SPEC)
+include $(GAMMADIR)/make/defs.make
 include $(GAMMADIR)/make/scm.make
 include $(GAMMADIR)/make/altsrc.make
 
@@ -215,6 +216,7 @@ flags.make: $(BUILDTREE_MAKE) ../shared_dirs.lst
 	echo "HOTSPOT_BUILD_USER = $(HOTSPOT_BUILD_USER)"; \
 	echo "HOTSPOT_VM_DISTRO = $(HOTSPOT_VM_DISTRO)"; \
 	echo "OPENJDK = $(OPENJDK)"; \
+	echo "ZERO_BUILD = $(ZERO_BUILD)"; \
 	echo; \
 	echo "# Used for platform dispatching"; \
 	echo "TARGET_DEFINES  = -DTARGET_OS_FAMILY_\$$(Platform_os_family)"; \

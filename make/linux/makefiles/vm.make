@@ -1,5 +1,6 @@
 #
 # Copyright (c) 1999, 2012, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2013 Red Hat, Inc.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -42,7 +43,9 @@ DEP_DIR       = $(GENERATED)/dependencies
 -include $(DEP_DIR)/*.d
 
 # read machine-specific adjustments (%%% should do this via buildtree.make?)
-ifeq ($(findstring true, $(JVM_VARIANT_ZERO) $(JVM_VARIANT_ZEROSHARK)), true)
+ifeq ($(TYPE),ZERO)
+  include $(MAKEFILES_DIR)/zeroshark.make
+else ifeq ($(TYPE),SHARK)
   include $(MAKEFILES_DIR)/zeroshark.make
 else
   include $(MAKEFILES_DIR)/$(BUILDARCH).make
@@ -244,7 +247,7 @@ mapfile_reorder : mapfile $(REORDERFILE)
 vm.def: $(Res_Files) $(Obj_Files)
 	sh $(GAMMADIR)/make/linux/makefiles/build_vm_def.sh *.o > $@
 
-ifeq ($(JVM_VARIANT_ZEROSHARK), true)
+ifeq ($(TYPE),SHARK)
   STATIC_CXX = false
 else
   ifeq ($(ZERO_LIBARCH), ppc64)
@@ -276,10 +279,10 @@ else
 
   LIBS_VM                  += $(LIBS)
 endif
-ifeq ($(JVM_VARIANT_ZERO), true)
+ifeq ($(TYPE),ZERO)
   LIBS_VM += $(LIBFFI_LIBS)
 endif
-ifeq ($(JVM_VARIANT_ZEROSHARK), true)
+ifeq ($(TYPE),SHARK)
   LIBS_VM   += $(LIBFFI_LIBS) $(LLVM_LIBS)
   LFLAGS_VM += $(LLVM_LDFLAGS)
 endif
