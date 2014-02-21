@@ -139,11 +139,16 @@ void Module::add_backdoor_access(const char* pkg, int loader_tag, const char* wh
   PackageExport* entry = first;
   while (entry != NULL) {
     if (entry->hash() == hash && strcmp(entry->package(), pkg) == 0) {
-      entry->add_package_permits(loader_tag, who);
-      return;
+      break;
     }
     entry = entry->next();
   }
+  if (entry == NULL) {
+    entry = new PackageExport(pkg, hash);
+    entry->set_next(first);
+    set_first(index, entry);
+  }
+  entry->add_package_permits(loader_tag, who);
 }
 
 // does loader/who have access to pkg
