@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2005, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -113,7 +113,7 @@ AWT_OnLoad(JavaVM *vm, void *reserved)
     jvm = vm;
 
     /* Get address of this library and the directory containing it. */
-    dladdr((void *)JNI_OnLoad, &dlinfo);
+    dladdr((void *)AWT_OnLoad, &dlinfo);
     realpath((char *)dlinfo.dli_fname, buf);
     len = strlen(buf);
     p = strrchr(buf, '/');
@@ -227,7 +227,7 @@ Java_sun_awt_motif_XsessionWMcommand_New(JNIEnv *env, jobjectArray jargv)
 
 
 #define REFLECT_VOID_FUNCTION(name, arglist, paramlist)                 \
-typedef name##_type arglist;                                            \
+typedef void name##_type arglist;                                       \
 void name arglist                                                       \
 {                                                                       \
     static name##_type *name##_ptr = NULL;                              \
