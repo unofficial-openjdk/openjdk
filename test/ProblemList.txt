@@ -405,10 +405,6 @@ sun/tools/jconsole/ResourceCheckTest.sh                         generic-all
 # 7132203
 sun/jvmstat/monitor/MonitoredVm/CR6672135.java                  generic-all
 
-# 8001118
-sun/tools/jcmd/jcmd-f.sh					generic-all
-sun/tools/jcmd/jcmd-help-help.sh				generic-all
-
 # 7175775
 sun/tools/jinfo/Basic.sh					macosx-all
 
