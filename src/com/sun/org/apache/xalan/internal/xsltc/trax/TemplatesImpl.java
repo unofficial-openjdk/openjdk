@@ -383,18 +383,16 @@ public final class TemplatesImpl implements Templates, Serializable {
     }
 
     private static void ensureAccess(ClassLoader loader, String pkg, String target) {
-        ClassLoader[] loaders = new ClassLoader[] { loader };
-        String[] pkgs = new String[] { pkg };
         // use reflection as JAXP is compiled before the jdk reposotory in a
         // regular build
         try {
             Class<?> vm = Class.forName("sun.misc.VM");
-            Method m = vm.getDeclaredMethod("addPackageAccess",
+            Method m = vm.getDeclaredMethod("addBackdoorAccess",
                                             ClassLoader.class,
                                             String.class,
-                                            ClassLoader[].class,
-                                            String[].class);
-            m.invoke(null, null, target, loaders, pkgs);
+                                            ClassLoader.class,
+                                            String.class);
+            m.invoke(null, target, loader, pkg);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
