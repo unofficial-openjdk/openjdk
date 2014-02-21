@@ -449,14 +449,28 @@ JVM_DefineClassWithSourceCond(JNIEnv *env, const char *name,
                               jsize len, jobject pd, const char *source,
                               jboolean verify);
 
+/*
+ * Module support funcions
+ */
+
+JNIEXPORT void* JNICALL
+JVM_DefineModule(JNIEnv *env, jstring name);
+
 JNIEXPORT void JNICALL
-JVM_SetPackageAccess(JNIEnv *env, jobject loader, jstring pkg,
-                     jobjectArray loaders, jobjectArray pkgs);
+JVM_BindToModule(JNIEnv *env, jobject loader, jstring pkg, void *handle);
 
-JNIEXPORT jboolean JNICALL
-JVM_AddPackageAccess(JNIEnv *env, jobject loader, jstring pkg,
-                     jobjectArray loaders, jobjectArray pkgs);
+JNIEXPORT void JNICALL
+JVM_AddRequires(JNIEnv *env, void *handle1, void *handle2);
 
+JNIEXPORT void JNICALL
+JVM_AddExports(JNIEnv *env, void *handle, jstring pkg);
+
+JNIEXPORT void JNICALL
+JVM_AddExportsWithPermits(JNIEnv *env, void *handle1, jstring pkg, void *handle2);
+
+JNIEXPORT void JNICALL
+JVM_AddBackdoorAccess(JNIEnv *env, jobject loader, jstring pkg,
+                      jobject toLoader, jstring toPackage);
 
 /*
  * Reflection support functions

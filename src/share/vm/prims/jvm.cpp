@@ -24,7 +24,6 @@
 
 #include "precompiled.hpp"
 #include "classfile/classLoader.hpp"
-#include "classfile/classLoaderExports.hpp"
 #include "classfile/javaAssertions.hpp"
 #include "classfile/javaClasses.hpp"
 #include "classfile/symbolTable.hpp"
@@ -52,6 +51,8 @@
 #include "runtime/java.hpp"
 #include "runtime/javaCalls.hpp"
 #include "runtime/jfieldIDWorkaround.hpp"
+#include "runtime/module.hpp"
+#include "runtime/moduleLookup.hpp"
 #include "runtime/os.hpp"
 #include "runtime/perfData.hpp"
 #include "runtime/reflection.hpp"
@@ -975,51 +976,69 @@ JVM_ENTRY(jclass, JVM_FindLoadedClass(JNIEnv *env, jobject loader, jstring name)
             (jclass) JNIHandles::make_local(env, k->java_mirror());
 JVM_END
 
-JVM_ENTRY(void, JVM_SetPackageAccess(JNIEnv *env, jobject loader, jstring pkg,
-                                     jobjectArray loaders, jobjectArray pkgs))
-  JVMWrapper("JVM_SetPackageAccess");
+// Module support //////////////////////////////////////////////////////////////////////////////
+
+JVM_ENTRY(void*, JVM_DefineModule(JNIEnv* env, jstring name))
+  JVMWrapper("JVM_DefineModule");
   ResourceMark rm(THREAD);
-
-  Handle loader_h(THREAD, JNIHandles::resolve(loader));
-  objArrayHandle loaders_h(THREAD, objArrayOop(JNIHandles::resolve_non_null(loaders)));
-
-  const char* pkg_str = java_lang_String::as_utf8_string(JNIHandles::resolve_non_null(pkg));
-
-  objArrayOop pkgs_array = objArrayOop(JNIHandles::resolve_non_null(pkgs));
-  assert(loaders_h->length() == pkgs_array->length(), "length should be the same");
-
-  char** pkgs_str_array = NEW_RESOURCE_ARRAY(char*, pkgs_array->length());
-  for (int i = 0; i < pkgs_array->length(); i++) {
-    pkgs_str_array[i] = java_lang_String::as_utf8_string(pkgs_array->obj_at(i));
-  }
-
-  if (!ClassLoaderExports::set_package_access(loader_h, pkg_str, loaders_h, (const char**) pkgs_str_array)) {
-    // ## FIXME: Changing the exports after they have been set needs discussion
-    THROW_MSG(vmSymbols::java_lang_IllegalStateException(), "package access already set");
-  }
-
+  const char* name_str = java_lang_String::as_utf8_string(JNIHandles::resolve_non_null(name));
+  return (void*) Module::define_module(name_str);
 JVM_END
 
-JVM_ENTRY(jboolean, JVM_AddPackageAccess(JNIEnv *env, jobject loader, jstring pkg,
-                                         jobjectArray loaders, jobjectArray pkgs))
-  JVMWrapper("JVM_AddPackageAccess");
+JVM_ENTRY(void, JVM_BindToModule(JNIEnv *env, jobject loader, jstring pkg, void* handle))
+  JVMWrapper("JVM_BindToModule");
+  assert(handle != NULL, "can't be NULL");
   ResourceMark rm(THREAD);
-
-  Handle loader_h(THREAD, JNIHandles::resolve(loader));
-  objArrayHandle loaders_h(THREAD, objArrayOop(JNIHandles::resolve_non_null(loaders)));
-
+  Handle h_loader(THREAD, JNIHandles::resolve(loader));
   const char* pkg_str = java_lang_String::as_utf8_string(JNIHandles::resolve_non_null(pkg));
+  ModuleLookup::bind_to_module(h_loader, pkg_str, (Module*)handle);
+JVM_END
 
-  objArrayOop pkgs_array = objArrayOop(JNIHandles::resolve_non_null(pkgs));
-  assert(loaders_h->length() == pkgs_array->length(), "length should be the same");
+JVM_ENTRY(void, JVM_AddRequires(JNIEnv *env, void* handle1, void* handle2))
+  JVMWrapper("JVM_AddRequires");
+  assert(handle1 != NULL && handle2 != NULL, "can't be NULL");
+  ((Module*)handle1)->add_requires((Module*)handle2);
+JVM_END
 
-  char** pkgs_str_array = NEW_RESOURCE_ARRAY(char*, pkgs_array->length());
-  for (int i = 0; i < pkgs_array->length(); i++) {
-    pkgs_str_array[i] = java_lang_String::as_utf8_string(pkgs_array->obj_at(i));
+JVM_ENTRY(void, JVM_AddExports(JNIEnv *env, void* handle, jstring pkg))
+  JVMWrapper("JVM_AddExports");
+  assert(handle != NULL, "can't be NULL");
+  ResourceMark rm(THREAD);
+  const char* pkg_str = java_lang_String::as_utf8_string(JNIHandles::resolve_non_null(pkg));
+  ((Module*)handle)->export_without_permits(pkg_str);
+JVM_END
+
+JVM_ENTRY(void, JVM_AddExportsWithPermits(JNIEnv *env, void* handle1, jstring pkg, void* handle2))
+  JVMWrapper("JVM_AddExportsWithPermits");
+  assert(handle1 != NULL && handle2 != NULL, "can't be NULL");
+  ResourceMark rm(THREAD);
+  const char* pkg_str = java_lang_String::as_utf8_string(JNIHandles::resolve_non_null(pkg));
+  ((Module*)handle1)->export_with_permits(pkg_str, (Module*)handle2);
+JVM_END
+
+JVM_ENTRY(void, JVM_AddBackdoorAccess(JNIEnv *env, jobject loader, jstring pkg,
+                                      jobject toLoader, jstring toPackage))
+  JVMWrapper("JVM_AddBackdoorAccess");
+  Handle loader_h(THREAD, JNIHandles::resolve(loader));
+  ModuleLookup* lookup = ModuleLookup::module_lookup_or_null(loader_h);
+  if (lookup == NULL) {
+    // no modules associated with loader, no special access required
+    return;
   }
 
-  return ClassLoaderExports::add_package_access(loader_h, pkg_str, loaders_h, (const char**) pkgs_str_array);
+  ResourceMark rm(THREAD);
+  const char* pkg_str = java_lang_String::as_utf8_string(JNIHandles::resolve_non_null(pkg));
+  Module* module = lookup->lookup(pkg_str);
+  if (module == NULL || module->is_exported_without_permits(pkg_str)) {
+    // not in a module or package is exported
+    return;
+  }
 
+  Handle to_loader_h(THREAD, JNIHandles::resolve(toLoader));
+  int to_loader_tag = ClassLoader::tag_for(to_loader_h);
+  const char* to_pkg_str= java_lang_String::as_utf8_string(JNIHandles::resolve_non_null(toPackage));
+
+  module->add_backdoor_access(pkg_str, to_loader_tag, to_pkg_str);
 JVM_END
 
 

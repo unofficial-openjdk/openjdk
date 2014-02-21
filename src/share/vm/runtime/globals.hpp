@@ -1252,6 +1252,9 @@ class CommandLineFlags {
           "Decay time (in milliseconds) to re-enable bulk rebiasing of a "  \
           "type after previous bulk rebias")                                \
                                                                             \
+  product(bool, UseModuleBoundaries, true,                                  \
+          "Use access control to enforce module boundaries")                \
+                                                                            \
   /* tracing */                                                             \
                                                                             \
   notproduct(bool, TraceRuntimeCalls, false,                                \
@@ -1353,10 +1356,6 @@ class CommandLineFlags {
                                                                             \
   product(bool, TraceClassResolution, false,                                \
           "Trace all constant pool resolutions (for debugging)")            \
-                                                                            \
-  develop(bool, TracePackageAccess, false,                                  \
-          "Trace access control when set to only allow access from types"   \
-          "in configured runtime packages")                                 \
                                                                             \
   product(bool, TraceBiasedLocking, false,                                  \
           "Trace biased locking in JVM")                                    \
