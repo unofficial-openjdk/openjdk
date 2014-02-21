@@ -416,15 +416,29 @@ JVM_DefineClassWithSource(JNIEnv *env, const char *name, jobject loader,
                           const jbyte *buf, jsize len, jobject pd,
                           const char *source);
 
-/* Set package access so that loader/pkg can only be acessed by loaders/pkgs */
-JNIEXPORT void JNICALL
-JVM_SetPackageAccess(JNIEnv *env, jobject loader, jstring pkg,
-                     jobjectArray loaders, jobjectArray pkgs);
+/*
+ * Module support funcions
+ */
 
-/* Augment access control so that loader/pkg can be acessed by loaders/pkgs */
-JNIEXPORT jboolean JNICALL
-JVM_AddPackageAccess(JNIEnv *env, jobject loader, jstring pkg,
-                     jobjectArray loaders, jobjectArray pkgs);
+JNIEXPORT void * JNICALL
+JVM_DefineModule(JNIEnv *env, jstring name);
+
+JNIEXPORT void JNICALL
+JVM_BindToModule(JNIEnv *env, jobject loader, jstring pkg, void *handle);
+
+JNIEXPORT void JNICALL
+JVM_AddRequires(JNIEnv *env, void *handle1, void *handle2);
+
+JNIEXPORT void JNICALL
+JVM_AddExports(JNIEnv *env, void *handle1, jstring pkg);
+
+JNIEXPORT void JNICALL
+JVM_AddExportsWithPermits(JNIEnv *env, void *handle1, jstring pkg, void *handle2);
+
+JNIEXPORT void JNICALL
+JVM_AddBackdoorAccess(JNIEnv *env, jobject loader, jstring pkg,
+                      jobject toLoader, jstring toPackage);
+
 
 /*
  * Reflection support functions

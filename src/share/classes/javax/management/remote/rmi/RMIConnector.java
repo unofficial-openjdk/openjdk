@@ -2133,10 +2133,10 @@ public class RMIConnector implements JMXConnector, Serializable, JMXAddressable 
                 int last = pRefClassName.lastIndexOf(".");
                 String pkg = (last != -1) ? pRefClassName.substring(0, last) : "";
                 String[] pkgs = new String[] { pkg };
-                sun.misc.VM.addPackageAccess(ProxyRef.class.getClassLoader(),
-                                             "com.sun.jmx.remote.internal",
-                                             loaders,
-                                             pkgs);
+                sun.misc.VM.addBackdoorAccess(ProxyRef.class.getClassLoader(),
+                                              "com.sun.jmx.remote.internal",
+                                              cl,
+                                              pkg);
                 Class<?> c = cl.loadClass(pRefClassName);
                 return c.getConstructor(RemoteRef.class);
             }

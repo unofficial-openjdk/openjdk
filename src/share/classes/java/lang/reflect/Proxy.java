@@ -668,12 +668,10 @@ public class Proxy implements java.io.Serializable {
         int len = pkg.length();
         if (len > 0 && pkg.charAt(len-1) == '.')
             pkg = pkg.substring(0, len-1);
-        ClassLoader[] loaders = new ClassLoader[] { loader };
-        String[] pkgs = new String[] { pkg };
-        sun.misc.VM.addPackageAccess(target.getClassLoader(),
-                                     packageName(target),
-                                     loaders,
-                                     pkgs);
+        sun.misc.VM.addBackdoorAccess(target.getClassLoader(),
+                                      packageName(target),
+                                      loader,
+                                      pkg);
     }
 
     private static String packageName(Class<?> c) {

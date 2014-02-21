@@ -898,129 +898,83 @@ public enum LauncherHelper {
     }
 
     /**
-     * Returns a mapping of API package to class loader for class loaders that
-     * aren't the null loader.
+     * Setup the module boundaries
      */
-    private static Map<String, ClassLoader> generateLoaderMap(Module[] modules) throws IOException {
-        Map<String, Module> mods = new HashMap<>();
+    private static void setupAccessControl(Module[] modules, Set<Module> modulesNeeded) {
+        Map<String, Module> names = new HashMap<>();
         for (Module m: modules) {
-            mods.put(m.mainView().id().name(), m);
+            names.put(m.mainView().id().name(), m);
         }
-        Map<String, ClassLoader> pkgToLoaders = new HashMap<>();
-        Launcher launcher = Launcher.getLauncher();
 
-        // extensions class loader
+        // Need to elide view names
+        Map<String, Module> viewToModule = new HashMap<>();
+        for (Module m: modules) {
+            m.views().forEach( v -> viewToModule.put(v.id().name(), m) );
+        }
+
+        // assign modules to loaders
+        Map<Module, ClassLoader> moduleToLoaders = new HashMap<>();
+        Launcher launcher = Launcher.getLauncher();
         ClassLoader extcl = launcher.getExtClassLoader();
         for (String name: launcher.getExtModules()) {
-            Module m = mods.get(name);
+            Module m = names.get(name);
             if (m != null) {
-                m.packages().forEach(p -> pkgToLoaders.put(p, extcl));
+                moduleToLoaders.put(m, extcl);
             }
         }
-
-        // system/application class loader
         ClassLoader cl = launcher.getClassLoader();
         for (String name: launcher.getAppModules()) {
-            Module m = mods.get(name);
-            if (m != null) {
-                m.packages().forEach(p -> pkgToLoaders.put(p, cl));
-            }
+            Module m = names.get(name);
+            if (m != null)
+                moduleToLoaders.put(m, cl);
         }
 
-        return pkgToLoaders;
-    }
-
-    /**
-     * Setup access control to restrict access to the packages that are the keys
-     * in the given map. For each key {@code p} then its value in the map is the
-     * set of packages that have access to {@code p}.
-     */
-    private static void setupPackageAccess(Map<String, Set<String>> restricted,
-                                           Map<String, ClassLoader> pkgToLoaders) {
-        for (Map.Entry<String,Set<String>> entry: restricted.entrySet()) {
-            String pkg = entry.getKey();
-            ClassLoader loader = pkgToLoaders.get(pkg);
-            String[] pkgs = entry.getValue().toArray(new String[0]);
-            ClassLoader[] loaders = new ClassLoader[pkgs.length];
-            int i=0;
-            while (i < pkgs.length) {
-                loaders[i] = pkgToLoaders.get(pkgs[i]);
-                i++;
-            }
-            sun.misc.VM.setPackageAccess(loader, pkg, loaders, pkgs);
-        }
-    }
-
-    /**
-     * Given the module graph and the modules actually needed, return a map
-     * of the access control that needs to be setup. The map key is a package
-     * name, the map value the set of packages that are permitted to access
-     * types in the package.
-     */
-    private static Map<String,Set<String>>
-        computePackageAccess(Module[] modules, Set<Module> modulesNeeded)
-    {
-        Map<String, Set<String>> restricted = new HashMap<>();
-
-        // Step 1: hide all packages that are not in the selected modules
+        // define modules in VM and bind content
+        Map<Module, Long> moduleToHandle = new HashMap<>();
         for (Module m: modules) {
-            if (!modulesNeeded.contains(m)) {
-                for (String p: m.packages()) {
-                    // ## FIXME - can't use emptySet due to split package issues
-                    restricted.put(p, new HashSet<>());
+            long handle = sun.misc.VM.defineModule(m.mainView().id().name());
+            moduleToHandle.put(m, handle);
+
+            ClassLoader loader = moduleToLoaders.get(m);
+            for (String pkg: m.packages()) {
+                if (pkg != null) {
+                    sun.misc.VM.bindToModule(loader, pkg, handle);
                 }
             }
         }
 
-        // Step 2: hide on all non-exported packages in selected modules so
-        // that they are only accessible from within the module
-        for (Module m: modulesNeeded) {
-            Set<String> packages = m.packages();
-
-            // compute the set of packages that private to the module
-            Set<String> local = new HashSet<>(packages);
-            for (View v: m.views()) {
-                local.removeAll(v.exports());
-            }
-
-            // every package in the module gets access to the packages
-            // that are module-private
-            for (String p: local) {
-                // ## FIXME - due split package issues it may already be in map
-                restricted.computeIfAbsent(p, k -> new HashSet<>()).addAll(packages);
-            }
-        }
-
-        // Step 3: restrict access to packages that are exported to a permits
-        // list
-        Map<String,Set<String>> contents = new HashMap<>();
+        // setup the edges and exports
         for (Module m: modules) {
-            contents.put(m.id().name(), m.packages());
-        }
-        for (Module m: modulesNeeded) {
+            // modules that are not selected have no exports
+            if (!modulesNeeded.contains(m))
+                continue;
+
+            long fromHandle  = moduleToHandle.get(m);
+
+            // setup requires (assumes "requires public" is propagated)
+            for (ViewDependence vd: m.viewDependences()) {
+                String name = vd.query().name();
+                Module other = viewToModule.get(name);
+                long toHandle = moduleToHandle.get(other);
+                sun.misc.VM.addRequires(fromHandle, toHandle);
+            }
+
+            // exported packages
             for (View v: m.views()) {
-                Set<String> permits = v.permits();
-                if (!permits.isEmpty()) {
-                    for (String p: v.exports()) {
-                        Set<String> packages = restricted.get(p);
-                        if (packages == null) {
-                            packages = new HashSet<>();
-                            restricted.put(p, packages);
-                        }
-
-                        // packages in current module get access
-                        packages.addAll(m.packages());
-
-                        // packages in friends get access
-                        for (String friend: permits) {
-                            packages.addAll(contents.get(friend));
+                if (v.permits().isEmpty()) {
+                    for (String pkg: v.exports()) {
+                        sun.misc.VM.addExports(fromHandle, pkg);
+                    }
+                } else {
+                    for (String pkg: v.exports()) {
+                        for (String other: v.permits()) {
+                            long toHandle = moduleToHandle.get(names.get(other));
+                            sun.misc.VM.addExportsWithPermits(fromHandle, pkg, toHandle);
                         }
                     }
                 }
             }
         }
-
-        return restricted;
     }
 
     /**
@@ -1055,8 +1009,7 @@ public enum LauncherHelper {
             sorted.forEach(m -> System.out.println(m.id().name()));
         }
 
-        // compute and set the access control
-        Map<String, Set<String>> restricted = computePackageAccess(modules, modulesNeeded);
-        setupPackageAccess(restricted, generateLoaderMap(modules));
+        // setup the access control
+        setupAccessControl(modules, modulesNeeded);
     }
 }

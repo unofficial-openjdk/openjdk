@@ -273,11 +273,15 @@ SUNWprivate_1.1 {
                 Java_sun_misc_Version_getJdkSpecialVersion;
                 Java_sun_misc_Version_getJvmVersionInfo;
                 Java_sun_misc_Version_getJvmSpecialVersion;
-                Java_sun_misc_VM_addPackageAccess0;
 		Java_sun_misc_VM_latestUserDefinedLoader;
-                Java_sun_misc_VM_setPackageAccess0;
                 Java_sun_misc_VM_initialize;
 		Java_sun_misc_VMSupport_initAgentProperties;
+		Java_sun_misc_VM_defineModule;
+		Java_sun_misc_VM_bindToModule;
+		Java_sun_misc_VM_addRequires;
+		Java_sun_misc_VM_addExports;
+		Java_sun_misc_VM_addExportsWithPermits;
+                Java_sun_misc_VM_addBackdoorAccess;
 
                 # ZipFile.c needs this one
 		throwFileNotFoundException;

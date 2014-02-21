@@ -402,66 +402,40 @@ public class VM {
      */
     public static native ClassLoader latestUserDefinedLoader();
 
+    /**
+     * Define a new module with the given name. The return value is an opaque handle
+     * to the module.
+     */
+    public static native long defineModule(String name);
 
     /**
-     * Set access control so that public and protected types defined by
-     * {@code loader} in package {@code pkg} are accessible only to the
-     * given set of runtime packages.
-     *
-     * @see ClassLoader#setPackageAccess
+     * Use to lazily associate all types in a given ClassLoader/package with a module.
      */
-    public static void setPackageAccess(ClassLoader loader, String pkg,
-                                        ClassLoader[] loaders, String[] pkgs)
-    {
-        // check args
-        Objects.requireNonNull(pkg);
-        loaders = loaders.clone();
-        pkgs = pkgs.clone();
-        if (loaders.length != pkgs.length)
-            throw new IllegalArgumentException("Arrays are of different length");
-        for (String p: pkgs) {
-            Objects.requireNonNull(p);
-        }
-
-        // permission check
-        SecurityManager sm = System.getSecurityManager();
-        if (sm != null) {
-            // not specified yet
-        }
-
-        // restrict pkg to the given loaders/packages
-        setPackageAccess0(loader, pkg, loaders, pkgs);
-    }
+    public static native void bindToModule(ClassLoader loader, String pkg, long handle);
 
     /**
-     * Augment the access control so that types defined by {@code loader}
-     * in package {@code pkg} are accessible to the given set of runtime
-     * packages.
-     *
-     * @return {@code true} if the access control is updated
+     * Add an edge to the graph.
      */
-    public static boolean addPackageAccess(ClassLoader loader, String pkg,
-                                           ClassLoader[] loaders, String[] pkgs)
-    {
-        // check args
-        Objects.requireNonNull(pkg);
-        loaders = loaders.clone();
-        pkgs = pkgs.clone();
-        if (loaders.length != pkgs.length)
-            throw new IllegalArgumentException("Arrays are of different length");
-        for (String p: pkgs) {
-            Objects.requireNonNull(p);
-        }
+    public static native void addRequires(long handle1, long handle2);
 
-        // augment access to pkg
-        return addPackageAccess0(loader, pkg, loaders, pkgs);
-    }
+    /**
+     * Configures the module to export the given package.
+     */
+    public static native void addExports(long handle, String pkg);
 
-    private static native void setPackageAccess0(ClassLoader loader, String pkg,
-                                                 ClassLoader[] loaders, String[] pkgs);
+    /**
+     * Configures the module to export the given package to the given module.
+     */
+    public static native void addExportsWithPermits(long handle1, String pkg, long handle2);
 
-    private static native boolean addPackageAccess0(ClassLoader loader, String pkg,
-                                                    ClassLoader[] loaders, String[] pkgs);
+    /**
+     * Used to grant access to module-private types from types in the unnamed module. This
+     * is needed to deal with classes generated at runtime (such as proxy classes).
+     */
+    public static native void addBackdoorAccess(ClassLoader loader, String pkg,
+                                                ClassLoader toLoader, String toPackage);
+
+    /******/
 
 
     static {

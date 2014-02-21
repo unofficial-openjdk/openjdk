@@ -785,13 +785,7 @@ class MethodAccessorGenerator extends AccessorGenerator {
     }
 
     private static void ensureAccess(Class<?> c, Class<?> target) {
-        ClassLoader loader = target.getClassLoader();
-        ClassLoader[] loaders = new ClassLoader[] { c.getClassLoader() };
-        String[] pkgs = new String[] { packageName(c) };
-        sun.misc.VM.addPackageAccess(target.getClassLoader(),
-                                     packageName(target),
-                                     loaders,
-                                     pkgs);
+      // do nothing for now
     }
 
     private static String packageName(Class<?> c) {
