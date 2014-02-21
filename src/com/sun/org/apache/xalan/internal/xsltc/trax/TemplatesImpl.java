@@ -392,7 +392,7 @@ public final class TemplatesImpl implements Templates, Serializable {
                                             String.class,
                                             ClassLoader.class,
                                             String.class);
-            m.invoke(null, target, loader, pkg);
+            m.invoke(null, null, target, loader, pkg);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
