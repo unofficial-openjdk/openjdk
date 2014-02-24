@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -82,6 +82,7 @@ AWT_ASSERT_APPKIT_THREAD;
     fPAHNeedsToSelect = NO;
 
     mouseIsOver = NO;
+    [self resetTrackingArea];
 
     if (windowLayer != nil) {
         self.cglLayer = windowLayer;
@@ -149,7 +150,7 @@ AWT_ASSERT_APPKIT_THREAD;
         [[self window] makeFirstResponder: self];
     }];
     if ([self window] != NULL) {
-        [self resetTrackingRect];
+        [self resetTrackingArea];
     }
 }
 
@@ -380,30 +381,31 @@ AWT_ASSERT_APPKIT_THREAD;
     JNFCallVoidMethod(env, m_cPlatformView, jm_deliverMouseEvent, jEvent);
 }
 
-
-- (void) clearTrackingRect {
-    if (rolloverTrackingRectTag > 0) {
-        [self removeTrackingRect:rolloverTrackingRectTag];
-        rolloverTrackingRectTag = 0;
+- (void) resetTrackingArea {
+    if (rolloverTrackingArea != nil) {
+        [self removeTrackingArea:rolloverTrackingArea];
+        [rolloverTrackingArea release];
     }
-}
 
-- (void) resetTrackingRect {
-    [self clearTrackingRect];
-    rolloverTrackingRectTag = [self addTrackingRect:[self visibleRect]
-                                              owner:self
-                                           userData:NULL
-                                       assumeInside:NO];
+    int options = (NSTrackingActiveInActiveApp | NSTrackingMouseEnteredAndExited |
+                   NSTrackingMouseMoved | NSTrackingEnabledDuringMouseDrag);
+
+    rolloverTrackingArea = [[NSTrackingArea alloc] initWithRect:[self visibleRect]
+                                                        options:options
+                                                          owner:self
+                                                       userInfo:nil
+                            ];
+    [self addTrackingArea:rolloverTrackingArea];
 }
 
 - (void)updateTrackingAreas {
     [super updateTrackingAreas];
-    [self resetTrackingRect];
+    [self resetTrackingArea];
 }
 
 - (void) resetCursorRects {
     [super resetCursorRects];
-    [self resetTrackingRect];
+    [self resetTrackingArea];
 }
 
 -(void) deliverJavaKeyEventHelper: (NSEvent *) event {
