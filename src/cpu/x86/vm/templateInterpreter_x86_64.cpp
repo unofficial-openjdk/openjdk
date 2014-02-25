@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1814,6 +1814,27 @@ void TemplateInterpreterGenerator::generate_throw_exception() {
   // Clear the popframe condition flag
   __ movl(Address(r15_thread, JavaThread::popframe_condition_offset()),
           JavaThread::popframe_inactive);
+
+  if (EnableInvokeDynamic) {
+    Label L_done;
+    const Register local0 = r14;
+
+    __ cmpb(Address(r13, 0), Bytecodes::_invokestatic);
+    __ jcc(Assembler::notEqual, L_done);
+
+    // The member name argument must be restored if _invokestatic is re-executed after a PopFrame call.
+    // Detect such a case in the InterpreterRuntime function and return the member name argument, or NULL.
+
+    __ get_method(rdx);
+    __ movptr(rax, Address(local0, 0));
+    __ call_VM(rax, CAST_FROM_FN_PTR(address, InterpreterRuntime::member_name_arg_or_null), rax, rdx, r13);
+
+    __ testptr(rax, rax);
+    __ jcc(Assembler::zero, L_done);
+
+    __ movptr(Address(rbx, 0), rax);
+    __ bind(L_done);
+  }
 
   __ dispatch_next(vtos);
   // end of PopFrame support
