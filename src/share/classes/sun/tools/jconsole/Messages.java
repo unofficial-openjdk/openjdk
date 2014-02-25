@@ -36,7 +36,7 @@ final public class Messages {
         Resources.initializeMessages(Messages.class, BUNDLE_NAME);
     }
     // TODO:
-    // The names of some of the constants below looks strange.
+    // The names of some of the constants below look strange.
     // That's because they  were generated programmatically
     // from the messages. They should be cleaned up,
     // ___ should be removed etc.
@@ -265,6 +265,7 @@ final public class Messages {
     public static String SUMMARY_TAB_TAB_NAME;
     public static String SUMMARY_TAB_VM_VERSION;
     public static String THREADS;
+    public static String THREAD_TAB_INFO_LABEL_FORMAT;
     public static String THREAD_TAB_THREAD_INFO_ACCESSIBLE_NAME;
     public static String THREAD_TAB_THREAD_PLOTTER_ACCESSIBLE_NAME;
     public static String THRESHOLD;
@@ -304,9 +305,9 @@ final public class Messages {
     public static String WRITABLE;
     public static String CONNECTION_FAILED1;
     public static String CONNECTION_FAILED2;
+    public static String CONNECTION_FAILED_SSL1;
+    public static String CONNECTION_FAILED_SSL2;
     public static String CONNECTION_LOST1;
-    public static String CONNECTION_INSECURE1;
-    public static String CONNECTION_INSECURE2;
     public static String CONNECTING_TO1;
     public static String CONNECTING_TO2;
     public static String DEADLOCK_TAB;
