@@ -23,6 +23,9 @@
 # questions.
 #
 
+ifndef _TOOLS_GMK
+_TOOLS_GMK := 1
+
 default: all
 
 include $(SPEC)
@@ -173,3 +176,6 @@ endif
 java-tools: $(BUILD_TOOLS)
 
 all: java-tools
+
+endif # _TOOLS_GMK
+

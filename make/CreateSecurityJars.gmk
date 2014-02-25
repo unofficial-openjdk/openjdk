@@ -34,6 +34,10 @@ include Setup.gmk
 # cannot wait to be built in the images target.
 
 ##########################################################################################
+
+include CreatePolicyJars.gmk
+
+##########################################################################################
 # Create manifest for security jars
 #
 # Include these extra attributes for now, should probably take out.
@@ -175,12 +179,6 @@ else
 endif
 
 TARGETS += $(JCE_JAR_DST)
-
-##########################################################################################
-
-include CreatePolicyJars.gmk
-
-TARGETS += $(POLICY_JAR_TARGET_FILES)
 
 ##########################################################################################
 

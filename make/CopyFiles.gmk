@@ -141,7 +141,7 @@ ifeq ($(JIGSAW), true)
 else
   PSFONTPROPFILE_SRC_DIR := $(JDK_TOPDIR)/src/share/classes/sun/print
 endif
-PSFONTPROPFILE_SRCS := $(wildcard $(PSFONTPROPFILE_SRC_DIR)/*.properties*)
+PSFONTPROPFILE_SRCS := $(wildcard $(PSFONTPROPFILE_SRC_DIR)/psfont*.properties*)
 PSFONTPROPFILE_TARGET_FILES := $(subst $(PSFONTPROPFILE_SRC_DIR),$(LIBDIR),$(PSFONTPROPFILE_SRCS))
 
 $(LIBDIR)/%: $(PSFONTPROPFILE_SRC_DIR)/%

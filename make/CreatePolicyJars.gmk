@@ -23,7 +23,16 @@
 # questions.
 #
 
-##########################################################################################
+default: all
+
+include $(SPEC)
+include JigsawSpecMod.gmk
+include MakeBase.gmk
+include JavaCompilation.gmk
+include Setup.gmk
+
+
+################################################################################
 
 US_EXPORT_POLICY_JAR_DST := $(JDK_OUTPUTDIR)/lib/security/US_export_policy.jar
 
@@ -83,9 +92,9 @@ else
   endif
 endif
 
-TARGETS += $(US_EXPORT_POLICY_JAR_DST)
+POLICY_JARS += $(US_EXPORT_POLICY_JAR_DST)
 
-##########################################################################################
+################################################################################
 
 LOCAL_POLICY_JAR_DST := $(JDK_OUTPUTDIR)/lib/security/local_policy.jar
 
@@ -153,4 +162,10 @@ else
   endif
 endif
 
-TARGETS += $(LOCAL_POLICY_JAR_DST)
+POLICY_JARS += $(LOCAL_POLICY_JAR_DST)
+TARGETS += $(POLICY_JARS)
+
+################################################################################
+
+all: $(TARGETS)
+
