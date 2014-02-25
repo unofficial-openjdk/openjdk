@@ -289,7 +289,7 @@ compare_general_files() {
         ! -name "*.debuginfo" ! -name "*.dylib" ! -name "jexec" \
         ! -name "ct.sym" ! -name "*.diz" ! -name "*.dll" \
         ! -name "*.pdb" ! -name "*.exp" ! -name "*.ilk" \
-        ! -name "*.lib" ! -name "*.war" ! -name "JavaControlPanel" \
+        ! -name "*.lib" ! -name "*.war" ! -name "JavaControlPanel" ! -name "*.jmod" \
         | $GREP -v "./bin/"  | $SORT | $FILTER)
 
     echo General files...
@@ -510,7 +510,8 @@ compare_all_jar_files() {
     WORK_DIR=$3
 
     # TODO filter?
-    ZIPS=$(cd $THIS_DIR && $FIND . -type f -name "*.jar" -o -name "*.war" | $SORT | $FILTER)
+    ZIPS=$(cd $THIS_DIR && $FIND . -type f -name "*.jar" -o -name "*.war" -o -name "*.jmod" \
+        | $SORT | $FILTER)
 
     if [ -n "$ZIPS" ]; then
         echo Jar files...

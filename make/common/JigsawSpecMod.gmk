@@ -33,6 +33,7 @@ ifeq ($(JIGSAW), true)
   CORBA_OUTPUTDIR := $(patsubst $(OUTPUT_ROOT)/%,$(OUTPUT_ROOT)/jigsaw/%,$(CORBA_OUTPUTDIR))
   JDK_OUTPUTDIR := $(patsubst $(OUTPUT_ROOT)/%,$(OUTPUT_ROOT)/jigsaw/%,$(JDK_OUTPUTDIR))
   NASHORN_OUTPUTDIR := $(patsubst $(OUTPUT_ROOT)/%,$(OUTPUT_ROOT)/jigsaw/%,$(NASHORN_OUTPUTDIR))
+  IMAGES_OUTPUTDIR := $(patsubst $(OUTPUT_ROOT)/%,$(OUTPUT_ROOT)/jigsaw/%,$(IMAGES_OUTPUTDIR))
 
   MODULES_SUBDIR := modules
 

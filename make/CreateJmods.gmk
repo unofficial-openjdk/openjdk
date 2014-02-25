@@ -1,0 +1,173 @@
+#
+# Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+#
+# This code is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License version 2 only, as
+# published by the Free Software Foundation.  Oracle designates this
+# particular file as subject to the "Classpath" exception as provided
+# by Oracle in the LICENSE file that accompanied this code.
+#
+# This code is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# version 2 for more details (a copy is included in the LICENSE file that
+# accompanied this code).
+#
+# You should have received a copy of the GNU General Public License version
+# 2 along with this work; if not, write to the Free Software Foundation,
+# Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+#
+# Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+# or visit www.oracle.com if you need additional information or have any
+# questions.
+#
+
+# Use a different default target than "default" and "all" so that we don't 
+# re-evaluate all the targets in the included makefiles.
+jdk-image:
+
+include $(SPEC)
+include JigsawSpecMod.gmk
+include MakeBase.gmk
+
+#
+# these defines the per-module libraries and conf files
+#
+include CompileNativeLibraries.gmk
+include CompileLaunchers.gmk
+include CreatePolicyJars.gmk
+include HotspotImport.gmk
+
+include gendata/GendataFontConfig.gmk
+GENDATA_TZDB := $(JDK_OUTPUTDIR)/lib/tzdb.dat
+GENDATA_CURDATA := $(JDK_OUTPUTDIR)/lib/currency.data
+
+################################################################################
+# Must generate jmods into jdk outputdir for now since jlink cannot find them
+# otherwise.
+
+# Param 1: Name of module
+define CreateJmod
+
+  $$(eval $$(call SetupCopyFiles,$1_COPY_NATIVE, \
+      SRC := $(JDK_OUTPUTDIR)/lib, \
+      DEST := $(JDK_OUTPUTDIR)/modules_tmp/$1/native, \
+      FILES := $$($1_NATIVE)))
+
+  $$(eval $$(call SetupCopyFiles,$1_COPY_CMDS, \
+      SRC := $(JDK_OUTPUTDIR)/bin, \
+      DEST := $(JDK_OUTPUTDIR)/modules_tmp/$1/bin, \
+      FILES := $$($1_CMDS)))
+
+  $$(eval $$(call SetupCopyFiles,$1_COPY_CONF, \
+      SRC := $(JDK_OUTPUTDIR)/lib, \
+      DEST := $(JDK_OUTPUTDIR)/modules_tmp/$1/conf, \
+      FILES := $$($1_CONF)))
+
+  ifneq ($$($1_COPY_NATIVE), )
+    $1_JLINK_FLAGS += --libs $(JDK_OUTPUTDIR)/modules_tmp/$1/native
+  endif
+  ifneq ($$($1_COPY_CMDS), )
+    $1_JLINK_FLAGS += --cmds $(JDK_OUTPUTDIR)/modules_tmp/$1/bin
+  endif
+  ifneq ($$($1_COPY_CONF), )
+    $1_JLINK_FLAGS += --config $(JDK_OUTPUTDIR)/modules_tmp/$1/conf
+  endif
+  ifneq ($$(wildcard $(JDK_OUTPUTDIR)/modules/$1), )
+    $1_JLINK_FLAGS += --class-path $(JDK_OUTPUTDIR)/modules/$1
+    $1_DEPS += $(wildcard $(JDK_OUTPUTDIR)/modules/$1/_the.*_batch)
+  endif
+
+  # TODO: What about headers?
+  # TODO: Define jlink in spec
+  $(JDK_OUTPUTDIR)/jmods/$1.jmod: \
+      $$($1_COPY_NATIVE) $$($1_COPY_CMDS) $$($1_COPY_CONF) $$($1_DEPS)
+		$(ECHO) Creating jmods/$1.jmod
+		$(MKDIR) -p $$(@D)
+		$(RM) $$@
+		$(JDK_OUTPUTDIR)/bin/jlink --format jmod --module $1 \
+		    --output $$@ $$($1_JLINK_FLAGS) 
+
+  JMODS += $(JDK_OUTPUTDIR)/jmods/$1.jmod
+endef
+
+################################################################################
+
+java.base_NATIVE := $(BASE_LIBRARIES) $(MSVCR_TARGET) $(JVM_LIBRARIES)
+java.base_CMDS := $(BASE_LAUNCHERS)
+java.base_CONF := $(JVMCFG) $(BASE_CONF_FILES) $(NET_CONF_FILES) $(GENDATA_TZDB) \
+    $(GENDATA_CURDATA) $(POLICY_JARS)
+
+java.desktop_NATIVE := $(DESKTOP_LIBRARIES) $(FREETYPE_LIB)
+java.desktop_CONF := $(DESKTOP_CONF_FILES) $(GENDATA_FONT_CONFIG)
+
+java.kerberos_NATIVE := $(SECURITY_KERBEROS_LIBRARIES)
+java.kerberos_CMDS := $(KERBEROS_LAUNCHERS)
+
+java.logging_NATIVE := $(LOGGING_LIBRARIES)
+java.logging_CONF := $(LOGGING_CONF_FILES)
+
+java.instrument_NATIVE := $(INSTRUMENT_LIBRARIES)
+
+java.management_NATIVE := $(MANAGEMENT_LIBRARIES) $(JFR_LIBRARIES)
+java.management_CONF := $(MANAGEMENT_CONF_FILES)
+
+java.rmi_CMDS := $(RMI_LAUNCHERS)
+
+javax.script_NATIVE := $(SCRIPT_LIBRARIES)
+
+javax.corba_CMDS := $(CORBA_LAUNCHERS)
+
+jdk.sctp_NATIVE := $(SCTP_LIBRARIES)
+
+javax.smartcardio_NATIVE := $(SECURITY_SMARTCARDIO_LIBRARIES)
+
+jdk.crypto.ec_NATIVE := $(SECURITY_SUNEC_LIBRARIES)
+
+jdk.crypto.mscapi_NATIVE := $(SECURITY_MSCAPI_LIBRARIES)
+
+jdk.crypto.pkcs11_NATIVE := $(SECURITY_PKCS11_LIBRARIES)
+jdk.crypto.pkcs11_CONF := $(SECURITY_PKCS11_CONF_FILES)
+
+jdk.ucrytpo_NATIVE := $(SECURITY_UCRYPTO_LIBRARIES)
+jdk.ucrytpo_CONF := $(SECURITY_UCRYPTO_CONF_FILES)
+
+jdk.devtools_CMDS := $(DEVTOOLS_LAUNCHERS)
+
+jdk.jaas_NATIVE := $(SECURITY_JAAS_LIBRARIES)
+
+jdk.tools.base_CMDS := $(TOOLS_BASE_LAUNCHERS)
+jdk.tools.base_NATIVE := $(UNPACK_LIBRARIES)
+
+jdk.tools.jaxws_CMDS := $(TOOLS_JAXWS_LAUNCHERS)
+
+jdk.tools.jre_CMDS := $(TOOLS_JRE_LAUNCHERS)
+jdk.tools.jre_NATIVE := $(HPROF_LIBRARIES) $(JSDT_LIBRARIES)
+jdk.tools.jre_CONF := $(HPROF_CONF_FILES)
+
+jdk.tools_CMDS := $(TOOLS_LAUNCHERS)
+jdk.tools_NATIVE := $(ATTACH_LIBRARIES) $(JDWP_LIBRARIES) $(JDI_SA_LIBRARIES)
+
+################################################################################
+
+# TODO: Centralize full module list
+ALL_MODULES := $(sort $(notdir $(wildcard $(SRC_ROOT)/*/$(SRC_SUBDIR)/*/modules/*)))
+
+$(foreach m, $(ALL_MODULES), $(eval $(call CreateJmod,$m)))
+
+jmods: $(JMODS)
+
+################################################################################
+
+$(IMAGES_OUTPUTDIR)/_jdk-images-create.marker: $(JMODS)
+	$(ECHO) Creating jdk-module-image
+	$(RM) -r $(IMAGES_OUTPUTDIR)/jdk-module-image
+	$(JDK_OUTPUTDIR)/bin/jlink \
+	    --format image --output $(IMAGES_OUTPUTDIR)/jdk-module-image --mods jdk
+	$(TOUCH) $@
+
+jdk-image: $(IMAGES_OUTPUTDIR)/_jdk-images-create.marker
+
+################################################################################
+
