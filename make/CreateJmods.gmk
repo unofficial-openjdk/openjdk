@@ -76,7 +76,7 @@ define CreateJmod
   endif
   ifneq ($$(wildcard $(JDK_OUTPUTDIR)/modules/$1), )
     $1_JLINK_FLAGS += --class-path $(JDK_OUTPUTDIR)/modules/$1
-    $1_DEPS += $(wildcard $(JDK_OUTPUTDIR)/modules/$1/_the.*_batch)
+    $1_DEPS += $(wildcard $(JDK_OUTPUTDIR)/modules/$1/_*)
   endif
 
   # TODO: What about headers?
