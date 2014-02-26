@@ -1773,27 +1773,28 @@ void os::jvm_path(char *buf, jint buflen) {
      // libjvm.so is installed there (append a fake suffix
      // hotspot/libjvm.so).
      char* java_home_var = ::getenv("JAVA_HOME");
-     if (java_home_var != NULL && java_home_var[0] != 0) {
+     if (java_home_var != NULL && java_home_var[0] != 0 &&
+         strlen(java_home_var) < (size_t)buflen) {
 
-        strncpy(buf, java_home_var, buflen);
+       strncpy(buf, java_home_var, buflen);
 
-        // determine if this is a legacy image or modules image
-        // modules image doesn't have "jre" subdirectory
-        size_t len = strlen(buf);
-        char* jrebin_p = buf + len;
-        jio_snprintf(jrebin_p, buflen-len, "\\jre\\bin\\");
-        if (0 != _access(buf, 0)) {
-          jio_snprintf(jrebin_p, buflen-len, "\\bin\\");
-        }
-        len = strlen(buf);
-        jio_snprintf(buf + len, buflen-len, "hotspot\\jvm.dll");
+       // determine if this is a legacy image or modules image
+       // modules image doesn't have "jre" subdirectory
+       size_t len = strlen(buf);
+       char* jrebin_p = buf + len;
+       jio_snprintf(jrebin_p, buflen-len, "\\jre\\bin\\");
+       if (0 != _access(buf, 0)) {
+         jio_snprintf(jrebin_p, buflen-len, "\\bin\\");
+       }
+       len = strlen(buf);
+       jio_snprintf(buf + len, buflen-len, "hotspot\\jvm.dll");
      }
   }
 
   if(buf[0] == '\0') {
-  GetModuleFileName(vm_lib_handle, buf, buflen);
+    GetModuleFileName(vm_lib_handle, buf, buflen);
   }
-  strcpy(saved_jvm_path, buf);
+  strncpy(saved_jvm_path, buf, MAX_PATH);
 }
 
 
@@ -2217,17 +2218,6 @@ LONG WINAPI Handle_FLT_Exception(struct _EXCEPTION_POINTERS* exceptionInfo) {
 */
 #endif //_WIN64
 
-
-// Fatal error reporting is single threaded so we can make this a
-// static and preallocated.  If it's more than MAX_PATH silently ignore
-// it.
-static char saved_error_file[MAX_PATH] = {0};
-
-void os::set_error_file(const char *logfile) {
-  if (strlen(logfile) <= MAX_PATH) {
-    strncpy(saved_error_file, logfile, MAX_PATH);
-  }
-}
 
 static inline void report_error(Thread* t, DWORD exception_code,
                                 address addr, void* siginfo, void* context) {
