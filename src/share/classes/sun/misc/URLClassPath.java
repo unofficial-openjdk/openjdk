@@ -31,12 +31,14 @@ import sun.misc.JarIndex;
 import sun.misc.InvalidJarIndexException;
 import sun.net.www.ParseUtil;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 import java.util.jar.JarEntry;
 import java.util.jar.Manifest;
 import java.util.jar.Attributes;
 import java.util.jar.Attributes.Name;
 import java.net.JarURLConnection;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.HttpURLConnection;
@@ -363,7 +365,11 @@ public class URLClassPath {
                             return new Loader(url);
                         }
                     } else {
-                        return new JarLoader(url, jarHandler, lmap);
+                        if (file.endsWith(".jmod")) {
+                            return new JModLoader(url);
+                        } else {
+                            return new JarLoader(url, jarHandler, lmap);
+                        }
                     }
                 }
             });
@@ -1093,6 +1099,88 @@ public class URLClassPath {
                 return null;
             }
             return null;
+        }
+    }
+
+    /**
+     * A Loader of classes and resources from a jmod file.
+     *
+     * ###FIXME: permission checks not implemented yet
+     */
+    private static class JModLoader extends Loader {
+        private final ZipFile zipfile;
+
+        JModLoader(URL url) throws IOException {
+            super(url);
+            String s = url.toString();
+            if (!s.startsWith("jmod:"))
+                throw new IOException("not a jmod URL");
+            s = "file" + s.substring(4);
+            File f = new File(URI.create(s));
+            ZipFile zf = new ZipFile(f);
+            ZipFile previous = JModCache.add(url, zf);
+            if (previous == null) {
+                this.zipfile = zf;
+            } else {
+                zf.close();
+                this.zipfile = previous;
+            }
+        }
+
+        private String toEntryName(String name) {
+            return "classes/" + name;
+        }
+
+        /**
+         * Returns a URL to the given entry in the jmod.
+         */
+        private URL toURL(String entry) {
+            try {
+                return new URL(getBaseURL() + "!/" +  ParseUtil.encodePath(entry, false));
+            } catch (MalformedURLException e) {
+                throw new InternalError(e);
+            }
+        }
+
+        @Override
+        URL findResource(String name, boolean check) {
+            String entry;
+            if (name.startsWith("META-INF/services/")) {
+                entry = "module/" + name.substring(9);
+            } else {
+                entry = toEntryName(name);
+            }
+            ZipEntry ze = zipfile.getEntry(entry);
+            if (ze == null)
+                return null;
+            return toURL(entry);
+        }
+
+        @Override
+        Resource getResource(String name, boolean check) {
+            final String entry = toEntryName(name);
+            final ZipEntry ze = zipfile.getEntry(entry);
+            if (ze == null)
+                return null;
+            final URL url = toURL(entry);
+            return new Resource() {
+                public String getName() { return entry; }
+                public URL getURL() { return url; }
+                public URL getCodeSourceURL() { return getBaseURL(); }
+                public InputStream getInputStream() throws IOException {
+                    return zipfile.getInputStream(ze);
+                }
+                public int getContentLength() {
+                    long size = ze.getSize();
+                    return (size > Integer.MAX_VALUE) ? -1 : (int)size;
+                }
+            };
+        }
+
+        @Override
+        public void close() throws IOException {
+            JModCache.remove(getBaseURL());
+            zipfile.close();
         }
     }
 }

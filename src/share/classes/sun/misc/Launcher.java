@@ -34,8 +34,10 @@ import java.net.MalformedURLException;
 import java.net.URLStreamHandler;
 import java.net.URLStreamHandlerFactory;
 import java.nio.file.Files;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -318,11 +320,21 @@ public class Launcher {
             return AccessController.doPrivileged(
                 new PrivilegedAction<AppClassLoader>() {
                     public AppClassLoader run() {
-                    URL[] urls =
-                        (s == null) ? new URL[0] : pathToURLs(path);
-                    return new AppClassLoader(urls, extcl);
-                }
-            });
+                        URL[] urls = (s == null) ? new URL[0] : pathToURLs(path);
+
+                        // -modulepath => URLs to prepend to class path
+                        String mp = System.getProperty("java.module.path");
+                        if (mp != null) {
+                            List<URL> list = Launcher.toModuleURLs(mp);
+                            for (URL url: urls) {
+                                list.add(url);
+                            }
+                            urls = list.toArray(new URL[0]);
+                        }
+
+                        return new AppClassLoader(urls, extcl);
+                    }
+                });
         }
 
         public List<String> modules() {
@@ -600,6 +612,38 @@ public class Launcher {
         }
         return result;
     }
+
+    /**
+     * Returns a list of URLs to the jmods and exploded modules on the
+     * given module path
+     */
+    private static List<URL> toModuleURLs(String mp) {
+        List<URL> result = new ArrayList<>();
+        String[] dirs = mp.split(File.pathSeparator);
+        for (String dir: dirs) {
+            Path dirPath = Paths.get(dir);
+            try (DirectoryStream<Path> stream = Files.newDirectoryStream(dirPath)) {
+                for (Path entry: stream) {
+                    BasicFileAttributes attrs =
+                        Files.readAttributes(entry, BasicFileAttributes.class);
+                    if (attrs.isRegularFile() && entry.toString().endsWith(".jmod")) {
+                        String s = entry.toUri().toURL().toString();
+                        URL url = new URL("jmod" + s.substring(4));
+                        result.add(url);
+                    } else if (attrs.isDirectory()) {
+                        Path mi = entry.resolve("module-info.class");
+                        if (Files.exists(mi)) {
+                            URL url = entry.toUri().toURL();
+                            result.add(url);
+                        }
+                    }
+                }
+            } catch (IOException ioe) {
+                // ignore for now
+            }
+        }
+        return result;
+   }
 }
 
 class PathPermissions extends PermissionCollection {
