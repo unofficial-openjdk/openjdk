@@ -396,7 +396,9 @@
   template(init_lock_name,                            "init_lock")                                \
   template(signers_name,                              "signers_name")                             \
   template(loader_data_name,                          "loader_data")                              \
+  template(loader_tag_name,                           "loader_tag")                               \
   template(dependencies_name,                         "dependencies")                             \
+  template(module_lookup_name,                        "module_lookup")                            \
                                                                                                   \
   /* non-intrinsic name/signature pairs: */                                                       \
   template(register_method_name,                      "register")                                 \
