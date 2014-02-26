@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -421,6 +421,93 @@ public class Pretty extends JCTree.Visitor {
     public void visitTopLevel(JCCompilationUnit tree) {
         try {
             printUnit(tree, null);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    @Override
+    public void visitModuleDef(JCModuleDecl tree) {
+        try {
+            print("module ");
+            printExpr(tree.qualId);
+            if (tree.directives == null) {
+                print(";");
+            } else {
+                printBlock(tree.directives);
+            }
+            println();
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    @Override
+    public void visitExports(JCExports tree) {
+        try {
+            print("exports ");
+            printExpr(tree.qualid);
+            print(";");
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    @Override
+    public void visitPermits(JCPermits tree) {
+        try {
+            print("permits ");
+            printExpr(tree.qualid);
+            print(";");
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    @Override
+    public void visitProvides(JCProvides tree) {
+        try {
+            print("provides ");
+            printExpr(tree.serviceName);
+            print(" with ");
+            printExpr(tree.implName);
+            print(";");
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    @Override
+    public void visitRequires(JCRequires tree) {
+        try {
+            print("requires ");
+            if (tree.isPublic)
+                print("public ");
+            printExpr(tree.viewName);
+            print(";");
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    @Override
+    public void visitUses(JCUses tree) {
+        try {
+            print("uses ");
+            printExpr(tree.qualid);
+            print(";");
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    @Override
+    public void visitViewDef(JCViewDecl tree) {
+        try {
+            print("view ");
+            printExpr(tree.name);
+            printBlock(tree.directives);
+            println();
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }

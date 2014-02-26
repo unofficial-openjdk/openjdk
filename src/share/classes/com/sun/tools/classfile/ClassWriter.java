@@ -1,6 +1,6 @@
 
 /*
- * Copyright (c) 2008, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -481,6 +481,48 @@ public class ClassWriter {
             for (MethodParameters_attribute.Entry e : attr.method_parameter_table) {
                 out.writeShort(e.name_index);
                 out.writeShort(e.flags);
+            }
+            return null;
+        }
+
+        public Void visitModule(Module_attribute attr, ClassOutputStream out) {
+            out.writeShort(attr.module_name_index);
+            return null;
+        }
+
+        public Void visitModuleProvides(ModuleProvides_attribute attr, ClassOutputStream out) {
+            out.writeShort(attr.view_table.length);
+            for (ModuleProvides_attribute.View v: attr.view_table)
+                writeView(v, out);
+            return null;
+        }
+
+        protected void writeView(ModuleProvides_attribute.View v, ClassOutputStream out) {
+            out.writeShort(v.view_name_index);
+            out.writeShort(v.service_table.length);
+            for (ModuleProvides_attribute.Service s: v.service_table) {
+                out.writeShort(s.service_index);
+                out.writeShort(s.impl_index);
+            }
+            out.writeShort(v.export_table.length);
+            for (int export_index: v.export_table) {
+                out.writeShort(export_index);
+            }
+            out.writeShort(v.permit_table.length);
+            for (int permit_index: v.permit_table)
+                out.writeShort(permit_index);
+        }
+
+        public Void visitModuleRequires(ModuleRequires_attribute attr, ClassOutputStream out) {
+            out.writeShort(attr.module_table.length);
+            for (ModuleRequires_attribute.Entry e: attr.module_table) {
+                out.writeShort(e.index);
+                out.writeInt(e.flags);
+            }
+            out.writeShort(attr.service_table.length);
+            for (ModuleRequires_attribute.Entry e: attr.service_table) {
+                out.writeShort(e.index);
+                out.writeInt(e.flags);
             }
             return null;
         }

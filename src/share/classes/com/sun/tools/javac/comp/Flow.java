@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -723,6 +723,10 @@ public class Flow {
             }
         }
 
+        public void visitModuleDef(JCModuleDecl tree) {
+            // Do nothing for modules
+        }
+
         public void visitTopLevel(JCCompilationUnit tree) {
             // Do nothing for TopLevel since each class is visited individually
         }
@@ -1287,6 +1291,10 @@ public class Flow {
                 caught = prevCaught;
                 thrown = prevThrown;
             }
+        }
+
+        public void visitModuleDef(JCModuleDecl tree) {
+            // Do nothing for modules
         }
 
         public void visitTopLevel(JCCompilationUnit tree) {
@@ -2357,6 +2365,10 @@ public class Flow {
             tree.underlyingType.accept(this);
         }
 
+        public void visitModuleDef(JCModuleDecl tree) {
+            // Do nothing for modules
+        }
+
         public void visitTopLevel(JCCompilationUnit tree) {
             // Do nothing for TopLevel since each class is visited individually
         }
@@ -2675,6 +2687,10 @@ public class Flow {
                 default:
                     scan(tree.arg);
             }
+        }
+
+        public void visitModuleDef(JCModuleDecl tree) {
+            // Do nothing for modules
         }
 
         public void visitTopLevel(JCCompilationUnit tree) {
