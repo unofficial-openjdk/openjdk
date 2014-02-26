@@ -1349,6 +1349,7 @@ clean-src:
 	$(RM) -r $(JDK_TOPDIR)/make/src/native/genconstants
 	$(RM) -r $(JDK_TOPDIR)/make/data/macosxicons
 	$(RM) -r $(JDK_TOPDIR)/src/solaris/native/jspawnhelper
+	$(RM) -r $(JDK_TOPDIR)/make/data/currency/CurrencyData.properties
 
 clean-build:
 	$(RM) -r $(JDK_OUTPUTDIR)/modules
