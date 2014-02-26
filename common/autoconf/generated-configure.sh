@@ -789,6 +789,7 @@ JAXWS_TOPDIR
 JAXP_TOPDIR
 CORBA_TOPDIR
 LANGTOOLS_TOPDIR
+BUILD_JDK
 BOOT_JDK_JVMARGS
 JAVAC_FLAGS
 BOOT_JDK_SOURCETARGET
@@ -3608,6 +3609,17 @@ ac_configure="$SHELL $ac_aux_dir/configure"  # Please don't use this var.
 
 
 
+# BUILD_JDK: the location of the latest JDK that can run
+#   on the host system and supports the target class file version
+#   generated in this JDK build.  This variable should only be
+#   used after the launchers are built.
+#
+# By default, it is the JDK_OUTPUTDIR.  If the target architecture
+# is different than the host system doing the build (e.g. cross-compilation),
+# it defaults to the BOOT_JDK.
+
+
+
 #
 # Copyright (c) 2011, 2012, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -4087,7 +4099,7 @@ fi
 #CUSTOM_AUTOCONF_INCLUDE
 
 # Do not change or remove the following line, it is needed for consistency checks:
-DATE_WHEN_GENERATED=1391160222
+DATE_WHEN_GENERATED=1393343271
 
 ###############################################################################
 #
@@ -25766,6 +25778,14 @@ fi
   fi
 
   BOOT_JDK_JVMARGS=$boot_jdk_jvmargs
+
+
+
+  if test "x$COMPILE_TYPE" = "xcross"; then
+    BUILD_JDK="$BOOT_JDK"
+  else
+    BUILD_JDK="\$(JDK_OUTPUTDIR)"
+  fi
 
 
 

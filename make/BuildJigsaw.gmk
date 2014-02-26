@@ -1,0 +1,133 @@
+#
+# Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+#
+# This code is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License version 2 only, as
+# published by the Free Software Foundation.  Oracle designates this
+# particular file as subject to the "Classpath" exception as provided
+# by Oracle in the LICENSE file that accompanied this code.
+#
+# This code is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# version 2 for more details (a copy is included in the LICENSE file that
+# accompanied this code).
+#
+# You should have received a copy of the GNU General Public License version
+# 2 along with this work; if not, write to the Free Software Foundation,
+# Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+#
+# Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+# or visit www.oracle.com if you need additional information or have any
+# questions.
+#
+
+# This must be the first rule
+default: all
+
+include $(SPEC)
+include JigsawSpecMod.gmk
+include MakeBase.gmk
+
+################################################################################
+
+langtools-gensrc:
+	+($(CD) $(LANGTOOLS_TOPDIR)/make && $(MAKE) -f GensrcLangtools.gmk JIGSAW=true)
+
+langtools-interim: langtools-gensrc
+	+($(CD) $(LANGTOOLS_TOPDIR)/make && $(MAKE) -f CompileInterim.gmk JIGSAW=true)
+
+.PHONY: langtools-gensrc langtools-interim
+
+################################################################################
+
+corba-gensrc: langtools-interim
+	+($(CD) $(CORBA_TOPDIR)/make && $(MAKE) -f GensrcCorba.gmk JIGSAW=true)
+
+corba-interim: corba-gensrc
+	+($(CD) $(CORBA_TOPDIR)/make && $(MAKE) -f CompileCorba.gmk JIGSAW=true)
+
+.PHONY: corba-gensrc
+
+################################################################################
+# Build nashorn. Needs to be compiled separately from the rest of the modules
+# due to special needs.
+nashorn: java-compile
+	+($(CD) $(NASHORN_TOPDIR)/make && $(MAKE) -f BuildNashorn.gmk JIGSAW=true)
+
+.PHONY: nashorn
+
+################################################################################
+# Build hotspot into the legacy build output dir for now.
+
+hotspot:
+	($(CD) $(SRC_ROOT)/make && $(MAKE) $(MAKE_ARGS) -f HotspotWrapper.gmk JIGSAW=true)
+
+.PHONY: hotspot
+
+################################################################################
+
+jdk-build-tools: langtools-interim
+	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f Tools.gmk java-tools JIGSAW=true)
+
+jdk-gensrc: jdk-build-tools langtools-interim
+	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f GenerateSources.gmk JIGSAW=true)
+
+jdk-gendata: langtools-interim jdk-build-tools
+	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f GenerateData.gmk JIGSAW=true)
+
+jdk-genclasses: langtools-interim corba-interim java-compile
+	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f GenerateClasses.gmk JIGSAW=true)
+
+jdk-createpolicyjars:
+	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f CreatePolicyJars.gmk JIGSAW=true)
+
+import-hotspot: hotspot
+	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f Import.gmk hotspot JIGSAW=true)
+
+jdk-libs: import-hotspot java-compile
+	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f CompileNativeLibraries.gmk JIGSAW=true)
+
+jdk-launchers: jdk-libs
+	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f CompileLaunchers.gmk JIGSAW=true)
+
+jdk: java-compile jdk-gendata jdk-genclasses jdk-libs jdk-launchers \
+    jdk-createpolicyjars
+
+.PHONY: jdk-build-tools jdk-gensrc jdk-gendata jdk-genclasses jdk-createpolicyjars \
+    import-hotspot jdk-libs jdk-launchers jdk
+
+################################################################################
+
+# Compile all java modules except nashorn
+java-compile: jdk-gensrc langtools-gensrc corba-gensrc
+	+($(CD) $(SRC_ROOT)/make && $(MAKE) -f CompileJavaModules.gmk JIGSAW=true)
+
+# Generate the modules.ser file
+java-modules: java-compile nashorn
+	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f GenerateModules.gmk JIGSAW=true)
+
+.PHONY: java-compile java-modules
+
+################################################################################
+
+# Create jmods
+jmods: jdk java-modules
+	+($(CD) $(SRC_ROOT)/make && $(MAKE) -I $(JDK_TOPDIR)/make \
+	    -f CreateJmods.gmk JIGSAW=true jmods)
+
+# Create images from jmods
+images: jmods
+	+($(CD) $(SRC_ROOT)/make && $(MAKE) -I $(JDK_TOPDIR)/make \
+	    -f CreateJmods.gmk JIGSAW=true jdk-image)
+
+.PHONY: jmods images
+
+################################################################################
+
+all: images
+
+.PHONY: default all
+
+FRC: # Force target

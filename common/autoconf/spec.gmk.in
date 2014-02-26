@@ -172,10 +172,12 @@ RUNTIME_NAME=$(PRODUCT_NAME) $(PRODUCT_SUFFIX)
 COOKED_BUILD_NUMBER:=@COOKED_BUILD_NUMBER@
 # These variables need to be generated here so that MILESTONE and
 # JDK_BUILD_NUMBER can be overridden on the make command line.
-ifeq ($(MILESTONE),)
+ifeq ($(MILESTONE), fcs)
   RELEASE=$(JDK_VERSION)$(BUILD_VARIANT_RELEASE)
+  MODULE_VERSION = ${JDK_MINOR_VERSION}
 else
   RELEASE=$(JDK_VERSION)-$(MILESTONE)$(BUILD_VARIANT_RELEASE)
+  MODULE_VERSION = ${JDK_MINOR_VERSION}-ea
 endif
 
 ifneq ($(USER_RELEASE_SUFFIX), )
@@ -254,6 +256,8 @@ BOOT_JDK:=@BOOT_JDK@
 BOOT_JDK_JVMARGS:=@BOOT_JDK_JVMARGS@
 BOOT_RTJAR:=@BOOT_RTJAR@
 BOOT_TOOLSJAR=$(BOOT_JDK)/lib/tools.jar
+
+BUILD_JDK:=@BUILD_JDK@
 
 # When compiling Java source to be run by the boot jdk
 # use these extra flags, eg -source 6 -target 6
@@ -454,6 +458,10 @@ JAR:=@FIXPATH@ @JAR@
 NATIVE2ASCII:=@FIXPATH@ @NATIVE2ASCII@
 
 JARSIGNER:=@FIXPATH@ @JARSIGNER@
+
+
+BUILD_JAVA_FLAGS:=-Xms64M -Xmx1100M
+BUILD_JAVA=@FIXPATH@ $(BUILD_JDK)/bin/java $(BUILD_JAVA_FLAGS)
 
 # You run the new javac using the boot jdk with $(BOOT_JDK)/bin/java $(NEW_JAVAC) ...
 INTERIM_LANGTOOLS_JAR := $(LANGTOOLS_OUTPUTDIR)/dist/interim_langtools.jar

@@ -78,6 +78,13 @@ $(SPEC): $(wildcard $(SRC_ROOT)/common/autoconf/*)
 start-make: $(SPEC)
 	@$(call AtMakeStart)
 
+jigsaw: shuffle jigsaw-only
+jigsaw-only: start-make
+	@$(call TargetEnter)
+	@($(CD) $(SRC_ROOT)/make && $(BUILD_LOG_WRAPPER) $(MAKE) $(MAKE_ARGS) \
+	    -f BuildJigsaw.gmk $(JIGSAW_TARGET))
+	@$(call TargetExit)
+
 langtools: langtools-only
 langtools-only: start-make
 	@$(call TargetEnter)
@@ -122,15 +129,33 @@ nashorn-only: start-make
 	@($(CD) $(NASHORN_TOPDIR)/make && $(BUILD_LOG_WRAPPER) $(MAKE) $(MAKE_ARGS) -f BuildNashorn.gmk)
 	@$(call TargetExit)
 
+genmodules: jdk nashorn genmodules-only
+genmodules-only:
+	@$(call TargetEnter)
+	@($(CD) $(JDK_TOPDIR)/make && $(BUILD_LOG_WRAPPER) $(MAKE) $(MAKE_ARGS) -f BuildJdk.gmk shuffle-build)
+	@$(call TargetExit)
+
 demos: jdk demos-only
 demos-only: start-make
 	@$(call TargetEnter)
 	@($(CD) $(JDK_TOPDIR)/make && $(BUILD_LOG_WRAPPER) $(MAKE) $(MAKE_ARGS) -f BuildJdk.gmk demos)
 	@$(call TargetExit)
 
+jmods: jdk demos nashorn genmodules jmods-only
+jmods-only: start-make
+	@$(call TargetEnter)
+	@($(CD) $(JDK_TOPDIR)/make && $(BUILD_LOG_WRAPPER) $(MAKE) $(MAKE_ARGS) -f BuildJdk.gmk jmods)
+	@$(call TargetExit)
+
+shuffle: genmodules shuffle-only
+shuffle-only: start-make
+	@$(call TargetEnter)
+	@($(CD) $(JDK_TOPDIR)/make && $(BUILD_LOG_WRAPPER) $(MAKE) $(MAKE_ARGS) -f BuildJdk.gmk shuffle)
+	@$(call TargetExit)
+
 # Note: This double-colon rule is intentional, to support
 # custom make file integration.
-images:: source-tips demos nashorn images-only
+images:: source-tips demos nashorn jmods images-only
 images-only: start-make
 	@$(call TargetEnter)
 	@($(CD) $(JDK_TOPDIR)/make && $(BUILD_LOG_WRAPPER) $(MAKE) $(MAKE_ARGS) -f BuildJdk.gmk images)
@@ -192,7 +217,8 @@ $(OUTPUT_ROOT)/source_tips: FRC
 
 
 # Remove everything, except the output from configure.
-clean: clean-langtools clean-corba clean-jaxp clean-jaxws clean-hotspot clean-jdk clean-nashorn clean-images clean-overlay-images clean-bootcycle-build clean-docs clean-test
+clean: clean-langtools clean-corba clean-jaxp clean-jaxws clean-hotspot clean-jdk clean-nashorn \
+    clean-images clean-overlay-images clean-bootcycle-build clean-docs clean-test clean-jigsaw
 	@($(CD) $(OUTPUT_ROOT) && $(RM) -r tmp source_tips build.log* build-trace*.log*)
 	@$(ECHO) Cleaned all build artifacts.
 
@@ -210,6 +236,8 @@ dist-clean: clean
 	)
 	@$(ECHO) Cleaned everything, you will have to re-run configure.
 
+clean-jigsaw:
+	$(call CleanComponent,jigsaw)
 clean-langtools:
 	$(call CleanComponent,langtools)
 clean-corba:
@@ -235,11 +263,13 @@ clean-docs:
 	$(call CleanComponent,docstemp)
 clean-test:
 	$(call CleanComponent,testoutput)
+clean-shuffle:
+	@($(CD) $(JDK_TOPDIR)/make && $(BUILD_LOG_WRAPPER) $(MAKE) $(MAKE_ARGS) -f BuildJdk.gmk clean-shuffle)
 
-.PHONY: langtools corba jaxp jaxws hotspot jdk nashorn images overlay-images install test docs
-.PHONY: langtools-only corba-only jaxp-only jaxws-only hotspot-only jdk-only nashorn-only images-only overlay-images-only install-only test-only docs-only
+.PHONY: langtools corba jaxp jaxws hotspot jdk nashorn jmods shuffle images overlay-images install test docs
+.PHONY: langtools-only corba-only jaxp-only jaxws-only hotspot-only jdk-only nashorn-only jmods-only shuffle-only images-only overlay-images-only install-only test-only docs-only
 .PHONY: default all clean dist-clean bootcycle-images start-make
-.PHONY: clean-langtools clean-corba clean-jaxp clean-jaxws clean-hotspot clean-jdk clean-nashorn clean-images clean-docs clean-test clean-overlay-images clean-bootcycle-build
+.PHONY: clean-jigsaw clean-langtools clean-corba clean-jaxp clean-jaxws clean-hotspot clean-jdk clean-nashorn clean-images clean-docs clean-test clean-overlay-images clean-bootcycle-build
 .PHONY: profiles profiles-only profiles-oscheck
 
 include $(root_dir)/make/Jprt.gmk

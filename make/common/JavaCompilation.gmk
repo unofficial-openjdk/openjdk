@@ -35,6 +35,9 @@
 # of removing duplicates. It is actually this side effect that is
 # desired whenever sort is used below!
 
+ifndef _JAVA_COMPILATION_GMK
+_JAVA_COMPILATION_GMK := 1
+
 ifeq (,$(_MAKEBASE_GMK))
   $(error You must include MakeBase.gmk prior to including JavaCompilation.gmk)
 endif
@@ -165,10 +168,10 @@ define SetupArchive
   # .class and .prp) that are newer than the jar-file, ie the new content to be put into the jar.
   # NOTICE: please leave the parentheses space separated otherwise the AIX build will break!
   $1_CAPTURE_CONTENTS=$$(foreach src,$$($1_SRCS), \
-      ( ( $(FIND) $$(src) -type f -a \( $$($1_FIND_PATTERNS) \) -a -newer $$@ $$($1_GREP_INCLUDES) \
+      (($(FIND) $$(src) -type f -a \( $$($1_FIND_PATTERNS) \) -a -newer $$@ $$($1_GREP_INCLUDES) \
           $$($1_GREP_EXCLUDES) | $(SED) 's|$$(src)/||g' && \
-      $(ECHO) $$(subst $$(src)/,,$$($1_EXTRA_FILES) ) ) > \
-      $$(src)/_the.$$($1_JARNAME)_contents) $$(NEWLINE) )
+      $(ECHO) $$(subst $$(src)/,,$$($1_EXTRA_FILES))) > \
+      $$(src)/_the.$$($1_JARNAME)_contents) $$(NEWLINE))
   # The capture metainf macro finds all files below the META-INF directory that are newer than the jar-file.
   ifeq (,$$($1_SKIP_METAINF))
     $1_CAPTURE_METAINF =$$(foreach src,$$($1_SRCS),($(FIND) $$(src)/META-INF -type f -a -newer $$@ 2> /dev/null | $(SED) 's|$$(src)/||g' >> $$(src)/_the.$$($1_JARNAME)_contents ) $$(NEWLINE))
@@ -187,10 +190,10 @@ define SetupArchive
   # The s-variants of the above macros are used when the jar is created from scratch.
   # NOTICE: please leave the parentheses space separated otherwise the AIX build will break!
   $1_SCAPTURE_CONTENTS=$$(foreach src,$$($1_SRCS), \
-      ( ( $(FIND) $$(src) -type f -a \( $$($1_FIND_PATTERNS) \) $$($1_GREP_INCLUDES) \
+      (($(FIND) $$(src) -type f -a \( $$($1_FIND_PATTERNS) \) $$($1_GREP_INCLUDES) \
           $$($1_GREP_EXCLUDES) | $(SED) 's|$$(src)/||g' && \
-      $$(subst $$(src)/,,$(ECHO) $$($1_EXTRA_FILES) ) ) > \
-      $$(src)/_the.$$($1_JARNAME)_contents) $$(NEWLINE) )
+      $$(subst $$(src)/,,$(ECHO) $$($1_EXTRA_FILES))) > \
+      $$(src)/_the.$$($1_JARNAME)_contents) $$(NEWLINE))
 
   ifeq (,$$($1_SKIP_METAINF))
     $1_SCAPTURE_METAINF=$$(foreach src,$$($1_SRCS), \
@@ -538,11 +541,14 @@ define SetupJavaCompilation
 
       $$($1_HEADERS)/_the.$1_headers: $$($1_BIN)/_the.$1_batch
 		$(MKDIR) -p $$(@D)
-		for f in `ls $$($1_HEADERS).$1.tmp`; do \
-		  if [ ! -f "$$($1_HEADERS)/$$$$f" ] || [ "`$(DIFF) $$($1_HEADERS)/$$$$f $$($1_HEADERS).$1.tmp/$$$$f`" != "" ]; then \
-		    $(CP) -f $$($1_HEADERS).$1.tmp/$$$$f $$($1_HEADERS)/$$$$f; \
-		  fi; \
-		done
+		if [ -d "$$($1_HEADERS).$1.tmp" ]; then \
+		  for f in `ls $$($1_HEADERS).$1.tmp`; do \
+		    if [ ! -f "$$($1_HEADERS)/$$$$f" ] \
+		        || [ "`$(DIFF) $$($1_HEADERS)/$$$$f $$($1_HEADERS).$1.tmp/$$$$f`" != "" ]; then \
+		      $(CP) -f $$($1_HEADERS).$1.tmp/$$$$f $$($1_HEADERS)/$$$$f; \
+		    fi; \
+		  done; \
+		fi
 		$(RM) -r $$($1_HEADERS).$1.tmp
 		$(TOUCH) $$@
 
@@ -602,3 +608,4 @@ define SetupJavaCompilation
     $1 += $$($1_SRCZIP)
   endif
 endef
+endif
