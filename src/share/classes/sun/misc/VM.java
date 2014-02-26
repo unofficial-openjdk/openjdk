@@ -29,6 +29,7 @@ import static java.lang.Thread.State.*;
 import java.util.Properties;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 public class VM {
@@ -366,6 +367,42 @@ public class VM {
      * or null if only code from the null class loader is on the stack.
      */
     public static native ClassLoader latestUserDefinedLoader();
+
+    /**
+     * Define a new module with the given name. The return value is an opaque handle
+     * to the module.
+     */
+    public static native long defineModule(String name);
+
+    /**
+     * Use to lazily associate all types in a given ClassLoader/package with a module.
+     */
+    public static native void bindToModule(ClassLoader loader, String pkg, long handle);
+
+    /**
+     * Add an edge to the graph.
+     */
+    public static native void addRequires(long handle1, long handle2);
+
+    /**
+     * Configures the module to export the given package.
+     */
+    public static native void addExports(long handle, String pkg);
+
+    /**
+     * Configures the module to export the given package to the given module.
+     */
+    public static native void addExportsWithPermits(long handle1, String pkg, long handle2);
+
+    /**
+     * Used to grant access to module-private types from types in the unnamed module. This
+     * is needed to deal with classes generated at runtime (such as proxy classes).
+     */
+    public static native void addBackdoorAccess(ClassLoader loader, String pkg,
+                                                ClassLoader toLoader, String toPackage);
+
+    /******/
+
 
     static {
         initialize();

@@ -23,93 +23,72 @@
 # questions.
 #
 
-BUILD_LIBNIO_SRC := \
+ifeq ($(JIGSAW), true)
+  BUILD_LIBNIO_SRC := \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libnio \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/native/libnio \
+      #
+
+  BUILD_LIBNIO_CFLAGS := \
+      $(addprefix -I, $(BUILD_LIBNIO_SRC)) \
+      -I$(JDK_OUTPUTDIR)/gensrc_headers/java.base \
+      $(addprefix -I, $(BUILD_LIBJAVA_SRC) $(BUILD_LIBNET_SRC))
+else
+  BUILD_LIBNIO_SRC := \
     $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/java/nio \
     $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/sun/nio/ch \
     $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/sun/nio/fs
 
-BUILD_LIBNIO_CFLAGS := \
+  BUILD_LIBNIO_CFLAGS := \
     -I$(JDK_TOPDIR)/src/share/native/sun/nio/ch \
     -I$(JDK_TOPDIR)/src/share/native/java/io \
     -I$(JDK_TOPDIR)/src/share/native/java/net \
     -I$(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/java/net
 
-BUILD_LIBNIO_FILES := \
-    DatagramChannelImpl.c \
-    DatagramDispatcher.c \
-    FileChannelImpl.c \
-    FileDispatcherImpl.c \
-    FileKey.c \
-    IOUtil.c \
-    MappedByteBuffer.c \
-    Net.c \
-    ServerSocketChannelImpl.c \
-    SocketChannelImpl.c \
-    SocketDispatcher.c
-
-ifeq ($(OPENJDK_TARGET_OS), windows)
-  BUILD_LIBNIO_FILES += \
-      Iocp.c \
-      RegistryFileTypeDetector.c \
-      WindowsAsynchronousFileChannelImpl.c \
-      WindowsAsynchronousServerSocketChannelImpl.c \
-      WindowsAsynchronousSocketChannelImpl.c \
-      WindowsNativeDispatcher.c \
-      WindowsSelectorImpl.c
+  BUILD_LIBNIO_EXFILES := \
+      genSolarisConstants.c \
+      genUnixConstants.c \
+      #
 endif
 
 ifeq ($(OPENJDK_TARGET_OS), linux)
   BUILD_LIBNIO_MAPFILE := $(JDK_TOPDIR)/make/mapfiles/libnio/mapfile-$(OPENJDK_TARGET_OS)
-  BUILD_LIBNIO_FILES += \
+else
+  BUILD_LIBNIO_EXFILES += \
       EPoll.c \
       EPollArrayWrapper.c \
       EPollPort.c \
-      InheritedChannel.c \
-      NativeThread.c \
-      PollArrayWrapper.c \
-      UnixAsynchronousServerSocketChannelImpl.c \
-      UnixAsynchronousSocketChannelImpl.c \
-      GnomeFileTypeDetector.c \
       MagicFileTypeDetector.c \
       LinuxNativeDispatcher.c \
       LinuxWatchService.c \
-      UnixCopyFile.c \
-      UnixNativeDispatcher.c
+      #
 endif
 
 ifeq ($(OPENJDK_TARGET_OS), macosx)
   BUILD_LIBNIO_MAPFILE := $(JDK_TOPDIR)/make/mapfiles/libnio/mapfile-$(OPENJDK_TARGET_OS)
   BUILD_LIBNIO_SRC += $(JDK_TOPDIR)/src/macosx/native/sun/nio/ch
-  BUILD_LIBNIO_FILES += \
-      InheritedChannel.c \
-      NativeThread.c \
-      PollArrayWrapper.c \
-      UnixAsynchronousServerSocketChannelImpl.c \
-      UnixAsynchronousSocketChannelImpl.c \
+  BUILD_LIBNIO_EXFILES += \
+      GnomeFileTypeDetector.c \
+      #
+else
+  BUILD_LIBNIO_EXFILES += \
       BsdNativeDispatcher.c \
       MacOSXNativeDispatcher.c \
-      UnixCopyFile.c \
-      UnixNativeDispatcher.c \
       KQueue.c \
       KQueuePort.c \
-      KQueueArrayWrapper.c
+      KQueueArrayWrapper.c \
+      #
 endif
 
 ifeq ($(OPENJDK_TARGET_OS), solaris)
   BUILD_LIBNIO_MAPFILE := $(JDK_TOPDIR)/make/mapfiles/libnio/mapfile-$(OPENJDK_TARGET_OS)
-  BUILD_LIBNIO_FILES += \
+else
+  BUILD_LIBNIO_EXFILES += \
       DevPollArrayWrapper.c \
-      InheritedChannel.c \
-      NativeThread.c \
-      PollArrayWrapper.c \
       SolarisEventPort.c \
-      UnixAsynchronousServerSocketChannelImpl.c \
-      UnixAsynchronousSocketChannelImpl.c \
-      GnomeFileTypeDetector.c \
       SolarisNativeDispatcher.c \
       SolarisWatchService.c \
-      UnixCopyFile.c \
-      UnixNativeDispatcher.c
+      #
 endif
 
 ifeq ($(OPENJDK_TARGET_OS), aix)
@@ -134,7 +113,8 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBNIO, \
     LIBRARY := nio, \
     OUTPUT_DIR := $(INSTALL_LIBRARIES_HERE), \
     SRC := $(BUILD_LIBNIO_SRC), \
-    INCLUDE_FILES := $(BUILD_LIBNIO_FILES), \
+    EXCLUDE_FILES := $(BUILD_LIBNIO_EXFILES), \
+    EXCLUDES := sctp, \
     LANG := C, \
     OPTIMIZATION := HIGH, \
     CFLAGS := $(CFLAGS_JDKLIB) \
@@ -159,7 +139,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBNIO, \
     OBJECT_DIR := $(JDK_OUTPUTDIR)/objs/libnio, \
     DEBUG_SYMBOLS := $(DEBUG_ALL_BINARIES)))
 
-BUILD_LIBRARIES += $(BUILD_LIBNIO)
+BASE_LIBRARIES += $(BUILD_LIBNIO)
 
 $(BUILD_LIBNIO): $(BUILD_LIBNET)
 
@@ -175,18 +155,27 @@ ifeq ($(OPENJDK_TARGET_OS_API), posix)
       SCTP_WERROR :=
     endif
 
+    ifeq ($(JIGSAW), true)
+      LIBSCTP_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/native/libsctp
+      LIBSCTP_CFLAGS := $(addprefix -I, $(BUILD_LIBNIO_SRC) $(BUILD_LIBNET_SRC) $(BUILD_LIBJAVA_SRC)) \
+          -I$(JDK_OUTPUTDIR)/gensrc_headers/jdk.sctp \
+          -I$(JDK_OUTPUTDIR)/gensrc_headers/java.base
+    else
+      LIBSCTP_SRC := $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/sun/nio/ch/sctp
+      LIBSCTP_CFLAGS := -I$(JDK_TOPDIR)/src/share/native/sun/nio/ch \
+          -I$(JDK_TOPDIR)/src/share/native/sun/nio/ch/sctp \
+          -I$(JDK_TOPDIR)/src/share/native/java/net \
+          -I$(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/sun/nio/ch \
+          -I$(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/java/net
+    endif
+
     $(eval $(call SetupNativeCompilation,BUILD_LIBSCTP, \
         LIBRARY := sctp, \
         OUTPUT_DIR := $(INSTALL_LIBRARIES_HERE), \
-        SRC := $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/sun/nio/ch/sctp, \
+        SRC := $(LIBSCTP_SRC), \
         LANG := C, \
         OPTIMIZATION := LOW, \
-        CFLAGS := $(CFLAGS_JDKLIB) \
-            -I$(JDK_TOPDIR)/src/share/native/sun/nio/ch \
-            -I$(JDK_TOPDIR)/src/share/native/sun/nio/ch/sctp \
-            -I$(JDK_TOPDIR)/src/share/native/java/net \
-            -I$(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/sun/nio/ch \
-            -I$(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/java/net, \
+        CFLAGS := $(CFLAGS_JDKLIB) $(LIBSCTP_CFLAGS), \
         CFLAGS_linux := $(SCTP_WERROR), \
         MAPFILE := $(JDK_TOPDIR)/make/mapfiles/libsctp/mapfile-vers, \
         LDFLAGS := $(LDFLAGS_JDKLIB) \
@@ -198,7 +187,7 @@ ifeq ($(OPENJDK_TARGET_OS_API), posix)
         OBJECT_DIR := $(JDK_OUTPUTDIR)/objs/libsctp, \
         DEBUG_SYMBOLS := $(DEBUG_ALL_BINARIES)))
 
-    BUILD_LIBRARIES += $(BUILD_LIBSCTP)
+    SCTP_LIBRARIES += $(BUILD_LIBSCTP)
 
     $(BUILD_LIBSCTP): $(BUILD_LIBNIO)
   endif

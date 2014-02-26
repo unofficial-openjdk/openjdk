@@ -29,6 +29,7 @@ jdk_lang = \
     sun/misc \
     sun/reflect \
     jdk/lambda \
+    jdk/jigsaw \
     vm
 
 # All of the java.util package

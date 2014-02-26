@@ -33,10 +33,14 @@ import java.net.URLClassLoader;
 import java.net.MalformedURLException;
 import java.net.URLStreamHandler;
 import java.net.URLStreamHandlerFactory;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.StringTokenizer;
 import java.util.Set;
-import java.util.Vector;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.security.PrivilegedExceptionAction;
@@ -51,7 +55,7 @@ import sun.net.www.ParseUtil;
 
 /**
  * This class is used by the system to launch the main application.
-Launcher */
+ */
 public class Launcher {
     private static URLStreamHandlerFactory factory = new Factory();
     private static Launcher launcher = new Launcher();
@@ -62,11 +66,11 @@ public class Launcher {
         return launcher;
     }
 
-    private ClassLoader loader;
+    private final ExtClassLoader extcl;
+    private final AppClassLoader loader;
 
     public Launcher() {
         // Create the extension class loader
-        ClassLoader extcl;
         try {
             extcl = ExtClassLoader.getExtClassLoader();
         } catch (IOException e) {
@@ -116,21 +120,43 @@ public class Launcher {
         return loader;
     }
 
+    /**
+     * Returns the extensions class loader.
+     */
+    public ClassLoader getExtClassLoader() {
+        return extcl;
+    }
+
+    /**
+     * Returns a list of the module names for the modules on the system/application
+     * class path.
+     */
+    public List<String> getAppModules() {
+        return loader.modules();
+    }
+
+    /**
+     * Returns a list of the module names for the modules on the extensions
+     * class path.
+     */
+    public List<String> getExtModules() {
+        return extcl.modules();
+    }
+
     /*
      * The class loader used for loading installed extensions.
      */
     static class ExtClassLoader extends URLClassLoader {
-
         static {
             ClassLoader.registerAsParallelCapable();
         }
+        static final List<String> modules = Launcher.readModulesList("ext.modules");
 
         /**
          * create an ExtClassLoader. The ExtClassLoader is created
          * within a context that limits which files it can read
          */
-        public static ExtClassLoader getExtClassLoader() throws IOException
-        {
+        static ExtClassLoader getExtClassLoader() throws IOException {
             final File[] dirs = getExtDirs();
 
             try {
@@ -145,7 +171,7 @@ public class Launcher {
                             for (int i = 0; i < len; i++) {
                                 MetaIndex.registerDirectory(dirs[i]);
                             }
-                            return new ExtClassLoader(dirs);
+                            return new ExtClassLoader(toModuleLocations(modules), dirs);
                         }
                     });
             } catch (java.security.PrivilegedActionException e) {
@@ -157,11 +183,16 @@ public class Launcher {
             super.addURL(url);
         }
 
+        public List<String> modules() {
+            return modules;
+        }
+
         /*
-         * Creates a new ExtClassLoader for the specified directories.
+         * Creates a new ExtClassLoader for the specified module locations and
+         * ext  directories.
          */
-        public ExtClassLoader(File[] dirs) throws IOException {
-            super(getExtURLs(dirs), null, factory);
+        public ExtClassLoader(List<String> modLocations, File[] dirs) throws IOException {
+            super(getExtURLs(modLocations, dirs), null, factory);
         }
 
         private static File[] getExtDirs() {
@@ -181,8 +212,11 @@ public class Launcher {
             return dirs;
         }
 
-        private static URL[] getExtURLs(File[] dirs) throws IOException {
-            Vector<URL> urls = new Vector<URL>();
+        private static URL[] getExtURLs(List<String> modLocations, File[] dirs) throws IOException {
+            List<URL> urls = new ArrayList<>();
+            for (String loc : modLocations) {
+                urls.add(getFileURL(new File(loc)));
+            }
             for (int i = 0; i < dirs.length; i++) {
                 String[] files = dirs[i].list();
                 if (files != null) {
@@ -194,9 +228,7 @@ public class Launcher {
                     }
                 }
             }
-            URL[] ua = new URL[urls.size()];
-            urls.copyInto(ua);
-            return ua;
+            return urls.toArray(new URL[0]);
         }
 
         /*
@@ -257,15 +289,23 @@ public class Launcher {
      * runs in a restricted security context.
      */
     static class AppClassLoader extends URLClassLoader {
-
         static {
             ClassLoader.registerAsParallelCapable();
         }
+        static final List<String> modules = Launcher.readModulesList("system.modules");
 
-        public static ClassLoader getAppClassLoader(final ClassLoader extcl)
+        public static AppClassLoader getAppClassLoader(final ClassLoader extcl)
             throws IOException
         {
-            final String s = System.getProperty("java.class.path");
+            String cp = System.getProperty("java.class.path");
+            String mp = Launcher.toClassPath(modules);
+            String s;
+            if (mp.length() > 0) {
+                // ## FIXME should we update java.class.path
+                s = mp + File.pathSeparator + cp;
+            } else {
+                s = cp;
+            }
             final File[] path = (s == null) ? new File[0] : getClassPath(s, true);
 
             // Note: on bugid 4256530
@@ -283,6 +323,10 @@ public class Launcher {
                     return new AppClassLoader(urls, extcl);
                 }
             });
+        }
+
+        public List<String> modules() {
+            return modules;
         }
 
         /*
@@ -481,6 +525,80 @@ public class Launcher {
                                         "system protocol handler", e);
             }
         }
+    }
+
+    /**
+     * Reads the contents of the given modules file in {@code ${java.home}/lib}.
+     */
+    private static List<String> readModulesList(String name) {
+        Path file = Paths.get(System.getProperty("java.home"), "lib", name);
+        try {
+            return Files.readAllLines(file);
+        } catch (IOException ioe) {
+            throw new java.io.UncheckedIOException(ioe);
+        }
+    }
+
+    /**
+     * Expand the given list of modules to a class path.
+     */
+    private static String toClassPath(List<String> modules) {
+        String home = System.getProperty("java.home");
+        Path dir = Paths.get(home, "lib", "modules");
+        String suffix = null;
+        if (Files.exists(dir)) {
+            suffix = "classes";
+        } else {
+            dir = Paths.get(home, "modules");
+            if (Files.notExists(dir))
+                return "";
+        }
+        StringBuilder sb = new StringBuilder();
+        for (String module : modules) {
+            if (sb.length() > 0)
+                sb.append(File.pathSeparator);
+            sb.append(dir.toString());
+            sb.append(File.separator);
+            sb.append(module);
+            if (suffix != null) {
+                sb.append(File.separator);
+                sb.append(suffix);
+            }
+        }
+        return sb.toString();
+    }
+
+    /**
+     * Expand the given list of modules to a list of module locations.
+     */
+    private static List<String> toModuleLocations(List<String> modules) {
+        List<String> result = new ArrayList<>();
+        String home = System.getProperty("java.home");
+        Path dir = Paths.get(home, "lib", "modules");
+        boolean image;
+        if (Files.exists(dir)) {
+            image = true;
+        } else {
+            dir = Paths.get(home, "modules");
+            if (Files.notExists(dir))
+                return result;
+            image = false;
+        }
+        for (String m: modules) {
+            if (image) {
+                StringBuilder sb = new StringBuilder();
+                sb.append(dir);
+                sb.append(File.separator);
+                sb.append(m);
+                sb.append(File.separator);
+                sb.append("classes");
+                String s = sb.toString();
+                result.add(s);
+            } else {
+                result.add(dir.resolve(m).toString());
+            }
+        }
+        return result;
     }
 }
 

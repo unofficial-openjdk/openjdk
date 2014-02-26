@@ -1,0 +1,87 @@
+#
+# Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+#
+# This code is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License version 2 only, as
+# published by the Free Software Foundation.  Oracle designates this
+# particular file as subject to the "Classpath" exception as provided
+# by Oracle in the LICENSE file that accompanied this code.
+#
+# This code is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# version 2 for more details (a copy is included in the LICENSE file that
+# accompanied this code).
+#
+# You should have received a copy of the GNU General Public License version
+# 2 along with this work; if not, write to the Free Software Foundation,
+# Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+#
+# Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+# or visit www.oracle.com if you need additional information or have any
+# questions.
+#
+
+# Default target declared first
+default: all
+
+include $(SPEC)
+include JigsawSpecMod.gmk
+include Modules.gmk
+include MakeBase.gmk
+include Setup.gmk
+
+ifeq ($(JIGSAW), true)
+
+  ALL_SRC_DIRS := \
+      $(JDK_TOPDIR)/src_shuffled/share/modules \
+      $(LANGTOOLS_TOPDIR)/src_shuffled/share/modules \
+      $(CORBA_TOPDIR)/src_shuffled/share/modules \
+      $(JAXP_TOPDIR)/src_shuffled/share/modules \
+      $(JAXWS_TOPDIR)/src_shuffled/share/modules \
+      $(NASHORN_TOPDIR)/src_shuffled/share/modules \
+      $(JDK_TOPDIR)/src_shuffled/$(OPENJDK_TARGET_OS_API_DIR)/modules \
+      $(JDK_OUTPUTDIR)/gensrc \
+      $(LANGTOOLS_OUTPUTDIR)/gensrc \
+      $(CORBA_OUTPUTDIR)/gensrc \
+      $(JDK_OUTPUTDIR)/gensrc_no_srczip \
+      #
+
+  $(MODULES_SER_OUT): $(BUILD_CLASSANALYZER) \
+      $(wildcard $(JDK_OUTPUTDIR)/modules/_* $(JDK_OUTPUTDIR)/modules/*/_*)
+	$(RM) $@
+	$(MKDIR) -p $(@D)
+	$(TOOL_GENMODULEGRAPH) \
+	  -sourcepath "$(subst $(SPACE),$(PATH_SEP),$(ALL_SRC_DIRS))" \
+	  -buildmodules $(JDK_OUTPUTDIR)/modules \
+	  -o $@
+
+else
+
+  # Import nashorn.jar from nashorn dist dir.
+  $(JDK_OUTPUTDIR)/lib/ext/nashorn.jar: $(NASHORN_DIST)/nashorn.jar
+	$(install-file)
+
+  $(MODULES_SER_OUT): $(BUILD_CLASSANALYZER) \
+      $(wildcard $(JDK_OUTPUTDIR)/classes/_the*) \
+      $(JDK_OUTPUTDIR)/lib/ext/nashorn.jar
+	$(RM) -rf $(MODULE_CLASSLIST_DIR) \
+	  $(MODULEINFO_DIR) \
+	  $(MODULES_SER_OUT) \
+	  $(JDK_OUTPUTDIR)/modules
+	$(TOOL_CLASSANALYZER) \
+	  --version $(MODULE_VERSION) \
+	  --classlist $(MODULE_CLASSLIST_DIR) \
+	  --out $(MODULES_SER_OUT) \
+	  --moduleinfo $(MODULEINFO_DIR)
+	if [ -f $(MODULE_CLASSLIST_DIR)/other.summary ] ; then \
+	  $(ECHO) "ERROR: Check module \"other\". modules.config possibly requires update." ; \
+	  exit 2; \
+	fi
+
+endif
+
+all: $(MODULES_SER_OUT)
+
+.PHONY: all

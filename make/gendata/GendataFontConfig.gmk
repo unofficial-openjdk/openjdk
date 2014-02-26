@@ -26,7 +26,7 @@
 GENDATA_FONT_CONFIG_DST := $(JDK_OUTPUTDIR)/lib
 
 ifeq ($(OPENJDK_TARGET_OS), windows)
-  GENDATA_FONT_CONFIG_SRC_DIR := $(JDK_TOPDIR)/src/windows/classes/sun/awt/windows
+  GENDATA_FONT_CONFIG_SRC_DIR := $(JDK_TOPDIR)/$(SRC_SUBDIR)/windows/$(MODULES_SUBDIR)$(JAVA_DESKTOP_SUBDIR)/sun/awt/windows
   GENDATA_FONT_CONFIG_SRC_FILES := fontconfig.properties
   GENDATA_FONT_CONFIG_SRC_PREFIX :=
 endif
@@ -35,13 +35,13 @@ ifeq ($(OPENJDK_TARGET_OS), linux)
   GENDATA_FONT_CONFIG_SRC_PREFIX := linux.
   ifdef OPENJDK
     GENDATA_FONT_CONFIG_SRC_DIR := \
-        $(JDK_TOPDIR)/src/solaris/classes/sun/awt/fontconfigs
+        $(JDK_TOPDIR)/$(SRC_SUBDIR)/solaris/$(MODULES_SUBDIR)$(JAVA_DESKTOP_SUBDIR)/sun/awt/fontconfigs
     # This is placeholder for possible fonconfig files which may
     # useful for some highly specialized Linux distributions
     GENDATA_FONT_CONFIG_SRC_FILES :=
   else
     GENDATA_FONT_CONFIG_SRC_DIR := \
-        $(JDK_TOPDIR)/src/closed/solaris/classes/sun/awt/fontconfigs
+        $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/solaris/$(MODULES_SUBDIR)$(JAVA_DESKTOP_SUBDIR)/sun/awt/fontconfigs
     GENDATA_FONT_CONFIG_SRC_FILES := \
         fontconfig.properties \
         fontconfig.RedHat.5.properties \
@@ -54,14 +54,14 @@ endif
 
 ifeq ($(OPENJDK_TARGET_OS), solaris)
   GENDATA_FONT_CONFIG_SRC_DIR := \
-      $(JDK_TOPDIR)/src/solaris/classes/sun/awt/fontconfigs
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/solaris/$(MODULES_SUBDIR)$(JAVA_DESKTOP_SUBDIR)/sun/awt/fontconfigs
   GENDATA_FONT_CONFIG_SRC_FILES := fontconfig.properties
   GENDATA_FONT_CONFIG_SRC_PREFIX := solaris.
 endif
 
 ifeq ($(OPENJDK_TARGET_OS), macosx)
   GENDATA_FONT_CONFIG_SRC_DIR := \
-      $(JDK_TOPDIR)/src/macosx/classes/sun/awt/fontconfigs
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/macosx/$(MODULES_SUBDIR)$(JAVA_DESKTOP_SUBDIR)/sun/awt/fontconfigs
   GENDATA_FONT_CONFIG_SRC_FILES := fontconfig.properties
   GENDATA_FONT_CONFIG_SRC_PREFIX := macosx.
 endif

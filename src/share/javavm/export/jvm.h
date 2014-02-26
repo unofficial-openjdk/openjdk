@@ -417,6 +417,30 @@ JVM_DefineClassWithSource(JNIEnv *env, const char *name, jobject loader,
                           const char *source);
 
 /*
+ * Module support funcions
+ */
+
+JNIEXPORT void * JNICALL
+JVM_DefineModule(JNIEnv *env, jstring name);
+
+JNIEXPORT void JNICALL
+JVM_BindToModule(JNIEnv *env, jobject loader, jstring pkg, void *handle);
+
+JNIEXPORT void JNICALL
+JVM_AddRequires(JNIEnv *env, void *handle1, void *handle2);
+
+JNIEXPORT void JNICALL
+JVM_AddExports(JNIEnv *env, void *handle1, jstring pkg);
+
+JNIEXPORT void JNICALL
+JVM_AddExportsWithPermits(JNIEnv *env, void *handle1, jstring pkg, void *handle2);
+
+JNIEXPORT void JNICALL
+JVM_AddBackdoorAccess(JNIEnv *env, jobject loader, jstring pkg,
+                      jobject toLoader, jstring toPackage);
+
+
+/*
  * Reflection support functions
  */
 

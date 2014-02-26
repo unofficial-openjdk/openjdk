@@ -2126,6 +2126,17 @@ public class RMIConnector implements JMXConnector, Serializable, JMXAddressable 
                         otherClassNames,
                         thisLoader,
                         thisProtectionDomain);
+                // fabricated RemoteRef extends ProxyRef and so requires
+                // access to com.sun.jmx.remote.interna.ProxyRef defined
+                // by the boot class loader.
+                ClassLoader[] loaders = new ClassLoader[] { cl };
+                int last = pRefClassName.lastIndexOf(".");
+                String pkg = (last != -1) ? pRefClassName.substring(0, last) : "";
+                String[] pkgs = new String[] { pkg };
+                sun.misc.VM.addBackdoorAccess(ProxyRef.class.getClassLoader(),
+                                              "com.sun.jmx.remote.internal",
+                                              cl,
+                                              pkg);
                 Class<?> c = cl.loadClass(pRefClassName);
                 return c.getConstructor(RemoteRef.class);
             }

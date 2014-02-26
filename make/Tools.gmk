@@ -23,13 +23,30 @@
 # questions.
 #
 
+ifndef _TOOLS_GMK
+_TOOLS_GMK := 1
+
+default: all
+
+include $(SPEC)
+include JigsawSpecMod.gmk
+include MakeBase.gmk
+include JavaCompilation.gmk
+include NativeCompilation.gmk
+include Setup.gmk
+
 # Cache all finds needed for this file. Only used on windows.
 $(eval $(call FillCacheFind, $(JDK_TOPDIR)/make/src/classes))
 
 TOOLS_SRC := $(JDK_TOPDIR)/make/src/classes
 
+# The shuffle script moves this file into make/src/classes. Need to
+# check for it so that the build doesn't fail due to duplicate class.
+ifneq ($(JIGSAW), true)
 ifeq ($(findstring $(OPENJDK_TARGET_OS),windows macosx),)
   TOOLS_SRC += $(JDK_TOPDIR)/src/solaris/classes/sun/awt/X11/generator
+endif
+  TOOLS_EXCLUDE := build/tools/x11wrappergen
 endif
 
 # The exception handling of swing beaninfo which have the own tool directory
@@ -37,14 +54,15 @@ ifeq (, $(BUILD_TOOLS))
   $(eval $(call SetupJavaCompilation,BUILD_TOOLS, \
       SETUP := GENERATE_OLDBYTECODE, \
       SRC := $(TOOLS_SRC), \
-      BIN := $(JDK_OUTPUTDIR)/btclasses))
+      BIN := $(JDK_OUTPUTDIR)/btclasses, \
+      EXCLUDES := $(TOOLS_EXCLUDE)))
 endif
 
 $(JDK_OUTPUTDIR)/btclasses/build/tools/generatenimbus/resources/%.template: \
-    $(JDK_TOPDIR)/src/share/classes/javax/swing/plaf/nimbus/%.template
+    $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/$(MODULES_SUBDIR)$(JAVA_DESKTOP_SUBDIR)/javax/swing/plaf/nimbus/%.template
 	$(call install-file)
 
-BUILD_TOOLS += $(foreach i, $(wildcard $(JDK_TOPDIR)/src/share/classes/javax/swing/plaf/nimbus/*.template), $(JDK_OUTPUTDIR)/btclasses/build/tools/generatenimbus/resources/$(notdir $i))
+BUILD_TOOLS += $(foreach i, $(wildcard $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/$(MODULES_SUBDIR)$(JAVA_DESKTOP_SUBDIR)/javax/swing/plaf/nimbus/*.template), $(JDK_OUTPUTDIR)/btclasses/build/tools/generatenimbus/resources/$(notdir $i))
 
 # Resource used by CheckDeps tool
 $(JDK_OUTPUTDIR)/btclasses/build/tools/deps/refs.allowed: \
@@ -127,7 +145,7 @@ TOOL_CHECKDEPS = $(JAVA) -Xbootclasspath/p:$(INTERIM_LANGTOOLS_JAR) \
     build.tools.deps.CheckDeps
 
 TOOL_ADDTORESTRICTEDPKGS=$(JAVA) -cp $(JDK_OUTPUTDIR)/btclasses \
-    build.tools.addtorestrictedpkgs.AddToRestrictedPkgs
+ 	build.tools.addtorestrictedpkgs.AddToRestrictedPkgs
 
 ##########################################################################################
 
@@ -154,3 +172,10 @@ $(eval $(call SetupNativeCompilation,FIX_EMPTY_SEC_HDR_FLAGS, \
     OUTPUT_DIR := $(JDK_OUTPUTDIR)/btbin, \
     PROGRAM := fix_empty_sec_hdr_flags))
 endif
+
+java-tools: $(BUILD_TOOLS)
+
+all: java-tools
+
+endif # _TOOLS_GMK
+

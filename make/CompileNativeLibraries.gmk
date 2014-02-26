@@ -26,6 +26,7 @@
 default: all
 
 include $(SPEC)
+include JigsawSpecMod.gmk
 include MakeBase.gmk
 include NativeCompilation.gmk
 
@@ -36,14 +37,20 @@ include Setup.gmk
 include CopyFiles.gmk
 
 # Prepare the find cache. Only used if running on windows.
-$(eval $(call FillCacheFind, $(JDK_TOPDIR)/src))
+ifeq ($(JIGSAW), true)
+  $(eval $(call FillCacheFind, $(JDK_TOPDIR)/src_shuffled))
+else
+  $(eval $(call FillCacheFind, $(JDK_TOPDIR)/src))
+endif
 
 # Build tools
 include Tools.gmk
 
 # Include the javah generated headers.
-CFLAGS_JDKLIB += -I$(JDK_OUTPUTDIR)/gensrc_headers
-CXXFLAGS_JDKLIB += -I$(JDK_OUTPUTDIR)/gensrc_headers
+ifneq ($(JIGSAW), true)
+  CFLAGS_JDKLIB += -I$(JDK_OUTPUTDIR)/gensrc_headers
+  CXXFLAGS_JDKLIB += -I$(JDK_OUTPUTDIR)/gensrc_headers
+endif
 
 # Put the libraries here. Different locations for different target apis.
 ifeq ($(OPENJDK_TARGET_OS_API), posix)
@@ -53,6 +60,31 @@ else
 endif
 
 BUILD_LIBRARIES =
+
+#
+# Libraries are grouped by modules.  The following defines
+# variables for modules containing shared libraries.
+#
+ATTACH_LIBRARIES=
+BASE_LIBRARIES=
+DESKTOP_LIBRARIES=
+HPROF_LIBRARIES=
+INSTRUMENT_LIBRARIES=
+JSDT_LIBRARIES=
+JDWP_LIBRARIES=
+JFR_LIBRARIES=
+MANAGEMENT_LIBRARIES=
+SCRIPT_LIBRARIES=
+SCTP_LIBRARIES=
+SECURITY_JAAS_LIBRARIES=
+SECURITY_KERBEROS_LIBRARIES=
+SECURITY_MSCAPI_LIBRARIES=
+SECURITY_PKCS11_LIBRARIES=
+SECURITY_SMARTCARDIO_LIBRARIES=
+SECURITY_SUNEC_LIBRARIES=
+SECURITY_UCRYPTO_LIBRARIES=
+UNPACK_LIBRARIES=
+
 
 # Absolute paths to lib files on windows for use in LDFLAGS. Should figure out a more
 # elegant solution to this.
@@ -88,6 +120,27 @@ include lib/Awt2dLibraries.gmk
 include lib/SoundLibraries.gmk
 
 ##########################################################################################
+
+BUILD_LIBRARIES += $(BASE_LIBRARIES)
+BUILD_LIBRARIES += $(DESKTOP_LIBRARIES)
+BUILD_LIBRARIES += $(INSTRUMENT_LIBRARIES)
+BUILD_LIBRARIES += $(MANAGEMENT_LIBRARIES)
+BUILD_LIBRARIES += $(SCRIPT_LIBRARIES)
+BUILD_LIBRARIES += $(SCTP_LIBRARIES)
+BUILD_LIBRARIES += $(JFR_LIBRARIES)
+BUILD_LIBRARIES += $(UNPACK_LIBRARIES)
+BUILD_LIBRARIES += $(SECURITY_JAAS_LIBRARIES)
+BUILD_LIBRARIES += $(SECURITY_KERBEROS_LIBRARIES)
+BUILD_LIBRARIES += $(SECURITY_MSCAPI_LIBRARIES)
+BUILD_LIBRARIES += $(SECURITY_PKCS11_LIBRARIES)
+BUILD_LIBRARIES += $(SECURITY_SMARTCARDIO_LIBRARIES)
+BUILD_LIBRARIES += $(SECURITY_SUNEC_LIBRARIES)
+BUILD_LIBRARIES += $(SECURITY_UCRYPTO_LIBRARIES)
+BUILD_LIBRARIES += $(ATTACH_LIBRARIES)
+BUILD_LIBRARIES += $(HPROF_LIBRARIES)
+BUILD_LIBRARIES += $(JDWP_LIBRARIES)
+BUILD_LIBRARIES += $(JSDT_LIBRARIES)
+
 
 all: $(COPY_FILES) $(BUILD_LIBRARIES)
 

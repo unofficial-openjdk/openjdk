@@ -41,6 +41,8 @@ package sun.launcher;
  */
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInputStream;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Method;
@@ -54,18 +56,31 @@ import java.nio.file.Path;
 import java.text.Normalizer;
 import java.util.ResourceBundle;
 import java.text.MessageFormat;
+import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Locale.Category;
 import java.util.Properties;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
+
+import jdk.jigsaw.module.Module;
+import jdk.jigsaw.module.ServiceDependence;
+import jdk.jigsaw.module.SimpleResolver;
+import jdk.jigsaw.module.View;
+import jdk.jigsaw.module.ViewDependence;
+
+import sun.misc.Launcher;
 
 public enum LauncherHelper {
     INSTANCE;
@@ -474,8 +489,12 @@ public enum LauncherHelper {
      */
     public static Class<?> checkAndLoadMain(boolean printToStderr,
                                             int mode,
-                                            String what) {
+                                            String what)
+        throws Exception
+    {
         initOutput(printToStderr);
+        initModules();
+
         // get the class name
         String cn = null;
         switch (mode) {
@@ -767,5 +786,230 @@ public enum LauncherHelper {
             fxLauncherMethod.invoke(null,
                     new Object[] {fxLaunchName, fxLaunchMode, args});
         }
+    }
+
+    private static void formatCommaList(PrintStream out,
+                                        String prefix,
+                                        Collection<?> list)
+    {
+        if (list.isEmpty())
+            return;
+        out.format("  %s", prefix);
+        boolean first = true;
+        for (Object ob : list) {
+            if (first) {
+                out.format(" %s", ob);
+                first = false;
+            } else {
+                out.format(", %s", ob);
+            }
+        }
+        out.format("%n");
+    }
+
+    private static void formatModuleView(PrintStream out,
+                                         View view,
+                                         String indent)
+    {
+        formatCommaList(out, indent + "provides",
+                        view.aliases());
+        formatCommaList(out, indent + "permits",
+                        view.permits());
+        Map<String,Set<String>> services = view.services();
+        for (Map.Entry<String,Set<String>> entry: services.entrySet()) {
+            String sn = entry.getKey();
+            for (String impl: entry.getValue()) {
+                out.format("%s  provides service %s with %s%n", indent, sn, impl);
+            }
+        }
+
+        if (!view.exports().isEmpty()) {
+            out.format("  %sexports%n", indent);
+            Set<String> exports = new TreeSet<>(view.exports());
+            for (String pn : exports) {
+                out.format("  %s  %s%n", indent, pn);
+            }
+        }
+    }
+
+    /**
+     * Called by the launcher to list the installed modules.
+     * If called without any sub-options then it the output is a simple
+     * list of the moduels. If called with the verbose sub-option
+     * (-XlistModules:verbose) then the dependences and other details
+     * are also printed.
+     */
+    static void listModules(boolean printToStderr, String optionFlag)
+        throws IOException, ClassNotFoundException
+    {
+        initOutput(printToStderr);
+
+        boolean verbose = false;
+        int colon = optionFlag.indexOf(':');
+        if (colon >= 0) {
+            String[] subOptions = optionFlag.substring(colon+1).split(",");
+            for (String subOption: subOptions) {
+                 switch (subOption) {
+                     case "verbose" : verbose = true; break;
+                     default : /* do nothing for now */
+                 }
+            }
+        }
+
+        Module[] mods = readModules();
+        Arrays.sort(mods);
+        for (Module m: mods) {
+            ostream.println(m.id().name());
+            if (verbose) {
+                for (ViewDependence d: m.viewDependences()) {
+                    ostream.format("  %s%n", d);
+                }
+                for (ServiceDependence d: m.serviceDependences()) {
+                    ostream.format("  %s%n", d);
+                }
+                formatModuleView(ostream, m.mainView(), "");
+                for (View v: m.views()) {
+                    if (v != m.mainView()) {
+                        ostream.format("  view %s%n", v.id().name());
+                        formatModuleView(ostream, v, "  ");
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Module definitions, serialized in modules.ser for now
+     */
+    private static final String MODULES_SER = "jdk/jigsaw/module/resources/modules.ser";
+
+    private static Module[] readModules() throws IOException, ClassNotFoundException {
+        // ## FIXME: rmic is run in the build before modules.ser is generated
+        InputStream stream = ClassLoader.getSystemResourceAsStream(MODULES_SER);
+        if (stream == null) {
+            System.err.format("WARNING: %s not found%n", MODULES_SER);
+            return new Module[0];
+        }
+        try (InputStream in = stream) {
+           ObjectInputStream ois = new ObjectInputStream(in);
+           Module[] mods = (Module[]) ois.readObject();
+           return mods;
+        }
+    }
+
+    /**
+     * Setup the module boundaries
+     */
+    private static void setupAccessControl(Module[] modules, Set<Module> modulesNeeded) {
+        Map<String, Module> names = new HashMap<>();
+        for (Module m: modules) {
+            names.put(m.mainView().id().name(), m);
+        }
+
+        // Need to elide view names
+        Map<String, Module> viewToModule = new HashMap<>();
+        for (Module m: modules) {
+            m.views().forEach( v -> viewToModule.put(v.id().name(), m) );
+        }
+
+        // assign modules to loaders
+        Map<Module, ClassLoader> moduleToLoaders = new HashMap<>();
+        Launcher launcher = Launcher.getLauncher();
+        ClassLoader extcl = launcher.getExtClassLoader();
+        for (String name: launcher.getExtModules()) {
+            Module m = names.get(name);
+            if (m != null) {
+                moduleToLoaders.put(m, extcl);
+            }
+        }
+        ClassLoader cl = launcher.getClassLoader();
+        for (String name: launcher.getAppModules()) {
+            Module m = names.get(name);
+            if (m != null)
+                moduleToLoaders.put(m, cl);
+        }
+
+        // define modules in VM and bind content
+        Map<Module, Long> moduleToHandle = new HashMap<>();
+        for (Module m: modules) {
+            long handle = sun.misc.VM.defineModule(m.mainView().id().name());
+            moduleToHandle.put(m, handle);
+
+            ClassLoader loader = moduleToLoaders.get(m);
+            for (String pkg: m.packages()) {
+                if (pkg != null) {
+                    sun.misc.VM.bindToModule(loader, pkg, handle);
+                }
+            }
+        }
+
+        // setup the edges and exports
+        for (Module m: modules) {
+            // modules that are not selected have no exports
+            if (!modulesNeeded.contains(m))
+                continue;
+
+            long fromHandle  = moduleToHandle.get(m);
+
+            // setup requires (assumes "requires public" is propagated)
+            for (ViewDependence vd: m.viewDependences()) {
+                String name = vd.query().name();
+                Module other = viewToModule.get(name);
+                long toHandle = moduleToHandle.get(other);
+                sun.misc.VM.addRequires(fromHandle, toHandle);
+            }
+
+            // exported packages
+            for (View v: m.views()) {
+                if (v.permits().isEmpty()) {
+                    for (String pkg: v.exports()) {
+                        sun.misc.VM.addExports(fromHandle, pkg);
+                    }
+                } else {
+                    for (String pkg: v.exports()) {
+                        for (String other: v.permits()) {
+                            long toHandle = moduleToHandle.get(names.get(other));
+                            sun.misc.VM.addExportsWithPermits(fromHandle, pkg, toHandle);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Load compiled module graph, resolve the modules specified on the command
+     * line (if any) and setup the access control.
+     */
+    private static void initModules() throws IOException, ClassNotFoundException {
+        Module[] modules = readModules();
+        if (modules == null || modules.length == 0) {
+            // do nothing for now
+            return;
+        }
+
+        String propValue = System.getProperty("jdk.launcher.modules");
+        String[] requested;
+        if (propValue == null) {
+            requested = new String[]{ "jdk" };
+        } else {
+            requested = propValue.split(",");
+        }
+
+        boolean verbose = false;
+        propValue = System.getProperty("jdk.launcher.modules.verbose");
+        if (propValue != null)
+            verbose = Boolean.parseBoolean(propValue);
+
+        // find set of modules required
+        SimpleResolver resolver = new SimpleResolver(modules);
+        Set<Module> modulesNeeded = resolver.resolve(requested);
+        if (verbose) {
+            Set<Module> sorted = new TreeSet<>(modulesNeeded);
+            sorted.forEach(m -> System.out.println(m.id().name()));
+        }
+
+        // setup the access control
+        setupAccessControl(modules, modulesNeeded);
     }
 }
