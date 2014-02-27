@@ -68,7 +68,7 @@ endif
 
 ifeq ($(OPENJDK_TARGET_OS), aix)
   GENDATA_FONT_CONFIG_SRC_DIR    := \
-      $(JDK_TOPDIR)/src/aix/classes/sun/awt/fontconfigs
+      $(JDK_TOPDIR)/src/aix/$(MODULES_SUBDIR)$(JAVA_DESKTOP_SUBDIR)/sun/awt/fontconfigs
   GENDATA_FONT_CONFIG_SRC_FILES  := fontconfig.properties
   GENDATA_FONT_CONFIG_SRC_PREFIX := aix.
 endif

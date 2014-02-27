@@ -333,6 +333,28 @@ $(eval $(call SetupShuffleFiles,COPY_CURRENCY_DATA, \
     DEST := $(JDK_TOPDIR)/make/data/currency, \
     FILES := $(JDK_TOPDIR)/src/share/classes/java/util/CurrencyData.properties))
 
+# In jdk9/dev the fontconfig files have moved to make/data
+$(eval $(call SetupShuffleFiles,COPY_FONTCONFIG_SOLARIS, \
+    SRC := $(JDK_TOPDIR)/src/solaris/classes, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/solaris/modules/java.desktop, \
+    FILES := $(JDK_TOPDIR)/src/solaris/classes/sun/awt/fontconfigs/solaris.fontconfig.properties \
+        $(JDK_TOPDIR)/src/solaris/classes/sun/awt/fontconfigs/bsd.fontconfig.properties))
+
+$(eval $(call SetupShuffleFiles,COPY_FONTCONFIG_MACOSX, \
+    SRC := $(JDK_TOPDIR)/src/macosx/classes, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/macosx/modules/java.desktop, \
+    FILES := $(JDK_TOPDIR)/src/macosx/classes/sun/awt/fontconfigs/macosx.fontconfig.properties))
+
+$(eval $(call SetupShuffleFiles,COPY_FONTCONFIG_WINDOWS, \
+    SRC := $(JDK_TOPDIR)/src/windows/classes, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/windows/modules/java.desktop, \
+    FILES := $(JDK_TOPDIR)/src/windows/classes/sun/awt/windows/fontconfig.properties))
+
+$(eval $(call SetupShuffleFiles,COPY_FONTCONFIG_AIX, \
+    SRC := $(JDK_TOPDIR)/src/aix/classes, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/aix/modules/java.desktop, \
+    FILES := $(JDK_TOPDIR)/src/aix/classes/sun/awt/fontconfigs/aix.fontconfig.properties))
+
 ################################################################################
 
 # fdlibm
@@ -1207,6 +1229,10 @@ shuffle-src: \
     $(COPY_AWT_RESOURCES_MACOSX) \
     $(COPY_NASHORN_RESOURCES) \
     $(COPY_CURRENCY_DATA) \
+    $(COPY_FONTCONFIG_SOLARIS) \
+    $(COPY_FONTCONFIG_MACOSX) \
+    $(COPY_FONTCONFIG_WINDOWS) \
+    $(COPY_FONTCONFIG_AIX) \
     $(COPY_LIBFDLIBM) \
     $(COPY_LIBVERIFY) \
     $(COPY_LIBJAVA_SOLARIS) \
