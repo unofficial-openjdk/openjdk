@@ -1,12 +1,10 @@
 /*
- * Copyright (c) 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Oracle designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Oracle in the LICENSE file that accompanied this code.
+ * published by the Free Software Foundation.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -23,50 +21,38 @@
  * questions.
  */
 
-package com.sun.tools.doclets.formats.html.markup;
-
-/**
- * Enum representing HTML tag attributes.
- *
- * @author Bhavesh Patel
+/*
+ * @test
+ * @bug 8033294
+ * @summary javac, spurious warning for instanceof operator
+ * @compile -Werror -Xlint:unchecked RedundantWarningInIntersectionTest.java
  */
-public enum HtmlAttr {
-    ALT,
-    BORDER,
-    CELLPADDING,
-    CELLSPACING,
-    CLASS,
-    CLEAR,
-    COLS,
-    CONTENT,
-    HREF,
-    HTTP_EQUIV("http-equiv"),
-    ID,
-    LANG,
-    NAME,
-    ONLOAD,
-    REL,
-    ROWS,
-    SCOPE,
-    SCROLLING,
-    SRC,
-    SUMMARY,
-    TARGET,
-    TITLE,
-    TYPE,
-    WIDTH;
 
-    private final String value;
+import java.math.BigDecimal;
 
-    HtmlAttr() {
-        this.value = name().toLowerCase();
+public class RedundantWarningInIntersectionTest {
+
+    class A<S extends A<S, T>, T> {
+
+        protected T p;
+
+        A(T p) {}
+
+        public S m(T parameter) {
+            @SuppressWarnings("unchecked")
+            S self = (S) new A<>(parameter);
+            return self;
+        }
     }
 
-    HtmlAttr(String name) {
-        this.value = name;
-    }
+    class B<K extends Number & Comparable<? super K>> extends A<B<K>, K> {
 
-    public String toString() {
-        return value;
+        B(K parameter) {
+            super(parameter);
+        }
+
+        public boolean m2() {
+            return (p instanceof BigDecimal);
+        }
     }
 }

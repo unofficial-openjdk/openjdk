@@ -44,6 +44,8 @@ import com.sun.tools.doclets.internal.toolkit.*;
  */
 public abstract class HtmlDocWriter extends HtmlWriter {
 
+    public static final String CONTENT_TYPE = "text/html";
+
     /**
      * Constructor. Initializes the destination file name through the super
      * class HtmlWriter.
@@ -181,12 +183,14 @@ public abstract class HtmlDocWriter extends HtmlWriter {
                                String label, boolean strong,
                                String stylename, String title, String target) {
         StringBuffer retlink = new StringBuffer();
+        StringBuilder lnk = new StringBuilder();
         retlink.append("<a href=\"");
-        retlink.append(link);
+        lnk.append(link);
         if (where != null && where.length() != 0) {
-            retlink.append("#");
-            retlink.append(where);
+            lnk.append("#");
+            lnk.append(where);
         }
+        retlink.append(HtmlTree.encodeURL(lnk.toString()));
         retlink.append("\"");
         if (title != null && title.length() != 0) {
             retlink.append(" title=\"" + title + "\"");
@@ -328,7 +332,7 @@ public abstract class HtmlDocWriter extends HtmlWriter {
             head.addContent(headComment);
         }
         if (configuration.charset.length() > 0) {
-            Content meta = HtmlTree.META("Content-Type", "text/html",
+            Content meta = HtmlTree.META("Content-Type", CONTENT_TYPE,
                     configuration.charset);
             head.addContent(meta);
         }
