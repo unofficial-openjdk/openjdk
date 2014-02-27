@@ -36,6 +36,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.function.BiFunction;
+import java.util.stream.Collectors;
 
 /**
  * Module contains a list of classes and resources.
@@ -64,10 +65,9 @@ public class Module implements Comparable<Module> {
     private final Set<Klass> classes;
     private final Set<Resource> resources;
     private final Set<Module> members;
-    private final Map<String,View> views;
-    private final View defaultView;
-    private final View internalView;
     private final Set<Service> services;
+    private final Set<Package> exports;
+    private final Map<Klass, Set<Module>> classExportsTo;
     private final Map<Service, Set<Klass>> providers;
     private final Map<String, Package> packages;
     private final Map<String, Dependence> configRequires; // requires came from ModuleConfig
@@ -86,18 +86,11 @@ public class Module implements Comparable<Module> {
         this.providers = new HashMap<>();
         this.configRequires = new LinkedHashMap<>(config.requires());
         this.services = new HashSet<>();
+        this.exports = new HashSet<>();
+        this.classExportsTo = new HashMap<>();
         this.packages = new HashMap<>();
 
         this.group = this; // initialize to itself
-
-        this.views = new LinkedHashMap<>();
-        for (ModuleConfig.View mcv : config.viewForName.values()) {
-            addView(mcv.name, mcv);
-        }
-        this.defaultView = views.get(name);
-
-        // create an internal view
-        this.internalView = addView(name + ".internal");
 
         // add to the resources if defined in the modules.properties
         String res = getModuleProperty(name + ".resources");
@@ -156,53 +149,62 @@ public class Module implements Comparable<Module> {
         return Collections.unmodifiableSet(members);
     }
 
-    Module.View defaultView() {
-        return defaultView;
+    Map<Klass,Set<Module>> classExportsTo() {
+        return Collections.unmodifiableMap(classExportsTo);
     }
 
-    Module.View internalView() {
-        return internalView;
+    Set<String> exports() {
+        Set<String> epkgs = exports.stream().map(Package::name).collect(Collectors.toSet());
+        if (!config.exportsTo.isEmpty()) {
+            epkgs.addAll(config.exportsTo.keySet().stream()
+                             .filter(pn -> packages.containsKey(pn) && config.exportsTo.get(pn).isEmpty())
+                             .collect(Collectors.toSet()));
+        }
+        return epkgs;
     }
 
-    Collection<View> views() {
-        return views.values();
-    }
-
-    View addView(String name) {
-        View v = new View(this, name);
-        views.put(name, v);
-        return v;
-    }
-
-    private View addView(String name, ModuleConfig.View mcv) {
-        View v = new View(this, mcv, name);
-        views.put(name, v);
-        return v;
-    }
-
-    Module.View getView(String name) {
-        return views.get(name);
-    }
-
-    Module.View getView(Klass k) {
-        String pn = k.getPackageName();
-        View view = internalView;
-        for (View v : views.values()) {
-            if (v.exports.contains(pn)) {
-                view = v;
-                break;
+    Map<String,Set<Module>> exportsTo() {
+        Map<String,Set<Module>> packageExportsToModule = new HashMap<>();
+        classExportsTo.keySet().stream().forEach(k -> {
+            String pkg = k.getPackageName();
+            Set<Module> ms = packageExportsToModule.get(pkg);
+            if (ms == null) {
+                ms = new HashSet<>();
+                packageExportsToModule.put(pkg, ms);
+            }
+            ms.addAll(classExportsTo.get(k));
+        });
+        // process exports to from the config
+        for (Map.Entry<String, Set<String>> e : config.exportsTo.entrySet()) {
+            Package pkg = packages.get(e.getKey());
+            if (pkg == null) {
+                System.err.println("Warning: " + e.getKey() + " exported in config not found in " + name());
+                continue;
+            }
+            if (!e.getValue().isEmpty()) {
+                Set<Module> ms = packageExportsToModule.get(e.getKey());
+                if (ms == null) {
+                    ms = new HashSet<>();
+                    packageExportsToModule.put(e.getKey(), ms);
+                }
+                ms.addAll(e.getValue().stream()
+                            .map(n -> getFactory().getModule(n))
+                            .collect(Collectors.toSet()));
             }
         }
-        // make sure a package referenced by other modules
-        // is exported either in the default view or internal view
-        Package pinfo = packages.get(pn);
-        if (contains(k) && !defaultView.exports.contains(pn)) {
-            if (!pinfo.isExported && !internalView.exports.contains(pn)) {
-                internalView.exports.add(pn);
-            }
+        return packageExportsToModule;
+    }
+
+    Set<String> permits() {
+        return config.permits;
+    }
+
+    void exportsInternalClass(Klass k, Module m) {
+        Set<Module> ms = classExportsTo.get(k);
+        if (ms == null) {
+            classExportsTo.put(k, ms = new HashSet<>());
         }
-        assert view.exports.contains(pn);
-        return view;
+        ms.add(m);
     }
 
     boolean contains(Klass k) {
@@ -223,10 +225,6 @@ public class Module implements Comparable<Module> {
         if (!classes.isEmpty() || !resources.isEmpty())
             return false;
 
-        for (View v : views.values()) {
-            if (v.mainClass() != null)
-                return false;
-        }
         return true;
     }
 
@@ -364,22 +362,6 @@ public class Module implements Comparable<Module> {
             }
         });
 
-        // merge views
-        for (View v : m.views.values()) {
-            if (views.containsKey(v.name)) {
-                throw new RuntimeException(name + " and member " + m.name
-                        + " already has view " + v.name);
-            }
-            if (v == m.defaultView) {
-                // merge default view
-                defaultView.merge(v);
-            } else if (v == m.internalView) {
-                internalView.merge(v);
-            } else {
-                views.put(v.name, v);
-            }
-        }
-
         // propagate profile
         if (profile == null) {
             profile = m.profile;
@@ -391,139 +373,23 @@ public class Module implements Comparable<Module> {
         }
     }
 
+
+    void addProviders(Map<Service, Set<Klass>> map) {
+        mergeMaps(this.providers, map, new BiFunction<Set<Klass>, Set<Klass>, Void>() {
+            @Override
+            public Void apply(Set<Klass> v1, Set<Klass> v2) {
+                v1.addAll(v2);
+                return null;
+            }
+        });
+    }
+
     void buildExports() {
-        // rebuild default view's exports after Package are merged
+        // rebuild exports after Package are merged
         boolean all = moduleProperty("exports.all");
         for (Package p : packages.values()) {
             if (p.hasClasses() && (all || p.isExported))
-                defaultView.exports.add(p.name());
-        }
-    }
-
-    public static class View implements Comparable<View> {
-        final Module module;
-        final String name;
-        private final Set<String> exports = new HashSet<>();
-        private final Set<String> permitNames = new HashSet<>();
-        private final Set<String> aliases = new HashSet<>();
-        private final String mainClassName;
-        private Klass mainClass;
-        private final Set<String> permits = new HashSet<>();
-        private final Map<String, Set<String>> providers = new HashMap<>();
-
-        int refCount;
-
-        // specified in modules.config; always include it in module-info.java
-        View(Module m, ModuleConfig.View mcv, String name) {
-            this.module = m;
-            this.name = name;
-            this.refCount = 0;
-            this.mainClassName = mcv != null ? mcv.mainClass : null;
-            if (mcv != null) {
-                exports.addAll(mcv.exports);
-                permitNames.addAll(mcv.permits);
-                aliases.addAll(mcv.aliases);
-                providers.putAll(mcv.providers);
-            }
-        }
-
-        // only show up in module-info.java if there is a reference to it.
-        View(Module m, String name) {
-            this.module = m;
-            this.name = name;
-            this.refCount = -1;
-            this.mainClassName = null;
-        }
-
-        boolean isEmpty() {
-            // Internal view may have non-empty exports but it's only
-            // non-empty if any module requires it
-            return mainClass == null &&
-                    (refCount < 0 || exports.isEmpty()) &&
-                    permits.isEmpty() && providers.isEmpty() &&
-                    aliases.isEmpty();
-        }
-
-        Set<String> permitNames() {
-            return Collections.unmodifiableSet(permitNames);
-        }
-
-        Set<String> permits() {
-            return Collections.unmodifiableSet(permits);
-        }
-
-        Set<String> aliases() {
-            return Collections.unmodifiableSet(aliases);
-        }
-
-        Set<String> exports() {
-            return Collections.unmodifiableSet(exports);
-        }
-
-        Map<String,Set<String>> providers() {
-            return Collections.unmodifiableMap(providers);
-        }
-
-        void addPermit(String name) {
-            permits.add(name);
-        }
-
-        void addProviders(Map<String,Set<String>> map) {
-             mergeMaps(this.providers, map, new BiFunction<Set<String>,Set<String>,Void>() {
-                @Override
-                public Void apply(Set<String> v1, Set<String> v2) {
-                    v1.addAll(v2);
-                    return null;
-                }
-            });
-        }
-
-        void merge(View v) {
-            // main class is not propagated to the default view
-            this.aliases.addAll(v.aliases);
-            this.permitNames.addAll(v.permitNames);
-            mergeMaps(this.providers, v.providers, new BiFunction<Set<String>,Set<String>,Void>() {
-                @Override
-                public Void apply(Set<String> v1, Set<String> v2) {
-                    v1.addAll(v2);
-                    return null;
-                }
-            });
-        }
-
-        String mainClassName() {
-            return mainClassName;
-        }
-
-        void setMainClass(Klass k) {
-            mainClass = k;
-        }
-
-        Klass mainClass() {
-            return mainClass;
-        }
-
-        void addRefCount() {
-            refCount++;
-        }
-
-        String id() {
-            return name + "@" + module.version();
-        }
-
-        public String toString() {
-            return id();
-        }
-
-        public int compareTo(Module.View o) {
-            if (o == null) {
-                return -1;
-            }
-            int rc = module.compareTo(o.module);
-            if (rc == 0) {
-                return name.compareTo(o.name);
-            }
-            return rc;
+                exports.add(p);
         }
     }
 
@@ -533,6 +399,7 @@ public class Module implements Comparable<Module> {
     }
 
     static class Factory {
+        // view to module map
         protected Map<String, Module> modules = new LinkedHashMap<>();
 
         protected final void addModule(Module m) {
@@ -549,17 +416,10 @@ public class Module implements Comparable<Module> {
             return modules.get(name);
         }
 
-        public final Module getModuleForView(String name) {
+        public final Module getModule(String name) {
             Module m = findModule(name);
             if (m != null)
                 return m;
-
-            // Fallback to search views
-            for (Map.Entry<String, Module> e: modules.entrySet()) {
-                m = e.getValue();
-                if (m.getView(name) != null)
-                    return m;
-            }
 
             throw new RuntimeException("module " + name + " doesn't exist");
         }

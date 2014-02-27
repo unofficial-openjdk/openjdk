@@ -145,14 +145,14 @@ public class GenModuleGraph extends Task {
                 b.requires(viewDependence(d));
             }
         });
-        mconfig.viewForName.values().stream()
-            .forEach(v -> {
-                if (v == mconfig.defaultView) {
-                    b.main(build(v));
-                } else {
-                    b.view(build(v));
-                }
-            });
+
+        b.main(buildMainView(mconfig));
+
+        // build one view per a package exported to specific modules for now
+        mconfig.exportsTo.keySet().stream()
+                .filter(p -> mconfig.exportsTo.get(p).size() > 0)
+                .map(p -> buildExportsTo(p, mconfig.exportsTo.get(p)))
+                .forEach(v -> b.view(v));
 
         if (Files.exists(mclasses)) {
             // find all packages included in the module
@@ -165,39 +165,41 @@ public class GenModuleGraph extends Task {
         return b.build();
     }
 
-    private View build(ModuleConfig.View v) {
-        View.Builder vb = new View.Builder();
-        vb.id(v.name);
+    private View buildExportsTo(String pn, Set<String> permits) {
+        View.Builder b = new View.Builder();
+        b.id(pn);
+        b.export(pn);
+        permits.forEach(m -> b.permit(m));
+        return b.build();
+    }
 
-        // filter out platform-specific exports
-        v.exports.stream()
-            .forEach(pn -> vb.export(pn));
-        for (Map.Entry<String, Set<String>> e : v.providers.entrySet()) {
+    private View buildMainView(ModuleConfig mconfig) {
+        View.Builder b = new View.Builder();
+        b.id(mconfig.module);
+
+        mconfig.exportsTo.keySet().stream()
+                .filter(p -> mconfig.exportsTo.get(p).isEmpty())
+                .forEach(p -> b.export(p));
+
+        for (Map.Entry<String, Set<String>> e : mconfig.providers.entrySet()) {
             String service = e.getKey();
             e.getValue().stream().forEach((impl) -> {
-                vb.service(service, impl);
+                b.service(service, impl);
             });
         }
-        v.permits.stream().forEach((String name) -> {
-            vb.permit(name);
-        });
-        return vb.build();
+        mconfig.permits.stream().forEach(n -> b.permit(n));
+        return b.build();
     }
 
     private ViewDependence viewDependence(Dependence d) {
         Set<ViewDependence.Modifier> ms = new HashSet<>();
-        if (d.requiresOptional())
-            ms.add(ViewDependence.Modifier.OPTIONAL);
         if (d.requiresPublic())
             ms.add(ViewDependence.Modifier.PUBLIC);
         return new ViewDependence(ms, d.name());
     }
 
-    private ServiceDependence serviceDependence(Dependence d) {
-        Set<ServiceDependence.Modifier> ms =
-            d.requiresOptional() ? EnumSet.of(ServiceDependence.Modifier.OPTIONAL) :
-                EnumSet.noneOf(ServiceDependence.Modifier.class);
-        return new ServiceDependence(ms, d.name());
+    private ServiceDependence serviceDependence(Dependence d) {                ;
+        return new ServiceDependence(EnumSet.noneOf(ServiceDependence.Modifier.class), d.name());
     }
 
     private static class Options {

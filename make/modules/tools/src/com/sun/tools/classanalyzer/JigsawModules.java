@@ -34,10 +34,8 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.Collection;
-import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -68,7 +66,6 @@ public class JigsawModules {
 
     public void build(Module m, Collection<Dependence> requires) {
         Builder b = new Builder();
-        b.main(build(m.defaultView()));
         requires.stream().forEach(d -> {
             if (d.requiresService()) {
                 b.requires(serviceDependence(d));
@@ -76,55 +73,53 @@ public class JigsawModules {
                 b.requires(viewDependence(d));
             }
         });
-        m.views().stream()
-            .filter(v -> !v.isEmpty() && v != m.defaultView())
-            .forEach(v -> b.view(build(v)));
         m.packages().stream()
             .filter(p -> p.hasClasses())
             .forEach(p -> b.include(p.name()));
+        // build exported packages and module-level permits
+        b.main(buildMainView(m));
+
+        // build exports to
+        Map<String,Set<Module>> exportsTo = m.exportsTo();
+        exportsTo.keySet().stream()
+                 .map(p -> buildExportsTo(p, exportsTo.get(p)))
+                 .forEach(v -> b.view(v));
+
         modules.put(m.name(), b.build());
+    }
+
+    private View buildExportsTo(String p, Set<Module> permits) {
+        View.Builder b = new View.Builder();
+        b.id(p);
+        b.export(p);
+        permits.forEach(m -> b.permit(m.name()));
+        return b.build();
     }
 
     private ViewDependence viewDependence(Dependence d) {
         Set<ViewDependence.Modifier> ms = new HashSet<>();
-        if (d.requiresOptional())
-            ms.add(ViewDependence.Modifier.OPTIONAL);
         if (d.requiresPublic())
             ms.add(ViewDependence.Modifier.PUBLIC);
         return new ViewDependence(ms, d.name());
     }
+
     private ServiceDependence serviceDependence(Dependence d) {
-        Set<ServiceDependence.Modifier> ms =
-            d.requiresOptional() ? EnumSet.of(ServiceDependence.Modifier.OPTIONAL) :
-                EnumSet.noneOf(ServiceDependence.Modifier.class);
-        return new ServiceDependence(ms, d.name());
+        return new ServiceDependence(EnumSet.noneOf(ServiceDependence.Modifier.class), d.name());
     }
 
-    private View build(Module.View v) {
+    private View buildMainView(Module m) {
         View.Builder b = new View.Builder();
-        b.id(v.id());
-        v.aliases().stream().forEach(alias -> b.alias(alias));
+        b.id(m.name());
 
-        // a view may have a platform-specific class
-        if (v.mainClass() != null) {
-            b.mainClass(v.mainClassName());
-        }
-
-        // filter out platform-specific exports
-        v.exports().stream()
-            .filter(pn -> v.module.getPackage(pn) != null)
-            .forEach(pn -> b.export(pn));
-
-        for (Map.Entry<String, Set<String>> e : v.providers().entrySet()) {
-            String service = e.getKey();
+        for (Map.Entry<Service, Set<Klass>> e : m.providers().entrySet()) {
+            String service = e.getKey().service.getClassName();
             e.getValue().stream().forEach((impl) -> {
-                b.service(service, impl);
+                b.service(service, impl.getClassName());
             });
         }
-
-        v.permits().stream().forEach((String name) -> {
-            b.permit(name);
-        });
+        m.exports().stream().forEach(pn -> b.export(pn));
+        m.permits().stream().forEachOrdered(n -> b.permit(n));
+        // permits
         return b.build();
     }
 
@@ -138,7 +133,6 @@ public class JigsawModules {
     }
 
     public void load(InputStream in) throws IOException {
-        int count = 0;
         try (ObjectInputStream sin = new ObjectInputStream(in)) {
             for (jdk.jigsaw.module.Module m : (jdk.jigsaw.module.Module[]) sin.readObject()) {
                 modules.put(m.id().name(), m);
@@ -160,6 +154,7 @@ public class JigsawModules {
         return result.values();
     }
 
+    private static final boolean showView = Boolean.getBoolean("classanalyzer.showView");
     private static final String INDENT = "    ";
     private void printModule(PrintWriter writer, jdk.jigsaw.module.Module m) {
         StringBuilder sb = new StringBuilder();
@@ -177,6 +172,38 @@ public class JigsawModules {
         // print main view first
         printView(0, sb, m.mainView());
 
+        if (!showView && m.views().size() > 1) {
+            // print exports to
+            for (View view : orderedSet(m.views(), (View v) -> v.id().name())) {
+                if (view == m.mainView()) continue;
+
+                String s = format(1, "exports %s to", view.id().name());
+                sb.append(s);
+
+                int tabs = s.length() / 8;
+                char[] spaces = new char[s.length() % 8];
+                Arrays.fill(spaces, ' ');
+
+                int count = 0;
+                for (String to : view.permits().stream().sorted().collect(Collectors.toSet())) {
+                    if (count < 3) {
+                        sb.append(count == 0 ? " " : ", ").append(to);
+                    } else {
+                        count = 0;
+                        sb.append(",\n");
+
+                        for (int i=0; i < tabs; i++) {
+                            sb.append("\t");
+                        }
+                        sb.append(spaces).append(" ").append(to);
+                    }
+                    count++;
+                }
+                sb.append(";\n");
+            }
+            sb.append("\n");
+        }
+
         for (Map.Entry<String,Set<String>> entry: m.mainView().services().entrySet()) {
             String sn = entry.getKey();
             for (String cn: entry.getValue()) {
@@ -190,10 +217,11 @@ public class JigsawModules {
                           .collect(Collectors.joining(" "));
             sb.append(format(1, "uses %s;%n", sd.service()));
         }
-
-        for (View view : orderedSet(m.views(), (View v) -> v.id().name())) {
-            if (view != m.mainView()) {
-                printView(1, sb, view);
+        if (showView) {
+            for (View view : orderedSet(m.views(), (View v) -> v.id().name())) {
+                if (view != m.mainView()) {
+                    printView(1, sb, view);
+                }
             }
         }
         sb.append("}\n");
@@ -210,6 +238,24 @@ public class JigsawModules {
             s += INDENT;
         }
         return s + String.format(fmt, args);
+    }
+
+    private StringBuilder formatList(StringBuilder sb, int level, String firstElement, Collection<?> c, String sep) {
+        assert !c.isEmpty();
+
+        TreeSet<?> ls = new TreeSet<>(c);
+        boolean first = true;
+        for (Object o : ls) {
+            if (first) {
+                sb.append(format(level, "%s %s", firstElement, o));
+                first = false;
+            } else {
+                sb.append(sep);
+                sb.append(format(level, "%s %s", firstElement, o));
+            }
+        }
+        sb.append(";\n");
+        return sb;
     }
 
     private StringBuilder formatList(StringBuilder sb, int level, String fmt, Collection<?> c) {

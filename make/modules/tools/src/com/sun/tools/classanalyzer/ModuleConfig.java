@@ -44,45 +44,18 @@ import java.util.LinkedHashSet;
  * module config file parser
  */
 public class ModuleConfig {
-    public static class View {
-        final String modulename;
-        final String name;
-        final Set<String> exports;
-        final Set<String> permits;
-        final Set<String> aliases;
-        final Map<String, Set<String>> providers;
-        String mainClass;
-
-        public View(String modulename, String name) {
-            this.modulename = modulename;
-            this.name = name;
-            this.exports = new HashSet<>();
-            this.permits = new HashSet<>();
-            this.aliases = new HashSet<>();
-            this.providers = new HashMap<>();
-        }
-
-        void addPermit(Module m) {
-            permits.add(m.name());
-        }
-    }
-
     private final Set<String> roots;
     private final Set<String> includes;
-    private final Map<String, Dependence> requires;
     private final Filter filter;
     private List<String> members;
     final String module;
     final String version;
-    final View defaultView;
-    final Map<String,View> viewForName;
+    final Map<String, Dependence> requires;
+    final Set<String> permits;
+    final Map<String, Set<String>> providers;
+    final Map<String, Set<String>> exportsTo;
 
     ModuleConfig(String name, String version) {
-        this(name, version, null);
-    }
-
-    ModuleConfig(String name, String version, String mainClass)
-    {
         assert name != null && version != null;
 
         this.module = name;
@@ -90,9 +63,10 @@ public class ModuleConfig {
         this.roots = new TreeSet<>();
         this.includes = new TreeSet<>();
         this.requires = new LinkedHashMap<>();
-        this.viewForName = new LinkedHashMap<>();
-        this.defaultView = newView(name);
         this.filter = new Filter(this);
+        this.permits = new HashSet<>();
+        this.providers = new HashMap<>();
+        this.exportsTo = new HashMap<>();
     }
 
     static ModuleConfig moduleConfigForUnknownModule() {
@@ -117,12 +91,6 @@ public class ModuleConfig {
 
     Map<String, Dependence> requires() {
         return requires;
-    }
-
-    private View newView(String name) {
-         View view = new View(module, name);
-         viewForName.put(name, view);
-         return view;
     }
 
     boolean matchesRoot(String name) {
@@ -452,12 +420,11 @@ public class ModuleConfig {
             boolean inProvides = false;
             boolean inUses = false;
             boolean inExports = false;
-            boolean inView = false;
+            String inExportsTo = null;
             Set<Dependence.Identifier> identifiers = new HashSet<>();
 
             boolean inBlockComment = false;
             ModuleConfig config = null;
-            View view = null;
 
             while ((line = reader.readLine()) != null) {
                 lineNumber++;
@@ -497,7 +464,6 @@ public class ModuleConfig {
                         // use the given version
                         String name = s[1].trim();
                         config = new ModuleConfig(name, version);
-                        view = config.defaultView;
 
                         result.add(config);
                         // switch to a new module; so reset the flags
@@ -510,14 +476,7 @@ public class ModuleConfig {
                         inProvides = false;
                         inUses = false;
                         inExports = false;
-                        inView = false;
-                        continue;
-                    } else if (keyword.equals("class")) {
-                        if (s.length != 2 || !s[1].trim().endsWith(";")) {
-                            throw new RuntimeException(file + ", line "
-                                    + lineNumber + ", is malformed");
-                        }
-                        view.mainClass = s[1].substring(0, s[1].length() - 1);
+                        inExportsTo = null;
                         continue;
                     } else if (keyword.equals("roots")) {
                         inRoots = true;
@@ -537,55 +496,42 @@ public class ModuleConfig {
                         }
                     } else if (keyword.equals("exports")) {
                         inExports = true;
+                        inExportsTo = null;
+                        if (s.length < 2 || s.length > 2 && !s[2].trim().equals("to")) {
+                            throw new RuntimeException(file + ", line "
+                                    + lineNumber + ", is malformed");
+                        }
+                        if (config.exportsTo.containsKey(s[1])) {
+                            throw new RuntimeException(file + ", line "
+                                    + lineNumber + " duplicated exports: \"" + s + "\"");
+                        }
+                        if (s.length > 2) {
+                            // skip past "to"
+                            inExportsTo = s[1];
+                            nextIndex = line.indexOf(inExportsTo) + inExportsTo.length();
+                            nextIndex = line.indexOf("to", nextIndex) + "to".length();
+                        }
                     } else if (keyword.equals("uses")) {
                         inUses = true;
                         identifiers.clear();
-                        identifiers.add(Dependence.Identifier.OPTIONAL);
                         identifiers.add(Dependence.Identifier.SERVICE);
                     } else if (keyword.equals("requires")) {
                         inRequires = true;
                         identifiers.clear();
-                        String name = null;
-                        for (int i=1; i < s.length; i++) {
-                            String ss = s[i].trim();
-                            switch (ss) {
-                                case "public":
+                        if (s.length >= 2) {
+                            String ss = s[1].trim();
+                            if (ss.equals("public")) {
                                     identifiers.add(Dependence.Identifier.PUBLIC);
-                                    break;
-                                case "optional":
-                                    identifiers.add(Dependence.Identifier.OPTIONAL);
-                                    break;
-                                default:
-                                    name = ss;
-                            }
-                            if (name == null) {
-                                nextIndex = line.indexOf(ss) + ss.length();
-                            } else {
-                                break;
+                                    nextIndex = line.indexOf(ss) + ss.length();
                             }
                         }
-                    } else if (keyword.equals("view")) {
-                        if (s.length != 3 || !s[2].trim().equals("{")) {
-                            throw new RuntimeException(file + ", line " +
-                                    lineNumber + ", is malformed");
-                        }
-
-                        // use the given version
-                        inView = true;
-                        String name = s[1].trim();
-                        view = config.newView(name);
-                        continue;
                     } else if (keyword.equals("}")) {
                         if (config == null || s.length != 1) {
                             throw new RuntimeException(file + ", line " +
                                     lineNumber + ", is malformed");
-                        } else if (inView) {
-                            inView = false;
-                            view = config.defaultView;
                         } else {
                             // end of a module
                             config = null;
-                            view = null;
                         }
                          continue;
                     } else {
@@ -629,18 +575,26 @@ public class ModuleConfig {
                         } else if (inAllows) {
                             config.filter.allow(s);
                         } else if (inPermits) {
-                            view.permits.add(s);
+                            config.permits.add(s);
                         } else if (inProvides) {
                             String[] names = values.split("\\s+");
                             assert names.length == 3;
-                            Set<String> providers = view.providers.get(names[0]);
+                            Set<String> providers = config.providers.get(names[0]);
                             if (providers == null) {
-                                view.providers.put(names[0], providers = new LinkedHashSet<>());
+                                config.providers.put(names[0], providers = new LinkedHashSet<>());
                             }
                             providers.add(names[2]);
                         } else if (inExports) {
-                            String e = s.equals("**") ? "*" : s;
-                            view.exports.add(e);
+                            if (inExportsTo != null) {
+                                Set<String> permits = config.exportsTo.get(inExportsTo);
+                                if (permits == null) {
+                                    config.exportsTo.put(inExportsTo, permits = new HashSet<>());
+                                }
+                                permits.add(s);
+                            } else {
+                                String pkg = s.equals("**") ? "*" : s;
+                                config.exportsTo.put(pkg, new HashSet<>());
+                            }
                         } else if (inUses || inRequires) {
                             if (config.requires.containsKey(s)) {
                                 throw new RuntimeException(file + ", line "
@@ -677,6 +631,31 @@ public class ModuleConfig {
 
         return result;
     }
+
+    private String formatExports(int level, String keyword, Map<String, Set<String>> exportsTo) {
+        if (exportsTo.isEmpty()) {
+            return "";
+        }
+
+        StringBuilder sb = new StringBuilder();
+        String format = level == 1 ? "%4s%-9s" : "%8s%-9s";
+        String spaces = String.format(format, "", "");
+        for (Map.Entry<String, Set<String>> e : exportsTo.entrySet()) {
+            sb.append(String.format(format, "", keyword)).append(e.getKey());
+            if (e.getValue().isEmpty()) {
+                sb.append(";\n");
+                continue;
+            }
+            String separator = " to ";
+            for (String v : e.getValue()) {
+                  sb.append(separator).append(v);
+                  separator = ", \n";
+            }
+            sb.append(";\n");
+        }
+        return sb.toString();
+    }
+
 
     private String formatServices(int level, String keyword, Map<String, Set<String>> services) {
         if (services.isEmpty()) {
@@ -732,13 +711,9 @@ public class ModuleConfig {
         for (Dependence rm : requires.values()) {
             sb.append("    ").append(rm.toString()).append("\n");
         }
-        for (View v : viewForName.values()) {
-            sb.append("    ").append("view ").append(v.name).append(" {\n");
-            sb.append(format(2, "permits", v.permits));
-            sb.append(format(2, "exports", v.exports));
-            sb.append(format(2, "provides", v.aliases));
-            sb.append(formatServices(2, "provides", v.providers));
-        }
+        sb.append(format(1, "permits", permits));
+        sb.append(formatExports(1, "exports", exportsTo));
+        sb.append(formatServices(1, "provides", providers));
         sb.append("}\n");
         return sb.toString();
     }

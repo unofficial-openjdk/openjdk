@@ -26,8 +26,8 @@ package com.sun.tools.classanalyzer;
 
 import com.sun.tools.classanalyzer.Module.ModuleVisitor;
 import java.io.*;
-import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.Files;
 import java.util.*;
 
 import java.nio.file.Path;
@@ -129,23 +129,27 @@ class ClassAnalyzer extends Task {
         // write module summary and dependencies
         final Path dir = Paths.get(options.classlistDir);
         dir.toFile().mkdirs();
-        builder.visit(new ModuleBuilder.Visitor<Void, Void>() {
-            @Override
-            public Void visitModule(Module m) throws IOException {
-                printModulePackages(m, dir);
-                printModuleSummary(m, dir, builder);
-                if (options.moduleInfoDir != null) {
-                    Path mdir = Paths.get(options.moduleInfoDir, m.name());
-                    mdir.toFile().mkdirs();
-                    try (PrintWriter writer =
-                            new PrintWriter(mdir.resolve("module-info.java").toFile()))
-                    {
-                        builder.printModuleInfo(writer, m);
+        try (BufferedWriter bw = Files.newBufferedWriter(dir.resolve("class-exports-to.list"));
+             PrintWriter writer = new PrintWriter(bw)) {
+            builder.visit(new ModuleBuilder.Visitor<Void, Void>() {
+                @Override
+                public Void visitModule(Module m) throws IOException {
+                    printModulePackages(m, dir);
+                    printModuleSummary(m, dir, builder);
+                    if (options.moduleInfoDir != null) {
+                        Path mdir = Paths.get(options.moduleInfoDir, m.name());
+                        mdir.toFile().mkdirs();
+                        try (PrintWriter writer =
+                                new PrintWriter(mdir.resolve("module-info.java").toFile()))
+                        {
+                            builder.printModuleInfo(writer, m);
+                        }
                     }
+                    printExportsToMap(m, writer);
+                    return null;
                 }
-                return null;
-            }
-        });
+            });
+        }
 
         // write split packages
         Map<String, Set<Module>> modulesForPackage = builder.getPackages();
@@ -256,6 +260,19 @@ class ClassAnalyzer extends Task {
                     + "%d bytes %d resources %n",
                     total, count, resBytes, resCount);
         }
+    }
+
+    private void printExportsToMap(Module m, PrintWriter writer) throws IOException {
+        Map<Klass,Set<Module>> classExportsToMap = m.classExportsTo();
+        if (classExportsToMap.isEmpty()) return;
+
+        writer.format("%nmodule %s%n", m.name());
+        classExportsToMap.keySet().stream().sorted().forEachOrdered(k -> {
+            writer.format("    exports %-50s to %s;%n", k.getClassName(),
+                          classExportsToMap.get(k).stream()
+                                .map(Module::name).sorted()
+                                .collect(Collectors.joining(", ")));
+        });
     }
 
     private void printModuleGroup(Module group, PrintWriter writer) throws IOException {

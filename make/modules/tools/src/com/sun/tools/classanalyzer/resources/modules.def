@@ -191,8 +191,6 @@ module java.base {
     uses sun.net.spi.nameservice.NameServiceDescriptor;
     uses sun.util.spi.XmlPropertiesProvider;
 
-    // @jdk.Exported
-    exports jdk;
 }
 
 module java.logging {
@@ -319,7 +317,6 @@ module java.jdbc.rowset {
     include javax.sql.rowset.**;
     include com.sun.rowset.**;
     uses javax.sql.rowset.RowSetFactory;
-    exports com.sun.sql.rowset;
 }
 
 // Deprecated APIs used by snmp
@@ -349,18 +346,11 @@ module javax.sasl {
     // NTLM
     include com.sun.security.ntlm.**,
             sun.net.www.protocol.http.ntlm.*;
-
-    exports javax.security.sasl;
 }
 
 module jdk.jaas {
     // JDK-specific API to JAAS
     include com.sun.security.auth.**;
-
-    exports com.sun.security.auth;
-    exports com.sun.security.auth.callback;
-    exports com.sun.security.auth.login;
-    exports com.sun.security.auth.module;
 }
 
 module javax.kerberos {
@@ -372,10 +362,6 @@ module javax.kerberos {
             sun.security.krb5.**,
             org.ietf.jgss.**,
             sun.net.www.protocol.http.spnego.*;
-
-    exports javax.security.auth.kerberos;
-    exports org.ietf.jgss;
-    exports com.sun.security.jgss;
 }
 
 module jdk.ucrypto {
@@ -571,6 +557,7 @@ module jdk.nashorn {
 
 module sun.charsets {
     include sun.nio.cs.ext.**;
+    permits java.desktop, java.base;
 }
 
 // localedata.jar in jre/lib/ext
@@ -579,6 +566,7 @@ module sun.localedata {
             sun.text.resources.**;
     include sun.util.resources.cldr.**,
             sun.text.resources.cldr.**;
+    permits java.base;
 }
 
 module jdk.jfr {
@@ -730,15 +718,6 @@ module jdk.tools {
     uses com.sun.jdi.connect.Connector;
     uses com.sun.jdi.connect.spi.TransportService;
     uses com.sun.tools.attach.spi.AttachProvider;
-
-    view jdk.attach {
-        exports com.sun.tools.attach;
-        exports com.sun.tools.attach.spi;
-    }
-
-    view jdk.jconsole {
-        exports com.sun.tools.jconsole;
-    }
 }
 
 module java.compact1 {
@@ -807,7 +786,6 @@ module jdk.jre {
     requires jdk.crypto.pkcs11;
     requires jdk.ucrypto;
 
-    requires java.base.internal;
     requires sun.charsets;
     requires sun.localedata;
 

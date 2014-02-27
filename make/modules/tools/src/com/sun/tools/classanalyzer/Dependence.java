@@ -27,7 +27,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class Dependence implements Comparable<Dependence> {
-    enum Identifier { PUBLIC, OPTIONAL, SERVICE };
+    enum Identifier { PUBLIC, SERVICE };
 
     private final String name;
     private final Set<Identifier> identifiers;
@@ -55,10 +55,6 @@ public class Dependence implements Comparable<Dependence> {
 
     public boolean requiresPublic() {
         return identifiers.contains(Identifier.PUBLIC);
-    }
-
-    public boolean requiresOptional() {
-        return identifiers.contains(Identifier.OPTIONAL);
     }
 
     @Override

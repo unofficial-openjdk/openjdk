@@ -55,6 +55,7 @@ public class ModuleBuilder {
     private final Map<String, Set<Package>> packages = new HashMap<>();
     private final Map<String, Service> services = new HashMap<>();
     private final Map<Module, Map<String,Dependence>> dependencesForModule = new HashMap<>();
+
     private final JigsawModules graph = new JigsawModules();
     public ModuleBuilder(List<ModuleConfig> configs,
                          List<Archive> archives,
@@ -75,7 +76,7 @@ public class ModuleBuilder {
         Set<Module> deps = new HashSet<>();
         for (Dependence d : dependencesForModule.get(m).values()) {
             if (!d.requiresService()) {
-                deps.add(factory().getModuleForView(d.name()));
+                deps.add(factory().getModule(d.name()));
             }
         }
         return deps;
@@ -153,6 +154,14 @@ public class ModuleBuilder {
                         validateProfile(m, requires);
                         profiles.remove(m.profile());
                     }
+
+                    // validate permits
+                    for (String n : m.permits()) {
+                        if (factory().findModule(n) == null) {
+                            throw new RuntimeException("permits " + n +
+                                " in config file for " + m + " not found");
+                        }
+                    }
                 }
             }
         }
@@ -160,9 +169,6 @@ public class ModuleBuilder {
         if (!profiles.isEmpty()) {
             throw new RuntimeException("Profile module missing: " + profiles);
         }
-
-        // fixup permits after dependences are found
-        fixupPermits();
     }
 
     private Module findModule(String name) {
@@ -246,16 +252,6 @@ public class ModuleBuilder {
     // not in an exported package of the base module
     private boolean requiresModuleDependence(Module m, Klass k) {
         return m.group() != k.getModule().group();
-    }
-
-    private Module.View getRequiresModule(Module m, Klass k) {
-        if (m.group() == k.getModule().group())
-            return null;
-
-        // Returns true if class k is exported from another module
-        // and not from the base's default view
-        Module other = k.getModule().group();
-        return other.getView(k);
     }
 
     interface KlassFilter {
@@ -342,7 +338,7 @@ public class ModuleBuilder {
     private void validateProfile(Module m, Map<String, Dependence> requires) {
        Profile profile = m.profile();
         for (Dependence d : requires.values()) {
-            Profile p = factory().getModuleForView(d.name()).profile();
+            Profile p = factory().getModule(d.name()).profile();
             if (p != null && p != profile && !profile.requires(p)) {
                 // dependence is a module in this profile
                 // or requires a smaller profile
@@ -351,21 +347,6 @@ public class ModuleBuilder {
             }
         }
         return;
-    }
-
-    private void fixupPermits() {
-        // fixup permits after all ModuleInfo are created in two passes:
-        // 1. permits the requesting module if it requires local dependence
-        // 2. if permits set is non-empty, permits
-        //    all of its requesting modules
-        for (Map.Entry<Module.View, Set<Module>> e : backedges.entrySet()) {
-            Module.View dmv = e.getKey();
-            if (dmv.permits().size() > 0) {
-                for (Module m : e.getValue()) {
-                    dmv.addPermit(m.defaultView().name);
-                }
-            }
-        }
     }
 
     protected Map<String, Dependence> buildModuleDependences(Module m) {
@@ -400,73 +381,44 @@ public class ModuleBuilder {
             }
         }
 
-        // add dependency due to the main class
-        for (Module.View v : m.views()) {
-            if (v.mainClassName() != null) {
-                Klass k = classes.get(v.mainClassName().replace('.', '/'));
-                if (k != null) {
-                    v.setMainClass(k);
-                    // this main class may possibly be a platform-specific class
-                    if (requiresModuleDependence(m, k)) {
-                        addDependence(m, k, requires);
-                    }
-                }
-            }
-            for (String name : v.permitNames()) {
-                Module pm = factory().getModuleForView(name);
-                if (pm != null) {
-                    v.addPermit(pm.group().defaultView().name);
-                    addBackEdge(m, v);
-                } else {
-                    throw new RuntimeException("module " + name
-                            + " specified in the permits rule for " + m.name()
-                            + " doesn't exist");
-                }
-            }
-        }
-
         for (Service s : m.services()) {
             String name = s.service.getClassName();
-            requires.put(name, new Dependence(name, EnumSet.of(OPTIONAL, SERVICE)));
+            requires.put(name, new Dependence(name, EnumSet.of(SERVICE)));
         }
-
-        Map<String,Set<String>> providesServices = new HashMap<>();
-        for (Map.Entry<Service,Set<Klass>> entry: m.providers().entrySet()) {
-            String sn = entry.getKey().service.getClassName();
-            Set<String> impls = providesServices.get(sn);
-            if (impls == null) {
-                providesServices.put(sn, impls = new LinkedHashSet<>());
-            }
-            // preserve order, assume no dups in input
-            for (Klass k : entry.getValue()) {
-                impls.add(k.getClassName());
-            }
-        }
-        m.defaultView().addProviders(providesServices);
 
         return requires;
     }
 
-    // backedges (i.e. reverse dependences)
-    private final Map<Module.View, Set<Module>> backedges = new HashMap<>();
-    private void addDependence(Module from, Klass k, Map<String, Dependence> requires) {
-        Module dm = k.getModule().group();
-        Module.View view = dm.getView(k);
-        if (view == null)
-            throw new RuntimeException("No view exporting " + k);
+    private void addDependence(Module from, Klass k,
+                               Map<String, Dependence> requires) {
+        Module to = k.getModule().group();
+        assert from.group() != to;
 
-        addDependence(from, dm, view, requires);
-    }
-
-    private void addBackEdge(Module from, Module.View view) {
-        Set<Module> refs = backedges.get(view);
-        if (refs == null) {
-            backedges.put(view, refs = new HashSet<>());
+        if (!getPackage(k).isExported) {
+            to.exportsInternalClass(k, from);
         }
-        refs.add(from);
+        addDependence(from, to, requires);
     }
+
+    private void addDependence(Module from, Module to,
+                               Map<String, Dependence> requires) {
+        addDependence(from, to, requires, EnumSet.noneOf(Dependence.Identifier.class));
+    }
+
+    private void addDependence(Module from, Module to,
+                               Map<String, Dependence> requires,
+                               Set<Dependence.Identifier> mods) {
+        String name = to.name();
+        Dependence dep = requires.get(name);
+        if (dep == null) {
+            requires.put(name, dep = new Dependence(name, mods));
+        } else {
+            assert dep.name().equals(name);
+        }
+    }
+
     private void addDependence(Module m, Dependence d, Map<String, Dependence> requires) {
-        Module other = factory().getModuleForView(d.name());
+        Module other = factory().getModule(d.name());
         if (other == null) {
             throw new RuntimeException(m.name() + " requires "
                     + d.name() + "not found");
@@ -475,39 +427,7 @@ public class ModuleBuilder {
         if (other.isEmpty() && !other.allowsEmpty()) {
             return;
         }
-        Module.View view = other.getView(d.name());
-        addDependence(m, other, view, requires, d.mods());
-    }
-
-    private void addDependence(Module from, Module to, Module.View view,
-                               Map<String, Dependence> requires) {
-        addDependence(from, to, view, requires, EnumSet.noneOf(Dependence.Identifier.class));
-    }
-
-    private void addDependence(Module from, Module to, Module.View view,
-                               Map<String, Dependence> requires,
-                               Set<Dependence.Identifier> mods) {
-        assert from.group() != to.group();
-        addBackEdge(from, view);
-
-        if (view == to.internalView()) {
-            // if there is an optional dependence on the main view,
-            // make this an optional dependence
-            Dependence d = requires.get(to.group().name());
-            if (d != null && d.requiresOptional() && !mods.contains(OPTIONAL)) {
-                mods = new HashSet<>(mods);
-                mods.add(OPTIONAL);
-            }
-            view.addPermit(from.group().name());
-        }
-
-        String name = view.name;
-        Dependence dep = requires.get(name);
-        if (dep == null) {
-            requires.put(name, dep = new Dependence(name, mods));
-        } else {
-            assert dep.name().equals(name);
-        }
+        addDependence(m, other, requires, d.mods());
     }
 
     public interface Visitor<R, P> {

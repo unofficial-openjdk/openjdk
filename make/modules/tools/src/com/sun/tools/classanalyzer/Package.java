@@ -49,6 +49,9 @@ public class Package implements Comparable<Package> {
         return pkgName;
     }
 
+    Module module() {
+        return module;
+    }
     boolean hasClasses() {
         return classCount > 0;
     }
