@@ -26,6 +26,7 @@
 package jdk.jigsaw.module;
 
 import java.util.ArrayDeque;
+import java.util.Arrays;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -49,7 +50,7 @@ public final class SimpleResolver {
     /**
      * Creates a {@code SimpleResolver} with the given set of modules.
      */
-    public SimpleResolver(Module[] modules) {
+    public SimpleResolver(Iterable<Module> modules) {
         for (Module m: modules) {
             for (View v: m.views()) {
                 String name = v.id().name();
@@ -63,11 +64,15 @@ public final class SimpleResolver {
         }
     }
 
+    public SimpleResolver(Module... modules) {
+        this(Arrays.asList(modules));
+    }
+
     /**
      * Returns the set of modules required to satisfy the given array of root
      * modules.
      */
-    public Set<Module> resolve(String... rootModules) {
+    public Set<Module> resolve(Iterable<String> rootModules) {
         // the selected modules
         Set<Module> selected = new HashSet<>();
 
@@ -115,5 +120,9 @@ public final class SimpleResolver {
         }
 
         return selected;
+    }
+
+    public Set<Module> resolve(String... roots) {
+        return resolve(Arrays.asList(roots));
     }
 }

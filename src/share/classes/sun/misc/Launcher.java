@@ -34,10 +34,8 @@ import java.net.MalformedURLException;
 import java.net.URLStreamHandler;
 import java.net.URLStreamHandlerFactory;
 import java.nio.file.Files;
-import java.nio.file.DirectoryStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -133,7 +131,7 @@ public class Launcher {
      * Returns a list of the module names for the modules on the system/application
      * class path.
      */
-    public List<String> getAppModules() {
+    public List<String> getAppModuleNames() {
         return loader.modules();
     }
 
@@ -141,8 +139,15 @@ public class Launcher {
      * Returns a list of the module names for the modules on the extensions
      * class path.
      */
-    public List<String> getExtModules() {
+    public List<String> getExtModuleNames() {
         return extcl.modules();
+    }
+
+    /**
+     * Returns the module path
+     */
+    public ModulePath getModulePath() {
+        return loader.modulePath();
     }
 
     /*
@@ -294,13 +299,15 @@ public class Launcher {
         static {
             ClassLoader.registerAsParallelCapable();
         }
-        static final List<String> modules = Launcher.readModulesList("system.modules");
+        static final List<String> systemModules = Launcher.readModulesList("system.modules");
+
+        private final ModulePath modulePath;
 
         public static AppClassLoader getAppClassLoader(final ClassLoader extcl)
             throws IOException
         {
             String cp = System.getProperty("java.class.path");
-            String mp = Launcher.toClassPath(modules);
+            String mp = Launcher.toClassPath(systemModules);
             String s;
             if (mp.length() > 0) {
                 // ## FIXME should we update java.class.path
@@ -323,29 +330,46 @@ public class Launcher {
                         URL[] urls = (s == null) ? new URL[0] : pathToURLs(path);
 
                         // -modulepath => URLs to prepend to class path
-                        String mp = System.getProperty("java.module.path");
-                        if (mp != null) {
-                            List<URL> list = Launcher.toModuleURLs(mp);
+                        String dirs= System.getProperty("java.module.path");
+                        ModulePath mp = ModulePath.scan(dirs); // null okay
+                        List<URL> list = mp.urls();
+                        if (list.size() > 0) {
                             for (URL url: urls) {
                                 list.add(url);
                             }
                             urls = list.toArray(new URL[0]);
                         }
 
-                        return new AppClassLoader(urls, extcl);
+                        return new AppClassLoader(mp, urls, extcl);
                     }
                 });
-        }
-
-        public List<String> modules() {
-            return modules;
         }
 
         /*
          * Creates a new AppClassLoader
          */
-        AppClassLoader(URL[] urls, ClassLoader parent) {
+        AppClassLoader(ModulePath mp, URL[] urls, ClassLoader parent) {
             super(urls, parent, factory);
+            this.modulePath = mp;
+        }
+
+        /**
+         * Returns the ModulePath
+         */
+        ModulePath modulePath() {
+            return modulePath;
+        }
+
+        /**
+         * Returns the list of the module names associated with this loader.
+         * The names are ordered so that the names of the JDK modules appear
+         * first, followed by the names of the modules on the modulepath
+         * (in modulepath order).
+         */
+        public List<String> modules() {
+            List<String> result = new ArrayList<>(systemModules);
+            result.addAll(modulePath.moduleNames());
+            return result;
         }
 
         /**
@@ -612,38 +636,6 @@ public class Launcher {
         }
         return result;
     }
-
-    /**
-     * Returns a list of URLs to the jmods and exploded modules on the
-     * given module path
-     */
-    private static List<URL> toModuleURLs(String mp) {
-        List<URL> result = new ArrayList<>();
-        String[] dirs = mp.split(File.pathSeparator);
-        for (String dir: dirs) {
-            Path dirPath = Paths.get(dir);
-            try (DirectoryStream<Path> stream = Files.newDirectoryStream(dirPath)) {
-                for (Path entry: stream) {
-                    BasicFileAttributes attrs =
-                        Files.readAttributes(entry, BasicFileAttributes.class);
-                    if (attrs.isRegularFile() && entry.toString().endsWith(".jmod")) {
-                        String s = entry.toUri().toURL().toString();
-                        URL url = new URL("jmod" + s.substring(4));
-                        result.add(url);
-                    } else if (attrs.isDirectory()) {
-                        Path mi = entry.resolve("module-info.class");
-                        if (Files.exists(mi)) {
-                            URL url = entry.toUri().toURL();
-                            result.add(url);
-                        }
-                    }
-                }
-            } catch (IOException ioe) {
-                // ignore for now
-            }
-        }
-        return result;
-   }
 }
 
 class PathPermissions extends PermissionCollection {

@@ -26,10 +26,13 @@
 package sun.misc;
 
 import java.net.URL;
+import java.net.URI;
 import java.net.URLConnection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.zip.ZipFile;
+import java.io.File;
+import java.io.IOException;
 
 /**
  * A simple cache of open jmod files used to support URL connections
@@ -42,10 +45,32 @@ public class JModCache {
     private static final Map<URL, ZipFile> jmods = new ConcurrentHashMap<>();
 
     /**
-     * Adds an entry to the cache.
+     * Returns a {@code ZipFile} that can be used to read entries from a
+     * jmod file that is located by the given URL. The {@code ZipFile}
+     * instances may be shared with other threads so care should be taken
+     * not to close the file.
      */
-    public static ZipFile add(URL url, ZipFile zf) {
-        return jmods.putIfAbsent(url, zf);
+    public static ZipFile get(URL url) throws IOException {
+        ZipFile zf = jmods.get(url);
+        if (zf != null)
+            return zf;
+
+        // not in cache so need to open it
+        String s = url.toString();
+        if (!s.startsWith("jmod:"))
+            throw new IOException("not a jmod URL");
+        s = "file" + s.substring(4);
+        File f = new File(URI.create(s));
+        zf = new ZipFile(f);
+
+        // potential race with other threads opening the same URL
+        ZipFile previous = jmods.putIfAbsent(url, zf);
+        if (previous == null) {
+            return zf;
+        } else {
+            zf.close();
+            return previous;
+        }
     }
 
     /**
@@ -53,13 +78,5 @@ public class JModCache {
      */
     public static ZipFile remove(URL url) {
         return jmods.remove(url);
-    }
-
-    /**
-     * Returns the ZipFile to which the given URL is mapped or {@code null}
-     * if there is no mapping.
-     */
-    public static ZipFile get(URL url) {
-        return jmods.get(url);
     }
 }

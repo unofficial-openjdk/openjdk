@@ -1112,19 +1112,7 @@ public class URLClassPath {
 
         JModLoader(URL url) throws IOException {
             super(url);
-            String s = url.toString();
-            if (!s.startsWith("jmod:"))
-                throw new IOException("not a jmod URL");
-            s = "file" + s.substring(4);
-            File f = new File(URI.create(s));
-            ZipFile zf = new ZipFile(f);
-            ZipFile previous = JModCache.add(url, zf);
-            if (previous == null) {
-                this.zipfile = zf;
-            } else {
-                zf.close();
-                this.zipfile = previous;
-            }
+            this.zipfile = JModCache.get(url);
         }
 
         private String toEntryName(String name) {

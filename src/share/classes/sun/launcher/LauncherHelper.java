@@ -81,6 +81,7 @@ import jdk.jigsaw.module.View;
 import jdk.jigsaw.module.ViewDependence;
 
 import sun.misc.Launcher;
+import sun.misc.ModulePath;
 
 public enum LauncherHelper {
     INSTANCE;
@@ -900,7 +901,7 @@ public enum LauncherHelper {
     /**
      * Setup the module boundaries
      */
-    private static void setupAccessControl(Module[] modules, Set<Module> modulesNeeded) {
+    private static void setupAccessControl(Iterable<Module> modules, Set<Module> modulesNeeded) {
         Map<String, Module> names = new HashMap<>();
         for (Module m: modules) {
             names.put(m.mainView().id().name(), m);
@@ -916,14 +917,14 @@ public enum LauncherHelper {
         Map<Module, ClassLoader> moduleToLoaders = new HashMap<>();
         Launcher launcher = Launcher.getLauncher();
         ClassLoader extcl = launcher.getExtClassLoader();
-        for (String name: launcher.getExtModules()) {
+        for (String name: launcher.getExtModuleNames()) {
             Module m = names.get(name);
             if (m != null) {
                 moduleToLoaders.put(m, extcl);
             }
         }
         ClassLoader cl = launcher.getClassLoader();
-        for (String name: launcher.getAppModules()) {
+        for (String name: launcher.getAppModuleNames()) {
             Module m = names.get(name);
             if (m != null)
                 moduleToLoaders.put(m, cl);
@@ -978,32 +979,53 @@ public enum LauncherHelper {
     }
 
     /**
-     * Load compiled module graph, resolve the modules specified on the command
-     * line (if any) and setup the access control.
+     * Load the "compiled" module graph, resolve the modules specified on the command
+     * line and the modules on the modulepath and setup the access control.
      */
     private static void initModules() throws IOException, ClassNotFoundException {
-        Module[] modules = readModules();
-        if (modules == null || modules.length == 0) {
+        Module[] jdkModules = readModules();
+        if (jdkModules == null || jdkModules.length == 0) {
             // do nothing for now
             return;
         }
 
+        Set<String> roots = new HashSet<>();
         String propValue = System.getProperty("jdk.launcher.modules");
-        String[] requested;
         if (propValue == null) {
-            requested = new String[]{ "jdk" };
+            roots.add("jdk");
         } else {
-            requested = propValue.split(",");
+            for (String root: propValue.split(",")) {
+                roots.add(root);
+            }
         }
 
-        boolean verbose = false;
-        propValue = System.getProperty("jdk.launcher.modules.verbose");
-        if (propValue != null)
-            verbose = Boolean.parseBoolean(propValue);
+        // tracing
+        boolean verbose = Boolean.parseBoolean(
+            System.getProperty("jdk.launcher.modules.verbose"));
+
+        // the complete set of modules includes the JDK modules and
+        // any modules on the modulepath
+        Set<Module> modules = new HashSet<>();
+        for (Module m: jdkModules) {
+            modules.add(m);
+        }
+        ModulePath mp = Launcher.getLauncher().getModulePath();
+        if (mp != null) {
+            for (Module m: mp.modules()) {
+                modules.add(m);
+
+                // for now the -mods options cannot be used to make
+                // modules on the modulepath non-readable.
+                roots.add(m.id().name());
+
+                if (verbose)
+                    System.out.println(m);
+            }
+        }
 
         // find set of modules required
         SimpleResolver resolver = new SimpleResolver(modules);
-        Set<Module> modulesNeeded = resolver.resolve(requested);
+        Set<Module> modulesNeeded = resolver.resolve(roots);
         if (verbose) {
             Set<Module> sorted = new TreeSet<>(modulesNeeded);
             sorted.forEach(m -> System.out.println(m.id().name()));
