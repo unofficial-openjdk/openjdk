@@ -493,12 +493,24 @@ bool Reflection::verify_class_access(Klass* current_class, Klass* new_class, boo
 
     // a type in a module trying to access a type in the unamed module
     // (instrumentation case, no support for this yet)
-    if (m2 == NULL)
+    if (m2 == NULL) {
+      if (TraceAccessControlErrors) {
+        ResourceMark rm;
+        tty->print_cr("Type in module %s (%s) cannot access type in unnamed module (%s)",
+          m1->name(), current_class->external_name(), new_class->external_name());
+      }
       return false;
+    }
 
     // m1 does not require m2
-    if (m1 != NULL && !m1->requires(m2))
+    if (m1 != NULL && !m1->requires(m2)) {
+      if (TraceAccessControlErrors) {
+        ResourceMark rm;
+        tty->print_cr("Type in module %s (%s) cannot access type in module %s (%s)",
+          m1->name(), current_class->external_name(), m2->name(), new_class->external_name());
+      }
       return false;
+    }
 
     // ## FIXME using package name for now
     ResourceMark rm;
@@ -506,8 +518,14 @@ bool Reflection::verify_class_access(Klass* current_class, Klass* new_class, boo
 
     // if requester is in named module then type must be exported
     // to that module (no permits or m1 is permitted)
-    if (m1 != NULL)
-      return m2->is_exported_to_module(pkg, m1);
+    if (m1 != NULL) {
+      bool okay = m2->is_exported_to_module(pkg, m1);
+      if (!okay && TraceAccessControlErrors) {
+        tty->print_cr("Type in module %s (%s) cannot access type in module %s (%s)",
+          m1->name(), current_class->external_name(), m2->name(), new_class->external_name());
+      }
+      return okay;
+    }
 
     // requester is in unnamed module, okay if exported without permits
     if (m2->is_exported_without_permits(pkg))

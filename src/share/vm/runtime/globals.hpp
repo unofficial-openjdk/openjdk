@@ -1363,6 +1363,9 @@ class CommandLineFlags {
   product(bool, TraceMonitorInflation, false,                               \
           "Trace monitor inflation in JVM")                                 \
                                                                             \
+  product(bool, TraceAccessControlErrors, false,                            \
+          "Trace access control errors")                                    \
+                                                                            \
   /* gc */                                                                  \
                                                                             \
   product(bool, UseSerialGC, false,                                         \
