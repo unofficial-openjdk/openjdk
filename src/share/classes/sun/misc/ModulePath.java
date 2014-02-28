@@ -270,14 +270,13 @@ public class ModulePath {
 
         // requires, default to java.base if missing
         Set<String> requires = mi.requires();
-        if (requires == null) {
-            builder.requires(new ViewDependence(null, ViewIdQuery.parse("java.base")));
-        } else {
+        if (requires != null) {
             for (String require: requires) {
                 ViewDependence vd = new ViewDependence(null, ViewIdQuery.parse(require));
                 builder.requires(vd);
             }
         }
+        builder.requires(new ViewDependence(null, ViewIdQuery.parse("java.base")));
 
         // TBD, need qualified exports and more
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -65,10 +65,10 @@ class MethodAccessorGenerator extends AccessorGenerator {
     }
 
     /** This routine is not thread-safe */
-    public MethodAccessor generateMethod(final Class<?> declaringClass,
-                                         String name,
-                                         final Class<?>[] parameterTypes,
-                                         final Class<?> returnType,
+    public MethodAccessor generateMethod(Class<?> declaringClass,
+                                         String   name,
+                                         Class<?>[] parameterTypes,
+                                         Class<?>   returnType,
                                          Class<?>[] checkedExceptions,
                                          int modifiers)
     {
@@ -393,25 +393,19 @@ class MethodAccessorGenerator extends AccessorGenerator {
         return AccessController.doPrivileged(
             new PrivilegedAction<MagicAccessorImpl>() {
                 public MagicAccessorImpl run() {
-                    try {
-                        Class<?> c = ClassDefiner.defineClass
+                        try {
+                        return (MagicAccessorImpl)
+                        ClassDefiner.defineClass
                                 (generatedName,
                                  bytes,
                                  0,
                                  bytes.length,
-                                 declaringClass.getClassLoader());
-
-                        ensureAccess(c, declaringClass);
-                        for (Class<?> param: parameterTypes) {
-                            ensureAccess(c, param);
+                                 declaringClass.getClassLoader()).newInstance();
+                        } catch (InstantiationException | IllegalAccessException e) {
+                            throw new InternalError(e);
                         }
-                        ensureAccess(c, returnType);
-
-                        return (MagicAccessorImpl)c.newInstance();
-                    } catch (InstantiationException | IllegalAccessException e) {
-                        throw new InternalError(e);
                     }
-                }});
+                });
     }
 
     /** This emits the code for either invoke() or newInstance() */
@@ -782,15 +776,5 @@ class MethodAccessorGenerator extends AccessorGenerator {
             int num = ++methodSymnum;
             return "sun/reflect/GeneratedMethodAccessor" + num;
         }
-    }
-
-    private static void ensureAccess(Class<?> c, Class<?> target) {
-      // do nothing for now
-    }
-
-    private static String packageName(Class<?> c) {
-        String cn = c.getName();
-        int last = cn.lastIndexOf(".");
-        return (last != -1) ? cn.substring(0, last) : "";
     }
 }

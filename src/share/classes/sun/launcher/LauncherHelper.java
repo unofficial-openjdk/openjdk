@@ -969,8 +969,11 @@ public enum LauncherHelper {
                 } else {
                     for (String pkg: v.exports()) {
                         for (String other: v.permits()) {
-                            long toHandle = moduleToHandle.get(names.get(other));
-                            sun.misc.VM.addExportsWithPermits(fromHandle, pkg, toHandle);
+                            Module m2 = names.get(other);
+                            if (m2 != null) {
+                                long toHandle = moduleToHandle.get(m2);
+                                sun.misc.VM.addExportsWithPermits(fromHandle, pkg, toHandle);
+                            }
                         }
                     }
                 }
