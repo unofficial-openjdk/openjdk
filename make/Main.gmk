@@ -65,7 +65,7 @@ MAKE_ARGS:=$(MAKE_ARGS) -j$(JOBS)
 default: jdk
 	@$(call CheckIfMakeAtEnd)
 
-all: images docs
+all: jigsaw images docs
 	@$(call CheckIfMakeAtEnd)
 
 # Setup a rule for SPEC file that fails if executed. This check makes sure the configuration
