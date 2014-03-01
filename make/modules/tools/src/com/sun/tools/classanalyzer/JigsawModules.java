@@ -66,7 +66,7 @@ public class JigsawModules {
 
     public void build(Module m, Collection<Dependence> requires) {
         Builder b = new Builder();
-        requires.stream().forEach(d -> {
+        requires.forEach(d -> {
             if (d.requiresService()) {
                 b.requires(serviceDependence(d));
             } else {
@@ -74,8 +74,9 @@ public class JigsawModules {
             }
         });
         m.packages().stream()
-            .filter(p -> p.hasClasses())
-            .forEach(p -> b.include(p.name()));
+            .filter(Package::hasClasses)
+            .map(Package::name)
+            .forEach(b::include);
         // build exported packages and module-level permits
         b.main(buildMainView(m));
 
@@ -83,16 +84,24 @@ public class JigsawModules {
         Map<String,Set<Module>> exportsTo = m.exportsTo();
         exportsTo.keySet().stream()
                  .map(p -> buildExportsTo(p, exportsTo.get(p)))
-                 .forEach(v -> b.view(v));
+                 .forEach(b::view);
 
-        modules.put(m.name(), b.build());
+        jdk.jigsaw.module.Module jm = b.build();
+        jm.views().forEach(v -> {
+            if (modules.containsKey(v.id().name())) {
+               throw new RuntimeException("view " + v.id().name() +
+                   " in " + m.name() +
+                   " duplicated module name ");
+            }
+            modules.put(v.id().name(), jm);
+        });
     }
 
     private View buildExportsTo(String p, Set<Module> permits) {
         View.Builder b = new View.Builder();
         b.id(p);
         b.export(p);
-        permits.forEach(m -> b.permit(m.name()));
+        permits.stream().map(Module::name).forEach(b::permit);
         return b.build();
     }
 
@@ -104,21 +113,18 @@ public class JigsawModules {
     }
 
     private ServiceDependence serviceDependence(Dependence d) {
-        return new ServiceDependence(EnumSet.noneOf(ServiceDependence.Modifier.class), d.name());
+        return new ServiceDependence(EnumSet.of(ServiceDependence.Modifier.OPTIONAL), d.name());
     }
 
     private View buildMainView(Module m) {
         View.Builder b = new View.Builder();
         b.id(m.name());
 
-        for (Map.Entry<Service, Set<Klass>> e : m.providers().entrySet()) {
-            String service = e.getKey().service.getClassName();
-            e.getValue().stream().forEach((impl) -> {
-                b.service(service, impl.getClassName());
-            });
-        }
-        m.exports().stream().forEach(pn -> b.export(pn));
-        m.permits().stream().forEachOrdered(n -> b.permit(n));
+        m.providers().keySet().forEach(s ->
+            m.providers().get(s).forEach(impl ->
+                b.service(s.service.getClassName(), impl.getClassName())));
+        m.exports().forEach(b::export);
+        m.permits().forEach(b::permit);
         // permits
         return b.build();
     }

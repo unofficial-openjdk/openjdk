@@ -165,15 +165,9 @@ public class Module implements Comparable<Module> {
 
     Map<String,Set<Module>> exportsTo() {
         Map<String,Set<Module>> packageExportsToModule = new HashMap<>();
-        classExportsTo.keySet().stream().forEach(k -> {
-            String pkg = k.getPackageName();
-            Set<Module> ms = packageExportsToModule.get(pkg);
-            if (ms == null) {
-                ms = new HashSet<>();
-                packageExportsToModule.put(pkg, ms);
-            }
-            ms.addAll(classExportsTo.get(k));
-        });
+        classExportsTo.keySet().forEach(k ->
+            packageExportsToModule.computeIfAbsent(k.getPackageName(), _k -> new HashSet<>())
+            .addAll(classExportsTo.get(k)));
         // process exports to from the config
         for (Map.Entry<String, Set<String>> e : config.exportsTo.entrySet()) {
             Package pkg = packages.get(e.getKey());
@@ -182,14 +176,8 @@ public class Module implements Comparable<Module> {
                 continue;
             }
             if (!e.getValue().isEmpty()) {
-                Set<Module> ms = packageExportsToModule.get(e.getKey());
-                if (ms == null) {
-                    ms = new HashSet<>();
-                    packageExportsToModule.put(e.getKey(), ms);
-                }
-                ms.addAll(e.getValue().stream()
-                            .map(n -> getFactory().getModule(n))
-                            .collect(Collectors.toSet()));
+                Set<Module> ms = packageExportsToModule.computeIfAbsent(e.getKey(), k -> new HashSet<>());
+                e.getValue().forEach(n -> ms.add( getFactory().getModule(n)));
             }
         }
         return packageExportsToModule;
@@ -200,11 +188,7 @@ public class Module implements Comparable<Module> {
     }
 
     void exportsInternalClass(Klass k, Module m) {
-        Set<Module> ms = classExportsTo.get(k);
-        if (ms == null) {
-            classExportsTo.put(k, ms = new HashSet<>());
-        }
-        ms.add(m);
+        classExportsTo.computeIfAbsent(k, _k -> new HashSet<>()).add(m);
     }
 
     boolean contains(Klass k) {

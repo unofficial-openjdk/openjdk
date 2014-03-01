@@ -138,7 +138,7 @@ public class GenModuleGraph extends Task {
 
     private Module build(ModuleConfig mconfig, Path mclasses) throws IOException {
         Builder b = new Builder();
-        mconfig.requires().values().stream().forEach(d -> {
+        mconfig.requires().values().forEach(d -> {
             if (d.requiresService()) {
                 b.requires(serviceDependence(d));
             } else {
@@ -152,15 +152,15 @@ public class GenModuleGraph extends Task {
         mconfig.exportsTo.keySet().stream()
                 .filter(p -> mconfig.exportsTo.get(p).size() > 0)
                 .map(p -> buildExportsTo(p, mconfig.exportsTo.get(p)))
-                .forEach(v -> b.view(v));
+                .forEach(b::view);
 
         if (Files.exists(mclasses)) {
             // find all packages included in the module
-            Set<Path> packages = Files.find(mclasses, Integer.MAX_VALUE,
+            Files.find(mclasses, Integer.MAX_VALUE,
                        (Path p,BasicFileAttributes attr) ->
                             p.getFileName().toString().endsWith(".class"))
-                 .map(Path::getParent).collect(Collectors.toSet());
-            packages.forEach(pkg -> b.include(mclasses.relativize(pkg).toString().replace(File.separatorChar, '.')));
+                 .map(Path::getParent)
+                 .forEach(pkg -> b.include(mclasses.relativize(pkg).toString().replace(File.separatorChar, '.')));
         }
         return b.build();
     }
@@ -169,7 +169,7 @@ public class GenModuleGraph extends Task {
         View.Builder b = new View.Builder();
         b.id(pn);
         b.export(pn);
-        permits.forEach(m -> b.permit(m));
+        permits.forEach(b::permit);
         return b.build();
     }
 
@@ -178,16 +178,12 @@ public class GenModuleGraph extends Task {
         b.id(mconfig.module);
 
         mconfig.exportsTo.keySet().stream()
-                .filter(p -> mconfig.exportsTo.get(p).isEmpty())
-                .forEach(p -> b.export(p));
+            .filter(p -> mconfig.exportsTo.get(p).isEmpty())
+            .forEach(b::export);
 
-        for (Map.Entry<String, Set<String>> e : mconfig.providers.entrySet()) {
-            String service = e.getKey();
-            e.getValue().stream().forEach((impl) -> {
-                b.service(service, impl);
-            });
-        }
-        mconfig.permits.stream().forEach(n -> b.permit(n));
+        mconfig.providers.keySet().forEach(service ->
+            mconfig.providers.get(service).forEach(impl -> b.service(service, impl)));
+        mconfig.permits.forEach(b::permit);
         return b.build();
     }
 
@@ -199,7 +195,7 @@ public class GenModuleGraph extends Task {
     }
 
     private ServiceDependence serviceDependence(Dependence d) {                ;
-        return new ServiceDependence(EnumSet.noneOf(ServiceDependence.Modifier.class), d.name());
+        return new ServiceDependence(EnumSet.of(ServiceDependence.Modifier.OPTIONAL), d.name());
     }
 
     private static class Options {
