@@ -450,7 +450,7 @@ $(eval $(call SetupLauncher,rmiregistry, \
     -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.rmi.registry.RegistryImpl"$(COMMA) }',,,,,,,,,,RMI))
 
 $(eval $(call SetupLauncher,jcmd, \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.tools.jcmd.JCmd"$(COMMA) }'))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.tools.jcmd.JCmd"$(COMMA) }',,,,,,,,,,TOOLS))
 
 ifeq ($(OPENJDK_TARGET_OS), windows)
   $(eval $(call SetupLauncher,kinit, \
