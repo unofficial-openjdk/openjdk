@@ -132,6 +132,12 @@ nashorn-only: start-make
 genmodules: jdk nashorn genmodules-only
 genmodules-only:
 	@$(call TargetEnter)
+	@($(CD) $(JDK_TOPDIR)/make && $(BUILD_LOG_WRAPPER) $(MAKE) $(MAKE_ARGS) -f BuildJdk.gmk genmodules)
+	@$(call TargetExit)
+
+shuffle-build: genmodules shuffle-build-only
+shuffle-build-only:
+	@$(call TargetEnter)
 	@($(CD) $(JDK_TOPDIR)/make && $(BUILD_LOG_WRAPPER) $(MAKE) $(MAKE_ARGS) -f BuildJdk.gmk shuffle-build)
 	@$(call TargetExit)
 
