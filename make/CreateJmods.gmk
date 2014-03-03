@@ -50,10 +50,15 @@ GENDATA_CURDATA := $(JDK_OUTPUTDIR)/lib/currency.data
 # Param 1: Name of module
 define CreateJmod
 
-  $$(eval $$(call SetupCopyFiles,$1_COPY_NATIVE, \
+  $$(eval $$(call SetupCopyFiles,$1_COPY_NATIVE_LIB, \
       SRC := $(JDK_OUTPUTDIR)/lib, \
       DEST := $(JDK_OUTPUTDIR)/modules_tmp/$1/native, \
-      FILES := $$($1_NATIVE)))
+      FILES := $$(filter $(JDK_OUTPUTDIR)/lib/%, $$($1_NATIVE))))
+
+  $$(eval $$(call SetupCopyFiles,$1_COPY_NATIVE_BIN, \
+      SRC := $(JDK_OUTPUTDIR)/bin, \
+      DEST := $(JDK_OUTPUTDIR)/modules_tmp/$1/native, \
+      FILES := $$(filter $(JDK_OUTPUTDIR)/bin/%, $$($1_NATIVE))))
 
   $$(eval $$(call SetupCopyFiles,$1_COPY_CMDS, \
       SRC := $(JDK_OUTPUTDIR)/bin, \
@@ -65,7 +70,7 @@ define CreateJmod
       DEST := $(JDK_OUTPUTDIR)/modules_tmp/$1/conf, \
       FILES := $$($1_CONF)))
 
-  ifneq ($$($1_COPY_NATIVE), )
+  ifneq ($$($1_COPY_NATIVE_LIB)$$($1_COPY_NATIVE_BIN), )
     $1_JLINK_FLAGS += --libs $(JDK_OUTPUTDIR)/modules_tmp/$1/native
   endif
   ifneq ($$($1_COPY_CMDS), )
@@ -82,7 +87,8 @@ define CreateJmod
   # TODO: What about headers?
   # TODO: Define jlink in spec
   $(JDK_OUTPUTDIR)/jmods/$1.jmod: \
-      $$($1_COPY_NATIVE) $$($1_COPY_CMDS) $$($1_COPY_CONF) $$($1_DEPS)
+      $$($1_COPY_NATIVE_LIB) $$($1_COPY_NATIVE_BIN) $$($1_COPY_CMDS) \
+      $$($1_COPY_CONF) $$($1_DEPS)
 		$(ECHO) Creating jmods/$1.jmod
 		$(MKDIR) -p $$(@D)
 		$(RM) $$@
