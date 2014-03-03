@@ -60,7 +60,6 @@ import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -76,7 +75,6 @@ import java.util.jar.Manifest;
 
 import jdk.jigsaw.module.Module;
 import jdk.jigsaw.module.ServiceDependence;
-import jdk.jigsaw.module.SimpleResolver;
 import jdk.jigsaw.module.View;
 import jdk.jigsaw.module.ViewDependence;
 
@@ -885,113 +883,38 @@ public enum LauncherHelper {
     private static final String MODULES_SER = "jdk/jigsaw/module/resources/modules.ser";
 
     private static Module[] readModules() throws IOException, ClassNotFoundException {
-        // ## FIXME: rmic is run in the build before modules.ser is generated
         InputStream stream = ClassLoader.getSystemResourceAsStream(MODULES_SER);
         if (stream == null) {
             System.err.format("WARNING: %s not found%n", MODULES_SER);
             return new Module[0];
         }
         try (InputStream in = stream) {
-           ObjectInputStream ois = new ObjectInputStream(in);
-           Module[] mods = (Module[]) ois.readObject();
-           return mods;
+            ObjectInputStream ois = new ObjectInputStream(in);
+            Module[] mods = (Module[]) ois.readObject();
+            if (mods.length == 0)
+                System.err.format("WARNING: %s is empty%n", MODULES_SER);
+            return mods;
         }
     }
 
     /**
-     * Setup the module boundaries
-     */
-    private static void setupAccessControl(Iterable<Module> modules, Set<Module> modulesNeeded) {
-        Map<String, Module> names = new HashMap<>();
-        for (Module m: modules) {
-            names.put(m.mainView().id().name(), m);
-        }
-
-        // Need to elide view names
-        Map<String, Module> viewToModule = new HashMap<>();
-        for (Module m: modules) {
-            m.views().forEach( v -> viewToModule.put(v.id().name(), m) );
-        }
-
-        // assign modules to loaders
-        Map<Module, ClassLoader> moduleToLoaders = new HashMap<>();
-        Launcher launcher = Launcher.getLauncher();
-        ClassLoader extcl = launcher.getExtClassLoader();
-        for (String name: launcher.getExtModuleNames()) {
-            Module m = names.get(name);
-            if (m != null) {
-                moduleToLoaders.put(m, extcl);
-            }
-        }
-        ClassLoader cl = launcher.getClassLoader();
-        for (String name: launcher.getAppModuleNames()) {
-            Module m = names.get(name);
-            if (m != null)
-                moduleToLoaders.put(m, cl);
-        }
-
-        // define modules in VM and bind content
-        Map<Module, Long> moduleToHandle = new HashMap<>();
-        for (Module m: modules) {
-            long handle = sun.misc.VM.defineModule(m.mainView().id().name());
-            moduleToHandle.put(m, handle);
-
-            ClassLoader loader = moduleToLoaders.get(m);
-            for (String pkg: m.packages()) {
-                if (pkg != null) {
-                    sun.misc.VM.bindToModule(loader, pkg, handle);
-                }
-            }
-        }
-
-        // setup the edges and exports
-        for (Module m: modules) {
-            // modules that are not selected have no exports
-            if (!modulesNeeded.contains(m))
-                continue;
-
-            long fromHandle  = moduleToHandle.get(m);
-
-            // setup requires (assumes "requires public" is propagated)
-            for (ViewDependence vd: m.viewDependences()) {
-                String name = vd.query().name();
-                Module other = viewToModule.get(name);
-                long toHandle = moduleToHandle.get(other);
-                sun.misc.VM.addRequires(fromHandle, toHandle);
-            }
-
-            // exported packages
-            for (View v: m.views()) {
-                if (v.permits().isEmpty()) {
-                    for (String pkg: v.exports()) {
-                        sun.misc.VM.addExports(fromHandle, pkg);
-                    }
-                } else {
-                    for (String pkg: v.exports()) {
-                        for (String other: v.permits()) {
-                            Module m2 = names.get(other);
-                            if (m2 != null) {
-                                long toHandle = moduleToHandle.get(m2);
-                                sun.misc.VM.addExportsWithPermits(fromHandle, pkg, toHandle);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    /**
-     * Load the "compiled" module graph, resolve the modules specified on the command
-     * line and the modules on the modulepath and setup the access control.
+     * Load the "compiled" module graph, initialize the module path, and
+     * uses the ModuleBooter to resolve the initial module(s) and define
+     * the modules to the VM.
      */
     private static void initModules() throws IOException, ClassNotFoundException {
+
+        // JDK modules from modules.ser
         Module[] jdkModules = readModules();
-        if (jdkModules == null || jdkModules.length == 0) {
+        if (jdkModules.length == 0) {
             // do nothing for now
             return;
         }
 
+        // modulepath (might be null)
+        ModulePath mp = Launcher.getLauncher().getModulePath();
+
+        // initial modules/roots specified via -mods
         Set<String> roots = new HashSet<>();
         String propValue = System.getProperty("jdk.launcher.modules");
         if (propValue == null) {
@@ -1006,35 +929,7 @@ public enum LauncherHelper {
         boolean verbose = Boolean.parseBoolean(
             System.getProperty("jdk.launcher.modules.verbose"));
 
-        // the complete set of modules includes the JDK modules and
-        // any modules on the modulepath
-        Set<Module> modules = new HashSet<>();
-        for (Module m: jdkModules) {
-            modules.add(m);
-        }
-        ModulePath mp = Launcher.getLauncher().getModulePath();
-        if (mp != null) {
-            for (Module m: mp.modules()) {
-                modules.add(m);
 
-                // for now the -mods options cannot be used to make
-                // modules on the modulepath non-readable.
-                roots.add(m.id().name());
-
-                if (verbose)
-                    System.out.println(m);
-            }
-        }
-
-        // find set of modules required
-        SimpleResolver resolver = new SimpleResolver(modules);
-        Set<Module> modulesNeeded = resolver.resolve(roots);
-        if (verbose) {
-            Set<Module> sorted = new TreeSet<>(modulesNeeded);
-            sorted.forEach(m -> System.out.println(m.id().name()));
-        }
-
-        // setup the access control
-        setupAccessControl(modules, modulesNeeded);
+        ModuleBooter.boot(jdkModules, mp, roots, verbose);
     }
 }

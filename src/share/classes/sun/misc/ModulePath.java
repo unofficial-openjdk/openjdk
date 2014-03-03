@@ -33,11 +33,7 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Collections;
-import java.util.Properties;
-import java.util.Set;
 import java.util.stream.Collectors;
 import java.io.File;
 import java.io.InputStream;
@@ -46,9 +42,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import jdk.jigsaw.module.Module;
-import jdk.jigsaw.module.View;
-import jdk.jigsaw.module.ViewDependence;
-import jdk.jigsaw.module.ViewIdQuery;
+import jdk.jigsaw.module.ModuleInfo;
 
 /**
  * Represents a module path, essentially a PATH of directories containing
@@ -159,45 +153,6 @@ public class ModulePath {
     }
 
     /**
-     * For testing purposes only, will be replaced.
-     */
-    private static class ModuleInfo {
-        private final Properties props;
-        private ModuleInfo(Properties props) {
-            this.props = props;
-        }
-        static ModuleInfo read(InputStream in) throws IOException {
-            Properties props = new Properties();
-            props.load(in);
-            return new ModuleInfo(props);
-        }
-        String name() {
-            return props.getProperty("name");
-        }
-        Set<String> requires() {
-            return split("requires");
-        }
-        Set<String> permits() {
-            return split("permits");
-        }
-        Set<String> exports() {
-            return split("exports");
-        }
-        Set<String> split(String prop) {
-            String values = props.getProperty(prop);
-            if (values == null) {
-                return Collections.emptySet();
-            } else {
-                Set<String> result = new HashSet<>();
-                for (String value: values.split(",")) {
-                    result.add(value.trim());
-                }
-                return result;
-            }
-        }
-    }
-
-    /**
      * Read the jmod at the given URL and returns a {@code Module}
      * corresponding to its module-info.class and jmod contents.
      */
@@ -221,7 +176,7 @@ public class ModulePath {
 
         try (InputStream in = zf.getInputStream(entry)) {
             ModuleInfo mi = ModuleInfo.read(in);
-            return makeModule(mi, packages);
+            return mi.makeModule(packages);
         }
     }
 
@@ -245,42 +200,8 @@ public class ModulePath {
         try (InputStream in = Files.newInputStream(file)) {
             ModuleInfo mi = ModuleInfo.read(in);
             // check that the module name is the same as the directory name?
-            return makeModule(mi, packages);
+            return mi.makeModule(packages);
         }
-    }
-
-    /**
-     * Creates a {@code Module} from the given {@code ModuleInfo} and
-     * package list.
-     */
-    private Module makeModule(ModuleInfo mi, List<String> packages) {
-        String name = mi.name();
-        if (name == null)
-            throw new RuntimeException("No module name");
-
-        View.Builder viewBuilder = new View.Builder().id(name);
-        mi.permits().forEach(permit -> viewBuilder.permit(permit));
-        mi.exports().forEach(export -> viewBuilder.export(export));
-
-        View mainView = viewBuilder.build();
-        Module.Builder builder = new Module.Builder().main(mainView);
-
-        // contents
-        packages.forEach(pkg -> builder.include(pkg));
-
-        // requires, default to java.base if missing
-        Set<String> requires = mi.requires();
-        if (requires != null) {
-            for (String require: requires) {
-                ViewDependence vd = new ViewDependence(null, ViewIdQuery.parse(require));
-                builder.requires(vd);
-            }
-        }
-        builder.requires(new ViewDependence(null, ViewIdQuery.parse("java.base")));
-
-        // TBD, need qualified exports and more
-
-        return builder.build();
     }
 
     private String toPackageName(ZipEntry entry) {

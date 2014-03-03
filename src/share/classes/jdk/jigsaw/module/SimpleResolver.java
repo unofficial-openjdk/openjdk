@@ -33,6 +33,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import jdk.jigsaw.module.ViewDependence.Modifier;
+
 /**
  * A simple resolver to select the set of modules needed when starting
  * with a set of root modules.
@@ -43,23 +45,16 @@ public final class SimpleResolver {
     // maps view or alias names to modules
     private final Map<String, Module> namesToModules = new HashMap<>();
 
-    // maps a service name to a set of modules names that include an
-    // implementation of that service
-    private final Map<String, Set<String>> serviceProviders = new HashMap<>();
-
     /**
-     * Creates a {@code SimpleResolver} with the given set of modules.
+     * Creates a {@code SimpleResolver} for the given modules.
      */
     public SimpleResolver(Iterable<Module> modules) {
         for (Module m: modules) {
+            // ##FIMXE replace this when Views go away
             for (View v: m.views()) {
                 String name = v.id().name();
                 namesToModules.put(name, m);
                 v.aliases().forEach(id -> namesToModules.put(id.name(), m));
-
-                for (String s: v.services().keySet()) {
-                    serviceProviders.computeIfAbsent(s, k -> new HashSet<>()).add(name);
-                }
             }
         }
     }
@@ -69,10 +64,10 @@ public final class SimpleResolver {
     }
 
     /**
-     * Returns the set of modules required to satisfy the given array of root
-     * modules.
+     * Resolve the given root modules, returning a {@code Resolution}
+     * to represent the result that includes the set of selected modules.
      */
-    public Set<Module> resolve(Iterable<String> rootModules) {
+    public Resolution resolve(Iterable<String> rootModules) {
         // the selected modules
         Set<Module> selected = new HashSet<>();
 
@@ -83,7 +78,7 @@ public final class SimpleResolver {
         for (String name: rootModules) {
             Module m = namesToModules.get(name);
             if (m == null)
-                throw new RuntimeException(name + " not found!!");
+                throw new ResolveException("Module %s does not exist", name);
             stack.offer(m);
         }
 
@@ -95,34 +90,92 @@ public final class SimpleResolver {
 
             // process dependencies
             for (ViewDependence d: m.viewDependences()) {
-                // ## FIXME should really doing matching here
-                String name = d.query().name();
-                Module m2 = namesToModules.get(name);
-                if (m2 == null)
-                    throw new RuntimeException(name + " not found!!");
-                if (!selected.contains(m2))
-                    stack.offer(m2);
+                String dn = d.query().name();
+                Module other = namesToModules.get(dn);
+                if (other == null) {
+                    throw new ResolveException("%s requires unknown module %s",
+                                               m.mainView().id().name(), dn);
+                }
+                if (!selected.contains(other))
+                    stack.offer(other);
             }
-            for (ServiceDependence d: m.serviceDependences()) {
-                if (!d.modifiers().contains(ServiceDependence.Modifier.OPTIONAL)) {
-                    Set<String> providers = serviceProviders.get(d.service());
-                    if (providers != null) {
-                        for (String provider: providers) {
-                            Module m2 = namesToModules.get(provider);
-                            if (m2 == null)
-                                throw new RuntimeException(provider + " not found!!");
-                            if (!selected.contains(m2))
-                                stack.offer(m2);
-                        }
-                    }
+        }
+
+        // propagate requires through the "requires public" edges.
+        Map<Module, Set<String>> resolvedDependences = resolveDependences(selected);
+
+        // ## FIXME, check permits when Module supports module-level permits
+
+        // return result
+        return new Resolution(selected, resolvedDependences);
+    }
+
+    public Resolution resolve(String... roots) {
+        return resolve(Arrays.asList(roots));
+    }
+
+    /**
+     * Resolves the dependences for the given set of modules.
+     *
+     * If m1 requires m2 && m2 requires public m3 then the resolved dependences
+     * will expand this to m1 requires m2, m1 requires m3, m2 requires m3.
+     */
+    private Map<Module, Set<String>> resolveDependences(Set<Module> selected) {
+        // the "requires" edges
+        Map<Module, Set<String>> requires = new HashMap<>();
+
+        // the "requires public" edges
+        Map<Module, Set<String>> requiresPublic = new HashMap<>();
+
+        // initialize the map of edges
+        for (Module m: selected) {
+            for (ViewDependence d: m.viewDependences()) {
+                String dn = d.query().name();
+                requires.computeIfAbsent(m, k -> new HashSet<>()).add(dn);
+                if (d.modifiers().contains(Modifier.PUBLIC)) {
+                    requiresPublic.computeIfAbsent(m, k -> new HashSet<>()).add(dn);
                 }
             }
         }
 
-        return selected;
-    }
+        // iteratively find "m1 requires m2" && "m2 requires public m3" and
+        // add "m1 requires m3" to the requires set.
+        boolean changed;
+        Map<Module, Set<String>> needToAdd = new HashMap<>();
+        do {
+            changed = false;
+            for (Map.Entry<Module, Set<String>> entry: requires.entrySet()) {
+                Module m1 = entry.getKey();
+                Set<String> m1Requires = entry.getValue();
 
-    public Set<Module> resolve(String... roots) {
-        return resolve(Arrays.asList(roots));
+                for (String m2Name: m1Requires) {
+                    // m1 requires m2
+                    Module m2 = namesToModules.get(m2Name);
+                    Set<String> m2RequiresPublic = requiresPublic.get(m2);
+                    if (m2RequiresPublic != null) {
+                        // m2 requires public m3
+                        for (String m3Name: m2RequiresPublic) {
+                            if (!m1Requires.contains(m3Name)) {
+                                // need to add "m1 requires m3"
+                                needToAdd.computeIfAbsent(m1, k -> new HashSet<>())
+                                         .add(m3Name);
+                                changed = true;
+                            }
+                        }
+                    }
+                }
+            }
+            if (changed) {
+                for (Map.Entry<Module, Set<String>> entry: needToAdd.entrySet()) {
+                    Module m1 = entry.getKey();
+                    requires.computeIfAbsent(m1, k -> new HashSet<>())
+                            .addAll(entry.getValue());
+                }
+                needToAdd.clear();
+            }
+
+        } while (changed);
+
+        return requires;
     }
 }

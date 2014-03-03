@@ -367,7 +367,7 @@ class JlinkTask {
 
         SimpleResolver resolver = new SimpleResolver(modules);
         Set<Path> modsNeeded = new TreeSet<>();
-        for (Module m : resolver.resolve(jmods)) {
+        for (Module m : resolver.resolve(jmods).selectedModules()) {
             Path path = systemJmodPath.resolve(m.id().name() + ".jmod");
             if (Files.notExists(path)) {
                 throw new InternalError(path + " not found");
