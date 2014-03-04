@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,28 +23,36 @@
 
 /*
  * @test
- * @bug     6421756
- * @summary 6421756 JSR 199: In the method JavaCompilerTool.getTask 'options' can be supplied in the place of 'classes'
- * @author  Peter von der Ah\u00e9
- * @library ../lib
- * @build ToolTester
- * @compile T6421756.java
- * @run main T6421756
+ * @bug 8033294
+ * @summary javac, spurious warning for instanceof operator
+ * @compile -Werror -Xlint:unchecked RedundantWarningInIntersectionTest.java
  */
 
-import java.util.Collections;
+import java.math.BigDecimal;
 
-public class T6421756 extends ToolTester {
-    void test(String... args) {
-        Iterable<String> options = Collections.singleton("-verbose");
-        try {
-            task = tool.getTask(null, fm, null, null, options, null);
-            throw new AssertionError("Expected IllegalArgumentException!");
-        } catch (IllegalArgumentException e) {
-            System.out.println("OK: got expected error " + e.getLocalizedMessage());
+public class RedundantWarningInIntersectionTest {
+
+    class A<S extends A<S, T>, T> {
+
+        protected T p;
+
+        A(T p) {}
+
+        public S m(T parameter) {
+            @SuppressWarnings("unchecked")
+            S self = (S) new A<>(parameter);
+            return self;
         }
     }
-    public static void main(String... args) {
-        new T6421756().test(args);
+
+    class B<K extends Number & Comparable<? super K>> extends A<B<K>, K> {
+
+        B(K parameter) {
+            super(parameter);
+        }
+
+        public boolean m2() {
+            return (p instanceof BigDecimal);
+        }
     }
 }
