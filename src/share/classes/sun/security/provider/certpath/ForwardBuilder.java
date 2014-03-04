@@ -375,20 +375,22 @@ class ForwardBuilder extends Builder {
         boolean add = false;
         for (AccessDescription ad : adList) {
             CertStore cs = URICertStore.getInstance(ad);
-            try {
-                if (certs.addAll((Collection<X509Certificate>)
-                    cs.getCertificates(caSelector))) {
-                    add = true;
-                    if (!searchAllCertStores) {
-                        return true;
+            if (cs != null) {
+                try {
+                    if (certs.addAll((Collection<X509Certificate>)
+                            cs.getCertificates(caSelector))) {
+                        add = true;
+                        if (!searchAllCertStores) {
+                            return true;
+                        }
                     }
+                } catch (CertStoreException cse) {
+                    if (debug != null) {
+                        debug.println("exception getting certs from CertStore:");
+                        cse.printStackTrace();
+                    }
+                    continue;
                 }
-            } catch (CertStoreException cse) {
-                if (debug != null) {
-                    debug.println("exception getting certs from CertStore:");
-                    cse.printStackTrace();
-                }
-                continue;
             }
         }
         return add;
