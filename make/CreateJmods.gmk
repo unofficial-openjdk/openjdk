@@ -85,14 +85,13 @@ define CreateJmod
   endif
 
   # TODO: What about headers?
-  # TODO: Define jlink in spec
   $(JDK_OUTPUTDIR)/jmods/$1.jmod: \
       $$($1_COPY_NATIVE_LIB) $$($1_COPY_NATIVE_BIN) $$($1_COPY_CMDS) \
       $$($1_COPY_CONF) $$($1_DEPS)
 		$(ECHO) Creating jmods/$1.jmod
 		$(MKDIR) -p $$(@D)
 		$(RM) $$@
-		$(JDK_OUTPUTDIR)/bin/jlink --format jmod --module $1 \
+		$(JLINK) --format jmod --module $1 \
 		    --output $$@ $$($1_JLINK_FLAGS) 
 
   JMODS += $(JDK_OUTPUTDIR)/jmods/$1.jmod
@@ -169,8 +168,7 @@ jmods: $(JMODS)
 $(IMAGES_OUTPUTDIR)/_jdk-images-create.marker: $(JMODS)
 	$(ECHO) Creating jdk-module-image
 	$(RM) -r $(JDK_MODULE_IMAGE_DIR)
-	$(JDK_OUTPUTDIR)/bin/jlink \
-	    --format image --output $(JDK_MODULE_IMAGE_DIR) --mods jdk
+	$(JLINK) --format image --output $(JDK_MODULE_IMAGE_DIR) --mods jdk
 	$(TOUCH) $@
 
 jdk-image: $(IMAGES_OUTPUTDIR)/_jdk-images-create.marker

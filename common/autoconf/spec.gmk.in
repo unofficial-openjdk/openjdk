@@ -472,6 +472,10 @@ NEW_JAVADOC = $(INTERIM_LANGTOOLS_ARGS) com.sun.tools.javadoc.Main
 # The interim corba jar is needed for running rmic
 INTERIM_CORBA_JAR := $(CORBA_OUTPUTDIR)/dist/interim_corba.jar
 
+# JLink is run from the built exploded image. Use = assignment to enable override
+# of JDK_OUTPUTDIR until we commit the shuffled sources.
+JLINK = @FIXPATH@ $(JDK_OUTPUTDIR)/bin/jlink
+
 # Base flags for RC
 # Guarding this against resetting value. Legacy make files include spec multiple
 # times.
