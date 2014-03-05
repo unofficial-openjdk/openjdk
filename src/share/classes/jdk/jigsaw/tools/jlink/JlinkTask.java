@@ -665,13 +665,21 @@ class JlinkTask {
 
     private static String SERVICES = "META-INF/services";
     private static enum Section {
-        NATIVE_LIBS("native", "lib"),
+        NATIVE_LIBS("native", nativeDir()),
         NATIVE_CMDS("bin", "bin"),
         CLASSES("classes", "classes"),
         CONFIG("conf", "lib"),
         MODULE_SERVICES("module/services", "classes"),
         MODULE_NAME("module", "lib/module"),
         UNKNOWN("unknown", "unknown");
+
+        private static String nativeDir() {
+            if (System.getProperty("os.name").startsWith("Windows")) {
+                return "bin";
+            } else {
+                return "lib";
+            }
+        }
 
         private final String jmodDir;
         private final String imageDir;
