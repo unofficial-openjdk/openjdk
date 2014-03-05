@@ -831,17 +831,19 @@ SetBootClassPath(const char *jrepath) {
     const char separator[] = { FILE_SEPARATOR, '\0' };
     char module_list[MAXPATHLEN];
     char dir[MAXPATHLEN];
+    char *prefix = dir;
     struct stat statbuf;
 
     JLI_Snprintf(module_list, sizeof(module_list), "%s%slib%sboot.modules", jrepath, separator, separator);
 
     /* modules image */
-    JLI_Snprintf(dir, sizeof(dir), "%s%slib%smodules%s", jrepath, separator, separator, separator);
+    JLI_Snprintf(dir, sizeof(dir), "%s%slib%smodules", jrepath, separator, separator);
     if (stat(dir, &statbuf) == 0) {
         char *s;
-        char classes[16];
-        JLI_Snprintf(classes, sizeof(classes), "%sclasses", separator);
-        s = ReadModuleList(module_list, dir, classes);
+        char suffix[16];
+        JLI_StrCat(prefix, separator);
+        JLI_Snprintf(suffix, sizeof(suffix), "%sclasses", separator);
+        s = ReadModuleList(module_list, prefix, suffix);
         if (s != NULL) {
             ExpandToBootClassPath(s);
             JLI_MemFree(s);
@@ -853,9 +855,11 @@ SetBootClassPath(const char *jrepath) {
     }
 
     /* exploded modules */
-    JLI_Snprintf(dir, sizeof(dir), "%s%smodules%s", jrepath, separator, separator);
+    JLI_Snprintf(dir, sizeof(dir), "%s%smodules", jrepath, separator);
     if (stat(dir, &statbuf) == 0) {
-        char* s = ReadModuleList(module_list, dir, "");
+        char *s;
+        JLI_StrCat(prefix, separator);
+        s = ReadModuleList(module_list, prefix, "");
         if (s != NULL) {
             ExpandToBootClassPath(s);
             JLI_MemFree(s);
@@ -888,6 +892,7 @@ ReadModuleList(const char* filename, const char* prefix, const char* suffix) {
     result_size = 1024;
     result_len = 0;
     result = (char*)JLI_MemAlloc(result_size);
+    result[0] = '\0';
 
     while (fgets(module, sizeof(module), fp) != NULL) {
         module_len = JLI_StrLen(module);
