@@ -78,6 +78,13 @@ public final class ModuleInfo {
     }
 
     /**
+     * Returns the set of the module names that are permitted (maybe empty).
+     */
+    public Set<String> permits() {
+        return split("permits");
+    }
+
+    /**
      *  Returns the set of the module names that are required with the
      *  {@code ACC_PUBLIC} flag set.
      */
@@ -124,7 +131,13 @@ public final class ModuleInfo {
                 builder.requires(new ViewDependence(mods, ViewIdQuery.parse(dn))));
         }
 
-        // TBD, need qualified exports and permits
+        // permits
+        Set<String> permits = permits();
+        if (permits != null) {
+            permits.forEach( m -> builder.permit(m) );
+        }
+
+        // TBD, need qualified exports when Module API is updated
 
         return builder.build();
     }

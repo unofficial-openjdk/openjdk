@@ -26,7 +26,6 @@
 package jdk.jigsaw.module;
 
 import java.util.ArrayDeque;
-import java.util.Arrays;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -41,33 +40,20 @@ import jdk.jigsaw.module.ViewDependence.Modifier;
  */
 
 public final class SimpleResolver {
-
-    // maps view or alias names to modules
-    private final Map<String, Module> namesToModules = new HashMap<>();
+    private final ModuleLibrary library;
 
     /**
-     * Creates a {@code SimpleResolver} for the given modules.
+     * Creates a {@code SimpleResolver} to resolve modules located in the given
+     * module library.
      */
-    public SimpleResolver(Iterable<Module> modules) {
-        for (Module m: modules) {
-            // ##FIMXE replace this when Views go away
-            for (View v: m.views()) {
-                String name = v.id().name();
-                namesToModules.put(name, m);
-                v.aliases().forEach(id -> namesToModules.put(id.name(), m));
-            }
-        }
-    }
-
-    public SimpleResolver(Module... modules) {
-        this(Arrays.asList(modules));
+    public SimpleResolver(ModuleLibrary library) {
+        this.library = library;
     }
 
     /**
-     * Resolve the given root modules, returning a {@code Resolution}
-     * to represent the result that includes the set of selected modules.
+     * Resolve the given modules, returning a {@code Resolution} result.
      */
-    public Resolution resolve(Iterable<String> rootModules) {
+    public Resolution resolve(Iterable<String> roots) {
         // the selected modules
         Set<Module> selected = new HashSet<>();
 
@@ -75,10 +61,10 @@ public final class SimpleResolver {
         Deque<Module> stack = new ArrayDeque<>();
 
         // push the root modules onto the visit stack to get us started
-        for (String name: rootModules) {
-            Module m = namesToModules.get(name);
+        for (String root: roots) {
+            Module m = library.findModule(root);
             if (m == null)
-                throw new ResolveException("Module %s does not exist", name);
+                fail("Module %s does not exist", root);
             stack.offer(m);
         }
 
@@ -88,13 +74,13 @@ public final class SimpleResolver {
             Module m = stack.poll();
             selected.add(m);
 
-            // process dependencies
+            // process dependencies (needs to replaced with module dependences)
             for (ViewDependence d: m.viewDependences()) {
                 String dn = d.query().name();
-                Module other = namesToModules.get(dn);
+                Module other = library.findModule(dn);
                 if (other == null) {
-                    throw new ResolveException("%s requires unknown module %s",
-                                               m.mainView().id().name(), dn);
+                    fail("%s requires unknown module %s",
+                         m.mainView().id().name(), dn);
                 }
                 if (!selected.contains(other))
                     stack.offer(other);
@@ -104,14 +90,11 @@ public final class SimpleResolver {
         // propagate requires through the "requires public" edges.
         Map<Module, Set<String>> resolvedDependences = resolveDependences(selected);
 
-        // ## FIXME, check permits when Module supports module-level permits
+        // check the resolved dependences for permits violations
+        checkPermits(resolvedDependences);
 
-        // return result
+        // result is the set of selected modules and the resolved dependences
         return new Resolution(selected, resolvedDependences);
-    }
-
-    public Resolution resolve(String... roots) {
-        return resolve(Arrays.asList(roots));
     }
 
     /**
@@ -150,7 +133,7 @@ public final class SimpleResolver {
 
                 for (String m2Name: m1Requires) {
                     // m1 requires m2
-                    Module m2 = namesToModules.get(m2Name);
+                    Module m2 = library.findModule(m2Name);
                     Set<String> m2RequiresPublic = requiresPublic.get(m2);
                     if (m2RequiresPublic != null) {
                         // m2 requires public m3
@@ -177,5 +160,28 @@ public final class SimpleResolver {
         } while (changed);
 
         return requires;
+    }
+
+    /**
+     * Checks the permits on the resolved dependences.
+     *
+     * @throws ResolveException
+     */
+    private void checkPermits(Map<Module, Set<String>> resolvedDependences) {
+        for (Map.Entry<Module, Set<String>> entry: resolvedDependences.entrySet()) {
+            Module m1 = entry.getKey();
+            String m1Name = m1.mainView().id().name();
+            for (String m2Name: entry.getValue()) {
+                Module m2 = library.findModule(m2Name);
+                Set<String> permits = m2.permits();
+                if (!permits.isEmpty() && !permits.contains(m1Name)) {
+                    fail("%s does not permit %s", m2Name, m1Name);
+                }
+            }
+        }
+    }
+
+    private void fail(String fmt, Object ... args) {
+        throw new ResolveException(fmt, args);
     }
 }

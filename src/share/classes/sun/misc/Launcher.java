@@ -120,6 +120,24 @@ public class Launcher {
         return loader;
     }
 
+
+    /**
+     * Appends the URL to the list of URLs to search for classes and
+     * resources.
+     */
+    public void addAppClassLoaderURL(URL url) {
+        loader.addURL(url);
+    }
+
+
+    /**
+     * Returns a list of the module names for the modules installed for
+     * the system/application class loader.
+     */
+    public List<String> getAppModuleNames() {
+        return loader.installedModules();
+    }
+
     /**
      * Returns the extensions class loader.
      */
@@ -128,26 +146,11 @@ public class Launcher {
     }
 
     /**
-     * Returns a list of the module names for the modules on the system/application
-     * class path.
-     */
-    public List<String> getAppModuleNames() {
-        return loader.modules();
-    }
-
-    /**
-     * Returns a list of the module names for the modules on the extensions
-     * class path.
+     * Returns a list of the module names for the modules installed for
+     * the extensions class loader.
      */
     public List<String> getExtModuleNames() {
-        return extcl.modules();
-    }
-
-    /**
-     * Returns the module path
-     */
-    public ModulePath getModulePath() {
-        return loader.modulePath();
+        return extcl.installedModules();
     }
 
     /*
@@ -190,7 +193,7 @@ public class Launcher {
             super.addURL(url);
         }
 
-        public List<String> modules() {
+        public List<String> installedModules() {
             return modules;
         }
 
@@ -301,8 +304,6 @@ public class Launcher {
         }
         static final List<String> systemModules = Launcher.readModulesList("system.modules");
 
-        private final ModulePath modulePath;
-
         public static AppClassLoader getAppClassLoader(final ClassLoader extcl)
             throws IOException
         {
@@ -328,19 +329,7 @@ public class Launcher {
                 new PrivilegedAction<AppClassLoader>() {
                     public AppClassLoader run() {
                         URL[] urls = (s == null) ? new URL[0] : pathToURLs(path);
-
-                        // -modulepath => URLs to prepend to class path
-                        String dirs= System.getProperty("java.module.path");
-                        ModulePath mp = ModulePath.scan(dirs); // null okay
-                        List<URL> list = mp.urls();
-                        if (list.size() > 0) {
-                            for (URL url: urls) {
-                                list.add(url);
-                            }
-                            urls = list.toArray(new URL[0]);
-                        }
-
-                        return new AppClassLoader(mp, urls, extcl);
+                        return new AppClassLoader(urls, extcl);
                     }
                 });
         }
@@ -348,28 +337,21 @@ public class Launcher {
         /*
          * Creates a new AppClassLoader
          */
-        AppClassLoader(ModulePath mp, URL[] urls, ClassLoader parent) {
+        AppClassLoader(URL[] urls, ClassLoader parent) {
             super(urls, parent, factory);
-            this.modulePath = mp;
+        }
+
+        @Override
+        public void addURL(URL url) {
+            super.addURL(url);
         }
 
         /**
-         * Returns the ModulePath
+         * Returns the list of the module names that are installed and
+         * associated with this loader.
          */
-        ModulePath modulePath() {
-            return modulePath;
-        }
-
-        /**
-         * Returns the list of the module names associated with this loader.
-         * The names are ordered so that the names of the JDK modules appear
-         * first, followed by the names of the modules on the modulepath
-         * (in modulepath order).
-         */
-        public List<String> modules() {
-            List<String> result = new ArrayList<>(systemModules);
-            result.addAll(modulePath.moduleNames());
-            return result;
+        public List<String> installedModules() {
+            return systemModules;
         }
 
         /**

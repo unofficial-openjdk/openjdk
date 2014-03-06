@@ -116,6 +116,13 @@ public final class Module
     }
 
     /**
+     * <p> The module-level permits, not implemented yet </p>
+     */
+    public Set<String> permits() {
+        return Collections.emptySet();
+    }
+
+    /**
      * <p> The main view of this module.</p>
      *
      * <p> Each module has a main view whose {@linkplain View#id() identifier}
@@ -172,6 +179,11 @@ public final class Module
 
         public Builder requires(ServiceDependence sd) {
             serviceDeps.add(requireNonNull(sd));
+            return this;
+        }
+
+        public Builder permit(String m) {
+            // not implemented yet
             return this;
         }
 

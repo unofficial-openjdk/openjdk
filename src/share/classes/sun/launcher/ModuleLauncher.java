@@ -25,13 +25,11 @@
 
 package sun.launcher;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
+import java.net.URL;
 
 import jdk.jigsaw.module.Module;
+import jdk.jigsaw.module.ModuleLibrary;
 import jdk.jigsaw.module.Resolution;
 import jdk.jigsaw.module.SimpleResolver;
 import jdk.jigsaw.module.View;
@@ -45,41 +43,57 @@ import sun.misc.VM;
  * JDK modules and modules on the modulepath. Defines each of the modules to the
  * VM so that accessibility can be checked at runtime.
  */
-class ModuleBooter {
-    private ModuleBooter() { }
+class ModuleLauncher {
+    private ModuleLauncher() { }
 
     /**
-     * @param jdkModules the JDK modules
-     * @param mp the module path
-     * @param roots the initial module(s), specified via the -mods option for now
-     * @param verbose true for tracing
+     * A module library for the JDK modules.
      */
-    static void boot(Module[] jdkModules,
-                     ModulePath mp,
-                     Set<String> roots,
-                     boolean verbose)
-    {
-        // the complete set of modules includes the JDK modules and any modules
-        // on the modulepath
-        Set<Module> modules = new HashSet<>();
-        for (Module m: jdkModules) {
-            modules.add(m);
-        }
-        if (mp != null) {
-            for (Module m: mp.modules()) {
+    private static class JdkModuleLibrary extends ModuleLibrary {
+        private final Set<Module> modules = new HashSet<>();
+        private final Map<String, Module> namesToModules = new HashMap<>();
+
+        JdkModuleLibrary(Module... mods) {
+            for (Module m: mods) {
                 modules.add(m);
-
-                // for now the -mods options cannot be used to make
-                // modules on the modulepath non-readable.
-                roots.add(m.id().name());
-
-                if (verbose)
-                    System.out.println(m);
+                namesToModules.put(m.mainView().id().name(), m);
             }
         }
 
+        @Override
+        public Module findLocalModule(String name) {
+            return namesToModules.get(name);
+        }
+
+        @Override
+        public Set<Module> localModules() {
+            return Collections.unmodifiableSet(modules);
+        }
+    }
+
+    /**
+     * Initialize the runtime for modules.
+     *
+     * @param jdkModules the JDK modules
+     * @param roots the initial module(s), specified via the -mods option for now
+     * @param verbose true for tracing
+     */
+    static void init(Module[] jdkModules, Set<String> roots, boolean verbose) {
+
+        // create a module library that the resolver uses to locate modules.
+        // If -modulepath is specified then create a ModulePath that delegates
+        // to the JDK module library
+        ModuleLibrary systemLibrary = new JdkModuleLibrary(jdkModules);
+        ModuleLibrary library;
+        String mp = System.getProperty("java.module.path");
+        if (mp != null) {
+            library = new ModulePath(mp, systemLibrary);
+        } else {
+            library = systemLibrary;
+        }
+
         // resolve the required modules
-        SimpleResolver resolver = new SimpleResolver(modules);
+        SimpleResolver resolver = new SimpleResolver(library);
         Resolution resolution = resolver.resolve(roots);
         if (verbose) {
             Set<Module> sorted = new TreeSet<>(resolution.selectedModules());
@@ -88,41 +102,37 @@ class ModuleBooter {
 
         // -- setup the access control --
 
-        // Need name to module mapping
-        Map<String, Module> names = new HashMap<>();
-        for (Module m: modules) {
-            names.put(m.mainView().id().name(), m);
-        }
-
-        // Need to elide view names (assumes no dups, goes again with Views)
-        Map<String, Module> viewToModule = new HashMap<>();
-        for (Module m: modules) {
-            m.views().forEach( v -> viewToModule.put(v.id().name(), m) );
-        }
-
         // assign modules to loaders
         Map<Module, ClassLoader> moduleToLoaders = new HashMap<>();
         Launcher launcher = Launcher.getLauncher();
         ClassLoader extcl = launcher.getExtClassLoader();
         for (String name: launcher.getExtModuleNames()) {
-            Module m = names.get(name);
+            Module m = systemLibrary.findModule(name);
             if (m != null) {
                 moduleToLoaders.put(m, extcl);
             }
         }
-        ClassLoader cl = launcher.getClassLoader();
+        final ClassLoader cl = launcher.getClassLoader();
         for (String name: launcher.getAppModuleNames()) {
-            Module m = names.get(name);
+            Module m = systemLibrary.findModule(name);
             if (m != null)
                 moduleToLoaders.put(m, cl);
         }
 
-        // define modules in VM
+        // used to map modules to their opaque handles
         Map<Module, Long> moduleToHandle = new HashMap<>();
-        for (Module m: modules) {
+
+
+        // define JDK modules to VM
+        //
+        // Note that we define all the JDK modules, even if they aren't
+        // selected by the resolver. This is because they are installed
+        // in the JDK image and therefore observable. The JDK modules
+        // that aren't selected will not have their exports setup and
+        // so none of the types in these modules will be accessible.
+        for (Module m: systemLibrary.localModules()) {
             long handle = VM.defineModule(m.mainView().id().name());
             moduleToHandle.put(m, handle);
-
             ClassLoader loader = moduleToLoaders.get(m);
             for (String pkg: m.packages()) {
                 if (pkg != null) {
@@ -131,22 +141,42 @@ class ModuleBooter {
             }
         }
 
-        // setup the requires
+        // define modules on module path that are selected
+        Set<Module> installed = systemLibrary.localModules();
+        for (Module m: resolution.selectedModules()) {
+            if (!installed.contains(m)) {
+                long handle = VM.defineModule(m.mainView().id().name());
+                moduleToHandle.put(m, handle);
+                for (String pkg: m.packages()) {
+                    if (pkg != null) {
+                        VM.bindToModule(cl, pkg, handle);
+                    }
+                }
+
+                // add to the application class loader so that classes
+                // and resources can be loaded
+                URL url = ((ModulePath)library).toURL(m);
+                launcher.addAppClassLoaderURL(url);
+            }
+
+        }
+
+
+        // setup the requires used the resolved dependences
         for (Map.Entry<Module, Set<String>> entry:
-                resolution.resolvedDependences().entrySet())
-        {
+                resolution.resolvedDependences().entrySet()) {
             Module m1 = entry.getKey();
             Set<String> dependences = entry.getValue();
             if (dependences != null) {
                 for (String name: dependences) {
-                    Module m2 = names.get(name);
+                    Module m2 = library.findModule(name);
                     VM.addRequires(moduleToHandle.get(m1),
-                            moduleToHandle.get(m2));
+                                   moduleToHandle.get(m2));
                 }
             }
         }
 
-        // setup the exports
+        // setup the exports (selected modules only)
         for (Module m: resolution.selectedModules()) {
             long fromHandle  = moduleToHandle.get(m);
             for (View v: m.views()) {
@@ -157,7 +187,7 @@ class ModuleBooter {
                 } else for (String pkg: v.exports()) {
                     // qualified exports
                     for (String who: v.permits()) {
-                        Module m2 = names.get(who);
+                        Module m2 = library.findModule(who);
                         if (m2 != null) {
                             long toHandle = moduleToHandle.get(m2);
                             VM.addExportsWithPermits(fromHandle, pkg, toHandle);

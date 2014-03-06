@@ -78,9 +78,6 @@ import jdk.jigsaw.module.ServiceDependence;
 import jdk.jigsaw.module.View;
 import jdk.jigsaw.module.ViewDependence;
 
-import sun.misc.Launcher;
-import sun.misc.ModulePath;
-
 public enum LauncherHelper {
     INSTANCE;
     private static final String MAIN_CLASS = "Main-Class";
@@ -899,20 +896,16 @@ public enum LauncherHelper {
 
     /**
      * Load the "compiled" module graph, initialize the module path, and
-     * uses the ModuleBooter to resolve the initial module(s) and define
+     * uses the ModuleLauncher to resolve the initial module(s) and define
      * the modules to the VM.
      */
     private static void initModules() throws IOException, ClassNotFoundException {
-
         // JDK modules from modules.ser
         Module[] jdkModules = readModules();
         if (jdkModules.length == 0) {
             // do nothing for now
             return;
         }
-
-        // modulepath (might be null)
-        ModulePath mp = Launcher.getLauncher().getModulePath();
 
         // initial modules/roots specified via -mods
         Set<String> roots = new HashSet<>();
@@ -929,7 +922,12 @@ public enum LauncherHelper {
         boolean verbose = Boolean.parseBoolean(
             System.getProperty("jdk.launcher.modules.verbose"));
 
-
-        ModuleBooter.boot(jdkModules, mp, roots, verbose);
+        // initialize modules
+        try {
+            ModuleLauncher.init(jdkModules, roots, verbose);
+        } catch (Exception e) {
+            ostream.println(e);
+            abort(e, "java.launcher.init.error");
+        }
     }
 }

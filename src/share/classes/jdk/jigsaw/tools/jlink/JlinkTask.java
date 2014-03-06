@@ -40,6 +40,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 import jdk.jigsaw.module.Module;
+import jdk.jigsaw.module.ModuleLibrary;
 import jdk.jigsaw.module.SimpleResolver;
 
 /**
@@ -353,6 +354,29 @@ class JlinkTask {
      * Module definitions, serialized in modules.ser for now
      */
     private static final String MODULES_SER = "jdk/jigsaw/module/resources/modules.ser";
+
+    private static class JModModuleLibrary extends ModuleLibrary {
+        private final Set<Module> modules = new HashSet<>();
+        private final Map<String, Module> namesToModules = new HashMap<>();
+
+        JModModuleLibrary(Module... mods) {
+            for (Module m: mods) {
+                modules.add(m);
+                namesToModules.put(m.mainView().id().name(), m);
+            }
+        }
+
+        @Override
+        public Module findLocalModule(String name) {
+            return namesToModules.get(name);
+        }
+
+        @Override
+        public Set<Module> localModules() {
+            return modules;
+        }
+    }
+
     /*
      * Returns the set of required modules
      */
@@ -365,7 +389,8 @@ class JlinkTask {
             throw new InternalError(ex);
         }
 
-        SimpleResolver resolver = new SimpleResolver(modules);
+        ModuleLibrary library = new JModModuleLibrary(modules);
+        SimpleResolver resolver = new SimpleResolver(library);
         Set<Path> modsNeeded = new TreeSet<>();
         for (Module m : resolver.resolve(jmods).selectedModules()) {
             Path path = systemJmodPath.resolve(m.id().name() + ".jmod");

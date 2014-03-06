@@ -25,183 +25,229 @@
 
 package sun.misc;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.net.URL;
-import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
-import java.io.File;
-import java.io.InputStream;
-import java.io.IOException;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import jdk.jigsaw.module.Module;
 import jdk.jigsaw.module.ModuleInfo;
+import jdk.jigsaw.module.ModuleLibrary;
 
 /**
- * Represents a module path, essentially a PATH of directories containing
- * exploded modules or jmod files.
+ * A module path implementation of {@code ModuleLibrary}. A module path
+ * is essentially a PATH of directories containing exploded modules or jmod
+ * files. The directories on the PATH are scanned lazily as modules are
+ * located via {@code findLocalModule}.
  *
- * @apiNote URL used in this API because the system class laoder is
- * a URLClassLoader.
+ * @apiNote This class is currently not safe for use by multiple threads.
  */
 
-public class ModulePath {
+public class ModulePath extends ModuleLibrary {
     private static final String MODULE_INFO = "module-info.class";
 
-    // the list of URLs to the candidate modules on the module path
-    private final List<URL> urls;
+    // the directories on this module path
+    private final String[] dirs;
+    private int next;
 
-    // the list of Modules for the actual modules found, creted lazily
-    private List<Module> modules;
+    // the module name to Module map of modules already located
+    private final Map<String, Module> cachedModules = new HashMap<>();
 
-    private ModulePath(List<URL> urls) {
-        this.urls = urls;
+    // the module to URL map of modules already located
+    private final Map<Module, URL> urls = new HashMap<>();
+
+
+    public ModulePath(String path, ModuleLibrary parent) {
+        super(parent);
+        this.dirs = path.split(File.pathSeparator);
     }
 
-    /**
-     * Scans each of the directories in the given PATH string looking for
-     * candidate modules (jmod or {@code <dir>/module-info.class} and returns
-     * a {@code ModulePath} to represent the resulting module path.
-     */
-    public static ModulePath scan(String path) {
-        List<URL> urls = new ArrayList<>();
-        if (path != null) {
-            String[] dirs = path.split(File.pathSeparator);
-            for (String dir: dirs) {
-                Path dirPath = Paths.get(dir);
-                try (DirectoryStream<Path> stream = Files.newDirectoryStream(dirPath)) {
-                    for (Path entry: stream) {
-                        BasicFileAttributes attrs =
-                            Files.readAttributes(entry, BasicFileAttributes.class);
-                        if (attrs.isRegularFile() && entry.toString().endsWith(".jmod")) {
-                            String s = entry.toUri().toURL().toString();
-                            URL url = new URL("jmod" + s.substring(4));
-                            urls.add(url);
-                        } else if (attrs.isDirectory()) {
-                            Path mi = entry.resolve(MODULE_INFO);
-                            if (Files.exists(mi)) {
-                                URL url = entry.toUri().toURL();
-                                urls.add(url);
-                            }
-                        }
-                    }
-                } catch (IOException ioe) {
-                    // ignore for now, similar to legacy classpath behavior
-                }
-            }
+    @Override
+    public Module findLocalModule(String name) {
+        // try cached modules
+        Module m = cachedModules.get(name);
+        if (m != null)
+            return m;
+
+        // the module may be in directories that we haven't scanned yet
+        while (hasNextDirectory()) {
+            scanNextDirectory();
+            m = cachedModules.get(name);
+            if (m != null)
+                return m;
         }
-        return new ModulePath(urls);
+        return null;
     }
 
     /**
-     * Returns a list of URLs with the candidate modules on the module path.
+     * Returns {@code true} if the module of the given name is already known
+     * to the module library.
      */
-    public List<URL> urls() {
-        return new ArrayList<>(urls);  // return copy
+    private boolean isKnownModule(String name) {
+        ModuleLibrary parent = parent();
+        if (parent != null && parent.findModule(name) != null)
+            return true;
+        return cachedModules.containsKey(name);
     }
 
     /**
-     * Returns a list of the Modules found on this module  path (in module
-     * path order).
+     * Returns the URL for the purposes of class and resource loading.
      */
-    public synchronized List<Module> modules() {
-        if (modules == null) {
-            List<Module> result = new ArrayList<>();
-            for (URL url: urls) {
-                String protocol = url.getProtocol();
-                Module m;
-                try {
-                    switch (protocol) {
-                        case "jmod" :
-                            m = readJModModule(url);
-                            break;
-                        case "file" :
-                            Path top = Paths.get(url.toURI());
-                            m = readExplodedModule(top);
-                            break;
-                        default     : m = null;
-                    }
-                } catch (IOException | URISyntaxException e) {
-                    // bail for now
-                    throw new RuntimeException(e);
-                }
-                if (m != null) {
-                    result.add(m);
-                }
-            }
-            modules = result;
+    public URL toURL(Module m) {
+        return urls.get(m);
+    }
+
+    @Override
+    public Set<Module> localModules() {
+        // need to ensure that all directories have been scanned
+        while (hasNextDirectory()) {
+            scanNextDirectory();
         }
-        return modules;
+        return Collections.unmodifiableSet(urls.keySet());
     }
 
     /**
-     * Returns a list of the names of the modules found on this module
-     * path (in module path order).
+     * Returns {@code true} if there are additional directories to scan
      */
-    public List<String> moduleNames() {
-        List<Module> mods = modules();
-        List<String> names = new ArrayList<>(mods.size());
-        mods.forEach(m -> names.add(m.mainView().id().name()));
-        return names;
+    private boolean hasNextDirectory() {
+        return next < dirs.length;
     }
 
     /**
-     * Read the jmod at the given URL and returns a {@code Module}
-     * corresponding to its module-info.class and jmod contents.
+     * Scans the next directory on the module path. A no-op if all
+     * directories have already been scanned.
      */
-    private Module readJModModule(URL url) throws IOException {
+    private void scanNextDirectory() {
+        if (hasNextDirectory()) {
+            String dir = dirs[next++];
+            scan(dir);
+        }
+    }
+
+    /**
+     * Scans the given directory for jmod or exploded modules. For each module
+     * found then it enumerates its contents and creates a {@code Module} and
+     * adds it (and its URL) to the cache.
+     */
+    private void scan(String dir) {
+        // the set of module names found in this directory
+        Set<String> localModules = new HashSet<>();
+
+        Path dirPath = Paths.get(dir);
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(dirPath)) {
+            for (Path entry: stream) {
+                ModuleInfo mi = null;
+                URL url = null;
+                boolean jmod = false;
+
+                BasicFileAttributes attrs =
+                    Files.readAttributes(entry, BasicFileAttributes.class);
+                if (attrs.isRegularFile() && entry.toString().endsWith(".jmod")) {
+                    String s = entry.toUri().toURL().toString();
+                    url = new URL("jmod" + s.substring(4));
+                    mi = readModuleInfo(url);
+                    jmod = true;
+                } else if (attrs.isDirectory()) {
+                    url = entry.toUri().toURL();
+                    mi = readModuleInfo(entry);
+                }
+
+                // module-info found
+                if (mi != null) {
+
+                    // check that there is only one version of the module
+                    // in this directory
+                    String name = mi.name();
+                    if (localModules.contains(name)) {
+                        throw new RuntimeException(dir +
+                            " contains more than one version of " + name);
+                    }
+                    localModules.add(name);
+
+                    // module already in cache (either parent module library
+                    // or a previous directory on the path).
+                    if (isKnownModule(name))
+                        continue;
+
+                    // enumerate the contents and add the Module to the cache
+                    List<String> packages =
+                        (jmod) ? jmodPackageList(url) : explodedPackageList(entry);
+                    Module m = mi.makeModule(packages);
+                    cachedModules.put(name, m);
+                    urls.put(m, url);
+                }
+
+            }
+        } catch (IOException | UncheckedIOException ioe) {
+            // warn for now, needs to be re-examined
+            System.err.println(ioe);
+        }
+
+    }
+
+    private ModuleInfo readModuleInfo(URL url) throws IOException {
+        assert url.getProtocol().equals("jmod");
+
         ZipFile zf = JModCache.get(url);
-
-        // package list
-        List<String> packages =
-            zf.stream()
-              .filter(entry -> entry.getName().startsWith("classes/") &&
-                               entry.getName().endsWith(".class"))
-              .map(entry -> toPackageName(entry))
-              .filter(pkg -> pkg.length() > 0)   // module-info
-              .distinct()
-              .collect(Collectors.toList());
-
-        // module-info
         ZipEntry entry = zf.getEntry("classes/" + MODULE_INFO);
-        if (entry == null)
-            throw new IOException(MODULE_INFO + " not found in " + url);
-
-        try (InputStream in = zf.getInputStream(entry)) {
-            ModuleInfo mi = ModuleInfo.read(in);
-            return mi.makeModule(packages);
+        if (entry != null) {
+            try (InputStream in = zf.getInputStream(entry)) {
+                return ModuleInfo.read(in);
+            }
+        } else {
+            return null;
         }
     }
 
-    /**
-     * Returns a {@code Module} corresponding to the exploded module
-     * at the given location.
-     */
-    private Module readExplodedModule(Path top) throws IOException {
-        //  package list
-        List<String> packages =
-            Files.find(top, Integer.MAX_VALUE,
-                     ((path, attrs) -> attrs.isRegularFile() &&
-                                       path.toString().endsWith(".class")))
-                 .map(path -> toPackageName(top.relativize(path)))
+    private ModuleInfo readModuleInfo(Path dir) throws IOException {
+        Path mi = dir.resolve(MODULE_INFO);
+        if (Files.exists(mi)) {
+            try (InputStream in = Files.newInputStream(mi)) {
+                return ModuleInfo.read(in);
+            }
+        } else {
+            return null;
+        }
+    }
+
+    private List<String> jmodPackageList(URL url) throws IOException {
+        ZipFile zf = JModCache.get(url);
+        return zf.stream()
+                 .filter(entry -> entry.getName().startsWith("classes/") &&
+                         entry.getName().endsWith(".class"))
+                 .map(entry -> toPackageName(entry))
                  .filter(pkg -> pkg.length() > 0)   // module-info
                  .distinct()
                  .collect(Collectors.toList());
+    }
 
-        // module-info
-        Path file = top.resolve(MODULE_INFO);
-        try (InputStream in = Files.newInputStream(file)) {
-            ModuleInfo mi = ModuleInfo.read(in);
-            // check that the module name is the same as the directory name?
-            return mi.makeModule(packages);
-        }
+    /**
+     * @throws java.io.IOException
+     * @throws java.io.UncheckedIOException
+     */
+    private List<String> explodedPackageList(Path top) throws IOException {
+        return Files.find(top, Integer.MAX_VALUE,
+                        ((path, attrs) -> attrs.isRegularFile() &&
+                            path.toString().endsWith(".class")))
+                    .map(path -> toPackageName(top.relativize(path)))
+                    .filter(pkg -> pkg.length() > 0)   // module-info
+                    .distinct()
+                    .collect(Collectors.toList());
     }
 
     private String toPackageName(ZipEntry entry) {
@@ -218,7 +264,7 @@ public class ModulePath {
     private String toPackageName(Path path) {
         String name = path.toString();
         assert name.endsWith(".class");
-        int index = name.lastIndexOf("/");
+        int index = name.lastIndexOf(File.separatorChar);
         if (index != -1) {
             return name.substring(0, index).replace(File.separatorChar, '.');
         } else {
