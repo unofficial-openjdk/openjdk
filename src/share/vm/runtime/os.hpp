@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -40,6 +40,10 @@
 #endif
 #ifdef TARGET_OS_FAMILY_windows
 # include "jvm_windows.h"
+#endif
+#ifdef TARGET_OS_FAMILY_aix
+# include "jvm_aix.h"
+# include <setjmp.h>
 #endif
 #ifdef TARGET_OS_FAMILY_bsd
 # include "jvm_bsd.h"
@@ -161,6 +165,7 @@ class os: AllStatic {
   static jlong  javaTimeNanos();
   static void   javaTimeNanos_info(jvmtiTimerInfo *info_ptr);
   static void   run_periodic_checks();
+  static bool   supports_monotonic_clock();
 
 
   // Returns the elapsed time in seconds since the vm started.
@@ -772,6 +777,10 @@ class os: AllStatic {
 #ifdef TARGET_OS_FAMILY_windows
 # include "os_windows.hpp"
 #endif
+#ifdef TARGET_OS_FAMILY_aix
+# include "os_aix.hpp"
+# include "os_posix.hpp"
+#endif
 #ifdef TARGET_OS_FAMILY_bsd
 # include "os_posix.hpp"
 # include "os_bsd.hpp"
@@ -799,6 +808,9 @@ class os: AllStatic {
 #endif
 #ifdef TARGET_OS_ARCH_linux_ppc
 # include "os_linux_ppc.hpp"
+#endif
+#ifdef TARGET_OS_ARCH_aix_ppc
+# include "os_aix_ppc.hpp"
 #endif
 #ifdef TARGET_OS_ARCH_bsd_x86
 # include "os_bsd_x86.hpp"
