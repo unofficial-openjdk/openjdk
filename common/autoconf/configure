@@ -23,17 +23,18 @@
 #
 
 if test "x$1" != xCHECKME; then
-  echo "This script cannot be run directly."
+  echo "WARNING: Calling the wrapper script directly is deprecated and unsupported."
+  echo "Not all features of configure will be available."
   echo "Use the 'configure' script in the top-level directory instead."
-  exit 1
+  TOPDIR=$(cd $(dirname $0)/../.. > /dev/null && pwd)
+else
+  # Now the next argument is the absolute top-level directory path.
+  # The TOPDIR variable is passed on to configure.ac.
+  TOPDIR="$2"
+  # Remove these two arguments to get to the user supplied arguments
+  shift
+  shift
 fi
-
-# Now the next argument is the absolute top-level directory path.
-# The TOPDIR variable is passed on to configure.ac.
-TOPDIR="$2"
-# Remove these two arguments to get to the user supplied arguments
-shift
-shift
 
 conf_script_dir="$TOPDIR/common/autoconf"
 
@@ -126,10 +127,11 @@ function shell_quote() {
   if [[ -n "$1" ]]; then
     # Uses only shell-safe characters?  No quoting needed.
     # '=' is a zsh meta-character, but only in word-initial position.
-    if [[ "$1" =~ ^[ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.:,%/+=_-]+$ && ! "$1" =~ ^= ]]; then
+    if echo "$1" | grep '^[ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789\.:,%/+=_-]\{1,\}$' > /dev/null \
+        && ! echo "$1" | grep '^=' > /dev/null; then
       quoted="$1"
     else
-      if [[ "$1" =~ [\'!] ]]; then
+      if echo "$1" | grep "[\'!]" > /dev/null; then
         # csh does history expansion within single quotes, but not
         # when backslash-escaped!
         local quoted_quote="'\\''" quoted_exclam="'\\!'"
