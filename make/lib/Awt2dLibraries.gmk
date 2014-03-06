@@ -34,7 +34,7 @@ ifeq ($(JIGSAW), true)
   BUILD_LIBMLIB_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libmlib_image \
       $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/common-awt/sun/awt/medialib
   BUILD_LIBMLIB_CFLAGS := -D__USE_J2D_NAMES -D__MEDIALIB_OLD_NAMES \
-      -I$(BUILD_LIBMLIB_SRC) \
+      $(addprefix -I, $(BUILD_LIBMLIB_SRC)) \
       -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/native/libmlib_image
 else
 BUILD_LIBMLIB_SRC := $(JDK_TOPDIR)/src/share/native/sun/awt/medialib
