@@ -1146,112 +1146,110 @@ if [ "$SKIP_DEFAULT" != "true" ]; then
     fi
 
 
-    if [ "$CMP_IMAGES" = "true" ]; then
-        # Figure out the layout of the this build. Which kinds of images have been produced
+    # Figure out the layout of the this build. Which kinds of images have been produced
+    if [ -d "$THIS/install/j2sdk-image" ]; then
+        THIS_J2SDK="$THIS/install/j2sdk-image"
+        THIS_J2RE="$THIS/install/j2re-image"
+        echo "Selecting install images in this build"
+    elif [ -d "$THIS/deploy/j2sdk-image" ]; then
+        THIS_J2SDK="$THIS/deploy/j2sdk-image"
+        THIS_J2RE="$THIS/deploy/j2re-image"
+        echo "Selecting deploy images in this build"
+    elif [ -d "$THIS/images/j2sdk-image" ]; then
+        THIS_J2SDK="$THIS/images/j2sdk-image"
+        THIS_J2RE="$THIS/images/j2re-image"
+        echo "Selecting jdk images in this build"
+    fi
+
+    if [ -d "$THIS/images/j2sdk-overlay-image" ]; then
         if [ -d "$THIS/install/j2sdk-image" ]; then
-            THIS_J2SDK="$THIS/install/j2sdk-image"
-            THIS_J2RE="$THIS/install/j2re-image"
-            echo "Selecting install images in this build"
-        elif [ -d "$THIS/deploy/j2sdk-image" ]; then
-            THIS_J2SDK="$THIS/deploy/j2sdk-image"
-            THIS_J2RE="$THIS/deploy/j2re-image"
-            echo "Selecting deploy images in this build"
-        elif [ -d "$THIS/images/j2sdk-image" ]; then
-            THIS_J2SDK="$THIS/images/j2sdk-image"
-            THIS_J2RE="$THIS/images/j2re-image"
-            echo "Selecting jdk images in this build"
+            # If there is an install image, prefer that, it's also overlay
+            THIS_J2SDK_OVERLAY="$THIS/install/j2sdk-image"
+            THIS_J2RE_OVERLAY="$THIS/install/j2re-image"
+            echo "Selecting install overlay images in this build"
+        else
+            THIS_J2SDK_OVERLAY="$THIS/images/j2sdk-overlay-image"
+            THIS_J2RE_OVERLAY="$THIS/images/j2re-overlay-image"
+            echo "Selecting jdk overlay images in this build"
         fi
+    fi
 
-        if [ -d "$THIS/images/j2sdk-overlay-image" ]; then
-            if [ -d "$THIS/install/j2sdk-image" ]; then
-                # If there is an install image, prefer that, it's also overlay
-                THIS_J2SDK_OVERLAY="$THIS/install/j2sdk-image"
-                THIS_J2RE_OVERLAY="$THIS/install/j2re-image"
-                echo "Selecting install overlay images in this build"
-            else
-                THIS_J2SDK_OVERLAY="$THIS/images/j2sdk-overlay-image"
-                THIS_J2RE_OVERLAY="$THIS/images/j2re-overlay-image"
-                echo "Selecting jdk overlay images in this build"
-            fi
+    if [ -d "$THIS/images/j2sdk-bundle" ]; then
+        THIS_J2SDK_BUNDLE="$THIS/images/j2sdk-bundle"
+        THIS_J2RE_BUNDLE="$THIS/images/j2re-bundle"
+        echo "Selecting bundles in this build"
+    fi
+
+    # Figure out the layout of the other build (old or new, normal or overlay image)
+    if [ -d "$OTHER/j2sdk-image" ]; then
+        if [ -f "$OTHER/j2sdk-image/LICENSE" ]; then
+            OTHER_J2SDK="$OTHER/j2sdk-image"
+            OTHER_J2RE="$OTHER/j2re-image"
+            echo "Selecting old-style images in other build"
+        else
+            OTHER_J2SDK_OVERLAY="$OTHER/j2sdk-image"
+            OTHER_J2RE_OVERLAY="$OTHER/j2re-image"
+            echo "Selecting overlay images in other build"
         fi
+    elif [ -d "$OTHER/install/j2sdk-image" ]; then
+        OTHER_J2SDK="$OTHER/install/j2sdk-image"
+        OTHER_J2RE="$OTHER/install/j2re-image"
+        echo "Selecting install images in other build"
+    elif [ -d "$OTHER/deploy/j2sdk-image" ]; then
+        OTHER_J2SDK="$OTHER/deploy/j2sdk-image"
+        OTHER_J2RE="$OTHER/deploy/j2re-image"
+        echo "Selecting deploy images in other build"
+    elif [ -d "$OTHER/images/j2sdk-image" ]; then
+        OTHER_J2SDK="$OTHER/images/j2sdk-image"
+        OTHER_J2RE="$OTHER/images/j2re-image"
+        echo "Selecting jdk images in other build"
+    fi
 
-        if [ -d "$THIS/images/j2sdk-bundle" ]; then
-            THIS_J2SDK_BUNDLE="$THIS/images/j2sdk-bundle"
-            THIS_J2RE_BUNDLE="$THIS/images/j2re-bundle"
-            echo "Selecting bundles in this build"
-        fi
-
-        # Figure out the layout of the other build (old or new, normal or overlay image)
-        if [ -d "$OTHER/j2sdk-image" ]; then
-            if [ -f "$OTHER/j2sdk-image/LICENSE" ]; then
-                OTHER_J2SDK="$OTHER/j2sdk-image"
-                OTHER_J2RE="$OTHER/j2re-image"
-                echo "Selecting old-style images in other build"
-            else
-                OTHER_J2SDK_OVERLAY="$OTHER/j2sdk-image"
-                OTHER_J2RE_OVERLAY="$OTHER/j2re-image"
-                echo "Selecting overlay images in other build"
-            fi
-        elif [ -d "$OTHER/install/j2sdk-image" ]; then
-            OTHER_J2SDK="$OTHER/install/j2sdk-image"
-            OTHER_J2RE="$OTHER/install/j2re-image"
-            echo "Selecting install images in other build"
-        elif [ -d "$OTHER/deploy/j2sdk-image" ]; then
-            OTHER_J2SDK="$OTHER/deploy/j2sdk-image"
-            OTHER_J2RE="$OTHER/deploy/j2re-image"
-            echo "Selecting deploy images in other build"
-        elif [ -d "$OTHER/images/j2sdk-image" ]; then
-            OTHER_J2SDK="$OTHER/images/j2sdk-image"
-            OTHER_J2RE="$OTHER/images/j2re-image"
-            echo "Selecting jdk images in other build"
-        fi
-
-        if [ -d "$OTHER/j2sdk-bundle" ]; then
-            OTHER_J2SDK_BUNDLE="$OTHER/j2sdk-bundle"
-            OTHER_J2RE_BUNDLE="$OTHER/j2re-bundle"
-            echo "Selecting bundles in other build"
-        elif [ -d "$OTHER/images/j2sdk-bundle" ]; then
-            OTHER_J2SDK_BUNDLE="$OTHER/images/j2sdk-bundle"
-            OTHER_J2RE_BUNDLE="$OTHER/images/j2re-bundle"
-            echo "Selecting jdk bundles in other build"
-        fi
-
-        if [ -z "$THIS_J2SDK" ] || [ -z "$THIS_J2RE" ]; then
-            if [ -z "$THIS_J2SDK_OVERLAY" ]; then
-                echo "Cannot locate images for this build. Are you sure you have run 'make images'?"
-                exit 1
-            fi
-        fi
-
-        if [ -z "$OTHER_J2SDK" ] && [ -n "$OTHER_J2SDK_OVERLAY" ] && [ -z "$THIS_J2SDK_OVERLAY" ]; then
-            echo "OTHER build only has an overlay image while this build does not. Nothing to compare!"
+    if [ -d "$OTHER/j2sdk-bundle" ]; then
+        OTHER_J2SDK_BUNDLE="$OTHER/j2sdk-bundle"
+        OTHER_J2RE_BUNDLE="$OTHER/j2re-bundle"
+        echo "Selecting bundles in other build"
+    elif [ -d "$OTHER/images/j2sdk-bundle" ]; then
+        OTHER_J2SDK_BUNDLE="$OTHER/images/j2sdk-bundle"
+        OTHER_J2RE_BUNDLE="$OTHER/images/j2re-bundle"
+        echo "Selecting jdk bundles in other build"
+    fi
+    
+    if [ -z "$THIS_J2SDK" ] || [ -z "$THIS_J2RE" ]; then
+        if [ -z "$THIS_J2SDK_OVERLAY" ]; then
+            echo "Cannot locate images for this build. Are you sure you have run 'make images'?"
             exit 1
         fi
+    fi
 
-        if [ -z "$THIS_J2SDK_BUNDLE" ] && [ -n "$OTHER_J2SDK_BUNDLE" ]; then
-            echo "WARNING! OTHER build has bundles built while this build does not."
-            echo "Skipping bundle compare!"
-        fi
+    if [ -z "$OTHER_J2SDK" ] && [ -n "$OTHER_J2SDK_OVERLAY" ] && [ -z "$THIS_J2SDK_OVERLAY" ]; then
+        echo "OTHER build only has an overlay image while this build does not. Nothing to compare!"
+        exit 1
+    fi
 
-        if [ -d "$OTHER/images" ]; then
-            OTHER_SEC_DIR="$OTHER/images"
+    if [ -z "$THIS_J2SDK_BUNDLE" ] && [ -n "$OTHER_J2SDK_BUNDLE" ]; then
+        echo "WARNING! OTHER build has bundles built while this build does not."
+        echo "Skipping bundle compare!"
+    fi
+
+    if [ -d "$OTHER/images" ]; then
+        OTHER_SEC_DIR="$OTHER/images"
+    else
+        OTHER_SEC_DIR="$OTHER/tmp"
+    fi
+    OTHER_SEC_BIN="$OTHER_SEC_DIR/sec-bin.zip"
+    THIS_SEC_DIR="$THIS/images"
+    THIS_SEC_BIN="$THIS_SEC_DIR/sec-bin.zip"
+    if [ "$OPENJDK_TARGET_OS" = "windows" ]; then
+        if [ "$OPENJDK_TARGET_CPU" = "x86_64" ]; then
+            JGSS_WINDOWS_BIN="jgss-windows-x64-bin.zip"
         else
-            OTHER_SEC_DIR="$OTHER/tmp"
+            JGSS_WINDOWS_BIN="jgss-windows-i586-bin.zip"
         fi
-        OTHER_SEC_BIN="$OTHER_SEC_DIR/sec-bin.zip"
-        THIS_SEC_DIR="$THIS/images"
-        THIS_SEC_BIN="$THIS_SEC_DIR/sec-bin.zip"
-        if [ "$OPENJDK_TARGET_OS" = "windows" ]; then
-            if [ "$OPENJDK_TARGET_CPU" = "x86_64" ]; then
-                JGSS_WINDOWS_BIN="jgss-windows-x64-bin.zip"
-            else
-                JGSS_WINDOWS_BIN="jgss-windows-i586-bin.zip"
-            fi
-            OTHER_SEC_WINDOWS_BIN="$OTHER_SEC_DIR/sec-windows-bin.zip"
-            OTHER_JGSS_WINDOWS_BIN="$OTHER_SEC_DIR/$JGSS_WINDOWS_BIN"
-            THIS_SEC_WINDOWS_BIN="$THIS_SEC_DIR/sec-windows-bin.zip"
-            THIS_JGSS_WINDOWS_BIN="$THIS_SEC_DIR/$JGSS_WINDOWS_BIN"
-        fi
+        OTHER_SEC_WINDOWS_BIN="$OTHER_SEC_DIR/sec-windows-bin.zip"
+        OTHER_JGSS_WINDOWS_BIN="$OTHER_SEC_DIR/$JGSS_WINDOWS_BIN"
+        THIS_SEC_WINDOWS_BIN="$THIS_SEC_DIR/sec-windows-bin.zip"
+        THIS_JGSS_WINDOWS_BIN="$THIS_SEC_DIR/$JGSS_WINDOWS_BIN"
     fi
 
     if [ -d "$THIS/docs" ]; then

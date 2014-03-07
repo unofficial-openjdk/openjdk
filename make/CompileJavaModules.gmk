@@ -45,19 +45,152 @@ $(eval $(call SetupJavaCompiler,GENERATE_JDKBYTECODE, \
 ################################################################################
 # Module specific build settings
 
+# Excludes with unknown module
+# EXCLUDES += com/sun/pept
+# ifdef OPENJDK
+#  EXCLUDES += sun/dc \
+#      com/sun/script
+# endif
+
+#ifndef OPENJDK
+#  ifeq ($(OPENJDK_TARGET_OS), windows)
+#    # AccessBridge is compiled separately below.
+#    EXCLUDE_FILES += AccessBridge.java \
+#        AccessBridgeLoader.java \
+#  endif
+#endif
+
+#ifneq ($(OPENJDK_TARGET_OS), solaris)
+#  EXCLUDES += com/oracle/security
+#endif
+
 ################################################################################
 
 java.base_COPY := .icu .dat .spp
 
-java.base_EXCLUDE_FILES := sun/text/resources/BreakIteratorRules.java
+# Exclude BreakIterator classes that are just used in compile process to generate
+# data files and shouldn't go in the product
+java.base_EXCLUDE_FILES += sun/text/resources/BreakIteratorRules.java
+java.base_EXCLUDE_FILES += sun/util/locale/AsciiUtil.java
+
+ifndef OPENJDK
+  # Use the closed version of this file
+  java.base_EXCLUDE_FILES += $(JDK_TOPDIR)/src/share/classes/javax/crypto/JarVerifier.java
+endif
 
 ifeq ($(OPENJDK_TARGET_OS), macosx)
   JAVA_BASE_SOLARIS_DIR := $(JDK_TOPDIR)/$(SRC_SUBDIR)/solaris/modules/java.base
-  java.base_EXCLUDE_FILES := \
+  java.base_EXCLUDE_FILES += \
       $(JAVA_BASE_SOLARIS_DIR)/sun/util/locale/provider/HostLocaleProviderAdapterImpl.java \
       $(JAVA_BASE_SOLARIS_DIR)/java/net/DefaultInterface.java \
       $(JAVA_BASE_SOLARIS_DIR)/java/lang/ClassLoaderHelper.java \
       $(JAVA_BASE_SOLARIS_DIR)/sun/nio/ch/DefaultSelectorProvider.java \
+      #
+endif
+
+ifneq ($(OPENJDK_TARGET_OS), solaris)
+  java.base_EXCLUDE_FILES += \
+      SolarisAclFileAttributeView.java \
+      SolarisFileStore.java \
+      SolarisFileSystem.java \
+      SolarisFileSystemProvider.java \
+      SolarisNativeDispatcher.java \
+      SolarisUserDefinedFileAttributeView.java \
+      SolarisWatchService.java \
+      SolarisAclFileAttributeView.java \
+      SolarisLoginModule.java \
+      SolarisSystem.java \
+      sun/nio/ch/DevPollArrayWrapper.java \
+      sun/nio/ch/DevPollSelectorImpl.java \
+      sun/nio/ch/DevPollSelectorProvider.java \
+      sun/nio/ch/EventPortSelectorImpl.java \
+      sun/nio/ch/EventPortSelectorProvider.java \
+      sun/nio/ch/EventPortWrapper.java \
+      sun/nio/ch/SolarisAsynchronousChannelProvider.java \
+      sun/nio/ch/SolarisEventPort.java \
+      #
+endif
+
+ifneq ($(OPENJDK_TARGET_OS), linux)
+  java.base_EXCLUDE_FILES += \
+      sun/nio/ch/EPoll.java \
+      sun/nio/ch/EPollArrayWrapper.java \
+      sun/nio/ch/EPollPort.java \
+      sun/nio/ch/EPollSelectorImpl.java \
+      sun/nio/ch/EPollSelectorProvider.java \
+      sun/nio/ch/LinuxAsynchronousChannelProvider.java \
+      sun/nio/fs/LinuxDosFileAttributeView.java \
+      sun/nio/fs/LinuxFileStore.java \
+      sun/nio/fs/LinuxFileSystem.java \
+      sun/nio/fs/LinuxFileSystemProvider.java \
+      sun/nio/fs/MagicFileTypeDetector.java \
+      sun/nio/fs/LinuxNativeDispatcher.java \
+      sun/nio/fs/LinuxUserDefinedFileAttributeView.java \
+      sun/nio/fs/LinuxWatchService.java \
+      #
+endif
+
+ifneq ($(OPENJDK_TARGET_OS), macosx)
+  java.base_EXCLUDE_FILES += \
+      sun/nio/ch/BsdAsynchronousChannelProvider.java \
+      sun/nio/ch/KQueue.java \
+      sun/nio/ch/KQueuePort.java \
+      sun/nio/fs/BsdFileStore.java \
+      sun/nio/fs/BsdFileSystem.java \
+      sun/nio/fs/BsdFileSystemProvider.java \
+      sun/nio/fs/BsdNativeDispatcher.java \
+      sun/nio/fs/MacOSXFileSystemProvider.java \
+      sun/nio/fs/MacOSXFileSystem.java \
+      sun/nio/fs/MacOSXNativeDispatcher.java \
+      #
+endif
+
+ifneq ($(OPENJDK_TARGET_OS),aix)
+  java.base_EXCLUDE_FILES += \
+      sun/nio/ch/AixAsynchronousChannelProvider.java \
+      sun/nio/ch/AixPollPort.java \
+      sun/nio/fs/AixFileStore.java \
+      sun/nio/fs/AixFileSystem.java \
+      sun/nio/fs/AixFileSystemProvider.java \
+      sun/nio/fs/AixNativeDispatcher.java \
+      #
+endif
+
+ifeq ($(filter $(OPENJDK_TARGET_OS), solaris macosx aix), )
+  #
+  # only solaris, macosx and aix
+  #
+  java.base_EXCLUDE_FILES += sun/nio/fs/PollingWatchService.java
+endif
+
+ifeq ($(OPENJDK_TARGET_OS), windows)
+  java.base_EXCLUDE_FILES += \
+      sun/nio/ch/AbstractPollSelectorImpl.java \
+      sun/nio/ch/PollSelectorProvider.java \
+      sun/nio/ch/SimpleAsynchronousFileChannelImpl.java \
+      #
+endif
+
+ifeq ($(OPENJDK_TARGET_OS), macosx)
+  # These files are duplicated in MACOSX_SRC_DIRS
+  java.base_EXCLUDE_FILES += \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/solaris/modules/java.base/sun/nio/ch/DefaultSelectorProvider.java \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/solaris/modules/java.base/java/net/DefaultInterface.java \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/solaris/modules/java.base/java/lang/ClassLoaderHelper.java \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/solaris/modules/java.base/sun/util/locale/provider/HostLocaleProviderAdapterImpl.java \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/solaris/modules/java.base/sun/nio/fs/GnomeFileTypeDetector.java \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/solaris/modules/java.base/sun/nio/ch/sctp/SctpChannelImpl.java \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/solaris/modules/java.base/sun/nio/ch/sctp/SctpMultiChannelImpl.java \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/solaris/modules/java.base/sun/nio/ch/sctp/SctpServerChannelImpl.java \
+      #
+endif
+
+ifeq ($(OPENJDK_TARGET_OS),aix)
+  # These files are duplicated in AIX_SRC_DIRS
+  java.base_EXCLUDE_FILES += \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/solaris/modules/java.base/sun/nio/ch/sctp/SctpChannelImpl.java \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/solaris/modules/java.base/sun/nio/ch/sctp/SctpMultiChannelImpl.java \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/solaris/modules/java.base/sun/nio/ch/sctp/SctpServerChannelImpl.java \
       #
 endif
 
@@ -76,7 +209,7 @@ $(JDK_OUTPUTDIR)/modules/java.desktop/javax/swing/beaninfo/images/%.gif: \
     $(JDK_TOPDIR)/make/data/swingbeaninfo/images/%.gif
 	$(call install-file)
 
-java.desktop_EXCLUDE_FILES := \
+java.desktop_EXCLUDE_FILES += \
     javax/swing/plaf/nimbus/InternalFrameTitlePanePainter.java \
     javax/swing/plaf/nimbus/OptionPaneMessageAreaPainter.java \
     javax/swing/plaf/nimbus/ScrollBarPainter.java \
@@ -155,6 +288,69 @@ else
       sun/awt/X11/XwcTextItem.java
 endif
 
+ifndef OPENJDK
+  ifeq ($(OPENJDK_TARGET_OS), windows)
+    # This gets built on unix platforms implicitly in the old build even though
+    # it's excluded in the closed build.
+    java.desktop_EXCLUDES += sun/java2d/pisces
+
+    java.desktop_EXCLUDES += com/sun/java/accessibility/extensions
+    java.desktop_EXCLUDE_FILES += com/sun/java/accessibility/util/java/awt/ChoiceTranslator.java
+  endif
+endif
+
+ifeq ($(OPENJDK_TARGET_OS), windows)
+  java.desktop_EXCLUDES += com/sun/java/swing/plaf/gtk
+endif
+
+ifdef BUILD_HEADLESS_ONLY
+  java.desktop_EXCLUDES += sun/applet
+endif
+
+ifdef OPENJDK
+  java.desktop_EXCLUDES += sun/java2d/cmm/kcms
+endif
+
+# Used on windows and macosx
+ifeq ($(filter $(OPENJDK_TARGET_OS), windows macosx), )
+  java.desktop_EXCLUDE_FILES += sun/awt/AWTCharset.java
+endif
+
+# These files do not appear in the build result of the old build. This
+# is because they are generated sources, but the AUTO_JAVA_FILES won't
+# pick them up since they aren't generated when the source dirs are
+# searched and they aren't referenced by any other classes so they won't
+# be picked up by implicit compilation. On a rebuild, they are picked up
+# and compiled. Exclude them here to produce the same rt.jar as the old
+# build does when building just once.
+java.desktop_EXCLUDE_FILES += \
+    javax/swing/plaf/nimbus/InternalFrameTitlePanePainter.java \
+    javax/swing/plaf/nimbus/OptionPaneMessageAreaPainter.java \
+    javax/swing/plaf/nimbus/ScrollBarPainter.java \
+    javax/swing/plaf/nimbus/SliderPainter.java \
+    javax/swing/plaf/nimbus/SpinnerPainter.java \
+    javax/swing/plaf/nimbus/SplitPanePainter.java \
+    javax/swing/plaf/nimbus/TabbedPanePainter.java \
+    #
+
+ifeq ($(OPENJDK_TARGET_OS), macosx)
+  # These files are duplicated in MACOSX_SRC_DIRS
+  java.base_EXCLUDE_FILES += \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/solaris/modules/java.desktop/sun/java2d/BackBufferCapsProvider.java \
+      #
+endif
+
+################################################################################
+# Exclude building of IIOP transport for RMI Connector
+java.management_EXCLUDES := com/sun/jmx/remote/protocol/iiop
+
+ifdef OPENJDK
+  java.management_EXCLUDES := \
+      com/sun/jmx/snmp \
+      sun/management/snmp \
+      #
+endif
+
 ################################################################################
 
 javax.corba_COPY := .prp LogStrings.properties
@@ -195,6 +391,20 @@ javax.xmldsig_COPY := .dtd .xml
 
 ################################################################################
 
+ifneq ($(OPENJDK_TARGET_OS), windows)
+  jdk.jaas_EXCLUDE_FILES += \
+      NTLoginModule.java \
+      NTSystem.java \
+      #
+else
+  jdk.jaas_EXCLUDE_FILES += \
+      UnixLoginModule.java \
+      UnixSystem.java \
+      #
+endif
+
+################################################################################
+
 jdk.devtools_COPY := .gif .xml .css .js javax.tools.JavaCompilerTool
 
 ################################################################################
@@ -210,6 +420,40 @@ endif
 ################################################################################
 
 jdk.tools_COPY := .gif .png .js .html .txt aliasmap _options messages.properties
+jdk.tools_EXCLUDES := \
+    com/sun/tools/example/trace \
+    com/sun/tools/example/debug/bdi \
+    com/sun/tools/example/debug/event \
+    com/sun/tools/example/debug/gui \
+    #
+
+ifneq ($(OPENJDK_TARGET_OS), solaris)
+  jdk.tools_EXCLUDE_FILES += \
+      sun/tools/attach/SolarisAttachProvider.java \
+      sun/tools/attach/SolarisVirtualMachine.java \
+      #
+endif
+
+ifneq ($(OPENJDK_TARGET_OS), linux)
+  jdk.tools_EXCLUDE_FILES += \
+      sun/tools/attach/LinuxAttachProvider.java \
+      sun/tools/attach/LinuxVirtualMachine.java \
+      #
+endif
+
+ifneq ($(OPENJDK_TARGET_OS), macosx)
+  jdk.tools_EXCLUDE_FILES += \
+      sun/tools/attach/BsdAttachProvider.java \
+      sun/tools/attach/BsdVirtualMachine.java \
+      #
+endif
+
+ifneq ($(OPENJDK_TARGET_OS),aix)
+  jdk.tools_EXCLUDE_FILES += \
+      sun/tools/attach/AixAttachProvider.java \
+      sun/tools/attach/AixVirtualMachine.java \
+      #
+endif
 
 ################################################################################
 
@@ -223,6 +467,9 @@ sun.charsets_COPY := .dat
 ################################################################################
 
 sun.localedata_COPY := _dict _th
+# Exclude BreakIterator classes that are just used in compile process to generate
+# data files and shouldn't go in the product
+sun.localedata_EXCLUDE_FILES := sun/text/resources/th/BreakIteratorRules_th.java
 
 ################################################################################
 # Setup the compilation of each module
@@ -242,6 +489,9 @@ ALL_SRC_DIRS := \
 
 ifeq ($(OPENJDK_TARGET_OS), macosx)
   ALL_SRC_DIRS += $(JDK_TOPDIR)/$(SRC_SUBDIR)/macosx/modules
+endif
+ifeq ($(OPENJDK_TARGET_OS), aix)
+     AIX_SRC_DIRS += $(JDK_TOPDIR)/$(SRC_SUBDIR)/aix/modules
 endif
 
 # Find all modules with java sources by looking in the source dirs

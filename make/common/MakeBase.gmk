@@ -437,13 +437,14 @@ endif
 # Otherwise reverts to shell find. This is safe to call on all platforms, even if
 # cache is deactivated.
 #
+# $1 can be either a directory or a file. If it's a directory, make
+# sure we have exactly one trailing slash before the wildcard.
+#
 # The extra - is needed when FIND_CACHE_DIR is empty but should be harmless.
 # Param 1 - Dirs to find in
 define CacheFind
   $(if $(filter-out $(addsuffix %,- $(FIND_CACHE_DIR)),$1), \
     $(shell $(FIND) $1 -type f -o -type l), \
-    # $1 can be either a directory or a file. If it's a directory, make
-    # sure we have exactly one trailing slash before the wildcard.
     $(filter $(addsuffix /%,$(patsubst %/,%,$1)) $1,$(FIND_CACHE)))
 endef
 
