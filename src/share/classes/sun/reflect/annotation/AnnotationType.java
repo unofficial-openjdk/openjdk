@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2006, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,6 +25,8 @@
 
 package sun.reflect.annotation;
 
+import sun.misc.JavaLangAccess;
+
 import java.lang.annotation.*;
 import java.lang.reflect.*;
 import java.util.*;
@@ -45,29 +47,28 @@ public class AnnotationType {
      * types.  This matches the return value that must be used for a
      * dynamic proxy, allowing for a simple isInstance test.
      */
-    private final Map<String, Class<?>> memberTypes = new HashMap<String,Class<?>>();
+    private final Map<String, Class<?>> memberTypes;
 
     /**
      * Member name -> default value mapping.
      */
-    private final Map<String, Object> memberDefaults =
-        new HashMap<String, Object>();
+    private final Map<String, Object> memberDefaults;
 
     /**
-     * Member name -> Method object mapping. This (and its assoicated
+     * Member name -> Method object mapping. This (and its associated
      * accessor) are used only to generate AnnotationTypeMismatchExceptions.
      */
-    private final Map<String, Method> members = new HashMap<String, Method>();
+    private final Map<String, Method> members;
 
     /**
      * The retention policy for this annotation type.
      */
-    private RetentionPolicy retention = RetentionPolicy.RUNTIME;;
+    private final RetentionPolicy retention;
 
     /**
      * Whether this annotation type is inherited.
      */
-    private boolean inherited = false;
+    private final boolean inherited;
 
     /**
      * Returns an AnnotationType instance for the specified annotation type.
@@ -75,13 +76,20 @@ public class AnnotationType {
      * @throw IllegalArgumentException if the specified class object for
      *     does not represent a valid annotation type
      */
-    public static synchronized AnnotationType getInstance(
+    public static AnnotationType getInstance(
         Class<? extends Annotation> annotationClass)
     {
-        AnnotationType result = sun.misc.SharedSecrets.getJavaLangAccess().
-            getAnnotationType(annotationClass);
-        if (result == null)
-            result = new AnnotationType((Class<? extends Annotation>) annotationClass);
+        JavaLangAccess jla = sun.misc.SharedSecrets.getJavaLangAccess();
+        AnnotationType result = jla.getAnnotationType(annotationClass); // volatile read
+        if (result == null) {
+            result = new AnnotationType(annotationClass);
+            // try to CAS the AnnotationType: null -> result
+            if (!jla.casAnnotationType(annotationClass, null, result)) {
+                // somebody was quicker -> read it's result
+                result = jla.getAnnotationType(annotationClass);
+                assert result != null;
+            }
+        }
 
         return result;
     }
@@ -105,6 +113,9 @@ public class AnnotationType {
                 }
             });
 
+        memberTypes = new HashMap<String,Class<?>>(methods.length+1, 1.0f);
+        memberDefaults = new HashMap<String, Object>(0);
+        members = new HashMap<String, Method>(methods.length+1, 1.0f);
 
         for (Method method :  methods) {
             if (method.getParameterTypes().length != 0)
@@ -117,20 +128,27 @@ public class AnnotationType {
             Object defaultValue = method.getDefaultValue();
             if (defaultValue != null)
                 memberDefaults.put(name, defaultValue);
-
-            members.put(name, method);
         }
-
-        sun.misc.SharedSecrets.getJavaLangAccess().
-            setAnnotationType(annotationClass, this);
 
         // Initialize retention, & inherited fields.  Special treatment
         // of the corresponding annotation types breaks infinite recursion.
         if (annotationClass != Retention.class &&
             annotationClass != Inherited.class) {
-            Retention ret = annotationClass.getAnnotation(Retention.class);
+            JavaLangAccess jla = sun.misc.SharedSecrets.getJavaLangAccess();
+            Map<Class<? extends Annotation>, Annotation> metaAnnotations =
+                AnnotationParser.parseSelectAnnotations(
+                    jla.getRawClassAnnotations(annotationClass),
+                    jla.getConstantPool(annotationClass),
+                    annotationClass,
+                    Retention.class, Inherited.class
+                );
+            Retention ret = (Retention) metaAnnotations.get(Retention.class);
             retention = (ret == null ? RetentionPolicy.CLASS : ret.value());
-            inherited = annotationClass.isAnnotationPresent(Inherited.class);
+            inherited = metaAnnotations.containsKey(Inherited.class);
+        }
+        else {
+            retention = RetentionPolicy.RUNTIME;
+            inherited = false;
         }
     }
 
@@ -205,11 +223,10 @@ public class AnnotationType {
      * For debugging.
      */
     public String toString() {
-        StringBuffer s = new StringBuffer("Annotation Type:" + "\n");
-        s.append("   Member types: " + memberTypes + "\n");
-        s.append("   Member defaults: " + memberDefaults + "\n");
-        s.append("   Retention policy: " + retention + "\n");
-        s.append("   Inherited: " + inherited);
-        return s.toString();
+        return "Annotation Type:\n" +
+               "   Member types: " + memberTypes + "\n" +
+               "   Member defaults: " + memberDefaults + "\n" +
+               "   Retention policy: " + retention + "\n" +
+               "   Inherited: " + inherited;
     }
 }
