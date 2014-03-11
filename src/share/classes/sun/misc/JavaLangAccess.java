@@ -31,6 +31,7 @@ import java.security.AccessControlContext;
 import java.util.Map;
 
 import sun.reflect.ConstantPool;
+import sun.reflect.ModuleCatalog;
 import sun.reflect.annotation.AnnotationType;
 import sun.nio.ch.Interruptible;
 
@@ -132,4 +133,10 @@ public interface JavaLangAccess {
      * Invokes the finalize method of the given object.
      */
     void invokeFinalize(Object o) throws Throwable;
+
+    /**
+     * Returns the ModuleCatalog for modules associated with the given
+     * class loader.
+     */
+    ModuleCatalog getModuleCatalog(ClassLoader cl);
 }

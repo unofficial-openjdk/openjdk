@@ -926,7 +926,7 @@ public enum LauncherHelper {
         try {
             ModuleLauncher.init(jdkModules, roots, verbose);
         } catch (Exception e) {
-            ostream.println(e);
+            e.printStackTrace();  // for debugging purposes
             abort(e, "java.launcher.init.error");
         }
     }

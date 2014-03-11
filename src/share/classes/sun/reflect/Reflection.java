@@ -28,6 +28,7 @@ package sun.reflect;
 import java.lang.reflect.*;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 /** Common utility routines used by both java.lang and
     java.lang.reflect */
@@ -49,6 +50,12 @@ public class Reflection {
         fieldFilterMap = map;
 
         methodFilterMap = new HashMap<>();
+    }
+
+    private static volatile boolean moduleChecksEnabled;
+
+    public static void enableModuleChecks() {
+        moduleChecksEnabled = true;
     }
 
     /** Returns the class of the caller of the method calling this method,
@@ -80,6 +87,10 @@ public class Reflection {
     public static boolean quickCheckMemberAccess(Class<?> memberClass,
                                                  int modifiers)
     {
+        if (moduleChecksEnabled) {
+            // no quick check as don't know if caller is in named or unnamed module
+            return false;
+        }
         return Modifier.isPublic(getClassAccessFlags(memberClass) & modifiers);
     }
 
@@ -94,9 +105,20 @@ public class Reflection {
         }
 
         if (!verifyMemberAccess(currentClass, memberClass, target, modifiers)) {
+            String currentSuffix = "";
+            String memberSuffix = "";
+            if (moduleChecksEnabled) {
+                Module m1 = currentClass.getModule();
+                if (m1 != null)
+                    currentSuffix = " (" + m1 + ")";
+                Module m2 = memberClass.getModule();
+                if (m2 != null)
+                    memberSuffix = " (" + m2 + ")";
+            }
             throw new IllegalAccessException("Class " + currentClass.getName() +
+                                             currentSuffix +
                                              " can not access a member of class " +
-                                             memberClass.getName() +
+                                             memberClass.getName() + memberSuffix +
                                              " with modifiers \"" +
                                              Modifier.toString(modifiers) +
                                              "\"");
@@ -121,6 +143,12 @@ public class Reflection {
         if (currentClass == memberClass) {
             // Always succeeds
             return true;
+        }
+
+        if (moduleChecksEnabled) {
+            if (!verifyModuleAccess(currentClass, memberClass)) {
+                return false;
+            }
         }
 
         if (!Modifier.isPublic(getClassAccessFlags(memberClass))) {
@@ -179,6 +207,54 @@ public class Reflection {
         }
 
         return true;
+    }
+
+    /**
+     * Returns {@ocde true} if memberClass's module is readable by currentClass's
+     * module and memberClass's's module exports memberClass's package to
+     * currentClass's module.
+     */
+    private static boolean verifyModuleAccess(Class<?> currentClass,
+                                              Class<?> memberClass) {
+        Module m1 = currentClass.getModule();
+        Module m2 = memberClass.getModule();
+
+        if (m1 == m2)
+            return true;  // same module (named or unnamed)
+
+        if (m1 != null) {
+            // named module trying to access member in unnamed module
+            if (m2 == null)
+                return false;
+
+            // named module trying to access member in another named module
+            if (!m1.requires().contains(m2))
+                return false;
+        }
+
+        // check exports
+        Set<Module> who = m2.exports().get(packageName(memberClass));
+
+        // not exported
+        if (who == null)
+            return false;
+
+        // no restrictions
+        if (who.isEmpty())
+            return true;
+
+        // check exported to m1
+        // assert !who.contains(null);
+        return who.contains(m1);
+    }
+
+    private static String packageName(Class<?> c) {
+        String name = c.getName();
+        int i = name.lastIndexOf('.');
+        if (i == -1)
+            return "";
+        int start = name.startsWith("[L") ? 2 : 0;
+        return name.substring(start, i);
     }
 
     private static boolean isSameClassPackage(Class<?> c1, Class<?> c2) {

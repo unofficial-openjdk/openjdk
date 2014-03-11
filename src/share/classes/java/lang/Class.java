@@ -33,6 +33,7 @@ import java.lang.reflect.Member;
 import java.lang.reflect.Field;
 import java.lang.reflect.Executable;
 import java.lang.reflect.Method;
+import java.lang.reflect.Module;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
@@ -57,6 +58,7 @@ import java.util.Objects;
 import sun.misc.Unsafe;
 import sun.reflect.CallerSensitive;
 import sun.reflect.ConstantPool;
+import sun.reflect.ModuleCatalog;
 import sun.reflect.Reflection;
 import sun.reflect.ReflectionFactory;
 import sun.reflect.generics.factory.CoreReflectionFactory;
@@ -678,6 +680,41 @@ public final class Class<T> implements java.io.Serializable,
 
     // Package-private to allow ClassLoader access
     native ClassLoader getClassLoader0();
+
+    /**
+     * Returns the module that this class is a member of. Returns {@code null}
+     * if the class is a member of the unnamed module or a {@code Class}
+     * object for a primitive Java type. If invoked on a {@code Class} for
+     * an array type then this method returns the {@code Module} for the
+     * component type.
+     *
+     * @since 1.9
+     */
+    public Module getModule() {
+        Module m = module;
+        if (m == null) {
+            ClassLoader cl = getClassLoader0();
+            String name = getName();
+            int i = name.lastIndexOf('.');
+            if (i != -1) {
+                int start = name.startsWith("[L") ? 2 : 0;
+                String pkg = name.substring(start, i);
+                ModuleCatalog catalog;
+                if (cl == null) {
+                    catalog = ModuleCatalog.getSystemModuleCatalog();
+                } else {
+                    catalog = cl.getModuleCatalog();
+                }
+                m = catalog.getModule(pkg);
+            }
+            if (m == null)
+                m = ModuleCatalog.UNNAMED_MODULE;
+            module = m;
+        }
+        return (m != ModuleCatalog.UNNAMED_MODULE) ? m : null;
+    }
+
+    private transient Module module;  // cached, no need to be volatile
 
 
     /**
