@@ -233,6 +233,7 @@ java.desktop_EXCLUDE_FILES += \
     sun/awt/X11/java-icon24.png \
     sun/awt/X11/java-icon32.png \
     sun/awt/X11/java-icon48.png \
+    .template \
     #
 
 ifeq ($(OPENJDK_TARGET_OS), macosx)
@@ -475,17 +476,20 @@ sun.localedata_EXCLUDE_FILES := sun/text/resources/th/BreakIteratorRules_th.java
 # Setup the compilation of each module
 # Do not include nashorn src here since it needs to be compiled separately due
 # to nasgen.
+# Order src dirs in order of override with the most important first. Generated
+# source before static source and platform specific source before shared.
 ALL_SRC_DIRS := \
+    $(JDK_OUTPUTDIR)/gensrc \
+    $(LANGTOOLS_OUTPUTDIR)/gensrc \
+    $(CORBA_OUTPUTDIR)/gensrc \
+    $(JDK_OUTPUTDIR)/gensrc_no_srczip \
+    $(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/modules \
     $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/modules \
     $(LANGTOOLS_TOPDIR)/$(SRC_SUBDIR)/share/modules \
     $(CORBA_TOPDIR)/$(SRC_SUBDIR)/share/modules \
     $(JAXP_TOPDIR)/$(SRC_SUBDIR)/share/modules \
     $(JAXWS_TOPDIR)/$(SRC_SUBDIR)/share/modules \
-    $(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/modules \
-    $(JDK_OUTPUTDIR)/gensrc \
-    $(LANGTOOLS_OUTPUTDIR)/gensrc \
-    $(CORBA_OUTPUTDIR)/gensrc \
-    $(JDK_OUTPUTDIR)/gensrc_no_srczip
+    #
 
 ifeq ($(OPENJDK_TARGET_OS), macosx)
   ALL_SRC_DIRS += $(JDK_TOPDIR)/$(SRC_SUBDIR)/macosx/modules
@@ -534,8 +538,10 @@ endef
 
 # This macro declares the dependencies in make. This needs to happen in 
 # a separate call when all the module name variables have been defined.
+# Only the javac compilation actually depends on other modules so limit
+# dependency declaration to that by using the *_COMPILE_TARGET variable.
 define DeclareModuleDependencies
-  $$($1): $$(foreach d,$$($1_DEPS),$$($$d))
+  $$($1_COMPILE_TARGETS): $$(foreach d,$$($1_DEPS),$$($$d_COMPILE_TARGETS))
 endef
 
 # Setup compilation for each module

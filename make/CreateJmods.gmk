@@ -47,6 +47,11 @@ GENDATA_CURDATA := $(JDK_OUTPUTDIR)/lib/currency.data
 # Must generate jmods into jdk outputdir for now since jlink cannot find them
 # otherwise.
 
+# Find all files in the modules output dir. Filter out inner classes since they
+# mess up in make dependencies and aren't needed for correct dependency analysis
+# anyway.
+ALL_CLASSES := $(shell $(FIND) $(JDK_OUTPUTDIR)/modules ! -name '*$$*')
+
 # Param 1: Name of module
 define CreateJmod
 
@@ -81,7 +86,8 @@ define CreateJmod
   endif
   ifneq ($$(wildcard $(JDK_OUTPUTDIR)/modules/$1), )
     $1_JLINK_FLAGS += --class-path $(JDK_OUTPUTDIR)/modules/$1
-    $1_DEPS += $(wildcard $(JDK_OUTPUTDIR)/modules/$1/_*)
+    $1_DEPS += $(wildcard $(JDK_OUTPUTDIR)/modules/$1/_*) \
+        $(filter $(JDK_OUTPUTDIR)/modules/$1/%, $(ALL_CLASSES))
   endif
 
   # TODO: What about headers?
