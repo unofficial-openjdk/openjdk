@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,7 +23,7 @@
 
 /*
  * @test
- * @bug      4663254
+ * @bug      4663254 8016328
  * @summary  Verify that spaces do not appear in hrefs and anchors.
  * @author   jamieh
  * @library  ../lib/
@@ -46,11 +46,11 @@ public class TestHref extends JavadocTester {
     private static final String[][] TEST = {
         //External link.
         {BUG_ID + FS + "pkg" + FS + "C1.html",
-            "href=\"http://java.sun.com/j2se/1.4/docs/api/java/lang/Object.html?is-external=true#wait(long, int)\""
+            "href=\"http://java.sun.com/j2se/1.4/docs/api/java/lang/Object.html?is-external=true#wait(long,%20int)\""
         },
         //Member summary table link.
         {BUG_ID + FS + "pkg" + FS + "C1.html",
-            "href=\"../pkg/C1.html#method(int, int, java.util.ArrayList)\""
+            "href=\"../pkg/C1.html#method(int,%20int,%20java.util.ArrayList)\""
         },
         //Anchor test.
         {BUG_ID + FS + "pkg" + FS + "C1.html",
@@ -66,11 +66,11 @@ public class TestHref extends JavadocTester {
         },
         //{@link} test.
         {BUG_ID + FS + "pkg" + FS + "C2.html",
-            "Link: <a href=\"../pkg/C1.html#method(int, int, java.util.ArrayList)\">"
+            "Link: <a href=\"../pkg/C1.html#method(int,%20int,%20java.util.ArrayList)\">"
         },
         //@see test.
         {BUG_ID + FS + "pkg" + FS + "C2.html",
-            "See Also:</span></dt><dd><a href=\"../pkg/C1.html#method(int, int, java.util.ArrayList)\">"
+            "See Also:</span></dt><dd><a href=\"../pkg/C1.html#method(int,%20int,%20java.util.ArrayList)\">"
         },
 
         //Header does not link to the page itself.
