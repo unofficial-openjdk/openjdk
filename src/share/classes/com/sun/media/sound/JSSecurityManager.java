@@ -187,7 +187,7 @@ final class JSSecurityManager {
         return thread;
     }
 
-    static List getProviders(final Class providerClass) {
+    static synchronized List getProviders(final Class providerClass) {
         List p = new ArrayList();
         // Service.providers(Class) just creates "lazy" iterator instance,
         // so it doesn't require do be called from privileged section
