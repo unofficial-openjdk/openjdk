@@ -851,8 +851,6 @@ JVM_ENTRY(jobject, jmm_GetMemoryUsage(JNIEnv* env, jboolean heap))
       total_used += u.used();
       total_committed += u.committed();
 
-      // if any one of the memory pool has undefined init_size or max_size,
-      // set it to -1
       if (u.init_size() == (size_t)-1) {
         has_undefined_init_size = true;
       }
@@ -867,6 +865,15 @@ JVM_ENTRY(jobject, jmm_GetMemoryUsage(JNIEnv* env, jboolean heap))
         total_max += u.max_size();
       }
     }
+  }
+
+  // if any one of the memory pool has undefined init_size or max_size,
+  // set it to -1
+  if (has_undefined_init_size) {
+    total_init = (size_t)-1;
+  }
+  if (has_undefined_max_size) {
+    total_max = (size_t)-1;
   }
 
   // In our current implementation, we make sure that all non-heap
@@ -1793,6 +1800,18 @@ JVM_ENTRY(void, jmm_SetVMGlobal(JNIEnv *env, jstring flag_name, jvalue new_value
     succeed = CommandLineFlags::intxAtPut(name, &ivalue, MANAGEMENT);
   } else if (flag->is_uintx()) {
     uintx uvalue = (uintx)new_value.j;
+
+    if (strncmp(name, "MaxHeapFreeRatio", 17) == 0) {
+      FormatBuffer<80> err_msg("");
+      if (!Arguments::verify_MaxHeapFreeRatio(err_msg, uvalue)) {
+        THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(), err_msg.buffer());
+      }
+    } else if (strncmp(name, "MinHeapFreeRatio", 17) == 0) {
+      FormatBuffer<80> err_msg("");
+      if (!Arguments::verify_MinHeapFreeRatio(err_msg, uvalue)) {
+        THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(), err_msg.buffer());
+      }
+    }
     succeed = CommandLineFlags::uintxAtPut(name, &uvalue, MANAGEMENT);
   } else if (flag->is_uint64_t()) {
     uint64_t uvalue = (uint64_t)new_value.j;

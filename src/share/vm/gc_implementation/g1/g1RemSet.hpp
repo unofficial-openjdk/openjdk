@@ -25,6 +25,8 @@
 #ifndef SHARE_VM_GC_IMPLEMENTATION_G1_G1REMSET_HPP
 #define SHARE_VM_GC_IMPLEMENTATION_G1_G1REMSET_HPP
 
+#include "gc_implementation/g1/g1RemSetSummary.hpp"
+
 // A G1RemSet provides ways of iterating over pointers into a selected
 // collection set.
 
@@ -37,9 +39,11 @@ class ConcurrentG1Refine;
 // so that they can be used to update the individual region remsets.
 
 class G1RemSet: public CHeapObj<mtGC> {
+private:
+  G1RemSetSummary _prev_period_summary;
 protected:
   G1CollectedHeap* _g1;
-  unsigned _conc_refine_cards;
+  size_t _conc_refine_cards;
   uint n_workers();
 
 protected:
@@ -66,6 +70,8 @@ protected:
   // references into the collection set.
   OopsInHeapRegionClosure** _cset_rs_update_cl;
 
+  // Print the given summary info
+  virtual void print_summary_info(G1RemSetSummary * summary, const char * header = NULL);
 public:
   // This is called to reset dual hash tables after the gc pause
   // is finished and the initial hash table is no longer being
@@ -75,14 +81,23 @@ public:
   G1RemSet(G1CollectedHeap* g1, CardTableModRefBS* ct_bs);
   ~G1RemSet();
 
-  // Invoke "blk->do_oop" on all pointers into the CS in objects in regions
-  // outside the CS (having invoked "blk->set_region" to set the "from"
-  // region correctly beforehand.) The "worker_i" param is for the
-  // parallel case where the number of the worker thread calling this
-  // function can be helpful in partitioning the work to be done. It
-  // should be the same as the "i" passed to the calling thread's
-  // work(i) function. In the sequential case this param will be ingored.
-  void oops_into_collection_set_do(OopsInHeapRegionClosure* blk, int worker_i);
+  // Invoke "blk->do_oop" on all pointers into the collection set
+  // from objects in regions outside the collection set (having
+  // invoked "blk->set_region" to set the "from" region correctly
+  // beforehand.)
+  //
+  // Invoke code_root_cl->do_code_blob on the unmarked nmethods
+  // on the strong code roots list for each region in the
+  // collection set.
+  //
+  // The "worker_i" param is for the parallel case where the id
+  // of the worker thread calling this function can be helpful in
+  // partitioning the work to be done. It should be the same as
+  // the "i" passed to the calling thread's work(i) function.
+  // In the sequential case this param will be ignored.
+  void oops_into_collection_set_do(OopsInHeapRegionClosure* blk,
+                                   CodeBlobToOopClosure* code_root_cl,
+                                   int worker_i);
 
   // Prepare for and cleanup after an oops_into_collection_set_do
   // call.  Must call each of these once before and after (in sequential
@@ -92,7 +107,10 @@ public:
   void prepare_for_oops_into_collection_set_do();
   void cleanup_after_oops_into_collection_set_do();
 
-  void scanRS(OopsInHeapRegionClosure* oc, int worker_i);
+  void scanRS(OopsInHeapRegionClosure* oc,
+              CodeBlobToOopClosure* code_root_cl,
+              int worker_i);
+
   void updateRS(DirtyCardQueue* into_cset_dcq, int worker_i);
 
   CardTableModRefBS* ct_bs() { return _ct_bs; }
@@ -123,11 +141,18 @@ public:
                            int worker_i,
                            bool check_for_refs_into_cset);
 
-  // Print any relevant summary info.
+  // Print accumulated summary info from the start of the VM.
   virtual void print_summary_info();
+
+  // Print accumulated summary info from the last time called.
+  virtual void print_periodic_summary_info(const char* header);
 
   // Prepare remembered set for verification.
   virtual void prepare_for_verify();
+
+  size_t conc_refine_cards() const {
+    return _conc_refine_cards;
+  }
 };
 
 class CountNonCleanMemRegionClosure: public MemRegionClosure {

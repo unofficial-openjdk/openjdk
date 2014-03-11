@@ -26,10 +26,11 @@
 
 #if INCLUDE_TRACE
 
-#include "trace/traceTime.hpp"
-#include "tracefiles/traceEventIds.hpp"
 #include "runtime/globals.hpp"
 #include "runtime/os.hpp"
+#include "trace/traceTime.hpp"
+#include "tracefiles/traceEventIds.hpp"
+
 
 class TraceBackend {
 public:
@@ -42,10 +43,6 @@ public:
 
   static TracingTime time() {
     return os::elapsed_counter();
-  }
-
-  static TracingTime time_adjustment(jlong time) {
-    return time;
   }
 
   static void on_unloading_classes(BoolObjectClosure* is_alive, int no_of_classes_unloading) {

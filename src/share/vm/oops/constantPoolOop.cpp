@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1026,24 +1026,13 @@ bool constantPoolOopDesc::compare_entry_to(int index1, constantPoolHandle cp2,
 
   case JVM_CONSTANT_InvokeDynamic:
   {
-    int k1 = invoke_dynamic_bootstrap_method_ref_index_at(index1);
-    int k2 = cp2->invoke_dynamic_bootstrap_method_ref_index_at(index2);
-    bool match = compare_entry_to(k1, cp2, k2, CHECK_false);
-    if (!match)  return false;
-    k1 = invoke_dynamic_name_and_type_ref_index_at(index1);
-    k2 = cp2->invoke_dynamic_name_and_type_ref_index_at(index2);
-    match = compare_entry_to(k1, cp2, k2, CHECK_false);
-    if (!match)  return false;
-    int argc = invoke_dynamic_argument_count_at(index1);
-    if (argc == cp2->invoke_dynamic_argument_count_at(index2)) {
-      for (int j = 0; j < argc; j++) {
-        k1 = invoke_dynamic_argument_index_at(index1, j);
-        k2 = cp2->invoke_dynamic_argument_index_at(index2, j);
-        match = compare_entry_to(k1, cp2, k2, CHECK_false);
-        if (!match)  return false;
-      }
-      return true;           // got through loop; all elements equal
-    }
+    int k1 = invoke_dynamic_name_and_type_ref_index_at(index1);
+    int k2 = cp2->invoke_dynamic_name_and_type_ref_index_at(index2);
+    int i1 = invoke_dynamic_bootstrap_specifier_index(index1);
+    int i2 = cp2->invoke_dynamic_bootstrap_specifier_index(index2);
+    bool match = compare_entry_to(k1, cp2, k2, CHECK_false) &&
+                 compare_operand_to(i1, cp2, i2, CHECK_false);
+    return match;
   } break;
 
   case JVM_CONSTANT_UnresolvedString:
@@ -1078,11 +1067,134 @@ bool constantPoolOopDesc::compare_entry_to(int index1, constantPoolHandle cp2,
 } // end compare_entry_to()
 
 
+// Resize the operands array with delta_len and delta_size.
+// Used in RedefineClasses for CP merge.
+void constantPoolOopDesc::resize_operands(int delta_len, int delta_size, TRAPS) {
+  int old_len  = operand_array_length(operands());
+  int new_len  = old_len + delta_len;
+  int min_len  = (delta_len > 0) ? old_len : new_len;
+
+  int old_size = operands()->length();
+  int new_size = old_size + delta_size;
+  int min_size = (delta_size > 0) ? old_size : new_size;
+
+  typeArrayHandle new_ops = oopFactory::new_permanent_intArray(new_size, CHECK);
+
+  // Set index in the resized array for existing elements only
+  for (int idx = 0; idx < min_len; idx++) {
+    int offset = operand_offset_at(idx);                         // offset in original array
+    operand_offset_at_put(new_ops(), idx, offset + 2*delta_len); // offset in resized array
+  }
+  // Copy the bootstrap specifiers only
+  Copy::conjoint_memory_atomic(operands()->short_at_addr(2*old_len),
+                               new_ops->short_at_addr(2*new_len),
+                               (min_size - 2*min_len) * sizeof(u2));
+  // Explicit deallocation of old operands array is not needed for 7u
+  set_operands(new_ops());
+} // end resize_operands()
+
+
+// Extend the operands array with the length and size of the ext_cp operands.
+// Used in RedefineClasses for CP merge.
+void constantPoolOopDesc::extend_operands(constantPoolHandle ext_cp, TRAPS) {
+  int delta_len = operand_array_length(ext_cp->operands());
+  if (delta_len == 0) {
+    return; // nothing to do
+  }
+  int delta_size = ext_cp->operands()->length();
+
+  assert(delta_len  > 0 && delta_size > 0, "extended operands array must be bigger");
+
+  if (operand_array_length(operands()) == 0) {
+    typeArrayHandle new_ops = oopFactory::new_permanent_intArray(delta_size, CHECK);
+    // The first element index defines the offset of second part
+    operand_offset_at_put(new_ops(), 0, 2*delta_len); // offset in new array
+    set_operands(new_ops());
+  } else {
+    resize_operands(delta_len, delta_size, CHECK);
+  }
+
+} // end extend_operands()
+
+
+// Shrink the operands array to a smaller array with new_len length.
+// Used in RedefineClasses for CP merge.
+void constantPoolOopDesc::shrink_operands(int new_len, TRAPS) {
+  int old_len = operand_array_length(operands());
+  if (new_len == old_len) {
+    return; // nothing to do
+  }
+  assert(new_len < old_len, "shrunken operands array must be smaller");
+
+  int free_base  = operand_next_offset_at(new_len - 1);
+  int delta_len  = new_len - old_len;
+  int delta_size = 2*delta_len + free_base - operands()->length();
+
+  resize_operands(delta_len, delta_size, CHECK);
+
+} // end shrink_operands()
+
+
+void constantPoolOopDesc::copy_operands(constantPoolHandle from_cp,
+                                        constantPoolHandle to_cp,
+                                        TRAPS) {
+
+  int from_oplen = operand_array_length(from_cp->operands());
+  int old_oplen  = operand_array_length(to_cp->operands());
+  if (from_oplen != 0) {
+    // append my operands to the target's operands array
+    if (old_oplen == 0) {
+      to_cp->set_operands(from_cp->operands());  // reuse; do not merge
+    } else {
+      int old_len  = to_cp->operands()->length();
+      int from_len = from_cp->operands()->length();
+      int old_off  = old_oplen * sizeof(u2);
+      int from_off = from_oplen * sizeof(u2);
+      typeArrayHandle new_operands = oopFactory::new_permanent_intArray(old_len + from_len, CHECK);
+      int fillp = 0, len = 0;
+      // first part of dest
+      Copy::conjoint_memory_atomic(to_cp->operands()->short_at_addr(0),
+                                   new_operands->short_at_addr(fillp),
+                                   (len = old_off) * sizeof(u2));
+      fillp += len;
+      // first part of src
+      Copy::conjoint_memory_atomic(from_cp->operands()->short_at_addr(0),
+                                   new_operands->short_at_addr(fillp),
+                                   (len = from_off) * sizeof(u2));
+      fillp += len;
+      // second part of dest
+      Copy::conjoint_memory_atomic(to_cp->operands()->short_at_addr(old_off),
+                                   new_operands->short_at_addr(fillp),
+                                   (len = old_len - old_off) * sizeof(u2));
+      fillp += len;
+      // second part of src
+      Copy::conjoint_memory_atomic(from_cp->operands()->short_at_addr(from_off),
+                                   new_operands->short_at_addr(fillp),
+                                   (len = from_len - from_off) * sizeof(u2));
+      fillp += len;
+      assert(fillp == new_operands->length(), "");
+
+      // Adjust indexes in the first part of the copied operands array.
+      for (int j = 0; j < from_oplen; j++) {
+        int offset = operand_offset_at(new_operands(), old_oplen + j);
+        assert(offset == operand_offset_at(from_cp->operands(), j), "correct copy");
+        offset += old_len;  // every new tuple is preceded by old_len extra u2's
+        operand_offset_at_put(new_operands(), old_oplen + j, offset);
+      }
+
+      // replace target operands array with combined array
+      to_cp->set_operands(new_operands());
+    }
+  }
+} // end copy_operands()
+
+
 // Copy this constant pool's entries at start_i to end_i (inclusive)
 // to the constant pool to_cp's entries starting at to_i. A total of
 // (end_i - start_i) + 1 entries are copied.
 void constantPoolOopDesc::copy_cp_to_impl(constantPoolHandle from_cp, int start_i, int end_i,
        constantPoolHandle to_cp, int to_i, TRAPS) {
+
 
   int dest_i = to_i;  // leave original alone for debug purposes
 
@@ -1104,56 +1216,9 @@ void constantPoolOopDesc::copy_cp_to_impl(constantPoolHandle from_cp, int start_
       break;
     }
   }
+  copy_operands(from_cp, to_cp, CHECK);
 
-  int from_oplen = operand_array_length(from_cp->operands());
-  int old_oplen  = operand_array_length(to_cp->operands());
-  if (from_oplen != 0) {
-    // append my operands to the target's operands array
-    if (old_oplen == 0) {
-      to_cp->set_operands(from_cp->operands());  // reuse; do not merge
-    } else {
-      int old_len  = to_cp->operands()->length();
-      int from_len = from_cp->operands()->length();
-      int old_off  = old_oplen * sizeof(u2);
-      int from_off = from_oplen * sizeof(u2);
-      typeArrayHandle new_operands = oopFactory::new_permanent_shortArray(old_len + from_len, CHECK);
-      int fillp = 0, len = 0;
-      // first part of dest
-      Copy::conjoint_memory_atomic(to_cp->operands()->short_at_addr(0),
-                                   new_operands->short_at_addr(fillp),
-                                   (len = old_off) * sizeof(u2));
-      fillp += len;
-      // first part of src
-      Copy::conjoint_memory_atomic(to_cp->operands()->short_at_addr(0),
-                                   new_operands->short_at_addr(fillp),
-                                   (len = from_off) * sizeof(u2));
-      fillp += len;
-      // second part of dest
-      Copy::conjoint_memory_atomic(to_cp->operands()->short_at_addr(old_off),
-                                   new_operands->short_at_addr(fillp),
-                                   (len = old_len - old_off) * sizeof(u2));
-      fillp += len;
-      // second part of src
-      Copy::conjoint_memory_atomic(to_cp->operands()->short_at_addr(from_off),
-                                   new_operands->short_at_addr(fillp),
-                                   (len = from_len - from_off) * sizeof(u2));
-      fillp += len;
-      assert(fillp == new_operands->length(), "");
-
-      // Adjust indexes in the first part of the copied operands array.
-      for (int j = 0; j < from_oplen; j++) {
-        int offset = operand_offset_at(new_operands(), old_oplen + j);
-        assert(offset == operand_offset_at(from_cp->operands(), j), "correct copy");
-        offset += old_len;  // every new tuple is preceded by old_len extra u2's
-        operand_offset_at_put(new_operands(), old_oplen + j, offset);
-      }
-
-      // replace target operands array with combined array
-      to_cp->set_operands(new_operands());
-    }
-  }
-
-} // end copy_cp_to()
+} // end copy_cp_to_impl()
 
 
 // Copy this constant pool's entry at from_i to the constant pool
@@ -1335,6 +1400,46 @@ int constantPoolOopDesc::find_matching_entry(int pattern_i,
 
   return 0;  // entry not found; return unused index zero (0)
 } // end find_matching_entry()
+
+
+// Compare this constant pool's bootstrap specifier at idx1 to the constant pool
+// cp2's bootstrap specifier at idx2.
+bool constantPoolOopDesc::compare_operand_to(int idx1, constantPoolHandle cp2, int idx2, TRAPS) {
+  int k1 = operand_bootstrap_method_ref_index_at(idx1);
+  int k2 = cp2->operand_bootstrap_method_ref_index_at(idx2);
+  bool match = compare_entry_to(k1, cp2, k2, CHECK_false);
+
+  if (!match) {
+    return false;
+  }
+  int argc = operand_argument_count_at(idx1);
+  if (argc == cp2->operand_argument_count_at(idx2)) {
+    for (int j = 0; j < argc; j++) {
+      k1 = operand_argument_index_at(idx1, j);
+      k2 = cp2->operand_argument_index_at(idx2, j);
+      match = compare_entry_to(k1, cp2, k2, CHECK_false);
+      if (!match) {
+        return false;
+      }
+    }
+    return true;           // got through loop; all elements equal
+  }
+  return false;
+} // end compare_operand_to()
+
+// Search constant pool search_cp for a bootstrap specifier that matches
+// this constant pool's bootstrap specifier at pattern_i index.
+// Return the index of a matching bootstrap specifier or (-1) if there is no match.
+int constantPoolOopDesc::find_matching_operand(int pattern_i,
+                    constantPoolHandle search_cp, int search_len, TRAPS) {
+  for (int i = 0; i < search_len; i++) {
+    bool found = compare_operand_to(pattern_i, search_cp, i, CHECK_(-1));
+    if (found) {
+      return i;
+    }
+  }
+  return -1;  // bootstrap specifier not found; return unused index (-1)
+} // end find_matching_operand()
 
 
 #ifndef PRODUCT

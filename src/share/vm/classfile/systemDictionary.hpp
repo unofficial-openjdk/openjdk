@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,7 +33,7 @@
 #include "runtime/reflectionUtils.hpp"
 #include "utilities/hashtable.hpp"
 #include "utilities/hashtable.inline.hpp"
-#include "trace/traceTime.hpp"
+#include "utilities/ticks.hpp"
 
 // The system dictionary stores all loaded classes and maps:
 //
@@ -151,6 +151,7 @@ class BoolObjectClosure;
   do_klass(MemberName_klass,                            java_lang_invoke_MemberName,               Pre_JSR292          ) \
   do_klass(MethodHandleNatives_klass,                   java_lang_invoke_MethodHandleNatives,      Pre_JSR292          ) \
   do_klass(LambdaForm_klass,                            java_lang_invoke_LambdaForm,               Opt                 ) \
+  do_klass(DirectMethodHandle_klass,                    java_lang_invoke_DirectMethodHandle,       Opt                 ) \
   do_klass(MethodType_klass,                            java_lang_invoke_MethodType,               Pre_JSR292          ) \
   do_klass(BootstrapMethodError_klass,                  java_lang_BootstrapMethodError,            Pre_JSR292          ) \
   do_klass(CallSite_klass,                              java_lang_invoke_CallSite,                 Pre_JSR292          ) \
@@ -616,7 +617,7 @@ private:
   static void add_to_hierarchy(instanceKlassHandle k, TRAPS);
 
   // event based tracing
-  static void post_class_load_event(TracingTime start_time, instanceKlassHandle k,
+  static void post_class_load_event(const Ticks& start_time, instanceKlassHandle k,
                                     Handle initiating_loader);
   static void post_class_unload_events(BoolObjectClosure* is_alive);
 
@@ -678,7 +679,7 @@ private:
   static bool _has_checkPackageAccess;
 
 #if INCLUDE_TRACE
-  static TracingTime _class_unload_time;
+  static Ticks _class_unload_time;
   static BoolObjectClosure* _is_alive;
   static int _no_of_classes_unloading;
   static bool _should_write_unload_events;

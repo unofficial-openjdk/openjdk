@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,25 +21,24 @@
  * questions.
  */
 
-/* @test TestVerifyBeforeGCDuringStartup.java
- * @key gc
- * @bug 8010463
- * @summary Simple test run with -XX:+VerifyBeforeGC -XX:-UseTLAB to verify 8010463
- * @library /testlibrary
+/*
+ * @test
+ * @bug 8032207
+ * @summary Invalid node sizing for loadUS2L_immI16 and loadI2L_immI
+ * @run main/othervm -server -Xbatch -XX:-TieredCompilation -XX:CompileCommand=compileonly,LoadWithMask.foo LoadWithMask
+ *
  */
+public class LoadWithMask {
+  static int x[] = new int[1];
+  static long foo() {
+    return x[0] & 0xfff0ffff;
+  }
 
-import com.oracle.java.testlibrary.OutputAnalyzer;
-import com.oracle.java.testlibrary.ProcessTools;
-
-public class TestVerifyBeforeGCDuringStartup {
-  public static void main(String args[]) throws Exception {
-    ProcessBuilder pb =
-      ProcessTools.createJavaProcessBuilder(System.getProperty("test.vm.opts"),
-                                            "-XX:-UseTLAB",
-                                            "-XX:+UnlockDiagnosticVMOptions",
-                                            "-XX:+VerifyBeforeGC", "-version");
-    OutputAnalyzer output = new OutputAnalyzer(pb.start());
-    output.shouldContain("[Verifying");
-    output.shouldHaveExitValue(0);
+  public static void main(String[] args) {
+    x[0] = -1;
+    long l = 0;
+    for (int i = 0; i < 100000; ++i) {
+      l = foo();
+    }
   }
 }

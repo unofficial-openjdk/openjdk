@@ -370,6 +370,13 @@ class VM_RedefineClasses: public VM_Operation {
   // _index_map_p contains any entries.
   int                         _index_map_count;
   intArray *                  _index_map_p;
+
+  // _operands_index_map_count is just an optimization for knowing if
+  // _operands_index_map_p contains any entries.
+  int                         _operands_cur_length;
+  int                         _operands_index_map_count;
+  intArray *                  _operands_index_map_p;
+
   // ptr to _class_count scratch_classes
   instanceKlassHandle *       _scratch_classes;
   jvmtiError                  _res;
@@ -431,16 +438,24 @@ class VM_RedefineClasses: public VM_Operation {
   // and in all direct and indirect subclasses.
   void increment_class_counter(instanceKlass *ik, TRAPS);
 
-  // Support for constant pool merging (these routines are in alpha
-  // order):
+  // Support for constant pool merging (these routines are in alpha order):
   void append_entry(constantPoolHandle scratch_cp, int scratch_i,
     constantPoolHandle *merge_cp_p, int *merge_cp_length_p, TRAPS);
+  void append_operand(constantPoolHandle scratch_cp, int scratch_bootstrap_spec_index,
+    constantPoolHandle *merge_cp_p, int *merge_cp_length_p, TRAPS);
+  void finalize_operands_merge(constantPoolHandle merge_cp, TRAPS);
+  int find_or_append_indirect_entry(constantPoolHandle scratch_cp, int scratch_i,
+    constantPoolHandle *merge_cp_p, int *merge_cp_length_p, TRAPS);
+  int find_or_append_operand(constantPoolHandle scratch_cp, int scratch_bootstrap_spec_index,
+    constantPoolHandle *merge_cp_p, int *merge_cp_length_p, TRAPS);
   int find_new_index(int old_index);
+  int find_new_operand_index(int old_bootstrap_spec_index);
   bool is_unresolved_class_mismatch(constantPoolHandle cp1, int index1,
     constantPoolHandle cp2, int index2);
   bool is_unresolved_string_mismatch(constantPoolHandle cp1, int index1,
     constantPoolHandle cp2, int index2);
   void map_index(constantPoolHandle scratch_cp, int old_index, int new_index);
+  void map_operand_index(int old_bootstrap_spec_index, int new_bootstrap_spec_index);
   bool merge_constant_pools(constantPoolHandle old_cp,
     constantPoolHandle scratch_cp, constantPoolHandle *merge_cp_p,
     int *merge_cp_length_p, TRAPS);
@@ -474,7 +489,7 @@ class VM_RedefineClasses: public VM_Operation {
          address& stackmap_addr_ref, address stackmap_end, u2 frame_i,
          u1 frame_size, TRAPS);
   void set_new_constant_pool(instanceKlassHandle scratch_class,
-    constantPoolHandle scratch_cp, int scratch_cp_length, bool shrink, TRAPS);
+    constantPoolHandle scratch_cp, int scratch_cp_length, TRAPS);
 
   void flush_dependent_code(instanceKlassHandle k_h, TRAPS);
 

@@ -266,7 +266,7 @@ bool PSScavenge::invoke_no_policy() {
   assert(_preserved_mark_stack.is_empty(), "should be empty");
   assert(_preserved_oop_stack.is_empty(), "should be empty");
 
-  _gc_timer.register_gc_start(os::elapsed_counter());
+  _gc_timer.register_gc_start();
 
   TimeStamp scavenge_entry;
   TimeStamp scavenge_midpoint;
@@ -325,8 +325,7 @@ bool PSScavenge::invoke_no_policy() {
 
   if (VerifyBeforeGC && heap->total_collections() >= VerifyGCStartAt) {
     HandleMark hm;  // Discard invalid handles created during verification
-    gclog_or_tty->print(" VerifyBeforeGC:");
-    Universe::verify();
+    Universe::verify(" VerifyBeforeGC:");
   }
 
   {
@@ -536,8 +535,19 @@ bool PSScavenge::invoke_no_policy() {
           counters->update_survivor_overflowed(_survivor_overflow);
         }
 
+        size_t max_young_size = young_gen->max_size();
+
+        // Deciding a free ratio in the young generation is tricky, so if
+        // MinHeapFreeRatio or MaxHeapFreeRatio are in use (implicating
+        // that the old generation size may have been limited because of them) we
+        // should then limit our young generation size using NewRatio to have it
+        // follow the old generation size.
+        if (MinHeapFreeRatio != 0 || MaxHeapFreeRatio != 100) {
+          max_young_size = MIN2(old_gen->capacity_in_bytes() / NewRatio, young_gen->max_size());
+        }
+
         size_t survivor_limit =
-          size_policy->max_survivor_size(young_gen->max_size());
+          size_policy->max_survivor_size(max_young_size);
         _tenuring_threshold =
           size_policy->compute_survivor_space_size_and_threshold(
                                                            _survivor_overflow,
@@ -560,8 +570,7 @@ bool PSScavenge::invoke_no_policy() {
         // Do call at minor collections?
         // Don't check if the size_policy is ready at this
         // level.  Let the size_policy check that internally.
-        if (UseAdaptiveSizePolicy &&
-            UseAdaptiveGenerationSizePolicyAtMinorCollection &&
+        if (UseAdaptiveGenerationSizePolicyAtMinorCollection &&
             ((gc_cause != GCCause::_java_lang_system_gc) ||
               UseAdaptiveSizePolicyWithSystemGC)) {
 
@@ -570,7 +579,7 @@ bool PSScavenge::invoke_no_policy() {
             young_gen->from_space()->capacity_in_bytes() +
             young_gen->to_space()->capacity_in_bytes(),
             "Sizes of space in young gen are out-of-bounds");
-          size_t max_eden_size = young_gen->max_size() -
+          size_t max_eden_size = max_young_size -
             young_gen->from_space()->capacity_in_bytes() -
             young_gen->to_space()->capacity_in_bytes();
           size_policy->compute_generation_free_space(young_gen->used_in_bytes(),
@@ -661,8 +670,7 @@ bool PSScavenge::invoke_no_policy() {
 
   if (VerifyAfterGC && heap->total_collections() >= VerifyGCStartAt) {
     HandleMark hm;  // Discard invalid handles created during verification
-    gclog_or_tty->print(" VerifyAfterGC:");
-    Universe::verify();
+    Universe::verify(" VerifyAfterGC:");
   }
 
   heap->print_heap_after_gc();
@@ -689,7 +697,7 @@ bool PSScavenge::invoke_no_policy() {
 #endif
 
 
-  _gc_timer.register_gc_end(os::elapsed_counter());
+  _gc_timer.register_gc_end();
 
   _gc_tracer.report_gc_end(_gc_timer.gc_end(), _gc_timer.time_partitions());
 

@@ -1697,6 +1697,9 @@ class CommandLineFlags {
   product(bool, CMSAbortSemantics, false,                                   \
           "Whether abort-on-overflow semantics is implemented")             \
                                                                             \
+  product(bool, CMSParallelInitialMarkEnabled, false,                       \
+          "Use the parallel initial mark.")                                 \
+                                                                            \
   product(bool, CMSParallelRemarkEnabled, true,                             \
           "Whether parallel remark enabled (only if ParNewGC)")             \
                                                                             \
@@ -1707,6 +1710,14 @@ class CommandLineFlags {
   product(bool, CMSPLABRecordAlways, true,                                  \
           "Whether to always record survivor space PLAB bdries"             \
           " (effective only if CMSParallelSurvivorRemarkEnabled)")          \
+                                                                            \
+  product(bool, CMSEdenChunksRecordAlways, false,                           \
+          "Whether to always record eden chunks used for "                  \
+          "the parallel initial mark or remark of eden" )                   \
+                                                                            \
+  product(bool, CMSPrintEdenSurvivorChunks, false,                          \
+          "Print the eden and the survivor chunks used for the parallel "   \
+          "initial mark or remark of the eden/survivor spaces")             \
                                                                             \
   product(bool, CMSConcurrentMTEnabled, true,                               \
           "Whether multi-threaded concurrent work enabled (if ParNewGC)")   \
@@ -1917,6 +1928,9 @@ class CommandLineFlags {
   notproduct(bool, ExecuteInternalVMTests, false,                           \
           "Enable execution of internal VM tests.")                         \
                                                                             \
+  notproduct(bool, VerboseInternalVMTests, false,                           \
+          "Turn on logging for internal VM tests.")                         \
+                                                                            \
   product_pd(bool, UseTLAB, "Use thread-local object allocation")           \
                                                                             \
   product_pd(bool, ResizeTLAB,                                              \
@@ -2125,6 +2139,13 @@ class CommandLineFlags {
                                                                             \
   product(intx, PrefetchFieldsAhead, -1,                                    \
           "How many fields ahead to prefetch in oop scan (<= 0 means off)") \
+                                                                            \
+  diagnostic(bool, VerifySilently, false,                                   \
+          "Don't print print the verification progress")                    \
+                                                                            \
+  diagnostic(bool, VerifyDuringStartup, false,                              \
+          "Verify memory system before executing any Java code "            \
+          "during VM initialization")                                       \
                                                                             \
   diagnostic(bool, VerifyBeforeExit, trueInDebug,                           \
           "Verify system before exiting")                                   \
@@ -3010,10 +3031,10 @@ class CommandLineFlags {
   product_pd(uintx, MaxPermSize,                                            \
           "Maximum size of permanent generation (in bytes)")                \
                                                                             \
-  product(uintx, MinHeapFreeRatio,    40,                                   \
+  manageable(uintx, MinHeapFreeRatio,    40,                                \
           "Min percentage of heap free after GC to avoid expansion")        \
                                                                             \
-  product(uintx, MaxHeapFreeRatio,    70,                                   \
+  manageable(uintx, MaxHeapFreeRatio,    70,                                \
           "Max percentage of heap free after GC to avoid shrinking")        \
                                                                             \
   product(intx, SoftRefLRUPolicyMSPerMB, 1000,                              \

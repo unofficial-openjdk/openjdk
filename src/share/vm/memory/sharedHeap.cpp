@@ -64,7 +64,8 @@ SharedHeap::SharedHeap(CollectorPolicy* policy_) :
   }
   _sh = this;  // ch is static, should be set only once.
   if ((UseParNewGC ||
-      (UseConcMarkSweepGC && CMSParallelRemarkEnabled) ||
+      (UseConcMarkSweepGC && (CMSParallelInitialMarkEnabled ||
+                              CMSParallelRemarkEnabled)) ||
        UseG1GC) &&
       ParallelGCThreads > 0) {
     _workers = new FlexibleWorkGang("Parallel GC Threads", ParallelGCThreads,
@@ -148,7 +149,8 @@ void SharedHeap::process_strong_roots(bool activate_scope,
                                       ScanningOption so,
                                       OopClosure* roots,
                                       CodeBlobClosure* code_roots,
-                                      OopsInGenClosure* perm_blk) {
+                                      OopsInGenClosure* perm_blk,
+                                      bool manages_code_roots) {
   StrongRootsScope srs(this, activate_scope);
   // General strong roots.
   assert(_strong_roots_parity != 0, "must have called prologue code");
@@ -216,7 +218,7 @@ void SharedHeap::process_strong_roots(bool activate_scope,
         CodeCache::blobs_do(code_roots);
       }
     } else if (so & (SO_SystemClasses|SO_AllClasses)) {
-      if (!collecting_perm_gen) {
+      if (!manages_code_roots && !collecting_perm_gen) {
         // If we are collecting from class statics, but we are not going to
         // visit all of the CodeCache, collect from the non-perm roots if any.
         // This makes the code cache function temporarily as a source of strong
