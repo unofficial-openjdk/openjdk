@@ -80,7 +80,7 @@ define SetupGensrcAWTIcon
   $1_NAME64 := $(call GENSRC_AWT_ICONS_DST_NAME,$1,64)
   $1_TARGET64 := $(GENSRC_AWT_ICONS_DST)/$$($1_NAME64).java
 
-  $$($1_TARGET32): $2/$1 $(GENSRC_AWT_ICONS_TMP)/_the.icons.dir
+  $$($1_TARGET32): $2/$1 $(GENSRC_AWT_ICONS_TMP)/_the.icons.dir $(BUILD_TOOLS)
 	$(RM) $$@ $$@.tmp
 	$(ECHO) "package sun.awt;" > $$@.tmp
 	$(ECHO) "public class $$($1_NAME32) {" >> $$@.tmp
@@ -91,7 +91,7 @@ define SetupGensrcAWTIcon
 
   GENSRC_AWT_ICONS += $$($1_TARGET32)
 
-  $$($1_TARGET64): $2/$1 $(GENSRC_AWT_ICONS_TMP)/_the.icons.dir
+  $$($1_TARGET64): $2/$1 $(GENSRC_AWT_ICONS_TMP)/_the.icons.dir $(BUILD_TOOLS)
 	$(RM) $$@ $$@.tmp
 	$(ECHO) "package sun.awt;" > $$@.tmp
 	$(ECHO) "public class $$($1_NAME64) {" >> $$@.tmp

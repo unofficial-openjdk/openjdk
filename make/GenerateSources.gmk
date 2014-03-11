@@ -87,7 +87,8 @@ GENSRC += $(GENSRC_CLDR)
 include gensrc/GensrcSwing.gmk
 GENSRC += $(GENSRC_SWING_BEANINFO) $(GENSRC_SWING_NIMBUS)
 
-$(GENSRC): $(BUILD_TOOLS)
+include gensrc/GensrcProviders.gmk
+GENSRC += $(GENSRC_PROVIDERS)
 
 all: $(GENSRC)
 

@@ -49,7 +49,8 @@ ifeq ($(JIGSAW), true)
       #
 
   $(MODULES_SER_OUT): $(BUILD_CLASSANALYZER) \
-      $(wildcard $(JDK_OUTPUTDIR)/modules/_* $(JDK_OUTPUTDIR)/modules/*/_*)
+      $(wildcard $(JDK_OUTPUTDIR)/modules/_* $(JDK_OUTPUTDIR)/modules/*/_*) \
+      $(wildcard $(ALL_SRC_DIRS)/*/module-info.java)
 	$(RM) $@
 	$(MKDIR) -p $(@D)
 	$(TOOL_GENMODULEGRAPH) \

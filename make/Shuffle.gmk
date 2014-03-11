@@ -59,6 +59,7 @@ endif
 define SetupShuffleFiles
   $$(eval $$(call SetupCopyFiles,$1,$2,$3,$4,$5, \
       MACRO := module-copy-file))
+  SHUFFLE_SRC_TARGETS += $$($1)
 endef
 
 ################################################################################
@@ -219,9 +220,72 @@ $(eval $(call SetupShuffleFiles,COPY_CORBA_MC, \
 
 # Copy services in jaxws
 $(eval $(call SetupShuffleFiles,COPY_JAXWS_SERVICES, \
-    SRC := $(JAXWS_TOPDIR)/src/share/jaxws_classes, \
+    SRC := $(JAXWS_TOPDIR)/src/share/jaxws_classes/com/sun/tools/etc, \
     DEST := $(JAXWS_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/modules/jdk.tools.jaxws, \
-    FILES := $(wildcard $(JAXWS_TOPDIR)/src/share/jaxws_classes/com/sun/tools/etc/META-INF/services/*Plugin)))
+    FILES := META-INF/services/com.sun.tools.internal.ws.wscompile.Plugin \
+        META-INF/services/com.sun.tools.internal.xjc.Plugin))
+
+# Copy services in java.desktop
+$(eval $(call SetupShuffleFiles,COPY_SERVICES_PRINT_SOLARIS, \
+    SRC := $(JDK_TOPDIR)/src/solaris/classes/sun/print, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/solaris/modules/java.desktop/META-INF, \
+    FILES := services/javax.print.PrintServiceLookup \
+        services/javax.print.StreamPrintServiceFactory))
+
+$(eval $(call SetupShuffleFiles,COPY_SERVICES_PRINT_WINDOWS, \
+    SRC := $(JDK_TOPDIR)/src/windows/classes/sun/print, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/windows/modules/java.desktop/META-INF, \
+    FILES := services/javax.print.PrintServiceLookup \
+        services/javax.print.StreamPrintServiceFactory))
+
+$(eval $(call SetupShuffleFiles,COPY_SERVICES_SOUND, \
+    SRC := $(JDK_TOPDIR)/src/share/classes/com/sun/media/sound, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/modules/java.desktop/META-INF, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/share/classes/com/sun/media/sound/services/javax*)))
+
+$(eval $(call SetupShuffleFiles,COPY_SERVICES_CMM, \
+    SRC := $(JDK_TOPDIR)/src/share/classes/sun/java2d/cmm/lcms, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/modules/java.desktop, \
+    FILES := $(JDK_TOPDIR)/src/share/classes/sun/java2d/cmm/lcms/META-INF/services/sun.java2d.cmm.CMMServiceProvider))
+
+$(eval $(call SetupShuffleFiles,COPY_SERVICES_PISCES_SHARE, \
+    SRC := $(JDK_TOPDIR)/src/share/classes/sun/java2d/pisces, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/modules/java.desktop, \
+    FILES := $(JDK_TOPDIR)/src/share/classes/sun/java2d/pisces/META-INF/services/sun.java2d.pipe.RenderingEngine))
+
+$(eval $(call SetupShuffleFiles,COPY_SERVICES_PISCES_SOLARIS, \
+    SRC := $(JDK_TOPDIR)/src/solaris/classes/sun/java2d/pisces, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/solaris/modules/java.desktop, \
+    FILES := $(JDK_TOPDIR)/src/solaris/classes/sun/java2d/pisces/META-INF/services/sun.java2d.pipe.RenderingEngine))
+
+
+$(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/modules/java.desktop/META-INF/services/sun.java2d.pipe.RenderingEngine-dc.template: \
+    $(JDK_TOPDIR)/src/share/classes/sun/dc/META-INF/services/sun.java2d.pipe.RenderingEngine
+	$(module-copy-file)
+
+SHUFFLE_SRC_TARGETS += $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/modules/java.desktop/META-INF/services/sun.java2d.pipe.RenderingEngine-dc.template
+
+# Copy services in javax.jaxp
+$(eval $(call SetupShuffleFiles,COPY_SERVICES_JAXP, \
+    SRC := $(JDK_TOPDIR)/src/share/classes/sun/util/xml, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/modules/javax.jaxp, \
+    FILES := $(JDK_TOPDIR)/src/share/classes/sun/util/xml/META-INF/services/sun.util.spi.XmlPropertiesProvider))
+
+# Copy services in jdk.tools
+$(eval $(call SetupShuffleFiles,COPY_SERVICES_ATTACH, \
+    SRC := $(JDK_TOPDIR)/src/share/classes/sun/tools/attach, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/modules/jdk.tools, \
+    FILES := $(JDK_TOPDIR)/src/share/classes/sun/tools/attach/META-INF/services/com.sun.tools.attach.spi.AttachProvider))
+
+$(eval $(call SetupShuffleFiles,COPY_SERVICES_JDI, \
+    SRC := $(JDK_TOPDIR)/src/share/classes/com/sun/tools/jdi, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/modules/jdk.tools, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/share/classes/com/sun/tools/jdi/META-INF/services/*)))
+
+$(eval $(call SetupShuffleFiles,COPY_METAINF_JAF, \
+    SRC := $(JAXWS_TOPDIR)/src/share/jaf_classes/META-INF, \
+    DEST := $(JAXWS_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/modules/javax.jaf/META-INF, \
+    FILES := $(wildcard $(JAXWS_TOPDIR)/src/share/jaf_classes/META-INF/*)))
 
 # Copy WrapperGenerator to a source dir in build tools where it belongs
 $(eval $(call SetupShuffleFiles,COPY_X11_WRAPPER_GENERATOR, \
@@ -311,6 +375,11 @@ $(eval $(call SetupShuffleFiles,COPY_BREAK_ITERATOR_RULES, \
     SRC := $(JDK_TOPDIR)/src/share/classes, \
     DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/modules/java.base, \
     FILES := $(JDK_TOPDIR)/src/share/classes/sun/text/resources/BreakIteratorRules.java))
+
+$(eval $(call SetupShuffleFiles,COPY_BREAK_ITERATOR_RULES_TH, \
+    SRC := $(JDK_TOPDIR)/src/share/classes, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/modules/sun.localedata, \
+    FILES := $(JDK_TOPDIR)/src/share/classes/sun/text/resources/th/BreakIteratorRules_th.java))
 
 $(eval $(call SetupShuffleFiles,COPY_APPLE_LAF, \
     SRC := $(JDK_TOPDIR)/src/macosx/classes, \
@@ -1203,149 +1272,7 @@ $(eval $(call SetupShuffleFiles,COPY_CONF_DESKTOP_MACOSX, \
 
 ################################################################################
 
-shuffle-src: \
-    $(SRC_TARGET_FILES) \
-    $(COPY_CORBA_LOGUTIL) \
-    $(COPY_CORBA_MC) \
-    $(COPY_JAXWS_SERVICES) \
-    $(COPY_X11_WRAPPER_GENERATOR) \
-    $(COPY_X11_WRAPPER_DATA) \
-    $(COPY_NIMBUS_RESOURCES) \
-    $(COPY_LOCALE_TEMPLATES) \
-    $(COPY_MISC_VERSION) \
-    $(COPY_JCONSOLE_VERSION) \
-    $(COPY_UNIX_PROCESS) \
-    $(COPY_STANDARD_CHARSETS) \
-    $(COPY_NIO_TEMPLATES) \
-    $(COPY_NIO_EXCEPTIONS) \
-    $(COPY_SOLARIS_ICONS) \
-    $(COPY_SHARE_ICONS) \
-    $(COPY_MACOSX_ICONS) \
-    $(COPY_CLDR) \
-    $(COPY_SWING_LAF) \
-    $(COPY_SERIAL_VER) \
-    $(COPY_BREAK_ITERATOR_RULES) \
-    $(COPY_APPLE_LAF) \
-    $(COPY_AWT_RESOURCES_MACOSX) \
-    $(COPY_NASHORN_RESOURCES) \
-    $(COPY_CURRENCY_DATA) \
-    $(COPY_FONTCONFIG_SOLARIS) \
-    $(COPY_FONTCONFIG_MACOSX) \
-    $(COPY_FONTCONFIG_WINDOWS) \
-    $(COPY_FONTCONFIG_AIX) \
-    $(COPY_LIBFDLIBM) \
-    $(COPY_LIBVERIFY) \
-    $(COPY_LIBJAVA_SOLARIS) \
-    $(COPY_LIBJAVA_WINDOWS) \
-    $(COPY_LIBJAVA_MACOSX) \
-    $(COPY_LIBJAVA_SHARE) \
-    $(COPY_LIBZIP) \
-    $(COPY_COMMON_UNPACK) \
-    $(COPY_LIBUNPACK) \
-    $(COPY_UNPACK200) \
-    $(COPY_LIBJLI_SHARE) \
-    $(COPY_LIBJLI_SOLARIS) \
-    $(COPY_LIBJLI_MACOSX) \
-    $(COPY_LIBJLI_WINDOWS) \
-    $(COPY_LIBNPT_SHARE) \
-    $(COPY_LIBNPT_SOLARIS) \
-    $(COPY_LIBNPT_WINDOWS) \
-    $(COPY_LIBNET_SHARE) \
-    $(COPY_LIBNET_SOLARIS) \
-    $(COPY_LIBNET_WINDOWS) \
-    $(COPY_LIBNIO_SHARE) \
-    $(COPY_LIBNIO_SOLARIS) \
-    $(COPY_LIBNIO_WINDOWS) \
-    $(COPY_LIBNIO_TOOLS) \
-    $(COPY_LIBNIO_TOOLS_SOCKET) \
-    $(COPY_LIBSCTP_SOLARIS) \
-    $(COPY_LIBJAAS_SOLARIS) \
-    $(COPY_LIBJAAS_WINDOWS) \
-    $(COPY_LIBJ2PCSC_SHARE) \
-    $(COPY_LIBJ2PCSC_SOLARIS) \
-    $(COPY_LIBJ2PCSC_WINDOWS) \
-    $(COPY_LIBJ2GSS_SHARE) \
-    $(COPY_LIBJ2GSS_SOLARIS) \
-    $(COPY_LIBKRB5_MACOSX) \
-    $(COPY_LIBKRB5_WINDOWS) \
-    $(COPY_LIBSUNMSCAPI_WINDOWS) \
-    $(COPY_LIBJ2PKCS11_SHARE) \
-    $(COPY_LIBJ2PKCS11_SOLARIS) \
-    $(COPY_LIBJ2PKCS11_WINDOWS) \
-    $(COPY_LIBSUNEC_SHARE) \
-    $(COPY_LIBATTACH_SOLARIS) \
-    $(COPY_LIBATTACH_WINDOWS) \
-    $(COPY_LIBDT_SOCKET_SHARE) \
-    $(COPY_LIBDT_SOCKET_SOLARIS) \
-    $(COPY_LIBDT_SOCKET_WINDOWS) \
-    $(COPY_LIBDT_SHMEM_SHARE_JDI) \
-    $(COPY_LIBDT_SHMEM_SHARE) \
-    $(COPY_LIBDT_SHMEM_WINDOWS) \
-    $(COPY_LIBJDWP_SHARE) \
-    $(COPY_LIBJDWP_SOLARIS) \
-    $(COPY_LIBJDWP_WINDOWS) \
-    $(COPY_LIBJSDT_SHARE) \
-    $(COPY_LIBJSDT_SOLARIS) \
-    $(COPY_LIBJSDT_WINDOWS) \
-    $(COPY_LIBINSTRUMENT_SHARE) \
-    $(COPY_LIBINSTRUMENT_SOLARIS) \
-    $(COPY_LIBINSTRUMENT_WINDOWS) \
-    $(COPY_LIBMANAGEMENT_SHARE) \
-    $(COPY_LIBMANAGEMENT_SOLARIS) \
-    $(COPY_LIBMANAGEMENT_WINDOWS) \
-    $(COPY_LIBHPROF_SHARE) \
-    $(COPY_LIBHPROF_SOLARIS) \
-    $(COPY_LIBHPROF_WINDOWS) \
-    $(COPY_LIBJAVA_CRW_DEMO_SHARE) \
-    $(COPY_LIBMLIB_IMAGE_SHARE) \
-    $(COPY_LIBMLIB_IMAGE_SOLARIS) \
-    $(COPY_LIBAWT_SHARE) \
-    $(COPY_LIBAWT_SOLARIS) \
-    $(COPY_LIBAWT_WINDOWS) \
-    $(COPY_COMMON_AWT_SHARE) \
-    $(COPY_COMMON_AWT_SOLARIS) \
-    $(COPY_COMMON_AWT_WINDOWS) \
-    $(COPY_LIBAWT_XAWT_SOLARIS) \
-    $(COPY_LIBFONTMANAGER_SHARE) \
-    $(COPY_LIBFONTMANAGER_SOLARIS) \
-    $(COPY_LIBFONTMANAGER_WINDOWS) \
-    $(COPY_LIBSUNWJDGA_SOLARIS) \
-    $(COPY_LIBLCMS_SHARE) \
-    $(COPY_LIBJPEG_SHARE) \
-    $(COPY_LIBJAWT_SOLARIS) \
-    $(COPY_LIBJAWT_WINDOWS) \
-    $(COPY_LIBJAWT_MACOSX) \
-    $(COPY_LIBAWT_HEADLESS_SOLARIS) \
-    $(COPY_LIBSPLASHSCREEN_SHARE) \
-    $(COPY_LIBSPLASHSCREEN_SOLARIS) \
-    $(COPY_LIBSPLASHSCREEN_WINDOWS) \
-    $(COPY_LIBSPLASHSCREEN_MACOSX) \
-    $(COPY_LIBSPLASHSCREEN_PNG_GIF_SHARE) \
-    $(COPY_LIBOSXUI_MACOSX) \
-    $(COPY_LIBOSXAPP_MACOSX) \
-    $(COPY_LIBOSX_MACOSX) \
-    $(COPY_LIBAPPLESCRIPTENGINE_MACOSX) \
-    $(COPY_LIBAWT_LWAWT_MACOSX) \
-    $(COPY_LIBJSOUND_SHARE) \
-    $(COPY_LIBJSOUND_SOLARIS) \
-    $(COPY_LIBJSOUND_WINDOWS) \
-    $(COPY_LIBJSOUND_MACOSX) \
-    $(COPY_LAUNCHERS_SHARE) \
-    $(COPY_LAUNCHERS_SOLARIS) \
-    $(COPY_LAUNCHERS_MACOSX) \
-    $(COPY_JSPAWNHELPER_SOLARIS) \
-    $(MODULE_INFO_TARGETS) \
-    $(COPY_CONF_BASE) \
-    $(COPY_CONF_BASE_SOLARIS) \
-    $(COPY_CONF_BASE_WINDOWS) \
-    $(COPY_CONF_MANAGEMENT) \
-    $(COPY_CONF_LOGGING) \
-    $(COPY_CONF_DESKTOP_PRINT) \
-    $(COPY_CONF_DESKTOP) \
-    $(COPY_CONF_DESKTOP_SOLARIS) \
-    $(COPY_CONF_DESKTOP_WINDOWS) \
-    $(COPY_CONF_DESKTOP_MACOSX) \
-    #
+shuffle-src: $(SHUFFLE_SRC_TARGETS) $(SRC_TARGET_FILES) $(MODULE_INFO_TARGETS)
 
 shuffle-build: $(BUILD_TARGET_FILES)
 

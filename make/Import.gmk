@@ -203,6 +203,16 @@ ifeq ($(JIGSAW), true)
 	$(TOUCH) $@
 
   HOTSPOT_IMPORT_TARGET_FILES += $(JDK_OUTPUTDIR)/modules/jdk.tools/_sajdi.unpacked
+
+  $(JDK_OUTPUTDIR)/gensrc_jdi/_sajdi.unpacked: $(SRC_SAJDI_JAR)
+	$(ECHO) $(LOG_INFO) Unzipping META-INF/services from $(<F)
+	$(RM) -r $(@D)
+	$(MKDIR) -p $(@D)
+	$(CD) $(@D) && $(UNZIP) $< 'META-INF/services/*' $(LOG_DEBUG)
+	$(TOUCH) $@
+
+  HOTSPOT_IMPORT_TARGET_FILES += $(JDK_OUTPUTDIR)/gensrc_jdi/_sajdi.unpacked
+
 else
   # Unzip sa-jdi.jar for the shuffle target.
   SA_CLASSES := $(JDK_OUTPUTDIR)/classes_sa
