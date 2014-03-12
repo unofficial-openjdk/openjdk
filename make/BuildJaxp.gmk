@@ -58,7 +58,7 @@ $(JAXP_OUTPUTDIR)/classes/%.properties: $(JAXP_TOPDIR)/src/%.properties
 	$(CAT) $< | LANG=C $(NAWK) '{ sub(/#.*$$/,"#"); print }' > $@.tmp
 	$(MV) $@.tmp $@
 
-SRC_PROP_FILES := $(shell $(FIND) $(JAXP_TOPDIR)/src -name "*.properties")
+SRC_PROP_FILES := $(shell $(FIND) $(JAXP_TOPDIR)/src -name share -prune -o -name "*.properties" -print)
 TARGET_PROP_FILES := $(patsubst $(JAXP_TOPDIR)/src/%, $(JAXP_OUTPUTDIR)/classes/%, $(SRC_PROP_FILES))
 
 $(eval $(call SetupArchive,ARCHIVE_JAXP, $(BUILD_JAXP) $(TARGET_PROP_FILES), \
