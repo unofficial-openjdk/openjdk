@@ -48,8 +48,7 @@ endif
 $(eval $(call SetupJavaCompilation,BUILD_CORBA, \
     SETUP := GENERATE_NEWBYTECODE, \
     SRC := $(CORBA_SRC), \
-    EXCLUDES := com/sun/corba/se/PortableActivationIDL \
-        com/sun/tools/corba/se/logutil, \
+    EXCLUDES := com/sun/corba/se/PortableActivationIDL, \
     EXCLUDE_FILES := com/sun/corba/se/impl/presentation/rmi/JNDIStateFactoryImpl.java \
         com/sun/corba/se/spi/presentation/rmi/StubWrapper.java \
         com/sun/org/omg/CORBA/IDLTypeOperations.java \
@@ -106,6 +105,6 @@ endif
 ifeq ($(JIGSAW), true)
   all: $(BUILD_INTERIM_CORBA) $(IDL_TARGET_FILES)
 else
-  all: $(BUILD_CORBA) $(BUILD_INTERIM_CORBA) $(ARCHIVE_CORBA_SRC) \
-      $(CORBA_OUTPUTDIR)/dist/lib/bin.zip
+all: $(BUILD_CORBA) $(BUILD_INTERIM_CORBA) $(ARCHIVE_CORBA_SRC) \
+    $(CORBA_OUTPUTDIR)/dist/lib/bin.zip
 endif
