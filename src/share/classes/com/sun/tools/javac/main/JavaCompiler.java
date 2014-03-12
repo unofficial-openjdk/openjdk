@@ -853,6 +853,12 @@ public class JavaCompiler {
                     enterTrees(stopIfError(CompileState.PARSE, parseFiles(sourceFileObjects))),
                     classnames);
 
+            // If it's safe to do so, skip attr / flow / gen for implicit classes
+            if (taskListener.isEmpty() &&
+                    implicitSourcePolicy == ImplicitSourcePolicy.NONE) {
+                delegateCompiler.todo.retainFiles(delegateCompiler.inputFiles);
+            }
+
             delegateCompiler.compile2();
             delegateCompiler.close();
             elapsed_msec = delegateCompiler.elapsed_msec;
