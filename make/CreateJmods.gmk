@@ -129,6 +129,8 @@ all: $(BUILD_CLASSANALYZER)
                 --conf="$(HPROF_CONF_FILES)" \
             --module jdk.tools \
                 --cmds="$(TOOLS_LAUNCHERS)" \
-                --native="$(ATTACH_LIBRARIES) $(JDWP_LIBRARIES) $(JDI_SA_LIBRARIES)"
+                --native="$(ATTACH_LIBRARIES) $(JDWP_LIBRARIES) $(JDI_SA_LIBRARIES)" \
+	    --module java.prefs \
+	        --native="$(PREFS_LIBRARIES)"
 
 .PHONY: all

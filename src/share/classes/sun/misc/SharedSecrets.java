@@ -46,6 +46,7 @@ public class SharedSecrets {
     private static JavaUtilJarAccess javaUtilJarAccess;
     private static JavaLangAccess javaLangAccess;
     private static JavaLangReflectAccess javaLangReflectAccess;
+    private static JavaLangRefAccess javaLangRefAccess;
     private static JavaIOAccess javaIOAccess;
     private static JavaNetAccess javaNetAccess;
     private static JavaNetHttpCookieAccess javaNetHttpCookieAccess;
@@ -85,6 +86,14 @@ public class SharedSecrets {
         if (javaLangReflectAccess == null)
             unsafe.ensureClassInitialized(java.lang.reflect.Module.class);
         return javaLangReflectAccess;
+    }
+
+    public static void setJavaLangRefAccess(JavaLangRefAccess jlra) {
+        javaLangRefAccess = jlra;
+    }
+
+    public static JavaLangRefAccess getJavaLangRefAccess() {
+        return javaLangRefAccess;
     }
 
     public static void setJavaNetAccess(JavaNetAccess jna) {

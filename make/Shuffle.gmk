@@ -204,12 +204,6 @@ MODULE_INFO_TARGETS := \
 
 ################################################################################
 
-# Copy logutil in corba to make/tools
-$(eval $(call SetupShuffleFiles,COPY_CORBA_LOGUTIL, \
-    SRC := $(CORBA_TOPDIR)/src/share/classes, \
-    DEST := $(CORBA_TOPDIR)/make/tools/src, \
-    FILES := $(wildcard $(CORBA_TOPDIR)/src/share/classes/com/sun/tools/corba/se/logutil/*.java)))
-
 # Copy *.mc and *.properties files in corba
 $(eval $(call SetupShuffleFiles,COPY_CORBA_MC, \
     SRC := $(CORBA_TOPDIR)/src/share/classes, \
@@ -287,19 +281,6 @@ $(eval $(call SetupShuffleFiles,COPY_METAINF_JAF, \
     DEST := $(JAXWS_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/modules/javax.jaf/META-INF, \
     FILES := $(wildcard $(JAXWS_TOPDIR)/src/share/jaf_classes/META-INF/*)))
 
-# Copy WrapperGenerator to a source dir in build tools where it belongs
-$(eval $(call SetupShuffleFiles,COPY_X11_WRAPPER_GENERATOR, \
-    SRC := $(JDK_TOPDIR)/src/solaris/classes/sun/awt/X11/generator, \
-    DEST := $(JDK_TOPDIR)/make/src/classes/build/tools/x11wrappergen, \
-    FILES := $(JDK_TOPDIR)/src/solaris/classes/sun/awt/X11/generator/WrapperGenerator.java))
-
-# Copy WrapperGenerator data files to proper dir in make/data
-$(eval $(call SetupShuffleFiles,COPY_X11_WRAPPER_DATA, \
-    SRC := $(JDK_TOPDIR)/src/solaris/classes/sun/awt/X11/generator, \
-    DEST := $(JDK_TOPDIR)/make/data/x11wrappergen, \
-    FILES := $(wildcard $(JDK_TOPDIR)/src/solaris/classes/sun/awt/X11/generator/*.txt) \
-        $(wildcard $(JDK_TOPDIR)/src/solaris/classes/sun/awt/X11/generator/sizes*)))
-
 # Copy nimbus templates
 $(eval $(call SetupShuffleFiles,COPY_NIMBUS_RESOURCES, \
     SRC := $(JDK_TOPDIR)/src/share/classes/javax/swing/plaf/nimbus, \
@@ -350,12 +331,6 @@ $(eval $(call SetupShuffleFiles,COPY_SHARE_ICONS, \
     DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/modules/java.desktop, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/share/classes/sun/awt/resources/*.png)))
 
-# Integrate to jdk9
-$(eval $(call SetupShuffleFiles,COPY_MACOSX_ICONS, \
-    SRC := $(JDK_TOPDIR)/src/macosx/native/sun/osxapp/resource/icons, \
-    DEST := $(JDK_TOPDIR)/make/data/macosxicons, \
-    FILES := $(wildcard $(JDK_TOPDIR)/src/macosx/native/sun/osxapp/resource/icons/JavaApp.icns)))
-
 $(eval $(call SetupShuffleFiles,COPY_CLDR, \
     SRC := $(JDK_TOPDIR)/src/share/classes, \
     DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/modules/sun.localedata, \
@@ -396,34 +371,6 @@ $(eval $(call SetupShuffleFiles,COPY_NASHORN_RESOURCES, \
     DEST := $(NASHORN_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/modules/jdk.nashorn, \
     FILES := $(NASHORN_TOPDIR)/src/jdk/nashorn/internal/runtime/resources/version.properties-template))
 
-# Copy CurrencyData.properties to make/data
-$(eval $(call SetupShuffleFiles,COPY_CURRENCY_DATA, \
-    SRC := $(JDK_TOPDIR)/src/share/classes/java/util, \
-    DEST := $(JDK_TOPDIR)/make/data/currency, \
-    FILES := $(JDK_TOPDIR)/src/share/classes/java/util/CurrencyData.properties))
-
-# In jdk9/dev the fontconfig files have moved to make/data
-$(eval $(call SetupShuffleFiles,COPY_FONTCONFIG_SOLARIS, \
-    SRC := $(JDK_TOPDIR)/src/solaris/classes, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/solaris/modules/java.desktop, \
-    FILES := $(JDK_TOPDIR)/src/solaris/classes/sun/awt/fontconfigs/solaris.fontconfig.properties \
-        $(JDK_TOPDIR)/src/solaris/classes/sun/awt/fontconfigs/bsd.fontconfig.properties))
-
-$(eval $(call SetupShuffleFiles,COPY_FONTCONFIG_MACOSX, \
-    SRC := $(JDK_TOPDIR)/src/macosx/classes, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/macosx/modules/java.desktop, \
-    FILES := $(JDK_TOPDIR)/src/macosx/classes/sun/awt/fontconfigs/macosx.fontconfig.properties))
-
-$(eval $(call SetupShuffleFiles,COPY_FONTCONFIG_WINDOWS, \
-    SRC := $(JDK_TOPDIR)/src/windows/classes, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/windows/modules/java.desktop, \
-    FILES := $(JDK_TOPDIR)/src/windows/classes/sun/awt/windows/fontconfig.properties))
-
-$(eval $(call SetupShuffleFiles,COPY_FONTCONFIG_AIX, \
-    SRC := $(JDK_TOPDIR)/src/aix/classes, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/aix/modules/java.desktop, \
-    FILES := $(JDK_TOPDIR)/src/aix/classes/sun/awt/fontconfigs/aix.fontconfig.properties))
-
 ################################################################################
 
 # fdlibm
@@ -446,26 +393,28 @@ $(eval $(call SetupShuffleFiles,COPY_LIBJAVA_SOLARIS, \
     SRC := $(JDK_TOPDIR)/src/solaris/native, \
     DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/solaris/native/libjava, \
     FLATTEN := true, \
-    FILES := $(filter-out %jspawnhelper.c, \
-        $(shell $(FIND) $(JDK_TOPDIR)/src/solaris/native/java/lang \
-        $(JDK_TOPDIR)/src/solaris/native/java/io \
-        $(JDK_TOPDIR)/src/solaris/native/common \
-        $(JDK_TOPDIR)/src/solaris/native/java/util \
-        $(JDK_TOPDIR)/src/solaris/native/sun/util/locale/provider \
-        -type f))))
+    FILES := $(filter-out %jspawnhelper.c, $(wildcard \
+        $(JDK_TOPDIR)/src/solaris/native/java/lang/* \
+        $(JDK_TOPDIR)/src/solaris/native/java/io/* \
+        $(JDK_TOPDIR)/src/solaris/native/common/* \
+        $(JDK_TOPDIR)/src/solaris/native/sun/misc/* \
+        $(JDK_TOPDIR)/src/solaris/native/java/util/*.c \
+        $(JDK_TOPDIR)/src/solaris/native/java/util/*.h))))
 
 $(eval $(call SetupShuffleFiles,COPY_LIBJAVA_WINDOWS, \
     SRC := $(JDK_TOPDIR)/src/windows/native, \
     DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/windows/native/libjava, \
     FLATTEN := true, \
-    FILES := $(shell $(FIND) $(JDK_TOPDIR)/src/windows/native/java/lang \
-        $(JDK_TOPDIR)/src/windows/native/java/io \
-        $(JDK_TOPDIR)/src/windows/native/common \
-        $(JDK_TOPDIR)/src/windows/native/java/util \
-        $(JDK_TOPDIR)/src/windows/native/sun/security/provider \
-        $(JDK_TOPDIR)/src/windows/native/sun/util/locale/provider \
-        $(JDK_TOPDIR)/src/windows/native/sun/io \
-        -type f)))
+    FILES := $(wildcard \
+        $(JDK_TOPDIR)/src/windows/native/java/lang/* \
+        $(JDK_TOPDIR)/src/windows/native/java/io/* \
+        $(JDK_TOPDIR)/src/windows/native/common/* \
+        $(JDK_TOPDIR)/src/windows/native/java/util/*.c \
+        $(JDK_TOPDIR)/src/windows/native/java/util/*.h \
+        $(JDK_TOPDIR)/src/windows/native/sun/security/provider/* \
+        $(JDK_TOPDIR)/src/windows/native/sun/util/locale/provider/* \
+        $(JDK_TOPDIR)/src/windows/native/sun/io/* \
+        $(JDK_TOPDIR)/src/windows/native/sun/misc/*)))
 
 $(eval $(call SetupShuffleFiles,COPY_LIBJAVA_MACOSX, \
     SRC := $(JDK_TOPDIR)/src/macosx/native, \
@@ -604,17 +553,6 @@ $(eval $(call SetupShuffleFiles,COPY_LIBNIO_WINDOWS, \
     FILES := $(shell $(FIND) $(JDK_TOPDIR)/src/windows/native/sun/nio \
         $(JDK_TOPDIR)/src/windows/native/java/nio -type f)))
 
-# Move gen*Constants.c to make/src
-$(eval $(call SetupShuffleFiles,COPY_LIBNIO_TOOLS, \
-    SRC := $(JDK_TOPDIR)/src/solaris/native/sun/nio/fs, \
-    DEST := $(JDK_TOPDIR)/make/src/native/genconstants/fs, \
-    FILES := $(wildcard $(JDK_TOPDIR)/src/solaris/native/sun/nio/fs/gen*Constants.c)))
-
-$(eval $(call SetupShuffleFiles,COPY_LIBNIO_TOOLS_SOCKET, \
-    SRC := $(JDK_TOPDIR)/src/share/native/sun/nio/ch, \
-    DEST := $(JDK_TOPDIR)/make/src/native/genconstants/ch, \
-    FILES := $(JDK_TOPDIR)/src/share/native/sun/nio/ch/genSocketOptionRegistry.c))
-
 # sctp
 $(eval $(call SetupShuffleFiles,COPY_LIBSCTP_SOLARIS, \
     SRC := $(JDK_TOPDIR)/src/solaris/native/sun/nio/ch/sctp, \
@@ -660,10 +598,15 @@ $(eval $(call SetupShuffleFiles,COPY_LIBJ2GSS_SOLARIS, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/solaris/native/sun/security/jgss/wrapper/*)))
 
 # krb5
-$(eval $(call SetupShuffleFiles,COPY_LIBKRB5_MACOSX, \
+$(eval $(call SetupShuffleFiles,COPY_LIBKRB5_MACOSX_SHARE, \
     SRC := $(JDK_TOPDIR)/src/share/native/sun/security/krb5, \
     DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/macosx/native/libosxkrb5, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/share/native/sun/security/krb5/*)))
+
+$(eval $(call SetupShuffleFiles,COPY_LIBKRB5_MACOSX, \
+    SRC := $(JDK_TOPDIR)/src/macosx/native/sun/security/krb5, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/macosx/native/libosxkrb5, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/macosx/native/sun/security/krb5/*)))
 
 $(eval $(call SetupShuffleFiles,COPY_LIBKRB5_WINDOWS, \
     SRC := $(JDK_TOPDIR)/src/windows/native/sun/security/krb5, \
@@ -1132,10 +1075,25 @@ $(eval $(call SetupShuffleFiles,COPY_LIBOSX_MACOSX, \
     DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/macosx/native/libosx, \
     FLATTEN := true, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/macosx/native/com/apple/concurrent/* \
-        $(JDK_TOPDIR)/src/macosx/native/java/util/* \
         $(JDK_TOPDIR)/src/macosx/native/com/apple/eio/* \
         $(JDK_TOPDIR)/src/macosx/native/apple/security/* \
         $(JDK_TOPDIR)/src/macosx/native/apple/launcher/*)))
+
+# prefs
+$(eval $(call SetupShuffleFiles,COPY_LIBPREFS_SOLARIS, \
+    SRC := $(JDK_TOPDIR)/src/solaris/native/java/util/prefs, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/solaris/native/libprefs, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/solaris/native/java/util/prefs/* )))
+
+$(eval $(call SetupShuffleFiles,COPY_LIBPREFS_WINDOWS, \
+    SRC := $(JDK_TOPDIR)/src/windows/native/java/util/prefs, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/windows/native/libprefs, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/windows/native/java/util/prefs/* )))
+
+$(eval $(call SetupShuffleFiles,COPY_LIBPREFS_MACOSX, \
+    SRC := $(JDK_TOPDIR)/src/macosx/native/java/util/prefs, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/macosx/native/libprefs, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/macosx/native/java/util/prefs/* )))
 
 # applescriptengine
 $(eval $(call SetupShuffleFiles,COPY_LIBAPPLESCRIPTENGINE_MACOSX, \
@@ -1291,18 +1249,12 @@ clean-src:
 	$(RM) -r $(CORBA_TOPDIR)/src/share/modules
 	$(RM) -r $(LANGTOOLS_TOPDIR)/src/share/modules
 	$(RM) -r $(NASHORN_TOPDIR)/src/share/modules
-	$(RM) -r $(CORBA_TOPDIR)/make/tools/src/com
-	$(RM) -r $(JDK_TOPDIR)/make/src/classes/build/tools/x11wrappergen*
-	$(RM) -r $(JDK_TOPDIR)/make/data/x11wrappergen*
 	$(RM) -r $(JDK_TOPDIR)/src/*/native/lib*
 	$(RM) -r $(JDK_TOPDIR)/src/*/native/awt-common
 	$(RM) -r $(JDK_TOPDIR)/src/*/native/common-*
 	$(RM) -r $(JDK_TOPDIR)/src/*/native/unpack200
 	$(RM) -r $(JDK_TOPDIR)/src/*/native/launchers
-	$(RM) -r $(JDK_TOPDIR)/make/src/native/genconstants
-	$(RM) -r $(JDK_TOPDIR)/make/data/macosxicons
 	$(RM) -r $(JDK_TOPDIR)/src/solaris/native/jspawnhelper
-	$(RM) -r $(JDK_TOPDIR)/make/data/currency/CurrencyData.properties
 
 clean-build:
 	$(RM) -r $(JDK_OUTPUTDIR)/modules
