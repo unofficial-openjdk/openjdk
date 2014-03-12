@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  * 
  * This code is free software; you can redistribute it and/or modify it
@@ -21,12 +21,26 @@
  * questions.
  */
 
+
 /**
- * JDK-8026161: Don't narrow floating-point literals in the lexer
+ * JDK-8030197: Nashorn: Object.defineProperty() can be lured to change fixed NaN property
  *
  * @test
  * @run
  */
 
-print(Java.type("jdk.nashorn.test.models.IntFloatOverloadSelection").overloadedMethod(1))
-print(Java.type("jdk.nashorn.test.models.IntFloatOverloadSelection").overloadedMethod(1.0))
+function str(n) {
+    var a = new Uint8Array(new Float64Array([n]).buffer);
+    return Array.apply(null, a).reduceRight(
+        function(acc, v){
+            return acc + (v < 10 ? "0" : "") + v.toString(16);
+        }, "");
+}
+
+var o = Object.defineProperty({}, "NaN", { value: NaN })
+var str1 = str(o.NaN);
+Object.defineProperty(o, "NaN", { value: 0/0 })
+var str2 = str(o.NaN);
+if (str1 != str2) {
+    fail("NaN bit pattern changed");
+}
