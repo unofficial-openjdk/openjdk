@@ -105,6 +105,8 @@ public class Win32ShellFolderManager2 extends ShellFolderManager {
         if (desktop == null) {
             try {
                 desktop = new Win32ShellFolder2(DESKTOP);
+            } catch (SecurityException e) {
+                desktop = null;
             } catch (IOException e) {
                 desktop = null;
             }
@@ -116,6 +118,8 @@ public class Win32ShellFolderManager2 extends ShellFolderManager {
         if (drives == null) {
             try {
                 drives = new Win32ShellFolder2(DRIVES);
+            } catch (SecurityException e) {
+                drives = null;
             } catch (IOException e) {
                 drives = null;
             }
@@ -130,6 +134,8 @@ public class Win32ShellFolderManager2 extends ShellFolderManager {
                 if (path != null) {
                     recent = createShellFolder(getDesktop(), new File(path));
                 }
+            } catch (SecurityException e) {
+                recent = null;
             } catch (IOException e) {
                 recent = null;
             }
@@ -141,6 +147,8 @@ public class Win32ShellFolderManager2 extends ShellFolderManager {
         if (network == null) {
             try {
                 network = new Win32ShellFolder2(NETWORK);
+            } catch (SecurityException e) {
+                network = null;
             } catch (IOException e) {
                 network = null;
             }
@@ -162,6 +170,8 @@ public class Win32ShellFolderManager2 extends ShellFolderManager {
                         personal.setIsPersonal();
                     }
                 }
+            } catch (SecurityException e) {
+                personal = null;
             } catch (IOException e) {
                 personal = null;
             }

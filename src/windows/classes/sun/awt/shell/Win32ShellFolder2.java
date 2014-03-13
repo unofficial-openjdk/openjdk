@@ -584,11 +584,18 @@ final class Win32ShellFolder2 extends ShellFolder {
     }
     // Needs to be accessible to Win32ShellFolderManager2
     static String getFileSystemPath(final int csidl) throws IOException {
-        return new ComTask<String>() {
+        String path = new ComTask<String>() {
             public String call() throws Exception {
                 return getFileSystemPath0(csidl);
             }
         }.execute();
+        if (path != null) {
+            SecurityManager security = System.getSecurityManager();
+            if (security != null) {
+                security.checkRead(path);
+            }
+        }
+        return path;
     }
     /* NOTE: this method uses COM and must be called on the 'COM thread'. See ComTask for the details */
     private static native String getFileSystemPath0(int csidl) throws IOException;
