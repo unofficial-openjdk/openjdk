@@ -118,7 +118,7 @@ ifeq ($(OPENJDK_TARGET_OS), macosx)
     GENSRC_OSX_ICONS_SRC := $(JDK_TOPDIR)/make/closed/data/macosxicons/JavaApp.icns
   endif
 
-  $(GENSRC_OSX_ICONS): $(GENSRC_OSX_ICONS_SRC)
+  $(GENSRC_OSX_ICONS): $(GENSRC_OSX_ICONS_SRC) $(BUILD_TOOLS)
 	$(RM) $@ $@.tmp
 	$(MKDIR) -p $(dir $@)
 	$(ECHO) "static unsigned char sAWTIconData[] = { " >> $@.tmp
