@@ -48,12 +48,16 @@ public final class Module {
     //
     private final Map<Module, Object> requires;  // used as a set
     private final Map<String, Set<Module>> exports;
+    private final Map<String, Object> uses;      // used as a set
+    private final Map<String, Set<String>> provides;
 
     Module(String name, Set<String> packages) {
         this.name = name;
         this.packages = Collections.unmodifiableSet(packages);
         this.requires = new ConcurrentHashMap<>();
         this.exports = new ConcurrentHashMap<>();
+        this.uses = new ConcurrentHashMap<>();
+        this.provides = new ConcurrentHashMap<>();
     }
 
     /**
@@ -89,6 +93,23 @@ public final class Module {
     }
 
     /**
+     * Returns the set of type names that are service interfaces that the
+     * module uses.
+     */
+    public Set<String> uses() {
+        return Collections.unmodifiableSet(uses.keySet());
+    }
+
+    /**
+     * Returns a map of the service providers that the module provides.
+     * The map key is the type name of the service interface. The map key
+     * is the set of type names for the service implementations.
+     */
+    public Map<String, Set<String>> provides() {
+        return Collections.unmodifiableMap(provides);
+    }
+
+    /**
      * Return the string representation of the module.
      */
     public String toString() {
@@ -110,6 +131,17 @@ public final class Module {
                 public void addExport(Module m, String pkg, Set<Module> who) {
                     if (m.exports.put(pkg, Collections.unmodifiableSet(who)) != null)
                         throw new InternalError(pkg + " already exported by " + m);
+                }
+                @Override
+                public void addUses(Module m, String sn) {
+                    m.uses.put(sn, Boolean.TRUE);
+                }
+                @Override
+                public void addProvides(Module m, Map<String, Set<String>> services) {
+                    for (Map.Entry<String, Set<String>> entry: services.entrySet()) {
+                        String sn = entry.getKey();
+                        m.provides.put(sn, Collections.unmodifiableSet(entry.getValue()));
+                    }
                 }
             });
     }

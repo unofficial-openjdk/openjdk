@@ -29,6 +29,9 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Modifier;
+import java.lang.reflect.Module;
 import java.net.URL;
 import java.security.AccessController;
 import java.security.AccessControlContext;
@@ -38,6 +41,9 @@ import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
+
+import sun.reflect.CallerSensitive;
+import sun.reflect.Reflection;
 
 
 /**
@@ -360,7 +366,56 @@ public final class ServiceLoader<S>
             return true;
         }
 
-        private S nextService() {
+        /**
+         * If {@code caller} or {@code c} are defined in a module then ensures
+         * that that the modules are defined to provide or use the service.
+         *
+         * @return the {@code Constructor} to instanitate the service provider
+         */
+        private Constructor<?> ensureAccess(Class<?> caller, Class<?> c)
+            throws NoSuchMethodException, IllegalAccessException
+        {
+            Constructor<?> ctor = c.getConstructor();
+
+            // check class and no-arg constructor are public
+            int modifiers = ctor.getModifiers();
+            if (!Modifier.isPublic(Reflection.getClassAccessFlags(c) & modifiers)) {
+                String cn = c.getName();
+                throw new IllegalAccessException(cn + " is not public");
+            }
+
+            Module m1 = caller.getModule();
+            Module m2 = c.getModule();
+
+            // check that m1 uses the service
+            if (m1 != null) {
+                String sn = service.getName();
+                if (!m1.uses().contains(sn)) {
+                    throw new IllegalAccessException(m1 +
+                        " does not declare that it uses " + sn);
+                }
+            }
+
+            // check that m2 provides the service
+            if (m2 != null) {
+                String sn = service.getName();
+                String cn = c.getName();
+                Set<String> provides = m2.provides().get(sn);
+                if (!provides.contains(cn)) {
+                    throw new IllegalAccessException(m2 +
+                        " does not declare that it provides " + sn + " with " + cn);
+                }
+            }
+
+            // return Constructor to create the service implementation
+            PrivilegedAction<Void> action = new PrivilegedAction<Void>() {
+                public Void run() { ctor.setAccessible(true); return null; }
+            };
+            AccessController.doPrivileged(action);
+            return ctor;
+        }
+
+        private S nextService(Class<?> caller) {
             if (!hasNextService())
                 throw new NoSuchElementException();
             String cn = nextName;
@@ -376,8 +431,10 @@ public final class ServiceLoader<S>
                 fail(service,
                      "Provider " + cn  + " not a subtype");
             }
+
             try {
-                S p = service.cast(c.newInstance());
+                Constructor<?> ctor = ensureAccess(caller, c);
+                S p = service.cast(ctor.newInstance());
                 providers.put(cn, p);
                 return p;
             } catch (Throwable x) {
@@ -399,15 +456,19 @@ public final class ServiceLoader<S>
             }
         }
 
-        public S next() {
+        public S next(Class<?> caller) {
             if (acc == null) {
-                return nextService();
+                return nextService(caller);
             } else {
                 PrivilegedAction<S> action = new PrivilegedAction<S>() {
-                    public S run() { return nextService(); }
+                    public S run() { return nextService(caller); }
                 };
                 return AccessController.doPrivileged(action, acc);
             }
+        }
+
+        public S next() {
+            throw new InternalError("Should not get here");
         }
 
         public void remove() {
@@ -474,10 +535,11 @@ public final class ServiceLoader<S>
                 return lookupIterator.hasNext();
             }
 
+            @CallerSensitive
             public S next() {
                 if (knownProviders.hasNext())
                     return knownProviders.next().getValue();
-                return lookupIterator.next();
+                return lookupIterator.next(Reflection.getCallerClass());
             }
 
             public void remove() {

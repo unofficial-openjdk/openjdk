@@ -26,6 +26,7 @@
 package sun.misc;
 
 import java.lang.reflect.Module;
+import java.util.Map;
 import java.util.Set;
 
 public interface JavaLangReflectAccess {
@@ -35,4 +36,8 @@ public interface JavaLangReflectAccess {
     void addRequires(Module m1, Module m2);
 
     void addExport(Module m, String pkg, Set<Module> who);
+
+    void addUses(Module m, String service);
+
+    void addProvides(Module m, Map<String, Set<String>> services);
 }

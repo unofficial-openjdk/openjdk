@@ -29,7 +29,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
@@ -102,12 +104,42 @@ public final class ModuleInfo {
     }
 
     /**
+     * Returns a map of the service providers that the module provides.
+     * The map key is the type name of the service interface. The map key
+     * is the set of type names for the service implementations.
+     */
+    public Map<String, Set<String>> provides() {
+        Set<String> values = split("provides");
+        if (values.isEmpty())
+            return Collections.emptyMap();
+
+        Map<String, Set<String>> result = new HashMap<>();
+        for (String value: values) {
+            String[] s = value.split(" ");
+            if (s.length == 3 && s[1].equals("with")) {
+                String service = s[0];
+                String provider = s[2];
+                result.computeIfAbsent(service, k -> new HashSet<>()).add(provider);
+            }
+        }
+        return result;
+    }
+
+    /**
      * Creates a module definition from the module information and the given
      * content.
      */
     public Module makeModule(Iterable<String> packages) {
         View.Builder viewBuilder = new View.Builder().id(name());
+
+        // exports
         exports().forEach(export -> viewBuilder.export(export));
+
+        // services
+        for (Map.Entry<String, Set<String>> entry: provides().entrySet()) {
+            String s = entry.getKey();
+            entry.getValue().forEach(p -> viewBuilder.service(s, p));
+        }
 
         View mainView = viewBuilder.build();
         Module.Builder builder = new Module.Builder().main(mainView);
@@ -117,7 +149,7 @@ public final class ModuleInfo {
 
         // requires
         Set<String> requires = requires();
-        if (requires != null) {
+        if (!requires.isEmpty()) {
             requires.forEach( dn ->
                 builder.requires(new ViewDependence(null, ViewIdQuery.parse(dn))) );
         }
@@ -125,7 +157,7 @@ public final class ModuleInfo {
 
         // requires public
         Set<String> requiresPublic = requiresPublic();
-        if (requiresPublic != null) {
+        if (!requiresPublic.isEmpty()) {
             Set<Modifier> mods = EnumSet.of(Modifier.PUBLIC);
             requiresPublic.forEach( dn ->
                 builder.requires(new ViewDependence(mods, ViewIdQuery.parse(dn))));
@@ -133,7 +165,7 @@ public final class ModuleInfo {
 
         // permits
         Set<String> permits = permits();
-        if (permits != null) {
+        if (!permits.isEmpty()) {
             permits.forEach( m -> builder.permit(m) );
         }
 

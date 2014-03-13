@@ -52,10 +52,19 @@ public class Reflection {
         methodFilterMap = new HashMap<>();
     }
 
+    // set to true when modules initialized
+    private static volatile boolean modulesInitialized;
+
+    // set to true to enable module checks
     private static volatile boolean moduleChecksEnabled;
 
-    public static void enableModuleChecks() {
-        moduleChecksEnabled = true;
+    public static boolean modulesInitialized() {
+        return modulesInitialized;
+    }
+
+    public static void enableModules(boolean enableModuleChecks) {
+        moduleChecksEnabled = enableModuleChecks;
+        modulesInitialized = true;
     }
 
     /** Returns the class of the caller of the method calling this method,

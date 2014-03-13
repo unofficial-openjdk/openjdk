@@ -692,7 +692,7 @@ public final class Class<T> implements java.io.Serializable,
      */
     public Module getModule() {
         Module m = module;
-        if (m == null) {
+        if (m == null && Reflection.modulesInitialized()) {
             ClassLoader cl = getClassLoader0();
             String name = getName();
             int i = name.lastIndexOf('.');

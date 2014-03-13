@@ -37,6 +37,7 @@ import java.util.stream.Collectors;
 import jdk.jigsaw.module.Module;
 import jdk.jigsaw.module.ModuleLibrary;
 import jdk.jigsaw.module.Resolution;
+import jdk.jigsaw.module.ServiceDependence;
 import jdk.jigsaw.module.SimpleResolver;
 import jdk.jigsaw.module.View;
 
@@ -154,10 +155,6 @@ class ModuleLauncher {
 
         // setup the reflection machinery
         initReflection(systemLibrary, resolution, moduleToLoaders);
-
-        if (System.getProperty("sun.reflect.enableModuleChecks") != null) {
-            Reflection.enableModuleChecks();
-        }
     }
 
     /**
@@ -273,7 +270,7 @@ class ModuleLauncher {
             }
         }
 
-        // setup requires and exports
+        // setup requires, exports and services
         for (Module m: resolution.selectedModules()) {
             java.lang.reflect.Module reflectModule = nameToReflectModule.get(name(m));
 
@@ -296,7 +293,24 @@ class ModuleLauncher {
                     reflectAccess.addExport(reflectModule, pkg, who);
                 }
             }
+
+            // services used
+            Set<ServiceDependence> sd = m.serviceDependences();
+            if (!sd.isEmpty()) {
+                sd.stream()
+                  .map(ServiceDependence::service)
+                  .forEach(sn -> reflectAccess.addUses(reflectModule, sn));
+            }
+
+            // services provided
+            m.views().forEach(v -> reflectAccess.addProvides(reflectModule, v.services()));
         }
+
+        //
+        boolean enableModuleChecks =
+           System.getProperty("sun.reflect.enableModuleChecks") != null;
+
+        Reflection.enableModules(enableModuleChecks);
     }
 
     /**
