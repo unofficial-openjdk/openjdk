@@ -124,6 +124,8 @@ java.instrument_NATIVE := $(INSTRUMENT_LIBRARIES)
 java.management_NATIVE := $(MANAGEMENT_LIBRARIES) $(JFR_LIBRARIES)
 java.management_CONF := $(MANAGEMENT_CONF_FILES)
 
+java.prefs_NATIVE := $(PREFS_LIBRARIES)
+
 java.rmi_CMDS := $(RMI_LAUNCHERS)
 
 javax.script_NATIVE := $(SCRIPT_LIBRARIES)
