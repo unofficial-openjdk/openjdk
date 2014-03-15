@@ -4505,8 +4505,8 @@ void ClassFileParser::check_final_method_override(instanceKlassHandle this_klass
             break; // didn't find any match; get out
           }
 
-          if (super_m->is_final() &&
-              // matching method in super is final
+          if (super_m->is_final() && !super_m->is_static() &&
+              // matching method in super is final, and not static
               (Reflection::verify_field_access(this_klass(),
                                                super_m->method_holder(),
                                                super_m->method_holder(),
