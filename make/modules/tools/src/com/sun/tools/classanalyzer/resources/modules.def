@@ -87,7 +87,7 @@ module java.base {
             sun.util.calendar.*,
             sun.util.cldr.*,
             sun.util.locale.**,
-            sun.util.logging.**,
+            sun.util.logging.*,
             sun.util.spi.*;
 
     include jdk.Exported,
@@ -196,6 +196,7 @@ module java.base {
 
 module java.logging {
     include java.util.logging.*;
+    include sun.util.logging.resources.*;
 
     // Formatter for HTTP messages
     include sun.net.www.protocol.http.logging.*;

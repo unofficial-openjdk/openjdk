@@ -349,11 +349,11 @@ $(eval $(call add_properties_to_clean,SUN_TOOLS_SERIALVER, \
 #sun/util/logging/resources
 $(eval $(call add_properties_to_compile,SUN_UTIL_LOGGING, \
     $(filter %.properties, \
-    $(call CacheFind, $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/$(MODULES_SUBDIR)$(JAVA_BASE_SUBDIR)/sun/util/logging/resources)), \
+    $(call CacheFind, $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/$(MODULES_SUBDIR)$(JAVA_LOGGING_SUBDIR)/sun/util/logging/resources)), \
     ListResourceBundle))
 $(eval $(call add_properties_to_compile,SUN_UTIL_LOGGING_HK, \
     $(filter %.properties, \
-    $(call CacheFind, $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/$(MODULES_SUBDIR)$(JAVA_BASE_SUBDIR)/sun/util/logging/resources)), \
+    $(call CacheFind, $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/$(MODULES_SUBDIR)$(JAVA_LOGGING_SUBDIR)/sun/util/logging/resources)), \
     ListResourceBundle, %zh_TW, %zh_HK))
 # sun/util/resources
 $(eval $(call add_properties_to_compile,SUN_UTIL, \
