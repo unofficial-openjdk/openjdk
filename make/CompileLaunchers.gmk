@@ -50,6 +50,7 @@ KERBEROS_LAUNCHERS=
 RMI_LAUNCHERS=
 TOOLS_LAUNCHERS=
 TOOLS_BASE_LAUNCHERS=
+TOOLS_DIAG_LAUNCHERS=
 TOOLS_JAXWS_LAUNCHERS=
 TOOLS_JRE_LAUNCHERS=
 
@@ -352,7 +353,7 @@ $(eval $(call SetupLauncher,jinfo, \
         "-J-Dsun.jvm.hotspot.debugger.useWindbgDebugger"$(COMMA) \
         "sun.tools.jinfo.JInfo"$(COMMA) }' \
     -DAPP_CLASSPATH='{ "/lib/tools.jar"$(COMMA) "/lib/sa-jdi.jar"$(COMMA) "/classes" }' \
-    ,,,,,,,,,Info-privileged.plist,TOOLS))
+    ,,,,,,,,,Info-privileged.plist,TOOLS_DIAG))
 
 $(eval $(call SetupLauncher,jmap, \
     -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) \
@@ -360,10 +361,10 @@ $(eval $(call SetupLauncher,jmap, \
         "-J-Dsun.jvm.hotspot.debugger.useWindbgDebugger"$(COMMA) \
         "sun.tools.jmap.JMap"$(COMMA) }' \
     -DAPP_CLASSPATH='{ "/lib/tools.jar"$(COMMA) "/lib/sa-jdi.jar"$(COMMA) "/classes" }' \
-    ,,,,,,,,,Info-privileged.plist,TOOLS))
+    ,,,,,,,,,Info-privileged.plist,TOOLS_DIAG))
 
 $(eval $(call SetupLauncher,jps, \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.tools.jps.Jps"$(COMMA) }',,,,,,,,,,TOOLS))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.tools.jps.Jps"$(COMMA) }',,,,,,,,,,TOOLS_DIAG))
 
 $(eval $(call SetupLauncher,jrunscript, \
     -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "com.sun.tools.script.shell.Main"$(COMMA) }',,,,,,,,,,TOOLS))
@@ -382,13 +383,13 @@ $(eval $(call SetupLauncher,jstack, \
         "-J-Dsun.jvm.hotspot.debugger.useWindbgDebugger"$(COMMA) \
         "sun.tools.jstack.JStack"$(COMMA) }' \
     -DAPP_CLASSPATH='{ "/lib/tools.jar"$(COMMA) "/lib/sa-jdi.jar"$(COMMA) "/classes" }' \
-    ,,,,,,,,,Info-privileged.plist,TOOLS))
+    ,,,,,,,,,Info-privileged.plist,TOOLS_DIAG))
 
 $(eval $(call SetupLauncher,jstat, \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.tools.jstat.Jstat"$(COMMA) }',,,,,,,,,,TOOLS))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.tools.jstat.Jstat"$(COMMA) }',,,,,,,,,,TOOLS_DIAG))
 
 $(eval $(call SetupLauncher,jstatd, \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.tools.jstatd.Jstatd"$(COMMA) }',,,,,,,,,,TOOLS))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.tools.jstatd.Jstatd"$(COMMA) }',,,,,,,,,,TOOLS_DIAG))
 
 $(eval $(call SetupLauncher,keytool, \
     -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.security.tools.keytool.Main"$(COMMA) }',,,,,,,,,,BASE))
@@ -449,7 +450,7 @@ $(eval $(call SetupLauncher,rmiregistry, \
     -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.rmi.registry.RegistryImpl"$(COMMA) }',,,,,,,,,,RMI))
 
 $(eval $(call SetupLauncher,jcmd, \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.tools.jcmd.JCmd"$(COMMA) }',,,,,,,,,,TOOLS))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.tools.jcmd.JCmd"$(COMMA) }',,,,,,,,,,TOOLS_DIAG))
 
 ifeq ($(OPENJDK_TARGET_OS), windows)
   $(eval $(call SetupLauncher,kinit, \

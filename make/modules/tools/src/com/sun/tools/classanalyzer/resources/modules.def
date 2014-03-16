@@ -606,7 +606,7 @@ module jdk.deploy {
     include sun.net.www.protocol.http.AuthCacheBridge;
 }
 
-// Oracle's platform extension (supported APIs)
+// JDK-specific SCTP (supported API)
 module jdk.sctp {
     include com.sun.nio.sctp.**, sun.nio.ch.sctp.*;
 }
@@ -656,6 +656,24 @@ module jdk.tools.base {
     include jdk.jigsaw.tools.jlink.**;
 }
 
+// diagnostic tools and APIs
+module jdk.tools.diag {
+    include com.sun.tools.attach.**,
+            sun.tools.attach.**;
+
+    include sun.jvmstat.**;
+
+    include sun.tools.jcmd.**,
+            sun.tools.jinfo.**,
+            sun.tools.jmap.**,
+            sun.tools.jps.**,
+            sun.tools.jstat.**,
+            sun.tools.jstatd.**,
+            sun.tools.jstack.**;
+
+    uses com.sun.tools.attach.spi.AttachProvider;
+}
+
 // JRE tools
 module jdk.tools.jre {
     // ## part of the runtime - include hprof and jsdt here for now
@@ -669,14 +687,10 @@ module jdk.tools {
     requires public jdk.tools.jre;     // Tools in JRE
     requires public jdk.tools.base;    // developer tools for the base module
     requires public jdk.tools.jaxws;   // developer tools for the jaxws module
-
-    include com.sun.tools.attach.**,
-            sun.tools.attach.**;
+    requires public jdk.tools.diag;    // diagnostic tools
 
     include com.sun.jdi.**, com.sun.tools.jdi.**;
     include META-INF/services/com.sun.tools.jdi.**;
-
-    include sun.jvmstat.**;
 
     // GUI tools
     include sun.jvm.hotspot.HSDB,
@@ -707,19 +721,11 @@ module jdk.tools {
             com.sun.tools.jconsole.*,
             com.sun.tools.script.**,
             sun.tools.jconsole.**,
-            sun.tools.jcmd.**,
-            sun.tools.jinfo.**,
-            sun.tools.jmap.**,
-            sun.tools.jps.**,
-            sun.tools.jstat.**,
-            sun.tools.jstatd.**,
-            sun.tools.jstack.**,
             sun.tools.native2ascii.**,
             sun.tools.serialver.**;
 
     uses com.sun.jdi.connect.Connector;
     uses com.sun.jdi.connect.spi.TransportService;
-    uses com.sun.tools.attach.spi.AttachProvider;
 }
 
 module java.compact1 {

@@ -265,12 +265,13 @@ $(eval $(call SetupShuffleFiles,COPY_SERVICES_JAXP, \
     DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/modules/javax.jaxp, \
     FILES := $(JDK_TOPDIR)/src/share/classes/sun/util/xml/META-INF/services/sun.util.spi.XmlPropertiesProvider))
 
-# Copy services in jdk.tools
+# Copy services in jdk.tools.diag
 $(eval $(call SetupShuffleFiles,COPY_SERVICES_ATTACH, \
     SRC := $(JDK_TOPDIR)/src/share/classes/sun/tools/attach, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/modules/jdk.tools, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/modules/jdk.tools.diag, \
     FILES := $(JDK_TOPDIR)/src/share/classes/sun/tools/attach/META-INF/services/com.sun.tools.attach.spi.AttachProvider))
 
+# Copy services in jdk.tools
 $(eval $(call SetupShuffleFiles,COPY_SERVICES_JDI, \
     SRC := $(JDK_TOPDIR)/src/share/classes/com/sun/tools/jdi, \
     DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/modules/jdk.tools, \

@@ -56,7 +56,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBATTACH, \
     EXCLUDE_FILES := $(LIBATTACH_EXCLUDE_FILES), \
     LANG := C, \
     OPTIMIZATION := LOW, \
-    CFLAGS := $(CFLAGS_JDKLIB) -I$(JDK_OUTPUTDIR)/gensrc_headers/jdk.tools \
+    CFLAGS := $(CFLAGS_JDKLIB) -I$(JDK_OUTPUTDIR)/gensrc_headers/jdk.tools.diag \
         $(addprefix -I, $(BUILD_LIBJAVA_SRC)), \
     CFLAGS_windows := /Gy, \
     MAPFILE := $(JDK_TOPDIR)/make/mapfiles/libattach/mapfile-$(OPENJDK_TARGET_OS), \
@@ -122,6 +122,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBDT_SOCKET, \
 
 $(BUILD_LIBDT_SOCKET): $(BUILD_LIBJAVA)
 
+# Include socket transport with JDWP agent to allow for remote debugging
 JDWP_LIBRARIES += $(BUILD_LIBDT_SOCKET)
 
 ##########################################################################################
@@ -165,7 +166,7 @@ ifeq ($(OPENJDK_TARGET_OS), windows)
       OBJECT_DIR := $(JDK_OUTPUTDIR)/objs/libdt_shmem, \
       DEBUG_SYMBOLS := $(DEBUG_ALL_BINARIES)))
 
-  JDWP_LIBRARIES += $(BUILD_LIBDT_SHMEM)
+  JDI_TRANSPORT_LIBRARIES += $(BUILD_LIBDT_SHMEM)
 
 endif # OPENJDK_TARGET_OS
 
