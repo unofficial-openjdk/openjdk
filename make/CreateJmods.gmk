@@ -153,6 +153,9 @@ jdk.jaas_NATIVE := $(SECURITY_JAAS_LIBRARIES)
 jdk.tools.base_CMDS := $(TOOLS_BASE_LAUNCHERS)
 jdk.tools.base_NATIVE := $(UNPACK_LIBRARIES)
 
+jdk.tools.diag_CMDS := $(TOOLS_DIAG_LAUNCHERS)
+jdk.tools.diag_NATIVE := $(ATTACH_LIBRARIES) $(JDWP_LIBRARIES)
+
 jdk.tools.jaxws_CMDS := $(TOOLS_JAXWS_LAUNCHERS)
 
 jdk.tools.jre_CMDS := $(TOOLS_JRE_LAUNCHERS)
@@ -160,7 +163,7 @@ jdk.tools.jre_NATIVE := $(HPROF_LIBRARIES) $(JSDT_LIBRARIES)
 jdk.tools.jre_CONF := $(HPROF_CONF_FILES)
 
 jdk.tools_CMDS := $(TOOLS_LAUNCHERS)
-jdk.tools_NATIVE := $(ATTACH_LIBRARIES) $(JDWP_LIBRARIES) $(JDI_SA_LIBRARIES)
+jdk.tools_NATIVE := $(JDI_SA_LIBRARIES) $(JDI_TRANSPORT_LIBRARIES)
 
 ################################################################################
 
