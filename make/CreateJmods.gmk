@@ -35,6 +35,7 @@ include MakeBase.gmk
 # these defines the per-module libraries and conf files
 #
 include CompileNativeLibraries.gmk
+include CopyFiles.gmk
 include CompileLaunchers.gmk
 include CreatePolicyJars.gmk
 include HotspotImport.gmk
@@ -107,7 +108,7 @@ endef
 
 java.base_NATIVE := $(BASE_LIBRARIES) $(MSVCR_TARGET) $(JVM_LIBRARIES)
 java.base_CMDS := $(BASE_LAUNCHERS)
-java.base_CONF := $(JVMCFG) $(BASE_CONF_FILES) $(NET_CONF_FILES) $(GENDATA_TZDB) \
+java.base_CONF := $(BASE_CONF_FILES) $(NET_CONF_FILES) $(GENDATA_TZDB) \
     $(GENDATA_CURDATA) $(POLICY_JARS)
 
 java.desktop_NATIVE := $(DESKTOP_LIBRARIES) $(FREETYPE_LIB)

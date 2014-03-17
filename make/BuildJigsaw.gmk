@@ -86,6 +86,9 @@ jdk-createpolicyjars:
 import-hotspot: hotspot
 	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f Import.gmk hotspot JIGSAW=true)
 
+jdk-copyfiles:
+	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f CopyFiles.gmk JIGSAW=true)
+
 jdk-libs: import-hotspot java-compile
 	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f CompileNativeLibraries.gmk JIGSAW=true)
 
@@ -93,10 +96,10 @@ jdk-launchers: jdk-libs
 	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f CompileLaunchers.gmk JIGSAW=true)
 
 jdk: java-compile jdk-gendata jdk-genclasses jdk-libs jdk-launchers \
-    jdk-createpolicyjars import-hotspot
+    jdk-createpolicyjars import-hotspot jdk-copyfiles
 
 .PHONY: jdk-build-tools jdk-gensrc jdk-gendata jdk-genclasses jdk-createpolicyjars \
-    import-hotspot jdk-libs jdk-launchers jdk
+    import-hotspot jdk-copyfiles jdk-libs jdk-launchers jdk
 
 ################################################################################
 
