@@ -92,18 +92,3 @@ $(BUILD_LIBNET): $(BUILD_LIBJAVA)
 
 BASE_LIBRARIES += $(BUILD_LIBNET)
 
-$(JDK_OUTPUTDIR)/lib/net.properties: $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/$(BASE_SUBDIR)/net.properties
-	$(ECHO) $(LOG_INFO) Copying $(@F)
-	$(call install-file)
-
-NET_CONF_FILES += $(JDK_OUTPUTDIR)/lib/net.properties
-
-ifeq ($(OPENJDK_TARGET_OS), solaris)
-  $(JDK_OUTPUTDIR)/lib/sdp/sdp.conf.template: $(JDK_TOPDIR)/$(SRC_SUBDIR)/${OPENJDK_TARGET_OS_API_DIR}/$(BASE_SUBDIR)/sdp/sdp.conf.template
-	$(ECHO) $(LOG_INFO) Copying $(@F)
-	$(call install-file)
-
-  NET_CONF_FILES += $(JDK_OUTPUTDIR)/lib/sdp/sdp.conf.template
-endif
-
-COPY_FILES += $(NET_CONF_FILES)

@@ -51,3 +51,4 @@ $(CLDR_METAINFO_FILE): $(wildcard $(CLDRSRCDIR)/common/dtd/*.dtd) \
         endif
 
 GENSRC_CLDR := $(CLDR_METAINFO_FILE)
+GENSRC_SUN_LOCALEDATA += $(GENSRC_CLDR)

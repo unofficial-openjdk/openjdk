@@ -60,5 +60,6 @@ $(JDK_OUTPUTDIR)/gensrc$(JAVA_BASE_SUBDIR)/java/lang/%.java: $(CHARACTERDATA)/%.
 
 GENSRC_CHARACTERDATA += $(JDK_OUTPUTDIR)/gensrc$(JAVA_BASE_SUBDIR)/java/lang/CharacterDataUndefined.java \
     $(JDK_OUTPUTDIR)/gensrc$(JAVA_BASE_SUBDIR)/java/lang/CharacterDataPrivateUse.java
+GENSRC_JAVA_BASE += $(GENSRC_CHARACTERDATA)
 
 $(GENSRC_CHARACTERDATA): $(BUILD_TOOLS)

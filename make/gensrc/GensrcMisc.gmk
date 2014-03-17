@@ -44,7 +44,7 @@ $(PROFILE_VERSION_JAVA_TARGETS): \
 	    $< > $@.tmp
 	$(MV) $@.tmp $@
 
-GENSRC_MISC += $(JDK_OUTPUTDIR)/gensrc$(JAVA_BASE_SUBDIR)/sun/misc/Version.java \
+GENSRC_JAVA_BASE += $(JDK_OUTPUTDIR)/gensrc$(JAVA_BASE_SUBDIR)/sun/misc/Version.java \
     $(PROFILE_VERSION_JAVA_TARGETS)
 
 ##########################################################################################
@@ -58,7 +58,7 @@ $(JDK_OUTPUTDIR)/gensrc$(JDK_TOOLS_SUBDIR)/sun/tools/jconsole/Version.java: \
 	$(SED) -e 's/@@jconsole_version@@/$(FULL_VERSION)/g' $< > $@.tmp
 	$(MV) $@.tmp $@
 
-GENSRC_MISC += $(JDK_OUTPUTDIR)/gensrc$(JDK_TOOLS_SUBDIR)/sun/tools/jconsole/Version.java
+GENSRC_JDK_TOOLS += $(JDK_OUTPUTDIR)/gensrc$(JDK_TOOLS_SUBDIR)/sun/tools/jconsole/Version.java
 
 ##########################################################################################
 
@@ -76,12 +76,12 @@ ifeq ($(OPENJDK_TARGET_OS_API), posix)
 	$(call install-file)
 	$(CHMOD) u+rw $@
 
-  GENSRC_MISC += $(JDK_OUTPUTDIR)/gensrc$(JAVA_BASE_SUBDIR)/java/lang/UNIXProcess.java
+  GENSRC_JAVA_BASE += $(JDK_OUTPUTDIR)/gensrc$(JAVA_BASE_SUBDIR)/java/lang/UNIXProcess.java
 endif
 
 ##########################################################################################
 
-GENSRC_MISC += $(JDK_OUTPUTDIR)/gensrc$(JAVA_BASE_SUBDIR)/sun/nio/ch/SocketOptionRegistry.java
+GENSRC_JAVA_BASE += $(JDK_OUTPUTDIR)/gensrc$(JAVA_BASE_SUBDIR)/sun/nio/ch/SocketOptionRegistry.java
 
 GENSRC_SOR_SRC := $(JDK_TOPDIR)/make/src/native/genconstants/ch
 GENSRC_SOR_SRC_FILE := genSocketOptionRegistry.c
@@ -118,7 +118,7 @@ endif
 
 ifneq ($(OPENJDK_TARGET_OS), windows)
 
-  GENSRC_MISC += $(JDK_OUTPUTDIR)/gensrc$(JAVA_BASE_SUBDIR)/sun/nio/fs/UnixConstants.java
+  GENSRC_JAVA_BASE += $(JDK_OUTPUTDIR)/gensrc$(JAVA_BASE_SUBDIR)/sun/nio/fs/UnixConstants.java
 
   GENSRC_UC_SRC := $(JDK_TOPDIR)/make/src/native/genconstants/fs
   GENSRC_UC_SRC_FILE := genUnixConstants.c
@@ -158,7 +158,7 @@ endif
 
 ifeq ($(OPENJDK_TARGET_OS), solaris)
 
-  GENSRC_MISC += $(JDK_OUTPUTDIR)/gensrc$(JAVA_BASE_SUBDIR)/sun/nio/fs/SolarisConstants.java
+  GENSRC_JAVA_BASE += $(JDK_OUTPUTDIR)/gensrc$(JAVA_BASE_SUBDIR)/sun/nio/fs/SolarisConstants.java
 
   GENSRC_SOL_SRC := $(JDK_TOPDIR)/make/src/native/genconstants/fs
   GENSRC_SOL_SRC_FILE := genSolarisConstants.c

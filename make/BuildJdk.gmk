@@ -65,7 +65,10 @@ classes-only:
         # The classes are now built and
         # any javah files have now been generated.
 
-libs: classes libs-only
+copyfiles:
+	+$(MAKE) -f CopyFiles.gmk
+
+libs: classes copyfiles libs-only
 libs-only:
 	+$(MAKE) -f CompileNativeLibraries.gmk
 

@@ -378,3 +378,4 @@ $(eval $(call SetupGenBuffer,ByteBufferAsDoubleBufferRL,$(BYTE_X_BUF), type:=dou
 ###
 
 $(GENSRC_BUFFER): $(BUILD_TOOLS)
+GENSRC_JAVA_BASE += $(GENSRC_BUFFER)

@@ -40,7 +40,7 @@ ifeq ($(JIGSAW), true)
       $(JDK_OUTPUTDIR)/gensrc_jdi/META-INF/services/com.sun.jdi.connect.Connector
 	$(process-provider)
 
-  GENSRC_PROVIDERS += $(JDK_OUTPUTDIR)/gensrc/jdk.tools/META-INF/services/$(CONNECTOR_SERVICE)
+  GENSRC_JDK_TOOLS += $(JDK_OUTPUTDIR)/gensrc/jdk.tools/META-INF/services/$(CONNECTOR_SERVICE)
 
   ##############################################################################
 
@@ -49,7 +49,7 @@ ifeq ($(JIGSAW), true)
       $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/modules/jdk.tools.diag/META-INF/services/com.sun.tools.attach.spi.AttachProvider
 	$(process-provider)
 
-  GENSRC_PROVIDERS += $(JDK_OUTPUTDIR)/gensrc/jdk.tools.diag/META-INF/services/com.sun.tools.attach.spi.AttachProvider
+  GENSRC_JDK_TOOLS += $(JDK_OUTPUTDIR)/gensrc/jdk.tools.diag/META-INF/services/com.sun.tools.attach.spi.AttachProvider
 
   ##############################################################################
 
@@ -59,7 +59,7 @@ ifeq ($(JIGSAW), true)
         $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/modules/java.desktop/META-INF/services/sun.java2d.pipe.RenderingEngine-dc.template
 		$(install-file)
 
-    GENSRC_PROVIDERS += $(JDK_OUTPUTDIR)/gensrc/java.desktop/META-INF/services/sun.java2d.pipe.RenderingEngine
+    GENSRC_JAVA_DESKTOP += $(JDK_OUTPUTDIR)/gensrc/java.desktop/META-INF/services/sun.java2d.pipe.RenderingEngine
   endif
 
 endif

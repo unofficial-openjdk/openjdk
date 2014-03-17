@@ -107,3 +107,5 @@ $(JDK_OUTPUTDIR)/gensrc$(JAVA_DESKTOP_SUBDIR)/sun/swing/BeanInfoUtils.java: $(DO
 	$(call install-file)
 
 GENSRC_SWING_BEANINFO = $(JDK_OUTPUTDIR)/gensrc_no_srczip/_the.generated_beaninfo
+
+GENSRC_JAVA_DESKTOP += $(GENSRC_SWING_BEANINFO) $(GENSRC_SWING_NIMBUS)

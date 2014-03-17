@@ -105,6 +105,8 @@ endef
 
 $(foreach I, $(GENSRC_AWT_ICONS_SRC), $(eval $(call SetupGensrcAWTIcon,$(notdir $(I)),$(dir $(I)))))
 
+GENSRC_JAVA_DESKTOP += $(GENSRC_AWT_ICONS)
+
 ###
 
 ifeq ($(OPENJDK_TARGET_OS), macosx)
@@ -126,4 +128,5 @@ ifeq ($(OPENJDK_TARGET_OS), macosx)
 	$(ECHO) "};" >> $@.tmp
 	$(MV) $@.tmp $@
 
+  GENSRC_JAVA_DESKTOP += $(GENSRC_OSX_ICONS)
 endif
