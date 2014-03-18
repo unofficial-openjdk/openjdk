@@ -3416,9 +3416,10 @@ jint Threads::create_vm(JavaVMInitArgs* args, bool* canTryAgain) {
   }
 
   assert (Universe::is_fully_initialized(), "not initialized");
-  if (VerifyBeforeGC && VerifyGCStartAt == 0) {
-    Universe::heap()->prepare_for_verify();
-    Universe::verify();   // make sure we're starting with a clean slate
+  if (VerifyDuringStartup) {
+    // Make sure we're starting with a clean slate.
+    VM_Verify verify_op;
+    VMThread::execute(&verify_op);
   }
 
   EXCEPTION_MARK;
@@ -3504,11 +3505,12 @@ jint Threads::create_vm(JavaVMInitArgs* args, bool* canTryAgain) {
       java_lang_Thread::set_thread_status(thread_object,
                                           java_lang_Thread::RUNNABLE);
 
-      // The VM preresolve methods to these classes. Make sure that get initialized
-      initialize_class(vmSymbols::java_lang_reflect_Method(), CHECK_0);
-      initialize_class(vmSymbols::java_lang_ref_Finalizer(),  CHECK_0);
       // The VM creates & returns objects of this class. Make sure it's initialized.
       initialize_class(vmSymbols::java_lang_Class(), CHECK_0);
+
+      // The VM preresolves methods to these classes. Make sure that they get initialized
+      initialize_class(vmSymbols::java_lang_reflect_Method(), CHECK_0);
+      initialize_class(vmSymbols::java_lang_ref_Finalizer(),  CHECK_0);
       call_initializeSystemClass(CHECK_0);
 
       // get the Java runtime name after java.lang.System is initialized

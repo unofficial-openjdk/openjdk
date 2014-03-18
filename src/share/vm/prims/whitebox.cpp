@@ -27,6 +27,8 @@
 #include "memory/universe.hpp"
 #include "oops/oop.inline.hpp"
 
+#include "code/codeCache.hpp"
+
 #include "classfile/symbolTable.hpp"
 
 #include "prims/whitebox.hpp"
@@ -131,6 +133,13 @@ WB_ENTRY(jboolean, WB_NMTWaitForDataMerge(JNIEnv* env))
   return MemTracker::wbtest_wait_for_data_merge();
 WB_END
 
+WB_ENTRY(void, WB_DeoptimizeAll(JNIEnv* env, jobject o))
+  MutexLockerEx mu(Compile_lock);
+  CodeCache::mark_all_nmethods_for_deoptimization();
+  VM_Deoptimize op;
+  VMThread::execute(&op);
+WB_END
+
 //Some convenience methods to deal with objects from java
 int WhiteBox::offset_for_field(const char* field_name, oop object,
     Symbol* signature_symbol) {
@@ -204,6 +213,7 @@ static JNINativeMethod methods[] = {
   {CC"NMTUncommitMemory",   CC"(JJ)V",                (void*)&WB_NMTUncommitMemory  },
   {CC"NMTReleaseMemory",    CC"(JJ)V",                (void*)&WB_NMTReleaseMemory   },
   {CC"NMTWaitForDataMerge", CC"()Z",                  (void*)&WB_NMTWaitForDataMerge},
+  {CC"deoptimizeAll",       CC"()V",                  (void*)&WB_DeoptimizeAll     },
 };
 
 #undef CC

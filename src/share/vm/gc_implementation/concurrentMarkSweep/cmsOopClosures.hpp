@@ -58,8 +58,22 @@ class MarkRefsIntoClosure: public OopsInGenClosure {
   MarkRefsIntoClosure(MemRegion span, CMSBitMap* bitMap);
   virtual void do_oop(oop* p);
   virtual void do_oop(narrowOop* p);
-  inline void do_oop_nv(oop* p)       { MarkRefsIntoClosure::do_oop_work(p); }
-  inline void do_oop_nv(narrowOop* p) { MarkRefsIntoClosure::do_oop_work(p); }
+
+  Prefetch::style prefetch_style() {
+    return Prefetch::do_read;
+  }
+};
+
+class Par_MarkRefsIntoClosure: public OopsInGenClosure {
+ private:
+  const MemRegion _span;
+  CMSBitMap*      _bitMap;
+ protected:
+  DO_OOP_WORK_DEFN
+ public:
+  Par_MarkRefsIntoClosure(MemRegion span, CMSBitMap* bitMap);
+  virtual void do_oop(oop* p);
+  virtual void do_oop(narrowOop* p);
   bool do_header() { return true; }
   Prefetch::style prefetch_style() {
     return Prefetch::do_read;
