@@ -108,20 +108,8 @@ class JlinkTask {
         }
     }
 
-    private static final Path systemJmodPath = systemJmodPath();
-
-    private static Path systemJmodPath() {
-        Path p = Paths.get(System.getProperty("java.home"));
-        if (p.endsWith("jre"))
-            p = p.getParent();
-        return p.resolve("jmods");
-    }
-
     private static Path CWD = Paths.get("");
 
-    private static Path getSystemJmodPath(String name) {
-        return systemJmodPath.resolve(name + ".jmod");
-    }
     private static List<Path> splitPath(String arg, String separator)
         throws BadArgs
     {
@@ -183,6 +171,11 @@ class JlinkTask {
                 task.options.help = true;
             }
         },
+        new Option(true, "--jmod-repo") {
+            void process(JlinkTask task, String opt, String arg) {
+                task.options.jmodRepo = Paths.get(arg);
+            }
+        },
         new Option(true, "--libs") {
             void process(JlinkTask task, String opt, String arg) throws BadArgs {
                 task.options.libs = splitPath(arg, File.pathSeparator);
@@ -198,10 +191,6 @@ class JlinkTask {
                 for (String mn : arg.split(",")) {
                     if (mn.isEmpty())
                         throw new BadArgs("err.jmod.not.found", mn);
-                    Path path = systemJmodPath.resolve(mn + ".jmod");
-                    if (Files.notExists(path)) {
-                        throw new BadArgs("err.jmod.not.found", mn);
-                    }
                     task.options.jmods.add(mn);
                 }
             }
@@ -255,6 +244,7 @@ class JlinkTask {
         List<Path> cmds;
         List<Path> configs;
         List<Path> libs;
+        Path jmodRepo;
         Set<String> jmods = new TreeSet<>();
         Format format = null;
         Path output;
@@ -281,21 +271,22 @@ class JlinkTask {
                     throw new BadArgs("err.format.must.be.specified").showUsage(true);
                 }
             } else if (options.format.equals(Format.IMAGE)) {
-                Path path = options.output;
-                if (path == null)
+                Path dir = options.jmodRepo;
+                if (dir == null)
+                    throw new BadArgs("err.jmodrepo.must.be.specified").showUsage(true);
+                Optional<Path> first =
+                    Files.list(dir)
+                         .filter(name -> name.toString().endsWith(".jmod"))
+                         .findFirst();
+                if (!first.isPresent())
+                    throw new BadArgs("err.jmod.not.found", dir).showUsage(true);
+
+                Path output = options.output;
+                if (output == null)
                     throw new BadArgs("err.output.must.be.specified").showUsage(true);
-                if (Files.notExists(path))
-                    // ## throw new BadArgs("err.dir.not.found", path);
-                    Files.createDirectories(path);
-                try {
-                    BasicFileAttributes attrs = Files.readAttributes(path, BasicFileAttributes.class);
-                    if (!attrs.isDirectory())
-                        throw new BadArgs("err.dir.not.directory", path);
-                } catch (IOException x) {
-                    throw new BadArgs("err.dir.not.directory", path);
-                }
-                if (path.toFile().list().length != 0)
-                    throw new BadArgs("err.dir.not.empty", path);
+                Files.createDirectories(output);
+                if (Files.list(output).findFirst().isPresent())
+                    throw new BadArgs("err.dir.not.empty", output);
 
                 if (options.jmods.isEmpty())  // ## default to jdk.base ??
                     throw new BadArgs("err.mods.must.be.specified").showUsage(true);
@@ -381,6 +372,8 @@ class JlinkTask {
      * Returns the set of required modules
      */
     private Set<Path> modulesNeeded(Set<String> jmods) throws IOException {
+        final Path jmodRepo = options.jmodRepo;
+
         Module[] modules;
         try (InputStream in =  ClassLoader.getSystemResourceAsStream(MODULES_SER)) {
             ObjectInputStream ois = new ObjectInputStream(in);
@@ -393,10 +386,7 @@ class JlinkTask {
         SimpleResolver resolver = new SimpleResolver(library);
         Set<Path> modsNeeded = new TreeSet<>();
         for (Module m : resolver.resolve(jmods).selectedModules()) {
-            Path path = systemJmodPath.resolve(m.id().name() + ".jmod");
-            if (Files.notExists(path)) {
-                throw new InternalError(path + " not found");
-            }
+            Path path = jmodRepo.resolve(m.id().name() + ".jmod");
             modsNeeded.add(path);
         }
         return modsNeeded;
