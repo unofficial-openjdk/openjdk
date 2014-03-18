@@ -238,27 +238,34 @@ class ClassAnalyzer extends Task {
     private void printModulePackages(Module m, Path dir) throws IOException {
         File summary = dir.resolve(m.name() + ".summary").toFile();
         try (PrintWriter writer = new PrintWriter(summary)) {
-            long total = 0;
-            int count = 0;
+            long classBytes = 0;
+            int classCount = 0;
             long resBytes = 0;
             int resCount = 0;
+            for (Package p: m.packages()) {
+                resCount += p.resourceCount;
+                resBytes += p.resourceBytes;
+                classBytes += p.classBytes;
+                classCount += p.classCount;
+            }
             writer.format("%10s\t%10s\t%s%n", "Bytes", "Classes", "Package name");
-            Set<Package> pkgs = new TreeSet<>(m.packages());
-            for (Package p : pkgs) {
-                writer.format("%10d\t%10d\t%s%n",
-                        p.classBytes, p.classCount, p.name());
-                total += p.classBytes;
-                count += p.classCount;
+            m.packages().stream()
+                .filter(p -> p.classCount > 0)
+                .sorted().forEach(p ->
+                    writer.format("%10d\t%10d\t%s%n",
+                                  p.classBytes, p.classCount, p.name()));
 
+            if (resCount > 0) {
+                writer.format("%n%10s\t%10s\t%s%n", "Bytes", "Resources", "Package name");
+                m.packages().stream()
+                    .filter(p -> p.resourceCount > 0)
+                    .sorted().forEach(p ->
+                        writer.format("%10d\t%10d\t%s%n",
+                                      p.resourceBytes, p.resourceCount, p.name()));
             }
-            for (Resource rf : m.resources()) {
-                resCount++;
-                resBytes += rf.getFileSize();
-            }
-
-            writer.format("%nTotal: %d bytes (uncompressed) %d classes "
-                    + "%d bytes %d resources %n",
-                    total, count, resBytes, resCount);
+            writer.format("%nTotal: %d bytes (uncompressed): " +
+                    " %d classes %d bytes %d resources %d bytes%n",
+                    (classBytes+resBytes), classBytes, classCount, resBytes, resCount);
         }
     }
 

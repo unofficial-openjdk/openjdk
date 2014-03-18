@@ -234,6 +234,7 @@ public class Module implements Comparable<Module> {
         k.setModule(this);
 
         Package pkg = getPackage(k.getPackageName());
+        pkg.addKlass(k);
         if (pkg.isExported) {
             // ## TODO: handle implementation classes
             if (profile == null) {
@@ -250,12 +251,20 @@ public class Module implements Comparable<Module> {
     }
 
     Package getPackage(String pn) {
-        return packages.get(pn);
+        return packages.computeIfAbsent(pn, _p -> new Package(pn, this));
     }
 
     void addResource(Resource res) {
         resources.add(res);
         res.setModule(this);
+
+        String pn = "";
+        int i = res.getName().lastIndexOf('/');
+        if (i > 0) {
+            pn = res.getName().substring(0, i).replace('/', '.');
+        }
+        Package pkg = getPackage(pn);
+        pkg.addResource(res);
     }
 
     void addService(Service s) {

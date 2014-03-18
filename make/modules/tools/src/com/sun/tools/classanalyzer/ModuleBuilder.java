@@ -52,7 +52,6 @@ public class ModuleBuilder {
     protected final String version;
     private final List<Archive> archives;
     private final Map<String, Klass> classes = new HashMap<>();
-    private final Map<String, Set<Package>> packages = new HashMap<>();
     private final Map<String, Service> services = new HashMap<>();
     private final Map<Module, Map<String,Dependence>> dependencesForModule = new HashMap<>();
 
@@ -286,9 +285,7 @@ public class ModuleBuilder {
 
     private Package getPackage(Klass k) {
         String pn = k.getPackageName();
-        Package p = getPackage(pn, k.getClassName());
-        p.addKlass(k);
-        return p;
+        return getPackage(pn, k.getClassName());
     }
 
     private Package getPackage(Resource res) {
@@ -297,23 +294,12 @@ public class ModuleBuilder {
         if (i > 0) {
             pn = res.getName().substring(0, i).replace('/', '.');
         }
-        Package p = getPackage(pn, res.getName());
-        p.addResource(res);
-        return p;
+        return getPackage(pn, res.getName());
     }
 
     private Package getPackage(String pn, String name) {
         Module module = findModule(name);
-        Package p = module.getPackage(pn);
-        if (p == null) {
-            Set<Package> pkgs = packages.get(pn);
-            if (pkgs == null) {
-                packages.put(pn, pkgs = new HashSet<>());
-            }
-            pkgs.add(p = new Package(pn, module));
-            module.addPackage(p);
-        }
-        return p;
+        return module.getPackage(pn);
     }
 
     public Map<String, Set<Module>> getPackages() {
