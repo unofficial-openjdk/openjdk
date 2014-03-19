@@ -371,9 +371,7 @@ class JlinkTask {
     /*
      * Returns the set of required modules
      */
-    private Set<Path> modulesNeeded(Set<String> jmods) throws IOException {
-        final Path jmodRepo = options.jmodRepo;
-
+    private Set<Module> modulesNeeded(Set<String> jmods) throws IOException {
         Module[] modules;
         try (InputStream in =  ClassLoader.getSystemResourceAsStream(MODULES_SER)) {
             ObjectInputStream ois = new ObjectInputStream(in);
@@ -384,12 +382,17 @@ class JlinkTask {
 
         ModuleLibrary library = new JModModuleLibrary(modules);
         SimpleResolver resolver = new SimpleResolver(library);
-        Set<Path> modsNeeded = new TreeSet<>();
-        for (Module m : resolver.resolve(jmods).selectedModules()) {
+        return resolver.resolve(jmods).selectedModules();
+    }
+
+    private Set<Path> modulesToPath(Set<Module> modules) throws IOException {
+        final Path jmodRepo = options.jmodRepo;
+        Set<Path> modPaths = new TreeSet<>();
+        for (Module m : modules) {
             Path path = jmodRepo.resolve(m.id().name() + ".jmod");
-            modsNeeded.add(path);
+            modPaths.add(path);
         }
-        return modsNeeded;
+        return modPaths;
     }
 
     private void createImage() throws IOException {
@@ -397,7 +400,8 @@ class JlinkTask {
         final Path output = options.output;
 
         // the set of modules required
-        Set<Path> jmods = modulesNeeded(options.jmods);
+        Set<Module> mods = modulesNeeded(options.jmods);
+        Set<Path> jmods = modulesToPath(mods);
 
         Path modulesPath = output.resolve("lib/modules");
         Files.createDirectories(modulesPath);
@@ -407,8 +411,11 @@ class JlinkTask {
             Path modPath = modulesPath.resolve(modName);
             Files.createDirectories(modPath);
 
-            JmodFileReader reader = new JmodFileReader(jmod, modPath, output);
-            reader.extract();
+            try (JmodFileReader reader = new JmodFileReader(jmod, modPath, output)) {
+                if (modName.equals("java.base"))
+                    reader.writeModulesSer(mods);
+                reader.extract();
+            }
         }
 
         Path appJar = output.resolve(APP_DIR).resolve("app.jar");
@@ -438,7 +445,7 @@ class JlinkTask {
         }
     }
 
-    private class JmodFileReader {
+    private class JmodFileReader implements Closeable {
         final ZipFile moduleFile;
         final Path output;
         final Path classesPath;
@@ -453,14 +460,13 @@ class JlinkTask {
         }
 
         void extract() throws IOException {
-            ZipEntryConsumer zec = new ZipEntryConsumer();
-            try {
-                moduleFile.stream().forEach(zec);
-            } finally {
-                if (classesJar != null)
-                    classesJar.close();
-                moduleFile.close();
-            }
+            moduleFile.stream().forEach(new ZipEntryConsumer());
+        }
+
+        public void close() throws IOException {
+            if (classesJar != null)
+                classesJar.close();
+            moduleFile.close();
         }
 
         private class ZipEntryConsumer implements Consumer<ZipEntry> {
@@ -477,6 +483,9 @@ class JlinkTask {
 
         private void visitFile(ZipEntry ze) throws IOException {
             String fullFilename = ze.getName();
+            if (fullFilename.toString().endsWith("modules.ser"))
+                return;  // modules.ser will be generated for the given image
+
             if (fullFilename.toString().endsWith("module-info.class")) // ## hack remove
                 return;
 
@@ -496,6 +505,14 @@ class JlinkTask {
                 writeFile(moduleFile.getInputStream(ze), dstFile, section);
                 setExecutable(section, dstFile);
             }
+        }
+
+        public void writeModulesSer(Set<Module> modules) throws IOException {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            try (ObjectOutputStream oos = new ObjectOutputStream(baos)) {
+                oos.writeObject(modules.toArray(new Module[0]));
+            }
+            writeJarEntry(new ByteArrayInputStream(baos.toByteArray()), MODULES_SER);
         }
 
         private void writeJarEntry(InputStream is, String filename)
