@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -49,6 +49,7 @@ import javax.swing.UIDefaults;
 import sun.awt.*;
 import sun.font.FontConfigManager;
 import sun.misc.PerformanceLogger;
+import sun.misc.ThreadGroupUtils;
 import sun.print.PrintJob2D;
 import sun.security.action.GetPropertyAction;
 import sun.security.action.GetBooleanAction;
@@ -236,13 +237,7 @@ public final class XToolkit extends UNIXToolkit implements Runnable {
         }
         PrivilegedAction<Void> a = new PrivilegedAction<Void>() {
             public Void run() {
-                ThreadGroup mainTG = Thread.currentThread().getThreadGroup();
-                ThreadGroup parentTG = mainTG.getParent();
-                while (parentTG != null) {
-                    mainTG = parentTG;
-                    parentTG = mainTG.getParent();
-                }
-                Thread shutdownThread = new Thread(mainTG, "XToolkt-Shutdown-Thread") {
+                Thread shutdownThread = new Thread(ThreadGroupUtils.getRootThreadGroup(), "XToolkt-Shutdown-Thread") {
                         public void run() {
                             XSystemTrayPeer peer = XSystemTrayPeer.getPeerInstance();
                             if (peer != null) {
@@ -304,22 +299,16 @@ public final class XToolkit extends UNIXToolkit implements Runnable {
             init();
             XWM.init();
             SunToolkit.setDataTransfererClassName(DATA_TRANSFERER_CLASS_NAME);
-
-            PrivilegedAction<Thread> action = new PrivilegedAction() {
+            toolkitThread = AccessController.doPrivileged(new PrivilegedAction<Thread>() {
+                @Override
                 public Thread run() {
-                    ThreadGroup currentTG = Thread.currentThread().getThreadGroup();
-                    ThreadGroup parentTG = currentTG.getParent();
-                    while (parentTG != null) {
-                        currentTG = parentTG;
-                        parentTG = currentTG.getParent();
-                    }
-                    Thread thread = new Thread(currentTG, XToolkit.this, "AWT-XAWT");
+                    Thread thread = new Thread(ThreadGroupUtils.getRootThreadGroup(), XToolkit.this, "AWT-XAWT");
+                    thread.setContextClassLoader(null);
                     thread.setPriority(Thread.NORM_PRIORITY + 1);
                     thread.setDaemon(true);
                     return thread;
                 }
-            };
-            toolkitThread = AccessController.doPrivileged(action);
+            });
             toolkitThread.start();
         }
     }
