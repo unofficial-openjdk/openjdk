@@ -26,12 +26,15 @@
 package java.lang.invoke;
 
 import java.lang.reflect.*;
+
 import sun.invoke.util.ValueConversions;
 import sun.invoke.util.VerifyAccess;
 import sun.invoke.util.Wrapper;
+
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Arrays;
+
 import sun.reflect.CallerSensitive;
 import sun.reflect.Reflection;
 import sun.reflect.misc.ReflectUtil;
@@ -1155,6 +1158,10 @@ return mh1;
             int allowedModes = this.allowedModes;
             if (allowedModes == TRUSTED)  return;
             int mods = m.getModifiers();
+            if (Modifier.isProtected(mods) && refKind == REF_newInvokeSpecial) {
+                // cannot "new" a protected ctor in a different package
+                mods ^= Modifier.PROTECTED;
+            }
             if (Modifier.isFinal(mods) &&
                     MethodHandleNatives.refKindIsSetter(refKind))
                 throw m.makeAccessException("unexpected set of a final field", this);
