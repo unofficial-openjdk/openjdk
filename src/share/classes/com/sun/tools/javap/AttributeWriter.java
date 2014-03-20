@@ -62,8 +62,6 @@ import com.sun.tools.classfile.StackMap_attribute;
 import com.sun.tools.classfile.Synthetic_attribute;
 
 import static com.sun.tools.classfile.AccessFlags.*;
-import com.sun.tools.classfile.ModuleProvides_attribute;
-import com.sun.tools.classfile.ModuleRequires_attribute;
 import com.sun.tools.classfile.Module_attribute;
 import com.sun.tools.javac.util.StringUtils;
 
@@ -403,70 +401,84 @@ public class AttributeWriter extends BasicWriter
     }
 
     public Void visitModule(Module_attribute attr, Void ignore) {
-        println("Module: " + constantWriter.stringValue(attr.module_name_index));
+        println("Module:");
+        indent(+1);
+        printRequiresTable(attr);
+        printPermitsTable(attr);
+        printExportsTable(attr);
+        printUsesTable(attr);
+        printProvidesTable(attr);
+        indent(-1);
         return null;
     }
 
-    public Void visitModuleProvides(ModuleProvides_attribute attr, Void ignore) {
-        println("ModuleProvides: ");
+    protected void printRequiresTable(Module_attribute attr) {
+        Module_attribute.RequiresEntry[] entries = attr.requires;
+        println(entries.length + "\t// " + "requires");
         indent(+1);
-        for (int i = 0; i < attr.view_table.length; i++) {
-            println("View " + i);
-            indent(+1);
-            ModuleProvides_attribute.View v = attr.view_table[i];
-            String view_name = (v.view_name_index == 0)
-                    ? "(default)" : constantWriter.stringValue(v.view_name_index);
-            println("#" + v.view_name_index + "\t// view " + view_name);
-            println(v.service_length + "\t// services ");
-            indent(+1);
-            for (int si = 0; si < v.service_length; si++) {
-                ModuleProvides_attribute.Service s = v.service_table[si];
-                println("#" + s.service_index + ", " + "#" + s.impl_index
-                        +"\t// provides " + constantWriter.stringValue(s.service_index)
-                        + " with " + constantWriter.stringValue(s.impl_index));
-            }
-            indent(-1);
-            println(v.export_length + "\t// exports ");
-            indent(+1);
-            for (int ei = 0; ei < v.export_length; ei++) {
-                int e = v.export_table[ei];
-                println("#" + e + "\t// exports " + constantWriter.stringValue(e));
-            }
-            indent(-1);
-            println(v.permit_length + "\t// permits ");
-            indent(+1);
-            for (int pi = 0; pi < v.permit_length; pi++) {
-                int p = v.permit_table[pi];
-                println("#" + p +"\t// permits " + constantWriter.stringValue(p));
-            }
-            indent(-1); // end of permits
-            indent(-1); // end of ModuleProvides
+        for (Module_attribute.RequiresEntry e: entries) {
+            print("#" + e.requires_index + "," +
+                    String.format("%x", e.requires_flags)+ "\t// requires");
+            if ((e.requires_flags & Module_attribute.ACC_PUBLIC) != 0)
+                print(" public");
+            if ((e.requires_flags & Module_attribute.ACC_SYNTHETIC) != 0)
+                print(" synthetic");
+            if ((e.requires_flags & Module_attribute.ACC_MANDATED) != 0)
+                print(" mandated");
+            println(" " + constantWriter.stringValue(e.requires_index));
         }
         indent(-1);
-        return null;
     }
 
-    public Void visitModuleRequires(ModuleRequires_attribute attr, Void ignore) {
-        println("ModuleRequires: ");
+    protected void printPermitsTable(Module_attribute attr) {
+        int[] entries = attr.permits_index;
+        println(entries.length + "\t// " + "permits");
         indent(+1);
-        writeRequiresTable(attr.module_table, false);
-        writeRequiresTable(attr.service_table, true);
+        for (int e: entries) {
+            print("#" + e + "\t// permits " + constantWriter.stringValue(e));
+        }
         indent(-1);
-        return null;
     }
 
-    protected void writeRequiresTable(ModuleRequires_attribute.Entry[] entries,
-            boolean service) {
-        println(entries.length + "\t// " + (service ? "services" : "modules"));
+    protected void printExportsTable(Module_attribute attr) {
+        Module_attribute.ExportsEntry[] entries = attr.exports;
+        println(entries.length + "\t// " + "exports");
         indent(+1);
-        for (ModuleRequires_attribute.Entry e: entries) {
-            print("#" + e.index + "," + String.format("%x", e.flags)+ "\t// "
-                + (service ? "uses" : "requires"));
-            if ((e.flags & ModuleRequires_attribute.ACC_PUBLIC) != 0)
-                print(" public");
-            if ((e.flags & ModuleRequires_attribute.ACC_MANDATED) != 0)
-                print(" mandated");
-            println(" " + constantWriter.stringValue(e.index));
+        for (Module_attribute.ExportsEntry e: entries) {
+            print("#" + e.exports_index + "\t// exports");
+            print(" " + constantWriter.stringValue(e.exports_index));
+            if (e.exports_to_index.length > 0) {
+                print(" to ... " + e.exports_to_index.length);
+                indent(+1);
+                for (int to: e.exports_to_index) {
+                    print("#" + to + "\t// ... to " + constantWriter.stringValue(to));
+                }
+                indent(-1);
+            }
+        }
+        indent(-1);
+    }
+
+    protected void printUsesTable(Module_attribute attr) {
+        int[] entries = attr.uses_index;
+        println(entries.length + "\t// " + "uses services");
+        indent(+1);
+        for (int e: entries) {
+            print("#" + e + "\t// uses " + constantWriter.stringValue(e));
+        }
+        indent(-1);
+    }
+
+    protected void printProvidesTable(Module_attribute attr) {
+        Module_attribute.ProvidesEntry[] entries = attr.provides;
+        println(entries.length + "\t// " + "provides services");
+        indent(+1);
+        for (Module_attribute.ProvidesEntry e: entries) {
+            print("#" + e.provides_index + "," +
+                    e.with_index + "\t// provides ");
+            print(" " + constantWriter.stringValue(e.provides_index));
+            print (" with ");
+            println(" " + constantWriter.stringValue(e.with_index));
         }
         indent(-1);
     }

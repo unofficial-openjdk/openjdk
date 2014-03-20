@@ -4107,10 +4107,16 @@ public class Attr extends JCTree.Visitor {
      * Attribute an env for either a top level tree or class declaration.
      */
     public void attrib(Env<AttrContext> env) {
-        if (env.tree.hasTag(TOPLEVEL))
-            attribTopLevel(env);
-        else
-            attribClass(env.tree.pos(), env.enclClass.sym);
+        switch (env.tree.getTag()) {
+            case MODULE:
+                attribModule(env.tree.pos(), ((JCModuleDecl)env.tree).sym);
+                break;
+            case TOPLEVEL:
+                attribTopLevel(env);
+                break;
+            default:
+                attribClass(env.tree.pos(), env.enclClass.sym);
+        }
     }
 
     /**
@@ -4124,6 +4130,22 @@ public class Attr extends JCTree.Visitor {
         } catch (CompletionFailure ex) {
             chk.completionError(toplevel.pos(), ex);
         }
+    }
+
+    public void attribModule(DiagnosticPosition pos, ModuleSymbol m) {
+        try {
+            annotate.flush();
+            attribModule(m);
+        } catch (CompletionFailure ex) {
+            chk.completionError(pos, ex);
+        }
+    }
+
+    void attribModule(ModuleSymbol m) {
+        // Get environment current at the point of module definition.
+        Env<AttrContext> env = enter.typeEnvs.get(m);
+        //System.err.println("Attr.attribModule: " + env + " " + env.tree);
+        attribStat(env.tree, env);
     }
 
     /** Main method: attribute class definition associated with given class symbol.
@@ -4217,6 +4239,19 @@ public class Attr extends JCTree.Visitor {
 
     public void visitImport(JCImport tree) {
         // nothing to do
+    }
+
+    public void visitModuleDef(JCModuleDecl tree) {
+        System.err.println("Attr.visitModuleDecl: " + Pretty.toSimpleString(tree, 80));
+        super.visitModuleDef(tree);
+    }
+
+    public void visitProvides(JCProvides tree) {
+        System.err.println("Attr.visitProvides: " + tree);
+    }
+
+    public void visitUses(JCUses tree) {
+        System.err.println("Attr.visitUses: " + tree);
     }
 
     /** Finish the attribution of a class. */
