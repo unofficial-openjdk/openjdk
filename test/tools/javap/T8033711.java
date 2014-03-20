@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,34 +23,33 @@
 
 /*
  * @test
- * @bug 8003280 8003306
- * @summary Add lambda tests
- *  Regression test JDK-8003306 inner class constructor in lambda
- * @author  Robert Field
+ * @bug 8033711
+ * @summary An exception is thrown if using the "-classpath" option with no arguments
  */
 
-public class InnerConstructor {
 
-    public static void main(String... args) {
-        InnerConstructor ic = new InnerConstructor();
-        String res = ic.seq1().m().toString();
-        if (!res.equals("Cbl.toString")) {
-            throw new AssertionError(String.format("Unexpected result: %s", res));
-        }
+import java.io.*;
+
+public class T8033711 {
+    public static void main(String[] args) throws Exception {
+        new T8033711().run();
     }
 
-    Ib1 seq1() {
-        return () -> new Cbl();
+    public void run() throws Exception {
+        String out = javap("-classpath");
+        if (out.contains("IllegalArgumentException"))
+            throw new Exception("exception found in javap output");
+        if (!out.contains("Error: invalid use of option"))
+            throw new Exception("expected error message not found in javap output");
     }
 
-    class Cbl {
-        Cbl() {  }
-        public String toString() {
-            return "Cbl.toString";
-        }
-    }
-
-    interface Ib1 {
-        Object m();
+    String javap(String... args) {
+        StringWriter sw = new StringWriter();
+        PrintWriter out = new PrintWriter(sw);
+        int rc = com.sun.tools.javap.Main.run(args, out);
+        out.close();
+        System.out.println(sw.toString());
+        System.out.println("javap exited, rc=" + rc);
+        return sw.toString();
     }
 }
