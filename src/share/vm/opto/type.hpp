@@ -1348,6 +1348,7 @@ inline bool Type::is_floatingpoint() const {
 #define ConvL2X(x)   (x)
 #define ConvX2I(x)   ConvL2I(x)
 #define ConvX2L(x)   (x)
+#define ConvX2UL(x)  (x)
 
 #else
 
@@ -1392,6 +1393,7 @@ inline bool Type::is_floatingpoint() const {
 #define ConvL2X(x)   ConvL2I(x)
 #define ConvX2I(x)   (x)
 #define ConvX2L(x)   ConvI2L(x)
+#define ConvX2UL(x)  ConvI2UL(x)
 
 #endif
 
