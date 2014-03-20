@@ -116,6 +116,5 @@ public interface TreeVisitor<R,P> {
     R visitProvides(ProvidesTree node, P p);
     R visitRequires(RequiresTree node, P p);
     R visitUses(UsesTree node, P p);
-    R visitView(ViewTree node, P p);
     R visitOther(Tree node, P p);
 }

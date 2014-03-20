@@ -414,14 +414,10 @@ public class TreeScanner<R,P> implements TreeVisitor<R,P> {
         return r;
     }
 
-    public R visitView(ViewTree node, P p) {
-        R r = scan(node.getName(), p);
-        r = scanAndReduce(node.getDirectives(), p, r);
-        return r;
-    }
-
     public R visitExports(ExportsTree node, P p) {
-        return scan(node.getExportName(), p);
+        R r = scan(node.getExportName(), p);
+        r = scanAndReduce(node.getModuleNames(), p, r);
+        return r;
     }
 
     public R visitPermits(PermitsTree node, P p) {
@@ -435,7 +431,7 @@ public class TreeScanner<R,P> implements TreeVisitor<R,P> {
     }
 
     public R visitRequires(RequiresTree node, P p) {
-        return scan(node.getViewName(), p);
+        return scan(node.getModuleName(), p);
     }
 
     public R visitUses(UsesTree node, P p) {

@@ -537,8 +537,8 @@ public class TreeMaker implements JCTree.Factory {
     }
 
     @Override
-    public JCExports Exports(JCExpression qualId) {
-        JCExports tree = new JCExports(qualId);
+    public JCExports Exports(JCExpression qualId, List<JCExpression> moduleNames) {
+        JCExports tree = new JCExports(qualId, moduleNames);
         tree.pos = pos;
         return tree;
     }
@@ -567,14 +567,6 @@ public class TreeMaker implements JCTree.Factory {
     @Override
     public JCUses Uses(JCExpression qualId) {
         JCUses tree = new JCUses(qualId);
-        tree.pos = pos;
-        return tree;
-    }
-
-    @Override
-    public JCViewDecl ViewDef(JCExpression name,
-            List<JCDirective> directives) {
-        JCViewDecl tree = new JCViewDecl(name, directives);
         tree.pos = pos;
         return tree;
     }

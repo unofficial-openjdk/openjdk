@@ -25,9 +25,6 @@
 
 package com.sun.source.tree;
 
-/**
- *
- */
-public interface PermitsTree extends Tree {
+public interface PermitsTree extends DirectiveTree {
     Tree getModuleName();
 }

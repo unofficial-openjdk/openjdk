@@ -447,6 +447,10 @@ public class Pretty extends JCTree.Visitor {
         try {
             print("exports ");
             printExpr(tree.qualid);
+            if (tree.moduleNames != null) {
+                print(" to ");
+                printExprs(tree.moduleNames);
+            }
             print(";");
         } catch (IOException e) {
             throw new UncheckedIOException(e);
@@ -483,7 +487,7 @@ public class Pretty extends JCTree.Visitor {
             print("requires ");
             if (tree.isPublic)
                 print("public ");
-            printExpr(tree.viewName);
+            printExpr(tree.moduleName);
             print(";");
         } catch (IOException e) {
             throw new UncheckedIOException(e);
@@ -496,18 +500,6 @@ public class Pretty extends JCTree.Visitor {
             print("uses ");
             printExpr(tree.qualid);
             print(";");
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
-    }
-
-    @Override
-    public void visitViewDef(JCViewDecl tree) {
-        try {
-            print("view ");
-            printExpr(tree.name);
-            printBlock(tree.directives);
-            println();
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }

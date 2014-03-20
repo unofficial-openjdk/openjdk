@@ -4104,7 +4104,7 @@ public class Attr extends JCTree.Visitor {
     }
 
     /**
-     * Attribute an env for either a top level tree or class declaration.
+     * Attribute an env for either a top level tree or class or module declaration.
      */
     public void attrib(Env<AttrContext> env) {
         switch (env.tree.getTag()) {
@@ -4144,7 +4144,7 @@ public class Attr extends JCTree.Visitor {
     void attribModule(ModuleSymbol m) {
         // Get environment current at the point of module definition.
         Env<AttrContext> env = enter.typeEnvs.get(m);
-        //System.err.println("Attr.attribModule: " + env + " " + env.tree);
+//        System.err.println("Attr.attribModule: " + env + " " + env.tree);
         attribStat(env.tree, env);
     }
 
@@ -4242,16 +4242,28 @@ public class Attr extends JCTree.Visitor {
     }
 
     public void visitModuleDef(JCModuleDecl tree) {
-        System.err.println("Attr.visitModuleDecl: " + Pretty.toSimpleString(tree, 80));
-        super.visitModuleDef(tree);
+//        System.err.println("Attr.visitModuleDecl: " + Pretty.toSimpleString(tree, 80));
+        attribStats(tree.directives, env);
+    }
+
+    public void visitExports(JCExports tree) {
+//        System.err.println("Attr.visitExport: " + tree);
+    }
+
+    public void visitRequires(JCRequires tree) {
+//        System.err.println("Attr.visitRequires: " + tree);
+    }
+
+    public void visitPermits(JCPermits tree) {
+//        System.err.println("Attr.visitPermits: " + tree);
     }
 
     public void visitProvides(JCProvides tree) {
-        System.err.println("Attr.visitProvides: " + tree);
+//        System.err.println("Attr.visitProvides: " + tree);
     }
 
     public void visitUses(JCUses tree) {
-        System.err.println("Attr.visitUses: " + tree);
+//        System.err.println("Attr.visitUses: " + tree);
     }
 
     /** Finish the attribution of a class. */

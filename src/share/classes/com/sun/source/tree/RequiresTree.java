@@ -27,5 +27,5 @@ package com.sun.source.tree;
 
 public interface RequiresTree extends DirectiveTree {
     boolean isPublic();
-    ExpressionTree getViewName();
+    ExpressionTree getModuleName();
 }

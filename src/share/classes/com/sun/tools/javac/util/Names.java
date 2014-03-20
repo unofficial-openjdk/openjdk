@@ -68,8 +68,8 @@ public class Names {
     public final Name permits;
     public final Name provides;
     public final Name requires;
+    public final Name to;
     public final Name uses;
-    public final Name view;
     public final Name with;
 
     // field and method names
@@ -216,8 +216,8 @@ public class Names {
         permits = fromString("permits");
         provides = fromString("provides");
         requires = fromString("requires");
+        to = fromString("to");
         uses = fromString("uses");
-        view = fromString("view");
         with = fromString("with");
 
         // field and method names
