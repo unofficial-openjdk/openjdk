@@ -353,7 +353,7 @@ class JlinkTask {
         JModModuleLibrary(Module... mods) {
             for (Module m: mods) {
                 modules.add(m);
-                namesToModules.put(m.mainView().id().name(), m);
+                namesToModules.put(m.id().name(), m);
             }
         }
 

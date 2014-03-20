@@ -35,7 +35,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
-import jdk.jigsaw.module.ViewDependence.Modifier;
+import jdk.jigsaw.module.ModuleDependence.Modifier;
 
 /**
  * Information about a module, as found in a {@code module-info.java} source
@@ -120,7 +120,7 @@ public final class ModuleInfo {
                 String service = s[0];
                 String provider = s[2];
                 result.computeIfAbsent(service, k -> new HashSet<>()).add(provider);
-            }
+             }
         }
         return result;
     }
@@ -130,46 +130,43 @@ public final class ModuleInfo {
      * content.
      */
     public Module makeModule(Iterable<String> packages) {
-        View.Builder viewBuilder = new View.Builder().id(name());
-
-        // exports
-        exports().forEach(export -> viewBuilder.export(export));
-
-        // services
-        for (Map.Entry<String, Set<String>> entry: provides().entrySet()) {
-            String s = entry.getKey();
-            entry.getValue().forEach(p -> viewBuilder.service(s, p));
-        }
-
-        View mainView = viewBuilder.build();
-        Module.Builder builder = new Module.Builder().main(mainView);
+        Module.Builder builder = new Module.Builder();
+        builder.id(name());
 
         // contents
         packages.forEach(pkg -> builder.include(pkg));
 
+        // unqualified exports
+        exports().forEach(pkg -> builder.export(pkg));
+
         // requires
-        Set<String> requires = requires();
-        if (!requires.isEmpty()) {
-            requires.forEach( dn ->
-                builder.requires(new ViewDependence(null, ViewIdQuery.parse(dn))) );
-        }
-        builder.requires(new ViewDependence(null, ViewIdQuery.parse("java.base")));
+        requires().forEach( dn ->
+            builder.requires(new ModuleDependence(null, ModuleIdQuery.parse(dn))) );
 
         // requires public
         Set<String> requiresPublic = requiresPublic();
         if (!requiresPublic.isEmpty()) {
             Set<Modifier> mods = EnumSet.of(Modifier.PUBLIC);
             requiresPublic.forEach( dn ->
-                builder.requires(new ViewDependence(mods, ViewIdQuery.parse(dn))));
+                builder.requires(new ModuleDependence(mods, ModuleIdQuery.parse(dn))));
+        }
+
+        // add requires java.base if no requires
+        if (requires().isEmpty() && requiresPublic().isEmpty()) {
+            builder.requires(new ModuleDependence(null, ModuleIdQuery.parse("java.base")));
         }
 
         // permits
         Set<String> permits = permits();
         if (!permits.isEmpty()) {
-            permits.forEach( m -> builder.permit(m) );
+            permits.forEach(m -> builder.permit(m));
         }
 
-        // TBD, need qualified exports when Module API is updated
+        // services
+        for (Map.Entry<String, Set<String>> entry: provides().entrySet()) {
+            String s = entry.getKey();
+            entry.getValue().forEach(p -> builder.service(s, p));
+        }
 
         return builder.build();
     }

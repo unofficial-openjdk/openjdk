@@ -27,38 +27,38 @@ import java.util.*;
 import static java.lang.System.out;
 
 import jdk.jigsaw.module.*;
-import jdk.jigsaw.module.ViewDependence.Modifier;
-import static jdk.jigsaw.module.ViewDependence.Modifier.*;
+import jdk.jigsaw.module.ModuleDependence.Modifier;
+import static jdk.jigsaw.module.ModuleDependence.Modifier.*;
 
 import org.testng.annotations.*;
 import static org.testng.Assert.*;
 
 
 @Test
-public class _ViewDependence {
+public class _ModuleDependence {
 
-    private static ViewDependence build(Set<Modifier> mods, String vq) {
-        ViewDependence vd = new ViewDependence(mods,
-                                               ViewIdQuery.parse(vq));
-        out.println(vd);
-        return vd;
+    private static ModuleDependence build(Set<Modifier> mods, String mq) {
+        ModuleDependence md = new ModuleDependence(mods,
+                                                   ModuleIdQuery.parse(mq));
+        out.println(md);
+        return md;
     }
 
     public void none() {
-        ViewDependence vd = build(null, "foo@1.1");
-        assertTrue(vd.modifiers().isEmpty());
-        assertEquals(vd.query(), ViewIdQuery.parse("foo@1.1"));
+        ModuleDependence md = build(null, "foo@1.1");
+        assertTrue(md.modifiers().isEmpty());
+        assertEquals(md.query(), ModuleIdQuery.parse("foo@1.1"));
     }
 
     public void one() {
-        ViewDependence vd = build(EnumSet.of(OPTIONAL), "foo@1.1");
-        assertEquals(vd.modifiers(), EnumSet.of(OPTIONAL));
-        assertEquals(vd.query(), ViewIdQuery.parse("foo@1.1"));
+        ModuleDependence md = build(EnumSet.of(OPTIONAL), "foo@1.1");
+        assertEquals(md.modifiers(), EnumSet.of(OPTIONAL));
+        assertEquals(md.query(), ModuleIdQuery.parse("foo@1.1"));
     }
 
     public void two() {
-        ViewDependence vd = build(EnumSet.of(OPTIONAL, PUBLIC), "foo@1.1");
-        assertEquals(vd.modifiers(), EnumSet.of(OPTIONAL, PUBLIC));
+        ModuleDependence md = build(EnumSet.of(OPTIONAL, PUBLIC), "foo@1.1");
+        assertEquals(md.modifiers(), EnumSet.of(OPTIONAL, PUBLIC));
     }
 
 }

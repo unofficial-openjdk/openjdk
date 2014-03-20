@@ -32,14 +32,13 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.stream.Collectors;
 
 import jdk.jigsaw.module.Module;
+import jdk.jigsaw.module.ModuleExport;
 import jdk.jigsaw.module.ModuleLibrary;
 import jdk.jigsaw.module.Resolution;
 import jdk.jigsaw.module.ServiceDependence;
 import jdk.jigsaw.module.SimpleResolver;
-import jdk.jigsaw.module.View;
 
 import sun.misc.JavaLangAccess;
 import sun.misc.JavaLangReflectAccess;
@@ -219,19 +218,16 @@ class ModuleLauncher {
         // setup the exports
         for (Module m: resolution.selectedModules()) {
             long fromHandle  = moduleToHandle.get(m);
-            for (View v: m.views()) {
-                if (v.permits().isEmpty()) {
-                    for (String pkg: v.exports()) {
-                        VM.addExports(fromHandle, pkg);
-                    }
-                } else for (String pkg: v.exports()) {
-                    // qualified exports
-                    for (String who: v.permits()) {
-                        Module m2 = library.findModule(who);
-                        if (m2 != null) {
-                            long toHandle = moduleToHandle.get(m2);
-                            VM.addExportsWithPermits(fromHandle, pkg, toHandle);
-                        }
+            for (ModuleExport export: m.exports()) {
+                String pkg = export.pkg();
+                String who = export.permit();
+                if (who == null) {
+                    VM.addExports(fromHandle, export.pkg());
+                } else {
+                    Module m2 = library.findModule(who);
+                    if (m2 != null) {
+                        long toHandle = moduleToHandle.get(m2);
+                        VM.addExportsWithPermits(fromHandle, export.pkg(), toHandle);
                     }
                 }
             }
@@ -277,22 +273,15 @@ class ModuleLauncher {
             // requires
             Set<String> requires = resolution.resolvedDependences().get(m);
             if (requires != null) {
-                for (String dn: requires) {
-                    reflectAccess.addRequires(reflectModule, nameToReflectModule.get(dn));
-                }
+                requires.forEach(dn ->
+                    reflectAccess.addRequires(reflectModule, nameToReflectModule.get(dn)));
             }
 
             // exports
-            for (View v: m.views()) {
-                for (String pkg: v.exports()) {
-                    Set<java.lang.reflect.Module> who =
-                        v.permits()
-                         .stream()
-                         .map(nameToReflectModule::get)
-                         .collect(Collectors.toSet());
-                    reflectAccess.addExport(reflectModule, pkg, who);
-                }
-            }
+            m.exports().forEach(e ->
+                reflectAccess.addExport(reflectModule,
+                                        e.pkg(),
+                                        nameToReflectModule.get(e.permit())));
 
             // services used
             Set<ServiceDependence> sd = m.serviceDependences();
@@ -303,21 +292,20 @@ class ModuleLauncher {
             }
 
             // services provided
-            m.views().forEach(v -> reflectAccess.addProvides(reflectModule, v.services()));
+            reflectAccess.addProvides(reflectModule, m.services());
         }
 
-        //
+        // reflection checks enabled?
         boolean enableModuleChecks =
            System.getProperty("sun.reflect.enableModuleChecks") != null;
-
         Reflection.enableModules(enableModuleChecks);
     }
 
     /**
-     * Returns a module name (will go away when views are removed)
+     * Returns a module name
      */
     private static String name(Module m) {
-        return m.mainView().id().name();
+        return m.id().name();
     }
 
     /**
@@ -333,7 +321,7 @@ class ModuleLauncher {
         } else {
             catalog = langAccess.getModuleCatalog(loader);
         }
-        String name = m.mainView().id().name();
+        String name = m.id().name();
         return catalog.defineModule(name, m.packages());
     }
 }

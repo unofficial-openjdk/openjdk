@@ -559,7 +559,7 @@ module jdk.nashorn {
 
 module sun.charsets {
     include sun.nio.cs.ext.**;
-    permits java.desktop, java.base;
+    permits java.desktop, java.base, jdk.jre;
 }
 
 // localedata.jar in jre/lib/ext
@@ -568,7 +568,7 @@ module sun.localedata {
             sun.text.resources.**;
     include sun.util.resources.cldr.**,
             sun.text.resources.cldr.**;
-    permits java.base;
+    permits java.base, jdk.jre;
 }
 
 module jdk.jfr {

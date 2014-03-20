@@ -32,7 +32,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import jdk.jigsaw.module.ViewDependence.Modifier;
+import jdk.jigsaw.module.ModuleDependence.Modifier;
 
 /**
  * A simple resolver to select the set of modules needed when starting
@@ -74,13 +74,13 @@ public final class SimpleResolver {
             Module m = stack.poll();
             selected.add(m);
 
-            // process dependencies (needs to replaced with module dependences)
-            for (ViewDependence d: m.viewDependences()) {
+            // process dependencies
+            for (ModuleDependence d: m.moduleDependences()) {
                 String dn = d.query().name();
                 Module other = library.findModule(dn);
                 if (other == null) {
                     fail("%s requires unknown module %s",
-                         m.mainView().id().name(), dn);
+                         m.id().name(), dn);
                 }
                 if (!selected.contains(other))
                     stack.offer(other);
@@ -112,7 +112,7 @@ public final class SimpleResolver {
 
         // initialize the map of edges
         for (Module m: selected) {
-            for (ViewDependence d: m.viewDependences()) {
+            for (ModuleDependence d: m.moduleDependences()) {
                 String dn = d.query().name();
                 requires.computeIfAbsent(m, k -> new HashSet<>()).add(dn);
                 if (d.modifiers().contains(Modifier.PUBLIC)) {
@@ -170,7 +170,7 @@ public final class SimpleResolver {
     private void checkPermits(Map<Module, Set<String>> resolvedDependences) {
         for (Map.Entry<Module, Set<String>> entry: resolvedDependences.entrySet()) {
             Module m1 = entry.getKey();
-            String m1Name = m1.mainView().id().name();
+            String m1Name = m1.id().name();
             for (String m2Name: entry.getValue()) {
                 Module m2 = library.findModule(m2Name);
                 Set<String> permits = m2.permits();

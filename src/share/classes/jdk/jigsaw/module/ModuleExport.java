@@ -23,21 +23,50 @@
  * questions.
  */
 
-package sun.misc;
+package jdk.jigsaw.module;
 
-import java.lang.reflect.Module;
-import java.util.Map;
-import java.util.Set;
+import java.io.Serializable;
+import java.util.Objects;
 
-public interface JavaLangReflectAccess {
+@SuppressWarnings("serial")             // serialVersionUID intentionally omitted
+public class ModuleExport
+    implements Serializable
+{
+    private final String pkg;
+    private final String permit;
 
-    Module defineModule(String name, Set<String> packages);
+    public ModuleExport(String pkg, String permit) {
+        this.pkg = Objects.requireNonNull(pkg);
+        this.permit = permit;
+    }
 
-    void addRequires(Module m1, Module m2);
+    public ModuleExport(String pkg) {
+        this(pkg, null);
+    }
 
-    void addExport(Module m, String pkg, Module permit);
+    public String pkg() {
+        return pkg;
+    }
 
-    void addUses(Module m, String service);
+    public String permit() {
+        return permit;
+    }
 
-    void addProvides(Module m, Map<String, Set<String>> services);
+    public int hashCode() {
+        return Objects.hash(pkg, permit);
+    }
+
+    public boolean equals(Object obj) {
+        if (!(obj instanceof ModuleExport))
+            return false;
+        ModuleExport other = (ModuleExport)obj;
+        return Objects.equals(this.pkg, other.pkg) &&
+               Objects.equals(this.permit, other.permit);
+    }
+
+    public String toString() {
+        if (permit == null)
+            return pkg;
+        return pkg + " to " + permit;
+    }
 }

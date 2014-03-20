@@ -28,8 +28,8 @@ import java.util.*;
 import static java.lang.System.out;
 
 import jdk.jigsaw.module.*;
-import jdk.jigsaw.module.ViewDependence.Modifier;
-import static jdk.jigsaw.module.ViewDependence.Modifier.*;
+import jdk.jigsaw.module.ModuleDependence.Modifier;
+import static jdk.jigsaw.module.ModuleDependence.Modifier.*;
 
 import org.testng.annotations.*;
 import static org.testng.Assert.*;
@@ -38,20 +38,18 @@ import static org.testng.Assert.*;
 public class JdkModules {
     private static final String MODULES_SER = "jdk/jigsaw/module/resources/modules.ser";
     private void base(Module m) throws Exception {
-        assertEquals(m.mainView().aliases(), Collections.singleton(ViewId.parse("java.base")));
-
         // requires jdk.tls.internal due to the sunjce security provider
         // - to be revisited
-        ViewDependence[] deps = new ViewDependence[] {};
-        assertEqualsNoOrder(m.viewDependences().toArray(new ViewDependence[0]), deps);
+        ModuleDependence[] deps = new ModuleDependence[] {};
+        assertEqualsNoOrder(m.moduleDependences().toArray(new ModuleDependence[0]), deps);
     }
 
     private void jdk(Module m) throws Exception {
-        ViewDependence[] deps = new ViewDependence[] {
-            viewDep(EnumSet.of(PUBLIC), "jdk.jre"),
-            viewDep(EnumSet.of(PUBLIC), "jdk.tools")
+        ModuleDependence[] deps = new ModuleDependence[] {
+            moduleDep(EnumSet.of(PUBLIC), "jdk.jre"),
+            moduleDep(EnumSet.of(PUBLIC), "jdk.tools")
         };
-        assertEqualsNoOrder(m.viewDependences().toArray(new ViewDependence[0]), deps);
+        assertEqualsNoOrder(m.moduleDependences().toArray(new ModuleDependence[0]), deps);
     }
 
     public void go() throws Exception {
@@ -73,8 +71,8 @@ public class JdkModules {
         }
     }
 
-    private static ViewDependence viewDep(Set<Modifier> mods, String vq) {
-        return new ViewDependence(mods, ViewIdQuery.parse(vq));
+    private static ModuleDependence moduleDep(Set<Modifier> mods, String mq) {
+        return new ModuleDependence(mods, ModuleIdQuery.parse(mq));
     }
 
 }

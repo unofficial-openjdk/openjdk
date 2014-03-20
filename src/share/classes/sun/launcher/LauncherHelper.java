@@ -68,15 +68,16 @@ import java.util.Locale.Category;
 import java.util.Properties;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 
 import jdk.jigsaw.module.Module;
+import jdk.jigsaw.module.ModuleDependence;
+import jdk.jigsaw.module.ModuleExport;
 import jdk.jigsaw.module.ServiceDependence;
-import jdk.jigsaw.module.View;
-import jdk.jigsaw.module.ViewDependence;
 
 public enum LauncherHelper {
     INSTANCE;
@@ -790,7 +791,7 @@ public enum LauncherHelper {
     {
         if (list.isEmpty())
             return;
-        out.format("  %s", prefix);
+        out.format("%s", prefix);
         boolean first = true;
         for (Object ob : list) {
             if (first) {
@@ -801,31 +802,6 @@ public enum LauncherHelper {
             }
         }
         out.format("%n");
-    }
-
-    private static void formatModuleView(PrintStream out,
-                                         View view,
-                                         String indent)
-    {
-        formatCommaList(out, indent + "provides",
-                        view.aliases());
-        formatCommaList(out, indent + "permits",
-                        view.permits());
-        Map<String,Set<String>> services = view.services();
-        for (Map.Entry<String,Set<String>> entry: services.entrySet()) {
-            String sn = entry.getKey();
-            for (String impl: entry.getValue()) {
-                out.format("%s  provides service %s with %s%n", indent, sn, impl);
-            }
-        }
-
-        if (!view.exports().isEmpty()) {
-            out.format("  %sexports%n", indent);
-            Set<String> exports = new TreeSet<>(view.exports());
-            for (String pn : exports) {
-                out.format("  %s  %s%n", indent, pn);
-            }
-        }
     }
 
     /**
@@ -857,17 +833,40 @@ public enum LauncherHelper {
         for (Module m: mods) {
             ostream.println(m.id().name());
             if (verbose) {
-                for (ViewDependence d: m.viewDependences()) {
+                for (ModuleDependence d: m.moduleDependences()) {
                     ostream.format("  %s%n", d);
                 }
                 for (ServiceDependence d: m.serviceDependences()) {
                     ostream.format("  %s%n", d);
                 }
-                formatModuleView(ostream, m.mainView(), "");
-                for (View v: m.views()) {
-                    if (v != m.mainView()) {
-                        ostream.format("  view %s%n", v.id().name());
-                        formatModuleView(ostream, v, "  ");
+
+                formatCommaList(ostream, "  permits", m.permits());
+
+                // sorted exports
+                Map<String, Set<String>> exports = new TreeMap<>();
+                for (ModuleExport export: m.exports()) {
+                    String pkg = export.pkg();
+                    String who = export.permit();
+                    Set<String> permits = exports.computeIfAbsent(pkg, k -> new HashSet<>());
+                    if (who != null) {
+                        permits.add(who);
+                    }
+                }
+                for (Map.Entry<String, Set<String>> entry: exports.entrySet()) {
+                    ostream.format("  exports %s", entry.getKey());
+                    Set<String> permits = entry.getValue();
+                    if (permits.isEmpty()) {
+                        ostream.println();
+                    } else {
+                        formatCommaList(ostream, " to", permits);
+                    }
+                }
+
+                Map<String, Set<String>> services = m.services();
+                for (Map.Entry<String, Set<String>> entry: services.entrySet()) {
+                    String sn = entry.getKey();
+                    for (String impl: entry.getValue()) {
+                        ostream.format("  provides service %s with %s%n",sn, impl);
                     }
                 }
             }

@@ -29,50 +29,50 @@ import java.io.*;
 
 
 @SuppressWarnings("serial")             // serialVersionUID intentionally omitted
-public final class ViewIdQuery
+public final class ModuleIdQuery
     implements Serializable
 {
 
     private String name;
     private VersionQuery versionQuery;
 
-    public ViewIdQuery(String name, VersionQuery versionQuery) {
-        this.name = ViewId.checkViewName(name);
+    public ModuleIdQuery(String name, VersionQuery versionQuery) {
+        this.name = ModuleId.checkModuleName(name);
         this.versionQuery = versionQuery;
     }
 
-    public static ViewIdQuery parse(String vidq) {
-        int i = vidq.indexOf('@');
+    public static ModuleIdQuery parse(String midq) {
+        int i = midq.indexOf('@');
         String mn;
         VersionQuery vq = null;
         if (i < 0) {
-            mn = vidq;
+            mn = midq;
         } else {
-            mn = vidq.substring(0, i);
-            vq = VersionQuery.parse(vidq.substring(i + 1));
+            mn = midq.substring(0, i);
+            vq = VersionQuery.parse(midq.substring(i + 1));
         }
-        return new ViewIdQuery(mn, vq);
+        return new ModuleIdQuery(mn, vq);
     }
 
     public String name() { return name; }
 
     public VersionQuery versionQuery() { return versionQuery; }
 
-    public boolean matches(ViewId vid) {
-        if (!name.equals(vid.name()))
+    public boolean matches(ModuleId mid) {
+        if (!name.equals(mid.name()))
             return false;
         if (versionQuery == null)
             return true;
-        if (vid.version() == null)
+        if (mid.version() == null)
             return false;
-        return versionQuery.matches(vid.version());
+        return versionQuery.matches(mid.version());
     }
 
     @Override
     public boolean equals(Object ob) {
-        if (!(ob instanceof ViewIdQuery))
+        if (!(ob instanceof ModuleIdQuery))
             return false;
-        ViewIdQuery that = (ViewIdQuery)ob;
+        ModuleIdQuery that = (ModuleIdQuery)ob;
         if (!this.name.equals(that.name))
             return false;
         if (versionQuery == that.versionQuery)

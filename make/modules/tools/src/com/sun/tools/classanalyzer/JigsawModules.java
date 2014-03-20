@@ -23,10 +23,10 @@
  */
 package com.sun.tools.classanalyzer;
 
-import jdk.jigsaw.module.View;
-import jdk.jigsaw.module.ViewDependence;
-import jdk.jigsaw.module.ServiceDependence;
+import jdk.jigsaw.module.ModuleDependence;
+import jdk.jigsaw.module.ModuleExport;
 import jdk.jigsaw.module.Module.Builder;
+import jdk.jigsaw.module.ServiceDependence;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -34,7 +34,6 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashSet;
@@ -66,75 +65,66 @@ public class JigsawModules {
 
     public void build(Module m, Collection<Dependence> requires) {
         Builder b = new Builder();
+
+        // pkg
+        b.id(m.name());
+
+        // requires and uses
         requires.forEach(d -> {
             if (d.requiresService()) {
                 b.requires(serviceDependence(d));
             } else {
-                b.requires(viewDependence(d));
+                b.requires(moduleDependence(d));
             }
         });
+
+        // permits
+        m.permits().forEach(b::permit);
+
+        // contents
         m.packages().stream()
             .filter(Package::hasClasses)
             .map(Package::name)
             .forEach(b::include);
-        // build exported packages and module-level permits
-        b.main(buildMainView(m));
 
-        // build exports to
-        Map<String,Set<Module>> exportsTo = m.exportsTo();
-        exportsTo.keySet().stream()
-                 .map(p -> buildExportsTo(p, exportsTo.get(p)))
-                 .forEach(b::view);
+        // (unqualified) exports
+        m.exports().forEach(p -> b.export(p));
 
+        // qualified exports
+        Map<String, Set<Module>> exportsTo = m.exportsTo();
+        for (Map.Entry<String, Set<Module>> entry: exportsTo.entrySet()) {
+            String p = entry.getKey();
+            Set<Module> permits = entry.getValue();
+            permits.forEach(who -> b.export(p, who.name()));
+        }
+
+        // services
+        m.providers().keySet().forEach(s ->
+                m.providers().get(s).forEach(impl ->
+                        b.service(s.service.getClassName(), impl.getClassName())));
+
+        // build and add to map
         jdk.jigsaw.module.Module jm = b.build();
-        jm.views().forEach(v -> {
-            if (modules.containsKey(v.id().name())) {
-               throw new RuntimeException("view " + v.id().name() +
-                   " in " + m.name() +
-                   " duplicated module name ");
-            }
-            modules.put(v.id().name(), jm);
-        });
+        modules.put(jm.id().name(), jm);
     }
 
-    private View buildExportsTo(String p, Set<Module> permits) {
-        View.Builder b = new View.Builder();
-        b.id(p);
-        b.export(p);
-        permits.stream().map(Module::name).forEach(b::permit);
-        return b.build();
-    }
-
-    private ViewDependence viewDependence(Dependence d) {
-        Set<ViewDependence.Modifier> ms = new HashSet<>();
+    private ModuleDependence moduleDependence(Dependence d) {
+        Set<ModuleDependence.Modifier> ms = new HashSet<>();
         if (d.requiresPublic())
-            ms.add(ViewDependence.Modifier.PUBLIC);
-        return new ViewDependence(ms, d.name());
+            ms.add(ModuleDependence.Modifier.PUBLIC);
+        return new ModuleDependence(ms, d.name());
     }
 
     private ServiceDependence serviceDependence(Dependence d) {
         return new ServiceDependence(EnumSet.of(ServiceDependence.Modifier.OPTIONAL), d.name());
     }
 
-    private View buildMainView(Module m) {
-        View.Builder b = new View.Builder();
-        b.id(m.name());
-
-        m.providers().keySet().forEach(s ->
-            m.providers().get(s).forEach(impl ->
-                b.service(s.service.getClassName(), impl.getClassName())));
-        m.exports().forEach(b::export);
-        m.permits().forEach(b::permit);
-        // permits
-        return b.build();
-    }
-
     /**
      * Write an array of jigsaw Module to the given OutputStream
      */
     public void store(OutputStream out) throws IOException {
-        try (ObjectOutputStream sout = new ObjectOutputStream(out)) {
-            sout.writeObject(modules.values().toArray(new jdk.jigsaw.module.Module[0]));
+        try (ObjectOutputStream oos = new ObjectOutputStream(out)) {
+            oos.writeObject(modules.values().toArray(new jdk.jigsaw.module.Module[0]));
         }
     }
 
@@ -160,13 +150,13 @@ public class JigsawModules {
         return result.values();
     }
 
-    private static final boolean showView = Boolean.getBoolean("classanalyzer.showView");
     private static final String INDENT = "    ";
     private void printModule(PrintWriter writer, jdk.jigsaw.module.Module m) {
         StringBuilder sb = new StringBuilder();
         sb.append(String.format("module %s {%n", m.id().name()));
-        for (ViewDependence vd : orderedSet(m.viewDependences(),
-                                            (ViewDependence d) -> d.query().name())) {
+
+        for (ModuleDependence vd : orderedSet(m.moduleDependences(),
+                                              (ModuleDependence d) -> d.query().name())) {
             String ms = vd.modifiers().stream()
                           .map(e -> e.name().toLowerCase())
                           .collect(Collectors.joining(" "));
@@ -175,47 +165,40 @@ public class JigsawModules {
                              vd.query()));
         }
 
-        // print main view first
-        printView(0, sb, m.mainView());
+        formatList(sb, 1, "permits %s;%n", m.permits(), true);
 
-        if (!showView && m.views().size() > 1) {
-            // print exports to
-            for (View view : orderedSet(m.views(), (View v) -> v.id().name())) {
-                if (view == m.mainView()) continue;
-
-                String s = format(1, "exports %s to", view.id().name());
-                sb.append(s);
-
-                int tabs = s.length() / 8;
-                char[] spaces = new char[s.length() % 8];
-                Arrays.fill(spaces, ' ');
-
-                int count = 0;
-                for (String to : view.permits().stream().sorted().collect(Collectors.toSet())) {
-                    if (count < 3) {
-                        sb.append(count == 0 ? " " : ", ").append(to);
-                    } else {
-                        count = 0;
-                        sb.append(",\n");
-
-                        for (int i=0; i < tabs; i++) {
-                            sb.append("\t");
-                        }
-                        sb.append(spaces).append(" ").append(to);
-                    }
-                    count++;
-                }
-                sb.append(";\n");
+        // exports (sorted)
+        Map<String, Set<String>> exports = new TreeMap<>();
+        for (ModuleExport export: m.exports()) {
+            String pkg = export.pkg();
+            String who = export.permit();
+            Set<String> permits = exports.computeIfAbsent(pkg, k -> new TreeSet<>());
+            if (who != null) {
+                permits.add(who);
             }
-            sb.append("\n");
+        }
+        for (Map.Entry<String, Set<String>> entry: exports.entrySet()) {
+            String pkg = entry.getKey();
+            sb.append(format(1, "exports %s", pkg));
+            Set<String> permits = entry.getValue();
+            int count = permits.size();
+            if (count > 0)
+                sb.append(" to ");
+            for (String permit: permits) {
+                sb.append("\n");
+                sb.append(format(2, "%s", permit));
+                if (--count > 0) sb.append(',');
+            }
+            sb.append(";\n");
         }
 
-        for (Map.Entry<String,Set<String>> entry: m.mainView().services().entrySet()) {
+        for (Map.Entry<String, Set<String>> entry: m.services().entrySet()) {
             String sn = entry.getKey();
             for (String cn: entry.getValue()) {
                 sb.append(format(1, "provides %s with %s;%n", sn, cn));
             }
         }
+
         for (ServiceDependence sd : orderedSet(m.serviceDependences(),
                                                (ServiceDependence d) -> d.service())) {
             String ms = sd.modifiers().stream()
@@ -223,13 +206,7 @@ public class JigsawModules {
                           .collect(Collectors.joining(" "));
             sb.append(format(1, "uses %s;%n", sd.service()));
         }
-        if (showView) {
-            for (View view : orderedSet(m.views(), (View v) -> v.id().name())) {
-                if (view != m.mainView()) {
-                    printView(1, sb, view);
-                }
-            }
-        }
+
         sb.append("}\n");
         writer.println(sb.toString());
     }
@@ -280,36 +257,6 @@ public class JigsawModules {
             sb.append(format(level, fmt, o));
         }
         return sb;
-    }
-
-    private void printView(int level, StringBuilder sb, View view) {
-        if (level > 0) {
-            // non-default view
-            sb.append("\n");
-            sb.append(format(level, "view %s {%n", view.id().name()));
-        }
-
-        formatList(sb, level+1, "provides %s;%n", view.aliases());
-        if (view.mainClass() != null) {
-            sb.append(format(level+1, "class %s;%n", view.mainClass()));
-        }
-
-        boolean newline = !view.aliases().isEmpty() || view.mainClass() != null;
-        if (!view.exports().isEmpty()) {
-            if (level == 0) {
-                sb.append(newline ? "\n" : "");
-                newline = false;
-            }
-            Set<String> exports = view.exports();
-            formatList(sb, level+1, "exports %s;%n", exports, newline);
-            newline = true;
-        }
-
-        formatList(sb, level + 1, "permits %s;%n", view.permits(), newline);
-
-        if (level > 0)
-            sb.append(format(level, "}"));
-        sb.append("\n");
     }
 
     /**

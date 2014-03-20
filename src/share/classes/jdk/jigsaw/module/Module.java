@@ -27,6 +27,7 @@ package jdk.jigsaw.module;
 
 import java.io.*;
 import java.util.*;
+import java.util.stream.Collectors;
 import static java.util.Objects.*;
 
 
@@ -39,70 +40,75 @@ public final class Module
     implements Comparable<Module>, Serializable
 {
 
-    private final View mainView;
-    private final Set<View> views;
-    private final Set<ViewDependence> viewDependences;
+    private final ModuleId id;
+    private final Set<ModuleDependence> moduleDependences;
     private final Set<ServiceDependence> serviceDependences;
+    private final Set<String> permits;
     private final Set<String> packages;
+    private final Set<ModuleExport> exports;
+    private final Map<String, Set<String>> services;
 
     // Every exported package must be included in this module
     //
-    private void checkExportedPackages(Set<String> packages) {
-        for (View v : views) {
-            for (String p : v.exports()) {
-                if (!packages.contains(p)) {
-                    Set<String> ps = new HashSet<>(v.exports());
-                    ps.removeAll(packages);
-                    String msg = String.format("Package%s %s exported by view %s"
-                                               + " but not included in module %s",
-                                               ps.size() > 1 ? "s" : "", ps,
-                                               v.id(), this.id());
-                    throw new IllegalArgumentException(msg);
-                }
+    private void checkExportedPackages() {
+        for (ModuleExport export : exports()) {
+            String pkg = export.pkg();
+            if (!packages.contains(pkg)) {
+                Set<String> ps = exports().stream()
+                                          .map(ModuleExport::pkg)
+                                          .collect(Collectors.toSet());
+                ps.removeAll(packages);
+                String msg = String.format("Package%s %s exported"
+                                           + " but not included in module %s",
+                                           ps.size() > 1 ? "s" : "", ps,
+                                           this.id());
+                throw new IllegalArgumentException(msg);
             }
         }
     }
 
-    private Module(View mainView,
-                   Set<View> views,
-                   Set<ViewDependence> viewDeps,
+    private Module(ModuleId id,
+                   Set<ModuleDependence> moduleDeps,
                    Set<ServiceDependence> serviceDeps,
-                   Set<String> packages)
+                   Set<String> permits,
+                   Set<String> packages,
+                   Set<ModuleExport> exports,
+                   Map<String, Set<String>> services)
     {
-        this.mainView = requireNonNull(mainView);
-        if (!views.contains(mainView))
-            throw new IllegalArgumentException("views");
-        this.views = Collections.unmodifiableSet(views);
-        this.viewDependences = Collections.unmodifiableSet(viewDeps);
+        this.id = requireNonNull(id);
+        this.moduleDependences = Collections.unmodifiableSet(moduleDeps);
         this.serviceDependences = Collections.unmodifiableSet(serviceDeps);
-        checkExportedPackages(packages);
+        this.permits = Collections.unmodifiableSet(permits);
         this.packages = Collections.unmodifiableSet(packages);
+        this.exports = Collections.unmodifiableSet(exports);
+        // ## FIXME values are mutable
+        this.services = Collections.unmodifiableMap(services);
+        checkExportedPackages();
     }
 
     /**
-     * This module's identifier
+     * <p> This module's identifier </p>
      */
-    public ViewId id() {
-        return mainView.id();
+    public ModuleId id() {
+        return id;
     }
 
     /**
-     * The names of the packages included in this module, not all of which are
-     * necessarily {@linkplain View#exports() exported}.
+     * <p> The names of the modules that are permitted to require this module </p>
      *
-     * @return  A possibly-empty unmodifiable set of package names
+     * @return  A possibly-empty unmodifiable set of module names
      */
-    public Set<String> packages() {
-        return packages;
+    public Set<String> permits() {
+        return permits;
     }
 
     /**
      * <p> The view dependences of this module </p>
      *
-     * @return  A possibly-empty unmodifiable set of {@link ViewDependence}s
+     * @return  A possibly-empty unmodifiable set of {@link ModuleDependence}s
      */
-    public Set<ViewDependence> viewDependences() {
-        return viewDependences;
+    public Set<ModuleDependence> moduleDependences() {
+        return moduleDependences;
     }
 
     /**
@@ -115,65 +121,68 @@ public final class Module
         return serviceDependences;
     }
 
+
     /**
-     * <p> The module-level permits, not implemented yet </p>
+     * <p> The services that this module provides </p>
+     *
+     * @return  A possibly-empty unmodifiable map with a key that is the
+     *          fully-qualified name of a service type and value that is
+     *          the set of class names of the service providers that are
+     *          provided by this module.
      */
-    public Set<String> permits() {
-        return Collections.emptySet();
+    public Map<String, Set<String>> services() {
+        return services;
     }
 
     /**
-     * <p> The main view of this module.</p>
+     * <p> The module exports </p>
      *
-     * <p> Each module has a main view whose {@linkplain View#id() identifier}
-     * is taken also to be the identifier of the module itself. </p>
-     *
-     * @return  A {@link View}
+     * @return  A possibly-empty unmodifiable set of exported packages
      */
-    public View mainView() {
-        return mainView;
+    public Set<ModuleExport> exports() {
+        return exports;
     }
 
     /**
-     * <p> The views of this module.</p>
+     * The names of the packages included in this module, not all of which are
+     * necessarily {@linkplain #exports() exported}.
      *
-     * @return  An unmodifiable set of {@link View Views}
-     *          which includes the {@linkplain #mainView() main view}
+     * @return  A possibly-empty unmodifiable set of package names
      */
-    public Set<View> views() {
-        return views;
+    public Set<String> packages() {
+        return packages;
     }
 
     public final static class Builder {
 
-        private View mainView;
-        private final Set<View> views = new HashSet<>();
-        private final Set<ViewDependence> viewDeps = new HashSet<>();
+        private ModuleId id;
+        private final Set<String> permits = new HashSet<>();
+        private final Set<ModuleDependence> moduleDeps = new HashSet<>();
         private final Set<ServiceDependence> serviceDeps = new HashSet<>();
+        private final Set<ModuleExport> exports = new HashSet<>();
         private final Set<String> packages = new HashSet<>();
+        private final Map<String, Set<String>> services = new HashMap<>();
 
         public Builder() { }
 
-        public Builder main(View v) {
-            if (mainView != null)
-                throw new IllegalStateException("mainView");
-            mainView = v;
-            views.add(v);
+        public Builder id(ModuleId id) {
+            if (this.id != null)
+                throw new IllegalStateException("id already set");
+            this.id = id;
             return this;
         }
 
-        public Builder view(View v) {
-            views.add(v);
-            return this;
+        public Builder id(String id) {
+            return id(ModuleId.parse(id, null));
         }
 
         public Builder include(String p) {
-            packages.add(p);
+            packages.add(requireNonNull(p));
             return this;
         }
 
-        public Builder requires(ViewDependence vd) {
-            viewDeps.add(requireNonNull(vd));
+        public Builder requires(ModuleDependence md) {
+            moduleDeps.add(requireNonNull(md));
             return this;
         }
 
@@ -183,22 +192,45 @@ public final class Module
         }
 
         public Builder permit(String m) {
-            // not implemented yet
+            permits.add(requireNonNull(m));
+            return this;
+        }
+
+        public Builder export(ModuleExport e) {
+            exports.add(requireNonNull(e));
+            return this;
+        }
+
+        public Builder export(String p) {
+            return export(new ModuleExport(p));
+        }
+
+        public Builder export(String p, String m) {
+            return export(new ModuleExport(p, m));
+        }
+
+        public Builder service(String s, String p) {
+            services.computeIfAbsent(requireNonNull(s), k -> new HashSet<>())
+                    .add(requireNonNull(p));
             return this;
         }
 
         public Module build() {
-            Module m = new Module(mainView, views,
-                                  viewDeps, serviceDeps, packages);
-            views.forEach(v -> { v.module(m); });
-            return m;
+            if (id == null)
+                throw new IllegalStateException("id not set");
+            return new Module(id,
+                              moduleDeps,
+                              serviceDeps,
+                              permits,
+                              packages,
+                              exports,
+                              services);
         }
-
     }
 
     @Override
     public int compareTo(Module that) {
-        return this.mainView.compareTo(that.mainView);
+        return this.id().compareTo(that.id());
     }
 
     @Override
@@ -206,20 +238,30 @@ public final class Module
         if (!(ob instanceof Module))
             return false;
         Module that = (Module)ob;
-        return (mainView.equals(that.mainView)
-                && views.equals(that.views)
-                && viewDependences.equals(that.viewDependences)
+        return (id.equals(that.id)
+                && moduleDependences.equals(that.moduleDependences)
                 && serviceDependences.equals(that.serviceDependences)
-                && packages.equals(that.packages));
+                && permits.equals(that.permits)
+                && packages.equals(that.packages)
+                && exports.equals(exports)
+                && services.equals(that.services));
     }
+
+    private transient int hash;  // cached hash code
 
     @Override
     public int hashCode() {
-        int hc = mainView.hashCode();
-        hc = hc * 43 + views.hashCode();
-        hc = hc * 43 + viewDependences.hashCode();
-        hc = hc * 43 + serviceDependences.hashCode();
-        hc = hc * 43 + packages.hashCode();
+        int hc = hash;
+        if (hc == 0) {
+            hc = id.hashCode();
+            hc = hc * 43 + permits.hashCode();
+            hc = hc * 43 + moduleDependences.hashCode();
+            hc = hc * 43 + serviceDependences.hashCode();
+            hc = hc * 43 + exports.hashCode();
+            hc = hc * 43 + packages.hashCode();
+            hc = hc * 43 + services.hashCode();
+            hash = hc;
+        }
         return hc;
     }
 
@@ -227,13 +269,24 @@ public final class Module
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append("Module { id: ").append(id());
-        if (!views.isEmpty()) sb.append(", views: ").append(views);
-        if (!viewDependences.isEmpty())
-            sb.append(", viewDeps: ").append(viewDependences);
+        if (!moduleDependences.isEmpty())
+            sb.append(", ").append(moduleDependences);
         if (!serviceDependences.isEmpty())
-            sb.append(", svcDeps: ").append(serviceDependences);
+            sb.append(", ").append(serviceDependences);
+        if (!permits.isEmpty())
+            sb.append(", permits: ").append(permits);
         if (!packages.isEmpty())
             sb.append(", packages: ").append(packages);
+        if (!exports.isEmpty())
+            sb.append(", exports: ").append(exports);
+        if (!services.isEmpty()) {
+            sb.append(", provides: [");
+            for (Map.Entry<String, Set<String>> entry: services.entrySet()) {
+                sb.append(entry.getKey())
+                   .append(" with ")
+                   .append(entry.getValue());
+            }
+        }
         sb.append(" }");
         return sb.toString();
     }

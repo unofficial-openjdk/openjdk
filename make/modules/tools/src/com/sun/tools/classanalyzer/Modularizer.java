@@ -33,7 +33,6 @@ import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import java.util.zip.GZIPOutputStream;
-import jdk.jigsaw.module.View;
 
 /**
  * Modularize classes and resources from a JDK build or image
@@ -163,10 +162,9 @@ class Modularizer extends Task {
             if (mc == null) {
                 modules.put(name, mc = new ModuleContent(name));
             }
-            for (View view : jmodules.get(name).views()) {
-                // need to retain the order of the providers
-                mc.services.putAll(view.services());
-            }
+
+            // need to retain the order of the providers
+            mc.services.putAll(jmodules.get(name).services());
         }
 
         Path dst = Paths.get(options.jmodsDir);

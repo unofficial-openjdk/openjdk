@@ -55,30 +55,21 @@ public class Serial {
 
         test(Version.parse("1.3-alpha9"));
         test(VersionQuery.parse(">=1.3"));
-        test(ViewId.parse("foo@1.1"));
-        test(ViewIdQuery.parse("foo@=1.1"));
+        test(ModuleId.parse("foo@1.1"));
+        test(ModuleIdQuery.parse("foo@=1.1"));
 
         Module m = (new Module.Builder()
                     .include("p.one")
                     .include("p.two")
                     .include("p.private")
-                    .requires(new ViewDependence(EnumSet.of(ViewDependence.Modifier.PUBLIC),
-                                                 "bar@>=2.3.0"))
+                    .requires(new ModuleDependence(EnumSet.of(ModuleDependence.Modifier.PUBLIC),
+                                                   "bar@>=2.3.0"))
                     .requires(new ServiceDependence(EnumSet.of(ServiceDependence.Modifier.OPTIONAL),
                                                     "baz.Finder"))
-                    .main(new View.Builder()
-                          .id("foo")
-                          .alias("bar")
-                          .export("p.one")
-                          .export("p.two")
-                          .service("alpha.Beta", "gamma.Delta")
-                          .mainClass("alpha.Main")
-                          .build())
-                    .view(new View.Builder()
-                          .id("foo.private")
-                          .permit("baz")
-                          .export("p.private")
-                          .build())
+                    .id("foo")
+                    .export("p.one")
+                    .export("p.two")
+                    .service("alpha.Beta", "gamma.Delta")
                     .build());
         test(m);
 

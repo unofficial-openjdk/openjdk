@@ -42,14 +42,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import jdk.jigsaw.module.Module;
+import jdk.jigsaw.module.ModuleDependence;
 import jdk.jigsaw.module.Module.Builder;
 import jdk.jigsaw.module.ServiceDependence;
-import jdk.jigsaw.module.View;
-import jdk.jigsaw.module.ViewDependence;
-import jdk.jigsaw.module.ViewId;
 
 /**
  * Compile module-info.java from the given sourcepath into modules.ser.
@@ -138,21 +135,36 @@ public class GenModuleGraph extends Task {
 
     private Module build(ModuleConfig mconfig, Path mclasses) throws IOException {
         Builder b = new Builder();
+
+        // name
+        b.id(mconfig.module);
+
+        // requires and uses
         mconfig.requires().values().forEach(d -> {
             if (d.requiresService()) {
                 b.requires(serviceDependence(d));
             } else {
-                b.requires(viewDependence(d));
+                b.requires(moduleDependence(d));
             }
         });
 
-        b.main(buildMainView(mconfig));
+        // permits
+        mconfig.permits.forEach(b::permit);
 
-        // build one view per a package exported to specific modules for now
-        mconfig.exportsTo.keySet().stream()
-                .filter(p -> mconfig.exportsTo.get(p).size() > 0)
-                .map(p -> buildExportsTo(p, mconfig.exportsTo.get(p)))
-                .forEach(b::view);
+        // exports
+        for (Map.Entry<String, Set<String>> entry: mconfig.exportsTo.entrySet()) {
+            String p = entry.getKey();
+            Set<String> permits = entry.getValue();
+            if (permits.isEmpty()) {
+                b.export(p);
+            } else {
+                permits.forEach(m -> b.export(p, m));
+            }
+        }
+
+        // provides (service providers)
+        mconfig.providers.keySet().forEach(service ->
+            mconfig.providers.get(service).forEach(impl -> b.service(service, impl)));
 
         if (Files.exists(mclasses)) {
             // find all packages included in the module
@@ -165,33 +177,11 @@ public class GenModuleGraph extends Task {
         return b.build();
     }
 
-    private View buildExportsTo(String pn, Set<String> permits) {
-        View.Builder b = new View.Builder();
-        b.id(pn);
-        b.export(pn);
-        permits.forEach(b::permit);
-        return b.build();
-    }
-
-    private View buildMainView(ModuleConfig mconfig) {
-        View.Builder b = new View.Builder();
-        b.id(mconfig.module);
-
-        mconfig.exportsTo.keySet().stream()
-            .filter(p -> mconfig.exportsTo.get(p).isEmpty())
-            .forEach(b::export);
-
-        mconfig.providers.keySet().forEach(service ->
-            mconfig.providers.get(service).forEach(impl -> b.service(service, impl)));
-        mconfig.permits.forEach(b::permit);
-        return b.build();
-    }
-
-    private ViewDependence viewDependence(Dependence d) {
-        Set<ViewDependence.Modifier> ms = new HashSet<>();
+    private ModuleDependence moduleDependence(Dependence d) {
+        Set<ModuleDependence.Modifier> ms = new HashSet<>();
         if (d.requiresPublic())
-            ms.add(ViewDependence.Modifier.PUBLIC);
-        return new ViewDependence(ms, d.name());
+            ms.add(ModuleDependence.Modifier.PUBLIC);
+        return new ModuleDependence(ms, d.name());
     }
 
     private ServiceDependence serviceDependence(Dependence d) {                ;
@@ -236,44 +226,23 @@ public class GenModuleGraph extends Task {
         System.out.println("----");
     }
 
-    private void assertEquals(View v1, View v2) {
-        if (v1.equals(v2)) return;
-
-        if (!v1.id().equals(v2.id())) {
-            throw new AssertionError("View " + v1.id() + " != " + v2.id());
-        }
-
-        assertEquals(v1.exports(), v2.exports());
-        assertEquals(v1.permits(), v2.permits());
-        assertEquals(v1.services().keySet(), v2.services().keySet());
-        for (Map.Entry<String,Set<String>> e : v1.services().entrySet()) {
-            Set<String> providers1 = e.getValue();
-            Set<String> providers2 = v2.services().get(e.getKey());
-            assertEquals(providers1, providers2);
-        }
-    }
-
     private void assertEquals(Module m1, Module m2) {
         if (m1.equals(m2)) return;
         if (!m1.id().equals(m2.id())) {
             throw new AssertionError("Module " + m1.id() + " != " + m2.id());
         }
-        assertEquals(m1.viewDependences(), m2.viewDependences());
+        assertEquals(m1.moduleDependences(), m2.moduleDependences());
         assertEquals(m1.serviceDependences(), m2.serviceDependences());
 
-        assertEquals(m1.mainView(), m2.mainView());
         assertEquals(m1.packages(), m2.packages());
-        Map<ViewId,View> map = m2.views().stream().collect(Collectors.toMap(View::id, Function.identity()));
-        for (View v1 : m1.views()) {
-            View v2 = map.get(v1.id());
-            if (v1.id().equals(m1.mainView().id()))
-                continue;
+        assertEquals(m1.exports(), m2.exports());
+        assertEquals(m1.permits(), m2.permits());
+        assertEquals(m1.services().keySet(), m2.services().keySet());
 
-            if (v2 == null) {
-                System.out.println("View " + v1.id() + " not found " + m2.id());
-            } else {
-                assertEquals(v1, v2);
-            }
+        for (Map.Entry<String, Set<String>> e : m1.services().entrySet()) {
+            Set<String> providers1 = e.getValue();
+            Set<String> providers2 = m2.services().get(e.getKey());
+            assertEquals(providers1, providers2);
         }
     }
 }

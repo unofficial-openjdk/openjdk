@@ -29,22 +29,22 @@ import java.io.*;
 
 
 /**
- * <p> A view's identification, which consists of a name and, optionally, a
+ * <p> A module's identification, which consists of a name and, optionally, a
  * version. </p>
  */
 
 @SuppressWarnings("serial")             // serialVersionUID intentionally omitted
-public final class ViewId
-    implements Comparable<ViewId>, Serializable
+public final class ModuleId
+    implements Comparable<ModuleId>, Serializable
 {
 
     private final String name;
     private final Version version;
     private final int hash;
 
-    // View names must be legal Java identifiers
+    // Module names must be legal Java identifiers
     //
-    public static final String checkViewName(String nm) {
+    public static final String checkModuleName(String nm) {
         if (nm == null)
             throw new IllegalArgumentException();
         int n = nm.length();
@@ -57,7 +57,7 @@ public final class ViewId
             cp = nm.codePointAt(i);
             if (!Character.isJavaIdentifierPart(cp) && nm.charAt(i) != '.') {
                 throw new IllegalArgumentException(nm
-                                                   + ": Illegal view-name"
+                                                   + ": Illegal module-name"
                                                    + " character"
                                                    + " at index " + i);
             }
@@ -65,18 +65,18 @@ public final class ViewId
         return nm;
     }
 
-    public ViewId(String name, Version version) {
-        this.name = checkViewName(name);
+    public ModuleId(String name, Version version) {
+        this.name = checkModuleName(name);
         this.version = version;
         hash = (43 * name.hashCode()
                 + ((version != null) ? version.hashCode() : 0));
     }
 
-    public static ViewId parse(String nm, String v) {
-        return new ViewId(nm, Version.parse(v));
+    public static ModuleId parse(String nm, String v) {
+        return new ModuleId(nm, Version.parse(v));
     }
 
-    public static ViewId parse(String s) {
+    public static ModuleId parse(String s) {
         if (s == null)
             throw new IllegalArgumentException();
         int n = s.length();
@@ -87,7 +87,7 @@ public final class ViewId
             i++;
         }
         if (i >= n)
-            return new ViewId(s, null);
+            return new ModuleId(s, null);
         if (i == 0)
             throw new IllegalArgumentException();
         String nm = (i < n) ? s.substring(0, i) : s;
@@ -109,12 +109,12 @@ public final class ViewId
 
     public Version version() { return version; }
 
-    public ViewIdQuery toQuery() {
-        return new ViewIdQuery(name, version.toQuery());
+    public ModuleIdQuery toQuery() {
+        return new ModuleIdQuery(name, version.toQuery());
     }
 
     @Override
-    public int compareTo(ViewId that) {
+    public int compareTo(ModuleId that) {
         int c = name.compareTo(that.name);
         if (c != 0)
             return c;
@@ -130,9 +130,9 @@ public final class ViewId
 
     @Override
     public boolean equals(Object ob) {
-        if (!(ob instanceof ViewId))
+        if (!(ob instanceof ModuleId))
             return false;
-        ViewId that = (ViewId)ob;
+        ModuleId that = (ModuleId)ob;
         if (!name.equals(that.name))
             return false;
         if (version == that.version)

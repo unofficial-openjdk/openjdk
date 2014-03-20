@@ -39,8 +39,7 @@ public class _Module {
 
     private static Module build(Consumer<Module.Builder> c) {
         try {
-            Module.Builder mb = (new Module.Builder()
-                                 .main(new View.Builder().id("foo").build()));
+            Module.Builder mb = new Module.Builder().id(ModuleId.parse("foo"));
             c.accept(mb);
             Module m = mb.build();
             out.println(m);
@@ -53,20 +52,12 @@ public class _Module {
 
     public void main() {
         Module m = build(b -> { });
-        assertEquals(m.id(), ViewId.parse("foo"));
+        assertEquals(m.id(), ModuleId.parse("foo"));
     }
 
     @Test(expectedExceptions = { IllegalStateException.class })
     public void mainOnce() {
-        build(b -> b.main(new View.Builder().id("bar").build()));
-    }
-
-    public void view() {
-        Module m = build(b -> b.view(new View.Builder().id("bar").build()));
-        assertEquals(m.views().stream()
-                     .map(View::id).collect(Collectors.toCollection(TreeSet::new)),
-                     new TreeSet<>(Arrays.asList(ViewId.parse("bar"),
-                                                 ViewId.parse("foo"))));
+        build(b -> b.id(ModuleId.parse("bar")));
     }
 
     public void includes() {
@@ -75,11 +66,11 @@ public class _Module {
                      new TreeSet<>(Arrays.asList("sun.misc", "sun.reflect")));
     }
 
-    public void reqView() {
-        ViewDependence vd = new ViewDependence(null, "baz@>=1.1");
-        Module m = build(b -> b.requires(vd));
-        assertEquals(m.viewDependences(),
-                     new HashSet<>(Arrays.asList(vd)));
+    public void reqModule() {
+        ModuleDependence md = new ModuleDependence(null, "baz@>=1.1");
+        Module m = build(b -> b.requires(md));
+        assertEquals(m.moduleDependences(),
+                     new HashSet<>(Arrays.asList(md)));
     }
 
     public void reqService() {
@@ -91,7 +82,7 @@ public class _Module {
 
     @Test(expectedExceptions = { IllegalArgumentException.class })
     public void badExport() {
-        build(b -> b.view(new View.Builder().id("bar").export("p.q").build()));
+        build(b -> b.export(new ModuleExport("p.q")));
     }
 
 }

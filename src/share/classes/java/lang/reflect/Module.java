@@ -26,6 +26,7 @@
 package java.lang.reflect;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -47,16 +48,16 @@ public final class Module {
     // them to be created in topological order.
     //
     private final Map<Module, Object> requires;  // used as a set
-    private final Map<String, Set<Module>> exports;
     private final Map<String, Object> uses;      // used as a set
+    private final Map<String, Set<Module>> exports;
     private final Map<String, Set<String>> provides;
 
     Module(String name, Set<String> packages) {
         this.name = name;
         this.packages = Collections.unmodifiableSet(packages);
         this.requires = new ConcurrentHashMap<>();
-        this.exports = new ConcurrentHashMap<>();
         this.uses = new ConcurrentHashMap<>();
+        this.exports = new ConcurrentHashMap<>();
         this.provides = new ConcurrentHashMap<>();
     }
 
@@ -89,6 +90,7 @@ public final class Module {
      * exported to (and will be empty if exported without restrictions).
      */
     public Map<String, Set<Module>> exports() {
+        // ###FIXME values are modifiable
         return Collections.unmodifiableMap(exports);
     }
 
@@ -128,9 +130,8 @@ public final class Module {
                     m1.requires.put(m2, Boolean.TRUE);
                 }
                 @Override
-                public void addExport(Module m, String pkg, Set<Module> who) {
-                    if (m.exports.put(pkg, Collections.unmodifiableSet(who)) != null)
-                        throw new InternalError(pkg + " already exported by " + m);
+                public void addExport(Module m, String pkg, Module permit) {
+                    m.exports.computeIfAbsent(pkg, k -> new HashSet<>()).add(permit);
                 }
                 @Override
                 public void addUses(Module m, String sn) {

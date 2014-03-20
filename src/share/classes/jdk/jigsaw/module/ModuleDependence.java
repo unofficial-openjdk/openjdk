@@ -30,12 +30,12 @@ import java.util.*;
 
 
 /**
- * <p> A dependence upon a view </p>
+ * <p> A dependence upon a module </p>
  */
 
 @SuppressWarnings("serial")             // serialVersionUID intentionally omitted
-public final class ViewDependence
-    implements Comparable<ViewDependence>, Serializable
+public final class ModuleDependence
+    implements Comparable<ModuleDependence>, Serializable
 {
 
     public static enum Modifier {
@@ -43,49 +43,49 @@ public final class ViewDependence
     }
 
     private final Set<Modifier> mods;
-    private final ViewIdQuery vidq;
+    private final ModuleIdQuery midq;
 
-    public ViewDependence(Set<Modifier> ms, ViewIdQuery vidq) {
+    public ModuleDependence(Set<Modifier> ms, ModuleIdQuery midq) {
         if (ms == null)
             mods = Collections.emptySet();
         else
             mods = Collections.unmodifiableSet(ms);
-        this.vidq = vidq;
+        this.midq = midq;
     }
 
-    public ViewDependence(Set<Modifier> mods, String vidqs) {
-        this(mods, ViewIdQuery.parse(vidqs));
+    public ModuleDependence(Set<Modifier> mods, String midqs) {
+        this(mods, ModuleIdQuery.parse(midqs));
     }
 
     public Set<Modifier> modifiers() {
         return mods;
     }
 
-    public ViewIdQuery query() {
-        return vidq;
+    public ModuleIdQuery query() {
+        return midq;
     }
 
     @Override
-    public int compareTo(ViewDependence that) {
-        return this.vidq.name().compareTo(that.vidq.name());
+    public int compareTo(ModuleDependence that) {
+        return this.midq.name().compareTo(that.midq.name());
     }
 
     @Override
     public boolean equals(Object ob) {
-        if (!(ob instanceof ViewDependence))
+        if (!(ob instanceof ModuleDependence))
             return false;
-        ViewDependence that = (ViewDependence)ob;
-        return (vidq.equals(that.vidq) && mods.equals(that.mods));
+        ModuleDependence that = (ModuleDependence)ob;
+        return (midq.equals(that.midq) && mods.equals(that.mods));
     }
 
     @Override
     public int hashCode() {
-        return vidq.hashCode() * 43 + mods.hashCode();
+        return midq.hashCode() * 43 + mods.hashCode();
     }
 
     @Override
     public String toString() {
-        return Dependence.toString(mods, "view " + vidq.toString());
+        return Dependence.toString(mods, "module " + midq.toString());
     }
 
 }
