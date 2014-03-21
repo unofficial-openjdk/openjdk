@@ -2388,6 +2388,8 @@ public final class SunGraphics2D
                 surfaceData = NullSurfaceData.theInstance;
             }
 
+            invalidatePipe();
+
             // this will recalculate the composite clip
             setDevClip(surfaceData.getBounds());
 
