@@ -59,7 +59,7 @@ public class Module_attribute extends Attribute {
         for (int i = 0; i < uses_count; i++)
             uses_index[i] = cr.readUnsignedShort();
         provides_count = cr.readUnsignedShort();
-        provides = new ProvidesEntry[requires_count];
+        provides = new ProvidesEntry[provides_count];
         for (int i = 0; i < provides_count; i++)
             provides[i] = new ProvidesEntry(cr);
     }
