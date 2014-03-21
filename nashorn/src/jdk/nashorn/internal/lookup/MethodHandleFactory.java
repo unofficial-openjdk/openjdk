@@ -125,8 +125,11 @@ public final class MethodHandleFactory {
         return FUNC;
     }
 
-    private static final MethodHandle TRACE        = STANDARD.findStatic(LOOKUP, MethodHandleFactory.class, "traceArgs",   MethodType.methodType(void.class, DebugLogger.class, String.class, int.class, Object[].class));
-    private static final MethodHandle TRACE_RETURN = STANDARD.findStatic(LOOKUP, MethodHandleFactory.class, "traceReturn", MethodType.methodType(Object.class, DebugLogger.class, Object.class));
+    private static final MethodHandle TRACE             = STANDARD.findStatic(LOOKUP, MethodHandleFactory.class, "traceArgs",   MethodType.methodType(void.class, DebugLogger.class, String.class, int.class, Object[].class));
+    private static final MethodHandle TRACE_RETURN      = STANDARD.findStatic(LOOKUP, MethodHandleFactory.class, "traceReturn", MethodType.methodType(Object.class, DebugLogger.class, Object.class));
+    private static final MethodHandle TRACE_RETURN_VOID = STANDARD.findStatic(LOOKUP, MethodHandleFactory.class, "traceReturnVoid", MethodType.methodType(void.class, DebugLogger.class));
+
+    private static final String VOID_TAG = "[VOID]";
 
     /**
      * Tracer that is applied before a value is returned from the traced function. It will output the return
@@ -136,9 +139,17 @@ public final class MethodHandleFactory {
      * @return return value unmodified
      */
     static Object traceReturn(final DebugLogger logger, final Object value) {
-        final String str = "\treturn: " + stripName(value) + " [type=" + (value == null ? "null" : stripName(value.getClass()) + ']');
+        final String str = "\treturn" +
+                (VOID_TAG.equals(value) ?
+                    ";" :
+                    " " + stripName(value) + "; // [type=" + (value == null ? "null" : stripName(value.getClass()) + ']'));
         logger.log(TRACE_LEVEL, str);
+        logger.log(TRACE_LEVEL, Debug.firstJSFrame());
         return value;
+    }
+
+    static void traceReturnVoid(final DebugLogger logger) {
+        traceReturn(logger, VOID_TAG);
     }
 
     /**
@@ -203,7 +214,7 @@ public final class MethodHandleFactory {
 
         if (arg instanceof ScriptObject) {
             return arg.toString() +
-                " (map=" + Debug.id((((ScriptObject)arg).getMap())) +
+                " (map=" + Debug.id(((ScriptObject)arg).getMap()) +
                 ")";
         }
 
@@ -236,7 +247,9 @@ public final class MethodHandleFactory {
     public static MethodHandle addDebugPrintout(final DebugLogger logger, final MethodHandle mh, final int paramStart, final boolean printReturnValue, final Object tag) {
         final MethodType type = mh.type();
 
-        if (logger != null && logger.levelAbove(TRACE_LEVEL)) {
+        //if there is no logger, or if it's set to log only coarser events
+        //than the trace level, skip and return
+        if (logger != null && logger.levelCoarserThan(TRACE_LEVEL)) {
             return mh;
         }
 
@@ -253,11 +266,15 @@ public final class MethodHandleFactory {
                 asType(type.changeReturnType(void.class)));
 
         final Class<?> retType = type.returnType();
-        if (retType != void.class && printReturnValue) {
-            final MethodHandle traceReturn = MethodHandles.insertArguments(TRACE_RETURN, 0, logger);
-            trace = MethodHandles.filterReturnValue(trace,
-                    traceReturn.asType(
-                        traceReturn.type().changeParameterType(0, retType).changeReturnType(retType)));
+        if (printReturnValue) {
+            if (retType != void.class) {
+                final MethodHandle traceReturn = MethodHandles.insertArguments(TRACE_RETURN, 0, logger);
+                trace = MethodHandles.filterReturnValue(trace,
+                        traceReturn.asType(
+                            traceReturn.type().changeParameterType(0, retType).changeReturnType(retType)));
+            } else {
+                trace = MethodHandles.filterReturnValue(trace, MethodHandles.insertArguments(TRACE_RETURN_VOID, 0, logger));
+            }
         }
 
         return trace;
@@ -338,6 +355,11 @@ public final class MethodHandleFactory {
         }
 
         @Override
+        public MethodHandle catchException(final MethodHandle target, final Class<? extends Throwable> exType, final MethodHandle handler) {
+            return MethodHandles.catchException(target, exType, handler);
+        }
+
+        @Override
         public MethodHandle constant(final Class<?> type, final Object value) {
             return MethodHandles.constant(type, value);
         }
@@ -402,6 +424,15 @@ public final class MethodHandleFactory {
         public MethodHandle findStatic(final MethodHandles.Lookup explicitLookup, final Class<?> clazz, final String name, final MethodType type) {
             try {
                 return explicitLookup.findStatic(clazz, name, type);
+            } catch (final NoSuchMethodException | IllegalAccessException e) {
+                throw new LookupException(e);
+            }
+        }
+
+        @Override
+        public MethodHandle findSpecial(final MethodHandles.Lookup explicitLookup, final Class<?> clazz, final String name, final MethodType type, final Class<?> thisClass) {
+            try {
+                return explicitLookup.findSpecial(clazz, name, type, thisClass);
             } catch (final NoSuchMethodException | IllegalAccessException e) {
                 throw new LookupException(e);
             }
@@ -549,6 +580,12 @@ public final class MethodHandleFactory {
         public MethodHandle throwException(final Class<?> returnType, final Class<? extends Throwable> exType) {
             final MethodHandle mh = super.throwException(returnType, exType);
             return debug(mh, "throwException", returnType, exType);
+        }
+
+        @Override
+        public MethodHandle catchException(final MethodHandle target, final Class<? extends Throwable> exType, final MethodHandle handler) {
+            final MethodHandle mh = super.catchException(target, exType, handler);
+            return debug(mh, "catchException", exType);
         }
 
         @Override

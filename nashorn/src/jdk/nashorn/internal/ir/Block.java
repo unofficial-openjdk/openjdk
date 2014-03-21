@@ -25,6 +25,8 @@
 
 package jdk.nashorn.internal.ir;
 
+import static jdk.nashorn.internal.codegen.CompilerConstants.RETURN;
+
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -33,13 +35,10 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-
 import jdk.nashorn.internal.codegen.Label;
 import jdk.nashorn.internal.codegen.types.Type;
 import jdk.nashorn.internal.ir.annotations.Immutable;
 import jdk.nashorn.internal.ir.visitor.NodeVisitor;
-
-import static jdk.nashorn.internal.codegen.CompilerConstants.RETURN;
 
 /**
  * IR representation for a list of statements.
@@ -53,7 +52,7 @@ public class Block extends Node implements BreakableNode, Flags<Block> {
     protected final Map<String, Symbol> symbols;
 
     /** Entry label. */
-    protected final Label entryLabel;
+    private final Label entryLabel;
 
     /** Break label. */
     private final Label breakLabel;
@@ -65,19 +64,23 @@ public class Block extends Node implements BreakableNode, Flags<Block> {
     public static final int NEEDS_SCOPE = 1 << 0;
 
     /**
-     * Flag indicating whether this block needs
-     * self symbol assignment at the start. This is used only for
-     * blocks that are the bodies of function nodes who refer to themselves
-     * by name. It causes codegen to insert a var [fn_name] = __callee__
+     * Flag indicating whether this block uses the self symbol for the function. This is used only for blocks that are
+     * bodies of function nodes who refer to themselves by name. It causes Attr to insert a var [fn_name] = __callee__
      * at the start of the body
      */
-    public static final int NEEDS_SELF_SYMBOL = 1 << 1;
+    public static final int USES_SELF_SYMBOL = 1 << 1;
 
     /**
      * Is this block tagged as terminal based on its contents
      * (usually the last statement)
      */
     public static final int IS_TERMINAL = 1 << 2;
+
+    /**
+     * Is this block the eager global scope - i.e. the original program. This isn't true for the
+     * outermost level of recompiles
+     */
+    public static final int IS_GLOBAL_SCOPE = 1 << 3;
 
     /**
      * Constructor
@@ -94,7 +97,7 @@ public class Block extends Node implements BreakableNode, Flags<Block> {
         this.entryLabel = new Label("block_entry");
         this.breakLabel = new Label("block_break");
         final int len = statements.length;
-        this.flags = (len > 0 && statements[len - 1].hasTerminalFlags()) ? IS_TERMINAL : 0;
+        this.flags = len > 0 && statements[len - 1].hasTerminalFlags() ? IS_TERMINAL : 0;
     }
 
     /**
@@ -116,6 +119,15 @@ public class Block extends Node implements BreakableNode, Flags<Block> {
         this.entryLabel = new Label(block.entryLabel);
         this.breakLabel = new Label(block.breakLabel);
         this.finish     = finish;
+    }
+
+    /**
+     * Is this block the outermost eager global scope - i.e. the primordial program?
+     * Used for global anchor point for scope depth computation for recompilation code
+     * @return true if outermost eager global scope
+     */
+    public boolean isGlobalScope() {
+        return getFlag(IS_GLOBAL_SCOPE);
     }
 
     /**
@@ -295,7 +307,7 @@ public class Block extends Node implements BreakableNode, Flags<Block> {
     }
 
     @Override
-    public Block setFlags(final LexicalContext lc, int flags) {
+    public Block setFlags(final LexicalContext lc, final int flags) {
         if (this.flags == flags) {
             return this;
         }
@@ -303,12 +315,12 @@ public class Block extends Node implements BreakableNode, Flags<Block> {
     }
 
     @Override
-    public Block clearFlag(final LexicalContext lc, int flag) {
+    public Block clearFlag(final LexicalContext lc, final int flag) {
         return setFlags(lc, flags & ~flag);
     }
 
     @Override
-    public Block setFlag(final LexicalContext lc, int flag) {
+    public Block setFlag(final LexicalContext lc, final int flag) {
         return setFlags(lc, flags | flag);
     }
 
@@ -357,7 +369,7 @@ public class Block extends Node implements BreakableNode, Flags<Block> {
     }
 
     @Override
-    public Node accept(NodeVisitor<? extends LexicalContext> visitor) {
+    public Node accept(final NodeVisitor<? extends LexicalContext> visitor) {
         return Acceptor.accept(this, visitor);
     }
 }

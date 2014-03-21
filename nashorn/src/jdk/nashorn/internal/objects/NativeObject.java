@@ -38,6 +38,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
+
 import jdk.internal.dynalink.beans.BeansLinker;
 import jdk.internal.dynalink.beans.StaticClass;
 import jdk.internal.dynalink.linker.GuardedInvocation;
@@ -249,8 +250,7 @@ public final class NativeObject {
      */
     @Function(attributes = Attribute.NOT_ENUMERABLE, where = Where.CONSTRUCTOR)
     public static Object defineProperty(final Object self, final Object obj, final Object prop, final Object attr) {
-        Global.checkObject(obj);
-        ((ScriptObject)obj).defineOwnProperty(JSType.toString(prop), attr, true);
+        Global.checkObject(obj).defineOwnProperty(JSType.toString(prop), attr, true);
         return obj;
     }
 
@@ -264,9 +264,7 @@ public final class NativeObject {
      */
     @Function(attributes = Attribute.NOT_ENUMERABLE, where = Where.CONSTRUCTOR)
     public static Object defineProperties(final Object self, final Object obj, final Object props) {
-        Global.checkObject(obj);
-
-        final ScriptObject sobj     = (ScriptObject)obj;
+        final ScriptObject sobj     = Global.checkObject(obj);
         final Object       propsObj = Global.toObject(props);
 
         if (propsObj instanceof ScriptObject) {
@@ -424,7 +422,7 @@ public final class NativeObject {
 
         // Object(null), Object(undefined), Object() are same as "new Object()"
 
-        if (newObj || (type == JSType.NULL || type == JSType.UNDEFINED)) {
+        if (newObj || type == JSType.NULL || type == JSType.UNDEFINED) {
             switch (type) {
             case BOOLEAN:
             case NUMBER:
@@ -512,7 +510,7 @@ public final class NativeObject {
         final Object key = JSType.toPrimitive(v, String.class);
         final Object obj = Global.toObject(self);
 
-        return (obj instanceof ScriptObject) && ((ScriptObject)obj).hasOwnProperty(key);
+        return obj instanceof ScriptObject && ((ScriptObject)obj).hasOwnProperty(key);
     }
 
     /**
@@ -626,25 +624,28 @@ public final class NativeObject {
     @Function(attributes = Attribute.NOT_ENUMERABLE, where = Where.CONSTRUCTOR)
     public static Object bindProperties(final Object self, final Object target, final Object source) {
         // target object has to be a ScriptObject
-        Global.checkObject(target);
+        final ScriptObject targetObj = Global.checkObject(target);
         // check null or undefined source object
         Global.checkObjectCoercible(source);
 
-        final ScriptObject targetObj = (ScriptObject)target;
-
         if (source instanceof ScriptObject) {
-            final ScriptObject sourceObj = (ScriptObject)source;
-            final Property[] properties = sourceObj.getMap().getProperties();
+            final ScriptObject sourceObj  = (ScriptObject)source;
+
+            final PropertyMap  sourceMap  = sourceObj.getMap();
+            final Property[]   properties = sourceMap.getProperties();
+            //replace the map and blow up everything to objects to work with dual fields :-(
 
             // filter non-enumerable properties
             final ArrayList<Property> propList = new ArrayList<>();
-            for (Property prop : properties) {
+            for (final Property prop : properties) {
                 if (prop.isEnumerable()) {
+                    prop.setValue(sourceObj, sourceObj, sourceObj.get(prop.getKey()), false);
+                    prop.setCurrentType(Object.class);
                     propList.add(prop);
                 }
             }
 
-            if (! propList.isEmpty()) {
+            if (!propList.isEmpty()) {
                 targetObj.addBoundProperties(sourceObj, propList.toArray(new Property[propList.size()]));
             }
         } else if (source instanceof ScriptObjectMirror) {
@@ -662,7 +663,7 @@ public final class NativeObject {
                 final String name = keys[idx];
                 final MethodHandle getter = Bootstrap.createDynamicInvoker("dyn:getMethod|getProp|getElem:" + name, MIRROR_GETTER_TYPE);
                 final MethodHandle setter = Bootstrap.createDynamicInvoker("dyn:setProp|setElem:" + name, MIRROR_SETTER_TYPE);
-                props[idx] = (AccessorProperty.create(name, 0, getter, setter));
+                props[idx] = AccessorProperty.create(name, 0, getter, setter);
             }
 
             targetObj.addBoundProperties(source, props);
@@ -747,7 +748,7 @@ public final class NativeObject {
                     Bootstrap.bindDynamicMethod(methodGetter.invoke(source), source)), 0, Object.class);
         } catch(RuntimeException|Error e) {
             throw e;
-        } catch(Throwable t) {
+        } catch(final Throwable t) {
             throw new RuntimeException(t);
         }
     }
@@ -760,7 +761,7 @@ public final class NativeObject {
             assert passesGuard(source, inv.getGuard());
         } catch(RuntimeException|Error e) {
             throw e;
-        } catch(Throwable t) {
+        } catch(final Throwable t) {
             throw new RuntimeException(t);
         }
         assert inv.getSwitchPoint() == null; // Linkers in Dynalink's beans package don't use switchpoints.
@@ -774,6 +775,6 @@ public final class NativeObject {
 
     private static LinkRequest createLinkRequest(String operation, MethodType methodType, Object source) {
         return new LinkRequestImpl(CallSiteDescriptorFactory.create(MethodHandles.publicLookup(), operation,
-                methodType), false, source);
+                methodType), null, 0, false, source);
     }
 }

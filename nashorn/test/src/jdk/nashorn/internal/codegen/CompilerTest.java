@@ -180,9 +180,9 @@ public class CompilerTest {
             }
         } catch (final Throwable t) {
             log("Compile failed: " + file.getAbsolutePath() + " : " + t);
-            if (VERBOSE) {
+        //            if (VERBOSE) {
                 t.printStackTrace(System.out);
-            }
+        //}
             failed++;
         } finally {
             if (globalChanged) {

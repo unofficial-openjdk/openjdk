@@ -63,7 +63,7 @@ public final class PropertyMap implements Iterable<Object> {
     private int fieldCount;
 
     /** Number of fields available. */
-    private int fieldMaximum;
+    private final int fieldMaximum;
 
     /** Length of spill in use. */
     private int spillLength;
@@ -161,7 +161,7 @@ public final class PropertyMap implements Iterable<Object> {
      * @return New {@link PropertyMap}.
      */
     public static PropertyMap newMap(final Collection<Property> properties, final int fieldCount, final int fieldMaximum,  final int spillLength) {
-        PropertyHashMap newProperties = EMPTY_HASHMAP.immutableAdd(properties);
+        final PropertyHashMap newProperties = EMPTY_HASHMAP.immutableAdd(properties);
         return new PropertyMap(newProperties, fieldCount, fieldMaximum, spillLength, false);
     }
 
@@ -175,7 +175,7 @@ public final class PropertyMap implements Iterable<Object> {
      * @return New {@link PropertyMap}.
      */
     public static PropertyMap newMap(final Collection<Property> properties) {
-        return (properties == null || properties.isEmpty())? newMap() : newMap(properties, 0, 0, 0);
+        return properties == null || properties.isEmpty()? newMap() : newMap(properties, 0, 0, 0);
     }
 
     /**
@@ -377,7 +377,7 @@ public final class PropertyMap implements Iterable<Object> {
             newMap = new PropertyMap(this, newProperties);
             addToHistory(property, newMap);
 
-            if(!property.isSpill()) {
+            if (!property.isSpill()) {
                 newMap.fieldCount = Math.max(newMap.fieldCount, property.getSlot() + 1);
             }
             if (isValidArrayIndex(getArrayIndex(property.getKey()))) {
@@ -426,9 +426,8 @@ public final class PropertyMap implements Iterable<Object> {
             listeners.propertyModified(oldProperty, newProperty);
         }
         // Add replaces existing property.
-        final PropertyHashMap newProperties = properties.immutableAdd(newProperty);
+        final PropertyHashMap newProperties = properties.immutableReplace(oldProperty, newProperty);
         final PropertyMap newMap = new PropertyMap(this, newProperties);
-
         /*
          * See ScriptObject.modifyProperty and ScriptObject.setUserAccessors methods.
          *
@@ -444,10 +443,11 @@ public final class PropertyMap implements Iterable<Object> {
          * the old property is an AccessorProperty and the new one is a UserAccessorProperty property.
          */
 
-        final boolean sameType = (oldProperty.getClass() == newProperty.getClass());
+        final boolean sameType = oldProperty.getClass() == newProperty.getClass();
         assert sameType ||
-                (oldProperty instanceof AccessorProperty &&
-                newProperty instanceof UserAccessorProperty) : "arbitrary replaceProperty attempted";
+                oldProperty instanceof AccessorProperty &&
+                newProperty instanceof UserAccessorProperty :
+            "arbitrary replaceProperty attempted " + sameType + " oldProperty=" + oldProperty.getClass() + " newProperty=" + newProperty.getClass() + " [" + oldProperty.getCurrentType() + " => " + newProperty.getCurrentType() + "]";
 
         newMap.flags = flags;
 
@@ -455,7 +455,7 @@ public final class PropertyMap implements Iterable<Object> {
          * spillLength remains same in case (1) and (2) because of slot reuse. Only for case (3), we need
          * to add spill count of the newly added UserAccessorProperty property.
          */
-        newMap.spillLength = spillLength + (sameType? 0 : newProperty.getSpillCount());
+        newMap.spillLength = spillLength;
         return newMap;
     }
 
@@ -470,12 +470,7 @@ public final class PropertyMap implements Iterable<Object> {
      * @return the newly created UserAccessorProperty
      */
     public UserAccessorProperty newUserAccessors(final String key, final int propertyFlags) {
-        int oldSpillLength = spillLength;
-
-        final int getterSlot = oldSpillLength++;
-        final int setterSlot = oldSpillLength++;
-
-        return new UserAccessorProperty(key, propertyFlags, getterSlot, setterSlot);
+        return new UserAccessorProperty(key, propertyFlags, spillLength);
     }
 
     /**
@@ -560,7 +555,7 @@ public final class PropertyMap implements Iterable<Object> {
     PropertyMap freeze() {
         PropertyHashMap newProperties = EMPTY_HASHMAP;
 
-        for (Property oldProperty : properties.getProperties()) {
+        for (final Property oldProperty : properties.getProperties()) {
             int propertyFlags = Property.NOT_CONFIGURABLE;
 
             if (!(oldProperty instanceof UserAccessorProperty)) {
@@ -675,7 +670,7 @@ public final class PropertyMap implements Iterable<Object> {
     private PropertyMap checkHistory(final Property property) {
 
         if (history != null) {
-            SoftReference<PropertyMap> ref = history.get(property);
+            final SoftReference<PropertyMap> ref = history.get(property);
             final PropertyMap historicMap = ref == null ? null : ref.get();
 
             if (historicMap != null) {
@@ -690,32 +685,44 @@ public final class PropertyMap implements Iterable<Object> {
         return null;
     }
 
+    /**
+     * Returns true if the two maps have identical properties in the same order, but allows the properties to differ in
+     * their types. This method is mostly useful for tests.
+     * @param otherMap the other map
+     * @return true if this map has identical properties in the same order as the other map, allowing the properties to
+     * differ in type.
+     */
+    public boolean equalsWithoutType(final PropertyMap otherMap) {
+        if (properties.size() != otherMap.properties.size()) {
+            return false;
+        }
+
+        final Iterator<Property> iter      = properties.values().iterator();
+        final Iterator<Property> otherIter = otherMap.properties.values().iterator();
+
+        while (iter.hasNext() && otherIter.hasNext()) {
+            if (!iter.next().equalsWithoutType(otherIter.next())) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder();
 
-        sb.append(" [");
-        boolean isFirst = true;
+        sb.append(Debug.id(this));
+        sb.append(" = {\n");
 
-        for (final Property property : properties.values()) {
-            if (!isFirst) {
-                sb.append(", ");
-            }
-
-            isFirst = false;
-
-            sb.append(ScriptRuntime.safeToString(property.getKey()));
-            final Class<?> ctype = property.getCurrentType();
-            sb.append(" <").
-                append(property.getClass().getSimpleName()).
-                append(':').
-                append(ctype == null ?
-                    "undefined" :
-                    ctype.getSimpleName()).
-                append('>');
+        for (final Property property : getProperties()) {
+            sb.append('\t');
+            sb.append(property);
+            sb.append('\n');
         }
 
-        sb.append(']');
+        sb.append('}');
 
         return sb.toString();
     }
@@ -878,6 +885,57 @@ public final class PropertyMap implements Iterable<Object> {
      * Debugging and statistics.
      */
 
+    /**
+     * Debug helper function that returns the diff of two property maps, only
+     * displaying the information that is different and in which map it exists
+     * compared to the other map. Can be used to e.g. debug map guards and
+     * investigate why they fail, causing relink
+     *
+     * @param map0 the first property map
+     * @param map1 the second property map
+     *
+     * @return property map diff as string
+     */
+    public static String diff(final PropertyMap map0, final PropertyMap map1) {
+        final StringBuilder sb = new StringBuilder();
+
+        if (map0 != map1) {
+           sb.append(">>> START: Map diff");
+           boolean found = false;
+
+           for (final Property p : map0.getProperties()) {
+               final Property p2 = map1.findProperty(p.getKey());
+               if (p2 == null) {
+                   sb.append("FIRST ONLY : [" + p + "]");
+                   found = true;
+               } else if (p2 != p) {
+                   sb.append("DIFFERENT  : [" + p + "] != [" + p2 + "]");
+                   found = true;
+               }
+           }
+
+           for (final Property p2 : map1.getProperties()) {
+               final Property p1 = map0.findProperty(p2.getKey());
+               if (p1 == null) {
+                   sb.append("SECOND ONLY: [" + p2 + "]");
+                   found = true;
+               }
+           }
+
+           //assert found;
+
+           if (!found) {
+                sb.append(map0).
+                    append("!=").
+                    append(map1);
+           }
+
+           sb.append("<<< END: Map diff\n");
+        }
+
+        return sb.toString();
+    }
+
     // counters updated only in debug mode
     private static int count;
     private static int clonedCount;
@@ -935,5 +993,4 @@ public final class PropertyMap implements Iterable<Object> {
     public static int getSetProtoNewMapCount() {
         return setProtoNewMapCount;
     }
-
 }

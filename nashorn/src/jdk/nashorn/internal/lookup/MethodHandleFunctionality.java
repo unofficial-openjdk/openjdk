@@ -152,6 +152,17 @@ public interface MethodHandleFunctionality {
     public MethodHandle throwException(Class<?> returnType, Class<? extends Throwable> exType);
 
     /**
+     * Wrapper for {@link java.lang.invoke.MethodHandles#catchException(MethodHandle, Class, MethodHandle)}
+     *
+     * @param target  target method
+     * @param exType  exception type
+     * @param handler the method handle to call when exception is thrown
+     *
+     * @return exception thrower method handle
+     */
+    public MethodHandle catchException(final MethodHandle target, final Class<? extends Throwable> exType, final MethodHandle handler);
+
+    /**
      * Wrapper for {@link java.lang.invoke.MethodHandles#constant(Class, Object)}
      *
      * @param type  type of constant
@@ -284,6 +295,19 @@ public interface MethodHandleFunctionality {
      * @return method handle for virtual method
      */
     public MethodHandle findVirtual(MethodHandles.Lookup explicitLookup, Class<?> clazz, String name, MethodType type);
+
+    /**
+     * Wrapper for {@link java.lang.invoke.MethodHandles.Lookup#findSpecial(Class, String, MethodType, Class)}
+     *
+     * @param explicitLookup explicit lookup to be used
+     * @param clazz          class to look in
+     * @param name           name of method
+     * @param type           method type
+     * @param thisClass      thisClass
+     *
+     * @return method handle for virtual method
+     */
+    public MethodHandle findSpecial(MethodHandles.Lookup explicitLookup, Class<?> clazz, String name, MethodType type, final Class<?> thisClass);
 
     /**
      * Wrapper for SwitchPoint creation. Just like {@code new SwitchPoint()} but potentially

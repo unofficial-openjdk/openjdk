@@ -35,7 +35,6 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Field;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
@@ -70,6 +69,8 @@ import jdk.nashorn.internal.scripts.JO;
  */
 @ScriptClass("Global")
 public final class Global extends ScriptObject implements Scope {
+    // Placeholder value used in place of a location property (__FILE__, __DIR__, __LINE__)
+    private static final Object LOCATION_PROPERTY_PLACEHOLDER = new Object();
     private final InvokeByName TO_STRING = new InvokeByName("toString", ScriptObject.class);
     private final InvokeByName VALUE_OF  = new InvokeByName("valueOf",  ScriptObject.class);
 
@@ -135,11 +136,11 @@ public final class Global extends ScriptObject implements Scope {
 
     /** Value property NaN of the Global Object - ECMA 15.1.1.1 NaN */
     @Property(attributes = Attribute.NON_ENUMERABLE_CONSTANT)
-    public final Object NaN = Double.NaN;
+    public final double NaN = Double.NaN;
 
     /** Value property Infinity of the Global Object - ECMA 15.1.1.2 Infinity */
     @Property(attributes = Attribute.NON_ENUMERABLE_CONSTANT)
-    public final Object Infinity = Double.POSITIVE_INFINITY;
+    public final double Infinity = Double.POSITIVE_INFINITY;
 
     /** Value property Undefined of the Global Object - ECMA 15.1.1.3 Undefined */
     @Property(attributes = Attribute.NON_ENUMERABLE_CONSTANT)
@@ -303,15 +304,15 @@ public final class Global extends ScriptObject implements Scope {
 
     /** Nashorn extension: current script's file name */
     @Property(name = "__FILE__", attributes = Attribute.NON_ENUMERABLE_CONSTANT)
-    public Object __FILE__;
+    public final Object __FILE__ = LOCATION_PROPERTY_PLACEHOLDER;
 
     /** Nashorn extension: current script's directory */
     @Property(name = "__DIR__", attributes = Attribute.NON_ENUMERABLE_CONSTANT)
-    public Object __DIR__;
+    public final Object __DIR__ = LOCATION_PROPERTY_PLACEHOLDER;
 
     /** Nashorn extension: current source line number being executed */
     @Property(name = "__LINE__", attributes = Attribute.NON_ENUMERABLE_CONSTANT)
-    public Object __LINE__;
+    public final Object __LINE__ = LOCATION_PROPERTY_PLACEHOLDER;
 
     /** Used as Date.prototype's default value */
     public NativeDate   DEFAULT_DATE;
@@ -432,7 +433,7 @@ public final class Global extends ScriptObject implements Scope {
      * @return the global singleton
      */
     public static Global instance() {
-        Global global = Context.getGlobal();
+        final Global global = Context.getGlobal();
         global.getClass(); // null check
         return global;
     }
@@ -758,7 +759,6 @@ public final class Global extends ScriptObject implements Scope {
         return desc;
     }
 
-
     private static <T> T getLazilyCreatedValue(final Object key, final Callable<T> creator, final Map<Object, T> map) {
         final T obj = map.get(key);
         if (obj != null) {
@@ -832,7 +832,7 @@ public final class Global extends ScriptObject implements Scope {
             return str;
         }
         final Global global = Global.instance();
-        final ScriptObject scope = (self instanceof ScriptObject) ? (ScriptObject)self : global;
+        final ScriptObject scope = self instanceof ScriptObject ? (ScriptObject)self : global;
 
         return global.getContext().eval(scope, str.toString(), callThis, location, Boolean.TRUE.equals(strict));
     }
@@ -873,7 +873,7 @@ public final class Global extends ScriptObject implements Scope {
      */
     public static Object load(final Object self, final Object source) throws IOException {
         final Global global = Global.instance();
-        final ScriptObject scope = (self instanceof ScriptObject) ? (ScriptObject)self : global;
+        final ScriptObject scope = self instanceof ScriptObject ? (ScriptObject)self : global;
         return global.getContext().load(scope, source);
     }
 
@@ -1457,6 +1457,26 @@ public final class Global extends ScriptObject implements Scope {
     }
 
     /**
+     * Called from generated to replace a location property placeholder with the actual location property value.
+     *
+     * @param  placeholder the value tested for being a placeholder for a location property
+     * @param  locationProperty the actual value for the location property
+     * @return locationProperty if placeholder is indeed a placeholder for a location property, the placeholder otherwise
+     */
+    public static Object replaceLocationPropertyPlaceholder(final Object placeholder, final Object locationProperty) {
+        return isLocationPropertyPlaceholder(placeholder) ? locationProperty : placeholder;
+    }
+
+    /**
+     * Called from runtime internals to check if the passed value is a location property placeholder.
+     * @param  placeholder the value tested for being a placeholder for a location property
+     * @return true if the value is a placeholder, false otherwise.
+     */
+    public static boolean isLocationPropertyPlaceholder(final Object placeholder) {
+        return placeholder == LOCATION_PROPERTY_PLACEHOLDER;
+    }
+
+    /**
      * Create a new RegExp object.
      *
      * @param expression Regular expression.
@@ -1494,11 +1514,13 @@ public final class Global extends ScriptObject implements Scope {
      * not the case
      *
      * @param obj and object to check
+     * @return the script object
      */
-    public static void checkObject(final Object obj) {
+    public static ScriptObject checkObject(final Object obj) {
         if (!(obj instanceof ScriptObject)) {
             throw typeError("not.an.object", ScriptRuntime.safeToString(obj));
         }
+        return (ScriptObject)obj;
     }
 
     /**
@@ -1547,7 +1569,8 @@ public final class Global extends ScriptObject implements Scope {
         // initialize global function properties
         this.eval = this.builtinEval = ScriptFunctionImpl.makeFunction("eval", EVAL);
 
-        this.parseInt           = ScriptFunctionImpl.makeFunction("parseInt",   GlobalFunctions.PARSEINT);
+        this.parseInt           = ScriptFunctionImpl.makeFunction("parseInt",   GlobalFunctions.PARSEINT,
+                new MethodHandle[] { GlobalFunctions.PARSEINT_OI, GlobalFunctions.PARSEINT_O });
         this.parseFloat         = ScriptFunctionImpl.makeFunction("parseFloat", GlobalFunctions.PARSEFLOAT);
         this.isNaN              = ScriptFunctionImpl.makeFunction("isNaN",      GlobalFunctions.IS_NAN);
         this.isFinite           = ScriptFunctionImpl.makeFunction("isFinite",   GlobalFunctions.IS_FINITE);
@@ -1632,19 +1655,13 @@ public final class Global extends ScriptObject implements Scope {
 
         copyBuiltins();
 
-        // initialized with strings so that typeof will work as expected.
-        this.__FILE__ = "";
-        this.__DIR__  = "";
-        this.__LINE__ = 0.0;
-
         // expose script (command line) arguments as "arguments" property of global
-        final List<String> arguments = env.getArguments();
-        final Object argsObj = wrapAsObject(arguments.toArray());
-
-        addOwnProperty("arguments", Attribute.NOT_ENUMERABLE, argsObj);
+        final Object argumentsObject = wrapAsObject(env.getArguments().toArray());
+        final int    argumentsFlags  = Attribute.NOT_ENUMERABLE;
+        addOwnProperty("arguments", argumentsFlags, argumentsObject);
         if (env._scripting) {
             // synonym for "arguments" in scripting mode
-            addOwnProperty("$ARG", Attribute.NOT_ENUMERABLE, argsObj);
+            addOwnProperty("$ARG", argumentsFlags, argumentsObject);
         }
     }
 
@@ -1744,7 +1761,7 @@ public final class Global extends ScriptObject implements Scope {
     }
 
     private static void copyOptions(final ScriptObject options, final ScriptEnvironment scriptEnv) {
-        for (Field f : scriptEnv.getClass().getFields()) {
+        for (final Field f : scriptEnv.getClass().getFields()) {
             try {
                 options.set(f.getName(), f.get(scriptEnv), false);
             } catch (final IllegalArgumentException | IllegalAccessException exp) {

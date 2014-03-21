@@ -25,6 +25,7 @@
 
 package jdk.nashorn.internal.ir;
 
+import jdk.nashorn.internal.codegen.types.Type;
 import jdk.nashorn.internal.ir.annotations.Immutable;
 import jdk.nashorn.internal.ir.visitor.NodeVisitor;
 
@@ -49,8 +50,8 @@ public final class AccessNode extends BaseNode {
         this.property = property.setIsPropertyName();
     }
 
-    private AccessNode(final AccessNode accessNode, final Expression base, final IdentNode property, final boolean isFunction) {
-        super(accessNode, base, isFunction);
+    private AccessNode(final AccessNode accessNode, final Expression base, final IdentNode property, final boolean isFunction, final Type optimisticType, final boolean isOptimistic, final int id) {
+        super(accessNode, base, isFunction, optimisticType, isOptimistic, id);
         this.property = property;
     }
 
@@ -71,6 +72,8 @@ public final class AccessNode extends BaseNode {
     @Override
     public void toString(final StringBuilder sb) {
         final boolean needsParen = tokenType().needsParens(getBase().tokenType(), true);
+
+        Node.optimisticType(this, sb);
 
         if (needsParen) {
             sb.append('(');
@@ -99,22 +102,46 @@ public final class AccessNode extends BaseNode {
         if (this.base == base) {
             return this;
         }
-        return new AccessNode(this, base, property, isFunction());
+        return new AccessNode(this, base, property, isFunction(), optimisticType, isOptimistic, programPoint);
     }
 
     private AccessNode setProperty(final IdentNode property) {
         if (this.property == property) {
             return this;
         }
-        return new AccessNode(this, base, property, isFunction());
+        return new AccessNode(this, base, property, isFunction(), optimisticType, isOptimistic, programPoint);
     }
 
     @Override
-    public BaseNode setIsFunction() {
+    public AccessNode setType(final TemporarySymbols ts, final Type optimisticType) {
+        if (this.optimisticType == optimisticType) {
+            return this;
+        }
+        return new AccessNode(this, base, property, isFunction(), optimisticType, isOptimistic, programPoint);
+    }
+
+    @Override
+    public AccessNode setProgramPoint(int programPoint) {
+        if (this.programPoint == programPoint) {
+            return this;
+        }
+        return new AccessNode(this, base, property, isFunction(), optimisticType, isOptimistic, programPoint);
+    }
+
+    @Override
+    public AccessNode setIsFunction() {
         if (isFunction()) {
             return this;
         }
-        return new AccessNode(this, base, property, true);
+        return new AccessNode(this, base, property, true, optimisticType, isOptimistic, programPoint);
+    }
+
+    @Override
+    public AccessNode setIsOptimistic(final boolean isOptimistic) {
+        if (this.isOptimistic == isOptimistic) {
+            return this;
+        }
+        return new AccessNode(this, base, property, isFunction(), optimisticType, isOptimistic, programPoint);
     }
 
 }

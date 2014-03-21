@@ -148,6 +148,7 @@ public class LexicalContext {
      * @return the node that was pushed
      */
     public <T extends LexicalContextNode> T push(final T node) {
+        assert !contains(node);
         if (sp == stack.length) {
             final LexicalContextNode[] newStack = new LexicalContextNode[sp * 2];
             System.arraycopy(stack, 0, newStack, 0, sp);
@@ -201,7 +202,6 @@ public class LexicalContext {
         return (T)popped;
     }
 
-
     /**
      * Return the top element in the context
      * @return the node that was pushed last
@@ -233,10 +233,9 @@ public class LexicalContext {
      * @return the new node
      */
     public LexicalContextNode replace(final LexicalContextNode oldNode, final LexicalContextNode newNode) {
-       //System.err.println("REPLACE old=" + Debug.id(oldNode) + " new=" + Debug.id(newNode));
         for (int i = sp - 1; i >= 0; i--) {
             if (stack[i] == oldNode) {
-                assert i == (sp - 1) : "violation of contract - we always expect to find the replacement node on top of the lexical context stack: " + newNode + " has " + stack[i + 1].getClass() + " above it";
+                assert i == sp - 1 : "violation of contract - we always expect to find the replacement node on top of the lexical context stack: " + newNode + " has " + stack[i + 1].getClass() + " above it";
                 stack[i] = newNode;
                 break;
             }
@@ -269,6 +268,17 @@ public class LexicalContext {
         iter.next();
         return iter.hasNext() ? iter.next() : null;
     }
+
+    /*
+    public FunctionNode getProgram() {
+        final Iterator<FunctionNode> iter = getFunctions();
+        FunctionNode last = null;
+        while (iter.hasNext()) {
+            last = iter.next();
+        }
+        assert last != null;
+        return last;
+    }*/
 
     /**
      * Returns an iterator over all ancestors block of the given block, with its parent block first.
@@ -382,7 +392,7 @@ public class LexicalContext {
      * @param symbol symbol
      * @return function node in which this symbol is defined, assert if no such symbol exists in context
      */
-    public FunctionNode getDefiningFunction(Symbol symbol) {
+    public FunctionNode getDefiningFunction(final Symbol symbol) {
         if (symbol.isTemp()) {
             return null;
         }
@@ -393,7 +403,7 @@ public class LexicalContext {
                 while (iter.hasNext()) {
                     final LexicalContextNode next2 = iter.next();
                     if (next2 instanceof FunctionNode) {
-                        return ((FunctionNode)next2);
+                        return (FunctionNode)next2;
                     }
                 }
                 throw new AssertionError("Defining block for symbol " + name + " has no function in the context");
@@ -408,22 +418,6 @@ public class LexicalContext {
      */
     public boolean isFunctionBody() {
         return getParentBlock() == null;
-    }
-
-    /**
-     * Returns true if the expression defining the function is a callee of a CallNode that should be the second
-     * element on the stack, e.g. <code>(function(){})()</code>. That is, if the stack ends with
-     * {@code [..., CallNode, FunctionNode]} then {@code callNode.getFunction()} should be equal to
-     * {@code functionNode}, and the top of the stack should itself be a variant of {@code functionNode}.
-     * @param functionNode the function node being tested
-     * @return true if the expression defining the current function is a callee of a call expression.
-     */
-    public boolean isFunctionDefinedInCurrentCall(FunctionNode functionNode) {
-        final LexicalContextNode parent = stack[sp - 2];
-        if (parent instanceof CallNode && ((CallNode)parent).getFunction() == functionNode) {
-            return true;
-        }
-        return false;
     }
 
     /**
@@ -444,15 +438,23 @@ public class LexicalContext {
     }
 
     /**
-     * Count the number of with scopes until a given node
-     * @param until node to stop counting at, or null if all nodes should be counted
+     * Count the number of scopes until a given node.
+     * @param until node to stop counting at. Must be within the current  function
      * @return number of with scopes encountered in the context
      */
     public int getScopeNestingLevelTo(final LexicalContextNode until) {
+        assert until != null;
         //count the number of with nodes until "until" is hit
         int n = 0;
-        for (final Iterator<WithNode> iter = new NodeIterator<>(WithNode.class, until); iter.hasNext(); iter.next()) {
-            n++;
+        for (final Iterator<LexicalContextNode> iter = getAllNodes(); iter.hasNext();) {
+            final LexicalContextNode node = iter.next();
+            if (node == until) {
+                break;
+            }
+            assert !(node instanceof FunctionNode); // Can't go outside current function
+            if (node instanceof WithNode || node instanceof Block && ((Block)node).needsScope()) {
+                n++;
+            }
         }
         return n;
     }
@@ -627,7 +629,7 @@ public class LexicalContext {
             if (next == null) {
                 throw new NoSuchElementException();
             }
-            T lnext = next;
+            final T lnext = next;
             next = findNext();
             return lnext;
         }
