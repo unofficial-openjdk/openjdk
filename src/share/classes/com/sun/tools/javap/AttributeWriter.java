@@ -435,7 +435,7 @@ public class AttributeWriter extends BasicWriter
         println(entries.length + "\t// " + "permits");
         indent(+1);
         for (int e: entries) {
-            print("#" + e + "\t// permits " + constantWriter.stringValue(e));
+            println("#" + e + "\t// permits " + constantWriter.stringValue(e));
         }
         indent(-1);
     }
@@ -447,11 +447,13 @@ public class AttributeWriter extends BasicWriter
         for (Module_attribute.ExportsEntry e: entries) {
             print("#" + e.exports_index + "\t// exports");
             print(" " + constantWriter.stringValue(e.exports_index));
-            if (e.exports_to_index.length > 0) {
-                print(" to ... " + e.exports_to_index.length);
+            if (e.exports_to_index.length == 0) {
+                println();
+            } else {
+                println(" to ... " + e.exports_to_index.length);
                 indent(+1);
                 for (int to: e.exports_to_index) {
-                    print("#" + to + "\t// ... to " + constantWriter.stringValue(to));
+                    println("#" + to + "\t// ... to " + constantWriter.stringValue(to));
                 }
                 indent(-1);
             }
@@ -464,7 +466,7 @@ public class AttributeWriter extends BasicWriter
         println(entries.length + "\t// " + "uses services");
         indent(+1);
         for (int e: entries) {
-            print("#" + e + "\t// uses " + constantWriter.stringValue(e));
+            println("#" + e + "\t// uses " + constantWriter.stringValue(e));
         }
         indent(-1);
     }
