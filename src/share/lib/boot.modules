@@ -28,6 +28,7 @@ javax.smartcardio
 javax.xmldsig
 jdk
 jdk.deploy
+jdk.deploy.osx
 jdk.devtools
 jdk.httpserver
 jdk.jaas

@@ -595,15 +595,16 @@ module jdk.deploy {
             com.sun.deploy.**,
             com.sun.javaws.**,
             com.sun.jnlp.*;
+    // Split package issue: Hook for http authentication - see JDK-8004653 
+    include sun.net.www.protocol.http.AuthCacheBridge;
+}
 
-    // Apple integration - should it be a separate module?
+// Apple integration
+module jdk.deploy.osx {
     include apple.applescript.*,
             apple.launcher.*,      // see JDK-8003847
             apple.security.*,
             com.apple.**;
-
-    // Split package issue: Hook for http authentication - see JDK-8004653 
-    include sun.net.www.protocol.http.AuthCacheBridge;
 }
 
 // JDK-specific SCTP (supported API)

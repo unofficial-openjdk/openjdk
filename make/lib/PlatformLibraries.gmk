@@ -39,7 +39,7 @@ ifeq ($(OPENJDK_TARGET_OS), macosx)
       OPTIMIZATION := LOW, \
       CFLAGS := $(CFLAGS_JDKLIB) \
           -I$(LIBAPPLESCRIPTENGINE_SRC) \
-          -I$(JDK_OUTPUTDIR)/gensrc_headers/jdk.deploy \
+          -I$(JDK_OUTPUTDIR)/gensrc_headers/jdk.deploy.osx \
           -F/System/Library/Frameworks/JavaVM.framework/Frameworks \
           -F/System/Library/Frameworks/ApplicationServices.framework/Frameworks, \
       LDFLAGS := $(LDFLAGS_JDKLIB) \
@@ -113,7 +113,7 @@ ifeq ($(OPENJDK_TARGET_OS), macosx)
         -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/macosx/native/libosxapp \
         $(addprefix -I, $(BUILD_LIBJAVA_SRC)) \
         -I$(JDK_OUTPUTDIR)/gensrc_headers/java.desktop \
-        -I$(JDK_OUTPUTDIR)/gensrc_headers/jdk.deploy \
+        -I$(JDK_OUTPUTDIR)/gensrc_headers/jdk.deploy.osx \
         #
   else
   LIBOSX_DIRS := \
