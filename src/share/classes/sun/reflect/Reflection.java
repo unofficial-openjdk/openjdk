@@ -58,12 +58,17 @@ public class Reflection {
     // set to true to enable module checks
     private static volatile boolean moduleChecksEnabled;
 
+    // set to true to debug failing module checks
+    private static boolean moduleChecksDebugging;
+
     public static boolean modulesInitialized() {
         return modulesInitialized;
     }
 
-    public static void enableModules(boolean enableModuleChecks) {
+    public static void enableModules(boolean enableModuleChecks,
+                                     boolean debugging) {
         moduleChecksEnabled = enableModuleChecks;
+        moduleChecksDebugging = debugging;
         modulesInitialized = true;
     }
 
@@ -124,13 +129,17 @@ public class Reflection {
                 if (m2 != null)
                     memberSuffix = " (" + m2 + ")";
             }
-            throw new IllegalAccessException("Class " + currentClass.getName() +
-                                             currentSuffix +
-                                             " can not access a member of class " +
-                                             memberClass.getName() + memberSuffix +
-                                             " with modifiers \"" +
-                                             Modifier.toString(modifiers) +
-                                             "\"");
+            IllegalAccessException iae =
+                new IllegalAccessException("Class " + currentClass.getName() +
+                                           currentSuffix +
+                                           " can not access a member of class " +
+                                           memberClass.getName() + memberSuffix +
+                                           " with modifiers \"" +
+                                           Modifier.toString(modifiers) +
+                                           "\"");
+            if (moduleChecksDebugging)
+                iae.printStackTrace();
+            throw iae;
         }
     }
 
@@ -223,8 +232,8 @@ public class Reflection {
      * module and memberClass's's module exports memberClass's package to
      * currentClass's module.
      */
-    private static boolean verifyModuleAccess(Class<?> currentClass,
-                                              Class<?> memberClass) {
+    public static boolean verifyModuleAccess(Class<?> currentClass,
+                                             Class<?> memberClass) {
         Module m1 = currentClass.getModule();
         Module m2 = memberClass.getModule();
 
@@ -234,7 +243,7 @@ public class Reflection {
         if (m1 != null) {
             // named module trying to access member in unnamed module
             if (m2 == null)
-                return false;
+                return true;
 
             // named module trying to access member in another named module
             if (!m1.requires().contains(m2))

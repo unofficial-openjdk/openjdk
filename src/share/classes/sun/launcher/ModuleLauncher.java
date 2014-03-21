@@ -296,9 +296,10 @@ class ModuleLauncher {
         }
 
         // reflection checks enabled?
-        boolean enableModuleChecks =
-           System.getProperty("sun.reflect.enableModuleChecks") != null;
-        Reflection.enableModules(enableModuleChecks);
+        String s = System.getProperty("sun.reflect.enableModuleChecks");
+        boolean enableModuleChecks = (s != null);
+        boolean debugging = enableModuleChecks && s.equals("debug");
+        Reflection.enableModules(enableModuleChecks, debugging);
     }
 
     /**

@@ -131,7 +131,9 @@ public final class Module {
                 }
                 @Override
                 public void addExport(Module m, String pkg, Module permit) {
-                    m.exports.computeIfAbsent(pkg, k -> new HashSet<>()).add(permit);
+                    Set<Module> permits = m.exports.computeIfAbsent(pkg, k -> new HashSet<>());
+                    if (permit != null)
+                        permits.add(permit);
                 }
                 @Override
                 public void addUses(Module m, String sn) {
