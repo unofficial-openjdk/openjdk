@@ -476,11 +476,11 @@ public class AttributeWriter extends BasicWriter
         println(entries.length + "\t// " + "provides services");
         indent(+1);
         for (Module_attribute.ProvidesEntry e: entries) {
-            print("#" + e.provides_index + "," +
+            print("#" + e.provides_index + ",#" +
                     e.with_index + "\t// provides ");
-            print(" " + constantWriter.stringValue(e.provides_index));
+            print(constantWriter.stringValue(e.provides_index));
             print (" with ");
-            println(" " + constantWriter.stringValue(e.with_index));
+            println(constantWriter.stringValue(e.with_index));
         }
         indent(-1);
     }

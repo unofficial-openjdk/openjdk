@@ -464,7 +464,7 @@ public class TreeCopier<P> implements TreeVisitor<JCTree,P> {
     @Override
     public JCPermits visitPermits(PermitsTree node, P p) {
         JCPermits t = (JCPermits) node;
-        JCExpression qualId = copy(t.qualid, p);
+        JCExpression qualId = copy(t.moduleName, p);
         return M.at(t.pos).Permits(qualId);
     }
 

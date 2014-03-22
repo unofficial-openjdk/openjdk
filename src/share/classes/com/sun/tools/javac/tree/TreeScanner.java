@@ -82,7 +82,7 @@ public class TreeScanner extends Visitor {
 
     @Override
     public void visitPermits(JCPermits tree) {
-        scan(tree.qualid);
+        scan(tree.moduleName);
     }
 
     @Override

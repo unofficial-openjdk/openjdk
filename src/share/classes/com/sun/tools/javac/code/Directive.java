@@ -28,6 +28,7 @@ package com.sun.tools.javac.code;
 import java.util.EnumSet;
 import java.util.Set;
 import com.sun.tools.javac.code.Symbol.ClassSymbol;
+import com.sun.tools.javac.code.Symbol.ModuleSymbol;
 import com.sun.tools.javac.code.Symbol.PackageSymbol;
 import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.util.ListBuffer;
@@ -46,19 +47,16 @@ public abstract class Directive {
     public enum Kind {
         EXPORTS,
         PERMITS,
-        REQUIRES,
         PROVIDES,
-        USES,
-        VIEW
+        REQUIRES,
+        USES
     }
 
     /** Flags for RequiresModuleDirective and RequiresServiceDirective. */
     public enum RequiresFlag {
-        OPTIONAL(0x0001),
-        LOCAL(0x0002),
-        REEXPORT(0x0004),
+        PUBLIC(0x0020),
         SYNTHETIC(0x1000),
-        SYNTHESIZED(0x10000);
+        MANDATED(0x8000);
 
         // overkill? move to ClassWriter?
         public static int value(Set<RequiresFlag> s) {
@@ -93,9 +91,11 @@ public abstract class Directive {
      */
     public static class ExportsDirective extends Directive {
         public final PackageSymbol sym;
+        public final List<Name> moduleNames; // maybe ModuleSymbol
 
-        public ExportsDirective(PackageSymbol sym) {
+        public ExportsDirective(PackageSymbol sym, List<Name> moduleNames) {
             this.sym = sym;
+            this.moduleNames = moduleNames;
         }
 
         @Override
@@ -105,7 +105,10 @@ public abstract class Directive {
 
         @Override
         public String toString() {
-            return "Exports[" + sym + "]";
+            if (moduleNames == null)
+                return "Exports[" + sym + "]";
+            else
+                return "Exports[" + sym + ":" + moduleNames + "]";
         }
 
         @Override
@@ -172,15 +175,15 @@ public abstract class Directive {
      * 'requires' ['public'] ViewName ';'
      */
     public static class RequiresDirective extends Directive {
-        public final Name viewName;  // may eventually be ModuleSymbol
+        public final Name moduleName;  // may eventually be ModuleSymbol
         public final Set<RequiresFlag> flags;
 
-        public RequiresDirective(Name viewName) {
-            this(viewName, EnumSet.noneOf(RequiresFlag.class));
+        public RequiresDirective(Name moduleName) {
+            this(moduleName, EnumSet.noneOf(RequiresFlag.class));
         }
 
-        public RequiresDirective(Name viewName, Set<RequiresFlag> flags) {
-            this.viewName = viewName;
+        public RequiresDirective(Name moduleName, Set<RequiresFlag> flags) {
+            this.moduleName = moduleName;
             this.flags = flags;
         }
 
@@ -191,7 +194,7 @@ public abstract class Directive {
 
         @Override
         public String toString() {
-            return "Requires[" + flags + "," + viewName + "]";
+            return "Requires[" + flags + "," + moduleName + "]";
         }
 
         @Override
@@ -212,66 +215,17 @@ public abstract class Directive {
 
         @Override
         public Kind getKind() {
-            return Kind.PERMITS;
+            return Kind.USES;
         }
 
         @Override
         public String toString() {
-            return "Permits[" + service + "]";
+            return "Uses[" + service + "]";
         }
 
         @Override
         public <R, P> R accept(Visitor<R, P> visitor, P data) {
             return visitor.visitUses(this, data);
-        }
-    }
-
-    /**
-     * 'view' ModuleName '{' {ProvidesDirective | ExportsDirective | PermitsDirective | EntrypointDirective} '}'
-     */
-    public static class ViewDeclaration extends Directive {
-        public final Name name;
-        public final List<Directive> directives;
-
-        public ViewDeclaration(Name name, List<Directive> directives) {
-            this.name = name;
-            this.directives = directives;
-        }
-
-        public ViewDeclaration(List<Directive> directives) {
-            this.name = null;
-            this.directives = directives;
-        }
-
-        public boolean isDefault() {
-            return name == null;
-        }
-
-        public List<ExportsDirective> getExports() {
-            return filter(directives, Kind.EXPORTS, ExportsDirective.class);
-        }
-
-        public List<PermitsDirective> getPermits() {
-            return filter(directives, Kind.PERMITS, PermitsDirective.class);
-        }
-
-        public List<ProvidesDirective> getServices() {
-            return filter(directives, Kind.PROVIDES, ProvidesDirective.class);
-        }
-
-        @Override
-        public Kind getKind() {
-            return Kind.VIEW;
-        }
-
-        @Override
-        public String toString() {
-            return "View[" + directives + "]";
-        }
-
-        @Override
-        public <R, P> R accept(Visitor<R, P> visitor, P data) {
-            return visitor.visitView(this, data);
         }
     }
 
@@ -281,7 +235,6 @@ public abstract class Directive {
         R visitPermits(PermitsDirective d, P p);
         R visitProvides(ProvidesDirective d, P p);
         R visitUses(UsesDirective d, P p);
-        R visitView(ViewDeclaration d, P p);
     }
 
     public static class SimpleVisitor<R, P> implements Visitor<R, P> {
@@ -333,11 +286,6 @@ public abstract class Directive {
 
         @Override
         public R visitUses(UsesDirective d, P p) {
-            return defaultAction(d, p);
-        }
-
-        @Override
-        public R visitView(ViewDeclaration d, P p) {
             return defaultAction(d, p);
         }
     }
@@ -396,10 +344,6 @@ public abstract class Directive {
 
         public R visitUses(UsesDirective d, P p) {
             return null;
-        }
-
-        public R visitView(ViewDeclaration d, P p) {
-            return scan(d.directives, p);
         }
 
     }

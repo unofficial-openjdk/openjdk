@@ -37,6 +37,8 @@ import com.sun.source.tree.*;
 import com.sun.source.tree.LambdaExpressionTree.BodyKind;
 import com.sun.source.tree.MemberReferenceTree.ReferenceMode;
 import com.sun.tools.javac.code.*;
+import com.sun.tools.javac.code.Directive.PermitsDirective;
+import com.sun.tools.javac.code.Directive.RequiresDirective;
 import com.sun.tools.javac.code.Scope.*;
 import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.util.*;
@@ -2483,10 +2485,11 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
 
     public static class JCPermits extends JCDirective
             implements PermitsTree {
-        public JCExpression qualid;
+        public JCExpression moduleName;
+        public PermitsDirective directive;
 
         protected JCPermits(JCExpression qualId) {
-            this.qualid = qualId;
+            this.moduleName = qualId;
         }
 
         @Override
@@ -2499,7 +2502,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
 
         @Override
         public JCExpression getModuleName() {
-            return qualid;
+            return moduleName;
         }
 
         @Override
@@ -2556,6 +2559,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
             implements RequiresTree {
         public boolean isPublic;
         public JCExpression moduleName;
+        public RequiresDirective directive;
 
         protected JCRequires(boolean isPublic, JCExpression moduleName) {
             this.isPublic = isPublic;

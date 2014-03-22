@@ -991,70 +991,50 @@ public class ClassWriter extends ClassFile {
      *  Returns the number of attributes written (0 or 1).
      */
     int writeModuleAttribute(ClassSymbol c) {
-        if (c.modle == null)
-            return 0;
+        ModuleSymbol m = c.modle;
 
         int alenIdx = writeAttr(names.Module);
-        databuf.appendChar(pool.put(c.modle));
+        List<RequiresDirective> requires = m.getRequires();
+        databuf.appendChar(requires.size());
+        for (RequiresDirective r: requires) {
+            databuf.appendChar(pool.put(r.moduleName));
+            databuf.appendChar(RequiresFlag.value(r.flags));
+        }
+
+        List<PermitsDirective> permits = m.getPermits();
+        databuf.appendChar(permits.size());
+        for (PermitsDirective p: permits) {
+            databuf.appendChar(pool.put(p.moduleName));
+        }
+
+        List<ExportsDirective> exports = m.getExports();
+        databuf.appendChar(exports.size());
+        for (ExportsDirective e: exports) {
+            databuf.appendChar(pool.put(names.fromUtf(externalize(e.sym.flatName()))));
+            if (e.moduleNames == null) {
+                databuf.appendChar(0);
+            } else {
+                databuf.appendChar(e.moduleNames.size());
+                for (Name n: e.moduleNames)
+                    databuf.appendChar(pool.put(n));
+            }
+        }
+
+        List<UsesDirective> uses = m.getUses();
+        databuf.appendChar(uses.size());
+        for (UsesDirective s: uses) {
+            databuf.appendChar(pool.put(s.service));
+        }
+
+        List<ProvidesDirective> services = m.getProvides();
+        databuf.appendChar(services.size());
+        for (ProvidesDirective s: services) {
+            databuf.appendChar(pool.put(s.service));
+            databuf.appendChar(pool.put(s.impl));
+        }
+
         endAttr(alenIdx);
         return 1;
-    }
-
-    int writeModuleMetadata(ModuleSymbol sym) {
-        int n = 0;
-
-        if (sym.hasRequires()) {
-            int alenIdx = writeAttr(names.ModuleRequires);
-                // modules
-                List<RequiresDirective> modules = sym.getRequiredModules();
-                databuf.appendChar(modules.size());
-                for (RequiresDirective m: modules) {
-                    databuf.appendChar(pool.put(m.viewName));
-                    databuf.appendInt(RequiresFlag.value(m.flags));
-                }
-                // services
-                List<UsesDirective> services = sym.getRequiredServices();
-                databuf.appendChar(services.size());
-                for (UsesDirective s: services) {
-                    databuf.appendChar(pool.put(s.service));
-                    databuf.appendInt(0);
-                }
-            endAttr(alenIdx);
-            n++;
-        }
-
-        if (sym.hasViews()) {
-            int alenIdx = writeAttr(names.ModuleProvides);
-            List<ViewDeclaration> views = sym.getViews();
-            databuf.appendChar(views.size());
-            for (ViewDeclaration v: views) {
-                // name
-                databuf.appendChar(v.isDefault() ? 0 : pool.put(names.fromUtf(externalize(v.name))));
-                // services
-                List<ProvidesDirective> services = v.getServices();
-                databuf.appendChar(services.size());
-                for (ProvidesDirective s: services) {
-                    databuf.appendChar(pool.put(s.service));
-                    databuf.appendChar(pool.put(s.impl));
-                }
-                // exports
-                Set<PackageSymbol> exports = sym.getExports(v);
-                databuf.appendChar(exports.size());
-                for (PackageSymbol e: exports) {
-                    databuf.appendChar(pool.put(names.fromUtf(externalize(e.flatName()))));
-                }
-                // permits
-                List<PermitsDirective> permits = v.getPermits();
-                databuf.appendChar(permits.size());
-                for (PermitsDirective p: permits) {
-                    databuf.appendChar(pool.put(p.moduleName));
-                }
-            }
-            endAttr(alenIdx);
-            n++;
-        }
-
-        return n;
     }
 
 /**********************************************************************
@@ -1684,9 +1664,10 @@ public class ClassWriter extends ClassFile {
     public JavaFileObject writeClass(ClassSymbol c)
         throws IOException, PoolOverflow, StringOverflow
     {
+        String name = (c.owner.kind == MDL ? c.name : c.flatname).toString();
         JavaFileObject outFile
             = fileManager.getJavaFileForOutput(CLASS_OUTPUT,
-                                               c.flatname.toString(),
+                                               name,
                                                JavaFileObject.Kind.CLASS,
                                                c.sourcefile);
         OutputStream out = outFile.openOutputStream();
@@ -1814,6 +1795,9 @@ public class ClassWriter extends ClassFile {
         acount += writeJavaAnnotations(c.getRawAttributes());
         acount += writeTypeAnnotations(c.getRawTypeAttributes(), false);
         acount += writeEnclosingMethodAttribute(c);
+        if (c.owner.kind == MDL) {
+            acount += writeModuleAttribute(c);
+        }
         acount += writeExtraClassAttributes(c);
 
         poolbuf.appendInt(JAVA_MAGIC);

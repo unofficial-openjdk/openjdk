@@ -461,7 +461,7 @@ public class Pretty extends JCTree.Visitor {
     public void visitPermits(JCPermits tree) {
         try {
             print("permits ");
-            printExpr(tree.qualid);
+            printExpr(tree.moduleName);
             print(";");
         } catch (IOException e) {
             throw new UncheckedIOException(e);

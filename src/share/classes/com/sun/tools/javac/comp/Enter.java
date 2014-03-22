@@ -302,6 +302,8 @@ public class Enter extends JCTree.Visitor {
 
     @Override
     public void visitTopLevel(JCCompilationUnit tree) {
+//        Assert.checkNonNull(tree.modle, tree.sourcefile.toString());
+
         JavaFileObject prev = log.useSource(tree.sourcefile);
         boolean addEnv = false;
         boolean isPkgInfo = tree.sourcefile.isNameCompatible("package-info",
@@ -421,6 +423,7 @@ public class Enter extends JCTree.Visitor {
         c.flags_field = chk.checkFlags(tree.pos(), tree.mods.flags, c, tree);
         c.sourcefile = env.toplevel.sourcefile;
         c.members_field = new Scope(c);
+        c.modle = env.toplevel.modle;
 
         ClassType ct = (ClassType)c.type;
         if (owner.kind != PCK && (c.flags_field & STATIC) == 0) {
@@ -448,6 +451,8 @@ public class Enter extends JCTree.Visitor {
 
         // Recursively enter all member classes.
         classEnter(tree.defs, localEnv);
+
+//        Assert.checkNonNull(c.modle, c.sourcefile.toString());
 
         result = c.type;
     }
