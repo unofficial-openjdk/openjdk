@@ -550,8 +550,7 @@ module javax.jta {
 
 module jdk.nashorn {
     include jdk.nashorn.**,
-            jdk.internal.dynalink.**,
-            netscape.**;
+            jdk.internal.dynalink.**;
     include jdk/nashorn/**;
     include META-INF/services/javax.script.ScriptEngineFactory;
 }
