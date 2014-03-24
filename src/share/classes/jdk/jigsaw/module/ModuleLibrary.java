@@ -26,6 +26,7 @@
 package jdk.jigsaw.module;
 
 import java.util.Set;
+import java.util.HashSet;
 
 /**
  * A library of modules, for example installed modules or a module path.
@@ -76,4 +77,16 @@ public abstract class ModuleLibrary {
      * the modules in the parent module library.
      */
     public abstract Set<Module> localModules();
+
+    /**
+     * Returns the set of modules in this library and all parent libraries.
+     */
+    public final Set<Module> allModules() {
+        if (parent == null)
+            return localModules();
+        Set<Module> result = new HashSet<>();
+        result.addAll(parent.allModules());
+        result.addAll(localModules());
+        return result;
+    }
 }

@@ -32,6 +32,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 import jdk.jigsaw.module.Module;
 import jdk.jigsaw.module.ModuleExport;
@@ -99,15 +100,17 @@ class ModuleLauncher {
         String mp = System.getProperty("java.module.path");
         if (mp != null) {
             library = new ModulePath(mp, systemLibrary);
-
-            // If -mods is not specified then all add modules on the module path
-            // to the root set. This is temporary until we know whether the main
-            // class is in a named or unnamed module.
-            if (roots.size() == 1 && roots.contains("jdk")) {
-                library.localModules().forEach(m -> roots.add(name(m)));
-            }
         } else {
             library = systemLibrary;
+        }
+
+        // If -mods is not specified then add all modules to the root set.
+        // This is temporary until we know whether the main class is in a named
+        // or unnamed module.
+        if (roots.isEmpty()) {
+            roots = library.allModules()
+                           .stream()
+                           .map(m -> name(m)).collect(Collectors.toSet());
         }
 
         // resolve the required modules

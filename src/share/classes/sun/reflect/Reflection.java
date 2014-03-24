@@ -101,11 +101,15 @@ public class Reflection {
     public static boolean quickCheckMemberAccess(Class<?> memberClass,
                                                  int modifiers)
     {
-        if (moduleChecksEnabled) {
-            // no quick check as don't know if caller is in named or unnamed module
-            return false;
-        }
-        return Modifier.isPublic(getClassAccessFlags(memberClass) & modifiers);
+      if (!Modifier.isPublic(getClassAccessFlags(memberClass) & modifiers))
+          return false;
+
+      if (moduleChecksEnabled) {
+          // no quick check if member is a public type in a named module
+          return (memberClass.getModule() == null);
+      } else {
+          return true;
+      }
     }
 
     public static void ensureMemberAccess(Class<?> currentClass,

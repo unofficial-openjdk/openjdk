@@ -909,9 +909,7 @@ public enum LauncherHelper {
         // initial modules/roots specified via -mods
         Set<String> roots = new HashSet<>();
         String propValue = System.getProperty("jdk.launcher.modules");
-        if (propValue == null) {
-            roots.add("jdk");
-        } else {
+        if (propValue != null) {
             for (String root: propValue.split(",")) {
                 roots.add(root);
             }
