@@ -25,24 +25,107 @@ package jdk.testlibrary;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.Phaser;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import sun.management.VMManagement;
 
 public final class ProcessTools {
+    private static final class LineForwarder extends StreamPumper.LinePump {
+        private final PrintStream ps;
+        private final String prefix;
+        LineForwarder(String prefix, PrintStream os) {
+            this.ps = os;
+            this.prefix = prefix;
+        }
+        @Override
+        protected void processLine(String line) {
+            ps.println("[" + prefix + "] " + line);
+        }
+    }
 
     private ProcessTools() {
     }
 
     /**
+     * <p>Starts a process from its builder.</p>
+     * <span>The default redirects of STDOUT and STDERR are started</span>
+     * @param name The process name
+     * @param processBuilder The process builder
+     * @return Returns the initialized process
+     * @throws IOException
+     */
+    public static Process startProcess(String name,
+                                       ProcessBuilder processBuilder)
+    throws IOException {
+        Process p = null;
+        try {
+            p = startProcess(name, processBuilder, -1, TimeUnit.NANOSECONDS);
+        } catch (InterruptedException | TimeoutException e) {
+            // can't ever happen
+        }
+        return p;
+    }
+
+    /**
+     * <p>Starts a process from its builder.</p>
+     * <span>The default redirects of STDOUT and STDERR are started</span>
+     * @param name The process name
+     * @param processBuilder The process builder
+     * @param timeout The timeout for the warmup waiting
+     * @param unit The timeout {@linkplain TimeUnit}
+     * @return Returns the initialized {@linkplain Process}
+     * @throws IOException
+     * @throws InterruptedException
+     * @throws TimeoutException
+     */
+    public static Process startProcess(String name,
+                                       ProcessBuilder processBuilder,
+                                       long timeout,
+                                       TimeUnit unit)
+    throws IOException, InterruptedException, TimeoutException {
+        Process p = processBuilder.start();
+        StreamPumper stdout = new StreamPumper(p.getInputStream());
+        StreamPumper stderr = new StreamPumper(p.getErrorStream());
+
+        stdout.addPump(new LineForwarder(name, System.out));
+        stderr.addPump(new LineForwarder(name, System.err));
+        final Phaser phs = new Phaser(1);
+        Future<Void> stdoutTask = stdout.process();
+        Future<Void> stderrTask = stderr.process();
+
+        try {
+            if (timeout > -1) {
+                phs.awaitAdvanceInterruptibly(0, timeout, unit);
+            }
+        } catch (TimeoutException | InterruptedException e) {
+            System.err.println("Failed to start a process (thread dump follows)");
+            for(Map.Entry<Thread, StackTraceElement[]> s : Thread.getAllStackTraces().entrySet()) {
+                printStack(s.getKey(), s.getValue());
+            }
+            stdoutTask.cancel(true);
+            stderrTask.cancel(true);
+            throw e;
+        }
+
+        return p;
+    }
+
+    /**
      * Pumps stdout and stderr from running the process into a String.
      *
-     * @param processHandler
+     * @param processBuilder
      *            ProcessHandler to run.
      * @return Output from process.
      * @throws IOException
@@ -69,22 +152,19 @@ public final class ProcessTools {
                 stdoutBuffer);
         StreamPumper errPumper = new StreamPumper(process.getErrorStream(),
                 stderrBuffer);
-        Thread outPumperThread = new Thread(outPumper);
-        Thread errPumperThread = new Thread(errPumper);
 
-        outPumperThread.setDaemon(true);
-        errPumperThread.setDaemon(true);
-
-        outPumperThread.start();
-        errPumperThread.start();
+        Future<Void> outTask = outPumper.process();
+        Future<Void> errTask = errPumper.process();
 
         try {
             process.waitFor();
-            outPumperThread.join();
-            errPumperThread.join();
+            outTask.get();
+            errTask.get();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             return null;
+        } catch (ExecutionException e) {
+            throw new IOException(e);
         }
 
         return new OutputBuffer(stdoutBuffer.toString(),
@@ -137,15 +217,106 @@ public final class ProcessTools {
      */
     public static ProcessBuilder createJavaProcessBuilder(String... command)
             throws Exception {
-        String javapath = JdkFinder.getJavaLauncher(false);
+        String javapath = JDKToolFinder.getJDKTool("java");
 
         ArrayList<String> args = new ArrayList<>();
         args.add(javapath);
         Collections.addAll(args, getPlatformSpecificVMArgs());
         Collections.addAll(args, command);
 
-        return new ProcessBuilder(args.toArray(new String[args.size()]));
+        // Reporting
+        StringBuilder cmdLine = new StringBuilder();
+        for (String cmd : args)
+            cmdLine.append(cmd).append(' ');
+        System.out.println("Command line: [" + cmdLine.toString() + "]");
 
+        return new ProcessBuilder(args.toArray(new String[args.size()]));
     }
 
+    private static void printStack(Thread t, StackTraceElement[] stack) {
+        System.out.println("\t" +  t +
+                           " stack: (length = " + stack.length + ")");
+        if (t != null) {
+            for (StackTraceElement stack1 : stack) {
+                System.out.println("\t" + stack1);
+            }
+            System.out.println();
+        }
+    }
+
+    /**
+     * Executes a test jvm process, waits for it to finish and returns the process output.
+     * The default jvm options from jtreg, test.vm.opts and test.java.opts, are added.
+     * The java from the test.jdk is used to execute the command.
+     *
+     * The command line will be like:
+     * {test.jdk}/bin/java {test.vm.opts} {test.java.opts} cmds
+     *
+     * @param cmds User specifed arguments.
+     * @return The output from the process.
+     */
+    public static OutputAnalyzer executeTestJvm(String... cmds) throws Throwable {
+        ProcessBuilder pb = createJavaProcessBuilder(Utils.addTestJavaOpts(cmds));
+        return executeProcess(pb);
+    }
+
+    /**
+     * Executes a process, waits for it to finish and returns the process output.
+     * @param pb The ProcessBuilder to execute.
+     * @return The output from the process.
+     */
+    public static OutputAnalyzer executeProcess(ProcessBuilder pb) throws Throwable {
+        OutputAnalyzer output = null;
+        try {
+            output = new OutputAnalyzer(pb.start());
+            return output;
+        } catch (Throwable t) {
+            System.out.println("executeProcess() failed: " + t);
+            throw t;
+        } finally {
+            System.out.println(getProcessLog(pb, output));
+        }
+    }
+
+    /**
+     * Executes a process, waits for it to finish and returns the process output.
+     * @param cmds The command line to execute.
+     * @return The output from the process.
+     */
+    public static OutputAnalyzer executeProcess(String... cmds) throws Throwable {
+        return executeProcess(new ProcessBuilder(cmds));
+    }
+
+    /**
+     * Used to log command line, stdout, stderr and exit code from an executed process.
+     * @param pb The executed process.
+     * @param output The output from the process.
+     */
+    public static String getProcessLog(ProcessBuilder pb, OutputAnalyzer output) {
+        String stderr = output == null ? "null" : output.getStderr();
+        String stdout = output == null ? "null" : output.getStdout();
+        String exitValue = output == null ? "null": Integer.toString(output.getExitValue());
+        StringBuilder logMsg = new StringBuilder();
+        final String nl = System.getProperty("line.separator");
+        logMsg.append("--- ProcessLog ---" + nl);
+        logMsg.append("cmd: " + getCommandLine(pb) + nl);
+        logMsg.append("exitvalue: " + exitValue + nl);
+        logMsg.append("stderr: " + stderr + nl);
+        logMsg.append("stdout: " + stdout + nl);
+        return logMsg.toString();
+    }
+
+    /**
+     * @return The full command line for the ProcessBuilder.
+     */
+    public static String getCommandLine(ProcessBuilder pb) {
+        if (pb == null) {
+            return "null";
+        }
+        StringBuilder cmd = new StringBuilder();
+        for (String s : pb.command()) {
+            cmd.append(s).append(" ");
+        }
+        return cmd.toString().trim();
+    }
 }
