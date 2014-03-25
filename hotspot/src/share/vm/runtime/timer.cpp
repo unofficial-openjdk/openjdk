@@ -35,6 +35,9 @@
 #ifdef TARGET_OS_FAMILY_windows
 # include "os_windows.inline.hpp"
 #endif
+#ifdef TARGET_OS_FAMILY_aix
+# include "os_aix.inline.hpp"
+#endif
 #ifdef TARGET_OS_FAMILY_bsd
 # include "os_bsd.inline.hpp"
 #endif
@@ -191,7 +194,7 @@ TraceCPUTime::~TraceCPUTime() {
         system_secs = system_time - _starting_system_time;
         real_secs = real_time - _starting_real_time;
 
-        _logfile->print(" [Times: user=%3.2f sys=%3.2f, real=%3.2f secs] ",
+        _logfile->print(" [Times: user=%3.2f sys=%3.2f real=%3.2f secs] ",
           user_secs, system_secs, real_secs);
 
       } else {

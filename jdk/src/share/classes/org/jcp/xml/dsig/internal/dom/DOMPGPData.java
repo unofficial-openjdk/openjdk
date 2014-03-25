@@ -21,7 +21,7 @@
  * under the License.
  */
 /*
- * Copyright (c) 2005, 2008, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2013, Oracle and/or its affiliates. All rights reserved.
  */
 /*
  * $Id: DOMPGPData.java 1203846 2011-11-18 21:18:17Z mullan $
@@ -85,7 +85,7 @@ public final class DOMPGPData extends DOMStructure implements PGPData {
                 }
             }
         }
-        this.keyPacket = (byte[])keyPacket.clone();
+        this.keyPacket = keyPacket.clone();
         checkKeyPacket(keyPacket);
         this.keyId = null;
     }
@@ -132,9 +132,9 @@ public final class DOMPGPData extends DOMStructure implements PGPData {
                 }
             }
         }
-        this.keyId = (byte[])keyId.clone();
+        this.keyId = keyId.clone();
         this.keyPacket = keyPacket == null ? null
-                                           : (byte[])keyPacket.clone();
+                                           : keyPacket.clone();
         if (keyPacket != null) {
             checkKeyPacket(keyPacket);
         }
@@ -177,11 +177,11 @@ public final class DOMPGPData extends DOMStructure implements PGPData {
     }
 
     public byte[] getKeyId() {
-        return (keyId == null ? null : (byte[])keyId.clone());
+        return (keyId == null ? null : keyId.clone());
     }
 
     public byte[] getKeyPacket() {
-        return (keyPacket == null ? null : (byte[])keyPacket.clone());
+        return (keyPacket == null ? null : keyPacket.clone());
     }
 
     public List getExternalElements() {

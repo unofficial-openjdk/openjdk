@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -40,18 +40,21 @@
 #include <limits.h>
 #include <sys/param.h>
 #include <sys/sysctl.h>
+#include <sys/ioctl.h>
 #ifndef MAXINT
 #define MAXINT INT_MAX
 #endif
 #endif
 
 #ifdef __solaris__
+#include <sys/filio.h>
 #include <sys/sockio.h>
 #include <stropts.h>
 #include <inet/nd.h>
 #endif
 
 #ifdef __linux__
+#include <sys/ioctl.h>
 #include <arpa/inet.h>
 #include <net/route.h>
 #include <sys/utsname.h>
@@ -62,18 +65,15 @@
 
 #endif
 
+#ifdef _AIX
+#include <sys/ioctl.h>
+#endif
+
 #include "jni_util.h"
 #include "jvm.h"
 #include "net_util.h"
 
 #include "java_net_SocketOptions.h"
-
-/* needed from libsocket on Solaris 8 */
-
-getaddrinfo_f getaddrinfo_ptr = NULL;
-freeaddrinfo_f freeaddrinfo_ptr = NULL;
-gai_strerror_f gai_strerror_ptr = NULL;
-getnameinfo_f getnameinfo_ptr = NULL;
 
 /*
  * EXCLBIND socket options only on Solaris
@@ -110,6 +110,7 @@ void setDefaultScopeID(JNIEnv *env, struct sockaddr *him)
 }
 
 int getDefaultScopeID(JNIEnv *env) {
+    int defaultIndex = 0;
     static jclass ni_class = NULL;
     static jfieldID ni_defaultIndexID;
     if (ni_class == NULL) {
@@ -121,10 +122,23 @@ int getDefaultScopeID(JNIEnv *env) {
                                                      "defaultIndex", "I");
         ni_class = c;
     }
-    int defaultIndex = 0;
     defaultIndex = (*env)->GetStaticIntField(env, ni_class,
                                              ni_defaultIndexID);
     return defaultIndex;
+}
+
+#define RESTARTABLE(_cmd, _result) do { \
+    do { \
+        _result = _cmd; \
+    } while((_result == -1) && (errno == EINTR)); \
+} while(0)
+
+int NET_SocketAvailable(int s, jint *pbytes) {
+    int result;
+    RESTARTABLE(ioctl(s, FIONREAD, pbytes), result);
+    // note: ioctl can return 0 when successful, NET_SocketAvailable
+    // is expected to return 0 on failure and 1 on success.
+    return (result == -1) ? 0 : 1;
 }
 
 #ifdef __solaris__
@@ -322,7 +336,7 @@ jint  IPv6_supported()
     SOCKADDR sa;
     socklen_t sa_len = sizeof(sa);
 
-    fd = JVM_Socket(AF_INET6, SOCK_STREAM, 0) ;
+    fd = socket(AF_INET6, SOCK_STREAM, 0) ;
     if (fd < 0) {
         /*
          *  TODO: We really cant tell since it may be an unrelated error
@@ -425,15 +439,14 @@ jint  IPv6_supported()
 }
 #endif /* DONT_ENABLE_IPV6 */
 
-void ThrowUnknownHostExceptionWithGaiError(JNIEnv *env,
-                                           const char* hostname,
-                                           int gai_error)
+void NET_ThrowUnknownHostExceptionWithGaiError(JNIEnv *env,
+                                               const char* hostname,
+                                               int gai_error)
 {
     int size;
     char *buf;
     const char *format = "%s: %s";
-    const char *error_string =
-        (gai_strerror_ptr == NULL) ? NULL : (*gai_strerror_ptr)(gai_error);
+    const char *error_string = gai_strerror(gai_error);
     if (error_string == NULL)
         error_string = "unknown error";
 
@@ -737,14 +750,23 @@ static int getLocalScopeID (char *addr) {
     return 0;
 }
 
-void initLocalAddrTable () {
+void platformInit () {
     initLoopbackRoutes();
     initLocalIfs();
 }
 
+#elif defined(_AIX)
+
+/* Initialize stubs for blocking I/O workarounds (see src/solaris/native/java/net/linux_close.c) */
+extern void aix_close_init();
+
+void platformInit () {
+    aix_close_init();
+}
+
 #else
 
-void initLocalAddrTable () {}
+void platformInit () {}
 
 #endif
 
@@ -1198,6 +1220,7 @@ NET_GetSockOpt(int fd, int level, int opt, void *result,
                int *len)
 {
     int rv;
+    socklen_t socklen = *len;
 
 #ifdef AF_INET6
     if ((level == IPPROTO_IP) && (opt == IP_TOS)) {
@@ -1214,15 +1237,8 @@ NET_GetSockOpt(int fd, int level, int opt, void *result,
     }
 #endif
 
-#ifdef __solaris__
-    rv = getsockopt(fd, level, opt, result, len);
-#else
-    {
-        socklen_t socklen = *len;
-        rv = getsockopt(fd, level, opt, result, &socklen);
-        *len = socklen;
-    }
-#endif
+    rv = getsockopt(fd, level, opt, result, &socklen);
+    *len = socklen;
 
     if (rv < 0) {
         return rv;
@@ -1271,6 +1287,7 @@ int
 NET_SetSockOpt(int fd, int level, int  opt, const void *arg,
                int len)
 {
+
 #ifndef IPTOS_TOS_MASK
 #define IPTOS_TOS_MASK 0x1e
 #endif
@@ -1291,9 +1308,6 @@ NET_SetSockOpt(int fd, int level, int  opt, const void *arg,
 #else
     static long maxsockbuf = -1;
 #endif
-
-    int addopt;
-    struct linger *ling;
 #endif
 
     /*
@@ -1335,7 +1349,8 @@ NET_SetSockOpt(int fd, int level, int  opt, const void *arg,
 #ifdef __solaris__
     if (level == SOL_SOCKET) {
         if (opt == SO_SNDBUF || opt == SO_RCVBUF) {
-            int sotype=0, arglen;
+            int sotype=0;
+            socklen_t arglen;
             int *bufsize, maxbuf;
             int ret;
 
@@ -1381,6 +1396,29 @@ NET_SetSockOpt(int fd, int level, int  opt, const void *arg,
             bufsize = (int *)arg;
             if (*bufsize > maxbuf) {
                 *bufsize = maxbuf;
+            }
+        }
+    }
+#endif
+
+#ifdef _AIX
+    if (level == SOL_SOCKET) {
+        if (opt == SO_SNDBUF || opt == SO_RCVBUF) {
+            /*
+             * Just try to set the requested size. If it fails we will leave the
+             * socket option as is. Setting the buffer size means only a hint in
+             * the jse2/java software layer, see javadoc. In the previous
+             * solution the buffer has always been truncated to a length of
+             * 0x100000 Byte, even if the technical limit has not been reached.
+             * This kind of absolute truncation was unexpected in the jck tests.
+             */
+            int ret = setsockopt(fd, level, opt, arg, len);
+            if ((ret == 0) || (ret == -1 && errno == ENOBUFS)) {
+                // Accept failure because of insufficient buffer memory resources.
+                return 0;
+            } else {
+                // Deliver all other kinds of errors.
+                return ret;
             }
         }
     }
@@ -1442,10 +1480,12 @@ NET_SetSockOpt(int fd, int level, int  opt, const void *arg,
 
         }
     }
+#endif
 
+#if defined(_ALLBSD_SOURCE) || defined(_AIX)
     /*
      * On Solaris, SO_REUSEADDR will allow multiple datagram
-     * sockets to bind to the same port.  The network jck tests
+     * sockets to bind to the same port. The network jck tests check
      * for this "feature", so we need to emulate it by turning on
      * SO_REUSEPORT as well for that combination.
      */
@@ -1459,11 +1499,9 @@ NET_SetSockOpt(int fd, int level, int  opt, const void *arg,
         }
 
         if (sotype == SOCK_DGRAM) {
-            addopt = SO_REUSEPORT;
-            setsockopt(fd, level, addopt, arg, len);
+            setsockopt(fd, level, SO_REUSEPORT, arg, len);
         }
     }
-
 #endif
 
     return setsockopt(fd, level, opt, arg, len);
@@ -1516,7 +1554,8 @@ NET_Bind(int fd, struct sockaddr *him, int len)
      * corresponding IPv4 port is in use.
      */
     if (ipv6_available()) {
-        int arg, len;
+        int arg;
+        socklen_t len;
 
         len = sizeof(arg);
         if (useExclBind || getsockopt(fd, SOL_SOCKET, SO_REUSEADDR,
@@ -1567,7 +1606,7 @@ NET_Bind(int fd, struct sockaddr *him, int len)
 }
 
 /**
- * Wrapper for select/poll with timeout on a single file descriptor.
+ * Wrapper for poll with timeout on a single file descriptor.
  *
  * flags (defined in net_util_md.h can be any combination of
  * NET_WAIT_READ, NET_WAIT_WRITE & NET_WAIT_CONNECT.
@@ -1586,54 +1625,25 @@ NET_Wait(JNIEnv *env, jint fd, jint flags, jint timeout)
 
     while (1) {
         jlong newTime;
-#ifndef USE_SELECT
-        {
-          struct pollfd pfd;
-          pfd.fd = fd;
-          pfd.events = 0;
-          if (flags & NET_WAIT_READ)
-            pfd.events |= POLLIN;
-          if (flags & NET_WAIT_WRITE)
-            pfd.events |= POLLOUT;
-          if (flags & NET_WAIT_CONNECT)
-            pfd.events |= POLLOUT;
+        struct pollfd pfd;
+        pfd.fd = fd;
+        pfd.events = 0;
+        if (flags & NET_WAIT_READ)
+          pfd.events |= POLLIN;
+        if (flags & NET_WAIT_WRITE)
+          pfd.events |= POLLOUT;
+        if (flags & NET_WAIT_CONNECT)
+          pfd.events |= POLLOUT;
 
-          errno = 0;
-          read_rv = NET_Poll(&pfd, 1, timeout);
-        }
-#else
-        {
-          fd_set rd, wr, ex;
-          struct timeval t;
-
-          t.tv_sec = timeout / 1000;
-          t.tv_usec = (timeout % 1000) * 1000;
-
-          FD_ZERO(&rd);
-          FD_ZERO(&wr);
-          FD_ZERO(&ex);
-          if (flags & NET_WAIT_READ) {
-            FD_SET(fd, &rd);
-          }
-          if (flags & NET_WAIT_WRITE) {
-            FD_SET(fd, &wr);
-          }
-          if (flags & NET_WAIT_CONNECT) {
-            FD_SET(fd, &wr);
-            FD_SET(fd, &ex);
-          }
-
-          errno = 0;
-          read_rv = NET_Select(fd+1, &rd, &wr, &ex, &t);
-        }
-#endif
+        errno = 0;
+        read_rv = NET_Poll(&pfd, 1, timeout);
 
         newTime = JVM_CurrentTimeMillis(env, 0);
         timeout -= (newTime - prevTime);
         if (timeout <= 0) {
           return read_rv > 0 ? 0 : -1;
         }
-        newTime = prevTime;
+        prevTime = newTime;
 
         if (read_rv > 0) {
           break;

@@ -43,6 +43,7 @@ ifneq ($(OPENJDK_TARGET_OS), macosx)
       CFLAGS := $(CFLAGS_JDKLIB) \
           -I$(JDK_TOPDIR)/src/share/native/java/lang/fdlibm/include, \
       CFLAGS_windows_debug := -DLOGGING, \
+      CFLAGS_aix := -qfloat=nomaf, \
       ARFLAGS := $(ARFLAGS), \
       OBJECT_DIR := $(JDK_OUTPUTDIR)/objs/libfdlibm, \
       DEBUG_SYMBOLS := $(DEBUG_ALL_BINARIES)))
@@ -122,15 +123,16 @@ LIBJAVA_SRC_DIRS := $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/java/l
     $(JDK_TOPDIR)/src/share/native/java/security \
     $(JDK_TOPDIR)/src/share/native/common \
     $(JDK_TOPDIR)/src/share/native/sun/misc \
+    $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/sun/misc \
     $(JDK_TOPDIR)/src/share/native/sun/reflect \
     $(JDK_TOPDIR)/src/share/native/java/util \
     $(JDK_TOPDIR)/src/share/native/java/util/concurrent/atomic \
     $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/common \
     $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/java/util
 
-ifneq ($(OPENJDK_TARGET_OS), macosx)
+ifeq ($(OPENJDK_TARGET_OS), windows)
   LIBJAVA_SRC_DIRS += $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/sun/util/locale/provider
-else
+else ifeq ($(OPENJDK_TARGET_OS), macosx)
   LIBJAVA_SRC_DIRS += $(JDK_TOPDIR)/src/macosx/native/sun/util/locale/provider
 endif
 
@@ -186,7 +188,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBJAVA, \
     LIBRARY := java, \
     OUTPUT_DIR := $(INSTALL_LIBRARIES_HERE), \
     SRC := $(LIBJAVA_SRC_DIRS), \
-    EXCLUDES := fdlibm/src zip, \
+    EXCLUDES := fdlibm/src zip prefs, \
     EXCLUDE_FILES := $(LIBJAVA_EXCLUDE_FILES), \
     LANG := C, \
     OPTIMIZATION := HIGH, \
@@ -198,6 +200,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBJAVA, \
     LDFLAGS_SUFFIX_posix := -ljvm -lverify, \
     LDFLAGS_SUFFIX_solaris := -lsocket -lnsl -lscf $(LIBDL) $(BUILD_LIBFDLIBM) -lc, \
     LDFLAGS_SUFFIX_linux := $(LIBDL) $(BUILD_LIBFDLIBM), \
+    LDFLAGS_SUFFIX_aix := $(LIBDL) $(BUILD_LIBFDLIBM) -lm,\
     LDFLAGS_SUFFIX_macosx := -L$(JDK_OUTPUTDIR)/objs/ -lfdlibm \
         -framework CoreFoundation \
         -framework Foundation \
@@ -266,6 +269,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBZIP, \
         $(WIN_JAVA_LIB), \
     LDFLAGS_SUFFIX_linux := -ljvm -ljava $(LIBZ), \
     LDFLAGS_SUFFIX_solaris := -ljvm -ljava $(LIBZ) -lc, \
+    LDFLAGS_SUFFIX_aix := -ljvm -ljava $(LIBZ),\
     LDFLAGS_SUFFIX_macosx := $(LIBZ) -ljava -ljvm, \
     VERSIONINFO_RESOURCE := $(JDK_TOPDIR)/src/windows/resource/version.rc, \
     RC_FLAGS := $(RC_FLAGS) \
@@ -279,6 +283,41 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBZIP, \
 $(BUILD_LIBZIP): $(BUILD_LIBJAVA)
 
 BUILD_LIBRARIES += $(BUILD_LIBZIP)
+
+##########################################################################################
+
+ifeq ($(OPENJDK_TARGET_OS), macosx)
+  LIBPREF_SRC_DIRS := $(JDK_TOPDIR)/src/macosx/native/java/util/prefs
+else
+  LIBPREF_SRC_DIRS := $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/java/util/prefs
+endif
+
+$(eval $(call SetupNativeCompilation,BUILD_LIBPREFS, \
+    LIBRARY := prefs, \
+    OUTPUT_DIR := $(INSTALL_LIBRARIES_HERE), \
+    SRC := $(LIBPREF_SRC_DIRS), \
+    LANG := C, \
+    OPTIMIZATION := HIGH, \
+    CFLAGS := $(CFLAGS_JDKLIB), \
+    MAPFILE := $(JDK_TOPDIR)/make/mapfiles/libprefs/mapfile-vers, \
+    LDFLAGS := $(LDFLAGS_JDKLIB) \
+        $(call SET_SHARED_LIBRARY_ORIGIN), \
+    LDFLAGS_SUFFIX_linux := -ljvm -ljava, \
+    LDFLAGS_SUFFIX_solaris := -ljvm -ljava -lc, \
+    LDFLAGS_SUFFIX_aix := -ljvm -ljava, \
+    LDFLAGS_SUFFIX_windows := advapi32.lib, \
+    LDFLAGS_SUFFIX_macosx := -ljvm -framework CoreFoundation, \
+    VERSIONINFO_RESOURCE := $(JDK_TOPDIR)/src/windows/resource/version.rc, \
+    RC_FLAGS := $(RC_FLAGS) \
+        -D "JDK_FNAME=prefs.dll" \
+        -D "JDK_INTERNAL_NAME=prefs" \
+        -D "JDK_FTYPE=0x2L", \
+    OBJECT_DIR := $(JDK_OUTPUTDIR)/objs/libprefs, \
+    DEBUG_SYMBOLS := $(DEBUG_ALL_BINARIES)))
+
+$(BUILD_LIBPREFS): $(BUILD_LIBJAVA)
+    
+BUILD_LIBRARIES += $(BUILD_LIBPREFS)
 
 ##########################################################################################
 
@@ -404,6 +443,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBJLI, \
     LDFLAGS_macosx := -framework Cocoa -framework Security -framework ApplicationServices, \
     LDFLAGS_SUFFIX_solaris := $(LIBZ) $(LIBDL) -lc, \
     LDFLAGS_SUFFIX_linux := $(LIBZ) $(LIBDL) -lc -lpthread, \
+    LDFLAGS_SUFFIX_aix := $(LIBZ) $(LIBDL),\
     LDFLAGS_SUFFIX_macosx := $(LIBZ), \
     LDFLAGS_SUFFIX_windows := \
         -export:JLI_Launch \
@@ -469,6 +509,22 @@ else ifeq ($(OPENJDK_TARGET_OS), macosx)
 	$(call install-file)
 
   BUILD_LIBRARIES += $(JDK_OUTPUTDIR)/objs/libjli_static.a
+
+else ifeq ($(OPENJDK_TARGET_OS), aix)
+  # AIX also requires a static libjli because the compiler doesn't support '-rpath'
+  $(eval $(call SetupNativeCompilation,BUILD_LIBJLI_STATIC,\
+      STATIC_LIBRARY:=jli_static,\
+      OUTPUT_DIR:=$(JDK_OUTPUTDIR)/objs,\
+      SRC:=$(BUILD_LIBJLI_SRC_DIRS),\
+      INCLUDE_FILES:=$(BUILD_LIBJLI_FILES),\
+      LANG:=C,\
+      OPTIMIZATION:=HIGH, \
+      CFLAGS:=$(STATIC_LIBRARY_FLAGS) $(LIBJLI_CFLAGS),\
+      ARFLAGS:=$(ARFLAGS),\
+      OBJECT_DIR:=$(JDK_OUTPUTDIR)/objs/libjli_static))
+
+  BUILD_LIBRARIES += $(JDK_OUTPUTDIR)/objs/libjli_static.a
+
 endif
 
 ##########################################################################################

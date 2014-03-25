@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -581,9 +581,34 @@ public class Net {
 
     private static native void initIDs();
 
+    /**
+     * Event masks for the various poll system calls.
+     * They will be set platform dependant in the static initializer below.
+     */
+    public static final short POLLIN;
+    public static final short POLLOUT;
+    public static final short POLLERR;
+    public static final short POLLHUP;
+    public static final short POLLNVAL;
+    public static final short POLLCONN;
+
+    static native short pollinValue();
+    static native short polloutValue();
+    static native short pollerrValue();
+    static native short pollhupValue();
+    static native short pollnvalValue();
+    static native short pollconnValue();
+
     static {
         IOUtil.load();
         initIDs();
+
+        POLLIN     = pollinValue();
+        POLLOUT    = polloutValue();
+        POLLERR    = pollerrValue();
+        POLLHUP    = pollhupValue();
+        POLLNVAL   = pollnvalValue();
+        POLLCONN   = pollconnValue();
     }
 
 }

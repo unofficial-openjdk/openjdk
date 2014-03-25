@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -142,9 +142,9 @@ class UnixAsynchronousSocketChannelImpl
         assert Thread.holdsLock(updateLock);
         int events = 0;
         if (readPending)
-            events |= Port.POLLIN;
+            events |= Net.POLLIN;
         if (connectPending || writePending)
-            events |= Port.POLLOUT;
+            events |= Net.POLLOUT;
         if (events != 0)
             port.startPoll(fdVal, events);
     }
@@ -204,9 +204,9 @@ class UnixAsynchronousSocketChannelImpl
      */
     @Override
     public void onEvent(int events, boolean mayInvokeDirect) {
-        boolean readable = (events & Port.POLLIN) > 0;
-        boolean writable = (events & Port.POLLOUT) > 0;
-        if ((events & (Port.POLLERR | Port.POLLHUP)) > 0) {
+        boolean readable = (events & Net.POLLIN) > 0;
+        boolean writable = (events & Net.POLLOUT) > 0;
+        if ((events & (Net.POLLERR | Net.POLLHUP)) > 0) {
             readable = true;
             writable = true;
         }

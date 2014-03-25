@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -43,8 +43,6 @@ import sun.misc.*;
 
 public class PollArrayWrapper extends AbstractPollArrayWrapper {
 
-    public static final short POLLCONN = POLLOUT;
-
     // File descriptor to write for interrupt
     int interruptFD;
 
@@ -58,7 +56,7 @@ public class PollArrayWrapper extends AbstractPollArrayWrapper {
     void initInterrupt(int fd0, int fd1) {
         interruptFD = fd1;
         putDescriptor(0, fd0);
-        putEventOps(0, POLLIN);
+        putEventOps(0, Net.POLLIN);
         putReventOps(0, 0);
     }
 

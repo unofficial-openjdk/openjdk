@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -42,8 +42,8 @@ static jfieldID ia_addrID;      /* java.net.InetAddress.address */
 JNIEXPORT void JNICALL
 Java_sun_nio_ch_SocketChannelImpl_initIDs(JNIEnv *env, jclass cls)
 {
-    cls = (*env)->FindClass(env, "java/net/InetAddress");
-    ia_addrID = (*env)->GetFieldID(env, cls, "address", "I");
+    CHECK_NULL(cls = (*env)->FindClass(env, "java/net/InetAddress"));
+    CHECK_NULL(ia_addrID = (*env)->GetFieldID(env, cls, "address", "I"));
 }
 
 jint

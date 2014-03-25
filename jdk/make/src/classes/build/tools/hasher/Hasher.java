@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2004, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -42,9 +42,6 @@ import java.util.*;
  */
 
 public class Hasher {
-
-    // This class cannot, sadly, make use of 1.5 features since it must be
-    // compiled and run with the bootstrap JDK, which is 1.4.2.
 
     static final PrintStream out = System.out;
     static final PrintStream err = System.err;
@@ -184,11 +181,13 @@ public class Hasher {
                 if (md <= maxDepth) {
                     // Success
                     out.flush();
-                    if (cln != null)
-                        err.print(cln + ": ");
-                    err.println("Table size " + (1 << nb) + " (" + nb + " bits)"
-                                + ", shift " + shift
-                                + ", max chain depth " + md);
+                    if (verbose) {
+                        if (cln != null)
+                            err.print(cln + ": ");
+                        err.println("Table size " + (1 << nb) + " (" + nb + " bits)"
+                                    + ", shift " + shift
+                                    + ", max chain depth " + md);
+                    }
                     return this;
                 }
             }

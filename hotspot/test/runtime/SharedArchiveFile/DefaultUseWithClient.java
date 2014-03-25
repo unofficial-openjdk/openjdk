@@ -26,6 +26,7 @@
  * @summary Test default behavior of sharing with -client
  * @library /testlibrary
  * @run main DefaultUseWithClient
+ * @bug 8032224
  */
 
 import com.oracle.java.testlibrary.*;
@@ -55,10 +56,17 @@ public class DefaultUseWithClient {
            "-XX:+UnlockDiagnosticVMOptions",
            "-XX:SharedArchiveFile=./" + fileName,
            "-client",
+           "-XX:+PrintSharedSpaces",
            "-version");
 
         output = new OutputAnalyzer(pb.start());
-        output.shouldContain("sharing");
+        try {
+            output.shouldContain("sharing");
+        } catch (RuntimeException e) {
+            // if sharing failed due to ASLR or similar reasons,
+            // check whether sharing was attempted at all (UseSharedSpaces)
+            output.shouldContain("UseSharedSpaces:");
+        }
         output.shouldHaveExitValue(0);
    }
 }

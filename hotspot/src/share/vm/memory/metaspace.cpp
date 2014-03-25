@@ -32,7 +32,9 @@
 #include "memory/gcLocker.hpp"
 #include "memory/metachunk.hpp"
 #include "memory/metaspace.hpp"
+#include "memory/metaspaceGCThresholdUpdater.hpp"
 #include "memory/metaspaceShared.hpp"
+#include "memory/metaspaceTracer.hpp"
 #include "memory/resourceArea.hpp"
 #include "memory/universe.hpp"
 #include "runtime/atomic.inline.hpp"
@@ -46,8 +48,8 @@
 #include "utilities/copy.hpp"
 #include "utilities/debug.hpp"
 
-typedef BinaryTreeDictionary<Metablock, FreeList> BlockTreeDictionary;
-typedef BinaryTreeDictionary<Metachunk, FreeList> ChunkTreeDictionary;
+typedef BinaryTreeDictionary<Metablock, FreeList<Metablock> > BlockTreeDictionary;
+typedef BinaryTreeDictionary<Metachunk, FreeList<Metachunk> > ChunkTreeDictionary;
 
 // Set this constant to enable slow integrity checking of the free chunk lists
 const bool metaspace_slow_verify = false;
@@ -57,6 +59,7 @@ size_t const allocation_from_dictionary_limit = 4 * K;
 MetaWord* last_allocated = 0;
 
 size_t Metaspace::_compressed_class_space_size;
+const MetaspaceTracer* Metaspace::_tracer = NULL;
 
 // Used in declarations in SpaceManager and ChunkManager
 enum ChunkIndex {
@@ -181,6 +184,48 @@ class ChunkManager : public CHeapObj<mtInternal> {
 
   // Remove from a list by size.  Selects list based on size of chunk.
   Metachunk* free_chunks_get(size_t chunk_word_size);
+
+#define index_bounds_check(index)                                         \
+  assert(index == SpecializedIndex ||                                     \
+         index == SmallIndex ||                                           \
+         index == MediumIndex ||                                          \
+         index == HumongousIndex, err_msg("Bad index: %d", (int) index))
+
+  size_t num_free_chunks(ChunkIndex index) const {
+    index_bounds_check(index);
+
+    if (index == HumongousIndex) {
+      return _humongous_dictionary.total_free_blocks();
+    }
+
+    ssize_t count = _free_chunks[index].count();
+    return count == -1 ? 0 : (size_t) count;
+  }
+
+  size_t size_free_chunks_in_bytes(ChunkIndex index) const {
+    index_bounds_check(index);
+
+    size_t word_size = 0;
+    if (index == HumongousIndex) {
+      word_size = _humongous_dictionary.total_size();
+    } else {
+      const size_t size_per_chunk_in_words = _free_chunks[index].size();
+      word_size = size_per_chunk_in_words * num_free_chunks(index);
+    }
+
+    return word_size * BytesPerWord;
+  }
+
+  MetaspaceChunkFreeListSummary chunk_free_list_summary() const {
+    return MetaspaceChunkFreeListSummary(num_free_chunks(SpecializedIndex),
+                                         num_free_chunks(SmallIndex),
+                                         num_free_chunks(MediumIndex),
+                                         num_free_chunks(HumongousIndex),
+                                         size_free_chunks_in_bytes(SpecializedIndex),
+                                         size_free_chunks_in_bytes(SmallIndex),
+                                         size_free_chunks_in_bytes(MediumIndex),
+                                         size_free_chunks_in_bytes(HumongousIndex));
+  }
 
   // Debug support
   void verify();
@@ -746,7 +791,7 @@ void VirtualSpaceNode::inc_container_count() {
   assert_lock_strong(SpaceManager::expand_lock());
   _container_count++;
   assert(_container_count == container_count_slow(),
-         err_msg("Inconsistency in countainer_count _container_count " SIZE_FORMAT
+         err_msg("Inconsistency in container_count _container_count " SIZE_FORMAT
                  " container_count_slow() " SIZE_FORMAT,
                  _container_count, container_count_slow()));
 }
@@ -759,7 +804,7 @@ void VirtualSpaceNode::dec_container_count() {
 #ifdef ASSERT
 void VirtualSpaceNode::verify_container_count() {
   assert(_container_count == container_count_slow(),
-    err_msg("Inconsistency in countainer_count _container_count " SIZE_FORMAT
+    err_msg("Inconsistency in container_count _container_count " SIZE_FORMAT
             " container_count_slow() " SIZE_FORMAT, _container_count, container_count_slow()));
 }
 #endif
@@ -790,7 +835,7 @@ MetaWord* BlockFreelist::get_block(size_t word_size) {
     return NULL;
   }
 
-  if (word_size < TreeChunk<Metablock, FreeList>::min_size()) {
+  if (word_size < TreeChunk<Metablock, FreeList<Metablock> >::min_size()) {
     // Dark matter.  Too small for dictionary.
     return NULL;
   }
@@ -810,7 +855,7 @@ MetaWord* BlockFreelist::get_block(size_t word_size) {
   MetaWord* new_block = (MetaWord*)free_block;
   assert(block_size >= word_size, "Incorrect size of block from freelist");
   const size_t unused = block_size - word_size;
-  if (unused >= TreeChunk<Metablock, FreeList>::min_size()) {
+  if (unused >= TreeChunk<Metablock, FreeList<Metablock> >::min_size()) {
     return_block(new_block + word_size, unused);
   }
 
@@ -1436,19 +1481,21 @@ void MetaspaceGC::compute_new_size() {
     expand_bytes = align_size_up(expand_bytes, Metaspace::commit_alignment());
     // Don't expand unless it's significant
     if (expand_bytes >= MinMetaspaceExpansion) {
-      MetaspaceGC::inc_capacity_until_GC(expand_bytes);
-    }
-    if (PrintGCDetails && Verbose) {
-      size_t new_capacity_until_GC = capacity_until_GC;
-      gclog_or_tty->print_cr("    expanding:"
-                    "  minimum_desired_capacity: %6.1fKB"
-                    "  expand_bytes: %6.1fKB"
-                    "  MinMetaspaceExpansion: %6.1fKB"
-                    "  new metaspace HWM:  %6.1fKB",
-                    minimum_desired_capacity / (double) K,
-                    expand_bytes / (double) K,
-                    MinMetaspaceExpansion / (double) K,
-                    new_capacity_until_GC / (double) K);
+      size_t new_capacity_until_GC = MetaspaceGC::inc_capacity_until_GC(expand_bytes);
+      Metaspace::tracer()->report_gc_threshold(capacity_until_GC,
+                                               new_capacity_until_GC,
+                                               MetaspaceGCThresholdUpdater::ComputeNewSize);
+      if (PrintGCDetails && Verbose) {
+        gclog_or_tty->print_cr("    expanding:"
+                      "  minimum_desired_capacity: %6.1fKB"
+                      "  expand_bytes: %6.1fKB"
+                      "  MinMetaspaceExpansion: %6.1fKB"
+                      "  new metaspace HWM:  %6.1fKB",
+                      minimum_desired_capacity / (double) K,
+                      expand_bytes / (double) K,
+                      MinMetaspaceExpansion / (double) K,
+                      new_capacity_until_GC / (double) K);
+      }
     }
     return;
   }
@@ -1528,7 +1575,10 @@ void MetaspaceGC::compute_new_size() {
   // Don't shrink unless it's significant
   if (shrink_bytes >= MinMetaspaceExpansion &&
       ((capacity_until_GC - shrink_bytes) >= MetaspaceSize)) {
-    MetaspaceGC::dec_capacity_until_GC(shrink_bytes);
+    size_t new_capacity_until_GC = MetaspaceGC::dec_capacity_until_GC(shrink_bytes);
+    Metaspace::tracer()->report_gc_threshold(capacity_until_GC,
+                                             new_capacity_until_GC,
+                                             MetaspaceGCThresholdUpdater::ComputeNewSize);
   }
 }
 
@@ -2240,7 +2290,7 @@ ChunkIndex ChunkManager::list_index(size_t size) {
 void SpaceManager::deallocate(MetaWord* p, size_t word_size) {
   assert_lock_strong(_lock);
   size_t raw_word_size = get_raw_word_size(word_size);
-  size_t min_size = TreeChunk<Metablock, FreeList>::min_size();
+  size_t min_size = TreeChunk<Metablock, FreeList<Metablock> >::min_size();
   assert(raw_word_size >= min_size,
          err_msg("Should not deallocate dark matter " SIZE_FORMAT "<" SIZE_FORMAT, word_size, min_size));
   block_freelists()->return_block(p, raw_word_size);
@@ -2296,7 +2346,7 @@ void SpaceManager::add_chunk(Metachunk* new_chunk, bool make_current) {
 void SpaceManager::retire_current_chunk() {
   if (current_chunk() != NULL) {
     size_t remaining_words = current_chunk()->free_word_size();
-    if (remaining_words >= TreeChunk<Metablock, FreeList>::min_size()) {
+    if (remaining_words >= TreeChunk<Metablock, FreeList<Metablock> >::min_size()) {
       block_freelists()->return_block(current_chunk()->allocate(remaining_words), remaining_words);
       inc_used_metrics(remaining_words);
     }
@@ -2627,6 +2677,19 @@ size_t MetaspaceAux::free_chunks_total_words() {
 
 size_t MetaspaceAux::free_chunks_total_bytes() {
   return free_chunks_total_words() * BytesPerWord;
+}
+
+bool MetaspaceAux::has_chunk_free_list(Metaspace::MetadataType mdtype) {
+  return Metaspace::get_chunk_manager(mdtype) != NULL;
+}
+
+MetaspaceChunkFreeListSummary MetaspaceAux::chunk_free_list_summary(Metaspace::MetadataType mdtype) {
+  if (!has_chunk_free_list(mdtype)) {
+    return MetaspaceChunkFreeListSummary();
+  }
+
+  const ChunkManager* cm = Metaspace::get_chunk_manager(mdtype);
+  return cm->chunk_free_list_summary();
 }
 
 void MetaspaceAux::print_metaspace_change(size_t prev_metadata_used) {
@@ -3132,6 +3195,7 @@ void Metaspace::global_initialize() {
   }
 
   MetaspaceGC::initialize();
+  _tracer = new MetaspaceTracer();
 }
 
 Metachunk* Metaspace::get_initialization_chunk(MetadataType mdtype,
@@ -3220,8 +3284,12 @@ MetaWord* Metaspace::expand_and_allocate(size_t word_size, MetadataType mdtype) 
   assert(delta_bytes > 0, "Must be");
 
   size_t after_inc = MetaspaceGC::inc_capacity_until_GC(delta_bytes);
+
+  // capacity_until_GC might be updated concurrently, must calculate previous value.
   size_t before_inc = after_inc - delta_bytes;
 
+  tracer()->report_gc_threshold(before_inc, after_inc,
+                                MetaspaceGCThresholdUpdater::ExpandAndAllocate);
   if (PrintGCDetails && Verbose) {
     gclog_or_tty->print_cr("Increase capacity to GC from " SIZE_FORMAT
         " to " SIZE_FORMAT, before_inc, after_inc);
@@ -3279,7 +3347,7 @@ void Metaspace::deallocate(MetaWord* ptr, size_t word_size, bool is_class) {
     assert(Thread::current()->is_VM_thread(), "should be the VM thread");
     // Don't take Heap_lock
     MutexLockerEx ml(vsm()->lock(), Mutex::_no_safepoint_check_flag);
-    if (word_size < TreeChunk<Metablock, FreeList>::min_size()) {
+    if (word_size < TreeChunk<Metablock, FreeList<Metablock> >::min_size()) {
       // Dark matter.  Too small for dictionary.
 #ifdef ASSERT
       Copy::fill_to_words((HeapWord*)ptr, word_size, 0xf5f5f5f5);
@@ -3294,7 +3362,7 @@ void Metaspace::deallocate(MetaWord* ptr, size_t word_size, bool is_class) {
   } else {
     MutexLockerEx ml(vsm()->lock(), Mutex::_no_safepoint_check_flag);
 
-    if (word_size < TreeChunk<Metablock, FreeList>::min_size()) {
+    if (word_size < TreeChunk<Metablock, FreeList<Metablock> >::min_size()) {
       // Dark matter.  Too small for dictionary.
 #ifdef ASSERT
       Copy::fill_to_words((HeapWord*)ptr, word_size, 0xf5f5f5f5);
@@ -3345,6 +3413,8 @@ MetaWord* Metaspace::allocate(ClassLoaderData* loader_data, size_t word_size,
   MetaWord* result = loader_data->metaspace_non_null()->allocate(word_size, mdtype);
 
   if (result == NULL) {
+    tracer()->report_metaspace_allocation_failure(loader_data, word_size, type, mdtype);
+
     // Allocation failed.
     if (is_init_completed()) {
       // Only start a GC if the bootstrapping has completed.
@@ -3356,7 +3426,7 @@ MetaWord* Metaspace::allocate(ClassLoaderData* loader_data, size_t word_size,
   }
 
   if (result == NULL) {
-    report_metadata_oome(loader_data, word_size, mdtype, CHECK_NULL);
+    report_metadata_oome(loader_data, word_size, type, mdtype, CHECK_NULL);
   }
 
   // Zero initialize.
@@ -3370,7 +3440,9 @@ size_t Metaspace::class_chunk_size(size_t word_size) {
   return class_vsm()->calc_chunk_size(word_size);
 }
 
-void Metaspace::report_metadata_oome(ClassLoaderData* loader_data, size_t word_size, MetadataType mdtype, TRAPS) {
+void Metaspace::report_metadata_oome(ClassLoaderData* loader_data, size_t word_size, MetaspaceObj::Type type, MetadataType mdtype, TRAPS) {
+  tracer()->report_metadata_oom(loader_data, word_size, type, mdtype);
+
   // If result is still null, we are out of memory.
   if (Verbose && TraceMetadataChunkAllocation) {
     gclog_or_tty->print_cr("Metaspace allocation failed for size "
@@ -3410,6 +3482,16 @@ void Metaspace::report_metadata_oome(ClassLoaderData* loader_data, size_t word_s
     THROW_OOP(Universe::out_of_memory_error_class_metaspace());
   } else {
     THROW_OOP(Universe::out_of_memory_error_metaspace());
+  }
+}
+
+const char* Metaspace::metadata_type_name(Metaspace::MetadataType mdtype) {
+  switch (mdtype) {
+    case Metaspace::ClassType: return "Class";
+    case Metaspace::NonClassType: return "Metadata";
+    default:
+      assert(false, err_msg("Got bad mdtype: %d", (int) mdtype));
+      return NULL;
   }
 }
 

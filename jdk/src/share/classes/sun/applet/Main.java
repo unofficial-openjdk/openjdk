@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2006, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -369,7 +369,7 @@ public class Main {
         Properties sysProps = System.getProperties();
         for (Enumeration e = sysProps.propertyNames(); e.hasMoreElements(); ) {
             String key = (String) e.nextElement();
-            String val = (String) sysProps.getProperty(key);
+            String val = sysProps.getProperty(key);
             String oldVal;
             if ((oldVal = (String) avProps.setProperty(key, val)) != null)
                 System.err.println(lookup("main.warn.prop.overwrite", key,

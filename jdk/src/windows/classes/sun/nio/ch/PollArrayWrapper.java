@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2002, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -52,15 +52,6 @@ class PollArrayWrapper {
     @Native private static final short EVENT_OFFSET  = 4; // events offset in pollfd
 
     static short SIZE_POLLFD = 8; // sizeof pollfd struct
-
-    // events masks
-    @Native static final short POLLIN     = AbstractPollArrayWrapper.POLLIN;
-    @Native static final short POLLOUT    = AbstractPollArrayWrapper.POLLOUT;
-    @Native static final short POLLERR    = AbstractPollArrayWrapper.POLLERR;
-    @Native static final short POLLHUP    = AbstractPollArrayWrapper.POLLHUP;
-    @Native static final short POLLNVAL   = AbstractPollArrayWrapper.POLLNVAL;
-    @Native static final short POLLREMOVE = AbstractPollArrayWrapper.POLLREMOVE;
-    @Native static final short POLLCONN   = 0x0002;
 
     private int size; // Size of the pollArray
 
@@ -119,6 +110,6 @@ class PollArrayWrapper {
     // Adds Windows wakeup socket at a given index.
     void addWakeupSocket(int fdVal, int index) {
         putDescriptor(index, fdVal);
-        putEventOps(index, POLLIN);
+        putEventOps(index, Net.POLLIN);
     }
 }

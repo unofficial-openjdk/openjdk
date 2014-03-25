@@ -1436,7 +1436,7 @@ void GraphBuilder::method_return(Value x) {
 
   bool need_mem_bar = false;
   if (method()->name() == ciSymbol::object_initializer_name() &&
-      scope()->wrote_final()) {
+      (scope()->wrote_final() || (AlwaysSafeConstructors && scope()->wrote_fields()))) {
     need_mem_bar = true;
   }
 
@@ -1548,6 +1548,10 @@ void GraphBuilder::access_field(Bytecodes::Code code) {
 
   if (field->is_final() && (code == Bytecodes::_putfield)) {
     scope()->set_wrote_final();
+  }
+
+  if (code == Bytecodes::_putfield) {
+    scope()->set_wrote_fields();
   }
 
   const int offset = !needs_patching ? field->offset() : -1;
@@ -2276,7 +2280,7 @@ XHandlers* GraphBuilder::handle_exception(Instruction* instruction) {
   if (!has_handler() && (!instruction->needs_exception_state() || instruction->exception_state() != NULL)) {
     assert(instruction->exception_state() == NULL
            || instruction->exception_state()->kind() == ValueStack::EmptyExceptionState
-           || (instruction->exception_state()->kind() == ValueStack::ExceptionState && _compilation->env()->jvmti_can_access_local_variables()),
+           || (instruction->exception_state()->kind() == ValueStack::ExceptionState && _compilation->env()->should_retain_local_variables()),
            "exception_state should be of exception kind");
     return new XHandlers();
   }
@@ -2367,7 +2371,7 @@ XHandlers* GraphBuilder::handle_exception(Instruction* instruction) {
       // This scope and all callees do not handle exceptions, so the local
       // variables of this scope are not needed. However, the scope itself is
       // required for a correct exception stack trace -> clear out the locals.
-      if (_compilation->env()->jvmti_can_access_local_variables()) {
+      if (_compilation->env()->should_retain_local_variables()) {
         cur_state = cur_state->copy(ValueStack::ExceptionState, cur_state->bci());
       } else {
         cur_state = cur_state->copy(ValueStack::EmptyExceptionState, cur_state->bci());
@@ -3251,7 +3255,7 @@ ValueStack* GraphBuilder::copy_state_exhandling_with_bci(int bci) {
 ValueStack* GraphBuilder::copy_state_for_exception_with_bci(int bci) {
   ValueStack* s = copy_state_exhandling_with_bci(bci);
   if (s == NULL) {
-    if (_compilation->env()->jvmti_can_access_local_variables()) {
+    if (_compilation->env()->should_retain_local_variables()) {
       s = state()->copy(ValueStack::ExceptionState, bci);
     } else {
       s = state()->copy(ValueStack::EmptyExceptionState, bci);
@@ -3767,11 +3771,14 @@ bool GraphBuilder::try_inline_full(ciMethod* callee, bool holder_known, Bytecode
   }
 
   // now perform tests that are based on flag settings
-  if (callee->force_inline()) {
-    if (inline_level() > MaxForceInlineLevel) INLINE_BAILOUT("MaxForceInlineLevel");
-    print_inlining(callee, "force inline by annotation");
-  } else if (callee->should_inline()) {
-    print_inlining(callee, "force inline by CompileOracle");
+  if (callee->force_inline() || callee->should_inline()) {
+    if (inline_level() > MaxForceInlineLevel                    ) INLINE_BAILOUT("MaxForceInlineLevel");
+    if (recursive_inline_level(callee) > MaxRecursiveInlineLevel) INLINE_BAILOUT("recursive inlining too deep");
+
+    const char* msg = "";
+    if (callee->force_inline())  msg = "force inline by annotation";
+    if (callee->should_inline()) msg = "force inline by CompileOracle";
+    print_inlining(callee, msg);
   } else {
     // use heuristic controls on inlining
     if (inline_level() > MaxInlineLevel                         ) INLINE_BAILOUT("inlining too deep");

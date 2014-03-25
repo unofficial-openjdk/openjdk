@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2008, 2012, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2008, 2013, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -133,6 +133,14 @@ case "$OS" in
       FILESEP="/"
       PATHSEP=";"
       TMP=`cd "${SystemRoot}/Temp"; echo ${PWD}`
+      ;;
+
+    AIX )
+      VAR="A different value for AIX"
+      DEFAULT_JDK=/
+      FILESEP="/"
+      PATHSEP=":"
+      TMP="/tmp"
       ;;
 
    # catch all other OSs

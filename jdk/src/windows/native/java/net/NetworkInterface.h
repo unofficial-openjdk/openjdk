@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -69,16 +69,6 @@ extern jfieldID ni_bindsID;         /* NetworkInterface.bindings */
 extern jfieldID ni_nameID;          /* NetworkInterface.name */
 extern jfieldID ni_displayNameID;   /* NetworkInterface.displayName */
 extern jfieldID ni_childsID;        /* NetworkInterface.childs */
-
-extern jclass ni_iacls;             /* InetAddress */
-
-extern jclass ni_ia4cls;            /* Inet4Address */
-extern jmethodID ni_ia4Ctor;        /* Inet4Address() */
-
-extern jclass ni_ia6cls;            /* Inet6Address */
-extern jmethodID ni_ia6ctrID;       /* Inet6Address() */
-extern jfieldID ni_ia6ipaddressID;
-extern jfieldID ni_ia6ipaddressID;
 
 extern jclass ni_ibcls;             /* InterfaceAddress */
 extern jmethodID ni_ibctrID;        /* InterfaceAddress() */

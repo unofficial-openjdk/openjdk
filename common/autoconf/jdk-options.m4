@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2011, 2013, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2011, 2014, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -51,6 +51,33 @@ AC_DEFUN_ONCE([JDKOPT_SETUP_JDK_VARIANT],
   AC_MSG_RESULT([$JDK_VARIANT])
 ])
 
+AC_DEFUN_ONCE([JDKOPT_SETUP_JVM_INTERPRETER],
+[
+###############################################################################
+#
+# Check which interpreter of the JVM we want to build.
+# Currently we have:
+#    template: Template interpreter (the default)
+#    cpp     : C++ interpreter
+AC_MSG_CHECKING([which interpreter of the JVM to build])
+AC_ARG_WITH([jvm-interpreter], [AS_HELP_STRING([--with-jvm-interpreter],
+	[JVM interpreter to build (template, cpp) @<:@template@:>@])])
+
+if test "x$with_jvm_interpreter" = x; then
+     with_jvm_interpreter="template"
+fi
+
+JVM_INTERPRETER="$with_jvm_interpreter"
+
+if test "x$JVM_INTERPRETER" != xtemplate && test "x$JVM_INTERPRETER" != xcpp; then
+   AC_MSG_ERROR([The available JVM interpreters are: template, cpp])
+fi
+
+AC_SUBST(JVM_INTERPRETER)
+
+AC_MSG_RESULT([$with_jvm_interpreter])
+])
+
 AC_DEFUN_ONCE([JDKOPT_SETUP_JVM_VARIANTS],
 [
 
@@ -65,19 +92,20 @@ AC_DEFUN_ONCE([JDKOPT_SETUP_JVM_VARIANTS],
   #             ie normal interpreter and C1, only the serial GC, kernel jvmti etc
   #    zero: no machine code interpreter, no compiler
   #    zeroshark: zero interpreter and shark/llvm compiler backend
+#    core: interpreter only, no compiler (only works on some platforms)
   AC_MSG_CHECKING([which variants of the JVM to build])
   AC_ARG_WITH([jvm-variants], [AS_HELP_STRING([--with-jvm-variants],
-      [JVM variants (separated by commas) to build (server, client, minimal1, kernel, zero, zeroshark) @<:@server@:>@])])
+	[JVM variants (separated by commas) to build (server, client, minimal1, kernel, zero, zeroshark, core) @<:@server@:>@])])
 
   if test "x$with_jvm_variants" = x; then
     with_jvm_variants="server"
   fi
 
   JVM_VARIANTS=",$with_jvm_variants,"
-  TEST_VARIANTS=`$ECHO "$JVM_VARIANTS" | $SED -e 's/server,//' -e 's/client,//'  -e 's/minimal1,//' -e 's/kernel,//' -e 's/zero,//' -e 's/zeroshark,//'`
+  TEST_VARIANTS=`$ECHO "$JVM_VARIANTS" | $SED -e 's/server,//' -e 's/client,//'  -e 's/minimal1,//' -e 's/kernel,//' -e 's/zero,//' -e 's/zeroshark,//' -e 's/core,//'`
 
   if test "x$TEST_VARIANTS" != "x,"; then
-    AC_MSG_ERROR([The available JVM variants are: server, client, minimal1, kernel, zero, zeroshark])
+     AC_MSG_ERROR([The available JVM variants are: server, client, minimal1, kernel, zero, zeroshark, core])
   fi
   AC_MSG_RESULT([$with_jvm_variants])
 
@@ -87,6 +115,7 @@ AC_DEFUN_ONCE([JDKOPT_SETUP_JVM_VARIANTS],
   JVM_VARIANT_KERNEL=`$ECHO "$JVM_VARIANTS" | $SED -e '/,kernel,/!s/.*/false/g' -e '/,kernel,/s/.*/true/g'`
   JVM_VARIANT_ZERO=`$ECHO "$JVM_VARIANTS" | $SED -e '/,zero,/!s/.*/false/g' -e '/,zero,/s/.*/true/g'`
   JVM_VARIANT_ZEROSHARK=`$ECHO "$JVM_VARIANTS" | $SED -e '/,zeroshark,/!s/.*/false/g' -e '/,zeroshark,/s/.*/true/g'`
+  JVM_VARIANT_CORE=`$ECHO "$JVM_VARIANTS" | $SED -e '/,core,/!s/.*/false/g' -e '/,core,/s/.*/true/g'`
 
   if test "x$JVM_VARIANT_CLIENT" = xtrue; then
     if test "x$OPENJDK_TARGET_CPU_BITS" = x64; then
@@ -106,7 +135,7 @@ AC_DEFUN_ONCE([JDKOPT_SETUP_JVM_VARIANTS],
 
   # Replace the commas with AND for use in the build directory name.
   ANDED_JVM_VARIANTS=`$ECHO "$JVM_VARIANTS" | $SED -e 's/^,//' -e 's/,$//' -e 's/,/AND/g'`
-  COUNT_VARIANTS=`$ECHO "$JVM_VARIANTS" | $SED -e 's/server,/1/' -e 's/client,/1/' -e 's/minimal1,/1/' -e 's/kernel,/1/' -e 's/zero,/1/' -e 's/zeroshark,/1/'`
+  COUNT_VARIANTS=`$ECHO "$JVM_VARIANTS" | $SED -e 's/server,/1/' -e 's/client,/1/' -e 's/minimal1,/1/' -e 's/kernel,/1/' -e 's/zero,/1/' -e 's/zeroshark,/1/' -e 's/core,/1/'`
   if test "x$COUNT_VARIANTS" != "x,1"; then
     BUILDING_MULTIPLE_JVM_VARIANTS=yes
   else
@@ -120,12 +149,16 @@ AC_DEFUN_ONCE([JDKOPT_SETUP_JVM_VARIANTS],
   AC_SUBST(JVM_VARIANT_KERNEL)
   AC_SUBST(JVM_VARIANT_ZERO)
   AC_SUBST(JVM_VARIANT_ZEROSHARK)
+  AC_SUBST(JVM_VARIANT_CORE)
 
   INCLUDE_SA=true
   if test "x$JVM_VARIANT_ZERO" = xtrue ; then
     INCLUDE_SA=false
   fi
   if test "x$JVM_VARIANT_ZEROSHARK" = xtrue ; then
+    INCLUDE_SA=false
+  fi
+  if test "x$VAR_CPU" = xppc64 ; then
     INCLUDE_SA=false
   fi
   AC_SUBST(INCLUDE_SA)
@@ -236,6 +269,10 @@ AC_DEFUN_ONCE([JDKOPT_SETUP_DEBUG_LEVEL],
     HOTSPOT_TARGET="$HOTSPOT_TARGET${HOTSPOT_DEBUG_LEVEL}shark "
   fi
 
+  if test "x$JVM_VARIANT_CORE" = xtrue; then
+    HOTSPOT_TARGET="$HOTSPOT_TARGET${HOTSPOT_DEBUG_LEVEL}core "
+  fi
+
   HOTSPOT_TARGET="$HOTSPOT_TARGET docs export_$HOTSPOT_EXPORT"
 
   # On Macosx universal binaries are produced, but they only contain
@@ -295,6 +332,10 @@ AC_DEFUN_ONCE([JDKOPT_SETUP_OPEN_OR_CUSTOM],
   fi
 
   AC_SUBST(SET_OPENJDK)
+
+  # custom-make-dir is deprecated. Please use your custom-hook.m4 to override
+  # the IncludeCustomExtension macro.
+  BASIC_DEPRECATED_ARG_WITH(custom-make-dir)
 ])
 
 AC_DEFUN_ONCE([JDKOPT_SETUP_JDK_OPTIONS],
@@ -389,6 +430,19 @@ AC_DEFUN_ONCE([JDKOPT_SETUP_JDK_OPTIONS],
 
   ###############################################################################
   #
+  # --enable-rmiconnector-iiop
+  #
+  AC_ARG_ENABLE(rmiconnector-iiop, [AS_HELP_STRING([--enable-rmiconnector-iiop],
+      [enable the JMX RMIConnector iiop transport  @<:@disabled@:>@])])
+  if test "x$enable_rmiconnector_iiop" = "xyes"; then
+    RMICONNECTOR_IIOP=true
+  else
+    RMICONNECTOR_IIOP=false
+  fi
+  AC_SUBST(RMICONNECTOR_IIOP)
+
+  ###############################################################################
+  #
   # Compress jars
   #
   COMPRESS_JARS=false
@@ -432,7 +486,7 @@ AC_DEFUN_ONCE([JDKOPT_SETUP_JDK_VERSION_NUMBERS],
   fi
 
   AC_ARG_WITH(user-release-suffix, [AS_HELP_STRING([--with-user-release-suffix],
-      [Add a custom string to the version string if build number isn't set.@<:@username_builddateb00@:>@])])
+      [Add a custom string to the version string if build number is not set.@<:@username_builddateb00@:>@])])
   if test "x$with_user_release_suffix" = xyes; then
     AC_MSG_ERROR([Release suffix must have a value])
   elif test "x$with_user_release_suffix" != x; then
@@ -552,14 +606,4 @@ AC_DEFUN_ONCE([JDKOPT_SETUP_DEBUG_SYMBOLS],
 
   AC_SUBST(ENABLE_DEBUG_SYMBOLS)
   AC_SUBST(ZIP_DEBUGINFO_FILES)
-  AC_SUBST(CFLAGS_DEBUG_SYMBOLS)
-  AC_SUBST(CXXFLAGS_DEBUG_SYMBOLS)
 ])
-
-# Support for customization of the build process. Some build files
-# will include counterparts from this location, if they exist. This allows
-# for a degree of customization of the build targets and the rules/recipes
-# to create them
-AC_ARG_WITH([custom-make-dir], [AS_HELP_STRING([--with-custom-make-dir],
-[use this directory for custom build/make files])], [CUSTOM_MAKE_DIR=$with_custom_make_dir])
-AC_SUBST(CUSTOM_MAKE_DIR)

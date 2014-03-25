@@ -38,12 +38,20 @@ endif
 LIBNET_CFLAGS := $(foreach dir, $(LIBNET_SRC_DIRS), -I$(dir))
 
 LIBNET_EXCLUDE_FILES :=
+ifneq ($(OPENJDK_TARGET_OS), solaris)
+  LIBNET_EXCLUDE_FILES += solaris_close.c
+endif
+
 ifneq ($(OPENJDK_TARGET_OS), linux)
   LIBNET_EXCLUDE_FILES += linux_close.c
 endif
 
 ifneq ($(OPENJDK_TARGET_OS), macosx)
   LIBNET_EXCLUDE_FILES += bsd_close.c
+endif
+
+ifeq ($(OPENJDK_TARGET_OS), aix)
+  LIBNET_SRC_DIRS += $(JDK_TOPDIR)/src/aix/native/java/net/
 endif
 
 ifeq ($(OPENJDK_TARGET_OS), windows)
@@ -69,6 +77,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBNET, \
     LDFLAGS_SUFFIX_macosx := -ljvm -ljava, \
     LDFLAGS_SUFFIX_solaris := -ljvm -ljava -lnsl -lsocket $(LIBDL) -lc, \
     LDFLAGS_SUFFIX_linux := $(LIBDL) -ljvm -lpthread -ljava, \
+    LDFLAGS_SUFFIX_aix := $(LIBDL) -ljvm -ljava,\
     LDFLAGS_SUFFIX_windows := ws2_32.lib jvm.lib secur32.lib iphlpapi.lib \
         delayimp.lib $(WIN_JAVA_LIB) advapi32.lib \
         -DELAYLOAD:secur32.dll -DELAYLOAD:iphlpapi.dll, \

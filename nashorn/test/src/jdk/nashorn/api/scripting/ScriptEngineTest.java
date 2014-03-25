@@ -33,7 +33,9 @@ import static org.testng.Assert.fail;
 import java.io.PrintWriter;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.util.concurrent.Callable;
 import javax.script.Compilable;
 import javax.script.CompiledScript;
@@ -533,6 +535,70 @@ public class ScriptEngineTest {
         assertEquals(e.eval("Window.funcScriptObjectMirror(obj)"), "hello");
         assertEquals(e.eval("Window.funcMap(obj)"), "hello");
         assertEquals(e.eval("Window.funcJSObject(obj)"), "hello");
+    }
+
+    // @bug 8032948: Nashorn linkages awry
+    @Test
+    public void checkProxyAccess() throws ScriptException {
+        final ScriptEngineManager m = new ScriptEngineManager();
+        final ScriptEngine e = m.getEngineByName("nashorn");
+        final boolean[] reached = new boolean[1];
+        final Runnable r = (Runnable)Proxy.newProxyInstance(
+            ScriptEngineTest.class.getClassLoader(),
+            new Class[] { Runnable.class },
+            new InvocationHandler() {
+                @Override
+                public Object invoke(Object p, Method m, Object[] a) {
+                    reached[0] = true;
+                    return null;
+                }
+            });
+
+        e.put("r", r);
+        e.eval("r.run()");
+
+        assertTrue(reached[0]);
+    }
+
+    // properties that can be read by any code
+    private static String[] propNames = {
+        "java.version",
+        "java.vendor",
+        "java.vendor.url",
+        "java.class.version",
+        "os.name",
+        "os.version",
+        "os.arch",
+        "file.separator",
+        "path.separator",
+        "line.separator",
+        "java.specification.version",
+        "java.specification.vendor",
+        "java.specification.name",
+        "java.vm.specification.version",
+        "java.vm.specification.vendor",
+        "java.vm.specification.name",
+        "java.vm.version",
+        "java.vm.vendor",
+        "java.vm.name"
+    };
+
+    // @bug 8033924: Default permissions are not given for eval code
+    @Test
+    public void checkPropertyReadPermissions() throws ScriptException {
+        final ScriptEngineManager m = new ScriptEngineManager();
+        final ScriptEngine e = m.getEngineByName("nashorn");
+
+        for (final String name : propNames) {
+            checkProperty(e, name);
+        }
+    }
+
+    private static void checkProperty(final ScriptEngine e, final String name)
+        throws ScriptException {
+        String value = System.getProperty(name);
+        e.put("name", name);
+        assertEquals(value, e.eval("java.lang.System.getProperty(name)"));
     }
 
     private static final String LINE_SEPARATOR = System.getProperty("line.separator");

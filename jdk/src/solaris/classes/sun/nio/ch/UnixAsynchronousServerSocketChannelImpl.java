@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -148,7 +148,7 @@ class UnixAsynchronousServerSocketChannelImpl
                 synchronized (updateLock) {
                     acceptPending = true;
                 }
-                port.startPoll(fdVal, Port.POLLIN);
+                port.startPoll(fdVal, Net.POLLIN);
                 return;
             }
 
@@ -299,7 +299,7 @@ class UnixAsynchronousServerSocketChannelImpl
                 }
 
                 // register for connections
-                port.startPoll(fdVal, Port.POLLIN);
+                port.startPoll(fdVal, Net.POLLIN);
                 return result;
             }
         } catch (Throwable x) {

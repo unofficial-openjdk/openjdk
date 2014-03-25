@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -114,6 +114,11 @@ import static sun.invoke.util.Wrapper.isWrapperType;
                                        Class<?>[] markerInterfaces,
                                        MethodType[] additionalBridges)
             throws LambdaConversionException {
+        if ((caller.lookupModes() & MethodHandles.Lookup.PRIVATE) == 0) {
+            throw new LambdaConversionException(String.format(
+                    "Invalid caller: %s",
+                    caller.lookupClass().getName()));
+        }
         this.targetClass = caller.lookupClass();
         this.invokedType = invokedType;
 
@@ -195,6 +200,13 @@ import static sun.invoke.util.Wrapper.isWrapperType;
                                   implIsInstanceMethod ? "instance" : "static", implInfo,
                                   instantiatedArity, samArity));
         }
+        for (MethodType bridgeMT : additionalBridges) {
+            if (bridgeMT.parameterCount() != samArity) {
+                throw new LambdaConversionException(
+                        String.format("Incorrect number of parameters for bridge signature %s; incompatible with %s",
+                                      bridgeMT, samMethodType));
+            }
+        }
 
         // If instance: first captured arg (receiver) must be subtype of class where impl method is defined
         final int capturedStart;
@@ -220,6 +232,13 @@ import static sun.invoke.util.Wrapper.isWrapperType;
                 throw new LambdaConversionException(
                         String.format("Invalid receiver type %s; not a subtype of implementation type %s",
                                       receiverClass, implDefiningClass));
+            }
+
+           Class<?> implReceiverClass = implMethod.type().parameterType(0);
+           if (implReceiverClass != implDefiningClass && !implReceiverClass.isAssignableFrom(receiverClass)) {
+               throw new LambdaConversionException(
+                       String.format("Invalid receiver type %s; not a subtype of implementation receiver type %s",
+                                     receiverClass, implReceiverClass));
             }
         } else {
             // no receiver
@@ -256,10 +275,23 @@ import static sun.invoke.util.Wrapper.isWrapperType;
                 (implKind == MethodHandleInfo.REF_newInvokeSpecial)
                   ? implDefiningClass
                   : implMethodType.returnType();
+        Class<?> samReturnType = samMethodType.returnType();
         if (!isAdaptableToAsReturn(actualReturnType, expectedType)) {
             throw new LambdaConversionException(
                     String.format("Type mismatch for lambda return: %s is not convertible to %s",
                                   actualReturnType, expectedType));
+        }
+        if (!isAdaptableToAsReturnStrict(expectedType, samReturnType)) {
+            throw new LambdaConversionException(
+                    String.format("Type mismatch for lambda expected return: %s is not convertible to %s",
+                                  expectedType, samReturnType));
+        }
+        for (MethodType bridgeMT : additionalBridges) {
+            if (!isAdaptableToAsReturnStrict(expectedType, bridgeMT.returnType())) {
+                throw new LambdaConversionException(
+                        String.format("Type mismatch for lambda expected return: %s is not convertible to %s",
+                                      expectedType, bridgeMT.returnType()));
+            }
         }
      }
 
@@ -311,6 +343,10 @@ import static sun.invoke.util.Wrapper.isWrapperType;
     private boolean isAdaptableToAsReturn(Class<?> fromType, Class<?> toType) {
         return toType.equals(void.class)
                || !fromType.equals(void.class) && isAdaptableTo(fromType, toType, false);
+    }
+    private boolean isAdaptableToAsReturnStrict(Class<?> fromType, Class<?> toType) {
+        if (fromType.equals(void.class)) return toType.equals(void.class);
+        return isAdaptableTo(fromType, toType, true);
     }
 
 

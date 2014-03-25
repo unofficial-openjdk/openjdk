@@ -92,6 +92,14 @@ case "$OS" in
       TMP="/tmp"
       ;;
 
+   AIX )
+      VAR="A different value for AIX"
+      DEFAULT_JDK=/
+      FILESEP="/"
+      PATHSEP=":"
+      TMP="/tmp"
+      ;;
+
    Darwin )
       VAR="A different value for MacOSX"
       DEFAULT_JDK=/usr
@@ -190,14 +198,15 @@ if [ $? -ne 0 ] ; then
 fi
 
 # Verify that all classoladers are destroyed
-${TESTJAVA}/bin/java -cp Test.jar test.Main
+${TESTJAVA}/bin/java ${TESTVMOPTS} -cp Test.jar test.Main
 if [ $? -ne 0 ] ; then
     fail "Test FAILED: some classloaders weren't destroyed."
 fi
 
 
 # Verify that ImageIO shutdown hook works correcly
-${TESTJAVA}/bin/java -cp Test.jar -DforgetSomeStreams=true test.Main
+${TESTJAVA}/bin/java ${TESTVMOPTS} \
+    -cp Test.jar -DforgetSomeStreams=true test.Main
 if [ $? -ne 0 ] ; then
     fail "Test FAILED: some classloaders weren't destroyed of shutdown hook failed."
 fi

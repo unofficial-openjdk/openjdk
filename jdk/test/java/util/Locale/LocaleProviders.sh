@@ -56,7 +56,7 @@ echo "CLASSPATH=${CLASSPATH}"
 # set platform-dependent variables
 OS=`uname -s`
 case "$OS" in
-  SunOS | Linux | *BSD | Darwin )
+  SunOS | Linux | *BSD | Darwin | AIX )
     PS=":"
     FS="/"
     ;;
@@ -313,5 +313,23 @@ PARAM1=
 PARAM2=
 PARAM3=
 runTest
+
+# testing 8027289 fix, if the platform format default is zh_CN
+# this assumes Windows' currency symbol for zh_CN is \u00A5, the yen
+# (yuan) sign.
+if [ "${DEFFMTLANG}" = "zh" ] && [ "${DEFFMTCTRY}" = "CN" ]; then
+  METHODNAME=bug8027289Test
+  PREFLIST=JRE,HOST
+  PARAM1=FFE5
+  PARAM2=
+  PARAM3=
+  runTest
+  METHODNAME=bug8027289Test
+  PREFLIST=HOST
+  PARAM1=00A5
+  PARAM2=
+  PARAM3=
+  runTest
+fi
 
 exit $result

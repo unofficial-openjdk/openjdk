@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -49,6 +49,9 @@
 #endif
 #ifdef TARGET_OS_FAMILY_windows
 # include "os_windows.inline.hpp"
+#endif
+#ifdef TARGET_OS_FAMILY_aix
+# include "os_aix.inline.hpp"
 #endif
 #ifdef TARGET_OS_FAMILY_bsd
 # include "os_bsd.inline.hpp"
@@ -297,10 +300,12 @@ static ObsoleteFlag obsolete_jvm_flags[] = {
   { "UsePermISM",                    JDK_Version::jdk(8), JDK_Version::jdk(9) },
   { "UseMPSS",                       JDK_Version::jdk(8), JDK_Version::jdk(9) },
   { "UseStringCache",                JDK_Version::jdk(8), JDK_Version::jdk(9) },
+  { "UseOldInlining",                JDK_Version::jdk(9), JDK_Version::jdk(10) },
 #ifdef PRODUCT
   { "DesiredMethodLimit",
                            JDK_Version::jdk_update(7, 2), JDK_Version::jdk(8) },
 #endif // PRODUCT
+  { "UseVMInterruptibleIO",          JDK_Version::jdk(8), JDK_Version::jdk(9) },
   { NULL, JDK_Version(0), JDK_Version(0) }
 };
 
@@ -1657,6 +1662,9 @@ julong Arguments::limit_by_allocatable_memory(julong limit) {
   return result;
 }
 
+// Use static initialization to get the default before parsing
+static const uintx DefaultHeapBaseMinAddress = HeapBaseMinAddress;
+
 void Arguments::set_heap_size() {
   if (!FLAG_IS_DEFAULT(DefaultMaxRAMFraction)) {
     // Deprecated flag
@@ -1688,6 +1696,24 @@ void Arguments::set_heap_size() {
     if (UseCompressedOops) {
       // Limit the heap size to the maximum possible when using compressed oops
       julong max_coop_heap = (julong)max_heap_for_compressed_oops();
+
+      // HeapBaseMinAddress can be greater than default but not less than.
+      if (!FLAG_IS_DEFAULT(HeapBaseMinAddress)) {
+        if (HeapBaseMinAddress < DefaultHeapBaseMinAddress) {
+          // matches compressed oops printing flags
+          if (PrintCompressedOopsMode || (PrintMiscellaneous && Verbose)) {
+            jio_fprintf(defaultStream::error_stream(),
+                        "HeapBaseMinAddress must be at least " UINTX_FORMAT
+                        " (" UINTX_FORMAT "G) which is greater than value given "
+                        UINTX_FORMAT "\n",
+                        DefaultHeapBaseMinAddress,
+                        DefaultHeapBaseMinAddress/G,
+                        HeapBaseMinAddress);
+          }
+          FLAG_SET_ERGO(uintx, HeapBaseMinAddress, DefaultHeapBaseMinAddress);
+        }
+      }
+
       if (HeapBaseMinAddress + MaxHeapSize < max_coop_heap) {
         // Heap should be above HeapBaseMinAddress to get zero based compressed oops
         // but it should be not less than default MaxHeapSize.
@@ -2221,6 +2247,8 @@ bool Arguments::check_vm_args_consistency() {
                                        "G1ConcRSHotCardLimit");
     status = status && verify_interval(G1ConcRSLogCacheSize, 0, 31,
                                        "G1ConcRSLogCacheSize");
+    status = status && verify_interval(StringDeduplicationAgeThreshold, 1, markOopDesc::max_age,
+                                       "StringDeduplicationAgeThreshold");
   }
   if (UseConcMarkSweepGC) {
     status = status && verify_min_value(CMSOldPLABNumRefills, 1, "CMSOldPLABNumRefills");
@@ -2383,6 +2411,12 @@ bool Arguments::check_vm_args_consistency() {
 
   status &= verify_interval(NmethodSweepFraction, 1, ReservedCodeCacheSize/K, "NmethodSweepFraction");
   status &= verify_interval(NmethodSweepActivity, 0, 2000, "NmethodSweepActivity");
+  status &= verify_interval(CodeCacheMinBlockLength, 1, 100, "CodeCacheMinBlockLength");
+  status &= verify_interval(CodeCacheSegmentSize, 1, 1024, "CodeCacheSegmentSize");
+
+  // TieredCompilation needs at least 2 compiler threads.
+  const int num_min_compiler_threads = (TieredCompilation && (TieredStopAtLevel >= CompLevel_full_optimization)) ? 2 : 1;
+  status &=verify_min_value(CICompilerCount, num_min_compiler_threads, "CICompilerCount");
 
   return status;
 }
@@ -3195,11 +3229,6 @@ jint Arguments::parse_each_vm_init_arg(const JavaVMInitArgs* args,
         return JNI_EINVAL;
       }
       FLAG_SET_CMDLINE(uintx, MaxDirectMemorySize, max_direct_memory_size);
-    } else if (match_option(option, "-XX:+UseVMInterruptibleIO", &tail)) {
-      // NOTE! In JDK 9, the UseVMInterruptibleIO flag will completely go
-      //       away and will cause VM initialization failures!
-      warning("-XX:+UseVMInterruptibleIO is obsolete and will be removed in a future release.");
-      FLAG_SET_CMDLINE(bool, UseVMInterruptibleIO, true);
 #if !INCLUDE_MANAGEMENT
     } else if (match_option(option, "-XX:+ManagementServer", &tail)) {
         jio_fprintf(defaultStream::error_stream(),
@@ -3741,8 +3770,8 @@ jint Arguments::apply_ergo() {
     UseBiasedLocking = false;
   }
 
-#ifdef CC_INTERP
-  // Clear flags not supported by the C++ interpreter
+#ifdef ZERO
+  // Clear flags not supported on zero.
   FLAG_SET_DEFAULT(ProfileInterpreter, false);
   FLAG_SET_DEFAULT(UseBiasedLocking, false);
   LP64_ONLY(FLAG_SET_DEFAULT(UseCompressedOops, false));
@@ -3818,18 +3847,24 @@ jint Arguments::apply_ergo() {
 }
 
 jint Arguments::adjust_after_os() {
-#if INCLUDE_ALL_GCS
-  if (UseParallelGC || UseParallelOldGC) {
-    if (UseNUMA) {
+  if (UseNUMA) {
+    if (UseParallelGC || UseParallelOldGC) {
       if (FLAG_IS_DEFAULT(MinHeapDeltaBytes)) {
-        FLAG_SET_DEFAULT(MinHeapDeltaBytes, 64*M);
+         FLAG_SET_DEFAULT(MinHeapDeltaBytes, 64*M);
       }
-      // For those collectors or operating systems (eg, Windows) that do
-      // not support full UseNUMA, we will map to UseNUMAInterleaving for now
-      UseNUMAInterleaving = true;
+    }
+    // UseNUMAInterleaving is set to ON for all collectors and
+    // platforms when UseNUMA is set to ON. NUMA-aware collectors
+    // such as the parallel collector for Linux and Solaris will
+    // interleave old gen and survivor spaces on top of NUMA
+    // allocation policy for the eden space.
+    // Non NUMA-aware collectors such as CMS, G1 and Serial-GC on
+    // all platforms and ParallelGC on Windows will interleave all
+    // of the heap spaces across NUMA nodes.
+    if (FLAG_IS_DEFAULT(UseNUMAInterleaving)) {
+      FLAG_SET_ERGO(bool, UseNUMAInterleaving, true);
     }
   }
-#endif // INCLUDE_ALL_GCS
   return JNI_OK;
 }
 

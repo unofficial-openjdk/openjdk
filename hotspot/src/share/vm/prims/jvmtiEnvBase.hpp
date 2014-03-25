@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,6 +29,7 @@
 #include "prims/jvmtiEnvThreadState.hpp"
 #include "prims/jvmtiEventController.hpp"
 #include "prims/jvmtiThreadState.hpp"
+#include "prims/jvmtiThreadState.inline.hpp"
 #include "runtime/fieldDescriptor.hpp"
 #include "runtime/frame.hpp"
 #include "runtime/handles.inline.hpp"
@@ -334,6 +335,60 @@ class JvmtiEnvIterator : public StackObj {
   JvmtiEnv* next(JvmtiEnvBase* env) { return env->next_environment(); }
 };
 
+// VM operation to update for pop top frame.
+class VM_UpdateForPopTopFrame : public VM_Operation {
+private:
+  JvmtiThreadState* _state;
+  jvmtiError _result;
+
+public:
+  VM_UpdateForPopTopFrame(JvmtiThreadState* state) {
+    _state = state;
+    _result = JVMTI_ERROR_NONE;
+  }
+  VMOp_Type type() const { return VMOp_UpdateForPopTopFrame; }
+  jvmtiError result() { return _result; }
+  void doit() {
+    JavaThread* jt = _state->get_thread();
+    if (Threads::includes(jt) && !jt->is_exiting() && jt->threadObj() != NULL) {
+      _state->update_for_pop_top_frame();
+    } else {
+      _result = JVMTI_ERROR_THREAD_NOT_ALIVE;
+    }
+  }
+};
+
+// VM operation to set frame pop.
+class VM_SetFramePop : public VM_Operation {
+private:
+  JvmtiEnv *_env;
+  JvmtiThreadState* _state;
+  jint _depth;
+  jvmtiError _result;
+
+public:
+  VM_SetFramePop(JvmtiEnv *env, JvmtiThreadState* state, jint depth) {
+    _env = env;
+    _state = state;
+    _depth = depth;
+    _result = JVMTI_ERROR_NONE;
+  }
+  // Nested operation must be allowed for the VM_EnterInterpOnlyMode that is
+  // called from the JvmtiEventControllerPrivate::recompute_thread_enabled.
+  bool allow_nested_vm_operations() const { return true; }
+  VMOp_Type type() const { return VMOp_SetFramePop; }
+  jvmtiError result() { return _result; }
+  void doit() {
+    JavaThread* jt = _state->get_thread();
+    if (Threads::includes(jt) && !jt->is_exiting() && jt->threadObj() != NULL) {
+      int frame_number = _state->count_frames() - _depth;
+      _state->env_thread_state((JvmtiEnvBase*)_env)->set_frame_pop(frame_number);
+    } else {
+      _result = JVMTI_ERROR_THREAD_NOT_ALIVE;
+    }
+  }
+};
+
 
 // VM operation to get monitor information with stack depth.
 class VM_GetOwnedMonitorInfo : public VM_Operation {
@@ -356,8 +411,12 @@ public:
   }
   VMOp_Type type() const { return VMOp_GetOwnedMonitorInfo; }
   void doit() {
-    ((JvmtiEnvBase *)_env)->get_owned_monitors(_calling_thread, _java_thread,
-                                                         _owned_monitors_list);
+    _result = JVMTI_ERROR_THREAD_NOT_ALIVE;
+    if (Threads::includes(_java_thread) && !_java_thread->is_exiting()
+                                        && _java_thread->threadObj() != NULL) {
+      _result = ((JvmtiEnvBase *)_env)->get_owned_monitors(_calling_thread, _java_thread,
+                                                            _owned_monitors_list);
+    }
   }
   jvmtiError result() { return _result; }
 };
@@ -439,9 +498,13 @@ public:
   jvmtiError result() { return _result; }
   VMOp_Type type() const { return VMOp_GetStackTrace; }
   void doit() {
-    _result = ((JvmtiEnvBase *)_env)->get_stack_trace(_java_thread,
-                                                      _start_depth, _max_count,
-                                                      _frame_buffer, _count_ptr);
+    _result = JVMTI_ERROR_THREAD_NOT_ALIVE;
+    if (Threads::includes(_java_thread) && !_java_thread->is_exiting()
+                                        && _java_thread->threadObj() != NULL) {
+      _result = ((JvmtiEnvBase *)_env)->get_stack_trace(_java_thread,
+                                                        _start_depth, _max_count,
+                                                        _frame_buffer, _count_ptr);
+    }
   }
 };
 

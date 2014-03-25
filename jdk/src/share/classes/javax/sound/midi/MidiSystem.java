@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -472,7 +472,7 @@ public class MidiSystem {
             } catch (MidiUnavailableException e) {
                 // something went wrong with synth
                 if (e instanceof MidiUnavailableException) {
-                    mue = (MidiUnavailableException) e;
+                    mue = e;
                 }
             }
             if (rec == null) {
@@ -1475,7 +1475,7 @@ public class MidiSystem {
 
     /**
      * Obtains the set of services currently installed on the system
-     * using sun.misc.Service, the SPI mechanism in 1.3.
+     * using the SPI mechanism in 1.3.
      * @return a List of instances of providers for the requested service.
      * If no providers are available, a List of length 0 will be returned.
      */

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -183,7 +183,7 @@
           "When true, record recent calls to rem set operations.")          \
                                                                             \
   develop(intx, G1MaxVerifyFailures, -1,                                    \
-          "The maximum number of verification failrues to print.  "         \
+          "The maximum number of verification failures to print.  "         \
           "-1 means print all.")                                            \
                                                                             \
   develop(bool, G1ScrubRemSets, true,                                       \
@@ -284,6 +284,10 @@
                                                                             \
   product(uintx, G1MixedGCCountTarget, 8,                                   \
           "The target number of mixed GCs after a marking cycle.")          \
+                                                                            \
+  experimental(uintx, G1CodeRootsChunkCacheKeepPercent, 10,                 \
+          "The amount of code root chunks that should be kept at most "     \
+          "as percentage of already allocated.")                            \
                                                                             \
   experimental(uintx, G1OldCSetRegionThresholdPercent, 10,                  \
           "An upper bound for the number of old CSet regions expressed "    \

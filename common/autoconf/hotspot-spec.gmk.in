@@ -91,11 +91,18 @@ LLVM_LDFLAGS=@LLVM_LDFLAGS@
 ALT_OUTPUTDIR=$(HOTSPOT_OUTPUTDIR)
 ALT_EXPORT_PATH=$(HOTSPOT_DIST)
 
+JVM_INTERPRETER:=@JVM_INTERPRETER@
+ifeq ($(JVM_INTERPRETER), cpp)
+  CC_INTERP=true
+endif
+
 HOTSPOT_MAKE_ARGS:=@HOTSPOT_MAKE_ARGS@ @STATIC_CXX_SETTING@
 # This is used from the libjvm build for C/C++ code.
 HOTSPOT_BUILD_JOBS:=$(JOBS)
 # Control wether Hotspot runs Queens test after building
 TEST_IN_BUILD=@TEST_IN_BUILD@
+
+USE_CLANG := @USE_CLANG@
 
 # For hotspot, override compiler/tools definition to not include FIXPATH prefix.
 # Hotspot has its own handling on the Windows path situation.

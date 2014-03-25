@@ -90,7 +90,7 @@ case "$OS" in
       FILESEP="/"
       ;;
 
-   Linux | Darwin )
+   Linux | Darwin | AIX )
       VAR="A different value for Linux"
       DEFAULT_JDK=/none
       #DEFAULT_JDK=/usr/local/java/jdk1.4/linux-i386
@@ -212,7 +212,8 @@ mkdir ./test_classes
 # split application classes and test plugin classes
 mv ./UserPluginMetadataFormatTest*.class ./test_classes
 
-$TESTJAVA/bin/java MetadataFormatThreadTest test_classes UserPluginMetadataFormatTest
+$TESTJAVA/bin/java ${TESTVMOPTS} \
+    MetadataFormatThreadTest test_classes UserPluginMetadataFormatTest
 
 ###############  END YOUR TEST CODE !!!!! ############
 status=$?

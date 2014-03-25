@@ -51,29 +51,6 @@
 #define HAS_GLIBC_GETHOSTBY_R   1
 #endif
 
-static jclass ni_iacls;
-static jclass ni_ia4cls;
-static jmethodID ni_ia4ctrID;
-
-static jboolean initializeInetClasses(JNIEnv *env)
-{
-    static int initialized = 0;
-    if (!initialized) {
-        ni_iacls = (*env)->FindClass(env, "java/net/InetAddress");
-        CHECK_NULL_RETURN(ni_iacls, JNI_FALSE);
-        ni_iacls = (*env)->NewGlobalRef(env, ni_iacls);
-        CHECK_NULL_RETURN(ni_iacls, JNI_FALSE);
-        ni_ia4cls = (*env)->FindClass(env, "java/net/Inet4Address");
-        CHECK_NULL_RETURN(ni_ia4cls, JNI_FALSE);
-        ni_ia4cls = (*env)->NewGlobalRef(env, ni_ia4cls);
-        CHECK_NULL_RETURN(ni_ia4cls, JNI_FALSE);
-        ni_ia4ctrID = (*env)->GetMethodID(env, ni_ia4cls, "<init>", "()V");
-        CHECK_NULL_RETURN(ni_ia4ctrID, JNI_FALSE);
-        initialized = 1;
-    }
-    return JNI_TRUE;
-}
-
 
 #if defined(_ALLBSD_SOURCE) && !defined(HAS_GLIBC_GETHOSTBY_R)
 extern jobjectArray lookupIfLocalhost(JNIEnv *env, const char *hostname, jboolean includeV6);
@@ -93,7 +70,7 @@ Java_java_net_Inet4AddressImpl_getLocalHostName(JNIEnv *env, jobject this) {
     char hostname[NI_MAXHOST+1];
 
     hostname[0] = '\0';
-    if (JVM_GetHostName(hostname, NI_MAXHOST)) {
+    if (gethostname(hostname, NI_MAXHOST)) {
         /* Something went wrong, maybe networking is not setup? */
         strcpy(hostname, "localhost");
     } else {
@@ -147,8 +124,8 @@ Java_java_net_Inet4AddressImpl_lookupAllHostAddr(JNIEnv *env, jobject this,
     int error=0;
     struct addrinfo hints, *res, *resNew = NULL;
 
-    if (!initializeInetClasses(env))
-        return NULL;
+    initInetAddressIDs(env);
+    JNU_CHECK_EXCEPTION_RETURN(env, NULL);
 
     if (IS_NULL(host)) {
         JNU_ThrowNullPointerException(env, "host is null");
@@ -187,7 +164,7 @@ Java_java_net_Inet4AddressImpl_lookupAllHostAddr(JNIEnv *env, jobject this,
 
     if (error) {
         /* report error */
-        ThrowUnknownHostExceptionWithGaiError(env, hostname, error);
+        NET_ThrowUnknownHostExceptionWithGaiError(env, hostname, error);
         JNU_ReleaseStringPlatformChars(env, host, hostname);
         return NULL;
     } else {
@@ -241,7 +218,7 @@ Java_java_net_Inet4AddressImpl_lookupAllHostAddr(JNIEnv *env, jobject this,
           goto cleanupAndReturn;
         }
 
-        ret = (*env)->NewObjectArray(env, retLen, ni_iacls, NULL);
+        ret = (*env)->NewObjectArray(env, retLen, ia_class, NULL);
         if (IS_NULL(ret)) {
             /* we may have memory to free at the end of this */
             goto cleanupAndReturn;
@@ -251,7 +228,7 @@ Java_java_net_Inet4AddressImpl_lookupAllHostAddr(JNIEnv *env, jobject this,
             /* We need 4 bytes to store ipv4 address; */
             int len = 4;
 
-            jobject iaObj = (*env)->NewObject(env, ni_ia4cls, ni_ia4ctrID);
+            jobject iaObj = (*env)->NewObject(env, ia4_class, ia4_ctrID);
             if (IS_NULL(iaObj)) {
                 /* we may have memory to free at the end of this */
                 ret = NULL;
@@ -355,7 +332,7 @@ Java_java_net_Inet4AddressImpl_getLocalHostName(JNIEnv *env, jobject this) {
     char hostname[NI_MAXHOST+1];
 
     hostname[0] = '\0';
-    if (JVM_GetHostName(hostname, sizeof(hostname))) {
+    if (gethostname(hostname, NI_MAXHOST)) {
         /* Something went wrong, maybe networking is not setup? */
         strcpy(hostname, "localhost");
     } else {
@@ -407,8 +384,8 @@ Java_java_net_Inet4AddressImpl_lookupAllHostAddr(JNIEnv *env, jobject this,
     int error = 0;
     struct addrinfo hints, *res, *resNew = NULL;
 
-    if (!initializeInetClasses(env))
-        return NULL;
+    initInetAddressIDs(env);
+    JNU_CHECK_EXCEPTION_RETURN(env, NULL);
 
     if (IS_NULL(host)) {
         JNU_ThrowNullPointerException(env, "host is null");
@@ -439,7 +416,7 @@ Java_java_net_Inet4AddressImpl_lookupAllHostAddr(JNIEnv *env, jobject this,
 
     if (error) {
         /* report error */
-        ThrowUnknownHostExceptionWithGaiError(env, hostname, error);
+        NET_ThrowUnknownHostExceptionWithGaiError(env, hostname, error);
         JNU_ReleaseStringPlatformChars(env, host, hostname);
         return NULL;
     } else {
@@ -486,7 +463,7 @@ Java_java_net_Inet4AddressImpl_lookupAllHostAddr(JNIEnv *env, jobject this,
         retLen = i;
         iterator = resNew;
 
-        ret = (*env)->NewObjectArray(env, retLen, ni_iacls, NULL);
+        ret = (*env)->NewObjectArray(env, retLen, ia_class, NULL);
 
         if (IS_NULL(ret)) {
             /* we may have memory to free at the end of this */
@@ -495,7 +472,7 @@ Java_java_net_Inet4AddressImpl_lookupAllHostAddr(JNIEnv *env, jobject this,
 
         i = 0;
         while (iterator != NULL) {
-            jobject iaObj = (*env)->NewObject(env, ni_ia4cls, ni_ia4ctrID);
+            jobject iaObj = (*env)->NewObject(env, ia4_class, ia4_ctrID);
             if (IS_NULL(iaObj)) {
                 ret = NULL;
                 goto cleanupAndReturn;
@@ -752,7 +729,7 @@ Java_java_net_Inet4AddressImpl_isReachable0(JNIEnv *env, jobject this,
      * Let's try to create a RAW socket to send ICMP packets
      * This usually requires "root" privileges, so it's likely to fail.
      */
-    fd = JVM_Socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
+    fd = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
     if (fd != -1) {
       /*
        * It didn't fail, so we can use ICMP_ECHO requests.
@@ -763,8 +740,8 @@ Java_java_net_Inet4AddressImpl_isReachable0(JNIEnv *env, jobject this,
     /*
      * Can't create a raw socket, so let's try a TCP socket
      */
-    fd = JVM_Socket(AF_INET, SOCK_STREAM, 0);
-    if (fd == JVM_IO_ERR) {
+    fd = socket(AF_INET, SOCK_STREAM, 0);
+    if (fd == -1) {
         /* note: if you run out of fds, you may not be able to load
          * the exception class, and get a NoClassDefFoundError
          * instead.
@@ -792,9 +769,8 @@ Java_java_net_Inet4AddressImpl_isReachable0(JNIEnv *env, jobject this,
      */
     SET_NONBLOCKING(fd);
 
-    /* no need to use NET_Connect as non-blocking */
     him.sin_port = htons(7);    /* Echo */
-    connect_rv = JVM_Connect(fd, (struct sockaddr *)&him, len);
+    connect_rv = NET_Connect(fd, (struct sockaddr *)&him, len);
 
     /**
      * connection established or refused immediately, either way it means
@@ -804,7 +780,7 @@ Java_java_net_Inet4AddressImpl_isReachable0(JNIEnv *env, jobject this,
         close(fd);
         return JNI_TRUE;
     } else {
-        int optlen;
+        socklen_t optlen = (socklen_t)sizeof(connect_rv);
 
         switch (errno) {
         case ENETUNREACH: /* Network Unreachable */
@@ -834,9 +810,8 @@ Java_java_net_Inet4AddressImpl_isReachable0(JNIEnv *env, jobject this,
         timeout = NET_Wait(env, fd, NET_WAIT_CONNECT, timeout);
         if (timeout >= 0) {
           /* has connection been established? */
-          optlen = sizeof(connect_rv);
-          if (JVM_GetSockOpt(fd, SOL_SOCKET, SO_ERROR, (void*)&connect_rv,
-                             &optlen) <0) {
+          if (getsockopt(fd, SOL_SOCKET, SO_ERROR, (void*)&connect_rv,
+                         &optlen) <0) {
             connect_rv = errno;
           }
           if (connect_rv == 0 || connect_rv == ECONNREFUSED) {

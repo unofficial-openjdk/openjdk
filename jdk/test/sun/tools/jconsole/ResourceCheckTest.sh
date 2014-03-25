@@ -54,7 +54,7 @@ pass()
 
 OS=`uname -s`
 case "$OS" in
-   SunOS | Linux | Darwin)
+   SunOS | Linux | Darwin | AIX)
       PATHSEP=":"
       ;;
 
@@ -102,7 +102,7 @@ ${TESTJAVA}/bin/javac -d "${TESTCLASSES}" ${CP} -g \
                          "${TESTSRC}"/"${TARGETCLASS}".java
 #
 #Run the test class, again with the classpath we need:
-${TESTJAVA}/bin/java ${CP} ${TARGETCLASS}
+${TESTJAVA}/bin/java ${TESTVMOPTS} ${CP} ${TARGETCLASS}
 status=$?
 echo "test status was: $status"
 if [ $status -eq "0" ];

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -54,11 +54,6 @@ ProjNode* MultiNode::proj_out(uint which_proj) const {
         assert(Opcode() != Op_If || proj->Opcode() == (which_proj?Op_IfTrue:Op_IfFalse), "bad if #2");
         return proj;
       }
-    } else if (p->is_FlagsProj()) {
-      FlagsProjNode *proj = p->as_FlagsProj();
-      if (proj->_con == which_proj) {
-        return proj;
-      }
     } else {
       assert(p == this && this->is_Start(), "else must be proj");
       continue;
@@ -94,7 +89,7 @@ const Type* ProjNode::proj_type(const Type* t) const {
   if ((_con == TypeFunc::Parms) &&
       n->is_CallStaticJava() && n->as_CallStaticJava()->is_boxing_method()) {
     // The result of autoboxing is always non-null on normal path.
-    t = t->join(TypePtr::NOTNULL);
+    t = t->join_speculative(TypePtr::NOTNULL);
   }
   return t;
 }
@@ -199,7 +194,9 @@ bool ProjNode::is_uncommon_trap_if_pattern(Deoptimization::DeoptReason reason) {
     }
   }
 
-  ProjNode* other_proj = iff->proj_out(1-_con)->as_Proj();
+  ProjNode* other_proj = iff->proj_out(1-_con);
+  if (other_proj == NULL) // Should never happen, but make Parfait happy.
+      return false;
   if (other_proj->is_uncommon_trap_proj(reason)) {
     assert(reason == Deoptimization::Reason_none ||
            Compile::current()->is_predicate_opaq(iff->in(1)->in(1)), "should be on the list");

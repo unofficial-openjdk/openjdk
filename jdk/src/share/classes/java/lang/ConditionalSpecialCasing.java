@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -91,15 +91,14 @@ final class ConditionalSpecialCasing {
     static Hashtable<Integer, HashSet<Entry>> entryTable = new Hashtable<>();
     static {
         // create hashtable from the entry
-        for (int i = 0; i < entry.length; i ++) {
-            Entry cur = entry[i];
-            Integer cp = new Integer(cur.getCodePoint());
+        for (Entry cur : entry) {
+            Integer cp = cur.getCodePoint();
             HashSet<Entry> set = entryTable.get(cp);
             if (set == null) {
-                set = new HashSet<Entry>();
+                set = new HashSet<>();
+                entryTable.put(cp, set);
             }
             set.add(cur);
-            entryTable.put(cp, set);
         }
     }
 

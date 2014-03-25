@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -53,10 +53,6 @@ import java.util.LinkedList;
  */
 
 class KQueueArrayWrapper {
-    // Event masks
-    static final short POLLIN       = AbstractPollArrayWrapper.POLLIN;
-    static final short POLLOUT      = AbstractPollArrayWrapper.POLLOUT;
-
     // kevent filters
     static short EVFILT_READ;
     static short EVFILT_WRITE;
@@ -129,9 +125,9 @@ class KQueueArrayWrapper {
         //   SinkChannelImpl, SourceChannelImpl, DatagramChannelImpl,
         //   ServerSocketChannelImpl, SocketChannelImpl
         if (filter == EVFILT_READ) {
-            result |= POLLIN;
+            result |= Net.POLLIN;
         } else if (filter == EVFILT_WRITE) {
-            result |= POLLOUT;
+            result |= Net.POLLOUT;
         }
 
         return result;
@@ -180,7 +176,7 @@ class KQueueArrayWrapper {
                 if (!ch.isOpen())
                     continue;
 
-                register0(kq, ch.getFDVal(), u.events & POLLIN, u.events & POLLOUT);
+                register0(kq, ch.getFDVal(), u.events & Net.POLLIN, u.events & Net.POLLOUT);
             }
         }
     }

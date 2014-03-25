@@ -1,5 +1,5 @@
 #
-# Copyright (c) 1998, 2012, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 1998, 2013, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -45,7 +45,7 @@ OS=`uname -s`
 # Need to determine the classpath separator and filepath separator based on the
 # operating system.
 case "$OS" in
-SunOS | Linux | Darwin )
+SunOS | Linux | Darwin | AIX )
   PS=":"  ;;
 Windows* | CYGWIN* )
   PS=";"  ;;

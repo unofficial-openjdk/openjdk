@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1609,8 +1609,7 @@ public class AudioSystem {
         Mixer.Info[] allInfos;  // for all mixers
 
         for(int i = 0; i < providers.size(); i++ ) {
-            someInfos = (Mixer.Info[])
-                ((MixerProvider)providers.get(i)).getMixerInfo();
+            someInfos = ((MixerProvider)providers.get(i)).getMixerInfo();
 
             for (int j = 0; j < someInfos.length; j++) {
                 infos.add(someInfos[j]);
@@ -1623,7 +1622,7 @@ public class AudioSystem {
 
     /**
      * Obtains the set of services currently installed on the system
-     * using sun.misc.Service, the SPI mechanism in 1.3.
+     * using the SPI mechanism in 1.3.
      * @return a List of instances of providers for the requested service.
      * If no providers are available, a vector of length 0 will be returned.
      */

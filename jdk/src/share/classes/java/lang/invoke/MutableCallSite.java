@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -274,8 +274,8 @@ public class MutableCallSite extends CallSite {
     public static void syncAll(MutableCallSite[] sites) {
         if (sites.length == 0)  return;
         STORE_BARRIER.lazySet(0);
-        for (int i = 0; i < sites.length; i++) {
-            sites[i].getClass();  // trigger NPE on first null
+        for (MutableCallSite site : sites) {
+            site.getClass();  // trigger NPE on first null
         }
         // FIXME: NYI
     }
