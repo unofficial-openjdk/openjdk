@@ -23,38 +23,34 @@
 
 package jdk.testlibrary;
 
-import java.util.Arrays;
-
 /**
- * Super class for tests which need to attach jcmd to the current process.
+ * This type serves no other purpose than to simply allow automatically running
+ * something in a thread, and have all exceptions propagated to
+ * RuntimeExceptions, which are thrown up to thread, which in turn should
+ * probably be a {@link TestThread} to they are stored.
  */
-public class JcmdBase {
-
-    private static ProcessBuilder processBuilder = new ProcessBuilder();
+public abstract class XRun implements Runnable {
 
     /**
-     * Attach jcmd to the current process
-     *
-     * @param toolArgs
-     *            jcmd command line parameters, e.g. VM.flags
-     * @return jcmd output
-     * @throws Exception
+     * Invokes {@code xrun()} and throws all exceptions caught in it
+     * up to the thread.
      */
-    public final static OutputAnalyzer jcmd(String... toolArgs)
-            throws Exception {
-        JDKToolLauncher launcher = JDKToolLauncher.createUsingTestJDK("jcmd");
-        launcher.addToolArg(Integer.toString(ProcessTools.getProcessId()));
-        for (String toolArg : toolArgs) {
-            launcher.addToolArg(toolArg);
+    public final void run() {
+        try {
+            xrun();
+        } catch (Error e) {
+            throw e;
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Throwable e) {
+            throw new RuntimeException(e);
         }
-        processBuilder.command(launcher.getCommand());
-        System.out.println(Arrays.toString(processBuilder.command().toArray()).replace(",", ""));
-        OutputAnalyzer output = new OutputAnalyzer(processBuilder.start());
-        System.out.println(output.getOutput());
-
-        output.shouldHaveExitValue(0);
-
-        return output;
     }
 
+    /**
+     * Override this method to implement what to run in the thread.
+     *
+     * @throws Throwable
+     */
+    protected abstract void xrun() throws Throwable;
 }
