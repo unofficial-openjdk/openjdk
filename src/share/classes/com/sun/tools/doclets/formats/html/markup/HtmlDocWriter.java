@@ -181,12 +181,14 @@ public abstract class HtmlDocWriter extends HtmlWriter {
                                String label, boolean strong,
                                String stylename, String title, String target) {
         StringBuffer retlink = new StringBuffer();
+        StringBuilder lnk = new StringBuilder();
         retlink.append("<a href=\"");
-        retlink.append(link);
+        lnk.append(link);
         if (where != null && where.length() != 0) {
-            retlink.append("#");
-            retlink.append(where);
+            lnk.append("#");
+            lnk.append(where);
         }
+        retlink.append(HtmlTree.encodeURL(lnk.toString()));
         retlink.append("\"");
         if (title != null && title.length() != 0) {
             retlink.append(" title=\"" + title + "\"");
