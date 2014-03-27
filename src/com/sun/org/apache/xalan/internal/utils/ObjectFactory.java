@@ -54,8 +54,8 @@ public class ObjectFactory {
     //
     // Constants
     //
-     private static final String XALAN_INTERNAL = "com.sun.org.apache.xalan.internal";
-     private static final String XERCES_INTERNAL = "com.sun.org.apache.xerces.internal";
+     private static final String JAXP_INTERNAL = "com.sun.org.apache";
+     private static final String STAX_INTERNAL = "com.sun.xml.internal";
 
     // name of default properties file to look for in JDK's jre/lib directory
     private static final String DEFAULT_PROPERTIES_FILENAME =
@@ -497,12 +497,8 @@ public class ObjectFactory {
     public static Class findProviderClass(String className, boolean doFallback)
         throws ClassNotFoundException, ConfigurationError
     {
-        if (System.getSecurityManager()!=null) {
-            return Class.forName(className);
-        } else {
-            return findProviderClass (className,
+        return findProviderClass (className,
                 findClassLoader (), doFallback);
-        }
     }
 
     /**
@@ -517,8 +513,8 @@ public class ObjectFactory {
         SecurityManager security = System.getSecurityManager();
         try{
             if (security != null){
-                if (className.startsWith(XALAN_INTERNAL) ||
-                    className.startsWith(XERCES_INTERNAL)) {
+                if (className.startsWith(JAXP_INTERNAL) ||
+                    className.startsWith(STAX_INTERNAL)) {
                     cl = null;
                 } else {
                     final int lastDot = className.lastIndexOf(".");
@@ -533,16 +529,7 @@ public class ObjectFactory {
 
         Class providerClass;
         if (cl == null) {
-            // XXX Use the bootstrap ClassLoader.  There is no way to
-            // load a class using the bootstrap ClassLoader that works
-            // in both JDK 1.1 and Java 2.  However, this should still
-            // work b/c the following should be true:
-            //
-            // (cl == null) iff current ClassLoader == null
-            //
-            // Thus Class.forName(String) will use the current
-            // ClassLoader which will be the bootstrap ClassLoader.
-            providerClass = Class.forName(className);
+            providerClass = Class.forName(className, false, ObjectFactory.class.getClassLoader());
         } else {
             try {
                 providerClass = cl.loadClass(className);
