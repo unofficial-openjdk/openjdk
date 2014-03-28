@@ -285,8 +285,6 @@ ifneq ($(FREETYPE_BUNDLE_LIB_PATH), )
         ifeq ($(OPENJDK_BUILD_OS), windows)
 	  $(CHMOD) +rx $@
         endif
-
-  DESKTOP_CONF_FILES += $(FREETYPE_TARGET_LIB)
 endif
 
 ##########################################################################################
@@ -299,8 +297,6 @@ ifeq ($(OPENJDK_TARGET_OS), windows)
   $(MSVCR_TARGET): $(MSVCR_DLL)
 	$(call install-file)
 	$(CHMOD) a+rx $@
-
-  BASE_CONF_FILES += $(MSVCR_TARGET)
 endif
 
 ##########################################################################################
@@ -640,8 +636,8 @@ endif
 
 ##########################################################################################
 
-java.base: $(BASE_CONF_FILES) $(NET_CONF_FILES) $(H_TARGET_FILES)
-java.desktop: $(DESKTOP_CONF_FILES)
+java.base: $(BASE_CONF_FILES) $(NET_CONF_FILES) $(H_TARGET_FILES) $(MSVCR_TARGET)
+java.desktop: $(DESKTOP_CONF_FILES) $(FREETYPE_TARGET_LIB)
 jdk.tools.jre: $(HPROF_CONF_FILES)
 java.management: $(MANAGEMENT_CONF_FILES)
 java.logging: $(LOGGING_CONF_FILES)
