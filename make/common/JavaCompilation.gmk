@@ -35,6 +35,9 @@
 # of removing duplicates. It is actually this side effect that is
 # desired whenever sort is used below!
 
+ifndef _JAVA_COMPILATION_GMK
+_JAVA_COMPILATION_GMK := 1
+
 ifeq (,$(_MAKEBASE_GMK))
   $(error You must include MakeBase.gmk prior to including JavaCompilation.gmk)
 endif
@@ -327,6 +330,10 @@ define add_file_to_copy
   $2_TARGET:=$2
   # Remove the source prefix.
   $$(foreach i,$$($1_SRC),$$(eval $$(call remove_string,$$i,$2_TARGET)))
+  # To allow for automatic overrides, do not create a rule for a target file that
+  # already has one
+  ifeq ($$(findstring $$($2_TARGET), $$($1_COPY_LIST)), )
+    $1_COPY_LIST += $$($2_TARGET)
   # Now we can setup the depency that will trigger the copying.
   $$($1_BIN)$$($2_TARGET) : $2
 	$(MKDIR) -p $$(@D)
@@ -335,6 +342,7 @@ define add_file_to_copy
 
   # And do not forget this target
   $1_ALL_COPY_TARGETS += $$($1_BIN)$$($2_TARGET)
+  endif
 endef
 
 
@@ -461,10 +469,12 @@ define SetupJavaCompilation
     $1_SRCS := $$(filter-out $$($1_SRC_EXCLUDES),$$($1_SRCS))
   endif
 
+  # All files below META-INF are always copied.
+  $1_ALL_COPIES := $$(filter $$(addsuffix /META-INF%,$$($1_SRC)),$$($1_ALL_SRCS))
   # Find all files to be copied from source to bin.
   ifneq (,$$($1_COPY)$$($1_COPY_FILES))
     # Search for all files to be copied.
-    $1_ALL_COPIES := $$(filter $$(addprefix %,$$($1_COPY)),$$($1_ALL_SRCS))
+    $1_ALL_COPIES += $$(filter $$(addprefix %,$$($1_COPY)),$$($1_ALL_SRCS))
     # Copy these explicitly
     $1_ALL_COPIES += $$($1_COPY_FILES)
     # Copy must also respect filters.
@@ -478,14 +488,12 @@ define SetupJavaCompilation
       $1_ALL_COPIES := $$(filter-out $$($1_EXCLUDE_FILES_PATTERN),$$($1_ALL_COPIES))
     endif
   endif
-  # All files below META-INF are always copied.
-  $1_ALL_COPIES += $$(filter $$(addsuffix /META-INF%,$$($1_SRC)),$$($1_ALL_SRCS))
-  ifneq (,$$($1_ALL_COPIES))
-    # Yep, there are files to be copied!
-    $1_ALL_COPY_TARGETS:=
-        $$(foreach i,$$($1_ALL_COPIES),$$(eval $$(call add_file_to_copy,$1,$$i)))
-    # Now we can depend on $$($1_ALL_COPY_TARGETS) to copy all files!
-  endif
+    ifneq (,$$($1_ALL_COPIES))
+      # Yep, there are files to be copied!
+      $1_ALL_COPY_TARGETS:=
+          $$(foreach i,$$($1_ALL_COPIES),$$(eval $$(call add_file_to_copy,$1,$$i)))
+      # Now we can depend on $$($1_ALL_COPY_TARGETS) to copy all files!
+    endif
 
   # Find all property files to be copied and cleaned from source to bin.
   ifneq (,$$($1_CLEAN)$$($1_CLEAN_FILES))
@@ -528,7 +536,7 @@ define SetupJavaCompilation
     endif
 
     # Using sjavac to compile.
-    $1 := $$($1_ALL_COPY_TARGETS) $$($1_ALL_COPY_CLEAN_TARGETS) $$($1_BIN)/javac_state
+    $1_COMPILE_TARGETS := $$($1_BIN)/javac_state
 
     # Create SJAVAC variable form JAVAC variable. Expects $1_JAVAC to be
     # "bootclasspathprepend -cp .../javac.jar com.sun.tools.javac.Main"
@@ -556,7 +564,7 @@ define SetupJavaCompilation
 	$(MV) $$($1_BIN)/_the.$1_batch.tmp $$($1_BIN)/_the.$1_batch)
   else
     # Using plain javac to batch compile everything.
-    $1 := $$($1_ALL_COPY_TARGETS) $$($1_ALL_COPY_CLEAN_TARGETS) $$($1_BIN)/_the.$1_batch
+    $1_COMPILE_TARGETS := $$($1_BIN)/_the.$1_batch
 
     # When building in batch, put headers in a temp dir to filter out those that actually
     # changed before copying them to the real header dir.
@@ -565,15 +573,18 @@ define SetupJavaCompilation
 
       $$($1_HEADERS)/_the.$1_headers: $$($1_BIN)/_the.$1_batch
 		$(MKDIR) -p $$(@D)
+		if [ -d "$$($1_HEADERS).$1.tmp" ]; then \
 		for f in `ls $$($1_HEADERS).$1.tmp`; do \
-		  if [ ! -f "$$($1_HEADERS)/$$$$f" ] || [ "`$(DIFF) $$($1_HEADERS)/$$$$f $$($1_HEADERS).$1.tmp/$$$$f`" != "" ]; then \
+		    if [ ! -f "$$($1_HEADERS)/$$$$f" ] \
+		        || [ "`$(DIFF) $$($1_HEADERS)/$$$$f $$($1_HEADERS).$1.tmp/$$$$f`" != "" ]; then \
 		    $(CP) -f $$($1_HEADERS).$1.tmp/$$$$f $$($1_HEADERS)/$$$$f; \
 		  fi; \
-		done
+		  done; \
+		fi
 		$(RM) -r $$($1_HEADERS).$1.tmp
 		$(TOUCH) $$@
 
-      $1 += $$($1_HEADERS)/_the.$1_headers
+      $1_HEADER_TARGETS := $$($1_HEADERS)/_the.$1_headers
     endif
 
     # When not using sjavac, pass along all sources to javac using an @file.
@@ -588,6 +599,10 @@ define SetupJavaCompilation
 	$(MV) $$($1_BIN)/_the.$1_batch.tmp $$($1_BIN)/_the.$1_batch)
 
   endif
+
+  # Add all targets to main variable
+  $1 := $$($1_ALL_COPY_TARGETS) $$($1_ALL_COPY_CLEAN_TARGETS) $$($1_COMPILE_TARGETS) \
+      $$($1_HEADER_TARGETS)
 
   # Check if a jar file was specified, then setup the rules for the jar.
   ifneq (,$$($1_JAR))
@@ -629,3 +644,4 @@ define SetupJavaCompilation
     $1 += $$($1_SRCZIP)
   endif
 endef
+endif
