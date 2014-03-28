@@ -33,11 +33,11 @@ include NativeCompilation.gmk
 # Setup the java compilers for the JDK build.
 include Setup.gmk
 
-# Prepare the find cache. Only used on windows.
+# Prepare the find cache.
 ifeq ($(JIGSAW), true)
   $(eval $(call FillCacheFind, $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/launchers))
 else
-$(eval $(call FillCacheFind, $(JDK_TOPDIR)/src/share/bin))
+  $(eval $(call FillCacheFind, $(JDK_TOPDIR)/src/share/bin))
 endif
 
 # Build tools
@@ -174,11 +174,11 @@ define SetupLauncher
       $1_MAPFILE :=
     endif
   else
-  ifneq ($(wildcard $(JDK_TOPDIR)/make/mapfiles/launchers/mapfile-$(OPENJDK_TARGET_CPU)), )
-    $1_MAPFILE := $(JDK_TOPDIR)/make/mapfiles/launchers/mapfile-$(OPENJDK_TARGET_CPU)
-  else
-    $1_MAPFILE :=
-  endif
+    ifneq ($(wildcard $(JDK_TOPDIR)/make/mapfiles/launchers/mapfile-$(OPENJDK_TARGET_CPU)), )
+      $1_MAPFILE := $(JDK_TOPDIR)/make/mapfiles/launchers/mapfile-$(OPENJDK_TARGET_CPU)
+    else
+      $1_MAPFILE :=
+    endif
   endif
 
   $(call SetupNativeCompilation,BUILD_LAUNCHER_$1, \

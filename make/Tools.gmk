@@ -35,7 +35,7 @@ include JavaCompilation.gmk
 include NativeCompilation.gmk
 include Setup.gmk
 
-# Cache all finds needed for this file. Only used on windows.
+# Cache all finds needed for this file.
 $(eval $(call FillCacheFind, $(JDK_TOPDIR)/make/src/classes))
 
 # The exception handling of swing beaninfo which have the own tool directory
@@ -43,8 +43,7 @@ ifeq (, $(BUILD_TOOLS))
   $(eval $(call SetupJavaCompilation,BUILD_TOOLS, \
       SETUP := GENERATE_OLDBYTECODE, \
       SRC := $(JDK_TOPDIR)/make/src/classes, \
-      BIN := $(JDK_OUTPUTDIR)/btclasses, \
-      EXCLUDES := $(TOOLS_EXCLUDE)))
+      BIN := $(JDK_OUTPUTDIR)/btclasses))
 endif
 
 $(JDK_OUTPUTDIR)/btclasses/build/tools/generatenimbus/resources/%.template: \
@@ -75,8 +74,6 @@ TOOL_COMPILEPROPERTIES = $(JAVA_SMALL) -cp $(JDK_OUTPUTDIR)/btclasses \
     build.tools.compileproperties.CompileProperties
 
 TOOL_STRIPPROPERTIES = $(JAVA_SMALL) -cp $(JDK_OUTPUTDIR)/btclasses \
-    build.tools.stripproperties.StripProperties
-
 TOOL_JARREORDER = $(JAVA_SMALL) -cp $(JDK_OUTPUTDIR)/btclasses \
     build.tools.jarreorder.JarReorder
 
