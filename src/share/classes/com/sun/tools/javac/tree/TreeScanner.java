@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -66,6 +66,43 @@ public class TreeScanner extends Visitor {
         scan(tree.packageAnnotations);
         scan(tree.pid);
         scan(tree.defs);
+    }
+
+    @Override
+    public void visitModuleDef(JCModuleDecl tree) {
+        scan(tree.qualId);
+        scan(tree.directives);
+    }
+
+    @Override
+    public void visitExports(JCExports tree) {
+        scan(tree.qualid);
+    }
+
+    @Override
+    public void visitPermits(JCPermits tree) {
+        scan(tree.qualid);
+    }
+
+    @Override
+    public void visitProvides(JCProvides tree) {
+        scan(tree.serviceName);
+        scan(tree.implName);
+    }
+
+    @Override
+    public void visitRequires(JCRequires tree) {
+        scan(tree.viewName);
+    }
+
+    @Override
+    public void visitUses(JCUses tree) {
+        scan(tree.qualid);
+    }
+
+    @Override
+    public void visitViewDef(JCViewDecl tree) {
+        scan(tree.directives);
     }
 
     public void visitImport(JCImport tree) {

@@ -35,9 +35,6 @@ import java.util.MissingResourceException;
 import java.util.Queue;
 import java.util.ResourceBundle;
 import java.util.Set;
-import java.util.logging.Handler;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import javax.annotation.processing.Processor;
 import javax.lang.model.SourceVersion;
@@ -1453,14 +1450,14 @@ public class JavaCompiler {
             make.at(Position.FIRSTPOS);
             TreeMaker localMake = make.forToplevel(env.toplevel);
 
-            if (env.tree instanceof JCCompilationUnit) {
+            if (env.tree.hasTag(JCTree.Tag.TOPLEVEL) || env.tree.hasTag(JCTree.Tag.MODULE)) {
                 if (!(stubOutput || sourceOutput || printFlat)) {
                     if (shouldStop(CompileState.LOWER))
                         return;
-                    List<JCTree> pdef = lower.translateTopLevelClass(env, env.tree, localMake);
-                    if (pdef.head != null) {
-                        Assert.check(pdef.tail.isEmpty());
-                        results.add(new Pair<>(env, (JCClassDecl)pdef.head));
+                    List<JCTree> def = lower.translateTopLevelClass(env, env.tree, localMake);
+                    if (def.head != null) {
+                        Assert.check(def.tail.isEmpty());
+                        results.add(new Pair<>(env, (JCClassDecl)def.head));
                     }
                 }
                 return;
