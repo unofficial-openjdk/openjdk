@@ -493,15 +493,8 @@ bool Reflection::verify_class_access(Klass* current_class, Klass* new_class, boo
       return true;
 
     // a type in a module trying to access a type in the unamed module
-    // (instrumentation case, no support for this yet)
-    if (m2 == NULL) {
-      if (TraceAccessControlErrors) {
-        ResourceMark rm;
-        tty->print_cr("Type in module %s (%s) cannot access type in unnamed module (%s)",
-          m1->name(), current_class->external_name(), new_class->external_name());
-      }
-      return false;
-    }
+    if (m2 == NULL)
+      return true;
 
     // m1 does not require m2
     if (m1 != NULL && !m1->requires(m2)) {
