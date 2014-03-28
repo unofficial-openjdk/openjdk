@@ -33,7 +33,7 @@ include NativeCompilation.gmk
 # Setup the java compilers for the JDK build.
 include Setup.gmk
 
-# Prepare the find cache. Only used if running on windows.
+# Prepare the find cache.
 ifeq ($(JIGSAW), true)
   $(eval $(call FillCacheFind, $(JDK_TOPDIR)/src_shuffled))
 else
@@ -45,8 +45,8 @@ include Tools.gmk
 
 # Include the javah generated headers.
 ifneq ($(JIGSAW), true)
-  CFLAGS_JDKLIB += -I$(JDK_OUTPUTDIR)/gensrc_headers
-  CXXFLAGS_JDKLIB += -I$(JDK_OUTPUTDIR)/gensrc_headers
+CFLAGS_JDKLIB += -I$(JDK_OUTPUTDIR)/gensrc_headers
+CXXFLAGS_JDKLIB += -I$(JDK_OUTPUTDIR)/gensrc_headers
 endif
 
 # Put the libraries here. Different locations for different target apis.
