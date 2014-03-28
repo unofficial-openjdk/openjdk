@@ -36,22 +36,62 @@ import java.io.IOException;
  *  deletion without notice.</b>
  */
 public class Module_attribute extends Attribute {
+    public static final int ACC_PUBLIC    =   0x20;
+    public static final int ACC_SYNTHETIC = 0x1000;
+    public static final int ACC_MANDATED  = 0x8000;
+
     Module_attribute(ClassReader cr, int name_index, int length) throws IOException {
         super(name_index, length);
-        module_name_index = cr.readUnsignedShort();
+        requires_count = cr.readUnsignedShort();
+        requires = new RequiresEntry[requires_count];
+        for (int i = 0; i < requires_count; i++)
+            requires[i] = new RequiresEntry(cr);
+        permits_count = cr.readUnsignedShort();
+        permits_index = new int[permits_count];
+        for (int i = 0; i < permits_count; i++)
+            permits_index[i] = cr.readUnsignedShort();
+        exports_count = cr.readUnsignedShort();
+        exports = new ExportsEntry[exports_count];
+        for (int i = 0; i < exports_count; i++)
+            exports[i] = new ExportsEntry(cr);
+        uses_count = cr.readUnsignedShort();
+        uses_index = new int[uses_count];
+        for (int i = 0; i < uses_count; i++)
+            uses_index[i] = cr.readUnsignedShort();
+        provides_count = cr.readUnsignedShort();
+        provides = new ProvidesEntry[provides_count];
+        for (int i = 0; i < provides_count; i++)
+            provides[i] = new ProvidesEntry(cr);
     }
 
-    public Module_attribute(int name_index, int module_name_index) {
+    public Module_attribute(int name_index,
+            RequiresEntry[] requires,
+            int[] permits,
+            ExportsEntry[] exports,
+            int[] uses,
+            ProvidesEntry[] provides) {
         super(name_index, 2);
-        this.module_name_index = module_name_index;
+        requires_count = requires.length;
+        this.requires = requires;
+        permits_count = permits.length;
+        this.permits_index = permits;
+        exports_count = exports.length;
+        this.exports = exports;
+        uses_count = uses.length;
+        this.uses_index = uses;
+        provides_count = provides.length;
+        this.provides = provides;
+
     }
 
-    public String getModuleName(ConstantPool constant_pool) throws ConstantPoolException {
-        return constant_pool.getUTF8Value(module_name_index);
+    public String getPermits(int index, ConstantPool constant_pool) throws ConstantPoolException {
+        int i = permits_index[index];
+        return constant_pool.getUTF8Value(i);
     }
 
-    public String getModuleVersion(ConstantPool constant_pool) throws ConstantPoolException {
-        return constant_pool.getUTF8Value(module_name_index);
+    public String getUses(int index, ConstantPool constant_pool) throws ConstantPoolException {
+        int i = uses_index[index];
+        return constant_pool.getClassInfo(i).getName();
     }
 
     @Override
@@ -59,6 +99,76 @@ public class Module_attribute extends Attribute {
         return visitor.visitModule(this, data);
     }
 
-    public final int module_name_index;
+    public final int requires_count;
+    public final RequiresEntry[] requires;
+    public final int permits_count;
+    public final int[] permits_index;
+    public final int exports_count;
+    public final ExportsEntry[] exports;
+    public final int uses_count;
+    public final int[] uses_index;
+    public final int provides_count;
+    public final ProvidesEntry[] provides;
 
+    public static class RequiresEntry {
+        RequiresEntry(ClassReader cr) throws IOException {
+            requires_index = cr.readUnsignedShort();
+            requires_flags = cr.readUnsignedShort();
+        }
+
+        public RequiresEntry(int index, int flags) {
+            this.requires_index = index;
+            this.requires_flags = flags;
+        }
+
+        public String getPermits(int index, ConstantPool constant_pool) throws ConstantPoolException {
+            return constant_pool.getUTF8Value(requires_index);
+        }
+
+        public static final int length = 4;
+
+        public final int requires_index;
+        public final int requires_flags;
+    }
+
+    public static class ExportsEntry {
+        ExportsEntry(ClassReader cr) throws IOException {
+            exports_index = cr.readUnsignedShort();
+            exports_to_count = cr.readUnsignedShort();
+            exports_to_index = new int[exports_to_count];
+            for (int i = 0; i < exports_to_count; i++)
+                exports_to_index[i] = cr.readUnsignedShort();
+        }
+
+        public ExportsEntry(int index, int[] to) {
+            this.exports_index = index;
+            this.exports_to_count = to.length;
+            this.exports_to_index = to;
+        }
+
+        public int length() {
+            return 4 + 2 * exports_to_index.length;
+        }
+
+        public final int exports_index;
+        public final int exports_to_count;
+        public final int[] exports_to_index;
+    }
+
+    public static class ProvidesEntry {
+        ProvidesEntry(ClassReader cr) throws IOException {
+            provides_index = cr.readUnsignedShort();
+            with_index = cr.readUnsignedShort();
+        }
+
+        public ProvidesEntry(int provides, int with) {
+            this.provides_index = provides;
+            this.with_index = with;
+        }
+
+        public static final int length = 4;
+
+        public final int provides_index;
+        public final int with_index;
+    }
 }

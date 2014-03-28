@@ -26,8 +26,6 @@
 
 package com.sun.source.tree;
 
-import java.util.List;
-
 public interface UsesTree extends DirectiveTree {
     ExpressionTree getServiceName();
 }

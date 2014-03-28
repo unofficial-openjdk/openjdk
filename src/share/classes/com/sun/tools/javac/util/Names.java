@@ -68,8 +68,8 @@ public class Names {
     public final Name permits;
     public final Name provides;
     public final Name requires;
+    public final Name to;
     public final Name uses;
-    public final Name view;
     public final Name with;
 
     // field and method names
@@ -143,8 +143,6 @@ public class Names {
     public final Name LocalVariableTypeTable;
     public final Name MethodParameters;
     public final Name Module;
-    public final Name ModuleProvides;
-    public final Name ModuleRequires;
     public final Name RuntimeInvisibleAnnotations;
     public final Name RuntimeInvisibleParameterAnnotations;
     public final Name RuntimeInvisibleTypeAnnotations;
@@ -216,8 +214,8 @@ public class Names {
         permits = fromString("permits");
         provides = fromString("provides");
         requires = fromString("requires");
+        to = fromString("to");
         uses = fromString("uses");
-        view = fromString("view");
         with = fromString("with");
 
         // field and method names
@@ -291,8 +289,6 @@ public class Names {
         LocalVariableTypeTable = fromString("LocalVariableTypeTable");
         MethodParameters = fromString("MethodParameters");
         Module = fromString("Module");
-        ModuleProvides = fromString("ModuleProvides");
-        ModuleRequires = fromString("ModuleRequires");
         RuntimeInvisibleAnnotations = fromString("RuntimeInvisibleAnnotations");
         RuntimeInvisibleParameterAnnotations = fromString("RuntimeInvisibleParameterAnnotations");
         RuntimeInvisibleTypeAnnotations = fromString("RuntimeInvisibleTypeAnnotations");

@@ -454,24 +454,17 @@ public class TreeCopier<P> implements TreeVisitor<JCTree,P> {
     }
 
     @Override
-    public JCTree visitView(ViewTree node, P p) {
-        JCViewDecl t = (JCViewDecl) node;
-        JCExpression name = copy(t.name);
-        List<JCDirective> directives = copy(t.directives);
-        return M.at(t.pos).ViewDef(name, directives);
-    }
-
-    @Override
     public JCExports visitExports(ExportsTree node, P p) {
         JCExports t = (JCExports) node;
         JCExpression qualId = copy(t.qualid, p);
-        return M.at(t.pos).Exports(qualId);
+        List<JCExpression> moduleNames = copy(t.moduleNames, p);
+        return M.at(t.pos).Exports(qualId, moduleNames);
     }
 
     @Override
     public JCPermits visitPermits(PermitsTree node, P p) {
         JCPermits t = (JCPermits) node;
-        JCExpression qualId = copy(t.qualid, p);
+        JCExpression qualId = copy(t.moduleName, p);
         return M.at(t.pos).Permits(qualId);
     }
 
@@ -486,8 +479,8 @@ public class TreeCopier<P> implements TreeVisitor<JCTree,P> {
     @Override
     public JCRequires visitRequires(RequiresTree node, P p) {
         JCRequires t = (JCRequires) node;
-        JCExpression viewName = copy(t.viewName, p);
-        return M.at(t.pos).Requires(t.isPublic, viewName);
+        JCExpression moduleName = copy(t.moduleName, p);
+        return M.at(t.pos).Requires(t.isPublic, moduleName);
     }
 
     @Override

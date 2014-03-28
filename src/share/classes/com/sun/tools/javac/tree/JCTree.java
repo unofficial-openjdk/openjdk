@@ -37,6 +37,8 @@ import com.sun.source.tree.*;
 import com.sun.source.tree.LambdaExpressionTree.BodyKind;
 import com.sun.source.tree.MemberReferenceTree.ReferenceMode;
 import com.sun.tools.javac.code.*;
+import com.sun.tools.javac.code.Directive.PermitsDirective;
+import com.sun.tools.javac.code.Directive.RequiresDirective;
 import com.sun.tools.javac.code.Scope.*;
 import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.util.*;
@@ -2442,52 +2444,14 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
         }
     }
 
-    public static class JCViewDecl extends JCDirective
-            implements ViewTree {
-        public JCExpression name;
-        public List<JCDirective> directives;
-
-        protected JCViewDecl(JCExpression name, List<JCDirective> directives) {
-            this.name = name;
-            this.directives = directives;
-        }
-
-        @Override
-        public void accept(Visitor v) { v.visitViewDef(this); }
-
-        @Override
-        public Kind getKind() {
-            return Kind.VIEW;
-        }
-
-        @Override
-        public JCExpression getName() {
-            return name;
-        }
-
-        @Override
-        public List<JCDirective> getDirectives() {
-            return directives;
-        }
-
-        @Override
-        public <R, D> R accept(TreeVisitor<R, D> v, D d) {
-            throw new UnsupportedOperationException();
-//            return v.visitView(this, d);
-        }
-
-        @Override
-        public Tag getTag() {
-            return VIEW;
-        }
-    }
-
     public static class JCExports extends JCDirective
             implements ExportsTree {
         public JCExpression qualid;
+        public List<JCExpression> moduleNames;
 
-        protected JCExports(JCExpression qualId) {
+        protected JCExports(JCExpression qualId, List<JCExpression> moduleNames) {
             this.qualid = qualId;
+            this.moduleNames = moduleNames;
         }
 
         @Override
@@ -2504,6 +2468,11 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
         }
 
         @Override
+        public List<JCExpression> getModuleNames() {
+            return moduleNames;
+        }
+
+        @Override
         public <R, D> R accept(TreeVisitor<R, D> v, D d) {
             return v.visitExports(this, d);
         }
@@ -2516,10 +2485,11 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
 
     public static class JCPermits extends JCDirective
             implements PermitsTree {
-        public JCExpression qualid;
+        public JCExpression moduleName;
+        public PermitsDirective directive;
 
         protected JCPermits(JCExpression qualId) {
-            this.qualid = qualId;
+            this.moduleName = qualId;
         }
 
         @Override
@@ -2532,7 +2502,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
 
         @Override
         public JCExpression getModuleName() {
-            return qualid;
+            return moduleName;
         }
 
         @Override
@@ -2588,11 +2558,12 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
     public static class JCRequires extends JCDirective
             implements RequiresTree {
         public boolean isPublic;
-        public JCExpression viewName;
+        public JCExpression moduleName;
+        public RequiresDirective directive;
 
-        protected JCRequires(boolean isPublic, JCExpression viewName) {
+        protected JCRequires(boolean isPublic, JCExpression moduleName) {
             this.isPublic = isPublic;
-            this.viewName = viewName;
+            this.moduleName = moduleName;
         }
 
         @Override
@@ -2614,8 +2585,8 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
         }
 
         @Override
-        public JCExpression getViewName() {
-            return viewName;
+        public JCExpression getModuleName() {
+            return moduleName;
         }
 
         @Override
@@ -2792,12 +2763,11 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
         JCModifiers Modifiers(long flags, List<JCAnnotation> annotations);
         JCErroneous Erroneous(List<? extends JCTree> errs);
         JCModuleDecl ModuleDef(JCExpression qualId, List<JCDirective> directives);
-        JCExports Exports(JCExpression qualId);
+        JCExports Exports(JCExpression qualId, List<JCExpression> moduleNames);
         JCPermits Permits(JCExpression qualId);
         JCProvides Provides(JCExpression serviceName, JCExpression implName);
         JCRequires Requires(boolean isPublic, JCExpression qualId);
         JCUses Uses(JCExpression qualId);
-        JCViewDecl ViewDef(JCExpression qualId, List<JCDirective> directives);
         LetExpr LetExpr(List<JCVariableDecl> defs, JCTree expr);
     }
 
@@ -2858,12 +2828,11 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
         public void visitAnnotatedType(JCAnnotatedType that) { visitTree(that); }
         public void visitErroneous(JCErroneous that)         { visitTree(that); }
         public void visitModuleDef(JCModuleDecl that)        { visitTree(that); }
-        public void visitExports(JCExports that)    { visitTree(that); }
-        public void visitPermits(JCPermits that)    { visitTree(that); }
-        public void visitProvides(JCProvides that)  { visitTree(that); }
-        public void visitRequires(JCRequires that)  { visitTree(that); }
-        public void visitUses(JCUses that)          { visitTree(that); }
-        public void visitViewDef(JCViewDecl that)          { visitTree(that); }
+        public void visitExports(JCExports that)             { visitTree(that); }
+        public void visitPermits(JCPermits that)             { visitTree(that); }
+        public void visitProvides(JCProvides that)           { visitTree(that); }
+        public void visitRequires(JCRequires that)           { visitTree(that); }
+        public void visitUses(JCUses that)                   { visitTree(that); }
         public void visitLetExpr(LetExpr that)               { visitTree(that); }
 
         public void visitTree(JCTree that)                   { Assert.error(); }

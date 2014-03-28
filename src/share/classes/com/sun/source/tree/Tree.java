@@ -603,13 +603,13 @@ public interface Tree {
 
         /**
          * Used for instances of {@link ExportsTree} representing
-         * export directives in a module or view declaration.
+         * export directives in a module declaration.
          */
         EXPORTS(ExportsTree.class),
 
         /**
          * Used for instances of {@link PermitsTree} representing
-         * export directives in a module or view declaration.
+         * export directives in a module declaration.
          */
         PERMITS(PermitsTree.class),
 
@@ -630,12 +630,6 @@ public interface Tree {
          * export directives in a module declaration.
          */
         USES(UsesTree.class),
-
-        /**
-         * Used for instances of {@link ViewTree} representing
-         * export directives in a module declaration.
-         */
-        VIEW(ViewTree.class),
 
         /**
          * An implementation-reserved node. This is the not the node

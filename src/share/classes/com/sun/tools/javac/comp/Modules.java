@@ -26,6 +26,9 @@
 
 package com.sun.tools.javac.comp;
 
+import com.sun.tools.javac.code.Directive.PermitsDirective;
+import com.sun.tools.javac.code.Directive.RequiresDirective;
+import com.sun.tools.javac.code.Directive.RequiresFlag;
 import com.sun.tools.javac.code.Scope;
 import com.sun.tools.javac.code.Symbol.ClassSymbol;
 import com.sun.tools.javac.code.Symbol.ModuleSymbol;
@@ -33,11 +36,16 @@ import com.sun.tools.javac.code.Symtab;
 import com.sun.tools.javac.tree.JCTree;
 import com.sun.tools.javac.tree.JCTree.JCCompilationUnit;
 import com.sun.tools.javac.tree.JCTree.JCModuleDecl;
+import com.sun.tools.javac.tree.JCTree.JCPermits;
+import com.sun.tools.javac.tree.JCTree.JCRequires;
 import com.sun.tools.javac.tree.TreeInfo;
 import com.sun.tools.javac.util.Context;
 import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.util.Log;
+import com.sun.tools.javac.util.Name;
 import com.sun.tools.javac.util.Names;
+import java.util.EnumSet;
+import java.util.Set;
 import javax.tools.JavaFileObject;
 
 public class Modules extends JCTree.Visitor {
@@ -83,6 +91,9 @@ public class Modules extends JCTree.Visitor {
 
         sym.location = env.toplevel.locn;
         tree.sym = sym;
+        env.toplevel.modle = sym;
+
+        acceptAll(tree.directives);
     }
 
     @Override
@@ -96,6 +107,21 @@ public class Modules extends JCTree.Visitor {
         } finally {
             log.useSource(prev);
         }
+    }
+
+    @Override
+    public void visitPermits(JCPermits tree) {
+        Name name = TreeInfo.fullName(tree.moduleName);
+        tree.directive = new PermitsDirective(name);
+    }
+
+    @Override
+    public void visitRequires(JCRequires tree) {
+        Name name = TreeInfo.fullName(tree.moduleName);
+        Set<RequiresFlag> flags = EnumSet.noneOf(RequiresFlag.class);
+        if (tree.isPublic)
+            flags.add(RequiresFlag.PUBLIC);
+        tree.directive = new RequiresDirective(name, flags);
     }
 
     @Override

@@ -25,9 +25,12 @@
 
 package com.sun.source.tree;
 
+import java.util.List;
+
 /**
  *
  */
 public interface ExportsTree extends DirectiveTree {
     ExpressionTree getExportName();
+    List<? extends ExpressionTree> getModuleNames();
 }

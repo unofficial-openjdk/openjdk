@@ -486,43 +486,28 @@ public class ClassWriter {
         }
 
         public Void visitModule(Module_attribute attr, ClassOutputStream out) {
-            out.writeShort(attr.module_name_index);
-            return null;
-        }
-
-        public Void visitModuleProvides(ModuleProvides_attribute attr, ClassOutputStream out) {
-            out.writeShort(attr.view_table.length);
-            for (ModuleProvides_attribute.View v: attr.view_table)
-                writeView(v, out);
-            return null;
-        }
-
-        protected void writeView(ModuleProvides_attribute.View v, ClassOutputStream out) {
-            out.writeShort(v.view_name_index);
-            out.writeShort(v.service_table.length);
-            for (ModuleProvides_attribute.Service s: v.service_table) {
-                out.writeShort(s.service_index);
-                out.writeShort(s.impl_index);
+            out.writeShort(attr.requires.length);
+            for (Module_attribute.RequiresEntry e: attr.requires) {
+                out.writeShort(e.requires_index);
+                out.writeShort(e.requires_flags);
             }
-            out.writeShort(v.export_table.length);
-            for (int export_index: v.export_table) {
-                out.writeShort(export_index);
+            out.writeShort(attr.permits_index.length);
+            for (int index: attr.permits_index)
+                out.writeShort(index);
+            out.writeShort(attr.exports.length);
+            for (Module_attribute.ExportsEntry e: attr.exports) {
+                out.writeShort(e.exports_index);
+                out.writeShort(e.exports_to_index.length);
+                for (int index: e.exports_to_index)
+                    out.writeShort(index);
             }
-            out.writeShort(v.permit_table.length);
-            for (int permit_index: v.permit_table)
-                out.writeShort(permit_index);
-        }
-
-        public Void visitModuleRequires(ModuleRequires_attribute attr, ClassOutputStream out) {
-            out.writeShort(attr.module_table.length);
-            for (ModuleRequires_attribute.Entry e: attr.module_table) {
-                out.writeShort(e.index);
-                out.writeInt(e.flags);
-            }
-            out.writeShort(attr.service_table.length);
-            for (ModuleRequires_attribute.Entry e: attr.service_table) {
-                out.writeShort(e.index);
-                out.writeInt(e.flags);
+            out.writeShort(attr.uses_index.length);
+            for (int index: attr.uses_index)
+                out.writeShort(index);
+            out.writeShort(attr.provides.length);
+            for (Module_attribute.ProvidesEntry e: attr.provides) {
+                out.writeShort(e.provides_index);
+                out.writeShort(e.with_index);
             }
             return null;
         }

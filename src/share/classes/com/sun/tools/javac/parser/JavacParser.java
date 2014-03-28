@@ -3185,9 +3185,9 @@ public class JavacParser implements Parser {
                     isPublic = true;
                     nextToken();
                 }
-                JCExpression viewName = qualident(false);
+                JCExpression moduleName = qualident(false);
                 accept(SEMI);
-                defs.append(toP(F.at(pos).Requires(isPublic, viewName)));
+                defs.append(toP(F.at(pos).Requires(isPublic, moduleName)));
             } else if (token.name() == names.permits) {
                 nextToken();
                 JCExpression moduleName = qualident(false);
@@ -3196,8 +3196,13 @@ public class JavacParser implements Parser {
             } else if (token.name() == names.exports) {
                 nextToken();
                 JCExpression pkgName = qualident(false);
+                List<JCExpression> moduleNames = null;
+                if (token.kind == IDENTIFIER && token.name() == names.to) {
+                    nextToken();
+                    moduleNames = qualidentList();
+                }
                 accept(SEMI);
-                defs.append(toP(F.at(pos).Exports(pkgName)));
+                defs.append(toP(F.at(pos).Exports(pkgName, moduleNames)));
             } else if (token.name() == names.provides) {
                 nextToken();
                 JCExpression serviceName = qualident(false);
@@ -3208,19 +3213,13 @@ public class JavacParser implements Parser {
                     defs.append(toP(F.at(pos).Provides(serviceName, implName)));
                 } else {
                     log.error("with.expected");
+                    skip(false, false, false, false);
                 }
             } else if (token.name() == names.uses) {
                 nextToken();
                 JCExpression service = qualident(false);
                 accept(SEMI);
                 defs.append(toP(F.at(pos).Uses(service)));
-            } else if (token.name() == names.view) {
-                nextToken();
-                JCExpression qualId = qualident(false);
-                accept(LBRACE);
-                List<JCDirective> directives = moduleDirectiveList();
-                accept(RBRACE);
-                defs.append(toP(F.at(pos).ViewDef(qualId, directives)));
             } else {
                 break;
             }

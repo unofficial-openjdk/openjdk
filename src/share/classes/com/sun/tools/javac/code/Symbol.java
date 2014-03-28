@@ -850,88 +850,29 @@ public abstract class Symbol extends AnnoConstruct implements Element {
             this.fullname = formFullName(name, owner);
         }
 
-        public boolean hasRequires() {
-            for (Directive d: directives) {
-                switch (d.getKind()) {
-                    case REQUIRES:
-                    case USES:
-                        return true;
-                }
-            }
-            return false;
+        public List<ExportsDirective> getExports() {
+            return Directive.filter(directives, Directive.Kind.EXPORTS,
+                    ExportsDirective.class);
         }
 
-        public List<RequiresDirective> getRequiredModules() {
+        public List<PermitsDirective> getPermits() {
+            return Directive.filter(directives, Directive.Kind.PERMITS,
+                    PermitsDirective.class);
+        }
+
+        public List<ProvidesDirective> getProvides() {
+            return Directive.filter(directives, Directive.Kind.PROVIDES,
+                    ProvidesDirective.class);
+        }
+
+        public List<RequiresDirective> getRequires() {
             return Directive.filter(directives, Directive.Kind.REQUIRES,
                     RequiresDirective.class);
         }
 
-        public List<UsesDirective> getRequiredServices() {
+        public List<UsesDirective> getUses() {
             return Directive.filter(directives, Directive.Kind.USES,
                     UsesDirective.class);
-        }
-
-        public boolean hasViews() {
-            for (Directive d: directives) {
-                switch (d.getKind()) {
-                    case REQUIRES:
-                    case USES:
-                        continue;
-                    default:
-                        return true;
-                }
-            }
-            return false;
-        }
-
-        public ViewDeclaration getDefaultView() {
-            ListBuffer<Directive> defaultViewDirectives = new ListBuffer<>();
-            for (Directive d: directives) {
-                switch (d.getKind()) {
-                    case PROVIDES:
-                    case EXPORTS:
-                    case PERMITS:
-                        defaultViewDirectives.add(d);
-                }
-            }
-            return new ViewDeclaration(defaultViewDirectives.toList());
-        }
-
-        public List<ViewDeclaration> getViews() {
-            ListBuffer<Directive> defaultViewDirectives = new ListBuffer<>();
-            for (Directive d: directives) {
-                switch (d.getKind()) {
-                    case PROVIDES:
-                    case EXPORTS:
-                    case PERMITS:
-                        defaultViewDirectives.add(d);
-                }
-            }
-            List<ViewDeclaration> views =
-                    Directive.filter(directives, Directive.Kind.VIEW,
-                        ViewDeclaration.class);
-            if (defaultViewDirectives.nonEmpty())
-                views = views.prepend(new ViewDeclaration(defaultViewDirectives.toList()));
-            return views;
-        }
-
-        public Set<PackageSymbol> getExports(final ViewDeclaration viewDecl) {
-            final Set<PackageSymbol> exports = new LinkedHashSet<PackageSymbol>();
-            Directive.Scanner<Void,Void> s = new Directive.Scanner<Void,Void>() {
-                @Override
-                public Void visitExports(Directive.ExportsDirective d, Void p) {
-                    exports.add(d.sym);
-                    return null;
-                }
-                @Override
-                public Void visitView(Directive.ViewDeclaration d, Void p) {
-                    if (d == viewDecl)
-                        scan(d.directives, null);
-                    return null;
-                }
-            };
-            s.scan(directives, null);
-            return exports;
         }
 
         @Override
