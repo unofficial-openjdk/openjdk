@@ -32,8 +32,6 @@ import java.lang.ref.WeakReference;
 import java.util.*;
 
 import com.sun.java.swing.SwingUtilities3;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import sun.awt.AWTAccessor;
 
 import sun.awt.SubRegionShowable;
