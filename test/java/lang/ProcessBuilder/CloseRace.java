@@ -33,6 +33,8 @@
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 
 public class CloseRace {
     private static final String BIG_FILE = "bigfile";
@@ -42,6 +44,9 @@ public class CloseRace {
     /** default value sufficient to repro bug 8024521. */
     private static final int testDurationSeconds
         = Integer.getInteger("test.duration", 600);
+
+    private static final CountDownLatch threadsStarted
+        = new CountDownLatch(2);
 
     static boolean fdInUse(int i) {
         return new File("/proc/self/fd/" + i).exists();
@@ -61,13 +66,31 @@ public class CloseRace {
         return count;
     }
 
+    static void dumpAllStacks() {
+        System.err.println("Start of dump");
+        final Map<Thread, StackTraceElement[]> allStackTraces
+                = Thread.getAllStackTraces();
+        for (Thread thread : allStackTraces.keySet()) {
+            System.err.println("Thread " + thread.getName());
+            for (StackTraceElement element : allStackTraces.get(thread))
+                System.err.println("\t" + element);
+        }
+        System.err.println("End of dump");
+    }
+
     public static void main(String args[]) throws Exception {
         if (!(new File("/proc/self/fd").isDirectory()))
             return;
 
         // Catch Errors from process reaper
-        Thread.setDefaultUncaughtExceptionHandler
-            ((t, e) -> { e.printStackTrace(); System.exit(1); });
+        Thread.setDefaultUncaughtExceptionHandler(
+                new Thread.UncaughtExceptionHandler() {
+                    @Override
+                    public void uncaughtException(Thread t, Throwable e) {
+                        e.printStackTrace();
+                        System.exit(1);
+                    }
+                });
 
         try (RandomAccessFile f = new RandomAccessFile(BIG_FILE, "rw")) {
             f.setLength(Runtime.getRuntime().maxMemory()); // provoke OOME
@@ -84,26 +107,41 @@ public class CloseRace {
         for (Thread thread : threads)
             thread.start();
 
+        threadsStarted.await();
         Thread.sleep(testDurationSeconds * 1000);
 
         for (Thread thread : threads)
             thread.interrupt();
-        for (Thread thread : threads)
-            thread.join();
+        for (Thread thread : threads) {
+            thread.join(10_000);
+            if (thread.isAlive()) {
+                dumpAllStacks();
+                throw new Error("At least one child thread ("
+                        + thread.getName()
+                        + ") failed to finish gracefully");
+            }
+        }
     }
 
     static class OpenLoop implements Runnable {
         public void run() {
+            threadsStarted.countDown();
             while (!Thread.interrupted()) {
                 try {
                     // wait for ExecLoop to finish creating process
-                    do {} while (count(procFDsInUse()) != 3);
+                    do {
+                        if (Thread.interrupted())
+                            return;
+                    } while (count(procFDsInUse()) != 3);
                     List<InputStream> iss = new ArrayList<>(4);
 
                     // eat up three "holes" (closed ends of pipe fd pairs)
                     for (int i = 0; i < 3; i++)
                         iss.add(new FileInputStream(BIG_FILE));
-                    do {} while (count(procFDsInUse()) == procFDs.length);
+                    do {
+                        if (Thread.interrupted())
+                            return;
+                    } while (count(procFDsInUse()) == procFDs.length);
                     // hopefully this will racily occupy empty fd slot
                     iss.add(new FileInputStream(BIG_FILE));
                     Thread.sleep(1); // Widen race window
@@ -120,11 +158,15 @@ public class CloseRace {
 
     static class ExecLoop implements Runnable {
         public void run() {
+            threadsStarted.countDown();
             ProcessBuilder builder = new ProcessBuilder("/bin/true");
             while (!Thread.interrupted()) {
                 try {
                     // wait for OpenLoop to finish
-                    do {} while (count(procFDsInUse()) > 0);
+                    do {
+                        if (Thread.interrupted())
+                            return;
+                    } while (count(procFDsInUse()) > 0);
                     Process process = builder.start();
                     InputStream is = process.getInputStream();
                     process.waitFor();
