@@ -55,8 +55,8 @@ ifeq ($(JIGSAW), true)
   JDK_TOOLS_SUBDIR := /jdk.tools
   JDK_TOOLS_BASE_SUBDIR := /jdk.tools.base
 
-  SUN_CHARSETS_SUBDIR := /sun.charsets
-  SUN_LOCALEDATA_SUBDIR := /sun.localedata
+  JDK_CHARSETS_SUBDIR := /jdk.charsets
+  JDK_LOCALEDATA_SUBDIR := /jdk.localedata
 
   LDFLAGS_JDKLIB := $(subst $(OUTPUT_ROOT),$(OUTPUT_ROOT)/jigsaw,$(LDFLAGS_JDKLIB))
 
