@@ -395,7 +395,8 @@ javax.jaxp_CLEAN := .properties
 
 ################################################################################
 
-javax.jaxws_CLEAN := .properties .xml
+javax.jaxws_COPY := .xml
+javax.jaxws_CLEAN := .properties
 
 ################################################################################
 
