@@ -192,6 +192,28 @@ module java.base {
     uses sun.net.spi.nameservice.NameServiceDescriptor;
     uses sun.util.spi.XmlPropertiesProvider;
 
+    //
+    // qualified exports for open/closed and platform-specific content
+    //
+    exports jdk.internal.org.objectweb.asm to jdk.jfr, jdk.nashorn;
+    exports jdk.internal.org.objectweb.asm.commons to jdk.jfr, jdk.nashorn;
+    exports jdk.internal.org.objectweb.asm.tree to jdk.jfr;
+    exports jdk.internal.org.objectweb.asm.util to jdk.jfr, jdk.nashorn;
+
+
+    exports sun.misc to jdk.deploy.osx;
+    exports sun.security.pkcs to jdk.deploy.osx;
+    exports sun.security.util to jdk.deploy.osx;
+    exports sun.security.x509 to jdk.deploy.osx;
+
+    exports sun.nio.ch to jdk.crypto.ucrypto;
+    exports sun.security.action to jdk.crypto.ucrypto;
+    exports sun.security.rsa to jdk.crypto.mscapi;
+    exports sun.security.util to javax.smartcardio,
+                                 jdk.crypto.mscapi,
+                                 jdk.crypto.ucrypto;
+
+
 }
 
 module java.logging {
@@ -249,7 +271,6 @@ module java.desktop {
     include sun.net.www.content.audio.**,
             sun.net.www.content.image.**;
 
-    uses java.awt.im.spi.InputMethodDescriptor;
     uses javax.imageio.spi.IIOServiceProvider;
     uses javax.imageio.spi.ImageInputStreamSpi;
     uses javax.imageio.spi.ImageOutputStreamSpi;
@@ -267,13 +288,8 @@ module java.desktop {
     uses javax.sound.sampled.spi.AudioFileWriter;
     uses javax.sound.sampled.spi.FormatConversionProvider;
     uses javax.sound.sampled.spi.MixerProvider;
-    uses sun.java2d.cmm.PCMM;
     uses sun.java2d.pipe.RenderingEngine;
-
-    // Swing Look & Feels (no need to export com.sun.java.swing.plaf.nimbus)
-    exports com.sun.java.swing.plaf.gtk;
-    exports com.sun.java.swing.plaf.motif;
-    exports com.sun.java.swing.plaf.windows;
+    uses sun.java2d.cmm.CMMServiceProvider;
 }
 
 // ## the Preferences implementation for Unix to XML (currently stored as a XML file)
@@ -287,6 +303,11 @@ module jdk.snmp {
 }
 
 module java.management {
+    // closed specific
+    exports com.sun.jmx.defaults to jdk.snmp;
+    exports com.sun.jmx.mbeanserver to jdk.snmp;
+    exports sun.management to jdk.jfr, jdk.snmp;
+ 
     include java.lang.management.*, com.sun.management.**, sun.management.**;
     include javax.management.**, com.sun.jmx.**;
 }
@@ -328,14 +349,17 @@ module java.security.acl {
 
 module jdk.crypto {
     include com.sun.crypto.provider.*;
+    permits java.compact1, jdk.providers;
 }
 
 module jdk.crypto.ec {
     include sun.security.ec.*;
+    permits jdk.providers;
 }
 
 module jdk.crypto.pkcs11 {
     include sun.security.pkcs11.**;
+    permits jdk.providers;
 }
 
 module javax.sasl {
@@ -366,12 +390,14 @@ module javax.kerberos {
             sun.net.www.protocol.http.spnego.*;
 }
 
-module jdk.ucrypto {
+module jdk.crypto.ucrypto {
     include com.oracle.security.ucrypto.**;
+    permits oracle.providers.os;
 }
 
 module jdk.crypto.mscapi {
     include sun.security.mscapi.*;
+    permits jdk.providers.os;
 }
 
 module javax.xmldsig {
@@ -487,7 +513,6 @@ module jdk.tools.jaxws {
             org.relaxng.datatype.**;
 
     uses com.sun.tools.internal.ws.wscompile.Plugin;
-    uses com.sun.tools.internal.xjc.Plugin;
 }
 
 // standalone technology (JSR-250)
@@ -553,21 +578,22 @@ module jdk.nashorn {
             jdk.internal.dynalink.**;
     include jdk/nashorn/**;
     include META-INF/services/javax.script.ScriptEngineFactory;
+    permits jdk.providers;
 }
 
 
-module sun.charsets {
+module jdk.charsets {
     include sun.nio.cs.ext.**;
-    permits java.desktop, java.base, jdk.jre;
+    permits java.desktop, java.base, jdk.providers;
 }
 
 // localedata.jar in jre/lib/ext
-module sun.localedata {
+module jdk.localedata {
     include sun.util.resources.**,
             sun.text.resources.**;
     include sun.util.resources.cldr.**,
             sun.text.resources.cldr.**;
-    permits java.base, jdk.jre;
+    permits java.base, jdk.providers;
 }
 
 module jdk.jfr {
@@ -575,9 +601,19 @@ module jdk.jfr {
             jdk.jfr.**,
             oracle.jrockit.**;
 
+    // they are deprecated. 
     exports com.oracle.jrockit.jfr;
     exports com.oracle.jrockit.jfr.client;
     exports com.oracle.jrockit.jfr.management;
+}
+
+module jdk.deploy.osx {
+    // Apple integration
+    include apple.applescript.*,
+            apple.launcher.*,      // see JDK-8003847
+            apple.security.*,
+            com.apple.**;
+    permits jdk.providers.os;
 }
 
 module jdk.deploy {
@@ -594,16 +630,9 @@ module jdk.deploy {
             com.sun.deploy.**,
             com.sun.javaws.**,
             com.sun.jnlp.*;
+
     // Split package issue: Hook for http authentication - see JDK-8004653 
     include sun.net.www.protocol.http.AuthCacheBridge;
-}
-
-// Apple integration
-module jdk.deploy.osx {
-    include apple.applescript.*,
-            apple.launcher.*,      // see JDK-8003847
-            apple.security.*,
-            com.apple.**;
 }
 
 // JDK-specific SCTP (supported API)
@@ -614,8 +643,7 @@ module jdk.sctp {
 module jdk.zipfs {
     include com.sun.nio.zipfs.*;
     include META-INF/services/java.nio.file.spi.FileSystemProvider;
-
-    exports com.sun.nio.zipfs;
+    permits jdk.providers;
 }
 
 module jdk.httpserver {
@@ -684,13 +712,20 @@ module jdk.tools.jre {
 
 // JDK tools
 module jdk.tools {
+    include com.sun.jdi.**, com.sun.tools.jdi.**;
+    include META-INF/services/com.sun.tools.jdi.**;
+
+    uses com.sun.jdi.connect.Connector;
+    uses com.sun.jdi.connect.spi.TransportService;
+
+    include com.sun.tools.example.debug.**,
+            com.sun.tools.example.debug.bdi.**,
+            com.sun.tools.example.debug.gui.**;
+
     requires public jdk.tools.jre;     // Tools in JRE
     requires public jdk.tools.base;    // developer tools for the base module
     requires public jdk.tools.jaxws;   // developer tools for the jaxws module
     requires public jdk.tools.diag;    // diagnostic tools
-
-    include com.sun.jdi.**, com.sun.tools.jdi.**;
-    include META-INF/services/com.sun.tools.jdi.**;
 
     // GUI tools
     include sun.jvm.hotspot.HSDB,
@@ -713,10 +748,7 @@ module jdk.tools {
             sun.tools.tree.*,
             sun.tools.util.*;
 
-    include com.sun.tools.example.debug.**,
-            com.sun.tools.example.debug.bdi.**,
-            com.sun.tools.example.debug.gui.**,
-            com.sun.tools.extcheck.**,
+    include com.sun.tools.extcheck.**,
             com.sun.tools.hat.**,
             com.sun.tools.jconsole.*,
             com.sun.tools.script.**,
@@ -724,8 +756,28 @@ module jdk.tools {
             sun.tools.native2ascii.**,
             sun.tools.serialver.**;
 
-    uses com.sun.jdi.connect.Connector;
-    uses com.sun.jdi.connect.spi.TransportService;
+}
+
+module jdk.providers {
+    requires jdk.crypto;
+    requires jdk.crypto.ec;
+    requires jdk.crypto.pkcs11;
+    requires jdk.nashorn;
+    requires jdk.zipfs;
+    requires jdk.charsets;
+    requires jdk.localedata;
+    permits jdk.jre;
+}
+
+module jdk.providers.os {
+    requires jdk.crypto.mscapi;  // windows-only
+    requires jdk.deploy.osx;     // macosx-only
+    permits jdk.jre;
+}
+
+module oracle.providers.os {
+    requires jdk.crypto.ucrypto;        // solaris-only
+    permits oracle.jre;
 }
 
 module java.compact1 {
@@ -783,25 +835,22 @@ module jdk.jre {
     requires public javax.jaxb;
     requires public javax.jaxws;
     requires public javax.saaj;
-    requires public jdk.deploy;
     requires public jdk.tools.jre;
+    requires public jdk.deploy;
 
-    // JDK-specific providers
-    requires jdk.nashorn;
-    requires jdk.zipfs;
-    requires jdk.crypto.ec;
-    requires jdk.crypto.mscapi;
-    requires jdk.crypto.pkcs11;
-    requires jdk.ucrypto;
+    requires jdk.providers;
+    requires jdk.providers.os;
 
-    requires sun.charsets;
-    requires sun.localedata;
-
-    requires jdk.jfr;
-    requires jdk.snmp;
 }
 
 module jdk {
     requires public jdk.jre;
     requires public jdk.tools;
+}
+
+module oracle.jre {
+    requires public jdk.jre;
+    requires public jdk.jfr;
+    requires public jdk.snmp;
+    requires oracle.providers.os;
 }

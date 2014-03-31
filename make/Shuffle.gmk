@@ -334,7 +334,7 @@ $(eval $(call SetupShuffleFiles,COPY_SHARE_ICONS, \
 
 $(eval $(call SetupShuffleFiles,COPY_CLDR, \
     SRC := $(JDK_TOPDIR)/src/share/classes, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/modules/sun.localedata, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/modules/jdk.localedata, \
     FILES := $(shell $(FIND) $(JDK_TOPDIR)/src/share/classes/sun/util/cldr/resources -type f)))
 
 $(eval $(call SetupShuffleFiles,COPY_SWING_LAF, \
@@ -354,7 +354,7 @@ $(eval $(call SetupShuffleFiles,COPY_BREAK_ITERATOR_RULES, \
 
 $(eval $(call SetupShuffleFiles,COPY_BREAK_ITERATOR_RULES_TH, \
     SRC := $(JDK_TOPDIR)/src/share/classes, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/modules/sun.localedata, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/modules/jdk.localedata, \
     FILES := $(JDK_TOPDIR)/src/share/classes/sun/text/resources/th/BreakIteratorRules_th.java))
 
 $(eval $(call SetupShuffleFiles,COPY_APPLE_LAF, \

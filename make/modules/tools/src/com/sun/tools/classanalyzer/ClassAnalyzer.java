@@ -74,6 +74,11 @@ class ClassAnalyzer extends Task {
                 task.options.outFile = arg;
             }
         },
+        new Option<ClassAnalyzer>(true, "--os-source-path") {
+            void process(ClassAnalyzer task, String opt, String arg) {
+                task.options.osSourcePath = arg;
+            }
+        },
         new Option<ClassAnalyzer>(true, "-f", "--config") {
             void process(ClassAnalyzer task, String opt, String arg) {
                 task.options.configs.add(arg);
@@ -137,7 +142,7 @@ class ClassAnalyzer extends Task {
                     printModulePackages(m, dir);
                     printModuleSummary(m, dir, builder);
                     if (options.moduleInfoDir != null) {
-                        Path mdir = Paths.get(options.moduleInfoDir, m.name());
+                        Path mdir = getSourcePath(m, options.moduleInfoDir);
                         mdir.toFile().mkdirs();
                         try (PrintWriter writer =
                                 new PrintWriter(mdir.resolve("module-info.java").toFile()))
@@ -205,6 +210,19 @@ class ClassAnalyzer extends Task {
             }
         }
         return true;
+    }
+
+    private Path getSourcePath(Module m, String src) {
+        String name = m.name();
+        if (options.osSourcePath == null)
+            return Paths.get(src, name);
+
+        // construct a path for module-info.java per the new source layout
+        Path srcPath = Paths.get(src, Module.getModuleProperty(name + ".closed", ""), name);
+        srcPath = m.moduleProperty("OS")
+                      ? srcPath.resolve(options.osSourcePath)
+                      : srcPath.resolve("share");
+        return srcPath.resolve("classes");
     }
 
     private void printModuleSummary(Module m, Path dir, ModuleBuilder builder) throws IOException {
@@ -318,6 +336,7 @@ class ClassAnalyzer extends Task {
         String moduleInfoDir;
         List<String> configs = new ArrayList<>();
         String version;
+        String osSourcePath = null;
     }
 
     public static void main(String... args) throws Exception {

@@ -37,6 +37,7 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.util.*;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Module builder that creates modules as defined in the given
@@ -134,14 +135,7 @@ public class ModuleBuilder {
         Set<Profile> profiles = new HashSet<>(Arrays.asList(Profile.values()));
         for (Module m : factory().getAllModules()) {
             if (m.group() == m) {
-                // module with no class is not included except the base module
-                // or reexporting APIs from required modules
-                boolean reexports = false;
-                for (Dependence d : m.config().requires().values()) {
-                    reexports = reexports || d.requiresPublic();
-                }
-
-                if (isBaseModule(m) || !m.isEmpty() || m.allowsEmpty() || reexports) {
+                if (isBaseModule(m) || !m.isEmpty() || m.allowsEmpty()) {
                     Map<String, Dependence> requires = buildModuleDependences(m);
                     dependencesForModule.put(m, requires);
 
@@ -167,6 +161,17 @@ public class ModuleBuilder {
 
         if (!profiles.isEmpty()) {
             throw new RuntimeException("Profile module missing: " + profiles);
+        }
+
+        fixupPermits();
+    }
+
+    private void fixupPermits() {
+        // backedges for the dependence with permits
+        for (Module m : dependencesForModule.keySet()) {
+            getModuleDependences(m).stream()
+                .filter(d -> !d.permits().isEmpty())
+                .forEach(d -> d.addPermit(m));
         }
     }
 

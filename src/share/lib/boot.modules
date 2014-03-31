@@ -27,6 +27,7 @@ javax.script
 javax.smartcardio
 javax.xmldsig
 jdk
+jdk.charsets
 jdk.deploy
 jdk.deploy.osx
 jdk.devtools
@@ -38,4 +39,4 @@ jdk.jre
 jdk.sctp
 jdk.tools.base
 jdk.tools.jre
-sun.charsets
+oracle.jre

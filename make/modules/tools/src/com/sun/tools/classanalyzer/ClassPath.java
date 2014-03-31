@@ -79,7 +79,9 @@ class ClassPath {
     }
 
     private static List<String> SKIP_JARFILES =
-            Arrays.asList("alt-rt.jar", "jfxrt.jar", "ant-javafx.jar", "javafx-mx.jar");
+            Arrays.asList("alt-rt.jar", "jfxrt.jar",
+                          "ant-javafx.jar", "javafx-mx.jar",
+                          "jfxswt.jar");
     private static List<Archive> addJarFiles(final Path root) throws IOException {
         final List<Archive> result = new ArrayList<Archive>();
         final Path ext = root.resolve("ext");

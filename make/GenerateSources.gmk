@@ -68,8 +68,8 @@ include gensrc/GensrcProviders.gmk
 java.base: $(GENSRC_JAVA_BASE)
 java.desktop: $(GENSRC_JAVA_DESKTOP)
 jdk.tools: $(GENSRC_JDK_TOOLS)
-sun.charset: $(GENSRC_SUN_CHARSET)
-sun.localedata: $(GENSRC_SUN_LOCALEDATA)
+jdk.charset: $(GENSRC_SUN_CHARSET)
+jdk.localedata: $(GENSRC_SUN_LOCALEDATA)
 
 all: $(GENSRC_JAVA_BASE) \
     $(GENSRC_JAVA_DESKTOP) \
@@ -78,4 +78,4 @@ all: $(GENSRC_JAVA_BASE) \
     $(GENSRC_SUN_LOCALEDATA) \
     #
 
-.PHONY: all java.base java.desktop jdk.tools sun.charset sun.localedata
+.PHONY: all java.base java.desktop jdk.tools jdk.charset jdk.localedata

@@ -1,8 +1,11 @@
 jdk.crypto
 jdk.crypto.ec
-jdk.crypto.pkcs11
 jdk.crypto.mscapi
-jdk.ucrypto
+jdk.crypto.pkcs11
+jdk.crypto.ucrypto
+jdk.localedata
 jdk.nashorn
+jdk.providers
+jdk.providers.os
 jdk.zipfs
-sun.localedata
+oracle.providers.os

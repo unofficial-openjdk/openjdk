@@ -64,6 +64,14 @@ else
   $(JDK_OUTPUTDIR)/lib/ext/nashorn.jar: $(NASHORN_DIST)/nashorn.jar
 	$(install-file)
 
+  # To generate module-info.java per the new source layout:
+  #   src/$MODULE/share/classes/module-info.java
+  #   src/$MODULE/$OS/classes/module-info.java
+  #   src/closed/$MODULE/$OS/classes/module-info.java
+  #
+  # add this option to run ClassAnalyzer
+  #     --os-source-path $(OPENJDK_TARGET_OS)
+
   $(MODULES_SER_OUT): $(BUILD_CLASSANALYZER) \
       $(wildcard $(JDK_OUTPUTDIR)/classes/_the*) \
       $(JDK_OUTPUTDIR)/lib/ext/nashorn.jar

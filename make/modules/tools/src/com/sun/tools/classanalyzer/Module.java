@@ -67,6 +67,7 @@ public class Module implements Comparable<Module> {
     private final Set<Module> members;
     private final Set<Service> services;
     private final Set<Package> exports;
+    private final Set<String> permits;
     private final Map<Klass, Set<Module>> classExportsTo;
     private final Map<Service, Set<Klass>> providers;
     private final Map<String, Package> packages;
@@ -89,6 +90,7 @@ public class Module implements Comparable<Module> {
         this.exports = new HashSet<>();
         this.classExportsTo = new HashMap<>();
         this.packages = new HashMap<>();
+        this.permits = new HashSet<>(config.permits);
 
         this.group = this; // initialize to itself
 
@@ -184,7 +186,7 @@ public class Module implements Comparable<Module> {
     }
 
     Set<String> permits() {
-        return config.permits;
+        return permits;
     }
 
     void exportsInternalClass(Klass k, Module m) {
@@ -213,7 +215,13 @@ public class Module implements Comparable<Module> {
     }
 
     boolean allowsEmpty() {
-        return moduleProperty("allows.empty");
+        String value = moduleProps.getProperty(name + ".allows.empty");
+        if ("closed".equals(value)) {
+            // include empty closed module only if the system property is set
+            return Boolean.getBoolean("classanalyzer.closed.modules");
+        } else {
+            return moduleProperty("allows.empty");
+        }
     }
 
     @Override
@@ -281,6 +289,10 @@ public class Module implements Comparable<Module> {
         if (!implClasses.contains(k)) {
             implClasses.add(k);
         }
+    }
+
+    void addPermit(Module m) {
+        permits.add(m.name());
     }
 
     <P> void visitMembers(Set<Module> visited, ModuleVisitor<P> visitor, P p) {

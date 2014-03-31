@@ -501,15 +501,19 @@ public class ModuleConfig {
                             throw new RuntimeException(file + ", line "
                                     + lineNumber + ", is malformed");
                         }
-                        if (config.exportsTo.containsKey(s[1])) {
-                            throw new RuntimeException(file + ", line "
-                                    + lineNumber + " duplicated exports: \"" + s + "\"");
-                        }
                         if (s.length > 2) {
                             // skip past "to"
                             inExportsTo = s[1];
                             nextIndex = line.indexOf(inExportsTo) + inExportsTo.length();
                             nextIndex = line.indexOf("to", nextIndex) + "to".length();
+                        }
+                        // can't have both non-qualified and qualified exports declared
+                        Set<String> tos = config.exportsTo.get(s[1]);
+                        if (tos != null &&
+                                ((inExportsTo != null && tos.isEmpty()) ||
+                                 (inExportsTo == null && !tos.isEmpty()))) {
+                            throw new RuntimeException(file + ", line "
+                                    + lineNumber + " duplicated exports: \"" + s[1] + "\"");
                         }
                     } else if (keyword.equals("uses")) {
                         inUses = true;
@@ -586,11 +590,11 @@ public class ModuleConfig {
                             providers.add(names[2]);
                         } else if (inExports) {
                             if (inExportsTo != null) {
-                                Set<String> permits = config.exportsTo.get(inExportsTo);
-                                if (permits == null) {
-                                    config.exportsTo.put(inExportsTo, permits = new HashSet<>());
+                                Set<String> tos = config.exportsTo.get(inExportsTo);
+                                if (tos == null) {
+                                    config.exportsTo.put(inExportsTo, tos = new HashSet<>());
                                 }
-                                permits.add(s);
+                                tos.add(s);
                             } else {
                                 String pkg = s.equals("**") ? "*" : s;
                                 config.exportsTo.put(pkg, new HashSet<>());

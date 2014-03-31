@@ -107,7 +107,7 @@ $(eval $(call add_properties_to_compile,LIST_RESOURCE_BUNDLE, \
 $(eval $(call add_properties_to_compile,SUN_UTIL, \
     $(filter %.properties, \
         $(call CacheFind, $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/$(MODULES_SUBDIR)$(JAVA_BASE_SUBDIR)/sun/util/resources) \
-        $(call CacheFind, $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/$(MODULES_SUBDIR)$(SUN_LOCALEDATA_SUBDIR)/sun/util/resources)), \
+        $(call CacheFind, $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/$(MODULES_SUBDIR)$(JDK_LOCALEDATA_SUBDIR)/sun/util/resources)), \
     sun.util.resources.LocaleNamesBundle))
 
 ################################################################################
@@ -142,7 +142,7 @@ ZH_HK_JAVA := $(JAVA_DESKTOP_SUBDIR:/%=%)/sun/applet/resources/MsgAppletViewer_z
     $(JAVA_BASE_SUBDIR:/%=%)/sun/security/util/Resources_zh_HK.java
 
 ZH_HK_JAVA_FILES := $(addprefix $(JDK_OUTPUTDIR)/gensrc/, $(ZH_HK_JAVA)) \
-    $(filter-out $(JDK_OUTPUTDIR)/gensrc$(SUN_LOCALEDATA_SUBDIR)/sun/util/resources/zh/%, \
+    $(filter-out $(JDK_OUTPUTDIR)/gensrc$(JDK_LOCALEDATA_SUBDIR)/sun/util/resources/zh/%, \
     $(subst _zh_TW,_zh_HK,$(filter %_zh_TW.java, $(ALL_COMPILED_PROPJAVAS))))
 
 ################################################################################
