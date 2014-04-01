@@ -26,6 +26,7 @@
 # Shell script for a fast parallel forest command
 command="$1"
 pull_extra_base="$2"
+pull_extra_dir="$3"
 
 if [ "" = "$command" ] ; then
   echo No command to hg supplied!
@@ -89,7 +90,11 @@ if [ "${command}" = "clone" -o "${command}" = "fclone" ] ; then
   done
   if [ "${pull_extra_base}" != "" ] ; then
     subrepos_extra="closed jdk/src/closed jdk/make/closed jdk/test/closed hotspot/make/closed hotspot/src/closed hotspot/test/closed deploy install sponsors pubs"
-    pull_default_tail=`echo ${pull_default} | sed -e 's@^.*://[^/]*/\(.*\)@\1@'`
+    if [ "${pull_extra_dir}" != "" ] ; then
+      pull_default_tail="${pull_extra_dir}"
+    else
+      pull_default_tail=`echo ${pull_default} | sed -e 's@^.*://[^/]*/\(.*\)@\1@'`
+    fi
     pull_extra="${pull_extra_base}/${pull_default_tail}"
     for i in ${subrepos_extra} ; do
       if [ ! -f ${i}/.hg/hgrc ] ; then

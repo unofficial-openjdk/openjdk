@@ -86,7 +86,7 @@ jdk-createpolicyjars:
 import-hotspot: hotspot
 	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f Import.gmk hotspot JIGSAW=true)
 
-jdk-copyfiles:
+jdk-copyfiles: jdk-build-tools
 	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f CopyFiles.gmk JIGSAW=true)
 
 jdk-libs: import-hotspot java-compile

@@ -76,7 +76,7 @@ java.base_EXCLUDE_FILES += sun/util/locale/AsciiUtil.java
 
 ifndef OPENJDK
   # Use the closed version of this file
-  java.base_EXCLUDE_FILES += $(JDK_TOPDIR)/src/share/classes/javax/crypto/JarVerifier.java
+  java.base_EXCLUDE_FILES += $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/modules/java.base/javax/crypto/JarVerifier.java
 endif
 
 ifeq ($(OPENJDK_TARGET_OS), macosx)
@@ -524,6 +524,12 @@ ALL_SRC_DIRS := \
     $(JAXP_TOPDIR)/$(SRC_SUBDIR)/share/modules \
     $(JAXWS_TOPDIR)/$(SRC_SUBDIR)/share/modules \
     #
+
+ifndef OPENJDK
+  ALL_SRC_DIRS += $(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/modules \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/share/modules \
+      #
+endif
 
 ifeq ($(OPENJDK_TARGET_OS), macosx)
   ALL_SRC_DIRS += $(JDK_TOPDIR)/$(SRC_SUBDIR)/macosx/modules
