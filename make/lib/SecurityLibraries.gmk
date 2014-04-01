@@ -329,7 +329,7 @@ ifeq ($(OPENJDK_TARGET_OS), solaris)
         LANG := C, \
         OPTIMIZATION := LOW, \
         CFLAGS := $(CFLAGS_JDKLIB) \
-            $(addprefix -I, $(LIBJ2UCRYPTO_SRC), \
+            $(addprefix -I, $(LIBJ2UCRYPTO_SRC)), \
         MAPFILE := $(JDK_TOPDIR)/make/mapfiles/libj2ucrypto/mapfile-vers, \
         LDFLAGS := $(LDFLAGS_JDKLIB), \
         LDFLAGS_SUFFIX := $(LIBDL), \
