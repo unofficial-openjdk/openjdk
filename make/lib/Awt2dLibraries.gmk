@@ -786,7 +786,7 @@ ifdef OPENJDK
 else
   BUILD_LIBJPEG_MAPFILE := $(JDK_TOPDIR)/make/mapfiles/libjpeg/mapfile-vers-closed
   ifeq ($(JIGSAW), true)
-    LIBJPEG_SRC += $(JDK_TOPDIR)/src/closed/share/native/libjpeg
+    LIBJPEG_SRC += $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/share/native/libjpeg
   else
     LIBJPEG_SRC += $(JDK_TOPDIR)/src/closed/share/native/sun/awt/image/jpeg
   endif
@@ -955,17 +955,21 @@ DESKTOP_LIBRARIES += $(BUILD_LIBFONTMANAGER)
 
 ifndef OPENJDK
 
-  # TODO JIGSAW
-
-  #ifeq ($(OPENJDK_TARGET_OS), linux)
-  #  ifeq ("$(CC_VER_MAJOR)", "3")
-  #    OTHER_LDLIBS += -Wl,-Bstatic -lgcc_eh -Wl,-Bdynamic
-  #  endif
-  #endif
-  #
-  # The resulting size of the t2k lib file is (at least on linux) dependant on the order of
-  # the input .o files. Because of this the new build will differ in size to the old build.
-  BUILD_LIBT2K_CFLAGS_COMMON := -I$(JDK_TOPDIR)/src/share/native/sun/font \
+  ifeq ($(JIGSAW), true)
+    LIBT2K_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/share/native/libt2k
+    LIBT2K_CFLAGS := $(addprefix -I, $(LIBT2K_SRC)) \
+        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/share/native/libt2k/t2k \
+        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libfontmanager \
+        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libawt/sun/java2d \
+        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libawt/sun/java2d/loops \
+        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/common-awt/sun/font \
+        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libjava \
+        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/native/libjava \
+        -I$(JDK_OUTPUTDIR)/gensrc_headers/java.desktop \
+        #
+  else
+    LIBT2K_SRC := $(JDK_TOPDIR)/src/closed/share/native/sun/font
+    LIBT2K_CFLAGS := -I$(JDK_TOPDIR)/src/share/native/sun/font \
       -I$(JDK_TOPDIR)/src/closed/share/native/sun/font/t2k \
       -I$(JDK_TOPDIR)/src/closed/share/native/sun/font \
       -I$(JDK_TOPDIR)/src/share/share/native/sun/font \
@@ -973,19 +977,19 @@ ifndef OPENJDK
       -I$(JDK_TOPDIR)/src/share/native/sun/java2d/loops \
       -I$(JDK_TOPDIR)/src/share/native/sun/java2d/pipe \
       -I$(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/sun/java2d \
-      -I$(JDK_TOPDIR)/src/share/native/sun/java2d
+      -I$(JDK_TOPDIR)/src/share/native/sun/java2d \
+      #
+  endif
 
   $(eval $(call SetupNativeCompilation,BUILD_LIBT2K, \
       LIBRARY := t2k, \
       OUTPUT_DIR := $(INSTALL_LIBRARIES_HERE), \
-      SRC := $(JDK_TOPDIR)/src/closed/share/native/sun/font \
-          $(JDK_TOPDIR)/src/closed/share/native/sun/font/t2k \
-          $(JDK_TOPDIR)/src/closed/share/native/sun/font/t2k/ttHints, \
+      SRC := $(LIBT2K_SRC), \
       EXCLUDE_FILES := orion.c, \
       LANG := C++, \
       OPTIMIZATION := HIGH, \
-      CFLAGS := $(CFLAGS_JDKLIB) $(BUILD_LIBT2K_CFLAGS_COMMON), \
-      CXXFLAGS := $(CXXFLAGS_JDKLIB) $(BUILD_LIBT2K_CFLAGS_COMMON), \
+      CFLAGS := $(CFLAGS_JDKLIB) $(LIBT2K_CFLAGS), \
+      CXXFLAGS := $(CXXFLAGS_JDKLIB) $(LIBT2K_CFLAGS), \
       CFLAGS_windows = -DCC_NOEX, \
       CXXFLAGS_windows = -DCC_NOEX, \
       MAPFILE := $(JDK_TOPDIR)/make/mapfiles/libt2k/mapfile-vers, \
@@ -1144,26 +1148,33 @@ DESKTOP_LIBRARIES += $(BUILD_LIBJAWT)
 ifndef OPENJDK
 
   ifeq ($(JIGSAW), true)
-    LIBKCMS_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/share/native/libkcms
+    LIBKCMS_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/share/native/libkcms \
+        $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/$(OPENJDK_TARGET_OS_API_DIR)/native/libkcms \
+        #
+    LIBKCMS_CFLAGS += $(addprefix -I, $(LIBKCMS_SRC)) \
+        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libjava \
+        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/native/libjava \
+        -I$(JDK_OUTPUTDIR)/gensrc_headers/java.desktop \
+        #
   else
     LIBKCMS_SRC := $(JDK_TOPDIR)/src/closed/share/native/sun/java2d/cmm/kcms
+
+    BUILD_LIBKCMS_EXCLUDE_FILES :=
+    ifeq ($(OPENJDK_TARGET_OS), windows)
+      BUILD_LIBKCMS_EXCLUDE_FILES += ukcpmgr.c unixmem.c
+    else
+      BUILD_LIBKCMS_EXCLUDE_FILES += cmmdll.c registry.c spxffile.c sysinfo.c winmem.c wkcpmgr.c
+    endif
   endif
 
-  BUILD_LIBKCMS_EXCLUDE_FILES :=
-  ifeq ($(OPENJDK_TARGET_OS), windows)
-    BUILD_LIBKCMS_EXCLUDE_FILES += ukcpmgr.c unixmem.c
-  else
-    BUILD_LIBKCMS_EXCLUDE_FILES += cmmdll.c registry.c spxffile.c sysinfo.c winmem.c wkcpmgr.c
-  endif
-
-  BUILD_LIBKCMS_FLAGS := $(CFLAGS_JDKLIB)
+  LIBKCMS_CFLAGS += $(CFLAGS_JDKLIB)
 
   ifeq ($(OPENJDK_TARGET_OS), solaris)
     # This particular library uses a feature called PIC_CODE_SMALL (on solaris)
     # implement it like this...since it's only used here
-    BUILD_LIBKCMS_FLAGS := $(patsubst -KPIC, -Kpic, $(BUILD_LIBKCMS_FLAGS))
+    LIBKCMS_CFLAGS := $(patsubst -KPIC, -Kpic, $(LIBKCMS_CFLAGS))
   else ifeq ($(OPENJDK_TARGET_CPU_ARCH), ppc)
-    BUILD_LIBKCMS_FLAGS := $(patsubst -fPIC, -fpic, $(BUILD_LIBKCMS_FLAGS))
+    LIBKCMS_CFLAGS := $(patsubst -fPIC, -fpic, $(LIBKCMS_CFLAGS))
   endif
 
   $(eval $(call SetupNativeCompilation,BUILD_LIBKCMS, \
@@ -1173,7 +1184,7 @@ ifndef OPENJDK
       LANG := C, \
       EXCLUDE_FILES := $(BUILD_LIBKCMS_EXCLUDE_FILES), \
       OPTIMIZATION := LOW, \
-      CFLAGS := $(BUILD_LIBKCMS_FLAGS) \
+      CFLAGS := $(LIBKCMS_CFLAGS) \
           -DJAVACMM -DFUT_CALC_EX -DNO_FUT_GCONST, \
       CFLAGS_linux := -Wno-missing-field-initializers, \
       MAPFILE := $(JDK_TOPDIR)/make/mapfiles/libkcms/mapfile-vers, \
@@ -1518,10 +1529,13 @@ endif
 ifndef OPENJDK
 
   ifeq ($(JIGSAW), true)
-    LIBDCPR_SRC_DIRS := \
-        $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/share/native/libdcpr
-    LIBDCPR_CFLAGS := $(addprefix -I, $(LIBDCPR_SRC_DIRS)) \
-        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libawt/sun/java2d/pipe
+    LIBDCPR_SRC_DIRS := $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/share/native/libdcpr
+    LIBDCPR_CFLAGS := $(addprefix -I, $(shell $(FIND) $(LIBDCPR_SRC_DIRS) -type d)) \
+        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libawt/sun/java2d/pipe \
+        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libjava \
+        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/native/libjava \
+        -I$(JDK_OUTPUTDIR)/gensrc_headers/java.desktop \
+        #
   else
 
     LIBDCPR_SRC_DIRS := \

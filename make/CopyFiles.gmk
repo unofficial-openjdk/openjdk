@@ -28,6 +28,7 @@ default: all
 include $(SPEC)
 include JigsawSpecMod.gmk
 include MakeBase.gmk
+include Tools.gmk
 
 INCLUDEDIR = $(JDK_OUTPUTDIR)/include
 
@@ -50,6 +51,16 @@ ifeq ($(OPENJDK_TARGET_OS), windows)
   OPENJDK_TARGET_OS_INCLUDE = $(INCLUDEDIR)/win32
 else ifeq ($(OPENJDK_TARGET_OS), macosx)
   OPENJDK_TARGET_OS_INCLUDE = $(INCLUDEDIR)/darwin
+endif
+
+ifeq ($(JIGSAW), true)
+  BASE_SUBDIR := conf/java.base
+  DESKTOP_SUBDIR := conf/java.desktop
+  UCRYPTO_SUBDIR := conf/jdk.ucrypto
+else
+  DESKTOP_SUBDIR := lib
+  UCRYPTO_SUBDIR := lib
+  BASE_SUBDIR := lib
 endif
 
 #
@@ -154,11 +165,6 @@ DESKTOP_CONF_FILES := $(PSFONTPROPFILE_TARGET_FILES)
 #
 # Copy flavormap.properties, cursor.properties and cursors gif files to LIBDIR
 #
-ifeq ($(JIGSAW), true)
-  DESKTOP_SUBDIR := conf/java.desktop
-else
-  DESKTOP_SUBDIR := lib
-endif
 ifneq ($(OPENJDK_TARGET_OS), macosx)
   OPENJDK_TARGET_OS_LIB_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/$(DESKTOP_SUBDIR)
 else
@@ -201,12 +207,6 @@ $(LIBDIR)/content-types.properties: $(CONTENT_TYPES_SRC)/content-types.propertie
 DESKTOP_CONF_FILES += $(LIBDIR)/content-types.properties
 
 ##########################################################################################
-
-ifeq ($(JIGSAW), true)
-  BASE_SUBDIR := conf/java.base
-else
-  BASE_SUBDIR := lib
-endif
 
 CALENDARS_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/$(BASE_SUBDIR)
 
@@ -391,17 +391,17 @@ PROPS_DST := $(JDK_OUTPUTDIR)/lib/security/java.security
 
 ifndef OPENJDK
 
-  RESTRICTED_PKGS_SRC := $(JDK_TOPDIR)/src/closed/share/$(BASE_SUBDIR)/security/restricted.pkgs
-RESTRICTED_PKGS := $(shell $(CAT) $(RESTRICTED_PKGS_SRC) | $(TR) "\n" " ")
+  RESTRICTED_PKGS_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/share/$(BASE_SUBDIR)/security/restricted.pkgs
+  RESTRICTED_PKGS := $(shell $(CAT) $(RESTRICTED_PKGS_SRC) | $(TR) "\n" " ")
 
-$(PROPS_DST): $(PROPS_SRC)
+  $(PROPS_DST): $(PROPS_SRC)
 	$(MKDIR) -p $(@D)
 	$(TOOL_ADDTORESTRICTEDPKGS) $^ $@.tmp $(RESTRICTED_PKGS)
 	$(MV) $@.tmp $@
 
 else
 
-$(PROPS_DST): $(PROPS_SRC)
+  $(PROPS_DST): $(PROPS_SRC)
 	$(call install-file)
 
 endif
@@ -435,10 +435,10 @@ BLACKLISTED_CERTS_DST := $(JDK_OUTPUTDIR)/lib/security/blacklisted.certs
 
 ifndef OPENJDK
 
-  BLACKLIST_SRC := $(JDK_TOPDIR)/src/closed/share/$(BASE_SUBDIR)/security/blacklist
+  BLACKLIST_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/share/$(BASE_SUBDIR)/security/blacklist
   BLACKLIST_DST := $(JDK_OUTPUTDIR)/lib/security/blacklist
 
-  BLACKLISTED_CERTS_SRC += $(wildcard $(JDK_TOPDIR)/src/closed/share/lib/security/blacklisted.certs)
+  BLACKLISTED_CERTS_SRC += $(wildcard $(JDK_TOPDIR)/src/closed/share/$(BASE_SUBDIR)/security/blacklisted.certs)
 
   TRUSTEDLIBS_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/share/$(BASE_SUBDIR)/security/trusted.libraries
   TRUSTEDLIBS_DST := $(JDK_OUTPUTDIR)/lib/security/trusted.libraries
@@ -473,8 +473,15 @@ BASE_CONF_FILES += $(BLACKLISTED_CERTS_DST)
 
 ifndef OPENJDK
 
-  SHARED_FONTS_SRC_DIR := $(JDK_TOPDIR)/src/closed/share/$(DESKTOP_SUBDIR)/fonts
-  SHARED_FONTS_DST_DIR := $(JDK_OUTPUTDIR)/lib/fonts
+  ifeq ($(JIGSAW), true)
+    SHARED_FONTS_SRC_DIR := $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/share/$(DESKTOP_SUBDIR)/fonts
+    SHARED_FONTS_DST_DIR := $(JDK_OUTPUTDIR)/lib/fonts
+    FONTS_DIR_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/solaris/$(DESKTOP_SUBDIR)/fonts/fonts.dir
+  else
+    SHARED_FONTS_SRC_DIR := $(JDK_TOPDIR)/src/closed/share/lib/fonts
+    SHARED_FONTS_DST_DIR := $(JDK_OUTPUTDIR)/lib/fonts
+    FONTS_DIR_SRC := $(JDK_TOPDIR)/src/solaris/classes/sun/awt/motif/java.fonts.dir
+  endif
   SHARED_FONTS_FILES := \
       LucidaTypewriterRegular.ttf \
       LucidaTypewriterBold.ttf \
@@ -491,7 +498,7 @@ ifndef OPENJDK
   $(SHARED_FONTS_DST_DIR)/%.ttf: $(SHARED_FONTS_SRC_DIR)/%.ttf
 	$(call install-file)
 
-  $(SHARED_FONTS_DST_DIR)/fonts.dir: $(JDK_TOPDIR)/src/solaris/classes/sun/awt/motif/java.fonts.dir
+  $(SHARED_FONTS_DST_DIR)/fonts.dir: $(FONTS_DIR_SRC)
 	$(call install-file)
 
   DESKTOP_CONF_FILES += $(SHARED_FONTS_DST)
@@ -502,10 +509,16 @@ ifndef OPENJDK
 
   ifeq ($(OPENJDK_TARGET_OS), linux)
 
-  # The oblique fonts are only needed/wanted on Linux.
-
-    OBL_FONTS_SRC_DIR := $(JDK_TOPDIR)/src/closed/share/$(DESKTOP_SUBDIR)/fonts/oblique
-    OBL_FONTS_DST_DIR := $(JDK_OUTPUTDIR)/lib/oblique-fonts
+    # The oblique fonts are only needed/wanted on Linux.
+    ifeq ($(JIGSAW), true)
+      OBL_FONTS_SRC_DIR := $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/share/$(DESKTOP_SUBDIR)/oblique-fonts
+      OBL_FONTS_DST_DIR := $(JDK_OUTPUTDIR)/lib/oblique-fonts
+      OBL_FONTS_DIR_SRC := $(JDK_TOPDIR)/$(SCR_SUBDIR)/closed/solaris/$(DESKTOP_SUBIDR)/oblique-fonts/fonts.dir
+    else
+      OBL_FONTS_SRC_DIR := $(JDK_TOPDIR)/src/closed/share/$(DESKTOP_SUBDIR)/fonts/oblique
+      OBL_FONTS_DST_DIR := $(JDK_OUTPUTDIR)/lib/oblique-fonts
+      OBL_FONTS_DIR_SRC := $(JDK_TOPDIR)/src/solaris/classes/sun/awt/motif/java.oblique-fonts.dir
+    endif
     OBL_FONTS_FILES := LucidaTypewriterOblique.ttf LucidaTypewriterBoldOblique.ttf \
         LucidaSansOblique.ttf LucidaSansDemiOblique.ttf
 
@@ -551,15 +564,18 @@ ifndef OPENJDK
 
   DGALIBS := $(_DGALIBS_$(OPENJDK_TARGET_CPU_LEGACY):%=$(JDK_OUTPUTDIR)/lib$(OPENJDK_TARGET_CPU_LIBDIR)/%)
 
-  $(JDK_OUTPUTDIR)/lib$(OPENJDK_TARGET_CPU_LIBDIR)/libxinerama.so: $(JDK_TOPDIR)/src/closed/solaris/lib/$(OPENJDK_TARGET_CPU_LEGACY)/libxinerama.so
+  $(JDK_OUTPUTDIR)/lib$(OPENJDK_TARGET_CPU_LIBDIR)/libxinerama.so: \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/solaris/$(DESKTOP_SUBDIR)/$(OPENJDK_TARGET_CPU_LEGACY)/libxinerama.so
 	$(call install-file)
 	$(CHMOD) 755 $@
 
-  $(JDK_OUTPUTDIR)/lib$(OPENJDK_TARGET_CPU_LIBDIR)/libjdgaSUNW%.so: $(JDK_TOPDIR)/src/closed/solaris/lib/$(OPENJDK_TARGET_CPU_LEGACY)/libjdgaSUNW%.so
+  $(JDK_OUTPUTDIR)/lib$(OPENJDK_TARGET_CPU_LIBDIR)/libjdgaSUNW%.so: \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/solaris/$(DESKTOP_SUBDIR)/$(OPENJDK_TARGET_CPU_LEGACY)/libjdgaSUNW%.so
 	$(call install-file)
 	$(CHMOD) 755 $@
 
-  $(JDK_OUTPUTDIR)/lib$(OPENJDK_TARGET_CPU_LIBDIR)/libjdgaSUNWafb.so: $(JDK_OUTPUTDIR)/lib$(OPENJDK_TARGET_CPU_LIBDIR)/libjdgaSUNWffb.so
+  $(JDK_OUTPUTDIR)/lib$(OPENJDK_TARGET_CPU_LIBDIR)/libjdgaSUNWafb.so: \
+      $(JDK_OUTPUTDIR)/lib$(OPENJDK_TARGET_CPU_LIBDIR)/libjdgaSUNWffb.so
 	$(MKDIR) -p $(@D)
 	$(RM) $@
 	$(LN) -s $(<F) $@
@@ -587,7 +603,11 @@ endif
 ifndef OPENJDK
   ifeq ($(OPENJDK_TARGET_OS), solaris)
 
-    UCRYPTO_CFG_SRC := $(JDK_TOPDIR)/src/closed/share/lib/security/ucrypto-solaris.cfg
+    ifeq ($(JIGSAW), true)
+      UCRYPTO_CFG_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/solaris/$(UCRYPTO_SUBDIR)/security/ucrypto-solaris.cfg
+    else
+      UCRYPTO_CFG_SRC := $(JDK_TOPDIR)/src/closed/share/lib/security/ucrypto-solaris.cfg
+    endif
     UCRYPTO_CFG_DST := $(JDK_OUTPUTDIR)/lib/security/ucrypto-solaris.cfg
 
     $(UCRYPTO_CFG_DST): $(UCRYPTO_CFG_SRC)

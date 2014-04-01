@@ -492,8 +492,11 @@ ifndef OPENJDK
 
     ifeq ($(JIGSAW), true)
       LIBJFR_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/share/native/libjfr
+      # TODO: shuffle this somewhere
+      LIBJFR_CFLAGS := -I$(JDK_TOPDIR)/src/closed/share/javavm/export
     else
       LIBJFR_SRC := $(JDK_TOPDIR)/src/closed/share/native/oracle/jfr
+      LIBJFR_CFLAGS := -I$(JDK_TOPDIR)/src/closed/share/javavm/export
     endif
 
     $(eval $(call SetupNativeCompilation,BUILD_LIBJFR, \
@@ -502,7 +505,7 @@ ifndef OPENJDK
         SRC := $(LIBJFR_SRC), \
         LANG := C, \
         OPTIMIZATION := LOW, \
-        CFLAGS := $(CFLAGS_JDKLIB), \
+        CFLAGS := $(CFLAGS_JDKLIB) $(LIBJFR_CFLAGS), \
         MAPFILE := $(JDK_TOPDIR)/make/mapfiles/libjfr/mapfile-vers, \
         LDFLAGS := $(LDFLAGS_JDKLIB) \
             $(call SET_SHARED_LIBRARY_ORIGIN), \

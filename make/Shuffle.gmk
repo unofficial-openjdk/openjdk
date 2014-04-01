@@ -1259,3 +1259,7 @@ clean-src:
 
 clean-build:
 	$(RM) -r $(JDK_OUTPUTDIR)/modules
+
+
+# Hook to include the corresponding custom file, if present.
+$(eval $(call IncludeCustomExtension, jdk, Shuffle.gmk))
