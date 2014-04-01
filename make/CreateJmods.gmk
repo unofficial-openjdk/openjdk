@@ -122,7 +122,7 @@ java.logging_CONF := $(LOGGING_CONF_FILES)
 
 java.instrument_NATIVE := $(INSTRUMENT_LIBRARIES)
 
-java.management_NATIVE := $(MANAGEMENT_LIBRARIES) $(JFR_LIBRARIES)
+java.management_NATIVE := $(MANAGEMENT_LIBRARIES)
 java.management_CONF := $(MANAGEMENT_CONF_FILES)
 
 java.prefs_NATIVE := $(PREFS_LIBRARIES)
@@ -165,6 +165,10 @@ jdk.tools.jre_CONF := $(HPROF_CONF_FILES)
 
 jdk.tools_CMDS := $(TOOLS_LAUNCHERS)
 jdk.tools_NATIVE := $(JDI_SA_LIBRARIES) $(JDI_TRANSPORT_LIBRARIES)
+
+ifndef OPENJDK
+  jdk.jfr_NATIVE := $(JFR_LIBRARIES)
+endif
 
 ################################################################################
 
