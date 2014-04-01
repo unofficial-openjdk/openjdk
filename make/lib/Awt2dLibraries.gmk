@@ -1761,7 +1761,9 @@ ifeq ($(OPENJDK_TARGET_OS), macosx)
     LIBOSXUI_CFLAGS := -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/macosx/native/libosxui \
         -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/macosx/native/libosxapp \
         -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/macosx/native/libawt_lwawt/sun/awt \
-        -I$(JDK_OUTPUTDIR)/gensrc_headers/java.desktop
+        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libjava \
+        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/native/libjava \
+        -I$(JDK_OUTPUTDIR)/gensrc_headers/java.desktop \
         #
   else
     LIBOSXUI_SRC := $(JDK_TOPDIR)/src/macosx/native/com/apple/laf
