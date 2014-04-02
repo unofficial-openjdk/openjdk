@@ -741,8 +741,14 @@ endif
 ifndef OPENJDK
   ifeq ($(OPENJDK_TARGET_OS), windows)
 
+    ifeq ($(JIGSAW), true)
+      JABSWITCH_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/windows/native/jabswitch
+    else
+      JABSWITCH_SRC := $(JDK_TOPDIR)/src/closed/windows/native/sun/bridge
+    endif
+
     $(eval $(call SetupNativeCompilation,BUILD_JABSWITCH, \
-        SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/windows/native/sun/bridge, \
+        SRC := $(JABSWITCH_SRC), \
         INCLUDE_FILES := jabswitch.cpp, \
         LANG := C++, \
         CFLAGS := $(filter-out -Zc:wchar_t-, $(CFLAGS_JDKEXE)) -Zc:wchar_t \
