@@ -52,14 +52,6 @@ $(eval $(call SetupJavaCompiler,GENERATE_JDKBYTECODE, \
 #      com/sun/script
 # endif
 
-#ifndef OPENJDK
-#  ifeq ($(OPENJDK_TARGET_OS), windows)
-#    # AccessBridge is compiled separately below.
-#    EXCLUDE_FILES += AccessBridge.java \
-#        AccessBridgeLoader.java \
-#  endif
-#endif
-
 #ifneq ($(OPENJDK_TARGET_OS), solaris)
 #  EXCLUDES += com/oracle/security
 #endif
@@ -298,7 +290,12 @@ ifndef OPENJDK
     java.desktop_EXCLUDES += sun/java2d/pisces
 
     java.desktop_EXCLUDES += com/sun/java/accessibility/extensions
-    java.desktop_EXCLUDE_FILES += com/sun/java/accessibility/util/java/awt/ChoiceTranslator.java
+    # AccessBridge is compiled separately below.
+    java.desktop_EXCLUDE_FILES += \
+        AccessBridge.java \
+        AccessBridgeLoader.java \
+        com/sun/java/accessibility/util/java/awt/ChoiceTranslator.java \
+        #
   endif
 endif
 
@@ -526,7 +523,7 @@ ALL_SRC_DIRS := \
     #
 
 ifndef OPENJDK
-  ALL_SRC_DIRS += $(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/modules \
+  ALL_SRC_DIRS += $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/$(OPENJDK_TARGET_OS_API_DIR)/modules \
       $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/share/modules \
       #
 endif
@@ -600,6 +597,49 @@ COPY_EXTRA += $(patsubst $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/modules/%, $(JDK_OUTP
 
 ################################################################################
 
-all: $(JAVA_MODULES) $(COPY_EXTRA)
+# Compile accessbridge separately. Need to figure out how to handle this properly.
+# Where should the classes go?
+ifndef OPENJDK
+  ifeq ($(OPENJDK_TARGET_OS), windows)
+    AB_CLASSPATH := $(java.desktop_CLASSPATH)$(PATH_SEP)$(JDK_OUTPUTDIR)/modules/java.desktop
+    ifeq ($(OPENJDK_TARGET_CPU_BITS), 32)
+      $(eval $(call SetupJavaCompilation,BUILD_ACCESSBRIDGE_32, \
+          SETUP := GENERATE_JDKBYTECODE, \
+          ADD_JAVAC_FLAGS := -bootclasspath "$(AB_CLASSPATH)"
+          SRC := $(JDK_OUTPUTDIR)/gensrc_ab/32bit, \
+          BIN := $(JDK_OUTPUTDIR)/classes_ab/32bit, \
+          HEADERS := $(JDK_OUTPUTDIR)/gensrc_headers/java.desktop))
+
+      $(BUILD_ACCESSBRIDGE_32_COMPILE_TARGETS): $(java.desktop_COMPILE_TARGETS)
+
+      $(eval $(call SetupJavaCompilation,BUILD_ACCESSBRIDGE_LEGACY, \
+          SETUP := GENERATE_JDKBYTECODE, \
+          ADD_JAVAC_FLAGS := -bootclasspath "$(AB_CLASSPATH)", \
+          SRC := $(JDK_OUTPUTDIR)/gensrc_ab/legacy, \
+          BIN := $(JDK_OUTPUTDIR)/classes_ab/legacy, \
+          HEADERS := $(JDK_OUTPUTDIR)/gensrc_headers/java.desktop))
+
+      $(BUILD_ACCESSBRIDGE_LEGACY_COMPILE_TARGETS): $(java.desktop_COMPILE_TARGETS)
+
+    else
+
+      $(eval $(call SetupJavaCompilation,BUILD_ACCESSBRIDGE_64, \
+          SETUP := GENERATE_JDKBYTECODE, \
+          ADD_JAVAC_FLAGS := -bootclasspath "$(AB_CLASSPATH)", \
+          SRC := $(JDK_OUTPUTDIR)/gensrc_ab/64bit, \
+          BIN := $(JDK_OUTPUTDIR)/classes_ab/64bit, \
+          HEADERS := $(JDK_OUTPUTDIR)/gensrc_headers/java.desktop))
+
+      $(BUILD_ACCESSBRIDGE_64_COMPILE_TARGETS): $(java.desktop_COMPILE_TARGETS)
+
+    endif
+  endif
+endif
+
+################################################################################
+
+all: $(JAVA_MODULES) $(COPY_EXTRA) \
+    $(BUILD_ACCESSBRIDGE_32) $(BUILD_ACCESSBRIDGE_64) \
+    $(BUILD_ACCESSBRIDGE_LEGACY)
 
 .PHONY: all $(JAVA_MODULES)
