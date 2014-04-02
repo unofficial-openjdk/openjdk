@@ -193,7 +193,7 @@ ifndef OPENJDK
   ifeq ($(OPENJDK_TARGET_OS), windows)
 
     AB_GENSRC_DIR := $(JDK_OUTPUTDIR)/gensrc_ab
-    AB_SRC_DIR := $(JDK_TOPDIR)/src/closed/windows/$(MODULES_SUBDIR)/com/sun/java/accessibility
+    AB_SRC_DIR := $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/windows/$(MODULES_SUBDIR)$(JAVA_DESKTOP_SUBDIR)/com/sun/java/accessibility
 
     ifeq ($(OPENJDK_TARGET_CPU_BITS), 32)
       $(AB_GENSRC_DIR)/32bit/com/sun/java/accessibility/AccessBridgeLoader.java: \
@@ -212,10 +212,12 @@ ifndef OPENJDK
           $(AB_SRC_DIR)/AccessBridge.java
 		$(install-file)
 
-      GENSRC_MISC += $(AB_GENSRC_DIR)/32bit/com/sun/java/accessibility/AccessBridgeLoader.java \
+      GENSRC_JAVA_DESKTOP += \
+          $(AB_GENSRC_DIR)/32bit/com/sun/java/accessibility/AccessBridgeLoader.java \
           $(AB_GENSRC_DIR)/legacy/com/sun/java/accessibility/AccessBridgeLoader.java \
           $(AB_GENSRC_DIR)/32bit/com/sun/java/accessibility/AccessBridge.java \
-          $(AB_GENSRC_DIR)/legacy/com/sun/java/accessibility/AccessBridge.java
+          $(AB_GENSRC_DIR)/legacy/com/sun/java/accessibility/AccessBridge.java \
+          #
 
     else
       $(AB_GENSRC_DIR)/64bit/com/sun/java/accessibility/AccessBridgeLoader.java: \
@@ -226,8 +228,10 @@ ifndef OPENJDK
           $(AB_SRC_DIR)/AccessBridge.java
 		$(install-file)
 
-      GENSRC_MISC += $(AB_GENSRC_DIR)/64bit/com/sun/java/accessibility/AccessBridgeLoader.java \
-          $(AB_GENSRC_DIR)/64bit/com/sun/java/accessibility/AccessBridge.java
+      GENSRC_JAVA_DESKTOP += \
+          $(AB_GENSRC_DIR)/64bit/com/sun/java/accessibility/AccessBridgeLoader.java \
+          $(AB_GENSRC_DIR)/64bit/com/sun/java/accessibility/AccessBridge.java \
+          #
 
     endif
   endif

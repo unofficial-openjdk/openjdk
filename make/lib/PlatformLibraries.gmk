@@ -166,7 +166,12 @@ endif
 ifndef OPENJDK
   ifeq ($(OPENJDK_TARGET_OS), windows)
 
-    ACCESSBRIDGE_SRCDIR := $(JDK_TOPDIR)/src/closed/windows/native/sun/bridge
+    ifeq ($(JIGSAW), true)
+      ACCESSBRIDGE_SRCDIR := $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/windows/native/libaccessbridge
+      ACCESSBRIDGE_CFLAGS := -I$(JDK_OUTPUTDIR)/gensrc_headers/java.desktop
+    else
+      ACCESSBRIDGE_SRCDIR := $(JDK_TOPDIR)/src/closed/windows/native/sun/bridge
+    endif
 
     define SetupAccessBridge
       # Parameter 1 Suffix
@@ -180,7 +185,7 @@ ifndef OPENJDK
           INCLUDE_FILES := JAWTAccessBridge.cpp, \
           LANG := C++, \
           OPTIMIZATION := LOW, \
-          CFLAGS := $(CFLAGS_JDKLIB) \
+          CFLAGS := $(CFLAGS_JDKLIB) $(ACCESSBRIDGE_CFLAGS) \
               -DACCESSBRIDGE_ARCH_$3, \
           LDFLAGS := $(LDFLAGS_JDKLIB) kernel32.lib user32.lib gdi32.lib \
               winspool.lib jawt.lib comdlg32.lib advapi32.lib shell32.lib \
@@ -203,7 +208,7 @@ ifndef OPENJDK
               AccessBridgeMessages.cpp JavaAccessBridge.cpp, \
           LANG := C++, \
           OPTIMIZATION := LOW, \
-          CFLAGS := $(CFLAGS_JDKLIB) \
+          CFLAGS := $(CFLAGS_JDKLIB) $(ACCESSBRIDGE_CFLAGS) \
               -DACCESSBRIDGE_ARCH_$3, \
           LDFLAGS := $(LDFLAGS_JDKLIB) kernel32.lib user32.lib gdi32.lib \
               winspool.lib comdlg32.lib advapi32.lib shell32.lib \
@@ -225,7 +230,7 @@ ifndef OPENJDK
               AccessBridgeEventHandler.cpp, \
           LANG := C++, \
           OPTIMIZATION := LOW, \
-          CFLAGS := $(filter-out -MD, $(CFLAGS_JDKLIB)) -MT \
+          CFLAGS := $(filter-out -MD, $(CFLAGS_JDKLIB)) -MT $(ACCESSBRIDGE_CFLAGS) \
               -DACCESSBRIDGE_ARCH_$3, \
           LDFLAGS := $(LDFLAGS_JDKLIB) kernel32.lib user32.lib gdi32.lib \
               winspool.lib comdlg32.lib advapi32.lib shell32.lib \

@@ -89,8 +89,9 @@ ifndef OPENJDK
     H_TARGET_FILES += $(OPENJDK_TARGET_OS_INCLUDE)/bridge/AccessBridgeCallbacks.h \
         $(OPENJDK_TARGET_OS_INCLUDE)/bridge/AccessBridgeCalls.h \
         $(OPENJDK_TARGET_OS_INCLUDE)/bridge/AccessBridgePackages.h \
-        $(OPENJDK_TARGET_OS_INCLUDE)/bridge/AccessBridgeCalls.c
-        $(JDK_OUTPUTDIR)/lib/accessibility.properties
+        $(OPENJDK_TARGET_OS_INCLUDE)/bridge/AccessBridgeCalls.c \
+        $(JDK_OUTPUTDIR)/lib/accessibility.properties \
+        #
 
     $(OPENJDK_TARGET_OS_INCLUDE)/bridge/%: \
         $(JDK_TOPDIR)/src/closed/windows/native/sun/bridge/%
@@ -670,6 +671,7 @@ jdk.ucrytpo: $(SECURITY_UCRYPTO_CONF_FILES)
 all: $(BASE_CONF_FILES) \
     $(NET_CONF_FILES) \
     $(H_TARGET_FILES) \
+    $(MSVCR_TARGET) \
     $(DESKTOP_CONF_FILES) \
     $(HPROF_CONF_FILES) \
     $(MANAGEMENT_CONF_FILES) \
