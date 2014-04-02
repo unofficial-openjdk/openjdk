@@ -605,7 +605,7 @@ ifndef OPENJDK
     ifeq ($(OPENJDK_TARGET_CPU_BITS), 32)
       $(eval $(call SetupJavaCompilation,BUILD_ACCESSBRIDGE_32, \
           SETUP := GENERATE_JDKBYTECODE, \
-          ADD_JAVAC_FLAGS := -bootclasspath "$(AB_CLASSPATH)"
+          ADD_JAVAC_FLAGS := -bootclasspath "$(AB_CLASSPATH)", \
           SRC := $(JDK_OUTPUTDIR)/gensrc_ab/32bit, \
           BIN := $(JDK_OUTPUTDIR)/classes_ab/32bit, \
           HEADERS := $(JDK_OUTPUTDIR)/gensrc_headers/java.desktop))
