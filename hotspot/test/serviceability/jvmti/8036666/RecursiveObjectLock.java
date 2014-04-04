@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright 2014 SAP AG.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -19,38 +19,45 @@
  * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  * or visit www.oracle.com if you need additional information or have any
  * questions.
- *
  */
 
-#ifndef SHARE_VM_MEMORY_GCLOCKER_INLINE_HPP
-#define SHARE_VM_MEMORY_GCLOCKER_INLINE_HPP
+public class RecursiveObjectLock {
 
-#include "memory/gcLocker.hpp"
-
-inline void GC_locker::lock_critical(JavaThread* thread) {
-  if (!thread->in_critical()) {
-    if (needs_gc()) {
-      // jni_lock call calls enter_critical under the lock so that the
-      // global lock count and per thread count are in agreement.
-      jni_lock(thread);
-      return;
+    public void testMethod() {
+        synchronized (this) {
+            nestedLock1();
+        }
     }
-    increment_debug_jni_lock_count();
-  }
-  thread->enter_critical();
-}
 
-inline void GC_locker::unlock_critical(JavaThread* thread) {
-  if (thread->in_last_critical()) {
-    if (needs_gc()) {
-      // jni_unlock call calls exit_critical under the lock so that
-      // the global lock count and per thread count are in agreement.
-      jni_unlock(thread);
-      return;
+    public void nestedLock1() {
+        synchronized (this) {
+            nestedLock2();
+        }
     }
-    decrement_debug_jni_lock_count();
-  }
-  thread->exit_critical();
-}
 
-#endif // SHARE_VM_MEMORY_GCLOCKER_INLINE_HPP
+    public void nestedLock2() {
+        synchronized (this) {
+            callWait();
+        }
+    }
+
+    public void callWait(){
+        try {
+            this.wait(1);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        breakpoint1();
+    }
+
+    public static void breakpoint1() {
+        // purpose: hold a breakpoint
+    }
+
+    public static void main(String[] args) {
+        RecursiveObjectLock ro = new RecursiveObjectLock();
+        ro.testMethod();
+        System.out.println("ready");
+    }
+
+}
