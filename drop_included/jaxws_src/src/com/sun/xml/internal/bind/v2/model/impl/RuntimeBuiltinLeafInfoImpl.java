@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2006, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -60,9 +60,7 @@ import javax.imageio.ImageWriter;
 import javax.imageio.stream.ImageOutputStream;
 import javax.xml.bind.ValidationEvent;
 import javax.xml.bind.helpers.ValidationEventImpl;
-import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeConstants;
-import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.Duration;
 import javax.xml.datatype.XMLGregorianCalendar;
 import javax.xml.namespace.QName;
@@ -532,7 +530,8 @@ public abstract class RuntimeBuiltinLeafInfoImpl<T> extends BuiltinLeafInfoImpl<
 
                 public XMLGregorianCalendar parse(CharSequence lexical) throws SAXException {
                     try {
-                        return datatypeFactory.newXMLGregorianCalendar(lexical.toString().trim()); // (.trim() - issue 396)
+                        return DatatypeConverterImpl.getDatatypeFactory()
+                                .newXMLGregorianCalendar(lexical.toString().trim()); // (.trim() - issue 396)
                     } catch (Exception e) {
                         UnmarshallingContext.getInstance().handleError(e);
                         return null;
@@ -776,7 +775,7 @@ public abstract class RuntimeBuiltinLeafInfoImpl<T> extends BuiltinLeafInfoImpl<
 
                 public Duration parse(CharSequence lexical) {
                     TODO.checkSpec("JSR222 Issue #42");
-                    return datatypeFactory.newDuration(lexical.toString());
+                    return DatatypeConverterImpl.getDatatypeFactory().newDuration(lexical.toString());
                 }
             },
             new StringImpl<Void>(Void.class) {
@@ -822,20 +821,6 @@ public abstract class RuntimeBuiltinLeafInfoImpl<T> extends BuiltinLeafInfoImpl<
 
     private static QName createXS(String typeName) {
         return new QName(WellKnownNamespace.XML_SCHEMA,typeName);
-    }
-
-    /**
-     * Cached instance of {@link DatatypeFactory} to create
-     * {@link XMLGregorianCalendar} and {@link Duration}.
-     */
-    private static final DatatypeFactory datatypeFactory = init();
-
-    private static DatatypeFactory init() {
-        try {
-            return DatatypeFactory.newInstance();
-        } catch (DatatypeConfigurationException e) {
-            throw new Error(Messages.FAILED_TO_INITIALE_DATATYPE_FACTORY.format(),e);
-        }
     }
 
         private static void checkXmlGregorianCalendarFieldRef(QName type,
