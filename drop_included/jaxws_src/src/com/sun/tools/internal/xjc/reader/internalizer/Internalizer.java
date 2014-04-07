@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2006, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -67,9 +67,14 @@ import org.xml.sax.SAXParseException;
  */
 class Internalizer {
 
-    private static final XPathFactory xpf = XPathFactory.newInstance();
+    private static final ContextClassloaderLocal<XPathFactory> xpf = new ContextClassloaderLocal<XPathFactory>() {
+        @Override
+        protected XPathFactory initialValue() throws Exception {
+            return XPathFactory.newInstance();
+        }
+    };
 
-    private final XPath xpath = xpf.newXPath();
+    private final XPath xpath = xpf.get().newXPath();
 
     /**
      * Internalize all &lt;jaxb:bindings> customizations in the given forest.
