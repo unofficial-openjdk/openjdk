@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2006, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -60,27 +60,6 @@ import java.util.UUID;
  * @author Kohsuke Kawaguchi
  */
 abstract class MimeCodec implements Codec {
-
-    static {
-        // DataHandler.writeTo() may search for DCH. So adding some default ones.
-        try {
-            CommandMap map = CommandMap.getDefaultCommandMap();
-            if (map instanceof MailcapCommandMap) {
-                MailcapCommandMap mailMap = (MailcapCommandMap) map;
-                String hndlrStr = ";;x-java-content-handler=";
-                mailMap.addMailcap(
-                    "text/xml" + hndlrStr + XmlDataContentHandler.class.getName());
-                mailMap.addMailcap(
-                    "application/xml" + hndlrStr + XmlDataContentHandler.class.getName());
-                mailMap.addMailcap(
-                    "image/*" + hndlrStr + ImageDataContentHandler.class.getName());
-                mailMap.addMailcap(
-                    "text/plain" + hndlrStr + StringDataContentHandler.class.getName());
-            }
-        } catch (Throwable t) {
-            // ignore the exception.
-        }
-    }
 
     public static final String MULTIPART_RELATED_MIME_TYPE = "multipart/related";
 
