@@ -100,17 +100,15 @@ public class D3DScreenUpdateManager extends ScreenUpdateManager
                         currentTG = parentTG;
                         parentTG = currentTG.getParent();
                     }
+                    Thread shutdown = new Thread(currentTG, new Runnable() {
+                            public void run() {
+                                done = true;
+                                wakeUpUpdateThread();
+                            }
+                        });
+                    shutdown.setContextClassLoader(null);
                     try {
-                        Runtime.getRuntime().addShutdownHook(
-                            new Thread(currentTG,
-                                new Runnable() {
-                                    public void run() {
-                                        done = true;
-                                        wakeUpUpdateThread();
-                                    }
-                                }
-                            )
-                        );
+                        Runtime.getRuntime().addShutdownHook(shutdown);
                     } catch (Exception e) {
                         done = true;
                     }

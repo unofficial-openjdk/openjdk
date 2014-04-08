@@ -291,15 +291,29 @@ public class XToolkit extends UNIXToolkit implements Runnable, XConstants {
             awtUnlock();
         }
 
-        if (log.isLoggable(Level.FINE)) {
-            Runtime.getRuntime().addShutdownHook(new Thread() {
-                public void run() {
-                    if (log.isLoggable(Level.FINE)) {
-                        dumpPeers();
-                    }
+	if (log.isLoggable(Level.FINE)) {
+	    PrivilegedAction<Void> a = new PrivilegedAction<Void>() {
+		public Void run() {
+		    ThreadGroup mainTG = Thread.currentThread().getThreadGroup();
+		    ThreadGroup parentTG = mainTG.getParent();
+		    while (parentTG != null) {
+			mainTG = parentTG;
+			parentTG = mainTG.getParent();
+		    }
+		    Thread shutdownThread = new Thread(mainTG, "XToolkt-Shutdown-Thread") {
+			public void run() {
+			    if (log.isLoggable(Level.FINE)) {
+				dumpPeers();
+			    }
+			}
+		    };
+		    shutdownThread.setContextClassLoader(null);
+		    Runtime.getRuntime().addShutdownHook(shutdownThread);
+		    return null;
                 }
-            });
-        }
+            };
+	    AccessController.doPrivileged(a);
+	}
     }
 
     static String getCorrectXIDString(String val) {
