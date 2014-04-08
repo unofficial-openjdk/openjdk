@@ -25,6 +25,8 @@
 
 package javax.sql.rowset.spi;
 
+import java.io.InputStream;
+
 import java.util.Map;
 import java.util.Hashtable;
 import java.util.Enumeration;
@@ -43,8 +45,11 @@ import java.io.IOException;
 import java.io.FileNotFoundException;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+import java.security.PrivilegedActionException;
+import java.security.PrivilegedExceptionAction;
 
 import javax.naming.*;
+import sun.reflect.misc.ReflectUtil;
 
 /**
  * The Service Provider Interface (SPI) mechanism that generates <code>SyncProvider</code>
@@ -375,7 +380,7 @@ public class SyncFactory {
         // Local implementation class names and keys from Properties
         // file, translate names into Class objects using Class.forName
         // and store mappings
-        Properties properties = new Properties();
+        final Properties properties = new Properties();
 
         if (implementations == null) {
             implementations = new Hashtable();
@@ -404,6 +409,7 @@ public class SyncFactory {
                         }
                     });
                 } catch (Exception ex) {
+                    System.out.println("errorget rowset.properties: " + ex);
                     strRowsetProperties = null;
                 }
                 if ( strRowsetProperties != null) {
@@ -420,12 +426,39 @@ public class SyncFactory {
                 ROWSET_PROPERTIES = "javax" + strFileSep + "sql" +
                     strFileSep + "rowset" + strFileSep +
                     "rowset.properties";
-                // properties.load(
-                //                ClassLoader.getSystemResourceAsStream(ROWSET_PROPERTIES));
 
-                ClassLoader cl = Thread.currentThread().getContextClassLoader();
+                final ClassLoader cl = Thread.currentThread().getContextClassLoader();
 
-                properties.load(cl.getResourceAsStream(ROWSET_PROPERTIES));
+                try {
+                    AccessController.doPrivileged(new PrivilegedExceptionAction<Void>() {
+			    public Void run()  throws SyncFactoryException, IOException, FileNotFoundException {
+				InputStream stream = null;
+				try {
+				    if (cl == null) {
+					stream = ClassLoader.getSystemResourceAsStream(ROWSET_PROPERTIES);
+				    } else {
+					stream = cl.getResourceAsStream(ROWSET_PROPERTIES);
+				    }
+				    if (stream == null) {
+					throw new SyncFactoryException("Resource " + ROWSET_PROPERTIES + " not found");
+				    }
+				    properties.load(stream);
+				} finally {
+				    if (stream != null) { stream.close(); }
+				}
+				return null;
+			    }
+			});
+                } catch (PrivilegedActionException ex) {
+                    Throwable e = ex.getException();
+                    if (e instanceof SyncFactoryException) {
+                      throw (SyncFactoryException) e;
+                    } else {
+                       SyncFactoryException sfe = new SyncFactoryException();
+                        sfe.initCause(ex.getException());
+                        throw sfe;
+		    }
+		}
                 parseProperties(properties);
 
                 // removed else, has properties should sum together
@@ -584,6 +617,13 @@ public class SyncFactory {
             return new com.sun.rowset.providers.RIOptimisticProvider();
         }
 
+        try {
+            ReflectUtil.checkPackageAccess(providerID);
+        } catch (java.security.AccessControlException e) {
+            SyncFactoryException sfe = new SyncFactoryException();
+            sfe.initCause(e);
+            throw sfe;
+        }
         // Attempt to invoke classname from registered SyncProvider list
         Class c = null;
         try {
@@ -592,7 +632,7 @@ public class SyncFactory {
             /**
              * The SyncProvider implementation of the user will be in
              * the classpath. We need to find the ClassLoader which loads
-             * this SyncFactory and try to laod the SyncProvider class from
+             * this SyncFactory and try to load the SyncProvider class from
              * there.
              **/
 
