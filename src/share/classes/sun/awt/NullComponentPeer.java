@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2007, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2008, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -255,7 +255,9 @@ public class NullComponentPeer implements LightweightPeer,
         throw new IllegalStateException(
             "Page-flipping is not allowed on a lightweight component");
     }
-    public void flip(BufferCapabilities.FlipContents flipAction) {
+    public void flip(int x1, int y1, int x2, int y2,
+                     BufferCapabilities.FlipContents flipAction)
+    {
         throw new IllegalStateException(
             "Page-flipping is not allowed on a lightweight component");
     }

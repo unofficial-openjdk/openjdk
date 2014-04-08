@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2004, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2008, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,7 +30,7 @@
 #include <jawt.h>
 #include <jawt_md.h>
 #include "awt_Component.h"
-#include "ddrawObject.h"
+#include <ddraw.h>
 
 class JAWTDrawingSurface;
 class JAWTOffscreenDrawingSurface;
@@ -84,8 +84,6 @@ class JAWTOffscreenDrawingSurfaceInfo :
 public:
     jint Init(JAWTOffscreenDrawingSurface* parent);
 
-public:
-    DDrawSurface *ddrawSurface;
 };
 
 /*

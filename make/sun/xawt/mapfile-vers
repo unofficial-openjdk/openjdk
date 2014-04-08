@@ -242,6 +242,7 @@ SUNWprivate_1.1 {
         AWTCharAscent;
         AWTCharDescent;
         AWTDrawGlyphList;
+        AccelGlyphCache_RemoveAllCellInfos;
 
         Java_sun_awt_X11_XToolkit_waitForEvents;
         Java_java_awt_Event_initIDs;

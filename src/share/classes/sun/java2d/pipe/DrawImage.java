@@ -958,7 +958,7 @@ public class DrawImage implements DrawImagePipe
         } else {
             BlitBg blit = BlitBg.getFromCache(srcType, comp, dstType);
             blit.BlitBg(srcData, dstData, sg.composite, clipRegion,
-                        bgColor, sx, sy, dx, dy, w, h);
+                        bgColor.getRGB(), sx, sy, dx, dy, w, h);
         }
     }
 

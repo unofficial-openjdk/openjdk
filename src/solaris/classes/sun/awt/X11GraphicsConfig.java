@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2007, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2008, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,20 +27,17 @@ package sun.awt;
 
 import java.awt.AWTException;
 import java.awt.BufferCapabilities;
+import java.awt.BufferCapabilities.FlipContents;
 import java.awt.Component;
 import java.awt.Toolkit;
 import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsDevice;
 import java.awt.Image;
 import java.awt.ImageCapabilities;
-import java.awt.image.DataBuffer;
 import java.awt.Transparency;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
 import java.awt.image.DirectColorModel;
-import java.awt.image.ImageProducer;
-import java.awt.image.IndexColorModel;
-import java.awt.image.Raster;
 import java.awt.image.VolatileImage;
 import java.awt.image.WritableRaster;
 import java.awt.geom.AffineTransform;
@@ -437,6 +434,7 @@ public class X11GraphicsConfig extends GraphicsConfiguration
      */
     public void flip(X11ComponentPeer peer,
                      Component target, VolatileImage xBackBuffer,
+                     int x1, int y1, int x2, int y2,
                      BufferCapabilities.FlipContents flipAction)
     {
         long window = peer.getContentWindow();

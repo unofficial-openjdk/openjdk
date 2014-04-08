@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 2007, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1995, 2008, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -88,7 +88,7 @@ public interface ComponentPeer {
     boolean     handlesWheelScrolling();
     void createBuffers(int numBuffers, BufferCapabilities caps) throws AWTException;
     Image getBackBuffer();
-    void flip(BufferCapabilities.FlipContents flipAction);
+    void flip(int x1, int y1, int x2, int y2, BufferCapabilities.FlipContents flipAction);
     void destroyBuffers();
 
     /**

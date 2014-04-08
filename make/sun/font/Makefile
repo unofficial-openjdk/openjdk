@@ -1,5 +1,5 @@
 #
-# Copyright (c) 1997, 2007, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 1997, 2008, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -83,8 +83,6 @@ ifeq ($(PLATFORM), windows)
 
   OTHER_CFLAGS += -DCC_NOEX
   OTHER_CXXFLAGS += -DCC_NOEX
-
-  FILES_export += sun/java2d/d3d/D3DTextRenderer.java
 
 else # PLATFORM unix
 
@@ -170,7 +168,6 @@ endif
 
 ifeq ($(PLATFORM), windows)
 vpath %.cpp   $(PLATFORM_SRC)/native/sun/windows
-vpath %.cpp   $(PLATFORM_SRC)/native/sun/java2d/d3d
 else # PLATFORM
 
 #
@@ -205,8 +202,7 @@ CPPFLAGS += -I$(SHARE_SRC)/native/$(PKGDIR) \
 	    -I$(TEMPDIR)/../../sun.awt/awt/CClassHeaders
 
 ifeq ($(PLATFORM), windows)
-CPPFLAGS += -I$(PLATFORM_SRC)/native/sun/windows \
-	    -I$(PLATFORM_SRC)/native/sun/java2d/d3d
+CPPFLAGS += -I$(PLATFORM_SRC)/native/sun/windows
 endif
 
 # Make the Layout Engine build standalone

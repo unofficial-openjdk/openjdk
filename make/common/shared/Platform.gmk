@@ -396,7 +396,7 @@ ifeq ($(PLATFORM), windows)
   # ISHIELD_TEMP_MIN is the difference of an empty C:\TEMP vs. one after a
   #     bundles build on windows.
   ISHIELD_TEMP_MIN=250000
-  REQUIRED_DXSDK_VER = 0x0700
+  REQUIRED_DXSDK_VER = 0x0900
   # How much RAM does this machine have:
   MB_OF_MEMORY := $(shell \
     if [ -f "C:/cygwin/bin/free.exe" ] ; then \

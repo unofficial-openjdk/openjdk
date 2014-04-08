@@ -42,6 +42,7 @@ import java.awt.image.VolatileImage;
 import java.awt.dnd.DropTarget;
 import java.awt.dnd.peer.DropTargetPeer;
 
+import sun.java2d.BackBufferCapsProvider;
 import sun.java2d.SunGraphics2D;
 import sun.java2d.SurfaceData;
 
@@ -53,7 +54,7 @@ import sun.java2d.pipe.Region;
 
 
 public /* REMIND: should not be public */
-abstract class MComponentPeer implements ComponentPeer, DropTargetPeer, X11ComponentPeer {
+abstract class MComponentPeer implements BackBufferCapsProvider, ComponentPeer, DropTargetPeer, X11ComponentPeer {
 
     private static final Logger log = Logger.getLogger("sun.awt.motif.MComponentPeer");
     private static final Logger focusLog = Logger.getLogger("sun.awt.motif.focus.MComponentPeer");
@@ -88,6 +89,7 @@ abstract class MComponentPeer implements ComponentPeer, DropTargetPeer, X11Compo
     private Font font;
     private long backBuffer = 0;
     private VolatileImage xBackBuffer = null;
+    private BufferCapabilities backBufferCaps;
 
     static {
         initIDs();
@@ -1124,16 +1126,25 @@ abstract class MComponentPeer implements ComponentPeer, DropTargetPeer, X11Compo
     public void createBuffers(int numBuffers, BufferCapabilities caps)
       throws AWTException
     {
+        // set the caps first, they're used when creating the bb
+        backBufferCaps = caps;
         backBuffer = graphicsConfig.createBackBuffer(this, numBuffers, caps);
         xBackBuffer = graphicsConfig.createBackBufferImage(target,
                                                            backBuffer);
     }
 
-    public void flip(BufferCapabilities.FlipContents flipAction) {
+    public BufferCapabilities getBackBufferCaps() {
+        return backBufferCaps;
+    }
+
+    public void flip(int x1, int y1, int x2, int y2,
+                     BufferCapabilities.FlipContents flipAction)
+    {
         if (backBuffer == 0) {
             throw new IllegalStateException("Buffers have not been created");
         }
-        graphicsConfig.flip(this, target, xBackBuffer, flipAction);
+        graphicsConfig.flip(this, target, xBackBuffer,
+                            x1, y1, x2, y2, flipAction);
     }
 
     public Image getBackBuffer() {

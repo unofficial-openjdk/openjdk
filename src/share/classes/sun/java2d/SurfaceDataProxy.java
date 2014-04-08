@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2008, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -521,7 +521,7 @@ public abstract class SurfaceDataProxy
                                             CompositeType.SrcNoEa,
                                             dstType);
         blitbg.BlitBg(srcData, dstData,
-                      AlphaComposite.Src, null, bgColor,
+                      AlphaComposite.Src, null, bgColor.getRGB(),
                       0, 0, 0, 0, w, h);
         dstData.markDirty();
     }
