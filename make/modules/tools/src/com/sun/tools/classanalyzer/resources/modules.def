@@ -567,6 +567,8 @@ module javax.compiler {
     include javax.tools.**,
             javax.lang.model.**,
             javax.annotation.processing.**;
+    uses javax.tools.DocumentationTool;
+    uses javax.tools.JavaCompiler;
 } 
 
 module javax.jta {
