@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,20 +22,20 @@
  */
 
 /*
-  @test
-  @bug 4811096
-  @summary Tests whether overlapping buttons mix correctly
+  @test %W% %E%
+  @bug 6779670
+  @summary Tests if a LW components in the glass pane affects HW in the content pane
   @author anthony.petrov@...: area=awt.mixing
   @library ../regtesthelpers
   @build Util
-  @run main OverlappingButtons
+  @run main JButtonInGlassPane
 */
 
 
 /**
- * OverlappingButtons.java
+ * JButtonInGlassPane.java
  *
- * summary:  Tests whether awt.Button and swing.JButton mix correctly
+ * summary:  Tests whether a LW menu correctly overlaps a HW button
  */
 
 import java.awt.*;
@@ -45,13 +45,9 @@ import test.java.awt.regtesthelpers.Util;
 
 
 
-public class OverlappingButtons
+public class JButtonInGlassPane
 {
-
-    //*** test-writer defined static variables go here ***
-
-    static volatile String testSeq = "";
-    final static String checkSeq = new String("010101");
+    static volatile boolean failed = false;
 
     private static void init()
     {
@@ -66,72 +62,65 @@ public class OverlappingButtons
         Sysout.createDialog( );
         Sysout.printInstructions( instructions );
 
+        JFrame frame = new JFrame("Glass Pane children test");
+        frame.setLayout(null);
 
-        // Create components
-        final Frame f = new Frame("Button-JButton mix test");
-        final Panel p = new Panel();
-        final Button heavy = new Button("  Heavyweight Button  ");
-        final JButton light = new JButton("  LW Button  ");
+        final Button button = new Button("AWT Button");
+        button.setBounds(100,100,100,100);
+        frame.add(button);
 
-        // Actions for the buttons add appropriate number to the test sequence
-        heavy.addActionListener(new java.awt.event.ActionListener()
-                {
-                    public void actionPerformed(java.awt.event.ActionEvent e) {
-                        p.setComponentZOrder(light, 0);
-                        f.validate();
-                        testSeq = testSeq + "0";
-                    }
-                }
-                );
+        button.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                failed = true;
+            }
+        });
 
-        light.addActionListener(new java.awt.event.ActionListener()
-                {
-                    public void actionPerformed(java.awt.event.ActionEvent e) {
-                        p.setComponentZOrder(heavy, 0);
-                        f.validate();
-                        testSeq = testSeq + "1";
-                    }
-                }
-                );
+        frame.getGlassPane().setVisible(true);
+        Container glassPane = (Container) frame.getGlassPane();
+        glassPane.setLayout(null);
 
-        // Overlap the buttons
-        heavy.setBounds(30, 30, 200, 200);
-        light.setBounds(10, 10, 50, 50);
+        final JButton jbutton = new JButton("JButton");
+        jbutton.setBounds(50,50,100,100);
+        glassPane.add(jbutton);
 
-        // Put the components into the frame
-        p.setLayout(null);
-        p.add(heavy);
-        p.add(light);
-        f.add(p);
-        f.setBounds(50, 50, 400, 400);
-        f.show();
+        jbutton.setVisible(false);
 
+        frame.setSize(400, 400);
+        frame.setLocationRelativeTo(null);
+        frame.setVisible(true);
 
         Robot robot = Util.createRobot();
         robot.setAutoDelay(20);
 
         Util.waitForIdle(robot);
 
-        // Move the mouse pointer to the position where both
-        //    buttons overlap
-        Point heavyLoc = heavy.getLocationOnScreen();
-        robot.mouseMove(heavyLoc.x + 5, heavyLoc.y + 5);
-
-        // Now perform the click at this point for 6 times
-        for (int i = 0; i < 6; ++i) {
-            robot.mousePress(InputEvent.BUTTON1_MASK);
-            robot.mouseRelease(InputEvent.BUTTON1_MASK);
-            Util.waitForIdle(robot);
-        }
-
+        jbutton.setVisible(true);
         Util.waitForIdle(robot);
 
-        // If the buttons are correctly mixed, the test sequence
-        // is equal to the check sequence.
-        if (testSeq.equals(checkSeq)) {
-            OverlappingButtons.pass();
+        // Click the LW button - in the area that intersects with
+        // the HW button.
+        Point lLoc = jbutton.getLocationOnScreen();
+        robot.mouseMove(lLoc.x + jbutton.getWidth() - 5, lLoc.y + jbutton.getHeight() - 5);
+
+        robot.mousePress(InputEvent.BUTTON1_MASK);
+        robot.mouseRelease(InputEvent.BUTTON1_MASK);
+        Util.waitForIdle(robot);
+
+        jbutton.setBounds(50,50,120,120);
+        Util.waitForIdle(robot);
+
+        // Now click on the 'added' area of the LW button that again
+        // intersects with the HW.
+        robot.mouseMove(lLoc.x + jbutton.getWidth() - 5, lLoc.y + jbutton.getHeight() - 5);
+
+        robot.mousePress(InputEvent.BUTTON1_MASK);
+        robot.mouseRelease(InputEvent.BUTTON1_MASK);
+        Util.waitForIdle(robot);
+
+        if (failed) {
+            JButtonInGlassPane.fail("The LW button did not receive the click.");
         } else {
-            OverlappingButtons.fail("The components changed their visible Z-order in a wrong sequence: '" + testSeq + "' instead of '" + checkSeq + "'");
+            JButtonInGlassPane.pass();
         }
     }//End  init()
 
@@ -248,7 +237,7 @@ public class OverlappingButtons
         mainThread.interrupt();
     }//fail()
 
-}// class OverlappingButtons
+}// class JButtonInGlassPane
 
 //This exception is used to exit from any level of call nesting
 // when it's determined that the test has passed, and immediately
@@ -279,13 +268,13 @@ class NewClass implements anInterface
        {
          //got enough events, so pass
 
-         OverlappingButtons.pass();
+         JButtonInGlassPane.pass();
        }
       else if( tries == 20 )
        {
          //tried too many times without getting enough events so fail
 
-         OverlappingButtons.fail();
+         JButtonInGlassPane.fail();
        }
 
     }// eventDispatched()
@@ -437,3 +426,5 @@ class TestDialog extends Dialog
     }
 
 }// TestDialog  class
+
+

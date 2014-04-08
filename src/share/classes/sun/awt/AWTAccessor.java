@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -79,6 +79,13 @@ public final class AWTAccessor {
          * Sets the appContext of the component.
          */
         void setAppContext(Component comp, AppContext appContext);
+
+        // See 6797587
+        // Also see: 6776743, 6768307, and 6768332.
+        /**
+         * Sets the shape of a lw component to cut out from hw components.
+         */
+        void setMixingCutoutShape(Component comp, Shape shape);
 
         /*
          * Returns the acc this component was constructed with.
@@ -336,6 +343,8 @@ public final class AWTAccessor {
      * corresponding AWT classes by using setters defined below.
      */
     private static WindowAccessor windowAccessor;
+    /* The java.awt.Component class accessor object.
+     */
     private static ComponentAccessor componentAccessor;
     private static KeyboardFocusManagerAccessor kfmAccessor;
     private static AWTEventAccessor awtEventAccessor;
