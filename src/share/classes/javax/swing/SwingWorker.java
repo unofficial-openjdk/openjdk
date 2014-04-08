@@ -27,6 +27,10 @@ package javax.swing;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.beans.PropertyChangeEvent;
+
+import java.lang.ref.WeakReference;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.List;
 
 import java.util.concurrent.*;
@@ -852,6 +856,33 @@ public abstract class SwingWorker<T, V> implements RunnableFuture<T> {
                     }
                 };
             appContext.put(SwingWorker.class, obj);
+
+            // Don't use ShutdownHook here as it's not enough. We should track
+            // AppContext disposal instead of JVM shutdown, see 6799345 for details
+            final ExecutorService es = (ExecutorService) obj;
+            appContext.addPropertyChangeListener(AppContext.DISPOSED_PROPERTY_NAME,
+                new PropertyChangeListener() {
+                    public void propertyChange(PropertyChangeEvent pce) {
+                        boolean disposed = (Boolean)pce.getNewValue();
+                        if (disposed) {
+                            final WeakReference<ExecutorService> executorServiceRef =
+                                new WeakReference<ExecutorService>(es);
+                            final ExecutorService executorService =
+                                executorServiceRef.get();
+                            if (executorService != null) {
+                                AccessController.doPrivileged(
+                                    new PrivilegedAction<Void>() {
+                                        public Void run() {
+                                            executorService.shutdown();
+                                            return null;
+                                        }
+				    }
+				);
+			    }
+			}
+		    }
+		}
+	    );		 
         }
         return (ExecutorService)obj;
     }

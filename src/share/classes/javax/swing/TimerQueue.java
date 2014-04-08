@@ -187,7 +187,12 @@ class TimerQueue implements Runnable
                     } finally {
                         timer.getLock().unlock();
                     }
-                } catch (InterruptedException ignore) {
+                } catch (InterruptedException ie) {
+                    // Shouldn't ignore InterruptedExceptions here, so AppContext
+                    // is disposed gracefully, see 6799345 for details
+                    if (AppContext.getAppContext().isDisposed()) {
+                        break;
+                    }
                 }
             }
         }
