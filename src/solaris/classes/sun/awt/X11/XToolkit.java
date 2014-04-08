@@ -294,13 +294,7 @@ public class XToolkit extends UNIXToolkit implements Runnable, XConstants {
 	if (log.isLoggable(Level.FINE)) {
 	    PrivilegedAction<Void> a = new PrivilegedAction<Void>() {
 		public Void run() {
-		    ThreadGroup mainTG = Thread.currentThread().getThreadGroup();
-		    ThreadGroup parentTG = mainTG.getParent();
-		    while (parentTG != null) {
-			mainTG = parentTG;
-			parentTG = mainTG.getParent();
-		    }
-		    Thread shutdownThread = new Thread(mainTG, "XToolkt-Shutdown-Thread") {
+		    Thread shutdownThread = new Thread(getRootThreadGroup(), "XToolkt-Shutdown-Thread") {
 			public void run() {
 			    if (log.isLoggable(Level.FINE)) {
 				dumpPeers();
@@ -358,13 +352,8 @@ public class XToolkit extends UNIXToolkit implements Runnable, XConstants {
 
             PrivilegedAction<Thread> action = new PrivilegedAction() {
                 public Thread run() {
-                    ThreadGroup currentTG = Thread.currentThread().getThreadGroup();
-                    ThreadGroup parentTG = currentTG.getParent();
-                    while (parentTG != null) {
-                        currentTG = parentTG;
-                        parentTG = currentTG.getParent();
-                    }
-                    Thread thread = new Thread(currentTG, XToolkit.this, "AWT-XAWT");
+                    Thread thread = new Thread(getRootThreadGroup(), XToolkit.this, "AWT-XAWT");
+                    thread.setContextClassLoader(null);
                     thread.setPriority(Thread.NORM_PRIORITY + 1);
                     thread.setDaemon(true);
                     return thread;
