@@ -875,6 +875,10 @@ public abstract class Component implements ImageObserver, MenuContainer,
 			}
 		    }
 		}
+
+		public boolean isVisible_NoClientCode(Component comp) {
+		    return comp.isVisible_NoClientCode();
+		}
             });
     }
 

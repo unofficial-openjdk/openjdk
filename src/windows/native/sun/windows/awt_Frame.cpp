@@ -551,11 +551,6 @@ MsgRouting AwtFrame::WmNcMouseDown(WPARAM hitTest, int x, int y, int button) {
     return AwtWindow::WmNcMouseDown(hitTest, x, y, button);
 }
 
-MsgRouting AwtFrame::WmWindowPosChanged(LPARAM windowPos) {
-    return mrDoDefault;
-}
-
-
 // Override AwtWindow::Reshape() to handle minimized/maximized
 // frames (see 6525850, 4065534)
 void AwtFrame::Reshape(int x, int y, int width, int height)
@@ -792,6 +787,11 @@ MsgRouting AwtFrame::WmGetMinMaxInfo(LPMINMAXINFO lpmmi)
 
 MsgRouting AwtFrame::WmSize(UINT type, int w, int h)
 {
+    currentWmSizeState = type;
+    if (currentWmSizeState == SIZE_MINIMIZED) {
+        UpdateSecurityWarningVisibility();
+    }
+
     if (m_ignoreWmSize) {
         return mrDoDefault;
     }
@@ -879,7 +879,7 @@ MsgRouting AwtFrame::WmActivate(UINT nState, BOOL fMinimized, HWND opposite)
             ::SetFocus(NULL); // The KeyboardFocusManager will set focus later
             type = java_awt_event_WindowEvent_WINDOW_GAINED_FOCUS;
             isAppActive = TRUE;
-            sm_focusedWindow = GetHWnd();
+	    AwtComponent::SetFocusedWindow(GetHWnd());
 
             /*
              * Fix for 4823903.
@@ -922,7 +922,7 @@ MsgRouting AwtFrame::WmActivate(UINT nState, BOOL fMinimized, HWND opposite)
             }
 
             // If actual focused window is not this Frame
-            if (sm_focusedWindow != GetHWnd()) {
+            if (AwtComponent::GetFocusedWindow() != GetHWnd()) {
 
                 // Check that the Frame is going to be really inactive (i.e. the opposite is not its owned window)
                 if (opposite != NULL) {
@@ -931,7 +931,7 @@ MsgRouting AwtFrame::WmActivate(UINT nState, BOOL fMinimized, HWND opposite)
                     if (wOpposite != NULL &&
                         wOpposite->GetOwningFrameOrDialog() != this)
                     {
-                        AwtWindow *window = (AwtWindow *)AwtComponent::GetComponent(sm_focusedWindow);
+		        AwtWindow *window = (AwtWindow *)AwtComponent::GetComponent(AwtComponent::GetFocusedWindow());
 
                         // If actual focused window is one of Frame's owned windows
                         if (window != NULL && window->GetOwningFrameOrDialog() == this) {
@@ -943,7 +943,7 @@ MsgRouting AwtFrame::WmActivate(UINT nState, BOOL fMinimized, HWND opposite)
 
             type = java_awt_event_WindowEvent_WINDOW_LOST_FOCUS;
             isAppActive = FALSE;
-            sm_focusedWindow = NULL;
+            AwtComponent::SetFocusedWindow(NULL);
         }
     }
 
@@ -1137,7 +1137,7 @@ BOOL AwtFrame::activateEmbeddedFrameOnSetFocus(HWND hWndLostFocus) {
     // - Alt hitting in IE while its menu is active (see 6374321).
     // In both these cases we get WM_SETFOCUS without WM_ACTIVATE
     // on the EmbeddedFrame.
-    if (sm_focusedWindow != GetHWnd()) {
+    if (AwtComponent::GetFocusedWindow() != GetHWnd()) {
         HWND oppositeToplevelHWnd = AwtComponent::GetTopLevelParentForWindow(hWndLostFocus);
 
         // As we get WM_SETFOCUS from the native system we expect
@@ -1165,7 +1165,7 @@ BOOL AwtFrame::activateEmbeddedFrameOnSetFocus(HWND hWndLostFocus) {
 BOOL AwtFrame::deactivateEmbeddedFrameOnKillFocus(HWND hWndGotFocus) {
     HWND oppositeToplevelHWnd = AwtComponent::GetTopLevelParentForWindow(hWndGotFocus);
 
-    if (oppositeToplevelHWnd != sm_focusedWindow) {
+    if (oppositeToplevelHWnd != AwtComponent::GetFocusedWindow()) {
         SynthesizeWmActivate(FALSE, oppositeToplevelHWnd);
     }
     return TRUE;

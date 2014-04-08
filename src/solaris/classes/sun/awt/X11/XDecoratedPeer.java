@@ -451,7 +451,7 @@ abstract class XDecoratedPeer extends XWindowPeer {
 
     public Insets getInsets() {
         Insets in = copy(getRealInsets());
-        in.top += getMenuBarHeight() + getWarningWindowHeight();
+        in.top += getMenuBarHeight();
         if (insLog.isLoggable(Level.FINEST)) {
             insLog.log(Level.FINEST, "Get insets returns {0}",
                        new Object[] {String.valueOf(in)});
@@ -812,6 +812,8 @@ abstract class XDecoratedPeer extends XWindowPeer {
         }
         reconfigureContentWindow(newDimensions);
         updateChildrenSizes();
+
+        repositionSecurityWarning();
     }
 
     private void checkShellRectSize(Rectangle shellRect) {

@@ -63,6 +63,10 @@ class ComCtl32Util
             return m_bNewSubclassing;
         }
 
+        INLINE BOOL IsToolTipControlInitialized() {
+            return m_bToolTipControlInitialized;
+        }
+
         // if comctl32.dll version 6 is used returns NULL, otherwise
         // returns default window proc
         WNDPROC SubclassHWND(HWND hwnd, WNDPROC _WindowProc);
@@ -82,6 +86,8 @@ class ComCtl32Util
         PFNDEFSUBCLASSPROC m_lpfnDefSubclassProc;
 
         BOOL m_bNewSubclassing;
+
+        BOOL m_bToolTipControlInitialized;
 
         // comctl32.dll version 6 window proc
         static LRESULT CALLBACK SharedWindowProc(HWND hwnd, UINT message,

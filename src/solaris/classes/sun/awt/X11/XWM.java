@@ -889,7 +889,7 @@ class XWM implements MWMConstants, XUtilConstants {
     /*
      * Set MWM decorations.  Set MWM functions depending on resizability.
      */
-    static void setMotifDecor(XWindowPeer window, boolean resizable, int decorations, int functions) {
+    static void setMotifDecor(XWindow window, boolean resizable, int decorations, int functions) {
         /* Apparently some WMs don't implement MWM_*_ALL semantic correctly */
         if ((decorations & MWM_DECOR_ALL) != 0
             && (decorations != MWM_DECOR_ALL))

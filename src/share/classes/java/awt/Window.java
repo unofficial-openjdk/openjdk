@@ -26,6 +26,7 @@ package java.awt;
 
 import java.applet.Applet;
 import java.awt.event.*;
+import java.awt.geom.Point2D;
 import java.awt.im.InputContext;
 import java.awt.image.BufferStrategy;
 import java.awt.image.BufferedImage;
@@ -326,6 +327,23 @@ public class Window extends Container implements Accessible {
 
     transient boolean isTrayIconWindow = false;
 
+    /**
+     * These fields are initialized in the native peer code
+     * or via AWTAccessor's WindowAccessor.
+     */
+    private transient volatile int securityWarningWidth = 0;
+    private transient volatile int securityWarningHeight = 0;
+
+    /**
+     * These fields represent the desired location for the security
+     * warning if this window is untrusted.
+     * See com.sun.awt.SecurityWarning for more details.
+     */
+    private transient double securityWarningPointX = 2.0;
+    private transient double securityWarningPointY = 0.0;
+    private transient float securityWarningAlignmentX = RIGHT_ALIGNMENT;
+    private transient float securityWarningAlignmentY = TOP_ALIGNMENT;
+
     static {
         /* ensure that the necessary native libraries are loaded */
         Toolkit.loadLibraries();
@@ -375,6 +393,39 @@ public class Window extends Container implements Accessible {
 
             public void setLWRequestStatus(Window changed, boolean status) {
                 changed.syncLWRequests = status;
+            }
+
+            public Dimension getSecurityWarningSize(Window window) {
+                return new Dimension(window.securityWarningWidth,
+                        window.securityWarningHeight);
+            }
+
+            public void setSecurityWarningSize(Window window, int width, int height)
+            {
+                window.securityWarningWidth = width;
+                window.securityWarningHeight = height;
+            }
+
+            public void setSecurityWarningPosition(Window window,
+                    Point2D point, float alignmentX, float alignmentY)
+            {
+                window.securityWarningPointX = point.getX();
+                window.securityWarningPointY = point.getY();
+                window.securityWarningAlignmentX = alignmentX;
+                window.securityWarningAlignmentY = alignmentY;
+
+                synchronized (window.getTreeLock()) {
+                    WindowPeer peer = (WindowPeer)window.getPeer();
+                    if (peer != null) {
+                        peer.repositionSecurityWarning();
+                    }
+                }
+            }
+
+            public Point2D calculateSecurityWarningPosition(Window window,
+                    double x, double y, double w, double h)
+            {
+                return window.calculateSecurityWarningPosition(x, y, w, h);
             }
         }); // WindowAccessor
     } // static
@@ -2827,6 +2878,13 @@ public class Window extends Container implements Accessible {
          shape = (Shape)f.get("shape", null);
          opacity = (Float)f.get("opacity", 1.0f);
 
+         this.securityWarningWidth = 0;
+         this.securityWarningHeight = 0;
+         this.securityWarningPointX = 2.0;
+         this.securityWarningPointY = 0.0;
+         this.securityWarningAlignmentX = RIGHT_ALIGNMENT;
+         this.securityWarningAlignmentY = TOP_ALIGNMENT;
+
          deserializeResources(s);
     }
 
@@ -3498,6 +3556,18 @@ public class Window extends Container implements Accessible {
     }
 
     // ****************** END OF MIXING CODE ********************************
+
+    // This method gets the window location/size as reported by the native
+    // system since the locally cached values may represent outdated data.
+    // NOTE: this method is invoked on the toolkit thread, and therefore
+    // is not supposed to become public/user-overridable.
+    private Point2D calculateSecurityWarningPosition(double x, double y,
+            double w, double h)
+    {
+        return new Point2D.Double(
+                x + w * securityWarningAlignmentX + securityWarningPointX,
+                y + h * securityWarningAlignmentY + securityWarningPointY);
+    }
 
 } // class Window
 

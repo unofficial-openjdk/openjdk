@@ -35,6 +35,7 @@ import java.security.AccessControlContext;
 import java.util.Vector;
 
 import java.awt.event.KeyEvent;
+import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 
 /**
@@ -94,6 +95,26 @@ public final class AWTAccessor {
          * components in the specified window to the specified value.
          */
         void setLWRequestStatus(Window changed, boolean status);
+
+        /** Get the size of the security warning.
+         */
+        Dimension getSecurityWarningSize(Window w);
+
+        /**
+         * Set the size of the security warning.
+         */
+        void setSecurityWarningSize(Window w, int width, int height);
+
+        /** Set the position of the security warning.
+         */
+        void setSecurityWarningPosition(Window w, Point2D point,
+                float alignmentX, float alignmentY);
+
+        /** Request to recalculate the new position of the security warning for
+         * the given window size/location as reported by the native system.
+         */
+        Point2D calculateSecurityWarningPosition(Window window,
+                double x, double y, double w, double h);
     }
 
     /*
@@ -151,6 +172,12 @@ public final class AWTAccessor {
          * Requests that this Component get the input focus, providing the cause
          */
         void requestFocus(Component comp, CausedFocusEvent.Cause cause);
+
+        /**
+         * Returns whether the component is visible without invoking
+         * any client code.
+         */
+        boolean isVisible_NoClientCode(Component comp);
     }
 
     /**

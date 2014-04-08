@@ -32,6 +32,7 @@ ComCtl32Util::ComCtl32Util() {
     m_lpfnSetWindowSubclass = NULL;
     m_lpfnRemoveWindowSubclass = NULL;
     m_lpfnDefSubclassProc = NULL;
+    m_bToolTipControlInitialized = FALSE;
 }
 
 ComCtl32Util::~ComCtl32Util() {
@@ -51,6 +52,7 @@ void ComCtl32Util::InitLibraries() {
                                 (m_lpfnDefSubclassProc != NULL);
         }
     }
+    m_bToolTipControlInitialized = TRUE;
 }
 
 void ComCtl32Util::FreeLibraries() {

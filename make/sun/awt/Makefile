@@ -552,3 +552,4 @@ CLASSES.export += java.io.InputStream \
 
 .PHONY: dgalibs dgalib.clean fontconfigs fontconfigs.clean
 
+# DO NOT DELETE

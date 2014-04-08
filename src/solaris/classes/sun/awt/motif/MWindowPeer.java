@@ -618,4 +618,8 @@ DisplayChangedListener {
         // no-op
     }
 
+    public void repositionSecurityWarning() {
+	// not implemented
+    }
+
 }

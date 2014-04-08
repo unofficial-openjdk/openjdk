@@ -67,4 +67,9 @@ public interface WindowPeer extends ContainerPeer {
      * @see Window#setBackground(Color)
      */
     void updateWindow(BufferedImage backBuffer);
+
+    /**
+     * Instructs the peer to update the position of the security warning.
+     */
+    void repositionSecurityWarning();
 }
