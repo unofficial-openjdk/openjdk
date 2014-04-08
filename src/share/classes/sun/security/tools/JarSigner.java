@@ -72,9 +72,6 @@ public class JarSigner {
 
     private static final String META_INF = "META-INF/";
 
-    // prefix for new signature-related files in META-INF directory
-    private static final String SIG_PREFIX = META_INF + "SIG-";
-
     private static final Class[] PARAM_STRING = { String.class };
 
     private static final String NONE = "NONE";
@@ -1280,22 +1277,7 @@ public class JarSigner {
      * . META-INF/*.RSA
      */
     private boolean signatureRelated(String name) {
-        String ucName = name.toUpperCase();
-        if (ucName.equals(JarFile.MANIFEST_NAME) ||
-            ucName.equals(META_INF) ||
-            (ucName.startsWith(SIG_PREFIX) &&
-                ucName.indexOf("/") == ucName.lastIndexOf("/"))) {
-            return true;
-        }
-
-        if (ucName.startsWith(META_INF) &&
-            SignatureFileVerifier.isBlockOrSF(ucName)) {
-            // .SF/.DSA/.RSA files in META-INF subdirs
-            // are not considered signature-related
-            return (ucName.indexOf("/") == ucName.lastIndexOf("/"));
-        }
-
-        return false;
+        return SignatureFileVerifier.isSigningRelated(name);
     }
 
     private void writeEntry(ZipFile zf, ZipOutputStream os, ZipEntry ze)
