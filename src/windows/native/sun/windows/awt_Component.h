@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 2008, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1996, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -422,9 +422,6 @@ public:
     /* Functions for MouseWheel support on Windows95
      * These should only be called if running on 95
      */
-    static void Wheel95Init();
-    INLINE static UINT Wheel95GetMsg() {return sm_95WheelMessage;}
-    static UINT Wheel95GetScrLines();
 
     /* Determines whether the component is obscured by another window */
     // Called on Toolkit thread
@@ -714,9 +711,9 @@ protected:
     virtual void SetDragCapture(UINT flags);
     virtual void ReleaseDragCapture(UINT flags);
 
-    // 95 support for mouse wheel
-    static UINT sm_95WheelMessage;
-    static UINT sm_95WheelSupport;
+    //These functions are overridden in AwtWindow to handle non-opaque windows.
+    virtual void FillBackground(HDC hMemoryDC, SIZE &size);
+    virtual void FillAlpha(void *bitmapBits, SIZE &size, BYTE alpha);
 
 private:
     BOOL m_bSubclassed;

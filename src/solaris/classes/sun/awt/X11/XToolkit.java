@@ -2164,4 +2164,35 @@ public class XToolkit extends UNIXToolkit implements Runnable, XConstants {
         return new XDesktopPeer();
     }
 
+    @Override
+    public boolean isWindowOpacitySupported() {
+        XNETProtocol net_protocol = XWM.getWM().getNETProtocol();
+
+        if (net_protocol == null) {
+            return false;
+        }
+
+        return net_protocol.doOpacityProtocol();
+    }
+
+    @Override
+    public boolean isWindowShapingSupported() {
+        return XlibUtil.isShapingSupported();
+    }
+
+    @Override
+    public boolean isWindowTranslucencySupported() {
+        //NOTE: it may not be supported. The actual check is being performed
+        //      at com.sun.awt.AWTUtilities(). In X11 we need to check
+        //      whether there's any translucency-capable GC available.
+        return true;
+    }
+
+    @Override
+    public boolean isTranslucencyCapable(GraphicsConfiguration gc) {
+        if (!(gc instanceof X11GraphicsConfig)) {
+            return false;
+        }
+        return ((X11GraphicsConfig)gc).isTranslucencyCapable();
+    }
 }

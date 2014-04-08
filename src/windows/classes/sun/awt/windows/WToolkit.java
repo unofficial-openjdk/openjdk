@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 2008, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1996, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -966,4 +966,34 @@ public class WToolkit extends SunToolkit implements Runnable {
     }
 
     private static native boolean isProtectedMode();
+
+    @Override
+    public boolean isWindowOpacitySupported() {
+        // supported in Win2K and later
+        return true;
+    }
+
+    @Override
+    public boolean isWindowShapingSupported() {
+        return true;
+    }
+
+    @Override
+    public boolean isWindowTranslucencySupported() {
+        // supported in Win2K and later
+        return true;
+    }
+
+    @Override
+    public boolean isTranslucencyCapable(GraphicsConfiguration gc) {
+        //XXX: worth checking if 8-bit? Anyway, it doesn't hurt.
+        return true;
+    }
+
+    // On MS Windows one must use the peer.updateWindow() to implement
+    // non-opaque windows.
+    @Override
+    public boolean needUpdateWindow() {
+        return true;
+    }
 }

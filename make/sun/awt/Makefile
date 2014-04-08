@@ -1,5 +1,5 @@
 #
-# Copyright (c) 1995, 2008, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 1995, 2009, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -224,6 +224,7 @@ vpath %.c   $(SHARE_SRC)/native/$(PKGDIR)/image/cvutils
 vpath %.c   $(SHARE_SRC)/native/$(PKGDIR)/shell
 vpath %.c   $(SHARE_SRC)/native/$(PKGDIR)/medialib
 vpath %.c   $(SHARE_SRC)/native/$(PKGDIR)/debug
+vpath %.c   $(SHARE_SRC)/native/$(PKGDIR)/utility
 vpath %.c   $(SHARE_SRC)/native/$(PKGDIR)/../java2d
 vpath %.c   $(SHARE_SRC)/native/$(PKGDIR)/../java2d/loops
 vpath %.c   $(SHARE_SRC)/native/$(PKGDIR)/../java2d/pipe

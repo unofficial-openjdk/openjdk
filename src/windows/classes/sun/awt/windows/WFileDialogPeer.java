@@ -244,4 +244,10 @@ public class WFileDialogPeer extends WWindowPeer implements FileDialogPeer {
     public boolean isRestackSupported() {
         return false;
     }
+
+    // The effects are not supported for system dialogs.
+    public void applyShape(sun.java2d.pipe.Region shape) {}
+    public void setOpacity(float opacity) {}
+    public void setOpaque(boolean isOpaque) {}
+    public void updateWindow(java.awt.image.BufferedImage backBuffer) {}
 }

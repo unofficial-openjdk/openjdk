@@ -35,6 +35,7 @@ import java.security.AccessControlContext;
 import java.util.Vector;
 
 import java.awt.event.KeyEvent;
+import java.awt.image.BufferedImage;
 
 /**
  * The AWTAccessor utility class.
@@ -59,6 +60,35 @@ public final class AWTAccessor {
      * An interface of an accessor for java.awt.Window class.
      */
     public interface WindowAccessor {
+        /*
+         * Get opacity level of the given window.
+         */
+        float getOpacity(Window window);
+        /*
+         * Set opacity level to the given window.
+         */
+        void setOpacity(Window window, float opacity);
+        /*
+         * Get a shape assigned to the given window.
+         */
+        Shape getShape(Window window);
+        /*
+         * Set a shape to the given window.
+         */
+        void setShape(Window window, Shape shape);
+        /*
+         * Identify whether the given window is opaque (true)
+         *  or translucent (false).
+         */
+        boolean isOpaque(Window window);
+        /*
+         * Set the opaque preoperty to the given window.
+         */
+        void setOpaque(Window window, boolean isOpaque);
+        /*
+         * Update the image of a non-opaque (translucent) window.
+         */
+        void updateWindow(Window window, BufferedImage backBuffer);
         /**
          * Sets the synchronous status of focus requests on lightweight
          * components in the specified window to the specified value.
@@ -80,10 +110,29 @@ public final class AWTAccessor {
          */
         void setAppContext(Component comp, AppContext appContext);
 
-        // See 6797587
-        // Also see: 6776743, 6768307, and 6768332.
-        /**
+        /*
+         * Sets whether the native background erase for a component
+         * has been disabled via SunToolkit.disableBackgroundErase().
+         */
+        void setBackgroundEraseDisabled(Component comp, boolean disabled);
+        /*
+         * Indicates whether the native background erase for a
+         * component has been disabled via
+         * SunToolkit.disableBackgroundErase().
+         */
+        boolean getBackgroundEraseDisabled(Component comp);
+        /*
+         *
+         * Gets the bounds of this component in the form of a
+         * <code>Rectangle</code> object. The bounds specify this
+         * component's width, height, and location relative to
+         * its parent.
+         */
+        Rectangle getBounds(Component comp);
+        /*
          * Sets the shape of a lw component to cut out from hw components.
+         *
+         * See 6797587, 6776743, 6768307, and 6768332 for details
          */
         void setMixingCutoutShape(Component comp, Shape shape);
 
@@ -342,11 +391,18 @@ public final class AWTAccessor {
      * Accessor instances are initialized in the static initializers of
      * corresponding AWT classes by using setters defined below.
      */
-    private static WindowAccessor windowAccessor;
     /* The java.awt.Component class accessor object.
      */
     private static ComponentAccessor componentAccessor;
     private static KeyboardFocusManagerAccessor kfmAccessor;
+    /*
+     * The java.awt.Window class accessor object.
+     */
+    private static WindowAccessor windowAccessor;
+
+    /*
+     * The java.awt.AWTEvent class accessor object.
+     */
     private static AWTEventAccessor awtEventAccessor;
     private static MenuComponentAccessor menuComponentAccessor;
     private static EventQueueAccessor eventQueueAccessor;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2007, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,6 +35,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.applet.*;
 
+import sun.awt.AWTAccessor;
 import sun.awt.AppContext;
 import sun.awt.AWTAccessor;
 import sun.awt.DisplayChangedListener;
@@ -711,6 +712,44 @@ public class RepaintManager
         }
     }
 
+    private Map<Component,Rectangle>
+        updateWindows(Map<Component,Rectangle> dirtyComponents)
+    {
+        Toolkit toolkit = Toolkit.getDefaultToolkit();
+        if (!(toolkit instanceof SunToolkit &&
+              ((SunToolkit)toolkit).needUpdateWindow()))
+        {
+            return dirtyComponents;
+        }
+
+        Set<Window> windows = new HashSet<Window>();
+        Set<Component> dirtyComps = dirtyComponents.keySet();
+        for (Iterator<Component> it = dirtyComps.iterator(); it.hasNext();) {
+            Component dirty = it.next();
+            Window window = dirty instanceof Window ?
+                (Window)dirty :
+                SwingUtilities.getWindowAncestor(dirty);
+
+            if (window != null &&
+                !AWTAccessor.getWindowAccessor().isOpaque(window))
+            {
+                // if this component's toplevel is perpixel translucent, it will
+                // be repainted below
+                it.remove();
+                // add to the set of windows to update (so that we don't update
+                // the window many times for each component to be repainted that
+                // belongs to this window)
+                windows.add(window);
+            }
+        }
+
+        for (Window window : windows) {
+            AWTAccessor.getWindowAccessor().updateWindow(window, null);
+        }
+
+        return dirtyComponents;
+    }
+
     /**
      * Paint all of the components that have been marked dirty.
      *
@@ -732,6 +771,10 @@ public class RepaintManager
         if (tmpDirtyComponents.isEmpty()) {
             return;
         }
+
+        // the components belonging to perpixel-translucent windows will be
+        // removed from the list
+	updateWindows(tmpDirtyComponents);
 
         final java.util.List<Component> roots =
             new ArrayList<Component>(tmpDirtyComponents.size());

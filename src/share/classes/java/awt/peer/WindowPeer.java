@@ -27,6 +27,8 @@ package java.awt.peer;
 
 import java.awt.*;
 
+import java.awt.image.BufferedImage;
+
 /**
  * The peer interfaces are intended only for use in porting
  * the AWT. They are not intended for use by application
@@ -43,4 +45,26 @@ public interface WindowPeer extends ContainerPeer {
     void setModalBlocked(Dialog blocker, boolean blocked);
     void updateMinimumSize();
     void updateIconImages();
+
+    /**
+     * Sets the level of opacity for the window.
+     *
+     * @see Window#setOpacity(float)
+     */
+    void setOpacity(float opacity);
+
+    /**
+     * Enables the per-pixel alpha support for the window.
+     *
+     * @see Window#setBackground(Color)
+     */
+    void setOpaque(boolean isOpaque);
+
+    /**
+     * Updates the native part of non-opaque window using
+     * the given image with color+alpha values for each pixel.
+     *
+     * @see Window#setBackground(Color)
+     */
+    void updateWindow(BufferedImage backBuffer);
 }

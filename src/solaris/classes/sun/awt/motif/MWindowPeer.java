@@ -603,4 +603,19 @@ DisplayChangedListener {
         super.setBounds(newBounds.x, newBounds.y, newBounds.width, newBounds.height, op);
     }
 
+    @Override
+    public void setOpacity(float opacity) {
+	// not implemented
+    }
+
+    @Override
+    public void setOpaque(boolean isOpaque) {
+        // no-op
+    }
+
+    @Override
+    public void updateWindow(BufferedImage backBuffer) {
+        // no-op
+    }
+
 }
