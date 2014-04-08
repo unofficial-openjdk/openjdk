@@ -212,6 +212,8 @@ public class WToolkit extends SunToolkit implements Runnable {
 
     private static native void postDispose();
 
+    private static native boolean startToolkitThread(Runnable thread);
+
     public WToolkit() {
         // Startup toolkit threads
         if (PerformanceLogger.loggingEnabled()) {
@@ -225,9 +227,6 @@ public class WToolkit extends SunToolkit implements Runnable {
             // where notifyAll can be called before
             // the "AWT-Windows" thread's parent thread is
             // waiting, resulting in a deadlock on startup.
-            Thread toolkitThread = new Thread(this, "AWT-Windows");
-            toolkitThread.setDaemon(true);
-            toolkitThread.setPriority(Thread.NORM_PRIORITY+1);
 
             /*
              * Fix for 4701990.
@@ -236,7 +235,11 @@ public class WToolkit extends SunToolkit implements Runnable {
              */
             AWTAutoShutdown.notifyToolkitThreadBusy();
 
-            toolkitThread.start();
+            if (!startToolkitThread(this)) {
+                Thread toolkitThread = new Thread(this, "AWT-Windows");
+                toolkitThread.setDaemon(true);
+                toolkitThread.start();
+            }
 
             try {
                 wait();
@@ -252,6 +255,7 @@ public class WToolkit extends SunToolkit implements Runnable {
     }
 
     public void run() {
+        Thread.currentThread().setPriority(Thread.NORM_PRIORITY+1);
         boolean startPump = init();
 
         if (startPump) {
