@@ -248,6 +248,9 @@ public class MethodHandles {
      * In general, the conditions under which a method handle may be
      * looked up for a method {@code M} are exactly equivalent to the conditions
      * under which the lookup class could have compiled and resolved a call to {@code M}.
+     * Where the JVM would raise exceptions like {@code NoSuchMethodError},
+     * a method handle lookup will generally raise a corresponding
+     * checked exception, such as {@code NoSuchMethodException}.
      * And the effect of invoking the method handle resulting from the lookup
      * is exactly equivalent to executing the compiled and resolved call to {@code M}.
      * The same point is true of fields and constructors.
@@ -263,6 +266,12 @@ public class MethodHandles {
      * {@code this} parameter from {@code C}
      * (which will necessarily be a superclass of the lookup class)
      * to the lookup class itself.
+     * <p>
+     * The JVM represents constructors and static initializer blocks as internal methods
+     * with special names ({@code "<init>"} and {@code "<clinit>"}).
+     * The internal syntax of invocation instructions allows them to refer to such internal
+     * methods as if they were normal methods, but the JVM verifier rejects them.
+     * A lookup of such an internal method will produce a {@code NoSuchMethodException}.
      * <p>
      * In some cases, access between nested classes is obtained by the Java compiler by creating
      * an wrapper method to access a private method of another class
@@ -578,6 +587,15 @@ public class MethodHandles {
          * The returned method handle will have
          * {@linkplain MethodHandle#asVarargsCollector variable arity} if and only if
          * the method's variable arity modifier bit ({@code 0x0080}) is set.
+         * <b>Example:</b>
+         * <p><blockquote><pre>{@code
+import static java.lang.invoke.MethodHandles.*;
+import static java.lang.invoke.MethodType.*;
+...
+MethodHandle MH_asList = publicLookup().findStatic(Arrays.class,
+  "asList", methodType(List.class, Object[].class));
+assertEquals("[x, y]", MH_asList.invoke("x", "y").toString());
+         * }</pre></blockquote>
          * @param refc the class from which the method is accessed
          * @param name the name of the method
          * @param type the type of the method
@@ -628,6 +646,34 @@ public class MethodHandles {
          * {@link java.lang.invoke.MethodHandles#invoker MethodHandles.invoker}
          * with the same {@code type} argument.
          *
+         * <b>Example:</b>
+         * <p><blockquote><pre>{@code
+import static java.lang.invoke.MethodHandles.*;
+import static java.lang.invoke.MethodType.*;
+...
+MethodHandle MH_concat = publicLookup().findVirtual(String.class,
+  "concat", methodType(String.class, String.class));
+MethodHandle MH_hashCode = publicLookup().findVirtual(Object.class,
+  "hashCode", methodType(int.class));
+MethodHandle MH_hashCode_String = publicLookup().findVirtual(String.class,
+  "hashCode", methodType(int.class));
+assertEquals("xy", (String) MH_concat.invokeExact("x", "y"));
+assertEquals("xy".hashCode(), (int) MH_hashCode.invokeExact((Object)"xy"));
+assertEquals("xy".hashCode(), (int) MH_hashCode_String.invokeExact("xy"));
+// interface method:
+MethodHandle MH_subSequence = publicLookup().findVirtual(CharSequence.class,
+  "subSequence", methodType(CharSequence.class, int.class, int.class));
+assertEquals("def", MH_subSequence.invoke("abcdefghi", 3, 6).toString());
+// constructor "internal method" must be accessed differently:
+MethodType MT_newString = methodType(void.class); //()V for new String()
+try { assertEquals("impossible", lookup()
+        .findVirtual(String.class, "<init>", MT_newString));
+ } catch (NoSuchMethodException ex) { } // OK
+MethodHandle MH_newString = publicLookup()
+  .findConstructor(String.class, MT_newString);
+assertEquals("", (String) MH_newString.invokeExact());
+         * }</pre></blockquote>
+         *
          * @param refc the class or interface from which the method is accessed
          * @param name the name of the method
          * @param type the type of the method, with the receiver argument omitted
@@ -669,12 +715,30 @@ public class MethodHandles {
          * If the constructor's class has not yet been initialized, that is done
          * immediately, before the method handle is returned.
          * <p>
-         * Note:  The requested type must have a return type of {@code void}.
-         * This is consistent with the JVM's treatment of constructor type descriptors.
+         * <em>(Note:  The requested type must have a return type of {@code void}.
+         * This is consistent with the JVM's treatment of constructor type descriptors.)</em>
          * <p>
          * The returned method handle will have
          * {@linkplain MethodHandle#asVarargsCollector variable arity} if and only if
          * the constructor's variable arity modifier bit ({@code 0x0080}) is set.
+         * <b>Example:</b>
+         * <p><blockquote><pre>{@code
+import static java.lang.invoke.MethodHandles.*;
+import static java.lang.invoke.MethodType.*;
+...
+MethodHandle MH_newArrayList = publicLookup().findConstructor(
+  ArrayList.class, methodType(void.class, Collection.class));
+Collection orig = Arrays.asList("x", "y");
+Collection copy = (ArrayList) MH_newArrayList.invokeExact(orig);
+assert(orig != copy);
+assertEquals(orig, copy);
+// a variable-arity constructor:
+MethodHandle MH_newProcessBuilder = publicLookup().findConstructor(
+  ProcessBuilder.class, methodType(void.class, String[].class));
+ProcessBuilder pb = (ProcessBuilder)
+  MH_newProcessBuilder.invoke("x", "y", "z");
+assertEquals("[x, y, z]", pb.command().toString());
+         * }</pre></blockquote>
          * @param refc the class or interface from which the method is accessed
          * @param type the type of the method, with the receiver argument omitted, and a void return type
          * @return the desired method handle
@@ -714,6 +778,45 @@ public class MethodHandles {
          * The returned method handle will have
          * {@linkplain MethodHandle#asVarargsCollector variable arity} if and only if
          * the method's variable arity modifier bit ({@code 0x0080}) is set.
+         * <p>
+         * <em>(Note:  JVM internal methods named {@code <init>} not visible to this API,
+         * even though the {@code invokespecial} instruction can refer to them
+         * in special circumstances.  Use {@link #findConstructor findConstructor}
+         * to access instance initialization methods in a safe manner.)</em>
+         * <b>Example:</b>
+         * <p><blockquote><pre>{@code
+import static java.lang.invoke.MethodHandles.*;
+import static java.lang.invoke.MethodType.*;
+...
+static class Listie extends ArrayList {
+  public String toString() { return "[wee Listie]"; }
+  static Lookup lookup() { return MethodHandles.lookup(); }
+}
+...
+// no access to constructor via invokeSpecial:
+MethodHandle MH_newListie = Listie.lookup()
+  .findConstructor(Listie.class, methodType(void.class));
+Listie l = (Listie) MH_newListie.invokeExact();
+try { assertEquals("impossible", Listie.lookup().findSpecial(
+        Listie.class, "<init>", methodType(void.class), Listie.class));
+ } catch (NoSuchMethodException ex) { } // OK
+// access to super and self methods via invokeSpecial:
+MethodHandle MH_super = Listie.lookup().findSpecial(
+  ArrayList.class, "toString" , methodType(String.class), Listie.class);
+MethodHandle MH_this = Listie.lookup().findSpecial(
+  Listie.class, "toString" , methodType(String.class), Listie.class);
+MethodHandle MH_duper = Listie.lookup().findSpecial(
+  Object.class, "toString" , methodType(String.class), Listie.class);
+assertEquals("[]", (String) MH_super.invokeExact(l));
+assertEquals(""+l, (String) MH_this.invokeExact(l));
+assertEquals("[]", (String) MH_duper.invokeExact(l)); // ArrayList method
+try { assertEquals("inaccessible", Listie.lookup().findSpecial(
+        String.class, "toString", methodType(String.class), Listie.class));
+ } catch (IllegalAccessException ex) { } // OK
+Listie subl = new Listie() { public String toString() { return "[subclass]"; } };
+assertEquals(""+l, (String) MH_this.invokeExact(subl)); // Listie method
+         * }</pre></blockquote>
+         *
          * @param refc the class or interface from which the method is accessed
          * @param name the name of the method (which must not be "&lt;init&gt;")
          * @param type the type of the method, with the receiver argument omitted
@@ -1017,15 +1120,16 @@ return mh1;
         /// Helper methods, all package-private.
 
         MemberName resolveOrFail(byte refKind, Class<?> refc, String name, Class<?> type) throws NoSuchFieldException, IllegalAccessException {
-            checkSymbolicClass(refc);  // do this before attempting to resolve
             name.getClass(); type.getClass();  // NPE
+            checkSymbolicClass(refc);  // do this before attempting to resolve
             return IMPL_NAMES.resolveOrFail(refKind, new MemberName(refc, name, type, refKind), lookupClassOrNull(),
                                             NoSuchFieldException.class);
         }
 
         MemberName resolveOrFail(byte refKind, Class<?> refc, String name, MethodType type) throws NoSuchMethodException, IllegalAccessException {
+            type.getClass();  // NPE
             checkSymbolicClass(refc);  // do this before attempting to resolve
-            name.getClass(); type.getClass();  // NPE
+            checkMethodName(refKind, name);
             return IMPL_NAMES.resolveOrFail(refKind, new MemberName(refc, name, type, refKind), lookupClassOrNull(),
                                             NoSuchMethodException.class);
         }
@@ -1035,6 +1139,12 @@ return mh1;
             if (caller != null && !VerifyAccess.isClassAccessible(refc, caller, allowedModes))
                 throw new MemberName(refc).makeAccessException("symbolic reference class is not public", this);
         }
+
+        void checkMethodName(byte refKind, String name) throws NoSuchMethodException {
+            if (name.startsWith("<") && refKind != REF_newInvokeSpecial)
+                throw new NoSuchMethodException("illegal method name: "+name);
+        }
+
 
         /**
          * Find my trustable caller class if m is a caller sensitive method.
