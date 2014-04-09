@@ -1142,6 +1142,9 @@ png_read_transform_info(png_structp png_ptr, png_infop info_ptr)
             info_ptr->color_type = PNG_COLOR_TYPE_RGB;
          info_ptr->bit_depth = 8;
          info_ptr->num_trans = 0;
+
+         if (png_ptr->palette == NULL)
+            png_error (png_ptr, "Palette is NULL in indexed image");
       }
       else
       {
