@@ -173,7 +173,7 @@ endif
 ################################################################################
 
 # TODO: Centralize full module list
-ALL_MODULES := $(sort $(notdir $(wildcard $(SRC_ROOT)/*/$(SRC_SUBDIR)/*/modules/*)))
+ALL_MODULES := $(sort $(filter-out closed, $(notdir $(wildcard $(SRC_ROOT)/*/$(SRC_SUBDIR)/*))))
 
 $(foreach m, $(ALL_MODULES), $(eval $(call CreateJmod,$m)))
 

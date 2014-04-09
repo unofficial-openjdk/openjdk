@@ -68,11 +68,11 @@ java.base_EXCLUDE_FILES += sun/util/locale/AsciiUtil.java
 
 ifndef OPENJDK
   # Use the closed version of this file
-  java.base_EXCLUDE_FILES += $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/modules/java.base/javax/crypto/JarVerifier.java
+  java.base_EXCLUDE_FILES += $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/classes/javax/crypto/JarVerifier.java
 endif
 
 ifeq ($(OPENJDK_TARGET_OS), macosx)
-  JAVA_BASE_SOLARIS_DIR := $(JDK_TOPDIR)/$(SRC_SUBDIR)/solaris/modules/java.base
+  JAVA_BASE_SOLARIS_DIR := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/solaris/classes
   java.base_EXCLUDE_FILES += \
       $(JAVA_BASE_SOLARIS_DIR)/sun/util/locale/provider/HostLocaleProviderAdapterImpl.java \
       $(JAVA_BASE_SOLARIS_DIR)/java/net/DefaultInterface.java \
@@ -167,23 +167,23 @@ endif
 ifeq ($(OPENJDK_TARGET_OS), macosx)
   # These files are duplicated in MACOSX_SRC_DIRS
   java.base_EXCLUDE_FILES += \
-      $(JDK_TOPDIR)/$(SRC_SUBDIR)/solaris/modules/java.base/sun/nio/ch/DefaultSelectorProvider.java \
-      $(JDK_TOPDIR)/$(SRC_SUBDIR)/solaris/modules/java.base/java/net/DefaultInterface.java \
-      $(JDK_TOPDIR)/$(SRC_SUBDIR)/solaris/modules/java.base/java/lang/ClassLoaderHelper.java \
-      $(JDK_TOPDIR)/$(SRC_SUBDIR)/solaris/modules/java.base/sun/util/locale/provider/HostLocaleProviderAdapterImpl.java \
-      $(JDK_TOPDIR)/$(SRC_SUBDIR)/solaris/modules/java.base/sun/nio/fs/GnomeFileTypeDetector.java \
-      $(JDK_TOPDIR)/$(SRC_SUBDIR)/solaris/modules/java.base/sun/nio/ch/sctp/SctpChannelImpl.java \
-      $(JDK_TOPDIR)/$(SRC_SUBDIR)/solaris/modules/java.base/sun/nio/ch/sctp/SctpMultiChannelImpl.java \
-      $(JDK_TOPDIR)/$(SRC_SUBDIR)/solaris/modules/java.base/sun/nio/ch/sctp/SctpServerChannelImpl.java \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/solaris/classes/sun/nio/ch/DefaultSelectorProvider.java \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/solaris/classes/java/net/DefaultInterface.java \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/solaris/classes/java/lang/ClassLoaderHelper.java \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/solaris/classes/sun/util/locale/provider/HostLocaleProviderAdapterImpl.java \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/solaris/classes/sun/nio/fs/GnomeFileTypeDetector.java \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/solaris/classes/sun/nio/ch/sctp/SctpChannelImpl.java \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/solaris/classes/sun/nio/ch/sctp/SctpMultiChannelImpl.java \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/solaris/classes/sun/nio/ch/sctp/SctpServerChannelImpl.java \
       #
 endif
 
 ifeq ($(OPENJDK_TARGET_OS),aix)
   # These files are duplicated in AIX_SRC_DIRS
   java.base_EXCLUDE_FILES += \
-      $(JDK_TOPDIR)/$(SRC_SUBDIR)/solaris/modules/java.base/sun/nio/ch/sctp/SctpChannelImpl.java \
-      $(JDK_TOPDIR)/$(SRC_SUBDIR)/solaris/modules/java.base/sun/nio/ch/sctp/SctpMultiChannelImpl.java \
-      $(JDK_TOPDIR)/$(SRC_SUBDIR)/solaris/modules/java.base/sun/nio/ch/sctp/SctpServerChannelImpl.java \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/solaris/classes/sun/nio/ch/sctp/SctpChannelImpl.java \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/solaris/classes/sun/nio/ch/sctp/SctpMultiChannelImpl.java \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/solaris/classes/sun/nio/ch/sctp/SctpServerChannelImpl.java \
       #
 endif
 
@@ -234,7 +234,7 @@ ifeq ($(OPENJDK_TARGET_OS), macosx)
   # exclude all X11 on Mac, we can't exclude some like below or we'll have compilation errors
   java.desktop_EXCLUDES += sun/awt/X11
   java.desktop_EXCLUDE_FILES += \
-      $(JDK_TOPDIR)/$(SRC_SUBDIR)/solaris/modules/java.desktop/sun/java2d/BackBufferCapsProvider.java \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/solaris/classes/sun/java2d/BackBufferCapsProvider.java \
       #
 else
   # TBD: figure out how to eliminate this long list
@@ -336,15 +336,15 @@ java.desktop_EXCLUDE_FILES += \
 ifeq ($(OPENJDK_TARGET_OS), macosx)
   # These files are duplicated in MACOSX_SRC_DIRS
   java.desktop_EXCLUDE_FILES += \
-      $(JDK_TOPDIR)/$(SRC_SUBDIR)/solaris/modules/java.desktop/sun/java2d/BackBufferCapsProvider.java \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/solaris/classes/sun/java2d/BackBufferCapsProvider.java \
       #
 endif
 
 ################################################################################
 
 java.jdbc.rowset_CLEAN_FILES := $(wildcard \
-    $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/modules/java.jdbc.rowset/com/sun/rowset/*.properties \
-    $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/modules/java.jdbc.rowset/javax/sql/rowset/*.properties)
+    $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.jdbc.rowset/share/classes/com/sun/rowset/*.properties \
+    $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.jdbc.rowset/share/classes/javax/sql/rowset/*.properties)
 
 ################################################################################
 # Exclude building of IIOP transport for RMI Connector
@@ -360,8 +360,8 @@ endif
 ################################################################################
 
 java.rmi_CLEAN_FILES := $(wildcard \
-    $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/modules/java.rmi/sun/rmi/registry/resources/*.properties \
-    $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/modules/java.rmi/sun/rmi/server/resources/*.properties)
+    $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.rmi/share/classes/sun/rmi/registry/resources/*.properties \
+    $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.rmi/share/classes/sun/rmi/server/resources/*.properties)
 
 ################################################################################
 
@@ -424,15 +424,25 @@ endif
 
 ################################################################################
 
+jdk.charsets_COPY := .dat
+
+################################################################################
+
 jdk.devtools_COPY := .gif .xml .css .js javax.tools.JavaCompilerTool
+
+################################################################################
+
+ifndef OPENJDK
+  jdk.jfr_COPY := .xsd
+endif
 
 ################################################################################
 
 ifeq ($(OPENJDK_TARGET_OS), macosx)
   jdk.sctp_EXCLUDE_FILES := \
-      $(JDK_TOPDIR)/$(SRC_SUBDIR)/solaris/modules/jdk.sctp/sun/nio/ch/sctp/SctpChannelImpl.java \
-      $(JDK_TOPDIR)/$(SRC_SUBDIR)/solaris/modules/jdk.sctp/sun/nio/ch/sctp/SctpMultiChannelImpl.java \
-      $(JDK_TOPDIR)/$(SRC_SUBDIR)/solaris/modules/jdk.sctp/sun/nio/ch/sctp/SctpServerChannelImpl.java \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.sctp/solaris/classes/sun/nio/ch/sctp/SctpChannelImpl.java \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.sctp/solaris/classes/sun/nio/ch/sctp/SctpMultiChannelImpl.java \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.sctp/solaris/classes/sun/nio/ch/sctp/SctpServerChannelImpl.java \
       #
 endif
 
@@ -441,7 +451,7 @@ endif
 jdk.tools_COPY := .gif .png .js .html .txt aliasmap _options
 
 jdk.tools_CLEAN_FILES := $(wildcard \
-    $(patsubst %, $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/modules/jdk.tools/%/*.properties, \
+    $(patsubst %, $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.tools/share/classes/%/*.properties, \
         sun/rmi/rmic/resources \
         sun/tools/javac/resources \
         sun/tools/jconsole/resources \
@@ -498,53 +508,70 @@ sun.charsets_COPY := .dat
 
 ################################################################################
 
-sun.localedata_COPY := _dict _th
+jdk.localedata_COPY := _dict _th
 # Exclude BreakIterator classes that are just used in compile process to generate
 # data files and shouldn't go in the product
-sun.localedata_EXCLUDE_FILES := sun/text/resources/th/BreakIteratorRules_th.java
+jdk.localedata_EXCLUDE_FILES := sun/text/resources/th/BreakIteratorRules_th.java
 
 ################################################################################
 # Setup the compilation of each module
+#
 # Do not include nashorn src here since it needs to be compiled separately due
 # to nasgen.
+#
 # Order src dirs in order of override with the most important first. Generated
 # source before static source and platform specific source before shared.
-ALL_SRC_DIRS := \
-    $(JDK_OUTPUTDIR)/gensrc \
-    $(LANGTOOLS_OUTPUTDIR)/gensrc \
-    $(CORBA_OUTPUTDIR)/gensrc \
-    $(JDK_OUTPUTDIR)/gensrc_no_srczip \
-    $(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/modules \
-    $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/modules \
-    $(LANGTOOLS_TOPDIR)/$(SRC_SUBDIR)/share/modules \
-    $(CORBA_TOPDIR)/$(SRC_SUBDIR)/share/modules \
-    $(JAXP_TOPDIR)/$(SRC_SUBDIR)/share/modules \
-    $(JAXWS_TOPDIR)/$(SRC_SUBDIR)/share/modules \
+#
+# To use this variable, use $(call ALL_SRC_DIRS,module) with no space.
+ALL_SRC_DIRS = \
+    $(JDK_OUTPUTDIR)/gensrc/$1 \
+    $(LANGTOOLS_OUTPUTDIR)/gensrc/$1 \
+    $(CORBA_OUTPUTDIR)/gensrc/$1 \
+    $(JDK_OUTPUTDIR)/gensrc_no_srczip/$1 \
+    $(JDK_TOPDIR)/$(SRC_SUBDIR)/$1/$(OPENJDK_TARGET_OS_API_DIR)/classes \
+    $(JDK_TOPDIR)/$(SRC_SUBDIR)/$1/share/classes \
+    $(LANGTOOLS_TOPDIR)/$(SRC_SUBDIR)/$1/share/classes \
+    $(CORBA_TOPDIR)/$(SRC_SUBDIR)/$1/share/classes \
+    $(JAXP_TOPDIR)/$(SRC_SUBDIR)/$1/share/classes \
+    $(JAXWS_TOPDIR)/$(SRC_SUBDIR)/$1/share/classes \
     #
 
 ifndef OPENJDK
-  ALL_SRC_DIRS += $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/$(OPENJDK_TARGET_OS_API_DIR)/modules \
-      $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/share/modules \
+  ALL_SRC_DIRS += $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/$1/$(OPENJDK_TARGET_OS_API_DIR)/classes \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/$1/share/classes \
       #
 endif
 
 ifeq ($(OPENJDK_TARGET_OS), macosx)
-  ALL_SRC_DIRS += $(JDK_TOPDIR)/$(SRC_SUBDIR)/macosx/modules
+  ALL_SRC_DIRS += $(JDK_TOPDIR)/$(SRC_SUBDIR)/$1/macosx/classes
 endif
 ifeq ($(OPENJDK_TARGET_OS), aix)
-     AIX_SRC_DIRS += $(JDK_TOPDIR)/$(SRC_SUBDIR)/aix/modules
+  AIX_SRC_DIRS += $(JDK_TOPDIR)/$(SRC_SUBDIR)/$1/aix/classes
 endif
+
+ALL_TOP_SRC_DIRS := \
+    $(JDK_TOPDIR)/$(SRC_SUBDIR) \
+    $(LANGTOOLS_TOPDIR)/$(SRC_SUBDIR) \
+    $(CORBA_TOPDIR)/$(SRC_SUBDIR) \
+    $(JAXP_TOPDIR)/$(SRC_SUBDIR) \
+    $(JAXWS_TOPDIR)/$(SRC_SUBDIR) \
+    #
+
+ifndef OPENJDK
+  ALL_TOP_SRC_DIRS += $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed
+endif
+
+MODULES_LIST_FILE := $(OUTPUT_ROOT)/jdk/genmodules/classlist/modules.list
 
 # Find all modules with java sources by looking in the source dirs
 #JAVA_MODULES := $(sort $(notdir $(wildcard \
     $(patsubst %,%/*,$(filter %modules, $(ALL_SRC_DIRS))))))
 # For now we must only include modules that has actual source in them. When
 # javac accepts module-info.java, revert back to the line above.
-JAVA_MODULES := $(sort $(notdir $(patsubst %/,%, $(dir \
-    $(filter-out %module-info.java, $(wildcard \
-    $(patsubst %,%/*/*,$(filter %modules, $(ALL_SRC_DIRS)))))))))
-
-MODULES_LIST_FILE := $(OUTPUT_ROOT)/jdk/genmodules/classlist/modules.list
+JAVA_MODULES := $(sort $(notdir \
+    $(patsubst %/,%, $(dir $(patsubst %/,%, $(dir $(patsubst %/,%, $(dir \
+    $(filter-out %module-info.java, \
+    $(wildcard $(patsubst %,%/*/*/classes/*, $(ALL_TOP_SRC_DIRS))))))))))))
 
 # This macro sets up compilation of a module and declares dependencies for it.
 # Param 1 - module name
@@ -565,7 +592,7 @@ define SetupModuleCompilation
 
   $$(eval $$(call SetupJavaCompilation,$1, \
       SETUP := GENERATE_JDKBYTECODE, \
-      SRC := $(wildcard $(patsubst %,%/$1,$(ALL_SRC_DIRS))), \
+      SRC := $$(wildcard $$(call ALL_SRC_DIRS,$1)), \
       BIN := $(JDK_OUTPUTDIR)/modules/$1, \
       HEADERS := $(JDK_OUTPUTDIR)/gensrc_headers/$1, \
       ADD_JAVAC_FLAGS := $$($1_JAVAC_FLAGS)))
@@ -591,9 +618,10 @@ $(foreach m,$(JAVA_MODULES),$(eval $(call DeclareModuleDependencies,$m)))
 $(JDK_OUTPUTDIR)/modules/%_zh_HK.properties: $(JDK_OUTPUTDIR)/modules/%_zh_TW.properties
 	$(install-file)
 
-COPY_EXTRA += $(patsubst $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/modules/%, $(JDK_OUTPUTDIR)/modules/%, \
+COPY_EXTRA += $(patsubst $(JDK_TOPDIR)/$(SRC_SUBDIR)/%, $(JDK_OUTPUTDIR)/modules/%, \
+    $(subst /share/classes,, \
     $(subst _zh_TW,_zh_HK, $(filter %_zh_TW.properties, \
-    $(java.jdbc.rowset_CLEAN_FILES) $(java.rmi_CLEAN_FILES) $(jdk.tools_CLEAN_FILES))))
+    $(java.jdbc.rowset_CLEAN_FILES) $(java.rmi_CLEAN_FILES) $(jdk.tools_CLEAN_FILES)))))
 
 ################################################################################
 

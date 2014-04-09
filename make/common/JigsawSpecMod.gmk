@@ -35,6 +35,7 @@ ifeq ($(JIGSAW), true)
   NASHORN_OUTPUTDIR := $(patsubst $(OUTPUT_ROOT)/%,$(OUTPUT_ROOT)/jigsaw/%,$(NASHORN_OUTPUTDIR))
   IMAGES_OUTPUTDIR := $(patsubst $(OUTPUT_ROOT)/%,$(OUTPUT_ROOT)/jigsaw/%,$(IMAGES_OUTPUTDIR))
 
+  MODULES_WILDCARD := /*
   MODULES_SUBDIR := modules
 
   JAVA_BASE_SUBDIR := /java.base
@@ -49,14 +50,15 @@ ifeq ($(JIGSAW), true)
   JAVAX_JNDI_SUBDIR := /javax.jndi
   JAVAX_XMLDSIG_SUBDIR := /javax.xmldsig
 
+  JDK_CHARSETS_SUBDIR := /jdk.charsets
   JDK_DEVTOOLS_SUBDIR := /jdk.devtools
   JDK_JAAS_SUBDIR := /jdk.jaas
   JDK_JNDI_RMI_SUBDIR := /jdk.jndi.rmi
+  JDK_LOCALEDATA_SUBDIR := /jdk.localedata
   JDK_TOOLS_SUBDIR := /jdk.tools
   JDK_TOOLS_BASE_SUBDIR := /jdk.tools.base
-
-  JDK_CHARSETS_SUBDIR := /jdk.charsets
-  JDK_LOCALEDATA_SUBDIR := /jdk.localedata
+  JDK_TOOLS_DIAG_SUBDIR := /jdk.tools.diag
+  JDK_UCRYPTO_SUBDIR := /jdk.ucrypto
 
   LDFLAGS_JDKLIB := $(subst $(OUTPUT_ROOT),$(OUTPUT_ROOT)/jigsaw,$(LDFLAGS_JDKLIB))
 
@@ -70,9 +72,8 @@ ifeq ($(JIGSAW), true)
   CFLAGS_JDKLIB := $(filter-out %native/common, $(CFLAGS_JDKLIB))
   CFLAGS_JDKEXE := $(filter-out %native/common, $(CFLAGS_JDKEXE))
 
-  # CACERTS_FILE is set in configure. Override here for now.
-  CACERTS_FILE := $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/conf/java.base/security/cacerts
 else
+  MODULES_WILDCARD :=
   MODULES_SUBDIR := classes
   SRC_SUBDIR := src
 endif
