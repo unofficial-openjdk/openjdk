@@ -71,7 +71,8 @@ hotspot:
 jdk-build-tools: langtools-interim
 	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f Tools.gmk java-tools JIGSAW=true)
 
-jdk-gensrc: jdk-build-tools langtools-interim
+# TODO: It would be nice if this dependency on Hotspot could be reduced.
+jdk-gensrc: jdk-build-tools langtools-interim import-hotspot
 	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f GenerateSources.gmk JIGSAW=true)
 
 jdk-gendata: langtools-interim jdk-build-tools
