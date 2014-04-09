@@ -34,14 +34,16 @@ include JavaCompilation.gmk
 include CommonLangtools.gmk
 
 ifeq ($(JIGSAW), true)
-  SRC := $(LANGTOOLS_TOPDIR)/$(SRC_SUBDIR)/share/modules/javax.compiler \
-      $(LANGTOOLS_TOPDIR)/$(SRC_SUBDIR)/share/modules/jdk.devtools \
-      $(LANGTOOLS_TOPDIR)/$(SRC_SUBDIR)/share/modules/java.base \
-      $(LANGTOOLS_OUTPUTDIR)/gensrc/jdk.devtools
+  SRC := $(LANGTOOLS_TOPDIR)/$(SRC_SUBDIR)/javax.compiler/share/classes \
+      $(LANGTOOLS_TOPDIR)/$(SRC_SUBDIR)/jdk.devtools/share/classes \
+      $(LANGTOOLS_TOPDIR)/$(SRC_SUBDIR)/java.base/share/classes \
+      $(LANGTOOLS_OUTPUTDIR)/gensrc/jdk.devtools \
+      #
 else
   SRC := $(LANGTOOLS_TOPDIR)/src/share/classes \
       $(LANGTOOLS_OUTPUTDIR)/gensrc \
-      $(LANGTOOLS_TOPDIR)/make/tools
+      $(LANGTOOLS_TOPDIR)/make/tools \
+      #
 endif
 
 # Setup the rules to build the interim langtools jar, which is compiled by

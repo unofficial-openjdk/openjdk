@@ -52,17 +52,19 @@ TOOL_COMPILEPROPS_CMD := $(JAVA) -cp $(LANGTOOLS_OUTPUTDIR)/buildtools_classes \
     compileproperties.CompileProperties -quiet
 
 # Lookup the properties that need to be compiled into resource bundles.
-PROPSOURCES := $(shell $(FIND) $(LANGTOOLS_TOPDIR)/$(SRC_SUBDIR)/share/$(MODULES_SUBDIR) -name "*.properties")
+PROPSOURCES := $(shell $(FIND) $(LANGTOOLS_TOPDIR)/$(SRC_SUBDIR)$(MODULES_WILDCARD)/share/classes -name "*.properties")
 
+# Convert .../src/<module>/share/classes/com/sun/tools/javac/resources/javac_zh_CN.properties
+# to .../langtools/gensrc/<module>/com/sun/tools/javac/resources/javac_zh_CN.java
 # Strip away prefix and suffix, leaving for example only: 
-# "com/sun/tools/javac/resources/javac_zh_CN"
-PROPPATHS := $(patsubst $(LANGTOOLS_TOPDIR)/$(SRC_SUBDIR)/share/$(MODULES_SUBDIR)/%.properties, %, $(PROPSOURCES))
+# "<module>/share/classes/com/sun/tools/javac/resources/javac_zh_CN"
+PROPJAVAS := $(patsubst $(LANGTOOLS_TOPDIR)/$(SRC_SUBDIR)/%.properties, \
+    $(LANGTOOLS_OUTPUTDIR)/gensrc/%.java, \
+    $(subst /share/classes,,$(PROPSOURCES)))
 
-# Generate the list of java files to be created.
-PROPJAVAS := $(patsubst %, $(LANGTOOLS_OUTPUTDIR)/gensrc/%.java, $(PROPPATHS))
-
-# Generate the package dirs for the tobe generated java files.
-PROPDIRS := $(dir $(PROPJAVAS))
+# Generate the package dirs for the tobe generated java files. Sort to remove
+# duplicates.
+PROPDIRS := $(sort $(dir $(PROPJAVAS)))
 
 # Now generate a sequence of:
 # "-compile ...javac_zh_CN.properties ...javac_zh_CN.java java.util.ListResourceBundle"
@@ -70,8 +72,7 @@ PROPDIRS := $(dir $(PROPJAVAS))
 PROPCMDLINE := $(subst _SPACE_, $(SPACE), \
     $(join $(addprefix -compile_SPACE_, $(PROPSOURCES)), \
     $(addsuffix _SPACE_java.util.ListResourceBundle, \
-    $(addprefix _SPACE_$(LANGTOOLS_OUTPUTDIR)/gensrc/, \
-    $(addsuffix .java, $(PROPPATHS))))))
+    $(addprefix _SPACE_, $(PROPJAVAS)))))
 
 # Now setup the rule for the generation of the resource bundles.
 $(LANGTOOLS_OUTPUTDIR)/gensrc/_the_props: $(PROPSOURCES) $(BUILD_TOOLS)
