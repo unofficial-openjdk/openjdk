@@ -475,7 +475,11 @@ BASE_CONF_FILES += $(POLICY_DST)
 ##########################################################################################
 
 ifeq ($(CACERTS_FILE), )
-  CACERTS_FILE := $(JDK_TOPDIR)/$(SRC_SUBDIR)$(JAVA_BASE_SUBDIR)/share/conf/security/cacerts
+  ifeq ($(JIGSAW), true)
+    CACERTS_FILE := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/conf/security/cacerts
+  else
+    CACERTS_FILE := $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/lib/security/cacerts
+  endif
 endif
 CACERTS_DST := $(JDK_OUTPUTDIR)/lib/security/cacerts
 
