@@ -118,47 +118,47 @@ define CopyModule
 
 
   # Rules for copying sources
-  $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/modules/$1/%: $(JDK_TOPDIR)/src/share/classes/%
+  $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/$1/share/classes/%: $(JDK_TOPDIR)/src/share/classes/%
 	$$(module-copy-file)
 
-  $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/macosx/modules/$1/%: $(JDK_TOPDIR)/src/macosx/classes/%
+  $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/$1/macosx/classes/%: $(JDK_TOPDIR)/src/macosx/classes/%
 	$$(module-copy-file)
 
-  $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/solaris/modules/$1/%: $(JDK_TOPDIR)/src/solaris/classes/%
+  $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/$1/solaris/classes/%: $(JDK_TOPDIR)/src/solaris/classes/%
 	$$(module-copy-file)
 
-  $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/windows/modules/$1/%: $(JDK_TOPDIR)/src/windows/classes/%
+  $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/$1/windows/classes/%: $(JDK_TOPDIR)/src/windows/classes/%
 	$$(module-copy-file)
 
-  $(JAXP_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/modules/$1/%: $(JAXP_TOPDIR)/src/%
+  $(JAXP_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/$1/share/classes/%: $(JAXP_TOPDIR)/src/%
 	$$(module-copy-file)
 
-  $(JAXWS_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/modules/$1/%: $(JAXWS_TOPDIR)/src/share/jaxws_classes/%
+  $(JAXWS_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/$1/share/classes/%: $(JAXWS_TOPDIR)/src/share/jaxws_classes/%
 	$$(module-copy-file)
 
-  $(JAXWS_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/modules/$1/%: $(JAXWS_TOPDIR)/src/share/jaf_classes/%
+  $(JAXWS_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/$1/share/classes/%: $(JAXWS_TOPDIR)/src/share/jaf_classes/%
 	$$(module-copy-file)
 
-  $(CORBA_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/modules/$1/%: $(CORBA_TOPDIR)/src/share/classes/%
+  $(CORBA_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/$1/share/classes/%: $(CORBA_TOPDIR)/src/share/classes/%
 	$$(module-copy-file)
 
-  $(LANGTOOLS_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/modules/$1/%: $(LANGTOOLS_TOPDIR)/src/share/classes/%
+  $(LANGTOOLS_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/$1/share/classes/%: $(LANGTOOLS_TOPDIR)/src/share/classes/%
 	$$(module-copy-file)
 
-  $(NASHORN_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/modules/$1/%: $(NASHORN_TOPDIR)/src/%
+  $(NASHORN_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/$1/share/classes/%: $(NASHORN_TOPDIR)/src/%
 	$$(module-copy-file)
 
   SRC_TARGET_FILES += \
-      $$(patsubst $(JDK_TOPDIR)/src/share/classes/%,$(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/modules/$1/%, \
-      $$(patsubst $(JDK_TOPDIR)/src/macosx/classes/%, $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/macosx/modules/$1/%, \
-      $$(patsubst $(JDK_TOPDIR)/src/solaris/classes/%, $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/solaris/modules/$1/%, \
-      $$(patsubst $(JDK_TOPDIR)/src/windows/classes/%, $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/windows/modules/$1/%, \
-      $$(patsubst $(JAXP_TOPDIR)/src/%,$(JAXP_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/modules/$1/%,\
-      $$(patsubst $(JAXWS_TOPDIR)/src/share/jaxws_classes/%,$(JAXWS_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/modules/$1/%,\
-      $$(patsubst $(JAXWS_TOPDIR)/src/share/jaf_classes/%,$(JAXWS_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/modules/$1/%,\
-      $$(patsubst $(CORBA_TOPDIR)/src/share/classes/%,$(CORBA_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/modules/$1/%,\
-      $$(patsubst $(LANGTOOLS_TOPDIR)/src/share/classes/%,$(LANGTOOLS_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/modules/$1/%,\
-      $$(patsubst $(NASHORN_TOPDIR)/src/%,$(NASHORN_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/modules/$1/%,\
+      $$(patsubst $(JDK_TOPDIR)/src/share/classes/%,$(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/$1/share/classes/%, \
+      $$(patsubst $(JDK_TOPDIR)/src/macosx/classes/%, $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/$1/macosx/classes/%, \
+      $$(patsubst $(JDK_TOPDIR)/src/solaris/classes/%, $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/$1/solaris/classes/%, \
+      $$(patsubst $(JDK_TOPDIR)/src/windows/classes/%, $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/$1/windows/classes/%, \
+      $$(patsubst $(JAXP_TOPDIR)/src/%,$(JAXP_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/$1/share/classes/%,\
+      $$(patsubst $(JAXWS_TOPDIR)/src/share/jaxws_classes/%,$(JAXWS_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/$1/share/classes/%,\
+      $$(patsubst $(JAXWS_TOPDIR)/src/share/jaf_classes/%,$(JAXWS_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/$1/share/classes/%,\
+      $$(patsubst $(CORBA_TOPDIR)/src/share/classes/%,$(CORBA_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/$1/share/classes/%,\
+      $$(patsubst $(LANGTOOLS_TOPDIR)/src/share/classes/%,$(LANGTOOLS_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/$1/share/classes/%,\
+      $$(patsubst $(NASHORN_TOPDIR)/src/%,$(NASHORN_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/$1/share/classes/%,\
           $$($1_SRC_FILES)))))))))))
 endef
 
@@ -172,7 +172,7 @@ $(foreach m,$(MODULE_LIST),$(eval $(call CopyModule,$m)))
 ################################################################################
 # Copy the generated module-info.java files into the shuffled source.
 define DeclareModuleInfoRule
-  $1/$(SHUFFLED_SRC_SUBDIR)/share/modules/%/module-info.java: \
+  $1/$(SHUFFLED_SRC_SUBDIR)/%/share/classes/module-info.java: \
       $(JDK_OUTPUTDIR)/genmodules/src/%/module-info.java
 	$$(install-file)
 endef
@@ -194,12 +194,12 @@ JDK_MODULE_LIST := $(filter-out $(CORBA_MODULE_LIST) $(JAXP_MODULE_LIST) \
     $(FULL_MODULE_LIST))
 
 MODULE_INFO_TARGETS := \
-    $(patsubst %, $(LANGTOOLS_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/modules/%/module-info.java, $(LANGTOOLS_MODULE_LIST)) \
-    $(patsubst %, $(CORBA_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/modules/%/module-info.java, $(CORBA_MODULE_LIST)) \
-    $(patsubst %, $(JAXP_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/modules/%/module-info.java, $(JAXP_MODULE_LIST)) \
-    $(patsubst %, $(JAXWS_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/modules/%/module-info.java, $(JAXWS_MODULE_LIST)) \
-    $(patsubst %, $(NASHORN_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/modules/%/module-info.java, $(NASHORN_MODULE_LIST)) \
-    $(patsubst %, $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/modules/%/module-info.java, $(JDK_MODULE_LIST)) \
+    $(patsubst %, $(LANGTOOLS_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/%/share/classes/module-info.java, $(LANGTOOLS_MODULE_LIST)) \
+    $(patsubst %, $(CORBA_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/%/share/classes/module-info.java, $(CORBA_MODULE_LIST)) \
+    $(patsubst %, $(JAXP_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/%/share/classes/module-info.java, $(JAXP_MODULE_LIST)) \
+    $(patsubst %, $(JAXWS_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/%/share/classes/module-info.java, $(JAXWS_MODULE_LIST)) \
+    $(patsubst %, $(NASHORN_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/%/share/classes/module-info.java, $(NASHORN_MODULE_LIST)) \
+    $(patsubst %, $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/%/share/classes/module-info.java, $(JDK_MODULE_LIST)) \
     #
 
 ################################################################################
@@ -207,7 +207,7 @@ MODULE_INFO_TARGETS := \
 # Copy *.mc and *.properties files in corba
 $(eval $(call SetupShuffleFiles,COPY_CORBA_MC, \
     SRC := $(CORBA_TOPDIR)/src/share/classes, \
-    DEST := $(CORBA_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/modules/javax.corba, \
+    DEST := $(CORBA_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/javax.corba/share/classes, \
     FILES := $(wildcard $(CORBA_TOPDIR)/src/share/classes/com/sun/corba/se/spi/logging/data/*.mc \
         $(CORBA_TOPDIR)/src/share/classes/com/sun/corba/se/impl/orbutil/resources/*.properties) \
         $(shell $(FIND) $(CORBA_TOPDIR)/src/share/classes -name *.idl)))
@@ -215,161 +215,161 @@ $(eval $(call SetupShuffleFiles,COPY_CORBA_MC, \
 # Copy services in jaxws
 $(eval $(call SetupShuffleFiles,COPY_JAXWS_SERVICES, \
     SRC := $(JAXWS_TOPDIR)/src/share/jaxws_classes/com/sun/tools/etc, \
-    DEST := $(JAXWS_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/modules/jdk.tools.jaxws, \
+    DEST := $(JAXWS_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/jdk.tools.jaxws/share/classes, \
     FILES := META-INF/services/com.sun.tools.internal.ws.wscompile.Plugin \
         META-INF/services/com.sun.tools.internal.xjc.Plugin))
 
 # Copy services in java.desktop
 $(eval $(call SetupShuffleFiles,COPY_SERVICES_PRINT_SOLARIS, \
     SRC := $(JDK_TOPDIR)/src/solaris/classes/sun/print, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/solaris/modules/java.desktop/META-INF, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.desktop/solaris/classes/META-INF, \
     FILES := services/javax.print.PrintServiceLookup \
         services/javax.print.StreamPrintServiceFactory))
 
 $(eval $(call SetupShuffleFiles,COPY_SERVICES_PRINT_WINDOWS, \
     SRC := $(JDK_TOPDIR)/src/windows/classes/sun/print, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/windows/modules/java.desktop/META-INF, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.desktop/windows/classes/META-INF, \
     FILES := services/javax.print.PrintServiceLookup \
         services/javax.print.StreamPrintServiceFactory))
 
 $(eval $(call SetupShuffleFiles,COPY_SERVICES_SOUND, \
     SRC := $(JDK_TOPDIR)/src/share/classes/com/sun/media/sound, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/modules/java.desktop/META-INF, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.desktop/share/classes/META-INF, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/share/classes/com/sun/media/sound/services/javax*)))
 
 $(eval $(call SetupShuffleFiles,COPY_SERVICES_CMM, \
     SRC := $(JDK_TOPDIR)/src/share/classes/sun/java2d/cmm/lcms, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/modules/java.desktop, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.desktop/share/classes, \
     FILES := $(JDK_TOPDIR)/src/share/classes/sun/java2d/cmm/lcms/META-INF/services/sun.java2d.cmm.CMMServiceProvider))
 
 $(eval $(call SetupShuffleFiles,COPY_SERVICES_PISCES_SHARE, \
     SRC := $(JDK_TOPDIR)/src/share/classes/sun/java2d/pisces, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/modules/java.desktop, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.desktop/share/classes, \
     FILES := $(JDK_TOPDIR)/src/share/classes/sun/java2d/pisces/META-INF/services/sun.java2d.pipe.RenderingEngine))
 
 $(eval $(call SetupShuffleFiles,COPY_SERVICES_PISCES_SOLARIS, \
     SRC := $(JDK_TOPDIR)/src/solaris/classes/sun/java2d/pisces, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/solaris/modules/java.desktop, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.desktop/solaris/classes, \
     FILES := $(JDK_TOPDIR)/src/solaris/classes/sun/java2d/pisces/META-INF/services/sun.java2d.pipe.RenderingEngine))
 
 
-$(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/modules/java.desktop/META-INF/services/sun.java2d.pipe.RenderingEngine-dc.template: \
+$(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.desktop/share/classes/META-INF/services/sun.java2d.pipe.RenderingEngine-dc.template: \
     $(JDK_TOPDIR)/src/share/classes/sun/dc/META-INF/services/sun.java2d.pipe.RenderingEngine
 	$(module-copy-file)
 
-SHUFFLE_SRC_TARGETS += $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/modules/java.desktop/META-INF/services/sun.java2d.pipe.RenderingEngine-dc.template
+SHUFFLE_SRC_TARGETS += $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.desktop/share/classes/META-INF/services/sun.java2d.pipe.RenderingEngine-dc.template
 
 # Copy services in javax.jaxp
 $(eval $(call SetupShuffleFiles,COPY_SERVICES_JAXP, \
     SRC := $(JDK_TOPDIR)/src/share/classes/sun/util/xml, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/modules/javax.jaxp, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/javax.jaxp/share/classes, \
     FILES := $(JDK_TOPDIR)/src/share/classes/sun/util/xml/META-INF/services/sun.util.spi.XmlPropertiesProvider))
 
 # Copy services in jdk.tools.diag
 $(eval $(call SetupShuffleFiles,COPY_SERVICES_ATTACH, \
     SRC := $(JDK_TOPDIR)/src/share/classes/sun/tools/attach, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/modules/jdk.tools.diag, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/jdk.tools.diag/share/classes, \
     FILES := $(JDK_TOPDIR)/src/share/classes/sun/tools/attach/META-INF/services/com.sun.tools.attach.spi.AttachProvider))
 
 # Copy services in jdk.tools
 $(eval $(call SetupShuffleFiles,COPY_SERVICES_JDI, \
     SRC := $(JDK_TOPDIR)/src/share/classes/com/sun/tools/jdi, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/modules/jdk.tools, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/jdk.tools/share/classes, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/share/classes/com/sun/tools/jdi/META-INF/services/*)))
 
 $(eval $(call SetupShuffleFiles,COPY_METAINF_JAF, \
     SRC := $(JAXWS_TOPDIR)/src/share/jaf_classes/META-INF, \
-    DEST := $(JAXWS_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/modules/javax.jaf/META-INF, \
+    DEST := $(JAXWS_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/javax.jaf/share/classes/META-INF, \
     FILES := $(wildcard $(JAXWS_TOPDIR)/src/share/jaf_classes/META-INF/*)))
 
 # Copy nimbus templates
 $(eval $(call SetupShuffleFiles,COPY_NIMBUS_RESOURCES, \
     SRC := $(JDK_TOPDIR)/src/share/classes/javax/swing/plaf/nimbus, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/modules/java.desktop/javax/swing/plaf/nimbus/, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.desktop/share/classes/javax/swing/plaf/nimbus/, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/share/classes/javax/swing/plaf/nimbus/*.template)))
 
 # Copy *XLocales.java.template to JAVA_base
 $(eval $(call SetupShuffleFiles,COPY_LOCALE_TEMPLATES, \
     SRC := $(JDK_TOPDIR)/src/share/classes, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/modules/java.base, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.base/share/classes, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/share/classes/sun/util/*XLocales.java.template \
         $(JDK_TOPDIR)/src/share/classes/sun/util/locale/provider/*XLocales.java.template)))
 
 $(eval $(call SetupShuffleFiles,COPY_MISC_VERSION, \
     SRC := $(JDK_TOPDIR)/src/share/classes, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/modules/java.base, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.base/share/classes, \
     FILES := $(JDK_TOPDIR)/src/share/classes/sun/misc/Version.java.template))
 
 $(eval $(call SetupShuffleFiles,COPY_JCONSOLE_VERSION, \
     SRC := $(JDK_TOPDIR)/src/share/classes, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/modules/jdk.tools, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/jdk.tools/share/classes, \
     FILES := $(JDK_TOPDIR)/src/share/classes/sun/tools/jconsole/Version.java.template))
 
 $(eval $(call SetupShuffleFiles,COPY_UNIX_PROCESS, \
     SRC := $(JDK_TOPDIR)/src/solaris/classes, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/solaris/modules/java.base, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.base/solaris/classes, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/solaris/classes/java/lang/UNIXProcess.java*)))
 
 $(eval $(call SetupShuffleFiles,COPY_NIO_TEMPLATES, \
     SRC := $(JDK_TOPDIR)/src/share/classes, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/modules/java.base, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.base/share/classes, \
     FILES := $(JDK_TOPDIR)/src/share/classes/java/nio/charset/Charset-X-Coder.java.template \
         $(wildcard $(JDK_TOPDIR)/src/share/classes/java/nio/*.template)))
 
 $(eval $(call SetupShuffleFiles,COPY_NIO_EXCEPTIONS, \
     SRC := $(JDK_TOPDIR)/src/share/classes, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/modules/java.base, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.base/share/classes, \
     FILES := $(JDK_TOPDIR)/src/share/classes/java/nio/exceptions \
         $(wildcard $(JDK_TOPDIR)/src/share/classes/java/nio/*/exceptions)))
 
 $(eval $(call SetupShuffleFiles,COPY_SOLARIS_ICONS, \
     SRC := $(JDK_TOPDIR)/src/solaris/classes, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/solaris/modules/java.desktop, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.desktop/solaris/classes, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/solaris/classes/sun/awt/X11/*.png)))
 
 $(eval $(call SetupShuffleFiles,COPY_SHARE_ICONS, \
     SRC := $(JDK_TOPDIR)/src/share/classes, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/modules/java.desktop, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.desktop/share/classes, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/share/classes/sun/awt/resources/*.png)))
 
 $(eval $(call SetupShuffleFiles,COPY_CLDR, \
     SRC := $(JDK_TOPDIR)/src/share/classes, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/modules/jdk.localedata, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/jdk.localedata/share/classes, \
     FILES := $(shell $(FIND) $(JDK_TOPDIR)/src/share/classes/sun/util/cldr/resources -type f)))
 
 $(eval $(call SetupShuffleFiles,COPY_SWING_LAF, \
     SRC := $(JDK_TOPDIR)/src/share/classes, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/modules/java.desktop, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.desktop/share/classes, \
     FILES := $(JDK_TOPDIR)/src/share/classes/javax/swing/plaf/nimbus/skin.laf))
 
 $(eval $(call SetupShuffleFiles,COPY_SERIAL_VER, \
     SRC := $(JDK_TOPDIR)/src/share/classes, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/modules/jdk.tools, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/jdk.tools/share/classes, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/share/classes/sun/tools/serialver/*.properties)))
 
 $(eval $(call SetupShuffleFiles,COPY_BREAK_ITERATOR_RULES, \
     SRC := $(JDK_TOPDIR)/src/share/classes, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/modules/java.base, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.base/share/classes, \
     FILES := $(JDK_TOPDIR)/src/share/classes/sun/text/resources/BreakIteratorRules.java))
 
 $(eval $(call SetupShuffleFiles,COPY_BREAK_ITERATOR_RULES_TH, \
     SRC := $(JDK_TOPDIR)/src/share/classes, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/modules/jdk.localedata, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/jdk.localedata/share/classes, \
     FILES := $(JDK_TOPDIR)/src/share/classes/sun/text/resources/th/BreakIteratorRules_th.java))
 
 $(eval $(call SetupShuffleFiles,COPY_APPLE_LAF, \
     SRC := $(JDK_TOPDIR)/src/macosx/classes, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/macosx/modules/java.desktop, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.desktop/macosx/classes, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/macosx/classes/com/apple/laf/resources/*.properties)))
 
 $(eval $(call SetupShuffleFiles,COPY_AWT_RESOURCES_MACOSX, \
     SRC := $(JDK_TOPDIR)/src/macosx/classes, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/macosx/modules/java.desktop, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.desktop/macosx/classes, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/macosx/classes/sun/awt/resources/*.properties)))
 
 $(eval $(call SetupShuffleFiles,COPY_NASHORN_RESOURCES, \
     SRC := $(NASHORN_TOPDIR)/src, \
-    DEST := $(NASHORN_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/modules/jdk.nashorn, \
+    DEST := $(NASHORN_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/jdk.nashorn/share/classes, \
     FILES := $(NASHORN_TOPDIR)/src/jdk/nashorn/internal/runtime/resources/version.properties-template))
 
 ################################################################################
@@ -377,14 +377,14 @@ $(eval $(call SetupShuffleFiles,COPY_NASHORN_RESOURCES, \
 # fdlibm
 $(eval $(call SetupShuffleFiles,COPY_LIBFDLIBM, \
     SRC := $(JDK_TOPDIR)/src/share/native, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/native/libfdlibm, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.base/share/native/libfdlibm, \
     FLATTEN := true, \
     FILES := $(shell $(FIND) $(JDK_TOPDIR)/src/share/native/java/lang/fdlibm -type f)))
 
 # verify
 $(eval $(call SetupShuffleFiles,COPY_LIBVERIFY, \
     SRC := $(JDK_TOPDIR)/src/share/native/common, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/native/libverify, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.base/share/native/libverify, \
     FILES := $(JDK_TOPDIR)/src/share/native/common/check_code.c \
         $(JDK_TOPDIR)/src/share/native/common/check_format.c \
         $(JDK_TOPDIR)/src/share/native/common/opcodes.in_out))
@@ -392,7 +392,7 @@ $(eval $(call SetupShuffleFiles,COPY_LIBVERIFY, \
 # java
 $(eval $(call SetupShuffleFiles,COPY_LIBJAVA_SOLARIS, \
     SRC := $(JDK_TOPDIR)/src/solaris/native, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/solaris/native/libjava, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.base/solaris/native/libjava, \
     FLATTEN := true, \
     FILES := $(filter-out %jspawnhelper.c, $(wildcard \
         $(JDK_TOPDIR)/src/solaris/native/java/lang/* \
@@ -404,7 +404,7 @@ $(eval $(call SetupShuffleFiles,COPY_LIBJAVA_SOLARIS, \
 
 $(eval $(call SetupShuffleFiles,COPY_LIBJAVA_WINDOWS, \
     SRC := $(JDK_TOPDIR)/src/windows/native, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/windows/native/libjava, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.base/windows/native/libjava, \
     FLATTEN := true, \
     FILES := $(wildcard \
         $(JDK_TOPDIR)/src/windows/native/java/lang/* \
@@ -419,13 +419,13 @@ $(eval $(call SetupShuffleFiles,COPY_LIBJAVA_WINDOWS, \
 
 $(eval $(call SetupShuffleFiles,COPY_LIBJAVA_MACOSX, \
     SRC := $(JDK_TOPDIR)/src/macosx/native, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/macosx/native/libjava, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.base/macosx/native/libjava, \
     FLATTEN := true, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/macosx/native/sun/util/locale/provider/*)))
 
 $(eval $(call SetupShuffleFiles,COPY_LIBJAVA_SHARE, \
     SRC := $(JDK_TOPDIR)/src/share/native, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/native/libjava, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.base/share/native/libjava, \
     FLATTEN := true, \
     FILES := $(shell $(FIND) $(JDK_TOPDIR)/src/share/native/java/lang \
         $(JDK_TOPDIR)/src/share/native/java/io \
@@ -437,33 +437,60 @@ $(eval $(call SetupShuffleFiles,COPY_LIBJAVA_SHARE, \
         $(JDK_TOPDIR)/src/share/native/java/util -type f \
         | $(GREP) -v -e /zip/ -e /fdlibm/ -e /check_format -e /check_code)))
 
+$(eval $(call SetupShuffleFiles,COPY_LIBJAVA_EXPORTED_SHARE, \
+    SRC := $(JDK_TOPDIR)/src/share/javavm/export, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.base/share/native/include, \
+    FILES := $(JDK_TOPDIR)/src/share/javavm/export/jni.h \
+        $(JDK_TOPDIR)/src/share/javavm/export/jvm.h \
+        $(JDK_TOPDIR)/src/share/javavm/export/jvmti.h \
+        $(JDK_TOPDIR)/src/share/javavm/export/jvmticmlr.h \
+        $(JDK_TOPDIR)/src/share/javavm/export/classfile_constants.h))
+
+$(eval $(call SetupShuffleFiles,COPY_LIBJAVA_EXPORTED_SOLARIS, \
+    SRC := $(JDK_TOPDIR)/src/solaris/javavm/export, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.base/solaris/native/include, \
+    FILES := $(JDK_TOPDIR)/src/solaris/javavm/export/jni_md.h \
+        $(JDK_TOPDIR)/src/solaris/javavm/export/jvm_md.h))
+
+$(eval $(call SetupShuffleFiles,COPY_LIBJAVA_EXPORTED_MACOSX, \
+    SRC := $(JDK_TOPDIR)/src/macosx/javavm/export, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.base/macosx/native/include, \
+    FILES := $(JDK_TOPDIR)/src/macosx/javavm/export/jni_md.h \
+        $(JDK_TOPDIR)/src/macosx/javavm/export/jvm_md.h))
+
+$(eval $(call SetupShuffleFiles,COPY_LIBJAVA_EXPORTED_WINDOWS, \
+    SRC := $(JDK_TOPDIR)/src/windows/javavm/export, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.base/windows/native/include, \
+    FILES := $(JDK_TOPDIR)/src/windows/javavm/export/jni_md.h \
+        $(JDK_TOPDIR)/src/windows/javavm/export/jvm_md.h))
+
 # zip
 $(eval $(call SetupShuffleFiles,COPY_LIBZIP, \
     SRC := $(JDK_TOPDIR)/src/share/native/java/util/zip, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/native/libzip, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.base/share/native/libzip, \
     FILES := $(shell $(FIND) $(JDK_TOPDIR)/src/share/native/java/util/zip -type f)))
 
 # unpack
 $(eval $(call SetupShuffleFiles,COPY_COMMON_UNPACK, \
     SRC := $(JDK_TOPDIR)/src/share/native/com/sun/java/util/jar/pack, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/native/common-unpack, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/jdk.tools.base/share/native/common-unpack, \
     FILES := $(filter-out %main.cpp %jni.cpp, $(wildcard \
         $(JDK_TOPDIR)/src/share/native/com/sun/java/util/jar/pack/*))))
 
 $(eval $(call SetupShuffleFiles,COPY_LIBUNPACK, \
     SRC := $(JDK_TOPDIR)/src/share/native/com/sun/java/util/jar/pack, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/native/libunpack, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/jdk.tools.base//share/native/libunpack, \
     FILES := $(JDK_TOPDIR)/src/share/native/com/sun/java/util/jar/pack/jni.cpp))
 
 $(eval $(call SetupShuffleFiles,COPY_UNPACK200, \
     SRC := $(JDK_TOPDIR)/src/share/native/com/sun/java/util/jar/pack, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/native/unpack200, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/jdk.tools.base/share/native/unpack200, \
     FILES := $(JDK_TOPDIR)/src/share/native/com/sun/java/util/jar/pack/main.cpp))
 
 # jli
 $(eval $(call SetupShuffleFiles,COPY_LIBJLI_SHARE, \
     SRC := $(JDK_TOPDIR)/src/share/bin, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/native/libjli, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.base/share/native/libjli, \
     FILES := $(filter %java.c %java.h \
         %splashscreen_stubs.c %splashscreen.h \
         %parse_manifest.c %manifest_info.h \
@@ -475,46 +502,46 @@ $(eval $(call SetupShuffleFiles,COPY_LIBJLI_SHARE, \
 
 $(eval $(call SetupShuffleFiles,COPY_LIBJLI_SOLARIS, \
     SRC := $(JDK_TOPDIR)/src/solaris/bin, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/solaris/native/libjli, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.base/solaris/native/libjli, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/solaris/bin/java_md* \
         $(JDK_TOPDIR)/src/solaris/bin/ergo*)))
 
 $(eval $(call SetupShuffleFiles,COPY_LIBJLI_MACOSX, \
     SRC := $(JDK_TOPDIR)/src/macosx/bin, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/macosx/native/libjli, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.base/macosx/native/libjli, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/macosx/bin/java_md*)))
 
 $(eval $(call SetupShuffleFiles,COPY_LIBJLI_WINDOWS, \
     SRC := $(JDK_TOPDIR)/src/windows/bin, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/windows/native/libjli, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.base/windows/native/libjli, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/windows/bin/java_md.* \
         $(JDK_TOPDIR)/src/windows/bin/cmdtoargs.c)))
 
 # npt
 $(eval $(call SetupShuffleFiles,COPY_LIBNPT_SHARE, \
     SRC := $(JDK_TOPDIR)/src/share/npt, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/native/libnpt, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.base/share/native/libnpt, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/share/npt/*)))
 
 $(eval $(call SetupShuffleFiles,COPY_LIBNPT_SOLARIS, \
     SRC := $(JDK_TOPDIR)/src/solaris/npt, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/solaris/native/libnpt, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.base/solaris/native/libnpt, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/solaris/npt/*)))
 
 $(eval $(call SetupShuffleFiles,COPY_LIBNPT_WINDOWS, \
     SRC := $(JDK_TOPDIR)/src/windows/npt, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/windows/native/libnpt, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.base/windows/native/libnpt, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/windows/npt/*)))
 
 # net
 $(eval $(call SetupShuffleFiles,COPY_LIBNET_SHARE, \
     SRC := $(JDK_TOPDIR)/src/share/native/java/net, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/native/libnet, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.base/share/native/libnet, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/share/native/java/net/*)))
 
 $(eval $(call SetupShuffleFiles,COPY_LIBNET_SOLARIS, \
     SRC := $(JDK_TOPDIR)/src/solaris/native, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/solaris/native/libnet, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.base/solaris/native/libnet, \
     FLATTEN := true, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/solaris/native/java/net/* \
         $(JDK_TOPDIR)/src/solaris/native/sun/net/*.c \
@@ -524,7 +551,7 @@ $(eval $(call SetupShuffleFiles,COPY_LIBNET_SOLARIS, \
 
 $(eval $(call SetupShuffleFiles,COPY_LIBNET_WINDOWS, \
     SRC := $(JDK_TOPDIR)/src/windows/native, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/windows/native/libnet, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.base/windows/native/libnet, \
     FLATTEN := true, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/windows/native/java/net/* \
         $(JDK_TOPDIR)/src/windows/native/sun/net/*.c \
@@ -535,13 +562,13 @@ $(eval $(call SetupShuffleFiles,COPY_LIBNET_WINDOWS, \
 # nio
 $(eval $(call SetupShuffleFiles,COPY_LIBNIO_SHARE, \
     SRC := $(JDK_TOPDIR)/src/share/native, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/native/libnio, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.base/share/native/libnio, \
     FLATTEN := true, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/share/native/sun/nio/ch/*.h)))
 
 $(eval $(call SetupShuffleFiles,COPY_LIBNIO_SOLARIS, \
     SRC := $(JDK_TOPDIR)/src/solaris/native, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/solaris/native/libnio, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.base/solaris/native/libnio, \
     FLATTEN := true, \
     FILES := $(shell $(FIND) $(JDK_TOPDIR)/src/solaris/native/sun/nio \
         $(JDK_TOPDIR)/src/solaris/native/java/nio -type f \
@@ -549,7 +576,7 @@ $(eval $(call SetupShuffleFiles,COPY_LIBNIO_SOLARIS, \
 
 $(eval $(call SetupShuffleFiles,COPY_LIBNIO_WINDOWS, \
     SRC := $(JDK_TOPDIR)/src/windows/native, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/windows/native/libnio, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.base/windows/native/libnio, \
     FLATTEN := true, \
     FILES := $(shell $(FIND) $(JDK_TOPDIR)/src/windows/native/sun/nio \
         $(JDK_TOPDIR)/src/windows/native/java/nio -type f)))
@@ -557,199 +584,204 @@ $(eval $(call SetupShuffleFiles,COPY_LIBNIO_WINDOWS, \
 # sctp
 $(eval $(call SetupShuffleFiles,COPY_LIBSCTP_SOLARIS, \
     SRC := $(JDK_TOPDIR)/src/solaris/native/sun/nio/ch/sctp, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/solaris/native/libsctp, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/jdk.sctp/solaris/native/libsctp, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/solaris/native/sun/nio/ch/sctp/*)))
 
 # jaas
 $(eval $(call SetupShuffleFiles,COPY_LIBJAAS_SOLARIS, \
     SRC := $(JDK_TOPDIR)/src/solaris/native/com/sun/security/auth/module, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/solaris/native/libjaas, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/jdk.jaas/solaris/native/libjaas, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/solaris/native/com/sun/security/auth/module/*)))
 
 $(eval $(call SetupShuffleFiles,COPY_LIBJAAS_WINDOWS, \
     SRC := $(JDK_TOPDIR)/src/windows/native/com/sun/security/auth/module, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/windows/native/libjaas, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/jdk.jaas/windows/native/libjaas, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/windows/native/com/sun/security/auth/module/*)))
 
 # j2pcsc
 $(eval $(call SetupShuffleFiles,COPY_LIBJ2PCSC_SHARE, \
     SRC := $(JDK_TOPDIR)/src/share/native/sun/security/smartcardio, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/native/libj2pcsc, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/javax.smartcardio/share/native/libj2pcsc, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/share/native/sun/security/smartcardio/*)))
 
 $(eval $(call SetupShuffleFiles,COPY_LIBJ2PCSC_SOLARIS, \
     SRC := $(JDK_TOPDIR)/src/solaris/native/sun/security/smartcardio, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/solaris/native/libj2pcsc, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/javax.smartcardio/solaris/native/libj2pcsc, \
     FILES := $(shell $(FIND) $(JDK_TOPDIR)/src/solaris/native/sun/security/smartcardio -type f)))
 
 $(eval $(call SetupShuffleFiles,COPY_LIBJ2PCSC_WINDOWS, \
     SRC := $(JDK_TOPDIR)/src/windows/native/sun/security/smartcardio, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/windows/native/libj2pcsc, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/javax.smartcardio/windows/native/libj2pcsc, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/windows/native/sun/security/smartcardio/*)))
 
 # gss
 $(eval $(call SetupShuffleFiles,COPY_LIBJ2GSS_SHARE, \
     SRC := $(JDK_TOPDIR)/src/share/native/sun/security/jgss/wrapper, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/native/libj2gss, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/javax.kerberos/share/native/libj2gss, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/share/native/sun/security/jgss/wrapper/*)))
 
 $(eval $(call SetupShuffleFiles,COPY_LIBJ2GSS_SOLARIS, \
     SRC := $(JDK_TOPDIR)/src/solaris/native/sun/security/jgss/wrapper, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/solaris/native/libj2gss, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/javax.kerberos/solaris/native/libj2gss, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/solaris/native/sun/security/jgss/wrapper/*)))
 
 # krb5
 $(eval $(call SetupShuffleFiles,COPY_LIBKRB5_MACOSX_SHARE, \
     SRC := $(JDK_TOPDIR)/src/share/native/sun/security/krb5, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/macosx/native/libosxkrb5, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/javax.kerberos/macosx/native/libosxkrb5, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/share/native/sun/security/krb5/*)))
 
 $(eval $(call SetupShuffleFiles,COPY_LIBKRB5_MACOSX, \
     SRC := $(JDK_TOPDIR)/src/macosx/native/sun/security/krb5, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/macosx/native/libosxkrb5, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/javax.kerberos/macosx/native/libosxkrb5, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/macosx/native/sun/security/krb5/*)))
 
 $(eval $(call SetupShuffleFiles,COPY_LIBKRB5_WINDOWS, \
     SRC := $(JDK_TOPDIR)/src/windows/native/sun/security/krb5, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/windows/native/libw2k_lsa_auth, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/javax.kerberos/windows/native/libw2k_lsa_auth, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/windows/native/sun/security/krb5/*)))
 
 # sunmscapi
 $(eval $(call SetupShuffleFiles,COPY_LIBSUNMSCAPI_WINDOWS, \
     SRC := $(JDK_TOPDIR)/src/windows/native/sun/security/mscapi, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/windows/native/libsunmscapi, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/jdk.crypto.mscapi/windows/native/libsunmscapi, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/windows/native/sun/security/mscapi/*)))
 
 # j2pkcs11
 $(eval $(call SetupShuffleFiles,COPY_LIBJ2PKCS11_SHARE, \
     SRC := $(JDK_TOPDIR)/src/share/native/sun/security/pkcs11, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/native/libj2pkcs11, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/jdk.crypto.pkcs11/share/native/libj2pkcs11, \
     FLATTEN := true, \
     FILES := $(shell $(FIND) $(JDK_TOPDIR)/src/share/native/sun/security/pkcs11 -type f)))
 
 $(eval $(call SetupShuffleFiles,COPY_LIBJ2PKCS11_SOLARIS, \
     SRC := $(JDK_TOPDIR)/src/solaris/native/sun/security/pkcs11, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/solaris/native/libj2pkcs11, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/jdk.crypto.pkcs11/solaris/native/libj2pkcs11, \
     FLATTEN := true, \
     FILES := $(shell $(FIND) $(JDK_TOPDIR)/src/solaris/native/sun/security/pkcs11 -type f)))
 
 $(eval $(call SetupShuffleFiles,COPY_LIBJ2PKCS11_WINDOWS, \
     SRC := $(JDK_TOPDIR)/src/windows/native/sun/security/pkcs11, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/windows/native/libj2pkcs11, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/jdk.crypto.pkcs11/windows/native/libj2pkcs11, \
     FLATTEN := true, \
     FILES := $(shell $(FIND) $(JDK_TOPDIR)/src/windows/native/sun/security/pkcs11 -type f)))
 
 # sunec
 $(eval $(call SetupShuffleFiles,COPY_LIBSUNEC_SHARE, \
     SRC := $(JDK_TOPDIR)/src/share/native/sun/security/ec, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/native/libsunec, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/jdk.crypto.ec/share/native/libsunec, \
     FILES := $(shell $(FIND) $(JDK_TOPDIR)/src/share/native/sun/security/ec -type f)))
 
 # attach
 $(eval $(call SetupShuffleFiles,COPY_LIBATTACH_SOLARIS, \
     SRC := $(JDK_TOPDIR)/src/solaris/native/sun/tools/attach, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/solaris/native/libattach, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/jdk.tools.diag/solaris/native/libattach, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/solaris/native/sun/tools/attach/*)))
 
 $(eval $(call SetupShuffleFiles,COPY_LIBATTACH_WINDOWS, \
     SRC := $(JDK_TOPDIR)/src/windows/native/sun/tools/attach, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/windows/native/libattach, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/jdk.tools.diag/windows/native/libattach, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/windows/native/sun/tools/attach/*)))
 
 # dt_socket
 $(eval $(call SetupShuffleFiles,COPY_LIBDT_SOCKET_SHARE, \
     SRC := $(JDK_TOPDIR)/src/share/transport/socket, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/native/libdt_socket, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/jdk.tools.diag/share/native/libdt_socket, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/share/transport/socket/*)))
 
 $(eval $(call SetupShuffleFiles,COPY_LIBDT_SOCKET_SOLARIS, \
     SRC := $(JDK_TOPDIR)/src/solaris/transport/socket, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/solaris/native/libdt_socket, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/jdk.tools.diag/solaris/native/libdt_socket, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/solaris/transport/socket/*)))
 
 $(eval $(call SetupShuffleFiles,COPY_LIBDT_SOCKET_WINDOWS, \
     SRC := $(JDK_TOPDIR)/src/windows/transport/socket, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/windows/native/libdt_socket, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/jdk.tools.diag/windows/native/libdt_socket, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/windows/transport/socket/*)))
 
 # libdt_shmem
 $(eval $(call SetupShuffleFiles,COPY_LIBDT_SHMEM_SHARE_JDI, \
     SRC := $(JDK_TOPDIR)/src/share/native/com/sun/tools/jdi, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/native/libdt_shmem, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/jdk.tools/share/native/libdt_shmem, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/share/native/com/sun/tools/jdi/*)))
 
 $(eval $(call SetupShuffleFiles,COPY_LIBDT_SHMEM_SHARE, \
     SRC := $(JDK_TOPDIR)/src/share/transport/shmem, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/native/libdt_shmem, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/jdk.tools/share/native/libdt_shmem, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/share/transport/shmem/*)))
 
 $(eval $(call SetupShuffleFiles,COPY_LIBDT_SHMEM_WINDOWS, \
     SRC := $(JDK_TOPDIR)/src/windows/transport/shmem, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/windows/native/libdt_shmem, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/jdk.tools/windows/native/libdt_shmem, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/windows/transport/shmem/*)))
 
 # jdwp
 $(eval $(call SetupShuffleFiles,COPY_LIBJDWP_SHARE, \
     SRC := $(JDK_TOPDIR)/src/share/back, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/native/libjdwp, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/jdk.tools.diag/share/native/libjdwp, \
     FILES := $(shell $(FIND) $(JDK_TOPDIR)/src/share/back -type f)))
 
 $(eval $(call SetupShuffleFiles,COPY_LIBJDWP_SOLARIS, \
     SRC := $(JDK_TOPDIR)/src/solaris/back, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/solaris/native/libjdwp, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/jdk.tools.diag/solaris/native/libjdwp, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/solaris/back/*)))
 
 $(eval $(call SetupShuffleFiles,COPY_LIBJDWP_WINDOWS, \
     SRC := $(JDK_TOPDIR)/src/windows/back, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/windows/native/libjdwp, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/jdk.tools.diag/windows/native/libjdwp, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/windows/back/*)))
+
+$(eval $(call SetupShuffleFiles,COPY_JDK_TOOLS_DIAG_INCLUDE_SHARE, \
+    SRC := $(JDK_TOPDIR)/src/share/javavm/export, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/jdk.tools.diag/share/native/include, \
+    FILES := $(JDK_TOPDIR)/src/share/javavm/export/jdwpTransport.h))
 
 # jsdt
 $(eval $(call SetupShuffleFiles,COPY_LIBJSDT_SHARE, \
     SRC := $(JDK_TOPDIR)/src/share/native/sun/tracing/dtrace, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/native/libjsdt, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/jdk.tools.jre/share/native/libjsdt, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/share/native/sun/tracing/dtrace/*)))
 
 $(eval $(call SetupShuffleFiles,COPY_LIBJSDT_SOLARIS, \
     SRC := $(JDK_TOPDIR)/src/solaris/native/sun/tracing/dtrace, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/solaris/native/libjsdt, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/jdk.tools.jre/solaris/native/libjsdt, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/solaris/native/sun/tracing/dtrace/*)))
 
 $(eval $(call SetupShuffleFiles,COPY_LIBJSDT_WINDOWS, \
     SRC := $(JDK_TOPDIR)/src/windows/native/sun/tracing/dtrace, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/windows/native/libjsdt, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/jdk.tools.jre/windows/native/libjsdt, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/windows/native/sun/tracing/dtrace/*)))
 
 # instrument
 $(eval $(call SetupShuffleFiles,COPY_LIBINSTRUMENT_SHARE, \
     SRC := $(JDK_TOPDIR)/src/share/instrument, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/native/libinstrument, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.instrument/share/native/libinstrument, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/share/instrument/*)))
 
 $(eval $(call SetupShuffleFiles,COPY_LIBINSTRUMENT_SOLARIS, \
     SRC := $(JDK_TOPDIR)/src/solaris/instrument, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/solaris/native/libinstrument, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.instrument/solaris/native/libinstrument, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/solaris/instrument/*)))
 
 $(eval $(call SetupShuffleFiles,COPY_LIBINSTRUMENT_WINDOWS, \
     SRC := $(JDK_TOPDIR)/src/windows/instrument, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/windows/native/libinstrument, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.instrument/windows/native/libinstrument, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/windows/instrument/*)))
 
 # management
 $(eval $(call SetupShuffleFiles,COPY_LIBMANAGEMENT_SHARE, \
     SRC := $(JDK_TOPDIR)/src/share/native/sun/management, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/native/libmanagement, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.management/share/native/libmanagement, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/share/native/sun/management/*)))
 
 $(eval $(call SetupShuffleFiles,COPY_LIBMANAGEMENT_SOLARIS, \
     SRC := $(JDK_TOPDIR)/src/solaris/native/sun/management, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/solaris/native/libmanagement, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.management/solaris/native/libmanagement, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/solaris/native/sun/management/*)))
 
 $(eval $(call SetupShuffleFiles,COPY_LIBMANAGEMENT_WINDOWS, \
     SRC := $(JDK_TOPDIR)/src/windows/native/sun/management, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/windows/native/libmanagement, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.management/windows/native/libmanagement, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/windows/native/sun/management/*)))
 
 # hprof
@@ -757,33 +789,33 @@ $(eval $(call SetupShuffleFiles,COPY_LIBMANAGEMENT_WINDOWS, \
 # meta data in place.
 $(eval $(call SetupShuffleFiles,COPY_LIBHPROF_SHARE, \
     SRC := $(JDK_TOPDIR)/src/share/demo/jvmti/hprof, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/native/libhprof, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/jdk.tools.jre/share/native/libhprof, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/share/demo/jvmti/hprof/*.c \
         $(JDK_TOPDIR)/src/share/demo/jvmti/hprof/*.h)))
 
 $(eval $(call SetupShuffleFiles,COPY_LIBHPROF_SOLARIS, \
     SRC := $(JDK_TOPDIR)/src/solaris/demo/jvmti/hprof, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/solaris/native/libhprof, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/jdk.tools.jre/solaris/native/libhprof, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/solaris/demo/jvmti/hprof/*.c \
         $(JDK_TOPDIR)/src/solaris/demo/jvmti/hprof/*.h)))
 
 $(eval $(call SetupShuffleFiles,COPY_LIBHPROF_WINDOWS, \
     SRC := $(JDK_TOPDIR)/src/windows/demo/jvmti/hprof, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/windows/native/libhprof, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/jdk.tools.jre/windows/native/libhprof, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/windows/demo/jvmti/hprof/*.c \
         $(JDK_TOPDIR)/src/windows/demo/jvmti/hprof/*.h)))
 
 # java_crw_demo
 $(eval $(call SetupShuffleFiles,COPY_LIBJAVA_CRW_DEMO_SHARE, \
     SRC := $(JDK_TOPDIR)/src/share/demo/jvmti/java_crw_demo, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/native/libjava_crw_demo, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.instrument/share/native/libjava_crw_demo, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/share/demo/jvmti/java_crw_demo/*.c \
         $(JDK_TOPDIR)/src/share/demo/jvmti/java_crw_demo/*.h)))
 
 # mlib_image/mlib_image_v
 $(eval $(call SetupShuffleFiles,COPY_LIBMLIB_IMAGE_SHARE, \
     SRC := $(JDK_TOPDIR)/src/share/native/sun/awt/medialib, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/native/libmlib_image, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.desktop/share/native/libmlib_image, \
     FILES := $(filter-out \
         %awt_ImagingLib.c \
         %awt_ImagingLib.h \
@@ -795,7 +827,7 @@ $(eval $(call SetupShuffleFiles,COPY_LIBMLIB_IMAGE_SHARE, \
 
 $(eval $(call SetupShuffleFiles,COPY_LIBMLIB_IMAGE_SOLARIS, \
     SRC := $(JDK_TOPDIR)/src/solaris/native/sun/awt/medialib, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/solaris/native/libmlib_image, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.desktop/solaris/native/libmlib_image, \
     FILES := $(filter-out %mlib_v_ImageChannelExtract.c \
         %mlib_v_ImageChannelExtract_f.c \
         %mlib_v_ImageChannelInsert_34.c \
@@ -813,7 +845,7 @@ $(eval $(call SetupShuffleFiles,COPY_LIBMLIB_IMAGE_SOLARIS, \
 # awt
 $(eval $(call SetupShuffleFiles,COPY_LIBAWT_SHARE, \
     SRC := $(JDK_TOPDIR)/src/share/native, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/native/libawt, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.desktop/share/native/libawt, \
     FILES := $(filter-out \
         %GLXSurfaceData.c \
         %GLXGraphicsConfig.c \
@@ -830,7 +862,7 @@ $(eval $(call SetupShuffleFiles,COPY_LIBAWT_SHARE, \
 
 $(eval $(call SetupShuffleFiles,COPY_LIBAWT_SOLARIS, \
     SRC := $(JDK_TOPDIR)/src/solaris/native, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/solaris/native/libawt, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.desktop/solaris/native/libawt, \
     FILES := $(wildcard \
         $(JDK_TOPDIR)/src/solaris/native/sun/java2d/*.c \
         $(JDK_TOPDIR)/src/solaris/native/sun/java2d/*.h \
@@ -844,7 +876,7 @@ $(eval $(call SetupShuffleFiles,COPY_LIBAWT_SOLARIS, \
 
 $(eval $(call SetupShuffleFiles,COPY_LIBAWT_WINDOWS, \
     SRC := $(JDK_TOPDIR)/src/windows/native, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/windows/native/libawt, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.desktop/windows/native/libawt, \
     FILES := $(filter-out \
         %jawt.cpp \
         ,$(wildcard \
@@ -860,7 +892,7 @@ $(eval $(call SetupShuffleFiles,COPY_LIBAWT_WINDOWS, \
 # common-awt
 $(eval $(call SetupShuffleFiles,COPY_COMMON_AWT_SHARE, \
     SRC := $(JDK_TOPDIR)/src/share/native, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/native/common-awt, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.desktop/share/native/common, \
     FILES := $(wildcard \
         $(JDK_TOPDIR)/src/share/native/sun/awt/debug/* \
         $(JDK_TOPDIR)/src/share/native/sun/awt/utility/* \
@@ -877,7 +909,7 @@ $(eval $(call SetupShuffleFiles,COPY_COMMON_AWT_SHARE, \
 
 $(eval $(call SetupShuffleFiles,COPY_COMMON_AWT_SOLARIS, \
     SRC := $(JDK_TOPDIR)/src/solaris/native, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/solaris/native/common-awt, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.desktop/solaris/native/common, \
     FILES := $(wildcard \
         $(JDK_TOPDIR)/src/solaris/native/sun/awt/utility/*.h \
         $(JDK_TOPDIR)/src/solaris/native/sun/awt/initIDs.c \
@@ -908,7 +940,7 @@ $(eval $(call SetupShuffleFiles,COPY_COMMON_AWT_SOLARIS, \
 
 $(eval $(call SetupShuffleFiles,COPY_COMMON_AWT_WINDOWS, \
     SRC := $(JDK_TOPDIR)/src/windows/native, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/windows/native/common-awt, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.desktop/windows/native/common, \
     FILES := $(wildcard \
         $(JDK_TOPDIR)/src/windows/native/sun/awt/utility/*.h \
         $(JDK_TOPDIR)/src/windows/native/sun/awt/colordata.h \
@@ -919,7 +951,7 @@ $(eval $(call SetupShuffleFiles,COPY_COMMON_AWT_WINDOWS, \
 # awt_xawt
 $(eval $(call SetupShuffleFiles,COPY_LIBAWT_XAWT_SOLARIS, \
     SRC := $(JDK_TOPDIR)/src/solaris/native, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/solaris/native/libawt_xawt, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.desktop/solaris/native/libawt_xawt, \
     FILES := $(wildcard \
         $(JDK_TOPDIR)/src/solaris/native/sun/java2d/x11/XR* \
         $(JDK_TOPDIR)/src/solaris/native/sun/xawt/* \
@@ -952,7 +984,7 @@ $(eval $(call SetupShuffleFiles,COPY_LIBAWT_XAWT_SOLARIS, \
 # fontmanager
 $(eval $(call SetupShuffleFiles,COPY_LIBFONTMANAGER_SHARE, \
     SRC := $(JDK_TOPDIR)/src/share/native/sun/font, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/native/libfontmanager, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.desktop/share/native/libfontmanager, \
     FILES := $(filter-out \
         %AccelGlyphCache.c \
         %AccelGlyphCache.h \
@@ -967,7 +999,7 @@ $(eval $(call SetupShuffleFiles,COPY_LIBFONTMANAGER_SHARE, \
 
 $(eval $(call SetupShuffleFiles,COPY_LIBFONTMANAGER_SOLARIS, \
     SRC := $(JDK_TOPDIR)/src/solaris/native/sun/font, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/solaris/native/libfontmanager, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.desktop/solaris/native/libfontmanager, \
     FILES := $(filter-out \
         %X11FontScaler.h, \
         $(wildcard \
@@ -977,7 +1009,7 @@ $(eval $(call SetupShuffleFiles,COPY_LIBFONTMANAGER_SOLARIS, \
 
 $(eval $(call SetupShuffleFiles,COPY_LIBFONTMANAGER_WINDOWS, \
     SRC := $(JDK_TOPDIR)/src/windows/native/sun/font, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/windows/native/libfontmanager, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.desktop/windows/native/libfontmanager, \
     FILES := $(filter-out %AccelGlyphCache.c %AccelGlyphCache.h, \
         $(wildcard \
         $(JDK_TOPDIR)/src/windows/native/sun/font/*.c \
@@ -987,42 +1019,42 @@ $(eval $(call SetupShuffleFiles,COPY_LIBFONTMANAGER_WINDOWS, \
 # sunwjdga
 $(eval $(call SetupShuffleFiles,COPY_LIBSUNWJDGA_SOLARIS, \
     SRC := $(JDK_TOPDIR)/src/solaris/native/sun/jdga, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/solaris/native/libsunwjdga, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.desktop/solaris/native/libsunwjdga, \
     FILES := $(wildcard \
         $(JDK_TOPDIR)/src/solaris/native/sun/jdga/*)))
 
 # lcms
 $(eval $(call SetupShuffleFiles,COPY_LIBLCMS_SHARE, \
     SRC := $(JDK_TOPDIR)/src/share/native/sun/java2d/cmm/lcms, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/native/liblcms, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.desktop/share/native/liblcms, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/share/native/sun/java2d/cmm/lcms/*)))
 
 # jpeg
 $(eval $(call SetupShuffleFiles,COPY_LIBJPEG_SHARE, \
     SRC := $(JDK_TOPDIR)/src/share/native/sun/awt/image/jpeg, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/native/libjpeg, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.desktop/share/native/libjpeg, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/share/native/sun/awt/image/jpeg/*)))
 
 # jawt
 $(eval $(call SetupShuffleFiles,COPY_LIBJAWT_SOLARIS, \
     SRC := $(JDK_TOPDIR)/src/solaris/native/sun/awt, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/solaris/native/libjawt, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.desktop/solaris/native/libjawt, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/solaris/native/sun/awt/jawt.c)))
 
 $(eval $(call SetupShuffleFiles,COPY_LIBJAWT_WINDOWS, \
     SRC := $(JDK_TOPDIR)/src/windows/native/sun/windows, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/windows/native/libjawt, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.desktop/windows/native/libjawt, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/windows/native/sun/windows/jawt.cpp)))
 
 $(eval $(call SetupShuffleFiles,COPY_LIBJAWT_MACOSX, \
     SRC := $(JDK_TOPDIR)/src/macosx/native/sun/awt, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/macosx/native/libjawt, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.desktop/macosx/native/libjawt, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/macosx/native/sun/awt/jawt.m)))
 
 # awt_headless
 $(eval $(call SetupShuffleFiles,COPY_LIBAWT_HEADLESS_SOLARIS, \
     SRC := $(JDK_TOPDIR)/src/solaris/native, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/solaris/native/libawt_headless, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.desktop/solaris/native/libawt_headless, \
     FILES := $(wildcard \
         $(JDK_TOPDIR)/src/solaris/native/sun/awt/HeadlessToolkit.c \
         $(JDK_TOPDIR)/src/solaris/native/sun/awt/VDrawingArea.c \
@@ -1031,40 +1063,61 @@ $(eval $(call SetupShuffleFiles,COPY_LIBAWT_HEADLESS_SOLARIS, \
 # splashscreen
 $(eval $(call SetupShuffleFiles,COPY_LIBSPLASHSCREEN_SHARE, \
     SRC := $(JDK_TOPDIR)/src/share/native/sun/awt/splashscreen, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/native/libsplashscreen, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.desktop/share/native/libsplashscreen, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/share/native/sun/awt/splashscreen/*)))
 
 $(eval $(call SetupShuffleFiles,COPY_LIBSPLASHSCREEN_PNG_GIF_SHARE, \
     SRC := $(JDK_TOPDIR)/src/share/native/sun/awt, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/native/libsplashscreen, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.desktop/share/native/libsplashscreen, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/share/native/sun/awt/libpng/* \
         $(JDK_TOPDIR)/src/share/native/sun/awt/giflib/* )))
 
 $(eval $(call SetupShuffleFiles,COPY_LIBSPLASHSCREEN_SOLARIS, \
     SRC := $(JDK_TOPDIR)/src/solaris/native/sun/awt/splashscreen, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/solaris/native/libsplashscreen, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.desktop/solaris/native/libsplashscreen, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/solaris/native/sun/awt/splashscreen/*)))
 
 $(eval $(call SetupShuffleFiles,COPY_LIBSPLASHSCREEN_WINDOWS, \
     SRC := $(JDK_TOPDIR)/src/windows/native/sun/awt/splashscreen, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/windows/native/libsplashscreen, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.desktop/windows/native/libsplashscreen, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/windows/native/sun/awt/splashscreen/*)))
 
 $(eval $(call SetupShuffleFiles,COPY_LIBSPLASHSCREEN_MACOSX, \
     SRC := $(JDK_TOPDIR)/src/macosx/native/sun/awt/splashscreen, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/macosx/native/libsplashscreen, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.desktop/macosx/native/libsplashscreen, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/macosx/native/sun/awt/splashscreen/*)))
+
+# exported include files
+$(eval $(call SetupShuffleFiles,COPY_JAVA_DESKTOP_INCLUDE_SHARE, \
+    SRC := $(JDK_TOPDIR)/src/share/javavm/export, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.desktop/share/native/include, \
+    FILES := $(JDK_TOPDIR)/src/share/javavm/export/jawt.h))
+
+$(eval $(call SetupShuffleFiles,COPY_JAVA_DESKTOP_INCLUDE_SOLARIS, \
+    SRC := $(JDK_TOPDIR)/src/solaris/javavm/export, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.desktop/solaris/native/include, \
+    FILES := $(JDK_TOPDIR)/src/solaris/javavm/export/jawt_md.h))
+
+$(eval $(call SetupShuffleFiles,COPY_JAVA_DESKTOP_INCLUDE_WINDOWS, \
+    SRC := $(JDK_TOPDIR)/src/windows/javavm/export, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.desktop/windows/native/include, \
+    FILES := $(JDK_TOPDIR)/src/windows/javavm/export/jawt_md.h))
+
+$(eval $(call SetupShuffleFiles,COPY_JAVA_DESKTOP_INCLUDE_MACOSX, \
+    SRC := $(JDK_TOPDIR)/src/macosx/javavm/export, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.desktop/macosx/native/include, \
+    FILES := $(JDK_TOPDIR)/src/macosx/javavm/export/jawt_md.h))
 
 # osxui
 $(eval $(call SetupShuffleFiles,COPY_LIBOSXUI_MACOSX, \
     SRC := $(JDK_TOPDIR)/src/macosx/native/com/apple/laf, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/macosx/native/libosxui, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.desktop/macosx/native/libosxui, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/macosx/native/com/apple/laf/*)))
 
 # osxapp
 $(eval $(call SetupShuffleFiles,COPY_LIBOSXAPP_MACOSX, \
     SRC := $(JDK_TOPDIR)/src/macosx/native/sun/osxapp, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/macosx/native/libosxapp, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.base/macosx/native/libosxapp, \
     FILES := $(wildcard \
         $(JDK_TOPDIR)/src/macosx/native/sun/osxapp/*.m \
         $(JDK_TOPDIR)/src/macosx/native/sun/osxapp/*.h \
@@ -1073,7 +1126,7 @@ $(eval $(call SetupShuffleFiles,COPY_LIBOSXAPP_MACOSX, \
 # osx
 $(eval $(call SetupShuffleFiles,COPY_LIBOSX_MACOSX, \
     SRC := $(JDK_TOPDIR)/src/macosx/native, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/macosx/native/libosx, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.base/macosx/native/libosx, \
     FLATTEN := true, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/macosx/native/com/apple/concurrent/* \
         $(JDK_TOPDIR)/src/macosx/native/com/apple/eio/* \
@@ -1083,29 +1136,29 @@ $(eval $(call SetupShuffleFiles,COPY_LIBOSX_MACOSX, \
 # prefs
 $(eval $(call SetupShuffleFiles,COPY_LIBPREFS_SOLARIS, \
     SRC := $(JDK_TOPDIR)/src/solaris/native/java/util/prefs, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/solaris/native/libprefs, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.prefs/solaris/native/libprefs, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/solaris/native/java/util/prefs/* )))
 
 $(eval $(call SetupShuffleFiles,COPY_LIBPREFS_WINDOWS, \
     SRC := $(JDK_TOPDIR)/src/windows/native/java/util/prefs, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/windows/native/libprefs, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.prefs/windows/native/libprefs, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/windows/native/java/util/prefs/* )))
 
 $(eval $(call SetupShuffleFiles,COPY_LIBPREFS_MACOSX, \
     SRC := $(JDK_TOPDIR)/src/macosx/native/java/util/prefs, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/macosx/native/libprefs, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.prefs/macosx/native/libprefs, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/macosx/native/java/util/prefs/* )))
 
 # applescriptengine
 $(eval $(call SetupShuffleFiles,COPY_LIBAPPLESCRIPTENGINE_MACOSX, \
     SRC := $(JDK_TOPDIR)/src/macosx/native/apple/applescript, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/macosx/native/libapplescriptengine, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/javax.script/macosx/native/libapplescriptengine, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/macosx/native/apple/applescript/*)))
 
 # awt_lwawt
 $(eval $(call SetupShuffleFiles,COPY_LIBAWT_LWAWT_MACOSX, \
     SRC := $(JDK_TOPDIR)/src/macosx/native, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/macosx/native/libawt_lwawt, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.desktop/macosx/native/libawt_lwawt, \
     FILES := $(filter-out %jawt.m \
         ,$(wildcard \
         $(JDK_TOPDIR)/src/macosx/native/sun/awt/*.m \
@@ -1119,45 +1172,45 @@ $(eval $(call SetupShuffleFiles,COPY_LIBAWT_LWAWT_MACOSX, \
 # jsound
 $(eval $(call SetupShuffleFiles,COPY_LIBJSOUND_SHARE, \
     SRC := $(JDK_TOPDIR)/src/share/native/com/sun/media/sound, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/native/libjsound, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.desktop/share/native/libjsound, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/share/native/com/sun/media/sound/*)))
 
 $(eval $(call SetupShuffleFiles,COPY_LIBJSOUND_SOLARIS, \
     SRC := $(JDK_TOPDIR)/src/solaris/native/com/sun/media/sound, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/solaris/native/libjsound, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.desktop/solaris/native/libjsound, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/solaris/native/com/sun/media/sound/*)))
 
 $(eval $(call SetupShuffleFiles,COPY_LIBJSOUND_WINDOWS, \
     SRC := $(JDK_TOPDIR)/src/windows/native/com/sun/media/sound, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/windows/native/libjsound, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.desktop/windows/native/libjsound, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/windows/native/com/sun/media/sound/*)))
 
 $(eval $(call SetupShuffleFiles,COPY_LIBJSOUND_MACOSX, \
     SRC := $(JDK_TOPDIR)/src/macosx/native/com/sun/media/sound, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/macosx/native/libjsound, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.desktop/macosx/native/libjsound, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/macosx/native/com/sun/media/sound/*)))
 
 # launchers
 $(eval $(call SetupShuffleFiles,COPY_LAUNCHERS_SHARE, \
     SRC := $(JDK_TOPDIR)/src/share/bin, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/native/launchers, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.base/share/native/launchers, \
     FILES := $(JDK_TOPDIR)/src/share/bin/main.c \
         $(JDK_TOPDIR)/src/share/bin/defines.h))
 
 $(eval $(call SetupShuffleFiles,COPY_LAUNCHERS_SOLARIS, \
     SRC := $(JDK_TOPDIR)/src/solaris/bin, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/solaris/native/launchers, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.base/solaris/native/launchers, \
     FILES := $(JDK_TOPDIR)/src/solaris/bin/jexec.c))
 
 $(eval $(call SetupShuffleFiles,COPY_LAUNCHERS_MACOSX, \
     SRC := $(JDK_TOPDIR)/src/macosx/bin, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/macosx/native/launchers, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.base/macosx/native/launchers, \
     FILES := $(JDK_TOPDIR)/src/macosx/bin/jexec.c))
 
 # jspawnhelper
 $(eval $(call SetupShuffleFiles,COPY_JSPAWNHELPER_SOLARIS, \
     SRC := $(JDK_TOPDIR)/src/solaris/native/java/lang, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/solaris/native/jspawnhelper, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.base/solaris/native/jspawnhelper, \
     FILES := $(JDK_TOPDIR)/src/solaris/native/java/lang/jspawnhelper.c))
 
 ################################################################################
@@ -1165,7 +1218,7 @@ $(eval $(call SetupShuffleFiles,COPY_JSPAWNHELPER_SOLARIS, \
 
 $(eval $(call SetupShuffleFiles,COPY_CONF_BASE, \
     SRC := $(JDK_TOPDIR)/src/share/lib, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/conf/java.base, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.base/share/conf, \
     FILES := $(JDK_TOPDIR)/src/share/lib/calendars.properties \
         $(JDK_TOPDIR)/src/share/lib/hijrah-config-umalqura.properties \
         $(JDK_TOPDIR)/src/share/lib/security/java.policy \
@@ -1178,53 +1231,53 @@ $(eval $(call SetupShuffleFiles,COPY_CONF_BASE, \
 
 $(eval $(call SetupShuffleFiles,COPY_CONF_BASE_SOLARIS, \
     SRC := $(JDK_TOPDIR)/src/solaris/lib, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/solaris/conf/java.base, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.base/solaris/conf, \
     FILES := $(JDK_TOPDIR)/src/solaris/lib/sdp/sdp.conf.template))
 
 $(eval $(call SetupShuffleFiles,COPY_CONF_BASE_WINDOWS, \
     SRC := $(JDK_TOPDIR)/src/windows/lib, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/windows/conf/java.base, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.base/windows/conf, \
     FILES := $(JDK_TOPDIR)/src/windows/lib/tzmappings))
 
 $(eval $(call SetupShuffleFiles,COPY_CONF_MANAGEMENT, \
     SRC := $(JDK_TOPDIR)/src/share/lib/management, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/conf/java.management, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.management/share/conf, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/share/lib/management/*)))
 
 $(eval $(call SetupShuffleFiles,COPY_CONF_LOGGING, \
     SRC := $(JDK_TOPDIR)/src/share/lib, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/conf/java.logging, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.logging/share/conf, \
     FILES := $(JDK_TOPDIR)/src/share/lib/logging.properties))
 
 $(eval $(call SetupShuffleFiles,COPY_CONF_DESKTOP_PRINT, \
     SRC := $(JDK_TOPDIR)/src/share/classes/sun/print, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/conf/java.desktop, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.desktop/share/conf, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/share/classes/sun/print/*.properties*)))
 
 $(eval $(call SetupShuffleFiles,COPY_CONF_DESKTOP, \
     SRC := $(JDK_TOPDIR)/src/share/lib, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/share/conf/java.desktop, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.desktop/share/conf, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/share/lib/images/cursors/* \
         $(JDK_TOPDIR)/src/share/lib/cmm/lcms/*) \
         $(JDK_TOPDIR)/src/share/lib/sound.properties))
 
 $(eval $(call SetupShuffleFiles,COPY_CONF_DESKTOP_SOLARIS, \
     SRC := $(JDK_TOPDIR)/src/solaris/lib, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/solaris/conf/java.desktop, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.desktop/solaris/conf, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/solaris/lib/images/cursors/*) \
         $(JDK_TOPDIR)/src/solaris/lib/flavormap.properties \
         $(JDK_TOPDIR)/src/solaris/lib/content-types.properties))
 
 $(eval $(call SetupShuffleFiles,COPY_CONF_DESKTOP_WINDOWS, \
     SRC := $(JDK_TOPDIR)/src/windows/lib, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/windows/conf/java.desktop, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.desktop/windows/conf, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/windows/lib/images/cursors/*) \
         $(JDK_TOPDIR)/src/windows/lib/flavormap.properties \
         $(JDK_TOPDIR)/src/windows/lib/content-types.properties))
 
 $(eval $(call SetupShuffleFiles,COPY_CONF_DESKTOP_MACOSX, \
     SRC := $(JDK_TOPDIR)/src/macosx/lib, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/macosx/conf/java.desktop, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.desktop/macosx/conf, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/macosx/lib/images/cursors/*) \
         $(JDK_TOPDIR)/src/macosx/lib/flavormap.properties \
         $(JDK_TOPDIR)/src/macosx/lib/content-types.properties))

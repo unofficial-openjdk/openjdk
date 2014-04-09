@@ -32,7 +32,7 @@ include ProfileNames.gmk
 
 $(JDK_OUTPUTDIR)/gensrc$(JAVA_BASE_SUBDIR)/sun/misc/Version.java \
 $(PROFILE_VERSION_JAVA_TARGETS): \
-    $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/$(MODULES_SUBDIR)$(JAVA_BASE_SUBDIR)/sun/misc/Version.java.template
+    $(JDK_TOPDIR)/$(SRC_SUBDIR)$(JAVA_BASE_SUBDIR)/share/classes/sun/misc/Version.java.template
 	$(MKDIR) -p $(@D)
 	$(RM) $@ $@.tmp
 	$(ECHO) Generating sun/misc/Version.java $(call profile_version_name, $@)
@@ -51,7 +51,7 @@ GENSRC_JAVA_BASE += $(JDK_OUTPUTDIR)/gensrc$(JAVA_BASE_SUBDIR)/sun/misc/Version.
 # Version file for jconsole
 
 $(JDK_OUTPUTDIR)/gensrc$(JDK_TOOLS_SUBDIR)/sun/tools/jconsole/Version.java: \
-    $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/$(MODULES_SUBDIR)$(JDK_TOOLS_SUBDIR)/sun/tools/jconsole/Version.java.template
+    $(JDK_TOPDIR)/$(SRC_SUBDIR)$(JDK_TOOLS_SUBDIR)/share/classes/sun/tools/jconsole/Version.java.template
 	$(MKDIR) -p $(@D)
 	$(RM) $@ $@.tmp
 	$(ECHO) $(LOG_INFO) Generating sun/tools/jconsole/Version.java
@@ -71,7 +71,7 @@ ifeq ($(OPENJDK_TARGET_OS_API), posix)
   # the correct UNIXProcess.java over to $(JDK_OUTPUTDIR)/gensrc/java/lang/.
 
   $(JDK_OUTPUTDIR)/gensrc$(JAVA_BASE_SUBDIR)/java/lang/UNIXProcess.java: \
-      $(JDK_TOPDIR)/$(SRC_SUBDIR)/solaris/$(MODULES_SUBDIR)$(JAVA_BASE_SUBDIR)/java/lang/UNIXProcess.java.$(UPSUFFIX)
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)$(JAVA_BASE_SUBDIR)/solaris/classes/java/lang/UNIXProcess.java.$(UPSUFFIX)
 	$(ECHO) $(LOG_INFO) Copying UNIXProcess.java.$(OPENJDK_TARGET_OS) to java/lang/UNIXProcess.java
 	$(call install-file)
 	$(CHMOD) u+rw $@
@@ -100,7 +100,7 @@ $(eval $(call SetupNativeCompilation,BUILD_GENSRC_SOR_EXE, \
     OUTPUT_DIR := $(GENSRC_SOR_BIN), \
     PROGRAM := genSocketOptionRegistry))
 
-SOR_PREGEN_FILE := $(JDK_TOPDIR)/src/closed/solaris/$(MODULES_SUBDIR)$(JAVA_BASE_SUBDIR)/sun/nio/ch/SocketOptionRegistry-$(OPENJDK_TARGET_OS)-$(OPENJDK_TARGET_CPU_ARCH).java.template
+SOR_PREGEN_FILE := $(JDK_TOPDIR)/src/closed$(JAVA_BASE_SUBDIR)/solaris/classes/sun/nio/ch/SocketOptionRegistry-$(OPENJDK_TARGET_OS)-$(OPENJDK_TARGET_CPU_ARCH).java.template
 
 ifeq ($(wildcard $(SOR_PREGEN_FILE)), )
   $(JDK_OUTPUTDIR)/gensrc$(JAVA_BASE_SUBDIR)/sun/nio/ch/SocketOptionRegistry.java: $(BUILD_GENSRC_SOR_EXE)
@@ -138,7 +138,7 @@ ifneq ($(OPENJDK_TARGET_OS), windows)
       OUTPUT_DIR := $(GENSRC_UC_BIN), \
       PROGRAM := genUnixConstants))
 
-  UC_PREGEN_FILE := $(JDK_TOPDIR)/src/closed/solaris/$(MODULES_SUBDIR)$(JAVA_BASE_SUBDIR)/sun/nio/fs/UnixConstants-$(OPENJDK_TARGET_OS)-$(OPENJDK_TARGET_CPU_ARCH).java.template
+  UC_PREGEN_FILE := $(JDK_TOPDIR)/src/closed$(JAVA_BASE_SUBDIR)/solaris/classes/sun/nio/fs/UnixConstants-$(OPENJDK_TARGET_OS)-$(OPENJDK_TARGET_CPU_ARCH).java.template
 
   ifeq ($(wildcard $(UC_PREGEN_FILE)), )
     $(JDK_OUTPUTDIR)/gensrc$(JAVA_BASE_SUBDIR)/sun/nio/fs/UnixConstants.java: $(BUILD_GENSRC_UC_EXE)
@@ -193,7 +193,7 @@ ifndef OPENJDK
   ifeq ($(OPENJDK_TARGET_OS), windows)
 
     AB_GENSRC_DIR := $(JDK_OUTPUTDIR)/gensrc_ab
-    AB_SRC_DIR := $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/windows/$(MODULES_SUBDIR)$(JAVA_DESKTOP_SUBDIR)/com/sun/java/accessibility
+    AB_SRC_DIR := $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed$(JAVA_DESKTOP_SUBDIR)/windows/classes/com/sun/java/accessibility
 
     ifeq ($(OPENJDK_TARGET_CPU_BITS), 32)
       $(AB_GENSRC_DIR)/32bit/com/sun/java/accessibility/AccessBridgeLoader.java: \

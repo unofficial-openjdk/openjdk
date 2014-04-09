@@ -111,11 +111,14 @@ public class GenModuleGraph extends Task {
 
         for (String p : paths) {
             Path src = Paths.get(p);
-            if (Files.exists(src)) {
+            /*if (Files.exists(src)) {
                 List<ModuleConfig> result = Files.list(src)
                      .filter(m -> Files.exists(m.resolve("module-info.java")))
                      .map(m -> readFile(m)).collect(Collectors.toList());
                 configs.addAll(result);
+                }*/
+            if (Files.exists(src.resolve("module-info.java"))) {
+                configs.add(readFile(src));
             }
         }
         return configs;

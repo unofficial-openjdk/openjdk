@@ -26,7 +26,7 @@
 ifeq ($(OPENJDK_TARGET_OS), macosx)
 
   ifeq ($(JIGSAW), true)
-    LIBAPPLESCRIPTENGINE_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/macosx/native/libapplescriptengine
+    LIBAPPLESCRIPTENGINE_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/javax.script/macosx/native/libapplescriptengine
   else
     LIBAPPLESCRIPTENGINE_SRC := $(JDK_TOPDIR)/src/macosx/native/apple/applescript
   endif
@@ -63,7 +63,7 @@ endif
 ifeq ($(OPENJDK_TARGET_OS), macosx)
 
   ifeq ($(JIGSAW), true)
-    LIBOSXAPP_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/macosx/native/libosxapp
+    LIBOSXAPP_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/macosx/native/libosxapp
   else
     LIBOSXAPP_SRC := $(JDK_TOPDIR)/src/macosx/native/sun/osxapp
   endif
@@ -108,18 +108,18 @@ ifeq ($(OPENJDK_TARGET_OS), macosx)
 
   ifeq ($(JIGSAW), true)
     # TODO JIGSAW: Why is libosx dependant on java.desktop?
-    LIBOSX_DIRS := $(JDK_TOPDIR)/$(SRC_SUBDIR)/macosx/native/libosx
+    LIBOSX_DIRS := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/macosx/native/libosx
     LIBOSX_CFLAGS := -I$(LIBOSX_DIRS) \
-        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/macosx/native/libosxapp \
+        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/macosx/native/libosxapp \
         $(addprefix -I, $(BUILD_LIBJAVA_SRC)) \
         -I$(JDK_OUTPUTDIR)/gensrc_headers/java.desktop \
         -I$(JDK_OUTPUTDIR)/gensrc_headers/jdk.deploy.osx \
         #
   else
-  LIBOSX_DIRS := \
-      $(JDK_TOPDIR)/src/macosx/native/com/apple/concurrent \
-      $(JDK_TOPDIR)/src/macosx/native/com/apple/eio \
-      $(JDK_TOPDIR)/src/macosx/native/apple/security \
+    LIBOSX_DIRS := \
+        $(JDK_TOPDIR)/src/macosx/native/com/apple/concurrent \
+        $(JDK_TOPDIR)/src/macosx/native/com/apple/eio \
+        $(JDK_TOPDIR)/src/macosx/native/apple/security \
         $(JDK_TOPDIR)/src/macosx/native/apple/launcher \
         #
     LIBOSX_CFLAGS := \
@@ -167,7 +167,7 @@ ifndef OPENJDK
   ifeq ($(OPENJDK_TARGET_OS), windows)
 
     ifeq ($(JIGSAW), true)
-      ACCESSBRIDGE_SRCDIR := $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/windows/native/libaccessbridge
+      ACCESSBRIDGE_SRCDIR := $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/java.desktop/windows/native/libaccessbridge
       ACCESSBRIDGE_CFLAGS := -I$(JDK_OUTPUTDIR)/gensrc_headers/java.desktop
     else
       ACCESSBRIDGE_SRCDIR := $(JDK_TOPDIR)/src/closed/windows/native/sun/bridge

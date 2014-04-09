@@ -34,11 +34,11 @@ WIN_AWT_LIB := $(JDK_OUTPUTDIR)/objs/libawt/awt.lib
 ##########################################################################################
 
 ifeq ($(JIGSAW), true)
-  BUILD_LIBMLIB_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libmlib_image \
-      $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/common-awt/sun/awt/medialib
+  BUILD_LIBMLIB_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/share/native/libmlib_image \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/share/native/common/sun/awt/medialib
   BUILD_LIBMLIB_CFLAGS := -D__USE_J2D_NAMES -D__MEDIALIB_OLD_NAMES \
       $(addprefix -I, $(BUILD_LIBMLIB_SRC)) \
-      -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/native/libmlib_image
+      -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/$(OPENJDK_TARGET_OS_API_DIR)/native/libmlib_image
 else
   BUILD_LIBMLIB_SRC := $(JDK_TOPDIR)/src/share/native/sun/awt/medialib
   BUILD_LIBMLIB_CFLAGS := -D__USE_J2D_NAMES -D__MEDIALIB_OLD_NAMES \
@@ -92,12 +92,12 @@ DESKTOP_LIBRARIES += $(BUILD_LIBMLIB_IMAGE)
 ifeq ($(OPENJDK_TARGET_OS)-$(OPENJDK_TARGET_CPU_ARCH), solaris-sparc)
 
   ifeq ($(JIGSAW), true)
-    LIBMLIB_IMAGE_V_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libmlib_image \
-        $(JDK_TOPDIR)/$(SRC_SUBDIR)/solaris/native/libmlib_image \
-        $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/common-awt/sun/awt/medialib \
-        $(JDK_TOPDIR)/$(SRC_SUBDIR)/solaris/native/common-awt/sun/awt/medialib \
+    LIBMLIB_IMAGE_V_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/share/native/libmlib_image \
+        $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/solaris/native/libmlib_image \
+        $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/share/native/common/sun/awt/medialib \
+        $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/solaris/native/common/sun/awt/medialib \
         #
-    LIBMLIB_IMAGE_V_CFLAGS := $(JDK_TOPDIR)/$(SRC_SUBDIR)/solaris/native/libmlib_image/vis_$(OPENJDK_TARGET_CPU_BITS).il \
+    LIBMLIB_IMAGE_V_CFLAGS := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/solaris/native/libmlib_image/vis_$(OPENJDK_TARGET_CPU_BITS).il \
         $(addprefix -I, $(LIBMLIB_IMAGE_V_SRC)) \
         #
   else
@@ -164,14 +164,14 @@ endif
 ##########################################################################################
 
 ifeq ($(JIGSAW), true)
-  LIBAWT_DIRS := $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libawt \
-      $(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/native/libawt \
-      $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/common-awt/sun/awt/debug \
-      $(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/native/common-awt/sun/awt \
+  LIBAWT_DIRS := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/share/native/libawt \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/$(OPENJDK_TARGET_OS_API_DIR)/native/libawt \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/share/native/common/sun/awt/debug \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/$(OPENJDK_TARGET_OS_API_DIR)/native/common/sun/awt \
       #
 
   ifeq ($(OPENJDK_TARGET_OS), windows)
-    LIBAWT_DIRS += $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/common-awt/sun/awt/utility
+    LIBAWT_DIRS += $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/share/native/common/sun/awt/utility
   else
     LIBAWT_EXFILES := sun/java2d/ShaderList.c
   endif
@@ -186,7 +186,7 @@ ifeq ($(JIGSAW), true)
 
   LIBAWT_CFLAGS += -I$(JDK_OUTPUTDIR)/gensrc_headers/java.desktop \
       $(addprefix -I, $(shell find $(LIBAWT_DIRS) -type d)) \
-      -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/native/common-awt/sun/awt \
+      -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/$(OPENJDK_TARGET_OS_API_DIR)/native/common/sun/awt \
       $(addprefix -I, $(BUILD_LIBJAVA_SRC) $(BUILD_LIBMLIB_IMAGE_SRC))
       #
 else
@@ -318,8 +318,8 @@ ifeq ($(OPENJDK_TARGET_OS)-$(OPENJDK_TARGET_CPU_ARCH), solaris-sparc)
   LIBAWT_CFLAGS += -xarch=sparcvis
 
   ifeq ($(JIGSAW), true)
-    LIBAWT_CFLAGS += $(JDK_TOPDIR)/$(SRC_SUBDIR)/solaris/native/libmlib_image/vis_$(OPENJDK_TARGET_CPU_BITS).il
-    LIBAWT_DIRS += $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/common-awt/sun/awt/medialib
+    LIBAWT_CFLAGS += $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/solaris/native/libmlib_image/vis_$(OPENJDK_TARGET_CPU_BITS).il
+    LIBAWT_DIRS += $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/share/native/common/sun/awt/medialib
     LIBAWT_EXFILES += sun/java2d/loops/MapAccelFunc.c
   else
     LIBAWT_CFLAGS += $(JDK_TOPDIR)/src/solaris/native/sun/awt/medialib/vis_$(OPENJDK_TARGET_CPU_BITS).il
@@ -383,9 +383,9 @@ ifeq ($(OPENJDK_TARGET_OS)-$(OPENJDK_TARGET_CPU_ARCH), solaris-sparc)
 else
   ifeq ($(JIGSAW), true)
     LIBAWT_EXCLUDES += \
-        $(JDK_TOPDIR)/$(SRC_SUBDIR)/solaris/native/libawt/sun/awt/medialib \
-        $(JDK_TOPDIR)/$(SRC_SUBDIR)/solaris/native/libawt/sun/java2d/loops \
-        $(JDK_TOPDIR)/$(SRC_SUBDIR)/solaris/native/common-awt/sun/awt/medialib \
+        $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/solaris/native/libawt/sun/awt/medialib \
+        $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/solaris/native/libawt/sun/java2d/loops \
+        $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/solaris/native/common/sun/awt/medialib \
         #
   else
     LIBAWT_FILES += MapAccelFunc.c
@@ -400,12 +400,12 @@ LIBAWT_LANG := C
 
 ifeq ($(OPENJDK_TARGET_OS), windows)
   ifeq ($(JIGSAW), true)
-    LIBAWT_DIRS += $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/common-awt/sun/font \
-        $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/common-awt/sun/java2d/opengl \
+    LIBAWT_DIRS += $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/share/native/common/sun/font \
+        $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/share/native/common/sun/java2d/opengl \
     # Why does libawt need java.base headers?
-    LIBAWT_CFLAGS += -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/common-awt/sun/font \
-        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/common-awt/sun/java2d/opengl \
-        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/native/common-awt/sun/java2d/opengl \
+    LIBAWT_CFLAGS += -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/share/native/common/sun/font \
+        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/share/native/common/sun/java2d/opengl \
+        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/$(OPENJDK_TARGET_OS_API_DIR)/native/common/sun/java2d/opengl \
         -I$(JDK_OUTPUTDIR)/gensrc_headers/java.base \
         #
     LIBAWT_EXFILES += \
@@ -552,29 +552,29 @@ ifeq ($(findstring $(OPENJDK_TARGET_OS),windows macosx),)
 
     ifeq ($(JIGSAW), true)
       LIBAWT_XAWT_DIRS := \
-          $(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/native/libawt_xawt \
-          $(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/native/libjawt \
-          $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/common-awt/sun/awt/debug \
-          $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/common-awt/sun/awt/utility \
-          $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/common-awt/sun/font \
-          $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/common-awt/sun/java2d/opengl \
-          $(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/native/common-awt/sun/java2d/opengl \
-          $(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/native/common-awt/sun/java2d/x11 \
-          $(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/native/common-awt/sun/awt \
+          $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/$(OPENJDK_TARGET_OS_API_DIR)/native/libawt_xawt \
+          $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/$(OPENJDK_TARGET_OS_API_DIR)/native/libjawt \
+          $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/share/native/common/sun/awt/debug \
+          $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/share/native/common/sun/awt/utility \
+          $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/share/native/common/sun/font \
+          $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/share/native/common/sun/java2d/opengl \
+          $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/$(OPENJDK_TARGET_OS_API_DIR)/native/common/sun/java2d/opengl \
+          $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/$(OPENJDK_TARGET_OS_API_DIR)/native/common/sun/java2d/x11 \
+          $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/$(OPENJDK_TARGET_OS_API_DIR)/native/common/sun/awt \
           #
 
       LIBAWT_XAWT_EXCLUDES := medialib
 
       LIBAWT_XAWT_CFLAGS := $(addprefix -I, $(shell $(FIND) $(LIBAWT_XAWT_DIRS) -type d)) \
           -I$(JDK_OUTPUTDIR)/gensrc_headers/java.desktop \
-          -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libawt/sun/java2d \
-          -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/native/libawt/sun/java2d \
-          -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libawt/sun/java2d/loops \
-          -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libawt/sun/java2d/pipe \
-          -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libawt/sun/awt/image/cvutils \
-          -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libawt/sun/awt/image \
-          -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/native/libsunwjdga \
-          -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/native/common-awt/sun/font \
+          -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/share/native/libawt/sun/java2d \
+          -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/$(OPENJDK_TARGET_OS_API_DIR)/native/libawt/sun/java2d \
+          -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/share/native/libawt/sun/java2d/loops \
+          -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/share/native/libawt/sun/java2d/pipe \
+          -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/share/native/libawt/sun/awt/image/cvutils \
+          -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/share/native/libawt/sun/awt/image \
+          -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/$(OPENJDK_TARGET_OS_API_DIR)/native/libsunwjdga \
+          -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/$(OPENJDK_TARGET_OS_API_DIR)/native/common/sun/font \
           $(addprefix -I, $(BUILD_LIBJAVA_SRC))
           #
 
@@ -730,10 +730,10 @@ endif
 ##########################################################################################
 
 ifeq ($(JIGSAW), true)
-  LIBLCMS_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/liblcms
+  LIBLCMS_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/share/native/liblcms
   LIBLCMS_CPPFLAGS := -I$(JDK_OUTPUTDIR)/gensrc_headers/java.desktop \
-      -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libawt/sun/java2d \
-      -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/common-awt/sun/awt/debug \
+      -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/share/native/libawt/sun/java2d \
+      -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/share/native/common/sun/awt/debug \
       $(addprefix -I, $(BUILD_LIBJAVA_SRC)) \
       #
 else
@@ -776,9 +776,9 @@ $(BUILD_LIBLCMS): $(BUILD_LIBAWT)
 ##########################################################################################
 
 ifeq ($(JIGSAW), true)
-  LIBJPEG_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libjpeg
+  LIBJPEG_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/share/native/libjpeg
 else
-  LIBJPEG_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/sun/awt/image/jpeg
+  LIBJPEG_SRC := $(JDK_TOPDIR)/src/share/native/sun/awt/image/jpeg
 endif
 
 ifdef OPENJDK
@@ -786,7 +786,7 @@ ifdef OPENJDK
 else
   BUILD_LIBJPEG_MAPFILE := $(JDK_TOPDIR)/make/mapfiles/libjpeg/mapfile-vers-closed
   ifeq ($(JIGSAW), true)
-    LIBJPEG_SRC += $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/share/native/libjpeg
+    LIBJPEG_SRC += $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/java.desktop/share/native/libjpeg
   else
     LIBJPEG_SRC += $(JDK_TOPDIR)/src/closed/share/native/sun/awt/image/jpeg
   endif
@@ -843,15 +843,15 @@ DESKTOP_LIBRARIES += $(BUILD_LIBJPEG)
 ##########################################################################################
 
 ifeq ($(JIGSAW), true)
-  LIBFONTMANAGER_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libfontmanager \
-      $(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/native/libfontmanager
+  LIBFONTMANAGER_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/share/native/libfontmanager \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/$(OPENJDK_TARGET_OS_API_DIR)/native/libfontmanager
   LIBFONTMANAGER_CFLAGS := \
       $(addprefix -I, $(shell $(FIND) \
         $(LIBFONTMANAGER_SRC) \
-        $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libawt \
-        $(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/native/libawt \
-        $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/common-awt \
-        $(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/native/common-awt -type d)) \
+        $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/share/native/libawt \
+        $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/$(OPENJDK_TARGET_OS_API_DIR)/native/libawt \
+        $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/share/native/common \
+        $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/$(OPENJDK_TARGET_OS_API_DIR)/native/common -type d)) \
       -I$(JDK_OUTPUTDIR)/gensrc_headers/java.desktop \
       $(addprefix -I, $(BUILD_LIBJAVA_SRC)) \
       #
@@ -873,7 +873,7 @@ endif
 
 ifndef OPENJDK
   ifeq ($(JIGSAW), true)
-    LIBFONTMANAGER_CFLAGS += -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/share/native/libt2k
+    LIBFONTMANAGER_CFLAGS += -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/java.desktop/share/native/libt2k
   else
     LIBFONTMANAGER_CFLAGS += -I$(JDK_TOPDIR)/src/closed/share/native/sun/font/t2k
   endif
@@ -892,7 +892,7 @@ ifeq ($(OPENJDK_TARGET_OS), windows)
       X11TextRenderer.c
   LIBFONTMANAGER_OPTIMIZATION := HIGHEST
   ifeq ($(JIGSAW), true)
-    LIBFONTMANAGER_CFLAGS += -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/native/libawt/sun/windows
+    LIBFONTMANAGER_CFLAGS += -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/$(OPENJDK_TARGET_OS_API_DIR)/native/libawt/sun/windows
   else
     LIBFONTMANAGER_CFLAGS += -I$(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/sun/windows
   endif
@@ -956,15 +956,15 @@ DESKTOP_LIBRARIES += $(BUILD_LIBFONTMANAGER)
 ifndef OPENJDK
 
   ifeq ($(JIGSAW), true)
-    LIBT2K_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/share/native/libt2k
+    LIBT2K_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/java.desktop/share/native/libt2k
     LIBT2K_CFLAGS := $(addprefix -I, $(LIBT2K_SRC)) \
-        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/share/native/libt2k/t2k \
-        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libfontmanager \
-        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libawt/sun/java2d \
-        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libawt/sun/java2d/loops \
-        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/common-awt/sun/font \
-        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libjava \
-        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/native/libjava \
+        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/java.desktop/share/native/libt2k/t2k \
+        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/share/native/libfontmanager \
+        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/share/native/libawt/sun/java2d \
+        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/share/native/libawt/sun/java2d/loops \
+        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/share/native/common/sun/font \
+        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/libjava \
+        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/$(OPENJDK_TARGET_OS_API_DIR)/native/libjava \
         -I$(JDK_OUTPUTDIR)/gensrc_headers/java.desktop \
         #
   else
@@ -1016,12 +1016,12 @@ endif
 
 ifeq ($(OPENJDK_TARGET_OS), windows)
   ifeq ($(JIGSAW), true)
-    LIBJAWT_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/native/libjawt
-    LIBJAWT_CFLAGS := -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/native/libawt/sun/windows \
-        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/common-awt/sun/awt/debug \
-        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libawt/sun/java2d \
-        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libawt/sun/awt/image/cvutils \
-        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/native/libawt/sun/java2d/windows \
+    LIBJAWT_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/$(OPENJDK_TARGET_OS_API_DIR)/native/libjawt
+    LIBJAWT_CFLAGS := -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/$(OPENJDK_TARGET_OS_API_DIR)/native/libawt/sun/windows \
+        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/share/native/common/sun/awt/debug \
+        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/share/native/libawt/sun/java2d \
+        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/share/native/libawt/sun/awt/image/cvutils \
+        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/$(OPENJDK_TARGET_OS_API_DIR)/native/libawt/sun/java2d/windows \
         -I$(JDK_OUTPUTDIR)/gensrc_headers/java.desktop \
         $(addprefix -I, $(BUILD_LIBJAVA_SRC)) \
         #
@@ -1072,12 +1072,12 @@ else # OPENJDK_TARGET_OS not windows
 
   ifeq ($(JIGSAW), true)
     ifeq ($(OPENJDK_TARGET_OS), macosx)
-      LIBJAWT_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/macosx/native/libjawt
+      LIBJAWT_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/macosx/native/libjawt
     else
-      LIBJAWT_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/native/libjawt
+      LIBJAWT_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/$(OPENJDK_TARGET_OS_API_DIR)/native/libjawt
     endif
     LIBJAWT_CFLAGS := \
-        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/native/common-awt/sun/awt \
+        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/$(OPENJDK_TARGET_OS_API_DIR)/native/common/sun/awt \
         $(addprefix -I, $(BUILD_LIBJAVA_SRC)) \
         #
   else
@@ -1148,12 +1148,12 @@ DESKTOP_LIBRARIES += $(BUILD_LIBJAWT)
 ifndef OPENJDK
 
   ifeq ($(JIGSAW), true)
-    LIBKCMS_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/share/native/libkcms \
-        $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/$(OPENJDK_TARGET_OS_API_DIR)/native/libkcms \
+    LIBKCMS_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/java.desktop/share/native/libkcms \
+        $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/java.desktop/$(OPENJDK_TARGET_OS_API_DIR)/native/libkcms \
         #
     LIBKCMS_CFLAGS += $(addprefix -I, $(LIBKCMS_SRC)) \
-        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libjava \
-        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/native/libjava \
+        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/libjava \
+        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/$(OPENJDK_TARGET_OS_API_DIR)/native/libjava \
         -I$(JDK_OUTPUTDIR)/gensrc_headers/java.desktop \
         #
   else
@@ -1218,7 +1218,7 @@ ifndef OPENJDK
       ifeq ($(shell if test "$(OS_VERSION_MAJOR)" -eq 5 -a "$(OS_VERSION_MINOR)" -le 10; then $(ECHO) ok; fi), ok)
 
         ifeq ($(JIGSAW), true)
-          LIBSUNWJDGA_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/solaris/native/libsunwjdga
+          LIBSUNWJDGA_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/solaris/native/libsunwjdga
         else
           LIBSUNWJDGA_SRC := $(JDK_TOPDIR)/src/solaris/native/sun/jdga
         endif
@@ -1259,28 +1259,28 @@ ifeq ($(BUILD_HEADLESS), true)
   ifeq ($(findstring $(OPENJDK_TARGET_OS), windows macosx),)
 
     ifeq ($(JIGSAW), true)
-      LIBAWT_HEADLESS_DIRS := $(JDK_TOPDIR)/$(SRC_SUBDIR)/solaris/native/libawt_headless/sun/awt \
-          $(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/native/common-awt/sun/awt \
-          $(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/native/common-awt/sun/java2d/opengl \
-          $(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/native/common-awt/sun/java2d/x11 \
-          $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/common-awt/sun/java2d/opengl \
-          $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/common-awt/sun/font \
+      LIBAWT_HEADLESS_DIRS := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/solaris/native/libawt_headless/sun/awt \
+          $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/$(OPENJDK_TARGET_OS_API_DIR)/native/common/sun/awt \
+          $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/$(OPENJDK_TARGET_OS_API_DIR)/native/common/sun/java2d/opengl \
+          $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/$(OPENJDK_TARGET_OS_API_DIR)/native/common/sun/java2d/x11 \
+          $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/share/native/common/sun/java2d/opengl \
+          $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/share/native/common/sun/font \
           #
 
       LIBAWT_HEADLESS_EXCLUDES := medialib
 
       LIBAWT_HEADLESS_CFLAGS := -I$(JDK_OUTPUTDIR)/gensrc_headers/java.desktop \
           $(addprefix -I, $(LIBAWT_HEADLESS_DIRS)) \
-          -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libawt/sun/java2d \
-          -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libawt/sun/java2d/loops \
-          -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libawt/sun/awt/image/cvutils \
-          -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libawt/sun/java2d/pipe \
-          -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libawt/sun/awt/image \
-          -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/native/libawt/sun/java2d \
-          -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/common-awt/sun/font \
-          -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/common-awt/sun/awt/debug \
-          -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/native/common-awt/sun/font \
-          -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/native/libsunwjdga/ \
+          -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/share/native/libawt/sun/java2d \
+          -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/share/native/libawt/sun/java2d/loops \
+          -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/share/native/libawt/sun/awt/image/cvutils \
+          -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/share/native/libawt/sun/java2d/pipe \
+          -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/share/native/libawt/sun/awt/image \
+          -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/$(OPENJDK_TARGET_OS_API_DIR)/native/libawt/sun/java2d \
+          -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/share/native/common/sun/font \
+          -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/share/native/common/sun/awt/debug \
+          -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/$(OPENJDK_TARGET_OS_API_DIR)/native/common/sun/font \
+          -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/$(OPENJDK_TARGET_OS_API_DIR)/native/libsunwjdga/ \
           $(addprefix -I, $(BUILD_LIBJAVA_SRC)) \
           #
       LIBAWT_HEADLESS_EXFILES := initIDs.c
@@ -1393,9 +1393,9 @@ ifndef BUILD_HEADLESS_ONLY
 
   ifeq ($(JIGSAW), true)
     LIBSPLASHSCREEN_DIRS := \
-      $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libjpeg \
-      $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libsplashscreen \
-      $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libsplashscreen/libpng \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/share/native/libjpeg \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/share/native/libsplashscreen \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/share/native/libsplashscreen/libpng \
       #
   else
     LIBSPLASHSCREEN_DIRS := \
@@ -1411,7 +1411,7 @@ ifndef BUILD_HEADLESS_ONLY
     endif
   else
     ifeq ($(JIGSAW), true)
-      LIBSPLASHSCREEN_CFLAGS += -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libsplashscreen/giflib
+      LIBSPLASHSCREEN_CFLAGS += -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/share/native/libsplashscreen/giflib
     else
       LIBSPLASHSCREEN_DIRS += $(JDK_TOPDIR)/src/share/native/sun/awt/giflib
     endif
@@ -1424,13 +1424,13 @@ ifndef BUILD_HEADLESS_ONLY
 
   ifneq ($(OPENJDK_TARGET_OS), macosx)
     ifeq ($(JIGSAW), true)
-      LIBSPLASHSCREEN_DIRS += $(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/native/libsplashscreen
+      LIBSPLASHSCREEN_DIRS += $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/$(OPENJDK_TARGET_OS_API_DIR)/native/libsplashscreen
     else
       LIBSPLASHSCREEN_DIRS += $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/sun/awt/splashscreen
     endif
   else
     ifeq ($(JIGSAW), true)
-      LIBSPLASHSCREEN_DIRS += $(JDK_TOPDIR)/$(SRC_SUBDIR)/macosx/native/libsplashscreen
+      LIBSPLASHSCREEN_DIRS += $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/macosx/native/libsplashscreen
     else
       LIBSPLASHSCREEN_DIRS += $(JDK_TOPDIR)/src/macosx/native/sun/awt/splashscreen
     endif
@@ -1445,7 +1445,7 @@ ifndef BUILD_HEADLESS_ONLY
     LIBSPLASHSCREEN_CFLAGS += -F/System/Library/Frameworks/JavaVM.framework/Frameworks
     LIBSPLASHSCREEN_CFLAGS += -DWITH_MACOSX
     ifeq ($(JIGSAW), true)
-      LIBSPLASHSCREEN_CFLAGS += -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/macosx/native/libosxapp
+      LIBSPLASHSCREEN_CFLAGS += -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/macosx/native/libosxapp
     else
       LIBSPLASHSCREEN_CFLAGS += -I$(JDK_TOPDIR)/src/macosx/native/sun/osxapp
     endif
@@ -1470,7 +1470,7 @@ ifndef BUILD_HEADLESS_ONLY
 
   ifneq ($(USE_EXTERNAL_LIBZ), true)
     ifeq ($(JIGSAW), true)
-      LIBSPLASHSCREEN_DIRS += $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libzip/zlib-1.2.5
+      LIBSPLASHSCREEN_DIRS += $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/libzip/zlib-1.2.5
     else
       LIBSPLASHSCREEN_DIRS += $(JDK_TOPDIR)/src/share/native/java/util/zip/zlib-1.2.5
     endif
@@ -1529,11 +1529,11 @@ endif
 ifndef OPENJDK
 
   ifeq ($(JIGSAW), true)
-    LIBDCPR_SRC_DIRS := $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/share/native/libdcpr
+    LIBDCPR_SRC_DIRS := $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/java.desktop/share/native/libdcpr
     LIBDCPR_CFLAGS := $(addprefix -I, $(shell $(FIND) $(LIBDCPR_SRC_DIRS) -type d)) \
-        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libawt/sun/java2d/pipe \
-        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libjava \
-        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/native/libjava \
+        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/share/native/libawt/sun/java2d/pipe \
+        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/libjava \
+        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/$(OPENJDK_TARGET_OS_API_DIR)/native/libjava \
         -I$(JDK_OUTPUTDIR)/gensrc_headers/java.desktop \
         #
   else
@@ -1582,33 +1582,33 @@ ifeq ($(OPENJDK_TARGET_OS), macosx)
 
   ifeq ($(JIGSAW), true)
     LIBAWT_LWAWT_DIRS := \
-        $(JDK_TOPDIR)/$(SRC_SUBDIR)/macosx/native/libawt_lwawt \
-        $(JDK_TOPDIR)/$(SRC_SUBDIR)/solaris/native/common-awt/sun/awt \
-        $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/common-awt/sun/font \
-        $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/common-awt/sun/java2d/opengl \
+        $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/macosx/native/libawt_lwawt \
+        $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/solaris/native/common/sun/awt \
+        $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/share/native/common/sun/font \
+        $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/share/native/common/sun/java2d/opengl \
         #
 
     LIBAWT_LWAWT_CFLAGS := \
         $(addprefix -I, $(LIBAWT_LWAWT_DIRS)) \
         -I$(JDK_OUTPUTDIR)/gensrc_headers/java.desktop \
-        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/macosx/native/libawt_lwawt/sun/java2d/opengl \
-        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/macosx/native/libawt_lwawt/sun/awt \
-        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/solaris/native/libawt_xawt/sun/awt \
-        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/macosx/native/libawt_lwawt/sun/font \
-        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/macosx/native/libosxapp \
-        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libawt/sun/awt/image \
-        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libawt/sun/java2d \
-        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/solaris/native/libawt/sun/java2d \
-        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libmlib_image/ \
-        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libawt/sun/awt/image/cvutils \
-        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libawt/sun/java2d/loops \
-        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libawt/sun/java2d/pipe \
-        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/common-awt/sun/awt/debug \
+        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/macosx/native/libawt_lwawt/sun/java2d/opengl \
+        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/macosx/native/libawt_lwawt/sun/awt \
+        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/solaris/native/libawt_xawt/sun/awt \
+        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/macosx/native/libawt_lwawt/sun/font \
+        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/share/native/libawt/sun/awt/image \
+        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/share/native/libawt/sun/java2d \
+        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/solaris/native/libawt/sun/java2d \
+        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/share/native/libmlib_image/ \
+        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/share/native/libawt/sun/awt/image/cvutils \
+        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/share/native/libawt/sun/java2d/loops \
+        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/share/native/libawt/sun/java2d/pipe \
+        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/share/native/common/sun/awt/debug \
+        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/macosx/native/libosxapp \
         $(addprefix -I, $(BUILD_LIBJAVA_SRC)) \
         #
 
     LIBAWT_LWAWT_EXFILES := fontpath.c awt_Font.c X11Color.c initIDs.c
-    LIBAWT_LWAWT_EXCLUDES := $(JDK_TOPDIR)/$(SRC_SUBDIR)/solaris/native/common-awt/sun/awt/medialib
+    LIBAWT_LWAWT_EXCLUDES := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/solaris/native/common/sun/awt/medialib
   else
     LIBAWT_LWAWT_FILES := \
       awt.m \
@@ -1757,12 +1757,12 @@ endif
 ifeq ($(OPENJDK_TARGET_OS), macosx)
 
   ifeq ($(JIGSAW), true)
-    LIBOSXUI_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/macosx/native/libosxui
-    LIBOSXUI_CFLAGS := -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/macosx/native/libosxui \
-        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/macosx/native/libosxapp \
-        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/macosx/native/libawt_lwawt/sun/awt \
-        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libjava \
-        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/native/libjava \
+    LIBOSXUI_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/macosx/native/libosxui
+    LIBOSXUI_CFLAGS := -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/macosx/native/libosxui \
+        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/macosx/native/libawt_lwawt/sun/awt \
+        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/macosx/native/libosxapp \
+        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/libjava \
+        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/$(OPENJDK_TARGET_OS_API_DIR)/native/libjava \
         -I$(JDK_OUTPUTDIR)/gensrc_headers/java.desktop \
         #
   else

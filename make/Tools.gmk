@@ -47,10 +47,10 @@ ifeq (, $(BUILD_TOOLS))
 endif
 
 $(JDK_OUTPUTDIR)/btclasses/build/tools/generatenimbus/resources/%.template: \
-    $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/$(MODULES_SUBDIR)$(JAVA_DESKTOP_SUBDIR)/javax/swing/plaf/nimbus/%.template
+    $(JDK_TOPDIR)/$(SRC_SUBDIR)$(JAVA_DESKTOP_SUBDIR)/share/classes/javax/swing/plaf/nimbus/%.template
 	$(call install-file)
 
-BUILD_TOOLS += $(foreach i, $(wildcard $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/$(MODULES_SUBDIR)$(JAVA_DESKTOP_SUBDIR)/javax/swing/plaf/nimbus/*.template), $(JDK_OUTPUTDIR)/btclasses/build/tools/generatenimbus/resources/$(notdir $i))
+BUILD_TOOLS += $(foreach i, $(wildcard $(JDK_TOPDIR)/$(SRC_SUBDIR)$(JAVA_DESKTOP_SUBDIR)/share/classes/javax/swing/plaf/nimbus/*.template), $(JDK_OUTPUTDIR)/btclasses/build/tools/generatenimbus/resources/$(notdir $i))
 
 # Resource used by CheckDeps tool
 $(JDK_OUTPUTDIR)/btclasses/build/tools/deps/refs.allowed: \

@@ -25,8 +25,8 @@
 
 ifeq ($(JIGSAW), true)
   BUILD_LIBNIO_SRC := \
-      $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libnio \
-      $(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/native/libnio \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/libnio \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/$(OPENJDK_TARGET_OS_API_DIR)/native/libnio \
       #
 
   BUILD_LIBNIO_CFLAGS := \
@@ -156,7 +156,7 @@ ifeq ($(OPENJDK_TARGET_OS_API), posix)
     endif
 
     ifeq ($(JIGSAW), true)
-      LIBSCTP_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/native/libsctp
+      LIBSCTP_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.sctp/$(OPENJDK_TARGET_OS_API_DIR)/native/libsctp
       LIBSCTP_CFLAGS := $(addprefix -I, $(BUILD_LIBNIO_SRC) $(BUILD_LIBNET_SRC) $(BUILD_LIBJAVA_SRC)) \
           -I$(JDK_OUTPUTDIR)/gensrc_headers/jdk.sctp \
           -I$(JDK_OUTPUTDIR)/gensrc_headers/java.base

@@ -35,18 +35,22 @@ include Setup.gmk
 ifeq ($(JIGSAW), true)
 
   ALL_SRC_DIRS := \
-      $(JDK_TOPDIR)/src_shuffled/share/modules \
-      $(LANGTOOLS_TOPDIR)/src_shuffled/share/modules \
-      $(CORBA_TOPDIR)/src_shuffled/share/modules \
-      $(JAXP_TOPDIR)/src_shuffled/share/modules \
-      $(JAXWS_TOPDIR)/src_shuffled/share/modules \
-      $(NASHORN_TOPDIR)/src_shuffled/share/modules \
-      $(JDK_TOPDIR)/src_shuffled/$(OPENJDK_TARGET_OS_API_DIR)/modules \
+      $(wildcard \
+        $(JDK_TOPDIR)/src_shuffled/*/*/classes \
+        $(LANGTOOLS_TOPDIR)/src_shuffled/*/*/classes \
+        $(CORBA_TOPDIR)/src_shuffled/*/*/classes \
+        $(JAXP_TOPDIR)/src_shuffled/*/*/classes \
+        $(JAXWS_TOPDIR)/src_shuffled/*/*/classes \
+        $(NASHORN_TOPDIR)/src_shuffled/*/*/classes) \
       $(JDK_OUTPUTDIR)/gensrc \
       $(LANGTOOLS_OUTPUTDIR)/gensrc \
       $(CORBA_OUTPUTDIR)/gensrc \
       $(JDK_OUTPUTDIR)/gensrc_no_srczip \
       #
+
+  ifndef OPENJDK
+    ALL_SRC_DIRS += $(wildcard $(JDK_TOPDIR)/src_shuffled/closed/*/*/classes)
+  endif
 
   $(MODULES_SER_OUT): $(BUILD_CLASSANALYZER) \
       $(wildcard $(JDK_OUTPUTDIR)/modules/_* $(JDK_OUTPUTDIR)/modules/*/_*) \

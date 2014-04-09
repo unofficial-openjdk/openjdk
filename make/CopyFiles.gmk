@@ -31,6 +31,7 @@ include MakeBase.gmk
 include Tools.gmk
 
 INCLUDEDIR = $(JDK_OUTPUTDIR)/include
+LIBDIR := $(JDK_OUTPUTDIR)/lib
 
 #
 # Files are grouped by modules.  The following defines variables
@@ -54,63 +55,115 @@ else ifeq ($(OPENJDK_TARGET_OS), macosx)
 endif
 
 ifeq ($(JIGSAW), true)
-  BASE_SUBDIR := conf/java.base
-  DESKTOP_SUBDIR := conf/java.desktop
-  UCRYPTO_SUBDIR := conf/jdk.ucrypto
+  CONF_SUBDIR := conf
 else
-  DESKTOP_SUBDIR := lib
-  UCRYPTO_SUBDIR := lib
-  BASE_SUBDIR := lib
+  CONF_SUBDIR := lib
 endif
 
 #
 # Copy exported header files to outputdir.
 #
-H_TARGET_FILES := $(INCLUDEDIR)/jdwpTransport.h \
-    $(INCLUDEDIR)/jni.h \
-    $(INCLUDEDIR)/jvmti.h \
-    $(INCLUDEDIR)/jvmticmlr.h \
-    $(INCLUDEDIR)/classfile_constants.h \
-    $(INCLUDEDIR)/jawt.h \
-    $(OPENJDK_TARGET_OS_INCLUDE)/jni_md.h \
-    $(OPENJDK_TARGET_OS_INCLUDE)/jawt_md.h
+ifeq ($(JIGSAW), true)
+  JAVA_BASE_HEADERS := \
+      $(INCLUDEDIR)/jni.h \
+      $(INCLUDEDIR)/jvmti.h \
+      $(INCLUDEDIR)/jvmticmlr.h \
+      $(INCLUDEDIR)/classfile_constants.h \
+      $(OPENJDK_TARGET_OS_INCLUDE)/jni_md.h \
+      #
 
-$(INCLUDEDIR)/%.h: $(JDK_TOPDIR)/src/share/javavm/export/%.h
+  $(INCLUDEDIR)/%.h: $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/include/%.h
 	$(call install-file)
 
-$(OPENJDK_TARGET_OS_INCLUDE)/%.h: $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_EXPORT_DIR)/javavm/export/%.h
+  $(OPENJDK_TARGET_OS_INCLUDE)/%.h: \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/$(OPENJDK_TARGET_OS_EXPORT_DIR)/native/include/%.h
 	$(call install-file)
 
-##########################################################################################
 
-ifndef OPENJDK
-  ifeq ($(OPENJDK_TARGET_OS), windows)
-    DESKTOP_CONF_FILES += $(JDK_OUTPUTDIR)/lib/accessibility.properties
-    H_TARGET_FILES += $(OPENJDK_TARGET_OS_INCLUDE)/bridge/AccessBridgeCallbacks.h \
-        $(OPENJDK_TARGET_OS_INCLUDE)/bridge/AccessBridgeCalls.h \
-        $(OPENJDK_TARGET_OS_INCLUDE)/bridge/AccessBridgePackages.h \
-        $(OPENJDK_TARGET_OS_INCLUDE)/bridge/AccessBridgeCalls.c \
-        $(JDK_OUTPUTDIR)/lib/accessibility.properties \
-        #
+  JAVA_DESKTOP_HEADERS := \
+      $(INCLUDEDIR)/jawt.h \
+      $(OPENJDK_TARGET_OS_INCLUDE)/jawt_md.h \
+      #
 
-    $(OPENJDK_TARGET_OS_INCLUDE)/bridge/%: \
-        $(JDK_TOPDIR)/src/closed/windows/native/sun/bridge/%
+  $(INCLUDEDIR)/%.h: $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/share/native/include/%.h
+	$(call install-file)
+
+  $(OPENJDK_TARGET_OS_INCLUDE)/%.h: \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/$(OPENJDK_TARGET_OS_EXPORT_DIR)/native/include/%.h
+	$(call install-file)
+
+  ifndef OPENJDK
+    ifeq ($(OPENJDK_TARGET_OS), windows)
+      DESKTOP_CONF_FILES += $(JDK_OUTPUTDIR)/lib/accessibility.properties
+      JAVA_DESKTOP_HEADERS += \
+          $(OPENJDK_TARGET_OS_INCLUDE)/bridge/AccessBridgeCallbacks.h \
+          $(OPENJDK_TARGET_OS_INCLUDE)/bridge/AccessBridgeCalls.h \
+          $(OPENJDK_TARGET_OS_INCLUDE)/bridge/AccessBridgePackages.h \
+          $(OPENJDK_TARGET_OS_INCLUDE)/bridge/AccessBridgeCalls.c \
+          #
+
+      $(OPENJDK_TARGET_OS_INCLUDE)/bridge/%: \
+          $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/java.desktop/windows/native/include/bridge/%
 		$(install-file)
 
-    $(JDK_OUTPUTDIR)/lib/accessibility.properties: \
-        $(JDK_TOPDIR)/src/closed/windows/native/sun/bridge/accessibility.properties
+      $(JDK_OUTPUTDIR)/lib/accessibility.properties: \
+          $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/java.desktop/windows/conf/accessibility.properties
 		$(install-file)
 
+    endif
+  endif
+
+
+  JDK_TOOLS_DIAG_HEADERS := $(INCLUDEDIR)/jdwpTransport.h
+
+  $(INCLUDEDIR)/%.h: $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.tools.diag/share/native/include/%.h
+	$(call install-file)
+
+else
+  H_TARGET_FILES := $(INCLUDEDIR)/jdwpTransport.h \
+      $(INCLUDEDIR)/jni.h \
+      $(INCLUDEDIR)/jvmti.h \
+      $(INCLUDEDIR)/jvmticmlr.h \
+      $(INCLUDEDIR)/classfile_constants.h \
+      $(INCLUDEDIR)/jawt.h \
+      $(OPENJDK_TARGET_OS_INCLUDE)/jni_md.h \
+      $(OPENJDK_TARGET_OS_INCLUDE)/jawt_md.h
+
+  $(INCLUDEDIR)/%.h: $(JDK_TOPDIR)/src/share/javavm/export/%.h
+	$(call install-file)
+
+  $(OPENJDK_TARGET_OS_INCLUDE)/%.h: $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_EXPORT_DIR)/javavm/export/%.h
+	$(call install-file)
+
+  ########################################################################################
+
+  ifndef OPENJDK
+    ifeq ($(OPENJDK_TARGET_OS), windows)
+      DESKTOP_CONF_FILES += $(JDK_OUTPUTDIR)/lib/accessibility.properties
+      H_TARGET_FILES += $(OPENJDK_TARGET_OS_INCLUDE)/bridge/AccessBridgeCallbacks.h \
+          $(OPENJDK_TARGET_OS_INCLUDE)/bridge/AccessBridgeCalls.h \
+          $(OPENJDK_TARGET_OS_INCLUDE)/bridge/AccessBridgePackages.h \
+          $(OPENJDK_TARGET_OS_INCLUDE)/bridge/AccessBridgeCalls.c \
+          $(JDK_OUTPUTDIR)/lib/accessibility.properties \
+          #
+
+      $(OPENJDK_TARGET_OS_INCLUDE)/bridge/%: \
+          $(JDK_TOPDIR)/src/closed/windows/native/sun/bridge/%
+		$(install-file)
+
+      $(JDK_OUTPUTDIR)/lib/accessibility.properties: \
+          $(JDK_TOPDIR)/src/closed/windows/native/sun/bridge/accessibility.properties
+		$(install-file)
+
+    endif
   endif
 endif
 
 ##########################################################################################
 
-LIBDIR := $(JDK_OUTPUTDIR)/lib
-
 MGMT_LIBDIR := $(LIBDIR)/management
 ifeq ($(JIGSAW), true)
-  MGMT_LIB_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/conf/java.management
+  MGMT_LIB_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.management/share/conf
 else
 MGMT_LIB_SRC := $(JDK_TOPDIR)/src/share/lib/management
 endif
@@ -135,7 +188,7 @@ MANAGEMENT_CONF_FILES := $(MGMT_TARGET_FILES)
 ##########################################################################################
 
 ifeq ($(JIGSAW), true)
-  LOGGING_LIB_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/conf/java.logging
+  LOGGING_LIB_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.logging/share/conf
 else
   LOGGING_LIB_SRC := $(JDK_TOPDIR)/src/share/lib
 endif
@@ -150,7 +203,7 @@ LOGGING_CONF_FILES := $(LIBDIR)/logging.properties
 # Copy property files from sun/print to LIBDIR
 #
 ifeq ($(JIGSAW), true)
-  PSFONTPROPFILE_SRC_DIR := $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/conf/java.desktop
+  PSFONTPROPFILE_SRC_DIR := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/share/conf
 else
   PSFONTPROPFILE_SRC_DIR := $(JDK_TOPDIR)/src/share/classes/sun/print
 endif
@@ -167,9 +220,9 @@ DESKTOP_CONF_FILES := $(PSFONTPROPFILE_TARGET_FILES)
 # Copy flavormap.properties, cursor.properties and cursors gif files to LIBDIR
 #
 ifneq ($(OPENJDK_TARGET_OS), macosx)
-  OPENJDK_TARGET_OS_LIB_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/$(DESKTOP_SUBDIR)
+  OPENJDK_TARGET_OS_LIB_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)$(JAVA_DESKTOP_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/$(CONF_SUBDIR)
 else
-  OPENJDK_TARGET_OS_LIB_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/macosx/$(DESKTOP_SUBDIR)
+  OPENJDK_TARGET_OS_LIB_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)$(JAVA_DESKTOP_SUBDIR)/macosx/$(CONF_SUBDIR)
 endif
 
 $(LIBDIR)/flavormap.properties: $(OPENJDK_TARGET_OS_LIB_SRC)/flavormap.properties
@@ -178,14 +231,14 @@ $(LIBDIR)/flavormap.properties: $(OPENJDK_TARGET_OS_LIB_SRC)/flavormap.propertie
 DESKTOP_CONF_FILES += $(LIBDIR)/flavormap.properties
 
 CURSORS_DEST_DIR := $(LIBDIR)/images/cursors
-CURSORS_OPENJDK_TARGET_OS_LIB_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/$(DESKTOP_SUBDIR)/images/cursors
+CURSORS_OPENJDK_TARGET_OS_LIB_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)$(JAVA_DESKTOP_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/$(CONF_SUBDIR)/images/cursors
 
 $(CURSORS_DEST_DIR)/cursors.properties: $(CURSORS_OPENJDK_TARGET_OS_LIB_SRC)/cursors.properties
 	$(call install-file)
 
 DESKTOP_CONF_FILES += $(CURSORS_DEST_DIR)/cursors.properties
 
-CURSORS_LIB_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/$(DESKTOP_SUBDIR)/images/cursors
+CURSORS_LIB_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)$(JAVA_DESKTOP_SUBDIR)/share/$(CONF_SUBDIR)/images/cursors
 ifeq ($(OPENJDK_TARGET_OS), windows)
   CURSORS_SRC_FILES := $(CURSORS_LIB_SRC)/invalid32x32.gif $(wildcard $(CURSORS_LIB_SRC)/win32_*.gif)
 else # OPENJDK_TARGET_OS
@@ -200,7 +253,7 @@ DESKTOP_CONF_FILES += $(CURSORS_TARGET_FILES)
 
 ##########################################################################################
 
-CONTENT_TYPES_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/$(DESKTOP_SUBDIR)
+CONTENT_TYPES_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)$(JAVA_DESKTOP_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/$(CONF_SUBDIR)
 
 $(LIBDIR)/content-types.properties: $(CONTENT_TYPES_SRC)/content-types.properties
 	$(call install-file)
@@ -209,7 +262,7 @@ DESKTOP_CONF_FILES += $(LIBDIR)/content-types.properties
 
 ##########################################################################################
 
-CALENDARS_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/$(BASE_SUBDIR)
+CALENDARS_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)$(JAVA_BASE_SUBDIR)/share/$(CONF_SUBDIR)
 
 $(LIBDIR)/calendars.properties: $(CALENDARS_SRC)/calendars.properties
 	$(call install-file)
@@ -227,7 +280,7 @@ BASE_CONF_FILES += $(LIBDIR)/hijrah-config-umalqura.properties
 
 ifeq ($(OPENJDK_TARGET_OS), windows)
 
-  TZMAPPINGS_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/$(BASE_SUBDIR)
+  TZMAPPINGS_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)$(JAVA_BASE_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/$(CONF_SUBDIR)
 
   $(LIBDIR)/tzmappings: $(TZMAPPINGS_SRC)/tzmappings
 	$(call install-file)
@@ -241,9 +294,9 @@ endif
 ICCPROFILE_DEST_DIR := $(LIBDIR)/cmm
 
 ifdef OPENJDK
-  ICCPROFILE_SRC_DIR := $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/$(DESKTOP_SUBDIR)/cmm/lcms
+  ICCPROFILE_SRC_DIR := $(JDK_TOPDIR)/$(SRC_SUBDIR)$(JAVA_DESKTOP_SUBDIR)/share/$(CONF_SUBDIR)/cmm/lcms
 else
-  ICCPROFILE_SRC_DIR := $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/share/$(DESKTOP_SUBDIR)/cmm/kcms
+  ICCPROFILE_SRC_DIR := $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed$(JAVA_DESKTOP_SUBDIR)/share/$(CONF_SUBDIR)/cmm/kcms
 endif
 
 ICCPROFILE_SRCS := $(wildcard $(ICCPROFILE_SRC_DIR)/*.pf)
@@ -387,12 +440,12 @@ BASE_CONF_FILES += $(JVMCFG)
 
 ##########################################################################################
 
-PROPS_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/$(BASE_SUBDIR)/security/java.security-$(OPENJDK_TARGET_OS)
+PROPS_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)$(JAVA_BASE_SUBDIR)/share/$(CONF_SUBDIR)/security/java.security-$(OPENJDK_TARGET_OS)
 PROPS_DST := $(JDK_OUTPUTDIR)/lib/security/java.security
 
 ifndef OPENJDK
 
-  RESTRICTED_PKGS_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/share/$(BASE_SUBDIR)/security/restricted.pkgs
+  RESTRICTED_PKGS_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed$(JAVA_BASE_SUBDIR)/share/$(CONF_SUBDIR)/security/restricted.pkgs
   RESTRICTED_PKGS := $(shell $(CAT) $(RESTRICTED_PKGS_SRC) | $(TR) "\n" " ")
 
   $(PROPS_DST): $(PROPS_SRC)
@@ -411,7 +464,7 @@ BASE_CONF_FILES += $(PROPS_DST)
 
 ##########################################################################################
 
-POLICY_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/$(BASE_SUBDIR)/security/java.policy
+POLICY_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)$(JAVA_BASE_SUBDIR)/share/$(CONF_SUBDIR)/security/java.policy
 POLICY_DST := $(JDK_OUTPUTDIR)/lib/security/java.policy
 
 $(POLICY_DST): $(POLICY_SRC)
@@ -421,27 +474,29 @@ BASE_CONF_FILES += $(POLICY_DST)
 
 ##########################################################################################
 
-CACERTS_SRC := $(CACERTS_FILE)
+ifeq ($(CACERTS_FILE), )
+  CACERTS_FILE := $(JDK_TOPDIR)/$(SRC_SUBDIR)$(JAVA_BASE_SUBDIR)/share/conf/security/cacerts
+endif
 CACERTS_DST := $(JDK_OUTPUTDIR)/lib/security/cacerts
 
-$(CACERTS_DST): $(CACERTS_SRC)
+$(CACERTS_DST): $(CACERTS_FILE)
 	$(call install-file)
 
 BASE_CONF_FILES += $(CACERTS_DST)
 
 ##########################################################################################
 
-BLACKLISTED_CERTS_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/$(BASE_SUBDIR)/security/blacklisted.certs
+BLACKLISTED_CERTS_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)$(JAVA_BASE_SUBDIR)/share/$(CONF_SUBDIR)/security/blacklisted.certs
 BLACKLISTED_CERTS_DST := $(JDK_OUTPUTDIR)/lib/security/blacklisted.certs
 
 ifndef OPENJDK
 
-  BLACKLIST_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/share/$(BASE_SUBDIR)/security/blacklist
+  BLACKLIST_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed$(JAVA_BASE_SUBDIR)/share/$(CONF_SUBDIR)/security/blacklist
   BLACKLIST_DST := $(JDK_OUTPUTDIR)/lib/security/blacklist
 
-  BLACKLISTED_CERTS_SRC += $(wildcard $(JDK_TOPDIR)/src/closed/share/$(BASE_SUBDIR)/security/blacklisted.certs)
+  BLACKLISTED_CERTS_SRC += $(wildcard $(JDK_TOPDIR)/src/closed$(JAVA_BASE_SUBDIR)/share/$(CONF_SUBDIR)/security/blacklisted.certs)
 
-  TRUSTEDLIBS_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/share/$(BASE_SUBDIR)/security/trusted.libraries
+  TRUSTEDLIBS_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed$(JAVA_BASE_SUBDIR)/share/$(CONF_SUBDIR)/security/trusted.libraries
   TRUSTEDLIBS_DST := $(JDK_OUTPUTDIR)/lib/security/trusted.libraries
 
   $(BLACKLIST_DST): $(BLACKLIST_SRC)
@@ -475,9 +530,9 @@ BASE_CONF_FILES += $(BLACKLISTED_CERTS_DST)
 ifndef OPENJDK
 
   ifeq ($(JIGSAW), true)
-    SHARED_FONTS_SRC_DIR := $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/share/$(DESKTOP_SUBDIR)/fonts
+    SHARED_FONTS_SRC_DIR := $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed$(JAVA_DESKTOP_SUBDIR)/share/$(CONF_SUBDIR)/fonts
     SHARED_FONTS_DST_DIR := $(JDK_OUTPUTDIR)/lib/fonts
-    FONTS_DIR_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/solaris/$(DESKTOP_SUBDIR)/fonts/fonts.dir
+    FONTS_DIR_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed$(JAVA_DESKTOP_SUBDIR)/solaris/$(CONF_SUBDIR)/fonts/fonts.dir
   else
     SHARED_FONTS_SRC_DIR := $(JDK_TOPDIR)/src/closed/share/lib/fonts
     SHARED_FONTS_DST_DIR := $(JDK_OUTPUTDIR)/lib/fonts
@@ -512,11 +567,11 @@ ifndef OPENJDK
 
     # The oblique fonts are only needed/wanted on Linux.
     ifeq ($(JIGSAW), true)
-      OBL_FONTS_SRC_DIR := $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/share/$(DESKTOP_SUBDIR)/oblique-fonts
+      OBL_FONTS_SRC_DIR := $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed$(JAVA_DESKTOP_SUBDIR)/share/$(CONF_SUBDIR)/oblique-fonts
       OBL_FONTS_DST_DIR := $(JDK_OUTPUTDIR)/lib/oblique-fonts
-      OBL_FONTS_DIR_SRC := $(JDK_TOPDIR)/$(SCR_SUBDIR)/closed/solaris/$(DESKTOP_SUBIDR)/oblique-fonts/fonts.dir
+      OBL_FONTS_DIR_SRC := $(JDK_TOPDIR)/$(SCR_SUBDIR)/closed$(JAVA_DESKTOP_SUBDIR)/solaris/$(CONF_SUBIDR)/oblique-fonts/fonts.dir
     else
-      OBL_FONTS_SRC_DIR := $(JDK_TOPDIR)/src/closed/share/$(DESKTOP_SUBDIR)/fonts/oblique
+      OBL_FONTS_SRC_DIR := $(JDK_TOPDIR)/src/closed$(JAVA_DESKTOP_SUBDIR)/share/$(CONF_SUBDIR)/fonts/oblique
       OBL_FONTS_DST_DIR := $(JDK_OUTPUTDIR)/lib/oblique-fonts
       OBL_FONTS_DIR_SRC := $(JDK_TOPDIR)/src/solaris/classes/sun/awt/motif/java.oblique-fonts.dir
     endif
@@ -566,12 +621,12 @@ ifndef OPENJDK
   DGALIBS := $(_DGALIBS_$(OPENJDK_TARGET_CPU_LEGACY):%=$(JDK_OUTPUTDIR)/lib$(OPENJDK_TARGET_CPU_LIBDIR)/%)
 
   $(JDK_OUTPUTDIR)/lib$(OPENJDK_TARGET_CPU_LIBDIR)/libxinerama.so: \
-      $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/solaris/$(DESKTOP_SUBDIR)/$(OPENJDK_TARGET_CPU_LEGACY)/libxinerama.so
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed$(JAVA_DESKTOP_SUBDIR)/solaris/$(CONF_SUBDIR)/$(OPENJDK_TARGET_CPU_LEGACY)/libxinerama.so
 	$(call install-file)
 	$(CHMOD) 755 $@
 
   $(JDK_OUTPUTDIR)/lib$(OPENJDK_TARGET_CPU_LIBDIR)/libjdgaSUNW%.so: \
-      $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/solaris/$(DESKTOP_SUBDIR)/$(OPENJDK_TARGET_CPU_LEGACY)/libjdgaSUNW%.so
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed$(JAVA_DESKTOP_SUBDIR)/solaris/$(CONF_SUBDIR)/$(OPENJDK_TARGET_CPU_LEGACY)/libjdgaSUNW%.so
 	$(call install-file)
 	$(CHMOD) 755 $@
 
@@ -589,7 +644,7 @@ endif
 
 ifeq ($(OPENJDK_TARGET_OS), solaris)
 
-  SUNPKCS11_CFG_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/$(BASE_SUBDIR)/security/sunpkcs11-solaris.cfg
+  SUNPKCS11_CFG_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)$(JAVA_BASE_SUBDIR)/share/$(CONF_SUBDIR)/security/sunpkcs11-solaris.cfg
   SUNPKCS11_CFG_DST := $(JDK_OUTPUTDIR)/lib/security/sunpkcs11-solaris.cfg
 
   $(SUNPKCS11_CFG_DST): $(SUNPKCS11_CFG_SRC)
@@ -605,7 +660,7 @@ ifndef OPENJDK
   ifeq ($(OPENJDK_TARGET_OS), solaris)
 
     ifeq ($(JIGSAW), true)
-      UCRYPTO_CFG_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/solaris/$(UCRYPTO_SUBDIR)/security/ucrypto-solaris.cfg
+      UCRYPTO_CFG_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed$(JDK_UCRYPTO_SUBDIR)/solaris/$(CONF_SUBDIR)/security/ucrypto-solaris.cfg
     else
       UCRYPTO_CFG_SRC := $(JDK_TOPDIR)/src/closed/share/lib/security/ucrypto-solaris.cfg
     endif
@@ -621,14 +676,14 @@ endif
 
 ##########################################################################################
 
-$(JDK_OUTPUTDIR)/lib/sound.properties: $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/$(DESKTOP_SUBDIR)/sound.properties
+$(JDK_OUTPUTDIR)/lib/sound.properties: $(JDK_TOPDIR)/$(SRC_SUBDIR)$(JAVA_DESKTOP_SUBDIR)/share/$(CONF_SUBDIR)/sound.properties
 	$(call install-file)
 
 DESKTOP_CONF_FILES += $(JDK_OUTPUTDIR)/lib/sound.properties
 
 ##########################################################################################
 
-$(JDK_OUTPUTDIR)/lib/%.modules: $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/$(BASE_SUBDIR)/%.modules
+$(JDK_OUTPUTDIR)/lib/%.modules: $(JDK_TOPDIR)/$(SRC_SUBDIR)$(JAVA_BASE_SUBDIR)/share/$(CONF_SUBDIR)/%.modules
 	$(call install-file)
 
 MODULES_CONF_FILES := \
@@ -641,14 +696,14 @@ BASE_CONF_FILES += $(MODULES_CONF_FILES)
 
 ##########################################################################################
 
-$(JDK_OUTPUTDIR)/lib/net.properties: $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/$(BASE_SUBDIR)/net.properties
+$(JDK_OUTPUTDIR)/lib/net.properties: $(JDK_TOPDIR)/$(SRC_SUBDIR)$(JAVA_BASE_SUBDIR)/share/$(CONF_SUBDIR)/net.properties
 	$(ECHO) $(LOG_INFO) Copying $(@F)
 	$(call install-file)
 
 NET_CONF_FILES += $(JDK_OUTPUTDIR)/lib/net.properties
 
 ifeq ($(OPENJDK_TARGET_OS), solaris)
-  $(JDK_OUTPUTDIR)/lib/sdp/sdp.conf.template: $(JDK_TOPDIR)/$(SRC_SUBDIR)/${OPENJDK_TARGET_OS_API_DIR}/$(BASE_SUBDIR)/sdp/sdp.conf.template
+  $(JDK_OUTPUTDIR)/lib/sdp/sdp.conf.template: $(JDK_TOPDIR)/$(SRC_SUBDIR)$(JAVA_BASE_SUBDIR)/${OPENJDK_TARGET_OS_API_DIR}/$(CONF_SUBDIR)/sdp/sdp.conf.template
 	$(ECHO) $(LOG_INFO) Copying $(@F)
 	$(call install-file)
 
@@ -657,27 +712,21 @@ endif
 
 ##########################################################################################
 
-java.base: $(BASE_CONF_FILES) $(NET_CONF_FILES) $(H_TARGET_FILES) $(MSVCR_TARGET)
-java.desktop: $(DESKTOP_CONF_FILES) $(FREETYPE_TARGET_LIB)
+java.base: $(BASE_CONF_FILES) $(NET_CONF_FILES) $(JAVA_BASE_HEADERS) $(MSVCR_TARGET)
+java.desktop: $(DESKTOP_CONF_FILES) $(FREETYPE_TARGET_LIB) $(JAVA_DESKTOP_HEADERS)
+jdk.tools.diag: $(JDK_TOOLS_DIAG_HEADERS)
 jdk.tools.jre: $(HPROF_CONF_FILES)
 java.management: $(MANAGEMENT_CONF_FILES)
 java.logging: $(LOGGING_CONF_FILES)
 jdk.crypto.pkcs11: $(SECURITY_PKCS11_CONF_FILES)
-jdk.ucrytpo: $(SECURITY_UCRYPTO_CONF_FILES)
+jdk.ucrypto: $(SECURITY_UCRYPTO_CONF_FILES)
 
 .PHONY: java.base java.desktop jdk.tools.jre java.management java.logging \
     jdk.crypto.pkcs11 jdk.ucrytpo
 
-all: $(BASE_CONF_FILES) \
-    $(NET_CONF_FILES) \
+all: java.base java.desktop jdk.tools.diag jdk.tools.jre java.management java.logging \
+    jdk.crypto.pkcs11 jdk.ucrypto \
     $(H_TARGET_FILES) \
-    $(MSVCR_TARGET) \
-    $(DESKTOP_CONF_FILES) \
-    $(HPROF_CONF_FILES) \
-    $(MANAGEMENT_CONF_FILES) \
-    $(LOGGING_CONF_FILES) \
-    $(SECURITY_PKCS11_CONF_FILES) \
-    $(SECURITY_UCRYPTO_CONF_FILES) \
     #
 
 .PHONY: all

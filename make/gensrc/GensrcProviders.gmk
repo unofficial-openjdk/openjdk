@@ -35,8 +35,10 @@ ifeq ($(JIGSAW), true)
   # Combine Connectors
   CONNECTOR_SERVICE := com.sun.jdi.connect.Connector
 
+  # $(JDK_OUTPUTDIR)/gensrc_jdi/META-INF/services/com.sun.jdi.connect.Connector is
+  # created in Import.gmk.
   $(JDK_OUTPUTDIR)/gensrc/jdk.tools/META-INF/services/$(CONNECTOR_SERVICE): \
-      $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/modules/jdk.tools/META-INF/services/com.sun.jdi.connect.Connector \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.tools/share/classes/META-INF/services/com.sun.jdi.connect.Connector \
       $(JDK_OUTPUTDIR)/gensrc_jdi/META-INF/services/com.sun.jdi.connect.Connector
 	$(process-provider)
 
@@ -46,7 +48,7 @@ ifeq ($(JIGSAW), true)
 
   # Filter AttachProvider
   $(JDK_OUTPUTDIR)/gensrc/jdk.tools.diag/META-INF/services/com.sun.tools.attach.spi.AttachProvider: \
-      $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/modules/jdk.tools.diag/META-INF/services/com.sun.tools.attach.spi.AttachProvider
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.tools.diag/share/classes/META-INF/services/com.sun.tools.attach.spi.AttachProvider
 	$(process-provider)
 
   GENSRC_JDK_TOOLS += $(JDK_OUTPUTDIR)/gensrc/jdk.tools.diag/META-INF/services/com.sun.tools.attach.spi.AttachProvider
@@ -54,9 +56,9 @@ ifeq ($(JIGSAW), true)
   ##############################################################################
 
   ifndef OPENJDK
-  # Override RenderingEnging
+    # Override RenderingEnging
     $(JDK_OUTPUTDIR)/gensrc/java.desktop/META-INF/services/sun.java2d.pipe.RenderingEngine: \
-        $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/modules/java.desktop/META-INF/services/sun.java2d.pipe.RenderingEngine-dc.template
+        $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/share/classes/META-INF/services/sun.java2d.pipe.RenderingEngine-dc.template
 		$(install-file)
 
     GENSRC_JAVA_DESKTOP += $(JDK_OUTPUTDIR)/gensrc/java.desktop/META-INF/services/sun.java2d.pipe.RenderingEngine

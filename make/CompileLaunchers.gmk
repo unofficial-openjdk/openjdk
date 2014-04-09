@@ -35,7 +35,7 @@ include Setup.gmk
 
 # Prepare the find cache.
 ifeq ($(JIGSAW), true)
-  $(eval $(call FillCacheFind, $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/launchers))
+  $(eval $(call FillCacheFind, $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/launchers))
 else
   $(eval $(call FillCacheFind, $(JDK_TOPDIR)/src/share/bin))
 endif
@@ -81,11 +81,11 @@ ifneq ($(findstring $(OPENJDK_TARGET_OS), linux solaris), )
 endif
 
 ifeq ($(JIGSAW), true)
-  LAUNCHER_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/launchers
-  LAUNCHER_CFLAGS := -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/launchers \
-      -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libjli \
-      -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/native/libjli \
-      -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS)/native/libjli \
+  LAUNCHER_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/launchers
+  LAUNCHER_CFLAGS := -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/launchers \
+      -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/libjli \
+      -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/$(OPENJDK_TARGET_OS_API_DIR)/native/libjli \
+      -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/$(OPENJDK_TARGET_OS)/native/libjli \
       #
 else
   LAUNCHER_SRC := $(JDK_TOPDIR)/src/share/bin
@@ -468,11 +468,11 @@ endif
 # binary (at least on linux) which causes the size to differ between old and new build.
 
 ifeq ($(JIGSAW), true)
-  UNPACKEXE_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/common-unpack \
-      $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/unpack200
-  UNPACKEXE_CFLAGS := -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/common-unpack \
-      -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libjava \
-      -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/native/libjava
+  UNPACKEXE_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.tools.base/share/native/common-unpack \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.tools.base/share/native/unpack200
+  UNPACKEXE_CFLAGS := -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.tools.base/share/native/common-unpack \
+      -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/libjava \
+      -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/$(OPENJDK_TARGET_OS_API_DIR)/native/libjava
 else
   UNPACKEXE_SRC := $(JDK_TOPDIR)/src/share/native/com/sun/java/util/jar/pack
   UNPACKEXE_EXFILES := jni.cpp
@@ -483,7 +483,7 @@ ifeq ($(USE_EXTERNAL_LIBZ), true)
   UNPACKEXE_ZIPOBJS := -lz
 else
   ifeq ($(JIGSAW), true)
-    UNPACKEXE_CFLAGS += -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libzip/zlib-1.2.5
+    UNPACKEXE_CFLAGS += -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/libzip/zlib-1.2.5
   else
     UNPACKEXE_CFLAGS += -I$(JDK_TOPDIR)/src/share/native/java/util/zip/zlib-1.2.5
   endif
@@ -617,13 +617,13 @@ ifeq ($(BUILD_JEXEC), 1)
   ifeq ($(OPENJDK_TARGET_OS), windows)
   else ifeq ($(OPENJDK_TARGET_OS), macosx)
     ifeq ($(JIGSAW), true)
-      BUILD_JEXEC_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/macosx/native/launchers
+      BUILD_JEXEC_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/macosx/native/launchers
     else
-    BUILD_JEXEC_SRC := $(JDK_TOPDIR)/src/macosx/bin
+      BUILD_JEXEC_SRC := $(JDK_TOPDIR)/src/macosx/bin
     endif
   else
     ifeq ($(JIGSAW), true)
-      BUILD_JEXEC_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/solaris/native/launchers
+      BUILD_JEXEC_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/solaris/native/launchers
   else
     BUILD_JEXEC_SRC := $(JDK_TOPDIR)/src/solaris/bin
   endif
@@ -632,7 +632,7 @@ ifeq ($(BUILD_JEXEC), 1)
   ifeq ($(OPENJDK_TARGET_OS), linux)
     BUILD_JEXEC_DST_DIR := $(JDK_OUTPUTDIR)/lib
     ifeq ($(JIGSAW), true)
-      BUILD_JEXEC_INC += -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/share/native/libjli
+      BUILD_JEXEC_INC += -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/libjli
     else
     BUILD_JEXEC_INC += -I$(JDK_TOPDIR)/src/share/bin
   endif
@@ -696,8 +696,8 @@ endif
 
 BUILD_JSPAWNHELPER :=
 ifeq ($(JIGSAW), true)
-  BUILD_JSPAWNHELPER_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/solaris/native/jspawnhelper
-  JSPAWNHELPER_CFLAGS := -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/solaris/native/libjava
+  BUILD_JSPAWNHELPER_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/solaris/native/jspawnhelper
+  JSPAWNHELPER_CFLAGS := -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/solaris/native/libjava
 else
 BUILD_JSPAWNHELPER_SRC := $(JDK_TOPDIR)/src/solaris/native/java/lang
 endif
@@ -742,7 +742,7 @@ ifndef OPENJDK
   ifeq ($(OPENJDK_TARGET_OS), windows)
 
     ifeq ($(JIGSAW), true)
-      JABSWITCH_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/windows/native/jabswitch
+      JABSWITCH_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/closed/windows/native/jabswitch
     else
       JABSWITCH_SRC := $(JDK_TOPDIR)/src/closed/windows/native/sun/bridge
     endif
