@@ -918,7 +918,7 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
                         //Posting an empty to flush the EventQueue without blocking the main thread
                     }
                 }, target);
-            } catch (InterruptedException | InvocationTargetException e) {
+            } catch (InvocationTargetException e) {
                 e.printStackTrace();
             }
         }
