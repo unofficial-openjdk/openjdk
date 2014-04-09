@@ -310,10 +310,7 @@ public class CookieManager extends CookieHandler
                         // there is no dot at the beginning of effective request-host,
                         // the default Domain can only domain-match itself.)
                         if (cookie.getDomain() == null) {
-                            String host = uri.getHost();
-                            if (host != null && !host.contains("."))
-                                host += ".local";
-                            cookie.setDomain(host);
+                            cookie.setDomain(uri.getHost());
                         }
                         String ports = cookie.getPortlist();
                         if (ports != null) {
