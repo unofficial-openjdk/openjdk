@@ -79,7 +79,7 @@ public class XClipboard extends SunClipboard implements Runnable {
 
     protected synchronized void setContentsNative(Transferable contents) {
         SortedMap formatMap = DataTransferer.getInstance().getFormatsForTransferable
-                (contents, DataTransferer.adaptFlavorMap(flavorMap));
+                (contents, DataTransferer.adaptFlavorMap(getDefaultFlavorTable()));
         long[] formats =
             DataTransferer.getInstance().keysToLongArray(formatMap);
 
@@ -125,7 +125,7 @@ public class XClipboard extends SunClipboard implements Runnable {
     void checkChangeHere(Transferable contents) {
         if (areFlavorListenersRegistered()) {
             super.checkChange(DataTransferer.getInstance().
-                        getFormatsForTransferableAsArray(contents, flavorMap));
+                        getFormatsForTransferableAsArray(contents, getDefaultFlavorTable()));
         }
     }
 

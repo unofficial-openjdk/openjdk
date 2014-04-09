@@ -116,7 +116,7 @@ public class X11Clipboard extends SunClipboard implements X11SelectionHolder {
     void checkChangeHere(Transferable contents) {
         if (areFlavorListenersRegistered()) {
             super.checkChange(DataTransferer.getInstance().
-                        getFormatsForTransferableAsArray(contents, flavorMap));
+                        getFormatsForTransferableAsArray(contents, getDefaultFlavorTable()));
         }
     }
 
