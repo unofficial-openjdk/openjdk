@@ -36,10 +36,10 @@ include CommonCorba.gmk
 ################################################################################
 
 ifeq ($(JIGSAW), true)
-  CORBA_SRC := $(CORBA_TOPDIR)/$(SRC_SUBDIR)/share/modules/javax.corba \
-      $(CORBA_TOPDIR)/$(SRC_SUBDIR)/share/modules/javax.jta \
-      $(CORBA_TOPDIR)/$(SRC_SUBDIR)/share/modules/jdk.tools \
-      $(CORBA_OUTPUTDIR)/gensrc \
+  CORBA_SRC := $(CORBA_TOPDIR)/$(SRC_SUBDIR)/javax.corba/share/classes \
+      $(CORBA_TOPDIR)/$(SRC_SUBDIR)/javax.jta/share/classes \
+      $(CORBA_TOPDIR)/$(SRC_SUBDIR)/jdk.tools/share/classes \
+      $(CORBA_OUTPUTDIR)/gensrc/javax.corba \
       #
 else
   CORBA_SRC := $(CORBA_TOPDIR)/src/share/classes $(CORBA_OUTPUTDIR)/gensrc
@@ -79,8 +79,8 @@ $(eval $(call SetupZipArchive,ARCHIVE_CORBA_SRC, \
 
 ################################################################################
 # Create bin.zip containing the corba specific binaries: orb.idl, ir.idl
-BIN_FILES := $(CORBA_TOPDIR)/$(SRC_SUBDIR)/share/$(MODULES_SUBDIR)$(JAVAX_CORBA_SUBDIR)/com/sun/tools/corba/se/idl/orb.idl \
-    $(CORBA_TOPDIR)/$(SRC_SUBDIR)/share/$(MODULES_SUBDIR)$(JAVAX_CORBA_SUBDIR)/com/sun/tools/corba/se/idl/ir.idl
+BIN_FILES := $(CORBA_TOPDIR)/$(SRC_SUBDIR)$(JAVAX_CORBA_SUBDIR)/share/classes/com/sun/tools/corba/se/idl/orb.idl \
+    $(CORBA_TOPDIR)/$(SRC_SUBDIR)$(JAVAX_CORBA_SUBDIR)/share/classes/com/sun/tools/corba/se/idl/ir.idl
 
 $(CORBA_OUTPUTDIR)/dist/lib/bin.zip: $(BIN_FILES)
 	$(MKDIR) -p $(CORBA_OUTPUTDIR)/dist/lib
@@ -95,7 +95,7 @@ ifeq ($(JIGSAW), true)
   # Copy idl files straight to jdk/lib. Not sure if this is the right way to do
   # it, but we are moving away from the one repo at a time build. Perhaps we should
   # scrap the 'jdk' prefix to bin, lib etc?
-  $(JDK_OUTPUTDIR)/lib/%: $(CORBA_TOPDIR)/$(SRC_SUBDIR)/share/$(MODULES_SUBDIR)$(JAVAX_CORBA_SUBDIR)/com/sun/tools/corba/se/idl/%
+  $(JDK_OUTPUTDIR)/lib/%: $(CORBA_TOPDIR)/$(SRC_SUBDIR)$(JAVAX_CORBA_SUBDIR)/share/classes/com/sun/tools/corba/se/idl/%
 	$(install-file)
 
   IDL_TARGET_FILES := $(JDK_OUTPUTDIR)/lib/orb.idl $(JDK_OUTPUTDIR)/lib/ir.idl
