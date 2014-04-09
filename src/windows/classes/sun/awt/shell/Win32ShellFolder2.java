@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2006, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1225,11 +1225,8 @@ final class Win32ShellFolder2 extends ShellFolder {
                              * which will not get GCed before VM exit.
                              * Make its parent the top-level thread group.
                              */
-                            ThreadGroup tg = Thread.currentThread().getThreadGroup();
-                            for (ThreadGroup tgn = tg;
-                                 tgn != null;
-                                 tg = tgn, tgn = tg.getParent());
-                            Thread thread = new Thread(tg, comRun, "Swing-Shell");
+                            ThreadGroup rootTG = ThreadGroupUtils.getRootThreadGroup();
+                            Thread thread = new Thread(rootTG, comRun, "Swing-Shell");
                             thread.setDaemon(true);
                             return thread;
                         }

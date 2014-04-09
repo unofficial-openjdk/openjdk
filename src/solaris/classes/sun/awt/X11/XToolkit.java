@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -46,7 +46,7 @@ import javax.swing.LookAndFeel;
 import javax.swing.UIDefaults;
 import java.util.logging.*;
 import sun.font.FontManager;
-import sun.misc.PerformanceLogger;
+import sun.misc.*;
 import sun.print.PrintJob2D;
 import sun.security.action.GetBooleanAction;
 import sun.security.action.GetPropertyAction;
@@ -294,7 +294,7 @@ public class XToolkit extends UNIXToolkit implements Runnable, XConstants {
 	if (log.isLoggable(Level.FINE)) {
 	    PrivilegedAction<Void> a = new PrivilegedAction<Void>() {
 		public Void run() {
-		    Thread shutdownThread = new Thread(getRootThreadGroup(), "XToolkt-Shutdown-Thread") {
+		    Thread shutdownThread = new Thread(ThreadGroupUtils.getRootThreadGroup(), "XToolkt-Shutdown-Thread") {
 			public void run() {
 			    if (log.isLoggable(Level.FINE)) {
 				dumpPeers();
@@ -352,7 +352,7 @@ public class XToolkit extends UNIXToolkit implements Runnable, XConstants {
 
             PrivilegedAction<Thread> action = new PrivilegedAction() {
                 public Thread run() {
-                    Thread thread = new Thread(getRootThreadGroup(), XToolkit.this, "AWT-XAWT");
+                    Thread thread = new Thread(ThreadGroupUtils.getRootThreadGroup(), XToolkit.this, "AWT-XAWT");
                     thread.setContextClassLoader(null);
                     thread.setPriority(Thread.NORM_PRIORITY + 1);
                     thread.setDaemon(true);

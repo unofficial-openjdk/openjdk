@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,7 +36,7 @@ import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.HashMap;
-import sun.awt.SunToolkit;
+
 import sun.awt.Win32GraphicsConfig;
 import sun.awt.windows.WComponentPeer;
 import sun.java2d.InvalidPipeException;
@@ -46,6 +46,7 @@ import sun.java2d.SurfaceData;
 import sun.java2d.windows.GDIWindowSurfaceData;
 import sun.java2d.d3d.D3DSurfaceData.D3DWindowSurfaceData;
 import sun.java2d.windows.WindowsFlags;
+import sun.misc.ThreadGroupUtils;
 
 /**
  * This class handles rendering to the screen with the D3D pipeline.
@@ -90,17 +91,11 @@ public class D3DScreenUpdateManager extends ScreenUpdateManager
 
     public D3DScreenUpdateManager() {
         done = false;
-        AccessController.doPrivileged(
-            new PrivilegedAction() {
-                public Object run() {
-                    ThreadGroup currentTG =
-                        Thread.currentThread().getThreadGroup();
-                    ThreadGroup parentTG = currentTG.getParent();
-                    while (parentTG != null) {
-                        currentTG = parentTG;
-                        parentTG = currentTG.getParent();
-                    }
-                    Thread shutdown = new Thread(currentTG, new Runnable() {
+         AccessController.doPrivileged(
+            new PrivilegedAction<Void>() {
+                public Void run() {
+                    ThreadGroup rootTG = ThreadGroupUtils.getRootThreadGroup();
+                    Thread shutdown = new Thread(rootTG, new Runnable() {
                             public void run() {
                                 done = true;
                                 wakeUpUpdateThread();
@@ -355,15 +350,13 @@ public class D3DScreenUpdateManager extends ScreenUpdateManager
      */
     private synchronized void startUpdateThread() {
         if (screenUpdater == null) {
-            screenUpdater = (Thread)java.security.AccessController.doPrivileged(
-                new java.security.PrivilegedAction() {
-                    public Object run() {
-                        ThreadGroup tg =
-                            Thread.currentThread().getThreadGroup();
-                        for (ThreadGroup tgn = tg;
-                             tgn != null; tg = tgn, tgn = tg.getParent());
-                        Thread t = new Thread(tg, D3DScreenUpdateManager.this,
-                                              "D3D Screen Updater");
+            screenUpdater = AccessController.doPrivileged(
+                new PrivilegedAction<Thread>() {
+                    public Thread run() {
+                        ThreadGroup rootTG = ThreadGroupUtils.getRootThreadGroup();
+                        Thread t = new Thread(rootTG,
+                                D3DScreenUpdateManager.this,
+                                "D3D Screen Updater");
                         // REMIND: should it be higher?
                         t.setPriority(Thread.NORM_PRIORITY + 2);
                         t.setDaemon(true);
