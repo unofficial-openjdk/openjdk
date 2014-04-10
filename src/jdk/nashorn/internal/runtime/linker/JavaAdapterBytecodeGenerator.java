@@ -318,7 +318,7 @@ final class JavaAdapterBytecodeGenerator {
         final InstructionAdapter mv = new InstructionAdapter(cw.visitMethod(ACC_STATIC, CLASS_INIT,
                 Type.getMethodDescriptor(Type.VOID_TYPE), null, null));
 
-        mv.invokestatic(SERVICES_CLASS_TYPE_NAME, "getClassOverrides", GET_CLASS_INITIALIZER_DESCRIPTOR);
+        mv.invokestatic(SERVICES_CLASS_TYPE_NAME, "getClassOverrides", GET_CLASS_INITIALIZER_DESCRIPTOR, false);
         final Label initGlobal;
         if(samName != null) {
             // If the class is a SAM, allow having a ScriptFunction passed as class overrides
@@ -334,7 +334,7 @@ final class JavaAdapterBytecodeGenerator {
                 if(mi.getName().equals(samName)) {
                     mv.dup();
                     mv.aconst(Type.getMethodType(mi.type.toMethodDescriptorString()));
-                    mv.invokestatic(SERVICES_CLASS_TYPE_NAME, "getHandle", GET_HANDLE_FUNCTION_DESCRIPTOR);
+                    mv.invokestatic(SERVICES_CLASS_TYPE_NAME, "getHandle", GET_HANDLE_FUNCTION_DESCRIPTOR, false);
                 } else {
                     mv.visitInsn(ACONST_NULL);
                 }
@@ -351,7 +351,7 @@ final class JavaAdapterBytecodeGenerator {
             mv.dup();
             mv.aconst(mi.getName());
             mv.aconst(Type.getMethodType(mi.type.toMethodDescriptorString()));
-            mv.invokestatic(SERVICES_CLASS_TYPE_NAME, "getHandle", GET_HANDLE_OBJECT_DESCRIPTOR);
+            mv.invokestatic(SERVICES_CLASS_TYPE_NAME, "getHandle", GET_HANDLE_OBJECT_DESCRIPTOR, false);
             mv.putstatic(generatedClassName, mi.methodHandleFieldName, METHOD_HANDLE_TYPE_DESCRIPTOR);
         }
 
@@ -368,7 +368,7 @@ final class JavaAdapterBytecodeGenerator {
     private static void invokeGetGlobalWithNullCheck(final InstructionAdapter mv) {
         invokeGetGlobal(mv);
         mv.dup();
-        mv.invokevirtual(OBJECT_TYPE_NAME, "getClass", GET_CLASS_METHOD_DESCRIPTOR); // check against null Context
+        mv.invokevirtual(OBJECT_TYPE_NAME, "getClass", GET_CLASS_METHOD_DESCRIPTOR, false); // check against null Context
         mv.pop();
     }
 
@@ -425,7 +425,7 @@ final class JavaAdapterBytecodeGenerator {
             mv.load(offset, argType);
             offset += argType.getSize();
         }
-        mv.invokespecial(superClassName, INIT, originalCtorType.getDescriptor());
+        mv.invokespecial(superClassName, INIT, originalCtorType.getDescriptor(), false);
 
         endInitMethod(mv);
     }
@@ -478,7 +478,7 @@ final class JavaAdapterBytecodeGenerator {
             mv.load(offset, argType);
             offset += argType.getSize();
         }
-        mv.invokespecial(superClassName, INIT, originalCtorType.getDescriptor());
+        mv.invokespecial(superClassName, INIT, originalCtorType.getDescriptor(), false);
 
         // Get a descriptor to the appropriate "JavaAdapterFactory.getHandle" method.
         final String getHandleDescriptor = fromFunction ? GET_HANDLE_FUNCTION_DESCRIPTOR : GET_HANDLE_OBJECT_DESCRIPTOR;
@@ -497,7 +497,7 @@ final class JavaAdapterBytecodeGenerator {
                     mv.aconst(mi.getName());
                 }
                 mv.aconst(Type.getMethodType(mi.type.toMethodDescriptorString()));
-                mv.invokestatic(SERVICES_CLASS_TYPE_NAME, "getHandle", getHandleDescriptor);
+                mv.invokestatic(SERVICES_CLASS_TYPE_NAME, "getHandle", getHandleDescriptor, false);
             }
             mv.putfield(generatedClassName, mi.methodHandleFieldName, METHOD_HANDLE_TYPE_DESCRIPTOR);
         }
@@ -521,11 +521,11 @@ final class JavaAdapterBytecodeGenerator {
     }
 
     private static void invokeGetGlobal(final InstructionAdapter mv) {
-        mv.invokestatic(SERVICES_CLASS_TYPE_NAME, "getGlobal", GET_GLOBAL_METHOD_DESCRIPTOR);
+        mv.invokestatic(SERVICES_CLASS_TYPE_NAME, "getGlobal", GET_GLOBAL_METHOD_DESCRIPTOR, false);
     }
 
     private static void invokeSetGlobal(final InstructionAdapter mv) {
-        mv.invokestatic(SERVICES_CLASS_TYPE_NAME, "setGlobal", SET_GLOBAL_METHOD_DESCRIPTOR);
+        mv.invokestatic(SERVICES_CLASS_TYPE_NAME, "setGlobal", SET_GLOBAL_METHOD_DESCRIPTOR, false);
     }
 
     /**
@@ -638,7 +638,7 @@ final class JavaAdapterBytecodeGenerator {
             // If the super method is abstract, throw an exception
             mv.anew(UNSUPPORTED_OPERATION_TYPE);
             mv.dup();
-            mv.invokespecial(UNSUPPORTED_OPERATION_TYPE_NAME, INIT, VOID_NOARG_METHOD_DESCRIPTOR);
+            mv.invokespecial(UNSUPPORTED_OPERATION_TYPE_NAME, INIT, VOID_NOARG_METHOD_DESCRIPTOR, false);
             mv.athrow();
         } else {
             // If the super method is not abstract, delegate to it.
@@ -712,7 +712,7 @@ final class JavaAdapterBytecodeGenerator {
         // Invoke the target method handle
         final Label tryBlockStart = new Label();
         mv.visitLabel(tryBlockStart);
-        mv.invokevirtual(METHOD_HANDLE_TYPE.getInternalName(), "invokeExact", type.toMethodDescriptorString());
+        mv.invokevirtual(METHOD_HANDLE_TYPE.getInternalName(), "invokeExact", type.toMethodDescriptorString(), false);
         final Label tryBlockEnd = new Label();
         mv.visitLabel(tryBlockEnd);
         emitFinally(mv, currentGlobalVar, globalsDifferVar);
@@ -728,7 +728,7 @@ final class JavaAdapterBytecodeGenerator {
             mv.anew(RUNTIME_EXCEPTION_TYPE);
             mv.dupX1();
             mv.swap();
-            mv.invokespecial(RUNTIME_EXCEPTION_TYPE_NAME, INIT, Type.getMethodDescriptor(Type.VOID_TYPE, THROWABLE_TYPE));
+            mv.invokespecial(RUNTIME_EXCEPTION_TYPE_NAME, INIT, Type.getMethodDescriptor(Type.VOID_TYPE, THROWABLE_TYPE), false);
             // Fall through to rethrow handler
         } else {
             throwableHandler = null;
@@ -827,7 +827,7 @@ final class JavaAdapterBytecodeGenerator {
             mv.load(nextParam, t);
             nextParam += t.getSize();
         }
-        mv.invokespecial(superClassName, name, methodDesc);
+        mv.invokespecial(superClassName, name, methodDesc, false);
         mv.areturn(methodType.getReturnType());
     }
 
