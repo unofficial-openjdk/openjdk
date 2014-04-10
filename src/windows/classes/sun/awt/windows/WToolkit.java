@@ -37,6 +37,7 @@ import java.beans.PropertyChangeListener;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import sun.awt.AWTAutoShutdown;
+import sun.awt.AppContext;
 import sun.awt.SunToolkit;
 import sun.awt.Win32GraphicsDevice;
 import sun.awt.Win32GraphicsEnvironment;
@@ -855,7 +856,18 @@ public class WToolkit extends SunToolkit implements Runnable {
      * Windows doesn't always send WM_SETTINGCHANGE when it should.
      */
     private void windowsSettingChange() {
-        updateProperties();
+        if (AppContext.getAppContext() == null) {
+            // No AppContext, so we can update properties on the current thread,
+            // DesktopPropertyChangeSupport will only post events.
+            updateProperties();
+        } else {
+            EventQueue.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    updateProperties();
+                }
+            });
+        }
     }
 
     private synchronized void updateProperties() {
