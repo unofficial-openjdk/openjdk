@@ -58,7 +58,7 @@ ifeq ($(JIGSAW), true)
   JDK_TOOLS_SUBDIR := /jdk.tools
   JDK_TOOLS_BASE_SUBDIR := /jdk.tools.base
   JDK_TOOLS_DIAG_SUBDIR := /jdk.tools.diag
-  JDK_UCRYPTO_SUBDIR := /jdk.ucrypto
+  JDK_UCRYPTO_SUBDIR := /jdk.crypto.ucrypto
 
   LDFLAGS_JDKLIB := $(subst $(OUTPUT_ROOT),$(OUTPUT_ROOT)/jigsaw,$(LDFLAGS_JDKLIB))
 
