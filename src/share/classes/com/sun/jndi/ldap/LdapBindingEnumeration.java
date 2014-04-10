@@ -57,7 +57,6 @@ final class LdapBindingEnumeration extends LdapNamingEnumeration {
             // serialized object or object reference
             try {
                 obj = AccessController.doPrivileged(new PrivilegedExceptionAction<Object>() {
-                    @Override
                     public Object run() throws NamingException {
                         return Obj.decodeObject(attrs);
                     }
