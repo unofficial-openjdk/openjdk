@@ -317,7 +317,7 @@ ifeq ($(OPENJDK_TARGET_OS), solaris)
   ifndef OPENJDK
 
     ifeq ($(JIGSAW), true)
-      LIBJ2UCRYPTO_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/jdk.ucrypto/solaris/native/libj2ucrypto
+      LIBJ2UCRYPTO_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/jdk.crypto.ucrypto/solaris/native/libj2ucrypto
     else
       LIBJ2UCRYPTO_SRC := $(JDK_TOPDIR)/src/closed/solaris/native/com/oracle/security/ucrypto
     endif
