@@ -737,12 +737,11 @@ endif
 
 ##########################################################################################
 # jabswitch
-# TODO JIGSAW
 ifndef OPENJDK
   ifeq ($(OPENJDK_TARGET_OS), windows)
 
     ifeq ($(JIGSAW), true)
-      JABSWITCH_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/closed/windows/native/jabswitch
+      JABSWITCH_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/java.desktop/windows/native/jabswitch
     else
       JABSWITCH_SRC := $(JDK_TOPDIR)/src/closed/windows/native/sun/bridge
     endif

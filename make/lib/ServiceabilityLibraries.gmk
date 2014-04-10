@@ -133,7 +133,7 @@ ifeq ($(OPENJDK_TARGET_OS), windows)
         #
     LIBDT_SHMEM_CPPFLAGS := -I$(INCLUDEDIR) -I$(JDK_OUTPUTDIR)/include/$(OPENJDK_TARGET_OS) \
         $(addprefix -I, $(LIBDT_SHMEM_SRC)) \
-        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.tools/share/native/libjdwp/export \
+        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.tools.diag/share/native/libjdwp/export \
         -I$(JDK_OUTPUTDIR)/gensrc_headers/jdk.tools \
         #
   else
