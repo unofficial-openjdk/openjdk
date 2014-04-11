@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -2337,9 +2337,9 @@ class CommandLineFlags {
           "Number of gclog files in rotation, "                             \
           "Default: 0, no rotation")                                        \
                                                                             \
-  product(uintx, GCLogFileSize, 0,                                          \
-          "GC log file size, Default: 0 bytes, no rotation "                \
-          "Only valid with UseGCLogFileRotation")                           \
+  product(uintx, GCLogFileSize, 8*K,                                        \
+          "GC log file size, requires UseGCLogFileRotation. "               \
+          "Set to 0 to only trigger rotation via jcmd")                     \
                                                                             \
   /* JVMTI heap profiling */                                                \
                                                                             \
