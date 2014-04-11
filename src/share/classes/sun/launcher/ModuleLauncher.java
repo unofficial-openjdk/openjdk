@@ -110,6 +110,7 @@ class ModuleLauncher {
         if (roots.isEmpty()) {
             roots = library.allModules()
                            .stream()
+                           .filter(m -> m.permits().isEmpty())
                            .map(m -> name(m)).collect(Collectors.toSet());
         }
 
