@@ -1445,7 +1445,7 @@ ifndef BUILD_HEADLESS_ONLY
     LIBSPLASHSCREEN_CFLAGS += -F/System/Library/Frameworks/JavaVM.framework/Frameworks
     LIBSPLASHSCREEN_CFLAGS += -DWITH_MACOSX
     ifeq ($(JIGSAW), true)
-      LIBSPLASHSCREEN_CFLAGS += -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/macosx/native/libosxapp
+      LIBSPLASHSCREEN_CFLAGS += -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/macosx/native/libosxapp
     else
       LIBSPLASHSCREEN_CFLAGS += -I$(JDK_TOPDIR)/src/macosx/native/sun/osxapp
     endif
@@ -1603,7 +1603,7 @@ ifeq ($(OPENJDK_TARGET_OS), macosx)
         -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/share/native/libawt/sun/java2d/loops \
         -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/share/native/libawt/sun/java2d/pipe \
         -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/share/native/common/sun/awt/debug \
-        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/macosx/native/libosxapp \
+        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/macosx/native/libosxapp \
         $(addprefix -I, $(BUILD_LIBJAVA_SRC)) \
         #
 
@@ -1760,7 +1760,7 @@ ifeq ($(OPENJDK_TARGET_OS), macosx)
     LIBOSXUI_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/macosx/native/libosxui
     LIBOSXUI_CFLAGS := -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/macosx/native/libosxui \
         -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/macosx/native/libawt_lwawt/sun/awt \
-        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/macosx/native/libosxapp \
+        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/macosx/native/libosxapp \
         -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/libjava \
         -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/$(OPENJDK_TARGET_OS_API_DIR)/native/libjava \
         -I$(JDK_OUTPUTDIR)/gensrc_headers/java.desktop \

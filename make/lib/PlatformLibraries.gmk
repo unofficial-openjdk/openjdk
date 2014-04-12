@@ -26,7 +26,7 @@
 ifeq ($(OPENJDK_TARGET_OS), macosx)
 
   ifeq ($(JIGSAW), true)
-    LIBAPPLESCRIPTENGINE_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/javax.script/macosx/native/libapplescriptengine
+    LIBAPPLESCRIPTENGINE_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.deploy.osx/macosx/native/libapplescriptengine
   else
     LIBAPPLESCRIPTENGINE_SRC := $(JDK_TOPDIR)/src/macosx/native/apple/applescript
   endif
@@ -54,7 +54,7 @@ ifeq ($(OPENJDK_TARGET_OS), macosx)
 
   $(BUILD_LIBAPPLESCRIPTENGINE): $(BUILD_LIBJAVA)
 
-  SCRIPT_LIBRARIES += $(BUILD_LIBAPPLESCRIPTENGINE)
+  DEPLOY_OSX_LIBRARIES += $(BUILD_LIBAPPLESCRIPTENGINE)
 
 endif
 
@@ -63,7 +63,7 @@ endif
 ifeq ($(OPENJDK_TARGET_OS), macosx)
 
   ifeq ($(JIGSAW), true)
-    LIBOSXAPP_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/macosx/native/libosxapp
+    LIBOSXAPP_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/macosx/native/libosxapp
   else
     LIBOSXAPP_SRC := $(JDK_TOPDIR)/src/macosx/native/sun/osxapp
   endif
@@ -98,7 +98,7 @@ ifeq ($(OPENJDK_TARGET_OS), macosx)
       OBJECT_DIR := $(JDK_OUTPUTDIR)/objs/libosxapp, \
       DEBUG_SYMBOLS := $(DEBUG_ALL_BINARIES)))
 
-  BASE_LIBRARIES += $(BUILD_LIBOSXAPP)
+  DESKTOP_LIBRARIES += $(BUILD_LIBOSXAPP)
 
 endif
 
@@ -108,9 +108,9 @@ ifeq ($(OPENJDK_TARGET_OS), macosx)
 
   ifeq ($(JIGSAW), true)
     # TODO JIGSAW: Why is libosx dependant on java.desktop?
-    LIBOSX_DIRS := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/macosx/native/libosx
+    LIBOSX_DIRS := $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.deploy.osx/macosx/native/libosx
     LIBOSX_CFLAGS := -I$(LIBOSX_DIRS) \
-        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/macosx/native/libosxapp \
+        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/macosx/native/libosxapp \
         $(addprefix -I, $(BUILD_LIBJAVA_SRC)) \
         -I$(JDK_OUTPUTDIR)/gensrc_headers/java.desktop \
         -I$(JDK_OUTPUTDIR)/gensrc_headers/jdk.deploy.osx \
@@ -153,7 +153,7 @@ ifeq ($(OPENJDK_TARGET_OS), macosx)
       OBJECT_DIR := $(JDK_OUTPUTDIR)/objs/libosx, \
       DEBUG_SYMBOLS := $(DEBUG_ALL_BINARIES)))
 
-  BASE_LIBRARIES += $(BUILD_LIBOSX)
+  DEPLOY_OSX_LIBRARIES += $(BUILD_LIBOSX)
 
   $(BUILD_LIBOSX): $(BUILD_LIBOSXAPP)
 

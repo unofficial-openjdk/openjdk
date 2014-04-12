@@ -1123,7 +1123,7 @@ $(eval $(call SetupShuffleFiles,COPY_LIBOSXUI_MACOSX, \
 # osxapp
 $(eval $(call SetupShuffleFiles,COPY_LIBOSXAPP_MACOSX, \
     SRC := $(JDK_TOPDIR)/src/macosx/native/sun/osxapp, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.base/macosx/native/libosxapp, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.desktop/macosx/native/libosxapp, \
     FILES := $(wildcard \
         $(JDK_TOPDIR)/src/macosx/native/sun/osxapp/*.m \
         $(JDK_TOPDIR)/src/macosx/native/sun/osxapp/*.h \
@@ -1132,7 +1132,7 @@ $(eval $(call SetupShuffleFiles,COPY_LIBOSXAPP_MACOSX, \
 # osx
 $(eval $(call SetupShuffleFiles,COPY_LIBOSX_MACOSX, \
     SRC := $(JDK_TOPDIR)/src/macosx/native, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.base/macosx/native/libosx, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/jdk.deploy.osx/macosx/native/libosx, \
     FLATTEN := true, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/macosx/native/com/apple/concurrent/* \
         $(JDK_TOPDIR)/src/macosx/native/com/apple/eio/* \
@@ -1158,7 +1158,7 @@ $(eval $(call SetupShuffleFiles,COPY_LIBPREFS_MACOSX, \
 # applescriptengine
 $(eval $(call SetupShuffleFiles,COPY_LIBAPPLESCRIPTENGINE_MACOSX, \
     SRC := $(JDK_TOPDIR)/src/macosx/native/apple/applescript, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/javax.script/macosx/native/libapplescriptengine, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/jdk.deploy.osx/macosx/native/libapplescriptengine, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/macosx/native/apple/applescript/*)))
 
 # awt_lwawt

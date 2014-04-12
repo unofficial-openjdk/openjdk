@@ -264,7 +264,6 @@ module java.desktop {
     include apple.laf.*,
             com.apple.eawt.**,
             com.apple.eio.**,
-            com.apple.concurrent.**,
             com.apple.laf.**;
 
     // content handlers
