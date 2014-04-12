@@ -114,9 +114,6 @@ java.base_CONF := $(BASE_CONF_FILES) $(NET_CONF_FILES) $(GENDATA_TZDB) \
 java.desktop_NATIVE := $(DESKTOP_LIBRARIES) $(FREETYPE_TARGET_LIB)
 java.desktop_CONF := $(DESKTOP_CONF_FILES) $(GENDATA_FONT_CONFIG)
 
-java.kerberos_NATIVE := $(SECURITY_KERBEROS_LIBRARIES)
-java.kerberos_CMDS := $(KERBEROS_LAUNCHERS)
-
 java.logging_NATIVE := $(LOGGING_LIBRARIES)
 java.logging_CONF := $(LOGGING_CONF_FILES)
 
@@ -129,13 +126,14 @@ java.prefs_NATIVE := $(PREFS_LIBRARIES)
 
 java.rmi_CMDS := $(RMI_LAUNCHERS)
 
-javax.script_NATIVE := $(SCRIPT_LIBRARIES)
-
 javax.corba_CMDS := $(CORBA_LAUNCHERS)
 
-jdk.sctp_NATIVE := $(SCTP_LIBRARIES)
+javax.kerberos_NATIVE := $(SECURITY_KERBEROS_LIBRARIES)
+javax.kerberos_CMDS := $(KERBEROS_LAUNCHERS)
 
 javax.smartcardio_NATIVE := $(SECURITY_SMARTCARDIO_LIBRARIES)
+
+jdk.sctp_NATIVE := $(SCTP_LIBRARIES)
 
 jdk.crypto.ec_NATIVE := $(SECURITY_SUNEC_LIBRARIES)
 
@@ -145,6 +143,8 @@ jdk.crypto.pkcs11_NATIVE := $(SECURITY_PKCS11_LIBRARIES)
 jdk.crypto.pkcs11_CONF := $(SECURITY_PKCS11_CONF_FILES)
 
 jdk.devtools_CMDS := $(DEVTOOLS_LAUNCHERS)
+
+jdk.deploy.osx_NATIVE := $(DEPLOY_OSX_LIBRARIES)
 
 jdk.jaas_NATIVE := $(SECURITY_JAAS_LIBRARIES)
 
