@@ -26,6 +26,7 @@
 ifeq ($(JIGSAW), true)
   BUILD_LIBNIO_SRC := \
       $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/libnio/ch \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/$(OPENJDK_TARGET_OS_API_DIR)/native/libnio \
       $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/$(OPENJDK_TARGET_OS_API_DIR)/native/libnio/ch \
       $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/$(OPENJDK_TARGET_OS_API_DIR)/native/libnio/fs \
       #
