@@ -700,14 +700,15 @@ module jdk.tools.diag {
             sun.tools.jstatd.**,
             sun.tools.jstack.**;
 
+    include com.sun.demo.jvmti.hprof.*;
+
     uses com.sun.tools.attach.spi.AttachProvider;
 }
 
 // JRE tools
 module jdk.tools.jre {
-    // ## part of the runtime - include hprof and jsdt here for now
+    // ## part of the runtime - include jsdt here for now
     include com.sun.tracing.**, sun.tracing.**;
-    include com.sun.demo.jvmti.hprof.*;
     include sun.security.tools.policytool.*;
 }
 

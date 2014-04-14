@@ -718,17 +718,16 @@ endif
 
 java.base: $(BASE_CONF_FILES) $(NET_CONF_FILES) $(JAVA_BASE_HEADERS) $(MSVCR_TARGET)
 java.desktop: $(DESKTOP_CONF_FILES) $(FREETYPE_TARGET_LIB) $(JAVA_DESKTOP_HEADERS)
-jdk.tools.diag: $(JDK_TOOLS_DIAG_HEADERS)
-jdk.tools.jre: $(HPROF_CONF_FILES)
+jdk.tools.diag: $(JDK_TOOLS_DIAG_HEADERS) $(HPROF_CONF_FILES)
 java.management: $(MANAGEMENT_CONF_FILES)
 java.logging: $(LOGGING_CONF_FILES)
 jdk.crypto.pkcs11: $(SECURITY_PKCS11_CONF_FILES)
 jdk.crypto.ucrypto: $(SECURITY_UCRYPTO_CONF_FILES)
 
-.PHONY: java.base java.desktop jdk.tools.jre java.management java.logging \
+.PHONY: java.base java.desktop jdk.tools.diag java.management java.logging \
     jdk.crypto.pkcs11 jdk.crypto.ucrytpo
 
-all: java.base java.desktop jdk.tools.diag jdk.tools.jre java.management java.logging \
+all: java.base java.desktop jdk.tools.diag jdk.tools.diag java.management java.logging \
     jdk.crypto.pkcs11 jdk.crypto.ucrypto \
     $(H_TARGET_FILES) \
     #

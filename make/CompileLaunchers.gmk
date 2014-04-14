@@ -45,9 +45,11 @@ include Tools.gmk
 
 BASE_LAUNCHERS=
 CORBA_LAUNCHERS=
+DESKTOP_LAUNCHERS=
 DEVTOOLS_LAUNCHERS=
 KERBEROS_LAUNCHERS=
 RMI_LAUNCHERS=
+NASHORN_LAUNCHERS=
 TOOLS_LAUNCHERS=
 TOOLS_BASE_LAUNCHERS=
 TOOLS_DIAG_LAUNCHERS=
@@ -281,7 +283,7 @@ endif
 ifndef BUILD_HEADLESS_ONLY
   $(eval $(call SetupLauncher,appletviewer, \
       -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.applet.Main"$(COMMA) }',, \
-      $(XLIBS)))
+      $(XLIBS),,,,,,,,DESKTOP))
 endif
 
 $(eval $(call SetupLauncher,extcheck, \
@@ -370,7 +372,7 @@ $(eval $(call SetupLauncher,jrunscript, \
     -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "com.sun.tools.script.shell.Main"$(COMMA) }',,,,,,,,,,TOOLS))
 
 $(eval $(call SetupLauncher,jjs, \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "jdk.nashorn.tools.Shell"$(COMMA) }',,,,,,,,,,TOOLS))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "jdk.nashorn.tools.Shell"$(COMMA) }',,,,,,,,,,NASHORN))
 
 $(eval $(call SetupLauncher,jsadebugd, \
     -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.jvm.hotspot.jdi.SADebugServer"$(COMMA) }' \
