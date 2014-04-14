@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,27 +23,12 @@
  * questions.
  */
 
-package java.net;
-
-import java.io.IOException;
-import java.io.FileDescriptor;
-
-import sun.net.sdp.SdpSupport;
-
 /**
- * SocketImpl that supports the SDP protocol
+ * Platform specific socket options for the {@code java.net} and {@code java.nio.channels}
+ * socket classes.
+ *
+ * @since 1.9
  */
-class SdpSocketImpl extends PlainSocketImpl {
-    SdpSocketImpl() { }
 
-    @Override
-    protected void create(boolean stream) throws IOException {
-        if (!stream)
-            throw new UnsupportedOperationException("Must be a stream socket");
-        fd = SdpSupport.createSocket();
-        if (socket != null)
-            socket.setCreated();
-        if (serverSocket != null)
-            serverSocket.setCreated();
-    }
-}
+@jdk.Exported
+package jdk.net;
