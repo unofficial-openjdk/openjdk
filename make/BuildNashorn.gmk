@@ -89,10 +89,11 @@ $(eval $(call SetupJavaCompilation,BUILD_NASGEN, \
 $(BUILD_NASGEN): $(BUILD_NASHORN)
 
 ifeq ($(JIGSAW), true)
-  NASGEN_RUN_FILE := $(JDK_OUTPUTDIR)/modules/jdk.nashorn/_the.nasgen.run
+  NASHORN_CLASSES_DIR := $(JDK_OUTPUTDIR)/modules/jdk.nashorn
 else
-  NASGEN_RUN_FILE := $(NASHORN_OUTPUTDIR)/classes/_the.nasgen.run
+  NASHORN_CLASSES_DIR := $(NASHORN_OUTPUTDIR)/classes
 endif
+NASGEN_RUN_FILE := $(NASHORN_CLASSES_DIR)/_the.nasgen.run
 
 # Copy classes to final classes dir and run nasgen to modify classes in jdk.nashorn.internal.objects package
 $(NASGEN_RUN_FILE): $(BUILD_NASGEN)
@@ -128,19 +129,16 @@ MANIFEST_ATTRIBUTES := Name: jdk/nashorn/\nImplementation-Title: Oracle Nashorn\
 
 # Create nashorn.jar from the final classes dir
 $(eval $(call SetupArchive,BUILD_NASHORN_JAR, \
-    $(NASHORN_OUTPUTDIR)/classes/_the.nasgen.run \
+    $(NASGEN_RUN_FILE) \
     $(VERSION_FILE), \
-    SRCS := $(NASHORN_OUTPUTDIR)/classes, \
+    SRCS := $(NASHORN_CLASSES_DIR), \
     SUFFIXES := .class .js .properties Factory, \
     MANIFEST := $(NASHORN_TOPDIR)/src/META-INF/MANIFEST.MF, \
     EXTRA_MANIFEST_ATTR := $(MANIFEST_ATTRIBUTES), \
     SKIP_METAINF := true, \
     JAR := $(NASHORN_JAR)))
 
-ifeq ($(JIGSAW), true)
-  all: $(NASHORN_RUN_FILE) $(VERSION_FILE)
-else
-  all: $(NASHORN_JAR)
-endif
+compile: $(NASHORN_RUN_FILE) $(VERSION_FILE)
+all: $(NASHORN_JAR)
 
-.PHONY: all
+.PHONY: compile all
