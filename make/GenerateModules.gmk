@@ -54,7 +54,7 @@ ifeq ($(JIGSAW), true)
 
   $(MODULES_SER_OUT): $(BUILD_CLASSANALYZER) \
       $(wildcard $(JDK_OUTPUTDIR)/modules/_* $(JDK_OUTPUTDIR)/modules/*/_*) \
-      $(wildcard $(ALL_SRC_DIRS)/*/module-info.java)
+      $(wildcard $(ALL_SRC_DIRS)/module-info.java)
 	$(RM) $@
 	$(MKDIR) -p $(@D)
 	$(TOOL_GENMODULEGRAPH) \
@@ -84,6 +84,7 @@ else
 	  $(MODULES_SER_OUT) \
 	  $(JDK_OUTPUTDIR)/modules
 	$(TOOL_CLASSANALYZER) \
+	  --os-source-path $(OPENJDK_TARGET_OS) \
 	  --version $(MODULE_VERSION) \
 	  --classlist $(MODULE_CLASSLIST_DIR) \
 	  --out $(MODULES_SER_OUT) \
