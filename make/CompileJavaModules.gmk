@@ -45,13 +45,6 @@ $(eval $(call SetupJavaCompiler,GENERATE_JDKBYTECODE, \
 ################################################################################
 # Module specific build settings
 
-# Excludes with unknown module
-# EXCLUDES += com/sun/pept
-# ifdef OPENJDK
-#  EXCLUDES += sun/dc \
-#      com/sun/script
-# endif
-
 #ifneq ($(OPENJDK_TARGET_OS), solaris)
 #  EXCLUDES += com/oracle/security
 #endif
@@ -308,7 +301,8 @@ ifdef BUILD_HEADLESS_ONLY
 endif
 
 ifdef OPENJDK
-  java.desktop_EXCLUDES += sun/java2d/cmm/kcms
+  java.desktop_EXCLUDES += sun/java2d/cmm/kcms \
+      sun/dc
 endif
 
 # Used on windows and macosx
@@ -572,6 +566,11 @@ JAVA_MODULES := $(sort $(notdir \
     $(patsubst %/,%, $(dir $(patsubst %/,%, $(dir $(patsubst %/,%, $(dir \
     $(filter-out %module-info.java, \
     $(wildcard $(patsubst %,%/*/*/classes/*, $(ALL_TOP_SRC_DIRS))))))))))))
+
+# There are snmp classes in the open but they are not included in OpenJDK
+ifdef OPENJDK
+  JAVA_MODULES := $(filter-out jdk.snmp, $(JAVA_MODULES))
+endif
 
 # This macro sets up compilation of a module and declares dependencies for it.
 # Param 1 - module name
