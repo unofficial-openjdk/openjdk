@@ -1308,21 +1308,6 @@ clean: clean-src clean-build
 
 clean-src:
 	$(RM) -r $(SRC_ROOT)/*/$(SHUFFLED_SRC_SUBDIR)
-	$(RM) -r $(JDK_TOPDIR)/src/share/modules
-	$(RM) -r $(JDK_TOPDIR)/src/macosx/modules
-	$(RM) -r $(JDK_TOPDIR)/src/solaris/modules
-	$(RM) -r $(JDK_TOPDIR)/src/windows/modules
-	$(RM) -r $(JAXP_TOPDIR)/src/share/modules
-	$(RM) -r $(JAXWS_TOPDIR)/src/share/modules
-	$(RM) -r $(CORBA_TOPDIR)/src/share/modules
-	$(RM) -r $(LANGTOOLS_TOPDIR)/src/share/modules
-	$(RM) -r $(NASHORN_TOPDIR)/src/share/modules
-	$(RM) -r $(JDK_TOPDIR)/src/*/native/lib*
-	$(RM) -r $(JDK_TOPDIR)/src/*/native/awt-common
-	$(RM) -r $(JDK_TOPDIR)/src/*/native/common-*
-	$(RM) -r $(JDK_TOPDIR)/src/*/native/unpack200
-	$(RM) -r $(JDK_TOPDIR)/src/*/native/launchers
-	$(RM) -r $(JDK_TOPDIR)/src/solaris/native/jspawnhelper
 
 clean-build:
 	$(RM) -r $(JDK_OUTPUTDIR)/modules
