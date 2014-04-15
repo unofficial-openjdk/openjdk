@@ -26,7 +26,7 @@
 # This must be the first rule
 default: all
 
--include $(SPEC)
+include $(SPEC)
 include MakeBase.gmk
 include JavaCompilation.gmk
 
@@ -38,7 +38,7 @@ DISABLE_JAXP_WARNINGS := -Xlint:all,-deprecation,-unchecked,-rawtypes,-cast,-ser
 $(eval $(call SetupJavaCompiler,GENERATE_NEWBYTECODE_DEBUG, \
     JVM := $(JAVA), \
     JAVAC := $(NEW_JAVAC), \
-    FLAGS := -XDignore.symbol.file=true $(DISABLE_JAXP_WARNINGS) -g, \
+    FLAGS := -XDignore.symbol.file=true $(DISABLE_JAXP_WARNINGS), \
     SERVER_DIR := $(SJAVAC_SERVER_DIR), \
     SERVER_JVM := $(SJAVAC_SERVER_JAVA)))
 
