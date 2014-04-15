@@ -38,7 +38,7 @@ DISABLE_JAXWS_WARNINGS := -Xlint:all,-varargs,-rawtypes,-deprecation,-unchecked,
 $(eval $(call SetupJavaCompiler,GENERATE_NEWBYTECODE_DEBUG, \
     JVM := $(JAVA), \
     JAVAC := $(NEW_JAVAC), \
-    FLAGS := -XDignore.symbol.file=true $(DISABLE_JAXWS_WARNINGS) -g, \
+    FLAGS := -XDignore.symbol.file=true $(DISABLE_JAXWS_WARNINGS), \
     SERVER_DIR := $(SJAVAC_SERVER_DIR), \
     SERVER_JVM := $(SJAVAC_SERVER_JAVA)))
 
