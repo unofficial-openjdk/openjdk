@@ -96,8 +96,9 @@ public abstract class MessageFactory {
      * @see SAAJMetaFactory
      */
 
-    public static MessageFactory newInstance()
-        throws SOAPException {
+    public static MessageFactory newInstance() throws SOAPException {
+
+
         try {
             MessageFactory factory = (MessageFactory) FactoryFinder.find(
                     MESSAGE_FACTORY_PROPERTY,
@@ -107,8 +108,8 @@ public abstract class MessageFactory {
             if (factory != null) {
                 return factory;
             }
-
             return newInstance(SOAPConstants.SOAP_1_1_PROTOCOL);
+
         } catch (Exception ex) {
             throw new SOAPException(
                     "Unable to create message factory for SOAP: "

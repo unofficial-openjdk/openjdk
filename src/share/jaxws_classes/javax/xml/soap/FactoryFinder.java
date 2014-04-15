@@ -40,11 +40,12 @@ class FactoryFinder {
      */
     private static Object newInstance(String className,
                                       ClassLoader classLoader)
-        throws SOAPException
+            throws SOAPException
     {
         try {
             Class spiClass = safeLoadClass(className, classLoader);
             return spiClass.newInstance();
+
         } catch (ClassNotFoundException x) {
             throw new SOAPException("Provider " + className + " not found", x);
         } catch (Exception x) {
@@ -66,7 +67,7 @@ class FactoryFinder {
      * @exception SOAPException if there is a SOAP error
      */
     static Object find(String factoryId)
-        throws SOAPException
+            throws SOAPException
     {
         return find(factoryId, null, false);
     }
@@ -92,7 +93,7 @@ class FactoryFinder {
      * @exception SOAPException if there is a SOAP error
      */
     static Object find(String factoryId, String fallbackClassName)
-        throws SOAPException
+            throws SOAPException
     {
         return find(factoryId, fallbackClassName, true);
     }
@@ -122,7 +123,7 @@ class FactoryFinder {
      * @exception SOAPException if there is a SOAP error
      */
     static Object find(String factoryId, String defaultClassName,
-            boolean tryFallback) throws SOAPException {
+                       boolean tryFallback) throws SOAPException {
         ClassLoader classLoader;
         try {
             classLoader = Thread.currentThread().getContextClassLoader();
@@ -133,7 +134,7 @@ class FactoryFinder {
         // Use the system property first
         try {
             String systemProp =
-                System.getProperty( factoryId );
+                    System.getProperty( factoryId );
             if( systemProp!=null) {
                 return newInstance(systemProp, classLoader);
             }
@@ -144,7 +145,7 @@ class FactoryFinder {
         try {
             String javah=System.getProperty( "java.home" );
             String configFile = javah + File.separator +
-                "lib" + File.separator + "jaxm.properties";
+                    "lib" + File.separator + "jaxm.properties";
             File f=new File( configFile );
             if( f.exists()) {
                 Properties props=new Properties();
@@ -167,13 +168,13 @@ class FactoryFinder {
 
             if( is!=null ) {
                 BufferedReader rd =
-                    new BufferedReader(new InputStreamReader(is, "UTF-8"));
+                        new BufferedReader(new InputStreamReader(is, "UTF-8"));
 
                 String factoryClassName = rd.readLine();
                 rd.close();
 
                 if (factoryClassName != null &&
-                    ! "".equals(factoryClassName)) {
+                        ! "".equals(factoryClassName)) {
                     return newInstance(factoryClassName, classLoader);
                 }
             }
@@ -188,7 +189,7 @@ class FactoryFinder {
         // (built in) factory if specified.
         if (defaultClassName == null) {
             throw new SOAPException(
-                "Provider for " + factoryId + " cannot be found", null);
+                    "Provider for " + factoryId + " cannot be found", null);
         }
         return newInstance(defaultClassName, classLoader);
     }
@@ -200,7 +201,7 @@ class FactoryFinder {
      * Class.forName() on it so it will be loaded by the bootstrap class loader.
      */
     private static Class safeLoadClass(String className,
-            ClassLoader classLoader)
+                                       ClassLoader classLoader)
             throws ClassNotFoundException {
         try {
             // make sure that the current thread has an access to the package of the given name.
@@ -218,7 +219,7 @@ class FactoryFinder {
                 return classLoader.loadClass(className);
         } catch (SecurityException se) {
             // (only) default implementation can be loaded
-            // using bootstrap class loader ...
+            // using bootstrap class loader:
             if (isDefaultImplementation(className))
                 return Class.forName(className);
 
