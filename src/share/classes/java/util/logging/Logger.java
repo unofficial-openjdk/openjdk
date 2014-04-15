@@ -174,7 +174,7 @@ import sun.reflect.Reflection;
 public class Logger {
     private static final Handler emptyHandlers[] = new Handler[0];
     private static final int offValue = Level.OFF.intValue();
-    private LogManager manager;
+    private volatile LogManager manager;
     private String name;
     private final CopyOnWriteArrayList<Handler> handlers =
         new CopyOnWriteArrayList<>();
@@ -1572,6 +1572,9 @@ public class Logger {
     public void setParent(Logger parent) {
         if (parent == null) {
             throw new NullPointerException();
+        }
+        if (manager == null) {
+            manager = LogManager.getLogManager();
         }
         manager.checkPermission();
         doSetParent(parent);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,7 +38,7 @@ public abstract class XErrorHandler {
     public static class XBaseErrorHandler extends XErrorHandler {
         @Override
         public int handleError(long display, XErrorEvent err) {
-            return XToolkit.SAVED_ERROR_HANDLER(display, err);
+            return XErrorHandlerUtil.SAVED_XERROR_HANDLER(display, err);
         }
     }
 

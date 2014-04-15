@@ -187,3 +187,16 @@ Java_java_lang_Class_getPrimitiveClass(JNIEnv *env,
 
     return result;
 }
+
+JNIEXPORT jobject JNICALL
+Java_java_lang_Class_getCheckMemberAccessMethod(JNIEnv *env, jclass cls, jclass smClass)
+{
+    jmethodID mid;
+
+    mid = (*env)->GetMethodID(env, smClass, "checkMemberAccess", "(Ljava/lang/Class;I)V");
+    if (mid == NULL) {
+        return NULL;
+    }
+    return (*env)->ToReflectedMethod(env, smClass, mid, JNI_FALSE);
+}
+

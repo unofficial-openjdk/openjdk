@@ -168,7 +168,7 @@ abstract public class TimeZone implements Serializable, Cloneable {
     // TimeZone.setDefault maintains the compatible behavior of the AppContext-based
     // default setting for untrusted code if allowSetDefault is true.
     private static final boolean allowSetDefault = AccessController.doPrivileged(
-        new sun.security.action.GetPropertyAction("jdk.util.TimeZone.allowSetDefault")) != null;
+    new sun.security.action.GetPropertyAction("jdk.util.TimeZone.allowSetDefault")) != null;
 
     /**
      * Gets the time zone offset, for current date, modified in case of
@@ -738,17 +738,16 @@ abstract public class TimeZone implements Serializable, Cloneable {
         if (allowSetDefault) {
             // JavaAWTAccess provides access implementation-private methods without using reflection.
             JavaAWTAccess javaAWTAccess = SharedSecrets.getJavaAWTAccess();
-            if (javaAWTAccess == null) {
+            if (System.getSecurityManager() == null || javaAWTAccess == null) {
                 return mainAppContextDefault;
+            } else if (javaAWTAccess.isDisposed()) {
+                return null;
             } else {
-                if (!javaAWTAccess.isDisposed()) {
-                    TimeZone tz = (TimeZone)
-                        javaAWTAccess.get(TimeZone.class);
-                    if (tz == null && javaAWTAccess.isMainAppContext()) {
-                        return mainAppContextDefault;
-                    } else {
-                        return tz;
-                    }
+                TimeZone tz = (TimeZone) javaAWTAccess.get(TimeZone.class);
+                if (tz == null && javaAWTAccess.isMainAppContext()) {
+                    return mainAppContextDefault;
+                } else {
+                    return tz;
                 }
             }
         }
@@ -770,14 +769,12 @@ abstract public class TimeZone implements Serializable, Cloneable {
         if (allowSetDefault) {
             // JavaAWTAccess provides access implementation-private methods without using reflection.
             JavaAWTAccess javaAWTAccess = SharedSecrets.getJavaAWTAccess();
-            if (javaAWTAccess == null) {
+            if (System.getSecurityManager() == null || javaAWTAccess == null) {
                 mainAppContextDefault = tz;
-            } else {
-                if (!javaAWTAccess.isDisposed()) {
-                    javaAWTAccess.put(TimeZone.class, tz);
-                    if (javaAWTAccess.isMainAppContext()) {
-                        mainAppContextDefault = null;
-                    }
+            } else if (!javaAWTAccess.isDisposed()) {
+                javaAWTAccess.put(TimeZone.class, tz);
+                if (javaAWTAccess.isMainAppContext()) {
+                    mainAppContextDefault = null;
                 }
             }
         }

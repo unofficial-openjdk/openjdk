@@ -426,39 +426,32 @@ public abstract class Charset
     }
 
     /* The extended set of charsets */
-    private static Object extendedProviderLock = new Object();
-    private static boolean extendedProviderProbed = false;
-    private static CharsetProvider extendedProvider = null;
-
-    private static void probeExtendedProvider() {
-        AccessController.doPrivileged(new PrivilegedAction<Object>() {
-                public Object run() {
-                    try {
-                        Class epc
-                            = Class.forName("sun.nio.cs.ext.ExtendedCharsets");
-                        extendedProvider = (CharsetProvider)epc.newInstance();
-                    } catch (ClassNotFoundException x) {
-                        // Extended charsets not available
-                        // (charsets.jar not present)
-                    } catch (InstantiationException x) {
-                        throw new Error(x);
-                    } catch (IllegalAccessException x) {
-                        throw new Error(x);
-                    }
-                    return null;
-                }
-            });
+    private static class ExtendedProviderHolder {
+        static final CharsetProvider extendedProvider = extendedProvider();
+        // returns ExtendedProvider, if installed
+        private static CharsetProvider extendedProvider() {
+            return AccessController.doPrivileged(
+                       new PrivilegedAction<CharsetProvider>() {
+                           public CharsetProvider run() {
+                                try {
+                                    Class<?> epc
+                                        = Class.forName("sun.nio.cs.ext.ExtendedCharsets");
+                                    return (CharsetProvider)epc.newInstance();
+                                } catch (ClassNotFoundException x) {
+                                    // Extended charsets not available
+                                    // (charsets.jar not present)
+                                } catch (InstantiationException |
+                                         IllegalAccessException x) {
+                                  throw new Error(x);
+                                }
+                                return null;
+                            }
+                        });
+        }
     }
 
     private static Charset lookupExtendedCharset(String charsetName) {
-        CharsetProvider ecp = null;
-        synchronized (extendedProviderLock) {
-            if (!extendedProviderProbed) {
-                probeExtendedProvider();
-                extendedProviderProbed = true;
-            }
-            ecp = extendedProvider;
-        }
+        CharsetProvider ecp = ExtendedProviderHolder.extendedProvider;
         return (ecp != null) ? ecp.charsetForName(charsetName) : null;
     }
 
@@ -588,6 +581,9 @@ public abstract class Charset
                         new TreeMap<String,Charset>(
                             ASCIICaseInsensitiveComparator.CASE_INSENSITIVE_ORDER);
                     put(standardProvider.charsets(), m);
+                    CharsetProvider ecp = ExtendedProviderHolder.extendedProvider;
+                    if (ecp != null)
+                        put(ecp.charsets(), m);
                     for (Iterator i = providers(); i.hasNext();) {
                         CharsetProvider cp = (CharsetProvider)i.next();
                         put(cp.charsets(), m);

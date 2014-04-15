@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1996, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -405,7 +405,14 @@ JNIEXPORT jobject JNICALL
         target = (*env)->GetObjectField(env, peer, mComponentPeerIDs.target);
     }
 #else
-    target =  (*env)->GetObjectField(env, peer, targetID);
+    if (window != None) {
+        peer = JNU_CallStaticMethodByName(env, NULL, "sun/awt/X11/XToolkit",
+            "windowToXWindow", "(J)Lsun/awt/X11/XBaseWindow;", (jlong)window).l;
+    }
+    if ((peer != NULL) &&
+        (JNU_IsInstanceOfByName(env, peer, "sun/awt/X11/XWindow") == 1)) {
+        target = (*env)->GetObjectField(env, peer, targetID);
+    }
 #endif
 
     if (target == NULL) {
@@ -413,7 +420,6 @@ JNIEXPORT jobject JNICALL
         AWT_UNLOCK();
         return (jobject)NULL;
     }
-
 
     AWT_UNLOCK();
 

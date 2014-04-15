@@ -158,7 +158,7 @@ class TimSort<T> {
          */
         int stackLen = (len <    120  ?  5 :
                         len <   1542  ? 10 :
-                        len < 119151  ? 19 : 40);
+                        len < 119151  ? 24 : 40);
         runBase = new int[stackLen];
         runLen = new int[stackLen];
     }

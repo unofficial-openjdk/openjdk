@@ -85,9 +85,6 @@ build: $(FILES_genout_extcs) $(CHARSETS_JAR)
 #
 # Extra rules to build character converters.
 
-SERVICE_DESCRIPTION = java.nio.charset.spi.CharsetProvider
-SERVICE_DESCRIPTION_PATH = META-INF/services/$(SERVICE_DESCRIPTION)
-
 GENCSDATASRC = $(BUILDDIR)/tools/CharsetMapping
 GENCSSRCDIR = $(BUILDDIR)/tools/src/build/tools/charsetmapping
 GENCSEXT = $(GENSRCDIR)/sun/nio/cs/ext
@@ -116,10 +113,6 @@ $(FILES_genout_extcs): \
 		$(GENCSSRCDIR)/HKSCS.java
 	$(BOOT_JAVA_CMD) -jar $(CHARSETMAPPING_JARFILE) $(GENCSDATASRC) $(GENCSEXT) dbcs
 
-$(CLASSDESTDIR)/$(SERVICE_DESCRIPTION_PATH): \
-  $(SHARE_SRC)/classes/sun/nio/cs/ext/$(SERVICE_DESCRIPTION_PATH)
-	$(install-file)
-
 # no compression unless requested
 ifndef COMPRESS_JARS
   CREATE_JAR_OPTS_NOMANIFEST = cf0
@@ -127,10 +120,9 @@ else
   CREATE_JAR_OPTS_NOMANIFEST = cf
 endif
 
-$(CHARSETS_JAR): $(FILES_class) $(CLASSDESTDIR)/$(SERVICE_DESCRIPTION_PATH) $(FILES_DAT)
+$(CHARSETS_JAR): $(FILES_class) $(FILES_DAT)
 	$(BOOT_JAR_CMD) $(CREATE_JAR_OPTS_NOMANIFEST) $(CHARSETS_JAR) \
 	      -C $(CLASSDESTDIR) sun \
-	      -C $(CLASSDESTDIR) $(SERVICE_DESCRIPTION_PATH)  \
 	      $(BOOT_JAR_JFLAGS)
 	@$(java-vm-cleanup)
 

@@ -117,7 +117,7 @@ public class VerifyAccess {
                 isSamePackage(defc, lookupClass))
                 return true;
             if ((allowedModes & PROTECTED) != 0 &&
-                isPublicSuperClass(defc, lookupClass))
+                isSuperClass(defc, lookupClass))
                 return true;
             return false;
         case PACKAGE_ONLY:  // That is, zero.  Unmarked member is package-only access.
@@ -139,8 +139,8 @@ public class VerifyAccess {
                 lookupClass.isAssignableFrom(refc));
     }
 
-    static boolean isPublicSuperClass(Class<?> defc, Class<?> lookupClass) {
-        return isPublic(defc.getModifiers()) && defc.isAssignableFrom(lookupClass);
+    static boolean isSuperClass(Class<?> defc, Class<?> lookupClass) {
+        return defc.isAssignableFrom(lookupClass);
     }
 
     /**

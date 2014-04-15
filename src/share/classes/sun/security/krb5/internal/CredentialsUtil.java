@@ -155,13 +155,11 @@ rs.
                 }
 
                 /*
-                 * No tgt found. Try to get one for a
-                 * realm as close to the target as possible.
-                 * That means traversing the realms list backwards.
+                 * No tgt found. Let's go thru the realms list one by one.
                  */
 
-                for (newTgt = null, k = realms.length - 1;
-                     newTgt == null && k > i; k--)
+                for (newTgt = null, k = i+1;
+                        newTgt == null && k < realms.length; k++)
                 {
 
                     tempService = new ServiceName(
