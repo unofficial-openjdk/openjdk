@@ -78,4 +78,7 @@ public class WhiteBox {
   public native void NMTUncommitMemory(long addr, long size);
   public native void NMTReleaseMemory(long addr, long size);
   public native boolean NMTWaitForDataMerge();
+
+  // Compiler
+  public native void    deoptimizeAll();
 }

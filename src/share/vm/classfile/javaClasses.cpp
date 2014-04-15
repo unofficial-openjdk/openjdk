@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -2388,6 +2388,26 @@ void java_lang_ref_SoftReference::set_clock(jlong value) {
   *offset = value;
 }
 
+// Support for java_lang_invoke_DirectMethodHandle
+
+int java_lang_invoke_DirectMethodHandle::_member_offset;
+
+oop java_lang_invoke_DirectMethodHandle::member(oop dmh) {
+  oop member_name = NULL;
+  bool is_dmh = dmh->is_oop() && java_lang_invoke_DirectMethodHandle::is_instance(dmh);
+  assert(is_dmh, "a DirectMethodHandle oop is expected");
+  if (is_dmh) {
+    member_name = dmh->obj_field(member_offset_in_bytes());
+  }
+  return member_name;
+}
+
+void java_lang_invoke_DirectMethodHandle::compute_offsets() {
+  klassOop klass_oop = SystemDictionary::DirectMethodHandle_klass();
+  if (klass_oop != NULL && EnableInvokeDynamic) {
+    compute_offset(_member_offset, klass_oop, vmSymbols::member_name(), vmSymbols::java_lang_invoke_MemberName_signature());
+  }
+}
 
 // Support for java_lang_invoke_MethodHandle
 
@@ -2495,6 +2515,13 @@ void java_lang_invoke_MemberName::set_flags(oop mname, int flags) {
 oop java_lang_invoke_MemberName::vmtarget(oop mname) {
   assert(is_instance(mname), "wrong type");
   return mname->obj_field(_vmtarget_offset);
+}
+
+// Can be executed on VM thread only
+void java_lang_invoke_MemberName::adjust_vmtarget(oop mname, oop ref) {
+  assert((is_instance(mname) && (flags(mname) & (MN_IS_METHOD | MN_IS_CONSTRUCTOR)) > 0), "wrong type");
+  assert(Thread::current()->is_VM_thread(), "not VM thread");
+  mname->address_field_put(_vmtarget_offset, (address)ref);
 }
 
 void java_lang_invoke_MemberName::set_vmtarget(oop mname, oop ref) {
@@ -3000,6 +3027,7 @@ void JavaClasses::compute_offsets() {
   java_lang_ThreadGroup::compute_offsets();
   if (EnableInvokeDynamic) {
     java_lang_invoke_MethodHandle::compute_offsets();
+    java_lang_invoke_DirectMethodHandle::compute_offsets();
     java_lang_invoke_MemberName::compute_offsets();
     java_lang_invoke_LambdaForm::compute_offsets();
     java_lang_invoke_MethodType::compute_offsets();

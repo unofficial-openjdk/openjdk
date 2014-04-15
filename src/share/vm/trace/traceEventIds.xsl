@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
- Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2012, 2013, Oracle and/or its affiliates. All rights reserved.
  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 
  This code is free software; you can redistribute it and/or modify it
@@ -23,8 +23,8 @@
 -->
 
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
-<xsl:output method="text" indent="no" omit-xml-declaration="yes"/>
 <xsl:import href="xsl_util.xsl"/>
+<xsl:output method="text" indent="no" omit-xml-declaration="yes"/>
 
 <xsl:template match="/">
   <xsl:call-template name="file-header"/>

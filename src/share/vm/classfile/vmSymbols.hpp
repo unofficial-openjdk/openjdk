@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -243,6 +243,7 @@
   /* Support for JSR 292 & invokedynamic (JDK 1.7 and above) */                                   \
   template(java_lang_invoke_CallSite,                 "java/lang/invoke/CallSite")                \
   template(java_lang_invoke_ConstantCallSite,         "java/lang/invoke/ConstantCallSite")        \
+  template(java_lang_invoke_DirectMethodHandle,       "java/lang/invoke/DirectMethodHandle")      \
   template(java_lang_invoke_MutableCallSite,          "java/lang/invoke/MutableCallSite")         \
   template(java_lang_invoke_VolatileCallSite,         "java/lang/invoke/VolatileCallSite")        \
   template(java_lang_invoke_MethodHandle,             "java/lang/invoke/MethodHandle")            \
@@ -338,6 +339,7 @@
   template(thread_id_name,                            "tid")                                      \
   template(newInstance0_name,                         "newInstance0")                             \
   template(limit_name,                                "limit")                                    \
+  template(member_name,                               "member")                                   \
   template(forName_name,                              "forName")                                  \
   template(forName0_name,                             "forName0")                                 \
   template(isJavaIdentifierStart_name,                "isJavaIdentifierStart")                    \
