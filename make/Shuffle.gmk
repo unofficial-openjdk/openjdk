@@ -370,7 +370,13 @@ $(eval $(call SetupShuffleFiles,COPY_AWT_RESOURCES_MACOSX, \
 $(eval $(call SetupShuffleFiles,COPY_NASHORN_RESOURCES, \
     SRC := $(NASHORN_TOPDIR)/src, \
     DEST := $(NASHORN_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/jdk.nashorn/share/classes, \
-    FILES := $(NASHORN_TOPDIR)/src/jdk/nashorn/internal/runtime/resources/version.properties-template))
+    FILES := $(NASHORN_TOPDIR)/src/jdk/nashorn/internal/runtime/resources/version.properties-template \
+        $(NASHORN_TOPDIR)/src/META-INF/services/javax.script.ScriptEngineFactory))
+
+$(eval $(call SetupShuffleFiles,COPY_DNS_SERVICE, \
+    SRC := $(JDK_TOPDIR)/src/share/classes/sun/net/spi/nameservice/dns, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/jdk.jndi.dns/share/classes, \
+    FILES := $(JDK_TOPDIR)/src/share/classes/sun/net/spi/nameservice/dns/META-INF/services/sun.net.spi.nameservice.NameServiceDescriptor))
 
 ################################################################################
 

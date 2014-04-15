@@ -24,6 +24,7 @@
 #
 
 include $(SPEC)
+include JigsawSpecMod.gmk
 include MakeBase.gmk
 include JavaCompilation.gmk
 include Setup.gmk
@@ -47,10 +48,16 @@ BEANMANIFEST := $(JDK_TOPDIR)/make/data/swingbeaninfo/manifest.mf
 
 $(eval $(call MakeDir, $(IMAGES_OUTPUTDIR)/lib))
 
+ifeq ($(JIGSAW), true)
+  JDK_OUT_CLASSES := $(wildcard $(JDK_OUTPUTDIR)/modules/*)
+else
+  JDK_OUT_CLASSES := $(JDK_OUTPUTDIR)/classes
+endif
+
 ##########################################################################################
 
 $(eval $(call SetupArchive,BUILD_JCONSOLE_JAR, , \
-    SRCS := $(JDK_OUTPUTDIR)/classes, \
+    SRCS := $(JDK_OUTPUTDIR)/$(MODULES_SUBDIR)$(JDK_TOOLS_SUBDIR), \
     SUFFIXES := .class .gif .png .properties, \
     INCLUDES := sun/tools/jconsole com/sun/tools/jconsole, \
     JARMAIN := sun.tools.jconsole.JConsole, \
@@ -61,7 +68,7 @@ $(eval $(call SetupArchive,BUILD_JCONSOLE_JAR, , \
 ##########################################################################################
 
 $(eval $(call SetupArchive,BUILD_DNS_JAR, , \
-    SRCS := $(JDK_OUTPUTDIR)/classes, \
+    SRCS := $(JDK_OUTPUTDIR)/$(MODULES_SUBDIR)$(JDK_JNDI_DNS_SUBDIR), \
     INCLUDES := sun/net/spi/nameservice/dns, \
     EXTRA_FILES := META-INF/services/sun.net.spi.nameservice.NameServiceDescriptor, \
     JAR := $(IMAGES_OUTPUTDIR)/lib/ext/dnsns.jar, \
@@ -78,10 +85,9 @@ LOCALEDATA_INCLUDES := $(addprefix sun/text/resources/, $(LOCALEDATA_INCLUDE_LOC
     $(addprefix sun/util/resources/, $(LOCALEDATA_INCLUDE_LOCALES))
 
 $(eval $(call SetupArchive,BUILD_LOCALEDATA_JAR, , \
-    SRCS := $(JDK_OUTPUTDIR)/classes, \
+    SRCS := $(JDK_OUTPUTDIR)/$(MODULES_SUBDIR)$(JDK_LOCALEDATA_SUBDIR), \
     SUFFIXES := .class _dict _th, \
     INCLUDES := $(LOCALEDATA_INCLUDES), \
-    EXCLUDES := sun/text/resources/th/BreakIteratorRules_th.class, \
     JAR := $(IMAGES_OUTPUTDIR)/lib/ext/localedata.jar, \
     SKIP_METAINF := true))
 
@@ -164,17 +170,18 @@ RT_JAR_EXCLUDES += \
     META-INF/services/com.sun.jdi.connect.spi.TransportService \
     META-INF/services/com.sun.tools.attach.spi.AttachProvider \
     META-INF/services/com.sun.tools.xjc.Plugin \
+    META-INF/services/javax.script.ScriptEngineFactory \
     META-INF/services/sun.net.spi.nameservice.NameServiceDescriptor \
     org/relaxng/datatype \
     sun/awt/HKSCS.class \
     sun/awt/motif/X11GB2312.class \
-    sun/awt/motif/X11GB2312\$$$$Decoder.class \
-    sun/awt/motif/X11GB2312\$$$$Encoder.class \
+    sun/awt/motif/X11GB2312$$$$Decoder.class \
+    sun/awt/motif/X11GB2312$$$$Encoder.class \
     sun/awt/motif/X11GBK.class \
-    sun/awt/motif/X11GBK\$$$$Encoder.class \
+    sun/awt/motif/X11GBK$$$$Encoder.class \
     sun/awt/motif/X11KSC5601.class \
-    sun/awt/motif/X11KSC5601\$$$$Decoder.class \
-    sun/awt/motif/X11KSC5601\$$$$Encoder.class \
+    sun/awt/motif/X11KSC5601$$$$Decoder.class \
+    sun/awt/motif/X11KSC5601$$$$Encoder.class \
     sun/jvmstat \
     sun/net/spi/nameservice/dns \
     sun/nio/cs/ext \
@@ -210,11 +217,19 @@ RT_JAR_EXCLUDES += \
     $(LOCALEDATA_INCLUDES) \
     com/oracle/jrockit/jfr \
     oracle/jrockit/jfr \
-    jdk/jfr
+    jdk/jfr \
+    jdk/internal/dynalink \
+    jdk/nashorn \
+    sun/jvm \
+    toolbarButtonGraphics \
+    sa.properties \
+    com/sun/java/swing/action \
+    com/sun/java/swing/ui \
+    #
 
 # Find all files in the classes dir to use as dependencies. This could be more fine granular.
 ALL_FILES_IN_CLASSES := $(call not-containing, _the., $(filter-out %javac_state, \
-    $(call CacheFind, $(JDK_OUTPUTDIR)/classes)))
+    $(call CacheFind, $(JDK_OUT_CLASSES))))
 
 RT_JAR_MANIFEST_FILE := $(IMAGES_OUTPUTDIR)/lib$(PROFILE)/_the.rt.jar_manifest
 RESOURCE_JAR_MANIFEST_FILE := $(IMAGES_OUTPUTDIR)/lib$(PROFILE)/_the.resources.jar_manifest
@@ -250,14 +265,25 @@ $(IMAGES_OUTPUTDIR)/lib/classlist: $(JDK_TOPDIR)/make/data/classlist/classlist.$
 	$(TOOL_ADDJSUM) $< $@.tmp
 	$(MV) $@.tmp $@
 
-$(IMAGES_OUTPUTDIR)/lib$(PROFILE)/_the.jars.contents: $(BUILD_TOOLS) $(IMAGES_OUTPUTDIR)/lib$(PROFILE)/_the.jars.exclude \
-    $(ALL_FILES_IN_CLASSES) $(IMAGES_OUTPUTDIR)/lib/classlist
+ifeq ($(JIGSAW), true)
+  $(IMAGES_OUTPUTDIR)/lib$(PROFILE)/_the.jars.contents: $(BUILD_TOOLS) $(IMAGES_OUTPUTDIR)/lib$(PROFILE)/_the.jars.exclude \
+      $(ALL_FILES_IN_CLASSES) $(IMAGES_OUTPUTDIR)/lib/classlist
+	$(MKDIR) -p $(@D)
+	$(RM) $@ $@.tmp
+	($(CD) $(JDK_OUTPUTDIR)/modules && \
+	$(TOOL_JARREORDER) -m \
+	    -o $@.tmp $(IMAGES_OUTPUTDIR)/lib/classlist $(IMAGES_OUTPUTDIR)/lib$(PROFILE)/_the.jars.exclude . )
+	$(MV) $@.tmp $@
+else
+  $(IMAGES_OUTPUTDIR)/lib$(PROFILE)/_the.jars.contents: $(BUILD_TOOLS) $(IMAGES_OUTPUTDIR)/lib$(PROFILE)/_the.jars.exclude \
+      $(ALL_FILES_IN_CLASSES) $(IMAGES_OUTPUTDIR)/lib/classlist
 	$(MKDIR) -p $(@D)
 	$(RM) $@ $@.tmp
 	($(CD) $(JDK_OUTPUTDIR)/classes && \
 	$(TOOL_JARREORDER) \
 	    -o $@.tmp $(IMAGES_OUTPUTDIR)/lib/classlist $(IMAGES_OUTPUTDIR)/lib$(PROFILE)/_the.jars.exclude . )
 	$(MV) $@.tmp $@
+endif
 
 $(IMAGES_OUTPUTDIR)/lib$(PROFILE)/_the.rt.jar.contents: $(IMAGES_OUTPUTDIR)/lib$(PROFILE)/_the.jars.contents
 	$(MKDIR) -p $(@D)
@@ -275,7 +301,7 @@ $(IMAGES_OUTPUTDIR)/lib$(PROFILE)/_the.resources.jar.contents: $(IMAGES_OUTPUTDI
 	$(MKDIR) -p $(@D)
 	$(RM) $@ $@.tmp
 	$(GREP) -v -e '\.class$$' \
-	    -e '/_the\.*' -e '^_the\.*' -e '\\_the\.*' -e 'javac_state' \
+	    -e '/_the\.' -e '^_the\.' -e '\\_the\.' -e ' _the\.' -e 'javac_state' \
 	    $(IMAGES_OUTPUTDIR)/lib$(PROFILE)/_the.jars.contents > $@.tmp
         ifneq ($(PROFILE), )
           # # Strip out all META-INF/services/ entries
@@ -311,7 +337,7 @@ $(IMAGES_OUTPUTDIR)/lib$(PROFILE)/rt.jar: $(IMAGES_OUTPUTDIR)/lib$(PROFILE)/_the
 	$(ECHO) Creating rt.jar $(PROFILE) Compressed=$(COMPRESS_JARS)
 	$(MKDIR) -p $(@D)
 	$(RM) $@ $@.tmp
-	$(CD) $(JDK_OUTPUTDIR)/classes && \
+	$(CD) $(JDK_OUTPUTDIR)/$(MODULES_SUBDIR) && \
 	$(JAR) $(RT_JAR_CREATE_OPTIONS) $@.tmp $(RT_JAR_MANIFEST_FILE) \
 	    @$(IMAGES_OUTPUTDIR)/lib$(PROFILE)/_the.rt.jar.contents && \
 	if [ -f $(CLASS_FILE) ]; then \
@@ -326,7 +352,7 @@ $(IMAGES_OUTPUTDIR)/lib$(PROFILE)/resources.jar: $(IMAGES_OUTPUTDIR)/lib$(PROFIL
 	$(ECHO) Creating resources.jar
 	$(MKDIR) -p $(@D)
 	$(RM) $@ $@.tmp
-	$(CD) $(JDK_OUTPUTDIR)/classes && \
+	$(CD) $(JDK_OUTPUTDIR)/$(MODULES_SUBDIR) && \
 	$(JAR) $(RT_JAR_CREATE_OPTIONS) $@.tmp $(RESOURCE_JAR_MANIFEST_FILE) \
 	    @$(IMAGES_OUTPUTDIR)/lib$(PROFILE)/_the.resources.jar.contents
 	$(MV) $@.tmp $@
@@ -335,17 +361,17 @@ $(IMAGES_OUTPUTDIR)/lib$(PROFILE)/resources.jar: $(IMAGES_OUTPUTDIR)/lib$(PROFIL
 
 ifneq ($(OPENJDK_TARGET_OS), windows)
   CHARSETS_EXTRA_FILES := sun/awt/motif/X11GBK.class \
-      sun/awt/motif/X11GB2312\$$$$Decoder.class \
+      sun/awt/motif/X11GB2312$$$$Decoder.class \
       sun/awt/motif/X11GB2312.class \
-      sun/awt/motif/X11KSC5601\$$$$Decoder.class \
-      sun/awt/motif/X11KSC5601\$$$$Encoder.class \
-      sun/awt/motif/X11GB2312\$$$$Encoder.class \
-      sun/awt/motif/X11GBK\$$$$Encoder.class \
+      sun/awt/motif/X11KSC5601$$$$Decoder.class \
+      sun/awt/motif/X11KSC5601$$$$Encoder.class \
+      sun/awt/motif/X11GB2312$$$$Encoder.class \
+      sun/awt/motif/X11GBK$$$$Encoder.class \
       sun/awt/motif/X11KSC5601.class
 endif
 
 $(eval $(call SetupArchive,BUILD_CHARSETS_JAR, , \
-    SRCS := $(JDK_OUTPUTDIR)/classes, \
+    SRCS := $(JDK_OUT_CLASSES), \
     SUFFIXES := .class .dat, \
     INCLUDES := sun/nio/cs/ext, \
     EXTRA_FILES := sun/awt/HKSCS.class \
@@ -359,7 +385,7 @@ $(eval $(call SetupArchive,BUILD_CHARSETS_JAR, , \
 ifndef OPENJDK
   ifeq ($(ENABLE_JFR), true)
     $(eval $(call SetupArchive,BUILD_JFR_JAR, , \
-        SRCS := $(JDK_OUTPUTDIR)/classes, \
+        SRCS := $(JDK_OUTPUTDIR)/$(MODULES_SUBDIR)$(JDK_JFR_SUBDIR), \
         SUFFIXES := .class .jfc .xsd, \
         INCLUDES := com/oracle/jrockit/jfr \
             oracle/jrockit/jfr \
@@ -375,7 +401,7 @@ endif
 ##########################################################################################
 
 $(eval $(call SetupArchive,BUILD_JSSE_JAR, , \
-    SRCS := $(JDK_OUTPUTDIR)/classes, \
+    SRCS := $(JDK_OUT_CLASSES), \
     INCLUDES := sun/security/provider/Sun.class \
         sun/security/rsa/SunRsaSign.class \
         sun/security/ssl \
@@ -388,7 +414,7 @@ $(eval $(call SetupArchive,BUILD_JSSE_JAR, , \
 ##########################################################################################
 
 $(eval $(call SetupArchive,BUILD_SWINGBEANS_JAR, , \
-    SRCS := $(JDK_OUTPUTDIR)/classes, \
+    SRCS := $(JDK_OUTPUTDIR)/$(MODULES_SUBDIR)$(JAVA_DESKTOP_SUBDIR), \
     SUFFIXES := BeanInfo.class .gif, \
     INCLUDES := javax/swing sun/swing, \
     EXCLUDES := javax/swing/plaf, \
@@ -403,13 +429,21 @@ include gensrc/GensrcCLDR.gmk
 
 CLDRDATA_JAR_DST := $(IMAGES_OUTPUTDIR)/lib/ext/cldrdata.jar
 
+ifeq ($(JIGSAW), true)
+  CLDRDATA_JAR_SRCS := \
+      $(JDK_OUTPUTDIR)/modules/jdk.localedata \
+      $(JDK_OUTPUTDIR)/modules/java.base \
+      #
+else
+  CLDRDATA_JAR_SRCS := $(JDK_OUTPUTDIR)/classes
+endif
+
 $(eval $(call SetupArchive,BUILD_CLDRDATA_JAR, , \
-    SRCS := $(JDK_OUTPUTDIR)/classes, \
+    SRCS := $(CLDRDATA_JAR_SRCS), \
     SUFFIXES := .class, \
     INCLUDES := sun/text/resources/cldr \
-        sun/util/cldr \
+        sun/util/cldr/CLDRLocaleDataMetaInfo.class \
         sun/util/resources/cldr, \
-    EXCLUDES := sun/util/cldr/CLDRLocaleProviderAdapter, \
     JAR := $(CLDRDATA_JAR_DST), \
     EXTRA_MANIFEST_ATTR := CLDR-Version: $(CLDRVERSION), \
     SKIP_METAINF := true))
@@ -472,8 +506,24 @@ TOOLS_JAR_INCLUDES := \
 # The sjavac tools is not ready for public consumption.
 TOOLS_JAR_EXCLUDES = com/sun/tools/sjavac
 
+ifeq ($(JIGSAW), true)
+  TOOLS_JAR_SRC := $(addprefix $(JDK_OUTPUTDIR)/modules/,\
+      java.desktop \
+      jdk.devtools \
+      jdk.tools \
+      jdk.tools.base \
+      jdk.tools.diag \
+      jdk.tools.jaxws \
+      javax.corba \
+      )
+      #
+
+else
+  TOOLS_JAR_SRC := $(JDK_OUTPUTDIR)/classes
+endif
+
 $(eval $(call SetupArchive,BUILD_TOOLS_JAR, , \
-    SRCS := $(JDK_OUTPUTDIR)/classes, \
+    SRCS := $(TOOLS_JAR_SRC), \
     SUFFIXES := .class .prp .gif .properties .xml .css .xsd .js .html .txt .java \
         Tool aliasmap options, \
     INCLUDES := $(TOOLS_JAR_INCLUDES), \
@@ -521,7 +571,7 @@ $(IMAGES_OUTPUTDIR)/symbols/_the.symbols: $(IMAGES_OUTPUTDIR)/lib/rt.jar
 	$(RM) -r $(IMAGES_OUTPUTDIR)/symbols/META-INF/sym
 	$(MKDIR) -p $(IMAGES_OUTPUTDIR)/symbols/META-INF/sym
 	$(JAVA) $(NEW_JAVAC) \
-	    -bootclasspath $(JDK_OUTPUTDIR)/classes \
+	    -bootclasspath "$(subst $(SPACE),$(PATH_SEP),$(JDK_OUT_CLASSES))" \
 	    -XDprocess.packages -proc:only \
 	    -processor com.sun.tools.javac.sym.CreateSymbols \
 	    -Acom.sun.tools.javac.sym.Jar=$(IMAGES_OUTPUTDIR)/lib/rt.jar \
@@ -575,12 +625,30 @@ SRC_ZIP_INCLUDES = \
     org/xml/sax \
     #
 
-SRC_ZIP_SRCS = $(JDK_TOPDIR)/src/share/classes $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/classes
-SRC_ZIP_SRCS += $(JDK_OUTPUTDIR)/gensrc
-SRC_ZIP_SRCS += $(JDK_OUTPUTDIR)/impsrc
-SRC_ZIP_SRCS += $(JDK_OUTPUTDIR)/gendocsrc_rmic
-ifndef OPENJDK
-  SRC_ZIP_SRCS += $(JDK_TOPDIR)/src/closed/share/classes
+ifeq ($(JIGSAW), true)
+  SRC_ZIP_SRCS := $(wildcard \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/*/share/classes \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/*/$(OPENJDK_TARGET_OS_API_DIR)/classes \
+      $(LANGTOOLS_TOPDIR)/src/*/share/classes \
+      $(CORBA_TOPDIR)/src/*/share/classes \
+      $(JAXP_TOPDIR)/src/*/share/classes \
+      $(JAXWS_TOPDIR)/src/*/share/classes \
+      $(JDK_OUTPUTDIR)/gensrc/j* \
+      $(JDK_OUTPUTDIR)/gendocsrc_rmic \
+      ) \
+      #
+else
+  SRC_ZIP_SRCS := \
+      $(JDK_TOPDIR)/src/share/classes \
+      $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/classes \
+      $(JDK_OUTPUTDIR)/gensrc \
+      $(JDK_OUTPUTDIR)/impsrc \
+      $(JDK_OUTPUTDIR)/gendocsrc_rmic \
+      #
+
+  ifndef OPENJDK
+    SRC_ZIP_SRCS += $(JDK_TOPDIR)/src/closed/share/classes
+  endif
 endif
 
 # Need to copy launcher src files into desired directory structure
@@ -615,7 +683,7 @@ ifndef OPENJDK
   ifeq ($(OPENJDK_TARGET_OS), windows)
 
     $(eval $(call SetupArchive,BUILD_JACCESS_JAR, , \
-        SRCS := $(JDK_OUTPUTDIR)/classes, \
+        SRCS := $(JDK_OUTPUTDIR)/$(MODULES_SUBDIR)$(JAVA_DESKTOP_SUBDIR), \
         INCLUDES := com/sun/java/accessibility/util, \
         JAR := $(IMAGES_OUTPUTDIR)/lib/ext/jaccess.jar, \
         SKIP_METAINF := true))
@@ -668,32 +736,54 @@ $(IMAGES_OUTPUTDIR)/lib/ext/zipfs.jar: $(JDK_OUTPUTDIR)/demo/nio/zipfs/zipfs.jar
 # This file is imported from hotspot in Import.gmk. Copying it into images/lib so that
 # all jars can be found in one place when creating images in Images.gmk. It needs to be
 # done here so that clean targets can be simple and accurate.
-$(IMAGES_OUTPUTDIR)/lib/sa-jdi.jar: $(JDK_OUTPUTDIR)/lib/sa-jdi.jar
+$(IMAGES_OUTPUTDIR)/lib/sa-jdi.jar: $(HOTSPOT_DIST)/lib/sa-jdi.jar
 	$(install-file)
 
 ##########################################################################################
 #
 # sec-bin.zip is used by builds where the corresponding sources are not available
 #
-$(eval $(call SetupZipArchive,BUILD_SEC_BIN_ZIP, \
-    SRC := $(JDK_OUTPUTDIR), \
-    INCLUDES := classes/javax/net \
-        classes/javax/security/cert \
-        classes/com/sun/net/ssl \
-        classes/com/sun/security/cert \
-        classes/sun/net/www/protocol/https \
-        classes/sun/security/pkcs12 \
-        classes/sun/security/ssl \
-        classes/sun/security/krb5 \
-        classes/sun/security/krb5/internal \
-        classes/sun/security/krb5/internal/ccache \
-        classes/sun/security/krb5/internal/crypto \
-        classes/sun/security/krb5/internal/ktab \
-        classes/sun/security/krb5/internal/rcache \
-        classes/sun/security/krb5/internal/util, \
-    INCLUDE_FILES := classes/sun/security/jgss/spi/GSSContextSpi.class, \
-    EXCLUDES := classes/sun/security/krb5/internal/tools, \
-    ZIP := $(IMAGES_OUTPUTDIR)/sec-bin.zip))
+ifeq ($(JIGSAW), true)
+  $(eval $(call SetupZipArchive,BUILD_SEC_BIN_ZIP, \
+      SRC := $(JDK_OUTPUTDIR), \
+      INCLUDES := modules/java.base/javax/net \
+          modules/java.base/javax/security/cert \
+          modules/java.base/com/sun/net/ssl \
+          modules/java.base/com/sun/security/cert \
+          modules/java.base/sun/net/www/protocol/https \
+          modules/java.base/sun/security/pkcs12 \
+          modules/java.base/sun/security/ssl \
+          modules/javax.kerberos/sun/security/krb5 \
+          modules/javax.kerberos/sun/security/krb5/internal \
+          modules/javax.kerberos/sun/security/krb5/internal/ccache \
+          modules/javax.kerberos/sun/security/krb5/internal/crypto \
+          modules/javax.kerberos/sun/security/krb5/internal/ktab \
+          modules/javax.kerberos/sun/security/krb5/internal/rcache \
+          modules/javax.kerberos/sun/security/krb5/internal/util, \
+      INCLUDE_FILES := modules/javax.kerberos/sun/security/jgss/spi/GSSContextSpi.class, \
+      EXCLUDES := modules/javax.kerberos/sun/security/krb5/internal/tools, \
+      ZIP := $(IMAGES_OUTPUTDIR)/sec-bin.zip))
+else
+  $(eval $(call SetupZipArchive,BUILD_SEC_BIN_ZIP, \
+      SRC := $(JDK_OUTPUTDIR), \
+      INCLUDES := classes/javax/net \
+          classes/javax/security/cert \
+          classes/com/sun/net/ssl \
+          classes/com/sun/security/cert \
+          classes/sun/net/www/protocol/https \
+          classes/sun/security/pkcs12 \
+          classes/sun/security/ssl \
+          classes/sun/security/krb5 \
+          classes/sun/security/krb5/internal \
+          classes/sun/security/krb5/internal/ccache \
+          classes/sun/security/krb5/internal/crypto \
+          classes/sun/security/krb5/internal/ktab \
+          classes/sun/security/krb5/internal/rcache \
+          classes/sun/security/krb5/internal/util, \
+      INCLUDE_FILES := classes/sun/security/jgss/spi/GSSContextSpi.class, \
+      EXCLUDES := classes/sun/security/krb5/internal/tools, \
+      ZIP := $(IMAGES_OUTPUTDIR)/sec-bin.zip))
+endif
 
 JARS += $(IMAGES_OUTPUTDIR)/sec-bin.zip
 

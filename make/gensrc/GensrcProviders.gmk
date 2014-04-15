@@ -35,6 +35,8 @@ ifeq ($(JIGSAW), true)
   # Combine Connectors
   CONNECTOR_SERVICE := com.sun.jdi.connect.Connector
 
+  # TODO jdk9: When merging to jdk9 first milestone, disable the combination of connector 
+  # service providers.
   # $(JDK_OUTPUTDIR)/gensrc_jdi/META-INF/services/com.sun.jdi.connect.Connector is
   # created in Import.gmk.
   $(JDK_OUTPUTDIR)/gensrc/jdk.tools/META-INF/services/$(CONNECTOR_SERVICE): \

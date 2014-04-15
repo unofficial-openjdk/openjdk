@@ -27,6 +27,7 @@
 default: all
 
 include $(SPEC)
+include JigsawSpecMod.gmk
 include MakeBase.gmk
 include JavaCompilation.gmk
 include NativeCompilation.gmk
@@ -34,7 +35,7 @@ include NativeCompilation.gmk
 # Setup the java compilers for the JDK build.
 include Setup.gmk
 
-# Prepare the find cache. Only used if running on windows.
+# Prepare the find cache.
 $(eval $(call FillCacheFind, $(JDK_TOPDIR)/src))
 
 # Append demo goals to this variable.

@@ -664,7 +664,7 @@ ifndef OPENJDK
   ifeq ($(OPENJDK_TARGET_OS), solaris)
 
     ifeq ($(JIGSAW), true)
-      UCRYPTO_CFG_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed$(JDK_UCRYPTO_SUBDIR)/solaris/$(CONF_SUBDIR)/security/ucrypto-solaris.cfg
+      UCRYPTO_CFG_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed$(JDK_CRYPTO_UCRYPTO_SUBDIR)/solaris/$(CONF_SUBDIR)/security/ucrypto-solaris.cfg
     else
       UCRYPTO_CFG_SRC := $(JDK_TOPDIR)/src/closed/share/lib/security/ucrypto-solaris.cfg
     endif

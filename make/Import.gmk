@@ -194,24 +194,25 @@ ifneq ($(OPENJDK_TARGET_OS), macosx)
 	$(MV) $@.tmp $@
 endif
 
+# TODO jdk9: When merging to jdk9 first milestone, disable unpacking of sajdi.
 ifeq ($(JIGSAW), true)
-  $(JDK_OUTPUTDIR)/modules/jdk.tools/_sajdi.unpacked: $(SRC_SAJDI_JAR)
+  $(JDK_OUTPUTDIR)/modules/jdk.tools/_the.sa.jar.unpacked: $(SRC_SAJDI_JAR)
 	$(ECHO) $(LOG_INFO) Unzipping $(<F)
 	$(RM) -r $(@D)
 	$(MKDIR) -p $(@D)
 	$(CD) $(@D) && $(UNZIP) $< $(LOG_DEBUG)
 	$(TOUCH) $@
 
-  HOTSPOT_IMPORT_TARGET_FILES += $(JDK_OUTPUTDIR)/modules/jdk.tools/_sajdi.unpacked
+  HOTSPOT_IMPORT_TARGET_FILES += $(JDK_OUTPUTDIR)/modules/jdk.tools/_the.sa.jar.unpacked
 
-  $(JDK_OUTPUTDIR)/gensrc_jdi/_sajdi.unpacked: $(SRC_SAJDI_JAR)
+  $(JDK_OUTPUTDIR)/gensrc_jdi/_the.sa.jar.unpacked: $(SRC_SAJDI_JAR)
 	$(ECHO) $(LOG_INFO) Unzipping META-INF/services from $(<F)
 	$(RM) -r $(@D)
 	$(MKDIR) -p $(@D)
 	$(CD) $(@D) && $(UNZIP) $< 'META-INF/services/*' $(LOG_DEBUG)
 	$(TOUCH) $@
 
-  HOTSPOT_IMPORT_TARGET_FILES += $(JDK_OUTPUTDIR)/gensrc_jdi/_sajdi.unpacked
+  HOTSPOT_IMPORT_TARGET_FILES += $(JDK_OUTPUTDIR)/gensrc_jdi/_the.sa.jar.unpacked
 
 else
   # Unzip sa-jdi.jar for the shuffle target.

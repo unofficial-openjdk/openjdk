@@ -26,6 +26,7 @@
 default: all
 
 include $(SPEC)
+include JigsawSpecMod.gmk
 include MakeBase.gmk
 include JavaCompilation.gmk
 include Setup.gmk
@@ -70,7 +71,7 @@ SUNPKCS11_JAR_DST := $(JDK_OUTPUTDIR)/lib/ext/sunpkcs11.jar
 SUNPKCS11_JAR_UNSIGNED := $(JDK_OUTPUTDIR)/jce/unsigned/sunpkcs11.jar
 
 $(eval $(call SetupArchive,BUILD_SUNPKCS11_JAR, , \
-    SRCS := $(JDK_OUTPUTDIR)/classes_security, \
+    SRCS := $(JDK_OUTPUTDIR)/$(SECURITY_CLASSES_SUBDIR)$(JDK_CRYPTO_PKCS11_SUBDIR), \
     SUFFIXES := .class, \
     INCLUDES := sun/security/pkcs11, \
     JAR := $(SUNPKCS11_JAR_UNSIGNED), \
@@ -97,7 +98,7 @@ SUNEC_JAR_DST := $(JDK_OUTPUTDIR)/lib/ext/sunec.jar
 SUNEC_JAR_UNSIGNED := $(JDK_OUTPUTDIR)/jce/unsigned/sunec.jar
 
 $(eval $(call SetupArchive,BUILD_SUNEC_JAR, , \
-    SRCS := $(JDK_OUTPUTDIR)/classes_security, \
+    SRCS := $(JDK_OUTPUTDIR)/$(SECURITY_CLASSES_SUBDIR)$(JDK_CRYPTO_EC_SUBDIR), \
     SUFFIXES := .class, \
     INCLUDES := sun/security/ec, \
     JAR := $(SUNEC_JAR_UNSIGNED), \
@@ -125,7 +126,7 @@ SUNJCE_PROVIDER_JAR_UNSIGNED := $(JDK_OUTPUTDIR)/jce/unsigned/sunjce_provider.ja
 
 ifneq ($(BUILD_CRYPTO), no)
   $(eval $(call SetupArchive,BUILD_SUNJCE_PROVIDER_JAR, , \
-      SRCS := $(JDK_OUTPUTDIR)/classes_security, \
+      SRCS := $(JDK_OUTPUTDIR)/$(SECURITY_CLASSES_SUBDIR)$(JDK_CRYPTO_SUBDIR), \
       SUFFIXES := .class, \
       INCLUDES := com/sun/crypto/provider, \
       JAR := $(SUNJCE_PROVIDER_JAR_UNSIGNED), \
@@ -154,9 +155,10 @@ TARGETS += $(SUNJCE_PROVIDER_JAR_DST)
 JCE_JAR_DST := $(JDK_OUTPUTDIR)/lib/jce.jar
 JCE_JAR_UNSIGNED := $(JDK_OUTPUTDIR)/jce/unsigned/jce.jar
 
+# TODO JIGSAW: Compile these classes separately to different output dir for legacy image
 ifneq ($(BUILD_CRYPTO), no)
   $(eval $(call SetupArchive,BUILD_JCE_JAR, , \
-      SRCS := $(JDK_OUTPUTDIR)/classes_security, \
+      SRCS := $(JDK_OUTPUTDIR)/$(SECURITY_CLASSES_SUBDIR)$(JAVA_BASE_SUBDIR), \
       SUFFIXES := .class, \
       INCLUDES := javax/crypto sun/security/internal, \
       JAR := $(JCE_JAR_UNSIGNED), \
@@ -188,7 +190,7 @@ ifeq ($(OPENJDK_TARGET_OS), windows)
   SUNMSCAPI_JAR_UNSIGNED := $(JDK_OUTPUTDIR)/jce/unsigned/sunmscapi.jar
 
   $(eval $(call SetupArchive,BUILD_SUNMSCAPI_JAR, , \
-      SRCS := $(JDK_OUTPUTDIR)/classes_security, \
+      SRCS := $(JDK_OUTPUTDIR)/$(SECURITY_CLASSES_SUBDIR)$(JDK_CRYPTO_MSCAPI_SUBDIR), \
       SUFFIXES := .class, \
       INCLUDES := sun/security/mscapi, \
       JAR := $(SUNMSCAPI_JAR_UNSIGNED), \
@@ -221,7 +223,7 @@ ifeq ($(OPENJDK_TARGET_OS), solaris)
     UCRYPTO_JAR_SRC := $(JDK_TOPDIR)/make/closed/tools/crypto/ucrypto/ucrypto.jar
 
     $(eval $(call SetupArchive,BUILD_UCRYPTO_JAR, , \
-        SRCS := $(JDK_OUTPUTDIR)/classes_security, \
+        SRCS := $(JDK_OUTPUTDIR)/$(SECURITY_CLASSES_SUBDIR)$(JDK_CRYPTO_UCRYPTO_SUBDIR), \
         SUFFIXES := .class, \
         INCLUDES := com/oracle/security/ucrypto, \
         JAR := $(UCRYPTO_JAR_UNSIGNED), \
