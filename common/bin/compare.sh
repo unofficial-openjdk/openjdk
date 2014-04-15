@@ -510,7 +510,7 @@ compare_all_jar_files() {
     WORK_DIR=$3
 
     # TODO filter?
-    ZIPS=$(cd $THIS_DIR && $FIND . -type f -name "*.jar" -o -name "*.war" -o -name "*.jmod" \
+    ZIPS=$(cd $THIS_DIR && $FIND . -type f -name "*.jar" -o -name "*.war" \
         | $SORT | $FILTER)
 
     if [ -n "$ZIPS" ]; then

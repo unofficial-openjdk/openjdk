@@ -54,7 +54,7 @@ corba-interim: corba-gensrc
 # Build nashorn. Needs to be compiled separately from the rest of the modules
 # due to special needs.
 nashorn: java-compile
-	+($(CD) $(NASHORN_TOPDIR)/make && $(MAKE) -f BuildNashorn.gmk JIGSAW=true)
+	+($(CD) $(NASHORN_TOPDIR)/make && $(MAKE) -f BuildNashorn.gmk compile JIGSAW=true)
 
 .PHONY: nashorn
 
@@ -96,11 +96,18 @@ jdk-libs: import-hotspot java-compile
 jdk-launchers: jdk-libs
 	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f CompileLaunchers.gmk JIGSAW=true)
 
+jdk-demos: java-compile
+	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f CompileDemos.gmk JIGSAW=true)
+
+jdk-samples:
+	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f CopySamples.gmk JIGSAW=true)
+
+# The jdk target results in a runnable exploded image
 jdk: java-compile jdk-gendata jdk-genclasses jdk-libs jdk-launchers \
     jdk-createpolicyjars import-hotspot jdk-copyfiles
 
 .PHONY: jdk-build-tools jdk-gensrc jdk-gendata jdk-genclasses jdk-createpolicyjars \
-    import-hotspot jdk-copyfiles jdk-libs jdk-launchers jdk
+    import-hotspot jdk-copyfiles jdk-libs jdk-launchers jdk-demos jdk-samples jdk
 
 ################################################################################
 
@@ -122,11 +129,34 @@ jmods: jdk java-modules
 	    -f CreateJmods.gmk JIGSAW=true jmods)
 
 # Create images from jmods
-images: jmods
+module-images: jmods
 	+($(CD) $(SRC_ROOT)/make && $(MAKE) -I $(JDK_TOPDIR)/make \
 	    -f CreateJmods.gmk JIGSAW=true jdk-image)
 
-.PHONY: jmods images
+images: module-images
+
+.PHONY: jmods module-images images
+
+################################################################################
+# Legacy image targets
+
+create-security-jars: jdk
+	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f CreateSecurityJars.gmk JIGSAW=true)
+
+legacy-jdk: jdk create-security-jars
+
+nashorn-jar: nashorn
+	+($(CD) $(NASHORN_TOPDIR)/make && $(MAKE) -f BuildNashorn.gmk all JIGSAW=true)
+
+# Creates the legacy jar files (rt.jar resources.jar etc)
+create-jars: legacy-jdk nashorn-jar jdk-demos
+	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f CreateJars.gmk JIGSAW=true)
+
+# Creates the legacy images (j2sdk-image j2re-image etc)
+legacy-images: create-jars jdk-demos jdk-samples legacy-jdk
+	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f Images.gmk JIGSAW=true)
+
+.PHONY: create-security-jars legacy-jdk nashorn-jar create-jars legacy-images
 
 ################################################################################
 

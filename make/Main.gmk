@@ -214,6 +214,11 @@ test-only: start-make
 	@($(CD) $(SRC_ROOT)/test && $(BUILD_LOG_WRAPPER) $(MAKE) -j1 -k MAKEFLAGS= JT_HOME=$(JT_HOME) PRODUCT_HOME=$(JDK_IMAGE_DIR) ALT_OUTPUTDIR=$(OUTPUT_ROOT) CONCURRENCY=$(JOBS) $(TEST)) || true
 	@$(call TargetExit)
 
+test-make: start-make
+	@$(call TargetEnter)
+	@($(CD) $(SRC_ROOT)/test/make && $(BUILD_LOG_WRAPPER) $(MAKE) $(MAKE_ARGS) -f TestMake.gmk $(TEST_TARGET))
+	@$(call TargetExit)
+
 # Stores the tips for each repository. This file is be used when constructing the jdk image and can be
 # used to track the exact sources used to build that image.
 source-tips: $(OUTPUT_ROOT)/source_tips
@@ -272,6 +277,8 @@ clean-test:
 	$(call CleanComponent,testoutput)
 clean-shuffle:
 	@($(CD) $(JDK_TOPDIR)/make && $(BUILD_LOG_WRAPPER) $(MAKE) $(MAKE_ARGS) -f BuildJdk.gmk clean-shuffle)
+clean-test-make:
+	$(call CleanComponent,testmake)
 
 reconfigure:
         ifneq ($(CONFIGURE_COMMAND_LINE), )

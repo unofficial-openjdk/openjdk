@@ -37,6 +37,7 @@ ifeq ($(JIGSAW), true)
 
   MODULES_WILDCARD := /*
   MODULES_SUBDIR := modules
+  SECURITY_CLASSES_SUBDIR := modules
 
   JAVA_BASE_SUBDIR := /java.base
   JAVA_DESKTOP_SUBDIR := /java.desktop
@@ -51,14 +52,20 @@ ifeq ($(JIGSAW), true)
   JAVAX_XMLDSIG_SUBDIR := /javax.xmldsig
 
   JDK_CHARSETS_SUBDIR := /jdk.charsets
+  JDK_CRYPTO_SUBDIR := /jdk.crypto
+  JDK_CRYPTO_EC_SUBDIR := /jdk.crypto.ec
+  JDK_CRYPTO_MSCAPI_SUBDIR := /jdk.crypto.mscapi
+  JDK_CRYPTO_PKCS11_SUBDIR := /jdk.crypto.pkcs11
+  JDK_CRYPTO_UCRYPTO_SUBDIR := /jdk.crypto.ucrypto
   JDK_DEVTOOLS_SUBDIR := /jdk.devtools
   JDK_JAAS_SUBDIR := /jdk.jaas
+  JDK_JFR_SUBDIR := /jdk.jfr
+  JDK_JNDI_DNS_SUBDIR := /jdk.jndi.dns
   JDK_JNDI_RMI_SUBDIR := /jdk.jndi.rmi
   JDK_LOCALEDATA_SUBDIR := /jdk.localedata
   JDK_TOOLS_SUBDIR := /jdk.tools
   JDK_TOOLS_BASE_SUBDIR := /jdk.tools.base
   JDK_TOOLS_DIAG_SUBDIR := /jdk.tools.diag
-  JDK_UCRYPTO_SUBDIR := /jdk.crypto.ucrypto
 
   LDFLAGS_JDKLIB := $(subst $(OUTPUT_ROOT),$(OUTPUT_ROOT)/jigsaw,$(LDFLAGS_JDKLIB))
 
@@ -75,5 +82,6 @@ ifeq ($(JIGSAW), true)
 else
   MODULES_WILDCARD :=
   MODULES_SUBDIR := classes
+  SECURITY_CLASSES_SUBDIR := classes_security
   SRC_SUBDIR := src
 endif
