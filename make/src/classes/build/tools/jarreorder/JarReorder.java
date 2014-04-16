@@ -198,7 +198,7 @@ public class JarReorder {
             // '-C dir ' which points to the source root where that file is
             // found.
             if (moduleMode) {
-                int firstPathSep = str.indexOf('/');
+                int firstPathSep = str.indexOf(File.separator);
                 String moduleDir;
                 if (firstPathSep < 0) {
                     moduleDir = ".";
