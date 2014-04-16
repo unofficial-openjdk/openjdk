@@ -176,7 +176,12 @@ endif
 ################################################################################
 
 # TODO: Centralize full module list
-ALL_MODULES := $(sort $(filter-out closed, $(notdir $(wildcard $(SRC_ROOT)/*/$(SRC_SUBDIR)/*))))
+ALL_MODULES := $(sort $(filter-out closed, \
+    $(notdir $(wildcard $(SRC_ROOT)/*/$(SRC_SUBDIR)/*))))
+
+ifndef OPENJDK
+  ALL_MODULES := $(sort $(ALL_MODULES) $(notdir $(wildcard $(SRC_ROOT)/*/$(SRC_SUBDIR)/closed/*)))
+endif
 
 $(foreach m, $(ALL_MODULES), $(eval $(call CreateJmod,$m)))
 
