@@ -35,7 +35,7 @@ include CommonCorba.gmk
 
 ################################################################################
 
-$(eval $(call SetupJavaCompilation,BUILD_TOOLS, \
+$(eval $(call SetupJavaCompilation,BUILD_TOOLS_CORBA, \
     SETUP := GENERATE_OLDBYTECODE, \
     SRC := $(CORBA_TOPDIR)/make/src/classes, \
     BIN := $(CORBA_OUTPUTDIR)/tools_classes))
@@ -59,7 +59,7 @@ TOOL_IDLJ_CMD := $(JAVA) -cp $(CORBA_OUTPUTDIR)/idlj_classes \
 # Generate LogWrapper classes
 $(CORBA_OUTPUTDIR)/gensrc$(JAVAX_CORBA_SUBDIR)/com/sun/corba/se/impl/logging/%SystemException.java: \
     $(CORBA_TOPDIR)/$(SRC_SUBDIR)$(JAVAX_CORBA_SUBDIR)/share/classes/com/sun/corba/se/spi/logging/data/%.mc \
-    $(BUILD_TOOLS)
+    $(BUILD_TOOLS_CORBA)
 	$(MKDIR) -p $(@D)
 	$(RM) -f $(@D)/_the_wrappers.d
 	$(ECHO) $(LOG_INFO) Generating class file from $*.mc
@@ -82,7 +82,7 @@ $(CORBA_OUTPUTDIR)/gensrc$(JAVAX_CORBA_SUBDIR)/com/sun/corba/se/impl/logging/Log
 # The resources files are generated from lisp-like .mc files.
 $(CORBA_OUTPUTDIR)/logwrappers/%SystemException.resource: \
     $(CORBA_TOPDIR)/$(SRC_SUBDIR)$(JAVAX_CORBA_SUBDIR)/share/classes/com/sun/corba/se/spi/logging/data/%.mc \
-    $(BUILD_TOOLS)
+    $(BUILD_TOOLS_CORBA)
 	$(MKDIR) -p $(@D)
 	$(RM) -f $(@D)/_the_wrappers.d
 	$(ECHO) $(LOG_INFO) Generating resource file from $*.mc
