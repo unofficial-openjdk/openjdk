@@ -1662,6 +1662,11 @@ public class JTree extends JComponent implements Scrollable, Accessible
 
         leadPath = newPath;
         firePropertyChange(LEAD_SELECTION_PATH_PROPERTY, oldValue, newPath);
+
+        if (accessibleContext != null){
+            ((AccessibleJTree)accessibleContext).
+                fireActiveDescendantPropertyChange(oldValue, newPath);
+        }
     }
 
     /**
@@ -4123,23 +4128,6 @@ public class JTree extends JComponent implements Scrollable, Accessible
          *
          */
         public void valueChanged(TreeSelectionEvent e) {
-            // Fixes 4546503 - JTree is sending incorrect active
-            // descendant events
-            TreePath oldLeadSelectionPath = e.getOldLeadSelectionPath();
-            leadSelectionPath = e.getNewLeadSelectionPath();
-
-            if (oldLeadSelectionPath != leadSelectionPath) {
-                // Set parent to null so AccessibleJTreeNode computes
-                // its parent.
-                Accessible oldLSA = leadSelectionAccessible;
-                leadSelectionAccessible = (leadSelectionPath != null)
-                        ? new AccessibleJTreeNode(JTree.this,
-                                                  leadSelectionPath,
-                                                  null) // parent
-                        : null;
-                firePropertyChange(AccessibleContext.ACCESSIBLE_ACTIVE_DESCENDANT_PROPERTY,
-                                   oldLSA, leadSelectionAccessible);
-            }
             firePropertyChange(AccessibleContext.ACCESSIBLE_SELECTION_PROPERTY,
                                Boolean.valueOf(false), Boolean.valueOf(true));
         }
@@ -4240,6 +4228,35 @@ public class JTree extends JComponent implements Scrollable, Accessible
                     AccessibleState.EXPANDED);
                 firePropertyChange(AccessibleContext.ACCESSIBLE_STATE_PROPERTY,
                                    null, pce);
+            }
+        }
+
+        /**
+        *  Fire an active descendant property change notification.
+        *  The active descendant is used for objects such as list,
+        *  tree, and table, which may have transient children.
+        *  It notifies screen readers the active child of the component
+        *  has been changed so user can be notified from there.
+        *
+        * @param oldPath - lead path of previous active child
+        * @param newPath - lead path of current active child
+        *
+        */
+        void fireActiveDescendantPropertyChange(TreePath oldPath, TreePath newPath){
+            if(oldPath != newPath){
+                Accessible oldLSA = (oldPath != null)
+                                    ? new AccessibleJTreeNode(JTree.this,
+                                                              oldPath,
+                                                              null)
+                                    : null;
+
+                Accessible newLSA = (newPath != null)
+                                    ? new AccessibleJTreeNode(JTree.this,
+                                                              newPath,
+                                                              null)
+                                    : null;
+                firePropertyChange(AccessibleContext.ACCESSIBLE_ACTIVE_DESCENDANT_PROPERTY,
+                                                                oldLSA, newLSA);
             }
         }
 
