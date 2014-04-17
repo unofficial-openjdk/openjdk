@@ -85,15 +85,18 @@ public class ScriptEngineManager  {
         nameAssociations = new HashMap<String, ScriptEngineFactory>();
         extensionAssociations = new HashMap<String, ScriptEngineFactory>();
         mimeTypeAssociations = new HashMap<String, ScriptEngineFactory>();
-        AccessController.doPrivileged(new PrivilegedAction<Object>() {
-            public Object run() {
-                initEngines(loader);
-                return null;
-            }
-        });
+        List<ScriptEngineFactory> facList = AccessController.doPrivileged(
+            new PrivilegedAction<List<ScriptEngineFactory>>() {
+                public List<ScriptEngineFactory> run() {
+                    return initEngines(loader);
+                }
+            });
+        for (ScriptEngineFactory fac : facList) {
+            engineSpis.add(fac);
+        }
     }
 
-    private void initEngines(final ClassLoader loader) {
+    private List<ScriptEngineFactory> initEngines(final ClassLoader loader) {
         Iterator itr = null;
         try {
             if (loader != null) {
@@ -110,14 +113,15 @@ public class ScriptEngineManager  {
             // do not throw any exception here. user may want to
             // manage his/her own factories using this manager
             // by explicit registratation (by registerXXX) methods.
-            return;
+            return null;
         }
 
+        final List<ScriptEngineFactory> facList = new ArrayList<>();
         try {
             while (itr.hasNext()) {
                 try {
                     ScriptEngineFactory fact = (ScriptEngineFactory) itr.next();
-                    engineSpis.add(fact);
+                    facList.add(fact);
                 } catch (ServiceConfigurationError err) {
                     System.err.println("ScriptEngineManager providers.next(): "
                                  + err.getMessage());
@@ -137,8 +141,8 @@ public class ScriptEngineManager  {
             // do not throw any exception here. user may want to
             // manage his/her own factories using this manager
             // by explicit registratation (by registerXXX) methods.
-            return;
         }
+        return facList;
     }
 
     /**

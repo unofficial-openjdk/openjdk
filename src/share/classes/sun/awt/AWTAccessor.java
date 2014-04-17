@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,6 +29,7 @@ import java.awt.*;
 import java.awt.KeyboardFocusManager;
 import java.awt.DefaultKeyboardFocusManager;
 import java.awt.event.InputEvent;
+import java.awt.event.InvocationEvent;
 import java.awt.event.KeyEvent;
 import java.awt.geom.Point2D;
 
@@ -238,8 +239,8 @@ public final class AWTAccessor {
         AccessControlContext getAccessControlContext(Component comp);
 
         /**
-         * Revalidates the component synchronously.
-         */
+        * Revalidates the component synchronously.
+        */
         void revalidateSynchronously(Component comp);
 
     }
@@ -703,6 +704,25 @@ public final class AWTAccessor {
     }
 
     /*
+     * An accessor object for the InvocationEvent class
+     */
+    public interface InvocationEventAccessor {
+        /**
+         * Disposes the InvocationEvent
+         */
+        void dispose(InvocationEvent event);
+
+        /**
+         * Creates an InvocationEvent with a completion listener -
+         * a Runnable whose run() method will be called immediately after
+         * the event is dispatched or disposed
+         */
+        InvocationEvent createEvent(Object source, Runnable runnable, Runnable listener,
+                                    boolean catchThrowables);
+    }
+
+
+    /*
      * Accessor instances are initialized in the static initializers of
      * corresponding AWT classes by using setters defined below.
      */
@@ -729,6 +749,7 @@ public final class AWTAccessor {
     private static TrayIconAccessor trayIconAccessor;
     private static DefaultKeyboardFocusManagerAccessor defaultKeyboardFocusManagerAccessor;
     private static SequencedEventAccessor sequencedEventAccessor;
+    private static InvocationEventAccessor invocationEventAccessor;
     private static ToolkitAccessor toolkitAccessor;
 
     /*
@@ -1141,5 +1162,19 @@ public final class AWTAccessor {
         }
 
         return toolkitAccessor;
+    }
+
+    /*
+     * Get the accessor object for the java.awt.event.InvocationEvent class.
+     */
+    public static void setInvocationEventAccessor(InvocationEventAccessor invocationEventAccessor) {
+        AWTAccessor.invocationEventAccessor = invocationEventAccessor;
+    }
+
+    /*
+     * Set the accessor object for the java.awt.event.InvocationEvent class.
+     */
+    public static InvocationEventAccessor getInvocationEventAccessor() {
+        return invocationEventAccessor;
     }
 }
