@@ -33,6 +33,12 @@ default: all
 
 include Tools.gmk
 
+ifeq ($(JIGSAW), true)
+  JDK_OUT_CLASSES := $(wildcard $(JDK_OUTPUTDIR)/modules/*)
+else
+  JDK_OUT_CLASSES := $(JDK_OUTPUTDIR)/classes
+endif
+
 include Profiles.gmk
 
 #
@@ -47,12 +53,6 @@ MAINMANIFEST := $(JDK_TOPDIR)/make/data/mainmanifest/manifest.mf
 BEANMANIFEST := $(JDK_TOPDIR)/make/data/swingbeaninfo/manifest.mf
 
 $(eval $(call MakeDir, $(IMAGES_OUTPUTDIR)/lib))
-
-ifeq ($(JIGSAW), true)
-  JDK_OUT_CLASSES := $(wildcard $(JDK_OUTPUTDIR)/modules/*)
-else
-  JDK_OUT_CLASSES := $(JDK_OUTPUTDIR)/classes
-endif
 
 ##########################################################################################
 
@@ -290,7 +290,9 @@ $(IMAGES_OUTPUTDIR)/lib$(PROFILE)/_the.rt.jar.contents: $(IMAGES_OUTPUTDIR)/lib$
 	$(RM) $@ $@.tmp
 	$(GREP) -e '\.class$$' $(IMAGES_OUTPUTDIR)/lib$(PROFILE)/_the.jars.contents > $@.tmp
         ifneq ($(PROFILE), )
-          # # Add back classes from excluded packages (fixing the $ substitution in the process)
+          # Add back classes from excluded packages (fixing the $ substitution in the process)
+          # This currently won't work with modular build layout, but there currently are no 
+          # types needing to be re added.
 	  for type in $(subst \$$,\, $(RT_JAR_INCLUDE_TYPES)) ; do \
 	    $(ECHO) $$type >> $@.tmp ; \
 	  done
@@ -304,13 +306,14 @@ $(IMAGES_OUTPUTDIR)/lib$(PROFILE)/_the.resources.jar.contents: $(IMAGES_OUTPUTDI
 	    -e '/_the\.' -e '^_the\.' -e '\\_the\.' -e ' _the\.' -e 'javac_state' \
 	    $(IMAGES_OUTPUTDIR)/lib$(PROFILE)/_the.jars.contents > $@.tmp
         ifneq ($(PROFILE), )
-          # # Strip out all META-INF/services/ entries
+          # Strip out all META-INF/services/ entries
 	  $(GREP) -v -e 'META-INF/services/' $@.tmp > $@.tmp2
-          # # Add back the required services
-          # # FIXME: On Solaris if PROFILE_INCLUDE_METAINF_SERVICES is not defined
-          # # we get a syntax error from sh. That doesn't happen on linux
+          # Add back the required services
+          # FIXME: On Solaris if PROFILE_INCLUDE_METAINF_SERVICES is not defined
+          # we get a syntax error from sh. That doesn't happen on linux
+          # Preserve any -C <dir> part of the original include line.
 	  for service in $(PROFILE_INCLUDE_METAINF_SERVICES) ; do \
-	    $(ECHO) $$service >> $@.tmp2; \
+	    $(GREP) -e "$$service" $@.tmp >> $@.tmp2; \
 	  done
 	  $(MV) $@.tmp2 $@.tmp
         endif
@@ -629,14 +632,18 @@ ifeq ($(JIGSAW), true)
   SRC_ZIP_SRCS := $(wildcard \
       $(JDK_TOPDIR)/$(SRC_SUBDIR)/*/share/classes \
       $(JDK_TOPDIR)/$(SRC_SUBDIR)/*/$(OPENJDK_TARGET_OS_API_DIR)/classes \
-      $(LANGTOOLS_TOPDIR)/src/*/share/classes \
-      $(CORBA_TOPDIR)/src/*/share/classes \
-      $(JAXP_TOPDIR)/src/*/share/classes \
-      $(JAXWS_TOPDIR)/src/*/share/classes \
+      $(LANGTOOLS_TOPDIR)/$(SRC_SUBDIR)/*/share/classes \
+      $(CORBA_TOPDIR)/$(SRC_SUBDIR)/*/share/classes \
+      $(JAXP_TOPDIR)/$(SRC_SUBDIR)/*/share/classes \
+      $(JAXWS_TOPDIR)/$(SRC_SUBDIR)/*/share/classes \
       $(JDK_OUTPUTDIR)/gensrc/j* \
       $(JDK_OUTPUTDIR)/gendocsrc_rmic \
+      $(CORBA_OUTPUTDIR)/gensrc/j* \
       ) \
       #
+  ifndef OPENJDK
+    SRC_ZIP_SRCS += $(wildcard $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/*/share/classes)
+  endif
 else
   SRC_ZIP_SRCS := \
       $(JDK_TOPDIR)/src/share/classes \

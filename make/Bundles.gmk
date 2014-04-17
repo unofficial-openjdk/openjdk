@@ -24,6 +24,7 @@
 #
 
 include $(SPEC)
+include JigsawSpecMod.gmk
 include MakeBase.gmk
 
 default: bundles
