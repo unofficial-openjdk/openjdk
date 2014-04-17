@@ -202,6 +202,7 @@ class ClassFileParser VALUE_OBJ_CLASS_SPEC {
   typeArrayOop parse_stackmap_table(u4 code_attribute_length, TRAPS);
 
   // Classfile attribute parsing
+  u2 parse_generic_signature_attribute(constantPoolHandle cp, TRAPS);
   void parse_classfile_sourcefile_attribute(constantPoolHandle cp, TRAPS);
   void parse_classfile_source_debug_extension_attribute(constantPoolHandle cp, int length, TRAPS);
   u2   parse_classfile_inner_classes_attribute(u1* inner_classes_attribute_start,
@@ -334,6 +335,12 @@ class ClassFileParser VALUE_OBJ_CLASS_SPEC {
     return (EnableInvokeDynamic
             ? cp->tag_at(index).is_klass_or_reference()
             : cp->tag_at(index).is_klass_reference());
+  }
+
+  // Checks that the cpool index is in range and is a utf8
+  bool valid_symbol_at(constantPoolHandle cp, int cpool_index) {
+    return (cp->is_within_bounds(cpool_index) &&
+            cp->tag_at(cpool_index).is_utf8());
   }
 
  public:
