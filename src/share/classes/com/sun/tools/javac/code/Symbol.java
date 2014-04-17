@@ -31,6 +31,7 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 
 import javax.lang.model.element.*;
+import javax.tools.JavaFileManager;
 import javax.tools.JavaFileObject;
 
 import com.sun.tools.javac.code.Type.*;
@@ -40,12 +41,14 @@ import com.sun.tools.javac.comp.Env;
 import com.sun.tools.javac.jvm.*;
 import com.sun.tools.javac.util.*;
 import com.sun.tools.javac.util.Name;
+import static com.sun.tools.javac.code.Directive.*;
 import static com.sun.tools.javac.code.Flags.*;
 import static com.sun.tools.javac.code.Kinds.*;
 import static com.sun.tools.javac.code.TypeTag.CLASS;
 import static com.sun.tools.javac.code.TypeTag.FORALL;
 import static com.sun.tools.javac.code.TypeTag.TYPEVAR;
 import com.sun.tools.javac.tree.JCTree.JCVariableDecl;
+import java.util.LinkedHashSet;
 
 /** Root class for Java symbols. It contains subclasses
  *  for specific sorts of symbols, such as variables, methods and operators,
@@ -813,6 +816,71 @@ public abstract class Symbol extends AnnoConstruct implements Element {
             return v.visitTypeParameter(this, p);
         }
     }
+    /** A class for module symbols.
+     */
+    public static class ModuleSymbol extends TypeSymbol // JIGSAW need TypeSymbol?
+            /*implements ModuleElement*/ {
+
+        public Name fullname;
+
+        /** All directives, in natural order. */
+        public List<Directive> directives;
+
+        public ClassSymbol module_info;
+
+        public JavaFileManager.Location location;
+
+        public ModuleSymbol() {
+            super(MDL, 0, null, null, null);
+            this.type = new ModuleType(this);
+        }
+
+        public ModuleSymbol(Name name, Symbol owner) {
+            super(MDL, 0, name, null, owner);
+            this.type = new ModuleType(this);
+            this.fullname = formFullName(name, owner);
+        }
+
+        public List<ExportsDirective> getExports() {
+            return Directive.filter(directives, Directive.Kind.EXPORTS,
+                    ExportsDirective.class);
+        }
+
+        public List<PermitsDirective> getPermits() {
+            return Directive.filter(directives, Directive.Kind.PERMITS,
+                    PermitsDirective.class);
+        }
+
+        public List<ProvidesDirective> getProvides() {
+            return Directive.filter(directives, Directive.Kind.PROVIDES,
+                    ProvidesDirective.class);
+        }
+
+        public List<RequiresDirective> getRequires() {
+            return Directive.filter(directives, Directive.Kind.REQUIRES,
+                    RequiresDirective.class);
+        }
+
+        public List<UsesDirective> getUses() {
+            return Directive.filter(directives, Directive.Kind.USES,
+                    UsesDirective.class);
+        }
+
+        @Override
+        public String toString() {
+            // the following strings should be localized
+            String n = (fullname == null) ? "<unknown>"
+                    : (fullname.isEmpty()) ? "<unnamed>"
+                    : String.valueOf(fullname);
+            return n;
+        }
+
+        @Override
+        public <R, P> R accept(ElementVisitor<R, P> v, P p) {
+            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        }
+
+    }
 
     /** A class for package symbols
      */
@@ -907,6 +975,10 @@ public abstract class Symbol extends AnnoConstruct implements Element {
     /** A class for class symbols
      */
     public static class ClassSymbol extends TypeSymbol implements TypeElement {
+        /**
+         * The module for the class.
+         */
+        public ModuleSymbol modle;
 
         /** a scope for all class members; variables, methods and inner classes
          *  type parameters are not part of this scope

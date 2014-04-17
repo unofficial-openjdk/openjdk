@@ -62,6 +62,7 @@ import com.sun.tools.classfile.StackMap_attribute;
 import com.sun.tools.classfile.Synthetic_attribute;
 
 import static com.sun.tools.classfile.AccessFlags.*;
+import com.sun.tools.classfile.Module_attribute;
 import com.sun.tools.javac.util.StringUtils;
 
 /*
@@ -397,6 +398,91 @@ public class AttributeWriter extends BasicWriter
         }
         indent(-1);
         return null;
+    }
+
+    public Void visitModule(Module_attribute attr, Void ignore) {
+        println("Module:");
+        indent(+1);
+        printRequiresTable(attr);
+        printPermitsTable(attr);
+        printExportsTable(attr);
+        printUsesTable(attr);
+        printProvidesTable(attr);
+        indent(-1);
+        return null;
+    }
+
+    protected void printRequiresTable(Module_attribute attr) {
+        Module_attribute.RequiresEntry[] entries = attr.requires;
+        println(entries.length + "\t// " + "requires");
+        indent(+1);
+        for (Module_attribute.RequiresEntry e: entries) {
+            print("#" + e.requires_index + "," +
+                    String.format("%x", e.requires_flags)+ "\t// requires");
+            if ((e.requires_flags & Module_attribute.ACC_PUBLIC) != 0)
+                print(" public");
+            if ((e.requires_flags & Module_attribute.ACC_SYNTHETIC) != 0)
+                print(" synthetic");
+            if ((e.requires_flags & Module_attribute.ACC_MANDATED) != 0)
+                print(" mandated");
+            println(" " + constantWriter.stringValue(e.requires_index));
+        }
+        indent(-1);
+    }
+
+    protected void printPermitsTable(Module_attribute attr) {
+        int[] entries = attr.permits_index;
+        println(entries.length + "\t// " + "permits");
+        indent(+1);
+        for (int e: entries) {
+            println("#" + e + "\t// permits " + constantWriter.stringValue(e));
+        }
+        indent(-1);
+    }
+
+    protected void printExportsTable(Module_attribute attr) {
+        Module_attribute.ExportsEntry[] entries = attr.exports;
+        println(entries.length + "\t// " + "exports");
+        indent(+1);
+        for (Module_attribute.ExportsEntry e: entries) {
+            print("#" + e.exports_index + "\t// exports");
+            print(" " + constantWriter.stringValue(e.exports_index));
+            if (e.exports_to_index.length == 0) {
+                println();
+            } else {
+                println(" to ... " + e.exports_to_index.length);
+                indent(+1);
+                for (int to: e.exports_to_index) {
+                    println("#" + to + "\t// ... to " + constantWriter.stringValue(to));
+                }
+                indent(-1);
+            }
+        }
+        indent(-1);
+    }
+
+    protected void printUsesTable(Module_attribute attr) {
+        int[] entries = attr.uses_index;
+        println(entries.length + "\t// " + "uses services");
+        indent(+1);
+        for (int e: entries) {
+            println("#" + e + "\t// uses " + constantWriter.stringValue(e));
+        }
+        indent(-1);
+    }
+
+    protected void printProvidesTable(Module_attribute attr) {
+        Module_attribute.ProvidesEntry[] entries = attr.provides;
+        println(entries.length + "\t// " + "provides services");
+        indent(+1);
+        for (Module_attribute.ProvidesEntry e: entries) {
+            print("#" + e.provides_index + ",#" +
+                    e.with_index + "\t// provides ");
+            print(constantWriter.stringValue(e.provides_index));
+            print (" with ");
+            println(constantWriter.stringValue(e.with_index));
+        }
+        indent(-1);
     }
 
     public Void visitRuntimeVisibleAnnotations(RuntimeVisibleAnnotations_attribute attr, Void ignore) {
