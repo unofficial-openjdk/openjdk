@@ -27,8 +27,12 @@
 default: all
 
 include $(SPEC)
+JIGSAW := true
 include JigsawSpecMod.gmk
 include MakeBase.gmk
+
+# Include Profile information for legacy profiles images
+include $(JDK_TOPDIR)/make/ProfileNames.gmk
 
 ################################################################################
 
@@ -155,6 +159,24 @@ create-jars: legacy-jdk nashorn-jar jdk-demos
 # Creates the legacy images (j2sdk-image j2re-image etc)
 legacy-images: create-jars jdk-demos jdk-samples legacy-jdk
 	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f Images.gmk JIGSAW=true)
+        ifeq ($(OPENJDK_TARGET_OS), macosx)
+	  +($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f Bundles.gmk JIGSAW=true)
+        endif
+
+# Create Compact Profile jars
+%-create-jars: legacy-jdk nashorn-jar jdk-demos
+	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) PROFILE=$* -f CreateJars.gmk JIGSAW=true)
+
+# Create Compact Profile images
+%-images: %-create-jars jdk-demos jdk-samples legacy-jdk
+	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) PROFILE=$* \
+	    JRE_IMAGE_DIR=$(IMAGES_OUTPUTDIR)/j2re-$(word $(call profile_number,$*),$(PROFILE_NAMES))-image \
+	    -f Images.gmk profile-image JIGSAW=true)
+
+# Make each profile name a target that depends on it's images target.
+$(foreach p, $(ALL_PROFILES), $(eval $(p): $(p)-images))
+
+legacy-profiles: $(ALL_PROFILES)
 
 .PHONY: create-security-jars legacy-jdk nashorn-jar create-jars legacy-images
 
