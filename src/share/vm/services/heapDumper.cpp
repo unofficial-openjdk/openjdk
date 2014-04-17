@@ -720,7 +720,7 @@ void DumperSupport::dump_field_value(DumpWriter* writer, char type, address addr
 
       // reflection and sun.misc.Unsafe classes may have a reference to a
       // klassOop so filter it out.
-      if (o != NULL && o->is_klass()) {
+      if (o != NULL && o->is_perm() && o->is_klass()) {
         o = NULL;
       }
 
