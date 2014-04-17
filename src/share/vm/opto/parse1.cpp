@@ -638,25 +638,6 @@ void Parse::do_all_blocks() {
         // (Note that dead locals do not get phis built, ever.)
         ensure_phis_everywhere();
 
-        if (block->is_SEL_head() &&
-            (UseLoopPredicate || LoopLimitCheck)) {
-          // Add predicate to single entry (not irreducible) loop head.
-          assert(!block->has_merged_backedge(), "only entry paths should be merged for now");
-          // Need correct bci for predicate.
-          // It is fine to set it here since do_one_block() will set it anyway.
-          set_parse_bci(block->start());
-          add_predicate();
-          // Add new region for back branches.
-          int edges = block->pred_count() - block->preds_parsed() + 1; // +1 for original region
-          RegionNode *r = new (C) RegionNode(edges+1);
-          _gvn.set_type(r, Type::CONTROL);
-          record_for_igvn(r);
-          r->init_req(edges, control());
-          set_control(r);
-          // Add new phis.
-          ensure_phis_everywhere();
-        }
-
         // Leave behind an undisturbed copy of the map, for future merges.
         set_map(clone_map());
       }
@@ -1520,11 +1501,6 @@ void Parse::merge_common(Parse::Block* target, int pnum) {
       set_parse_bci(target->start()); // Set target bci
       if (target->is_SEL_head()) {
         DEBUG_ONLY( target->mark_merged_backedge(block()); )
-        if (target->start() == 0) {
-          // Add loop predicate for the special case when
-          // there are backbranches to the method entry.
-          add_predicate();
-        }
       }
       // Add a Region to start the new basic block.  Phis will be added
       // later lazily.

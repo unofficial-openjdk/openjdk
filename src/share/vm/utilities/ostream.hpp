@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -113,7 +113,7 @@ class outputStream : public ResourceObj {
    // flushing
    virtual void flush() {}
    virtual void write(const char* str, size_t len) = 0;
-   virtual void rotate_log() {} // GC log rotation
+   virtual void rotate_log(bool force, outputStream* out = NULL) {} // GC log rotation
    virtual ~outputStream() {}   // close properly on deletion
 
    void dec_cr() { dec(); cr(); }
@@ -228,19 +228,30 @@ class fdStream : public outputStream {
   void flush() {};
 };
 
-class rotatingFileStream : public fileStream {
+class gcLogFileStream : public fileStream {
  protected:
-  char*  _file_name;
+  const char*  _file_name;
   jlong  _bytes_written;
-  uintx  _cur_file_num;             // current logfile rotation number, from 0 to MaxGCLogFileNumbers-1
+  uintx  _cur_file_num;             // current logfile rotation number, from 0 to NumberOfGCLogFiles-1
  public:
-  rotatingFileStream(const char* file_name);
-  rotatingFileStream(const char* file_name, const char* opentype);
-  rotatingFileStream(FILE* file) : fileStream(file) {}
-  ~rotatingFileStream();
+  gcLogFileStream(const char* file_name);
+  ~gcLogFileStream();
   virtual void write(const char* c, size_t len);
-  virtual void rotate_log();
+  virtual void rotate_log(bool force, outputStream* out = NULL);
+  void dump_loggc_header();
+
+  /* If "force" sets true, force log file rotation from outside JVM */
+  bool should_rotate(bool force) {
+    return force ||
+             ((GCLogFileSize != 0) && ((uintx)_bytes_written >= GCLogFileSize));
+  }
+
 };
+
+#ifndef PRODUCT
+// unit test for checking -Xloggc:<filename> parsing result
+void test_loggc_filename();
+#endif
 
 void ostream_init();
 void ostream_init_log();

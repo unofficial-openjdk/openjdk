@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
  * Copyright (c) 2012 Red Hat, Inc.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -5037,6 +5037,7 @@ _JNI_IMPORT_OR_EXPORT_ jint JNICALL JNI_GetDefaultJavaVMInitArgs(void *args_) {
 #include "gc_implementation/shared/gcTimer.hpp"
 #include "gc_interface/collectedHeap.hpp"
 #include "utilities/quickSort.hpp"
+#include "utilities/ostream.hpp"
 
 #define run_unit_test(unit_test_function_call)              \
   tty->print_cr("Running test: " #unit_test_function_call); \
@@ -5058,6 +5059,7 @@ void execute_internal_vm_tests() {
     run_unit_test(QuickSort::test_quick_sort());
     run_unit_test(AltHashing::test_alt_hash());
     run_unit_test(TestOldFreeSpaceCalculation_test());
+    run_unit_test(test_loggc_filename());
     tty->print_cr("All internal VM tests passed");
   }
 }
