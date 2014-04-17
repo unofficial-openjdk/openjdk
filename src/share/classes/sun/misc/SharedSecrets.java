@@ -56,6 +56,7 @@ public class SharedSecrets {
     private static JavaSecurityAccess javaSecurityAccess;
     private static JavaUtilZipFileAccess javaUtilZipFileAccess;
     private static JavaAWTAccess javaAWTAccess;
+    private static JavaBeansIntrospectorAccess javaBeansIntrospectorAccess;
 
     public static JavaUtilJarAccess javaUtilJarAccess() {
         if (javaUtilJarAccess == null) {
@@ -194,5 +195,13 @@ public class SharedSecrets {
             return null;
         }
         return javaAWTAccess;
+    }
+
+    public static JavaBeansIntrospectorAccess getJavaBeansIntrospectorAccess() {
+        return javaBeansIntrospectorAccess;
+    }
+
+    public static void setJavaBeansIntrospectorAccess(JavaBeansIntrospectorAccess access) {
+        javaBeansIntrospectorAccess = access;
     }
 }
