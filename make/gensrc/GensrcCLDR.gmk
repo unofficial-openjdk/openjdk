@@ -34,7 +34,7 @@ CLDR_METAINFO_FILE := $(BASE_GENSRC_DIR)/sun/util/cldr/CLDRLocaleDataMetaInfo.ja
 $(CLDR_METAINFO_FILE): $(wildcard $(CLDRSRCDIR)/common/dtd/*.dtd) \
     $(wildcard $(CLDRSRCDIR)/common/main/*.xml) \
     $(wildcard $(CLDRSRCDIR)/common/supplemental/*.xml) \
-    $(BUILD_TOOLS)
+    $(BUILD_TOOLS_JDK)
 	$(MKDIR) -p $(GENSRC_DIR)
 	$(TOOL_CLDRCONVERTER) -base $(CLDRSRCDIR) -o $(GENSRC_DIR)
         ifeq ($(JIGSAW), true)

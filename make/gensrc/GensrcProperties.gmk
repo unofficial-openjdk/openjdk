@@ -112,7 +112,7 @@ $(eval $(call add_properties_to_compile,SUN_UTIL, \
 
 ################################################################################
 # Now setup the rule for the generation of the resource bundles.
-$(JDK_OUTPUTDIR)/gensrc/_the.compiled_properties: $(ALL_COMPILED_PROPSOURCES) $(BUILD_TOOLS)
+$(JDK_OUTPUTDIR)/gensrc/_the.compiled_properties: $(ALL_COMPILED_PROPSOURCES) $(BUILD_TOOLS_JDK)
         # Generate all output directories in advance since the build tool does not do that...
 	$(MKDIR) -p $(sort $(dir $(ALL_COMPILED_PROPJAVAS)))
 	$(ECHO) Compiling $(words $(ALL_COMPILED_PROPSOURCES)) properties into resource bundles

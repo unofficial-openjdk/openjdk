@@ -30,7 +30,7 @@ NIMBUS_PACKAGE = javax.swing.plaf
 NIMBUS_GENSRC_DIR = $(JDK_OUTPUTDIR)/gensrc$(JAVA_DESKTOP_SUBDIR)/javax/swing/plaf/nimbus
 NIMBUS_SKIN_FILE = $(JDK_TOPDIR)/$(SRC_SUBDIR)$(JAVA_DESKTOP_SUBDIR)/share/classes/javax/swing/plaf/nimbus/skin.laf
 
-$(JDK_OUTPUTDIR)/gensrc/_the.generated_nimbus: $(NIMBUS_SKIN_FILE) $(BUILD_TOOLS)
+$(JDK_OUTPUTDIR)/gensrc/_the.generated_nimbus: $(NIMBUS_SKIN_FILE) $(BUILD_TOOLS_JDK)
 	$(MKDIR) -p $(@D)
 	$(ECHO) "Generating Nimbus source files"
 	$(TOOL_GENERATENIMBUS) $(LOG_INFO) \
@@ -72,7 +72,7 @@ SWINGBEAN_DEBUG_FLAG = false
 # in the build log.
 $(JDK_OUTPUTDIR)/gensrc_no_srczip/_the.generated_beaninfo: $(BEANS_SRC) \
     $(JDK_OUTPUTDIR)/gensrc_no_srczip$(JAVA_DESKTOP_SUBDIR)/javax/swing/SwingBeanInfoBase.java \
-    $(JDK_OUTPUTDIR)/gensrc$(JAVA_DESKTOP_SUBDIR)/sun/swing/BeanInfoUtils.java $(BUILD_TOOLS) \
+    $(JDK_OUTPUTDIR)/gensrc$(JAVA_DESKTOP_SUBDIR)/sun/swing/BeanInfoUtils.java $(BUILD_TOOLS_JDK) \
     | $(GENSRC_LOCALEDATAMETAINFO)
 	$(ECHO) Generating beaninfo
 	$(MKDIR) -p $(JDK_OUTPUTDIR)/gensrc_no_srczip$(JAVA_DESKTOP_SUBDIR)/javax/swing

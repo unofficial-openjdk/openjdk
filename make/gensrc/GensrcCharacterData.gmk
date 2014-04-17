@@ -33,7 +33,7 @@ CHARACTERDATA = $(JDK_TOPDIR)/make/data/characterdata
 UNICODEDATA = $(JDK_TOPDIR)/make/data/unicodedata
 
 define SetupCharacterData
-  $(JDK_OUTPUTDIR)/gensrc$(JAVA_BASE_SUBDIR)/java/lang/$1.java: $(CHARACTERDATA)/$1.java.template $(BUILD_TOOLS)
+  $(JDK_OUTPUTDIR)/gensrc$(JAVA_BASE_SUBDIR)/java/lang/$1.java: $(CHARACTERDATA)/$1.java.template $(BUILD_TOOLS_JDK)
 	$(MKDIR) -p $$(@D)
 	$(ECHO) $(LOG_INFO) Generating $1.java
 	$(TOOL_GENERATECHARACTER) $2 \
@@ -62,4 +62,4 @@ GENSRC_CHARACTERDATA += $(JDK_OUTPUTDIR)/gensrc$(JAVA_BASE_SUBDIR)/java/lang/Cha
     $(JDK_OUTPUTDIR)/gensrc$(JAVA_BASE_SUBDIR)/java/lang/CharacterDataPrivateUse.java
 GENSRC_JAVA_BASE += $(GENSRC_CHARACTERDATA)
 
-$(GENSRC_CHARACTERDATA): $(BUILD_TOOLS)
+$(GENSRC_CHARACTERDATA): $(BUILD_TOOLS_JDK)

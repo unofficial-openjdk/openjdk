@@ -266,7 +266,7 @@ $(IMAGES_OUTPUTDIR)/lib/classlist: $(JDK_TOPDIR)/make/data/classlist/classlist.$
 	$(MV) $@.tmp $@
 
 ifeq ($(JIGSAW), true)
-  $(IMAGES_OUTPUTDIR)/lib$(PROFILE)/_the.jars.contents: $(BUILD_TOOLS) $(IMAGES_OUTPUTDIR)/lib$(PROFILE)/_the.jars.exclude \
+  $(IMAGES_OUTPUTDIR)/lib$(PROFILE)/_the.jars.contents: $(BUILD_TOOLS_JDK) $(IMAGES_OUTPUTDIR)/lib$(PROFILE)/_the.jars.exclude \
       $(ALL_FILES_IN_CLASSES) $(IMAGES_OUTPUTDIR)/lib/classlist
 	$(MKDIR) -p $(@D)
 	$(RM) $@ $@.tmp
@@ -275,7 +275,7 @@ ifeq ($(JIGSAW), true)
 	    -o $@.tmp $(IMAGES_OUTPUTDIR)/lib/classlist $(IMAGES_OUTPUTDIR)/lib$(PROFILE)/_the.jars.exclude . )
 	$(MV) $@.tmp $@
 else
-  $(IMAGES_OUTPUTDIR)/lib$(PROFILE)/_the.jars.contents: $(BUILD_TOOLS) $(IMAGES_OUTPUTDIR)/lib$(PROFILE)/_the.jars.exclude \
+  $(IMAGES_OUTPUTDIR)/lib$(PROFILE)/_the.jars.contents: $(BUILD_TOOLS_JDK) $(IMAGES_OUTPUTDIR)/lib$(PROFILE)/_the.jars.exclude \
       $(ALL_FILES_IN_CLASSES) $(IMAGES_OUTPUTDIR)/lib/classlist
 	$(MKDIR) -p $(@D)
 	$(RM) $@ $@.tmp

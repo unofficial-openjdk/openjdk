@@ -55,7 +55,7 @@ GENDATA += $(GENDATA_HTML32DTD)
 
 GENDATA_UNINAME := $(JDK_OUTPUTDIR)/$(MODULES_SUBDIR)$(JAVA_BASE_SUBDIR)/java/lang/uniName.dat
 
-$(GENDATA_UNINAME): $(JDK_TOPDIR)/make/data/unicodedata/UnicodeData.txt $(BUILD_TOOLS)
+$(GENDATA_UNINAME): $(JDK_TOPDIR)/make/data/unicodedata/UnicodeData.txt $(BUILD_TOOLS_JDK)
 	$(MKDIR) -p $(@D)
 	$(TOOL_CHARACTERNAME) $< $@
 
@@ -65,7 +65,7 @@ GENDATA += $(GENDATA_UNINAME)
 
 GENDATA_CURDATA := $(JDK_OUTPUTDIR)/lib/currency.data
 
-$(GENDATA_CURDATA): $(JDK_TOPDIR)/make/data/currency/CurrencyData.properties $(BUILD_TOOLS)
+$(GENDATA_CURDATA): $(JDK_TOPDIR)/make/data/currency/CurrencyData.properties $(BUILD_TOOLS_JDK)
 	$(MKDIR) -p $(@D)
 	$(RM) $@
 	$(TOOL_GENERATECURRENCYDATA) -o $@.tmp < $<
@@ -76,7 +76,7 @@ GENDATA += $(GENDATA_CURDATA)
 
 ##########################################################################################
 
-$(GENDATA): $(BUILD_TOOLS)
+$(GENDATA): $(BUILD_TOOLS_JDK)
 
 all: $(GENDATA)
 
