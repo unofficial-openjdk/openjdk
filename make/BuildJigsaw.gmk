@@ -164,7 +164,9 @@ legacy-images: create-jars jdk-demos jdk-samples legacy-jdk
         endif
 
 # Create Compact Profile jars
-%-create-jars: legacy-jdk nashorn-jar jdk-demos
+# Need to depend on create-jars as otherwise there will races between all the
+# invocations of CreateJars.gmk.
+%-create-jars: create-jars
 	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) PROFILE=$* -f CreateJars.gmk JIGSAW=true)
 
 # Create Compact Profile images

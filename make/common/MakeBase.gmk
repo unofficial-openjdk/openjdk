@@ -430,8 +430,8 @@ else
 endif
 
 # Convenience functions for working around make's limitations with $(filter ).
-containing = $(foreach v,$2,$(if $(findstring $1,$v),$v))
-not-containing = $(foreach v,$2,$(if $(findstring $1,$v),,$v))
+containing = $(strip $(foreach v,$(strip $2),$(if $(findstring $(strip $1),$v),$v)))
+not-containing = $(strip $(foreach v,$(strip $2),$(if $(findstring $(strip $1),$v),,$v)))
 
 ifneq ($(DISABLE_CACHE_FIND), true)
 ################################################################################
