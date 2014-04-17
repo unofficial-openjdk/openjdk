@@ -28,7 +28,10 @@ ifeq ($(JIGSAW), true)
       $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/share/native/libjsound \
       $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/$(OPENJDK_TARGET_OS_API_DIR)/native/libjsound \
       #
-  LIBJSOUND_CFLAGS := -I$(JDK_OUTPUTDIR)/gensrc_headers/java.desktop
+  LIBJSOUND_CFLAGS := \
+      -I$(JDK_OUTPUTDIR)/gensrc_headers/java.desktop \
+      $(addprefix -I, $(BUILD_LIBJAVA_SRC))
+      #
 else
   LIBJSOUND_SRC_DIRS := \
     $(JDK_TOPDIR)/src/share/native/com/sun/media/sound \
