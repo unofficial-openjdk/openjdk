@@ -35,10 +35,10 @@ include CommonLangtools.gmk
 
 ################################################################################
 # Setup the compilation of the properties compilation tool. You can depend
-# upon $(BUILD_TOOLS) to trigger a compilation of the tools. Note that we
-# add src/share/classes to the sourcepath. This is necessary since the GenStubs
-# program needs to be linked and run with the new javac sources.
-$(eval $(call SetupJavaCompilation,BUILD_TOOLS, \
+# upon $(BUILD_TOOLS_LANGTOOLS) to trigger a compilation of the tools. Note that 
+# we add src/share/classes to the sourcepath. This is necessary since the 
+# GenStubs program needs to be linked and run with the new javac sources.
+$(eval $(call SetupJavaCompilation,BUILD_TOOLS_LANGTOOLS, \
     SETUP := BOOT_JAVAC, \
     DISABLE_SJAVAC := true, \
     ADD_JAVAC_FLAGS := -Xprefer:source, \
@@ -75,7 +75,7 @@ PROPCMDLINE := $(subst _SPACE_, $(SPACE), \
     $(addprefix _SPACE_, $(PROPJAVAS)))))
 
 # Now setup the rule for the generation of the resource bundles.
-$(LANGTOOLS_OUTPUTDIR)/gensrc/_the_props: $(PROPSOURCES) $(BUILD_TOOLS)
+$(LANGTOOLS_OUTPUTDIR)/gensrc/_the_props: $(PROPSOURCES) $(BUILD_TOOLS_LANGTOOLS)
 	$(RM) -r $(@D)/*
 	$(MKDIR) -p $(@D) $(PROPDIRS)
 	$(PRINTF) "jdk=$(JDK_VERSION)\nfull=$(FULL_VERSION)\nrelease=$(RELEASE)\n" \
