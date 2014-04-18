@@ -43,6 +43,7 @@ ifeq (, $(BUILD_TOOLS_JDK))
   $(eval $(call SetupJavaCompilation,BUILD_TOOLS_JDK, \
       SETUP := GENERATE_OLDBYTECODE, \
       SRC := $(JDK_TOPDIR)/make/src/classes, \
+      EXCLUDE_FILES := build/tools/deps/GenGraphs.java, \
       BIN := $(JDK_OUTPUTDIR)/btclasses))
 endif
 

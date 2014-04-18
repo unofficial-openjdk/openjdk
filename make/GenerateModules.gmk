@@ -62,6 +62,10 @@ ifeq ($(JIGSAW), true)
 	  -buildmodules $(JDK_OUTPUTDIR)/modules \
 	  -o $@
 
+  $(GENGRAPHS_DIR)/jdk.dot: $(BUILD_DEPS_TOOLS) $(MODULES_SER_OUT)
+	$(TOOL_GENGRAPHS) $(GENGRAPHS_DIR)
+
+all: $(MODULES_SER_OUT) $(GENGRAPHS_DIR)/jdk.dot
 else
 
   # Import nashorn.jar from nashorn dist dir.
@@ -89,13 +93,12 @@ else
 	  --classlist $(MODULE_CLASSLIST_DIR) \
 	  --out $(MODULES_SER_OUT) \
 	  --moduleinfo $(MODULEINFO_DIR)
-	if [ -f $(MODULE_CLASSLIST_DIR)/other.summary ] ; then \
-	  $(ECHO) "ERROR: Check module \"other\". modules.config possibly requires update." ; \
+	if [ -f $(MODULE_CLASSLIST_DIR)/unknown.summary ] ; then \
+	  $(ECHO) "ERROR: Check module \"unknown\". modules.config possibly requires update." ; \
 	  exit 2; \
 	fi
 
-endif
-
 all: $(MODULES_SER_OUT)
+endif
 
 .PHONY: all
