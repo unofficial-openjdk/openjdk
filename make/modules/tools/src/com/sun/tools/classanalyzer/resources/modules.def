@@ -95,6 +95,8 @@ module java.base {
             jdk.internal.util.xml.**,
             jdk.internal.org.objectweb.asm.**;
 
+    // See http://ccc.us.oracle.com/8032808 - not exported in JDK 9
+    include jdk.net.*;
 
     exclude META-INF/services/java.nio.file.spi.FileSystemProvider;
 
@@ -642,6 +644,7 @@ module jdk.sctp {
 }
 
 module jdk.zipfs {
+    include jdk.nio.zipfs.*;
     include com.sun.nio.zipfs.*;
     include META-INF/services/java.nio.file.spi.FileSystemProvider;
     permits jdk.providers;
