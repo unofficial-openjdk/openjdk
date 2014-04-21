@@ -116,7 +116,7 @@ bool PSMarkSweep::invoke_no_policy(bool clear_all_softrefs) {
   assert(heap->kind() == CollectedHeap::ParallelScavengeHeap, "Sanity");
   GCCause::Cause gc_cause = heap->gc_cause();
 
-  _gc_timer->register_gc_start(os::elapsed_counter());
+  _gc_timer->register_gc_start();
   _gc_tracer->report_gc_start(gc_cause, _gc_timer->gc_start());
 
   PSAdaptiveSizePolicy* size_policy = heap->size_policy();
@@ -149,8 +149,7 @@ bool PSMarkSweep::invoke_no_policy(bool clear_all_softrefs) {
 
   if (VerifyBeforeGC && heap->total_collections() >= VerifyGCStartAt) {
     HandleMark hm;  // Discard invalid handles created during verification
-    gclog_or_tty->print(" VerifyBeforeGC:");
-    Universe::verify();
+    Universe::verify(" VerifyBeforeGC:");
   }
 
   // Verify object start arrays
@@ -359,8 +358,7 @@ bool PSMarkSweep::invoke_no_policy(bool clear_all_softrefs) {
 
   if (VerifyAfterGC && heap->total_collections() >= VerifyGCStartAt) {
     HandleMark hm;  // Discard invalid handles created during verification
-    gclog_or_tty->print(" VerifyAfterGC:");
-    Universe::verify();
+    Universe::verify(" VerifyAfterGC:");
   }
 
   // Re-verify object start arrays
@@ -386,7 +384,7 @@ bool PSMarkSweep::invoke_no_policy(bool clear_all_softrefs) {
   ParallelTaskTerminator::print_termination_counts();
 #endif
 
-  _gc_timer->register_gc_end(os::elapsed_counter());
+  _gc_timer->register_gc_end();
 
   _gc_tracer->report_gc_end(_gc_timer->gc_end(), _gc_timer->time_partitions());
 

@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2003, 2013, Oracle and/or its affiliates. All rights reserved.
- * Copyright (c) 2007, 2013, Red Hat, Inc.
+ * Copyright (c) 2013 Red Hat, Inc.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -132,7 +132,7 @@ inline intptr_t* frame::id() const {
   return fp();
 }
 
-inline JavaCallWrapper* frame::entry_frame_call_wrapper() const {
+inline JavaCallWrapper** frame::entry_frame_call_wrapper_addr() const {
   return zero_entryframe()->call_wrapper();
 }
 

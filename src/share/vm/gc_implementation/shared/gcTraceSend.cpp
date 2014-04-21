@@ -28,8 +28,10 @@
 #include "gc_implementation/shared/gcTrace.hpp"
 #include "gc_implementation/shared/gcWhen.hpp"
 #include "gc_implementation/shared/copyFailedInfo.hpp"
+#include "runtime/os.hpp"
 #include "trace/traceBackend.hpp"
 #include "trace/tracing.hpp"
+
 #ifndef SERIALGC
 #include "gc_implementation/g1/evacuationInfo.hpp"
 #include "gc_implementation/g1/g1YCTypes.hpp"

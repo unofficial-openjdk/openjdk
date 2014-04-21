@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -330,8 +330,8 @@ class os: AllStatic {
 
   static char*  non_memory_address_word();
   // reserve, commit and pin the entire memory region
-  static char*  reserve_memory_special(size_t size, char* addr = NULL,
-                bool executable = false);
+  static char*  reserve_memory_special(size_t size, size_t alignment,
+                                       char* addr, bool executable);
   static bool   release_memory_special(char* addr, size_t bytes);
   static void   large_page_init();
   static size_t large_page_size();
@@ -459,9 +459,6 @@ class os: AllStatic {
 
   // run cmd in a separate process and return its exit code; or -1 on failures
   static int fork_and_exec(char *cmd);
-
-  // Set file to send error reports.
-  static void set_error_file(const char *logfile);
 
   // os::exit() is merged with vm_exit()
   // static void exit(int num);

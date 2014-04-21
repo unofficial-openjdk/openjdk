@@ -800,15 +800,21 @@ FILETIME java_to_windows_time(jlong l) {
   return result;
 }
 
-// For now, we say that Windows does not support vtime.  I have no idea
-// whether it can actually be made to (DLD, 9/13/05).
-
-bool os::supports_vtime() { return false; }
+bool os::supports_vtime() { return true; }
 bool os::enable_vtime() { return false; }
 bool os::vtime_enabled() { return false; }
+
 double os::elapsedVTime() {
-  // better than nothing, but not much
-  return elapsedTime();
+  FILETIME created;
+  FILETIME exited;
+  FILETIME kernel;
+  FILETIME user;
+  if (GetThreadTimes(GetCurrentThread(), &created, &exited, &kernel, &user) != 0) {
+    // the resolution of windows_to_java_time() should be sufficient (ms)
+    return (double) (windows_to_java_time(kernel) + windows_to_java_time(user)) / MILLIUNITS;
+  } else {
+    return elapsedTime();
+  }
 }
 
 jlong os::javaTimeMillis() {
@@ -1767,27 +1773,28 @@ void os::jvm_path(char *buf, jint buflen) {
      // libjvm.so is installed there (append a fake suffix
      // hotspot/libjvm.so).
      char* java_home_var = ::getenv("JAVA_HOME");
-     if (java_home_var != NULL && java_home_var[0] != 0) {
+     if (java_home_var != NULL && java_home_var[0] != 0 &&
+         strlen(java_home_var) < (size_t)buflen) {
 
-        strncpy(buf, java_home_var, buflen);
+       strncpy(buf, java_home_var, buflen);
 
-        // determine if this is a legacy image or modules image
-        // modules image doesn't have "jre" subdirectory
-        size_t len = strlen(buf);
-        char* jrebin_p = buf + len;
-        jio_snprintf(jrebin_p, buflen-len, "\\jre\\bin\\");
-        if (0 != _access(buf, 0)) {
-          jio_snprintf(jrebin_p, buflen-len, "\\bin\\");
-        }
-        len = strlen(buf);
-        jio_snprintf(buf + len, buflen-len, "hotspot\\jvm.dll");
+       // determine if this is a legacy image or modules image
+       // modules image doesn't have "jre" subdirectory
+       size_t len = strlen(buf);
+       char* jrebin_p = buf + len;
+       jio_snprintf(jrebin_p, buflen-len, "\\jre\\bin\\");
+       if (0 != _access(buf, 0)) {
+         jio_snprintf(jrebin_p, buflen-len, "\\bin\\");
+       }
+       len = strlen(buf);
+       jio_snprintf(buf + len, buflen-len, "hotspot\\jvm.dll");
      }
   }
 
   if(buf[0] == '\0') {
-  GetModuleFileName(vm_lib_handle, buf, buflen);
+    GetModuleFileName(vm_lib_handle, buf, buflen);
   }
-  strcpy(saved_jvm_path, buf);
+  strncpy(saved_jvm_path, buf, MAX_PATH);
 }
 
 
@@ -2211,17 +2218,6 @@ LONG WINAPI Handle_FLT_Exception(struct _EXCEPTION_POINTERS* exceptionInfo) {
 */
 #endif //_WIN64
 
-
-// Fatal error reporting is single threaded so we can make this a
-// static and preallocated.  If it's more than MAX_PATH silently ignore
-// it.
-static char saved_error_file[MAX_PATH] = {0};
-
-void os::set_error_file(const char *logfile) {
-  if (strlen(logfile) <= MAX_PATH) {
-    strncpy(saved_error_file, logfile, MAX_PATH);
-  }
-}
 
 static inline void report_error(Thread* t, DWORD exception_code,
                                 address addr, void* siginfo, void* context) {
@@ -3088,7 +3084,12 @@ bool os::can_execute_large_page_memory() {
   return true;
 }
 
-char* os::reserve_memory_special(size_t bytes, char* addr, bool exec) {
+char* os::reserve_memory_special(size_t bytes, size_t alignment, char* addr, bool exec) {
+  assert(UseLargePages, "only for large pages");
+
+  if (!is_size_aligned(bytes, os::large_page_size()) || alignment > os::large_page_size()) {
+    return NULL; // Fallback to small pages.
+  }
 
   const DWORD prot = exec ? PAGE_EXECUTE_READWRITE : PAGE_READWRITE;
   const DWORD flags = MEM_RESERVE | MEM_COMMIT | MEM_LARGE_PAGES;
@@ -5592,4 +5593,10 @@ BOOL os::Advapi32Dll::AdvapiAvailable() {
     _LookupPrivilegeValue != NULL;
 }
 
+#endif
+
+#ifndef PRODUCT
+void TestReserveMemorySpecial_test() {
+  // No tests available for this platform
+}
 #endif

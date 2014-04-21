@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -915,6 +915,32 @@ class java_lang_invoke_MethodHandle: AllStatic {
   static int form_offset_in_bytes()             { return _form_offset; }
 };
 
+// Interface to java.lang.invoke.DirectMethodHandle objects
+
+class java_lang_invoke_DirectMethodHandle: AllStatic {
+  friend class JavaClasses;
+
+ private:
+  static int _member_offset;               // the MemberName of this DMH
+
+  static void compute_offsets();
+
+ public:
+  // Accessors
+  static oop  member(oop mh);
+
+  // Testers
+  static bool is_subclass(klassOop klass) {
+    return Klass::cast(klass)->is_subclass_of(SystemDictionary::DirectMethodHandle_klass());
+  }
+  static bool is_instance(oop obj) {
+    return obj != NULL && is_subclass(obj->klass());
+  }
+
+  // Accessors for code generation:
+  static int member_offset_in_bytes() { return _member_offset; }
+};
+
 // Interface to java.lang.invoke.LambdaForm objects
 // (These are a private interface for managing adapter code generation.)
 
@@ -988,6 +1014,7 @@ class java_lang_invoke_MemberName: AllStatic {
 
   static oop            vmtarget(oop mname);
   static void       set_vmtarget(oop mname, oop target);
+  static void       adjust_vmtarget(oop mname, oop target);
 
   static intptr_t       vmindex(oop mname);
   static void       set_vmindex(oop mname, intptr_t index);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -583,6 +583,13 @@ void VMError::report(outputStream* st) {
           while (count++ < StackPrintLimit) {
              fr.print_on_error(st, buf, sizeof(buf));
              st->cr();
+             // Compiled code may use EBP register on x86 so it looks like
+             // non-walkable C frame. Use frame.sender() for java frames.
+             if (_thread && _thread->is_Java_thread() && fr.is_java_frame()) {
+               RegisterMap map((JavaThread*)_thread, false); // No update
+               fr = fr.sender(&map);
+               continue;
+             }
              if (os::is_first_C_frame(&fr)) break;
              fr = os::get_sender_for_C_frame(&fr);
           }
@@ -697,18 +704,6 @@ void VMError::report(outputStream* st) {
        st->print_cr("Polling page: " INTPTR_FORMAT, os::get_polling_page());
        st->cr();
      }
-
-#ifdef LINUX
-  STEP(193, "(printing large pages allocation errors)")
-
-     if (_verbose) {
-       jint largepage_failures = os::Linux::num_largepage_commit_fails;
-       if (largepage_failures > 0) {
-         st->print_cr("Large page allocation failures have occurred " INT32_FORMAT " times", largepage_failures);
-         st->cr();
-       }
-     }
-#endif
 
   STEP(195, "(printing code cache information)" )
 
@@ -956,7 +951,6 @@ void VMError::report_and_die() {
       if (fd != -1) {
         out.print_raw("# An error report file with more information is saved as:\n# ");
         out.print_raw_cr(buffer);
-        os::set_error_file(buffer);
 
         log.set_fd(fd);
       } else {

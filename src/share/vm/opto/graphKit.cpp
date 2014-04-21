@@ -3596,7 +3596,7 @@ void GraphKit::g1_write_barrier_pre(bool do_load,
   Node* marking = __ load(__ ctrl(), marking_adr, TypeInt::INT, active_type, Compile::AliasIdxRaw);
 
   // if (!marking)
-  __ if_then(marking, BoolTest::ne, zero); {
+  __ if_then(marking, BoolTest::ne, zero, unlikely); {
     BasicType index_bt = TypeX_X->basic_type();
     assert(sizeof(size_t) == type2aelembytes(index_bt), "Loading G1 PtrQueue::_index with wrong size.");
     Node* index   = __ load(__ ctrl(), index_adr, TypeX_X, index_bt, Compile::AliasIdxRaw);
@@ -3604,7 +3604,7 @@ void GraphKit::g1_write_barrier_pre(bool do_load,
     if (do_load) {
       // load original value
       // alias_idx correct??
-      pre_val = __ load(no_ctrl, adr, val_type, bt, alias_idx);
+      pre_val = __ load(__ ctrl(), adr, val_type, bt, alias_idx);
     }
 
     // if (pre_val != NULL)
@@ -3701,7 +3701,8 @@ void GraphKit::g1_write_barrier_post(Node* oop_store,
   Node* no_base = __ top();
   float likely  = PROB_LIKELY(0.999);
   float unlikely  = PROB_UNLIKELY(0.999);
-  Node* zero = __ ConI(0);
+  Node* young_card = __ ConI((jint)G1SATBCardTableModRefBS::g1_young_card_val());
+  Node* dirty_card = __ ConI((jint)CardTableModRefBS::dirty_card_val());
   Node* zeroX = __ ConX(0);
 
   // Get the alias_index for raw card-mark memory
@@ -3757,8 +3758,16 @@ void GraphKit::g1_write_barrier_post(Node* oop_store,
         // load the original value of the card
         Node* card_val = __ load(__ ctrl(), card_adr, TypeInt::INT, T_BYTE, Compile::AliasIdxRaw);
 
-        __ if_then(card_val, BoolTest::ne, zero); {
-          g1_mark_card(ideal, card_adr, oop_store, alias_idx, index, index_adr, buffer, tf);
+        __ if_then(card_val, BoolTest::ne, young_card); {
+          sync_kit(ideal);
+          // Use Op_MemBarVolatile to achieve the effect of a StoreLoad barrier.
+          insert_mem_bar(Op_MemBarVolatile, oop_store);
+          __ sync_kit(this);
+
+          Node* card_val_reload = __ load(__ ctrl(), card_adr, TypeInt::INT, T_BYTE, Compile::AliasIdxRaw);
+          __ if_then(card_val_reload, BoolTest::ne, dirty_card); {
+            g1_mark_card(ideal, card_adr, oop_store, alias_idx, index, index_adr, buffer, tf);
+          } __ end_if();
         } __ end_if();
       } __ end_if();
     } __ end_if();

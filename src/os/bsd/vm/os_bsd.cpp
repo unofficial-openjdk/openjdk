@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1582,10 +1582,10 @@ jlong os::elapsed_frequency() {
   return (1000 * 1000);
 }
 
-// XXX: For now, code this as if BSD does not support vtime.
-bool os::supports_vtime() { return false; }
+bool os::supports_vtime() { return true; }
 bool os::enable_vtime()   { return false; }
 bool os::vtime_enabled()  { return false; }
+
 double os::elapsedVTime() {
   // better than nothing, but not much
   return elapsedTime();
@@ -1818,9 +1818,6 @@ void os::die() {
   // _exit() on BsdThreads only kills current thread
   ::abort();
 }
-
-// unused on bsd for now.
-void os::set_error_file(const char *logfile) {}
 
 
 // This method is a copy of JDK's sysGetLastErrorString
@@ -2585,6 +2582,7 @@ void os::jvm_path(char *buf, jint buflen) {
         // determine if this is a legacy image or modules image
         // modules image doesn't have "jre" subdirectory
         len = strlen(buf);
+        assert(len < buflen, "Ran out of buffer space");
         jrelib_p = buf + len;
 
         // Add the appropriate library subdir
@@ -2620,7 +2618,7 @@ void os::jvm_path(char *buf, jint buflen) {
     }
   }
 
-  strcpy(saved_jvm_path, buf);
+  strncpy(saved_jvm_path, buf, MAXPATHLEN);
 }
 
 void os::print_jni_name_prefix_on(outputStream* st, int args_size) {
@@ -3434,7 +3432,9 @@ void os::large_page_init() {
 #endif
 #endif
 
-char* os::reserve_memory_special(size_t bytes, char* req_addr, bool exec) {
+char* os::reserve_memory_special(size_t bytes, size_t alignment, char* req_addr, bool exec) {
+  fatal("This code is not used or maintained.");
+
   // "exec" is passed in but not used.  Creating the shared image for
   // the code cache doesn't have an SHM_X executable permission to check.
   assert(UseLargePages && UseSHM, "only for SHM large pages");
@@ -6104,4 +6104,10 @@ int os::get_core_path(char* buffer, size_t bufferSize) {
 
   return n;
 }
+
+#ifndef PRODUCT
+void TestReserveMemorySpecial_test() {
+  // No tests available for this platform
+}
+#endif
 

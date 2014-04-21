@@ -177,10 +177,8 @@ void G1MarkSweep::mark_sweep_phase1(bool& marked_for_unloading,
   GenMarkSweep::follow_mdo_weak_refs();
   assert(GenMarkSweep::_marking_stack.is_empty(), "just drained");
 
-  // Visit interned string tables and delete unmarked oops
-  StringTable::unlink(&GenMarkSweep::is_alive);
-  // Clean up unreferenced symbols in symbol table.
-  SymbolTable::unlink();
+  // Delete entries for dead interned string and clean up unreferenced symbols in symbol table.
+  G1CollectedHeap::heap()->unlink_string_and_symbol_table(&GenMarkSweep::is_alive);
 
   assert(GenMarkSweep::_marking_stack.is_empty(),
          "stack should be empty by now");
@@ -188,7 +186,6 @@ void G1MarkSweep::mark_sweep_phase1(bool& marked_for_unloading,
   if (VerifyDuringGC) {
     HandleMark hm;  // handle scope
     COMPILER2_PRESENT(DerivedPointerTableDeactivate dpt_deact);
-    gclog_or_tty->print(" VerifyDuringGC:(full)[Verifying ");
     Universe::heap()->prepare_for_verify();
     // Note: we can verify only the heap here. When an object is
     // marked, the previous value of the mark word (including
@@ -200,11 +197,13 @@ void G1MarkSweep::mark_sweep_phase1(bool& marked_for_unloading,
     // fail. At the end of the GC, the orginal mark word values
     // (including hash values) are restored to the appropriate
     // objects.
-    Universe::heap()->verify(/* silent      */ false,
-                             /* option      */ VerifyOption_G1UseMarkWord);
-
-    G1CollectedHeap* g1h = G1CollectedHeap::heap();
-    gclog_or_tty->print_cr("]");
+    if (!VerifySilently) {
+      gclog_or_tty->print(" VerifyDuringGC:(full)[Verifying ");
+    }
+    Universe::heap()->verify(VerifySilently, VerifyOption_G1UseMarkWord);
+    if (!VerifySilently) {
+      gclog_or_tty->print_cr("]");
+    }
   }
 
   gc_tracer()->report_object_count_after_gc(&GenMarkSweep::is_alive);
@@ -235,7 +234,7 @@ class G1PrepareCompactClosure: public HeapRegionClosure {
 public:
   G1PrepareCompactClosure(CompactibleSpace* cs)
   : _g1h(G1CollectedHeap::heap()),
-    _mrbs(G1CollectedHeap::heap()->mr_bs()),
+    _mrbs(_g1h->g1_barrier_set()),
     _cp(NULL, cs, cs->initialize_threshold()),
     _humongous_proxy_set("G1MarkSweep Humongous Proxy Set") { }
 

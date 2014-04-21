@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -42,6 +42,7 @@
 #include "runtime/deoptimization.hpp"
 #include "runtime/vmThread.hpp"
 #include "trace/tracing.hpp"
+#include "utilities/ticks.hpp"
 
 class Block;
 class Bundle;
@@ -284,6 +285,8 @@ class Compile : public Phase {
   bool                  _do_method_data_update; // True if we generate code to update methodDataOops
   int                   _AliasLevel;            // Locally-adjusted version of AliasLevel flag.
   bool                  _print_assembly;        // True if we should dump assembly code for this compilation
+  bool                  _print_inlining;        // True if we should print inlining for this compilation
+  bool                  _print_intrinsics;      // True if we should print intrinsics for this compilation
 #ifndef PRODUCT
   bool                  _trace_opto_output;
   bool                  _parsed_irreducible_loop; // True if ciTypeFlow detected irreducible loops during parsing
@@ -384,7 +387,7 @@ class Compile : public Phase {
   };
 
   GrowableArray<PrintInliningBuffer>* _print_inlining_list;
-  int _print_inlining;
+  int _print_inlining_idx;
 
   // Only keep nodes in the expensive node list that need to be optimized
   void cleanup_expensive_nodes(PhaseIterGVN &igvn);
@@ -396,24 +399,24 @@ class Compile : public Phase {
  public:
 
   outputStream* print_inlining_stream() const {
-    return _print_inlining_list->at(_print_inlining).ss();
+    return _print_inlining_list->adr_at(_print_inlining_idx)->ss();
   }
 
   void print_inlining_skip(CallGenerator* cg) {
-    if (PrintInlining) {
-      _print_inlining_list->at(_print_inlining).set_cg(cg);
-      _print_inlining++;
-      _print_inlining_list->insert_before(_print_inlining, PrintInliningBuffer());
+    if (_print_inlining) {
+      _print_inlining_list->adr_at(_print_inlining_idx)->set_cg(cg);
+      _print_inlining_idx++;
+      _print_inlining_list->insert_before(_print_inlining_idx, PrintInliningBuffer());
     }
   }
 
   void print_inlining_insert(CallGenerator* cg) {
-    if (PrintInlining) {
+    if (_print_inlining) {
       for (int i = 0; i < _print_inlining_list->length(); i++) {
-        if (_print_inlining_list->at(i).cg() == cg) {
+        if (_print_inlining_list->adr_at(i)->cg() == cg) {
           _print_inlining_list->insert_before(i+1, PrintInliningBuffer());
-          _print_inlining = i+1;
-          _print_inlining_list->at(i).set_cg(NULL);
+          _print_inlining_idx = i+1;
+          _print_inlining_list->adr_at(i)->set_cg(NULL);
           return;
         }
       }
@@ -536,6 +539,10 @@ class Compile : public Phase {
   int               AliasLevel() const          { return _AliasLevel; }
   bool              print_assembly() const       { return _print_assembly; }
   void          set_print_assembly(bool z)       { _print_assembly = z; }
+  bool              print_inlining() const       { return _print_inlining; }
+  void          set_print_inlining(bool z)       { _print_inlining = z; }
+  bool              print_intrinsics() const     { return _print_intrinsics; }
+  void          set_print_intrinsics(bool z)     { _print_intrinsics = z; }
   // check the CompilerOracle for special behaviours for this compile
   bool          method_has_option(const char * option) {
     return method() != NULL && method()->has_option(option);
@@ -550,20 +557,19 @@ class Compile : public Phase {
   bool              has_method_handle_invokes() const { return _has_method_handle_invokes;     }
   void          set_has_method_handle_invokes(bool z) {        _has_method_handle_invokes = z; }
 
-  jlong _latest_stage_start_counter;
+  Ticks _latest_stage_start_counter;
 
   void begin_method() {
 #ifndef PRODUCT
     if (_printer) _printer->begin_method(this);
 #endif
-    C->_latest_stage_start_counter = os::elapsed_counter();
+    C->_latest_stage_start_counter.stamp();
   }
 
   void print_method(CompilerPhaseType cpt, int level = 1) {
-    EventCompilerPhase event(UNTIMED);
+    EventCompilerPhase event;
     if (event.should_commit()) {
       event.set_starttime(C->_latest_stage_start_counter);
-      event.set_endtime(os::elapsed_counter());
       event.set_phase((u1) cpt);
       event.set_compileID(C->_compile_id);
       event.set_phaseLevel(level);
@@ -574,14 +580,13 @@ class Compile : public Phase {
 #ifndef PRODUCT
     if (_printer) _printer->print_method(this, CompilerPhaseTypeHelper::to_string(cpt), level);
 #endif
-    C->_latest_stage_start_counter = os::elapsed_counter();
+    C->_latest_stage_start_counter.stamp();
   }
 
   void end_method(int level = 1) {
-    EventCompilerPhase event(UNTIMED);
+    EventCompilerPhase event;
     if (event.should_commit()) {
       event.set_starttime(C->_latest_stage_start_counter);
-      event.set_endtime(os::elapsed_counter());
       event.set_phase((u1) PHASE_END);
       event.set_compileID(C->_compile_id);
       event.set_phaseLevel(level);
@@ -1090,6 +1095,9 @@ class Compile : public Phase {
 
   // Print bytecodes, including the scope inlining tree
   void print_codes();
+
+  // Verify GC barrier patterns
+  void verify_barriers() PRODUCT_RETURN;
 
   // End-of-run dumps.
   static void print_statistics() PRODUCT_RETURN;

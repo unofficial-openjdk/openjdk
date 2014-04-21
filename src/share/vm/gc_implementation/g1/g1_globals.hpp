@@ -71,6 +71,9 @@
   diagnostic(bool, G1TraceConcRefinement, false,                            \
           "Trace G1 concurrent refinement")                                 \
                                                                             \
+  experimental(bool, G1TraceStringSymbolTableScrubbing, false,              \
+          "Trace information string and symbol table scrubbing.")           \
+                                                                            \
   product(double, G1ConcMarkStepDurationMillis, 10.0,                       \
           "Target duration of individual concurrent marking steps "         \
           "in milliseconds.")                                               \
@@ -332,7 +335,14 @@
                                                                             \
   develop(bool, G1EvacuationFailureALotDuringMixedGC, true,                 \
           "Force use of evacuation failure handling during mixed "          \
-          "evacuation pauses")
+          "evacuation pauses")                                              \
+                                                                            \
+  diagnostic(bool, G1VerifyRSetsDuringFullGC, false,                        \
+             "If true, perform verification of each heap region's "         \
+             "remembered set when verifying the heap during a full GC.")    \
+                                                                            \
+  diagnostic(bool, G1VerifyHeapRegionCodeRoots, false,                      \
+             "Verify the code root lists attached to each heap region.")
 
 G1_FLAGS(DECLARE_DEVELOPER_FLAG, DECLARE_PD_DEVELOPER_FLAG, DECLARE_PRODUCT_FLAG, DECLARE_PD_PRODUCT_FLAG, DECLARE_DIAGNOSTIC_FLAG, DECLARE_EXPERIMENTAL_FLAG, DECLARE_NOTPRODUCT_FLAG, DECLARE_MANAGEABLE_FLAG, DECLARE_PRODUCT_RW_FLAG)
 
