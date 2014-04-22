@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,7 +25,6 @@
 
 package com.sun.tools.internal.ws.processor.model;
 
-import com.sun.tools.internal.ws.wsdl.framework.Entity;
 import com.sun.tools.internal.ws.wscompile.ErrorReceiver;
 import com.sun.tools.internal.ws.wscompile.AbortException;
 import com.sun.tools.internal.ws.resources.ModelMessages;
@@ -177,7 +176,8 @@ public abstract class Message extends ModelObject {
             throw new AbortException();
         }
         _parameters.add(p);
-        _parametersByName.put(p.getName(), p);
+        String name = p.getCustomName() != null ? p.getCustomName() : p.getName();
+        _parametersByName.put(name, p);
     }
 
     public Parameter getParameterByName(String name) {
