@@ -178,7 +178,7 @@ endef
 
 $(eval $(call FillCacheFind, $(ALL_SOURCE_DIRS)))
 define PackageDependencies
-  $(foreach p, $(subst .,/,$1), $(call CacheFind, $(addsuffix /$p, $(ALL_SOURCE_DIRS))))
+  $(call CacheFind, $(foreach p, $(subst .,/,$1), $(addsuffix /$p, $(ALL_SOURCE_DIRS))))
 endef
 
 # Given a list of packages, add packages that exist to $@, print summary
