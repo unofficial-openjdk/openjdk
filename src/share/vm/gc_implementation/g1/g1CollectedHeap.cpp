@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1519,7 +1519,7 @@ bool G1CollectedHeap::do_collection(bool explicit_gc,
     }
 
     if (G1Log::finer()) {
-      g1_policy()->print_detailed_heap_transition();
+      g1_policy()->print_detailed_heap_transition(true /* full */);
     }
 
     print_heap_after_gc();
