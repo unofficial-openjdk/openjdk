@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -2368,7 +2368,8 @@ public abstract class KeyboardFocusManager
                 focusLog.finest("Request {0}", String.valueOf(hwFocusRequest));
             }
             if (hwFocusRequest == null &&
-                heavyweight == nativeFocusOwner)
+                heavyweight == nativeFocusOwner &&
+                heavyweight.getContainingWindow() == nativeFocusedWindow)
             {
                 if (descendant == currentFocusOwner) {
                     // Redundant request.
