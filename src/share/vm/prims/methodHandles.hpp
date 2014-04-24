@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,7 +39,6 @@ class MethodHandles: AllStatic {
   // in java.lang.invoke and sun.invoke.
   // See also  javaClasses for layouts java_lang_invoke_Method{Handle,Type,Type::Form}.
  public:
- public:
   static bool enabled()                         { return _enabled; }
   static void set_enabled(bool z);
 
@@ -54,18 +53,18 @@ class MethodHandles: AllStatic {
   static Handle resolve_MemberName(Handle mname, KlassHandle caller, TRAPS); // compute vmtarget/vmindex from name/type
   static void expand_MemberName(Handle mname, int suppress, TRAPS);  // expand defc/name/type if missing
   static Handle new_MemberName(TRAPS);  // must be followed by init_MemberName
-  static oop init_MemberName(oop mname_oop, oop target_oop); // compute vmtarget/vmindex from target
-  static oop init_method_MemberName(oop mname_oop, methodOop m, bool do_dispatch,
-                                    klassOop resolved_klass);
-  static oop init_field_MemberName(oop mname_oop, klassOop field_holder,
+  static oop init_MemberName(Handle mname_h, Handle target_h); // compute vmtarget/vmindex from target
+  static oop init_method_MemberName(Handle mname_h, methodOop m, bool do_dispatch,
+                                    KlassHandle resolved_klass_h);
+  static oop init_field_MemberName(Handle mname_h, KlassHandle field_holder_h,
                                    AccessFlags mods, oop type, oop name,
                                    intptr_t offset, bool is_setter = false);
-  static Handle init_method_MemberName(oop mname_oop, CallInfo& info, TRAPS);
-  static Handle init_field_MemberName(oop mname_oop, FieldAccessInfo& info, TRAPS);
+  static Handle init_method_MemberName(Handle mname_h, CallInfo& info, TRAPS);
+  static Handle init_field_MemberName(Handle mname_h, FieldAccessInfo& info, TRAPS);
   static int method_ref_kind(methodOop m, bool do_dispatch_if_possible = true);
-  static int find_MemberNames(klassOop k, Symbol* name, Symbol* sig,
-                              int mflags, klassOop caller,
-                              int skip, objArrayOop results);
+  static int find_MemberNames(KlassHandle k, Symbol* name, Symbol* sig,
+                              int mflags, KlassHandle caller,
+                              int skip, objArrayHandle results);
   // bit values for suppress argument to expand_MemberName:
   enum { _suppress_defc = 1, _suppress_name = 2, _suppress_type = 4 };
 
@@ -228,6 +227,28 @@ public:
   MethodHandlesAdapterGenerator(CodeBuffer* code) : StubCodeGenerator(code, PrintMethodHandleStubs) {}
 
   void generate();
+};
+
+//------------------------------------------------------------------------------
+// MemberNameTable
+//
+
+class MemberNameTable : public GrowableArray<jweak> {
+ public:
+  MemberNameTable(int methods_cnt);
+  ~MemberNameTable();
+
+  void add_member_name(int index, jweak mem_name_ref);
+  oop  get_member_name(int index);
+
+ public:
+  // RedefineClasses() API support:
+  // If a MemberName refers to old_method then update it
+  // to refer to new_method.
+  void adjust_method_entries(methodOop* old_methods, methodOop* new_methods,
+                             int methods_length, bool *trace_name_printed);
+ private:
+  oop find_member_name_by_method(methodOop old_method);
 };
 
 #endif // SHARE_VM_PRIMS_METHODHANDLES_HPP

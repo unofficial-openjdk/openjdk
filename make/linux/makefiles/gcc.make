@@ -1,5 +1,6 @@
 #
 # Copyright (c) 1999, 2012, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2013 Red Hat, Inc.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -72,10 +73,10 @@ VM_PICFLAG/LIBJVM = $(PICFLAG)
 VM_PICFLAG/AOUT   =
 VM_PICFLAG        = $(VM_PICFLAG/$(LINK_INTO))
 
-ifeq ($(JVM_VARIANT_ZERO), true)
+ifeq ($(TYPE),ZERO)
 CFLAGS += $(LIBFFI_CFLAGS)
 endif
-ifeq ($(JVM_VARIANT_ZEROSHARK), true)
+ifeq ($(TYPE),SHARK)
 CFLAGS += $(LIBFFI_CFLAGS)
 CFLAGS += $(LLVM_CFLAGS)
 endif
