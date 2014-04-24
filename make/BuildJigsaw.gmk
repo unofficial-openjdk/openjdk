@@ -144,6 +144,14 @@ images: module-images
 ################################################################################
 # Legacy image targets
 
+# Stores the tips for each repository. This file is be used when constructing the jdk image and can be
+# used to track the exact sources used to build that image.
+source-tips: $(OUTPUT_ROOT)/source_tips
+$(OUTPUT_ROOT)/source_tips: FRC
+	@$(MKDIR) -p $(@D)
+	@$(RM) $@
+	@$(call GetSourceTips)
+
 create-security-jars: jdk
 	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f CreateSecurityJars.gmk JIGSAW=true)
 
@@ -157,7 +165,7 @@ create-jars: legacy-jdk nashorn-jar jdk-demos
 	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f CreateJars.gmk JIGSAW=true)
 
 # Creates the legacy images (j2sdk-image j2re-image etc)
-legacy-images: create-jars jdk-demos jdk-samples legacy-jdk
+legacy-images: create-jars jdk-demos jdk-samples legacy-jdk source-tips
 	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f Images.gmk JIGSAW=true)
         ifeq ($(OPENJDK_TARGET_OS), macosx)
 	  +($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f Bundles.gmk JIGSAW=true)
@@ -170,7 +178,7 @@ legacy-images: create-jars jdk-demos jdk-samples legacy-jdk
 	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) PROFILE=$* -f CreateJars.gmk JIGSAW=true)
 
 # Create Compact Profile images
-%-images: %-create-jars jdk-demos jdk-samples legacy-jdk
+%-images: %-create-jars jdk-demos jdk-samples legacy-jdk source-tips
 	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) PROFILE=$* \
 	    JRE_IMAGE_DIR=$(IMAGES_OUTPUTDIR)/j2re-$(word $(call profile_number,$*),$(PROFILE_NAMES))-image \
 	    -f Images.gmk profile-image JIGSAW=true)
@@ -180,7 +188,20 @@ $(foreach p, $(ALL_PROFILES), $(eval $(p): $(p)-images))
 
 legacy-profiles: $(ALL_PROFILES)
 
-.PHONY: create-security-jars legacy-jdk nashorn-jar create-jars legacy-images
+.PHONY: source-tips create-security-jars legacy-jdk nashorn-jar create-jars \
+    legacy-images
+
+################################################################################
+
+docs-javadoc: jdk-gensrc corba-gensrc langtools-gensrc
+	+($(CD) $(SRC_ROOT)/make && $(MAKE) -f Javadoc.gmk docs JIGSAW=true)
+
+docs-jvmtidoc: hotspot
+	+($(CD) $(SRC_ROOT)/make && $(MAKE) -f Javadoc.gmk jvmtidocs JIGSAW=true)
+
+docs: docs-javadoc docs-jvmtidoc
+
+.PHONY: docs docs-javadoc docs-jvmtidoc
 
 ################################################################################
 
