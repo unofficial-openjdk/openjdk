@@ -1538,6 +1538,19 @@ $(eval $(call SetupShuffleFiles,COPY_JAVA_DESKTOP_DOCFILES_SOLARIS, \
     DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.desktop/solaris/classes, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/solaris/classes/sun/awt/X11/doc-files/*)))
 
+$(eval $(call SetupShuffleFiles,COPY_JAVA_DESKTOP_DOCFILES_MACOSX, \
+    SRC := $(JDK_TOPDIR)/src/macosx/classes, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.desktop/macosx/classes, \
+    FILES := $(shell $(FIND) \
+        $(JDK_TOPDIR)/src/macosx/classes/com/apple/eawt \
+        $(JDK_TOPDIR)/src/macosx/classes/com/apple/eio \
+        -name package.html)))
+
+$(eval $(call SetupShuffleFiles,COPY_JDK_DEPLOY_OSX_DOCFILES, \
+    SRC := $(JDK_TOPDIR)/src/macosx/classes, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/jdk.deploy.osx/macosx/classes, \
+    FILES := $(JDK_TOPDIR)/src/macosx/classes/com/apple/concurrent/package.html))
+
 $(eval $(call SetupShuffleFiles,COPY_JAVA_SECURITY_ACL_PACKAGE_INFO, \
     SRC := $(JDK_TOPDIR)/src/share/classes, \
     DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.security.acl/share/classes, \
