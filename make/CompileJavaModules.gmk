@@ -565,7 +565,9 @@ MODULES_LIST_FILE := $(OUTPUT_ROOT)/jdk/genmodules/classlist/modules.list
 JAVA_MODULES := $(sort $(notdir \
     $(patsubst %/,%, $(dir $(patsubst %/,%, $(dir $(patsubst %/,%, $(dir \
     $(filter-out %module-info.java, \
-    $(wildcard $(patsubst %,%/*/*/classes/*, $(ALL_TOP_SRC_DIRS))))))))))))
+    $(wildcard $(patsubst %,%/*/share/classes/*, $(ALL_TOP_SRC_DIRS)) \
+        $(patsubst %,%/*/$(OPENJDK_TARGET_OS_API_DIR)/classes/*, $(ALL_TOP_SRC_DIRS)) \
+        $(patsubst %,%/*/$(OPENJDK_TARGET_OS)/classes/*, $(ALL_TOP_SRC_DIRS))))))))))))
 
 # There are snmp classes in the open but they are not included in OpenJDK
 ifdef OPENJDK
