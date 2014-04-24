@@ -1336,7 +1336,26 @@ $(eval $(call SetupShuffleFiles,COPY_JAVA_BASE_PACKAGE_INFO, \
         $(JDK_TOPDIR)/src/share/classes/java/security/spec/package-info.java \
         $(JDK_TOPDIR)/src/share/classes/sun/invoke/util/package-info.java \
         $(JDK_TOPDIR)/src/share/classes/sun/invoke/package-info.java \
-        ))
+        $(JDK_TOPDIR)/src/share/classes/overview-core.html \
+        $(JDK_TOPDIR)/src/share/classes/com/sun/net/ssl/package.html \
+        $(JDK_TOPDIR)/src/share/classes/com/sun/java/util/jar/pack/package.html \
+        $(JDK_TOPDIR)/src/share/classes/javax/net/ssl/package.html \
+        $(JDK_TOPDIR)/src/share/classes/javax/net/package.html \
+        $(JDK_TOPDIR)/src/share/classes/javax/crypto/package.html \
+        $(JDK_TOPDIR)/src/share/classes/javax/crypto/interfaces/package.html \
+        $(JDK_TOPDIR)/src/share/classes/javax/crypto/spec/package.html \
+        $(JDK_TOPDIR)/src/share/classes/java/io/package.html \
+        $(shell $(FIND) \
+            $(JDK_TOPDIR)/src/share/classes/java/text \
+            $(JDK_TOPDIR)/src/share/classes/java/nio \
+            $(JDK_TOPDIR)/src/share/classes/java/util \
+            $(JDK_TOPDIR)/src/share/classes/java/lang \
+            $(JDK_TOPDIR)/src/share/classes/sun/reflect \
+        -name package.html) \
+        $(wildcard \
+            $(JDK_TOPDIR)/src/share/classes/java/lang/doc-files/* \
+            $(JDK_TOPDIR)/src/share/classes/java/net/doc-files/* \
+        )))
 
 $(eval $(call SetupShuffleFiles,COPY_JAVA_MANAGEMENT_PACKAGE_INFO, \
     SRC := $(JDK_TOPDIR)/src/share/classes, \
@@ -1344,7 +1363,32 @@ $(eval $(call SetupShuffleFiles,COPY_JAVA_MANAGEMENT_PACKAGE_INFO, \
     FILES := \
         $(JDK_TOPDIR)/src/share/classes/com/sun/management/package-info.java \
         $(JDK_TOPDIR)/src/share/classes/sun/management/jdp/package-info.java \
-         ))
+        $(JDK_TOPDIR)/src/share/classes/com/sun/jmx/interceptor/package.html \
+        $(JDK_TOPDIR)/src/share/classes/com/sun/jmx/mbeanserver/package.html \
+        $(JDK_TOPDIR)/src/share/classes/com/sun/jmx/defaults/package.html \
+        $(JDK_TOPDIR)/src/share/classes/com/sun/jmx/remote/internal/package.html \
+        $(shell $(FIND) \
+            $(JDK_TOPDIR)/src/share/classes/javax/management \
+            $(JDK_TOPDIR)/src/share/classes/sun/management/jmxremote \
+        -name package.html)))
+
+$(eval $(call SetupShuffleFiles,COPY_JAVA_MANAGEMENT_OVERVIEW, \
+    SRC := $(JDK_TOPDIR)/src/share/classes/com/sun/management, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.management/share/classes, \
+    FILES := $(JDK_TOPDIR)/src/share/classes/com/sun/management/mgmt-overview.html))
+
+$(eval $(call SetupShuffleFiles,COPY_JDK_SNMP_PACKAGE_INFO, \
+    SRC := $(JDK_TOPDIR)/src/share/classes, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/jdk.snmp/share/classes, \
+    FILES := $(shell $(FIND) \
+        $(JDK_TOPDIR)/src/share/classes/com/sun/jmx/snmp \
+        $(JDK_TOPDIR)/src/share/classes/sun/management/snmp \
+        -name package.html)))
+
+$(eval $(call SetupShuffleFiles,COPY_JAVAX_SMARTCARDIO_PACKAGE_INFO, \
+    SRC := $(JDK_TOPDIR)/src/share/classes, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/javax.smartcardio/share/classes, \
+    FILES := $(JDK_TOPDIR)/src/share/classes/javax/smartcardio/package.html))
 
 $(eval $(call SetupShuffleFiles,COPY_JDK_TOOLS_PACKAGE_INFO, \
     SRC := $(JDK_TOPDIR)/src/share/classes, \
@@ -1356,6 +1400,8 @@ $(eval $(call SetupShuffleFiles,COPY_JDK_TOOLS_PACKAGE_INFO, \
         $(JDK_TOPDIR)/src/share/classes/com/sun/jdi/package-info.java \
         $(JDK_TOPDIR)/src/share/classes/com/sun/jdi/connect/spi/package-info.java \
         $(JDK_TOPDIR)/src/share/classes/com/sun/jdi/connect/package-info.java \
+        $(JDK_TOPDIR)/src/share/classes/jdi-overview.html \
+        $(wildcard $(JDK_TOPDIR)/src/share/classes/com/sun/jdi/doc-files/*) \
         ))
 
 $(eval $(call SetupShuffleFiles,COPY_JDK_TOOLS_JRE_PACKAGE_INFO, \
@@ -1367,13 +1413,22 @@ $(eval $(call SetupShuffleFiles,COPY_JDK_TOOLS_JRE_PACKAGE_INFO, \
         $(JDK_TOPDIR)/src/share/classes/com/sun/tracing/package-info.java \
         ))
 
+$(eval $(call SetupShuffleFiles,COPY_JDK_TOOLS_BASE_PACKAGE_INFO, \
+    SRC := $(JDK_TOPDIR)/src/share/classes, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/jdk.tools.base/share/classes, \
+    FILES := \
+        $(JDK_TOPDIR)/src/share/classes/com/sun/jarsigner/package.html \
+        ))
+
 $(eval $(call SetupShuffleFiles,COPY_JDK_TOOLS_DIAG_PACKAGE_INFO, \
     SRC := $(JDK_TOPDIR)/src/share/classes, \
     DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/jdk.tools.diag/share/classes, \
     FILES := \
         $(JDK_TOPDIR)/src/share/classes/com/sun/tools/attach/spi/package-info.java \
         $(JDK_TOPDIR)/src/share/classes/com/sun/tools/attach/package-info.java \
-        ))
+        $(shell $(FIND) \
+            $(JDK_TOPDIR)/src/share/classes/sun/jvmstat \
+        -name package.html)))
 
 $(eval $(call SetupShuffleFiles,COPY_JDK_SCTP_PACKAGE_INFO, \
     SRC := $(JDK_TOPDIR)/src/share/classes, \
@@ -1400,13 +1455,24 @@ $(eval $(call SetupShuffleFiles,COPY_JDK_JAAS_PACKAGE_INFO, \
         $(JDK_TOPDIR)/src/share/classes/com/sun/security/auth/callback/package-info.java \
         ))
 
+$(eval $(call SetupShuffleFiles,COPY_JDK_JAAS_OVERVIEW, \
+    SRC := $(JDK_TOPDIR)/src/share/classes/com/sun/security/auth, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/jdk.jaas/share/classes, \
+    FILES := $(JDK_TOPDIR)/src/share/classes/com/sun/security/auth/jaas-overview.html))
+
 $(eval $(call SetupShuffleFiles,COPY_JAVAX_KERBEROS_PACKAGE_INFO, \
     SRC := $(JDK_TOPDIR)/src/share/classes, \
     DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/javax.kerberos/share/classes, \
     FILES := \
         $(JDK_TOPDIR)/src/share/classes/com/sun/security/jgss/package-info.java \
         $(JDK_TOPDIR)/src/share/classes/javax/security/auth/kerberos/package-info.java \
+        $(JDK_TOPDIR)/src/share/classes/org/ietf/jgss/package.html \
         ))
+
+$(eval $(call SetupShuffleFiles,COPY_JAVAX_KERBEROS_OVERVIEW, \
+    SRC := $(JDK_TOPDIR)/src/share/classes/com/sun/security/jgss, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/javax.kerberos/share/classes, \
+    FILES := $(JDK_TOPDIR)/src/share/classes/com/sun/security/jgss/jgss-overview.html))
 
 $(eval $(call SetupShuffleFiles,COPY_JAVAX_SASL_PACKAGE_INFO, \
     SRC := $(JDK_TOPDIR)/src/share/classes, \
@@ -1414,6 +1480,63 @@ $(eval $(call SetupShuffleFiles,COPY_JAVAX_SASL_PACKAGE_INFO, \
     FILES := \
         $(JDK_TOPDIR)/src/share/classes/javax/security/sasl/package-info.java \
         ))
+
+$(eval $(call SetupShuffleFiles,COPY_ROWSET_PACKAGE_INFO, \
+    SRC := $(JDK_TOPDIR)/src/share/classes, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.jdbc.rowset/share/classes, \
+    FILES := $(shell $(FIND) \
+        $(JDK_TOPDIR)/src/share/classes/com/sun/rowset \
+        $(JDK_TOPDIR)/src/share/classes/javax/sql/rowset \
+        -name package.html)))
+
+$(eval $(call SetupShuffleFiles,COPY_JDBC_PACKAGE_INFO, \
+    SRC := $(JDK_TOPDIR)/src/share/classes, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.jdbc/share/classes, \
+    FILES := $(JDK_TOPDIR)/src/share/classes/javax/sql/package.html \
+        $(JDK_TOPDIR)/src/share/classes/java/sql/package.html))
+
+$(eval $(call SetupShuffleFiles,COPY_XMLDSIG_PACKAGE_INFO, \
+    SRC := $(JDK_TOPDIR)/src/share/classes, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/javax.xmldsig/share/classes, \
+    FILES := $(shell $(FIND) \
+        $(JDK_TOPDIR)/src/share/classes/com/sun/org/apache/xml/internal \
+        $(JDK_TOPDIR)/src/share/classes/javax/xml/crypto \
+        -name package.html)))
+
+$(eval $(call SetupShuffleFiles,COPY_JAVAX_SCRIPT_PACKAGE_INFO, \
+    SRC := $(JDK_TOPDIR)/src/share/classes, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/javax.script/share/classes, \
+    FILES := $(JDK_TOPDIR)/src/share/classes/javax/script/package.html))
+
+$(eval $(call SetupShuffleFiles,COPY_JAVA_DESKTOP_DOCFILES, \
+    SRC := $(JDK_TOPDIR)/src/share/classes, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.desktop/share/classes, \
+    FILES := $(wildcard \
+        $(JDK_TOPDIR)/src/share/classes/javax/imageio/metadata/doc-files/* \
+        $(JDK_TOPDIR)/src/share/classes/javax/swing/doc-files/* \
+        $(JDK_TOPDIR)/src/share/classes/javax/swing/text/doc-files/* \
+        $(JDK_TOPDIR)/src/share/classes/javax/swing/undo/doc-files/* \
+        $(JDK_TOPDIR)/src/share/classes/javax/swing/plaf/nimbus/doc-files/* \
+        $(JDK_TOPDIR)/src/share/classes/javax/swing/plaf/synth/doc-files/* \
+        $(JDK_TOPDIR)/src/share/classes/javax/swing/plaf/multi/doc-files/* \
+        $(JDK_TOPDIR)/src/share/classes/java/awt/doc-files/* \
+        ) \
+        $(shell $(FIND) \
+        $(JDK_TOPDIR)/src/share/classes/javax/accessibility \
+        $(JDK_TOPDIR)/src/share/classes/javax/imageio \
+        $(JDK_TOPDIR)/src/share/classes/javax/sound \
+        $(JDK_TOPDIR)/src/share/classes/javax/swing \
+        $(JDK_TOPDIR)/src/share/classes/javax/print \
+        $(JDK_TOPDIR)/src/share/classes/java/awt \
+        $(JDK_TOPDIR)/src/share/classes/java/applet \
+        $(JDK_TOPDIR)/src/share/classes/java/beans \
+        -name package.html \
+        )))
+
+$(eval $(call SetupShuffleFiles,COPY_JAVA_DESKTOP_DOCFILES_SOLARIS, \
+    SRC := $(JDK_TOPDIR)/src/solaris/classes, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.desktop/solaris/classes, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/solaris/classes/sun/awt/X11/doc-files/*)))
 
 $(eval $(call SetupShuffleFiles,COPY_JAVA_SECURITY_ACL_PACKAGE_INFO, \
     SRC := $(JDK_TOPDIR)/src/share/classes, \
@@ -1427,7 +1550,8 @@ $(eval $(call SetupShuffleFiles,COPY_JDK_DEVTOOLS_PACKAGE_INFO, \
     SRC := $(LANGTOOLS_TOPDIR)/src/share/classes, \
     DEST := $(LANGTOOLS_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/jdk.devtools/share/classes, \
     FILES := $(shell $(FIND) $(LANGTOOLS_TOPDIR)/src/share/classes/com \
-        -name package-info.java)))
+        -name package-info.java) \
+        $(LANGTOOLS_TOPDIR)/src/share/classes/com/sun/tools/doclets/Taglet.java))
 
 $(eval $(call SetupShuffleFiles,COPY_JAVAX_COMPILER_PACKAGE_INFO, \
     SRC := $(LANGTOOLS_TOPDIR)/src/share/classes, \
@@ -1463,6 +1587,29 @@ $(eval $(call SetupShuffleFiles,COPY_JAVAX_JAXB_PACKAGE_INFO, \
         $(shell $(FIND) \
         $(JAXWS_TOPDIR)/src/share/jaxws_classes/com/sun/xml/internal/bind \
         -name package-info.java)))
+
+$(eval $(call SetupShuffleFiles,COPY_JAVA_RMI_PACKAGE_INFO, \
+    SRC := $(JDK_TOPDIR)/src/share/classes, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.rmi/share/classes, \
+    FILES := $(shell $(FIND) \
+        $(JDK_TOPDIR)/src/share/classes/javax/rmi/ssl \
+        $(JDK_TOPDIR)/src/share/classes/java/rmi \
+        -name package.html)))
+
+$(eval $(call SetupShuffleFiles,COPY_JAVAX_JNDI_PACKAGE_INFO, \
+    SRC := $(JDK_TOPDIR)/src/share/classes, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/javax.jndi/share/classes, \
+    FILES := $(shell $(FIND) $(JDK_TOPDIR)/src/share/classes/javax/naming -name package.html)))
+
+$(eval $(call SetupShuffleFiles,COPY_DOC_STUB, \
+    SRC := $(JDK_TOPDIR)/src/share/doc, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.rmi/share/doc, \
+    FILES := $(JDK_TOPDIR)/src/share/doc/stub/java/rmi/activation/ActivationGroup_Stub.java))
+
+$(eval $(call SetupShuffleFiles,COPY_JAVAX_CORBA_DOC_FILES, \
+    SRC := $(CORBA_TOPDIR)/src/share/classes, \
+    DEST := $(CORBA_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/javax.corba/share/classes, \
+    FILES := $(wildcard $(CORBA_TOPDIR)/src/share/classes/org/omg/CORBA/doc-files/*)))
 
 ################################################################################
 
