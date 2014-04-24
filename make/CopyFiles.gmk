@@ -213,7 +213,7 @@ PSFONTPROPFILE_TARGET_FILES := $(subst $(PSFONTPROPFILE_SRC_DIR),$(LIBDIR),$(PSF
 $(LIBDIR)/%: $(PSFONTPROPFILE_SRC_DIR)/%
 	$(call install-file)
 
-DESKTOP_CONF_FILES := $(PSFONTPROPFILE_TARGET_FILES)
+DESKTOP_CONF_FILES += $(PSFONTPROPFILE_TARGET_FILES)
 
 ##########################################################################################
 #
