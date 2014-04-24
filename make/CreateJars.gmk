@@ -574,7 +574,7 @@ $(IMAGES_OUTPUTDIR)/symbols/_the.symbols: $(IMAGES_OUTPUTDIR)/lib/rt.jar
 	$(RM) -r $(IMAGES_OUTPUTDIR)/symbols/META-INF/sym
 	$(MKDIR) -p $(IMAGES_OUTPUTDIR)/symbols/META-INF/sym
 	$(JAVA) $(NEW_JAVAC) \
-	    -bootclasspath "$(subst $(SPACE),$(PATH_SEP),$(JDK_OUT_CLASSES))" \
+	    -bootclasspath "$(IMAGES_OUTPUTDIR)/lib/rt.jar" \
 	    -XDprocess.packages -proc:only \
 	    -processor com.sun.tools.javac.sym.CreateSymbols \
 	    -Acom.sun.tools.javac.sym.Jar=$(IMAGES_OUTPUTDIR)/lib/rt.jar \
