@@ -193,7 +193,8 @@ legacy-profiles: $(ALL_PROFILES)
 
 ################################################################################
 
-docs-javadoc: jdk-gensrc corba-gensrc langtools-gensrc
+# Two source files needed for doc generation are generated in jdk-genclasses.
+docs-javadoc: jdk-gensrc corba-gensrc langtools-gensrc jdk-genclasses
 	+($(CD) $(SRC_ROOT)/make && $(MAKE) -f Javadoc.gmk docs JIGSAW=true)
 
 docs-jvmtidoc: hotspot
