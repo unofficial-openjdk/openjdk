@@ -188,7 +188,7 @@ public class TimestampCheck {
             DerOutputStream tstInfo2 = new DerOutputStream();
             tstInfo2.putOctetString(tstInfo.toByteArray());
 
-            Signature sig = Signature.getInstance("SHA1withDSA");
+            Signature sig = Signature.getInstance("SHA1withRSA");
             sig.initSign((PrivateKey)(ks.getKey(
                     alias, "changeit".toCharArray())));
             sig.update(tstInfo.toByteArray());
@@ -205,7 +205,7 @@ public class TimestampCheck {
             SignerInfo signerInfo = new SignerInfo(
                     new X500Name(signer.getIssuerX500Principal().getName()),
                     signer.getSerialNumber(),
-                    aid, AlgorithmId.get("DSA"), sig.sign());
+                    aid, AlgorithmId.get("RSA"), sig.sign());
 
             SignerInfo[] signerInfos = {signerInfo};
             PKCS7 p7 =

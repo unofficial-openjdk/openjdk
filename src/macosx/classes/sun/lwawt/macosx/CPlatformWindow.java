@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -61,8 +61,9 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
     private static native void nativeSetNSWindowMinimizedIcon(long nsWindowPtr, long nsImage);
     private static native void nativeSetNSWindowRepresentedFilename(long nsWindowPtr, String representedFilename);
     private static native void nativeSetEnabled(long nsWindowPtr, boolean isEnabled);
-    private static native void nativeSynthesizeMouseEnteredExitedEvents(long nsWindowPtr);
+    private static native void nativeSynthesizeMouseEnteredExitedEvents();
     private static native void nativeDispose(long nsWindowPtr);
+    private static native CPlatformWindow nativeGetTopmostPlatformWindowUnderMouse();
 
     // Loger to report issues happened during execution but that do not affect functionality
     private static final PlatformLogger logger = PlatformLogger.getLogger("sun.lwawt.macosx.CPlatformWindow");
@@ -579,7 +580,12 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
         if (visible) {
             // Apply the extended state as expected in shared code
             if (target instanceof Frame) {
-                switch (((Frame)target).getExtendedState()) {
+                int frameState = ((Frame)target).getExtendedState();
+                if ((frameState & Frame.ICONIFIED) != 0) {
+                    // Treat all state bit masks with ICONIFIED bit as ICONIFIED state.
+                    frameState = Frame.ICONIFIED;
+                }
+                switch (frameState) {
                     case Frame.ICONIFIED:
                         CWrapper.NSWindow.miniaturize(nsWindowPtr);
                         break;
@@ -593,7 +599,7 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
             }
         }
 
-        nativeSynthesizeMouseEnteredExitedEvents(nsWindowPtr);
+        nativeSynthesizeMouseEnteredExitedEvents();
 
         // Configure stuff #2
         updateFocusabilityForAutoRequestFocus(true);
@@ -738,6 +744,9 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
         setStyleBits(ALWAYS_ON_TOP, isAlwaysOnTop);
     }
 
+    public PlatformWindow getTopmostPlatformWindowUnderMouse() {
+        return CPlatformWindow.nativeGetTopmostPlatformWindowUnderMouse();
+    }
     @Override
     public void setOpacity(float opacity) {
         CWrapper.NSWindow.setAlphaValue(getNSWindowPtr(), opacity);
@@ -802,6 +811,10 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
         if (prevWindowState == windowState) return;
 
         final long nsWindowPtr = getNSWindowPtr();
+        if ((windowState & Frame.ICONIFIED) != 0) {
+            // Treat all state bit masks with ICONIFIED bit as ICONIFIED state.
+            windowState = Frame.ICONIFIED;
+        }
         switch (windowState) {
             case Frame.ICONIFIED:
                 if (prevWindowState == Frame.MAXIMIZED_BOTH) {
@@ -830,7 +843,7 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
                 throw new RuntimeException("Unknown window state: " + windowState);
         }
 
-        nativeSynthesizeMouseEnteredExitedEvents(nsWindowPtr);
+        nativeSynthesizeMouseEnteredExitedEvents();
 
         // NOTE: the SWP.windowState field gets updated to the newWindowState
         //       value when the native notification comes to us

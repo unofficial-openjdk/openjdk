@@ -369,15 +369,6 @@ sun/security/ssl/com/sun/net/ssl/internal/ssl/InputRecord/InterruptedIO.java sol
 # 7147060
 com/sun/org/apache/xml/internal/security/transforms/ClassLoaderTest.java        generic-all
 
-# 8000439: NPG: REGRESSION : sun/security/krb5/auto/MaxRetries.java fails with timeout
-sun/security/krb5/auto/MaxRetries.java                          solaris-sparcv9
-
-# 8006690: sun/security/krb5/auto/BadKdc1.java fails intermittently
-sun/security/krb5/auto/BadKdc1.java                             solaris-sparcv9
-sun/security/krb5/auto/BadKdc2.java                             solaris-sparcv9
-sun/security/krb5/auto/BadKdc3.java                             solaris-sparcv9
-sun/security/krb5/auto/BadKdc4.java                             solaris-sparcv9
-
 ############################################################################
 
 # jdk_swing
@@ -404,10 +395,6 @@ sun/tools/jconsole/ResourceCheckTest.sh                         generic-all
 
 # 7132203
 sun/jvmstat/monitor/MonitoredVm/CR6672135.java                  generic-all
-
-# 8001118
-sun/tools/jcmd/jcmd-f.sh					generic-all
-sun/tools/jcmd/jcmd-help-help.sh				generic-all
 
 # 7175775
 sun/tools/jinfo/Basic.sh					macosx-all
@@ -452,9 +439,6 @@ java/util/concurrent/FutureTask/BlockingTaskExecutor.java       generic-all
 
 # Problems on windows, jmap.exe hangs? (these run jmap), fails on Solaris 10 x86
 java/util/concurrent/locks/Lock/TimedAcquireLeak.java           generic-all
-
-# 7041639, Solaris DSA keypair generation bug
-java/util/TimeZone/TimeZoneDatePermissionCheck.sh               solaris-all
 
 # 8026772: test/sun/util/resources/TimeZone/Bug6317929.java failing
 sun/util/resources/TimeZone/Bug6317929.java                     generic-all
