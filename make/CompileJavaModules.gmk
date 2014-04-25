@@ -45,14 +45,10 @@ $(eval $(call SetupJavaCompiler,GENERATE_JDKBYTECODE, \
 ################################################################################
 # Module specific build settings
 
-#ifneq ($(OPENJDK_TARGET_OS), solaris)
-#  EXCLUDES += com/oracle/security
-#endif
-
-################################################################################
-
 java.base_COPY := .icu .dat .spp
 java.base_CLEAN := intrinsic.properties
+
+java.base_EXCLUDES += java/lang/doc-files
 
 # Exclude BreakIterator classes that are just used in compile process to generate
 # data files and shouldn't go in the product
@@ -188,6 +184,15 @@ java.desktop_CLEAN := iio-plugin.properties
 COPY_EXTRA += $(patsubst $(JDK_TOPDIR)/make/data/swingbeaninfo/images/%, \
     $(JDK_OUTPUTDIR)/modules/java.desktop/javax/swing/beaninfo/images/%,\
     $(wildcard $(JDK_TOPDIR)/make/data/swingbeaninfo/images/*.gif))
+
+java.desktop_EXCLUDES += \
+    java/awt/doc-files \
+    javax/swing/doc-files \
+    javax/swing/text/doc-files \
+    javax/swing/plaf/synth/doc-files \
+    javax/swing/undo/doc-files \
+    sun/awt/X11/doc-files \
+    #
 
 # The exception handling of swing beaninfo
 # These resources violates the convention of having code and resources together under
@@ -457,7 +462,10 @@ jdk.tools_EXCLUDES := \
     com/sun/tools/example/debug/bdi \
     com/sun/tools/example/debug/event \
     com/sun/tools/example/debug/gui \
+    com/sun/jdi/doc-files \
     #
+
+jdk.tools_EXCLUDE_FILES += jdi-overview.html
 
 ifneq ($(OPENJDK_TARGET_OS), solaris)
   jdk.tools_EXCLUDE_FILES += \

@@ -340,14 +340,14 @@ define add_file_to_copy
   # already has one
   ifeq ($$(findstring $$($2_TARGET), $$($1_COPY_LIST)), )
     $1_COPY_LIST += $$($2_TARGET)
-  # Now we can setup the depency that will trigger the copying.
-  $$($1_BIN)$$($2_TARGET) : $2
+    # Now we can setup the depency that will trigger the copying.
+    $$($1_BIN)$$($2_TARGET) : $2
 	$(MKDIR) -p $$(@D)
 	$(CP) $$< $$@
 	$(CHMOD) -f ug+w $$@
 
-  # And do not forget this target
-  $1_ALL_COPY_TARGETS += $$($1_BIN)$$($2_TARGET)
+    # And do not forget this target
+    $1_ALL_COPY_TARGETS += $$($1_BIN)$$($2_TARGET)
   endif
 endef
 
@@ -444,8 +444,9 @@ define SetupJavaCompilation
   # Add all source roots to the find cache since we are likely going to run find 
   # on these more than once. The cache will only be updated if necessary.
   $$(eval $$(call FillCacheFind,$$($1_SRC)))
-  # Find all files in the source trees.
-  $1_ALL_SRCS += $$(filter-out $(OVR_SRCS),$$(call CacheFind,$$($1_SRC)))
+  # Find all files in the source trees. Preserve order of source roots for overrides to
+  # work correctly. CacheFind does not preserve order so need to call it for each root.
+  $1_ALL_SRCS += $$(filter-out $(OVR_SRCS),$$(foreach s,$$($1_SRC),$$(call CacheFind,$$(s))))
   # Extract the java files.
   ifneq ($$($1_EXCLUDE_FILES),)
     $1_EXCLUDE_FILES_PATTERN:=$$(addprefix %,$$($1_EXCLUDE_FILES))
