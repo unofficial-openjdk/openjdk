@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2012, 2014, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -44,7 +44,10 @@ JAB_SRC = $(CLOSED_PLATFORM_SRC)/native/sun/bridge/jabswitch.cpp
 JAB_MANIFEST_INP = $(CLOSED_PLATFORM_SRC)/native/sun/bridge/jabswitch.manifest
 JAB_MANIFEST_OUT = $(TEMPDIR)/jabswitch.exe.intermediate.manifest
 
-RC_FLAGS += /fo "$(VERSIONRES)"
+RC_FLAGS += /fo "$(VERSIONRES)" \
+            /D "JDK_FNAME=$(PROGRAM)$(EXE_SUFFIX)" \
+            /D "JDK_INTERNAL_NAME=$(PROGRAM)" \
+            /D "JDK_FTYPE=0x1L"
 OTHER_CPPFLAGS += /MD /Fo"$(TEMPDIR)/" /Fd"$(TEMPDIR)/" /analyze- /Od /Gd /nologo /Gm /D "WIN32" /D "_WINDOWS" /D "_UNICODE" /D "UNICODE" /RTC1 /W3 /ZI /Zc:wchar_t /EHsc 
 LDDFLAGS += Advapi32.lib Version.lib User32.lib
 
