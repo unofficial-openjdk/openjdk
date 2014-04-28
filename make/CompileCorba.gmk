@@ -35,7 +35,7 @@ include CommonCorba.gmk
 
 ################################################################################
 
-ifeq ($(JIGSAW), true)
+ifeq ($(SHUFFLED), true)
   CORBA_SRC := $(CORBA_TOPDIR)/$(SRC_SUBDIR)/javax.corba/share/classes \
       $(CORBA_TOPDIR)/$(SRC_SUBDIR)/javax.jta/share/classes \
       $(CORBA_TOPDIR)/$(SRC_SUBDIR)/jdk.tools/share/classes \
@@ -91,7 +91,7 @@ $(CORBA_OUTPUTDIR)/dist/lib/bin.zip: $(BIN_FILES)
 	$(CHMOD) ug+w $(CORBA_OUTPUTDIR)/lib/*
 	(cd $(CORBA_OUTPUTDIR); $(ZIP) -q $@ lib/orb.idl lib/ir.idl)
 
-ifeq ($(JIGSAW), true)
+ifeq ($(SHUFFLED), true)
   # Copy idl files straight to jdk/lib. Not sure if this is the right way to do
   # it, but we are moving away from the one repo at a time build. Perhaps we should
   # scrap the 'jdk' prefix to bin, lib etc?
@@ -103,7 +103,7 @@ endif
 
 ################################################################################
 
-ifeq ($(JIGSAW), true)
+ifeq ($(SHUFFLED), true)
   all: $(BUILD_INTERIM_CORBA) $(IDL_TARGET_FILES)
 else
 all: $(BUILD_CORBA) $(BUILD_INTERIM_CORBA) $(ARCHIVE_CORBA_SRC) \
