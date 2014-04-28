@@ -28,7 +28,7 @@
 
 SHUFFLED_SRC_SUBDIR := src_shuffled
 
-ifeq ($(JIGSAW), true)
+ifeq ($(SHUFFLED), true)
   LANGTOOLS_OUTPUTDIR := $(patsubst $(OUTPUT_ROOT)/%,$(OUTPUT_ROOT)/jigsaw/%,$(LANGTOOLS_OUTPUTDIR))
   CORBA_OUTPUTDIR := $(patsubst $(OUTPUT_ROOT)/%,$(OUTPUT_ROOT)/jigsaw/%,$(CORBA_OUTPUTDIR))
   JDK_OUTPUTDIR := $(patsubst $(OUTPUT_ROOT)/%,$(OUTPUT_ROOT)/jigsaw/%,$(JDK_OUTPUTDIR))

@@ -37,20 +37,20 @@ include $(JDK_TOPDIR)/make/ProfileNames.gmk
 ################################################################################
 
 langtools-gensrc:
-	+($(CD) $(LANGTOOLS_TOPDIR)/make && $(MAKE) -f GensrcLangtools.gmk JIGSAW=true)
+	+($(CD) $(LANGTOOLS_TOPDIR)/make && $(MAKE) -f GensrcLangtools.gmk SHUFFLED=true)
 
 langtools-interim: langtools-gensrc
-	+($(CD) $(LANGTOOLS_TOPDIR)/make && $(MAKE) -f CompileInterim.gmk JIGSAW=true)
+	+($(CD) $(LANGTOOLS_TOPDIR)/make && $(MAKE) -f CompileInterim.gmk SHUFFLED=true)
 
 .PHONY: langtools-gensrc langtools-interim
 
 ################################################################################
 
 corba-gensrc: langtools-interim
-	+($(CD) $(CORBA_TOPDIR)/make && $(MAKE) -f GensrcCorba.gmk JIGSAW=true)
+	+($(CD) $(CORBA_TOPDIR)/make && $(MAKE) -f GensrcCorba.gmk SHUFFLED=true)
 
 corba-interim: corba-gensrc
-	+($(CD) $(CORBA_TOPDIR)/make && $(MAKE) -f CompileCorba.gmk JIGSAW=true)
+	+($(CD) $(CORBA_TOPDIR)/make && $(MAKE) -f CompileCorba.gmk SHUFFLED=true)
 
 .PHONY: corba-gensrc
 
@@ -58,7 +58,7 @@ corba-interim: corba-gensrc
 # Build nashorn. Needs to be compiled separately from the rest of the modules
 # due to special needs.
 nashorn: java-compile
-	+($(CD) $(NASHORN_TOPDIR)/make && $(MAKE) -f BuildNashorn.gmk compile JIGSAW=true)
+	+($(CD) $(NASHORN_TOPDIR)/make && $(MAKE) -f BuildNashorn.gmk compile SHUFFLED=true)
 
 .PHONY: nashorn
 
@@ -66,45 +66,45 @@ nashorn: java-compile
 # Build hotspot into the legacy build output dir for now.
 
 hotspot:
-	($(CD) $(SRC_ROOT)/make && $(MAKE) $(MAKE_ARGS) -f HotspotWrapper.gmk JIGSAW=true)
+	($(CD) $(SRC_ROOT)/make && $(MAKE) $(MAKE_ARGS) -f HotspotWrapper.gmk SHUFFLED=true)
 
 .PHONY: hotspot
 
 ################################################################################
 
 jdk-build-tools: langtools-interim
-	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f Tools.gmk java-tools JIGSAW=true)
+	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f Tools.gmk java-tools SHUFFLED=true)
 
 # TODO: It would be nice if this dependency on Hotspot could be reduced.
 jdk-gensrc: jdk-build-tools langtools-interim import-hotspot
-	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f GenerateSources.gmk JIGSAW=true)
+	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f GenerateSources.gmk SHUFFLED=true)
 
 jdk-gendata: langtools-interim jdk-build-tools
-	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f GenerateData.gmk JIGSAW=true)
+	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f GenerateData.gmk SHUFFLED=true)
 
 jdk-genclasses: langtools-interim corba-interim java-compile
-	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f GenerateClasses.gmk JIGSAW=true)
+	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f GenerateClasses.gmk SHUFFLED=true)
 
 jdk-createpolicyjars:
-	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f CreatePolicyJars.gmk JIGSAW=true)
+	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f CreatePolicyJars.gmk SHUFFLED=true)
 
 import-hotspot: hotspot
-	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f Import.gmk hotspot JIGSAW=true)
+	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f Import.gmk hotspot SHUFFLED=true)
 
 jdk-copyfiles: jdk-build-tools
-	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f CopyFiles.gmk JIGSAW=true)
+	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f CopyFiles.gmk SHUFFLED=true)
 
 jdk-libs: import-hotspot java-compile
-	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f CompileNativeLibraries.gmk JIGSAW=true)
+	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f CompileNativeLibraries.gmk SHUFFLED=true)
 
 jdk-launchers: jdk-libs
-	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f CompileLaunchers.gmk JIGSAW=true)
+	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f CompileLaunchers.gmk SHUFFLED=true)
 
 jdk-demos: java-compile
-	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f CompileDemos.gmk JIGSAW=true)
+	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f CompileDemos.gmk SHUFFLED=true)
 
 jdk-samples:
-	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f CopySamples.gmk JIGSAW=true)
+	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f CopySamples.gmk SHUFFLED=true)
 
 # The jdk target results in a runnable exploded image
 jdk: java-compile jdk-gendata jdk-genclasses jdk-libs jdk-launchers \
@@ -117,11 +117,11 @@ jdk: java-compile jdk-gendata jdk-genclasses jdk-libs jdk-launchers \
 
 # Compile all java modules except nashorn
 java-compile: jdk-gensrc langtools-gensrc corba-gensrc
-	+($(CD) $(SRC_ROOT)/make && $(MAKE) -f CompileJavaModules.gmk JIGSAW=true)
+	+($(CD) $(SRC_ROOT)/make && $(MAKE) -f CompileJavaModules.gmk SHUFFLED=true)
 
 # Generate the modules.ser file
 java-modules: java-compile nashorn jdk-genclasses
-	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f GenerateModules.gmk JIGSAW=true)
+	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f GenerateModules.gmk SHUFFLED=true)
 
 .PHONY: java-compile java-modules
 
@@ -130,12 +130,12 @@ java-modules: java-compile nashorn jdk-genclasses
 # Create jmods
 jmods: jdk java-modules
 	+($(CD) $(SRC_ROOT)/make && $(MAKE) -I $(JDK_TOPDIR)/make \
-	    -f CreateJmods.gmk JIGSAW=true jmods)
+	    -f CreateJmods.gmk SHUFFLED=true jmods)
 
 # Create images from jmods
 module-images: jmods
 	+($(CD) $(SRC_ROOT)/make && $(MAKE) -I $(JDK_TOPDIR)/make \
-	    -f CreateJmods.gmk JIGSAW=true jdk-image)
+	    -f CreateJmods.gmk SHUFFLED=true jdk-image)
 
 images: module-images
 
@@ -153,35 +153,35 @@ $(OUTPUT_ROOT)/source_tips: FRC
 	@$(call GetSourceTips)
 
 create-security-jars: jdk
-	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f CreateSecurityJars.gmk JIGSAW=true)
+	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f CreateSecurityJars.gmk SHUFFLED=true)
 
 legacy-jdk: jdk create-security-jars
 
 nashorn-jar: nashorn
-	+($(CD) $(NASHORN_TOPDIR)/make && $(MAKE) -f BuildNashorn.gmk all JIGSAW=true)
+	+($(CD) $(NASHORN_TOPDIR)/make && $(MAKE) -f BuildNashorn.gmk all SHUFFLED=true)
 
 # Creates the legacy jar files (rt.jar resources.jar etc)
 create-jars: legacy-jdk nashorn-jar jdk-demos
-	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f CreateJars.gmk JIGSAW=true)
+	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f CreateJars.gmk SHUFFLED=true)
 
 # Creates the legacy images (j2sdk-image j2re-image etc)
 legacy-images: create-jars jdk-demos jdk-samples legacy-jdk source-tips
-	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f Images.gmk JIGSAW=true)
+	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f Images.gmk SHUFFLED=true)
         ifeq ($(OPENJDK_TARGET_OS), macosx)
-	  +($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f Bundles.gmk JIGSAW=true)
+	  +($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f Bundles.gmk SHUFFLED=true)
         endif
 
 # Create Compact Profile jars
 # Need to depend on create-jars as otherwise there will races between all the
 # invocations of CreateJars.gmk.
 %-create-jars: create-jars
-	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) PROFILE=$* -f CreateJars.gmk JIGSAW=true)
+	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) PROFILE=$* -f CreateJars.gmk SHUFFLED=true)
 
 # Create Compact Profile images
 %-images: %-create-jars jdk-demos jdk-samples legacy-jdk source-tips
 	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) PROFILE=$* \
 	    JRE_IMAGE_DIR=$(IMAGES_OUTPUTDIR)/j2re-$(word $(call profile_number,$*),$(PROFILE_NAMES))-image \
-	    -f Images.gmk profile-image JIGSAW=true)
+	    -f Images.gmk profile-image SHUFFLED=true)
 
 # Make each profile name a target that depends on it's images target.
 $(foreach p, $(ALL_PROFILES), $(eval $(p): $(p)-images))
@@ -195,10 +195,10 @@ legacy-profiles: $(ALL_PROFILES)
 
 # Two source files needed for doc generation are generated in jdk-genclasses.
 docs-javadoc: jdk-gensrc corba-gensrc langtools-gensrc jdk-genclasses
-	+($(CD) $(SRC_ROOT)/make && $(MAKE) -f Javadoc.gmk docs JIGSAW=true)
+	+($(CD) $(SRC_ROOT)/make && $(MAKE) -f Javadoc.gmk docs SHUFFLED=true)
 
 docs-jvmtidoc: hotspot
-	+($(CD) $(SRC_ROOT)/make && $(MAKE) -f Javadoc.gmk jvmtidocs JIGSAW=true)
+	+($(CD) $(SRC_ROOT)/make && $(MAKE) -f Javadoc.gmk jvmtidocs SHUFFLED=true)
 
 docs: docs-javadoc docs-jvmtidoc
 

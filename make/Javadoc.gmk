@@ -45,7 +45,7 @@ include NON_CORE_PKGS.gmk
 # Definitions for $(DOCSDIR), $(MKDIR), $(BINDIR), etc.
 #
 
-ifeq ($(JIGSAW), true)
+ifeq ($(SHUFFLED), true)
   DOCSDIR := $(OUTPUT_ROOT)/jigsaw/docs
   TEMPDIR := $(OUTPUT_ROOT)/jigsaw/docstemp
 else
@@ -151,7 +151,7 @@ $(FULL_COMPANY_NAME) in the US and other countries.
 # Otherwise, you get "No packages or classes specified." due
 # to $(PATH_SEP) being interpreted as an end of
 # command (newline or shell ; character)
-ifeq ($(JIGSAW), true)
+ifeq ($(SHUFFLED), true)
   ALL_SOURCE_DIRS := $(wildcard \
       $(JDK_TOPDIR)/$(SRC_SUBDIR)/*/share/classes \
       $(JDK_TOPDIR)/$(SRC_SUBDIR)/*/$(OPENJDK_TARGET_OS_API_DIR)/classes \
@@ -366,7 +366,7 @@ TAG_JLS = jls:a:See <cite> \
 The Java&trade; Language Specification</cite>:
 
 # Overview file for core apis
-ifeq ($(JIGSAW), true)
+ifeq ($(SHUFFLED), true)
   COREAPI_OVERVIEW := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/classes/overview-core.html
 else
   COREAPI_OVERVIEW := $(JDK_SHARE_CLASSES)/overview-core.html
@@ -538,7 +538,7 @@ $(TAGLETAPI_OPTIONS_FILE):
 # Create a file with the package names in it
 $(TAGLETAPI_PACKAGES_FILE): $(call PackageDependencies,$(TAGLETAPI_PKGS))
 	$(prep-target)
-        ifeq ($(JIGSAW), true)
+        ifeq ($(SHUFFLED), true)
 	  @($(ECHO) "$(LANGTOOLS_TOPDIR)/$(SRC_SUBDIR)/jdk.devtools/share/classes/$(TAGLETAPI_FILE)" ) > $@
         else
 	  @($(ECHO) "$(JDK_IMPSRC)/$(TAGLETAPI_FILE)" ) > $@
@@ -709,7 +709,7 @@ JAAS_WINDOWTITLE := Java Authentication and Authorization Service
 JAAS_HEADER := <strong>Java Authentication and Authorization Service</strong>
 JAAS_BOTTOM := $(call CommonBottom,$(JAAS_FIRST_COPYRIGHT_YEAR))
 # JAAS_PKGS is located in NON_CORE_PKGS.gmk
-ifeq ($(JIGSAW), true)
+ifeq ($(SHUFFLED), true)
   JAAS_OVERVIEW := $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.jaas/share/classes/jaas-overview.html
 else
   JAAS_OVERVIEW := $(JDK_SHARE_CLASSES)/com/sun/security/auth/jaas-overview.html
@@ -765,7 +765,7 @@ JGSS_DOCTITLE := Java$(TRADEMARK) GSS-API Utilities
 JGSS_WINDOWTITLE := Java GSS-API Utilities
 JGSS_HEADER := <strong>Java GSS-API Utilities</strong>
 JGSS_BOTTOM := $(call CommonBottom,$(JGSS_FIRST_COPYRIGHT_YEAR))
-ifeq ($(JIGSAW), true)
+ifeq ($(SHUFFLED), true)
   JGSS_OVERVIEW := $(JDK_TOPDIR)/$(SRC_SUBDIR)/javax.kerberos/share/classes/jgss-overview.html
 else
   JGSS_OVERVIEW := $(JDK_SHARE_CLASSES)/com/sun/security/jgss/jgss-overview.html
@@ -928,7 +928,7 @@ MGMT_DOCTITLE := Monitoring and Management Interface for the Java$(TRADEMARK) Pl
 MGMT_WINDOWTITLE := Monitoring and Management Interface for the Java Platform
 MGMT_HEADER := <strong>Monitoring and Management Interface for the Java Platform</strong>
 MGMT_BOTTOM := $(call CommonBottom,$(MGMT_FIRST_COPYRIGHT_YEAR))
-ifeq ($(JIGSAW), true)
+ifeq ($(SHUFFLED), true)
   MGMT_OVERVIEW := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.management/share/classes/mgmt-overview.html
 else
   MGMT_OVERVIEW := $(JDK_SHARE_CLASSES)/com/sun/management/mgmt-overview.html
