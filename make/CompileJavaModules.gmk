@@ -551,42 +551,15 @@ ifeq ($(OPENJDK_TARGET_OS), aix)
   AIX_SRC_DIRS += $(JDK_TOPDIR)/$(SRC_SUBDIR)/$1/aix/classes
 endif
 
-ALL_TOP_SRC_DIRS := \
-    $(JDK_TOPDIR)/$(SRC_SUBDIR) \
-    $(LANGTOOLS_TOPDIR)/$(SRC_SUBDIR) \
-    $(CORBA_TOPDIR)/$(SRC_SUBDIR) \
-    $(JAXP_TOPDIR)/$(SRC_SUBDIR) \
-    $(JAXWS_TOPDIR)/$(SRC_SUBDIR) \
-    #
-
-ifndef OPENJDK
-  ALL_TOP_SRC_DIRS += $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed
-endif
-
-MODULES_LIST_FILE := $(OUTPUT_ROOT)/jdk/genmodules/classlist/modules.list
-
-# Find all modules with java sources by looking in the source dirs
-#JAVA_MODULES := $(sort $(notdir $(wildcard \
-    $(patsubst %,%/*,$(filter %modules, $(ALL_SRC_DIRS))))))
-# For now we must only include modules that has actual source in them. When
-# javac accepts module-info.java, revert back to the line above.
-JAVA_MODULES := $(sort $(notdir \
-    $(patsubst %/,%, $(dir $(patsubst %/,%, $(dir $(patsubst %/,%, $(dir \
-    $(filter-out %module-info.java, \
-    $(wildcard $(patsubst %,%/*/share/classes/*, $(ALL_TOP_SRC_DIRS)) \
-        $(patsubst %,%/*/$(OPENJDK_TARGET_OS_API_DIR)/classes/*, $(ALL_TOP_SRC_DIRS)) \
-        $(patsubst %,%/*/$(OPENJDK_TARGET_OS)/classes/*, $(ALL_TOP_SRC_DIRS))))))))))))
-
-# There are snmp classes in the open but they are not included in OpenJDK
-ifdef OPENJDK
-  JAVA_MODULES := $(filter-out jdk.snmp, $(JAVA_MODULES))
-endif
+# Find all modules with java sources. Filter out nashorn since it needs to be
+# compiled separately.
+JAVA_MODULES := $(filter-out jdk.nashorn, $(call FindJavaModules))
 
 # This macro sets up compilation of a module and declares dependencies for it.
 # Param 1 - module name
 define SetupModuleCompilation
   # Find the module dependencies by parsing modules.list file
-  $1_DEPS := $(wordlist 2, 100, $(shell $(GREP) '^$1:' $(MODULES_LIST_FILE)))
+  $1_DEPS := $$(call FindDepsForModule, $1)
   ifneq ($$($1_DEPS), )
     $1_CLASSPATH := $$(addprefix $(JDK_OUTPUTDIR)/modules/,$$($1_DEPS))
     $1_CLASSPATH := $$(subst $$(SPACE),$$(PATH_SEP),$$($1_CLASSPATH))
@@ -635,7 +608,6 @@ COPY_EXTRA += $(patsubst $(JDK_TOPDIR)/$(SRC_SUBDIR)/%, $(JDK_OUTPUTDIR)/modules
 ################################################################################
 
 # Compile accessbridge separately. Need to figure out how to handle this properly.
-# Where should the classes go?
 ifndef OPENJDK
   ifeq ($(OPENJDK_TARGET_OS), windows)
     AB_CLASSPATH := $(java.desktop_CLASSPATH)$(PATH_SEP)$(JDK_OUTPUTDIR)/modules/java.desktop

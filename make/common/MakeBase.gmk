@@ -526,5 +526,57 @@ else
 endif
 
 ################################################################################
+# Module list macros
+
+ALL_TOP_SRC_DIRS := \
+    $(JDK_TOPDIR)/$(SRC_SUBDIR) \
+    $(LANGTOOLS_TOPDIR)/$(SRC_SUBDIR) \
+    $(CORBA_TOPDIR)/$(SRC_SUBDIR) \
+    $(JAXP_TOPDIR)/$(SRC_SUBDIR) \
+    $(JAXWS_TOPDIR)/$(SRC_SUBDIR) \
+    $(NASHORN_TOPDIR)/$(SRC_SUBDIR) \
+    #
+
+ifndef OPENJDK
+  ALL_TOP_SRC_DIRS += $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed
+endif
+
+# There are snmp classes in the open but they are not included in OpenJDK
+ifdef OPENJDK
+  JAVA_MODULES_FILTER := jdk.snmp
+else
+  JAVA_MODULES_FILTER := -
+endif
+
+# Find all modules with java sources by looking in the source dirs
+define FindJavaModules
+  $(filter-out $(JAVA_MODULES_FILTER), $(sort $(notdir \
+      $(patsubst %/,%, $(dir $(patsubst %/,%, $(dir $(patsubst %/,%, $(dir \
+      $(filter-out %module-info.java, \
+      $(wildcard $(patsubst %,%/*/share/classes/*, $(ALL_TOP_SRC_DIRS)) \
+          $(patsubst %,%/*/$(OPENJDK_TARGET_OS_API_DIR)/classes/*, $(ALL_TOP_SRC_DIRS)) \
+          $(patsubst %,%/*/$(OPENJDK_TARGET_OS)/classes/*, $(ALL_TOP_SRC_DIRS)))))))))))))
+endef
+
+define FindNativeModules
+  $(sort $(notdir $(patsubst %/,%, $(dir $(patsubst %/,%, $(dir \
+  $(wildcard $(JDK_TOPDIR)/$(SRC_SUBDIR)/*/share/native \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/*/$(OPENJDK_TARGET_OS_API_DIR)/native \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/*/$(OPENJDK_TARGET_OS)/native)))))))
+endef
+
+MODULES_LIST_FILE := $(OUTPUT_ROOT)/jdk/genmodules/classlist/modules.list
+
+# Param 1: Module to find deps for
+define FindDepsForModule
+  $(wordlist 2, 100, $(shell $(GREP) '^$(strip $1):' $(MODULES_LIST_FILE)))
+endef
+
+define FindAllModules
+  $(sort $(filter-out closed, $(notdir \
+      $(wildcard $(patsubst %, %/*, $(ALL_TOP_SRC_DIRS))))))
+endef
+
+################################################################################
 
 endif # _MAKEBASE_GMK
