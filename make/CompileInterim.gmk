@@ -33,7 +33,7 @@ include JavaCompilation.gmk
 
 include CommonLangtools.gmk
 
-ifeq ($(JIGSAW), true)
+ifeq ($(SHUFFLED), true)
   SRC := $(LANGTOOLS_TOPDIR)/$(SRC_SUBDIR)/javax.compiler/share/classes \
       $(LANGTOOLS_TOPDIR)/$(SRC_SUBDIR)/jdk.devtools/share/classes \
       $(LANGTOOLS_TOPDIR)/$(SRC_SUBDIR)/java.base/share/classes \
