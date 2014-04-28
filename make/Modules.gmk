@@ -53,6 +53,12 @@ $(eval $(call SetupJavaCompilation,BUILD_DEPS_TOOLS, \
     INCLUDES := build/tools/deps, \
     BIN := $(JDK_OUTPUTDIR)/btclasses))
 
+$(eval $(call SetupJavaCompilation,BUILD_GENMODULESXML_TOOL, \
+    SETUP := GENERATE_USINGJDKBYTECODE, \
+    SRC := $(JDK_TOPDIR)/make/src/classes, \
+    INCLUDES := build/tools/generatemodulesxml, \
+    BIN := $(JDK_OUTPUTDIR)/btclasses))
+
 ifndef OPENJDK
    CLOSED_MODULES := true
 else
@@ -71,3 +77,6 @@ TOOL_GENMODULEGRAPH =$(BUILD_JAVA) -esa -ea -cp $(CLASSANALYZER_CLASSES) \
 
 TOOL_GENGRAPHS =$(BUILD_JAVA) -esa -ea -cp $(JDK_OUTPUTDIR)/btclasses \
     build.tools.deps.GenGraphs
+
+TOOL_GENMODULESXML =$(BUILD_JAVA) -esa -ea -cp $(JDK_OUTPUTDIR)/btclasses \
+    build.tools.generatemodulesxml.GenerateModulesXml
