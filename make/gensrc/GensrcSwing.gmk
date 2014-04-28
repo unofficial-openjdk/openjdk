@@ -78,7 +78,7 @@ $(JDK_OUTPUTDIR)/gensrc_no_srczip/_the.generated_beaninfo: $(BEANS_SRC) \
 	$(MKDIR) -p $(JDK_OUTPUTDIR)/gensrc_no_srczip$(JAVA_DESKTOP_SUBDIR)/javax/swing
 	$(JAVA) -Djava.awt.headless=true $(NEW_JAVADOC) \
 	    -sourcepath "$(subst $(SPACE),$(PATH_SEP),\
-	        $(if $(JIGSAW),$(wildcard $(JDK_TOPDIR)/$(SRC_SUBDIR)/*/*/classes) \
+	        $(if $(SHUFFLED),$(wildcard $(JDK_TOPDIR)/$(SRC_SUBDIR)/*/*/classes) \
 	        $(JDK_OUTPUTDIR)/gensrc/java.base, \
 	        $(JDK_TOPDIR)/src/share/classes \
                 $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/classes \

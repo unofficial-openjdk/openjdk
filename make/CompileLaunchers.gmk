@@ -34,7 +34,7 @@ include NativeCompilation.gmk
 include Setup.gmk
 
 # Prepare the find cache.
-ifeq ($(JIGSAW), true)
+ifeq ($(SHUFFLED), true)
   $(eval $(call FillCacheFind, $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/launchers))
 else
   $(eval $(call FillCacheFind, $(JDK_TOPDIR)/src/share/bin))
@@ -82,7 +82,7 @@ ifneq ($(findstring $(OPENJDK_TARGET_OS), linux solaris), )
   ORIGIN_ARG += $(call SET_EXECUTABLE_ORIGIN,$(ORIGIN_ROOT)/lib$(OPENJDK_TARGET_CPU_LIBDIR))
 endif
 
-ifeq ($(JIGSAW), true)
+ifeq ($(SHUFFLED), true)
   LAUNCHER_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/launchers
   LAUNCHER_CFLAGS := -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/launchers \
       -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/libjli \
@@ -469,7 +469,7 @@ endif
 # The order of the object files on the link command line affects the size of the resulting
 # binary (at least on linux) which causes the size to differ between old and new build.
 
-ifeq ($(JIGSAW), true)
+ifeq ($(SHUFFLED), true)
   UNPACKEXE_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.tools.base/share/native/common-unpack \
       $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.tools.base/share/native/unpack200
   UNPACKEXE_CFLAGS := -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.tools.base/share/native/common-unpack \
@@ -484,7 +484,7 @@ ifeq ($(USE_EXTERNAL_LIBZ), true)
   UNPACKEXE_CFLAGS += -DSYSTEM_ZLIB
   UNPACKEXE_ZIPOBJS := -lz
 else
-  ifeq ($(JIGSAW), true)
+  ifeq ($(SHUFFLED), true)
     UNPACKEXE_CFLAGS += -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/libzip/zlib-1.2.5
   else
     UNPACKEXE_CFLAGS += -I$(JDK_TOPDIR)/src/share/native/java/util/zip/zlib-1.2.5
@@ -618,13 +618,13 @@ ifeq ($(BUILD_JEXEC), 1)
 
   ifeq ($(OPENJDK_TARGET_OS), windows)
   else ifeq ($(OPENJDK_TARGET_OS), macosx)
-    ifeq ($(JIGSAW), true)
+    ifeq ($(SHUFFLED), true)
       BUILD_JEXEC_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/macosx/native/launchers
     else
       BUILD_JEXEC_SRC := $(JDK_TOPDIR)/src/macosx/bin
     endif
   else
-    ifeq ($(JIGSAW), true)
+    ifeq ($(SHUFFLED), true)
       BUILD_JEXEC_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/solaris/native/launchers
   else
     BUILD_JEXEC_SRC := $(JDK_TOPDIR)/src/solaris/bin
@@ -633,7 +633,7 @@ ifeq ($(BUILD_JEXEC), 1)
 
   ifeq ($(OPENJDK_TARGET_OS), linux)
     BUILD_JEXEC_DST_DIR := $(JDK_OUTPUTDIR)/lib
-    ifeq ($(JIGSAW), true)
+    ifeq ($(SHUFFLED), true)
       BUILD_JEXEC_INC += -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/libjli
     else
     BUILD_JEXEC_INC += -I$(JDK_TOPDIR)/src/share/bin
@@ -697,7 +697,7 @@ endif
 ##########################################################################################
 
 BUILD_JSPAWNHELPER :=
-ifeq ($(JIGSAW), true)
+ifeq ($(SHUFFLED), true)
   BUILD_JSPAWNHELPER_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/solaris/native/jspawnhelper
   JSPAWNHELPER_CFLAGS := -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/solaris/native/libjava
 else
@@ -742,7 +742,7 @@ endif
 ifndef OPENJDK
   ifeq ($(OPENJDK_TARGET_OS), windows)
 
-    ifeq ($(JIGSAW), true)
+    ifeq ($(SHUFFLED), true)
       JABSWITCH_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/java.desktop/windows/native/jabswitch
     else
       JABSWITCH_SRC := $(JDK_TOPDIR)/src/closed/windows/native/sun/bridge

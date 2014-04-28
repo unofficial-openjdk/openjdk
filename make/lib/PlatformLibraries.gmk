@@ -25,7 +25,7 @@
 
 ifeq ($(OPENJDK_TARGET_OS), macosx)
 
-  ifeq ($(JIGSAW), true)
+  ifeq ($(SHUFFLED), true)
     LIBAPPLESCRIPTENGINE_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.deploy.osx/macosx/native/libapplescriptengine
   else
     LIBAPPLESCRIPTENGINE_SRC := $(JDK_TOPDIR)/src/macosx/native/apple/applescript
@@ -62,7 +62,7 @@ endif
 
 ifeq ($(OPENJDK_TARGET_OS), macosx)
 
-  ifeq ($(JIGSAW), true)
+  ifeq ($(SHUFFLED), true)
     LIBOSXAPP_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/macosx/native/libosxapp
   else
     LIBOSXAPP_SRC := $(JDK_TOPDIR)/src/macosx/native/sun/osxapp
@@ -106,7 +106,7 @@ endif
 
 ifeq ($(OPENJDK_TARGET_OS), macosx)
 
-  ifeq ($(JIGSAW), true)
+  ifeq ($(SHUFFLED), true)
     # TODO JIGSAW: Why is libosx dependant on java.desktop?
     LIBOSX_DIRS := $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.deploy.osx/macosx/native/libosx
     LIBOSX_CFLAGS := -I$(LIBOSX_DIRS) \
@@ -166,7 +166,7 @@ endif
 ifndef OPENJDK
   ifeq ($(OPENJDK_TARGET_OS), windows)
 
-    ifeq ($(JIGSAW), true)
+    ifeq ($(SHUFFLED), true)
       ACCESSBRIDGE_SRCDIR := $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/java.desktop/windows/native/libaccessbridge
       ACCESSBRIDGE_CFLAGS := -I$(JDK_OUTPUTDIR)/gensrc_headers/java.desktop \
           -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/java.desktop/windows/native/include/bridge

@@ -195,7 +195,7 @@ ifneq ($(OPENJDK_TARGET_OS), macosx)
 endif
 
 # TODO jdk9: When merging to jdk9 first milestone, disable unpacking of sajdi.
-ifeq ($(JIGSAW), true)
+ifeq ($(SHUFFLED), true)
   $(JDK_OUTPUTDIR)/modules/jdk.tools/_the.sa.jar.unpacked: $(SRC_SAJDI_JAR)
 	$(ECHO) $(LOG_INFO) Unzipping $(<F)
 	$(RM) -r $(@D)

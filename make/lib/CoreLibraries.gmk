@@ -33,7 +33,7 @@ ifneq ($(OPENJDK_TARGET_OS), solaris)
   BUILD_LIBFDLIBM_OPTIMIZATION := NONE
 endif
 
-ifeq ($(JIGSAW), true)
+ifeq ($(SHUFFLED), true)
   LIBFDLIBM_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/libfdlibm
   LIBFDLIBM_CFLAGS := -I$(LIBFDLIBM_SRC)
 else
@@ -77,7 +77,7 @@ endif
 
 ##########################################################################################
 
-ifeq ($(JIGSAW), true)
+ifeq ($(SHUFFLED), true)
   LIBVERIFY_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/libverify
 else
   LIBVERIFY_SRC := $(JDK_TOPDIR)/src/share/native/common
@@ -123,7 +123,7 @@ BASE_LIBRARIES += $(BUILD_LIBVERIFY)
 
 ##########################################################################################
 
-ifeq ($(JIGSAW), true)
+ifeq ($(SHUFFLED), true)
   ifeq ($(OPENJDK_TARGET_OS), macosx)
     LIBJAVA_SRC_DIRS += $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/macosx/native/libjava
     LIBJAVA_EXCLUDE_FILES += $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/solaris/native/libjava/HostLocaleProviderAdapter_md.c
@@ -235,7 +235,7 @@ $(BUILD_LIBJAVA): $(BUILD_LIBFDLIBM)
 
 ##########################################################################################
 
-ifeq ($(JIGSAW), true)
+ifeq ($(SHUFFLED), true)
   LIBZIP_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/libzip
   LIBZIP_CPPFLAGS := -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/libjava \
       -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/$(OPENJDK_TARGET_OS_API_DIR)/native/libjava \
@@ -251,7 +251,7 @@ ifeq ($(USE_EXTERNAL_LIBZ), true)
   LIBZ := -lz
   LIBZIP_EXCLUDES += zlib-1.2.5
 else
-  ifeq ($(JIGSAW), true)
+  ifeq ($(SHUFFLED), true)
     ZLIB_CPPFLAGS := -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/libzip/zlib-1.2.5
   else
     ZLIB_CPPFLAGS := -I$(JDK_TOPDIR)/src/share/native/java/util/zip/zlib-1.2.5
@@ -307,7 +307,7 @@ BASE_LIBRARIES += $(BUILD_LIBZIP)
 
 ##########################################################################################
 
-ifeq ($(JIGSAW), true)
+ifeq ($(SHUFFLED), true)
   ifeq ($(OPENJDK_TARGET_OS), macosx)
     LIBPREF_SRC_DIRS := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.prefs/macosx/native/libprefs
   else
@@ -350,7 +350,7 @@ PREFS_LIBRARIES += $(BUILD_LIBPREFS)
 
 ##########################################################################################
 
-ifeq ($(JIGSAW), true)
+ifeq ($(SHUFFLED), true)
   LIBUNPACK_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.tools.base/share/native/libunpack \
       $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.tools.base/share/native/common-unpack
   LIBUNPACK_CPPFLAGS := -I$(JDK_OUTPUTDIR)/gensrc_headers/java.base \
@@ -393,7 +393,7 @@ UNPACK_LIBRARIES += $(BUILD_LIBUNPACK)
 
 ##########################################################################################
 
-ifeq ($(JIGSAW), true)
+ifeq ($(SHUFFLED), true)
   BUILD_LIBJLI_SRC_DIRS := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/libjli \
       $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/$(OPENJDK_TARGET_OS_API_DIR)/native/libjli
 else
@@ -422,7 +422,7 @@ else
 endif
 
 ifeq ($(OPENJDK_TARGET_OS), macosx)
-  ifeq ($(JIGSAW), true)
+  ifeq ($(SHUFFLED), true)
     BUILD_LIBJLI_SRC_DIRS += $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/macosx/native/libjli
   else
     BUILD_LIBJLI_SRC_DIRS += $(JDK_TOPDIR)/src/macosx/bin
@@ -465,7 +465,7 @@ ifeq ($(OPENJDK_TARGET_OS), macosx)
 endif
 
 ifneq ($(USE_EXTERNAL_LIBZ), true)
-  ifeq ($(JIGSAW), true)
+  ifeq ($(SHUFFLED), true)
     BUILD_LIBJLI_SRC_DIRS += $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/libzip/zlib-1.2.5
   else
     BUILD_LIBJLI_SRC_DIRS += $(JDK_TOPDIR)/src/share/native/java/util/zip/zlib-1.2.5
@@ -587,7 +587,7 @@ endif
 
 # This should be moved to ServiceabilityLibraries.gmk
 
-ifeq ($(JIGSAW), true)
+ifeq ($(SHUFFLED), true)
   LIBNPT_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.tools.diag/share/native/libnpt \
          $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.tools.diag/$(OPENJDK_TARGET_OS_API_DIR)/native/libnpt
 else

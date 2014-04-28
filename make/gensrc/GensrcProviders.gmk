@@ -23,7 +23,7 @@
 # questions.
 #
 
-ifeq ($(JIGSAW), true)
+ifeq ($(SHUFFLED), true)
 
   define process-provider
 	$(MKDIR) -p $(@D)

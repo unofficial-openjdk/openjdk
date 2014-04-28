@@ -33,7 +33,7 @@ default: all
 
 include Tools.gmk
 
-ifeq ($(JIGSAW), true)
+ifeq ($(SHUFFLED), true)
   JDK_OUT_CLASSES := $(wildcard $(JDK_OUTPUTDIR)/modules/*)
 else
   JDK_OUT_CLASSES := $(JDK_OUTPUTDIR)/classes
@@ -265,7 +265,7 @@ $(IMAGES_OUTPUTDIR)/lib/classlist: $(JDK_TOPDIR)/make/data/classlist/classlist.$
 	$(TOOL_ADDJSUM) $< $@.tmp
 	$(MV) $@.tmp $@
 
-ifeq ($(JIGSAW), true)
+ifeq ($(SHUFFLED), true)
   $(IMAGES_OUTPUTDIR)/lib$(PROFILE)/_the.jars.contents: $(BUILD_TOOLS_JDK) $(IMAGES_OUTPUTDIR)/lib$(PROFILE)/_the.jars.exclude \
       $(ALL_FILES_IN_CLASSES) $(IMAGES_OUTPUTDIR)/lib/classlist
 	$(MKDIR) -p $(@D)
@@ -432,7 +432,7 @@ include gensrc/GensrcCLDR.gmk
 
 CLDRDATA_JAR_DST := $(IMAGES_OUTPUTDIR)/lib/ext/cldrdata.jar
 
-ifeq ($(JIGSAW), true)
+ifeq ($(SHUFFLED), true)
   CLDRDATA_JAR_SRCS := \
       $(JDK_OUTPUTDIR)/modules/jdk.localedata \
       $(JDK_OUTPUTDIR)/modules/java.base \
@@ -509,7 +509,7 @@ TOOLS_JAR_INCLUDES := \
 # The sjavac tools is not ready for public consumption.
 TOOLS_JAR_EXCLUDES = com/sun/tools/sjavac
 
-ifeq ($(JIGSAW), true)
+ifeq ($(SHUFFLED), true)
   TOOLS_JAR_SRC := $(addprefix $(JDK_OUTPUTDIR)/modules/,\
       java.desktop \
       jdk.devtools \
@@ -628,7 +628,7 @@ SRC_ZIP_INCLUDES = \
     org/xml/sax \
     #
 
-ifeq ($(JIGSAW), true)
+ifeq ($(SHUFFLED), true)
   SRC_ZIP_SRCS := $(wildcard \
       $(JDK_TOPDIR)/$(SRC_SUBDIR)/*/share/classes \
       $(JDK_TOPDIR)/$(SRC_SUBDIR)/*/$(OPENJDK_TARGET_OS_API_DIR)/classes \
@@ -750,7 +750,7 @@ $(IMAGES_OUTPUTDIR)/lib/sa-jdi.jar: $(HOTSPOT_DIST)/lib/sa-jdi.jar
 #
 # sec-bin.zip is used by builds where the corresponding sources are not available
 #
-ifeq ($(JIGSAW), true)
+ifeq ($(SHUFFLED), true)
   $(eval $(call SetupZipArchive,BUILD_SEC_BIN_ZIP, \
       SRC := $(JDK_OUTPUTDIR), \
       INCLUDES := modules/java.base/javax/net \

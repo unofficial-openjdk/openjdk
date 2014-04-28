@@ -54,7 +54,7 @@ else ifeq ($(OPENJDK_TARGET_OS), macosx)
   OPENJDK_TARGET_OS_INCLUDE = $(INCLUDEDIR)/darwin
 endif
 
-ifeq ($(JIGSAW), true)
+ifeq ($(SHUFFLED), true)
   CONF_SUBDIR := conf
 else
   CONF_SUBDIR := lib
@@ -63,7 +63,7 @@ endif
 #
 # Copy exported header files to outputdir.
 #
-ifeq ($(JIGSAW), true)
+ifeq ($(SHUFFLED), true)
   JAVA_BASE_HEADERS := \
       $(INCLUDEDIR)/jni.h \
       $(INCLUDEDIR)/jvmti.h \
@@ -162,7 +162,7 @@ endif
 ##########################################################################################
 
 MGMT_LIBDIR := $(LIBDIR)/management
-ifeq ($(JIGSAW), true)
+ifeq ($(SHUFFLED), true)
   MGMT_LIB_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.management/share/conf
 else
 MGMT_LIB_SRC := $(JDK_TOPDIR)/src/share/lib/management
@@ -187,7 +187,7 @@ MANAGEMENT_CONF_FILES := $(MGMT_TARGET_FILES)
 
 ##########################################################################################
 
-ifeq ($(JIGSAW), true)
+ifeq ($(SHUFFLED), true)
   LOGGING_LIB_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.logging/share/conf
 else
   LOGGING_LIB_SRC := $(JDK_TOPDIR)/src/share/lib
@@ -202,7 +202,7 @@ LOGGING_CONF_FILES := $(LIBDIR)/logging.properties
 #
 # Copy property files from sun/print to LIBDIR
 #
-ifeq ($(JIGSAW), true)
+ifeq ($(SHUFFLED), true)
   PSFONTPROPFILE_SRC_DIR := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/share/conf
 else
   PSFONTPROPFILE_SRC_DIR := $(JDK_TOPDIR)/src/share/classes/sun/print
@@ -475,7 +475,7 @@ BASE_CONF_FILES += $(POLICY_DST)
 ##########################################################################################
 
 ifeq ($(CACERTS_FILE), )
-  ifeq ($(JIGSAW), true)
+  ifeq ($(SHUFFLED), true)
     CACERTS_FILE := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/conf/security/cacerts
   else
     CACERTS_FILE := $(JDK_TOPDIR)/$(SRC_SUBDIR)/share/lib/security/cacerts
@@ -533,7 +533,7 @@ BASE_CONF_FILES += $(BLACKLISTED_CERTS_DST)
 
 ifndef OPENJDK
 
-  ifeq ($(JIGSAW), true)
+  ifeq ($(SHUFFLED), true)
     SHARED_FONTS_SRC_DIR := $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed$(JAVA_DESKTOP_SUBDIR)/share/$(CONF_SUBDIR)/fonts
     SHARED_FONTS_DST_DIR := $(JDK_OUTPUTDIR)/lib/fonts
     FONTS_DIR_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed$(JAVA_DESKTOP_SUBDIR)/solaris/$(CONF_SUBDIR)/fonts/fonts.dir
@@ -570,7 +570,7 @@ ifndef OPENJDK
   ifeq ($(OPENJDK_TARGET_OS), linux)
 
     # The oblique fonts are only needed/wanted on Linux.
-    ifeq ($(JIGSAW), true)
+    ifeq ($(SHUFFLED), true)
       OBL_FONTS_SRC_DIR := $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed$(JAVA_DESKTOP_SUBDIR)/share/$(CONF_SUBDIR)/oblique-fonts
       OBL_FONTS_DST_DIR := $(JDK_OUTPUTDIR)/lib/oblique-fonts
       OBL_FONTS_DIR_SRC := $(JDK_TOPDIR)/$(SCR_SUBDIR)/closed$(JAVA_DESKTOP_SUBDIR)/solaris/$(CONF_SUBIDR)/oblique-fonts/fonts.dir
@@ -663,7 +663,7 @@ endif
 ifndef OPENJDK
   ifeq ($(OPENJDK_TARGET_OS), solaris)
 
-    ifeq ($(JIGSAW), true)
+    ifeq ($(SHUFFLED), true)
       UCRYPTO_CFG_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed$(JDK_CRYPTO_UCRYPTO_SUBDIR)/solaris/$(CONF_SUBDIR)/security/ucrypto-solaris.cfg
     else
       UCRYPTO_CFG_SRC := $(JDK_TOPDIR)/src/closed/share/lib/security/ucrypto-solaris.cfg

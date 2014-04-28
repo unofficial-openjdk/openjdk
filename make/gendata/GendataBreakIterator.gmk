@@ -33,7 +33,7 @@
 # They are used at JDK build phase in order to create $(BIFILES) which
 # are used on runtime instead.
 #
-ifeq ($(JIGSAW), true)
+ifeq ($(SHUFFLED), true)
   TEXT_SRCDIR = $(JDK_TOPDIR)/$(SRC_SUBDIR)$(JAVA_BASE_SUBDIR)/share/classes \
       $(JDK_TOPDIR)/$(SRC_SUBDIR)$(JDK_LOCALEDATA_SUBDIR)/share/classes
 else

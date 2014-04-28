@@ -32,7 +32,7 @@ include Modules.gmk
 include MakeBase.gmk
 include Setup.gmk
 
-ifeq ($(JIGSAW), true)
+ifeq ($(SHUFFLED), true)
 
   ALL_SRC_DIRS := \
       $(wildcard \

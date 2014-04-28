@@ -37,7 +37,7 @@ $(CLDR_METAINFO_FILE): $(wildcard $(CLDRSRCDIR)/common/dtd/*.dtd) \
     $(BUILD_TOOLS_JDK)
 	$(MKDIR) -p $(GENSRC_DIR)
 	$(TOOL_CLDRCONVERTER) -base $(CLDRSRCDIR) -o $(GENSRC_DIR)
-        ifeq ($(JIGSAW), true)
+        ifeq ($(SHUFFLED), true)
 	  $(MKDIR) -p $(BASE_GENSRC_DIR)/sun/text/resources/cldr
 	  $(MKDIR) -p $(BASE_GENSRC_DIR)/sun/util/resources/cldr
 	  $(RM) -r $(BASE_GENSRC_DIR)/sun/text/resources/cldr/en \

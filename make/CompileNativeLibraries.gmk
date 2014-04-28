@@ -34,7 +34,7 @@ include NativeCompilation.gmk
 include Setup.gmk
 
 # Prepare the find cache.
-ifeq ($(JIGSAW), true)
+ifeq ($(SHUFFLED), true)
   $(eval $(call FillCacheFind, $(JDK_TOPDIR)/src_shuffled))
 else
   $(eval $(call FillCacheFind, $(JDK_TOPDIR)/src))
@@ -44,7 +44,7 @@ endif
 include Tools.gmk
 
 # Include the javah generated headers.
-ifneq ($(JIGSAW), true)
+ifneq ($(SHUFFLED), true)
 CFLAGS_JDKLIB += -I$(JDK_OUTPUTDIR)/gensrc_headers
 CXXFLAGS_JDKLIB += -I$(JDK_OUTPUTDIR)/gensrc_headers
 endif

@@ -23,7 +23,7 @@
 # questions.
 #
 
-ifeq ($(JIGSAW), true)
+ifeq ($(SHUFFLED), true)
   LIBNET_SRC_DIRS := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/libnet \
       $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/$(OPENJDK_TARGET_OS_API_DIR)/native/libnet
   LIBNET_CFLAGS += -I$(JDK_OUTPUTDIR)/gensrc_headers/java.base \

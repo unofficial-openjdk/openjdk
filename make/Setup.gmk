@@ -60,7 +60,7 @@ $(eval $(call SetupJavaCompiler,GENERATE_JDKBYTECODE, \
     SERVER_DIR := $(SJAVAC_SERVER_DIR), \
     SERVER_JVM := $(SJAVAC_SERVER_JAVA)))
 
-ifeq ($(JIGSAW), true)
+ifeq ($(SHUFFLED), true)
   JDK_BOOTCLASSPATH := $(subst $(SPACE),$(PATH_SEP),\
       $(filter-out $(JDK_OUTPUTDIR)/modules/_%, $(wildcard $(JDK_OUTPUTDIR)/modules/*)))
 else
