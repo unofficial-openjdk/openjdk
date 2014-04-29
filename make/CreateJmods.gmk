@@ -132,8 +132,6 @@ javax.corba_CMDS := $(CORBA_LAUNCHERS)
 javax.kerberos_NATIVE := $(SECURITY_KERBEROS_LIBRARIES)
 javax.kerberos_CMDS := $(KERBEROS_LAUNCHERS)
 
-javax.nashorn_CMDS := $(NASHORN_LAUNCHERS)
-
 javax.smartcardio_NATIVE := $(SECURITY_SMARTCARDIO_LIBRARIES)
 
 jdk.sctp_NATIVE := $(SCTP_LIBRARIES)
@@ -150,6 +148,8 @@ jdk.devtools_CMDS := $(DEVTOOLS_LAUNCHERS)
 jdk.deploy.osx_NATIVE := $(DEPLOY_OSX_LIBRARIES)
 
 jdk.jaas_NATIVE := $(SECURITY_JAAS_LIBRARIES)
+
+jdk.nashorn_CMDS := $(NASHORN_LAUNCHERS)
 
 jdk.tools.base_CMDS := $(TOOLS_BASE_LAUNCHERS)
 jdk.tools.base_NATIVE := $(UNPACK_LIBRARIES)
