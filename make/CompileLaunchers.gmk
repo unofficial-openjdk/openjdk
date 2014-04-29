@@ -277,6 +277,7 @@ ifeq ($(OPENJDK_TARGET_OS), windows)
       -DJAVAW -DEXPAND_CLASSPATH_WILDCARDS,,,user32.lib comctl32.lib, \
       $(JDK_OUTPUTDIR)/objs/jli_static.lib, $(JAVA_RC_FLAGS), \
       $(JDK_TOPDIR)/src/windows/resource/java.rc,,true))
+  BASE_LAUNCHERS += $(JDK_OUTPUTDIR)/bin$(OUTPUT_SUBDIR)/javaw$(EXE_SUFFIX)
 endif
 
 

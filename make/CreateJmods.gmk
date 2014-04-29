@@ -112,7 +112,7 @@ all: $(BUILD_CLASSANALYZER)
             --module jdk.crypto.pkcs11 \
                 --native="$(SECURITY_PKCS11_LIBRARIES)" \
 		--conf="$(SECURITY_PKCS11_CONF_FILES)" \
-            --module jdk.ucrytpo \
+            --module jdk.crypto.ucrytpo \
                 --native="$(SECURITY_UCRYPTO_LIBRARIES)" \
                 --conf="$(SECURITY_UCRYPTO_CONF_FILES)" \
             --module jdk.devtools \
