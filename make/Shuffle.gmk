@@ -1663,6 +1663,39 @@ $(eval $(call SetupShuffleFiles,COPY_JAVAX_CORBA_DOC_FILES, \
     FILES := $(wildcard $(CORBA_TOPDIR)/src/share/classes/org/omg/CORBA/doc-files/*)))
 
 ################################################################################
+# Shuffle demos
+
+$(eval $(call SetupShuffleFiles,COPY_DEMOS_SHARE, \
+    SRC := $(JDK_TOPDIR)/src/share/demo, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/demo/share, \
+    FILES := $(shell $(FIND) $(JDK_TOPDIR)/src/share/demo -type f)))
+
+$(eval $(call SetupShuffleFiles,COPY_DEMOS_UNIX, \
+    SRC := $(JDK_TOPDIR)/src/solaris/demo, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/demo/unix, \
+    FILES := $(shell $(FIND) $(JDK_TOPDIR)/src/solaris/demo/jvmti -type f)))
+
+$(eval $(call SetupShuffleFiles,COPY_DEMOS_SOLARIS, \
+    SRC := $(JDK_TOPDIR)/src/solaris/demo, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/demo/solaris, \
+    FILES := $(shell $(FIND) $(JDK_TOPDIR)/src/solaris/demo/jni -type f)))
+
+$(eval $(call SetupShuffleFiles,COPY_DEMOS_WINDOWS, \
+    SRC := $(JDK_TOPDIR)/src/windows/demo, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/demo/windows, \
+    FILES := $(shell $(FIND) $(JDK_TOPDIR)/src/windows/demo -type f)))
+
+$(eval $(call SetupShuffleFiles,COPY_SAMPLES_SHARE, \
+    SRC := $(JDK_TOPDIR)/src/share/sample, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/sample/share, \
+    FILES := $(shell $(FIND) $(JDK_TOPDIR)/src/share/sample -type f)))
+
+$(eval $(call SetupShuffleFiles,COPY_SAMPLES_SOLARIS, \
+    SRC := $(JDK_TOPDIR)/src/solaris/sample, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/sample/solaris, \
+    FILES := $(shell $(FIND) $(JDK_TOPDIR)/src/solaris/sample -type f)))
+
+################################################################################
 
 shuffle-src: $(SHUFFLE_SRC_TARGETS) $(SRC_TARGET_FILES) $(MODULE_INFO_TARGETS)
 
