@@ -573,7 +573,7 @@ define FindDepsForModule
 endef
 
 define FindAllModules
-  $(sort $(filter-out closed, $(notdir \
+  $(sort $(filter-out closed demo sample, $(notdir \
       $(wildcard $(patsubst %, %/*, $(ALL_TOP_SRC_DIRS))))))
 endef
 
