@@ -126,7 +126,7 @@ BASE_LIBRARIES += $(BUILD_LIBVERIFY)
 ifeq ($(SHUFFLED), true)
   ifeq ($(OPENJDK_TARGET_OS), macosx)
     LIBJAVA_SRC_DIRS += $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/macosx/native/libjava
-    LIBJAVA_EXCLUDE_FILES += $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/solaris/native/libjava/HostLocaleProviderAdapter_md.c
+    LIBJAVA_EXCLUDE_FILES += $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/unix/native/libjava/HostLocaleProviderAdapter_md.c
   endif
 
   LIBJAVA_SRC_DIRS += $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/$(OPENJDK_TARGET_OS_API_DIR)/native/libjava \

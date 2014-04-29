@@ -62,21 +62,23 @@ GENSRC_JDK_TOOLS += $(JDK_OUTPUTDIR)/gensrc$(JDK_TOOLS_SUBDIR)/sun/tools/jconsol
 
 ##########################################################################################
 
-ifeq ($(OPENJDK_TARGET_OS_API), posix)
-  UPSUFFIX := $(OPENJDK_TARGET_OS)
-  ifeq ($(OPENJDK_TARGET_OS), macosx)
-    UPSUFFIX := bsd
+ifneq ($(SHUFFLED), true)
+  ifeq ($(OPENJDK_TARGET_OS_API), posix)
+    UPSUFFIX := $(OPENJDK_TARGET_OS)
+    ifeq ($(OPENJDK_TARGET_OS), macosx)
+      UPSUFFIX := bsd
+    endif
+    # UNIXProcess.java is different for solaris and linux. We need to copy
+    # the correct UNIXProcess.java over to $(JDK_OUTPUTDIR)/gensrc/java/lang/.
+
+    $(JDK_OUTPUTDIR)/gensrc$(JAVA_BASE_SUBDIR)/java/lang/UNIXProcess.java: \
+        $(JDK_TOPDIR)/$(SRC_SUBDIR)$(JAVA_BASE_SUBDIR)/solaris/classes/java/lang/UNIXProcess.java.$(UPSUFFIX)
+		$(ECHO) $(LOG_INFO) Copying UNIXProcess.java.$(OPENJDK_TARGET_OS) to java/lang/UNIXProcess.java
+		$(call install-file)
+		$(CHMOD) u+rw $@
+
+    GENSRC_JAVA_BASE += $(JDK_OUTPUTDIR)/gensrc$(JAVA_BASE_SUBDIR)/java/lang/UNIXProcess.java
   endif
-  # UNIXProcess.java is different for solaris and linux. We need to copy
-  # the correct UNIXProcess.java over to $(JDK_OUTPUTDIR)/gensrc/java/lang/.
-
-  $(JDK_OUTPUTDIR)/gensrc$(JAVA_BASE_SUBDIR)/java/lang/UNIXProcess.java: \
-      $(JDK_TOPDIR)/$(SRC_SUBDIR)$(JAVA_BASE_SUBDIR)/solaris/classes/java/lang/UNIXProcess.java.$(UPSUFFIX)
-	$(ECHO) $(LOG_INFO) Copying UNIXProcess.java.$(OPENJDK_TARGET_OS) to java/lang/UNIXProcess.java
-	$(call install-file)
-	$(CHMOD) u+rw $@
-
-  GENSRC_JAVA_BASE += $(JDK_OUTPUTDIR)/gensrc$(JAVA_BASE_SUBDIR)/java/lang/UNIXProcess.java
 endif
 
 ##########################################################################################
