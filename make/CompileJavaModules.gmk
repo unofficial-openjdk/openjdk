@@ -61,13 +61,17 @@ ifndef OPENJDK
 endif
 
 ifeq ($(OPENJDK_TARGET_OS), macosx)
-  JAVA_BASE_SOLARIS_DIR := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/solaris/classes
+  JAVA_BASE_UNIX_DIR := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/unix/classes
+  # TODO: make JavaCompilation handle overrides automatically instead of excluding here
+  # These files are overridden in macosx
   java.base_EXCLUDE_FILES += \
-      $(JAVA_BASE_SOLARIS_DIR)/sun/util/locale/provider/HostLocaleProviderAdapterImpl.java \
-      $(JAVA_BASE_SOLARIS_DIR)/java/net/DefaultInterface.java \
-      $(JAVA_BASE_SOLARIS_DIR)/java/lang/ClassLoaderHelper.java \
-      $(JAVA_BASE_SOLARIS_DIR)/sun/nio/ch/DefaultSelectorProvider.java \
+      $(JAVA_BASE_UNIX_DIR)/sun/util/locale/provider/HostLocaleProviderAdapterImpl.java \
+      $(JAVA_BASE_UNIX_DIR)/java/net/DefaultInterface.java \
+      $(JAVA_BASE_UNIX_DIR)/java/lang/ClassLoaderHelper.java \
+      $(JAVA_BASE_UNIX_DIR)/sun/nio/ch/DefaultSelectorProvider.java \
       #
+  # This is just skipped on macosx
+  java.base_EXCLUDE_FILES += $(JAVA_BASE_UNIX_DIR)/sun/nio/fs/GnomeFileTypeDetector.java
 endif
 
 ifneq ($(OPENJDK_TARGET_OS), solaris)
@@ -153,29 +157,6 @@ ifeq ($(OPENJDK_TARGET_OS), windows)
       #
 endif
 
-ifeq ($(OPENJDK_TARGET_OS), macosx)
-  # These files are duplicated in MACOSX_SRC_DIRS
-  java.base_EXCLUDE_FILES += \
-      $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/solaris/classes/sun/nio/ch/DefaultSelectorProvider.java \
-      $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/solaris/classes/java/net/DefaultInterface.java \
-      $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/solaris/classes/java/lang/ClassLoaderHelper.java \
-      $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/solaris/classes/sun/util/locale/provider/HostLocaleProviderAdapterImpl.java \
-      $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/solaris/classes/sun/nio/fs/GnomeFileTypeDetector.java \
-      $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/solaris/classes/sun/nio/ch/sctp/SctpChannelImpl.java \
-      $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/solaris/classes/sun/nio/ch/sctp/SctpMultiChannelImpl.java \
-      $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/solaris/classes/sun/nio/ch/sctp/SctpServerChannelImpl.java \
-      #
-endif
-
-ifeq ($(OPENJDK_TARGET_OS),aix)
-  # These files are duplicated in AIX_SRC_DIRS
-  java.base_EXCLUDE_FILES += \
-      $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/solaris/classes/sun/nio/ch/sctp/SctpChannelImpl.java \
-      $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/solaris/classes/sun/nio/ch/sctp/SctpMultiChannelImpl.java \
-      $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/solaris/classes/sun/nio/ch/sctp/SctpServerChannelImpl.java \
-      #
-endif
-
 ################################################################################
 
 java.desktop_COPY := .gif .png .wav .txt .xml .css
@@ -229,10 +210,10 @@ java.desktop_EXCLUDE_FILES += \
     #
 
 ifeq ($(OPENJDK_TARGET_OS), macosx)
-  # exclude all X11 on Mac, we can't exclude some like below or we'll have compilation errors
+  # exclude all X11 on Mac.
   java.desktop_EXCLUDES += sun/awt/X11
   java.desktop_EXCLUDE_FILES += \
-      $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/solaris/classes/sun/java2d/BackBufferCapsProvider.java \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/unix/classes/sun/java2d/BackBufferCapsProvider.java \
       #
 else
   # TBD: figure out how to eliminate this long list
@@ -335,7 +316,7 @@ java.desktop_EXCLUDE_FILES += \
 ifeq ($(OPENJDK_TARGET_OS), macosx)
   # These files are duplicated in MACOSX_SRC_DIRS
   java.desktop_EXCLUDE_FILES += \
-      $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/solaris/classes/sun/java2d/BackBufferCapsProvider.java \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/unix/classes/sun/java2d/BackBufferCapsProvider.java \
       #
 endif
 
@@ -439,9 +420,18 @@ endif
 
 ifeq ($(OPENJDK_TARGET_OS), macosx)
   jdk.sctp_EXCLUDE_FILES := \
-      $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.sctp/solaris/classes/sun/nio/ch/sctp/SctpChannelImpl.java \
-      $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.sctp/solaris/classes/sun/nio/ch/sctp/SctpMultiChannelImpl.java \
-      $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.sctp/solaris/classes/sun/nio/ch/sctp/SctpServerChannelImpl.java \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.sctp/unix/classes/sun/nio/ch/sctp/SctpChannelImpl.java \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.sctp/unix/classes/sun/nio/ch/sctp/SctpMultiChannelImpl.java \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.sctp/unix/classes/sun/nio/ch/sctp/SctpServerChannelImpl.java \
+      #
+endif
+
+ifeq ($(OPENJDK_TARGET_OS),aix)
+  # These files are duplicated in AIX_SRC_DIRS
+  jdk.sctp_EXCLUDE_FILES += \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.sctp/unix/classes/sun/nio/ch/sctp/SctpChannelImpl.java \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.sctp/unix/classes/sun/nio/ch/sctp/SctpMultiChannelImpl.java \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.sctp/unix/classes/sun/nio/ch/sctp/SctpServerChannelImpl.java \
       #
 endif
 
@@ -530,6 +520,7 @@ ALL_SRC_DIRS = \
     $(LANGTOOLS_OUTPUTDIR)/gensrc/$1 \
     $(CORBA_OUTPUTDIR)/gensrc/$1 \
     $(JDK_OUTPUTDIR)/gensrc_no_srczip/$1 \
+    $(JDK_TOPDIR)/$(SRC_SUBDIR)/$1/$(OPENJDK_TARGET_OS)/classes \
     $(JDK_TOPDIR)/$(SRC_SUBDIR)/$1/$(OPENJDK_TARGET_OS_API_DIR)/classes \
     $(JDK_TOPDIR)/$(SRC_SUBDIR)/$1/share/classes \
     $(LANGTOOLS_TOPDIR)/$(SRC_SUBDIR)/$1/share/classes \
@@ -539,16 +530,11 @@ ALL_SRC_DIRS = \
     #
 
 ifndef OPENJDK
-  ALL_SRC_DIRS += $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/$1/$(OPENJDK_TARGET_OS_API_DIR)/classes \
+  ALL_SRC_DIRS += \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/$1/$(OPENJDK_TARGET_OS)/classes \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/$1/$(OPENJDK_TARGET_OS_API_DIR)/classes \
       $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/$1/share/classes \
       #
-endif
-
-ifeq ($(OPENJDK_TARGET_OS), macosx)
-  ALL_SRC_DIRS += $(JDK_TOPDIR)/$(SRC_SUBDIR)/$1/macosx/classes
-endif
-ifeq ($(OPENJDK_TARGET_OS), aix)
-  AIX_SRC_DIRS += $(JDK_TOPDIR)/$(SRC_SUBDIR)/$1/aix/classes
 endif
 
 # Find all modules with java sources. Filter out nashorn since it needs to be

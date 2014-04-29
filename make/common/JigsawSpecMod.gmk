@@ -79,6 +79,10 @@ ifeq ($(SHUFFLED), true)
   CFLAGS_JDKLIB := $(filter-out %native/common, $(CFLAGS_JDKLIB))
   CFLAGS_JDKEXE := $(filter-out %native/common, $(CFLAGS_JDKEXE))
 
+  ifeq ($(OPENJDK_TARGET_OS_API_DIR), solaris)
+    OPENJDK_TARGET_OS_API_DIR := unix
+    OPENJDK_TARGET_OS_EXPORT_DIR := unix
+  endif
 else
   MODULES_WILDCARD :=
   MODULES_SUBDIR := classes
