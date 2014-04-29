@@ -626,10 +626,10 @@ ifeq ($(BUILD_JEXEC), 1)
     endif
   else
     ifeq ($(SHUFFLED), true)
-      BUILD_JEXEC_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/solaris/native/launchers
-  else
-    BUILD_JEXEC_SRC := $(JDK_TOPDIR)/src/solaris/bin
-  endif
+      BUILD_JEXEC_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/unix/native/launchers
+    else
+      BUILD_JEXEC_SRC := $(JDK_TOPDIR)/src/solaris/bin
+    endif
   endif
 
   ifeq ($(OPENJDK_TARGET_OS), linux)
@@ -637,9 +637,9 @@ ifeq ($(BUILD_JEXEC), 1)
     ifeq ($(SHUFFLED), true)
       BUILD_JEXEC_INC += -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/libjli
     else
-    BUILD_JEXEC_INC += -I$(JDK_TOPDIR)/src/share/bin
+      BUILD_JEXEC_INC += -I$(JDK_TOPDIR)/src/share/bin
+    endif
   endif
-endif
 endif
 
 #
@@ -690,7 +690,12 @@ ifeq ($(OPENJDK_TARGET_OS), windows)
   $(eval $(call SetupLauncher,java-rmi, , \
       $(call SET_SHARED_LIBRARY_MAPFILE,$(JDK_TOPDIR)/make/java/main/java/mapfile-$(OPENJDK_TARGET_CPU))))
 else
-  $(JAVA_RMI_CGI): $(JDK_TOPDIR)/src/solaris/bin/java-rmi.cgi.sh
+  ifeq ($(SHUFFLED), true)
+    JAVA_RMI_CGI_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.rmi/unix/bin/java-rmi.cgi.sh
+  else
+    JAVA_RMI_CGI_SRC := $(JDK_TOPDIR)/src/solaris/bin/java-rmi.cgi.sh
+  endif
+  $(JAVA_RMI_CGI): $(JAVA_RMI_CGI_SRC)
 	$(call install-file)
 	$(CHMOD) a+x $@
 endif
@@ -699,8 +704,8 @@ endif
 
 BUILD_JSPAWNHELPER :=
 ifeq ($(SHUFFLED), true)
-  BUILD_JSPAWNHELPER_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/solaris/native/jspawnhelper
-  JSPAWNHELPER_CFLAGS := -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/solaris/native/libjava
+  BUILD_JSPAWNHELPER_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/unix/native/jspawnhelper
+  JSPAWNHELPER_CFLAGS := -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/unix/native/libjava
 else
 BUILD_JSPAWNHELPER_SRC := $(JDK_TOPDIR)/src/solaris/native/java/lang
 endif
