@@ -816,8 +816,24 @@ module java.compact3 {
     requires public javax.sasl;
     requires public javax.compiler;
     requires public javax.xmldsig;
+}
 
-    // JSR 168 (not in Java SE)
+module java.se {
+    requires public java.compact3;
+
+    requires public java.desktop;
+    requires public javax.corba;
+    requires public javax.annotations.common;
+    requires public javax.jaf;
+    requires public javax.jaxb;
+    requires public javax.jaxws;
+    requires public javax.saaj;
+}
+
+module jdk.compact3 {
+    requires public java.compact3;
+
+    // JSR 268 (not in Java SE)
     requires public javax.smartcardio;
 
     // JDK-specific APIs
@@ -831,21 +847,14 @@ module java.compact3 {
 }
 
 module jdk.jre {
-    requires public java.compact3;
+    requires public java.se;
+    requires public jdk.compact3;
 
-    requires public java.desktop;
-    requires public javax.corba;
-    requires public javax.annotations.common;
-    requires public javax.jaf;
-    requires public javax.jaxb;
-    requires public javax.jaxws;
-    requires public javax.saaj;
     requires public jdk.tools.jre;
     requires public jdk.deploy;
 
     requires jdk.providers;
     requires jdk.providers.os;
-
 }
 
 module jdk {
