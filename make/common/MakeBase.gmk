@@ -572,9 +572,12 @@ define FindDepsForModule
   $(wordlist 2, 100, $(shell $(GREP) '^$(strip $1):' $(MODULES_LIST_FILE)))
 endef
 
+# Find all modules with source for the target platform.
 define FindAllModules
-  $(sort $(filter-out closed demo sample, $(notdir \
-      $(wildcard $(patsubst %, %/*, $(ALL_TOP_SRC_DIRS))))))
+  $(sort $(filter-out closed demo sample, $(notdir $(patsubst %/,%, $(dir \
+      $(wildcard $(patsubst %, %/*/share, $(ALL_TOP_SRC_DIRS)) \
+      $(patsubst %, %/*/$(OPENJDK_TARGET_OS), $(ALL_TOP_SRC_DIRS)) \
+      $(patsubst %, %/*/$(OPENJDK_TARGET_OS_API_DIR), $(ALL_TOP_SRC_DIRS))))))))
 endef
 
 ################################################################################
