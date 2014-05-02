@@ -127,12 +127,12 @@ java.prefs_NATIVE := $(PREFS_LIBRARIES)
 
 java.rmi_CMDS := $(RMI_LAUNCHERS)
 
-javax.corba_CMDS := $(CORBA_LAUNCHERS)
+java.corba_CMDS := $(CORBA_LAUNCHERS)
 
-javax.kerberos_NATIVE := $(SECURITY_KERBEROS_LIBRARIES)
-javax.kerberos_CMDS := $(KERBEROS_LAUNCHERS)
+java.security.kerberos_NATIVE := $(SECURITY_KERBEROS_LIBRARIES)
+java.security.kerberos_CMDS := $(KERBEROS_LAUNCHERS)
 
-javax.smartcardio_NATIVE := $(SECURITY_SMARTCARDIO_LIBRARIES)
+java.smartcardio_NATIVE := $(SECURITY_SMARTCARDIO_LIBRARIES)
 
 jdk.sctp_NATIVE := $(SCTP_LIBRARIES)
 

@@ -322,9 +322,9 @@ endif
 
 ################################################################################
 
-java.jdbc.rowset_CLEAN_FILES := $(wildcard \
-    $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.jdbc.rowset/share/classes/com/sun/rowset/*.properties \
-    $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.jdbc.rowset/share/classes/javax/sql/rowset/*.properties)
+java.sql.rowset_CLEAN_FILES := $(wildcard \
+    $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.sql.rowset/share/classes/com/sun/rowset/*.properties \
+    $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.sql.rowset/share/classes/javax/sql/rowset/*.properties)
 
 ################################################################################
 # Exclude building of IIOP transport for RMI Connector
@@ -345,14 +345,14 @@ java.rmi_CLEAN_FILES := $(wildcard \
 
 ################################################################################
 
-javax.corba_COPY := .prp
-javax.corba_CLEAN := .properties
+java.corba_COPY := .prp
+java.corba_CLEAN := .properties
 
-javax.corba_EXCLUDES := \
+java.corba_EXCLUDES := \
     com/sun/corba/se/PortableActivationIDL \
     com/sun/tools/corba/se/logutil \
     #
-javax.corba_EXCLUDE_FILES := \
+java.corba_EXCLUDE_FILES := \
     com/sun/corba/se/impl/presentation/rmi/JNDIStateFactoryImpl.java \
     com/sun/corba/se/spi/presentation/rmi/StubWrapper.java \
     com/sun/org/omg/CORBA/IDLTypeOperations.java \
@@ -364,29 +364,29 @@ javax.corba_EXCLUDE_FILES := \
 
 ################################################################################
 
-javax.jaxb_CLEAN := .properties
+java.xml.bind_CLEAN := .properties
 
 ################################################################################
 
-javax.jaxp_CLEAN := .properties
+java.xml_CLEAN := .properties
 
 ################################################################################
 
-javax.jaxws_COPY := .xml
-javax.jaxws_CLEAN := .properties
+java.xml.ws_COPY := .xml
+java.xml.ws_CLEAN := .properties
 
 ################################################################################
 
-javax.jndi_CLEAN := jndiprovider.properties
+java.naming_CLEAN := jndiprovider.properties
 
 ################################################################################
 
-javax.saaj_CLEAN := .properties
+java.security.saaj_CLEAN := .properties
 
 ################################################################################
 
-javax.xmldsig_COPY := .dtd .xml
-javax.xmldsig_CLEAN := .properties
+java.xml.crypto_COPY := .dtd .xml
+java.xml.crypto_CLEAN := .properties
 
 ################################################################################
 
@@ -589,7 +589,7 @@ $(JDK_OUTPUTDIR)/modules/%_zh_HK.properties: $(JDK_OUTPUTDIR)/modules/%_zh_TW.pr
 COPY_EXTRA += $(patsubst $(JDK_TOPDIR)/$(SRC_SUBDIR)/%, $(JDK_OUTPUTDIR)/modules/%, \
     $(subst /share/classes,, \
     $(subst _zh_TW,_zh_HK, $(filter %_zh_TW.properties, \
-    $(java.jdbc.rowset_CLEAN_FILES) $(java.rmi_CLEAN_FILES) $(jdk.tools_CLEAN_FILES)))))
+    $(java.sql.rowset_CLEAN_FILES) $(java.rmi_CLEAN_FILES) $(jdk.tools_CLEAN_FILES)))))
 
 ################################################################################
 
