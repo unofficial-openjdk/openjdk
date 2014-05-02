@@ -68,7 +68,7 @@ $(eval $(call SetupArchive,BUILD_JCONSOLE_JAR, , \
 ##########################################################################################
 
 $(eval $(call SetupArchive,BUILD_DNS_JAR, , \
-    SRCS := $(JDK_OUTPUTDIR)/$(MODULES_SUBDIR)$(JDK_JNDI_DNS_SUBDIR), \
+    SRCS := $(JDK_OUTPUTDIR)/$(MODULES_SUBDIR)$(JDK_NAMING_DNS_SUBDIR), \
     INCLUDES := sun/net/spi/nameservice/dns, \
     EXTRA_FILES := META-INF/services/sun.net.spi.nameservice.NameServiceDescriptor, \
     JAR := $(IMAGES_OUTPUTDIR)/lib/ext/dnsns.jar, \
@@ -512,12 +512,12 @@ TOOLS_JAR_EXCLUDES = com/sun/tools/sjavac
 ifeq ($(SHUFFLED), true)
   TOOLS_JAR_SRC := $(addprefix $(JDK_OUTPUTDIR)/modules/,\
       java.desktop \
+      java.corba \
       jdk.devtools \
       jdk.tools \
       jdk.tools.base \
       jdk.tools.diag \
       jdk.tools.jaxws \
-      javax.corba \
       )
       #
 
@@ -760,15 +760,15 @@ ifeq ($(SHUFFLED), true)
           modules/java.base/sun/net/www/protocol/https \
           modules/java.base/sun/security/pkcs12 \
           modules/java.base/sun/security/ssl \
-          modules/javax.kerberos/sun/security/krb5 \
-          modules/javax.kerberos/sun/security/krb5/internal \
-          modules/javax.kerberos/sun/security/krb5/internal/ccache \
-          modules/javax.kerberos/sun/security/krb5/internal/crypto \
-          modules/javax.kerberos/sun/security/krb5/internal/ktab \
-          modules/javax.kerberos/sun/security/krb5/internal/rcache \
-          modules/javax.kerberos/sun/security/krb5/internal/util, \
-      INCLUDE_FILES := modules/javax.kerberos/sun/security/jgss/spi/GSSContextSpi.class, \
-      EXCLUDES := modules/javax.kerberos/sun/security/krb5/internal/tools, \
+          modules/java.security.kerberos/sun/security/krb5 \
+          modules/java.security.kerberos/sun/security/krb5/internal \
+          modules/java.security.kerberos/sun/security/krb5/internal/ccache \
+          modules/java.security.kerberos/sun/security/krb5/internal/crypto \
+          modules/java.security.kerberos/sun/security/krb5/internal/ktab \
+          modules/java.security.kerberos/sun/security/krb5/internal/rcache \
+          modules/java.security.kerberos/sun/security/krb5/internal/util, \
+      INCLUDE_FILES := modules/java.security.kerberos/sun/security/jgss/spi/GSSContextSpi.class, \
+      EXCLUDES := modules/java.security.kerberos/sun/security/krb5/internal/tools, \
       ZIP := $(IMAGES_OUTPUTDIR)/sec-bin.zip))
 else
   $(eval $(call SetupZipArchive,BUILD_SEC_BIN_ZIP, \

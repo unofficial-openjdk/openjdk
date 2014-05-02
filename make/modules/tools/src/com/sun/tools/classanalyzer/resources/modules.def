@@ -211,7 +211,7 @@ module java.base {
     exports sun.nio.ch to jdk.crypto.ucrypto;
     exports sun.security.action to jdk.crypto.ucrypto;
     exports sun.security.rsa to jdk.crypto.mscapi;
-    exports sun.security.util to javax.smartcardio,
+    exports sun.security.util to java.smartcardio,
                                  jdk.crypto.mscapi,
                                  jdk.crypto.ucrypto;
 
@@ -313,7 +313,7 @@ module java.management {
     include javax.management.**, com.sun.jmx.**;
 }
 
-module javax.corba {
+module java.corba {
     include javax.activity.**,
             javax.rmi.*,
             javax.rmi.CORBA.*,
@@ -332,12 +332,12 @@ module javax.corba {
             com.sun.jndi.url.iiopname.**;
 }
 
-module java.jdbc {
+module java.sql {
     include java.sql.**, javax.sql.*;
     uses java.sql.Driver;
 }
 
-module java.jdbc.rowset {
+module java.sql.rowset {
     include javax.sql.rowset.**;
     include com.sun.rowset.**;
     uses javax.sql.rowset.RowSetFactory;
@@ -363,7 +363,7 @@ module jdk.crypto.pkcs11 {
     permits jdk.providers;
 }
 
-module javax.sasl {
+module java.security.sasl {
     include javax.security.sasl.**,
             com.sun.security.sasl.**;
 
@@ -380,7 +380,7 @@ module jdk.jaas {
     include com.sun.security.auth.**;
 }
 
-module javax.kerberos {
+module java.security.kerberos {
     include javax.security.auth.kerberos.*,
             com.sun.security.jgss.**,
             com.sun.security.sasl.gsskerb.**,             // GSSAPI SASL mechanism
@@ -401,17 +401,17 @@ module jdk.crypto.mscapi {
     permits jdk.providers.os;
 }
 
-module javax.xmldsig {
+module java.xml.crypto {
     include javax.xml.crypto.**,
             org.jcp.xml.dsig.**,
             com.sun.org.apache.xml.internal.security.**;
 }
 
-module javax.smartcardio {
+module java.smartcardio {
     include javax.smartcardio.**, sun.security.smartcardio.**;
 }
 
-module javax.jaxp {
+module java.xml {
     include javax.xml.**,
             org.w3c.dom.**,
             org.w3c.sax.**,
@@ -456,7 +456,7 @@ module javax.jaxp {
     uses javax.xml.xpath.XPathFactory;
 }
 
-module javax.jndi {
+module java.naming {
     // framework/API 
     include javax.naming.**,
             com.sun.naming.**,
@@ -473,12 +473,12 @@ module javax.jndi {
     uses javax.naming.ldap.StartTlsResponse;
  }
 
-module jdk.jndi.rmi {
+module jdk.naming.rmi {
     // RMI registry provider
     include com.sun.jndi.rmi.**, com.sun.jndi.url.rmi.**;
 }
 
-module jdk.jndi.dns {
+module jdk.naming.dns {
     // DNS provider
     include com.sun.jndi.dns.**,
             com.sun.jndi.url.dns.**,
@@ -517,11 +517,11 @@ module jdk.tools.jaxws {
 }
 
 // standalone technology (JSR-250)
-module javax.annotations.common {
+module java.annotations.common {
     include javax.annotation.*;
 }
 
-module javax.jaxb {
+module java.xml.bind {
     include javax.xml.bind.**,
             com.sun.istack.internal.*,
             com.sun.istack.internal.localization.*,
@@ -533,12 +533,12 @@ module javax.jaxb {
             com.sun.xml.internal.txw2.**;
 }
 
-module javax.saaj {
+module java.xml.soap {
     include javax.xml.soap.**,
             com.sun.xml.internal.messaging.saaj.**;
 }
 
-module javax.jaxws {
+module java.xml.ws {
     include javax.jws.**,
             javax.xml.ws.**,
             org.relaxng.**,
@@ -549,7 +549,7 @@ module javax.jaxws {
             com.sun.xml.internal.ws.**;
 }
 
-module javax.jaf {
+module java.activation {
     include javax.activation.**, com.sun.activation.**;
 
     include META-INF/mailcap.default,
@@ -558,13 +558,13 @@ module javax.jaf {
 
 
 // standalone technology (JSR-223)
-module javax.script {
+module java.scripting {
     include javax.script.**;
 
     uses javax.script.ScriptEngineFactory;
 }
 
-module javax.compiler {
+module java.compiler {
     include javax.tools.**,
             javax.lang.model.**,
             javax.annotation.processing.**;
@@ -572,7 +572,7 @@ module javax.compiler {
     uses javax.tools.JavaCompiler;
 } 
 
-module javax.jta {
+module java.transaction {
     include javax.transaction.**;  // JTA
 }
 
@@ -788,7 +788,7 @@ module oracle.providers.os {
 module java.compact1 {
     requires public java.base;
     requires public java.logging;
-    requires public javax.script;
+    requires public java.scripting;
    
     // Need SunJCE provider in compact1
     requires jdk.crypto;
@@ -797,44 +797,44 @@ module java.compact1 {
 module java.compact2 {
     requires public java.compact1;
 
-    requires public java.jdbc;
+    requires public java.sql;
     requires public java.rmi;
-    requires public javax.jta;
-    requires public javax.jaxp;
+    requires public java.transaction;
+    requires public java.xml;
 }
 
 module java.compact3 {
     requires public java.compact2;
 
     requires public java.instrument;
-    requires public java.jdbc.rowset;
+    requires public java.sql.rowset;
     requires public java.management;
     requires public java.prefs;
     requires public java.security.acl;
-    requires public javax.jndi;
-    requires public javax.kerberos;
-    requires public javax.sasl;
-    requires public javax.compiler;
-    requires public javax.xmldsig;
+    requires public java.naming;
+    requires public java.security.kerberos;
+    requires public java.security.sasl;
+    requires public java.compiler;
+    requires public java.xml.crypto;
 }
 
 module java.se {
     requires public java.compact3;
 
     requires public java.desktop;
-    requires public javax.corba;
-    requires public javax.annotations.common;
-    requires public javax.jaf;
-    requires public javax.jaxb;
-    requires public javax.jaxws;
-    requires public javax.saaj;
+    requires public java.corba;
+    requires public java.annotations.common;
+    requires public java.activation;
+    requires public java.xml.bind;
+    requires public java.xml.ws;
+    requires public java.xml.soap;
 }
 
 module jdk.compact3 {
     requires public java.compact3;
 
     // JSR 268 (not in Java SE)
-    requires public javax.smartcardio;
+    requires public java.smartcardio;
 
     // JDK-specific APIs
     requires public jdk.jaas;
@@ -842,8 +842,8 @@ module jdk.compact3 {
     requires public jdk.sctp;
 
     // service providers
-    requires public jdk.jndi.dns;
-    requires public jdk.jndi.rmi;
+    requires public jdk.naming.dns;
+    requires public jdk.naming.rmi;
 }
 
 module jdk.jre {

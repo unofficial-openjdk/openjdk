@@ -77,10 +77,10 @@
       <permit>java.logging</permit>
       <permit>java.management</permit>
       <permit>java.rmi</permit>
-      <permit>javax.corba</permit>
-      <permit>javax.jndi</permit>
-      <permit>javax.kerberos</permit>
-      <permit>javax.sasl</permit>
+      <permit>java.corba</permit>
+      <permit>java.naming</permit>
+      <permit>java.security.kerberos</permit>
+      <permit>java.security.sasl</permit>
       <permit>jdk.charsets</permit>
       <permit>jdk.crypto</permit>
       <permit>jdk.deploy.osx</permit>
@@ -92,29 +92,29 @@
     </export-to>
     <export-to>
       <name>sun.net.dns</name>
-      <permit>javax.kerberos</permit>
-      <permit>jdk.jndi.dns</permit>
+      <permit>java.security.kerberos</permit>
+      <permit>jdk.naming.dns</permit>
     </export-to>
     <export-to>
       <name>sun.net.spi.nameservice</name>
-      <permit>jdk.jndi.dns</permit>
+      <permit>jdk.naming.dns</permit>
     </export-to>
     <export-to>
       <name>sun.net.util</name>
-      <permit>jdk.jndi.dns</permit>
+      <permit>jdk.naming.dns</permit>
       <permit>jdk.tools</permit>
     </export-to>
     <export-to>
       <name>sun.net.www</name>
       <permit>java.desktop</permit>
-      <permit>javax.sasl</permit>
+      <permit>java.security.sasl</permit>
       <permit>jdk.tools</permit>
       <permit>jdk.tools.base</permit>
     </export-to>
     <export-to>
       <name>sun.net.www.protocol.http</name>
-      <permit>javax.kerberos</permit>
-      <permit>javax.sasl</permit>
+      <permit>java.security.kerberos</permit>
+      <permit>java.security.sasl</permit>
     </export-to>
     <export-to>
       <name>sun.nio.ch</name>
@@ -130,10 +130,10 @@
     </export-to>
     <export-to>
       <name>sun.reflect</name>
-      <permit>java.jdbc</permit>
-      <permit>java.jdbc.rowset</permit>
+      <permit>java.sql</permit>
+      <permit>java.sql.rowset</permit>
       <permit>java.logging</permit>
-      <permit>javax.corba</permit>
+      <permit>java.corba</permit>
       <permit>jdk.nashorn</permit>
     </export-to>
     <export-to>
@@ -147,16 +147,16 @@
     <export-to>
       <name>sun.reflect.misc</name>
       <permit>java.desktop</permit>
-      <permit>java.jdbc.rowset</permit>
+      <permit>java.sql.rowset</permit>
       <permit>java.management</permit>
       <permit>java.rmi</permit>
-      <permit>javax.jaxp</permit>
+      <permit>java.xml</permit>
     </export-to>
     <export-to>
       <name>sun.security.action</name>
       <permit>java.desktop</permit>
-      <permit>javax.kerberos</permit>
-      <permit>javax.sasl</permit>
+      <permit>java.security.kerberos</permit>
+      <permit>java.security.sasl</permit>
       <permit>jdk.crypto.ec</permit>
       <permit>jdk.crypto.pkcs11</permit>
       <permit>jdk.crypto.ucrypto</permit>
@@ -173,8 +173,8 @@
     </export-to>
     <export-to>
       <name>sun.security.jca</name>
-      <permit>javax.smartcardio</permit>
-      <permit>javax.xmldsig</permit>
+      <permit>java.smartcardio</permit>
+      <permit>java.xml.crypto</permit>
       <permit>jdk.crypto</permit>
       <permit>jdk.crypto.ec</permit>
       <permit>jdk.crypto.pkcs11</permit>
@@ -188,8 +188,8 @@
     <export-to>
       <name>sun.security.provider</name>
       <permit>java.rmi</permit>
-      <permit>javax.kerberos</permit>
-      <permit>javax.sasl</permit>
+      <permit>java.security.kerberos</permit>
+      <permit>java.security.sasl</permit>
       <permit>jdk.crypto</permit>
       <permit>jdk.crypto.pkcs11</permit>
       <permit>jdk.jaas</permit>
@@ -197,7 +197,7 @@
     </export-to>
     <export-to>
       <name>sun.security.provider.certpath</name>
-      <permit>javax.jndi</permit>
+      <permit>java.naming</permit>
     </export-to>
     <export-to>
       <name>sun.security.rsa</name>
@@ -207,7 +207,7 @@
     </export-to>
     <export-to>
       <name>sun.security.ssl</name>
-      <permit>javax.kerberos</permit>
+      <permit>java.security.kerberos</permit>
     </export-to>
     <export-to>
       <name>sun.security.tools</name>
@@ -217,9 +217,9 @@
       <name>sun.security.util</name>
       <permit>java.desktop</permit>
       <permit>java.rmi</permit>
-      <permit>javax.jndi</permit>
-      <permit>javax.kerberos</permit>
-      <permit>javax.smartcardio</permit>
+      <permit>java.naming</permit>
+      <permit>java.security.kerberos</permit>
+      <permit>java.smartcardio</permit>
       <permit>jdk.crypto</permit>
       <permit>jdk.crypto.ec</permit>
       <permit>jdk.crypto.mscapi</permit>
@@ -232,7 +232,7 @@
     </export-to>
     <export-to>
       <name>sun.security.x509</name>
-      <permit>javax.jndi</permit>
+      <permit>java.naming</permit>
       <permit>jdk.crypto</permit>
       <permit>jdk.crypto.ec</permit>
       <permit>jdk.crypto.pkcs11</permit>
@@ -266,7 +266,7 @@
     </export-to>
     <export-to>
       <name>sun.util.spi</name>
-      <permit>javax.jaxp</permit>
+      <permit>java.xml</permit>
     </export-to>
   </module>
   <module>
@@ -279,36 +279,36 @@
   <module>
     <name>java.compact2</name>
     <dependence>java.compact1</dependence>
-    <dependence>java.jdbc</dependence>
+    <dependence>java.sql</dependence>
     <dependence>java.rmi</dependence>
-    <dependence>javax.jaxp</dependence>
+    <dependence>java.xml</dependence>
     <dependence>javax.jta</dependence>
   </module>
   <module>
     <name>java.compact3</name>
     <dependence>java.compact2</dependence>
     <dependence>java.instrument</dependence>
-    <dependence>java.jdbc.rowset</dependence>
+    <dependence>java.sql.rowset</dependence>
     <dependence>java.management</dependence>
     <dependence>java.prefs</dependence>
     <dependence>java.security.acl</dependence>
-    <dependence>javax.compiler</dependence>
-    <dependence>javax.jndi</dependence>
-    <dependence>javax.kerberos</dependence>
-    <dependence>javax.sasl</dependence>
-    <dependence>javax.smartcardio</dependence>
-    <dependence>javax.xmldsig</dependence>
+    <dependence>java.compiler</dependence>
+    <dependence>java.naming</dependence>
+    <dependence>java.security.kerberos</dependence>
+    <dependence>java.security.sasl</dependence>
+    <dependence>java.smartcardio</dependence>
+    <dependence>java.xml.crypto</dependence>
     <dependence>jdk.httpserver</dependence>
     <dependence>jdk.jaas</dependence>
-    <dependence>jdk.jndi.dns</dependence>
-    <dependence>jdk.jndi.rmi</dependence>
+    <dependence>jdk.naming.dns</dependence>
+    <dependence>jdk.naming.rmi</dependence>
     <dependence>jdk.sctp</dependence>
   </module>
   <module>
     <name>java.desktop</name>
     <dependence>java.base</dependence>
     <dependence>java.prefs</dependence>
-    <dependence>javax.jaxp</dependence>
+    <dependence>java.xml</dependence>
     <dependence>jdk.charsets</dependence>
     <export>java.applet</export>
     <export>java.awt</export>
@@ -366,21 +366,21 @@
     <export>java.lang.instrument</export>
   </module>
   <module>
-    <name>java.jdbc</name>
+    <name>java.sql</name>
     <dependence>java.base</dependence>
     <dependence>java.logging</dependence>
-    <dependence>javax.jaxp</dependence>
+    <dependence>java.xml</dependence>
     <dependence>javax.jta</dependence>
     <export>java.sql</export>
     <export>javax.sql</export>
   </module>
   <module>
-    <name>java.jdbc.rowset</name>
+    <name>java.sql.rowset</name>
     <dependence>java.base</dependence>
-    <dependence>java.jdbc</dependence>
+    <dependence>java.sql</dependence>
     <dependence>java.logging</dependence>
-    <dependence>javax.jaxp</dependence>
-    <dependence>javax.jndi</dependence>
+    <dependence>java.xml</dependence>
+    <dependence>java.naming</dependence>
     <export>javax.sql.rowset</export>
     <export>javax.sql.rowset.serial</export>
     <export>javax.sql.rowset.spi</export>
@@ -395,7 +395,7 @@
     <dependence>java.base</dependence>
     <dependence>java.logging</dependence>
     <dependence>java.rmi</dependence>
-    <dependence>javax.jndi</dependence>
+    <dependence>java.naming</dependence>
     <export>com.sun.management</export>
     <export>java.lang.management</export>
     <export>javax.management</export>
@@ -425,7 +425,7 @@
   <module>
     <name>java.prefs</name>
     <dependence>java.base</dependence>
-    <dependence>javax.jaxp</dependence>
+    <dependence>java.xml</dependence>
     <export>java.util.prefs</export>
   </module>
   <module>
@@ -464,7 +464,7 @@
     <export>javax.annotation</export>
   </module>
   <module>
-    <name>javax.compiler</name>
+    <name>java.compiler</name>
     <dependence>java.base</dependence>
     <dependence>java.logging</dependence>
     <export>javax.annotation.processing</export>
@@ -475,12 +475,12 @@
     <export>javax.tools</export>
   </module>
   <module>
-    <name>javax.corba</name>
+    <name>java.corba</name>
     <dependence>java.base</dependence>
     <dependence>java.desktop</dependence>
     <dependence>java.logging</dependence>
     <dependence>java.rmi</dependence>
-    <dependence>javax.jndi</dependence>
+    <dependence>java.naming</dependence>
     <dependence>javax.jta</dependence>
     <export>javax.activity</export>
     <export>javax.rmi</export>
@@ -519,20 +519,20 @@
     </export-to>
   </module>
   <module>
-    <name>javax.jaf</name>
+    <name>java.activation</name>
     <dependence>java.base</dependence>
     <dependence>java.desktop</dependence>
     <dependence>java.logging</dependence>
     <export>javax.activation</export>
   </module>
   <module>
-    <name>javax.jaxb</name>
+    <name>java.xml.bind</name>
     <dependence>java.base</dependence>
     <dependence>java.desktop</dependence>
     <dependence>java.logging</dependence>
-    <dependence>javax.compiler</dependence>
-    <dependence>javax.jaf</dependence>
-    <dependence>javax.jaxp</dependence>
+    <dependence>java.compiler</dependence>
+    <dependence>java.activation</dependence>
+    <dependence>java.xml</dependence>
     <export>javax.xml.bind</export>
     <export>javax.xml.bind.annotation</export>
     <export>javax.xml.bind.annotation.adapters</export>
@@ -541,22 +541,22 @@
     <export>javax.xml.bind.util</export>
     <export-to>
       <name>com.sun.istack.internal</name>
-      <permit>javax.jaxws</permit>
+      <permit>java.xml.ws</permit>
       <permit>jdk.tools.jaxws</permit>
     </export-to>
     <export-to>
       <name>com.sun.istack.internal.localization</name>
-      <permit>javax.jaxws</permit>
+      <permit>java.xml.ws</permit>
       <permit>jdk.tools.jaxws</permit>
     </export-to>
     <export-to>
       <name>com.sun.istack.internal.logging</name>
-      <permit>javax.jaxws</permit>
+      <permit>java.xml.ws</permit>
       <permit>jdk.tools.jaxws</permit>
     </export-to>
     <export-to>
       <name>com.sun.xml.internal.bind</name>
-      <permit>javax.jaxws</permit>
+      <permit>java.xml.ws</permit>
       <permit>jdk.tools.jaxws</permit>
     </export-to>
     <export-to>
@@ -565,37 +565,37 @@
     </export-to>
     <export-to>
       <name>com.sun.xml.internal.bind.api</name>
-      <permit>javax.jaxws</permit>
+      <permit>java.xml.ws</permit>
       <permit>jdk.tools.jaxws</permit>
     </export-to>
     <export-to>
       <name>com.sun.xml.internal.bind.api.impl</name>
-      <permit>javax.jaxws</permit>
+      <permit>java.xml.ws</permit>
       <permit>jdk.tools.jaxws</permit>
     </export-to>
     <export-to>
       <name>com.sun.xml.internal.bind.marshaller</name>
-      <permit>javax.jaxws</permit>
+      <permit>java.xml.ws</permit>
       <permit>jdk.tools.jaxws</permit>
     </export-to>
     <export-to>
       <name>com.sun.xml.internal.bind.unmarshaller</name>
-      <permit>javax.jaxws</permit>
+      <permit>java.xml.ws</permit>
       <permit>jdk.tools.jaxws</permit>
     </export-to>
     <export-to>
       <name>com.sun.xml.internal.bind.util</name>
-      <permit>javax.jaxws</permit>
+      <permit>java.xml.ws</permit>
       <permit>jdk.tools.jaxws</permit>
     </export-to>
     <export-to>
       <name>com.sun.xml.internal.bind.v2</name>
-      <permit>javax.jaxws</permit>
+      <permit>java.xml.ws</permit>
       <permit>jdk.tools.jaxws</permit>
     </export-to>
     <export-to>
       <name>com.sun.xml.internal.bind.v2.model.annotation</name>
-      <permit>javax.jaxws</permit>
+      <permit>java.xml.ws</permit>
       <permit>jdk.tools.jaxws</permit>
     </export-to>
     <export-to>
@@ -608,12 +608,12 @@
     </export-to>
     <export-to>
       <name>com.sun.xml.internal.bind.v2.model.nav</name>
-      <permit>javax.jaxws</permit>
+      <permit>java.xml.ws</permit>
       <permit>jdk.tools.jaxws</permit>
     </export-to>
     <export-to>
       <name>com.sun.xml.internal.bind.v2.model.runtime</name>
-      <permit>javax.jaxws</permit>
+      <permit>java.xml.ws</permit>
     </export-to>
     <export-to>
       <name>com.sun.xml.internal.bind.v2.model.util</name>
@@ -621,16 +621,16 @@
     </export-to>
     <export-to>
       <name>com.sun.xml.internal.bind.v2.runtime</name>
-      <permit>javax.jaxws</permit>
+      <permit>java.xml.ws</permit>
       <permit>jdk.tools.jaxws</permit>
     </export-to>
     <export-to>
       <name>com.sun.xml.internal.bind.v2.runtime.unmarshaller</name>
-      <permit>javax.jaxws</permit>
+      <permit>java.xml.ws</permit>
     </export-to>
     <export-to>
       <name>com.sun.xml.internal.bind.v2.schemagen</name>
-      <permit>javax.jaxws</permit>
+      <permit>java.xml.ws</permit>
       <permit>jdk.tools.jaxws</permit>
     </export-to>
     <export-to>
@@ -639,7 +639,7 @@
     </export-to>
     <export-to>
       <name>com.sun.xml.internal.bind.v2.schemagen.xmlschema</name>
-      <permit>javax.jaxws</permit>
+      <permit>java.xml.ws</permit>
     </export-to>
     <export-to>
       <name>com.sun.xml.internal.bind.v2.util</name>
@@ -647,43 +647,43 @@
     </export-to>
     <export-to>
       <name>com.sun.xml.internal.fastinfoset.stax</name>
-      <permit>javax.jaxws</permit>
+      <permit>java.xml.ws</permit>
     </export-to>
     <export-to>
       <name>com.sun.xml.internal.fastinfoset.vocab</name>
-      <permit>javax.jaxws</permit>
+      <permit>java.xml.ws</permit>
     </export-to>
     <export-to>
       <name>com.sun.xml.internal.org.jvnet.fastinfoset</name>
-      <permit>javax.jaxws</permit>
+      <permit>java.xml.ws</permit>
     </export-to>
     <export-to>
       <name>com.sun.xml.internal.org.jvnet.mimepull</name>
-      <permit>javax.jaxws</permit>
-      <permit>javax.saaj</permit>
+      <permit>java.xml.ws</permit>
+      <permit>java.xml.soap</permit>
     </export-to>
     <export-to>
       <name>com.sun.xml.internal.org.jvnet.staxex</name>
-      <permit>javax.jaxws</permit>
+      <permit>java.xml.ws</permit>
     </export-to>
     <export-to>
       <name>com.sun.xml.internal.txw2</name>
-      <permit>javax.jaxws</permit>
+      <permit>java.xml.ws</permit>
       <permit>jdk.tools.jaxws</permit>
     </export-to>
     <export-to>
       <name>com.sun.xml.internal.txw2.annotation</name>
-      <permit>javax.jaxws</permit>
+      <permit>java.xml.ws</permit>
       <permit>jdk.tools.jaxws</permit>
     </export-to>
     <export-to>
       <name>com.sun.xml.internal.txw2.output</name>
-      <permit>javax.jaxws</permit>
+      <permit>java.xml.ws</permit>
       <permit>jdk.tools.jaxws</permit>
     </export-to>
   </module>
   <module>
-    <name>javax.jaxp</name>
+    <name>java.xml</name>
     <dependence>java.base</dependence>
     <export>javax.xml</export>
     <export>javax.xml.datatype</export>
@@ -709,67 +709,67 @@
     <export>org.xml.sax.helpers</export>
     <export-to>
       <name>com.sun.org.apache.xerces.internal.dom</name>
-      <permit>javax.saaj</permit>
+      <permit>java.xml.soap</permit>
     </export-to>
     <export-to>
-      <name>com.sun.org.apache.xerces.internal.jaxp</name>
-      <permit>javax.saaj</permit>
+      <name>com.sun.org.apache.xerces.internal.java.xml</name>
+      <permit>java.xml.soap</permit>
     </export-to>
     <export-to>
       <name>com.sun.org.apache.xerces.internal.util</name>
-      <permit>javax.saaj</permit>
+      <permit>java.xml.soap</permit>
     </export-to>
     <export-to>
       <name>com.sun.org.apache.xml.internal.dtm</name>
-      <permit>javax.xmldsig</permit>
+      <permit>java.xml.crypto</permit>
     </export-to>
     <export-to>
       <name>com.sun.org.apache.xml.internal.resolver</name>
-      <permit>javax.jaxws</permit>
+      <permit>java.xml.ws</permit>
       <permit>jdk.tools.jaxws</permit>
     </export-to>
     <export-to>
       <name>com.sun.org.apache.xml.internal.resolver.tools</name>
-      <permit>javax.jaxws</permit>
+      <permit>java.xml.ws</permit>
       <permit>jdk.tools.jaxws</permit>
     </export-to>
     <export-to>
       <name>com.sun.org.apache.xml.internal.utils</name>
-      <permit>javax.xmldsig</permit>
+      <permit>java.xml.crypto</permit>
     </export-to>
     <export-to>
       <name>com.sun.org.apache.xpath.internal</name>
-      <permit>javax.xmldsig</permit>
+      <permit>java.xml.crypto</permit>
     </export-to>
     <export-to>
       <name>com.sun.org.apache.xpath.internal.compiler</name>
-      <permit>javax.xmldsig</permit>
+      <permit>java.xml.crypto</permit>
     </export-to>
     <export-to>
       <name>com.sun.org.apache.xpath.internal.functions</name>
-      <permit>javax.xmldsig</permit>
+      <permit>java.xml.crypto</permit>
     </export-to>
     <export-to>
       <name>com.sun.org.apache.xpath.internal.objects</name>
-      <permit>javax.xmldsig</permit>
+      <permit>java.xml.crypto</permit>
     </export-to>
     <export-to>
       <name>com.sun.org.apache.xpath.internal.res</name>
-      <permit>javax.xmldsig</permit>
+      <permit>java.xml.crypto</permit>
     </export-to>
   </module>
   <module>
-    <name>javax.jaxws</name>
+    <name>java.xml.ws</name>
     <dependence>java.base</dependence>
     <dependence>java.desktop</dependence>
     <dependence>java.logging</dependence>
     <dependence>java.management</dependence>
     <dependence>java.rmi</dependence>
     <dependence>javax.annotations.common</dependence>
-    <dependence>javax.jaf</dependence>
-    <dependence>javax.jaxb</dependence>
-    <dependence>javax.jaxp</dependence>
-    <dependence>javax.saaj</dependence>
+    <dependence>java.activation</dependence>
+    <dependence>java.xml.bind</dependence>
+    <dependence>java.xml</dependence>
+    <dependence>java.xml.soap</dependence>
     <dependence>jdk.httpserver</dependence>
     <export>javax.jws</export>
     <export>javax.jws.soap</export>
@@ -875,9 +875,9 @@
     </export-to>
   </module>
   <module>
-    <name>javax.jndi</name>
+    <name>java.naming</name>
     <dependence>java.base</dependence>
-    <dependence>javax.sasl</dependence>
+    <dependence>java.security.sasl</dependence>
     <export>javax.naming</export>
     <export>javax.naming.directory</export>
     <export>javax.naming.event</export>
@@ -885,13 +885,13 @@
     <export>javax.naming.spi</export>
     <export-to>
       <name>com.sun.jndi.toolkit.ctx</name>
-      <permit>jdk.jndi.dns</permit>
+      <permit>jdk.naming.dns</permit>
     </export-to>
     <export-to>
       <name>com.sun.jndi.toolkit.url</name>
-      <permit>javax.corba</permit>
-      <permit>jdk.jndi.dns</permit>
-      <permit>jdk.jndi.rmi</permit>
+      <permit>java.corba</permit>
+      <permit>jdk.naming.dns</permit>
+      <permit>jdk.naming.rmi</permit>
     </export-to>
   </module>
   <module>
@@ -902,11 +902,11 @@
     <export>javax.transaction.xa</export>
   </module>
   <module>
-    <name>javax.kerberos</name>
+    <name>java.security.kerberos</name>
     <dependence>java.base</dependence>
     <dependence>java.logging</dependence>
-    <dependence>javax.jndi</dependence>
-    <dependence>javax.sasl</dependence>
+    <dependence>java.naming</dependence>
+    <dependence>java.security.sasl</dependence>
     <export>com.sun.security.jgss</export>
     <export>javax.security.auth.kerberos</export>
     <export>org.ietf.jgss</export>
@@ -924,23 +924,23 @@
     </export-to>
   </module>
   <module>
-    <name>javax.saaj</name>
+    <name>java.xml.soap</name>
     <dependence>java.base</dependence>
     <dependence>java.desktop</dependence>
     <dependence>java.logging</dependence>
-    <dependence>javax.jaf</dependence>
-    <dependence>javax.jaxb</dependence>
-    <dependence>javax.jaxp</dependence>
+    <dependence>java.activation</dependence>
+    <dependence>java.xml.bind</dependence>
+    <dependence>java.xml</dependence>
     <export>javax.xml.soap</export>
   </module>
   <module>
-    <name>javax.sasl</name>
+    <name>java.security.sasl</name>
     <dependence>java.base</dependence>
     <dependence>java.logging</dependence>
     <export>javax.security.sasl</export>
     <export-to>
       <name>com.sun.security.sasl.util</name>
-      <permit>javax.kerberos</permit>
+      <permit>java.security.kerberos</permit>
     </export-to>
   </module>
   <module>
@@ -949,15 +949,15 @@
     <export>javax.script</export>
   </module>
   <module>
-    <name>javax.smartcardio</name>
+    <name>java.smartcardio</name>
     <dependence>java.base</dependence>
     <export>javax.smartcardio</export>
   </module>
   <module>
-    <name>javax.xmldsig</name>
+    <name>java.xml.crypto</name>
     <dependence>java.base</dependence>
     <dependence>java.logging</dependence>
-    <dependence>javax.jaxp</dependence>
+    <dependence>java.xml</dependence>
     <export>javax.xml.crypto</export>
     <export>javax.xml.crypto.dom</export>
     <export>javax.xml.crypto.dsig</export>
@@ -998,7 +998,7 @@
   <module>
     <name>jdk.deploy</name>
     <dependence>java.base</dependence>
-    <dependence>javax.jaxp</dependence>
+    <dependence>java.xml</dependence>
   </module>
   <module>
     <name>jdk.deploy.osx</name>
@@ -1009,8 +1009,8 @@
   <module>
     <name>jdk.devtools</name>
     <dependence>java.base</dependence>
-    <dependence>javax.compiler</dependence>
-    <dependence>javax.jaxp</dependence>
+    <dependence>java.compiler</dependence>
+    <dependence>java.xml</dependence>
     <export>com.sun.javadoc</export>
     <export>com.sun.source.doctree</export>
     <export>com.sun.source.tree</export>
@@ -1031,8 +1031,8 @@
   <module>
     <name>jdk.jaas</name>
     <dependence>java.base</dependence>
-    <dependence>javax.jndi</dependence>
-    <dependence>javax.kerberos</dependence>
+    <dependence>java.naming</dependence>
+    <dependence>java.security.kerberos</dependence>
     <export>com.sun.security.auth</export>
     <export>com.sun.security.auth.callback</export>
     <export>com.sun.security.auth.login</export>
@@ -1042,33 +1042,33 @@
     <name>jdk.jfr</name>
     <dependence>java.base</dependence>
     <dependence>java.management</dependence>
-    <dependence>javax.jaxp</dependence>
-    <dependence>javax.jaxws</dependence>
+    <dependence>java.xml</dependence>
+    <dependence>java.xml.ws</dependence>
     <export>com.oracle.jrockit.jfr</export>
     <export>com.oracle.jrockit.jfr.client</export>
     <export>com.oracle.jrockit.jfr.management</export>
   </module>
   <module>
-    <name>jdk.jndi.dns</name>
+    <name>jdk.naming.dns</name>
     <dependence>java.base</dependence>
-    <dependence>javax.jndi</dependence>
+    <dependence>java.naming</dependence>
   </module>
   <module>
-    <name>jdk.jndi.rmi</name>
+    <name>jdk.naming.rmi</name>
     <dependence>java.base</dependence>
     <dependence>java.rmi</dependence>
-    <dependence>javax.jndi</dependence>
+    <dependence>java.naming</dependence>
   </module>
   <module>
     <name>jdk.jre</name>
     <dependence>java.compact3</dependence>
     <dependence>java.desktop</dependence>
     <dependence>javax.annotations.common</dependence>
-    <dependence>javax.corba</dependence>
-    <dependence>javax.jaf</dependence>
-    <dependence>javax.jaxb</dependence>
-    <dependence>javax.jaxws</dependence>
-    <dependence>javax.saaj</dependence>
+    <dependence>java.corba</dependence>
+    <dependence>java.activation</dependence>
+    <dependence>java.xml.bind</dependence>
+    <dependence>java.xml.ws</dependence>
+    <dependence>java.xml.soap</dependence>
     <dependence>jdk.deploy</dependence>
     <dependence>jdk.providers</dependence>
     <dependence>jdk.providers.os</dependence>
@@ -1116,7 +1116,7 @@
     <dependence>java.logging</dependence>
     <dependence>java.management</dependence>
     <dependence>java.rmi</dependence>
-    <dependence>javax.corba</dependence>
+    <dependence>java.corba</dependence>
     <dependence>javax.script</dependence>
     <dependence>jdk.devtools</dependence>
     <dependence>jdk.tools.base</dependence>
@@ -1152,11 +1152,11 @@
     <dependence>java.desktop</dependence>
     <dependence>java.logging</dependence>
     <dependence>java.rmi</dependence>
-    <dependence>javax.compiler</dependence>
-    <dependence>javax.jaf</dependence>
-    <dependence>javax.jaxb</dependence>
-    <dependence>javax.jaxp</dependence>
-    <dependence>javax.jaxws</dependence>
+    <dependence>java.compiler</dependence>
+    <dependence>java.activation</dependence>
+    <dependence>java.xml</dependence>
+    <dependence>java.xml.bind</dependence>
+    <dependence>java.xml.ws</dependence>
     <dependence>jdk.devtools</dependence>
   </module>
   <module>
