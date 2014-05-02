@@ -144,17 +144,6 @@ public final class Module extends Archive {
             return this;
         }
 
-        public Builder export(String p, String m) {
-            Objects.requireNonNull(p);
-            Set<String> permits = exports.get(p);
-            if (permits == null) {
-                exports.put(p, permits = new HashSet<>());
-            }
-            if (m != null && !m.isEmpty()) {
-                permits.add(m);
-            }
-            return this;
-        }
         public Builder export(String p, Set<String> ms) {
             Objects.requireNonNull(p);
             Objects.requireNonNull(ms);

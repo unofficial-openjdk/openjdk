@@ -30,6 +30,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 import javax.xml.stream.XMLEventReader;
 import javax.xml.stream.XMLInputFactory;
@@ -49,14 +50,13 @@ public class ModulesXmlReader {
         this.helper = helper;
     }
 
-    private static final String MODULES    = "modules";
-    private static final String MODULE     = "module";
-    private static final String NAME       = "name";
-    private static final String DEPENDENCE = "dependence";
-    private static final String EXPORT     = "export";
-    private static final String EXPORT_TO  = "export-to";
-    private static final String PERMIT     = "permit";
-    private static final String INCLUDE    = "include";
+    private static final String MODULES  = "modules";
+    private static final String MODULE   = "module";
+    private static final String NAME     = "name";
+    private static final String REQUIRES = "requires";
+    private static final String EXPORTS  = "exports";
+    private static final String TO       = "to";
+    private static final String INCLUDES = "includes";
     public Set<Module> load(InputStream in) throws XMLStreamException, IOException {
         Set<Module> modules = new HashSet<>();
         if (in == null) {
@@ -67,7 +67,7 @@ public class ModulesXmlReader {
         XMLEventReader reader = factory.createXMLEventReader(in, "UTF-8");
         Module.Builder mb = null;
         String modulename = null;
-        String pkg = null;
+        String exportedPackage = null;
         Set<String> permits = new HashSet<>();
         while (reader.hasNext()) {
             XMLEvent event = reader.nextEvent();
@@ -86,19 +86,16 @@ public class ModulesXmlReader {
                         break;
                     case NAME:
                         throw new RuntimeException(event.toString());
-                    case DEPENDENCE:
+                    case REQUIRES:
                         mb.require(getData(reader));
                         break;
-                    case EXPORT:
-                        mb.export(getData(reader), "");
-                        break;
-                    case INCLUDE:
+                    case INCLUDES:
                         mb.include(getData(reader));
                         break;
-                    case EXPORT_TO:
-                        pkg = getNextTag(reader, NAME);
+                    case EXPORTS:
+                        exportedPackage = getNextTag(reader, NAME);
                         break;
-                    case PERMIT:
+                    case TO:
                         permits.add(getData(reader));
                         break;
                     default:
@@ -112,11 +109,12 @@ public class ModulesXmlReader {
                         modules.add(mb.build());
                         mb = null;
                         break;
-                    case EXPORT_TO:
-                        if (pkg == null || permits.isEmpty()) {
-                            throw new RuntimeException("export-to is malformed");
+                    case EXPORTS:
+                        if (exportedPackage == null) {
+                            throw new RuntimeException("export's name is missing");
                         }
-                        mb.export(pkg, permits);
+                        mb.export(exportedPackage, permits);
+                        exportedPackage = null;
                         permits.clear();
                         break;
                     default:

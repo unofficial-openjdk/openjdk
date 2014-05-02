@@ -103,8 +103,14 @@ enum Profile {
             }
             for (Profile p : Profile.values()) {
                 String profileName = p.name;
+                System.out.format("%2d: %-10s  %s%n", p.profile, profileName, p.modules);
                 for (Module m: p.modules) {
-                    System.out.format("%2d: %-10s  %s%n", p.profile, profileName, p.modules);
+                    System.out.format("module %s%n", m.name());
+                    System.out.format("   requires %s%n", m.requires());
+                    for (Map.Entry<String,Set<String>> e: m.exports().entrySet()) {
+                        System.out.format("   exports %s %s%n", e.getKey(),
+                            e.getValue().isEmpty() ? "" : "to " + e.getValue());
+                    }
                 }
             }
         }

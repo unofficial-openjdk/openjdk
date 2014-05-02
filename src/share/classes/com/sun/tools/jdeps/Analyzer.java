@@ -299,7 +299,7 @@ public class Analyzer {
             }
             // include required archives
             Archive targetArchive = findArchive(t);
-            if (!requires.contains(targetArchive)) {
+            if (targetArchive != archive && !requires.contains(targetArchive)) {
                 requires.add(targetArchive);
             }
         }
