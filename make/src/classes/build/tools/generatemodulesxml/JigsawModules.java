@@ -43,16 +43,22 @@ import jdk.jigsaw.module.ModuleExport;
  * for JDK 9 build to use.
  */
 public class JigsawModules {
+    final GenerateModulesXml gentool;
+    final boolean skipPackages;
+    JigsawModules(GenerateModulesXml gentool, boolean nopackages) {
+        this.gentool = gentool;
+        this.skipPackages = nopackages;
+    }
     private static final String MODULES_SER = "jdk/jigsaw/module/resources/modules.ser";
-    public static Set<Module> load(GenerateModulesXml gentool)
+    public Set<Module> load()
         throws IOException, ClassNotFoundException
     {
         try (InputStream in = ClassLoader.getSystemResourceAsStream(MODULES_SER)) {
-            return load(gentool, in);
+            return load(in);
         }
     }
 
-    public static Set<Module> load(GenerateModulesXml gentool, InputStream in)
+    public Set<Module> load(InputStream in)
         throws IOException, ClassNotFoundException
     {
         ObjectInputStream ois = new ObjectInputStream(in);
@@ -66,13 +72,14 @@ public class JigsawModules {
             .collect(Collectors.toSet());
     }
 
-    private static Module toModule(GenerateModulesXml gentool, jdk.jigsaw.module.Module m) {
+    private Module toModule(GenerateModulesXml gentool, jdk.jigsaw.module.Module m) {
         Module.Builder mb = new Module.Builder();
         String modulename = m.id().name();
         mb.name(modulename);
         m.moduleDependences().stream()
             .map(d -> d.query().name())
-            .sorted();
+            .sorted()
+            .forEach(mb::require);
         m.exports().stream()
             .filter(e -> e.permit() == null)
             .map(ModuleExport::pkg)
@@ -90,10 +97,12 @@ public class JigsawModules {
                          .map(ModuleExport::permit).collect(Collectors.toSet());
                  mb.exportTo(e.getKey(), permits);
             });
-        try {
-            gentool.buildIncludes(mb, modulename);
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
+        if (!skipPackages) {
+            try {
+                gentool.buildIncludes(mb, modulename);
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
         }
         return mb.build();
     }

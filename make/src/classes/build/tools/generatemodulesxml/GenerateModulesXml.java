@@ -50,33 +50,50 @@ import javax.xml.stream.events.XMLEvent;
  * This tool is used to generate com/sun/tools/jdeps/resources/modules.xml
  * for jdeps to analyze dependencies and enforce module boundaries.
  *
- * Run GenerateModulesXml <output file> build/modules
- * on jdk-module-image to generate modules.xml to be integrated
- * in JDK 9 jdk/make/data/checkdeps/modules.xml that includes
- * dependences, exports, and qualified-exports.
+ * Run GenerateModulesXml -nopackages output-filename build/modules
+ * on jake and check in the output file into
+ *     jdk9/jdk/make/data/checkdeps/modules.xml
  *
- * For JDK 9 legacy build, this takes jdk/make/data/checkdeps/modules.xml
- * and augment it with module membership and output a resource file
- * com/sun/tools/jdeps/resources/modules.xml
+ * In JDK 9 legacy build, two steps involved:
+ * 1. Run GenerateModulesXml -usemetadata \
+ *        com/sun/tools/jdeps/resources/modules.xml build/modules
+ *
+ * This will generate modules.xml as jdeps resources that extend
+ * the metadata to include module membership (jdeps needs the
+ * membership information to determine which module a type belongs to.)
+ *
+ * 2. OUTPUTDIR/bin/jdeps -verify:access -mp OUTPUTDIR/modules
+ *
+ * This will verify the module access.
  */
 public final class GenerateModulesXml {
+    private final static String USAGE =
+        "Usage: GenerateModulesXml [-usemetadata] [-nopackages] <output file> build/modules";
+
     public static void main(String[] args) throws Exception {
         if (args.length < 2) {
-            System.err.println("Usage: GenerateModulesXml [-xml modules.xml] <output file> build/modules");
+            System.err.println(USAGE);
             System.exit(-1);
         }
-        Path infile = null;
+        boolean useMetadata = false;
+        boolean nopackages = false;
         int i=0;
-        if (args[0].equals("-xml")) {
-            infile = Paths.get(args[1]);
-            i = 2;
-            if (Files.notExists(infile)) {
-                System.err.println(infile + " doesn't exist");
-                System.exit(1);
+        while (i < args.length && args[i].startsWith("-")) {
+            String arg = args[i++];
+            switch (arg) {
+                case "-usemetadata":
+                    useMetadata = true;
+                    break;
+                case "-nopackages":
+                    nopackages = true;
+                    break;
+                default:
+                    System.err.println(USAGE);
+                    System.exit(-1);
             }
         }
-        if (i != 0 && args.length != 4) {
-            System.err.println("Usage: GenerateModulesXml [-xml modules.xml] <output file> build/modules");
+        if (i+2 != args.length) {
+            System.err.println(USAGE);
             System.exit(-1);
         }
 
@@ -90,12 +107,13 @@ public final class GenerateModulesXml {
         GenerateModulesXml gentool =
             new GenerateModulesXml(modulepath);
         Set<Module> modules;
-        if (infile != null) {
-            try (InputStream in = Files.newInputStream(infile)) {
+        if (useMetadata) {
+            try (InputStream in = GenerateModulesXml.class.getResourceAsStream("modules.xml")) {
                 modules = gentool.load(in);
             }
         } else {
-            modules = JigsawModules.load(gentool);
+            JigsawModules jms = new JigsawModules(gentool, nopackages);
+            modules = jms.load();
         }
 
         Files.createDirectories(outfile.getParent());
@@ -107,14 +125,13 @@ public final class GenerateModulesXml {
         this.modulepath = modulepath;
     }
 
-    private static final String MODULES    = "modules";
-    private static final String MODULE     = "module";
-    private static final String NAME       = "name";
-    private static final String DEPENDENCE = "dependence";
-    private static final String EXPORT     = "export";
-    private static final String EXPORT_TO  = "export-to";
-    private static final String PERMIT     = "permit";
-    private static final String INCLUDE    = "include";
+    private static final String MODULES  = "modules";
+    private static final String MODULE   = "module";
+    private static final String NAME     = "name";
+    private static final String REQUIRES = "requires";
+    private static final String EXPORTS  = "exports";
+    private static final String TO       = "to";
+    private static final String INCLUDES = "includes";
     private Set<Module> load(InputStream in) throws XMLStreamException, IOException {
         Set<Module> modules = new HashSet<>();
         XMLInputFactory factory = XMLInputFactory.newInstance();
@@ -140,18 +157,15 @@ public final class GenerateModulesXml {
                         break;
                     case NAME:
                         throw new RuntimeException(event.toString());
-                    case DEPENDENCE:
+                    case REQUIRES:
                         mb.require(getData(stream));
                         break;
-                    case EXPORT:
-                        mb.export(getData(stream));
-                        break;
-                    case INCLUDE:
+                    case INCLUDES:
                         throw new RuntimeException("unexpected " + event);
-                    case EXPORT_TO:
+                    case EXPORTS:
                         pkg = getNextTag(stream, NAME);
                         break;
-                    case PERMIT:
+                    case TO:
                         permits.add(getData(stream));
                         break;
                     default:
@@ -164,11 +178,12 @@ public final class GenerateModulesXml {
                         modules.add(mb.build());
                         mb = null;
                         break;
-                    case EXPORT_TO:
-                        if (pkg == null || permits.isEmpty()) {
+                    case EXPORTS:
+                        if (pkg == null) {
                             throw new RuntimeException("export-to is malformed");
                         }
                         mb.exportTo(pkg, permits);
+                        pkg = null;
                         permits.clear();
                         break;
                     default:
@@ -231,13 +246,20 @@ public final class GenerateModulesXml {
             throw new RuntimeException(e);
         }
     }
-    private void writeExportsToElement(XMLStreamWriter xtw, String pkg,
-                                              Set<String> permits, int depth) {
+
+    private void writeExportsElement(XMLStreamWriter xtw, String pkg, int depth) {
+        writeExportsElement(xtw, pkg, Collections.emptySet(), depth);
+    }
+
+    private void writeExportsElement(XMLStreamWriter xtw, String pkg,
+                                       Set<String> permits, int depth) {
         try {
-            writeStartElement(xtw, EXPORT_TO, depth);
+            writeStartElement(xtw, EXPORTS, depth);
             writeElement(xtw, NAME, pkg, depth+1);
-            permits.stream().sorted()
-                   .forEach(m -> writeElement(xtw, PERMIT, m, depth+1));
+            if (!permits.isEmpty()) {
+                permits.stream().sorted()
+                       .forEach(m -> writeElement(xtw, TO, m, depth + 1));
+            }
             writeEndElement(xtw, depth);
         } catch (XMLStreamException e) {
             throw new RuntimeException(e);
@@ -248,17 +270,17 @@ public final class GenerateModulesXml {
             writeStartElement(xtw, MODULE, depth);
             writeElement(xtw, NAME, m.name(), depth+1);
             m.requires().stream().sorted()
-                        .forEach(d -> writeElement(xtw, DEPENDENCE, d, depth+1));
+                        .forEach(d -> writeElement(xtw, REQUIRES, d, depth+1));
             m.exports().keySet().stream()
                        .filter(pn -> m.exports().get(pn).isEmpty())
                        .sorted()
-                       .forEach(pn -> writeElement(xtw, EXPORT, pn, depth+1));
+                       .forEach(pn -> writeExportsElement(xtw, pn, depth+1));
             m.exports().entrySet().stream()
                        .filter(e -> !e.getValue().isEmpty())
                        .sorted(Map.Entry.comparingByKey())
-                       .forEach(e -> writeExportsToElement(xtw, e.getKey(), e.getValue(), depth+1));
+                       .forEach(e -> writeExportsElement(xtw, e.getKey(), e.getValue(), depth+1));
             m.packages().stream().sorted()
-                        .forEach(p -> writeElement(xtw, INCLUDE, p, depth+1));
+                        .forEach(p -> writeElement(xtw, INCLUDES, p, depth+1));
             writeEndElement(xtw, depth);
         } catch (XMLStreamException e) {
             throw new RuntimeException(e);
@@ -410,17 +432,15 @@ public final class GenerateModulesXml {
             }
 
             public Builder export(String p) {
-                Objects.requireNonNull(p);
-                if (exports.containsKey(p)) {
-                    throw new RuntimeException(name + " already exports " + p);
-                }
-                exports.put(p, new HashSet<>());
-                return this;
+                return exportTo(p, Collections.emptySet());
             }
 
             public Builder exportTo(String p, Set<String> ms) {
                 Objects.requireNonNull(p);
                 Objects.requireNonNull(ms);
+                if (exports.containsKey(p)) {
+                    throw new RuntimeException(name + " already exports " + p);
+                }
                 exports.put(p, new HashSet<>(ms));
                 return this;
             }

@@ -67,7 +67,14 @@ ifeq ($(SHUFFLED), true)
 
   MODULES_XML := $(JDK_OUTPUTDIR)/$(MODULES_SUBDIR)/$(JDK_DEVTOOLS_SUBDIR)/com/sun/tools/jdeps/resources/modules.xml
 
-  $(MODULES_XML): $(BUILD_GENMODULESXML_TOOL)
+  # This is only used by legacy build
+  METADATA := $(JDK_OUTPUTDIR)/btclasses/build/tools/generatemodulesxml/modules.xml
+
+  # Resource used by GenerateModulesXml tool
+  $(METADATA): $(JDK_TOPDIR)/make/data/checkdeps/modules.xml
+	$(call install-file)
+
+  $(MODULES_XML): $(BUILD_GENMODULESXML_TOOL) $(METADATA)
 	$(MKDIR) -p $(@D)
 	$(RM) $@
 	$(TOOL_GENMODULESXML) $@ $(JDK_OUTPUTDIR)/$(MODULES_SUBDIR)
