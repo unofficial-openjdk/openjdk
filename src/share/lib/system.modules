@@ -1,3 +1,7 @@
+jdk.compiler.tools
+jdk.diag.tools
+jdk.hotspot.tools
+jdk.jdi
+jdk.jre.tools
 jdk.tools
-jdk.tools.diag
-jdk.tools.jaxws
+jdk.xml.ws.tools

@@ -512,12 +512,12 @@ TOOLS_JAR_EXCLUDES = com/sun/tools/sjavac
 ifeq ($(SHUFFLED), true)
   TOOLS_JAR_SRC := $(addprefix $(JDK_OUTPUTDIR)/modules/,\
       java.desktop \
+      jdk.diag.tools \
       java.corba \
-      jdk.devtools \
+      jdk.compiler.tools \
       jdk.tools \
-      jdk.tools.base \
-      jdk.tools.diag \
-      jdk.tools.jaxws \
+      jdk.jre.tools \
+      jdk.xml.ws.tools \
       )
       #
 

@@ -344,8 +344,8 @@ ifeq ($(OPENJDK_TARGET_OS), aix)
 endif
 
 ifeq ($(SHUFFLED), true)
-  HPROF_EXTRA_CFLAGS := -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.tools.diag/share/native/libnpt \
-      -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.tools.diag/$(OPENJDK_TARGET_OS_API_DIR)/native/libnpt
+  HPROF_EXTRA_CFLAGS := -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.hprof.agent/share/native/libnpt \
+      -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.hprof.agent/$(OPENJDK_TARGET_OS_API_DIR)/native/libnpt
 else
   HPROF_EXTRA_CFLAGS := -I$(JDK_TOPDIR)/src/share/npt -I$(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/npt
 endif

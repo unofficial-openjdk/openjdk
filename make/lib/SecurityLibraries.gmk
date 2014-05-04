@@ -24,7 +24,7 @@
 #
 
 ifeq ($(SHUFFLED), true)
-  LIBJAAS_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.jaas/$(OPENJDK_TARGET_OS_API_DIR)/native/libjaas
+  LIBJAAS_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.security.auth/$(OPENJDK_TARGET_OS_API_DIR)/native/libjaas
 else
   LIBJAAS_SRC := $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/com/sun/security/auth/module
 endif
@@ -48,7 +48,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBJAAS, \
     SRC := $(LIBJAAS_SRC), \
     LANG := C, \
     OPTIMIZATION := LOW, \
-    CFLAGS := $(CFLAGS_JDKLIB) -I$(JDK_OUTPUTDIR)/gensrc_headers/jdk.jaas, \
+    CFLAGS := $(CFLAGS_JDKLIB) -I$(JDK_OUTPUTDIR)/gensrc_headers/jdk.security.auth, \
     MAPFILE := $(LIBJAAS_MAPFILE), \
     LDFLAGS := $(filter-out -ljava, $(LDFLAGS_JDKLIB)) \
         $(call SET_SHARED_LIBRARY_ORIGIN), \

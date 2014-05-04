@@ -39,21 +39,21 @@ ifeq ($(SHUFFLED), true)
   # service providers.
   # $(JDK_OUTPUTDIR)/gensrc_jdi/META-INF/services/com.sun.jdi.connect.Connector is
   # created in Import.gmk.
-  $(JDK_OUTPUTDIR)/gensrc/jdk.tools/META-INF/services/$(CONNECTOR_SERVICE): \
-      $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.tools/share/classes/META-INF/services/com.sun.jdi.connect.Connector \
+  $(JDK_OUTPUTDIR)/gensrc/jdk.jdi/META-INF/services/$(CONNECTOR_SERVICE): \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.jdi/share/classes/META-INF/services/com.sun.jdi.connect.Connector \
       $(JDK_OUTPUTDIR)/gensrc_jdi/META-INF/services/com.sun.jdi.connect.Connector
 	$(process-provider)
 
-  GENSRC_JDK_TOOLS += $(JDK_OUTPUTDIR)/gensrc/jdk.tools/META-INF/services/$(CONNECTOR_SERVICE)
+  GENSRC_JDK_TOOLS += $(JDK_OUTPUTDIR)/gensrc/jdk.jdi/META-INF/services/$(CONNECTOR_SERVICE)
 
   ##############################################################################
 
   # Filter AttachProvider
-  $(JDK_OUTPUTDIR)/gensrc/jdk.tools.diag/META-INF/services/com.sun.tools.attach.spi.AttachProvider: \
-      $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.tools.diag/share/classes/META-INF/services/com.sun.tools.attach.spi.AttachProvider
+  $(JDK_OUTPUTDIR)/gensrc/jdk.diag.tools/META-INF/services/com.sun.tools.attach.spi.AttachProvider: \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.diag.tools/share/classes/META-INF/services/com.sun.tools.attach.spi.AttachProvider
 	$(process-provider)
 
-  GENSRC_JDK_TOOLS += $(JDK_OUTPUTDIR)/gensrc/jdk.tools.diag/META-INF/services/com.sun.tools.attach.spi.AttachProvider
+  GENSRC_JDK_TOOLS += $(JDK_OUTPUTDIR)/gensrc/jdk.diag.tools/META-INF/services/com.sun.tools.attach.spi.AttachProvider
 
   ##############################################################################
 

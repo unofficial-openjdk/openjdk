@@ -375,7 +375,7 @@ module java.security.sasl {
             sun.net.www.protocol.http.ntlm.*;
 }
 
-module jdk.jaas {
+module jdk.security.auth {
     // JDK-specific API to JAAS
     include com.sun.security.auth.**;
 }
@@ -500,7 +500,7 @@ module java.rmi {
 }
 
 // Implementation for xjc, wsgen, wsimport, and schemagen tools
-module jdk.tools.jaxws {
+module jdk.xml.ws.tools {
     include com.sun.codemodel.**,
             com.sun.xml.internal.dtdparser.**,
             com.sun.xml.internal.rngom.**,
@@ -655,7 +655,27 @@ module jdk.httpserver {
     uses com.sun.net.httpserver.spi.HttpServerProvider;
 }
 
-module jdk.devtools {
+module jdk.jdi {
+    include com.sun.jdi.**, com.sun.tools.jdi.**;
+    include META-INF/services/com.sun.tools.jdi.**;
+
+    uses com.sun.jdi.connect.Connector;
+    uses com.sun.jdi.connect.spi.TransportService;
+
+    include com.sun.tools.example.debug.**,
+            com.sun.tools.example.debug.bdi.**,
+            com.sun.tools.example.debug.gui.**;
+}
+
+// JDWP agent and socket transport
+module jdk.debug.agent {
+}
+
+module jdk.hprof.agent {
+    include com.sun.demo.jvmti.hprof.*;
+}
+
+module jdk.compiler.tools {
     include com.sun.tools.javac.**,
             com.sun.source.**,
             com.sun.tools.sjavac.**;
@@ -674,22 +694,8 @@ module jdk.devtools {
     include com.sun.tools.jdeps.**;
 }
 
-// developer tools
-module jdk.tools.base {
-    requires public jdk.devtools;
-
-    // jar, jarsigner
-    include sun.tools.jar.**;
-
-    include sun.security.tools.jarsigner.**,
-            com.sun.jarsigner.**;
-
-    // jlink
-    include jdk.jigsaw.tools.jlink.**;
-}
-
 // diagnostic tools and APIs
-module jdk.tools.diag {
+module jdk.diag.tools {
     include com.sun.tools.attach.**,
             sun.tools.attach.**;
 
@@ -703,13 +709,20 @@ module jdk.tools.diag {
             sun.tools.jstatd.**,
             sun.tools.jstack.**;
 
-    include com.sun.demo.jvmti.hprof.*;
-
     uses com.sun.tools.attach.spi.AttachProvider;
 }
 
+// SA
+module jdk.hotspot.tools {
+    include sun.jvm.hotspot.**,
+            com.sun.java.swing.ui.**,
+            com.sun.java.swing.action.**;
+    include toolbarButtonGraphics/**;
+    include sa.properties;
+}
+
 // JRE tools
-module jdk.tools.jre {
+module jdk.jre.tools {
     // ## part of the runtime - include jsdt here for now
     include com.sun.tracing.**, sun.tracing.**;
     include sun.security.tools.policytool.*;
@@ -717,33 +730,23 @@ module jdk.tools.jre {
 
 // JDK tools
 module jdk.tools {
-    include com.sun.jdi.**, com.sun.tools.jdi.**;
-    include META-INF/services/com.sun.tools.jdi.**;
+    requires public jdk.jre.tools;
+    requires public jdk.compiler.tools;
+    requires public jdk.diag.tools;
+    requires public jdk.hotspot.tools;
+    requires public jdk.xml.ws.tools;
 
-    uses com.sun.jdi.connect.Connector;
-    uses com.sun.jdi.connect.spi.TransportService;
+    requires public jdk.jdi;
+    requires public jdk.debug.agent;
+    requires public jdk.hprof.agent;
 
-    include com.sun.tools.example.debug.**,
-            com.sun.tools.example.debug.bdi.**,
-            com.sun.tools.example.debug.gui.**;
+    // jar, jarsigner
+    include sun.tools.jar.**;
+    include sun.security.tools.jarsigner.**,
+            com.sun.jarsigner.**;
 
-    requires public jdk.tools.jre;     // Tools in JRE
-    requires public jdk.tools.base;    // developer tools for the base module
-    requires public jdk.tools.jaxws;   // developer tools for the jaxws module
-    requires public jdk.tools.diag;    // diagnostic tools
-
-    // GUI tools
-    include sun.jvm.hotspot.HSDB,
-            sun.jvm.hotspot.tools.Tool,
-            sun.jvm.hotspot.bugspot.**,
-            sun.jvm.hotspot.ui.**,
-            com.sun.java.swing.ui.**,
-            com.sun.java.swing.action.**;
-    include toolbarButtonGraphics/**;
-
-    // non-GUI tools
-    include sun.jvm.hotspot.**;
-    include sa.properties;
+    // jlink
+    include jdk.jigsaw.tools.jlink.**;
 
     // rmic
     include sun.rmi.rmic.**,
@@ -753,6 +756,7 @@ module jdk.tools {
             sun.tools.tree.*,
             sun.tools.util.*;
 
+    // misc tools
     include com.sun.tools.extcheck.**,
             com.sun.tools.hat.**,
             com.sun.tools.jconsole.*,
@@ -760,7 +764,6 @@ module jdk.tools {
             sun.tools.jconsole.**,
             sun.tools.native2ascii.**,
             sun.tools.serialver.**;
-
 }
 
 module jdk.providers {
@@ -821,9 +824,9 @@ module java.compact3 {
 module java.se {
     requires public java.compact3;
 
+    requires public java.annotations.common;
     requires public java.desktop;
     requires public java.corba;
-    requires public java.annotations.common;
     requires public java.activation;
     requires public java.xml.bind;
     requires public java.xml.ws;
@@ -837,7 +840,7 @@ module jdk.compact3 {
     requires public java.smartcardio;
 
     // JDK-specific APIs
-    requires public jdk.jaas;
+    requires public jdk.security.auth;
     requires public jdk.httpserver;
     requires public jdk.sctp;
 
@@ -850,7 +853,7 @@ module jdk.jre {
     requires public java.se;
     requires public jdk.compact3;
 
-    requires public jdk.tools.jre;
+    requires public jdk.jre.tools;
     requires public jdk.deploy;
 
     requires jdk.providers;

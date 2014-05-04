@@ -196,14 +196,14 @@ endif
 
 # TODO jdk9: When merging to jdk9 first milestone, disable unpacking of sajdi.
 ifeq ($(SHUFFLED), true)
-  $(JDK_OUTPUTDIR)/modules/jdk.tools/_the.sa.jar.unpacked: $(SRC_SAJDI_JAR)
+  $(JDK_OUTPUTDIR)/modules/jdk.hotspot.tools/_the.sa.jar.unpacked: $(SRC_SAJDI_JAR)
 	$(ECHO) $(LOG_INFO) Unzipping $(<F)
 	$(RM) -r $(@D)
 	$(MKDIR) -p $(@D)
 	$(CD) $(@D) && $(UNZIP) $< $(LOG_DEBUG)
 	$(TOUCH) $@
 
-  HOTSPOT_IMPORT_TARGET_FILES += $(JDK_OUTPUTDIR)/modules/jdk.tools/_the.sa.jar.unpacked
+  HOTSPOT_IMPORT_TARGET_FILES += $(JDK_OUTPUTDIR)/modules/jdk.hotspot.tools/_the.sa.jar.unpacked
 
   $(JDK_OUTPUTDIR)/gensrc_jdi/_the.sa.jar.unpacked: $(SRC_SAJDI_JAR)
 	$(ECHO) $(LOG_INFO) Unzipping META-INF/services from $(<F)

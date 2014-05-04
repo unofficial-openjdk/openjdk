@@ -26,12 +26,9 @@ java.xml.ws
 jdk.charsets
 jdk.deploy
 jdk.deploy.osx
-jdk.devtools
+jdk.hprof.agent
 jdk.httpserver
-jdk.jaas
 jdk.naming.dns
 jdk.naming.rmi
-jdk.jre
+jdk.security.auth
 jdk.sctp
-jdk.tools.base
-jdk.tools.jre

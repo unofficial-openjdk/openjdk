@@ -70,13 +70,13 @@ COMPILE_PROP_SRC_FILES := \
         $(JDK_TOPDIR)/$(SRC_SUBDIR)$(JAVA_DESKTOP_SUBDIR)/share/classes/com/sun/swing/internal/plaf/basic/resources \
         $(JDK_TOPDIR)/$(SRC_SUBDIR)$(JAVA_DESKTOP_SUBDIR)/share/classes/com/sun/swing/internal/plaf/metal/resources \
         $(JDK_TOPDIR)/$(SRC_SUBDIR)$(JAVA_DESKTOP_SUBDIR)/share/classes/com/sun/swing/internal/plaf/synth/resources \
-        $(JDK_TOPDIR)/$(SRC_SUBDIR)$(JDK_TOOLS_SUBDIR)/share/classes/com/sun/tools/jdi/resources \
+        $(JDK_TOPDIR)/$(SRC_SUBDIR)$(JDK_JDI_SUBDIR)/share/classes/com/sun/tools/jdi/resources \
         $(JDK_TOPDIR)/$(SRC_SUBDIR)$(JAVA_DESKTOP_SUBDIR)/share/classes/sun/awt/resources \
         $(JDK_TOPDIR)/$(SRC_SUBDIR)$(JAVA_BASE_SUBDIR)/share/classes/sun/launcher/resources \
         $(JDK_TOPDIR)/$(SRC_SUBDIR)$(JAVA_MANAGEMENT_SUBDIR)/share/classes/sun/management/resources \
         $(JDK_TOPDIR)/$(SRC_SUBDIR)$(JAVA_DESKTOP_SUBDIR)/share/classes/sun/print/resources \
-        $(JDK_TOPDIR)/$(SRC_SUBDIR)$(JDK_TOOLS_BASE_SUBDIR)/share/classes/sun/tools/jar/resources \
-        $(JDK_TOPDIR)/$(SRC_SUBDIR)$(JDK_TOOLS_BASE_SUBDIR)/share/classes/jdk/jigsaw/tools/jlink/resources \
+        $(JDK_TOPDIR)/$(SRC_SUBDIR)$(JDK_TOOLS_SUBDIR)/share/classes/sun/tools/jar/resources \
+        $(JDK_TOPDIR)/$(SRC_SUBDIR)$(JDK_TOOLS_SUBDIR)/share/classes/jdk/jigsaw/tools/jlink/resources \
         $(JDK_TOPDIR)/$(SRC_SUBDIR)$(JAVA_LOGGING_SUBDIR)/share/classes/sun/util/logging/resources)) \
     #
 
