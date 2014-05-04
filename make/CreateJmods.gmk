@@ -112,7 +112,6 @@ java.base_CONF := $(BASE_CONF_FILES) $(NET_CONF_FILES) $(GENDATA_TZDB) \
     $(GENDATA_CURDATA) $(POLICY_JARS)
 
 java.desktop_NATIVE := $(DESKTOP_LIBRARIES) $(FREETYPE_TARGET_LIB)
-java.desktop_CMDS := $(DESKTOP_LAUNCHERS)
 java.desktop_CONF := $(DESKTOP_CONF_FILES) $(GENDATA_FONT_CONFIG)
 
 java.logging_NATIVE := $(LOGGING_LIBRARIES)
@@ -129,6 +128,8 @@ java.rmi_CMDS := $(RMI_LAUNCHERS)
 
 java.corba_CMDS := $(CORBA_LAUNCHERS)
 
+java.scripting_CMDS := $(SCRIPTING_LAUNCHERS)
+
 java.security.kerberos_NATIVE := $(SECURITY_KERBEROS_LIBRARIES)
 java.security.kerberos_CMDS := $(KERBEROS_LAUNCHERS)
 
@@ -143,28 +144,34 @@ jdk.crypto.mscapi_NATIVE := $(SECURITY_MSCAPI_LIBRARIES)
 jdk.crypto.pkcs11_NATIVE := $(SECURITY_PKCS11_LIBRARIES)
 jdk.crypto.pkcs11_CONF := $(SECURITY_PKCS11_CONF_FILES)
 
-jdk.devtools_CMDS := $(DEVTOOLS_LAUNCHERS)
+jdk.compiler.tools_CMDS := $(COMPILER_TOOLS_LAUNCHERS)
 
 jdk.deploy.osx_NATIVE := $(DEPLOY_OSX_LIBRARIES)
 
-jdk.jaas_NATIVE := $(SECURITY_JAAS_LIBRARIES)
+jdk.hotspot.tools_CMDS := $(HOTSPOT_SA_LAUNCHERS)
+jdk.hotspot.tools_NATIVE := $(JDI_SA_LIBRARIES)
+
+jdk.security.auth_NATIVE := $(SECURITY_JAAS_LIBRARIES)
+
+jdk.jdi_CMDS := $(JDI_LAUNCHERS)
+jdk.jdi_NATIVE := $(JDI_TRANSPORT_LIBRARIES)
 
 jdk.nashorn_CMDS := $(NASHORN_LAUNCHERS)
 
-jdk.tools.base_CMDS := $(TOOLS_BASE_LAUNCHERS)
-jdk.tools.base_NATIVE := $(UNPACK_LIBRARIES)
+jdk.debug.agent_NATIVE := $(JDWP_LIBRARIES)
 
-jdk.tools.diag_CMDS := $(TOOLS_DIAG_LAUNCHERS)
-jdk.tools.diag_NATIVE := $(ATTACH_LIBRARIES) $(CRW_LIBRARIES) $(NPT_LIBRARIES) $(JDWP_LIBRARIES) $(HPROF_LIBRARIES)
-jdk.tools.diag_CONF := $(HPROF_CONF_FILES)
+jdk.hprof.agent_NATIVE := $(HPROF_LIBRARIES) $(CRW_LIBRARIES)
+jdk.hprof.agent_CONF := $(HPROF_CONF_FILES)
 
-jdk.tools.jaxws_CMDS := $(TOOLS_JAXWS_LAUNCHERS)
+jdk.diag.tools_CMDS := $(DIAG_TOOLS_LAUNCHERS)
+jdk.diag.tools_NATIVE := $(ATTACH_LIBRARIES)
 
-jdk.tools.jre_CMDS := $(TOOLS_JRE_LAUNCHERS)
-jdk.tools.jre_NATIVE := $(JSDT_LIBRARIES)
+jdk.xml.ws.tools_CMDS := $(XML_WS_TOOLS_LAUNCHERS)
+
+jdk.jre.tools_CMDS := $(JRE_TOOLS_LAUNCHERS)
+jdk.jre.tools_NATIVE := $(UNPACK_LIBRARIES) $(JSDT_LIBRARIES)
 
 jdk.tools_CMDS := $(TOOLS_LAUNCHERS)
-jdk.tools_NATIVE := $(JDI_SA_LIBRARIES) $(JDI_TRANSPORT_LIBRARIES)
 
 ifndef OPENJDK
   jdk.crypto.ucrypto_NATIVE := $(SECURITY_UCRYPTO_LIBRARIES)

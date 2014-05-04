@@ -539,7 +539,7 @@ $(TAGLETAPI_OPTIONS_FILE):
 $(TAGLETAPI_PACKAGES_FILE): $(call PackageDependencies,$(TAGLETAPI_PKGS))
 	$(prep-target)
         ifeq ($(SHUFFLED), true)
-	  @($(ECHO) "$(LANGTOOLS_TOPDIR)/$(SRC_SUBDIR)/jdk.devtools/share/classes/$(TAGLETAPI_FILE)" ) > $@
+	  @($(ECHO) "$(LANGTOOLS_TOPDIR)/$(SRC_SUBDIR)/jdk.compiler.tools/share/classes/$(TAGLETAPI_FILE)" ) > $@
         else
 	  @($(ECHO) "$(JDK_IMPSRC)/$(TAGLETAPI_FILE)" ) > $@
         endif
@@ -710,7 +710,7 @@ JAAS_HEADER := <strong>Java Authentication and Authorization Service</strong>
 JAAS_BOTTOM := $(call CommonBottom,$(JAAS_FIRST_COPYRIGHT_YEAR))
 # JAAS_PKGS is located in NON_CORE_PKGS.gmk
 ifeq ($(SHUFFLED), true)
-  JAAS_OVERVIEW := $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.jaas/share/classes/jaas-overview.html
+  JAAS_OVERVIEW := $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.security.auth/share/classes/jaas-overview.html
 else
   JAAS_OVERVIEW := $(JDK_SHARE_CLASSES)/com/sun/security/auth/jaas-overview.html
 endif

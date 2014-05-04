@@ -391,12 +391,12 @@ java.xml.crypto_CLEAN := .properties
 ################################################################################
 
 ifneq ($(OPENJDK_TARGET_OS), windows)
-  jdk.jaas_EXCLUDE_FILES += \
+  jdk.security.auth_EXCLUDE_FILES += \
       NTLoginModule.java \
       NTSystem.java \
       #
 else
-  jdk.jaas_EXCLUDE_FILES += \
+  jdk.security.auth_EXCLUDE_FILES += \
       UnixLoginModule.java \
       UnixSystem.java \
       #
@@ -408,7 +408,7 @@ jdk.charsets_COPY := .dat
 
 ################################################################################
 
-jdk.devtools_COPY := .gif .xml .css .js javax.tools.JavaCompilerTool
+jdk.compiler.tools_COPY := .gif .xml .css .js javax.tools.JavaCompilerTool
 
 ################################################################################
 
@@ -437,6 +437,17 @@ endif
 
 ################################################################################
 
+jdk.jdi_EXCLUDES := \
+    com/sun/tools/example/debug/bdi \
+    com/sun/tools/example/debug/event \
+    com/sun/tools/example/debug/gui \
+    com/sun/jdi/doc-files \
+    #
+
+jdk.jdi_EXCLUDE_FILES += jdi-overview.html
+
+################################################################################
+
 jdk.tools_COPY := .gif .png .js .html .txt aliasmap _options
 
 jdk.tools_CLEAN_FILES := $(wildcard \
@@ -449,13 +460,7 @@ jdk.tools_CLEAN_FILES := $(wildcard \
 
 jdk.tools_EXCLUDES := \
     com/sun/tools/example/trace \
-    com/sun/tools/example/debug/bdi \
-    com/sun/tools/example/debug/event \
-    com/sun/tools/example/debug/gui \
-    com/sun/jdi/doc-files \
     #
-
-jdk.tools_EXCLUDE_FILES += jdi-overview.html
 
 ifneq ($(OPENJDK_TARGET_OS), solaris)
   jdk.tools_EXCLUDE_FILES += \
@@ -487,12 +492,12 @@ endif
 
 ################################################################################
 
-jdk.tools.diag_COPY := aliasmap jstat_options jstat_unsupported_options
+jdk.diag.tools_COPY := aliasmap jstat_options jstat_unsupported_options
 
 ################################################################################
 
-jdk.tools.jaxws_CLEAN := .properties
-jdk.tools.jaxws_COPY := .xsd JAXBContextFactory.java ZeroOneBooleanAdapter.java
+jdk.xml.ws.tools_CLEAN := .properties
+jdk.xml.ws.tools_COPY := .xsd JAXBContextFactory.java ZeroOneBooleanAdapter.java
 
 ################################################################################
 

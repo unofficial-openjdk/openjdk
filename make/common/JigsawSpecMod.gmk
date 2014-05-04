@@ -56,15 +56,16 @@ ifeq ($(SHUFFLED), true)
   JDK_CRYPTO_MSCAPI_SUBDIR := /jdk.crypto.mscapi
   JDK_CRYPTO_PKCS11_SUBDIR := /jdk.crypto.pkcs11
   JDK_CRYPTO_UCRYPTO_SUBDIR := /jdk.crypto.ucrypto
-  JDK_DEVTOOLS_SUBDIR := /jdk.devtools
-  JDK_JAAS_SUBDIR := /jdk.jaas
+  JDK_COMPILER_TOOLS_SUBDIR := /jdk.compiler.tools
+  JDK_DIAG_TOOLS_SUBDIR := jdk.diag.tools
+  JDK_SECURITY_AUTH_SUBDIR := /jdk.security.auth
+  JDK_JDI_SUBDIR := /jdk.jdi
   JDK_JFR_SUBDIR := /jdk.jfr
   JDK_NAMING_DNS_SUBDIR := /jdk.naming.dns
   JDK_NAMING_RMI_SUBDIR := /jdk.naming.rmi
   JDK_LOCALEDATA_SUBDIR := /jdk.localedata
   JDK_TOOLS_SUBDIR := /jdk.tools
-  JDK_TOOLS_BASE_SUBDIR := /jdk.tools.base
-  JDK_TOOLS_DIAG_SUBDIR := /jdk.tools.diag
+  JDK_JRE_TOOLS_SUBDIR := /jdk.jre.tools
 
   LDFLAGS_JDKLIB := $(subst $(OUTPUT_ROOT),$(OUTPUT_ROOT)/jigsaw,$(LDFLAGS_JDKLIB))
 
