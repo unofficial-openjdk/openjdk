@@ -739,12 +739,12 @@ $(eval $(call SetupShuffleFiles,COPY_LIBDT_SHMEM_SHARE_JDI, \
 
 $(eval $(call SetupShuffleFiles,COPY_LIBDT_SHMEM_SHARE, \
     SRC := $(JDK_TOPDIR)/src/share/transport/shmem, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/jdk.tools/share/native/libdt_shmem, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/jdk.jdi/share/native/libdt_shmem, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/share/transport/shmem/*)))
 
 $(eval $(call SetupShuffleFiles,COPY_LIBDT_SHMEM_WINDOWS, \
     SRC := $(JDK_TOPDIR)/src/windows/transport/shmem, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/jdk.tools/windows/native/libdt_shmem, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/jdk.jdi/windows/native/libdt_shmem, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/windows/transport/shmem/*)))
 
 # jdwp
