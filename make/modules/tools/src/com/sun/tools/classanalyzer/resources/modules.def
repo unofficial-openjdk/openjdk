@@ -311,6 +311,9 @@ module java.management {
  
     include java.lang.management.*, com.sun.management.**, sun.management.**;
     include javax.management.**, com.sun.jmx.**;
+
+    uses javax.management.remote.JMXConnectorProvider;
+    uses javax.management.remote.JMXConnectorServerProvider;
 }
 
 module java.corba {
