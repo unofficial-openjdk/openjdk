@@ -172,6 +172,7 @@ jdk.jre.tools_CMDS := $(JRE_TOOLS_LAUNCHERS)
 jdk.jre.tools_NATIVE := $(UNPACK_LIBRARIES) $(JSDT_LIBRARIES)
 
 jdk.tools_CMDS := $(TOOLS_LAUNCHERS)
+jdk.tools_NATIVE := $(NPT_LIBRARIES)
 
 ifndef OPENJDK
   jdk.crypto.ucrypto_NATIVE := $(SECURITY_UCRYPTO_LIBRARIES)
