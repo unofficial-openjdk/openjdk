@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -128,14 +128,6 @@ public final class JAXBContextImpl extends JAXBRIContext {
      * All the bridge classes.
      */
     private final Map<TypeReference,Bridge> bridges = new LinkedHashMap<TypeReference,Bridge>();
-
-    /**
-     * Shared instance of {@link TransformerFactory}.
-     * Lock before use, because a {@link TransformerFactory} is not thread-safe
-     * whereas {@link JAXBContextImpl} is.
-     * Lazily created.
-     */
-    private volatile static SAXTransformerFactory tf;
 
     /**
      * Shared instance of {@link DocumentBuilder}.
@@ -702,13 +694,7 @@ public final class JAXBContextImpl extends JAXBRIContext {
      */
     static Transformer createTransformer() {
         try {
-            if (tf==null) {
-                synchronized(JAXBContextImpl.class) {
-                    if (tf==null) {
-                        tf = (SAXTransformerFactory)TransformerFactory.newInstance();
-                    }
-                }
-            }
+            SAXTransformerFactory tf = (SAXTransformerFactory)TransformerFactory.newInstance();
             return tf.newTransformer();
         } catch (TransformerConfigurationException e) {
             throw new Error(e); // impossible
@@ -720,13 +706,7 @@ public final class JAXBContextImpl extends JAXBRIContext {
      */
     public static TransformerHandler createTransformerHandler() {
         try {
-            if (tf==null) {
-                synchronized(JAXBContextImpl.class) {
-                    if (tf==null) {
-                        tf = (SAXTransformerFactory)TransformerFactory.newInstance();
-                    }
-                }
-            }
+            SAXTransformerFactory tf = (SAXTransformerFactory)TransformerFactory.newInstance();
             return tf.newTransformerHandler();
         } catch (TransformerConfigurationException e) {
             throw new Error(e); // impossible
