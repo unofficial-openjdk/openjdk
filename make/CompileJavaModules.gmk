@@ -45,7 +45,7 @@ $(eval $(call SetupJavaCompiler,GENERATE_JDKBYTECODE, \
 ################################################################################
 # Module specific build settings
 
-java.base_COPY := .icu .dat .spp
+java.base_COPY := .icu .dat .spp content-types.properties
 java.base_CLEAN := intrinsic.properties
 
 java.base_EXCLUDES += java/lang/doc-files
@@ -364,11 +364,15 @@ java.corba_EXCLUDE_FILES := \
 
 ################################################################################
 
+java.xml_CLEAN := .properties
+
+################################################################################
+
 java.xml.bind_CLEAN := .properties
 
 ################################################################################
 
-java.xml_CLEAN := .properties
+java.xml.soap_CLEAN := .properties
 
 ################################################################################
 
@@ -448,7 +452,7 @@ jdk.jdi_EXCLUDE_FILES += jdi-overview.html
 
 ################################################################################
 
-jdk.tools_COPY := .gif .png .js .html .txt aliasmap _options
+jdk.tools_COPY := .gif .png .js oqlhelp.html .txt aliasmap _options
 
 jdk.tools_CLEAN_FILES := $(wildcard \
     $(patsubst %, $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.tools/share/classes/%/*.properties, \
@@ -520,13 +524,24 @@ jdk.localedata_EXCLUDE_FILES := sun/text/resources/th/BreakIteratorRules_th.java
 # source before static source and platform specific source before shared.
 #
 # To use this variable, use $(call ALL_SRC_DIRS,module) with no space.
-ALL_SRC_DIRS = \
+ifndef OPENJDK
+  OS_SRC_DIRS += $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/$1/$(OPENJDK_TARGET_OS)/classes
+  OS_API_SRC_DIRS += $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/$1/$(OPENJDK_TARGET_OS_API_DIR)/classes
+  SHARE_SRC_DIRS += $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/$1/share/classes
+endif
+
+GENERATED_SRC_DIRS += \
     $(JDK_OUTPUTDIR)/gensrc/$1 \
     $(LANGTOOLS_OUTPUTDIR)/gensrc/$1 \
     $(CORBA_OUTPUTDIR)/gensrc/$1 \
     $(JDK_OUTPUTDIR)/gensrc_no_srczip/$1 \
-    $(JDK_TOPDIR)/$(SRC_SUBDIR)/$1/$(OPENJDK_TARGET_OS)/classes \
-    $(JDK_TOPDIR)/$(SRC_SUBDIR)/$1/$(OPENJDK_TARGET_OS_API_DIR)/classes \
+    #
+
+OS_SRC_DIRS += $(JDK_TOPDIR)/$(SRC_SUBDIR)/$1/$(OPENJDK_TARGET_OS)/classes
+
+OS_API_SRC_DIRS += $(JDK_TOPDIR)/$(SRC_SUBDIR)/$1/$(OPENJDK_TARGET_OS_API_DIR)/classes
+
+SHARE_SRC_DIRS += \
     $(JDK_TOPDIR)/$(SRC_SUBDIR)/$1/share/classes \
     $(LANGTOOLS_TOPDIR)/$(SRC_SUBDIR)/$1/share/classes \
     $(CORBA_TOPDIR)/$(SRC_SUBDIR)/$1/share/classes \
@@ -534,13 +549,12 @@ ALL_SRC_DIRS = \
     $(JAXWS_TOPDIR)/$(SRC_SUBDIR)/$1/share/classes \
     #
 
-ifndef OPENJDK
-  ALL_SRC_DIRS += \
-      $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/$1/$(OPENJDK_TARGET_OS)/classes \
-      $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/$1/$(OPENJDK_TARGET_OS_API_DIR)/classes \
-      $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/$1/share/classes \
-      #
-endif
+ALL_SRC_DIRS = \
+    $(GENERATED_SRC_DIRS) \
+    $(OS_SRC_DIRS) \
+    $(OS_API_SRC_DIRS) \
+    $(SHARE_SRC_DIRS) \
+    #
 
 # Find all modules with java sources. Filter out nashorn since it needs to be
 # compiled separately.

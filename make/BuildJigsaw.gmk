@@ -76,7 +76,8 @@ jdk-build-tools: langtools-interim
 	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f Tools.gmk java-tools SHUFFLED=true)
 
 # TODO: It would be nice if this dependency on Hotspot could be reduced.
-jdk-gensrc: jdk-build-tools langtools-interim import-hotspot
+# Since sajdi is now in its own module, no need to depend on hotspot.
+jdk-gensrc: jdk-build-tools langtools-interim
 	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f GenerateSources.gmk SHUFFLED=true)
 
 jdk-gendata: langtools-interim jdk-build-tools
