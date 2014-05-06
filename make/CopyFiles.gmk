@@ -253,15 +253,6 @@ DESKTOP_CONF_FILES += $(CURSORS_TARGET_FILES)
 
 ##########################################################################################
 
-CONTENT_TYPES_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)$(JAVA_DESKTOP_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/$(CONF_SUBDIR)
-
-$(LIBDIR)/content-types.properties: $(CONTENT_TYPES_SRC)/content-types.properties
-	$(call install-file)
-
-DESKTOP_CONF_FILES += $(LIBDIR)/content-types.properties
-
-##########################################################################################
-
 CALENDARS_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)$(JAVA_BASE_SUBDIR)/share/$(CONF_SUBDIR)
 
 $(LIBDIR)/calendars.properties: $(CALENDARS_SRC)/calendars.properties
@@ -278,9 +269,9 @@ BASE_CONF_FILES += $(LIBDIR)/hijrah-config-umalqura.properties
 
 ##########################################################################################
 
-ifeq ($(OPENJDK_TARGET_OS), windows)
+ifneq ($(findstring $(OPENJDK_TARGET_OS), windows aix),)
 
-  TZMAPPINGS_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)$(JAVA_BASE_SUBDIR)/$(OPENJDK_TARGET_OS_API_DIR)/$(CONF_SUBDIR)
+  TZMAPPINGS_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)$(JAVA_BASE_SUBDIR)/$(OPENJDK_TARGET_OS)/$(CONF_SUBDIR)
 
   $(LIBDIR)/tzmappings: $(TZMAPPINGS_SRC)/tzmappings
 	$(call install-file)

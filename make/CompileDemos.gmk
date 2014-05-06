@@ -199,7 +199,6 @@ $(eval $(call SetupDemo,FullThreadDump,management,,FullThreadDump,,,README*))
 $(eval $(call SetupDemo,JTop,management,,JTop,,,README*))
 $(eval $(call SetupDemo,MemoryMonitor,management,,MemoryMonitor,,,README*))
 $(eval $(call SetupDemo,VerboseGC,management,,VerboseGC,,,README*))
-$(eval $(call SetupDemo,zipfs,nio,,,,,README* *.java,,,,Main-Class: \n))
 
 ifndef OPENJDK
   $(eval $(call SetupDemo,Laffy,jfc,,,,closed/,*))
@@ -344,8 +343,8 @@ ifeq ($(OPENJDK_TARGET_OS), aix)
 endif
 
 ifeq ($(SHUFFLED), true)
-  HPROF_EXTRA_CFLAGS := -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.hprof.agent/share/native/libnpt \
-      -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.hprof.agent/$(OPENJDK_TARGET_OS_API_DIR)/native/libnpt
+  HPROF_EXTRA_CFLAGS := -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.tools/share/native/libnpt \
+      -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.tools/$(OPENJDK_TARGET_OS_API_DIR)/native/libnpt
 else
   HPROF_EXTRA_CFLAGS := -I$(JDK_TOPDIR)/src/share/npt -I$(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/npt
 endif

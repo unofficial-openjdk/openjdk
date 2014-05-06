@@ -1297,22 +1297,19 @@ $(eval $(call SetupShuffleFiles,COPY_CONF_DESKTOP_SOLARIS, \
     SRC := $(JDK_TOPDIR)/src/solaris/lib, \
     DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.desktop/unix/conf, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/solaris/lib/images/cursors/*) \
-        $(JDK_TOPDIR)/src/solaris/lib/flavormap.properties \
-        $(JDK_TOPDIR)/src/solaris/lib/content-types.properties))
+        $(JDK_TOPDIR)/src/solaris/lib/flavormap.properties))
 
 $(eval $(call SetupShuffleFiles,COPY_CONF_DESKTOP_WINDOWS, \
     SRC := $(JDK_TOPDIR)/src/windows/lib, \
     DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.desktop/windows/conf, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/windows/lib/images/cursors/*) \
-        $(JDK_TOPDIR)/src/windows/lib/flavormap.properties \
-        $(JDK_TOPDIR)/src/windows/lib/content-types.properties))
+        $(JDK_TOPDIR)/src/windows/lib/flavormap.properties))
 
 $(eval $(call SetupShuffleFiles,COPY_CONF_DESKTOP_MACOSX, \
     SRC := $(JDK_TOPDIR)/src/macosx/lib, \
     DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.desktop/macosx/conf, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/macosx/lib/images/cursors/*) \
-        $(JDK_TOPDIR)/src/macosx/lib/flavormap.properties \
-        $(JDK_TOPDIR)/src/macosx/lib/content-types.properties))
+        $(JDK_TOPDIR)/src/macosx/lib/flavormap.properties))
 
 $(eval $(call SetupShuffleFiles,COPY_CONF_JVMCFG_SOLARIS, \
     SRC := $(JDK_TOPDIR)/src/solaris/bin, \

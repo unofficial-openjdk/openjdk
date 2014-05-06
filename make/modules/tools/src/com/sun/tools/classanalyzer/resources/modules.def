@@ -262,6 +262,9 @@ module java.desktop {
             sun.print.**,
             sun.swing.**;
 
+    // Explicitly include content-types.properties
+    include sun/net/www/content-types.properties;
+
     // circular dependencies with these apple packages
     include apple.laf.*,
             com.apple.eawt.**,
