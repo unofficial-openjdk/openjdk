@@ -530,6 +530,7 @@ ifeq ($(SHUFFLED), true)
       jdk.tools \
       jdk.jre.tools \
       jdk.xml.ws.tools \
+      jdk.jdi \
       )
       #
 
@@ -657,6 +658,24 @@ ifeq ($(SHUFFLED), true)
   ifndef OPENJDK
     SRC_ZIP_SRCS += $(wildcard $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/*/share/classes)
   endif
+
+  # Need to copy launcher src files into desired directory structure
+  # before zipping the sources.
+  LAUNCHER_SRC_FILES := $(wildcard $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/libjli/*) \
+      $(wildcard $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/$(OPENJDK_TARGET_OS_API_DIR)/native/libjli/java_md*)
+  LAUNCHER_ZIP_SRC := $(patsubst $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/libjli/%, \
+          $(IMAGES_OUTPUTDIR)/src/launcher/%, \
+      $(patsubst $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/$(OPENJDK_TARGET_OS_API_DIR)/native/libjli/%, \
+          $(IMAGES_OUTPUTDIR)/src/launcher/%, \
+      $(LAUNCHER_SRC_FILES)))
+
+  $(IMAGES_OUTPUTDIR)/src/launcher/%: \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/libjli/%
+		$(install-file)
+
+  $(IMAGES_OUTPUTDIR)/src/launcher/%: \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/$(OPENJDK_TARGET_OS_API_DIR)/native/libjli/%
+		$(install-file)
 else
   SRC_ZIP_SRCS := \
       $(JDK_TOPDIR)/src/share/classes \
@@ -669,21 +688,21 @@ else
   ifndef OPENJDK
     SRC_ZIP_SRCS += $(JDK_TOPDIR)/src/closed/share/classes
   endif
+
+  # Need to copy launcher src files into desired directory structure
+  # before zipping the sources.
+  LAUNCHER_SRC_FILES := $(wildcard $(JDK_TOPDIR)/src/share/bin/*) \
+      $(wildcard $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/bin/java_md*)
+  LAUNCHER_ZIP_SRC := $(patsubst $(JDK_TOPDIR)/src/share/bin/%, $(IMAGES_OUTPUTDIR)/src/launcher/%, \
+      $(patsubst $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/bin/%, $(IMAGES_OUTPUTDIR)/src/launcher/%, \
+      $(LAUNCHER_SRC_FILES)))
+
+  $(IMAGES_OUTPUTDIR)/src/launcher/%: $(JDK_TOPDIR)/src/share/bin/%
+	$(install-file)
+
+  $(IMAGES_OUTPUTDIR)/src/launcher/%: $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/bin/%
+	$(install-file)
 endif
-
-# Need to copy launcher src files into desired directory structure
-# before zipping the sources.
-LAUNCHER_SRC_FILES := $(wildcard $(JDK_TOPDIR)/src/share/bin/*) \
-    $(wildcard $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/bin/java_md*)
-LAUNCHER_ZIP_SRC := $(patsubst $(JDK_TOPDIR)/src/share/bin/%, $(IMAGES_OUTPUTDIR)/src/launcher/%, \
-    $(patsubst $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/bin/%, $(IMAGES_OUTPUTDIR)/src/launcher/%, \
-    $(LAUNCHER_SRC_FILES)))
-
-$(IMAGES_OUTPUTDIR)/src/launcher/%: $(JDK_TOPDIR)/src/share/bin/%
-	$(install-file)
-
-$(IMAGES_OUTPUTDIR)/src/launcher/%: $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/bin/%
-	$(install-file)
 
 $(IMAGES_OUTPUTDIR)/src.zip: $(LAUNCHER_ZIP_SRC)
 

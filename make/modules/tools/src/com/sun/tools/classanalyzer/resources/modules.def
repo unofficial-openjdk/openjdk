@@ -175,6 +175,9 @@ module java.base {
     // unicode scripting support
     include java/lang/uniName.dat;
 
+    // Explicitly include content-types.properties
+    include sun/net/www/content-types.properties;
+
     // no META-INF/services
     uses java.nio.channels.spi.AsynchronousChannelProvider;
     uses java.nio.channels.spi.SelectorProvider;
@@ -261,9 +264,6 @@ module java.desktop {
             sun.java2d.**,
             sun.print.**,
             sun.swing.**;
-
-    // Explicitly include content-types.properties
-    include sun/net/www/content-types.properties;
 
     // circular dependencies with these apple packages
     include apple.laf.*,

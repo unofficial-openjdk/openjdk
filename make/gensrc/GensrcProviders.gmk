@@ -39,12 +39,13 @@ ifeq ($(SHUFFLED), true)
   # service providers.
   # $(JDK_OUTPUTDIR)/gensrc_jdi/META-INF/services/com.sun.jdi.connect.Connector is
   # created in Import.gmk.
-  $(JDK_OUTPUTDIR)/gensrc/jdk.jdi/META-INF/services/$(CONNECTOR_SERVICE): \
+  # Now sajdi is in its own module. Disable this part:
+#  $(JDK_OUTPUTDIR)/gensrc/jdk.jdi/META-INF/services/$(CONNECTOR_SERVICE): \
       $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.jdi/share/classes/META-INF/services/com.sun.jdi.connect.Connector \
       $(JDK_OUTPUTDIR)/gensrc_jdi/META-INF/services/com.sun.jdi.connect.Connector
-	$(process-provider)
+#	$(process-provider)
 
-  GENSRC_JDK_TOOLS += $(JDK_OUTPUTDIR)/gensrc/jdk.jdi/META-INF/services/$(CONNECTOR_SERVICE)
+#  GENSRC_JDK_TOOLS += $(JDK_OUTPUTDIR)/gensrc/jdk.jdi/META-INF/services/$(CONNECTOR_SERVICE)
 
   ##############################################################################
 

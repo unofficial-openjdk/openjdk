@@ -398,6 +398,11 @@ SHUFFLE_SRC_TARGETS += \
     $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.base/aix/classes/java/lang/UNIXProcess.java \
     #
 
+$(eval $(call SetupShuffleFiles,COPY_ZIPFS_SERVICE, \
+    SRC := $(JDK_TOPDIR)/src/share/classes/jdk/nio/zipfs, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/jdk.zipfs/share/classes, \
+    FILES := $(JDK_TOPDIR)/src/share/classes/jdk/nio/zipfs/META-INF/services/java.nio.file.spi.FileSystemProvider))
+
 ################################################################################
 
 # fdlibm
