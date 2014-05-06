@@ -2437,7 +2437,7 @@ jint Arguments::parse_each_vm_init_arg(const JavaVMInitArgs* args,
                                             (size_t)InitialCodeCacheSize);
       if (errcode != arg_in_range) {
         jio_fprintf(defaultStream::error_stream(),
-                    "Invalid maximum code cache size: %s. Should be greater than InitialCodeCacheSize=%dK\n",
+                    "Invalid maximum code cache size: %s. Should be greater than or equal to InitialCodeCacheSize=%dK\n",
                     option->optionString, InitialCodeCacheSize/K);
         describe_range_error(errcode);
         return JNI_EINVAL;
