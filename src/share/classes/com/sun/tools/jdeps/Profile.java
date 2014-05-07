@@ -34,7 +34,7 @@ enum Profile {
     COMPACT1("compact1", 1, "java.compact1"),
     COMPACT2("compact2", 2, "java.compact2"),
     COMPACT3("compact3", 3, "java.compact3"),
-    FULL_JRE("Full JRE", 4, "jdk.jre");
+    FULL_JRE("Full JRE", 4, "jdk.runtime");
 
     final String name;
     final int profile;
