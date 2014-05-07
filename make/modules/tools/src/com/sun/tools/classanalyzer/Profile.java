@@ -41,7 +41,7 @@ public enum Profile {
     COMPACT1(1),
     COMPACT2(2),
     COMPACT3(3),
-    FULL_JRE("Full JRE", 4, "jdk.jre"),
+    FULL_JRE("Full JRE", 4, "jdk.runtime"),
     JDK("JDK", 5, "jdk");
 
     final String name;

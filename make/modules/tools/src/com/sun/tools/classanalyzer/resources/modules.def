@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright (c) 2009, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -200,10 +200,10 @@ module java.base {
     //
     // qualified exports for open/closed and platform-specific content
     //
-    exports jdk.internal.org.objectweb.asm to jdk.jfr, jdk.nashorn;
-    exports jdk.internal.org.objectweb.asm.commons to jdk.jfr, jdk.nashorn;
+    exports jdk.internal.org.objectweb.asm to jdk.jfr, jdk.scripting.nashorn;
+    exports jdk.internal.org.objectweb.asm.commons to jdk.jfr, jdk.scripting.nashorn;
     exports jdk.internal.org.objectweb.asm.tree to jdk.jfr;
-    exports jdk.internal.org.objectweb.asm.util to jdk.jfr, jdk.nashorn;
+    exports jdk.internal.org.objectweb.asm.util to jdk.jfr, jdk.scripting.nashorn;
 
 
     exports sun.misc to jdk.deploy.osx;
@@ -327,6 +327,10 @@ module java.corba {
             com.sun.org.omg.**,
             org.omg.**,
             sun.corba.**;
+
+    // RMI-IIOP defines mapping to these exceptions
+    include javax.transaction.*;
+
     // idlj
     include com.sun.tools.corba.**;
 
@@ -340,6 +344,7 @@ module java.corba {
 
 module java.sql {
     include java.sql.**, javax.sql.*;
+    include javax.transaction.xa.*;
     uses java.sql.Driver;
 }
 
@@ -578,11 +583,7 @@ module java.compiler {
     uses javax.tools.JavaCompiler;
 } 
 
-module java.transaction {
-    include javax.transaction.**;  // JTA
-}
-
-module jdk.nashorn {
+module jdk.scripting.nashorn {
     include jdk.nashorn.**,
             jdk.internal.dynalink.**;
     include jdk/nashorn/**;
@@ -681,7 +682,7 @@ module jdk.hprof.agent {
     include com.sun.demo.jvmti.hprof.*;
 }
 
-module jdk.compiler.tools {
+module jdk.compiler {
     include com.sun.tools.javac.**,
             com.sun.source.**,
             com.sun.tools.sjavac.**;
@@ -696,55 +697,58 @@ module jdk.compiler.tools {
 
     include com.sun.tools.javap.**,
             com.sun.tools.classfile.**;
-
-    include com.sun.tools.jdeps.**;
 }
 
-// diagnostic tools and APIs
-module jdk.diag.tools {
+// jvmstat tooling
+module jdk.jvmstat {
+    include sun.jvmstat.**;
+
+    include sun.tools.jps.**,
+            sun.tools.jstat.**,
+            sun.tools.jstatd.**;
+}
+
+// Attach API
+module jdk.attach {
     include com.sun.tools.attach.**,
             sun.tools.attach.**;
 
-    include sun.jvmstat.**;
-
-    include sun.tools.jcmd.**,
-            sun.tools.jinfo.**,
-            sun.tools.jmap.**,
-            sun.tools.jps.**,
-            sun.tools.jstat.**,
-            sun.tools.jstatd.**,
-            sun.tools.jstack.**;
+    include sun.tools.jcmd.**;
 
     uses com.sun.tools.attach.spi.AttachProvider;
 }
 
-// SA
+// SA tooling
 module jdk.hotspot.tools {
     include sun.jvm.hotspot.**,
             com.sun.java.swing.ui.**,
             com.sun.java.swing.action.**;
     include toolbarButtonGraphics/**;
     include sa.properties;
+
+    include sun.tools.jinfo.**,
+            sun.tools.jmap.**,
+            sun.tools.jstack.**;
 }
 
-// JRE tools
-module jdk.jre.tools {
-    // ## part of the runtime - include jsdt here for now
-    include com.sun.tracing.**, sun.tracing.**;
-    include sun.security.tools.policytool.*;
+module jdk.jconsole {
+    include sun.tools.jconsole.**,
+            com.sun.tools.jconsole.**;
 }
 
 // JDK tools
 module jdk.tools {
-    requires public jdk.jre.tools;
-    requires public jdk.compiler.tools;
-    requires public jdk.diag.tools;
-    requires public jdk.hotspot.tools;
-    requires public jdk.xml.ws.tools;
+    requires jdk.compiler;
+    requires jdk.hotspot.tools;
+    requires jdk.xml.ws.tools;
 
-    requires public jdk.jdi;
-    requires public jdk.debug.agent;
-    requires public jdk.hprof.agent;
+    requires jdk.jdi;
+    requires jdk.debug.agent;
+    requires jdk.hprof.agent;
+
+    requires jdk.jvmstat;
+    requires jdk.attach;
+    requires jdk.jconsole;
 
     // jar, jarsigner
     include sun.tools.jar.**;
@@ -753,6 +757,8 @@ module jdk.tools {
 
     // jlink
     include jdk.jigsaw.tools.jlink.**;
+
+    include com.sun.tools.jdeps.**;
 
     // rmic
     include sun.rmi.rmic.**,
@@ -765,9 +771,7 @@ module jdk.tools {
     // misc tools
     include com.sun.tools.extcheck.**,
             com.sun.tools.hat.**,
-            com.sun.tools.jconsole.*,
             com.sun.tools.script.**,
-            sun.tools.jconsole.**,
             sun.tools.native2ascii.**,
             sun.tools.serialver.**;
 }
@@ -776,17 +780,17 @@ module jdk.providers {
     requires jdk.crypto;
     requires jdk.crypto.ec;
     requires jdk.crypto.pkcs11;
-    requires jdk.nashorn;
+    requires jdk.scripting.nashorn;
     requires jdk.zipfs;
     requires jdk.charsets;
     requires jdk.localedata;
-    permits jdk.jre;
+    permits jdk.runtime;
 }
 
 module jdk.providers.os {
     requires jdk.crypto.mscapi;  // windows-only
     requires jdk.deploy.osx;     // macosx-only
-    permits jdk.jre;
+    permits jdk.runtime;
 }
 
 module oracle.providers.os {
@@ -808,7 +812,6 @@ module java.compact2 {
 
     requires public java.sql;
     requires public java.rmi;
-    requires public java.transaction;
     requires public java.xml;
 }
 
@@ -830,7 +833,6 @@ module java.compact3 {
 module java.se {
     requires public java.compact3;
 
-    requires public java.annotations.common;
     requires public java.desktop;
     requires public java.corba;
     requires public java.activation;
@@ -855,25 +857,28 @@ module jdk.compact3 {
     requires public jdk.naming.rmi;
 }
 
-module jdk.jre {
-    requires public java.se;
-    requires public jdk.compact3;
+module jdk.runtime {
+    requires java.se;
+    requires jdk.compact3;
 
-    requires public jdk.jre.tools;
-    requires public jdk.deploy;
+    requires jdk.deploy;
 
     requires jdk.providers;
     requires jdk.providers.os;
+
+    // Tools/APIs included in the JRE
+    include com.sun.tracing.**, sun.tracing.**;
+    include sun.security.tools.policytool.*;
 }
 
 module jdk {
-    requires public jdk.jre;
-    requires public jdk.tools;
+    requires jdk.runtime;
+    requires jdk.tools;
 }
 
 module oracle.jre {
-    requires public jdk.jre;
-    requires public jdk.jfr;
-    requires public jdk.snmp;
+    requires jdk.runtime;
+    requires jdk.jfr;
+    requires jdk.snmp;
     requires oracle.providers.os;
 }

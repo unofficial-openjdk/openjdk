@@ -65,7 +65,7 @@ ifeq ($(SHUFFLED), true)
   $(GENGRAPHS_DIR)/jdk.dot: $(BUILD_DEPS_TOOLS) $(MODULES_SER_OUT)
 	$(TOOL_GENGRAPHS) $(GENGRAPHS_DIR)
 
-  MODULES_XML := $(JDK_OUTPUTDIR)/$(MODULES_SUBDIR)/$(JDK_COMPILER_TOOLS_SUBDIR)/com/sun/tools/jdeps/resources/modules.xml
+  MODULES_XML := $(JDK_OUTPUTDIR)/$(MODULES_SUBDIR)/$(JDK_TOOLS_SUBDIR)/com/sun/tools/jdeps/resources/modules.xml
 
   # This is only used by legacy build
   METADATA := $(JDK_OUTPUTDIR)/btclasses/build/tools/generatemodulesxml/modules.xml

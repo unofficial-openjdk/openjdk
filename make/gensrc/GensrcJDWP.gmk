@@ -48,4 +48,4 @@ $(JDK_OUTPUTDIR)/gensrc_jdwp_doc/jdwp-protocol.html: $(JDWP_SPEC_FILE) \
 GENSRC_JDWP := $(JDK_OUTPUTDIR)/gensrc$(JDK_JDI_SUBDIR)/com/sun/tools/jdi/JDWP.java \
     $(JDK_OUTPUTDIR)/gensrc_jdwp_headers/JDWPCommands.h \
     $(JDK_OUTPUTDIR)/gensrc_jdwp_doc/jdwp-protocol.html
-GENSRC_JDK_TOOLS += $(GENSRC_JDWP)
+GENSRC_JDK_JDI += $(GENSRC_JDWP)

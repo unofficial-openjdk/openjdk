@@ -50,11 +50,11 @@ ifeq ($(SHUFFLED), true)
   ##############################################################################
 
   # Filter AttachProvider
-  $(JDK_OUTPUTDIR)/gensrc/jdk.diag.tools/META-INF/services/com.sun.tools.attach.spi.AttachProvider: \
-      $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.diag.tools/share/classes/META-INF/services/com.sun.tools.attach.spi.AttachProvider
+  $(JDK_OUTPUTDIR)/gensrc/jdk.attach/META-INF/services/com.sun.tools.attach.spi.AttachProvider: \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.attach/share/classes/META-INF/services/com.sun.tools.attach.spi.AttachProvider
 	$(process-provider)
 
-  GENSRC_JDK_TOOLS += $(JDK_OUTPUTDIR)/gensrc/jdk.diag.tools/META-INF/services/com.sun.tools.attach.spi.AttachProvider
+  GENSRC_JDK_ATTACH += $(JDK_OUTPUTDIR)/gensrc/jdk.attach/META-INF/services/com.sun.tools.attach.spi.AttachProvider
 
   ##############################################################################
 

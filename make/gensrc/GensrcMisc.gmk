@@ -50,15 +50,15 @@ GENSRC_JAVA_BASE += $(JDK_OUTPUTDIR)/gensrc$(JAVA_BASE_SUBDIR)/sun/misc/Version.
 ##########################################################################################
 # Version file for jconsole
 
-$(JDK_OUTPUTDIR)/gensrc$(JDK_TOOLS_SUBDIR)/sun/tools/jconsole/Version.java: \
-    $(JDK_TOPDIR)/$(SRC_SUBDIR)$(JDK_TOOLS_SUBDIR)/share/classes/sun/tools/jconsole/Version.java.template
+$(JDK_OUTPUTDIR)/gensrc$(JDK_JCONSOLE_SUBDIR)/sun/tools/jconsole/Version.java: \
+    $(JDK_TOPDIR)/$(SRC_SUBDIR)$(JDK_JCONSOLE_SUBDIR)/share/classes/sun/tools/jconsole/Version.java.template
 	$(MKDIR) -p $(@D)
 	$(RM) $@ $@.tmp
 	$(ECHO) $(LOG_INFO) Generating sun/tools/jconsole/Version.java
 	$(SED) -e 's/@@jconsole_version@@/$(FULL_VERSION)/g' $< > $@.tmp
 	$(MV) $@.tmp $@
 
-GENSRC_JDK_TOOLS += $(JDK_OUTPUTDIR)/gensrc$(JDK_TOOLS_SUBDIR)/sun/tools/jconsole/Version.java
+GENSRC_JDK_JCONSOLE += $(JDK_OUTPUTDIR)/gensrc$(JDK_JCONSOLE_SUBDIR)/sun/tools/jconsole/Version.java
 
 ##########################################################################################
 

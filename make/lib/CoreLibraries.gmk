@@ -351,10 +351,10 @@ PREFS_LIBRARIES += $(BUILD_LIBPREFS)
 ##########################################################################################
 
 ifeq ($(SHUFFLED), true)
-  LIBUNPACK_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.jre.tools/share/native/libunpack \
-      $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.jre.tools/share/native/common-unpack
+  LIBUNPACK_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.runtime/share/native/libunpack \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.runtime/share/native/common-unpack
   LIBUNPACK_CPPFLAGS := -I$(JDK_OUTPUTDIR)/gensrc_headers/java.base \
-      -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.jre.tools/share/native/common-unpack \
+      -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.runtime/share/native/common-unpack \
       $(addprefix -I, $(BUILD_LIBJAVA_SRC)) \
       #
 else
