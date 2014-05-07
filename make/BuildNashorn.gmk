@@ -57,7 +57,7 @@ $(eval $(call SetupJavaCompiler,GENERATE_NEWBYTECODE_DEBUG, \
     SERVER_JVM := $(SJAVAC_SERVER_JAVA)))
 
 ifeq ($(SHUFFLED), true)
-  NASHORN_SRC := $(NASHORN_TOPDIR)/$(SRC_SUBDIR)/jdk.nashorn/share/classes
+  NASHORN_SRC := $(NASHORN_TOPDIR)/$(SRC_SUBDIR)/jdk.scripting.nashorn/share/classes
 else
   NASHORN_SRC := $(NASHORN_TOPDIR)/src
 endif
@@ -89,7 +89,7 @@ $(eval $(call SetupJavaCompilation,BUILD_NASGEN, \
 $(BUILD_NASGEN): $(BUILD_NASHORN)
 
 ifeq ($(SHUFFLED), true)
-  NASHORN_CLASSES_DIR := $(JDK_OUTPUTDIR)/modules/jdk.nashorn
+  NASHORN_CLASSES_DIR := $(JDK_OUTPUTDIR)/modules/jdk.scripting.nashorn
 else
   NASHORN_CLASSES_DIR := $(NASHORN_OUTPUTDIR)/classes
 endif
@@ -108,8 +108,8 @@ $(NASGEN_RUN_FILE): $(BUILD_NASGEN)
 
 # Version file needs to be processed with version numbers
 ifeq ($(SHUFFLED), true)
-  VERSION_FILE := $(JDK_OUTPUTDIR)/modules/jdk.nashorn/jdk/nashorn/internal/runtime/resources/version.properties
-  VERSION_SRC := $(NASHORN_TOPDIR)/$(SRC_SUBDIR)/jdk.nashorn/share/classes/jdk/nashorn/internal/runtime/resources/version.properties-template
+  VERSION_FILE := $(JDK_OUTPUTDIR)/modules/jdk.scripting.nashorn/jdk/nashorn/internal/runtime/resources/version.properties
+  VERSION_SRC := $(NASHORN_TOPDIR)/$(SRC_SUBDIR)/jdk.scripting.nashorn/share/classes/jdk/nashorn/internal/runtime/resources/version.properties-template
 else
   VERSION_FILE := $(NASHORN_OUTPUTDIR)/classes/jdk/nashorn/internal/runtime/resources/version.properties
   VERSION_SRC := $(NASHORN_TOPDIR)/src/jdk/nashorn/internal/runtime/resources/version.properties-template
