@@ -412,7 +412,7 @@ jdk.charsets_COPY := .dat
 
 ################################################################################
 
-jdk.compiler.tools_COPY := .gif .xml .css .js javax.tools.JavaCompilerTool
+jdk.compiler_COPY := .gif .xml .css .js javax.tools.JavaCompilerTool
 
 ################################################################################
 
@@ -496,7 +496,7 @@ endif
 
 ################################################################################
 
-jdk.diag.tools_COPY := aliasmap jstat_options jstat_unsupported_options
+jdk.jvmstat_COPY := aliasmap jstat_options jstat_unsupported_options
 
 ################################################################################
 
@@ -558,7 +558,7 @@ ALL_SRC_DIRS = \
 
 # Find all modules with java sources. Filter out nashorn since it needs to be
 # compiled separately.
-JAVA_MODULES := $(filter-out jdk.nashorn, $(call FindJavaModules))
+JAVA_MODULES := $(filter-out jdk.scripting.nashorn, $(call FindJavaModules))
 
 # This macro sets up compilation of a module and declares dependencies for it.
 # Param 1 - module name

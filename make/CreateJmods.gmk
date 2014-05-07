@@ -144,11 +144,11 @@ jdk.crypto.mscapi_NATIVE := $(SECURITY_MSCAPI_LIBRARIES)
 jdk.crypto.pkcs11_NATIVE := $(SECURITY_PKCS11_LIBRARIES)
 jdk.crypto.pkcs11_CONF := $(SECURITY_PKCS11_CONF_FILES)
 
-jdk.compiler.tools_CMDS := $(COMPILER_TOOLS_LAUNCHERS)
+jdk.compiler_CMDS := $(COMPILER_LAUNCHERS)
 
 jdk.deploy.osx_NATIVE := $(DEPLOY_OSX_LIBRARIES)
 
-jdk.hotspot.tools_CMDS := $(HOTSPOT_SA_LAUNCHERS)
+jdk.hotspot.tools_CMDS := $(HOTSPOT_TOOLS_LAUNCHERS)
 jdk.hotspot.tools_NATIVE := $(JDI_SA_LIBRARIES)
 
 jdk.security.auth_NATIVE := $(SECURITY_JAAS_LIBRARIES)
@@ -156,20 +156,24 @@ jdk.security.auth_NATIVE := $(SECURITY_JAAS_LIBRARIES)
 jdk.jdi_CMDS := $(JDI_LAUNCHERS)
 jdk.jdi_NATIVE := $(JDI_TRANSPORT_LIBRARIES)
 
-jdk.nashorn_CMDS := $(NASHORN_LAUNCHERS)
+jdk.scripting.nashorn_CMDS := $(NASHORN_LAUNCHERS)
 
 jdk.debug.agent_NATIVE := $(JDWP_LIBRARIES)
 
 jdk.hprof.agent_NATIVE := $(HPROF_LIBRARIES) $(CRW_LIBRARIES)
 jdk.hprof.agent_CONF := $(HPROF_CONF_FILES)
 
-jdk.diag.tools_CMDS := $(DIAG_TOOLS_LAUNCHERS)
-jdk.diag.tools_NATIVE := $(ATTACH_LIBRARIES)
+jdk.attach_CMDS := $(ATTACH_LAUNCHERS)
+jdk.attach_NATIVE := $(ATTACH_LIBRARIES)
+
+jdk.jconsole_CMDS := $(JCONSOLE_LAUNCHERS)
+
+jdk.jvmstat_CMDS := $(JVMSTAT_LAUNCHERS)
 
 jdk.xml.ws.tools_CMDS := $(XML_WS_TOOLS_LAUNCHERS)
 
-jdk.jre.tools_CMDS := $(JRE_TOOLS_LAUNCHERS)
-jdk.jre.tools_NATIVE := $(UNPACK_LIBRARIES) $(JSDT_LIBRARIES)
+jdk.runtime_CMDS := $(RUNTIME_LAUNCHERS)
+jdk.runtime_NATIVE := $(UNPACK_LIBRARIES) $(JSDT_LIBRARIES)
 
 jdk.tools_CMDS := $(TOOLS_LAUNCHERS)
 jdk.tools_NATIVE := $(NPT_LIBRARIES)

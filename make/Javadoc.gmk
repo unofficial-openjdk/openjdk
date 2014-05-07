@@ -540,7 +540,7 @@ $(TAGLETAPI_OPTIONS_FILE):
 $(TAGLETAPI_PACKAGES_FILE): $(call PackageDependencies,$(TAGLETAPI_PKGS))
 	$(prep-target)
         ifeq ($(SHUFFLED), true)
-	  @($(ECHO) "$(LANGTOOLS_TOPDIR)/$(SRC_SUBDIR)/jdk.compiler.tools/share/classes/$(TAGLETAPI_FILE)" ) > $@
+	  @($(ECHO) "$(LANGTOOLS_TOPDIR)/$(SRC_SUBDIR)/jdk.compiler/share/classes/$(TAGLETAPI_FILE)" ) > $@
         else
 	  @($(ECHO) "$(JDK_IMPSRC)/$(TAGLETAPI_FILE)" ) > $@
         endif
