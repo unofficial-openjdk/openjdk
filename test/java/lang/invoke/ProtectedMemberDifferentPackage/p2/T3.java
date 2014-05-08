@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -19,33 +19,14 @@
  * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  * or visit www.oracle.com if you need additional information or have any
  * questions.
+ *
  */
+package p2;
 
-/* @test
- * @bug 4629307
- * @summary Socket with OP_READ would get selected on connect
- * @author kladko
- */
+import p1.T2;
 
-import java.nio.channels.Selector;
-import java.nio.channels.SelectionKey;
-import java.nio.channels.SocketChannel;
+import java.lang.invoke.MethodHandles;
 
-public class ReadAfterConnect {
-    public static void main(String[] argv) throws Exception {
-        try (ByteServer server = new ByteServer();
-             SocketChannel sc = SocketChannel.open(server.address())) {
-
-            server.acceptConnection();
-
-            try (Selector sel = Selector.open()) {
-                sc.configureBlocking(false);
-                sc.register(sel, SelectionKey.OP_READ);
-                // Previously channel would get selected here, although there is nothing to read
-                if (sel.selectNow() != 0)
-                    throw new Exception("Select returned nonzero value");
-            }
-        }
-    }
-
+public class T3 extends T2 {
+    public static MethodHandles.Lookup lookup() { return MethodHandles.lookup(); }
 }
