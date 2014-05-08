@@ -68,18 +68,22 @@ ifeq ($(SHUFFLED), true)
   MODULES_XML := $(JDK_OUTPUTDIR)/$(MODULES_SUBDIR)/$(JDK_TOOLS_SUBDIR)/com/sun/tools/jdeps/resources/modules.xml
 
   # This is only used by legacy build
-  METADATA := $(JDK_OUTPUTDIR)/btclasses/build/tools/generatemodulesxml/modules.xml
+  METADATA := $(JDK_OUTPUTDIR)/btclasses/build/tools/module/modules.xml
 
   # Resource used by GenerateModulesXml tool
   $(METADATA): $(JDK_TOPDIR)/make/data/checkdeps/modules.xml
 	$(call install-file)
 
-  $(MODULES_XML): $(BUILD_GENMODULESXML_TOOL) $(METADATA)
+  $(MODULES_XML): $(BUILD_MODULE_TOOL) $(METADATA)
 	$(MKDIR) -p $(@D)
 	$(RM) $@
 	$(TOOL_GENMODULESXML) $@ $(JDK_OUTPUTDIR)/$(MODULES_SUBDIR)
 
-all: $(MODULES_SER_OUT) $(MODULES_XML) $(GENGRAPHS_DIR)/jdk.dot
+  $(GENGRAPHS_DIR)/module-summary.html: $(BUILD_MODULE_TOOL)
+	$(MKDIR) -p $(@D)
+	$(TOOL_MODULESUMMARY) -o $@ -mp $(JDK_OUTPUTDIR)/jmods
+
+all: $(MODULES_SER_OUT) $(MODULES_XML) $(GENGRAPHS_DIR)/jdk.dot $(GENGRAPHS_DIR)/module-summary.html
 else
 
   # Import nashorn.jar from nashorn dist dir.

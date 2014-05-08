@@ -23,9 +23,9 @@
  * questions.
  */
 
-package build.tools.generatemodulesxml;
+package build.tools.module;
 
-import build.tools.generatemodulesxml.GenerateModulesXml.Module;
+import build.tools.module.GenerateModulesXml.Module;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;

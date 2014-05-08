@@ -23,7 +23,7 @@
  * questions.
  */
 
-package build.tools.generatemodulesxml;
+package build.tools.module;
 
 import java.io.File;
 import java.io.IOException;
