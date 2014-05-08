@@ -87,7 +87,7 @@ $(LANGTOOLS_OUTPUTDIR)/gensrc/_the_props: $(PROPSOURCES) $(BUILD_TOOLS_LANGTOOLS
 	$(PRINTF) "jdk=$(JDK_VERSION)\nfull=$(FULL_VERSION)\nrelease=$(RELEASE)\n" \
 	    > $(LANGTOOLS_OUTPUTDIR)/gensrc$(JDK_TOOLS_SUBDIR)/com/sun/tools/jdeps/resources/version.properties
 	$(PRINTF) "jdk=$(JDK_VERSION)\nfull=$(FULL_VERSION)\nrelease=$(RELEASE)\n" \
-	    > $(LANGTOOLS_OUTPUTDIR)/gensrc$(JDK_COMPILER_SUBDIR)/com/sun/tools/javadoc/resources/version.properties
+	    > $(LANGTOOLS_OUTPUTDIR)/gensrc$(JDK_JAVADOC_SUBDIR)/com/sun/tools/javadoc/resources/version.properties
 	$(ECHO) Compiling $(words $(PROPSOURCES) v1 v2 v3) properties into resource bundles
 	$(TOOL_COMPILEPROPS_CMD) $(PROPCMDLINE) \
 	    -compile $(LANGTOOLS_OUTPUTDIR)/gensrc$(JDK_COMPILER_SUBDIR)/com/sun/tools/javah/resources/version.properties \
@@ -102,8 +102,8 @@ $(LANGTOOLS_OUTPUTDIR)/gensrc/_the_props: $(PROPSOURCES) $(BUILD_TOOLS_LANGTOOLS
 	    -compile $(LANGTOOLS_OUTPUTDIR)/gensrc$(JDK_TOOLS_SUBDIR)/com/sun/tools/jdeps/resources/version.properties \
 	        $(LANGTOOLS_OUTPUTDIR)/gensrc$(JDK_TOOLS_SUBDIR)/com/sun/tools/jdeps/resources/version.java \
 	        java.util.ListResourceBundle \
-	    -compile $(LANGTOOLS_OUTPUTDIR)/gensrc$(JDK_COMPILER_SUBDIR)/com/sun/tools/javadoc/resources/version.properties \
-	        $(LANGTOOLS_OUTPUTDIR)/gensrc$(JDK_COMPILER_SUBDIR)/com/sun/tools/javadoc/resources/version.java \
+	    -compile $(LANGTOOLS_OUTPUTDIR)/gensrc$(JDK_JAVADOC_SUBDIR)/com/sun/tools/javadoc/resources/version.properties \
+	        $(LANGTOOLS_OUTPUTDIR)/gensrc$(JDK_JAVADOC_SUBDIR)/com/sun/tools/javadoc/resources/version.java \
 	        java.util.ListResourceBundle
 	$(TOUCH) $@
 
