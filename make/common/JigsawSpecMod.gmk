@@ -52,12 +52,12 @@ ifeq ($(SHUFFLED), true)
 
   JDK_ATTACH_SUBDIR := /jdk.attach
   JDK_CHARSETS_SUBDIR := /jdk.charsets
-  JDK_CRYPTO_SUBDIR := /jdk.crypto
   JDK_CRYPTO_EC_SUBDIR := /jdk.crypto.ec
   JDK_CRYPTO_MSCAPI_SUBDIR := /jdk.crypto.mscapi
   JDK_CRYPTO_PKCS11_SUBDIR := /jdk.crypto.pkcs11
   JDK_CRYPTO_UCRYPTO_SUBDIR := /jdk.crypto.ucrypto
   JDK_COMPILER_SUBDIR := /jdk.compiler
+  JDK_JAVADOC_SUBDIR := /jdk.javadoc
   JDK_JCONSOLE_SUBDIR := /jdk.jconsole
   JDK_JVMSTAT_SUBDIR := /jdk.jvmstat
   JDK_SECURITY_AUTH_SUBDIR := /jdk.security.auth

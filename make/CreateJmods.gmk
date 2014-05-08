@@ -146,6 +146,8 @@ jdk.crypto.pkcs11_CONF := $(SECURITY_PKCS11_CONF_FILES)
 
 jdk.compiler_CMDS := $(COMPILER_LAUNCHERS)
 
+jdk.javadoc_CMDS := $(JAVADOC_LAUNCHERS)
+
 jdk.deploy.osx_NATIVE := $(DEPLOY_OSX_LIBRARIES)
 
 jdk.hotspot.tools_CMDS := $(HOTSPOT_TOOLS_LAUNCHERS)

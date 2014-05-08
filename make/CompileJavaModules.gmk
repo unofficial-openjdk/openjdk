@@ -412,7 +412,9 @@ jdk.charsets_COPY := .dat
 
 ################################################################################
 
-jdk.compiler_COPY := .gif .xml .css .js javax.tools.JavaCompilerTool
+jdk.compiler_COPY := javax.tools.JavaCompilerTool
+
+jdk.javadoc_COPY := .xml .css .js
 
 ################################################################################
 
