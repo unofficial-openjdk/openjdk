@@ -112,28 +112,30 @@ public class ModuleSummary {
                 .collect(Collectors.joining(" ")));
     }
 
-
     private static void genSummary(PrintStream out, Module m, Path jmod) throws IOException {
         JmodInfo jm = new JmodInfo(jmod);
         out.format("<tr>%n");
-        out.format("<td><b>%s</b><br><br>%n", m.id().name());
-                out.format("jmod file %12d bytes<br>%n", jm.filesize);
-        out.format("uncompressed %12d bytes<br>%n", jm.size);
-        out.format("  %8d %-12s %10d bytes<br>%n", jm.classCount, "classes", jm.classBytes);
-        out.format("  %8d %-12s %10d bytes<br>%n", jm.resourceCount, "resources", jm.resourceBytes);
-        out.format("  %8d %-12s %10d bytes<br>%n", jm.configCount, "config", jm.configBytes);
-        long diz = jm.nativeLibs.entrySet().stream()
-                .filter(e -> e.getKey().endsWith(".diz"))
-                .mapToLong(e -> e.getValue().longValue()).sum();
-        long dizCount = jm.nativeLibs.keySet().stream()
-                .filter(n -> n.endsWith(".diz"))
-                .count();
-        out.format("  %8d %-12s %10d bytes<br>%n", jm.nativeLibs.size() - dizCount,
-                   "native libs",
-                   jm.nativeLibs.values().stream().mapToLong(l -> l.longValue()).sum() - diz);
-        out.format("  %8d %-12s %10d bytes<br>%n", dizCount, "native diz", diz);
-        out.format("  %8d %-12s %10d bytes<br>%n", jm.nativeCmds.size(), "launchers",
-                   jm.nativeCmds.values().stream().mapToLong(l -> l.longValue()).sum());
+        out.format("<td class=\"name\"><b>%s</b><br><br>%n", m.id().name());
+        out.format("jmod file<br>%n");
+        out.format("uncompressed<br>%n");
+        out.format("%8d %s<br>%n", jm.classCount, "classes");
+        out.format("%8d %s<br>%n", jm.resourceCount, "resources");
+        out.format("%8d %s<br>%n", jm.configCount, "config");
+        out.format("%8d %s<br>%n", jm.nativeLibs.size() - jm.dizCount, "native libs");
+        out.format("%8d %s<br>%n", jm.dizCount, "native diz");
+        out.format("%8d %s<br>%n", jm.nativeCmds.size(), "launchers");
+        out.format("</td>%n");
+        out.format("<td class=\"num\"><br><br>%n");
+        out.format("%12d<br>%n", jm.filesize);
+        out.format("%12d<br>%n", jm.size);
+        out.format("%10d<br>%n", jm.classBytes);
+        out.format("%10d<br>%n", jm.resourceBytes);
+        out.format("%10d<br>%n", jm.configBytes);
+        out.format("%10d<br>%n", jm.nativeLibs.values().stream()
+                                   .mapToLong(l -> l.longValue()).sum() - jm.dizBytes);
+        out.format("%10d<br>%n", jm.dizBytes);
+        out.format("%10d<br>%n", jm.nativeCmds.values().stream()
+                                   .mapToLong(l -> l.longValue()).sum());
         out.format("</td>%n");
         out.format("<td>%n");
         jm.nativeCmds.entrySet().stream()
@@ -147,25 +149,29 @@ public class ModuleSummary {
         out.format("<td>%s</td>%n", requires);
         String exports = m.exports().stream()
             .filter(e -> e.permit() == null)
-            .map(e -> "exports " + e.pkg())
+            .map(e -> e.pkg())
             .sorted()
             .collect(Collectors.joining("<br>\n"));
         out.format("<td>%s</td>%n", exports);
-        String services = m.serviceDependences().stream()
+        Stream<String> uses = m.serviceDependences().stream()
             .map(d -> "uses " + d.service())
-            .sorted()
-            .collect(Collectors.joining("<br>\n"));
-        out.format("<td>%s</td>%n", services);
+            .sorted();
+        Stream<String> providers = m.services().entrySet().stream()
+            .sorted(Map.Entry.comparingByKey())
+            .flatMap(e -> e.getValue().stream().map(p ->
+                String.format("prov %s<br>&nbsp; w/ %s", e.getKey(), p)));
+        out.format("<td>%s</td>%n", Stream.concat(uses, providers)
+                                          .collect(Collectors.joining("<br>\n")));
         if (jm.nativeLibs.size() > 0) {
             String nativeLibs = jm.nativeLibs.keySet().stream()
                 .sorted()
                 .collect(Collectors.joining("<br>\n"));
-            out.format("<td class=\"col1\">%s</td>%n", nativeLibs);
+            out.format("<td class=\"name\">%s</td>%n", nativeLibs);
             String sizes = jm.nativeLibs.entrySet().stream()
                 .sorted(Map.Entry.comparingByKey())
                 .map(e -> e.getValue().toString())
                 .collect(Collectors.joining("<br>\n"));
-            out.format("<td class=\"col2\">%s</td>%n", sizes);
+            out.format("<td class=\"num\">%s</td>%n", sizes);
         }
         out.format("</td>%n");
         out.format("</tr>%n");
@@ -173,25 +179,29 @@ public class ModuleSummary {
 
     private static void writeHeader(PrintStream out, int numModules) {
         out.format("<html>%n");
-        out.format("<head>%n<style>%n");
-        out.format("table {font-family:monospace; font-size:80%% border: 1px solid black; border-collapse: collapse;}%n");
+        out.format("<head>%n");
+        out.format("<title>JDK Module Sumamry</title>%n");
+        out.format("<style type=\"text/css\">%n");
+        out.format("table {border: 1px solid black; border-collapse: collapse;}%n");
+        out.format("td { font-family: monospace; padding: 3px 6px}%n");
         out.format("td {vertical-align:text-top; border: 1px solid;}%n");
-        out.format("td.col1 {border-right: none;}");
-        out.format("td.col2 {border-left: none; text-align:right;}");
+        out.format("td.name {border-right: none;}");
+        out.format("td.num {border-left: none; text-align:right;}");
         out.format("th {border: 1px solid black;}%n");
-        out.format("th.col1 {border-right: none;}");
-        out.format("th.col2 {border-left: none; text-align:right;}");
+        out.format("th.name {border-right: none;}");
+        out.format("th.num {border-left: none; text-align:right;}");
         out.format("</style>%n</head>%n");
-        out.format("Number of modules = %d%n", numModules);
+        out.format("<h1>Number of JDK modules = %d</h1>%n", numModules);
         out.format("<table>");
         out.format("<tr>%n");
-        out.format("<th>Module</th>%n");
+        out.format("<th class=\"name\">Module</th>%n");
+        out.format("<th class=\"num\">Bytes</th>%n");
         out.format("<th>Launchers</th>%n");
         out.format("<th>Dependences</th>%n");
         out.format("<th>Exports</th>%n");
         out.format("<th>Services</th>%n");
-        out.format("<th class=\"col1\">Native libs</th>%n");
-        out.format("<th class=\"col2\">Bytes</th>%n");
+        out.format("<th class=\"name\">Native libs</th>%n");
+        out.format("<th class=\"num\">Bytes</th>%n");
         out.format("</tr>%n");
     }
 
@@ -204,6 +214,8 @@ public class ModuleSummary {
         final long resourceBytes;
         final int  configCount;
         final long configBytes;
+        final long dizCount;
+        final long dizBytes;
         final Map<String,Long> nativeCmds = new HashMap<>();
         final Map<String,Long> nativeLibs = new HashMap<>();
         JmodInfo(Path jmod) throws IOException {
@@ -254,6 +266,12 @@ public class ModuleSummary {
                 this.configCount = cfCount;
                 this.configBytes = cfBytes;
                 this.size = total;
+                this.dizBytes = nativeLibs.entrySet().stream()
+                    .filter(e -> e.getKey().endsWith(".diz"))
+                    .mapToLong(e -> e.getValue().longValue()).sum();
+                this.dizCount = nativeLibs.keySet().stream()
+                    .filter(n -> n.endsWith(".diz"))
+                    .count();
             }
         }
 
