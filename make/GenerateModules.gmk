@@ -83,7 +83,7 @@ ifeq ($(SHUFFLED), true)
 	$(MKDIR) -p $(@D)
 	$(TOOL_MODULESUMMARY) -o $@ -mp $(JDK_OUTPUTDIR)/jmods
 
-all: $(MODULES_SER_OUT) $(MODULES_XML) $(GENGRAPHS_DIR)/jdk.dot $(GENGRAPHS_DIR)/module-summary.html
+all: $(MODULES_SER_OUT) $(MODULES_XML) $(GENGRAPHS_DIR)/jdk.dot
 else
 
   # Import nashorn.jar from nashorn dist dir.
