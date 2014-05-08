@@ -104,18 +104,21 @@ public class ModuleSummary {
         }
     }
 
-    private static String toString(ModuleDependence d) {
+    private static String toRequires(ModuleDependence d) {
+        String ref = String.format("<a href=\"#%s\">%s</a>",
+                                   d.query().name(), d.query().name());
         Stream<String> mods = d.modifiers().stream().map(e -> e.toString().toLowerCase());
         return (Stream.concat(Stream.of("requires"),
                               Stream.concat(mods,
-                                            Stream.of(d.query().name())))
+                                            Stream.of(ref)))
                 .collect(Collectors.joining(" ")));
     }
 
     private static void genSummary(PrintStream out, Module m, Path jmod) throws IOException {
         JmodInfo jm = new JmodInfo(jmod);
+        String modulename = m.id().name();
         out.format("<tr>%n");
-        out.format("<td class=\"name\"><b>%s</b><br><br>%n", m.id().name());
+        out.format("<td class=\"name\"><b><a name=\"%s\">%s</a></b><br><br>%n", modulename, modulename);
         out.format("jmod file<br>%n");
         out.format("uncompressed<br>%n");
         out.format("%8d %s<br>%n", jm.classCount, "classes");
@@ -143,7 +146,7 @@ public class ModuleSummary {
                 .forEach(e -> out.format("%s <br>%n", e.getKey()));
         out.format("</td>%n");
         String requires = m.moduleDependences().stream()
-            .map(ModuleSummary::toString)
+            .map(ModuleSummary::toRequires)
             .sorted()
             .collect(Collectors.joining("<br>\n"));
         out.format("<td>%s</td>%n", requires);
@@ -159,7 +162,7 @@ public class ModuleSummary {
         Stream<String> providers = m.services().entrySet().stream()
             .sorted(Map.Entry.comparingByKey())
             .flatMap(e -> e.getValue().stream().map(p ->
-                String.format("prov %s<br>&nbsp; w/ %s", e.getKey(), p)));
+                String.format("prov %s<br>&nbsp; <em>w/ %s</em>", e.getKey(), p)));
         out.format("<td>%s</td>%n", Stream.concat(uses, providers)
                                           .collect(Collectors.joining("<br>\n")));
         if (jm.nativeLibs.size() > 0) {
