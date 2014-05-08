@@ -625,17 +625,27 @@ void CompileQueue::add(CompileTask* task) {
   lock()->notify_all();
 }
 
+/**
+ * Empties compilation queue by putting all compilation tasks onto
+ * a freelist. Furthermore, the method wakes up all threads that are
+ * waiting on a compilation task to finish. This can happen if background
+ * compilation is disabled.
+ */
 void CompileQueue::free_all() {
   MutexLocker mu(lock());
-  if (_first != NULL) {
-    for (CompileTask* task = _first; task != NULL; task = task->next()) {
-      // Wake up thread that blocks on the compile task.
-      task->lock()->notify();
-      // Puts task back on the freelist.
-      CompileTask::free(task);
-    }
-    _first = NULL;
+  CompileTask* next = _first;
+
+  // Iterate over all tasks in the compile queue
+  while (next != NULL) {
+    CompileTask* current = next;
+    next = current->next();
+    // Wake up thread that blocks on the compile task.
+    current->lock()->notify();
+    // Put the task back on the freelist.
+    CompileTask::free(current);
   }
+  _first = NULL;
+
   // Wake up all threads that block on the queue.
   lock()->notify_all();
 }
@@ -1052,15 +1062,16 @@ void CompileBroker::init_compiler_threads(int c1_compiler_count, int c2_compiler
 
 /**
  * Set the methods on the stack as on_stack so that redefine classes doesn't
- * reclaim them
+ * reclaim them. This method is executed at a safepoint.
  */
 void CompileBroker::mark_on_stack() {
+  assert(SafepointSynchronize::is_at_safepoint(), "sanity check");
+  // Since we are at a safepoint, we do not need a lock to access
+  // the compile queues.
   if (_c2_compile_queue != NULL) {
-    MutexLocker locker(_c2_compile_queue->lock());
     _c2_compile_queue->mark_on_stack();
   }
   if (_c1_compile_queue != NULL) {
-    MutexLocker locker(_c1_compile_queue->lock());
     _c1_compile_queue->mark_on_stack();
   }
 }
