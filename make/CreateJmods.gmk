@@ -194,6 +194,7 @@ ALL_MODULES := $(call FindAllModules)
 $(foreach m, $(ALL_MODULES), $(eval $(call CreateJmod,$m)))
 
 jmods: $(JMODS)
+	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f GenerateModules.gmk SHUFFLED=true postjmods)
 
 ################################################################################
 
