@@ -70,6 +70,7 @@ module java.base {
             com.sun.net.ssl.**,
             com.sun.nio.file.*,
             com.sun.security.cert.internal.x509.*,
+            com.sun.security.ntlm.**,
             sun.io.*,
             sun.invoke.**,
             sun.launcher.**,
@@ -161,7 +162,6 @@ module java.base {
             sun.net.www.content.**;
 
     exclude sun.net.www.protocol.http.logging.*,
-            sun.net.www.protocol.http.ntlm.*,
             sun.net.www.protocol.http.spnego.*,
             sun.net.www.content.audio.**,
             sun.net.www.content.image.**;
@@ -379,9 +379,6 @@ module java.security.sasl {
     // GSSAPI mechanism in Kerberos module for now
     exclude com.sun.security.sasl.gsskerb.*;
 
-    // NTLM
-    include com.sun.security.ntlm.**,
-            sun.net.www.protocol.http.ntlm.*;
 }
 
 module jdk.security.auth {
