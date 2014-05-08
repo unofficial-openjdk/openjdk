@@ -1,6 +1,7 @@
 jdk.attach
 jdk.compiler
 jdk.hotspot.tools
+jdk.javadoc
 jdk.jconsole
 jdk.jdi
 jdk.jvmstat

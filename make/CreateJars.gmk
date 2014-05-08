@@ -529,6 +529,7 @@ ifeq ($(SHUFFLED), true)
       jdk.jconsole \
       jdk.jvmstat \
       jdk.compiler \
+      jdk.javadoc \
       jdk.tools \
       jdk.runtime \
       jdk.xml.ws.tools \

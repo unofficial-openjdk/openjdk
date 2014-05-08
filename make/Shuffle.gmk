@@ -184,7 +184,7 @@ $(foreach d, $(LANGTOOLS_TOPDIR) $(CORBA_TOPDIR) $(JAXP_TOPDIR) \
 FULL_MODULE_LIST := $(filter-out modules.config closed, \
     $(notdir $(wildcard $(MODULEINFO_DIR)/* $(MODULEINFO_DIR)/closed/*)))
 
-LANGTOOLS_MODULE_LIST := java.compiler jdk.compiler
+LANGTOOLS_MODULE_LIST := java.compiler jdk.compiler jdk.javadoc
 CORBA_MODULE_LIST := java.corba
 JAXP_MODULE_LIST := java.xml
 JAXWS_MODULE_LIST := java.activation java.annotations.common java.xml.bind java.xml.ws \
@@ -1603,12 +1603,10 @@ $(eval $(call SetupShuffleFiles,COPY_JAVA_SECURITY_ACL_PACKAGE_INFO, \
         ))
 
 # langtools
-$(eval $(call SetupShuffleFiles,COPY_JDK_COMPILER_TOOLS_PACKAGE_INFO, \
+$(eval $(call SetupShuffleFiles,COPY_JDK_JAVADOC_TOOLS_PACKAGE_INFO, \
     SRC := $(LANGTOOLS_TOPDIR)/src/share/classes, \
-    DEST := $(LANGTOOLS_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/jdk.compiler/share/classes, \
-    FILES := $(shell $(FIND) $(LANGTOOLS_TOPDIR)/src/share/classes/com \
-        -name package-info.java) \
-        $(LANGTOOLS_TOPDIR)/src/share/classes/com/sun/tools/doclets/Taglet.java))
+    DEST := $(LANGTOOLS_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/jdk.javadoc/share/classes, \
+    FILES := $(LANGTOOLS_TOPDIR)/src/share/classes/com/sun/tools/doclets/Taglet.java))
 
 $(eval $(call SetupShuffleFiles,COPY_JAVAX_COMPILER_PACKAGE_INFO, \
     SRC := $(LANGTOOLS_TOPDIR)/src/share/classes, \

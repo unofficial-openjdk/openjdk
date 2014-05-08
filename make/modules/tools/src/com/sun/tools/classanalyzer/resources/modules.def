@@ -54,6 +54,9 @@ module java.base {
     include javax.net.**,
             javax.security.cert.*;
 
+    // SunJCE provider
+    include com.sun.crypto.provider.*;
+
     // jigsaw
     include jdk.jigsaw.module.**,
             jdk.joptsimple.**;
@@ -357,11 +360,6 @@ module java.sql.rowset {
 // Deprecated APIs used by snmp
 module java.security.acl {
     include java.security.acl.*, sun.security.acl.*;
-}
-
-module jdk.crypto {
-    include com.sun.crypto.provider.*;
-    permits java.compact1, jdk.providers;
 }
 
 module jdk.crypto.ec {
@@ -687,17 +685,20 @@ module jdk.compiler {
             com.sun.source.**,
             com.sun.tools.sjavac.**;
 
-    include com.sun.tools.doclint.**,
-            com.sun.tools.doclets.**;
-
-    include com.sun.tools.javadoc.**,
-            com.sun.javadoc.**;
+    include com.sun.tools.doclint.**;
 
     include com.sun.tools.javah.**;
 
     include com.sun.tools.javap.**,
             com.sun.tools.classfile.**;
 }
+
+module jdk.javadoc {
+    include com.sun.tools.javadoc.**,
+            com.sun.tools.doclets.**,
+            com.sun.javadoc.**;
+}
+
 
 // jvmstat tooling
 module jdk.jvmstat {
@@ -739,6 +740,7 @@ module jdk.jconsole {
 // JDK tools
 module jdk.tools {
     requires jdk.compiler;
+    requires jdk.javadoc;
     requires jdk.hotspot.tools;
     requires jdk.xml.ws.tools;
 
@@ -777,7 +779,6 @@ module jdk.tools {
 }
 
 module jdk.providers {
-    requires jdk.crypto;
     requires jdk.crypto.ec;
     requires jdk.crypto.pkcs11;
     requires jdk.scripting.nashorn;
@@ -802,9 +803,6 @@ module java.compact1 {
     requires public java.base;
     requires public java.logging;
     requires public java.scripting;
-   
-    // Need SunJCE provider in compact1
-    requires jdk.crypto;
 }
 
 module java.compact2 {

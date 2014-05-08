@@ -47,6 +47,7 @@ ATTACH_LAUNCHERS=
 BASE_LAUNCHERS=
 CORBA_LAUNCHERS=
 COMPILER_LAUNCHERS=
+JAVADOC_LAUNCHERS=
 HOTSPOT_TOOLS_LAUNCHERS=
 JCONSOLE_LAUNCHERS=
 JDI_LAUNCHERS=
@@ -317,7 +318,7 @@ endif
 $(eval $(call SetupLauncher,javadoc, \
     -DEXPAND_CLASSPATH_WILDCARDS \
     -DNEVER_ACT_AS_SERVER_CLASS_MACHINE \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "com.sun.tools.javadoc.Main"$(COMMA) }',,,,,,,,,,COMPILER))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "com.sun.tools.javadoc.Main"$(COMMA) }',,,,,,,,,,JAVADOC))
 
 $(eval $(call SetupLauncher,javah, \
     -DEXPAND_CLASSPATH_WILDCARDS \
