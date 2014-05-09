@@ -61,8 +61,8 @@ public final class ModuleInfo {
     private Map<String, Set<String>> services;
 
     /**
-     * Returns the module name as found in the this_class item of
-     * the class file.
+     * Returns the module name. This is the binary name rather than the
+     * internal name in the {@code this_class} item.
      */
     public String name() {
         return name;
@@ -101,7 +101,7 @@ public final class ModuleInfo {
         int suffix = mn.indexOf("/module-info");
         if (suffix < 1)
             throw new ClassFormatError("this_class not of form name/module-info");
-        this.name = mn.substring(0, suffix);
+        this.name = mn.substring(0, suffix).replace('/', '.');
 
         int super_class = in.readUnsignedShort();
         if (super_class > 0)
