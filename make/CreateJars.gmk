@@ -57,7 +57,7 @@ $(eval $(call MakeDir, $(IMAGES_OUTPUTDIR)/lib))
 ##########################################################################################
 
 $(eval $(call SetupArchive,BUILD_JCONSOLE_JAR, , \
-    SRCS := $(JDK_OUTPUTDIR)/$(MODULES_SUBDIR)$(JDK_TOOLS_SUBDIR), \
+    SRCS := $(JDK_OUTPUTDIR)/$(MODULES_SUBDIR)$(JDK_JCONSOLE_SUBDIR), \
     SUFFIXES := .class .gif .png .properties, \
     INCLUDES := sun/tools/jconsole com/sun/tools/jconsole, \
     JARMAIN := sun.tools.jconsole.JConsole, \

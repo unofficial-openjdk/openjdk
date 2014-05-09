@@ -126,7 +126,7 @@ SUNJCE_PROVIDER_JAR_UNSIGNED := $(JDK_OUTPUTDIR)/jce/unsigned/sunjce_provider.ja
 
 ifneq ($(BUILD_CRYPTO), no)
   $(eval $(call SetupArchive,BUILD_SUNJCE_PROVIDER_JAR, , \
-      SRCS := $(JDK_OUTPUTDIR)/$(SECURITY_CLASSES_SUBDIR)$(JDK_CRYPTO_SUBDIR), \
+      SRCS := $(JDK_OUTPUTDIR)/$(SECURITY_CLASSES_SUBDIR)$(JAVA_BASE_SUBDIR), \
       SUFFIXES := .class, \
       INCLUDES := com/sun/crypto/provider, \
       JAR := $(SUNJCE_PROVIDER_JAR_UNSIGNED), \
