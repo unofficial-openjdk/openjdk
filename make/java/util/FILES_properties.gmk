@@ -107,6 +107,7 @@ FILES_compiled_properties = \
         sun/util/resources/CalendarData_pl.properties \
         sun/util/resources/CalendarData_pt.properties \
         sun/util/resources/CalendarData_pt_PT.properties \
+        sun/util/resources/CalendarData_pt_BR.properties \
         sun/util/resources/CalendarData_ro.properties \
         sun/util/resources/CalendarData_ru.properties \
         sun/util/resources/CalendarData_sk.properties \
