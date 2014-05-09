@@ -1260,8 +1260,6 @@ assertEquals("[three, thee, tee]", asListFix.invoke((Object)argv).toString());
     /*non-public*/
     MethodHandle viewAsType(MethodType newType) {
         // No actual conversions, just a new view of the same method.
-        if (!type.isViewableAs(newType))
-            throw new InternalError();
         return MethodHandleImpl.makePairwiseConvert(this, newType, 0);
     }
 
