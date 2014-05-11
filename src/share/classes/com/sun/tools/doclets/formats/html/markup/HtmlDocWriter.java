@@ -44,6 +44,8 @@ import com.sun.tools.doclets.internal.toolkit.*;
  */
 public abstract class HtmlDocWriter extends HtmlWriter {
 
+    public static final String CONTENT_TYPE = "text/html";
+
     /**
      * Constructor. Initializes the destination file name through the super
      * class HtmlWriter.
@@ -330,7 +332,7 @@ public abstract class HtmlDocWriter extends HtmlWriter {
             head.addContent(headComment);
         }
         if (configuration.charset.length() > 0) {
-            Content meta = HtmlTree.META("Content-Type", "text/html",
+            Content meta = HtmlTree.META("Content-Type", CONTENT_TYPE,
                     configuration.charset);
             head.addContent(meta);
         }

@@ -56,11 +56,17 @@ echo "CLASSPATH=${CLASSPATH}"
 # set platform-dependent variables
 OS=`uname -s`
 case "$OS" in
-  SunOS | Linux | Darwin | CYGWIN* )
+  SunOS | Linux | Darwin )
     FS="/"
+    CHMOD="${FS}bin${FS}chmod"
     ;;
   Windows* )
     FS="\\"
+    CHMOD="chmod"
+    ;;
+  CYGWIN* )
+    FS="/"
+    CHMOD="chmod"
     ;;
   * )
     echo "Unrecognized system!"
@@ -73,6 +79,7 @@ javac="${TESTJAVA}${FS}bin${FS}javac"
 cleanup() {
 	rm -f *.class pkg${FS}*.class foo${FS}pkg${FS}*.class bar${FS}pkg${FS}*.class
 	cp -rf $TESTSRC${FS}* .
+        ${CHMOD} -R u+w *
 }
 
 fail() {
