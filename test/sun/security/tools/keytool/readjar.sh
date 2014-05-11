@@ -45,7 +45,7 @@ esac
 KS=readjar.jks
 rm $KS
 $TESTJAVA${FS}bin${FS}keytool -storepass changeit -keypass changeit -keystore $KS \
-        -alias x -dname CN=X -genkeypair
+        -keyalg rsa -alias x -dname CN=X -genkeypair
 $TESTJAVA${FS}bin${FS}jar cvf readjar.jar $KS
 $TESTJAVA${FS}bin${FS}jarsigner -storepass changeit -keystore $KS readjar.jar x
 
