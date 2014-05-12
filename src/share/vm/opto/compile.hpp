@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -291,6 +291,7 @@ class Compile : public Phase {
   bool                  _trace_opto_output;
   bool                  _parsed_irreducible_loop; // True if ciTypeFlow detected irreducible loops during parsing
 #endif
+  bool                  _has_irreducible_loop;  // Found irreducible loops
 
   // JSR 292
   bool                  _has_method_handle_invokes; // True if this method has MethodHandle invokes.
@@ -552,6 +553,8 @@ class Compile : public Phase {
   bool              parsed_irreducible_loop() const { return _parsed_irreducible_loop; }
   void          set_parsed_irreducible_loop(bool z) { _parsed_irreducible_loop = z; }
 #endif
+  bool              has_irreducible_loop() const { return _has_irreducible_loop; }
+  void          set_has_irreducible_loop(bool z) { _has_irreducible_loop = z; }
 
   // JSR 292
   bool              has_method_handle_invokes() const { return _has_method_handle_invokes;     }
