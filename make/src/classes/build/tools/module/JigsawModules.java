@@ -31,6 +31,7 @@ import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.UncheckedIOException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -53,16 +54,7 @@ public class JigsawModules {
     public Set<Module> load()
         throws IOException, ClassNotFoundException
     {
-        try (InputStream in = ClassLoader.getSystemResourceAsStream(MODULES_SER)) {
-            return load(in);
-        }
-    }
-
-    public Set<Module> load(InputStream in)
-        throws IOException, ClassNotFoundException
-    {
-        ObjectInputStream ois = new ObjectInputStream(in);
-        jdk.jigsaw.module.Module[] mods = (jdk.jigsaw.module.Module[]) ois.readObject();
+        jdk.jigsaw.module.Module[] mods = ModuleUtils.readModules();
         if (mods.length == 0) {
             System.err.format("ERROR: %s is empty%n", MODULES_SER);
             System.exit(1);

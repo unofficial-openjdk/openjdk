@@ -27,7 +27,6 @@ package build.tools.module;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.ObjectInputStream;
 import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -36,8 +35,10 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
@@ -52,6 +53,8 @@ public class ModuleSummary {
         int i=0;
         Path modpath = null;
         Path outfile = null;
+        Path depSer = null;
+        String title = "JDK Module Summary";
         while (i < args.length && args[i].startsWith("-")) {
             String arg = args[i++];
             switch (arg) {
@@ -61,10 +64,20 @@ public class ModuleSummary {
                 case "-o":
                     outfile = Paths.get(args[i++]);
                     break;
+                case "-deps":
+                    depSer = Paths.get(args[i++]);
+                    break;
+                case "-title":
+                    title = args[i++];
+                    break;
                 default:
                     System.err.println(USAGE);
                     System.exit(-1);
             }
+        }
+        Set<String> roots = new HashSet<>();
+        while (i < args.length) {
+            roots.add(args[i++]);
         }
         if (outfile == null || modpath == null) {
             System.err.println(USAGE);
@@ -74,59 +87,87 @@ public class ModuleSummary {
             Files.createDirectories(outfile.getParent());
         }
 
+        // dependences to be highlighted
+        Map<String, Set<String>> deps = new HashMap<>();
+        if (depSer != null) {
+            try (InputStream in = Files.newInputStream(depSer)) {
+                Module[] mods = ModuleUtils.readModules(in);
+                for (Module m : mods) {
+                    deps.put(m.id().name(),
+                             m.moduleDependences().stream()
+                                 .map(d -> d.query().name())
+                                 .collect(Collectors.toSet()));
+                }
+            }
+        }
+
+        ModuleSummary ms = new ModuleSummary(title, modpath, deps);
+        ms.genReport(outfile, roots);
+    }
+
+    private final String title;
+    private final Map<Module, JmodInfo> jmods = new HashMap<>();
+    private final Module[] modules;
+    private final Map<String,Set<String>> deps;
+    ModuleSummary(String title, Path modpath, Map<String,Set<String>> deps) throws IOException {
+        this.title = title;
+        this.modules = ModuleUtils.readModules();
+        for (Module m : modules) {
+            jmods.put(m,
+                      new JmodInfo(modpath.resolve(m.id().name() + ".jmod")));
+        }
+        this.deps = deps;
+    }
+
+    public void genReport(Path outfile, Set<String> roots) throws IOException {
         try (PrintStream out = new PrintStream(Files.newOutputStream(outfile))) {
-            Module[] modules = readModules();
-            writeHeader(out, modules.length);
-            List<Module> mods =
-                Arrays.stream(modules)
-                      .sorted(Comparator.comparing(Module::id))
-                      .collect(Collectors.toList());
+            List<Module> mods;
+            if (roots.isEmpty()) {
+                mods = Arrays.stream(modules).sorted(Comparator.comparing(Module::id))
+                           .collect(Collectors.toList());
+            } else {
+                mods = ModuleUtils.resolve(modules, roots).stream()
+                           .sorted(Comparator.comparing(Module::id))
+                           .collect(Collectors.toList());
+            }
+
+            long totalBytes = mods.stream().mapToLong(m -> jmods.get(m).size).sum();
+            writeHeader(out, mods.size(), totalBytes);
             for (Module m: mods) {
-                genSummary(out, m, modpath.resolve(m.id().name() + ".jmod"));
+                genSummary(out, m, jmods.get(m));
             }
             out.format("</table>");
             out.format("</body></html>%n");
         }
     }
-
-    private static Module[] readModules() throws Exception {
-        InputStream stream = ClassLoader.getSystemResourceAsStream(MODULES_SER);
-        if (stream == null) {
-            System.err.format("WARNING: %s not found%n", MODULES_SER);
-            return new Module[0];
-        }
-        try (InputStream in = stream) {
-            ObjectInputStream ois = new ObjectInputStream(in);
-            Module[] mods = (Module[]) ois.readObject();
-            if (mods.length == 0)
-                System.err.format("WARNING: %s is empty%n", MODULES_SER);
-            return mods;
-        }
-    }
-
-    private static String toRequires(ModuleDependence d) {
+    private String toRequires(Module from, ModuleDependence d) {
+        String name = d.query().name();
         String ref = String.format("<a href=\"#%s\">%s</a>",
-                                   d.query().name(), d.query().name());
+                                   name, name);
         Stream<String> mods = d.modifiers().stream().map(e -> e.toString().toLowerCase());
-        return (Stream.concat(Stream.of("requires"),
+        String result = (Stream.concat(Stream.of("requires"),
                               Stream.concat(mods,
                                             Stream.of(ref)))
                 .collect(Collectors.joining(" ")));
+        String mn = from.id().name();
+        return deps.containsKey(mn) && deps.get(mn).contains(name)
+                    ? "<b>" + result + "</b>" : result;
     }
 
-    private static void genSummary(PrintStream out, Module m, Path jmod) throws IOException {
-        JmodInfo jm = new JmodInfo(jmod);
+    private void genSummary(PrintStream out, Module m, JmodInfo jm) throws IOException {
         String modulename = m.id().name();
         out.format("<tr>%n");
-        out.format("<td class=\"name\"><b><a name=\"%s\">%s</a></b><br><br>%n", modulename, modulename);
+        out.format("<td class=\"name\"><b><a name=\"%s\">%s</a></b><br><br>%n",
+                   modulename, modulename);
         out.format("jmod file<br>%n");
         out.format("uncompressed<br>%n");
         out.format("%8d %s<br>%n", jm.classCount, "classes");
         out.format("%8d %s<br>%n", jm.resourceCount, "resources");
         out.format("%8d %s<br>%n", jm.configCount, "config");
-        out.format("%8d %s<br>%n", jm.nativeLibs.size() - jm.dizCount, "native libs");
-        out.format("%8d %s<br>%n", jm.dizCount, "native diz");
-        out.format("%8d %s<br>%n", jm.nativeCmds.size(), "launchers");
+        out.format("%8d %s<br>%n", jm.nativeLibs.size() - jm.debugInfoLibCount, "native libs");
+        out.format("%8d %s<br>%n", jm.debugInfoLibCount, "debugInfo libs");
+        out.format("%8d %s<br>%n", jm.nativeCmds.size() - jm.debugInfoCmdCount, "launchers");
+        out.format("%8d %s<br>%n", jm.debugInfoCmdCount, "debugInfo");
         out.format("</td>%n");
         out.format("<td class=\"num\"><br><br>%n");
         out.format("%12d<br>%n", jm.filesize);
@@ -135,10 +176,11 @@ public class ModuleSummary {
         out.format("%10d<br>%n", jm.resourceBytes);
         out.format("%10d<br>%n", jm.configBytes);
         out.format("%10d<br>%n", jm.nativeLibs.values().stream()
-                                   .mapToLong(l -> l.longValue()).sum() - jm.dizBytes);
-        out.format("%10d<br>%n", jm.dizBytes);
+                                   .mapToLong(l -> l.longValue()).sum() - jm.debugInfoLibBytes);
+        out.format("%10d<br>%n", jm.debugInfoLibBytes);
         out.format("%10d<br>%n", jm.nativeCmds.values().stream()
                                    .mapToLong(l -> l.longValue()).sum());
+        out.format("%10d<br>%n", jm.debugInfoCmdBytes);
         out.format("</td>%n");
         out.format("<td>%n");
         jm.nativeCmds.entrySet().stream()
@@ -146,7 +188,7 @@ public class ModuleSummary {
                 .forEach(e -> out.format("%s <br>%n", e.getKey()));
         out.format("</td>%n");
         String requires = m.moduleDependences().stream()
-            .map(ModuleSummary::toRequires)
+            .map(md -> toRequires(m, md))
             .sorted()
             .collect(Collectors.joining("<br>\n"));
         out.format("<td>%s</td>%n", requires);
@@ -180,10 +222,10 @@ public class ModuleSummary {
         out.format("</tr>%n");
     }
 
-    private static void writeHeader(PrintStream out, int numModules) {
+    private void writeHeader(PrintStream out, int numModules, long size) {
         out.format("<html>%n");
         out.format("<head>%n");
-        out.format("<title>JDK Module Sumamry</title>%n");
+        out.format("<title>%s</title>%n", title);
         out.format("<style type=\"text/css\">%n");
         out.format("table {border: 1px solid black; border-collapse: collapse;}%n");
         out.format("td { font-family: monospace; padding: 3px 6px}%n");
@@ -194,7 +236,9 @@ public class ModuleSummary {
         out.format("th.name {border-right: none;}");
         out.format("th.num {border-left: none; text-align:right;}");
         out.format("</style>%n</head>%n");
-        out.format("<h1>Number of JDK modules = %d</h1>%n", numModules);
+        out.format("<h1>%s</h1>%n", title);
+        out.format("<h3>Number of Modules = %d<br>%n", numModules);
+        out.format("Total Uncompressed Size = %d</h3>%n", size);
         out.format("<table>");
         out.format("<tr>%n");
         out.format("<th class=\"name\">Module</th>%n");
@@ -217,8 +261,10 @@ public class ModuleSummary {
         final long resourceBytes;
         final int  configCount;
         final long configBytes;
-        final long dizCount;
-        final long dizBytes;
+        final int debugInfoLibCount;
+        final long debugInfoLibBytes;
+        final int debugInfoCmdCount;
+        final long debugInfoCmdBytes;
         final Map<String,Long> nativeCmds = new HashMap<>();
         final Map<String,Long> nativeLibs = new HashMap<>();
         JmodInfo(Path jmod) throws IOException {
@@ -230,6 +276,10 @@ public class ModuleSummary {
             long rBytes = 0;
             int cfCount = 0;
             long cfBytes = 0;
+            int dizLibCount = 0;
+            long dizLibBytes = 0;
+            int dizCmdCount = 0;
+            long dizCmdBytes = 0;
             try (ZipFile zf = new ZipFile(jmod.toFile())) {
                 for (Enumeration<? extends ZipEntry> e = zf.entries(); e.hasMoreElements();) {
                     ZipEntry ze = e.nextElement();
@@ -241,9 +291,17 @@ public class ModuleSummary {
                     switch (dir) {
                         case NATIVE_LIBS:
                             nativeLibs.put(filename, len);
+                            if (filename.endsWith(".diz")) {
+                                dizLibCount++;
+                                dizLibBytes += len;
+                            }
                             break;
                         case NATIVE_CMDS:
                             nativeCmds.put(filename, len);
+                            if (filename.endsWith(".diz")) {
+                                dizCmdCount++;
+                                dizCmdBytes += len;
+                            }
                             break;
                         case CLASSES:
                             if (filename.endsWith(".class")) {
@@ -269,12 +327,10 @@ public class ModuleSummary {
                 this.configCount = cfCount;
                 this.configBytes = cfBytes;
                 this.size = total;
-                this.dizBytes = nativeLibs.entrySet().stream()
-                    .filter(e -> e.getKey().endsWith(".diz"))
-                    .mapToLong(e -> e.getValue().longValue()).sum();
-                this.dizCount = nativeLibs.keySet().stream()
-                    .filter(n -> n.endsWith(".diz"))
-                    .count();
+                this.debugInfoLibCount = dizLibCount;
+                this.debugInfoLibBytes = dizLibBytes;
+                this.debugInfoCmdCount = dizCmdCount;
+                this.debugInfoCmdBytes = dizCmdBytes;
             }
         }
 

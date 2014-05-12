@@ -88,6 +88,11 @@ class ClassAnalyzer extends Task {
             void process(ClassAnalyzer task, String opt, String arg) {
                 task.options.props = arg;
             }
+        },
+        new Option<ClassAnalyzer>(false, "-A", "--apionly") {
+            void process(ClassAnalyzer task, String opt, String arg) {
+                task.options.apiOnly = true;
+            }
         }
     );
 
@@ -128,7 +133,8 @@ class ClassAnalyzer extends Task {
         final ModuleBuilder builder =
             new ModuleBuilder(mconfigs,
                               ClassPath.getArchives(options.javahome),
-                              options.version);
+                              options.version,
+                              options.apiOnly);
         builder.run();
 
         // write module summary and dependencies
@@ -283,7 +289,7 @@ class ClassAnalyzer extends Task {
             }
             writer.format("%nTotal: %d bytes (uncompressed): " +
                     " %d classes %d bytes %d resources %d bytes%n",
-                    (classBytes+resBytes), classBytes, classCount, resBytes, resCount);
+                    (classBytes+resBytes), classCount, classBytes, resCount, resBytes);
         }
     }
 
@@ -337,6 +343,7 @@ class ClassAnalyzer extends Task {
         List<String> configs = new ArrayList<>();
         String version;
         String osSourcePath = null;
+        boolean apiOnly = false;
     }
 
     public static void main(String... args) throws Exception {

@@ -26,18 +26,17 @@ import com.sun.tools.classanalyzer.ClassPath.Archive;
 import com.sun.tools.classanalyzer.Module.Factory;
 import com.sun.tools.classanalyzer.Service.ProviderConfigFile;
 import static com.sun.tools.classanalyzer.Dependence.Identifier.*;
-
 import com.sun.tools.classfile.ClassFile;
 import com.sun.tools.classfile.ConstantPoolException;
 import com.sun.tools.classfile.Dependencies;
 import com.sun.tools.classfile.Dependency;
 import com.sun.tools.classfile.Dependency.Location;
+import static com.sun.tools.classfile.AccessFlags.*;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.util.*;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 /**
  * Module builder that creates modules as defined in the given
@@ -55,14 +54,26 @@ public class ModuleBuilder {
     private final Map<String, Klass> classes = new HashMap<>();
     private final Map<String, Service> services = new HashMap<>();
     private final Map<Module, Map<String,Dependence>> dependencesForModule = new HashMap<>();
-
+    private final Dependency.Finder finder;
+    private final Dependency.Filter filter;
+    private final boolean apiOnly;
     private final JigsawModules graph = new JigsawModules();
     public ModuleBuilder(List<ModuleConfig> configs,
                          List<Archive> archives,
-                         String version) throws IOException {
+                         String version,
+                         boolean apiOnly) throws IOException {
         this.mconfigs.addAll(configs);
         this.archives = archives;
         this.version = version;
+        this.apiOnly = apiOnly;
+        this.finder = apiOnly ? Dependencies.getAPIFinder(ACC_PROTECTED)
+                              : Dependencies.getClassDependencyFinder();
+        this.filter = new Dependency.Filter() {
+            @Override
+            public boolean accepts(Dependency dependency) {
+                return !dependency.getOrigin().equals(dependency.getTarget());
+            }
+        };
     }
 
     /**
@@ -187,14 +198,6 @@ public class ModuleBuilder {
     }
 
     private void findDependencies() throws IOException {
-        Dependency.Finder finder = Dependencies.getClassDependencyFinder();
-        Dependency.Filter filter = new Dependency.Filter() {
-            @Override
-            public boolean accepts(Dependency dependency) {
-                return !dependency.getOrigin().equals(dependency.getTarget());
-            }
-        };
-
         // get the immediate dependencies of the input files
         for (Archive a : archives) {
             for (ClassFile cf : a.getClassFiles()) {
@@ -212,6 +215,15 @@ public class ModuleBuilder {
                     Module module = getPackage(k).module;
                     module.addKlass(k);
                     classes.put(classFileName, k);
+                }
+
+                if (apiOnly) {
+                    int pos = classFileName.lastIndexOf('/');
+                    String pn = (pos > 0) ? classFileName.substring(0, pos).replace('/', '.') : "";
+                    if (!Package.isExportedPackage(pn)) {
+                        // skip non-exported class
+                        continue;
+                    }
                 }
                 for (Dependency d : finder.findDependencies(cf)) {
                     if (filter.accepts(d)) {
