@@ -25,6 +25,11 @@
 
 package build.tools.module;
 
+import static com.sun.tools.classfile.AccessFlags.ACC_PROTECTED;
+import com.sun.tools.classfile.ClassFile;
+import com.sun.tools.classfile.ConstantPoolException;
+import com.sun.tools.classfile.Dependencies;
+import com.sun.tools.classfile.Dependency;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
@@ -47,13 +52,12 @@ import jdk.jigsaw.module.Module;
 import jdk.jigsaw.module.ModuleDependence;
 
 public class ModuleSummary {
-    private static final String USAGE = "Usage: ModuleSummary -mp <dir> -o <outputfile>";
+    private static final String USAGE = "Usage: ModuleSummary -mp <dir> -o <outfile>";
     private static final String MODULES_SER = "jdk/jigsaw/module/resources/modules.ser";
     public static void main(String[] args) throws Exception {
         int i=0;
         Path modpath = null;
         Path outfile = null;
-        Path depSer = null;
         String title = "JDK Module Summary";
         while (i < args.length && args[i].startsWith("-")) {
             String arg = args[i++];
@@ -63,9 +67,6 @@ public class ModuleSummary {
                     break;
                 case "-o":
                     outfile = Paths.get(args[i++]);
-                    break;
-                case "-deps":
-                    depSer = Paths.get(args[i++]);
                     break;
                 case "-title":
                     title = args[i++];
@@ -87,53 +88,48 @@ public class ModuleSummary {
             Files.createDirectories(outfile.getParent());
         }
 
-        // dependences to be highlighted
-        Map<String, Set<String>> deps = new HashMap<>();
-        if (depSer != null) {
-            try (InputStream in = Files.newInputStream(depSer)) {
-                Module[] mods = ModuleUtils.readModules(in);
-                for (Module m : mods) {
-                    deps.put(m.id().name(),
-                             m.moduleDependences().stream()
-                                 .map(d -> d.query().name())
-                                 .collect(Collectors.toSet()));
-                }
-            }
-        }
-
-        ModuleSummary ms = new ModuleSummary(title, modpath, deps);
-        ms.genReport(outfile, roots);
+        ModuleSummary ms = new ModuleSummary(title, modpath, roots);
+        ms.run();
+        ms.genReport(outfile);
     }
 
     private final String title;
+    private final List<Module> modules;
     private final Map<Module, JmodInfo> jmods = new HashMap<>();
-    private final Module[] modules;
-    private final Map<String,Set<String>> deps;
-    ModuleSummary(String title, Path modpath, Map<String,Set<String>> deps) throws IOException {
+    private final Map<Module, Set<String>> deps = new HashMap<>();
+    private final Map<String, Module> packageMap = new HashMap<>();
+    private final Path modpath;
+    ModuleSummary(String title, Path modpath, Set<String> roots) throws IOException{
         this.title = title;
-        this.modules = ModuleUtils.readModules();
-        for (Module m : modules) {
-            jmods.put(m,
-                      new JmodInfo(modpath.resolve(m.id().name() + ".jmod")));
-        }
-        this.deps = deps;
-    }
-
-    public void genReport(Path outfile, Set<String> roots) throws IOException {
-        try (PrintStream out = new PrintStream(Files.newOutputStream(outfile))) {
-            List<Module> mods;
-            if (roots.isEmpty()) {
-                mods = Arrays.stream(modules).sorted(Comparator.comparing(Module::id))
-                           .collect(Collectors.toList());
-            } else {
-                mods = ModuleUtils.resolve(modules, roots).stream()
+        this.modpath = modpath;
+        Module[] mods = ModuleUtils.readModules();
+        if (roots.isEmpty()) {
+            this.modules = Arrays.stream(mods).sorted(Comparator.comparing(Module::id))
+                                 .collect(Collectors.toList());
+        } else {
+            this.modules = ModuleUtils.resolve(mods, roots).stream()
                            .sorted(Comparator.comparing(Module::id))
                            .collect(Collectors.toList());
-            }
+        }
+        // build package map for all modules for API dependency analysis
+        Arrays.stream(mods)
+              .forEach(m -> m.packages().stream()
+                               .forEach(p -> packageMap.put(p, m)));
+    }
 
-            long totalBytes = mods.stream().mapToLong(m -> jmods.get(m).size).sum();
-            writeHeader(out, mods.size(), totalBytes);
-            for (Module m: mods) {
+    void run() throws IOException, ConstantPoolException {
+        for (Module m : modules) {
+            Path jmod = modpath.resolve(m.id().name() + ".jmod");
+            jmods.put(m, new JmodInfo(jmod));
+            deps.put(m, getAPIDependences(m, jmod));
+        }
+    }
+
+    public void genReport(Path outfile) throws IOException {
+        try (PrintStream out = new PrintStream(Files.newOutputStream(outfile))) {
+            long totalBytes = modules.stream().mapToLong(m -> jmods.get(m).size).sum();
+            writeHeader(out, modules.size(), totalBytes);
+            for (Module m: modules) {
                 genSummary(out, m, jmods.get(m));
             }
             out.format("</table>");
@@ -149,9 +145,11 @@ public class ModuleSummary {
                               Stream.concat(mods,
                                             Stream.of(ref)))
                 .collect(Collectors.joining(" ")));
-        String mn = from.id().name();
-        return deps.containsKey(mn) && deps.get(mn).contains(name)
-                    ? "<b>" + result + "</b>" : result;
+        // API dependency: bold
+        // aggregator module's require: italic
+        return deps.containsKey(from) && deps.get(from).contains(name)
+                    ? String.format("<b>%s</b>", result)
+                    : (from.packages().isEmpty() ? String.format("<em>%s</em>", result) : result);
     }
 
     private void genSummary(PrintStream out, Module m, JmodInfo jm) throws IOException {
@@ -238,13 +236,14 @@ public class ModuleSummary {
         out.format("</style>%n</head>%n");
         out.format("<h1>%s</h1>%n", title);
         out.format("<h3>Number of Modules = %d<br>%n", numModules);
-        out.format("Total Uncompressed Size = %d</h3>%n", size);
+        out.format("Total Uncompressed Size = %,d bytes</h3>%n", size);
+        out.format("(*) <b>bold</b> indicates dependence from exported APIs; <em>italic</em> indicates dependences from empty module<p>%n");
         out.format("<table>");
         out.format("<tr>%n");
         out.format("<th class=\"name\">Module</th>%n");
         out.format("<th class=\"num\">Bytes</th>%n");
         out.format("<th>Launchers</th>%n");
-        out.format("<th>Dependences</th>%n");
+        out.format("<th>Dependences (*)</th>%n");
         out.format("<th>Exports</th>%n");
         out.format("<th>Services</th>%n");
         out.format("<th class=\"name\">Native libs</th>%n");
@@ -340,5 +339,42 @@ public class ModuleSummary {
         static final String CONFIG = "conf";
         static final String MODULE_SERVICES = "module/services";
         static final String MODULE_NAME = "module";
+    }
+
+    Set<String> getAPIDependences(Module m, Path jmod) throws IOException, ConstantPoolException {
+        Dependency.Finder finder = Dependencies.getAPIFinder(ACC_PROTECTED);
+        Dependency.Filter filter = (Dependency d) -> !m.packages().contains(d.getTarget().getPackageName());
+        Set<String> exports = m.exports().stream()
+                    .filter(e -> e.permit() == null)
+                    .map(e -> e.pkg())
+                    .sorted()
+                    .collect(Collectors.toSet());
+        Set<String> deps = new HashSet<>();
+        try (ZipFile zf = new ZipFile(jmod.toFile())) {
+            for (Enumeration<? extends ZipEntry> e = zf.entries(); e.hasMoreElements();) {
+                ZipEntry ze = e.nextElement();
+                String fn = ze.getName();
+                String dir = fn.substring(0, fn.indexOf('/'));
+                if (JmodInfo.CLASSES.equals(dir) && fn.endsWith(".class")) {
+                    String pn = fn.substring(fn.indexOf('/')+1, fn.lastIndexOf('/')).replace('/', '.');
+                    if (exports.contains(pn)) {
+                        // analyze only exported APIs
+                        try (InputStream in = zf.getInputStream(ze)) {
+                            ClassFile cf = ClassFile.read(in);
+                            for (Dependency d : finder.findDependencies(cf)) {
+                                if (filter.accepts(d)) {
+                                   Module md = packageMap.get(d.getTarget().getPackageName());
+                                   if (md == null) {
+                                       throw new Error(d.getOrigin() + " -> " + d.getTarget() + " not found");
+                                   }
+                                   deps.add(md.id().name());
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return deps;
     }
 }
