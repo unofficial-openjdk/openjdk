@@ -25,7 +25,7 @@
 
 # Use a different default target than "default" and "all" so that we don't 
 # re-evaluate all the targets in the included makefiles.
-jdk-image:
+jmods:
 
 include $(SPEC)
 include JigsawSpecMod.gmk
@@ -40,9 +40,7 @@ include CompileLaunchers.gmk
 include CreatePolicyJars.gmk
 include HotspotImport.gmk
 
-include gendata/GendataFontConfig.gmk
-GENDATA_TZDB := $(JDK_OUTPUTDIR)/lib/tzdb.dat
-GENDATA_CURDATA := $(JDK_OUTPUTDIR)/lib/currency.data
+include GenerateData.gmk
 
 ################################################################################
 # Must generate jmods into jdk outputdir for now since jlink cannot find them
@@ -109,9 +107,10 @@ endef
 java.base_NATIVE := $(BASE_LIBRARIES) $(MSVCR_TARGET) $(JVM_LIBRARIES)
 java.base_CMDS := $(BASE_LAUNCHERS)
 java.base_CONF := $(BASE_CONF_FILES) $(NET_CONF_FILES) $(GENDATA_TZDB) \
-    $(GENDATA_CURDATA) $(POLICY_JARS)
+    $(POLICY_JARS)
 
 java.desktop_NATIVE := $(DESKTOP_LIBRARIES) $(FREETYPE_TARGET_LIB)
+java.desktop_CMDS := $(DESKTOP_LAUNCHERS)
 java.desktop_CONF := $(DESKTOP_CONF_FILES) $(GENDATA_FONT_CONFIG)
 
 java.logging_NATIVE := $(LOGGING_LIBRARIES)
@@ -195,23 +194,6 @@ $(foreach m, $(ALL_MODULES), $(eval $(call CreateJmod,$m)))
 
 jmods: $(JMODS)
 	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f GenerateModules.gmk SHUFFLED=true postjmods)
-
-################################################################################
-
-ifdef OPENJDK
-  MODS := jdk
-else
-  MODS := "jdk,oracle.jre"
-endif
-
-$(IMAGES_OUTPUTDIR)/_jdk-images-create.marker: $(JMODS)
-	$(ECHO) Creating jdk-module-image
-	$(RM) -r $(JDK_MODULE_IMAGE_DIR)
-	$(JLINK) --format image --output $(JDK_MODULE_IMAGE_DIR) \
-            --jmod-repo $(JDK_OUTPUTDIR)/jmods --mods $(MODS)
-	$(TOUCH) $@
-
-jdk-image: $(IMAGES_OUTPUTDIR)/_jdk-images-create.marker
 
 ################################################################################
 

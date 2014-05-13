@@ -162,10 +162,6 @@ endif
 java.desktop_COPY := .gif .png .wav .txt .xml .css
 java.desktop_CLEAN := iio-plugin.properties
 
-COPY_EXTRA += $(patsubst $(JDK_TOPDIR)/make/data/swingbeaninfo/images/%, \
-    $(JDK_OUTPUTDIR)/modules/java.desktop/javax/swing/beaninfo/images/%,\
-    $(wildcard $(JDK_TOPDIR)/make/data/swingbeaninfo/images/*.gif))
-
 java.desktop_EXCLUDES += \
     java/awt/doc-files \
     javax/swing/doc-files \
@@ -178,9 +174,12 @@ java.desktop_EXCLUDES += \
 # The exception handling of swing beaninfo
 # These resources violates the convention of having code and resources together under
 # $(JDK_TOPDIR)/src/.../classes directories
-$(JDK_OUTPUTDIR)/modules/java.desktop/javax/swing/beaninfo/images/%.gif: \
-    $(JDK_TOPDIR)/make/data/swingbeaninfo/images/%.gif
-	$(call install-file)
+$(eval $(call SetupCopyFiles,COPY_BEANINFO, \
+    SRC := $(JDK_TOPDIR)/make/data/swingbeaninfo/images, \
+    DEST := $(JDK_OUTPUTDIR)/modules/java.desktop/javax/swing/beaninfo/images, \
+    FILES := $(wildcard $(JDK_TOPDIR)/make/data/swingbeaninfo/images/*.gif)))
+
+java.desktop_COPY_EXTRA += $(COPY_BEANINFO)
 
 java.desktop_EXCLUDE_FILES += \
     javax/swing/plaf/nimbus/InternalFrameTitlePanePainter.java \
@@ -443,6 +442,13 @@ endif
 
 ################################################################################
 
+jdk.jconsole_COPY := .gif .png
+
+jdk.jconsole_CLEAN_FILES := $(wildcard \
+    $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.jconsole/share/classes/sun/tools/jconsole/resources/*.properties)
+
+################################################################################
+
 jdk.jdi_EXCLUDES := \
     com/sun/tools/example/debug/bdi \
     com/sun/tools/example/debug/event \
@@ -460,7 +466,6 @@ jdk.tools_CLEAN_FILES := $(wildcard \
     $(patsubst %, $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.tools/share/classes/%/*.properties, \
         sun/rmi/rmic/resources \
         sun/tools/javac/resources \
-        sun/tools/jconsole/resources \
         sun/tools/serialver/resources \
         com/sun/tools/script/shell))
 
@@ -560,13 +565,14 @@ ALL_SRC_DIRS = \
 
 # Find all modules with java sources. Filter out nashorn since it needs to be
 # compiled separately.
-JAVA_MODULES := $(filter-out jdk.scripting.nashorn, $(call FindJavaModules))
+ALL_JAVA_MODULES := $(filter-out jdk.scripting.nashorn, $(call FindJavaModules))
+JAVA_MODULES := $(ALL_JAVA_MODULES)
 
 # This macro sets up compilation of a module and declares dependencies for it.
 # Param 1 - module name
 define SetupModuleCompilation
   # Find the module dependencies by parsing modules.list file
-  $1_DEPS := $$(call FindDepsForModule, $1)
+  $1_DEPS := $$(filter $(ALL_JAVA_MODULES), $$(call FindDepsForModule, $1))
   ifneq ($$($1_DEPS), )
     $1_CLASSPATH := $$(addprefix $(JDK_OUTPUTDIR)/modules/,$$($1_DEPS))
     $1_CLASSPATH := $$(subst $$(SPACE),$$(PATH_SEP),$$($1_CLASSPATH))
@@ -586,20 +592,20 @@ define SetupModuleCompilation
       HEADERS := $(JDK_OUTPUTDIR)/gensrc_headers/$1, \
       ADD_JAVAC_FLAGS := $$($1_JAVAC_FLAGS)))
 
-  $1: $$($1)
-endef
+  $1: $$($1) $$($1_COPY_EXTRA)
 
-# This macro declares the dependencies in make. This needs to happen in 
-# a separate call when all the module name variables have been defined.
+  # Declare dependencies between java compilation of different modules.
+  # Since not all modules have been declared yet, or might be declared
+  # in different invocations of this file, use the macro to find the 
+  # correct target file to depend on.
 # Only the javac compilation actually depends on other modules so limit
 # dependency declaration to that by using the *_COMPILE_TARGET variable.
-define DeclareModuleDependencies
-  $$($1_COMPILE_TARGETS): $$(foreach d,$$($1_DEPS),$$($$d_COMPILE_TARGETS))
+  $$($1_COMPILE_TARGETS): $$(foreach d,$$($1_DEPS), \
+      $$(call SetupJavaCompilationCompileTarget, $$d, $(JDK_OUTPUTDIR)/modules/$$d))
 endef
 
 # Setup compilation for each module
 $(foreach m,$(JAVA_MODULES),$(eval $(call SetupModuleCompilation,$m)))
-$(foreach m,$(JAVA_MODULES),$(eval $(call DeclareModuleDependencies,$m)))
 
 ################################################################################
 # Copy zh_HK properties files from zh_TW
@@ -607,10 +613,15 @@ $(foreach m,$(JAVA_MODULES),$(eval $(call DeclareModuleDependencies,$m)))
 $(JDK_OUTPUTDIR)/modules/%_zh_HK.properties: $(JDK_OUTPUTDIR)/modules/%_zh_TW.properties
 	$(install-file)
 
-COPY_EXTRA += $(patsubst $(JDK_TOPDIR)/$(SRC_SUBDIR)/%, $(JDK_OUTPUTDIR)/modules/%, \
+define CreateHkTargets
+  $(patsubst $(JDK_TOPDIR)/$(SRC_SUBDIR)/%, $(JDK_OUTPUTDIR)/modules/%, \
     $(subst /share/classes,, \
-    $(subst _zh_TW,_zh_HK, $(filter %_zh_TW.properties, \
-    $(java.sql.rowset_CLEAN_FILES) $(java.rmi_CLEAN_FILES) $(jdk.tools_CLEAN_FILES)))))
+      $(subst _zh_TW,_zh_HK, $(filter %_zh_TW.properties, $1))))
+endef
+
+java.sql.rowset: $(call CreateHkTargets, $(java.sql.rowset_CLEAN_FILES))
+java.rmi: $(call CreateHkTargets, $(java.rmi_CLEAN_FILES))
+jdk.tools: $(call CreateHkTargets, $(jdk.tools_CLEAN_FILES))
 
 ################################################################################
 
@@ -649,13 +660,16 @@ ifndef OPENJDK
       $(BUILD_ACCESSBRIDGE_64_COMPILE_TARGETS): $(java.desktop_COMPILE_TARGETS)
 
     endif
+    java.desktop: $(BUILD_ACCESSBRIDGE_32) $(BUILD_ACCESSBRIDGE_64) \
+        $(BUILD_ACCESSBRIDGE_LEGACY)
   endif
 endif
 
 ################################################################################
 
-all: $(JAVA_MODULES) $(COPY_EXTRA) \
-    $(BUILD_ACCESSBRIDGE_32) $(BUILD_ACCESSBRIDGE_64) \
+all: $(JAVA_MODULES) \
+    $(BUILD_ACCESSBRIDGE_32) \
+    $(BUILD_ACCESSBRIDGE_64) \
     $(BUILD_ACCESSBRIDGE_LEGACY)
 
 .PHONY: all $(JAVA_MODULES)

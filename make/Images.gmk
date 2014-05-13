@@ -23,17 +23,30 @@
 # questions.
 #
 
-default: all
+# Use a different default target than "default" and "all" so that we don't 
+# re-evaluate all the targets in the included makefiles.
+all: jdk-image
 
 include $(SPEC)
-
-make-base:
-	+$(MAKE) -f TestMakeBase.gmk $(TEST_SUBTARGET)
-
-java-compilation:
-	+$(MAKE) -f TestJavaCompilation.gmk $(TEST_SUBTARGET)
+include JigsawSpecMod.gmk
+include MakeBase.gmk
 
 
-all: make-base java-compilation
+################################################################################
 
-.PHONY: default all make-base java-compilation
+ifdef OPENJDK
+  MODS := jdk
+else
+  MODS := "jdk,oracle.jre"
+endif
+
+$(IMAGES_OUTPUTDIR)/_jdk-images-create.marker: $(JMODS)
+	$(ECHO) Creating jdk-module-image
+	$(RM) -r $(JDK_MODULE_IMAGE_DIR)
+	$(JLINK) --format image --output $(JDK_MODULE_IMAGE_DIR) \
+            --jmod-repo $(JDK_OUTPUTDIR)/jmods --mods $(MODS)
+	$(TOUCH) $@
+
+jdk-image: $(IMAGES_OUTPUTDIR)/_jdk-images-create.marker
+
+################################################################################

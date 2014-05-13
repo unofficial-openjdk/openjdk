@@ -38,6 +38,7 @@ ifeq ($(SHUFFLED), true)
   MODULES_WILDCARD := /*
   MODULES_SUBDIR := modules
   SECURITY_CLASSES_SUBDIR := modules
+  CONF_SUBDIR := conf
 
   JAVA_BASE_SUBDIR := /java.base
   JAVA_COMPILER_SUBDIR := /java.compiler
@@ -89,5 +90,6 @@ else
   MODULES_WILDCARD :=
   MODULES_SUBDIR := classes
   SECURITY_CLASSES_SUBDIR := classes_security
+  CONF_SUBDIR := lib
   SRC_SUBDIR := src
 endif

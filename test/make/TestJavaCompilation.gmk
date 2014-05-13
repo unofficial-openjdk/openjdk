@@ -83,6 +83,7 @@ $(OUTPUT_DIR)/_jar1_verified: $(BUILD_JAR1)
 	fi
 	$(TOUCH) $@
 
+create-jar2: $(OUTPUT_DIR)/_jar1_verified
 TEST_TARGETS += $(OUTPUT_DIR)/_jar1_verified
 
 # Change a source file and call this makefile again to force the jar to be 
@@ -94,7 +95,10 @@ $(OUTPUT_DIR)_jar1_updated: $(OUTPUT_DIR)/_jar1_verified
 	+$(MAKE) -f $(THIS_FILE) $(OUTPUT_DIR)/_jar1_verified
 	$(TOUCH) $@
 
+update-jar1: $(OUTPUT_DIR)_jar1_updated
 TEST_TARGETS += $(OUTPUT_DIR)_jar1_updated
+
+.PHONY: clean-jar1 create-jar1 update-jar1
 
 ################################################################################
 # Test: jar2
@@ -132,6 +136,7 @@ $(OUTPUT_DIR)/_jar2_verified: $(BUILD_JAR2)
 	$(DIFF) -r $(JAR2_SRC_ROOT2)/dir2 $(JAR2_UNZIP)/dir2
 	$(TOUCH) $@
 
+create-jar2: $(OUTPUT_DIR)/_jar2_verified
 TEST_TARGETS += $(OUTPUT_DIR)/_jar2_verified
 
 $(OUTPUT_DIR)_jar2_updated: $(OUTPUT_DIR)/_jar2_verified
@@ -140,7 +145,10 @@ $(OUTPUT_DIR)_jar2_updated: $(OUTPUT_DIR)/_jar2_verified
 	+$(MAKE) -f $(THIS_FILE) $(OUTPUT_DIR)/_jar2_verified
 	$(TOUCH) $@
 
+update-jar2: $(OUTPUT_DIR)_jar2_updated
 TEST_TARGETS += $(OUTPUT_DIR)_jar2_updated
+
+.PHONY: clean-jar2 create-jar2 update-jar2
 
 ################################################################################
 # Test: jar3
@@ -164,6 +172,7 @@ $(OUTPUT_DIR)/_jar3_created: $(DEPS)
 	$(TOUCH) $(JAR3_SRC_ROOT1)/dir1/file1\$$foo.class
 	$(TOUCH) $(JAR3_SRC_ROOT2)/dir2/file2.class
 	$(TOUCH) $(JAR3_SRC_ROOT2)/extra-file
+	$(TOUCH) $(JAR3_SRC_ROOT2)/extra-file-abs
 	$(TOUCH) $(JAR3_SRC_ROOT2)/dir2/file\$$foo.dollar
 	$(TOUCH) $@
 
@@ -171,7 +180,8 @@ $(eval $(call SetupArchive,BUILD_JAR3, \
     $(OUTPUT_DIR)/_jar3_created, \
     SRCS := $(JAR3_SRC_ROOT1) $(JAR3_SRC_ROOT2), \
     EXTRA_FILES := extra-file \
-        dir2/file$$$$foo.dollar, \
+        dir2/file$$$$foo.dollar \
+        $(JAR3_SRC_ROOT2)/extra-file-abs, \
     EXCLUDE_FILES := dir1/file1$$$$foo.class, \
     JAR := $(JAR3_FILE)))
 
@@ -187,6 +197,7 @@ $(OUTPUT_DIR)/_jar3_verified: $(BUILD_JAR3)
 	$(DIFF) -r $(JAR3_SRC_ROOT2)/extra-file $(JAR3_UNZIP)/extra-file
 	$(TOUCH) $@
 
+create-jar3: $(OUTPUT_DIR)/_jar3_verified
 TEST_TARGETS += $(OUTPUT_DIR)/_jar3_verified
 
 $(OUTPUT_DIR)_jar3_updated: $(OUTPUT_DIR)/_jar3_verified
@@ -195,9 +206,10 @@ $(OUTPUT_DIR)_jar3_updated: $(OUTPUT_DIR)/_jar3_verified
 	+$(MAKE) -f $(THIS_FILE) $(OUTPUT_DIR)/_jar3_verified
 	$(TOUCH) $@
 
+update-jar3: $(OUTPUT_DIR)_jar3_updated
 TEST_TARGETS += $(OUTPUT_DIR)_jar3_updated
 
-.PHONY: clean-jar3
+.PHONY: clean-jar3 create-jar3 update-jar3
 
 ################################################################################
 
