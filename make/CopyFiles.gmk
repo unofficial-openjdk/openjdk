@@ -28,7 +28,6 @@ default: all
 include $(SPEC)
 include JigsawSpecMod.gmk
 include MakeBase.gmk
-include Tools.gmk
 
 INCLUDEDIR = $(JDK_OUTPUTDIR)/include
 LIBDIR := $(JDK_OUTPUTDIR)/lib
@@ -52,12 +51,6 @@ ifeq ($(OPENJDK_TARGET_OS), windows)
   OPENJDK_TARGET_OS_INCLUDE = $(INCLUDEDIR)/win32
 else ifeq ($(OPENJDK_TARGET_OS), macosx)
   OPENJDK_TARGET_OS_INCLUDE = $(INCLUDEDIR)/darwin
-endif
-
-ifeq ($(SHUFFLED), true)
-  CONF_SUBDIR := conf
-else
-  CONF_SUBDIR := lib
 endif
 
 #
@@ -436,30 +429,6 @@ else
 endif
 
 BASE_CONF_FILES += $(JVMCFG)
-
-##########################################################################################
-
-PROPS_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)$(JAVA_BASE_SUBDIR)/share/$(CONF_SUBDIR)/security/java.security-$(OPENJDK_TARGET_OS)
-PROPS_DST := $(JDK_OUTPUTDIR)/lib/security/java.security
-
-ifndef OPENJDK
-
-  RESTRICTED_PKGS_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed$(JAVA_BASE_SUBDIR)/share/$(CONF_SUBDIR)/security/restricted.pkgs
-  RESTRICTED_PKGS := $(shell $(CAT) $(RESTRICTED_PKGS_SRC) | $(TR) "\n" " ")
-
-  $(PROPS_DST): $(PROPS_SRC)
-	$(MKDIR) -p $(@D)
-	$(TOOL_ADDTORESTRICTEDPKGS) $^ $@.tmp $(RESTRICTED_PKGS)
-	$(MV) $@.tmp $@
-
-else
-
-  $(PROPS_DST): $(PROPS_SRC)
-	$(call install-file)
-
-endif
-
-BASE_CONF_FILES += $(PROPS_DST)
 
 ##########################################################################################
 

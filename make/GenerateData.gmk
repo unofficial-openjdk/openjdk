@@ -73,10 +73,40 @@ $(GENDATA_CURDATA): $(JDK_TOPDIR)/make/data/currency/CurrencyData.properties $(B
 	$(CHMOD) 444 $@
 
 GENDATA += $(GENDATA_CURDATA)
+BASE_CONF_FILES += $(GENDATA_CURDATA)
+
+##########################################################################################
+
+PROPS_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)$(JAVA_BASE_SUBDIR)/share/$(CONF_SUBDIR)/security/java.security-$(OPENJDK_TARGET_OS)
+PROPS_DST := $(JDK_OUTPUTDIR)/lib/security/java.security
+
+ifndef OPENJDK
+
+  RESTRICTED_PKGS_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed$(JAVA_BASE_SUBDIR)/share/$(CONF_SUBDIR)/security/restricted.pkgs
+
+  $(PROPS_DST): $(PROPS_SRC)
+	$(MKDIR) -p $(@D)
+	$(TOOL_ADDTORESTRICTEDPKGS) $< $@.tmp `$(CAT) $(RESTRICTED_PKGS_SRC) | $(TR) "\n" " "`
+	$(MV) $@.tmp $@
+
+else
+
+  $(PROPS_DST): $(PROPS_SRC)
+	$(call install-file)
+
+endif
+
+GENDATA += $(PROPS_DST)
+BASE_CONF_FILES += $(PROPS_DST)
 
 ##########################################################################################
 
 $(GENDATA): $(BUILD_TOOLS_JDK)
+
+java.base: $(BASE_CONF_FILES) $(GENDATA_UNINAME) $(BREAK_ITERATOR) $(GENDATA_TZDB)
+java.desktop: $(GENDATA_FONT_CONFIG) $(GENDATA_HTML32DTD)
+
+.PHONY: java.base java.desktop
 
 all: $(GENDATA)
 

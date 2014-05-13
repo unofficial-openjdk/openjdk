@@ -190,7 +190,7 @@ ifeq ($(OPENJDK_TARGET_OS), solaris)
 endif
 
 ##########################################################################################
-# TODO JIGSAW: what module?
+
 ifndef OPENJDK
   ifeq ($(OPENJDK_TARGET_OS), windows)
 

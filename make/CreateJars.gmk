@@ -523,17 +523,18 @@ TOOLS_JAR_EXCLUDES = com/sun/tools/sjavac
 
 ifeq ($(SHUFFLED), true)
   TOOLS_JAR_SRC := $(addprefix $(JDK_OUTPUTDIR)/modules/,\
-      java.desktop \
       java.corba \
+      java.desktop \
       jdk.attach \
-      jdk.jconsole \
-      jdk.jvmstat \
       jdk.compiler \
+      jdk.hotspot.tools \
       jdk.javadoc \
-      jdk.tools \
-      jdk.runtime \
-      jdk.xml.ws.tools \
+      jdk.jconsole \
       jdk.jdi \
+      jdk.jvmstat \
+      jdk.runtime \
+      jdk.tools \
+      jdk.xml.ws.tools \
       )
       #
 
@@ -547,7 +548,8 @@ $(eval $(call SetupArchive,BUILD_TOOLS_JAR, , \
         Tool aliasmap options, \
     INCLUDES := $(TOOLS_JAR_INCLUDES), \
     EXCLUDES := $(TOOLS_JAR_EXCLUDES), \
-    EXTRA_FILES := META-INF/services/com.sun.jdi.connect.Connector \
+    EXTRA_FILES := \
+        $(JDK_OUTPUTDIR)/modules/jdk.jdi/META-INF/services/com.sun.jdi.connect.Connector \
         META-INF/services/com.sun.jdi.connect.spi.TransportService \
         META-INF/services/com.sun.tools.attach.spi.AttachProvider \
         META-INF/services/com.sun.tools.internal.ws.wscompile.Plugin \
@@ -664,21 +666,17 @@ ifeq ($(SHUFFLED), true)
 
   # Need to copy launcher src files into desired directory structure
   # before zipping the sources.
-  LAUNCHER_SRC_FILES := $(wildcard $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/libjli/*) \
-      $(wildcard $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/$(OPENJDK_TARGET_OS_API_DIR)/native/libjli/java_md*)
-  LAUNCHER_ZIP_SRC := $(patsubst $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/libjli/%, \
-          $(IMAGES_OUTPUTDIR)/src/launcher/%, \
-      $(patsubst $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/$(OPENJDK_TARGET_OS_API_DIR)/native/libjli/%, \
-          $(IMAGES_OUTPUTDIR)/src/launcher/%, \
-      $(LAUNCHER_SRC_FILES)))
+  $(eval $(call SetupCopyFiles,COPY_LAUNCHER_SRC, \
+      SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base, \
+      DEST := $(IMAGES_OUTPUTDIR)/src/launcher, \
+      FLATTEN := true, \
+      FILES := $(wildcard \
+          $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/launchers/* \
+          $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/libjli/* \
+          $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/$(OPENJDK_TARGET_OS_API_DIR)/native/libjli/java_md*)))
 
-  $(IMAGES_OUTPUTDIR)/src/launcher/%: \
-      $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/libjli/%
-		$(install-file)
+  LAUNCHER_ZIP_SRC := $(COPY_LAUNCHER_SRC)
 
-  $(IMAGES_OUTPUTDIR)/src/launcher/%: \
-      $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/$(OPENJDK_TARGET_OS_API_DIR)/native/libjli/%
-		$(install-file)
 else
   SRC_ZIP_SRCS := \
       $(JDK_TOPDIR)/src/share/classes \

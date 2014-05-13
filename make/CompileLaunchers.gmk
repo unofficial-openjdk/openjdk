@@ -668,6 +668,7 @@ ifneq ($(BUILD_JEXEC_SRC), )
       PROGRAM := jexec))
 
   BUILD_LAUNCHERS += $(BUILD_JEXEC)
+  BASE_LIBRARIES += $(BUILD_JEXEC)
 endif
 
 ##########################################################################################
@@ -678,9 +679,11 @@ endif
 JAVA_RMI_CGI := $(JDK_OUTPUTDIR)/bin$(OUTPUT_SUBDIR)/java-rmi.cgi
 ifeq ($(OPENJDK_TARGET_OS), linux)
   BUILD_LAUNCHERS += $(JAVA_RMI_CGI)
+  RMI_LAUNCHERS += $(JAVA_RMI_CGI)
 endif
 ifeq ($(OPENJDK_TARGET_OS), solaris)
   BUILD_LAUNCHERS += $(JAVA_RMI_CGI)
+  RMI_LAUNCHERS += $(JAVA_RMI_CGI)
 endif
 
 # TODO:
@@ -692,7 +695,7 @@ endif
 # http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6512052
 ifeq ($(OPENJDK_TARGET_OS), windows)
   $(eval $(call SetupLauncher,java-rmi, , \
-      $(call SET_SHARED_LIBRARY_MAPFILE,$(JDK_TOPDIR)/make/java/main/java/mapfile-$(OPENJDK_TARGET_CPU))))
+      $(call SET_SHARED_LIBRARY_MAPFILE,$(JDK_TOPDIR)/make/java/main/java/mapfile-$(OPENJDK_TARGET_CPU)),,,,,,,,,RMI))
 else
   ifeq ($(SHUFFLED), true)
     JAVA_RMI_CGI_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.rmi/unix/bin/java-rmi.cgi.sh
@@ -745,6 +748,7 @@ ifeq ($(BUILD_JSPAWNHELPER), 1)
   $(BUILD_JSPAWNHELPER): $(LINK_JSPAWNHELPER_OBJECTS)
 
   BUILD_LAUNCHERS += $(BUILD_JSPAWNHELPER)
+  BASE_LIBRARIES += $(BUILD_JSPAWNHELPER)
 endif
 
 ##########################################################################################
@@ -779,6 +783,7 @@ ifndef OPENJDK
         MANIFEST := $(JDK_TOPDIR)/src/closed/windows/native/sun/bridge/jabswitch.manifest))
 
     BUILD_LAUNCHERS += $(BUILD_JABSWITCH)
+    DESKTOP_LAUNCHERS += $(BUILD_JABSWITCH)
 
   endif
 endif
@@ -786,6 +791,28 @@ endif
 ##########################################################################################
 
 $(BUILD_LAUNCHERS): $(JDK_TOPDIR)/make/CompileLaunchers.gmk
+
+java.base: $(BASE_LAUNCHERS) $(BASE_LIBRARIES)
+java.corba: $(CORBA_LAUNCHERS)
+java.desktop: $(DESKTOP_LAUNCHERS)
+java.rmi: $(RMI_LAUNCHERS)
+java.scripting: $(SCRIPTING_LAUNCHERS)
+java.security.kerberos: $(KERBEROS_LAUNCHERS)
+jdk.attach: $(ATTACH_LAUNCHERS)
+jdk.compiler: $(COMPILER_LAUNCHERS)
+jdk.hotspot.tools: $(HOTSPOT_TOOLS_LAUNCHERS)
+jdk.javadoc: $(JAVADOC_LAUNCHERS)
+jdk.jconsole: $(JCONSOLE_LAUNCHERS)
+jdk.jdi: $(JDI_LAUNCHERS)
+jdk.jvmstat: $(JVMSTAT_LAUNCHERS)
+jdk.runtime: $(RUNTIME_LAUNCHERS)
+jdk.scripting.nashorn: $(NASHORN_LAUNCHERS)
+jdk.tools: $(TOOLS_LAUNCHERS)
+jdk.xml.ws.tools: $(XML_WS_TOOLS_LAUNCHERS)
+
+.PHONY: java.base java.corba java.desktop java.rmi java.scripting java.security.kerberos \
+    jdk.attach jdk.compiler jdk.hotspot.tools jdk.javadoc jdk.jconsole jdk.jdi \
+    jdk.jvmstat jdk.runtime jdk.scripting.nashorn jdk.tools jdk.xml.ws.tools
 
 all: $(BUILD_LAUNCHERS)
 

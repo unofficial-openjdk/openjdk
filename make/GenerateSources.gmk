@@ -67,18 +67,16 @@ include gensrc/GensrcProviders.gmk
 
 java.base: $(GENSRC_JAVA_BASE)
 java.desktop: $(GENSRC_JAVA_DESKTOP)
-jdk.debug.agent: $(GENSRC_JDK_JDI)
-jdk.charset: $(GENSRC_SUN_CHARSET)
-jdk.localedata: $(GENSRC_SUN_LOCALEDATA)
+jdk.attach: $(GENSRC_JDK_ATTACH)
+jdk.charsets: $(GENSRC_JDK_CHARSETS)
 jdk.jconsole: $(GENSRC_JDK_JCONSOLE)
 jdk.jdi: $(GENSRC_JDK_JDI)
 
 all: $(GENSRC_JAVA_BASE) \
     $(GENSRC_JAVA_DESKTOP) \
-    $(GENSRC_SUN_CHARSET) \
-    $(GENSRC_SUN_LOCALEDATA) \
+    $(GENSRC_JDK_CHARSETS) \
     $(GENSRC_JDK_JCONSOLE) \
     $(GENSRC_JDK_JDI) \
     #
 
-.PHONY: all java.base java.desktop jdk.debug.agent jdk.charset jdk.localedata jdk.jconsole jdk.jdi
+.PHONY: all java.base java.desktop jdk.attach jdk.debug.agent jdk.charsets jdk.jconsole jdk.jdi
