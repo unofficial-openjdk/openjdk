@@ -556,10 +556,9 @@ endif
 define FindJavaModules
   $(filter-out $(JAVA_MODULES_FILTER), $(sort $(notdir \
       $(patsubst %/,%, $(dir $(patsubst %/,%, $(dir $(patsubst %/,%, $(dir \
-      $(filter-out %module-info.java, \
       $(wildcard $(patsubst %,%/*/share/classes/*, $(ALL_TOP_SRC_DIRS)) \
           $(patsubst %,%/*/$(OPENJDK_TARGET_OS_API_DIR)/classes/*, $(ALL_TOP_SRC_DIRS)) \
-          $(patsubst %,%/*/$(OPENJDK_TARGET_OS)/classes/*, $(ALL_TOP_SRC_DIRS)))))))))))))
+          $(patsubst %,%/*/$(OPENJDK_TARGET_OS)/classes/*, $(ALL_TOP_SRC_DIRS))))))))))))
 endef
 
 define FindNativeModules
@@ -573,7 +572,7 @@ MODULES_LIST_FILE := $(OUTPUT_ROOT)/jdk/genmodules/classlist/modules.list
 
 # Param 1: Module to find deps for
 define FindDepsForModule
-  $(wordlist 2, 100, $(shell $(GREP) '^$(strip $1):' $(MODULES_LIST_FILE)))
+  $(if $(filter-out java.base, $1), java.base $(filter-out jdk.scripting.nashorn, $(filter-out java.base, $(wordlist 2, 100, $(shell $(GREP) '^$(strip $1):' $(MODULES_LIST_FILE))))))
 endef
 
 # Find all modules with source for the target platform.

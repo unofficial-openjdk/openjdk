@@ -36,7 +36,7 @@ include JavaCompilation.gmk
 $(eval $(call SetupJavaCompiler,GENERATE_JDKBYTECODE, \
     JVM := $(JAVA), \
     JAVAC := $(NEW_JAVAC), \
-    FLAGS := -source 8 -target 8 \
+    FLAGS := -source 9 -target 9 \
         -encoding ascii -XDignore.symbol.file=true $(JAVAC_WARNINGS) \
         $(GENERATE_JDKBYTECODE_EXTRA_FLAGS), \
     SERVER_DIR := $(SJAVAC_SERVER_DIR), \
@@ -572,18 +572,16 @@ JAVA_MODULES := $(ALL_JAVA_MODULES)
 # Param 1 - module name
 define SetupModuleCompilation
   # Find the module dependencies by parsing modules.list file
-  $1_DEPS := $$(filter $(ALL_JAVA_MODULES), $$(call FindDepsForModule, $1))
-  ifneq ($$($1_DEPS), )
-    $1_CLASSPATH := $$(addprefix $(JDK_OUTPUTDIR)/modules/,$$($1_DEPS))
-    $1_CLASSPATH := $$(subst $$(SPACE),$$(PATH_SEP),$$($1_CLASSPATH))
-    $1_JAVAC_FLAGS := -bootclasspath "$$($1_CLASSPATH)"
-  else
-    # Need to set the bootclasspath for java.base too.
-    $1_JAVAC_FLAGS := -bootclasspath $(JDK_OUTPUTDIR)/modules/$1
-  endif
+  $1_DEPS := $$(call FindDepsForModule, $1)
 
-  # Remove this line to let javac see module-info.java files.
-  $1_EXCLUDE_FILES += module-info.java
+  $1_CLASSPATH := $$(addprefix $(JDK_OUTPUTDIR)/modules/,$$($1_DEPS))
+  ifeq ($1, jdk.hotspot.tools)
+    ## The source of this module is compiled elsewhere, hotspot, and imported.
+    ## Service types are required in the classpath when compiing module-info
+    $1_CLASSPATH := $$($1_CLASSPATH) $$(addprefix $(JDK_OUTPUTDIR)/modules/,jdk.hotspot.tools)
+  endif
+  $1_CLASSPATH := $$(subst $$(SPACE),$$(PATH_SEP),$$($1_CLASSPATH))
+  $1_JAVAC_FLAGS := -bootclasspath "$$($1_CLASSPATH)"
 
   $$(eval $$(call SetupJavaCompilation,$1, \
       SETUP := GENERATE_JDKBYTECODE, \
