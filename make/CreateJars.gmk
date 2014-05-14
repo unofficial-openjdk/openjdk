@@ -35,6 +35,7 @@ include Tools.gmk
 
 ifeq ($(SHUFFLED), true)
   JDK_OUT_CLASSES := $(wildcard $(JDK_OUTPUTDIR)/modules/*)
+  RT_JAR_EXCLUDES += module-info.class
 else
   JDK_OUT_CLASSES := $(JDK_OUTPUTDIR)/classes
 endif
