@@ -356,6 +356,8 @@ public class ModuleSummary {
                 String fn = ze.getName();
                 String dir = fn.substring(0, fn.indexOf('/'));
                 if (JmodInfo.CLASSES.equals(dir) && fn.endsWith(".class")) {
+                    if (fn.equals("classes/module-info.class"))
+                        continue;   // skip module-info.class
                     String pn = fn.substring(fn.indexOf('/')+1, fn.lastIndexOf('/')).replace('/', '.');
                     if (exports.contains(pn)) {
                         // analyze only exported APIs

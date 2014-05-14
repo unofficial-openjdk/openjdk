@@ -173,11 +173,16 @@ public class GenModuleGraph extends Task {
             // find all packages included in the module
             Files.find(mclasses, Integer.MAX_VALUE,
                        (Path p,BasicFileAttributes attr) ->
-                            p.getFileName().toString().endsWith(".class"))
+                            p.getFileName().toString().endsWith(".class")
+                            && !p.getFileName().toString().equals("module-info.class"))
                  .map(Path::getParent)
                  .forEach(pkg -> b.include(mclasses.relativize(pkg).toString().replace(File.separatorChar, '.')));
         }
-        return b.build();
+        Module m = b.build();
+        m.packages()
+         .stream()
+         .forEach(pkg -> { if (pkg.equals("")) throw new AssertionError("Module contains unnamed package"); });
+        return m;
     }
 
     private ModuleDependence moduleDependence(Dependence d) {

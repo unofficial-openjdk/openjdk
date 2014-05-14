@@ -176,6 +176,7 @@ public final class Module
             return id(ModuleId.parse(id, null));
         }
 
+        // ## chegar: should we disallow the <unnamed> package, <empty string>?
         public Builder include(String p) {
             packages.add(requireNonNull(p));
             return this;

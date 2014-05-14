@@ -671,6 +671,8 @@ module jdk.jdi {
 
 // JDWP agent and socket transport
 module jdk.debug.agent {
+    // explicitly require java.base, until javac implicitly adds mandated dependence
+    requires java.base;
 }
 
 module jdk.hprof.agent {
