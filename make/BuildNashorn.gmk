@@ -49,10 +49,11 @@ ifdef MILESTONE
 endif
 
 # Need to use source and target 7 for nasgen to work.
+# ## source/target updated to 9 to support compilation of module-info
 $(eval $(call SetupJavaCompiler,GENERATE_NEWBYTECODE_DEBUG, \
     JVM := $(JAVA), \
     JAVAC := $(NEW_JAVAC), \
-    FLAGS := -g -source 7 -target 7 -bootclasspath "$(JDK_CLASSES)", \
+    FLAGS := -g -source 9 -target 9 -bootclasspath "$(JDK_CLASSES)", \
     SERVER_DIR := $(SJAVAC_SERVER_DIR), \
     SERVER_JVM := $(SJAVAC_SERVER_JAVA)))
 
@@ -67,7 +68,6 @@ $(eval $(call SetupJavaCompilation,BUILD_NASHORN, \
     SETUP := GENERATE_NEWBYTECODE_DEBUG, \
     SRC := $(NASHORN_SRC), \
     EXCLUDES := share, \
-    EXCLUDE_FILES := module-info.java, \
     COPY := .properties .js, \
     BIN := $(NASHORN_OUTPUTDIR)/nashorn_classes))
 
