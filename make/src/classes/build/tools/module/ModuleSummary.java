@@ -25,6 +25,7 @@
 
 package build.tools.module;
 
+import com.sun.tools.classfile.AccessFlags;
 import static com.sun.tools.classfile.AccessFlags.ACC_PROTECTED;
 import com.sun.tools.classfile.ClassFile;
 import com.sun.tools.classfile.ConstantPoolException;
@@ -425,13 +426,16 @@ public class ModuleSummary {
                         // analyze only exported APIs
                         try (InputStream in = zf.getInputStream(ze)) {
                             ClassFile cf = ClassFile.read(in);
-                            for (Dependency d : finder.findDependencies(cf)) {
-                                if (filter.accepts(d)) {
-                                   Module md = packageMap.get(d.getTarget().getPackageName());
-                                   if (md == null) {
-                                       throw new Error(d.getOrigin() + " -> " + d.getTarget() + " not found");
-                                   }
-                                   deps.add(name(md));
+                            if (cf.access_flags.is(AccessFlags.ACC_PUBLIC)) {
+                                for (Dependency d : finder.findDependencies(cf)) {
+                                    if (filter.accepts(d)) {
+                                       Module md = packageMap.get(d.getTarget().getPackageName());
+                                       if (md == null) {
+                                           throw new Error(d.getOrigin() + " -> " +
+                                                           d.getTarget() + " not found");
+                                       }
+                                       deps.add(name(md));
+                                    }
                                 }
                             }
                         }

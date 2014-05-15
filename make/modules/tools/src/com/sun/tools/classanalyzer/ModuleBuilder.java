@@ -26,6 +26,7 @@ import com.sun.tools.classanalyzer.ClassPath.Archive;
 import static com.sun.tools.classanalyzer.Dependence.Identifier.*;
 import com.sun.tools.classanalyzer.Module.Factory;
 import com.sun.tools.classanalyzer.Service.ProviderConfigFile;
+import com.sun.tools.classfile.AccessFlags;
 import static com.sun.tools.classfile.AccessFlags.*;
 import com.sun.tools.classfile.ClassFile;
 import com.sun.tools.classfile.ConstantPoolException;
@@ -301,7 +302,7 @@ public class ModuleBuilder {
 
                 int pos = classFileName.lastIndexOf('/');
                 String pn = (pos > 0) ? classFileName.substring(0, pos).replace('/', '.') : "";
-                if (!Package.isExportedPackage(pn)) {
+                if (!Package.isExportedPackage(pn) || !cf.access_flags.is(AccessFlags.ACC_PUBLIC)) {
                     // skip non-exported class
                     continue;
                 }
