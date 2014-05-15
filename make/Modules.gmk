@@ -76,7 +76,7 @@ TOOL_GENMODULEGRAPH =$(BUILD_JAVA) -esa -ea -cp $(CLASSANALYZER_CLASSES) \
     com.sun.tools.classanalyzer.GenModuleGraph
 
 TOOL_GENGRAPHS =$(BUILD_JAVA) -esa -ea -cp $(JDK_OUTPUTDIR)/btclasses \
-    build.tools.deps.GenGraphs
+    build.tools.module.GenGraphs
 
 TOOL_GENMODULESXML =$(BUILD_JAVA) -esa -ea -cp $(JDK_OUTPUTDIR)/btclasses \
     build.tools.module.GenerateModulesXml

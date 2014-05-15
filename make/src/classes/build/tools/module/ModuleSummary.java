@@ -33,23 +33,26 @@ import com.sun.tools.classfile.Dependency;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import jdk.jigsaw.module.Module;
 import jdk.jigsaw.module.ModuleDependence;
+import jdk.jigsaw.module.Resolution;
 
 public class ModuleSummary {
     private static final String USAGE = "Usage: ModuleSummary -mp <dir> -o <outfile>";
@@ -58,7 +61,6 @@ public class ModuleSummary {
         int i=0;
         Path modpath = null;
         Path outfile = null;
-        String title = "JDK Module Summary";
         while (i < args.length && args[i].startsWith("-")) {
             String arg = args[i++];
             switch (arg) {
@@ -67,9 +69,6 @@ public class ModuleSummary {
                     break;
                 case "-o":
                     outfile = Paths.get(args[i++]);
-                    break;
-                case "-title":
-                    title = args[i++];
                     break;
                 default:
                     System.err.println(USAGE);
@@ -84,54 +83,104 @@ public class ModuleSummary {
             System.err.println(USAGE);
             System.exit(1);
         }
-        if (outfile.getParent() != null) {
-            Files.createDirectories(outfile.getParent());
-        }
-
-        ModuleSummary ms = new ModuleSummary(title, modpath, roots);
-        ms.run();
-        ms.genReport(outfile);
+        Path dir = outfile.getParent() != null ? outfile.getParent() : Paths.get(".");
+        Files.createDirectories(dir);
+        ModuleSummary ms = new ModuleSummary(modpath);
+        ms.genReport(outfile, ms.modules(), "JDK Module Summary");
+        ms.genReport(dir.resolve("java.se.html"),
+                     Collections.singleton("java.se"), "Java SE Modules");
+        ms.genCSV(dir.resolve("jdk.csv"), ms.modules());
     }
 
-    private final String title;
-    private final List<Module> modules;
+    private final Set<Module> modules;
     private final Map<Module, JmodInfo> jmods = new HashMap<>();
     private final Map<Module, Set<String>> deps = new HashMap<>();
     private final Map<String, Module> packageMap = new HashMap<>();
     private final Path modpath;
-    ModuleSummary(String title, Path modpath, Set<String> roots) throws IOException{
-        this.title = title;
+    ModuleSummary(Path modpath) throws IOException, ConstantPoolException {
         this.modpath = modpath;
         Module[] mods = ModuleUtils.readModules();
-        if (roots.isEmpty()) {
-            this.modules = Arrays.stream(mods).sorted(Comparator.comparing(Module::id))
-                                 .collect(Collectors.toList());
-        } else {
-            this.modules = ModuleUtils.resolve(mods, roots).stream()
-                           .sorted(Comparator.comparing(Module::id))
-                           .collect(Collectors.toList());
-        }
+        this.modules = Arrays.stream(mods).collect(Collectors.toSet());
+
         // build package map for all modules for API dependency analysis
         Arrays.stream(mods)
               .forEach(m -> m.packages().stream()
                                .forEach(p -> packageMap.put(p, m)));
-    }
 
-    void run() throws IOException, ConstantPoolException {
         for (Module m : modules) {
-            Path jmod = modpath.resolve(m.id().name() + ".jmod");
+            Path jmod = modpath.resolve(name(m) + ".jmod");
             jmods.put(m, new JmodInfo(jmod));
             deps.put(m, getAPIDependences(m, jmod));
         }
     }
 
-    public void genReport(Path outfile) throws IOException {
+    Set<String> modules() {
+        return modules.stream().map(this::name).collect(Collectors.toSet());
+    }
+
+    private String name(Module m) {
+        return m.id().name();
+    }
+
+    public void genCSV(Path outfile, Set<String> roots) throws IOException {
+        Resolution r = ModuleUtils.resolve(modules, roots);
+        Map<String, Module> selectedModules = r.selectedModules().stream()
+                .collect(Collectors.toMap(this::name, Function.identity()));
+        Map<Module,Set<String>> deps = r.resolvedDependences();
         try (PrintStream out = new PrintStream(Files.newOutputStream(outfile))) {
-            long totalBytes = modules.stream().mapToLong(m -> jmods.get(m).size).sum();
-            writeHeader(out, modules.size(), totalBytes);
-            for (Module m: modules) {
-                genSummary(out, m, jmods.get(m));
-            }
+            selectedModules.values().stream()
+                   .sorted(Comparator.comparing(Module::id))
+                   .forEach(m -> {
+                        int reqCount = 0;
+                        long reqBytes = 0;
+                        long reqJmodSize = 0;
+                        if (deps.containsKey(m)) {
+                            reqCount = deps.get(m).size();
+                            reqBytes = deps.get(m).stream()
+                                            .map(d -> selectedModules.get(d))
+                                            .mapToLong(d -> jmods.get(d).size).sum();
+                            reqJmodSize = deps.get(m).stream()
+                                            .map(d -> selectedModules.get(d))
+                                            .mapToLong(d -> jmods.get(d).filesize).sum();
+                        }
+                        out.format("%s,%d,%d,%d,%d%n", name(m),
+                                   jmods.get(m).size, jmods.get(m).filesize,
+                                   reqBytes, reqJmodSize);
+                   });
+        }
+    }
+
+    public void genReport(Path outfile, Set<String> roots, String title) throws IOException {
+        Resolution r = ModuleUtils.resolve(modules, roots);
+        Map<String, Module> selectedModules = r.selectedModules().stream()
+                .collect(Collectors.toMap(this::name, Function.identity()));
+        Map<Module,Set<String>> deps = r.resolvedDependences();
+        try (PrintStream out = new PrintStream(Files.newOutputStream(outfile))) {
+            long totalBytes = selectedModules.values().stream()
+                                  .mapToLong(m -> jmods.get(m).size).sum();
+            writeHeader(out, title, selectedModules.size(), totalBytes);
+            selectedModules.values().stream()
+                   .sorted(Comparator.comparing(Module::id))
+                   .forEach(m -> {
+                        int reqCount = 0;
+                        long reqBytes = jmods.get(m).size;
+                        long reqJmodSize = jmods.get(m).filesize;
+                        if (deps.containsKey(m)) {
+                            reqCount = deps.get(m).size();
+                            reqBytes += deps.get(m).stream()
+                                    .map(d -> selectedModules.get(d))
+                                    .mapToLong(d -> jmods.get(d).size).sum();
+                            reqJmodSize += deps.get(m).stream()
+                                    .map(d -> selectedModules.get(d))
+                                    .mapToLong(d -> jmods.get(d).filesize).sum();
+                        }
+
+                        try {
+                            genSummary(out, m, jmods.get(m), reqCount, reqBytes, reqJmodSize);
+                        } catch (IOException e) {
+                            throw new UncheckedIOException(e);
+                        }
+                    });
             out.format("</table>");
             out.format("</body></html>%n");
         }
@@ -142,8 +191,7 @@ public class ModuleSummary {
                                    name, name);
         Stream<String> mods = d.modifiers().stream().map(e -> e.toString().toLowerCase());
         String result = (Stream.concat(Stream.of("requires"),
-                              Stream.concat(mods,
-                                            Stream.of(ref)))
+                                       Stream.concat(mods, Stream.of(ref)))
                 .collect(Collectors.joining(" ")));
         // API dependency: bold
         // aggregator module's require: italic
@@ -152,11 +200,15 @@ public class ModuleSummary {
                     : (from.packages().isEmpty() ? String.format("<em>%s</em>", result) : result);
     }
 
-    private void genSummary(PrintStream out, Module m, JmodInfo jm) throws IOException {
-        String modulename = m.id().name();
+    private void genSummary(PrintStream out, Module m, JmodInfo jm,
+                            int requireModules, long requireUncompressed, long requireJmodFileSize)
+            throws IOException
+    {
+        String modulename = name(m);
         out.format("<tr>%n");
         out.format("<td class=\"name\"><b><a name=\"%s\">%s</a></b><br><br>%n",
                    modulename, modulename);
+        // statistic about module content
         out.format("jmod file<br>%n");
         out.format("uncompressed<br>%n");
         out.format("%8d %s<br>%n", jm.classCount, "classes");
@@ -166,6 +218,10 @@ public class ModuleSummary {
         out.format("%8d %s<br>%n", jm.debugInfoLibCount, "debugInfo libs");
         out.format("%8d %s<br>%n", jm.nativeCmds.size() - jm.debugInfoCmdCount, "launchers");
         out.format("%8d %s<br>%n", jm.debugInfoCmdCount, "debugInfo");
+        out.format("<br>Transitive dependences<br>%n");
+        out.format("Total uncompressed<br>%n");
+        out.format("Approx compressed<br>%n");
+
         out.format("</td>%n");
         out.format("<td class=\"num\"><br><br>%n");
         out.format("%12d<br>%n", jm.filesize);
@@ -179,7 +235,13 @@ public class ModuleSummary {
         out.format("%10d<br>%n", jm.nativeCmds.values().stream()
                                    .mapToLong(l -> l.longValue()).sum());
         out.format("%10d<br>%n", jm.debugInfoCmdBytes);
+        // total size due to the transitive dependences
+        out.format("<br>%10d<br>%n", requireModules);
+        out.format("%10d<br>%n", requireUncompressed);
+        out.format("%10d<br>%n", requireJmodFileSize);
+
         out.format("</td>%n");
+
         out.format("<td>%n");
         jm.nativeCmds.entrySet().stream()
                 .sorted(Map.Entry.comparingByKey())
@@ -220,7 +282,7 @@ public class ModuleSummary {
         out.format("</tr>%n");
     }
 
-    private void writeHeader(PrintStream out, int numModules, long size) {
+    private void writeHeader(PrintStream out, String title, int numModules, long size) {
         out.format("<html>%n");
         out.format("<head>%n");
         out.format("<title>%s</title>%n", title);
@@ -369,7 +431,7 @@ public class ModuleSummary {
                                    if (md == null) {
                                        throw new Error(d.getOrigin() + " -> " + d.getTarget() + " not found");
                                    }
-                                   deps.add(md.id().name());
+                                   deps.add(name(md));
                                 }
                             }
                         }

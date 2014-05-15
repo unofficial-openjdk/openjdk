@@ -23,7 +23,7 @@
  * questions.
  */
 
-package build.tools.deps;
+package build.tools.module;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -32,25 +32,25 @@ import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-
+import java.util.stream.Collectors;
 import jdk.jigsaw.module.Module;
+import static jdk.jigsaw.module.ModuleDependence.Modifier.PUBLIC;
 import jdk.jigsaw.module.ModuleLibrary;
 import jdk.jigsaw.module.Resolution;
 import jdk.jigsaw.module.SimpleResolver;
 
 public class GenGraphs {
-
     private static final String MODULES_SER = "jdk/jigsaw/module/resources/modules.ser";
 
     private static class JdkModuleLibrary extends ModuleLibrary {
         private final Set<Module> modules = new HashSet<>();
         private final Map<String, Module> namesToModules = new HashMap<>();
-
         JdkModuleLibrary(Module... mods) {
             for (Module m: mods) {
                 modules.add(m);
@@ -81,6 +81,12 @@ public class GenGraphs {
         JdkModuleLibrary mlib = new JdkModuleLibrary(modules);
         SimpleResolver resolver = new SimpleResolver(mlib);
 
+        Set<Module> javaSEModules = resolver.resolve(Collections.singleton("java.se"))
+                                            .selectedModules();
+        Set<Module> jdkModules = Arrays.stream(modules)
+                                       .filter(m -> !javaSEModules.contains(m))
+                                       .collect(Collectors.toSet());
+        GenGraphs genGraphs = new GenGraphs(javaSEModules, jdkModules);
         for (Module m: modules) {
             String name = m.id().name();
             Set<String> roots = new HashSet<>();
@@ -89,7 +95,7 @@ public class GenGraphs {
             Resolution r = resolver.resolve(roots);
             Map<Module, Set<String>> deps = r.resolvedDependences();
 
-            genDotFile(dir, name, deps);
+            genGraphs.genDotFile(dir, name, deps);
         }
     }
 
@@ -108,18 +114,55 @@ public class GenGraphs {
         }
     }
 
-    private static void genDotFile(Path dir, String name, Map<Module, Set<String>> deps)
+    private static final String ORANGE = "#e76f00";
+    private static final String BLUE = "#437291";
+    private static final String GREEN = "#97b101";
+    private final Set<Module> javaGroup;
+    private final Set<Module> jdkGroup;
+    GenGraphs(Set<Module> javaGroup, Set<Module> jdkGroup) {
+        this.javaGroup = Collections.unmodifiableSet(javaGroup);
+        this.jdkGroup = Collections.unmodifiableSet(jdkGroup);
+    }
+
+    private void genDotFile(Path dir, String name, Map<Module, Set<String>> deps)
         throws IOException
     {
         try (PrintStream out = new PrintStream(Files.newOutputStream(dir.resolve(name + ".dot")))) {
             out.format("digraph \"%s\" {%n", name);
+            out.format("nodesep=.5;%n");
+            out.format("ranksep=1.5;%n");
+            out.format("edge [arrowhead=open, arrowsize=2];%n");
+            out.format("node [shape=plaintext, fontname=\"DejaVuSan\"];%n");
+
+            deps.keySet().stream()
+                .filter(javaGroup::contains)
+                .map(this::name)
+                .forEach(mn -> out.format("  \"%s\" [fontcolor=\"%s\", group=%s];%n",
+                                          mn, ORANGE, "java"));
+            deps.keySet().stream()
+                .filter(jdkGroup::contains)
+                .map(this::name)
+                .forEach(mn -> out.format("  \"%s\" [fontcolor=\"%s\", group=%s];%n",
+                                          mn, BLUE, "jdk"));
             for (Map.Entry<Module, Set<String>> entry: deps.entrySet()) {
-                name = entry.getKey().id().name();
+                Module m = entry.getKey();
+                Set<String> requiresPublic = m.moduleDependences().stream()
+                                                 .filter(d -> d.modifiers().contains(PUBLIC))
+                                                 .map(d -> d.query().name())
+                                                 .collect(Collectors.toSet());
+                name = m.id().name();
                 for (String dn: entry.getValue()) {
-                    out.format("  \"%s\" -> \"%s\";%n", name, dn);
+                    String attr = requiresPublic.contains(dn)
+                            ? String.format(" [type=reqPublic, color=\"%s\"]", GREEN)
+                            : "";
+                    out.format("  \"%s\" -> \"%s\"%s;%n", name, dn, attr);
                 }
             }
             out.println("}");
         }
+    }
+
+    private String name(Module m) {
+        return m.id().name();
     }
 }

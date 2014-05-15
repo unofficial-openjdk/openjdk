@@ -132,7 +132,7 @@ class ClassAnalyzer extends Task {
 
         final ModuleBuilder builder =
             new ModuleBuilder(mconfigs,
-                              ClassPath.getArchives(options.javahome),
+                              Paths.get(options.javahome),
                               options.version,
                               options.apiOnly);
         builder.run();

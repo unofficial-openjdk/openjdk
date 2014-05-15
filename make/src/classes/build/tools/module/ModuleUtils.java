@@ -65,7 +65,13 @@ public class ModuleUtils {
         }
     }
 
-    public static Set<Module> resolve(Module[] modules, Set<String> roots)
+    public static Resolution resolve(Set<Module> modules, Set<String> roots)
+        throws IOException
+    {
+        return resolve(modules.toArray(new Module[0]), roots);
+    }
+
+    public static Resolution resolve(Module[] modules, Set<String> roots)
         throws IOException
     {
         JdkModuleLibrary mlib = new JdkModuleLibrary(modules);
@@ -78,8 +84,7 @@ public class ModuleUtils {
             }
         }
 
-        Resolution r = resolver.resolve(roots);
-        return r.selectedModules();
+        return resolver.resolve(roots);
     }
 
     private static class JdkModuleLibrary extends ModuleLibrary {

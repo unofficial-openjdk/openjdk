@@ -45,6 +45,9 @@ public class Dependence implements Comparable<Dependence> {
         return name;
     }
 
+    public void setRequiresPublic() {
+        identifiers.add(Identifier.PUBLIC);
+    }
     public Set<Identifier> mods() {
         return Collections.unmodifiableSet(identifiers);
     }

@@ -44,6 +44,7 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Jigsaw module builder
@@ -142,12 +143,12 @@ public class JigsawModules {
         printModule(writer, modules.get(m.name()));
     }
 
-    private <E> Iterable<E> orderedSet(Set<E> set, Function<E, String> f) {
-        Map<String, E> result = new TreeMap<>();
-        set.stream().forEach((e) -> {
-            result.put(f.apply(e), e);
-        });
-        return result.values();
+    private String toRequires(ModuleDependence d) {
+        String name = d.query().name();
+        Stream<String> mods = d.modifiers().stream().map(e -> e.toString().toLowerCase());
+        return (Stream.concat(Stream.of("requires"),
+                              Stream.concat(mods, Stream.of(name)))
+                      .collect(Collectors.joining(" ")));
     }
 
     private static final String INDENT = "    ";
@@ -155,15 +156,8 @@ public class JigsawModules {
         StringBuilder sb = new StringBuilder();
         sb.append(String.format("module %s {%n", m.id().name()));
 
-        for (ModuleDependence vd : orderedSet(m.moduleDependences(),
-                                              (ModuleDependence d) -> d.query().name())) {
-            String ms = vd.modifiers().stream()
-                          .map(e -> e.name().toLowerCase())
-                          .collect(Collectors.joining(" "));
-            sb.append(format(1, "requires %s%s%s;%n",
-                             ms, vd.modifiers().isEmpty() ? "" : " ",
-                             vd.query()));
-        }
+        Stream<String> reqs = m.moduleDependences().stream().map(this::toRequires);
+        reqs.sorted().forEach(d -> sb.append(format(1, "%s;%n", d)));
 
         formatList(sb, 1, "permits %s;%n", m.permits(), true);
 
@@ -199,13 +193,9 @@ public class JigsawModules {
             }
         }
 
-        for (ServiceDependence sd : orderedSet(m.serviceDependences(),
-                                               (ServiceDependence d) -> d.service())) {
-            String ms = sd.modifiers().stream()
-                          .map(e -> e.name().toLowerCase())
-                          .collect(Collectors.joining(" "));
-            sb.append(format(1, "uses %s;%n", sd.service()));
-        }
+        m.serviceDependences().stream()
+                .map(ServiceDependence::service)
+                .sorted().forEach(s -> sb.append(format(1, "uses %s;%n", s)));
 
         sb.append("}\n");
         writer.println(sb.toString());

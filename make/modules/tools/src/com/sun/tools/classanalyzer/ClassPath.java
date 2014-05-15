@@ -49,9 +49,8 @@ class ClassPath {
      *
      * It will filter out the cobundled JAR files such as FX, JMC, JVisualVM
      */
-    static List<Archive> getArchives(String javahome) throws IOException {
+    static List<Archive> getArchives(Path home) throws IOException {
         List<Archive> result = new ArrayList<>();
-        Path home = Paths.get(javahome);
 
         if (home.endsWith("jre")) {
             // jar files in <javahome>/jre/lib

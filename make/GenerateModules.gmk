@@ -83,21 +83,9 @@ ifeq ($(SHUFFLED), true)
 	$(MKDIR) -p $(@D)
 	$(TOOL_MODULESUMMARY) -o $@ -mp $(JDK_OUTPUTDIR)/jmods
 
-  $(GENGRAPHS_DIR)/jdk.tools.html: $(BUILD_MODULE_TOOL) $(API_MODULES_SER)
-	$(MKDIR) -p $(@D)
-	$(TOOL_MODULESUMMARY) -o $@ -mp $(JDK_OUTPUTDIR)/jmods \
-		-title "Tools Modules" jdk.tools
-
-  $(GENGRAPHS_DIR)/java.se.html: $(BUILD_MODULE_TOOL)
-	$(MKDIR) -p $(@D)
-	$(TOOL_MODULESUMMARY) -o $@ -mp $(JDK_OUTPUTDIR)/jmods \
-		-title "Java SE Modules" java.se
-
 all: $(MODULES_SER_OUT) $(MODULES_XML) $(GENGRAPHS_DIR)/jdk.dot
 
-postjmods: $(GENGRAPHS_DIR)/module-summary.html \
-	   $(GENGRAPHS_DIR)/java.se.html \
-	   $(GENGRAPHS_DIR)/jdk.tools.html
+postjmods: $(GENGRAPHS_DIR)/module-summary.html
 
 else
 

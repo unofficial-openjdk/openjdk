@@ -23,20 +23,22 @@
 package com.sun.tools.classanalyzer;
 
 import com.sun.tools.classanalyzer.ClassPath.Archive;
+import static com.sun.tools.classanalyzer.Dependence.Identifier.*;
 import com.sun.tools.classanalyzer.Module.Factory;
 import com.sun.tools.classanalyzer.Service.ProviderConfigFile;
-import static com.sun.tools.classanalyzer.Dependence.Identifier.*;
+import static com.sun.tools.classfile.AccessFlags.*;
 import com.sun.tools.classfile.ClassFile;
 import com.sun.tools.classfile.ConstantPoolException;
 import com.sun.tools.classfile.Dependencies;
 import com.sun.tools.classfile.Dependency;
 import com.sun.tools.classfile.Dependency.Location;
-import static com.sun.tools.classfile.AccessFlags.*;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Module builder that creates modules as defined in the given
@@ -50,6 +52,7 @@ import java.util.function.Function;
 public class ModuleBuilder {
     protected final List<ModuleConfig> mconfigs = new ArrayList<>();
     protected final String version;
+    private final Path jdkPath;
     private final List<Archive> archives;
     private final Map<String, Klass> classes = new HashMap<>();
     private final Map<String, Service> services = new HashMap<>();
@@ -59,12 +62,13 @@ public class ModuleBuilder {
     private final boolean apiOnly;
     private final JigsawModules graph = new JigsawModules();
     public ModuleBuilder(List<ModuleConfig> configs,
-                         List<Archive> archives,
+                         Path jdkPath,
                          String version,
                          boolean apiOnly) throws IOException {
         this.mconfigs.addAll(configs);
-        this.archives = archives;
+        this.archives = ClassPath.getArchives(jdkPath);
         this.version = version;
+        this.jdkPath = jdkPath;
         this.apiOnly = apiOnly;
         this.finder = apiOnly ? Dependencies.getAPIFinder(ACC_PROTECTED)
                               : Dependencies.getClassDependencyFinder();
@@ -174,11 +178,30 @@ public class ModuleBuilder {
             throw new RuntimeException("Profile module missing: " + profiles);
         }
 
+        fixupRequiresPublic();
         fixupPermits();
     }
 
+    private void fixupRequiresPublic() throws IOException {
+        Map<Module, Set<Module>> apiDeps = findAPIDependencies();
+        for (Map.Entry<Module, Map<String,Dependence>> e : dependencesForModule.entrySet()) {
+            Module m = e.getKey();
+            Set<String> requiresPublic =
+                apiDeps.containsKey(m) ? apiDeps.get(m).stream()
+                                                .filter(d -> !isBaseModule(d))
+                                                .map(Module::name)
+                                                .collect(Collectors.toSet())
+                                       : Collections.emptySet();
+            // for API dependence, requires public
+            e.getValue().values().stream()
+                .filter(d -> !d.requiresService() && !d.requiresPublic() &&
+                        requiresPublic.contains(d.name()))
+                .forEach(d -> d.setRequiresPublic());
+        }
+    }
+
     private void fixupPermits() {
-        // backedges for the dependence with permits
+                // backedges for the dependence with permits
         for (Module m : dependencesForModule.keySet()) {
             getModuleDependences(m).stream()
                 .filter(d -> !d.permits().isEmpty())
@@ -262,6 +285,38 @@ public class ModuleBuilder {
                 }
             }
         }
+    }
+
+    private Map<Module, Set<Module>> findAPIDependencies() throws IOException {
+        Map<Module, Set<Module>> apiDeps = new HashMap<>();
+        Dependency.Finder apiDepFinder = Dependencies.getAPIFinder(ACC_PROTECTED);
+        for (Archive a : ClassPath.getArchives(jdkPath)) {
+            for (ClassFile cf : a.getClassFiles()) {
+                String classFileName;
+                try {
+                    classFileName = cf.getName();
+                } catch (ConstantPoolException e) {
+                    throw new Dependencies.ClassFileError(e);
+                }
+
+                int pos = classFileName.lastIndexOf('/');
+                String pn = (pos > 0) ? classFileName.substring(0, pos).replace('/', '.') : "";
+                if (!Package.isExportedPackage(pn)) {
+                    // skip non-exported class
+                    continue;
+                }
+                for (Dependency d : apiDepFinder.findDependencies(cf)) {
+                    Klass from = classes.get(d.getOrigin().getName());
+                    Klass to = classes.get(d.getTarget().getName());
+                    Module m = from.getModule().group();
+                    Module md = to.getModule().group();
+                    if (m != md) {
+                        apiDeps.computeIfAbsent(m, _d -> new HashSet<>()).add(md);
+                    }
+                }
+            }
+        }
+        return apiDeps;
     }
 
     // returns true if the given class is not in module m and
@@ -377,11 +432,38 @@ public class ModuleBuilder {
             }
         }
 
+        // service providers from the configuration
+        for (Map.Entry<String, Set<String>> e : m.config().providers.entrySet()) {
+            Service s = services.get(e.getKey());
+            if (s != null) {
+                String cf = e.getKey().replace('.', '/');
+                Klass k = classes.get(cf);
+                if (k == null) {
+                    throw new RuntimeException("service " + e.getKey() + " not found");
+                }
+                services.put(k.getClassName(), s = new Service(k));
+            }
+            for (String cn : e.getValue()) {
+                String cf = cn.replace('.', '/');
+                Klass impl = classes.get(cf);
+                if (impl == null || impl.getModule() != m) {
+                    throw new RuntimeException("impl " + cn + " not found or not in module " + m);
+                }
+                m.addProvider(s, impl);
+            }
+        }
+
         // add static dependences
         for (Klass from : m.classes()) {
             for (Klass to : getDeps(from, null)) {
                 addDependence(m, to, requires);
             }
+        }
+
+        // add dependence for the service it provides
+        for (Service s : m.providers().keySet()) {
+            if (s.service.getModule() != m)
+                addDependence(m, s.service, requires);
         }
 
         for (Service s : m.services()) {

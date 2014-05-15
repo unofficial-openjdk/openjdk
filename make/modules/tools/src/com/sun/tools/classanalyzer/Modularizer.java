@@ -149,7 +149,7 @@ class Modularizer extends Task {
     }
 
     protected boolean run() throws IOException {
-        archives = ClassPath.getArchives(options.javahome);
+        archives = ClassPath.getArchives(Paths.get(options.javahome));
 
         // load the module graph
         JigsawModules jmodules = new JigsawModules();
