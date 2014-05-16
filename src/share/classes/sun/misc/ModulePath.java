@@ -35,12 +35,15 @@ import java.nio.file.Paths;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -151,28 +154,25 @@ public class ModulePath extends ModuleLibrary {
         Path dirPath = Paths.get(dir);
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(dirPath)) {
             for (Path entry: stream) {
-                ModuleInfo mi = null;
-                URL url = null;
-                boolean jmod = false;
+                ModuleArtifact artifact = null;
 
                 BasicFileAttributes attrs =
                     Files.readAttributes(entry, BasicFileAttributes.class);
-                if (attrs.isRegularFile() && entry.toString().endsWith(".jmod")) {
-                    String s = entry.toUri().toURL().toString();
-                    url = new URL("jmod" + s.substring(4));
-                    mi = readModuleInfo(url);
-                    jmod = true;
+                if (attrs.isRegularFile()) {
+                    if (entry.toString().endsWith(".jmod")) {
+                        artifact = readJMod(entry);
+                    } else if (entry.toString().endsWith(".jar")) {
+                        artifact = readJar(entry);
+                    }
                 } else if (attrs.isDirectory()) {
-                    url = entry.toUri().toURL();
-                    mi = readModuleInfo(entry);
+                    artifact = readExploded(entry);
                 }
 
-                // module-info found
-                if (mi != null) {
-
+                // module artifact found
+                if (artifact != null) {
                     // check that there is only one version of the module
                     // in this directory
-                    String name = mi.name();
+                    String name = artifact.moduleName();
                     if (localModules.contains(name)) {
                         throw new RuntimeException(dir +
                             " contains more than one version of " + name);
@@ -184,12 +184,10 @@ public class ModulePath extends ModuleLibrary {
                     if (isKnownModule(name))
                         continue;
 
-                    // enumerate the contents and add the Module to the cache
-                    List<String> packages =
-                        (jmod) ? jmodPackageList(url) : explodedPackageList(entry);
-                    Module m = mi.makeModule(packages);
+                    // add the module to the cache
+                    Module m = artifact.makeModule();
                     cachedModules.put(name, m);
-                    urls.put(m, url);
+                    urls.put(m, artifact.url());
                 }
 
             }
@@ -200,62 +198,126 @@ public class ModulePath extends ModuleLibrary {
 
     }
 
-    private ModuleInfo readModuleInfo(URL url) throws IOException {
-        assert url.getProtocol().equals("jmod");
+    /**
+     * A module artifact on the file system
+     */
+    private static class ModuleArtifact {
+        final URL url;
+        final ModuleInfo mi;
+        final Collection<String> packages;
 
-        ZipFile zf = JModCache.get(url);
-        ZipEntry entry = zf.getEntry("classes/" + MODULE_INFO);
-        if (entry != null) {
-            try (InputStream in = zf.getInputStream(entry)) {
-                return ModuleInfo.read(in);
-            }
-        } else {
-            return null;
+        ModuleArtifact(URL url, ModuleInfo mi, Collection<String> packages) {
+            this.url = url;
+            this.mi = mi;
+            this.packages = packages;
         }
-    }
 
-    private ModuleInfo readModuleInfo(Path dir) throws IOException {
-        Path mi = dir.resolve(MODULE_INFO);
-        if (Files.exists(mi)) {
-            try (InputStream in = Files.newInputStream(mi)) {
-                return ModuleInfo.read(in);
-            }
-        } else {
-            return null;
-        }
-    }
-
-    private List<String> jmodPackageList(URL url) throws IOException {
-        ZipFile zf = JModCache.get(url);
-        return zf.stream()
-                 .filter(entry -> entry.getName().startsWith("classes/") &&
-                         entry.getName().endsWith(".class"))
-                 .map(entry -> toPackageName(entry))
-                 .filter(pkg -> pkg.length() > 0)   // module-info
-                 .distinct()
-                 .collect(Collectors.toList());
+        URL url() { return url; }
+        String moduleName() { return mi.name(); }
+        Iterable<String> packages() { return packages; }
+        Module makeModule() { return mi.makeModule(packages); }
     }
 
     /**
-     * @throws java.io.IOException
-     * @throws java.io.UncheckedIOException
+     * Returns a {@code ModuleArtifact} to represent a jmod file on the
+     * file system.
      */
-    private List<String> explodedPackageList(Path top) throws IOException {
-        return Files.find(top, Integer.MAX_VALUE,
+    private ModuleArtifact readJMod(Path file) throws IOException {
+        // file -> jmod URL
+        String s = file.toUri().toURL().toString();
+        URL url = new URL("jmod" + s.substring(4));
+
+        ZipFile zf = JModCache.get(url);
+        ZipEntry ze = zf.getEntry("classes/" + MODULE_INFO);
+        if (ze == null) {
+            // jmod without classes/module-info, ignore for now
+            return null;
+        }
+
+        ModuleInfo mi;
+        try (InputStream in = zf.getInputStream(ze)) {
+            mi = ModuleInfo.read(in);
+        }
+
+        List<String> packages =
+            zf.stream()
+              .filter(e -> e.getName().startsWith("classes/") &&
+                      e.getName().endsWith(".class"))
+              .map(e -> toPackageName(e))
+              .filter(pkg -> pkg.length() > 0)   // module-info
+              .distinct()
+              .collect(Collectors.toList());
+
+        return new ModuleArtifact(url, mi, packages);
+    }
+
+    /**
+     * Returns a {@code ModuleArtifact} to represent a module jar on the
+     * file system.
+     */
+    private ModuleArtifact readJar(Path file) throws IOException {
+        try (JarFile jf = new JarFile(file.toString())) {
+            JarEntry entry = jf.getJarEntry(MODULE_INFO);
+            if (entry == null) {
+                // not a modular jar
+                return null;
+            }
+
+            URL url = file.toUri().toURL();
+
+            ModuleInfo mi = ModuleInfo.read(jf.getInputStream(entry));
+
+            List<String> packages =
+                jf.stream()
+                  .filter(e -> entry.getName().endsWith(".class"))
+                  .map(e -> toPackageName(e))
+                  .filter(pkg -> pkg.length() > 0)   // module-info
+                  .distinct()
+                  .collect(Collectors.toList());
+
+
+            return new ModuleArtifact(url, mi, packages);
+        }
+    }
+
+    /**
+     * Returns a {@code ModuleArtifact} to represent an exploded module
+     * on the file system.
+     */
+    private ModuleArtifact readExploded(Path dir) throws IOException {
+        Path file = dir.resolve(MODULE_INFO);
+        if (Files.notExists((file))) {
+            // no module-info in directory
+            return null;
+        }
+
+        URL url = dir.toUri().toURL();
+
+        ModuleInfo mi;
+        try (InputStream in = Files.newInputStream(file)) {
+             mi = ModuleInfo.read(in);
+        }
+
+        List<String> packages =
+            Files.find(dir, Integer.MAX_VALUE,
                         ((path, attrs) -> attrs.isRegularFile() &&
                             path.toString().endsWith(".class")))
-                    .map(path -> toPackageName(top.relativize(path)))
-                    .filter(pkg -> pkg.length() > 0)   // module-info
-                    .distinct()
-                    .collect(Collectors.toList());
+                  .map(path -> toPackageName(dir.relativize(path)))
+                  .filter(pkg -> pkg.length() > 0)   // module-info
+                  .distinct()
+                  .collect(Collectors.toList());
+
+        return new ModuleArtifact(url, mi, packages);
     }
 
     private String toPackageName(ZipEntry entry) {
         String name = entry.getName();
-        assert name.startsWith("classes/") && name.endsWith(".class");
+        assert name.endsWith(".class");
+        // jmod classes in classes/, jar in /
+        int start = name.startsWith("classes/") ? 8 : 0;
         int index = name.lastIndexOf("/");
-        if (index > 7) {
-            return name.substring(8, index).replace('/', '.');
+        if (index > start) {
+            return name.substring(start, index).replace('/', '.');
         } else {
             return "";
         }
