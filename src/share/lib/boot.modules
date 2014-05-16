@@ -17,7 +17,6 @@ java.security.sasl
 java.smartcardio
 java.sql
 java.sql.rowset
-java.transaction
 java.xml
 java.xml.bind
 java.xml.crypto

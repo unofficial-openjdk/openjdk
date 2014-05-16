@@ -42,6 +42,7 @@ import java.util.zip.ZipOutputStream;
 import jdk.jigsaw.module.Module;
 import jdk.jigsaw.module.ModuleLibrary;
 import jdk.jigsaw.module.SimpleResolver;
+import sun.misc.ModulePath;
 
 /**
  * Implementation for the jlink tool.
@@ -221,6 +222,13 @@ class JlinkTask {
         log = out;
     }
 
+    /** Module list files, in java.base */
+    private static final String BOOT_MODULES = "boot.modules";
+    private static final String EXT_MODULES = "ext.modules";
+    private static final String SYSTEM_MODULES = "system.modules";
+
+    private List<String> bootModules, extModules, systemModules;
+
     /**
      * Result codes.
      */
@@ -372,15 +380,9 @@ class JlinkTask {
      * Returns the set of required modules
      */
     private Set<Module> modulesNeeded(Set<String> jmods) throws IOException {
-        Module[] modules;
-        try (InputStream in =  ClassLoader.getSystemResourceAsStream(MODULES_SER)) {
-            ObjectInputStream ois = new ObjectInputStream(in);
-            modules = (Module[]) ois.readObject();
-        } catch (ClassNotFoundException ex) {
-            throw new InternalError(ex);
-        }
+        final Path jmodRepo = options.jmodRepo;
+        ModuleLibrary library = new ModulePath(jmodRepo.toString(), null);
 
-        ModuleLibrary library = new JModModuleLibrary(modules);
         SimpleResolver resolver = new SimpleResolver(library);
         return resolver.resolve(jmods).selectedModules();
     }
@@ -412,9 +414,11 @@ class JlinkTask {
             Files.createDirectories(modPath);
 
             try (JmodFileReader reader = new JmodFileReader(jmod, modPath, output)) {
-                if (modName.equals("java.base"))
-                    reader.writeModulesSer(mods);
                 reader.extract();
+                if (modName.equals("java.base")) {
+                    reader.writeModulesSer(mods);
+                    reader.writeModulesLists(mods);
+                }
             }
         }
 
@@ -481,13 +485,45 @@ class JlinkTask {
             }
         }
 
+        private List<String> readAllLines(ZipEntry ze) throws IOException {
+            try (BufferedReader reader = new BufferedReader(
+                    new InputStreamReader(moduleFile.getInputStream(ze),
+                                          StandardCharsets.ISO_8859_1))) {
+                List<String> result = new ArrayList<>();
+                for (;;) {
+                    String line = reader.readLine();
+                    if (line == null)
+                        break;
+                    result.add(line);
+                }
+                return result;
+            }
+        }
+
+        private final String BOOT_MODULES_CONF_FILE =
+                Section.CONFIG.jmodDir() + '/' + BOOT_MODULES;
+        private final String EXT_MODULES_CONF_FILE =
+                Section.CONFIG.jmodDir() + '/' + EXT_MODULES;
+        private final String SYSTEM_MODULES_CONF_FILE =
+                Section.CONFIG.jmodDir() + '/' + SYSTEM_MODULES;
+
         private void visitFile(ZipEntry ze) throws IOException {
             String fullFilename = ze.getName();
-            if (fullFilename.toString().endsWith("modules.ser"))
+
+            // ## handling of "special" files first
+            if (fullFilename.toString().endsWith(MODULES_SER))
                 return;  // modules.ser will be generated for the given image
 
-            if (fullFilename.toString().endsWith("module-info.class")) // ## hack remove
+            if (fullFilename.equals(BOOT_MODULES_CONF_FILE)) {
+                bootModules = readAllLines(ze);
                 return;
+            } else if (fullFilename.equals(EXT_MODULES_CONF_FILE)) {
+                extModules = readAllLines(ze);
+                return;
+            } else if (fullFilename.equals(SYSTEM_MODULES_CONF_FILE)) {
+                systemModules = readAllLines(ze);
+                return;
+            }
 
             Section section = Section.getSectionFromName(fullFilename);
             if (Section.UNKNOWN.equals(section))
@@ -513,6 +549,51 @@ class JlinkTask {
                 oos.writeObject(modules.toArray(new Module[0]));
             }
             writeJarEntry(new ByteArrayInputStream(baos.toByteArray()), MODULES_SER);
+        }
+
+        private final String BOOT_MODULES_IMAGE_FILE =
+                Section.CONFIG.imageDir() + '/' + BOOT_MODULES;
+        private final String EXT_MODULES_IMAGE_FILE =
+                Section.CONFIG.imageDir() + '/' + EXT_MODULES;
+        private final String SYSTEM_MODULES_IMAGE_FILE =
+                Section.CONFIG.imageDir() + '/' + SYSTEM_MODULES;
+
+        public void writeModulesLists(Set<Module> modules) throws IOException {
+            List<String> moduleNames = new ArrayList<>();
+            for (Module module : modules)
+                moduleNames.add(module.id().name());
+
+            if (bootModules == null || extModules == null || systemModules == null) {
+                throw new InternalError("Failure to find module lists.");
+            }
+
+            bootModules.retainAll(moduleNames);
+            Collections.sort(bootModules);
+            extModules.retainAll(moduleNames);
+            Collections.sort(extModules);
+            List<String> sm = new ArrayList<>(moduleNames);
+            sm.removeAll(bootModules);
+            sm.removeAll(extModules);
+            Collections.sort(sm);
+
+            // write the module lists to the image lib dir
+            Path dstFile = output.resolve(BOOT_MODULES_IMAGE_FILE);
+            writeFile(toStream(bootModules), dstFile, Section.CONFIG);
+            dstFile = output.resolve(EXT_MODULES_IMAGE_FILE);
+            writeFile(toStream(extModules), dstFile, Section.CONFIG);
+            dstFile = output.resolve(SYSTEM_MODULES_IMAGE_FILE);
+            writeFile(toStream(sm), dstFile, Section.CONFIG);
+        }
+
+        public InputStream toStream(List<String> moduleNames) throws IOException {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            try (OutputStreamWriter osw = new OutputStreamWriter(baos, StandardCharsets.ISO_8859_1);
+                 BufferedWriter br = new BufferedWriter(osw);
+                 PrintWriter writer = new PrintWriter(br)) {
+                for (String moduleName : moduleNames)
+                    writer.println(moduleName);
+            }
+            return new ByteArrayInputStream(baos.toByteArray());
         }
 
         private void writeJarEntry(InputStream is, String filename)

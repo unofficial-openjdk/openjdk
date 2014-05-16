@@ -788,6 +788,8 @@ module jdk.providers {
 }
 
 module jdk.providers.os {
+    // explicitly require java.base, until javac implicitly adds mandated dependence
+    requires java.base;
     requires jdk.crypto.mscapi;  // windows-only
     requires jdk.deploy.osx;     // macosx-only
     permits jdk.runtime;
