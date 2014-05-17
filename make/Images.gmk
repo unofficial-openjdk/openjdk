@@ -44,7 +44,7 @@ $(IMAGES_OUTPUTDIR)/_jdk-images-create.marker: $(JMODS)
 	$(ECHO) Creating jdk-module-image
 	$(RM) -r $(JDK_MODULE_IMAGE_DIR)
 	$(JLINK) --format image --output $(JDK_MODULE_IMAGE_DIR) \
-            --jmod-repo $(JDK_OUTPUTDIR)/jmods --mods $(MODS)
+            --module-path $(JDK_OUTPUTDIR)/jmods --mods $(MODS)
 	$(TOUCH) $@
 
 jdk-image: $(IMAGES_OUTPUTDIR)/_jdk-images-create.marker
