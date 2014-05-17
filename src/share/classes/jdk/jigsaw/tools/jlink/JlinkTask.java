@@ -25,12 +25,48 @@
 
 package jdk.jigsaw.tools.jlink;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.Closeable;
+import java.io.DataInputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.ObjectOutputStream;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.io.UncheckedIOException;
+import java.lang.reflect.InvocationTargetException;
+import java.net.URISyntaxException;
+import java.net.URI;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.*;
-import java.nio.file.attribute.*;;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.StandardOpenOption;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.text.MessageFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Formatter;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.MissingResourceException;
+import java.util.ResourceBundle;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.jar.JarEntry;
@@ -39,9 +75,10 @@ import java.util.jar.JarOutputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
+
 import jdk.jigsaw.module.Module;
-import jdk.jigsaw.module.ModuleLibrary;
 import jdk.jigsaw.module.SimpleResolver;
+
 import sun.misc.ModulePath;
 
 /**
@@ -131,6 +168,21 @@ class JlinkTask {
         return paths;
     }
 
+    static <T extends Throwable> void fail(Class<T> type,
+                                           String format,
+                                           Object... args) throws T {
+        String msg = new Formatter().format(format, args).toString();
+        try {
+            T t = type.getConstructor(String.class).newInstance(msg);
+            throw t;
+        } catch (InstantiationException |
+                 InvocationTargetException |
+                 NoSuchMethodException |
+                 IllegalAccessException e) {
+            throw new InternalError("Unable to create an instance of " + type, e);
+        }
+    }
+
     static Option[] recognizedOptions = {
         new Option(true, "--class-path") {
             void process(JlinkTask task, String opt, String arg) throws BadArgs {
@@ -172,9 +224,9 @@ class JlinkTask {
                 task.options.help = true;
             }
         },
-        new Option(true, "--jmod-repo") {
+        new Option(true, "--module-path", "--mp") {
             void process(JlinkTask task, String opt, String arg) {
-                task.options.jmodRepo = Paths.get(arg);
+                task.options.modulePath = new ModulePath(arg, null);
             }
         },
         new Option(true, "--libs") {
@@ -252,7 +304,7 @@ class JlinkTask {
         List<Path> cmds;
         List<Path> configs;
         List<Path> libs;
-        Path jmodRepo;
+        ModulePath modulePath;
         Set<String> jmods = new TreeSet<>();
         Format format = null;
         Path output;
@@ -279,15 +331,8 @@ class JlinkTask {
                     throw new BadArgs("err.format.must.be.specified").showUsage(true);
                 }
             } else if (options.format.equals(Format.IMAGE)) {
-                Path dir = options.jmodRepo;
-                if (dir == null)
-                    throw new BadArgs("err.jmodrepo.must.be.specified").showUsage(true);
-                Optional<Path> first =
-                    Files.list(dir)
-                         .filter(name -> name.toString().endsWith(".jmod"))
-                         .findFirst();
-                if (!first.isPresent())
-                    throw new BadArgs("err.jmod.not.found", dir).showUsage(true);
+                if (options.modulePath == null)
+                    throw new BadArgs("err.modulepath.must.be.specified").showUsage(true);
 
                 Path output = options.output;
                 if (output == null)
@@ -354,45 +399,44 @@ class JlinkTask {
      */
     private static final String MODULES_SER = "jdk/jigsaw/module/resources/modules.ser";
 
-    private static class JModModuleLibrary extends ModuleLibrary {
-        private final Set<Module> modules = new HashSet<>();
-        private final Map<String, Module> namesToModules = new HashMap<>();
-
-        JModModuleLibrary(Module... mods) {
-            for (Module m: mods) {
-                modules.add(m);
-                namesToModules.put(m.id().name(), m);
-            }
-        }
-
-        @Override
-        public Module findLocalModule(String name) {
-            return namesToModules.get(name);
-        }
-
-        @Override
-        public Set<Module> localModules() {
-            return modules;
-        }
-    }
-
     /*
      * Returns the set of required modules
      */
     private Set<Module> modulesNeeded(Set<String> jmods) throws IOException {
-        final Path jmodRepo = options.jmodRepo;
-        ModuleLibrary library = new ModulePath(jmodRepo.toString(), null);
-
-        SimpleResolver resolver = new SimpleResolver(library);
+        SimpleResolver resolver = new SimpleResolver(options.modulePath);
         return resolver.resolve(jmods).selectedModules();
     }
 
-    private Set<Path> modulesToPath(Set<Module> modules) throws IOException {
-        final Path jmodRepo = options.jmodRepo;
+    private Set<Path> modulesToPath(Set<Module> modules) {
+        ModulePath mp = options.modulePath;
+
         Set<Path> modPaths = new TreeSet<>();
         for (Module m : modules) {
-            Path path = jmodRepo.resolve(m.id().name() + ".jmod");
-            modPaths.add(path);
+            String name = m.id().name();
+
+            URL url = mp.toURL(m);
+            if (url == null) {
+                // this should not happen, module path bug?
+                fail(InternalError.class,
+                     "Selected module %s not on module path",
+                     name);
+            }
+
+            String scheme = url.getProtocol();
+            if (!scheme.equalsIgnoreCase("jmod")) {
+                // only jmods supported at this time
+                fail(RuntimeException.class,
+                     "Selected module %s (%s) not in jmod format",
+                     name,
+                     url);
+            }
+
+            try {
+                URI fileUri = URI.create("file" + url.toURI().toString().substring(4));
+                modPaths.add(Paths.get(fileUri));
+            } catch (URISyntaxException e) {
+                fail(InternalError.class, "Unable create file URI from %s: %s", url, e);
+            }
         }
         return modPaths;
     }
