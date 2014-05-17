@@ -796,6 +796,7 @@ module jdk.providers.os {
 }
 
 module oracle.providers.os {
+    requires java.base;
     requires jdk.crypto.ucrypto;        // solaris-only
     permits oracle.jre;
 }
