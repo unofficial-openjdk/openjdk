@@ -177,7 +177,6 @@ define_pd_global(bool, ProfileTraps,                 false);
 define_pd_global(bool, TieredCompilation,            false);
 
 define_pd_global(intx, CompileThreshold,             0);
-define_pd_global(intx, BackEdgeThreshold,            0);
 
 define_pd_global(intx, OnStackReplacePercentage,     0);
 define_pd_global(bool, ResizeTLAB,                   false);
@@ -2555,6 +2554,20 @@ class CommandLineFlags {
   diagnostic(bool, PrintMethodFlushingStatistics, false,                    \
           "print statistics about method flushing")                         \
                                                                             \
+  diagnostic(intx, HotMethodDetectionLimit, 100000,                         \
+          "Number of compiled code invocations after which "                \
+          "the method is considered as hot by the flusher")                 \
+                                                                            \
+  diagnostic(intx, MinPassesBeforeFlush, 10,                                \
+          "Minimum number of sweeper passes before an nmethod "             \
+          "can be flushed")                                                 \
+                                                                            \
+  product(bool, UseCodeAging, true,                                         \
+          "Insert counter to detect warm methods")                          \
+                                                                            \
+  diagnostic(bool, StressCodeAging, false,                                  \
+          "Start with counters compiled in")                                \
+                                                                            \
   develop(bool, UseRelocIndex, false,                                       \
           "Use an index to speed random access to relocations")             \
                                                                             \
@@ -3517,10 +3530,6 @@ class CommandLineFlags {
   /* recompilation */                                                       \
   product_pd(intx, CompileThreshold,                                        \
           "number of interpreted method invocations before (re-)compiling") \
-                                                                            \
-  product_pd(intx, BackEdgeThreshold,                                       \
-          "Interpreter Back edge threshold at which an OSR compilation is " \
-          "invoked")                                                        \
                                                                             \
   product(intx, Tier0InvokeNotifyFreqLog, 7,                                \
           "Interpreter (tier 0) invocation notification frequency")         \
