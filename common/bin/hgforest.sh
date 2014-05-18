@@ -145,12 +145,20 @@ if [ "${command}" = "clone" -o "${command}" = "fclone" -o "${command}" = "tclone
     fi
   done
   if [ "${command_args}" != "" ] ; then
-    pull_default_tail=`echo ${pull_default} | sed -e 's@^.*://[^/]*/\(.*\)@\1@'`
+    set ${command_args}
+    pull_extra_base="$1"
+    pull_extra_dir="$2"
+    if [ "${pull_extra_dir}" != "" ] ; then
+      pull_default_tail="${pull_extra_dir}"
+    else
+      pull_default_tail=`echo ${pull_default} | sed -e 's@^.*://[^/]*/\(.*\)@\1@'`
+    fi
+
     if [ "x${pull_default}" = "x${pull_default_tail}" ] ; then
       echo "ERROR: Need initial clone from non-local source" > ${status_output}
       exit 1
     fi
-    pull_extra="${command_args}/${pull_default_tail}"
+    pull_extra="${pull_extra_base}/${pull_default_tail}"
     for i in ${subrepos_extra} ; do
       if [ ! -f ${i}/.hg/hgrc ] ; then
         repos_extra="${repos_extra} ${i}"
