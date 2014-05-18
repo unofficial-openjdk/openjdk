@@ -1,4 +1,3 @@
-#
 # Copyright (c) 2011, 2013, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
@@ -112,8 +111,8 @@ SECURITY_SMARTCARDIO_LIBRARIES += $(BUILD_LIBJ2PCSC)
 ifneq ($(OPENJDK_TARGET_OS), windows)
 
   ifeq ($(SHUFFLED), true)
-    LIBJ2GSS_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.security.kerberos/share/native/libj2gss \
-        $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.security.kerberos/$(OPENJDK_TARGET_OS_API_DIR)/native/libj2gss
+    LIBJ2GSS_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.jgss/share/native/libj2gss \
+        $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.jgss/$(OPENJDK_TARGET_OS_API_DIR)/native/libj2gss
   else
     LIBJ2GSS_SRC := $(JDK_TOPDIR)/src/share/native/sun/security/jgss/wrapper \
         $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/sun/security/jgss/wrapper
@@ -126,7 +125,7 @@ ifneq ($(OPENJDK_TARGET_OS), windows)
       LANG := C, \
       OPTIMIZATION := LOW, \
       CFLAGS := $(CFLAGS_JDKLIB) $(addprefix -I, $(LIBJ2GSS_SRC) $(BUILD_LIBJAVA_SRC)) \
-          -I$(JDK_OUTPUTDIR)/gensrc_headers/java.security.kerberos, \
+          -I$(JDK_OUTPUTDIR)/gensrc_headers/java.jgss, \
       MAPFILE := $(JDK_TOPDIR)/make/mapfiles/libj2gss/mapfile-vers, \
       LDFLAGS := $(LDFLAGS_JDKLIB) \
           $(call SET_SHARED_LIBRARY_ORIGIN), \
@@ -145,7 +144,7 @@ ifneq ($(BUILD_CRYPTO), no)
   ifeq ($(OPENJDK_TARGET_OS), windows)
     BUILD_LIBKRB5_NAME := w2k_lsa_auth
     ifeq ($(SHUFFLED), true)
-      BUILD_LIBKRB5_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.security.kerberos/$(OPENJDK_TARGET_OS_API_DIR)/native/libw2k_lsa_auth
+      BUILD_LIBKRB5_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.jgss/$(OPENJDK_TARGET_OS_API_DIR)/native/libw2k_lsa_auth
     else
       BUILD_LIBKRB5_SRC := $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/sun/security/krb5
     endif
@@ -155,7 +154,7 @@ ifneq ($(BUILD_CRYPTO), no)
   else ifeq ($(OPENJDK_TARGET_OS), macosx)
     BUILD_LIBKRB5_NAME := osxkrb5
     ifeq ($(SHUFFLED), true)
-      BUILD_LIBKRB5_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.security.kerberos/macosx/native/libosxkrb5
+      BUILD_LIBKRB5_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.jgss/macosx/native/libosxkrb5
     else 
       BUILD_LIBKRB5_SRC := $(JDK_TOPDIR)/src/share/native/sun/security/krb5 \
           $(JDK_TOPDIR)/src/macosx/native/sun/security/krb5
@@ -176,7 +175,7 @@ ifneq ($(BUILD_CRYPTO), no)
         OPTIMIZATION := LOW, \
         CFLAGS := $(CFLAGS_JDKLIB) \
             $(addprefix -I, $(BUILD_LIBKRB5_SRC)) \
-            -I$(JDK_OUTPUTDIR)/gensrc_headers/java.security.kerberos, \
+            -I$(JDK_OUTPUTDIR)/gensrc_headers/java.jgss, \
         CFLAGS_macosx := -F/System/Library/Frameworks/JavaVM.framework/Frameworks, \
         LDFLAGS := $(LDFLAGS_JDKLIB) \
             $(call SET_SHARED_LIBRARY_ORIGIN), \
@@ -343,3 +342,4 @@ ifeq ($(OPENJDK_TARGET_OS), solaris)
 
   endif
 endif
+#

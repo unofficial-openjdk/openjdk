@@ -6,5 +6,6 @@ jdk.jconsole
 jdk.jdi
 jdk.jvmstat
 jdk.runtime
+jdk.svctools
 jdk.tools
 jdk.xml.ws.tools

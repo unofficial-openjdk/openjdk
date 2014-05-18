@@ -789,15 +789,15 @@ ifeq ($(SHUFFLED), true)
           modules/java.base/sun/net/www/protocol/https \
           modules/java.base/sun/security/pkcs12 \
           modules/java.base/sun/security/ssl \
-          modules/java.security.kerberos/sun/security/krb5 \
-          modules/java.security.kerberos/sun/security/krb5/internal \
-          modules/java.security.kerberos/sun/security/krb5/internal/ccache \
-          modules/java.security.kerberos/sun/security/krb5/internal/crypto \
-          modules/java.security.kerberos/sun/security/krb5/internal/ktab \
-          modules/java.security.kerberos/sun/security/krb5/internal/rcache \
-          modules/java.security.kerberos/sun/security/krb5/internal/util, \
-      INCLUDE_FILES := modules/java.security.kerberos/sun/security/jgss/spi/GSSContextSpi.class, \
-      EXCLUDES := modules/java.security.kerberos/sun/security/krb5/internal/tools, \
+          modules/java.jgss/sun/security/krb5 \
+          modules/java.jgss/sun/security/krb5/internal \
+          modules/java.jgss/sun/security/krb5/internal/ccache \
+          modules/java.jgss/sun/security/krb5/internal/crypto \
+          modules/java.jgss/sun/security/krb5/internal/ktab \
+          modules/java.jgss/sun/security/krb5/internal/rcache \
+          modules/java.jgss/sun/security/krb5/internal/util, \
+      INCLUDE_FILES := modules/java.jgss/sun/security/jgss/spi/GSSContextSpi.class, \
+      EXCLUDES := modules/java.jgss/sun/security/krb5/internal/tools, \
       ZIP := $(IMAGES_OUTPUTDIR)/sec-bin.zip))
 else
   $(eval $(call SetupZipArchive,BUILD_SEC_BIN_ZIP, \

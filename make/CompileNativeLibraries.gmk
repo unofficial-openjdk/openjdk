@@ -153,7 +153,7 @@ java.management: $(MANAGEMENT_LIBRARIES) $(JFR_LIBRARIES)
 java.scripting: $(SCRIPT_LIBRARIES)
 jdk.sctp: $(SCTP_LIBRARIES)
 jdk.security.auth: $(SECURITY_JAAS_LIBRARIES)
-java.security.kerberos: $(SECURITY_KERBEROS_LIBRARIES)
+java.jgss: $(SECURITY_KERBEROS_LIBRARIES)
 jdk.crypto.mscapi: $(SECURITY_MSCAPI_LIBRARIES)
 jdk.crypto.pkcs11: $(SECURITY_PKCS11_LIBRARIES)
 java.smartcardio: $(SECURITY_SMARTCARDIO_LIBRARIES)
@@ -161,9 +161,9 @@ jdk.crypto.ec: $(SECURITY_SUNEC_LIBRARIES)
 jdk.crypto.ucrytpo: $(SECURITY_UCRYPTO_LIBRARIES)
 jdk.tools: $(NPT_LIBRARIES)
 jdk.attach: $(ATTACH_LIBRARIES)
-jdk.debug.agent: $(JDWP_LIBRARIES)
+jdk.jdwp: $(JDWP_LIBRARIES)
 jdk.jdi: $(JDI_TRANSPORT_LIBRARIES)
-jdk.hprof.agent: $(HPROF_LIBRARIES) $(CRW_LIBRARIES)
+jdk.hprof: $(HPROF_LIBRARIES) $(CRW_LIBRARIES)
 jdk.runtime: $(JSDT_LIBRARIES) $(UNPACK_LIBRARIES)
 java.prefs: $(PREFS_LIBRARIES)
 
@@ -171,6 +171,6 @@ all: $(BUILD_LIBRARIES)
 
 .PHONY: all
 .PHONY: java.base java.desktop java.instrument java.management java.scripting jdk.sctp \
-    jdk.security.auth java.security.kerberos jdk.crypto.mscapi jdk.crypto.pkcs11 \
+    jdk.security.auth java.jgss jdk.crypto.mscapi jdk.crypto.pkcs11 \
     java.smartcardio jdk.crypto.ec jdk.crypto.ucrytpo jdk.tools jdk.attach \
-    jdk.debug.agent jdk.jdi jdk.hprof.agent jdk.runtime java.prefs
+    jdk.jdwp jdk.jdi jdk.hprof jdk.runtime java.prefs

@@ -109,7 +109,7 @@ ifeq ($(SHUFFLED), true)
 
   JDK_DEBUG_AGENT_HEADERS := $(INCLUDEDIR)/jdwpTransport.h
 
-  $(INCLUDEDIR)/%.h: $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.debug.agent/share/native/include/%.h
+  $(INCLUDEDIR)/%.h: $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.jdwp/share/native/include/%.h
 	$(call install-file)
 
 else
@@ -686,17 +686,17 @@ endif
 
 java.base: $(BASE_CONF_FILES) $(NET_CONF_FILES) $(JAVA_BASE_HEADERS) $(MSVCR_TARGET)
 java.desktop: $(DESKTOP_CONF_FILES) $(FREETYPE_TARGET_LIB) $(JAVA_DESKTOP_HEADERS)
-jdk.debug.agent: $(JDK_DEBUG_AGENT_HEADERS)
-jdk.hprof.agent: $(HPROF_CONF_FILES)
+jdk.jdwp: $(JDK_DEBUG_AGENT_HEADERS)
+jdk.hprof: $(HPROF_CONF_FILES)
 java.management: $(MANAGEMENT_CONF_FILES)
 java.logging: $(LOGGING_CONF_FILES)
 jdk.crypto.pkcs11: $(SECURITY_PKCS11_CONF_FILES)
 jdk.crypto.ucrypto: $(SECURITY_UCRYPTO_CONF_FILES)
 
-.PHONY: java.base java.desktop jdk.debug.agent jdk.hprof.agent java.management java.logging \
+.PHONY: java.base java.desktop jdk.jdwp jdk.hprof java.management java.logging \
     jdk.crypto.pkcs11 jdk.crypto.ucrytpo
 
-all: java.base java.desktop jdk.debug.agent jdk.hprof.agent  java.management java.logging \
+all: java.base java.desktop jdk.jdwp jdk.hprof java.management java.logging \
     jdk.crypto.pkcs11 jdk.crypto.ucrypto \
     $(H_TARGET_FILES) \
     #

@@ -79,4 +79,4 @@ all: $(GENSRC_JAVA_BASE) \
     $(GENSRC_JDK_JDI) \
     #
 
-.PHONY: all java.base java.desktop jdk.attach jdk.debug.agent jdk.charsets jdk.jconsole jdk.jdi
+.PHONY: all java.base java.desktop jdk.attach jdk.jdwp jdk.charsets jdk.jconsole jdk.jdi

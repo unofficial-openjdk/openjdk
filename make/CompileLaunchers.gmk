@@ -43,7 +43,6 @@ endif
 # Build tools
 include Tools.gmk
 
-ATTACH_LAUNCHERS=
 BASE_LAUNCHERS=
 CORBA_LAUNCHERS=
 COMPILER_LAUNCHERS=
@@ -55,6 +54,7 @@ JVMSTAT_LAUNCHERS=
 KERBEROS_LAUNCHERS=
 RMI_LAUNCHERS=
 SCRIPTING_LAUNCHERS=
+SVCTOOLS_LAUNCHERS=
 NASHORN_LAUNCHERS=
 TOOLS_LAUNCHERS=
 XML_WS_TOOLS_LAUNCHERS=
@@ -360,7 +360,7 @@ $(eval $(call SetupLauncher,jinfo, \
         "-J-Dsun.jvm.hotspot.debugger.useWindbgDebugger"$(COMMA) \
         "sun.tools.jinfo.JInfo"$(COMMA) }' \
     -DAPP_CLASSPATH='{ "/lib/tools.jar"$(COMMA) "/lib/sa-jdi.jar"$(COMMA) "/classes" }' \
-    ,,,,,,,,,Info-privileged.plist,HOTSPOT_TOOLS))
+    ,,,,,,,,,Info-privileged.plist,SVCTOOLS))
 
 $(eval $(call SetupLauncher,jmap, \
     -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) \
@@ -368,7 +368,7 @@ $(eval $(call SetupLauncher,jmap, \
         "-J-Dsun.jvm.hotspot.debugger.useWindbgDebugger"$(COMMA) \
         "sun.tools.jmap.JMap"$(COMMA) }' \
     -DAPP_CLASSPATH='{ "/lib/tools.jar"$(COMMA) "/lib/sa-jdi.jar"$(COMMA) "/classes" }' \
-    ,,,,,,,,,Info-privileged.plist,HOTSPOT_TOOLS))
+    ,,,,,,,,,Info-privileged.plist,SVCTOOLS))
 
 $(eval $(call SetupLauncher,jps, \
     -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.tools.jps.Jps"$(COMMA) }',,,,,,,,,,JVMSTAT))
@@ -390,7 +390,7 @@ $(eval $(call SetupLauncher,jstack, \
         "-J-Dsun.jvm.hotspot.debugger.useWindbgDebugger"$(COMMA) \
         "sun.tools.jstack.JStack"$(COMMA) }' \
     -DAPP_CLASSPATH='{ "/lib/tools.jar"$(COMMA) "/lib/sa-jdi.jar"$(COMMA) "/classes" }' \
-    ,,,,,,,,,Info-privileged.plist,HOTSPOT_TOOLS))
+    ,,,,,,,,,Info-privileged.plist,SVCTOOLS))
 
 $(eval $(call SetupLauncher,jstat, \
     -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.tools.jstat.Jstat"$(COMMA) }',,,,,,,,,,JVMSTAT))
@@ -457,7 +457,7 @@ $(eval $(call SetupLauncher,rmiregistry, \
     -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.rmi.registry.RegistryImpl"$(COMMA) }',,,,,,,,,,RMI))
 
 $(eval $(call SetupLauncher,jcmd, \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.tools.jcmd.JCmd"$(COMMA) }',,,,,,,,,,ATTACH))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.tools.jcmd.JCmd"$(COMMA) }',,,,,,,,,,SVCTOOLS))
 
 ifeq ($(OPENJDK_TARGET_OS), windows)
   $(eval $(call SetupLauncher,kinit, \
@@ -797,8 +797,7 @@ java.corba: $(CORBA_LAUNCHERS)
 java.desktop: $(DESKTOP_LAUNCHERS)
 java.rmi: $(RMI_LAUNCHERS)
 java.scripting: $(SCRIPTING_LAUNCHERS)
-java.security.kerberos: $(KERBEROS_LAUNCHERS)
-jdk.attach: $(ATTACH_LAUNCHERS)
+java.jgss: $(KERBEROS_LAUNCHERS)
 jdk.compiler: $(COMPILER_LAUNCHERS)
 jdk.hotspot.tools: $(HOTSPOT_TOOLS_LAUNCHERS)
 jdk.javadoc: $(JAVADOC_LAUNCHERS)
@@ -807,10 +806,11 @@ jdk.jdi: $(JDI_LAUNCHERS)
 jdk.jvmstat: $(JVMSTAT_LAUNCHERS)
 jdk.runtime: $(RUNTIME_LAUNCHERS)
 jdk.scripting.nashorn: $(NASHORN_LAUNCHERS)
+jdk.svctools: $(SVCTOOLS_LAUNCHERS)
 jdk.tools: $(TOOLS_LAUNCHERS)
 jdk.xml.ws.tools: $(XML_WS_TOOLS_LAUNCHERS)
 
-.PHONY: java.base java.corba java.desktop java.rmi java.scripting java.security.kerberos \
+.PHONY: java.base java.corba java.desktop java.rmi java.scripting java.jgss \
     jdk.attach jdk.compiler jdk.hotspot.tools jdk.javadoc jdk.jconsole jdk.jdi \
     jdk.jvmstat jdk.runtime jdk.scripting.nashorn jdk.tools jdk.xml.ws.tools
 
