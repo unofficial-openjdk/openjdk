@@ -46,8 +46,9 @@ include Tools.gmk
 BASE_LAUNCHERS=
 CORBA_LAUNCHERS=
 COMPILER_LAUNCHERS=
+DESKTOP_LAUNCHERS=
 JAVADOC_LAUNCHERS=
-HOTSPOT_TOOLS_LAUNCHERS=
+HOTSPOT_SA_LAUNCHERS=
 JCONSOLE_LAUNCHERS=
 JDI_LAUNCHERS=
 JVMSTAT_LAUNCHERS=
@@ -56,6 +57,7 @@ RMI_LAUNCHERS=
 SCRIPTING_LAUNCHERS=
 SVCTOOLS_LAUNCHERS=
 NASHORN_LAUNCHERS=
+LEGACYTOOLS_LAUNCHERS=
 TOOLS_LAUNCHERS=
 XML_WS_TOOLS_LAUNCHERS=
 RUNTIME_LAUNCHERS=
@@ -288,11 +290,11 @@ endif
 ifndef BUILD_HEADLESS_ONLY
   $(eval $(call SetupLauncher,appletviewer, \
       -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.applet.Main"$(COMMA) }',, \
-      $(XLIBS),,,,,,,,TOOLS))
+      $(XLIBS),,,,,,,,DESKTOP))
 endif
 
 $(eval $(call SetupLauncher,extcheck, \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "com.sun.tools.extcheck.Main"$(COMMA) }',,,,,,,,,,TOOLS))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "com.sun.tools.extcheck.Main"$(COMMA) }',,,,,,,,,,LEGACYTOOLS))
 
 $(eval $(call SetupLauncher,idlj, \
     -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "com.sun.tools.corba.se.idl.toJavaPortable.Compile"$(COMMA) }',,,,,,,,,,CORBA))
@@ -352,7 +354,7 @@ $(eval $(call SetupLauncher,jdb, \
     -DAPP_CLASSPATH='{ "/lib/tools.jar"$(COMMA) "/lib/sa-jdi.jar"$(COMMA) "/classes" }',,,,,,,,,,JDI))
 
 $(eval $(call SetupLauncher,jhat, \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "com.sun.tools.hat.Main"$(COMMA) }',,,,,,,,,,TOOLS))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "com.sun.tools.hat.Main"$(COMMA) }',,,,,,,,,,LEGACYTOOLS))
 
 $(eval $(call SetupLauncher,jinfo, \
     -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) \
@@ -382,7 +384,7 @@ $(eval $(call SetupLauncher,jjs, \
 $(eval $(call SetupLauncher,jsadebugd, \
     -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.jvm.hotspot.jdi.SADebugServer"$(COMMA) }' \
     -DAPP_CLASSPATH='{ "/lib/tools.jar"$(COMMA) "/lib/sa-jdi.jar"$(COMMA) "/classes" }' \
-    ,,,,,,,,,Info-privileged.plist,HOTSPOT_TOOLS))
+    ,,,,,,,,,Info-privileged.plist,HOTSPOT_SA))
 
 $(eval $(call SetupLauncher,jstack, \
     -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) \
@@ -402,7 +404,7 @@ $(eval $(call SetupLauncher,keytool, \
     -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.security.tools.keytool.Main"$(COMMA) }',,,,,,,,,,BASE))
 
 $(eval $(call SetupLauncher,native2ascii, \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.tools.native2ascii.Main"$(COMMA) }',,,,,,,,,,TOOLS))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.tools.native2ascii.Main"$(COMMA) }',,,,,,,,,,LEGACYTOOLS))
 
 ifndef BUILD_HEADLESS_ONLY
   $(eval $(call SetupLauncher,policytool, \
@@ -419,7 +421,7 @@ $(eval $(call SetupLauncher,schemagen, \
 
 $(eval $(call SetupLauncher,serialver, \
     -DEXPAND_CLASSPATH_WILDCARDS \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.tools.serialver.SerialVer"$(COMMA) }',,,,,,,,,,TOOLS))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.tools.serialver.SerialVer"$(COMMA) }',,,,,,,,,,LEGACYTOOLS))
 
 $(eval $(call SetupLauncher,xjc, \
     -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "com.sun.tools.internal.xjc.Driver"$(COMMA) }',,,,,,,,,,XML_WS_TOOLS))
@@ -799,7 +801,7 @@ java.rmi: $(RMI_LAUNCHERS)
 java.scripting: $(SCRIPTING_LAUNCHERS)
 java.jgss: $(KERBEROS_LAUNCHERS)
 jdk.compiler: $(COMPILER_LAUNCHERS)
-jdk.hotspot.tools: $(HOTSPOT_TOOLS_LAUNCHERS)
+jdk.hotspot.sa: $(HOTSPOT_SA_LAUNCHERS)
 jdk.javadoc: $(JAVADOC_LAUNCHERS)
 jdk.jconsole: $(JCONSOLE_LAUNCHERS)
 jdk.jdi: $(JDI_LAUNCHERS)
@@ -807,12 +809,14 @@ jdk.jvmstat: $(JVMSTAT_LAUNCHERS)
 jdk.runtime: $(RUNTIME_LAUNCHERS)
 jdk.scripting.nashorn: $(NASHORN_LAUNCHERS)
 jdk.svctools: $(SVCTOOLS_LAUNCHERS)
+jdk.legacytools :$(LEGACYTOOLS_LAUNCHERS)
 jdk.tools: $(TOOLS_LAUNCHERS)
 jdk.xml.ws.tools: $(XML_WS_TOOLS_LAUNCHERS)
 
 .PHONY: java.base java.corba java.desktop java.rmi java.scripting java.jgss \
-    jdk.attach jdk.compiler jdk.hotspot.tools jdk.javadoc jdk.jconsole jdk.jdi \
-    jdk.jvmstat jdk.runtime jdk.scripting.nashorn jdk.tools jdk.xml.ws.tools
+    jdk.attach jdk.compiler jdk.hotspot.sa jdk.javadoc jdk.jconsole jdk.jdi \
+    jdk.jvmstat jdk.runtime jdk.scripting.nashorn jdk.tools jdk.xml.ws.tools \
+    jdk.svctools jdk.legacytools
 
 all: $(BUILD_LAUNCHERS)
 

@@ -341,7 +341,7 @@ $(eval $(call SetupShuffleFiles,COPY_SWING_LAF, \
 
 $(eval $(call SetupShuffleFiles,COPY_SERIAL_VER, \
     SRC := $(JDK_TOPDIR)/src/share/classes, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/jdk.tools/share/classes, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/jdk.legacytools/share/classes, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/share/classes/sun/tools/serialver/*.properties)))
 
 $(eval $(call SetupShuffleFiles,COPY_BREAK_ITERATOR_RULES, \

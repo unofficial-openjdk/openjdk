@@ -196,14 +196,14 @@ endif
 
 # TODO jdk9: When merging to jdk9 first milestone, disable unpacking of sajdi.
 ifeq ($(SHUFFLED), true)
-  $(JDK_OUTPUTDIR)/modules/jdk.hotspot.tools/_the.sa.jar.unpacked: $(SRC_SAJDI_JAR)
+  $(JDK_OUTPUTDIR)/modules/jdk.hotspot.sa/_the.sa.jar.unpacked: $(SRC_SAJDI_JAR)
 	$(ECHO) $(LOG_INFO) Unzipping $(<F)
 	$(RM) -r $(@D)
 	$(MKDIR) -p $(@D)
 	$(CD) $(@D) && $(UNZIP) $< $(LOG_DEBUG)
 	$(TOUCH) $@
 
-  HOTSPOT_IMPORT_TARGET_FILES += $(JDK_OUTPUTDIR)/modules/jdk.hotspot.tools/_the.sa.jar.unpacked
+  HOTSPOT_IMPORT_TARGET_FILES += $(JDK_OUTPUTDIR)/modules/jdk.hotspot.sa/_the.sa.jar.unpacked
 
 # Since sajdi is now its own module, disable this special handling of the service provider
 # file.

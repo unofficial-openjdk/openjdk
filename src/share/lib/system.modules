@@ -1,10 +1,11 @@
 jdk.attach
 jdk.compiler
-jdk.hotspot.tools
+jdk.hotspot.sa
 jdk.javadoc
 jdk.jconsole
 jdk.jdi
 jdk.jvmstat
+jdk.legacytools
 jdk.runtime
 jdk.svctools
 jdk.tools

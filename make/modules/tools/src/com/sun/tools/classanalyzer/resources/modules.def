@@ -715,6 +715,7 @@ module jdk.attach {
     uses com.sun.tools.attach.spi.AttachProvider;
 }
 
+// Serviceability command-line tools
 module jdk.svctools {
     include sun.tools.jcmd.**,
             sun.tools.jinfo.**,
@@ -723,7 +724,7 @@ module jdk.svctools {
 }
 
 // SA
-module jdk.hotspot.tools {
+module jdk.hotspot.sa {
     include sun.jvm.hotspot.**,
             com.sun.java.swing.ui.**,
             com.sun.java.swing.action.**;
@@ -736,11 +737,22 @@ module jdk.jconsole {
             com.sun.tools.jconsole.**;
 }
 
+module jdk.legacytools {
+    include com.sun.tools.extcheck.**,
+            sun.tools.native2ascii.**,
+            sun.tools.serialver.**;
+
+    // jhat
+    include com.sun.tools.hat.**,
+            com.sun.tools.script.**;
+}
+
+
 // JDK tools
 module jdk.tools {
     requires jdk.compiler;
     requires jdk.javadoc;
-    requires jdk.hotspot.tools;
+    requires jdk.hotspot.sa;
     requires jdk.xml.ws.tools;
 
     requires jdk.jdi;
@@ -751,6 +763,8 @@ module jdk.tools {
     requires jdk.attach;
     requires jdk.svctools;
     requires jdk.jconsole;
+
+    requires jdk.legacytools;
 
     // jar, jarsigner
     include sun.tools.jar.**;
@@ -770,13 +784,6 @@ module jdk.tools {
             sun.tools.javac.**,
             sun.tools.tree.*,
             sun.tools.util.*;
-
-    // misc tools
-    include com.sun.tools.extcheck.**,
-            com.sun.tools.hat.**,
-            com.sun.tools.script.**,
-            sun.tools.native2ascii.**,
-            sun.tools.serialver.**;
 }
 
 module jdk.providers {

@@ -528,11 +528,13 @@ ifeq ($(SHUFFLED), true)
       java.desktop \
       jdk.attach \
       jdk.compiler \
-      jdk.hotspot.tools \
+      jdk.hotspot.sa \
       jdk.javadoc \
       jdk.jconsole \
       jdk.jdi \
       jdk.jvmstat \
+      jdk.legacytools \
+      jdk.svctools \
       jdk.runtime \
       jdk.tools \
       jdk.xml.ws.tools \
