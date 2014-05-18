@@ -120,7 +120,7 @@ $(foreach m, $(GENDATA_MODULES), $(eval $(call DeclareGendataRecipe,$m)))
 ################################################################################
 # Copy files
 COPYFILES_MODULES := \
-    java.base java.desktop jdk.debug.agent jdk.hprof.agent java.management \
+    java.base java.desktop jdk.jdwp jdk.hprof java.management \
     java.logging jdk.crypto.pkcs11 jdk.crypto.ucrytpo
 ifndef OPENJDK
   COPYFILES_MODULES += jdk.jfr
@@ -160,9 +160,9 @@ jdk.scripting.nashorn-java:
 # Compile native libraries
 ALL_LIB_MODULES := \
     java.base java.desktop java.instrument java.management java.scripting jdk.sctp \
-    jdk.security.auth java.security.kerberos jdk.crypto.mscapi jdk.crypto.pkcs11 \
+    jdk.security.auth java.jgss jdk.crypto.mscapi jdk.crypto.pkcs11 \
     java.smartcardio jdk.crypto.ec jdk.crypto.ucrytpo jdk.tools jdk.attach \
-    jdk.debug.agent jdk.jdi jdk.hprof.agent jdk.runtime java.prefs
+    jdk.jdwp jdk.jdi jdk.hprof jdk.runtime java.prefs
 LIB_MODULES := $(filter $(ALL_MODULES), $(ALL_LIB_MODULES))
 LIB_TARGETS := $(addsuffix -libs, $(LIB_MODULES))
 
@@ -179,7 +179,7 @@ $(foreach m, $(LIB_MODULES), $(eval $(call DeclareCompileNativeLibsRecipe,$m)))
 ################################################################################
 # Compile native executables
 ALL_LAUNCHER_MODULES := \
-    java.base java.corba java.desktop java.rmi java.scripting java.security.kerberos \
+    java.base java.corba java.desktop java.rmi java.scripting java.jgss \
     jdk.attach jdk.compiler jdk.hotspot.tools jdk.javadoc jdk.jconsole jdk.jdi \
     jdk.jvmstat jdk.runtime jdk.scripting.nashorn jdk.tools jdk.xml.ws.tools
 LAUNCHER_MODULES := $(filter $(ALL_MODULES), $(ALL_LAUNCHER_MODULES))
@@ -329,16 +329,16 @@ $(foreach m, $(JAVA_MODULES), \
     $(call FindDepsForModule,$m)))))
 
 # Declare dependencies from <module>-lib to <module>-java
-# Skip jdk.debug.agent until we handle module-info.java in javac.
-$(foreach m, $(filter-out jdk.debug.agent, $(LIB_MODULES)), $(eval $m-libs: $m-java))
+# Skip jdk.jdwp until we handle module-info.java in javac.
+$(foreach m, $(filter-out jdk.jdwp, $(LIB_MODULES)), $(eval $m-libs: $m-java))
 
 # Declare dependencies from all other <module>-lib to java.base-lib
 $(foreach t, $(filter-out java.base-libs, $(LIB_TARGETS)), \
     $(eval $t: java.base-libs))
 
 # This dependency needs to be explicitly declared. jdk.jdi-gensrc generates a 
-# header file used by jdk.debug.agent libs.
-jdk.debug.agent-libs: jdk.jdi-gensrc
+# header file used by jdk.jdwp libs.
+jdk.jdwp-libs: jdk.jdi-gensrc
 
 # Explicitly add dependencies for special targets
 java.base: import-hotspot policy-jars

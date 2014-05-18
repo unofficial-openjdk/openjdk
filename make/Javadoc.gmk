@@ -767,7 +767,7 @@ JGSS_WINDOWTITLE := Java GSS-API Utilities
 JGSS_HEADER := <strong>Java GSS-API Utilities</strong>
 JGSS_BOTTOM := $(call CommonBottom,$(JGSS_FIRST_COPYRIGHT_YEAR))
 ifeq ($(SHUFFLED), true)
-  JGSS_OVERVIEW := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.security.kerberos/share/classes/jgss-overview.html
+  JGSS_OVERVIEW := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.jgss/share/classes/jgss-overview.html
 else
   JGSS_OVERVIEW := $(JDK_SHARE_CLASSES)/com/sun/security/jgss/jgss-overview.html
 endif
