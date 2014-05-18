@@ -180,8 +180,9 @@ $(foreach m, $(LIB_MODULES), $(eval $(call DeclareCompileNativeLibsRecipe,$m)))
 # Compile native executables
 ALL_LAUNCHER_MODULES := \
     java.base java.corba java.desktop java.rmi java.scripting java.jgss \
-    jdk.attach jdk.compiler jdk.hotspot.tools jdk.javadoc jdk.jconsole jdk.jdi \
-    jdk.jvmstat jdk.runtime jdk.scripting.nashorn jdk.tools jdk.xml.ws.tools
+    jdk.attach jdk.compiler jdk.hotspot.sa jdk.javadoc jdk.jconsole jdk.jdi \
+    jdk.jvmstat jdk.runtime jdk.scripting.nashorn jdk.tools jdk.xml.ws.tools \
+    jdk.svctools jdk.legacytools
 LAUNCHER_MODULES := $(filter $(ALL_MODULES), $(ALL_LAUNCHER_MODULES))
 LAUNCHER_TARGETS := $(addsuffix -launchers, $(LAUNCHER_MODULES))
 
@@ -345,7 +346,7 @@ java.base: import-hotspot policy-jars
 java.rmi jdk.naming.rmi java.management: genclasses
 # Part of the contents of this module is produced by the hotspot build and the 
 # import step will provide it.
-jdk.hotspot.tools-java: import-hotspot
+jdk.hotspot.sa-java: import-hotspot
 
 java-modules: $(JAVA_TARGETS) genclasses
 
@@ -385,7 +386,7 @@ exploded-image: $(ALL_MODULE_TARGETS)
 
 images: module-images
 
-.PHONY: gensrc jdk.hotspot.tools-java java libs launchers exploded-image images \
+.PHONY: gensrc jdk.hotspot.sa-java java libs launchers exploded-image images \
      $(ALL_MODULE_TARGETS)
 
 ################################################################################

@@ -149,8 +149,8 @@ jdk.javadoc_CMDS := $(JAVADOC_LAUNCHERS)
 
 jdk.deploy.osx_NATIVE := $(DEPLOY_OSX_LIBRARIES)
 
-jdk.hotspot.tools_CMDS := $(HOTSPOT_TOOLS_LAUNCHERS)
-jdk.hotspot.tools_NATIVE := $(JDI_SA_LIBRARIES)
+jdk.hotspot.sa_CMDS := $(HOTSPOT_SA_LAUNCHERS)
+jdk.hotspot.sa_NATIVE := $(JDI_SA_LIBRARIES)
 
 jdk.security.auth_NATIVE := $(SECURITY_JAAS_LIBRARIES)
 
@@ -170,12 +170,14 @@ jdk.jconsole_CMDS := $(JCONSOLE_LAUNCHERS)
 
 jdk.jvmstat_CMDS := $(JVMSTAT_LAUNCHERS)
 
-jdk.svctools_CMDS := $(SVCTOOLS_LAUNCHERS)
-
 jdk.xml.ws.tools_CMDS := $(XML_WS_TOOLS_LAUNCHERS)
 
 jdk.runtime_CMDS := $(RUNTIME_LAUNCHERS)
 jdk.runtime_NATIVE := $(UNPACK_LIBRARIES) $(JSDT_LIBRARIES)
+
+jdk.legacytools_CMDS := $(LEGACYTOOLS_LAUNCHERS)
+
+jdk.svctools_CMDS := $(SVCTOOLS_LAUNCHERS)
 
 jdk.tools_CMDS := $(TOOLS_LAUNCHERS)
 jdk.tools_NATIVE := $(NPT_LIBRARIES)

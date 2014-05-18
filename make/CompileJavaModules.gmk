@@ -460,14 +460,19 @@ jdk.jdi_EXCLUDE_FILES += jdi-overview.html
 
 ################################################################################
 
+jdk.legacytools_CLEAN_FILES := $(wildcard \
+    $(patsubst %, $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.legacytools/share/classes/%/*.properties, \
+        sun/tools/serialver/resources \
+        com/sun/tools/script/shell))
+
+################################################################################
+
 jdk.tools_COPY := .gif .png .js oqlhelp.html .txt aliasmap _options
 
 jdk.tools_CLEAN_FILES := $(wildcard \
     $(patsubst %, $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.tools/share/classes/%/*.properties, \
         sun/rmi/rmic/resources \
-        sun/tools/javac/resources \
-        sun/tools/serialver/resources \
-        com/sun/tools/script/shell))
+        sun/tools/javac/resources))
 
 jdk.tools_EXCLUDES := \
     com/sun/tools/example/trace \
@@ -575,10 +580,10 @@ define SetupModuleCompilation
   $1_DEPS := $$(call FindDepsForModule, $1)
 
   $1_CLASSPATH := $$(addprefix $(JDK_OUTPUTDIR)/modules/,$$($1_DEPS))
-  ifeq ($1, jdk.hotspot.tools)
+  ifeq ($1, jdk.hotspot.sa)
     ## The source of this module is compiled elsewhere, hotspot, and imported.
     ## Service types are required in the classpath when compiing module-info
-    $1_CLASSPATH := $$($1_CLASSPATH) $$(addprefix $(JDK_OUTPUTDIR)/modules/,jdk.hotspot.tools)
+    $1_CLASSPATH := $$($1_CLASSPATH) $$(addprefix $(JDK_OUTPUTDIR)/modules/,jdk.hotspot.sa)
   endif
   $1_CLASSPATH := $$(subst $$(SPACE),$$(PATH_SEP),$$($1_CLASSPATH))
   $1_JAVAC_FLAGS := -bootclasspath "$$($1_CLASSPATH)"
