@@ -37,7 +37,7 @@ include CommonCorba.gmk
 
 ifeq ($(SHUFFLED), true)
   CORBA_SRC := $(CORBA_TOPDIR)/$(SRC_SUBDIR)/java.corba/share/classes \
-      $(CORBA_TOPDIR)/$(SRC_SUBDIR)/jdk.tools/share/classes \
+      $(CORBA_TOPDIR)/$(SRC_SUBDIR)/jdk.rmic/share/classes \
       $(CORBA_OUTPUTDIR)/gensrc/java.corba \
       #
 else
