@@ -104,7 +104,7 @@ endef
 
 ################################################################################
 
-java.base_NATIVE := $(BASE_LIBRARIES) $(MSVCR_TARGET) $(JVM_LIBRARIES)
+java.base_NATIVE := $(BASE_LIBRARIES) $(MSVCR_TARGET) $(JVM_LIBRARIES) $(NPT_LIBRARIES)
 java.base_CMDS := $(BASE_LAUNCHERS)
 java.base_CONF := $(BASE_CONF_FILES) $(NET_CONF_FILES) $(GENDATA_TZDB) \
     $(POLICY_JARS)
@@ -179,8 +179,9 @@ jdk.legacytools_CMDS := $(LEGACYTOOLS_LAUNCHERS)
 
 jdk.svctools_CMDS := $(SVCTOOLS_LAUNCHERS)
 
-jdk.tools_CMDS := $(TOOLS_LAUNCHERS)
-jdk.tools_NATIVE := $(NPT_LIBRARIES)
+jdk.rmic_CMDS := $(RMIC_LAUNCHERS)
+
+jdk.pkgtools_CMDS := $(PKGTOOLS_LAUNCHERS)
 
 ifndef OPENJDK
   jdk.crypto.ucrypto_NATIVE := $(SECURITY_UCRYPTO_LIBRARIES)

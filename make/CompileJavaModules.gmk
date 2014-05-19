@@ -465,42 +465,33 @@ jdk.legacytools_CLEAN_FILES := $(wildcard \
         sun/tools/serialver/resources \
         com/sun/tools/script/shell))
 
+jdk.legacytools_COPY := .js oqlhelp.html .txt
+
 ################################################################################
 
-jdk.tools_COPY := .gif .png .js oqlhelp.html .txt aliasmap _options
-
-jdk.tools_CLEAN_FILES := $(wildcard \
-    $(patsubst %, $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.tools/share/classes/%/*.properties, \
-        sun/rmi/rmic/resources \
-        sun/tools/javac/resources))
-
-jdk.tools_EXCLUDES := \
-    com/sun/tools/example/trace \
-    #
-
 ifneq ($(OPENJDK_TARGET_OS), solaris)
-  jdk.tools_EXCLUDE_FILES += \
+  jdk.attach_EXCLUDE_FILES += \
       sun/tools/attach/SolarisAttachProvider.java \
       sun/tools/attach/SolarisVirtualMachine.java \
       #
 endif
 
 ifneq ($(OPENJDK_TARGET_OS), linux)
-  jdk.tools_EXCLUDE_FILES += \
+  jdk.attach_EXCLUDE_FILES += \
       sun/tools/attach/LinuxAttachProvider.java \
       sun/tools/attach/LinuxVirtualMachine.java \
       #
 endif
 
 ifneq ($(OPENJDK_TARGET_OS), macosx)
-  jdk.tools_EXCLUDE_FILES += \
+  jdk.attach_EXCLUDE_FILES += \
       sun/tools/attach/BsdAttachProvider.java \
       sun/tools/attach/BsdVirtualMachine.java \
       #
 endif
 
 ifneq ($(OPENJDK_TARGET_OS),aix)
-  jdk.tools_EXCLUDE_FILES += \
+  jdk.attach_EXCLUDE_FILES += \
       sun/tools/attach/AixAttachProvider.java \
       sun/tools/attach/AixVirtualMachine.java \
       #
@@ -624,7 +615,6 @@ endef
 
 java.sql.rowset: $(call CreateHkTargets, $(java.sql.rowset_CLEAN_FILES))
 java.rmi: $(call CreateHkTargets, $(java.rmi_CLEAN_FILES))
-jdk.tools: $(call CreateHkTargets, $(jdk.tools_CLEAN_FILES))
 
 ################################################################################
 

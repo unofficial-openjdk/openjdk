@@ -67,7 +67,8 @@ ifeq ($(SHUFFLED), true)
   JDK_NAMING_DNS_SUBDIR := /jdk.naming.dns
   JDK_NAMING_RMI_SUBDIR := /jdk.naming.rmi
   JDK_LOCALEDATA_SUBDIR := /jdk.localedata
-  JDK_TOOLS_SUBDIR := /jdk.tools
+  JDK_PKGTOOLS_SUBDIR := /jdk.pkgtools
+  JDK_RMIC_SUBDIR := /jdk.rmic
   JDK_RUNTIME_SUBDIR := /jdk.runtime
 
   LDFLAGS_JDKLIB := $(subst $(OUTPUT_ROOT),$(OUTPUT_ROOT)/jigsaw,$(LDFLAGS_JDKLIB))

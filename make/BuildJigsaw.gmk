@@ -161,7 +161,7 @@ jdk.scripting.nashorn-java:
 ALL_LIB_MODULES := \
     java.base java.desktop java.instrument java.management java.scripting jdk.sctp \
     jdk.security.auth java.jgss jdk.crypto.mscapi jdk.crypto.pkcs11 \
-    java.smartcardio jdk.crypto.ec jdk.crypto.ucrytpo jdk.tools jdk.attach \
+    java.smartcardio jdk.crypto.ec jdk.crypto.ucrytpo jdk.attach \
     jdk.jdwp jdk.jdi jdk.hprof jdk.runtime java.prefs
 LIB_MODULES := $(filter $(ALL_MODULES), $(ALL_LIB_MODULES))
 LIB_TARGETS := $(addsuffix -libs, $(LIB_MODULES))
@@ -181,8 +181,8 @@ $(foreach m, $(LIB_MODULES), $(eval $(call DeclareCompileNativeLibsRecipe,$m)))
 ALL_LAUNCHER_MODULES := \
     java.base java.corba java.desktop java.rmi java.scripting java.jgss \
     jdk.attach jdk.compiler jdk.hotspot.sa jdk.javadoc jdk.jconsole jdk.jdi \
-    jdk.jvmstat jdk.runtime jdk.scripting.nashorn jdk.tools jdk.xml.ws.tools \
-    jdk.svctools jdk.legacytools
+    jdk.jvmstat jdk.runtime jdk.scripting.nashorn jdk.pkgtools jdk.xml.ws.tools \
+    jdk.svctools jdk.legacytools jdk.rmic
 LAUNCHER_MODULES := $(filter $(ALL_MODULES), $(ALL_LAUNCHER_MODULES))
 LAUNCHER_TARGETS := $(addsuffix -launchers, $(LAUNCHER_MODULES))
 
