@@ -176,8 +176,8 @@ ifeq ($(SHUFFLED), true)
       $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.jdwp/$(OPENJDK_TARGET_OS_API_DIR)/native/libjdwp
   LIBJDWP_CPPFLAGS := \
         -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.jdwp/share/native/libjdwp/export \
-        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.tools/share/native/libnpt \
-        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.tools/$(OPENJDK_TARGET_OS_API_DIR)/native/libnpt \
+        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.base/share/native/libnpt \
+        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.base/$(OPENJDK_TARGET_OS_API_DIR)/native/libnpt \
         $(addprefix -I, $(LIBJDWP_SRC))
 else
   LIBJDWP_SRC := $(JDK_TOPDIR)/src/share/back \
@@ -403,8 +403,8 @@ ifeq ($(SHUFFLED), true)
   BUILD_LIBHPROF_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.hprof/share/native/libhprof \
       $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.hprof/$(OPENJDK_TARGET_OS_API_DIR)/native/libhprof
   BUILD_LIBHPROF_CFLAGS := $(addprefix -I, $(BUILD_LIBHPROF_SRC)) \
-      -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.tools/share/native/libnpt \
-      -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.tools/$(OPENJDK_TARGET_OS_API_DIR)/native/libnpt \
+      -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.base/share/native/libnpt \
+      -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.base/$(OPENJDK_TARGET_OS_API_DIR)/native/libnpt \
       -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.hprof/share/native/libjava_crw_demo
 else
   BUILD_LIBHPROF_SRC := $(JDK_TOPDIR)/src/share/demo/jvmti/hprof \

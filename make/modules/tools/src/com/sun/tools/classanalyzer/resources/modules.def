@@ -505,6 +505,15 @@ module java.rmi {
     uses java.rmi.server.RMIClassLoaderSpi;
 }
 
+module jdk.rmic {
+    include sun.rmi.rmic.**,
+            sun.tools.asm.*,
+            sun.tools.java.*,
+            sun.tools.javac.**,
+            sun.tools.tree.*,
+            sun.tools.util.*;
+}
+
 // Implementation for xjc, wsgen, wsimport, and schemagen tools
 module jdk.xml.ws.tools {
     include com.sun.codemodel.**,
@@ -747,24 +756,7 @@ module jdk.legacytools {
             com.sun.tools.script.**;
 }
 
-
-// JDK tools
-module jdk.tools {
-    requires jdk.compiler;
-    requires jdk.javadoc;
-    requires jdk.hotspot.sa;
-    requires jdk.xml.ws.tools;
-
-    requires jdk.jdi;
-    requires jdk.jdwp;
-    requires jdk.hprof;
-
-    requires jdk.jvmstat;
-    requires jdk.attach;
-    requires jdk.svctools;
-    requires jdk.jconsole;
-
-    requires jdk.legacytools;
+module jdk.pkgtools {
 
     // jar, jarsigner
     include sun.tools.jar.**;
@@ -776,14 +768,30 @@ module jdk.tools {
 
     // jdeps
     include com.sun.tools.jdeps.**;
+}
 
-    // rmic
-    include sun.rmi.rmic.**,
-            sun.tools.asm.*,
-            sun.tools.java.*,
-            sun.tools.javac.**,
-            sun.tools.tree.*,
-            sun.tools.util.*;
+
+// JDK tools
+module jdk.tools {
+
+    // development, including debugging
+    requires jdk.compiler;
+    requires jdk.javadoc;
+    requires jdk.pkgtools;
+    requires jdk.rmic;
+    requires jdk.xml.ws.tools;
+    requires jdk.jdi;
+    requires jdk.jdwp;
+
+    // serviceability
+    requires jdk.hprof;
+    requires jdk.jvmstat;
+    requires jdk.attach;
+    requires jdk.svctools;
+    requires jdk.jconsole;
+    requires jdk.hotspot.sa;
+
+    requires jdk.legacytools;
 }
 
 module jdk.providers {

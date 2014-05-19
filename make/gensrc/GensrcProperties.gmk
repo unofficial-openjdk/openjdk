@@ -75,8 +75,8 @@ COMPILE_PROP_SRC_FILES := \
         $(JDK_TOPDIR)/$(SRC_SUBDIR)$(JAVA_BASE_SUBDIR)/share/classes/sun/launcher/resources \
         $(JDK_TOPDIR)/$(SRC_SUBDIR)$(JAVA_MANAGEMENT_SUBDIR)/share/classes/sun/management/resources \
         $(JDK_TOPDIR)/$(SRC_SUBDIR)$(JAVA_DESKTOP_SUBDIR)/share/classes/sun/print/resources \
-        $(JDK_TOPDIR)/$(SRC_SUBDIR)$(JDK_TOOLS_SUBDIR)/share/classes/sun/tools/jar/resources \
-        $(JDK_TOPDIR)/$(SRC_SUBDIR)$(JDK_TOOLS_SUBDIR)/share/classes/jdk/jigsaw/tools/jlink/resources \
+        $(JDK_TOPDIR)/$(SRC_SUBDIR)$(JDK_PKGTOOLS_SUBDIR)/share/classes/sun/tools/jar/resources \
+        $(JDK_TOPDIR)/$(SRC_SUBDIR)$(JDK_PKGTOOLS_SUBDIR)/share/classes/jdk/jigsaw/tools/jlink/resources \
         $(JDK_TOPDIR)/$(SRC_SUBDIR)$(JAVA_LOGGING_SUBDIR)/share/classes/sun/util/logging/resources)) \
     #
 

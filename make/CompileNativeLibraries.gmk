@@ -146,7 +146,7 @@ BUILD_LIBRARIES := \
     $(PREFS_LIBRARIES) \
     #
 
-java.base: $(BASE_LIBRARIES) $(BASE_STATIC_LIBRARIES)
+java.base: $(BASE_LIBRARIES) $(BASE_STATIC_LIBRARIES) $(NPT_LIBRARIES)
 java.desktop: $(DESKTOP_LIBRARIES)
 java.instrument: $(INSTRUMENT_LIBRARIES)
 java.management: $(MANAGEMENT_LIBRARIES) $(JFR_LIBRARIES)
@@ -159,7 +159,6 @@ jdk.crypto.pkcs11: $(SECURITY_PKCS11_LIBRARIES)
 java.smartcardio: $(SECURITY_SMARTCARDIO_LIBRARIES)
 jdk.crypto.ec: $(SECURITY_SUNEC_LIBRARIES)
 jdk.crypto.ucrytpo: $(SECURITY_UCRYPTO_LIBRARIES)
-jdk.tools: $(NPT_LIBRARIES)
 jdk.attach: $(ATTACH_LIBRARIES)
 jdk.jdwp: $(JDWP_LIBRARIES)
 jdk.jdi: $(JDI_TRANSPORT_LIBRARIES)
@@ -172,5 +171,5 @@ all: $(BUILD_LIBRARIES)
 .PHONY: all
 .PHONY: java.base java.desktop java.instrument java.management java.scripting jdk.sctp \
     jdk.security.auth java.jgss jdk.crypto.mscapi jdk.crypto.pkcs11 \
-    java.smartcardio jdk.crypto.ec jdk.crypto.ucrytpo jdk.tools jdk.attach \
+    java.smartcardio jdk.crypto.ec jdk.crypto.ucrytpo jdk.attach \
     jdk.jdwp jdk.jdi jdk.hprof jdk.runtime java.prefs

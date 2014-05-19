@@ -273,7 +273,7 @@ $(eval $(call SetupShuffleFiles,COPY_SERVICES_ATTACH, \
     DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/jdk.attach/share/classes, \
     FILES := $(JDK_TOPDIR)/src/share/classes/sun/tools/attach/META-INF/services/com.sun.tools.attach.spi.AttachProvider))
 
-# Copy services in jdk.tools
+# Copy services in jdk.jdi
 $(eval $(call SetupShuffleFiles,COPY_SERVICES_JDI, \
     SRC := $(JDK_TOPDIR)/src/share/classes/com/sun/tools/jdi, \
     DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/jdk.jdi/share/classes, \
@@ -551,17 +551,17 @@ $(eval $(call SetupShuffleFiles,COPY_LIBJLI_WINDOWS, \
 # npt
 $(eval $(call SetupShuffleFiles,COPY_LIBNPT_SHARE, \
     SRC := $(JDK_TOPDIR)/src/share/npt, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/jdk.tools/share/native/libnpt, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/jdk.base/share/native/libnpt, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/share/npt/*)))
 
 $(eval $(call SetupShuffleFiles,COPY_LIBNPT_SOLARIS, \
     SRC := $(JDK_TOPDIR)/src/solaris/npt, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/jdk.tools/unix/native/libnpt, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/jdk.base/unix/native/libnpt, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/solaris/npt/*)))
 
 $(eval $(call SetupShuffleFiles,COPY_LIBNPT_WINDOWS, \
     SRC := $(JDK_TOPDIR)/src/windows/npt, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/jdk.tools/windows/native/libnpt, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/jdk.base/windows/native/libnpt, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/windows/npt/*)))
 
 # net
@@ -1459,9 +1459,9 @@ $(eval $(call SetupShuffleFiles,COPY_JDK_JRE_TOOLS_PACKAGE_INFO, \
         $(JDK_TOPDIR)/src/share/classes/com/sun/tracing/package-info.java \
         ))
 
-$(eval $(call SetupShuffleFiles,COPY_JDK_TOOLS_PACKAGE_INFO, \
+$(eval $(call SetupShuffleFiles,COPY_JDK_PKGTOOLS_PACKAGE_INFO, \
     SRC := $(JDK_TOPDIR)/src/share/classes, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/jdk.tools/share/classes, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/jdk.pkgtools/share/classes, \
     FILES := \
         $(JDK_TOPDIR)/src/share/classes/com/sun/jarsigner/package.html \
         ))

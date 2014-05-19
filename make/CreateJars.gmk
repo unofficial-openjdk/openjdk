@@ -534,9 +534,10 @@ ifeq ($(SHUFFLED), true)
       jdk.jdi \
       jdk.jvmstat \
       jdk.legacytools \
+      jdk.pkgtools \
       jdk.svctools \
+      jdk.rmic \
       jdk.runtime \
-      jdk.tools \
       jdk.xml.ws.tools \
       )
       #

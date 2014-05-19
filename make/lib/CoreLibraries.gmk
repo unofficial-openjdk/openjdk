@@ -594,8 +594,8 @@ endif
 # This should be moved to ServiceabilityLibraries.gmk
 
 ifeq ($(SHUFFLED), true)
-  LIBNPT_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.tools/share/native/libnpt \
-         $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.tools/$(OPENJDK_TARGET_OS_API_DIR)/native/libnpt
+  LIBNPT_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.base/share/native/libnpt \
+         $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.base/$(OPENJDK_TARGET_OS_API_DIR)/native/libnpt
 else
   LIBNPT_SRC := $(JDK_TOPDIR)/src/share/npt \
          $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/npt

@@ -45,11 +45,11 @@ RMIC_PKGS := \
 
 $(eval $(call SetupJavaCompilation,BUILD_BOOTSTRAP_RMIC, \
     SETUP := GENERATE_OLDBYTECODE, \
-    SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)$(JDK_TOOLS_SUBDIR)/share/classes, \
+    SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)$(JDK_RMIC_SUBDIR)/share/classes, \
     INCLUDES := $(RMIC_PKGS), \
     BIN := $(JDK_OUTPUTDIR)/btclasses_rmic, \
     COPY := .properties, \
-    JAVAC_SOURCE_PATH_OVERRIDE := $(addprefix $(JDK_TOPDIR)/$(SRC_SUBDIR)$(JDK_TOOLS_SUBDIR)/share/classes/, $(RMIC_PKGS))))
+    JAVAC_SOURCE_PATH_OVERRIDE := $(addprefix $(JDK_TOPDIR)/$(SRC_SUBDIR)$(JDK_RMIC_SUBDIR)/share/classes/, $(RMIC_PKGS))))
 
 ##########################################################################################
 
