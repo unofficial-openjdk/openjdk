@@ -849,11 +849,17 @@ public class WToolkit extends SunToolkit implements Runnable {
      * Windows doesn't always send WM_SETTINGCHANGE when it should.
      */
     private void windowsSettingChange() {
-        EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                updateProperties();
-            }
-        });
+        if (AppContext.getAppContext() == null) {
+            // We cannot post the update to any EventQueue. Listeners will
+            // be called on EDTs by DesktopPropertyChangeSupport
+            updateProperties();
+        } else {
+            EventQueue.invokeLater(new Runnable() {
+                public void run() {
+                    updateProperties();
+                }
+            });
+        }
     }
 
     private synchronized void updateProperties() {
