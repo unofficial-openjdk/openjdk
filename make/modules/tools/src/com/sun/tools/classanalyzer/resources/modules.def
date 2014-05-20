@@ -801,6 +801,8 @@ module jdk.providers {
     requires jdk.zipfs;
     requires jdk.charsets;
     requires jdk.localedata;
+    requires jdk.naming.dns;
+    requires jdk.naming.rmi;
     permits jdk.runtime;
 }
 
