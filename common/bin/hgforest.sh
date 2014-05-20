@@ -144,16 +144,20 @@ if [ "${command}" = "clone" -o "${command}" = "fclone" -o "${command}" = "tclone
       repos="${repos} ${i}"
     fi
   done
-  if [ "${command_args}" != "" ] ; then
+
+  if [ "${command_args}" != "" ]; then
     set ${command_args}
     pull_extra_base="$1"
     pull_extra_dir="$2"
     if [ "${pull_extra_dir}" != "" ] ; then
       pull_default_tail="${pull_extra_dir}"
-    else
-      pull_default_tail=`echo ${pull_default} | sed -e 's@^.*://[^/]*/\(.*\)@\1@'`
     fi
+  fi
+  if [ "${pull_default_tail}" = "" ]; then
+    pull_default_tail=`echo ${pull_default} | sed -e 's@^.*://[^/]*/\(.*\)@\1@'`
+  fi
 
+  if [ "${command_args}" != "" ] ; then
     if [ "x${pull_default}" = "x${pull_default_tail}" ] ; then
       echo "ERROR: Need initial clone from non-local source" > ${status_output}
       exit 1
@@ -164,6 +168,16 @@ if [ "${command}" = "clone" -o "${command}" = "fclone" -o "${command}" = "tclone
         repos_extra="${repos_extra} ${i}"
       fi
     done
+  else
+    if [ "x${pull_default}" = "x${pull_default_tail}" ] ; then
+      # local source repo. Copy the extras ones that exist there.
+      for i in ${subrepos_extra} ; do
+        if [ -f ${pull_default}/${i}/.hg/hgrc -a ! -f ${i}/.hg/hgrc ] ; then
+          # sub-repo there in source but not here
+          repos_extra="${repos_extra} ${i}"
+        fi
+      done
+    fi
   fi
   at_a_time=2
   # Any repos to deal with?
