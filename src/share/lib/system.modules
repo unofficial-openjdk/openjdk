@@ -1,0 +1,14 @@
+jdk.attach
+jdk.compiler
+jdk.hotspot.sa
+jdk.javadoc
+jdk.jconsole
+jdk.jdi
+jdk.jvmstat
+jdk.legacytools
+jdk.pkgtools
+jdk.runtime
+jdk.svctools
+jdk.rmic
+jdk.tools
+jdk.xml.ws.tools

@@ -24,6 +24,7 @@
 #
 
 include $(SPEC)
+include JigsawSpecMod.gmk
 include MakeBase.gmk
 include JavaCompilation.gmk
 include Setup.gmk
@@ -105,6 +106,7 @@ ifeq ($(PROFILE), )
       javah$(EXE_SUFFIX) \
       javap$(EXE_SUFFIX) \
       jdeps$(EXE_SUFFIX) \
+      jlink$(EXE_SUFFIX) \
       jcmd$(EXE_SUFFIX) \
       jdb$(EXE_SUFFIX) \
       jps$(EXE_SUFFIX) \
@@ -737,12 +739,14 @@ $(eval $(call IncludeCustomExtension, jdk, Images.gmk))
 # Main targets
 
 jre-image: $(JRE_BIN_TARGETS) $(JRE_LIB_TARGETS) $(JRE_IMAGE_DIR)/lib/applet \
+    $(JRE_MODULE_TARGETS) \
     $(JRE_IMAGE_DIR)/lib/meta-index $(JRE_IMAGE_DIR)/lib/ext/meta-index \
     $(JRE_MAN_PAGE_LIST) $(JRE_DOC_TARGETS) $(JRE_INFO_FILE) $(JRE_STRIP_LIST) \
     $(JRE_BIN_ISADIR_LINK_TARGETS)
 
 jdk-image: $(JDK_BIN_TARGETS) $(JDKJRE_BIN_TARGETS) \
     $(JDK_LIB_TARGETS) $(JDKJRE_LIB_TARGETS) \
+    $(JDKJRE_MODULE_TARGETS) \
     $(JDK_IMAGE_DIR)/jre/lib/applet \
     $(JDK_DEMO_TARGETS) \
     $(JDK_IMAGE_DIR)/jre/lib/meta-index $(JDK_IMAGE_DIR)/jre/lib/ext/meta-index \

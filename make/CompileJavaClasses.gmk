@@ -38,6 +38,11 @@ EXCLUDES :=
 
 ##########################################################################################
 
+# Exclude building of IIOP transport for RMI Connector
+EXCLUDES += com/sun/jmx/remote/protocol/iiop
+
+##########################################################################################
+
 EXCLUDES += com/sun/pept \
     com/sun/tools/example/trace \
     com/sun/tools/example/debug/bdi \
@@ -151,7 +156,7 @@ endif
 # Exclude BreakIterator classes that are just used in compile process to generate
 # data files and shouldn't go in the product
 EXFILES += sun/text/resources/BreakIteratorRules.java \
-    sun/text/resources/BreakIteratorRules_th.java
+    sun/text/resources/th/BreakIteratorRules_th.java
 
 # TODO: Add BUILD_HEADLESS_ONLY to configure?
 ifdef BUILD_HEADLESS_ONLY

@@ -41,6 +41,8 @@ package sun.launcher;
  */
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInputStream;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Method;
@@ -54,18 +56,28 @@ import java.nio.file.Path;
 import java.text.Normalizer;
 import java.util.ResourceBundle;
 import java.text.MessageFormat;
+import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Locale.Category;
 import java.util.Properties;
+import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
+
+import jdk.jigsaw.module.Module;
+import jdk.jigsaw.module.ModuleDependence;
+import jdk.jigsaw.module.ModuleExport;
+import jdk.jigsaw.module.ServiceDependence;
 
 public enum LauncherHelper {
     INSTANCE;
@@ -483,8 +495,12 @@ public enum LauncherHelper {
      */
     public static Class<?> checkAndLoadMain(boolean printToStderr,
                                             int mode,
-                                            String what) {
+                                            String what)
+        throws Exception
+    {
         initOutput(printToStderr);
+        initModules();
+
         // get the class name
         String cn = null;
         switch (mode) {
@@ -771,6 +787,149 @@ public enum LauncherHelper {
             // launch appClass via fxLauncherMethod
             fxLauncherMethod.invoke(null,
                     new Object[] {fxLaunchName, fxLaunchMode, args});
+        }
+    }
+
+    private static void formatCommaList(PrintStream out,
+                                        String prefix,
+                                        Collection<?> list)
+    {
+        if (list.isEmpty())
+            return;
+        out.format("%s", prefix);
+        boolean first = true;
+        for (Object ob : list) {
+            if (first) {
+                out.format(" %s", ob);
+                first = false;
+            } else {
+                out.format(", %s", ob);
+            }
+        }
+        out.format("%n");
+    }
+
+    /**
+     * Called by the launcher to list the installed modules.
+     * If called without any sub-options then it the output is a simple
+     * list of the moduels. If called with the verbose sub-option
+     * (-XlistModules:verbose) then the dependences and other details
+     * are also printed.
+     */
+    static void listModules(boolean printToStderr, String optionFlag)
+        throws IOException, ClassNotFoundException
+    {
+        initOutput(printToStderr);
+
+        boolean verbose = false;
+        int colon = optionFlag.indexOf(':');
+        if (colon >= 0) {
+            String[] subOptions = optionFlag.substring(colon+1).split(",");
+            for (String subOption: subOptions) {
+                 switch (subOption) {
+                     case "verbose" : verbose = true; break;
+                     default : /* do nothing for now */
+                 }
+            }
+        }
+
+        Module[] mods = readModules();
+        Arrays.sort(mods);
+        for (Module m: mods) {
+            ostream.println(m.id().name());
+            if (verbose) {
+                for (ModuleDependence d: m.moduleDependences()) {
+                    ostream.format("  %s%n", d);
+                }
+                for (ServiceDependence d: m.serviceDependences()) {
+                    ostream.format("  %s%n", d);
+                }
+
+                formatCommaList(ostream, "  permits", m.permits());
+
+                // sorted exports
+                Map<String, Set<String>> exports = new TreeMap<>();
+                for (ModuleExport export: m.exports()) {
+                    String pkg = export.pkg();
+                    String who = export.permit();
+                    Set<String> permits = exports.computeIfAbsent(pkg, k -> new HashSet<>());
+                    if (who != null) {
+                        permits.add(who);
+                    }
+                }
+                for (Map.Entry<String, Set<String>> entry: exports.entrySet()) {
+                    ostream.format("  exports %s", entry.getKey());
+                    Set<String> permits = entry.getValue();
+                    if (permits.isEmpty()) {
+                        ostream.println();
+                    } else {
+                        formatCommaList(ostream, " to", permits);
+                    }
+                }
+
+                Map<String, Set<String>> services = m.services();
+                for (Map.Entry<String, Set<String>> entry: services.entrySet()) {
+                    String sn = entry.getKey();
+                    for (String impl: entry.getValue()) {
+                        ostream.format("  provides service %s with %s%n",sn, impl);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Module definitions, serialized in modules.ser for now
+     */
+    private static final String MODULES_SER = "jdk/jigsaw/module/resources/modules.ser";
+
+    private static Module[] readModules() throws IOException, ClassNotFoundException {
+        InputStream stream = ClassLoader.getSystemResourceAsStream(MODULES_SER);
+        if (stream == null) {
+            System.err.format("WARNING: %s not found%n", MODULES_SER);
+            return new Module[0];
+        }
+        try (InputStream in = stream) {
+            ObjectInputStream ois = new ObjectInputStream(in);
+            Module[] mods = (Module[]) ois.readObject();
+            if (mods.length == 0)
+                System.err.format("WARNING: %s is empty%n", MODULES_SER);
+            return mods;
+        }
+    }
+
+    /**
+     * Load the "compiled" module graph, initialize the module path, and
+     * uses the ModuleLauncher to resolve the initial module(s) and define
+     * the modules to the VM.
+     */
+    private static void initModules() throws IOException, ClassNotFoundException {
+        // JDK modules from modules.ser
+        Module[] jdkModules = readModules();
+        if (jdkModules.length == 0) {
+            // do nothing for now
+            return;
+        }
+
+        // initial modules/roots specified via -mods
+        Set<String> roots = new HashSet<>();
+        String propValue = System.getProperty("jdk.launcher.modules");
+        if (propValue != null) {
+            for (String root: propValue.split(",")) {
+                roots.add(root);
+            }
+        }
+
+        // tracing
+        boolean verbose = Boolean.parseBoolean(
+            System.getProperty("jdk.launcher.modules.verbose"));
+
+        // initialize modules
+        try {
+            ModuleLauncher.init(jdkModules, roots, verbose);
+        } catch (Exception e) {
+            e.printStackTrace();  // for debugging purposes
+            abort(e, "java.launcher.init.error");
         }
     }
 }

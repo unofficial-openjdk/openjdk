@@ -39,7 +39,7 @@ import java.nio.file.attribute.PosixFilePermission;
 import java.security.AccessController;
 import java.util.*;
 
-import com.sun.security.auth.module.UnixSystem;
+//import com.sun.security.auth.module.UnixSystem;
 import sun.security.action.GetPropertyAction;
 import sun.security.krb5.internal.KerberosTime;
 import sun.security.krb5.internal.Krb5;
@@ -108,14 +108,16 @@ public class DflCache extends ReplayCache {
 
     private static long uid;
     static {
-        try {
+        // JIGSAW Temp solution: Remove reference to
+        // to avoid cyclic dependency com.sun.security.auth.module.UnixSystem
+//        try {
             // Available on Solaris, Linux and Mac. Otherwise, no _euid suffix
-            UnixSystem us = new com.sun.security.auth.module.UnixSystem();
-            uid = us.getUid();
-        } catch (Throwable e) {
+//            UnixSystem us = new com.sun.security.auth.module.UnixSystem();
+//            uid = us.getUid();
+//        } catch (Throwable e) {
             // Cannot be only Exception, might be UnsatisfiedLinkError
             uid = -1;
-        }
+//        }
     }
 
     public DflCache (String source) {

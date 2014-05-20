@@ -1,0 +1,137 @@
+#
+# Copyright 2013 Sun Microsystems, Inc.  All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+#
+# This code is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License version 2 only, as
+# published by the Free Software Foundation.  Sun designates this
+# particular file as subject to the "Classpath" exception as provided
+# by Sun in the LICENSE file that accompanied this code.
+#
+# This code is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# version 2 for more details (a copy is included in the LICENSE file that
+# accompanied this code).
+#
+# You should have received a copy of the GNU General Public License version
+# 2 along with this work; if not, write to the Free Software Foundation,
+# Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+#
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
+# CA 95054 USA or visit www.sun.com if you need additional information or
+# have any questions.
+#
+
+default: all
+
+include $(SPEC)
+include MakeBase.gmk
+include Setup.gmk
+include Modules.gmk
+
+#
+# these defines the per-module libraries and conf files
+#
+include CompileNativeLibraries.gmk
+include CopyFiles.gmk
+include CompileLaunchers.gmk
+include CreatePolicyJars.gmk
+include HotspotImport.gmk
+
+include gendata/GendataFontConfig.gmk
+GENDATA_TZDB    = $(JDK_OUTPUTDIR)/lib/tzdb.dat
+GENDATA_CURDATA = $(JDK_OUTPUTDIR)/lib/currency.data
+
+#
+# Jurisdiction policy files are built in JDK_OUTPUTDIR/lib/security
+# so that Modularizer will include them with the proper relative path
+# in the base module.  They are removed after jmod files are created.
+#
+BASE_POLICY_JAR_FILES = $(JDK_OUTPUTDIR)/lib/security/US_export_policy.jar \
+		  	$(JDK_OUTPUTDIR)/lib/security/local_policy.jar
+
+# jmod file layout
+#
+#      classes/            All the module's classes and resources
+#      native/             .so files
+#      module/name         A file "name" containing the module's name
+#      module/services/    Like META-INF/services
+#      conf/               Properties etc.
+#
+# TODO: man pages, include header files, license etc?
+#       demos, samples, debuginfo
+#
+
+# Add this option to output jmod.gz file
+# COMPRESSION_OPTION=-z
+
+all: $(BUILD_CLASSANALYZER)
+	$(RM) -rf $(JMODS_DIR)
+	$(TOOL_MODULARIZER) \
+	    $(COMPRESSION_OPTION) \
+            --javahome $(JDK_OUTPUTDIR) \
+            --classlist $(MODULE_CLASSLIST_DIR) \
+            --graph $(MODULES_SER_OUT) \
+            --jmods $(JMODS_DIR) \
+            --module java.base \
+                --native="$(BASE_LIBRARIES) $(MSVCR_TARGET) $(JVM_LIBRARIES)" \
+                --cmds="$(BASE_LAUNCHERS)" \
+		--conf="$(JVMCFG)" \
+                --conf="$(BASE_CONF_FILES) $(NET_CONF_FILES) $(GENDATA_TZDB) $(GENDATA_CURDATA)" \
+		--conf="$(BASE_POLICY_JAR_FILES)" \
+            --module java.desktop \
+                --native="$(DESKTOP_LIBRARIES) $(FREETYPE_LIB)" \
+                --conf="$(DESKTOP_CONF_FILES)" \
+                --conf="$(GENDATA_FONT_CONFIG)" \
+            --module javax.kerberos \
+                --cmds="$(KERBEROS_LAUNCHERS)" \
+                --native="$(SECURITY_KERBEROS_LIBRARIES)" \
+            --module java.logging \
+                --native="$(LOGGING_LIBRARIES)" \
+                --conf="$(LOGGING_CONF_FILES)" \
+            --module java.instrument \
+                --native="$(INSTRUMENT_LIBRARIES)" \
+            --module java.management \
+                --native="$(MANAGEMENT_LIBRARIES) $(JFR_LIBRARIES)" \
+                --conf="$(MANAGEMENT_CONF_FILES)" \
+            --module java.rmi \
+                --cmds="$(RMI_LAUNCHERS)" \
+            --module javax.script \
+                --native="$(SCRIPT_LIBRARIES)" \
+            --module javax.corba \
+                --cmds="$(CORBA_LAUNCHERS)" \
+            --module jdk.sctp \
+                --native="$(SCTP_LIBRARIES)" \
+            --module javax.smartcardio \
+                --native="$(SECURITY_SMARTCARDIO_LIBRARIES)" \
+            --module jdk.crypto.ec \
+                --native="$(SECURITY_SUNEC_LIBRARIES)" \
+            --module jdk.crypto.mscapi \
+                --native="$(SECURITY_MSCAPI_LIBRARIES)" \
+            --module jdk.crypto.pkcs11 \
+                --native="$(SECURITY_PKCS11_LIBRARIES)" \
+		--conf="$(SECURITY_PKCS11_CONF_FILES)" \
+            --module jdk.crypto.ucrytpo \
+                --native="$(SECURITY_UCRYPTO_LIBRARIES)" \
+                --conf="$(SECURITY_UCRYPTO_CONF_FILES)" \
+            --module jdk.devtools \
+                --cmds="$(DEVTOOLS_LAUNCHERS)" \
+            --module jdk.jaas \
+                --native="$(SECURITY_JAAS_LIBRARIES)" \
+            --module jdk.tools.base \
+                --cmds="$(TOOLS_BASE_LAUNCHERS)" \
+                --native="$(UNPACK_LIBRARIES)" \
+            --module jdk.tools.jaxws \
+                --cmds="$(TOOLS_JAXWS_LAUNCHERS)" \
+            --module jdk.tools.jre \
+                --cmds="$(TOOLS_JRE_LAUNCHERS)" \
+                --native="$(HPROF_LIBRARIES) $(JSDT_LIBRARIES)" \
+                --conf="$(HPROF_CONF_FILES)" \
+            --module jdk.tools \
+                --cmds="$(TOOLS_LAUNCHERS)" \
+                --native="$(ATTACH_LIBRARIES) $(JDWP_LIBRARIES) $(JDI_SA_LIBRARIES) $(JDK_TRANSPORT_LIBRARIES)" \
+	    --module java.prefs \
+	        --native="$(PREFS_LIBRARIES)"
+
+.PHONY: all

@@ -39,6 +39,7 @@ import java.nio.channels.Channel;
 import java.nio.channels.spi.SelectorProvider;
 import sun.nio.ch.Interruptible;
 import sun.reflect.CallerSensitive;
+import sun.reflect.ModuleCatalog;
 import sun.reflect.Reflection;
 import sun.security.util.SecurityConstants;
 import sun.reflect.annotation.AnnotationType;
@@ -1265,6 +1266,9 @@ public final class System {
             }
             public void invokeFinalize(Object o) throws Throwable {
                 o.finalize();
+            }
+            public ModuleCatalog getModuleCatalog(ClassLoader cl) {
+                return cl.getModuleCatalog();
             }
         });
     }
