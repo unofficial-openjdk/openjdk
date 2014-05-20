@@ -76,10 +76,6 @@ public class ModuleSummary {
                     System.exit(-1);
             }
         }
-        Set<String> roots = new HashSet<>();
-        while (i < args.length) {
-            roots.add(args[i++]);
-        }
         if (outfile == null || modpath == null) {
             System.err.println(USAGE);
             System.exit(1);
@@ -125,58 +121,69 @@ public class ModuleSummary {
 
     public void genCSV(Path outfile, Set<String> roots) throws IOException {
         Resolution r = ModuleUtils.resolve(modules, roots);
-        Map<String, Module> selectedModules = r.selectedModules().stream()
-                .collect(Collectors.toMap(this::name, Function.identity()));
-        Map<Module,Set<String>> deps = r.resolvedDependences();
+        Set<Module> selectedModules = r.selectedModules();
         try (PrintStream out = new PrintStream(Files.newOutputStream(outfile))) {
-            selectedModules.values().stream()
+            out.format("module,size,\"direct deps\",\"indirect deps\",total," +
+                       "\"compressed size\",\"compressed direct deps\",\"compressed indirect deps\",total%n");
+            selectedModules.stream()
                    .sorted(Comparator.comparing(Module::id))
                    .forEach(m -> {
-                        int reqCount = 0;
+                        Set<Module> deps;
+                        try {
+                            deps = ModuleUtils.resolve(modules, Collections.singleton(name(m)))
+                                           .selectedModules();
+                        } catch (IOException e) {
+                            throw new UncheckedIOException(e);
+                        }
                         long reqBytes = 0;
                         long reqJmodSize = 0;
-                        if (deps.containsKey(m)) {
-                            reqCount = deps.get(m).size();
-                            reqBytes = deps.get(m).stream()
-                                            .map(d -> selectedModules.get(d))
-                                            .mapToLong(d -> jmods.get(d).size).sum();
-                            reqJmodSize = deps.get(m).stream()
-                                            .map(d -> selectedModules.get(d))
-                                            .mapToLong(d -> jmods.get(d).filesize).sum();
-                        }
-                        out.format("%s,%d,%d,%d,%d%n", name(m),
-                                   jmods.get(m).size, jmods.get(m).filesize,
-                                   reqBytes, reqJmodSize);
+                        long otherBytes = 0;
+                        long otherJmodSize = 0;
+                        Set<String> reqs = m.moduleDependences().stream()
+                                                .map(d -> d.query().name())
+                                                .collect(Collectors.toSet());
+                        reqBytes = deps.stream()
+                                        .filter(d -> reqs.contains(name(d)))
+                                        .mapToLong(d -> jmods.get(d).size).sum();
+                        reqJmodSize = deps.stream()
+                                        .filter(d -> reqs.contains(name(d)))
+                                        .mapToLong(d -> jmods.get(d).filesize).sum();
+                        otherBytes = deps.stream()
+                                        .filter(d -> !reqs.contains(name(d)))
+                                        .mapToLong(d -> jmods.get(d).size).sum();
+                        otherJmodSize = deps.stream()
+                                        .filter(d -> !reqs.contains(name(d)))
+                                        .mapToLong(d -> jmods.get(d).filesize).sum();
+                        out.format("%s,%d,%d,%d,%d,%d,%d,%d,%d%n", name(m),
+                                   jmods.get(m).size, reqBytes, otherBytes,
+                                   jmods.get(m).size + reqBytes + otherBytes,
+                                   jmods.get(m).filesize, reqJmodSize, otherJmodSize,
+                                   jmods.get(m).filesize + reqJmodSize + otherJmodSize);
                    });
         }
     }
 
     public void genReport(Path outfile, Set<String> roots, String title) throws IOException {
         Resolution r = ModuleUtils.resolve(modules, roots);
-        Map<String, Module> selectedModules = r.selectedModules().stream()
-                .collect(Collectors.toMap(this::name, Function.identity()));
-        Map<Module,Set<String>> deps = r.resolvedDependences();
+        Set<Module> selectedModules = r.selectedModules();
         try (PrintStream out = new PrintStream(Files.newOutputStream(outfile))) {
-            long totalBytes = selectedModules.values().stream()
+            long totalBytes = selectedModules.stream()
                                   .mapToLong(m -> jmods.get(m).size).sum();
             writeHeader(out, title, selectedModules.size(), totalBytes);
-            selectedModules.values().stream()
+            selectedModules.stream()
                    .sorted(Comparator.comparing(Module::id))
                    .forEach(m -> {
-                        int reqCount = 0;
-                        long reqBytes = jmods.get(m).size;
-                        long reqJmodSize = jmods.get(m).filesize;
-                        if (deps.containsKey(m)) {
-                            reqCount = deps.get(m).size();
-                            reqBytes += deps.get(m).stream()
-                                    .map(d -> selectedModules.get(d))
-                                    .mapToLong(d -> jmods.get(d).size).sum();
-                            reqJmodSize += deps.get(m).stream()
-                                    .map(d -> selectedModules.get(d))
-                                    .mapToLong(d -> jmods.get(d).filesize).sum();
-                        }
-
                         try {
+                            Set<Module> deps =
+                                ModuleUtils.resolve(modules, Collections.singleton(name(m)))
+                                           .selectedModules();
+                            long reqBytes = jmods.get(m).size;
+                            long reqJmodSize = jmods.get(m).filesize;
+                            int reqCount = deps.size();
+                            reqBytes += deps.stream()
+                                        .mapToLong(d -> jmods.get(d).size).sum();
+                            reqJmodSize += deps.stream()
+                                    .mapToLong(d -> jmods.get(d).filesize).sum();
                             genSummary(out, m, jmods.get(m), reqCount, reqBytes, reqJmodSize);
                         } catch (IOException e) {
                             throw new UncheckedIOException(e);
