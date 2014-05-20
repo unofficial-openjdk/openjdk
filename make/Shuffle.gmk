@@ -458,7 +458,8 @@ $(eval $(call SetupShuffleFiles,COPY_LIBJAVA_SHARE, \
     SRC := $(JDK_TOPDIR)/src/share/native, \
     DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.base/share/native/libjava, \
     FLATTEN := true, \
-    FILES := $(shell $(FIND) $(JDK_TOPDIR)/src/share/native/java/lang \
+    FILES := $(filter-out %opcodes.in_out %check_code.c %check_format.c, \
+        $(shell $(FIND) $(JDK_TOPDIR)/src/share/native/java/lang \
         $(JDK_TOPDIR)/src/share/native/java/io \
         $(JDK_TOPDIR)/src/share/native/java/nio \
         $(JDK_TOPDIR)/src/share/native/java/security \
@@ -466,7 +467,7 @@ $(eval $(call SetupShuffleFiles,COPY_LIBJAVA_SHARE, \
         $(JDK_TOPDIR)/src/share/native/sun/misc \
         $(JDK_TOPDIR)/src/share/native/sun/reflect \
         $(JDK_TOPDIR)/src/share/native/java/util -type f \
-        | $(GREP) -v -e /zip/ -e /fdlibm/ -e /check_format -e /check_code)))
+        | $(GREP) -v -e /zip/ -e /fdlibm/ -e /check_format -e /check_code))))
 
 $(eval $(call SetupShuffleFiles,COPY_LIBJAVA_EXPORTED_SHARE, \
     SRC := $(JDK_TOPDIR)/src/share/javavm/export, \
