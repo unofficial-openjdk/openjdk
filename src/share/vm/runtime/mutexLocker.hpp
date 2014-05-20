@@ -151,6 +151,8 @@ extern Mutex*   JfrStream_lock;                  // protects JFR stream access
 extern Mutex*   JfrThreadGroups_lock;            // protects JFR access to Thread Groups
 #endif
 
+extern Mutex*   LoaderTag_lock;                  // used to generate a unique loader tag (experimental)
+
 // A MutexLocker provides mutual exclusion with respect to a given mutex
 // for the scope which contains the locker.  The lock is an OS lock, not
 // an object lock, and the two do not interoperate.  Do not use Mutex-based
