@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,6 +29,8 @@
 #include "oops/klass.hpp"
 #include "oops/klassOop.hpp"
 #include "oops/klassVtable.hpp"
+
+class fieldDescriptor;
 
 // arrayKlass is the abstract baseclass for all array classes
 
@@ -82,6 +84,9 @@ class arrayKlass: public Klass {
   // are always in higher memory.  The callers of these set that up.
   virtual oop multi_allocate(int rank, jint* sizes, TRAPS);
   objArrayOop allocate_arrayArray(int n, int length, TRAPS);
+
+  // find field according to JVM spec 5.4.3.2, returns the klass in which the field is defined
+  klassOop find_field(Symbol* name, Symbol* sig, fieldDescriptor* fd) const;
 
   // Lookup operations
   methodOop uncached_lookup_method(Symbol* name, Symbol* signature) const;
