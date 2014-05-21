@@ -58,6 +58,7 @@ ifeq ($(SHUFFLED), true)
   JDK_CRYPTO_PKCS11_SUBDIR := /jdk.crypto.pkcs11
   JDK_CRYPTO_UCRYPTO_SUBDIR := /jdk.crypto.ucrypto
   JDK_COMPILER_SUBDIR := /jdk.compiler
+  JDK_DEV_SUBDIR := /jdk.dev
   JDK_JAVADOC_SUBDIR := /jdk.javadoc
   JDK_JCONSOLE_SUBDIR := /jdk.jconsole
   JDK_JVMSTAT_SUBDIR := /jdk.jvmstat
@@ -67,7 +68,6 @@ ifeq ($(SHUFFLED), true)
   JDK_NAMING_DNS_SUBDIR := /jdk.naming.dns
   JDK_NAMING_RMI_SUBDIR := /jdk.naming.rmi
   JDK_LOCALEDATA_SUBDIR := /jdk.localedata
-  JDK_PKGTOOLS_SUBDIR := /jdk.pkgtools
   JDK_RMIC_SUBDIR := /jdk.rmic
   JDK_RUNTIME_SUBDIR := /jdk.runtime
 

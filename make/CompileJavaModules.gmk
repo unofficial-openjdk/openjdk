@@ -460,12 +460,12 @@ jdk.jdi_EXCLUDE_FILES += jdi-overview.html
 
 ################################################################################
 
-jdk.legacytools_CLEAN_FILES := $(wildcard \
-    $(patsubst %, $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.legacytools/share/classes/%/*.properties, \
+jdk.dev_CLEAN_FILES := $(wildcard \
+    $(patsubst %, $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.dev/share/classes/%/*.properties, \
         sun/tools/serialver/resources \
         com/sun/tools/script/shell))
 
-jdk.legacytools_COPY := .js oqlhelp.html .txt
+jdk.dev_COPY := .js oqlhelp.html .txt
 
 ################################################################################
 
@@ -503,8 +503,8 @@ jdk.jvmstat_COPY := aliasmap jstat_options jstat_unsupported_options
 
 ################################################################################
 
-jdk.xml.ws.tools_CLEAN := .properties
-jdk.xml.ws.tools_COPY := .xsd JAXBContextFactory.java ZeroOneBooleanAdapter.java
+jdk.xml.ws_CLEAN := .properties
+jdk.xml.ws_COPY := .xsd JAXBContextFactory.java ZeroOneBooleanAdapter.java
 
 ################################################################################
 
@@ -571,10 +571,10 @@ define SetupModuleCompilation
   $1_DEPS := $$(call FindDepsForModule, $1)
 
   $1_CLASSPATH := $$(addprefix $(JDK_OUTPUTDIR)/modules/,$$($1_DEPS))
-  ifeq ($1, jdk.hotspot.sa)
+  ifeq ($1, jdk.hotspot.agent)
     ## The source of this module is compiled elsewhere, hotspot, and imported.
     ## Service types are required in the classpath when compiing module-info
-    $1_CLASSPATH := $$($1_CLASSPATH) $$(addprefix $(JDK_OUTPUTDIR)/modules/,jdk.hotspot.sa)
+    $1_CLASSPATH := $$($1_CLASSPATH) $$(addprefix $(JDK_OUTPUTDIR)/modules/,jdk.hotspot.agent)
   endif
   $1_CLASSPATH := $$(subst $$(SPACE),$$(PATH_SEP),$$($1_CLASSPATH))
   $1_JAVAC_FLAGS := -bootclasspath "$$($1_CLASSPATH)"

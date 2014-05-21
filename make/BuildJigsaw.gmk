@@ -120,7 +120,7 @@ $(foreach m, $(GENDATA_MODULES), $(eval $(call DeclareGendataRecipe,$m)))
 ################################################################################
 # Copy files
 COPYFILES_MODULES := \
-    java.base java.desktop jdk.jdwp jdk.hprof java.management \
+    java.base java.desktop jdk.jdwp.agent jdk.hprof.agent java.management \
     java.logging jdk.crypto.pkcs11 jdk.crypto.ucrytpo
 ifndef OPENJDK
   COPYFILES_MODULES += jdk.jfr
@@ -162,7 +162,7 @@ ALL_LIB_MODULES := \
     java.base java.desktop java.instrument java.management java.scripting jdk.sctp \
     jdk.security.auth java.jgss jdk.crypto.mscapi jdk.crypto.pkcs11 \
     java.smartcardio jdk.crypto.ec jdk.crypto.ucrytpo jdk.attach \
-    jdk.jdwp jdk.jdi jdk.hprof jdk.runtime java.prefs
+    jdk.jdwp.agent jdk.jdi jdk.hprof.agent jdk.runtime java.prefs
 LIB_MODULES := $(filter $(ALL_MODULES), $(ALL_LIB_MODULES))
 LIB_TARGETS := $(addsuffix -libs, $(LIB_MODULES))
 
@@ -180,9 +180,9 @@ $(foreach m, $(LIB_MODULES), $(eval $(call DeclareCompileNativeLibsRecipe,$m)))
 # Compile native executables
 ALL_LAUNCHER_MODULES := \
     java.base java.corba java.desktop java.rmi java.scripting java.jgss \
-    jdk.attach jdk.compiler jdk.hotspot.sa jdk.javadoc jdk.jconsole jdk.jdi \
-    jdk.jvmstat jdk.runtime jdk.scripting.nashorn jdk.pkgtools jdk.xml.ws.tools \
-    jdk.svctools jdk.legacytools jdk.rmic
+    jdk.attach jdk.compiler jdk.hotspot.agent jdk.javadoc jdk.jconsole jdk.jdi \
+    jdk.jvmstat jdk.runtime jdk.scripting.nashorn jdk.xml.ws \
+    jdk.jcmd jdk.dev jdk.rmic
 LAUNCHER_MODULES := $(filter $(ALL_MODULES), $(ALL_LAUNCHER_MODULES))
 LAUNCHER_TARGETS := $(addsuffix -launchers, $(LAUNCHER_MODULES))
 
@@ -346,7 +346,7 @@ java.base: import-hotspot policy-jars
 java.rmi jdk.naming.rmi java.management: genclasses
 # Part of the contents of this module is produced by the hotspot build and the 
 # import step will provide it.
-jdk.hotspot.sa-java: import-hotspot
+jdk.hotspot.agent-java: import-hotspot
 
 java-modules: $(JAVA_TARGETS) genclasses
 
@@ -386,7 +386,7 @@ exploded-image: $(ALL_MODULE_TARGETS)
 
 images: module-images
 
-.PHONY: gensrc jdk.hotspot.sa-java java libs launchers exploded-image images \
+.PHONY: gensrc jdk.hotspot.agent-java java libs launchers exploded-image images \
      $(ALL_MODULE_TARGETS)
 
 ################################################################################
