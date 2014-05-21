@@ -36,17 +36,17 @@ import java.util.Set;
  */
 public final class Module extends Archive {
     private final String moduleName;
-    private final Set<String> requires;
+    private final Map<String, Boolean> requires;
     private final Map<String, Set<String>> exports;
     private final Set<String> packages;
 
     private Module(ClassFileReader reader, String name,
-                   Set<String> requires,
+                   Map<String, Boolean> requires,
                    Map<String, Set<String>> exports,
                    Set<String> packages) {
         super(name, reader);
         this.moduleName = name;
-        this.requires = Collections.unmodifiableSet(requires);
+        this.requires = Collections.unmodifiableMap(requires);
         this.exports = Collections.unmodifiableMap(exports);
         this.packages = Collections.unmodifiableSet(packages);
     }
@@ -56,7 +56,7 @@ public final class Module extends Archive {
     }
 
     public Set<String> requires() {
-        return requires;
+        return requires.keySet();
     }
 
     public Map<String, Set<String>> exports() {
@@ -79,6 +79,8 @@ public final class Module extends Archive {
         if (!packages.contains(pn)) {
             throw new IllegalArgumentException(classname + " is not a member of module " + name());
         }
+
+        // ## TODO: check API dependences
         if (m != null && !m.requires().contains(name())) {
             System.err.format("%s not readable by %s%n", this.name(), m.name());
             return false;
@@ -122,7 +124,7 @@ public final class Module extends Archive {
     public final static class Builder {
         String name;
         ClassFileReader reader;
-        final Set<String> requires = new HashSet<>();
+        final Map<String, Boolean> requires = new HashMap<>();
         final Map<String, Set<String>> exports = new HashMap<>();
         final Set<String> packages = new HashSet<>();
 
@@ -134,8 +136,8 @@ public final class Module extends Archive {
             return this;
         }
 
-        public Builder require(String d) {
-            requires.add(d);
+        public Builder require(String d, boolean reexport) {
+            requires.put(d, reexport);
             return this;
         }
 

@@ -30,11 +30,12 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
+import javax.xml.namespace.QName;
 import javax.xml.stream.XMLEventReader;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.events.Attribute;
 import javax.xml.stream.events.XMLEvent;
 
 public class ModulesXmlReader {
@@ -50,13 +51,14 @@ public class ModulesXmlReader {
         this.helper = helper;
     }
 
-    private static final String MODULES  = "modules";
-    private static final String MODULE   = "module";
-    private static final String NAME     = "name";
-    private static final String REQUIRES = "requires";
-    private static final String EXPORTS  = "exports";
-    private static final String TO       = "to";
-    private static final String INCLUDES = "includes";
+    private static final String MODULES   = "modules";
+    private static final String MODULE    = "module";
+    private static final String NAME      = "name";
+    private static final String DEPEND    = "depend";
+    private static final String EXPORT    = "export";
+    private static final String TO        = "to";
+    private static final String INCLUDE   = "include";
+    private static final QName  REEXPORTS = new QName("re-exports");
     public Set<Module> load(InputStream in) throws XMLStreamException, IOException {
         Set<Module> modules = new HashSet<>();
         if (in == null) {
@@ -86,13 +88,23 @@ public class ModulesXmlReader {
                         break;
                     case NAME:
                         throw new RuntimeException(event.toString());
-                    case REQUIRES:
-                        mb.require(getData(reader));
+                    case DEPEND:
+                        boolean reexports = false;
+                        Attribute attr = event.asStartElement().getAttributeByName(REEXPORTS);
+                        if (attr != null) {
+                            String value = attr.getValue();
+                            if (value.equals("true") || value.equals("false")) {
+                                reexports = Boolean.parseBoolean(value);
+                            } else {
+                                throw new RuntimeException("unexpected attribute " + attr.toString());
+                            }
+                        }
+                        mb.require(getData(reader), reexports);
                         break;
-                    case INCLUDES:
+                    case INCLUDE:
                         mb.include(getData(reader));
                         break;
-                    case EXPORTS:
+                    case EXPORT:
                         exportedPackage = getNextTag(reader, NAME);
                         break;
                     case TO:
@@ -109,7 +121,7 @@ public class ModulesXmlReader {
                         modules.add(mb.build());
                         mb = null;
                         break;
-                    case EXPORTS:
+                    case EXPORT:
                         if (exportedPackage == null) {
                             throw new RuntimeException("export's name is missing");
                         }
