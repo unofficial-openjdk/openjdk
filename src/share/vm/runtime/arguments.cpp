@@ -2057,7 +2057,9 @@ bool Arguments::check_vm_args_consistency() {
     PrintNMTStatistics = false;
   }
 
+#ifdef COMPILER1
   status &= verify_interval(SafepointPollOffset, 0, os::vm_page_size() - BytesPerWord, "SafepointPollOffset");
+#endif
 
   return status;
 }
