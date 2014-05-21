@@ -136,6 +136,12 @@ public class ClassReader {
     public boolean preferSource;
 
     /**
+     * Switch: Search classpath and sourcepath for classes before the
+     * bootclasspath
+     */
+    public boolean userPathsFirst;
+
+    /**
      * The currently selected profile.
      */
     public final Profile profile;
@@ -276,6 +282,7 @@ public class ClassReader {
         saveParameterNames = options.isSet("save-parameter-names");
         cacheCompletionFailure = options.isUnset("dev");
         preferSource = "source".equals(options.get("-Xprefer"));
+        userPathsFirst = options.isSet(XXUSERPATHSFIRST);
 
         profile = Profile.instance(context);
 
@@ -481,14 +488,14 @@ public class ClassReader {
             break;
         case CONSTANT_Fieldref: {
             ClassSymbol owner = readClassSymbol(getChar(index + 1));
-            NameAndType nt = (NameAndType)readPool(getChar(index + 3));
+            NameAndType nt = readNameAndType(getChar(index + 3));
             poolObj[i] = new VarSymbol(0, nt.name, nt.uniqueType.type, owner);
             break;
         }
         case CONSTANT_Methodref:
         case CONSTANT_InterfaceMethodref: {
             ClassSymbol owner = readClassSymbol(getChar(index + 1));
-            NameAndType nt = (NameAndType)readPool(getChar(index + 3));
+            NameAndType nt = readNameAndType(getChar(index + 3));
             poolObj[i] = new MethodSymbol(0, nt.name, nt.uniqueType.type, owner);
             break;
         }
@@ -557,13 +564,34 @@ public class ClassReader {
     /** Read class entry.
      */
     ClassSymbol readClassSymbol(int i) {
-        return (ClassSymbol) (readPool(i));
+        Object obj = readPool(i);
+        if (obj != null && !(obj instanceof ClassSymbol))
+            throw badClassFile("bad.const.pool.entry",
+                               currentClassFile.toString(),
+                               "CONSTANT_Class_info", i);
+        return (ClassSymbol)obj;
     }
 
     /** Read name.
      */
     Name readName(int i) {
-        return (Name) (readPool(i));
+        Object obj = readPool(i);
+        if (obj != null && !(obj instanceof Name))
+            throw badClassFile("bad.const.pool.entry",
+                               currentClassFile.toString(),
+                               "CONSTANT_Utf8_info or CONSTANT_String_info", i);
+        return (Name)obj;
+    }
+
+    /** Read name and type.
+     */
+    NameAndType readNameAndType(int i) {
+        Object obj = readPool(i);
+        if (obj != null && !(obj instanceof NameAndType))
+            throw badClassFile("bad.const.pool.entry",
+                               currentClassFile.toString(),
+                               "CONSTANT_NameAndType_info", i);
+        return (NameAndType)obj;
     }
 
     /** Read requires_flags.
@@ -1282,7 +1310,7 @@ public class ClassReader {
         sym.owner.members().remove(sym);
         ClassSymbol self = (ClassSymbol)sym;
         ClassSymbol c = readClassSymbol(nextChar());
-        NameAndType nt = (NameAndType)readPool(nextChar());
+        NameAndType nt = readNameAndType(nextChar());
 
         if (c.members_field == null)
             throw badClassFile("bad.enclosing.class", self, c);
@@ -1615,7 +1643,7 @@ public class ClassReader {
             final int exception_index = nextChar();
             final TypeAnnotationPosition position =
                 TypeAnnotationPosition.exceptionParameter(readTypePath());
-            position.exception_index = exception_index;
+            position.setExceptionIndex(exception_index);
             return position;
         }
         // method receiver
@@ -2701,7 +2729,7 @@ public class ClassReader {
                 if (c.owner == p)  // it might be an inner class
                     p.members_field.enter(c);
             }
-        } else if (c.classfile != null && (c.flags_field & seen) == 0) {
+        } else if (!preferCurrent && c.classfile != null && (c.flags_field & seen) == 0) {
             // if c.classfile == null, we are currently compiling this class
             // and no further action is necessary.
             // if (c.flags_field & seen) != 0, we have already encountered
@@ -2747,19 +2775,32 @@ public class ClassReader {
 
     private boolean verbosePath = true;
 
+    // Set to true when the currently selected file should be kept
+    private boolean preferCurrent;
+
     /** Load directory of package into members scope.
      */
     private void fillIn(PackageSymbol p) throws IOException {
-        if (p.members_field == null) p.members_field = new Scope(p);
-        String packageName = p.fullname.toString();
+        if (p.members_field == null)
+            p.members_field = new Scope(p);
 
+        preferCurrent = false;
+        if (userPathsFirst) {
+            scanUserPaths(p);
+            preferCurrent = true;
+            scanPlatformPath(p);
+        } else {
+            scanPlatformPath(p);
+            scanUserPaths(p);
+        }
+        verbosePath = false;
+    }
+
+    /**
+     * Scans class path and source path for files in given package.
+     */
+    private void scanUserPaths(PackageSymbol p) throws IOException {
         Set<JavaFileObject.Kind> kinds = getPackageFileKinds();
-
-        fillIn(p, PLATFORM_CLASS_PATH,
-               fileManager.list(PLATFORM_CLASS_PATH,
-                                packageName,
-                                EnumSet.of(JavaFileObject.Kind.CLASS),
-                                false));
 
         Set<JavaFileObject.Kind> classKinds = EnumSet.copyOf(kinds);
         classKinds.remove(JavaFileObject.Kind.SOURCE);
@@ -2800,6 +2841,7 @@ public class ClassReader {
             }
         }
 
+        String packageName = p.fullname.toString();
         if (wantSourceFiles && !haveSourcePath) {
             fillIn(p, CLASS_PATH,
                    fileManager.list(CLASS_PATH,
@@ -2820,7 +2862,17 @@ public class ClassReader {
                                         sourceKinds,
                                         false));
         }
-        verbosePath = false;
+    }
+
+    /**
+     * Scans platform class path for files in given package.
+     */
+    private void scanPlatformPath(PackageSymbol p) throws IOException {
+        fillIn(p, PLATFORM_CLASS_PATH,
+               fileManager.list(PLATFORM_CLASS_PATH,
+                                p.fullname.toString(),
+                                EnumSet.of(JavaFileObject.Kind.CLASS),
+                                false));
     }
     // where
         private void fillIn(PackageSymbol p,

@@ -407,6 +407,11 @@ public class TreeInfo {
             return Position.NOPOS;
 
         switch(tree.getTag()) {
+            case PACKAGEDEF: {
+                JCPackageDecl pd = (JCPackageDecl)tree;
+                return pd.annotations.isEmpty() ? pd.pos :
+                       pd.annotations.head.pos;
+            }
             case APPLY:
                 return getStartPos(((JCMethodInvocation) tree).meth);
             case ASSIGN:
@@ -789,6 +794,8 @@ public class TreeInfo {
         switch (node.getTag()) {
         case TOPLEVEL:
             return ((JCCompilationUnit) node).packge;
+        case PACKAGEDEF:
+            return ((JCPackageDecl) node).packge;
         case CLASSDEF:
             return ((JCClassDecl) node).sym;
         case METHODDEF:
@@ -821,6 +828,7 @@ public class TreeInfo {
     public static boolean isDeclaration(JCTree node) {
         node = skipParens(node);
         switch (node.getTag()) {
+        case PACKAGEDEF:
         case CLASSDEF:
         case METHODDEF:
         case VARDEF:
@@ -844,6 +852,8 @@ public class TreeInfo {
             return symbol(((JCTypeApply) tree).clazz);
         case ANNOTATED_TYPE:
             return symbol(((JCAnnotatedType) tree).underlyingType);
+        case REFERENCE:
+            return ((JCMemberReference) tree).sym;
         default:
             return null;
         }
