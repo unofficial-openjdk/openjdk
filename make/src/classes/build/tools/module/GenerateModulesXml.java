@@ -43,7 +43,9 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import javax.xml.namespace.QName;
 import javax.xml.stream.*;
+import javax.xml.stream.events.Attribute;
 import javax.xml.stream.events.XMLEvent;
 
 /**
@@ -125,13 +127,14 @@ public final class GenerateModulesXml {
         this.modulepath = modulepath;
     }
 
-    private static final String MODULES  = "modules";
-    private static final String MODULE   = "module";
-    private static final String NAME     = "name";
-    private static final String REQUIRES = "requires";
-    private static final String EXPORTS  = "exports";
-    private static final String TO       = "to";
-    private static final String INCLUDES = "includes";
+    private static final String MODULES   = "modules";
+    private static final String MODULE    = "module";
+    private static final String NAME      = "name";
+    private static final String DEPEND    = "depend";
+    private static final String EXPORT    = "export";
+    private static final String TO        = "to";
+    private static final String INCLUDE   = "include";
+    private static final QName  REEXPORTS = new QName("re-exports");
     private Set<Module> load(InputStream in) throws XMLStreamException, IOException {
         Set<Module> modules = new HashSet<>();
         XMLInputFactory factory = XMLInputFactory.newInstance();
@@ -157,12 +160,22 @@ public final class GenerateModulesXml {
                         break;
                     case NAME:
                         throw new RuntimeException(event.toString());
-                    case REQUIRES:
-                        mb.require(getData(stream));
+                    case DEPEND:
+                        boolean reexports = false;
+                        Attribute attr = event.asStartElement().getAttributeByName(REEXPORTS);
+                        if (attr != null) {
+                            String value = attr.getValue();
+                            if (value.equals("true") || value.equals("false")) {
+                                reexports = Boolean.parseBoolean(value);
+                            } else {
+                                throw new RuntimeException("unexpected attribute " + attr.toString());
+                            }
+                        }
+                        mb.require(getData(stream), reexports);
                         break;
-                    case INCLUDES:
+                    case INCLUDE:
                         throw new RuntimeException("unexpected " + event);
-                    case EXPORTS:
+                    case EXPORT:
                         pkg = getNextTag(stream, NAME);
                         break;
                     case TO:
@@ -178,7 +191,7 @@ public final class GenerateModulesXml {
                         modules.add(mb.build());
                         mb = null;
                         break;
-                    case EXPORTS:
+                    case EXPORT:
                         if (pkg == null) {
                             throw new RuntimeException("export-to is malformed");
                         }
@@ -237,6 +250,7 @@ public final class GenerateModulesXml {
             xtw.close();
         }
     }
+
     private void writeElement(XMLStreamWriter xtw, String element, String value, int depth) {
         try {
             writeStartElement(xtw, element, depth);
@@ -247,14 +261,27 @@ public final class GenerateModulesXml {
         }
     }
 
-    private void writeExportsElement(XMLStreamWriter xtw, String pkg, int depth) {
-        writeExportsElement(xtw, pkg, Collections.emptySet(), depth);
+    private void writeDependElement(XMLStreamWriter xtw, Module.Dependence d, int depth) {
+        try {
+            writeStartElement(xtw, DEPEND, depth);
+            if (d.reexport) {
+                xtw.writeAttribute("re-exports", "true");
+            }
+            xtw.writeCharacters(d.name);
+            xtw.writeEndElement();
+        } catch (XMLStreamException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    private void writeExportsElement(XMLStreamWriter xtw, String pkg,
-                                       Set<String> permits, int depth) {
+    private void writeExportElement(XMLStreamWriter xtw, String pkg, int depth) {
+        writeExportElement(xtw, pkg, Collections.emptySet(), depth);
+    }
+
+    private void writeExportElement(XMLStreamWriter xtw, String pkg,
+                                    Set<String> permits, int depth) {
         try {
-            writeStartElement(xtw, EXPORTS, depth);
+            writeStartElement(xtw, EXPORT, depth);
             writeElement(xtw, NAME, pkg, depth+1);
             if (!permits.isEmpty()) {
                 permits.stream().sorted()
@@ -269,18 +296,18 @@ public final class GenerateModulesXml {
         try {
             writeStartElement(xtw, MODULE, depth);
             writeElement(xtw, NAME, m.name(), depth+1);
-            m.requires().stream().sorted()
-                        .forEach(d -> writeElement(xtw, REQUIRES, d, depth+1));
+            m.requires().stream().sorted(Comparator.comparing(d -> d.name))
+                        .forEach(d -> writeDependElement(xtw, d, depth+1));
             m.exports().keySet().stream()
                        .filter(pn -> m.exports().get(pn).isEmpty())
                        .sorted()
-                       .forEach(pn -> writeExportsElement(xtw, pn, depth+1));
+                       .forEach(pn -> GenerateModulesXml.this.writeExportElement(xtw, pn, depth+1));
             m.exports().entrySet().stream()
                        .filter(e -> !e.getValue().isEmpty())
                        .sorted(Map.Entry.comparingByKey())
-                       .forEach(e -> writeExportsElement(xtw, e.getKey(), e.getValue(), depth+1));
+                       .forEach(e -> writeExportElement(xtw, e.getKey(), e.getValue(), depth+1));
             m.packages().stream().sorted()
-                        .forEach(p -> writeElement(xtw, INCLUDES, p, depth+1));
+                        .forEach(p -> writeElement(xtw, INCLUDE, p, depth+1));
             writeEndElement(xtw, depth);
         } catch (XMLStreamException e) {
             throw new RuntimeException(e);
@@ -317,19 +344,24 @@ public final class GenerateModulesXml {
         return (i > 0) ? name.substring(0, i).replace('/', '.') : "";
     }
 
+    private boolean includes(String name) {
+        return name.endsWith(".class") && !name.equals("module-info.class");
+    }
+
     public void buildIncludes(Module.Builder mb, String modulename) throws IOException {
         Path mclasses = modulepath.resolve(modulename);
         if (Files.exists(mclasses.resolve("classes"))) {
             // zip file
             try (JarFile jf = new JarFile(mclasses.resolve("classes").toFile())) {
-                jf.stream().filter(je -> je.getName().endsWith(".class"))
-                        .map(JarEntry::getName).map(this::packageName)
-                        .forEach(mb::include);
+                jf.stream().filter(je -> includes(je.getName()))
+                           .map(JarEntry::getName)
+                           .map(this::packageName)
+                           .forEach(mb::include);
             }
         } else {
             try {
                 Files.find(mclasses, Integer.MAX_VALUE, (Path p, BasicFileAttributes attr)
-                                -> p.getFileName().toString().endsWith(".class"))
+                             -> includes(p.getFileName().toString()))
                      .map(p -> packageName(mclasses.relativize(p)))
                      .forEach(mb::include);
             } catch (NoSuchFileException e) {
@@ -339,13 +371,37 @@ public final class GenerateModulesXml {
     }
 
     static class Module {
+        static class Dependence {
+            final String name;
+            final boolean reexport;
+            Dependence(String name) {
+                this(name, false);
+            }
+            Dependence(String name, boolean reexport) {
+                this.name = name;
+                this.reexport = reexport;
+            }
+
+            @Override
+            public int hashCode() {
+                int hash = 5;
+                hash = 11 * hash + Objects.hashCode(this.name);
+                hash = 11 * hash + (this.reexport ? 1 : 0);
+                return hash;
+            }
+
+            public boolean equals(Object o) {
+                Dependence d = (Dependence)o;
+                return this.name.equals(d.name) && this.reexport == d.reexport;
+            }
+        }
         private final String moduleName;
-        private final Set<String> requires;
+        private final Set<Dependence> requires;
         private final Map<String, Set<String>> exports;
         private final Set<String> packages;
 
         private Module(String name,
-                Set<String> requires,
+                Set<Dependence> requires,
                 Map<String, Set<String>> exports,
                 Set<String> packages) {
             this.moduleName = name;
@@ -358,7 +414,7 @@ public final class GenerateModulesXml {
             return moduleName;
         }
 
-        public Set<String> requires() {
+        public Set<Dependence> requires() {
             return requires;
         }
 
@@ -395,7 +451,8 @@ public final class GenerateModulesXml {
         public String toString() {
             StringBuilder sb = new StringBuilder();
             sb.append("module ").append(moduleName).append(" {").append("\n");
-            requires.stream().sorted().forEach(d -> sb.append(String.format("   requires %s%n", d)));
+            requires.stream().sorted().forEach(d ->
+                    sb.append(String.format("   requires %s%s%n", d.reexport ? "public " : "", d.name)));
             exports.entrySet().stream().filter(e -> e.getValue().isEmpty())
                     .sorted(Map.Entry.comparingByKey())
                     .forEach(e -> sb.append(String.format("   exports %s%n", e.getKey())));
@@ -409,7 +466,7 @@ public final class GenerateModulesXml {
 
         static class Builder {
             private String name;
-            private final Set<String> requires = new HashSet<>();
+            private final Set<Dependence> requires = new HashSet<>();
             private final Map<String, Set<String>> exports = new HashMap<>();
             private final Set<String> packages = new HashSet<>();
 
@@ -421,8 +478,8 @@ public final class GenerateModulesXml {
                 return this;
             }
 
-            public Builder require(String d) {
-                requires.add(d);
+            public Builder require(String d, boolean reexport) {
+                requires.add(new Dependence(d, reexport));
                 return this;
             }
 
