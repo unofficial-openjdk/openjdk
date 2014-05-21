@@ -157,7 +157,18 @@ jmods-only: start-make
 shuffle: genmodules shuffle-only
 shuffle-only: start-make
 	@$(call TargetEnter)
-	@($(CD) $(JDK_TOPDIR)/make && $(BUILD_LOG_WRAPPER) $(MAKE) $(MAKE_ARGS) -f BuildJdk.gmk shuffle)
+	@($(CD) $(JDK_TOPDIR)/make && $(BUILD_LOG_WRAPPER) $(MAKE) $(MAKE_ARGS) -f Shuffle.gmk shuffle-src)
+	@$(call TargetExit)
+
+shuffle-langtools: genmodules shuffle-langtools-only
+shuffle-corba: genmodules shuffle-corba-only
+shuffle-jaxp: genmodules shuffle-jaxp-only
+shuffle-jaxws: genmodules shuffle-jaxws-only
+shuffle-nashorn: genmodules shuffle-nashorn-only
+shuffle-jdk: genmodules shuffle-jdk-only
+shuffle-%-only: start-make
+	@$(call TargetEnter)
+	@($(CD) $(JDK_TOPDIR)/make && $(BUILD_LOG_WRAPPER) $(MAKE) $(MAKE_ARGS) -f Shuffle.gmk shuffle-$*)
 	@$(call TargetExit)
 
 # Note: This double-colon rule is intentional, to support
