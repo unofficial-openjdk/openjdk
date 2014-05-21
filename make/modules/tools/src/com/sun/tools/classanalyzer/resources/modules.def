@@ -515,7 +515,7 @@ module jdk.rmic {
 }
 
 // Implementation for xjc, wsgen, wsimport, and schemagen tools
-module jdk.xml.ws.tools {
+module jdk.xml.ws {
     include com.sun.codemodel.**,
             com.sun.xml.internal.dtdparser.**,
             com.sun.xml.internal.rngom.**,
@@ -679,12 +679,12 @@ module jdk.jdi {
 }
 
 // JDWP agent and socket transport
-module jdk.jdwp {
+module jdk.jdwp.agent {
     // explicitly require java.base, until javac implicitly adds mandated dependence
     requires java.base;
 }
 
-module jdk.hprof {
+module jdk.hprof.agent {
     include com.sun.demo.jvmti.hprof.*;
 }
 
@@ -699,6 +699,9 @@ module jdk.compiler {
 
     include com.sun.tools.javap.**,
             com.sun.tools.classfile.**;
+
+    // serialver
+    include sun.tools.serialver.**;
 }
 
 module jdk.javadoc {
@@ -711,10 +714,7 @@ module jdk.javadoc {
 // jvmstat tooling
 module jdk.jvmstat {
     include sun.jvmstat.**;
-
-    include sun.tools.jps.**,
-            sun.tools.jstat.**,
-            sun.tools.jstatd.**;
+    include sun.tools.jstatd.**;
 }
 
 // Attach API
@@ -725,15 +725,17 @@ module jdk.attach {
 }
 
 // Serviceability command-line tools
-module jdk.svctools {
+module jdk.jcmd {
     include sun.tools.jcmd.**,
             sun.tools.jinfo.**,
+            sun.tools.jps.**,
             sun.tools.jmap.**,
-            sun.tools.jstack.**;
+            sun.tools.jstack.**,
+            sun.tools.jstat.**;
 }
 
 // SA
-module jdk.hotspot.sa {
+module jdk.hotspot.agent {
     include sun.jvm.hotspot.**,
             com.sun.java.swing.ui.**,
             com.sun.java.swing.action.**;
@@ -746,17 +748,29 @@ module jdk.jconsole {
             com.sun.tools.jconsole.**;
 }
 
-module jdk.legacytools {
+module jdk.service {
+    requires jdk.jcmd;
+    requires jdk.jconsole;
+    requires jdk.hotspot.agent;
+    requires jdk.hprof.agent;
+}
+
+module jdk.debug {
+    requires jdk.jdi;
+    requires jdk.jdwp.agent;
+}
+
+module jdk.dev {
+    requires jdk.compiler;
+    requires jdk.rmic;
+    requires jdk.xml.ws;
+
     include com.sun.tools.extcheck.**,
-            sun.tools.native2ascii.**,
-            sun.tools.serialver.**;
+            sun.tools.native2ascii.**;
 
     // jhat
     include com.sun.tools.hat.**,
             com.sun.tools.script.**;
-}
-
-module jdk.pkgtools {
 
     // jar, jarsigner
     include sun.tools.jar.**;
@@ -768,30 +782,6 @@ module jdk.pkgtools {
 
     // jdeps
     include com.sun.tools.jdeps.**;
-}
-
-
-// JDK tools
-module jdk.tools {
-
-    // development, including debugging
-    requires jdk.compiler;
-    requires jdk.javadoc;
-    requires jdk.pkgtools;
-    requires jdk.rmic;
-    requires jdk.xml.ws.tools;
-    requires jdk.jdi;
-    requires jdk.jdwp;
-
-    // serviceability
-    requires jdk.hprof;
-    requires jdk.jvmstat;
-    requires jdk.attach;
-    requires jdk.svctools;
-    requires jdk.jconsole;
-    requires jdk.hotspot.sa;
-
-    requires jdk.legacytools;
 }
 
 module jdk.providers {
@@ -892,7 +882,9 @@ module jdk.runtime {
 
 module jdk {
     requires jdk.runtime;
-    requires jdk.tools;
+    requires jdk.dev;
+    requires jdk.debug;
+    requires jdk.service;
 }
 
 module oracle.jre {

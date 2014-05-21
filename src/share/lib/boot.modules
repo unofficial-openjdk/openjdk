@@ -25,7 +25,7 @@ java.xml.ws
 jdk.charsets
 jdk.deploy
 jdk.deploy.osx
-jdk.hprof
+jdk.hprof.agent
 jdk.httpserver
 jdk.naming.rmi
 jdk.sctp

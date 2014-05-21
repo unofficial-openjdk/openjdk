@@ -160,9 +160,9 @@ java.smartcardio: $(SECURITY_SMARTCARDIO_LIBRARIES)
 jdk.crypto.ec: $(SECURITY_SUNEC_LIBRARIES)
 jdk.crypto.ucrytpo: $(SECURITY_UCRYPTO_LIBRARIES)
 jdk.attach: $(ATTACH_LIBRARIES)
-jdk.jdwp: $(JDWP_LIBRARIES)
+jdk.jdwp.agent: $(JDWP_LIBRARIES)
 jdk.jdi: $(JDI_TRANSPORT_LIBRARIES)
-jdk.hprof: $(HPROF_LIBRARIES) $(CRW_LIBRARIES)
+jdk.hprof.agent: $(HPROF_LIBRARIES) $(CRW_LIBRARIES)
 jdk.runtime: $(JSDT_LIBRARIES) $(UNPACK_LIBRARIES)
 java.prefs: $(PREFS_LIBRARIES)
 
@@ -172,4 +172,4 @@ all: $(BUILD_LIBRARIES)
 .PHONY: java.base java.desktop java.instrument java.management java.scripting jdk.sctp \
     jdk.security.auth java.jgss jdk.crypto.mscapi jdk.crypto.pkcs11 \
     java.smartcardio jdk.crypto.ec jdk.crypto.ucrytpo jdk.attach \
-    jdk.jdwp jdk.jdi jdk.hprof jdk.runtime java.prefs
+    jdk.jdwp.agent jdk.jdi jdk.hprof.agent jdk.runtime java.prefs

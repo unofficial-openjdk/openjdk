@@ -48,19 +48,17 @@ CORBA_LAUNCHERS=
 COMPILER_LAUNCHERS=
 DESKTOP_LAUNCHERS=
 JAVADOC_LAUNCHERS=
-HOTSPOT_SA_LAUNCHERS=
+HOTSPOT_AGENT_LAUNCHERS=
 JCONSOLE_LAUNCHERS=
 JDI_LAUNCHERS=
 JVMSTAT_LAUNCHERS=
 KERBEROS_LAUNCHERS=
-PKGTOOLS_LAUNCHERS=
 RMI_LAUNCHERS=
 SCRIPTING_LAUNCHERS=
-SVCTOOLS_LAUNCHERS=
+DEV_LAUNCHERS=
 RMIC_LAUNCHERS=
 NASHORN_LAUNCHERS=
-LEGACYTOOLS_LAUNCHERS=
-XML_WS_TOOLS_LAUNCHERS=
+XML_WS_LAUNCHERS=
 RUNTIME_LAUNCHERS=
 
 BUILD_LAUNCHERS =
@@ -295,16 +293,16 @@ ifndef BUILD_HEADLESS_ONLY
 endif
 
 $(eval $(call SetupLauncher,extcheck, \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "com.sun.tools.extcheck.Main"$(COMMA) }',,,,,,,,,,LEGACYTOOLS))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "com.sun.tools.extcheck.Main"$(COMMA) }',,,,,,,,,,DEV))
 
 $(eval $(call SetupLauncher,idlj, \
     -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "com.sun.tools.corba.se.idl.toJavaPortable.Compile"$(COMMA) }',,,,,,,,,,CORBA))
 
 $(eval $(call SetupLauncher,jar, \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.tools.jar.Main"$(COMMA) }',,,,,,,,,,PKGTOOLS))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.tools.jar.Main"$(COMMA) }',,,,,,,,,,DEV))
 
 $(eval $(call SetupLauncher,jarsigner, \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.security.tools.jarsigner.Main"$(COMMA) }',,,,,,,,,,PKGTOOLS))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.security.tools.jarsigner.Main"$(COMMA) }',,,,,,,,,,DEV))
 
 $(eval $(call SetupLauncher,javac, \
     -DEXPAND_CLASSPATH_WILDCARDS \
@@ -336,12 +334,12 @@ $(eval $(call SetupLauncher,javap, \
 $(eval $(call SetupLauncher,jdeps, \
     -DEXPAND_CLASSPATH_WILDCARDS \
     -DNEVER_ACT_AS_SERVER_CLASS_MACHINE \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "com.sun.tools.jdeps.Main"$(COMMA) }',,,,,,,,,,PKGTOOLS))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "com.sun.tools.jdeps.Main"$(COMMA) }',,,,,,,,,,DEV))
 
 $(eval $(call SetupLauncher,jlink,\
     -DEXPAND_CLASSPATH_WILDCARDS \
     -DNEVER_ACT_AS_SERVER_CLASS_MACHINE \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "jdk.jigsaw.tools.jlink.Main"$(COMMA) }',,,,,,,,,,PKGTOOLS))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "jdk.jigsaw.tools.jlink.Main"$(COMMA) }',,,,,,,,,,DEV))
 
 BUILD_LAUNCHER_jconsole_CFLAGS_windows := -DJAVAW
 BUILD_LAUNCHER_jconsole_LDFLAGS_windows := user32.lib
@@ -355,7 +353,7 @@ $(eval $(call SetupLauncher,jdb, \
     -DAPP_CLASSPATH='{ "/lib/tools.jar"$(COMMA) "/lib/sa-jdi.jar"$(COMMA) "/classes" }',,,,,,,,,,JDI))
 
 $(eval $(call SetupLauncher,jhat, \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "com.sun.tools.hat.Main"$(COMMA) }',,,,,,,,,,LEGACYTOOLS))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "com.sun.tools.hat.Main"$(COMMA) }',,,,,,,,,,DEV))
 
 $(eval $(call SetupLauncher,jinfo, \
     -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) \
@@ -363,7 +361,7 @@ $(eval $(call SetupLauncher,jinfo, \
         "-J-Dsun.jvm.hotspot.debugger.useWindbgDebugger"$(COMMA) \
         "sun.tools.jinfo.JInfo"$(COMMA) }' \
     -DAPP_CLASSPATH='{ "/lib/tools.jar"$(COMMA) "/lib/sa-jdi.jar"$(COMMA) "/classes" }' \
-    ,,,,,,,,,Info-privileged.plist,SVCTOOLS))
+    ,,,,,,,,,Info-privileged.plist,JCMD))
 
 $(eval $(call SetupLauncher,jmap, \
     -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) \
@@ -371,10 +369,10 @@ $(eval $(call SetupLauncher,jmap, \
         "-J-Dsun.jvm.hotspot.debugger.useWindbgDebugger"$(COMMA) \
         "sun.tools.jmap.JMap"$(COMMA) }' \
     -DAPP_CLASSPATH='{ "/lib/tools.jar"$(COMMA) "/lib/sa-jdi.jar"$(COMMA) "/classes" }' \
-    ,,,,,,,,,Info-privileged.plist,SVCTOOLS))
+    ,,,,,,,,,Info-privileged.plist,JCMD))
 
 $(eval $(call SetupLauncher,jps, \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.tools.jps.Jps"$(COMMA) }',,,,,,,,,,JVMSTAT))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.tools.jps.Jps"$(COMMA) }',,,,,,,,,,JCMD))
 
 $(eval $(call SetupLauncher,jrunscript, \
     -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "com.sun.tools.script.shell.Main"$(COMMA) }',,,,,,,,,,SCRIPTING))
@@ -385,7 +383,7 @@ $(eval $(call SetupLauncher,jjs, \
 $(eval $(call SetupLauncher,jsadebugd, \
     -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.jvm.hotspot.jdi.SADebugServer"$(COMMA) }' \
     -DAPP_CLASSPATH='{ "/lib/tools.jar"$(COMMA) "/lib/sa-jdi.jar"$(COMMA) "/classes" }' \
-    ,,,,,,,,,Info-privileged.plist,HOTSPOT_SA))
+    ,,,,,,,,,Info-privileged.plist,HOTSPOT_AGENT))
 
 $(eval $(call SetupLauncher,jstack, \
     -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) \
@@ -393,10 +391,10 @@ $(eval $(call SetupLauncher,jstack, \
         "-J-Dsun.jvm.hotspot.debugger.useWindbgDebugger"$(COMMA) \
         "sun.tools.jstack.JStack"$(COMMA) }' \
     -DAPP_CLASSPATH='{ "/lib/tools.jar"$(COMMA) "/lib/sa-jdi.jar"$(COMMA) "/classes" }' \
-    ,,,,,,,,,Info-privileged.plist,SVCTOOLS))
+    ,,,,,,,,,Info-privileged.plist,JCMD))
 
 $(eval $(call SetupLauncher,jstat, \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.tools.jstat.Jstat"$(COMMA) }',,,,,,,,,,JVMSTAT))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.tools.jstat.Jstat"$(COMMA) }',,,,,,,,,,JCMD))
 
 $(eval $(call SetupLauncher,jstatd, \
     -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.tools.jstatd.Jstatd"$(COMMA) }',,,,,,,,,,JVMSTAT))
@@ -405,7 +403,7 @@ $(eval $(call SetupLauncher,keytool, \
     -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.security.tools.keytool.Main"$(COMMA) }',,,,,,,,,,BASE))
 
 $(eval $(call SetupLauncher,native2ascii, \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.tools.native2ascii.Main"$(COMMA) }',,,,,,,,,,LEGACYTOOLS))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.tools.native2ascii.Main"$(COMMA) }',,,,,,,,,,DEV))
 
 ifndef BUILD_HEADLESS_ONLY
   $(eval $(call SetupLauncher,policytool, \
@@ -418,20 +416,20 @@ $(eval $(call SetupLauncher,rmic, \
     -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.rmi.rmic.Main"$(COMMA) }',,,,,,,,,,RMIC))
 
 $(eval $(call SetupLauncher,schemagen, \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "com.sun.tools.internal.jxc.SchemaGenerator"$(COMMA) }',,,,,,,,,,XML_WS_TOOLS))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "com.sun.tools.internal.jxc.SchemaGenerator"$(COMMA) }',,,,,,,,,,XML_WS))
 
 $(eval $(call SetupLauncher,serialver, \
     -DEXPAND_CLASSPATH_WILDCARDS \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.tools.serialver.SerialVer"$(COMMA) }',,,,,,,,,,LEGACYTOOLS))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.tools.serialver.SerialVer"$(COMMA) }',,,,,,,,,,COMPILER))
 
 $(eval $(call SetupLauncher,xjc, \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "com.sun.tools.internal.xjc.Driver"$(COMMA) }',,,,,,,,,,XML_WS_TOOLS))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "com.sun.tools.internal.xjc.Driver"$(COMMA) }',,,,,,,,,,XML_WS))
 
 $(eval $(call SetupLauncher,wsgen, \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "com.sun.tools.internal.ws.WsGen"$(COMMA) }',,,,,,,,,,XML_WS_TOOLS))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "com.sun.tools.internal.ws.WsGen"$(COMMA) }',,,,,,,,,,XML_WS))
 
 $(eval $(call SetupLauncher,wsimport, \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "com.sun.tools.internal.ws.WsImport"$(COMMA) }',,,,,,,,,,XML_WS_TOOLS))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "com.sun.tools.internal.ws.WsImport"$(COMMA) }',,,,,,,,,,XML_WS))
 
 $(eval $(call SetupLauncher,orbd, \
     -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) \
@@ -460,7 +458,7 @@ $(eval $(call SetupLauncher,rmiregistry, \
     -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.rmi.registry.RegistryImpl"$(COMMA) }',,,,,,,,,,RMI))
 
 $(eval $(call SetupLauncher,jcmd, \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.tools.jcmd.JCmd"$(COMMA) }',,,,,,,,,,SVCTOOLS))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.tools.jcmd.JCmd"$(COMMA) }',,,,,,,,,,JCMD))
 
 ifeq ($(OPENJDK_TARGET_OS), windows)
   $(eval $(call SetupLauncher,kinit, \
@@ -802,23 +800,22 @@ java.rmi: $(RMI_LAUNCHERS)
 java.scripting: $(SCRIPTING_LAUNCHERS)
 java.jgss: $(KERBEROS_LAUNCHERS)
 jdk.compiler: $(COMPILER_LAUNCHERS)
-jdk.hotspot.sa: $(HOTSPOT_SA_LAUNCHERS)
+jdk.hotspot.agent: $(HOTSPOT_AGENT_LAUNCHERS)
 jdk.javadoc: $(JAVADOC_LAUNCHERS)
 jdk.jconsole: $(JCONSOLE_LAUNCHERS)
 jdk.jdi: $(JDI_LAUNCHERS)
 jdk.jvmstat: $(JVMSTAT_LAUNCHERS)
 jdk.runtime: $(RUNTIME_LAUNCHERS)
 jdk.scripting.nashorn: $(NASHORN_LAUNCHERS)
-jdk.svctools: $(SVCTOOLS_LAUNCHERS)
+jdk.jcmd: $(JCMD_LAUNCHERS)
 jdk.rmic: $(RMIC_LAUNCHERS)
-jdk.legacytools :$(LEGACYTOOLS_LAUNCHERS)
-jdk.pkgtools: $(PKGTOOLS_LAUNCHERS)
-jdk.xml.ws.tools: $(XML_WS_TOOLS_LAUNCHERS)
+jdk.dev:$(DEV_LAUNCHERS)
+jdk.xml.ws: $(XML_WS_LAUNCHERS)
 
 .PHONY: java.base java.corba java.desktop java.rmi java.scripting java.jgss \
-    jdk.attach jdk.compiler jdk.hotspot.sa jdk.javadoc jdk.jconsole jdk.jdi \
-    jdk.jvmstat jdk.runtime jdk.scripting.nashorn jdk.xml.ws.tools \
-    jdk.svctools jdk.legacytools jdk.pkgtools jdk.rmic
+    jdk.attach jdk.compiler jdk.hotspot.agent jdk.javadoc jdk.jconsole jdk.jdi \
+    jdk.jvmstat jdk.runtime jdk.scripting.nashorn jdk.xml.ws \
+    jdk.jcmd jdk.dev jdk.rmic
 
 all: $(BUILD_LAUNCHERS)
 
