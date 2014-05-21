@@ -1310,7 +1310,7 @@ $(eval $(call SetupShuffleFiles,COPY_BIN_JAVA_RMI_CGI, \
     FILES := $(JDK_TOPDIR)/src/solaris/bin/java-rmi.cgi.sh))
 
 ################################################################################
-# package-info.java files
+# package-info.java files and other docs
 
 $(eval $(call SetupShuffleFiles,COPY_JAVA_BASE_PACKAGE_INFO, \
     SRC := $(JDK_TOPDIR)/src/share/classes, \
@@ -1581,11 +1581,24 @@ $(eval $(call SetupShuffleFiles,COPY_JDK_JAVADOC_TOOLS_PACKAGE_INFO, \
     DEST := $(LANGTOOLS_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/jdk.javadoc/share/classes, \
     FILES := $(LANGTOOLS_TOPDIR)/src/share/classes/com/sun/tools/doclets/Taglet.java))
 
-$(eval $(call SetupShuffleFiles,COPY_JAVAX_COMPILER_PACKAGE_INFO, \
+$(eval $(call SetupShuffleFiles,COPY_JAVA_COMPILER_PACKAGE_INFO, \
     SRC := $(LANGTOOLS_TOPDIR)/src/share/classes, \
     DEST := $(LANGTOOLS_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.compiler/share/classes, \
     FILES := $(shell $(FIND) $(LANGTOOLS_TOPDIR)/src/share/classes/javax \
-        -name package-info.java)))
+        -name package-info.java -o -name overview.html)))
+
+$(eval $(call SetupShuffleFiles,COPY_JDK_COMPILER_DOCS, \
+    SRC := $(LANGTOOLS_TOPDIR)/src/share/classes, \
+    DEST := $(LANGTOOLS_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/jdk.compiler/share/classes, \
+    FILES := $(shell $(FIND) $(LANGTOOLS_TOPDIR)/src/share/classes/com/sun/tools \
+        -name overview.html)))
+
+# jaxp
+$(eval $(call SetupShuffleFiles,COPY_JAVA_XML_DOCS, \
+    SRC := $(JAXP_TOPDIR)/src, \
+    DEST := $(JAXP_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.xml/share/classes, \
+    FILES := $(shell $(FIND) \
+        $(JAXP_TOPDIR)/src -name *.html)))
 
 # jaxws
 $(eval $(call SetupShuffleFiles,COPY_JAVAX_JAXWS_PACKAGE_INFO, \
@@ -1595,7 +1608,7 @@ $(eval $(call SetupShuffleFiles,COPY_JAVAX_JAXWS_PACKAGE_INFO, \
         $(JAXWS_TOPDIR)/src/share/jaxws_classes/com/oracle \
         $(JAXWS_TOPDIR)/src/share/jaxws_classes/com/sun/xml/internal/ws \
         $(JAXWS_TOPDIR)/src/share/jaxws_classes/javax/xml/ws \
-        -name package-info.java)))
+        -name package-info.java -o -name package.html)))
 
 $(eval $(call SetupShuffleFiles,COPY_JDK_XML_WS_TOOLS_PACKAGE_INFO, \
     SRC := $(JAXWS_TOPDIR)/src/share/jaxws_classes, \
@@ -1605,16 +1618,29 @@ $(eval $(call SetupShuffleFiles,COPY_JDK_XML_WS_TOOLS_PACKAGE_INFO, \
         $(shell $(FIND) \
         $(JAXWS_TOPDIR)/src/share/jaxws_classes/com/sun/codemodel \
         $(JAXWS_TOPDIR)/src/share/jaxws_classes/com/sun/tools \
-        -name package-info.java)))
+        $(JAXWS_TOPDIR)/src/share/jaxws_classes/com/sun/xml/internal/xsom \
+        $(JAXWS_TOPDIR)/src/share/jaxws_classes/com/sun/xml/internal/rngom \
+        $(JAXWS_TOPDIR)/src/share/jaxws_classes/com/sun/xml/internal/dtdparser \
+        -name package-info.java -o -name package.html)))
 
-$(eval $(call SetupShuffleFiles,COPY_JAVAX_JAXB_PACKAGE_INFO, \
+$(eval $(call SetupShuffleFiles,COPY_JAVA_XML_BIND_DOCS, \
     SRC := $(JAXWS_TOPDIR)/src/share/jaxws_classes, \
     DEST := $(JAXWS_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.xml.bind/share/classes, \
     FILES := \
         $(JAXWS_TOPDIR)/src/share/jaxws_classes/com/sun/istack/internal/package-info.java \
         $(shell $(FIND) \
         $(JAXWS_TOPDIR)/src/share/jaxws_classes/com/sun/xml/internal/bind \
-        -name package-info.java)))
+        $(JAXWS_TOPDIR)/src/share/jaxws_classes/com/sun/xml/internal/txw2 \
+        $(JAXWS_TOPDIR)/src/share/jaxws_classes/javax/xml/bind \
+        -name package-info.java -o -name package.html)))
+
+$(eval $(call SetupShuffleFiles,COPY_JAVA_XML_SOAP_DOCS, \
+    SRC := $(JAXWS_TOPDIR)/src/share/jaxws_classes, \
+    DEST := $(JAXWS_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.xml.soap/share/classes, \
+    FILES := \
+        $(shell $(FIND) \
+        $(JAXWS_TOPDIR)/src/share/jaxws_classes/javax/xml/soap \
+        -name package-info.java -o -name package.html)))
 
 $(eval $(call SetupShuffleFiles,COPY_JAVA_RMI_PACKAGE_INFO, \
     SRC := $(JDK_TOPDIR)/src/share/classes, \
@@ -1634,10 +1660,24 @@ $(eval $(call SetupShuffleFiles,COPY_DOC_STUB, \
     DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.rmi/share/doc, \
     FILES := $(JDK_TOPDIR)/src/share/doc/stub/java/rmi/activation/ActivationGroup_Stub.java))
 
-$(eval $(call SetupShuffleFiles,COPY_JAVAX_CORBA_DOC_FILES, \
+$(eval $(call SetupShuffleFiles,COPY_JAVA_CORBA_DOC_FILES, \
     SRC := $(CORBA_TOPDIR)/src/share/classes, \
     DEST := $(CORBA_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.corba/share/classes, \
-    FILES := $(wildcard $(CORBA_TOPDIR)/src/share/classes/org/omg/CORBA/doc-files/*)))
+    FILES := $(wildcard $(CORBA_TOPDIR)/src/share/classes/org/omg/CORBA/doc-files/*) \
+        $(filter-out %xa/package.html, \
+        $(shell $(FIND) $(CORBA_TOPDIR)/src/share/classes \
+            -name package.html -o -name "*.txt" -o -name "*notes" -o -name TestAssertions))))
+
+$(eval $(call SetupShuffleFiles,COPY_JAVA_SQL_DOC_FILES, \
+    SRC := $(CORBA_TOPDIR)/src/share/classes, \
+    DEST := $(CORBA_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.sql/share/classes, \
+    FILES := $(CORBA_TOPDIR)/src/share/classes/javax/transaction/xa/package.html))
+
+$(eval $(call SetupShuffleFiles,COPY_NASHORN_DOC_FILES, \
+    SRC := $(NASHORN_TOPDIR)/src, \
+    DEST := $(NASHORN_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/jdk.scripting.nashorn/share/classes, \
+    FILES := $(shell $(FIND) $(NASHORN_TOPDIR)/src \
+        -name package-info.java -o -name package.html -o -name overview.html -o -name MANIFEST.MF)))
 
 ################################################################################
 # Shuffle demos
@@ -1688,6 +1728,12 @@ clean-src:
 clean-build:
 	$(RM) -r $(JDK_OUTPUTDIR)/modules
 
+shuffle-langtools: $(filter $(LANGTOOLS_TOPDIR)/%, $(SHUFFLE_SRC_TARGETS) $(SRC_TARGET_FILES))
+shuffle-corba: $(filter $(CORBA_TOPDIR)/%, $(SHUFFLE_SRC_TARGETS) $(SRC_TARGET_FILES))
+shuffle-jaxp: $(filter $(JAXP_TOPDIR)/%, $(SHUFFLE_SRC_TARGETS) $(SRC_TARGET_FILES))
+shuffle-jaxws: $(filter $(JAXWS_TOPDIR)/%, $(SHUFFLE_SRC_TARGETS) $(SRC_TARGET_FILES))
+shuffle-nashorn: $(filter $(NASHORN_TOPDIR)/%, $(SHUFFLE_SRC_TARGETS) $(SRC_TARGET_FILES))
+shuffle-jdk: $(filter $(JDK_TOPDIR)/%, $(SHUFFLE_SRC_TARGETS) $(SRC_TARGET_FILES))
 
 # Hook to include the corresponding custom file, if present.
 $(eval $(call IncludeCustomExtension, jdk, Shuffle.gmk))
