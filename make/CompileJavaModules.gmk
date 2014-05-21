@@ -393,25 +393,17 @@ java.xml.crypto_CLEAN := .properties
 
 ################################################################################
 
-ifneq ($(OPENJDK_TARGET_OS), windows)
-  jdk.security.auth_EXCLUDE_FILES += \
-      NTLoginModule.java \
-      NTSystem.java \
-      #
-else
-  jdk.security.auth_EXCLUDE_FILES += \
-      UnixLoginModule.java \
-      UnixSystem.java \
-      #
-endif
-
-################################################################################
-
 jdk.charsets_COPY := .dat
 
 ################################################################################
 
 jdk.compiler_COPY := javax.tools.JavaCompilerTool
+
+################################################################################
+
+jdk.jcmd_COPY := _options 
+
+################################################################################
 
 jdk.javadoc_COPY := .xml .css .js
 
@@ -420,6 +412,10 @@ jdk.javadoc_COPY := .xml .css .js
 ifndef OPENJDK
   jdk.jfr_COPY := .xsd
 endif
+
+################################################################################
+
+jdk.rmic_CLEAN := .properties
 
 ################################################################################
 
@@ -504,7 +500,7 @@ endif
 
 ################################################################################
 
-jdk.jvmstat_COPY := aliasmap jstat_options jstat_unsupported_options
+jdk.jvmstat_COPY := aliasmap
 
 ################################################################################
 
