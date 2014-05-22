@@ -198,7 +198,7 @@
       <name>sun.misc</name>
       <to>java.corba</to>
       <to>java.desktop</to>
-      <to>java.jgss</to>
+      <to>java.security.jgss</to>
       <to>java.logging</to>
       <to>java.management</to>
       <to>java.naming</to>
@@ -214,7 +214,7 @@
     </export>
     <export>
       <name>sun.net.dns</name>
-      <to>java.jgss</to>
+      <to>java.security.jgss</to>
       <to>jdk.naming.dns</to>
     </export>
     <export>
@@ -234,7 +234,7 @@
     </export>
     <export>
       <name>sun.net.www.protocol.http</name>
-      <to>java.jgss</to>
+      <to>java.security.jgss</to>
     </export>
     <export>
       <name>sun.nio.ch</name>
@@ -276,7 +276,7 @@
     <export>
       <name>sun.security.action</name>
       <to>java.desktop</to>
-      <to>java.jgss</to>
+      <to>java.security.jgss</to>
       <to>jdk.crypto.ec</to>
       <to>jdk.crypto.pkcs11</to>
       <to>jdk.crypto.ucrypto</to>
@@ -305,7 +305,7 @@
     </export>
     <export>
       <name>sun.security.provider</name>
-      <to>java.jgss</to>
+      <to>java.security.jgss</to>
       <to>java.rmi</to>
       <to>jdk.crypto.pkcs11</to>
       <to>jdk.runtime</to>
@@ -322,7 +322,7 @@
     </export>
     <export>
       <name>sun.security.ssl</name>
-      <to>java.jgss</to>
+      <to>java.security.jgss</to>
     </export>
     <export>
       <name>sun.security.tools</name>
@@ -331,7 +331,7 @@
     <export>
       <name>sun.security.util</name>
       <to>java.desktop</to>
-      <to>java.jgss</to>
+      <to>java.security.jgss</to>
       <to>java.naming</to>
       <to>java.rmi</to>
       <to>java.smartcardio</to>
@@ -400,7 +400,7 @@
     <depend re-exports="true">java.compact2</depend>
     <depend re-exports="true">java.compiler</depend>
     <depend re-exports="true">java.instrument</depend>
-    <depend re-exports="true">java.jgss</depend>
+    <depend re-exports="true">java.security.jgss</depend>
     <depend re-exports="true">java.management</depend>
     <depend re-exports="true">java.naming</depend>
     <depend re-exports="true">java.prefs</depend>
@@ -703,7 +703,7 @@
     </export>
   </module>
   <module>
-    <name>java.jgss</name>
+    <name>java.security.jgss</name>
     <depend>java.base</depend>
     <depend>java.logging</depend>
     <depend>java.naming</depend>
@@ -899,7 +899,7 @@
     </export>
     <export>
       <name>com.sun.security.sasl.util</name>
-      <to>java.jgss</to>
+      <to>java.security.jgss</to>
     </export>
   </module>
   <module>
@@ -1727,7 +1727,7 @@
   <module>
     <name>jdk.security.auth</name>
     <depend>java.base</depend>
-    <depend>java.jgss</depend>
+    <depend>java.security.jgss</depend>
     <depend re-exports="true">java.naming</depend>
     <export>
       <name>com.sun.security.auth</name>

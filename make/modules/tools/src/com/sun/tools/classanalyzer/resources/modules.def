@@ -386,7 +386,7 @@ module jdk.security.auth {
     include com.sun.security.auth.**;
 }
 
-module java.jgss {
+module java.security.jgss {
     include javax.security.auth.kerberos.*,
             com.sun.security.jgss.**,
             com.sun.security.sasl.gsskerb.**,             // GSSAPI SASL mechanism
@@ -833,7 +833,7 @@ module java.compact3 {
     requires public java.prefs;
     requires public java.security.acl;
     requires public java.naming;
-    requires public java.jgss;
+    requires public java.security.jgss;
     requires public java.security.sasl;
     requires public java.compiler;
     requires public java.xml.crypto;

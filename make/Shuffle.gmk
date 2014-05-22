@@ -655,28 +655,28 @@ $(eval $(call SetupShuffleFiles,COPY_LIBJ2PCSC_WINDOWS, \
 # gss
 $(eval $(call SetupShuffleFiles,COPY_LIBJ2GSS_SHARE, \
     SRC := $(JDK_TOPDIR)/src/share/native/sun/security/jgss/wrapper, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.jgss/share/native/libj2gss, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.security.jgss/share/native/libj2gss, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/share/native/sun/security/jgss/wrapper/*)))
 
 $(eval $(call SetupShuffleFiles,COPY_LIBJ2GSS_SOLARIS, \
     SRC := $(JDK_TOPDIR)/src/solaris/native/sun/security/jgss/wrapper, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.jgss/unix/native/libj2gss, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.security.jgss/unix/native/libj2gss, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/solaris/native/sun/security/jgss/wrapper/*)))
 
 # krb5
 $(eval $(call SetupShuffleFiles,COPY_LIBKRB5_MACOSX_SHARE, \
     SRC := $(JDK_TOPDIR)/src/share/native/sun/security/krb5, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.jgss/macosx/native/libosxkrb5, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.security.jgss/macosx/native/libosxkrb5, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/share/native/sun/security/krb5/*)))
 
 $(eval $(call SetupShuffleFiles,COPY_LIBKRB5_MACOSX, \
     SRC := $(JDK_TOPDIR)/src/macosx/native/sun/security/krb5, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.jgss/macosx/native/libosxkrb5, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.security.jgss/macosx/native/libosxkrb5, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/macosx/native/sun/security/krb5/*)))
 
 $(eval $(call SetupShuffleFiles,COPY_LIBKRB5_WINDOWS, \
     SRC := $(JDK_TOPDIR)/src/windows/native/sun/security/krb5, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.jgss/windows/native/libw2k_lsa_auth, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.security.jgss/windows/native/libw2k_lsa_auth, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/windows/native/sun/security/krb5/*)))
 
 # sunmscapi
@@ -1479,7 +1479,7 @@ $(eval $(call SetupShuffleFiles,COPY_JDK_JAAS_OVERVIEW, \
 
 $(eval $(call SetupShuffleFiles,COPY_JAVAX_KERBEROS_PACKAGE_INFO, \
     SRC := $(JDK_TOPDIR)/src/share/classes, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.jgss/share/classes, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.security.jgss/share/classes, \
     FILES := \
         $(JDK_TOPDIR)/src/share/classes/com/sun/security/jgss/package-info.java \
         $(JDK_TOPDIR)/src/share/classes/javax/security/auth/kerberos/package-info.java \
@@ -1488,7 +1488,7 @@ $(eval $(call SetupShuffleFiles,COPY_JAVAX_KERBEROS_PACKAGE_INFO, \
 
 $(eval $(call SetupShuffleFiles,COPY_JAVAX_KERBEROS_OVERVIEW, \
     SRC := $(JDK_TOPDIR)/src/share/classes/com/sun/security/jgss, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.jgss/share/classes, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.security.jgss/share/classes, \
     FILES := $(JDK_TOPDIR)/src/share/classes/com/sun/security/jgss/jgss-overview.html))
 
 $(eval $(call SetupShuffleFiles,COPY_JAVAX_SASL_PACKAGE_INFO, \

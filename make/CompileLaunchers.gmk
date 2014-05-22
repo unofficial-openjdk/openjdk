@@ -798,7 +798,7 @@ java.corba: $(CORBA_LAUNCHERS)
 java.desktop: $(DESKTOP_LAUNCHERS)
 java.rmi: $(RMI_LAUNCHERS)
 java.scripting: $(SCRIPTING_LAUNCHERS)
-java.jgss: $(KERBEROS_LAUNCHERS)
+java.security.jgss: $(KERBEROS_LAUNCHERS)
 jdk.compiler: $(COMPILER_LAUNCHERS)
 jdk.hotspot.agent: $(HOTSPOT_AGENT_LAUNCHERS)
 jdk.javadoc: $(JAVADOC_LAUNCHERS)
@@ -812,7 +812,7 @@ jdk.rmic: $(RMIC_LAUNCHERS)
 jdk.dev:$(DEV_LAUNCHERS)
 jdk.xml.ws: $(XML_WS_LAUNCHERS)
 
-.PHONY: java.base java.corba java.desktop java.rmi java.scripting java.jgss \
+.PHONY: java.base java.corba java.desktop java.rmi java.scripting java.security.jgss \
     jdk.attach jdk.compiler jdk.hotspot.agent jdk.javadoc jdk.jconsole jdk.jdi \
     jdk.jvmstat jdk.runtime jdk.scripting.nashorn jdk.xml.ws \
     jdk.jcmd jdk.dev jdk.rmic

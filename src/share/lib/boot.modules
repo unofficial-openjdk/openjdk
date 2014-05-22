@@ -5,7 +5,6 @@ java.annotations.common
 java.compiler
 java.corba
 java.instrument
-java.jgss
 java.logging
 java.management
 java.naming
@@ -13,6 +12,7 @@ java.prefs
 java.rmi
 java.scripting
 java.security.acl
+java.security.jgss
 java.security.sasl
 java.smartcardio
 java.sql
