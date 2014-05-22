@@ -3767,11 +3767,14 @@ bool GraphBuilder::try_inline_full(ciMethod* callee, bool holder_known, Bytecode
   }
 
   // now perform tests that are based on flag settings
-  if (callee->force_inline()) {
-    if (inline_level() > MaxForceInlineLevel) INLINE_BAILOUT("MaxForceInlineLevel");
-    print_inlining(callee, "force inline by annotation");
-  } else if (callee->should_inline()) {
-    print_inlining(callee, "force inline by CompileOracle");
+  if (callee->force_inline() || callee->should_inline()) {
+    if (inline_level() > MaxForceInlineLevel                    ) INLINE_BAILOUT("MaxForceInlineLevel");
+    if (recursive_inline_level(callee) > MaxRecursiveInlineLevel) INLINE_BAILOUT("recursive inlining too deep");
+
+    const char* msg = "";
+    if (callee->force_inline())  msg = "force inline by annotation";
+    if (callee->should_inline()) msg = "force inline by CompileOracle";
+    print_inlining(callee, msg);
   } else {
     // use heuristic controls on inlining
     if (inline_level() > MaxInlineLevel                         ) INLINE_BAILOUT("inlining too deep");
@@ -4338,11 +4341,15 @@ void GraphBuilder::print_stats() {
 #endif // PRODUCT
 
 void GraphBuilder::profile_call(ciMethod* callee, Value recv, ciKlass* known_holder, Values* obj_args, bool inlined) {
-  // A default method's holder is an interface
-  if (known_holder != NULL && known_holder->is_interface()) {
-    assert(known_holder->is_instance_klass() && ((ciInstanceKlass*)known_holder)->has_default_methods(), "should be default method");
-    known_holder = NULL;
+  assert(known_holder == NULL || (known_holder->is_instance_klass() &&
+                                  (!known_holder->is_interface() ||
+                                   ((ciInstanceKlass*)known_holder)->has_default_methods())), "should be default method");
+  if (known_holder != NULL) {
+    if (known_holder->exact_klass() == NULL) {
+      known_holder = compilation()->cha_exact_type(known_holder);
+    }
   }
+
   append(new ProfileCall(method(), bci(), callee, recv, known_holder, obj_args, inlined));
 }
 
