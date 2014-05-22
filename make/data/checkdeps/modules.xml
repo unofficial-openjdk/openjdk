@@ -1409,7 +1409,7 @@
     <depend>jdk.debug</depend>
     <depend>jdk.dev</depend>
     <depend>jdk.runtime</depend>
-    <depend>jdk.service</depend>
+    <depend>jdk.svc</depend>
   </module>
   <module>
     <name>jdk.attach</name>
@@ -1743,7 +1743,7 @@
     </export>
   </module>
   <module>
-    <name>jdk.service</name>
+    <name>jdk.svc</name>
     <depend>jdk.hotspot.agent</depend>
     <depend>jdk.hprof.agent</depend>
     <depend>jdk.jcmd</depend>

@@ -748,7 +748,7 @@ module jdk.jconsole {
             com.sun.tools.jconsole.**;
 }
 
-module jdk.service {
+module jdk.svc {
     requires jdk.jcmd;
     requires jdk.jconsole;
     requires jdk.hotspot.agent;
@@ -884,7 +884,7 @@ module jdk {
     requires jdk.runtime;
     requires jdk.dev;
     requires jdk.debug;
-    requires jdk.service;
+    requires jdk.svc;
 }
 
 module oracle.jre {
