@@ -129,8 +129,8 @@ java.corba_CMDS := $(CORBA_LAUNCHERS)
 
 java.scripting_CMDS := $(SCRIPTING_LAUNCHERS)
 
-java.jgss_NATIVE := $(SECURITY_KERBEROS_LIBRARIES)
-java.jgss_CMDS := $(KERBEROS_LAUNCHERS)
+java.security.jgss_NATIVE := $(SECURITY_KERBEROS_LIBRARIES)
+java.security.jgss_CMDS := $(KERBEROS_LAUNCHERS)
 
 java.smartcardio_NATIVE := $(SECURITY_SMARTCARDIO_LIBRARIES)
 

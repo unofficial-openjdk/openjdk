@@ -160,7 +160,7 @@ jdk.scripting.nashorn-java:
 # Compile native libraries
 ALL_LIB_MODULES := \
     java.base java.desktop java.instrument java.management java.scripting jdk.sctp \
-    jdk.security.auth java.jgss jdk.crypto.mscapi jdk.crypto.pkcs11 \
+    jdk.security.auth java.security.jgss jdk.crypto.mscapi jdk.crypto.pkcs11 \
     java.smartcardio jdk.crypto.ec jdk.crypto.ucrytpo jdk.attach \
     jdk.jdwp.agent jdk.jdi jdk.hprof.agent jdk.runtime java.prefs
 LIB_MODULES := $(filter $(ALL_MODULES), $(ALL_LIB_MODULES))
@@ -179,7 +179,7 @@ $(foreach m, $(LIB_MODULES), $(eval $(call DeclareCompileNativeLibsRecipe,$m)))
 ################################################################################
 # Compile native executables
 ALL_LAUNCHER_MODULES := \
-    java.base java.corba java.desktop java.rmi java.scripting java.jgss \
+    java.base java.corba java.desktop java.rmi java.scripting java.security.jgss \
     jdk.attach jdk.compiler jdk.hotspot.agent jdk.javadoc jdk.jconsole jdk.jdi \
     jdk.jvmstat jdk.runtime jdk.scripting.nashorn jdk.xml.ws \
     jdk.jcmd jdk.dev jdk.rmic
