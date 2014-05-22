@@ -1,6 +1,5 @@
 /*
- * Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
- * Copyright 2012, 2013 SAP AG. All rights reserved.
+ * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,14 +22,18 @@
  *
  */
 
-#ifndef OS_AIX_VM_THREAD_AIX_INLINE_HPP
-#define OS_AIX_VM_THREAD_AIX_INLINE_HPP
+package sun.jvm.hotspot.oops;
 
-#include "runtime/thread.hpp"
-#include "runtime/threadLocalStorage.hpp"
+import java.io.*;
+import java.util.*;
+import sun.jvm.hotspot.debugger.*;
+import sun.jvm.hotspot.runtime.*;
+import sun.jvm.hotspot.types.*;
+import sun.jvm.hotspot.utilities.*;
 
-// Contains inlined functions for class Thread and ThreadLocalStorage
-
-inline void ThreadLocalStorage::pd_invalidate_all() {} // nothing to do
-
-#endif // OS_AIX_VM_THREAD_AIX_INLINE_HPP
+public interface MethodDataInterface<K, M> {
+  K getKlassAtAddress(Address addr);
+  M getMethodAtAddress(Address addr);
+  void printKlassValueOn(K klass, PrintStream st);
+  void printMethodValueOn(M klass, PrintStream st);
+}
