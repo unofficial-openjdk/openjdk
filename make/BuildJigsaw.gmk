@@ -181,7 +181,7 @@ $(foreach m, $(LIB_MODULES), $(eval $(call DeclareCompileNativeLibsRecipe,$m)))
 ALL_LAUNCHER_MODULES := \
     java.base java.corba java.desktop java.rmi java.scripting java.security.jgss \
     jdk.attach jdk.compiler jdk.hotspot.agent jdk.javadoc jdk.jconsole jdk.jdi \
-    jdk.jvmstat jdk.runtime jdk.scripting.nashorn jdk.xml.ws \
+    jdk.jvmstat jdk.runtime jdk.scripting.nashorn jdk.xml.bind jdk.xml.ws \
     jdk.jcmd jdk.dev jdk.rmic
 LAUNCHER_MODULES := $(filter $(ALL_MODULES), $(ALL_LAUNCHER_MODULES))
 LAUNCHER_TARGETS := $(addsuffix -launchers, $(LAUNCHER_MODULES))

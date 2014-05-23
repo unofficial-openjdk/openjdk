@@ -504,8 +504,12 @@ jdk.jvmstat_COPY := aliasmap
 
 ################################################################################
 
+jdk.xml.bind_CLEAN := .properties
+jdk.xml.bind_COPY := .xsd JAXBContextFactory.java ZeroOneBooleanAdapter.java
+
+################################################################################
+
 jdk.xml.ws_CLEAN := .properties
-jdk.xml.ws_COPY := .xsd JAXBContextFactory.java ZeroOneBooleanAdapter.java
 
 ################################################################################
 

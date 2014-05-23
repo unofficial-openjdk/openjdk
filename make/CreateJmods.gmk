@@ -170,6 +170,8 @@ jdk.jconsole_CMDS := $(JCONSOLE_LAUNCHERS)
 
 jdk.jvmstat_CMDS := $(JVMSTAT_LAUNCHERS)
 
+jdk.xml.bind_CMDS := $(XML_BIND_LAUNCHERS)
+
 jdk.xml.ws_CMDS := $(XML_WS_LAUNCHERS)
 
 jdk.runtime_CMDS := $(RUNTIME_LAUNCHERS)
