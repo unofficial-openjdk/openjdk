@@ -58,6 +58,7 @@ SCRIPTING_LAUNCHERS=
 DEV_LAUNCHERS=
 RMIC_LAUNCHERS=
 NASHORN_LAUNCHERS=
+XML_BIND_LAUNCHERS=
 XML_WS_LAUNCHERS=
 RUNTIME_LAUNCHERS=
 
@@ -416,14 +417,14 @@ $(eval $(call SetupLauncher,rmic, \
     -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.rmi.rmic.Main"$(COMMA) }',,,,,,,,,,RMIC))
 
 $(eval $(call SetupLauncher,schemagen, \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "com.sun.tools.internal.jxc.SchemaGenerator"$(COMMA) }',,,,,,,,,,XML_WS))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "com.sun.tools.internal.jxc.SchemaGenerator"$(COMMA) }',,,,,,,,,,XML_BIND))
 
 $(eval $(call SetupLauncher,serialver, \
     -DEXPAND_CLASSPATH_WILDCARDS \
     -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.tools.serialver.SerialVer"$(COMMA) }',,,,,,,,,,COMPILER))
 
 $(eval $(call SetupLauncher,xjc, \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "com.sun.tools.internal.xjc.Driver"$(COMMA) }',,,,,,,,,,XML_WS))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "com.sun.tools.internal.xjc.Driver"$(COMMA) }',,,,,,,,,,XML_BIND))
 
 $(eval $(call SetupLauncher,wsgen, \
     -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "com.sun.tools.internal.ws.WsGen"$(COMMA) }',,,,,,,,,,XML_WS))
@@ -810,11 +811,12 @@ jdk.scripting.nashorn: $(NASHORN_LAUNCHERS)
 jdk.jcmd: $(JCMD_LAUNCHERS)
 jdk.rmic: $(RMIC_LAUNCHERS)
 jdk.dev:$(DEV_LAUNCHERS)
+jdk.xml.bind: $(XML_BIND_LAUNCHERS)
 jdk.xml.ws: $(XML_WS_LAUNCHERS)
 
 .PHONY: java.base java.corba java.desktop java.rmi java.scripting java.security.jgss \
     jdk.attach jdk.compiler jdk.hotspot.agent jdk.javadoc jdk.jconsole jdk.jdi \
-    jdk.jvmstat jdk.runtime jdk.scripting.nashorn jdk.xml.ws \
+    jdk.jvmstat jdk.runtime jdk.scripting.nashorn jdk.xml.bind jdk.xml.ws \
     jdk.jcmd jdk.dev jdk.rmic
 
 all: $(BUILD_LAUNCHERS)

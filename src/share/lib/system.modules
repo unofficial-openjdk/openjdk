@@ -9,4 +9,5 @@ jdk.jdi
 jdk.jvmstat
 jdk.runtime
 jdk.rmic
+jdk.xml.bind
 jdk.xml.ws

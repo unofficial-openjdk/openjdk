@@ -537,6 +537,7 @@ ifeq ($(SHUFFLED), true)
       jdk.jvmstat \
       jdk.rmic \
       jdk.runtime \
+      jdk.xml.bind \
       jdk.xml.ws \
       )
       #

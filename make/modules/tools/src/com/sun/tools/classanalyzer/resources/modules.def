@@ -514,20 +514,23 @@ module jdk.rmic {
             sun.tools.util.*;
 }
 
-// Implementation for xjc, wsgen, wsimport, and schemagen tools
-module jdk.xml.ws {
+// schemagen and xjc
+module jdk.xml.bind {
     include com.sun.codemodel.**,
-            com.sun.xml.internal.dtdparser.**,
-            com.sun.xml.internal.rngom.**,
-            com.sun.xml.internal.xsom.**,
-            com.sun.istack.internal.tools.**,
-            com.sun.istack.internal.ws.**,
             com.sun.tools.xjc.**,
             com.sun.tools.internal.xjc.**,
-            com.sun.tools.internal.ws.**,
-            com.sun.tools.internal.jxc.**,
-            org.relaxng.datatype.**;
+            com.sun.xml.internal.xsom.**,
+            com.sun.xml.internal.rngom.**,
+            com.sun.istack.internal.tools.**,
+            com.sun.xml.internal.dtdparser.**,
+            org.relaxng.datatype.**,
+            com.sun.tools.internal.jxc.**;
+}
 
+// wsgen and wsimport
+module jdk.xml.ws {
+    include com.sun.istack.internal.ws.*,
+            com.sun.tools.internal.ws.**;
     uses com.sun.tools.internal.ws.wscompile.Plugin;
 }
 
@@ -763,6 +766,7 @@ module jdk.debug {
 module jdk.dev {
     requires jdk.compiler;
     requires jdk.rmic;
+    requires jdk.xml.bind;
     requires jdk.xml.ws;
 
     include com.sun.tools.extcheck.**,

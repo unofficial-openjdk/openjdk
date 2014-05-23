@@ -188,7 +188,7 @@ LANGTOOLS_MODULE_LIST := java.compiler jdk.compiler jdk.javadoc
 CORBA_MODULE_LIST := java.corba
 JAXP_MODULE_LIST := java.xml
 JAXWS_MODULE_LIST := java.activation java.annotations.common java.xml.bind java.xml.ws \
-    java.xml.soap jdk.xml.ws
+    java.xml.soap jdk.xml.bind jdk.xml.ws
 NASHORN_MODULE_LIST := jdk.scripting.nashorn
 JDK_MODULE_LIST := $(filter-out $(CORBA_MODULE_LIST) $(JAXP_MODULE_LIST) \
     $(JAXWS_MODULE_LIST) $(LANGTOOLS_MODULE_LIST) $(NASHORN_MODULE_LIST), \
@@ -215,11 +215,15 @@ $(eval $(call SetupShuffleFiles,COPY_CORBA_MC, \
         $(shell $(FIND) $(CORBA_TOPDIR)/src/share/classes -name *.idl)))
 
 # Copy services in jaxws
+$(eval $(call SetupShuffleFiles,COPY_JAXB_SERVICES, \
+    SRC := $(JAXWS_TOPDIR)/src/share/jaxws_classes/com/sun/tools/etc, \
+    DEST := $(JAXWS_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/jdk.xml.bind/share/classes, \
+    FILES := META-INF/services/com.sun.tools.internal.xjc.Plugin))
+
 $(eval $(call SetupShuffleFiles,COPY_JAXWS_SERVICES, \
     SRC := $(JAXWS_TOPDIR)/src/share/jaxws_classes/com/sun/tools/etc, \
     DEST := $(JAXWS_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/jdk.xml.ws/share/classes, \
-    FILES := META-INF/services/com.sun.tools.internal.ws.wscompile.Plugin \
-        META-INF/services/com.sun.tools.internal.xjc.Plugin))
+    FILES := META-INF/services/com.sun.tools.internal.ws.wscompile.Plugin))
 
 # Copy services in java.desktop
 $(eval $(call SetupShuffleFiles,COPY_SERVICES_PRINT_SOLARIS, \
@@ -1614,13 +1618,8 @@ $(eval $(call SetupShuffleFiles,COPY_JDK_XML_WS_TOOLS_PACKAGE_INFO, \
     SRC := $(JAXWS_TOPDIR)/src/share/jaxws_classes, \
     DEST := $(JAXWS_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/jdk.xml.ws/share/classes, \
     FILES := \
-        $(JAXWS_TOPDIR)/src/share/jaxws_classes/com/sun/istack/internal/tools/package-info.java \
         $(shell $(FIND) \
-        $(JAXWS_TOPDIR)/src/share/jaxws_classes/com/sun/codemodel \
-        $(JAXWS_TOPDIR)/src/share/jaxws_classes/com/sun/tools \
-        $(JAXWS_TOPDIR)/src/share/jaxws_classes/com/sun/xml/internal/xsom \
-        $(JAXWS_TOPDIR)/src/share/jaxws_classes/com/sun/xml/internal/rngom \
-        $(JAXWS_TOPDIR)/src/share/jaxws_classes/com/sun/xml/internal/dtdparser \
+        $(JAXWS_TOPDIR)/src/share/jaxws_classes/com/sun/tools/internal/ws \
         -name package-info.java -o -name package.html)))
 
 $(eval $(call SetupShuffleFiles,COPY_JAVA_XML_BIND_DOCS, \
@@ -1632,6 +1631,21 @@ $(eval $(call SetupShuffleFiles,COPY_JAVA_XML_BIND_DOCS, \
         $(JAXWS_TOPDIR)/src/share/jaxws_classes/com/sun/xml/internal/bind \
         $(JAXWS_TOPDIR)/src/share/jaxws_classes/com/sun/xml/internal/txw2 \
         $(JAXWS_TOPDIR)/src/share/jaxws_classes/javax/xml/bind \
+        -name package-info.java -o -name package.html)))
+
+$(eval $(call SetupShuffleFiles,COPY_JDK_XML_BIND_TOOLS_PACKAGE_INFO, \
+    SRC := $(JAXWS_TOPDIR)/src/share/jaxws_classes, \
+    DEST := $(JAXWS_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/jdk.xml.bind/share/classes, \
+    FILES := \
+        $(JAXWS_TOPDIR)/src/share/jaxws_classes/com/sun/istack/internal/tools/package-info.java \
+        $(shell $(FIND) \
+        $(JAXWS_TOPDIR)/src/share/jaxws_classes/com/sun/codemodel \
+        $(JAXWS_TOPDIR)/src/share/jaxws_classes/com/sun/tools/internal/xjc \
+        $(JAXWS_TOPDIR)/src/share/jaxws_classes/com/sun/tools/internal/jxc \
+        $(JAXWS_TOPDIR)/src/share/jaxws_classes/com/sun/xml/internal/xsom \
+        $(JAXWS_TOPDIR)/src/share/jaxws_classes/com/sun/xml/internal/rngom \
+        $(JAXWS_TOPDIR)/src/share/jaxws_classes/com/sun/xml/internal/dtdparser \
+        $(JAXWS_TOPDIR)/src/share/jaxws_classes/org/relaxng/datatype \
         -name package-info.java -o -name package.html)))
 
 $(eval $(call SetupShuffleFiles,COPY_JAVA_XML_SOAP_DOCS, \
