@@ -206,6 +206,18 @@ MODULE_INFO_TARGETS := $(foreach r, LANGTOOLS CORBA JAXP JAXWS NASHORN JDK, \
 
 ################################################################################
 
+$(eval $(call SetupShuffleFiles,COPY_JDK_DEV_VERSION, \
+    SRC := $(LANGTOOLS_TOPDIR)/src/share/classes, \
+    DEST := $(LANGTOOLS_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/jdk.dev/share/classes, \
+    FILES := $(LANGTOOLS_TOPDIR)/src/share/classes/com/sun/tools/jdeps/resources/version.properties-template))
+
+$(eval $(call SetupShuffleFiles,COPY_JDK_COMPILER_VERSION, \
+    SRC := $(LANGTOOLS_TOPDIR)/src/share/classes, \
+    DEST := $(LANGTOOLS_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/jdk.compiler/share/classes, \
+    FILES := $(LANGTOOLS_TOPDIR)/src/share/classes/com/sun/tools/javac/resources/version.properties-template \
+        $(LANGTOOLS_TOPDIR)/src/share/classes/com/sun/tools/javap/resources/version.properties-template \
+        $(LANGTOOLS_TOPDIR)/src/share/classes/com/sun/tools/javah/resources/version.properties-template))
+
 # Copy *.mc and *.properties files in corba
 $(eval $(call SetupShuffleFiles,COPY_CORBA_MC, \
     SRC := $(CORBA_TOPDIR)/src/share/classes, \
@@ -1602,7 +1614,7 @@ $(eval $(call SetupShuffleFiles,COPY_JAVA_XML_DOCS, \
     SRC := $(JAXP_TOPDIR)/src, \
     DEST := $(JAXP_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.xml/share/classes, \
     FILES := $(shell $(FIND) \
-        $(JAXP_TOPDIR)/src -name *.html)))
+        $(JAXP_TOPDIR)/src -name *.html -o -name xpath.* -o -name HTMLEntities.res)))
 
 # jaxws
 $(eval $(call SetupShuffleFiles,COPY_JAVAX_JAXWS_PACKAGE_INFO, \
