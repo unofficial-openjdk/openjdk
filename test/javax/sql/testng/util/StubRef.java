@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,37 +20,41 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+package util;
 
-import java.util.*;
-import java.io.*;
+import java.io.Serializable;
+import java.sql.Ref;
+import java.sql.SQLException;
+import java.util.Map;
 
-public class MyXmlPropertiesProvider
-    extends sun.util.spi.XmlPropertiesProvider
-{
-    private static int createCount;
-    private static int loadCount;
-    private static int storeCount;
+public class StubRef implements Ref, Serializable {
 
-    static int createCount() { return createCount; }
-    static int loadCount() { return loadCount; }
-    static int storeCount() { return storeCount; }
+    private final String baseTypeName;
+    private Object obj;
 
-    public MyXmlPropertiesProvider() {
-        createCount++;
+    public StubRef(String type, Object o) {
+        baseTypeName = type;
+        obj = o;
     }
 
     @Override
-    public void load(Properties props, InputStream in)
-        throws IOException, InvalidPropertiesFormatException
-    {
-        loadCount++;
+    public String getBaseTypeName() throws SQLException {
+        return baseTypeName;
     }
 
     @Override
-    public void store(Properties props, OutputStream out,
-                      String comment, String encoding)
-        throws IOException
-    {
-        storeCount++;
+    public Object getObject(Map<String, Class<?>> map) throws SQLException {
+        return obj;
     }
+
+    @Override
+    public Object getObject() throws SQLException {
+        return getObject(null);
+    }
+
+    @Override
+    public void setObject(Object value) throws SQLException {
+        obj = value;
+    }
+
 }
