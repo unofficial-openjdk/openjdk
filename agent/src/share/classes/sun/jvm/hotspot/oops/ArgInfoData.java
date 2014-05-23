@@ -1,6 +1,5 @@
 /*
- * Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
- * Copyright 2012, 2013 SAP AG. All rights reserved.
+ * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,14 +22,35 @@
  *
  */
 
-#ifndef OS_AIX_VM_THREAD_AIX_INLINE_HPP
-#define OS_AIX_VM_THREAD_AIX_INLINE_HPP
+package sun.jvm.hotspot.oops;
 
-#include "runtime/thread.hpp"
-#include "runtime/threadLocalStorage.hpp"
+import java.io.*;
+import java.util.*;
+import sun.jvm.hotspot.debugger.*;
+import sun.jvm.hotspot.runtime.*;
+import sun.jvm.hotspot.types.*;
+import sun.jvm.hotspot.utilities.*;
 
-// Contains inlined functions for class Thread and ThreadLocalStorage
+public class ArgInfoData extends ArrayData {
 
-inline void ThreadLocalStorage::pd_invalidate_all() {} // nothing to do
+  public ArgInfoData(DataLayout layout) {
+    super(layout);
+  }
 
-#endif // OS_AIX_VM_THREAD_AIX_INLINE_HPP
+  int numberOfArgs() {
+    return arrayLen();
+  }
+
+  int argModified(int arg) {
+    return arrayUintAt(arg);
+  }
+
+  public void printDataOn(PrintStream st) {
+    printShared(st, "ArgInfoData");
+    int nargs = numberOfArgs();
+    for (int i = 0; i < nargs; i++) {
+      st.print("  0x" + Integer.toHexString(argModified(i)));
+    }
+    st.println();
+  }
+}

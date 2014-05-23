@@ -1,6 +1,5 @@
 /*
- * Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
- * Copyright 2012, 2013 SAP AG. All rights reserved.
+ * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,14 +22,39 @@
  *
  */
 
-#ifndef OS_AIX_VM_THREAD_AIX_INLINE_HPP
-#define OS_AIX_VM_THREAD_AIX_INLINE_HPP
+package sun.jvm.hotspot.oops;
 
-#include "runtime/thread.hpp"
-#include "runtime/threadLocalStorage.hpp"
+import java.io.*;
+import java.util.*;
+import sun.jvm.hotspot.debugger.*;
+import sun.jvm.hotspot.runtime.*;
+import sun.jvm.hotspot.types.*;
+import sun.jvm.hotspot.utilities.*;
 
-// Contains inlined functions for class Thread and ThreadLocalStorage
+// Type entry used for return from a call. A single cell to record the
+// type.
+public class ReturnTypeEntry<K,M> extends TypeEntries<K,M> {
+  static final int cellCount = 1;
 
-inline void ThreadLocalStorage::pd_invalidate_all() {} // nothing to do
+  ReturnTypeEntry(MethodDataInterface<K,M> methodData, ProfileData pd, int baseOff) {
+    super(methodData, pd, baseOff);
+  }
 
-#endif // OS_AIX_VM_THREAD_AIX_INLINE_HPP
+  K type() {
+    return validKlass(baseOff);
+  }
+
+  static int staticCellCount() {
+    return cellCount;
+  }
+
+  int typeIndex() {
+    return baseOff;
+  }
+
+  void printDataOn(PrintStream st) {
+    pd.tab(st);
+    printKlass(st, baseOff);
+    st.println();
+  }
+}
