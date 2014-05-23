@@ -51,15 +51,6 @@
 
 static const char out_of_nodes[] = "out of nodes during split";
 
-static bool contains_no_live_range_input(const Node* def) {
-  for (uint i = 1; i < def->req(); ++i) {
-    if (def->in(i) != NULL && def->in_RegMask(i).is_NotEmpty()) {
-      return false;
-    }
-  }
-  return true;
-}
-
 //------------------------------get_spillcopy_wide-----------------------------
 // Get a SpillCopy node with wide-enough masks.  Use the 'wide-mask', the
 // wide ideal-register spill-mask if possible.  If the 'wide-mask' does
@@ -326,10 +317,13 @@ Node *PhaseChaitin::split_Rematerialize( Node *def, Block *b, uint insidx, uint 
   if( def->req() > 1 ) {
     for( uint i = 1; i < def->req(); i++ ) {
       Node *in = def->in(i);
-      // Check for single-def (LRG cannot redefined)
       uint lidx = n2lidx(in);
-      if( lidx >= _maxlrg ) continue; // Value is a recent spill-copy
-      if (lrgs(lidx).is_singledef()) continue;
+      // We do not need this for live ranges that are only defined once.
+      // However, this is not true for spill copies that are added in this
+      // Split() pass, since they might get coalesced later on in this pass.
+      if (lidx < _maxlrg && lrgs(lidx).is_singledef()) {
+         continue;
+       }
 
       Block *b_def = _cfg._bbs[def->_idx];
       int idx_def = b_def->find_node(def);
@@ -1303,7 +1297,7 @@ uint PhaseChaitin::Split(uint maxlrg, ResourceArea* split_arena) {
       Node *def = Reaches[pidx][slidx];
       assert( def, "must have reaching def" );
       // If input up/down sense and reg-pressure DISagree
-      if (def->rematerialize() && contains_no_live_range_input(def)) {
+      if (def->rematerialize()) {
         // Place the rematerialized node above any MSCs created during
         // phi node splitting.  end_idx points at the insertion point
         // so look at the node before it.
