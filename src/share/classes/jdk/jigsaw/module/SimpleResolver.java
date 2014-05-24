@@ -112,6 +112,7 @@ public final class SimpleResolver {
 
         // initialize the map of edges
         for (Module m: selected) {
+            requires.computeIfAbsent(m, k -> new HashSet<>());
             for (ModuleDependence d: m.moduleDependences()) {
                 String dn = d.query().name();
                 requires.computeIfAbsent(m, k -> new HashSet<>()).add(dn);

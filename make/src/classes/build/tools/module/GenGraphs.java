@@ -81,8 +81,9 @@ public class GenGraphs {
         JdkModuleLibrary mlib = new JdkModuleLibrary(modules);
         SimpleResolver resolver = new SimpleResolver(mlib);
 
-        Set<Module> javaSEModules = resolver.resolve(Collections.singleton("java.se"))
-                                            .selectedModules();
+        Set<Module> javaSEModules = Arrays.stream(modules)
+                                        .filter(m -> m.id().name().startsWith("java."))
+                                        .collect(Collectors.toSet());
         Set<Module> jdkModules = Arrays.stream(modules)
                                        .filter(m -> !javaSEModules.contains(m))
                                        .collect(Collectors.toSet());
@@ -114,15 +115,22 @@ public class GenGraphs {
         }
     }
 
-    private static final String ORANGE = "#e76f00";
-    private static final String BLUE = "#437291";
-    private static final String GREEN = "#97b101";
+
     private final Set<Module> javaGroup;
     private final Set<Module> jdkGroup;
     GenGraphs(Set<Module> javaGroup, Set<Module> jdkGroup) {
         this.javaGroup = Collections.unmodifiableSet(javaGroup);
         this.jdkGroup = Collections.unmodifiableSet(jdkGroup);
     }
+
+    private static final String ORANGE = "#e76f00";
+    private static final String BLUE = "#437291";
+    private static final String GREEN = "#97b101";
+    private static final String GRAY = "#c0c0c0";
+
+    private static final String REEXPORTS = "[type=\"re-exports\", style=\"bold\", color=\"" + GREEN + "\"]";
+    private static final String REQUIRES = "[style=\"dashed\"]";
+    private static final String REQUIRES_BASE = "[color=\"" + GRAY + "\"]";
 
     private void genDotFile(Path dir, String name, Map<Module, Set<String>> deps)
         throws IOException
@@ -131,7 +139,7 @@ public class GenGraphs {
             out.format("digraph \"%s\" {%n", name);
             out.format("nodesep=.5;%n");
             out.format("ranksep=1.5;%n");
-            out.format("edge [arrowhead=open, arrowsize=2];%n");
+            out.format("edge [arrowhead=open];%n");
             out.format("node [shape=plaintext, fontname=\"DejaVuSan\"];%n");
 
             deps.keySet().stream()
@@ -152,10 +160,9 @@ public class GenGraphs {
                                                  .collect(Collectors.toSet());
                 name = m.id().name();
                 for (String dn: entry.getValue()) {
-                    String attr = requiresPublic.contains(dn)
-                            ? String.format(" [type=reqPublic, color=\"%s\"]", GREEN)
-                            : "";
-                    out.format("  \"%s\" -> \"%s\"%s;%n", name, dn, attr);
+                    String attr = dn.equals("java.base") ? REQUIRES_BASE
+                            : (requiresPublic.contains(dn) ? REEXPORTS : REQUIRES);
+                    out.format("  \"%s\" -> \"%s\" %s;%n", name, dn, attr);
                 }
             }
             out.println("}");
