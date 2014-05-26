@@ -159,7 +159,7 @@ $(CHARSET_STANDARD_GENSRC_DIR)/cache-map.java.snippet: $(CHARSET_STANDARD_GENSRC
 	$(TOOL_HASHER) -i -e Cache -t Charset < '$<' > '$@'
 
 $(eval $(call SetupTextFileProcessing, BUILD_CHARSET_STANDARD, \
-    SOURCE_FILES := $(JDK_TOPDIR)/src/share/classes/$(CHARSET_STANDARD_JAVA).template, \
+    SOURCE_FILES := $(JDK_TOPDIR)/$(SRC_SUBDIR)$(JAVA_BASE_SUBDIR)/share/classes/$(CHARSET_STANDARD_JAVA).template, \
     OUTPUT_FILE := $(JDK_OUTPUTDIR)/gensrc$(JAVA_BASE_SUBDIR)/$(CHARSET_STANDARD_JAVA), \
     INCLUDES := \
         _INCLUDE_ALIASES_TABLES_ => $(CHARSET_STANDARD_GENSRC_DIR)/aliases-tables.java.snippet ; \

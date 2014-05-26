@@ -327,7 +327,8 @@ $(eval $(call SetupShuffleFiles,COPY_NIO_TEMPLATES, \
     SRC := $(JDK_TOPDIR)/src/share/classes, \
     DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.base/share/classes, \
     FILES := $(JDK_TOPDIR)/src/share/classes/java/nio/charset/Charset-X-Coder.java.template \
-        $(wildcard $(JDK_TOPDIR)/src/share/classes/java/nio/*.template)))
+        $(wildcard $(JDK_TOPDIR)/src/share/classes/java/nio/*.template \
+            $(JDK_TOPDIR)/src/share/classes/sun/nio/cs/*.template)))
 
 $(eval $(call SetupShuffleFiles,COPY_NIO_EXCEPTIONS, \
     SRC := $(JDK_TOPDIR)/src/share/classes, \
@@ -607,6 +608,11 @@ $(eval $(call SetupShuffleFiles,COPY_LIBNET_WINDOWS, \
         $(JDK_TOPDIR)/src/windows/native/sun/net/spi/* \
         $(JDK_TOPDIR)/src/windows/native/sun/net/www/protocol/http/ntlm/*)))
 
+$(eval $(call SetupShuffleFiles,COPY_LIBNET_AIX, \
+    SRC := $(JDK_TOPDIR)/src/aix/native, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.base/aix/native/libnet, \
+    FILES := $(JDK_TOPDIR)/src/aix/native/java/net/aix_close.c))
+
 # nio
 $(eval $(call SetupShuffleFiles,COPY_LIBNIO_SHARE, \
     SRC := $(JDK_TOPDIR)/src/share/native/sun/nio, \
@@ -634,6 +640,12 @@ $(eval $(call SetupShuffleFiles,COPY_LIBNIO_JAVA_WINDOWS, \
     SRC := $(JDK_TOPDIR)/src/windows/native/java/nio, \
     DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.base/windows/native/libnio, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/windows/native/java/nio/*)))
+
+$(eval $(call SetupShuffleFiles,COPY_LIBNIO_AIX, \
+    SRC := $(JDK_TOPDIR)/src/aix/native/sun/nio, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.base/aix/native/libnio, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/aix/native/sun/nio/ch/* \
+        $(JDK_TOPDIR)/src/aix/native/sun/nio/fs/*)))
 
 # sctp
 $(eval $(call SetupShuffleFiles,COPY_LIBSCTP_SOLARIS, \
@@ -736,6 +748,11 @@ $(eval $(call SetupShuffleFiles,COPY_LIBATTACH_WINDOWS, \
     SRC := $(JDK_TOPDIR)/src/windows/native/sun/tools/attach, \
     DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/jdk.attach/windows/native/libattach, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/windows/native/sun/tools/attach/*)))
+
+$(eval $(call SetupShuffleFiles,COPY_LIBATTACH_AIX, \
+    SRC := $(JDK_TOPDIR)/src/aix/native/sun/tools/attach, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/jdk.attach/aix/native/libattach, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/aix/native/sun/tools/attach/*)))
 
 # dt_socket
 $(eval $(call SetupShuffleFiles,COPY_LIBDT_SOCKET_SHARE, \
@@ -1265,6 +1282,11 @@ $(eval $(call SetupShuffleFiles,COPY_CONF_BASE_WINDOWS, \
     DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.base/windows/conf, \
     FILES := $(JDK_TOPDIR)/src/windows/lib/tzmappings))
 
+$(eval $(call SetupShuffleFiles,COPY_CONF_BASE_AIX, \
+    SRC := $(JDK_TOPDIR)/src/aix/lib, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.base/aix/conf, \
+    FILES := $(JDK_TOPDIR)/src/aix/lib/tzmappings))
+
 $(eval $(call SetupShuffleFiles,COPY_CONF_MANAGEMENT, \
     SRC := $(JDK_TOPDIR)/src/share/lib/management, \
     DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.management/share/conf, \
@@ -1355,6 +1377,7 @@ $(eval $(call SetupShuffleFiles,COPY_JAVA_BASE_PACKAGE_INFO, \
         $(JDK_TOPDIR)/src/share/classes/java/time/package-info.java \
         $(JDK_TOPDIR)/src/share/classes/java/time/chrono/package-info.java \
         $(JDK_TOPDIR)/src/share/classes/java/time/format/package-info.java \
+        $(JDK_TOPDIR)/src/share/classes/java/time/overview.html \
         $(JDK_TOPDIR)/src/share/classes/java/lang/annotation/package-info.java \
         $(JDK_TOPDIR)/src/share/classes/java/lang/reflect/package-info.java \
         $(JDK_TOPDIR)/src/share/classes/java/lang/package-info.java \
@@ -1374,6 +1397,9 @@ $(eval $(call SetupShuffleFiles,COPY_JAVA_BASE_PACKAGE_INFO, \
         $(JDK_TOPDIR)/src/share/classes/javax/crypto/interfaces/package.html \
         $(JDK_TOPDIR)/src/share/classes/javax/crypto/spec/package.html \
         $(JDK_TOPDIR)/src/share/classes/java/io/package.html \
+        $(JDK_TOPDIR)/src/share/classes/jdk/internal/org/objectweb/asm/version.txt \
+        $(JDK_TOPDIR)/src/share/classes/sun/security/x509/README \
+        $(JDK_TOPDIR)/src/share/classes/sun/security/x509/certAttributes.html \
         $(shell $(FIND) \
             $(JDK_TOPDIR)/src/share/classes/java/text \
             $(JDK_TOPDIR)/src/share/classes/java/nio \
@@ -1412,7 +1438,7 @@ $(eval $(call SetupShuffleFiles,COPY_JDK_SNMP_PACKAGE_INFO, \
     FILES := $(shell $(FIND) \
         $(JDK_TOPDIR)/src/share/classes/com/sun/jmx/snmp \
         $(JDK_TOPDIR)/src/share/classes/sun/management/snmp \
-        -name package.html)))
+        -name package.html -o -name README)))
 
 $(eval $(call SetupShuffleFiles,COPY_JAVAX_SMARTCARDIO_PACKAGE_INFO, \
     SRC := $(JDK_TOPDIR)/src/share/classes, \
@@ -1667,6 +1693,11 @@ $(eval $(call SetupShuffleFiles,COPY_JAVA_XML_SOAP_DOCS, \
         $(shell $(FIND) \
         $(JAXWS_TOPDIR)/src/share/jaxws_classes/javax/xml/soap \
         -name package-info.java -o -name package.html)))
+
+$(eval $(call SetupShuffleFiles,COPY_JVMSTAT_DOCS, \
+    SRC := $(JDK_TOPDIR)/src/share/classes, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/jdk.jvmstat/share/classes, \
+    FILES := $(shell $(FIND) $(JDK_TOPDIR)/src/share/classes/sun/jvmstat -name package.html)))
 
 $(eval $(call SetupShuffleFiles,COPY_JAVA_RMI_PACKAGE_INFO, \
     SRC := $(JDK_TOPDIR)/src/share/classes, \

@@ -102,7 +102,11 @@ $(eval $(call SetupNativeCompilation,BUILD_GENSRC_SOR_EXE, \
     OUTPUT_DIR := $(GENSRC_SOR_BIN), \
     PROGRAM := genSocketOptionRegistry))
 
-SOR_PREGEN_FILE := $(JDK_TOPDIR)/src/closed$(JAVA_BASE_SUBDIR)/solaris/classes/sun/nio/ch/SocketOptionRegistry-$(OPENJDK_TARGET_OS)-$(OPENJDK_TARGET_CPU_ARCH).java.template
+ifeq ($(SHUFFLED), true)
+  SOR_PREGEN_FILE := $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed$(JAVA_BASE_SUBDIR)/$(OPENJDK_TARGET_OS)/classes/sun/nio/ch/SocketOptionRegistry-$(OPENJDK_TARGET_OS)-$(OPENJDK_TARGET_CPU_ARCH).java.template
+else
+  SOR_PREGEN_FILE := $(JDK_TOPDIR)/src/closed/solaris/classes/sun/nio/ch/SocketOptionRegistry-$(OPENJDK_TARGET_OS)-$(OPENJDK_TARGET_CPU_ARCH).java.template
+endif
 
 ifeq ($(wildcard $(SOR_PREGEN_FILE)), )
   $(JDK_OUTPUTDIR)/gensrc$(JAVA_BASE_SUBDIR)/sun/nio/ch/SocketOptionRegistry.java: $(BUILD_GENSRC_SOR_EXE)
@@ -140,7 +144,11 @@ ifneq ($(OPENJDK_TARGET_OS), windows)
       OUTPUT_DIR := $(GENSRC_UC_BIN), \
       PROGRAM := genUnixConstants))
 
-  UC_PREGEN_FILE := $(JDK_TOPDIR)/src/closed$(JAVA_BASE_SUBDIR)/solaris/classes/sun/nio/fs/UnixConstants-$(OPENJDK_TARGET_OS)-$(OPENJDK_TARGET_CPU_ARCH).java.template
+  ifeq ($(SHUFFLED), true)
+    UC_PREGEN_FILE := $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed$(JAVA_BASE_SUBDIR)/$(OPENJDK_TARGET_OS)/classes/sun/nio/fs/UnixConstants-$(OPENJDK_TARGET_OS)-$(OPENJDK_TARGET_CPU_ARCH).java.template
+  else
+    UC_PREGEN_FILE := $(JDK_TOPDIR)/src/closed/solaris/classes/sun/nio/fs/UnixConstants-$(OPENJDK_TARGET_OS)-$(OPENJDK_TARGET_CPU_ARCH).java.template
+  endif
 
   ifeq ($(wildcard $(UC_PREGEN_FILE)), )
     $(JDK_OUTPUTDIR)/gensrc$(JAVA_BASE_SUBDIR)/sun/nio/fs/UnixConstants.java: $(BUILD_GENSRC_UC_EXE)
