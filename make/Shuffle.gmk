@@ -932,6 +932,21 @@ $(eval $(call SetupShuffleFiles,COPY_LIBAWT_WINDOWS, \
         $(JDK_TOPDIR)/src/windows/native/sun/java2d/windows/* \
         $(JDK_TOPDIR)/src/windows/native/sun/java2d/d3d/*))))
 
+$(eval $(call SetupShuffleFiles,COPY_LIBAWT_AIX, \
+    SRC := $(JDK_TOPDIR)/src/aix/porting, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.desktop/aix/native/libawt, \
+    FILES := $(JDK_TOPDIR)/src/aix/porting/porting_aix.h \
+        $(JDK_TOPDIR)/src/aix/porting/porting_aix.c))
+
+# Also copy the porting files to hprof demo. NOTE that this doesn't work well with
+# SHUFFLE_MODE=hg 
+$(eval $(call SetupCopyFiles,COPY_HPROF_AIX, \
+    SRC := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.desktop/aix/native/libawt, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/demo/aix/jvmti/hprof, \
+    FILES := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.desktop/aix/native/libawt/porting_aix.h \
+        $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.desktop/aix/native/libawt/porting_aix.c))
+SHUFFLE_SRC_TARGETS += $(COPY_HPROF_AIX)
+
 # common-awt
 $(eval $(call SetupShuffleFiles,COPY_COMMON_AWT_SHARE, \
     SRC := $(JDK_TOPDIR)/src/share/native, \
@@ -1256,6 +1271,24 @@ $(eval $(call SetupShuffleFiles,COPY_JSPAWNHELPER_SOLARIS, \
     DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.base/unix/native/jspawnhelper, \
     FILES := $(JDK_TOPDIR)/src/solaris/native/java/lang/jspawnhelper.c))
 
+# Windows resource and manifest fils
+$(eval $(call SetupShuffleFiles,COPY_VERSION_INFO_WINDOWS, \
+    SRC := $(JDK_TOPDIR)/src/windows/resource, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.base/windows/native/common, \
+    FILES := $(JDK_TOPDIR)/src/windows/resource/version.rc))
+
+$(eval $(call SetupShuffleFiles,COPY_LAUNCHER_RESOURCES_WINDOWS, \
+    SRC := $(JDK_TOPDIR)/src/windows/resource, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.base/windows/native/launchers, \
+    FILES := $(JDK_TOPDIR)/src/windows/resource/java.rc \
+        $(JDK_TOPDIR)/src/windows/resource/icons/awt.ico \
+        $(JDK_TOPDIR)/src/windows/resource/java.manifest))
+
+$(eval $(call SetupShuffleFiles,COPY_UNPACK_MANIFEST_WINDOWS, \
+    SRC := $(JDK_TOPDIR)/src/windows/resource, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/jdk.runtime/windows/native/unpack200, \
+    FILES := $(JDK_TOPDIR)/src/windows/resource/unpack200_proto.exe.manifest))
+
 ################################################################################
 # Copy to src/share/conf/%m
 
@@ -1425,7 +1458,9 @@ $(eval $(call SetupShuffleFiles,COPY_JAVA_MANAGEMENT_PACKAGE_INFO, \
         $(shell $(FIND) \
             $(JDK_TOPDIR)/src/share/classes/javax/management \
             $(JDK_TOPDIR)/src/share/classes/sun/management/jmxremote \
-        -name package.html)))
+        -name package.html) \
+        $(wildcard $(JDK_TOPDIR)/src/share/classes/com/sun/jmx/remote/protocol/iiop/*.java) \
+        $(JDK_TOPDIR)/src/share/classes/sun/management/manifest))
 
 $(eval $(call SetupShuffleFiles,COPY_JAVA_MANAGEMENT_OVERVIEW, \
     SRC := $(JDK_TOPDIR)/src/share/classes/com/sun/management, \

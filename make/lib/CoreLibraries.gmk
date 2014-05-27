@@ -110,7 +110,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBVERIFY, \
         $(call SET_SHARED_LIBRARY_ORIGIN), \
     LDFLAGS_SUFFIX_posix := -ljvm -lc, \
     LDFLAGS_SUFFIX_windows := jvm.lib, \
-    VERSIONINFO_RESOURCE := $(JDK_TOPDIR)/src/windows/resource/version.rc, \
+    VERSIONINFO_RESOURCE := $(GLOBAL_VERSION_INFO_RESOURCE), \
     RC_FLAGS := $(RC_FLAGS) \
         -D "JDK_FNAME=verify.dll" \
         -D "JDK_INTERNAL_NAME=verify" \
@@ -218,7 +218,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBJAVA, \
         jvm.lib $(BUILD_LIBFDLIBM) $(WIN_VERIFY_LIB) \
         shell32.lib delayimp.lib -DELAYLOAD:shell32.dll \
         advapi32.lib, \
-    VERSIONINFO_RESOURCE := $(JDK_TOPDIR)/src/windows/resource/version.rc, \
+    VERSIONINFO_RESOURCE := $(GLOBAL_VERSION_INFO_RESOURCE), \
     RC_FLAGS := $(RC_FLAGS) \
         -D "JDK_FNAME=java.dll" \
         -D "JDK_INTERNAL_NAME=java" \
@@ -292,7 +292,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBZIP, \
     LDFLAGS_SUFFIX_solaris := -ljvm -ljava $(LIBZ) -lc, \
     LDFLAGS_SUFFIX_aix := -ljvm -ljava $(LIBZ),\
     LDFLAGS_SUFFIX_macosx := $(LIBZ) -ljava -ljvm, \
-    VERSIONINFO_RESOURCE := $(JDK_TOPDIR)/src/windows/resource/version.rc, \
+    VERSIONINFO_RESOURCE := $(GLOBAL_VERSION_INFO_RESOURCE), \
     RC_FLAGS := $(RC_FLAGS) \
         -D "JDK_FNAME=zip.dll" \
         -D "JDK_INTERNAL_NAME=zip" \
@@ -336,7 +336,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBPREFS, \
     LDFLAGS_SUFFIX_aix := -ljvm -ljava, \
     LDFLAGS_SUFFIX_windows := advapi32.lib jvm.lib $(WIN_JAVA_LIB), \
     LDFLAGS_SUFFIX_macosx := -ljvm -framework CoreFoundation, \
-    VERSIONINFO_RESOURCE := $(JDK_TOPDIR)/src/windows/resource/version.rc, \
+    VERSIONINFO_RESOURCE := $(GLOBAL_VERSION_INFO_RESOURCE), \
     RC_FLAGS := $(RC_FLAGS) \
         -D "JDK_FNAME=prefs.dll" \
         -D "JDK_INTERNAL_NAME=prefs" \
@@ -380,7 +380,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBUNPACK, \
         jvm.lib $(WIN_JAVA_LIB), \
     LDFLAGS_SUFFIX_posix := -ljvm $(LIBCXX) -ljava -lc, \
     OBJECT_DIR := $(JDK_OUTPUTDIR)/objs/libunpack, \
-    VERSIONINFO_RESOURCE := $(JDK_TOPDIR)/src/windows/resource/version.rc, \
+    VERSIONINFO_RESOURCE := $(GLOBAL_VERSION_INFO_RESOURCE), \
     RC_FLAGS := $(RC_FLAGS) \
         -D "JDK_FNAME=unpack.dll" \
         -D "JDK_INTERNAL_NAME=unpack" \
@@ -519,7 +519,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBJLI, \
         advapi32.lib \
         comctl32.lib \
         user32.lib, \
-    VERSIONINFO_RESOURCE := $(JDK_TOPDIR)/src/windows/resource/version.rc, \
+    VERSIONINFO_RESOURCE := $(GLOBAL_VERSION_INFO_RESOURCE), \
     RC_FLAGS := $(RC_FLAGS) \
         -D "JDK_FNAME=jli.dll" \
         -D "JDK_INTERNAL_NAME=jli" \
@@ -615,7 +615,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBNPT, \
     LDFLAGS_macosx := -liconv, \
     LDFLAGS_SUFFIX_windows := -export:nptInitialize -export:nptTerminate, \
     LDFLAGS_SUFFIX_solaris := -lc, \
-    VERSIONINFO_RESOURCE := $(JDK_TOPDIR)/src/windows/resource/version.rc, \
+    VERSIONINFO_RESOURCE := $(GLOBAL_VERSION_INFO_RESOURCE), \
     RC_FLAGS := $(RC_FLAGS) \
         -D "JDK_FNAME=npt.dll" \
         -D "JDK_INTERNAL_NAME=npt" \

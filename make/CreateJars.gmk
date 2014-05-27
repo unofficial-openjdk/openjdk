@@ -768,7 +768,8 @@ endif
 # This is an empty jar (only contains manifest) and fits poorly into framework...
 # create simple rule instead
 #
-$(IMAGES_OUTPUTDIR)/lib/management-agent.jar: $(JDK_TOPDIR)/src/share/classes/sun/management/manifest
+$(IMAGES_OUTPUTDIR)/lib/management-agent.jar: \
+    $(JDK_TOPDIR)/$(SRC_SUBDIR)$(JAVA_MANAGEMENT_SUBDIR)/share/classes/sun/management/manifest
 	$(JAR) cfm $@ $<
 
 ##########################################################################################

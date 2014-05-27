@@ -72,7 +72,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBMLIB_IMAGE, \
     LDFLAGS_SUFFIX := $(BUILD_LIBMLIB_LDLIBS) \
         $(LDFLAGS_JDKLIB_SUFFIX), \
     LDFLAGS_SUFFIX_solaris := -lc, \
-    VERSIONINFO_RESOURCE := $(JDK_TOPDIR)/src/windows/resource/version.rc, \
+    VERSIONINFO_RESOURCE := $(GLOBAL_VERSION_INFO_RESOURCE), \
     RC_FLAGS := $(RC_FLAGS) \
         -D "JDK_FNAME=mlib_image.dll" \
         -D "JDK_INTERNAL_NAME=mlib_image" \
@@ -699,7 +699,7 @@ ifeq ($(findstring $(OPENJDK_TARGET_OS),windows macosx),)
             $(call SET_SHARED_LIBRARY_ORIGIN) \
             $(call SET_SHARED_LIBRARY_ORIGIN,/..), \
         LDFLAGS_SUFFIX := $(LIBAWT_XAWT_LDFLAGS_SUFFIX), \
-        VERSIONINFO_RESOURCE := $(JDK_TOPDIR)/src/windows/resource/version.rc, \
+        VERSIONINFO_RESOURCE := $(GLOBAL_VERSION_INFO_RESOURCE), \
         RC_FLAGS := $(RC_FLAGS) \
             -D "JDK_FNAME=xawt.dll" \
             -D "JDK_INTERNAL_NAME=xawt" \
@@ -750,7 +750,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBLCMS, \
     LDFLAGS_SUFFIX_macosx := $(LIBM) -lawt -ljava -ljvm, \
     LDFLAGS_SUFFIX_linux := -lm -lawt -ljava -ljvm, \
     LDFLAGS_SUFFIX_aix := -lm -lawt -ljava -ljvm,\
-    VERSIONINFO_RESOURCE := $(JDK_TOPDIR)/src/windows/resource/version.rc, \
+    VERSIONINFO_RESOURCE := $(GLOBAL_VERSION_INFO_RESOURCE), \
     RC_FLAGS := $(RC_FLAGS) \
         -D "JDK_FNAME=lcms.dll" \
         -D "JDK_INTERNAL_NAME=lcms" \
@@ -816,7 +816,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBJPEG, \
         $(call SET_SHARED_LIBRARY_ORIGIN), \
     LDFLAGS_windows := $(WIN_JAVA_LIB) jvm.lib, \
     LDFLAGS_SUFFIX := $(LDFLAGS_JDKLIB_SUFFIX), \
-    VERSIONINFO_RESOURCE := $(JDK_TOPDIR)/src/windows/resource/version.rc, \
+    VERSIONINFO_RESOURCE := $(GLOBAL_VERSION_INFO_RESOURCE), \
     RC_FLAGS := $(RC_FLAGS) \
         -D "JDK_FNAME=jpeg.dll" \
         -D "JDK_INTERNAL_NAME=jpeg" \
@@ -929,7 +929,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBFONTMANAGER, \
         -ljava -ljvm, \
     LDFLAGS_SUFFIX_windows := $(WIN_JAVA_LIB) advapi32.lib user32.lib gdi32.lib \
         $(WIN_AWT_LIB), \
-    VERSIONINFO_RESOURCE := $(JDK_TOPDIR)/src/windows/resource/version.rc, \
+    VERSIONINFO_RESOURCE := $(GLOBAL_VERSION_INFO_RESOURCE), \
     RC_FLAGS := $(RC_FLAGS) \
         -D "JDK_FNAME=fontmanager.dll" \
         -D "JDK_INTERNAL_NAME=fontmanager" \
@@ -992,7 +992,7 @@ ifndef OPENJDK
       LDFLAGS_windows := user32.lib $(JDK_OUTPUTDIR)/objs/libfontmanager/fontmanager.lib, \
       LDFLAGS_SUFFIX_posix := $(LIBM) $(LIBCXX) -lfontmanager -ljava -ljvm -lc, \
       LDFLAGS_SUFFIX_solaris := -lawt -lawt_xawt, \
-      VERSIONINFO_RESOURCE := $(JDK_TOPDIR)/src/windows/resource/version.rc, \
+      VERSIONINFO_RESOURCE := $(GLOBAL_VERSION_INFO_RESOURCE), \
       RC_FLAGS := $(RC_FLAGS) \
           -D "JDK_FNAME=t2k.dll" \
           -D "JDK_INTERNAL_NAME=t2k" \
@@ -1046,7 +1046,7 @@ ifeq ($(OPENJDK_TARGET_OS), windows)
       LDFLAGS := $(LDFLAGS_JDKLIB) $(KERNEL32_LIB) $(LDFLAGS_CXX_JDK) \
           advapi32.lib $(WIN_AWT_LIB), \
       LDFLAGS_SUFFIX := $(LDFLAGS_JDKLIB_SUFFIX), \
-      VERSIONINFO_RESOURCE := $(JDK_TOPDIR)/src/windows/resource/version.rc, \
+      VERSIONINFO_RESOURCE := $(GLOBAL_VERSION_INFO_RESOURCE), \
       RC_FLAGS := $(RC_FLAGS) \
           -D "JDK_FNAME=jawt.dll" \
           -D "JDK_INTERNAL_NAME=jawt" \
@@ -1495,7 +1495,7 @@ ifndef BUILD_HEADLESS_ONLY
       LDFLAGS_SUFFIX := $(LIBSPLASHSCREEN_LDFLAGS_SUFFIX) $(LIBZ) \
                         $(GIFLIB_LDFLAGS) $(PNG_LIBS), \
       LDFLAGS_SUFFIX_solaris := -lc, \
-      VERSIONINFO_RESOURCE := $(JDK_TOPDIR)/src/windows/resource/version.rc, \
+      VERSIONINFO_RESOURCE := $(GLOBAL_VERSION_INFO_RESOURCE), \
       RC_FLAGS := $(RC_FLAGS) \
           -D "JDK_FNAME=splashscreen.dll" \
           -D "JDK_INTERNAL_NAME=splashscreen" \
@@ -1549,7 +1549,7 @@ ifndef OPENJDK
       LDFLAGS_SUFFIX := $(LIBM) $(LDFLAGS_JDKLIB_SUFFIX), \
       LDFLAGS_SUFFIX_windows := $(WIN_JAVA_LIB), \
       LDFLAGS_SUFFIX_posix := -lm, \
-      VERSIONINFO_RESOURCE := $(JDK_TOPDIR)/src/windows/resource/version.rc, \
+      VERSIONINFO_RESOURCE := $(GLOBAL_VERSION_INFO_RESOURCE), \
       RC_FLAGS := $(RC_FLAGS) \
           -D "JDK_FNAME=dcpr.dll" \
           -D "JDK_INTERNAL_NAME=dcpr" \

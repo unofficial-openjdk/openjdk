@@ -43,10 +43,14 @@ endif
 # Build tools
 include Tools.gmk
 
-# Include the javah generated headers.
-ifneq ($(SHUFFLED), true)
-CFLAGS_JDKLIB += -I$(JDK_OUTPUTDIR)/gensrc_headers
-CXXFLAGS_JDKLIB += -I$(JDK_OUTPUTDIR)/gensrc_headers
+ifeq ($(SHUFFLED), true)
+  GLOBAL_VERSION_INFO_RESOURCE := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/windows/common/version.rc
+else
+  GLOBAL_VERSION_INFO_RESOURCE := $(JDK_TOPDIR)/src/windows/resource/version.rc
+
+  # Include the javah generated headers.
+  CFLAGS_JDKLIB += -I$(JDK_OUTPUTDIR)/gensrc_headers
+  CXXFLAGS_JDKLIB += -I$(JDK_OUTPUTDIR)/gensrc_headers
 endif
 
 # Put the libraries here. Different locations for different target apis.

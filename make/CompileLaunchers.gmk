@@ -95,12 +95,16 @@ ifeq ($(SHUFFLED), true)
       -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/$(OPENJDK_TARGET_OS_API_DIR)/native/libjli \
       -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/$(OPENJDK_TARGET_OS)/native/libjli \
       #
+  GLOBAL_VERSION_INFO_RESOURCE := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/windows/common/version.rc
+  JAVA_VERSION_INFO_RESOURCE := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/windows/launchers/version.rc
 else
   LAUNCHER_SRC := $(JDK_TOPDIR)/src/share/bin
   LAUNCHER_CFLAGS := -I$(JDK_TOPDIR)/src/share/bin \
       -I$(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/bin \
       -I$(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS)/bin \
       #
+  GLOBAL_VERSION_INFO_RESOURCE := 
+  JAVA_VERSION_INFO_RESOURCE := $(JDK_TOPDIR)/src/windows/resource/java.rc
 endif
 
 define SetupLauncher
@@ -268,7 +272,7 @@ endif
 $(eval $(call SetupLauncher,java, \
     -DEXPAND_CLASSPATH_WILDCARDS,,,user32.lib comctl32.lib, \
     $(JDK_OUTPUTDIR)/objs/jli_static.lib, $(JAVA_RC_FLAGS), \
-    $(JDK_TOPDIR)/src/windows/resource/java.rc, $(JDK_OUTPUTDIR)/objs/java_objs,true))
+    $(JAVA_VERSION_INFO_RESOURCE), $(JDK_OUTPUTDIR)/objs/java_objs,true))
 
 $(JDK_OUTPUTDIR)/bin$(OUTPUT_SUBDIR)/java$(EXE_SUFFIX): $(BUILD_LAUNCHER_java)
 	$(MKDIR) -p $(@D)
@@ -282,7 +286,7 @@ ifeq ($(OPENJDK_TARGET_OS), windows)
   $(eval $(call SetupLauncher,javaw, \
       -DJAVAW -DEXPAND_CLASSPATH_WILDCARDS,,,user32.lib comctl32.lib, \
       $(JDK_OUTPUTDIR)/objs/jli_static.lib, $(JAVA_RC_FLAGS), \
-      $(JDK_TOPDIR)/src/windows/resource/java.rc,,true))
+      $(JAVA_VERSION_INFO_RESOURCE),,true))
   BASE_LAUNCHERS += $(JDK_OUTPUTDIR)/bin$(OUTPUT_SUBDIR)/javaw$(EXE_SUFFIX)
 endif
 
@@ -541,6 +545,12 @@ else
   UNPACK_MAPFILE = $(JDK_TOPDIR)/make/mapfiles/libunpack/mapfile-vers-unpack200
 endif
 
+ifeq ($(SHUFFLED), true)
+  UNPACK_MANIFEST := $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.runtime/windows/native/unpack200_proto.exe.manifest
+else
+  UNPACK_MANIFEST := $(JDK_TOPDIR)/src/windows/resource/unpack200_proto.exe.manifest
+endif
+
 $(eval $(call SetupNativeCompilation,BUILD_UNPACKEXE, \
     SRC := $(UNPACKEXE_SRC), \
     EXCLUDE_FILES := $(UNPACKEXE_EXFILES), \
@@ -570,7 +580,7 @@ $(eval $(call SetupNativeCompilation,BUILD_UNPACKEXE, \
         -D "JDK_INTERNAL_NAME=unpack200" \
         -D "JDK_FTYPE=0x1L", \
     DEBUG_SYMBOLS := $(UNPACKEXE_DEBUG_SYMBOLS), \
-    MANIFEST := $(JDK_TOPDIR)/src/windows/resource/unpack200_proto.exe.manifest))
+    MANIFEST := $(UNPACK_MANIFEST)))
 
 ifeq ($(OPENJDK_TARGET_OS), windows)
   EXE_OUT_OPTION := $(EXE_OUT_OPTION_save)

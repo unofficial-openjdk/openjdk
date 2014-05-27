@@ -55,7 +55,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBJAAS, \
     LDFLAGS_SUFFIX_windows := $(LDFLAGS_JDKLIB_SUFFIX), \
     LDFLAGS_SUFFIX_solaris := -lc, \
     EXCLUDE_FILES := $(LIBJAAS_EXCLUDE_FILES), \
-    VERSIONINFO_RESOURCE := $(JDK_TOPDIR)/src/windows/resource/version.rc, \
+    VERSIONINFO_RESOURCE := $(GLOBAL_VERSION_INFO_RESOURCE), \
     RC_FLAGS := $(RC_FLAGS) \
         -D "JDK_FNAME=$(LIBJAAS_NAME).dll" \
         -D "JDK_INTERNAL_NAME=$(LIBJAAS_NAME)" \
@@ -96,7 +96,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBJ2PCSC, \
     LDFLAGS_SUFFIX_posix := $(LIBDL), \
     LDFLAGS_SUFFIX_windows := winscard.lib, \
     LDFLAGS_SUFFIX_solaris := -lc, \
-    VERSIONINFO_RESOURCE := $(JDK_TOPDIR)/src/windows/resource/version.rc, \
+    VERSIONINFO_RESOURCE := $(GLOBAL_VERSION_INFO_RESOURCE), \
     RC_FLAGS := $(RC_FLAGS) \
         -D "JDK_FNAME=j2pcsc.dll" \
         -D "JDK_INTERNAL_NAME=j2pcsc" \
@@ -180,7 +180,7 @@ ifneq ($(BUILD_CRYPTO), no)
         LDFLAGS := $(LDFLAGS_JDKLIB) \
             $(call SET_SHARED_LIBRARY_ORIGIN), \
         LDFLAGS_SUFFIX := $(BUILD_LIBKRB5_LIBS), \
-        VERSIONINFO_RESOURCE := $(JDK_TOPDIR)/src/windows/resource/version.rc, \
+        VERSIONINFO_RESOURCE := $(GLOBAL_VERSION_INFO_RESOURCE), \
         RC_FLAGS := $(RC_FLAGS) \
             -D "JDK_FNAME=$(BUILD_LIBKRB5_NAME).dll" \
             -D "JDK_INTERNAL_NAME=$(BUILD_LIBKRB5_NAME)" \
@@ -213,7 +213,7 @@ ifeq ($(OPENJDK_TARGET_OS), windows)
       LDFLAGS := $(LDFLAGS_JDKLIB) $(LDFLAGS_CXX_JDK) \
           $(call SET_SHARED_LIBRARY_ORIGIN), \
       LDFLAGS_SUFFIX := Crypt32.Lib advapi32.lib, \
-      VERSIONINFO_RESOURCE := $(JDK_TOPDIR)/src/windows/resource/version.rc, \
+      VERSIONINFO_RESOURCE := $(GLOBAL_VERSION_INFO_RESOURCE), \
       RC_FLAGS := $(RC_FLAGS) \
           -D "JDK_FNAME=sunmscapi.dll" \
           -D "JDK_INTERNAL_NAME=sunmscapi" \
@@ -249,7 +249,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBJ2PKCS11, \
         $(call SET_SHARED_LIBRARY_ORIGIN), \
     LDFLAGS_SUFFIX_posix := $(LIBDL), \
     LDFLAGS_SUFFIX_solaris := -lc, \
-    VERSIONINFO_RESOURCE := $(JDK_TOPDIR)/src/windows/resource/version.rc, \
+    VERSIONINFO_RESOURCE := $(GLOBAL_VERSION_INFO_RESOURCE), \
     RC_FLAGS := $(RC_FLAGS) \
         -D "JDK_FNAME=j2pkcs11.dll" \
         -D "JDK_INTERNAL_NAME=j2pkcs11" \
@@ -299,7 +299,7 @@ ifeq ($(ENABLE_INTREE_EC), yes)
       LDFLAGS_SUFFIX := $(LIBCXX), \
       LDFLAGS_SUFFIX_linux := -lc, \
       LDFLAGS_SUFFIX_solaris := -lc, \
-      VERSIONINFO_RESOURCE := $(JDK_TOPDIR)/src/windows/resource/version.rc, \
+      VERSIONINFO_RESOURCE := $(GLOBAL_VERSION_INFO_RESOURCE), \
       RC_FLAGS := $(RC_FLAGS) \
           -D "JDK_FNAME=sunec.dll" \
           -D "JDK_INTERNAL_NAME=sunec" \
