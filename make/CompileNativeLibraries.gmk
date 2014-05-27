@@ -45,6 +45,13 @@ include Tools.gmk
 
 ifeq ($(SHUFFLED), true)
   GLOBAL_VERSION_INFO_RESOURCE := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/windows/common/version.rc
+  # Until the shuffle is permanent, we can't add this in configure
+  CFLAGS_JDKLIB := $(filter-out %javavm/export, $(CFLAGS_JDKLIB))
+  CFLAGS_JDKLIB += -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/include \
+      -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/$(OPENJDK_TARGET_OS_API_DIR)/native/include
+  CXXFLAGS_JDKLIB := $(filter-out %javavm/export, $(CXXFLAGS_JDKLIB))
+  CXXFLAGS_JDKLIB += -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/include \
+      -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/$(OPENJDK_TARGET_OS_API_DIR)/native/include
 else
   GLOBAL_VERSION_INFO_RESOURCE := $(JDK_TOPDIR)/src/windows/resource/version.rc
 

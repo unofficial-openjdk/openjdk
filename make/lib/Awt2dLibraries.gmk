@@ -1387,7 +1387,6 @@ ifndef BUILD_HEADLESS_ONLY
     LIBSPLASHSCREEN_DIRS := \
       $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/share/native/libjpeg \
       $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/share/native/libsplashscreen \
-      $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/share/native/libsplashscreen/libpng \
       #
   else
     LIBSPLASHSCREEN_DIRS := \
@@ -1410,8 +1409,13 @@ ifndef BUILD_HEADLESS_ONLY
   endif
 
   ifeq ($(USE_EXTERNAL_LIBPNG), false)
-    LIBSPLASHSCREEN_DIRS += $(JDK_TOPDIR)/src/share/native/sun/awt/libpng
-    LIBPNG_CFLAGS := -I$(JDK_TOPDIR)/src/share/native/sun/awt/libpng
+    ifeq ($(SHUFFLED), true)
+      LIBSPLASHSCREEN_DIRS += $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/share/native/libsplashscreen/libpng
+    else
+      LIBSPLASHSCREEN_DIRS += $(JDK_TOPDIR)/src/share/native/sun/awt/libpng
+    endif
+  else
+    LIBSPLASHSCREEN_EXCLUDES += libpng
   endif
 
   ifneq ($(OPENJDK_TARGET_OS), macosx)
@@ -1429,7 +1433,7 @@ ifndef BUILD_HEADLESS_ONLY
   endif
 
   LIBSPLASHSCREEN_CFLAGS += -DSPLASHSCREEN -DPNG_NO_MMX_CODE \
-      $(foreach dir, $(LIBSPLASHSCREEN_DIRS), -I$(dir)) \
+      $(addprefix -I, $(LIBSPLASHSCREEN_DIRS)) \
       $(addprefix -I, $(BUILD_LIBJAVA_SRC)) \
       #
 
@@ -1485,6 +1489,7 @@ ifndef BUILD_HEADLESS_ONLY
       OUTPUT_DIR := $(INSTALL_LIBRARIES_HERE), \
       SRC := $(LIBSPLASHSCREEN_DIRS), \
       EXCLUDE_FILES := imageioJPEG.c jpegdecoder.c pngtest.c, \
+      EXCLUDES := $(LIBSPLASHSCREEN_EXCLUDES), \
       LANG := C, \
       OPTIMIZATION := LOW, \
       CFLAGS := $(LIBSPLASHSCREEN_CFLAGS) $(CFLAGS_JDKLIB) \

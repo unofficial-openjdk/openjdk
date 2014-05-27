@@ -854,6 +854,11 @@ $(eval $(call SetupShuffleFiles,COPY_LIBMANAGEMENT_WINDOWS, \
     SRC := $(JDK_TOPDIR)/src/windows/native/sun/management, \
     DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.management/windows/native/libmanagement, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/windows/native/sun/management/*)))
+# Not sure if this is the best location for jmm.h
+$(eval $(call SetupShuffleFiles,COPY_LIBMANAGEMENT_INCLUDE, \
+    SRC := $(JDK_TOPDIR)/src/share/javavm/export, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.management/share/native/include, \
+    FILES := $(JDK_TOPDIR)/src/share/javavm/export/jmm.h))
 
 # mlib_image/mlib_image_v
 $(eval $(call SetupShuffleFiles,COPY_LIBMLIB_IMAGE_SHARE, \

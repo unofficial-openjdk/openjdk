@@ -339,7 +339,11 @@ endif
 
 ##########################################################################################
 
-HPROF_SRC := $(JDK_TOPDIR)/src/share/demo/jvmti/hprof/jvm.hprof.txt
+ifeq ($(SHUFFLED), true)
+  HPROF_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/demo/share/jvmti/hprof/jvm.hprof.txt
+else
+  HPROF_SRC := $(JDK_TOPDIR)/src/share/demo/jvmti/hprof/jvm.hprof.txt
+endif
 
 $(LIBDIR)/jvm.hprof.txt: $(HPROF_SRC)
 	$(call install-file)

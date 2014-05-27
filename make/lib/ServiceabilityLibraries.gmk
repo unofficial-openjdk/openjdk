@@ -338,14 +338,15 @@ INSTRUMENT_LIBRARIES += $(BUILD_LIBINSTRUMENT)
 ifeq ($(SHUFFLED), true)
   BUILD_LIBMANAGEMENT_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.management/share/native/libmanagement \
       $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.management/$(OPENJDK_TARGET_OS_API_DIR)/native/libmanagement
+  BUILD_LIBMANAGEMENT_CFLAGS := -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.management/share/native/include
 else
-BUILD_LIBMANAGEMENT_SRC := $(JDK_TOPDIR)/src/share/native/sun/management \
-    $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/sun/management
+  BUILD_LIBMANAGEMENT_SRC := $(JDK_TOPDIR)/src/share/native/sun/management \
+      $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/sun/management
 endif
 
 BUILD_LIBMANAGEMENT_EXCLUDES :=
 
-BUILD_LIBMANAGEMENT_CFLAGS := $(addprefix -I,$(BUILD_LIBMANAGEMENT_SRC)) \
+BUILD_LIBMANAGEMENT_CFLAGS += $(addprefix -I,$(BUILD_LIBMANAGEMENT_SRC)) \
     -I$(JDK_OUTPUTDIR)/gensrc_headers/java.management \
     $(addprefix -I, $(BUILD_LIBJAVA_SRC)) \
     #
