@@ -70,6 +70,7 @@ ifeq ($(SHUFFLED), true)
   JDK_LOCALEDATA_SUBDIR := /jdk.localedata
   JDK_RMIC_SUBDIR := /jdk.rmic
   JDK_RUNTIME_SUBDIR := /jdk.runtime
+  JDK_SNMP_SUBDIR := /jdk.snmp
 
   LDFLAGS_JDKLIB := $(subst $(OUTPUT_ROOT),$(OUTPUT_ROOT)/jigsaw,$(LDFLAGS_JDKLIB))
 

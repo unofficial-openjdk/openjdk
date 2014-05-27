@@ -336,6 +336,10 @@ ifdef OPENJDK
       #
 endif
 
+ifeq ($(RMICONNECTOR_IIOP), false)
+  java.management_EXCLUDES += com/sun/jmx/remote/protocol/iiop
+endif
+
 ################################################################################
 
 java.rmi_CLEAN_FILES := $(wildcard \
