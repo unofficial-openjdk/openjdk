@@ -35,7 +35,7 @@ include Setup.gmk
 
 # Prepare the find cache.
 ifeq ($(SHUFFLED), true)
-  $(eval $(call FillCacheFind, $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/launchers))
+  $(eval $(call FillCacheFind, $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/launcher))
 else
   $(eval $(call FillCacheFind, $(JDK_TOPDIR)/src/share/bin))
 endif
@@ -89,14 +89,14 @@ ifneq ($(findstring $(OPENJDK_TARGET_OS), linux solaris), )
 endif
 
 ifeq ($(SHUFFLED), true)
-  LAUNCHER_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/launchers
-  LAUNCHER_CFLAGS := -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/launchers \
+  LAUNCHER_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/launcher
+  LAUNCHER_CFLAGS := -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/launcher \
       -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/libjli \
       -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/$(OPENJDK_TARGET_OS_API_DIR)/native/libjli \
       -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/$(OPENJDK_TARGET_OS)/native/libjli \
       #
-  GLOBAL_VERSION_INFO_RESOURCE := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/windows/common/version.rc
-  JAVA_VERSION_INFO_RESOURCE := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/windows/launchers/version.rc
+  GLOBAL_VERSION_INFO_RESOURCE := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/windows/native/common/version.rc
+  JAVA_VERSION_INFO_RESOURCE := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/windows/native/launcher/java.rc
   # Until the shuffle is permanent, we can't add this in configure
   CFLAGS_JDKEXE := $(filter-out %javavm/export, $(CFLAGS_JDKEXE))
   CFLAGS_JDKEXE += -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/include \
@@ -107,7 +107,7 @@ else
       -I$(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/bin \
       -I$(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS)/bin \
       #
-  GLOBAL_VERSION_INFO_RESOURCE := 
+  GLOBAL_VERSION_INFO_RESOURCE := $(JDK_TOPDIR)/src/windows/resource/version.rc
   JAVA_VERSION_INFO_RESOURCE := $(JDK_TOPDIR)/src/windows/resource/java.rc
 endif
 
@@ -132,7 +132,7 @@ define SetupLauncher
   ifneq ($6, )
     $1_WINDOWS_JLI_LIB := $6
   endif
-  $1_VERSION_INFO_RESOURCE := $(JDK_TOPDIR)/src/windows/resource/version.rc
+  $1_VERSION_INFO_RESOURCE := $(GLOBAL_VERSION_INFO_RESOURCE)
   ifneq ($8, )
     $1_VERSION_INFO_RESOURCE := $8
   endif
@@ -264,10 +264,19 @@ ifeq ($(OPENJDK_TARGET_OS), macosx)
   XLIBS :=
 endif
 
-ifdef OPENJDK
-  JAVA_RC_FLAGS += -i "$(JDK_TOPDIR)/src/windows/resource/icons"
+ifeq ($(SHUFFLED), true)
+  JAVA_RC_FLAGS += -i $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/windows/native/common
+  ifdef OPENJDK
+    JAVA_RC_FLAGS += -i "$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/windows/native/launcher/icons"
+  else
+    JAVA_RC_FLAGS += -i "$(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/java.base/windows/native/launcher/icons"
+  endif
 else
-  JAVA_RC_FLAGS += -i "$(JDK_TOPDIR)/src/closed/windows/native/sun/windows"
+  ifdef OPENJDK
+    JAVA_RC_FLAGS += -i "$(JDK_TOPDIR)/src/windows/resource/icons"
+  else
+    JAVA_RC_FLAGS += -i "$(JDK_TOPDIR)/src/closed/windows/native/sun/windows"
+  endif
 endif
 
 # On windows, the debuginfo files get the same name as for java.dll. Build
@@ -550,7 +559,7 @@ else
 endif
 
 ifeq ($(SHUFFLED), true)
-  UNPACK_MANIFEST := $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.runtime/windows/native/unpack200_proto.exe.manifest
+  UNPACK_MANIFEST := $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.runtime/windows/native/unpack200/unpack200_proto.exe.manifest
 else
   UNPACK_MANIFEST := $(JDK_TOPDIR)/src/windows/resource/unpack200_proto.exe.manifest
 endif
@@ -578,7 +587,7 @@ $(eval $(call SetupNativeCompilation,BUILD_UNPACKEXE, \
     OBJECT_DIR := $(JDK_OUTPUTDIR)/objs/unpackexe$(OUTPUT_SUBDIR), \
     OUTPUT_DIR := $(JDK_OUTPUTDIR)/objs/unpackexe$(OUTPUT_SUBDIR), \
     PROGRAM := unpack200, \
-    VERSIONINFO_RESOURCE := $(JDK_TOPDIR)/src/windows/resource/version.rc, \
+    VERSIONINFO_RESOURCE := $(GLOBAL_VERSION_INFO_RESOURCE), \
     RC_FLAGS := $(RC_FLAGS) \
         -D "JDK_FNAME=unpack200.exe" \
         -D "JDK_INTERNAL_NAME=unpack200" \
@@ -640,13 +649,13 @@ ifeq ($(BUILD_JEXEC), 1)
   ifeq ($(OPENJDK_TARGET_OS), windows)
   else ifeq ($(OPENJDK_TARGET_OS), macosx)
     ifeq ($(SHUFFLED), true)
-      BUILD_JEXEC_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/macosx/native/launchers
+      BUILD_JEXEC_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/macosx/native/launcher
     else
       BUILD_JEXEC_SRC := $(JDK_TOPDIR)/src/macosx/bin
     endif
   else
     ifeq ($(SHUFFLED), true)
-      BUILD_JEXEC_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/unix/native/launchers
+      BUILD_JEXEC_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/unix/native/launcher
     else
       BUILD_JEXEC_SRC := $(JDK_TOPDIR)/src/solaris/bin
     endif
@@ -791,12 +800,12 @@ ifndef OPENJDK
         OUTPUT_DIR := $(JDK_OUTPUTDIR)/bin, \
         PROGRAM := jabswitch, \
         DEBUG_SYMBOLS := true, \
-        VERSIONINFO_RESOURCE := $(JDK_TOPDIR)/src/closed/windows/native/sun/bridge/AccessBridgeStatusWindow.rc, \
+        VERSIONINFO_RESOURCE := $(JABSWITCH_SRC)/jabswitch_manifest.rc, \
         RC_FLAGS := $(RC_FLAGS) \
             -D "JDK_FNAME=jabswitch.exe" \
             -D "JDK_INTERNAL_NAME=jabswitch" \
             -D "JDK_FTYPE=0x01L", \
-        MANIFEST := $(JDK_TOPDIR)/src/closed/windows/native/sun/bridge/jabswitch.manifest))
+        MANIFEST := $(JABSWITCH_SRC)/jabswitch.manifest))
 
     BUILD_LAUNCHERS += $(BUILD_JABSWITCH)
     DESKTOP_LAUNCHERS += $(BUILD_JABSWITCH)

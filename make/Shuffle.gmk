@@ -1256,18 +1256,18 @@ $(eval $(call SetupShuffleFiles,COPY_LIBJSOUND_MACOSX, \
 # launchers
 $(eval $(call SetupShuffleFiles,COPY_LAUNCHERS_SHARE, \
     SRC := $(JDK_TOPDIR)/src/share/bin, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.base/share/native/launchers, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.base/share/native/launcher, \
     FILES := $(JDK_TOPDIR)/src/share/bin/main.c \
         $(JDK_TOPDIR)/src/share/bin/defines.h))
 
 $(eval $(call SetupShuffleFiles,COPY_LAUNCHERS_SOLARIS, \
     SRC := $(JDK_TOPDIR)/src/solaris/bin, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.base/unix/native/launchers, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.base/unix/native/launcher, \
     FILES := $(JDK_TOPDIR)/src/solaris/bin/jexec.c))
 
 $(eval $(call SetupShuffleFiles,COPY_LAUNCHERS_MACOSX, \
     SRC := $(JDK_TOPDIR)/src/macosx/bin, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.base/macosx/native/launchers, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.base/macosx/native/launcher, \
     FILES := $(JDK_TOPDIR)/src/macosx/bin/jexec.c))
 
 # jspawnhelper
@@ -1284,7 +1284,7 @@ $(eval $(call SetupShuffleFiles,COPY_VERSION_INFO_WINDOWS, \
 
 $(eval $(call SetupShuffleFiles,COPY_LAUNCHER_RESOURCES_WINDOWS, \
     SRC := $(JDK_TOPDIR)/src/windows/resource, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.base/windows/native/launchers, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.base/windows/native/launcher, \
     FILES := $(JDK_TOPDIR)/src/windows/resource/java.rc \
         $(JDK_TOPDIR)/src/windows/resource/icons/awt.ico \
         $(JDK_TOPDIR)/src/windows/resource/java.manifest))
