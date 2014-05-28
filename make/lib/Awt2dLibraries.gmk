@@ -184,7 +184,7 @@ ifeq ($(SHUFFLED), true)
   LIBAWT_CFLAGS += -I$(JDK_OUTPUTDIR)/gensrc_headers/java.desktop \
       $(addprefix -I, $(shell find $(LIBAWT_DIRS) -type d)) \
       -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/$(OPENJDK_TARGET_OS_API_DIR)/native/common/sun/awt \
-      $(addprefix -I, $(BUILD_LIBJAVA_SRC) $(BUILD_LIBMLIB_IMAGE_SRC))
+      $(addprefix -I, $(BUILD_LIBJAVA_SRC) $(BUILD_LIBMLIB_IMAGE_SRC)) \
       #
 else
   LIBAWT_DIRS := \
@@ -403,6 +403,7 @@ ifeq ($(OPENJDK_TARGET_OS), windows)
     LIBAWT_CFLAGS += -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/share/native/common/sun/font \
         -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/share/native/common/sun/java2d/opengl \
         -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/$(OPENJDK_TARGET_OS_API_DIR)/native/common/sun/java2d/opengl \
+        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/windows/native/include \
         -I$(JDK_OUTPUTDIR)/gensrc_headers/java.base \
         #
     LIBAWT_EXFILES += \
@@ -474,12 +475,21 @@ ifeq ($(OPENJDK_TARGET_OS), windows)
     LIBAWT_CFLAGS += -DMLIB_OS64BIT
   endif
 
-  ifdef OPENJDK
-    LIBAWT_RC_FLAGS := -i "$(JDK_TOPDIR)/src/windows/resource/icons"
+  ifeq ($(SHUFFLED), true)
+    ifdef OPENJDK
+      LIBAWT_RC_FLAGS := -i "$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/windows/native/launcher/icons"
+    else
+      LIBAWT_RC_FLAGS := -i "$(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/java.base/windows/native/launcher/icons"
+    endif
+    LIBAWT_VERSIONINFO_RESOURCE := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/windows/native/libawt/sun/windows/awt.rc
   else
-    LIBAWT_RC_FLAGS := -i "$(JDK_TOPDIR)/src/closed/windows/native/sun/windows"
+    ifdef OPENJDK
+      LIBAWT_RC_FLAGS := -i "$(JDK_TOPDIR)/src/windows/resource/icons"
+    else
+      LIBAWT_RC_FLAGS := -i "$(JDK_TOPDIR)/src/closed/windows/native/sun/windows"
+    endif
+    LIBAWT_VERSIONINFO_RESOURCE := $(JDK_TOPDIR)/src/windows/native/sun/windows/awt.rc
   endif
-  LIBAWT_VERSIONINFO_RESOURCE := $(JDK_TOPDIR)/src/windows/native/sun/windows/awt.rc
 endif
 
 ifeq ($(MILESTONE), internal)
@@ -1017,6 +1027,7 @@ ifeq ($(OPENJDK_TARGET_OS), windows)
         -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/share/native/libawt/sun/awt/image/cvutils \
         -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/$(OPENJDK_TARGET_OS_API_DIR)/native/libawt/sun/java2d/windows \
         -I$(JDK_OUTPUTDIR)/gensrc_headers/java.desktop \
+        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/windows/native/include \
         $(addprefix -I, $(BUILD_LIBJAVA_SRC)) \
         #
   else
@@ -1150,6 +1161,7 @@ ifndef OPENJDK
         -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/$(OPENJDK_TARGET_OS_API_DIR)/native/libjava \
         -I$(JDK_OUTPUTDIR)/gensrc_headers/java.desktop \
         #
+    LIBKCMS_VERSIONINFO_RESOURCE := $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/java.desktop/windows/native/libkcms/cmm.rc
   else
     LIBKCMS_SRC := $(JDK_TOPDIR)/src/closed/share/native/sun/java2d/cmm/kcms
 
@@ -1159,6 +1171,7 @@ ifndef OPENJDK
     else
       BUILD_LIBKCMS_EXCLUDE_FILES += cmmdll.c registry.c spxffile.c sysinfo.c winmem.c wkcpmgr.c
     endif
+    LIBKCMS_VERSIONINFO_RESOURCE := $(JDK_TOPDIR)/src/closed/share/native/sun/java2d/cmm/kcms/cmm.rc
   endif
 
   LIBKCMS_CFLAGS += $(CFLAGS_JDKLIB)
@@ -1188,8 +1201,7 @@ ifndef OPENJDK
       LDFLAGS_SUFFIX_solaris := -lc, \
       LDFLAGS_SUFFIX_windows := $(WIN_JAVA_LIB) advapi32.lib user32.lib version.lib, \
       LDFLAGS_SUFFIX_posix := -lm -ljava -ljvm, \
-      VERSIONINFO_RESOURCE := $(JDK_TOPDIR)/src/closed/share/native/sun/java2d/cmm/kcms/cmm.rc, \
-      VERSIONINFO_RESOURCE := $(JDK_TOPDIR)/src/closed/share/native/sun/java2d/cmm/kcms/cmm.rc, \
+      VERSIONINFO_RESOURCE := $(LIBKCMS_VERSIONINFO_RESOURCE), \
       RC_FLAGS := $(RC_FLAGS) \
           -D "JDK_FNAME=kcms.dll" \
           -D "JDK_INTERNAL_NAME=kcms" \

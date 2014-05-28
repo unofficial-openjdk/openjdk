@@ -97,10 +97,7 @@ ifeq ($(SHUFFLED), true)
       #
   GLOBAL_VERSION_INFO_RESOURCE := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/windows/native/common/version.rc
   JAVA_VERSION_INFO_RESOURCE := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/windows/native/launcher/java.rc
-  # Until the shuffle is permanent, we can't add this in configure
-  CFLAGS_JDKEXE := $(filter-out %javavm/export, $(CFLAGS_JDKEXE))
-  CFLAGS_JDKEXE += -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/include \
-      -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/$(OPENJDK_TARGET_OS_API_DIR)/native/include
+  JAVA_MANIFEST := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/windows/native/launcher/java.manifest
 else
   LAUNCHER_SRC := $(JDK_TOPDIR)/src/share/bin
   LAUNCHER_CFLAGS := -I$(JDK_TOPDIR)/src/share/bin \
@@ -109,6 +106,7 @@ else
       #
   GLOBAL_VERSION_INFO_RESOURCE := $(JDK_TOPDIR)/src/windows/resource/version.rc
   JAVA_VERSION_INFO_RESOURCE := $(JDK_TOPDIR)/src/windows/resource/java.rc
+  JAVA_MANIFEST := $(JDK_TOPDIR)/src/windows/resource/java.manifest
 endif
 
 define SetupLauncher
@@ -237,7 +235,7 @@ define SetupLauncher
           -D "JDK_INTERNAL_NAME=$1" \
           -D "JDK_FTYPE=0x1L" \
           $7, \
-      MANIFEST := $(JDK_TOPDIR)/src/windows/resource/java.manifest, \
+      MANIFEST := $(JAVA_MANIFEST), \
       CODESIGN := $$($1_CODESIGN))
 
   BUILD_LAUNCHERS += $$(BUILD_LAUNCHER_$1)
@@ -783,8 +781,10 @@ ifndef OPENJDK
 
     ifeq ($(SHUFFLED), true)
       JABSWITCH_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/java.desktop/windows/native/jabswitch
+      ACCESSBRIDGE_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/java.desktop/windows/native/libaccessbridge
     else
       JABSWITCH_SRC := $(JDK_TOPDIR)/src/closed/windows/native/sun/bridge
+      ACCESSBRIDGE_SRC := $(JABSWITCH_SRC)
     endif
 
     $(eval $(call SetupNativeCompilation,BUILD_JABSWITCH, \
@@ -800,7 +800,7 @@ ifndef OPENJDK
         OUTPUT_DIR := $(JDK_OUTPUTDIR)/bin, \
         PROGRAM := jabswitch, \
         DEBUG_SYMBOLS := true, \
-        VERSIONINFO_RESOURCE := $(JABSWITCH_SRC)/jabswitch_manifest.rc, \
+        VERSIONINFO_RESOURCE := $(ACCESSBRIDGE_SRC)/AccessBridgeStatusWindow.RC, \
         RC_FLAGS := $(RC_FLAGS) \
             -D "JDK_FNAME=jabswitch.exe" \
             -D "JDK_INTERNAL_NAME=jabswitch" \

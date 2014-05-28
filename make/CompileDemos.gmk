@@ -50,11 +50,13 @@ ifeq ($(SHUFFLED), true)
   DEMO_CLOSED_SHARE_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/demo/share
   DEMO_SOLARIS_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/demo/solaris
   DEMO_OS_API_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/demo/$(OPENJDK_TARGET_OS_API_DIR)
+  VERSION_INFO_RESOURCE := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/windows/native/common/version.rc
 else
   DEMO_SHARE_SRC := $(JDK_TOPDIR)/src/share/demo
   DEMO_CLOSED_SHARE_SRC := $(JDK_TOPDIR)/src/closed/share/demo
   DEMO_SOLARIS_SRC := $(JDK_TOPDIR)/src/solaris/demo
   DEMO_OS_API_SRC := $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/demo
+  VERSION_INFO_RESOURCE := $(JDK_TOPDIR)/src/windows/resource/version.rc
 endif
 
 ##################################################################################################
@@ -280,7 +282,7 @@ define SetupJVMTIDemo
       LDFLAGS_SUFFIX_windows := $6, \
       LDFLAGS_SUFFIX_solaris := $7 -lc, \
       LDFLAGS_SUFFIX_linux := $8, \
-      VERSIONINFO_RESOURCE := $(JDK_TOPDIR)/src/windows/resource/version.rc, \
+      VERSIONINFO_RESOURCE := $(VERSION_INFO_RESOURCE), \
       RC_FLAGS := $$(RC_FLAGS) \
           -D "JDK_FNAME=$1.dll" \
           -D "JDK_INTERNAL_NAME=$1" \
@@ -361,17 +363,38 @@ $(eval $(call SetupJVMTIDemo,versionCheck, agent_util))
 
 ##################################################################################################
 
-# The jpda demo (com/sun/tools/example) is oddly enough stored in src/share/classes.
-# At least, we do not need to compile the jpda demo, just jar/zip up the sources.
-JPDA_SOURCES := $(call CacheFind, $(JDK_TOPDIR)/src/share/classes/com/sun/tools/example)
-# The number of files are few enough so that we can use echo safely below to list them.
-JPDA_FILES := $(subst $(JDK_TOPDIR)/src/share/classes/,,$(JPDA_SOURCES))
+ifeq ($(SHUFFLED), true)
 
-$(JDK_OUTPUTDIR)/demo/jpda/src.zip: $(JPDA_SOURCES)
+  $(JDK_OUTPUTDIR)/demo/jpda/com/sun/tools/example/README: \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/demo/share/jpda/com/sun/tools/example/README
+		$(call install-file)
+		$(CHMOD) -f ug+w $@
+
+  $(eval $(call SetupArchive,JPDA_JAR, \
+      $(JDK_OUTPUTDIR)/demo/jpda/com/sun/tools/example/README, \
+      SRCS := $(JDK_TOPDIR)/$(SRC_SUBDIR)/demo/share/jpda \
+          $(JDK_OUTPUTDIR)/demo/jpda/com/sun/tools/example, \
+      SUFFIXES := .java .html .jj README, \
+      JAR := $(JDK_OUTPUTDIR)/demo/jpda/examples.jar))
+
+  $(eval $(call SetupZipArchive,JPDA_ZIP, \
+      SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/demo/share/jpda, \
+      SUFFIXES := .java .html .jj, \
+      ZIP := $(JDK_OUTPUTDIR)/demo/jpda/src.zip))
+
+  BUILD_DEMOS += $(JPDA_JAR) $(JPDA_ZIP)
+else
+  # The jpda demo (com/sun/tools/example) is oddly enough stored in src/share/classes.
+  # At least, we do not need to compile the jpda demo, just jar/zip up the sources.
+  JPDA_SOURCES := $(call CacheFind, $(JDK_TOPDIR)/src/share/classes/com/sun/tools/example)
+  # The number of files are few enough so that we can use echo safely below to list them.
+  JPDA_FILES := $(subst $(JDK_TOPDIR)/src/share/classes/,,$(JPDA_SOURCES))
+
+  $(JDK_OUTPUTDIR)/demo/jpda/src.zip: $(JPDA_SOURCES)
 	$(MKDIR) -p $(@D)
 	(cd $(JDK_TOPDIR)/src/share/classes && $(ZIP) -qru $@ com -i "com/sun/tools/example/*")
 
-$(JDK_OUTPUTDIR)/demo/jpda/examples.jar: $(JPDA_SOURCES)
+  $(JDK_OUTPUTDIR)/demo/jpda/examples.jar: $(JPDA_SOURCES)
 	$(MKDIR) -p $(@D)
 	$(RM) $(@D)/_the.sources
 	$(call ListPathsSafely,JPDA_FILES,\n, >> $(@D)/_the.sources)
@@ -381,12 +404,14 @@ $(JDK_OUTPUTDIR)/demo/jpda/examples.jar: $(JPDA_SOURCES)
 	(cd $(JDK_TOPDIR)/src/share/classes && $(JAR) cfm $@ $(@D)/_the.manifest @$(@D)/_the.sources)
 	(cd $(JDK_TOPDIR)/src/share/classes/com/sun/tools/example && $(JAR) uf $@ README)
 
-$(JDK_OUTPUTDIR)/demo/jpda/com/sun/tools/example/README: $(JDK_TOPDIR)/src/share/classes/com/sun/tools/example/README
+  $(JDK_OUTPUTDIR)/demo/jpda/com/sun/tools/example/README: $(JDK_TOPDIR)/src/share/classes/com/sun/tools/example/README
 	$(call install-file)
 	$(CHMOD) -f ug+w $@
 
-BUILD_DEMOS += $(JDK_OUTPUTDIR)/demo/jpda/src.zip $(JDK_OUTPUTDIR)/demo/jpda/examples.jar \
-    $(JDK_OUTPUTDIR)/demo/jpda/com/sun/tools/example/README
+  BUILD_DEMOS += $(JDK_OUTPUTDIR)/demo/jpda/src.zip $(JDK_OUTPUTDIR)/demo/jpda/examples.jar \
+      $(JDK_OUTPUTDIR)/demo/jpda/com/sun/tools/example/README
+
+endif
 
 ##################################################################################################
 
@@ -485,7 +510,12 @@ endif
 ##################################################################################################
 
 ifndef OPENJDK
-  DB_DEMO_ZIPFILE := $(wildcard $(JDK_TOPDIR)/src/closed/share/db/*.zip)
+  ifeq ($(SHUFFLED), true)
+    DB_ZIP_DIR := $(wildcard $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/db)
+  else
+    DB_ZIP_DIR := $(wildcard $(JDK_TOPDIR)/src/closed/share/db)
+  endif
+  DB_DEMO_ZIPFILE := $(wildcard $(DB_ZIP_DIR)/*.zip)
 
   $(JDK_OUTPUTDIR)/demo/_the.db.unzipped: $(DB_DEMO_ZIPFILE)
 	$(MKDIR) -p $(@D)
@@ -497,10 +527,10 @@ ifndef OPENJDK
 
   # Copy this after the unzip above to avoid race with directory creation and mv command.
   $(JDK_OUTPUTDIR)/demo/db/README-JDK-DEMOS.html: \
-      $(JDK_TOPDIR)/src/closed/share/db/README-JDK-DEMOS.html \
+      $(DB_ZIP_DIR)/README-JDK-DEMOS.html \
       | $(JDK_OUTPUTDIR)/demo/_the.db.unzipped
 	$(MKDIR) -p $(@D)
-	$(CAT) $< | $(SED) "s/XXXX/$(shell cat $(JDK_TOPDIR)/src/closed/share/db/COPYRIGHTYEAR)/" > $@
+	$(CAT) $< | $(SED) "s/XXXX/$(shell cat $(DB_ZIP_DIR)/COPYRIGHTYEAR)/" > $@
 
   BUILD_DEMOS += $(JDK_OUTPUTDIR)/demo/_the.db.unzipped $(JDK_OUTPUTDIR)/demo/db/README-JDK-DEMOS.html
 endif

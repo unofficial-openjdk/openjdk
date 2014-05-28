@@ -1809,6 +1809,13 @@ $(eval $(call SetupShuffleFiles,COPY_SAMPLES_SOLARIS, \
     DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/sample/solaris, \
     FILES := $(shell $(FIND) $(JDK_TOPDIR)/src/solaris/sample -type f)))
 
+# Shuffle jpda demo to demos dir
+$(eval $(call SetupShuffleFiles,COPY_DEMOS_JPDA, \
+    SRC := $(JDK_TOPDIR)/src/share/classes, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/demo/share/jpda, \
+    FILES := $(shell $(FIND) $(JDK_TOPDIR)/src/share/classes/com/sun/tools/example \
+        -type f)))
+
 ################################################################################
 
 shuffle-src: $(SHUFFLE_SRC_TARGETS) $(SRC_TARGET_FILES) $(MODULE_INFO_TARGETS)
