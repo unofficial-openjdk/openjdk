@@ -88,6 +88,20 @@ ifeq ($(SHUFFLED), true)
     OPENJDK_TARGET_OS_API_DIR := unix
     OPENJDK_TARGET_OS_EXPORT_DIR := unix
   endif
+
+  # Until the shuffle is permanent, we can't add this in configure
+  CFLAGS_JDKLIB := $(filter-out %javavm/export, $(CFLAGS_JDKLIB))
+  CFLAGS_JDKLIB += -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/include \
+      -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/$(OPENJDK_TARGET_OS_API_DIR)/native/include
+  CXXFLAGS_JDKLIB := $(filter-out %javavm/export, $(CXXFLAGS_JDKLIB))
+  CXXFLAGS_JDKLIB += -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/include \
+      -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/$(OPENJDK_TARGET_OS_API_DIR)/native/include
+  CFLAGS_JDKEXE := $(filter-out %javavm/export, $(CFLAGS_JDKEXE))
+  CFLAGS_JDKEXE += -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/include \
+      -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/$(OPENJDK_TARGET_OS_API_DIR)/native/include
+  CXXFLAGS_JDKEXE := $(filter-out %javavm/export, $(CXXFLAGS_JDKEXE))
+  CXXFLAGS_JDKEXE += -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/include \
+      -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/$(OPENJDK_TARGET_OS_API_DIR)/native/include
 else
   MODULES_WILDCARD :=
   MODULES_SUBDIR := classes
