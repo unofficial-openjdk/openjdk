@@ -28,7 +28,7 @@
 #include "runtime/os.hpp"
 #include "runtime/threadLocalStorage.hpp"
 
-#include <asm-sparc/traps.h>
+#include <asm/traps.h>
 
 void MacroAssembler::read_ccr_trap(Register ccr_save) {
   // No implementation
