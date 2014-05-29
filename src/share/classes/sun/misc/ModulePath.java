@@ -269,7 +269,7 @@ public class ModulePath extends ModuleLibrary {
 
             List<String> packages =
                 jf.stream()
-                  .filter(e -> entry.getName().endsWith(".class"))
+                  .filter(e -> e.getName().endsWith(".class"))
                   .map(e -> toPackageName(e))
                   .filter(pkg -> pkg.length() > 0)   // module-info
                   .distinct()
