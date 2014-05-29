@@ -1078,13 +1078,18 @@ else # OPENJDK_TARGET_OS not windows
   ifeq ($(SHUFFLED), true)
     ifeq ($(OPENJDK_TARGET_OS), macosx)
       LIBJAWT_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/macosx/native/libjawt
+      LIBJAWT_CFLAGS := \
+        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/$(OPENJDK_TARGET_OS_API_DIR)/native/common/sun/awt \
+        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/macosx/native/include \
+        $(addprefix -I, $(BUILD_LIBJAVA_SRC)) \
+        #
     else
       LIBJAWT_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/$(OPENJDK_TARGET_OS_API_DIR)/native/libjawt
-    endif
-    LIBJAWT_CFLAGS := \
+      LIBJAWT_CFLAGS := \
         -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/$(OPENJDK_TARGET_OS_API_DIR)/native/common/sun/awt \
         $(addprefix -I, $(BUILD_LIBJAVA_SRC)) \
         #
+    endif
   else
     LIBJAWT_SRC := $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/sun/awt \
           $(JDK_TOPDIR)/src/macosx/native/sun/awt
@@ -1586,6 +1591,7 @@ ifeq ($(OPENJDK_TARGET_OS), macosx)
 
   ifeq ($(SHUFFLED), true)
     LIBAWT_LWAWT_DIRS := \
+        $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/macosx/native/include \
         $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/macosx/native/libawt_lwawt \
         $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/unix/native/common/sun/awt \
         $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/share/native/common/sun/font \
