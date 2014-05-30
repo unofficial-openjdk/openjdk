@@ -48,12 +48,14 @@ public final class NSEvent {
 
     // Key event information
     private short keyCode;
+    private String characters;
     private String charactersIgnoringModifiers;
 
-    public NSEvent(int type, int modifierFlags, short keyCode, String charactersIgnoringModifiers) {
+    public NSEvent(int type, int modifierFlags, short keyCode, String characters, String charactersIgnoringModifiers) {
         this.type = type;
         this.modifierFlags = modifierFlags;
         this.keyCode = keyCode;
+        this.characters = characters;
         this.charactersIgnoringModifiers = charactersIgnoringModifiers;
     }
 
@@ -120,12 +122,16 @@ public final class NSEvent {
         return charactersIgnoringModifiers;
     }
 
+    public String getCharacters() {
+        return characters;
+    }
+
     @Override
     public String toString() {
         return "NSEvent[" + getType() + " ," + getModifierFlags() + " ,"
                 + getClickCount() + " ," + getButtonNumber() + " ," + getX() + " ,"
                 + getY() + " ," + getAbsX() + " ," + getAbsY()+ " ," + getKeyCode() + " ,"
-                + getCharactersIgnoringModifiers() + "]";
+                + getCharacters() + " ," + getCharactersIgnoringModifiers() + "]";
     }
 
     /*
