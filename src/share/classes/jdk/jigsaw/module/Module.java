@@ -168,17 +168,18 @@ public final class Module
         public Builder id(ModuleId id) {
             if (this.id != null)
                 throw new IllegalStateException("id already set");
-            this.id = id;
+            this.id = requireNonNull(id);
             return this;
         }
 
         public Builder id(String id) {
-            return id(ModuleId.parse(id, null));
+            return id(ModuleId.parse(id));
         }
 
-        // ## chegar: should we disallow the <unnamed> package, <empty string>?
         public Builder include(String p) {
-            packages.add(requireNonNull(p));
+            if (p.isEmpty())
+                throw new IllegalArgumentException("<unnamed> package not allowed");
+            packages.add(p);
             return this;
         }
 

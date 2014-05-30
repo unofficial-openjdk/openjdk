@@ -213,13 +213,19 @@ public final class ModuleInfo {
 
     /**
      * Creates a {@code Module} from the information in the module-info file
-     * and the given set of packages (the module content).
+     * and the given set of packages (the module content). The module's
+     * {@code id} is the given identifier and typically comes from the
+     * extended module descriptor. If there is no extended module descriptor
+     * then it is the simple module name.
      */
-    public Module makeModule(Iterable<String> packages) {
-        Module.Builder builder = new Module.Builder();
+    public Module makeModule(String id, Iterable<String> packages) {
+        // the name in the module identifier must match the module name
+        ModuleId mid = ModuleId.parse(id);
+        if (!mid.name().equals(name))
+            throw new IllegalArgumentException(id + ": name does not match " + name);
 
-        // from module-info
-        builder.id(name);
+        Module.Builder builder = new Module.Builder();
+        builder.id(mid);
         moduleDependences.forEach(builder::requires);
         if (serviceDependences != null)
             serviceDependences.forEach(builder::requires);

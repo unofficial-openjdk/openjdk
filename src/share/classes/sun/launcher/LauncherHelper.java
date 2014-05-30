@@ -836,7 +836,7 @@ public enum LauncherHelper {
         Module[] mods = readModules();
         Arrays.sort(mods);
         for (Module m: mods) {
-            ostream.println(m.id().name());
+            ostream.println(m.id());
             if (verbose) {
                 for (ModuleDependence d: m.moduleDependences()) {
                     ostream.format("  %s%n", d);

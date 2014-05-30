@@ -23,9 +23,11 @@
  * questions.
  */
 
-package sun.misc;
+package jdk.jigsaw.module;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.InputStreamReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
@@ -48,9 +50,7 @@ import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-import jdk.jigsaw.module.Module;
-import jdk.jigsaw.module.ModuleInfo;
-import jdk.jigsaw.module.ModuleLibrary;
+import sun.misc.JModCache;
 
 /**
  * A module path implementation of {@code ModuleLibrary}. A module path
@@ -63,6 +63,9 @@ import jdk.jigsaw.module.ModuleLibrary;
 
 public class ModulePath extends ModuleLibrary {
     private static final String MODULE_INFO = "module-info.class";
+
+    // extended module descriptor
+    private static final String EXT_MODULE_DESCRIPTOR = "module/name";
 
     // the directories on this module path
     private final String[] dirs;
@@ -203,19 +206,25 @@ public class ModulePath extends ModuleLibrary {
      */
     private static class ModuleArtifact {
         final URL url;
+        final String id;
         final ModuleInfo mi;
         final Collection<String> packages;
 
-        ModuleArtifact(URL url, ModuleInfo mi, Collection<String> packages) {
+        ModuleArtifact(URL url, String id, ModuleInfo mi, Collection<String> packages) {
             this.url = url;
+            this.id = id;
             this.mi = mi;
             this.packages = packages;
+        }
+
+        ModuleArtifact(URL url, ModuleInfo mi, Collection<String> packages) {
+            this(url, mi.name(), mi, packages);
         }
 
         URL url() { return url; }
         String moduleName() { return mi.name(); }
         Iterable<String> packages() { return packages; }
-        Module makeModule() { return mi.makeModule(packages); }
+        Module makeModule() { return mi.makeModule(id, packages); }
     }
 
     /**
@@ -239,6 +248,16 @@ public class ModulePath extends ModuleLibrary {
             mi = ModuleInfo.read(in);
         }
 
+        // extended module descriptor
+        String id = null;
+        ze = zf.getEntry(EXT_MODULE_DESCRIPTOR);
+        if (ze != null) {
+            try (InputStream in = zf.getInputStream(ze)) {
+                id = new BufferedReader(
+                    new InputStreamReader(in, "UTF-8")).readLine();
+            }
+        }
+
         List<String> packages =
             zf.stream()
               .filter(e -> e.getName().startsWith("classes/") &&
@@ -248,7 +267,7 @@ public class ModulePath extends ModuleLibrary {
               .distinct()
               .collect(Collectors.toList());
 
-        return new ModuleArtifact(url, mi, packages);
+        return new ModuleArtifact(url, id, mi, packages);
     }
 
     /**
@@ -274,7 +293,6 @@ public class ModulePath extends ModuleLibrary {
                   .filter(pkg -> pkg.length() > 0)   // module-info
                   .distinct()
                   .collect(Collectors.toList());
-
 
             return new ModuleArtifact(url, mi, packages);
         }

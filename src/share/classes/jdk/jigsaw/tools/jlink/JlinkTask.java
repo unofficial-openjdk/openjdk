@@ -77,9 +77,8 @@ import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
 import jdk.jigsaw.module.Module;
+import jdk.jigsaw.module.ModulePath;
 import jdk.jigsaw.module.SimpleResolver;
-
-import sun.misc.ModulePath;
 
 /**
  * Implementation for the jlink tool.
@@ -234,9 +233,9 @@ class JlinkTask {
                 task.options.libs = splitPath(arg, File.pathSeparator);
             }
         },
-        new Option(true, "--module") {
+        new Option(true, "--mid") {
             void process(JlinkTask task, String opt, String arg) throws BadArgs {
-                task.options.moduleName = arg;
+                task.options.moduleId = arg;
             }
         },
         new Option(true, "--mods") {
@@ -309,7 +308,7 @@ class JlinkTask {
         Format format = null;
         Path output;
         Map<String,String> launchers = new HashMap<>();
-        String moduleName;
+        String moduleId;
     }
 
     int run(String[] args) {
@@ -359,8 +358,8 @@ class JlinkTask {
                     throw new BadArgs("err.output.must.be.specified").showUsage(true);
                 if (Files.exists(path))
                     throw new BadArgs("err.file.already.exists", path);
-                if (options.moduleName == null)
-                    throw new BadArgs("err.module.must.be.specified").showUsage(true);
+                if (options.moduleId == null)
+                    throw new BadArgs("err.mid.must.be.specified").showUsage(true);
             }
 
             // additional option combination validation
@@ -693,18 +692,18 @@ class JlinkTask {
         final List<Path> configs = options.configs;
         final List<Path> classes = options.classpath;
         final Path output = options.output;
-        final String moduleName = options.moduleName;
+        final String moduleId = options.moduleId;
 
-        JmodFileWriter jmod = new JmodFileWriter(moduleName);
+        JmodFileWriter jmod = new JmodFileWriter(moduleId);
         try (OutputStream os = Files.newOutputStream(output)) {
             jmod.write(os, classes, libs, configs, cmds);
         }
     }
 
     private class JmodFileWriter {
-        final String modulename;
-        JmodFileWriter(String moduleName) {
-            this.modulename = moduleName;
+        final String mid;
+        JmodFileWriter(String moduleId) {
+            this.mid = moduleId;
         }
 
         void write(OutputStream os, List<Path> classes,
@@ -712,9 +711,9 @@ class JlinkTask {
             throws IOException
         {
             try (ZipOutputStream zos = new ZipOutputStream(os)) {
-                // write module/name
-                String mn = modulename + "\n";
-                writeZipEntry(zos, mn.getBytes(), "module", "name");
+                // write extended module descriptor, module/name for now
+                String line = mid + "\n";
+                writeZipEntry(zos, line.getBytes("UTF-8"), "module", "name");
 
                 // classes / services
                 processClasses(zos, classes);
