@@ -23,6 +23,15 @@
  * questions.
  */
 
+// This file is a derivative work resulting from (and including) modifications
+// made by Azul Systems, Inc. The date of such changes is 2014.
+// These modification are copyright 2014 Azul Systems, Inc., and are made
+// available on the same license terms set forth above.
+//
+// Please contact Azul Systems, Inc., 1173 Borregas Avenue, Sunnyvale, CA 94089
+// USA or visit www.azulsystems.com if you need additional information or have
+// any questions.
+
 #include "jni.h"
 #include "jni_util.h"
 #include "jvm.h"
@@ -37,8 +46,6 @@
 static jfieldID dci_senderID;   /* sender in sun.nio.ch.DatagramChannelImpl */
 static jfieldID dci_senderAddrID; /* sender InetAddress in sun.nio.ch.DatagramChannelImpl */
 static jfieldID dci_senderPortID; /* sender port in sun.nio.ch.DatagramChannelImpl */
-static jfieldID ia_addrID;
-static jfieldID ia_famID;
 static jclass isa_class;        /* java.net.InetSocketAddress */
 static jclass ia_class;
 static jmethodID isa_ctorID;    /*   .InetSocketAddress(InetAddress, int) */
@@ -64,7 +71,7 @@ static jboolean isSenderCached(JNIEnv *env, jobject this, struct sockaddr_in *sa
         return JNI_FALSE;
     }
     if ((jint)ntohl(sa->sin_addr.s_addr) !=
-        (*env)->GetIntField(env, senderAddr, ia_addrID)) {
+        getInetAddress_addr(env, senderAddr)) {
         return JNI_FALSE;
     }
 
@@ -96,8 +103,6 @@ Java_sun_nio_ch_DatagramChannelImpl_initIDs(JNIEnv *env, jclass clazz)
                                           "cachedSenderPort", "I");
     clazz = (*env)->FindClass(env, "java/net/Inet4Address");
     ia_class = (*env)->NewGlobalRef(env, clazz);
-    ia_addrID = (*env)->GetFieldID(env, clazz, "address", "I");
-    ia_famID = (*env)->GetFieldID(env, clazz, "family", "I");
     ia_ctorID = (*env)->GetMethodID(env, clazz, "<init>", "()V");
 }
 
@@ -240,7 +245,7 @@ Java_sun_nio_ch_DatagramChannelImpl_receive0(JNIEnv *env, jobject this,
 
         if (ia != NULL) {
             // populate InetAddress (assumes AF_INET)
-            (*env)->SetIntField(env, ia, ia_addrID, ntohl(psa.sin_addr.s_addr));
+            setInetAddress_addr(env, ia, ntohl(psa.sin_addr.s_addr));
 
             // create InetSocketAddress
             isa = (*env)->NewObject(env, isa_class, isa_ctorID, ia, port);

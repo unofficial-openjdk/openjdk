@@ -23,6 +23,15 @@
  * questions.
  */
 
+// This file is a derivative work resulting from (and including) modifications
+// made by Azul Systems, Inc. The date of such changes is 2014.
+// These modification are copyright 2014 Azul Systems, Inc., and are made
+// available on the same license terms set forth above.
+//
+// Please contact Azul Systems, Inc., 1173 Borregas Avenue, Sunnyvale, CA 94089
+// USA or visit www.azulsystems.com if you need additional information or have
+// any questions.
+
 #define OEMRESOURCE
 
 #ifdef DEBUG
@@ -39,9 +48,14 @@
 #include "jni_util.h"
 #include "jlong.h"
 #include "alloc.h"
+#include "UnicowsLoader.h"
 
 #include "stdhdrs.h"
-#include "UnicowsLoader.h"
+
+// Copy from shlguid.h which is no longer in PlatformSDK
+#ifndef DEFINE_SHLGUID
+#define DEFINE_SHLGUID(name, l, w1, w2) DEFINE_GUID(name, l, w1, w2, 0xC0, 0, 0, 0, 0, 0, 0, 0x46)
+#endif
 
 // {93F2F68C-1D1B-11d3-A30E-00C04F79ABD1}
 DEFINE_GUID(IID_IShellFolder2, 0x93f2f68c, 0x1d1b, 0x11d3, 0xa3, 0xe, 0x0, 0xc0, 0x4f, 0x79, 0xab, 0xd1);

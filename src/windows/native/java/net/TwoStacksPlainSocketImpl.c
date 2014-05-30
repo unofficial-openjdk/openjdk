@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2007, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,15 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+
+// This file is a derivative work resulting from (and including) modifications
+// made by Azul Systems, Inc. The date of such changes is 2014.
+// These modification are copyright 2014 Azul Systems, Inc., and are made
+// available on the same license terms set forth above.
+//
+// Please contact Azul Systems, Inc., 1173 Borregas Avenue, Sunnyvale, CA 94089
+// USA or visit www.azulsystems.com if you need additional information or have
+// any questions.
 
 #include <windows.h>
 #include <winsock2.h>
@@ -168,6 +177,8 @@ Java_java_net_TwoStacksPlainSocketImpl_socketCreate(JNIEnv *env, jobject this,
             NET_SocketClose(fd);
             return;
         } else {
+            /* Set socket attribute so it is not passed to any child process */
+            SetHandleInformation((HANDLE)(UINT_PTR)fd1, HANDLE_FLAG_INHERIT, FALSE);
             (*env)->SetIntField(env, fd1Obj, IO_fd_fdID, fd1);
         }
     } else {
@@ -963,7 +974,8 @@ Java_java_net_TwoStacksPlainSocketImpl_socketNativeSetOption(JNIEnv *env,
 
                 if (on) {
                     optval.ling.l_onoff = 1;
-                    optval.ling.l_linger = (*env)->GetIntField(env, value, fid);
+                    optval.ling.l_linger =
+                        (unsigned short)(*env)->GetIntField(env, value, fid);
                 } else {
                     optval.ling.l_onoff = 0;
                     optval.ling.l_linger = 0;
@@ -1028,21 +1040,20 @@ Java_java_net_TwoStacksPlainSocketImpl_socketGetOption(JNIEnv *env, jobject this
      * SO_BINDADDR isn't a socket option
      */
     if (opt == java_net_SocketOptions_SO_BINDADDR) {
-        SOCKET_ADDRESS him;
+        SOCKETADDRESS him;
         int len;
         int port;
         jobject iaObj;
         jclass iaCntrClass;
         jfieldID iaFieldID;
 
-        len = sizeof(struct sockaddr_in);
+        len = sizeof(him);
 
         if (fd == -1) {
             /* must be an IPV6 only socket. Case where both sockets are != -1
              * is handled in java
              */
             fd = getFD1 (env, this);
-            len = sizeof(struct SOCKADDR_IN6);
         }
 
         if (getsockname(fd, (struct sockaddr *)&him, &len) < 0) {

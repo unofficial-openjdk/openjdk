@@ -22,6 +22,16 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+
+// This file is a derivative work resulting from (and including) modifications
+// made by Azul Systems, Inc. The date of such changes is 2014.
+// These modification are copyright 2014 Azul Systems, Inc., and are made
+// available on the same license terms set forth above.
+//
+// Please contact Azul Systems, Inc., 1173 Borregas Avenue, Sunnyvale, CA 94089
+// USA or visit www.azulsystems.com if you need additional information or have
+// any questions.
+
 #ifndef _INC_MMSTUB
 #define _INC_MMSTUB
 
@@ -33,7 +43,10 @@
 #include "awt.h"
 #endif
 
-#if !defined(_WIN32_WINNT) || (_WIN32_WINNT < 0x0500)
+#include "awt_Multimon.h"
+
+//#if !defined(_WIN32_WINNT) || (_WIN32_WINNT < 0x0500)
+typedef HANDLE                              MHND;
 
 /*  Cdecl for C++               */
 #ifdef __cplusplus
@@ -75,7 +88,6 @@ extern "C" {
 
 
 //  Datatypes
-typedef HANDLE                              MHND;
 typedef BOOL (CALLBACK* MON_ENUM_CALLBACK_PROC)(MHND,HDC,LPRECT,LPARAM);
 
 typedef struct  tagMONITOR_INFO
@@ -126,6 +138,6 @@ HWND WINAPI                     _createWindowOM     (MHND,LPCTSTR,LPCTSTR,DWORD,
 }
 #endif  /* __cplusplus */
 
-#endif  /* !defined(_WIN32_WINNT) || (_WIN32_WINNT < 0x0500) */
+//#endif  /* !defined(_WIN32_WINNT) || (_WIN32_WINNT < 0x0500) */
 
 #endif  /* _INC_MMSTUB */

@@ -23,6 +23,15 @@
  * questions.
  */
 
+// This file is a derivative work resulting from (and including) modifications
+// made by Azul Systems, Inc. The date of such changes is 2014.
+// These modification are copyright 2014 Azul Systems, Inc., and are made
+// available on the same license terms set forth above.
+//
+// Please contact Azul Systems, Inc., 1173 Borregas Avenue, Sunnyvale, CA 94089
+// USA or visit www.azulsystems.com if you need additional information or have
+// any questions.
+
 #include <winsock2.h>
 #include <WS2tcpip.h>
 
@@ -222,7 +231,8 @@ LPFN_GETNAMEINFO getnameinfo_ptr;
 #define IN6_IS_ADDR_ANY(a)      \
     (((a)->s6_words[0] == 0) && ((a)->s6_words[1] == 0) &&      \
     ((a)->s6_words[2] == 0) && ((a)->s6_words[3] == 0) &&       \
-    ((a)->s6_words[4] == 0) && ((a)->s6_words[5] == 0))
+    ((a)->s6_words[4] == 0) && ((a)->s6_words[5] == 0) &&       \
+    ((a)->s6_words[6] == 0) && ((a)->s6_words[7] == 0))
 #endif
 
 #ifndef IPV6_V6ONLY
@@ -293,6 +303,13 @@ struct ipv6bind {
 JNIEXPORT int JNICALL NET_SocketClose(int fd);
 
 JNIEXPORT int JNICALL NET_Timeout(int fd, long timeout);
+
+int NET_Socket(int domain, int type, int protocol);
+
+void NET_ThrowByNameWithLastError(JNIEnv *env, const char *name,
+         const char *defaultDetail);
+
+void NET_ThrowSocketException(JNIEnv *env, char* msg);
 
 /*
  * differs from NET_Timeout() as follows:

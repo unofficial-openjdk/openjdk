@@ -23,6 +23,15 @@
  * questions.
  */
 
+// This file is a derivative work resulting from (and including) modifications
+// made by Azul Systems, Inc. The date of such changes is 2014.
+// These modification are copyright 2014 Azul Systems, Inc., and are made
+// available on the same license terms set forth above.
+//
+// Please contact Azul Systems, Inc., 1173 Borregas Avenue, Sunnyvale, CA 94089
+// USA or visit www.azulsystems.com if you need additional information or have
+// any questions.
+
 #ifndef NET_UTILS_H
 #define NET_UTILS_H
 
@@ -74,11 +83,11 @@ extern int setInet6Address_scopeid(JNIEnv *env, jobject ia6Obj, int scopeid);
 extern int getInet6Address_ipaddress(JNIEnv *env, jobject ia6Obj, char *dest);
 extern int setInet6Address_ipaddress(JNIEnv *env, jobject ia6Obj, char *address);
 
-extern void setInetAddress_addr(JNIEnv *env, jobject iaObj, int address);
-extern void setInetAddress_family(JNIEnv *env, jobject iaObj, int family);
+extern JNIEXPORT void JNICALL setInetAddress_addr(JNIEnv *env, jobject iaObj, int address);
+extern JNIEXPORT void JNICALL setInetAddress_family(JNIEnv *env, jobject iaObj, int family);
 extern void setInetAddress_hostName(JNIEnv *env, jobject iaObj, jobject h);
-extern int getInetAddress_addr(JNIEnv *env, jobject iaObj);
-extern int getInetAddress_family(JNIEnv *env, jobject iaObj);
+extern JNIEXPORT int JNICALL getInetAddress_addr(JNIEnv *env, jobject iaObj);
+extern JNIEXPORT int JNICALL getInetAddress_family(JNIEnv *env, jobject iaObj);
 extern jobject getInetAddress_hostName(JNIEnv *env, jobject iaObj);
 
 extern jclass ia4_class;
@@ -150,7 +159,7 @@ void parseExclusiveBindProperty(JNIEnv *env);
 void
 NET_SetTrafficClass(struct sockaddr *him, int trafficClass);
 
-jint
+JNIEXPORT jint JNICALL
 NET_GetPortFromSockaddr(struct sockaddr *him);
 
 jint

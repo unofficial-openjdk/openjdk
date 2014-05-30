@@ -23,12 +23,21 @@
 # questions.
 #
 
+# This file is a derivative work resulting from (and including) modifications
+# made by Azul Systems, Inc. The date of such changes is 2014.
+# These modification are copyright 2014 Azul Systems, Inc., and are made
+# available on the same license terms set forth above.
+#
+# Please contact Azul Systems, Inc., 1173 Borregas Avenue, Sunnyvale, CA 94089
+# USA or visit www.azulsystems.com if you need additional information or have
+# any questions.
+
 BUILDDIR = ../../..
 PROGRAM = java
 PRODUCT = java
 
 #
-# Statically link java to avoid the dependency on msvcr71.dll.  This
+# Statically link java to avoid the dependency on msvcrNN.dll.  This
 # must be set before Defs.gmk is included.
 #
 MS_RUNTIME_STATIC = true

@@ -23,6 +23,15 @@
  * questions.
  */
 
+// This file is a derivative work resulting from (and including) modifications
+// made by Azul Systems, Inc. The date of such changes is 2014.
+// These modification are copyright 2014 Azul Systems, Inc., and are made
+// available on the same license terms set forth above.
+//
+// Please contact Azul Systems, Inc., 1173 Borregas Avenue, Sunnyvale, CA 94089
+// USA or visit www.azulsystems.com if you need additional information or have
+// any questions.
+
 package sun.awt.shell;
 
 import java.awt.Image;
@@ -36,6 +45,8 @@ import java.util.concurrent.*;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import javax.swing.SwingConstants;
+
+import sun.misc.ThreadGroupUtils;
 
 // NOTE: This class supersedes Win32ShellFolder, which was removed from
 //       distribution after version 1.4.2.

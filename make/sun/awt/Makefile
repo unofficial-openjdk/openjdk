@@ -23,6 +23,15 @@
 # questions.
 #
 
+# This file is a derivative work resulting from (and including) modifications
+# made by Azul Systems, Inc. The date of such changes is 2014.
+# These modification are copyright 2014 Azul Systems, Inc., and are made
+# available on the same license terms set forth above.
+#
+# Please contact Azul Systems, Inc., 1173 Borregas Avenue, Sunnyvale, CA 94089
+# USA or visit www.azulsystems.com if you need additional information or have
+# any questions.
+
 BUILDDIR = ../..
 PACKAGE = sun.awt
 LIBRARY = awt
@@ -252,21 +261,17 @@ endif # PLATFORM
 
 ifeq ($(PLATFORM), windows)
 # vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv WINDOWS
-ifeq ($(ARCH_DATA_MODEL), 64)
+
 OTHER_LDLIBS = kernel32.lib user32.lib gdi32.lib winspool.lib \
-               imm32.lib ole32.lib uuid.lib $(JVMLIB) \
-               shell32.lib
-else
-OTHER_LDLIBS = /nod:kernel32.lib /nod:advapi32.lib /nod:user32.lib \
-               /nod:gdi32.lib /nod:shell32.lib /nod:comdlg32.lib \
-               /nod:version.lib /nod:mpr.lib /nod:rasapi32.lib \
-               /nod:winmm.lib /nod:winspool.lib /nod:vfw32.lib \
-               /nod:secur32.lib /nod:oleacc.lib /nod:oledlg.lib \
-               /nod:sensapi.lib $(UNICOWS_LIB_PATH)/unicows.lib \
-               kernel32.lib user32.lib gdi32.lib winspool.lib \
-               imm32.lib ole32.lib uuid.lib $(JVMLIB) \
-               shell32.lib
-endif
+               imm32.lib ole32.lib uuid.lib shell32.lib \
+               comdlg32.lib winmm.lib comctl32.lib \
+               shlwapi.lib delayimp.lib \
+               $(JVMLIB) \
+               /DELAYLOAD:user32.dll /DELAYLOAD:gdi32.dll \
+               /DELAYLOAD:shell32.dll /DELAYLOAD:winmm.dll \
+               /DELAYLOAD:winspool.drv /DELAYLOAD:imm32.dll \
+               /DELAYLOAD:ole32.dll /DELAYLOAD:comdlg32.dll \
+               /DELAYLOAD:comctl32.dll /DELAYLOAD:shlwapi.dll
 
 clean:: awt.clean
 

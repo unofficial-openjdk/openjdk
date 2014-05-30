@@ -23,6 +23,15 @@
  * questions.
  */
 
+// This file is a derivative work resulting from (and including) modifications
+// made by Azul Systems, Inc. The date of such changes is 2014.
+// These modification are copyright 2014 Azul Systems, Inc., and are made 
+// available on the same license terms set forth above.
+//
+// Please contact Azul Systems, Inc., 1173 Borregas Avenue, Sunnyvale, CA 94089
+// USA or visit www.azulsystems.com if you need additional information or have
+// any questions.
+
 #include "jni.h"
 #include "jvm.h"
 #include "jni_util.h"
@@ -199,14 +208,16 @@ int setInet6Address_ipaddress(JNIEnv *env, jobject iaObj, char *address) {
     return JNI_TRUE;
 }
 
-void setInetAddress_addr(JNIEnv *env, jobject iaObj, int address) {
+JNIEXPORT
+void JNICALL setInetAddress_addr(JNIEnv *env, jobject iaObj, int address) {
     jobject holder;
     init(env);
     holder = (*env)->GetObjectField(env, iaObj, ia_holderID);
     (*env)->SetIntField(env, holder, iac_addressID, address);
 }
 
-void setInetAddress_family(JNIEnv *env, jobject iaObj, int family) {
+JNIEXPORT
+void JNICALL setInetAddress_family(JNIEnv *env, jobject iaObj, int family) {
     jobject holder;
     init(env);
     holder = (*env)->GetObjectField(env, iaObj, ia_holderID);
@@ -220,14 +231,16 @@ void setInetAddress_hostName(JNIEnv *env, jobject iaObj, jobject host) {
     (*env)->SetObjectField(env, holder, iac_hostNameID, host);
 }
 
-int getInetAddress_addr(JNIEnv *env, jobject iaObj) {
+JNIEXPORT
+int JNICALL getInetAddress_addr(JNIEnv *env, jobject iaObj) {
     jobject holder;
     init(env);
     holder = (*env)->GetObjectField(env, iaObj, ia_holderID);
     return (*env)->GetIntField(env, holder, iac_addressID);
 }
 
-int getInetAddress_family(JNIEnv *env, jobject iaObj) {
+JNIEXPORT
+int JNICALL getInetAddress_family(JNIEnv *env, jobject iaObj) {
     jobject holder;
     init(env);
     holder = (*env)->GetObjectField(env, iaObj, ia_holderID);

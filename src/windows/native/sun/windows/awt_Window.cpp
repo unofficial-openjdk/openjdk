@@ -23,6 +23,15 @@
  * questions.
  */
 
+// This file is a derivative work resulting from (and including) modifications
+// made by Azul Systems, Inc. The date of such changes is 2014.
+// These modification are copyright 2014 Azul Systems, Inc., and are made
+// available on the same license terms set forth above.
+//
+// Please contact Azul Systems, Inc., 1173 Borregas Avenue, Sunnyvale, CA 94089
+// USA or visit www.azulsystems.com if you need additional information or have
+// any questions.
+
 #include <windowsx.h>
 
 #include <jlong.h>
@@ -417,7 +426,7 @@ bool AwtWindow::IsWarningWindow(HWND hWnd)
     return 0 == _tcsncmp(windowClassName,
             AwtWindow::GetWarningWindowClassName(), len);
 }
-+
+
 LRESULT CALLBACK AwtWindow::CBTFilter(int nCode, WPARAM wParam, LPARAM lParam)
 {
     if (nCode == HCBT_ACTIVATE || nCode == HCBT_SETFOCUS) {
@@ -703,7 +712,7 @@ void AwtWindow::CalculateWarningWindowBounds(JNIEnv *env, LPRECT rect)
     y = min(y, windowBounds.bottom + (int)warningWindowHeight + 2);
 
     // Now make sure the warning window is visible on the screen
-    HMONITOR hmon = MonitorFromWindow(GetHWnd(), MONITOR_DEFAULTTOPRIMARY);
+    HMONITOR hmon = (HMONITOR)MonitorFromWindow(GetHWnd(), MONITOR_DEFAULTTOPRIMARY);
     DASSERT(hmon != NULL);
 
     RECT monitorBounds;

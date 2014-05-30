@@ -23,6 +23,15 @@
  * questions.
  */
 
+// This file is a derivative work resulting from (and including) modifications
+// made by Azul Systems, Inc. The date of such changes is 2014.
+// These modification are copyright 2014 Azul Systems, Inc., and are made
+// available on the same license terms set forth above.
+//
+// Please contact Azul Systems, Inc., 1173 Borregas Avenue, Sunnyvale, CA 94089
+// USA or visit www.azulsystems.com if you need additional information or have
+// any questions.
+
 #include <windows.h>
 #include <winsock2.h>
 #include <ctype.h>
@@ -37,13 +46,10 @@
 #include "net_util.h"
 
 
-static jfieldID ia_addrID;      /* java.net.InetAddress.address */
-
 JNIEXPORT void JNICALL
 Java_sun_nio_ch_SocketChannelImpl_initIDs(JNIEnv *env, jclass cls)
 {
     cls = (*env)->FindClass(env, "java/net/InetAddress");
-    ia_addrID = (*env)->GetFieldID(env, cls, "address", "I");
 }
 
 jint

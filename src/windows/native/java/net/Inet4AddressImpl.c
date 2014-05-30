@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2006, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,6 +23,15 @@
  * questions.
  */
 
+// This file is a derivative work resulting from (and including) modifications
+// made by Azul Systems, Inc. The date of such changes is 2014.
+// These modification are copyright 2014 Azul Systems, Inc., and are made
+// available on the same license terms set forth above.
+//
+// Please contact Azul Systems, Inc., 1173 Borregas Avenue, Sunnyvale, CA 94089
+// USA or visit www.azulsystems.com if you need additional information or have
+// any questions.
+
 #include <windows.h>
 #include <winsock2.h>
 #include <ctype.h>
@@ -30,6 +39,7 @@
 #include <stdlib.h>
 #include <malloc.h>
 #include <sys/types.h>
+#include <process.h>
 
 #include "java_net_InetAddress.h"
 #include "java_net_Inet4AddressImpl.h"
@@ -134,12 +144,10 @@ JNIEXPORT jobjectArray JNICALL
 Java_java_net_Inet4AddressImpl_lookupAllHostAddr(JNIEnv *env, jobject this,
                                                 jstring host) {
     const char *hostname;
-    jobject name;
     struct hostent *hp;
     unsigned int addr[4];
 
     jobjectArray ret = NULL;
-    jclass byteArrayCls;
 
     if (!initialized) {
       ni_iacls = (*env)->FindClass(env, "java/net/InetAddress");
@@ -222,10 +230,6 @@ Java_java_net_Inet4AddressImpl_lookupAllHostAddr(JNIEnv *env, jobject this,
             addrp++;
         }
 
-        name = (*env)->NewStringUTF(env, hostname);
-        if (IS_NULL(name)) {
-          goto cleanupAndReturn;
-        }
         ret = (*env)->NewObjectArray(env, i, ni_iacls, NULL);
 
         if (IS_NULL(ret)) {
@@ -241,7 +245,7 @@ Java_java_net_Inet4AddressImpl_lookupAllHostAddr(JNIEnv *env, jobject this,
             goto cleanupAndReturn;
           }
           setInetAddress_addr(env, iaObj, ntohl((*addrp)->s_addr));
-          setInetAddress_hostName(env, iaObj, name);
+          setInetAddress_hostName(env, iaObj, host);
           (*env)->SetObjectArrayElement(env, ret, i, iaObj);
           addrp++;
           i++;
@@ -312,7 +316,7 @@ ping4(JNIEnv *env, jint fd, struct sockaddr_in* him, jint timeout,
     seq = ((unsigned short)rand()) >> 1;
 
     /* icmp_id is a 16 bit data type, therefore down cast the pid */
-    pid = (u_short) getpid();
+    pid = (u_short) _getpid();
     size = 60*1024;
     setsockopt(fd, SOL_SOCKET, SO_RCVBUF, (const char *) &size, sizeof(size));
     /**
@@ -556,8 +560,8 @@ Java_java_net_Inet4AddressImpl_isReachable0(JNIEnv *env, jobject this,
 
         if (timeout >= 0) {
           optlen = sizeof(connect_rv);
-          if (JVM_GetSockOpt(fd, SOL_SOCKET, SO_ERROR, (void*)&connect_rv,
-                             &optlen) <0) {
+          if (getsockopt(fd, SOL_SOCKET, SO_ERROR, (void*)&connect_rv,
+                         &optlen) <0) {
             connect_rv = WSAGetLastError();
           }
 

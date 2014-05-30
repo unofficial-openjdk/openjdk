@@ -23,6 +23,15 @@
  * questions.
  */
 
+// This file is a derivative work resulting from (and including) modifications
+// made by Azul Systems, Inc. The date of such changes is 2014.
+// These modification are copyright 2014 Azul Systems, Inc., and are made
+// available on the same license terms set forth above.
+//
+// Please contact Azul Systems, Inc., 1173 Borregas Avenue, Sunnyvale, CA 94089
+// USA or visit www.azulsystems.com if you need additional information or have
+// any questions.
+
 #include "awt_Toolkit.h"
 #include "awt_TextArea.h"
 #include "awt_TextComponent.h"
@@ -740,14 +749,8 @@ AwtTextArea::HandleEvent(MSG *msg, BOOL synthetic)
         // kdm@sparc.spb.su
         UINT platfScrollLines = 3;
         // Retrieve a number of scroll lines.
-        if (!sm_RichEdit20) {
-            // 95 doesn't understand the SPI_GETWHEELSCROLLLINES - get the user
-            // preference by other means
-            platfScrollLines = Wheel95GetScrLines();
-        } else {
-            ::SystemParametersInfo(SPI_GETWHEELSCROLLLINES, 0,
-                                   &platfScrollLines, 0);
-        }
+        ::SystemParametersInfo(SPI_GETWHEELSCROLLLINES, 0,
+                               &platfScrollLines, 0);
 
         if (platfScrollLines > 0) {
             HWND hWnd = GetHWnd();
@@ -798,7 +801,7 @@ AwtTextArea::HandleEvent(MSG *msg, BOOL synthetic)
                     si.cbSize = sizeof(SCROLLINFO);
                     si.fMask = SIF_POS | SIF_RANGE | SIF_PAGE;
                     int actualScrollLines =
-                        abs(platfScrollLines * (*delta_accum / WHEEL_DELTA));
+                        labs(platfScrollLines * (*delta_accum / WHEEL_DELTA));
                     for (int i = 0; i < actualScrollLines; i++) {
                         if (::GetScrollInfo(hWnd, sb_type, &si)) {
                             if ((wm_msg == WM_VSCROLL)

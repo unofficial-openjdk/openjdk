@@ -23,6 +23,15 @@
  * questions.
  */
 
+// This file is a derivative work resulting from (and including) modifications
+// made by Azul Systems, Inc. The date of such changes is 2014.
+// These modification are copyright 2014 Azul Systems, Inc., and are made
+// available on the same license terms set forth above.
+//
+// Please contact Azul Systems, Inc., 1173 Borregas Avenue, Sunnyvale, CA 94089
+// USA or visit www.azulsystems.com if you need additional information or have
+// any questions.
+
 #include <windows.h>
 #include <winsock2.h>
 #include <ctype.h>
@@ -121,6 +130,9 @@ Java_java_net_SocketInputStream_socketRead0(JNIEnv *env, jobject this,
             newfd = (*env)->GetIntField(env, fdObj, IO_fd_fdID);
             if (newfd == -1) {
                 NET_ThrowSocketException(env, "Socket Closed");
+                if (bufP != BUF) {
+                    free(bufP);
+                }
                 return -1;
             }
         }

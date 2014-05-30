@@ -23,6 +23,15 @@
  * questions.
  */
 
+// This file is a derivative work resulting from (and including) modifications
+// made by Azul Systems, Inc. The date of such changes is 2014.
+// These modification are copyright 2014 Azul Systems, Inc., and are made
+// available on the same license terms set forth above.
+//
+// Please contact Azul Systems, Inc., 1173 Borregas Avenue, Sunnyvale, CA 94089
+// USA or visit www.azulsystems.com if you need additional information or have
+// any questions.
+
 #include <windows.h>
 #include <winsock2.h>
 #include "jni.h"
@@ -37,10 +46,8 @@
 #include "sun_nio_ch_Net.h"
 
 
-static jfieldID ia_addrID;
 static jclass ia_class;
 static jmethodID ia_ctorID;
-static jfieldID ia_famID;
 
 /**************************************************************
  * static method to store field IDs in initializers
@@ -51,8 +58,6 @@ Java_sun_nio_ch_Net_initIDs(JNIEnv *env, jclass clazz)
 {
     clazz = (*env)->FindClass(env, "java/net/Inet4Address");
     ia_class = (*env)->NewGlobalRef(env, clazz);
-    ia_addrID = (*env)->GetFieldID(env, clazz, "address", "I");
-    ia_famID = (*env)->GetFieldID(env, clazz, "family", "I");
     ia_ctorID = (*env)->GetMethodID(env, clazz, "<init>", "()V");
 }
 
@@ -157,7 +162,7 @@ Java_sun_nio_ch_Net_localInetAddress(JNIEnv *env, jclass clazz, jobject fdo)
     if (iao == NULL) {
         JNU_ThrowOutOfMemoryError(env, "heap allocation failure");
     } else {
-        (*env)->SetIntField(env, iao, ia_addrID, ntohl(sa.sin_addr.s_addr));
+        setInetAddress_addr(env, iao, ntohl(sa.sin_addr.s_addr));
     }
 
     return iao;

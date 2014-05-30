@@ -23,6 +23,15 @@
 # questions.
 #
 
+# This file is a derivative work resulting from (and including) modifications
+# made by Azul Systems, Inc. The date of such changes is 2014.
+# These modification are copyright 2014 Azul Systems, Inc., and are made
+# available on the same license terms set forth above.
+#
+# Please contact Azul Systems, Inc., 1173 Borregas Avenue, Sunnyvale, CA 94089
+# USA or visit www.azulsystems.com if you need additional information or have
+# any questions.
+
 #
 # Makefile for building and packaging all of the JDK and the JRE. See
 # also included files.
@@ -74,7 +83,6 @@ import            -- copy in the pre-built components (e.g. VM) \n\
 import_product    -- copy in the product components \n\
 import_fastdebug  -- copy in the fastdebug components \n\
 import_debug      -- copy in the debug components \n\
-sccs_get          -- make sure all SCCS files are up-to-date (need SCCS) \n\
 create_links      -- create softlinks in Solaris 32bit build to 64bit dirs \n\
 "
 
@@ -103,8 +111,6 @@ CUPS_HEADERS_PATH.desc     = Include directory location for CUPS header files
 DXSDK_PATH.desc            = Root directory of DirectX SDK
 MSDEVTOOLS_PATH.desc       = Root directory of VC++ tools (e.g. rc.exe)
 MSVCRT_DLL_PATH.desc       = Directory containing mscvrt.dll
-UNICOWS_DLL_PATH.desc      = Directory containing unicows.dll
-UNICOWS_LIB_PATH.desc      = Directory containing unicows.lib
 
 # Make variables to print out (description and value)
 VARIABLE_PRINTVAL_LIST +=       \
@@ -140,16 +146,12 @@ ifeq ($(PLATFORM), windows)
 VARIABLE_PRINTVAL_LIST +=       \
     DXSDK_PATH                  \
     MSDEVTOOLS_PATH             \
-    MSVCRT_DLL_PATH             \
-    UNICOWS_DLL_PATH            \
-    UNICOWS_LIB_PATH
+    MSVCRT_DLL_PATH
 
 VARIABLE_CHECKDIR_LIST +=       \
     DXSDK_PATH                  \
     MSDEVTOOLS_PATH             \
-    MSVCRT_DLL_PATH             \
-    UNICOWS_DLL_PATH            \
-    UNICOWS_LIB_PATH
+    MSVCRT_DLL_PATH
 
 endif
 

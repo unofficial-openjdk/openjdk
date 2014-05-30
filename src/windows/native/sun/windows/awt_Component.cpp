@@ -23,6 +23,15 @@
  * questions.
  */
 
+// This file is a derivative work resulting from (and including) modifications
+// made by Azul Systems, Inc. The date of such changes is 2014.
+// These modification are copyright 2014 Azul Systems, Inc., and are made
+// available on the same license terms set forth above.
+//
+// Please contact Azul Systems, Inc., 1173 Borregas Avenue, Sunnyvale, CA 94089
+// USA or visit www.azulsystems.com if you need additional information or have
+// any questions.
+
 #include "windows.h"
 #include <windowsx.h>
 #include <zmouse.h>
@@ -1352,17 +1361,7 @@ LRESULT AwtComponent::WindowProc(UINT message, WPARAM wParam, LPARAM lParam)
         return (LRESULT)TRUE;
     }
 
-    UINT switchMessage;
-    if (IS_WIN95 && !IS_WIN98 && message == Wheel95GetMsg()) {
-        // Wheel message is generated dynamically on 95.  A quick swap and
-        // we're good to go.
-        DTRACE_PRINTLN1("got wheel event on 95.  msg is %i\n", message);
-        switchMessage = WM_MOUSEWHEEL;
-    }
-    else {
-        switchMessage = message;
-    }
-
+    UINT switchMessage = message;
     switch (switchMessage) {
       case WM_AWT_GETDC:
       {
@@ -2639,20 +2638,10 @@ MsgRouting AwtComponent::WmMouseWheel(UINT flags, int x, int y,
     jint newWheelRotation = wheelRotation / (-1 * WHEEL_DELTA);
     MSG msg;
 
-    if (IS_WIN95 && !IS_WIN98) {
-        // 95 doesn't understand the SPI_GETWHEELSCROLLLINES - get the user
-        // preference by other means
-        DTRACE_PRINTLN("WmMouseWheel: using 95 branch");
-        platformLines = Wheel95GetScrLines();
-        result = true;
-        InitMessage(&msg, lastMessage, wheelRotation, MAKELPARAM(x, y));
-    }
-    else {
-        result = ::SystemParametersInfo(SPI_GETWHEELSCROLLLINES, 0,
-                                        &platformLines, 0);
-        InitMessage(&msg, lastMessage, MAKEWPARAM(flags, wheelRotation),
-                            MAKELPARAM(x, y));
-    }
+    result = ::SystemParametersInfo(SPI_GETWHEELSCROLLLINES, 0,
+                                    &platformLines, 0);
+    InitMessage(&msg, lastMessage, MAKEWPARAM(flags, wheelRotation),
+                MAKELPARAM(x, y));
 
     if (result) {
         if (platformLines == WHEEL_PAGESCROLL) {
@@ -5305,18 +5294,8 @@ void AwtComponent::SynthesizeMouseMessage(JNIEnv *env, jobject mouseEvent)
           // convert Java wheel amount value to Win32
           wheelAmt *= -1 * WHEEL_DELTA;
 
-          if (IS_WIN95 && !IS_WIN98) {
-              // 95 doesn't understand WM_MOUSEWHEEL, so plug in value of
-              // mouse wheel event on 95
-              DTRACE_PRINTLN("awt_C::synthmm - 95 case");
-              DASSERT(Wheel95GetMsg() != NULL);
-              message = Wheel95GetMsg();
-              wParam = wheelAmt;
-          }
-          else {
-              message = WM_MOUSEWHEEL;
-              wParam = MAKEWPARAM(wLow, wheelAmt);
-          }
+          message = WM_MOUSEWHEEL;
+          wParam = MAKEWPARAM(wLow, wheelAmt);
 
           break;
       default:
@@ -5428,45 +5407,6 @@ void AwtComponent::Enable(BOOL bEnable)
     sm_suppressFocusAndActivation = FALSE;
     CriticalSection::Lock l(GetLock());
     VerifyState();
-}
-
-/* Initialization of MouseWheel support on Windows 95 */
-void AwtComponent::Wheel95Init() {
-    DASSERT(IS_WIN95 && !IS_WIN98);
-
-    HWND mwHWND = NULL;
-    UINT wheelMSG = WM_NULL;
-    UINT suppMSG = WM_NULL;
-    UINT linesMSG = WM_NULL;
-    BOOL wheelActive;
-    INT lines;
-
-    mwHWND = HwndMSWheel(&wheelMSG, &suppMSG, &linesMSG, &wheelActive, &lines);
-    if (mwHWND != WM_NULL) {
-        sm_95WheelMessage = wheelMSG;
-        sm_95WheelSupport = suppMSG;
-    }
-}
-
-/* Win95 only
- * Return the user's preferred number of lines of test to scroll when the
- * mouse wheel is rotated.
- */
-UINT AwtComponent::Wheel95GetScrLines() {
-    DASSERT(IS_WIN95 && !IS_WIN98);
-    DASSERT(sm_95WheelSupport != NULL);
-
-    HWND mwHWND = NULL;
-    UINT linesMSG = WM_NULL;
-    INT numLines = 3;
-
-    linesMSG = RegisterWindowMessage(MSH_SCROLL_LINES);
-    mwHWND = FindWindow(MSH_WHEELMODULE_CLASS, MSH_WHEELMODULE_TITLE);
-
-    if (mwHWND && linesMSG) {
-        numLines = (INT)::SendMessage(mwHWND, linesMSG, 0, 0);
-    }
-    return numLines;
 }
 
 /*
@@ -7037,7 +6977,6 @@ Java_sun_awt_windows_WComponentPeer_wheelInit(JNIEnv *env, jclass cls)
 {
     // Only necessary on Win95
     if (IS_WIN95 && !IS_WIN98) {
-        AwtComponent::Wheel95Init();
     }
 }
 

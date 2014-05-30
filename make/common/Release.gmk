@@ -23,6 +23,15 @@
 # questions.
 #
 
+# This file is a derivative work resulting from (and including) modifications
+# made by Azul Systems, Inc. The date of such changes is 2014.
+# These modification are copyright 2014 Azul Systems, Inc., and are made
+# available on the same license terms set forth above.
+#
+# Please contact Azul Systems, Inc., 1173 Borregas Avenue, Sunnyvale, CA 94089
+# USA or visit www.azulsystems.com if you need additional information or have
+# any questions.
+
 include $(JDK_TOPDIR)/make/docs/CORE_PKGS.gmk
 include $(JDK_TOPDIR)/make/docs/NON_CORE_PKGS.gmk
 
@@ -922,11 +931,7 @@ initial-image-jdk:: initial-image-jdk-setup \
 	$(MKDIR) -p $(JDK_IMAGE_DIR)/bin
 	$(CP) $(BINDIR)/*$(EXE_SUFFIX) $(JDK_IMAGE_DIR)/bin
 	$(CP) $(BINDIR)/jli.$(LIBRARY_SUFFIX) $(JDK_IMAGE_DIR)/bin
-    ifeq ($(ARCH_DATA_MODEL), 32)
-      ifeq ($(COMPILER_VERSION), VS2003)
-	$(CP) $(BINDIR)/msvc*71.$(LIBRARY_SUFFIX) $(JDK_IMAGE_DIR)/bin
-      endif
-    endif
+	$(CP) $(BINDIR)/$(MSVCRNN_DLL) $(JDK_IMAGE_DIR)/bin
   else # PLATFORM
 	@#
 	@# bin/

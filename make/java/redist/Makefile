@@ -23,6 +23,15 @@
 # questions.
 #
 
+# This file is a derivative work resulting from (and including) modifications
+# made by Azul Systems, Inc. The date of such changes is 2014.
+# These modification are copyright 2014 Azul Systems, Inc., and are made
+# available on the same license terms set forth above.
+#
+# Please contact Azul Systems, Inc., 1173 Borregas Avenue, Sunnyvale, CA 94089
+# USA or visit www.azulsystems.com if you need additional information or have
+# any questions.
+
 #
 # Imports files exported by a hotspot build or provided from an external
 #   location into the OUTPUTDIR, and also primes the OUTPUTDIR with files
@@ -107,16 +116,9 @@ ifeq ($(PLATFORM), windows)
 
 IMPORT_LIST += $(MS_RUNTIME_LIBRARIES:%=$(BINDIR)/%)
 
-# NOTE: These might actually come from BUILDDIR, depends on the settings.
-$(BINDIR)/msvcrt.dll: $(MSVCRT_DLL_PATH)/msvcrt.dll
+$(BINDIR)/$(MSVCRNN_DLL): $(MSVCRNN_DLL_PATH)/$(MSVCRNN_DLL)
 	$(install-import-file)
-	$(CHMOD) a+x $@
-$(BINDIR)/unicows.dll: $(UNICOWS_DLL_PATH)/unicows.dll
-	$(install-import-file)
-	$(CHMOD) a+x $@
-$(BINDIR)/msvcr71.dll: $(MSVCR71_DLL_PATH)/msvcr71.dll
-	$(install-import-file)
-	$(CHMOD) a+x $@
+	$(call chmod-file, a+x)
 
 # Get the hotspot .map and .pdb files for client and server
 IMPORT_LIST += \

@@ -23,6 +23,15 @@
 # questions.
 #
 
+# This file is a derivative work resulting from (and including) modifications
+# made by Azul Systems, Inc. The date of such changes is 2014.
+# These modification are copyright 2014 Azul Systems, Inc., and are made
+# available on the same license terms set forth above.
+#
+# Please contact Azul Systems, Inc., 1173 Borregas Avenue, Sunnyvale, CA 94089
+# USA or visit www.azulsystems.com if you need additional information or have
+# any questions.
+
 BUILDDIR = ../..
 PACKAGE = java.net
 LIBRARY = net
@@ -37,10 +46,6 @@ include FILES_c.gmk
 AUTO_FILES_JAVA_DIRS = java/net
 
 ifeq ($(PLATFORM), windows)
-    # Windows 9x module only needed on 32-bit build
-    ifeq ($(ARCH_DATA_MODEL), 32)
-	FILES_c += NetworkInterface_win9x.c
-    endif
     FILES_c += NTLMAuthSequence.c
     FILES_c += NetworkInterface_winXP.c
 endif
@@ -93,9 +98,9 @@ include $(BUILDDIR)/common/Mapfile-vers.gmk
 include $(BUILDDIR)/common/Library.gmk
 
 ifeq ($(PLATFORM), windows)
-  OTHER_LDLIBS = ws2_32.lib $(JVMLIB)
-  # Will not compile at warning level 3 if warnings are fatal
-  COMPILER_WARNINGS_FATAL=false
+  OTHER_LDLIBS = ws2_32.lib $(JVMLIB) \
+                 secur32.lib iphlpapi.lib delayimp.lib \
+                 /DELAYLOAD:secur32.dll /DELAYLOAD:iphlpapi.dll
 else
   OTHER_LDLIBS = $(LIBSOCKET) -lnsl -ldl $(JVMLIB)
 endif

@@ -23,6 +23,15 @@
  * questions.
  */
 
+// This file is a derivative work resulting from (and including) modifications
+// made by Azul Systems, Inc. The date of such changes is 2014.
+// These modification are copyright 2014 Azul Systems, Inc., and are made
+// available on the same license terms set forth above.
+//
+// Please contact Azul Systems, Inc., 1173 Borregas Avenue, Sunnyvale, CA 94089
+// USA or visit www.azulsystems.com if you need additional information or have
+// any questions.
+
 #include "awt_Toolkit.h"
 #include "awt_Component.h"
 #include "awt_Robot.h"
@@ -141,45 +150,7 @@ void AwtRobot::MouseRelease( jint buttonMask )
 }
 
 void AwtRobot::MouseWheel (jint wheelAmt) {
-    if (IS_WIN95 && !IS_WIN98) {
-        // Other win32 platforms do nothing for mouse_event(0), so
-        // do nothing on 95, too.
-        if (wheelAmt == 0) {
-            return;
-        }
-
-        // Win95 doesn't understand MOUSEEVENTF_WHEEL, so use PostEvent
-        POINT curPos;
-        HWND mouseOver = NULL;
-        HWND topLevel = NULL;
-        UINT wheelMsg = NULL;
-
-        if (::GetCursorPos((LPPOINT)&curPos) == 0) {
-            return;
-        }
-        // get hwnd of top-level container
-        mouseOver = ::WindowFromPoint(curPos);
-        DASSERT(mouseOver);
-        topLevel = AwtComponent::GetTopLevelParentForWindow(mouseOver);
-        DASSERT(topLevel);
-
-        if (::ScreenToClient(topLevel, (LPPOINT)&curPos) == 0) {
-            return;
-        }
-        wheelMsg = AwtComponent::Wheel95GetMsg();
-
-        if (wheelMsg == NULL) {
-            return;
-        }
-
-        ::PostMessage(topLevel,
-                      wheelMsg,
-                      wheelAmt * -1 * WHEEL_DELTA,
-                      MAKELPARAM((WORD)curPos.x, (WORD)curPos.y));
-    }
-    else {
-        mouse_event(MOUSEEVENTF_WHEEL, 0, 0, wheelAmt * -1 * WHEEL_DELTA, 0);
-    }
+    mouse_event(MOUSEEVENTF_WHEEL, 0, 0, wheelAmt * -1 * WHEEL_DELTA, 0);
 }
 
 inline jint AwtRobot::WinToJavaPixel(USHORT r, USHORT g, USHORT b)

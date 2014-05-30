@@ -23,7 +23,14 @@
  * questions.
  */
 
-
+// This file is a derivative work resulting from (and including) modifications
+// made by Azul Systems, Inc. The date of such changes is 2014.
+// These modification are copyright 2014 Azul Systems, Inc., and are made
+// available on the same license terms set forth above.
+//
+// Please contact Azul Systems, Inc., 1173 Borregas Avenue, Sunnyvale, CA 94089
+// USA or visit www.azulsystems.com if you need additional information or have
+// any questions.
 
 /* Maximum number of sockets per select() */
 /* This number should be equal to WindowsSelectorImpl.MAX_SELECTABLE_FDS */
@@ -36,6 +43,7 @@
 #include "jni.h"
 #include "jni_util.h"
 #include "sun_nio_ch_WindowsSelectorImpl.h"
+#include "sun_nio_ch_PollArrayWrapper.h"
 #include "winsock2.h"
 
 
@@ -43,10 +51,6 @@ typedef struct {
     jint fd;
     jshort events;
 } pollfd;
-
-static int POLLIN   = 1;
-static int POLLCONN = 2;
-static int POLLOUT  = 4;
 
 #define WAKEUP_SOCKET_BUF_SIZE 16
 
@@ -81,11 +85,13 @@ Java_sun_nio_ch_WindowsSelectorImpl_00024SubSelector_poll0(JNIEnv *env, jobject 
 
     /* Set FD_SET structures required for select */
     for (i = 0; i < numfds; i++) {
-        if (fds[i].events & POLLIN) {
+        if (fds[i].events & sun_nio_ch_PollArrayWrapper_POLLIN) {
            readfds.fd_array[read_count] = fds[i].fd;
            read_count++;
         }
-        if (fds[i].events & (POLLOUT | POLLCONN)) {
+        if (fds[i].events & (sun_nio_ch_PollArrayWrapper_POLLOUT |
+                             sun_nio_ch_PollArrayWrapper_POLLCONN))
+        {
            writefds.fd_array[write_count] = fds[i].fd;
            write_count++;
         }
@@ -110,11 +116,13 @@ Java_sun_nio_ch_WindowsSelectorImpl_00024SubSelector_poll0(JNIEnv *env, jobject 
             /* prepare select structures for the i-th socket */
             errreadfds.fd_count = 0;
             errwritefds.fd_count = 0;
-            if (fds[i].events & POLLIN) {
+            if (fds[i].events & sun_nio_ch_PollArrayWrapper_POLLIN) {
                errreadfds.fd_array[0] = fds[i].fd;
                errreadfds.fd_count = 1;
             }
-            if (fds[i].events & (POLLOUT | POLLCONN)) {
+            if (fds[i].events & (sun_nio_ch_PollArrayWrapper_POLLOUT |
+                                 sun_nio_ch_PollArrayWrapper_POLLCONN))
+            {
                 errwritefds.fd_array[0] = fds[i].fd;
                 errwritefds.fd_count = 1;
             }
@@ -186,7 +194,8 @@ Java_sun_nio_ch_WindowsSelectorImpl_setWakeupSocket0(JNIEnv *env, jclass this,
                                                 jint scoutFd)
 {
     /* Write one byte into the pipe */
-    send(scoutFd, (char*)&POLLIN, 1, 0);
+    const char byte = 1;
+    send(scoutFd, &byte, 1, 0);
 }
 
 JNIEXPORT void JNICALL
@@ -220,11 +229,10 @@ Java_sun_nio_ch_WindowsSelectorImpl_discardUrgentData(JNIEnv* env, jobject this,
     jboolean discarded = JNI_FALSE;
     int n;
     do {
-        n = recv(s, data, sizeof(data), MSG_OOB);
+        n = recv(s, (char*)&data, sizeof(data), MSG_OOB);
         if (n > 0) {
             discarded = JNI_TRUE;
         }
     } while (n > 0);
     return discarded;
 }
-

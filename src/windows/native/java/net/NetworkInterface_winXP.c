@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2005, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,6 +23,15 @@
  * questions.
  */
 
+// This file is a derivative work resulting from (and including) modifications
+// made by Azul Systems, Inc. The date of such changes is 2014.
+// These modification are copyright 2014 Azul Systems, Inc., and are made
+// available on the same license terms set forth above.
+//
+// Please contact Azul Systems, Inc., 1173 Borregas Avenue, Sunnyvale, CA 94089
+// USA or visit www.azulsystems.com if you need additional information or have
+// any questions.
+
 #include <stdlib.h>
 #include <windows.h>
 #include <winsock2.h>           /* needed for htonl */
@@ -42,14 +51,7 @@
  */
 
 extern int enumAddresses_win(JNIEnv *env, netif *netifP, netaddr **netaddrPP);
-
-/* IP helper library routines */
-int (PASCAL FAR *GetIpAddrTable_fn)();
-int (PASCAL FAR *GetIfTable_fn)();
-int (PASCAL FAR *GetFriendlyIfIndex_fn)();
-int (PASCAL FAR *GetAdaptersAddresses_fn)();
-int (PASCAL FAR *GetAdaptersInfo_fn)();
-int (PASCAL FAR *GetNumberOfInterfaces_fn)();
+int getAddrsFromAdapter(IP_ADAPTER_ADDRESSES *ptr, netaddr **netaddrPP);
 
 #ifdef DEBUG
 void printnif (netif *nif) {
@@ -96,14 +98,14 @@ static int getAdapters (JNIEnv *env, IP_ADAPTER_ADDRESSES **adapters) {
     flags = GAA_FLAG_SKIP_DNS_SERVER;
     flags |= GAA_FLAG_SKIP_MULTICAST;
     flags |= GAA_FLAG_INCLUDE_PREFIX;
-    ret = (*GetAdaptersAddresses_fn) (AF_UNSPEC, flags, NULL, adapterInfo, &len);
+    ret = GetAdaptersAddresses(AF_UNSPEC, flags, NULL, adapterInfo, &len);
     if (ret == ERROR_BUFFER_OVERFLOW) {
         adapterInfo = (IP_ADAPTER_ADDRESSES *) realloc (adapterInfo, len);
         if (adapterInfo == 0) {
             return -1;
         }
         bufsize = len;
-        ret = (*GetAdaptersAddresses_fn) (AF_UNSPEC, flags, NULL, adapterInfo, &len);
+        ret = GetAdaptersAddresses(AF_UNSPEC, flags, NULL, adapterInfo, &len);
     }
     if (ret != ERROR_SUCCESS) {
         free (adapterInfo);
@@ -121,31 +123,33 @@ static int getAdapters (JNIEnv *env, IP_ADAPTER_ADDRESSES **adapters) {
  * Buffer is malloc'd and must be freed (unless error returned)
  */
 IP_ADAPTER_ADDRESSES *getAdapter (JNIEnv *env,  jint index) {
-    DWORD flags;
+    DWORD flags, val;
     IP_ADAPTER_ADDRESSES *adapterInfo, *ptr, *ret;
     ULONG len;
     adapterInfo = (IP_ADAPTER_ADDRESSES *)malloc (bufsize);
     if (adapterInfo == 0) {
-        return -1;
+        JNU_ThrowByName(env, "java/lang/OutOfMemoryError", 0);
+        return NULL;
     }
     len = bufsize;
     flags = GAA_FLAG_SKIP_DNS_SERVER;
     flags |= GAA_FLAG_SKIP_MULTICAST;
     flags |= GAA_FLAG_INCLUDE_PREFIX;
-    ret = (*GetAdaptersAddresses_fn) (AF_UNSPEC, flags, NULL, adapterInfo, &len);
-    if (ret == ERROR_BUFFER_OVERFLOW) {
+    val = GetAdaptersAddresses(AF_UNSPEC, flags, NULL, adapterInfo, &len);
+    if (val == ERROR_BUFFER_OVERFLOW) {
         adapterInfo = (IP_ADAPTER_ADDRESSES *) realloc (adapterInfo, len);
         if (adapterInfo == 0) {
-            return -1;
+            JNU_ThrowByName(env, "java/lang/OutOfMemoryError", 0);
+            return NULL;
         }
         bufsize = len;
-        ret = (*GetAdaptersAddresses_fn) (AF_UNSPEC, flags, NULL, adapterInfo, &len);
+        val = GetAdaptersAddresses(AF_UNSPEC, flags, NULL, adapterInfo, &len);
     }
-    if (ret != ERROR_SUCCESS) {
+    if (val != ERROR_SUCCESS) {
         free (adapterInfo);
         JNU_ThrowByName(env, "java/lang/Error",
                 "IP Helper Library GetAdaptersAddresses function failed");
-        return -1;
+        return NULL;
     }
     ptr = adapterInfo;
     ret = NULL;
@@ -167,11 +171,10 @@ static int ipinflen = 2048;
  */
 int getAllInterfacesAndAddresses (JNIEnv *env, netif **netifPP)
 {
-    DWORD ret, numInterfaces;
-    IP_ADAPTER_ADDRESSES *ptr, *ptr1, *adapters=0;
+    DWORD ret;
+    IP_ADAPTER_ADDRESSES *ptr, *adapters=0;
     ULONG len=ipinflen, count=0;
-    netif *nif=0, *dup_nif, *last=0, *loopif=0;
-    netaddr *addr, *addr1;
+    netif *nif=0, *dup_nif, *last=0, *loopif=0, *curr;
     int tun=0, net=0;
 
     *netifPP = 0;
@@ -181,7 +184,7 @@ int getAllInterfacesAndAddresses (JNIEnv *env, netif **netifPP)
     * as what previous JDK versions would return.
     */
 
-    ret = enumInterfaces_win (env, netifPP);
+    ret = enumInterfaces(env, netifPP);
     if (ret == -1) {
         return -1;
     } else {
@@ -196,6 +199,20 @@ int getAllInterfacesAndAddresses (JNIEnv *env, netif **netifPP)
         last = nif;
     }
 
+    // Retrieve IPv4 addresses with the IP Helper API
+    curr = *netifPP;
+    while (curr != NULL) {
+        netaddr *netaddrP;
+        ret = enumAddresses_win(env, curr, &netaddrP);
+        if ((*env)->ExceptionOccurred(env)) {
+            free_netaddr(netaddrP);
+            return -1;
+        }
+        curr->addrs = netaddrP;
+        curr->naddrs += ret;
+        curr = curr->next;
+    }
+
     ret = getAdapters (env, &adapters);
     if (ret != ERROR_SUCCESS) {
         goto err;
@@ -206,7 +223,7 @@ int getAllInterfacesAndAddresses (JNIEnv *env, netif **netifPP)
      *  (b)  IPv6 information for IPv6 only interfaces (probably tunnels)
      *
      * For compatibility with previous releases we use the naming
-     * information gotten from enumInterfaces_win() for (a) entries
+     * information gotten from enumInterfaces() for (a) entries
      * However, the index numbers are taken from the new API.
      *
      * The procedure is to go through the list of adapters returned
@@ -329,7 +346,7 @@ err:
 
 static int getAddrsFromAdapter(IP_ADAPTER_ADDRESSES *ptr, netaddr **netaddrPP) {
     LPSOCKADDR                   sock;
-    int                          ret, count = 0;
+    int                          count = 0;
     netaddr                     *curr, *start=0, *prev=0;
     PIP_ADAPTER_UNICAST_ADDRESS uni_addr;
     PIP_ADAPTER_ANYCAST_ADDRESS any_addr;
@@ -349,6 +366,14 @@ static int getAddrsFromAdapter(IP_ADAPTER_ADDRESSES *ptr, netaddr **netaddrPP) {
         /* address is only usable if dad state is preferred or deprecated */
         if (uni_addr->DadState == IpDadStateDeprecated ||
                 uni_addr->DadState == IpDadStatePreferred) {
+            sock = uni_addr->Address.lpSockaddr;
+
+            // IPv4 addresses already retrieved with enumAddresses_win
+            if (sock->sa_family == AF_INET) {
+                uni_addr = uni_addr->Next;
+                continue;
+            }
+
             curr = (netaddr *)calloc (1, sizeof (netaddr));
             if (curr == 0) {
                 return -1;
@@ -360,15 +385,9 @@ static int getAddrsFromAdapter(IP_ADAPTER_ADDRESSES *ptr, netaddr **netaddrPP) {
                 prev->next = curr;
             }
             prev = curr;
-            sock = uni_addr->Address.lpSockaddr;
             SOCKETADDRESS_COPY (&curr->addr, sock);
             if (prefix != NULL) {
-              curr->mask = prefix->PrefixLength;
-              if (sock->sa_family == AF_INET) {
-                sock = prefix->Address.lpSockaddr;
-                SOCKETADDRESS_COPY(&curr->brdcast, sock);
-                curr->brdcast.him4.sin_addr.s_addr |= htonl((0xffffffff >> curr->mask));
-              }
+              curr->mask = (short)prefix->PrefixLength;
               prefix = prefix->Next;
             }
             count ++;
@@ -422,7 +441,8 @@ static jobject createNetworkInterfaceXP(JNIEnv *env, netif *ifs)
     netifObj = (*env)->NewObject(env, ni_class, ni_ctor);
     name = (*env)->NewStringUTF(env, ifs->name);
     if (ifs->dNameIsUnicode) {
-        displayName = (*env)->NewString(env, (PWCHAR)ifs->displayName, wcslen ((PWCHAR)ifs->displayName));
+        displayName = (*env)->NewString(env, (PWCHAR)ifs->displayName,
+                                        (jsize)wcslen ((PWCHAR)ifs->displayName));
     } else {
         displayName = (*env)->NewStringUTF(env, ifs->displayName);
     }
@@ -570,7 +590,7 @@ JNIEXPORT jobject JNICALL Java_java_net_NetworkInterface_getByName0_XP
 
 /*
  * Class:     NetworkInterface
- * Method:    getByIndex
+ * Method:    getByIndex_XP
  * Signature: (I)LNetworkInterface;
  */
 JNIEXPORT jobject JNICALL Java_java_net_NetworkInterface_getByIndex_XP
@@ -717,14 +737,12 @@ JNIEXPORT jobjectArray JNICALL Java_java_net_NetworkInterface_getAll_XP
  */
 JNIEXPORT jboolean JNICALL Java_java_net_NetworkInterface_supportsMulticast0_XP
     (JNIEnv *env, jclass cls, jstring name, jint index) {
-      IP_ADAPTER_ADDRESSES *adapters, *ptr;
-      DWORD ret;
-      jint ifindex;
+      IP_ADAPTER_ADDRESSES *ptr;
       jboolean val = JNI_TRUE;
 
       ptr = getAdapter(env, index);
-      if (ptr != NULL && (ptr->Flags & IP_ADAPTER_NO_MULTICAST)) {
-        val = JNI_FALSE;
+      if (ptr != NULL) {
+        val = ptr->Flags & IP_ADAPTER_NO_MULTICAST ? JNI_FALSE : JNI_TRUE;
         free(ptr);
       }
       return val;
@@ -741,9 +759,8 @@ JNIEXPORT jboolean JNICALL Java_java_net_NetworkInterface_isUp0_XP
       jboolean val = JNI_FALSE;
 
       ptr = getAdapter(env, index);
-      if (ptr != NULL &&
-          (ptr->OperStatus == IfOperStatusUp)) {
-        val = JNI_TRUE;
+      if (ptr != NULL) {
+        val = ptr->OperStatus == IfOperStatusUp ? JNI_TRUE : JNI_FALSE;
         free(ptr);
       }
       return val;
@@ -802,9 +819,8 @@ JNIEXPORT jboolean JNICALL Java_java_net_NetworkInterface_isLoopback0_XP
       jboolean val = JNI_FALSE;
 
       ptr = getAdapter(env, index);
-      if (ptr != NULL &&
-          (ptr->IfType == IF_TYPE_SOFTWARE_LOOPBACK)) {
-        val = JNI_TRUE;
+      if (ptr != NULL) {
+        val = ptr->IfType == IF_TYPE_SOFTWARE_LOOPBACK ? JNI_TRUE : JNI_FALSE;
         free(ptr);
       }
       return val;
@@ -821,11 +837,11 @@ JNIEXPORT jboolean JNICALL Java_java_net_NetworkInterface_isP2P0_XP
       jboolean val = JNI_FALSE;
 
       ptr = getAdapter(env, index);
-      if (ptr != NULL &&
-          (ptr->IfType == IF_TYPE_PPP ||
-           ptr->IfType == IF_TYPE_SLIP ||
-           ptr->IfType == IF_TYPE_TUNNEL)) {
-        val = JNI_TRUE;
+      if (ptr != NULL) {
+        if (ptr->IfType == IF_TYPE_PPP || ptr->IfType == IF_TYPE_SLIP ||
+           ptr->IfType == IF_TYPE_TUNNEL) {
+          val = JNI_TRUE;
+        }
         free(ptr);
       }
       return val;

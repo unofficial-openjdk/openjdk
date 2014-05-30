@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2008, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,12 +23,20 @@
  * questions.
  */
 
+// This file is a derivative work resulting from (and including) modifications
+// made by Azul Systems, Inc. The date of such changes is 2014.
+// These modification are copyright 2014 Azul Systems, Inc., and are made
+// available on the same license terms set forth above.
+//
+// Please contact Azul Systems, Inc., 1173 Borregas Avenue, Sunnyvale, CA 94089
+// USA or visit www.azulsystems.com if you need additional information or have
+// any questions.
+
 #include <winsock2.h>
 #include <ws2tcpip.h>
 
 #include "net_util.h"
 #include "jni.h"
-#include "typedefs.h"
 
 #ifndef IPTOS_TOS_MASK
 #define IPTOS_TOS_MASK 0x1e
@@ -39,10 +47,6 @@
 
 /* true if SO_RCVTIMEO is supported */
 jboolean isRcvTimeoutSupported = JNI_TRUE;
-
-LPFN_GETADDRINFO getaddrinfo_ptr = NULL;
-LPFN_FREEADDRINFO freaddrinfo_ptr = NULL;
-LPFN_GETNAMEINFO getnameinfo_ptr = NULL;
 
 /*
  * Table of Windows Sockets errors, the specific exception we
@@ -235,29 +239,11 @@ NET_GetFileDescriptorID(JNIEnv *env)
 
 jint  IPv6_supported()
 {
-    HMODULE lib;
-    int fd = socket(AF_INET6, SOCK_STREAM, 0) ;
-    if (fd < 0) {
+    SOCKET s = socket(AF_INET6, SOCK_STREAM, 0) ;
+    if (s == INVALID_SOCKET) {
         return JNI_FALSE;
     }
-    closesocket (fd);
-
-    if ((lib = LoadLibrary ("ws2_32.dll")) == NULL) {
-        return JNI_FALSE;
-    }
-    if ((getaddrinfo_ptr = (LPFN_GETADDRINFO)GetProcAddress (lib, "getaddrinfo")) == NULL) {
-        FreeLibrary (lib);
-        return JNI_FALSE;
-    }
-    if ((freeaddrinfo_ptr = (LPFN_FREEADDRINFO)GetProcAddress (lib, "freeaddrinfo")) == NULL) {
-        FreeLibrary (lib);
-        return JNI_FALSE;
-    }
-    if ((getnameinfo_ptr = (LPFN_GETNAMEINFO)GetProcAddress (lib, "getnameinfo")) == NULL) {
-        FreeLibrary (lib);
-        return JNI_FALSE;
-    }
-    FreeLibrary(lib);
+    closesocket(s);
 
     return JNI_TRUE;
 }
@@ -707,7 +693,7 @@ NET_BindV6(struct ipv6bind* b, jboolean exclBind) {
     if (family == AF_INET && (b->addr->him4.sin_addr.s_addr != INADDR_ANY)) {
         /* bind to v4 only */
         int ret;
-        ret = NET_WinBind (b->ipv4_fd, (struct sockaddr *)b->addr,
+        ret = NET_WinBind ((int)b->ipv4_fd, (struct sockaddr *)b->addr,
                                 sizeof (struct sockaddr_in), exclBind);
         if (ret == SOCKET_ERROR) {
             CLOSE_SOCKETS_AND_RETURN;
@@ -719,7 +705,7 @@ NET_BindV6(struct ipv6bind* b, jboolean exclBind) {
     if (family == AF_INET6 && (!IN6_IS_ADDR_ANY(&b->addr->him6.sin6_addr))) {
         /* bind to v6 only */
         int ret;
-        ret = NET_WinBind (b->ipv6_fd, (struct sockaddr *)b->addr,
+        ret = NET_WinBind ((int)b->ipv6_fd, (struct sockaddr *)b->addr,
                                 sizeof (struct SOCKADDR_IN6), exclBind);
         if (ret == SOCKET_ERROR) {
             CLOSE_SOCKETS_AND_RETURN;
@@ -734,15 +720,15 @@ NET_BindV6(struct ipv6bind* b, jboolean exclBind) {
     memset (&oaddr, 0, sizeof(oaddr));
     if (family == AF_INET) {
         ofamily = AF_INET6;
-        fd = b->ipv4_fd;
-        ofd = b->ipv6_fd;
+        fd = (int)b->ipv4_fd;
+        ofd = (int)b->ipv6_fd;
         port = (u_short)GET_PORT (b->addr);
         IN6ADDR_SETANY (&oaddr.him6);
         oaddr.him6.sin6_port = port;
     } else {
         ofamily = AF_INET;
-        ofd = b->ipv4_fd;
-        fd = b->ipv6_fd;
+        ofd = (int)b->ipv4_fd;
+        fd = (int)b->ipv6_fd;
         port = (u_short)GET_PORT (b->addr);
         oaddr.him4.sin_family = AF_INET;
         oaddr.him4.sin_port = port;
@@ -787,11 +773,11 @@ NET_BindV6(struct ipv6bind* b, jboolean exclBind) {
             b->ipv6_fd = SOCKET_ERROR;
 
             /* create two new sockets */
-            fd = socket (family, sotype, 0);
+            fd = (int)socket (family, sotype, 0);
             if (fd == SOCKET_ERROR) {
                 CLOSE_SOCKETS_AND_RETURN;
             }
-            ofd = socket (ofamily, sotype, 0);
+            ofd = (int)socket (ofamily, sotype, 0);
             if (ofd == SOCKET_ERROR) {
                 CLOSE_SOCKETS_AND_RETURN;
             }
@@ -847,7 +833,7 @@ jint getDefaultIPv6Interface(JNIEnv *env, struct SOCKADDR_IN6 *target_addr)
     DWORD b;
     struct sockaddr_in6 route;
     SOCKET fd = socket(AF_INET6, SOCK_STREAM, 0);
-    if (fd < 0) {
+    if (fd == INVALID_SOCKET) {
         return 0;
     }
 
@@ -855,7 +841,7 @@ jint getDefaultIPv6Interface(JNIEnv *env, struct SOCKADDR_IN6 *target_addr)
                     (void *)target_addr, sizeof(struct sockaddr_in6),
                     (void *)&route, sizeof(struct sockaddr_in6),
                     &b, 0, 0);
-    if (ret < 0) {
+    if (ret == SOCKET_ERROR) {
         // error
         closesocket(fd);
         return 0;
@@ -932,7 +918,7 @@ NET_InetAddressToSockaddr(JNIEnv *env, jobject iaObj, int port, struct sockaddr 
     return 0;
 }
 
-jint
+JNIEXPORT jint JNICALL
 NET_GetPortFromSockaddr(struct sockaddr *him) {
     if (him->sa_family == AF_INET6) {
         return ntohs(((struct sockaddr_in6*)him)->sin6_port);
@@ -1027,7 +1013,7 @@ NET_Wait(JNIEnv *env, jint fd, jint flags, jint timeout)
         read_rv = select(fd+1, &rd, &wr, &ex, &t);
 
         newTime = JVM_CurrentTimeMillis(env, 0);
-        timeout -= (newTime - prevTime);
+        timeout -= (jint)(newTime - prevTime);
         if (timeout <= 0) {
           return read_rv > 0 ? 0 : -1;
         }
@@ -1044,10 +1030,10 @@ NET_Wait(JNIEnv *env, jint fd, jint flags, jint timeout)
 }
 
 int NET_Socket (int domain, int type, int protocol) {
-    int sock;
+    SOCKET sock;
     sock = socket (domain, type, protocol);
     if (sock != INVALID_SOCKET) {
         SetHandleInformation((HANDLE)(uintptr_t)sock, HANDLE_FLAG_INHERIT, FALSE);
     }
-    return sock;
+    return (int)sock;
 }

@@ -23,6 +23,15 @@
  * questions.
  */
 
+// This file is a derivative work resulting from (and including) modifications
+// made by Azul Systems, Inc. The date of such changes is 2014.
+// These modification are copyright 2014 Azul Systems, Inc., and are made
+// available on the same license terms set forth above.
+//
+// Please contact Azul Systems, Inc., 1173 Borregas Avenue, Sunnyvale, CA 94089
+// USA or visit www.azulsystems.com if you need additional information or have
+// any questions.
+
 #include <windows.h>
 #include <io.h>
 #include <process.h>
@@ -38,7 +47,6 @@
 
 #define JVM_DLL "jvm.dll"
 #define JAVA_DLL "java.dll"
-#define CRT_DLL "msvcr71.dll"
 
 /*
  * Prototypes.
@@ -103,8 +111,8 @@ int awtPreloadD3D = -1;
  * GetParamValue("theParam", "theParam=value") returns pointer to "value".
  */
 const char * GetParamValue(const char *paramName, const char *arg) {
-    int nameLen = JLI_StrLen(paramName);
-    if (JLI_StrNCmp(paramName, arg, nameLen) == 0) {
+    int nameLen = strlen(paramName);
+    if (strncmp(paramName, arg, nameLen) == 0) {
         /* arg[nameLen] is valid (may contain final NULL) */
         if (arg[nameLen] == '=') {
             return arg + nameLen + 1;
@@ -122,10 +130,10 @@ const char * GetParamValue(const char *paramName, const char *arg) {
 int GetBoolParamValue(const char *paramName, const char *arg) {
     const char * paramValue = GetParamValue(paramName, arg);
     if (paramValue != NULL) {
-        if (JLI_StrCaseCmp(paramValue, "true") == 0) {
+        if (stricmp(paramValue, "true") == 0) {
             return 1;
         }
-        if (JLI_StrCaseCmp(paramValue, "false") == 0) {
+        if (stricmp(paramValue, "false") == 0) {
             return 0;
         }
     }
@@ -209,19 +217,19 @@ CreateExecutionEnvironment(int *_argc,
 
     /* Check if we need preload AWT */
 #ifdef ENABLE_AWT_PRELOAD
-    argv = *pargv;
-    for (i = 0; i < *pargc ; i++) {
+    pargv = *_argv;
+    for (i = 0; i < *_argc ; i++) {
         /* Tests the "turn on" parameter only if not set yet. */
         if (awtPreloadD3D < 0) {
-            if (GetBoolParamValue(PARAM_PRELOAD_D3D, argv[i]) == 1) {
+            if (GetBoolParamValue(PARAM_PRELOAD_D3D, pargv[i]) == 1) {
                 awtPreloadD3D = 1;
             }
         }
         /* Test parameters which can disable preloading if not already disabled. */
         if (awtPreloadD3D != 0) {
-            if (GetBoolParamValue(PARAM_NODDRAW, argv[i]) == 1
-                || GetBoolParamValue(PARAM_D3D, argv[i]) == 0
-                || GetBoolParamValue(PARAM_OPENGL, argv[i]) == 1)
+            if (GetBoolParamValue(PARAM_NODDRAW, pargv[i]) == 1
+                || GetBoolParamValue(PARAM_D3D, pargv[i]) == 0
+                || GetBoolParamValue(PARAM_OPENGL, pargv[i]) == 1)
             {
                 awtPreloadD3D = 0;
                 /* no need to test the rest of the parameters */
@@ -231,6 +239,53 @@ CreateExecutionEnvironment(int *_argc,
     }
 #endif /* ENABLE_AWT_PRELOAD */
 
+}
+
+static jboolean
+LoadMSVCRT()
+{
+    // Only do this once
+    static int loaded = 0;
+    char crtpath[MAXPATHLEN];
+
+    if (!loaded) {
+        /*
+         * The Microsoft C Runtime Library needs to be loaded first.  A copy is
+         * assumed to be present in the "JRE path" directory.  If it is not found
+         * there (or "JRE path" fails to resolve), skip the explicit load and let
+         * nature take its course, which is likely to be a failure to execute.
+         * This is clearly completely specific to the exact compiler version
+         * which isn't very nice, but its hardly the only place.
+         * No attempt to look for compiler versions in between 2003 and 2010
+         * as we aren't supporting building with those.
+         */
+#ifdef _MSC_VER
+#if _MSC_VER >= 1600
+#define CRT_DLL "msvcr100.dll"
+#endif
+#ifdef CRT_DLL
+        if (GetJREPath(crtpath, MAXPATHLEN)) {
+            if (strlen(crtpath) + strlen("\\bin\\") +
+                    strlen(CRT_DLL) >= MAXPATHLEN) {
+		printf("Error: Path length exceeds maximum length (PATH_MAX)");
+                return JNI_FALSE;
+            }
+            (void)strcat(crtpath, "\\bin\\" CRT_DLL);   /* Add crt dll */
+	    if (_launcher_debug) {
+		printf("CRT path is %s\n", crtpath);
+	    }
+            if (_access(crtpath, 0) == 0) {
+                if (LoadLibrary(crtpath) == 0) {
+		    ReportErrorMessage2("Error loading: %s", crtpath, JNI_TRUE);
+                    return JNI_FALSE;
+                }
+            }
+        }
+#endif /* CRT_DLL */
+#endif /* _MSC_VER */
+        loaded = 1;
+    }
+    return JNI_TRUE;
 }
 
 /*
@@ -312,18 +367,7 @@ LoadJavaVM(const char *jvmpath, InvocationFunctions *ifn)
      * there (or "JRE path" fails to resolve), skip the explicit load and let
      * nature take its course, which is likely to be a failure to execute.
      */
-    if (GetJREPath(crtpath, MAXPATHLEN)) {
-        (void)strcat(crtpath, "\\bin\\" CRT_DLL);       /* Add crt dll */
-        if (_launcher_debug) {
-             printf("CRT path is %s\n", crtpath);
-        }
-        if (_access(crtpath, 0) == 0) {
-            if (LoadLibrary(crtpath) == 0) {
-                ReportErrorMessage2("Error loading: %s", crtpath, JNI_TRUE);
-                return JNI_FALSE;
-            }
-        }
-    }
+    LoadMSVCRT();
 
     /* Load the Java VM DLL */
     if ((handle = LoadLibrary(jvmpath)) == 0) {
@@ -1170,12 +1214,12 @@ ContinueInNewThread(int (JNICALL *continuation)(void *), jlong stack_size, void 
          * command line params was specified
          */
         envValue = getenv("J2D_D3D");
-        if (envValue != NULL && JLI_StrCaseCmp(envValue, "false") == 0) {
+        if (envValue != NULL && stricmp(envValue, "false") == 0) {
             awtPreloadD3D = 0;
         }
         /* Test that AWT preloading isn't disabled by J2D_D3D_PRELOAD env.var */
         envValue = getenv("J2D_D3D_PRELOAD");
-        if (envValue != NULL && JLI_StrCaseCmp(envValue, "false") == 0) {
+        if (envValue != NULL && stricmp(envValue, "false") == 0) {
             awtPreloadD3D = 0;
         }
         if (awtPreloadD3D < 0) {
@@ -1184,7 +1228,7 @@ ContinueInNewThread(int (JNICALL *continuation)(void *), jlong stack_size, void 
              * By default it's turned OFF.
              */
             awtPreloadD3D = 0;
-            if (envValue != NULL && JLI_StrCaseCmp(envValue, "true") == 0) {
+            if (envValue != NULL && stricmp(envValue, "true") == 0) {
                 awtPreloadD3D = 1;
             }
          }
@@ -1249,13 +1293,13 @@ int AWTPreload(const char *funcName)
             }
 
             /* save path length */
-            jrePathLen = JLI_StrLen(libraryPath);
+            jrePathLen = strlen(libraryPath);
 
             /* load msvcrt 1st */
             LoadMSVCRT();
 
             /* load verify.dll */
-            JLI_StrCat(libraryPath, "\\bin\\verify.dll");
+            strcat(libraryPath, "\\bin\\verify.dll");
             hVerify = LoadLibrary(libraryPath);
             if (hVerify == NULL) {
                 break;
@@ -1264,7 +1308,7 @@ int AWTPreload(const char *funcName)
             /* restore jrePath */
             libraryPath[jrePathLen] = 0;
             /* load java.dll */
-            JLI_StrCat(libraryPath, "\\bin\\" JAVA_DLL);
+            strcat(libraryPath, "\\bin\\" JAVA_DLL);
             hJava = LoadLibrary(libraryPath);
             if (hJava == NULL) {
                 break;
@@ -1273,7 +1317,7 @@ int AWTPreload(const char *funcName)
             /* restore jrePath */
             libraryPath[jrePathLen] = 0;
             /* load awt.dll */
-            JLI_StrCat(libraryPath, "\\bin\\awt.dll");
+            strcat(libraryPath, "\\bin\\awt.dll");
             hPreloadAwt = LoadLibrary(libraryPath);
             if (hPreloadAwt == NULL) {
                 break;
