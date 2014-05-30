@@ -1591,7 +1591,6 @@ ifeq ($(OPENJDK_TARGET_OS), macosx)
 
   ifeq ($(SHUFFLED), true)
     LIBAWT_LWAWT_DIRS := \
-        $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/macosx/native/include \
         $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/macosx/native/libawt_lwawt \
         $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/unix/native/common/sun/awt \
         $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/share/native/common/sun/font \
@@ -1601,6 +1600,7 @@ ifeq ($(OPENJDK_TARGET_OS), macosx)
     LIBAWT_LWAWT_CFLAGS := \
         $(addprefix -I, $(LIBAWT_LWAWT_DIRS)) \
         -I$(JDK_OUTPUTDIR)/gensrc_headers/java.desktop \
+        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/macosx/native/include \
         -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/macosx/native/libawt_lwawt/sun/java2d/opengl \
         -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/macosx/native/libawt_lwawt/sun/awt \
         -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/unix/native/libawt_xawt/sun/awt \
