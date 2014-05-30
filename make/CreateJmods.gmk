@@ -96,7 +96,7 @@ define CreateJmod
 		$(ECHO) Creating jmods/$1.jmod
 		$(MKDIR) -p $$(@D)
 		$(RM) $$@
-		$(JLINK) --format jmod --module $1 \
+		$(JLINK) --format jmod --mid $1@9.0 \
 		    --output $$@ $$($1_JLINK_FLAGS) 
 
   JMODS += $(JDK_OUTPUTDIR)/jmods/$1.jmod
