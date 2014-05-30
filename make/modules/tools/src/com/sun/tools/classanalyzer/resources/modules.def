@@ -313,7 +313,7 @@ module java.management {
     // closed specific
     exports com.sun.jmx.defaults to jdk.snmp;
     exports com.sun.jmx.mbeanserver to jdk.snmp;
-    exports sun.management to jdk.jfr, jdk.snmp;
+    exports sun.management to jdk.snmp;
  
     include java.lang.management.*, com.sun.management.**, sun.management.**;
     include javax.management.**, com.sun.jmx.**;
