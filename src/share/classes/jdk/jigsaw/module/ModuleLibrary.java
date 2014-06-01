@@ -25,68 +25,78 @@
 
 package jdk.jigsaw.module;
 
+import java.util.Collections;
 import java.util.Set;
 import java.util.HashSet;
 
 /**
- * A library of modules, for example installed modules or a module path.
- * A {@code ModuleLibrary} can optionally have a parent module library
- * for delegation.
+ * A library of modules, for example installed modules or the launcher module
+ * path. A {@code ModuleLibrary} can optionally to be arranged in a path of
+ * module libraries.
  */
 
 public abstract class ModuleLibrary {
-    private final ModuleLibrary parent;
+    private final ModuleLibrary next;
+
+    protected ModuleLibrary(ModuleLibrary next) {
+        this.next = next;
+    }
 
     protected ModuleLibrary() {
-        this.parent = null;
-    }
-
-    protected ModuleLibrary(ModuleLibrary parent) {
-        this.parent = parent;
+        this(null);
     }
 
     /**
-     * Returns the module library's parent or {@code null} if if does not have
-     * a parent.
+     * Returns the next module library in the path, may be {@code null}.
      */
-    public final ModuleLibrary parent() {
-        return parent;
+    public final ModuleLibrary next() {
+        return next;
     }
 
     /**
-     * Locates a module of the given name in this library. Returns {@code null}
-     * if not found.
+     * Locates a module of the given name in this module library. Returns
+     * {@code null} if not found.
      */
     public abstract Module findLocalModule(String name);
 
     /**
-     * Locates a module of the given name in parent library and if not found,
-     * attempts to locate it in this module library.
+     * Locates a module of the given name. If the module is not found in this
+     * module library then the next module library in the path is searched.
      */
     public final Module findModule(String name) {
-        Module m = null;
-        if (parent != null)
-            m = parent.findModule(name);
-        if (m == null)
-            m = findLocalModule(name);
+        Module m = findLocalModule(name);
+        if (m == null && next != null)
+            m = next.findModule(name);
         return m;
     }
 
     /**
-     * Returns the set of modules in this library. The set does not include
-     * the modules in the parent module library.
+     * Returns the set of modules that are local to this module library.
      */
     public abstract Set<Module> localModules();
 
     /**
-     * Returns the set of modules in this library and all parent libraries.
+     * Returns the complete set of modules in this library and all module
+     * libraries that in the path of libraries.
      */
     public final Set<Module> allModules() {
-        if (parent == null)
+        if (next == null)
             return localModules();
         Set<Module> result = new HashSet<>();
-        result.addAll(parent.allModules());
+        result.addAll(next.allModules());
         result.addAll(localModules());
         return result;
+    }
+
+    /**
+     * Returns an empty module library.
+     */
+    public static ModuleLibrary emptyModuleLibrary() {
+        return new ModuleLibrary(null) {
+            @Override
+            public Module findLocalModule(String name) { return null; }
+            @Override
+            public Set<Module> localModules() { return Collections.emptySet(); }
+        };
     }
 }

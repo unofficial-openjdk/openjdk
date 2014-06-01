@@ -42,7 +42,7 @@ import java.util.stream.Collectors;
 import jdk.jigsaw.module.Module;
 import static jdk.jigsaw.module.ModuleDependence.Modifier.PUBLIC;
 import jdk.jigsaw.module.ModuleLibrary;
-import jdk.jigsaw.module.Resolution;
+import jdk.jigsaw.module.ModuleGraph;
 import jdk.jigsaw.module.SimpleResolver;
 
 public class GenGraphs {
@@ -90,13 +90,8 @@ public class GenGraphs {
         GenGraphs genGraphs = new GenGraphs(javaSEModules, jdkModules);
         for (Module m: modules) {
             String name = m.id().name();
-            Set<String> roots = new HashSet<>();
-            roots.add(name);
-
-            Resolution r = resolver.resolve(roots);
-            Map<Module, Set<String>> deps = r.resolvedDependences();
-
-            genGraphs.genDotFile(dir, name, deps);
+            ModuleGraph g = resolver.resolve(name);
+            genGraphs.genDotFile(dir, name, g);
         }
     }
 
@@ -132,9 +127,7 @@ public class GenGraphs {
     private static final String REQUIRES = "[style=\"dashed\"]";
     private static final String REQUIRES_BASE = "[color=\"" + GRAY + "\"]";
 
-    private void genDotFile(Path dir, String name, Map<Module, Set<String>> deps)
-        throws IOException
-    {
+    private void genDotFile(Path dir, String name, ModuleGraph g) throws IOException {
         try (PrintStream out = new PrintStream(Files.newOutputStream(dir.resolve(name + ".dot")))) {
             out.format("digraph \"%s\" {%n", name);
             out.format("nodesep=.5;%n");
@@ -142,29 +135,29 @@ public class GenGraphs {
             out.format("edge [arrowhead=open];%n");
             out.format("node [shape=plaintext, fontname=\"DejaVuSan\"];%n");
 
-            deps.keySet().stream()
+            g.modules().stream()
                 .filter(javaGroup::contains)
                 .map(this::name)
                 .forEach(mn -> out.format("  \"%s\" [fontcolor=\"%s\", group=%s];%n",
                                           mn, ORANGE, "java"));
-            deps.keySet().stream()
+            g.modules().stream()
                 .filter(jdkGroup::contains)
                 .map(this::name)
                 .forEach(mn -> out.format("  \"%s\" [fontcolor=\"%s\", group=%s];%n",
                                           mn, BLUE, "jdk"));
-            for (Map.Entry<Module, Set<String>> entry: deps.entrySet()) {
-                Module m = entry.getKey();
+            g.modules().forEach(m -> {
                 Set<String> requiresPublic = m.moduleDependences().stream()
-                                                 .filter(d -> d.modifiers().contains(PUBLIC))
-                                                 .map(d -> d.query().name())
-                                                 .collect(Collectors.toSet());
-                name = m.id().name();
-                for (String dn: entry.getValue()) {
+                                              .filter(d -> d.modifiers().contains(PUBLIC))
+                                              .map(d -> d.query().name())
+                                              .collect(Collectors.toSet());
+                String mn = m.id().name();
+                g.readDependences(m).forEach(d -> {
+                    String dn = d.id().name();
                     String attr = dn.equals("java.base") ? REQUIRES_BASE
                             : (requiresPublic.contains(dn) ? REEXPORTS : REQUIRES);
-                    out.format("  \"%s\" -> \"%s\" %s;%n", name, dn, attr);
-                }
-            }
+                    out.format("  \"%s\" -> \"%s\" %s;%n", mn, dn, attr);
+                });
+            });
             out.println("}");
         }
     }

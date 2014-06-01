@@ -25,8 +25,12 @@
 
 package jdk.jigsaw.module;
 
-import java.io.*;
-import java.util.*;
+import java.io.Serializable;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import static java.util.Objects.*;
 

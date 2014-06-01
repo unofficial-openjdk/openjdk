@@ -53,7 +53,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import jdk.jigsaw.module.Module;
 import jdk.jigsaw.module.ModuleDependence;
-import jdk.jigsaw.module.Resolution;
+import jdk.jigsaw.module.ModuleGraph;
 
 public class ModuleSummary {
     private static final String USAGE = "Usage: ModuleSummary -mp <dir> -o <outfile>";
@@ -120,8 +120,8 @@ public class ModuleSummary {
     }
 
     public void genCSV(Path outfile, Set<String> roots) throws IOException {
-        Resolution r = ModuleUtils.resolve(modules, roots);
-        Set<Module> selectedModules = r.selectedModules();
+        ModuleGraph g = ModuleUtils.resolve(modules, roots);
+        Set<Module> selectedModules = g.modules();
         try (PrintStream out = new PrintStream(Files.newOutputStream(outfile))) {
             out.format("module,size,\"direct deps\",\"indirect deps\",total," +
                        "\"compressed size\",\"compressed direct deps\",\"compressed indirect deps\",total%n");
@@ -131,7 +131,7 @@ public class ModuleSummary {
                         Set<Module> deps;
                         try {
                             deps = ModuleUtils.resolve(modules, Collections.singleton(name(m)))
-                                           .selectedModules();
+                                              .modules();
                         } catch (IOException e) {
                             throw new UncheckedIOException(e);
                         }
@@ -164,8 +164,8 @@ public class ModuleSummary {
     }
 
     public void genReport(Path outfile, Set<String> roots, String title) throws IOException {
-        Resolution r = ModuleUtils.resolve(modules, roots);
-        Set<Module> selectedModules = r.selectedModules();
+        ModuleGraph g = ModuleUtils.resolve(modules, roots);
+        Set<Module> selectedModules = g.modules();
         try (PrintStream out = new PrintStream(Files.newOutputStream(outfile))) {
             long totalBytes = selectedModules.stream()
                                   .mapToLong(m -> jmods.get(m).size).sum();
@@ -176,7 +176,7 @@ public class ModuleSummary {
                         try {
                             Set<Module> deps =
                                 ModuleUtils.resolve(modules, Collections.singleton(name(m)))
-                                           .selectedModules();
+                                           .modules();
                             long reqBytes = jmods.get(m).size;
                             long reqJmodSize = jmods.get(m).filesize;
                             int reqCount = deps.size();

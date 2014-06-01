@@ -403,7 +403,7 @@ class JlinkTask {
      */
     private Set<Module> modulesNeeded(Set<String> jmods) throws IOException {
         SimpleResolver resolver = new SimpleResolver(options.modulePath);
-        return resolver.resolve(jmods).selectedModules();
+        return resolver.resolve(jmods).modules();
     }
 
     private Set<Path> modulesToPath(Set<Module> modules) {
@@ -711,9 +711,8 @@ class JlinkTask {
             throws IOException
         {
             try (ZipOutputStream zos = new ZipOutputStream(os)) {
-                // write extended module descriptor, module/name for now
-                String line = mid + "\n";
-                writeZipEntry(zos, line.getBytes("UTF-8"), "module", "name");
+                // write extended module descriptor, module/id for now
+                writeZipEntry(zos, mid.getBytes("UTF-8"), "module", "id");
 
                 // classes / services
                 processClasses(zos, classes);

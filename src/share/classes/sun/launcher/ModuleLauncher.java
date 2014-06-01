@@ -36,9 +36,9 @@ import java.util.stream.Collectors;
 
 import jdk.jigsaw.module.Module;
 import jdk.jigsaw.module.ModuleExport;
+import jdk.jigsaw.module.ModuleGraph;
 import jdk.jigsaw.module.ModuleLibrary;
 import jdk.jigsaw.module.ModulePath;
-import jdk.jigsaw.module.Resolution;
 import jdk.jigsaw.module.ServiceDependence;
 import jdk.jigsaw.module.SimpleResolver;
 
@@ -116,9 +116,9 @@ class ModuleLauncher {
 
         // resolve the required modules
         SimpleResolver resolver = new SimpleResolver(library);
-        Resolution resolution = resolver.resolve(roots);
+        ModuleGraph graph = resolver.resolve(roots);
         if (verbose) {
-            Set<Module> sorted = new TreeSet<>(resolution.selectedModules());
+            Set<Module> sorted = new TreeSet<>(graph.modules());
             sorted.forEach(m -> System.out.println(m.id().name()));
         }
 
@@ -142,7 +142,7 @@ class ModuleLauncher {
         // assign selected modules on the module path to the application
         // class loader.
         Set<Module> systemModules = systemLibrary.localModules();
-        for (Module m: resolution.selectedModules()) {
+        for (Module m: graph.modules()) {
             if (!systemModules.contains(m)) {
                 moduleToLoaders.put(m, appClassLoader);
 
@@ -154,18 +154,20 @@ class ModuleLauncher {
         }
 
         // setup the VM access control
-        initAccessControl(systemLibrary, library ,resolution, moduleToLoaders);
+        initAccessControl(systemLibrary, graph, moduleToLoaders);
 
         // setup the reflection machinery
-        initReflection(systemLibrary, resolution, moduleToLoaders);
+        initReflection(systemLibrary, graph, moduleToLoaders);
+
+        // set system module graph so that other module graphs can be composed
+        ModuleGraph.setSystemModuleGraph(graph);
     }
 
     /**
      * Setup the VM access control
      */
     private static void initAccessControl(ModuleLibrary systemLibrary,
-                                          ModuleLibrary library,
-                                          Resolution resolution,
+                                          ModuleGraph graph,
                                           Map<Module, ClassLoader> moduleToLoaders) {
 
         // used to map modules to their opaque handles
@@ -191,7 +193,7 @@ class ModuleLauncher {
 
         // define the selected modules on module path
         Set<Module> installed = systemLibrary.localModules();
-        for (Module m: resolution.selectedModules()) {
+        for (Module m: graph.modules()) {
             if (!installed.contains(m)) {
                 long handle = VM.defineModule(name(m));
                 moduleToHandle.put(m, handle);
@@ -205,22 +207,15 @@ class ModuleLauncher {
 
         }
 
-        // setup the requires (resolved dependences)
-        for (Map.Entry<Module, Set<String>> entry:
-                resolution.resolvedDependences().entrySet()) {
-            Module m1 = entry.getKey();
-            Set<String> dependences = entry.getValue();  // null when java.base
-            if (dependences != null) {
-                for (String name: dependences) {
-                    Module m2 = library.findModule(name);
-                    VM.addRequires(moduleToHandle.get(m1),
-                                   moduleToHandle.get(m2));
-                }
-            }
+        // setup the readability relationships
+        for (Module m1: graph.modules()) {
+            graph.readDependences(m1).forEach(m2 -> {
+                VM.addRequires(moduleToHandle.get(m1), moduleToHandle.get(m2));
+            });
         }
 
         // setup the exports
-        for (Module m: resolution.selectedModules()) {
+        for (Module m: graph.modules()) {
             long fromHandle  = moduleToHandle.get(m);
             for (ModuleExport export: m.exports()) {
                 String pkg = export.pkg();
@@ -228,7 +223,7 @@ class ModuleLauncher {
                 if (who == null) {
                     VM.addExports(fromHandle, export.pkg());
                 } else {
-                    Module m2 = library.findModule(who);
+                    Module m2 = graph.moduleLibrary().findModule(who);
                     if (m2 != null) {
                         long toHandle = moduleToHandle.get(m2);
                         VM.addExportsWithPermits(fromHandle, export.pkg(), toHandle);
@@ -245,7 +240,7 @@ class ModuleLauncher {
      * reflective information from the VM.
      */
     private static void initReflection(ModuleLibrary systemLibrary,
-                                       Resolution resolution,
+                                       ModuleGraph graph,
                                        Map<Module, ClassLoader> moduleToLoaders) {
 
         JavaLangAccess langAccess = SharedSecrets.getJavaLangAccess();
@@ -262,7 +257,7 @@ class ModuleLauncher {
 
         // selected modules on the module path
         Set<Module> installed = systemLibrary.localModules();
-        for (Module m: resolution.selectedModules()) {
+        for (Module m: graph.modules()) {
             if (!installed.contains(m)) {
                 ClassLoader loader = moduleToLoaders.get(m);
                 assert loader == Launcher.getLauncher().getClassLoader();
@@ -271,15 +266,14 @@ class ModuleLauncher {
         }
 
         // setup requires, exports and services
-        for (Module m: resolution.selectedModules()) {
+        for (Module m: graph.modules()) {
             java.lang.reflect.Module reflectModule = nameToReflectModule.get(name(m));
 
-            // requires
-            Set<String> requires = resolution.resolvedDependences().get(m);
-            if (requires != null) {
-                requires.forEach(dn ->
-                    reflectAccess.addRequires(reflectModule, nameToReflectModule.get(dn)));
-            }
+            // setup the readability relationships
+            graph.readDependences(m).forEach(m2 -> {
+                String name = name(m2);
+                reflectAccess.addRequires(reflectModule, nameToReflectModule.get(name));
+            });
 
             // exports
             m.exports().forEach(e ->

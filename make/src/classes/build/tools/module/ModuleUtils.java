@@ -37,7 +37,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import jdk.jigsaw.module.Module;
 import jdk.jigsaw.module.ModuleLibrary;
-import jdk.jigsaw.module.Resolution;
+import jdk.jigsaw.module.ModuleGraph;
 import jdk.jigsaw.module.SimpleResolver;
 
 public class ModuleUtils {
@@ -65,13 +65,13 @@ public class ModuleUtils {
         }
     }
 
-    public static Resolution resolve(Set<Module> modules, Set<String> roots)
+    public static ModuleGraph resolve(Set<Module> modules, Set<String> roots)
         throws IOException
     {
         return resolve(modules.toArray(new Module[0]), roots);
     }
 
-    public static Resolution resolve(Module[] modules, Set<String> roots)
+    public static ModuleGraph resolve(Module[] modules, Set<String> roots)
         throws IOException
     {
         JdkModuleLibrary mlib = new JdkModuleLibrary(modules);

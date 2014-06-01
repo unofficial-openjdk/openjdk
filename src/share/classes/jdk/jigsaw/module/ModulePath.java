@@ -64,8 +64,8 @@ import sun.misc.JModCache;
 public class ModulePath extends ModuleLibrary {
     private static final String MODULE_INFO = "module-info.class";
 
-    // extended module descriptor
-    private static final String EXT_MODULE_DESCRIPTOR = "module/name";
+    // module id in extended module descriptor
+    private static final String EXTENDED_MODULE_DESCRIPTOR_MID = "module/id";
 
     // the directories on this module path
     private final String[] dirs;
@@ -78,9 +78,13 @@ public class ModulePath extends ModuleLibrary {
     private final Map<Module, URL> urls = new HashMap<>();
 
 
-    public ModulePath(String path, ModuleLibrary parent) {
-        super(parent);
+    public ModulePath(String path, ModuleLibrary next) {
+        super(next);
         this.dirs = path.split(File.pathSeparator);
+    }
+
+    public ModulePath(String path) {
+        this(path, null);
     }
 
     @Override
@@ -98,17 +102,6 @@ public class ModulePath extends ModuleLibrary {
                 return m;
         }
         return null;
-    }
-
-    /**
-     * Returns {@code true} if the module of the given name is already known
-     * to the module library.
-     */
-    private boolean isKnownModule(String name) {
-        ModuleLibrary parent = parent();
-        if (parent != null && parent.findModule(name) != null)
-            return true;
-        return cachedModules.containsKey(name);
     }
 
     /**
@@ -152,7 +145,7 @@ public class ModulePath extends ModuleLibrary {
      */
     private void scan(String dir) {
         // the set of module names found in this directory
-        Set<String> localModules = new HashSet<>();
+        Set<String> namesInThisDirectory = new HashSet<>();
 
         Path dirPath = Paths.get(dir);
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(dirPath)) {
@@ -176,15 +169,15 @@ public class ModulePath extends ModuleLibrary {
                     // check that there is only one version of the module
                     // in this directory
                     String name = artifact.moduleName();
-                    if (localModules.contains(name)) {
+                    if (namesInThisDirectory.contains(name)) {
                         throw new RuntimeException(dir +
                             " contains more than one version of " + name);
                     }
-                    localModules.add(name);
+                    namesInThisDirectory.add(name);
 
-                    // module already in cache (either parent module library
-                    // or a previous directory on the path).
-                    if (isKnownModule(name))
+                    // a module of this name found in a previous location
+                    // on the module path so ignore it
+                    if (cachedModules.containsKey(name))
                         continue;
 
                     // add the module to the cache
@@ -248,9 +241,9 @@ public class ModulePath extends ModuleLibrary {
             mi = ModuleInfo.read(in);
         }
 
-        // extended module descriptor
-        String id = null;
-        ze = zf.getEntry(EXT_MODULE_DESCRIPTOR);
+        // read module id from extended module descriptor
+        String id = mi.name();
+        ze = zf.getEntry(EXTENDED_MODULE_DESCRIPTOR_MID);
         if (ze != null) {
             try (InputStream in = zf.getInputStream(ze)) {
                 id = new BufferedReader(
