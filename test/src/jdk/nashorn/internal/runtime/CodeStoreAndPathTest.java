@@ -24,18 +24,19 @@
  */
 package jdk.nashorn.internal.runtime;
 
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.DirectoryStream;
-import java.nio.file.Path;
 import java.nio.file.FileSystems;
-import javax.script.ScriptException;
-import org.testng.annotations.Test;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import javax.script.ScriptEngine;
+import javax.script.ScriptException;
 import jdk.nashorn.api.scripting.NashornScriptEngineFactory;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertEquals;
+import org.testng.annotations.Test;
 
 /**
  * @test
@@ -105,6 +106,7 @@ public class CodeStoreAndPathTest {
 
     @Test
     public void pathHandlingTest() throws ScriptException, IOException {
+        assertFalse(ScriptEnvironment.globalOptimistic());
         System.setProperty("nashorn.persistent.code.cache", codeCache);
         String[] options = new String[]{"--persistent-code-cache"};
         NashornScriptEngineFactory fac = new NashornScriptEngineFactory();
@@ -122,6 +124,7 @@ public class CodeStoreAndPathTest {
 
     @Test
     public void changeUserDirTest() throws ScriptException, IOException {
+        assertFalse(ScriptEnvironment.globalOptimistic());
         System.setProperty("nashorn.persistent.code.cache", codeCache);
         String[] options = new String[]{"--persistent-code-cache"};
         NashornScriptEngineFactory fac = new NashornScriptEngineFactory();
@@ -131,17 +134,21 @@ public class CodeStoreAndPathTest {
         String newUserDir = "build/newUserDir";
         // Now changing current working directory
         System.setProperty("user.dir", System.getProperty("user.dir") + File.separator + newUserDir);
-        // Check that a new compiled script is stored in exisitng code cache
-        e.eval(code1);
-        DirectoryStream<Path> stream = Files.newDirectoryStream(codeCachePath);
-        // Already one compiled script has been stored in the cache during initialization
-        checkCompiledScripts(stream, 2);
-        // Setting to default current working dir
-        System.setProperty("user.dir", oldUserDir);
+        try {
+            // Check that a new compiled script is stored in existing code cache
+            e.eval(code1);
+            DirectoryStream<Path> stream = Files.newDirectoryStream(codeCachePath);
+            // Already one compiled script has been stored in the cache during initialization
+            checkCompiledScripts(stream, 2);
+            // Setting to default current working dir
+        } finally {
+            System.setProperty("user.dir", oldUserDir);
+        }
     }
 
     @Test
     public void codeCacheTest() throws ScriptException, IOException {
+        assertFalse(ScriptEnvironment.globalOptimistic());
         System.setProperty("nashorn.persistent.code.cache", codeCache);
         String[] options = new String[]{"--persistent-code-cache"};
         NashornScriptEngineFactory fac = new NashornScriptEngineFactory();

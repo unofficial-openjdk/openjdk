@@ -59,6 +59,7 @@ import jdk.nashorn.internal.objects.Global;
 import jdk.nashorn.internal.runtime.Context;
 import jdk.nashorn.internal.runtime.ErrorManager;
 import jdk.nashorn.internal.runtime.Property;
+import jdk.nashorn.internal.runtime.ScriptEnvironment;
 import jdk.nashorn.internal.runtime.ScriptFunction;
 import jdk.nashorn.internal.runtime.ScriptObject;
 import jdk.nashorn.internal.runtime.ScriptRuntime;
@@ -123,7 +124,6 @@ public final class NashornScriptEngine extends AbstractScriptEngine implements C
     }
 
     // load engine.js
-    @SuppressWarnings("resource")
     private static Source loadEngineJSSource() {
         final String script = "resources/engine.js";
         try {
@@ -380,7 +380,7 @@ public final class NashornScriptEngine extends AbstractScriptEngine implements C
         }
 
         // Arbitrary user Bindings implementation. Look for NASHORN_GLOBAL in it!
-        Object scope = bindings.get(NASHORN_GLOBAL);
+        final Object scope = bindings.get(NASHORN_GLOBAL);
         if (scope instanceof ScriptObjectMirror) {
             final Global glob = globalFromMirror((ScriptObjectMirror)scope);
             if (glob != null) {
@@ -397,7 +397,7 @@ public final class NashornScriptEngine extends AbstractScriptEngine implements C
 
     // Retrieve nashorn Global object from a given ScriptObjectMirror
     private Global globalFromMirror(final ScriptObjectMirror mirror) {
-        ScriptObject sobj = mirror.getScriptObject();
+        final ScriptObject sobj = mirror.getScriptObject();
         if (sobj instanceof Global && isOfContext((Global)sobj, nashornContext)) {
             return (Global)sobj;
         }
@@ -456,7 +456,7 @@ public final class NashornScriptEngine extends AbstractScriptEngine implements C
     private void setContextVariables(final Global ctxtGlobal, final ScriptContext ctxt) {
         // set "context" global variable via contextProperty - because this
         // property is non-writable
-        contextProperty.setObjectValue(ctxtGlobal, ctxtGlobal, ctxt, false);
+        contextProperty.setValue(ctxtGlobal, ctxtGlobal, ctxt, false);
         Object args = ScriptObjectMirror.unwrap(ctxt.getAttribute("arguments"), ctxtGlobal);
         if (args == null || args == UNDEFINED) {
             args = ScriptRuntime.EMPTY_ARRAY;
@@ -636,6 +636,15 @@ public final class NashornScriptEngine extends AbstractScriptEngine implements C
         };
     }
 
+    /**
+     * Check if the global script environment tells us to do optimistic
+     * compilation
+     * @return true if optimistic compilation enabled
+     */
+    public static boolean isOptimistic() {
+        return ScriptEnvironment.globalOptimistic();
+    }
+
     private ScriptFunction compileImpl(final Source source, final ScriptContext ctxt) throws ScriptException {
         return compileImpl(source, getNashornGlobalFrom(ctxt));
     }
@@ -671,7 +680,7 @@ public final class NashornScriptEngine extends AbstractScriptEngine implements C
                 continue;
             }
 
-            Object obj = sobj.get(method.getName());
+            final Object obj = sobj.get(method.getName());
             if (! (obj instanceof ScriptFunction)) {
                 return false;
             }

@@ -27,6 +27,9 @@ package jdk.nashorn.internal.ir;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Function;
+
+import jdk.nashorn.internal.codegen.types.Type;
 import jdk.nashorn.internal.ir.annotations.Immutable;
 import jdk.nashorn.internal.ir.visitor.NodeVisitor;
 
@@ -66,7 +69,12 @@ public final class ObjectNode extends Expression {
     }
 
     @Override
-    public void toString(final StringBuilder sb) {
+    public Type getType(final Function<Symbol, Type> localVariableTypes) {
+        return Type.OBJECT;
+    }
+
+    @Override
+    public void toString(final StringBuilder sb, final boolean printType) {
         sb.append('{');
 
         if (!elements.isEmpty()) {
@@ -79,7 +87,7 @@ public final class ObjectNode extends Expression {
                 }
                 first = false;
 
-                element.toString(sb);
+                element.toString(sb, printType);
             }
             sb.append(' ');
         }

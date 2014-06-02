@@ -25,6 +25,13 @@
  * @subtest
  */
 
+
+function initZlib() {
+    zlib = new BenchmarkSuite('zlib', [152815148], [
+						    new Benchmark('zlib', false, true, 10,
+								  runZlib, undefined, tearDownZlib, null, 3)]);
+}
+
 var tests = [
     {name:"box2d",         files:["box2d.js"],                         suite:"Box2DBenchmark"},
     {name:"code-load",     files:["code-load.js"],                     suite:"CodeLoad"},
@@ -39,16 +46,16 @@ var tests = [
     {name:"regexp",        files:["regexp.js"],                        suite:"RegExpSuite"},
     {name:"richards",      files:["richards.js"],                      suite:"Richards"},
     {name:"splay",         files:["splay.js"],                         suite:"Splay"},
-    {name:"typescript",    files:["typescript.js", "typescript-input.js", "typescript-compiler.js"], suite:"typescript"}
+    {name:"typescript",    files:["typescript.js", "typescript-input.js", "typescript-compiler.js"], suite:"typescript"},
     //zlib currently disabled - requires read
-    //    {name:"zlib",          files:["zlib.js", "zlib-data.js"], suite:"zlib"},
+    {name:"zlib",          files:["zlib.js", "zlib-data.js"], suite:"zlib", before:initZlib}
 ];
 var dir = (typeof(__DIR__) == 'undefined') ? "test/script/basic/" : __DIR__;
 
 // TODO: why is this path hard coded when it's defined in project properties?
 var path = dir + "../external/octane/";
 
-var runtime = "";
+var runtime = undefined;
 var verbose = false;
 
 var numberOfIterations = 5;
@@ -78,6 +85,10 @@ function load_bench(arg) {
 	print_verbose(arg, "loading '" + arg.name + "' [" + f + "]...");
 	load(file_name); 
     }
+    
+    if (typeof arg.before !== 'undefined') {
+	arg.before();
+    }
 
     if (compile_and_return) {
 	print_always(arg, "Compiled OK");
@@ -85,6 +96,7 @@ function load_bench(arg) {
     return !compile_and_return;
 
 }
+
 
 function run_one_benchmark(arg, iters) {
 
@@ -114,7 +126,7 @@ function run_one_benchmark(arg, iters) {
 	    benchmarks[x].Setup();
 	}
 	BenchmarkSuite.ResetRNG();
-	print_verbose(arg, "running '" + arg.name + "' for " + iters + " iterations of no less than " + min_time + " seconds (" + runtime + ")");
+	print_verbose(arg, "running '" + arg.name + "' for " + iters + " iterations of no less than " + min_time + " seconds");
 	
 	var scores = [];
 	
@@ -153,9 +165,11 @@ function run_one_benchmark(arg, iters) {
 	    max_score = Math.max(max_score, scores[x]);
 	}
 	mean_score /= iters;    
-
     } catch (e) {
-	print_always("*** Aborted and setting score to zero. Reason: " + e);
+	print_always(arg, "*** Aborted and setting score to zero. Reason: " + e);
+	if (e instanceof java.lang.Throwable) {
+	    e.printStackTrace();
+	}
 	mean_score = min_score = max_score = 0;
 	scores = [0];
     }
@@ -167,8 +181,12 @@ function run_one_benchmark(arg, iters) {
     print_always(arg, res);
 }
 
+function runtime_string() {
+    return runtime == undefined ? "" : ("[" + runtime + "] ");
+}
+
 function print_always(arg, x) {
-    print("[" + arg.name + "] " + x);
+    print(runtime_string() + "[" + arg.name + "] " + x);
 }
 
 function print_verbose(arg, x) {
@@ -182,8 +200,6 @@ function run_suite(tests, iters) {
 	run_one_benchmark(tests[idx], iters);
     }
 }
-
-runtime = "command line";
 
 var args = [];
 
@@ -217,13 +233,19 @@ var min_time = 5;
 for (var i = 0; i < args.length; i++) { 
     arg = args[i];
     if (arg == "--iterations") {
-	iters = +args[++i];
+	iters = +args[++i];	
+	if (isNaN(iters)) {
+	    throw "'--iterations' must be followed by integer";
+	}
     } else if (arg == "--runtime") {
 	runtime = args[++i];
     } else if (arg == "--verbose") {
 	verbose = true;
     } else if (arg == "--min-time") {
 	min_time = +args[++i];
+	if (isNaN(iters)) {
+	    throw "'--min-time' must be followed by integer";
+	}
     } else if (arg == "") {
 	continue; //skip
     } else {
@@ -254,10 +276,30 @@ if (tests_found.length == 0) {
     }
 } 
 
-tests_found.sort();
+// returns false for rhino, v8 and all other javascript runtimes, true for Nashorn
+function is_this_nashorn() {
+    return typeof Error.dumpStack == 'function'
+}
+
+if (is_this_nashorn()) {
+    try {
+	read = readFully;
+    } catch (e) {
+	print("ABORTING: Cannot find 'readFully'. You must have scripting enabled to use this test harness. (-scripting)");
+	throw e;
+    }
+}
+
+// run tests in alphabetical order by name
+tests_found.sort(function(a, b) {
+    if (a.name < b.name) {
+	return -1;
+    } else if (a.name > b.name) {
+	return 1;
+    } else {
+	return 0;
+    }
+});
 
 load(path + 'base.js');
 run_suite(tests_found, iters);
-
-
-

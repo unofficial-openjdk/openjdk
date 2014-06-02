@@ -198,7 +198,7 @@ final class ByteBufferArrayData extends ArrayData {
         throw unsupported("convert");
     }
 
-    private UnsupportedOperationException unsupported(final String method) {
+    private static UnsupportedOperationException unsupported(final String method) {
         return new UnsupportedOperationException(method);
     }
 }

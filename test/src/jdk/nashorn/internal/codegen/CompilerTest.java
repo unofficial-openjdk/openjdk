@@ -25,8 +25,8 @@
 
 package jdk.nashorn.internal.codegen;
 
-import static jdk.nashorn.internal.runtime.Source.sourceFor;
 import static jdk.nashorn.internal.runtime.Source.readFully;
+import static jdk.nashorn.internal.runtime.Source.sourceFor;
 
 import java.io.File;
 import java.io.PrintWriter;

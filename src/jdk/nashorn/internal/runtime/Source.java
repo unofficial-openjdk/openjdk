@@ -49,13 +49,15 @@ import java.util.Objects;
 import java.util.WeakHashMap;
 import jdk.nashorn.api.scripting.URLReader;
 import jdk.nashorn.internal.parser.Token;
+import jdk.nashorn.internal.runtime.logging.DebugLogger;
+import jdk.nashorn.internal.runtime.logging.Loggable;
+import jdk.nashorn.internal.runtime.logging.Logger;
 
 /**
  * Source objects track the origin of JavaScript entities.
  */
-public final class Source {
-
-    private static final DebugLogger DEBUG = new DebugLogger("source");
+@Logger(name="source")
+public final class Source implements Loggable {
     private static final int BUF_SIZE = 8 * 1024;
     private static final Cache CACHE = new Cache();
 
@@ -348,7 +350,10 @@ public final class Source {
     }
 
     private static void debug(final Object... msg) {
-        DEBUG.info(msg);
+        final DebugLogger logger = getLoggerStatic();
+        if (logger != null) {
+            logger.info(msg);
+        }
     }
 
     private char[] data() {
@@ -841,5 +846,20 @@ public final class Source {
         } catch (final SecurityException | MalformedURLException ignored) {
             return null;
         }
+    }
+
+    private static DebugLogger getLoggerStatic() {
+        final Context context = Context.getContextTrustedOrNull();
+        return context == null ? null : context.getLogger(Source.class);
+    }
+
+    @Override
+    public DebugLogger initLogger(Context context) {
+        return context.getLogger(this.getClass());
+    }
+
+    @Override
+    public DebugLogger getLogger() {
+        return initLogger(Context.getContextTrusted());
     }
 }
