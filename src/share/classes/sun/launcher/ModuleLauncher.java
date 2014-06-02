@@ -25,6 +25,9 @@
 
 package sun.launcher;
 
+import java.io.File;
+import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.util.Collections;
 import java.util.HashMap;
@@ -37,7 +40,6 @@ import java.util.stream.Collectors;
 import jdk.jigsaw.module.Module;
 import jdk.jigsaw.module.ModuleExport;
 import jdk.jigsaw.module.ModuleGraph;
-import jdk.jigsaw.module.ModuleLibrary;
 import jdk.jigsaw.module.ModulePath;
 import jdk.jigsaw.module.ServiceDependence;
 import jdk.jigsaw.module.SimpleResolver;
@@ -51,37 +53,14 @@ import sun.reflect.ModuleCatalog;
 import sun.reflect.Reflection;
 
 /**
- * Used at startup to resolve the set of readable modules, which may include both
- * JDK modules and modules on the modulepath. Defines each of the modules to the
- * VM so that accessibility can be checked at runtime.
+ * Used at startup to run the resolver and generate the module graph. Modules
+ * are installed in the runtime image or located via the module path specified
+ * to the launcher. The readbility graph is used to define the modules to the
+ * VM so that accessibility can be checked at runtime. The same graph is used
+ * to setup the Core Reflection mechanism.
  */
 class ModuleLauncher {
     private ModuleLauncher() { }
-
-    /**
-     * A module library for the JDK modules.
-     */
-    private static class JdkModuleLibrary extends ModuleLibrary {
-        private final Set<Module> modules = new HashSet<>();
-        private final Map<String, Module> namesToModules = new HashMap<>();
-
-        JdkModuleLibrary(Module... mods) {
-            for (Module m: mods) {
-                modules.add(m);
-                namesToModules.put(name(m), m);
-            }
-        }
-
-        @Override
-        public Module findLocalModule(String name) {
-            return namesToModules.get(name);
-        }
-
-        @Override
-        public Set<Module> localModules() {
-            return Collections.unmodifiableSet(modules);
-        }
-    }
 
     /**
      * Initialize the runtime for modules.
@@ -92,30 +71,30 @@ class ModuleLauncher {
      */
     static void init(Module[] jdkModules, Set<String> roots, boolean verbose) {
 
-        // create a module library that the resolver uses to locate modules.
-        // If -modulepath is specified then create a ModulePath that delegates
-        // to the JDK module library
-        ModuleLibrary systemLibrary = new JdkModuleLibrary(jdkModules);
-        ModuleLibrary library;
+        // create a module path that the resolver uses to locate modules.
+        // If -modulepath is specified then create a ModulePath that prepends
+        // the module path specified to the launcher.
+        ModulePath systemLibrary = ModulePath.installed(jdkModules);
+        ModulePath modulePath;
         String mp = System.getProperty("java.module.path");
         if (mp != null) {
-            library = new ModulePath(mp, systemLibrary);
+            modulePath = ModulePath.fromPath(mp, systemLibrary);
         } else {
-            library = systemLibrary;
+            modulePath = systemLibrary;
         }
 
         // If -mods is not specified then add all modules to the root set.
         // This is temporary until we know whether the main class is in a named
         // or unnamed module.
         if (roots.isEmpty()) {
-            roots = library.allModules()
-                           .stream()
-                           .filter(m -> m.permits().isEmpty())
-                           .map(m -> name(m)).collect(Collectors.toSet());
+            roots = modulePath.allModules()
+                              .stream()
+                              .filter(m -> m.permits().isEmpty())
+                              .map(m -> name(m)).collect(Collectors.toSet());
         }
 
         // resolve the required modules
-        SimpleResolver resolver = new SimpleResolver(library);
+        SimpleResolver resolver = new SimpleResolver(modulePath);
         ModuleGraph graph = resolver.resolve(roots);
         if (verbose) {
             Set<Module> sorted = new TreeSet<>(graph.modules());
@@ -148,16 +127,19 @@ class ModuleLauncher {
 
                 // add to the application class loader so that classes
                 // and resources can be loaded
-                URL url = ((ModulePath)library).toURL(m);
+                URL url = modulePath.localLocationOf(m);
+
+                // check url is not null?
+
                 launcher.addAppClassLoaderURL(url);
             }
         }
 
         // setup the VM access control
-        initAccessControl(systemLibrary, graph, moduleToLoaders);
+        initAccessControl(modulePath, graph, moduleToLoaders);
 
         // setup the reflection machinery
-        initReflection(systemLibrary, graph, moduleToLoaders);
+        initReflection(modulePath, graph, moduleToLoaders);
 
         // set system module graph so that other module graphs can be composed
         ModuleGraph.setSystemModuleGraph(graph);
@@ -166,7 +148,7 @@ class ModuleLauncher {
     /**
      * Setup the VM access control
      */
-    private static void initAccessControl(ModuleLibrary systemLibrary,
+    private static void initAccessControl(ModulePath systemLibrary,
                                           ModuleGraph graph,
                                           Map<Module, ClassLoader> moduleToLoaders) {
 
@@ -223,7 +205,7 @@ class ModuleLauncher {
                 if (who == null) {
                     VM.addExports(fromHandle, export.pkg());
                 } else {
-                    Module m2 = graph.moduleLibrary().findModule(who);
+                    Module m2 = graph.modulePath().findModule(who);
                     if (m2 != null) {
                         long toHandle = moduleToHandle.get(m2);
                         VM.addExportsWithPermits(fromHandle, export.pkg(), toHandle);
@@ -239,7 +221,7 @@ class ModuleLauncher {
      * @implNote We can remove this once we have a more efficient way to read the
      * reflective information from the VM.
      */
-    private static void initReflection(ModuleLibrary systemLibrary,
+    private static void initReflection(ModulePath systemLibrary,
                                        ModuleGraph graph,
                                        Map<Module, ClassLoader> moduleToLoaders) {
 

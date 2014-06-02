@@ -31,6 +31,8 @@ import java.io.InputStreamReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
+import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -53,15 +55,184 @@ import java.util.zip.ZipFile;
 import sun.misc.JModCache;
 
 /**
- * A module path implementation of {@code ModuleLibrary}. A module path
- * is essentially a PATH of directories containing exploded modules or jmod
- * files. The directories on the PATH are scanned lazily as modules are
- * located via {@code findLocalModule}.
+ * A module path used for locating modules. For example a module path may be
+ * backed by a sequence of directories on the file system that contain
+ * module artifacts.
+ *
+ * {@code ModulePath}s can be arranged in a sequence. When locating a module
+ * that is not found then the next {@code ModulePath} in the sequence is
+ * searched.
+ */
+
+public abstract class ModulePath {
+
+    // the next module path, can be {@code null}
+    private final ModulePath next;
+
+    protected ModulePath(ModulePath next) {
+        this.next = next;
+    }
+
+    protected ModulePath() {
+        this(null);
+    }
+
+    /**
+     * Returns the next module path, may be {@code null}.
+     */
+    public final ModulePath next() {
+        return next;
+    }
+
+    /**
+     * Locates a module of the given name in this module path. Returns
+     * {@code null} if not found.
+     */
+    public abstract Module findLocalModule(String name);
+
+    /**
+     * Locates a module of the given name. If the module is not found in this
+     * module path then the next module path is searched.
+     */
+    public final Module findModule(String name) {
+        Module m = findLocalModule(name);
+        if (m == null && next != null)
+            m = next.findModule(name);
+        return m;
+    }
+
+    /**
+     * Returns the set of modules that are local to this module path.
+     */
+    public abstract Set<Module> localModules();
+
+    /**
+     * Returns the set of all modules in this module path and all modules
+     * paths that is is chained to.
+     */
+    public final Set<Module> allModules() {
+        if (next == null)
+            return localModules();
+        Set<Module> result = new HashSet<>();
+        result.addAll(next.allModules());
+        result.addAll(localModules());
+        return result;
+    }
+
+    /**
+     * Returns a {@code URL} to locate the given {@code Module} in this module
+     * path. Returns {@code null} if not found.
+     */
+    public abstract URL localLocationOf(Module m);
+
+    /**
+     * Returns a {@code URL} to locate the given {@code Module}. if the module
+     * is not found in this module path then the next module path is searched.
+     */
+    public final URL locationOf(Module m) {
+        URL url = localLocationOf(m);
+        if (url == null && next != null)
+            url = next.localLocationOf(m);
+        return url;
+    }
+
+    /**
+     * Creates a {@code ModulePath} to represent the module path of a runtime
+     * that has the given modules linked-in into the runtime.
+     */
+    public static ModulePath installed(Module... mods) {
+        return new InstalledModulePath(mods);
+    }
+
+    /**
+     * Creates a {@code ModulePath} that locates modules on the file system by
+     * searching a {@code PATH} that is a a sequence of directories containing
+     * module artifacts ({@code jmod}, modular JAR, exploded modules).
+     *
+     * @param path The sequence of directories, separated by the system-dependent
+     *             path-separator
+     * @param next The next {@code ModulePath}, may be {@code null}
+     */
+    public static ModulePath fromPath(String path, ModulePath next) {
+        String[] dirs = path.split(File.pathSeparator);
+        return new FileSystemModulePath(dirs, next);
+    }
+
+    /**
+     * Creates a {@code ModulePath} that locates modules on the file system by
+     * searching a {@code PATH} that is a a sequence of directories containing
+     * module artifacts.
+     *
+     * @param path The sequence of directories, separated by the system-dependent
+     *             path-separator
+     */
+    public static ModulePath fromPath(String path) {
+        return fromPath(path, null);
+    }
+
+    /**
+     * Returns an empty {@code ModulePath}.
+     */
+    public static ModulePath emptyModulePath() {
+        return new ModulePath(null) {
+            @Override
+            public Module findLocalModule(String name) { return null; }
+            @Override
+            public Set<Module> localModules() { return Collections.emptySet(); }
+            @Override
+            public URL localLocationOf(Module m) { return null; }
+        };
+    }
+}
+
+/**
+ * A module path of the modules installed in the runtime image.
+ */
+class InstalledModulePath extends ModulePath {
+    private final Set<Module> modules = new HashSet<>();
+    private final Map<String, Module> namesToModules = new HashMap<>();
+
+    InstalledModulePath(Module... mods) {
+        for (Module m: mods) {
+            modules.add(m);
+            String name = m.id().name();
+            if (namesToModules.containsKey(name))
+                throw new IllegalArgumentException(name + ": more than one");
+            namesToModules.put(name, m);
+        }
+    }
+
+    @Override
+    public Module findLocalModule(String name) {
+        return namesToModules.get(name);
+    }
+
+    @Override
+    public Set<Module> localModules() {
+        return Collections.unmodifiableSet(modules);
+    }
+
+    @Override
+    public URL localLocationOf(Module m) {
+        if (!modules.contains(m))
+            return null;
+        try {
+            return URI.create("module:///" + m.id()).toURL();
+        } catch (MalformedURLException e) {
+            throw new InternalError(e);
+        }
+    }
+}
+
+/**
+ * A {@code ModulePath} implementation that locates modules on the file system
+ * by searching a sequence of directories for jmod, modular JAR or exploded
+ * modules.
  *
  * @apiNote This class is currently not safe for use by multiple threads.
  */
 
-public class ModulePath extends ModuleLibrary {
+class FileSystemModulePath extends ModulePath {
     private static final String MODULE_INFO = "module-info.class";
 
     // module id in extended module descriptor
@@ -77,14 +248,9 @@ public class ModulePath extends ModuleLibrary {
     // the module to URL map of modules already located
     private final Map<Module, URL> urls = new HashMap<>();
 
-
-    public ModulePath(String path, ModuleLibrary next) {
+    public FileSystemModulePath(String[] dirs, ModulePath next) {
         super(next);
-        this.dirs = path.split(File.pathSeparator);
-    }
-
-    public ModulePath(String path) {
-        this(path, null);
+        this.dirs = dirs; // no need to clone
     }
 
     @Override
@@ -104,13 +270,6 @@ public class ModulePath extends ModuleLibrary {
         return null;
     }
 
-    /**
-     * Returns the URL for the purposes of class and resource loading.
-     */
-    public URL toURL(Module m) {
-        return urls.get(m);
-    }
-
     @Override
     public Set<Module> localModules() {
         // need to ensure that all directories have been scanned
@@ -118,6 +277,22 @@ public class ModulePath extends ModuleLibrary {
             scanNextDirectory();
         }
         return Collections.unmodifiableSet(urls.keySet());
+    }
+
+    @Override
+    public URL localLocationOf(Module m) {
+        URL url = urls.get(m);
+        if (url != null)
+            return url;
+
+        // the module may be in directories that we haven't scanned yet
+        while (hasNextDirectory()) {
+            scanNextDirectory();
+            url = urls.get(m);
+            if (url != null)
+                return url;
+        }
+        return null;
     }
 
     /**

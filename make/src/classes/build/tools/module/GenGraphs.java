@@ -41,33 +41,12 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import jdk.jigsaw.module.Module;
 import static jdk.jigsaw.module.ModuleDependence.Modifier.PUBLIC;
-import jdk.jigsaw.module.ModuleLibrary;
 import jdk.jigsaw.module.ModuleGraph;
+import jdk.jigsaw.module.ModulePath;
 import jdk.jigsaw.module.SimpleResolver;
 
 public class GenGraphs {
     private static final String MODULES_SER = "jdk/jigsaw/module/resources/modules.ser";
-
-    private static class JdkModuleLibrary extends ModuleLibrary {
-        private final Set<Module> modules = new HashSet<>();
-        private final Map<String, Module> namesToModules = new HashMap<>();
-        JdkModuleLibrary(Module... mods) {
-            for (Module m: mods) {
-                modules.add(m);
-                namesToModules.put(m.id().name(), m);
-            }
-        }
-
-        @Override
-        public Module findLocalModule(String name) {
-            return namesToModules.get(name);
-        }
-
-        @Override
-        public Set<Module> localModules() {
-            return Collections.unmodifiableSet(modules);
-        }
-    }
 
     public static void main(String[] args) throws Exception {
         if (args.length != 1) {
@@ -78,8 +57,8 @@ public class GenGraphs {
         Files.createDirectories(dir);
         Module[] modules = readModules();
 
-        JdkModuleLibrary mlib = new JdkModuleLibrary(modules);
-        SimpleResolver resolver = new SimpleResolver(mlib);
+        ModulePath mp = ModulePath.installed(modules);
+        SimpleResolver resolver = new SimpleResolver(mp);
 
         Set<Module> javaSEModules = Arrays.stream(modules)
                                         .filter(m -> m.id().name().startsWith("java."))

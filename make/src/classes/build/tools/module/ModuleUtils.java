@@ -36,8 +36,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import jdk.jigsaw.module.Module;
-import jdk.jigsaw.module.ModuleLibrary;
 import jdk.jigsaw.module.ModuleGraph;
+import jdk.jigsaw.module.ModulePath;
 import jdk.jigsaw.module.SimpleResolver;
 
 public class ModuleUtils {
@@ -74,37 +74,16 @@ public class ModuleUtils {
     public static ModuleGraph resolve(Module[] modules, Set<String> roots)
         throws IOException
     {
-        JdkModuleLibrary mlib = new JdkModuleLibrary(modules);
-        SimpleResolver resolver = new SimpleResolver(mlib);
+        ModulePath mp = ModulePath.installed(modules);
+        SimpleResolver resolver = new SimpleResolver(mp);
 
         for (String mn : roots) {
-            Module m = mlib.findLocalModule(mn);
+            Module m = mp.findLocalModule(mn);
             if (m == null) {
                 throw new Error("module " + mn + " not found");
             }
         }
 
         return resolver.resolve(roots);
-    }
-
-    private static class JdkModuleLibrary extends ModuleLibrary {
-        private final Set<Module> modules = new HashSet<>();
-        private final Map<String, Module> namesToModules = new HashMap<>();
-        JdkModuleLibrary(Module... mods) {
-            for (Module m: mods) {
-                modules.add(m);
-                namesToModules.put(m.id().name(), m);
-            }
-        }
-
-        @Override
-        public Module findLocalModule(String name) {
-            return namesToModules.get(name);
-        }
-
-        @Override
-        public Set<Module> localModules() {
-            return Collections.unmodifiableSet(modules);
-        }
     }
 }

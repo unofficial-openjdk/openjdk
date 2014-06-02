@@ -225,7 +225,7 @@ class JlinkTask {
         },
         new Option(true, "--module-path", "--mp") {
             void process(JlinkTask task, String opt, String arg) {
-                task.options.modulePath = new ModulePath(arg, null);
+                task.options.modulePath = ModulePath.fromPath(arg);
             }
         },
         new Option(true, "--libs") {
@@ -413,7 +413,7 @@ class JlinkTask {
         for (Module m : modules) {
             String name = m.id().name();
 
-            URL url = mp.toURL(m);
+            URL url = mp.locationOf(m);
             if (url == null) {
                 // this should not happen, module path bug?
                 fail(InternalError.class,

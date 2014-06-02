@@ -42,8 +42,8 @@ public final class ModuleGraph {
     // readability graph
     private final Map<Module, Set<Module>> graph;
 
-    // the module library to locate the modules in this module graph
-    private final ModuleLibrary moduleLibrary;
+    // the module path to locate the modules in this module graph
+    private final ModulePath modulePath;
 
     // the (possibly empty) module graph from which this module graph was composed
     private final ModuleGraph initialGraph;
@@ -52,11 +52,11 @@ public final class ModuleGraph {
     private final Set<Module> modules;
 
     ModuleGraph(Map<Module, Set<Module>> graph,
-                ModuleLibrary moduleLibrary,
+                ModulePath modulePath,
                 ModuleGraph initialGraph)
     {
         this.graph = graph;
-        this.moduleLibrary = moduleLibrary;
+        this.modulePath = modulePath;
         this.initialGraph = initialGraph;
         this.modules = Collections.unmodifiableSet(graph.keySet());
     }
@@ -66,7 +66,7 @@ public final class ModuleGraph {
      */
     public static ModuleGraph emptyModuleGraph() {
         return new ModuleGraph(Collections.emptyMap(),
-                               ModuleLibrary.emptyModuleLibrary(),
+                               ModulePath.emptyModulePath(),
                                null);
     }
 
@@ -95,10 +95,10 @@ public final class ModuleGraph {
     }
 
     /**
-     * Returns the module library to locate modules in this module graph.
+     * Returns the module path to locate modules in this module graph.
      */
-    public ModuleLibrary moduleLibrary() {
-        return moduleLibrary;
+    public ModulePath modulePath() {
+        return modulePath;
     }
 
     /**
@@ -122,7 +122,7 @@ public final class ModuleGraph {
              .stream()
              .filter(e -> !initialGraph.graph.containsKey(e.getKey()))
              .forEach(e -> delta.put(e.getKey(), e.getValue()));
-        return new ModuleGraph(delta, moduleLibrary, ModuleGraph.emptyModuleGraph());
+        return new ModuleGraph(delta, modulePath, ModuleGraph.emptyModuleGraph());
     }
 
     // system module graph; concurrency TBD

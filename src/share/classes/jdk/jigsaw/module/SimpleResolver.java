@@ -38,27 +38,32 @@ import jdk.jigsaw.module.ModuleDependence.Modifier;
 
 /**
  * A simple resolver that constructs a module graph from an initial, possibly
- * empty module graph, a module library, and a set of module names.
+ * empty module graph, a module path, and a set of module names.
  */
 
 public final class SimpleResolver {
 
-    // the module library
-    private final ModuleLibrary library;
-
     // the initial (possibly empty module graph)
     private final ModuleGraph initialGraph;
 
+    // the module path
+    private final ModulePath modulePath;
+
     /**
-     * Creates a {@code SimpleResolver} to construct module graphs over the
+     * Creates a {@code SimpleResolver} to construct module graphs from an
+     * initial module graph. Modules are located on the given module path.
      */
-    public SimpleResolver(ModuleLibrary library, ModuleGraph initialGraph) {
-        this.library = library;
+    public SimpleResolver(ModuleGraph initialGraph, ModulePath modulePath) {
         this.initialGraph = initialGraph;
+        this.modulePath = modulePath;
     }
 
-    public SimpleResolver(ModuleLibrary library) {
-        this(library, ModuleGraph.emptyModuleGraph());
+    /**
+     * Creates a {@code SimpleResolver} that locates modules on the given module
+     * path.
+     */
+    public SimpleResolver(ModulePath modulePath) {
+        this(ModuleGraph.emptyModuleGraph(), modulePath);
     }
 
     /**
@@ -73,7 +78,7 @@ public final class SimpleResolver {
 
         // push the root modules onto the visit stack to get us started
         for (String root: roots) {
-            Module m = library.findModule(Objects.requireNonNull(root));
+            Module m = modulePath.findModule(Objects.requireNonNull(root));
             if (m == null)
                 fail("Module %s does not exist", root);
             stack.offer(m);
@@ -88,7 +93,7 @@ public final class SimpleResolver {
             // process dependencies
             for (ModuleDependence d: m.moduleDependences()) {
                 String dn = d.query().name();
-                Module other = library.findModule(dn);
+                Module other = modulePath.findModule(dn);
                 if (other == null) {
                     fail("%s requires unknown module %s",
                          m.id().name(), dn);
@@ -110,7 +115,7 @@ public final class SimpleResolver {
         // sanity check implementation, -esa only
         assert isSubsetOfInitialGraph(graph);
 
-        return new ModuleGraph(graph, library, initialGraph);
+        return new ModuleGraph(graph, modulePath, initialGraph);
     }
 
     /**
@@ -170,7 +175,7 @@ public final class SimpleResolver {
                 g2.put(m, new HashSet<>());
                 for (ModuleDependence d: m.moduleDependences()) {
                     String dn = d.query().name();
-                    Module other = library.findModule(dn);
+                    Module other = modulePath.findModule(dn);
                     if (other == null)
                         throw new InternalError();
 
