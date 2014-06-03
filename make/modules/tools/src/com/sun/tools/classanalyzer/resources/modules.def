@@ -294,8 +294,6 @@ module java.desktop {
     uses javax.sound.sampled.spi.AudioFileWriter;
     uses javax.sound.sampled.spi.FormatConversionProvider;
     uses javax.sound.sampled.spi.MixerProvider;
-    uses sun.java2d.pipe.RenderingEngine;
-    uses sun.java2d.cmm.CMMServiceProvider;
 }
 
 // ## the Preferences implementation for Unix to XML (currently stored as a XML file)
