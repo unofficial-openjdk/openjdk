@@ -33,7 +33,7 @@ public interface JavaLangReflectAccess {
 
     Module defineModule(String name, Set<String> packages);
 
-    void addRequires(Module m1, Module m2);
+    void addReadsModule(Module m1, Module m2);
 
     void addExport(Module m, String pkg, Module permit);
 

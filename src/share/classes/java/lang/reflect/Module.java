@@ -47,7 +47,7 @@ public final class Module {
     // mutable to allow "construction" of a graph of modules without needing
     // them to be created in topological order.
     //
-    private final Map<Module, Object> requires;  // used as a set
+    private final Map<Module, Object> reads;     // used as a set
     private final Map<String, Object> uses;      // used as a set
     private final Map<String, Set<Module>> exports;
     private final Map<String, Set<String>> provides;
@@ -55,7 +55,7 @@ public final class Module {
     Module(String name, Set<String> packages) {
         this.name = name;
         this.packages = Collections.unmodifiableSet(packages);
-        this.requires = new ConcurrentHashMap<>();
+        this.reads = new ConcurrentHashMap<>();
         this.uses = new ConcurrentHashMap<>();
         this.exports = new ConcurrentHashMap<>();
         this.provides = new ConcurrentHashMap<>();
@@ -76,12 +76,10 @@ public final class Module {
     }
 
     /**
-     * Returns the set of modules that this module requires. The set includes
-     * the set of modules that are transitively required through
-     * "requires public".
+     * Returns the set of modules that this module reads.
      */
-    public Set<Module> requires() {
-        return Collections.unmodifiableSet(requires.keySet());
+    public Set<Module> readDependences() {
+        return Collections.unmodifiableSet(reads.keySet());
     }
 
     /**
@@ -126,8 +124,8 @@ public final class Module {
                     return new Module(name, packages);
                 }
                 @Override
-                public void addRequires(Module m1, Module m2) {
-                    m1.requires.put(m2, Boolean.TRUE);
+                public void addReadsModule(Module m1, Module m2) {
+                    m1.reads.put(m2, Boolean.TRUE);
                 }
                 @Override
                 public void addExport(Module m, String pkg, Module permit) {

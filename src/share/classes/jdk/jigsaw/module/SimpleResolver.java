@@ -51,11 +51,12 @@ public final class SimpleResolver {
 
     /**
      * Creates a {@code SimpleResolver} to construct module graphs from an
-     * initial module graph. Modules are located on the given module path.
+     * initial module graph. Modules are located on the given module path and if
+     * not found, on the module path used to create the initial module graph.
      */
     public SimpleResolver(ModuleGraph initialGraph, ModulePath modulePath) {
         this.initialGraph = initialGraph;
-        this.modulePath = modulePath;
+        this.modulePath = modulePath.join(initialGraph.modulePath());
     }
 
     /**

@@ -250,7 +250,7 @@ public class Reflection {
                 return true;
 
             // named module trying to access member in another named module
-            if (!m1.requires().contains(m2))
+            if (!m1.readDependences().contains(m2))
                 return false;
         }
 

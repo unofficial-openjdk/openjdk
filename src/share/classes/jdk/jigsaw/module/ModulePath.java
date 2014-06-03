@@ -137,6 +137,31 @@ public abstract class ModulePath {
     }
 
     /**
+     * Creates a new {@code ModulePath} that is the equivalent to joining the
+     * given module path to tail of this module path. In order words, searching
+     * the resulting module path for a module will first search this module path;
+     * if not found then the module path specified by {@code tail} will be
+     * searched.
+     */
+    public final ModulePath join(ModulePath tail) {
+        ModulePath head = this;
+        return new ModulePath(tail) {
+            @Override
+            public Module findLocalModule(String name) {
+                return head.findModule(name);
+            }
+            @Override
+            public Set<Module> localModules() {
+                return head.allModules();
+            }
+            @Override
+            public URL localLocationOf(Module m) {
+                return head.locationOf(m);
+            }
+        };
+    }
+
+    /**
      * Creates a {@code ModulePath} to represent the module path of a runtime
      * that has the given modules linked-in into the runtime.
      */

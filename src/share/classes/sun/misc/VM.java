@@ -380,9 +380,13 @@ public class VM {
     public static native void bindToModule(ClassLoader loader, String pkg, long handle);
 
     /**
-     * Add an edge to the graph.
+     * Configures the module with handle {@code handle1} so that it can read the module
+     * with handle {@code handle2}.
      */
-    public static native void addRequires(long handle1, long handle2);
+    public static void addReadsModule(long handle1, long handle2) {
+        addRequires(handle1, handle2);
+    }
+    private static native void addRequires(long handle1, long handle2);
 
     /**
      * Configures the module to export the given package.
