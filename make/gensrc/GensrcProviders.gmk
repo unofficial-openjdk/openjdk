@@ -23,31 +23,16 @@
 # questions.
 #
 
-ifeq ($(SHUFFLED), true)
+################################################################################
 
-  define process-provider
+define process-provider
 	$(MKDIR) -p $(@D)
 	$(CAT) $^ | $(SED) -e "s/^#\[$(OPENJDK_TARGET_OS)\]//" > $@
-  endef
+endef
 
-  ##############################################################################
+################################################################################
 
-  # Combine Connectors
-  CONNECTOR_SERVICE := com.sun.jdi.connect.Connector
-
-  # TODO jdk9: When merging to jdk9 first milestone, disable the combination of connector 
-  # service providers.
-  # $(JDK_OUTPUTDIR)/gensrc_jdi/META-INF/services/com.sun.jdi.connect.Connector is
-  # created in Import.gmk.
-  # Now sajdi is in its own module. Disable this part:
-#  $(JDK_OUTPUTDIR)/gensrc/jdk.jdi/META-INF/services/$(CONNECTOR_SERVICE): \
-      $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.jdi/share/classes/META-INF/services/com.sun.jdi.connect.Connector \
-      $(JDK_OUTPUTDIR)/gensrc_jdi/META-INF/services/com.sun.jdi.connect.Connector
-#	$(process-provider)
-
-#  GENSRC_JDK_TOOLS += $(JDK_OUTPUTDIR)/gensrc/jdk.jdi/META-INF/services/$(CONNECTOR_SERVICE)
-
-  ##############################################################################
+ifeq ($(SHUFFLED), true)
 
   # Filter AttachProvider
   $(JDK_OUTPUTDIR)/gensrc/jdk.attach/META-INF/services/com.sun.tools.attach.spi.AttachProvider: \
@@ -55,17 +40,6 @@ ifeq ($(SHUFFLED), true)
 	$(process-provider)
 
   GENSRC_JDK_ATTACH += $(JDK_OUTPUTDIR)/gensrc/jdk.attach/META-INF/services/com.sun.tools.attach.spi.AttachProvider
-
-  ##############################################################################
-
-  ifndef OPENJDK
-    # Override RenderingEnging
-    $(JDK_OUTPUTDIR)/gensrc/java.desktop/META-INF/services/sun.java2d.pipe.RenderingEngine: \
-        $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/share/classes/META-INF/services/sun.java2d.pipe.RenderingEngine-dc.template
-		$(install-file)
-
-    GENSRC_JAVA_DESKTOP += $(JDK_OUTPUTDIR)/gensrc/java.desktop/META-INF/services/sun.java2d.pipe.RenderingEngine
-  endif
 
 endif
 

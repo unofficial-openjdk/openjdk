@@ -255,34 +255,6 @@ $(eval $(call SetupShuffleFiles,COPY_SERVICES_SOUND, \
     DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.desktop/share/classes/META-INF, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/share/classes/com/sun/media/sound/services/javax*)))
 
-$(eval $(call SetupShuffleFiles,COPY_SERVICES_CMM, \
-    SRC := $(JDK_TOPDIR)/src/share/classes/sun/java2d/cmm/lcms, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.desktop/share/classes, \
-    FILES := $(JDK_TOPDIR)/src/share/classes/sun/java2d/cmm/lcms/META-INF/services/sun.java2d.cmm.CMMServiceProvider))
-
-$(eval $(call SetupShuffleFiles,COPY_SERVICES_PISCES_SHARE, \
-    SRC := $(JDK_TOPDIR)/src/share/classes/sun/java2d/pisces, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.desktop/share/classes, \
-    FILES := $(JDK_TOPDIR)/src/share/classes/sun/java2d/pisces/META-INF/services/sun.java2d.pipe.RenderingEngine))
-
-$(eval $(call SetupShuffleFiles,COPY_SERVICES_PISCES_SOLARIS, \
-    SRC := $(JDK_TOPDIR)/src/solaris/classes/sun/java2d/pisces, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.desktop/unix/classes, \
-    FILES := $(JDK_TOPDIR)/src/solaris/classes/sun/java2d/pisces/META-INF/services/sun.java2d.pipe.RenderingEngine))
-
-
-$(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.desktop/share/classes/META-INF/services/sun.java2d.pipe.RenderingEngine-dc.template: \
-    $(JDK_TOPDIR)/src/share/classes/sun/dc/META-INF/services/sun.java2d.pipe.RenderingEngine
-	$(module-copy-file)
-
-SHUFFLE_SRC_TARGETS += $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.desktop/share/classes/META-INF/services/sun.java2d.pipe.RenderingEngine-dc.template
-
-# Copy services in java.xml
-$(eval $(call SetupShuffleFiles,COPY_SERVICES_JAXP, \
-    SRC := $(JDK_TOPDIR)/src/share/classes/sun/util/xml, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.xml/share/classes, \
-    FILES := $(JDK_TOPDIR)/src/share/classes/sun/util/xml/META-INF/services/sun.util.spi.XmlPropertiesProvider))
-
 # Copy services in jdk.attach
 $(eval $(call SetupShuffleFiles,COPY_SERVICES_ATTACH, \
     SRC := $(JDK_TOPDIR)/src/share/classes/sun/tools/attach, \
@@ -391,29 +363,6 @@ $(eval $(call SetupShuffleFiles,COPY_DNS_SERVICE, \
     SRC := $(JDK_TOPDIR)/src/share/classes/sun/net/spi/nameservice/dns, \
     DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/jdk.naming.dns/share/classes, \
     FILES := $(JDK_TOPDIR)/src/share/classes/sun/net/spi/nameservice/dns/META-INF/services/sun.net.spi.nameservice.NameServiceDescriptor))
-
-$(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.base/linux/classes/java/lang/UNIXProcess.java: \
-    $(JDK_TOPDIR)/src/solaris/classes/java/lang/UNIXProcess.java.linux
-	$(call module-copy-file)
-
-$(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.base/solaris/classes/java/lang/UNIXProcess.java: \
-    $(JDK_TOPDIR)/src/solaris/classes/java/lang/UNIXProcess.java.solaris
-	$(call module-copy-file)
-
-$(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.base/macosx/classes/java/lang/UNIXProcess.java: \
-    $(JDK_TOPDIR)/src/solaris/classes/java/lang/UNIXProcess.java.bsd
-	$(call module-copy-file)
-
-$(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.base/aix/classes/java/lang/UNIXProcess.java: \
-    $(JDK_TOPDIR)/src/solaris/classes/java/lang/UNIXProcess.java.aix
-	$(call module-copy-file)
-
-SHUFFLE_SRC_TARGETS += \
-    $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.base/linux/classes/java/lang/UNIXProcess.java \
-    $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.base/solaris/classes/java/lang/UNIXProcess.java \
-    $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.base/macosx/classes/java/lang/UNIXProcess.java \
-    $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.base/aix/classes/java/lang/UNIXProcess.java \
-    #
 
 $(eval $(call SetupShuffleFiles,COPY_ZIPFS_SERVICE, \
     SRC := $(JDK_TOPDIR)/src/share/classes/jdk/nio/zipfs, \

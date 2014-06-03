@@ -198,7 +198,6 @@ module java.base {
     uses java.util.spi.CurrencyNameProvider;
     uses java.util.spi.LocaleNameProvider;
     uses sun.net.spi.nameservice.NameServiceDescriptor;
-    uses sun.util.spi.XmlPropertiesProvider;
 
     //
     // qualified exports for open/closed and platform-specific content

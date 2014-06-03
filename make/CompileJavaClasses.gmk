@@ -38,12 +38,7 @@ EXCLUDES :=
 
 ##########################################################################################
 
-# Exclude building of IIOP transport for RMI Connector
-EXCLUDES += com/sun/jmx/remote/protocol/iiop
-
-##########################################################################################
-
-EXCLUDES += com/sun/pept \
+EXCLUDES += \
     com/sun/tools/example/trace \
     com/sun/tools/example/debug/bdi \
     com/sun/tools/example/debug/event \
