@@ -1222,7 +1222,11 @@ class java_security_AccessControlContext: AllStatic {
 // Interface to java.lang.ClassLoader objects
 
 #define CLASSLOADER_INJECTED_FIELDS(macro)                            \
-  macro(java_lang_ClassLoader, loader_data,  intptr_signature, false)
+  macro(java_lang_ClassLoader, loader_data,  intptr_signature, false) \
+  macro(java_lang_ClassLoader, loader_tag,   int_signature,    false) \
+  macro(java_lang_ClassLoader, module_lookup, intptr_signature, false)
+
+class ModuleLookup;
 
 class java_lang_ClassLoader : AllStatic {
  private:
@@ -1231,6 +1235,8 @@ class java_lang_ClassLoader : AllStatic {
    hc_parent_offset = 0
   };
   static int _loader_data_offset;
+  static int _loader_tag_offset;
+  static int _module_lookup_offset;
   static bool offsets_computed;
   static int parent_offset;
   static int parallelCapable_offset;
@@ -1240,6 +1246,12 @@ class java_lang_ClassLoader : AllStatic {
 
   static ClassLoaderData** loader_data_addr(oop loader);
   static ClassLoaderData* loader_data(oop loader);
+
+  static jint* loader_tag_addr(oop loader);
+  static jint loader_tag(oop loader);
+
+  static ModuleLookup** module_lookup_addr(oop loader);
+  static ModuleLookup* module_lookup(oop loader);
 
   static oop parent(oop loader);
   static bool isAncestor(oop loader, oop cl);

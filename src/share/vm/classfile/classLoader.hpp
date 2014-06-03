@@ -214,6 +214,10 @@ class ClassLoader: AllStatic {
   // Canonicalizes path names, so strcmp will work properly. This is mainly
   // to avoid confusing the zip library
   static bool get_canonical_path(char* orig, char* out, int len);
+
+  // used to compute the per-loader tag
+  static int _next_loader_tag;
+
  public:
   // Used by the kernel jvm.
   static void update_class_path_entry_list(char *path,
@@ -335,6 +339,9 @@ class ClassLoader: AllStatic {
 
   // creates a class path zip entry (returns NULL if JAR file cannot be opened)
   static ClassPathZipEntry* create_class_path_zip_entry(const char *apath);
+
+  /* returns a unique tag for the given loader */
+  static int tag_for(Handle loader);
 
   // Debugging
   static void verify()              PRODUCT_RETURN;

@@ -245,6 +245,14 @@ SUNWprivate_1.1 {
                 JVM_Yield;
                 JVM_handle_linux_signal;
 
+                # Modules
+                JVM_DefineModule;
+                JVM_BindToModule;
+                JVM_AddRequires;
+                JVM_AddExports;
+                JVM_AddExportsWithPermits;
+                JVM_AddBackdoorAccess;
+
                 # miscellaneous functions
                 jio_fprintf;
                 jio_printf;
