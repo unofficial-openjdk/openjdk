@@ -4454,6 +4454,7 @@ public class Types {
         public R visitArrayType(ArrayType t, S s)       { return visitType(t, s); }
         public R visitMethodType(MethodType t, S s)     { return visitType(t, s); }
         public R visitPackageType(PackageType t, S s)   { return visitType(t, s); }
+        public R visitModuleType(ModuleType t, S s)     { return visitType(t, s); }
         public R visitTypeVar(TypeVar t, S s)           { return visitType(t, s); }
         public R visitCapturedType(CapturedType t, S s) { return visitType(t, s); }
         public R visitForAll(ForAll t, S s)             { return visitType(t, s); }

@@ -31,13 +31,14 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.lang.model.element.ElementVisitor;
+import javax.tools.JavaFileManager.Location;
 import javax.tools.JavaFileObject;
-
 
 import com.sun.tools.javac.code.Symbol.ClassSymbol;
 import com.sun.tools.javac.code.Symbol.Completer;
 import com.sun.tools.javac.code.Symbol.CompletionFailure;
 import com.sun.tools.javac.code.Symbol.MethodSymbol;
+import com.sun.tools.javac.code.Symbol.ModuleSymbol;
 import com.sun.tools.javac.code.Symbol.OperatorSymbol;
 import com.sun.tools.javac.code.Symbol.PackageSymbol;
 import com.sun.tools.javac.code.Symbol.TypeSymbol;
@@ -105,6 +106,18 @@ public class Symtab {
     private final Names names;
     private final Completer initialCompleter;
     private final Target target;
+
+    /** A symbol for the root module.
+     */
+    public final ModuleSymbol rootModule;
+
+    /** A symbol for the unnamed module.
+     */
+    public final ModuleSymbol unnamedModule;
+
+    /** A symbol for no module, for use with -source 8 or less
+     */
+    public final ModuleSymbol noModule;
 
     /** A symbol for the root package.
      */
@@ -231,6 +244,10 @@ public class Symtab {
      *  by compiled source files.
      */
     public final Map<Name, PackageSymbol> packages = new HashMap<>();
+
+    /** A hashtable giving the module for each module location.
+     */
+    private Map<Location, ModuleSymbol> modules = new HashMap<>();
 
     public void initType(Type type, ClassSymbol c) {
         type.tsym = c;
@@ -416,10 +433,19 @@ public class Symtab {
         // Create the unknown type
         unknownType = new UnknownType();
 
+        final JavacMessages messages = JavacMessages.instance(context);
+
         // create the basic builtin symbols
+        rootModule = new ModuleSymbol(names.empty, null);
+        unnamedModule = new ModuleSymbol(names.empty, rootModule) {
+                @Override
+                public String toString() {
+                    return messages.getLocalizedString("compiler.misc.unnamed.module");
+                }
+            };
+        noModule = new ModuleSymbol(names.empty, rootModule) { };
         rootPackage = new PackageSymbol(names.empty, null);
         packages.put(names.empty, rootPackage);
-        final JavacMessages messages = JavacMessages.instance(context);
         unnamedPackage = new PackageSymbol(names.empty, rootPackage) {
                 public String toString() {
                     return messages.getLocalizedString("compiler.misc.unnamed.package");
@@ -847,5 +873,57 @@ public class Symtab {
      */
     public PackageSymbol enterPackage(Name name, PackageSymbol owner) {
         return enterPackage(TypeSymbol.formFullName(name, owner));
+    }
+
+    public ModuleSymbol enterModule(Location locn) {
+        ModuleSymbol sym = modules.get(locn);
+        if (sym == null) {
+            sym = new ModuleSymbol(null, rootModule);
+            sym.location = locn;
+            sym.module_info = new ClassSymbol(0, names.module_info, sym);
+            sym.module_info.modle = sym;
+            // perhaps this should be initialCompleter
+            sym.completer = new Symbol.Completer() {
+                public void complete(Symbol sym) throws CompletionFailure {
+//                    readModule((ModuleSymbol) sym);
+                    throw new UnsupportedOperationException();
+                }
+
+// Perhaps this should stay as a method in ClassReader
+//                void readModule(ModuleSymbol sym) {
+//                    Location locn = sym.location;
+//                    JavaFileObject srcFile = getModuleInfo(locn, JavaFileObject.Kind.SOURCE);
+//                    JavaFileObject classFile = getModuleInfo(locn, JavaFileObject.Kind.CLASS);
+//                    JavaFileObject file;
+//                    if (srcFile == null) {
+//                        if (classFile == null) {
+//                            sym.name = sym.fullname = names.empty; // unnamed module
+//                            RequiresModuleDirective d = new RequiresModuleDirective(syms.jdkLegacyQuery,
+//                                    EnumSet.of(Directive.RequiresFlag.SYNTHESIZED));
+//                            sym.directives = List.<Directive>of(d);
+//                            return;
+//                        }
+//                        file = classFile;
+//                    } else if (classFile == null)
+//                        file = srcFile;
+//                    else
+//                        file = preferredFileObject(srcFile, classFile);
+//
+//                    sym.module_info.classfile = file;
+//                    ClassReader.this.complete(sym);
+//                    assert sym.name != null;
+//                }
+//
+//                JavaFileObject getModuleInfo(Location locn, JavaFileObject.Kind kind) {
+//                    try {
+//                        return fileManager.getJavaFileForInput(locn, "module-info", kind);
+//                    } catch (IOException e) {
+//                        return null;
+//                    }
+//                }
+            };
+            modules.put(locn, sym);
+        }
+        return sym;
     }
 }

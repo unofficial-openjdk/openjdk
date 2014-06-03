@@ -41,6 +41,7 @@ import static com.sun.tools.javac.code.TypeTag.BOT;
 import static com.sun.tools.javac.tree.JCTree.Tag.*;
 import static com.sun.tools.javac.tree.JCTree.Tag.BLOCK;
 import static com.sun.tools.javac.tree.JCTree.Tag.SYNCHRONIZED;
+import javax.tools.JavaFileObject;
 
 /** Utility class containing inspector methods for trees.
  *
@@ -1173,5 +1174,22 @@ public class TreeInfo {
         TypeAnnotationFinder finder = new TypeAnnotationFinder();
         finder.scan(e);
         return finder.foundTypeAnno;
+    }
+
+    public static boolean isModuleInfo(JCCompilationUnit tree) {
+        return tree.sourcefile.isNameCompatible("module-info", JavaFileObject.Kind.SOURCE);
+    }
+
+    public static JCModuleDecl getModule(JCCompilationUnit t) {
+        if (t.defs.nonEmpty()) {
+            JCTree def = t.defs.head;
+            if (def.hasTag(MODULE))
+                return (JCModuleDecl) def;
+        }
+        return null;
+    }
+
+    public static boolean isPackageInfo(JCCompilationUnit tree) {
+        return tree.sourcefile.isNameCompatible("package-info", JavaFileObject.Kind.SOURCE);
     }
 }

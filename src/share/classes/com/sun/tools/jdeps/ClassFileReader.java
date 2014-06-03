@@ -54,6 +54,9 @@ public class ClassFileReader {
             return new DirectoryReader(path);
         } else if (path.getFileName().toString().endsWith(".jar")) {
             return new JarFileReader(path);
+        } else if (path.getFileName().toString().equals("classes")) {
+            // ## current layout for module classes
+            return new JarFileReader(path);
         } else {
             return new ClassFileReader(path);
         }
@@ -68,7 +71,7 @@ public class ClassFileReader {
 
     protected final Path path;
     protected final String baseFileName;
-    private ClassFileReader(Path path) {
+    protected ClassFileReader(Path path) {
         this.path = path;
         this.baseFileName = path.getFileName() != null
                                 ? path.getFileName().toString()
@@ -235,7 +238,7 @@ public class ClassFileReader {
     private static class JarFileReader extends ClassFileReader {
         final JarFile jarfile;
         JarFileReader(Path path) throws IOException {
-            this(path, new JarFile(path.toFile()));
+            this(path, new JarFile(path.toFile(), false));
         }
         JarFileReader(Path path, JarFile jf) throws IOException {
             super(path);
@@ -288,6 +291,7 @@ public class ClassFileReader {
         class JarFileIterator implements Iterator<ClassFile> {
             private Enumeration<JarEntry> entries;
             private JarEntry nextEntry;
+            private ClassFile cf;
             JarFileIterator() {
                 this.entries = jarfile.entries();
                 while (entries.hasMoreElements()) {
@@ -300,32 +304,50 @@ public class ClassFileReader {
                 }
             }
 
+            private String errorMessage(Throwable t) {
+                if (t.getCause() != null) {
+                    return t.getCause().toString();
+                } else {
+                    return t.toString();
+                }
+            }
             public boolean hasNext() {
-                return nextEntry != null;
+                if (nextEntry != null && cf != null) {
+                    return true;
+                }
+                while (nextEntry != null) {
+                    try {
+                        cf = readClassFile(nextEntry);
+                        return true;
+                    } catch (ClassFileError ex) {
+                        System.err.println("Bad entry: " + nextEntry + " " + errorMessage(ex));
+                    } catch (IOException ex) {
+                        System.err.println("IO error: " + nextEntry + " " + errorMessage(ex));
+                    }
+                    nextEntry = nextEntry();
+                }
+                return false;
             }
 
             public ClassFile next() {
                 if (!hasNext()) {
                     throw new NoSuchElementException();
                 }
+                ClassFile classFile = cf;
+                cf = null;
+                nextEntry = nextEntry();
+                return classFile;
+            }
 
-                ClassFile cf;
-                try {
-                    cf = readClassFile(nextEntry);
-                } catch (IOException ex) {
-                    throw new ClassFileError(ex);
-                }
-                JarEntry entry = nextEntry;
-                nextEntry = null;
+            private JarEntry nextEntry() {
                 while (entries.hasMoreElements()) {
                     JarEntry e = entries.nextElement();
                     String name = e.getName();
                     if (name.endsWith(".class")) {
-                        nextEntry = e;
-                        break;
+                        return e;
                     }
                 }
-                return cf;
+                return null;
             }
 
             public void remove() {

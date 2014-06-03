@@ -24,211 +24,95 @@
  */
 package com.sun.tools.jdeps;
 
-import com.sun.tools.classfile.Annotation;
-import com.sun.tools.classfile.Annotation.*;
-import com.sun.tools.classfile.Attribute;
-import com.sun.tools.classfile.ClassFile;
-import com.sun.tools.classfile.ConstantPool.*;
-import com.sun.tools.classfile.ConstantPoolException;
-import com.sun.tools.classfile.RuntimeAnnotations_attribute;
-import java.io.FileReader;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
-import java.util.jar.JarFile;
 
 /**
  * Build the profile information from ct.sym if exists.
  */
 enum Profile {
-
-    COMPACT1("compact1", 1),
-    COMPACT2("compact2", 2),
-    COMPACT3("compact3", 3),
-    FULL_JRE("Full JRE", 4);
+    COMPACT1("compact1", 1, "java.compact1"),
+    COMPACT2("compact2", 2, "java.compact2"),
+    COMPACT3("compact3", 3, "java.compact3"),
+    FULL_JRE("Full JRE", 4, "jdk.runtime");
 
     final String name;
     final int profile;
-    final Set<String> packages;
-    final Set<String> proprietaryPkgs;
+    final String moduleName;
+    final Set<Module> modules = new HashSet<>();
 
-    Profile(String name, int profile) {
+    Profile(String name, int profile, String moduleName) {
         this.name = name;
         this.profile = profile;
-        this.packages = new HashSet<>();
-        this.proprietaryPkgs = new HashSet<>();
+        this.moduleName = moduleName;
+    }
+
+    public String profileName() {
+        return name;
     }
 
     @Override
     public String toString() {
-        return name;
+        // print module name?
+        return moduleName;
     }
 
     public static int getProfileCount() {
-        return PackageToProfile.map.values().size();
+        return JDK.isEmpty() ? 0 : Profile.values().length;
     }
 
     /**
      * Returns the Profile for the given package name. It returns an empty
      * string if the given package is not in any profile.
      */
-    public static Profile getProfile(String pn) {
-        Profile profile = PackageToProfile.map.get(pn);
-        return (profile != null && profile.packages.contains(pn))
-                ? profile : null;
+    public static Profile getProfile(Module m) {
+        if (m != null) {
+            for (Profile p : Profile.values()) {
+                if (p.modules.contains(m)) {
+                    return p;
+                }
+            }
+        }
+        return null;
     }
 
-    static class PackageToProfile {
-        static String[] JAVAX_CRYPTO_PKGS = new String[] {
-            "javax.crypto",
-            "javax.crypto.interfaces",
-            "javax.crypto.spec"
-        };
-        static Map<String, Profile> map = initProfiles();
-        private static Map<String, Profile> initProfiles() {
-            try {
-                String profilesProps = System.getProperty("jdeps.profiles");
-                if (profilesProps != null) {
-                    // for testing for JDK development build where ct.sym doesn't exist
-                    initProfilesFromProperties(profilesProps);
-                } else {
-                    Path home = Paths.get(System.getProperty("java.home"));
-                    if (home.endsWith("jre")) {
-                        home = home.getParent();
-                    }
-                    Path ctsym = home.resolve("lib").resolve("ct.sym");
-                    if (Files.exists(ctsym)) {
-                        // parse ct.sym and load information about profiles
-                        try (JarFile jf = new JarFile(ctsym.toFile())) {
-                            ClassFileReader reader = ClassFileReader.newInstance(ctsym, jf);
-                            for (ClassFile cf : reader.getClassFiles()) {
-                                findProfile(cf);
-                            }
-                        }
-                        // special case for javax.crypto.* classes that are not
-                        // included in ct.sym since they are in jce.jar
-                        Collections.addAll(Profile.COMPACT1.packages, JAVAX_CRYPTO_PKGS);
-                    }
-                }
-            } catch (IOException | ConstantPoolException e) {
-                throw new Error(e);
-            }
-            HashMap<String,Profile> map = new HashMap<>();
-            for (Profile profile : Profile.values()) {
-                for (String pn : profile.packages) {
-                    if (!map.containsKey(pn)) {
-                        // split packages in the JRE: use the smaller compact
-                        map.put(pn, profile);
-                    }
-                }
-                for (String pn : profile.proprietaryPkgs) {
-                    if (!map.containsKey(pn)) {
-                        map.put(pn, profile);
-                    }
-                }
-            }
-            return map;
-        }
-        private static final String PROFILE_ANNOTATION = "Ljdk/Profile+Annotation;";
-        private static final String PROPRIETARY_ANNOTATION = "Lsun/Proprietary+Annotation;";
-        private static Profile findProfile(ClassFile cf) throws ConstantPoolException {
-            RuntimeAnnotations_attribute attr = (RuntimeAnnotations_attribute)
-                cf.attributes.get(Attribute.RuntimeInvisibleAnnotations);
-            int index = 0;
-            boolean proprietary = false;
-            if (attr != null) {
-                for (int i = 0; i < attr.annotations.length; i++) {
-                    Annotation ann = attr.annotations[i];
-                    String annType = cf.constant_pool.getUTF8Value(ann.type_index);
-                    if (PROFILE_ANNOTATION.equals(annType)) {
-                        for (int j = 0; j < ann.num_element_value_pairs; j++) {
-                            Annotation.element_value_pair pair = ann.element_value_pairs[j];
-                            Primitive_element_value ev = (Primitive_element_value) pair.value;
-                            CONSTANT_Integer_info info = (CONSTANT_Integer_info)
-                                cf.constant_pool.get(ev.const_value_index);
-                            index = info.value;
-                            break;
-                        }
-                    } else if (PROPRIETARY_ANNOTATION.equals(annType)) {
-                        proprietary = true;
-                    }
-                }
-            }
-
-            Profile p = null;  // default
-            switch (index) {
-                case 1:
-                    p = Profile.COMPACT1; break;
-                case 2:
-                    p = Profile.COMPACT2; break;
-                case 3:
-                    p = Profile.COMPACT3; break;
-                case 4:
-                    p = Profile.FULL_JRE; break;
-                default:
-                    // skip classes with profile=0
-                    // Inner classes are not annotated with the profile annotation
-                    return null;
-            }
-
-            String name = cf.getName();
-            int i = name.lastIndexOf('/');
-            name = (i > 0) ? name.substring(0, i).replace('/', '.') : "";
-            if (proprietary) {
-                p.proprietaryPkgs.add(name);
-            } else {
-                p.packages.add(name);
-            }
-            return p;
-        }
-
-        private static void initProfilesFromProperties(String path) throws IOException {
-            Properties props = new Properties();
-            try (FileReader reader = new FileReader(path)) {
-                props.load(reader);
-            }
-            for (Profile prof : Profile.values()) {
-                int i = prof.profile;
-                String key = props.getProperty("profile." + i + ".name");
-                if (key == null) {
-                    throw new RuntimeException(key + " missing in " + path);
-                }
-                String n = props.getProperty("profile." + i + ".packages");
-                String[] pkgs = n.split("\\s+");
-                for (String p : pkgs) {
-                    if (p.isEmpty()) continue;
-                    prof.packages.add(p);
-                }
+    final static Set<Module> JDK = new HashSet<>();
+    static void initProfiles() {
+        for (Profile p : Profile.values()) {
+            Module m = PlatformClassPath.findModule(p.moduleName);
+            if (m == null)
+                throw new Error(p.moduleName + " doesn't exist");
+            p.modules.add(m);
+            JDK.add(m);
+            for (String n : m.requires()) {
+                Module d = PlatformClassPath.findModule(n);
+                if (d == null)
+                    throw new Error(n + " doesn't exist");
+                p.modules.add(d);
+                JDK.add(d);
             }
         }
     }
-
     // for debugging
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         if (args.length == 0) {
+            // find platform modules
+            PlatformClassPath.getArchives(null);
             if (Profile.getProfileCount() == 0) {
                 System.err.println("No profile is present in this JDK");
             }
             for (Profile p : Profile.values()) {
                 String profileName = p.name;
-                SortedSet<String> set = new TreeSet<>(p.packages);
-                for (String s : set) {
-                    // filter out the inner classes that are not annotated with
-                    // the profile annotation
-                    if (PackageToProfile.map.get(s) == p) {
-                        System.out.format("%2d: %-10s  %s%n", p.profile, profileName, s);
-                        profileName = "";
-                    } else {
-                        System.err.format("Split package: %s in %s and %s %n",
-                            s, PackageToProfile.map.get(s).name, p.name);
+                System.out.format("%2d: %-10s  %s%n", p.profile, profileName, p.modules);
+                for (Module m: p.modules) {
+                    System.out.format("module %s%n", m.name());
+                    System.out.format("   requires %s%n", m.requires());
+                    for (Map.Entry<String,Set<String>> e: m.exports().entrySet()) {
+                        System.out.format("   exports %s %s%n", e.getKey(),
+                            e.getValue().isEmpty() ? "" : "to " + e.getValue());
                     }
                 }
             }
-        }
-        for (String pn : args) {
-            System.out.format("%s in %s%n", pn, getProfile(pn));
         }
     }
 }

@@ -4133,13 +4133,19 @@ public class Attr extends JCTree.Visitor {
     }
 
     /**
-     * Attribute an env for either a top level tree or class declaration.
+     * Attribute an env for either a top level tree or class or module declaration.
      */
     public void attrib(Env<AttrContext> env) {
-        if (env.tree.hasTag(TOPLEVEL))
-            attribTopLevel(env);
-        else
-            attribClass(env.tree.pos(), env.enclClass.sym);
+        switch (env.tree.getTag()) {
+            case MODULE:
+                attribModule(env.tree.pos(), ((JCModuleDecl)env.tree).sym);
+                break;
+            case TOPLEVEL:
+                attribTopLevel(env);
+                break;
+            default:
+                attribClass(env.tree.pos(), env.enclClass.sym);
+        }
     }
 
     /**
@@ -4153,6 +4159,22 @@ public class Attr extends JCTree.Visitor {
         } catch (CompletionFailure ex) {
             chk.completionError(toplevel.pos(), ex);
         }
+    }
+
+    public void attribModule(DiagnosticPosition pos, ModuleSymbol m) {
+        try {
+            annotate.flush();
+            attribModule(m);
+        } catch (CompletionFailure ex) {
+            chk.completionError(pos, ex);
+        }
+    }
+
+    void attribModule(ModuleSymbol m) {
+        // Get environment current at the point of module definition.
+        Env<AttrContext> env = enter.typeEnvs.get(m);
+//        System.err.println("Attr.attribModule: " + env + " " + env.tree);
+        attribStat(env.tree, env);
     }
 
     /** Main method: attribute class definition associated with given class symbol.
@@ -4251,6 +4273,54 @@ public class Attr extends JCTree.Visitor {
 
     public void visitImport(JCImport tree) {
         // nothing to do
+    }
+
+    public void visitModuleDef(JCModuleDecl tree) {
+//        System.err.println("Attr.visitModuleDecl: " + Pretty.toSimpleString(tree, 80));
+        tree.sym.directives = List.nil();
+        attribStats(tree.directives, env);
+        tree.sym.directives = tree.sym.directives.reverse();
+    }
+
+    public void visitExports(JCExports tree) {
+//        System.err.println("Attr.visitExport: " + tree);
+        ModuleSymbol msym = env.toplevel.modle;
+        PackageSymbol p = syms.enterPackage(TreeInfo.fullName(tree.qualid));
+        List<Name> modules = null;
+        if (tree.moduleNames != null) {
+            ListBuffer<Name> lb = new ListBuffer<>();
+            for (JCExpression n: tree.moduleNames)
+                lb.add(TreeInfo.fullName(n));
+            modules = lb.toList();
+        }
+        msym.directives = msym.directives.prepend(new Directive.ExportsDirective(p, modules));
+    }
+
+    public void visitPermits(JCPermits tree) {
+//        System.err.println("Attr.visitPermits: " + tree);
+        ModuleSymbol msym = env.toplevel.modle;
+        msym.directives = msym.directives.prepend(tree.directive);
+    }
+
+    public void visitProvides(JCProvides tree) {
+//        System.err.println("Attr.visitProvides: " + tree);
+        ModuleSymbol msym = env.toplevel.modle;
+        ClassSymbol service = syms.enterClass(TreeInfo.fullName(tree.serviceName));
+        ClassSymbol impl = syms.enterClass(TreeInfo.fullName(tree.implName));
+        msym.directives = msym.directives.prepend(new Directive.ProvidesDirective(service, impl));
+    }
+
+    public void visitRequires(JCRequires tree) {
+//        System.err.println("Attr.visitRequires: " + tree);
+        ModuleSymbol msym = env.toplevel.modle;
+        msym.directives = msym.directives.prepend(tree.directive);
+    }
+
+    public void visitUses(JCUses tree) {
+//        System.err.println("Attr.visitUses: " + tree);
+        ModuleSymbol msym = env.toplevel.modle;
+        ClassSymbol service = syms.enterClass(TreeInfo.fullName(tree.qualid));
+        msym.directives = msym.directives.prepend(new Directive.UsesDirective(service));
     }
 
     /** Finish the attribution of a class. */

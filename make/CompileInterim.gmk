@@ -27,10 +27,26 @@
 default: all
 
 include $(SPEC)
+include JigsawSpecMod.gmk
 include MakeBase.gmk
 include JavaCompilation.gmk
 
 include CommonLangtools.gmk
+
+ifeq ($(SHUFFLED), true)
+  SRC := $(LANGTOOLS_TOPDIR)/$(SRC_SUBDIR)/java.compiler/share/classes \
+      $(LANGTOOLS_TOPDIR)/$(SRC_SUBDIR)/jdk.compiler/share/classes \
+      $(LANGTOOLS_TOPDIR)/$(SRC_SUBDIR)/jdk.javadoc/share/classes \
+      $(LANGTOOLS_TOPDIR)/$(SRC_SUBDIR)/java.base/share/classes \
+      $(LANGTOOLS_OUTPUTDIR)/gensrc/jdk.compiler \
+      $(LANGTOOLS_OUTPUTDIR)/gensrc/jdk.javadoc \
+      #
+else
+  SRC := $(LANGTOOLS_TOPDIR)/src/share/classes \
+      $(LANGTOOLS_OUTPUTDIR)/gensrc \
+      $(LANGTOOLS_TOPDIR)/make/tools \
+      #
+endif
 
 # Setup the rules to build the interim langtools jar, which is compiled by
 # the boot javac and can be run on the boot jdk. This will be used to compile
@@ -39,10 +55,9 @@ include CommonLangtools.gmk
 $(eval $(call SetupJavaCompilation,BUILD_INTERIM_LANGTOOLS, \
     SETUP := BOOT_JAVAC, \
     DISABLE_SJAVAC := true, \
-    SRC := $(LANGTOOLS_TOPDIR)/src/share/classes \
-        $(LANGTOOLS_OUTPUTDIR)/gensrc \
-        $(LANGTOOLS_TOPDIR)/make/tools, \
+    SRC := $(SRC), \
     EXCLUDES := com/sun/tools/javac/nio compileproperties anttasks crules, \
+    EXCLUDE_FILES := module-info.java, \
     COPY := $(RESOURCE_SUFFIXES), \
     BIN := $(LANGTOOLS_OUTPUTDIR)/interim_classes, \
     JAR := $(INTERIM_LANGTOOLS_JAR)))

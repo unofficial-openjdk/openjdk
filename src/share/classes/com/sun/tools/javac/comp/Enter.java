@@ -103,6 +103,8 @@ public class Enter extends JCTree.Visitor {
     Names names;
     JavaFileManager fileManager;
     PkgInfo pkginfoOpt;
+    Modules modules;
+    JCDiagnostic.Factory diags;
 
     private final Todo todo;
 
@@ -125,6 +127,8 @@ public class Enter extends JCTree.Visitor {
         annotate = Annotate.instance(context);
         lint = Lint.instance(context);
         names = Names.instance(context);
+        modules = Modules.instance(context);
+        diags = JCDiagnostic.Factory.instance(context);
 
         predefClassDef = make.ClassDef(
             make.Modifiers(PUBLIC),
@@ -237,6 +241,24 @@ public class Enter extends JCTree.Visitor {
             : env.info.scope;
     }
 
+    /** Create a fresh environment for modules.
+     *
+     *  @param tree     The module definition.
+     *  @param env      The environment current outside of the module definition.
+     */
+    public Env<AttrContext> moduleEnv(JCModuleDecl tree, Env<AttrContext> env) {
+        assert tree.sym != null;
+        Env<AttrContext> localEnv =
+            env.dup(tree, env.info.dup(new Scope(tree.sym)));
+        localEnv.enclClass = predefClassDef;
+        localEnv.outer = env;
+        localEnv.info.isSelfCall = false;
+        localEnv.info.lint = null; // leave this to be filled in by Attr,
+                                   // when annotations have been processed
+        return localEnv;
+    }
+
+
 /* ************************************************************************
  * Visitor methods for phase 1: class enter
  *************************************************************************/
@@ -282,6 +304,8 @@ public class Enter extends JCTree.Visitor {
 
     @Override
     public void visitTopLevel(JCCompilationUnit tree) {
+//        Assert.checkNonNull(tree.modle, tree.sourcefile.toString());
+
         JavaFileObject prev = log.useSource(tree.sourcefile);
         boolean addEnv = false;
         boolean isPkgInfo = tree.sourcefile.isNameCompatible("package-info",
@@ -396,6 +420,7 @@ public class Enter extends JCTree.Visitor {
         c.flags_field = chk.checkFlags(tree.pos(), tree.mods.flags, c, tree);
         c.sourcefile = env.toplevel.sourcefile;
         c.members_field = new Scope(c);
+        c.modle = env.toplevel.modle;
 
         ClassType ct = (ClassType)c.type;
         if (owner.kind != PCK && (c.flags_field & STATIC) == 0) {
@@ -423,6 +448,8 @@ public class Enter extends JCTree.Visitor {
 
         // Recursively enter all member classes.
         classEnter(tree.defs, localEnv);
+
+//        Assert.checkNonNull(c.modle, c.sourcefile.toString());
 
         result = c.type;
     }
@@ -456,6 +483,13 @@ public class Enter extends JCTree.Visitor {
         result = a;
     }
 
+    @Override
+    public void visitModuleDef(JCModuleDecl tree) {
+        Env<AttrContext> moduleEnv = moduleEnv(tree, env);
+        typeEnvs.put(tree.sym, moduleEnv);
+        todo.append(moduleEnv);
+    }
+
     /** Default class enter visitor method: do nothing.
      */
     @Override
@@ -476,6 +510,18 @@ public class Enter extends JCTree.Visitor {
      *  @param c          The class symbol to be processed.
      */
     public void complete(List<JCCompilationUnit> trees, ClassSymbol c) {
+        // Process module declarations.
+        // If module resolution fails, ignore trees, and if trying to
+        // complete a specific symbol, throw CompletionFailure.
+        // Note that if module resolution failed, we may not even
+        // have enough modules available to access java.lang, and
+        // so risk getting FatalError("no.java.lang") from MemberEnter.
+        if (!modules.enter(trees)) {
+            if (c != null)
+                throw new CompletionFailure(c, diags.fragment("cant.resolve.modules"));
+            return;
+        }
+
         annotate.enterStart();
         ListBuffer<ClassSymbol> prevUncompleted = uncompleted;
         if (memberEnter.completionEnabled) uncompleted = new ListBuffer<>();
