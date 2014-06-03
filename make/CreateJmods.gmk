@@ -1,0 +1,203 @@
+#
+# Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+#
+# This code is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License version 2 only, as
+# published by the Free Software Foundation.  Oracle designates this
+# particular file as subject to the "Classpath" exception as provided
+# by Oracle in the LICENSE file that accompanied this code.
+#
+# This code is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# version 2 for more details (a copy is included in the LICENSE file that
+# accompanied this code).
+#
+# You should have received a copy of the GNU General Public License version
+# 2 along with this work; if not, write to the Free Software Foundation,
+# Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+#
+# Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+# or visit www.oracle.com if you need additional information or have any
+# questions.
+#
+
+# Use a different default target than "default" and "all" so that we don't 
+# re-evaluate all the targets in the included makefiles.
+jmods:
+
+include $(SPEC)
+include JigsawSpecMod.gmk
+include MakeBase.gmk
+
+#
+# these defines the per-module libraries and conf files
+#
+include CompileNativeLibraries.gmk
+include CopyFiles.gmk
+include CompileLaunchers.gmk
+include CreatePolicyJars.gmk
+include HotspotImport.gmk
+
+include GenerateData.gmk
+
+################################################################################
+# Must generate jmods into jdk outputdir for now since jlink cannot find them
+# otherwise.
+
+# Find all files in the modules output dir. Filter out inner classes since they
+# mess up in make dependencies and aren't needed for correct dependency analysis
+# anyway.
+ALL_CLASSES := $(shell $(FIND) $(JDK_OUTPUTDIR)/modules ! -name '*$$*')
+
+# Param 1: Name of module
+define CreateJmod
+
+  $$(eval $$(call SetupCopyFiles,$1_COPY_NATIVE_LIB, \
+      SRC := $(JDK_OUTPUTDIR)/lib, \
+      DEST := $(JDK_OUTPUTDIR)/modules_tmp/$1/native, \
+      FILES := $$(filter $(JDK_OUTPUTDIR)/lib/%, $$($1_NATIVE))))
+
+  $$(eval $$(call SetupCopyFiles,$1_COPY_NATIVE_BIN, \
+      SRC := $(JDK_OUTPUTDIR)/bin, \
+      DEST := $(JDK_OUTPUTDIR)/modules_tmp/$1/native, \
+      FILES := $$(filter $(JDK_OUTPUTDIR)/bin/%, $$($1_NATIVE))))
+
+  $$(eval $$(call SetupCopyFiles,$1_COPY_CMDS, \
+      SRC := $(JDK_OUTPUTDIR)/bin, \
+      DEST := $(JDK_OUTPUTDIR)/modules_tmp/$1/bin, \
+      FILES := $$($1_CMDS)))
+
+  $$(eval $$(call SetupCopyFiles,$1_COPY_CONF, \
+      SRC := $(JDK_OUTPUTDIR)/lib, \
+      DEST := $(JDK_OUTPUTDIR)/modules_tmp/$1/conf, \
+      FILES := $$($1_CONF)))
+
+  ifneq ($$($1_COPY_NATIVE_LIB)$$($1_COPY_NATIVE_BIN), )
+    $1_JLINK_FLAGS += --libs $(JDK_OUTPUTDIR)/modules_tmp/$1/native
+  endif
+  ifneq ($$($1_COPY_CMDS), )
+    $1_JLINK_FLAGS += --cmds $(JDK_OUTPUTDIR)/modules_tmp/$1/bin
+  endif
+  ifneq ($$($1_COPY_CONF), )
+    $1_JLINK_FLAGS += --config $(JDK_OUTPUTDIR)/modules_tmp/$1/conf
+  endif
+  ifneq ($$(wildcard $(JDK_OUTPUTDIR)/modules/$1), )
+    $1_JLINK_FLAGS += --class-path $(JDK_OUTPUTDIR)/modules/$1
+    $1_DEPS += $(wildcard $(JDK_OUTPUTDIR)/modules/$1/_*) \
+        $(filter $(JDK_OUTPUTDIR)/modules/$1/%, $(ALL_CLASSES))
+  endif
+
+  # TODO: What about headers?
+  $(JDK_OUTPUTDIR)/jmods/$1.jmod: \
+      $$($1_COPY_NATIVE_LIB) $$($1_COPY_NATIVE_BIN) $$($1_COPY_CMDS) \
+      $$($1_COPY_CONF) $$($1_DEPS)
+		$(ECHO) Creating jmods/$1.jmod
+		$(MKDIR) -p $$(@D)
+		$(RM) $$@
+		$(JLINK) --format jmod --mid $1@9.0 \
+		    --output $$@ $$($1_JLINK_FLAGS) 
+
+  JMODS += $(JDK_OUTPUTDIR)/jmods/$1.jmod
+endef
+
+################################################################################
+
+java.base_NATIVE := $(BASE_LIBRARIES) $(MSVCR_TARGET) $(JVM_LIBRARIES) $(NPT_LIBRARIES)
+java.base_CMDS := $(BASE_LAUNCHERS)
+java.base_CONF := $(BASE_CONF_FILES) $(NET_CONF_FILES) $(GENDATA_TZDB) \
+    $(POLICY_JARS)
+
+java.desktop_NATIVE := $(DESKTOP_LIBRARIES) $(FREETYPE_TARGET_LIB)
+java.desktop_CMDS := $(DESKTOP_LAUNCHERS)
+java.desktop_CONF := $(DESKTOP_CONF_FILES) $(GENDATA_FONT_CONFIG)
+
+java.logging_NATIVE := $(LOGGING_LIBRARIES)
+java.logging_CONF := $(LOGGING_CONF_FILES)
+
+java.instrument_NATIVE := $(INSTRUMENT_LIBRARIES)
+
+java.management_NATIVE := $(MANAGEMENT_LIBRARIES)
+java.management_CONF := $(MANAGEMENT_CONF_FILES)
+
+java.prefs_NATIVE := $(PREFS_LIBRARIES)
+
+java.rmi_CMDS := $(RMI_LAUNCHERS)
+
+java.corba_CMDS := $(CORBA_LAUNCHERS)
+
+java.scripting_CMDS := $(SCRIPTING_LAUNCHERS)
+
+java.security.jgss_NATIVE := $(SECURITY_KERBEROS_LIBRARIES)
+java.security.jgss_CMDS := $(KERBEROS_LAUNCHERS)
+
+java.smartcardio_NATIVE := $(SECURITY_SMARTCARDIO_LIBRARIES)
+
+jdk.sctp_NATIVE := $(SCTP_LIBRARIES)
+
+jdk.crypto.ec_NATIVE := $(SECURITY_SUNEC_LIBRARIES)
+
+jdk.crypto.mscapi_NATIVE := $(SECURITY_MSCAPI_LIBRARIES)
+
+jdk.crypto.pkcs11_NATIVE := $(SECURITY_PKCS11_LIBRARIES)
+jdk.crypto.pkcs11_CONF := $(SECURITY_PKCS11_CONF_FILES)
+
+jdk.compiler_CMDS := $(COMPILER_LAUNCHERS)
+
+jdk.javadoc_CMDS := $(JAVADOC_LAUNCHERS)
+
+jdk.deploy.osx_NATIVE := $(DEPLOY_OSX_LIBRARIES)
+
+jdk.hotspot.agent_CMDS := $(HOTSPOT_SA_LAUNCHERS)
+jdk.hotspot.agent_NATIVE := $(JDI_SA_LIBRARIES)
+
+jdk.security.auth_NATIVE := $(SECURITY_JAAS_LIBRARIES)
+
+jdk.jdi_CMDS := $(JDI_LAUNCHERS)
+jdk.jdi_NATIVE := $(JDI_TRANSPORT_LIBRARIES)
+
+jdk.scripting.nashorn_CMDS := $(NASHORN_LAUNCHERS)
+
+jdk.jdwp.agent_NATIVE := $(JDWP_LIBRARIES)
+
+jdk.hprof.agent_NATIVE := $(HPROF_LIBRARIES) $(CRW_LIBRARIES)
+jdk.hprof.agent_CONF := $(HPROF_CONF_FILES)
+
+jdk.attach_NATIVE := $(ATTACH_LIBRARIES)
+
+jdk.jconsole_CMDS := $(JCONSOLE_LAUNCHERS)
+
+jdk.jvmstat_CMDS := $(JVMSTAT_LAUNCHERS)
+
+jdk.xml.bind_CMDS := $(XML_BIND_LAUNCHERS)
+
+jdk.xml.ws_CMDS := $(XML_WS_LAUNCHERS)
+
+jdk.runtime_CMDS := $(RUNTIME_LAUNCHERS)
+jdk.runtime_NATIVE := $(UNPACK_LIBRARIES) $(JSDT_LIBRARIES)
+
+jdk.dev_CMDS := $(DEV_LAUNCHERS)
+
+jdk.jcmd_CMDS := $(JCMD_LAUNCHERS)
+
+jdk.rmic_CMDS := $(RMIC_LAUNCHERS)
+
+ifndef OPENJDK
+  jdk.crypto.ucrypto_NATIVE := $(SECURITY_UCRYPTO_LIBRARIES)
+  jdk.crypto.ucrypto_CONF := $(SECURITY_UCRYPTO_CONF_FILES)
+
+  jdk.jfr_NATIVE := $(JFR_LIBRARIES)
+endif
+
+################################################################################
+
+ALL_MODULES := $(call FindAllModules)
+
+$(foreach m, $(ALL_MODULES), $(eval $(call CreateJmod,$m)))
+
+jmods: $(JMODS)
+	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f GenerateModules.gmk SHUFFLED=true postjmods)
+
+################################################################################
+
