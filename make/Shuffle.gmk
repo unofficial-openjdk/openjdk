@@ -44,8 +44,10 @@ else ifeq ($(SHUFFLE_MODE), hg)
   # Use this definition to do actual hg copies, very slow.
   $(info SHUFFLE_MODE hg copy files (takes a long time))
   define module-copy-file
-    $(ECHO) hg copy to $@
-    cd $(<D) && hg copy '$<' '$@'
+	if [ ! -f '$@' ]; then \
+	  $(ECHO) "hg copy to $@" ; \
+	  cd $(<D) && hg copy '$<' '$@' ; \
+	fi
   endef
   # hg copy does not support parallel execution.
   .NOTPARALLEL:
@@ -53,8 +55,8 @@ else ifeq ($(SHUFFLE_MODE), hgmv)
   # Use this definition to do actual hg copies, very slow.
   $(info SHUFFLE_MODE hg copy files (takes a long time))
   define module-copy-file
-    $(ECHO) hg move to $@
-    cd $(<D) && hg move '$<' '$@'
+	$(ECHO) hg move to $@
+	cd $(<D) && hg move '$<' '$@'
   endef
   # hg copy does not support parallel execution.
   .NOTPARALLEL:
@@ -1670,7 +1672,10 @@ $(eval $(call SetupShuffleFiles,COPY_JAVA_XML_DOCS, \
     SRC := $(JAXP_TOPDIR)/src, \
     DEST := $(JAXP_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.xml/share/classes, \
     FILES := $(shell $(FIND) \
-        $(JAXP_TOPDIR)/src -name *.html -o -name xpath.* -o -name HTMLEntities.res)))
+        $(JAXP_TOPDIR)/src/com \
+        $(JAXP_TOPDIR)/src/javax \
+        $(JAXP_TOPDIR)/src/org \
+        -name *.html -o -name xpath.* -o -name HTMLEntities.res)))
 
 # jaxws
 $(eval $(call SetupShuffleFiles,COPY_JAVAX_JAXWS_PACKAGE_INFO, \
@@ -1763,8 +1768,10 @@ $(eval $(call SetupShuffleFiles,COPY_JAVA_SQL_DOC_FILES, \
 $(eval $(call SetupShuffleFiles,COPY_NASHORN_DOC_FILES, \
     SRC := $(NASHORN_TOPDIR)/src, \
     DEST := $(NASHORN_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/jdk.scripting.nashorn/share/classes, \
-    FILES := $(shell $(FIND) $(NASHORN_TOPDIR)/src \
-        -name package-info.java -o -name package.html -o -name overview.html -o -name MANIFEST.MF)))
+    FILES := $(shell $(FIND) $(NASHORN_TOPDIR)/src/jdk \
+        -name package-info.java -o -name package.html) \
+        $(NASHORN_TOPDIR)/src/overview.html \
+        $(NASHORN_TOPDIR)/src/META-INF/MANIFEST.MF))
 
 ################################################################################
 # Shuffle demos
