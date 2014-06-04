@@ -307,6 +307,10 @@ AWT_ASSERT_APPKIT_THREAD;
         [self adjustGrowBoxWindow];
     } else growBoxWindow = nil;
 
+    if (IS(self.styleBits, IS_POPUP)) {
+        [self.nsWindow setCollectionBehavior:(1 << 8) /*NSWindowCollectionBehaviorFullScreenAuxiliary*/]; 
+    }
+
     return self;
 }
 
