@@ -1099,6 +1099,8 @@ else # OPENJDK_TARGET_OS not windows
       LIBJAWT_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/$(OPENJDK_TARGET_OS_API_DIR)/native/libjawt
       LIBJAWT_CFLAGS := \
         -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/$(OPENJDK_TARGET_OS_API_DIR)/native/common/sun/awt \
+        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/$(OPENJDK_TARGET_OS)/native/include \
+        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/$(OPENJDK_TARGET_OS_API_DIR)/native/include \
         $(addprefix -I, $(BUILD_LIBJAVA_SRC)) \
         #
     endif

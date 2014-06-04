@@ -1219,6 +1219,11 @@ $(eval $(call SetupShuffleFiles,COPY_LAUNCHERS_MACOSX, \
     DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.base/macosx/native/launcher, \
     FILES := $(JDK_TOPDIR)/src/macosx/bin/jexec.c))
 
+$(eval $(call SetupShuffleFiles,COPY_LAUNCHERS_MACOSX, \
+    SRC := $(JDK_TOPDIR)/src/macosx/lib, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.base/macosx/native/launcher, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/macosx/lib/*.plist)))
+
 # jspawnhelper
 $(eval $(call SetupShuffleFiles,COPY_JSPAWNHELPER_SOLARIS, \
     SRC := $(JDK_TOPDIR)/src/solaris/native/java/lang, \

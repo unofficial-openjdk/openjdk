@@ -27,8 +27,11 @@ ifeq ($(SHUFFLED), true)
   BUILD_LIBNIO_SRC := \
       $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/libnio/ch \
       $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/$(OPENJDK_TARGET_OS_API_DIR)/native/libnio \
-      $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/$(OPENJDK_TARGET_OS_API_DIR)/native/libnio/ch \
-      $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/$(OPENJDK_TARGET_OS_API_DIR)/native/libnio/fs \
+      $(sort $(wildcard \
+        $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/$(OPENJDK_TARGET_OS_API_DIR)/native/libnio/ch \
+        $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/$(OPENJDK_TARGET_OS_API_DIR)/native/libnio/fs \
+        $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/$(OPENJDK_TARGET_OS)/native/libnio/ch \
+        $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/$(OPENJDK_TARGET_OS)/native/libnio/fs)) \
       #
 
   BUILD_LIBNIO_CFLAGS := \
@@ -68,7 +71,9 @@ endif
 
 ifeq ($(OPENJDK_TARGET_OS), macosx)
   BUILD_LIBNIO_MAPFILE := $(JDK_TOPDIR)/make/mapfiles/libnio/mapfile-$(OPENJDK_TARGET_OS)
-  BUILD_LIBNIO_SRC += $(JDK_TOPDIR)/src/macosx/native/sun/nio/ch
+  ifneq ($(SHUFFLED), true)
+    BUILD_LIBNIO_SRC += $(JDK_TOPDIR)/src/macosx/native/sun/nio/ch
+  endif
   BUILD_LIBNIO_EXFILES += \
       GnomeFileTypeDetector.c \
       #
@@ -95,9 +100,11 @@ endif
 
 ifeq ($(OPENJDK_TARGET_OS), aix)
   BUILD_LIBNIO_MAPFILE:=$(JDK_TOPDIR)/make/mapfiles/libnio/mapfile-$(OPENJDK_TARGET_OS)
-  BUILD_LIBNIO_SRC += \
-      $(JDK_TOPDIR)/src/aix/native/sun/nio/ch \
-      $(JDK_TOPDIR)/src/aix/native/sun/nio/fs
+  ifneq ($(SHUFFLED), true)
+    BUILD_LIBNIO_SRC += \
+        $(JDK_TOPDIR)/src/aix/native/sun/nio/ch \
+        $(JDK_TOPDIR)/src/aix/native/sun/nio/fs
+  endif
   BUILD_LIBNIO_FILES += \
       AixPollPort.c \
       InheritedChannel.c \

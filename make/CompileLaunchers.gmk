@@ -97,6 +97,14 @@ ifeq ($(SHUFFLED), true)
       #
   GLOBAL_VERSION_INFO_RESOURCE := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/windows/native/common/version.rc
   JAVA_VERSION_INFO_RESOURCE := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/windows/native/launcher/java.rc
+  MACOSX_PLIST_DIR := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/macosx/native/launcher
+  # Until the shuffle is permanent, we can't add this in configure
+  CFLAGS_JDKEXE := $(filter-out %javavm/export, $(CFLAGS_JDKEXE))
+  CFLAGS_JDKEXE += -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/include \
+      -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/$(OPENJDK_TARGET_OS_API_DIR)/native/include
+  CXXFLAGS_JDKEXE := $(filter-out %javavm/export, $(CXXFLAGS_JDKEXE))
+  CXXFLAGS_JDKEXE += -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/include \
+      -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/$(OPENJDK_TARGET_OS_API_DIR)/native/include
   JAVA_MANIFEST := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/windows/native/launcher/java.manifest
 else
   LAUNCHER_SRC := $(JDK_TOPDIR)/src/share/bin
@@ -106,6 +114,7 @@ else
       #
   GLOBAL_VERSION_INFO_RESOURCE := $(JDK_TOPDIR)/src/windows/resource/version.rc
   JAVA_VERSION_INFO_RESOURCE := $(JDK_TOPDIR)/src/windows/resource/java.rc
+  MACOSX_PLIST_DIR := $(JDK_TOPDIR)/src/macosx/lib
   JAVA_MANIFEST := $(JDK_TOPDIR)/src/windows/resource/java.manifest
 endif
 
@@ -148,7 +157,7 @@ define SetupLauncher
 
     $1_LDFLAGS += -Wl,-all_load $(JDK_OUTPUTDIR)/objs/libjli_static.a \
         -framework Cocoa -framework Security -framework ApplicationServices \
-        -sectcreate __TEXT __info_plist $(JDK_TOPDIR)/src/macosx/lib/$$($1_PLIST_FILE)
+        -sectcreate __TEXT __info_plist $(MACOSX_PLIST_DIR)/$$($1_PLIST_FILE)
         $1_LDFLAGS_SUFFIX += -pthread
   endif
 
