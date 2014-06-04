@@ -524,7 +524,8 @@ ifndef OPENJDK
   ifeq ($(SHUFFLED), true)
     SHARED_FONTS_SRC_DIR := $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed$(JAVA_DESKTOP_SUBDIR)/share/$(CONF_SUBDIR)/fonts
     SHARED_FONTS_DST_DIR := $(JDK_OUTPUTDIR)/lib/fonts
-    FONTS_DIR_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed$(JAVA_DESKTOP_SUBDIR)/unix/$(CONF_SUBDIR)/fonts/fonts.dir
+    # Shouldn't this be moved to closed?
+    FONTS_DIR_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)$(JAVA_DESKTOP_SUBDIR)/unix/$(CONF_SUBDIR)/fonts/fonts.dir
   else
     SHARED_FONTS_SRC_DIR := $(JDK_TOPDIR)/src/closed/share/lib/fonts
     SHARED_FONTS_DST_DIR := $(JDK_OUTPUTDIR)/lib/fonts
@@ -561,7 +562,8 @@ ifndef OPENJDK
     ifeq ($(SHUFFLED), true)
       OBL_FONTS_SRC_DIR := $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed$(JAVA_DESKTOP_SUBDIR)/share/$(CONF_SUBDIR)/oblique-fonts
       OBL_FONTS_DST_DIR := $(JDK_OUTPUTDIR)/lib/oblique-fonts
-      OBL_FONTS_DIR_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed$(JAVA_DESKTOP_SUBDIR)/linux/$(CONF_SUBDIR)/oblique-fonts/fonts.dir
+      # Shouldn't this be moved to closed?
+      OBL_FONTS_DIR_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)$(JAVA_DESKTOP_SUBDIR)/linux/$(CONF_SUBDIR)/oblique-fonts/fonts.dir
     else
       OBL_FONTS_SRC_DIR := $(JDK_TOPDIR)/src/closed$(JAVA_DESKTOP_SUBDIR)/share/$(CONF_SUBDIR)/fonts/oblique
       OBL_FONTS_DST_DIR := $(JDK_OUTPUTDIR)/lib/oblique-fonts

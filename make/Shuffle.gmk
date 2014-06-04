@@ -49,6 +49,15 @@ else ifeq ($(SHUFFLE_MODE), hg)
   endef
   # hg copy does not support parallel execution.
   .NOTPARALLEL:
+else ifeq ($(SHUFFLE_MODE), hgmv)
+  # Use this definition to do actual hg copies, very slow.
+  $(info SHUFFLE_MODE hg copy files (takes a long time))
+  define module-copy-file
+    $(ECHO) hg move to $@
+    cd $(<D) && hg move '$<' '$@'
+  endef
+  # hg copy does not support parallel execution.
+  .NOTPARALLEL:
 else
   $(info SHUFFLE_MODE set to default just copy files)
   define module-copy-file
@@ -61,6 +70,19 @@ define SetupShuffleFiles
       MACRO := module-copy-file))
   SHUFFLE_SRC_TARGETS += $$($1)
 endef
+
+################################################################################
+
+# By setting SHUFFLE_SRC_ROOT, the shuffle can be applied to a different set of
+# sources.
+ifneq ($(SHUFFLE_SRC_ROOT), )
+  LANGTOOLS_TOPDIR := $(subst $(SRC_ROOT),$(SHUFFLE_SRC_ROOT),$(LANGTOOLS_TOPDIR))
+  CORBA_TOPDIR := $(subst $(SRC_ROOT),$(SHUFFLE_SRC_ROOT),$(CORBA_TOPDIR))
+  JAXP_TOPDIR := $(subst $(SRC_ROOT),$(SHUFFLE_SRC_ROOT),$(JAXP_TOPDIR))
+  JAXWS_TOPDIR := $(subst $(SRC_ROOT),$(SHUFFLE_SRC_ROOT),$(JAXWS_TOPDIR))
+  NASHORN_TOPDIR := $(subst $(SRC_ROOT),$(SHUFFLE_SRC_ROOT),$(NASHORN_TOPDIR))
+  JDK_TOPDIR := $(subst $(SRC_ROOT),$(SHUFFLE_SRC_ROOT),$(JDK_TOPDIR))
+endif
 
 ################################################################################
 
@@ -1339,6 +1361,20 @@ $(eval $(call SetupShuffleFiles,COPY_BIN_JAVA_RMI_CGI, \
     DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.rmi/unix/bin, \
     FILES := $(JDK_TOPDIR)/src/solaris/bin/java-rmi.cgi.sh))
 
+# The fonts.dir files are only used in closed builds. Should they be moved
+# to closed?
+$(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.desktop/unix/conf/fonts/fonts.dir: \
+    $(JDK_TOPDIR)/src/solaris/classes/sun/awt/motif/java.fonts.dir
+	$(module-copy-file)
+
+SHUFFLE_SRC_TARGETS += $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.desktop/unix/conf/fonts/fonts.dir
+
+$(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.desktop/linux/conf/oblique-fonts/fonts.dir: \
+    $(JDK_TOPDIR)/src/solaris/classes/sun/awt/motif/java.oblique-fonts.dir
+	$(module-copy-file)
+
+SHUFFLE_SRC_TARGETS += $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.desktop/linux/conf/oblique-fonts/fonts.dir
+
 ################################################################################
 # package-info.java files and other docs
 
@@ -1346,7 +1382,7 @@ $(eval $(call SetupShuffleFiles,COPY_JAVA_BASE_PACKAGE_INFO, \
     SRC := $(JDK_TOPDIR)/src/share/classes, \
     DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.base/share/classes, \
     FILES := \
-        $(JDK_TOPDIR)/src/share/classes/jdk/jigsaw/module/package-info.java \
+        $(wildcard $(JDK_TOPDIR)/src/share/classes/jdk/jigsaw/module/package-info.java) \
         $(JDK_TOPDIR)/src/share/classes/javax/security/auth/package-info.java \
         $(JDK_TOPDIR)/src/share/classes/javax/security/auth/spi/package-info.java \
         $(JDK_TOPDIR)/src/share/classes/javax/security/auth/x500/package-info.java \
@@ -1767,7 +1803,11 @@ $(eval $(call SetupShuffleFiles,COPY_SAMPLES_SOLARIS, \
 $(eval $(call SetupShuffleFiles,COPY_DEMOS_JPDA, \
     SRC := $(JDK_TOPDIR)/src/share/classes, \
     DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/demo/share/jpda, \
-    FILES := $(shell $(FIND) $(JDK_TOPDIR)/src/share/classes/com/sun/tools/example \
+    FILES := $(shell $(FIND) \
+        $(JDK_TOPDIR)/src/share/classes/com/sun/tools/example/trace \
+        $(JDK_TOPDIR)/src/share/classes/com/sun/tools/example/debug/bdi \
+        $(JDK_TOPDIR)/src/share/classes/com/sun/tools/example/debug/event \
+        $(JDK_TOPDIR)/src/share/classes/com/sun/tools/example/debug/gui \
         -type f)))
 
 ################################################################################

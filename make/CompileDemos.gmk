@@ -373,6 +373,7 @@ ifeq ($(SHUFFLED), true)
   $(eval $(call SetupArchive,JPDA_JAR, \
       $(JDK_OUTPUTDIR)/demo/jpda/com/sun/tools/example/README, \
       SRCS := $(JDK_TOPDIR)/$(SRC_SUBDIR)/demo/share/jpda \
+          $(JDK_TOPDIR)/$(SRC_SUBDIR)$(JDK_JDI_SUBDIR)/share/classes/com/sun/tools/example \
           $(JDK_OUTPUTDIR)/demo/jpda/com/sun/tools/example, \
       SUFFIXES := .java .html .jj README, \
       JAR := $(JDK_OUTPUTDIR)/demo/jpda/examples.jar))
