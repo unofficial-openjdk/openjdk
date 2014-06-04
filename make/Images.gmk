@@ -532,6 +532,7 @@ ifndef OPENJDK
   endif
   $(IMAGES_OUTPUTDIR)/_unzip/%.unzipped: $(DB_ZIP_DIR)/%
 	$(ECHO) Unzipping $(patsubst $(SRC_ROOT)/%,%,$<)
+	$(RM) -r $(JDK_IMAGE_DIR)/db
 	$(MKDIR) -p $(JDK_IMAGE_DIR)/db
 	cd $(JDK_IMAGE_DIR)/db && $(UNZIP) -q -o $< -x */index.html */KEYS */test/* *javadoc/* */docs/* */demo/* 2> /dev/null
 	cd $(JDK_IMAGE_DIR)/db && $(MV) db-derby-*-bin/* . && $(RM) -r db-derby-*-bin

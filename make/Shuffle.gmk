@@ -1808,6 +1808,7 @@ $(eval $(call SetupShuffleFiles,COPY_DEMOS_JPDA, \
         $(JDK_TOPDIR)/src/share/classes/com/sun/tools/example/debug/bdi \
         $(JDK_TOPDIR)/src/share/classes/com/sun/tools/example/debug/event \
         $(JDK_TOPDIR)/src/share/classes/com/sun/tools/example/debug/gui \
+        $(JDK_TOPDIR)/src/share/classes/com/sun/tools/example/README \
         -type f)))
 
 ################################################################################
