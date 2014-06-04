@@ -76,8 +76,9 @@ class ModuleLauncher {
         // run the resolver
         ModuleGraph graph = new SimpleResolver(systemLibrary).resolve(roots);
         if (verbose) {
-            Set<Module> sorted = new TreeSet<>(graph.modules());
-            sorted.forEach(m -> System.out.println(m.id().name()));
+            graph.modules().stream()
+                           .sorted()
+                           .forEach(m -> System.out.println(m.id()));
         }
 
         // assign linked modules to class loaders and define the selected
@@ -111,17 +112,22 @@ class ModuleLauncher {
                               .collect(Collectors.toSet());
 
             // compose a new module graph over the initial module graph
-            graph = new SimpleResolver(graph, ModulePath.fromPath(mp)).resolve(roots);
+            graph = new SimpleResolver(graph, modulePath).resolve(roots);
 
             // drop the modules from the initial module graph and define the
             // newly selected modules to the runtime.
-            graph = graph.minusInitialModuleGraph();
-            Runtime.defineModules(graph, m -> Launcher.getLauncher().getClassLoader());
+            ModuleGraph newGraph = graph.minusInitialModuleGraph();
+            if (verbose) {
+                newGraph.modules().stream()
+                                  .sorted()
+                                  .forEach(m -> System.out.println(m.id()));
+            }
+            Runtime.defineModules(newGraph, m -> Launcher.getLauncher().getClassLoader());
 
             // make the system class loader aware of the locations
-            graph.modules().stream()
-                           .map(graph.modulePath()::locationOf)
-                           .forEach(Launcher.getLauncher()::addAppClassLoaderURL);
+            newGraph.modules().stream()
+                              .map(newGraph.modulePath()::locationOf)
+                              .forEach(Launcher.getLauncher()::addAppClassLoaderURL);
         }
 
         // reflection checks enabled?
