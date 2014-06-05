@@ -60,6 +60,18 @@ else ifeq ($(SHUFFLE_MODE), hgmv)
   endef
   # hg copy does not support parallel execution.
   .NOTPARALLEL:
+else ifeq ($(SHUFFLE_MODE), print)
+  # Use this definition to do actual hg copies, very slow.
+  $(info SHUFFLE_MODE just print source and target files to separate files)
+  SHUFFLE_SRC_LIST_FILE := $(OUTPUT_ROOT)/shuffle-src.txt
+  SHUFFLE_TARGET_LIST_FILE := $(OUTPUT_ROOT)/shuffle-target.txt
+  $(shell $(RM) $(SHUFFLE_SRC_LIST_FILE) $(SHUFFLE_TARGET_LIST_FILE))
+  define module-copy-file
+    $(ECHO) '$<' >> $(SHUFFLE_SRC_LIST_FILE)
+    $(ECHO) '$@' >> $(SHUFFLE_TARGET_LIST_FILE)
+  endef
+  # Avoid jumbling the output.
+  .NOTPARALLEL:
 else
   $(info SHUFFLE_MODE set to default just copy files)
   define module-copy-file
@@ -917,13 +929,15 @@ $(eval $(call SetupShuffleFiles,COPY_LIBAWT_AIX, \
         $(JDK_TOPDIR)/src/aix/porting/porting_aix.c))
 
 # Also copy the porting files to hprof demo. NOTE that this doesn't work well with
-# SHUFFLE_MODE=hg 
-$(eval $(call SetupCopyFiles,COPY_HPROF_AIX, \
-    SRC := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.desktop/aix/native/libawt, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/demo/aix/jvmti/hprof, \
-    FILES := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.desktop/aix/native/libawt/porting_aix.h \
-        $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.desktop/aix/native/libawt/porting_aix.c))
-SHUFFLE_SRC_TARGETS += $(COPY_HPROF_AIX)
+# SHUFFLE_MODE=hg so skip it for that shuffle mode.
+ifeq ($(findstring $(SHUFFLE_MODE), hg hgmv print), )
+  $(eval $(call SetupCopyFiles,COPY_HPROF_AIX, \
+      SRC := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.desktop/aix/native/libawt, \
+      DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/demo/aix/jvmti/hprof, \
+      FILES := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.desktop/aix/native/libawt/porting_aix.h \
+          $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.desktop/aix/native/libawt/porting_aix.c))
+  SHUFFLE_SRC_TARGETS += $(COPY_HPROF_AIX)
+endif
 
 # common-awt
 $(eval $(call SetupShuffleFiles,COPY_COMMON_AWT_SHARE, \
