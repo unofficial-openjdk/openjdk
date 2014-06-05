@@ -81,6 +81,7 @@ needs_jdk = \
   runtime/NMT/ThreadedVirtualAllocTestType.java \
   runtime/NMT/VirtualAllocTestType.java \
   runtime/RedefineObject/TestRedefineObject.java \
+  runtime/Thread/TestThreadDumpMonitorContention.java \
   runtime/XCheckJniJsig/XCheckJSig.java \
   serviceability/attach/AttachWithStalePidFile.java \
   serviceability/jvmti/8036666/GetObjectLockCount.java \
@@ -139,7 +140,8 @@ needs_compact3 = \
   serviceability/jvmti/TestRedefineWithUnresolvedClass.java \
   compiler/tiered/NonTieredLevelsTest.java \
   compiler/tiered/TieredLevelsTest.java \
-  compiler/intrinsics/bmi/verifycode
+  compiler/intrinsics/bmi/verifycode \
+  runtime/whitebox/WBStackSize.java
 
 # Compact 2 adds full VM tests
 compact2 = \

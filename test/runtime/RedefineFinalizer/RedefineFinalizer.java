@@ -23,27 +23,42 @@
 
 /*
  * @test
- * @bug 8042885
- * @summary Make sure there is no error using hexadecimal format in vm options
- * @author Yumin Qi
+ * @bug 6904403
+ * @summary Don't assert if we redefine finalize method
  * @library /testlibrary
+ * @build RedefineClassHelper
+ * @run main RedefineClassHelper
+ * @run main/othervm -javaagent:redefineagent.jar RedefineFinalizer
  */
 
-import java.io.File;
-import com.oracle.java.testlibrary.*;
+/*
+ * Regression test for hitting:
+ *
+ * assert(f == k->has_finalizer()) failed: inconsistent has_finalizer
+ *
+ * when redefining finalizer method
+ */
+public class RedefineFinalizer {
 
-public class TestHexArguments {
-    public static void main(String args[]) throws Exception {
-      String[] javaArgs = {"-XX:SharedBaseAddress=0x1D000000", "-version"};
-      ProcessBuilder pb = ProcessTools.createJavaProcessBuilder(javaArgs);
+    public static String newB =
+                "class RedefineFinalizer$B {" +
+                "   protected void finalize() { " +
+                "       System.out.println(\"Finalizer called\");" +
+                "   }" +
+                "}";
 
-      OutputAnalyzer output = new OutputAnalyzer(pb.start());
-      output.shouldNotContain("Could not create the Java Virtual Machine");
-      output.shouldHaveExitValue(0);
+    public static void main(String[] args) throws Exception {
+        RedefineClassHelper.redefineClass(B.class, newB);
 
-      String[] javaArgs1 = {"-XX:SharedBaseAddress=1D000000", "-version"};
-      pb = ProcessTools.createJavaProcessBuilder(javaArgs1);
-      output = new OutputAnalyzer(pb.start());
-      output.shouldContain("Could not create the Java Virtual Machine");
-  }
+        A a = new A();
+    }
+
+    static class A extends B {
+    }
+
+    static class B {
+        protected void finalize() {
+            // should be empty
+        }
+    }
 }

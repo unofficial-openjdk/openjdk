@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -19,41 +19,36 @@
  * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  * or visit www.oracle.com if you need additional information or have any
  * questions.
- *
  */
 
-/**
+/*
  * @test
- * @bug 7005594
- * @summary Array overflow not handled correctly with loop optimzations
- *
- * @run shell Test7005594.sh
+ * @library /testlibrary
+ * @summary Proof of concept test for RedefineClassHelper
+ * @build RedefineClassHelper
+ * @run main RedefineClassHelper
+ * @run main/othervm -javaagent:redefineagent.jar RedefineClassTest
  */
 
-public class Test7005594 {
+import static com.oracle.java.testlibrary.Asserts.*;
+import com.oracle.java.testlibrary.*;
 
-      static int test(byte a[]){
-          int result=0;
-          for( int i=0; i<a.length; i+=((0x7fffffff>>1)+1) ){
-              result += a[i];
-          }
-          return result;
-      }
+/*
+ * Proof of concept test for the test utility class RedefineClassHelper
+ */
+public class RedefineClassTest {
 
-      public static void main(String [] args){
-          byte a[]=new byte[(0x7fffffff>>1)+2];
-          int result = 0;
-          try {
-              result = test(a);
-          } catch (ArrayIndexOutOfBoundsException e) {
-              e.printStackTrace(System.out);
-              System.out.println("Passed");
-              System.exit(95);
-          }
-          System.out.println(result);
-          System.out.println("FAILED");
-          System.exit(97);
-      }
+    public static String newClass = "class RedefineClassTest$A { public int Method() { return 2; } }";
+    public static void main(String[] args) throws Exception {
+        A a = new A();
+        assertTrue(a.Method() == 1);
+        RedefineClassHelper.redefineClass(A.class, newClass);
+        assertTrue(a.Method() == 2);
+    }
 
+    static class A {
+        public int Method() {
+            return 1;
+        }
+    }
 }
-
