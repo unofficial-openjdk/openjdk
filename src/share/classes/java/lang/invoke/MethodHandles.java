@@ -1391,7 +1391,7 @@ return mh1;
             refc.getClass();  // NPE
             Class<?> caller = lookupClassOrNull();
             if (caller != null && !VerifyAccess.isClassAccessible(refc, caller, allowedModes))
-                throw new MemberName(refc).makeAccessException("symbolic reference class is not public", this);
+                throw new MemberName(refc).makeAccessException("symbolic reference class is not accessible", this);
         }
 
         /** Check name for an illegal leading "&lt;" character. */
@@ -1508,7 +1508,8 @@ return mh1;
             if (Modifier.isFinal(mods) &&
                     MethodHandleNatives.refKindIsSetter(refKind))
                 throw m.makeAccessException("unexpected set of a final field", this);
-            if (Modifier.isPublic(mods) && Modifier.isPublic(refc.getModifiers()) && allowedModes != 0)
+            if (Modifier.isPublic(mods) && Modifier.isPublic(refc.getModifiers()) &&
+                    refc.getModule() == null && allowedModes != 0)
                 return;  // common case
             int requestedModes = fixmods(mods);  // adjust 0 => PACKAGE
             if ((requestedModes & allowedModes) != 0) {
@@ -1539,7 +1540,7 @@ return mh1;
             if (!classOK)
                 return "class is not public";
             if (Modifier.isPublic(mods))
-                return "access to public member failed";  // (how?)
+                return "access to public member failed";  // (how?, module not readable?)
             if (Modifier.isPrivate(mods))
                 return "member is private";
             if (Modifier.isProtected(mods))
