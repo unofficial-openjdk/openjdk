@@ -99,6 +99,7 @@ static int numOptions, maxOptions;
  */
 static void SetClassPath(const char *s);
 static void SetModulePath(const char *s);
+static void SetMainModule(const char *s);
 static void SetBootClassPath(const char *s);
 static char* ReadModuleList(const char* fn, const char* prefix, const char* suffix);
 static void ExpandToBootClassPath(const char* pathname);
@@ -830,6 +831,17 @@ SetModulePath(const char *s)
 }
 
 static void
+SetMainModule(const char *s)
+{
+    static const char format[] = "-Djava.module.main=%s";
+    char *def = JLI_MemAlloc(sizeof(format)
+                       - 2 /* strlen("%s") */
+                       + JLI_StrLen(s));
+    sprintf(def, format, s);
+    AddOption(def, NULL);
+}
+
+static void
 SetBootClassPath(const char *jrepath) {
     const char separator[] = { FILE_SEPARATOR, '\0' };
     char module_list[MAXPATHLEN];
@@ -1246,14 +1258,18 @@ ParseArguments(int *pargc, char ***pargv,
             mode = LM_CLASS;
             argv++; --argc;
         } else if (JLI_StrCmp(arg, "-modulepath") == 0 || JLI_StrCmp(arg, "-mp") == 0) {
-            ARG_CHECK (argc, ARG_ERROR1, arg);
+            ARG_CHECK (argc, ARG_ERROR4, arg);
             SetModulePath(*argv);
             argv++; --argc;
         } else if (JLI_StrCmp(arg, "-jar") == 0) {
             ARG_CHECK (argc, ARG_ERROR2, arg);
             mode = LM_JAR;
+        } else if (JLI_StrCmp(arg, "-m") == 0) {
+            ARG_CHECK (argc, ARG_ERROR5, arg);
+            SetMainModule(*argv);
+            mode = LM_MODULE;
         } else if (JLI_StrCmp(arg, "-mods") == 0 || JLI_StrCmp(arg, "-modules") == 0) {
-            ARG_CHECK (argc, ARG_ERROR4, arg);
+            ARG_CHECK (argc, ARG_ERROR6, arg);
             SetModulesProp(*argv);
             argv++; --argc;
         } else if (JLI_StrCmp(arg, "-help") == 0 ||

@@ -26,17 +26,17 @@
 package sun.launcher;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import jdk.jigsaw.module.Module;
 import jdk.jigsaw.module.ModuleGraph;
+import jdk.jigsaw.module.ModuleId;
 import jdk.jigsaw.module.ModulePath;
 import jdk.jigsaw.module.Runtime;
 import jdk.jigsaw.module.SimpleResolver;
-
 import sun.misc.Launcher;
 import sun.reflect.Reflection;
 
@@ -98,21 +98,39 @@ class ModuleLauncher {
                              Runtime.defineProtoModule(m, moduleToLoaders.get(m)));
         }
 
-        // if the launcher -modulepath option is specified
+        // launcher -modulepath option specified
         String mp = System.getProperty("java.module.path");
         if (mp != null) {
             ModulePath modulePath = ModulePath.fromPath(mp);
 
-            // all modules on the launcher module path as we don't know have a
-            // way to specify the initial module yet.
-            roots = modulePath.allModules()
-                              .stream()
-                              .filter(m -> m.permits().isEmpty())
-                              .map(m -> m.id().name())
-                              .collect(Collectors.toSet());
+            // if launcher -m also specified then the module name is the initial module
+            String mainModule = System.getProperty("java.module.main");
+            ModuleId mainMid = null;
+            if (mainModule != null) {
+                mainMid = ModuleId.parse(mainModule);
+                roots = new HashSet<>();
+                roots.add(mainMid.name());
+            } else {
+                // all modules on the launcher module path are the initial module(s)
+                // when -m not specified.
+                roots = modulePath.allModules()
+                                  .stream()
+                                  .filter(m -> m.permits().isEmpty())
+                                  .map(m -> m.id().name())
+                                  .collect(Collectors.toSet());
+            }
 
             // compose a new module graph over the initial module graph
             graph = new SimpleResolver(graph, modulePath).resolve(roots);
+
+            // if -m specified as name@version then we have to check the right
+            // version was selected
+            if (mainMid != null && mainMid.version() != null) {
+                Module selected = modulePath.findModule(mainMid.name());
+                if (!selected.id().equals(mainMid)) {
+                    throw new RuntimeException(selected.id() + " found first on module-path");
+                }
+            }
 
             // drop the modules from the initial module graph and define the
             // newly selected modules to the runtime.

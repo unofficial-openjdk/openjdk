@@ -233,6 +233,11 @@ class JlinkTask {
                 task.options.libs = splitPath(arg, File.pathSeparator);
             }
         },
+        new Option(true, "--main-class") {
+            void process(JlinkTask task, String opt, String arg) throws BadArgs {
+                task.options.mainClass = arg;
+            }
+        },
         new Option(true, "--mid") {
             void process(JlinkTask task, String opt, String arg) throws BadArgs {
                 task.options.moduleId = arg;
@@ -309,6 +314,7 @@ class JlinkTask {
         Path output;
         Map<String,String> launchers = new HashMap<>();
         String moduleId;
+        String mainClass;
     }
 
     int run(String[] args) {
@@ -653,13 +659,8 @@ class JlinkTask {
         private void writeFile(InputStream is, Path dstFile, Section section)
             throws IOException
         {
-            if (Files.exists(dstFile) && Section.MODULE_NAME.equals(section))
-                append(is, dstFile);
-            else {
-                if (Files.notExists(dstFile.getParent()))
-                    Files.createDirectories(dstFile.getParent());
-                Files.copy(is, dstFile);
-            }
+            Files.createDirectories(dstFile.getParent());
+            Files.copy(is, dstFile);
         }
 
         private void append(InputStream is, Path dstFile)
@@ -693,8 +694,9 @@ class JlinkTask {
         final List<Path> classes = options.classpath;
         final Path output = options.output;
         final String moduleId = options.moduleId;
+        final String mainClass = options.mainClass;
 
-        JmodFileWriter jmod = new JmodFileWriter(moduleId);
+        JmodFileWriter jmod = new JmodFileWriter(moduleId, mainClass);
         try (OutputStream os = Files.newOutputStream(output)) {
             jmod.write(os, classes, libs, configs, cmds);
         }
@@ -702,8 +704,10 @@ class JlinkTask {
 
     private class JmodFileWriter {
         final String mid;
-        JmodFileWriter(String moduleId) {
+        final String mainClass;
+        JmodFileWriter(String moduleId, String mainClass) {
             this.mid = moduleId;
+            this.mainClass = mainClass;
         }
 
         void write(OutputStream os, List<Path> classes,
@@ -711,8 +715,10 @@ class JlinkTask {
             throws IOException
         {
             try (ZipOutputStream zos = new ZipOutputStream(os)) {
-                // write extended module descriptor, module/id for now
+                // write extended module descriptor, module/id and module/main for now
                 writeZipEntry(zos, mid.getBytes("UTF-8"), "module", "id");
+                if (mainClass != null)
+                    writeZipEntry(zos, mainClass.getBytes("UTF-8"), "module", "main-class");
 
                 // classes / services
                 processClasses(zos, classes);
@@ -825,7 +831,6 @@ class JlinkTask {
         CLASSES("classes", "classes"),
         CONFIG("conf", "lib"),
         MODULE_SERVICES("module/services", "classes"),
-        MODULE_NAME("module", "lib/module"),
         UNKNOWN("unknown", "unknown");
 
         private static String nativeDir() {
@@ -862,8 +867,6 @@ class JlinkTask {
                 return Section.CONFIG;
             else if (Section.MODULE_SERVICES.matches(dir))
                 return Section.MODULE_SERVICES;
-            else if (Section.MODULE_NAME.matches(dir))
-                return Section.MODULE_NAME;
             else
                 return Section.UNKNOWN;
         }

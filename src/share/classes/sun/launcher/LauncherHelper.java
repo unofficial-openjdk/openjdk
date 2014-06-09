@@ -39,9 +39,11 @@ package sun.launcher;
  * The following are helper methods that the native launcher uses
  * to perform checks etc. using JNI, see src/share/bin/java.c
  */
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
@@ -49,6 +51,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
@@ -73,11 +76,18 @@ import java.util.TreeSet;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 import jdk.jigsaw.module.Module;
 import jdk.jigsaw.module.ModuleDependence;
 import jdk.jigsaw.module.ModuleExport;
+import jdk.jigsaw.module.ModuleGraph;
+import jdk.jigsaw.module.ModuleId;
+import jdk.jigsaw.module.ModulePath;
 import jdk.jigsaw.module.ServiceDependence;
+
+import sun.misc.JModCache;
 
 public enum LauncherHelper {
     INSTANCE;
@@ -450,12 +460,39 @@ public enum LauncherHelper {
         return null;
     }
 
+    /**
+     * Reads a module's main class from its extended module descriptor. For
+     * now then only jmod files are supported and the jmod must be on the
+     * module path.
+     */
+    static String getMainClassForModule(String query) throws IOException {
+        ModuleId mid = ModuleId.parse(query);
+        ModulePath mp = ModuleGraph.getSystemModuleGraph().modulePath();
+        Module m = mp.findModule(mid.name());
+        if (m == null) {
+            abort(null, "java.launcher.module.error1", query);
+        }
+        URL url = mp.locationOf(m);
+        if (!url.getProtocol().equalsIgnoreCase("jmod")) {
+            abort(null, "java.launcher.module.error2", query);
+        }
+        ZipFile zf = JModCache.get(url);
+        ZipEntry ze = zf.getEntry("module/main-class");
+        if (ze == null) {
+            abort(null, "java.launcher.module.error3", url);
+        }
+        try (InputStream in = zf.getInputStream(ze)) {
+            return new BufferedReader(new InputStreamReader(in, "UTF-8")).readLine();
+        }
+    }
+
     // From src/share/bin/java.c:
-    //   enum LaunchMode { LM_UNKNOWN = 0, LM_CLASS, LM_JAR };
+    //   enum LaunchMode { LM_UNKNOWN = 0, LM_CLASS, LM_JAR, LM_MODULE }
 
     private static final int LM_UNKNOWN = 0;
     private static final int LM_CLASS   = 1;
     private static final int LM_JAR     = 2;
+    private static final int LM_MODULE  = 3;
 
     static void abort(Throwable t, String msgKey, Object... args) {
         if (msgKey != null) {
@@ -509,6 +546,9 @@ public enum LauncherHelper {
                 break;
             case LM_JAR:
                 cn = getMainClassFromJar(what);
+                break;
+            case LM_MODULE:
+                cn = getMainClassForModule(what);
                 break;
             default:
                 // should never happen
