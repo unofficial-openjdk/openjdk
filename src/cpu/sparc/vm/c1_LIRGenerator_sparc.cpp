@@ -872,21 +872,19 @@ void LIRGenerator::do_Convert(Convert* x) {
 
 
 void LIRGenerator::do_NewInstance(NewInstance* x) {
+  print_if_not_loaded(x);
+
   // This instruction can be deoptimized in the slow path : use
   // O0 as result register.
   const LIR_Opr reg = result_register_for(x->type());
-#ifndef PRODUCT
-  if (PrintNotLoaded && !x->klass()->is_loaded()) {
-    tty->print_cr("   ###class not loaded at new bci %d", x->printable_bci());
-  }
-#endif
+
   CodeEmitInfo* info = state_for(x, x->state());
   LIR_Opr tmp1 = FrameMap::G1_oop_opr;
   LIR_Opr tmp2 = FrameMap::G3_oop_opr;
   LIR_Opr tmp3 = FrameMap::G4_oop_opr;
   LIR_Opr tmp4 = FrameMap::O1_oop_opr;
   LIR_Opr klass_reg = FrameMap::G5_metadata_opr;
-  new_instance(reg, x->klass(), tmp1, tmp2, tmp3, tmp4, klass_reg, info);
+  new_instance(reg, x->klass(), x->is_unresolved(), tmp1, tmp2, tmp3, tmp4, klass_reg, info);
   LIR_Opr result = rlock_result(x);
   __ move(reg, result);
 }
@@ -1221,10 +1219,8 @@ void LIRGenerator::do_UnsafeGetAndSetObject(UnsafeGetAndSetObject* x) {
   bool is_obj = (type == T_ARRAY || type == T_OBJECT);
   LIR_Opr offset = off.result();
 
-  if (data != dst) {
-    __ move(data, dst);
-    data = dst;
-  }
+  // Because we want a 2-arg form of xchg
+  __ move(data, dst);
 
   assert (!x->is_add() && (type == T_INT || (is_obj LP64_ONLY(&& UseCompressedOops))), "unexpected type");
   LIR_Address* addr;
@@ -1254,7 +1250,7 @@ void LIRGenerator::do_UnsafeGetAndSetObject(UnsafeGetAndSetObject* x) {
     pre_barrier(ptr, LIR_OprFact::illegalOpr /* pre_val */,
                 true /* do_load */, false /* patch */, NULL);
   }
-  __ xchg(LIR_OprFact::address(addr), data, dst, tmp);
+  __ xchg(LIR_OprFact::address(addr), dst, dst, tmp);
   if (is_obj) {
     // Seems to be a precise address
     post_barrier(ptr, data);

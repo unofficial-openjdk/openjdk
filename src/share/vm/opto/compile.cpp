@@ -95,7 +95,7 @@
 // Constant table base node singleton.
 MachConstantBaseNode* Compile::mach_constant_base_node() {
   if (_mach_constant_base_node == NULL) {
-    _mach_constant_base_node = new (C) MachConstantBaseNode();
+    _mach_constant_base_node = new MachConstantBaseNode();
     _mach_constant_base_node->add_req(C->root());
   }
   return _mach_constant_base_node;
@@ -672,6 +672,7 @@ Compile::Compile( ciEnv* ci_env, C2Compiler* compiler, ciMethod* target, int osr
                   _print_inlining_list(NULL),
                   _print_inlining_stream(NULL),
                   _print_inlining_idx(0),
+                  _print_inlining_output(NULL),
                   _preserve_jvm_state(0),
                   _interpreter_frame_size(0) {
   C = this;
@@ -747,14 +748,14 @@ Compile::Compile( ciEnv* ci_env, C2Compiler* compiler, ciMethod* target, int osr
       const TypeTuple *domain = StartOSRNode::osr_domain();
       const TypeTuple *range = TypeTuple::make_range(method()->signature());
       init_tf(TypeFunc::make(domain, range));
-      StartNode* s = new (this) StartOSRNode(root(), domain);
+      StartNode* s = new StartOSRNode(root(), domain);
       initial_gvn()->set_type_bottom(s);
       init_start(s);
       cg = CallGenerator::for_osr(method(), entry_bci());
     } else {
       // Normal case.
       init_tf(TypeFunc::make(method()));
-      StartNode* s = new (this) StartNode(root(), tf()->domain());
+      StartNode* s = new StartNode(root(), tf()->domain());
       initial_gvn()->set_type_bottom(s);
       init_start(s);
       if (method()->intrinsic_id() == vmIntrinsics::_Reference_get && UseG1GC) {
@@ -978,6 +979,7 @@ Compile::Compile( ciEnv* ci_env,
     _print_inlining_list(NULL),
     _print_inlining_stream(NULL),
     _print_inlining_idx(0),
+    _print_inlining_output(NULL),
     _preserve_jvm_state(0),
     _allowed_reasons(0),
     _interpreter_frame_size(0) {
@@ -1059,9 +1061,9 @@ void Compile::Init(int aliaslevel) {
   // Globally visible Nodes
   // First set TOP to NULL to give safe behavior during creation of RootNode
   set_cached_top_node(NULL);
-  set_root(new (this) RootNode());
+  set_root(new RootNode());
   // Now that you have a Root to point to, create the real TOP
-  set_cached_top_node( new (this) ConNode(Type::TOP) );
+  set_cached_top_node( new ConNode(Type::TOP) );
   set_recent_alloc(NULL, NULL);
 
   // Create Debug Information Recorder to record scopes, oopmaps, etc.
@@ -2207,7 +2209,7 @@ void Compile::Optimize() {
 
  } // (End scope of igvn; run destructor if necessary for asserts.)
 
-  dump_inlining();
+  process_print_inlining();
   // A method with only infinite loops has no edges entering loops from root
   {
     NOT_PRODUCT( TracePhase t2("graphReshape", &_t_graphReshaping, TimeCompiler); )
@@ -2755,9 +2757,9 @@ void Compile::final_graph_reshaping_impl( Node *n, Final_Reshape_Counts &frc) {
           // Decode a narrow oop to match address
           // [R12 + narrow_oop_reg<<3 + offset]
           if (t->isa_oopptr()) {
-            nn = new (this) DecodeNNode(nn, t);
+            nn = new DecodeNNode(nn, t);
           } else {
-            nn = new (this) DecodeNKlassNode(nn, t);
+            nn = new DecodeNKlassNode(nn, t);
           }
           n->set_req(AddPNode::Base, nn);
           n->set_req(AddPNode::Address, nn);
@@ -2878,7 +2880,7 @@ void Compile::final_graph_reshaping_impl( Node *n, Final_Reshape_Counts &frc) {
         }
       }
       if (new_in2 != NULL) {
-        Node* cmpN = new (this) CmpNNode(in1->in(1), new_in2);
+        Node* cmpN = new CmpNNode(in1->in(1), new_in2);
         n->subsume_by(cmpN, this);
         if (in1->outcnt() == 0) {
           in1->disconnect_inputs(NULL, this);
@@ -2977,8 +2979,8 @@ void Compile::final_graph_reshaping_impl( Node *n, Final_Reshape_Counts &frc) {
           n->subsume_by(divmod->mod_proj(), this);
         } else {
           // replace a%b with a-((a/b)*b)
-          Node* mult = new (this) MulINode(d, d->in(2));
-          Node* sub  = new (this) SubINode(d->in(1), mult);
+          Node* mult = new MulINode(d, d->in(2));
+          Node* sub  = new SubINode(d->in(1), mult);
           n->subsume_by(sub, this);
         }
       }
@@ -2997,8 +2999,8 @@ void Compile::final_graph_reshaping_impl( Node *n, Final_Reshape_Counts &frc) {
           n->subsume_by(divmod->mod_proj(), this);
         } else {
           // replace a%b with a-((a/b)*b)
-          Node* mult = new (this) MulLNode(d, d->in(2));
-          Node* sub  = new (this) SubLNode(d->in(1), mult);
+          Node* mult = new MulLNode(d, d->in(2));
+          Node* sub  = new SubLNode(d->in(1), mult);
           n->subsume_by(sub, this);
         }
       }
@@ -3047,7 +3049,7 @@ void Compile::final_graph_reshaping_impl( Node *n, Final_Reshape_Counts &frc) {
         }
       } else {
         if (t == NULL || t->_lo < 0 || t->_hi > (int)mask) {
-          Node* shift = new (this) AndINode(in2, ConNode::make(this, TypeInt::make(mask)));
+          Node* shift = new AndINode(in2, ConNode::make(this, TypeInt::make(mask)));
           n->set_req(2, shift);
         }
       }
@@ -3868,7 +3870,7 @@ void Compile::print_inlining_assert_ready() {
   assert(!_print_inlining || _print_inlining_stream->size() == 0, "loosing data");
 }
 
-void Compile::dump_inlining() {
+void Compile::process_print_inlining() {
   bool do_print_inlining = print_inlining() || print_intrinsics();
   if (do_print_inlining || log() != NULL) {
     // Print inlining message for candidates that we couldn't inline
@@ -3885,9 +3887,21 @@ void Compile::dump_inlining() {
     }
   }
   if (do_print_inlining) {
+    ResourceMark rm;
+    stringStream ss;
     for (int i = 0; i < _print_inlining_list->length(); i++) {
-      tty->print("%s", _print_inlining_list->adr_at(i)->ss()->as_string());
+      ss.print("%s", _print_inlining_list->adr_at(i)->ss()->as_string());
     }
+    size_t end = ss.size();
+    _print_inlining_output = NEW_ARENA_ARRAY(comp_arena(), char, end+1);
+    strncpy(_print_inlining_output, ss.base(), end+1);
+    _print_inlining_output[end] = 0;
+  }
+}
+
+void Compile::dump_print_inlining() {
+  if (_print_inlining_output != NULL) {
+    tty->print_raw(_print_inlining_output);
   }
 }
 
