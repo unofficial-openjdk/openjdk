@@ -35,7 +35,7 @@ import jdk.jigsaw.module.Module;
 import jdk.jigsaw.module.ModuleGraph;
 import jdk.jigsaw.module.ModuleId;
 import jdk.jigsaw.module.ModulePath;
-import jdk.jigsaw.module.Runtime;
+import jdk.jigsaw.module.ModuleRuntime;
 import jdk.jigsaw.module.SimpleResolver;
 import sun.misc.Launcher;
 import sun.reflect.Reflection;
@@ -84,7 +84,7 @@ class ModuleLauncher {
         // assign linked modules to class loaders and define the selected
         // modules to the runtime.
         Map<Module, ClassLoader> moduleToLoaders = loaderMap(systemLibrary);
-        Runtime.defineModules(graph, moduleToLoaders::get);
+        ModuleRuntime.defineModules(graph, moduleToLoaders::get);
 
         // if -mods is specified then we have to hide the linked modules
         // that are not selected. For now we just define the modules without
@@ -95,7 +95,7 @@ class ModuleLauncher {
                          .stream()
                          .filter(m -> !selected.contains(m))
                          .forEach(m ->
-                             Runtime.defineProtoModule(m, moduleToLoaders.get(m)));
+                             ModuleRuntime.defineProtoModule(m, moduleToLoaders.get(m)));
         }
 
         // launcher -modulepath option specified
@@ -134,18 +134,18 @@ class ModuleLauncher {
 
             // drop the modules from the initial module graph and define the
             // newly selected modules to the runtime.
-            ModuleGraph newGraph = graph.minusInitialModuleGraph();
+            ModuleGraph deltaGraph = graph.minusInitialModuleGraph();
             if (verbose) {
-                newGraph.modules().stream()
-                                  .sorted()
-                                  .forEach(m -> System.out.println(m.id()));
+                deltaGraph.modules().stream()
+                                    .sorted()
+                                    .forEach(m -> System.out.println(m.id()));
             }
-            Runtime.defineModules(newGraph, m -> Launcher.getLauncher().getClassLoader());
+            ModuleRuntime.defineModules(graph, m -> Launcher.getLauncher().getClassLoader());
 
             // make the system class loader aware of the locations
-            newGraph.modules().stream()
-                              .map(newGraph.modulePath()::locationOf)
-                              .forEach(Launcher.getLauncher()::addAppClassLoaderURL);
+            deltaGraph.modules().stream()
+                                .map(deltaGraph.modulePath()::locationOf)
+                                .forEach(Launcher.getLauncher()::addAppClassLoaderURL);
         }
 
         // reflection checks enabled?

@@ -111,6 +111,13 @@ public final class ModuleGraph {
     }
 
     /**
+     * Returns {@code true} if the module graph does not contain any modules.
+     */
+    public boolean isEmpty() {
+        return modules.size() == 0;
+    }
+
+    /**
      * Returns a module graph that is this module graph minus the modules
      * from the initial module graph.
      */
