@@ -51,6 +51,9 @@ public final class ModuleGraph {
     // selected modules
     private final Set<Module> modules;
 
+    // map of selected module name -> module
+    private final Map<String, Module> nameToModule;
+
     ModuleGraph(Map<Module, Set<Module>> graph,
                 ModulePath modulePath,
                 ModuleGraph initialGraph)
@@ -59,6 +62,10 @@ public final class ModuleGraph {
         this.modulePath = modulePath;
         this.initialGraph = initialGraph;
         this.modules = Collections.unmodifiableSet(graph.keySet());
+
+        Map<String, Module> map = new HashMap<>();
+        modules.forEach(m -> map.put(m.id().name(), m));
+        this.nameToModule = map;
     }
 
     /**
@@ -75,6 +82,14 @@ public final class ModuleGraph {
      */
     public Set<Module> modules() {
         return modules;
+    }
+
+    /**
+     * Finds a module, by name, in this module graph. Returns {@code null}
+     * if the module is not found.
+     */
+    public Module findModule(String name) {
+        return nameToModule.get(name);
     }
 
     /**

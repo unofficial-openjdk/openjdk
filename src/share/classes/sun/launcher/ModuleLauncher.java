@@ -37,6 +37,7 @@ import jdk.jigsaw.module.ModuleId;
 import jdk.jigsaw.module.ModulePath;
 import jdk.jigsaw.module.ModuleRuntime;
 import jdk.jigsaw.module.SimpleResolver;
+
 import sun.misc.Launcher;
 import sun.reflect.Reflection;
 
@@ -59,9 +60,8 @@ class ModuleLauncher {
     static void init(Module[] linkedModules, Set<String> mods, boolean verbose) {
         ModulePath systemLibrary = ModulePath.installed(linkedModules);
 
-        // If -mods is not specified then add all modules to the root set.
-        // This is temporary until we know whether the main class is in a named
-        // or unnamed module.
+        // If -mods is not specified then add all linked in modules without
+        // permits to the root set
         Set<String> roots;
         if (mods.isEmpty()) {
             roots = systemLibrary.allModules()
@@ -132,19 +132,21 @@ class ModuleLauncher {
                 }
             }
 
-            // drop the modules from the initial module graph and define the
-            // newly selected modules to the runtime.
+            // -verbose:mods to trace the selection of the modules on the
+            // launcher module path
             ModuleGraph deltaGraph = graph.minusInitialModuleGraph();
             if (verbose) {
                 deltaGraph.modules().stream()
                                     .sorted()
                                     .forEach(m -> System.out.println(m.id()));
             }
+
+            // define the newly selected modules to the runtime
             ModuleRuntime.defineModules(graph, m -> Launcher.getLauncher().getClassLoader());
 
             // make the system class loader aware of the locations
             deltaGraph.modules().stream()
-                                .map(deltaGraph.modulePath()::locationOf)
+                                .map(modulePath::locationOf)
                                 .forEach(Launcher.getLauncher()::addAppClassLoaderURL);
         }
 

@@ -40,7 +40,6 @@ import jdk.jigsaw.module.ModuleDependence.Modifier;
  * A simple resolver that constructs a module graph from an initial, possibly
  * empty module graph, a module path, and a set of module names.
  */
-
 public final class SimpleResolver {
 
     // the initial (possibly empty module graph)
@@ -51,12 +50,11 @@ public final class SimpleResolver {
 
     /**
      * Creates a {@code SimpleResolver} to construct module graphs from an
-     * initial module graph. Modules are located on the given module path and if
-     * not found, on the module path used to create the initial module graph.
+     * initial module graph. Modules are located on the given module path.
      */
     public SimpleResolver(ModuleGraph initialGraph, ModulePath modulePath) {
-        this.initialGraph = initialGraph;
-        this.modulePath = modulePath.join(initialGraph.modulePath());
+        this.initialGraph = Objects.requireNonNull(initialGraph);
+        this.modulePath = Objects.requireNonNull(modulePath);
     }
 
     /**
@@ -94,11 +92,17 @@ public final class SimpleResolver {
             // process dependencies
             for (ModuleDependence d: m.moduleDependences()) {
                 String dn = d.query().name();
+
+                // find module on module path
                 Module other = modulePath.findModule(dn);
-                if (other == null) {
-                    fail("%s requires unknown module %s",
-                         m.id().name(), dn);
-                }
+
+                // if not found then check initial module graph
+                if (other == null)
+                    other = initialGraph.findModule(dn);
+
+                if (other == null)
+                    fail("%s requires unknown module %s", m.id().name(), dn);
+
                 if (!selected.contains(other))
                     stack.offer(other);
             }
@@ -139,9 +143,12 @@ public final class SimpleResolver {
      * ###TBD Need to write up a detailed description of this algorithm.
      */
     private Map<Module, Set<Module>> makeGraph(Set<Module> modules) {
+        // name -> Module lookup
+        Map<String, Module> nameToModule = new HashMap<>();
+        modules.forEach(m -> nameToModule.put(m.id().name(), m));
 
         // the "requires" graph starts as a module dependence graph and
-        // is iteratively updated to be the readbility graph
+        // is iteratively updated to be the readability graph
         Map<Module, Set<Module>> g1 = new HashMap<>();
 
         // the "requires public" graph, contains requires public edges only
@@ -176,7 +183,7 @@ public final class SimpleResolver {
                 g2.put(m, new HashSet<>());
                 for (ModuleDependence d: m.moduleDependences()) {
                     String dn = d.query().name();
-                    Module other = modulePath.findModule(dn);
+                    Module other = nameToModule.get(dn);
                     if (other == null)
                         throw new InternalError();
 
@@ -200,10 +207,9 @@ public final class SimpleResolver {
                 Module m1 = entry.getKey();
                 Set<Module> m1_requires = entry.getValue();
                 for (Module m2: m1_requires) {
-                    Set<Module> m2_requires = g1.get(m2);
                     Set<Module> m2_requires_public = g2.get(m2);
                     for (Module m3: m2_requires_public) {
-                        if (!m2_requires.contains(m3)) {
+                        if (!m1_requires.contains(m3)) {
                             changes.computeIfAbsent(m1, k -> new HashSet<>()).add(m3);
                             changed = true;
                         }
