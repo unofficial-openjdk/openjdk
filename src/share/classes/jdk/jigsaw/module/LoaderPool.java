@@ -74,7 +74,7 @@ public final class LoaderPool {
      * the newly selected modules in the module graph.
      */
     public LoaderPool(ModuleGraph g, ClassLoader parent) {
-        Set<Module> selected = g.minusInitialModuleGraph().modules();
+        Set<Module> selected = g.minusInitialModuleGraph();
         Map<String, Module> map = new HashMap<>();
 
         // maps exported packages to Module

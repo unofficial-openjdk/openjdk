@@ -132,8 +132,16 @@ public final class ModuleRuntime {
      */
     public static void defineModules(ModuleGraph g, LoaderFactory factory) {
         g.minusInitialModuleGraph()
-         .modules()
          .forEach(m -> defineModule(g, m, factory.getLoader(m)));
+    }
+
+    /**
+     * Defines the modules in the given module graph that are not in its initial
+     * module graph to the runtime. The modules are associated with the given
+     * {@code ClassLoader}.
+     */
+    public static void defineModules(ModuleGraph g, ClassLoader cl) {
+        defineModules(g, l -> cl);
     }
 
     /**
@@ -149,7 +157,7 @@ public final class ModuleRuntime {
                 return false;
 
             // the newly selected modules, not present in the initial module graph
-            Set<Module> selected = g.minusInitialModuleGraph().modules();
+            Set<Module> selected = g.minusInitialModuleGraph();
             if (!selected.contains(m)) {
                 throw new IllegalArgumentException(m.id() +
                     " not a newly selected module in this module graph");

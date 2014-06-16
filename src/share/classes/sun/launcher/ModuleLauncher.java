@@ -126,7 +126,7 @@ class ModuleLauncher {
             // if -m specified as name@version then we have to check the right
             // version was selected
             if (mainMid != null && mainMid.version() != null) {
-                Module selected = modulePath.findModule(mainMid.name());
+                Module selected = graph.findModule(mainMid.name());
                 if (!selected.id().equals(mainMid)) {
                     throw new RuntimeException(selected.id() + " found first on module-path");
                 }
@@ -134,20 +134,21 @@ class ModuleLauncher {
 
             // -verbose:mods to trace the selection of the modules on the
             // launcher module path
-            ModuleGraph deltaGraph = graph.minusInitialModuleGraph();
             if (verbose) {
-                deltaGraph.modules().stream()
-                                    .sorted()
-                                    .forEach(m -> System.out.println(m.id()));
+                graph.minusInitialModuleGraph()
+                     .stream()
+                     .sorted()
+                     .forEach(m -> System.out.println(m.id()));
             }
 
             // define the newly selected modules to the runtime
             ModuleRuntime.defineModules(graph, m -> Launcher.getLauncher().getClassLoader());
 
             // make the system class loader aware of the locations
-            deltaGraph.modules().stream()
-                                .map(modulePath::locationOf)
-                                .forEach(Launcher.getLauncher()::addAppClassLoaderURL);
+            graph.minusInitialModuleGraph()
+                 .stream()
+                 .map(modulePath::locationOf)
+                 .forEach(Launcher.getLauncher()::addAppClassLoaderURL);
         }
 
         // reflection checks enabled?

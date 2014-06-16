@@ -29,6 +29,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Represents a module graph, typically the result of resolution.
@@ -51,7 +53,7 @@ public final class ModuleGraph {
     // selected modules
     private final Set<Module> modules;
 
-    // map of selected module name -> module
+    // map of most recently selected module name -> module
     private final Map<String, Module> nameToModule;
 
     ModuleGraph(Map<Module, Set<Module>> graph,
@@ -63,8 +65,17 @@ public final class ModuleGraph {
         this.initialGraph = initialGraph;
         this.modules = Collections.unmodifiableSet(graph.keySet());
 
+        // most recently selected modules
+        Stream<Module> newlySelected;
+        if (initialGraph == null) {
+            newlySelected = modules.stream();
+        } else {
+            newlySelected = graph.keySet()
+                                 .stream()
+                                 .filter(m -> !initialGraph.graph.containsKey(m));
+        }
         Map<String, Module> map = new HashMap<>();
-        modules.forEach(m -> map.put(m.id().name(), m));
+        newlySelected.forEach(m -> map.put(m.id().name(), m));
         this.nameToModule = map;
     }
 
@@ -85,11 +96,14 @@ public final class ModuleGraph {
     }
 
     /**
-     * Finds a module, by name, in this module graph. Returns {@code null}
+     * Finds a module by name in this module graph. Returns {@code null}
      * if the module is not found.
      */
     public Module findModule(String name) {
-        return nameToModule.get(name);
+        Module m = nameToModule.get(name);
+        if (m == null && initialGraph != null)
+            m = initialGraph.findModule(name);
+        return m;
     }
 
     /**
@@ -133,18 +147,18 @@ public final class ModuleGraph {
     }
 
     /**
-     * Returns a module graph that is this module graph minus the modules
-     * from the initial module graph.
+     * Returns the set of modules that are in this module graph that were not in
+     * the initial module graph.
      */
-    public ModuleGraph minusInitialModuleGraph() {
-        if (initialGraph == null)
-            return this;
-        Map<Module, Set<Module>> delta = new HashMap<>();
-        graph.entrySet()
-             .stream()
-             .filter(e -> !initialGraph.graph.containsKey(e.getKey()))
-             .forEach(e -> delta.put(e.getKey(), e.getValue()));
-        return new ModuleGraph(delta, modulePath, ModuleGraph.emptyModuleGraph());
+    public Set<Module> minusInitialModuleGraph() {
+        if (initialGraph == null) {
+            return modules;
+        } else {
+            return graph.keySet()
+                        .stream()
+                        .filter(m -> !initialGraph.graph.containsKey(m))
+                        .collect(Collectors.toSet());
+        }
     }
 
     // system module graph; concurrency TBD
