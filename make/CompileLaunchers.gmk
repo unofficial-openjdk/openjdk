@@ -37,7 +37,7 @@ include Setup.gmk
 ifeq ($(SHUFFLED), true)
   $(eval $(call FillCacheFind, $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/launcher))
 else
-  $(eval $(call FillCacheFind, $(JDK_TOPDIR)/src/share/bin))
+$(eval $(call FillCacheFind, $(JDK_TOPDIR)/src/share/bin))
 endif
 
 # Build tools
@@ -273,17 +273,17 @@ endif
 
 ifeq ($(SHUFFLED), true)
   JAVA_RC_FLAGS += -i $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/windows/native/common
-  ifdef OPENJDK
+ifdef OPENJDK
     JAVA_RC_FLAGS += -i "$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/windows/native/launcher/icons"
   else
     JAVA_RC_FLAGS += -i "$(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/java.base/windows/native/launcher/icons"
   endif
 else
   ifdef OPENJDK
-    JAVA_RC_FLAGS += -i "$(JDK_TOPDIR)/src/windows/resource/icons"
-  else
-    JAVA_RC_FLAGS += -i "$(JDK_TOPDIR)/src/closed/windows/native/sun/windows"
-  endif
+  JAVA_RC_FLAGS += -i "$(JDK_TOPDIR)/src/windows/resource/icons"
+else
+  JAVA_RC_FLAGS += -i "$(JDK_TOPDIR)/src/closed/windows/native/sun/windows"
+endif
 endif
 
 # On windows, the debuginfo files get the same name as for java.dll. Build
@@ -516,9 +516,9 @@ ifeq ($(USE_EXTERNAL_LIBZ), true)
   UNPACKEXE_ZIPOBJS := -lz
 else
   ifeq ($(SHUFFLED), true)
-    UNPACKEXE_CFLAGS += -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/libzip/zlib-1.2.5
+    UNPACKEXE_CFLAGS += -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/libzip/zlib-1.2.8
   else
-    UNPACKEXE_CFLAGS += -I$(JDK_TOPDIR)/src/share/native/java/util/zip/zlib-1.2.5
+    UNPACKEXE_CFLAGS += -I$(JDK_TOPDIR)/src/share/native/java/util/zip/zlib-1.2.8
   endif
   UNPACKEXE_ZIPOBJS := $(JDK_OUTPUTDIR)/objs/libzip/zcrc32$(OBJ_SUFFIX) \
       $(JDK_OUTPUTDIR)/objs/libzip/deflate$(OBJ_SUFFIX) \
@@ -531,11 +531,6 @@ else
       $(JDK_OUTPUTDIR)/objs/libzip/inftrees$(OBJ_SUFFIX) \
       $(JDK_OUTPUTDIR)/objs/libzip/inffast$(OBJ_SUFFIX)
 
-endif
-
-ifeq ($(OPENJDK_TARGET_CPU_ARCH), sparc)
-  UNPACKEXE_CFLAGS += -xregs=no%appl
-  UNPACKEXE_LDFLAGS_solaris += -xmemalign=4s
 endif
 
 UNPACKEXE_LANG := C
@@ -658,14 +653,14 @@ ifeq ($(BUILD_JEXEC), 1)
     ifeq ($(SHUFFLED), true)
       BUILD_JEXEC_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/macosx/native/launcher
     else
-      BUILD_JEXEC_SRC := $(JDK_TOPDIR)/src/macosx/bin
+    BUILD_JEXEC_SRC := $(JDK_TOPDIR)/src/macosx/bin
     endif
   else
     ifeq ($(SHUFFLED), true)
       BUILD_JEXEC_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/unix/native/launcher
     else
-      BUILD_JEXEC_SRC := $(JDK_TOPDIR)/src/solaris/bin
-    endif
+    BUILD_JEXEC_SRC := $(JDK_TOPDIR)/src/solaris/bin
+  endif
   endif
 
   ifeq ($(OPENJDK_TARGET_OS), linux)
@@ -673,9 +668,9 @@ ifeq ($(BUILD_JEXEC), 1)
     ifeq ($(SHUFFLED), true)
       BUILD_JEXEC_INC += -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/libjli
     else
-      BUILD_JEXEC_INC += -I$(JDK_TOPDIR)/src/share/bin
-    endif
+    BUILD_JEXEC_INC += -I$(JDK_TOPDIR)/src/share/bin
   endif
+endif
 endif
 
 #
@@ -731,7 +726,7 @@ ifeq ($(OPENJDK_TARGET_OS), windows)
 else
   ifeq ($(SHUFFLED), true)
     JAVA_RMI_CGI_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.rmi/unix/bin/java-rmi.cgi.sh
-  else
+else
     JAVA_RMI_CGI_SRC := $(JDK_TOPDIR)/src/solaris/bin/java-rmi.cgi.sh
   endif
   $(JAVA_RMI_CGI): $(JAVA_RMI_CGI_SRC)

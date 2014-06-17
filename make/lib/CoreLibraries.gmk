@@ -249,13 +249,13 @@ endif
 BUILD_LIBZIP_EXCLUDES :=
 ifeq ($(USE_EXTERNAL_LIBZ), true)
   LIBZ := -lz
-  LIBZIP_EXCLUDES += zlib-1.2.5
+  LIBZIP_EXCLUDES += zlib-1.2.8
 else
   ifeq ($(SHUFFLED), true)
-    ZLIB_CPPFLAGS := -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/libzip/zlib-1.2.5
+    ZLIB_CPPFLAGS := -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/libzip/zlib-1.2.8
   else
-    ZLIB_CPPFLAGS := -I$(JDK_TOPDIR)/src/share/native/java/util/zip/zlib-1.2.5
-  endif
+    ZLIB_CPPFLAGS := -I$(JDK_TOPDIR)/src/share/native/java/util/zip/zlib-1.2.8
+endif
 endif
 
 BUILD_LIBZIP_REORDER :=
@@ -314,11 +314,11 @@ ifeq ($(SHUFFLED), true)
     LIBPREF_SRC_DIRS := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.prefs/$(OPENJDK_TARGET_OS_API_DIR)/native/libprefs
   endif
 else
-  ifeq ($(OPENJDK_TARGET_OS), macosx)
-    LIBPREF_SRC_DIRS := $(JDK_TOPDIR)/src/macosx/native/java/util/prefs
-  else
-    LIBPREF_SRC_DIRS := $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/java/util/prefs
-  endif
+ifeq ($(OPENJDK_TARGET_OS), macosx)
+  LIBPREF_SRC_DIRS := $(JDK_TOPDIR)/src/macosx/native/java/util/prefs
+else
+  LIBPREF_SRC_DIRS := $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/java/util/prefs
+endif
 endif
 
 $(eval $(call SetupNativeCompilation,BUILD_LIBPREFS, \
@@ -345,7 +345,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBPREFS, \
     DEBUG_SYMBOLS := $(DEBUG_ALL_BINARIES)))
 
 $(BUILD_LIBPREFS): $(BUILD_LIBJAVA)
-
+    
 PREFS_LIBRARIES += $(BUILD_LIBPREFS)
 
 ##########################################################################################
@@ -426,7 +426,7 @@ ifeq ($(OPENJDK_TARGET_OS), macosx)
     BUILD_LIBJLI_SRC_DIRS += $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/macosx/native/libjli
   else
     BUILD_LIBJLI_SRC_DIRS += $(JDK_TOPDIR)/src/macosx/bin
-    LIBJLI_CFLAGS += -I$(JDK_TOPDIR)/src/macosx/bin
+  LIBJLI_CFLAGS += -I$(JDK_TOPDIR)/src/macosx/bin
   endif
   BUILD_LIBJLI_FILES += java_md_common.c java_md_macosx.c
 
@@ -466,9 +466,9 @@ endif
 
 ifneq ($(USE_EXTERNAL_LIBZ), true)
   ifeq ($(SHUFFLED), true)
-    BUILD_LIBJLI_SRC_DIRS += $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/libzip/zlib-1.2.5
+    BUILD_LIBJLI_SRC_DIRS += $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/libzip/zlib-1.2.8
   else
-    BUILD_LIBJLI_SRC_DIRS += $(JDK_TOPDIR)/src/share/native/java/util/zip/zlib-1.2.5
+    BUILD_LIBJLI_SRC_DIRS += $(JDK_TOPDIR)/src/share/native/java/util/zip/zlib-1.2.8
   endif
   LIBJLI_CFLAGS += $(ZLIB_CPPFLAGS)
   BUILD_LIBJLI_FILES += \
