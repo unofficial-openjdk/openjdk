@@ -149,8 +149,8 @@ nice_exit () {
       wait
     fi
     if [ "${HGFOREST_DEBUG:-false}" != "true" ] ; then
-      rm -f -r ${tmp}
-    fi
+    rm -f -r ${tmp}
+  fi
   fi
 }
 
@@ -185,7 +185,17 @@ if [ "${command}" = "clone" -o "${command}" = "fclone" -o "${command}" = "tclone
     fi
   done
 
+  if [ "${command_args}" != "" ]; then
+    set ${command_args}
+    pull_extra_base="$1"
+    pull_extra_dir="$2"
+    if [ "${pull_extra_dir}" != "" ] ; then
+      pull_default_tail="${pull_extra_dir}"
+    fi
+  fi
+  if [ "${pull_default_tail}" = "" ]; then
   pull_default_tail=`echo ${pull_default} | sed -e 's@^.*://[^/]*/\(.*\)@\1@'`
+  fi
 
   if [ -n "${command_args}" ] ; then
     # if there is an "extra sources" path then reparent "extra" repos to that path
@@ -193,7 +203,7 @@ if [ "${command}" = "clone" -o "${command}" = "fclone" -o "${command}" = "tclone
       echo "ERROR: Need initial clone from non-local source" > ${status_output}
       exit 1
     fi
-    pull_extra="${command_args}/${pull_default_tail}"
+    pull_extra="${pull_extra_base}/${pull_default_tail}"
 
     # determine which extra subrepos need to be cloned.
     for i in ${subrepos_extra} ; do
@@ -304,7 +314,7 @@ else
     for j in ${repos_extra} ; do
       if [ "${i}" = "${j}" ] ; then
         # it's an "extra"
-        pull_base="${pull_extra}"
+          pull_base="${pull_extra}"
       fi
     done
 
@@ -355,18 +365,18 @@ else
       wait
     else
       if [ "${have_fifos}" = "true" ]; then
-        # check on count of running subprocesses and possibly wait for completion
+      # check on count of running subprocesses and possibly wait for completion
         if [ ${n} -ge ${at_a_time} ] ; then
-          # read will block until there are completed subprocesses
-          while read repo_done; do
-            n=`expr ${n} '-' 1`
-            if [ ${n} -lt ${at_a_time} ] ; then
-              # we should start more subprocesses
-              break;
-            fi
-          done <&3
-        fi
-      else
+        # read will block until there are completed subprocesses
+        while read repo_done; do
+          n=`expr ${n} '-' 1`
+          if [ ${n} -lt ${at_a_time} ] ; then
+            # we should start more subprocesses
+            break;
+          fi
+        done <&3
+      fi
+    else
         # Compare completions to starts
         completed="`(ls -a1 ${tmp}/*.pid.rc 2> /dev/null | wc -l) || echo 0`"
         while [ `expr ${n} '-' ${completed}` -ge ${at_a_time} ] ; do

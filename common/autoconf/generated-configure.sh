@@ -801,6 +801,7 @@ JAXWS_TOPDIR
 JAXP_TOPDIR
 CORBA_TOPDIR
 LANGTOOLS_TOPDIR
+BUILD_JDK
 JAVA_FLAGS_SMALL
 JAVA_FLAGS_BIG
 JAVA_FLAGS
@@ -3650,6 +3651,17 @@ ac_configure="$SHELL $ac_aux_dir/configure"  # Please don't use this var.
 #
 
 
+
+
+
+# BUILD_JDK: the location of the latest JDK that can run
+#   on the host system and supports the target class file version
+#   generated in this JDK build.  This variable should only be
+#   used after the launchers are built.
+#
+# By default, it is the JDK_OUTPUTDIR.  If the target architecture
+# is different than the host system doing the build (e.g. cross-compilation),
+# it defaults to the BOOT_JDK.
 
 
 
@@ -19692,8 +19704,6 @@ fi
 
   if test "x$with_cacerts_file" != x; then
     CACERTS_FILE=$with_cacerts_file
-  else
-    CACERTS_FILE=${SRC_ROOT}/jdk/src/share/lib/security/cacerts
   fi
 
 
@@ -26202,6 +26212,14 @@ $as_echo_n "checking flags for boot jdk java command for small workloads... " >&
 $as_echo "$boot_jdk_jvmargs_small" >&6; }
 
   JAVA_FLAGS_SMALL=$boot_jdk_jvmargs_small
+
+
+
+  if test "x$COMPILE_TYPE" = "xcross"; then
+    BUILD_JDK="$BOOT_JDK"
+  else
+    BUILD_JDK="\$(JDK_OUTPUTDIR)"
+  fi
 
 
 

@@ -402,3 +402,22 @@ AC_DEFUN_ONCE([BOOTJDK_SETUP_BOOT_JDK_ARGUMENTS],
   JAVA_FLAGS_SMALL=$boot_jdk_jvmargs_small
   AC_SUBST(JAVA_FLAGS_SMALL)
 ])
+
+# BUILD_JDK: the location of the latest JDK that can run
+#   on the host system and supports the target class file version
+#   generated in this JDK build.  This variable should only be
+#   used after the launchers are built.
+#
+# By default, it is the JDK_OUTPUTDIR.  If the target architecture
+# is different than the host system doing the build (e.g. cross-compilation),
+# it defaults to the BOOT_JDK.
+AC_DEFUN_ONCE([BOOTJDK_SETUP_BUILD_JDK],
+[
+  if test "x$COMPILE_TYPE" = "xcross"; then
+    BUILD_JDK="$BOOT_JDK"
+  else
+    BUILD_JDK="\$(JDK_OUTPUTDIR)"
+  fi
+  AC_SUBST(BUILD_JDK)
+])
+
