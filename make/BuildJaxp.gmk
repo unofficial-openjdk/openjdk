@@ -26,7 +26,7 @@
 # This must be the first rule
 default: all
 
--include $(SPEC)
+include $(SPEC)
 include MakeBase.gmk
 include JavaCompilation.gmk
 
