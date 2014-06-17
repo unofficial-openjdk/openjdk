@@ -131,6 +131,8 @@ ClassPathEntry* ClassLoader::_first_entry         = NULL;
 ClassPathEntry* ClassLoader::_last_entry          = NULL;
 PackageHashtable* ClassLoader::_package_hash_table = NULL;
 
+int ClassLoader::_next_loader_tag = 0;
+
 // helper routines
 bool string_starts_with(const char* str, const char* str_to_find) {
   size_t str_len = strlen(str);
@@ -643,6 +645,30 @@ void ClassLoader::load_zip_library() {
   CanonicalizeEntry = CAST_TO_FN_PTR(canonicalize_fn_t, os::dll_lookup(javalib_handle, "Canonicalize"));
   // This lookup only works on 1.3. Do not check for non-null here
 }
+
+// Returns the unique tag for the given loader, generating it if required
+int ClassLoader::tag_for(Handle loader) {
+  // null loader
+  if (loader.is_null())
+     return 0;
+
+  jint tag = java_lang_ClassLoader::loader_tag(loader());
+  if (tag != 0)
+    return tag;
+
+  {
+    MutexLocker ml(LoaderTag_lock);
+    tag = ++_next_loader_tag;
+  }
+
+  jint* tag_addr = java_lang_ClassLoader::loader_tag_addr(loader());
+  jint prev = Atomic::cmpxchg(tag, tag_addr, 0);
+  if (prev != 0)
+    tag = prev;
+
+  return tag;
+}
+
 
 // PackageInfo data exists in order to support the java.lang.Package
 // class.  A Package object provides information about a java package
