@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -63,6 +63,14 @@ public class Names {
     public final Name _default;
     public final Name _super;
     public final Name _this;
+    public final Name exports;
+    public final Name module;
+    public final Name permits;
+    public final Name provides;
+    public final Name requires;
+    public final Name to;
+    public final Name uses;
+    public final Name with;
 
     // field and method names
     public final Name _name;
@@ -134,6 +142,7 @@ public class Names {
     public final Name LocalVariableTable;
     public final Name LocalVariableTypeTable;
     public final Name MethodParameters;
+    public final Name Module;
     public final Name RuntimeInvisibleAnnotations;
     public final Name RuntimeInvisibleParameterAnnotations;
     public final Name RuntimeInvisibleTypeAnnotations;
@@ -170,6 +179,7 @@ public class Names {
     public final Name T;
     public final Name deprecated;
     public final Name ex;
+    public final Name module_info;
     public final Name package_info;
 
     //lambda-related
@@ -199,6 +209,14 @@ public class Names {
         _default = fromString("default");
         _super = fromString("super");
         _this = fromString("this");
+        exports = fromString("exports");
+        module = fromString("module");
+        permits = fromString("permits");
+        provides = fromString("provides");
+        requires = fromString("requires");
+        to = fromString("to");
+        uses = fromString("uses");
+        with = fromString("with");
 
         // field and method names
         _name = fromString("name");
@@ -270,6 +288,7 @@ public class Names {
         LocalVariableTable = fromString("LocalVariableTable");
         LocalVariableTypeTable = fromString("LocalVariableTypeTable");
         MethodParameters = fromString("MethodParameters");
+        Module = fromString("Module");
         RuntimeInvisibleAnnotations = fromString("RuntimeInvisibleAnnotations");
         RuntimeInvisibleParameterAnnotations = fromString("RuntimeInvisibleParameterAnnotations");
         RuntimeInvisibleTypeAnnotations = fromString("RuntimeInvisibleTypeAnnotations");
@@ -306,6 +325,7 @@ public class Names {
         T = fromString("T");
         deprecated = fromString("deprecated");
         ex = fromString("ex");
+        module_info = fromString("module-info");
         package_info = fromString("package-info");
 
         //lambda-related

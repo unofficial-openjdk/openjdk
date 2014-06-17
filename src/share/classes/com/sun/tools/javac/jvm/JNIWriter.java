@@ -677,5 +677,10 @@ public class JNIWriter {
         public R visitType(Type t, P p) {
             return defaultAction(t, p);
         }
+
+        @Override
+        public R visitModuleType(Type.ModuleType t, P p) {
+            return defaultAction(t, p);
+        }
     }
 }

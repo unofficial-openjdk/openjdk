@@ -2409,26 +2409,20 @@ public class Lower extends TreeTranslator {
 
     public void visitPackageDef(JCPackageDecl tree) {
         if (!needPackageInfoClass(tree))
-            return;
+                        return;
 
-        Name name = names.package_info;
         long flags = Flags.ABSTRACT | Flags.INTERFACE;
         if (target.isPackageInfoSynthetic())
             // package-info is marked SYNTHETIC in JDK 1.6 and later releases
             flags = flags | Flags.SYNTHETIC;
-        JCClassDecl packageAnnotationsClass
-            = make.ClassDef(make.Modifiers(flags, tree.getAnnotations()),
-                            name, List.<JCTypeParameter>nil(),
-                            null, List.<JCExpression>nil(), List.<JCTree>nil());
         ClassSymbol c = tree.packge.package_info;
-        c.flags_field |= flags;
         c.setAttributes(tree.packge);
+        c.modle = attrEnv.toplevel.modle;
+        c.flags_field |= flags;
         ClassType ctype = (ClassType) c.type;
         ctype.supertype_field = syms.objectType;
         ctype.interfaces_field = List.nil();
-        packageAnnotationsClass.sym = c;
-
-        translated.append(packageAnnotationsClass);
+        createInfoClass(tree.annotations, c);
     }
     // where
     private boolean needPackageInfoClass(JCPackageDecl pd) {
@@ -2447,6 +2441,23 @@ public class Lower extends TreeTranslator {
                 return false;
         }
         throw new AssertionError();
+    }
+
+    public void visitModuleDef(JCModuleDecl tree) {
+        ModuleSymbol msym = tree.sym;
+        ClassSymbol c = msym.module_info;
+        c.flags_field |= SYNTHETIC;
+        createInfoClass(List.<JCAnnotation>nil(), tree.sym.module_info);
+    }
+
+    private void createInfoClass(List<JCAnnotation> annots, ClassSymbol c) {
+        long flags = Flags.ABSTRACT | Flags.INTERFACE;
+        JCClassDecl infoClass =
+                make.ClassDef(make.Modifiers(flags, annots),
+                    c.name, List.<JCTypeParameter>nil(),
+                    null, List.<JCExpression>nil(), List.<JCTree>nil());
+        infoClass.sym = c;
+        translated.append(infoClass);
     }
 
     public void visitClassDef(JCClassDecl tree) {

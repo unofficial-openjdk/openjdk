@@ -25,39 +25,31 @@
 package com.sun.tools.jdeps;
 
 import com.sun.tools.classfile.Dependency.Location;
+import java.io.IOException;
 import java.nio.file.Path;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Represents the source of the class files.
  */
 public class Archive {
+    private final Map<Location, Set<Location>> deps = new ConcurrentHashMap<>();
     private final Path path;
-    private final String filename;
+    private final String name;
     private final ClassFileReader reader;
-    private final Map<Location, Set<Location>> deps = new HashMap<>();
 
-    public Archive(String name) {
-        this.path = null;
-        this.filename = name;
-        this.reader = null;
-    }
-
-    public Archive(Path p, ClassFileReader reader) {
-        this.path = p;
-        this.filename = path.getFileName().toString();
+    Archive(String name, ClassFileReader reader) {
+        this.name = name;
+        this.path = reader != null ? reader.path : null;
         this.reader = reader;
     }
-
-    public ClassFileReader reader() {
-        return reader;
-    }
-
-    public String getFileName() {
-        return filename;
+    Archive(Path p, ClassFileReader reader) {
+        this.path = p;
+        this.name = path.getFileName().toString();
+        this.reader = reader;
     }
 
     public void addClass(Location origin) {
@@ -81,6 +73,10 @@ public class Archive {
         return deps.keySet();
     }
 
+    public boolean isEmpty() {
+        return getClasses().isEmpty();
+    }
+
     public void visitDependences(Visitor v) {
         for (Map.Entry<Location,Set<Location>> e: deps.entrySet()) {
             for (Location target : e.getValue()) {
@@ -89,15 +85,27 @@ public class Archive {
         }
     }
 
+    public ClassFileReader reader() {
+        return reader;
+    }
+
+    public String getName() {
+        return name;
+    }
+
     public String getPathName() {
-        return path != null ? path.toString() : filename;
+        return path != null ? path.toString() : name;
     }
 
     public String toString() {
-        return filename;
+        return getPathName();
     }
 
     interface Visitor {
         void visit(Location origin, Location target);
+    }
+
+    public static Archive getInstance(Path p) throws IOException {
+        return new Archive(p, ClassFileReader.newInstance(p));
     }
 }

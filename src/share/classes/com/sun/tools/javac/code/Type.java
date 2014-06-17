@@ -1345,6 +1345,45 @@ public abstract class Type extends AnnoConstruct implements TypeMirror {
         }
     }
 
+    public static class ModuleType extends Type implements NoType {
+
+        ModuleType(TypeSymbol tsym) {
+            // Module types cannot be annotated
+            super(tsym, noAnnotations);
+        }
+
+        @Override
+        public ModuleType annotatedType(List<Attribute.TypeCompound> annos) {
+            throw new AssertionError("Cannot annotate a module type");
+        }
+
+        @Override
+        public TypeTag getTag() {
+            return MODULE;
+        }
+
+        @Override
+        public <R,S> R accept(Type.Visitor<R,S> v, S s) {
+            return v.visitModuleType(this, s);
+        }
+
+        @Override
+        public String toString() {
+            return tsym.getQualifiedName().toString();
+        }
+
+        @Override
+        public TypeKind getKind() {
+            throw new UnsupportedOperationException();
+//            return TypeKind.MODULE;
+        }
+
+        @Override
+        public <R, P> R accept(TypeVisitor<R, P> v, P p) {
+            return v.visitNoType(this, p);
+        }
+    }
+
     public static class TypeVar extends Type implements TypeVariable {
 
         /** The upper bound of this type variable; set from outside.
@@ -2084,6 +2123,7 @@ public abstract class Type extends AnnoConstruct implements TypeMirror {
         R visitArrayType(ArrayType t, S s);
         R visitMethodType(MethodType t, S s);
         R visitPackageType(PackageType t, S s);
+        R visitModuleType(ModuleType t, S s);
         R visitTypeVar(TypeVar t, S s);
         R visitCapturedType(CapturedType t, S s);
         R visitForAll(ForAll t, S s);

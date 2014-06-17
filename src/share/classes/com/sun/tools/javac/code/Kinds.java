@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -77,9 +77,13 @@ public class Kinds {
      */
     public final static int POLY = 1 << 5;
 
+    /** The kind of modules.
+     */
+    public final static int MDL = 1 << 6;
+
     /** The error kind, which includes all other kinds.
      */
-    public final static int ERR = (1 << 6) - 1;
+    public final static int ERR = (1 << 7) - 1;
 
     /** The set of all kinds.
      */
@@ -113,7 +117,8 @@ public class Kinds {
         CLASS("kindname.class"),
         STATIC_INIT("kindname.static.init"),
         INSTANCE_INIT("kindname.instance.init"),
-        PACKAGE("kindname.package");
+        PACKAGE("kindname.package"),
+        MODULE("kindname.module");
 
         private final String name;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,6 +37,7 @@ import javax.tools.JavaFileObject;
 
 import com.sun.tools.javac.code.*;
 import com.sun.tools.javac.code.Attribute.RetentionPolicy;
+import com.sun.tools.javac.code.Directive.*;
 import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.code.Type.*;
 import com.sun.tools.javac.code.Types.UniqueType;
@@ -982,6 +983,60 @@ public class ClassWriter extends ClassFile {
     }
 
 /**********************************************************************
+ * Writing module attributes
+ **********************************************************************/
+
+    /** Write the Module attribute if needed.
+     *  Returns the number of attributes written (0 or 1).
+     */
+    int writeModuleAttribute(ClassSymbol c) {
+        ModuleSymbol m = c.modle;
+
+        int alenIdx = writeAttr(names.Module);
+        List<RequiresDirective> requires = m.getRequires();
+        databuf.appendChar(requires.size());
+        for (RequiresDirective r: requires) {
+            databuf.appendChar(pool.put(r.moduleName));
+            databuf.appendChar(RequiresFlag.value(r.flags));
+        }
+
+        List<PermitsDirective> permits = m.getPermits();
+        databuf.appendChar(permits.size());
+        for (PermitsDirective p: permits) {
+            databuf.appendChar(pool.put(p.moduleName));
+        }
+
+        List<ExportsDirective> exports = m.getExports();
+        databuf.appendChar(exports.size());
+        for (ExportsDirective e: exports) {
+            databuf.appendChar(pool.put(names.fromUtf(externalize(e.sym.flatName()))));
+            if (e.moduleNames == null) {
+                databuf.appendChar(0);
+            } else {
+                databuf.appendChar(e.moduleNames.size());
+                for (Name n: e.moduleNames)
+                    databuf.appendChar(pool.put(n));
+            }
+        }
+
+        List<UsesDirective> uses = m.getUses();
+        databuf.appendChar(uses.size());
+        for (UsesDirective s: uses) {
+            databuf.appendChar(pool.put(s.service));
+        }
+
+        List<ProvidesDirective> services = m.getProvides();
+        databuf.appendChar(services.size());
+        for (ProvidesDirective s: services) {
+            databuf.appendChar(pool.put(s.service));
+            databuf.appendChar(pool.put(s.impl));
+        }
+
+        endAttr(alenIdx);
+        return 1;
+    }
+
+/**********************************************************************
  * Writing Objects
  **********************************************************************/
 
@@ -1608,9 +1663,10 @@ public class ClassWriter extends ClassFile {
     public JavaFileObject writeClass(ClassSymbol c)
         throws IOException, PoolOverflow, StringOverflow
     {
+        String name = (c.owner.kind == MDL ? c.name : c.flatname).toString();
         JavaFileObject outFile
             = fileManager.getJavaFileForOutput(CLASS_OUTPUT,
-                                               c.flatname.toString(),
+                                               name,
                                                JavaFileObject.Kind.CLASS,
                                                c.sourcefile);
         OutputStream out = outFile.openOutputStream();
@@ -1738,6 +1794,9 @@ public class ClassWriter extends ClassFile {
         acount += writeJavaAnnotations(c.getRawAttributes());
         acount += writeTypeAnnotations(c.getRawTypeAttributes(), false);
         acount += writeEnclosingMethodAttribute(c);
+        if (c.owner.kind == MDL) {
+            acount += writeModuleAttribute(c);
+        }
         acount += writeExtraClassAttributes(c);
 
         poolbuf.appendInt(JAVA_MAGIC);

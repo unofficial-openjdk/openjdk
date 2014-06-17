@@ -40,6 +40,7 @@ import javax.tools.JavaFileManager;
 
 import com.sun.tools.javac.comp.Annotate;
 import com.sun.tools.javac.code.*;
+import com.sun.tools.javac.code.Directive.*;
 import com.sun.tools.javac.code.Lint.LintCategory;
 import com.sun.tools.javac.code.Type.*;
 import com.sun.tools.javac.code.Symbol.*;
@@ -105,6 +106,10 @@ public class ClassReader {
     /** Switch: allow simplified varargs.
      */
     boolean allowSimplifiedVarargs;
+
+    /** Switch: allow modules.
+     */
+    boolean allowModules;
 
    /** Lint option: warn about classfile issues
      */
@@ -226,6 +231,7 @@ public class ClassReader {
         allowVarargs     = source.allowVarargs();
         allowAnnotations = source.allowAnnotations();
         allowSimplifiedVarargs = source.allowSimplifiedVarargs();
+        allowModules     = source.allowModules();
 
         saveParameterNames = options.isSet("save-parameter-names");
 
@@ -518,6 +524,17 @@ public class ClassReader {
                                currentClassFile.toString(),
                                "CONSTANT_NameAndType_info", i);
         return (NameAndType)obj;
+    }
+
+    /** Read requires_flags.
+     */
+    Set<RequiresFlag> readRequiresFlags(int flags) {
+        Set<RequiresFlag> set = EnumSet.noneOf(RequiresFlag.class);
+        for (RequiresFlag f: RequiresFlag.values()) {
+            if ((flags & f.value) != 0)
+                set.add(f);
+        }
+        return set;
     }
 
 /************************************************************************
@@ -1002,6 +1019,62 @@ public class ClassReader {
                         }
                     }
                     bp = newbp;
+                }
+            },
+
+            new AttributeReader(names.Module, V53, CLASS_ATTRIBUTE) {
+                @Override
+                protected boolean accepts(AttributeKind kind) {
+                    return super.accepts(kind) && allowModules;
+                }
+                protected void read(Symbol sym, int attrLen) {
+                    if (sym.kind == TYP && sym.owner.kind == MDL) {
+                        ModuleSymbol msym = (ModuleSymbol) sym.owner;
+                        ListBuffer<Directive> directives = new ListBuffer<>();
+                        int nrequires = nextChar();
+                        for (int i = 0; i < nrequires; i++) {
+                            Name name = readName(nextChar());
+                            Set<RequiresFlag> flags = readRequiresFlags(nextChar());
+                            RequiresDirective d = new RequiresDirective(name, flags);
+                            directives.add(d);
+                        }
+                        int npermits = nextChar();
+                        for (int i = 0; i < npermits; i++) {
+                            Name name = readName(nextChar());
+                            PermitsDirective d = new PermitsDirective(name);
+                            directives.add(d);
+                        }
+                        int nexports = nextChar();
+                        for (int i = 0; i < nexports; i++) {
+                            PackageSymbol p = syms.enterPackage(readName(nextChar()));
+                            int nto = nextChar();
+                            List<Name> to;
+                            if (nto == 0) {
+                                to = List.nil();
+                            } else {
+                                ListBuffer<Name> lb = new ListBuffer<>();
+                                for (int t = 0; t < nto; t++)
+                                    lb.append(readName(nextChar()));
+                                to = lb.toList();
+                            }
+                            ExportsDirective d = new ExportsDirective(p, to);
+                            directives.add(d);
+                        }
+                        int nuses = nextChar();
+                        for (int i = 0; i < nuses; i++) {
+                            ClassSymbol srvc = readClassSymbol(nextChar());
+                            UsesDirective d = new UsesDirective(srvc);
+                            directives.add(d);
+                        }
+                        int nprovides = nextChar();
+                        for (int i = 0; i < nprovides; i++) {
+                            ClassSymbol srvc = readClassSymbol(nextChar());
+                            ClassSymbol impl = readClassSymbol(nextChar());
+                            ProvidesDirective d = new ProvidesDirective(srvc, impl);
+                            directives.add(d);
+                        }
+                        msym.directives = directives.toList();
+                    }
                 }
             },
 
