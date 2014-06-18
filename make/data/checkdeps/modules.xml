@@ -186,6 +186,10 @@
       <to>jdk.scripting.nashorn</to>
     </export>
     <export>
+      <name>jdk.internal.org.objectweb.asm.signature</name>
+      <to>jdk.scripting.nashorn</to>
+    </export>
+    <export>
       <name>jdk.internal.org.objectweb.asm.tree</name>
       <to>jdk.jfr</to>
     </export>
@@ -198,11 +202,11 @@
       <name>sun.misc</name>
       <to>java.corba</to>
       <to>java.desktop</to>
-      <to>java.security.jgss</to>
       <to>java.logging</to>
       <to>java.management</to>
       <to>java.naming</to>
       <to>java.rmi</to>
+      <to>java.security.jgss</to>
       <to>java.security.sasl</to>
       <to>jdk.charsets</to>
       <to>jdk.deploy.osx</to>
@@ -305,8 +309,8 @@
     </export>
     <export>
       <name>sun.security.provider</name>
-      <to>java.security.jgss</to>
       <to>java.rmi</to>
+      <to>java.security.jgss</to>
       <to>jdk.crypto.pkcs11</to>
       <to>jdk.runtime</to>
       <to>jdk.security.auth</to>
@@ -331,9 +335,9 @@
     <export>
       <name>sun.security.util</name>
       <to>java.desktop</to>
-      <to>java.security.jgss</to>
       <to>java.naming</to>
       <to>java.rmi</to>
+      <to>java.security.jgss</to>
       <to>java.smartcardio</to>
       <to>jdk.crypto.ec</to>
       <to>jdk.crypto.mscapi</to>
@@ -377,10 +381,6 @@
       <name>sun.util.resources</name>
       <to>jdk.localedata</to>
     </export>
-    <export>
-      <name>sun.util.spi</name>
-      <to>java.xml</to>
-    </export>
   </module>
   <module>
     <name>java.compact1</name>
@@ -400,11 +400,11 @@
     <depend re-exports="true">java.compact2</depend>
     <depend re-exports="true">java.compiler</depend>
     <depend re-exports="true">java.instrument</depend>
-    <depend re-exports="true">java.security.jgss</depend>
     <depend re-exports="true">java.management</depend>
     <depend re-exports="true">java.naming</depend>
     <depend re-exports="true">java.prefs</depend>
     <depend re-exports="true">java.security.acl</depend>
+    <depend re-exports="true">java.security.jgss</depend>
     <depend re-exports="true">java.security.sasl</depend>
     <depend re-exports="true">java.sql.rowset</depend>
     <depend re-exports="true">java.xml.crypto</depend>
@@ -703,34 +703,6 @@
     </export>
   </module>
   <module>
-    <name>java.security.jgss</name>
-    <depend>java.base</depend>
-    <depend>java.logging</depend>
-    <depend>java.naming</depend>
-    <depend>java.security.sasl</depend>
-    <export>
-      <name>com.sun.security.jgss</name>
-    </export>
-    <export>
-      <name>javax.security.auth.kerberos</name>
-    </export>
-    <export>
-      <name>org.ietf.jgss</name>
-    </export>
-    <export>
-      <name>sun.security.jgss.krb5</name>
-      <to>jdk.security.auth</to>
-    </export>
-    <export>
-      <name>sun.security.krb5</name>
-      <to>jdk.security.auth</to>
-    </export>
-    <export>
-      <name>sun.security.krb5.internal.ktab</name>
-      <to>jdk.security.auth</to>
-    </export>
-  </module>
-  <module>
     <name>java.logging</name>
     <depend>java.base</depend>
     <export>
@@ -787,7 +759,6 @@
     <export>
       <name>sun.management</name>
       <to>jdk.jconsole</to>
-      <to>jdk.jfr</to>
       <to>jdk.snmp</to>
     </export>
   </module>
@@ -888,6 +859,34 @@
     <depend>java.base</depend>
     <export>
       <name>java.security.acl</name>
+    </export>
+  </module>
+  <module>
+    <name>java.security.jgss</name>
+    <depend>java.base</depend>
+    <depend>java.logging</depend>
+    <depend>java.naming</depend>
+    <depend>java.security.sasl</depend>
+    <export>
+      <name>com.sun.security.jgss</name>
+    </export>
+    <export>
+      <name>javax.security.auth.kerberos</name>
+    </export>
+    <export>
+      <name>org.ietf.jgss</name>
+    </export>
+    <export>
+      <name>sun.security.jgss.krb5</name>
+      <to>jdk.security.auth</to>
+    </export>
+    <export>
+      <name>sun.security.krb5</name>
+      <to>jdk.security.auth</to>
+    </export>
+    <export>
+      <name>sun.security.krb5.internal.ktab</name>
+      <to>jdk.security.auth</to>
     </export>
   </module>
   <module>
@@ -1029,12 +1028,12 @@
     <export>
       <name>com.sun.org.apache.xml.internal.resolver</name>
       <to>java.xml.ws</to>
-      <to>jdk.xml.ws</to>
+      <to>jdk.xml.bind</to>
     </export>
     <export>
       <name>com.sun.org.apache.xml.internal.resolver.tools</name>
       <to>java.xml.ws</to>
-      <to>jdk.xml.ws</to>
+      <to>jdk.xml.bind</to>
     </export>
     <export>
       <name>com.sun.org.apache.xml.internal.utils</name>
@@ -1090,6 +1089,7 @@
     <export>
       <name>com.sun.istack.internal</name>
       <to>java.xml.ws</to>
+      <to>jdk.xml.bind</to>
       <to>jdk.xml.ws</to>
     </export>
     <export>
@@ -1105,58 +1105,65 @@
     <export>
       <name>com.sun.xml.internal.bind</name>
       <to>java.xml.ws</to>
+      <to>jdk.xml.bind</to>
       <to>jdk.xml.ws</to>
     </export>
     <export>
       <name>com.sun.xml.internal.bind.annotation</name>
-      <to>jdk.xml.ws</to>
+      <to>jdk.xml.bind</to>
     </export>
     <export>
       <name>com.sun.xml.internal.bind.api</name>
       <to>java.xml.ws</to>
-      <to>jdk.xml.ws</to>
+      <to>jdk.xml.bind</to>
     </export>
     <export>
       <name>com.sun.xml.internal.bind.api.impl</name>
       <to>java.xml.ws</to>
-      <to>jdk.xml.ws</to>
+      <to>jdk.xml.bind</to>
     </export>
     <export>
       <name>com.sun.xml.internal.bind.marshaller</name>
       <to>java.xml.ws</to>
+      <to>jdk.xml.bind</to>
       <to>jdk.xml.ws</to>
     </export>
     <export>
       <name>com.sun.xml.internal.bind.unmarshaller</name>
       <to>java.xml.ws</to>
+      <to>jdk.xml.bind</to>
       <to>jdk.xml.ws</to>
     </export>
     <export>
       <name>com.sun.xml.internal.bind.util</name>
       <to>java.xml.ws</to>
+      <to>jdk.xml.bind</to>
       <to>jdk.xml.ws</to>
     </export>
     <export>
       <name>com.sun.xml.internal.bind.v2</name>
       <to>java.xml.ws</to>
+      <to>jdk.xml.bind</to>
       <to>jdk.xml.ws</to>
     </export>
     <export>
       <name>com.sun.xml.internal.bind.v2.model.annotation</name>
       <to>java.xml.ws</to>
+      <to>jdk.xml.bind</to>
       <to>jdk.xml.ws</to>
     </export>
     <export>
       <name>com.sun.xml.internal.bind.v2.model.core</name>
-      <to>jdk.xml.ws</to>
+      <to>jdk.xml.bind</to>
     </export>
     <export>
       <name>com.sun.xml.internal.bind.v2.model.impl</name>
-      <to>jdk.xml.ws</to>
+      <to>jdk.xml.bind</to>
     </export>
     <export>
       <name>com.sun.xml.internal.bind.v2.model.nav</name>
       <to>java.xml.ws</to>
+      <to>jdk.xml.bind</to>
       <to>jdk.xml.ws</to>
     </export>
     <export>
@@ -1165,12 +1172,12 @@
     </export>
     <export>
       <name>com.sun.xml.internal.bind.v2.model.util</name>
-      <to>jdk.xml.ws</to>
+      <to>jdk.xml.bind</to>
     </export>
     <export>
       <name>com.sun.xml.internal.bind.v2.runtime</name>
       <to>java.xml.ws</to>
-      <to>jdk.xml.ws</to>
+      <to>jdk.xml.bind</to>
     </export>
     <export>
       <name>com.sun.xml.internal.bind.v2.runtime.unmarshaller</name>
@@ -1179,11 +1186,11 @@
     <export>
       <name>com.sun.xml.internal.bind.v2.schemagen</name>
       <to>java.xml.ws</to>
-      <to>jdk.xml.ws</to>
+      <to>jdk.xml.bind</to>
     </export>
     <export>
       <name>com.sun.xml.internal.bind.v2.schemagen.episode</name>
-      <to>jdk.xml.ws</to>
+      <to>jdk.xml.bind</to>
     </export>
     <export>
       <name>com.sun.xml.internal.bind.v2.schemagen.xmlschema</name>
@@ -1191,6 +1198,7 @@
     </export>
     <export>
       <name>com.sun.xml.internal.bind.v2.util</name>
+      <to>jdk.xml.bind</to>
       <to>jdk.xml.ws</to>
     </export>
     <export>
@@ -1223,16 +1231,19 @@
     <export>
       <name>com.sun.xml.internal.txw2</name>
       <to>java.xml.ws</to>
+      <to>jdk.xml.bind</to>
       <to>jdk.xml.ws</to>
     </export>
     <export>
       <name>com.sun.xml.internal.txw2.annotation</name>
       <to>java.xml.ws</to>
+      <to>jdk.xml.bind</to>
       <to>jdk.xml.ws</to>
     </export>
     <export>
       <name>com.sun.xml.internal.txw2.output</name>
       <to>java.xml.ws</to>
+      <to>jdk.xml.bind</to>
       <to>jdk.xml.ws</to>
     </export>
   </module>
@@ -1448,7 +1459,6 @@
     <name>jdk.compiler</name>
     <depend>java.base</depend>
     <depend re-exports="true">java.compiler</depend>
-    <depend>java.desktop</depend>
     <export>
       <name>com.sun.source.doctree</name>
     </export>
@@ -1546,6 +1556,7 @@
     <depend>java.xml</depend>
     <depend>jdk.compiler</depend>
     <depend>jdk.rmic</depend>
+    <depend>jdk.xml.bind</depend>
     <depend>jdk.xml.ws</depend>
   </module>
   <module>
@@ -1727,8 +1738,8 @@
   <module>
     <name>jdk.security.auth</name>
     <depend>java.base</depend>
-    <depend>java.security.jgss</depend>
     <depend re-exports="true">java.naming</depend>
+    <depend>java.security.jgss</depend>
     <export>
       <name>com.sun.security.auth</name>
     </export>
@@ -1743,13 +1754,6 @@
     </export>
   </module>
   <module>
-    <name>jdk.svc</name>
-    <depend>jdk.hotspot.agent</depend>
-    <depend>jdk.hprof.agent</depend>
-    <depend>jdk.jcmd</depend>
-    <depend>jdk.jconsole</depend>
-  </module>
-  <module>
     <name>jdk.snmp</name>
     <depend>java.base</depend>
     <depend>java.logging</depend>
@@ -1757,17 +1761,81 @@
     <depend>java.security.acl</depend>
   </module>
   <module>
-    <name>jdk.xml.ws</name>
+    <name>jdk.svc</name>
+    <depend>jdk.hotspot.agent</depend>
+    <depend>jdk.hprof.agent</depend>
+    <depend>jdk.jcmd</depend>
+    <depend>jdk.jconsole</depend>
+  </module>
+  <module>
+    <name>jdk.xml.bind</name>
     <depend>java.activation</depend>
     <depend>java.base</depend>
     <depend>java.compiler</depend>
     <depend>java.desktop</depend>
     <depend>java.logging</depend>
+    <depend>java.xml</depend>
+    <depend>java.xml.bind</depend>
+    <depend>jdk.compiler</depend>
+    <export>
+      <name>com.sun.codemodel.internal</name>
+      <to>jdk.xml.ws</to>
+    </export>
+    <export>
+      <name>com.sun.codemodel.internal.writer</name>
+      <to>jdk.xml.ws</to>
+    </export>
+    <export>
+      <name>com.sun.istack.internal.tools</name>
+      <to>jdk.xml.ws</to>
+    </export>
+    <export>
+      <name>com.sun.tools.internal.jxc.ap</name>
+      <to>jdk.xml.ws</to>
+    </export>
+    <export>
+      <name>com.sun.tools.internal.jxc.model.nav</name>
+      <to>jdk.xml.ws</to>
+    </export>
+    <export>
+      <name>com.sun.tools.internal.xjc</name>
+      <to>jdk.xml.ws</to>
+    </export>
+    <export>
+      <name>com.sun.tools.internal.xjc.api</name>
+      <to>jdk.xml.ws</to>
+    </export>
+    <export>
+      <name>com.sun.tools.internal.xjc.api.util</name>
+      <to>jdk.xml.ws</to>
+    </export>
+    <export>
+      <name>com.sun.tools.internal.xjc.reader</name>
+      <to>jdk.xml.ws</to>
+    </export>
+    <export>
+      <name>com.sun.tools.internal.xjc.reader.internalizer</name>
+      <to>jdk.xml.ws</to>
+    </export>
+    <export>
+      <name>com.sun.tools.internal.xjc.util</name>
+      <to>jdk.xml.ws</to>
+    </export>
+    <export>
+      <name>com.sun.xml.internal.xsom.parser</name>
+      <to>jdk.xml.ws</to>
+    </export>
+  </module>
+  <module>
+    <name>jdk.xml.ws</name>
+    <depend>java.base</depend>
+    <depend>java.compiler</depend>
+    <depend>java.logging</depend>
     <depend>java.rmi</depend>
     <depend>java.xml</depend>
     <depend>java.xml.bind</depend>
     <depend>java.xml.ws</depend>
-    <depend>jdk.compiler</depend>
+    <depend>jdk.xml.bind</depend>
   </module>
   <module>
     <name>jdk.zipfs</name>
