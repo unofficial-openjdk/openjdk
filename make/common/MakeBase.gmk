@@ -548,8 +548,8 @@ endif
 # There are snmp classes in the open but they are not included in OpenJDK
 ifdef OPENJDK
   JAVA_MODULES_FILTER := jdk.snmp
-else
-  JAVA_MODULES_FILTER := -
+else 
+  JAVA_MODULES_FILTER := oracle.jrecreate
 endif
 
 # Find all modules with java sources by looking in the source dirs

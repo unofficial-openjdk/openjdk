@@ -266,14 +266,6 @@ ifndef OPENJDK
     # This gets built on unix platforms implicitly in the old build even though
     # it's excluded in the closed build.
     java.desktop_EXCLUDES += sun/java2d/pisces
-
-    java.desktop_EXCLUDES += com/sun/java/accessibility/extensions
-    # AccessBridge is compiled separately below.
-    java.desktop_EXCLUDE_FILES += \
-        AccessBridge.java \
-        AccessBridgeLoader.java \
-        com/sun/java/accessibility/util/java/awt/ChoiceTranslator.java \
-        #
   endif
 endif
 
@@ -662,7 +654,7 @@ ifndef OPENJDK
       $(BUILD_ACCESSBRIDGE_64_COMPILE_TARGETS): $(java.desktop_COMPILE_TARGETS)
 
     endif
-    java.desktop: $(BUILD_ACCESSBRIDGE_32) $(BUILD_ACCESSBRIDGE_64) \
+    oracle.accessbridge : $(BUILD_ACCESSBRIDGE_32) $(BUILD_ACCESSBRIDGE_64) \
         $(BUILD_ACCESSBRIDGE_LEGACY)
   endif
 endif

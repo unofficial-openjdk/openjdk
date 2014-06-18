@@ -188,6 +188,10 @@ ifndef OPENJDK
   jdk.crypto.ucrypto_CONF := $(SECURITY_UCRYPTO_CONF_FILES)
 
   jdk.jfr_NATIVE := $(JFR_LIBRARIES)
+
+  oracle.accessbridge_NATIVE := $(ACCESSBRIDGE_LIBRARIES)
+  oracle.accessbridge_CMDS := $(ACCESSBRIDGE_LAUNCHERS)
+  oracle.accessbridge_CONF := $(ACCESSBRIDGE_CONF_FILES)
 endif
 
 ################################################################################
