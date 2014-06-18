@@ -36,6 +36,7 @@ LIBDIR := $(JDK_OUTPUTDIR)/lib
 # Files are grouped by modules.  The following defines variables
 # for modules containing non-class files.
 #
+ACCESSBRIDGE_CONF_FILES:=
 BASE_CONF_FILES:=
 DESKTOP_CONF_FILES:=
 HPROF_CONF_FILES:=
@@ -87,8 +88,8 @@ ifeq ($(SHUFFLED), true)
 
   ifndef OPENJDK
     ifeq ($(OPENJDK_TARGET_OS), windows)
-      DESKTOP_CONF_FILES += $(JDK_OUTPUTDIR)/lib/accessibility.properties
-      JAVA_DESKTOP_HEADERS += \
+      ACCESSBRIDGE_CONF_FILES += $(JDK_OUTPUTDIR)/lib/accessibility.properties
+      ACCESSBRIDGE_HEADERS += \
           $(OPENJDK_TARGET_OS_INCLUDE)/bridge/AccessBridgeCallbacks.h \
           $(OPENJDK_TARGET_OS_INCLUDE)/bridge/AccessBridgeCalls.h \
           $(OPENJDK_TARGET_OS_INCLUDE)/bridge/AccessBridgePackages.h \
@@ -96,12 +97,14 @@ ifeq ($(SHUFFLED), true)
           #
 
       $(OPENJDK_TARGET_OS_INCLUDE)/bridge/%: \
-          $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/java.desktop/windows/native/include/bridge/%
+          $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/oracle.accessbridge/windows/native/include/bridge/%
 		$(install-file)
 
       $(JDK_OUTPUTDIR)/lib/accessibility.properties: \
-          $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/java.desktop/windows/conf/accessibility.properties
+          $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/oracle.accessbridge/windows/conf/accessibility.properties
 		$(install-file)
+
+      oracle.accessbridge: $(ACCESSBRIDGE_CONF_FILES) $(ACCESSBRIDGE_DESKTOP_HEADERS)
 
     endif
   endif

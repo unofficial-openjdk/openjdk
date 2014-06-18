@@ -64,6 +64,7 @@ endif
 # Libraries are grouped by modules.  The following defines
 # variables for modules containing shared libraries.
 #
+ACCESSBRIDGE_LIBRARIES:=
 ATTACH_LIBRARIES:=
 BASE_LIBRARIES:=
 CRW_LIBRARIES:=

@@ -249,7 +249,6 @@ module java.desktop {
             com.sun.image.**,
             com.sun.imageio.**,
             com.sun.accessibility.**,
-            com.sun.java.accessibility.**,
             // sajdi also contains classes in subpackages of com.sun.java.swing;
             // so use '*' instead of '**'
             com.sun.java.swing.*,
@@ -294,6 +293,10 @@ module java.desktop {
     uses javax.sound.sampled.spi.AudioFileWriter;
     uses javax.sound.sampled.spi.FormatConversionProvider;
     uses javax.sound.sampled.spi.MixerProvider;
+}
+
+module oracle.accessbridge {
+    include com.sun.java.accessibility.**;
 }
 
 // ## the Preferences implementation for Unix to XML (currently stored as a XML file)
@@ -888,9 +891,17 @@ module jdk {
     requires jdk.svc;
 }
 
+module oracle.jrecreate {
+    include oracle.tools.jrecreate.**;
+    include org.openjdk.internal.joptsimple.**;
+}
+
 module oracle.jre {
     requires jdk.runtime;
     requires jdk.jfr;
     requires jdk.snmp;
     requires oracle.providers.os;
+    requires oracle.accessbridge;
+    requires oracle.jrecreate;
 }
+

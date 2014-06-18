@@ -43,6 +43,7 @@ endif
 # Build tools
 include Tools.gmk
 
+ACCESSBRIDGE_LAUNCHERS=
 BASE_LAUNCHERS=
 CORBA_LAUNCHERS=
 COMPILER_LAUNCHERS=
@@ -784,8 +785,8 @@ ifndef OPENJDK
   ifeq ($(OPENJDK_TARGET_OS), windows)
 
     ifeq ($(SHUFFLED), true)
-      JABSWITCH_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/java.desktop/windows/native/jabswitch
-      ACCESSBRIDGE_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/java.desktop/windows/native/libaccessbridge
+      JABSWITCH_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/oracle.accessbridge/windows/native/jabswitch
+      ACCESSBRIDGE_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/oracle.accessbridge/windows/native/libaccessbridge
     else
       JABSWITCH_SRC := $(JDK_TOPDIR)/src/closed/windows/native/sun/bridge
       ACCESSBRIDGE_SRC := $(JABSWITCH_SRC)
@@ -812,8 +813,9 @@ ifndef OPENJDK
         MANIFEST := $(JABSWITCH_SRC)/jabswitch.manifest))
 
     BUILD_LAUNCHERS += $(BUILD_JABSWITCH)
-    DESKTOP_LAUNCHERS += $(BUILD_JABSWITCH)
+    ACCESSBRIDGE_LAUNCHERS += $(BUILD_JABSWITCH)
 
+    oracle.accessbridge: $(ACCESSBRIDGE_LAUNCHERS)
   endif
 endif
 

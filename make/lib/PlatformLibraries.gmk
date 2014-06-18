@@ -167,9 +167,9 @@ ifndef OPENJDK
   ifeq ($(OPENJDK_TARGET_OS), windows)
 
     ifeq ($(SHUFFLED), true)
-      ACCESSBRIDGE_SRCDIR := $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/java.desktop/windows/native/libaccessbridge
-      ACCESSBRIDGE_CFLAGS := -I$(JDK_OUTPUTDIR)/gensrc_headers/java.desktop \
-          -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/java.desktop/windows/native/include/bridge
+      ACCESSBRIDGE_SRCDIR := $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/oracle.accessbridge/windows/native/libaccessbridge
+      ACCESSBRIDGE_CFLAGS := -I$(JDK_OUTPUTDIR)/gensrc_headers/oracle.accessbridge \
+          -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/oracle.accessbridge/windows/native/include/bridge
     else
     ACCESSBRIDGE_SRCDIR := $(JDK_TOPDIR)/src/closed/windows/native/sun/bridge
     endif
@@ -256,7 +256,7 @@ ifndef OPENJDK
           OBJECT_DIR := $(JDK_OUTPUTDIR)/objs/libwindowsaccessbridge$1, \
           DEBUG_SYMBOLS := true)
 
-      DESKTOP_LIBRARIES += $$(BUILD_JAWTACCESSBRIDGE$1) $$(BUILD_JAVAACCESSBRIDGE$1) \
+      ACCESSBRIDGE_LIBRARIES += $$(BUILD_JAWTACCESSBRIDGE$1) $$(BUILD_JAVAACCESSBRIDGE$1) \
           $$(BUILD_WINDOWSACCESSBRIDGE$1)
 
     endef
