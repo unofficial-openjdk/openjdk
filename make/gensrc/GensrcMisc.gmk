@@ -182,7 +182,7 @@ ifndef OPENJDK
   ifeq ($(OPENJDK_TARGET_OS), windows)
 
     AB_GENSRC_DIR := $(JDK_OUTPUTDIR)/gensrc_ab
-    AB_SRC_DIR := $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/oracle.accessbridge/windows/classes/com/sun/java/accessibility
+    AB_SRC_DIR := $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed$(ORACLE_ACCESSBRIDGE_SUBDIR)/windows/classes/com/sun/java/accessibility
 
     ifeq ($(OPENJDK_TARGET_CPU_BITS), 32)
       $(AB_GENSRC_DIR)/32bit/com/sun/java/accessibility/AccessBridgeLoader.java: \

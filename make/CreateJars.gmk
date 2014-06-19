@@ -741,7 +741,7 @@ ifndef OPENJDK
   ifeq ($(OPENJDK_TARGET_OS), windows)
 
     $(eval $(call SetupArchive,BUILD_JACCESS_JAR, , \
-        SRCS := $(JDK_OUTPUTDIR)/$(MODULES_SUBDIR)$(JAVA_DESKTOP_SUBDIR), \
+        SRCS := $(JDK_OUTPUTDIR)/$(MODULES_SUBDIR)$(ORACLE_ACCESSBRIDGE_SUBDIR), \
         INCLUDES := com/sun/java/accessibility/util, \
         JAR := $(IMAGES_OUTPUTDIR)/lib/ext/jaccess.jar, \
         SKIP_METAINF := true))
