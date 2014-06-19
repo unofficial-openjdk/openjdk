@@ -27,7 +27,7 @@ GENDATA_FONT_CONFIG_DST := $(JDK_OUTPUTDIR)/lib
 
 GENDATA_FONT_CONFIG_DATA_DIR := $(JDK_TOPDIR)/make/data/fontconfig
 ifndef OPENJDK
-ifeq ($(OPENJDK_TARGET_OS), linux)
+  ifeq ($(OPENJDK_TARGET_OS), linux)
     GENDATA_FONT_CONFIG_DATA_DIR := $(JDK_TOPDIR)/make/closed/data/fontconfig
   endif
 endif

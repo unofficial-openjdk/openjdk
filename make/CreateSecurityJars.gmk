@@ -155,7 +155,6 @@ TARGETS += $(SUNJCE_PROVIDER_JAR_DST)
 JCE_JAR_DST := $(JDK_OUTPUTDIR)/lib/jce.jar
 JCE_JAR_UNSIGNED := $(JDK_OUTPUTDIR)/jce/unsigned/jce.jar
 
-# TODO JIGSAW: Compile these classes separately to different output dir for legacy image
 ifneq ($(BUILD_CRYPTO), no)
   $(eval $(call SetupArchive,BUILD_JCE_JAR, , \
       SRCS := $(JDK_OUTPUTDIR)/$(SECURITY_CLASSES_SUBDIR)$(JAVA_BASE_SUBDIR), \
