@@ -509,6 +509,16 @@ jdk.xml.ws_CLEAN := .properties
 
 ################################################################################
 
+oracle.accessbridge_EXCLUDES += com/sun/java/accessibility/extensions
+# AccessBridge is compiled separately below.
+oracle.accessbridge_EXCLUDE_FILES += \
+    AccessBridge.java \
+    AccessBridgeLoader.java \
+    com/sun/java/accessibility/util/java/awt/ChoiceTranslator.java \
+    #
+
+################################################################################
+
 sun.charsets_COPY := .dat
 
 ################################################################################
@@ -622,7 +632,7 @@ java.rmi: $(call CreateHkTargets, $(java.rmi_CLEAN_FILES))
 # Compile accessbridge separately. Need to figure out how to handle this properly.
 ifndef OPENJDK
   ifeq ($(OPENJDK_TARGET_OS), windows)
-    AB_CLASSPATH := $(java.desktop_CLASSPATH)$(PATH_SEP)$(JDK_OUTPUTDIR)/modules/java.desktop
+    AB_CLASSPATH := $(oracle.accessbridge_CLASSPATH)$(PATH_SEP)$(JDK_OUTPUTDIR)/modules/oracle.accessbridge
     ifeq ($(OPENJDK_TARGET_CPU_BITS), 32)
       $(eval $(call SetupJavaCompilation,BUILD_ACCESSBRIDGE_32, \
           SETUP := GENERATE_JDKBYTECODE, \
@@ -631,7 +641,7 @@ ifndef OPENJDK
           BIN := $(JDK_OUTPUTDIR)/classes_ab/32bit, \
           HEADERS := $(JDK_OUTPUTDIR)/gensrc_headers_ab/32))
 
-      $(BUILD_ACCESSBRIDGE_32_COMPILE_TARGETS): $(java.desktop_COMPILE_TARGETS)
+      $(BUILD_ACCESSBRIDGE_32_COMPILE_TARGETS): $(oracle.accessbridge_COMPILE_TARGETS)
 
       $(eval $(call SetupJavaCompilation,BUILD_ACCESSBRIDGE_LEGACY, \
           SETUP := GENERATE_JDKBYTECODE, \
@@ -640,7 +650,7 @@ ifndef OPENJDK
           BIN := $(JDK_OUTPUTDIR)/classes_ab/legacy, \
           HEADERS := $(JDK_OUTPUTDIR)/gensrc_headers_ab/legacy))
 
-      $(BUILD_ACCESSBRIDGE_LEGACY_COMPILE_TARGETS): $(java.desktop_COMPILE_TARGETS)
+      $(BUILD_ACCESSBRIDGE_LEGACY_COMPILE_TARGETS): $(oracle.accessbridge_COMPILE_TARGETS)
 
     else
 
@@ -651,7 +661,7 @@ ifndef OPENJDK
           BIN := $(JDK_OUTPUTDIR)/classes_ab/64bit, \
           HEADERS := $(JDK_OUTPUTDIR)/gensrc_headers_ab/64))
 
-      $(BUILD_ACCESSBRIDGE_64_COMPILE_TARGETS): $(java.desktop_COMPILE_TARGETS)
+      $(BUILD_ACCESSBRIDGE_64_COMPILE_TARGETS): $(oracle.accessbridge_COMPILE_TARGETS)
 
     endif
     oracle.accessbridge : $(BUILD_ACCESSBRIDGE_32) $(BUILD_ACCESSBRIDGE_64) \

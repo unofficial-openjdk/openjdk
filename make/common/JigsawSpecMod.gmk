@@ -72,6 +72,8 @@ ifeq ($(SHUFFLED), true)
   JDK_RUNTIME_SUBDIR := /jdk.runtime
   JDK_SNMP_SUBDIR := /jdk.snmp
 
+  ORACLE_ACCESSBRIDGE_SUBDIR := /oracle.accessbridge
+
   LDFLAGS_JDKLIB := $(subst $(OUTPUT_ROOT),$(OUTPUT_ROOT)/jigsaw,$(LDFLAGS_JDKLIB))
 
   SRC_SUBDIR := $(SHUFFLED_SRC_SUBDIR)
