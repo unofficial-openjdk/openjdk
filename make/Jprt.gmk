@@ -23,6 +23,7 @@
 # questions.
 #
 
+# This file contains targets and utilities needed by JPRT.
 
 # Cygpath is only defined when running on Cygwin
 ifneq ($(CYGPATH), )

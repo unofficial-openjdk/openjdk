@@ -473,6 +473,7 @@ ifneq ($(DISABLE_CACHE_FIND), true)
   # $1 can be either a directory or a file. If it's a directory, make
   # sure we have exactly one trailing slash before the wildcard.
   # The extra - is needed when FIND_CACHE_DIRS is empty but should be harmless.
+  #
   # Param 1 - Dirs to find in
   # Param 2 - (optional) specialization. Normally "-a \( ... \)" expression.
   define CacheFind
@@ -492,7 +493,6 @@ endif
 
 ################################################################################
 
-# General copy file macros should probably be moved to make/common in the root.
 define AddFileToCopy
   # Helper macro for SetupCopyFiles
   # 1 : Source file
