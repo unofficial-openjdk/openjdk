@@ -279,7 +279,7 @@ public class Resolve {
                         boolean allowBoxing,
                         boolean useVarargs,
                         Warner warn)
-        throws Infer.NoInstanceException {
+        throws Infer.InferenceException {
         if (useVarargs && (m.flags() & VARARGS) == 0) return null;
         Type mt = types.memberType(site, m);
 
@@ -350,7 +350,7 @@ public class Resolve {
         try {
             return rawInstantiate(env, site, m, argtypes, typeargtypes,
                                   allowBoxing, useVarargs, warn);
-        } catch (Infer.NoInstanceException ex) {
+        } catch (Infer.InferenceException ex) {
             return null;
         }
     }
@@ -562,7 +562,7 @@ public class Resolve {
                 default: return bestSoFar;
                 }
             }
-        } catch (Infer.NoInstanceException ex) {
+        } catch (Infer.InferenceException ex) {
             switch (bestSoFar.kind) {
             case ABSENT_MTH:
                 return wrongMethod.setWrongSym(sym, ex.getDiagnostic());

@@ -1,0 +1,2 @@
+T6638712c.java:17:9: compiler.err.cant.apply.symbol: <T>sort(T[],java.util.Comparator<? super T>), T6638712c, , java.lang.Enum[],java.util.Comparator<java.lang.Enum<?>>, null
+1 error

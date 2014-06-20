@@ -25,10 +25,10 @@
 
 package com.sun.tools.javac.comp;
 
-import com.sun.tools.javac.util.*;
-import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.code.*;
+import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.code.Type.*;
+import com.sun.tools.javac.util.*;
 
 import static com.sun.tools.javac.code.Flags.*;
 import static com.sun.tools.javac.code.Kinds.*;
@@ -50,6 +50,7 @@ public class Infer {
 
     Symtab syms;
     Types types;
+    Resolve rs;
 
     public static Infer instance(Context context) {
         Infer instance = context.get(inferKey);
@@ -62,43 +63,48 @@ public class Infer {
         context.put(inferKey, this);
         syms = Symtab.instance(context);
         types = Types.instance(context);
+        rs = Resolve.instance(context);
     }
 
-    public static class NoInstanceException extends RuntimeException {
+    public static class InferenceException extends RuntimeException {
         private static final long serialVersionUID = 0;
-
-        boolean isAmbiguous; // exist several incomparable best instances?
 
         JCDiagnostic diagnostic;
 
-        NoInstanceException(boolean isAmbiguous) {
+        InferenceException() {
             this.diagnostic = null;
-            this.isAmbiguous = isAmbiguous;
         }
-        NoInstanceException setMessage(String key) {
-            this.diagnostic = JCDiagnostic.fragment(key);
+
+        InferenceException setMessage(String key, Object... args) {
+            this.diagnostic = JCDiagnostic.fragment(key, args);
             return this;
         }
-        NoInstanceException setMessage(String key, Object arg1) {
-            this.diagnostic = JCDiagnostic.fragment(key, arg1);
-            return this;
-        }
-        NoInstanceException setMessage(String key, Object arg1, Object arg2) {
-            this.diagnostic = JCDiagnostic.fragment(key, arg1, arg2);
-            return this;
-        }
-        NoInstanceException setMessage(String key, Object arg1, Object arg2, Object arg3) {
-            this.diagnostic = JCDiagnostic.fragment(key, arg1, arg2, arg3);
-            return this;
-        }
+
         public JCDiagnostic getDiagnostic() {
             return diagnostic;
         }
     }
+
+    public static class NoInstanceException extends InferenceException {
+        private static final long serialVersionUID = 1;
+
+        boolean isAmbiguous; // do several incomparable best instances exist?
+
+        NoInstanceException(boolean isAmbiguous) {
+            this.isAmbiguous = isAmbiguous;
+        }
+    }
+
+    public static class InvalidInstanceException extends InferenceException {
+        private static final long serialVersionUID = 2;
+    }
+
     private final NoInstanceException ambiguousNoInstanceException =
         new NoInstanceException(true);
     private final NoInstanceException unambiguousNoInstanceException =
         new NoInstanceException(false);
+    private final InvalidInstanceException invalidInstanceException =
+        new InvalidInstanceException();
 
 /***************************************************************************
  * Auxiliary type values and classes
@@ -247,7 +253,7 @@ public class Infer {
      */
     public Type instantiateExpr(ForAll that,
                                 Type to,
-                                Warner warn) throws NoInstanceException {
+                                Warner warn) throws InferenceException {
         List<Type> undetvars = Type.map(that.tvars, fromTypeVarFun);
         for (List<Type> l = undetvars; l.nonEmpty(); l = l.tail) {
             UndetVar v = (UndetVar) l.head;
@@ -273,8 +279,7 @@ public class Infer {
         List<Type> targs = Type.map(undetvars, getInstFun);
         targs = types.subst(targs, that.tvars, targs);
         checkWithinBounds(that.tvars, targs, warn);
-
-        return getInstFun.apply(qtype1);
+        return that.inst(targs, types);
     }
 
     /** Instantiate method type `mt' by finding instantiations of
@@ -282,36 +287,42 @@ public class Infer {
      */
     public Type instantiateMethod(List<Type> tvars,
                                   MethodType mt,
-                                  List<Type> argtypes,
-                                  boolean allowBoxing,
-                                  boolean useVarargs,
-                                  Warner warn) throws NoInstanceException {
+                                  final List<Type> argtypes,
+                                  final boolean allowBoxing,
+                                  final boolean useVarargs,
+                                  final Warner warn) throws InferenceException {
         //-System.err.println("instantiateMethod(" + tvars + ", " + mt + ", " + argtypes + ")"); //DEBUG
         List<Type> undetvars = Type.map(tvars, fromTypeVarFun);
         List<Type> formals = mt.argtypes;
-
+        //need to capture exactly once - otherwise subsequent
+        //applicability checks might fail
+        final List<Type> capturedArgs = types.capture(argtypes);
+        List<Type> actuals = capturedArgs;
+        List<Type> actualsNoCapture = argtypes;
         // instantiate all polymorphic argument types and
         // set up lower bounds constraints for undetvars
         Type varargsFormal = useVarargs ? formals.last() : null;
-        while (argtypes.nonEmpty() && formals.head != varargsFormal) {
-            Type ft = formals.head;
-            Type at = argtypes.head.baseType();
-            if (at.tag == FORALL)
-                at = instantiateArg((ForAll) at, ft, tvars, warn);
-            Type sft = types.subst(ft, tvars, undetvars);
+        while (actuals.nonEmpty() && formals.head != varargsFormal) {
+            Type formal = formals.head;
+            Type actual = actuals.head.baseType();
+            Type actualNoCapture = actualsNoCapture.head.baseType();
+            if (actual.tag == FORALL)
+                actual = instantiateArg((ForAll)actual, formal, tvars, warn);
+            Type undetFormal = types.subst(formal, tvars, undetvars);
             boolean works = allowBoxing
-                ? types.isConvertible(at, sft, warn)
-                : types.isSubtypeUnchecked(at, sft, warn);
+                ? types.isConvertible(actual, undetFormal, warn)
+                : types.isSubtypeUnchecked(actual, undetFormal, warn);
             if (!works) {
                 throw unambiguousNoInstanceException
                     .setMessage("no.conforming.assignment.exists",
-                                tvars, at, ft);
+                                tvars, actualNoCapture, formal);
             }
             formals = formals.tail;
-            argtypes = argtypes.tail;
+            actuals = actuals.tail;
+            actualsNoCapture = actualsNoCapture.tail;
         }
         if (formals.head != varargsFormal || // not enough args
-            !useVarargs && argtypes.nonEmpty()) { // too many args
+            !useVarargs && actuals.nonEmpty()) { // too many args
             // argument lists differ in length
             throw unambiguousNoInstanceException
                 .setMessage("arg.length.mismatch");
@@ -319,20 +330,21 @@ public class Infer {
 
         // for varargs arguments as well
         if (useVarargs) {
-            Type elt = types.elemtype(varargsFormal);
-            Type sft = types.subst(elt, tvars, undetvars);
-            while (argtypes.nonEmpty()) {
-                Type ft = sft;
-                Type at = argtypes.head.baseType();
-                if (at.tag == FORALL)
-                    at = instantiateArg((ForAll) at, ft, tvars, warn);
-                boolean works = types.isConvertible(at, sft, warn);
+            Type elemType = types.elemtype(varargsFormal);
+            Type elemUndet = types.subst(elemType, tvars, undetvars);
+            while (actuals.nonEmpty()) {
+                Type actual = actuals.head.baseType();
+                Type actualNoCapture = actualsNoCapture.head.baseType();
+                if (actual.tag == FORALL)
+                    actual = instantiateArg((ForAll)actual, elemType, tvars, warn);
+                boolean works = types.isConvertible(actual, elemUndet, warn);
                 if (!works) {
                     throw unambiguousNoInstanceException
                         .setMessage("no.conforming.assignment.exists",
-                                    tvars, at, ft);
+                                    tvars, actualNoCapture, elemType);
                 }
-                argtypes = argtypes.tail;
+                actuals = actuals.tail;
+                actualsNoCapture = actualsNoCapture.tail;
             }
         }
 
@@ -363,16 +375,38 @@ public class Infer {
         }
         checkWithinBounds(tvars, undettypes.toList(), warn);
 
+        mt = (MethodType)types.subst(mt, tvars, insttypes.toList());
+
         if (!restvars.isEmpty()) {
             // if there are uninstantiated variables,
             // quantify result type with them
-            mt = new MethodType(mt.argtypes,
-                                new ForAll(restvars.toList(), mt.restype),
-                                mt.thrown, syms.methodClass);
+            final List<Type> inferredTypes = insttypes.toList();
+            final List<Type> all_tvars = tvars; //this is the wrong tvars
+            final MethodType mt2 = new MethodType(mt.argtypes, null, mt.thrown, syms.methodClass);
+            mt2.restype = new ForAll(restvars.toList(), mt.restype) {
+                @Override
+                public Type inst(List<Type> inferred, Types types) throws NoInstanceException {
+                    List<Type> formals = types.subst(mt2.argtypes, tvars, inferred);
+                   if (!rs.argumentsAcceptable(capturedArgs, formals,
+                           allowBoxing, useVarargs, warn)) {
+                      // inferred method is not applicable
+                      throw invalidInstanceException.setMessage("inferred.do.not.conform.to.params", formals, argtypes);
+                   }
+                   // check that inferred bounds conform to their bounds
+                   checkWithinBounds(all_tvars,
+                           types.subst(inferredTypes, tvars, inferred), warn);
+                   return super.inst(inferred, types);
+            }};
+            return mt2;
         }
-
-        // return instantiated version of method type
-        return types.subst(mt, tvars, insttypes.toList());
+        else if (!rs.argumentsAcceptable(capturedArgs, mt.getParameterTypes(), allowBoxing, useVarargs, warn)) {
+            // inferred method is not applicable
+            throw invalidInstanceException.setMessage("inferred.do.not.conform.to.params", mt.getParameterTypes(), argtypes);
+        }
+        else {
+            // return instantiated version of method type
+            return mt;
+        }
     }
     //where
 
@@ -384,7 +418,7 @@ public class Infer {
         private Type instantiateArg(ForAll that,
                                     Type to,
                                     List<Type> tvars,
-                                    Warner warn) throws NoInstanceException {
+                                    Warner warn) throws InferenceException {
             List<Type> targs;
             try {
                 return instantiateExpr(that, to, warn);
@@ -401,16 +435,16 @@ public class Infer {
     private void checkWithinBounds(List<Type> tvars,
                                    List<Type> arguments,
                                    Warner warn)
-        throws NoInstanceException {
+        throws InvalidInstanceException {
         for (List<Type> tvs = tvars, args = arguments;
              tvs.nonEmpty();
              tvs = tvs.tail, args = args.tail) {
             if (args.head instanceof UndetVar) continue;
             List<Type> bounds = types.subst(types.getBounds((TypeVar)tvs.head), tvars, arguments);
             if (!types.isSubtypeUnchecked(args.head, bounds, warn))
-                throw unambiguousNoInstanceException
+                throw invalidInstanceException
                     .setMessage("inferred.do.not.conform.to.bounds",
-                                arguments, tvars);
+                                args.head, bounds);
         }
     }
 }
