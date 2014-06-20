@@ -638,11 +638,12 @@ ifndef OPENJDK
           SETUP := GENERATE_JDKBYTECODE, \
           ADD_JAVAC_FLAGS := -bootclasspath "$(AB_CLASSPATH)", \
           SRC := $(JDK_OUTPUTDIR)/gensrc_ab/32bit, \
-          BIN := $(JDK_OUTPUTDIR)/classes_ab/32bit, \
+          BIN := $(JDK_OUTPUTDIR)/$(MODULES_SUBDIR)$(ORACLE_ACCESSBRIDGE_SUBDIR), \
           HEADERS := $(JDK_OUTPUTDIR)/gensrc_headers_ab/32))
 
       $(BUILD_ACCESSBRIDGE_32_COMPILE_TARGETS): $(oracle.accessbridge_COMPILE_TARGETS)
 
+      ## TODO: legacy AccessBridge ignored for now
       $(eval $(call SetupJavaCompilation,BUILD_ACCESSBRIDGE_LEGACY, \
           SETUP := GENERATE_JDKBYTECODE, \
           ADD_JAVAC_FLAGS := -bootclasspath "$(AB_CLASSPATH)", \
@@ -658,7 +659,7 @@ ifndef OPENJDK
           SETUP := GENERATE_JDKBYTECODE, \
           ADD_JAVAC_FLAGS := -bootclasspath "$(AB_CLASSPATH)", \
           SRC := $(JDK_OUTPUTDIR)/gensrc_ab/64bit, \
-          BIN := $(JDK_OUTPUTDIR)/classes_ab/64bit, \
+          BIN := $(JDK_OUTPUTDIR)/$(MODULES_SUBDIR)$(ORACLE_ACCESSBRIDGE_SUBDIR), \
           HEADERS := $(JDK_OUTPUTDIR)/gensrc_headers_ab/64))
 
       $(BUILD_ACCESSBRIDGE_64_COMPILE_TARGETS): $(oracle.accessbridge_COMPILE_TARGETS)
