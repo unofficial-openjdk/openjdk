@@ -221,6 +221,10 @@ module java.base {
                                  jdk.crypto.ucrypto;
 
 
+    //
+    // additional qualified exports for access via Core Reflection
+    //
+    exports sun.misc to java.xml;
 }
 
 module java.logging {
