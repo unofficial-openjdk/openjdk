@@ -28,6 +28,7 @@ package com.sun.tools.javac.comp;
 import com.sun.tools.javac.code.*;
 import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.code.Type.*;
+import com.sun.tools.javac.code.Type.ForAll.ConstraintKind;
 import com.sun.tools.javac.util.*;
 
 import static com.sun.tools.javac.code.Flags.*;
@@ -50,6 +51,7 @@ public class Infer {
 
     Symtab syms;
     Types types;
+    Check chk;
     Resolve rs;
 
     public static Infer instance(Context context) {
@@ -63,6 +65,7 @@ public class Infer {
         context.put(inferKey, this);
         syms = Symtab.instance(context);
         types = Types.instance(context);
+        chk = Check.instance(context);
         rs = Resolve.instance(context);
     }
 
@@ -256,14 +259,19 @@ public class Infer {
                                 Warner warn) throws InferenceException {
         List<Type> undetvars = Type.map(that.tvars, fromTypeVarFun);
         for (List<Type> l = undetvars; l.nonEmpty(); l = l.tail) {
-            UndetVar v = (UndetVar) l.head;
+            UndetVar uv = (UndetVar) l.head;
+            TypeVar tv = (TypeVar)uv.qtype;
             ListBuffer<Type> hibounds = new ListBuffer<Type>();
-            for (List<Type> l1 = types.getBounds((TypeVar) v.qtype); l1.nonEmpty(); l1 = l1.tail) {
-                if (!l1.head.containsSome(that.tvars)) {
-                    hibounds.append(l1.head);
+            for (Type t : that.getConstraints(tv, ConstraintKind.EXTENDS).prependList(types.getBounds(tv))) {
+                if (!t.containsSome(that.tvars) && t.tag != BOT) {
+                    hibounds.append(t);
                 }
             }
-            v.hibounds = hibounds.toList();
+            List<Type> inst = that.getConstraints(tv, ConstraintKind.EQUAL);
+            if (inst.nonEmpty() && inst.head.tag != BOT) {
+                uv.inst = inst.head;
+            }
+            uv.hibounds = hibounds.toList();
         }
         Type qtype1 = types.subst(that.qtype, that.tvars, undetvars);
         if (!types.isSubtype(qtype1, to)) {
@@ -279,7 +287,7 @@ public class Infer {
         List<Type> targs = Type.map(undetvars, getInstFun);
         targs = types.subst(targs, that.tvars, targs);
         checkWithinBounds(that.tvars, targs, warn);
-        return that.inst(targs, types);
+        return chk.checkType(warn.pos(), that.inst(targs, types), to);
     }
 
     /** Instantiate method type `mt' by finding instantiations of
@@ -355,6 +363,9 @@ public class Infer {
         /** Type variables instantiated to bottom */
         ListBuffer<Type> restvars = new ListBuffer<Type>();
 
+        /** Undet vars instantiated to bottom */
+        final ListBuffer<Type> restundet = new ListBuffer<Type>();
+
         /** Instantiated types or TypeVars if under-constrained */
         ListBuffer<Type> insttypes = new ListBuffer<Type>();
 
@@ -365,6 +376,7 @@ public class Infer {
             UndetVar uv = (UndetVar)t;
             if (uv.inst.tag == BOT) {
                 restvars.append(uv.qtype);
+                restundet.append(uv);
                 insttypes.append(uv.qtype);
                 undettypes.append(uv);
                 uv.inst = null;
@@ -385,17 +397,32 @@ public class Infer {
             final MethodType mt2 = new MethodType(mt.argtypes, null, mt.thrown, syms.methodClass);
             mt2.restype = new ForAll(restvars.toList(), mt.restype) {
                 @Override
+                public List<Type> getConstraints(TypeVar tv, ConstraintKind ck) {
+                    for (Type t : restundet.toList()) {
+                        UndetVar uv = (UndetVar)t;
+                        if (uv.qtype == tv) {
+                            switch (ck) {
+                                case EXTENDS: return uv.hibounds;
+                                case SUPER: return uv.lobounds;
+                                case EQUAL: return uv.inst != null ? List.of(uv.inst) : List.<Type>nil();
+                            }
+                        }
+                    }
+                    return List.nil();
+                }
+
+                @Override
                 public Type inst(List<Type> inferred, Types types) throws NoInstanceException {
                     List<Type> formals = types.subst(mt2.argtypes, tvars, inferred);
-                   if (!rs.argumentsAcceptable(capturedArgs, formals,
+                    if (!rs.argumentsAcceptable(capturedArgs, formals,
                            allowBoxing, useVarargs, warn)) {
                       // inferred method is not applicable
                       throw invalidInstanceException.setMessage("inferred.do.not.conform.to.params", formals, argtypes);
-                   }
-                   // check that inferred bounds conform to their bounds
-                   checkWithinBounds(all_tvars,
+                    }
+                    // check that inferred bounds conform to their bounds
+                    checkWithinBounds(all_tvars,
                            types.subst(inferredTypes, tvars, inferred), warn);
-                   return super.inst(inferred, types);
+                    return super.inst(inferred, types);
             }};
             return mt2;
         }

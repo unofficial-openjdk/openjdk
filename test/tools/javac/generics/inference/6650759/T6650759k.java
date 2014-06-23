@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006, 2007, Oracle and/or its affiliates. All rights reserved.
+ * Copyright 2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,23 +16,29 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
+ * CA 95054 USA or visit www.sun.com if you need additional information or
+ * have any questions.
  */
 
 /*
  * @test
- * @bug     6476073
- * @summary Capture using super wildcard of type variables doesn't work
- * @compile T6476073.java
+ * @bug     6650759
+ * @summary Inference of formal type parameter (unused in formal parameters) is not performed
+ * @compile T6650759k.java
  */
 
-import java.util.Collection;
-import java.util.List;
+public class T6650759k {
 
-public class T6476073 {
-    public static <B> void m(List<? super B> list,Collection<? super B> coll) {
-        m(list,coll);
+    static class A<X extends A> {}
+
+    static class B<X extends B, Y extends A> {}
+
+    <U extends A<U>, V extends B<V, U>> Object m(Class<V> c) {
+        return null;
+    }
+
+    <U extends A<U>, V extends B<V, U>> void test(Class<V> c) {
+        m(c);
     }
 }
