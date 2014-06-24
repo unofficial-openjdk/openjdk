@@ -118,6 +118,8 @@ public class Sockets {
                 Throwable t = ((InvocationTargetException)e).getTargetException();
                 if (t instanceof IOException) {
                     throw (IOException)t;
+                } else if (t instanceof RuntimeException) {
+                    throw (RuntimeException)t;
                 }
             }
             throw new RuntimeException(e);
@@ -134,6 +136,8 @@ public class Sockets {
                 Throwable t = ((InvocationTargetException)e).getTargetException();
                 if (t instanceof IOException) {
                     throw (IOException)t;
+                } else if (t instanceof RuntimeException) {
+                    throw (RuntimeException)t;
                 }
             }
             throw new RuntimeException(e);
