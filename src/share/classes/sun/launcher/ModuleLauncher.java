@@ -58,98 +58,80 @@ class ModuleLauncher {
      * @param verbose true for tracing
      */
     static void init(Module[] linkedModules, Set<String> mods, boolean verbose) {
+
+        // module path of the installed modules
         ModulePath systemLibrary = ModulePath.installed(linkedModules);
 
-        // If -mods is not specified then add all linked in modules without
-        // permits to the root set
+        // launcher -modulepath option
+        ModulePath launcherModulePath;
+        String propValue = System.getProperty("java.module.path");
+        if (propValue != null) {
+            launcherModulePath = ModulePath.fromPath(propValue);
+        } else {
+            launcherModulePath = null;
+        }
+
+        // launcher -m option to specify the main/initial module
+        ModuleId mainMid;
+        propValue = System.getProperty("java.module.main");
+        if (propValue != null) {
+            mainMid = ModuleId.parse(propValue);
+        } else {
+            mainMid = null;
+        }
+
+        // If neither -m nor -mods is specified then the initial module is the
+        // set of all installed modules, otherwise the initial module is the
+        // union of both -mods (if specified) and -m (if specified).
         Set<String> roots;
-        if (mods.isEmpty()) {
+        if (mainMid == null && mods.isEmpty()) {
             roots = systemLibrary.allModules()
                                  .stream()
                                  .filter(m -> m.permits().isEmpty())
                                  .map(m -> m.id().name())
                                  .collect(Collectors.toSet());
         } else {
-            roots = mods;
+            roots = new HashSet<>(mods);
+            if (mainMid != null)
+                roots.add(mainMid.name());
         }
 
         // run the resolver
-        ModuleGraph graph = new SimpleResolver(systemLibrary).resolve(roots);
+        ModulePath modulePath;
+        if (launcherModulePath != null) {
+            modulePath = systemLibrary.join(launcherModulePath);
+        } else {
+            modulePath = systemLibrary;
+        }
+        ModuleGraph graph = new SimpleResolver(modulePath).resolve(roots);
         if (verbose) {
             graph.modules().stream()
                            .sorted()
                            .forEach(m -> System.out.println(m.id()));
         }
 
-        // assign linked modules to class loaders and define the selected
-        // modules to the runtime.
+        // If -m was specified as name@version then check that the right version
+        // of the initial module was selected
+        if (mainMid != null && mainMid.version() != null) {
+            Module selected = graph.findModule(mainMid.name());
+            if (!selected.id().equals(mainMid)) {
+                throw new RuntimeException(selected.id() + " found first on module-path");
+            }
+        }
+
+        // setup module to ClassLoader mapping
         Map<Module, ClassLoader> moduleToLoaders = loaderMap(systemLibrary);
+        if (launcherModulePath != null) {
+            Set<Module> systemModules = systemLibrary.allModules();
+            Launcher launcher = Launcher.getLauncher();
+            graph.modules().stream().filter(m -> !systemModules.contains(m)).forEach(m -> {
+                moduleToLoaders.put(m, launcher.getClassLoader());
+                launcher.addAppClassLoaderURL(launcherModulePath.locationOf(m));
+            });
+        }
+
+        // define to runtime.
         ModuleRuntime.defineModules(graph, moduleToLoaders::get);
-
-        // if -mods is specified then we have to hide the linked modules
-        // that are not selected. For now we just define the modules without
-        // any readability relationship or exports. Yes, this is a hack.
-        if (!mods.isEmpty()) {
-            Set<Module> selected = graph.modules();
-            systemLibrary.allModules()
-                         .stream()
-                         .filter(m -> !selected.contains(m))
-                         .forEach(m ->
-                             ModuleRuntime.defineProtoModule(m, moduleToLoaders.get(m)));
-        }
-
-        // launcher -modulepath option specified
-        String mp = System.getProperty("java.module.path");
-        if (mp != null) {
-            ModulePath modulePath = ModulePath.fromPath(mp);
-
-            // if launcher -m also specified then the module name is the initial module
-            String mainModule = System.getProperty("java.module.main");
-            ModuleId mainMid = null;
-            if (mainModule != null) {
-                mainMid = ModuleId.parse(mainModule);
-                roots = new HashSet<>();
-                roots.add(mainMid.name());
-            } else {
-                // all modules on the launcher module path are the initial module(s)
-                // when -m not specified.
-                roots = modulePath.allModules()
-                                  .stream()
-                                  .filter(m -> m.permits().isEmpty())
-                                  .map(m -> m.id().name())
-                                  .collect(Collectors.toSet());
-            }
-
-            // compose a new module graph over the initial module graph
-            graph = new SimpleResolver(graph, modulePath).resolve(roots);
-
-            // if -m specified as name@version then we have to check the right
-            // version was selected
-            if (mainMid != null && mainMid.version() != null) {
-                Module selected = graph.findModule(mainMid.name());
-                if (!selected.id().equals(mainMid)) {
-                    throw new RuntimeException(selected.id() + " found first on module-path");
-                }
-            }
-
-            // -verbose:mods to trace the selection of the modules on the
-            // launcher module path
-            if (verbose) {
-                graph.minusInitialModuleGraph()
-                     .stream()
-                     .sorted()
-                     .forEach(m -> System.out.println(m.id()));
-            }
-
-            // define the newly selected modules to the runtime
-            ModuleRuntime.defineModules(graph, m -> Launcher.getLauncher().getClassLoader());
-
-            // make the system class loader aware of the locations
-            graph.minusInitialModuleGraph()
-                 .stream()
-                 .map(modulePath::locationOf)
-                 .forEach(Launcher.getLauncher()::addAppClassLoaderURL);
-        }
 
         // reflection checks enabled?
         String s = System.getProperty("sun.reflect.enableModuleChecks");
