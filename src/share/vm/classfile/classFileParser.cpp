@@ -2721,6 +2721,11 @@ void ClassFileParser::parse_classfile_bootstrap_methods_attribute(constantPoolHa
       "bootstrap_method_index %u has bad constant type in class file %s",
       bootstrap_method_index,
       CHECK);
+
+    guarantee_property((operand_fill_index + 1 + argument_count) < operands->length(),
+      "Invalid BootstrapMethods num_bootstrap_methods or num_bootstrap_arguments value in class file %s",
+      CHECK);
+
     operands->short_at_put(operand_fill_index++, bootstrap_method_index);
     operands->short_at_put(operand_fill_index++, argument_count);
 
@@ -2738,7 +2743,6 @@ void ClassFileParser::parse_classfile_bootstrap_methods_attribute(constantPoolHa
   }
 
   assert(operand_fill_index == operands()->length(), "exact fill");
-  assert(constantPoolOopDesc::operand_array_length(operands()) == attribute_array_length, "correct decode");
 
   u1* current_end = cfs->current();
   guarantee_property(current_end == current_start + attribute_byte_length,
