@@ -589,11 +589,10 @@ void CompileTask::log_task_done(CompileLog* log) {
 
 
 /**
- * Add a CompileTask to a CompileQueue
+ * Add a CompileTask to a CompileQueue.
  */
 void CompileQueue::add(CompileTask* task) {
   assert(lock()->owned_by_self(), "must own lock");
-  assert(!CompileBroker::is_compilation_disabled_forever(), "Do not add task if compilation is turned off forever");
 
   task->set_next(NULL);
   task->set_prev(NULL);
@@ -639,8 +638,11 @@ void CompileQueue::free_all() {
   while (next != NULL) {
     CompileTask* current = next;
     next = current->next();
-    // Wake up thread that blocks on the compile task.
-    current->lock()->notify();
+    {
+      // Wake up thread that blocks on the compile task.
+      MutexLocker ct_lock(current->lock());
+      current->lock()->notify();
+    }
     // Put the task back on the freelist.
     CompileTask::free(current);
   }
