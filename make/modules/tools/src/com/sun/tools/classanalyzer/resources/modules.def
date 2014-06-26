@@ -621,11 +621,6 @@ module jdk.jfr {
     include com.oracle.jrockit.**,
             jdk.jfr.**,
             oracle.jrockit.**;
-
-    // they are deprecated. 
-    exports com.oracle.jrockit.jfr;
-    exports com.oracle.jrockit.jfr.client;
-    exports com.oracle.jrockit.jfr.management;
 }
 
 module jdk.deploy.osx {
