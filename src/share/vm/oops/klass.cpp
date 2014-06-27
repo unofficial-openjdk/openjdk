@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -119,6 +119,15 @@ bool Klass::compute_is_subtype_of(klassOop k) {
   return is_subclass_of(k);
 }
 
+klassOop Klass::find_field(Symbol* name, Symbol* sig, fieldDescriptor* fd) const {
+#ifdef ASSERT
+  tty->print_cr("Error: find_field called on a klass oop."
+                " Likely error: reflection method does not correctly"
+                " wrap return value in a mirror object.");
+#endif
+  ShouldNotReachHere();
+  return NULL;
+}
 
 methodOop Klass::uncached_lookup_method(Symbol* name, Symbol* signature) const {
 #ifdef ASSERT
