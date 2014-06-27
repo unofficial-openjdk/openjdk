@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,15 +23,20 @@
  */
 
 #include "precompiled.hpp"
-#include "interpreter/bytecodes.hpp"
+#include "gc_implementation/shared/gcId.hpp"
+#include "runtime/safepoint.hpp"
 
+uint GCId::_next_id = 0;
 
-void Bytecodes::pd_initialize() {
-  // No i486 specific initialization
+const GCId GCId::create() {
+  return GCId(_next_id++);
 }
-
-
-Bytecodes::Code Bytecodes::pd_base_code_for(Code code) {
-  // No i486 specific bytecodes
-  return code;
+const GCId GCId::peek() {
+  return GCId(_next_id);
+}
+const GCId GCId::undefined() {
+  return GCId(UNDEFINED);
+}
+bool GCId::is_undefined() const {
+  return _id == UNDEFINED;
 }
