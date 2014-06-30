@@ -25,6 +25,7 @@
 
 package sun.launcher;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -35,8 +36,8 @@ import jdk.jigsaw.module.Module;
 import jdk.jigsaw.module.ModuleGraph;
 import jdk.jigsaw.module.ModuleId;
 import jdk.jigsaw.module.ModulePath;
-import jdk.jigsaw.module.ModuleRuntime;
-import jdk.jigsaw.module.SimpleResolver;
+import jdk.jigsaw.module.Resolver;
+import jdk.jigsaw.module.internal.ModuleRuntime;
 
 import sun.misc.Launcher;
 import sun.reflect.Reflection;
@@ -52,48 +53,60 @@ class ModuleLauncher {
 
     /**
      * Initialize the runtime for modules.
-     *
-     * @param linkedModules the modules linked into the runtime image
-     * @param mods the initial module(s), specified via the -mods option for now
-     * @param verbose true for tracing
      */
-    static void init(Module[] linkedModules, Set<String> mods, boolean verbose) {
+    static void init() {
 
         // module path of the installed modules
-        ModulePath systemLibrary = ModulePath.installed(linkedModules);
+        ModulePath systemLibrary = ModulePath.installedModules();
+
+        // launcher -verbose:mods option
+        boolean verbose =
+            Boolean.parseBoolean(System.getProperty("jdk.launcher.modules.verbose"));
+
+        // initial module(s) as specified by -mods
+        Set<String> mods = new HashSet<>();
+        String propValue = System.getProperty("jdk.launcher.modules");
+        if (propValue != null) {
+            for (String mod: propValue.split(",")) {
+                mods.add(mod);
+            }
+        }
 
         // launcher -modulepath option
         ModulePath launcherModulePath;
-        String propValue = System.getProperty("java.module.path");
+        propValue = System.getProperty("java.module.path");
         if (propValue != null) {
-            launcherModulePath = ModulePath.fromPath(propValue);
+            String[] dirs = propValue.split(File.pathSeparator);
+            launcherModulePath = ModulePath.ofDirectories(dirs);
         } else {
             launcherModulePath = null;
         }
 
-        // launcher -m option to specify the main/initial module
+        // launcher -m option to specify the initial module
         ModuleId mainMid;
         propValue = System.getProperty("java.module.main");
         if (propValue != null) {
-            mainMid = ModuleId.parse(propValue);
+            int i = propValue.indexOf('/');
+            String s = (i == -1) ? propValue : propValue.substring(0, i);
+            mainMid = ModuleId.parse(s);
         } else {
             mainMid = null;
         }
 
         // If neither -m nor -mods is specified then the initial module is the
         // set of all installed modules, otherwise the initial module is the
-        // union of both -mods (if specified) and -m (if specified).
-        Set<String> roots;
+        // union of both -m (if specified) and -mods (if specified).
+        Set<String> input;
         if (mainMid == null && mods.isEmpty()) {
-            roots = systemLibrary.allModules()
+            input = systemLibrary.allModules()
                                  .stream()
                                  .filter(m -> m.permits().isEmpty())
                                  .map(m -> m.id().name())
                                  .collect(Collectors.toSet());
         } else {
-            roots = new HashSet<>(mods);
+            input = new HashSet<>(mods);
             if (mainMid != null)
-                roots.add(mainMid.name());
+                input.add(mainMid.name());
         }
 
         // run the resolver
@@ -103,7 +116,7 @@ class ModuleLauncher {
         } else {
             modulePath = systemLibrary;
         }
-        ModuleGraph graph = new SimpleResolver(modulePath).resolve(roots);
+        ModuleGraph graph = new Resolver(modulePath).resolve(input).bindServices();
         if (verbose) {
             graph.modules().stream()
                            .sorted()

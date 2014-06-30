@@ -38,9 +38,9 @@ import jdk.jigsaw.module.ModuleDependence.Modifier;
 
 /**
  * A simple resolver that constructs a module graph from an initial, possibly
- * empty module graph, a module path, and a set of module names.
+ * empty module graph, a module path, and an input set of module names.
  */
-public final class SimpleResolver {
+public final class Resolver {
 
     // the initial (possibly empty module graph)
     private final ModuleGraph initialGraph;
@@ -49,44 +49,93 @@ public final class SimpleResolver {
     private final ModulePath modulePath;
 
     /**
-     * Creates a {@code SimpleResolver} to construct module graphs from an
+     * Creates a {@code Resolver} to construct module graphs from an
      * initial module graph. Modules are located on the given module path.
      */
-    public SimpleResolver(ModuleGraph initialGraph, ModulePath modulePath) {
+    public Resolver(ModuleGraph initialGraph, ModulePath modulePath) {
         this.initialGraph = Objects.requireNonNull(initialGraph);
         this.modulePath = Objects.requireNonNull(modulePath);
     }
 
     /**
-     * Creates a {@code SimpleResolver} that locates modules on the given module
-     * path.
+     * Creates a {@code Resolver} that locates modules on the given
+     * module path.
      */
-    public SimpleResolver(ModulePath modulePath) {
+    public Resolver(ModulePath modulePath) {
         this(ModuleGraph.emptyModuleGraph(), modulePath);
     }
 
     /**
-     * Resolve the given named modules.
+     * Returns the initial module graph.
      */
-    public ModuleGraph resolve(Iterable<String> roots) {
-        // the selected modules
-        Set<Module> selected = new HashSet<>(initialGraph.modules());
+    ModuleGraph initialModuleGraph() {
+        return initialGraph;
+    }
 
-        // the visit stack
-        Deque<Module> stack = new ArrayDeque<>();
+    /**
+     * Returns the module path.
+     */
+    ModulePath modulePath() {
+        return modulePath;
+    }
 
-        // push the root modules onto the visit stack to get us started
-        for (String root: roots) {
-            Module m = modulePath.findModule(Objects.requireNonNull(root));
+    /**
+     * Resolve the given named modules.
+     *
+     * @throws ResolveException if a named module (or any its transitive
+     * dependencies) cannot be resolved.
+     */
+    public ModuleGraph resolve(Iterable<String> input) {
+
+        // create the visit stack
+        Deque<Module> q = new ArrayDeque<>();
+
+        // push the input modules onto the visit stack to get us started
+        for (String name: input) {
+            Module m = modulePath.findModule(Objects.requireNonNull(name));
             if (m == null)
-                fail("Module %s does not exist", root);
-            stack.offer(m);
+                fail("Module %s does not exist", name);
+            q.offer(m);
         }
 
-        // visit modules until the root modules and their transitive
-        // dependencies have been visited
-        while (!stack.isEmpty()) {
-            Module m = stack.poll();
+        // run the resolver
+        Set<Module> modules = new HashSet<>(initialGraph.modules());
+        Set<Module> newlySelected = resolve(q, modules);
+        modules.addAll(newlySelected);
+
+        // return the resulting module graph
+        return finish(modules);
+    }
+
+    /**
+     * Resolve the given named modules.
+     *
+     * @throws ResolveException if a named module (or any its transitive
+     * dependencies) cannot be resolved.
+     */
+    public ModuleGraph resolve(String... input) {
+        return resolve(Arrays.asList(input));
+    }
+
+    /**
+     * Resolves a collection of modules.
+     *
+     * @param q The {@code Deque} with the modules to resolve
+     * @param resolvedModules The set of modules that this method should
+     *   treated as already resolved (in the initial module graph for
+     *   example)
+     * @return The set of modules resolved by this method
+     *
+     * @throws ResolveException
+     *
+     * @see ModuleGraph#bindServices()
+     */
+    Set<Module> resolve(Deque<Module> q, Set<Module> resolvedModules) {
+        // modules selected by this invocation of resolve
+        Set<Module> selected = new HashSet<>();
+
+        while (!q.isEmpty()) {
+            Module m = q.poll();
             selected.add(m);
 
             // process dependencies
@@ -103,13 +152,20 @@ public final class SimpleResolver {
                 if (other == null)
                     fail("%s requires unknown module %s", m.id().name(), dn);
 
-                if (!selected.contains(other))
-                    stack.offer(other);
+                if (!resolvedModules.contains(other) && !selected.contains(other))
+                    q.offer(other);
             }
         }
 
+        return selected;
+    }
+
+    /**
+     * Returns the {@code ModuleGraph} that is the result of the resolution process.
+     */
+    ModuleGraph finish(Set<Module> modules) {
         // create the readability graph
-        Map<Module, Set<Module>> graph = makeGraph(selected);
+        Map<Module, Set<Module>> graph = makeGraph(modules);
 
         // check for permits violations
         checkPermits(graph);
@@ -120,14 +176,7 @@ public final class SimpleResolver {
         // sanity check implementation, -esa only
         assert isSubsetOfInitialGraph(graph);
 
-        return new ModuleGraph(graph, modulePath, initialGraph);
-    }
-
-    /**
-     * Resolve the given named modules.
-     */
-    public ModuleGraph resolve(String... roots) {
-        return resolve(Arrays.asList(roots));
+        return new ModuleGraph(this, graph);
     }
 
     /**

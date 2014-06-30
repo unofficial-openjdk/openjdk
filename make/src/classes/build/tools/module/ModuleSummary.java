@@ -39,6 +39,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Enumeration;
@@ -54,10 +55,11 @@ import java.util.zip.ZipFile;
 import jdk.jigsaw.module.Module;
 import jdk.jigsaw.module.ModuleDependence;
 import jdk.jigsaw.module.ModuleGraph;
+import jdk.jigsaw.module.ModulePath;
+import jdk.jigsaw.module.Resolver;
 
 public class ModuleSummary {
     private static final String USAGE = "Usage: ModuleSummary -mp <dir> -o <outfile>";
-    private static final String MODULES_SER = "jdk/jigsaw/module/resources/modules.ser";
     public static void main(String[] args) throws Exception {
         int i=0;
         Path modpath = null;
@@ -96,13 +98,11 @@ public class ModuleSummary {
     private final Path modpath;
     ModuleSummary(Path modpath) throws IOException, ConstantPoolException {
         this.modpath = modpath;
-        Module[] mods = ModuleUtils.readModules();
-        this.modules = Arrays.stream(mods).collect(Collectors.toSet());
+        this.modules = ModulePath.installedModules().allModules();
 
         // build package map for all modules for API dependency analysis
-        Arrays.stream(mods)
-              .forEach(m -> m.packages().stream()
-                               .forEach(p -> packageMap.put(p, m)));
+        modules.forEach(m -> m.packages().stream()
+               .forEach(p -> packageMap.put(p, m)));
 
         for (Module m : modules) {
             Path jmod = modpath.resolve(name(m) + ".jmod");
@@ -120,7 +120,7 @@ public class ModuleSummary {
     }
 
     public void genCSV(Path outfile, Set<String> roots) throws IOException {
-        ModuleGraph g = ModuleUtils.resolve(modules, roots);
+        ModuleGraph g = resolve(roots);
         Set<Module> selectedModules = g.modules();
         try (PrintStream out = new PrintStream(Files.newOutputStream(outfile))) {
             out.format("module,size,\"direct deps\",\"indirect deps\",total," +
@@ -128,13 +128,7 @@ public class ModuleSummary {
             selectedModules.stream()
                    .sorted(Comparator.comparing(Module::id))
                    .forEach(m -> {
-                        Set<Module> deps;
-                        try {
-                            deps = ModuleUtils.resolve(modules, Collections.singleton(name(m)))
-                                              .modules();
-                        } catch (IOException e) {
-                            throw new UncheckedIOException(e);
-                        }
+                        Set<Module> deps = resolve(Collections.singleton(name(m))).modules();
                         long reqBytes = 0;
                         long reqJmodSize = 0;
                         long otherBytes = 0;
@@ -164,7 +158,7 @@ public class ModuleSummary {
     }
 
     public void genReport(Path outfile, Set<String> roots, String title) throws IOException {
-        ModuleGraph g = ModuleUtils.resolve(modules, roots);
+        ModuleGraph g = resolve(roots);
         Set<Module> selectedModules = g.modules();
         try (PrintStream out = new PrintStream(Files.newOutputStream(outfile))) {
             long totalBytes = selectedModules.stream()
@@ -174,9 +168,7 @@ public class ModuleSummary {
                    .sorted(Comparator.comparing(Module::id))
                    .forEach(m -> {
                         try {
-                            Set<Module> deps =
-                                ModuleUtils.resolve(modules, Collections.singleton(name(m)))
-                                           .modules();
+                            Set<Module> deps = resolve(Collections.singleton(name(m))).modules();
                             long reqBytes = jmods.get(m).size;
                             long reqJmodSize = jmods.get(m).filesize;
                             int reqCount = deps.size();
@@ -451,5 +443,9 @@ public class ModuleSummary {
             }
         }
         return deps;
+    }
+
+    static ModuleGraph resolve(Collection<String> roots) {
+        return new Resolver(ModulePath.installedModules()).resolve(roots);
     }
 }

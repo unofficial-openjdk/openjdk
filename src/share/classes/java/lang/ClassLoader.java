@@ -49,12 +49,14 @@ import java.util.Vector;
 import java.util.Hashtable;
 import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
+
+import jdk.jigsaw.module.internal.ModuleCatalog;
+import jdk.jigsaw.module.internal.ModuleRuntime;
 import sun.misc.CompoundEnumeration;
 import sun.misc.Resource;
 import sun.misc.URLClassPath;
 import sun.misc.Unsafe;
 import sun.reflect.CallerSensitive;
-import sun.reflect.ModuleCatalog;
 import sun.reflect.Reflection;
 import sun.reflect.misc.ReflectUtil;
 import sun.security.util.SecurityConstants;
@@ -530,6 +532,29 @@ public abstract class ClassLoader {
     protected Class<?> findClass(String name) throws ClassNotFoundException {
         throw new ClassNotFoundException(name);
     }
+
+    /**
+     * Defines the modules in the given module-graph (that are not in its
+     * initial module graph) to the runtime and associates the modules with
+     * this class loader.
+     *
+     * @apiNote This is an experimental API for now
+     */
+    protected final void defineModules(jdk.jigsaw.module.ModuleGraph g) {
+        ModuleRuntime.defineModules(g, this);
+    }
+
+    /**
+     * Defines a module in a given module graph to the runtime and associates
+     * the module with this class loader.
+     *
+     * @apiNote This is an experimental API for now
+     */
+    protected final void defineModule(jdk.jigsaw.module.ModuleGraph g,
+                                      jdk.jigsaw.module.Module m) {
+        ModuleRuntime.defineModule(g, m, this);
+    }
+
 
     /**
      * Converts an array of bytes into an instance of class <tt>Class</tt>.

@@ -78,7 +78,7 @@ import java.util.zip.ZipOutputStream;
 
 import jdk.jigsaw.module.Module;
 import jdk.jigsaw.module.ModulePath;
-import jdk.jigsaw.module.SimpleResolver;
+import jdk.jigsaw.module.Resolver;
 
 /**
  * Implementation for the jlink tool.
@@ -225,7 +225,7 @@ class JlinkTask {
         },
         new Option(true, "--module-path", "--mp") {
             void process(JlinkTask task, String opt, String arg) {
-                task.options.modulePath = ModulePath.fromPath(arg);
+                task.options.modulePath = ModulePath.ofDirectories(arg);
             }
         },
         new Option(true, "--libs") {
@@ -408,7 +408,7 @@ class JlinkTask {
      * Returns the set of required modules
      */
     private Set<Module> modulesNeeded(Set<String> jmods) throws IOException {
-        SimpleResolver resolver = new SimpleResolver(options.modulePath);
+        Resolver resolver = new Resolver(options.modulePath);
         return resolver.resolve(jmods).modules();
     }
 

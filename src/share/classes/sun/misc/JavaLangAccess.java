@@ -30,8 +30,9 @@ import java.lang.reflect.Executable;
 import java.security.AccessControlContext;
 import java.util.Map;
 
+import jdk.jigsaw.module.internal.ModuleCatalog;
+
 import sun.reflect.ConstantPool;
-import sun.reflect.ModuleCatalog;
 import sun.reflect.annotation.AnnotationType;
 import sun.nio.ch.Interruptible;
 

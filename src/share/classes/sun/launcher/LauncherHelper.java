@@ -44,7 +44,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.ObjectInputStream;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Method;
@@ -59,7 +58,6 @@ import java.nio.file.Path;
 import java.text.Normalizer;
 import java.util.ResourceBundle;
 import java.text.MessageFormat;
-import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -461,25 +459,56 @@ public enum LauncherHelper {
     }
 
     /**
-     * Reads a module's main class from its extended module descriptor. For
-     * now then only jmod files are supported and the jmod must be on the
-     * module path.
+     * Returns the main class for a module. The query is either a module-id
+     * or module-id/main-class. For the former then the module's main class
+     * is read from its extended module descriptor (jmod for now).
      */
     static String getMainClassForModule(String query) throws IOException {
-        ModuleId mid = ModuleId.parse(query);
+        int i = query.indexOf('/');
+        String mainModule;
+        String mainClass;
+        if (i == -1) {
+            mainModule = query;
+            mainClass = null;
+        } else {
+            mainModule = query.substring(0, i);
+            mainClass = query.substring(i+1);
+        }
+
+        // main module should be in the system module graph
+        ModuleId mid = ModuleId.parse(mainModule);
         ModulePath mp = ModuleGraph.getSystemModuleGraph().modulePath();
         Module m = mp.findModule(mid.name());
         if (m == null) {
-            abort(null, "java.launcher.module.error1", query);
+            abort(null, "java.launcher.module.error1", mainModule);
         }
+
+        // if query included the main-class then we return that
+        if (mainClass != null) {
+            i = mainClass.lastIndexOf('.');
+            if (i > 0) {
+                String pkg = mainClass.substring(0, i);
+                if (!m.packages().contains(pkg)) {
+                    // main class not in a package that the module defines
+                    abort(null, "java.launcher.module.error2", mainModule, mainClass);
+                }
+            } else {
+                // main-class cannot be in the unnamed package
+                abort(null, "java.launcher.module.error2", mainModule, "<unnamed>");
+            }
+            return mainClass;
+        }
+
+        // read extended module descriptor's main class.
+        // (only jmod for now)
         URL url = mp.locationOf(m);
         if (!url.getProtocol().equalsIgnoreCase("jmod")) {
-            abort(null, "java.launcher.module.error2", query);
+            abort(null, "java.launcher.module.error3", query);
         }
         ZipFile zf = JModCache.get(url);
         ZipEntry ze = zf.getEntry("module/main-class");
         if (ze == null) {
-            abort(null, "java.launcher.module.error3", url);
+            abort(null, "java.launcher.module.error4", url);
         }
         try (InputStream in = zf.getInputStream(ze)) {
             return new BufferedReader(new InputStreamReader(in, "UTF-8")).readLine();
@@ -536,7 +565,14 @@ public enum LauncherHelper {
         throws Exception
     {
         initOutput(printToStderr);
-        initModules();
+
+        // initialize modules
+        try {
+            ModuleLauncher.init();
+        } catch (Exception e) {
+            e.printStackTrace();  // for debugging purposes
+            abort(e, "java.launcher.init.error");
+        }
 
         // get the class name
         String cn = null;
@@ -873,11 +909,10 @@ public enum LauncherHelper {
             }
         }
 
-        Module[] mods = readModules();
-        Arrays.sort(mods);
-        for (Module m: mods) {
+        boolean detail = verbose;
+        ModulePath.installedModules().allModules().stream().sorted().forEach(m -> {
             ostream.println(m.id());
-            if (verbose) {
+            if (detail) {
                 for (ModuleDependence d: m.moduleDependences()) {
                     ostream.format("  %s%n", d);
                 }
@@ -915,61 +950,6 @@ public enum LauncherHelper {
                     }
                 }
             }
-        }
-    }
-
-    /**
-     * Module definitions, serialized in modules.ser for now
-     */
-    private static final String MODULES_SER = "jdk/jigsaw/module/resources/modules.ser";
-
-    private static Module[] readModules() throws IOException, ClassNotFoundException {
-        InputStream stream = ClassLoader.getSystemResourceAsStream(MODULES_SER);
-        if (stream == null) {
-            System.err.format("WARNING: %s not found%n", MODULES_SER);
-            return new Module[0];
-        }
-        try (InputStream in = stream) {
-            ObjectInputStream ois = new ObjectInputStream(in);
-            Module[] mods = (Module[]) ois.readObject();
-            if (mods.length == 0)
-                System.err.format("WARNING: %s is empty%n", MODULES_SER);
-            return mods;
-        }
-    }
-
-    /**
-     * Load the "compiled" module graph, initialize the module path, and
-     * uses the ModuleLauncher to resolve the initial module(s) and define
-     * the modules to the VM.
-     */
-    private static void initModules() throws IOException, ClassNotFoundException {
-        // JDK modules from modules.ser
-        Module[] jdkModules = readModules();
-        if (jdkModules.length == 0) {
-            // do nothing for now
-            return;
-        }
-
-        // initial modules/roots specified via -mods
-        Set<String> roots = new HashSet<>();
-        String propValue = System.getProperty("jdk.launcher.modules");
-        if (propValue != null) {
-            for (String root: propValue.split(",")) {
-                roots.add(root);
-            }
-        }
-
-        // tracing
-        boolean verbose = Boolean.parseBoolean(
-            System.getProperty("jdk.launcher.modules.verbose"));
-
-        // initialize modules
-        try {
-            ModuleLauncher.init(jdkModules, roots, verbose);
-        } catch (Exception e) {
-            e.printStackTrace();  // for debugging purposes
-            abort(e, "java.launcher.init.error");
-        }
+        });
     }
 }

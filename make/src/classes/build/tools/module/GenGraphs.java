@@ -27,7 +27,6 @@ package build.tools.module;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.ObjectInputStream;
 import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -43,11 +42,9 @@ import jdk.jigsaw.module.Module;
 import static jdk.jigsaw.module.ModuleDependence.Modifier.PUBLIC;
 import jdk.jigsaw.module.ModuleGraph;
 import jdk.jigsaw.module.ModulePath;
-import jdk.jigsaw.module.SimpleResolver;
+import jdk.jigsaw.module.Resolver;
 
 public class GenGraphs {
-    private static final String MODULES_SER = "jdk/jigsaw/module/resources/modules.ser";
-
     public static void main(String[] args) throws Exception {
         if (args.length != 1) {
             System.err.println("ERROR: specify the output directory");
@@ -55,40 +52,23 @@ public class GenGraphs {
         }
         Path dir = Paths.get(args[0]);
         Files.createDirectories(dir);
-        Module[] modules = readModules();
 
-        ModulePath mp = ModulePath.installed(modules);
-        SimpleResolver resolver = new SimpleResolver(mp);
+        ModulePath mp = ModulePath.installedModules();
+        Resolver resolver = new Resolver(mp);
 
-        Set<Module> javaSEModules = Arrays.stream(modules)
+        Set<Module> javaSEModules = mp.allModules().stream()
                                         .filter(m -> m.id().name().startsWith("java."))
                                         .collect(Collectors.toSet());
-        Set<Module> jdkModules = Arrays.stream(modules)
+        Set<Module> jdkModules = mp.allModules().stream()
                                        .filter(m -> !javaSEModules.contains(m))
                                        .collect(Collectors.toSet());
         GenGraphs genGraphs = new GenGraphs(javaSEModules, jdkModules);
-        for (Module m: modules) {
+        for (Module m: mp.allModules()) {
             String name = m.id().name();
             ModuleGraph g = resolver.resolve(name);
             genGraphs.genDotFile(dir, name, g);
         }
     }
-
-    private static Module[] readModules() throws Exception {
-        InputStream stream = ClassLoader.getSystemResourceAsStream(MODULES_SER);
-        if (stream == null) {
-            System.err.format("WARNING: %s not found%n", MODULES_SER);
-            return new Module[0];
-        }
-        try (InputStream in = stream) {
-            ObjectInputStream ois = new ObjectInputStream(in);
-            Module[] mods = (Module[]) ois.readObject();
-            if (mods.length == 0)
-                System.err.format("WARNING: %s is empty%n", MODULES_SER);
-            return mods;
-        }
-    }
-
 
     private final Set<Module> javaGroup;
     private final Set<Module> jdkGroup;

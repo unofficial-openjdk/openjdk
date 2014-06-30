@@ -27,9 +27,10 @@ package jdk.jigsaw.module;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.InputStreamReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.ObjectInputStream;
 import java.io.UncheckedIOException;
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -58,187 +59,128 @@ import sun.misc.JModCache;
  * A module path used for locating modules. For example a module path may be
  * backed by a sequence of directories on the file system that contain
  * module artifacts.
- *
- * {@code ModulePath}s can be arranged in a sequence. When locating a module
- * that is not found then the next {@code ModulePath} in the sequence is
- * searched.
  */
 
 public abstract class ModulePath {
-
-    // the next module path, can be {@code null}
-    private final ModulePath next;
-
-    protected ModulePath(ModulePath next) {
-        this.next = next;
-    }
-
-    protected ModulePath() {
-        this(null);
-    }
-
-    /**
-     * Returns the next module path, may be {@code null}.
-     */
-    public final ModulePath next() {
-        return next;
-    }
+    protected ModulePath() { }
 
     /**
      * Locates a module of the given name in this module path. Returns
      * {@code null} if not found.
      */
-    public abstract Module findLocalModule(String name);
+    public abstract Module findModule(String name);
 
     /**
-     * Locates a module of the given name. If the module is not found in this
-     * module path then the next module path is searched.
+     * Returns the set of all modules in this module path.
      */
-    public final Module findModule(String name) {
-        Module m = findLocalModule(name);
-        if (m == null && next != null)
-            m = next.findModule(name);
-        return m;
-    }
-
-    /**
-     * Returns the set of modules that are local to this module path.
-     */
-    public abstract Set<Module> localModules();
-
-    /**
-     * Returns the set of all modules in this module path and all modules
-     * paths that is is chained to.
-     */
-    public final Set<Module> allModules() {
-        if (next == null)
-            return localModules();
-        Set<Module> result = new HashSet<>();
-        result.addAll(next.allModules());
-        result.addAll(localModules());
-        return result;
-    }
+    public abstract Set<Module> allModules();
 
     /**
      * Returns a {@code URL} to locate the given {@code Module} in this module
      * path. Returns {@code null} if not found.
      */
-    public abstract URL localLocationOf(Module m);
-
-    /**
-     * Returns a {@code URL} to locate the given {@code Module}. if the module
-     * is not found in this module path then the next module path is searched.
-     */
-    public final URL locationOf(Module m) {
-        URL url = localLocationOf(m);
-        if (url == null && next != null)
-            url = next.localLocationOf(m);
-        return url;
-    }
+    public abstract URL locationOf(Module m);
 
     /**
      * Creates a new {@code ModulePath} that is the equivalent to joining the
-     * given module path to tail of this module path. In order words, searching
+     * given module path to end of this module path. In order words, searching
      * the resulting module path for a module will first search this module path;
      * if not found then the module path specified by {@code tail} will be
      * searched.
      */
     public final ModulePath join(ModulePath tail) {
         ModulePath head = this;
-        return new ModulePath(tail) {
+        return new ModulePath() {
             @Override
-            public Module findLocalModule(String name) {
-                return head.findModule(name);
+            public Module findModule(String name) {
+                Module m = head.findModule(name);
+                if (m == null)
+                    m = tail.findModule(name);
+                return m;
             }
             @Override
-            public Set<Module> localModules() {
-                return head.allModules();
+            public Set<Module> allModules() {
+                Set<Module> result = new HashSet<>();
+                // order is important as head overrides tail
+                result.addAll(tail.allModules());
+                result.addAll(head.allModules());
+                return result;
             }
             @Override
-            public URL localLocationOf(Module m) {
-                return head.locationOf(m);
+            public URL locationOf(Module m) {
+                URL u = head.locationOf(m);
+                if (u == null)
+                    u = tail.locationOf(m);
+                return u;
             }
         };
     }
 
     /**
-     * Creates a {@code ModulePath} to represent the module path of a runtime
-     * that has the given modules linked-in into the runtime.
+     * Returns a module-path of the installed modules, these are the modules
+     * that are linked into the runtime image.
+     *
+     * @implNote serialized in modules.ser for now
      */
-    public static ModulePath installed(Module... mods) {
-        return new InstalledModulePath(mods);
+    public static ModulePath installedModules() {
+        final String MODULES_SER = "jdk/jigsaw/module/resources/modules.ser";
+        InputStream stream = ClassLoader.getSystemResourceAsStream(MODULES_SER);
+        Module[] modules;
+        if (stream == null) {
+            System.err.format("WARNING: %s not found%n", MODULES_SER);
+            modules = new Module[0];
+        } else {
+            try (InputStream in = stream) {
+                ObjectInputStream ois = new ObjectInputStream(in);
+                modules = (Module[]) ois.readObject();
+                if (modules.length == 0)
+                    System.err.format("WARNING: %s is empty%n", MODULES_SER);
+            } catch (IOException | ClassNotFoundException e) {
+                throw new InternalError(e);
+            }
+        }
+        return new ArrayModulePath(modules);
     }
 
     /**
      * Creates a {@code ModulePath} that locates modules on the file system by
-     * searching a {@code PATH} that is a a sequence of directories containing
-     * module artifacts ({@code jmod}, modular JAR, exploded modules).
-     *
-     * @param path The sequence of directories, separated by the system-dependent
-     *             path-separator
-     * @param next The next {@code ModulePath}, may be {@code null}
+     * searching sequence of directories containing module artifacts
+     * ({@code jmod}, modular JAR, exploded modules).
      */
-    public static ModulePath fromPath(String path, ModulePath next) {
-        String[] dirs = path.split(File.pathSeparator);
-        return new FileSystemModulePath(dirs, next);
-    }
-
-    /**
-     * Creates a {@code ModulePath} that locates modules on the file system by
-     * searching a {@code PATH} that is a a sequence of directories containing
-     * module artifacts.
-     *
-     * @param path The sequence of directories, separated by the system-dependent
-     *             path-separator
-     */
-    public static ModulePath fromPath(String path) {
-        return fromPath(path, null);
-    }
-
-    /**
-     * Returns an empty {@code ModulePath}.
-     */
-    public static ModulePath emptyModulePath() {
-        return new ModulePath(null) {
-            @Override
-            public Module findLocalModule(String name) { return null; }
-            @Override
-            public Set<Module> localModules() { return Collections.emptySet(); }
-            @Override
-            public URL localLocationOf(Module m) { return null; }
-        };
+    public static ModulePath ofDirectories(String... dirs) {
+        return new FileSystemModulePath(dirs);
     }
 }
 
 /**
- * A module path of the modules installed in the runtime image.
+ * A module path backed by an array of modules.
  */
-class InstalledModulePath extends ModulePath {
+class ArrayModulePath extends ModulePath {
     private final Set<Module> modules = new HashSet<>();
     private final Map<String, Module> namesToModules = new HashMap<>();
 
-    InstalledModulePath(Module... mods) {
+    ArrayModulePath(Module... mods) {
         for (Module m: mods) {
-            modules.add(m);
             String name = m.id().name();
-            if (namesToModules.containsKey(name))
-                throw new IllegalArgumentException(name + ": more than one");
-            namesToModules.put(name, m);
+            if (!namesToModules.containsKey(name)) {
+                modules.add(m);
+                namesToModules.put(name, m);
+            }
         }
     }
 
     @Override
-    public Module findLocalModule(String name) {
+    public Module findModule(String name) {
         return namesToModules.get(name);
     }
 
     @Override
-    public Set<Module> localModules() {
+    public Set<Module> allModules() {
         return Collections.unmodifiableSet(modules);
     }
 
     @Override
-    public URL localLocationOf(Module m) {
+    public URL locationOf(Module m) {
         if (!modules.contains(m))
             return null;
         try {
@@ -273,13 +215,12 @@ class FileSystemModulePath extends ModulePath {
     // the module to URL map of modules already located
     private final Map<Module, URL> urls = new HashMap<>();
 
-    public FileSystemModulePath(String[] dirs, ModulePath next) {
-        super(next);
+    public FileSystemModulePath(String... dirs) {
         this.dirs = dirs; // no need to clone
     }
 
     @Override
-    public Module findLocalModule(String name) {
+    public Module findModule(String name) {
         // try cached modules
         Module m = cachedModules.get(name);
         if (m != null)
@@ -296,7 +237,7 @@ class FileSystemModulePath extends ModulePath {
     }
 
     @Override
-    public Set<Module> localModules() {
+    public Set<Module> allModules() {
         // need to ensure that all directories have been scanned
         while (hasNextDirectory()) {
             scanNextDirectory();
@@ -305,7 +246,7 @@ class FileSystemModulePath extends ModulePath {
     }
 
     @Override
-    public URL localLocationOf(Module m) {
+    public URL locationOf(Module m) {
         URL url = urls.get(m);
         if (url != null)
             return url;

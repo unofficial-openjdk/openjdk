@@ -36,6 +36,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import jdk.jigsaw.module.ModuleDependence;
 import jdk.jigsaw.module.ModuleExport;
+import jdk.jigsaw.module.ModulePath;
 
 /**
  * Run on Jake modular image to generate build/data/checkdeps/modules.xml
@@ -48,16 +49,9 @@ public class JigsawModules {
         this.gentool = gentool;
         this.skipPackages = nopackages;
     }
-    private static final String MODULES_SER = "jdk/jigsaw/module/resources/modules.ser";
-    public Set<Module> load()
-        throws IOException, ClassNotFoundException
-    {
-        jdk.jigsaw.module.Module[] mods = ModuleUtils.readModules();
-        if (mods.length == 0) {
-            System.err.format("ERROR: %s is empty%n", MODULES_SER);
-            System.exit(1);
-        }
-        return Arrays.stream(mods)
+    public Set<Module> load()  {
+        Set<jdk.jigsaw.module.Module> modules = ModulePath.installedModules().allModules();
+        return modules.stream()
             .map(m -> toModule(gentool, m))
             .collect(Collectors.toSet());
     }

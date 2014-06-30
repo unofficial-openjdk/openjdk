@@ -31,6 +31,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import sun.reflect.CallerSensitive;
+import sun.reflect.Reflection;
+
 /**
  * Provides information and access to a Java Module.
  *
@@ -76,10 +79,27 @@ public final class Module {
     }
 
     /**
-     * Returns the set of modules that this module reads.
+     * Returns the set of modules that this module reads. The set of modules
+     * that this module reads may vary over the lifetime of the VM.
+     *
+     * @see #setReadable()
      */
     public Set<Module> readDependences() {
         return Collections.unmodifiableSet(reads.keySet());
+    }
+
+    /**
+     * Makes this module readable to the module of the caller.
+     */
+    @CallerSensitive
+    public void setReadable() {
+        Module caller = Reflection.getCallerClass().getModule();
+        if (caller == null)
+            return;
+
+        // ### FIXME, permits not checked yet
+
+        caller.reads.put(this, Boolean.TRUE);
     }
 
     /**

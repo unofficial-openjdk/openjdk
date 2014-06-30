@@ -25,8 +25,11 @@
 
 package jdk.jigsaw.module;
 
+import java.util.ArrayDeque;
 import java.util.Collections;
+import java.util.Deque;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -38,54 +41,62 @@ import java.util.stream.Stream;
  * The {@link #modules} method returns the set of {@link Module Modules} in the
  * graph. The {@link #readDependences} method provides access to the readability
  * relationships.
+ *
+ * The {@link #bindServices} method can be used to augment the module graph with
+ * modules from the original module path that are induced by service-use
+ * relationships.
  */
 public final class ModuleGraph {
+
+    // the resolver, can be {@code null} in the case of an empty module graph
+    private final Resolver resolver;
 
     // readability graph
     private final Map<Module, Set<Module>> graph;
 
-    // the module path to locate the modules in this module graph
-    private final ModulePath modulePath;
-
-    // the (possibly empty) module graph from which this module graph was composed
-    private final ModuleGraph initialGraph;
-
-    // selected modules
+    // all modules in the module graph (including the initial module graph)
     private final Set<Module> modules;
 
-    // map of most recently selected module name -> module
+    // map of selected module name -> module
+    // "selected modules" = not in the initial module graph
     private final Map<String, Module> nameToModule;
 
-    ModuleGraph(Map<Module, Set<Module>> graph,
-                ModulePath modulePath,
-                ModuleGraph initialGraph)
-    {
+    /**
+     * Creates a new {@code ModuleGraph}.
+     *
+     * @param resolver The {@code Resolver} that created this module graph
+     * @param graph The readability graph
+     */
+    ModuleGraph(Resolver resolver, Map<Module, Set<Module>> graph) {
+        this.resolver = resolver;
         this.graph = graph;
-        this.modulePath = modulePath;
-        this.initialGraph = initialGraph;
         this.modules = Collections.unmodifiableSet(graph.keySet());
 
-        // most recently selected modules
-        Stream<Module> newlySelected;
-        if (initialGraph == null) {
-            newlySelected = modules.stream();
+        // create name->module map of the recently selected modules
+        Map<String, Module> map;
+        if (resolver == null) {
+            map = Collections.emptyMap();
         } else {
-            newlySelected = graph.keySet()
-                                 .stream()
-                                 .filter(m -> !initialGraph.graph.containsKey(m));
+            ModuleGraph g = resolver.initialModuleGraph();
+            Stream<Module> newlySelected;
+            if (g.isEmpty()) {
+                newlySelected = modules.stream();
+            } else {
+                newlySelected = graph.keySet()
+                                     .stream()
+                                     .filter(m -> !g.graph.containsKey(m));
+            }
+            map = new HashMap<>();
+            newlySelected.forEach(m -> map.put(m.id().name(), m));
         }
-        Map<String, Module> map = new HashMap<>();
-        newlySelected.forEach(m -> map.put(m.id().name(), m));
         this.nameToModule = map;
     }
 
     /**
      * Returns an empty module graph.
      */
-    public static ModuleGraph emptyModuleGraph() {
-        return new ModuleGraph(Collections.emptyMap(),
-                               ModulePath.emptyModulePath(),
-                               null);
+    static ModuleGraph emptyModuleGraph() {
+        return new ModuleGraph(null, Collections.emptyMap());
     }
 
     /**
@@ -101,8 +112,10 @@ public final class ModuleGraph {
      */
     public Module findModule(String name) {
         Module m = nameToModule.get(name);
-        if (m == null && initialGraph != null)
-            m = initialGraph.findModule(name);
+        if (m == null && resolver != null) {
+            // not a newly selected module so try the initial module graph
+            m = resolver.initialModuleGraph().findModule(name);
+        }
         return m;
     }
 
@@ -127,16 +140,18 @@ public final class ModuleGraph {
      * Returns the module path to locate modules in this module graph.
      */
     public ModulePath modulePath() {
-        return modulePath;
+        return resolver.modulePath();
     }
 
     /**
      * Returns the initial module graph used when creating this module graph.
      */
     public ModuleGraph initialModuleGraph() {
-        if (initialGraph == null)
-            return ModuleGraph.emptyModuleGraph();
-        return initialGraph;
+        if (resolver == null) {
+            return emptyModuleGraph();
+        } else {
+            return resolver.initialModuleGraph();
+        }
     }
 
     /**
@@ -147,18 +162,91 @@ public final class ModuleGraph {
     }
 
     /**
+     * Returns the set of modules that are in this module graph that are not
+     * in the given module graph.
+     */
+    public Set<Module> minus(ModuleGraph g) {
+        return graph.keySet()
+                    .stream()
+                    .filter(m -> !g.graph.containsKey(m))
+                    .collect(Collectors.toSet());
+    }
+
+
+    /**
      * Returns the set of modules that are in this module graph that were not in
      * the initial module graph.
      */
     public Set<Module> minusInitialModuleGraph() {
-        if (initialGraph == null) {
-            return modules;
-        } else {
-            return graph.keySet()
-                        .stream()
-                        .filter(m -> !initialGraph.graph.containsKey(m))
-                        .collect(Collectors.toSet());
+        return minus(resolver.initialModuleGraph());
+    }
+
+    /**
+     * Returns a new module graph that is this module graph augmented with modules
+     * from the module path that are induced by service-use relationships.
+     *
+     * @throws ResolveException if a service provider module dependences cannot be
+     * resolved
+     */
+    public ModuleGraph bindServices() {
+        // empty module graph, nothing to do
+        if (resolver == null)
+            return this;
+
+        // the selected modules so far, this will be augmented with modules
+        // that provide services and their dependences
+        Set<Module> modules = new HashSet<>(this.modules);
+
+        // create the visit stack
+        Deque<Module> q = new ArrayDeque<>();
+
+        // the set of services (name of service type) for which service providers
+        // have been searched for on the module path
+        Set<String> servicesSearched = new HashSet<>();
+
+        // the set of modules with service dependences that need to be visited
+        Set<Module> serviceConsumersToVisit = new HashSet<>();
+        modules.stream().filter(m -> !m.serviceDependences().isEmpty())
+               .forEach(serviceConsumersToVisit::add);
+
+        // iterate until there are no new service consumers to visit
+        while (!serviceConsumersToVisit.isEmpty()) {
+
+            // process the service dependences of service consumers
+            for (Module m: serviceConsumersToVisit) {
+                for (ServiceDependence d: m.serviceDependences()) {
+                    String sn = d.service();
+                    if (!servicesSearched.contains(sn)) {
+                        // find all modules on module-path that provide sn
+                        for (Module other: resolver.modulePath().allModules()) {
+                            if (other.services().containsKey(sn)) {
+                                // ignore permits
+                                if (!modules.contains(other)) {
+                                    q.offer(other);
+                                }
+                            }
+                        }
+                        servicesSearched.add(sn);
+                    }
+                }
+            }
+            serviceConsumersToVisit.clear();
+
+            // there may be service providers to resolve
+            if (!q.isEmpty()) {
+                Set<Module> newlySelected = resolver.resolve(q, modules);
+                // newly selected modules may have service dependences
+                for (Module m: newlySelected) {
+                    if (!m.serviceDependences().isEmpty()) {
+                        serviceConsumersToVisit.add(m);
+                    }
+                }
+                modules.addAll(newlySelected);
+            }
         }
+
+        // done, return resulting module graph
+        return resolver.finish(modules);
     }
 
     // system module graph; concurrency TBD

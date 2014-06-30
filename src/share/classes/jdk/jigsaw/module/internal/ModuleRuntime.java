@@ -23,20 +23,22 @@
  * questions.
  */
 
-package jdk.jigsaw.module;
+package jdk.jigsaw.module.internal;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import jdk.jigsaw.module.Module;
+import jdk.jigsaw.module.ModuleExport;
+import jdk.jigsaw.module.ModuleGraph;
+import jdk.jigsaw.module.ServiceDependence;
+
 import sun.misc.JavaLangAccess;
 import sun.misc.JavaLangReflectAccess;
 import sun.misc.SharedSecrets;
 import sun.misc.VM;
-import sun.reflect.CallerSensitive;
-import sun.reflect.ModuleCatalog;
-import sun.reflect.Reflection;
 
 /**
  * Module runtime support. This class defines static methods to define modules
@@ -147,6 +149,10 @@ public final class ModuleRuntime {
     /**
      * Defines the given modules in the given module graph to the runtime. The
      * module is associated with the given {@code ClassLoader}.
+     *
+     * ##FIXME: Modules with (unqalified) exports and permits aren't currnetly
+     * handled. The exported packages are accessible to code in the unnamed
+     * module as a result. This should be converted to qualified exports.
      */
     public static boolean defineModule(ModuleGraph g, Module m, ClassLoader loader) {
         synchronized (dictionary) {
@@ -254,36 +260,6 @@ public final class ModuleRuntime {
     }
 
     /**
-     * Makes the given module readable to the module of the caller.
-     *
-     * @throws java.lang.IllegalStateException if the given module has a
-     *   permits and the permits does not include the caller. We need to
-     *   decide on a better exception for this.
-     */
-    @CallerSensitive
-    public static void setReadable(java.lang.reflect.Module who) {
-        if (who == null)
-            return;
-        java.lang.reflect.Module caller = Reflection.getCallerClass().getModule();
-        if (caller == null)
-            return;
-
-        Module m = moduleToModule.get(who);
-        if (m == null)
-            throw new InternalError();
-
-        Set<String> permits = m.permits();
-        if (!permits.isEmpty()) {
-            if (!permits.contains(caller))
-                throw new IllegalStateException(m.id() + " has a permits");
-            return;
-        }
-
-        // update core reflection for now
-        reflectAccess.addReadsModule(caller, who);
-    }
-
-    /**
      * Defines a new java.lang.reflect.Module for the given Module and
      * associate with the given class loader.
      */
@@ -297,6 +273,6 @@ public final class ModuleRuntime {
             catalog = langAccess.getModuleCatalog(loader);
         }
         String name = m.id().name();
-        return catalog.defineModule(name, m.packages());
+        return catalog.defineModule(name, m.packages(), m.services());
     }
 }
