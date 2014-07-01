@@ -36,29 +36,23 @@ import static org.testng.Assert.*;
 
 @Test
 public class JdkModules {
-    private static final String MODULES_SER = "jdk/jigsaw/module/resources/modules.ser";
     private void base(Module m) throws Exception {
-        // requires jdk.tls.internal due to the sunjce security provider
-        // - to be revisited
         ModuleDependence[] deps = new ModuleDependence[] {};
         assertEqualsNoOrder(m.moduleDependences().toArray(new ModuleDependence[0]), deps);
     }
 
     private void jdk(Module m) throws Exception {
         ModuleDependence[] deps = new ModuleDependence[] {
-            moduleDep(EnumSet.of(PUBLIC), "jdk.jre"),
-            moduleDep(EnumSet.of(PUBLIC), "jdk.tools")
+            moduleDep("jdk.runtime"),
+            moduleDep("jdk.dev"),
+            moduleDep("jdk.svc"),
+            moduleDep("jdk.debug")
         };
         assertEqualsNoOrder(m.moduleDependences().toArray(new ModuleDependence[0]), deps);
     }
 
     public void go() throws Exception {
-        Set<Module> modules = new HashSet<>();
-        try (ObjectInputStream sin = new ObjectInputStream(
-                 ClassLoader.getSystemResourceAsStream(MODULES_SER)))
-        {
-            modules.addAll(Arrays.asList((Module[]) sin.readObject()));
-        }
+        Set<Module> modules = ModulePath.installedModules().allModules();
 
         // do sanity test for the base module for now
         for (Module m : modules) {
@@ -75,4 +69,7 @@ public class JdkModules {
         return new ModuleDependence(mods, ModuleIdQuery.parse(mq));
     }
 
+    private static ModuleDependence moduleDep(String mq) {
+        return new ModuleDependence(EnumSet.noneOf(Modifier.class), ModuleIdQuery.parse(mq));
+    }
 }

@@ -36,12 +36,10 @@ import java.net.URL;
 import java.security.AccessController;
 import java.security.AccessControlContext;
 import java.security.PrivilegedAction;
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.Iterator;
-import java.util.List;
-import java.util.NoSuchElementException;
 
+import jdk.jigsaw.module.internal.ModuleCatalog;
+import sun.misc.JavaLangAccess;
+import sun.misc.SharedSecrets;
 import sun.reflect.CallerSensitive;
 import sun.reflect.Reflection;
 
@@ -207,7 +205,7 @@ public final class ServiceLoader<S>
     private LinkedHashMap<String,S> providers = new LinkedHashMap<>();
 
     // The current lazy-lookup iterator
-    private LazyIterator lookupIterator;
+    private LookupIterator lookupIterator;
 
     /**
      * Clear this loader's provider cache so that all providers will be
@@ -222,7 +220,10 @@ public final class ServiceLoader<S>
      */
     public void reload() {
         providers.clear();
-        lookupIterator = new LazyIterator(service, loader);
+        lookupIterator = new LookupIterator(
+            new ModuleServicesIterator(service, loader),
+            new LegacyServicesIterator(service, loader)
+        );
     }
 
     private ServiceLoader(Class<S> svc, ClassLoader cl) {
@@ -324,46 +325,21 @@ public final class ServiceLoader<S>
         return names.iterator();
     }
 
-    // Private inner class implementing fully-lazy provider lookup
-    //
-    private class LazyIterator
+
+    /**
+     * Abstract class for lazy provider lookup
+     */
+    private abstract class ServicesIterator
         implements Iterator<S>
     {
+        protected final Class<S> service;
+        private final ClassLoader loader;
 
-        Class<S> service;
-        ClassLoader loader;
-        Enumeration<URL> configs = null;
-        Iterator<String> pending = null;
-        String nextName = null;
+        protected String nextName;
 
-        private LazyIterator(Class<S> service, ClassLoader loader) {
+        ServicesIterator(Class<S> service, ClassLoader loader) {
             this.service = service;
             this.loader = loader;
-        }
-
-        private boolean hasNextService() {
-            if (nextName != null) {
-                return true;
-            }
-            if (configs == null) {
-                try {
-                    String fullName = PREFIX + service.getName();
-                    if (loader == null)
-                        configs = ClassLoader.getSystemResources(fullName);
-                    else
-                        configs = loader.getResources(fullName);
-                } catch (IOException x) {
-                    fail(service, "Error locating configuration files", x);
-                }
-            }
-            while ((pending == null) || !pending.hasNext()) {
-                if (!configs.hasMoreElements()) {
-                    return false;
-                }
-                pending = parse(service, configs.nextElement());
-            }
-            nextName = pending.next();
-            return true;
         }
 
         /**
@@ -392,7 +368,7 @@ public final class ServiceLoader<S>
                 String sn = service.getName();
                 if (!m1.uses().contains(sn)) {
                     throw new IllegalAccessException(m1 +
-                        " does not declare that it uses " + sn);
+                            " does not declare that it uses " + sn);
                 }
             }
 
@@ -403,7 +379,7 @@ public final class ServiceLoader<S>
                 Set<String> provides = m2.provides().get(sn);
                 if (!provides.contains(cn)) {
                     throw new IllegalAccessException(m2 +
-                        " does not declare that it provides " + sn + " with " + cn);
+                            " does not declare that it provides " + sn + " with " + cn);
                 }
             }
 
@@ -415,6 +391,12 @@ public final class ServiceLoader<S>
             return ctor;
         }
 
+        /**
+         * Returns {@code true} with {@code nextName} set as a side effect
+         * when there is a next service provider.
+         */
+        abstract boolean hasNextService();
+
         private S nextService(Class<?> caller) {
             if (!hasNextService())
                 throw new NoSuchElementException();
@@ -425,11 +407,11 @@ public final class ServiceLoader<S>
                 c = Class.forName(cn, false, loader);
             } catch (ClassNotFoundException x) {
                 fail(service,
-                     "Provider " + cn + " not found");
+                        "Provider " + cn + " not found");
             }
             if (!service.isAssignableFrom(c)) {
                 fail(service,
-                     "Provider " + cn  + " not a subtype");
+                        "Provider " + cn  + " not a subtype");
             }
 
             try {
@@ -439,13 +421,13 @@ public final class ServiceLoader<S>
                 return p;
             } catch (Throwable x) {
                 fail(service,
-                     "Provider " + cn + " could not be instantiated",
-                     x);
+                        "Provider " + cn + " could not be instantiated",
+                        x);
             }
             throw new Error();          // This cannot happen
         }
 
-        public boolean hasNext() {
+        public final boolean hasNext() {
             if (acc == null) {
                 return hasNextService();
             } else {
@@ -456,7 +438,7 @@ public final class ServiceLoader<S>
             }
         }
 
-        public S next(Class<?> caller) {
+        public final S next(Class<?> caller) {
             if (acc == null) {
                 return nextService(caller);
             } else {
@@ -467,14 +449,131 @@ public final class ServiceLoader<S>
             }
         }
 
-        public S next() {
+        public final S next() {
             throw new InternalError("Should not get here");
         }
 
-        public void remove() {
+        public final void remove() {
             throw new UnsupportedOperationException();
         }
+    }
 
+    /**
+     * Implements lazy service provider lookup of service providers that
+     * are defined to the runtime as modules.
+     */
+    private class ModuleServicesIterator extends ServicesIterator {
+        final JavaLangAccess langAccess = SharedSecrets.getJavaLangAccess();
+
+        ClassLoader currentLoader;
+        Iterator<String> iterator;
+
+        ModuleServicesIterator(Class<S> service, ClassLoader loader) {
+            super(service, loader);
+            currentLoader = loader;
+            iterator = iteratorFor(loader);
+        }
+
+        // returns the services Iterator for the given class loader
+        private Iterator<String> iteratorFor(ClassLoader loader) {
+            ModuleCatalog catalog;
+            if (currentLoader == null) {
+                catalog = ModuleCatalog.getSystemModuleCatalog();
+            } else {
+                catalog = langAccess.getModuleCatalog(currentLoader);
+            }
+            return catalog.findServices(service.getName()).iterator();
+        }
+
+        @Override
+        boolean hasNextService() {
+            // already have a service name cached
+            if (nextName != null)
+                return true;
+
+            while (true) {
+                if (iterator.hasNext()) {
+                    nextName = iterator.next();
+                    return true;
+                }
+
+                // move to the next class loader if possible
+                if (currentLoader == null) {
+                    return false;
+                } else {
+                    currentLoader = currentLoader.getParent();
+                    iterator = iteratorFor(currentLoader);
+                }
+            }
+        }
+    }
+
+    /**
+     * Implements lazy service provider lookup where the service providers
+     * are configured via service configuration files.
+     */
+    private class LegacyServicesIterator extends ServicesIterator {
+        Enumeration<URL> configs = null;
+        Iterator<String> pending = null;
+
+        private LegacyServicesIterator(Class<S> service, ClassLoader loader) {
+            super(service, loader);
+        }
+
+        @Override
+        boolean hasNextService() {
+            if (nextName != null) {
+                return true;
+            }
+            if (configs == null) {
+                try {
+                    String fullName = PREFIX + service.getName();
+                    if (loader == null)
+                        configs = ClassLoader.getSystemResources(fullName);
+                    else
+                        configs = loader.getResources(fullName);
+                } catch (IOException x) {
+                    fail(service, "Error locating configuration files", x);
+                }
+            }
+            while ((pending == null) || !pending.hasNext()) {
+                if (!configs.hasMoreElements()) {
+                    return false;
+                }
+                pending = parse(service, configs.nextElement());
+            }
+            nextName = pending.next();
+            return true;
+        }
+    }
+
+    /**
+     * An iterator-like class that can be used to iterate over an array of
+     * service iterators.
+     */
+    private class LookupIterator {
+        ServicesIterator[] iterators;
+        int index;
+
+        LookupIterator(ServicesIterator... iterators) {
+            this.iterators = iterators;
+            this.index = 0;
+        }
+
+        boolean hasNext() {
+            while (index < iterators.length) {
+                if (iterators[index].hasNext())
+                    return true;
+                index++;
+            }
+            return false;
+        }
+
+        S next(Class<?> caller) {
+            if (!hasNext())
+                throw new NoSuchElementException();
+            return iterators[index].next(caller);
+        }
     }
 
     /**
