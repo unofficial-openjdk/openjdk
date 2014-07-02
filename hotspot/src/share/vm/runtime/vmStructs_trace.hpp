@@ -1,6 +1,5 @@
 /*
- * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
- * Copyright 2012, 2013 SAP AG. All rights reserved.
+ * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,9 +22,14 @@
  *
  */
 
-#include "precompiled.hpp"
-#include "interpreter/bytecodes.hpp"
+#ifndef SHARE_VM_RUNTIME_VMSTRUCTS_TRACE_HPP
+#define SHARE_VM_RUNTIME_VMSTRUCTS_TRACE_HPP
 
-void Bytecodes::pd_initialize() {
-  // No ppc specific initialization.
-}
+#define VM_INT_CONSTANTS_TRACE(a)
+
+#define VM_STRUCTS_TRACE(a, b)
+
+#define VM_TYPES_TRACE(a, b)
+
+
+#endif // SHARE_VM_RUNTIME_VMSTRUCTS_TRACE_HPP
