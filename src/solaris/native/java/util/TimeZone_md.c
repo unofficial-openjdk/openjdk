@@ -172,7 +172,6 @@ findZoneinfoFile(char *buf, size_t size, const char *dir)
                 break;
             }
             if ((fd = open(pathname, O_RDONLY)) == -1) {
-                fd = 0;
                 break;
             }
             if (read(fd, dbuf, size) != (ssize_t) size) {
@@ -188,7 +187,7 @@ findZoneinfoFile(char *buf, size_t size, const char *dir)
             free((void *) dbuf);
             dbuf = NULL;
             (void) close(fd);
-            fd = 0;
+            fd = -1;
         }
         free((void *) pathname);
         pathname = NULL;
@@ -203,7 +202,7 @@ findZoneinfoFile(char *buf, size_t size, const char *dir)
     if (pathname != NULL) {
         free((void *) pathname);
     }
-    if (fd != 0) {
+    if (fd != -1) {
         (void) close(fd);
     }
     if (dbuf != NULL) {
