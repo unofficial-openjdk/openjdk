@@ -70,9 +70,15 @@ AWT_ASSERT_APPKIT_THREAD;
     JNIEnv *env = [ThreadUtilities getJNIEnv];
 JNF_COCOA_ENTER(env);
 
-    // If we are called as a result of user pressing a shorcut, do nothing,
-    // because AWTView has already sent corresponding key event to the Java
-    // layer from performKeyEquivalent
+    // If we are called as a result of user pressing a shortcut, do nothing,
+    // because AVTView has already sent corresponding key event to the Java
+    // layer from performKeyEquivalent.
+    // There is an exception from the rule above, though: if a window with
+    // a menu gets minimized by user and there are no other windows to take
+    // focus, the window's menu won't be removed from the global menu bar.
+    // However, the Java layer won't handle invocation by a shortcut coming
+    // from this "frameless" menu, because there are no active windows. This
+    // means we have to handle it here.
     NSEvent *currEvent = [[NSApplication sharedApplication] currentEvent];
     if ([currEvent type] == NSKeyDown) {
         NSString *menuKey = [sender keyEquivalent];
@@ -91,7 +97,8 @@ JNF_COCOA_ENTER(env);
             eventKey = [NSString stringWithCharacters: &newChar length: 1];
         }
 
-        if ([menuKey isEqualToString:eventKey]) {
+        NSWindow *keyWindow = [NSApp keyWindow];
+        if ([menuKey isEqualToString:eventKey] && keyWindow != nil) {
             return;
         }
     }
@@ -289,7 +296,7 @@ static unichar AWTKeyToMacShortcut(jint awtKey, BOOL doShift) {
 
         case java_awt_event_KeyEvent_VK_HELP            : macKey = NSHelpFunctionKey; break;
         case java_awt_event_KeyEvent_VK_TAB             : macKey = NSTabCharacter; break;
-        case java_awt_event_KeyEvent_VK_ENTER           : macKey = NSCarriageReturnCharacter; break;
+        case java_awt_event_KeyEvent_VK_ENTER           : macKey = NSNewlineCharacter; break;
         case java_awt_event_KeyEvent_VK_BACK_SPACE      : macKey = NSBackspaceCharacter; break;
         case java_awt_event_KeyEvent_VK_DELETE          : macKey = NSDeleteCharacter; break;
         case java_awt_event_KeyEvent_VK_CLEAR           : macKey = NSClearDisplayFunctionKey; break;

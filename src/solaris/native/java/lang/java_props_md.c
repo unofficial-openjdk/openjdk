@@ -324,6 +324,25 @@ static int ParseLocale(int cat, char ** std_language, char ** std_script,
             *std_encoding = "Big5-HKSCS-2001";
         }
 #endif
+#ifdef MACOSX
+        /*
+         * For the case on MacOS X where encoding is set to US-ASCII, but we
+         * don't have any encoding hints from LANG/LC_ALL/LC_CTYPE, use UTF-8
+         * instead.
+         *
+         * The contents of ASCII files will still be read and displayed
+         * correctly, but so will files containing UTF-8 characters beyond the
+         * standard ASCII range.
+         *
+         * Specifically, this allows apps launched by double-clicking a .jar
+         * file to correctly read UTF-8 files using the default encoding (see
+         * 8011194).
+         */
+        if (strcmp(p,"US-ASCII") == 0 && getenv("LANG") == NULL &&
+            getenv("LC_ALL") == NULL && getenv("LC_CTYPE") == NULL) {
+            *std_encoding = "UTF-8";
+        }
+#endif
     }
 
     return 1;
@@ -527,7 +546,14 @@ GetJavaProperties(JNIEnv *env)
     {
         struct passwd *pwent = getpwuid(getuid());
         sprops.user_name = pwent ? strdup(pwent->pw_name) : "?";
-        sprops.user_home = pwent ? strdup(pwent->pw_dir) : "?";
+#ifdef MACOSX
+        setUserHome(&sprops);
+#else
+        sprops.user_home = pwent ? strdup(pwent->pw_dir) : NULL;
+#endif
+        if (sprops.user_home == NULL) {
+            sprops.user_home = "?";
+        }
     }
 
     /* User TIMEZONE */

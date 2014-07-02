@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -830,6 +830,8 @@ awt_init_Display(JNIEnv *env, jobject this)
     }
 
     XSetIOErrorHandler(xioerror_handler);
+    JNU_CallStaticMethodByName(env, NULL, "sun/awt/X11/XErrorHandlerUtil", "init", "(J)V",
+        ptr_to_jlong(awt_display));
 
     /* set awt_numScreens, and whether or not we're using Xinerama */
     xineramaInit();
@@ -978,16 +980,11 @@ static jint canUseShmExt = UNSET_MITSHM;
 static jint canUseShmExtPixmaps = UNSET_MITSHM;
 static jboolean xshmAttachFailed = JNI_FALSE;
 
-extern int mitShmPermissionMask;
-
-int J2DXErrHandler(Display *display, XErrorEvent *xerr) {
-    int ret = 0;
+int XShmAttachXErrHandler(Display *display, XErrorEvent *xerr) {
     if (xerr->minor_code == X_ShmAttach) {
         xshmAttachFailed = JNI_TRUE;
-    } else {
-        ret = (*xerror_saved_handler)(display, xerr);
     }
-    return ret;
+    return 0;
 }
 jboolean isXShmAttachFailed() {
     return xshmAttachFailed;
@@ -995,6 +992,8 @@ jboolean isXShmAttachFailed() {
 void resetXShmAttachFailed() {
     xshmAttachFailed = JNI_FALSE;
 }
+
+extern int mitShmPermissionMask;
 
 void TryInitMITShm(JNIEnv *env, jint *shmExt, jint *shmPixmaps) {
     XShmSegmentInfo shminfo;
@@ -1043,7 +1042,7 @@ void TryInitMITShm(JNIEnv *env, jint *shmExt, jint *shmPixmaps) {
          * The J2DXErrHandler handler will set xshmAttachFailed
          * to JNI_TRUE if any Shm error has occured.
          */
-        EXEC_WITH_XERROR_HANDLER(J2DXErrHandler,
+        EXEC_WITH_XERROR_HANDLER(XShmAttachXErrHandler,
                                  XShmAttach(awt_display, &shminfo));
 
         /**

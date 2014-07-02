@@ -469,8 +469,8 @@ public class VMPanel extends JTabbedPane implements PropertyChangeListener {
             msgExplanation = Resources.format(Messages.CONNECTING_TO2, getConnectionName());
             buttonStr = Messages.RECONNECT;
         } else if (shouldUseSSL) {
-            msgTitle = Messages.CONNECTION_INSECURE1;
-            msgExplanation = Resources.format(Messages.CONNECTION_INSECURE2, getConnectionName());
+            msgTitle = Messages.CONNECTION_FAILED_SSL1;
+            msgExplanation = Resources.format(Messages.CONNECTION_FAILED_SSL2, getConnectionName());
             buttonStr = Messages.INSECURE;
         } else {
             msgTitle = Messages.CONNECTION_FAILED1;

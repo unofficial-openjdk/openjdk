@@ -37,7 +37,6 @@ FILES_c = \
 	FileInputStream.c \
 	FileInputStream_md.c \
 	FileOutputStream_md.c \
-	Finalizer.c \
 	Float.c \
 	Object.c \
 	ObjectOutputStream.c \

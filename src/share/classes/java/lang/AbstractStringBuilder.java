@@ -1273,7 +1273,7 @@ abstract class AbstractStringBuilder implements Appendable, CharSequence {
      * specified substring, starting at the specified index.  The integer
      * returned is the smallest value <tt>k</tt> for which:
      * <blockquote><pre>
-     *     k >= Math.min(fromIndex, str.length()) &&
+     *     k >= Math.min(fromIndex, this.length()) &&
      *                   this.toString().startsWith(str, k)
      * </pre></blockquote>
      * If no such value of <i>k</i> exists, then -1 is returned.
@@ -1317,7 +1317,7 @@ abstract class AbstractStringBuilder implements Appendable, CharSequence {
      * specified substring. The integer returned is the largest value <i>k</i>
      * such that:
      * <blockquote><pre>
-     *     k <= Math.min(fromIndex, str.length()) &&
+     *     k <= Math.min(fromIndex, this.length()) &&
      *                   this.toString().startsWith(str, k)
      * </pre></blockquote>
      * If no such value of <i>k</i> exists, then -1 is returned.

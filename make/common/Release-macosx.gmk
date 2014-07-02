@@ -58,6 +58,9 @@ jre-bundle-setup:
 jdk-bundle-setup:
 	$(RM) -r $(JDK_BUNDLE_DIR)
 
+jdk-server-bundle-setup:
+	$(RM) -r $(JDK_SERVER_BUNDLE_DIR)
+
 jre-bundle-files:
 	$(MKDIR) -p $(JRE_BUNDLE_DIR)/MacOS
 	ln -s ../Home/lib/jli/libjli.dylib $(JRE_BUNDLE_DIR)/MacOS/
@@ -79,6 +82,6 @@ jdk-server-bundle-files:
 	$(SED) -e "s/@@ID@@/$(BUNDLE_ID_JDK)/g" -e "s/@@NAME@@/$(BUNDE_NAME_JDK)/g" -e "s/@@INFO@@/$(BUNDLE_INFO_JDK)/g" -e "s/@@PLATFORM_VERSION@@/$(BUNDLE_PLATFORM_VERSION)/g" -e "s/@@VERSION@@/$(BUNDLE_VERSION)/g" -e "s/@@VENDOR@@/$(BUNDLE_VENDOR)/g" < $(MACOSX_SRC)/bundle/JDK-Info.plist > $(JDK_SERVER_BUNDLE_DIR)/Info.plist
 	/usr/bin/SetFile -a B $(JDK_SERVER_BUNDLE_DIR)/../
 
-EXTRA_IMAGE_TARGETS += jre-bundle-setup jdk-bundle-setup jre-bundle-files jdk-bundle-files jdk-server-bundle-files
+EXTRA_IMAGE_TARGETS += jre-bundle-setup jdk-bundle-setup jdk-server-bundle-setup jre-bundle-files jdk-bundle-files jdk-server-bundle-files
 
 .PHONY: $(EXTRA_JRE_TARGETS) $(EXTRA_IMAGE_TARGETS)

@@ -296,11 +296,15 @@ public class Basic {
                     System.exit(5);
                 System.err.print("standard error");
                 System.out.print("standard output");
-            } else if (action.equals("testInheritIO")) {
+            } else if (action.equals("testInheritIO")
+                    || action.equals("testRedirectInherit")) {
                 List<String> childArgs = new ArrayList<String>(javaChildArgs);
                 childArgs.add("testIO");
                 ProcessBuilder pb = new ProcessBuilder(childArgs);
-                pb.inheritIO();
+                if (action.equals("testInheritIO"))
+                    pb.inheritIO();
+                else
+                    redirectIO(pb, INHERIT, INHERIT, INHERIT);
                 ProcessResults r = run(pb);
                 if (! r.out().equals(""))
                     System.exit(7);
@@ -555,9 +559,10 @@ public class Basic {
         System.getProperty("java.class.path");
 
     private static final List<String> javaChildArgs =
-        Arrays.asList(new String[]
-            { javaExe, "-classpath", absolutifyPath(classpath),
-              "Basic$JavaChild"});
+        Arrays.asList(javaExe,
+                      "-XX:+DisplayVMOutputToStderr",
+                      "-classpath", absolutifyPath(classpath),
+                      "Basic$JavaChild");
 
     private static void testEncoding(String encoding, String tested) {
         try {
@@ -989,10 +994,10 @@ public class Basic {
         // Note that this requires __FOUR__ nested JVMs involved in one test,
         // if you count the harness JVM.
         //----------------------------------------------------------------
-        {
+        for (String testName : new String[] { "testInheritIO", "testRedirectInherit" } ) {
             redirectIO(pb, PIPE, PIPE, PIPE);
             List<String> command = pb.command();
-            command.set(command.size() - 1, "testInheritIO");
+            command.set(command.size() - 1, testName);
             Process p = pb.start();
             new PrintStream(p.getOutputStream()).print("standard input");
             p.getOutputStream().close();
@@ -1593,8 +1598,8 @@ public class Basic {
                                       javaExe));
             list.add("ArrayOOME");
             ProcessResults r = run(new ProcessBuilder(list));
-            check(r.out().contains("java.lang.OutOfMemoryError:"));
-            check(r.out().contains(javaExe));
+            check(r.err().contains("java.lang.OutOfMemoryError:"));
+            check(r.err().contains(javaExe));
             check(r.err().contains(System.getProperty("java.version")));
             equal(r.exitValue(), 1);
         } catch (Throwable t) { unexpected(t); }

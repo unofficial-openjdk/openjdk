@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -75,6 +75,7 @@ import javax.net.ssl.SSLEngineResult.*;
 import java.io.*;
 import java.security.*;
 import java.nio.*;
+import java.lang.management.*;
 
 public class SSLEngineDeadlock {
 
@@ -145,6 +146,8 @@ public class SSLEngineDeadlock {
             }
             SSLEngineDeadlock test = new SSLEngineDeadlock();
             test.runTest();
+
+            detectDeadLock();
         }
         System.out.println("Test Passed.");
     }
@@ -359,6 +362,22 @@ public class SSLEngineDeadlock {
         b.position(b.limit());
         a.limit(a.capacity());
         b.limit(b.capacity());
+    }
+
+    /*
+     * Detect dead lock
+     */
+    private static void detectDeadLock() throws Exception {
+        ThreadMXBean threadBean = ManagementFactory.getThreadMXBean();
+        long[] threadIds = threadBean.findDeadlockedThreads();
+        if (threadIds != null && threadIds.length != 0) {
+            for (long id : threadIds) {
+                ThreadInfo info =
+                    threadBean.getThreadInfo(id, Integer.MAX_VALUE);
+                System.out.println("Deadlocked ThreadInfo: " + info);
+            }
+            throw new Exception("Found Deadlock!");
+        }
     }
 
     /*

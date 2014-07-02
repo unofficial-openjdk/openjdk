@@ -36,44 +36,31 @@ public class Unbounded {
     // number of concurrent completion handlers
     static final int CONCURRENCY_COUNT = 256;
 
-    public static void main(String[] args) throws Exception {
-        // all accepted connections are added to a queue
-        final ArrayBlockingQueue<AsynchronousSocketChannel> queue =
-            new ArrayBlockingQueue<AsynchronousSocketChannel>(CONCURRENCY_COUNT);
+    // set to true if an I/O operation fails
+    static volatile boolean failed;
 
+    // set to true when the test is done
+    static volatile boolean finished;
+
+    public static void main(String[] args) throws Exception {
         // create listener to accept connections
-        final AsynchronousServerSocketChannel listener =
+        AsynchronousServerSocketChannel listener =
             AsynchronousServerSocketChannel.open()
                 .bind(new InetSocketAddress(0));
-        listener.accept((Void)null, new CompletionHandler<AsynchronousSocketChannel,Void>() {
-            public void completed(AsynchronousSocketChannel ch, Void att) {
-                queue.add(ch);
-                listener.accept((Void)null, this);
-            }
-            public void failed(Throwable exc, Void att) {
-            }
-        });
-        System.out.println("Listener created.");
 
-        // establish lots of connections
+        // establish connections
+
+        AsynchronousSocketChannel[] clients = new AsynchronousSocketChannel[CONCURRENCY_COUNT];
+        AsynchronousSocketChannel[] peers = new AsynchronousSocketChannel[CONCURRENCY_COUNT];
+
         int port = ((InetSocketAddress)(listener.getLocalAddress())).getPort();
         SocketAddress sa = new InetSocketAddress(InetAddress.getLocalHost(), port);
-        AsynchronousSocketChannel[] channels =
-            new AsynchronousSocketChannel[CONCURRENCY_COUNT];
+
         for (int i=0; i<CONCURRENCY_COUNT; i++) {
-            int attempts = 0;
-            for (;;) {
-                try {
-                    channels[i] = AsynchronousSocketChannel.open();
-                    channels[i].connect(sa).get();
-                    break;
-                } catch (IOException x) {
-                    // probably resource issue so back off and retry
-                    if (++attempts >= 3)
-                        throw x;
-                    Thread.sleep(50);
-                }
-            }
+            clients[i] = AsynchronousSocketChannel.open();
+            Future<Void> result = clients[i].connect(sa);
+            peers[i] = listener.accept().get();
+            result.get();
         }
         System.out.println("All connection established.");
 
@@ -81,9 +68,9 @@ public class Unbounded {
         final CyclicBarrier barrier = new CyclicBarrier(CONCURRENCY_COUNT+1);
 
         // initiate a read operation on each channel.
-        for (int i=0; i<CONCURRENCY_COUNT; i++) {
+        for (AsynchronousSocketChannel client: clients) {
             ByteBuffer buf = ByteBuffer.allocateDirect(100);
-            channels[i].read( buf, channels[i],
+            client.read(buf, client,
                 new CompletionHandler<Integer,AsynchronousSocketChannel>() {
                     public void completed(Integer bytesRead, AsynchronousSocketChannel ch) {
                         try {
@@ -94,23 +81,29 @@ public class Unbounded {
                         }
                     }
                     public void failed(Throwable exc, AsynchronousSocketChannel ch) {
+                        failed = true;
+                        System.err.println("read failed: " + exc);
+                        completed(0, ch);
                     }
                 });
         }
         System.out.println("All read operations outstanding.");
 
         // write data to each of the accepted connections
-        int remaining = CONCURRENCY_COUNT;
-        while (remaining > 0) {
-            AsynchronousSocketChannel ch = queue.take();
-            ch.write(ByteBuffer.wrap("welcome".getBytes())).get();
-            ch.close();
-            remaining--;
+        for (AsynchronousSocketChannel peer: peers) {
+            peer.write(ByteBuffer.wrap("welcome".getBytes())).get();
+            peer.shutdownOutput();
+            peer.close();
         }
 
         // wait for all threads to reach the barrier
         System.out.println("Waiting for all threads to reach barrier");
         barrier.await();
+
+        // finish up
+        finished = true;
         listener.close();
+        if (failed)
+            throw new RuntimeException("I/O operation failed, see log for details");
     }
 }

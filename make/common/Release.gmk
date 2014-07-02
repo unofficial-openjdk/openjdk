@@ -402,25 +402,9 @@ TOOLS = \
 	sun/tools/jinfo         \
 	sun/tools/jmap
 
-JFR_SRCDIRS_EXIST := $(shell \
-  if [ -d $(CLOSED_SHARE_SRC)/classes/com/oracle/jrockit/jfr ] ; then \
-   echo true; \
-  else \
-   echo false; \
-  fi)
-
-BUILD_JFR=
-ifndef OPENJDK
-ifndef JAVASE_EMBEDDED
-ifeq ($(JFR_SRCDIRS_EXIST), true)
-BUILD_JFR=true
-endif
-endif
-endif
-
 # classes that go into jfr.jar
 JFR_CLASSES_DIRS=
-ifdef BUILD_JFR
+ifeq ($(BUILD_JFR), true)
 JFR_CLASSES_DIRS= \
 	com/oracle/jrockit/jfr \
 	oracle/jrockit/jfr \
@@ -629,7 +613,7 @@ $(NOT_RT_JAR_LIST): FRC
 	$(ECHO) "sun/tools/jstack/" >> $@
 	$(ECHO) "sun/tools/jinfo/" >> $@
 	$(ECHO) "sun/tools/jmap/" >> $@
-ifdef BUILD_JFR
+ifeq ($(BUILD_JFR), true)
 	$(ECHO) "com/oracle/jrockit/jfr/" >> $@
 	$(ECHO) "com/oracle/jrockit/jfr/client/" >> $@
 	$(ECHO) "com/oracle/jrockit/jfr/management/" >> $@
@@ -668,7 +652,7 @@ $(TOTAL_JAR_FILELIST): $(JARREORDER_JARFILE) $(NOT_RT_JAR_LIST)
 
 # Create jfr.jar
 JFR_JAR=
-ifdef BUILD_JFR
+ifeq ($(BUILD_JFR), true)
 JFR_JAR=$(ABS_TEMPDIR)/jfr-orig.jar
 $(JFR_JAR): $(OTHER_JAR_MANIFEST_FILE)
 	$(prep-target)
