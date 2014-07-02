@@ -368,12 +368,10 @@ module java.security.acl {
 
 module jdk.crypto.ec {
     include sun.security.ec.*;
-    permits jdk.providers;
 }
 
 module jdk.crypto.pkcs11 {
     include sun.security.pkcs11.**;
-    permits jdk.providers;
 }
 
 module java.security.sasl {
@@ -408,7 +406,6 @@ module jdk.crypto.ucrypto {
 
 module jdk.crypto.mscapi {
     include sun.security.mscapi.*;
-    permits jdk.providers.os;
 }
 
 module java.xml.crypto {
@@ -599,13 +596,11 @@ module jdk.scripting.nashorn {
             jdk.internal.dynalink.**;
     include jdk/nashorn/**;
     include META-INF/services/javax.script.ScriptEngineFactory;
-    permits jdk.providers;
 }
 
 
 module jdk.charsets {
     include sun.nio.cs.ext.**;
-    permits java.desktop, java.base, jdk.providers;
 }
 
 // localedata.jar in jre/lib/ext
@@ -614,7 +609,6 @@ module jdk.localedata {
             sun.text.resources.**;
     include sun.util.resources.cldr.**,
             sun.text.resources.cldr.**;
-    permits java.base, jdk.providers;
 }
 
 module jdk.jfr {
@@ -629,7 +623,6 @@ module jdk.deploy.osx {
             apple.launcher.*,      // see JDK-8003847
             apple.security.*,
             com.apple.**;
-    permits jdk.providers.os;
 }
 
 module jdk.deploy {
@@ -660,7 +653,6 @@ module jdk.zipfs {
     include jdk.nio.zipfs.*;
     include com.sun.nio.zipfs.*;
     include META-INF/services/java.nio.file.spi.FileSystemProvider;
-    permits jdk.providers;
 }
 
 module jdk.httpserver {
@@ -796,7 +788,6 @@ module jdk.providers {
     requires jdk.localedata;
     requires jdk.naming.dns;
     requires jdk.naming.rmi;
-    permits jdk.runtime;
 }
 
 module jdk.providers.os {
@@ -804,13 +795,11 @@ module jdk.providers.os {
     requires java.base;
     requires jdk.crypto.mscapi;  // windows-only
     requires jdk.deploy.osx;     // macosx-only
-    permits jdk.runtime;
 }
 
 module oracle.providers.os {
     requires java.base;
     requires jdk.crypto.ucrypto;        // solaris-only
-    permits oracle.jre;
 }
 
 module java.compact1 {
@@ -900,7 +889,8 @@ module oracle.jre {
     requires jdk.jfr;
     requires jdk.snmp;
     requires oracle.providers.os;
-    requires oracle.accessbridge;
-    requires oracle.jrecreate;
+    // ## looks like it needs to introduce oracle.runtime.os
+    requires oracle.accessbridge;   // windows-only
+    requires oracle.jrecreate;     // embedded build only
 }
 
