@@ -197,6 +197,7 @@ module java.base {
     uses java.time.zone.ZoneRulesProvider;
     uses java.util.spi.CurrencyNameProvider;
     uses java.util.spi.LocaleNameProvider;
+    uses java.util.spi.ResourceBundleControlProvider;
     uses sun.net.spi.nameservice.NameServiceDescriptor;
 
     //

@@ -38,6 +38,7 @@ import java.security.AccessControlContext;
 import java.security.PrivilegedAction;
 
 import jdk.jigsaw.module.internal.ModuleCatalog;
+
 import sun.misc.JavaLangAccess;
 import sun.misc.SharedSecrets;
 import sun.reflect.CallerSensitive;
@@ -179,6 +180,10 @@ import sun.reflect.Reflection;
  * problem is to fix the misconfigured web server to return the correct
  * response code (HTTP 404) along with the HTML error page.
  *
+ * @apiNote
+ * The ServiceLoader API docs need to be updated to specify how ServiceLoader
+ * works with modules.
+ *
  * @param  <S>
  *         The type of the service to be loaded by this loader
  *
@@ -226,8 +231,34 @@ public final class ServiceLoader<S>
         );
     }
 
-    private ServiceLoader(Class<S> svc, ClassLoader cl) {
-        service = Objects.requireNonNull(svc, "Service interface cannot be null");
+    /**
+     * Initializes a new instance of this class.
+     *
+     * @throws ServiceConfigurationError
+     *         If {@code svc} is not accessible to {@code caller} or that the
+     *         caller's module does not declare that it uses the service type.
+     */
+    private ServiceLoader(Class<?> caller, Class<S> svc, ClassLoader cl) {
+        Module m = caller.getModule();
+
+        // Check that the service type is defined in a module that is readable
+        // to the caller and that the service type is in a package that is
+        // exported to the caller.
+        if (!Reflection.verifyModuleAccess(caller, svc)) {
+            String who = (m != null) ? m.toString() : "<unnamed module>";
+            fail(svc, "not accessible to " + who);
+        }
+
+        // If the caller is in a named module then it must declare that it
+        // uses the service type
+        if (m != null) {
+            String sn = svc.getName();
+            if (!m.uses().contains(sn)) {
+                fail(svc, "use not declared in " + m);
+            }
+        }
+
+        service = svc;
         loader = (cl == null) ? ClassLoader.getSystemClassLoader() : cl;
         acc = (System.getSecurityManager() != null) ? AccessController.getContext() : null;
         reload();
@@ -343,12 +374,14 @@ public final class ServiceLoader<S>
         }
 
         /**
-         * If {@code caller} or {@code c} are defined in a module then ensures
-         * that that the modules are defined to provide or use the service.
-         *
-         * @return the {@code Constructor} to instanitate the service provider
+         * Returns the {@code Constructor} to instantiate the service provider.
+         * The constructor has its accessible flag set so that the access check
+         * is suppressed when instantiating the provider. This is necessary
+         * because newInstance is a caller sensitive method and ServiceLoader
+         * is instantiating the service provider on behalf of the service
+         * consumer.
          */
-        private Constructor<?> ensureAccess(Class<?> caller, Class<?> c)
+        private Constructor<?> getConstructor(Class<?> c)
             throws NoSuchMethodException, IllegalAccessException
         {
             Constructor<?> ctor = c.getConstructor();
@@ -358,29 +391,6 @@ public final class ServiceLoader<S>
             if (!Modifier.isPublic(Reflection.getClassAccessFlags(c) & modifiers)) {
                 String cn = c.getName();
                 throw new IllegalAccessException(cn + " is not public");
-            }
-
-            Module m1 = caller.getModule();
-            Module m2 = c.getModule();
-
-            // check that m1 uses the service
-            if (m1 != null) {
-                String sn = service.getName();
-                if (!m1.uses().contains(sn)) {
-                    throw new IllegalAccessException(m1 +
-                            " does not declare that it uses " + sn);
-                }
-            }
-
-            // check that m2 provides the service
-            if (m2 != null) {
-                String sn = service.getName();
-                String cn = c.getName();
-                Set<String> provides = m2.provides().get(sn);
-                if (!provides.contains(cn)) {
-                    throw new IllegalAccessException(m2 +
-                            " does not declare that it provides " + sn + " with " + cn);
-                }
             }
 
             // return Constructor to create the service implementation
@@ -397,7 +407,7 @@ public final class ServiceLoader<S>
          */
         abstract boolean hasNextService();
 
-        private S nextService(Class<?> caller) {
+        private S nextService() {
             if (!hasNextService())
                 throw new NoSuchElementException();
             String cn = nextName;
@@ -407,22 +417,34 @@ public final class ServiceLoader<S>
                 c = Class.forName(cn, false, loader);
             } catch (ClassNotFoundException x) {
                 fail(service,
-                        "Provider " + cn + " not found");
+                     "Provider " + cn + " not found");
             }
             if (!service.isAssignableFrom(c)) {
                 fail(service,
-                        "Provider " + cn  + " not a subtype");
+                     "Provider " + cn  + " not a subtype");
+            }
+
+            // if service provider is a module then check that it
+            // provides the service.
+            Module m = c.getModule();
+            if (m != null) {
+                String sn = service.getName();
+                Set<String> provides = m.provides().get(sn);
+                if (provides == null || !provides.contains(cn)) {
+                    fail(service,
+                         m + " does not declare that it provides " + sn + " with " + cn);
+                }
             }
 
             try {
-                Constructor<?> ctor = ensureAccess(caller, c);
+                Constructor<?> ctor = getConstructor(c);
                 S p = service.cast(ctor.newInstance());
                 providers.put(cn, p);
                 return p;
             } catch (Throwable x) {
                 fail(service,
-                        "Provider " + cn + " could not be instantiated",
-                        x);
+                     "Provider " + cn + " could not be instantiated",
+                     x);
             }
             throw new Error();          // This cannot happen
         }
@@ -438,19 +460,15 @@ public final class ServiceLoader<S>
             }
         }
 
-        public final S next(Class<?> caller) {
+        public final S next() {
             if (acc == null) {
-                return nextService(caller);
+                return nextService();
             } else {
                 PrivilegedAction<S> action = new PrivilegedAction<S>() {
-                    public S run() { return nextService(caller); }
+                    public S run() { return nextService(); }
                 };
                 return AccessController.doPrivileged(action, acc);
             }
-        }
-
-        public final S next() {
-            throw new InternalError("Should not get here");
         }
 
         public final void remove() {
@@ -548,10 +566,10 @@ public final class ServiceLoader<S>
     }
 
     /**
-     * An iterator-like class that can be used to iterate over an array of
+     * An iterator that can be used to iterate over an array of
      * service iterators.
      */
-    private class LookupIterator {
+    private class LookupIterator implements Iterator<S> {
         ServicesIterator[] iterators;
         int index;
 
@@ -560,7 +578,7 @@ public final class ServiceLoader<S>
             this.index = 0;
         }
 
-        boolean hasNext() {
+        public boolean hasNext() {
             while (index < iterators.length) {
                 if (iterators[index].hasNext())
                     return true;
@@ -569,10 +587,10 @@ public final class ServiceLoader<S>
             return false;
         }
 
-        S next(Class<?> caller) {
+        public S next() {
             if (!hasNext())
                 throw new NoSuchElementException();
-            return iterators[index].next(caller);
+            return iterators[index].next();
         }
     }
 
@@ -634,11 +652,10 @@ public final class ServiceLoader<S>
                 return lookupIterator.hasNext();
             }
 
-            @CallerSensitive
             public S next() {
                 if (knownProviders.hasNext())
                     return knownProviders.next().getValue();
-                return lookupIterator.next(Reflection.getCallerClass());
+                return lookupIterator.next();
             }
 
             public void remove() {
@@ -665,10 +682,11 @@ public final class ServiceLoader<S>
      *
      * @return A new service loader
      */
+    @CallerSensitive
     public static <S> ServiceLoader<S> load(Class<S> service,
                                             ClassLoader loader)
     {
-        return new ServiceLoader<>(service, loader);
+        return new ServiceLoader<>(Reflection.getCallerClass(), service, loader);
     }
 
     /**
@@ -694,9 +712,10 @@ public final class ServiceLoader<S>
      *
      * @return A new service loader
      */
+    @CallerSensitive
     public static <S> ServiceLoader<S> load(Class<S> service) {
         ClassLoader cl = Thread.currentThread().getContextClassLoader();
-        return ServiceLoader.load(service, cl);
+        return new ServiceLoader<>(Reflection.getCallerClass(), service, cl);
     }
 
     /**
@@ -725,6 +744,7 @@ public final class ServiceLoader<S>
      *
      * @return A new service loader
      */
+    @CallerSensitive
     public static <S> ServiceLoader<S> loadInstalled(Class<S> service) {
         ClassLoader cl = ClassLoader.getSystemClassLoader();
         ClassLoader prev = null;
@@ -732,7 +752,7 @@ public final class ServiceLoader<S>
             prev = cl;
             cl = cl.getParent();
         }
-        return ServiceLoader.load(service, prev);
+        return new ServiceLoader<>(Reflection.getCallerClass(), service, prev);
     }
 
     /**
