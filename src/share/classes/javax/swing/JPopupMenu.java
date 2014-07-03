@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2008, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -735,7 +735,7 @@ public class JPopupMenu extends JComponent implements Accessible,MenuElement {
 
             if (pref == null || pref.width != getWidth() ||
                                 pref.height != getHeight()) {
-                popup = getPopup();
+                showPopup();
             } else {
                 validate();
             }
@@ -786,7 +786,7 @@ public class JPopupMenu extends JComponent implements Accessible,MenuElement {
 
         if(b) {
             firePopupMenuWillBecomeVisible();
-            popup = getPopup();
+            showPopup();
             firePropertyChange("visible", Boolean.FALSE, Boolean.TRUE);
 
 
@@ -804,7 +804,7 @@ public class JPopupMenu extends JComponent implements Accessible,MenuElement {
     }
 
     /**
-     * Returns a <code>Popup</code> instance from the
+     * Retrieves <code>Popup</code> instance from the
      * <code>PopupMenuUI</code> that has had <code>show</code> invoked on
      * it. If the current <code>popup</code> is non-null,
      * this will invoke <code>dispose</code> of it, and then
@@ -813,7 +813,7 @@ public class JPopupMenu extends JComponent implements Accessible,MenuElement {
      * This does NOT fire any events, it is up the caller to dispatch
      * the necessary events.
      */
-    private Popup getPopup() {
+    private void showPopup() {
         Popup oldPopup = popup;
 
         if (oldPopup != null) {
@@ -837,8 +837,8 @@ public class JPopupMenu extends JComponent implements Accessible,MenuElement {
                                           desiredLocationY);
 
         popupFactory.setPopupType(PopupFactory.LIGHT_WEIGHT_POPUP);
+        popup = newPopup;
         newPopup.show();
-        return newPopup;
     }
 
     /**
@@ -867,7 +867,7 @@ public class JPopupMenu extends JComponent implements Accessible,MenuElement {
         desiredLocationX = x;
         desiredLocationY = y;
         if(popup != null && (x != oldX || y != oldY)) {
-            popup = getPopup();
+            showPopup();
         }
     }
 
@@ -1024,7 +1024,7 @@ public class JPopupMenu extends JComponent implements Accessible,MenuElement {
             Dimension newSize = getPreferredSize();
 
             if (!oldSize.equals(newSize)) {
-                popup = getPopup();
+                showPopup();
             }
         }
     }

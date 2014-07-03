@@ -58,7 +58,7 @@ public class CloseFile {
     }
 
     static void run(String s) throws Exception {
-        KeyTool.main((s+" -debug").split(" "));
+        KeyTool.main((s+" -debug -keyalg rsa").split(" "));
     }
     static void remove(String filename, boolean check) {
         new File(filename).delete();

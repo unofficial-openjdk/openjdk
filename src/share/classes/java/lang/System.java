@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1994, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1178,11 +1178,14 @@ public final class System {
             public sun.reflect.ConstantPool getConstantPool(Class klass) {
                 return klass.getConstantPool();
             }
-            public void setAnnotationType(Class klass, AnnotationType type) {
-                klass.setAnnotationType(type);
+            public boolean casAnnotationType(Class<?> klass, AnnotationType oldType, AnnotationType newType) {
+                return klass.casAnnotationType(oldType, newType);
             }
             public AnnotationType getAnnotationType(Class klass) {
                 return klass.getAnnotationType();
+            }
+            public byte[] getRawClassAnnotations(Class<?> klass) {
+                return klass.getRawAnnotations();
             }
             public <E extends Enum<E>>
                     E[] getEnumConstantsShared(Class<E> klass) {
