@@ -195,9 +195,11 @@ module java.base {
     uses java.text.spi.NumberFormatProvider;
     uses java.time.chrono.Chronology;
     uses java.time.zone.ZoneRulesProvider;
+    uses java.util.spi.CalendarDataProvider;
     uses java.util.spi.CurrencyNameProvider;
     uses java.util.spi.LocaleNameProvider;
     uses java.util.spi.ResourceBundleControlProvider;
+    uses java.util.spi.TimeZoneNameProvider;
     uses sun.net.spi.nameservice.NameServiceDescriptor;
 
     //
