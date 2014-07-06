@@ -955,7 +955,7 @@ void ClassFileParser::parse_field_attributes(constantPoolHandle cp,
             "Wrong size %u for field's Signature attribute in class file %s",
             attribute_length, CHECK);
         }
-        generic_signature_index = cfs->get_u2(CHECK);
+        generic_signature_index = parse_generic_signature_attribute(cp, CHECK);
       } else if (attribute_name == vmSymbols::tag_runtime_visible_annotations()) {
         runtime_visible_annotations_length = attribute_length;
         runtime_visible_annotations = cfs->get_u1_buffer();
@@ -1915,8 +1915,7 @@ methodHandle ClassFileParser::parse_method(constantPoolHandle cp, bool is_interf
             "Invalid Signature attribute length %u in class file %s",
             method_attribute_length, CHECK_(nullHandle));
         }
-        cfs->guarantee_more(2, CHECK_(nullHandle));  // generic_signature_index
-        generic_signature_index = cfs->get_u2_fast();
+        generic_signature_index = parse_generic_signature_attribute(cp, CHECK_(nullHandle));
       } else if (method_attribute_name == vmSymbols::tag_runtime_visible_annotations()) {
         runtime_visible_annotations_length = method_attribute_length;
         runtime_visible_annotations = cfs->get_u1_buffer();
@@ -2288,6 +2287,17 @@ void ClassFileParser::parse_classfile_sourcefile_attribute(constantPoolHandle cp
   k->set_source_file_name(cp->symbol_at(sourcefile_index));
 }
 
+// Parse generic_signature attribute for methods and fields
+u2 ClassFileParser::parse_generic_signature_attribute(constantPoolHandle cp, TRAPS) {
+  ClassFileStream* cfs = stream();
+  cfs->guarantee_more(2, CHECK_0);  // generic_signature_index
+  u2 generic_signature_index = cfs->get_u2_fast();
+  check_property(
+    valid_symbol_at(cp, generic_signature_index),
+    "Invalid Signature attribute at constant pool index %u in class file %s",
+    generic_signature_index, CHECK_0);
+  return generic_signature_index;
+}
 
 
 void ClassFileParser::parse_classfile_source_debug_extension_attribute(constantPoolHandle cp,
