@@ -134,6 +134,7 @@ void StackMapTable::check_jump_target(
   }
   // check if uninitialized objects exist on backward branches
   check_new_object(frame, target, CHECK_VERIFY(frame->verifier()));
+  frame->verifier()->update_furthest_jump(target);
 }
 
 void StackMapTable::check_new_object(

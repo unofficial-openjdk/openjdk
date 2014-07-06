@@ -97,6 +97,9 @@ class ClassVerifier : public StackObj {
   size_t _message_buffer_len;
   GrowableArray<Symbol*>* _symbols;  // keep a list of symbols created
 
+  // Used to detect illegal jumps over calls to super() nd this() in ctors.
+  int32_t _furthest_jump;
+
   void verify_method(methodHandle method, TRAPS);
   char* generate_code_data(methodHandle m, u4 code_length, TRAPS);
   void verify_exception_handler_table(u4 code_length, char* code_data, int& min, int& max, TRAPS);
@@ -232,6 +235,19 @@ class ClassVerifier : public StackObj {
   Symbol* create_temporary_symbol(const char *s, int length, TRAPS);
 
   static bool _verify_verbose;  // for debugging
+
+  // Keep track of the furthest branch done in a method to make sure that
+  // there are no branches over calls to super() or this() from inside of
+  // a constructor.
+  int32_t furthest_jump() { return _furthest_jump; }
+
+  void set_furthest_jump(int32_t target) {
+    _furthest_jump = target;
+  }
+
+  void update_furthest_jump(int32_t target) {
+    if (target > _furthest_jump) _furthest_jump = target;
+  }
 };
 
 inline int ClassVerifier::change_sig_to_verificationType(

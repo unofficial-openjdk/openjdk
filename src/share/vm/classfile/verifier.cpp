@@ -378,6 +378,9 @@ void ClassVerifier::verify_method(methodHandle m, TRAPS) {
   bool no_control_flow = false; // Set to true when there is no direct control
                                 // flow from current instruction to the next
                                 // instruction in sequence
+
+  set_furthest_jump(0);
+
   Bytecodes::Code opcode;
   while (!bcs.is_last_bytecode()) {
     // Check for recursive re-verification before each bytecode.
@@ -1891,6 +1894,34 @@ void ClassVerifier::verify_invoke_init(
       verify_error(bci, "Bad <init> method call");
       return;
     }
+
+    // Make sure that this call is not jumped over.
+    if (bci < furthest_jump()) {
+      verify_error(bci, "Bad <init> method call from inside of a branch");
+      return;
+    }
+
+    // Make sure that this call is not done from within a TRY block because
+    // that can result in returning an incomplete object.  Simply checking
+    // (bci >= start_pc) also ensures that this call is not done after a TRY
+    // block.  That is also illegal because this call must be the first Java
+    // statement in the constructor.
+    typeArrayHandle exhandlers (THREAD, _method->exception_table());
+    for(int i = 0; i < exhandlers->length(); i += 4) {
+      /*
+       * Skip reading end_pc, handler_pc and catch_type_index.
+       * Looks like this if you need all of them:
+       * u2 start_pc = exhandlers->int_at(i++);
+       * u2 end_pc = exhandlers->int_at(i++);
+       * u2 handler_pc = exhandlers->int_at(i++);
+       * int catch_type_index = exhandlers->int_at(i++);
+       */
+      u2 start_pc = exhandlers->int_at(i);
+      if (bci >= start_pc) {
+        verify_error(bci, "Bad <init> method call from after the start of a try block");
+      }
+    }
+
     current_frame->initialize_object(type, current_type());
     *this_uninit = true;
   } else if (type.is_uninitialized()) {
