@@ -40,6 +40,7 @@ import com.sun.org.apache.xml.internal.security.c14n.implementations.Canonicaliz
 import com.sun.org.apache.xml.internal.security.c14n.implementations.Canonicalizer20010315OmitComments;
 import com.sun.org.apache.xml.internal.security.c14n.implementations.Canonicalizer20010315WithComments;
 import com.sun.org.apache.xml.internal.security.exceptions.AlgorithmAlreadyRegisteredException;
+import com.sun.org.apache.xml.internal.security.utils.JavaUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -136,10 +137,13 @@ public class Canonicalizer {
      * @param algorithmURI
      * @param implementingClass
      * @throws AlgorithmAlreadyRegisteredException
+     * @throws SecurityException if a security manager is installed and the
+     *    caller does not have permission to register the canonicalizer
      */
     @SuppressWarnings("unchecked")
     public static void register(String algorithmURI, String implementingClass)
         throws AlgorithmAlreadyRegisteredException, ClassNotFoundException {
+        JavaUtils.checkRegisterPermission();
         // check whether URI is already registered
         Class<? extends CanonicalizerSpi> registeredClass =
             canonicalizerHash.get(algorithmURI);
@@ -160,9 +164,12 @@ public class Canonicalizer {
      * @param algorithmURI
      * @param implementingClass
      * @throws AlgorithmAlreadyRegisteredException
+     * @throws SecurityException if a security manager is installed and the
+     *    caller does not have permission to register the canonicalizer
      */
-    public static void register(String algorithmURI, Class<CanonicalizerSpi> implementingClass)
+    public static void register(String algorithmURI, Class<? extends CanonicalizerSpi> implementingClass)
         throws AlgorithmAlreadyRegisteredException, ClassNotFoundException {
+        JavaUtils.checkRegisterPermission();
         // check whether URI is already registered
         Class<? extends CanonicalizerSpi> registeredClass = canonicalizerHash.get(algorithmURI);
 
