@@ -79,16 +79,22 @@ public class XMLUtils {
     /**
      * Set the prefix for the digital signature namespace
      * @param prefix the new prefix for the digital signature namespace
+     * @throws SecurityException if a security manager is installed and the
+     *    caller does not have permission to set the prefix
      */
     public static void setDsPrefix(String prefix) {
+        JavaUtils.checkRegisterPermission();
         dsPrefix = prefix;
     }
 
     /**
      * Set the prefix for the encryption namespace
      * @param prefix the new prefix for the encryption namespace
+     * @throws SecurityException if a security manager is installed and the
+     *    caller does not have permission to set the prefix
      */
     public static void setXencPrefix(String prefix) {
+        JavaUtils.checkRegisterPermission();
         xencPrefix = prefix;
     }
 
