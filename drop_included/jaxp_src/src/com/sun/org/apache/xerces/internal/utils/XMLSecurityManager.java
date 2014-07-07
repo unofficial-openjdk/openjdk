@@ -132,7 +132,7 @@ public final class XMLSecurityManager {
     /**
      * Values of the properties
      */
-    private final int[] values;
+    private int[] values;
     /**
      * States of the settings for each property
      */
@@ -169,10 +169,7 @@ public final class XMLSecurityManager {
      * @param secureProcessing
      */
     public XMLSecurityManager(boolean secureProcessing) {
-        limitAnalyzer = new XMLLimitAnalyzer(this);
-        values = new int[Limit.values().length];
-        states = new State[Limit.values().length];
-        isSet = new boolean[Limit.values().length];
+        init();
         this.secureProcessing = secureProcessing;
         for (Limit limit : Limit.values()) {
             if (secureProcessing) {
@@ -185,6 +182,39 @@ public final class XMLSecurityManager {
         }
         //read system properties or jaxp.properties
         readSystemProperties();
+    }
+
+    /**
+     * Clone a security manager
+     * @param securityManager a base security manager
+     */
+    public XMLSecurityManager(XMLSecurityManager securityManager) {
+        init();
+        if (securityManager != null) {
+            this.secureProcessing = securityManager.isSecureProcessing();
+            for (Limit limit : Limit.values()) {
+                values[limit.ordinal()] = securityManager.getLimit(limit);
+                states[limit.ordinal()] = securityManager.getState(limit);
+            }
+        }
+    }
+
+    /**
+     * Initialize values
+     */
+    private void init() {
+        limitAnalyzer = new XMLLimitAnalyzer(this);
+        int numOfElements = Limit.values().length;
+        values = new int[numOfElements];
+        states = new State[numOfElements];
+        isSet = new boolean[numOfElements];
+    }
+
+    /**
+     * Reset all limits to their default status
+     */
+    public void resetLimits() {
+        limitAnalyzer.reset();
     }
 
     /**

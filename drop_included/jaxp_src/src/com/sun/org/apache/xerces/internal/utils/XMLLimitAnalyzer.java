@@ -110,6 +110,18 @@ public final class XMLLimitAnalyzer {
     }
 
     /**
+     * Reset all limits to their default status
+     */
+    public void reset() {
+        for (int i=0; i<Limit.values().length; i++) {
+            values[i] = 0;
+            totalValue[i] = 0;
+            names[i] = null;
+            caches[i] = null;
+        }
+    }
+
+    /**
      * Add the value to the current max count for the specified property
      * To find the max value of all entities, set no limit
      *
