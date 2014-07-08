@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -209,6 +209,17 @@ void klassVtable::initialize_vtable(bool checkconstraints, TRAPS) {
 // For bytecodes not produced by javac together it is possible that a method does not override
 // the superclass's method, but might indirectly override a super-super class's vtable entry
 // If none found, return a null superk, else return the superk of the method this does override
+// For public and protected methods: if they override a superclass, they will
+// also be overridden themselves appropriately.
+// Private methods do not override and are not overridden.
+// Package Private methods are trickier:
+// e.g. P1.A, pub m
+// P2.B extends A, package private m
+// P1.C extends B, public m
+// P1.C.m needs to override P1.A.m and can not override P2.B.m
+// Therefore: all package private methods need their own vtable entries for
+// them to be the root of an inheritance overriding decision
+// Package private methods may also override other vtable entries
 instanceKlass* klassVtable::find_transitive_override(instanceKlass* initialsuper, methodHandle target_method,
                             int vtable_index, Handle target_loader, Symbol* target_classname, Thread * THREAD) {
   instanceKlass* superk = initialsuper;
@@ -310,8 +321,12 @@ bool klassVtable::update_inherited_vtable(instanceKlass* klass, methodHandle tar
       ((klass->major_version() >= VTABLE_TRANSITIVE_OVERRIDE_VERSION)
         && ((super_klass = find_transitive_override(super_klass, target_method, i, target_loader,
              target_classname, THREAD)) != (instanceKlass*)NULL))) {
-        // overriding, so no new entry
-        allocate_new = false;
+
+        // Package private methods always need a new entry to root their own
+        // overriding. They may also override other methods.
+        if (!target_method()->is_package_private()) {
+          allocate_new = false;
+        }
 
         if (checkconstraints) {
         // Override vtable entry if passes loader constraint check
@@ -430,6 +445,12 @@ bool klassVtable::needs_new_vtable_entry(methodHandle target_method,
   // specification interpretation since classic has
   // private methods not overriding
   if (target_method()->is_private()) {
+    return true;
+  }
+
+  // Package private methods always need a new entry to root their own
+  // overriding. This allows transitive overriding to work.
+  if (target_method()->is_package_private()) {
     return true;
   }
 
