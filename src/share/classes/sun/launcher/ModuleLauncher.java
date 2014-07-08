@@ -116,7 +116,7 @@ class ModuleLauncher {
         } else {
             modulePath = systemLibrary;
         }
-        ModuleGraph graph = new Resolver(modulePath).resolve(input).bindServices();
+        ModuleGraph graph = new Resolver(modulePath).resolve(input);
         if (verbose) {
             graph.modules().stream()
                            .sorted()
