@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2005, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -67,7 +67,35 @@ public class AnnotationParser {
             return Collections.emptyMap();
 
         try {
-            return parseAnnotations2(rawAnnotations, constPool, container);
+            return parseAnnotations2(rawAnnotations, constPool, container, null);
+        } catch(BufferUnderflowException e) {
+            throw new AnnotationFormatError("Unexpected end of annotations.");
+        } catch(IllegalArgumentException e) {
+            // Type mismatch in constant pool
+            throw new AnnotationFormatError(e);
+        }
+    }
+
+    /**
+     * Like {@link #parseAnnotations(byte[], sun.reflect.ConstantPool, Class)}
+     * with an additional parameter {@code selectAnnotationClasses} which selects the
+     * annotation types to parse (other than selected are quickly skipped).<p>
+     * This method is only used to parse select meta annotations in the construction
+     * phase of {@link AnnotationType} instances to prevent infinite recursion.
+     *
+     * @param selectAnnotationClasses an array of annotation types to select when parsing
+     */
+    @SafeVarargs
+    static Map<Class<? extends Annotation>, Annotation> parseSelectAnnotations(
+                byte[] rawAnnotations,
+                ConstantPool constPool,
+                Class<?> container,
+                Class<? extends Annotation> ... selectAnnotationClasses) {
+        if (rawAnnotations == null)
+            return Collections.emptyMap();
+
+        try {
+            return parseAnnotations2(rawAnnotations, constPool, container, selectAnnotationClasses);
         } catch(BufferUnderflowException e) {
             throw new AnnotationFormatError("Unexpected end of annotations.");
         } catch(IllegalArgumentException e) {
@@ -79,21 +107,22 @@ public class AnnotationParser {
     private static Map<Class<? extends Annotation>, Annotation> parseAnnotations2(
                 byte[] rawAnnotations,
                 ConstantPool constPool,
-                Class<?> container) {
+                Class<?> container,
+                Class<? extends Annotation>[] selectAnnotationClasses) {
         Map<Class<? extends Annotation>, Annotation> result =
             new LinkedHashMap<Class<? extends Annotation>, Annotation>();
         ByteBuffer buf = ByteBuffer.wrap(rawAnnotations);
         int numAnnotations = buf.getShort() & 0xFFFF;
         for (int i = 0; i < numAnnotations; i++) {
-            Annotation a = parseAnnotation(buf, constPool, container, false);
+            Annotation a = parseAnnotation2(buf, constPool, container, false, selectAnnotationClasses);
             if (a != null) {
                 Class<? extends Annotation> klass = a.annotationType();
-                AnnotationType type = AnnotationType.getInstance(klass);
-                if (type.retention() == RetentionPolicy.RUNTIME)
-                    if (result.put(klass, a) != null)
+                if (AnnotationType.getInstance(klass).retention() == RetentionPolicy.RUNTIME &&
+                    result.put(klass, a) != null) {
                         throw new AnnotationFormatError(
                             "Duplicate annotation for class: "+klass+": " + a);
             }
+        }
         }
         return result;
     }
@@ -191,6 +220,15 @@ public class AnnotationParser {
                                               ConstantPool constPool,
                                               Class<?> container,
                                               boolean exceptionOnMissingAnnotationClass) {
+       return parseAnnotation2(buf, constPool, container, exceptionOnMissingAnnotationClass, null);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Annotation parseAnnotation2(ByteBuffer buf,
+                                              ConstantPool constPool,
+                                              Class<?> container,
+                                              boolean exceptionOnMissingAnnotationClass,
+                                              Class<? extends Annotation>[] selectAnnotationClasses) {
         int typeIndex = buf.getShort() & 0xFFFF;
         Class<? extends Annotation> annotationClass = null;
         String sig = "[unknown]";
@@ -213,6 +251,10 @@ public class AnnotationParser {
         catch (TypeNotPresentException e) {
             if (exceptionOnMissingAnnotationClass)
                 throw e;
+            skipAnnotation(buf, false);
+            return null;
+        }
+        if (selectAnnotationClasses != null && !contains(selectAnnotationClasses, annotationClass)) {
             skipAnnotation(buf, false);
             return null;
         }
@@ -789,6 +831,17 @@ public class AnnotationParser {
         int length = buf.getShort() & 0xFFFF;
         for (int i = 0; i < length; i++)
             skipMemberValue(buf);
+    }
+
+    /**
+     * Searches for given {@code element} in given {@code array} by identity.
+     * Returns {@code true} if found {@code false} if not.
+     */
+    private static boolean contains(Object[] array, Object element) {
+        for (Object e : array)
+            if (e == element)
+                return true;
+        return false;
     }
 
     /*
