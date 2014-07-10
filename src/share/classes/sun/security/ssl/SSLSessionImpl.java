@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1996, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -115,6 +115,14 @@ final class SSLSessionImpl extends ExtendedSSLSession {
     // Principals for non-certificate based cipher suites
     private Principal peerPrincipal;
     private Principal localPrincipal;
+
+    /*
+     * Is the session currently re-established with a session-resumption
+     * abbreviated initial handshake?
+     *
+     * Note that currently we only set this variable in client side.
+     */
+    private boolean isSessionResumption = false;
 
     /*
      * We count session creations, eventually for statistical data but
@@ -317,6 +325,22 @@ final class SSLSessionImpl extends ExtendedSSLSession {
        if (debug != null && Debug.isOn("session")) {
            System.out.println("%% Negotiating:  " + this);
        }
+    }
+
+    /**
+     * Return true if the session is currently re-established with a
+     * session-resumption abreviated initial handshake.
+     */
+    boolean isSessionResumption() {
+        return isSessionResumption;
+    }
+
+    /**
+     * Resets whether the session is re-established with a session-resumption
+     * abbreviated initial handshake.
+     */
+    void setAsSessionResumption(boolean flag) {
+        isSessionResumption = flag;
     }
 
     /**

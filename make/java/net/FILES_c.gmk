@@ -24,6 +24,7 @@
 #
 
 FILES_c = \
+        AbstractPlainDatagramSocketImpl.c \
         DatagramPacket.c \
         InetAddress.c \
         Inet4Address.c \

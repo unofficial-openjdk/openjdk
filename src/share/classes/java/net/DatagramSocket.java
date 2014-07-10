@@ -85,6 +85,17 @@ class DatagramSocket implements java.io.Closeable {
      */
     boolean oldImpl = false;
 
+    /**
+     * Set when a socket is ST_CONNECTED until we are certain
+     * that any packets which might have been received prior
+     * to calling connect() but not read by the application
+     * have been read. During this time we check the source
+     * address of all packets received to be sure they are from
+     * the connected destination. Other packets are read but
+     * silently dropped.
+     */
+    private boolean explicitFilter = false;
+    private int bytesLeftToFilter;
     /*
      * Connection state:
      * ST_NOT_CONNECTED = socket not connected
@@ -144,6 +155,15 @@ class DatagramSocket implements java.io.Closeable {
 
                 // socket is now connected by the impl
                 connectState = ST_CONNECTED;
+                // Do we need to filter some packets?
+                int avail = getImpl().dataAvailable();
+                if (avail == -1) {
+                    throw new SocketException();
+                }
+                explicitFilter = avail > 0;
+                if (explicitFilter) {
+                    bytesLeftToFilter = getReceiveBufferSize();
+                }
             } catch (SocketException se) {
 
                 // connection will be emulated by DatagramSocket
@@ -494,6 +514,7 @@ class DatagramSocket implements java.io.Closeable {
             connectedAddress = null;
             connectedPort = -1;
             connectState = ST_NOT_CONNECTED;
+            explicitFilter = false;
         }
     }
 
@@ -752,10 +773,12 @@ class DatagramSocket implements java.io.Closeable {
                     } // end of while
                 }
             }
-            if (connectState == ST_CONNECTED_NO_IMPL) {
+            if ((connectState == ST_CONNECTED_NO_IMPL) || explicitFilter) {
                 // We have to do the filtering the old fashioned way since
                 // the native impl doesn't support connect or the connect
-                // via the impl failed.
+                // via the impl failed, or .. "explicitFilter" may be set when
+                // a socket is connected via the impl, for a period of time
+                // when packets from other sources might be queued on socket.
                 boolean stop = false;
                 while (!stop) {
                     InetAddress peekAddress = null;
@@ -774,8 +797,18 @@ class DatagramSocket implements java.io.Closeable {
                     if ((!connectedAddress.equals(peekAddress)) ||
                         (connectedPort != peekPort)) {
                         // throw the packet away and silently continue
-                        DatagramPacket tmp = new DatagramPacket(new byte[1], 1);
+                        DatagramPacket tmp = new DatagramPacket(
+                                                new byte[1024], 1024);
                         getImpl().receive(tmp);
+                        if (explicitFilter) {
+                            bytesLeftToFilter -= tmp.getLength();
+                            if (bytesLeftToFilter <= 0 ||
+                                getImpl().dataAvailable() <= 0)
+                            {
+                                explicitFilter = false;
+                                stop = true;
+                            }
+                        }
                     } else {
                         stop = true;
                     }

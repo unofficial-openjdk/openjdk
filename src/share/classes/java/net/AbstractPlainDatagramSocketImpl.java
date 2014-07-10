@@ -70,6 +70,7 @@ abstract class AbstractPlainDatagramSocketImpl extends DatagramSocketImpl
     static {
         java.security.AccessController.doPrivileged(
                   new sun.security.action.LoadLibraryAction("net"));
+        init();
     }
 
     /**
@@ -362,4 +363,7 @@ abstract class AbstractPlainDatagramSocketImpl extends DatagramSocketImpl
     protected boolean nativeConnectDisabled() {
         return connectDisabled;
     }
+
+    native int dataAvailable();
+    private static native void init();
 }
