@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -299,6 +299,16 @@ public:
     return "Stop remote management agent.";
   }
 
+  virtual void execute(TRAPS);
+};
+
+class RotateGCLogDCmd : public DCmd {
+public:
+  RotateGCLogDCmd(outputStream* output, bool heap) : DCmd(output, heap) {}
+  static const char* name() { return "GC.rotate_log"; }
+  static const char* description() {
+    return "Force the GC log file to be rotated.";
+  }
   virtual void execute(TRAPS);
 };
 

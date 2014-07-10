@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -176,7 +176,6 @@ private:
   CollectionSetChooser* _collectionSetChooser;
 
   double _full_collection_start_sec;
-  size_t _cur_collection_pause_used_at_start_bytes;
   uint   _cur_collection_pause_used_regions_at_start;
 
   // These exclude marking times.
@@ -195,7 +194,6 @@ private:
 
   uint _young_list_target_length;
   uint _young_list_fixed_length;
-  size_t _prev_eden_capacity; // used for logging
 
   // The max number of regions we can extend the eden by while the GC
   // locker is active. This should be >= _young_list_target_length;
@@ -694,11 +692,12 @@ public:
 
   // Records the information about the heap size for reporting in
   // print_detailed_heap_transition
-  void record_heap_size_info_at_start();
+  void record_heap_size_info_at_start(bool full);
 
   // Print heap sizing transition (with less and more detail).
   void print_heap_transition();
-  void print_detailed_heap_transition();
+  void print_detailed_heap_transition(bool full = false);
+  void print_perm_heap_change(size_t perm_prev_used) const;
 
   void record_stop_world_start();
   void record_concurrent_pause();
@@ -862,9 +861,16 @@ private:
   uint _max_survivor_regions;
 
   // For reporting purposes.
-  size_t _eden_bytes_before_gc;
-  size_t _survivor_bytes_before_gc;
-  size_t _capacity_before_gc;
+  // The value of _heap_bytes_before_gc is also used to calculate
+  // the cost of copying.
+
+  size_t _eden_used_bytes_before_gc;         // Eden occupancy before GC
+  size_t _survivor_used_bytes_before_gc;     // Survivor occupancy before GC
+  size_t _heap_used_bytes_before_gc;         // Heap occupancy before GC
+  size_t _permgen_used_bytes_before_gc;      // PermGen occupancy before GC
+
+  size_t _eden_capacity_bytes_before_gc;     // Eden capacity before GC
+  size_t _heap_capacity_bytes_before_gc;     // Heap capacity before GC
 
   // The amount of survor regions after a collection.
   uint _recorded_survivor_regions;

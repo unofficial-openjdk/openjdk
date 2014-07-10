@@ -51,7 +51,7 @@ void DCmdRegistrant::register_dcmds(){
   DCmdFactory::register_DCmdFactory(new DCmdFactoryImpl<JMXStartRemoteDCmd>(true,false));
   DCmdFactory::register_DCmdFactory(new DCmdFactoryImpl<JMXStartLocalDCmd>(true,false));
   DCmdFactory::register_DCmdFactory(new DCmdFactoryImpl<JMXStopRemoteDCmd>(true,false));
-
+  DCmdFactory::register_DCmdFactory(new DCmdFactoryImpl<RotateGCLogDCmd>(true, false));
 }
 
 #ifndef HAVE_EXTRA_DCMD
@@ -565,3 +565,11 @@ void JMXStopRemoteDCmd::execute(TRAPS) {
     JavaCalls::call_static(&result, ik, vmSymbols::stopRemoteAgent_name(), vmSymbols::void_method_signature(), CHECK);
 }
 
+void RotateGCLogDCmd::execute(TRAPS) {
+  if (UseGCLogFileRotation) {
+    VM_RotateGCLog rotateop(output());
+    VMThread::execute(&rotateop);
+  } else {
+    output()->print_cr("Target VM does not support GC log file rotation.");
+  }
+}

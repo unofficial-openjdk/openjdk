@@ -1297,9 +1297,20 @@ void os::free_thread(OSThread* osthread) {
 //////////////////////////////////////////////////////////////////////////////
 // thread local storage
 
+// Restore the thread pointer if the destructor is called. This is in case
+// someone from JNI code sets up a destructor with pthread_key_create to run
+// detachCurrentThread on thread death. Unless we restore the thread pointer we
+// will hang or crash. When detachCurrentThread is called the key will be set
+// to null and we will not be called again. If detachCurrentThread is never
+// called we could loop forever depending on the pthread implementation.
+static void restore_thread_pointer(void* p) {
+  Thread* thread = (Thread*) p;
+  os::thread_local_storage_at_put(ThreadLocalStorage::thread_index(), thread);
+}
+
 int os::allocate_thread_local_storage() {
   pthread_key_t key;
-  int rslt = pthread_key_create(&key, NULL);
+  int rslt = pthread_key_create(&key, restore_thread_pointer);
   assert(rslt == 0, "cannot allocate thread local storage");
   return (int)key;
 }
@@ -4422,11 +4433,15 @@ void os::Bsd::install_signal_handlers() {
     // and if UserSignalHandler is installed all bets are off
     if (CheckJNICalls) {
       if (libjsig_is_loaded) {
-        tty->print_cr("Info: libjsig is activated, all active signal checking is disabled");
+        if (PrintJNIResolving) {
+          tty->print_cr("Info: libjsig is activated, all active signal checking is disabled");
+        }
         check_signals = false;
       }
       if (AllowUserSignalHandlers) {
-        tty->print_cr("Info: AllowUserSignalHandlers is activated, all active signal checking is disabled");
+        if (PrintJNIResolving) {
+          tty->print_cr("Info: AllowUserSignalHandlers is activated, all active signal checking is disabled");
+        }
         check_signals = false;
       }
     }
