@@ -1919,6 +1919,7 @@ void ClassVerifier::verify_invoke_init(
       u2 start_pc = exhandlers->int_at(i);
       if (bci >= start_pc) {
         verify_error(bci, "Bad <init> method call from after the start of a try block");
+        return;
       }
     }
 
