@@ -56,6 +56,14 @@ class ModuleLauncher {
      */
     static void init() {
 
+        // Do nothing if running with -XX:-UseModuleBoundaries
+        String propValue = System.getProperty("jdk.runtime.useModuleBoundaries");
+        if (propValue != null) {
+            boolean useModuleBoundaries = Boolean.parseBoolean(propValue);
+            if (!useModuleBoundaries)
+                return;
+        }
+
         // module path of the installed modules
         ModulePath systemLibrary = ModulePath.installedModules();
 
@@ -65,7 +73,7 @@ class ModuleLauncher {
 
         // initial module(s) as specified by -mods
         Set<String> mods = new HashSet<>();
-        String propValue = System.getProperty("jdk.launcher.modules");
+        propValue = System.getProperty("jdk.launcher.modules");
         if (propValue != null) {
             for (String mod: propValue.split(",")) {
                 mods.add(mod);
