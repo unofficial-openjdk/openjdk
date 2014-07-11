@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,34 +22,25 @@
  *
  */
 
-#ifndef SHARE_VM_CI_CICONSTANTPOOLCACHE_HPP
-#define SHARE_VM_CI_CICONSTANTPOOLCACHE_HPP
+#ifndef SHARE_VM_RUNTIME_OS_INLINE_HPP
+#define SHARE_VM_RUNTIME_OS_INLINE_HPP
 
-#include "memory/resourceArea.hpp"
-#include "utilities/growableArray.hpp"
+#include "runtime/os.hpp"
 
-// ciConstantPoolCache
-//
-// The class caches indexed constant pool lookups.
-//
-// Usage note: this klass has nothing to do with ConstantPoolCache*.
-class ciConstantPoolCache : public ResourceObj {
-private:
-  GrowableArray<int>*   _keys;
-  GrowableArray<void*>* _elements;
+#ifdef TARGET_OS_FAMILY_linux
+# include "os_linux.inline.hpp"
+#endif
+#ifdef TARGET_OS_FAMILY_solaris
+# include "os_solaris.inline.hpp"
+#endif
+#ifdef TARGET_OS_FAMILY_windows
+# include "os_windows.inline.hpp"
+#endif
+#ifdef TARGET_OS_FAMILY_aix
+# include "os_aix.inline.hpp"
+#endif
+#ifdef TARGET_OS_FAMILY_bsd
+# include "os_bsd.inline.hpp"
+#endif
 
-  int find(int index);
-
-public:
-  ciConstantPoolCache(Arena* arena, int expected_size);
-
-  // Get the element associated with some index.
-  void* get(int index);
-
-  // Associate an element with an index.
-  void insert(int index, void* element);
-
-  void print();
-};
-
-#endif // SHARE_VM_CI_CICONSTANTPOOLCACHE_HPP
+#endif // SHARE_VM_RUNTIME_OS_INLINE_HPP
