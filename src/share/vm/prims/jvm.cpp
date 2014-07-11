@@ -385,6 +385,11 @@ JVM_ENTRY(jobject, JVM_InitProperties(JNIEnv *env, jobject properties))
     }
   }
 
+  // Module boundaries
+  if (!UseModuleBoundaries) {
+    PUTPROP(props, "jdk.runtime.useModuleBoundaries", "false");
+  }
+
   return properties;
 JVM_END
 
