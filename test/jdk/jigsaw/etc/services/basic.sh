@@ -45,7 +45,7 @@ mkdir -p mods/test
 $JAVAC -d mods/test `find $TESTSRC/src/test -name "*.java"`
 
 # not a module
-mkdir classes
+mkdir -p classes
 $JAVAC -d classes `find $TESTSRC/src/pearscript -name "*.java"`
 cp -r $TESTSRC/src/pearscript/META-INF classes
 

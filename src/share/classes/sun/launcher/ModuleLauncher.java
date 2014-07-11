@@ -116,7 +116,7 @@ class ModuleLauncher {
         } else {
             modulePath = systemLibrary;
         }
-        ModuleGraph graph = new Resolver(modulePath).resolve(input);
+        ModuleGraph graph = new Resolver(modulePath).resolve(input).bindServices();
         if (verbose) {
             graph.modules().stream()
                            .sorted()
@@ -143,8 +143,23 @@ class ModuleLauncher {
             });
         }
 
-        // define to runtime.
-        ModuleRuntime.defineModules(graph, moduleToLoaders::get);
+        // define to runtime
+        Module base = graph.findModule("java.base");
+        if (base != null) {
+            ModuleRuntime.defineModule(graph, base, null);
+            ModuleRuntime.defineModules(graph, moduleToLoaders::get);
+        }
+
+        // if -mods is specified then we have to hide the linked modules
+        // that are not selected. For now we just define the modules without
+        // any readability relationship or exports. Yes, this is a hack.
+        if (!mods.isEmpty()) {
+            Set<Module> selected = graph.modules();
+            systemLibrary.allModules()
+                         .stream()
+                         .filter(m -> !selected.contains(m))
+                         .forEach(m -> ModuleRuntime.defineProtoModule(m, moduleToLoaders.get(m)));
+        }
 
         // reflection checks enabled?
         String s = System.getProperty("sun.reflect.enableModuleChecks");
