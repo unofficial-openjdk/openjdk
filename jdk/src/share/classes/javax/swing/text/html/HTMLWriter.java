@@ -254,7 +254,7 @@ public class HTMLWriter extends AbstractWriter {
         convAttr.removeAttributes(convAttr);
         convertToHTML32(attr, convAttr);
 
-        Enumeration names = convAttr.getAttributeNames();
+        Enumeration<?> names = convAttr.getAttributeNames();
         while (names.hasMoreElements()) {
             Object name = names.nextElement();
             if (name instanceof HTML.Tag ||
@@ -529,6 +529,7 @@ public class HTMLWriter extends AbstractWriter {
         Object model = attr.getAttribute(StyleConstants.ModelAttribute);
         incrIndent();
         if (model instanceof OptionListModel) {
+            @SuppressWarnings("unchecked")
             OptionListModel<Option> listModel = (OptionListModel<Option>) model;
             int size = listModel.getSize();
             for (int i = 0; i < size; i++) {
@@ -536,6 +537,7 @@ public class HTMLWriter extends AbstractWriter {
                 writeOption(option);
             }
         } else if (model instanceof OptionComboBoxModel) {
+            @SuppressWarnings("unchecked")
             OptionComboBoxModel<Option> comboBoxModel = (OptionComboBoxModel<Option>) model;
             int size = comboBoxModel.getSize();
             for (int i = 0; i < size; i++) {
@@ -659,7 +661,7 @@ public class HTMLWriter extends AbstractWriter {
                                         (HTMLDocument.AdditionalComments);
 
         if (comments instanceof Vector) {
-            Vector v = (Vector)comments;
+            Vector<?> v = (Vector)comments;
             for (int counter = 0, maxCounter = v.size(); counter < maxCounter;
                  counter++) {
                 writeComment(v.elementAt(counter).toString());
@@ -717,7 +719,7 @@ public class HTMLWriter extends AbstractWriter {
         // translate css attributes to html
         attr = convertToHTML(attr, oConvAttr);
 
-        Enumeration names = attr.getAttributeNames();
+        Enumeration<?> names = attr.getAttributeNames();
         while (names.hasMoreElements()) {
             Object name = names.nextElement();
             if (name instanceof HTML.Tag) {
@@ -859,7 +861,7 @@ public class HTMLWriter extends AbstractWriter {
      * Outputs the maps as elements. Maps are not stored as elements in
      * the document, and as such this is used to output them.
      */
-    void writeMaps(Enumeration maps) throws IOException {
+    void writeMaps(Enumeration<?> maps) throws IOException {
         if (maps != null) {
             while(maps.hasMoreElements()) {
                 Map map = (Map)maps.nextElement();
@@ -907,7 +909,7 @@ public class HTMLWriter extends AbstractWriter {
      */
     void writeStyles(StyleSheet sheet) throws IOException {
         if (sheet != null) {
-            Enumeration styles = sheet.getStyleNames();
+            Enumeration<?> styles = sheet.getStyleNames();
             if (styles != null) {
                 boolean outputStyle = false;
                 while (styles.hasMoreElements()) {
@@ -933,7 +935,7 @@ public class HTMLWriter extends AbstractWriter {
     boolean writeStyle(String name, Style style, boolean outputStyle)
                  throws IOException{
         boolean didOutputStyle = false;
-        Enumeration attributes = style.getAttributeNames();
+        Enumeration<?> attributes = style.getAttributeNames();
         if (attributes != null) {
             while (attributes.hasMoreElements()) {
                 Object attribute = attributes.nextElement();
@@ -1043,7 +1045,7 @@ public class HTMLWriter extends AbstractWriter {
         if (from == null) {
             return;
         }
-        Enumeration keys = from.getAttributeNames();
+        Enumeration<?> keys = from.getAttributeNames();
         String value = "";
         while (keys.hasMoreElements()) {
             Object key = keys.nextElement();
@@ -1150,7 +1152,7 @@ public class HTMLWriter extends AbstractWriter {
      * attribute.
      */
     private static void convertToHTML40(AttributeSet from, MutableAttributeSet to) {
-        Enumeration keys = from.getAttributeNames();
+        Enumeration<?> keys = from.getAttributeNames();
         String value = "";
         while (keys.hasMoreElements()) {
             Object key = keys.nextElement();

@@ -95,6 +95,7 @@ public class Resolve {
     public final boolean varargsEnabled;
     public final boolean allowMethodHandles;
     public final boolean allowFunctionalInterfaceMostSpecific;
+    public final boolean checkVarargsAccessDuringResolution;
     private final boolean debugResolve;
     private final boolean compactMethodDiags;
     final EnumSet<VerboseResolutionMode> verboseResolutionMode;
@@ -136,6 +137,8 @@ public class Resolve {
         Target target = Target.instance(context);
         allowMethodHandles = target.hasMethodHandles();
         allowFunctionalInterfaceMostSpecific = source.allowFunctionalInterfaceMostSpecific();
+        checkVarargsAccessDuringResolution =
+                source.allowPostApplicabilityVarargsAccessCheck();
         polymorphicSignatureScope = new Scope(syms.noSymbol);
 
         inapplicableMethodException = new InapplicableMethodException(diags);
@@ -833,7 +836,10 @@ public class Resolve {
                                     Warner warn) {
             super.argumentsAcceptable(env, deferredAttrContext, argtypes, formals, warn);
             //should we expand formals?
-            if (deferredAttrContext.phase.isVarargsRequired()) {
+            if ((!checkVarargsAccessDuringResolution ||
+                (checkVarargsAccessDuringResolution &&
+                 deferredAttrContext.mode == AttrMode.CHECK)) &&
+                deferredAttrContext.phase.isVarargsRequired()) {
                 //check varargs element type accessibility
                 varargsAccessible(env, types.elemtype(formals.last()),
                         deferredAttrContext.inferenceContext);
@@ -952,9 +958,10 @@ public class Resolve {
         }
 
         public boolean compatible(Type found, Type req, Warner warn) {
+            InferenceContext inferenceContext = deferredAttrContext.inferenceContext;
             return strict ?
-                    types.isSubtypeUnchecked(found, deferredAttrContext.inferenceContext.asUndetVar(req), warn) :
-                    types.isConvertible(found, deferredAttrContext.inferenceContext.asUndetVar(req), warn);
+                    types.isSubtypeUnchecked(inferenceContext.asUndetVar(found), inferenceContext.asUndetVar(req), warn) :
+                    types.isConvertible(inferenceContext.asUndetVar(found), inferenceContext.asUndetVar(req), warn);
         }
 
         public void report(DiagnosticPosition pos, JCDiagnostic details) {
