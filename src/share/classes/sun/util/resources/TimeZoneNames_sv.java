@@ -63,7 +63,7 @@ public final class TimeZoneNames_sv extends TimeZoneNamesBundle {
                                      "Bangladesh, sommartid", "BDST"};
         String BRISBANE[] = new String[] {"\u00D6stlig standardtid (Queensland)", "EST",
                                           "\u00D6stlig sommartid (Queensland)", "EST"};
-        String BROKEN_HILL[] = new String[] {"Central standardtid (Sydaustralien)/New South Wales)", "CST",
+        String BROKEN_HILL[] = new String[] {"Central standardtid (Sydaustralien/New South Wales)", "CST",
                                              "Central sommartid (South Australia/New South Wales)", "CST"};
         String BRT[] = new String[] {"Brasilien, normaltid", "BRT",
                                      "Brasilien, sommartid", "BRST"};
