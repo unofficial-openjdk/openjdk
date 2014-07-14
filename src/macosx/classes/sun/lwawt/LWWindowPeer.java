@@ -755,7 +755,7 @@ public class LWWindowPeer
     public void notifyNCMouseDown() {
         // Ungrab except for a click on a Dialog with the grabbing owner
         if (grabbingWindow != null &&
-            grabbingWindow != getOwnerFrameDialog(this))
+            !grabbingWindow.isOneOfOwnersOf(this))
         {
             grabbingWindow.ungrab();
         }
@@ -851,7 +851,7 @@ public class LWWindowPeer
 
                 // Ungrab only if this window is not an owned window of the grabbing one.
                 if (!isGrabbing() && grabbingWindow != null &&
-                    grabbingWindow != getOwnerFrameDialog(this))
+                    !grabbingWindow.isOneOfOwnersOf(this))
                 {
                     grabbingWindow.ungrab();
                 }
@@ -1321,6 +1321,17 @@ public class LWWindowPeer
         return !(window instanceof Dialog || window instanceof Frame);
     }
 
+    private boolean isOneOfOwnersOf(LWWindowPeer peer) {
+        Window owner = (peer != null ? peer.getTarget().getOwner() : null);
+        while (owner != null) {
+            if ((LWWindowPeer)owner.getPeer() == this) {
+                return true;
+            }
+            owner = owner.getOwner();
+        }
+        return false;
+    }
+
     /*
      * Changes focused window on java level.
      */
@@ -1352,7 +1363,7 @@ public class LWWindowPeer
         // - when the opposite (gaining focus) window is an owned/owner window.
         // - for a simple window in any case.
         if (!becomesFocused &&
-            (isGrabbing() || getOwnerFrameDialog(grabbingWindow) == this))
+            (isGrabbing() || this.isOneOfOwnersOf(grabbingWindow)))
         {
             focusLog.fine("ungrabbing on " + grabbingWindow);
             // ungrab a simple window if its owner looses activation.
@@ -1369,6 +1380,11 @@ public class LWWindowPeer
         postEvent(windowEvent);
     }
 
+    /*
+     * Retrieves the owner of the peer.
+     * Note: this method returns the owner which can be activated, (i.e. the instance
+     * of Frame or Dialog may be returned).
+     */
     static LWWindowPeer getOwnerFrameDialog(LWWindowPeer peer) {
         Window owner = (peer != null ? peer.getTarget().getOwner() : null);
         while (owner != null && !(owner instanceof Frame || owner instanceof Dialog)) {
