@@ -23,6 +23,7 @@
 
 /*
  * @test
+ * @ignore
  * @summary Basic test for jlink
  */
 
