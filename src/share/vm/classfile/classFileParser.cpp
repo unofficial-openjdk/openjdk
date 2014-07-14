@@ -2661,7 +2661,7 @@ void ClassFileParser::parse_classfile_bootstrap_methods_attribute(constantPoolHa
                      "Short length on BootstrapMethods in class file %s",
                      CHECK);
 
-  guarantee_property(attribute_byte_length > sizeof(u2),
+  guarantee_property(attribute_byte_length >= sizeof(u2),
                      "Invalid BootstrapMethods attribute length %u in class file %s",
                      attribute_byte_length,
                      CHECK);
