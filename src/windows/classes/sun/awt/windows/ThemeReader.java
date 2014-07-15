@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004, 2006, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2004, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -56,21 +56,21 @@ public class ThemeReader {
         new ReentrantReadWriteLock();
     private static final Lock readLock = readWriteLock.readLock();
     private static final Lock writeLock = readWriteLock.writeLock();
+    private static volatile boolean valid = false;
+
+    static volatile boolean xpStyleEnabled;
 
     static void flush() {
-        writeLock.lock();
-        try {
-            // Close old themes.
-            for (Long value : widgetToTheme.values()) {
-                closeTheme(value.longValue());
-            }
-            widgetToTheme.clear();
-        } finally {
-            writeLock.unlock();
-        }
+        // Could be called on Toolkit thread, so do not try to acquire locks
+        // to avoid deadlock with theme initialization
+        valid = false;
     }
 
     public native static boolean isThemed();
+
+    public static boolean isXPStyleEnabled() {
+        return xpStyleEnabled;
+    }
 
     // this should be called only with writeLock held
     private static Long getThemeImpl(String widget) {
@@ -94,6 +94,24 @@ public class ThemeReader {
     // returns theme value
     // this method should be invoked with readLock locked
     private static Long getTheme(String widget) {
+        if (!valid) {
+            readLock.unlock();
+            writeLock.lock();
+            try {
+                if (!valid) {
+                    // Close old themes.
+                    for (Long value : widgetToTheme.values()) {
+                        closeTheme(value);
+                    }
+                    widgetToTheme.clear();
+                    valid = true;
+                }
+            } finally {
+                readLock.lock();
+                writeLock.unlock();
+            }
+        }
+
         // mostly copied from the javadoc for ReentrantReadWriteLock
         Long theme = widgetToTheme.get(widget);
         if (theme == null) {
