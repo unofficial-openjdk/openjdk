@@ -56,17 +56,40 @@ import java.util.zip.ZipFile;
 import sun.misc.JModCache;
 
 /**
- * A module path used for locating modules. For example a module path may be
- * backed by a sequence of directories on the file system that contain
- * module artifacts.
+ * A module path for locating modules.
+ *
+ * <p> A {@code ModulePath} is conceptually a set of modules or a sequence
+ * of sets. An important property is that a {@code ModulePath} admits to at most
+ * one module with a given name. A {@code ModulePath} that is a sequence of
+ * directories for example, will locate the first occurrence of a module and
+ * ignores other modules of that name that appear in directories later in the
+ * sequence. </p>
+ *
+ * <p> A {@code ModulePath} is a concrete implementation of class. In addition,
+ * this class defines a static method to obtain a module path of the {@link
+ * #installedModules() installed-modules} and a static method to create a
+ * module path that is backed by a sequence of directories on the file system
+ * containing module artifacts. </p>
+ *
+ * <pre>{@code
+ *     ModulePath mp = ModulePath.ofDirectories("dir1", "dir2", "dir3");
+ * }</pre>
+ *
+ * @apiNote The eventual API will need to define how errors are handled, say
+ * for example findModule lazily searching the module path and finding two
+ * modules of the same name in the same directory.
  */
 
 public abstract class ModulePath {
+    /**
+     * Initializes a new instance of this class.
+     */
     protected ModulePath() { }
 
     /**
-     * Locates a module of the given name in this module path. Returns
-     * {@code null} if not found.
+     * Locates a module of the given name in this module path.
+     *
+     * @return the module or {@code null} if not found.
      */
     public abstract Module findModule(String name);
 
@@ -77,7 +100,9 @@ public abstract class ModulePath {
 
     /**
      * Returns a {@code URL} to locate the given {@code Module} in this module
-     * path. Returns {@code null} if not found.
+     * path.
+     *
+     * @return the {@code URL} or {@code null} if not found.
      */
     public abstract URL locationOf(Module m);
 
@@ -87,6 +112,8 @@ public abstract class ModulePath {
      * the resulting module path for a module will first search this module path;
      * if not found then the module path specified by {@code tail} will be
      * searched.
+     *
+     * @return the new module path
      */
     public final ModulePath join(ModulePath tail) {
         ModulePath head = this;
@@ -144,8 +171,12 @@ public abstract class ModulePath {
 
     /**
      * Creates a {@code ModulePath} that locates modules on the file system by
-     * searching sequence of directories containing module artifacts
+     * searching a sequence of directories containing module artifacts
      * ({@code jmod}, modular JAR, exploded modules).
+     *
+     * @apiNote This method needs to define how the returned {@code ModulePath}
+     * handles I/O and other errors (a ClassFormatError when parsing a
+     * module-info.class for example).
      */
     public static ModulePath ofDirectories(String... dirs) {
         return new FileSystemModulePath(dirs);

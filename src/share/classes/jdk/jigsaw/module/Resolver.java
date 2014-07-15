@@ -39,6 +39,10 @@ import jdk.jigsaw.module.ModuleDependence.Modifier;
 /**
  * A simple resolver that constructs a module graph from an initial, possibly
  * empty module graph, a module path, and an input set of module names.
+ *
+ * @apiNote The eventual API will need to define how errors are handled. This
+ * is tied into how {@link ModulePath} will be specified as there are a slew
+ * of possible errors that can arise when lazily searching a module path.
  */
 public final class Resolver {
 

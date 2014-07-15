@@ -41,6 +41,12 @@ import jdk.jigsaw.module.ModuleDependence.Modifier;
  * Represents module information as read from a {@code module-info} class file
  * and defines a method to combine this with the module contents to create a
  * {@link Module}.
+ *
+ * @apiNote We need to decide whether this is useful to expose in the API or not.
+ * It is public for now on the assumption that it will be useful to have a simple
+ * module-info.java reader in the API.
+ *
+ * @see ModulePath#ofDirectories
  */
 public final class ModuleInfo {
 
@@ -217,6 +223,13 @@ public final class ModuleInfo {
      * {@code id} is the given identifier and typically comes from the
      * extended module descriptor. If there is no extended module descriptor
      * then it is the simple module name.
+     *
+     * @throws IllegalArgumentException if the name component of the {@code id}
+     *   does not match the module name as read from the module-info file,
+     *   or {@code packages} does not include a package for each package that
+     *   the module exports, or {@code packages} includes the unnamed package.
+     *
+     * @see ModuleId
      */
     public Module makeModule(String id, Iterable<String> packages) {
         // the name in the module identifier must match the module name
@@ -244,6 +257,18 @@ public final class ModuleInfo {
         packages.forEach(pkg -> builder.include(pkg));
 
         return builder.build();
+    }
+
+    /**
+     * Creates a {@code Module} from the information in the module-info file
+     * and the given set of packages (the module content).
+     *
+     * @throws IllegalArgumentException if {@code packages} does not include
+     *   a package for each package that the module exports, or {@code packages}
+     *   includes the unnamed package.
+     */
+    public Module makeModule(Iterable<String> packages) {
+        return makeModule(name(), packages);
     }
 
     /**

@@ -125,7 +125,6 @@ public final class Module
         return serviceDependences;
     }
 
-
     /**
      * <p> The services that this module provides </p>
      *
@@ -157,6 +156,9 @@ public final class Module
         return packages;
     }
 
+    /**
+     * A builder used for building {@link Module} objects.
+     */
     public final static class Builder {
 
         private ModuleId id;
@@ -167,8 +169,16 @@ public final class Module
         private final Set<String> packages = new HashSet<>();
         private final Map<String, Set<String>> services = new HashMap<>();
 
+        /**
+         * Initializes a new builder.
+         */
         public Builder() { }
 
+        /**
+         * Sets the module id.
+         *
+         * @throws IllegalStateException if already set
+         */
         public Builder id(ModuleId id) {
             if (this.id != null)
                 throw new IllegalStateException("id already set");
@@ -176,10 +186,20 @@ public final class Module
             return this;
         }
 
+        /**
+         * Sets the module id.
+         *
+         * @throws IllegalStateException if already set
+         */
         public Builder id(String id) {
             return id(ModuleId.parse(id));
         }
 
+        /**
+         * Add/includes the given package name in the module contents.
+         *
+         * @throws IllegalArgumentException if {@code p} is the empty string
+         */
         public Builder include(String p) {
             if (p.isEmpty())
                 throw new IllegalArgumentException("<unnamed> package not allowed");
@@ -187,40 +207,66 @@ public final class Module
             return this;
         }
 
+        /**
+         * Adds a module dependence.
+         */
         public Builder requires(ModuleDependence md) {
             moduleDeps.add(requireNonNull(md));
             return this;
         }
 
+        /**
+         * Adds a service dependence.
+         */
         public Builder requires(ServiceDependence sd) {
             serviceDeps.add(requireNonNull(sd));
             return this;
         }
 
+        /**
+         * Adds a permits, by module name.
+         */
         public Builder permit(String m) {
             permits.add(requireNonNull(m));
             return this;
         }
 
+        /**
+         * Adds a module export.
+         */
         public Builder export(ModuleExport e) {
             exports.add(requireNonNull(e));
             return this;
         }
 
+        /**
+         * Exports the given package name.
+         */
         public Builder export(String p) {
             return export(new ModuleExport(p));
         }
 
+        /**
+         * Exports the given package name to the given named module.
+         */
         public Builder export(String p, String m) {
             return export(new ModuleExport(p, m));
         }
 
+        /**
+         * Provides service {@code s} with implementation {@code p}.
+         */
         public Builder service(String s, String p) {
             services.computeIfAbsent(requireNonNull(s), k -> new HashSet<>())
                     .add(requireNonNull(p));
             return this;
         }
 
+        /**
+         * Builds a {@code Module} from the components.
+         *
+         * @throws IllegalStateException if the module id is not set
+         */
         public Module build() {
             if (id == null)
                 throw new IllegalStateException("id not set");
@@ -249,7 +295,7 @@ public final class Module
                 && serviceDependences.equals(that.serviceDependences)
                 && permits.equals(that.permits)
                 && packages.equals(that.packages)
-                && exports.equals(exports)
+                && exports.equals(that.exports)
                 && services.equals(that.services));
     }
 

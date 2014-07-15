@@ -36,15 +36,36 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * Represents a module graph, typically the result of resolution.
+ * Represents a module graph that is the result of {@link Resolver#resolve
+ * resolution} or {@link #bindServices binding}.
  *
- * The {@link #modules} method returns the set of {@link Module Modules} in the
- * graph. The {@link #readDependences} method provides access to the readability
- * relationships.
+ * <p> A {@code ModuleGraph} is a set of {@link #modules() modules} with directed
+ * edges that represent the {@link #readDependences readability-relationship}
+ * between the modules. The modules in a module graph have a unique
+ * {@link ModuleId module-id} but their module names may not be unique. </p>
  *
- * The {@link #bindServices} method can be used to augment the module graph with
- * modules from the original module path that are induced by service-use
- * relationships.
+ * <p> A module graph can be augmented with additional modules (and edges) at a
+ * later time to produce a new, richer graph. This is the process of module graph
+ * composition. When augmenting an existing module graph by resolution then
+ * the {@link #minusInitialModuleGraph} method may be used to obtain the set
+ * of modules added to the graph. </p>
+ *
+ * <p> The following example augments the {@link #getSystemModuleGraph
+ * system-module-graph} with modules that are the result of resolving a module
+ * names <em>myapp</em>. </p>
+ *
+ * <pre>{@code
+ *     ModulePath mp = ModulePath.ofDirectories("dir1", "dir2", "dir3");
+ *
+ *     Resolver r = new Resolver(ModuleGraph.getSystemModuleGraph(), mp);
+ *
+ *     ModuleGraph g = r.resolve("myapp");
+ *
+ *     Set<Module> added = g.minusInitialModuleGraph();
+ *
+ * }</pre>
+ *
+ * @see ClassLoader#defineModules
  */
 public final class ModuleGraph {
 
@@ -107,8 +128,12 @@ public final class ModuleGraph {
     }
 
     /**
-     * Finds a module by name in this module graph. Returns {@code null}
-     * if the module is not found.
+     * Finds a module by name in this module graph. This method first searches
+     * the set of modules that are in this module graph but not in the
+     * {@link #initialModuleGraph}. If not found then it searches the initial
+     * module graph.
+     *
+     * @return The module or {@code null} if not found
      */
     public Module findModule(String name) {
         Module m = nameToModule.get(name);
@@ -127,7 +152,7 @@ public final class ModuleGraph {
      * as this module graph does not include the modules in the initial module
      * graph.
      *
-     * @throws IllegalAccessException if the module is not in the module graph
+     * @throws IllegalArgumentException if the module is not in the module graph
      */
     public Set<Module> readDependences(Module m) {
         Set<Module> s = graph.get(m);
@@ -172,7 +197,6 @@ public final class ModuleGraph {
                     .collect(Collectors.toSet());
     }
 
-
     /**
      * Returns the set of modules that are in this module graph that were not in
      * the initial module graph.
@@ -185,8 +209,11 @@ public final class ModuleGraph {
      * Returns a new module graph that is this module graph augmented with modules
      * from the module path that are induced by service-use relationships.
      *
-     * @throws ResolveException if a service provider module dependences cannot be
-     * resolved
+     * <p> The {@link #initialModuleGraph} of the new module graph is the same
+     * as this module graph. </p>
+     *
+     * @throws ResolveException if the module dependences of a service provider
+     * module cannot be resolved
      */
     public ModuleGraph bindServices() {
         // empty module graph, nothing to do
@@ -215,18 +242,18 @@ public final class ModuleGraph {
             // process the service dependences of service consumers
             for (Module m: serviceConsumersToVisit) {
                 for (ServiceDependence d: m.serviceDependences()) {
-                    String sn = d.service();
-                    if (!servicesSearched.contains(sn)) {
-                        // find all modules on module-path that provide sn
+                    String service = d.service();
+                    if (!servicesSearched.contains(service)) {
+                        // find all modules on module-path that provide "service"
                         for (Module other: resolver.modulePath().allModules()) {
-                            if (other.services().containsKey(sn)) {
+                            if (other.services().containsKey(service)) {
                                 // ignore permits
                                 if (!modules.contains(other)) {
                                     q.offer(other);
                                 }
                             }
                         }
-                        servicesSearched.add(sn);
+                        servicesSearched.add(service);
                     }
                 }
             }
@@ -245,7 +272,7 @@ public final class ModuleGraph {
             }
         }
 
-        // done, return resulting module graph
+        // done, create resulting module graph
         return resolver.finish(modules);
     }
 
@@ -256,6 +283,9 @@ public final class ModuleGraph {
      * Sets the system module graph. The system module graph typically includes
      * the modules installed in the runtime image and any modules on the module
      * path specified to the launcher.
+     *
+     * @throws IllegalStateException if the system module graph is already set
+     * @throws SecurityException if denied by the security manager
      */
     public static void setSystemModuleGraph(ModuleGraph g) {
         SecurityManager sm = System.getSecurityManager();
@@ -267,7 +297,8 @@ public final class ModuleGraph {
     }
 
     /**
-     * Returns the system module graph.
+     * Returns the system module graph. Returns {@code null} if the system
+     * module graph has not been setup,
      */
     public static ModuleGraph getSystemModuleGraph() {
         SecurityManager sm = System.getSecurityManager();

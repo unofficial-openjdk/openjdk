@@ -27,14 +27,22 @@ package jdk.jigsaw.module;
 
 /**
  * Thrown when an error occurs during resolution.
+ *
+ * @see Resolver
  */
 public class ResolveException extends RuntimeException {
     private static final long serialVersionUID = 0L;
 
+    /**
+     * Constructs an instance of this exception.
+     */
     public ResolveException(String m) {
         super(m);
     }
 
+    /**
+     * Constructs an instance of this exception.
+     */
     public ResolveException(String fmt, Object... args) {
         super(String.format(fmt, args));
     }
