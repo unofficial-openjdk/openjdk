@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -102,7 +102,7 @@ class ClassFileParser VALUE_OBJ_CLASS_SPEC {
       assert((int)_annotation_LIMIT <= (int)sizeof(_annotations_present) * BitsPerByte, "");
     }
     // If this annotation name has an ID, report it (or _none).
-    ID annotation_index(Symbol* name);
+    ID annotation_index(Handle class_loader, bool is_anonymous, Symbol* name);
     // Set the annotation name:
     void set_annotation(ID id) {
       assert((int)id >= 0 && (int)id < (int)_annotation_LIMIT, "oob");
@@ -169,14 +169,14 @@ class ClassFileParser VALUE_OBJ_CLASS_SPEC {
                                u2* java_fields_count_ptr, TRAPS);
 
   // Method parsing
-  methodHandle parse_method(constantPoolHandle cp, bool is_interface,
-                            AccessFlags* promoted_flags,
+  methodHandle parse_method(Handle class_loader, constantPoolHandle cp,
+                            bool is_interface, AccessFlags* promoted_flags,
                             typeArrayHandle* method_annotations,
                             typeArrayHandle* method_parameter_annotations,
                             typeArrayHandle* method_default_annotations,
                             TRAPS);
-  objArrayHandle parse_methods (constantPoolHandle cp, bool is_interface,
-                                AccessFlags* promoted_flags,
+  objArrayHandle parse_methods (Handle class_loader, constantPoolHandle cp,
+                                bool is_interface, AccessFlags* promoted_flags,
                                 bool* has_final_method,
                                 objArrayOop* methods_annotations_oop,
                                 objArrayOop* methods_parameter_annotations_oop,
@@ -202,6 +202,7 @@ class ClassFileParser VALUE_OBJ_CLASS_SPEC {
   typeArrayOop parse_stackmap_table(u4 code_attribute_length, TRAPS);
 
   // Classfile attribute parsing
+  u2 parse_generic_signature_attribute(constantPoolHandle cp, TRAPS);
   void parse_classfile_sourcefile_attribute(constantPoolHandle cp, TRAPS);
   void parse_classfile_source_debug_extension_attribute(constantPoolHandle cp, int length, TRAPS);
   u2   parse_classfile_inner_classes_attribute(u1* inner_classes_attribute_start,
@@ -210,7 +211,8 @@ class ClassFileParser VALUE_OBJ_CLASS_SPEC {
                                                u2 enclosing_method_method_index,
                                                constantPoolHandle cp,
                                                TRAPS);
-  void parse_classfile_attributes(constantPoolHandle cp,
+  void parse_classfile_attributes(Handle class_loader,
+                                  constantPoolHandle cp,
                                   ClassAnnotationCollector* parsed_annotations,
                                   TRAPS);
   void parse_classfile_synthetic_attribute(constantPoolHandle cp, TRAPS);
@@ -224,7 +226,7 @@ class ClassFileParser VALUE_OBJ_CLASS_SPEC {
                                        int runtime_invisible_annotations_length, TRAPS);
   int skip_annotation(u1* buffer, int limit, int index);
   int skip_annotation_value(u1* buffer, int limit, int index);
-  void parse_annotations(u1* buffer, int limit, constantPoolHandle cp,
+  void parse_annotations(Handle class_loader, u1* buffer, int limit, constantPoolHandle cp,
                          /* Results (currently, only one result is supported): */
                          AnnotationCollector* result,
                          TRAPS);
@@ -333,6 +335,12 @@ class ClassFileParser VALUE_OBJ_CLASS_SPEC {
     return (EnableInvokeDynamic
             ? cp->tag_at(index).is_klass_or_reference()
             : cp->tag_at(index).is_klass_reference());
+  }
+
+  // Checks that the cpool index is in range and is a utf8
+  bool valid_symbol_at(constantPoolHandle cp, int cpool_index) {
+    return (cp->is_within_bounds(cpool_index) &&
+            cp->tag_at(cpool_index).is_utf8());
   }
 
  public:
