@@ -36,14 +36,13 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.UncheckedIOException;
 import java.lang.reflect.InvocationTargetException;
-import java.net.URISyntaxException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitResult;
@@ -58,8 +57,8 @@ import java.nio.file.attribute.PosixFilePermissions;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Formatter;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -72,13 +71,15 @@ import java.util.function.Predicate;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
-
 import jdk.jigsaw.module.Module;
+import jdk.jigsaw.module.ModuleGraph;
 import jdk.jigsaw.module.ModulePath;
 import jdk.jigsaw.module.Resolver;
+import jdk.jigsaw.module.internal.ImageModules;
 
 /**
  * Implementation for the jlink tool.
@@ -399,11 +400,6 @@ class JlinkTask {
 
     private static final String APP_DIR = "lib" + File.separator + "app";
 
-    /**
-     * Module definitions, serialized in modules.ser for now
-     */
-    private static final String MODULES_SER = "jdk/jigsaw/module/resources/modules.ser";
-
     /*
      * Returns the set of required modules
      */
@@ -446,14 +442,12 @@ class JlinkTask {
         return modPaths;
     }
 
-    private void createImage() throws IOException {
-        final List<Path> jars = options.classpath;
-        final Path output = options.output;
-
-        // the set of modules required
-        Set<Module> mods = modulesNeeded(options.jmods);
-        Set<Path> jmods = modulesToPath(mods);
-
+    /*
+     * Extract Jmod files and write classes and resource files
+     * into per-module "classes" zip file and write module graph
+     * in the java.base module.
+     */
+    private void extractJMods(Path output, Set<Module> mods, Set<Path> jmods) throws IOException {
         Path modulesPath = output.resolve("lib/modules");
         Files.createDirectories(modulesPath);
         for (Path jmod : jmods) {
@@ -465,11 +459,26 @@ class JlinkTask {
             try (JmodFileReader reader = new JmodFileReader(jmod, modPath, output)) {
                 reader.extract();
                 if (modName.equals("java.base")) {
-                    reader.writeModulesSer(mods);
                     reader.writeModulesLists(mods);
                 }
             }
         }
+    }
+
+    private void createImage() throws IOException {
+        final List<Path> jars = options.classpath;
+        final Path output = options.output;
+
+        Resolver resolver = new Resolver(options.modulePath);
+        ModuleGraph graph = resolver.resolve(options.jmods);
+        Set<Module> modules = graph.modules();
+        Set<Path> jmods = modulesToPath(modules);
+
+        ImageFileHelper mg = new ImageFileHelper(graph, jmods);
+        extractJMods(output, modules, jmods);
+
+        // write module graph
+        mg.writeInstalledModules(output);
 
         Path appJar = output.resolve(APP_DIR).resolve("app.jar");
         if (jars != null) {
@@ -495,6 +504,44 @@ class JlinkTask {
                 writer.write(sb.toString());
             }
             Files.setPosixFilePermissions(cmd, PosixFilePermissions.fromString("r-xr-xr-x"));
+        }
+    }
+
+    static class ImageFileHelper {
+        static final Path IMODULES_FILE = Paths.get("lib", "modules", ImageModules.FILE);
+        final Set<Module> modules;
+        final ImageModules imf;
+        ImageFileHelper(ModuleGraph graph, Set<Path> jmods) throws IOException {
+            this.modules = graph.modules();
+            Map<String, Module> mods = new HashMap<>();
+            for (Module m : modules) {
+                mods.put(m.id().name(), m);
+            }
+            Set<Module> bootModules = modulesFor(BOOT_MODULES).stream()
+                    .filter(mods::containsKey)
+                    .map(mods::get)
+                    .collect(Collectors.toSet());
+            Set<Module> extModules = modulesFor(EXT_MODULES).stream()
+                    .filter(mods::containsKey)
+                    .map(mods::get)
+                    .collect(Collectors.toSet());
+            Set<Module> otherModules = modules.stream()
+                    .filter(m -> !bootModules.contains(m) && !extModules.contains(m))
+                    .collect(Collectors.toSet());
+            this.imf = new ImageModules(graph, bootModules,
+                                        extModules, otherModules, jmods);
+        }
+
+        void writeInstalledModules(Path output) throws IOException {
+            Path path = output.resolve(IMODULES_FILE);
+            try (OutputStream out = Files.newOutputStream(path)) {
+                imf.store(out);
+            }
+        }
+
+        private List<String> modulesFor(String name) throws IOException {
+          Path file = Paths.get(System.getProperty("java.home"), "lib", name);
+          return Files.readAllLines(file, StandardCharsets.ISO_8859_1);
         }
     }
 
@@ -559,10 +606,6 @@ class JlinkTask {
         private void visitFile(ZipEntry ze) throws IOException {
             String fullFilename = ze.getName();
 
-            // ## handling of "special" files first
-            if (fullFilename.toString().endsWith(MODULES_SER))
-                return;  // modules.ser will be generated for the given image
-
             if (fullFilename.equals(BOOT_MODULES_CONF_FILE)) {
                 bootModules = readAllLines(ze);
                 return;
@@ -590,14 +633,6 @@ class JlinkTask {
                 writeFile(moduleFile.getInputStream(ze), dstFile, section);
                 setExecutable(section, dstFile);
             }
-        }
-
-        public void writeModulesSer(Set<Module> modules) throws IOException {
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            try (ObjectOutputStream oos = new ObjectOutputStream(baos)) {
-                oos.writeObject(modules.toArray(new Module[0]));
-            }
-            writeJarEntry(new ByteArrayInputStream(baos.toByteArray()), MODULES_SER);
         }
 
         private final String BOOT_MODULES_IMAGE_FILE =

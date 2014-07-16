@@ -52,6 +52,7 @@ import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
+import jdk.jigsaw.module.internal.ImageModules;
 
 import sun.misc.JModCache;
 
@@ -147,26 +148,21 @@ public abstract class ModulePath {
      * Returns a module-path of the installed modules, these are the modules
      * that are linked into the runtime image.
      *
-     * @implNote serialized in modules.ser for now
      */
     public static ModulePath installedModules() {
-        final String MODULES_SER = "jdk/jigsaw/module/resources/modules.ser";
-        InputStream stream = ClassLoader.getSystemResourceAsStream(MODULES_SER);
-        Module[] modules;
-        if (stream == null) {
-            System.err.format("WARNING: %s not found%n", MODULES_SER);
-            modules = new Module[0];
+        if (SystemModulePath.exists()) {
+            return new SystemModulePath();
         } else {
-            try (InputStream in = stream) {
-                ObjectInputStream ois = new ObjectInputStream(in);
-                modules = (Module[]) ois.readObject();
-                if (modules.length == 0)
-                    System.err.format("WARNING: %s is empty%n", MODULES_SER);
-            } catch (IOException | ClassNotFoundException e) {
-                throw new InternalError(e);
+            String javahome = System.getProperty("java.home");
+            Path mlib = Paths.get(javahome, "modules");
+            if (Files.exists(mlib)) {
+                return ModulePath.ofDirectories(mlib.toString());
+            } else {
+                System.err.println("WARNING: Not modular JDK: " + mlib.toString() +
+                    " not exists");
+                return ModulePath.ofDirectories();
             }
         }
-        return new ArrayModulePath(modules);
     }
 
     /**
@@ -184,19 +180,37 @@ public abstract class ModulePath {
 }
 
 /**
- * A module path backed by an array of modules.
+ * System module path of a modular image
  */
-class ArrayModulePath extends ModulePath {
-    private final Set<Module> modules = new HashSet<>();
+class SystemModulePath extends ModulePath {
+    private final Set<Module> modules;
     private final Map<String, Module> namesToModules = new HashMap<>();
-
-    ArrayModulePath(Module... mods) {
-        for (Module m: mods) {
+    SystemModulePath() {
+        this.modules = modules();
+        for (Module m : modules) {
             String name = m.id().name();
             if (!namesToModules.containsKey(name)) {
-                modules.add(m);
                 namesToModules.put(name, m);
             }
+        }
+    }
+
+    static boolean exists() {
+        return Files.exists(getImageModulesFilePath());
+    }
+
+    private static Path getImageModulesFilePath() {
+        String javahome = System.getProperty("java.home");
+        Path mlib = Paths.get(javahome, "lib", "modules");
+        return mlib.resolve(ImageModules.FILE);
+    }
+
+    private Set<Module> modules() {
+        try (InputStream in = Files.newInputStream(getImageModulesFilePath())) {
+            ImageModules imods = ImageModules.load(in);
+            return imods.modules();
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
         }
     }
 

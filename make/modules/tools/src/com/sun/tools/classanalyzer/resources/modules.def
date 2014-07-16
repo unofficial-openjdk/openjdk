@@ -196,6 +196,7 @@ module java.base {
     uses java.time.chrono.Chronology;
     uses java.time.zone.ZoneRulesProvider;
     uses java.util.spi.CalendarDataProvider;
+    uses java.util.spi.CalendarNameProvider;
     uses java.util.spi.CurrencyNameProvider;
     uses java.util.spi.LocaleNameProvider;
     uses java.util.spi.ResourceBundleControlProvider;
