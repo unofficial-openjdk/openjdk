@@ -37,7 +37,7 @@ import java.util.Set;
 import jdk.jigsaw.module.ModuleDependence.Modifier;
 
 /**
- * A simple resolver that constructs a module graph from an initial, possibly
+ * A resolver that constructs a module graph from an initial, possibly
  * empty module graph, a module path, and an input set of module names.
  *
  * @apiNote The eventual API will need to define how errors are handled. This
@@ -103,12 +103,10 @@ public final class Resolver {
         }
 
         // run the resolver
-        Set<Module> modules = new HashSet<>(initialGraph.modules());
-        Set<Module> newlySelected = resolve(q, modules);
-        modules.addAll(newlySelected);
+        Set<Module> newlySelected = resolve(q, initialGraph.modules());
 
         // return the resulting module graph
-        return finish(modules);
+        return finish(newlySelected);
     }
 
     /**
@@ -166,6 +164,8 @@ public final class Resolver {
 
     /**
      * Returns the {@code ModuleGraph} that is the result of the resolution process.
+     *
+     * @param modules the newly resolved modules
      */
     ModuleGraph finish(Set<Module> modules) {
         // create the readability graph
@@ -195,10 +195,10 @@ public final class Resolver {
      *
      * ###TBD Need to write up a detailed description of this algorithm.
      */
-    private Map<Module, Set<Module>> makeGraph(Set<Module> modules) {
-        // name -> Module lookup
+    private Map<Module, Set<Module>> makeGraph(Set<Module> newlySelected) {
+        // name -> Module lookup for newly selected modules
         Map<String, Module> nameToModule = new HashMap<>();
-        modules.forEach(m -> nameToModule.put(m.id().name(), m));
+        newlySelected.forEach(m -> nameToModule.put(m.id().name(), m));
 
         // the "requires" graph starts as a module dependence graph and
         // is iteratively updated to be the readability graph
@@ -207,46 +207,44 @@ public final class Resolver {
         // the "requires public" graph, contains requires public edges only
         Map<Module, Set<Module>> g2 = new HashMap<>();
 
-        // initialize the graphs
-        for (Module m: modules) {
+        // initialize the graphs with the read dependences from the initial
+        // module graph
+        for (Module m: initialGraph.modules()) {
+            // requires
+            Set<Module> reads = initialGraph.readDependences(m);
+            g1.put(m, reads);
 
-            // if the module was present in the initial module graph then
-            // its read dependences are copied from the initial graph.
-            if (initialGraph.modules().contains(m)) {
-                // requires
-                Set<Module> reads = initialGraph.readDependences(m);
-                g1.put(m, reads);
-
-                // requires public
-                g2.put(m, new HashSet<>());
-                Map<String, Module> names = new HashMap<>();
-                reads.stream().forEach(x -> names.put(x.id().name(), x));
-                for (ModuleDependence d: m.moduleDependences()) {
-                    if (d.modifiers().contains(Modifier.PUBLIC)) {
-                        String dn = d.query().name();
-                        Module other = names.get(dn);
-                        if (other == null)
-                            throw new InternalError();
-                        g2.get(m).add(other);
-                    }
-                }
-            } else {
-                // module is newly selected
-                g1.put(m, new HashSet<>());
-                g2.put(m, new HashSet<>());
-                for (ModuleDependence d: m.moduleDependences()) {
+            // requires public
+            g2.put(m, new HashSet<>());
+            for (ModuleDependence d: m.moduleDependences()) {
+                if (d.modifiers().contains(Modifier.PUBLIC)) {
                     String dn = d.query().name();
-                    Module other = nameToModule.get(dn);
+                    Module other = initialGraph.findModule(dn);
                     if (other == null)
-                        throw new InternalError();
+                        throw new InternalError(m.id() + " requires missing " + dn);
+                    g2.get(m).add(other);
+                }
+            }
+        }
 
-                    // requires (and requires public)
-                    g1.get(m).add(other);
+        // add the module dependence edges from the newly selected modules
+        for (Module m: newlySelected) {
+            g1.put(m, new HashSet<>());
+            g2.put(m, new HashSet<>());
+            for (ModuleDependence d: m.moduleDependences()) {
+                String dn = d.query().name();
+                Module other = nameToModule.get(dn);
+                if (other == null)
+                    other = initialGraph.findModule(dn);
+                if (other == null)
+                    throw new InternalError(m.id() + " requires missing " + dn);
 
-                    // requires public only
-                    if (d.modifiers().contains(Modifier.PUBLIC)) {
-                        g2.get(m).add(other);
-                    }
+                // requires (and requires public)
+                g1.get(m).add(other);
+
+                // requires public only
+                if (d.modifiers().contains(Modifier.PUBLIC)) {
+                    g2.get(m).add(other);
                 }
             }
         }

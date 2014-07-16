@@ -43,71 +43,12 @@ import static org.testng.Assert.*;
 public class ModuleGraphTest {
 
     /**
-     * Basic test of module graph composition
-     */
-    public void testBasicComposition() {
-        // m1 -> m2 -> m3
-        Module m1 = new Module.Builder().id("m1").requires(md("m2")).build();
-        Module m2 = new Module.Builder().id("m2").requires(md("m3")).build();
-        Module m3 = new Module.Builder().id("m3").build();
-
-        ModulePath mp1 = new ModuleLibrary(m1, m2, m3);
-
-        // initial module graph
-        ModuleGraph g1 = new Resolver(mp1).resolve("m1");
-
-        // m4 -> m1 & m2 & m5
-        Module m4 = new Module.Builder().id("m4").requires(md("m1"))
-                                                 .requires(md("m2"))
-                                                 .requires(md("m5")).build();
-
-        // m5 -> m3
-        Module m5 = new Module.Builder().id("m5").requires(md("m3")).build();
-
-        ModulePath mp2 = new ModuleLibrary(m4, m5);
-
-        // new module graph
-        ModuleGraph g2 = new Resolver(g1, mp2).resolve("m4");
-
-        assertTrue(g2.initialModuleGraph() == g1);
-        assertTrue(g2.modulePath() == mp2);
-
-        assertTrue(g2.modules().size() == 5);
-        assertTrue(g2.modules().contains(m1));
-        assertTrue(g2.modules().contains(m2));
-        assertTrue(g2.modules().contains(m3));
-        assertTrue(g2.modules().contains(m4));
-        assertTrue(g2.modules().contains(m5));
-
-        Set<Module> selected = g2.minusInitialModuleGraph();
-        assertTrue(selected.size() == 2);
-        assertTrue(selected.contains(m4));
-        assertTrue(selected.contains(m5));
-
-        // readability graph should be a super-set
-        g1.modules().forEach(m -> {
-            assertTrue(g2.readDependences(m).containsAll(g1.readDependences(m)));
-        });
-
-        // m1, m2 and m3 read dependences should be unchanged
-        assertTrue(g1.readDependences(m1).size() == 1);
-        assertTrue(g1.readDependences(m2).size() == 1);
-        assertTrue(g1.readDependences(m3).size() == 0);
-
-        // check m4 and m5 read dependences
-        assertTrue(g2.readDependences(m4).contains(m1));
-        assertTrue(g2.readDependences(m4).contains(m2));
-        assertTrue(g2.readDependences(m4).contains(m5));
-        assertTrue(g2.readDependences(m5).contains(m3));
-    }
-
-    /**
      * Basic test of binding services
      */
     public void testBasicBinding() {
         Module m1 = new Module.Builder().id("m1")
-                                         .requires(md("m2"))
-                                         .requires(sd("S")).build();
+                                        .requires(md("m2"))
+                                        .requires(sd("S")).build();
         Module m2 = new Module.Builder().id("m2").build();
 
         // service provider
@@ -163,12 +104,18 @@ public class ModuleGraphTest {
         } catch (ResolveException e) { }
     }
 
+    /**
+     * Baisc test of ModuleGraph.getSystemModuleGraph
+     */
     public void testGetSystemModuleGraph() {
         ModuleGraph g = ModuleGraph.getSystemModuleGraph();
         Module base = g.findModule("java.base");
         assertTrue(base.packages().contains("java.lang"));
     }
 
+    /**
+     * Baisc test of ModuleGraph.setSystemModuleGraph
+     */
     @Test(expectedExceptions = { IllegalStateException.class })
     public void testSetSystemModuleGraph() {
         ModuleGraph g = ModuleGraph.getSystemModuleGraph();

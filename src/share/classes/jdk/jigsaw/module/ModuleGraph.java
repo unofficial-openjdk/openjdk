@@ -220,9 +220,8 @@ public final class ModuleGraph {
         if (resolver == null)
             return this;
 
-        // the selected modules so far, this will be augmented with modules
-        // that provide services and their dependences
-        Set<Module> modules = new HashSet<>(this.modules);
+        // all resolved modules, add to this as service provider modules are resolved
+        Set<Module> resolved = new HashSet<>(this.modules);
 
         // create the visit stack
         Deque<Module> q = new ArrayDeque<>();
@@ -233,8 +232,10 @@ public final class ModuleGraph {
 
         // the set of modules with service dependences that need to be visited
         Set<Module> serviceConsumersToVisit = new HashSet<>();
+
+        // seed with the consumers in the existing module graph
         modules.stream().filter(m -> !m.serviceDependences().isEmpty())
-               .forEach(serviceConsumersToVisit::add);
+                        .forEach(serviceConsumersToVisit::add);
 
         // iterate until there are no new service consumers to visit
         while (!serviceConsumersToVisit.isEmpty()) {
@@ -248,7 +249,7 @@ public final class ModuleGraph {
                         for (Module other: resolver.modulePath().allModules()) {
                             if (other.services().containsKey(service)) {
                                 // ignore permits
-                                if (!modules.contains(other)) {
+                                if (!resolved.contains(other)) {
                                     q.offer(other);
                                 }
                             }
@@ -261,19 +262,21 @@ public final class ModuleGraph {
 
             // there may be service providers to resolve
             if (!q.isEmpty()) {
-                Set<Module> newlySelected = resolver.resolve(q, modules);
+                Set<Module> newlySelected = resolver.resolve(q, resolved);
                 // newly selected modules may have service dependences
                 for (Module m: newlySelected) {
                     if (!m.serviceDependences().isEmpty()) {
                         serviceConsumersToVisit.add(m);
                     }
                 }
-                modules.addAll(newlySelected);
+                resolved.addAll(newlySelected);
             }
         }
 
-        // done, create resulting module graph
-        return resolver.finish(modules);
+        // create the module graph with the newly selected augmented with the
+        // service provider modules
+        resolved.removeAll(initialModuleGraph().modules());
+        return resolver.finish(resolved);
     }
 
     // system module graph; concurrency TBD
