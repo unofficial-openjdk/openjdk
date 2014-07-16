@@ -48,17 +48,17 @@ $JAVAC -d mods/container `find $TESTSRC/src/container -name "*.java"`
 $JLINK --class-path mods/container --format jmod \
    --mid container@1.0 --main-class container.Main --output mlib/wls@1.0.jmod
 
-# container ships with its own version of JAX-WS
-mkdir -p mods/java.xml.ws
-$JAVAC -d mods/java.xml.ws `find $TESTSRC/src/java.xml.ws -name "*.java"`
-$JAR cf mlib/jaxws.jar -C mods/java.xml.ws .
-
 rm -rf applib
 mkdir -p applib
 
+# app1 uses a "newer" version of JAX-WS
+mkdir -p mods/java.xml.ws
+$JAVAC -d mods/java.xml.ws `find $TESTSRC/src/java.xml.ws -name "*.java"`
+$JAR cf applib/jaxws.jar -C mods/java.xml.ws .
+
 # app1 uses JAX-WS
 mkdir -p mods/app1
-$JAVAC -cp mlib/jaxws.jar -d mods/app1 `find $TESTSRC/src/app1 -name "*.java"`
+$JAVAC -cp applib/jaxws.jar -d mods/app1 `find $TESTSRC/src/app1 -name "*.java"`
 $JAR cf applib/app1.jar -C mods/app1 .
 
 # app2 ships with its own copy of JAX-RS

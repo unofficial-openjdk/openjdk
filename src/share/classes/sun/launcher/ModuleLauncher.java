@@ -120,8 +120,7 @@ class ModuleLauncher {
         // run the resolver
         ModulePath modulePath;
         if (launcherModulePath != null) {
-            // allow all JDK modules to be upgraded for now, this will change later
-            modulePath = launcherModulePath.join(systemLibrary);
+            modulePath = systemLibrary.join(launcherModulePath);
         } else {
             modulePath = systemLibrary;
         }
