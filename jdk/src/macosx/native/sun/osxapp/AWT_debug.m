@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2007, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,13 +23,12 @@
  * questions.
  */
 
-package sun.awt;
+#import "AWT_debug.h"
 
-/**
- * Interface for identifying and casting toolkits that support
- * WindowClosingListeners.
- */
-public interface WindowClosingSupport {
-    WindowClosingListener getWindowClosingListener();
-    void setWindowClosingListener(WindowClosingListener wcl);
+bool ShouldPrintVerboseDebugging() {
+    static int debug = -1;
+    if (debug == -1) {
+        debug = (int)(getenv("JAVA_AWT_VERBOSE") != NULL);
+    }
+    return (bool)debug;
 }

@@ -36,6 +36,7 @@ import java.awt.TrayIcon;
 import java.beans.PropertyChangeListener;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+import sun.awt.AppContext;
 import sun.awt.AWTAutoShutdown;
 import sun.awt.AWTPermissions;
 import sun.awt.AppContext;
@@ -72,6 +73,9 @@ import sun.util.logging.PlatformLogger;
 public final class WToolkit extends SunToolkit implements Runnable {
 
     private static final PlatformLogger log = PlatformLogger.getLogger("sun.awt.windows.WToolkit");
+
+    // Desktop property which specifies whether XP visual styles are in effect
+    public static final String XPSTYLE_THEME_ACTIVE = "win.xpstyle.themeActive";
 
     static GraphicsConfiguration config;
 
@@ -896,7 +900,7 @@ public final class WToolkit extends SunToolkit implements Runnable {
     private synchronized void lazilyInitWProps() {
         if (wprops == null) {
             wprops = new WDesktopProperties(this);
-            updateProperties();
+            updateProperties(wprops.getProperties());
         }
     }
 
@@ -931,25 +935,36 @@ public final class WToolkit extends SunToolkit implements Runnable {
      * Windows doesn't always send WM_SETTINGCHANGE when it should.
      */
     private void windowsSettingChange() {
+        // JDK-8039383: Have to update the value of XPSTYLE_THEME_ACTIVE property
+        // as soon as possible to prevent NPE and other errors because theme data
+        // has become unavailable.
+        final Map<String, Object> props = getWProps();
+        if (props == null) {
+            // props has not been initialized, so we have nothing to update
+            return;
+        }
+
+        updateXPStyleEnabled(props.get(XPSTYLE_THEME_ACTIVE));
+
         if (AppContext.getAppContext() == null) {
             // We cannot post the update to any EventQueue. Listeners will
             // be called on EDTs by DesktopPropertyChangeSupport
-            updateProperties();
+            updateProperties(props);
         } else {
             // Cannot update on Toolkit thread.
             // DesktopPropertyChangeSupport will call listeners on Toolkit
             // thread if it has AppContext (standalone mode)
-            EventQueue.invokeLater(this::updateProperties);
+            EventQueue.invokeLater(() -> updateProperties(props));
         }
     }
 
-    private synchronized void updateProperties() {
-        if (null == wprops) {
-            // wprops has not been initialized, so we have nothing to update
+    private synchronized void updateProperties(final Map<String, Object> props) {
+        if (null == props) {
             return;
         }
 
-        Map<String, Object> props = wprops.getProperties();
+        updateXPStyleEnabled(props.get(XPSTYLE_THEME_ACTIVE));
+
         for (String propName : props.keySet()) {
             Object val = props.get(propName);
             if (log.isLoggable(PlatformLogger.Level.FINER)) {
@@ -957,6 +972,14 @@ public final class WToolkit extends SunToolkit implements Runnable {
             }
             setDesktopProperty(propName, val);
         }
+    }
+
+    private synchronized Map<String, Object> getWProps() {
+        return (wprops != null) ? wprops.getProperties() : null;
+    }
+
+    private void updateXPStyleEnabled(final Object dskProp) {
+        ThemeReader.xpStyleEnabled = Boolean.TRUE.equals(dskProp);
     }
 
     @Override
