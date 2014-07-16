@@ -140,6 +140,23 @@ class LazyClassPathEntry: public ClassPathEntry {
   NOT_PRODUCT(bool is_rt_jar();)
 };
 
+// For java image files
+class ImageFile;
+class ClassPathImageEntry: public ClassPathEntry {
+private:
+  ImageFile *_image;
+public:
+  bool is_jar_file()  { return false;  }
+  bool is_open()  { return _image != NULL; }
+  const char* name();
+  ClassPathImageEntry(char* name);
+  ~ClassPathImageEntry();
+  ClassFileStream* open_stream(const char* name, TRAPS);
+  // Debugging
+  NOT_PRODUCT(void compile_the_world(Handle loader, TRAPS);)
+  NOT_PRODUCT(bool is_rt_jar() = 0;)
+};
+
 class PackageHashtable;
 class PackageInfo;
 template <MEMFLAGS F> class HashtableBucket;

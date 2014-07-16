@@ -27,6 +27,7 @@
 #include "classfile/classFileStream.hpp"
 #include "classfile/classLoader.hpp"
 #include "classfile/classLoaderData.inline.hpp"
+#include "classfile/imageFile.hpp"
 #include "classfile/javaClasses.hpp"
 #include "classfile/systemDictionary.hpp"
 #include "classfile/vmSymbols.hpp"
@@ -340,6 +341,79 @@ bool LazyClassPathEntry::is_lazy() {
   return true;
 }
 
+ClassPathImageEntry::ClassPathImageEntry(char* name) : ClassPathEntry(), _image(new ImageFile(name)) {
+  bool opened = _image->open();
+  if (!opened) {
+    _image = NULL;
+  }
+}
+
+ClassPathImageEntry::~ClassPathImageEntry() {
+  if (_image) {
+    _image->close();
+    _image = NULL;
+  }
+}
+
+const char* ClassPathImageEntry::name() {
+  return _image ? _image->name() : "";
+}
+
+ClassFileStream* ClassPathImageEntry::open_stream(const char* name, TRAPS) {
+  u1* data = _image->findLocationData(name);
+  if (!data) {
+    return NULL;
+  }
+  ImageLocation location(data);
+  if (_image->verifyLocation(location, name)) {
+    u8 size = location.getAttribute(ImageLocation::ATTRIBUTE_UNCOMPRESSED);
+    u1* buffer = _image->getResource(location);
+    if (!buffer) {
+        return NULL;
+    }
+    if (UsePerfData) {
+      ClassLoader::perf_sys_classfile_bytes_read()->inc(size);
+    }
+    return new ClassFileStream(buffer, (int)size, (char*)name);  // Resource allocated
+  }
+
+  return NULL;
+}
+
+#ifndef PRODUCT
+void ClassPathImageEntry::compile_the_world(Handle loader, TRAPS) {
+  tty->print_cr("CompileTheWorld : Compiling all classes in %s", name());
+  tty->cr();
+  ImageStrings strings = _image->getStrings();
+  u4 count = _image->getLocationCount();
+  for (u4 i = 0; i < count; i++) {
+    ImageLocation location(_image->getLocationData(i));
+    const char* parent = location.getAttribute(ImageLocation::ATTRIBUTE_PARENT, strings);
+    const char* base = location.getAttribute(ImageLocation::ATTRIBUTE_BASE, strings);
+    const char* extension = location.getAttribute(ImageLocation::ATTRIBUTE_EXTENSION, strings);
+    assert((strlen(parent) + strlen(base) + strlen(extension)) < JVM_MAXPATHLEN, "path exceeds buffer");
+    char path[JVM_MAXPATHLEN];
+    strcpy(path, parent);
+    strcat(path, base);
+    strcat(path, extension);
+    ClassLoader::compile_the_world_in(path, loader, CHECK);
+  }
+  if (HAS_PENDING_EXCEPTION) {
+  if (PENDING_EXCEPTION->is_a(SystemDictionary::OutOfMemoryError_klass())) {
+    CLEAR_PENDING_EXCEPTION;
+    tty->print_cr("\nCompileTheWorld : Ran out of memory\n");
+    tty->print_cr("Increase class metadata storage if a limit was set");
+  } else {
+    tty->print_cr("\nCompileTheWorld : Unexpected exception occurred\n");
+  }
+  }
+}
+
+bool ClassPathImageEntry::is_rt_jar() {
+    return string_ends_with(name(), "java.base/bootmodules.jimage");
+}
+#endif
+
 static void print_meta_index(LazyClassPathEntry* entry,
                              GrowableArray<char*>& meta_packages) {
   tty->print("[Meta index for %s=", entry->name());
@@ -485,45 +559,51 @@ ClassPathEntry* ClassLoader::create_class_path_entry(char *path, const struct st
     return new LazyClassPathEntry(path, st);
   }
   ClassPathEntry* new_entry = NULL;
-  if ((st->st_mode & S_IFREG) == S_IFREG) {
-    // Regular file, should be a zip file
+  if ((st->st_mode & S_IFREG) != S_IFREG) {
+    // Directory
+    new_entry = new ClassPathDirEntry(path);
+    if (TraceClassLoading) {
+      tty->print_cr("[Path %s]", path);
+    }
+  } else {
+    // Regular file, should be a zip or image file
     // Canonicalized filename
     char canonical_path[JVM_MAXPATHLEN];
     if (!get_canonical_path(path, canonical_path, JVM_MAXPATHLEN)) {
       // This matches the classic VM
       THROW_MSG_(vmSymbols::java_io_IOException(), "Bad pathname", NULL);
     }
-    char* error_msg = NULL;
-    jzfile* zip;
-    {
-      // enable call to C land
-      ThreadToNativeFromVM ttn(thread);
-      HandleMark hm(thread);
-      zip = (*ZipOpen)(canonical_path, &error_msg);
-    }
-    if (zip != NULL && error_msg == NULL) {
-      new_entry = new ClassPathZipEntry(zip, path);
-      if (TraceClassLoading) {
-        tty->print_cr("[Opened %s]", path);
-      }
+    // TODO - add proper criteria for selecting image file
+    ClassPathImageEntry* entry = new ClassPathImageEntry(canonical_path);
+    if (entry->is_open()) {
+      new_entry = entry;
     } else {
-      ResourceMark rm(thread);
-      char *msg;
-      if (error_msg == NULL) {
-        msg = NEW_RESOURCE_ARRAY(char, strlen(path) + 128); ;
-        jio_snprintf(msg, strlen(path) + 127, "error in opening JAR file %s", path);
-      } else {
-        int len = (int)(strlen(path) + strlen(error_msg) + 128);
-        msg = NEW_RESOURCE_ARRAY(char, len); ;
-        jio_snprintf(msg, len - 1, "error in opening JAR file <%s> %s", error_msg, path);
+      char* error_msg = NULL;
+      jzfile* zip;
+      {
+        // enable call to C land
+        ThreadToNativeFromVM ttn(thread);
+        HandleMark hm(thread);
+        zip = (*ZipOpen)(canonical_path, &error_msg);
       }
-      THROW_MSG_(vmSymbols::java_lang_ClassNotFoundException(), msg, NULL);
+      if (zip != NULL && error_msg == NULL) {
+        new_entry = new ClassPathZipEntry(zip, path);
+      } else {
+        ResourceMark rm(thread);
+        char *msg;
+        if (error_msg == NULL) {
+          msg = NEW_RESOURCE_ARRAY(char, strlen(path) + 128); ;
+          jio_snprintf(msg, strlen(path) + 127, "error in opening JAR file %s", path);
+        } else {
+          int len = (int)(strlen(path) + strlen(error_msg) + 128);
+          msg = NEW_RESOURCE_ARRAY(char, len); ;
+          jio_snprintf(msg, len - 1, "error in opening JAR file <%s> %s", error_msg, path);
+        }
+        THROW_MSG_(vmSymbols::java_lang_ClassNotFoundException(), msg, NULL);
+      }
     }
-  } else {
-    // Directory
-    new_entry = new ClassPathDirEntry(path);
     if (TraceClassLoading) {
-      tty->print_cr("[Path %s]", path);
+      tty->print_cr("[Opened %s]", path);
     }
   }
   return new_entry;
@@ -1217,7 +1297,6 @@ void ClassPathDirEntry::compile_the_world(Handle loader, TRAPS) {
   tty->cr();
 }
 
-
 bool ClassPathDirEntry::is_rt_jar() {
   return false;
 }
@@ -1251,7 +1330,6 @@ void ClassPathZipEntry::compile_the_world13(Handle loader, TRAPS) {
     ClassLoader::compile_the_world_in(ze->name, loader, CHECK);
   }
 }
-
 
 // Version that works for JDK 1.2.x
 void ClassPathZipEntry::compile_the_world12(Handle loader, TRAPS) {
