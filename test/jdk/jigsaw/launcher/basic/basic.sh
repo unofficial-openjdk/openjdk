@@ -34,7 +34,7 @@ if [ -z "$TESTJAVA" ]; then
   TESTCLASSES="`pwd`"
 fi
 
-JAVAC="$TESTJAVA/bin/javac"
+JAVAC="$COMPILEJAVA/bin/javac"
 JAVA="$TESTJAVA/bin/java"
 JLINK="$TESTJAVA/bin/jlink"
 

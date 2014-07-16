@@ -35,7 +35,7 @@ if [ -z "$TESTJAVA" ]; then
   TESTCLASSES="`pwd`"
 fi
 
-JAVAC="$TESTJAVA/bin/javac"
+JAVAC="$COMPILEJAVA/bin/javac"
 JAVA="$TESTJAVA/bin/java"
 
 mkdir -p mods/bananascript 

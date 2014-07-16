@@ -36,7 +36,7 @@ if [ -z "$TESTJAVA" ]; then
   TESTCLASSES="`pwd`"
 fi
 
-JAVAC="$TESTJAVA/bin/javac"
+JAVAC="$COMPILEJAVA/bin/javac"
 JAVA="$TESTJAVA/bin/java"
 
 $JAVA -mods java.desktop -cp $TESTCLASSES UseAWT expect-pass
