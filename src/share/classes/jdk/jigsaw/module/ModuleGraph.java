@@ -206,7 +206,7 @@ public final class ModuleGraph {
     }
 
     /**
-     * Returns a new module graph that is this module graph augmented with modules
+     * Returns a module graph that is this module graph augmented with modules
      * from the module path that are induced by service-use relationships.
      *
      * <p> The {@link #initialModuleGraph} of the new module graph is the same
@@ -273,10 +273,15 @@ public final class ModuleGraph {
             }
         }
 
-        // create the module graph with the newly selected augmented with the
-        // service provider modules
-        resolved.removeAll(initialModuleGraph().modules());
-        return resolver.finish(resolved);
+        // if there aren't any additional modules then we are done, otherwise
+        // create a new readability graph that includes the newly selected
+        // service provider modules (and their dependencies)
+        if (resolved.size() == modules.size()) {
+            return this;
+        } else {
+            resolved.removeAll(initialModuleGraph().modules());
+            return resolver.finish(resolved);
+        }
     }
 
     // system module graph; concurrency TBD
