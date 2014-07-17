@@ -42,27 +42,29 @@ import java.util.stream.Stream;
  * <p> A {@code ModuleGraph} is a set of {@link #modules() modules} with directed
  * edges that represent the {@link #readDependences readability-relationship}
  * between the modules. The modules in a module graph have a unique
- * {@link ModuleId module-id} but their module names may not be unique. </p>
+ * {@link ModuleId module-id}, the names of the modules in the set of modules
+ * returned by {#link minusInitialModuleGraph} are also unique. </p>
  *
  * <p> A module graph can be augmented with additional modules (and edges) at a
  * later time to produce a new, richer graph. This is the process of module graph
- * composition. When augmenting an existing module graph by resolution then
- * the {@link #minusInitialModuleGraph} method may be used to obtain the set
- * of modules added to the graph. </p>
+ * composition when a {@link Resolver} is created with an initial module graph.
+ * When augmenting an existing module graph by resolution then the {@link
+ * #minusInitialModuleGraph} method may be used to obtain the set of modules
+ * added to the graph. </p>
+ *
+ * <p>  A module graph may also be augmented with modules from its module path
+ * that are induced by <em></em>service-use</em> relationships. This is the
+ * process of {@link #bindServices binding}.
  *
  * <p> The following example augments the {@link #getSystemModuleGraph
  * system-module-graph} with modules that are the result of resolving a module
- * names <em>myapp</em>. </p>
+ * named <em>myapp</em>. </p>
  *
  * <pre>{@code
  *     ModulePath mp = ModulePath.ofDirectories("dir1", "dir2", "dir3");
- *
  *     Resolver r = new Resolver(ModuleGraph.getSystemModuleGraph(), mp);
- *
  *     ModuleGraph g = r.resolve("myapp");
- *
  *     Set<Module> added = g.minusInitialModuleGraph();
- *
  * }</pre>
  *
  * @see ClassLoader#defineModules
@@ -147,12 +149,7 @@ public final class ModuleGraph {
     /**
      * Returns the set of modules that the given module reads.
      *
-     * @apiNote The returned set may include modules that are not in this module
-     * graph. This with a module graph created by {@link #}minusInitialModuleGraph}
-     * as this module graph does not include the modules in the initial module
-     * graph.
-     *
-     * @throws IllegalArgumentException if the module is not in the module graph
+     * @throws IllegalArgumentException if the module is not in this module graph
      */
     public Set<Module> readDependences(Module m) {
         Set<Module> s = graph.get(m);

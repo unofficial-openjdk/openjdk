@@ -28,6 +28,10 @@ package jdk.jigsaw.module;
 import java.io.Serializable;
 import java.util.Objects;
 
+/**
+ * <p> A module export, may be qualified or unqualified. </p>
+ */
+
 @SuppressWarnings("serial")             // serialVersionUID intentionally omitted
 public class ModuleExport
     implements Serializable
@@ -35,19 +39,34 @@ public class ModuleExport
     private final String pkg;
     private final String permit;
 
-    public ModuleExport(String pkg, String permit) {
+    /**
+     * Constructs a {@code ModuleExport} to represent the exporting of package
+     * {@code pkg} to module {@code who}.
+     */
+    public ModuleExport(String pkg, String who) {
         this.pkg = Objects.requireNonNull(pkg);
-        this.permit = permit;
+        this.permit = who;
     }
 
+    /**
+     * Constructs a {@code ModuleExport} to represent the exporting of package
+     * {@code pkg}.
+     */
     public ModuleExport(String pkg) {
         this(pkg, null);
     }
 
+    /**
+     * Returns the package name.
+     */
     public String pkg() {
         return pkg;
     }
 
+    /**
+     * Returns the name of the module that the package is exported to,
+     * or {@code null} if this is an unqualified export.
+     */
     public String permit() {
         return permit;
     }

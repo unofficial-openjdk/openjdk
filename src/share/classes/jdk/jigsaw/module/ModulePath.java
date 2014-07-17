@@ -148,18 +148,21 @@ public abstract class ModulePath {
      * Returns a module-path of the installed modules, these are the modules
      * that are linked into the runtime image.
      *
+     * @implNote For now, the module-path is backed by the contents of {@code
+     * modules.jimage}, or in the case a developer build then it is backed by
+     * the module descriptors found in the {@code lib/modules/$m/*}.
      */
     public static ModulePath installedModules() {
         if (SystemModulePath.exists()) {
             return new SystemModulePath();
         } else {
-            String javahome = System.getProperty("java.home");
-            Path mlib = Paths.get(javahome, "modules");
-            if (Files.exists(mlib)) {
+            String home = System.getProperty("java.home");
+            Path mlib = Paths.get(home, "modules");
+            if (Files.isDirectory(mlib)) {
                 return ModulePath.ofDirectories(mlib.toString());
             } else {
-                System.err.println("WARNING: Not modular JDK: " + mlib.toString() +
-                    " not exists");
+                System.err.println("WARNING: " + mlib.toString() +
+                    " not found or not a directory");
                 return ModulePath.ofDirectories();
             }
         }
@@ -185,33 +188,30 @@ public abstract class ModulePath {
 class SystemModulePath extends ModulePath {
     private final Set<Module> modules;
     private final Map<String, Module> namesToModules = new HashMap<>();
+
     SystemModulePath() {
         this.modules = modules();
         for (Module m : modules) {
             String name = m.id().name();
-            if (!namesToModules.containsKey(name)) {
-                namesToModules.put(name, m);
-            }
+            namesToModules.putIfAbsent(name, m);
+        }
+    }
+
+    private static Path imageModulesPath() {
+        String home = System.getProperty("java.home");
+        return Paths.get(home, "lib", "modules", ImageModules.FILE);
+    }
+
+    private Set<Module> modules() {
+        try (InputStream in = Files.newInputStream(imageModulesPath())) {
+            return ImageModules.load(in).modules();
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
         }
     }
 
     static boolean exists() {
-        return Files.exists(getImageModulesFilePath());
-    }
-
-    private static Path getImageModulesFilePath() {
-        String javahome = System.getProperty("java.home");
-        Path mlib = Paths.get(javahome, "lib", "modules");
-        return mlib.resolve(ImageModules.FILE);
-    }
-
-    private Set<Module> modules() {
-        try (InputStream in = Files.newInputStream(getImageModulesFilePath())) {
-            ImageModules imods = ImageModules.load(in);
-            return imods.modules();
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
+        return Files.isRegularFile(imageModulesPath());
     }
 
     @Override
@@ -243,7 +243,6 @@ class SystemModulePath extends ModulePath {
  *
  * @apiNote This class is currently not safe for use by multiple threads.
  */
-
 class FileSystemModulePath extends ModulePath {
     private static final String MODULE_INFO = "module-info.class";
 

@@ -44,7 +44,8 @@ import jdk.jigsaw.module.ModuleDependence.Modifier;
  *
  * @apiNote We need to decide whether this is useful to expose in the API or not.
  * It is public for now on the assumption that it will be useful to have a simple
- * module-info.java reader in the API.
+ * module-info.java reader in the API. If there is an API then it will need to
+ * define methods to access the information in the {@code Module} attribute.
  *
  * @see ModulePath#ofDirectories
  */
