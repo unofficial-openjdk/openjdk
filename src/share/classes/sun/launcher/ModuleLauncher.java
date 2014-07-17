@@ -158,10 +158,10 @@ class ModuleLauncher {
             ModuleRuntime.defineModules(graph, moduleToLoaders::get);
         }
 
-        // if -mods is specified then we have to hide the linked modules
+        // if -mods or -m is specified then we have to hide the linked modules
         // that are not selected. For now we just define the modules without
         // any readability relationship or exports. Yes, this is a hack.
-        if (!mods.isEmpty()) {
+        if (mainMid != null || !mods.isEmpty()) {
             Set<Module> selected = graph.modules();
             systemLibrary.allModules()
                          .stream()

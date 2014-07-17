@@ -21,20 +21,7 @@
  * questions.
  */
 
-public class UseAWT {
-    public static void main(String[] args) {
-        boolean expectFail = args[0].equals("expect-fail");
-        boolean expectPass = args[0].equals("expect-pass");
-        if (expectFail == expectPass)
-            throw new RuntimeException("Need to run with expect-* argument");
-
-        try {
-            Class<?> c = java.awt.Component.class;
-            if (expectFail) throw new RuntimeException("No Error thrown");
-        } catch (Error e) {
-            // exact Error is TBD, will likely be NoClassDefFoundError as
-            // class should not be observable
-            if (expectPass) throw new RuntimeException(e);
-        }
-    }
+module test {
+    requires java.base; // workaround javac bug
+    requires java.desktop;
 }

@@ -23,7 +23,6 @@
 
 # @test
 # @summary Basic test of launcher -mods option
-# @compile UseAWT.java
 # @run shell basic.sh
 
 set -e
@@ -39,8 +38,14 @@ fi
 JAVAC="$COMPILEJAVA/bin/javac"
 JAVA="$TESTJAVA/bin/java"
 
-$JAVA -mods java.desktop -cp $TESTCLASSES UseAWT expect-pass
+mkdir -p mods/test
+$JAVAC -d mods/test `find $TESTSRC/src/test -name "*.java"`
 
-$JAVA -mods java.base -cp $TESTCLASSES UseAWT expect-fail
+# -classpath && -mods
+$JAVA -mods java.desktop -cp mods/test jdk.test.UseAWT expect-pass
+$JAVA -mods java.base -cp mods/test jdk.test.UseAWT expect-fail
+
+# -m && -mods
+$JAVA -mods java.base -mp mods -m test/jdk.test.UseAWT expect-pass
 
 exit 0
