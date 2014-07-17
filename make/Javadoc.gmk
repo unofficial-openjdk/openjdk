@@ -1273,6 +1273,9 @@ $(MODULE_OPTIONS_FILE):
 	  $(call OptionOnly,-Xdoclint:none) ; \
 	  $(call OptionPair,-sourcepath,$(RELEASEDOCS_SOURCEPATH)) ; \
 	  $(call OptionPair,-encoding,ascii) ; \
+          $(call OptionPair,-tag,apiNote:a:API Note:) ; \
+          $(call OptionPair,-tag,implSpec:a:Implementation Requirements:) ; \
+          $(call OptionPair,-tag,implNote:a:Implementation Note:) ; \
 	  $(call OptionOnly,-nodeprecatedlist) ; \
 	  $(call OptionPair,-doctitle,$(MODULE_DOCTITLE)) ; \
 	  $(call OptionPair,-windowtitle,$(MODULE_WINDOWTITLE) $(DRAFT_WINTITLE)); \
