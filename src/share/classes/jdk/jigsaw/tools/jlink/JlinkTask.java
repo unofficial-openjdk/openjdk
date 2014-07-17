@@ -75,6 +75,7 @@ import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
+import jdk.jigsaw.module.ImageFile;
 import jdk.jigsaw.module.Module;
 import jdk.jigsaw.module.ModuleGraph;
 import jdk.jigsaw.module.ModulePath;
@@ -211,12 +212,11 @@ class JlinkTask {
         },
         new Option(true, "--format") {
             void process(JlinkTask task, String opt, String arg) throws BadArgs {
-                if (Format.IMAGE.toString().equalsIgnoreCase(arg))
-                    task.options.format = Format.IMAGE;
-                else if (Format.JMOD.toString().equalsIgnoreCase(arg))
-                    task.options.format = Format.JMOD;
-                else
+                try {
+                    task.options.format = Enum.valueOf(Format.class, arg.toUpperCase());
+                } catch (IllegalArgumentException e) {
                     throw new BadArgs("err.invalid.arg.for.option", opt).showUsage(true);
+                }
             }
         },
         new Option(false, "--help") {
@@ -298,7 +298,8 @@ class JlinkTask {
 
     enum Format {
         JMOD,
-        IMAGE;
+        IMAGE,
+        JIMAGE;
     }
 
     static class Options {
@@ -336,7 +337,7 @@ class JlinkTask {
                 } else {
                     throw new BadArgs("err.format.must.be.specified").showUsage(true);
                 }
-            } else if (options.format.equals(Format.IMAGE)) {
+            } else if (options.format == Format.IMAGE || options.format == Format.JIMAGE) {
                 if (options.modulePath == null)
                     throw new BadArgs("err.modulepath.must.be.specified").showUsage(true);
 
@@ -388,7 +389,7 @@ class JlinkTask {
     }
 
     private boolean run() throws IOException {
-        if (Format.IMAGE.equals(options.format))
+        if (options.format == Format.IMAGE || options.format == Format.JIMAGE)
             createImage();
         else if (Format.JMOD.equals(options.format))
             createJmod();
@@ -474,20 +475,17 @@ class JlinkTask {
         Set<Module> modules = graph.modules();
         Set<Path> jmods = modulesToPath(modules);
 
-        ImageFileHelper mg = new ImageFileHelper(graph, jmods);
-        extractJMods(output, modules, jmods);
-
-        // write module graph
-        mg.writeInstalledModules(output);
-
-        Path appJar = output.resolve(APP_DIR).resolve("app.jar");
-        if (jars != null) {
-            if (Files.notExists(appJar.getParent()))
-                Files.createDirectory(appJar.getParent());
-            //for (Path jar : jars)     // ## support multiple jars
-            //    Files.copy(jar, appDir.resolve(jar.getFileName()));
-            Files.copy(jars.get(0), appJar);
+        ImageFileHelper imageHelper = new ImageFileHelper(graph, jmods);
+        if (options.format == Format.IMAGE) {
+            extractJMods(output, modules, jmods);
+        } else if (options.format == Format.JIMAGE) {
+            imageHelper.createImageFile(output);
+        } else {
+            throw new InternalError("should never reach here");
         }
+
+        // write installed modules file
+        imageHelper.writeInstalledModules(output);
 
         for (Map.Entry<String,String> e : options.launchers.entrySet()) {
             // create a script to launch main class to support multiple commands
@@ -510,26 +508,37 @@ class JlinkTask {
     static class ImageFileHelper {
         static final Path IMODULES_FILE = Paths.get("lib", "modules", ImageModules.FILE);
         final Set<Module> modules;
+        final Set<Module> bootModules;
+        final Set<Module> extModules;
+        final Set<Module> otherModules;
+        final Set<Path> jmods;
         final ImageModules imf;
         ImageFileHelper(ModuleGraph graph, Set<Path> jmods) throws IOException {
             this.modules = graph.modules();
+            this.jmods = jmods;
             Map<String, Module> mods = new HashMap<>();
             for (Module m : modules) {
                 mods.put(m.id().name(), m);
             }
-            Set<Module> bootModules = modulesFor(BOOT_MODULES).stream()
+            this.bootModules = modulesFor(BOOT_MODULES).stream()
                     .filter(mods::containsKey)
                     .map(mods::get)
                     .collect(Collectors.toSet());
-            Set<Module> extModules = modulesFor(EXT_MODULES).stream()
+            this.extModules = modulesFor(EXT_MODULES).stream()
                     .filter(mods::containsKey)
                     .map(mods::get)
                     .collect(Collectors.toSet());
-            Set<Module> otherModules = modules.stream()
+            this.otherModules = modules.stream()
                     .filter(m -> !bootModules.contains(m) && !extModules.contains(m))
                     .collect(Collectors.toSet());
             this.imf = new ImageModules(graph, bootModules,
                                         extModules, otherModules, jmods);
+        }
+
+        void createImageFile(Path output)
+                throws IOException
+        {
+            ImageFile.create(output, jmods, bootModules, extModules, otherModules);
         }
 
         void writeInstalledModules(Path output) throws IOException {

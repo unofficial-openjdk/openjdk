@@ -25,35 +25,32 @@
 
 package sun.misc;
 
-import java.util.*;
-import java.util.jar.JarFile;
-import sun.misc.JarIndex;
-import sun.misc.InvalidJarIndexException;
-import sun.net.www.ParseUtil;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
-import java.util.jar.JarEntry;
-import java.util.jar.Manifest;
-import java.util.jar.Attributes;
-import java.util.jar.Attributes.Name;
+import java.io.*;
+import java.net.HttpURLConnection;
 import java.net.JarURLConnection;
 import java.net.MalformedURLException;
-import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
-import java.net.HttpURLConnection;
 import java.net.URLStreamHandler;
 import java.net.URLStreamHandlerFactory;
-import java.io.*;
-import java.security.AccessController;
 import java.security.AccessControlException;
+import java.security.AccessController;
 import java.security.CodeSigner;
 import java.security.Permission;
-import java.security.PrivilegedAction;
 import java.security.PrivilegedExceptionAction;
 import java.security.cert.Certificate;
-import sun.misc.FileURLMapper;
+import java.util.*;
+import java.util.jar.Attributes;
+import java.util.jar.Attributes.Name;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
+import java.util.jar.Manifest;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
+import jdk.jigsaw.module.internal.ImageLocation;
+import jdk.jigsaw.module.internal.ImageReader;
 import sun.net.util.URLUtil;
+import sun.net.www.ParseUtil;
 
 /**
  * This class is used to maintain a search path of URLs for loading classes
@@ -367,6 +364,8 @@ public class URLClassPath {
                     } else {
                         if (file.endsWith(".jmod")) {
                             return new JModLoader(url);
+                        } else if (file.endsWith(".jimage")) {
+                            return new JImageLoader(url);
                         } else {
                             return new JarLoader(url, jarHandler, lmap);
                         }
@@ -1169,6 +1168,92 @@ public class URLClassPath {
         public void close() throws IOException {
             JModCache.remove(getBaseURL());
             zipfile.close();
+        }
+    }
+
+    /**
+     * A Loader of classes and resources from a jimage file.
+     *
+     * ###FIXME: permission checks not implemented yet
+     */
+    private static class JImageLoader extends Loader {
+        private final ImageReader jimage;
+
+        JImageLoader(URL url) throws IOException {
+            super(url);
+            this.jimage = JImageCache.get(url);
+        }
+
+        private String toEntryName(String name) {
+            return name;
+        }
+
+        /**
+         * Returns a URL to the given entry in the jimage.
+         */
+        private URL toURL(String entry) {
+            try {
+                return new URL(getBaseURL() + "!/" +  ParseUtil.encodePath(entry, false));
+            } catch (MalformedURLException e) {
+                throw new InternalError(e);
+            }
+        }
+
+        @Override
+        URL findResource(String name, boolean check) {
+            String entry;
+            if (name.startsWith("META-INF/services/")) {
+                entry = "module/" + name.substring(9);
+            } else {
+                entry = toEntryName(name);
+            }
+            ImageLocation location = jimage.findLocation(entry);
+            if (location == null)
+                return null;
+            return toURL(entry);
+        }
+
+        @Override
+        Resource getResource(String name, boolean check) {
+            final String entry = toEntryName(name);
+            ImageLocation location = jimage.findLocation(entry);
+            if (location == null)
+                return null;
+            final URL url = toURL(entry);
+            return new Resource() {
+                @Override
+                public String getName() { return entry; }
+                @Override
+                public URL getURL() { return url; }
+                @Override
+                public URL getCodeSourceURL() { return getBaseURL(); }
+                @Override
+                public InputStream getInputStream() throws IOException {
+                    long offset = location.getContentOffset();
+                    long size = location.getUncompressedSize();
+                    long compressedSize = location.getCompressedSize();
+                    byte[] resource;
+                    if (compressedSize != 0) {
+                        // TODO - handle compression.
+                        resource = jimage.getResource(offset, compressedSize);
+                        // resource = decompress(resource);
+                    } else {
+                        resource = jimage.getResource(offset, size);
+                    }
+
+                    return new ByteArrayInputStream(resource);
+                }
+                public int getContentLength() {
+                    long size = location.getUncompressedSize();
+                    return (size > Integer.MAX_VALUE) ? -1 : (int)size;
+                }
+            };
+        }
+
+        @Override
+        public void close() throws IOException {
+            JImageCache.remove(getBaseURL());
+            jimage.close();
         }
     }
 }

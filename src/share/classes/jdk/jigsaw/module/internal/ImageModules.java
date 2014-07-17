@@ -147,7 +147,7 @@ import static jdk.jigsaw.module.internal.ImageModules.Loader.*;
  *    2: Other (class loader mapping TBD)
  */
 public final class ImageModules {
-    public static final String FILE = "modules.jimage";
+    public static final String FILE = "modules.jdata";
     private static final int MAGIC = 0xcafe00fa;
     private static final int MAJOR_VERSION = 0;
     private static final int MINOR_VERSION = 1;

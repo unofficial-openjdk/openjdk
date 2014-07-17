@@ -161,6 +161,8 @@ public class Launcher {
             ClassLoader.registerAsParallelCapable();
         }
         static final List<String> modules = Launcher.readModulesList("ext.modules");
+        static final Path extmodules =
+            Paths.get(System.getProperty("java.home"), "lib", "modules", "extmodules.jimage");
 
         /**
          * create an ExtClassLoader. The ExtClassLoader is created
@@ -181,7 +183,14 @@ public class Launcher {
                             for (int i = 0; i < len; i++) {
                                 MetaIndex.registerDirectory(dirs[i]);
                             }
-                            return new ExtClassLoader(toModuleLocations(modules), dirs);
+                            List<String> locations;
+                            if (Files.exists(extmodules)) {
+                                locations = new ArrayList<>();
+                                locations.add(extmodules.toString());
+                            } else {
+                                locations = toModuleLocations(modules);
+                            }
+                            return new ExtClassLoader(locations, dirs);
                         }
                     });
             } catch (java.security.PrivilegedActionException e) {
@@ -303,20 +312,21 @@ public class Launcher {
             ClassLoader.registerAsParallelCapable();
         }
         static final List<String> systemModules = Launcher.readModulesList("system.modules");
+        static final Path appmodules =
+            Paths.get(System.getProperty("java.home"), "lib", "modules", "appmodules.jimage");
 
         public static AppClassLoader getAppClassLoader(final ClassLoader extcl)
             throws IOException
         {
-            String cp = System.getProperty("java.class.path");
-            String mp = Launcher.toClassPath(systemModules);
-            String s;
-            if (mp.length() > 0) {
-                // ## FIXME should we update java.class.path
-                s = mp + File.pathSeparator + cp;
+            String cp = System.getProperty("java.class.path", ".");
+            if (Files.exists(appmodules)) {
+                cp = appmodules + File.pathSeparator + cp;
             } else {
-                s = cp;
+                String mp = Launcher.toClassPath(systemModules);
+                if (mp.length() > 0)
+                    cp = mp + File.pathSeparator + cp;
             }
-            final File[] path = (s == null) ? new File[0] : getClassPath(s, true);
+            final File[] path = getClassPath(cp, true);
 
             // Note: on bugid 4256530
             // Prior implementations of this doPrivileged() block supplied
@@ -327,8 +337,9 @@ public class Launcher {
             //
             return AccessController.doPrivileged(
                 new PrivilegedAction<AppClassLoader>() {
+                    @Override
                     public AppClassLoader run() {
-                        URL[] urls = (s == null) ? new URL[0] : pathToURLs(path);
+                        URL[] urls = pathToURLs(path);
                         return new AppClassLoader(urls, extcl);
                     }
                 });
@@ -520,7 +531,11 @@ public class Launcher {
         } catch (IOException e) {}
 
         try {
-            return ParseUtil.fileToEncodedURL(file);
+            URL u = ParseUtil.fileToEncodedURL(file);
+            String s = u.toString();
+            if (s.endsWith(".jimage"))
+                u = new URL("jimage" + s.substring(4));
+            return u;
         } catch (MalformedURLException e) {
             // Should never happen since we specify the protocol...
             throw new InternalError(e);
