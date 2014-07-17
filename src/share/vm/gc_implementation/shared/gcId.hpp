@@ -1,6 +1,5 @@
 /*
- * Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
- * Copyright 2012, 2013 SAP AG. All rights reserved.
+ * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,14 +22,30 @@
  *
  */
 
-#ifndef OS_AIX_VM_THREAD_AIX_INLINE_HPP
-#define OS_AIX_VM_THREAD_AIX_INLINE_HPP
+#ifndef SHARE_VM_GC_IMPLEMENTATION_SHARED_GCID_HPP
+#define SHARE_VM_GC_IMPLEMENTATION_SHARED_GCID_HPP
 
-#include "runtime/thread.hpp"
-#include "runtime/threadLocalStorage.hpp"
+#include "memory/allocation.hpp"
 
-// Contains inlined functions for class Thread and ThreadLocalStorage
+class GCId VALUE_OBJ_CLASS_SPEC {
+ private:
+  uint _id;
+  GCId(uint id) : _id(id) {}
+  GCId() { } // Unused
 
-inline void ThreadLocalStorage::pd_invalidate_all() {} // nothing to do
+  static uint _next_id;
+  static const uint UNDEFINED = (uint)-1;
 
-#endif // OS_AIX_VM_THREAD_AIX_INLINE_HPP
+ public:
+  uint id() const {
+    assert(_id != UNDEFINED, "Using undefined GC ID");
+    return _id;
+  }
+  bool is_undefined() const;
+
+  static const GCId create();
+  static const GCId peek();
+  static const GCId undefined();
+};
+
+#endif // SHARE_VM_GC_IMPLEMENTATION_SHARED_GCID_HPP

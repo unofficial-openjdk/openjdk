@@ -1,6 +1,5 @@
 /*
- * Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
- * Copyright 2012, 2013 SAP AG. All rights reserved.
+ * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,14 +22,21 @@
  *
  */
 
-#ifndef OS_AIX_VM_THREAD_AIX_INLINE_HPP
-#define OS_AIX_VM_THREAD_AIX_INLINE_HPP
+#include "precompiled.hpp"
+#include "gc_implementation/shared/gcId.hpp"
+#include "runtime/safepoint.hpp"
 
-#include "runtime/thread.hpp"
-#include "runtime/threadLocalStorage.hpp"
+uint GCId::_next_id = 0;
 
-// Contains inlined functions for class Thread and ThreadLocalStorage
-
-inline void ThreadLocalStorage::pd_invalidate_all() {} // nothing to do
-
-#endif // OS_AIX_VM_THREAD_AIX_INLINE_HPP
+const GCId GCId::create() {
+  return GCId(_next_id++);
+}
+const GCId GCId::peek() {
+  return GCId(_next_id);
+}
+const GCId GCId::undefined() {
+  return GCId(UNDEFINED);
+}
+bool GCId::is_undefined() const {
+  return _id == UNDEFINED;
+}
