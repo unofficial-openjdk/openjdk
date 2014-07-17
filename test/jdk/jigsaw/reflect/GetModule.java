@@ -21,9 +21,10 @@
  * questions.
  */
 
-/**
+/*
  * @test
- * @run testng Basic
+ * @summary Exercise Class#getModule
+ * @run testng GetModule
  */
 
 import java.awt.Component;
@@ -34,19 +35,19 @@ import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertEquals;
 
-public class Basic {
+public class GetModule {
 
     @DataProvider(name = "samples")
     public Object[][] sampleData() {
         return new Object[][] {
-            { int.class,         null },
-            { int[].class,       null },
-            { Basic.class,       null },
-            { Basic[].class,     null },
-            { Object.class,      "java.base" },
-            { Object[].class,    "java.base" },
-            { Component.class,   "java.desktop" },
-            { Component[].class, "java.desktop" },
+            { int.class,          null },
+            { int[].class,        null },
+            { GetModule.class,    null },
+            { GetModule[].class,  null },
+            { Object.class,       "java.base" },
+            { Object[].class,     "java.base" },
+            { Component.class,    "java.desktop" },
+            { Component[].class,  "java.desktop" },
 
             // TBD - need to add test classes for exported classes that are
             // on the extensions or application class path.
