@@ -1202,7 +1202,7 @@ class CommandLineFlags {
           "Decay time (in milliseconds) to re-enable bulk rebiasing of a "  \
           "type after previous bulk rebias")                                \
                                                                             \
-  develop(bool, JavaObjectsInPerm, false,                                   \
+  diagnostic(bool, JavaObjectsInPerm, false,                                \
           "controls whether Classes and interned Strings are allocated"     \
           "in perm.  This purely intended to allow debugging issues"        \
           "in production.")                                                 \
