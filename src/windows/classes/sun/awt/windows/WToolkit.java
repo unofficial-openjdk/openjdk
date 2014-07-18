@@ -36,6 +36,7 @@ import java.awt.TrayIcon;
 import java.beans.PropertyChangeListener;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+import sun.awt.AppContext;
 import sun.awt.AWTAutoShutdown;
 import sun.awt.SunToolkit;
 import sun.misc.ThreadGroupUtils;

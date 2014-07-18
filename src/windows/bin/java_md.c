@@ -264,7 +264,7 @@ LoadMSVCRT()
         if (GetJREPath(crtpath, MAXPATHLEN)) {
             if (strlen(crtpath) + strlen("\\bin\\") +
                     strlen(CRT_DLL) >= MAXPATHLEN) {
-		printf("Error: Path length exceeds maximum length (PATH_MAX)");
+		ReportErrorMessage("Error: Path length exceeds maximum length (PATH_MAX)", JNI_TRUE);
                 return JNI_FALSE;
             }
             (void)strcat(crtpath, "\\bin\\" CRT_DLL);   /* Add crt dll */
@@ -1292,11 +1292,11 @@ int AWTPreload(const char *funcName)
             /* save path length */
             jrePathLen = strlen(libraryPath);
 
-            if (jrePathLen + JLI_StrLen("\\bin\\verify.dll") >= MAXPATHLEN) {
+            if (jrePathLen + strlen("\\bin\\verify.dll") >= MAXPATHLEN) {
               /* jre path is too long, the library path will not fit there;
                * report and abort preloading
                */
-              JLI_ReportErrorMessage(JRE_ERROR11);
+              ReportErrorMessage("Error: Path length exceeds maximum length (PATH_MAX)", JNI_TRUE);
               break;
             }
 
