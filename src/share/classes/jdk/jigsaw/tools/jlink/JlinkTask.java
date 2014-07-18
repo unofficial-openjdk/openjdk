@@ -75,7 +75,7 @@ import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
-import jdk.jigsaw.module.ImageFile;
+import jdk.jigsaw.module.internal.ImageFile;
 import jdk.jigsaw.module.Module;
 import jdk.jigsaw.module.ModuleGraph;
 import jdk.jigsaw.module.ModulePath;

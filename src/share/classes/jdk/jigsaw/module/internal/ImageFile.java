@@ -22,7 +22,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package jdk.jigsaw.module;
+package jdk.jigsaw.module.internal;
 
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
@@ -55,10 +55,8 @@ import java.util.zip.Deflater;
 import java.util.zip.Inflater;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
-import jdk.jigsaw.module.internal.ImageHeader;
-import jdk.jigsaw.module.internal.ImageReader;
-import jdk.jigsaw.module.internal.ImageWriter;
-import static jdk.jigsaw.module.ImageFile.Loader.*;
+import jdk.jigsaw.module.Module;
+import static jdk.jigsaw.module.internal.ImageFile.Loader.*;
 
 /**
  * An image (native endian.)
