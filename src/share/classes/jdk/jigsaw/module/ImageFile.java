@@ -62,6 +62,7 @@ import static jdk.jigsaw.module.ImageFile.Loader.*;
 
 /**
  * An image (native endian.)
+ * <pre>{@code
  * {
  *   u4 magic;
  *   u2 major_version;
@@ -74,6 +75,8 @@ import static jdk.jigsaw.module.ImageFile.Loader.*;
  *   u1 location_attributes[location_attributes_size];
  *   u1 strings[strings_size];
  *   u1 content[if !EOF];
+ * }
+ * }</pre>
  */
 public final class ImageFile {
     private static final String MODULES_DIR = "lib/modules/";
