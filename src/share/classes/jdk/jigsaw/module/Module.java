@@ -37,6 +37,8 @@ import static java.util.Objects.*;
 
 /**
  * <p> A module definition </p>
+ *
+ * @see java.lang.reflect.Module
  */
 
 @SuppressWarnings("serial")             // serialVersionUID intentionally omitted

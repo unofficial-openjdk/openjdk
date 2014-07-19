@@ -25,6 +25,10 @@
 
 package sun.reflect;
 
+import sun.misc.JavaLangAccess;
+import sun.misc.JavaLangReflectAccess;
+import sun.misc.SharedSecrets;
+
 import java.lang.reflect.*;
 import java.util.HashMap;
 import java.util.Map;
@@ -41,6 +45,9 @@ public class Reflection {
         each access, we use copy-on-write */
     private static volatile Map<Class<?>,String[]> fieldFilterMap;
     private static volatile Map<Class<?>,String[]> methodFilterMap;
+
+    // access to java.lang.reflect.Module, initialized lazily
+    private static volatile JavaLangReflectAccess reflectAccess;
 
     static {
         Map<Class<?>,String[]> map = new HashMap<Class<?>,String[]>();
@@ -70,6 +77,9 @@ public class Reflection {
         moduleChecksEnabled = enableModuleChecks;
         moduleChecksDebugging = debugging;
         modulesInitialized = true;
+
+        JavaLangAccess langAccess = SharedSecrets.getJavaLangAccess();
+        reflectAccess = SharedSecrets.getJavaLangReflectAccess();
     }
 
     /** Returns the class of the caller of the method calling this method,
@@ -250,12 +260,12 @@ public class Reflection {
                 return true;
 
             // named module trying to access member in another named module
-            if (!m1.readDependences().contains(m2))
+            if (!m1.canRead(m2))
                 return false;
         }
 
         // check exports
-        Set<Module> who = m2.exports().get(packageName(memberClass));
+        Set<Module> who = reflectAccess.exports(m2, packageName(memberClass));
 
         // not exported
         if (who == null)

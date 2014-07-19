@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.io.File;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Module;
 import java.net.URL;
 import java.security.AccessController;
 import java.security.AccessControlContext;
@@ -52,6 +53,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import jdk.jigsaw.module.internal.ModuleCatalog;
 import jdk.jigsaw.module.internal.ModuleRuntime;
+
 import sun.misc.CompoundEnumeration;
 import sun.misc.Resource;
 import sun.misc.URLClassPath;
@@ -538,23 +540,58 @@ public abstract class ClassLoader {
      * initial module graph) to the runtime and associates the modules with
      * this class loader.
      *
-     * @apiNote This is an experimental API for now
+     * @apiNote This is an experimental API for now. There are a number of
+     * error/exception cases that will need to be specified if this method
+     * goes ahead. Cases that will be be specified include:
+     * <ul>
+     *     <li>
+     *         where the module graph is already defined to be associated with
+     *         another class loader.
+     *     </li>
+     *     <li>
+     *         there are types already defined in any of the packages that
+     *         the modules include (a module should be defined before any of its
+     *         types.
+     *     </li>
+     *     <li>
+     *         a module of the same name of one of the modules in the module graph
+     *         is already associated with this class loader.
+     *     </li>
+     * </ul>
+     *
+     * @since 1.9
      */
-    protected final void defineModules(jdk.jigsaw.module.ModuleGraph g) {
-        ModuleRuntime.defineModules(g, this);
+    protected final Module[] defineModules(jdk.jigsaw.module.ModuleGraph g) {
+        return ModuleRuntime.defineModules(g, this);
     }
 
     /**
      * Defines a module in a given module graph to the runtime and associates
      * the module with this class loader.
      *
-     * @apiNote This is an experimental API for now
+     * @apiNote This is an experimental API for now. In addition to the error
+     * conditions mentioned in defineModules, this method also needs to specify
+     * the cases:
+     * <ul>
+     *     <li>
+     *         where one of more of the module's read-dependences aren't defined
+     *         (modules should must be defined in reverse-topological order).
+     *     </li>
+     *     <li>
+     *         the given module graph/module have already been defined (to this
+     *         or another class loader).
+     *     </li>
+     *     <li>
+     *         the given module is not a module in {@code g.minusInitialModuleGraph()}.
+     *     </li>
+     * </ul>
+     *
+     * @since 1.9
      */
-    protected final void defineModule(jdk.jigsaw.module.ModuleGraph g,
-                                      jdk.jigsaw.module.Module m) {
-        ModuleRuntime.defineModule(g, m, this);
+    protected final Module defineModule(jdk.jigsaw.module.ModuleGraph g,
+                                        jdk.jigsaw.module.Module m) {
+        return ModuleRuntime.defineModule(g, m, this);
     }
-
 
     /**
      * Converts an array of bytes into an instance of class <tt>Class</tt>.

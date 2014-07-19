@@ -142,40 +142,50 @@ public final class ModuleRuntime {
      * module graph to the runtime. The modules are associated with the given
      * {@code ClassLoader}.
      */
-    public static void defineModules(ModuleGraph g, ClassLoader cl) {
-        defineModules(g, l -> cl);
+    public static java.lang.reflect.Module[] defineModules(ModuleGraph g, ClassLoader cl) {
+        Set<Module> modules = g.minusInitialModuleGraph();
+        java.lang.reflect.Module[] result = new java.lang.reflect.Module[modules.size()];
+        int i = 0;
+        for (Module m: modules) {
+            result[i++] = defineModule(g, m, cl);
+        }
+        return result;
     }
 
     /**
      * Defines the given modules in the given module graph to the runtime. The
      * module is associated with the given {@code ClassLoader}.
      *
-     * ##FIXME: Modules with (unqalified) exports and permits aren't currnetly
+     * ##FIXME: Modules with (unqualified) exports and permits aren't currently
      * handled. The exported packages are accessible to code in the unnamed
      * module as a result. This should be converted to qualified exports.
      */
-    public static boolean defineModule(ModuleGraph g, Module m, ClassLoader loader) {
+    public static java.lang.reflect.Module defineModule(ModuleGraph g,
+                                                        Module m,
+                                                        ClassLoader cl)
+    {
         synchronized (dictionary) {
 
             // check if already defined
             Map<Module, DictionaryEntry> map = dictionary.get(g);
-            if (map != null && map.containsKey(m))
-                return false;
+            if (map != null && map.containsKey(m)) {
+                //throw new Error(m.id() + " already defined");
+                return map.get(m).reflectModule;
+            }
 
             // the newly selected modules, not present in the initial module graph
             Set<Module> selected = g.minusInitialModuleGraph();
             if (!selected.contains(m)) {
-                throw new IllegalArgumentException(m.id() +
-                    " not a newly selected module in this module graph");
+                throw new Error(m.id() + " not in g.minusInitialModuleGraph");
             }
 
             // VM
-            long handle = VM.defineModule(m.id().name());
-            m.packages().forEach(pkg -> VM.bindToModule(loader, pkg, handle));
+            final long handle = VM.defineModule(m.id().name());
+            m.packages().forEach(pkg -> VM.bindToModule(cl, pkg, handle));
 
             // java.lang.reflect.Module
             java.lang.reflect.Module reflectModule =
-                defineReflectModule(langAccess, loader, m);
+                defineReflectModule(langAccess, cl, g, m);
 
             // setup the exports
             for (ModuleExport export: m.exports()) {
@@ -240,22 +250,15 @@ public final class ModuleRuntime {
                 }
             }
 
-            // services used
-            Set<ServiceDependence> sd = m.serviceDependences();
-            if (!sd.isEmpty()) {
-                sd.stream().map(ServiceDependence::service)
-                           .forEach(sn -> reflectAccess.addUses(reflectModule, sn));
-            }
-
-            // services provided
-            reflectAccess.addProvides(reflectModule, m.services());
-
             // module is defined to runtime so add it to dictionary and
             dictionary.computeIfAbsent(g, k -> new HashMap<>())
                       .put(m, new DictionaryEntry(handle, reflectModule));
             moduleToModule.put(reflectModule, m);
 
-            return true;
+            // mark as defined
+            reflectAccess.setDefined(reflectModule);
+
+            return reflectModule;
         }
     }
 
@@ -264,7 +267,7 @@ public final class ModuleRuntime {
      * associate with the given class loader.
      */
     private static java.lang.reflect.Module
-        defineReflectModule(JavaLangAccess langAccess, ClassLoader loader, Module m) {
+        defineReflectModule(JavaLangAccess langAccess, ClassLoader loader, ModuleGraph g, Module m) {
 
         ModuleCatalog catalog;
         if (loader == null) {
@@ -272,7 +275,6 @@ public final class ModuleRuntime {
         } else {
             catalog = langAccess.getModuleCatalog(loader);
         }
-        String name = m.id().name();
-        return catalog.defineModule(name, m.packages(), m.services());
+        return catalog.defineModule(g, m);
     }
 }

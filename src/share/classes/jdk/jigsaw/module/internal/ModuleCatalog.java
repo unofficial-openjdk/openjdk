@@ -39,7 +39,7 @@ import sun.misc.SharedSecrets;
 
 /**
  * A module catalog that supports defining and lookup of modules. Each
- * {@code ClassLoader} has an assoicated {@code ModuleCatalog} for modules
+ * {@code ClassLoader} has an associated {@code ModuleCatalog} for modules
  * that are associated with that class loader.
  *
  * @apiNote The ModuleCatalog for the null class loader is defined here
@@ -52,11 +52,9 @@ public class ModuleCatalog {
 
     // the unnamed modules, should not be leaked
     public static final Module UNNAMED_MODULE =
-        getSystemModuleCatalog().defineModule("<unnamed>",
-                                              Collections.emptySet(),
-                                              Collections.emptyMap());
+        SharedSecrets.getJavaLangReflectAccess().defineUnnamedModule();
 
-    // use RW locks as defineModue is rare
+    // use RW locks as defineModule is rare
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
     private final Lock readLock = lock.readLock();
     private final Lock writeLock = lock.writeLock();
@@ -86,29 +84,29 @@ public class ModuleCatalog {
     /**
      * Defines a new module with the given name, API packages, and services.
      */
-    public Module defineModule(String name,
-                               Set<String> packages,
-                               Map<String, Set<String>> services)
+    public Module defineModule(jdk.jigsaw.module.ModuleGraph g,
+                               jdk.jigsaw.module.Module m)
     {
         writeLock.lock();
         try {
+            String name = m.id().name();
             if (moduleNames.contains(name))
                 throw new Error("Module " + name + " already defined");
-            for (String pkg: packages) {
+            for (String pkg: m.packages()) {
                 if (modulePackages.contains(pkg))
                     throw new Error(pkg + " already defined by another module");
             }
             moduleNames.add(name);
-            modulePackages.addAll(packages);
+            modulePackages.addAll(m.packages());
 
             // extend the services map
-            for (Map.Entry<String, Set<String>> entry: services.entrySet()) {
+            for (Map.Entry<String, Set<String>> entry: m.services().entrySet()) {
                 String service = entry.getKey();
                 Set<String> providers = entry.getValue();
 
                 // if there are already service providers for this service
                 // then just create a new set that has the existing plus new
-                Set<String> existing = services.get(service);
+                Set<String> existing = m.services().get(service);
                 if (existing != null) {
                     Set<String> set = new HashSet<>();
                     set.addAll(existing);
@@ -118,10 +116,11 @@ public class ModuleCatalog {
                 loaderServices.put(service, Collections.unmodifiableSet(providers));
             }
 
-            Module m = SharedSecrets.getJavaLangReflectAccess().defineModule(name, packages);
-            packages.forEach(p -> packageToModule.put(p, m));
+            Module reflectModule = SharedSecrets.getJavaLangReflectAccess()
+                                                .defineModule(g, m);
+            m.packages().forEach(p -> packageToModule.put(p, reflectModule));
 
-            return m;
+            return reflectModule;
         } finally {
             writeLock.unlock();
         }

@@ -40,6 +40,7 @@ import java.security.PrivilegedAction;
 import jdk.jigsaw.module.internal.ModuleCatalog;
 
 import sun.misc.JavaLangAccess;
+import sun.misc.JavaLangReflectAccess;
 import sun.misc.SharedSecrets;
 import sun.reflect.CallerSensitive;
 import sun.reflect.Reflection;
@@ -194,6 +195,10 @@ import sun.reflect.Reflection;
 public final class ServiceLoader<S>
     implements Iterable<S>
 {
+    // access to java.lang.reflect.Module
+    private static JavaLangAccess langAccess = SharedSecrets.getJavaLangAccess();
+    private static JavaLangReflectAccess reflectAccess =
+        SharedSecrets.getJavaLangReflectAccess();
 
     private static final String PREFIX = "META-INF/services/";
 
@@ -253,7 +258,7 @@ public final class ServiceLoader<S>
         // uses the service type
         if (m != null) {
             String sn = svc.getName();
-            if (!m.uses().contains(sn)) {
+            if (!reflectAccess.uses(m, sn)) {
                 fail(svc, "use not declared in " + m);
             }
         }
@@ -429,7 +434,7 @@ public final class ServiceLoader<S>
             Module m = c.getModule();
             if (m != null) {
                 String sn = service.getName();
-                Set<String> provides = m.provides().get(sn);
+                Set<String> provides = reflectAccess.provides(m, sn);
                 if (provides == null || !provides.contains(cn)) {
                     fail(service,
                          m + " does not declare that it provides " + sn + " with " + cn);

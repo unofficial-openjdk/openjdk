@@ -149,7 +149,7 @@ public abstract class ModulePath {
      * that are linked into the runtime image.
      *
      * @implNote For now, the module-path is backed by the contents of {@code
-     * modules.jimage}, or in the case a developer build then it is backed by
+     * modules.jdata}, or in the case a developer build then it is backed by
      * the module descriptors found in the {@code lib/modules/$m/*}.
      */
     public static ModulePath installedModules() {

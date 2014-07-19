@@ -30,118 +30,193 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
+import jdk.jigsaw.module.ServiceDependence;
 import sun.reflect.CallerSensitive;
 import sun.reflect.Reflection;
 
+import jdk.jigsaw.module.ModuleGraph;
+
 /**
- * Provides information and access to a Java Module.
+ * Represents a runtime module.
+ *
+ * <p> {@code Module} does not define a public constructor. Instead {@code
+ * Module} objects are constructed automatically by the Java Virtual Machine as
+ * modules are defined by the {@link ClassLoader#defineModules defineModules} and
+ * {@link ClassLoader#defineModule defineModule}. </p>
+ *
+ * @apiNote For now, this class defines {@link #getModuleGraph()} and {@link
+ * #getModule()} to provide access to the original model. An alternative that
+ * might be more consistent with other {@code java.lang.reflect} classes is to
+ * have this class provide access to the original module definition.
  *
  * @since 1.9
  * @see java.lang.Class#getModule
  */
-
 public final class Module {
 
-    // immutable
+    // the module name
     private final String name;
-    private final Set<String> packages;
 
-    // mutable to allow "construction" of a graph of modules without needing
-    // them to be created in topological order.
-    //
-    private final Map<Module, Object> reads;     // used as a set
-    private final Map<String, Object> uses;      // used as a set
-    private final Map<String, Set<Module>> exports;
-    private final Map<String, Set<String>> provides;
+    // the original module graph and module, might be set lazily
+    private volatile ModuleGraph graph;
+    private volatile jdk.jigsaw.module.Module module;
 
-    Module(String name, Set<String> packages) {
+    // the modules that this module reads
+    private final Map<Module, Object> reads = new ConcurrentHashMap<>();
+
+    // this module's exported, cached here for access checks
+    private final Map<String, Set<Module>> exports = new ConcurrentHashMap<>();
+
+    // used by VM to indicate that the module is fully defined
+    private volatile boolean defined;
+
+
+    // called by VM during startup
+    Module(String name) {
         this.name = name;
-        this.packages = Collections.unmodifiableSet(packages);
-        this.reads = new ConcurrentHashMap<>();
-        this.uses = new ConcurrentHashMap<>();
-        this.exports = new ConcurrentHashMap<>();
-        this.provides = new ConcurrentHashMap<>();
+    }
+
+    Module(ModuleGraph g, jdk.jigsaw.module.Module m) {
+        this.name = m.id().name();
+        this.graph = g;
+        this.module = m;
     }
 
     /**
-     * Returns the module name.
+     * Returns the {@code ModuleGraph} from which this runtime module was defined.
      */
-    public String name() {
-        return name;
+    public ModuleGraph getModuleGraph() {
+        ModuleGraph g = this.graph;
+        if (g != null)
+            return g;
+        return ModuleGraph.getSystemModuleGraph();
     }
 
     /**
-     * Returns the set of API packages in this module.
+     * Returns the {@code Module} from which this runtime module was defined.
      */
-    public Set<String> packages() {
-        return packages;
+    public jdk.jigsaw.module.Module getModule() {
+        jdk.jigsaw.module.Module m = this.module;
+        if (m != null)
+            return m;
+
+        ModuleGraph systemModuleGraph = ModuleGraph.getSystemModuleGraph();
+        if (systemModuleGraph == null)
+            return null;
+
+        jdk.jigsaw.module.Module me = systemModuleGraph.findModule(name);
+        if (me == null)
+            throw new InternalError(name + " not in system module graph");
+
+        this.module = me;
+        return me;
     }
 
     /**
-     * Returns the set of modules that this module reads. The set of modules
-     * that this module reads may vary over the lifetime of the VM.
+     * Makes this module readable to the module of the caller. This method
+     * does nothing if the caller is this module, the caller already reads
+     * this module, or the caller is in the <em>unnamed module</em> and this
+     * module does not have a permits.
      *
-     * @see #setReadable()
-     */
-    public Set<Module> readDependences() {
-        return Collections.unmodifiableSet(reads.keySet());
-    }
-
-    /**
-     * Makes this module readable to the module of the caller.
+     * @throws IllegalArgumentException if this module has a permits
+     *
+     * @implNote For now, the new read edge is only effective for access
+     * checks done in Core Reflection. This anomaly will go away once the
+     * implementation is further along and should make {@code setReadable}
+     * more useful for dealing with optional dependencies, particularly the
+     * case of a static dependency with a reflection guard.
+     *
+     * @see #canRead
      */
     @CallerSensitive
     public void setReadable() {
         Module caller = Reflection.getCallerClass().getModule();
-        if (caller == null)
+        if (caller == this || (caller != null && caller.reads.containsKey(this)))
             return;
 
-        // ### FIXME, permits not checked yet
+        Set<String> permits = getModule().permits();
+        if (!permits.isEmpty())
+            throw new IllegalArgumentException("module has a 'permits'");
 
-        caller.reads.put(this, Boolean.TRUE);
+        if (caller != null)
+            caller.reads.putIfAbsent(this, Boolean.TRUE);
     }
 
     /**
-     * Returns a map of the APIs exported by this module. The map key is the
-     * package name, the value the set of modules that the API package is
-     * exported to (and will be empty if exported without restrictions).
+     * Indicates if this {@code Module} reads the given {@code Module}.
+     *
+     * <p> Returns {@code true} if {@code m} is {@code null} (the unnamed
+     * readable is readable to all modules, or {@code m} is this module (a
+     * module can read itself). </p>
+     *
+     * @see #setReadable()
      */
-    public Map<String, Set<Module>> exports() {
-        // ###FIXME values are modifiable
-        return Collections.unmodifiableMap(exports);
+    public boolean canRead(Module m) {
+        return m == null || m == this || reads.containsKey(m);
     }
 
     /**
-     * Returns the set of type names that are service interfaces that the
+     * Returns the set of type names that are service interfaces that this
      * module uses.
      */
-    public Set<String> uses() {
-        return Collections.unmodifiableSet(uses.keySet());
+    Set<String> uses() {
+        // already cached
+        Set<String> uses = this.uses;
+        if (uses != null)
+            return uses;
+
+        jdk.jigsaw.module.Module m = getModule();
+        if (m == null) {
+            return Collections.emptySet();
+        } else {
+            uses = m.serviceDependences()
+                    .stream()
+                    .map(ServiceDependence::service)
+                    .collect(Collectors.toSet());
+            uses = Collections.unmodifiableSet(uses);
+            this.uses = uses;
+            return uses;
+        }
     }
+    private volatile Set<String> uses;
 
     /**
-     * Returns a map of the service providers that the module provides.
-     * The map key is the type name of the service interface. The map key
-     * is the set of type names for the service implementations.
-     */
-    public Map<String, Set<String>> provides() {
-        return Collections.unmodifiableMap(provides);
+      * Returns a map of the service providers that the module provides.
+      * The map key is the type name of the service interface. The map key
+      * is the set of type names for the service implementations.
+      */
+    Map<String, Set<String>> provides() {
+        jdk.jigsaw.module.Module m = getModule();
+        if (m == null) {
+            return Collections.emptyMap();
+        } else {
+            return m.services();
+        }
     }
 
     /**
      * Return the string representation of the module.
      */
     public String toString() {
-        return "module " + name();
+        return "module " + name;
     }
 
     static {
         sun.misc.SharedSecrets.setJavaLangReflectAccess(
             new sun.misc.JavaLangReflectAccess() {
                 @Override
-                public Module defineModule(String name, Set<String> packages) {
-                    return new Module(name, packages);
+                public Module defineUnnamedModule() {
+                    return new Module("<unnamed>");
+                }
+                @Override
+                public Module defineModule(ModuleGraph g, jdk.jigsaw.module.Module m) {
+                    return new Module(g, m);
+                }
+                @Override
+                public void setDefined(Module m) {
+                    m.defined = true;
                 }
                 @Override
                 public void addReadsModule(Module m1, Module m2) {
@@ -154,14 +229,21 @@ public final class Module {
                         permits.add(permit);
                 }
                 @Override
-                public void addUses(Module m, String sn) {
-                    m.uses.put(sn, Boolean.TRUE);
+                public Set<Module> exports(Module m, String pkg) {
+                    // returns null if not exported
+                    return m.exports.get(pkg);
                 }
                 @Override
-                public void addProvides(Module m, Map<String, Set<String>> services) {
-                    for (Map.Entry<String, Set<String>> entry: services.entrySet()) {
-                        String sn = entry.getKey();
-                        m.provides.put(sn, Collections.unmodifiableSet(entry.getValue()));
+                public boolean uses(Module m, String sn) {
+                    return m.uses().contains(sn);
+                }
+                @Override
+                public Set<String> provides(Module m, String sn) {
+                    Set<String> provides = m.provides().get(sn);
+                    if (provides == null) {
+                        return Collections.emptySet();
+                    } else {
+                        return provides;
                     }
                 }
             });

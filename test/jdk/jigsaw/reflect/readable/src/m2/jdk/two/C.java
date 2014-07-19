@@ -4,9 +4,7 @@
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Oracle designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Oracle in the LICENSE file that accompanied this code.
+ * published by the Free Software Foundation.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -23,20 +21,8 @@
  * questions.
  */
 
-package sun.misc;
+package jdk.two;
 
-import java.lang.reflect.Module;
-import java.util.Set;
-
-public interface JavaLangReflectAccess {
-    Module defineUnnamedModule();
-    Module defineModule(jdk.jigsaw.module.ModuleGraph g, jdk.jigsaw.module.Module m);
-    void setDefined(Module m);
-
-    void addReadsModule(Module m1, Module m2);
-    void addExport(Module m, String pkg, Module permit);
-    Set<Module> exports(Module m, String pkg);
-
-    boolean uses(Module m, String service);
-    Set<String> provides(Module m, String service);
+public class C {
+    public C() { }
 }

@@ -48,9 +48,9 @@ import java.util.stream.Stream;
  * <p> A module graph can be augmented with additional modules (and edges) at a
  * later time to produce a new, richer graph. This is the process of module graph
  * composition when a {@link Resolver} is created with an initial module graph.
- * When augmenting an existing module graph by resolution then the {@link
- * #minusInitialModuleGraph} method may be used to obtain the set of modules
- * added to the graph. </p>
+ * When augmenting an existing module graph by resolution then the
+ * {@link #minusInitialModuleGraph} method may be used to obtain the set of
+ * modules added to the graph. </p>
  *
  * <p>  A module graph may also be augmented with modules from its module path
  * that are induced by <em></em>service-use</em> relationships. This is the
@@ -67,7 +67,7 @@ import java.util.stream.Stream;
  *     Set<Module> added = g.minusInitialModuleGraph();
  * }</pre>
  *
- * @see ClassLoader#defineModules
+ * @see java.lang.ClassLoader#defineModules
  */
 public final class ModuleGraph {
 
