@@ -384,6 +384,7 @@ ClassFileStream* ClassPathImageEntry::open_stream(const char* name, TRAPS) {
 void ClassPathImageEntry::compile_the_world(Handle loader, TRAPS) {
   tty->print_cr("CompileTheWorld : Compiling all classes in %s", name());
   tty->cr();
+/*
   ImageStrings strings = _image->getStrings();
   u4 count = _image->getLocationCount();
   for (u4 i = 0; i < count; i++) {
@@ -407,10 +408,11 @@ void ClassPathImageEntry::compile_the_world(Handle loader, TRAPS) {
     tty->print_cr("\nCompileTheWorld : Unexpected exception occurred\n");
   }
   }
+*/
 }
 
 bool ClassPathImageEntry::is_rt_jar() {
-    return string_ends_with(name(), "java.base/bootmodules.jimage");
+  return string_ends_with(name(), "java.base/bootmodules.jimage");
 }
 #endif
 

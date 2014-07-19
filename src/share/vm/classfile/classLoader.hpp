@@ -154,7 +154,7 @@ public:
   ClassFileStream* open_stream(const char* name, TRAPS);
   // Debugging
   NOT_PRODUCT(void compile_the_world(Handle loader, TRAPS);)
-  NOT_PRODUCT(bool is_rt_jar() = 0;)
+  NOT_PRODUCT(bool is_rt_jar();)
 };
 
 class PackageHashtable;

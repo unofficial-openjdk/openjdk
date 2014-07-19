@@ -135,7 +135,6 @@ bool ImageFile::open() {
     _header._magic != IMAGE_MAGIC ||
     _header._majorVersion != MAJOR_VERSION ||
     _header._minorVersion != MINOR_VERSION) {
-    assert(false, "invalid image file");
     close();
     return false;
   }
