@@ -25,6 +25,10 @@
 #ifndef SHARE_VM_CLASSFILE_IMAGEFILE_HPP
 #define SHARE_VM_CLASSFILE_IMAGEFILE_HPP
 
+#include "memory/allocation.hpp"
+#include "memory/allocation.inline.hpp"
+#include "utilities/globalDefinitions.hpp"
+
 class Mutex;
 
 // Manage image file index string table.  Each string is UTF-8 with zero byte terminator.
