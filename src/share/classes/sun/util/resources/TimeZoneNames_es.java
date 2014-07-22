@@ -77,8 +77,8 @@ public final class TimeZoneNames_es extends TimeZoneNamesBundle {
                                        "Hora de verano de Chatham", "CHADT"};
         String ChST[] = new String[] {"Hora est\u00e1ndar de Chamorro", "ChST",
                                       "Hora de verano de Chamorro", "ChDT"};
-        String CHUT[] = new String[] {"Chuuk Time", "CHUT",
-                                      "Chuuk Summer Time", "CHUST"};
+        String CHUT[] = new String[] {"Hora de Chuuk", "CHUT",
+                                      "Hora de verano de Chuuk", "CHUST"};
         String CIT[] = new String[] {"Hora de Indonesia Central", "WITA",
                                      "Hora de verano de Indonesia Central", "CIST"};
         String CLT[] = new String[] {"Hora de Chile", "CLT",
@@ -159,8 +159,8 @@ public final class TimeZoneNames_es extends TimeZoneNamesBundle {
                                           "Hora de verano de Pitcairn", "PDT"};
         String PKT[] = new String[] {"Hora de Pakist\u00e1n", "PKT",
                                      "Hora de verano de Pakist\u00e1n", "PKST"};
-        String PONT[] = new String[] {"Pohnpei Time", "PONT",
-                                      "Pohnpei Summer Time", "PONST"};
+        String PONT[] = new String[] {"Hora de Pohnpei", "PONT",
+                                      "Hora de verano de Pohnpei", "PONST"};
         String PST[] = new String[] {"Hora est\u00e1ndar del Pac\u00edfico", "PST",
                                      "Hora de verano del Pac\u00edfico", "PDT"};
         String SAMOA[] = new String[] {"Hora est\u00e1ndar de Samoa", "SST",
@@ -401,8 +401,8 @@ public final class TimeZoneNames_es extends TimeZoneNamesBundle {
             {"America/Mendoza", AGT},
             {"America/Menominee", CST},
             {"America/Merida", CST},
-            {"America/Metlakatla", new String[] {"Metlakatla Standard Time", "MeST",
-                                                 "Metlakatla Daylight Time", "MeDT"}},
+            {"America/Metlakatla", new String[] {"Hora de Metlakatla", "MeST",
+                                                 "Hora de verano de Metlakatla", "MeDT"}},
             {"America/Mexico_City", CST},
             {"America/Miquelon", new String[] {"Hora est\u00e1ndar de Pierre & Miquelon", "PMST",
                                                "Hora de verano de Pierre & Miquelon", "PMDT"}},
@@ -466,8 +466,8 @@ public final class TimeZoneNames_es extends TimeZoneNamesBundle {
                                                "Hora de verano de Davis", "DAVST"}},
             {"Antarctica/DumontDUrville", new String[] {"Hora de Dumont-d'Urville", "DDUT",
                                                         "Hora de verano de Dumont-d'Urville", "DDUST"}},
-            {"Antarctica/Macquarie", new String[] {"Macquarie Island Time", "MIST",
-                                                   "Macquarie Island Summer Time", "MIST"}},
+            {"Antarctica/Macquarie", new String[] {"Hora de Isla Macquarie", "MIST",
+                                                   "Hora de verano de Isla Macquarie", "MIST"}},
             {"Antarctica/Mawson", new String[] {"Hora de Mawson", "MAWT",
                                                 "Hora de verano de Mawson", "MAWST"}},
             {"Antarctica/McMurdo", NZST},
