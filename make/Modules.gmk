@@ -73,14 +73,14 @@ TOOL_MODULARIZER=$(BUILD_JAVA) -esa -ea -cp $(CLASSANALYZER_CLASSES) \
     com.sun.tools.classanalyzer.Modularizer
 
 JIGSAW_JAVA = $(JDK_OUTPUTDIR)/bin/java
-TOOL_GENMODULEGRAPH =$(JIGSAW_JAVA) -esa -ea -cp $(CLASSANALYZER_CLASSES) \
+TOOL_GENMODULEGRAPH =$(FIXPATH) $(JIGSAW_JAVA) -esa -ea -cp $(CLASSANALYZER_CLASSES) \
     com.sun.tools.classanalyzer.GenModuleGraph
 
-TOOL_GENGRAPHS =$(JIGSAW_JAVA) -esa -ea -cp $(JDK_OUTPUTDIR)/btclasses \
+TOOL_GENGRAPHS =$(FIXPATH) $(JIGSAW_JAVA) -esa -ea -cp $(JDK_OUTPUTDIR)/btclasses \
     build.tools.module.GenGraphs
 
-TOOL_GENMODULESXML =$(JIGSAW_JAVA) -esa -ea -cp $(JDK_OUTPUTDIR)/btclasses \
+TOOL_GENMODULESXML =$(FIXPATH) $(JIGSAW_JAVA) -esa -ea -cp $(JDK_OUTPUTDIR)/btclasses \
     build.tools.module.GenerateModulesXml
 
-TOOL_MODULESUMMARY =$(JIGSAW_JAVA) -esa -ea -cp $(JDK_OUTPUTDIR)/btclasses \
+TOOL_MODULESUMMARY =$(FIXPATH) $(JIGSAW_JAVA) -esa -ea -cp $(JDK_OUTPUTDIR)/btclasses \
     -XX:-UseModuleBoundaries build.tools.module.ModuleSummary
