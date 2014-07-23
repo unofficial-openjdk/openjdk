@@ -61,7 +61,7 @@ public class ThemeReader {
     static volatile boolean xpStyleEnabled;
 
     static void flush() {
-        // Could be called on Toolkit thread, so do not try to acquire locks
+        // Could be called on Toolkit thread, so do not try to aquire locks
         // to avoid deadlock with theme initialization
         valid = false;
     }
