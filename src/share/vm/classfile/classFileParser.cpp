@@ -961,7 +961,7 @@ void ClassFileParser::parse_field_attributes(constantPoolHandle cp,
             "Wrong size %u for field's Signature attribute in class file %s",
             attribute_length, CHECK);
         }
-        generic_signature_index = cfs->get_u2(CHECK);
+        generic_signature_index = parse_generic_signature_attribute(cp, CHECK);
       } else if (attribute_name == vmSymbols::tag_runtime_visible_annotations()) {
         runtime_visible_annotations_length = attribute_length;
         runtime_visible_annotations = cfs->get_u1_buffer();
@@ -1698,7 +1698,8 @@ int ClassFileParser::skip_annotation_value(u1* buffer, int limit, int index) {
 }
 
 // Sift through annotations, looking for those significant to the VM:
-void ClassFileParser::parse_annotations(u1* buffer, int limit,
+void ClassFileParser::parse_annotations(Handle class_loader,
+                                        u1* buffer, int limit,
                                         constantPoolHandle cp,
                                         ClassFileParser::AnnotationCollector* coll,
                                         TRAPS) {
@@ -1736,7 +1737,7 @@ void ClassFileParser::parse_annotations(u1* buffer, int limit,
     }
 
     // Here is where parsing particular annotations will take place.
-    AnnotationCollector::ID id = coll->annotation_index(aname);
+    AnnotationCollector::ID id = coll->annotation_index(class_loader, is_anonymous(), aname);
     if (id == AnnotationCollector::_unknown)  continue;
     coll->set_annotation(id);
     // If there are no values, just set the bit and move on:
@@ -1765,20 +1766,30 @@ void ClassFileParser::parse_annotations(u1* buffer, int limit,
   }
 }
 
-ClassFileParser::AnnotationCollector::ID ClassFileParser::AnnotationCollector::annotation_index(Symbol* name) {
+ClassFileParser::AnnotationCollector::ID ClassFileParser::AnnotationCollector::annotation_index(Handle class_loader,
+                                                                                                bool is_anonymous,
+                                                                                                Symbol* name) {
   vmSymbols::SID sid = vmSymbols::find_sid(name);
+  // Privileged code can use all annotations.  Other code silently drops some.
+  const bool privileged = class_loader.is_null() || is_anonymous ||
+                          class_loader()->klass()->klass_part()->name() ==
+                            vmSymbols::sun_misc_Launcher_ExtClassLoader();
   switch (sid) {
   case vmSymbols::VM_SYMBOL_ENUM_NAME(java_lang_invoke_ForceInline_signature):
     if (_location != _in_method)  break;  // only allow for methods
+    if (!privileged)              break;  // only allow in privileged code
     return _method_ForceInline;
   case vmSymbols::VM_SYMBOL_ENUM_NAME(java_lang_invoke_DontInline_signature):
     if (_location != _in_method)  break;  // only allow for methods
+    if (!privileged)              break;  // only allow in privileged code
     return _method_DontInline;
   case vmSymbols::VM_SYMBOL_ENUM_NAME(java_lang_invoke_LambdaForm_Compiled_signature):
     if (_location != _in_method)  break;  // only allow for methods
+    if (!privileged)              break;  // only allow in privileged code
     return _method_LambdaForm_Compiled;
   case vmSymbols::VM_SYMBOL_ENUM_NAME(java_lang_invoke_LambdaForm_Hidden_signature):
     if (_location != _in_method)  break;  // only allow for methods
+    if (!privileged)              break;  // only allow in privileged code
     return _method_LambdaForm_Hidden;
   default: break;
   }
@@ -1818,8 +1829,8 @@ void ClassFileParser::ClassAnnotationCollector::apply_to(instanceKlassHandle k) 
 // from the method back up to the containing klass. These flag values
 // are added to klass's access_flags.
 
-methodHandle ClassFileParser::parse_method(constantPoolHandle cp, bool is_interface,
-                                           AccessFlags *promoted_flags,
+methodHandle ClassFileParser::parse_method(Handle class_loader, constantPoolHandle cp,
+                                           bool is_interface, AccessFlags *promoted_flags,
                                            typeArrayHandle* method_annotations,
                                            typeArrayHandle* method_parameter_annotations,
                                            typeArrayHandle* method_default_annotations,
@@ -2122,13 +2133,12 @@ methodHandle ClassFileParser::parse_method(constantPoolHandle cp, bool is_interf
             "Invalid Signature attribute length %u in class file %s",
             method_attribute_length, CHECK_(nullHandle));
         }
-        cfs->guarantee_more(2, CHECK_(nullHandle));  // generic_signature_index
-        generic_signature_index = cfs->get_u2_fast();
+        generic_signature_index = parse_generic_signature_attribute(cp, CHECK_(nullHandle));
       } else if (method_attribute_name == vmSymbols::tag_runtime_visible_annotations()) {
         runtime_visible_annotations_length = method_attribute_length;
         runtime_visible_annotations = cfs->get_u1_buffer();
         assert(runtime_visible_annotations != NULL, "null visible annotations");
-        parse_annotations(runtime_visible_annotations, runtime_visible_annotations_length, cp, &parsed_annotations, CHECK_(nullHandle));
+        parse_annotations(class_loader, runtime_visible_annotations, runtime_visible_annotations_length, cp, &parsed_annotations, CHECK_(nullHandle));
         cfs->skip_u1(runtime_visible_annotations_length, CHECK_(nullHandle));
       } else if (PreserveAllAnnotations && method_attribute_name == vmSymbols::tag_runtime_invisible_annotations()) {
         runtime_invisible_annotations_length = method_attribute_length;
@@ -2357,8 +2367,8 @@ methodHandle ClassFileParser::parse_method(constantPoolHandle cp, bool is_interf
 // from the methods back up to the containing klass. These flag values
 // are added to klass's access_flags.
 
-objArrayHandle ClassFileParser::parse_methods(constantPoolHandle cp, bool is_interface,
-                                              AccessFlags* promoted_flags,
+objArrayHandle ClassFileParser::parse_methods(Handle class_loader, constantPoolHandle cp,
+                                              bool is_interface, AccessFlags* promoted_flags,
                                               bool* has_final_method,
                                               objArrayOop* methods_annotations_oop,
                                               objArrayOop* methods_parameter_annotations_oop,
@@ -2381,7 +2391,8 @@ objArrayHandle ClassFileParser::parse_methods(constantPoolHandle cp, bool is_int
     objArrayHandle methods_parameter_annotations;
     objArrayHandle methods_default_annotations;
     for (int index = 0; index < length; index++) {
-      methodHandle method = parse_method(cp, is_interface,
+      methodHandle method = parse_method(class_loader, cp,
+                                         is_interface,
                                          promoted_flags,
                                          &method_annotations,
                                          &method_parameter_annotations,
@@ -2490,6 +2501,17 @@ typeArrayHandle ClassFileParser::sort_methods(objArrayHandle methods,
   }
 }
 
+// Parse generic_signature attribute for methods and fields
+u2 ClassFileParser::parse_generic_signature_attribute(constantPoolHandle cp, TRAPS) {
+  ClassFileStream* cfs = stream();
+  cfs->guarantee_more(2, CHECK_0);  // generic_signature_index
+  u2 generic_signature_index = cfs->get_u2_fast();
+  check_property(
+    valid_symbol_at(cp, generic_signature_index),
+    "Invalid Signature attribute at constant pool index %u in class file %s",
+    generic_signature_index, CHECK_0);
+  return generic_signature_index;
+}
 
 void ClassFileParser::parse_classfile_sourcefile_attribute(constantPoolHandle cp, TRAPS) {
   ClassFileStream* cfs = stream();
@@ -2654,16 +2676,17 @@ void ClassFileParser::parse_classfile_bootstrap_methods_attribute(constantPoolHa
   ClassFileStream* cfs = stream();
   u1* current_start = cfs->current();
 
-  cfs->guarantee_more(2, CHECK);  // length
+  guarantee_property(attribute_byte_length > sizeof(u2),
+                     "Invalid BootstrapMethods attribute length %u in class file %s",
+                     attribute_byte_length,
+                     CHECK);
+
+  cfs->guarantee_more(attribute_byte_length, CHECK);
+
   int attribute_array_length = cfs->get_u2_fast();
 
   guarantee_property(_max_bootstrap_specifier_index < attribute_array_length,
                      "Short length on BootstrapMethods in class file %s",
-                     CHECK);
-
-  guarantee_property(attribute_byte_length >= sizeof(u2),
-                     "Invalid BootstrapMethods attribute length %u in class file %s",
-                     attribute_byte_length,
                      CHECK);
 
   // The attribute contains a counted array of counted tuples of shorts,
@@ -2726,7 +2749,8 @@ void ClassFileParser::parse_classfile_bootstrap_methods_attribute(constantPoolHa
 }
 
 
-void ClassFileParser::parse_classfile_attributes(constantPoolHandle cp,
+void ClassFileParser::parse_classfile_attributes(Handle class_loader,
+                                                 constantPoolHandle cp,
                                                  ClassFileParser::ClassAnnotationCollector* parsed_annotations,
                                                  TRAPS) {
   ClassFileStream* cfs = stream();
@@ -2809,7 +2833,8 @@ void ClassFileParser::parse_classfile_attributes(constantPoolHandle cp,
         runtime_visible_annotations_length = attribute_length;
         runtime_visible_annotations = cfs->get_u1_buffer();
         assert(runtime_visible_annotations != NULL, "null visible annotations");
-        parse_annotations(runtime_visible_annotations,
+        parse_annotations(class_loader,
+                          runtime_visible_annotations,
                           runtime_visible_annotations_length,
                           cp,
                           parsed_annotations,
@@ -3172,7 +3197,8 @@ instanceKlassHandle ClassFileParser::parseClassFile(Symbol* name,
     objArrayOop methods_annotations_oop = NULL;
     objArrayOop methods_parameter_annotations_oop = NULL;
     objArrayOop methods_default_annotations_oop = NULL;
-    objArrayHandle methods = parse_methods(cp, access_flags.is_interface(),
+    objArrayHandle methods = parse_methods(class_loader, cp,
+                                           access_flags.is_interface(),
                                            &promoted_flags,
                                            &has_final_method,
                                            &methods_annotations_oop,
@@ -3186,7 +3212,7 @@ instanceKlassHandle ClassFileParser::parseClassFile(Symbol* name,
 
     // Additional attributes
     ClassAnnotationCollector parsed_annotations;
-    parse_classfile_attributes(cp, &parsed_annotations, CHECK_(nullHandle));
+    parse_classfile_attributes(class_loader, cp, &parsed_annotations, CHECK_(nullHandle));
 
     // Make sure this is the end of class file stream
     guarantee_property(cfs->at_eos(), "Extra bytes at the end of class file %s", CHECK_(nullHandle));
