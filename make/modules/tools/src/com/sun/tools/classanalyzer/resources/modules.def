@@ -284,6 +284,7 @@ module java.desktop {
     include sun.net.www.content.audio.**,
             sun.net.www.content.image.**;
 
+    uses java.awt.im.spi.InputMethodDescriptor;
     uses javax.imageio.spi.IIOServiceProvider;
     uses javax.imageio.spi.ImageInputStreamSpi;
     uses javax.imageio.spi.ImageOutputStreamSpi;
