@@ -32,19 +32,45 @@ include JigsawSpecMod.gmk
 include MakeBase.gmk
 
 
-################################################################################
+############################################################################
 
-ifdef OPENJDK
-  MODS := jdk
-else
-  MODS := "jdk,oracle.jre"
+JDK_MODULES := java.se java.smartcardio jdk.deploy jdk.httpserver jdk.sctp \
+               jdk.security.auth jdk.runtime
+
+# providers
+JDK_MODULES += jdk.charsets jdk.crypto.ec jdk.crypto.pkcs11 jdk.jvmstat jdk.localedata \
+               jdk.naming.dns jdk.naming.rmi jdk.scripting.nashorn jdk.zipfs
+
+# tools
+JDK_MODULES += jdk.attach jdk.compiler jdk.dev jdk.javadoc jdk.jcmd jdk.jconsole \
+               jdk.hotspot.agent jdk.hprof.agent jdk.jdi jdk.jdwp.agent jdk.rmic \
+               jdk.xml.bind jdk.xml.ws
+
+ifeq ($(OPENJDK_TARGET_OS), windows)
+  JDK_MODULES += jdk.crypto.mscapi
 endif
+
+ifeq ($(OPENJDK_TARGET_OS), macosx)
+  JDK_MODULES += jdk.deploy.osx
+endif
+
+ifndef OPENJDK
+  JDK_MODULES += jdk.jfr jdk.snmp
+  ifeq ($(OPENJDK_TARGET_OS), solaris)
+    JDK_MODULES += jdk.crypto.ucrypto
+  endif
+  ifeq ($(OPENJDK_TARGET_OS), windows)
+    JDK_MODULES += oracle.accessbridge
+  endif
+endif
+
+MODS := $(shell $(ECHO) "$(JDK_MODULES)" | $(SED) -e 's| |,|g')
 
 $(IMAGES_OUTPUTDIR)/_jdk-images-create.marker: $(JMODS)
 	$(ECHO) Creating jdk-module-image
 	$(RM) -r $(JDK_MODULE_IMAGE_DIR)
 	$(JLINK) --format image --output $(JDK_MODULE_IMAGE_DIR) \
-            --module-path $(JDK_OUTPUTDIR)/jmods --mods $(MODS)
+            --module-path $(JDK_OUTPUTDIR)/jmods --mods "$(MODS)"
 	$(TOUCH) $@
 
 jdk-image: $(IMAGES_OUTPUTDIR)/_jdk-images-create.marker
