@@ -37,6 +37,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 import jdk.jigsaw.module.Module;
 import static jdk.jigsaw.module.ModuleDependence.Modifier.PUBLIC;
@@ -44,8 +45,11 @@ import jdk.jigsaw.module.ModuleGraph;
 import jdk.jigsaw.module.ModulePath;
 import jdk.jigsaw.module.Resolver;
 
+
 public class GenGraphs {
+
     public static void main(String[] args) throws Exception {
+
         if (args.length != 1) {
             System.err.println("ERROR: specify the output directory");
             System.exit(1);
@@ -56,17 +60,25 @@ public class GenGraphs {
         ModulePath mp = ModulePath.installedModules();
         Resolver resolver = new Resolver(mp);
 
-        Set<Module> javaSEModules = mp.allModules().stream()
-                                        .filter(m -> (m.id().name().startsWith("java.") &&
-                                                      !m.id().name().equals("java.smartcardio")))
-                                        .collect(Collectors.toSet());
-        Set<Module> jdkModules = mp.allModules().stream()
-                                       .filter(m -> !javaSEModules.contains(m))
-                                       .collect(Collectors.toSet());
+        Set<Module> javaSEModules
+            = new TreeSet<>(mp.allModules().stream()
+                            .filter(m -> (m.id().name().startsWith("java.") &&
+                                          !m.id().name().equals("java.smartcardio")))
+                            .collect(Collectors.toSet()));
+        Set<Module> jdkModules
+            = new TreeSet<>(mp.allModules().stream()
+                            .filter(m -> !javaSEModules.contains(m))
+                            .collect(Collectors.toSet()));
         GenGraphs genGraphs = new GenGraphs(javaSEModules, jdkModules);
         Set<String> mods = new HashSet<>();
         for (Module m: mp.allModules()) {
             String name = m.id().name();
+            switch (name) {
+            case "jdk.dev":
+            case "jdk.runtime":
+            case "jdk.deploy":
+                continue;
+            }
             mods.add(name);
             ModuleGraph g = resolver.resolve(name);
             genGraphs.genDotFile(dir, name, g);
@@ -74,6 +86,7 @@ public class GenGraphs {
 
         ModuleGraph g = resolver.resolve(mods);
         genGraphs.genDotFile(dir, "jdk", g);
+
     }
 
     private final Set<Module> javaGroup;
@@ -85,44 +98,78 @@ public class GenGraphs {
 
     private static final String ORANGE = "#e76f00";
     private static final String BLUE = "#437291";
-    private static final String GREEN = "#97b101";
-    private static final String GRAY = "#c0c0c0";
+    private static final String GRAY = "#dddddd";
 
-    private static final String REEXPORTS = "[type=\"re-exports\", style=\"bold\", color=\"" + GREEN + "\"]";
-    private static final String REQUIRES = "[style=\"dashed\"]";
-    private static final String REQUIRES_BASE = "[color=\"" + GRAY + "\"]";
+    private static final String REEXPORTS = "";
+    private static final String REQUIRES = "style=\"dashed\"";
+    private static final String REQUIRES_BASE = "color=\"" + GRAY + "\"";
+
+    private static final Map<String,Integer> weights = new HashMap<>();
+
+    private static void weight(String s, String t, int w) {
+        weights.put(s + ":" + t, w);
+    }
+
+    private static int weightOf(String s, String t) {
+        int w = weights.getOrDefault(s + ":" + t, 1);
+        if (w != 1)
+            return w;
+        if (s.startsWith("java.") && t.startsWith("java."))
+            return 10;
+        return 1;
+    }
+
+    static {
+        int h = 1000;
+        weight("java.se", "java.compact3", h * 10);
+        weight("jdk.compact3", "java.compact3", h * 10);
+        weight("java.compact3", "java.compact2", h * 10);
+        weight("java.compact2", "java.compact1", h * 10);
+        weight("java.compact1", "java.logging", h * 10);
+        weight("java.logging", "java.base", h * 10);
+    }
 
     private void genDotFile(Path dir, String name, ModuleGraph g) throws IOException {
-        try (PrintStream out = new PrintStream(Files.newOutputStream(dir.resolve(name + ".dot")))) {
+        try (PrintStream out
+                 = new PrintStream(Files.newOutputStream(dir.resolve(name + ".dot")))) {
+
             out.format("digraph \"%s\" {%n", name);
+            out.format("size=\"25,25\";");
             out.format("nodesep=.5;%n");
             out.format("ranksep=1.5;%n");
-            out.format("edge [arrowhead=open];%n");
-            out.format("node [shape=plaintext, fontname=\"DejaVuSan\"];%n");
+            out.format("node [shape=plaintext, fontname=\"DejaVuSans\", fontsize=36, margin=\".2,.2\"];");
+            out.format("edge [penwidth=4, color=\"#999999\", arrowhead=open, arrowsize=2];");
 
+            out.format("subgraph se {%n");
             g.modules().stream()
                 .filter(javaGroup::contains)
                 .map(this::name)
                 .forEach(mn -> out.format("  \"%s\" [fontcolor=\"%s\", group=%s];%n",
                                           mn, ORANGE, "java"));
+            out.format("}%n");
             g.modules().stream()
                 .filter(jdkGroup::contains)
                 .map(this::name)
                 .forEach(mn -> out.format("  \"%s\" [fontcolor=\"%s\", group=%s];%n",
                                           mn, BLUE, "jdk"));
+
             g.modules().forEach(m -> {
-                Set<String> requiresPublic = m.moduleDependences().stream()
+                String mn = m.id().name();
+                Set<String> requiresPublic = (m.moduleDependences().stream()
                                               .filter(d -> d.modifiers().contains(PUBLIC))
                                               .map(d -> d.query().name())
-                                              .collect(Collectors.toSet());
-                String mn = m.id().name();
+                                              .collect(Collectors.toSet()));
                 g.readDependences(m).forEach(d -> {
                     String dn = d.id().name();
                     String attr = dn.equals("java.base") ? REQUIRES_BASE
                             : (requiresPublic.contains(dn) ? REEXPORTS : REQUIRES);
-                    out.format("  \"%s\" -> \"%s\" %s;%n", mn, dn, attr);
+                    int w = weightOf(mn, dn);
+                    if (w > 1)
+                        attr += "weight=" + w;
+                    out.format("  \"%s\" -> \"%s\" [%s];%n", mn, dn, attr);
                 });
             });
+
             out.println("}");
         }
     }
@@ -130,4 +177,5 @@ public class GenGraphs {
     private String name(Module m) {
         return m.id().name();
     }
+
 }
