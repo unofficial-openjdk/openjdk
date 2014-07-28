@@ -41,12 +41,12 @@ public class JdkModules {
         assertEqualsNoOrder(m.moduleDependences().toArray(new ModuleDependence[0]), deps);
     }
 
-    private void jdk(Module m) throws Exception {
+    private void compact2(Module m) throws Exception {
         ModuleDependence[] deps = new ModuleDependence[] {
-            moduleDep("jdk.runtime"),
-            moduleDep("jdk.dev"),
-            moduleDep("jdk.svc"),
-            moduleDep("jdk.debug")
+            modulePublicDep("java.compact1"),
+            modulePublicDep("java.rmi"),
+            modulePublicDep("java.sql"),
+            modulePublicDep("java.xml")
         };
         assertEqualsNoOrder(m.moduleDependences().toArray(new ModuleDependence[0]), deps);
     }
@@ -57,16 +57,20 @@ public class JdkModules {
         // do sanity test for the base module for now
         for (Module m : modules) {
             switch (m.id().name()) {
-                case "jdk.base":
+                case "java.base":
                     base(m); break;
-                case "jdk":
-                    jdk(m); break;
+                case "java.compact2":
+                    compact2(m); break;
             }
         }
     }
 
     private static ModuleDependence moduleDep(Set<Modifier> mods, String mq) {
         return new ModuleDependence(mods, ModuleIdQuery.parse(mq));
+    }
+
+    private static ModuleDependence modulePublicDep(String mq) {
+        return new ModuleDependence(EnumSet.of(Modifier.PUBLIC), ModuleIdQuery.parse(mq));
     }
 
     private static ModuleDependence moduleDep(String mq) {

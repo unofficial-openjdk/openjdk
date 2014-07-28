@@ -175,9 +175,11 @@ public class ModuleBuilder {
             }
         }
 
+/*
         if (!profiles.isEmpty()) {
             throw new RuntimeException("Profile module missing: " + profiles);
         }
+*/
 
         fixupRequiresPublic();
         fixupPermits();

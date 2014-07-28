@@ -747,24 +747,7 @@ module jdk.jconsole {
             com.sun.tools.jconsole.**;
 }
 
-module jdk.svc {
-    requires jdk.jcmd;
-    requires jdk.jconsole;
-    requires jdk.hotspot.agent;
-    requires jdk.hprof.agent;
-}
-
-module jdk.debug {
-    requires jdk.jdi;
-    requires jdk.jdwp.agent;
-}
-
 module jdk.dev {
-    requires jdk.compiler;
-    requires jdk.rmic;
-    requires jdk.xml.bind;
-    requires jdk.xml.ws;
-
     include com.sun.tools.extcheck.**,
             sun.tools.native2ascii.**;
 
@@ -782,29 +765,6 @@ module jdk.dev {
 
     // jdeps
     include com.sun.tools.jdeps.**;
-}
-
-module jdk.providers {
-    requires jdk.crypto.ec;
-    requires jdk.crypto.pkcs11;
-    requires jdk.scripting.nashorn;
-    requires jdk.zipfs;
-    requires jdk.charsets;
-    requires jdk.localedata;
-    requires jdk.naming.dns;
-    requires jdk.naming.rmi;
-}
-
-module jdk.providers.os {
-    // explicitly require java.base, until javac implicitly adds mandated dependence
-    requires java.base;
-    requires jdk.crypto.mscapi;  // windows-only
-    requires jdk.deploy.osx;     // macosx-only
-}
-
-module oracle.providers.os {
-    requires java.base;
-    requires jdk.crypto.ucrypto;        // solaris-only
 }
 
 module java.compact1 {
@@ -847,55 +807,14 @@ module java.se {
     requires public java.xml.soap;
 }
 
-module jdk.compact3 {
-    requires public java.compact3;
-
-    // JSR 268 (not in Java SE)
-    requires public java.smartcardio;
-
-    // JDK-specific APIs
-    requires public jdk.security.auth;
-    requires public jdk.httpserver;
-    requires public jdk.sctp;
-
-    // service providers
-    requires public jdk.naming.dns;
-    requires public jdk.naming.rmi;
-}
-
 module jdk.runtime {
-    requires java.se;
-    requires jdk.compact3;
-
-    requires jdk.deploy;
-
-    requires jdk.providers;
-    requires jdk.providers.os;
-
     // Tools/APIs included in the JRE
     include com.sun.tracing.**, sun.tracing.**;
     include sun.security.tools.policytool.*;
 }
 
-module jdk {
-    requires jdk.runtime;
-    requires jdk.dev;
-    requires jdk.debug;
-    requires jdk.svc;
-}
-
 module oracle.jrecreate {
     include oracle.tools.jrecreate.**;
     include org.openjdk.internal.joptsimple.**;
-}
-
-module oracle.jre {
-    requires jdk.runtime;
-    requires jdk.jfr;
-    requires jdk.snmp;
-    requires oracle.providers.os;
-    // ## looks like it needs to introduce oracle.runtime.os
-    requires oracle.accessbridge;   // windows-only
-    requires oracle.jrecreate;     // embedded build only
 }
 

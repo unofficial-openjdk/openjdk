@@ -57,17 +57,23 @@ public class GenGraphs {
         Resolver resolver = new Resolver(mp);
 
         Set<Module> javaSEModules = mp.allModules().stream()
-                                        .filter(m -> m.id().name().startsWith("java."))
+                                        .filter(m -> (m.id().name().startsWith("java.") &&
+                                                      !m.id().name().equals("java.smartcardio")))
                                         .collect(Collectors.toSet());
         Set<Module> jdkModules = mp.allModules().stream()
                                        .filter(m -> !javaSEModules.contains(m))
                                        .collect(Collectors.toSet());
         GenGraphs genGraphs = new GenGraphs(javaSEModules, jdkModules);
+        Set<String> mods = new HashSet<>();
         for (Module m: mp.allModules()) {
             String name = m.id().name();
+            mods.add(name);
             ModuleGraph g = resolver.resolve(name);
             genGraphs.genDotFile(dir, name, g);
         }
+
+        ModuleGraph g = resolver.resolve(mods);
+        genGraphs.genDotFile(dir, "jdk", g);
     }
 
     private final Set<Module> javaGroup;
