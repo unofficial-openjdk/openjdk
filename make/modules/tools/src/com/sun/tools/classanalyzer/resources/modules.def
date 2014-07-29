@@ -406,7 +406,6 @@ module java.security.jgss {
 
 module jdk.crypto.ucrypto {
     include com.oracle.security.ucrypto.**;
-    permits oracle.providers.os;
 }
 
 module jdk.crypto.mscapi {
