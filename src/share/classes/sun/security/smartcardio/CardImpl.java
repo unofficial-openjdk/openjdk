@@ -237,7 +237,16 @@ final class CardImpl extends Card {
         }
     }
 
+    private static final boolean invertReset =
+        Boolean.parseBoolean(
+            java.security.AccessController.doPrivileged(
+                new sun.security.action.GetPropertyAction(
+                    "sun.security.smartcardio.invertCardReset", "true")));
+
     public void disconnect(boolean reset) throws CardException {
+        if (invertReset) {
+            reset = !reset;
+        }
         if (reset) {
             checkSecurity("reset");
         }
@@ -246,7 +255,7 @@ final class CardImpl extends Card {
         }
         checkExclusive();
         try {
-            SCardDisconnect(cardId, (reset ? SCARD_LEAVE_CARD : SCARD_RESET_CARD));
+            SCardDisconnect(cardId, (reset ? SCARD_RESET_CARD : SCARD_LEAVE_CARD));
         } catch (PCSCException e) {
             throw new CardException("disconnect() failed", e);
         } finally {

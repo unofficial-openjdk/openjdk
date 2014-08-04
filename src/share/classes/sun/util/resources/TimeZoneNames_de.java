@@ -89,7 +89,7 @@ public final class TimeZoneNames_de extends TimeZoneNamesBundle {
                                      "Chinesische Sommerzeit", "CDT"};
         String CUBA[] = new String[] {"Kubanische Normalzeit", "CST",
                                       "Kubanische Sommerzeit", "CDT"};
-        String DARWIN[] = new String[] {"Central Normalzeit (Northern Territory)", "CST",
+        String DARWIN[] = new String[] {"Zentrale Normalzeit (Northern Territory)", "CST",
                                         "Zentrale Sommerzeit (Northern Territory)", "CST"};
         String DUBLIN[] = new String[] {"Greenwich Zeit", "GMT",
                                         "Irische Sommerzeit", "IST"};
@@ -103,7 +103,7 @@ public final class TimeZoneNames_de extends TimeZoneNamesBundle {
                                      "Ostgr\u00f6nl\u00e4ndische Sommerzeit", "EGST"};
         String EST[] = new String[] {"\u00d6stliche Normalzeit", "EST",
                                      "\u00d6stliche Sommerzeit", "EDT"};
-        String EST_NSW[] = new String[] {"Eastern Normalzeit (Neus\u00FCdwales)", "EST",
+        String EST_NSW[] = new String[] {"\u00D6stliche Normalzeit (New South Wales)", "EST",
                                          "\u00D6stliche Sommerzeit (New South Wales)", "EST"};
         String FET[] = new String[] {"Kaliningrader Zeit", "FET",
                                      "Kaliningrader Sommerzeit", "FEST"};
