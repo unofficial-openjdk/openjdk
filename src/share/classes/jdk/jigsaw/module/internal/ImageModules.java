@@ -46,14 +46,16 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
-import jdk.jigsaw.module.Module;
+
+import jdk.jigsaw.module.Configuration;
+import jdk.jigsaw.module.ExtendedModuleDescriptor;
 import jdk.jigsaw.module.ModuleDependence;
 import jdk.jigsaw.module.ModuleDependence.Modifier;
+import jdk.jigsaw.module.ModuleDescriptor;
 import jdk.jigsaw.module.ModuleExport;
-import jdk.jigsaw.module.ModuleGraph;
 import jdk.jigsaw.module.ModuleId;
 import jdk.jigsaw.module.ServiceDependence;
-import jdk.jigsaw.module.internal.ImageModules.Loader;
+
 import static jdk.jigsaw.module.internal.ImageModules.Loader.*;
 
 /**
@@ -86,8 +88,6 @@ import static jdk.jigsaw.module.internal.ImageModules.Loader.*;
  *   u4  module_id;                // index to module_name array
  *   u4  module_dependence_count;
  *   module_dependence  module_dependences[module_dependence_count];
- *   u2  permit_count;
- *   u4  permits[permit_count];
  *   u4  export_count;
  *   package_info exports[export_count];
  *   u2  use_count;
@@ -153,32 +153,31 @@ public final class ImageModules {
     private static final int MINOR_VERSION = 1;
 
     private final Map<Loader, LoaderModuleData> loaders = new LinkedHashMap<>();
-    private final Map<String, Module> nameToModule = new LinkedHashMap<>(); // ordered
+    private final Map<String, ModuleDescriptor> nameToModule = new LinkedHashMap<>(); // ordered
     private final Map<String, Set<String>> services = new HashMap<>();
     private final Map<String, Set<String>> localPkgs = new HashMap<>();
     private final Map<String, Map<String, String>> exports = new HashMap<>();
-    private final Map<String, List<String>> permits = new HashMap<>();
     private final Map<String, Set<String>> readableModules = new HashMap<>();
-    private ImageModules() {
-    }
 
-    public ImageModules(ModuleGraph graph,
-                        Set<Module> bootModules,
-                        Set<Module> extModules,
-                        Set<Module> modules,
+    private ImageModules() { }
+
+    public ImageModules(Configuration cf,
+                        Set<ModuleDescriptor> bootModules,
+                        Set<ModuleDescriptor> extModules,
+                        Set<ModuleDescriptor> appModules,
                         Set<Path> jmods) throws IOException {
         mapModulesToLoader(BOOT_LOADER, bootModules);
         mapModulesToLoader(EXT_LOADER, extModules);
-        mapModulesToLoader(APP_LOADER, modules);
+        mapModulesToLoader(APP_LOADER, appModules);
         getLocalPackages(jmods);
 
         // build readableModules map
-        graph.modules().stream()
-            .forEach(m -> {
-                Set<String> rms = graph.readDependences(m).stream()
-                                       .map(d -> d.id().name())
+        cf.descriptors().stream()
+            .forEach(md -> {
+                Set<String> rms = cf.readDependences(md).stream()
+                                       .map(ModuleDescriptor::name)
                                        .collect(Collectors.toSet());
-                readableModules.put(m.id().name(), rms);
+                readableModules.put(md.name(), rms);
             });
     }
 
@@ -199,9 +198,17 @@ public final class ImageModules {
 
     /**
      * Returns the modules installed in the image.
+     *
+     * ###FIXME it would be much more efficient if this returned a set
+     * of ExtendedModuleDescriptor, that would avoid InstalledModuleFinder
+     * needing to "extend" the descriptor.
      */
-    public Set<Module> modules() {
+    public Set<ModuleDescriptor> modules() {
         return new HashSet<>(nameToModule.values());
+    }
+
+    public Map<String, Set<String>> packages() {
+        return localPkgs;
     }
 
     /**
@@ -209,17 +216,19 @@ public final class ImageModules {
      *
      * ## should return a ModuleGraph
      */
-    public Map<Module, Set<Module>> moduleGraph() {
-        Map<Module, Set<Module>> graph = new HashMap<>();
+    /*
+    public Map<ExtendedModuleDescriptor, Set<ExtendedModuleDescriptor>> moduleGraph() {
+        Map<ExtendedModuleDescriptor, Set<ExtendedModuleDescriptor>> graph = new HashMap<>();
         readableModules.entrySet()
                 .forEach(e -> {
-                    Set<Module> mods = e.getValue().stream()
+                    Set<ExtendedModuleDescriptor> mods = e.getValue().stream()
                             .map(nameToModule::get)
                             .collect(Collectors.toSet());
                     graph.put(nameToModule.get(e.getKey()), mods);
                 });
         return graph;
     }
+    */
 
     /**
      * Store the modules installed in the image to the given OutputStream.
@@ -230,23 +239,23 @@ public final class ImageModules {
         writer.store(out);
     }
 
-    private void mapModulesToLoader(Loader loader, Set<Module> modules) {
+    private void mapModulesToLoader(Loader loader, Set<ModuleDescriptor> modules) {
         if (modules.isEmpty())
             return;
 
         // put java.base first
         List<String> mods = new ArrayList<>();
         modules.stream()
-               .filter(m ->  m.id().name().equals("java.base"))
+               .filter(md ->  md.name().equals("java.base"))
                .forEach(m -> {
-                    String mn = m.id().name();
+                    String mn = m.name();
                     nameToModule.put(mn, m);
                     mods.add(mn);
                 });
-        modules.stream().sorted(Comparator.comparing(m -> m.id().name()))
-               .filter(m ->  !m.id().name().equals("java.base"))
+        modules.stream().sorted(Comparator.comparing(m -> m.name()))
+               .filter(m ->  !m.name().equals("java.base"))
                .forEach(m -> {
-                   String mn = m.id().name();
+                   String mn = m.name();
                    nameToModule.put(mn, m);
                    mods.add(mn);
                 });
@@ -445,24 +454,17 @@ public final class ImageModules {
             int mid = indexForModule.get(mn);
             out.writeInt(mid);
             // module dependences
-            Module m = nameToModule.get(mn);
-            out.writeInt(m.moduleDependences().size());
+            ModuleDescriptor md = nameToModule.get(mn);
+            out.writeInt(md.moduleDependences().size());
             // for each module, modules readable by m
-            for (ModuleDependence d : m.moduleDependences()) {
+            for (ModuleDependence d : md.moduleDependences()) {
                 int mods = d.modifiers().contains(ModuleDependence.Modifier.PUBLIC) ? 1 : 0;
                 out.writeShort(mods);
                 out.writeInt(indexForModule.get(d.query().name()));
             }
 
-            // permits
-            Set<String> permits = nameToModule.get(mn).permits();
-            out.writeShort(permits.size());
-            for (String pm : permits) {
-                out.writeInt(indexForModule.get(pm));
-            }
-
             // exports
-            Set<ModuleExport> exports = m.exports().stream()
+            Set<ModuleExport> exports = md.exports().stream()
                     .filter(e -> e.permit() == null || indexForModule.containsKey(e.permit()))
                     .collect(Collectors.toSet());
             out.writeInt(exports.size());
@@ -478,13 +480,13 @@ public final class ImageModules {
             }
 
             // services
-            out.writeShort(m.serviceDependences().size());
-            for (ServiceDependence s : m.serviceDependences()) {
+            out.writeShort(md.serviceDependences().size());
+            for (ServiceDependence s : md.serviceDependences()) {
                 String service = s.service();
                 out.writeInt(indexForService.get(service));
             }
             // provides
-            Map<String,Set<String>> services = m.services();
+            Map<String,Set<String>> services = md.services();
             int count = services.values().stream().mapToInt(Set::size).sum();
             out.writeShort(count);
             for (Map.Entry<String,Set<String>> s : services.entrySet()) {
@@ -538,6 +540,7 @@ public final class ImageModules {
 
             // local package table
             int nPkgs = in.readInt();
+
             // skip the 0th entry
             in.readUTF();
             for (int i=1; i <= nPkgs; i++) {
@@ -575,10 +578,10 @@ public final class ImageModules {
         }
 
         void loadModuleInfo(DataInputStream in) throws IOException {
-            Module.Builder builder = new Module.Builder();
             String mn = indexToModule.get(in.readInt());
+            ExtendedModuleDescriptor.Builder builder = new ExtendedModuleDescriptor.Builder(mn);
+
             ModuleId mid = ModuleId.parse(mn);
-            builder.id(mid);
 
             int nRequires = in.readInt();
             for (int j = 0; j < nRequires; j++) {
@@ -590,11 +593,6 @@ public final class ImageModules {
                 ModuleDependence md = new ModuleDependence(mods, dm);
                 builder.requires(md);
 
-            }
-            short nPermits = in.readShort();
-            for (int j = 0; j < nPermits; j++) {
-                int r = in.readInt();
-                builder.permit(indexToModule.get(r));
             }
             int nExports = in.readInt();
             Map<String, String> exps =
@@ -637,9 +635,8 @@ public final class ImageModules {
                 int pi = in.readInt();
                 String pkg = indexToPackage.get(pi);
                 localPkgs.get(mn).add(pkg);
-                builder.include(pkg);
             }
-            Module m = builder.build();
+            ExtendedModuleDescriptor m = builder.build();
             nameToModule.put(mn, m);
         }
 
@@ -660,22 +657,13 @@ public final class ImageModules {
             }
         }
 
-        private String permits(String mn) {
-            List<String> permitList = permits.get(mn);
-            if (permitList.isEmpty()) {
-                return "";
-            } else {
-                return "permits " + permitList.stream().collect(Collectors.joining(", "));
-            }
-        }
-
         // for debugging
         private void dumpModule(PrintStream out, String mn) {
+            /*
             Module m = nameToModule.get(mn);
             out.format("Module { id: %s%n", m.id().toString());
             m.moduleDependences().forEach(md -> out.format("  requires %s%s%n",
                     md.modifiers().contains(Modifier.PUBLIC) ? "public" : "", md.query().name()));
-            m.permits().forEach(p -> out.format("  permits %s%n", p));
             m.exports().stream().filter(e -> e.permit() == null)
                     .sorted(Comparator.comparing(ModuleExport::pkg))
                     .forEach(e -> out.format("  exports %s%n", e.pkg()));
@@ -690,6 +678,7 @@ public final class ImageModules {
 
             m.packages().stream().sorted()
                     .forEach(pn -> out.format("  package %s%n", pn));
+            */
         }
 
         public void dump(PrintStream out) {

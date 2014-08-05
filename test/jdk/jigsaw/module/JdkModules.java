@@ -36,12 +36,12 @@ import static org.testng.Assert.*;
 
 @Test
 public class JdkModules {
-    private void base(Module m) throws Exception {
+    private void base(ModuleDescriptor m) {
         ModuleDependence[] deps = new ModuleDependence[] {};
         assertEqualsNoOrder(m.moduleDependences().toArray(new ModuleDependence[0]), deps);
     }
 
-    private void compact2(Module m) throws Exception {
+    private void compact2(ModuleDescriptor m) {
         ModuleDependence[] deps = new ModuleDependence[] {
             modulePublicDep("java.compact1"),
             modulePublicDep("java.rmi"),
@@ -51,18 +51,18 @@ public class JdkModules {
         assertEqualsNoOrder(m.moduleDependences().toArray(new ModuleDependence[0]), deps);
     }
 
-    public void go() throws Exception {
-        Set<Module> modules = ModulePath.installedModules().allModules();
+    public void go() {
+        Set<ModuleArtifact> artifacts = ModuleArtifactFinder.installedModules().allModules();
 
         // do sanity test for the base module for now
-        for (Module m : modules) {
-            switch (m.id().name()) {
+        artifacts.stream().map(ModuleArtifact::descriptor).forEach(md -> {
+            switch (md.id().name()) {
                 case "java.base":
-                    base(m); break;
+                    base(md); break;
                 case "java.compact2":
-                    compact2(m); break;
+                    compact2(md); break;
             }
-        }
+        });
     }
 
     private static ModuleDependence moduleDep(Set<Modifier> mods, String mq) {

@@ -26,12 +26,10 @@
 package build.tools.module;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -39,12 +37,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
-import jdk.jigsaw.module.Module;
-import static jdk.jigsaw.module.ModuleDependence.Modifier.PUBLIC;
-import jdk.jigsaw.module.ModuleGraph;
-import jdk.jigsaw.module.ModulePath;
-import jdk.jigsaw.module.Resolver;
 
+import jdk.jigsaw.module.Configuration;
+import jdk.jigsaw.module.Layer;
+import jdk.jigsaw.module.ModuleArtifact;
+import jdk.jigsaw.module.ModuleArtifactFinder;
+import jdk.jigsaw.module.ModuleDescriptor;
+import static jdk.jigsaw.module.ModuleDependence.Modifier.PUBLIC;
 
 public class GenGraphs {
 
@@ -57,22 +56,24 @@ public class GenGraphs {
         Path dir = Paths.get(args[0]);
         Files.createDirectories(dir);
 
-        ModulePath mp = ModulePath.installedModules();
-        Resolver resolver = new Resolver(mp);
+        ModuleArtifactFinder finder = ModuleArtifactFinder.installedModules();
 
-        Set<Module> javaSEModules
-            = new TreeSet<>(mp.allModules().stream()
+        Set<ModuleDescriptor> javaSEModules
+            = new TreeSet<>(finder.allModules().stream()
+                            .map(ModuleArtifact::descriptor)
                             .filter(m -> (m.id().name().startsWith("java.") &&
-                                          !m.id().name().equals("java.smartcardio")))
+                                    !m.id().name().equals("java.smartcardio")))
                             .collect(Collectors.toSet()));
-        Set<Module> jdkModules
-            = new TreeSet<>(mp.allModules().stream()
+        Set<ModuleDescriptor> jdkModules
+            = new TreeSet<>(finder.allModules().stream()
+                            .map(ModuleArtifact::descriptor)
                             .filter(m -> !javaSEModules.contains(m))
                             .collect(Collectors.toSet()));
         GenGraphs genGraphs = new GenGraphs(javaSEModules, jdkModules);
         Set<String> mods = new HashSet<>();
-        for (Module m: mp.allModules()) {
-            String name = m.id().name();
+        for (ModuleArtifact artifact: finder.allModules()) {
+            ModuleDescriptor descriptor = artifact.descriptor();
+            String name = descriptor.name();
             switch (name) {
             case "jdk.dev":
             case "jdk.runtime":
@@ -80,18 +81,25 @@ public class GenGraphs {
                 continue;
             }
             mods.add(name);
-            ModuleGraph g = resolver.resolve(name);
-            genGraphs.genDotFile(dir, name, g);
+            Configuration cf = Configuration.resolve(finder,
+                                                     Layer.emptyLayer(),
+                                                     ModuleArtifactFinder.nullFinder(),
+                                                     name);
+            genGraphs.genDotFile(dir, name, cf);
         }
 
-        ModuleGraph g = resolver.resolve(mods);
-        genGraphs.genDotFile(dir, "jdk", g);
+        Configuration cf = Configuration.resolve(finder,
+                                                 Layer.emptyLayer(),
+                                                 ModuleArtifactFinder.nullFinder(),
+                                                 mods);
+        genGraphs.genDotFile(dir, "jdk", cf);
 
     }
 
-    private final Set<Module> javaGroup;
-    private final Set<Module> jdkGroup;
-    GenGraphs(Set<Module> javaGroup, Set<Module> jdkGroup) {
+    private final Set<ModuleDescriptor> javaGroup;
+    private final Set<ModuleDescriptor> jdkGroup;
+
+    GenGraphs(Set<ModuleDescriptor> javaGroup, Set<ModuleDescriptor> jdkGroup) {
         this.javaGroup = Collections.unmodifiableSet(javaGroup);
         this.jdkGroup = Collections.unmodifiableSet(jdkGroup);
     }
@@ -129,7 +137,7 @@ public class GenGraphs {
         weight("java.logging", "java.base", h * 10);
     }
 
-    private void genDotFile(Path dir, String name, ModuleGraph g) throws IOException {
+    private void genDotFile(Path dir, String name, Configuration cf) throws IOException {
         try (PrintStream out
                  = new PrintStream(Files.newOutputStream(dir.resolve(name + ".dot")))) {
 
@@ -141,26 +149,26 @@ public class GenGraphs {
             out.format("edge [penwidth=4, color=\"#999999\", arrowhead=open, arrowsize=2];");
 
             out.format("subgraph se {%n");
-            g.modules().stream()
+            cf.descriptors().stream()
                 .filter(javaGroup::contains)
-                .map(this::name)
+                .map(ModuleDescriptor::name)
                 .forEach(mn -> out.format("  \"%s\" [fontcolor=\"%s\", group=%s];%n",
                                           mn, ORANGE, "java"));
             out.format("}%n");
-            g.modules().stream()
+            cf.descriptors().stream()
                 .filter(jdkGroup::contains)
-                .map(this::name)
+                .map(ModuleDescriptor::name)
                 .forEach(mn -> out.format("  \"%s\" [fontcolor=\"%s\", group=%s];%n",
                                           mn, BLUE, "jdk"));
 
-            g.modules().forEach(m -> {
-                String mn = m.id().name();
-                Set<String> requiresPublic = (m.moduleDependences().stream()
+            cf.descriptors().forEach(md -> {
+                String mn = md.name();
+                Set<String> requiresPublic = (md.moduleDependences().stream()
                                               .filter(d -> d.modifiers().contains(PUBLIC))
                                               .map(d -> d.query().name())
                                               .collect(Collectors.toSet()));
-                g.readDependences(m).forEach(d -> {
-                    String dn = d.id().name();
+                cf.readDependences(md).forEach(d -> {
+                    String dn = d.name();
                     String attr = dn.equals("java.base") ? REQUIRES_BASE
                             : (requiresPublic.contains(dn) ? REEXPORTS : REQUIRES);
                     int w = weightOf(mn, dn);
@@ -172,10 +180,6 @@ public class GenGraphs {
 
             out.println("}");
         }
-    }
-
-    private String name(Module m) {
-        return m.id().name();
     }
 
 }

@@ -55,8 +55,8 @@ import java.util.Set;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.Objects;
-import jdk.jigsaw.module.internal.ModuleCatalog;
 import sun.misc.Unsafe;
+import sun.misc.ModuleCatalog;
 import sun.reflect.CallerSensitive;
 import sun.reflect.ConstantPool;
 import sun.reflect.Reflection;
@@ -691,6 +691,8 @@ public final class Class<T> implements java.io.Serializable,
      * @since 1.9
      */
     public Module getModule() {
+        // implementation will be replaced (and ModuleCatalog will go away)
+        // once the VM support is further along.
         Module m = module;
         if (m == null && Reflection.modulesInitialized()) {
             ClassLoader cl = getClassLoader0();

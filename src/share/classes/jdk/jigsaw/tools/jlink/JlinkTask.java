@@ -75,11 +75,12 @@ import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
+
+import jdk.jigsaw.module.Configuration;
+import jdk.jigsaw.module.Layer;
+import jdk.jigsaw.module.ModuleArtifactFinder;
+import jdk.jigsaw.module.ModuleDescriptor;
 import jdk.jigsaw.module.internal.ImageFile;
-import jdk.jigsaw.module.Module;
-import jdk.jigsaw.module.ModuleGraph;
-import jdk.jigsaw.module.ModulePath;
-import jdk.jigsaw.module.Resolver;
 import jdk.jigsaw.module.internal.ImageModules;
 
 /**
@@ -226,7 +227,13 @@ class JlinkTask {
         },
         new Option(true, "--module-path", "--mp") {
             void process(JlinkTask task, String opt, String arg) {
-                task.options.modulePath = ModulePath.ofDirectories(arg);
+                String[] dirs = arg.split(File.pathSeparator);
+                Path[] paths = new Path[dirs.length];
+                int i = 0;
+                for (String dir: dirs) {
+                    paths[i++] = Paths.get(dir);
+                }
+                task.options.moduleFinder = ModuleArtifactFinder.ofDirectories(paths);
             }
         },
         new Option(true, "--libs") {
@@ -310,7 +317,7 @@ class JlinkTask {
         List<Path> cmds;
         List<Path> configs;
         List<Path> libs;
-        ModulePath modulePath;
+        ModuleArtifactFinder moduleFinder;
         Set<String> jmods = new TreeSet<>();
         Format format = null;
         Path output;
@@ -338,7 +345,7 @@ class JlinkTask {
                     throw new BadArgs("err.format.must.be.specified").showUsage(true);
                 }
             } else if (options.format == Format.IMAGE || options.format == Format.JIMAGE) {
-                if (options.modulePath == null)
+                if (options.moduleFinder == null)
                     throw new BadArgs("err.modulepath.must.be.specified").showUsage(true);
 
                 Path output = options.output;
@@ -401,22 +408,14 @@ class JlinkTask {
 
     private static final String APP_DIR = "lib" + File.separator + "app";
 
-    /*
-     * Returns the set of required modules
-     */
-    private Set<Module> modulesNeeded(Set<String> jmods) throws IOException {
-        Resolver resolver = new Resolver(options.modulePath);
-        return resolver.resolve(jmods).modules();
-    }
-
-    private Set<Path> modulesToPath(Set<Module> modules) {
-        ModulePath mp = options.modulePath;
+    private Set<Path> modulesToPath(Set<ModuleDescriptor> modules) {
+        ModuleArtifactFinder finder = options.moduleFinder;
 
         Set<Path> modPaths = new TreeSet<>();
-        for (Module m : modules) {
-            String name = m.id().name();
+        for (ModuleDescriptor m : modules) {
+            String name = m.name();
 
-            URL url = mp.locationOf(m);
+            URL url = finder.find(name).location();
             if (url == null) {
                 // this should not happen, module path bug?
                 fail(InternalError.class,
@@ -448,7 +447,9 @@ class JlinkTask {
      * into per-module "classes" zip file and write module graph
      * in the java.base module.
      */
-    private void extractJMods(Path output, Set<Module> mods, Set<Path> jmods) throws IOException {
+    private void extractJMods(Path output, Set<ModuleDescriptor> mods, Set<Path> jmods)
+        throws IOException
+    {
         Path modulesPath = output.resolve("lib/modules");
         Files.createDirectories(modulesPath);
         for (Path jmod : jmods) {
@@ -467,15 +468,18 @@ class JlinkTask {
     }
 
     private void createImage() throws IOException {
-        final List<Path> jars = options.classpath;
         final Path output = options.output;
 
-        Resolver resolver = new Resolver(options.modulePath);
-        ModuleGraph graph = resolver.resolve(options.jmods);
-        Set<Module> modules = graph.modules();
+        Configuration cf = Configuration.resolve(options.moduleFinder,
+                                                 Layer.emptyLayer(),
+                                                 ModuleArtifactFinder.nullFinder(),
+                                                 options.jmods);
+
+        Set<ModuleDescriptor> modules = cf.descriptors();
+
         Set<Path> jmods = modulesToPath(modules);
 
-        ImageFileHelper imageHelper = new ImageFileHelper(graph, jmods);
+        ImageFileHelper imageHelper = new ImageFileHelper(cf, jmods);
         if (options.format == Format.IMAGE) {
             extractJMods(output, modules, jmods);
         } else if (options.format == Format.JIMAGE) {
@@ -507,18 +511,19 @@ class JlinkTask {
 
     static class ImageFileHelper {
         static final Path IMODULES_FILE = Paths.get("lib", "modules", ImageModules.FILE);
-        final Set<Module> modules;
-        final Set<Module> bootModules;
-        final Set<Module> extModules;
-        final Set<Module> otherModules;
+        final Set<ModuleDescriptor> modules;
+        final Set<ModuleDescriptor> bootModules;
+        final Set<ModuleDescriptor> extModules;
+        final Set<ModuleDescriptor> appModules;
         final Set<Path> jmods;
         final ImageModules imf;
-        ImageFileHelper(ModuleGraph graph, Set<Path> jmods) throws IOException {
-            this.modules = graph.modules();
+
+        ImageFileHelper(Configuration cf, Set<Path> jmods) throws IOException {
+            this.modules = cf.descriptors();
             this.jmods = jmods;
-            Map<String, Module> mods = new HashMap<>();
-            for (Module m : modules) {
-                mods.put(m.id().name(), m);
+            Map<String, ModuleDescriptor> mods = new HashMap<>();
+            for (ModuleDescriptor m : modules) {
+                mods.put(m.name(), m);
             }
             this.bootModules = modulesFor(BOOT_MODULES).stream()
                     .filter(mods::containsKey)
@@ -528,17 +533,15 @@ class JlinkTask {
                     .filter(mods::containsKey)
                     .map(mods::get)
                     .collect(Collectors.toSet());
-            this.otherModules = modules.stream()
+            this.appModules = modules.stream()
                     .filter(m -> !bootModules.contains(m) && !extModules.contains(m))
                     .collect(Collectors.toSet());
-            this.imf = new ImageModules(graph, bootModules,
-                                        extModules, otherModules, jmods);
+            this.imf = new ImageModules(cf, bootModules,
+                                        extModules, appModules, jmods);
         }
 
-        void createImageFile(Path output)
-                throws IOException
-        {
-            ImageFile.create(output, jmods, bootModules, extModules, otherModules);
+        void createImageFile(Path output) throws IOException {
+            ImageFile.create(output, jmods, bootModules, extModules, appModules);
         }
 
         void writeInstalledModules(Path output) throws IOException {
@@ -549,8 +552,8 @@ class JlinkTask {
         }
 
         private List<String> modulesFor(String name) throws IOException {
-          Path file = Paths.get(System.getProperty("java.home"), "lib", name);
-          return Files.readAllLines(file, StandardCharsets.ISO_8859_1);
+            Path file = Paths.get(System.getProperty("java.home"), "lib", name);
+            return Files.readAllLines(file, StandardCharsets.ISO_8859_1);
         }
     }
 
@@ -651,10 +654,10 @@ class JlinkTask {
         private final String SYSTEM_MODULES_IMAGE_FILE =
                 Section.CONFIG.imageDir() + '/' + SYSTEM_MODULES;
 
-        public void writeModulesLists(Set<Module> modules) throws IOException {
+        public void writeModulesLists(Set<ModuleDescriptor> modules) throws IOException {
             List<String> moduleNames = new ArrayList<>();
-            for (Module module : modules)
-                moduleNames.add(module.id().name());
+            for (ModuleDescriptor module : modules)
+                moduleNames.add(module.name());
 
             if (bootModules == null || extModules == null || systemModules == null) {
                 throw new InternalError("Failure to find module lists.");

@@ -74,17 +74,6 @@ public class Main {
             c.newInstance();
             expectedIllegalAccessException();
         } catch (IllegalAccessException e) { }
-
-        // module m3 is not readable
-        c = Class.forName("jdk.three.C");
-        Module m3 = c.getModule();
-        assertTrue(!m1.canRead(m3));
-
-        // m3 has a permits, can't make it readable
-        try {
-            m3.setReadable();
-            expectedIllegalArgumentException();
-        } catch (IllegalArgumentException e) { }
     }
 
     static void assertTrue(boolean expr) {

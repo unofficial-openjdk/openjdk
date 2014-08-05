@@ -28,6 +28,7 @@ package jdk.jigsaw.module;
 
 /**
  * <p> Some portions of these classes will eventually wind up in {@code
- * java.lang.module} and/or {@code javax.lang.model}, but for the purpose
- * of early prototyping they live here. </p>
+ * java.lang.module}. For the purpose of early prototyping they live here. </p>
+ *
+ * @since 1.9
  */

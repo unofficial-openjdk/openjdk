@@ -31,81 +31,41 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 import static java.util.Objects.*;
 
-
 /**
- * <p> A module definition </p>
- *
- * @see java.lang.reflect.Module
+ * A module descriptor.
  */
 
 @SuppressWarnings("serial")             // serialVersionUID intentionally omitted
-public final class Module
-    implements Comparable<Module>, Serializable
+public class ModuleDescriptor
+    implements Serializable, Comparable<ModuleDescriptor>
 {
-
-    private final ModuleId id;
+    private final String name;
     private final Set<ModuleDependence> moduleDependences;
     private final Set<ServiceDependence> serviceDependences;
-    private final Set<String> permits;
-    private final Set<String> packages;
     private final Set<ModuleExport> exports;
     private final Map<String, Set<String>> services;
 
-    // Every exported package must be included in this module
-    //
-    private void checkExportedPackages() {
-        for (ModuleExport export : exports()) {
-            String pkg = export.pkg();
-            if (!packages.contains(pkg)) {
-                Set<String> ps = exports().stream()
-                                          .map(ModuleExport::pkg)
-                                          .collect(Collectors.toSet());
-                ps.removeAll(packages);
-                String msg = String.format("Package%s %s exported"
-                                           + " but not included in module %s",
-                                           ps.size() > 1 ? "s" : "", ps,
-                                           this.id());
-                throw new IllegalArgumentException(msg);
-            }
-        }
-    }
-
-    private Module(ModuleId id,
-                   Set<ModuleDependence> moduleDeps,
-                   Set<ServiceDependence> serviceDeps,
-                   Set<String> permits,
-                   Set<String> packages,
-                   Set<ModuleExport> exports,
-                   Map<String, Set<String>> services)
+    ModuleDescriptor(String name,
+                     Set<ModuleDependence> moduleDeps,
+                     Set<ServiceDependence> serviceDeps,
+                     Set<ModuleExport> exports,
+                     Map<String, Set<String>> services)
     {
-        this.id = requireNonNull(id);
+        this.name = requireNonNull(name);
         this.moduleDependences = Collections.unmodifiableSet(moduleDeps);
         this.serviceDependences = Collections.unmodifiableSet(serviceDeps);
-        this.permits = Collections.unmodifiableSet(permits);
-        this.packages = Collections.unmodifiableSet(packages);
         this.exports = Collections.unmodifiableSet(exports);
         // ## FIXME values are mutable
         this.services = Collections.unmodifiableMap(services);
-        checkExportedPackages();
     }
 
     /**
-     * <p> This module's identifier </p>
+     * <p> The module name </p>
      */
-    public ModuleId id() {
-        return id;
-    }
-
-    /**
-     * <p> The names of the modules that are permitted to require this module </p>
-     *
-     * @return  A possibly-empty unmodifiable set of module names
-     */
-    public Set<String> permits() {
-        return permits;
+    public String name() {
+        return name;
     }
 
     /**
@@ -149,64 +109,27 @@ public final class Module
     }
 
     /**
-     * The names of the packages included in this module, not all of which are
-     * necessarily {@linkplain #exports() exported}.
-     *
-     * @return  A possibly-empty unmodifiable set of package names
+     * A builder used for building {@link ModuleDescriptor} objects.
      */
-    public Set<String> packages() {
-        return packages;
-    }
+    public static class Builder {
 
-    /**
-     * A builder used for building {@link Module} objects.
-     */
-    public final static class Builder {
+        String name;
+        final Set<ModuleDependence> moduleDeps = new HashSet<>();
+        final Set<ServiceDependence> serviceDeps = new HashSet<>();
+        final Set<ModuleExport> exports = new HashSet<>();
+        final Map<String, Set<String>> services = new HashMap<>();
 
-        private ModuleId id;
-        private final Set<String> permits = new HashSet<>();
-        private final Set<ModuleDependence> moduleDeps = new HashSet<>();
-        private final Set<ServiceDependence> serviceDeps = new HashSet<>();
-        private final Set<ModuleExport> exports = new HashSet<>();
-        private final Set<String> packages = new HashSet<>();
-        private final Map<String, Set<String>> services = new HashMap<>();
+        /**
+         * For sub-class usage.
+         */
+        Builder() {
+        }
 
         /**
          * Initializes a new builder.
          */
-        public Builder() { }
-
-        /**
-         * Sets the module id.
-         *
-         * @throws IllegalStateException if already set
-         */
-        public Builder id(ModuleId id) {
-            if (this.id != null)
-                throw new IllegalStateException("id already set");
-            this.id = requireNonNull(id);
-            return this;
-        }
-
-        /**
-         * Sets the module id.
-         *
-         * @throws IllegalStateException if already set
-         */
-        public Builder id(String id) {
-            return id(ModuleId.parse(id));
-        }
-
-        /**
-         * Add/includes the given package name in the module contents.
-         *
-         * @throws IllegalArgumentException if {@code p} is the empty string
-         */
-        public Builder include(String p) {
-            if (p.isEmpty())
-                throw new IllegalArgumentException("<unnamed> package not allowed");
-            packages.add(p);
-            return this;
+        public Builder(String name) {
+            this.name = name;
         }
 
         /**
@@ -222,14 +145,6 @@ public final class Module
          */
         public Builder requires(ServiceDependence sd) {
             serviceDeps.add(requireNonNull(sd));
-            return this;
-        }
-
-        /**
-         * Adds a permits, by module name.
-         */
-        public Builder permit(String m) {
-            permits.add(requireNonNull(m));
             return this;
         }
 
@@ -265,38 +180,31 @@ public final class Module
         }
 
         /**
-         * Builds a {@code Module} from the components.
-         *
-         * @throws IllegalStateException if the module id is not set
+         * Builds a {@code ModuleDescriptor} from the components.
          */
-        public Module build() {
-            if (id == null)
-                throw new IllegalStateException("id not set");
-            return new Module(id,
-                              moduleDeps,
-                              serviceDeps,
-                              permits,
-                              packages,
-                              exports,
-                              services);
+        public ModuleDescriptor build() {
+            assert name != null;
+            return new ModuleDescriptor(name,
+                                        moduleDeps,
+                                        serviceDeps,
+                                        exports,
+                                        services);
         }
     }
 
     @Override
-    public int compareTo(Module that) {
-        return this.id().compareTo(that.id());
+    public int compareTo(ModuleDescriptor that) {
+        return this.name().compareTo(that.name());
     }
 
     @Override
     public boolean equals(Object ob) {
-        if (!(ob instanceof Module))
+        if (!(ob instanceof ModuleDescriptor))
             return false;
-        Module that = (Module)ob;
-        return (id.equals(that.id)
+        ModuleDescriptor that = (ModuleDescriptor)ob;
+        return (name.equals(that.name)
                 && moduleDependences.equals(that.moduleDependences)
                 && serviceDependences.equals(that.serviceDependences)
-                && permits.equals(that.permits)
-                && packages.equals(that.packages)
                 && exports.equals(that.exports)
                 && services.equals(that.services));
     }
@@ -307,12 +215,10 @@ public final class Module
     public int hashCode() {
         int hc = hash;
         if (hc == 0) {
-            hc = id.hashCode();
-            hc = hc * 43 + permits.hashCode();
+            hc = name.hashCode();
             hc = hc * 43 + moduleDependences.hashCode();
             hc = hc * 43 + serviceDependences.hashCode();
             hc = hc * 43 + exports.hashCode();
-            hc = hc * 43 + packages.hashCode();
             hc = hc * 43 + services.hashCode();
             hash = hc;
         }
@@ -322,15 +228,11 @@ public final class Module
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append("Module { id: ").append(id());
+        sb.append("Module { name: ").append(name());
         if (!moduleDependences.isEmpty())
             sb.append(", ").append(moduleDependences);
         if (!serviceDependences.isEmpty())
             sb.append(", ").append(serviceDependences);
-        if (!permits.isEmpty())
-            sb.append(", permits: ").append(permits);
-        if (!packages.isEmpty())
-            sb.append(", packages: ").append(packages);
         if (!exports.isEmpty())
             sb.append(", exports: ").append(exports);
         if (!services.isEmpty()) {

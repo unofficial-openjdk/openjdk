@@ -369,19 +369,35 @@ public class VM {
     public static native ClassLoader latestUserDefinedLoader();
 
     /**
+     * Define a new module with the given name, the module is associated with the
+     * given class loader.
+     *
+     * @apiNote the return type will eventually be replaced by java.lang.reflect.Module
+     */
+    public static long defineModule(String name, ClassLoader loader, String[] pkgs) {
+        long handle = defineModule(name);
+        for (String pkg: pkgs) {
+            bindToModule(loader, pkg, handle);
+        }
+        return handle;
+    }
+
+    /**
      * Define a new module with the given name. The return value is an opaque handle
      * to the module.
      */
-    public static native long defineModule(String name);
+    private static native long defineModule(String name);
 
     /**
      * Use to lazily associate all types in a given ClassLoader/package with a module.
      */
-    public static native void bindToModule(ClassLoader loader, String pkg, long handle);
+    private static native void bindToModule(ClassLoader loader, String pkg, long handle);
 
     /**
      * Configures the module with handle {@code handle1} so that it can read the module
      * with handle {@code handle2}.
+     *
+     * @apiNote the handles will eventually be replaced by java.lang.reflect.Module
      */
     public static void addReadsModule(long handle1, long handle2) {
         addRequires(handle1, handle2);
@@ -389,14 +405,29 @@ public class VM {
     private static native void addRequires(long handle1, long handle2);
 
     /**
+     * Configures the module to export the given package. If {@code handle2} is
+     * {@code 0L} then the package is export to every module that reads the
+     * module that {@code handle1} is a handle to.
+     *
+     * @apiNote the handles will eventually be replaced by java.lang.reflect.Module
+     */
+    public static void addExports(long handle1, String pkg, long handle2) {
+        if (handle2 == 0L) {
+            addExports(handle1, pkg);
+        } else {
+            addExportsWithPermits(handle1, pkg, handle2);
+        }
+    }
+
+    /**
      * Configures the module to export the given package.
      */
-    public static native void addExports(long handle, String pkg);
+    private static native void addExports(long handle, String pkg);
 
     /**
      * Configures the module to export the given package to the given module.
      */
-    public static native void addExportsWithPermits(long handle1, String pkg, long handle2);
+    private static native void addExportsWithPermits(long handle1, String pkg, long handle2);
 
     /**
      * Used to grant access to module-private types from types in the unnamed module. This

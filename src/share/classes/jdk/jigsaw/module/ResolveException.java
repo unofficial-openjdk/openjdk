@@ -26,9 +26,10 @@
 package jdk.jigsaw.module;
 
 /**
- * Thrown when an error occurs during resolution.
+ * Thrown when an error occurs during resolution or binding.
  *
- * @see Resolver
+ * @see Configuration#resolve
+ * @see Configuration#bind
  */
 public class ResolveException extends RuntimeException {
     private static final long serialVersionUID = 0L;

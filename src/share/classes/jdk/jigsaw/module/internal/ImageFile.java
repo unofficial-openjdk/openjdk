@@ -55,7 +55,7 @@ import java.util.zip.Deflater;
 import java.util.zip.Inflater;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
-import jdk.jigsaw.module.Module;
+import jdk.jigsaw.module.ModuleDescriptor;
 import static jdk.jigsaw.module.internal.ImageFile.Loader.*;
 
 /**
@@ -112,8 +112,9 @@ public final class ImageFile {
             }
         }
 
-        if (header.getMajorVersion() > ImageHeader.MAJOR_VERSION
-                || (header.getMajorVersion() == ImageHeader.MAJOR_VERSION && header.getMinorVersion() > ImageHeader.MINOR_VERSION)) {
+        if (header.getMajorVersion() > ImageHeader.MAJOR_VERSION ||
+            (header.getMajorVersion() == ImageHeader.MAJOR_VERSION &&
+             header.getMinorVersion() > ImageHeader.MINOR_VERSION)) {
             throw new IOException("invalid version number");
         }
 
@@ -122,9 +123,9 @@ public final class ImageFile {
 
     public static ImageFile create(Path output,
                                        Set<Path> jmods,
-                                       Set<Module> bootModules,
-                                       Set<Module> extModules,
-                                       Set<Module> modules)
+                                       Set<ModuleDescriptor> bootModules,
+                                       Set<ModuleDescriptor> extModules,
+                                       Set<ModuleDescriptor> modules)
             throws IOException
     {
         ImageFile lib = new ImageFile(output);
@@ -138,17 +139,17 @@ public final class ImageFile {
         return lib;
     }
 
-    private void buildIndex(Set<Module> bootModules,
-                            Set<Module> extModules,
-                            Set<Module> modules,
+    private void buildIndex(Set<ModuleDescriptor> bootModules,
+                            Set<ModuleDescriptor> extModules,
+                            Set<ModuleDescriptor> modules,
                             Map<String, Path> nameToJmod)
             throws IOException
     {
         builder = new IndexBuilder(bootModules, extModules, modules);
 
         // build locations
-        for (Module m : builder.modules()) {
-            Path jmod = nameToJmod.get(m.id().name());
+        for (ModuleDescriptor md : builder.modules()) {
+            Path jmod = nameToJmod.get(md.name());
             String filename = jmod.getFileName().toString();
             if (filename.endsWith(MODULE_EXT)) {
                 builder.readJmod(jmod);
@@ -182,8 +183,8 @@ public final class ImageFile {
                 out.write(bytes, 0, bytes.length);
 
                 // write module content
-                for (Module m : builder.modules(l)) {
-                    writeModule(nameToJmod.get(m.id().name()), out);
+                for (ModuleDescriptor m : builder.modules(l)) {
+                    writeModule(nameToJmod.get(m.name()), out);
                 }
             }
         }
@@ -191,7 +192,7 @@ public final class ImageFile {
         Path modulesSer = root.resolve("lib").resolve("modules.ser");
         try (OutputStream os = Files.newOutputStream(modulesSer);
                 ObjectOutputStream oos = new ObjectOutputStream(os)) {
-            oos.writeObject(builder.modules().toArray(new Module[0]));
+            oos.writeObject(builder.modules().toArray(new ModuleDescriptor[0]));
         }
     }
 
@@ -230,65 +231,65 @@ public final class ImageFile {
 
     class IndexBuilder {
         private final Map<Loader, LoaderModuleIndex> loaders = new LinkedHashMap<>();
-        private final Map<Module, Integer> indexForModule = new LinkedHashMap<>();
-        private final Map<String, Module> nameToModule = new HashMap<>();
+        private final Map<ModuleDescriptor, Integer> indexForModule = new LinkedHashMap<>();
+        private final Map<String, ModuleDescriptor> nameToModule = new HashMap<>();
         private int moduleIndex = 1; // 1 is reserved for java.base
         private int packageIndex = 0;
         private Map<String, Integer> indexForPackage;
 
-        IndexBuilder(Set<Module> bootModules,
-                     Set<Module> extModules,
-                     Set<Module> modules) {
+        IndexBuilder(Set<ModuleDescriptor> bootModules,
+                     Set<ModuleDescriptor> extModules,
+                     Set<ModuleDescriptor> modules) {
             loader(BOOT_LOADER, bootModules);
             loader(EXT_LOADER, extModules);
             loader(APP_LOADER, modules);
         }
 
-        public List<Module> modules() {
+        public List<ModuleDescriptor> modules() {
             return indexForModule.entrySet().stream()
                                  .sorted(Map.Entry.comparingByValue())
                                  .map(Map.Entry::getKey)
                                  .collect(Collectors.toList());
         }
 
-        public List<Module> modules(Loader loader) {
+        public List<ModuleDescriptor> modules(Loader loader) {
             return loaders.containsKey(loader)
                        ? loaders.get(loader).modules()
                        : Collections.EMPTY_LIST;
         }
 
-        private void loader(Loader loader, Set<Module> modules) {
+        private void loader(Loader loader, Set<ModuleDescriptor> modules) {
             if (modules.isEmpty()) {
                 return;
             }
 
             // put java.base first
-            List<Module> mods = new ArrayList<>();
+            List<ModuleDescriptor> mods = new ArrayList<>();
             modules.stream()
-                    .filter(m -> m.id().name().equals(JAVA_BASE))
+                    .filter(m -> m.name().equals(JAVA_BASE))
                     .forEach(m -> {
                         indexForModule.put(m, 1);
-                        nameToModule.put(m.id().name(), m);
+                        nameToModule.put(m.name(), m);
                         mods.add(m);
                     });
-            modules.stream().sorted(Comparator.comparing(m -> m.id().name()))
-                    .filter(m -> !m.id().name().equals(JAVA_BASE))
+            modules.stream().sorted(Comparator.comparing(m -> m.name()))
+                    .filter(m -> !m.name().equals(JAVA_BASE))
                     .forEach(m -> {
                         indexForModule.put(m, ++moduleIndex);
-                        nameToModule.put(m.id().name(), m);
+                        nameToModule.put(m.name(), m);
                         mods.add(m);
                     });
             loaders.put(loader, new LoaderModuleIndex(this, loader, mods, MODULES_DIR + loader.filename));
         }
 
-        private Module getModule(String mn) {
+        private ModuleDescriptor getModule(String mn) {
             return nameToModule.get(mn);
         }
 
         void readJmod(Path jmod) throws IOException {
             String filename = jmod.getFileName().toString();
             String mn = filename.substring(0, filename.indexOf(MODULE_EXT));
-            Module m = getModule(mn);
+            ModuleDescriptor m = getModule(mn);
             LoaderModuleIndex loader = loaders.values().stream()
                                               .filter(l -> l.modules.contains(m))
                                               .findFirst().get();
@@ -319,19 +320,19 @@ public final class ImageFile {
     class LoaderModuleIndex {
         private final IndexBuilder builder;
         private final Loader loader;
-        private final List<Module> modules;
+        private final List<ModuleDescriptor> modules;
         private final String path;
         // classes and resource files
-        private final Map<Module, List<Resource>> entries = new LinkedHashMap<>();
+        private final Map<ModuleDescriptor, List<Resource>> entries = new LinkedHashMap<>();
         private long size = 0;
-        LoaderModuleIndex(IndexBuilder builder, Loader loader, List<Module> modules, String path) {
+        LoaderModuleIndex(IndexBuilder builder, Loader loader, List<ModuleDescriptor> modules, String path) {
             this.builder = builder;
             this.loader = loader;
             this.modules = Collections.unmodifiableList(modules);
             this.path = path;
         }
 
-        List<Module> modules() {
+        List<ModuleDescriptor> modules() {
             return modules;
         }
 
@@ -345,7 +346,7 @@ public final class ImageFile {
                           .collect(Collectors.toSet());
         }
 
-        void addEntry(Module m, ZipEntry ze) {
+        void addEntry(ModuleDescriptor m, ZipEntry ze) {
             List<Resource> classes = entries.computeIfAbsent(m, _e -> new ArrayList<>());
 
             String name = ze.getName();
@@ -365,7 +366,7 @@ public final class ImageFile {
 
         void store(ImageWriter writer, Set<String> duplicates, long pos) {
             long offset = pos;
-            for (Module m : modules) {
+            for (ModuleDescriptor m : modules) {
                 for (Resource e : entries.get(m)) {
                     String fn = e.getName();
 

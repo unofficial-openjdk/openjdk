@@ -26,18 +26,20 @@
 package sun.launcher;
 
 import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import jdk.jigsaw.module.Module;
-import jdk.jigsaw.module.ModuleGraph;
+import jdk.jigsaw.module.Configuration;
+import jdk.jigsaw.module.Layer;
+import jdk.jigsaw.module.ModuleArtifact;
+import jdk.jigsaw.module.ModuleArtifactFinder;
+import jdk.jigsaw.module.ModuleDescriptor;
 import jdk.jigsaw.module.ModuleId;
-import jdk.jigsaw.module.ModulePath;
-import jdk.jigsaw.module.Resolver;
-import jdk.jigsaw.module.internal.ModuleRuntime;
 
 import sun.misc.Launcher;
 import sun.reflect.Reflection;
@@ -65,7 +67,7 @@ class ModuleLauncher {
         }
 
         // module path of the installed modules
-        ModulePath systemLibrary = ModulePath.installedModules();
+        ModuleArtifactFinder systemLibrary = ModuleArtifactFinder.installedModules();
 
         // launcher -verbose:mods option
         boolean verbose =
@@ -81,11 +83,16 @@ class ModuleLauncher {
         }
 
         // launcher -modulepath option
-        ModulePath launcherModulePath;
+        ModuleArtifactFinder launcherModulePath;
         propValue = System.getProperty("java.module.path");
         if (propValue != null) {
             String[] dirs = propValue.split(File.pathSeparator);
-            launcherModulePath = ModulePath.ofDirectories(dirs);
+            Path[] paths = new Path[dirs.length];
+            int i = 0;
+            for (String dir: dirs) {
+                paths[i++] = Paths.get(dir);
+            }
+            launcherModulePath = ModuleArtifactFinder.ofDirectories(paths);
         } else {
             launcherModulePath = null;
         }
@@ -108,8 +115,7 @@ class ModuleLauncher {
         if (mainMid == null && mods.isEmpty()) {
             input = systemLibrary.allModules()
                                  .stream()
-                                 .filter(m -> m.permits().isEmpty())
-                                 .map(m -> m.id().name())
+                                 .map(md -> md.descriptor().name())
                                  .collect(Collectors.toSet());
         } else {
             input = new HashSet<>(mods);
@@ -117,56 +123,60 @@ class ModuleLauncher {
                 input.add(mainMid.name());
         }
 
-        // run the resolver
-        ModulePath modulePath;
+        // run the resolver to create the configuration
+        ModuleArtifactFinder finder;
         if (launcherModulePath != null) {
-            modulePath = systemLibrary.join(launcherModulePath);
+            finder = ModuleArtifactFinder.concat(systemLibrary, launcherModulePath);
         } else {
-            modulePath = systemLibrary;
+            finder = systemLibrary;
         }
-        ModuleGraph graph = new Resolver(modulePath).resolve(input).bindServices();
+        Configuration cf = Configuration.resolve(finder,
+                                                 Layer.emptyLayer(),
+                                                 ModuleArtifactFinder.nullFinder(),
+                                                 input).bind();
         if (verbose) {
-            graph.modules().stream()
-                           .sorted()
-                           .forEach(m -> System.out.println(m.id()));
+            cf.descriptors().stream()
+                            .sorted()
+                            .forEach(md -> System.out.println(md.name()));
         }
 
         // If -m was specified as name@version then check that the right version
         // of the initial module was selected
         if (mainMid != null && mainMid.version() != null) {
-            Module selected = graph.findModule(mainMid.name());
-            if (!selected.id().equals(mainMid)) {
-                throw new RuntimeException(selected.id() + " found first on module-path");
+            ModuleArtifact artifact = cf.findArtifact(mainMid.name());
+            ModuleId id = artifact.descriptor().id();
+            if (!id.equals(mainMid)) {
+                throw new RuntimeException(id + " found first on module-path");
             }
         }
 
+
         // setup module to ClassLoader mapping
-        Map<Module, ClassLoader> moduleToLoaders = loaderMap(systemLibrary);
+        Map<ModuleArtifact, ClassLoader> moduleToLoaders = loaderMap(systemLibrary);
         if (launcherModulePath != null) {
-            Set<Module> systemModules = systemLibrary.allModules();
+            Set<ModuleArtifact> systemModules = systemLibrary.allModules();
             Launcher launcher = Launcher.getLauncher();
-            graph.modules().stream().filter(m -> !systemModules.contains(m)).forEach(m -> {
-                moduleToLoaders.put(m, launcher.getClassLoader());
-                launcher.addAppClassLoaderURL(launcherModulePath.locationOf(m));
-            });
+            cf.descriptors().stream()
+                            .map(md -> cf.findArtifact(md.name()))
+                            .filter(artifact -> !systemModules.contains(artifact))
+                            .forEach(artifact -> {
+                                moduleToLoaders.put(artifact, launcher.getClassLoader());
+                                launcher.addAppClassLoaderURL(artifact.location());
+                            });
         }
 
         // define to runtime
-        Module base = graph.findModule("java.base");
-        if (base != null) {
-            ModuleRuntime.defineModule(graph, base, null);
-            ModuleRuntime.defineModules(graph, moduleToLoaders::get);
-        }
+        Layer bootLayer = Layer.create(null, cf, moduleToLoaders::get);
 
         // if -mods or -m is specified then we have to hide the linked modules
         // that are not selected. For now we just define the modules without
         // any readability relationship or exports. Yes, this is a hack.
         if (mainMid != null || !mods.isEmpty()) {
-            Set<Module> selected = graph.modules();
+            Set<ModuleDescriptor> selected = cf.descriptors();
             systemLibrary.allModules()
                          .stream()
-                         .filter(m -> !selected.contains(m))
-                         .forEach(m -> ModuleRuntime.defineProtoModule(m, moduleToLoaders.get(m)));
+                         .filter(md -> !selected.contains(md))
+                         .forEach(md -> defineProtoModule(md, moduleToLoaders.get(md)));
         }
 
         // reflection checks enabled?
@@ -176,28 +186,40 @@ class ModuleLauncher {
         Reflection.enableModules(enableModuleChecks, debugging);
 
         // set system module graph so that other module graphs can be composed
-        ModuleGraph.setSystemModuleGraph(graph);
+        Layer.setBootLayer(bootLayer);
     }
 
     /**
      * Returns a map of module to class loader.
      */
-    private static Map<Module, ClassLoader> loaderMap(ModulePath systemLibrary) {
-        Map<Module, ClassLoader> moduleToLoaders = new HashMap<>();
+    private static Map<ModuleArtifact, ClassLoader> loaderMap(ModuleArtifactFinder systemLibrary) {
+        Map<ModuleArtifact, ClassLoader> moduleToLoaders = new HashMap<>();
         Launcher launcher = Launcher.getLauncher();
         ClassLoader extClassLoader = launcher.getExtClassLoader();
         for (String name: launcher.getExtModuleNames()) {
-            Module m = systemLibrary.findModule(name);
-            if (m != null) {
-                moduleToLoaders.put(m, extClassLoader);
+            ModuleArtifact artifact = systemLibrary.find(name);
+            if (artifact != null) {
+                moduleToLoaders.put(artifact, extClassLoader);
             }
         }
         ClassLoader appClassLoader = launcher.getClassLoader();
         for (String name: launcher.getAppModuleNames()) {
-            Module m = systemLibrary.findModule(name);
-            if (m != null)
-                moduleToLoaders.put(m, appClassLoader);
+            ModuleArtifact artifact = systemLibrary.find(name);
+            if (artifact != null)
+                moduleToLoaders.put(artifact, appClassLoader);
         }
         return moduleToLoaders;
+    }
+
+    /**
+     * Defines the given module to the VM in "proto form". Proto form is the
+     * module defined to the runtime without any readability relationships and
+     * without exports. This is used by the launcher -mods option for testing
+     * purposes.
+     */
+    private static void defineProtoModule(ModuleArtifact artifact, ClassLoader loader) {
+        sun.misc.VM.defineModule(artifact.descriptor().name(),
+                                 loader,
+                                 artifact.packages().toArray(new String[0]));
     }
 }

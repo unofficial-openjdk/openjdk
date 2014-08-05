@@ -23,10 +23,6 @@
  */
 package com.sun.tools.classanalyzer;
 
-import jdk.jigsaw.module.ModuleDependence;
-import jdk.jigsaw.module.ModuleExport;
-import jdk.jigsaw.module.Module.Builder;
-import jdk.jigsaw.module.ServiceDependence;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -36,27 +32,35 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.util.Collection;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import jdk.jigsaw.module.ModuleDependence;
+import jdk.jigsaw.module.ModuleDescriptor;
+import jdk.jigsaw.module.ModuleDescriptor.Builder;
+import jdk.jigsaw.module.ModuleExport;
+import jdk.jigsaw.module.ServiceDependence;
 
 /**
  * Jigsaw module builder
  */
 public class JigsawModules {
     public static final String MODULE_GRAPH = "jdk/jigsaw/module/resources/modules.ser";
-    private final Map<String,jdk.jigsaw.module.Module> modules;
+    private Map<String, Set<String>> contents = new HashMap<>();
+    private final Map<String, ModuleDescriptor> modules;
+
     public JigsawModules() {
         this.modules = new LinkedHashMap<>();
     }
 
-    public jdk.jigsaw.module.Module get(String name) {
+    public jdk.jigsaw.module.ModuleDescriptor get(String name) {
         return modules.get(name);
     }
 
@@ -65,10 +69,7 @@ public class JigsawModules {
     }
 
     public void build(Module m, Collection<Dependence> requires) {
-        Builder b = new Builder();
-
-        // pkg
-        b.id(m.name());
+        Builder b = new Builder(m.name());
 
         // requires and uses
         requires.forEach(d -> {
@@ -79,14 +80,12 @@ public class JigsawModules {
             }
         });
 
-        // permits
-        m.permits().forEach(b::permit);
-
         // contents
+        Set<String> packages = contents.computeIfAbsent(m.name(), k -> new HashSet<>());
         m.packages().stream()
             .filter(Package::hasClasses)
             .map(Package::name)
-            .forEach(b::include);
+            .forEach(p -> packages.add(p));
 
         // (unqualified) exports
         m.exports().forEach(p -> b.export(p));
@@ -105,8 +104,8 @@ public class JigsawModules {
                         b.service(s.service.getClassName(), impl.getClassName())));
 
         // build and add to map
-        jdk.jigsaw.module.Module jm = b.build();
-        modules.put(jm.id().name(), jm);
+        ModuleDescriptor descriptor = b.build();
+        modules.put(descriptor.name(), descriptor);
     }
 
     private ModuleDependence moduleDependence(Dependence d) {
@@ -125,15 +124,17 @@ public class JigsawModules {
      */
     public void store(OutputStream out) throws IOException {
         try (ObjectOutputStream oos = new ObjectOutputStream(out)) {
-            oos.writeObject(modules.values().toArray(new jdk.jigsaw.module.Module[0]));
+            oos.writeObject(modules.values().toArray(new ModuleDescriptor[0]));
+            oos.writeObject(contents);
         }
     }
 
     public void load(InputStream in) throws IOException {
-        try (ObjectInputStream sin = new ObjectInputStream(in)) {
-            for (jdk.jigsaw.module.Module m : (jdk.jigsaw.module.Module[]) sin.readObject()) {
-                modules.put(m.id().name(), m);
+        try (ObjectInputStream ois = new ObjectInputStream(in)) {
+            for (ModuleDescriptor m : (ModuleDescriptor[]) ois.readObject()) {
+                modules.put(m.name(), m);
             }
+            contents = (Map<String, Set<String>>) ois.readObject();
         } catch (ClassNotFoundException e) {
             throw new RuntimeException(e);
         }
@@ -152,14 +153,12 @@ public class JigsawModules {
     }
 
     private static final String INDENT = "    ";
-    private void printModule(PrintWriter writer, jdk.jigsaw.module.Module m) {
+    private void printModule(PrintWriter writer, ModuleDescriptor m) {
         StringBuilder sb = new StringBuilder();
-        sb.append(String.format("module %s {%n", m.id().name()));
+        sb.append(String.format("module %s {%n", m.name()));
 
         Stream<String> reqs = m.moduleDependences().stream().map(this::toRequires);
         reqs.sorted().forEach(d -> sb.append(format(1, "%s;%n", d)));
-
-        formatList(sb, 1, "permits %s;%n", m.permits(), true);
 
         // exports (sorted)
         Map<String, Set<String>> exports = new TreeMap<>();
@@ -213,7 +212,11 @@ public class JigsawModules {
         return s + String.format(fmt, args);
     }
 
-    private StringBuilder formatList(StringBuilder sb, int level, String firstElement, Collection<?> c, String sep) {
+    private StringBuilder formatList(StringBuilder sb,
+                                     int level,
+                                     String firstElement,
+                                     Collection<?> c, String sep)
+    {
         assert !c.isEmpty();
 
         TreeSet<?> ls = new TreeSet<>(c);
@@ -231,11 +234,20 @@ public class JigsawModules {
         return sb;
     }
 
-    private StringBuilder formatList(StringBuilder sb, int level, String fmt, Collection<?> c) {
+    private StringBuilder formatList(StringBuilder sb,
+                                     int level,
+                                     String fmt,
+                                     Collection<?> c)
+    {
         return formatList(sb, level, fmt, c, false);
     }
 
-    private StringBuilder formatList(StringBuilder sb, int level, String fmt, Collection<?> c, boolean newline) {
+    private StringBuilder formatList(StringBuilder sb,
+                                     int level,
+                                     String fmt,
+                                     Collection<?> c,
+                                     boolean newline)
+    {
         if (c.isEmpty())
             return sb;
 
@@ -266,7 +278,7 @@ public class JigsawModules {
             }
         }
         PrintWriter writer = new PrintWriter(System.out);
-        for (jdk.jigsaw.module.Module m : graph.modules.values()) {
+        for (ModuleDescriptor m : graph.modules.values()) {
             graph.printModule(writer, m);
         }
         writer.flush();

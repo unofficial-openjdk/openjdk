@@ -38,18 +38,9 @@ import java.util.Set;
 import jdk.jigsaw.module.ModuleDependence.Modifier;
 
 /**
- * Represents module information as read from a {@code module-info} class file
- * and defines a method to combine this with the module contents to create a
- * {@link Module}.
- *
- * @apiNote We need to decide whether this is useful to expose in the API or not.
- * It is public for now on the assumption that it will be useful to have a simple
- * module-info.java reader in the API. If there is an API then it will need to
- * define methods to access the information in the {@code Module} attribute.
- *
- * @see ModulePath#ofDirectories
+ * Represents module information as read from a {@code module-info} class file.
  */
-public final class ModuleInfo {
+class ModuleInfo {
 
     // The name of the Module attribute
     private static final String MODULE = "Module";
@@ -63,7 +54,6 @@ public final class ModuleInfo {
 
     // optional and created lazily
     private Set<ServiceDependence> serviceDependences;
-    private Set<String> permits;
     private Set<ModuleExport> exports;
     private Map<String, Set<String>> services;
 
@@ -76,6 +66,48 @@ public final class ModuleInfo {
     }
 
     /**
+     * Returns the module dependences as read from the {@code Module} attribute.
+     */
+    public Set<ModuleDependence> moduleDependences() {
+        return moduleDependences;
+    }
+
+    /**
+     * Returns the service dependences (<em>uses</em>) as read from the {@code Module}
+     * attribute.
+     */
+    public Set<ServiceDependence> serviceDependences() {
+        if (serviceDependences == null) {
+            return Collections.emptySet();
+        } else {
+            return serviceDependences;
+        }
+    }
+
+    /**
+     * Returns the exports as read from the {@code Module} attribute.
+     */
+    public Set<ModuleExport> exports() {
+        if (exports == null) {
+            return Collections.emptySet();
+        } else {
+            return exports;
+        }
+    }
+
+    /**
+     * Returns the map of service implementation provided, as read from the
+     * {@code Module} attribute.
+     */
+    public Map<String, Set<String>> services() {
+        if (services == null) {
+            return Collections.emptyMap();
+        } else {
+            return services;
+        }
+    }
+
+    /**
      * Reads a {@code module-info.class} from the given input stream.
      *
      * @throws ClassFormatError if the class file is malformed
@@ -85,6 +117,9 @@ public final class ModuleInfo {
         return new ModuleInfo(new DataInputStream(in));
     }
 
+    /**
+     * Reads the input as a module-info class file.
+     */
     private ModuleInfo(DataInputStream in) throws IOException {
         int magic = in.readInt();
         if (magic != 0xCAFEBABE)
@@ -167,12 +202,11 @@ public final class ModuleInfo {
             moduleDependences.add(new ModuleDependence(mods, ModuleIdQuery.parse(dn)));
         }
 
+        // ignore permits, they are going away
         int permits_count = in.readUnsignedShort();
         if (permits_count > 0) {
-            permits = new HashSet<>();
             for (int i=0; i<permits_count; i++) {
                 int index = in.readUnsignedShort();
-                permits.add(cpool.getUtf8(index));
             }
         }
 
@@ -216,60 +250,6 @@ public final class ModuleInfo {
                 services.computeIfAbsent(sn, k -> new HashSet<>()).add(cn);
             }
         }
-    }
-
-    /**
-     * Creates a {@code Module} from the information in the module-info file
-     * and the given set of packages (the module content). The module's
-     * {@code id} is the given identifier and typically comes from the
-     * extended module descriptor. If there is no extended module descriptor
-     * then it is the simple module name.
-     *
-     * @throws IllegalArgumentException if the name component of the {@code id}
-     *   does not match the module name as read from the module-info file,
-     *   or {@code packages} does not include a package for each package that
-     *   the module exports, or {@code packages} includes the unnamed package.
-     *
-     * @see ModuleId
-     */
-    public Module makeModule(String id, Iterable<String> packages) {
-        // the name in the module identifier must match the module name
-        ModuleId mid = ModuleId.parse(id);
-        if (!mid.name().equals(name))
-            throw new IllegalArgumentException(id + ": name does not match " + name);
-
-        Module.Builder builder = new Module.Builder();
-        builder.id(mid);
-        moduleDependences.forEach(builder::requires);
-        if (serviceDependences != null)
-            serviceDependences.forEach(builder::requires);
-        if (permits != null)
-            permits.forEach(builder::permit);
-        if (exports != null)
-            exports.forEach(pkg -> builder.export(pkg));
-        if (services != null) {
-            for (Map.Entry<String, Set<String>> entry: services.entrySet()) {
-                String sn = entry.getKey();
-                entry.getValue().forEach(cn -> builder.service(sn, cn));
-            }
-        }
-
-        // contents
-        packages.forEach(pkg -> builder.include(pkg));
-
-        return builder.build();
-    }
-
-    /**
-     * Creates a {@code Module} from the information in the module-info file
-     * and the given set of packages (the module content).
-     *
-     * @throws IllegalArgumentException if {@code packages} does not include
-     *   a package for each package that the module exports, or {@code packages}
-     *   includes the unnamed package.
-     */
-    public Module makeModule(Iterable<String> packages) {
-        return makeModule(name(), packages);
     }
 
     /**

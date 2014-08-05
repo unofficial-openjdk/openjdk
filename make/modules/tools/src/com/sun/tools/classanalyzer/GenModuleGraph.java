@@ -43,17 +43,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import jdk.jigsaw.module.Module;
+
+import jdk.jigsaw.module.ExtendedModuleDescriptor;
+import jdk.jigsaw.module.ModuleDescriptor;
 import jdk.jigsaw.module.ModuleDependence;
-import jdk.jigsaw.module.Module.Builder;
+import jdk.jigsaw.module.ModuleDescriptor.Builder;
 import jdk.jigsaw.module.ServiceDependence;
 
 /**
  * Compile module-info.java from the given sourcepath into modules.ser.
  */
 public class GenModuleGraph extends Task {
-    private final List<Module> modules = new ArrayList<>();
+    private final List<ModuleDescriptor> descriptors = new ArrayList<>();
+    private final Map<String, Set<String>> contents = new HashMap<>();
     private final Options options = new Options();
+
     GenModuleGraph() {
         super("GenModuleGraph");
     }
@@ -95,12 +99,13 @@ public class GenModuleGraph extends Task {
         List<ModuleConfig> configs = readModuleInfos(options.sourcepath);
         for (ModuleConfig mc : configs) {
             Path mclasses = Paths.get(options.buildModulesPath, mc.module);
-            modules.add(build(mc, mclasses));
+            build(mc, mclasses);
         }
 
         try (OutputStream os = Files.newOutputStream(Paths.get(options.outFile));
              ObjectOutputStream sout = new ObjectOutputStream(os)) {
-            sout.writeObject(modules.toArray(new Module[0]));
+            sout.writeObject(descriptors.toArray(new ModuleDescriptor[0]));
+            sout.writeObject(contents);
         }
         return true;
     }
@@ -116,7 +121,7 @@ public class GenModuleGraph extends Task {
                      .filter(m -> Files.exists(m.resolve("module-info.java")))
                      .map(m -> readFile(m)).collect(Collectors.toList());
                 configs.addAll(result);
-                }*/
+            }*/
             if (Files.exists(src.resolve("module-info.java"))) {
                 configs.add(readFile(src));
             }
@@ -136,11 +141,8 @@ public class GenModuleGraph extends Task {
         }
     }
 
-    private Module build(ModuleConfig mconfig, Path mclasses) throws IOException {
-        Builder b = new Builder();
-
-        // name
-        b.id(mconfig.module);
+    private void build(ModuleConfig mconfig, Path mclasses) throws IOException {
+        Builder b = new Builder(mconfig.module);
 
         // requires and uses
         mconfig.requires().values().forEach(d -> {
@@ -150,9 +152,6 @@ public class GenModuleGraph extends Task {
                 b.requires(moduleDependence(d));
             }
         });
-
-        // permits
-        mconfig.permits.forEach(b::permit);
 
         // exports
         for (Map.Entry<String, Set<String>> entry: mconfig.exportsTo.entrySet()) {
@@ -169,6 +168,11 @@ public class GenModuleGraph extends Task {
         mconfig.providers.keySet().forEach(service ->
             mconfig.providers.get(service).forEach(impl -> b.service(service, impl)));
 
+        descriptors.add(b.build());
+
+        // content
+        Set<String> packages =
+            contents.computeIfAbsent(mconfig.module, k -> new HashSet<>());
         if (Files.exists(mclasses)) {
             // find all packages included in the module
             Files.find(mclasses, Integer.MAX_VALUE,
@@ -176,13 +180,10 @@ public class GenModuleGraph extends Task {
                             p.getFileName().toString().endsWith(".class")
                             && !p.getFileName().toString().equals("module-info.class"))
                  .map(Path::getParent)
-                 .forEach(pkg -> b.include(mclasses.relativize(pkg).toString().replace(File.separatorChar, '.')));
+                 .forEach(pkg -> packages.add(mclasses.relativize(pkg)
+                                                      .toString()
+                                                      .replace(File.separatorChar, '.')));
         }
-        Module m = b.build();
-        m.packages()
-         .stream()
-         .forEach(pkg -> { if (pkg.equals("")) throw new AssertionError("Module contains unnamed package"); });
-        return m;
     }
 
     private ModuleDependence moduleDependence(Dependence d) {
@@ -209,42 +210,30 @@ public class GenModuleGraph extends Task {
         System.exit(rc);
     }
 
-    // for comparing with another modules.ser
-    private void compare(String file) throws IOException, ClassNotFoundException {
-        Map<String, Module> moduleForName = new HashMap<>();
-        try (FileInputStream in = new FileInputStream(file);
-             ObjectInputStream sin = new ObjectInputStream(in)) {
-            for (Module m : (Module[]) sin.readObject()) {
-                moduleForName.put(m.id().name(), m);
-            }
-        }
-        for (Module m : modules) {
-            Module module = moduleForName.get(m.id().name());
-            assertEquals(module, m);
-        }
-    }
-
     private <T> void assertEquals(Set<T> set1, Set<T> set2) {
         if (set1.equals(set2)) return;
 
         List<T> list = new ArrayList<>(set1);
-        System.out.println(set1.stream().sorted().map(Object::toString).collect(Collectors.joining("\n")));
+        System.out.println(set1.stream()
+                               .sorted()
+                               .map(Object::toString).collect(Collectors.joining("\n")));
         System.out.println("----");
-        System.out.println(set2.stream().sorted().map(Object::toString).collect(Collectors.joining("\n")));
+        System.out.println(set2.stream()
+                               .sorted()
+                               .map(Object::toString)
+                               .collect(Collectors.joining("\n")));
         System.out.println("----");
     }
 
-    private void assertEquals(Module m1, Module m2) {
+    private void assertEquals(ModuleDescriptor m1, ModuleDescriptor m2) {
         if (m1.equals(m2)) return;
-        if (!m1.id().equals(m2.id())) {
-            throw new AssertionError("Module " + m1.id() + " != " + m2.id());
+        if (!m1.name().equals(m2.name())) {
+            throw new AssertionError("Module " + m1.name() + " != " + m2.name());
         }
         assertEquals(m1.moduleDependences(), m2.moduleDependences());
         assertEquals(m1.serviceDependences(), m2.serviceDependences());
 
-        assertEquals(m1.packages(), m2.packages());
         assertEquals(m1.exports(), m2.exports());
-        assertEquals(m1.permits(), m2.permits());
         assertEquals(m1.services().keySet(), m2.services().keySet());
 
         for (Map.Entry<String, Set<String>> e : m1.services().entrySet()) {

@@ -106,8 +106,7 @@ public final class GenerateModulesXml {
             System.err.println(modulepath + " is not a directory");
             System.exit(1);
         }
-        GenerateModulesXml gentool =
-            new GenerateModulesXml(modulepath);
+        GenerateModulesXml gentool = new GenerateModulesXml(modulepath);
         Set<Module> modules;
         if (useMetadata) {
             try (InputStream in = GenerateModulesXml.class.getResourceAsStream("modules.xml")) {
@@ -135,6 +134,7 @@ public final class GenerateModulesXml {
     private static final String TO        = "to";
     private static final String INCLUDE   = "include";
     private static final QName  REEXPORTS = new QName("re-exports");
+
     private Set<Module> load(InputStream in) throws XMLStreamException, IOException {
         Set<Module> modules = new HashSet<>();
         XMLInputFactory factory = XMLInputFactory.newInstance();

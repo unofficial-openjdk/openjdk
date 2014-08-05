@@ -28,9 +28,13 @@ package sun.misc;
 import java.lang.reflect.Module;
 import java.util.Set;
 
+import jdk.jigsaw.module.ModuleDescriptor;
+
 public interface JavaLangReflectAccess {
     Module defineUnnamedModule();
-    Module defineModule(jdk.jigsaw.module.ModuleGraph g, jdk.jigsaw.module.Module m);
+    Module defineModule(ClassLoader loader,
+                        ModuleDescriptor descriptor,
+                        Set<String> packages);
     void setDefined(Module m);
 
     void addReadsModule(Module m1, Module m2);

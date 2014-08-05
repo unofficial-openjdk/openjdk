@@ -25,6 +25,7 @@
 
 package java.lang.reflect;
 
+import java.security.Permission;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
@@ -32,86 +33,113 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
+import jdk.jigsaw.module.ModuleDescriptor;
+
 import jdk.jigsaw.module.ServiceDependence;
+import sun.misc.JavaLangAccess;
+import sun.misc.ModuleCatalog;
+import sun.misc.SharedSecrets;
 import sun.reflect.CallerSensitive;
 import sun.reflect.Reflection;
-
-import jdk.jigsaw.module.ModuleGraph;
 
 /**
  * Represents a runtime module.
  *
  * <p> {@code Module} does not define a public constructor. Instead {@code
  * Module} objects are constructed automatically by the Java Virtual Machine as
- * modules are defined by the {@link ClassLoader#defineModules defineModules} and
- * {@link ClassLoader#defineModule defineModule}. </p>
+ * modules are defined by the {@code Layer.create}. </p>
  *
- * @apiNote For now, this class defines {@link #getModuleGraph()} and {@link
- * #getModule()} to provide access to the original model. An alternative that
- * might be more consistent with other {@code java.lang.reflect} classes is to
- * have this class provide access to the original module definition.
+ * @apiNote Need to see if this API is consistent with other APis in
+ *  java.lang.reflect, in particular array vs. collection and whether to
+ *  use getXXX instead of XXX.
+ *
+ *  @apiNote The types in {@code java.lang.reflect} usually return an array
+ *  rather than collections. Also the convention is to use getXXX for getters.
  *
  * @since 1.9
  * @see java.lang.Class#getModule
  */
 public final class Module {
 
-    // the module name
-    private final String name;
+    private static final JavaLangAccess langAccess =
+        SharedSecrets.getJavaLangAccess();
 
-    // the original module graph and module, might be set lazily
-    private volatile ModuleGraph graph;
-    private volatile jdk.jigsaw.module.Module module;
+    private static final Permission ADD_READS_PERMISSION =
+        new ReflectPermission("addReadsModule");
+
+    private final ClassLoader loader;
+    private final ModuleDescriptor descriptor;
+    private final Set<String> packages;
+
+    private final String name;
+    private final long handle;
 
     // the modules that this module reads
+    // TBD - this needs to be a weak map.
     private final Map<Module, Object> reads = new ConcurrentHashMap<>();
 
     // this module's exported, cached here for access checks
     private final Map<String, Set<Module>> exports = new ConcurrentHashMap<>();
 
-    // used by VM to indicate that the module is fully defined
     private volatile boolean defined;
 
+    // called by VM during startup?
+    Module(ClassLoader loader, String name) {
+        this.loader = loader;
+        this.descriptor = null;
+        this.packages = null;
 
-    // called by VM during startup
-    Module(String name) {
         this.name = name;
+        this.handle = 0L;
     }
 
-    Module(ModuleGraph g, jdk.jigsaw.module.Module m) {
-        this.name = m.id().name();
-        this.graph = g;
-        this.module = m;
+    Module(ClassLoader loader, ModuleDescriptor descriptor, Set<String> packages) {
+        this.loader = loader;
+        this.descriptor = descriptor;
+        this.packages = packages;
+
+        // register this Module in the loader's catalog - this will go away
+        // once the Class#getModule has an implementation in the VM
+        ModuleCatalog catalog;
+        if (loader == null) {
+            catalog = ModuleCatalog.getSystemModuleCatalog();
+        } else {
+            catalog = langAccess.getModuleCatalog(loader);
+        }
+        catalog.register(this);
+
+        this.name = descriptor.name();
+        this.handle = sun.misc.VM.defineModule(name,
+                                               loader,
+                                               packages.toArray(new String[0]));
     }
 
     /**
-     * Returns the {@code ModuleGraph} from which this runtime module was defined.
+     * Returns the module name.
      */
-    public ModuleGraph getModuleGraph() {
-        ModuleGraph g = this.graph;
-        if (g != null)
-            return g;
-        return ModuleGraph.getSystemModuleGraph();
+    public String name() {
+        return name;
     }
 
     /**
-     * Returns the {@code Module} from which this runtime module was defined.
+     * Returns the {@code ClassLoader} that this module is associated with.
      */
-    public jdk.jigsaw.module.Module getModule() {
-        jdk.jigsaw.module.Module m = this.module;
-        if (m != null)
-            return m;
+    public ClassLoader classLoader() {
+        return loader;
+    }
 
-        ModuleGraph systemModuleGraph = ModuleGraph.getSystemModuleGraph();
-        if (systemModuleGraph == null)
-            return null;
+    /**
+     * Returns the module descriptor from which this {@code Module} was defined.
+     */
+    public ModuleDescriptor descriptor() {
+        return descriptor;
+    }
 
-        jdk.jigsaw.module.Module me = systemModuleGraph.findModule(name);
-        if (me == null)
-            throw new InternalError(name + " not in system module graph");
-
-        this.module = me;
-        return me;
+    /**
+     * Returns the set of packages that this module includes.
+     */
+    public Set<String> packages() {
+        return packages;
     }
 
     /**
@@ -119,16 +147,6 @@ public final class Module {
      * does nothing if the caller is this module, the caller already reads
      * this module, or the caller is in the <em>unnamed module</em> and this
      * module does not have a permits.
-     *
-     * @throws IllegalArgumentException if this module has a permits
-     *
-     * @implNote For now, the new read edge is only effective for access
-     * checks done in Core Reflection. This anomaly will go away once the
-     * implementation is further along and should make {@code setReadable}
-     * more useful for dealing with optional dependencies, particularly the
-     * case of a static dependency with a reflection guard.
-     *
-     * @see #canRead
      */
     @CallerSensitive
     public void setReadable() {
@@ -136,12 +154,26 @@ public final class Module {
         if (caller == this || (caller != null && caller.reads.containsKey(this)))
             return;
 
-        Set<String> permits = getModule().permits();
-        if (!permits.isEmpty())
-            throw new IllegalArgumentException("module has a 'permits'");
-
-        if (caller != null)
+        if (caller != null) {
+            sun.misc.VM.addReadsModule(caller.handle, this.handle);
             caller.reads.putIfAbsent(this, Boolean.TRUE);
+        }
+    }
+
+    /**
+     * Makes the given {@code Module} readable to this module. This method
+     * is no-op if {@code target} is {@code null} (all modules can read the
+     * unanmed module).
+     *
+     * @throws SecurityException if denied by the security manager
+     */
+    public void addReads(Module target) {
+        if (target != null) {
+            SecurityManager sm = System.getSecurityManager();
+            if (sm != null)
+                sm.checkPermission(ADD_READS_PERMISSION);
+            reads.putIfAbsent(target, Boolean.TRUE);
+        }
     }
 
     /**
@@ -153,28 +185,30 @@ public final class Module {
      *
      * @see #setReadable()
      */
-    public boolean canRead(Module m) {
-        return m == null || m == this || reads.containsKey(m);
+    public boolean canRead(Module target) {
+        return target == null || target == this || reads.containsKey(target);
     }
 
     /**
-     * Returns the set of type names that are service interfaces that this
-     * module uses.
+     * Returns the set of modules that this module reads.
      */
+    public Set<Module> reads() {
+        return new HashSet<>(reads.keySet());
+    }
+
     Set<String> uses() {
         // already cached
         Set<String> uses = this.uses;
         if (uses != null)
             return uses;
 
-        jdk.jigsaw.module.Module m = getModule();
-        if (m == null) {
+        if (descriptor == null) {
             return Collections.emptySet();
         } else {
-            uses = m.serviceDependences()
-                    .stream()
-                    .map(ServiceDependence::service)
-                    .collect(Collectors.toSet());
+            uses = descriptor().serviceDependences()
+                               .stream()
+                               .map(ServiceDependence::service)
+                               .collect(Collectors.toSet());
             uses = Collections.unmodifiableSet(uses);
             this.uses = uses;
             return uses;
@@ -183,16 +217,15 @@ public final class Module {
     private volatile Set<String> uses;
 
     /**
-      * Returns a map of the service providers that the module provides.
-      * The map key is the type name of the service interface. The map key
-      * is the set of type names for the service implementations.
-      */
+     * Returns a map of the service providers that the module provides.
+     * The map key is the type name of the service interface. The map key
+     * is the set of type names for the service implementations.
+     */
     Map<String, Set<String>> provides() {
-        jdk.jigsaw.module.Module m = getModule();
-        if (m == null) {
+        if (descriptor== null) {
             return Collections.emptyMap();
         } else {
-            return m.services();
+            return descriptor().services();
         }
     }
 
@@ -208,11 +241,13 @@ public final class Module {
             new sun.misc.JavaLangReflectAccess() {
                 @Override
                 public Module defineUnnamedModule() {
-                    return new Module("<unnamed>");
+                    return new Module(null, "<unnamed>");
                 }
                 @Override
-                public Module defineModule(ModuleGraph g, jdk.jigsaw.module.Module m) {
-                    return new Module(g, m);
+                public Module defineModule(ClassLoader loader,
+                                           ModuleDescriptor descriptor,
+                                           Set<String> packages) {
+                    return new Module(loader, descriptor, packages);
                 }
                 @Override
                 public void setDefined(Module m) {
@@ -220,13 +255,19 @@ public final class Module {
                 }
                 @Override
                 public void addReadsModule(Module m1, Module m2) {
+                    sun.misc.VM.addReadsModule(m1.handle, m2.handle);
                     m1.reads.put(m2, Boolean.TRUE);
                 }
                 @Override
                 public void addExport(Module m, String pkg, Module permit) {
+                    long handle = (permit != null) ? permit.handle : 0L;
+                    sun.misc.VM.addExports(m.handle, pkg, handle);
                     Set<Module> permits = m.exports.computeIfAbsent(pkg, k -> new HashSet<>());
-                    if (permit != null)
-                        permits.add(permit);
+                    if (permit != null) {
+                        synchronized (permits) {
+                            permits.add(permit);
+                        }
+                    }
                 }
                 @Override
                 public Set<Module> exports(Module m, String pkg) {

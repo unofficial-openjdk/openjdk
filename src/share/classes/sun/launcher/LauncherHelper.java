@@ -77,12 +77,12 @@ import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-import jdk.jigsaw.module.Module;
+import jdk.jigsaw.module.Layer;
+import jdk.jigsaw.module.ModuleArtifact;
+import jdk.jigsaw.module.ModuleArtifactFinder;
 import jdk.jigsaw.module.ModuleDependence;
 import jdk.jigsaw.module.ModuleExport;
-import jdk.jigsaw.module.ModuleGraph;
 import jdk.jigsaw.module.ModuleId;
-import jdk.jigsaw.module.ModulePath;
 import jdk.jigsaw.module.ServiceDependence;
 
 import sun.misc.JModCache;
@@ -477,18 +477,17 @@ public enum LauncherHelper {
 
         // main module should be in the system module graph
         ModuleId mid = ModuleId.parse(mainModule);
-        ModulePath mp = ModuleGraph.getSystemModuleGraph().modulePath();
-        Module m = mp.findModule(mid.name());
-        if (m == null) {
+        Layer layer = Layer.bootLayer();
+        ModuleArtifact artifact  = layer.findArtifact(mid.name());
+        if (artifact == null)
             abort(null, "java.launcher.module.error1", mainModule);
-        }
 
         // if query included the main-class then we return that
         if (mainClass != null) {
             i = mainClass.lastIndexOf('.');
             if (i > 0) {
                 String pkg = mainClass.substring(0, i);
-                if (!m.packages().contains(pkg)) {
+                if (!artifact.packages().contains(pkg)) {
                     // main class not in a package that the module defines
                     abort(null, "java.launcher.module.error2", mainModule, mainClass);
                 }
@@ -501,7 +500,7 @@ public enum LauncherHelper {
 
         // read extended module descriptor's main class.
         // (only jmod for now)
-        URL url = mp.locationOf(m);
+        URL url = artifact.location();
         if (!url.getProtocol().equalsIgnoreCase("jmod")) {
             abort(null, "java.launcher.module.error3", query);
         }
@@ -910,21 +909,24 @@ public enum LauncherHelper {
         }
 
         boolean detail = verbose;
-        ModulePath.installedModules().allModules().stream().sorted().forEach(m -> {
-            ostream.println(m.id());
+        ModuleArtifactFinder.installedModules()
+                            .allModules()
+                            .stream()
+                            .map(ModuleArtifact::descriptor)
+                            .sorted()
+                            .forEach(md -> {
+            ostream.println(md.id());
             if (detail) {
-                for (ModuleDependence d: m.moduleDependences()) {
+                for (ModuleDependence d : md.moduleDependences()) {
                     ostream.format("  %s%n", d);
                 }
-                for (ServiceDependence d: m.serviceDependences()) {
+                for (ServiceDependence d : md.serviceDependences()) {
                     ostream.format("  %s%n", d);
                 }
-
-                formatCommaList(ostream, "  permits", m.permits());
 
                 // sorted exports
                 Map<String, Set<String>> exports = new TreeMap<>();
-                for (ModuleExport export: m.exports()) {
+                for (ModuleExport export : md.exports()) {
                     String pkg = export.pkg();
                     String who = export.permit();
                     Set<String> permits = exports.computeIfAbsent(pkg, k -> new HashSet<>());
@@ -932,21 +934,21 @@ public enum LauncherHelper {
                         permits.add(who);
                     }
                 }
-                for (Map.Entry<String, Set<String>> entry: exports.entrySet()) {
+                for (Map.Entry<String, Set<String>> entry : exports.entrySet()) {
                     ostream.format("  exports %s", entry.getKey());
-                    Set<String> permits = entry.getValue();
-                    if (permits.isEmpty()) {
+                    Set<String> who = entry.getValue();
+                    if (who.isEmpty()) {
                         ostream.println();
                     } else {
-                        formatCommaList(ostream, " to", permits);
+                        formatCommaList(ostream, " to", who);
                     }
                 }
 
-                Map<String, Set<String>> services = m.services();
-                for (Map.Entry<String, Set<String>> entry: services.entrySet()) {
+                Map<String, Set<String>> services = md.services();
+                for (Map.Entry<String, Set<String>> entry : services.entrySet()) {
                     String sn = entry.getKey();
-                    for (String impl: entry.getValue()) {
-                        ostream.format("  provides service %s with %s%n",sn, impl);
+                    for (String impl : entry.getValue()) {
+                        ostream.format("  provides service %s with %s%n", sn, impl);
                     }
                 }
             }

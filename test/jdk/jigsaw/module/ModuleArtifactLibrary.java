@@ -23,55 +23,59 @@
  * questions.
  */
 
-import jdk.jigsaw.module.Module;
-import jdk.jigsaw.module.ModulePath;
+import jdk.jigsaw.module.*;
 
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
- * A container of modules that acts as a ModulePath for testing purposes.
+ * A container of modules that acts as a ModuleArtifactFinder for testing
+ * purposes.
  */
 
-class ModuleLibrary extends ModulePath {
-    private final Set<Module> modules = new HashSet<>();
-    private final Map<String, Module> namesToModules = new HashMap<>();
+class ModuleArtifactLibrary implements ModuleArtifactFinder {
+    private final Set<ExtendedModuleDescriptor> modules = new HashSet<>();
+    private final Map<String, ModuleArtifact> namesToArtifact = new HashMap<>();
 
-    ModuleLibrary(Module... mods) {
-        for (Module m: mods) {
-            String name = m.id().name();
-            if (!namesToModules.containsKey(name)) {
-                modules.add(m);
-                namesToModules.put(name, m);
+    ModuleArtifactLibrary(ExtendedModuleDescriptor... descriptors) {
+        for (ExtendedModuleDescriptor descriptor: descriptors) {
+            String name = descriptor.name();
+            if (!namesToArtifact.containsKey(name)) {
+                modules.add(descriptor);
+
+                URL url;
+                try {
+                     url = URI.create("module:///" + descriptor.id()).toURL();
+                } catch (MalformedURLException e) {
+                    throw new InternalError(e);
+                }
+
+                Set<String> packages = descriptor.exports().stream()
+                        .map(ModuleExport::pkg)
+                        .collect(Collectors.toSet());
+
+                ModuleArtifact artifact =
+                    new ModuleArtifact(descriptor, packages, url);
+
+                namesToArtifact.put(name, artifact);
             }
         }
     }
 
     @Override
-    public Module findModule(String name) {
-        return namesToModules.get(name);
+    public ModuleArtifact find(String name) {
+        return namesToArtifact.get(name);
     }
 
     @Override
-    public Set<Module> allModules() {
-        return Collections.unmodifiableSet(modules);
-    }
-
-    @Override
-    public URL locationOf(Module m) {
-        if (!modules.contains(m))
-            return null;
-        try {
-            return URI.create("module:///" + m.id()).toURL();
-        } catch (MalformedURLException e) {
-            throw new InternalError(e);
-        }
+    public Set<ModuleArtifact> allModules() {
+        return new HashSet<>(namesToArtifact.values());
     }
 }
 

@@ -58,20 +58,17 @@ public class Serial {
         test(ModuleId.parse("foo@1.1"));
         test(ModuleIdQuery.parse("foo@=1.1"));
 
-        Module m = (new Module.Builder()
-                    .include("p.one")
-                    .include("p.two")
-                    .include("p.private")
+        ModuleDescriptor descriptor =
+            (new ModuleDescriptor.Builder("foo")
                     .requires(new ModuleDependence(EnumSet.of(ModuleDependence.Modifier.PUBLIC),
                                                    "bar@>=2.3.0"))
                     .requires(new ServiceDependence(EnumSet.of(ServiceDependence.Modifier.OPTIONAL),
                                                     "baz.Finder"))
-                    .id("foo")
                     .export("p.one")
                     .export("p.two")
                     .service("alpha.Beta", "gamma.Delta")
                     .build());
-        test(m);
+        test(descriptor);
 
     }
 

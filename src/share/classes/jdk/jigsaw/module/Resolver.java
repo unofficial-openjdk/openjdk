@@ -26,161 +26,220 @@
 package jdk.jigsaw.module;
 
 import java.util.ArrayDeque;
-import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-
-import jdk.jigsaw.module.ModuleDependence.Modifier;
+import java.util.stream.Stream;
 
 /**
- * A resolver that constructs a module graph from an initial, possibly
- * empty module graph, a module path, and an input set of module names.
+ * The resolver used by {@link Configuration#resolve} and {@link Configuration#bind}.
  *
- * @apiNote The eventual API will need to define how errors are handled. This
- * is tied into how {@link ModulePath} will be specified as there are a slew
- * of possible errors that can arise when lazily searching a module path.
+ * @implNote This should be merged with Configuration or at least have the
+ * result of resolve or bind be a Configuration.
  */
-public final class Resolver {
 
-    // the initial (possibly empty module graph)
-    private final ModuleGraph initialGraph;
+class Resolver {
 
-    // the module path
-    private final ModulePath modulePath;
-
-    /**
-     * Creates a {@code Resolver} to construct module graphs from an
-     * initial module graph. Modules are located on the given module path.
-     */
-    public Resolver(ModuleGraph initialGraph, ModulePath modulePath) {
-        this.initialGraph = Objects.requireNonNull(initialGraph);
-        this.modulePath = Objects.requireNonNull(modulePath);
-    }
+    private final ModuleArtifactFinder beforeFinder;
+    private final Layer layer;
+    private final ModuleArtifactFinder afterFinder;
 
     /**
-     * Creates a {@code Resolver} that locates modules on the given
-     * module path.
+     * The result of resolution or binding.
      */
-    public Resolver(ModulePath modulePath) {
-        this(ModuleGraph.emptyModuleGraph(), modulePath);
-    }
+    static class Resolution {
+        final Resolver resolver;
+        final Map<String, ModuleArtifact> nameToArtifact = new HashMap<>();
+        final Set<ModuleDescriptor> selected = new HashSet<>();
+        Map<ModuleDescriptor, Set<ModuleDescriptor>> graph;
 
-    /**
-     * Returns the initial module graph.
-     */
-    ModuleGraph initialModuleGraph() {
-        return initialGraph;
-    }
-
-    /**
-     * Returns the module path.
-     */
-    ModulePath modulePath() {
-        return modulePath;
-    }
-
-    /**
-     * Resolve the given named modules.
-     *
-     * @throws ResolveException if a named module (or any its transitive
-     * dependencies) cannot be resolved.
-     */
-    public ModuleGraph resolve(Iterable<String> input) {
-
-        // create the visit stack
-        Deque<Module> q = new ArrayDeque<>();
-
-        // push the input modules onto the visit stack to get us started
-        for (String name: input) {
-            Module m = modulePath.findModule(Objects.requireNonNull(name));
-            if (m == null)
-                fail("Module %s does not exist", name);
-            q.offer(m);
+        Resolution(Resolver resolver) {
+            this.resolver = resolver;
         }
 
-        // run the resolver
-        Set<Module> newlySelected = resolve(q, initialGraph.modules());
+        /**
+         * Bind service provider modules (and their dependences) to
+         * create a new result.
+         *
+         * @implNote Not thread safe
+         */
+        Resolution bind() {
+            // copy the resolution result
+            Resolution r = new Resolution(resolver);
+            r.nameToArtifact.putAll(nameToArtifact);
+            r.selected.addAll(selected);
 
-        // return the resulting module graph
-        return finish(newlySelected);
+            // bind service and create a new readability graph
+            resolver.bind(r);
+            resolver.makeGraph(r);
+            return r;
+        }
+    }
+
+    Resolver(ModuleArtifactFinder beforeFinder,
+              Layer layer,
+              ModuleArtifactFinder afterFinder)
+    {
+        this.beforeFinder = Objects.requireNonNull(beforeFinder);
+        this.layer = Objects.requireNonNull(layer);
+        this.afterFinder = Objects.requireNonNull(afterFinder);
     }
 
     /**
-     * Resolve the given named modules.
-     *
-     * @throws ResolveException if a named module (or any its transitive
-     * dependencies) cannot be resolved.
+     * Given the given collection of modules (by name).
      */
-    public ModuleGraph resolve(String... input) {
-        return resolve(Arrays.asList(input));
+    Resolution resolve(Collection<String> input) {
+        Resolution r = new Resolution(this);
+
+        // create the visit stack to get us started
+        Deque<ModuleArtifact> q = new ArrayDeque<>();
+        for (String name: input) {
+            ModuleArtifact artifact = beforeFinder.find(name);
+            if (artifact == null)
+                artifact = afterFinder.find(name);
+            if (artifact == null)
+                fail("Module %s does not exist", name);
+            q.push(artifact);
+        }
+
+        resolve(r, q);
+        makeGraph(r);
+        return r;
     }
 
     /**
-     * Resolves a collection of modules.
+     * Poll the given {@code Deque} for modules to resolve. Resolution
+     * updates the given {@code Resolution} object with the result. On
+     * completion the {@code Deque} will be empty.
      *
-     * @param q The {@code Deque} with the modules to resolve
-     * @param resolvedModules The set of modules that this method should
-     *   treated as already resolved (in the initial module graph for
-     *   example)
-     * @return The set of modules resolved by this method
-     *
-     * @throws ResolveException
-     *
-     * @see ModuleGraph#bindServices()
+     * @return The module descriptors of the modules selected by this
+     * invovation of resolve
      */
-    Set<Module> resolve(Deque<Module> q, Set<Module> resolvedModules) {
-        // modules selected by this invocation of resolve
-        Set<Module> selected = new HashSet<>();
+    private Set<ModuleDescriptor> resolve(Resolution r, Deque<ModuleArtifact> q) {
+        Set<ModuleDescriptor> newlySelected = new HashSet<>();
 
         while (!q.isEmpty()) {
-            Module m = q.poll();
-            selected.add(m);
+            ModuleArtifact artifact = q.poll();
+            ModuleDescriptor descriptor = artifact.descriptor();
+
+            r.selected.add(descriptor);
+            newlySelected.add(descriptor);
+            r.nameToArtifact.put(descriptor.name(), artifact);
 
             // process dependencies
-            for (ModuleDependence d: m.moduleDependences()) {
+            for (ModuleDependence d: descriptor.moduleDependences()) {
                 String dn = d.query().name();
 
-                // find module on module path
-                Module other = modulePath.findModule(dn);
+                // in overrides?
+                ModuleArtifact other = beforeFinder.find(dn);
 
-                // if not found then check initial module graph
+                // already defined to the runtime
+                if (other == null && layer.findModule(dn) != null) {
+                    continue;
+                }
+
+                // normal finder
                 if (other == null)
-                    other = initialGraph.findModule(dn);
+                    other = afterFinder.find(dn);
 
-                if (other == null)
-                    fail("%s requires unknown module %s", m.id().name(), dn);
+                if (other == null) {
+                    fail("%s requires unknown module %s",
+                            descriptor.name(), dn);
+                }
 
-                if (!resolvedModules.contains(other) && !selected.contains(other))
+                ModuleDescriptor otherDescriptor = other.descriptor();
+                if (!r.selected.contains(otherDescriptor))  {
+                    r.selected.add(otherDescriptor);
+                    newlySelected.add(otherDescriptor);
                     q.offer(other);
+                    r.nameToArtifact.put(dn, artifact);
+                }
             }
         }
 
-        return selected;
+        return newlySelected;
     }
 
     /**
-     * Returns the {@code ModuleGraph} that is the result of the resolution process.
-     *
-     * @param modules the newly resolved modules
+     * Updates the given {@code Resolution} with modules located via the finders
+     * that are induced by service-use relationships.
      */
-    ModuleGraph finish(Set<Module> modules) {
-        // create the readability graph
-        Map<Module, Set<Module>> graph = makeGraph(modules);
+    private void bind(Resolution r) {
 
-        // check for permits violations
-        checkPermits(graph);
+        // modules bound to the runtime
+        Set<ModuleDescriptor> boundModules;
+        if (layer == null) {
+            boundModules = Collections.emptySet();
+        } else {
+            boundModules = layer.allModuleDescriptors();
+        }
 
-        // TBD check connectedness
-        // TDB check for cycles
+        // we will add to this as service provider modules are resolved
+        Set<ModuleDescriptor> resolved = new HashSet<>();
+        resolved.addAll(boundModules);
+        resolved.addAll(r.selected);
 
-        // sanity check implementation, -esa only
-        assert isSubsetOfInitialGraph(graph);
+        // create the visit stack
+        Deque<ModuleArtifact> q = new ArrayDeque<>();
 
-        return new ModuleGraph(this, graph);
+        // the set of services (name of service type) for which service providers
+        // have been searched for on the module path
+        Set<String> servicesSearched = new HashSet<>();
+
+        // the set of modules with service dependences that need to be visited
+        Set<ModuleDescriptor> serviceConsumersToVisit = new HashSet<>();
+
+        // seed with all consumers resolved so far
+        resolved.stream()
+                .filter(m -> !m.serviceDependences().isEmpty())
+                .forEach(serviceConsumersToVisit::add);
+
+        // iterate until there are no new service consumers to visit
+        while (!serviceConsumersToVisit.isEmpty()) {
+
+            // process the service dependences of service consumers
+            for (ModuleDescriptor m: serviceConsumersToVisit) {
+                for (ServiceDependence d: m.serviceDependences()) {
+                    String service = d.service();
+                    if (!servicesSearched.contains(service)) {
+
+                        // find all modules that provide "service", the order
+                        // doesn't matter here.
+                        Stream.concat(beforeFinder.allModules().stream(),
+                                afterFinder.allModules().stream())
+                                .forEach(artifact -> {
+                                    ModuleDescriptor descriptor = artifact.descriptor();
+                                    if (descriptor.services().containsKey(service)) {
+                                        if (!resolved.contains(descriptor)) {
+                                            q.offer(artifact);
+                                        }
+                                    }
+                                });
+
+                        servicesSearched.add(service);
+                    }
+                }
+            }
+            serviceConsumersToVisit.clear();
+
+            // there may be service providers to resolve
+            if (!q.isEmpty()) {
+                Set<ModuleDescriptor> newlySelected = resolve(r, q);
+
+                // newly selected modules may have service dependences
+                for (ModuleDescriptor descriptor: newlySelected) {
+                    if (!descriptor.serviceDependences().isEmpty()) {
+                        serviceConsumersToVisit.add(descriptor);
+                    }
+                }
+                resolved.addAll(newlySelected);
+            }
+        }
     }
 
     /**
@@ -190,60 +249,68 @@ public final class Resolver {
      * The readability graph is created by propagating "requires" through the
      * "public requires" edges of the module dependence graph. So if the module
      * dependence graph has m1 requires m2 && m2 requires public m3 then the
-     * resulting readability will contain m1 requires requires m2, m1 requires
-     * m3, and m2 requires m3.
+     * resulting readability graph will contain m1 requires requires m2, m1
+     * requires m3, and m2 requires m3.
      *
      * ###TBD Need to write up a detailed description of this algorithm.
      */
-    private Map<Module, Set<Module>> makeGraph(Set<Module> newlySelected) {
-        // name -> Module lookup for newly selected modules
-        Map<String, Module> nameToModule = new HashMap<>();
-        newlySelected.forEach(m -> nameToModule.put(m.id().name(), m));
+    private void makeGraph(Resolution r) {
+
+        // name -> ModuleDescriptor lookup for newly selected modules
+        Map<String, ModuleDescriptor> nameToModule = new HashMap<>();
+        r.selected.forEach(d -> nameToModule.put(d.name(), d));
 
         // the "requires" graph starts as a module dependence graph and
         // is iteratively updated to be the readability graph
-        Map<Module, Set<Module>> g1 = new HashMap<>();
+        Map<ModuleDescriptor, Set<ModuleDescriptor>> g1 = new HashMap<>();
 
         // the "requires public" graph, contains requires public edges only
-        Map<Module, Set<Module>> g2 = new HashMap<>();
+        Map<ModuleDescriptor, Set<ModuleDescriptor>> g2 = new HashMap<>();
 
-        // initialize the graphs with the read dependences from the initial
-        // module graph
-        for (Module m: initialGraph.modules()) {
-            // requires
-            Set<Module> reads = initialGraph.readDependences(m);
-            g1.put(m, reads);
+        // need "requires public" from the modules in parent layers as
+        // there may be selected modules that have a dependence.
+        Layer current = this.layer;
+        while (current != null) {
+            Configuration cf = current.configuration();
+            if (cf != null) {
+                for (ModuleDescriptor descriptor: cf.descriptors()) {
+                    // requires
+                    //Set<ModuleDescriptor> reads = cf.readDependences(descriptor);
+                    //g1.put(descriptor, reads);
 
-            // requires public
-            g2.put(m, new HashSet<>());
-            for (ModuleDependence d: m.moduleDependences()) {
-                if (d.modifiers().contains(Modifier.PUBLIC)) {
-                    String dn = d.query().name();
-                    Module other = initialGraph.findModule(dn);
-                    if (other == null)
-                        throw new InternalError(m.id() + " requires missing " + dn);
-                    g2.get(m).add(other);
+                    // requires public
+                    g2.put(descriptor, new HashSet<>());
+                    for (ModuleDependence d: descriptor.moduleDependences()) {
+                        if (d.modifiers().contains(ModuleDependence.Modifier.PUBLIC)) {
+                            String dn = d.query().name();
+                            ModuleArtifact artifact = current.findArtifact(dn);
+                            if (artifact == null)
+                                throw new InternalError();
+                            g2.get(descriptor).add(artifact.descriptor());
+                        }
+                    }
                 }
             }
+            current = current.parent();
         }
 
         // add the module dependence edges from the newly selected modules
-        for (Module m: newlySelected) {
+        for (ModuleDescriptor m: r.selected) {
             g1.put(m, new HashSet<>());
             g2.put(m, new HashSet<>());
             for (ModuleDependence d: m.moduleDependences()) {
                 String dn = d.query().name();
-                Module other = nameToModule.get(dn);
+                ModuleDescriptor other = nameToModule.get(dn);
+                if (other == null && layer != null)
+                    other = layer.findArtifact(dn).descriptor();
                 if (other == null)
-                    other = initialGraph.findModule(dn);
-                if (other == null)
-                    throw new InternalError(m.id() + " requires missing " + dn);
+                    throw new InternalError(dn + " not found??");
 
                 // requires (and requires public)
                 g1.get(m).add(other);
 
                 // requires public only
-                if (d.modifiers().contains(Modifier.PUBLIC)) {
+                if (d.modifiers().contains(ModuleDependence.Modifier.PUBLIC)) {
                     g2.get(m).add(other);
                 }
             }
@@ -251,15 +318,15 @@ public final class Resolver {
 
         // add to g1 until there are no more requires public to propagate
         boolean changed;
-        Map<Module, Set<Module>> changes = new HashMap<>();
+        Map<ModuleDescriptor, Set<ModuleDescriptor>> changes = new HashMap<>();
         do {
             changed = false;
-            for (Map.Entry<Module, Set<Module>> entry: g1.entrySet()) {
-                Module m1 = entry.getKey();
-                Set<Module> m1_requires = entry.getValue();
-                for (Module m2: m1_requires) {
-                    Set<Module> m2_requires_public = g2.get(m2);
-                    for (Module m3: m2_requires_public) {
+            for (Map.Entry<ModuleDescriptor, Set<ModuleDescriptor>> entry: g1.entrySet()) {
+                ModuleDescriptor m1 = entry.getKey();
+                Set<ModuleDescriptor> m1_requires = entry.getValue();
+                for (ModuleDescriptor m2: m1_requires) {
+                    Set<ModuleDescriptor> m2_requires_public = g2.get(m2);
+                    for (ModuleDescriptor m3: m2_requires_public) {
                         if (!m1_requires.contains(m3)) {
                             changes.computeIfAbsent(m1, k -> new HashSet<>()).add(m3);
                             changed = true;
@@ -268,8 +335,8 @@ public final class Resolver {
                 }
             }
             if (changed) {
-                for (Map.Entry<Module, Set<Module>> entry: changes.entrySet()) {
-                    Module m1 = entry.getKey();
+                for (Map.Entry<ModuleDescriptor, Set<ModuleDescriptor>> entry: changes.entrySet()) {
+                    ModuleDescriptor m1 = entry.getKey();
                     g1.get(m1).addAll(entry.getValue());
                 }
                 changes.clear();
@@ -277,48 +344,13 @@ public final class Resolver {
 
         } while (changed);
 
-        return g1;
+        // TBD - for each m1 -> m2 then need to check that m2 exports something to
+        // m1. Need to watch out for the "hollowed-out case" where m2 is an aggregator.
+
+        r.graph = g1;
     }
 
-    /**
-     * Check the module graph for permits violations.
-     *
-     * @throws ResolveException if m1 reads m2, and m2 has a permits that
-     * doesn't include the name of m1
-     */
-    private void checkPermits(Map<Module, Set<Module>> graph) {
-        for (Map.Entry<Module, Set<Module>> entry: graph.entrySet()) {
-            Module m1 = entry.getKey();
-            String name = m1.id().name();
-            for (Module m2: entry.getValue()) {
-                Set<String> permits = m2.permits();
-                if (!permits.isEmpty() && !permits.contains(name)) {
-                    fail("%s does not permit %s", m2.id(), name);
-                }
-            }
-        }
-    }
-
-    /**
-     * For debugging purposes, checks that the given graph is a superset of the
-     * initial graph. Also checks that the readability relationship of modules
-     * that were in the initial graph are identical in the new graph -- ie: the
-     * only new edges in the new graph should be from the newly selected
-     * modules.
-     */
-    private boolean isSubsetOfInitialGraph(Map<Module, Set<Module>> graph) {
-        if (!graph.keySet().containsAll(initialGraph.modules()))
-            return false;
-        for (Module m: initialGraph.modules()) {
-            Set<Module> s1 = initialGraph.readDependences(m);
-            Set<Module> s2 = graph.get(m);
-            if (!s1.equals(s2))
-                return false;
-        }
-        return true;
-    }
-
-    private void fail(String fmt, Object ... args) {
+    private static void fail(String fmt, Object ... args) {
         throw new ResolveException(fmt, args);
     }
 }

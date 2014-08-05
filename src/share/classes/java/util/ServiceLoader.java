@@ -37,10 +37,9 @@ import java.security.AccessController;
 import java.security.AccessControlContext;
 import java.security.PrivilegedAction;
 
-import jdk.jigsaw.module.internal.ModuleCatalog;
-
 import sun.misc.JavaLangAccess;
 import sun.misc.JavaLangReflectAccess;
+import sun.misc.ModuleCatalog;
 import sun.misc.SharedSecrets;
 import sun.reflect.CallerSensitive;
 import sun.reflect.Reflection;

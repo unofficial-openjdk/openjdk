@@ -23,26 +23,23 @@
  * questions.
  */
 
-package jdk.jigsaw.module.internal;
+package sun.misc;
+
+import jdk.jigsaw.module.ModuleDescriptor;
 
 import java.lang.reflect.Module;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import sun.misc.SharedSecrets;
-
 /**
- * A module catalog that supports defining and lookup of modules. Each
- * {@code ClassLoader} has an associated {@code ModuleCatalog} for modules
- * that are associated with that class loader.
+ * A module catalog to support {@link Class#getModule}. Each {@code
+ * ClassLoader} has an associated {@code ModuleCatalog} for modules that
+ * are associated with that class loader. This class will go away once the
+ * VM support for modules is further along.
  *
- * @apiNote The ModuleCatalog for the null class loader is defined here
+ * @implNote The ModuleCatalog for the null class loader is defined here
  * rather than java.lang.ClassLoader to avoid early initialization.
  */
 public class ModuleCatalog {
@@ -82,31 +79,38 @@ public class ModuleCatalog {
     public ModuleCatalog() { }
 
     /**
-     * Defines a new module with the given name, API packages, and services.
+     * Registers the module in this module catalog.
      */
-    public Module defineModule(jdk.jigsaw.module.ModuleGraph g,
-                               jdk.jigsaw.module.Module m)
-    {
+    public void register(Module m) {
+        ModuleDescriptor descriptor = m.descriptor();
+        String name = descriptor.name();
+        Set<String> packages = m.packages();
+
         writeLock.lock();
         try {
-            String name = m.id().name();
+            // validation
             if (moduleNames.contains(name))
-                throw new Error("Module " + name + " already defined");
-            for (String pkg: m.packages()) {
+                throw new Error("Module " + name + " already associated with class loader");
+            for (String pkg: packages) {
+                if (pkg.isEmpty())
+                    throw new Error("A module cannot include the <unnamed> package");
                 if (modulePackages.contains(pkg))
                     throw new Error(pkg + " already defined by another module");
             }
+
+            // update module catalog
             moduleNames.add(name);
-            modulePackages.addAll(m.packages());
+            modulePackages.addAll(packages);
+            packages.forEach(p -> packageToModule.put(p, m));
 
             // extend the services map
-            for (Map.Entry<String, Set<String>> entry: m.services().entrySet()) {
+            for (Map.Entry<String, Set<String>> entry: descriptor.services().entrySet()) {
                 String service = entry.getKey();
                 Set<String> providers = entry.getValue();
 
                 // if there are already service providers for this service
                 // then just create a new set that has the existing plus new
-                Set<String> existing = m.services().get(service);
+                Set<String> existing = loaderServices.get(service);
                 if (existing != null) {
                     Set<String> set = new HashSet<>();
                     set.addAll(existing);
@@ -116,11 +120,6 @@ public class ModuleCatalog {
                 loaderServices.put(service, Collections.unmodifiableSet(providers));
             }
 
-            Module reflectModule = SharedSecrets.getJavaLangReflectAccess()
-                                                .defineModule(g, m);
-            m.packages().forEach(p -> packageToModule.put(p, reflectModule));
-
-            return reflectModule;
         } finally {
             writeLock.unlock();
         }

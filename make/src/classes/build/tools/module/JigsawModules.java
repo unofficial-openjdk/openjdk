@@ -28,15 +28,16 @@ package build.tools.module;
 import build.tools.module.GenerateModulesXml.Module;
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.util.Arrays;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import jdk.jigsaw.module.ModuleArtifact;
+import jdk.jigsaw.module.ModuleArtifactFinder;
 import jdk.jigsaw.module.ModuleDependence;
+import jdk.jigsaw.module.ModuleDescriptor;
 import jdk.jigsaw.module.ModuleExport;
-import jdk.jigsaw.module.ModulePath;
 
 /**
  * Run on Jake modular image to generate build/data/checkdeps/modules.xml
@@ -45,29 +46,31 @@ import jdk.jigsaw.module.ModulePath;
 public class JigsawModules {
     final GenerateModulesXml gentool;
     final boolean skipPackages;
+
     JigsawModules(GenerateModulesXml gentool, boolean nopackages) {
         this.gentool = gentool;
         this.skipPackages = nopackages;
     }
     public Set<Module> load()  {
-        Set<jdk.jigsaw.module.Module> modules = ModulePath.installedModules().allModules();
+        Set<ModuleArtifact> modules = ModuleArtifactFinder.installedModules().allModules();
         return modules.stream()
             .map(m -> toModule(gentool, m))
             .collect(Collectors.toSet());
     }
 
-    private Module toModule(GenerateModulesXml gentool, jdk.jigsaw.module.Module m) {
+    private Module toModule(GenerateModulesXml gentool, ModuleArtifact m) {
         Module.Builder mb = new Module.Builder();
-        String modulename = m.id().name();
+        ModuleDescriptor descriptor = m.descriptor();
+        String modulename = descriptor.name();
         mb.name(modulename);
-        m.moduleDependences().stream()
+        descriptor.moduleDependences().stream()
             .forEach(d -> mb.require(d.query().name(),
                                      d.modifiers().contains(ModuleDependence.Modifier.PUBLIC)));
-        m.exports().stream()
+        descriptor.exports().stream()
             .filter(e -> e.permit() == null)
             .map(ModuleExport::pkg)
             .forEach(mb::export);
-        Map<String, List<ModuleExport>> exportsTo = m.exports().stream()
+        Map<String, List<ModuleExport>> exportsTo = descriptor.exports().stream()
             .filter(e -> e.permit() != null)
             .collect(Collectors.groupingBy(ModuleExport::pkg));
         exportsTo.entrySet().stream()

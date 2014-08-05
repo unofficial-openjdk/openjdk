@@ -23,7 +23,8 @@
 
 package container;
 
-import jdk.jigsaw.module.ModuleGraph;
+import jdk.jigsaw.module.Configuration;
+import jdk.jigsaw.module.ModuleDescriptor;
 
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -37,27 +38,27 @@ import java.util.Set;
 public final class MultiModuleClassLoader extends URLClassLoader {
     private final Set<String> packages;
 
-    public MultiModuleClassLoader(ModuleGraph g, ClassLoader parent) {
-        super(moduleURLs(g), parent);
+    public MultiModuleClassLoader(Configuration cf, ClassLoader parent) {
+        super(moduleURLs(cf), parent);
 
         // create map of packages
         Set<String> pkgs = new HashSet<>();
-        g.minusInitialModuleGraph().forEach(m -> {
-            m.packages().forEach( pkg -> {
+
+        for (ModuleDescriptor descriptor: cf.descriptors()) {
+            Set<String> contents = cf.findArtifact(descriptor.name()).packages();
+            for (String pkg: contents) {
                 if (pkgs.contains(pkg)) {
                     throw new Error(pkg + " defined by more than one module");
                 }
                 pkgs.add(pkg);
-            });
-        });
-        this.packages = pkgs;
+            }
+        }
 
-        // define modules
-        super.defineModules(g);
+        this.packages = pkgs;
     }
 
-    public MultiModuleClassLoader(ModuleGraph g) {
-        this(g, ClassLoader.getSystemClassLoader());
+    public MultiModuleClassLoader(Configuration cf) {
+        this(cf, ClassLoader.getSystemClassLoader());
     }
 
     @Override
@@ -88,11 +89,11 @@ public final class MultiModuleClassLoader extends URLClassLoader {
         return c;
     }
 
-    private static URL[] moduleURLs(ModuleGraph g) {
-        return g.minusInitialModuleGraph()
-                .stream()
-                .map(g.modulePath()::locationOf)
-                .toArray(URL[]::new);
+    private static URL[] moduleURLs(Configuration cf) {
+        return cf.descriptors()
+                 .stream()
+                 .map(md -> cf.findArtifact(md.name()).location())
+                 .toArray(URL[]::new);
     }
 
     static {

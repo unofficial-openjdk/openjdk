@@ -43,10 +43,7 @@ $JAVAC -d mods/m1 `find $TESTSRC/src/m1 -name "*.java"`
 mkdir -p mods/m2
 $JAVAC -d mods/m2 `find $TESTSRC/src/m2 -name "*.java"`
 
-mkdir -p mods/m3
-$JAVAC -d mods/m3 `find $TESTSRC/src/m3 -name "*.java"`
-
-# Need to use -mods to ensure that m2 & m3 are resolved
-$JAVA -mp mods -mods m2,m3 -m m1/jdk.one.Main
+# Need to use -mods to ensure that m2 is resolved
+$JAVA -mp mods -mods m2 -m m1/jdk.one.Main
 
 exit 0
