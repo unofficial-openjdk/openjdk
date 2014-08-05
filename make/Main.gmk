@@ -86,6 +86,14 @@ jigsaw-only: start-make
 	    -f BuildJigsaw.gmk $(JIGSAW_TARGET))
 	@$(call TargetExit)
 
+jimages: jigsaw jimages-only
+jimages-only: start-make
+	@$(call TargetEnter)
+	@($(CD) $(SRC_ROOT)/make && $(BUILD_LOG_WRAPPER) $(MAKE) $(MAKE_ARGS) \
+	    -f BuildJigsaw.gmk jimages)
+	@$(call TargetExit)
+
+
 langtools: langtools-only
 langtools-only: start-make
 	@$(call TargetEnter)

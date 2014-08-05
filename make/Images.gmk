@@ -34,7 +34,7 @@ include MakeBase.gmk
 
 ############################################################################
 
-JDK_MODULES := java.se java.smartcardio jdk.deploy jdk.httpserver jdk.sctp \
+JDK_MODULES := java.se java.smartcardio jdk.compact3 jdk.deploy jdk.httpserver jdk.sctp \
                jdk.security.auth jdk.runtime
 
 # providers
@@ -64,7 +64,7 @@ ifndef OPENJDK
   endif
 endif
 
-MODS := $(shell $(ECHO) "$(JDK_MODULES)" | $(SED) -e 's| |,|g')
+MODS := $(shell $(ECHO) "$(JDK_MODULES)" | $(SED) -e 's| \+|,|g')
 
 $(IMAGES_OUTPUTDIR)/_jdk-images-create.marker: $(JMODS)
 	$(ECHO) Creating jdk-module-image
@@ -74,5 +74,16 @@ $(IMAGES_OUTPUTDIR)/_jdk-images-create.marker: $(JMODS)
 	$(TOUCH) $@
 
 jdk-image: $(IMAGES_OUTPUTDIR)/_jdk-images-create.marker
+
+################################################################################
+JDK_MODULE_JIMAGE_DIR := $(OUTPUT_ROOT)/jigsaw/images/jdk-module-jimage
+
+$(IMAGES_OUTPUTDIR)/_jdk-jimages-create.marker: $(JMODS)
+	$(ECHO) Creating jdk-module-jimage
+	$(RM) -r $(JDK_MODULE_JIMAGE_DIR)
+	$(JLINK) --format jimage --output $(JDK_MODULE_JIMAGE_DIR) \
+            --module-path $(JDK_OUTPUTDIR)/jmods --mods "$(MODS)"
+	$(TOUCH) $@
+jdk-jimage: $(IMAGES_OUTPUTDIR)/_jdk-jimages-create.marker
 
 ################################################################################

@@ -233,7 +233,11 @@ module-images:
 	+($(CD) $(SRC_ROOT)/make && $(MAKE) -I $(JDK_TOPDIR)/make \
 	    -f Images.gmk SHUFFLED=true)
 
-.PHONY: jmods module-images
+module-jimages:
+	+($(CD) $(SRC_ROOT)/make && $(MAKE) -I $(JDK_TOPDIR)/make \
+	    -f Images.gmk jdk-jimage SHUFFLED=true)
+
+.PHONY: jmods module-images module-jimage
 
 ################################################################################
 # Legacy image targets
@@ -354,6 +358,8 @@ jmods: exploded-image java-modules
 
 module-images: jmods
 
+module-jimages: jmods
+
 ################################################################################
 # Virtual targets without recipes
 
@@ -386,7 +392,9 @@ exploded-image: $(ALL_MODULE_TARGETS)
 
 images: module-images
 
-.PHONY: gensrc jdk.hotspot.agent-java java libs launchers exploded-image images \
+jimages: module-jimages
+
+.PHONY: gensrc jdk.hotspot.agent-java java libs launchers exploded-image images jimages \
      $(ALL_MODULE_TARGETS)
 
 ################################################################################
