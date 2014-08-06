@@ -534,6 +534,9 @@ module jdk.xml.bind {
 
 // wsgen and wsimport
 module jdk.xml.ws {
+    // reflection on com.sun.tools.javac.Main
+    // this dependence should be removed when replaced with javax.tools.Compiler
+    requires jdk.compiler;
     include com.sun.istack.internal.ws.*,
             com.sun.tools.internal.ws.**;
     uses com.sun.tools.internal.ws.wscompile.Plugin;
@@ -570,6 +573,8 @@ module java.xml.ws {
             com.sun.org.glassfish.**,
             com.sun.xml.internal.stream.**,
             com.sun.xml.internal.ws.**;
+
+    uses javax.xml.ws.spi.Provider;
 }
 
 module java.activation {
