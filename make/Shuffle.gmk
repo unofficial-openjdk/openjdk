@@ -626,6 +626,11 @@ $(eval $(call SetupShuffleFiles,COPY_LIBNIO_JAVA_WINDOWS, \
     DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.base/windows/native/libnio, \
     FILES := $(wildcard $(JDK_TOPDIR)/src/windows/native/java/nio/*)))
 
+$(eval $(call SetupShuffleFiles,COPY_LIBNIO_MACOSX, \
+    SRC := $(JDK_TOPDIR)/src/macosx/native/sun/nio, \
+    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.base/macosx/native/libnio, \
+    FILES := $(wildcard $(JDK_TOPDIR)/src/macosx/native/sun/nio/ch/*)))
+
 $(eval $(call SetupShuffleFiles,COPY_LIBNIO_AIX, \
     SRC := $(JDK_TOPDIR)/src/aix/native/sun/nio, \
     DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.base/aix/native/libnio, \
