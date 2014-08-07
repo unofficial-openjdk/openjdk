@@ -726,6 +726,7 @@ class DatagramSocket {
                     } // end of while
                 }
             }
+            DatagramPacket tmp = null;
             if ((connectState == ST_CONNECTED_NO_IMPL) || explicitFilter) {
                 // We have to do the filtering the old fashioned way since
                 // the native impl doesn't support connect or the connect
@@ -740,15 +741,11 @@ class DatagramSocket {
                     if ((!connectedAddress.equals(peekAddress)) ||
                         (connectedPort != peekPort)) {
                         // throw the packet away and silently continue
-                        DatagramPacket tmp = new DatagramPacket(
+                        tmp = new DatagramPacket(
                                                 new byte[1024], 1024);
                         getImpl().receive(tmp);
                         if (explicitFilter) {
-                            bytesLeftToFilter -= tmp.getLength();
-                            if (bytesLeftToFilter <= 0 ||
-                                getImpl().dataAvailable() <= 0)
-                            {
-                                explicitFilter = false;
+                            if (checkFiltering(tmp)) {
                                 stop = true;
                             }
                         }
@@ -760,7 +757,21 @@ class DatagramSocket {
             // If the security check succeeds, or the datagram is
             // connected then receive the packet
             getImpl().receive(p);
+            if (explicitFilter && tmp == null) {
+                // packet was not filtered, account for it here
+                checkFiltering(p);
+            }
         }
+    }
+
+    // Update the filter information and return true if finished
+    private boolean checkFiltering(DatagramPacket p) throws SocketException {
+        bytesLeftToFilter -= p.getLength();
+        if (bytesLeftToFilter <= 0 || getImpl().dataAvailable() <= 0) {
+            explicitFilter = false;
+            return true;
+        }
+        return false;
     }
 
     /**
