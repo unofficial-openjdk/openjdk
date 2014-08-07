@@ -26,7 +26,7 @@ package jdk.one;
 import java.lang.reflect.Module;
 
 /**
- * Basic test of java.lang.reflect.Module#canRead and setReadable.
+ * Basic test of java.lang.reflect.Module#canRead and addReads.
  */
 public class Main {
     public static void main(String[] args) throws Exception {
@@ -37,12 +37,12 @@ public class Main {
         Module base = Object.class.getModule();
         assertTrue(base != null);
         assertTrue(m1.canRead(base));
-        base.setReadable(); // no-op
+        m1.addReads(base); // no-op
         assertTrue(m1.canRead(base));
 
         // a module can read itself
         assertTrue(m1.canRead(m1));
-        m1.setReadable(); // no-op
+        m1.addReads(m1); // no-op
         assertTrue(m1.canRead(m1));
 
         // unnamed module is readable
@@ -60,7 +60,7 @@ public class Main {
         } catch (IllegalAccessException e) { }
 
         // make m2 readable
-        m2.setReadable();
+        m1.addReads(m2);
         assertTrue(m1.canRead(m2));
 
         // jdk.one.C should be accessible now

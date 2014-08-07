@@ -38,8 +38,8 @@ public interface JavaLangReflectAccess {
     void setDefined(Module m);
 
     void addReadsModule(Module m1, Module m2);
-    void addExport(Module m, String pkg, Module permit);
-    Set<Module> exports(Module m, String pkg);
+    void addExport(Module m, String pkg, Module who);
+    boolean isExported(Module m, String pkg, Module who);
 
     boolean uses(Module m, String service);
     Set<String> provides(Module m, String service);

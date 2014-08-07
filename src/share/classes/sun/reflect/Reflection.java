@@ -264,20 +264,8 @@ public class Reflection {
                 return false;
         }
 
-        // check exports
-        Set<Module> who = reflectAccess.exports(m2, packageName(memberClass));
-
-        // not exported
-        if (who == null)
-            return false;
-
-        // no restrictions
-        if (who.isEmpty())
-            return true;
-
-        // check exported to m1
-        // assert !who.contains(null);
-        return who.contains(m1);
+        // check that m1 package is exported to m1
+        return reflectAccess.isExported(m2, packageName(memberClass), m1);
     }
 
     private static String packageName(Class<?> c) {

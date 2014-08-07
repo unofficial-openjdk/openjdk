@@ -27,34 +27,38 @@ package java.lang.reflect;
 
 import java.security.Permission;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.WeakHashMap;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
+import jdk.jigsaw.module.Layer;
+import jdk.jigsaw.module.ModuleArtifact;
 import jdk.jigsaw.module.ModuleDescriptor;
-
 import jdk.jigsaw.module.ServiceDependence;
+
 import sun.misc.JavaLangAccess;
 import sun.misc.ModuleCatalog;
 import sun.misc.SharedSecrets;
-import sun.reflect.CallerSensitive;
-import sun.reflect.Reflection;
 
 /**
  * Represents a runtime module.
  *
  * <p> {@code Module} does not define a public constructor. Instead {@code
  * Module} objects are constructed automatically by the Java Virtual Machine as
- * modules are defined by the {@code Layer.create}. </p>
+ * modules are defined by {@link jdk.jigsaw.module.Layer#create Layer.create}. </p>
  *
  * @apiNote Need to see if this API is consistent with other APis in
- *  java.lang.reflect, in particular array vs. collection and whether to
- *  use getXXX instead of XXX.
+ * java.lang.reflect, in particular array vs. collection and whether to
+ * use getXXX instead of XXX.
  *
- *  @apiNote The types in {@code java.lang.reflect} usually return an array
- *  rather than collections. Also the convention is to use getXXX for getters.
+ * @apiNote The types in {@code java.lang.reflect} usually return an array
+ * rather than collections. Also the convention is to use getXXX for getters.
  *
  * @since 1.9
  * @see java.lang.Class#getModule
@@ -67,36 +71,46 @@ public final class Module {
     private static final Permission ADD_READS_PERMISSION =
         new ReflectPermission("addReadsModule");
 
-    private final ClassLoader loader;
-    private final ModuleDescriptor descriptor;
-    private final Set<String> packages;
-
     private final String name;
+    private final ClassLoader loader;
+
+    // handle to module in VM, this will go away
     private final long handle;
 
+    // initialized lazily for modules defined by VM during bootstrapping
+    private volatile ModuleDescriptor descriptor;
+    private volatile Set<String> packages;
+
     // the modules that this module reads
-    // TBD - this needs to be a weak map.
-    private final Map<Module, Object> reads = new ConcurrentHashMap<>();
+    private final Map<Module, Boolean> reads = new WeakHashMap<>();
 
-    // this module's exported, cached here for access checks
-    private final Map<String, Set<Module>> exports = new ConcurrentHashMap<>();
+    // this module's exports, cached here for access checks
+    private final Map<String, Set<Module>> exports = new HashMap<>();
 
+    // use RW locks (changes are rare)
+    private final ReadWriteLock lock = new ReentrantReadWriteLock();
+    private final Lock readLock = lock.readLock();
+    private final Lock writeLock = lock.writeLock();
+
+    // indicates whether the Module is fully defined - will be used later
+    // by snapshot APIs (JVM TI for example)
     private volatile boolean defined;
 
-    // called by VM during startup?
+    // called by VM during startup for at least java.base
     Module(ClassLoader loader, String name) {
         this.loader = loader;
-        this.descriptor = null;
-        this.packages = null;
-
         this.name = name;
         this.handle = 0L;
     }
 
     Module(ClassLoader loader, ModuleDescriptor descriptor, Set<String> packages) {
+        this.name = descriptor.name();
         this.loader = loader;
         this.descriptor = descriptor;
         this.packages = packages;
+        this.handle = sun.misc.VM.defineModule(name,
+                                               loader,
+                                               packages.toArray(new String[0]));
 
         // register this Module in the loader's catalog - this will go away
         // once the Class#getModule has an implementation in the VM
@@ -107,11 +121,23 @@ public final class Module {
             catalog = langAccess.getModuleCatalog(loader);
         }
         catalog.register(this);
+    }
 
-        this.name = descriptor.name();
-        this.handle = sun.misc.VM.defineModule(name,
-                                               loader,
-                                               packages.toArray(new String[0]));
+    /**
+     * Initialize descriptor and packages for modules that are defined during
+     * VM bootstrapping.
+     */
+    private void postBootInit() {
+        Layer bootLayer = Layer.bootLayer();
+        if (bootLayer == null)
+            throw new InternalError("boot layer not set");
+
+        ModuleArtifact artifact = bootLayer.findArtifact(name);
+        if (artifact == null)
+            throw new InternalError("boot layer does not include: " + name);
+
+        this.descriptor = artifact.descriptor();
+        this.packages = artifact.packages();
     }
 
     /**
@@ -132,6 +158,11 @@ public final class Module {
      * Returns the module descriptor from which this {@code Module} was defined.
      */
     public ModuleDescriptor descriptor() {
+        ModuleDescriptor descriptor = this.descriptor;
+        if (descriptor == null) {
+            postBootInit();
+            descriptor = this.descriptor;
+        }
         return descriptor;
     }
 
@@ -139,25 +170,9 @@ public final class Module {
      * Returns the set of packages that this module includes.
      */
     public Set<String> packages() {
+        if (descriptor == null)
+            postBootInit();
         return packages;
-    }
-
-    /**
-     * Makes this module readable to the module of the caller. This method
-     * does nothing if the caller is this module, the caller already reads
-     * this module, or the caller is in the <em>unnamed module</em> and this
-     * module does not have a permits.
-     */
-    @CallerSensitive
-    public void setReadable() {
-        Module caller = Reflection.getCallerClass().getModule();
-        if (caller == this || (caller != null && caller.reads.containsKey(this)))
-            return;
-
-        if (caller != null) {
-            sun.misc.VM.addReadsModule(caller.handle, this.handle);
-            caller.reads.putIfAbsent(this, Boolean.TRUE);
-        }
     }
 
     /**
@@ -172,7 +187,48 @@ public final class Module {
             SecurityManager sm = System.getSecurityManager();
             if (sm != null)
                 sm.checkPermission(ADD_READS_PERMISSION);
-            reads.putIfAbsent(target, Boolean.TRUE);
+
+            implAddReads(target);
+        }
+    }
+
+    void implAddReads(Module target) {
+        writeLock.lock();
+        try {
+            sun.misc.VM.addReadsModule(this.handle, target.handle);
+            reads.put(target, Boolean.TRUE);
+        } finally {
+            writeLock.unlock();
+        }
+    }
+
+    void implAddExports(String pkg, Module who) {
+        writeLock.lock();
+        try {
+            long h2 = (who != null) ? who.handle : 0L;
+            sun.misc.VM.addExports(this.handle, pkg, h2);
+            Set<Module> permits = exports.computeIfAbsent(pkg, k -> new HashSet<>());
+            if (who != null)
+                permits.add(who);
+        } finally {
+            writeLock.unlock();
+        }
+    }
+
+    boolean isExported(String pkg, Module who) {
+        readLock.lock();
+        try {
+            Set<Module> permits = exports.get(pkg);
+            if (permits == null)
+                return false; // not exported
+
+            if (permits.isEmpty())
+                return true;  // exported
+
+            //assert !permits.contains(null);
+            return permits.contains(who);
+        } finally {
+            readLock.unlock();
         }
     }
 
@@ -180,20 +236,33 @@ public final class Module {
      * Indicates if this {@code Module} reads the given {@code Module}.
      *
      * <p> Returns {@code true} if {@code m} is {@code null} (the unnamed
-     * readable is readable to all modules, or {@code m} is this module (a
+     * readable is readable to all modules), or {@code m} is this module (a
      * module can read itself). </p>
      *
-     * @see #setReadable()
+     * @see #addReads
      */
     public boolean canRead(Module target) {
-        return target == null || target == this || reads.containsKey(target);
+        if (target == null || target == this)
+            return true;
+
+        readLock.lock();
+        try {
+            return reads.containsKey(target);
+        } finally {
+            readLock.unlock();
+        }
     }
 
     /**
      * Returns the set of modules that this module reads.
      */
     public Set<Module> reads() {
-        return new HashSet<>(reads.keySet());
+        readLock.lock();
+        try {
+            return new HashSet<>(reads.keySet());
+        } finally {
+            readLock.unlock();
+        }
     }
 
     Set<String> uses() {
@@ -202,32 +271,16 @@ public final class Module {
         if (uses != null)
             return uses;
 
-        if (descriptor == null) {
-            return Collections.emptySet();
-        } else {
-            uses = descriptor().serviceDependences()
-                               .stream()
-                               .map(ServiceDependence::service)
-                               .collect(Collectors.toSet());
-            uses = Collections.unmodifiableSet(uses);
-            this.uses = uses;
-            return uses;
-        }
+        uses = descriptor().serviceDependences()
+                           .stream()
+                           .map(ServiceDependence::service)
+                           .collect(Collectors.toSet());
+        uses = Collections.unmodifiableSet(uses);
+        this.uses = uses;
+        return uses;
+
     }
     private volatile Set<String> uses;
-
-    /**
-     * Returns a map of the service providers that the module provides.
-     * The map key is the type name of the service interface. The map key
-     * is the set of type names for the service implementations.
-     */
-    Map<String, Set<String>> provides() {
-        if (descriptor== null) {
-            return Collections.emptyMap();
-        } else {
-            return descriptor().services();
-        }
-    }
 
     /**
      * Return the string representation of the module.
@@ -255,24 +308,15 @@ public final class Module {
                 }
                 @Override
                 public void addReadsModule(Module m1, Module m2) {
-                    sun.misc.VM.addReadsModule(m1.handle, m2.handle);
-                    m1.reads.put(m2, Boolean.TRUE);
+                   m1.implAddReads(m2);
                 }
                 @Override
-                public void addExport(Module m, String pkg, Module permit) {
-                    long handle = (permit != null) ? permit.handle : 0L;
-                    sun.misc.VM.addExports(m.handle, pkg, handle);
-                    Set<Module> permits = m.exports.computeIfAbsent(pkg, k -> new HashSet<>());
-                    if (permit != null) {
-                        synchronized (permits) {
-                            permits.add(permit);
-                        }
-                    }
+                public void addExport(Module m, String pkg, Module who) {
+                    m.implAddExports(pkg, who);
                 }
                 @Override
-                public Set<Module> exports(Module m, String pkg) {
-                    // returns null if not exported
-                    return m.exports.get(pkg);
+                public boolean isExported(Module m, String pkg, Module who) {
+                    return m.isExported(pkg, who);
                 }
                 @Override
                 public boolean uses(Module m, String sn) {
@@ -280,7 +324,7 @@ public final class Module {
                 }
                 @Override
                 public Set<String> provides(Module m, String sn) {
-                    Set<String> provides = m.provides().get(sn);
+                    Set<String> provides = m.descriptor().services().get(sn);
                     if (provides == null) {
                         return Collections.emptySet();
                     } else {
