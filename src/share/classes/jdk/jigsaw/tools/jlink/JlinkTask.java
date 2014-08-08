@@ -53,7 +53,8 @@ import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.nio.file.attribute.PosixFilePermissions;
+import java.nio.file.attribute.PosixFileAttributeView;
+import java.nio.file.attribute.PosixFilePermission;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -467,6 +468,21 @@ class JlinkTask {
         }
     }
 
+    /**
+     * chmod ugo+x file
+     */
+    private void setExecutable(Path file) {
+        try {
+            Set<PosixFilePermission> perms = Files.getPosixFilePermissions(file);
+            perms.add(PosixFilePermission.OWNER_EXECUTE);
+            perms.add(PosixFilePermission.GROUP_EXECUTE);
+            perms.add(PosixFilePermission.OTHERS_EXECUTE);
+            Files.setPosixFilePermissions(file, perms);
+        } catch (IOException ioe) {
+            throw new UncheckedIOException(ioe);
+        }
+    }
+
     private void createImage() throws IOException {
         final Path output = options.output;
 
@@ -491,6 +507,21 @@ class JlinkTask {
         // write installed modules file
         imageHelper.writeInstalledModules(output);
 
+        // launchers in the bin directory need execute permission
+        Path bin = output.resolve("bin");
+        if (Files.getFileStore(bin).supportsFileAttributeView(PosixFileAttributeView.class)) {
+            Files.list(bin)
+                 .filter(f -> !f.toString().endsWith(".diz"))
+                 .filter(f -> Files.isRegularFile(f))
+                 .forEach(this::setExecutable);
+
+            // jspawnhelper
+            Path jspawnhelper = output.resolve("lib").resolve("jspawnhelper");
+            if (Files.exists(jspawnhelper))
+                setExecutable(jspawnhelper);
+        }
+
+        // application script
         for (Map.Entry<String,String> e : options.launchers.entrySet()) {
             // create a script to launch main class to support multiple commands
             // before the proper launcher support is added.
@@ -505,7 +536,7 @@ class JlinkTask {
                                                             StandardOpenOption.CREATE_NEW)) {
                 writer.write(sb.toString());
             }
-            Files.setPosixFilePermissions(cmd, PosixFilePermissions.fromString("r-xr-xr-x"));
+            setExecutable(cmd);
         }
     }
 
