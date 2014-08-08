@@ -39,7 +39,6 @@ import sun.misc.SharedSecrets;
  * then all modules are associated with the same class loader. </p>
  *
  * <pre>{@code
- *
  *     ModuleArtifactFinder finder =
  *         ModuleArtifactFinder.ofDirectories(dir1, dir2, dir3);
  *
@@ -51,10 +50,9 @@ import sun.misc.SharedSecrets;
  *
  *     ClassLoader loader = ...
  *
- *     Layer layer = Layer.create(Layer.bootLayer(), cf, m -> loader);
+ *     Layer layer = Layer.create(cf, m -> loader);
  *
  *     Class<?> c = layer.findLoader("myapp").loadClass("app.Main");
- *
  * }</pre>
  */
 
@@ -64,9 +62,8 @@ public final class Layer {
         SharedSecrets.getJavaLangReflectAccess();
 
     private static final Layer EMPTY_LAYER =
-        new Layer(null, null, Collections.emptyMap());
+        new Layer(null, Collections.emptyMap());
 
-    private final Layer parent;
     private final Configuration cf;
     private final Map<String, Module> nameToModule;
 
@@ -88,8 +85,7 @@ public final class Layer {
      *
      * @return a map of module name to runtime {@code Module}
      */
-    private static Map<String, Module> defineModules(Layer parent,
-                                                     Configuration cf,
+    private static Map<String, Module> defineModules(Configuration cf,
                                                      ClassLoaderFinder clf)
     {
         Map<String, Module> map = new HashMap<>();
@@ -119,7 +115,8 @@ public final class Layer {
                 if (permit == null) {
                     reflectAccess.addExport(m, pkg, null);
                 } else {
-                    // only export to modules that are in this configuration
+                    // only export to modules that are in this layer
+                    // (no forward references)
                     Module m2 = map.get(permit);
                     if (m2 != null)
                         reflectAccess.addExport(m, pkg, m2);
@@ -130,6 +127,7 @@ public final class Layer {
             for (ModuleDescriptor other: cf.readDependences(descriptor)) {
                 String dn = other.name();
                 Module m2 = map.get(dn);
+                Layer parent = cf.layer();
                 if (m2 == null && parent != null)
                     m2 = parent.findModule(other.name());
                 if (m2 == null) {
@@ -151,8 +149,7 @@ public final class Layer {
     /**
      * Creates a new {@code Layer} object.
      */
-    private Layer(Layer parent, Configuration cf, Map<String, Module> map) {
-        this.parent = parent;
+    private Layer(Configuration cf, Map<String, Module> map) {
         this.cf = cf;
         this.nameToModule = map;
     }
@@ -171,14 +168,12 @@ public final class Layer {
      * @apiNote The exact exceptions are TBD. Also need to discuss the topic of whether
      * this method is assumed to be atomic. For now, an exception thrown will leave
      * the VM in a state where some (but not all) modules may have been defined.
-     *
-     * @apiNote The parent Layer should not be in the signature.
      */
-    public static Layer create(Layer parent, Configuration cf, ClassLoaderFinder clf) {
+    public static Layer create(Configuration cf, ClassLoaderFinder clf) {
         Objects.requireNonNull(cf);
         Objects.requireNonNull(clf);
-        Map<String, Module> map = defineModules(parent, cf, clf);
-        return new Layer(parent, cf, map);
+        Map<String, Module> map = defineModules(cf, clf);
+        return new Layer(cf, map);
     }
 
     /**
@@ -190,11 +185,15 @@ public final class Layer {
     }
 
     /**
-     * Returns this layer's parent, {@code null} for the {@link #emptyLayer()
-     * empty-layer}.
+     * Returns this layer's parent. If this layer is the {@link #emptyLayer empty-layer}
+     * then its parent is {@code null}.
      */
     public Layer parent() {
-        return parent;
+        if (cf == null) {
+            return null;
+        } else {
+            return cf.layer();
+        }
     }
 
     /**
@@ -204,6 +203,7 @@ public final class Layer {
      */
     public Module findModule(String name) {
         Module m = nameToModule.get(Objects.requireNonNull(name));
+        Layer parent = parent();
         if (m == null && parent != null)
             m = parent.findModule(name);
         return m;
@@ -215,13 +215,16 @@ public final class Layer {
      * in this layer then the {@link #parent} layer is checked. Returns {@code
      * null} if not found.
      */
-    public ModuleArtifact findArtifact(String name) {
+    ModuleArtifact findArtifact(String name) {
         if (cf == null) {
             return null;
         } else {
             ModuleArtifact artifact = cf.findArtifact(name);
-            if (artifact == null && parent != null)
-                artifact = parent.findArtifact(name);
+            if (artifact == null) {
+                Layer parent = parent();
+                if (parent != null)
+                    artifact = parent.findArtifact(name);
+            }
             return artifact;
         }
     }
@@ -234,15 +237,29 @@ public final class Layer {
      * @throws IllegalArgumentException if a module of the given name is not
      * defined in this layer or any parent of this layer.
      *
+     * @throws SecurityException if denied by the security manager
+     *
      * @apiNote {@code null} is a valid return from this method.
      */
     public ClassLoader findLoader(String name) {
         Module m = nameToModule.get(name);
-        if (m == null && parent != null)
-            return parent.findLoader(name);
-        if (m == null)
-            throw new IllegalArgumentException();
-        return m.classLoader();
+        if (m == null) {
+            Layer parent = parent();
+            if (parent != null)
+                return parent.findLoader(name);
+            throw new IllegalArgumentException(name + " not known to this Layer");
+        }
+
+        ClassLoader loader = m.classLoader();
+        if (m != null) {
+            SecurityManager sm = System.getSecurityManager();
+            if (sm != null) {
+                // TBD: Will likely need a permission check equivalent to
+                // that done in Class#getClassLoader. This will make this
+                // method @CallerSensitive
+            }
+        }
+        return loader;
     }
 
     /**
@@ -251,6 +268,7 @@ public final class Layer {
      */
     Set<ModuleDescriptor> allModuleDescriptors() {
         Set<ModuleDescriptor> result = new HashSet<>();
+        Layer parent = parent();
         if (parent != null)
             result.addAll(parent.allModuleDescriptors());
         if (cf != null)
@@ -260,7 +278,7 @@ public final class Layer {
 
 
     /**
-     * Returns an <em>empty</em> {@code Layer}.
+     * Returns the <em>empty</em> {@code Layer}.
      */
     public static Layer emptyLayer() {
         return EMPTY_LAYER;
@@ -289,12 +307,15 @@ public final class Layer {
      * Sets the boot layer. The boot layer typically includes the modules installed
      * in the runtime image and any modules on the launcher module path.
      *
+     * @throws IllegalArgumentException if the parent layer is not the empty layer
      * @throws IllegalStateException if the boot layer is already set
      * @throws SecurityException if denied by the security manager
      *
      * @apiNote Need to decide if we need this.
      */
     public static void setBootLayer(Layer layer) {
+        if (layer.parent() != Layer.emptyLayer())
+            throw new IllegalArgumentException("boot layer must have emptyLayer as parent");
         SecurityManager sm = System.getSecurityManager();
         if (sm != null)
             sm.checkPermission(new RuntimePermission("setBootLayer"));

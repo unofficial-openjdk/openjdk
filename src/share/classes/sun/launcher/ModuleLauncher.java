@@ -166,7 +166,7 @@ class ModuleLauncher {
         }
 
         // define to runtime
-        Layer bootLayer = Layer.create(null, cf, moduleToLoaders::get);
+        Layer bootLayer = Layer.create(cf, moduleToLoaders::get);
 
         // if -mods or -m is specified then we have to hide the linked modules
         // that are not selected. For now we just define the modules without

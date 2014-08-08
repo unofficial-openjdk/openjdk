@@ -132,7 +132,7 @@ public final class Module {
         if (bootLayer == null)
             throw new InternalError("boot layer not set");
 
-        ModuleArtifact artifact = bootLayer.findArtifact(name);
+        ModuleArtifact artifact = bootLayer.configuration().findArtifact(name);
         if (artifact == null)
             throw new InternalError("boot layer does not include: " + name);
 

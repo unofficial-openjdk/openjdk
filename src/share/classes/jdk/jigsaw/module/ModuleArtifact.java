@@ -28,6 +28,7 @@ package jdk.jigsaw.module;
 import java.net.URL;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -56,10 +57,35 @@ public final class ModuleArtifact {
         this(mi, mi.name(), packages, url);
     }
 
-    public ModuleArtifact(ExtendedModuleDescriptor descriptor, Set<String> packages, URL url) {
-        this.descriptor = descriptor;
-        this.packages = Collections.unmodifiableSet(packages);
-        this.url = url;
+    /**
+     * Constructs a new instance of this class.
+     *
+     * @throws IllegalArgumentException if {@code packages} does not include
+     * an element for each of the exported packages in the module descriptor,
+     * or {@code packages} contains the empty string or {@code null}.
+     *
+     * @apiNote Need to discuss what other validation should be done here. For
+     * example, should this method check the package names to ensure that they
+     * are composed of valid Java identifiers for a package name?
+     */
+    public ModuleArtifact(ExtendedModuleDescriptor descriptor,
+                          Set<String> packages,
+                          URL url)
+    {
+        packages = Collections.unmodifiableSet(packages);
+        if (packages.contains("") || packages.contains(null))
+            throw new IllegalArgumentException("<unnamed> package or null not allowed");
+        for (ModuleExport export: descriptor.exports()) {
+            String pkg = export.pkg();
+            if (!packages.contains(pkg)) {
+                throw new IllegalArgumentException("exported package " + pkg +
+                    " not in contents");
+            }
+        }
+
+        this.descriptor = Objects.requireNonNull(descriptor);
+        this.packages = packages;
+        this.url = Objects.requireNonNull(url);
     }
 
     /**

@@ -87,7 +87,7 @@ public class Main {
         ClassLoader cl = new MultiModuleClassLoader(cf);
 
         // define modules
-        Layer layer = Layer.create(Layer.bootLayer(), cf, k -> cl);
+        Layer layer = Layer.create(cf, k -> cl);
 
         // invoke application main method
         Class<?> c = layer.findLoader(appModuleName).loadClass(appMainClass);

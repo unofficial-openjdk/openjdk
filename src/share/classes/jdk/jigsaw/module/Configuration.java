@@ -95,6 +95,13 @@ public class Configuration {
     }
 
     /**
+     * Returns the {@code Layer} used when creating this configuration.
+     */
+    Layer layer() {
+        return resolution.resolver().layer();
+    }
+
+    /**
      * Returns a configuration that is this configuration augmented with modules
      * (located via the module artifact finders) that are induced by service-use
      * relationships.
@@ -111,7 +118,7 @@ public class Configuration {
      * Returns the set of module descriptors in this configuration.
      */
     public Set<ModuleDescriptor> descriptors() {
-        return resolution.selected;
+        return resolution.selected();
     }
 
     /**
@@ -120,7 +127,7 @@ public class Configuration {
      * configuration.
      */
     public ModuleArtifact findArtifact(String name) {
-        return resolution.nameToArtifact.get(name);
+        return resolution.findArtifact(name);
     }
 
     /**
@@ -144,7 +151,7 @@ public class Configuration {
      * this configuration.
      */
     public Set<ModuleDescriptor> readDependences(ModuleDescriptor descriptor) {
-        Set<ModuleDescriptor> reads = resolution.graph.get(descriptor);
+        Set<ModuleDescriptor> reads = resolution.readDependences(descriptor);
         if (reads == null) {
             throw new IllegalArgumentException(descriptor.name() +
                 " not in this configuration");

@@ -53,13 +53,29 @@ class Resolver {
      * The result of resolution or binding.
      */
     static class Resolution {
-        final Resolver resolver;
-        final Map<String, ModuleArtifact> nameToArtifact = new HashMap<>();
-        final Set<ModuleDescriptor> selected = new HashSet<>();
-        Map<ModuleDescriptor, Set<ModuleDescriptor>> graph;
+        private final Resolver resolver;
+        private final Map<String, ModuleArtifact> nameToArtifact = new HashMap<>();
+        private final Set<ModuleDescriptor> selected = new HashSet<>();
+        private Map<ModuleDescriptor, Set<ModuleDescriptor>> graph;
 
         Resolution(Resolver resolver) {
             this.resolver = resolver;
+        }
+
+        Resolver resolver() {
+            return resolver;
+        }
+
+        Set<ModuleDescriptor> selected() {
+            return selected;
+        }
+
+        ModuleArtifact findArtifact(String name) {
+            return nameToArtifact.get(name);
+        }
+
+        Set<ModuleDescriptor> readDependences(ModuleDescriptor descriptor) {
+            return graph.get(descriptor);
         }
 
         /**
@@ -88,6 +104,10 @@ class Resolver {
         this.beforeFinder = Objects.requireNonNull(beforeFinder);
         this.layer = Objects.requireNonNull(layer);
         this.afterFinder = Objects.requireNonNull(afterFinder);
+    }
+
+    Layer layer() {
+        return layer;
     }
 
     /**

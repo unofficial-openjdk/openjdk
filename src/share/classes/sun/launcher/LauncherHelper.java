@@ -478,7 +478,7 @@ public enum LauncherHelper {
         // main module should be in the system module graph
         ModuleId mid = ModuleId.parse(mainModule);
         Layer layer = Layer.bootLayer();
-        ModuleArtifact artifact  = layer.findArtifact(mid.name());
+        ModuleArtifact artifact = layer.configuration().findArtifact(mid.name());
         if (artifact == null)
             abort(null, "java.launcher.module.error1", mainModule);
 

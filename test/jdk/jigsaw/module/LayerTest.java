@@ -60,9 +60,6 @@ public class LayerTest {
         ModuleExport javaLang = new ModuleExport("java.lang");
         assertTrue(cf.find("java.base").exports().contains(javaLang));
 
-        // findArtifact
-        assertTrue(bootLayer.findArtifact("java.base").packages().contains("java.lang"));
-
         // findLoader
         assertTrue(bootLayer.findLoader("java.base") == null);
 
@@ -71,7 +68,7 @@ public class LayerTest {
         assertTrue(bootLayer.findModule("java.base") == base);
 
         // parent
-        assertTrue(bootLayer.parent() == null);
+        assertTrue(bootLayer.parent() == Layer.emptyLayer());
     }
 
     /**
@@ -82,9 +79,6 @@ public class LayerTest {
 
         // configuration
         assertTrue(emptyLayer.configuration() == null);
-
-        // findArtifact
-        assertTrue(emptyLayer.findArtifact("java.base") == null);
 
         // findLoader
         try {
@@ -135,16 +129,10 @@ public class LayerTest {
         map.put(cf.findArtifact("m2"), loader2);
         map.put(cf.findArtifact("m3"), loader3);
 
-        Layer layer = Layer.create(Layer.emptyLayer(), cf, map::get);
+        Layer layer = Layer.create(cf, map::get);
 
         // configuration
         assertTrue(layer.configuration() == cf);
-
-        // findArtifact
-        assertTrue(layer.findArtifact("m1") != null);
-        assertTrue(layer.findArtifact("m2") != null);
-        assertTrue(layer.findArtifact("m3") != null);
-        assertTrue(layer.findArtifact("godot") == null);
 
         // findLoader
         assertTrue(layer.findLoader("m1") == loader1);
@@ -165,12 +153,51 @@ public class LayerTest {
         assertTrue(layer.parent() == Layer.emptyLayer());
     }
 
-    @Test
+    /**
+     * Exercise Layer#create, created over the boot layer
+     */
     public void testLayerOnBoot() {
-        // TBD
+        ExtendedModuleDescriptor descriptor1 =
+                new ExtendedModuleDescriptor.Builder("m1")
+                        .requires(md("m2"))
+                        .requires(md("java.base"))
+                        .export("p1")
+                        .build();
+
+        ExtendedModuleDescriptor descriptor2 =
+                new ExtendedModuleDescriptor.Builder("m2")
+                        .requires(md("java.base"))
+                        .build();
+
+        ModuleArtifactFinder finder =
+                new ModuleArtifactLibrary(descriptor1, descriptor2);
+
+        Configuration cf = Configuration.resolve(finder,
+                                                 Layer.bootLayer(),
+                                                 ModuleArtifactFinder.nullFinder(),
+                                                 "m1");
+
+        ClassLoader loader = new ClassLoader() { };
+
+        Layer layer = Layer.create(cf, m -> loader);
+
+        // configuration
+        assertTrue(layer.configuration() == cf);
+
+        // findLoader
+        assertTrue(layer.findLoader("m1") == loader);
+        assertTrue(layer.findLoader("m2") == loader);
+        assertTrue(layer.findLoader("java.base") == null);
+
+        // findModule
+        assertTrue(layer.findModule("m1").name().equals("m1"));
+        assertTrue(layer.findModule("m2").name().equals("m2"));
+        assertTrue(layer.findModule("java.base") == Object.class.getModule());
+        // parent
+
+        assertTrue(layer.parent() == Layer.bootLayer());
     }
 
-    @Test
     public void testLayerOnLayer() {
         // TBD
     }
