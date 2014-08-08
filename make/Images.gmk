@@ -64,7 +64,7 @@ ifndef OPENJDK
   endif
 endif
 
-MODS := $(shell $(ECHO) "$(JDK_MODULES)" | $(TR) '[:blank:]' ',')
+MODS := $(subst $(SPACE),$(COMMA),$(JDK_MODULES))
 
 $(IMAGES_OUTPUTDIR)/_jdk-images-create.marker: $(JMODS)
 	$(ECHO) Creating jdk-module-image
