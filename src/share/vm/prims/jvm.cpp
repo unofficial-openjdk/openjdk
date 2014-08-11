@@ -390,6 +390,14 @@ JVM_ENTRY(jobject, JVM_InitProperties(JNIEnv *env, jobject properties))
     PUTPROP(props, "jdk.runtime.useModuleBoundaries", "false");
   }
 
+  // Additional module dependences and exports
+  if (strlen(AddModuleRequires) > 0) {
+    PUTPROP(props, "jdk.runtime.addModuleRequires", AddModuleRequires);
+  }
+  if (strlen(AddModuleExports) > 0) {
+    PUTPROP(props, "jdk.runtime.addModuleExports", AddModuleExports);
+  }
+
   return properties;
 JVM_END
 

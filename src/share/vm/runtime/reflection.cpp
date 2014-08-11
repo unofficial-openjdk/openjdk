@@ -499,7 +499,7 @@ bool Reflection::verify_class_access(Klass* current_class, Klass* new_class, boo
     if (m1 != NULL && !m1->requires(m2)) {
       if (TraceAccessControlErrors) {
         ResourceMark rm;
-        tty->print_cr("Type in module %s (%s) cannot access type in module %s (%s)",
+        tty->print_cr("Type in module %s (%s) cannot access type in module %s (%s), not readable",
           m1->name(), current_class->external_name(), m2->name(), new_class->external_name());
       }
       return false;
@@ -514,7 +514,7 @@ bool Reflection::verify_class_access(Klass* current_class, Klass* new_class, boo
     if (m1 != NULL) {
       bool okay = m2->is_exported_to_module(pkg, m1);
       if (!okay && TraceAccessControlErrors) {
-        tty->print_cr("Type in module %s (%s) cannot access type in module %s (%s)",
+        tty->print_cr("Type in module %s (%s) cannot access type in module %s (%s), not exported",
           m1->name(), current_class->external_name(), m2->name(), new_class->external_name());
       }
       return okay;

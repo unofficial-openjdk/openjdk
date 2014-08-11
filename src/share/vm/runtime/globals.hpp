@@ -1264,6 +1264,12 @@ class CommandLineFlags {
   product(bool, UseModuleBoundaries, true,                                  \
           "Use access control to enforce module boundaries")                \
                                                                             \
+  product(ccstrlist, AddModuleRequires, "",                                 \
+          "Additional module dependences, for example jtreg=java.xml")      \
+                                                                            \
+  product(ccstrlist, AddModuleExports, "",                                  \
+          "Additional module exports, for example java.base/sun.misc")      \
+                                                                            \
   /* tracing */                                                             \
                                                                             \
   notproduct(bool, TraceRuntimeCalls, false,                                \
