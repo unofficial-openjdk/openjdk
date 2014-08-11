@@ -69,6 +69,17 @@ class ModuleLauncher {
         // module path of the installed modules
         ModuleArtifactFinder systemLibrary = ModuleArtifactFinder.installedModules();
 
+        // if -XX:AddModuleRequires or -XX:AddModuleExports is specified then
+        // interpose on the system library so that the requires/exports are
+        // updated as they modules are found
+        String moreRequires = System.getProperty("jdk.runtime.addModuleRequires");
+        String moreExports = System.getProperty("jdk.runtime.addModuleExports");
+        if (moreRequires != null || moreExports != null) {
+            systemLibrary =  ArtifactInterposer.interpose(systemLibrary,
+                                                          moreRequires,
+                                                          moreExports);
+        }
+
         // launcher -verbose:mods option
         boolean verbose =
             Boolean.parseBoolean(System.getProperty("jdk.launcher.modules.verbose"));
@@ -123,13 +134,15 @@ class ModuleLauncher {
                 input.add(mainMid.name());
         }
 
-        // run the resolver to create the configuration
+        // create the module finder
         ModuleArtifactFinder finder;
         if (launcherModulePath != null) {
             finder = ModuleArtifactFinder.concat(systemLibrary, launcherModulePath);
         } else {
             finder = systemLibrary;
         }
+
+        // run the resolver to create the configuration
         Configuration cf = Configuration.resolve(finder,
                                                  Layer.emptyLayer(),
                                                  ModuleArtifactFinder.nullFinder(),
@@ -149,7 +162,6 @@ class ModuleLauncher {
                 throw new RuntimeException(id + " found first on module-path");
             }
         }
-
 
         // setup module to ClassLoader mapping
         Map<ModuleArtifact, ClassLoader> moduleToLoaders = loaderMap(systemLibrary);

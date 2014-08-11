@@ -150,6 +150,8 @@ public class ModuleDescriptor
 
         /**
          * Adds a module export.
+         *
+         * ## FIXME need to check for conflicting exports
          */
         public Builder export(ModuleExport e) {
             exports.add(requireNonNull(e));
@@ -158,6 +160,8 @@ public class ModuleDescriptor
 
         /**
          * Exports the given package name.
+         *
+         * ## FIXME need to check for conflicting exports
          */
         public Builder export(String p) {
             return export(new ModuleExport(p));
@@ -165,6 +169,8 @@ public class ModuleDescriptor
 
         /**
          * Exports the given package name to the given named module.
+         *
+         * ## FIXME need to check for conflicting exports
          */
         public Builder export(String p, String m) {
             return export(new ModuleExport(p, m));

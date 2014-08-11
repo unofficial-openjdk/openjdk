@@ -26,7 +26,12 @@
 package jdk.jigsaw.module;
 
 import java.lang.reflect.Module;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
 import sun.misc.JavaLangReflectAccess;
 import sun.misc.SharedSecrets;
@@ -132,7 +137,7 @@ public final class Layer {
                     m2 = parent.findModule(other.name());
                 if (m2 == null) {
                     throw new InternalError(descriptor.name() +
-                        "reads unknown module: " + other.name());
+                        " reads unknown module: " + other.name());
                 }
                 reflectAccess.addReadsModule(m, m2);
             }

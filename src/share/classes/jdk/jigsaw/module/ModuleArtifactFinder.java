@@ -222,10 +222,18 @@ class InstalledModuleFinder implements ModuleArtifactFinder {
                 Set<String> packages = packageMap.get(name);
                 if (packages == null)
                     packages = Collections.emptySet();
-                ModuleArtifact artifact = new ModuleArtifact(extend(descriptor),
-                                                             packages,
-                                                             url);
 
+                ExtendedModuleDescriptor extendedDescriptor =
+                    new ExtendedModuleDescriptor(ModuleId.parse(descriptor.name()),
+                        descriptor.moduleDependences(),
+                        descriptor.serviceDependences(),
+                        descriptor.exports(),
+                        descriptor.services());
+
+                ModuleArtifact artifact =
+                    new ModuleArtifact(extendedDescriptor,
+                                       packages,
+                                       url);
                 artifacts.add(artifact);
             }
 
@@ -234,23 +242,6 @@ class InstalledModuleFinder implements ModuleArtifactFinder {
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
-    }
-
-    private static ExtendedModuleDescriptor extend(ModuleDescriptor d) {
-        ExtendedModuleDescriptor.Builder b =
-            new ExtendedModuleDescriptor.Builder(d.name());
-
-        d.moduleDependences().forEach(b::requires);
-        d.serviceDependences().forEach(b::requires);
-        d.exports().forEach(b::export);
-
-        Map<String, Set<String>> services = d.services();
-        for (Map.Entry<String, Set<String>> entry: services.entrySet()) {
-            String s = entry.getKey();
-            entry.getValue().forEach(p -> b.service(s, p));
-        }
-
-        return b.build();
     }
 
     static boolean isModularImage() {

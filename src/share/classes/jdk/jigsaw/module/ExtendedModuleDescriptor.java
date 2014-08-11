@@ -95,6 +95,13 @@ public class ExtendedModuleDescriptor
             this.id = ModuleId.parse(id);
         }
 
+        /**
+         * Initializes a new builder.
+         */
+        public Builder(ModuleId id) {
+            this.id = id;
+        }
+
         public Builder requires(ModuleDependence md) {
             super.requires(md);
             return this;
