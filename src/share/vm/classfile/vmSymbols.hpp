@@ -116,6 +116,10 @@
   template(java_runtime_name_name,                    "java_runtime_name")                        \
   template(java_runtime_version_name,                 "java_runtime_version")                     \
                                                                                                   \
+  /* Module system */                                                                             \
+  template(jdk_jigsaw_module_runtime_ModuleBootstrap, "jdk/jigsaw/module/runtime/ModuleBootstrap") \
+  template(boot_name,                                 "boot")                                     \
+                                                                                                  \
   /* class file format tags */                                                                    \
   template(tag_source_file,                           "SourceFile")                               \
   template(tag_inner_classes,                         "InnerClasses")                             \

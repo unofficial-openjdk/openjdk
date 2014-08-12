@@ -3343,6 +3343,15 @@ void Threads::initialize_jsr292_core_classes(TRAPS) {
   initialize_class(vmSymbols::java_lang_invoke_MethodHandleNatives(), CHECK);
 }
 
+static void call_initModuleRuntime(TRAPS) {
+  Klass* k = SystemDictionary::resolve_or_fail(vmSymbols::jdk_jigsaw_module_runtime_ModuleBootstrap(), true, CHECK);
+  instanceKlassHandle klass (THREAD, k);
+
+  JavaValue result(T_VOID);
+  JavaCalls::call_static(&result, klass, vmSymbols::boot_name(),
+                                         vmSymbols::void_method_signature(), CHECK);
+}
+
 jint Threads::create_vm(JavaVMInitArgs* args, bool* canTryAgain) {
 
   extern void JDK_Version_init();
@@ -3613,6 +3622,11 @@ jint Threads::create_vm(JavaVMInitArgs* args, bool* canTryAgain) {
   // signature polymorphic MH intrinsics can be missed
   // (see SystemDictionary::find_method_handle_intrinsic).
   initialize_jsr292_core_classes(CHECK_JNI_ERR);
+
+  // initialize the module system
+  if (UseModuleBoundaries) {
+    call_initModuleRuntime(CHECK_JNI_ERR);
+  }
 
 #if INCLUDE_MANAGEMENT
   Management::initialize(THREAD);
