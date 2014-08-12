@@ -23,7 +23,7 @@
  * questions.
  */
 
-package sun.launcher;
+package jdk.jigsaw.module.runtime;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -45,26 +45,20 @@ import sun.misc.Launcher;
 import sun.reflect.Reflection;
 
 /**
- * Used at startup to run the resolver and generate the module graph. Modules
- * are linked into the runtime image or located via the module path specified
- * to the launcher. The readability graph is used to define the modules so that
- * accessibility can be checked at runtime.
+ * Helper class used by the VM/runtime to initialize the module system.
+ *
+ * In summary, creates a Configuration by resolving a set of module names
+ * specified via the launcher (or equivalent) -m and -mods options. The
+ * Configuration is then used to define the selected modules to runtime
+ * to create the boot Layer.
  */
-class ModuleLauncher {
-    private ModuleLauncher() { }
+class ModuleBootstrap {
+    private ModuleBootstrap() { }
 
     /**
-     * Initialize the runtime for modules.
+     * Invoked by the VM at startup to initialize the module system.
      */
-    static void init() {
-
-        // Do nothing if running with -XX:-UseModuleBoundaries
-        String propValue = System.getProperty("jdk.runtime.useModuleBoundaries");
-        if (propValue != null) {
-            boolean useModuleBoundaries = Boolean.parseBoolean(propValue);
-            if (!useModuleBoundaries)
-                return;
-        }
+    static void boot() {
 
         // module path of the installed modules
         ModuleArtifactFinder systemLibrary = ModuleArtifactFinder.installedModules();
@@ -86,7 +80,7 @@ class ModuleLauncher {
 
         // initial module(s) as specified by -mods
         Set<String> mods = new HashSet<>();
-        propValue = System.getProperty("jdk.launcher.modules");
+        String propValue = System.getProperty("jdk.launcher.modules");
         if (propValue != null) {
             for (String mod: propValue.split(",")) {
                 mods.add(mod);
@@ -151,16 +145,6 @@ class ModuleLauncher {
             cf.descriptors().stream()
                             .sorted()
                             .forEach(md -> System.out.println(md.name()));
-        }
-
-        // If -m was specified as name@version then check that the right version
-        // of the initial module was selected
-        if (mainMid != null && mainMid.version() != null) {
-            ModuleArtifact artifact = cf.findArtifact(mainMid.name());
-            ModuleId id = artifact.descriptor().id();
-            if (!id.equals(mainMid)) {
-                throw new RuntimeException(id + " found first on module-path");
-            }
         }
 
         // setup module to ClassLoader mapping

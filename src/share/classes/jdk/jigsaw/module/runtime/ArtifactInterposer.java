@@ -23,7 +23,7 @@
  * questions.
  */
 
-package sun.launcher;
+package jdk.jigsaw.module.runtime;
 
 import java.util.HashMap;
 import java.util.HashSet;

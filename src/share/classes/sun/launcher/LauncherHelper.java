@@ -475,12 +475,19 @@ public enum LauncherHelper {
             mainClass = query.substring(i+1);
         }
 
-        // main module should be in the system module graph
+        // main module should be in the boot layer
         ModuleId mid = ModuleId.parse(mainModule);
         Layer layer = Layer.bootLayer();
         ModuleArtifact artifact = layer.configuration().findArtifact(mid.name());
         if (artifact == null)
             abort(null, "java.launcher.module.error1", mainModule);
+
+        // if a version is specified to -m then it needs to be checked
+        if (mid.version() != null) {
+            ModuleId actual = artifact.descriptor().id();
+            if (!actual.equals(mid))
+                abort(null, "java.launcher.module.error2", actual, mid);
+        }
 
         // if query included the main-class then we return that
         if (mainClass != null) {
@@ -489,11 +496,11 @@ public enum LauncherHelper {
                 String pkg = mainClass.substring(0, i);
                 if (!artifact.packages().contains(pkg)) {
                     // main class not in a package that the module defines
-                    abort(null, "java.launcher.module.error2", mainModule, mainClass);
+                    abort(null, "java.launcher.module.error3", mainModule, mainClass);
                 }
             } else {
                 // main-class cannot be in the unnamed package
-                abort(null, "java.launcher.module.error2", mainModule, "<unnamed>");
+                abort(null, "java.launcher.module.error3", mainModule, "<unnamed>");
             }
             return mainClass;
         }
@@ -502,12 +509,12 @@ public enum LauncherHelper {
         // (only jmod for now)
         URL url = artifact.location();
         if (!url.getProtocol().equalsIgnoreCase("jmod")) {
-            abort(null, "java.launcher.module.error3", query);
+            abort(null, "java.launcher.module.error4", query);
         }
         ZipFile zf = JModCache.get(url);
         ZipEntry ze = zf.getEntry("module/main-class");
         if (ze == null) {
-            abort(null, "java.launcher.module.error4", url);
+            abort(null, "java.launcher.module.error5", url);
         }
         try (InputStream in = zf.getInputStream(ze)) {
             return new BufferedReader(new InputStreamReader(in, "UTF-8")).readLine();
@@ -564,14 +571,6 @@ public enum LauncherHelper {
         throws Exception
     {
         initOutput(printToStderr);
-
-        // initialize modules
-        try {
-            ModuleLauncher.init();
-        } catch (Exception e) {
-            e.printStackTrace();  // for debugging purposes
-            abort(e, "java.launcher.init.error");
-        }
 
         // get the class name
         String cn = null;
