@@ -32,8 +32,8 @@
 
 #include "LETypes.h"
 #include "LEScripts.h"
-#include "LESwaps.h"
 #include "LELanguages.h"
+#include "LESwaps.h"
 
 #include "LayoutEngine.h"
 #include "ArabicLayoutEngine.h"
@@ -250,6 +250,10 @@ le_int32 LayoutEngine::characterProcessing(const LEUnicode chars[], le_int32 off
     if (offset < 0 || count < 0 || max < 0 || offset >= max || offset + count > max) {
         success = LE_ILLEGAL_ARGUMENT_ERROR;
         return 0;
+    }
+
+    if ((fTypoFlags & LE_NoCanon_FEATURE_FLAG) == 0) { // no canonical processing
+      return count;
     }
 
     LEReferenceTo<GlyphSubstitutionTableHeader> canonGSUBTable(LETableReference::kStaticData,
