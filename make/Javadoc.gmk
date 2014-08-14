@@ -125,7 +125,7 @@ DOCSDIR_URL = {@docroot}/$(GET2DOCSDIR)
 COPYRIGHT_URL = $(DOCSDIR_URL)/legal/cpyr.html
 
 # Url to bug filing site
-BUG_SUBMIT_URL = http://bugreport.sun.com/bugreport/
+BUG_SUBMIT_URL = http://bugreport.java.com/bugreport/
 
 # Common line for how to submit a bug or rfe
 BUG_SUBMIT_LINE = <a href="$(BUG_SUBMIT_URL)">Submit a bug or feature</a>
@@ -261,11 +261,15 @@ endef
 
 # Common echo of option
 define OptionOnly # opt
-	$(PRINTF) "%s\n" "$1"
+	if [ "$1" != "" ] ; then \
+		$(PRINTF) "%s\n" "$1"; \
+	fi
 endef
+
 define OptionPair # opt arg
 	$(PRINTF) "%s '%s'\n" "$1" '$2'
 endef
+
 define OptionTrip # opt arg arg
 	$(PRINTF) "%s '%s' '%s'\n" "$1" '$2' '$3'
 endef
@@ -280,14 +284,7 @@ and working code examples.<br>\
 $(call CopyrightLine,$(COPYRIGHT_URL),$(FIRST_COPYRIGHT_YEAR),)\
 </font>
 
-# Common javadoc options used by all
-COMMON_JAVADOCFLAGS = \
-    -XDignore.symbol.file=true \
-    -quiet \
-    -use \
-    -keywords \
-    -Xprofilespath $(JDK_TOPDIR)/make/profile-rtjar-includes.txt \
-    $(ADDITIONAL_JAVADOCFLAGS)
+# Common javadoc options used by all bundles
 
 ifdef OPENJDK
   ADDITIONAL_JAVADOCFLAGS = \
@@ -295,6 +292,52 @@ ifdef OPENJDK
 else
   ADDITIONAL_JAVADOCFLAGS =
 endif
+
+define COMMON_JAVADOCFLAGS
+    $(call OptionOnly,-XDignore.symbol.file=true) ; \
+    $(call OptionOnly,-quiet) ; \
+    $(call OptionOnly,-use) ; \
+    $(call OptionOnly,-keywords) ; \
+    $(call OptionPair,-Xprofilespath,$(JDK_TOPDIR)/make/profile-rtjar-includes.txt) ; \
+    $(call OptionOnly,$(ADDITIONAL_JAVADOCFLAGS))
+endef
+
+# Common javadoc tags used by all bundles
+
+# Java language specification cite
+TAG_JLS = jls:a:See <cite> \
+The Java&trade; Language Specification</cite>:
+
+# Java virtual machine specification cite
+TAG_JVMS = jvms:a:See <cite> \
+The Java&trade; Virtual Machine Specification</cite>:
+
+# In order to get a specific ordering it's necessary to specify the total
+# ordering of tags as the tags are otherwise ordered in order of definition.
+define COMMON_JAVADOCTAGS
+  $(call OptionPair,-tag,beaninfo:X) ; \
+  $(call OptionPair,-tag,revised:X) ; \
+  $(call OptionPair,-tag,since.unbundled:X) ; \
+  $(call OptionPair,-tag,spec:X) ; \
+  $(call OptionPair,-tag,specdefault:X) ; \
+  $(call OptionPair,-tag,Note:X) ; \
+  $(call OptionPair,-tag,ToDo:X) ; \
+  $(call OptionPair,-tag,apiNote:a:API Note:) ; \
+  $(call OptionPair,-tag,implSpec:a:Implementation Requirements:) ; \
+  $(call OptionPair,-tag,implNote:a:Implementation Note:) ; \
+  $(call OptionPair,-tag,param) ; \
+  $(call OptionPair,-tag,return) ; \
+  $(call OptionPair,-tag,throws) ; \
+  $(call OptionPair,-tag,since) ; \
+  $(call OptionPair,-tag,version) ; \
+  $(call OptionPair,-tag,serialData) ; \
+  $(call OptionPair,-tag,factory) ; \
+  $(call OptionPair,-tag,see) ; \
+  $(call OptionPair,-tag,$(TAG_JVMS)) ; \
+  $(call OptionPair,-tag,$(TAG_JLS))
+endef
+
+
 
 # Draft used for non-fcs documents
 DRAFT_HEADER =
@@ -360,10 +403,6 @@ COREAPI_WINDOWTITLE = Java Platform SE $(JDK_MINOR_VERSION)
 COREAPI_HEADER = \
 <strong>Java$(TRADEMARK)&nbsp;Platform<br>Standard&nbsp;Ed.&nbsp;$(JDK_MINOR_VERSION)</strong>
 
-# Java language specification cite
-TAG_JLS = jls:a:See <cite> \
-The Java&trade; Language Specification</cite>:
-
 # Overview file for core apis
 ifeq ($(SHUFFLED), true)
   COREAPI_OVERVIEW := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/classes/overview-core.html
@@ -391,29 +430,11 @@ $(COREAPI_INDEX_FILE): $(COREAPI_OPTIONS_FILE) $(COREAPI_PACKAGES_FILE)
 # Create file with javadoc options in it
 $(COREAPI_OPTIONS_FILE): $(COREAPI_OVERVIEW)
 	$(prep-target)
-	@($(call OptionOnly,$(COMMON_JAVADOCFLAGS)) ; \
-	  $(call OptionOnly,-Xdoclint:none) ; \
+	@($(call COMMON_JAVADOCFLAGS) ; \
+          $(call COMMON_JAVADOCTAGS) ; \
+          $(call OptionOnly,-Xdoclint:none) ; \
 	  $(call OptionPair,-sourcepath,$(RELEASEDOCS_SOURCEPATH)) ; \
 	  $(call OptionPair,-encoding,ISO-8859-1) ; \
-	  $(call OptionPair,-tag,beaninfo:X) ; \
-	  $(call OptionPair,-tag,revised:X) ; \
-	  $(call OptionPair,-tag,since.unbundled:X) ; \
-	  $(call OptionPair,-tag,spec:X) ; \
-	  $(call OptionPair,-tag,specdefault:X) ; \
-	  $(call OptionPair,-tag,Note:X) ; \
-	  $(call OptionPair,-tag,ToDo:X) ; \
-	  $(call OptionPair,-tag,apiNote:a:API Note:) ; \
-	  $(call OptionPair,-tag,implSpec:a:Implementation Requirements:) ; \
-	  $(call OptionPair,-tag,implNote:a:Implementation Note:) ; \
-	  $(call OptionPair,-tag,param) ; \
-	  $(call OptionPair,-tag,return) ; \
-	  $(call OptionPair,-tag,throws) ; \
-	  $(call OptionPair,-tag,since) ; \
-	  $(call OptionPair,-tag,version) ; \
-	  $(call OptionPair,-tag,serialData) ; \
-	  $(call OptionPair,-tag,factory) ; \
-	  $(call OptionPair,-tag,see) ; \
-	  $(call OptionPair,-tag,$(TAG_JLS)) ; \
 	  $(call OptionOnly,-splitIndex) ; \
 	  $(call OptionPair,-overview,$(COREAPI_OVERVIEW)) ; \
 	  $(call OptionPair,-doctitle,$(COREAPI_DOCTITLE)) ; \
@@ -467,8 +488,9 @@ $(DOCLETAPI_INDEX_FILE): $(DOCLETAPI_OPTIONS_FILE) $(DOCLETAPI_PACKAGES_FILE) $(
 # Create file with javadoc options in it
 $(DOCLETAPI_OPTIONS_FILE):
 	$(prep-target)
-	@($(call OptionOnly,$(COMMON_JAVADOCFLAGS)) ; \
-	  $(call OptionOnly,-Xdoclint:none) ; \
+	@($(call COMMON_JAVADOCFLAGS) ; \
+          $(call COMMON_JAVADOCTAGS) ; \
+	  $(call OptionOnly,-Xdoclint:all) ; \
 	  $(call OptionPair,-sourcepath,$(RELEASEDOCS_SOURCEPATH)) ; \
 	  $(call OptionPair,-encoding,ascii) ; \
 	  $(call OptionOnly,-breakiterator) ; \
@@ -524,8 +546,9 @@ $(TAGLETAPI_INDEX_FILE): $(TAGLETAPI_OPTIONS_FILE) $(TAGLETAPI_PACKAGES_FILE) $(
 # Create file with javadoc options in it
 $(TAGLETAPI_OPTIONS_FILE):
 	$(prep-target)
-	@($(call OptionOnly,$(COMMON_JAVADOCFLAGS)) ; \
-	  $(call OptionOnly,-Xdoclint:none) ; \
+	@($(call COMMON_JAVADOCFLAGS) ; \
+          $(call COMMON_JAVADOCTAGS) ; \
+	  $(call OptionOnly,-Xdoclint:all) ; \
 	  $(call OptionPair,-sourcepath,$(RELEASEDOCS_SOURCEPATH)) ; \
 	  $(call OptionPair,-encoding,ascii) ; \
 	  $(call OptionOnly,-nonavbar) ; \
@@ -557,7 +580,7 @@ DOMAPI_WINDOWTITLE := Common DOM API
 DOMAPI_HEADER := <strong>Common DOM API</strong>
 DOMAPI_BOTTOM := $(call CommonTrademarkBottom,$(DOMAPI_FIRST_COPYRIGHT_YEAR))
 DOMAPI_GROUPNAME := Packages
-DOMAPI_REGEXP := com.sun.java.browser.dom:org.w3c.dom*
+DOMAPI_REGEXP := org.w3c.dom*
 # DOMAPI_PKGS is located in NON_CORE_PKGS.gmk
 
 # The index.html, options, and packages files
@@ -580,7 +603,8 @@ $(DOMAPI_INDEX_FILE): $(DOMAPI_OPTIONS_FILE) $(DOMAPI_PACKAGES_FILE) $(COREAPI_I
 # Create file with javadoc options in it
 $(DOMAPI_OPTIONS_FILE):
 	$(prep-target)
-	@($(call OptionOnly,$(COMMON_JAVADOCFLAGS)) ; \
+	@($(call COMMON_JAVADOCFLAGS) ; \
+          $(call COMMON_JAVADOCTAGS) ; \
 	  $(call OptionOnly,-Xdoclint:none) ; \
 	  $(call OptionPair,-sourcepath,$(RELEASEDOCS_SOURCEPATH)) ; \
 	  $(call OptionPair,-encoding,ascii) ; \
@@ -643,7 +667,8 @@ $(JDI_INDEX_FILE): $(JDI_OPTIONS_FILE) $(JDI_PACKAGES_FILE) $(COREAPI_INDEX_FILE
 # Create file with javadoc options in it
 $(JDI_OPTIONS_FILE): $(JDI_OVERVIEW)
 	$(prep-target)
-	@($(call OptionOnly,$(COMMON_JAVADOCFLAGS)) ; \
+	@($(call COMMON_JAVADOCFLAGS) ; \
+          $(call COMMON_JAVADOCTAGS) ; \
 	  $(call OptionOnly,-Xdoclint:none) ; \
 	  $(call OptionPair,-sourcepath,$(RELEASEDOCS_SOURCEPATH)) ; \
 	  $(call OptionPair,-encoding,ascii) ; \
@@ -734,7 +759,8 @@ $(JAAS_INDEX_FILE): $(JAAS_OPTIONS_FILE) $(JAAS_PACKAGES_FILE) $(COREAPI_INDEX_F
 # Create file with javadoc options in it
 $(JAAS_OPTIONS_FILE): $(JAAS_OVERVIEW)
 	$(prep-target)
-	@($(call OptionOnly,$(COMMON_JAVADOCFLAGS)) ; \
+	@($(call COMMON_JAVADOCFLAGS) ; \
+          $(call COMMON_JAVADOCTAGS) ; \
 	  $(call OptionOnly,-Xdoclint:none) ; \
 	  $(call OptionPair,-sourcepath,$(RELEASEDOCS_SOURCEPATH)) ; \
 	  $(call OptionPair,-encoding,ascii) ; \
@@ -791,7 +817,8 @@ $(JGSS_INDEX_FILE): $(JGSS_OPTIONS_FILE) $(JGSS_PACKAGES_FILE) $(COREAPI_INDEX_F
 # Create file with javadoc options in it
 $(JGSS_OPTIONS_FILE): $(JGSS_OVERVIEW)
 	$(prep-target)
-	@($(call OptionOnly,$(COMMON_JAVADOCFLAGS)) ; \
+	@($(call COMMON_JAVADOCFLAGS) ; \
+          $(call COMMON_JAVADOCTAGS) ; \
 	  $(call OptionOnly,-Xdoclint:none) ; \
 	  $(call OptionPair,-sourcepath,$(RELEASEDOCS_SOURCEPATH)) ; \
 	  $(call OptionPair,-encoding,ascii) ; \
@@ -844,7 +871,8 @@ $(SMARTCARDIO_INDEX_FILE): $(SMARTCARDIO_OPTIONS_FILE) $(SMARTCARDIO_PACKAGES_FI
 # Create file with javadoc options in it
 $(SMARTCARDIO_OPTIONS_FILE):
 	$(prep-target)
-	@($(call OptionOnly,$(COMMON_JAVADOCFLAGS)) ; \
+	@($(call COMMON_JAVADOCFLAGS) ; \
+          $(call COMMON_JAVADOCTAGS) ; \
 	  $(call OptionOnly,-Xdoclint:none) ; \
 	  $(call OptionPair,-sourcepath,$(RELEASEDOCS_SOURCEPATH)) ; \
 	  $(call OptionPair,-encoding,ascii) ; \
@@ -895,7 +923,8 @@ $(HTTPSERVER_INDEX_HTML): $(HTTPSERVER_OPTIONS_FILE) $(HTTPSERVER_PACKAGES_FILE)
 # Create file with javadoc options in it
 $(HTTPSERVER_OPTIONS_FILE):
 	$(prep-target)
-	@($(call OptionOnly,$(COMMON_JAVADOCFLAGS)) ; \
+	@($(call COMMON_JAVADOCFLAGS) ; \
+          $(call COMMON_JAVADOCTAGS) ; \
 	  $(call OptionOnly,-Xdoclint:none) ; \
 	  $(call OptionPair,-sourcepath,$(RELEASEDOCS_SOURCEPATH)) ; \
 	  $(call OptionPair,-encoding,ascii) ; \
@@ -959,7 +988,8 @@ $(MGMT_INDEX_FILE): $(MGMT_OPTIONS_FILE) $(MGMT_PACKAGES_FILE) $(COREAPI_INDEX_F
 # Create file with javadoc options in it
 $(MGMT_OPTIONS_FILE): $(MGMT_OVERVIEW)
 	$(prep-target)
-	@($(call OptionOnly,$(COMMON_JAVADOCFLAGS)) ; \
+	@($(call COMMON_JAVADOCFLAGS) ; \
+          $(call COMMON_JAVADOCTAGS) ; \
 	  $(call OptionOnly,-Xdoclint:none) ; \
 	  $(call OptionPair,-sourcepath,$(RELEASEDOCS_SOURCEPATH)) ; \
 	  $(call OptionPair,-encoding,ascii) ; \
@@ -1011,7 +1041,8 @@ $(ATTACH_INDEX_HTML): $(ATTACH_OPTIONS_FILE) $(ATTACH_PACKAGES_FILE) $(COREAPI_I
 # Create file with javadoc options in it
 $(ATTACH_OPTIONS_FILE):
 	$(prep-target)
-	@($(call OptionOnly,$(COMMON_JAVADOCFLAGS)) ; \
+	@($(call COMMON_JAVADOCFLAGS) ; \
+          $(call COMMON_JAVADOCTAGS) ; \
 	  $(call OptionOnly,-Xdoclint:none) ; \
 	  $(call OptionPair,-sourcepath,$(RELEASEDOCS_SOURCEPATH)) ; \
 	  $(call OptionPair,-encoding,ascii) ; \
@@ -1062,7 +1093,8 @@ $(JCONSOLE_INDEX_HTML): $(JCONSOLE_OPTIONS_FILE) $(JCONSOLE_PACKAGES_FILE) $(COR
 # Create file with javadoc options in it
 $(JCONSOLE_OPTIONS_FILE):
 	$(prep-target)
-	@($(call OptionOnly,$(COMMON_JAVADOCFLAGS)) ; \
+	@($(call COMMON_JAVADOCFLAGS) ; \
+          $(call COMMON_JAVADOCTAGS) ; \
 	  $(call OptionOnly,-Xdoclint:none) ; \
 	  $(call OptionPair,-sourcepath,$(RELEASEDOCS_SOURCEPATH)) ; \
 	  $(call OptionPair,-encoding,ascii) ; \
@@ -1115,14 +1147,14 @@ $(TREEAPI_INDEX_HTML): $(TREEAPI_OPTIONS_FILE) $(TREEAPI_PACKAGES_FILE) $(COREAP
 # Create file with javadoc options in it
 $(TREEAPI_OPTIONS_FILE):
 	$(prep-target)
-	@($(call OptionOnly,$(COMMON_JAVADOCFLAGS)) ; \
-	  $(call OptionOnly,-Xdoclint:none) ; \
+	@($(call COMMON_JAVADOCFLAGS) ; \
+          $(call COMMON_JAVADOCTAGS) ; \
+	  $(call OptionOnly,-Xdoclint:all) ; \
 	  $(call OptionPair,-sourcepath,$(RELEASEDOCS_SOURCEPATH)) ; \
 	  $(call OptionPair,-encoding,ascii) ; \
 	  $(call OptionPair,-doctitle,$(TREEAPI_DOCTITLE)) ; \
 	  $(call OptionPair,-windowtitle,$(TREEAPI_WINDOWTITLE) $(DRAFT_WINTITLE)); \
 	  $(call OptionPair,-header,$(TREEAPI_HEADER)$(DRAFT_HEADER)) ; \
-	  $(call OptionPair,-tag,$(TAG_JLS)) ; \
 	  $(call OptionPair,-bottom,$(TREEAPI_BOTTOM)$(DRAFT_BOTTOM)) ; \
 	  $(call OptionTrip,-group,$(TREEAPI_GROUPNAME),$(TREEAPI_REGEXP)); \
 	  $(call OptionTrip,-linkoffline,$(TREEAPI2COREAPI),$(COREAPI_DOCSDIR)/); \
@@ -1167,7 +1199,8 @@ $(SCTPAPI_INDEX_HTML): $(SCTPAPI_OPTIONS_FILE) $(SCTPAPI_PACKAGES_FILE) $(COREAP
 # Create file with javadoc options in it
 $(SCTPAPI_OPTIONS_FILE):
 	$(prep-target)
-	@($(call OptionOnly,$(COMMON_JAVADOCFLAGS)) ; \
+	@($(call COMMON_JAVADOCFLAGS) ; \
+          $(call COMMON_JAVADOCTAGS) ; \
 	  $(call OptionOnly,-Xdoclint:none) ; \
 	  $(call OptionPair,-sourcepath,$(RELEASEDOCS_SOURCEPATH)) ; \
 	  $(call OptionPair,-encoding,ascii) ; \
@@ -1218,7 +1251,8 @@ $(JDKNET_INDEX_HTML): $(JDKNET_OPTIONS_FILE) $(JDKNET_PACKAGES_FILE) $(COREAPI_I
 # Create file with javadoc options in it
 $(JDKNET_OPTIONS_FILE):
 	$(prep-target)
-	@($(call OptionOnly,$(COMMON_JAVADOCFLAGS)) ; \
+	@($(call COMMON_JAVADOCFLAGS) ; \
+          $(call COMMON_JAVADOCTAGS) ; \
 	  $(call OptionOnly,-Xdoclint:none) ; \
 	  $(call OptionPair,-sourcepath,$(RELEASEDOCS_SOURCEPATH)) ; \
 	  $(call OptionPair,-encoding,ascii) ; \
