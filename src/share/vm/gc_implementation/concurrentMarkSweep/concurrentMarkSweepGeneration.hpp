@@ -32,6 +32,7 @@
 #include "gc_implementation/shared/generationCounters.hpp"
 #include "memory/freeBlockDictionary.hpp"
 #include "memory/generation.hpp"
+#include "memory/iterator.hpp"
 #include "runtime/mutexLocker.hpp"
 #include "runtime/virtualspace.hpp"
 #include "services/memoryService.hpp"
@@ -52,7 +53,7 @@
 // Concurrent mode failures are currently handled by
 // means of a sliding mark-compact.
 
-class CMSAdaptiveSizePolicy;
+class AdaptiveSizePolicy;
 class CMSConcMarkingTask;
 class CMSGCAdaptivePolicyCounters;
 class CMSTracer;
@@ -1009,8 +1010,7 @@ class CMSCollector: public CHeapObj<mtGC> {
   void icms_wait();          // Called at yield points.
 
   // Adaptive size policy
-  CMSAdaptiveSizePolicy* size_policy();
-  CMSGCAdaptivePolicyCounters* gc_adaptive_policy_counters();
+  AdaptiveSizePolicy* size_policy();
 
   static void print_on_error(outputStream* st);
 
@@ -1150,9 +1150,6 @@ class ConcurrentMarkSweepGeneration: public CardGeneration {
 
   virtual Generation::Name kind() { return Generation::ConcurrentMarkSweep; }
 
-  // Adaptive size policy
-  CMSAdaptiveSizePolicy* size_policy();
-
   void set_did_compact(bool v) { _did_compact = v; }
 
   bool refs_discovery_is_atomic() const { return false; }
@@ -1193,10 +1190,9 @@ class ConcurrentMarkSweepGeneration: public CardGeneration {
   // Does a "full" (forced) collection invoked on this generation collect
   // all younger generations as well? Note that the second conjunct is a
   // hack to allow the collection of the younger gen first if the flag is
-  // set. This is better than using th policy's should_collect_gen0_first()
-  // since that causes us to do an extra unnecessary pair of restart-&-stop-world.
+  // set.
   virtual bool full_collects_younger_generations() const {
-    return UseCMSCompactAtFullCollection && !CollectGen0First;
+    return UseCMSCompactAtFullCollection && !ScavengeBeforeFullGC;
   }
 
   void space_iterate(SpaceClosure* blk, bool usedOnly = false);
@@ -1347,37 +1343,6 @@ class ConcurrentMarkSweepGeneration: public CardGeneration {
   void rotate_debug_collection_type();
 };
 
-class ASConcurrentMarkSweepGeneration : public ConcurrentMarkSweepGeneration {
-
-  // Return the size policy from the heap's collector
-  // policy casted to CMSAdaptiveSizePolicy*.
-  CMSAdaptiveSizePolicy* cms_size_policy() const;
-
-  // Resize the generation based on the adaptive size
-  // policy.
-  void resize(size_t cur_promo, size_t desired_promo);
-
-  // Return the GC counters from the collector policy
-  CMSGCAdaptivePolicyCounters* gc_adaptive_policy_counters();
-
-  virtual void shrink_by(size_t bytes);
-
- public:
-  ASConcurrentMarkSweepGeneration(ReservedSpace rs, size_t initial_byte_size,
-                                  int level, CardTableRS* ct,
-                                  bool use_adaptive_freelists,
-                                  FreeBlockDictionary<FreeChunk>::DictionaryChoice
-                                    dictionaryChoice) :
-    ConcurrentMarkSweepGeneration(rs, initial_byte_size, level, ct,
-      use_adaptive_freelists, dictionaryChoice) {}
-
-  virtual const char* short_name() const { return "ASCMS"; }
-  virtual Generation::Name kind() { return Generation::ASConcurrentMarkSweep; }
-
-  virtual void update_counters();
-  virtual void update_counters(size_t used);
-};
-
 //
 // Closures of various sorts used by CMS to accomplish its work
 //
@@ -1445,7 +1410,7 @@ class Par_MarkFromRootsClosure: public BitMapClosure {
 
 // The following closures are used to do certain kinds of verification of
 // CMS marking.
-class PushAndMarkVerifyClosure: public CMSOopClosure {
+class PushAndMarkVerifyClosure: public MetadataAwareOopClosure {
   CMSCollector*    _collector;
   MemRegion        _span;
   CMSBitMap*       _verification_bm;

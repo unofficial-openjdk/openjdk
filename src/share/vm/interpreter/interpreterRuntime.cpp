@@ -42,11 +42,13 @@
 #include "oops/symbol.hpp"
 #include "prims/jvmtiExport.hpp"
 #include "prims/nativeLookup.hpp"
+#include "runtime/atomic.inline.hpp"
 #include "runtime/biasedLocking.hpp"
 #include "runtime/compilationPolicy.hpp"
 #include "runtime/deoptimization.hpp"
 #include "runtime/fieldDescriptor.hpp"
 #include "runtime/handles.inline.hpp"
+#include "runtime/icache.hpp"
 #include "runtime/interfaceSupport.hpp"
 #include "runtime/java.hpp"
 #include "runtime/jfieldIDWorkaround.hpp"
@@ -56,21 +58,6 @@
 #include "runtime/synchronizer.hpp"
 #include "runtime/threadCritical.hpp"
 #include "utilities/events.hpp"
-#ifdef TARGET_ARCH_x86
-# include "vm_version_x86.hpp"
-#endif
-#ifdef TARGET_ARCH_sparc
-# include "vm_version_sparc.hpp"
-#endif
-#ifdef TARGET_ARCH_zero
-# include "vm_version_zero.hpp"
-#endif
-#ifdef TARGET_ARCH_arm
-# include "vm_version_arm.hpp"
-#endif
-#ifdef TARGET_ARCH_ppc
-# include "vm_version_ppc.hpp"
-#endif
 #ifdef COMPILER2
 #include "opto/runtime.hpp"
 #endif
@@ -429,9 +416,18 @@ IRT_ENTRY(address, InterpreterRuntime::exception_handler_for_exception(JavaThrea
 
     // tracing
     if (TraceExceptions) {
-      ttyLocker ttyl;
       ResourceMark rm(thread);
-      tty->print_cr("Exception <%s> (" INTPTR_FORMAT ")", h_exception->print_value_string(), (address)h_exception());
+      Symbol* message = java_lang_Throwable::detail_message(h_exception());
+      ttyLocker ttyl;  // Lock after getting the detail message
+      if (message != NULL) {
+        tty->print_cr("Exception <%s: %s> (" INTPTR_FORMAT ")",
+                      h_exception->print_value_string(), message->as_C_string(),
+                      (address)h_exception());
+      } else {
+        tty->print_cr("Exception <%s> (" INTPTR_FORMAT ")",
+                      h_exception->print_value_string(),
+                      (address)h_exception());
+      }
       tty->print_cr(" thrown in interpreter method <%s>", h_method->print_value_string());
       tty->print_cr(" at bci %d for thread " INTPTR_FORMAT, current_bci, thread);
     }
@@ -1092,6 +1088,7 @@ IRT_END
 address SignatureHandlerLibrary::set_handler_blob() {
   BufferBlob* handler_blob = BufferBlob::create("native signature handlers", blob_size);
   if (handler_blob == NULL) {
+    CompileBroker::handle_full_code_cache();
     return NULL;
   }
   address handler = handler_blob->code_begin();

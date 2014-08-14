@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2003, 2013, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2003, 2014, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -19,7 +19,7 @@
 # Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
 # or visit www.oracle.com if you need additional information or have any
 # questions.
-#  
+#
 #
 
 # This makefile is used to build Serviceability Agent code
@@ -37,6 +37,22 @@ checkAndBuildSA::
 !include $(WorkSpace)/make/sa.files
 
 GENERATED = ../generated
+
+HS_COMMON_SRC_REL = src
+
+!if "$(OPENJDK)" != "true"
+HS_ALT_SRC_REL=src/closed
+HS_ALT_SRC = $(WorkSpace)/$(HS_ALT_SRC_REL)
+!ifndef HS_ALT_MAKE
+HS_ALT_MAKE=$(WorkSpace)/make/closed
+!endif
+!endif
+
+HS_COMMON_SRC = $(WorkSpace)/$(HS_COMMON_SRC_REL)
+
+!ifdef HS_ALT_MAKE
+!include $(HS_ALT_MAKE)/windows/makefiles/sa.make
+!endif
 
 # tools.jar is needed by the JDI - SA binding
 SA_CLASSPATH = $(BOOT_JAVA_HOME)/lib/tools.jar
@@ -60,16 +76,16 @@ $(GENERATED)/sa-jdi.jar: $(AGENT_FILES)
 	$(COMPILE_RMIC) -classpath $(SA_CLASSDIR) -d $(SA_CLASSDIR) sun.jvm.hotspot.debugger.remote.RemoteDebuggerServer
 	$(QUIETLY) echo $(SA_BUILD_VERSION_PROP)> $(SA_PROPERTIES)
 	$(QUIETLY) rm -f $(SA_CLASSDIR)/sun/jvm/hotspot/utilities/soql/sa.js
-	$(QUIETLY) cp $(AGENT_SRC_DIR)/sun/jvm/hotspot/utilities/soql/sa.js $(SA_CLASSDIR)/sun/jvm/hotspot/utilities/soql
+	$(QUIETLY) $(CP) $(AGENT_SRC_DIR)/sun/jvm/hotspot/utilities/soql/sa.js $(SA_CLASSDIR)/sun/jvm/hotspot/utilities/soql
 	$(QUIETLY) rm -rf $(SA_CLASSDIR)/sun/jvm/hotspot/ui/resources
 	$(QUIETLY) mkdir $(SA_CLASSDIR)/sun/jvm/hotspot/ui/resources
-	$(QUIETLY) cp $(AGENT_SRC_DIR)/sun/jvm/hotspot/ui/resources/*.png $(SA_CLASSDIR)/sun/jvm/hotspot/ui/resources
-	$(QUIETLY) cp -r $(AGENT_SRC_DIR)/images/* $(SA_CLASSDIR)
+	$(QUIETLY) $(CP) $(AGENT_SRC_DIR)/sun/jvm/hotspot/ui/resources/*.png $(SA_CLASSDIR)/sun/jvm/hotspot/ui/resources
+	$(QUIETLY) $(CP) -r $(AGENT_SRC_DIR)/images/* $(SA_CLASSDIR)
 	$(RUN_JAR) cf $@ -C $(SA_CLASSDIR) .
 	$(RUN_JAR) uf $@ -C $(AGENT_SRC_DIR) META-INF/services/com.sun.jdi.connect.Connector
 	$(RUN_JAVAH) -classpath $(SA_CLASSDIR) -jni sun.jvm.hotspot.debugger.windbg.WindbgDebuggerLocal
-	$(RUN_JAVAH) -classpath $(SA_CLASSDIR) -jni sun.jvm.hotspot.debugger.x86.X86ThreadContext 
-	$(RUN_JAVAH) -classpath $(SA_CLASSDIR) -jni sun.jvm.hotspot.debugger.amd64.AMD64ThreadContext 
+	$(RUN_JAVAH) -classpath $(SA_CLASSDIR) -jni sun.jvm.hotspot.debugger.x86.X86ThreadContext
+	$(RUN_JAVAH) -classpath $(SA_CLASSDIR) -jni sun.jvm.hotspot.debugger.amd64.AMD64ThreadContext
 	$(RUN_JAVAH) -classpath $(SA_CLASSDIR) -jni sun.jvm.hotspot.asm.Disassembler
 
 
@@ -85,16 +101,11 @@ checkAndBuildSA:: $(SAWINDBG)
 # will be useful to have the assertion checks in place
 
 !if "$(BUILDARCH)" == "ia64"
-SA_CFLAGS = -nologo $(MS_RUNTIME_OPTION) -W3 $(GX_OPTION) -Od -D "WIN32" -D "WIN64" -D "_WINDOWS" -D "_DEBUG" -D "_CONSOLE" -D "_MBCS" -YX -FD -c
+SA_CFLAGS = -nologo $(MS_RUNTIME_OPTION) -W3 $(GX_OPTION) -Od -D "WIN32" -D "WIN64" -D "_WINDOWS" -D "_DEBUG" -D "_CONSOLE" -D "_MBCS" -FD -c
 !elseif "$(BUILDARCH)" == "amd64"
-SA_CFLAGS = -nologo $(MS_RUNTIME_OPTION) -W3 $(GX_OPTION) -Od -D "WIN32" -D "WIN64" -D "_WINDOWS" -D "_DEBUG" -D "_CONSOLE" -D "_MBCS" -YX -FD -c
-!if "$(COMPILER_NAME)" == "VS2005"
-# On amd64, VS2005 compiler requires bufferoverflowU.lib on the link command line, 
-# otherwise we get missing __security_check_cookie externals at link time. 
-SA_LD_FLAGS = bufferoverflowU.lib
-!endif
+SA_CFLAGS = -nologo $(MS_RUNTIME_OPTION) -W3 $(GX_OPTION) -Od -D "WIN32" -D "WIN64" -D "_WINDOWS" -D "_DEBUG" -D "_CONSOLE" -D "_MBCS" -FD -c
 !else
-SA_CFLAGS = -nologo $(MS_RUNTIME_OPTION) -W3 $(GX_OPTION) -Od -D "WIN32" -D "_WINDOWS" -D "_DEBUG" -D "_CONSOLE" -D "_MBCS" -FD -RTC1 -c 
+SA_CFLAGS = -nologo $(MS_RUNTIME_OPTION) -W3 $(GX_OPTION) -Od -D "WIN32" -D "_WINDOWS" -D "_DEBUG" -D "_CONSOLE" -D "_MBCS" -FD -RTC1 -c
 !if "$(ENABLE_FULL_DEBUG_SYMBOLS)" == "1"
 SA_CFLAGS = $(SA_CFLAGS) -ZI
 !endif
@@ -105,7 +116,7 @@ SA_LD_FLAGS = -manifest $(SA_LD_FLAGS)
 
 SASRCFILES = $(AGENT_DIR)/src/os/win32/windbg/sawindbg.cpp \
 		$(AGENT_DIR)/src/share/native/sadis.c
-		            
+
 SA_LFLAGS = $(SA_LD_FLAGS) -nologo -subsystem:console -machine:$(MACHINE)
 !if "$(ENABLE_FULL_DEBUG_SYMBOLS)" == "1"
 SA_LFLAGS = $(SA_LFLAGS) -map -debug
@@ -125,7 +136,7 @@ SA_CFLAGS = $(SA_CFLAGS) $(MP_FLAG)
 $(SAWINDBG): $(SASRCFILES)
 	set INCLUDE=$(SA_INCLUDE)$(INCLUDE)
 	$(CXX) @<<
-	  -I"$(BootStrapDir)/include" -I"$(BootStrapDir)/include/win32" 
+	  -I"$(BootStrapDir)/include" -I"$(BootStrapDir)/include/win32"
 	  -I"$(GENERATED)" $(SA_CFLAGS)
 	  $(SASRCFILES)
 	  -out:$*.obj

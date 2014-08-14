@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2006, 2013, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2006, 2014, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -69,7 +69,7 @@ ifeq ($(ARCH), ia64)
 endif
 
 # sparc
-ifeq ($(ARCH), sparc64)
+ifneq (,$(findstring $(ARCH), sparc))
   ifeq ($(ARCH_DATA_MODEL), 64)
     ARCH_DATA_MODEL  = 64
     MAKE_ARGS        += LP64=1
@@ -83,30 +83,20 @@ ifeq ($(ARCH), sparc64)
   HS_ARCH            = sparc
 endif
 
-# amd64/x86_64
-ifneq (,$(findstring $(ARCH), amd64 x86_64))
+# i686/i586 and amd64/x86_64
+ifneq (,$(findstring $(ARCH), amd64 x86_64 i686 i586))
   ifeq ($(ARCH_DATA_MODEL), 64)
     ARCH_DATA_MODEL = 64
     MAKE_ARGS       += LP64=1
     PLATFORM        = linux-amd64
     VM_PLATFORM     = linux_amd64
-    HS_ARCH         = x86
   else
     ARCH_DATA_MODEL = 32
     PLATFORM        = linux-i586
     VM_PLATFORM     = linux_i486
-    HS_ARCH         = x86
-    # We have to reset ARCH to i686 since SRCARCH relies on it
-    ARCH            = i686
   endif
-endif
 
-# i686/i586 ie 32-bit x86
-ifneq (,$(findstring $(ARCH), i686 i586))
-  ARCH_DATA_MODEL  = 32
-  PLATFORM         = linux-i586
-  VM_PLATFORM      = linux_i486
-  HS_ARCH          = x86
+  HS_ARCH           = x86
 endif
 
 # ARM
@@ -118,20 +108,20 @@ ifeq ($(ARCH), arm)
 endif
 
 # PPC
-ifeq ($(ARCH), ppc)
-  ARCH_DATA_MODEL  = 32
-  PLATFORM         = linux-ppc
-  VM_PLATFORM      = linux_ppc
-  HS_ARCH          = ppc
-endif
+# Notice: after 8046471 ARCH will be 'ppc' for top-level ppc64 builds but
+# 'ppc64' for HotSpot-only ppc64 builds. Need to detect both variants here!
+ifneq (,$(findstring $(ARCH), ppc ppc64))
+  ifeq ($(ARCH_DATA_MODEL), 64)
+    MAKE_ARGS        += LP64=1
+    PLATFORM         = linux-ppc64
+    VM_PLATFORM      = linux_ppc64
+  else
+    ARCH_DATA_MODEL  = 32
+    PLATFORM         = linux-ppc
+    VM_PLATFORM      = linux_ppc
+  endif
 
-# PPC64
-ifeq ($(ARCH), ppc64)
-  ARCH_DATA_MODEL  = 64
-  MAKE_ARGS        += LP64=1
-  PLATFORM         = linux-ppc64
-  VM_PLATFORM      = linux_ppc64
-  HS_ARCH          = ppc
+  HS_ARCH = ppc
 endif
 
 # On 32 bit linux we build server and client, on 64 bit just server.
@@ -307,27 +297,23 @@ ifeq ($(JVM_VARIANT_MINIMAL1),true)
 endif
 
 # Serviceability Binaries
-# No SA Support for PPC, IA64, ARM or zero
-ADD_SA_BINARIES/x86   = $(EXPORT_JRE_LIB_ARCH_DIR)/libsaproc.$(LIBRARY_SUFFIX) \
-                        $(EXPORT_LIB_DIR)/sa-jdi.jar
-ADD_SA_BINARIES/sparc = $(EXPORT_JRE_LIB_ARCH_DIR)/libsaproc.$(LIBRARY_SUFFIX) \
-                        $(EXPORT_LIB_DIR)/sa-jdi.jar
+
+ADD_SA_BINARIES/DEFAULT = $(EXPORT_JRE_LIB_ARCH_DIR)/libsaproc.$(LIBRARY_SUFFIX) \
+                          $(EXPORT_LIB_DIR)/sa-jdi.jar
+
 ifeq ($(ENABLE_FULL_DEBUG_SYMBOLS),1)
   ifeq ($(ZIP_DEBUGINFO_FILES),1)
-    ADD_SA_BINARIES/x86   += $(EXPORT_JRE_LIB_ARCH_DIR)/libsaproc.diz
-    ADD_SA_BINARIES/sparc += $(EXPORT_JRE_LIB_ARCH_DIR)/libsaproc.diz
+    ADD_SA_BINARIES/DEFAULT += $(EXPORT_JRE_LIB_ARCH_DIR)/libsaproc.diz
   else
-    ADD_SA_BINARIES/x86   += $(EXPORT_JRE_LIB_ARCH_DIR)/libsaproc.debuginfo
-    ADD_SA_BINARIES/sparc += $(EXPORT_JRE_LIB_ARCH_DIR)/libsaproc.debuginfo
+    ADD_SA_BINARIES/DEFAULT += $(EXPORT_JRE_LIB_ARCH_DIR)/libsaproc.debuginfo
   endif
 endif
-ADD_SA_BINARIES/ppc   =
-ADD_SA_BINARIES/ia64  =
-ADD_SA_BINARIES/arm   =
+
+ADD_SA_BINARIES/$(HS_ARCH) = $(ADD_SA_BINARIES/DEFAULT)
+
+# No SA Support for zero
 ADD_SA_BINARIES/zero  =
 
 -include $(HS_ALT_MAKE)/linux/makefiles/defs.make
 
 EXPORT_LIST += $(ADD_SA_BINARIES/$(HS_ARCH))
-
-

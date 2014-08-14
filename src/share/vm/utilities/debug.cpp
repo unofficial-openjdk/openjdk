@@ -39,30 +39,21 @@
 #include "oops/oop.inline.hpp"
 #include "prims/privilegedStack.hpp"
 #include "runtime/arguments.hpp"
+#include "runtime/atomic.inline.hpp"
 #include "runtime/frame.hpp"
 #include "runtime/java.hpp"
+#include "runtime/os.hpp"
 #include "runtime/sharedRuntime.hpp"
 #include "runtime/stubCodeGenerator.hpp"
 #include "runtime/stubRoutines.hpp"
 #include "runtime/thread.inline.hpp"
 #include "runtime/vframe.hpp"
+#include "runtime/vm_version.hpp"
 #include "services/heapDumper.hpp"
 #include "utilities/defaultStream.hpp"
 #include "utilities/events.hpp"
 #include "utilities/top.hpp"
 #include "utilities/vmError.hpp"
-#ifdef TARGET_OS_FAMILY_linux
-# include "os_linux.inline.hpp"
-#endif
-#ifdef TARGET_OS_FAMILY_solaris
-# include "os_solaris.inline.hpp"
-#endif
-#ifdef TARGET_OS_FAMILY_windows
-# include "os_windows.inline.hpp"
-#endif
-#ifdef TARGET_OS_FAMILY_bsd
-# include "os_bsd.inline.hpp"
-#endif
 
 #ifndef ASSERT
 #  ifdef _DEBUG
@@ -263,13 +254,11 @@ void report_untested(const char* file, int line, const char* message) {
 
 void report_out_of_shared_space(SharedSpaceType shared_space) {
   static const char* name[] = {
-    "native memory for metadata",
     "shared read only space",
     "shared read write space",
     "shared miscellaneous data space"
   };
   static const char* flag[] = {
-    "Metaspace",
     "SharedReadOnlySize",
     "SharedReadWriteSize",
     "SharedMiscDataSize"

@@ -36,6 +36,7 @@
 #include "oops/oop.inline.hpp"
 #include "prims/nativeLookup.hpp"
 #include "runtime/arguments.hpp"
+#include "runtime/atomic.inline.hpp"
 #include "runtime/compilationPolicy.hpp"
 #include "runtime/init.hpp"
 #include "runtime/interfaceSupport.hpp"
@@ -296,6 +297,7 @@ void CompileTask::initialize(int compile_id,
   _hot_count = hot_count;
   _time_queued = 0;  // tidy
   _comment = comment;
+  _failure_reason = NULL;
 
   if (LogCompilation) {
     _time_queued = os::elapsed_counter();
@@ -565,6 +567,11 @@ void CompileTask::log_task_done(CompileLog* log) {
   methodHandle method(thread, this->method());
   ResourceMark rm(thread);
 
+  if (!_is_success) {
+    const char* reason = _failure_reason != NULL ? _failure_reason : "unknown";
+    log->elem("failure reason='%s'", reason);
+  }
+
   // <task_done ... stamp='1.234'>  </task>
   nmethod* nm = code();
   log->begin_elem("task_done success='%d' nmsize='%d' count='%d'",
@@ -589,11 +596,10 @@ void CompileTask::log_task_done(CompileLog* log) {
 
 
 /**
- * Add a CompileTask to a CompileQueue
+ * Add a CompileTask to a CompileQueue.
  */
 void CompileQueue::add(CompileTask* task) {
   assert(lock()->owned_by_self(), "must own lock");
-  assert(!CompileBroker::is_compilation_disabled_forever(), "Do not add task if compilation is turned off forever");
 
   task->set_next(NULL);
   task->set_prev(NULL);
@@ -639,8 +645,11 @@ void CompileQueue::free_all() {
   while (next != NULL) {
     CompileTask* current = next;
     next = current->next();
-    // Wake up thread that blocks on the compile task.
-    current->lock()->notify();
+    {
+      // Wake up thread that blocks on the compile task.
+      MutexLocker ct_lock(current->lock());
+      current->lock()->notify();
+    }
     // Put the task back on the freelist.
     CompileTask::free(current);
   }
@@ -730,6 +739,7 @@ void CompileQueue::purge_stale_tasks() {
       for (CompileTask* task = head; task != NULL; ) {
         CompileTask* next_task = task->next();
         CompileTaskWrapper ctw(task); // Frees the task
+        task->set_failure_reason("stale task");
         task = next_task;
       }
     }
@@ -1045,7 +1055,7 @@ CompilerThread* CompileBroker::make_compiler_thread(const char* name, CompileQue
   }
 
   // Let go of Threads_lock before yielding
-  os::yield(); // make sure that the compiler thread is started early (especially helpful on SOLARIS)
+  os::naked_yield(); // make sure that the compiler thread is started early (especially helpful on SOLARIS)
 
   return compiler_thread;
 }
@@ -1783,6 +1793,7 @@ void CompileBroker::compiler_thread_loop() {
       } else {
         // After compilation is disabled, remove remaining methods from queue
         method->clear_queued_for_compilation();
+        task->set_failure_reason("compilation is disabled");
       }
     }
   }
@@ -1970,6 +1981,7 @@ void CompileBroker::invoke_compiler_on_method(CompileTask* task) {
     compilable = ci_env.compilable();
 
     if (ci_env.failing()) {
+      task->set_failure_reason(ci_env.failure_reason());
       const char* retry_message = ci_env.retry_message();
       if (_compilation_log != NULL) {
         _compilation_log->log_failure(thread, task, ci_env.failure_reason(), retry_message);
@@ -2120,6 +2132,7 @@ void CompileBroker::set_last_compile(CompilerThread* thread, methodHandle method
   ResourceMark rm;
   char* method_name = method->name()->as_C_string();
   strncpy(_last_method_compiled, method_name, CompileBroker::name_buffer_length);
+  _last_method_compiled[CompileBroker::name_buffer_length - 1] = '\0'; // ensure null terminated
   char current_method[CompilerCounters::cmname_buffer_length];
   size_t maxLen = CompilerCounters::cmname_buffer_length;
 

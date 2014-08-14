@@ -24,6 +24,7 @@
 
 #include "precompiled.hpp"
 #include "oops/oop.inline.hpp"
+#include "runtime/atomic.inline.hpp"
 #include "runtime/os.hpp"
 #include "runtime/thread.inline.hpp"
 #include "utilities/debug.hpp"
@@ -141,7 +142,7 @@ bool ParallelTaskTerminator::peek_in_queue_set() {
 
 void ParallelTaskTerminator::yield() {
   assert(_offered_termination <= _n_threads, "Invariant");
-  os::yield();
+  os::naked_yield();
 }
 
 void ParallelTaskTerminator::sleep(uint millis) {

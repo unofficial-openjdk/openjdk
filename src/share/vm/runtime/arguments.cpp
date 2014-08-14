@@ -37,26 +37,13 @@
 #include "runtime/arguments.hpp"
 #include "runtime/globals_extension.hpp"
 #include "runtime/java.hpp"
+#include "runtime/os.hpp"
+#include "runtime/vm_version.hpp"
 #include "services/management.hpp"
 #include "services/memTracker.hpp"
 #include "utilities/defaultStream.hpp"
 #include "utilities/macros.hpp"
 #include "utilities/taskqueue.hpp"
-#ifdef TARGET_OS_FAMILY_linux
-# include "os_linux.inline.hpp"
-#endif
-#ifdef TARGET_OS_FAMILY_solaris
-# include "os_solaris.inline.hpp"
-#endif
-#ifdef TARGET_OS_FAMILY_windows
-# include "os_windows.inline.hpp"
-#endif
-#ifdef TARGET_OS_FAMILY_aix
-# include "os_aix.inline.hpp"
-#endif
-#ifdef TARGET_OS_FAMILY_bsd
-# include "os_bsd.inline.hpp"
-#endif
 #if INCLUDE_ALL_GCS
 #include "gc_implementation/concurrentMarkSweep/compactibleFreeListSpace.hpp"
 #include "gc_implementation/g1/g1CollectedHeap.inline.hpp"
@@ -222,10 +209,8 @@ void Arguments::init_version_specific_system_properties() {
   const char* spec_vendor = "Sun Microsystems Inc.";
   uint32_t spec_version = 0;
 
-  if (JDK_Version::is_gte_jdk17x_version()) {
-    spec_vendor = "Oracle Corporation";
-    spec_version = JDK_Version::current().major_version();
-  }
+  spec_vendor = "Oracle Corporation";
+  spec_version = JDK_Version::current().major_version();
   jio_snprintf(buffer, bufsz, "1." UINT32_FORMAT, spec_version);
 
   PropertyList_add(&_system_properties,
@@ -1553,8 +1538,10 @@ void Arguments::set_conservative_max_heap_alignment() {
     heap_alignment = G1CollectedHeap::conservative_max_heap_alignment();
   }
 #endif // INCLUDE_ALL_GCS
-  _conservative_max_heap_alignment = MAX3(heap_alignment, os::max_page_size(),
-    CollectorPolicy::compute_heap_alignment());
+  _conservative_max_heap_alignment = MAX4(heap_alignment,
+                                          (size_t)os::vm_allocation_granularity(),
+                                          os::max_page_size(),
+                                          CollectorPolicy::compute_heap_alignment());
 }
 
 void Arguments::set_ergonomics_flags() {
@@ -2187,6 +2174,10 @@ bool Arguments::check_vm_args_consistency() {
     }
   }
 
+  if (!(UseParallelGC || UseParallelOldGC) && FLAG_IS_DEFAULT(ScavengeBeforeFullGC)) {
+    FLAG_SET_DEFAULT(ScavengeBeforeFullGC, false);
+  }
+
   status = status && verify_percentage(GCHeapFreeLimit, "GCHeapFreeLimit");
   status = status && verify_percentage(GCTimeLimit, "GCTimeLimit");
   if (GCTimeLimit == 100) {
@@ -2450,6 +2441,8 @@ bool Arguments::check_vm_args_consistency() {
   if (!FLAG_IS_DEFAULT(CICompilerCount) && !FLAG_IS_DEFAULT(CICompilerCountPerCPU) && CICompilerCountPerCPU) {
     warning("The VM option CICompilerCountPerCPU overrides CICompilerCount.");
   }
+
+  status &= check_vm_args_consistency_ext();
 
   return status;
 }
@@ -3695,14 +3688,6 @@ jint Arguments::parse(const JavaVMInitArgs* args) {
     PrintGC = true;
   }
 
-  if (!JDK_Version::is_gte_jdk18x_version()) {
-    // To avoid changing the log format for 7 updates this flag is only
-    // true by default in JDK8 and above.
-    if (FLAG_IS_DEFAULT(PrintGCCause)) {
-      FLAG_SET_DEFAULT(PrintGCCause, false);
-    }
-  }
-
   // Set object alignment values.
   set_object_alignment();
 
@@ -3833,10 +3818,6 @@ jint Arguments::apply_ergo() {
   if (!UseTypeSpeculation && FLAG_IS_DEFAULT(TypeProfileLevel)) {
     // nothing to use the profiling, turn if off
     FLAG_SET_DEFAULT(TypeProfileLevel, 0);
-  }
-  if (UseTypeSpeculation && FLAG_IS_DEFAULT(ReplaceInParentMaps)) {
-    // Doing the replace in parent maps helps speculation
-    FLAG_SET_DEFAULT(ReplaceInParentMaps, true);
   }
 #endif
 

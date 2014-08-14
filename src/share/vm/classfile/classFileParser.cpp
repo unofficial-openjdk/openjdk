@@ -510,7 +510,7 @@ constantPoolHandle ClassFileParser::parse_constant_pool(TRAPS) {
     jbyte tag = cp->tag_at(index).value();
     switch (tag) {
       case JVM_CONSTANT_UnresolvedClass: {
-        Symbol*  class_name = cp->unresolved_klass_at(index);
+        Symbol*  class_name = cp->klass_name_at(index);
         // check the name, even if _cp_patches will overwrite it
         verify_legal_class_name(class_name, CHECK_(nullHandle));
         break;
@@ -919,7 +919,7 @@ void ClassFileParser::parse_field_attributes(u2 attributes_count,
             "Wrong size %u for field's Signature attribute in class file %s",
             attribute_length, CHECK);
         }
-        generic_signature_index = cfs->get_u2(CHECK);
+        generic_signature_index = parse_generic_signature_attribute(CHECK);
       } else if (attribute_name == vmSymbols::tag_runtime_visible_annotations()) {
         if (runtime_visible_annotations != NULL) {
           classfile_parse_error(
@@ -2306,8 +2306,7 @@ methodHandle ClassFileParser::parse_method(bool is_interface,
             "Invalid Signature attribute length %u in class file %s",
             method_attribute_length, CHECK_(nullHandle));
         }
-        cfs->guarantee_more(2, CHECK_(nullHandle));  // generic_signature_index
-        generic_signature_index = cfs->get_u2_fast();
+        generic_signature_index = parse_generic_signature_attribute(CHECK_(nullHandle));
       } else if (method_attribute_name == vmSymbols::tag_runtime_visible_annotations()) {
         if (runtime_visible_annotations != NULL) {
           classfile_parse_error(
@@ -2644,6 +2643,17 @@ intArray* ClassFileParser::sort_methods(Array<Method*>* methods) {
   return method_ordering;
 }
 
+// Parse generic_signature attribute for methods and fields
+u2 ClassFileParser::parse_generic_signature_attribute(TRAPS) {
+  ClassFileStream* cfs = stream();
+  cfs->guarantee_more(2, CHECK_0);  // generic_signature_index
+  u2 generic_signature_index = cfs->get_u2_fast();
+  check_property(
+    valid_symbol_at(generic_signature_index),
+    "Invalid Signature attribute at constant pool index %u in class file %s",
+    generic_signature_index, CHECK_0);
+  return generic_signature_index;
+}
 
 void ClassFileParser::parse_classfile_sourcefile_attribute(TRAPS) {
   ClassFileStream* cfs = stream();
@@ -2798,17 +2808,19 @@ void ClassFileParser::parse_classfile_bootstrap_methods_attribute(u4 attribute_b
   ClassFileStream* cfs = stream();
   u1* current_start = cfs->current();
 
-  cfs->guarantee_more(2, CHECK);  // length
+  guarantee_property(attribute_byte_length >= sizeof(u2),
+                     "Invalid BootstrapMethods attribute length %u in class file %s",
+                     attribute_byte_length,
+                     CHECK);
+
+  cfs->guarantee_more(attribute_byte_length, CHECK);
+
   int attribute_array_length = cfs->get_u2_fast();
 
   guarantee_property(_max_bootstrap_specifier_index < attribute_array_length,
                      "Short length on BootstrapMethods in class file %s",
                      CHECK);
 
-  guarantee_property(attribute_byte_length >= sizeof(u2),
-                     "Invalid BootstrapMethods attribute length %u in class file %s",
-                     attribute_byte_length,
-                     CHECK);
 
   // The attribute contains a counted array of counted tuples of shorts,
   // represending bootstrap specifiers:
@@ -2984,9 +2996,12 @@ void ClassFileParser::parse_classfile_attributes(ClassFileParser::ClassAnnotatio
       } else if (tag == vmSymbols::tag_enclosing_method()) {
         if (parsed_enclosingmethod_attribute) {
           classfile_parse_error("Multiple EnclosingMethod attributes in class file %s", CHECK);
-        }   else {
+        } else {
           parsed_enclosingmethod_attribute = true;
         }
+        guarantee_property(attribute_length == 4,
+          "Wrong EnclosingMethod attribute length %u in class file %s",
+          attribute_length, CHECK);
         cfs->guarantee_more(4, CHECK);  // class_index, method_index
         enclosing_method_class_index  = cfs->get_u2_fast();
         enclosing_method_method_index = cfs->get_u2_fast();
@@ -3158,7 +3173,7 @@ instanceKlassHandle ClassFileParser::parse_super_class(int super_class_index,
       if (_need_verify)
         is_array = super_klass->oop_is_array();
     } else if (_need_verify) {
-      is_array = (_cp->unresolved_klass_at(super_class_index)->byte_at(0) == JVM_SIGNATURE_ARRAY);
+      is_array = (_cp->klass_name_at(super_class_index)->byte_at(0) == JVM_SIGNATURE_ARRAY);
     }
     if (_need_verify) {
       guarantee_property(!is_array,
@@ -3852,7 +3867,7 @@ instanceKlassHandle ClassFileParser::parseClassFile(Symbol* name,
     "Invalid this class index %u in constant pool in class file %s",
     this_class_index, CHECK_(nullHandle));
 
-  Symbol*  class_name  = cp->unresolved_klass_at(this_class_index);
+  Symbol*  class_name  = cp->klass_name_at(this_class_index);
   assert(class_name != NULL, "class_name can't be null");
 
   // It's important to set parsed_name *before* resolving the super class.
@@ -4067,6 +4082,11 @@ instanceKlassHandle ClassFileParser::parseClassFile(Symbol* name,
     this_klass->set_major_version(major_version);
     this_klass->set_has_default_methods(has_default_methods);
 
+    if (!host_klass.is_null()) {
+      assert (this_klass->is_anonymous(), "should be the same");
+      this_klass->set_host_klass(host_klass());
+    }
+
     // Set up Method*::intrinsic_id as soon as we know the names of methods.
     // (We used to do this lazily, but now we query it in Rewriter,
     // which is eagerly done for every method, so we might as well do it now,
@@ -4131,8 +4151,8 @@ instanceKlassHandle ClassFileParser::parseClassFile(Symbol* name,
     }
 
     // Allocate mirror and initialize static fields
-    java_lang_Class::create_mirror(this_klass, protection_domain, CHECK_(nullHandle));
-
+    java_lang_Class::create_mirror(this_klass, class_loader, protection_domain,
+                                   CHECK_(nullHandle));
 
     // Generate any default methods - default methods are interface methods
     // that have a default implementation.  This is new with Lambda project.
@@ -4359,9 +4379,15 @@ void ClassFileParser::set_precomputed_flags(instanceKlassHandle k) {
   Method* m = k->lookup_method(vmSymbols::finalize_method_name(),
                                  vmSymbols::void_method_signature());
   if (m != NULL && !m->is_empty_method()) {
-    f = true;
+      f = true;
   }
-  assert(f == k->has_finalizer(), "inconsistent has_finalizer");
+
+  // Spec doesn't prevent agent from redefinition of empty finalizer.
+  // Despite the fact that it's generally bad idea and redefined finalizer
+  // will not work as expected we shouldn't abort vm in this case
+  if (!k->has_redefined_this_or_super()) {
+    assert(f == k->has_finalizer(), "inconsistent has_finalizer");
+  }
 #endif
 
   // Check if this klass supports the java.lang.Cloneable interface
@@ -4576,8 +4602,9 @@ void ClassFileParser::check_final_method_override(instanceKlassHandle this_klass
             Exceptions::fthrow(
               THREAD_AND_LOCATION,
               vmSymbols::java_lang_VerifyError(),
-              "class %s overrides final method %s.%s",
+              "class %s overrides final method %s.%s%s",
               this_klass->external_name(),
+              super_m->method_holder()->external_name(),
               name->as_C_string(),
               signature->as_C_string()
             );
@@ -4658,9 +4685,7 @@ bool ClassFileParser::has_illegal_visibility(jint flags) {
 }
 
 bool ClassFileParser::is_supported_version(u2 major, u2 minor) {
-  u2 max_version =
-    JDK_Version::is_gte_jdk17x_version() ? JAVA_MAX_SUPPORTED_VERSION :
-    (JDK_Version::is_gte_jdk16x_version() ? JAVA_6_VERSION : JAVA_1_5_VERSION);
+  u2 max_version = JAVA_MAX_SUPPORTED_VERSION;
   return (major >= JAVA_MIN_SUPPORTED_VERSION) &&
          (major <= max_version) &&
          ((major != max_version) ||

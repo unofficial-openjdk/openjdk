@@ -28,12 +28,6 @@
 #include "runtime/java.hpp"
 #include "runtime/stubCodeGenerator.hpp"
 #include "vm_version_sparc.hpp"
-#ifdef TARGET_OS_FAMILY_linux
-# include "os_linux.inline.hpp"
-#endif
-#ifdef TARGET_OS_FAMILY_solaris
-# include "os_solaris.inline.hpp"
-#endif
 
 int VM_Version::_features = VM_Version::unknown_m;
 const char* VM_Version::_features_str = "";
@@ -234,7 +228,7 @@ void VM_Version::initialize() {
   assert((OptoLoopAlignment % relocInfo::addr_unit()) == 0, "alignment is not a multiple of NOP size");
 
   char buf[512];
-  jio_snprintf(buf, sizeof(buf), "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s",
+  jio_snprintf(buf, sizeof(buf), "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s",
                (has_v9() ? ", v9" : (has_v8() ? ", v8" : "")),
                (has_hardware_popc() ? ", popc" : ""),
                (has_vis1() ? ", vis1" : ""),
@@ -243,6 +237,9 @@ void VM_Version::initialize() {
                (has_blk_init() ? ", blk_init" : ""),
                (has_cbcond() ? ", cbcond" : ""),
                (has_aes() ? ", aes" : ""),
+               (has_sha1() ? ", sha1" : ""),
+               (has_sha256() ? ", sha256" : ""),
+               (has_sha512() ? ", sha512" : ""),
                (is_ultra3() ? ", ultra3" : ""),
                (is_sun4v() ? ", sun4v" : ""),
                (is_niagara_plus() ? ", niagara_plus" : (is_niagara() ? ", niagara" : "")),
@@ -253,6 +250,49 @@ void VM_Version::initialize() {
 
   // buf is started with ", " or is empty
   _features_str = strdup(strlen(buf) > 2 ? buf + 2 : buf);
+
+  // There are three 64-bit SPARC families that do not overlap, e.g.,
+  // both is_ultra3() and is_sparc64() cannot be true at the same time.
+  // Within these families, there can be more than one chip, e.g.,
+  // is_T4() and is_T7() machines are also is_niagara().
+  if (is_ultra3()) {
+    assert(_L1_data_cache_line_size == 0, "overlap with Ultra3 family");
+    // Ref: UltraSPARC III Cu Processor
+    _L1_data_cache_line_size = 64;
+  }
+  if (is_niagara()) {
+    assert(_L1_data_cache_line_size == 0, "overlap with niagara family");
+    // All Niagara's are sun4v's, but not all sun4v's are Niagaras, e.g.,
+    // Fujitsu SPARC64 is sun4v, but we don't want it in this block.
+    //
+    // Ref: UltraSPARC T1 Supplement to the UltraSPARC Architecture 2005
+    // Appendix F.1.3.1 Cacheable Accesses
+    // -> 16-byte L1 cache line size
+    //
+    // Ref: UltraSPARC T2: A Highly-Threaded, Power-Efficient, SPARC SOC
+    // Section III: SPARC Processor Core
+    // -> 16-byte L1 cache line size
+    //
+    // Ref: Oracle's SPARC T4-1, SPARC T4-2, SPARC T4-4, and SPARC T4-1B Server Architecture
+    // Section SPARC T4 Processor Cache Architecture
+    // -> 32-byte L1 cache line size (no longer see that info on this ref)
+    //
+    // XXX - still need a T7 reference here
+    //
+    if (is_T7()) {  // T7 or newer
+      _L1_data_cache_line_size = 64;
+    } else if (is_T4()) {  // T4 or newer (until T7)
+      _L1_data_cache_line_size = 32;
+    } else {  // T1 or newer (until T4)
+      _L1_data_cache_line_size = 16;
+    }
+  }
+  if (is_sparc64()) {
+    guarantee(_L1_data_cache_line_size == 0, "overlap with SPARC64 family");
+    // Ref: Fujitsu SPARC64 VII Processor
+    // Section 4 Cache System
+    _L1_data_cache_line_size = 64;
+  }
 
   // UseVIS is set to the smallest of what hardware supports and what
   // the command line requires.  I.e., you cannot set UseVIS to 3 on
@@ -301,12 +341,65 @@ void VM_Version::initialize() {
     }
   }
 
+  // SHA1, SHA256, and SHA512 instructions were added to SPARC T-series at different times
+  if (has_sha1() || has_sha256() || has_sha512()) {
+    if (UseVIS > 0) { // SHA intrinsics use VIS1 instructions
+      if (FLAG_IS_DEFAULT(UseSHA)) {
+        FLAG_SET_DEFAULT(UseSHA, true);
+      }
+    } else {
+      if (UseSHA) {
+        warning("SPARC SHA intrinsics require VIS1 instruction support. Intrinsics will be disabled.");
+        FLAG_SET_DEFAULT(UseSHA, false);
+      }
+    }
+  } else if (UseSHA) {
+    warning("SHA instructions are not available on this CPU");
+    FLAG_SET_DEFAULT(UseSHA, false);
+  }
+
+  if (!UseSHA) {
+    FLAG_SET_DEFAULT(UseSHA1Intrinsics, false);
+    FLAG_SET_DEFAULT(UseSHA256Intrinsics, false);
+    FLAG_SET_DEFAULT(UseSHA512Intrinsics, false);
+  } else {
+    if (has_sha1()) {
+      if (FLAG_IS_DEFAULT(UseSHA1Intrinsics)) {
+        FLAG_SET_DEFAULT(UseSHA1Intrinsics, true);
+      }
+    } else if (UseSHA1Intrinsics) {
+      warning("SHA1 instruction is not available on this CPU.");
+      FLAG_SET_DEFAULT(UseSHA1Intrinsics, false);
+    }
+    if (has_sha256()) {
+      if (FLAG_IS_DEFAULT(UseSHA256Intrinsics)) {
+        FLAG_SET_DEFAULT(UseSHA256Intrinsics, true);
+      }
+    } else if (UseSHA256Intrinsics) {
+      warning("SHA256 instruction (for SHA-224 and SHA-256) is not available on this CPU.");
+      FLAG_SET_DEFAULT(UseSHA256Intrinsics, false);
+    }
+
+    if (has_sha512()) {
+      if (FLAG_IS_DEFAULT(UseSHA512Intrinsics)) {
+        FLAG_SET_DEFAULT(UseSHA512Intrinsics, true);
+      }
+    } else if (UseSHA512Intrinsics) {
+      warning("SHA512 instruction (for SHA-384 and SHA-512) is not available on this CPU.");
+      FLAG_SET_DEFAULT(UseSHA512Intrinsics, false);
+    }
+    if (!(UseSHA1Intrinsics || UseSHA256Intrinsics || UseSHA512Intrinsics)) {
+      FLAG_SET_DEFAULT(UseSHA, false);
+    }
+  }
+
   if (FLAG_IS_DEFAULT(ContendedPaddingWidth) &&
     (cache_line_size > ContendedPaddingWidth))
     ContendedPaddingWidth = cache_line_size;
 
 #ifndef PRODUCT
   if (PrintMiscellaneous && Verbose) {
+    tty->print_cr("L1 data cache line size: %u", L1_data_cache_line_size());
     tty->print("Allocation");
     if (AllocatePrefetchStyle <= 0) {
       tty->print_cr(": no prefetching");

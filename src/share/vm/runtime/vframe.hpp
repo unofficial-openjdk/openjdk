@@ -186,7 +186,7 @@ class interpretedVFrame: public javaVFrame {
  private:
   static const int bcp_offset;
   intptr_t* locals_addr_at(int offset) const;
-
+  StackValueCollection* stack_data(bool expressions) const;
   // returns where the parameters starts relative to the frame pointer
   int start_of_parameters() const;
 
@@ -511,8 +511,8 @@ inline bool vframeStreamCommon::fill_from_frame() {
 
 inline void vframeStreamCommon::fill_from_interpreter_frame() {
   Method* method = _frame.interpreter_frame_method();
-  intptr_t  bcx    = _frame.interpreter_frame_bcx();
-  int       bci    = method->validate_bci_from_bcx(bcx);
+  address   bcp    = _frame.interpreter_frame_bcp();
+  int       bci    = method->validate_bci_from_bcp(bcp);
   // 6379830 AsyncGetCallTrace sometimes feeds us wild frames.
   if (bci < 0) {
     found_bad_method_frame();

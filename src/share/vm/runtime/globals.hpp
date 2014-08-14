@@ -362,37 +362,37 @@ class DoubleFlagSetting {
 
 class CommandLineFlags {
  public:
-  static bool boolAt(char* name, size_t len, bool* value);
-  static bool boolAt(char* name, bool* value)      { return boolAt(name, strlen(name), value); }
-  static bool boolAtPut(char* name, size_t len, bool* value, Flag::Flags origin);
-  static bool boolAtPut(char* name, bool* value, Flag::Flags origin)   { return boolAtPut(name, strlen(name), value, origin); }
+  static bool boolAt(const char* name, size_t len, bool* value);
+  static bool boolAt(const char* name, bool* value)      { return boolAt(name, strlen(name), value); }
+  static bool boolAtPut(const char* name, size_t len, bool* value, Flag::Flags origin);
+  static bool boolAtPut(const char* name, bool* value, Flag::Flags origin)   { return boolAtPut(name, strlen(name), value, origin); }
 
-  static bool intxAt(char* name, size_t len, intx* value);
-  static bool intxAt(char* name, intx* value)      { return intxAt(name, strlen(name), value); }
-  static bool intxAtPut(char* name, size_t len, intx* value, Flag::Flags origin);
-  static bool intxAtPut(char* name, intx* value, Flag::Flags origin)   { return intxAtPut(name, strlen(name), value, origin); }
+  static bool intxAt(const char* name, size_t len, intx* value);
+  static bool intxAt(const char* name, intx* value)      { return intxAt(name, strlen(name), value); }
+  static bool intxAtPut(const char* name, size_t len, intx* value, Flag::Flags origin);
+  static bool intxAtPut(const char* name, intx* value, Flag::Flags origin)   { return intxAtPut(name, strlen(name), value, origin); }
 
-  static bool uintxAt(char* name, size_t len, uintx* value);
-  static bool uintxAt(char* name, uintx* value)    { return uintxAt(name, strlen(name), value); }
-  static bool uintxAtPut(char* name, size_t len, uintx* value, Flag::Flags origin);
-  static bool uintxAtPut(char* name, uintx* value, Flag::Flags origin) { return uintxAtPut(name, strlen(name), value, origin); }
+  static bool uintxAt(const char* name, size_t len, uintx* value);
+  static bool uintxAt(const char* name, uintx* value)    { return uintxAt(name, strlen(name), value); }
+  static bool uintxAtPut(const char* name, size_t len, uintx* value, Flag::Flags origin);
+  static bool uintxAtPut(const char* name, uintx* value, Flag::Flags origin) { return uintxAtPut(name, strlen(name), value, origin); }
 
-  static bool uint64_tAt(char* name, size_t len, uint64_t* value);
-  static bool uint64_tAt(char* name, uint64_t* value) { return uint64_tAt(name, strlen(name), value); }
-  static bool uint64_tAtPut(char* name, size_t len, uint64_t* value, Flag::Flags origin);
-  static bool uint64_tAtPut(char* name, uint64_t* value, Flag::Flags origin) { return uint64_tAtPut(name, strlen(name), value, origin); }
+  static bool uint64_tAt(const char* name, size_t len, uint64_t* value);
+  static bool uint64_tAt(const char* name, uint64_t* value) { return uint64_tAt(name, strlen(name), value); }
+  static bool uint64_tAtPut(const char* name, size_t len, uint64_t* value, Flag::Flags origin);
+  static bool uint64_tAtPut(const char* name, uint64_t* value, Flag::Flags origin) { return uint64_tAtPut(name, strlen(name), value, origin); }
 
-  static bool doubleAt(char* name, size_t len, double* value);
-  static bool doubleAt(char* name, double* value)    { return doubleAt(name, strlen(name), value); }
-  static bool doubleAtPut(char* name, size_t len, double* value, Flag::Flags origin);
-  static bool doubleAtPut(char* name, double* value, Flag::Flags origin) { return doubleAtPut(name, strlen(name), value, origin); }
+  static bool doubleAt(const char* name, size_t len, double* value);
+  static bool doubleAt(const char* name, double* value)    { return doubleAt(name, strlen(name), value); }
+  static bool doubleAtPut(const char* name, size_t len, double* value, Flag::Flags origin);
+  static bool doubleAtPut(const char* name, double* value, Flag::Flags origin) { return doubleAtPut(name, strlen(name), value, origin); }
 
-  static bool ccstrAt(char* name, size_t len, ccstr* value);
-  static bool ccstrAt(char* name, ccstr* value)    { return ccstrAt(name, strlen(name), value); }
+  static bool ccstrAt(const char* name, size_t len, ccstr* value);
+  static bool ccstrAt(const char* name, ccstr* value)    { return ccstrAt(name, strlen(name), value); }
   // Contract:  Flag will make private copy of the incoming value.
   // Outgoing value is always malloc-ed, and caller MUST call free.
-  static bool ccstrAtPut(char* name, size_t len, ccstr* value, Flag::Flags origin);
-  static bool ccstrAtPut(char* name, ccstr* value, Flag::Flags origin) { return ccstrAtPut(name, strlen(name), value, origin); }
+  static bool ccstrAtPut(const char* name, size_t len, ccstr* value, Flag::Flags origin);
+  static bool ccstrAtPut(const char* name, ccstr* value, Flag::Flags origin) { return ccstrAtPut(name, strlen(name), value, origin); }
 
   // Returns false if name is not a command line flag.
   static bool wasSetOnCmdline(const char* name, bool* value);
@@ -599,6 +599,9 @@ class CommandLineFlags {
   product(bool, UseAES, false,                                              \
           "Control whether AES instructions can be used on x86/x64")        \
                                                                             \
+  product(bool, UseSHA, false,                                              \
+          "Control whether SHA instructions can be used on SPARC")          \
+                                                                            \
   product(uintx, LargePageSizeInBytes, 0,                                   \
           "Large page size (0 to let VM choose the page size)")             \
                                                                             \
@@ -704,6 +707,15 @@ class CommandLineFlags {
                                                                             \
   product(bool, UseAESIntrinsics, false,                                    \
           "Use intrinsics for AES versions of crypto")                      \
+                                                                            \
+  product(bool, UseSHA1Intrinsics, false,                                   \
+          "Use intrinsics for SHA-1 crypto hash function")                  \
+                                                                            \
+  product(bool, UseSHA256Intrinsics, false,                                 \
+          "Use intrinsics for SHA-224 and SHA-256 crypto hash functions")   \
+                                                                            \
+  product(bool, UseSHA512Intrinsics, false,                                 \
+          "Use intrinsics for SHA-384 and SHA-512 crypto hash functions")   \
                                                                             \
   product(bool, UseCRC32Intrinsics, false,                                  \
           "use intrinsics for java.util.zip.CRC32")                         \
@@ -1097,7 +1109,7 @@ class CommandLineFlags {
           "Call loadClassInternal() rather than loadClass()")               \
                                                                             \
   product_pd(bool, DontYieldALot,                                           \
-          "Throw away obvious excess yield calls (for Solaris only)")       \
+          "Throw away obvious excess yield calls")                          \
                                                                             \
   product_pd(bool, ConvertSleepToYield,                                     \
           "Convert sleep(0) to thread yield "                               \
@@ -1105,7 +1117,7 @@ class CommandLineFlags {
                                                                             \
   product(bool, ConvertYieldToSleep, false,                                 \
           "Convert yield to a sleep of MinSleepInterval to simulate Win32 " \
-          "behavior (Solaris only)")                                        \
+          "behavior")                                                       \
                                                                             \
   product(bool, UseBoundThreads, true,                                      \
           "Bind user level threads to kernel threads (for Solaris only)")   \
@@ -1118,33 +1130,34 @@ class CommandLineFlags {
           "Use LWP-based instead of libthread-based synchronization "       \
           "(SPARC only)")                                                   \
                                                                             \
-  product(ccstr, SyncKnobs, NULL,                                           \
-          "(Unstable) Various monitor synchronization tunables")            \
+  experimental(ccstr, SyncKnobs, NULL,                                      \
+               "(Unstable) Various monitor synchronization tunables")       \
                                                                             \
-  product(intx, EmitSync, 0,                                                \
-          "(Unsafe, Unstable) "                                             \
-          "Control emission of inline sync fast-path code")                 \
+  experimental(intx, EmitSync, 0,                                           \
+               "(Unsafe, Unstable) "                                        \
+               "Control emission of inline sync fast-path code")            \
                                                                             \
   product(intx, MonitorBound, 0, "Bound Monitor population")                \
                                                                             \
   product(bool, MonitorInUseLists, false, "Track Monitors for Deflation")   \
                                                                             \
-  product(intx, SyncFlags, 0, "(Unsafe, Unstable) Experimental Sync flags") \
+  experimental(intx, SyncFlags, 0, "(Unsafe, Unstable) "                    \
+               "Experimental Sync flags")                                   \
                                                                             \
-  product(intx, SyncVerbose, 0, "(Unstable)")                               \
+  experimental(intx, SyncVerbose, 0, "(Unstable)")                          \
                                                                             \
-  product(intx, ClearFPUAtPark, 0, "(Unsafe, Unstable)")                    \
+  experimental(intx, ClearFPUAtPark, 0, "(Unsafe, Unstable)")               \
                                                                             \
-  product(intx, hashCode, 5,                                                \
-          "(Unstable) select hashCode generation algorithm")                \
+  experimental(intx, hashCode, 5,                                           \
+               "(Unstable) select hashCode generation algorithm")           \
                                                                             \
-  product(intx, WorkAroundNPTLTimedWaitHang, 1,                             \
-          "(Unstable, Linux-specific) "                                     \
-          "avoid NPTL-FUTEX hang pthread_cond_timedwait")                   \
+  experimental(intx, WorkAroundNPTLTimedWaitHang, 1,                        \
+               "(Unstable, Linux-specific) "                                \
+               "avoid NPTL-FUTEX hang pthread_cond_timedwait")              \
                                                                             \
   product(bool, FilterSpuriousWakeups, true,                                \
-          "Prevent spurious or premature wakeups from object.wait "         \
-          "(Solaris only)")                                                 \
+          "When true prevents OS-level spurious, or premature, wakeups "    \
+          "from Object.wait (Ignored for Windows)")                         \
                                                                             \
   product(intx, NativeMonitorTimeout, -1, "(Unstable)")                     \
                                                                             \
@@ -1202,6 +1215,11 @@ class CommandLineFlags {
                                                                             \
   product(bool, UseFastJNIAccessors, true,                                  \
           "Use optimized versions of Get<Primitive>Field")                  \
+                                                                            \
+  product(intx, MaxJNILocalCapacity, 65536,                                 \
+          "Maximum allowable local JNI handle capacity to "                 \
+          "EnsureLocalCapacity() and PushLocalFrame(), "                    \
+          "where <= 0 is unlimited, default: 65536")                        \
                                                                             \
   product(bool, EagerXrunInit, false,                                       \
           "Eagerly initialize -Xrun libraries; allows startup profiling, "  \
@@ -1462,8 +1480,7 @@ class CommandLineFlags {
           "(ParallelGC only)")                                              \
                                                                             \
   product(bool, ScavengeBeforeFullGC, true,                                 \
-          "Scavenge youngest generation before each full GC, "              \
-          "used with UseParallelGC")                                        \
+          "Scavenge youngest generation before each full GC.")              \
                                                                             \
   develop(bool, ScavengeWithObjectsInToSpace, false,                        \
           "Allow scavenges to occur when to-space contains objects")        \
@@ -2264,9 +2281,6 @@ class CommandLineFlags {
   notproduct(bool, CheckMemoryInitialization, false,                        \
           "Check memory initialization")                                    \
                                                                             \
-  product(bool, CollectGen0First, false,                                    \
-          "Collect youngest generation before each full GC")                \
-                                                                            \
   diagnostic(bool, BindCMSThreadToCPU, false,                               \
           "Bind CMS Thread to CPU if possible")                             \
                                                                             \
@@ -2302,6 +2316,9 @@ class CommandLineFlags {
                                                                             \
   manageable(bool, PrintGCTimeStamps, false,                                \
           "Print timestamps at garbage collection")                         \
+                                                                            \
+  manageable(bool, PrintGCID, true,                                         \
+          "Print an identifier for each garbage collection")                \
                                                                             \
   product(bool, PrintGCTaskTimeStamps, false,                               \
           "Print timestamps for individual gc worker thread tasks")         \
@@ -2345,11 +2362,11 @@ class CommandLineFlags {
           NOT_LP64(2200*K) LP64_ONLY(4*M),                                  \
           "Initial size of the boot class loader data metaspace")           \
                                                                             \
-  product(bool, TraceGen0Time, false,                                       \
-          "Trace accumulated time for Gen 0 collection")                    \
+  product(bool, TraceYoungGenTime, false,                                   \
+          "Trace accumulated time for young collection")                    \
                                                                             \
-  product(bool, TraceGen1Time, false,                                       \
-          "Trace accumulated time for Gen 1 collection")                    \
+  product(bool, TraceOldGenTime, false,                                     \
+          "Trace accumulated time for old collection")                      \
                                                                             \
   product(bool, PrintTenuringDistribution, false,                           \
           "Print tenuring age information")                                 \

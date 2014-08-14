@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,6 +36,7 @@
 #include "interpreter/bytecode.hpp"
 #include "runtime/sharedRuntime.hpp"
 #include "runtime/compilationPolicy.hpp"
+#include "runtime/vm_version.hpp"
 #include "utilities/bitMap.inline.hpp"
 
 class BlockListBuilder VALUE_OBJ_CLASS_SPEC {
@@ -1573,6 +1574,7 @@ void GraphBuilder::access_field(Bytecodes::Code code) {
         default:
           constant = new Constant(as_ValueType(field_val));
         }
+        // Stable static fields are checked for non-default values in ciField::initialize_from().
       }
       if (constant != NULL) {
         push(type, append(constant));
@@ -1613,6 +1615,10 @@ void GraphBuilder::access_field(Bytecodes::Code code) {
               break;
             default:
               constant = new Constant(as_ValueType(field_val));
+            }
+            if (FoldStableValues && field->is_stable() && field_val.is_null_or_zero()) {
+              // Stable field with default value can't be constant.
+              constant = NULL;
             }
           } else {
             // For CallSite objects treat the target field as a compile time constant.
@@ -1997,7 +2003,13 @@ void GraphBuilder::invoke(Bytecodes::Code code) {
   if (!UseInlineCaches && is_loaded && code == Bytecodes::_invokevirtual
       && !target->can_be_statically_bound()) {
     // Find a vtable index if one is available
-    vtable_index = target->resolve_vtable_index(calling_klass, callee_holder);
+    // For arrays, callee_holder is Object. Resolving the call with
+    // Object would allow an illegal call to finalize() on an
+    // array. We use holder instead: illegal calls to finalize() won't
+    // be compiled as vtable calls (IC call resolution will catch the
+    // illegal call) and the few legal calls on array types won't be
+    // either.
+    vtable_index = target->resolve_vtable_index(calling_klass, holder);
   }
 #endif
 
@@ -2054,7 +2066,7 @@ void GraphBuilder::new_instance(int klass_index) {
   bool will_link;
   ciKlass* klass = stream()->get_klass(will_link);
   assert(klass->is_instance_klass(), "must be an instance klass");
-  NewInstance* new_instance = new NewInstance(klass->as_instance_klass(), state_before);
+  NewInstance* new_instance = new NewInstance(klass->as_instance_klass(), state_before, stream()->is_unresolved_klass());
   _memory->new_instance(new_instance);
   apush(append_split(new_instance));
 }
@@ -3953,9 +3965,14 @@ bool GraphBuilder::try_inline_full(ciMethod* callee, bool holder_known, Bytecode
   // Clear out bytecode stream
   scope_data()->set_stream(NULL);
 
+  CompileLog* log = compilation()->log();
+  if (log != NULL) log->head("parse method='%d'", log->identify(callee));
+
   // Ready to resume parsing in callee (either in the same block we
   // were in before or in the callee's start block)
   iterate_all_blocks(callee_start_block == NULL);
+
+  if (log != NULL) log->done("parse");
 
   // If we bailed out during parsing, return immediately (this is bad news)
   if (bailed_out())

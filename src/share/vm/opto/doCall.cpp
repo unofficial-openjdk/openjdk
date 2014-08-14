@@ -119,12 +119,12 @@ CallGenerator* Compile::call_generator(ciMethod* callee, int vtable_index, bool 
   if (allow_inline && allow_intrinsics) {
     CallGenerator* cg = find_intrinsic(callee, call_does_dispatch);
     if (cg != NULL) {
-      if (cg->is_predicted()) {
+      if (cg->is_predicated()) {
         // Code without intrinsic but, hopefully, inlined.
         CallGenerator* inline_cg = this->call_generator(callee,
               vtable_index, call_does_dispatch, jvms, allow_inline, prof_factor, speculative_receiver_type, false);
         if (inline_cg != NULL) {
-          cg = CallGenerator::for_predicted_intrinsic(cg, inline_cg);
+          cg = CallGenerator::for_predicated_intrinsic(cg, inline_cg);
         }
       }
 
@@ -468,8 +468,14 @@ void Parse::do_call() {
     Node* receiver_node             = stack(sp() - nargs);
     const TypeOopPtr* receiver_type = _gvn.type(receiver_node)->isa_oopptr();
     // call_does_dispatch and vtable_index are out-parameters.  They might be changed.
-    callee = C->optimize_virtual_call(method(), bci(), klass, orig_callee, receiver_type,
-                                      is_virtual,
+    // For arrays, klass below is Object. When vtable calls are used,
+    // resolving the call with Object would allow an illegal call to
+    // finalize() on an array. We use holder instead: illegal calls to
+    // finalize() won't be compiled as vtable calls (IC call
+    // resolution will catch the illegal call) and the few legal calls
+    // on array types won't be either.
+    callee = C->optimize_virtual_call(method(), bci(), klass, holder, orig_callee,
+                                      receiver_type, is_virtual,
                                       call_does_dispatch, vtable_index);  // out-parameters
     speculative_receiver_type = receiver_type != NULL ? receiver_type->speculative_type() : NULL;
   }
@@ -525,7 +531,7 @@ void Parse::do_call() {
   // because exceptions don't return to the call site.)
   profile_call(receiver);
 
-  JVMState* new_jvms = cg->generate(jvms, this);
+  JVMState* new_jvms = cg->generate(jvms);
   if (new_jvms == NULL) {
     // When inlining attempt fails (e.g., too many arguments),
     // it may contaminate the current compile state, making it
@@ -539,7 +545,7 @@ void Parse::do_call() {
     // intrinsic was expecting to optimize. Should always be possible to
     // get a normal java call that may inline in that case
     cg = C->call_generator(cg->method(), vtable_index, call_does_dispatch, jvms, try_inline, prof_factor(), speculative_receiver_type, /* allow_intrinsics= */ false);
-    new_jvms = cg->generate(jvms, this);
+    new_jvms = cg->generate(jvms);
     if (new_jvms == NULL) {
       guarantee(failing(), "call failed to generate:  calls should work");
       return;
@@ -596,7 +602,7 @@ void Parse::do_call() {
             const Type*       sig_type = TypeOopPtr::make_from_klass(ctype->as_klass());
             if (arg_type != NULL && !arg_type->higher_equal(sig_type)) {
               Node* retnode = pop();
-              Node* cast_obj = _gvn.transform(new (C) CheckCastPPNode(control(), retnode, sig_type));
+              Node* cast_obj = _gvn.transform(new CheckCastPPNode(control(), retnode, sig_type));
               push(cast_obj);
             }
           }
@@ -689,7 +695,7 @@ void Parse::catch_call_exceptions(ciExceptionHandlerStream& handlers) {
   }
 
   int len = bcis->length();
-  CatchNode *cn = new (C) CatchNode(control(), i_o, len+1);
+  CatchNode *cn = new CatchNode(control(), i_o, len+1);
   Node *catch_ = _gvn.transform(cn);
 
   // now branch with the exception state to each of the (potential)
@@ -700,14 +706,14 @@ void Parse::catch_call_exceptions(ciExceptionHandlerStream& handlers) {
     // Locals are just copied from before the call.
     // Get control from the CatchNode.
     int handler_bci = bcis->at(i);
-    Node* ctrl = _gvn.transform( new (C) CatchProjNode(catch_, i+1,handler_bci));
+    Node* ctrl = _gvn.transform( new CatchProjNode(catch_, i+1,handler_bci));
     // This handler cannot happen?
     if (ctrl == top())  continue;
     set_control(ctrl);
 
     // Create exception oop
     const TypeInstPtr* extype = extypes->at(i)->is_instptr();
-    Node *ex_oop = _gvn.transform(new (C) CreateExNode(extypes->at(i), ctrl, i_o));
+    Node *ex_oop = _gvn.transform(new CreateExNode(extypes->at(i), ctrl, i_o));
 
     // Handle unloaded exception classes.
     if (saw_unloaded->contains(handler_bci)) {
@@ -746,7 +752,7 @@ void Parse::catch_call_exceptions(ciExceptionHandlerStream& handlers) {
 
   // The first CatchProj is for the normal return.
   // (Note:  If this is a call to rethrow_Java, this node goes dead.)
-  set_control(_gvn.transform( new (C) CatchProjNode(catch_, CatchProjNode::fall_through_index, CatchProjNode::no_handler_bci)));
+  set_control(_gvn.transform( new CatchProjNode(catch_, CatchProjNode::fall_through_index, CatchProjNode::no_handler_bci)));
 }
 
 
@@ -797,7 +803,7 @@ void Parse::catch_inline_exceptions(SafePointNode* ex_map) {
     // I'm loading the class from, I can replace the LoadKlass with the
     // klass constant for the exception oop.
     if( ex_node->is_Phi() ) {
-      ex_klass_node = new (C) PhiNode( ex_node->in(0), TypeKlassPtr::OBJECT );
+      ex_klass_node = new PhiNode( ex_node->in(0), TypeKlassPtr::OBJECT );
       for( uint i = 1; i < ex_node->req(); i++ ) {
         Node* p = basic_plus_adr( ex_node->in(i), ex_node->in(i), oopDesc::klass_offset_in_bytes() );
         Node* k = _gvn.transform( LoadKlassNode::make(_gvn, immutable_memory(), p, TypeInstPtr::KLASS, TypeKlassPtr::OBJECT) );
@@ -863,7 +869,7 @@ void Parse::catch_inline_exceptions(SafePointNode* ex_map) {
       PreserveJVMState pjvms(this);
       const TypeInstPtr* tinst = TypeOopPtr::make_from_klass_unique(klass)->cast_to_ptr_type(TypePtr::NotNull)->is_instptr();
       assert(klass->has_subklass() || tinst->klass_is_exact(), "lost exactness");
-      Node* ex_oop = _gvn.transform(new (C) CheckCastPPNode(control(), ex_node, tinst));
+      Node* ex_oop = _gvn.transform(new CheckCastPPNode(control(), ex_node, tinst));
       push_ex_oop(ex_oop);      // Push exception oop for handler
 #ifndef PRODUCT
       if (PrintOpto && WizardMode) {
@@ -940,8 +946,8 @@ void Parse::count_compiled_calls(bool at_method_entry, bool is_inline) {
 
 
 ciMethod* Compile::optimize_virtual_call(ciMethod* caller, int bci, ciInstanceKlass* klass,
-                                         ciMethod* callee, const TypeOopPtr* receiver_type,
-                                         bool is_virtual,
+                                         ciKlass* holder, ciMethod* callee,
+                                         const TypeOopPtr* receiver_type, bool is_virtual,
                                          bool& call_does_dispatch, int& vtable_index) {
   // Set default values for out-parameters.
   call_does_dispatch = true;
@@ -956,7 +962,7 @@ ciMethod* Compile::optimize_virtual_call(ciMethod* caller, int bci, ciInstanceKl
     call_does_dispatch = false;
   } else if (!UseInlineCaches && is_virtual && callee->is_loaded()) {
     // We can make a vtable call at this site
-    vtable_index = callee->resolve_vtable_index(caller->holder(), klass);
+    vtable_index = callee->resolve_vtable_index(caller->holder(), holder);
   }
   return callee;
 }
@@ -979,8 +985,10 @@ ciMethod* Compile::optimize_inlining(ciMethod* caller, int bci, ciInstanceKlass*
   ciInstanceKlass* actual_receiver = klass;
   if (receiver_type != NULL) {
     // Array methods are all inherited from Object, and are monomorphic.
+    // finalize() call on array is not allowed.
     if (receiver_type->isa_aryptr() &&
-        callee->holder() == env()->Object_klass()) {
+        callee->holder() == env()->Object_klass() &&
+        callee->name() != ciSymbol::finalize_method_name()) {
       return callee;
     }
 

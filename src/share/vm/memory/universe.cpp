@@ -53,6 +53,7 @@
 #include "oops/typeArrayKlass.hpp"
 #include "prims/jvmtiRedefineClassesTrace.hpp"
 #include "runtime/arguments.hpp"
+#include "runtime/atomic.inline.hpp"
 #include "runtime/deoptimization.hpp"
 #include "runtime/fprofiler.hpp"
 #include "runtime/handles.inline.hpp"
@@ -71,7 +72,7 @@
 #include "utilities/preserveException.hpp"
 #include "utilities/macros.hpp"
 #if INCLUDE_ALL_GCS
-#include "gc_implementation/concurrentMarkSweep/cmsAdaptiveSizePolicy.hpp"
+#include "gc_implementation/shared/adaptiveSizePolicy.hpp"
 #include "gc_implementation/concurrentMarkSweep/cmsCollectorPolicy.hpp"
 #include "gc_implementation/g1/g1CollectedHeap.inline.hpp"
 #include "gc_implementation/g1/g1CollectorPolicy.hpp"
@@ -801,13 +802,9 @@ jint Universe::initialize_heap() {
       gc_policy = new MarkSweepPolicy();
     } else if (UseConcMarkSweepGC) {
 #if INCLUDE_ALL_GCS
-      if (UseAdaptiveSizePolicy) {
-        gc_policy = new ASConcurrentMarkSweepPolicy();
-      } else {
-        gc_policy = new ConcurrentMarkSweepPolicy();
-      }
+      gc_policy = new ConcurrentMarkSweepPolicy();
 #else  // INCLUDE_ALL_GCS
-    fatal("UseConcMarkSweepGC not supported in this VM.");
+      fatal("UseConcMarkSweepGC not supported in this VM.");
 #endif // INCLUDE_ALL_GCS
     } else { // default old generation
       gc_policy = new MarkSweepPolicy();
@@ -1000,9 +997,6 @@ void universe2_init() {
 }
 
 
-// This function is defined in JVM.cpp
-extern void initialize_converter_functions();
-
 bool universe_post_init() {
   assert(!is_init_completed(), "Error: initialization not yet completed!");
   Universe::_fully_initialized = true;
@@ -1143,11 +1137,6 @@ bool universe_post_init() {
     Universe::_pd_implies_cache->init(
       SystemDictionary::ProtectionDomain_klass(), m);;
   }
-
-  // The following is initializing converter functions for serialization in
-  // JVM.cpp. If we clean up the StrictMath code above we may want to find
-  // a better solution for this as well.
-  initialize_converter_functions();
 
   // This needs to be done before the first scavenge/gc, since
   // it's an input to soft ref clearing policy.

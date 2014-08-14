@@ -240,6 +240,9 @@ void Method::mask_for(int bci, InterpreterOopMap* mask) {
 
 
 int Method::bci_from(address bcp) const {
+  if (is_native() && bcp == 0) {
+    return 0;
+  }
 #ifdef ASSERT
   { ResourceMark rm;
   assert(is_native() && bcp == code_base() || contains(bcp) || is_error_reported(),
@@ -250,24 +253,23 @@ int Method::bci_from(address bcp) const {
 }
 
 
-// Return (int)bcx if it appears to be a valid BCI.
-// Return bci_from((address)bcx) if it appears to be a valid BCP.
+int Method::validate_bci(int bci) const {
+  return (bci == 0 || bci < code_size()) ? bci : -1;
+}
+
+// Return bci if it appears to be a valid bcp
 // Return -1 otherwise.
 // Used by profiling code, when invalid data is a possibility.
 // The caller is responsible for validating the Method* itself.
-int Method::validate_bci_from_bcx(intptr_t bcx) const {
+int Method::validate_bci_from_bcp(address bcp) const {
   // keep bci as -1 if not a valid bci
   int bci = -1;
-  if (bcx == 0 || (address)bcx == code_base()) {
+  if (bcp == 0 || bcp == code_base()) {
     // code_size() may return 0 and we allow 0 here
     // the method may be native
     bci = 0;
-  } else if (frame::is_bci(bcx)) {
-    if (bcx < code_size()) {
-      bci = (int)bcx;
-    }
-  } else if (contains((address)bcx)) {
-    bci = (address)bcx - code_base();
+  } else if (contains(bcp)) {
+    bci = bcp - code_base();
   }
   // Assert that if we have dodged any asserts, bci is negative.
   assert(bci == -1 || bci == bci_from(bcp_from(bci)), "sane bci if >=0");
@@ -729,8 +731,8 @@ void Method::print_made_not_compilable(int comp_level, bool is_osr, bool report,
   }
   if ((TraceDeoptimization || LogCompilation) && (xtty != NULL)) {
     ttyLocker ttyl;
-    xtty->begin_elem("make_not_%scompilable thread='" UINTX_FORMAT "'",
-                     is_osr ? "osr_" : "", os::current_thread_id());
+    xtty->begin_elem("make_not_compilable thread='" UINTX_FORMAT "' osr='%d' level='%d'",
+                     os::current_thread_id(), is_osr, comp_level);
     if (reason != NULL) {
       xtty->print(" reason=\'%s\'", reason);
     }
@@ -1023,8 +1025,7 @@ bool Method::is_ignored_by_security_stack_walk() const {
     // This is Method.invoke() -- ignore it
     return true;
   }
-  if (JDK_Version::is_gte_jdk14x_version() &&
-      method_holder()->is_subclass_of(SystemDictionary::reflect_MethodAccessorImpl_klass())) {
+  if (method_holder()->is_subclass_of(SystemDictionary::reflect_MethodAccessorImpl_klass())) {
     // This is an auxilary frame -- ignore it
     return true;
   }

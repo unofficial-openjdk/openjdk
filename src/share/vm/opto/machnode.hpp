@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -60,7 +60,10 @@ class State;
 class MachOper : public ResourceObj {
 public:
   // Allocate right next to the MachNodes in the same arena
-  void *operator new( size_t x, Compile* C ) throw() { return C->node_arena()->Amalloc_D(x); }
+  void *operator new(size_t x) throw() {
+    Compile* C = Compile::current();
+    return C->node_arena()->Amalloc_D(x);
+  }
 
   // Opcode
   virtual uint opcode() const = 0;
@@ -839,6 +842,10 @@ public:
 
   bool returns_long() const { return tf()->return_type() == T_LONG; }
   bool return_value_is_used() const;
+
+  // Similar to cousin class CallNode::returns_pointer
+  bool returns_pointer() const;
+
 #ifndef PRODUCT
   virtual void dump_spec(outputStream *st) const;
 #endif

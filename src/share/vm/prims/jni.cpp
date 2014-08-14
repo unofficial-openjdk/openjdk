@@ -59,6 +59,7 @@
 #include "prims/jvm_misc.hpp"
 #include "prims/jvmtiExport.hpp"
 #include "prims/jvmtiThreadState.hpp"
+#include "runtime/atomic.inline.hpp"
 #include "runtime/compilationPolicy.hpp"
 #include "runtime/fieldDescriptor.hpp"
 #include "runtime/fprofiler.hpp"
@@ -79,18 +80,6 @@
 #include "utilities/dtrace.hpp"
 #include "utilities/events.hpp"
 #include "utilities/histogram.hpp"
-#ifdef TARGET_OS_FAMILY_linux
-# include "os_linux.inline.hpp"
-#endif
-#ifdef TARGET_OS_FAMILY_solaris
-# include "os_solaris.inline.hpp"
-#endif
-#ifdef TARGET_OS_FAMILY_windows
-# include "os_windows.inline.hpp"
-#endif
-#ifdef TARGET_OS_FAMILY_bsd
-# include "os_bsd.inline.hpp"
-#endif
 
 static jint CurrentVersion = JNI_VERSION_1_8;
 
@@ -257,15 +246,6 @@ void jfieldIDWorkaround::verify_instance_jfieldID(Klass* k, jfieldID id) {
   guarantee(InstanceKlass::cast(k)->contains_field_offset(offset),
       "Bug in native code: jfieldID offset must address interior of object");
 }
-
-// Pick a reasonable higher bound for local capacity requested
-// for EnsureLocalCapacity and PushLocalFrame.  We don't want it too
-// high because a test (or very unusual application) may try to allocate
-// that many handles and run out of swap space.  An implementation is
-// permitted to allocate more handles than the ensured capacity, so this
-// value is set high enough to prevent compatibility problems.
-const int MAX_REASONABLE_LOCAL_CAPACITY = 4*K;
-
 
 // Wrapper to trace JNI functions
 
@@ -752,7 +732,8 @@ JNI_ENTRY(jint, jni_PushLocalFrame(JNIEnv *env, jint capacity))
   HOTSPOT_JNI_PUSHLOCALFRAME_ENTRY(env, capacity);
 
   //%note jni_11
-  if (capacity < 0 || capacity > MAX_REASONABLE_LOCAL_CAPACITY) {
+  if (capacity < 0 ||
+      ((MaxJNILocalCapacity > 0) && (capacity > MaxJNILocalCapacity))) {
     HOTSPOT_JNI_PUSHLOCALFRAME_RETURN((uint32_t)JNI_ERR);
     return JNI_ERR;
   }
@@ -855,7 +836,8 @@ JNI_LEAF(jint, jni_EnsureLocalCapacity(JNIEnv *env, jint capacity))
   HOTSPOT_JNI_ENSURELOCALCAPACITY_ENTRY(env, capacity);
 
   jint ret;
-  if (capacity >= 0 && capacity <= MAX_REASONABLE_LOCAL_CAPACITY) {
+  if (capacity >= 0 &&
+      ((MaxJNILocalCapacity <= 0) || (capacity <= MaxJNILocalCapacity))) {
     ret = JNI_OK;
   } else {
     ret = JNI_ERR;
@@ -3336,13 +3318,7 @@ static bool initializeDirectBufferSupport(JNIEnv* env, JavaThread* thread) {
     directBufferSupportInitializeEnded = 1;
   } else {
     while (!directBufferSupportInitializeEnded && !directBufferSupportInitializeFailed) {
-      // Set state as yield_all can call os:sleep. On Solaris, yield_all calls
-      // os::sleep which requires the VM state transition. On other platforms, it
-      // is not necessary. The following call to change the VM state is purposely
-      // put inside the loop to avoid potential deadlock when multiple threads
-      // try to call this method. See 6791815 for more details.
-      ThreadInVMfromNative tivn(thread);
-      os::yield_all();
+      os::naked_yield();
     }
   }
 
@@ -3858,6 +3834,7 @@ _JNI_IMPORT_OR_EXPORT_ jint JNICALL JNI_GetDefaultJavaVMInitArgs(void *args_) {
 #if INCLUDE_ALL_GCS
 #include "gc_implementation/g1/heapRegionRemSet.hpp"
 #endif
+#include "memory/guardedMemory.hpp"
 #include "utilities/quickSort.hpp"
 #include "utilities/ostream.hpp"
 #if INCLUDE_VM_STRUCTS
@@ -3901,6 +3878,7 @@ void execute_internal_vm_tests() {
     run_unit_test(arrayOopDesc::test_max_array_length());
     run_unit_test(CollectedHeap::test_is_in());
     run_unit_test(QuickSort::test_quick_sort());
+    run_unit_test(GuardedMemory::test_guarded_memory());
     run_unit_test(AltHashing::test_alt_hash());
     run_unit_test(test_loggc_filename());
     run_unit_test(TestNewSize_test());
@@ -3908,6 +3886,7 @@ void execute_internal_vm_tests() {
     run_unit_test(TestKlass_test());
     run_unit_test(TestBitMap_test());
     run_unit_test(TestAsUtf8());
+    run_unit_test(ObjectMonitor::sanity_checks());
 #if INCLUDE_VM_STRUCTS
     run_unit_test(VMStructs::test());
 #endif

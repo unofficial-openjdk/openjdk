@@ -29,19 +29,6 @@
 #include "memory/genCollectedHeap.hpp"
 #include "memory/universe.hpp"
 #include "oops/oop.hpp"
-#include "runtime/thread.inline.hpp"
-#ifdef TARGET_OS_FAMILY_linux
-# include "os_linux.inline.hpp"
-#endif
-#ifdef TARGET_OS_FAMILY_solaris
-# include "os_solaris.inline.hpp"
-#endif
-#ifdef TARGET_OS_FAMILY_windows
-# include "os_windows.inline.hpp"
-#endif
-#ifdef TARGET_OS_FAMILY_bsd
-# include "os_bsd.inline.hpp"
-#endif
 
 // The direct lock/unlock calls do not force a collection if an unlock
 // decrements the count to zero. Avoid calling these if at all possible.
@@ -94,18 +81,8 @@ class GC_locker: public AllStatic {
   }
 
   // In debug mode track the locking state at all times
-  static void increment_debug_jni_lock_count() {
-#ifdef ASSERT
-    assert(_debug_jni_lock_count >= 0, "bad value");
-    Atomic::inc(&_debug_jni_lock_count);
-#endif
-  }
-  static void decrement_debug_jni_lock_count() {
-#ifdef ASSERT
-    assert(_debug_jni_lock_count > 0, "bad value");
-    Atomic::dec(&_debug_jni_lock_count);
-#endif
-  }
+  static void increment_debug_jni_lock_count() NOT_DEBUG_RETURN;
+  static void decrement_debug_jni_lock_count() NOT_DEBUG_RETURN;
 
   // Set the current lock count
   static void set_jni_lock_count(int count) {

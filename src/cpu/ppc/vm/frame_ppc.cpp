@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2014, Oracle and/or its affiliates. All rights reserved.
  * Copyright 2012, 2014 SAP AG. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -36,7 +36,6 @@
 #include "runtime/signature.hpp"
 #include "runtime/stubCodeGenerator.hpp"
 #include "runtime/stubRoutines.hpp"
-#include "vmreg_ppc.inline.hpp"
 #ifdef COMPILER1
 #include "c1/c1_Runtime1.hpp"
 #include "runtime/vframeArray.hpp"
@@ -140,7 +139,7 @@ frame frame::sender(RegisterMap* map) const {
 void frame::patch_pc(Thread* thread, address pc) {
   if (TracePcPatching) {
     tty->print_cr("patch_pc at address " PTR_FORMAT " [" PTR_FORMAT " -> " PTR_FORMAT "]",
-                  &((address*) _sp)[-1], ((address*) _sp)[-1], pc);
+                  p2i(&((address*) _sp)[-1]), p2i(((address*) _sp)[-1]), p2i(pc));
   }
   own_abi()->lr = (uint64_t)pc;
   _cb = CodeCache::find_blob(pc);
@@ -152,15 +151,6 @@ void frame::patch_pc(Thread* thread, address pc) {
   } else {
     _deopt_state = not_deoptimized;
     _pc = pc;
-  }
-}
-
-void frame::pd_gc_epilog() {
-  if (is_interpreted_frame()) {
-    // Set constant pool cache entry for interpreter.
-    Method* m = interpreter_frame_method();
-
-    *interpreter_frame_cpoolcache_addr() = m->constants()->cache();
   }
 }
 

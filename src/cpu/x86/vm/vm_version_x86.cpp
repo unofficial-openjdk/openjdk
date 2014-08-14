@@ -29,18 +29,6 @@
 #include "runtime/java.hpp"
 #include "runtime/stubCodeGenerator.hpp"
 #include "vm_version_x86.hpp"
-#ifdef TARGET_OS_FAMILY_linux
-# include "os_linux.inline.hpp"
-#endif
-#ifdef TARGET_OS_FAMILY_solaris
-# include "os_solaris.inline.hpp"
-#endif
-#ifdef TARGET_OS_FAMILY_windows
-# include "os_windows.inline.hpp"
-#endif
-#ifdef TARGET_OS_FAMILY_bsd
-# include "os_bsd.inline.hpp"
-#endif
 
 
 int VM_Version::_cpu;
@@ -406,6 +394,8 @@ void VM_Version::get_processor_features() {
   _stepping = 0;
   _cpuFeatures = 0;
   _logical_processors_per_package = 1;
+  // i486 internal cache is both I&D and has a 16-byte line size
+  _L1_data_cache_line_size = 16;
 
   if (!Use486InstrsOnly) {
     // Get raw processor info
@@ -424,6 +414,7 @@ void VM_Version::get_processor_features() {
       // Logical processors are only available on P4s and above,
       // and only if hyperthreading is available.
       _logical_processors_per_package = logical_processor_count();
+      _L1_data_cache_line_size = L1_line_size();
     }
   }
 
@@ -588,6 +579,17 @@ void VM_Version::get_processor_features() {
     if (!FLAG_IS_DEFAULT(UseAESIntrinsics))
       warning("AES intrinsics are not available on this CPU");
     FLAG_SET_DEFAULT(UseAESIntrinsics, false);
+  }
+
+  if (UseSHA) {
+    warning("SHA instructions are not available on this CPU");
+    FLAG_SET_DEFAULT(UseSHA, false);
+  }
+  if (UseSHA1Intrinsics || UseSHA256Intrinsics || UseSHA512Intrinsics) {
+    warning("SHA intrinsics are not available on this CPU");
+    FLAG_SET_DEFAULT(UseSHA1Intrinsics, false);
+    FLAG_SET_DEFAULT(UseSHA256Intrinsics, false);
+    FLAG_SET_DEFAULT(UseSHA512Intrinsics, false);
   }
 
   // Adjust RTM (Restricted Transactional Memory) flags
@@ -925,6 +927,7 @@ void VM_Version::get_processor_features() {
   if (PrintMiscellaneous && Verbose) {
     tty->print_cr("Logical CPUs per core: %u",
                   logical_processors_per_package());
+    tty->print_cr("L1 data cache line size: %u", L1_data_cache_line_size());
     tty->print("UseSSE=%d", (int) UseSSE);
     if (UseAVX > 0) {
       tty->print("  UseAVX=%d", (int) UseAVX);

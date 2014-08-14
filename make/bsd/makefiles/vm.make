@@ -81,14 +81,12 @@ VM_VER_DEFS   = -DHOTSPOT_RELEASE_VERSION="\"$(HS_BUILD_VER)\"" \
 		-DJRE_RELEASE_VERSION="\"$(JRE_RELEASE_VER)\""  \
 		$(JDK_VER_DEFS)
 HS_LIB_ARCH   = -DHOTSPOT_LIB_ARCH=\"$(LIBARCH)\"
-BUILD_TARGET  = -DHOTSPOT_BUILD_TARGET="\"$(TARGET)\""
 BUILD_USER    = -DHOTSPOT_BUILD_USER="\"$(HOTSPOT_BUILD_USER)\""
 VM_DISTRO     = -DHOTSPOT_VM_DISTRO="\"$(HOTSPOT_VM_DISTRO)\""
 
 CXXFLAGS =           \
   ${SYSDEFS}         \
   ${INCLUDES}        \
-  ${BUILD_TARGET}    \
   ${BUILD_USER}      \
   ${HS_LIB_ARCH}     \
   ${VM_DISTRO}
@@ -295,6 +293,7 @@ endif
 $(PRECOMPILED_HEADER):
 	$(QUIETLY) echo Generating precompiled header $@
 	$(QUIETLY) mkdir -p $(PRECOMPILED_HEADER_DIR)
+	$(QUIETLY) rm -f $@
 	$(QUIETLY) $(COMPILE.CXX) $(DEPFLAGS) -x c++-header $(PRECOMPILED_HEADER_SRC) -o $@ $(COMPILE_DONE)
 
 # making the library:
@@ -361,14 +360,14 @@ install_jvm: $(LIBJVM)
 	@echo "Copying $(LIBJVM) to $(DEST_JVM)"
 ifeq ($(OS_VENDOR), Darwin)
 	$(QUIETLY) test ! -d $(LIBJVM_DEBUGINFO) || \
-	    cp -f -r $(LIBJVM_DEBUGINFO) $(DEST_JVM_DEBUGINFO)
+	    $(CP) -f -r $(LIBJVM_DEBUGINFO) $(DEST_JVM_DEBUGINFO)
 else
 	$(QUIETLY) test ! -f $(LIBJVM_DEBUGINFO) || \
-	    cp -f $(LIBJVM_DEBUGINFO) $(DEST_JVM_DEBUGINFO)
+	    $(CP) -f $(LIBJVM_DEBUGINFO) $(DEST_JVM_DEBUGINFO)
 endif
 	$(QUIETLY) test ! -f $(LIBJVM_DIZ) || \
-	    cp -f $(LIBJVM_DIZ) $(DEST_JVM_DIZ)
-	$(QUIETLY) cp -f $(LIBJVM) $(DEST_JVM) && echo "Done"
+	    $(CP) -f $(LIBJVM_DIZ) $(DEST_JVM_DIZ)
+	$(QUIETLY) $(CP) -f $(LIBJVM) $(DEST_JVM) && echo "Done"
 
 #----------------------------------------------------------------------
 # Other files

@@ -26,6 +26,7 @@
 #include "gc_implementation/g1/g1SATBCardTableModRefBS.hpp"
 #include "gc_implementation/g1/heapRegion.hpp"
 #include "gc_implementation/g1/satbQueue.hpp"
+#include "runtime/atomic.inline.hpp"
 #include "runtime/mutexLocker.hpp"
 #include "runtime/orderAccess.inline.hpp"
 #include "runtime/thread.inline.hpp"
@@ -62,6 +63,17 @@ G1SATBCardTableModRefBS::write_ref_array_pre_work(T* dst, int count) {
     if (!oopDesc::is_null(heap_oop)) {
       enqueue(oopDesc::decode_heap_oop_not_null(heap_oop));
     }
+  }
+}
+
+void G1SATBCardTableModRefBS::write_ref_array_pre(oop* dst, int count, bool dest_uninitialized) {
+  if (!dest_uninitialized) {
+    write_ref_array_pre_work(dst, count);
+  }
+}
+void G1SATBCardTableModRefBS::write_ref_array_pre(narrowOop* dst, int count, bool dest_uninitialized) {
+  if (!dest_uninitialized) {
+    write_ref_array_pre_work(dst, count);
   }
 }
 

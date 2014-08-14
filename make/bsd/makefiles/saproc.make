@@ -19,7 +19,7 @@
 # Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
 # or visit www.oracle.com if you need additional information or have any
 # questions.
-#  
+#
 #
 
 # Rules to build serviceability agent library, used by vm.make
@@ -64,12 +64,26 @@ ifeq ($(OS_VENDOR), FreeBSD)
 else
   ifeq ($(OS_VENDOR), Darwin)
     SASRCFILES = $(DARWIN_NON_STUB_SASRCFILES)
-    SALIBS = -g -framework Foundation -F/System/Library/Frameworks/JavaVM.framework/Frameworks -framework JavaNativeFoundation -framework Security -framework CoreFoundation
+    SALIBS = -g \
+             -framework Foundation \
+             -framework JavaNativeFoundation \
+             -framework Security \
+             -framework CoreFoundation
     #objc compiler blows up on -march=i586, perhaps it should not be included in the macosx intel 32-bit C++ compiles?
     SAARCH = $(subst -march=i586,,$(ARCHFLAG))
+
+    # This is needed to locate JavaNativeFoundation.framework
+    ifeq ($(SYSROOT_CFLAGS),)
+      # this will happen when building without spec.gmk, set SDKROOT to a valid SDK
+      # path if your system does not have headers installed in the system frameworks
+      SA_SYSROOT_FLAGS = -F"$(SDKROOT)/System/Library/Frameworks/JavaVM.framework/Frameworks"
+    else
+      # Just use SYSROOT_CFLAGS
+      SA_SYSROOT_FLAGS=$(SYSROOT_CFLAGS)
+    endif
   else
     SASRCFILES = $(SASRCDIR)/StubDebuggerLocal.c
-    SALIBS = 
+    SALIBS =
     SAARCH = $(ARCHFLAG)
   endif
 endif
@@ -100,14 +114,8 @@ SA_LFLAGS = $(MAPFLAG:FILENAME=$(SAMAPFILE))
 endif
 SA_LFLAGS += $(LDFLAGS_HASH_STYLE)
 
-ifeq ($(OS_VENDOR), Darwin)
-  BOOT_JAVA_INCLUDES = -I$(BOOT_JAVA_HOME)/include \
-    -I$(BOOT_JAVA_HOME)/include/$(shell uname -s | tr "[:upper:]" "[:lower:]") \
-    -I/System/Library/Frameworks/JavaVM.framework/Headers
-else
-  BOOT_JAVA_INCLUDES = -I$(BOOT_JAVA_HOME)/include \
-    -I$(BOOT_JAVA_HOME)/include/$(shell uname -s | tr "[:upper:]" "[:lower:]")
-endif
+BOOT_JAVA_INCLUDES = -I$(BOOT_JAVA_HOME)/include \
+  -I$(BOOT_JAVA_HOME)/include/$(shell uname -s | tr "[:upper:]" "[:lower:]")
 
 $(LIBSAPROC): $(SASRCFILES) $(SAMAPFILE)
 	$(QUIETLY) if [ "$(BOOT_JAVA_HOME)" = "" ]; then \
@@ -116,6 +124,7 @@ $(LIBSAPROC): $(SASRCFILES) $(SAMAPFILE)
 	fi
 	@echo Making SA debugger back-end...
 	$(QUIETLY) $(CC) -D$(BUILDARCH) -D_GNU_SOURCE                   \
+	           $(SA_SYSROOT_FLAGS)                                  \
 	           $(SYMFLAG) $(SAARCH) $(SHARED_FLAG) $(PICFLAG)       \
 	           -I$(SASRCDIR)                                        \
 	           -I$(GENERATED)                                       \
@@ -154,13 +163,13 @@ install_saproc: $(BUILDLIBSAPROC)
 	@echo "Copying $(LIBSAPROC) to $(DEST_SAPROC)"
 ifeq ($(OS_VENDOR), Darwin)
 	$(QUIETLY) test ! -d $(LIBSAPROC_DEBUGINFO) || \
-	    cp -f -r $(LIBSAPROC_DEBUGINFO) $(DEST_SAPROC_DEBUGINFO)
+	    $(CP) -f -r $(LIBSAPROC_DEBUGINFO) $(DEST_SAPROC_DEBUGINFO)
 else
 	$(QUIETLY) test ! -f $(LIBSAPROC_DEBUGINFO) || \
-	    cp -f $(LIBSAPROC_DEBUGINFO) $(DEST_SAPROC_DEBUGINFO)
+	    $(CP) -f $(LIBSAPROC_DEBUGINFO) $(DEST_SAPROC_DEBUGINFO)
 endif
 	$(QUIETLY) test ! -f $(LIBSAPROC_DIZ) || \
-	    cp -f $(LIBSAPROC_DIZ) $(DEST_SAPROC_DIZ)
-	$(QUIETLY) cp -f $(LIBSAPROC) $(DEST_SAPROC) && echo "Done"
+	    $(CP) -f $(LIBSAPROC_DIZ) $(DEST_SAPROC_DIZ)
+	$(QUIETLY) $(CP) -f $(LIBSAPROC) $(DEST_SAPROC) && echo "Done"
 
 .PHONY: install_saproc

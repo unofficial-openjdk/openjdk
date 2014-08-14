@@ -25,6 +25,10 @@
 package sun.hotspot;
 
 import java.lang.reflect.Executable;
+import java.util.Arrays;
+import java.util.List;
+import java.util.function.Function;
+import java.util.stream.Stream;
 import java.security.BasicPermission;
 import sun.hotspot.parser.DiagnosticCommand;
 
@@ -129,7 +133,7 @@ public class WhiteBox {
   }
   public native int     getCompileQueueSize(int compLevel);
   public native boolean testSetForceInlineMethod(Executable method, boolean value);
-  public boolean        enqueueMethodForCompilation(Executable method, int compLevel) {
+  public        boolean enqueueMethodForCompilation(Executable method, int compLevel) {
     return enqueueMethodForCompilation(method, compLevel, -1 /*InvocationEntryBci*/);
   }
   public native boolean enqueueMethodForCompilation(Executable method, int compLevel, int entry_bci);
@@ -142,6 +146,8 @@ public class WhiteBox {
 
   // Memory
   public native void readReservedMemory();
+  public native long allocateMetaspace(ClassLoader classLoader, long size);
+  public native void freeMetaspace(ClassLoader classLoader, long addr, long size);
 
   // force Full GC
   public native void fullGC();
@@ -156,4 +162,28 @@ public class WhiteBox {
   // CPU features
   public native String getCPUFeatures();
 
+  // VM flags
+  public native void    setBooleanVMFlag(String name, boolean value);
+  public native void    setIntxVMFlag(String name, long value);
+  public native void    setUintxVMFlag(String name, long value);
+  public native void    setUint64VMFlag(String name, long value);
+  public native void    setStringVMFlag(String name, String value);
+  public native void    setDoubleVMFlag(String name, double value);
+  public native Boolean getBooleanVMFlag(String name);
+  public native Long    getIntxVMFlag(String name);
+  public native Long    getUintxVMFlag(String name);
+  public native Long    getUint64VMFlag(String name);
+  public native String  getStringVMFlag(String name);
+  public native Double  getDoubleVMFlag(String name);
+  private final List<Function<String,Object>> flagsGetters = Arrays.asList(
+    this::getBooleanVMFlag, this::getIntxVMFlag, this::getUintxVMFlag,
+    this::getUint64VMFlag, this::getStringVMFlag, this::getDoubleVMFlag);
+
+  public Object getVMFlag(String name) {
+    return flagsGetters.stream()
+                       .map(f -> f.apply(name))
+                       .filter(x -> x != null)
+                       .findAny()
+                       .orElse(null);
+  }
 }

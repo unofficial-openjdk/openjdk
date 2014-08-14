@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,23 +25,9 @@
 #ifndef SHARE_VM_CODE_COMPILEDIC_HPP
 #define SHARE_VM_CODE_COMPILEDIC_HPP
 
+#include "code/nativeInst.hpp"
 #include "interpreter/linkResolver.hpp"
 #include "oops/compiledICHolder.hpp"
-#ifdef TARGET_ARCH_x86
-# include "nativeInst_x86.hpp"
-#endif
-#ifdef TARGET_ARCH_sparc
-# include "nativeInst_sparc.hpp"
-#endif
-#ifdef TARGET_ARCH_zero
-# include "nativeInst_zero.hpp"
-#endif
-#ifdef TARGET_ARCH_arm
-# include "nativeInst_arm.hpp"
-#endif
-#ifdef TARGET_ARCH_ppc
-# include "nativeInst_ppc.hpp"
-#endif
 
 //-----------------------------------------------------------------------------
 // The CompiledIC represents a compiled inline cache.
@@ -150,6 +136,9 @@ class CompiledIC: public ResourceObj {
   bool          _is_optimized;  // an optimized virtual call (i.e., no compiled IC)
 
   CompiledIC(nmethod* nm, NativeCall* ic_call);
+  CompiledIC(RelocIterator* iter);
+
+  void initialize_from_iter(RelocIterator* iter);
 
   static bool is_icholder_entry(address entry);
 
@@ -183,6 +172,7 @@ class CompiledIC: public ResourceObj {
   friend CompiledIC* CompiledIC_before(nmethod* nm, address return_addr);
   friend CompiledIC* CompiledIC_at(nmethod* nm, address call_site);
   friend CompiledIC* CompiledIC_at(Relocation* call_site);
+  friend CompiledIC* CompiledIC_at(RelocIterator* reloc_iter);
 
   // This is used to release CompiledICHolder*s from nmethods that
   // are about to be freed.  The callsite might contain other stale
@@ -263,6 +253,13 @@ inline CompiledIC* CompiledIC_at(Relocation* call_site) {
   return c_ic;
 }
 
+inline CompiledIC* CompiledIC_at(RelocIterator* reloc_iter) {
+  assert(reloc_iter->type() == relocInfo::virtual_call_type ||
+      reloc_iter->type() == relocInfo::opt_virtual_call_type, "wrong reloc. info");
+  CompiledIC* c_ic = new CompiledIC(reloc_iter);
+  c_ic->verify();
+  return c_ic;
+}
 
 //-----------------------------------------------------------------------------
 // The CompiledStaticCall represents a call to a static method in the compiled

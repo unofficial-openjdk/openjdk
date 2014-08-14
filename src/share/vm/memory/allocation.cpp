@@ -29,28 +29,12 @@
 #include "memory/metaspaceShared.hpp"
 #include "memory/resourceArea.hpp"
 #include "memory/universe.hpp"
-#include "runtime/atomic.hpp"
+#include "runtime/atomic.inline.hpp"
 #include "runtime/os.hpp"
 #include "runtime/task.hpp"
 #include "runtime/threadCritical.hpp"
 #include "services/memTracker.hpp"
 #include "utilities/ostream.hpp"
-
-#ifdef TARGET_OS_FAMILY_linux
-# include "os_linux.inline.hpp"
-#endif
-#ifdef TARGET_OS_FAMILY_solaris
-# include "os_solaris.inline.hpp"
-#endif
-#ifdef TARGET_OS_FAMILY_windows
-# include "os_windows.inline.hpp"
-#endif
-#ifdef TARGET_OS_FAMILY_aix
-# include "os_aix.inline.hpp"
-#endif
-#ifdef TARGET_OS_FAMILY_bsd
-# include "os_bsd.inline.hpp"
-#endif
 
 void* StackObj::operator new(size_t size)     throw() { ShouldNotCallThis(); return 0; }
 void  StackObj::operator delete(void* p)              { ShouldNotCallThis(); }
@@ -563,6 +547,7 @@ void* Arena::grow(size_t x, AllocFailType alloc_failmode) {
   _chunk = new (alloc_failmode, len) Chunk(len);
 
   if (_chunk == NULL) {
+    _chunk = k;                 // restore the previous value of _chunk
     return NULL;
   }
   if (k) k->set_next(_chunk);   // Append new chunk to end of linked list

@@ -47,6 +47,7 @@
 #include "oops/objArrayOop.hpp"
 #include "oops/oop.inline.hpp"
 #include "oops/oop.pcgc.inline.hpp"
+#include "runtime/atomic.inline.hpp"
 #include "runtime/handles.hpp"
 #include "runtime/handles.inline.hpp"
 #include "runtime/java.hpp"
@@ -613,18 +614,21 @@ void ParNewGenTask::work(uint worker_id) {
 
   KlassScanClosure klass_scan_closure(&par_scan_state.to_space_root_closure(),
                                       gch->rem_set()->klass_rem_set());
-
-  int so = SharedHeap::SO_AllClasses | SharedHeap::SO_Strings | SharedHeap::SO_ScavengeCodeCache;
+  CLDToKlassAndOopClosure cld_scan_closure(&klass_scan_closure,
+                                           &par_scan_state.to_space_root_closure(),
+                                           false);
 
   par_scan_state.start_strong_roots();
-  gch->gen_process_strong_roots(_gen->level(),
-                                true,  // Process younger gens, if any,
-                                       // as strong roots.
-                                false, // no scope; this is parallel code
-                                SharedHeap::ScanningOption(so),
-                                &par_scan_state.to_space_root_closure(),
-                                &par_scan_state.older_gen_closure(),
-                                &klass_scan_closure);
+  gch->gen_process_roots(_gen->level(),
+                         true,  // Process younger gens, if any,
+                                // as strong roots.
+                         false, // no scope; this is parallel code
+                         SharedHeap::SO_ScavengeCodeCache,
+                         GenCollectedHeap::StrongAndWeakRoots,
+                         &par_scan_state.to_space_root_closure(),
+                         &par_scan_state.older_gen_closure(),
+                         &cld_scan_closure);
+
   par_scan_state.end_strong_roots();
 
   // "evacuate followers".
@@ -955,7 +959,7 @@ void ParNewGeneration::collect(bool   full,
     size_policy->minor_collection_begin();
   }
 
-  GCTraceTime t1(GCCauseString("GC", gch->gc_cause()), PrintGC && !PrintGCDetails, true, NULL);
+  GCTraceTime t1(GCCauseString("GC", gch->gc_cause()), PrintGC && !PrintGCDetails, true, NULL, gc_tracer.gc_id());
   // Capture heap used before collection (for printing).
   size_t gch_prev_used = gch->used();
 
@@ -1013,14 +1017,14 @@ void ParNewGeneration::collect(bool   full,
     ParNewRefProcTaskExecutor task_executor(*this, thread_state_set);
     stats = rp->process_discovered_references(&is_alive, &keep_alive,
                                               &evacuate_followers, &task_executor,
-                                              _gc_timer);
+                                              _gc_timer, gc_tracer.gc_id());
   } else {
     thread_state_set.flush();
     gch->set_par_threads(0);  // 0 ==> non-parallel.
     gch->save_marks();
     stats = rp->process_discovered_references(&is_alive, &keep_alive,
                                               &evacuate_followers, NULL,
-                                              _gc_timer);
+                                              _gc_timer, gc_tracer.gc_id());
   }
   gc_tracer.report_gc_reference_stats(stats);
   if (!promotion_failed()) {
@@ -1636,8 +1640,7 @@ void ParNewGeneration::ref_processor_init() {
                              refs_discovery_is_mt(),     // mt discovery
                              (int) ParallelGCThreads,    // mt discovery degree
                              refs_discovery_is_atomic(), // atomic_discovery
-                             NULL,                       // is_alive_non_header
-                             false);                     // write barrier for next field updates
+                             NULL);                      // is_alive_non_header
   }
 }
 

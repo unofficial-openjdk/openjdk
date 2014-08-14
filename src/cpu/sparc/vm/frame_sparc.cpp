@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,6 +23,7 @@
  */
 
 #include "precompiled.hpp"
+#include "code/codeCache.hpp"
 #include "interpreter/interpreter.hpp"
 #include "memory/resourceArea.hpp"
 #include "oops/markOop.hpp"
@@ -436,32 +437,6 @@ void frame::set_interpreter_frame_sender_sp(intptr_t* sender_sp) {
 }
 #endif // CC_INTERP
 
-
-#ifdef ASSERT
-// Debugging aid
-static frame nth_sender(int n) {
-  frame f = JavaThread::current()->last_frame();
-
-  for(int i = 0; i < n; ++i)
-    f = f.sender((RegisterMap*)NULL);
-
-  printf("first frame %d\n",          f.is_first_frame()       ? 1 : 0);
-  printf("interpreted frame %d\n",    f.is_interpreted_frame() ? 1 : 0);
-  printf("java frame %d\n",           f.is_java_frame()        ? 1 : 0);
-  printf("entry frame %d\n",          f.is_entry_frame()       ? 1 : 0);
-  printf("native frame %d\n",         f.is_native_frame()      ? 1 : 0);
-  if (f.is_compiled_frame()) {
-    if (f.is_deoptimized_frame())
-      printf("deoptimized frame 1\n");
-    else
-      printf("compiled frame 1\n");
-  }
-
-  return f;
-}
-#endif
-
-
 frame frame::sender_for_entry_frame(RegisterMap *map) const {
   assert(map != NULL, "map must be set");
   // Java frame called from C; skip all C frames and return top C
@@ -557,7 +532,8 @@ void frame::patch_pc(Thread* thread, address pc) {
     // QQQ this assert is invalid (or too strong anyway) sice _pc could
     // be original pc and frame could have the deopt pc.
     // assert(_pc == *O7_addr() + pc_return_offset, "frame has wrong pc");
-    tty->print_cr("patch_pc at address  0x%x [0x%x -> 0x%x] ", O7_addr(), _pc, pc);
+    tty->print_cr("patch_pc at address " INTPTR_FORMAT " [" INTPTR_FORMAT " -> " INTPTR_FORMAT "]",
+                  p2i(O7_addr()), p2i(_pc), p2i(pc));
   }
   _cb = CodeCache::find_blob(pc);
   *O7_addr() = pc - pc_return_offset;
@@ -618,17 +594,6 @@ bool frame::interpreter_frame_equals_unpacked_fp(intptr_t* fp) {
   return this->fp() == fp;
 }
 
-
-void frame::pd_gc_epilog() {
-  if (is_interpreted_frame()) {
-    // set constant pool cache entry for interpreter
-    Method* m = interpreter_frame_method();
-
-    *interpreter_frame_cpoolcache_addr() = m->constants()->cache();
-  }
-}
-
-
 bool frame::is_interpreted_frame_valid(JavaThread* thread) const {
 #ifdef CC_INTERP
   // Is there anything to do?
@@ -666,10 +631,10 @@ bool frame::is_interpreted_frame_valid(JavaThread* thread) const {
     return false;
   }
 
-  // validate bci/bcx
+  // validate bci/bcp
 
-  intptr_t  bcx    = interpreter_frame_bcx();
-  if (m->validate_bci_from_bcx(bcx) < 0) {
+  address bcp = interpreter_frame_bcp();
+  if (m->validate_bci_from_bcp(bcp) < 0) {
     return false;
   }
 

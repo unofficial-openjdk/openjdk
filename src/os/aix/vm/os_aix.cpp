@@ -42,12 +42,14 @@
 #include "memory/filemap.hpp"
 #include "mutex_aix.inline.hpp"
 #include "oops/oop.inline.hpp"
+#include "os_aix.inline.hpp"
 #include "os_share_aix.hpp"
 #include "porting_aix.hpp"
 #include "prims/jniFastGetField.hpp"
 #include "prims/jvm.h"
 #include "prims/jvm_misc.hpp"
 #include "runtime/arguments.hpp"
+#include "runtime/atomic.inline.hpp"
 #include "runtime/extendedPC.hpp"
 #include "runtime/globals.hpp"
 #include "runtime/interfaceSupport.hpp"
@@ -64,6 +66,7 @@
 #include "runtime/thread.inline.hpp"
 #include "runtime/threadCritical.hpp"
 #include "runtime/timer.hpp"
+#include "runtime/vm_version.hpp"
 #include "services/attachListener.hpp"
 #include "services/runtimeService.hpp"
 #include "utilities/decoder.hpp"
@@ -1210,10 +1213,6 @@ void os::abort(bool dump_core) {
 void os::die() {
   ::abort();
 }
-
-// Unused on Aix for now.
-void os::set_error_file(const char *logfile) {}
-
 
 // This method is a copy of JDK's sysGetLastErrorString
 // from src/solaris/hpi/src/system_md.c
@@ -2806,16 +2805,7 @@ bool os::dont_yield() {
   return DontYieldALot;
 }
 
-void os::yield() {
-  sched_yield();
-}
-
-os::YieldResult os::NakedYield() { sched_yield(); return os::YIELD_UNKNOWN; }
-
-void os::yield_all() {
-  // Yields to all threads, including threads with lower priorities
-  // Threads on Linux are all with same priority. The Solaris style
-  // os::yield_all() with nanosleep(1ms) is not necessary.
+void os::naked_yield() {
   sched_yield();
 }
 
@@ -3075,7 +3065,7 @@ static bool do_suspend(OSThread* osthread) {
 
   for (int n = 0; !osthread->sr.is_suspended(); n++) {
     for (int i = 0; i < RANDOMLY_LARGE_INTEGER2 && !osthread->sr.is_suspended(); i++) {
-      os::yield_all();
+      os::naked_yield();
     }
 
     // timeout, try to cancel the request
@@ -3109,7 +3099,7 @@ static void do_resume(OSThread* osthread) {
     if (sr_notify(osthread) == 0) {
       for (int n = 0; n < RANDOMLY_LARGE_INTEGER && !osthread->sr.is_running(); n++) {
         for (int i = 0; i < 100 && !osthread->sr.is_running(); i++) {
-          os::yield_all();
+          os::naked_yield();
         }
       }
     } else {
@@ -4734,10 +4724,8 @@ int os::PlatformEvent::park(jlong millis) {
   //
   // Thread.interrupt and object.notify{All} both call Event::set.
   // That is, we treat thread.interrupt as a special case of notification.
-  // The underlying Solaris implementation, cond_timedwait, admits
-  // spurious/premature wakeups, but the JLS/JVM spec prevents the
-  // JVM from making those visible to Java code. As such, we must
-  // filter out spurious wakeups. We assume all ETIME returns are valid.
+  // We ignore spurious OS wakeups unless FilterSpuriousWakeups is false.
+  // We assume all ETIME returns are valid.
   //
   // TODO: properly differentiate simultaneous notify+interrupt.
   // In that case, we should propagate the notify to another waiter.
