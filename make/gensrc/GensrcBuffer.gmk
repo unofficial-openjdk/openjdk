@@ -26,9 +26,9 @@
 GENSRC_BUFFER := 
 
 GENSRC_BUFFER_TMP := $(JDK_OUTPUTDIR)/gensrc
-GENSRC_BUFFER_DST := $(JDK_OUTPUTDIR)/gensrc/java/nio
+GENSRC_BUFFER_DST := $(JDK_OUTPUTDIR)/gensrc$(JAVA_BASE_SUBDIR)/java/nio
 
-GENSRC_BUFFER_SRC := $(JDK_TOPDIR)/src/share/classes/java/nio
+GENSRC_BUFFER_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)$(JAVA_BASE_SUBDIR)/share/classes/java/nio
 
 ###
 
@@ -377,4 +377,5 @@ $(eval $(call SetupGenBuffer,ByteBufferAsDoubleBufferRL,$(BYTE_X_BUF), type:=dou
 
 ###
 
-$(GENSRC_BUFFER): $(BUILD_TOOLS)
+$(GENSRC_BUFFER): $(BUILD_TOOLS_JDK)
+GENSRC_JAVA_BASE += $(GENSRC_BUFFER)

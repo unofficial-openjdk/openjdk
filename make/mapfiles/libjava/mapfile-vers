@@ -276,8 +276,14 @@ SUNWprivate_1.1 {
                 Java_sun_misc_VM_getegid;
                 Java_sun_misc_VM_initialize;
 		Java_sun_misc_VMSupport_initAgentProperties;
+		Java_sun_misc_VM_defineModule;
+		Java_sun_misc_VM_bindToModule;
+		Java_sun_misc_VM_addRequires;
+		Java_sun_misc_VM_addExports;
+		Java_sun_misc_VM_addExportsWithPermits;
+                Java_sun_misc_VM_addBackdoorAccess;
 		Java_sun_misc_VMSupport_getVMTemporaryDirectory;
-		
+
                 # ZipFile.c needs this one
 		throwFileNotFoundException;
 

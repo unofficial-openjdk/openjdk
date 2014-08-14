@@ -65,7 +65,10 @@ classes-only:
         # The classes are now built and
         # any javah files have now been generated.
 
-libs: classes libs-only
+copyfiles:
+	+$(MAKE) -f CopyFiles.gmk
+
+libs: classes copyfiles libs-only
 libs-only:
 	+$(MAKE) -f CompileNativeLibraries.gmk
 
@@ -73,6 +76,11 @@ launchers: libs launchers-only
 launchers-only:
         # Finally compile the launchers.
 	+$(MAKE) -f CompileLaunchers.gmk
+
+genmodules: classes genclasses genmodules-only
+genmodules-only:
+#       Generate static module graph
+	+$(MAKE) -f GenerateModules.gmk
 
 genclasses: launchers genclasses-only
 genclasses-only:
@@ -93,6 +101,22 @@ demos:
 	+$(MAKE) -f CompileDemos.gmk
         # Now copy the sample sources into the jdk.
 	+$(MAKE) -f CopySamples.gmk
+
+jmods:
+#       Generate jmod files 
+	+$(MAKE) -f CreateJmods.gmk
+
+shuffle-build: genmodules shuffle-build-only
+shuffle-build-only:
+#       Shuffle classes in the build output into module layout
+	+$(MAKE) -f Shuffle.gmk shuffle-build
+
+shuffle:
+#       Shuffle source to module layout
+	+$(MAKE) -f Shuffle.gmk shuffle-src
+
+clean-shuffle:
+	+$(MAKE) -f Shuffle.gmk clean-src
 
 # Create the final jdk and jre images, to be wrapped up
 # into packages, or installed. Ensure PROFILE is not set

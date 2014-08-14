@@ -1,0 +1,836 @@
+/* 
+ * Copyright (c) 2009, 2014, Oracle and/or its affiliates. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ *
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation.
+ *
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
+ *
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ *
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
+ */
+
+module java.base {
+    include java.lang.*,
+            java.lang.annotation.*,
+            java.lang.invoke.*,
+            java.lang.ref.*,
+            java.lang.reflect.*,
+            java.io.*,
+            java.math.*,
+            java.net.*,
+            java.nio.**,
+            java.util.*,
+            java.util.concurrent.**,
+            java.util.function.**,
+            java.util.jar.*,
+            java.util.regex.*,
+            java.util.spi.*,
+            java.util.stream.*,
+            java.util.zip.*,
+            java.text.**,
+            java.time.**;
+
+    // security APIs
+    include java.security.*,
+            java.security.cert.*,
+            java.security.interfaces.*,
+            java.security.spec.*,
+            javax.security.auth.**,
+            javax.crypto.**;
+
+    // TLS 
+    include javax.net.**,
+            javax.security.cert.*;
+
+    // SunJCE provider
+    include com.sun.crypto.provider.*;
+
+    // jigsaw
+    include jdk.jigsaw.module.**,
+            jdk.joptsimple.**;
+
+    // Oracle-private APIs
+    include com.oracle.nio.**,
+            com.oracle.net.*,
+            com.oracle.util.*;
+
+    include com.sun.java.util.jar.pack.**,
+            com.sun.net.ssl.**,
+            com.sun.nio.file.*,
+            com.sun.security.cert.internal.x509.*,
+            com.sun.security.ntlm.**,
+            sun.io.*,
+            sun.invoke.**,
+            sun.launcher.**,
+            sun.misc.*,
+            sun.net.www.protocol.https.**,
+            sun.nio.*,
+            sun.nio.fs.*,
+            sun.nio.ch.*,
+            sun.reflect.**,
+            sun.security.internal.interfaces.*,
+            sun.security.internal.spec.*,
+            sun.security.ssl.*,
+            sun.security.provider.certpath.ssl.**,
+            sun.text.*,
+            sun.text.bidi.*,
+            sun.text.normalizer.*,
+            sun.util.*,
+            sun.util.calendar.*,
+            sun.util.cldr.*,
+            sun.util.locale.**,
+            sun.util.logging.*,
+            sun.util.spi.*;
+
+    include jdk.Exported,
+            jdk.internal.org.xml.**,
+            jdk.internal.util.xml.**,
+            jdk.internal.org.objectweb.asm.**;
+
+    // See http://ccc.us.oracle.com/8032808 - not exported in JDK 9
+    include jdk.net.*;
+
+    exclude META-INF/services/java.nio.file.spi.FileSystemProvider;
+
+    // Sun and RSA security providers (except LDAP CertStore)
+    include sun.security.action.*,
+            sun.security.jca.*,
+            sun.security.pkcs.*,
+            sun.security.pkcs12.*,
+            sun.security.pkcs10.*,
+            sun.security.provider.*,
+            sun.security.provider.certpath.*,
+            sun.security.rsa.*,
+            sun.security.util.*,
+            sun.security.validator.*,
+            sun.security.x509.*,
+            sun.security.timestamp.*;
+
+    // keytool
+    include sun.security.tools.*,
+            sun.security.tools.keytool.**;
+
+    // Kerberos not needed
+    exclude javax.security.auth.kerberos.**,
+            sun.security.jgss.**,
+            sun.security.krb5.**,
+            org.ietf.jgss.**;
+
+    // mandatory charsets
+    include sun.nio.cs.*;
+
+    // include English locales
+    include sun.util.resources.*,
+            sun.util.resources.en.*,
+            sun.util.resources.cldr.*,
+            sun.util.resources.cldr.en.*,
+            sun.text.resources.*,
+            sun.text.resources.en.*,
+            sun.text.resources.cldr.*,
+            sun.text.resources.cldr.en.*;
+
+    include sun/text/resources/*.icu,
+            sun/text/resources/_the.bifile*;
+
+    include sun.misc.resources.*;
+
+    include sun.net.*,
+            sun.net.dns.*,
+            sun.net.sdp.*,
+            sun.net.spi.*,
+            sun.net.idn.*,
+            sun.net.util.*,
+            sun.net.www.*,
+            sun.net.www.http.*,
+            sun.net.spi.nameservice.*;
+
+    include sun.net.ftp.**,
+            sun.net.smtp.**,
+            sun.net.www.protocol.**,
+            sun.net.www.content.**;
+
+    exclude sun.net.www.protocol.http.logging.*,
+            sun.net.www.protocol.http.spnego.*,
+            sun.net.www.content.audio.**,
+            sun.net.www.content.image.**;
+
+    // resource file for sun.net.idn
+    include sun/net/idn/*;
+
+    // classes in deploy
+    exclude sun.net.www.protocol.http.AuthCacheBridge;
+
+    // include usage tracker
+    include sun.usagetracker.*;
+
+    // unicode scripting support
+    include java/lang/uniName.dat;
+
+    // Explicitly include content-types.properties
+    include sun/net/www/content-types.properties;
+
+    // no META-INF/services
+    uses java.nio.channels.spi.AsynchronousChannelProvider;
+    uses java.nio.channels.spi.SelectorProvider;
+    uses java.nio.charset.spi.CharsetProvider;
+    uses java.nio.file.spi.FileSystemProvider;
+    uses java.nio.file.spi.FileTypeDetector;
+    uses java.text.spi.BreakIteratorProvider;
+    uses java.text.spi.CollatorProvider;
+    uses java.text.spi.DateFormatProvider;
+    uses java.text.spi.DateFormatSymbolsProvider;
+    uses java.text.spi.DecimalFormatSymbolsProvider;
+    uses java.text.spi.NumberFormatProvider;
+    uses java.time.chrono.Chronology;
+    uses java.time.zone.ZoneRulesProvider;
+    uses java.util.spi.CalendarDataProvider;
+    uses java.util.spi.CalendarNameProvider;
+    uses java.util.spi.CurrencyNameProvider;
+    uses java.util.spi.LocaleNameProvider;
+    uses java.util.spi.ResourceBundleControlProvider;
+    uses java.util.spi.TimeZoneNameProvider;
+    uses sun.net.spi.nameservice.NameServiceDescriptor;
+
+    //
+    // qualified exports for open/closed and platform-specific content
+    //
+    exports jdk.internal.org.objectweb.asm to jdk.jfr, jdk.scripting.nashorn;
+    exports jdk.internal.org.objectweb.asm.commons to jdk.jfr, jdk.scripting.nashorn;
+    exports jdk.internal.org.objectweb.asm.tree to jdk.jfr;
+    exports jdk.internal.org.objectweb.asm.util to jdk.jfr, jdk.scripting.nashorn;
+
+
+    exports sun.misc to jdk.deploy.osx;
+    exports sun.security.pkcs to jdk.deploy.osx;
+    exports sun.security.util to jdk.deploy.osx;
+    exports sun.security.x509 to jdk.deploy.osx;
+
+    exports sun.nio.ch to jdk.crypto.ucrypto;
+    exports sun.security.action to jdk.crypto.ucrypto;
+    exports sun.security.rsa to jdk.crypto.mscapi;
+    exports sun.security.util to java.smartcardio,
+                                 jdk.crypto.mscapi,
+                                 jdk.crypto.ucrypto;
+
+
+    //
+    // additional qualified exports for access via Core Reflection
+    //
+    exports sun.misc to java.xml;
+}
+
+module java.logging {
+    include java.util.logging.*;
+    include sun.util.logging.resources.*;
+
+    // Formatter for HTTP messages
+    include sun.net.www.protocol.http.logging.*;
+}
+
+module java.instrument {
+    include java.lang.instrument.*, sun.instrument.*;
+}
+
+module java.desktop {
+    include java.applet.**,
+            java.awt.**,
+            java.beans.**,
+            javax.accessibility.**,
+            javax.imageio.**,
+            javax.print.**,
+            javax.sound.**,
+            javax.swing.**,
+            com.sun.awt.**,
+            com.sun.beans.**,
+            com.sun.image.**,
+            com.sun.imageio.**,
+            com.sun.accessibility.**,
+            // sajdi also contains classes in subpackages of com.sun.java.swing;
+            // so use '*' instead of '**'
+            com.sun.java.swing.*,
+            com.sun.java.swing.plaf.**,
+            com.sun.media.**,
+            com.sun.swing.**,
+            sun.applet.**,
+            sun.audio.*,
+            sun.awt.**,
+            sun.lwawt.**,
+            sun.beans.**,
+            sun.dc.**,
+            sun.font.**,
+            sun.java2d.**,
+            sun.print.**,
+            sun.swing.**;
+
+    // circular dependencies with these apple packages
+    include apple.laf.*,
+            com.apple.eawt.**,
+            com.apple.eio.**,
+            com.apple.laf.**;
+
+    // content handlers
+    include sun.net.www.content.audio.**,
+            sun.net.www.content.image.**;
+
+    uses java.awt.im.spi.InputMethodDescriptor;
+    uses javax.imageio.spi.IIOServiceProvider;
+    uses javax.imageio.spi.ImageInputStreamSpi;
+    uses javax.imageio.spi.ImageOutputStreamSpi;
+    uses javax.imageio.spi.ImageReaderSpi;
+    uses javax.imageio.spi.ImageReaderWriterSpi;
+    uses javax.imageio.spi.ImageTranscoderSpi;
+    uses javax.imageio.spi.ImageWriterSpi;
+    uses javax.print.PrintServiceLookup;
+    uses javax.print.StreamPrintServiceFactory;
+    uses javax.sound.midi.spi.MidiDeviceProvider;
+    uses javax.sound.midi.spi.MidiFileReader;
+    uses javax.sound.midi.spi.MidiFileWriter;
+    uses javax.sound.midi.spi.SoundbankReader;
+    uses javax.sound.sampled.spi.AudioFileReader;
+    uses javax.sound.sampled.spi.AudioFileWriter;
+    uses javax.sound.sampled.spi.FormatConversionProvider;
+    uses javax.sound.sampled.spi.MixerProvider;
+}
+
+module oracle.accessbridge {
+    include com.sun.java.accessibility.**;
+}
+
+// ## the Preferences implementation for Unix to XML (currently stored as a XML file)
+module java.prefs {
+    include java.util.prefs.*;
+    uses java.util.prefs.PreferencesFactory;
+}
+
+module jdk.snmp {
+    include com.sun.jmx.snmp.**, sun.management.snmp.**;
+}
+
+module java.management {
+    // closed specific
+    exports com.sun.jmx.defaults to jdk.snmp;
+    exports com.sun.jmx.mbeanserver to jdk.snmp;
+    exports sun.management to jdk.snmp;
+ 
+    include java.lang.management.*, com.sun.management.**, sun.management.**;
+    include javax.management.**, com.sun.jmx.**;
+
+    uses javax.management.remote.JMXConnectorProvider;
+    uses javax.management.remote.JMXConnectorServerProvider;
+}
+
+module java.corba {
+    include javax.activity.**,
+            javax.rmi.*,
+            javax.rmi.CORBA.*,
+            com.sun.corba.**,
+            com.sun.org.omg.**,
+            org.omg.**,
+            sun.corba.**;
+
+    // RMI-IIOP defines mapping to these exceptions
+    include javax.transaction.*;
+
+    // idlj
+    include com.sun.tools.corba.**;
+
+    // include COS naming service provider for JNDI
+    include com.sun.jndi.cosnaming.**,
+            com.sun.jndi.toolkit.corba.**,
+            com.sun.jndi.url.corbaname.**,
+            com.sun.jndi.url.iiop.**,
+            com.sun.jndi.url.iiopname.**;
+}
+
+module java.sql {
+    include java.sql.**, javax.sql.*;
+    include javax.transaction.xa.*;
+    uses java.sql.Driver;
+}
+
+module java.sql.rowset {
+    include javax.sql.rowset.**;
+    include com.sun.rowset.**;
+    uses javax.sql.rowset.RowSetFactory;
+}
+
+// Deprecated APIs used by snmp
+module java.security.acl {
+    include java.security.acl.*, sun.security.acl.*;
+}
+
+module jdk.crypto.ec {
+    include sun.security.ec.*;
+}
+
+module jdk.crypto.pkcs11 {
+    include sun.security.pkcs11.**;
+}
+
+module java.security.sasl {
+    include javax.security.sasl.**,
+            com.sun.security.sasl.**;
+
+    // GSSAPI mechanism in Kerberos module for now
+    exclude com.sun.security.sasl.gsskerb.*;
+
+}
+
+module jdk.security.auth {
+    // JDK-specific API to JAAS
+    include com.sun.security.auth.**;
+}
+
+module java.security.jgss {
+    include javax.security.auth.kerberos.*,
+            com.sun.security.jgss.**,
+            com.sun.security.sasl.gsskerb.**,             // GSSAPI SASL mechanism
+            sun.security.jgss.**,
+            sun.security.ssl.krb5.**,
+            sun.security.krb5.**,
+            org.ietf.jgss.**,
+            sun.net.www.protocol.http.spnego.*;
+}
+
+module jdk.crypto.ucrypto {
+    include com.oracle.security.ucrypto.**;
+}
+
+module jdk.crypto.mscapi {
+    include sun.security.mscapi.*;
+}
+
+module java.xml.crypto {
+    include javax.xml.crypto.**,
+            org.jcp.xml.dsig.**,
+            com.sun.org.apache.xml.internal.security.**;
+}
+
+module java.smartcardio {
+    include javax.smartcardio.**, sun.security.smartcardio.**;
+}
+
+module java.xml {
+    include javax.xml.**,
+            org.w3c.dom.**,
+            org.w3c.sax.**,
+            org.xml.sax.**;
+
+    exclude javax.xml.crypto.**,   // XML-DSIG
+            javax.xml.bind.**,     // JAX-WS
+            javax.xml.soap.**,
+            javax.xml.ws.**;
+
+    include sun.util.xml.*;
+
+    // Xerces implementation
+    include com.sun.org.apache.xerces.internal.**,
+            com.sun.org.apache.xml.internal.serialize.**,
+            com.sun.xml.internal.stream.**;
+    exclude com.sun.xml.internal.stream.buffer.**;  // JAX-WS
+
+    // Xerces resolver
+    include com.sun.org.apache.xml.internal.resolver.**;
+
+    // xalan
+    include org.w3c.dom.xpath.*,
+            com.sun.org.apache.xalan.internal.**,
+            com.sun.org.apache.xpath.internal.**,
+            com.sun.org.apache.xml.internal.dtm.**,
+            com.sun.org.apache.xml.internal.res.**,
+            com.sun.org.apache.xml.internal.serializer.**,
+            com.sun.org.apache.xml.internal.utils.**,
+            com.sun.org.apache.bcel.internal.**,
+            com.sun.org.apache.regexp.internal.**,
+            com.sun.java_cup.internal.**;
+
+    uses javax.xml.datatype.DatatypeFactory;
+    uses javax.xml.parsers.DocumentBuilderFactory;
+    uses javax.xml.parsers.SAXParserFactory;
+    uses javax.xml.stream.XMLEventFactory;
+    uses javax.xml.stream.XMLInputFactory;
+    uses javax.xml.stream.XMLOutputFactory;
+    uses javax.xml.transform.TransformerFactory;
+    uses javax.xml.validation.SchemaFactory;
+    uses javax.xml.xpath.XPathFactory;
+}
+
+module java.naming {
+    // framework/API 
+    include javax.naming.**,
+            com.sun.naming.**,
+            com.sun.jndi.toolkit.ctx.**,
+            com.sun.jndi.toolkit.dir.**,
+            com.sun.jndi.toolkit.url.**;
+
+    // LDAP provider
+    include com.sun.jndi.ldap.**,
+            com.sun.jndi.url.ldap.*,
+            com.sun.jndi.url.ldaps.*,
+            sun.security.provider.certpath.ldap.**;
+
+    uses javax.naming.ldap.StartTlsResponse;
+ }
+
+module jdk.naming.rmi {
+    // RMI registry provider
+    include com.sun.jndi.rmi.**, com.sun.jndi.url.rmi.**;
+}
+
+module jdk.naming.dns {
+    // DNS provider
+    include com.sun.jndi.dns.**,
+            com.sun.jndi.url.dns.**,
+            sun.net.spi.nameservice.dns.**;
+}
+
+module java.rmi {
+    include java.rmi.**,
+            sun.rmi.**,
+            com.sun.rmi.**;
+    exclude sun.rmi.rmic.**;
+
+    // SSL factories are in rmi
+    include javax.rmi.ssl.**;
+
+    include rmi-activation;
+
+    uses java.rmi.server.RMIClassLoaderSpi;
+}
+
+module jdk.rmic {
+    include sun.rmi.rmic.**,
+            sun.tools.asm.*,
+            sun.tools.java.*,
+            sun.tools.javac.**,
+            sun.tools.tree.*,
+            sun.tools.util.*;
+}
+
+// schemagen and xjc
+module jdk.xml.bind {
+    include com.sun.codemodel.**,
+            com.sun.tools.xjc.**,
+            com.sun.tools.internal.xjc.**,
+            com.sun.xml.internal.xsom.**,
+            com.sun.xml.internal.rngom.**,
+            com.sun.istack.internal.tools.**,
+            com.sun.xml.internal.dtdparser.**,
+            org.relaxng.datatype.**,
+            com.sun.tools.internal.jxc.**;
+}
+
+// wsgen and wsimport
+module jdk.xml.ws {
+    // reflection on com.sun.tools.javac.Main
+    // this dependence should be removed when replaced with javax.tools.Compiler
+    requires jdk.compiler;
+    include com.sun.istack.internal.ws.*,
+            com.sun.tools.internal.ws.**;
+    uses com.sun.tools.internal.ws.wscompile.Plugin;
+}
+
+// standalone technology (JSR-250)
+module java.annotations.common {
+    include javax.annotation.*;
+}
+
+module java.xml.bind {
+    include javax.xml.bind.**,
+            com.sun.istack.internal.*,
+            com.sun.istack.internal.localization.*,
+            com.sun.istack.internal.logging.**,
+            com.sun.xml.internal.fastinfoset.**,
+            com.sun.xml.internal.org.jvnet.fastinfoset.*,
+            com.sun.xml.internal.bind.**,
+            com.sun.xml.internal.org.jvnet.**,
+            com.sun.xml.internal.txw2.**;
+}
+
+module java.xml.soap {
+    include javax.xml.soap.**,
+            com.sun.xml.internal.messaging.saaj.**;
+}
+
+module java.xml.ws {
+    include javax.jws.**,
+            javax.xml.ws.**,
+            org.relaxng.**,
+            com.oracle.webservices.**,
+            com.oracle.xmlns.**,
+            com.sun.org.glassfish.**,
+            com.sun.xml.internal.stream.**,
+            com.sun.xml.internal.ws.**;
+
+    uses javax.xml.ws.spi.Provider;
+}
+
+module java.activation {
+    include javax.activation.**, com.sun.activation.**;
+
+    include META-INF/mailcap.default,
+            META-INF/mimetypes.default;
+}
+
+
+// standalone technology (JSR-223)
+module java.scripting {
+    include javax.script.**;
+
+    uses javax.script.ScriptEngineFactory;
+}
+
+module java.compiler {
+    include javax.tools.**,
+            javax.lang.model.**,
+            javax.annotation.processing.**;
+    uses javax.tools.DocumentationTool;
+    uses javax.tools.JavaCompiler;
+} 
+
+module jdk.scripting.nashorn {
+    include jdk.nashorn.**,
+            jdk.internal.dynalink.**;
+    include jdk/nashorn/**;
+    include META-INF/services/javax.script.ScriptEngineFactory;
+}
+
+
+module jdk.charsets {
+    include sun.nio.cs.ext.**;
+}
+
+// localedata.jar in jre/lib/ext
+module jdk.localedata {
+    include sun.util.resources.**,
+            sun.text.resources.**;
+    include sun.util.resources.cldr.**,
+            sun.text.resources.cldr.**;
+}
+
+module jdk.jfr {
+    include com.oracle.jrockit.**,
+            jdk.jfr.**,
+            oracle.jrockit.**;
+}
+
+module jdk.deploy.osx {
+    // Apple integration
+    include apple.applescript.*,
+            apple.launcher.*,      // see JDK-8003847
+            apple.security.*,
+            com.apple.**;
+}
+
+module jdk.deploy {
+    include javax.jnlp.*;
+
+    include com.oracle.deploy.**,
+            com.sun.applet2.**;
+
+    // For now, all plugin and JNLP
+    include com.sun.java.browser.**,
+            netscape.**,
+            sun.plugin.**,
+            sun.plugin2.**,,
+            com.sun.deploy.**,
+            com.sun.javaws.**,
+            com.sun.jnlp.*;
+
+    // Split package issue: Hook for http authentication - see JDK-8004653 
+    include sun.net.www.protocol.http.AuthCacheBridge;
+}
+
+// JDK-specific SCTP (supported API)
+module jdk.sctp {
+    include com.sun.nio.sctp.**, sun.nio.ch.sctp.*;
+}
+
+module jdk.zipfs {
+    include jdk.nio.zipfs.*;
+    include com.sun.nio.zipfs.*;
+    include META-INF/services/java.nio.file.spi.FileSystemProvider;
+}
+
+module jdk.httpserver {
+    include com.sun.net.httpserver.**, sun.net.httpserver.**;
+    uses com.sun.net.httpserver.spi.HttpServerProvider;
+}
+
+module jdk.jdi {
+    include com.sun.jdi.**, com.sun.tools.jdi.**;
+    include META-INF/services/com.sun.tools.jdi.**;
+
+    uses com.sun.jdi.connect.Connector;
+    uses com.sun.jdi.connect.spi.TransportService;
+
+    include com.sun.tools.example.debug.**,
+            com.sun.tools.example.debug.bdi.**,
+            com.sun.tools.example.debug.gui.**;
+}
+
+// JDWP agent and socket transport
+module jdk.jdwp.agent {
+    // explicitly require java.base, until javac implicitly adds mandated dependence
+    requires java.base;
+}
+
+module jdk.hprof.agent {
+    include com.sun.demo.jvmti.hprof.*;
+}
+
+module jdk.compiler {
+    include com.sun.tools.javac.**,
+            com.sun.source.**,
+            com.sun.tools.sjavac.**;
+
+    include com.sun.tools.doclint.**;
+
+    include com.sun.tools.javah.**;
+
+    include com.sun.tools.javap.**,
+            com.sun.tools.classfile.**;
+
+    // serialver
+    include sun.tools.serialver.**;
+}
+
+module jdk.javadoc {
+    include com.sun.tools.javadoc.**,
+            com.sun.tools.doclets.**,
+            com.sun.javadoc.**;
+}
+
+
+// jvmstat tooling
+module jdk.jvmstat {
+    include sun.jvmstat.**;
+    include sun.tools.jstatd.**;
+}
+
+// Attach API
+module jdk.attach {
+    include com.sun.tools.attach.**,
+            sun.tools.attach.**;
+    uses com.sun.tools.attach.spi.AttachProvider;
+}
+
+// Serviceability command-line tools
+module jdk.jcmd {
+    include sun.tools.jcmd.**,
+            sun.tools.jinfo.**,
+            sun.tools.jps.**,
+            sun.tools.jmap.**,
+            sun.tools.jstack.**,
+            sun.tools.jstat.**;
+}
+
+// SA
+module jdk.hotspot.agent {
+    include sun.jvm.hotspot.**,
+            com.sun.java.swing.ui.**,
+            com.sun.java.swing.action.**;
+    include toolbarButtonGraphics/**;
+    include sa.properties;
+}
+
+module jdk.jconsole {
+    include sun.tools.jconsole.**,
+            com.sun.tools.jconsole.**;
+}
+
+module jdk.dev {
+    include com.sun.tools.extcheck.**,
+            sun.tools.native2ascii.**;
+
+    // jhat
+    include com.sun.tools.hat.**,
+            com.sun.tools.script.**;
+
+    // jar, jarsigner
+    include sun.tools.jar.**;
+    include sun.security.tools.jarsigner.**,
+            com.sun.jarsigner.**;
+
+    // jlink
+    include jdk.jigsaw.tools.jlink.**;
+
+    // jdeps
+    include com.sun.tools.jdeps.**;
+}
+
+module java.compact1 {
+    requires public java.base;
+    requires public java.logging;
+    requires public java.scripting;
+}
+
+module java.compact2 {
+    requires public java.compact1;
+
+    requires public java.sql;
+    requires public java.rmi;
+    requires public java.xml;
+}
+
+module java.compact3 {
+    requires public java.compact2;
+
+    requires public java.instrument;
+    requires public java.sql.rowset;
+    requires public java.management;
+    requires public java.prefs;
+    requires public java.security.acl;
+    requires public java.naming;
+    requires public java.security.jgss;
+    requires public java.security.sasl;
+    requires public java.compiler;
+    requires public java.xml.crypto;
+}
+
+module java.se {
+    requires public java.compact3;
+
+    requires public java.desktop;
+    requires public java.corba;
+    requires public java.activation;
+    requires public java.xml.bind;
+    requires public java.xml.ws;
+    requires public java.xml.soap;
+}
+
+module jdk.compact3 {
+    requires public java.compact3;
+
+    // JSR 268 (not in Java SE)
+    requires public java.smartcardio;
+
+    // JDK-specific APIs
+    requires public jdk.security.auth;
+    requires public jdk.httpserver;
+    requires public jdk.sctp;
+}
+
+module jdk.runtime {
+    // Tools/APIs included in the JRE
+    include com.sun.tracing.**, sun.tracing.**;
+    include sun.security.tools.policytool.*;
+}
+
+module oracle.jrecreate {
+    include oracle.tools.jrecreate.**;
+    include org.openjdk.internal.joptsimple.**;
+}
+

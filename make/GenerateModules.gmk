@@ -1,0 +1,120 @@
+#
+# Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+#
+# This code is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License version 2 only, as
+# published by the Free Software Foundation.  Oracle designates this
+# particular file as subject to the "Classpath" exception as provided
+# by Oracle in the LICENSE file that accompanied this code.
+#
+# This code is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# version 2 for more details (a copy is included in the LICENSE file that
+# accompanied this code).
+#
+# You should have received a copy of the GNU General Public License version
+# 2 along with this work; if not, write to the Free Software Foundation,
+# Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+#
+# Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+# or visit www.oracle.com if you need additional information or have any
+# questions.
+#
+
+# Default target declared first
+default: all
+
+include $(SPEC)
+include JigsawSpecMod.gmk
+include Modules.gmk
+include MakeBase.gmk
+include Setup.gmk
+
+ifeq ($(SHUFFLED), true)
+
+  ALL_SRC_DIRS := \
+      $(wildcard \
+        $(JDK_TOPDIR)/src_shuffled/*/*/classes \
+        $(LANGTOOLS_TOPDIR)/src_shuffled/*/*/classes \
+        $(CORBA_TOPDIR)/src_shuffled/*/*/classes \
+        $(JAXP_TOPDIR)/src_shuffled/*/*/classes \
+        $(JAXWS_TOPDIR)/src_shuffled/*/*/classes \
+        $(NASHORN_TOPDIR)/src_shuffled/*/*/classes) \
+      $(JDK_OUTPUTDIR)/gensrc \
+      $(LANGTOOLS_OUTPUTDIR)/gensrc \
+      $(CORBA_OUTPUTDIR)/gensrc \
+      $(JDK_OUTPUTDIR)/gensrc_no_srczip \
+      #
+
+  ifndef OPENJDK
+    ALL_SRC_DIRS += $(wildcard $(JDK_TOPDIR)/src_shuffled/closed/*/*/classes)
+  endif
+
+  $(MODULES_SER_OUT): $(BUILD_CLASSANALYZER) \
+      $(wildcard $(JDK_OUTPUTDIR)/modules/_* $(JDK_OUTPUTDIR)/modules/*/_*) \
+      $(wildcard $(ALL_SRC_DIRS)/module-info.java)
+	$(RM) $@
+	$(MKDIR) -p $(@D)
+	$(TOOL_GENMODULEGRAPH) \
+	  -sourcepath "$(subst $(SPACE),$(PATH_SEP),$(ALL_SRC_DIRS))" \
+	  -buildmodules $(JDK_OUTPUTDIR)/modules \
+	  -o $@
+
+  $(GENGRAPHS_DIR)/jdk.dot: $(BUILD_DEPS_TOOLS) $(MODULES_SER_OUT)
+	$(TOOL_GENGRAPHS) $(GENGRAPHS_DIR)
+
+  MODULES_XML := $(JDK_OUTPUTDIR)/$(MODULES_SUBDIR)/$(JDK_DEV_SUBDIR)/com/sun/tools/jdeps/resources/modules.xml
+
+  $(MODULES_XML): $(BUILD_MODULE_TOOL)
+	$(MKDIR) -p $(@D)
+	$(RM) $@
+	$(TOOL_GENMODULESXML) $@ $(JDK_OUTPUTDIR)/$(MODULES_SUBDIR)
+
+  $(GENGRAPHS_DIR)/module-summary.html: $(BUILD_MODULE_TOOL)
+	$(MKDIR) -p $(@D)
+	$(TOOL_MODULESUMMARY) -o $@ -mp $(JDK_OUTPUTDIR)/jmods
+
+all: $(MODULES_SER_OUT) $(MODULES_XML) $(GENGRAPHS_DIR)/jdk.dot
+
+postjmods: $(GENGRAPHS_DIR)/module-summary.html
+
+else
+
+  # Import nashorn.jar from nashorn dist dir.
+  $(JDK_OUTPUTDIR)/lib/ext/nashorn.jar: $(NASHORN_DIST)/nashorn.jar
+	$(install-file)
+
+  # To generate module-info.java per the new source layout:
+  #   src/$MODULE/share/classes/module-info.java
+  #   src/$MODULE/$OS/classes/module-info.java
+  #   src/closed/$MODULE/$OS/classes/module-info.java
+  #
+  # add this option to run ClassAnalyzer
+  #     --os-source-path $(OPENJDK_TARGET_OS)
+
+  $(MODULES_SER_OUT): $(BUILD_CLASSANALYZER) \
+      $(wildcard $(JDK_OUTPUTDIR)/classes/_the*) \
+      $(JDK_OUTPUTDIR)/lib/ext/nashorn.jar
+	$(RM) -rf $(MODULE_CLASSLIST_DIR) \
+	  $(MODULEINFO_DIR) \
+	  $(MODULES_SER_OUT) \
+	  $(JDK_OUTPUTDIR)/modules
+	$(TOOL_CLASSANALYZER) \
+	  --os-source-path $(OPENJDK_TARGET_OS) \
+	  --version $(MODULE_VERSION) \
+	  --classlist $(MODULE_CLASSLIST_DIR) \
+	  --out $(MODULES_SER_OUT) \
+	  --moduleinfo $(MODULEINFO_DIR)
+	if [ -f $(MODULE_CLASSLIST_DIR)/unknown.summary ] ; then \
+	  $(ECHO) "ERROR: Check module \"unknown\". modules.config possibly requires update." ; \
+	  exit 2; \
+	fi
+
+all: $(MODULES_SER_OUT)
+
+postjmods:
+endif
+
+.PHONY: all postjmods

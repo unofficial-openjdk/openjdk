@@ -23,6 +23,18 @@
 # questions.
 #
 
+ifeq ($(OPENJDK_TARGET_OS), aix)
+  LIBATTACH_OS_API_DIR := aix
+else
+  LIBATTACH_OS_API_DIR := $(OPENJDK_TARGET_OS_API_DIR)
+endif
+
+ifeq ($(SHUFFLED), true)
+  LIBATTACH_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.attach/$(LIBATTACH_OS_API_DIR)/native/libattach
+else
+  LIBATTACH_SRC := $(JDK_TOPDIR)/src/$(LIBATTACH_OS_API_DIR)/native/sun/tools/attach
+endif
+
 LIBATTACH_EXCLUDE_FILES :=
 ifneq ($(OPENJDK_TARGET_OS), solaris)
   LIBATTACH_EXCLUDE_FILES += SolarisVirtualMachine.c
@@ -37,22 +49,19 @@ ifneq ($(OPENJDK_TARGET_OS),aix)
   LIBATTACH_EXCLUDE_FILES += AixVirtualMachine.c
 endif
 
-LIBATTACH_SRC_FILES := $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/sun/tools/attach
-ifeq ($(OPENJDK_TARGET_OS),aix)
-  LIBATTACH_SRC_FILES += $(JDK_TOPDIR)/src/aix/native/sun/tools/attach
-endif
-
 $(eval $(call SetupNativeCompilation,BUILD_LIBATTACH, \
     LIBRARY := attach, \
     OUTPUT_DIR := $(INSTALL_LIBRARIES_HERE), \
-    SRC := $(LIBATTACH_SRC_FILES), \
+    SRC := $(LIBATTACH_SRC), \
     EXCLUDE_FILES := $(LIBATTACH_EXCLUDE_FILES), \
     LANG := C, \
     OPTIMIZATION := LOW, \
-    CFLAGS := $(CFLAGS_JDKLIB) $(CFLAGS_WARNINGS_ARE_ERRORS), \
+    CFLAGS := $(CFLAGS_JDKLIB) $(CFLAGS_WARNINGS_ARE_ERRORS) \
+        -I$(JDK_OUTPUTDIR)/gensrc_headers/jdk.attach \
+        $(addprefix -I, $(BUILD_LIBJAVA_SRC)), \
     CFLAGS_windows := /Gy, \
     MAPFILE := $(JDK_TOPDIR)/make/mapfiles/libattach/mapfile-$(OPENJDK_TARGET_OS), \
-    VERSIONINFO_RESOURCE := $(JDK_TOPDIR)/src/windows/resource/version.rc, \
+    VERSIONINFO_RESOURCE := $(GLOBAL_VERSION_INFO_RESOURCE), \
     RC_FLAGS := $(RC_FLAGS) \
         -D "JDK_FNAME=attach.dll" \
         -D "JDK_INTERNAL_NAME=attach" \
@@ -68,30 +77,41 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBATTACH, \
 
 $(BUILD_LIBATTACH): $(BUILD_LIBJAVA)
 
-BUILD_LIBRARIES += $(BUILD_LIBATTACH)
+ATTACH_LIBRARIES += $(BUILD_LIBATTACH)
 
 ##########################################################################################
+
+ifeq ($(SHUFFLED), true)
+  LIBDT_SOCKET_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.jdwp.agent/share/native/libdt_socket \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.jdwp.agent/$(OPENJDK_TARGET_OS_API_DIR)/native/libdt_socket
+  LIBDT_SOCKET_CPPFLAGS := \
+      $(addprefix -I, $(LIBDT_SOCKET_SRC)) \
+      -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.jdwp.agent/share/native/libjdwp/export \
+      -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.jdwp.agent/share/native/libjdwp
+else
+  LIBDT_SOCKET_SRC := $(JDK_TOPDIR)/src/share/transport/socket \
+      $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/transport/socket
+  LIBDT_SOCKET_CPPFLAGS := \
+      $(addprefix -I, $(LIBDT_SOCKET_SRC)) \
+      -I$(JDK_TOPDIR)/src/share/back/export \
+      -I$(JDK_TOPDIR)/src/share/back
+endif
 
 $(eval $(call SetupNativeCompilation,BUILD_LIBDT_SOCKET, \
     LIBRARY := dt_socket, \
     OUTPUT_DIR := $(INSTALL_LIBRARIES_HERE), \
-    SRC := $(JDK_TOPDIR)/src/share/transport/socket \
-        $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/transport/socket, \
+    SRC := $(LIBDT_SOCKET_SRC), \
     LANG := C, \
     OPTIMIZATION := LOW, \
     CFLAGS := $(CFLAGS_JDKLIB) $(CFLAGS_CFLAGS_WARNINGS_ARE_ERRORS) -DUSE_MMAP \
-        -I$(INCLUDEDIR) -I$(JDK_OUTPUTDIR)/include/$(OPENJDK_TARGET_OS) \
-        -I$(JDK_TOPDIR)/src/share/transport/socket \
-        -I$(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/transport/socket \
-        -I$(JDK_TOPDIR)/src/share/back/export \
-        -I$(JDK_TOPDIR)/src/share/back, \
+        $(LIBDT_SOCKET_CPPFLAGS), \
     MAPFILE := $(JDK_TOPDIR)/make/mapfiles/libdt_socket/mapfile-vers, \
     LDFLAGS := $(LDFLAGS_JDKLIB) \
         $(call SET_SHARED_LIBRARY_ORIGIN), \
     LDFLAGS_SUFFIX_linux := -lpthread, \
     LDFLAGS_SUFFIX_solaris := -lnsl -lsocket -lc, \
     LDFLAGS_SUFFIX_windows := $(LDFLAGS_JDKLIB_SUFFIX) -export:jdwpTransport_OnLoad ws2_32.lib, \
-    VERSIONINFO_RESOURCE := $(JDK_TOPDIR)/src/windows/resource/version.rc, \
+    VERSIONINFO_RESOURCE := $(GLOBAL_VERSION_INFO_RESOURCE), \
     RC_FLAGS := $(RC_FLAGS) \
         -D "JDK_FNAME=dt_socket.dll" \
         -D "JDK_INTERNAL_NAME=dt_socket" \
@@ -101,29 +121,43 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBDT_SOCKET, \
 
 $(BUILD_LIBDT_SOCKET): $(BUILD_LIBJAVA)
 
-BUILD_LIBRARIES += $(BUILD_LIBDT_SOCKET)
+# Include socket transport with JDWP agent to allow for remote debugging
+JDWP_LIBRARIES += $(BUILD_LIBDT_SOCKET)
 
 ##########################################################################################
 
 ifeq ($(OPENJDK_TARGET_OS), windows)
 
+  ifeq ($(SHUFFLED), true)
+    LIBDT_SHMEM_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.jdi/share/native/libdt_shmem \
+        $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.jdi/$(OPENJDK_TARGET_OS_API_DIR)/native/libdt_shmem \
+        #
+    LIBDT_SHMEM_CPPFLAGS := -I$(INCLUDEDIR) -I$(JDK_OUTPUTDIR)/include/$(OPENJDK_TARGET_OS) \
+        $(addprefix -I, $(LIBDT_SHMEM_SRC)) \
+        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.jdwp.agent/share/native/libjdwp/export \
+        -I$(JDK_OUTPUTDIR)/gensrc_headers/jdk.jdi \
+        #
+  else
+    LIBDT_SHMEM_SRC := $(JDK_TOPDIR)/src/share/native/com/sun/tools/jdi \
+        $(JDK_TOPDIR)/src/share/transport/shmem \
+        $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/transport/shmem
+    LIBDT_SHMEM_CPPFLAGS := -I$(INCLUDEDIR) -I$(JDK_OUTPUTDIR)/include/$(OPENJDK_TARGET_OS) \
+        $(addprefix -I, $(LIBDT_SHMEM_SRC)) \
+        -I$(JDK_TOPDIR)/src/share/back/export
+  endif
+
   $(eval $(call SetupNativeCompilation,BUILD_LIBDT_SHMEM, \
       LIBRARY := dt_shmem, \
       OUTPUT_DIR := $(INSTALL_LIBRARIES_HERE), \
-      SRC := $(JDK_TOPDIR)/src/share/native/com/sun/tools/jdi \
-          $(JDK_TOPDIR)/src/share/transport/shmem \
-          $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/transport/shmem, \
+      SRC := $(LIBDT_SHMEM_SRC), \
       LANG := C, \
       OPTIMIZATION := LOW, \
       CFLAGS := $(CFLAGS_JDKLIB) $(CFLAGS_WARNINGS_ARE_ERRORS) -DUSE_MMAP \
-          -I$(INCLUDEDIR) -I$(JDK_OUTPUTDIR)/include/$(OPENJDK_TARGET_OS) \
-          -I$(JDK_TOPDIR)/src/share/transport/shmem \
-          -I$(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/transport/shmem \
-          -I$(JDK_TOPDIR)/src/share/back/export, \
+          $(LIBDT_SHMEM_CPPFLAGS), \
       LDFLAGS := $(LDFLAGS_JDKLIB), \
       LDFLAGS_windows := -export:jdwpTransport_OnLoad, \
       LDFLAGS_SUFFIX := $(LDFLAGS_JDKLIB_SUFFIX), \
-      VERSIONINFO_RESOURCE := $(JDK_TOPDIR)/src/windows/resource/version.rc, \
+      VERSIONINFO_RESOURCE := $(GLOBAL_VERSION_INFO_RESOURCE), \
       RC_FLAGS := $(RC_FLAGS) \
           -D "JDK_FNAME=dt_shmem.dll" \
           -D "JDK_INTERNAL_NAME=dt_shmem" \
@@ -131,24 +165,38 @@ ifeq ($(OPENJDK_TARGET_OS), windows)
       OBJECT_DIR := $(JDK_OUTPUTDIR)/objs/libdt_shmem, \
       DEBUG_SYMBOLS := $(DEBUG_ALL_BINARIES)))
 
-  BUILD_LIBRARIES += $(BUILD_LIBDT_SHMEM)
+  JDI_TRANSPORT_LIBRARIES += $(BUILD_LIBDT_SHMEM)
 
 endif # OPENJDK_TARGET_OS
 
 ##########################################################################################
 
+ifeq ($(SHUFFLED), true)
+  LIBJDWP_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.jdwp.agent/share/native/libjdwp \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.jdwp.agent/$(OPENJDK_TARGET_OS_API_DIR)/native/libjdwp
+  LIBJDWP_CPPFLAGS := \
+        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.jdwp.agent/share/native/libjdwp/export \
+        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.base/share/native/libnpt \
+        -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.base/$(OPENJDK_TARGET_OS_API_DIR)/native/libnpt \
+        $(addprefix -I, $(LIBJDWP_SRC))
+else
+  LIBJDWP_SRC := $(JDK_TOPDIR)/src/share/back \
+      $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/back
+  LIBJDWP_CPPFLAGS := \
+        -I$(JDK_TOPDIR)/src/share/back/export \
+        -I$(JDK_TOPDIR)/src/share/back \
+        -I$(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/back
+endif
+
 # JDWP_LOGGING causes log messages to be compiled into the library.
 $(eval $(call SetupNativeCompilation,BUILD_LIBJDWP, \
     LIBRARY := jdwp, \
     OUTPUT_DIR := $(INSTALL_LIBRARIES_HERE), \
-    SRC := $(JDK_TOPDIR)/src/share/back $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/back, \
+    SRC := $(LIBJDWP_SRC), \
     LANG := C, \
     OPTIMIZATION := LOW, \
     CFLAGS := $(CFLAGS_JDKLIB) $(CFLAGS_WARNINGS_ARE_ERRORS) -DJDWP_LOGGING \
-        -I$(JDK_TOPDIR)/src/share/transport/export \
-        -I$(JDK_TOPDIR)/src/share/back/export \
-        -I$(JDK_TOPDIR)/src/share/back \
-        -I$(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/back \
+        $(LIBJDWP_CPPFLAGS) \
         -I$(JDK_OUTPUTDIR)/gensrc_jdwp_headers, \
     MAPFILE := $(JDK_TOPDIR)/make/mapfiles/libjdwp/mapfile-vers, \
     LDFLAGS := $(LDFLAGS_JDKLIB) \
@@ -157,7 +205,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBJDWP, \
     LDFLAGS_SUFFIX_solaris := $(LIBDL) -lc, \
     LDFLAGS_SUFFIX_windows := $(LDFLAGS_JDKLIB_SUFFIX), \
     LDFLAGS_SUFFIX_macosx := -liconv, \
-    VERSIONINFO_RESOURCE := $(JDK_TOPDIR)/src/windows/resource/version.rc, \
+    VERSIONINFO_RESOURCE := $(GLOBAL_VERSION_INFO_RESOURCE), \
     RC_FLAGS := $(RC_FLAGS) \
         -D "JDK_FNAME=jdwp.dll" \
         -D "JDK_INTERNAL_NAME=jdwp" \
@@ -167,19 +215,27 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBJDWP, \
 
 $(BUILD_LIBJDWP): $(BUILD_LIBJAVA)
 
-BUILD_LIBRARIES += $(BUILD_LIBJDWP)
+JDWP_LIBRARIES += $(BUILD_LIBJDWP)
 
 ##########################################################################################
+
+ifeq ($(SHUFFLED), true)
+  LIBJSDT_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.runtime/share/native/libjsdt \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.runtime/$(OPENJDK_TARGET_OS_API_DIR)/native/libjsdt
+else
+  LIBJSDT_SRC := $(JDK_TOPDIR)/src/share/native/sun/tracing/dtrace \
+      $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/sun/tracing/dtrace
+endif
 
 $(eval $(call SetupNativeCompilation,BUILD_LIBJSDT, \
     LIBRARY := jsdt, \
     OUTPUT_DIR := $(INSTALL_LIBRARIES_HERE), \
-    SRC := $(JDK_TOPDIR)/src/share/native/sun/tracing/dtrace \
-        $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/sun/tracing/dtrace, \
+    SRC := $(LIBJSDT_SRC), \
     LANG := C, \
     OPTIMIZATION := LOW, \
     CFLAGS := $(CFLAGS_JDKLIB) $(CFLAGS_WARNINGS_ARE_ERRORS) \
-        -I$(JDK_TOPDIR)/src/share/native/sun/tracing/dtrace, \
+        $(addprefix -I, $(LIBJSDT_SRC) $(BUILD_LIBJAVA_SRC)) \
+        -I$(JDK_OUTPUTDIR)/gensrc_headers/jdk.runtime, \
     MAPFILE := $(JDK_TOPDIR)/make/mapfiles/libjsdt/mapfile-vers, \
     LDFLAGS := $(LDFLAGS_JDKLIB) \
         $(call SET_SHARED_LIBRARY_ORIGIN), \
@@ -187,7 +243,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBJSDT, \
     LDFLAGS_SUFFIX_windows := $(LDFLAGS_JDKLIB_SUFFIX) $(LIBDL), \
     LDFLAGS_SUFFIX_macosx := $(LIBDL), \
     LDFLAGS_SUFFIX_solaris := -lc, \
-    VERSIONINFO_RESOURCE := $(JDK_TOPDIR)/src/windows/resource/version.rc, \
+    VERSIONINFO_RESOURCE := $(GLOBAL_VERSION_INFO_RESOURCE), \
     RC_FLAGS := $(RC_FLAGS) \
         -D "JDK_FNAME=jsdt.dll" \
         -D "JDK_INTERNAL_NAME=jsdt" \
@@ -197,32 +253,29 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBJSDT, \
 
 $(BUILD_LIBJSDT): $(BUILD_LIBJAVA)
 
-BUILD_LIBRARIES += $(BUILD_LIBJSDT)
+JSDT_LIBRARIES += $(BUILD_LIBJSDT)
 
 ##########################################################################################
 
+ifeq ($(SHUFFLED), true)
+  LIBINSTRUMENT_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.instrument/share/native/libinstrument \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.instrument/$(OPENJDK_TARGET_OS_API_DIR)/native/libinstrument \
+      #
+  LIBINSTRUMENT_CFLAGS := $(CFLAGS_JDKLIB) \
+      $(addprefix -I, $(LIBINSTRUMENT_SRC)) \
+      -I$(JDK_OUTPUTDIR)/gensrc_headers/java.instrument \
+      -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/libjli \
+      -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/libjava \
+      #
+else
 LIBINSTRUMENT_SRC := $(JDK_TOPDIR)/src/share/instrument \
-    $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/instrument
-
-LIBINSTRUMENT_FILES := \
-    EncodingSupport.c \
-    EncodingSupport_md.c \
-    FileSystemSupport_md.c \
-    InstrumentationImplNativeMethods.c \
-    InvocationAdapter.c \
-    JarFacade.c \
-    JPLISAgent.c \
-    JPLISAssert.c \
-    JavaExceptions.c \
-    PathCharsValidator.c \
-    Reentrancy.c \
-    Utilities.c
-    
-LIBINSTRUMENT_DIR := $(JDK_OUTPUTDIR)/objs/libinstrument
+      $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/instrument \
+      #
 LIBINSTRUMENT_CFLAGS := $(CFLAGS_JDKLIB) \
-    -I$(JDK_TOPDIR)/src/share/instrument \
-    -I$(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/instrument \
-    -I$(JDK_TOPDIR)/src/share/bin
+      $(addprefix -I, $(LIBINSTRUMENT_SRC)) \
+      -I$(JDK_TOPDIR)/src/share/bin \
+      #
+endif
 
 LIBINSTRUMENT_LDFLAGS :=
 LIBINSTRUMENT_LDFLAGS_SUFFIX :=
@@ -244,7 +297,6 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBINSTRUMENT, \
     LIBRARY := instrument, \
     OUTPUT_DIR := $(INSTALL_LIBRARIES_HERE), \
     SRC := $(LIBINSTRUMENT_SRC), \
-    INCLUDE_FILES := $(LIBINSTRUMENT_FILES), \
     LANG := C, \
     OPTIMIZATION := LOW, \
     CFLAGS := $(LIBINSTRUMENT_CFLAGS) $(CFLAGS_WARNINGS_ARE_ERRORS), \
@@ -263,12 +315,12 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBINSTRUMENT, \
     LDFLAGS_SUFFIX_solaris := $(LIBZ) -L $(INSTALL_LIBRARIES_HERE)/jli -ljli $(LIBDL) -lc, \
     LDFLAGS_SUFFIX_linux := $(LIBZ) -L $(INSTALL_LIBRARIES_HERE)/jli -ljli $(LIBDL), \
     LDFLAGS_SUFFIX_aix := $(LIBZ) -L$(JDK_OUTPUTDIR)/objs -ljli_static $(LIBDL),\
-    VERSIONINFO_RESOURCE := $(JDK_TOPDIR)/src/windows/resource/version.rc, \
+    VERSIONINFO_RESOURCE := $(GLOBAL_VERSION_INFO_RESOURCE), \
     RC_FLAGS := $(RC_FLAGS) \
         -D "JDK_FNAME=instrument.dll" \
         -D "JDK_INTERNAL_NAME=instrument" \
         -D "JDK_FTYPE=0x2L", \
-    OBJECT_DIR := $(LIBINSTRUMENT_DIR), \
+    OBJECT_DIR := $(JDK_OUTPUTDIR)/objs/libinstrument, \
     DEBUG_SYMBOLS := true))
 
 ifneq (, $(findstring $(OPENJDK_TARGET_OS), macosx windows aix))
@@ -278,16 +330,25 @@ else
 endif
 $(BUILD_LIBINSTRUMENT): $(BUILD_LIBJAVA)
 
-BUILD_LIBRARIES += $(BUILD_LIBINSTRUMENT)
+INSTRUMENT_LIBRARIES += $(BUILD_LIBINSTRUMENT)
 
 ##########################################################################################
 
+ifeq ($(SHUFFLED), true)
+  BUILD_LIBMANAGEMENT_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.management/share/native/libmanagement \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.management/$(OPENJDK_TARGET_OS_API_DIR)/native/libmanagement
+  BUILD_LIBMANAGEMENT_CFLAGS := -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.management/share/native/include
+else
 BUILD_LIBMANAGEMENT_SRC := $(JDK_TOPDIR)/src/share/native/sun/management \
     $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/sun/management
+endif
 
 BUILD_LIBMANAGEMENT_EXCLUDES :=
 
-BUILD_LIBMANAGEMENT_CFLAGS := -I$(JDK_TOPDIR)/src/share/native/sun/management
+BUILD_LIBMANAGEMENT_CFLAGS += $(addprefix -I,$(BUILD_LIBMANAGEMENT_SRC)) \
+    -I$(JDK_OUTPUTDIR)/gensrc_headers/java.management \
+    $(addprefix -I, $(BUILD_LIBJAVA_SRC)) \
+    #
 
 ifneq ($(OPENJDK_TARGET_OS), solaris)
   BUILD_LIBMANAGEMENT_EXCLUDES += SolarisOperatingSystem.c
@@ -323,7 +384,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBMANAGEMENT, \
     LDFLAGS_SUFFIX := $(LDFLAGS_JDKLIB_SUFFIX), \
     LDFLAGS_SUFFIX_windows := jvm.lib psapi.lib $(WIN_JAVA_LIB) advapi32.lib, \
     LDFLAGS_SUFFIX_aix := -lperfstat,\
-    VERSIONINFO_RESOURCE := $(JDK_TOPDIR)/src/windows/resource/version.rc, \
+    VERSIONINFO_RESOURCE := $(GLOBAL_VERSION_INFO_RESOURCE), \
     RC_FLAGS := $(RC_FLAGS) \
         -D "JDK_FNAME=management.dll" \
         -D "JDK_INTERNAL_NAME=management" \
@@ -333,11 +394,20 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBMANAGEMENT, \
 
 $(BUILD_LIBMANAGEMENT): $(BUILD_LIBJAVA)
 
-BUILD_LIBRARIES += $(BUILD_LIBMANAGEMENT)
+MANAGEMENT_LIBRARIES += $(BUILD_LIBMANAGEMENT)
 
 ##########################################################################################
 
-BUILD_LIBHPROF_SRC := $(JDK_TOPDIR)/src/share/demo/jvmti/hprof $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/demo/jvmti/hprof
+ifeq ($(SHUFFLED), true)
+  BUILD_LIBHPROF_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/demo/share/jvmti/hprof \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/demo/$(OPENJDK_TARGET_OS_API_DIR)/jvmti/hprof
+  BUILD_LIBHPROF_CFLAGS := $(addprefix -I, $(BUILD_LIBHPROF_SRC)) \
+      -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.base/share/native/libnpt \
+      -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.base/$(OPENJDK_TARGET_OS_API_DIR)/native/libnpt \
+      -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/demo/share/jvmti/java_crw_demo
+else
+  BUILD_LIBHPROF_SRC := $(JDK_TOPDIR)/src/share/demo/jvmti/hprof \
+      $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/demo/jvmti/hprof
 BUILD_LIBHPROF_CFLAGS := -I$(JDK_TOPDIR)/src/share/demo/jvmti/hprof \
     -I$(JDK_TOPDIR)/src/share/demo/jvmti/java_crw_demo
 
@@ -345,6 +415,8 @@ ifeq ($(OPENJDK_TARGET_OS), aix)
   BUILD_LIBHPROF_SRC += $(JDK_TOPDIR)/src/aix/porting
   BUILD_LIBHPROF_CFLAGS += -I$(JDK_TOPDIR)/src/aix/porting
 endif
+endif
+
 
 BUILD_LIBHPROF_LDFLAGS :=
 
@@ -371,7 +443,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBHPROF, \
     LDFLAGS_SUFFIX_linux := $(LIBDL), \
     LDFLAGS_SUFFIX_macosx := $(LIBDL), \
     LDFLAGS_SUFFIX_solaris := -lsocket -lnsl $(LIBDL) -lc, \
-    VERSIONINFO_RESOURCE := $(JDK_TOPDIR)/src/windows/resource/version.rc, \
+    VERSIONINFO_RESOURCE := $(GLOBAL_VERSION_INFO_RESOURCE), \
     RC_FLAGS := $(RC_FLAGS) \
         -D "JDK_FNAME=hprof.dll" \
         -D "JDK_INTERNAL_NAME=hprof" \
@@ -379,23 +451,29 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBHPROF, \
     OBJECT_DIR := $(JDK_OUTPUTDIR)/objs/libhprof_jvmti, \
     DEBUG_SYMBOLS := true))
 
-BUILD_LIBRARIES += $(BUILD_LIBHPROF)
+HPROF_LIBRARIES += $(BUILD_LIBHPROF)
 
 ##########################################################################################
+
+ifeq ($(SHUFFLED), true)
+  LIBJAVA_CRW_DEMO_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/demo/share/jvmti/java_crw_demo
+else
+  LIBJAVA_CRW_DEMO_SRC := $(JDK_TOPDIR)/src/share/demo/jvmti/java_crw_demo
+endif
 
 $(eval $(call SetupNativeCompilation,BUILD_LIBJAVA_CRW_DEMO, \
     LIBRARY := java_crw_demo, \
     OUTPUT_DIR := $(INSTALL_LIBRARIES_HERE), \
-    SRC := $(JDK_TOPDIR)/src/share/demo/jvmti/java_crw_demo, \
+    SRC := $(LIBJAVA_CRW_DEMO_SRC), \
     LANG := C, \
     OPTIMIZATION := LOW, \
     CFLAGS := $(CFLAGS_JDKLIB) $(CFLAGS_WARNINGS_ARE_ERRORS) \
-        -I$(JDK_TOPDIR)/src/share/demo/jvmti/java_crw_demo, \
+        $(addprefix -I, $(LIBJAVA_CRW_DEMO_SRC)), \
     MAPFILE := $(JDK_TOPDIR)/make/mapfiles/libjava_crw_demo/mapfile-vers, \
     LDFLAGS := $(LDFLAGS_JDKLIB) \
         $(call SET_SHARED_LIBRARY_ORIGIN), \
     LDFLAGS_SUFFIX_solaris := -lc, \
-    VERSIONINFO_RESOURCE := $(JDK_TOPDIR)/src/windows/resource/version.rc, \
+    VERSIONINFO_RESOURCE := $(GLOBAL_VERSION_INFO_RESOURCE), \
     RC_FLAGS := $(RC_FLAGS) \
         -D "JDK_FNAME=java_crw_demo.dll" \
         -D "JDK_INTERNAL_NAME=java_crw_demo" \
@@ -403,26 +481,33 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBJAVA_CRW_DEMO, \
     OBJECT_DIR := $(JDK_OUTPUTDIR)/objs/libjava_crw_demo, \
     DEBUG_SYMBOLS := true))
 
-BUILD_LIBRARIES += $(BUILD_LIBJAVA_CRW_DEMO)
+CRW_LIBRARIES += $(BUILD_LIBJAVA_CRW_DEMO)
 
 ##########################################################################################
 
 ifndef OPENJDK
   ifeq ($(ENABLE_JFR), true)
 
+    ifeq ($(SHUFFLED), true)
+      LIBJFR_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/jdk.jfr/share/native/libjfr
+      LIBJFR_CFLAGS := -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/jdk.jfr/share/native/include
+    else
+      LIBJFR_SRC := $(JDK_TOPDIR)/src/closed/share/native/oracle/jfr
+      LIBJFR_CFLAGS := -I$(JDK_TOPDIR)/src/closed/share/javavm/export
+    endif
+
     $(eval $(call SetupNativeCompilation,BUILD_LIBJFR, \
         LIBRARY := jfr, \
         OUTPUT_DIR := $(INSTALL_LIBRARIES_HERE), \
-        SRC := $(JDK_TOPDIR)/src/closed/share/native/oracle/jfr, \
+        SRC := $(LIBJFR_SRC), \
         LANG := C, \
         OPTIMIZATION := LOW, \
-        CFLAGS := $(CFLAGS_JDKLIB) $(CFLAGS_WARNINGS_ARE_ERRORS) \
-            -I$(JDK_TOPDIR)/src/closed/share/javavm/export, \
+        CFLAGS := $(CFLAGS_JDKLIB) $(CFLAGS_WARNINGS_ARE_ERRORS) $(LIBJFR_CFLAGS), \
         MAPFILE := $(JDK_TOPDIR)/make/mapfiles/libjfr/mapfile-vers, \
         LDFLAGS := $(LDFLAGS_JDKLIB) \
             $(call SET_SHARED_LIBRARY_ORIGIN), \
         LDFLAGS_SUFFIX_solaris := -lc, \
-        VERSIONINFO_RESOURCE := $(JDK_TOPDIR)/src/windows/resource/version.rc, \
+        VERSIONINFO_RESOURCE := $(GLOBAL_VERSION_INFO_RESOURCE), \
         RC_FLAGS := $(RC_FLAGS) \
             -D "JDK_FNAME=jfr.dll" \
             -D "JDK_INTERNAL_NAME=jfr" \
@@ -430,7 +515,7 @@ ifndef OPENJDK
         OBJECT_DIR := $(JDK_OUTPUTDIR)/objs/libjfr, \
         DEBUG_SYMBOLS := $(DEBUG_ALL_BINARIES)))
 
-    BUILD_LIBRARIES += $(BUILD_LIBJFR)
+    JFR_LIBRARIES += $(BUILD_LIBJFR)
 
   endif
 endif

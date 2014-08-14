@@ -69,6 +69,7 @@ static jboolean showVersion = JNI_FALSE;  /* print but continue */
 static jboolean printUsage = JNI_FALSE;   /* print and exit*/
 static jboolean printXUsage = JNI_FALSE;  /* print and exit*/
 static char     *showSettings = NULL;      /* print but continue */
+static char     *listModules = NULL;
 
 static const char *_program_name;
 static const char *_launcher_name;
@@ -97,6 +98,12 @@ static int numOptions, maxOptions;
  * Prototypes for functions internal to launcher.
  */
 static void SetClassPath(const char *s);
+static void SetModulePath(const char *s);
+static void SetMainModule(const char *s);
+static void SetBootClassPath(const char *s);
+static char* ReadModuleList(const char* fn, const char* prefix, const char* suffix);
+static void ExpandToBootClassPath(const char* pathname);
+static void SetModulesProp(const char *mods);
 static void SelectVersion(int argc, char **argv, char **main_class);
 static void SetJvmEnvironment(int argc, char **argv);
 static jboolean ParseArguments(int *pargc, char ***pargv,
@@ -115,6 +122,7 @@ static void SetApplicationClassPath(const char**);
 static void PrintJavaVersion(JNIEnv *env, jboolean extraLF);
 static void PrintUsage(JNIEnv* env, jboolean doXUsage);
 static void ShowSettings(JNIEnv* env, char *optString);
+static void ListModules(JNIEnv* env, char *optString);
 
 static void SetPaths(int argc, char **argv);
 
@@ -167,6 +175,39 @@ static jboolean IsWildCardEnabled();
 static jlong threadStackSize    = 0;  /* stack size of the new thread */
 static jlong maxHeapSize        = 0;  /* max heap size */
 static jlong initialHeapSize    = 0;  /* inital heap size */
+
+// Read the main app class name, if it exists, and set the classpath.
+// This will only be the case if the image was created by jlink.
+static void
+AddModuleAppOptions(int *pmode, char **pwhat, const char* jrepath)
+{
+    FILE *file;
+    char* cn;
+    char* read;
+    char appCls[MAXPATHLEN];
+    char jarPath[MAXPATHLEN];
+
+    JLI_StrCpy(appCls, jrepath);
+    JLI_StrCat(appCls, APP_CLASS);
+    if ((file = fopen(appCls, "r")) == NULL)
+        return;
+
+    cn = (char *)JLI_MemAlloc(256);
+    memset(cn, 0, sizeof(cn));
+    read = fgets(cn, 256, file);
+    fclose(file);
+    if (read == NULL || JLI_StrLen(cn) < 1) {
+        JLI_MemFree(cn);
+        return;
+    }
+
+    *pwhat = cn;
+    *pmode = LM_CLASS;
+
+    JLI_StrCpy(jarPath, jrepath);
+    JLI_StrCat(jarPath, APP_JAR);
+    SetClassPath(jarPath);
+}
 
 /*
  * Entry point.
@@ -287,6 +328,13 @@ JLI_Launch(int argc, char ** argv,              /* main argc, argc */
         return(ret);
     }
 
+    if (ret == 1) {
+        AddModuleAppOptions(&mode, &what, jrepath);
+    }
+
+    /* Setup bcp when running with shuffled classes or modules image */
+    SetBootClassPath(jrepath);
+
     /* Override class path if -jar flag was specified */
     if (mode == LM_JAR) {
         SetClassPath(what);     /* Override class path */
@@ -388,6 +436,12 @@ JavaMain(void * _args)
     if (showSettings != NULL) {
         ShowSettings(env, showSettings);
         CHECK_EXCEPTION_LEAVE(1);
+    }
+
+    if (listModules != NULL) {
+        ListModules(env, listModules);
+        CHECK_EXCEPTION_LEAVE(1);
+        LEAVE();
     }
 
     if (printVersion || showVersion) {
@@ -527,7 +581,9 @@ CheckJvmType(int *pargc, char ***argv, jboolean speculative) {
             }
         } else {
             if (JLI_StrCmp(arg, "-classpath") == 0 ||
-                JLI_StrCmp(arg, "-cp") == 0) {
+                JLI_StrCmp(arg, "-cp") == 0 ||
+                JLI_StrCmp(arg, "-modulepath") == 0 ||
+                JLI_StrCmp(arg, "-mp") == 0) {
                 newArgv[newArgvIdx++] = arg;
                 argi++;
                 if (argi < argc) {
@@ -817,6 +873,190 @@ SetClassPath(const char *s)
         JLI_MemFree((char *) s);
 }
 
+static void
+SetModulePath(const char *s)
+{
+    char *def;
+    const char *orig = s;
+    static const char format[] = "-Djava.module.path=%s";
+    /*
+     * usually we should not get a null pointer, but there are cases where
+     * we might just get one, in which case we simply ignore it, and let the
+     * caller deal with it
+     */
+    if (s == NULL)
+        return;
+    s = JLI_WildcardExpandClasspath(s);
+    def = JLI_MemAlloc(sizeof(format)
+                       - 2 /* strlen("%s") */
+                       + JLI_StrLen(s));
+    sprintf(def, format, s);
+    AddOption(def, NULL);
+    if (s != orig)
+        JLI_MemFree((char *) s);
+}
+
+static void
+SetMainModule(const char *s)
+{
+    static const char format[] = "-Djava.module.main=%s";
+    char *def = JLI_MemAlloc(sizeof(format)
+                       - 2 /* strlen("%s") */
+                       + JLI_StrLen(s));
+    sprintf(def, format, s);
+    AddOption(def, NULL);
+}
+
+static void
+SetBootClassPath(const char *jrepath) {
+    const char separator[] = { FILE_SEPARATOR, '\0' };
+    char module_list[MAXPATHLEN];
+    char dir[MAXPATHLEN];
+    char *prefix = dir;
+    struct stat statbuf;
+
+    JLI_Snprintf(module_list, sizeof(module_list), "%s%slib%sboot.modules", jrepath, separator, separator);
+
+    /* modules image */
+    JLI_Snprintf(dir, sizeof(dir), "%s%slib%smodules", jrepath, separator, separator);
+    if (stat(dir, &statbuf) == 0) {
+        char *s;
+        char suffix[16];
+        JLI_StrCat(prefix, separator);
+        JLI_Snprintf(suffix, sizeof(suffix), "%sclasses", separator);
+        s = ReadModuleList(module_list, prefix, suffix);
+        if (s != NULL) {
+            ExpandToBootClassPath(s);
+            JLI_MemFree(s);
+        } else {
+            JLI_Snprintf(dir, sizeof(dir), "%s%slib%smodules%s*", jrepath, separator, separator, separator);
+            ExpandToBootClassPath(dir);
+        }
+        return;
+    }
+
+    /* exploded modules */
+    JLI_Snprintf(dir, sizeof(dir), "%s%smodules", jrepath, separator);
+    if (stat(dir, &statbuf) == 0) {
+        char *s;
+        JLI_StrCat(prefix, separator);
+        s = ReadModuleList(module_list, prefix, "");
+        if (s != NULL) {
+            ExpandToBootClassPath(s);
+            JLI_MemFree(s);
+        } else {
+            JLI_Snprintf(dir, sizeof(dir), "%s%smodules%s*", jrepath, separator, separator);
+            ExpandToBootClassPath(dir);
+        }
+        return;
+    }
+}
+
+/**
+ * Read the module names from the given file and return a module path formed by
+ * combining each module name with the given prefix and suffix.
+ */
+static char*
+ReadModuleList(const char* filename, const char* prefix, const char* suffix) {
+    const char path_separator[] = { PATH_SEPARATOR, '\0' };
+    const int prefix_len = JLI_StrLen(prefix);
+    const int suffix_len = JLI_StrLen(suffix);
+    int result_size, result_len;
+    char* result;
+    char module[64];
+    int module_len, space_needed;
+    FILE* fp;
+
+    if ((fp = fopen(filename, "r")) == NULL)
+        return NULL;
+
+    result_size = 1024;
+    result_len = 0;
+    result = (char*)JLI_MemAlloc(result_size);
+    result[0] = '\0';
+
+    while (fgets(module, sizeof(module), fp) != NULL) {
+        module_len = JLI_StrLen(module);
+        module[module_len-1] = '\0';
+
+        space_needed = prefix_len + module_len + suffix_len + 2;
+        if ((result_len + space_needed) > result_size) {
+            // grow
+            char* s;
+            result_size += space_needed + 128;
+            s = (char*)JLI_MemAlloc(result_size);
+            JLI_StrCpy(s, result);
+            JLI_MemFree(result);
+            result = s;
+        }
+
+        // add prefix+module+[suffix] to result
+        if (result_len > 0) {
+            JLI_StrCat(result, path_separator);
+            result_len++;
+        }
+        JLI_StrCat(result, prefix);
+        JLI_StrCat(result, module);
+        JLI_StrCat(result, suffix);
+        result_len += prefix_len + module_len + suffix_len;
+    }
+
+    fclose(fp);
+
+    return result;
+}
+
+static void
+ExpandToBootClassPath(const char* pathname) {
+    const char separator[] = { FILE_SEPARATOR, '\0' };
+    static const char vmoption[] = "-Xbootclasspath/p:";
+    const int vmoption_len = JLI_StrLen(vmoption);
+    const char *orig = pathname;
+    char *def, *s;
+    int slen = 0;
+
+    s = (char *) JLI_WildcardExpandDirectory(pathname);
+    slen = JLI_StrLen(s);
+    def = JLI_MemAlloc(vmoption_len+slen+1);
+    memcpy(def, vmoption, vmoption_len);
+    memcpy(def+vmoption_len, s, slen);
+    def[vmoption_len+slen] = '\0';
+
+    // Must be added before the user-specified -Xbootclasspath/p: arguments.
+    // Hotspot VM prepends the given -Xbootclasspath/p: argument
+    // to the bootclasspath in the order of the input VM arguments.
+    // The second -Xbootclasspath/p: argument will be prepended
+    // to the first -Xbootclasspath/p: if multiple ones are given.
+
+    if (numOptions == 0) {
+        AddOption(def, NULL);
+    } else {
+        int newMaxOptions = maxOptions + 1;
+        JavaVMOption *new = JLI_MemAlloc(newMaxOptions * sizeof(JavaVMOption));
+        JavaVMOption *orig = new+1;
+        // Set the -Xbootclasspath/p option to be the first VM argument
+
+        new[0].optionString = def;
+        new[0].extraInfo = NULL;
+        memcpy(orig, options, numOptions * sizeof(JavaVMOption));
+        JLI_MemFree(options);
+        options = new;
+        maxOptions = newMaxOptions;
+        numOptions++;
+    }
+
+    if (s != orig)
+        JLI_MemFree((char *) s);
+}
+
+static void
+SetModulesProp(const char *mods) {
+    size_t buflen = JLI_StrLen(mods) + 40;
+    char *prop = (char *)JLI_MemAlloc(buflen);
+    JLI_Snprintf(prop, buflen, "-Djdk.launcher.modules=%s", mods);
+    AddOption(prop, NULL);
+}
+
 /*
  * The SelectVersion() routine ensures that an appropriate version of
  * the JRE is running.  The specification for the appropriate version
@@ -1083,9 +1323,21 @@ ParseArguments(int *pargc, char ***pargv,
             SetClassPath(*argv);
             mode = LM_CLASS;
             argv++; --argc;
+        } else if (JLI_StrCmp(arg, "-modulepath") == 0 || JLI_StrCmp(arg, "-mp") == 0) {
+            ARG_CHECK (argc, ARG_ERROR4, arg);
+            SetModulePath(*argv);
+            argv++; --argc;
         } else if (JLI_StrCmp(arg, "-jar") == 0) {
             ARG_CHECK (argc, ARG_ERROR2, arg);
             mode = LM_JAR;
+        } else if (JLI_StrCmp(arg, "-m") == 0) {
+            ARG_CHECK (argc, ARG_ERROR5, arg);
+            SetMainModule(*argv);
+            mode = LM_MODULE;
+        } else if (JLI_StrCmp(arg, "-mods") == 0 || JLI_StrCmp(arg, "-modules") == 0) {
+            ARG_CHECK (argc, ARG_ERROR6, arg);
+            SetModulesProp(*argv);
+            argv++; --argc;
         } else if (JLI_StrCmp(arg, "-help") == 0 ||
                    JLI_StrCmp(arg, "-h") == 0 ||
                    JLI_StrCmp(arg, "-?") == 0) {
@@ -1106,6 +1358,9 @@ ParseArguments(int *pargc, char ***pargv,
         } else if (JLI_StrCmp(arg, "-XshowSettings") == 0 ||
                 JLI_StrCCmp(arg, "-XshowSettings:") == 0) {
             showSettings = arg;
+        } else if (JLI_StrCmp(arg, "-XlistModules") == 0 |
+                JLI_StrCCmp(arg, "-XlistModules:") == 0) {
+            listModules = arg;
         } else if (JLI_StrCmp(arg, "-Xdiag") == 0) {
             AddOption("-Dsun.java.launcher.diag=true", NULL);
 /*
@@ -1117,6 +1372,8 @@ ParseArguments(int *pargc, char ***pargv,
             return JNI_FALSE;
         } else if (JLI_StrCmp(arg, "-verbosegc") == 0) {
             AddOption("-verbose:gc", NULL);
+        } else if (JLI_StrCmp(arg, "-verbose:mods") == 0) {
+            AddOption("-Djdk.launcher.modules.verbose=true", NULL);
         } else if (JLI_StrCmp(arg, "-t") == 0) {
             AddOption("-Xt", NULL);
         } else if (JLI_StrCmp(arg, "-tm") == 0) {
@@ -1566,6 +1823,24 @@ ShowSettings(JNIEnv *env, char *optString)
                                  (jlong)maxHeapSize,
                                  (jlong)threadStackSize,
                                  ServerClassMachine());
+}
+
+/**
+ * List modules supported by the runtime
+ */
+static void
+ListModules(JNIEnv *env, char *optString)
+{
+    jmethodID listModulesID;
+    jstring joptString;
+    jclass cls = GetLauncherHelperClass(env);
+    NULL_CHECK(cls);
+    NULL_CHECK(listModulesID = (*env)->GetStaticMethodID(env, cls,
+            "listModules", "(ZLjava/lang/String;)V"));
+    joptString = (*env)->NewStringUTF(env, optString);
+    (*env)->CallStaticVoidMethod(env, cls, listModulesID,
+                                 USE_STDERR,
+                                 joptString);
 }
 
 /*

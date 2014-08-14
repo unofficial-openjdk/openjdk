@@ -26,6 +26,7 @@
 default: all
 
 include $(SPEC)
+include JigsawSpecMod.gmk
 include MakeBase.gmk
 include NativeCompilation.gmk
 
@@ -33,10 +34,34 @@ include NativeCompilation.gmk
 include Setup.gmk
 
 # Prepare the find cache.
+ifeq ($(SHUFFLED), true)
+  $(eval $(call FillCacheFind, $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/launcher))
+else
 $(eval $(call FillCacheFind, $(JDK_TOPDIR)/src/share/bin))
+endif
 
 # Build tools
 include Tools.gmk
+
+ACCESSBRIDGE_LAUNCHERS=
+BASE_LAUNCHERS=
+CORBA_LAUNCHERS=
+COMPILER_LAUNCHERS=
+DESKTOP_LAUNCHERS=
+JAVADOC_LAUNCHERS=
+HOTSPOT_AGENT_LAUNCHERS=
+JCONSOLE_LAUNCHERS=
+JDI_LAUNCHERS=
+JVMSTAT_LAUNCHERS=
+KERBEROS_LAUNCHERS=
+RMI_LAUNCHERS=
+SCRIPTING_LAUNCHERS=
+DEV_LAUNCHERS=
+RMIC_LAUNCHERS=
+NASHORN_LAUNCHERS=
+XML_BIND_LAUNCHERS=
+XML_WS_LAUNCHERS=
+RUNTIME_LAUNCHERS=
 
 BUILD_LAUNCHERS =
 
@@ -64,6 +89,36 @@ ifneq ($(findstring $(OPENJDK_TARGET_OS), linux solaris), )
   ORIGIN_ARG += $(call SET_EXECUTABLE_ORIGIN,$(ORIGIN_ROOT)/lib$(OPENJDK_TARGET_CPU_LIBDIR))
 endif
 
+ifeq ($(SHUFFLED), true)
+  LAUNCHER_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/launcher
+  LAUNCHER_CFLAGS := -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/launcher \
+      -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/libjli \
+      -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/$(OPENJDK_TARGET_OS_API_DIR)/native/libjli \
+      -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/$(OPENJDK_TARGET_OS)/native/libjli \
+      #
+  GLOBAL_VERSION_INFO_RESOURCE := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/windows/native/common/version.rc
+  JAVA_VERSION_INFO_RESOURCE := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/windows/native/launcher/java.rc
+  MACOSX_PLIST_DIR := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/macosx/native/launcher
+  # Until the shuffle is permanent, we can't add this in configure
+  CFLAGS_JDKEXE := $(filter-out %javavm/export, $(CFLAGS_JDKEXE))
+  CFLAGS_JDKEXE += -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/include \
+      -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/$(OPENJDK_TARGET_OS_API_DIR)/native/include
+  CXXFLAGS_JDKEXE := $(filter-out %javavm/export, $(CXXFLAGS_JDKEXE))
+  CXXFLAGS_JDKEXE += -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/include \
+      -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/$(OPENJDK_TARGET_OS_API_DIR)/native/include
+  JAVA_MANIFEST := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/windows/native/launcher/java.manifest
+else
+  LAUNCHER_SRC := $(JDK_TOPDIR)/src/share/bin
+  LAUNCHER_CFLAGS := -I$(JDK_TOPDIR)/src/share/bin \
+      -I$(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/bin \
+      -I$(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS)/bin \
+      #
+  GLOBAL_VERSION_INFO_RESOURCE := $(JDK_TOPDIR)/src/windows/resource/version.rc
+  JAVA_VERSION_INFO_RESOURCE := $(JDK_TOPDIR)/src/windows/resource/java.rc
+  MACOSX_PLIST_DIR := $(JDK_TOPDIR)/src/macosx/lib
+  JAVA_MANIFEST := $(JDK_TOPDIR)/src/windows/resource/java.manifest
+endif
+
 define SetupLauncher
   # TODO: Fix mapfile on solaris. Won't work with ld as linker.
   # Parameter 1 is the name of the launcher (java, javac, jar...)
@@ -77,12 +132,15 @@ define SetupLauncher
   # Parameter 9 is different output dir
   # Parameter 10 if set, link statically with c runtime on windows.
   # Parameter 11 if set, override plist file on macosx.
+  # Parameter 12 if set, module variable
+  $(call LogSetupMacroEntry,SetupLauncher($1),$2,$3,$4,$5,$6,$7,$8,$9,$(10),$(11),$(12))
+  $(if $(13),$(error Internal makefile error: Too many arguments to SetupLauncher, please update CompileLaunchers.gmk))
 
   $1_WINDOWS_JLI_LIB := $(JDK_OUTPUTDIR)/objs/libjli/jli.lib
   ifneq ($6, )
     $1_WINDOWS_JLI_LIB := $6
   endif
-  $1_VERSION_INFO_RESOURCE := $(JDK_TOPDIR)/src/windows/resource/version.rc
+  $1_VERSION_INFO_RESOURCE := $(GLOBAL_VERSION_INFO_RESOURCE)
   ifneq ($8, )
     $1_VERSION_INFO_RESOURCE := $8
   endif
@@ -100,7 +158,7 @@ define SetupLauncher
 
     $1_LDFLAGS += -Wl,-all_load $(JDK_OUTPUTDIR)/objs/libjli_static.a \
         -framework Cocoa -framework Security -framework ApplicationServices \
-        -sectcreate __TEXT __info_plist $(JDK_TOPDIR)/src/macosx/lib/$$($1_PLIST_FILE)
+        -sectcreate __TEXT __info_plist $(MACOSX_PLIST_DIR)/$$($1_PLIST_FILE)
         $1_LDFLAGS_SUFFIX += -pthread
   endif
 
@@ -148,14 +206,12 @@ define SetupLauncher
   endif
 
   $(call SetupNativeCompilation,BUILD_LAUNCHER_$1, \
-      SRC := $(JDK_TOPDIR)/src/share/bin, \
+      SRC := $(LAUNCHER_SRC), \
       INCLUDE_FILES := main.c, \
       LANG := C, \
       OPTIMIZATION := $$($1_OPTIMIZATION_ARG), \
       CFLAGS := $$($1_CFLAGS) \
-          -I$(JDK_TOPDIR)/src/share/bin \
-          -I$(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/bin \
-          -I$(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS)/bin \
+          $(LAUNCHER_CFLAGS) \
           -DFULL_VERSION='"$(FULL_VERSION)"' \
           -DJDK_MAJOR_VERSION='"$(JDK_MAJOR_VERSION)"' \
           -DJDK_MINOR_VERSION='"$(JDK_MINOR_VERSION)"' \
@@ -189,10 +245,14 @@ define SetupLauncher
           -D "JDK_INTERNAL_NAME=$1" \
           -D "JDK_FTYPE=0x1L" \
           $7, \
-      MANIFEST := $(JDK_TOPDIR)/src/windows/resource/java.manifest, \
+      MANIFEST := $(JAVA_MANIFEST), \
       CODESIGN := $$($1_CODESIGN))
 
   BUILD_LAUNCHERS += $$(BUILD_LAUNCHER_$1)
+
+  ifneq ($12,)
+    $(12)_LAUNCHERS += $$(BUILD_LAUNCHER_$1)
+  endif
 
   ifneq (,$(filter $(OPENJDK_TARGET_OS), macosx aix))
     $$(BUILD_LAUNCHER_$1): $(JDK_OUTPUTDIR)/objs/libjli_static.a
@@ -212,10 +272,19 @@ ifeq ($(OPENJDK_TARGET_OS), macosx)
   XLIBS :=
 endif
 
+ifeq ($(SHUFFLED), true)
+  JAVA_RC_FLAGS += -i $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/windows/native/common
 ifdef OPENJDK
+    JAVA_RC_FLAGS += -i "$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/windows/native/launcher/icons"
+  else
+    JAVA_RC_FLAGS += -i "$(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/java.base/windows/native/launcher/icons"
+  endif
+else
+  ifdef OPENJDK
   JAVA_RC_FLAGS += -i "$(JDK_TOPDIR)/src/windows/resource/icons"
 else
   JAVA_RC_FLAGS += -i "$(JDK_TOPDIR)/src/closed/windows/native/sun/windows"
+endif
 endif
 
 # On windows, the debuginfo files get the same name as for java.dll. Build
@@ -224,7 +293,7 @@ endif
 $(eval $(call SetupLauncher,java, \
     -DEXPAND_CLASSPATH_WILDCARDS,,,user32.lib comctl32.lib, \
     $(JDK_OUTPUTDIR)/objs/jli_static.lib, $(JAVA_RC_FLAGS), \
-    $(JDK_TOPDIR)/src/windows/resource/java.rc, $(JDK_OUTPUTDIR)/objs/java_objs,true))
+    $(JAVA_VERSION_INFO_RESOURCE), $(JDK_OUTPUTDIR)/objs/java_objs,true))
 
 $(JDK_OUTPUTDIR)/bin$(OUTPUT_SUBDIR)/java$(EXE_SUFFIX): $(BUILD_LAUNCHER_java)
 	$(MKDIR) -p $(@D)
@@ -232,78 +301,85 @@ $(JDK_OUTPUTDIR)/bin$(OUTPUT_SUBDIR)/java$(EXE_SUFFIX): $(BUILD_LAUNCHER_java)
 	$(CP) $(JDK_OUTPUTDIR)/objs/java_objs$(OUTPUT_SUBDIR)/java$(EXE_SUFFIX) $@
 
 BUILD_LAUNCHERS += $(JDK_OUTPUTDIR)/bin$(OUTPUT_SUBDIR)/java$(EXE_SUFFIX)
+BASE_LAUNCHERS += $(JDK_OUTPUTDIR)/bin$(OUTPUT_SUBDIR)/java$(EXE_SUFFIX)
 
 ifeq ($(OPENJDK_TARGET_OS), windows)
   $(eval $(call SetupLauncher,javaw, \
       -DJAVAW -DEXPAND_CLASSPATH_WILDCARDS,,,user32.lib comctl32.lib, \
       $(JDK_OUTPUTDIR)/objs/jli_static.lib, $(JAVA_RC_FLAGS), \
-      $(JDK_TOPDIR)/src/windows/resource/java.rc,,true))
+      $(JAVA_VERSION_INFO_RESOURCE),,true))
+  BASE_LAUNCHERS += $(JDK_OUTPUTDIR)/bin$(OUTPUT_SUBDIR)/javaw$(EXE_SUFFIX)
 endif
 
 
 ifndef BUILD_HEADLESS_ONLY
   $(eval $(call SetupLauncher,appletviewer, \
       -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.applet.Main"$(COMMA) }',, \
-      $(XLIBS)))
+      $(XLIBS),,,,,,,,DESKTOP))
 endif
 
 $(eval $(call SetupLauncher,extcheck, \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "com.sun.tools.extcheck.Main"$(COMMA) }'))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "com.sun.tools.extcheck.Main"$(COMMA) }',,,,,,,,,,DEV))
 
 $(eval $(call SetupLauncher,idlj, \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "com.sun.tools.corba.se.idl.toJavaPortable.Compile"$(COMMA) }'))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "com.sun.tools.corba.se.idl.toJavaPortable.Compile"$(COMMA) }',,,,,,,,,,CORBA))
 
 $(eval $(call SetupLauncher,jar, \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.tools.jar.Main"$(COMMA) }'))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.tools.jar.Main"$(COMMA) }',,,,,,,,,,DEV))
 
 $(eval $(call SetupLauncher,jarsigner, \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.security.tools.jarsigner.Main"$(COMMA) }'))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.security.tools.jarsigner.Main"$(COMMA) }',,,,,,,,,,DEV))
 
 $(eval $(call SetupLauncher,javac, \
     -DEXPAND_CLASSPATH_WILDCARDS \
     -DNEVER_ACT_AS_SERVER_CLASS_MACHINE \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "com.sun.tools.javac.Main"$(COMMA) }'))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "com.sun.tools.javac.Main"$(COMMA) }',,,,,,,,,,COMPILER))
 
 ifeq ($(ENABLE_SJAVAC), yes)
   $(eval $(call SetupLauncher,sjavac, \
       -DEXPAND_CLASSPATH_WILDCARDS \
       -DNEVER_ACT_AS_SERVER_CLASS_MACHINE \
-      -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "com.sun.tools.sjavac.Main"$(COMMA) }'))
+      -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "com.sun.tools.sjavac.Main"$(COMMA) }',,,,,,,,,,COMPILER))
 endif
 
 $(eval $(call SetupLauncher,javadoc, \
     -DEXPAND_CLASSPATH_WILDCARDS \
     -DNEVER_ACT_AS_SERVER_CLASS_MACHINE \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "com.sun.tools.javadoc.Main"$(COMMA) }'))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "com.sun.tools.javadoc.Main"$(COMMA) }',,,,,,,,,,JAVADOC))
 
 $(eval $(call SetupLauncher,javah, \
     -DEXPAND_CLASSPATH_WILDCARDS \
     -DNEVER_ACT_AS_SERVER_CLASS_MACHINE \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "com.sun.tools.javah.Main"$(COMMA) }'))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "com.sun.tools.javah.Main"$(COMMA) }',,,,,,,,,,COMPILER))
 
 $(eval $(call SetupLauncher,javap, \
     -DEXPAND_CLASSPATH_WILDCARDS \
     -DNEVER_ACT_AS_SERVER_CLASS_MACHINE \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "com.sun.tools.javap.Main"$(COMMA) }'))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "com.sun.tools.javap.Main"$(COMMA) }',,,,,,,,,,COMPILER))
 
 $(eval $(call SetupLauncher,jdeps, \
     -DEXPAND_CLASSPATH_WILDCARDS \
     -DNEVER_ACT_AS_SERVER_CLASS_MACHINE \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "com.sun.tools.jdeps.Main"$(COMMA) }'))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "com.sun.tools.jdeps.Main"$(COMMA) }',,,,,,,,,,DEV))
+
+$(eval $(call SetupLauncher,jlink,\
+    -DEXPAND_CLASSPATH_WILDCARDS \
+    -DNEVER_ACT_AS_SERVER_CLASS_MACHINE \
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "jdk.jigsaw.tools.jlink.Main"$(COMMA) }',,,,,,,,,,DEV))
 
 BUILD_LAUNCHER_jconsole_CFLAGS_windows := -DJAVAW
 BUILD_LAUNCHER_jconsole_LDFLAGS_windows := user32.lib
 
 $(eval $(call SetupLauncher,jconsole, \
     -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "-J-Djconsole.showOutputViewer"$(COMMA) "sun.tools.jconsole.JConsole"$(COMMA) }' \
-    -DAPP_CLASSPATH='{ "/lib/jconsole.jar"$(COMMA) "/lib/tools.jar"$(COMMA) "/classes" }'))
+    -DAPP_CLASSPATH='{ "/lib/jconsole.jar"$(COMMA) "/lib/tools.jar"$(COMMA) "/classes" }',,,,,,,,,,JCONSOLE))
 
 $(eval $(call SetupLauncher,jdb, \
     -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "com.sun.tools.example.debug.tty.TTY"$(COMMA) }' \
-    -DAPP_CLASSPATH='{ "/lib/tools.jar"$(COMMA) "/lib/sa-jdi.jar"$(COMMA) "/classes" }'))
+    -DAPP_CLASSPATH='{ "/lib/tools.jar"$(COMMA) "/lib/sa-jdi.jar"$(COMMA) "/classes" }',,,,,,,,,,JDI))
 
 $(eval $(call SetupLauncher,jhat, \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "com.sun.tools.hat.Main"$(COMMA) }'))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "com.sun.tools.hat.Main"$(COMMA) }',,,,,,,,,,DEV))
 
 $(eval $(call SetupLauncher,jinfo, \
     -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) \
@@ -311,7 +387,7 @@ $(eval $(call SetupLauncher,jinfo, \
         "-J-Dsun.jvm.hotspot.debugger.useWindbgDebugger"$(COMMA) \
         "sun.tools.jinfo.JInfo"$(COMMA) }' \
     -DAPP_CLASSPATH='{ "/lib/tools.jar"$(COMMA) "/lib/sa-jdi.jar"$(COMMA) "/classes" }' \
-    ,,,,,,,,,Info-privileged.plist))
+    ,,,,,,,,,Info-privileged.plist,JCMD))
 
 $(eval $(call SetupLauncher,jmap, \
     -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) \
@@ -319,21 +395,21 @@ $(eval $(call SetupLauncher,jmap, \
         "-J-Dsun.jvm.hotspot.debugger.useWindbgDebugger"$(COMMA) \
         "sun.tools.jmap.JMap"$(COMMA) }' \
     -DAPP_CLASSPATH='{ "/lib/tools.jar"$(COMMA) "/lib/sa-jdi.jar"$(COMMA) "/classes" }' \
-    ,,,,,,,,,Info-privileged.plist))
+    ,,,,,,,,,Info-privileged.plist,JCMD))
 
 $(eval $(call SetupLauncher,jps, \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.tools.jps.Jps"$(COMMA) }'))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.tools.jps.Jps"$(COMMA) }',,,,,,,,,,JCMD))
 
 $(eval $(call SetupLauncher,jrunscript, \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "com.sun.tools.script.shell.Main"$(COMMA) }'))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "com.sun.tools.script.shell.Main"$(COMMA) }',,,,,,,,,,SCRIPTING))
 
 $(eval $(call SetupLauncher,jjs, \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "jdk.nashorn.tools.Shell"$(COMMA) }'))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "jdk.nashorn.tools.Shell"$(COMMA) }',,,,,,,,,,NASHORN))
 
 $(eval $(call SetupLauncher,jsadebugd, \
     -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.jvm.hotspot.jdi.SADebugServer"$(COMMA) }' \
     -DAPP_CLASSPATH='{ "/lib/tools.jar"$(COMMA) "/lib/sa-jdi.jar"$(COMMA) "/classes" }' \
-    ,,,,,,,,,Info-privileged.plist))
+    ,,,,,,,,,Info-privileged.plist,HOTSPOT_AGENT))
 
 $(eval $(call SetupLauncher,jstack, \
     -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) \
@@ -341,94 +417,110 @@ $(eval $(call SetupLauncher,jstack, \
         "-J-Dsun.jvm.hotspot.debugger.useWindbgDebugger"$(COMMA) \
         "sun.tools.jstack.JStack"$(COMMA) }' \
     -DAPP_CLASSPATH='{ "/lib/tools.jar"$(COMMA) "/lib/sa-jdi.jar"$(COMMA) "/classes" }' \
-    ,,,,,,,,,Info-privileged.plist))
+    ,,,,,,,,,Info-privileged.plist,JCMD))
 
 $(eval $(call SetupLauncher,jstat, \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.tools.jstat.Jstat"$(COMMA) }'))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.tools.jstat.Jstat"$(COMMA) }',,,,,,,,,,JCMD))
 
 $(eval $(call SetupLauncher,jstatd, \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.tools.jstatd.Jstatd"$(COMMA) }'))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.tools.jstatd.Jstatd"$(COMMA) }',,,,,,,,,,JVMSTAT))
 
 $(eval $(call SetupLauncher,keytool, \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.security.tools.keytool.Main"$(COMMA) }'))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.security.tools.keytool.Main"$(COMMA) }',,,,,,,,,,BASE))
 
 $(eval $(call SetupLauncher,native2ascii, \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.tools.native2ascii.Main"$(COMMA) }'))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.tools.native2ascii.Main"$(COMMA) }',,,,,,,,,,DEV))
 
 ifndef BUILD_HEADLESS_ONLY
   $(eval $(call SetupLauncher,policytool, \
       -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.security.tools.policytool.PolicyTool"$(COMMA) }',, \
-      $(XLIBS)))
+      $(XLIBS),,,,,,,,RUNTIME))
 endif
 
 $(eval $(call SetupLauncher,rmic, \
     -DEXPAND_CLASSPATH_WILDCARDS \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.rmi.rmic.Main"$(COMMA) }'))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.rmi.rmic.Main"$(COMMA) }',,,,,,,,,,RMIC))
 
 $(eval $(call SetupLauncher,schemagen, \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "com.sun.tools.internal.jxc.SchemaGenerator"$(COMMA) }'))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "com.sun.tools.internal.jxc.SchemaGenerator"$(COMMA) }',,,,,,,,,,XML_BIND))
 
 $(eval $(call SetupLauncher,serialver, \
     -DEXPAND_CLASSPATH_WILDCARDS \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.tools.serialver.SerialVer"$(COMMA) }'))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.tools.serialver.SerialVer"$(COMMA) }',,,,,,,,,,COMPILER))
 
 $(eval $(call SetupLauncher,xjc, \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "com.sun.tools.internal.xjc.Driver"$(COMMA) }'))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "com.sun.tools.internal.xjc.Driver"$(COMMA) }',,,,,,,,,,XML_BIND))
 
 $(eval $(call SetupLauncher,wsgen, \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "com.sun.tools.internal.ws.WsGen"$(COMMA) }'))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "com.sun.tools.internal.ws.WsGen"$(COMMA) }',,,,,,,,,,XML_WS))
 
 $(eval $(call SetupLauncher,wsimport, \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "com.sun.tools.internal.ws.WsImport"$(COMMA) }'))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "com.sun.tools.internal.ws.WsImport"$(COMMA) }',,,,,,,,,,XML_WS))
 
 $(eval $(call SetupLauncher,orbd, \
     -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) \
         "-J-Dcom.sun.CORBA.activation.DbDir=./orb.db"$(COMMA) \
         "-J-Dcom.sun.CORBA.activation.Port=1049"$(COMMA) \
         "-J-Dcom.sun.CORBA.POA.ORBServerId=1"$(COMMA) \
-        "com.sun.corba.se.impl.activation.ORBD"$(COMMA) }'))
+        "com.sun.corba.se.impl.activation.ORBD"$(COMMA) }',,,,,,,,,,CORBA))
 
 $(eval $(call SetupLauncher,servertool, \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "com.sun.corba.se.impl.activation.ServerTool"$(COMMA) }'))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "com.sun.corba.se.impl.activation.ServerTool"$(COMMA) }',,,,,,,,,,CORBA))
 
 $(eval $(call SetupLauncher,tnameserv, \
     -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) \
         "-J-Dcom.sun.CORBA.activation.DbDir=./orb.db"$(COMMA) \
         "-J-Djava.util.logging.LoggingPermission=contol"$(COMMA) \
         "-J-Dcom.sun.CORBA.POA.ORBServerId=1"$(COMMA) \
-        "com.sun.corba.se.impl.naming.cosnaming.TransientNameServer"$(COMMA) }'))
+        "com.sun.corba.se.impl.naming.cosnaming.TransientNameServer"$(COMMA) }',,,,,,,,,,CORBA))
 
 $(eval $(call SetupLauncher,pack200, \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "com.sun.java.util.jar.pack.Driver"$(COMMA) }'))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "com.sun.java.util.jar.pack.Driver"$(COMMA) }',,,,,,,,,,RUNTIME))
 
 $(eval $(call SetupLauncher,rmid, \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.rmi.server.Activation"$(COMMA) }'))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.rmi.server.Activation"$(COMMA) }',,,,,,,,,,RMI))
 
 $(eval $(call SetupLauncher,rmiregistry, \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.rmi.registry.RegistryImpl"$(COMMA) }'))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.rmi.registry.RegistryImpl"$(COMMA) }',,,,,,,,,,RMI))
 
 $(eval $(call SetupLauncher,jcmd, \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.tools.jcmd.JCmd"$(COMMA) }'))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.tools.jcmd.JCmd"$(COMMA) }',,,,,,,,,,JCMD))
 
 ifeq ($(OPENJDK_TARGET_OS), windows)
   $(eval $(call SetupLauncher,kinit, \
-      -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.security.krb5.internal.tools.Kinit"$(COMMA) }'))
+      -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.security.krb5.internal.tools.Kinit"$(COMMA) }',,,,,,,,,,KERBEROS))
 
   $(eval $(call SetupLauncher,klist, \
-      -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.security.krb5.internal.tools.Klist"$(COMMA) }'))
+      -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.security.krb5.internal.tools.Klist"$(COMMA) }',,,,,,,,,,KERBEROS))
 
   $(eval $(call SetupLauncher,ktab, \
-      -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.security.krb5.internal.tools.Ktab"$(COMMA) }'))
+      -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.security.krb5.internal.tools.Ktab"$(COMMA) }',,,,,,,,,,KERBEROS))
 endif
 
 ##########################################################################################
 # The order of the object files on the link command line affects the size of the resulting
 # binary (at least on linux) which causes the size to differ between old and new build.
+
+ifeq ($(SHUFFLED), true)
+  UNPACKEXE_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.runtime/share/native/common-unpack \
+      $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.runtime/share/native/unpack200
+  UNPACKEXE_CFLAGS := -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.runtime/share/native/common-unpack \
+      -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/libjava \
+      -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/$(OPENJDK_TARGET_OS_API_DIR)/native/libjava
+else
+  UNPACKEXE_SRC := $(JDK_TOPDIR)/src/share/native/com/sun/java/util/jar/pack
+  UNPACKEXE_EXFILES := jni.cpp
+endif
+
 ifeq ($(USE_EXTERNAL_LIBZ), true)
-  UNPACKEXE_CFLAGS := -DSYSTEM_ZLIB
+  UNPACKEXE_CFLAGS += -DSYSTEM_ZLIB
   UNPACKEXE_ZIPOBJS := -lz
 else
-  UNPACKEXE_CFLAGS := -I$(JDK_TOPDIR)/src/share/native/java/util/zip/zlib-1.2.8
+  ifeq ($(SHUFFLED), true)
+    UNPACKEXE_CFLAGS += -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/libzip/zlib-1.2.8
+  else
+    UNPACKEXE_CFLAGS += -I$(JDK_TOPDIR)/src/share/native/java/util/zip/zlib-1.2.8
+  endif
   UNPACKEXE_ZIPOBJS := $(JDK_OUTPUTDIR)/objs/libzip/zcrc32$(OBJ_SUFFIX) \
       $(JDK_OUTPUTDIR)/objs/libzip/deflate$(OBJ_SUFFIX) \
       $(JDK_OUTPUTDIR)/objs/libzip/trees$(OBJ_SUFFIX) \
@@ -469,9 +561,15 @@ else
   UNPACK_MAPFILE = $(JDK_TOPDIR)/make/mapfiles/libunpack/mapfile-vers-unpack200
 endif
 
+ifeq ($(SHUFFLED), true)
+  UNPACK_MANIFEST := $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.runtime/windows/native/unpack200/unpack200_proto.exe.manifest
+else
+  UNPACK_MANIFEST := $(JDK_TOPDIR)/src/windows/resource/unpack200_proto.exe.manifest
+endif
+
 $(eval $(call SetupNativeCompilation,BUILD_UNPACKEXE, \
-    SRC := $(JDK_TOPDIR)/src/share/native/com/sun/java/util/jar/pack, \
-    EXCLUDE_FILES := jni.cpp, \
+    SRC := $(UNPACKEXE_SRC), \
+    EXCLUDE_FILES := $(UNPACKEXE_EXFILES), \
     LANG := $(UNPACKEXE_LANG), \
     OPTIMIZATION := LOW, \
     CFLAGS := $(UNPACKEXE_CFLAGS) $(CXXFLAGS_JDKEXE) \
@@ -492,13 +590,13 @@ $(eval $(call SetupNativeCompilation,BUILD_UNPACKEXE, \
     OBJECT_DIR := $(JDK_OUTPUTDIR)/objs/unpackexe$(OUTPUT_SUBDIR), \
     OUTPUT_DIR := $(JDK_OUTPUTDIR)/objs/unpackexe$(OUTPUT_SUBDIR), \
     PROGRAM := unpack200, \
-    VERSIONINFO_RESOURCE := $(JDK_TOPDIR)/src/windows/resource/version.rc, \
+    VERSIONINFO_RESOURCE := $(GLOBAL_VERSION_INFO_RESOURCE), \
     RC_FLAGS := $(RC_FLAGS) \
         -D "JDK_FNAME=unpack200.exe" \
         -D "JDK_INTERNAL_NAME=unpack200" \
         -D "JDK_FTYPE=0x1L", \
     DEBUG_SYMBOLS := $(UNPACKEXE_DEBUG_SYMBOLS), \
-    MANIFEST := $(JDK_TOPDIR)/src/windows/resource/unpack200_proto.exe.manifest))
+    MANIFEST := $(UNPACK_MANIFEST)))
 
 ifeq ($(OPENJDK_TARGET_OS), windows)
   EXE_OUT_OPTION := $(EXE_OUT_OPTION_save)
@@ -518,6 +616,7 @@ $(JDK_OUTPUTDIR)/bin$(OUTPUT_SUBDIR)/unpack200$(EXE_SUFFIX): $(BUILD_UNPACKEXE)
 	$(call install-file)
 
 BUILD_LAUNCHERS += $(JDK_OUTPUTDIR)/bin$(OUTPUT_SUBDIR)/unpack200$(EXE_SUFFIX)
+RUNTIME_LAUNCHERS += $(JDK_OUTPUTDIR)/bin$(OUTPUT_SUBDIR)/unpack200$(EXE_SUFFIX)
 
 ##########################################################################################
 
@@ -552,15 +651,27 @@ ifeq ($(BUILD_JEXEC), 1)
 
   ifeq ($(OPENJDK_TARGET_OS), windows)
   else ifeq ($(OPENJDK_TARGET_OS), macosx)
+    ifeq ($(SHUFFLED), true)
+      BUILD_JEXEC_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/macosx/native/launcher
+    else
     BUILD_JEXEC_SRC := $(JDK_TOPDIR)/src/macosx/bin
+    endif
   else
+    ifeq ($(SHUFFLED), true)
+      BUILD_JEXEC_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/unix/native/launcher
+    else
     BUILD_JEXEC_SRC := $(JDK_TOPDIR)/src/solaris/bin
+  endif
   endif
 
   ifeq ($(OPENJDK_TARGET_OS), linux)
     BUILD_JEXEC_DST_DIR := $(JDK_OUTPUTDIR)/lib
+    ifeq ($(SHUFFLED), true)
+      BUILD_JEXEC_INC += -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/libjli
+    else
     BUILD_JEXEC_INC += -I$(JDK_TOPDIR)/src/share/bin
   endif
+endif
 endif
 
 #
@@ -585,6 +696,7 @@ ifneq ($(BUILD_JEXEC_SRC), )
       PROGRAM := jexec))
 
   BUILD_LAUNCHERS += $(BUILD_JEXEC)
+  BASE_LIBRARIES += $(BUILD_JEXEC)
 endif
 
 ##########################################################################################
@@ -595,9 +707,11 @@ endif
 JAVA_RMI_CGI := $(JDK_OUTPUTDIR)/bin$(OUTPUT_SUBDIR)/java-rmi.cgi
 ifeq ($(OPENJDK_TARGET_OS), linux)
   BUILD_LAUNCHERS += $(JAVA_RMI_CGI)
+  RMI_LAUNCHERS += $(JAVA_RMI_CGI)
 endif
 ifeq ($(OPENJDK_TARGET_OS), solaris)
   BUILD_LAUNCHERS += $(JAVA_RMI_CGI)
+  RMI_LAUNCHERS += $(JAVA_RMI_CGI)
 endif
 
 # TODO:
@@ -609,9 +723,14 @@ endif
 # http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6512052
 ifeq ($(OPENJDK_TARGET_OS), windows)
   $(eval $(call SetupLauncher,java-rmi, , \
-      $(call SET_SHARED_LIBRARY_MAPFILE,$(JDK_TOPDIR)/make/java/main/java/mapfile-$(OPENJDK_TARGET_CPU))))
+      $(call SET_SHARED_LIBRARY_MAPFILE,$(JDK_TOPDIR)/make/java/main/java/mapfile-$(OPENJDK_TARGET_CPU)),,,,,,,,,RMI))
 else
-  $(JAVA_RMI_CGI): $(JDK_TOPDIR)/src/solaris/bin/java-rmi.cgi.sh
+  ifeq ($(SHUFFLED), true)
+    JAVA_RMI_CGI_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.rmi/unix/bin/java-rmi.cgi.sh
+else
+    JAVA_RMI_CGI_SRC := $(JDK_TOPDIR)/src/solaris/bin/java-rmi.cgi.sh
+  endif
+  $(JAVA_RMI_CGI): $(JAVA_RMI_CGI_SRC)
 	$(call install-file)
 	$(CHMOD) a+x $@
 endif
@@ -619,7 +738,12 @@ endif
 ##########################################################################################
 
 BUILD_JSPAWNHELPER :=
+ifeq ($(SHUFFLED), true)
+  BUILD_JSPAWNHELPER_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/unix/native/jspawnhelper
+  JSPAWNHELPER_CFLAGS := -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/unix/native/libjava
+else
 BUILD_JSPAWNHELPER_SRC := $(JDK_TOPDIR)/src/solaris/native/java/lang
+endif
 BUILD_JSPAWNHELPER_DST_DIR := $(JDK_OUTPUTDIR)/lib$(OPENJDK_TARGET_CPU_LIBDIR)
 LINK_JSPAWNHELPER_OBJECTS := $(JDK_OUTPUTDIR)/objs/libjava/childproc.o
 LINK_JSPAWNHELPER_FLAGS :=
@@ -642,7 +766,7 @@ ifeq ($(BUILD_JSPAWNHELPER), 1)
       INCLUDE_FILES := jspawnhelper.c, \
       LANG := C, \
       OPTIMIZATION := LOW, \
-      CFLAGS := $(CFLAGS_JDKEXE), \
+      CFLAGS := $(CFLAGS_JDKEXE) $(JSPAWNHELPER_CFLAGS), \
       LDFLAGS := $(LDFLAGS_JDKEXE) $(LINK_JSPAWNHELPER_FLAGS), \
       LDFLAGS_SUFFIX := $(LINK_JSPAWNHELPER_OBJECTS), \
       OBJECT_DIR := $(JDK_OUTPUTDIR)/objs/jspawnhelper, \
@@ -652,16 +776,24 @@ ifeq ($(BUILD_JSPAWNHELPER), 1)
   $(BUILD_JSPAWNHELPER): $(LINK_JSPAWNHELPER_OBJECTS)
 
   BUILD_LAUNCHERS += $(BUILD_JSPAWNHELPER)
+  BASE_LIBRARIES += $(BUILD_JSPAWNHELPER)
 endif
 
 ##########################################################################################
 # jabswitch
-
 ifndef OPENJDK
   ifeq ($(OPENJDK_TARGET_OS), windows)
 
+    ifeq ($(SHUFFLED), true)
+      JABSWITCH_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/oracle.accessbridge/windows/native/jabswitch
+      ACCESSBRIDGE_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/oracle.accessbridge/windows/native/libaccessbridge
+    else
+      JABSWITCH_SRC := $(JDK_TOPDIR)/src/closed/windows/native/sun/bridge
+      ACCESSBRIDGE_SRC := $(JABSWITCH_SRC)
+    endif
+
     $(eval $(call SetupNativeCompilation,BUILD_JABSWITCH, \
-        SRC := $(JDK_TOPDIR)/src/closed/windows/native/sun/bridge, \
+        SRC := $(JABSWITCH_SRC), \
         INCLUDE_FILES := jabswitch.cpp, \
         LANG := C++, \
         CFLAGS := $(filter-out -Zc:wchar_t-, $(CFLAGS_JDKEXE)) -Zc:wchar_t \
@@ -673,21 +805,48 @@ ifndef OPENJDK
         OUTPUT_DIR := $(JDK_OUTPUTDIR)/bin, \
         PROGRAM := jabswitch, \
         DEBUG_SYMBOLS := true, \
-        VERSIONINFO_RESOURCE := $(JDK_TOPDIR)/src/closed/windows/native/sun/bridge/AccessBridgeStatusWindow.rc, \
+        VERSIONINFO_RESOURCE := $(ACCESSBRIDGE_SRC)/AccessBridgeStatusWindow.RC, \
         RC_FLAGS := $(RC_FLAGS) \
             -D "JDK_FNAME=jabswitch.exe" \
             -D "JDK_INTERNAL_NAME=jabswitch" \
             -D "JDK_FTYPE=0x01L", \
-        MANIFEST := $(JDK_TOPDIR)/src/closed/windows/native/sun/bridge/jabswitch.manifest))
+        MANIFEST := $(JABSWITCH_SRC)/jabswitch.manifest))
 
     BUILD_LAUNCHERS += $(BUILD_JABSWITCH)
+    ACCESSBRIDGE_LAUNCHERS += $(BUILD_JABSWITCH)
 
+    oracle.accessbridge: $(ACCESSBRIDGE_LAUNCHERS)
   endif
 endif
 
 ##########################################################################################
 
 $(BUILD_LAUNCHERS): $(JDK_TOPDIR)/make/CompileLaunchers.gmk
+
+java.base: $(BASE_LAUNCHERS) $(BASE_LIBRARIES)
+java.corba: $(CORBA_LAUNCHERS)
+java.desktop: $(DESKTOP_LAUNCHERS)
+java.rmi: $(RMI_LAUNCHERS)
+java.scripting: $(SCRIPTING_LAUNCHERS)
+java.security.jgss: $(KERBEROS_LAUNCHERS)
+jdk.compiler: $(COMPILER_LAUNCHERS)
+jdk.hotspot.agent: $(HOTSPOT_AGENT_LAUNCHERS)
+jdk.javadoc: $(JAVADOC_LAUNCHERS)
+jdk.jconsole: $(JCONSOLE_LAUNCHERS)
+jdk.jdi: $(JDI_LAUNCHERS)
+jdk.jvmstat: $(JVMSTAT_LAUNCHERS)
+jdk.runtime: $(RUNTIME_LAUNCHERS)
+jdk.scripting.nashorn: $(NASHORN_LAUNCHERS)
+jdk.jcmd: $(JCMD_LAUNCHERS)
+jdk.rmic: $(RMIC_LAUNCHERS)
+jdk.dev:$(DEV_LAUNCHERS)
+jdk.xml.bind: $(XML_BIND_LAUNCHERS)
+jdk.xml.ws: $(XML_WS_LAUNCHERS)
+
+.PHONY: java.base java.corba java.desktop java.rmi java.scripting java.security.jgss \
+    jdk.attach jdk.compiler jdk.hotspot.agent jdk.javadoc jdk.jconsole jdk.jdi \
+    jdk.jvmstat jdk.runtime jdk.scripting.nashorn jdk.xml.bind jdk.xml.ws \
+    jdk.jcmd jdk.dev jdk.rmic
 
 all: $(BUILD_LAUNCHERS)
 
