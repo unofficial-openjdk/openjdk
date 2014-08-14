@@ -43,7 +43,6 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
-import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -173,7 +172,18 @@ enum CompilationPhase {
         @Override
         FunctionNode transform(final Compiler compiler, final CompilationPhases phases, final FunctionNode fn) {
             final CompileUnit  outermostCompileUnit = compiler.addCompileUnit(0L);
-            final FunctionNode newFunctionNode      = new Splitter(compiler, fn, outermostCompileUnit).split(fn, true);
+
+            FunctionNode newFunctionNode;
+
+            //ensure elementTypes, postsets and presets exist for splitter and arraynodes
+            newFunctionNode = (FunctionNode)fn.accept(new NodeVisitor<LexicalContext>(new LexicalContext()) {
+                @Override
+                public LiteralNode<?> leaveLiteralNode(final LiteralNode<?> literalNode) {
+                    return literalNode.initialize(lc);
+                }
+            });
+
+            newFunctionNode = new Splitter(compiler, newFunctionNode, outermostCompileUnit).split(newFunctionNode, true);
 
             assert newFunctionNode.getCompileUnit() == outermostCompileUnit : "fn=" + fn.getName() + ", fn.compileUnit (" + newFunctionNode.getCompileUnit() + ") != " + outermostCompileUnit;
             assert newFunctionNode.isStrict() == compiler.isStrict() : "functionNode.isStrict() != compiler.isStrict() for " + quote(newFunctionNode.getName());
@@ -323,15 +333,15 @@ enum CompilationPhase {
                     sb.append("$restOf");
                 }
                 newUnit = compiler.createCompileUnit(sb.toString(), oldUnit.getWeight());
-                log.info("Creating new compile unit ", oldUnit, " => ", newUnit);
+                log.fine("Creating new compile unit ", oldUnit, " => ", newUnit);
                 map.put(oldUnit, newUnit);
                 assert newUnit != null;
                 newUnits.add(newUnit);
             }
 
-            log.info("Replacing compile units in Compiler...");
+            log.fine("Replacing compile units in Compiler...");
             compiler.replaceCompileUnits(newUnits);
-            log.info("Done");
+            log.fine("Done");
 
             //replace old compile units in function nodes, if any are assigned,
             //for example by running the splitter on this function node in a previous
@@ -374,7 +384,7 @@ enum CompilationPhase {
                             assert newUnit != null;
                             newArrayUnits.add(new ArrayUnit(newUnit, au.getLo(), au.getHi()));
                         }
-                        aln.setUnits(newArrayUnits);
+                        return aln.setUnits(lc, newArrayUnits);
                     }
                     return node;
                 }
@@ -421,7 +431,9 @@ enum CompilationPhase {
             compiler.getLogger().fine("Starting bytecode generation for ", quote(fn.getName()), " - restOf=", phases.isRestOfCompilation());
             final CodeGenerator codegen = new CodeGenerator(compiler, phases.isRestOfCompilation() ? compiler.getContinuationEntryPoints() : null);
             try {
-                newFunctionNode = (FunctionNode)newFunctionNode.accept(codegen);
+                // Explicitly set BYTECODE_GENERATED here; it can not be set in case of skipping codegen for :program
+                // in the lazy + optimistic world. See CodeGenerator.skipFunction().
+                newFunctionNode = ((FunctionNode)newFunctionNode.accept(codegen)).setState(null, BYTECODE_GENERATED);
                 codegen.generateScopeCalls();
             } catch (final VerifyError e) {
                 if (senv._verify_code || senv._print_code) {
@@ -489,7 +501,7 @@ enum CompilationPhase {
             Class<?> rootClass = null;
             long length = 0L;
 
-            final CodeInstaller<?> codeInstaller = compiler.getCodeInstaller();
+            final CodeInstaller<ScriptEnvironment> codeInstaller = compiler.getCodeInstaller();
 
             final Map<String, byte[]> bytecode = compiler.getBytecode();
 
@@ -514,12 +526,10 @@ enum CompilationPhase {
             final Object[] constants = compiler.getConstantData().toArray();
             codeInstaller.initialize(installedClasses.values(), compiler.getSource(), constants);
 
-            // index recompilable script function datas in the constant pool
-            final Map<RecompilableScriptFunctionData, RecompilableScriptFunctionData> rfns = new IdentityHashMap<>();
+            // initialize transient fields on recompilable script function data
             for (final Object constant: constants) {
                 if (constant instanceof RecompilableScriptFunctionData) {
-                    final RecompilableScriptFunctionData rfn = (RecompilableScriptFunctionData)constant;
-                    rfns.put(rfn, rfn);
+                    ((RecompilableScriptFunctionData)constant).initTransients(compiler.getSource(), codeInstaller);
                 }
             }
 
@@ -553,7 +563,7 @@ enum CompilationPhase {
                     append(compiler.getCompileUnits().size()).
                     append(" compile unit(s)]");
 
-                log.info(sb.toString());
+                log.fine(sb.toString());
             }
 
             return setStates(fn.setRootClass(null, rootClass), BYTECODE_INSTALLED);
