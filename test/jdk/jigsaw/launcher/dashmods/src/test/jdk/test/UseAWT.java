@@ -33,7 +33,7 @@ public class UseAWT {
         try {
             Class<?> c = java.awt.Component.class;
             if (expectFail) throw new RuntimeException("No Error thrown");
-        } catch (Error e) {
+        } catch (NoClassDefFoundError e) {
             // exact Error is TBD, will likely be NoClassDefFoundError as
             // class should not be observable
             if (expectPass) throw new RuntimeException(e);

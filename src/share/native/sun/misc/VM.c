@@ -39,6 +39,12 @@ Java_sun_misc_VM_latestUserDefinedLoader(JNIEnv *env, jclass cls) {
 }
 
 JNIEXPORT jlong JNICALL
+Java_sun_misc_VM_defineBootModule(JNIEnv *env, jclass cls, jstring name) {
+    void* handle = JVM_DefineBootModule(env, name);
+    return ptr_to_jlong(handle);
+}
+
+JNIEXPORT jlong JNICALL
 Java_sun_misc_VM_defineModule(JNIEnv *env, jclass cls, jstring name) {
     void* handle = JVM_DefineModule(env, name);
     return ptr_to_jlong(handle);

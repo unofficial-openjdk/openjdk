@@ -375,7 +375,13 @@ public class VM {
      * @apiNote the return type will eventually be replaced by java.lang.reflect.Module
      */
     public static long defineModule(String name, ClassLoader loader, String[] pkgs) {
-        long handle = defineModule(name);
+        long handle;
+        if (loader == null) {
+            // special case boot loader for now
+            handle = defineBootModule(name);
+        } else {
+            handle = defineModule(name);
+        }
         for (String pkg: pkgs) {
             bindToModule(loader, pkg, handle);
         }
@@ -386,6 +392,7 @@ public class VM {
      * Define a new module with the given name. The return value is an opaque handle
      * to the module.
      */
+    private static native long defineBootModule(String name);
     private static native long defineModule(String name);
 
     /**

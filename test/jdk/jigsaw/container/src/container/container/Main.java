@@ -32,7 +32,6 @@ import jdk.jigsaw.module.Configuration;
 import jdk.jigsaw.module.Layer;
 import jdk.jigsaw.module.ModuleArtifactFinder;
 import jdk.jigsaw.module.ModuleDescriptor;
-import org.omg.DynamicAny._DynEnumStub;
 
 /**
  * A simple console application that accepts commands to start applications. It's

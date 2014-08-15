@@ -164,17 +164,6 @@ class ModuleBootstrap {
         // define to runtime
         Layer bootLayer = Layer.create(cf, moduleToLoaders::get);
 
-        // if -mods or -m is specified then we have to hide the linked modules
-        // that are not selected. For now we just define the modules without
-        // any readability relationship or exports. Yes, this is a hack.
-        if (mainMid != null || !mods.isEmpty()) {
-            Set<ModuleDescriptor> selected = cf.descriptors();
-            systemLibrary.allModules()
-                         .stream()
-                         .filter(md -> !selected.contains(md))
-                         .forEach(md -> defineProtoModule(md, moduleToLoaders.get(md)));
-        }
-
         // reflection checks enabled?
         String s = System.getProperty("sun.reflect.enableModuleChecks");
         boolean enableModuleChecks = (s == null) || !s.equals("false");
@@ -205,17 +194,5 @@ class ModuleBootstrap {
                 moduleToLoaders.put(artifact, appClassLoader);
         }
         return moduleToLoaders;
-    }
-
-    /**
-     * Defines the given module to the VM in "proto form". Proto form is the
-     * module defined to the runtime without any readability relationships and
-     * without exports. This is used by the launcher -mods option for testing
-     * purposes.
-     */
-    private static void defineProtoModule(ModuleArtifact artifact, ClassLoader loader) {
-        sun.misc.VM.defineModule(artifact.descriptor().name(),
-                                 loader,
-                                 artifact.packages().toArray(new String[0]));
     }
 }

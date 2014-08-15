@@ -67,6 +67,7 @@ endif
 
 TOOL_CLASSANALYZER=$(BUILD_JAVA) -esa -ea -cp $(CLASSANALYZER_CLASSES) \
     -Dclassanalyzer.closed.modules=$(CLOSED_MODULES) \
+    -Xbootclasspath/a:$(JDK_OUTPUTDIR)/classes_security \
     com.sun.tools.classanalyzer.ClassAnalyzer
 
 TOOL_MODULARIZER=$(BUILD_JAVA) -esa -ea -cp $(CLASSANALYZER_CLASSES) \
