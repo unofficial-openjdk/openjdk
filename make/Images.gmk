@@ -35,7 +35,8 @@ include CreateJmods.gmk
 
 ############################################################################
 
-JDK_MODULES := java.se java.smartcardio jdk.compact3 jdk.deploy jdk.httpserver jdk.sctp \
+# Dropping jdk.deploy since it currently doesn't exist.
+JDK_MODULES := java.se java.smartcardio jdk.compact3 jdk.httpserver jdk.sctp \
                jdk.security.auth jdk.runtime
 
 # providers
