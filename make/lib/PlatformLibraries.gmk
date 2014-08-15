@@ -121,7 +121,6 @@ ifeq ($(OPENJDK_TARGET_OS), macosx)
         -I$(JDK_TOPDIR)/src/macosx/native/sun/osxapp \
         #
   endif
-      $(JDK_TOPDIR)/src/macosx/native/apple/security
 
   $(eval $(call SetupNativeCompilation,BUILD_LIBOSX, \
       LIBRARY := osx, \
