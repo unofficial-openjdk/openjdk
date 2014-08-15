@@ -27,10 +27,13 @@ package com.sun.tools.javac.file;
 
 import java.io.FileNotFoundException;
 import java.util.Iterator;
+import java.io.UncheckedIOException;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -41,6 +44,7 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Stream;
 import java.util.StringTokenizer;
 import java.util.zip.ZipFile;
 import javax.tools.JavaFileManager.Location;
@@ -591,6 +595,34 @@ public class Locations {
             }
         }
 
+        /**
+         * Return a stream of file paths to the artifacts containing platform
+         * classes. Returns {@code null} if not running on a modular image.
+         *
+         * @throws UncheckedIOException if an I/O errors occurs
+         */
+        private Stream<File> bootPaths() {
+            try {
+                String home = System.getProperty("java.home");
+                java.nio.file.Path modules = Paths.get(home, "lib", "modules");
+                if (Files.exists(modules)) {
+                    return Files.list(modules)
+                                .map(d -> d.resolve("classes"))
+                                .map(java.nio.file.Path::toFile);
+                }
+                modules = Paths.get(home, "modules");
+                if (Files.isDirectory(modules)) {
+                    return Files.list(modules)
+                                .map(java.nio.file.Path::toFile);
+                }
+            } catch (IOException ioe) {
+                throw new UncheckedIOException(ioe);
+            }
+
+            // not a modular image that we know about
+            return null;
+        }
+
         Path computePath() {
             defaultBootClassPathRtJar = null;
             Path path = new Path();
@@ -611,12 +643,18 @@ public class Locations {
                 path.addFiles(bootclasspathOpt);
             } else {
                 // Standard system classes for this compiler's release.
-                String files = System.getProperty("sun.boot.class.path");
-                path.addFiles(files, false);
-                File rt_jar = new File("rt.jar");
-                for (File file : getPathEntries(files)) {
-                    if (new File(file.getName()).equals(rt_jar))
-                        defaultBootClassPathRtJar = file;
+                Stream<File> bootPaths = bootPaths();
+                if (bootPaths != null) {
+                    bootPaths.forEach(f -> path.addFile(f, false));
+                } else {
+                    // fallback to the value of sun.boot.class.path
+                    String files = System.getProperty("sun.boot.class.path");
+                    path.addFiles(files, false);
+                    File rt_jar = new File("rt.jar");
+                    for (File file : getPathEntries(files)) {
+                        if (new File(file.getName()).equals(rt_jar))
+                            defaultBootClassPathRtJar = file;
+                    }
                 }
             }
 
