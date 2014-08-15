@@ -652,6 +652,10 @@ void ClassLoader::add_to_list(ClassPathEntry *new_entry) {
   }
 }
 
+void ClassLoader::add_to_list(const char *apath) {
+  update_class_path_entry_list((char*)apath, false);
+}
+
 void ClassLoader::update_class_path_entry_list(char *path,
                                                bool check_for_duplicates) {
   struct stat st;

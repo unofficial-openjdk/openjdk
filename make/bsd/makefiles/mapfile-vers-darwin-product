@@ -244,6 +244,7 @@
                 _JVM_handle_bsd_signal
 
                 # Modules
+                _JVM_DefineBootModule
                 _JVM_DefineModule
                 _JVM_BindToModule
                 _JVM_AddRequires

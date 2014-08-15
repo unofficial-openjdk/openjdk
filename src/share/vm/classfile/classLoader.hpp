@@ -353,6 +353,9 @@ class ClassLoader: AllStatic {
   // creates a class path zip entry (returns NULL if JAR file cannot be opened)
   static ClassPathZipEntry* create_class_path_zip_entry(const char *apath);
 
+  // add a path to class path list
+  static void add_to_list(const char* apath);
+
   /* returns a unique tag for the given loader */
   static int tag_for(Handle loader);
 

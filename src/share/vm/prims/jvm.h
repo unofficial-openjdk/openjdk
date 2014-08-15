@@ -456,8 +456,12 @@ JVM_DefineClassWithSourceCond(JNIEnv *env, const char *name,
  * Module support funcions
  */
 
-JNIEXPORT void* JNICALL
+JNIEXPORT void * JNICALL
 JVM_DefineModule(JNIEnv *env, jstring name);
+
+/* special case for modules associated with the boot loader */
+JNIEXPORT void * JNICALL
+JVM_DefineBootModule(JNIEnv *env, jstring name);
 
 JNIEXPORT void JNICALL
 JVM_BindToModule(JNIEnv *env, jobject loader, jstring pkg, void *handle);

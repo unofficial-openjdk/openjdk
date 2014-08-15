@@ -246,6 +246,7 @@ SUNWprivate_1.1 {
                 JVM_handle_linux_signal;
 
                 # Modules
+                JVM_DefineBootModule;
                 JVM_DefineModule;
                 JVM_BindToModule;
                 JVM_AddRequires;

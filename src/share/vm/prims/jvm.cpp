@@ -1010,6 +1010,45 @@ JVM_END
 
 // Module support //////////////////////////////////////////////////////////////////////////////
 
+JVM_ENTRY(void*, JVM_DefineBootModule(JNIEnv* env, jstring name))
+  JVMWrapper("JVM_DefineBootModule");
+  ResourceMark rm(THREAD);
+  const char* name_str = java_lang_String::as_utf8_string(JNIHandles::resolve_non_null(name));
+
+  const char* home = Arguments::get_java_home();
+  size_t home_len = strlen(home);
+  size_t name_len = strlen(name_str);
+  char fileSep = os::file_separator()[0];
+  size_t len = home_len + name_len + 32;
+  char* path = NEW_C_HEAP_ARRAY(char, len, mtInternal);
+
+  // Check if ${java.home}/lib/modules/$MODULE/classes exists, if not then
+  // assume the exploded form ${java.home}/modules/$MODULE
+  bool extend_bcp;
+  struct stat st;
+  jio_snprintf(path, len, "%s%clib%cmodules%c%s%cclasses",
+               home, fileSep, fileSep, fileSep, name_str, fileSep);
+  extend_bcp = (os::stat(path, &st) == 0);
+  if (!extend_bcp) {
+    jio_snprintf(path, len, "%s%cmodules%c%s", home, fileSep, fileSep, name_str);
+    extend_bcp = (os::stat(path, &st) == 0);
+  }
+
+  // extend boot class path
+  if (extend_bcp) {
+    HandleMark hm;
+    Handle loader_lock = Handle(THREAD, SystemDictionary::system_loader_lock());
+    ObjectLocker ol(loader_lock, THREAD);
+    if (TraceClassLoading) {
+      tty->print_cr("[Opened %s]", path);
+    }
+    ClassLoader::add_to_list(path);
+  }
+
+  // define module
+  return (void*) Module::define_module(name_str);
+JVM_END
+
 JVM_ENTRY(void*, JVM_DefineModule(JNIEnv* env, jstring name))
   JVMWrapper("JVM_DefineModule");
   ResourceMark rm(THREAD);
