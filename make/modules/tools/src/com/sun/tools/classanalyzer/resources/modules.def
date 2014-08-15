@@ -632,7 +632,6 @@ module jdk.jfr {
 module jdk.deploy.osx {
     // Apple integration
     include apple.applescript.*,
-            apple.launcher.*,      // see JDK-8003847
             apple.security.*,
             com.apple.**;
 }
@@ -644,8 +643,7 @@ module jdk.deploy {
             com.sun.applet2.**;
 
     // For now, all plugin and JNLP
-    include com.sun.java.browser.**,
-            netscape.**,
+    include netscape.**,
             sun.plugin.**,
             sun.plugin2.**,,
             com.sun.deploy.**,
