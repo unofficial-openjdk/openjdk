@@ -815,18 +815,6 @@ module java.se {
     requires public java.xml.soap;
 }
 
-module jdk.compact3 {
-    requires public java.compact3;
-
-    // JSR 268 (not in Java SE)
-    requires public java.smartcardio;
-
-    // JDK-specific APIs
-    requires public jdk.security.auth;
-    requires public jdk.httpserver;
-    requires public jdk.sctp;
-}
-
 module jdk.runtime {
     // Tools/APIs included in the JRE
     include com.sun.tracing.**, sun.tracing.**;
