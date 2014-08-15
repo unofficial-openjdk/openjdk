@@ -178,6 +178,8 @@ module java.base {
     // unicode scripting support
     include java/lang/uniName.dat;
 
+    include java/util/currency.data;
+
     // Explicitly include content-types.properties
     include sun/net/www/content-types.properties;
 
