@@ -51,7 +51,7 @@ import sun.awt.util.ThreadGroupUtils;
  * @since 1.4
  */
 
-public class Win32ShellFolderManager2 extends ShellFolderManager {
+final class Win32ShellFolderManager2 extends ShellFolderManager {
 
     static {
         // Load library here
@@ -136,6 +136,8 @@ public class Win32ShellFolderManager2 extends ShellFolderManager {
         if (desktop == null) {
             try {
                 desktop = new Win32ShellFolder2(DESKTOP);
+            } catch (SecurityException e) {
+                // Ignore error
             } catch (IOException e) {
                 // Ignore error
             } catch (InterruptedException e) {
@@ -149,6 +151,8 @@ public class Win32ShellFolderManager2 extends ShellFolderManager {
         if (drives == null) {
             try {
                 drives = new Win32ShellFolder2(DRIVES);
+            } catch (SecurityException e) {
+                // Ignore error
             } catch (IOException e) {
                 // Ignore error
             } catch (InterruptedException e) {
@@ -165,6 +169,8 @@ public class Win32ShellFolderManager2 extends ShellFolderManager {
                 if (path != null) {
                     recent = createShellFolder(getDesktop(), new File(path));
                 }
+            } catch (SecurityException e) {
+                // Ignore error
             } catch (InterruptedException e) {
                 // Ignore error
             } catch (IOException e) {
@@ -178,6 +184,8 @@ public class Win32ShellFolderManager2 extends ShellFolderManager {
         if (network == null) {
             try {
                 network = new Win32ShellFolder2(NETWORK);
+            } catch (SecurityException e) {
+                // Ignore error
             } catch (IOException e) {
                 // Ignore error
             } catch (InterruptedException e) {
@@ -201,6 +209,8 @@ public class Win32ShellFolderManager2 extends ShellFolderManager {
                         personal.setIsPersonal();
                     }
                 }
+            } catch (SecurityException e) {
+                // Ignore error
             } catch (InterruptedException e) {
                 // Ignore error
             } catch (IOException e) {
@@ -414,14 +424,14 @@ public class Win32ShellFolderManager2 extends ShellFolderManager {
         return false;
     }
 
-    private static List topFolderList = null;
+    private static List<Win32ShellFolder2> topFolderList = null;
     static int compareShellFolders(Win32ShellFolder2 sf1, Win32ShellFolder2 sf2) {
         boolean special1 = sf1.isSpecial();
         boolean special2 = sf2.isSpecial();
 
         if (special1 || special2) {
             if (topFolderList == null) {
-                ArrayList tmpTopFolderList = new ArrayList();
+                ArrayList<Win32ShellFolder2> tmpTopFolderList = new ArrayList<>();
                 tmpTopFolderList.add(Win32ShellFolderManager2.getPersonal());
                 tmpTopFolderList.add(Win32ShellFolderManager2.getDesktop());
                 tmpTopFolderList.add(Win32ShellFolderManager2.getDrives());

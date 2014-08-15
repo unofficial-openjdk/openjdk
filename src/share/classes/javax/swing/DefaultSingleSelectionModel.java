@@ -42,6 +42,7 @@ import java.util.EventListener;
  * Please see {@link java.beans.XMLEncoder}.
  *
  * @author Dave Moore
+ * @since 1.2
  */
 @SuppressWarnings("serial") // Same-version serialization only
 public class DefaultSingleSelectionModel implements SingleSelectionModel,
@@ -154,6 +155,7 @@ Serializable {
      * If no such listeners exist,
      * this method returns an empty array.
      *
+     * @param <T>  the type of {@code EventListener} class being requested
      * @param listenerType  the type of listeners requested;
      *          this parameter should specify an interface
      *          that descends from <code>java.util.EventListener</code>

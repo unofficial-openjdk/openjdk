@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1995, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -65,7 +65,7 @@ import javax.accessibility.*;
  * @see        java.awt.Menu
  * @see        java.awt.MenuItem
  * @see        java.awt.MenuShortcut
- * @since      JDK1.0
+ * @since      1.0
  */
 public class MenuBar extends MenuComponent implements MenuContainer, Accessible {
 
@@ -272,13 +272,16 @@ public class MenuBar extends MenuComponent implements MenuContainer, Accessible 
     /**
      * Gets the number of menus on the menu bar.
      * @return     the number of menus on the menu bar.
-     * @since      JDK1.1
+     * @since      1.1
      */
     public int getMenuCount() {
         return countMenus();
     }
 
     /**
+     * Gets the number of menus on the menu bar.
+     *
+     * @return the number of menus on the menu bar.
      * @deprecated As of JDK version 1.1,
      * replaced by <code>getMenuCount()</code>.
      */
@@ -318,7 +321,7 @@ public class MenuBar extends MenuComponent implements MenuContainer, Accessible 
      * @return      an enumeration of menu shortcuts that this
      *                      menu bar is managing.
      * @see         java.awt.MenuShortcut
-     * @since       JDK1.1
+     * @since       1.1
      */
     public synchronized Enumeration<MenuShortcut> shortcuts() {
         Vector<MenuShortcut> shortcuts = new Vector<>();
@@ -338,10 +341,11 @@ public class MenuBar extends MenuComponent implements MenuContainer, Accessible 
      * or <code>null</code> if none of the menu items being managed
      * by this menu bar is associated with the specified menu
      * shortcut.
-     * @param        s the specified menu shortcut.
-     * @see          java.awt.MenuItem
-     * @see          java.awt.MenuShortcut
-     * @since        JDK1.1
+     * @param  s the specified menu shortcut.
+     * @return the menu item for the specified shortcut.
+     * @see java.awt.MenuItem
+     * @see java.awt.MenuShortcut
+     * @since 1.1
      */
      public MenuItem getShortcutMenuItem(MenuShortcut s) {
         int nmenus = getMenuCount();
@@ -387,7 +391,7 @@ public class MenuBar extends MenuComponent implements MenuContainer, Accessible 
     /**
      * Deletes the specified menu shortcut.
      * @param     s the menu shortcut to delete.
-     * @since     JDK1.1
+     * @since     1.1
      */
     public void deleteShortcut(MenuShortcut s) {
         int nmenus = getMenuCount();

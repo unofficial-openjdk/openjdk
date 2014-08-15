@@ -105,6 +105,7 @@ static char* ReadModuleList(const char* fn, const char* prefix, const char* suff
 static void ExpandToBootClassPath(const char* pathname);
 static void SetModulesProp(const char *mods);
 static void SelectVersion(int argc, char **argv, char **main_class);
+static void SetJvmEnvironment(int argc, char **argv);
 static jboolean ParseArguments(int *pargc, char ***pargv,
                                int *pmode, char **pwhat,
                                int *pret, const char *jrepath);
@@ -278,6 +279,10 @@ JLI_Launch(int argc, char ** argv,              /* main argc, argc */
                                jrepath, sizeof(jrepath),
                                jvmpath, sizeof(jvmpath),
                                jvmcfg,  sizeof(jvmcfg));
+
+    if (!IsJavaArgs()) {
+        SetJvmEnvironment(argc,argv);
+    }
 
     ifn.CreateJavaVM = 0;
     ifn.GetDefaultJavaVMInitArgs = 0;
@@ -694,6 +699,67 @@ CheckJvmType(int *pargc, char ***argv, jboolean speculative) {
     }
 
     return jvmtype;
+}
+
+/*
+ * static void SetJvmEnvironment(int argc, char **argv);
+ *   Is called just before the JVM is loaded.  We can set env variables
+ *   that are consumed by the JVM.  This function is non-destructive,
+ *   leaving the arg list intact.  The first use is for the JVM flag
+ *   -XX:NativeMemoryTracking=value.
+ */
+static void
+SetJvmEnvironment(int argc, char **argv) {
+
+    static const char*  NMT_Env_Name    = "NMT_LEVEL_";
+
+    int i;
+    for (i = 0; i < argc; i++) {
+        /*
+         * The following case checks for "-XX:NativeMemoryTracking=value".
+         * If value is non null, an environmental variable set to this value
+         * will be created to be used by the JVM.
+         * The argument is passed to the JVM, which will check validity.
+         * The JVM is responsible for removing the env variable.
+         */
+        char *arg = argv[i];
+        if (JLI_StrCCmp(arg, "-XX:NativeMemoryTracking=") == 0) {
+            int retval;
+            // get what follows this parameter, include "="
+            size_t pnlen = JLI_StrLen("-XX:NativeMemoryTracking=");
+            if (JLI_StrLen(arg) > pnlen) {
+                char* value = arg + pnlen;
+                size_t pbuflen = pnlen + JLI_StrLen(value) + 10; // 10 max pid digits
+
+                /*
+                 * ensures that malloc successful
+                 * DONT JLI_MemFree() pbuf.  JLI_PutEnv() uses system call
+                 *   that could store the address.
+                 */
+                char * pbuf = (char*)JLI_MemAlloc(pbuflen);
+
+                JLI_Snprintf(pbuf, pbuflen, "%s%d=%s", NMT_Env_Name, JLI_GetPid(), value);
+                retval = JLI_PutEnv(pbuf);
+                if (JLI_IsTraceLauncher()) {
+                    char* envName;
+                    char* envBuf;
+
+                    // ensures that malloc successful
+                    envName = (char*)JLI_MemAlloc(pbuflen);
+                    JLI_Snprintf(envName, pbuflen, "%s%d", NMT_Env_Name, JLI_GetPid());
+
+                    printf("TRACER_MARKER: NativeMemoryTracking: env var is %s\n",envName);
+                    printf("TRACER_MARKER: NativeMemoryTracking: putenv arg %s\n",pbuf);
+                    envBuf = getenv(envName);
+                    printf("TRACER_MARKER: NativeMemoryTracking: got value %s\n",envBuf);
+                    free(envName);
+                }
+
+            }
+
+        }
+
+    }
 }
 
 /* copied from HotSpot function "atomll()" */
@@ -2091,20 +2157,48 @@ ShowSplashScreen()
     const char *jar_name = getenv(SPLASH_JAR_ENV_ENTRY);
     const char *file_name = getenv(SPLASH_FILE_ENV_ENTRY);
     int data_size;
-    void *image_data;
+    void *image_data = NULL;
+    float scale_factor = 1;
+    char *scaled_splash_name = NULL;
+
+    if (file_name == NULL){
+        return;
+    }
+
+    scaled_splash_name = DoSplashGetScaledImageName(
+                        jar_name, file_name, &scale_factor);
     if (jar_name) {
-        image_data = JLI_JarUnpackFile(jar_name, file_name, &data_size);
+
+        if (scaled_splash_name) {
+            image_data = JLI_JarUnpackFile(
+                    jar_name, scaled_splash_name, &data_size);
+        }
+
+        if (!image_data) {
+            scale_factor = 1;
+            image_data = JLI_JarUnpackFile(
+                            jar_name, file_name, &data_size);
+        }
         if (image_data) {
             DoSplashInit();
+            DoSplashSetScaleFactor(scale_factor);
             DoSplashLoadMemory(image_data, data_size);
             JLI_MemFree(image_data);
         }
-    } else if (file_name) {
-        DoSplashInit();
-        DoSplashLoadFile(file_name);
     } else {
-        return;
+        DoSplashInit();
+        if (scaled_splash_name) {
+            DoSplashSetScaleFactor(scale_factor);
+            DoSplashLoadFile(scaled_splash_name);
+        } else {
+            DoSplashLoadFile(file_name);
+        }
     }
+
+    if (scaled_splash_name) {
+        JLI_MemFree(scaled_splash_name);
+    }
+
     DoSplashSetFileJarName(file_name, jar_name);
 
     /*

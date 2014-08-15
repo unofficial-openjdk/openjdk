@@ -49,7 +49,7 @@ import javax.accessibility.*;
  * style="float:center; margin: 7px 10px;">
  *
  * @author      Sami Shaio
- * @since       JDK1.0
+ * @since       1.0
  */
 public class Label extends Component implements Accessible {
 
@@ -73,7 +73,6 @@ public class Label extends Component implements Accessible {
 
     /**
      * Indicates that the label should be right justified.
-     * @since   JDK1.0t.
      */
     public static final int RIGHT       = 2;
 
@@ -194,7 +193,8 @@ public class Label extends Component implements Accessible {
      * Gets the current alignment of this label. Possible values are
      * <code>Label.LEFT</code>, <code>Label.RIGHT</code>, and
      * <code>Label.CENTER</code>.
-     * @see        java.awt.Label#setAlignment
+     * @return the alignment of this label
+     * @see java.awt.Label#setAlignment
      */
     public int getAlignment() {
         return alignment;
@@ -322,6 +322,9 @@ public class Label extends Component implements Accessible {
          */
         private static final long serialVersionUID = -3568967560160480438L;
 
+        /**
+         * Constructor for the accessible label.
+         */
         public AccessibleAWTLabel() {
             super();
         }

@@ -77,6 +77,7 @@ import javax.swing.text.*;
  * @see ProgressMonitorInputStream
  * @author James Gosling
  * @author Lynn Monsanto (accessibility)
+ * @since 1.2
  */
 public class ProgressMonitor implements Accessible
 {
@@ -368,6 +369,8 @@ public class ProgressMonitor implements Accessible
 
     /**
      * Returns true if the user hits the Cancel button in the progress dialog.
+     *
+     * @return true if the user hits the Cancel button in the progress dialog
      */
     public boolean isCanceled() {
         if (pane == null) return false;
@@ -395,6 +398,8 @@ public class ProgressMonitor implements Accessible
      * Returns the amount of time this object waits before deciding whether
      * or not to popup a progress monitor.
      *
+     * @return the amount of time in milliseconds this object waits before
+     *         deciding whether or not to popup a progress monitor
      * @see #setMillisToDecideToPopup
      */
     public int getMillisToDecideToPopup() {
@@ -418,6 +423,8 @@ public class ProgressMonitor implements Accessible
     /**
      * Returns the amount of time it will take for the popup to appear.
      *
+     * @return the amont of time in milliseconds it will take for the
+     *         popup to appear
      * @see #setMillisToPopup
      */
     public int getMillisToPopup() {

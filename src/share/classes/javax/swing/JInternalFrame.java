@@ -104,6 +104,7 @@ import sun.swing.SwingUtilities2;
  *
  * @author David Kloba
  * @author Rich Schiavi
+ * @since 1.2
  * @beaninfo
  *      attribute: isContainer true
  *      attribute: containerDelegate getContentPane
@@ -2106,7 +2107,7 @@ public class JInternalFrame extends JComponent implements
             if (n == null) {
                 return false;
             }
-            setLayer(new Integer(n.intValue()));
+            setLayer(Integer.valueOf(n.intValue()));
             return true;
         }
 

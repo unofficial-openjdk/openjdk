@@ -65,7 +65,7 @@ class NotExpression extends UnaryExpression {
      */
 
     public void checkCondition(Environment env, Context ctx, Vset vset,
-                               Hashtable exp, ConditionVars cvars) {
+                               Hashtable<Object, Object> exp, ConditionVars cvars) {
         right.checkCondition(env, ctx, vset, exp, cvars);
         right = convert(env, ctx, Type.tBoolean, right);
         // swap true and false
@@ -139,7 +139,7 @@ class NotExpression extends UnaryExpression {
      */
     public void codeValue(Environment env, Context ctx, Assembler asm) {
         right.codeValue(env, ctx, asm);
-        asm.add(where, opc_ldc, new Integer(1));
+        asm.add(where, opc_ldc, 1);
         asm.add(where, opc_ixor);
     }
 

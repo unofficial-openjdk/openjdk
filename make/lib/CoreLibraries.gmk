@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2011, 2013, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2011, 2014, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -254,7 +254,7 @@ else
   ifeq ($(SHUFFLED), true)
     ZLIB_CPPFLAGS := -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/libzip/zlib-1.2.8
   else
-    ZLIB_CPPFLAGS := -I$(JDK_TOPDIR)/src/share/native/java/util/zip/zlib-1.2.8
+  ZLIB_CPPFLAGS := -I$(JDK_TOPDIR)/src/share/native/java/util/zip/zlib-1.2.8
 endif
 endif
 
@@ -335,7 +335,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBPREFS, \
     LDFLAGS_SUFFIX_solaris := -ljvm -ljava -lc, \
     LDFLAGS_SUFFIX_aix := -ljvm -ljava, \
     LDFLAGS_SUFFIX_windows := advapi32.lib jvm.lib $(WIN_JAVA_LIB), \
-    LDFLAGS_SUFFIX_macosx := -ljvm -framework CoreFoundation, \
+    LDFLAGS_SUFFIX_macosx := -ljvm -framework CoreFoundation -framework Foundation, \
     VERSIONINFO_RESOURCE := $(GLOBAL_VERSION_INFO_RESOURCE), \
     RC_FLAGS := $(RC_FLAGS) \
         -D "JDK_FNAME=prefs.dll" \
@@ -468,7 +468,7 @@ ifneq ($(USE_EXTERNAL_LIBZ), true)
   ifeq ($(SHUFFLED), true)
     BUILD_LIBJLI_SRC_DIRS += $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/libzip/zlib-1.2.8
   else
-    BUILD_LIBJLI_SRC_DIRS += $(JDK_TOPDIR)/src/share/native/java/util/zip/zlib-1.2.8
+  BUILD_LIBJLI_SRC_DIRS += $(JDK_TOPDIR)/src/share/native/java/util/zip/zlib-1.2.8
   endif
   LIBJLI_CFLAGS += $(ZLIB_CPPFLAGS)
   BUILD_LIBJLI_FILES += \
@@ -588,39 +588,3 @@ else ifeq ($(OPENJDK_TARGET_OS), aix)
   BASE_STATIC_LIBRARIES += $(BUILD_LIBJLI_STATIC)
 
 endif
-
-##########################################################################################
-
-# This should be moved to ServiceabilityLibraries.gmk
-
-ifeq ($(SHUFFLED), true)
-  LIBNPT_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.base/share/native/libnpt \
-         $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.base/$(OPENJDK_TARGET_OS_API_DIR)/native/libnpt
-else
-  LIBNPT_SRC := $(JDK_TOPDIR)/src/share/npt \
-         $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/npt
-endif
-
-$(eval $(call SetupNativeCompilation,BUILD_LIBNPT, \
-    LIBRARY := npt, \
-    OUTPUT_DIR := $(INSTALL_LIBRARIES_HERE), \
-    SRC := $(LIBNPT_SRC), \
-    LANG := C, \
-    OPTIMIZATION := LOW, \
-    CFLAGS := $(CFLAGS_JDKLIB) \
-        $(addprefix -I, $(LIBNPT_SRC)), \
-    MAPFILE := $(JDK_TOPDIR)/make/mapfiles/libnpt/mapfile-vers, \
-    LDFLAGS := $(LDFLAGS_JDKLIB) \
-        $(call SET_SHARED_LIBRARY_ORIGIN), \
-    LDFLAGS_macosx := -liconv, \
-    LDFLAGS_SUFFIX_windows := -export:nptInitialize -export:nptTerminate, \
-    LDFLAGS_SUFFIX_solaris := -lc, \
-    VERSIONINFO_RESOURCE := $(GLOBAL_VERSION_INFO_RESOURCE), \
-    RC_FLAGS := $(RC_FLAGS) \
-        -D "JDK_FNAME=npt.dll" \
-        -D "JDK_INTERNAL_NAME=npt" \
-        -D "JDK_FTYPE=0x2L", \
-    OBJECT_DIR := $(JDK_OUTPUTDIR)/objs/libnpt, \
-    DEBUG_SYMBOLS := true))
-
-NPT_LIBRARIES += $(BUILD_LIBNPT)

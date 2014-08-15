@@ -49,6 +49,7 @@ import java.io.Serializable;
  *
  * @author Alan Chung
  * @author Philip Milne
+ * @since 1.2
  */
 @SuppressWarnings("serial") // Same-version serialization only
 public class DefaultCellEditor extends AbstractCellEditor
@@ -130,7 +131,7 @@ public class DefaultCellEditor extends AbstractCellEditor
      *
      * @param comboBox  a <code>JComboBox</code> object
      */
-    public DefaultCellEditor(final JComboBox comboBox) {
+    public DefaultCellEditor(final JComboBox<?> comboBox) {
         editorComponent = comboBox;
         comboBox.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
         delegate = new EditorDelegate() {
@@ -352,6 +353,7 @@ public class DefaultCellEditor extends AbstractCellEditor
         * Returns true to indicate that editing has begun.
         *
         * @param anEvent          the event
+        * @return true to indicate editing has begun
         */
         public boolean startCellEditing(EventObject anEvent) {
             return true;

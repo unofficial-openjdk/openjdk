@@ -25,10 +25,15 @@
 
 package javax.swing;
 
+import sun.awt.EmbeddedFrame;
+import sun.awt.OSInfo;
+import sun.swing.SwingAccessor;
+
 import java.applet.Applet;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.security.AccessController;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -56,6 +61,16 @@ import static javax.swing.ClientPropertyKey.PopupFactory_FORCE_HEAVYWEIGHT_POPUP
  * @since 1.4
  */
 public class PopupFactory {
+
+    static {
+        SwingAccessor.setPopupFactoryAccessor(new SwingAccessor.PopupFactoryAccessor() {
+            @Override
+            public Popup getHeavyWeightPopup(PopupFactory factory, Component owner,
+                                             Component contents, int ownerX, int ownerY) {
+                return factory.getPopup(owner, contents, ownerX, ownerY, HEAVY_WEIGHT_POPUP);
+            }
+        });
+    }
     /**
      * The shared instanceof <code>PopupFactory</code> is per
      * <code>AppContext</code>. This is the key used in the
@@ -226,7 +241,13 @@ public class PopupFactory {
         case MEDIUM_WEIGHT_POPUP:
             return getMediumWeightPopup(owner, contents, ownerX, ownerY);
         case HEAVY_WEIGHT_POPUP:
-            return getHeavyWeightPopup(owner, contents, ownerX, ownerY);
+            Popup popup = getHeavyWeightPopup(owner, contents, ownerX, ownerY);
+            if ((AccessController.doPrivileged(OSInfo.getOSTypeAction()) ==
+                OSInfo.OSType.MACOSX) && (owner != null) &&
+                (EmbeddedFrame.getAppletIfAncestorOf(owner) != null)) {
+                ((HeavyWeightPopup)popup).setCacheEnabled(false);
+            }
+            return popup;
         }
         return null;
     }
@@ -293,6 +314,8 @@ public class PopupFactory {
     private static class HeavyWeightPopup extends Popup {
         private static final Object heavyWeightPopupCacheKey =
                  new StringBuffer("PopupFactory.heavyWeightPopupCache");
+
+        private volatile boolean isCacheEnabled = true;
 
         /**
          * Returns either a new or recycled <code>Popup</code> containing
@@ -379,13 +402,14 @@ public class PopupFactory {
          * <code>Window</code> to a <code>List</code> of
          * <code>HeavyWeightPopup</code>s.
          */
+        @SuppressWarnings("unchecked")
         private static Map<Window, List<HeavyWeightPopup>> getHeavyWeightPopupCache() {
             synchronized (HeavyWeightPopup.class) {
                 Map<Window, List<HeavyWeightPopup>> cache = (Map<Window, List<HeavyWeightPopup>>)SwingUtilities.appContextGet(
                                   heavyWeightPopupCacheKey);
 
                 if (cache == null) {
-                    cache = new HashMap<Window, List<HeavyWeightPopup>>(2);
+                    cache = new HashMap<>(2);
                     SwingUtilities.appContextPut(heavyWeightPopupCacheKey,
                                                  cache);
                 }
@@ -448,12 +472,23 @@ public class PopupFactory {
             }
         }
 
+        /**
+         * Enables or disables cache for current object.
+         */
+        void setCacheEnabled(boolean enable) {
+            isCacheEnabled = enable;
+        }
+
         //
         // Popup methods
         //
         public void hide() {
             super.hide();
-            recycleHeavyWeightPopup(this);
+            if (isCacheEnabled) {
+                recycleHeavyWeightPopup(this);
+            } else {
+                this._dispose();
+            }
         }
 
         /**
@@ -665,11 +700,12 @@ public class PopupFactory {
         /**
          * Returns the cache to use for heavy weight popups.
          */
+        @SuppressWarnings("unchecked")
         private static List<LightWeightPopup> getLightWeightPopupCache() {
             List<LightWeightPopup> cache = (List<LightWeightPopup>)SwingUtilities.appContextGet(
                                    lightWeightPopupCacheKey);
             if (cache == null) {
-                cache = new ArrayList<LightWeightPopup>();
+                cache = new ArrayList<>();
                 SwingUtilities.appContextPut(lightWeightPopupCacheKey, cache);
             }
             return cache;
@@ -821,12 +857,13 @@ public class PopupFactory {
         /**
          * Returns the cache to use for medium weight popups.
          */
+        @SuppressWarnings("unchecked")
         private static List<MediumWeightPopup> getMediumWeightPopupCache() {
             List<MediumWeightPopup> cache = (List<MediumWeightPopup>)SwingUtilities.appContextGet(
                                     mediumWeightPopupCacheKey);
 
             if (cache == null) {
-                cache = new ArrayList<MediumWeightPopup>();
+                cache = new ArrayList<>();
                 SwingUtilities.appContextPut(mediumWeightPopupCacheKey, cache);
             }
             return cache;

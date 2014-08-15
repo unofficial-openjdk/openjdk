@@ -269,12 +269,12 @@ public class DefaultTableColumnModel implements TableColumnModel,
             throw new IllegalArgumentException("Identifier is null");
         }
 
-        Enumeration enumeration = getColumns();
+        Enumeration<TableColumn> enumeration = getColumns();
         TableColumn aColumn;
         int index = 0;
 
         while (enumeration.hasMoreElements()) {
-            aColumn = (TableColumn)enumeration.nextElement();
+            aColumn = enumeration.nextElement();
             // Compare them this way in case the column's identifier is null.
             if (identifier.equals(aColumn.getIdentifier()))
                 return index;
@@ -716,6 +716,8 @@ public class DefaultTableColumnModel implements TableColumnModel,
 
     /**
      * Creates a new default list selection model.
+     *
+     * @return a newly created default list selection model.
      */
     protected ListSelectionModel createSelectionModel() {
         return new DefaultListSelectionModel();
@@ -726,10 +728,10 @@ public class DefaultTableColumnModel implements TableColumnModel,
      * <code>totalColumnWidth</code> property.
      */
     protected void recalcWidthCache() {
-        Enumeration enumeration = getColumns();
+        Enumeration<TableColumn> enumeration = getColumns();
         totalColumnWidth = 0;
         while (enumeration.hasMoreElements()) {
-            totalColumnWidth += ((TableColumn)enumeration.nextElement()).getWidth();
+            totalColumnWidth += enumeration.nextElement().getWidth();
         }
     }
 

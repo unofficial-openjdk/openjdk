@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1995, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -85,7 +85,7 @@ import sun.security.action.GetBooleanAction;
  * @see       #add(java.awt.Component, int)
  * @see       #getComponent(int)
  * @see       LayoutManager
- * @since     JDK1.0
+ * @since     1.0
  */
 public class Container extends Component {
 
@@ -302,7 +302,7 @@ public class Container extends Component {
      *
      * @return    the number of components in this panel.
      * @see       #getComponent
-     * @since     JDK1.1
+     * @since     1.1
      * @see Component#getTreeLock()
      */
     public int getComponentCount() {
@@ -310,6 +310,9 @@ public class Container extends Component {
     }
 
     /**
+     * Returns the number of components in this container.
+     *
+     * @return the number of components in this container
      * @deprecated As of JDK version 1.1,
      * replaced by getComponentCount().
      */
@@ -384,15 +387,18 @@ public class Container extends Component {
      * @return    the insets of this container.
      * @see       Insets
      * @see       LayoutManager
-     * @since     JDK1.1
+     * @since     1.1
      */
     public Insets getInsets() {
         return insets();
     }
 
     /**
+     * Returns the insets for this container.
+     *
      * @deprecated As of JDK version 1.1,
      * replaced by <code>getInsets()</code>.
+     * @return the insets for this container
      */
     @Deprecated
     public Insets insets() {
@@ -438,6 +444,9 @@ public class Container extends Component {
      * displayed, the hierarchy must be validated thereafter in order to
      * display the added component.
      *
+     * @param  name the name of the component to be added
+     * @param  comp the component to be added
+     * @return the component added
      * @exception NullPointerException if {@code comp} is {@code null}
      * @see #add(Component, Object)
      * @see #invalidate
@@ -975,7 +984,7 @@ public class Container extends Component {
      * @see #validate
      * @see javax.swing.JComponent#revalidate()
      * @see       LayoutManager
-     * @since     JDK1.1
+     * @since     1.1
      */
     public void add(Component comp, Object constraints) {
         addImpl(comp, constraints, -1);
@@ -1078,7 +1087,7 @@ public class Container extends Component {
      * @see #invalidate
      * @see       LayoutManager
      * @see       LayoutManager2
-     * @since     JDK1.1
+     * @since     1.1
      */
     protected void addImpl(Component comp, Object constraints, int index) {
         synchronized (getTreeLock()) {
@@ -1202,7 +1211,7 @@ public class Container extends Component {
      * @see #invalidate
      * @see #validate
      * @see #getComponentCount
-     * @since JDK1.1
+     * @since 1.1
      */
     public void remove(int index) {
         synchronized (getTreeLock()) {
@@ -1471,8 +1480,10 @@ public class Container extends Component {
 
     /**
      * Gets the layout manager for this container.
+     *
      * @see #doLayout
      * @see #setLayout
+     * @return the current layout manager for this container
      */
     public LayoutManager getLayout() {
         return layoutMgr;
@@ -1501,7 +1512,7 @@ public class Container extends Component {
      * @see LayoutManager#layoutContainer
      * @see #setLayout
      * @see #validate
-     * @since JDK1.1
+     * @since 1.1
      */
     public void doLayout() {
         layout();
@@ -1749,7 +1760,7 @@ public class Container extends Component {
      * @param f The font to become this container's font.
      * @see Component#getFont
      * @see #invalidate
-     * @since JDK1.0
+     * @since 1.0
      */
     public void setFont(Font f) {
         boolean shouldinvalidate = false;
@@ -1834,7 +1845,7 @@ public class Container extends Component {
      * @see       #getLayout
      * @see       LayoutManager#minimumLayoutSize(Container)
      * @see       Component#getMinimumSize
-     * @since     JDK1.1
+     * @since     1.1
      */
     public Dimension getMinimumSize() {
         return minimumSize();
@@ -2539,7 +2550,7 @@ public class Container extends Component {
      * point is within the bounds of the container the container itself
      * is returned; otherwise the top-most child is returned.
      * @see Component#contains
-     * @since JDK1.1
+     * @since 1.1
      */
     public Component getComponentAt(int x, int y) {
         return locate(x, y);
@@ -2585,7 +2596,7 @@ public class Container extends Component {
      *                 or <code>null</code> if the component does
      *                 not contain the point.
      * @see        Component#contains
-     * @since      JDK1.1
+     * @since      1.1
      */
     public Component getComponentAt(Point p) {
         return getComponentAt(p.x, p.y);
@@ -2837,7 +2848,7 @@ public class Container extends Component {
      * @param c the component
      * @return     <code>true</code> if it is an ancestor;
      *             <code>false</code> otherwise.
-     * @since      JDK1.1
+     * @since      1.1
      */
     public boolean isAncestorOf(Component c) {
         Container p;
@@ -2899,17 +2910,10 @@ public class Container extends Component {
             }
         }
 
-        Runnable pumpEventsForHierarchy = new Runnable() {
-            public void run() {
-                EventDispatchThread dispatchThread =
-                    (EventDispatchThread)Thread.currentThread();
-                dispatchThread.pumpEventsForHierarchy(
-                        new Conditional() {
-                        public boolean evaluate() {
-                        return ((windowClosingException == null) && (nativeContainer.modalComp != null)) ;
-                        }
-                        }, Container.this);
-            }
+        Runnable pumpEventsForHierarchy = () -> {
+            EventDispatchThread dispatchThread = (EventDispatchThread)Thread.currentThread();
+            dispatchThread.pumpEventsForHierarchy(() -> nativeContainer.modalComp != null,
+                    Container.this);
         };
 
         if (EventQueue.isDispatchThread()) {
@@ -2927,8 +2931,7 @@ public class Container extends Component {
                     postEvent(new PeerEvent(this,
                                 pumpEventsForHierarchy,
                                 PeerEvent.PRIORITY_EVENT));
-                while ((windowClosingException == null) &&
-                       (nativeContainer.modalComp != null))
+                while (nativeContainer.modalComp != null)
                 {
                     try {
                         getTreeLock().wait();
@@ -2937,10 +2940,6 @@ public class Container extends Component {
                     }
                 }
             }
-        }
-        if (windowClosingException != null) {
-            windowClosingException.fillInStackTrace();
-            throw windowClosingException;
         }
         if (predictedFocusOwner != null) {
             KeyboardFocusManager.getCurrentKeyboardFocusManager().
@@ -3012,7 +3011,7 @@ public class Container extends Component {
      * @param    indent   the number of spaces to indent
      * @throws   NullPointerException if {@code out} is {@code null}
      * @see      Component#list(java.io.PrintStream, int)
-     * @since    JDK1.0
+     * @since    1.0
      */
     public void list(PrintStream out, int indent) {
         super.list(out, indent);
@@ -3039,7 +3038,7 @@ public class Container extends Component {
      * @param    indent   the number of spaces to indent
      * @throws   NullPointerException if {@code out} is {@code null}
      * @see      Component#list(java.io.PrintWriter, int)
-     * @since    JDK1.1
+     * @since    1.1
      */
     public void list(PrintWriter out, int indent) {
         super.list(out, indent);
@@ -3854,6 +3853,10 @@ public class Container extends Component {
          */
         private volatile transient int propertyListenersCount = 0;
 
+        /**
+         * The handler to fire {@code PropertyChange}
+         * when children are added or removed
+         */
         protected ContainerListener accessibleContainerHandler = null;
 
         /**

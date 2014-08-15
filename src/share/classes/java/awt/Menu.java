@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1995, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -53,7 +53,7 @@ import sun.awt.AWTAccessor;
  * @author Sami Shaio
  * @see     java.awt.MenuItem
  * @see     java.awt.CheckboxMenuItem
- * @since   JDK1.0
+ * @since   1.0
  */
 public class Menu extends MenuItem implements MenuContainer, Accessible {
 
@@ -118,7 +118,7 @@ public class Menu extends MenuItem implements MenuContainer, Accessible {
      * @exception HeadlessException if GraphicsEnvironment.isHeadless()
      * returns true.
      * @see java.awt.GraphicsEnvironment#isHeadless
-     * @since      JDK1.1
+     * @since      1.1
      */
     public Menu() throws HeadlessException {
         this("", false);
@@ -151,7 +151,6 @@ public class Menu extends MenuItem implements MenuContainer, Accessible {
      * @exception HeadlessException if GraphicsEnvironment.isHeadless()
      * returns true.
      * @see java.awt.GraphicsEnvironment#isHeadless
-     * @since       JDK1.0.
      */
     public Menu(String label, boolean tearOff) throws HeadlessException {
         super(label);
@@ -214,14 +213,17 @@ public class Menu extends MenuItem implements MenuContainer, Accessible {
 
     /**
       * Get the number of items in this menu.
-      * @return     the number of items in this menu.
-      * @since      JDK1.1
+      * @return the number of items in this menu
+      * @since      1.1
       */
     public int getItemCount() {
         return countItems();
     }
 
     /**
+     * Returns the number of items in this menu.
+     *
+     * @return the number of items in this menu
      * @deprecated As of JDK version 1.1,
      * replaced by <code>getItemCount()</code>.
      */
@@ -303,7 +305,7 @@ public class Menu extends MenuItem implements MenuContainer, Accessible {
      * @see           java.awt.Menu#add(java.awt.MenuItem)
      * @exception     IllegalArgumentException if the value of
      *                    <code>index</code> is less than zero
-     * @since         JDK1.1
+     * @since         1.1
      */
 
     public void insert(MenuItem menuitem, int index) {
@@ -347,7 +349,7 @@ public class Menu extends MenuItem implements MenuContainer, Accessible {
      * @see         java.awt.Menu#add(java.awt.MenuItem)
      * @exception     IllegalArgumentException if the value of
      *                    <code>index</code> is less than zero
-     * @since       JDK1.1
+     * @since       1.1
      */
 
     public void insert(String label, int index) {
@@ -369,7 +371,7 @@ public class Menu extends MenuItem implements MenuContainer, Accessible {
      * @exception   IllegalArgumentException if the value of
      *                       <code>index</code> is less than 0.
      * @see         java.awt.Menu#addSeparator
-     * @since       JDK1.1
+     * @since       1.1
      */
 
     public void insertSeparator(int index) {
@@ -436,7 +438,7 @@ public class Menu extends MenuItem implements MenuContainer, Accessible {
 
     /**
      * Removes all items from this menu.
-     * @since       JDK1.0.
+     * @since       1.1
      */
     public void removeAll() {
         synchronized (getTreeLock()) {

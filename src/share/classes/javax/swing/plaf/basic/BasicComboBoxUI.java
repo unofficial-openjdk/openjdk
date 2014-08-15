@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -61,7 +61,11 @@ import sun.swing.UIAction;
  * @author Mark Davidson
  */
 public class BasicComboBoxUI extends ComboBoxUI {
-    protected JComboBox comboBox;
+
+    /**
+     * The instance of {@code JComboBox}.
+     */
+    protected JComboBox<Object> comboBox;
     /**
      * This protected field is implementation specific. Do not access directly
      * or override.
@@ -73,20 +77,30 @@ public class BasicComboBoxUI extends ComboBoxUI {
     private boolean isTableCellEditor = false;
     private static final String IS_TABLE_CELL_EDITOR = "JComboBox.isTableCellEditor";
 
-    // This list is for drawing the current item in the combo box.
-    protected JList   listBox;
+    /**
+     * This list is for drawing the current item in the combo box.
+     */
+    protected JList<Object>   listBox;
 
-    // Used to render the currently selected item in the combo box.
-    // It doesn't have anything to do with the popup's rendering.
+    /**
+     * Used to render the currently selected item in the combo box.
+     * It doesn't have anything to do with the popup's rendering.
+     */
     protected CellRendererPane currentValuePane = new CellRendererPane();
 
-    // The implementation of ComboPopup that is used to show the popup.
+    /**
+     * The implementation of {@code ComboPopup} that is used to show the popup.
+     */
     protected ComboPopup popup;
 
-    // The Component that the ComboBoxEditor uses for editing
+    /**
+     * The Component that the @{code ComboBoxEditor} uses for editing.
+     */
     protected Component editor;
 
-    // The arrow button that invokes the popup.
+    /**
+     * The arrow button that invokes the popup.
+     */
     protected JButton   arrowButton;
 
     // Listeners that are attached to the JComboBox
@@ -121,8 +135,19 @@ public class BasicComboBoxUI extends ComboBoxUI {
     protected ItemListener itemListener;
 
     // Listeners that the ComboPopup produces.
+    /**
+     * The {@code MouseListener} listens to events.
+     */
     protected MouseListener popupMouseListener;
+
+    /**
+     * The {@code MouseMotionListener} listens to events.
+     */
     protected MouseMotionListener popupMouseMotionListener;
+
+    /**
+     * The {@code KeyListener} listens to events.
+     */
     protected KeyListener popupKeyListener;
 
     // This is used for knowing when to cache the minimum preferred size.
@@ -160,10 +185,14 @@ public class BasicComboBoxUI extends ComboBoxUI {
      */
     JComboBox.KeySelectionManager keySelectionManager;
 
-    // Flag for recalculating the minimum preferred size.
+    /**
+     * The flag for recalculating the minimum preferred size.
+     */
     protected boolean isMinimumSizeDirty = true;
 
-    // Cached minimum preferred size.
+    /**
+     * The cached minimum preferred size.
+     */
     protected Dimension cachedMinimumSize = new Dimension( 0, 0 );
 
     // Flag for calculating the display size
@@ -203,8 +232,9 @@ public class BasicComboBoxUI extends ComboBoxUI {
     protected Insets padding;
 
     // Used for calculating the default size.
-    private static ListCellRenderer getDefaultListCellRenderer() {
-        ListCellRenderer renderer = (ListCellRenderer)AppContext.
+    private static ListCellRenderer<Object> getDefaultListCellRenderer() {
+        @SuppressWarnings("unchecked")
+        ListCellRenderer<Object> renderer = (ListCellRenderer)AppContext.
                          getAppContext().get(COMBO_UI_LIST_CELL_RENDERER_KEY);
 
         if (renderer == null) {
@@ -237,6 +267,12 @@ public class BasicComboBoxUI extends ComboBoxUI {
     // begin UI Initialization
     //
 
+    /**
+     * Constructs a new instance of {@code BasicComboBoxUI}.
+     *
+     * @param c a component
+     * @return a new instance of {@code BasicComboBoxUI}
+     */
     public static ComponentUI createUI(JComponent c) {
         return new BasicComboBoxUI();
     }
@@ -245,7 +281,9 @@ public class BasicComboBoxUI extends ComboBoxUI {
     public void installUI( JComponent c ) {
         isMinimumSizeDirty = true;
 
-        comboBox = (JComboBox)c;
+        @SuppressWarnings("unchecked")
+        JComboBox<Object> tmp = (JComboBox)c;
+        comboBox = tmp;
         installDefaults();
         popup = createPopup();
         listBox = popup.getList();
@@ -508,7 +546,7 @@ public class BasicComboBoxUI extends ComboBoxUI {
      * @return a <code>ListCellRender</code> used for the combo box
      * @see javax.swing.JComboBox#setRenderer
      */
-    protected ListCellRenderer createRenderer() {
+    protected ListCellRenderer<Object> createRenderer() {
         return new BasicComboBoxRenderer.UIResource();
     }
 
@@ -865,14 +903,14 @@ public class BasicComboBoxUI extends ComboBoxUI {
     /**
      * Tells if the popup is visible or not.
      */
-    public boolean isPopupVisible( JComboBox c ) {
+    public boolean isPopupVisible( JComboBox<?> c ) {
         return popup.isVisible();
     }
 
     /**
      * Hides the popup.
      */
-    public void setPopupVisible( JComboBox c, boolean v ) {
+    public void setPopupVisible( JComboBox<?> c, boolean v ) {
         if ( v ) {
             popup.show();
         } else {
@@ -884,7 +922,7 @@ public class BasicComboBoxUI extends ComboBoxUI {
      * Determines if the JComboBox is focus traversable.  If the JComboBox is editable
      * this returns false, otherwise it returns true.
      */
-    public boolean isFocusTraversable( JComboBox c ) {
+    public boolean isFocusTraversable( JComboBox<?> c ) {
         return !comboBox.isEditable();
     }
 
@@ -956,7 +994,7 @@ public class BasicComboBoxUI extends ComboBoxUI {
             Insets insets = c.getInsets();
             height = height - insets.top - insets.bottom;
             if (!comboBox.isEditable()) {
-                ListCellRenderer renderer = comboBox.getRenderer();
+                ListCellRenderer<Object> renderer = comboBox.getRenderer();
                 if (renderer == null)  {
                     renderer = new DefaultListCellRenderer();
                 }
@@ -1013,7 +1051,7 @@ public class BasicComboBoxUI extends ComboBoxUI {
             return editor.getBaselineResizeBehavior();
         }
         else if (sameBaseline) {
-            ListCellRenderer renderer = comboBox.getRenderer();
+            ListCellRenderer<Object> renderer = comboBox.getRenderer();
             if (renderer == null)  {
                 renderer = new DefaultListCellRenderer();
             }
@@ -1087,6 +1125,9 @@ public class BasicComboBoxUI extends ComboBoxUI {
      * navigation.  This is used for optimizing key input by only passing non-
      * navigation keys to the type-ahead mechanism.  Subclasses should override this
      * if they change the navigation keys.
+     *
+     * @param keyCode a key code
+     * @return {@code true} if the supplied {@code keyCode} maps to a navigation key
      */
     protected boolean isNavigationKey( int keyCode ) {
         return keyCode == KeyEvent.VK_UP || keyCode == KeyEvent.VK_DOWN ||
@@ -1164,6 +1205,8 @@ public class BasicComboBoxUI extends ComboBoxUI {
 
     /**
      * Returns the area that is reserved for drawing the currently selected item.
+     *
+     * @return the area that is reserved for drawing the currently selected item
      */
     protected Rectangle rectangleForCurrentValue() {
         int width = comboBox.getWidth();
@@ -1187,6 +1230,8 @@ public class BasicComboBoxUI extends ComboBoxUI {
 
     /**
      * Gets the insets from the JComboBox.
+     *
+     * @return the insets
      */
     protected Insets getInsets() {
         return comboBox.getInsets();
@@ -1203,9 +1248,13 @@ public class BasicComboBoxUI extends ComboBoxUI {
 
     /**
      * Paints the currently selected item.
+     *
+     * @param g an instance of {@code Graphics}
+     * @param bounds a bounding rectangle to render to
+     * @param hasFocus is focused
      */
     public void paintCurrentValue(Graphics g,Rectangle bounds,boolean hasFocus) {
-        ListCellRenderer renderer = comboBox.getRenderer();
+        ListCellRenderer<Object> renderer = comboBox.getRenderer();
         Component c;
 
         if ( hasFocus && !isPopupVisible(comboBox) ) {
@@ -1260,6 +1309,10 @@ public class BasicComboBoxUI extends ComboBoxUI {
 
     /**
      * Paints the background of the currently selected item.
+     *
+     * @param g an instance of {@code Graphics}
+     * @param bounds a bounding rectangle to render to
+     * @param hasFocus is focused
      */
     public void paintCurrentValueBackground(Graphics g,Rectangle bounds,boolean hasFocus) {
         Color t = g.getColor();
@@ -1322,7 +1375,7 @@ public class BasicComboBoxUI extends ComboBoxUI {
         }
         Dimension result = new Dimension();
 
-        ListCellRenderer renderer = comboBox.getRenderer();
+        ListCellRenderer<Object> renderer = comboBox.getRenderer();
         if (renderer == null)  {
             renderer = new DefaultListCellRenderer();
         }
@@ -1338,7 +1391,7 @@ public class BasicComboBoxUI extends ComboBoxUI {
         } else {
             // Calculate the dimension by iterating over all the elements in the combo
             // box list.
-            ComboBoxModel model = comboBox.getModel();
+            ComboBoxModel<Object> model = comboBox.getModel();
             int modelSize = model.getSize();
             int baseline = -1;
             Dimension d;
@@ -1484,7 +1537,8 @@ public class BasicComboBoxUI extends ComboBoxUI {
 
         public void actionPerformed( ActionEvent e ) {
             String key = getName();
-            JComboBox comboBox = (JComboBox)e.getSource();
+            @SuppressWarnings("unchecked")
+            JComboBox<Object> comboBox = (JComboBox)e.getSource();
             BasicComboBoxUI ui = (BasicComboBoxUI)BasicLookAndFeel.getUIOfType(
                                   comboBox.getUI(), BasicComboBoxUI.class);
             if (key == HIDE) {
@@ -1625,7 +1679,7 @@ public class BasicComboBoxUI extends ComboBoxUI {
             }
         }
 
-        private int getNextIndex(JComboBox comboBox, String key) {
+        private int getNextIndex(JComboBox<?> comboBox, String key) {
             int listHeight = comboBox.getMaximumRowCount();
 
             int selectedIndex = comboBox.getSelectedIndex();
@@ -1685,10 +1739,13 @@ public class BasicComboBoxUI extends ComboBoxUI {
                     comboBox.revalidate();
                 }
             } else {
-                JComboBox comboBox = (JComboBox)e.getSource();
+                @SuppressWarnings("unchecked")
+                JComboBox<?> comboBox = (JComboBox)e.getSource();
                 if ( propertyName == "model" ) {
-                    ComboBoxModel newModel = (ComboBoxModel)e.getNewValue();
-                    ComboBoxModel oldModel = (ComboBoxModel)e.getOldValue();
+                    @SuppressWarnings("unchecked")
+                    ComboBoxModel<?> newModel = (ComboBoxModel)e.getNewValue();
+                    @SuppressWarnings("unchecked")
+                    ComboBoxModel<?> oldModel = (ComboBoxModel)e.getOldValue();
 
                     if ( oldModel != null && listDataListener != null ) {
                         oldModel.removeListDataListener( listDataListener );
@@ -1897,7 +1954,8 @@ public class BasicComboBoxUI extends ComboBoxUI {
         }
 
         public void layoutContainer(Container parent) {
-            JComboBox cb = (JComboBox)parent;
+            @SuppressWarnings("unchecked")
+            JComboBox<?> cb = (JComboBox)parent;
             int width = cb.getWidth();
             int height = cb.getHeight();
 
@@ -1959,7 +2017,7 @@ public class BasicComboBoxUI extends ComboBoxUI {
         private String prefix = "";
         private String typedString = "";
 
-        public int selectionForKey(char aKey,ComboBoxModel aModel) {
+        public int selectionForKey(char aKey,ComboBoxModel<?> aModel) {
             if (lastTime == 0L) {
                 prefix = "";
                 typedString = "";

@@ -270,7 +270,7 @@ $(IMAGES_OUTPUTDIR)/lib/classlist: $(JDK_TOPDIR)/make/data/classlist/classlist.$
 
 ifeq ($(SHUFFLED), true)
   $(IMAGES_OUTPUTDIR)/lib$(PROFILE)/_the.jars.contents: $(BUILD_TOOLS_JDK) $(IMAGES_OUTPUTDIR)/lib$(PROFILE)/_the.jars.exclude \
-      $(ALL_FILES_IN_CLASSES) $(IMAGES_OUTPUTDIR)/lib/classlist
+    $(ALL_FILES_IN_CLASSES) $(IMAGES_OUTPUTDIR)/lib/classlist
 	$(MKDIR) -p $(@D)
 	$(RM) $@ $@.tmp
 	($(CD) $(JDK_OUTPUTDIR)/modules && \
@@ -678,7 +678,7 @@ ifeq ($(SHUFFLED), true)
       $(CORBA_OUTPUTDIR)/gensrc/j* \
       ) \
       #
-  ifndef OPENJDK
+ifndef OPENJDK
     SRC_ZIP_SRCS += $(wildcard $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/*/share/classes)
   endif
 
@@ -705,21 +705,21 @@ else
       #
 
   ifndef OPENJDK
-    SRC_ZIP_SRCS += $(JDK_TOPDIR)/src/closed/share/classes
-  endif
+  SRC_ZIP_SRCS += $(JDK_TOPDIR)/src/closed/share/classes
+endif
 
-  # Need to copy launcher src files into desired directory structure
-  # before zipping the sources.
-  LAUNCHER_SRC_FILES := $(wildcard $(JDK_TOPDIR)/src/share/bin/*) \
-      $(wildcard $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/bin/java_md*)
-  LAUNCHER_ZIP_SRC := $(patsubst $(JDK_TOPDIR)/src/share/bin/%, $(IMAGES_OUTPUTDIR)/src/launcher/%, \
-      $(patsubst $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/bin/%, $(IMAGES_OUTPUTDIR)/src/launcher/%, \
-      $(LAUNCHER_SRC_FILES)))
+# Need to copy launcher src files into desired directory structure
+# before zipping the sources.
+LAUNCHER_SRC_FILES := $(wildcard $(JDK_TOPDIR)/src/share/bin/*) \
+    $(wildcard $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/bin/java_md*)
+LAUNCHER_ZIP_SRC := $(patsubst $(JDK_TOPDIR)/src/share/bin/%, $(IMAGES_OUTPUTDIR)/src/launcher/%, \
+    $(patsubst $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/bin/%, $(IMAGES_OUTPUTDIR)/src/launcher/%, \
+    $(LAUNCHER_SRC_FILES)))
 
-  $(IMAGES_OUTPUTDIR)/src/launcher/%: $(JDK_TOPDIR)/src/share/bin/%
+$(IMAGES_OUTPUTDIR)/src/launcher/%: $(JDK_TOPDIR)/src/share/bin/%
 	$(install-file)
 
-  $(IMAGES_OUTPUTDIR)/src/launcher/%: $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/bin/%
+$(IMAGES_OUTPUTDIR)/src/launcher/%: $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/bin/%
 	$(install-file)
 endif
 
@@ -777,16 +777,6 @@ endif
 
 ##########################################################################################
 
-#
-# This is an empty jar (only contains manifest) and fits poorly into framework...
-# create simple rule instead
-#
-$(IMAGES_OUTPUTDIR)/lib/management-agent.jar: \
-    $(JDK_TOPDIR)/$(SRC_SUBDIR)$(JAVA_MANAGEMENT_SUBDIR)/share/classes/sun/management/manifest
-	$(JAR) cfm $@ $<
-
-##########################################################################################
-
 # This file is imported from hotspot in Import.gmk. Copying it into images/lib so that
 # all jars can be found in one place when creating images in Images.gmk. It needs to be
 # done here so that clean targets can be simple and accurate.
@@ -798,8 +788,8 @@ $(IMAGES_OUTPUTDIR)/lib/sa-jdi.jar: $(HOTSPOT_DIST)/lib/sa-jdi.jar
 # sec-bin.zip is used by builds where the corresponding sources are not available
 #
 ifeq ($(SHUFFLED), true)
-  $(eval $(call SetupZipArchive,BUILD_SEC_BIN_ZIP, \
-      SRC := $(JDK_OUTPUTDIR), \
+$(eval $(call SetupZipArchive,BUILD_SEC_BIN_ZIP, \
+    SRC := $(JDK_OUTPUTDIR), \
       INCLUDES := modules/java.base/javax/net \
           modules/java.base/javax/security/cert \
           modules/java.base/com/sun/net/ssl \
@@ -820,23 +810,23 @@ ifeq ($(SHUFFLED), true)
 else
   $(eval $(call SetupZipArchive,BUILD_SEC_BIN_ZIP, \
       SRC := $(JDK_OUTPUTDIR), \
-      INCLUDES := classes/javax/net \
-          classes/javax/security/cert \
-          classes/com/sun/net/ssl \
-          classes/com/sun/security/cert \
-          classes/sun/net/www/protocol/https \
-          classes/sun/security/pkcs12 \
-          classes/sun/security/ssl \
-          classes/sun/security/krb5 \
-          classes/sun/security/krb5/internal \
-          classes/sun/security/krb5/internal/ccache \
-          classes/sun/security/krb5/internal/crypto \
-          classes/sun/security/krb5/internal/ktab \
-          classes/sun/security/krb5/internal/rcache \
-          classes/sun/security/krb5/internal/util, \
-      INCLUDE_FILES := classes/sun/security/jgss/spi/GSSContextSpi.class, \
-      EXCLUDES := classes/sun/security/krb5/internal/tools, \
-      ZIP := $(IMAGES_OUTPUTDIR)/sec-bin.zip))
+    INCLUDES := classes/javax/net \
+        classes/javax/security/cert \
+        classes/com/sun/net/ssl \
+        classes/com/sun/security/cert \
+        classes/sun/net/www/protocol/https \
+        classes/sun/security/pkcs12 \
+        classes/sun/security/ssl \
+        classes/sun/security/krb5 \
+        classes/sun/security/krb5/internal \
+        classes/sun/security/krb5/internal/ccache \
+        classes/sun/security/krb5/internal/crypto \
+        classes/sun/security/krb5/internal/ktab \
+        classes/sun/security/krb5/internal/rcache \
+        classes/sun/security/krb5/internal/util, \
+    INCLUDE_FILES := classes/sun/security/jgss/spi/GSSContextSpi.class, \
+    EXCLUDES := classes/sun/security/krb5/internal/tools, \
+    ZIP := $(IMAGES_OUTPUTDIR)/sec-bin.zip))
 endif
 
 JARS += $(IMAGES_OUTPUTDIR)/sec-bin.zip

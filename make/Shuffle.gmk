@@ -1301,7 +1301,6 @@ $(eval $(call SetupShuffleFiles,COPY_CONF_BASE, \
         $(JDK_TOPDIR)/src/share/lib/hijrah-config-umalqura.properties \
         $(JDK_TOPDIR)/src/share/lib/security/java.policy \
         $(JDK_TOPDIR)/src/share/lib/security/cacerts \
-        $(JDK_TOPDIR)/src/share/lib/security/blacklisted.certs \
         $(JDK_TOPDIR)/src/share/lib/security/sunpkcs11-solaris.cfg \
         $(wildcard $(JDK_TOPDIR)/src/share/lib/security/java.security-*) \
         $(wildcard $(JDK_TOPDIR)/src/share/lib/*.modules) \
@@ -1347,20 +1346,12 @@ $(eval $(call SetupShuffleFiles,COPY_CONF_DESKTOP, \
 $(eval $(call SetupShuffleFiles,COPY_CONF_DESKTOP_SOLARIS, \
     SRC := $(JDK_TOPDIR)/src/solaris/lib, \
     DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.desktop/unix/conf, \
-    FILES := $(wildcard $(JDK_TOPDIR)/src/solaris/lib/images/cursors/*) \
-        $(JDK_TOPDIR)/src/solaris/lib/flavormap.properties))
+    FILES := $(wildcard $(JDK_TOPDIR)/src/solaris/lib/images/cursors/*)))
 
 $(eval $(call SetupShuffleFiles,COPY_CONF_DESKTOP_WINDOWS, \
     SRC := $(JDK_TOPDIR)/src/windows/lib, \
     DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.desktop/windows/conf, \
-    FILES := $(wildcard $(JDK_TOPDIR)/src/windows/lib/images/cursors/*) \
-        $(JDK_TOPDIR)/src/windows/lib/flavormap.properties))
-
-$(eval $(call SetupShuffleFiles,COPY_CONF_DESKTOP_MACOSX, \
-    SRC := $(JDK_TOPDIR)/src/macosx/lib, \
-    DEST := $(JDK_TOPDIR)/$(SHUFFLED_SRC_SUBDIR)/java.desktop/macosx/conf, \
-    FILES := $(wildcard $(JDK_TOPDIR)/src/macosx/lib/images/cursors/*) \
-        $(JDK_TOPDIR)/src/macosx/lib/flavormap.properties))
+    FILES := $(wildcard $(JDK_TOPDIR)/src/windows/lib/images/cursors/*)))
 
 $(eval $(call SetupShuffleFiles,COPY_CONF_JVMCFG_SOLARIS, \
     SRC := $(JDK_TOPDIR)/src/solaris/bin, \
@@ -1475,8 +1466,7 @@ $(eval $(call SetupShuffleFiles,COPY_JAVA_MANAGEMENT_PACKAGE_INFO, \
             $(JDK_TOPDIR)/src/share/classes/javax/management \
             $(JDK_TOPDIR)/src/share/classes/sun/management/jmxremote \
         -name package.html) \
-        $(wildcard $(JDK_TOPDIR)/src/share/classes/com/sun/jmx/remote/protocol/iiop/*.java) \
-        $(JDK_TOPDIR)/src/share/classes/sun/management/manifest))
+        $(wildcard $(JDK_TOPDIR)/src/share/classes/com/sun/jmx/remote/protocol/iiop/*.java)))
 
 $(eval $(call SetupShuffleFiles,COPY_JAVA_MANAGEMENT_OVERVIEW, \
     SRC := $(JDK_TOPDIR)/src/share/classes/com/sun/management, \

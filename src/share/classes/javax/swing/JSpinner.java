@@ -149,6 +149,7 @@ public class JSpinner extends JComponent implements Accessible
      * a set of previous/next buttons, and an editor appropriate
      * for the model.
      *
+     * @param model  a model for the new spinner
      * @throws NullPointerException if the model is {@code null}
      */
     public JSpinner(SpinnerModel model) {
@@ -328,6 +329,7 @@ public class JSpinner extends JComponent implements Accessible
      * getModel().getValue()
      * </pre>
      *
+     * @return the current value of the model
      * @see #setValue
      * @see SpinnerModel#getValue
      */
@@ -349,6 +351,7 @@ public class JSpinner extends JComponent implements Accessible
      * getModel().setValue(value)
      * </pre>
      *
+     * @param value  new value for the spinner
      * @throws IllegalArgumentException if <code>value</code> isn't allowed
      * @see #getValue
      * @see SpinnerModel#setValue
@@ -907,7 +910,7 @@ public class JSpinner extends JComponent implements Accessible
 
     /**
      * This subclass of javax.swing.DateFormatter maps the minimum/maximum
-     * properties to te start/end properties of a SpinnerDateModel.
+     * properties to the start/end properties of a SpinnerDateModel.
      */
     private static class DateEditorFormatter extends DateFormatter {
         private final SpinnerDateModel model;
@@ -917,19 +920,25 @@ public class JSpinner extends JComponent implements Accessible
             this.model = model;
         }
 
-        public void setMinimum(Comparable min) {
-            model.setStart(min);
+        @Override
+        @SuppressWarnings("unchecked")
+        public void setMinimum(Comparable<?> min) {
+            model.setStart((Comparable<Date>)min);
         }
 
-        public Comparable getMinimum() {
+        @Override
+        public Comparable<Date> getMinimum() {
             return  model.getStart();
         }
 
-        public void setMaximum(Comparable max) {
-            model.setEnd(max);
+        @Override
+        @SuppressWarnings("unchecked")
+        public void setMaximum(Comparable<?> max) {
+            model.setEnd((Comparable<Date>)max);
         }
 
-        public Comparable getMaximum() {
+        @Override
+        public Comparable<Date> getMaximum() {
             return model.getEnd();
         }
     }
@@ -1095,19 +1104,23 @@ public class JSpinner extends JComponent implements Accessible
             setValueClass(model.getValue().getClass());
         }
 
-        public void setMinimum(Comparable min) {
+        @Override
+        public void setMinimum(Comparable<?> min) {
             model.setMinimum(min);
         }
 
-        public Comparable getMinimum() {
+        @Override
+        public Comparable<?> getMinimum() {
             return  model.getMinimum();
         }
 
-        public void setMaximum(Comparable max) {
+        @Override
+        public void setMaximum(Comparable<?> max) {
             model.setMaximum(max);
         }
 
-        public Comparable getMaximum() {
+        @Override
+        public Comparable<?> getMaximum() {
             return model.getMaximum();
         }
     }

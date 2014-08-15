@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -49,11 +49,19 @@ public class BasicTableHeaderUI extends TableHeaderUI {
 // Instance Variables
 //
 
-    /** The JTableHeader that is delegating the painting to this UI. */
+    /**
+     *  The {@code JTableHeader} that is delegating the painting to this UI.
+     */
     protected JTableHeader header;
+
+    /**
+     * The instance of {@code CellRendererPane}.
+     */
     protected CellRendererPane rendererPane;
 
-    // Listeners that are attached to the JTable
+    /**
+     * Listeners that are attached to the {@code JTable}
+     */
     protected MouseInputListener mouseInputListener;
 
     // The column header over which the mouse currently is.
@@ -103,7 +111,7 @@ public class BasicTableHeaderUI extends TableHeaderUI {
             if (e.getClickCount() % 2 == 1 &&
                     SwingUtilities.isLeftMouseButton(e)) {
                 JTable table = header.getTable();
-                RowSorter sorter;
+                RowSorter<?> sorter;
                 if (table != null && (sorter = table.getRowSorter()) != null) {
                     int columnIndex = header.columnAtPoint(e.getPoint());
                     if (columnIndex != -1) {
@@ -300,7 +308,9 @@ public class BasicTableHeaderUI extends TableHeaderUI {
 //
 
     /**
-     * Creates the mouse listener for the JTableHeader.
+     * Creates the mouse listener for the {@code JTableHeader}.
+     *
+     * @return the mouse listener for the {@code JTableHeader}
      */
     protected MouseInputListener createMouseInputListener() {
         return new MouseInputHandler();
@@ -310,6 +320,12 @@ public class BasicTableHeaderUI extends TableHeaderUI {
 //  The installation/uninstall procedures and support
 //
 
+    /**
+     * Returns a new instance of {@code BasicTableHeaderUI}.
+     *
+     * @param h a component.
+     * @return a new instance of {@code BasicTableHeaderUI}
+     */
     public static ComponentUI createUI(JComponent h) {
         return new BasicTableHeaderUI();
     }
@@ -376,8 +392,14 @@ public class BasicTableHeaderUI extends TableHeaderUI {
         header = null;
     }
 
+    /**
+     * Uninstalls default properties
+     */
     protected void uninstallDefaults() {}
 
+    /**
+     * Unregisters listeners.
+     */
     protected void uninstallListeners() {
         header.removeMouseListener(mouseInputListener);
         header.removeMouseMotionListener(mouseInputListener);
@@ -772,9 +794,9 @@ public class BasicTableHeaderUI extends TableHeaderUI {
      */
     public Dimension getMinimumSize(JComponent c) {
         long width = 0;
-        Enumeration enumeration = header.getColumnModel().getColumns();
+        Enumeration<TableColumn> enumeration = header.getColumnModel().getColumns();
         while (enumeration.hasMoreElements()) {
-            TableColumn aColumn = (TableColumn)enumeration.nextElement();
+            TableColumn aColumn = enumeration.nextElement();
             width = width + aColumn.getMinWidth();
         }
         return createHeaderSize(width);
@@ -788,9 +810,9 @@ public class BasicTableHeaderUI extends TableHeaderUI {
      */
     public Dimension getPreferredSize(JComponent c) {
         long width = 0;
-        Enumeration enumeration = header.getColumnModel().getColumns();
+        Enumeration<TableColumn> enumeration = header.getColumnModel().getColumns();
         while (enumeration.hasMoreElements()) {
-            TableColumn aColumn = (TableColumn)enumeration.nextElement();
+            TableColumn aColumn = enumeration.nextElement();
             width = width + aColumn.getPreferredWidth();
         }
         return createHeaderSize(width);
@@ -802,9 +824,9 @@ public class BasicTableHeaderUI extends TableHeaderUI {
      */
     public Dimension getMaximumSize(JComponent c) {
         long width = 0;
-        Enumeration enumeration = header.getColumnModel().getColumns();
+        Enumeration<TableColumn> enumeration = header.getColumnModel().getColumns();
         while (enumeration.hasMoreElements()) {
-            TableColumn aColumn = (TableColumn)enumeration.nextElement();
+            TableColumn aColumn = enumeration.nextElement();
             width = width + aColumn.getMaxWidth();
         }
         return createHeaderSize(width);
@@ -875,7 +897,7 @@ public class BasicTableHeaderUI extends TableHeaderUI {
             String name = getName();
             if (TOGGLE_SORT_ORDER == name) {
                 JTable table = th.getTable();
-                RowSorter sorter = table == null ? null : table.getRowSorter();
+                RowSorter<?> sorter = table == null ? null : table.getRowSorter();
                 if (sorter != null) {
                     int columnIndex = ui.getSelectedColumnIndex();
                     columnIndex = table.convertColumnIndexToModel(

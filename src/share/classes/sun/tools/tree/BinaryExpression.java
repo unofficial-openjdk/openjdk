@@ -64,7 +64,7 @@ class BinaryExpression extends UnaryExpression {
     /**
      * Check a binary expression
      */
-    public Vset checkValue(Environment env, Context ctx, Vset vset, Hashtable exp) {
+    public Vset checkValue(Environment env, Context ctx, Vset vset, Hashtable<Object, Object> exp) {
         vset = left.checkValue(env, ctx, vset, exp);
         vset = right.checkValue(env, ctx, vset, exp);
 
@@ -212,10 +212,10 @@ class BinaryExpression extends UnaryExpression {
             Label l2 = new Label();
 
             codeBranch(env, ctx, asm, l1, true);
-            asm.add(true, where, opc_ldc, new Integer(0));
+            asm.add(true, where, opc_ldc, 0);
             asm.add(true, where, opc_goto, l2);
             asm.add(l1);
-            asm.add(true, where, opc_ldc, new Integer(1));
+            asm.add(true, where, opc_ldc, 1);
             asm.add(l2);
         } else {
             left.codeValue(env, ctx, asm);

@@ -80,10 +80,10 @@ class BitNotExpression extends UnaryExpression {
     public void codeValue(Environment env, Context ctx, Assembler asm) {
         right.codeValue(env, ctx, asm);
         if (type.isType(TC_INT)) {
-            asm.add(where, opc_ldc, new Integer(-1));
+            asm.add(where, opc_ldc, -1);
             asm.add(where, opc_ixor);
         } else {
-            asm.add(where, opc_ldc2_w, new Long(-1));
+            asm.add(where, opc_ldc2_w, -1L);
             asm.add(where, opc_lxor);
         }
     }

@@ -255,7 +255,7 @@ public final class ImageFile {
         public List<ModuleDescriptor> modules(Loader loader) {
             return loaders.containsKey(loader)
                        ? loaders.get(loader).modules()
-                       : Collections.EMPTY_LIST;
+                       : Collections.emptyList();
         }
 
         private void loader(Loader loader, Set<ModuleDescriptor> modules) {

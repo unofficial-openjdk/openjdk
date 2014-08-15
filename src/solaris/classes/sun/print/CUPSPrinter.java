@@ -39,6 +39,7 @@ import javax.print.attribute.standard.MediaSizeName;
 import javax.print.attribute.standard.MediaSize;
 import javax.print.attribute.standard.MediaTray;
 import javax.print.attribute.standard.MediaPrintableArea;
+import javax.print.attribute.standard.PrinterResolution;
 import javax.print.attribute.Size2DSyntax;
 import javax.print.attribute.Attribute;
 import javax.print.attribute.EnumSyntax;
@@ -57,6 +58,8 @@ public class CUPSPrinter  {
     // CUPS does not support multi-threading.
     private static synchronized native String[] getMedia(String printer);
     private static synchronized native float[] getPageSizes(String printer);
+    private static synchronized native void
+        getResolutions(String printer, ArrayList<Integer> resolutionList);
     //public static boolean useIPPMedia = false; will be used later
 
     private MediaPrintableArea[] cupsMediaPrintables;
@@ -68,6 +71,7 @@ public class CUPSPrinter  {
     public  int nTrays = 0;
     private  String[] media;
     private  float[] pageSizes;
+    int[]   resolutionsArray;
     private String printer;
 
     private static boolean libFound;
@@ -119,6 +123,12 @@ public class CUPSPrinter  {
                 nTrays = media.length/2-nPageSizes;
                 assert (nTrays >= 0);
             }
+            ArrayList<Integer> resolutionList = new ArrayList<>();
+            getResolutions(printer, resolutionList);
+            resolutionsArray = new int[resolutionList.size()];
+            for (int i=0; i < resolutionList.size(); i++) {
+                resolutionsArray[i] = resolutionList.get(i);
+            }
         }
     }
 
@@ -140,6 +150,9 @@ public class CUPSPrinter  {
         return cupsCustomMediaSNames;
     }
 
+    public int getDefaultMediaIndex() {
+        return ((pageSizes.length >1) ? (int)(pageSizes[pageSizes.length -1]) : 0);
+    }
 
     /**
      * Returns array of MediaPrintableArea derived from PPD.
@@ -157,6 +170,12 @@ public class CUPSPrinter  {
         return cupsMediaTrays;
     }
 
+    /**
+     * return the raw packed array of supported printer resolutions.
+     */
+    int[] getRawResolutions() {
+        return resolutionsArray;
+    }
 
     /**
      * Initialize media by translating PPD info to PrintService attributes.
@@ -201,8 +220,15 @@ public class CUPSPrinter  {
 
                 // add this new custom msn to MediaSize array
                 if ((width > 0.0) && (length > 0.0)) {
+                    try {
                     new MediaSize(width, length,
                                   Size2DSyntax.INCH, msn);
+                    } catch (IllegalArgumentException e) {
+                        /* PDF printer in Linux for Ledger paper causes
+                        "IllegalArgumentException: X dimension > Y dimension".
+                        We rotate based on IPP spec. */
+                        new MediaSize(length, width, Size2DSyntax.INCH, msn);
+                    }
                 }
             }
 
@@ -246,9 +272,9 @@ public class CUPSPrinter  {
                 IPPPrintService.getIPPConnection(url);
 
             if (urlConnection != null) {
-                OutputStream os = (OutputStream)java.security.AccessController.
-                    doPrivileged(new java.security.PrivilegedAction() {
-                        public Object run() {
+                OutputStream os = java.security.AccessController.
+                    doPrivileged(new java.security.PrivilegedAction<OutputStream>() {
+                        public OutputStream run() {
                             try {
                                 return urlConnection.getOutputStream();
                             } catch (Exception e) {
@@ -274,10 +300,10 @@ public class CUPSPrinter  {
                                         IPPPrintService.OP_CUPS_GET_DEFAULT,
                                         attCl)) {
 
-                    HashMap defaultMap = null;
+                    HashMap<String, AttributeClass> defaultMap = null;
                     String[] printerInfo = new String[2];
                     InputStream is = urlConnection.getInputStream();
-                    HashMap[] responseMap = IPPPrintService.readIPPResponse(
+                    HashMap<String, AttributeClass>[] responseMap = IPPPrintService.readIPPResponse(
                                          is);
                     is.close();
 
@@ -309,13 +335,11 @@ public class CUPSPrinter  {
                     }
 
 
-                    AttributeClass attribClass = (AttributeClass)
-                        defaultMap.get("printer-name");
+                    AttributeClass attribClass = defaultMap.get("printer-name");
 
                     if (attribClass != null) {
                         printerInfo[0] = attribClass.getStringValue();
-                        attribClass = (AttributeClass)
-                            defaultMap.get("printer-uri-supported");
+                        attribClass = defaultMap.get("printer-uri-supported");
                         IPPPrintService.debug_println(debugPrefix+
                           "printer-uri-supported="+attribClass);
                         if (attribClass != null) {
@@ -348,9 +372,9 @@ public class CUPSPrinter  {
                 IPPPrintService.getIPPConnection(url);
 
             if (urlConnection != null) {
-                OutputStream os = (OutputStream)java.security.AccessController.
-                    doPrivileged(new java.security.PrivilegedAction() {
-                        public Object run() {
+                OutputStream os = java.security.AccessController.
+                    doPrivileged(new java.security.PrivilegedAction<OutputStream>() {
+                        public OutputStream run() {
                             try {
                                 return urlConnection.getOutputStream();
                             } catch (Exception e) {
@@ -375,7 +399,7 @@ public class CUPSPrinter  {
                                 IPPPrintService.OP_CUPS_GET_PRINTERS, attCl)) {
 
                     InputStream is = urlConnection.getInputStream();
-                    HashMap[] responseMap =
+                    HashMap<String, AttributeClass>[] responseMap =
                         IPPPrintService.readIPPResponse(is);
 
                     is.close();
@@ -386,9 +410,9 @@ public class CUPSPrinter  {
                         return null;
                     }
 
-                    ArrayList printerNames = new ArrayList();
+                    ArrayList<String> printerNames = new ArrayList<>();
                     for (int i=0; i< responseMap.length; i++) {
-                        AttributeClass attribClass = (AttributeClass)
+                        AttributeClass attribClass =
                             responseMap[i].get("printer-uri-supported");
 
                         if (attribClass != null) {
@@ -396,7 +420,7 @@ public class CUPSPrinter  {
                             printerNames.add(nameStr);
                         }
                     }
-                    return (String[])printerNames.toArray(new String[] {});
+                    return printerNames.toArray(new String[] {});
                 } else {
                     os.close();
                     urlConnection.disconnect();

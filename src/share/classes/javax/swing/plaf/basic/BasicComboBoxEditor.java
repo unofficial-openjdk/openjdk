@@ -41,9 +41,15 @@ import sun.reflect.misc.MethodUtil;
  * @author Mark Davidson
  */
 public class BasicComboBoxEditor implements ComboBoxEditor,FocusListener {
+    /**
+     * An instance of {@code JTextField}.
+     */
     protected JTextField editor;
     private Object oldValue;
 
+    /**
+     * Constructs a new instance of {@code BasicComboBoxEditor}.
+     */
     public BasicComboBoxEditor() {
         editor = createEditorComponent();
     }
@@ -100,7 +106,7 @@ public class BasicComboBoxEditor implements ComboBoxEditor,FocusListener {
                 // Must take the value from the editor and get the value and cast it to the new type.
                 Class<?> cls = oldValue.getClass();
                 try {
-                    Method method = MethodUtil.getMethod(cls, "valueOf", new Class[]{String.class});
+                    Method method = MethodUtil.getMethod(cls, "valueOf", new Class<?>[]{String.class});
                     newValue = MethodUtil.invoke(method, oldValue, new Object[] { editor.getText()});
                 } catch (Exception ex) {
                     // Fail silently and return the newValue (a String object)

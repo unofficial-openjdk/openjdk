@@ -59,20 +59,53 @@ public class BasicListUI extends ListUI
     private static final StringBuilder BASELINE_COMPONENT_KEY =
         new StringBuilder("List.baselineComponent");
 
-    protected JList list = null;
+    /**
+     * The instance of {@code JList}.
+     */
+    protected JList<Object> list = null;
+    /**
+     * The instance of {@code CellRendererPane}.
+     */
     protected CellRendererPane rendererPane;
 
     // Listeners that this UI attaches to the JList
+    /**
+     * {@code FocusListener} that attached to {@code JList}.
+     */
     protected FocusListener focusListener;
+    /**
+     * {@code MouseInputListener} that attached to {@code JList}.
+     */
     protected MouseInputListener mouseInputListener;
+    /**
+     * {@code ListSelectionListener} that attached to {@code JList}.
+     */
     protected ListSelectionListener listSelectionListener;
+    /**
+     * {@code ListDataListener} that attached to {@code JList}.
+     */
     protected ListDataListener listDataListener;
+    /**
+     * {@code PropertyChangeListener} that attached to {@code JList}.
+     */
     protected PropertyChangeListener propertyChangeListener;
     private Handler handler;
 
+    /**
+     * The array of cells' height
+     */
     protected int[] cellHeights = null;
+    /**
+     * The height of cell.
+     */
     protected int cellHeight = -1;
+    /**
+     * The width of cell.
+     */
     protected int cellWidth = -1;
+    /**
+     * The value represents changes to {@code JList} model.
+     */
     protected int updateLayoutStateNeeded = modelChanged;
     /**
      * Height of the list. When asked to paint, if the current size of
@@ -131,12 +164,33 @@ public class BasicListUI extends ListUI
      * models length changed, are handled similarly, see DataListener.
      */
 
+    /**
+     * The bit relates to model changed property.
+     */
     protected final static int modelChanged = 1 << 0;
+    /**
+     * The bit relates to selection model changed property.
+     */
     protected final static int selectionModelChanged = 1 << 1;
+    /**
+     * The bit relates to font changed property.
+     */
     protected final static int fontChanged = 1 << 2;
+    /**
+     * The bit relates to fixed cell width changed property.
+     */
     protected final static int fixedCellWidthChanged = 1 << 3;
+    /**
+     * The bit relates to fixed cell height changed property.
+     */
     protected final static int fixedCellHeightChanged = 1 << 4;
+    /**
+     * The bit relates to prototype cell value changed property.
+     */
     protected final static int prototypeCellValueChanged = 1 << 5;
+    /**
+     * The bit relates to cell renderer changed property.
+     */
     protected final static int cellRendererChanged = 1 << 6;
     private final static int layoutOrientationChanged = 1 << 7;
     private final static int heightChanged = 1 << 8;
@@ -187,17 +241,24 @@ public class BasicListUI extends ListUI
 
     /**
      * Paint one List cell: compute the relevant state, get the "rubber stamp"
-     * cell renderer component, and then use the CellRendererPane to paint it.
-     * Subclasses may want to override this method rather than paint().
+     * cell renderer component, and then use the {@code CellRendererPane} to paint it.
+     * Subclasses may want to override this method rather than {@code paint()}.
      *
+     * @param g an instance of {@code Graphics}
+     * @param row a row
+     * @param rowBounds a bounding rectangle to render to
+     * @param cellRenderer a list of {@code ListCellRenderer}
+     * @param dataModel a list model
+     * @param selModel a selection model
+     * @param leadIndex a lead index
      * @see #paint
      */
     protected void paintCell(
         Graphics g,
         int row,
         Rectangle rowBounds,
-        ListCellRenderer cellRenderer,
-        ListModel dataModel,
+        ListCellRenderer<Object> cellRenderer,
+        ListModel<Object> dataModel,
         ListSelectionModel selModel,
         int leadIndex)
     {
@@ -263,8 +324,8 @@ public class BasicListUI extends ListUI
         }
         maybeUpdateLayoutState();
 
-        ListCellRenderer renderer = list.getCellRenderer();
-        ListModel dataModel = list.getModel();
+        ListCellRenderer<Object> renderer = list.getCellRenderer();
+        ListModel<Object> dataModel = list.getModel();
         ListSelectionModel selModel = list.getSelectionModel();
         int size;
 
@@ -478,7 +539,8 @@ public class BasicListUI extends ListUI
         Component renderer = (Component)lafDefaults.get(
                 BASELINE_COMPONENT_KEY);
         if (renderer == null) {
-            ListCellRenderer lcr = (ListCellRenderer)UIManager.get(
+            @SuppressWarnings("unchecked")
+            ListCellRenderer<Object> lcr = (ListCellRenderer)UIManager.get(
                     "List.cellRenderer");
 
             // fix for 6711072 some LAFs like Nimbus do not provide this
@@ -715,7 +777,7 @@ public class BasicListUI extends ListUI
         list.addPropertyChangeListener(propertyChangeListener);
         list.addKeyListener(getHandler());
 
-        ListModel model = list.getModel();
+        ListModel<Object> model = list.getModel();
         if (model != null) {
             model.addListDataListener(listDataListener);
         }
@@ -744,7 +806,7 @@ public class BasicListUI extends ListUI
         list.removePropertyChangeListener(propertyChangeListener);
         list.removeKeyListener(getHandler());
 
-        ListModel model = list.getModel();
+        ListModel<Object> model = list.getModel();
         if (model != null) {
             model.removeListDataListener(listDataListener);
         }
@@ -785,7 +847,9 @@ public class BasicListUI extends ListUI
         LookAndFeel.installProperty(list, "opaque", Boolean.TRUE);
 
         if (list.getCellRenderer() == null) {
-            list.setCellRenderer((ListCellRenderer)(UIManager.get("List.cellRenderer")));
+            @SuppressWarnings("unchecked")
+            ListCellRenderer<Object> tmp = (ListCellRenderer)(UIManager.get("List.cellRenderer"));
+            list.setCellRenderer(tmp);
         }
 
         Color sbg = list.getSelectionBackground();
@@ -866,7 +930,9 @@ public class BasicListUI extends ListUI
      */
     public void installUI(JComponent c)
     {
-        list = (JList)c;
+        @SuppressWarnings("unchecked")
+        JList<Object> tmp = (JList)c;
+        list = tmp;
 
         layoutOrientation = list.getLayoutOrientation();
 
@@ -911,10 +977,11 @@ public class BasicListUI extends ListUI
 
 
     /**
-     * Returns a new instance of BasicListUI.  BasicListUI delegates are
-     * allocated one per JList.
+     * Returns a new instance of {@code BasicListUI}.
+     * {@code BasicListUI} delegates are allocated one per {@code JList}.
      *
-     * @return A new ListUI implementation for the Windows look and feel.
+     * @param list a component
+     * @return a new {@code ListUI} implementation for the Windows look and feel.
      */
     public static ComponentUI createUI(JComponent list) {
         return new BasicListUI();
@@ -925,7 +992,7 @@ public class BasicListUI extends ListUI
      * {@inheritDoc}
      * @throws NullPointerException {@inheritDoc}
      */
-    public int locationToIndex(JList list, Point location) {
+    public int locationToIndex(JList<?> list, Point location) {
         maybeUpdateLayoutState();
         return convertLocationToModel(location.x, location.y);
     }
@@ -934,7 +1001,7 @@ public class BasicListUI extends ListUI
     /**
      * {@inheritDoc}
      */
-    public Point indexToLocation(JList list, int index) {
+    public Point indexToLocation(JList<?> list, int index) {
         maybeUpdateLayoutState();
         Rectangle rect = getCellBounds(list, index, index);
 
@@ -948,7 +1015,7 @@ public class BasicListUI extends ListUI
     /**
      * {@inheritDoc}
      */
-    public Rectangle getCellBounds(JList list, int index1, int index2) {
+    public Rectangle getCellBounds(JList<?> list, int index1, int index2) {
         maybeUpdateLayoutState();
 
         int minIndex = Math.min(index1, index2);
@@ -992,7 +1059,7 @@ public class BasicListUI extends ListUI
      * Gets the bounds of the specified model index, returning the resulting
      * bounds, or null if <code>index</code> is not valid.
      */
-    private Rectangle getCellBounds(JList list, int index) {
+    private Rectangle getCellBounds(JList<?> list, int index) {
         maybeUpdateLayoutState();
 
         int row = convertModelToRow(index);
@@ -1041,7 +1108,8 @@ public class BasicListUI extends ListUI
     /**
      * Returns the height of the specified row based on the current layout.
      *
-     * @return The specified row height or -1 if row isn't valid.
+     * @param row a row
+     * @return the specified row height or -1 if row isn't valid
      * @see #convertYToRow
      * @see #convertRowToY
      * @see #updateLayoutState
@@ -1053,11 +1121,12 @@ public class BasicListUI extends ListUI
 
 
     /**
-     * Convert the JList relative coordinate to the row that contains it,
-     * based on the current layout.  If y0 doesn't fall within any row,
+     * Convert the {@code JList} relative coordinate to the row that contains it,
+     * based on the current layout. If {@code y0} doesn't fall within any row,
      * return -1.
      *
-     * @return The row that contains y0, or -1.
+     * @param y0 a relative Y coordinate
+     * @return the row that contains y0, or -1
      * @see #getRowHeight
      * @see #updateLayoutState
      */
@@ -1068,10 +1137,11 @@ public class BasicListUI extends ListUI
 
 
     /**
-     * Return the JList relative Y coordinate of the origin of the specified
+     * Return the {@code JList} relative Y coordinate of the origin of the specified
      * row or -1 if row isn't valid.
      *
-     * @return The Y coordinate of the origin of row, or -1.
+     * @param row a row
+     * @return the Y coordinate of the origin of row, or -1
      * @see #getRowHeight
      * @see #updateLayoutState
      */
@@ -1351,9 +1421,9 @@ public class BasicListUI extends ListUI
 
         if ((fixedCellWidth == -1) || (fixedCellHeight == -1)) {
 
-            ListModel dataModel = list.getModel();
+            ListModel<Object> dataModel = list.getModel();
             int dataModelSize = dataModel.getSize();
-            ListCellRenderer renderer = list.getCellRenderer();
+            ListCellRenderer<Object> renderer = list.getCellRenderer();
 
             if (renderer != null) {
                 for(int index = 0; index < dataModelSize; index++) {
@@ -1530,10 +1600,10 @@ public class BasicListUI extends ListUI
 
 
     /**
-     * Creates a delegate that implements MouseInputListener.
-     * The delegate is added to the corresponding java.awt.Component listener
-     * lists at installUI() time. Subclasses can override this method to return
-     * a custom MouseInputListener, e.g.
+     * Creates a delegate that implements {@code MouseInputListener}.
+     * The delegate is added to the corresponding {@code java.awt.Component} listener
+     * lists at {@code installUI()} time. Subclasses can override this method to return
+     * a custom {@code MouseInputListener}, e.g.
      * <pre>
      * class MyListUI extends BasicListUI {
      *    protected MouseInputListener <b>createMouseInputListener</b>() {
@@ -1548,6 +1618,7 @@ public class BasicListUI extends ListUI
      * }
      * </pre>
      *
+     * @return an instance of {@code MouseInputListener}
      * @see MouseInputHandler
      * @see #installUI
      */
@@ -1561,6 +1632,9 @@ public class BasicListUI extends ListUI
      */
     public class FocusHandler implements FocusListener
     {
+        /**
+         * Repaints focused cells.
+         */
         protected void repaintCellFocus()
         {
             getHandler().repaintCellFocus();
@@ -1579,6 +1653,11 @@ public class BasicListUI extends ListUI
         }
     }
 
+    /**
+     * Returns an instance of {@code FocusListener}.
+     *
+     * @return an instance of {@code FocusListener}
+     */
     protected FocusListener createFocusListener() {
         return getHandler();
     }
@@ -1612,9 +1691,9 @@ public class BasicListUI extends ListUI
 
 
     /**
-     * Creates an instance of ListSelectionHandler that's added to
-     * the JLists by selectionModel as needed.  Subclasses can override
-     * this method to return a custom ListSelectionListener, e.g.
+     * Creates an instance of {@code ListSelectionHandler} that's added to
+     * the {@code JLists} by selectionModel as needed.  Subclasses can override
+     * this method to return a custom {@code ListSelectionListener}, e.g.
      * <pre>
      * class MyListUI extends BasicListUI {
      *    protected ListSelectionListener <b>createListSelectionListener</b>() {
@@ -1629,6 +1708,7 @@ public class BasicListUI extends ListUI
      * }
      * </pre>
      *
+     * @return an instance of {@code ListSelectionHandler}
      * @see ListSelectionHandler
      * @see #installUI
      */
@@ -1644,8 +1724,8 @@ public class BasicListUI extends ListUI
 
 
     /**
-     * The ListDataListener that's added to the JLists model at
-     * installUI time, and whenever the JList.model property changes.
+     * The {@code ListDataListener} that's added to the {@code JLists} model at
+     * {@code installUI time}, and whenever the JList.model property changes.
      * <p>
      * <strong>Warning:</strong>
      * Serialized objects of this class will not be compatible with
@@ -1682,9 +1762,9 @@ public class BasicListUI extends ListUI
 
 
     /**
-     * Creates an instance of ListDataListener that's added to
-     * the JLists by model as needed.  Subclasses can override
-     * this method to return a custom ListDataListener, e.g.
+     * Creates an instance of {@code ListDataListener} that's added to
+     * the {@code JLists} by model as needed. Subclasses can override
+     * this method to return a custom {@code ListDataListener}, e.g.
      * <pre>
      * class MyListUI extends BasicListUI {
      *    protected ListDataListener <b>createListDataListener</b>() {
@@ -1699,6 +1779,7 @@ public class BasicListUI extends ListUI
      * }
      * </pre>
      *
+     * @return an instance of {@code ListDataListener}
      * @see ListDataListener
      * @see JList#getModel
      * @see #installUI
@@ -1739,9 +1820,9 @@ public class BasicListUI extends ListUI
 
 
     /**
-     * Creates an instance of PropertyChangeHandler that's added to
-     * the JList by installUI().  Subclasses can override this method
-     * to return a custom PropertyChangeListener, e.g.
+     * Creates an instance of {@code PropertyChangeHandler} that's added to
+     * the {@code JList} by {@code installUI()}. Subclasses can override this method
+     * to return a custom {@code PropertyChangeListener}, e.g.
      * <pre>
      * class MyListUI extends BasicListUI {
      *    protected PropertyChangeListener <b>createPropertyChangeListener</b>() {
@@ -1758,6 +1839,7 @@ public class BasicListUI extends ListUI
      * }
      * </pre>
      *
+     * @return an instance of {@code PropertyChangeHandler}
      * @see PropertyChangeListener
      * @see #installUI
      */
@@ -1838,7 +1920,8 @@ public class BasicListUI extends ListUI
         }
         public void actionPerformed(ActionEvent e) {
             String name = getName();
-            JList list = (JList)e.getSource();
+            @SuppressWarnings("unchecked")
+            JList<Object> list = (JList)e.getSource();
             BasicListUI ui = (BasicListUI)BasicLookAndFeel.getUIOfType(
                      list.getUI(), BasicListUI.class);
 
@@ -1997,11 +2080,11 @@ public class BasicListUI extends ListUI
             return true;
         }
 
-        private void clearSelection(JList list) {
+        private void clearSelection(JList<?> list) {
             list.clearSelection();
         }
 
-        private void selectAll(JList list) {
+        private void selectAll(JList<?> list) {
             int size = list.getModel().getSize();
             if (size > 0) {
                 ListSelectionModel lsm = list.getSelectionModel();
@@ -2030,7 +2113,7 @@ public class BasicListUI extends ListUI
             }
         }
 
-        private int getNextPageIndex(JList list, int direction) {
+        private int getNextPageIndex(JList<?> list, int direction) {
             if (list.getModel().getSize() == 0) {
                 return -1;
             }
@@ -2155,7 +2238,7 @@ public class BasicListUI extends ListUI
             return index;
         }
 
-        private void changeSelection(JList list, int type,
+        private void changeSelection(JList<?> list, int type,
                                      int index, int direction) {
             if (index >= 0 && index < list.getModel().getSize()) {
                 ListSelectionModel lsm = list.getSelectionModel();
@@ -2198,7 +2281,7 @@ public class BasicListUI extends ListUI
          * index. When scroll up makes selected index the first visible index.
          * Adjust visible rectangle respect to list's component orientation.
          */
-        private void adjustScrollPositionIfNecessary(JList list, int index,
+        private void adjustScrollPositionIfNecessary(JList<?> list, int index,
                                                      int direction) {
             if (direction == 0) {
                 return;
@@ -2286,7 +2369,7 @@ public class BasicListUI extends ListUI
             }
         }
 
-        private int getNextColumnIndex(JList list, BasicListUI ui,
+        private int getNextColumnIndex(JList<?> list, BasicListUI ui,
                                        int amount) {
             if (list.getLayoutOrientation() != JList.VERTICAL) {
                 int index = adjustIndex(list.getLeadSelectionIndex(), list);
@@ -2319,7 +2402,7 @@ public class BasicListUI extends ListUI
             return -1;
         }
 
-        private int getNextIndex(JList list, BasicListUI ui, int amount) {
+        private int getNextIndex(JList<?> list, BasicListUI ui, int amount) {
             int index = adjustIndex(list.getLeadSelectionIndex(), list);
             int size = list.getModel().getSize();
 
@@ -2371,8 +2454,8 @@ public class BasicListUI extends ListUI
          * of the same letters followed by first typed another letter.
          */
         public void keyTyped(KeyEvent e) {
-            JList src = (JList)e.getSource();
-            ListModel model = src.getModel();
+            JList<?> src = (JList)e.getSource();
+            ListModel<?> model = src.getModel();
 
             if (model.getSize() == 0 || e.isAltDown() ||
                     BasicGraphicsUtils.isMenuShortcutKeyDown(e) ||
@@ -2468,8 +2551,10 @@ public class BasicListUI extends ListUI
              * listDataListener from the old model and add it to the new one.
              */
             if (propertyName == "model") {
-                ListModel oldModel = (ListModel)e.getOldValue();
-                ListModel newModel = (ListModel)e.getNewValue();
+                @SuppressWarnings("unchecked")
+                ListModel<?> oldModel = (ListModel)e.getOldValue();
+                @SuppressWarnings("unchecked")
+                ListModel<?> newModel = (ListModel)e.getNewValue();
                 if (oldModel != null) {
                     oldModel.removeListDataListener(listDataListener);
                 }
@@ -2828,7 +2913,7 @@ public class BasicListUI extends ListUI
         }
     }
 
-    private static int adjustIndex(int index, JList list) {
+    private static int adjustIndex(int index, JList<?> list) {
         return index < list.getModel().getSize() ? index : -1;
     }
 
@@ -2848,30 +2933,30 @@ public class BasicListUI extends ListUI
          */
         protected Transferable createTransferable(JComponent c) {
             if (c instanceof JList) {
-                JList list = (JList) c;
+                JList<?> list = (JList) c;
                 Object[] values = list.getSelectedValues();
 
                 if (values == null || values.length == 0) {
                     return null;
                 }
 
-                StringBuffer plainBuf = new StringBuffer();
-                StringBuffer htmlBuf = new StringBuffer();
+                StringBuilder plainStr = new StringBuilder();
+                StringBuilder htmlStr = new StringBuilder();
 
-                htmlBuf.append("<html>\n<body>\n<ul>\n");
+                htmlStr.append("<html>\n<body>\n<ul>\n");
 
                 for (int i = 0; i < values.length; i++) {
                     Object obj = values[i];
                     String val = ((obj == null) ? "" : obj.toString());
-                    plainBuf.append(val + "\n");
-                    htmlBuf.append("  <li>" + val + "\n");
+                    plainStr.append(val + "\n");
+                    htmlStr.append("  <li>" + val + "\n");
                 }
 
                 // remove the last newline
-                plainBuf.deleteCharAt(plainBuf.length() - 1);
-                htmlBuf.append("</ul>\n</body>\n</html>");
+                plainStr.deleteCharAt(plainStr.length() - 1);
+                htmlStr.append("</ul>\n</body>\n</html>");
 
-                return new BasicTransferable(plainBuf.toString(), htmlBuf.toString());
+                return new BasicTransferable(plainStr.toString(), htmlStr.toString());
             }
 
             return null;

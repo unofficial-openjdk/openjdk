@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1995, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -92,7 +92,7 @@ import javax.accessibility.*;
  * @see         java.awt.TextField#processEvent
  * @see         java.awt.TextField#processActionEvent
  * @see         java.awt.TextField#addActionListener
- * @since       JDK1.0
+ * @since       1.0
  */
 public class TextField extends TextComponent {
 
@@ -265,13 +265,17 @@ public class TextField extends TextComponent {
      * @param       c   the echo character for this text field.
      * @see         java.awt.TextField#echoCharIsSet
      * @see         java.awt.TextField#getEchoChar
-     * @since       JDK1.1
+     * @since       1.1
      */
     public void setEchoChar(char c) {
         setEchoCharacter(c);
     }
 
     /**
+     * Sets the character to be echoed when protected input is displayed.
+     *
+     *  @param  c the echo character for this text field
+     *
      * @deprecated As of JDK version 1.1,
      * replaced by <code>setEchoChar(char)</code>.
      */
@@ -321,7 +325,7 @@ public class TextField extends TextComponent {
      * approximate average character width that is platform-dependent.
      * @return     the number of columns.
      * @see        java.awt.TextField#setColumns
-     * @since      JDK1.1
+     * @since      1.1
      */
     public int getColumns() {
         return columns;
@@ -335,7 +339,7 @@ public class TextField extends TextComponent {
      * @exception  IllegalArgumentException   if the value
      *                 supplied for <code>columns</code>
      *                 is less than <code>0</code>.
-     * @since      JDK1.1
+     * @since      1.1
      */
     public void setColumns(int columns) {
         int oldVal;
@@ -361,13 +365,19 @@ public class TextField extends TextComponent {
      *                 in this text field.
      * @return    the preferred dimensions for
      *                 displaying this text field.
-     * @since     JDK1.1
+     * @since     1.1
      */
     public Dimension getPreferredSize(int columns) {
         return preferredSize(columns);
     }
 
     /**
+     * Returns the preferred size for this text field
+     * with the specified number of columns.
+     *
+     * @param  columns the number of columns
+     * @return the preferred size for the text field
+     *
      * @deprecated As of JDK version 1.1,
      * replaced by <code>getPreferredSize(int)</code>.
      */
@@ -385,7 +395,7 @@ public class TextField extends TextComponent {
      * Gets the preferred size of this text field.
      * @return     the preferred dimensions for
      *                         displaying this text field.
-     * @since      JDK1.1
+     * @since      1.1
      */
     public Dimension getPreferredSize() {
         return preferredSize();
@@ -407,15 +417,21 @@ public class TextField extends TextComponent {
     /**
      * Gets the minimum dimensions for a text field with
      * the specified number of columns.
-     * @param    columns   the number of columns in
-     *                          this text field.
-     * @since    JDK1.1
+     * @param  columns the number of columns in
+     *         this text field.
+     * @return the minimum size for this text field
+     * @since    1.1
      */
     public Dimension getMinimumSize(int columns) {
         return minimumSize(columns);
     }
 
     /**
+     * Returns the minimum dimensions for a text field with
+     * the specified number of columns.
+     *
+     * @param  columns the number of columns
+     * @return the minimum size for this text field
      * @deprecated As of JDK version 1.1,
      * replaced by <code>getMinimumSize(int)</code>.
      */
@@ -433,7 +449,7 @@ public class TextField extends TextComponent {
      * Gets the minimum dimensions for this text field.
      * @return     the minimum dimensions for
      *                  displaying this text field.
-     * @since      JDK1.1
+     * @since      1.1
      */
     public Dimension getMinimumSize() {
         return minimumSize();
@@ -463,7 +479,7 @@ public class TextField extends TextComponent {
      * @see        #removeActionListener
      * @see        #getActionListeners
      * @see        java.awt.event.ActionListener
-     * @since      JDK1.1
+     * @since      1.1
      */
     public synchronized void addActionListener(ActionListener l) {
         if (l == null) {
@@ -484,7 +500,7 @@ public class TextField extends TextComponent {
      * @see             #addActionListener
      * @see             #getActionListeners
      * @see             java.awt.event.ActionListener
-     * @since           JDK1.1
+     * @since           1.1
      */
     public synchronized void removeActionListener(ActionListener l) {
         if (l == null) {
@@ -578,7 +594,7 @@ public class TextField extends TextComponent {
      * @param      e the event
      * @see        java.awt.event.ActionEvent
      * @see        java.awt.TextField#processActionEvent
-     * @since      JDK1.1
+     * @since      1.1
      */
     protected void processEvent(AWTEvent e) {
         if (e instanceof ActionEvent) {
@@ -609,7 +625,7 @@ public class TextField extends TextComponent {
      * @see         java.awt.event.ActionListener
      * @see         java.awt.TextField#addActionListener
      * @see         java.awt.Component#enableEvents
-     * @since       JDK1.1
+     * @since       1.1
      */
     protected void processActionEvent(ActionEvent e) {
         ActionListener listener = actionListener;

@@ -221,8 +221,8 @@ final class GssKrb5Server extends GssKrb5Base implements SaslServer {
             if (logger.isLoggable(Level.FINE)) {
                 logger.log(Level.FINE,
                     "KRB5SRV06:Supported protections: {0}; recv max buf size: {1}",
-                    new Object[]{new Byte(allQop),
-                                 new Integer(recvMaxBufSize)});
+                    new Object[]{allQop,
+                                 recvMaxBufSize});
             }
 
             handshakeStage = 2;  // progress to next stage
@@ -288,14 +288,14 @@ final class GssKrb5Server extends GssKrb5Base implements SaslServer {
             if (logger.isLoggable(Level.FINE)) {
                 logger.log(Level.FINE,
             "KRB5SRV10:Selected protection: {0}; privacy: {1}; integrity: {2}",
-                    new Object[]{new Byte(selectedQop),
+                    new Object[]{selectedQop,
                                  Boolean.valueOf(privacy),
                                  Boolean.valueOf(integrity)});
                 logger.log(Level.FINE,
 "KRB5SRV11:Client max recv size: {0}; server max send size: {1}; rawSendSize: {2}",
-                    new Object[] {new Integer(clntMaxBufSize),
-                                  new Integer(sendMaxBufSize),
-                                  new Integer(rawSendSize)});
+                    new Object[] {clntMaxBufSize,
+                                  sendMaxBufSize,
+                                  rawSendSize});
             }
 
             // Get authorization identity, if any

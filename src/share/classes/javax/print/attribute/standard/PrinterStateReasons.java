@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -77,7 +77,6 @@ import javax.print.attribute.PrintServiceAttribute;
  * together with a hyphen (<CODE>"-"</CODE>) in between, gives the IPP keyword
  * value. The category name returned by <CODE>getName()</CODE> gives the IPP
  * attribute name.
- * <P>
  *
  * @author  Alan Kaminsky
  */
@@ -242,16 +241,18 @@ public final class PrinterStateReasons
         extends AbstractSet<PrinterStateReason>
     {
         private Severity mySeverity;
-        private Set myEntrySet;
 
-        public PrinterStateReasonSet(Severity severity, Set entrySet) {
+        private Set<Map.Entry<PrinterStateReason, Severity>> myEntrySet;
+
+        public PrinterStateReasonSet(Severity severity,
+                                     Set<Map.Entry<PrinterStateReason, Severity>> entrySet) {
             mySeverity = severity;
             myEntrySet = entrySet;
         }
 
         public int size() {
             int result = 0;
-            Iterator iter = iterator();
+            Iterator<PrinterStateReason> iter = iterator();
             while (iter.hasNext()) {
                 iter.next();
                 ++ result;
@@ -259,19 +260,19 @@ public final class PrinterStateReasons
             return result;
         }
 
-        public Iterator iterator() {
+        public Iterator<PrinterStateReason> iterator() {
             return new PrinterStateReasonSetIterator(mySeverity,
                                                      myEntrySet.iterator());
         }
     }
 
-    private class PrinterStateReasonSetIterator implements Iterator {
+    private class PrinterStateReasonSetIterator implements Iterator<PrinterStateReason> {
         private Severity mySeverity;
-        private Iterator myIterator;
-        private Map.Entry myEntry;
+        private Iterator<Map.Entry<PrinterStateReason, Severity>> myIterator;
+        private Map.Entry<PrinterStateReason, Severity> myEntry;
 
         public PrinterStateReasonSetIterator(Severity severity,
-                                             Iterator iterator) {
+                                             Iterator<Map.Entry<PrinterStateReason, Severity>> iterator) {
             mySeverity = severity;
             myIterator = iterator;
             goToNext();
@@ -280,8 +281,8 @@ public final class PrinterStateReasons
         private void goToNext() {
             myEntry = null;
             while (myEntry == null && myIterator.hasNext()) {
-                myEntry = (Map.Entry) myIterator.next();
-                if ((Severity) myEntry.getValue() != mySeverity) {
+                myEntry = myIterator.next();
+                if (myEntry.getValue() != mySeverity) {
                     myEntry = null;
                 }
             }
@@ -291,11 +292,11 @@ public final class PrinterStateReasons
             return myEntry != null;
         }
 
-        public Object next() {
+        public PrinterStateReason next() {
             if (myEntry == null) {
                 throw new NoSuchElementException();
             }
-            Object result = myEntry.getKey();
+            PrinterStateReason result = myEntry.getKey();
             goToNext();
             return result;
         }

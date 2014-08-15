@@ -143,7 +143,7 @@ import sun.security.action.GetPropertyAction;
  * diagnose errors when an operation on a file fails.
  *
  * @author  unascribed
- * @since   JDK1.0
+ * @since   1.0
  */
 
 public class File
@@ -608,7 +608,7 @@ public class File
      *          java.lang.SecurityManager#checkRead}</code> method denies
      *          read access to the file
      *
-     * @since   JDK1.1
+     * @since   1.1
      * @see     Path#toRealPath
      */
     public String getCanonicalPath() throws IOException {
@@ -1997,8 +1997,10 @@ public class File
                                       File directory)
         throws IOException
     {
-        if (prefix.length() < 3)
-            throw new IllegalArgumentException("Prefix string too short");
+        if (prefix.length() < 3) {
+            throw new IllegalArgumentException("Prefix string \"" + prefix +
+                "\" too short: length must be at least 3");
+        }
         if (suffix == null)
             suffix = ".tmp";
 

@@ -44,7 +44,7 @@ public final class ImageWriter {
     private ImageStream locationStream;
     private ImageStream allIndexStream;
 
-    static class ImageBucket implements Comparable {
+    static class ImageBucket implements Comparable<ImageBucket> {
         final List<ImageLocation> list;
 
         ImageBucket() {
@@ -79,9 +79,8 @@ public final class ImageWriter {
         }
 
         @Override
-        public int compareTo(Object o) {
-            ImageBucket other = (ImageBucket)o;
-            return other.getSize() - getSize();
+        public int compareTo(ImageBucket o) {
+            return o.getSize() - getSize();
         }
     }
 

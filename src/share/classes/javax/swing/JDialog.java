@@ -94,6 +94,7 @@ import javax.accessibility.*;
  * @author David Kloba
  * @author James Gosling
  * @author Scott Violet
+ * @since 1.2
  */
 @SuppressWarnings("serial") // Same-version serialization only
 public class JDialog extends Dialog implements WindowConstants,
@@ -647,6 +648,7 @@ public class JDialog extends Dialog implements WindowConstants,
         enableEvents(AWTEvent.KEY_EVENT_MASK | AWTEvent.WINDOW_EVENT_MASK);
         setLocale( JComponent.getDefaultLocale() );
         setRootPane(createRootPane());
+        setBackground(UIManager.getColor("control"));
         setRootPaneCheckingEnabled(true);
         if (JDialog.isDefaultLookAndFeelDecorated()) {
             boolean supportsWindowDecorations =
@@ -662,6 +664,8 @@ public class JDialog extends Dialog implements WindowConstants,
     /**
      * Called by the constructor methods to create the default
      * {@code rootPane}.
+     *
+     * @return  a new {@code JRootPane}
      */
     protected JRootPane createRootPane() {
         JRootPane rp = new JRootPane();
@@ -852,6 +856,7 @@ public class JDialog extends Dialog implements WindowConstants,
    /**
     * Returns the menubar set on this dialog.
     *
+    * @return the menubar set on this dialog
     * @see #setJMenuBar
     */
     public JMenuBar getJMenuBar() {
@@ -1223,6 +1228,9 @@ public class JDialog extends Dialog implements WindowConstants,
 // Accessibility support
 ////////////////
 
+    /**
+     * {@code AccessibleContext} associated with this {@code JDialog}
+     */
     protected AccessibleContext accessibleContext = null;
 
     /**

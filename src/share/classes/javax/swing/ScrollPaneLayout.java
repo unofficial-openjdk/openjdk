@@ -56,6 +56,7 @@ import java.io.Serializable;
  * @see JViewport
  *
  * @author Hans Muller
+ * @since 1.2
  */
 @SuppressWarnings("serial") // Same-version serialization only
 public class ScrollPaneLayout
@@ -168,6 +169,8 @@ public class ScrollPaneLayout
      * };
      * scrollpane.setLayout(mySPLayout):
      * </pre>
+     *
+     * @param sp an instance of the {@code JScrollPane}
      */
     public void syncWithScrollPane(JScrollPane sp) {
         viewport = sp.getViewport();
@@ -820,10 +823,7 @@ public class ScrollPaneLayout
         Rectangle vsbR = new Rectangle(0, availR.y - vpbInsets.top, 0, 0);
 
         boolean vsbNeeded;
-        if (isEmpty) {
-            vsbNeeded = false;
-        }
-        else if (vsbPolicy == VERTICAL_SCROLLBAR_ALWAYS) {
+        if (vsbPolicy == VERTICAL_SCROLLBAR_ALWAYS) {
             vsbNeeded = true;
         }
         else if (vsbPolicy == VERTICAL_SCROLLBAR_NEVER) {
@@ -846,10 +846,7 @@ public class ScrollPaneLayout
 
         Rectangle hsbR = new Rectangle(availR.x - vpbInsets.left, 0, 0, 0);
         boolean hsbNeeded;
-        if (isEmpty) {
-            hsbNeeded = false;
-        }
-        else if (hsbPolicy == HORIZONTAL_SCROLLBAR_ALWAYS) {
+        if (hsbPolicy == HORIZONTAL_SCROLLBAR_ALWAYS) {
             hsbNeeded = true;
         }
         else if (hsbPolicy == HORIZONTAL_SCROLLBAR_NEVER) {
@@ -1106,6 +1103,7 @@ public class ScrollPaneLayout
      * Returns the bounds of the border around the specified scroll pane's
      * viewport.
      *
+     * @param scrollpane an instance of the {@code JScrollPane}
      * @return the size and position of the viewport border
      * @deprecated As of JDK version Swing1.1
      *    replaced by <code>JScrollPane.getViewportBorderBounds()</code>.

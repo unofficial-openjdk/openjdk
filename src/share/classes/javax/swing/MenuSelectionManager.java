@@ -36,6 +36,7 @@ import sun.swing.SwingUtilities2;
  * A MenuSelectionManager owns the selection in menu hierarchy.
  *
  * @author Arnaud Weber
+ * @since 1.2
  */
 public class MenuSelectionManager {
     private Vector<MenuElement> selection = new Vector<MenuElement>();
@@ -79,6 +80,7 @@ public class MenuSelectionManager {
      * generated is always "this".
      */
     protected transient ChangeEvent changeEvent = null;
+    /** The collection of registered listeners */
     protected EventListenerList listenerList = new EventListenerList();
 
     /**
@@ -220,7 +222,6 @@ public class MenuSelectionManager {
         MenuElement menuElement;
         MenuElement subElements[];
         MenuElement path[];
-        Vector<MenuElement> tmp;
         int selectionSize;
         p = event.getPoint();
 
@@ -249,7 +250,8 @@ public class MenuSelectionManager {
         screenX = p.x;
         screenY = p.y;
 
-        tmp = (Vector<MenuElement>)selection.clone();
+        @SuppressWarnings("unchecked")
+        Vector<MenuElement> tmp = (Vector<MenuElement>)selection.clone();
         selectionSize = tmp.size();
         boolean success = false;
         for (i=selectionSize - 1;i >= 0 && success == false; i--) {
@@ -384,7 +386,6 @@ public class MenuSelectionManager {
         int cWidth,cHeight;
         MenuElement menuElement;
         MenuElement subElements[];
-        Vector<MenuElement> tmp;
         int selectionSize;
 
         SwingUtilities.convertPointToScreen(p,source);
@@ -392,7 +393,8 @@ public class MenuSelectionManager {
         screenX = p.x;
         screenY = p.y;
 
-        tmp = (Vector<MenuElement>)selection.clone();
+        @SuppressWarnings("unchecked")
+        Vector<MenuElement> tmp = (Vector<MenuElement>)selection.clone();
         selectionSize = tmp.size();
         for(i=selectionSize - 1 ; i >= 0 ; i--) {
             menuElement = tmp.elementAt(i);
@@ -476,7 +478,11 @@ public class MenuSelectionManager {
     }
 
     /**
-     * Return true if c is part of the currently used menu
+     * Return true if {@code c} is part of the currently used menu
+     *
+     * @param c a {@code Component}
+     * @return true if {@code c} is part of the currently used menu,
+     *         false otherwise
      */
     public boolean isComponentPartOfCurrentMenu(Component c) {
         if(selection.size() > 0) {

@@ -62,13 +62,13 @@ class ServiceLocator {
      *
      * @param dn A string distinguished name (RFC 2253).
      * @return A domain name or null if none can be derived.
-     * @throw InvalidNameException If the distinugished name is invalid.
+     * @throw InvalidNameException If the distinguished name is invalid.
      */
     static String mapDnToDomainName(String dn) throws InvalidNameException {
         if (dn == null) {
             return null;
         }
-        StringBuffer domain = new StringBuffer();
+        StringBuilder domain = new StringBuilder();
         LdapName ldapName = new LdapName(dn);
 
         // process RDNs left-to-right

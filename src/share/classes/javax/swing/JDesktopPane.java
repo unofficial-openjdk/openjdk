@@ -85,6 +85,7 @@ import java.util.TreeSet;
  * @see DesktopManager
  *
  * @author David Kloba
+ * @since 1.2
  */
 @SuppressWarnings("serial") // Same-version serialization only
 public class JDesktopPane extends JLayeredPane implements Accessible
@@ -207,8 +208,11 @@ public class JDesktopPane extends JLayeredPane implements Accessible
      }
 
     /**
-     * Returns the <code>DesktopManger</code> that handles
+     * Returns the {@code DesktopManger} that handles
      * desktop-specific UI actions.
+     *
+     * @return the {@code DesktopManger} that handles desktop-specific
+     *         UI actions
      */
     public DesktopManager getDesktopManager() {
         return desktopManager;

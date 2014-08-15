@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2011, 2013, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2011, 2014, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -184,8 +184,6 @@ else
       $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/back
   LIBJDWP_CPPFLAGS := \
         -I$(JDK_TOPDIR)/src/share/back/export \
-        -I$(JDK_TOPDIR)/src/share/npt \
-        -I$(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/npt \
         -I$(JDK_TOPDIR)/src/share/back \
         -I$(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/back
 endif
@@ -206,6 +204,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBJDWP, \
     LDFLAGS_SUFFIX_linux := $(LIBDL), \
     LDFLAGS_SUFFIX_solaris := $(LIBDL) -lc, \
     LDFLAGS_SUFFIX_windows := $(LDFLAGS_JDKLIB_SUFFIX), \
+    LDFLAGS_SUFFIX_macosx := -liconv, \
     VERSIONINFO_RESOURCE := $(GLOBAL_VERSION_INFO_RESOURCE), \
     RC_FLAGS := $(RC_FLAGS) \
         -D "JDK_FNAME=jdwp.dll" \
@@ -340,8 +339,8 @@ ifeq ($(SHUFFLED), true)
       $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.management/$(OPENJDK_TARGET_OS_API_DIR)/native/libmanagement
   BUILD_LIBMANAGEMENT_CFLAGS := -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.management/share/native/include
 else
-  BUILD_LIBMANAGEMENT_SRC := $(JDK_TOPDIR)/src/share/native/sun/management \
-      $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/sun/management
+BUILD_LIBMANAGEMENT_SRC := $(JDK_TOPDIR)/src/share/native/sun/management \
+    $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/sun/management
 endif
 
 BUILD_LIBMANAGEMENT_EXCLUDES :=
@@ -409,15 +408,13 @@ ifeq ($(SHUFFLED), true)
 else
   BUILD_LIBHPROF_SRC := $(JDK_TOPDIR)/src/share/demo/jvmti/hprof \
       $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/demo/jvmti/hprof
-  BUILD_LIBHPROF_CFLAGS := -I$(JDK_TOPDIR)/src/share/demo/jvmti/hprof \
-      -I$(JDK_TOPDIR)/src/share/npt \
-      -I$(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/npt \
-      -I$(JDK_TOPDIR)/src/share/demo/jvmti/java_crw_demo
+BUILD_LIBHPROF_CFLAGS := -I$(JDK_TOPDIR)/src/share/demo/jvmti/hprof \
+    -I$(JDK_TOPDIR)/src/share/demo/jvmti/java_crw_demo
 
-  ifeq ($(OPENJDK_TARGET_OS), aix)
-    BUILD_LIBHPROF_SRC += $(JDK_TOPDIR)/src/aix/porting
-    BUILD_LIBHPROF_CFLAGS += -I$(JDK_TOPDIR)/src/aix/porting
-  endif
+ifeq ($(OPENJDK_TARGET_OS), aix)
+  BUILD_LIBHPROF_SRC += $(JDK_TOPDIR)/src/aix/porting
+  BUILD_LIBHPROF_CFLAGS += -I$(JDK_TOPDIR)/src/aix/porting
+endif
 endif
 
 

@@ -130,7 +130,7 @@ public class SnmpInt extends SnmpValue {
      * @return The <CODE>Long</CODE> representation of the value.
      */
     public Long toLong() {
-        return new Long(value) ;
+        return value;
     }
 
     /**
@@ -146,7 +146,7 @@ public class SnmpInt extends SnmpValue {
      * @return The <CODE>Integer</CODE> representation of the value.
      */
     public Integer toInteger() {
-        return new Integer((int)value) ;
+        return (int)value;
     }
 
     /**

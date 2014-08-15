@@ -43,7 +43,7 @@ class AquaComboBoxPopup extends BasicComboPopup {
     protected Component bottomStrut;
     protected boolean isPopDown = false;
 
-    public AquaComboBoxPopup(final JComboBox cBox) {
+    public AquaComboBoxPopup(final JComboBox<Object> cBox) {
         super(cBox);
     }
 
@@ -93,7 +93,7 @@ class AquaComboBoxPopup extends BasicComboPopup {
         final int rowCount = Math.min(maxRowCount, currentElementCount);
 
         final Dimension popupSize = new Dimension();
-        final ListCellRenderer renderer = list.getCellRenderer();
+        final ListCellRenderer<Object> renderer = list.getCellRenderer();
 
         for (int i = 0; i < rowCount; i++) {
             final Object value = list.getModel().getElementAt(i);
@@ -120,10 +120,6 @@ class AquaComboBoxPopup extends BasicComboPopup {
     @Override
     public void show() {
         final int startItemCount = comboBox.getItemCount();
-
-        if (startItemCount == 0) {
-            return;
-        }
 
         final Rectangle popupBounds = adjustPopupAndGetBounds();
         if (popupBounds == null) return; // null means don't show
@@ -153,8 +149,8 @@ class AquaComboBoxPopup extends BasicComboPopup {
 
     @Override
     @SuppressWarnings("serial") // anonymous class
-    protected JList createList() {
-        return new JList(comboBox.getModel()) {
+    protected JList<Object> createList() {
+        return new JList<Object>(comboBox.getModel()) {
             @Override
             public void processMouseEvent(MouseEvent e) {
                 if (e.isMetaDown()) {

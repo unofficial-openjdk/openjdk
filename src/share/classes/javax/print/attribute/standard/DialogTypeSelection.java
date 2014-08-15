@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,6 +26,7 @@
 package javax.print.attribute.standard;
 
 import javax.print.attribute.EnumSyntax;
+import javax.print.attribute.Attribute;
 import javax.print.attribute.PrintRequestAttribute;
 
 /**
@@ -45,9 +46,8 @@ import javax.print.attribute.PrintRequestAttribute;
  * or even printer specific options.
  * <P>
  * <B>IPP Compatibility:</B> This is not an IPP attribute.
- * <P>
- * @since 1.7
  *
+ * @since 1.7
  */
 public final class DialogTypeSelection extends EnumSyntax
         implements PrintRequestAttribute {
@@ -110,7 +110,7 @@ public final class DialogTypeSelection extends EnumSyntax
      * @return  Printing attribute class (category), an instance of class
      *          {@link java.lang.Class java.lang.Class}.
      */
-    public final Class getCategory() {
+    public final Class<? extends Attribute> getCategory() {
         return DialogTypeSelection.class;
     }
 

@@ -39,6 +39,7 @@ import javax.swing.text.*;
 import javax.swing.event.*;
 import javax.swing.text.html.*;
 import javax.accessibility.*;
+import sun.reflect.misc.ReflectUtil;
 
 /**
  * A text component to edit various kinds of content.
@@ -188,6 +189,7 @@ import javax.accessibility.*;
  * description: A text component to edit various types of content.
  *
  * @author  Timothy Prinzing
+ * @since 1.2
  */
 @SuppressWarnings("serial") // Same-version serialization only
 public class JEditorPane extends JTextComponent {
@@ -679,8 +681,8 @@ public class JEditorPane extends JTextComponent {
                         }
                     });
                 }
-                return (pageLoaded ? page : old);
             }
+            return (pageLoaded ? page : old);
         }
 
         /**
@@ -965,7 +967,7 @@ public class JEditorPane extends JTextComponent {
         // The type could have optional info is part of it,
         // for example some charset info.  We need to strip that
         // of and save it.
-        int parm = type.indexOf(";");
+        int parm = type.indexOf(';');
         if (parm > -1) {
             // Save the paramList.
             String paramList = type.substring(parm);
@@ -1190,14 +1192,14 @@ public class JEditorPane extends JTextComponent {
             String classname = getKitTypeRegistry().get(type);
             ClassLoader loader = getKitLoaderRegistry().get(type);
             try {
-                Class c;
+                Class<?> c;
                 if (loader != null) {
+                    ReflectUtil.checkPackageAccess(classname);
                     c = loader.loadClass(classname);
                 } else {
                     // Will only happen if developer has invoked
                     // registerEditorKitForContentType(type, class, null).
-                    c = Class.forName(classname, true, Thread.currentThread().
-                                      getContextClassLoader());
+                    c = SwingUtilities.loadSystemClass(classname);
                 }
                 k = (EditorKit) c.newInstance();
                 kitRegistry.put(type, k);
@@ -1250,11 +1252,12 @@ public class JEditorPane extends JTextComponent {
     }
 
     /**
-     * Returns the currently registered <code>EditorKit</code>
-     * class name for the type <code>type</code>.
+     * Returns the currently registered {@code EditorKit} class name for the
+     * type {@code type}.
      *
-     * @param type  the non-<code>null</code> content type
-     *
+     * @param type  the non-{@code null} content type
+     * @return a {@code String} containing the {@code EditorKit} class name
+     *         for {@code type}
      * @since 1.3
      */
     public static String getEditorKitClassNameForContentType(String type) {
@@ -1263,18 +1266,26 @@ public class JEditorPane extends JTextComponent {
 
     private static Hashtable<String, String> getKitTypeRegistry() {
         loadDefaultKitsIfNecessary();
-        return (Hashtable)SwingUtilities.appContextGet(kitTypeRegistryKey);
+        @SuppressWarnings("unchecked")
+        Hashtable<String, String> tmp =
+            (Hashtable)SwingUtilities.appContextGet(kitTypeRegistryKey);
+        return tmp;
     }
 
     private static Hashtable<String, ClassLoader> getKitLoaderRegistry() {
         loadDefaultKitsIfNecessary();
-        return (Hashtable)SwingUtilities.appContextGet(kitLoaderRegistryKey);
+        @SuppressWarnings("unchecked")
+        Hashtable<String, ClassLoader> tmp =
+            (Hashtable)SwingUtilities.appContextGet(kitLoaderRegistryKey);
+        return tmp;
     }
 
     private static Hashtable<String, EditorKit> getKitRegisty() {
-        Hashtable ht = (Hashtable)SwingUtilities.appContextGet(kitRegistryKey);
+        @SuppressWarnings("unchecked")
+        Hashtable<String, EditorKit> ht =
+            (Hashtable)SwingUtilities.appContextGet(kitRegistryKey);
         if (ht == null) {
-            ht = new Hashtable(3);
+            ht = new Hashtable<>(3);
             SwingUtilities.appContextPut(kitRegistryKey, ht);
         }
         return ht;
@@ -1300,9 +1311,9 @@ public class JEditorPane extends JTextComponent {
                                             "javax.swing.text.rtf.RTFEditorKit");
                 }
             }
-            Hashtable ht = new Hashtable();
+            Hashtable<Object, Object> ht = new Hashtable<>();
             SwingUtilities.appContextPut(kitTypeRegistryKey, ht);
-            ht = new Hashtable();
+            ht = new Hashtable<>();
             SwingUtilities.appContextPut(kitLoaderRegistryKey, ht);
             for (String key : defaultEditorKitMap.keySet()) {
                 registerEditorKitForContentType(key,defaultEditorKitMap.get(key));

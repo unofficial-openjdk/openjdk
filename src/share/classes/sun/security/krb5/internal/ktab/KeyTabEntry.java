@@ -68,12 +68,12 @@ public class KeyTabEntry implements KeyTabConstants {
     public EncryptionKey getKey() {
         EncryptionKey key = new EncryptionKey(keyblock,
                                               keyType,
-                                              new Integer(keyVersion));
+                                              keyVersion);
         return key;
     }
 
     public String getKeyString() {
-        StringBuffer sb = new StringBuffer("0x");
+        StringBuilder sb = new StringBuilder("0x");
         for (int i = 0; i < keyblock.length; i++) {
             sb.append(String.format("%02x", keyblock[i]&0xff));
         }

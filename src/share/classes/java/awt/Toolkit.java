@@ -108,7 +108,7 @@ import sun.util.CoreResourceBundleControl;
  * @author      Sami Shaio
  * @author      Arthur van Hoff
  * @author      Fred Ecks
- * @since       JDK1.0
+ * @since       1.0
  */
 public abstract class Toolkit {
 
@@ -222,7 +222,7 @@ public abstract class Toolkit {
      * @see       java.awt.GraphicsEnvironment#isHeadless
      * @see       java.awt.ScrollPane
      * @see       java.awt.peer.ScrollPanePeer
-     * @since     JDK1.1
+     * @since     1.1
      */
     protected abstract ScrollPanePeer createScrollPane(ScrollPane target)
         throws HeadlessException;
@@ -355,7 +355,7 @@ public abstract class Toolkit {
      * @see       java.awt.GraphicsEnvironment#isHeadless
      * @see       java.awt.PopupMenu
      * @see       java.awt.peer.PopupMenuPeer
-     * @since     JDK1.1
+     * @since     1.1
      */
     protected abstract PopupMenuPeer createPopupMenu(PopupMenu target)
         throws HeadlessException;
@@ -422,7 +422,8 @@ public abstract class Toolkit {
      * and allows the Component and Container classes to be extended directly
      * to create windowless components that are defined entirely in java.
      *
-     * @param target The Component to be created.
+     * @param  target The Component to be created.
+     * @return the peer for the specified component
      */
     protected LightweightPeer createComponent(Component target) {
         if (lightweightMarker == null) {
@@ -457,7 +458,7 @@ public abstract class Toolkit {
      * @exception HeadlessException if GraphicsEnvironment.isHeadless()
      * returns true
      * @see       java.awt.GraphicsEnvironment#isHeadless
-     * @since     JDK1.1
+     * @since     1.1
      */
     protected void loadSystemColors(int[] systemColors)
         throws HeadlessException {
@@ -1105,7 +1106,7 @@ public abstract class Toolkit {
      * @param     imagedata   an array of bytes, representing
      *                         image data in a supported image format.
      * @return    an image.
-     * @since     JDK1.1
+     * @since     1.1
      */
     public Image createImage(byte[] imagedata) {
         return createImage(imagedata, 0, imagedata.length);
@@ -1122,7 +1123,7 @@ public abstract class Toolkit {
      *                         of the data in the array.
      * @param     imagelength  the length of the data in the array.
      * @return    an image.
-     * @since     JDK1.1
+     * @since     1.1
      */
     public abstract Image createImage(byte[] imagedata,
                                       int imageoffset,
@@ -1159,7 +1160,7 @@ public abstract class Toolkit {
      * @see     java.awt.GraphicsEnvironment#isHeadless
      * @see     java.awt.PrintJob
      * @see     java.lang.RuntimePermission
-     * @since   JDK1.1
+     * @since   1.1
      */
     public abstract PrintJob getPrintJob(Frame frame, String jobtitle,
                                          Properties props);
@@ -1230,7 +1231,7 @@ public abstract class Toolkit {
     /**
      * Emits an audio beep depending on native system settings and hardware
      * capabilities.
-     * @since     JDK1.1
+     * @since     1.1
      */
     public abstract void beep();
 
@@ -1240,10 +1241,9 @@ public abstract class Toolkit {
      * clipboard enables data transfer between Java programs and native
      * applications which use native clipboard facilities.
      * <p>
-     * In addition to any and all formats specified in the flavormap.properties
-     * file, or other file specified by the <code>AWT.DnD.flavorMapFileURL
-     * </code> Toolkit property, text returned by the system Clipboard's <code>
-     * getTransferData()</code> method is available in the following flavors:
+     * In addition to any and all default formats text returned by the system
+     * Clipboard's <code>getTransferData()</code> method is available in the
+     * following flavors:
      * <ul>
      * <li>DataFlavor.stringFlavor</li>
      * <li>DataFlavor.plainTextFlavor (<b>deprecated</b>)</li>
@@ -1273,7 +1273,7 @@ public abstract class Toolkit {
      * @see       java.awt.datatransfer.DataFlavor#plainTextFlavor
      * @see       java.io.Reader
      * @see       java.awt.AWTPermission
-     * @since     JDK1.1
+     * @since     1.1
      */
     public abstract Clipboard getSystemClipboard()
         throws HeadlessException;
@@ -1353,7 +1353,7 @@ public abstract class Toolkit {
      * @see       java.awt.GraphicsEnvironment#isHeadless
      * @see       java.awt.MenuBar
      * @see       java.awt.MenuShortcut
-     * @since     JDK1.1
+     * @since     1.1
      */
     public int getMenuShortcutKeyMask() throws HeadlessException {
         GraphicsEnvironment.checkHeadless();
@@ -1370,6 +1370,9 @@ public abstract class Toolkit {
      * {@link java.awt.event.KeyEvent#VK_SCROLL_LOCK VK_SCROLL_LOCK}, and
      * {@link java.awt.event.KeyEvent#VK_KANA_LOCK VK_KANA_LOCK}.
      *
+     * @param  keyCode the key code
+     * @return {@code true} if the given key is currently in its "on" state;
+     *          otherwise {@code false}
      * @exception java.lang.IllegalArgumentException if <code>keyCode</code>
      * is not one of the valid key codes
      * @exception java.lang.UnsupportedOperationException if the host system doesn't
@@ -1404,6 +1407,8 @@ public abstract class Toolkit {
      * involve event processing and therefore may not be immediately
      * observable through getLockingKeyState.
      *
+     * @param  keyCode the key code
+     * @param  on the state of the key
      * @exception java.lang.IllegalArgumentException if <code>keyCode</code>
      * is not one of the valid key codes
      * @exception java.lang.UnsupportedOperationException if the host system doesn't
@@ -1429,6 +1434,9 @@ public abstract class Toolkit {
     /**
      * Give native peers the ability to query the native container
      * given a native component (eg the direct parent may be lightweight).
+     *
+     * @param  c the component to fetch the container for
+     * @return the native container object for the component
      */
     protected static Container getNativeContainer(Component c) {
         return c.getNativeContainer();
@@ -1449,6 +1457,7 @@ public abstract class Toolkit {
      * @param     name a localized description of the cursor, for Java Accessibility use
      * @exception IndexOutOfBoundsException if the hotSpot values are outside
      *   the bounds of the cursor
+     * @return the cursor created
      * @exception HeadlessException if GraphicsEnvironment.isHeadless()
      * returns true
      * @see       java.awt.GraphicsEnvironment#isHeadless
@@ -1675,6 +1684,11 @@ public abstract class Toolkit {
     /**
      * Gets a property with the specified key and default.
      * This method returns defaultValue if the property is not found.
+     *
+     * @param  key the key
+     * @param  defaultValue the default value
+     * @return the value of the property or the default value
+     *         if the property was not found
      */
     public static String getProperty(String key, String defaultValue) {
         // first try platform specific bundle
@@ -1738,6 +1752,9 @@ public abstract class Toolkit {
      * Creates the peer for a DragSourceContext.
      * Always throws InvalidDndOperationException if
      * GraphicsEnvironment.isHeadless() returns true.
+     *
+     * @param  dge the {@code DragGestureEvent}
+     * @return the peer created
      * @see java.awt.GraphicsEnvironment#isHeadless
      */
     public abstract DragSourceContextPeer createDragSourceContextPeer(DragGestureEvent dge) throws InvalidDnDOperationException;
@@ -1775,6 +1792,9 @@ public abstract class Toolkit {
      * representation for an underlying platform dependent desktop setting.
      * For more information on desktop properties supported by the AWT see
      * <a href="doc-files/DesktopProperties.html">AWT Desktop Properties</a>.
+     *
+     * @param  propertyName the property name
+     * @return the value for the specified desktop property
      */
     public final synchronized Object getDesktopProperty(String propertyName) {
         // This is a workaround for headless toolkits.  It would be
@@ -1818,6 +1838,9 @@ public abstract class Toolkit {
     /**
      * Sets the named desktop property to the specified value and fires a
      * property change event to notify any listeners that the value has changed.
+     *
+     * @param  name the property name
+     * @param  newValue the new property value
      */
     protected final void setDesktopProperty(String name, Object newValue) {
         // This is a workaround for headless toolkits.  It would be

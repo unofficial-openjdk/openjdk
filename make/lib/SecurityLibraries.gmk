@@ -1,4 +1,4 @@
-# Copyright (c) 2011, 2013, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2011, 2014, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -146,7 +146,7 @@ ifneq ($(BUILD_CRYPTO), no)
     ifeq ($(SHUFFLED), true)
       BUILD_LIBKRB5_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.security.jgss/$(OPENJDK_TARGET_OS_API_DIR)/native/libw2k_lsa_auth
     else
-      BUILD_LIBKRB5_SRC := $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/sun/security/krb5
+    BUILD_LIBKRB5_SRC := $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/sun/security/krb5
     endif
     BUILD_LIBKRB5_LIBS := advapi32.lib Secur32.lib netapi32.lib kernel32.lib user32.lib \
         gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib \
@@ -156,10 +156,10 @@ ifneq ($(BUILD_CRYPTO), no)
     ifeq ($(SHUFFLED), true)
       BUILD_LIBKRB5_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.security.jgss/macosx/native/libosxkrb5
     else 
-      BUILD_LIBKRB5_SRC := $(JDK_TOPDIR)/src/share/native/sun/security/krb5 \
-          $(JDK_TOPDIR)/src/macosx/native/sun/security/krb5
+    BUILD_LIBKRB5_SRC := $(JDK_TOPDIR)/src/share/native/sun/security/krb5 \
+        $(JDK_TOPDIR)/src/macosx/native/sun/security/krb5
     endif
-    BUILD_LIBKRB5_LIBS := -F/System/Library/Frameworks/JavaVM.framework/Frameworks \
+    BUILD_LIBKRB5_LIBS := \
         -framework JavaNativeFoundation \
         -framework Cocoa \
         -framework SystemConfiguration \
@@ -176,7 +176,6 @@ ifneq ($(BUILD_CRYPTO), no)
         CFLAGS := $(CFLAGS_JDKLIB) \
             $(addprefix -I, $(BUILD_LIBKRB5_SRC)) \
             -I$(JDK_OUTPUTDIR)/gensrc_headers/java.security.jgss, \
-        CFLAGS_macosx := -F/System/Library/Frameworks/JavaVM.framework/Frameworks, \
         LDFLAGS := $(LDFLAGS_JDKLIB) \
             $(call SET_SHARED_LIBRARY_ORIGIN), \
         LDFLAGS_SUFFIX := $(BUILD_LIBKRB5_LIBS), \

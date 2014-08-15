@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1995, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -82,7 +82,7 @@ import javax.accessibility.*;
  * @see         java.awt.event.ActionListener
  * @see         java.awt.Component#processMouseEvent
  * @see         java.awt.Component#addMouseListener
- * @since       JDK1.0
+ * @since       1.0
  */
 public class Button extends Component implements Accessible {
 
@@ -228,7 +228,7 @@ public class Button extends Component implements Accessible {
      *            If the string is <code>null</code> then the action command
      *            is set to match the label of the button.
      * @see       java.awt.event.ActionEvent
-     * @since     JDK1.1
+     * @since     1.1
      */
     public void setActionCommand(String command) {
         actionCommand = command;
@@ -238,6 +238,8 @@ public class Button extends Component implements Accessible {
      * Returns the command name of the action event fired by this button.
      * If the command name is <code>null</code> (default) then this method
      * returns the label of the button.
+     *
+     * @return the action command name (or label) for this button
      */
     public String getActionCommand() {
         return (actionCommand == null? label : actionCommand);
@@ -255,7 +257,7 @@ public class Button extends Component implements Accessible {
      * @see           #removeActionListener
      * @see           #getActionListeners
      * @see           java.awt.event.ActionListener
-     * @since         JDK1.1
+     * @since         1.1
      */
     public synchronized void addActionListener(ActionListener l) {
         if (l == null) {
@@ -277,7 +279,7 @@ public class Button extends Component implements Accessible {
      * @see             #addActionListener
      * @see             #getActionListeners
      * @see             java.awt.event.ActionListener
-     * @since           JDK1.1
+     * @since           1.1
      */
     public synchronized void removeActionListener(ActionListener l) {
         if (l == null) {
@@ -370,7 +372,7 @@ public class Button extends Component implements Accessible {
      * @param        e the event
      * @see          java.awt.event.ActionEvent
      * @see          java.awt.Button#processActionEvent
-     * @since        JDK1.1
+     * @since        1.1
      */
     protected void processEvent(AWTEvent e) {
         if (e instanceof ActionEvent) {
@@ -401,7 +403,7 @@ public class Button extends Component implements Accessible {
      * @see         java.awt.event.ActionListener
      * @see         java.awt.Button#addActionListener
      * @see         java.awt.Component#enableEvents
-     * @since       JDK1.1
+     * @since       1.1
      */
     protected void processActionEvent(ActionEvent e) {
         ActionListener listener = actionListener;

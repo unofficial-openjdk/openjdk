@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -433,7 +433,8 @@ gboolean gtk2_check_version()
             result = TRUE;
         }
 
-        dlclose(lib);
+        // 8048289: workaround for https://bugzilla.gnome.org/show_bug.cgi?id=733065
+        // dlclose(lib);
 
         return result;
     }
@@ -782,6 +783,8 @@ gboolean gtk2_load(JNIEnv *env)
         fp_g_signal_connect_data = dl_symbol("g_signal_connect_data");
         fp_gtk_widget_show = dl_symbol("gtk_widget_show");
         fp_gtk_main = dl_symbol("gtk_main");
+
+        fp_g_path_get_dirname = dl_symbol("g_path_get_dirname");
 
         /**
          * GLib thread system

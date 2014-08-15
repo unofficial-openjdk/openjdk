@@ -193,8 +193,7 @@ public class SynthTableHeaderUI extends BasicTableHeaderUI
     }
 
     private SynthContext getContext(JComponent c, int state) {
-        return SynthContext.getContext(SynthContext.class, c,
-                    SynthLookAndFeel.getRegion(c), style, state);
+        return SynthContext.getContext(c, style, state);
     }
 
     /**
@@ -241,7 +240,7 @@ public class SynthTableHeaderUI extends BasicTableHeaderUI
 
             //stuff a variable into the client property of this renderer indicating the sort order,
             //so that different rendering can be done for the header based on sorted state.
-            RowSorter rs = table == null ? null : table.getRowSorter();
+            RowSorter<?> rs = table == null ? null : table.getRowSorter();
             java.util.List<? extends RowSorter.SortKey> sortKeys = rs == null ? null : rs.getSortKeys();
             if (sortKeys != null && sortKeys.size() > 0 && sortKeys.get(0).getColumn() ==
                     table.convertColumnIndexToModel(column)) {

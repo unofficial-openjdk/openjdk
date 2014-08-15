@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1995, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -55,7 +55,7 @@ import sun.awt.InputMethodSupport;
  *
  * @author      Sami Shaio
  * @author      Arthur van Hoff
- * @since       JDK1.0
+ * @since       1.0
  */
 public class TextComponent extends Component implements Accessible {
 
@@ -107,6 +107,9 @@ public class TextComponent extends Component implements Accessible {
     // the background color of non-editable TextComponents.
     boolean backgroundSetByClientCode = false;
 
+    /**
+     * A list of listeners that will receive events from this object.
+     */
     transient protected TextListener textListener;
 
     /*
@@ -268,7 +271,7 @@ public class TextComponent extends Component implements Accessible {
      * @return     <code>true</code> if this text component is
      *                  editable; <code>false</code> otherwise.
      * @see        java.awt.TextComponent#setEditable
-     * @since      JDK1.0
+     * @since      1.0
      */
     public boolean isEditable() {
         return editable;
@@ -288,7 +291,7 @@ public class TextComponent extends Component implements Accessible {
      * @param     b   a flag indicating whether this text component
      *                      is user editable.
      * @see       java.awt.TextComponent#isEditable
-     * @since     JDK1.0
+     * @since     1.0
      */
     public synchronized void setEditable(boolean b) {
         if (editable == b) {
@@ -313,7 +316,7 @@ public class TextComponent extends Component implements Accessible {
      *         If this text component does not have a background color,
      *         the background color of its parent is returned.
      * @see #setBackground(Color)
-     * @since JDK1.0
+     * @since 1.0
      */
     public Color getBackground() {
         if (!editable && !backgroundSetByClientCode) {
@@ -330,7 +333,7 @@ public class TextComponent extends Component implements Accessible {
      *        If this parameter is null then this text component
      *        will inherit the background color of its parent.
      * @see #getBackground()
-     * @since JDK1.0
+     * @since 1.0
      */
     public void setBackground(Color c) {
         backgroundSetByClientCode = true;
@@ -365,7 +368,7 @@ public class TextComponent extends Component implements Accessible {
      *                        selected text
      * @see         java.awt.TextComponent#getSelectionStart
      * @see         java.awt.TextComponent#setSelectionEnd
-     * @since       JDK1.1
+     * @since       1.1
      */
     public synchronized void setSelectionStart(int selectionStart) {
         /* Route through select method to enforce consistent policy
@@ -401,7 +404,7 @@ public class TextComponent extends Component implements Accessible {
      *                        selected text
      * @see         java.awt.TextComponent#getSelectionEnd
      * @see         java.awt.TextComponent#setSelectionStart
-     * @since       JDK1.1
+     * @since       1.1
      */
     public synchronized void setSelectionEnd(int selectionEnd) {
         /* Route through select method to enforce consistent policy
@@ -494,7 +497,7 @@ public class TextComponent extends Component implements Accessible {
      * @param        position the position of the text insertion caret
      * @exception    IllegalArgumentException if <code>position</code>
      *               is less than zero
-     * @since        JDK1.1
+     * @since        1.1
      */
     public synchronized void setCaretPosition(int position) {
         if (position < 0) {
@@ -523,7 +526,7 @@ public class TextComponent extends Component implements Accessible {
      *
      * @return       the position of the text insertion caret
      * @see #setCaretPosition(int)
-     * @since        JDK1.1
+     * @since        1.1
      */
     public synchronized int getCaretPosition() {
         TextComponentPeer peer = (TextComponentPeer)this.peer;
@@ -574,7 +577,7 @@ public class TextComponent extends Component implements Accessible {
      * @see             #addTextListener
      * @see             #getTextListeners
      * @see             java.awt.event.TextListener
-     * @since           JDK1.1
+     * @since           1.1
      */
     public synchronized void removeTextListener(TextListener l) {
         if (l == null) {

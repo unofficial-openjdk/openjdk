@@ -69,8 +69,10 @@ public interface ComboPopup {
      * Returns the list that is being used to draw the items in the combo box.
      * This method is highly implementation specific and should not be used
      * for general list manipulation.
+     *
+     * @return the list that is being used to draw the items in the combo box
      */
-    public JList getList();
+    public JList<Object> getList();
 
     /**
      * Returns a mouse listener that will be added to the combo box or null.
@@ -91,6 +93,8 @@ public interface ComboPopup {
     /**
      * Returns a key listener that will be added to the combo box or null.
      * If this method returns null then it will not be added to the combo box.
+     *
+     * @return a key listener that will be added to the combo box or null
      */
     public KeyListener getKeyListener();
 

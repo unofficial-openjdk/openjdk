@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1995, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -45,7 +45,7 @@ import java.security.AccessController;
  * through the method <code>processEvent</code>.
  *
  * @author      Arthur van Hoff
- * @since       JDK1.0
+ * @since       1.0
  */
 public abstract class MenuComponent implements java.io.Serializable {
 
@@ -132,16 +132,24 @@ public abstract class MenuComponent implements java.io.Serializable {
     static {
         AWTAccessor.setMenuComponentAccessor(
             new AWTAccessor.MenuComponentAccessor() {
+                @Override
                 public AppContext getAppContext(MenuComponent menuComp) {
                     return menuComp.appContext;
                 }
+                @Override
                 public void setAppContext(MenuComponent menuComp,
                                           AppContext appContext) {
                     menuComp.appContext = appContext;
                 }
+                @Override
                 public MenuContainer getParent(MenuComponent menuComp) {
                     return menuComp.parent;
                 }
+                @Override
+                public void setParent(MenuComponent menuComp, MenuContainer menuContainer) {
+                    menuComp.parent = menuContainer;
+                }
+                @Override
                 public Font getFont_NoClientCode(MenuComponent menuComp) {
                     return menuComp.getFont_NoClientCode();
                 }
@@ -175,7 +183,7 @@ public abstract class MenuComponent implements java.io.Serializable {
      * Gets the name of the menu component.
      * @return        the name of the menu component
      * @see           java.awt.MenuComponent#setName(java.lang.String)
-     * @since         JDK1.1
+     * @since         1.1
      */
     public String getName() {
         if (name == null && !nameExplicitlySet) {
@@ -191,7 +199,7 @@ public abstract class MenuComponent implements java.io.Serializable {
      * Sets the name of the component to the specified string.
      * @param         name    the name of the menu component
      * @see           java.awt.MenuComponent#getName
-     * @since         JDK1.1
+     * @since         1.1
      */
     public void setName(String name) {
         synchronized(this) {
@@ -220,6 +228,7 @@ public abstract class MenuComponent implements java.io.Serializable {
     /**
      * @deprecated As of JDK version 1.1,
      * programs should not directly manipulate peers.
+     * @return the peer for this component
      */
     @Deprecated
     public MenuComponentPeer getPeer() {
@@ -373,7 +382,7 @@ public abstract class MenuComponent implements java.io.Serializable {
      * exception.
      *
      * @param e the event
-     * @since JDK1.1
+     * @since 1.1
      */
     protected void processEvent(AWTEvent e) {
     }

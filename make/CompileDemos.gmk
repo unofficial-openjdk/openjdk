@@ -1,6 +1,5 @@
-
 #
-# Copyright (c) 2011, 2013, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2011, 2014, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -344,15 +343,7 @@ ifeq ($(OPENJDK_TARGET_OS), aix)
   BUILD_LIBHPROF_AIX_EXTRA_CFLAGS += -I$(JDK_TOPDIR)/src/aix/porting
 endif
 
-ifeq ($(SHUFFLED), true)
-  HPROF_EXTRA_CFLAGS := -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.base/share/native/libnpt \
-      -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.base/$(OPENJDK_TARGET_OS_API_DIR)/native/libnpt
-else
-  HPROF_EXTRA_CFLAGS := -I$(JDK_TOPDIR)/src/share/npt -I$(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/npt
-endif
-
 $(eval $(call SetupJVMTIDemo,hprof, java_crw_demo, \
-    $(HPROF_EXTRA_CFLAGS) \
     $(BUILD_LIBHPROF_AIX_EXTRA_CFLAGS), C, \
     -ldl, ws2_32.lib winmm.lib, -lsocket -lnsl, -lpthread, $(BUILD_LIBHPROF_AIX_EXTRA_SRC)))
 
@@ -385,17 +376,17 @@ ifeq ($(SHUFFLED), true)
 
   BUILD_DEMOS += $(JPDA_JAR) $(JPDA_ZIP)
 else
-  # The jpda demo (com/sun/tools/example) is oddly enough stored in src/share/classes.
-  # At least, we do not need to compile the jpda demo, just jar/zip up the sources.
-  JPDA_SOURCES := $(call CacheFind, $(JDK_TOPDIR)/src/share/classes/com/sun/tools/example)
-  # The number of files are few enough so that we can use echo safely below to list them.
-  JPDA_FILES := $(subst $(JDK_TOPDIR)/src/share/classes/,,$(JPDA_SOURCES))
+# The jpda demo (com/sun/tools/example) is oddly enough stored in src/share/classes.
+# At least, we do not need to compile the jpda demo, just jar/zip up the sources.
+JPDA_SOURCES := $(call CacheFind, $(JDK_TOPDIR)/src/share/classes/com/sun/tools/example)
+# The number of files are few enough so that we can use echo safely below to list them.
+JPDA_FILES := $(subst $(JDK_TOPDIR)/src/share/classes/,,$(JPDA_SOURCES))
 
-  $(JDK_OUTPUTDIR)/demo/jpda/src.zip: $(JPDA_SOURCES)
+$(JDK_OUTPUTDIR)/demo/jpda/src.zip: $(JPDA_SOURCES)
 	$(MKDIR) -p $(@D)
 	(cd $(JDK_TOPDIR)/src/share/classes && $(ZIP) -qru $@ com -i "com/sun/tools/example/*")
 
-  $(JDK_OUTPUTDIR)/demo/jpda/examples.jar: $(JPDA_SOURCES)
+$(JDK_OUTPUTDIR)/demo/jpda/examples.jar: $(JPDA_SOURCES)
 	$(MKDIR) -p $(@D)
 	$(RM) $(@D)/_the.sources
 	$(call ListPathsSafely,JPDA_FILES,\n, >> $(@D)/_the.sources)
@@ -405,12 +396,12 @@ else
 	(cd $(JDK_TOPDIR)/src/share/classes && $(JAR) cfm $@ $(@D)/_the.manifest @$(@D)/_the.sources)
 	(cd $(JDK_TOPDIR)/src/share/classes/com/sun/tools/example && $(JAR) uf $@ README)
 
-  $(JDK_OUTPUTDIR)/demo/jpda/com/sun/tools/example/README: $(JDK_TOPDIR)/src/share/classes/com/sun/tools/example/README
+$(JDK_OUTPUTDIR)/demo/jpda/com/sun/tools/example/README: $(JDK_TOPDIR)/src/share/classes/com/sun/tools/example/README
 	$(call install-file)
 	$(CHMOD) -f ug+w $@
 
-  BUILD_DEMOS += $(JDK_OUTPUTDIR)/demo/jpda/src.zip $(JDK_OUTPUTDIR)/demo/jpda/examples.jar \
-      $(JDK_OUTPUTDIR)/demo/jpda/com/sun/tools/example/README
+BUILD_DEMOS += $(JDK_OUTPUTDIR)/demo/jpda/src.zip $(JDK_OUTPUTDIR)/demo/jpda/examples.jar \
+    $(JDK_OUTPUTDIR)/demo/jpda/com/sun/tools/example/README
 
 endif
 

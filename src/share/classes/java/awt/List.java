@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1995, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -104,7 +104,7 @@ import javax.accessibility.*;
  * @see         java.awt.event.ItemListener
  * @see         java.awt.event.ActionEvent
  * @see         java.awt.event.ActionListener
- * @since       JDK1.0
+ * @since       1.0
  */
 public class List extends Component implements ItemSelectable, Accessible {
     /**
@@ -199,7 +199,7 @@ public class List extends Component implements ItemSelectable, Accessible {
      * @exception HeadlessException if GraphicsEnvironment.isHeadless()
      * returns true.
      * @see java.awt.GraphicsEnvironment#isHeadless
-     * @since       JDK1.1
+     * @since       1.1
      */
     public List(int rows) throws HeadlessException {
         this(rows, false);
@@ -275,13 +275,16 @@ public class List extends Component implements ItemSelectable, Accessible {
      * Gets the number of items in the list.
      * @return     the number of items in the list
      * @see        #getItem
-     * @since      JDK1.1
+     * @since      1.1
      */
     public int getItemCount() {
         return countItems();
     }
 
     /**
+     * Returns the number of items in the list.
+     *
+     * @return the number of items in the list
      * @deprecated As of JDK version 1.1,
      * replaced by <code>getItemCount()</code>.
      */
@@ -315,7 +318,7 @@ public class List extends Component implements ItemSelectable, Accessible {
      * @see          #select
      * @see          #deselect
      * @see          #isIndexSelected
-     * @since        JDK1.1
+     * @since        1.1
      */
     public synchronized String[] getItems() {
         String itemCopies[] = new String[items.size()];
@@ -326,14 +329,17 @@ public class List extends Component implements ItemSelectable, Accessible {
     /**
      * Adds the specified item to the end of scrolling list.
      * @param item the item to be added
-     * @since JDK1.1
+     * @since 1.1
      */
     public void add(String item) {
         addItem(item);
     }
 
     /**
-     * @deprecated      replaced by <code>add(String)</code>.
+     * Adds the specified item to the end of the list.
+     *
+     * @param  item the item to be added
+     * @deprecated replaced by <code>add(String)</code>.
      */
     @Deprecated
     public void addItem(String item) {
@@ -351,14 +357,19 @@ public class List extends Component implements ItemSelectable, Accessible {
      *              if this parameter is <code>null</code> then the item is
      *              treated as an empty string, <code>""</code>
      * @param       index  the position at which to add the item
-     * @since       JDK1.1
+     * @since       1.1
      */
     public void add(String item, int index) {
         addItem(item, index);
     }
 
     /**
-     * @deprecated      replaced by <code>add(String, int)</code>.
+     * Adds the specified item to the the list
+     * at the position indicated by the index.
+     *
+     * @param  item the item to be added
+     * @param  index the position at which to add the item
+     * @deprecated replaced by <code>add(String, int)</code>.
      */
     @Deprecated
     public synchronized void addItem(String item, int index) {
@@ -399,7 +410,7 @@ public class List extends Component implements ItemSelectable, Accessible {
      * Removes all items from this list.
      * @see #remove
      * @see #delItems
-     * @since JDK1.1
+     * @since 1.1
      */
     public void removeAll() {
         clear();
@@ -426,7 +437,7 @@ public class List extends Component implements ItemSelectable, Accessible {
      * @param        item  the item to remove from the list
      * @exception    IllegalArgumentException
      *                     if the item doesn't exist in the list
-     * @since        JDK1.1
+     * @since        1.1
      */
     public synchronized void remove(String item) {
         int index = items.indexOf(item);
@@ -445,7 +456,7 @@ public class List extends Component implements ItemSelectable, Accessible {
      * only selected item in the list, the list is set to have no selection.
      * @param      position   the index of the item to delete
      * @see        #add(String, int)
-     * @since      JDK1.1
+     * @since      1.1
      * @exception    ArrayIndexOutOfBoundsException
      *               if the <code>position</code> is less than 0 or
      *               greater than <code>getItemCount()-1</code>
@@ -455,8 +466,11 @@ public class List extends Component implements ItemSelectable, Accessible {
     }
 
     /**
-     * @deprecated     replaced by <code>remove(String)</code>
-     *                         and <code>remove(int)</code>.
+     * Removes the item at the specified position.
+     *
+     * @param  position the index of the item to delete
+     * @deprecated replaced by <code>remove(String)</code>
+     *             and <code>remove(int)</code>.
      */
     @Deprecated
     public void delItem(int position) {
@@ -639,13 +653,17 @@ public class List extends Component implements ItemSelectable, Accessible {
      *                       selected; <code>false</code> otherwise
      * @see        #select
      * @see        #deselect
-     * @since      JDK1.1
+     * @since      1.1
      */
     public boolean isIndexSelected(int index) {
         return isSelected(index);
     }
 
     /**
+     * Determines if the specified item in the list is selected.
+     *
+     * @param  index specifies the item to be checked
+     * @return {@code true} if the item is selected; otherwise {@code false}
      * @deprecated As of JDK version 1.1,
      * replaced by <code>isIndexSelected(int)</code>.
      */
@@ -672,16 +690,21 @@ public class List extends Component implements ItemSelectable, Accessible {
 
     /**
      * Determines whether this list allows multiple selections.
+     *
      * @return     <code>true</code> if this list allows multiple
      *                 selections; otherwise, <code>false</code>
      * @see        #setMultipleMode
-     * @since      JDK1.1
+     * @since      1.1
      */
     public boolean isMultipleMode() {
         return allowsMultipleSelections();
     }
 
     /**
+     * Determines whether this list allows multiple selections.
+     *
+     * @return {@code true} if this list allows multiple
+     *         selections; otherwise {@code false}
      * @deprecated As of JDK version 1.1,
      * replaced by <code>isMultipleMode()</code>.
      */
@@ -702,13 +725,16 @@ public class List extends Component implements ItemSelectable, Accessible {
      *                      are allowed; otherwise, only one item from
      *                      the list can be selected at once
      * @see         #isMultipleMode
-     * @since       JDK1.1
+     * @since       1.1
      */
     public void setMultipleMode(boolean b) {
         setMultipleSelections(b);
     }
 
     /**
+     * Enables or disables multiple selection mode for this list.
+     *
+     * @param  b {@code true} to enable multiple mode, {@code false} otherwise
      * @deprecated As of JDK version 1.1,
      * replaced by <code>setMultipleMode(boolean)</code>.
      */
@@ -753,13 +779,18 @@ public class List extends Component implements ItemSelectable, Accessible {
      * @return     the preferred dimensions for displaying this scrolling list
      *             given that the specified number of rows must be visible
      * @see        java.awt.Component#getPreferredSize
-     * @since      JDK1.1
+     * @since      1.1
      */
     public Dimension getPreferredSize(int rows) {
         return preferredSize(rows);
     }
 
     /**
+     * Returns the preferred size of this component
+     * assuming it has the specified number of rows.
+     *
+     * @param  rows the number of rows
+     * @return the preferred dimensions for displaying this list
      * @deprecated As of JDK version 1.1,
      * replaced by <code>getPreferredSize(int)</code>.
      */
@@ -777,7 +808,7 @@ public class List extends Component implements ItemSelectable, Accessible {
      * Gets the preferred size of this scrolling list.
      * @return     the preferred dimensions for displaying this scrolling list
      * @see        java.awt.Component#getPreferredSize
-     * @since      JDK1.1
+     * @since      1.1
      */
     public Dimension getPreferredSize() {
         return preferredSize();
@@ -803,13 +834,18 @@ public class List extends Component implements ItemSelectable, Accessible {
      * @return     the minimum dimensions for displaying this scrolling list
      *             given that the specified number of rows must be visible
      * @see        java.awt.Component#getMinimumSize
-     * @since      JDK1.1
+     * @since      1.1
      */
     public Dimension getMinimumSize(int rows) {
         return minimumSize(rows);
     }
 
     /**
+     * Returns the minimum dimensions for the list
+     * with the specified number of rows.
+     *
+     * @param  rows the number of rows in the list
+     * @return the minimum dimensions for displaying this list
      * @deprecated As of JDK version 1.1,
      * replaced by <code>getMinimumSize(int)</code>.
      */
@@ -828,7 +864,7 @@ public class List extends Component implements ItemSelectable, Accessible {
      * @return       the minimum dimensions needed
      *                        to display this scrolling list
      * @see          java.awt.Component#getMinimumSize()
-     * @since        JDK1.1
+     * @since        1.1
      */
     public Dimension getMinimumSize() {
         return minimumSize();
@@ -861,7 +897,7 @@ public class List extends Component implements ItemSelectable, Accessible {
      * @see           #deselect
      * @see           java.awt.event.ItemEvent
      * @see           java.awt.event.ItemListener
-     * @since         JDK1.1
+     * @since         1.1
      */
     public synchronized void addItemListener(ItemListener l) {
         if (l == null) {
@@ -884,7 +920,7 @@ public class List extends Component implements ItemSelectable, Accessible {
      * @see             #getItemListeners
      * @see             java.awt.event.ItemEvent
      * @see             java.awt.event.ItemListener
-     * @since           JDK1.1
+     * @since           1.1
      */
     public synchronized void removeItemListener(ItemListener l) {
         if (l == null) {
@@ -927,7 +963,7 @@ public class List extends Component implements ItemSelectable, Accessible {
      * @see           #getActionListeners
      * @see           java.awt.event.ActionEvent
      * @see           java.awt.event.ActionListener
-     * @since         JDK1.1
+     * @since         1.1
      */
     public synchronized void addActionListener(ActionListener l) {
         if (l == null) {
@@ -951,7 +987,7 @@ public class List extends Component implements ItemSelectable, Accessible {
      * @see             #getActionListeners
      * @see             java.awt.event.ActionEvent
      * @see             java.awt.event.ActionListener
-     * @since           JDK1.1
+     * @since           1.1
      */
     public synchronized void removeActionListener(ActionListener l) {
         if (l == null) {
@@ -1061,7 +1097,7 @@ public class List extends Component implements ItemSelectable, Accessible {
      * @see          java.awt.event.ItemEvent
      * @see          #processActionEvent
      * @see          #processItemEvent
-     * @since        JDK1.1
+     * @since        1.1
      */
     protected void processEvent(AWTEvent e) {
         if (e instanceof ItemEvent) {
@@ -1096,7 +1132,7 @@ public class List extends Component implements ItemSelectable, Accessible {
      * @see         java.awt.event.ItemListener
      * @see         #addItemListener
      * @see         java.awt.Component#enableEvents
-     * @since       JDK1.1
+     * @since       1.1
      */
     protected void processItemEvent(ItemEvent e) {
         ItemListener listener = itemListener;
@@ -1127,7 +1163,7 @@ public class List extends Component implements ItemSelectable, Accessible {
      * @see         java.awt.event.ActionListener
      * @see         #addActionListener
      * @see         java.awt.Component#enableEvents
-     * @since       JDK1.1
+     * @since       1.1
      */
     protected void processActionEvent(ActionEvent e) {
         ActionListener listener = actionListener;
@@ -1146,6 +1182,10 @@ public class List extends Component implements ItemSelectable, Accessible {
     }
 
     /**
+     * Deletes the list items in the specified index range.
+     *
+     * @param  start the beginning index of the range to delete
+     * @param  end the ending index of the range to delete
      * @deprecated As of JDK version 1.1,
      * Not for public use in the future.
      * This method is expected to be retained only as a package
@@ -1290,6 +1330,9 @@ public class List extends Component implements ItemSelectable, Accessible {
          */
         private static final long serialVersionUID = 7924617370136012829L;
 
+        /**
+         * Constructs new {@code AccessibleAWTList}
+         */
         public AccessibleAWTList() {
             super();
             List.this.addActionListener(this);
@@ -1491,6 +1534,13 @@ public class List extends Component implements ItemSelectable, Accessible {
             private List parent;
             private int  indexInParent;
 
+            /**
+             * Constructs new {@code AccessibleAWTListChild} with the given
+             * parent {@code List} and 0-based index of this object in the parent.
+             *
+             * @param  parent the parent {@code List}
+             * @param  indexInParent the index in the parent
+             */
             public AccessibleAWTListChild(List parent, int indexInParent)  {
                 this.parent = parent;
                 this.setAccessibleParent(parent);

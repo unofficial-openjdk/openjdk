@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -117,7 +117,7 @@ public class MetalToolBarUI extends BasicToolBarUI
      * that shares the JRootPane ancestor of <code>from</code>.
      */
     synchronized static Object findRegisteredComponentOfType(JComponent from,
-                                                             Class target) {
+                                                             Class<?> target) {
         JRootPane rp = SwingUtilities.getRootPane(from);
         if (rp != null) {
             for (int counter = components.size() - 1; counter >= 0; counter--){
@@ -158,6 +158,12 @@ public class MetalToolBarUI extends BasicToolBarUI
         return false;
     }
 
+    /**
+     * Constructs an instance of {@code MetalToolBarUI}.
+     *
+     * @param c a component
+     * @return an instance of {@code MetalToolBarUI}
+     */
     public static ComponentUI createUI( JComponent c )
     {
         return new MetalToolBarUI();
@@ -269,6 +275,11 @@ public class MetalToolBarUI extends BasicToolBarUI
         return new MetalDockingListener( toolBar );
     }
 
+    /**
+     * Sets the offset of the mouse cursor inside the DragWindow.
+     *
+     * @param p the offset
+     */
     protected void setDragOffset(Point p) {
         if (!GraphicsEnvironment.isHeadless()) {
             if (dragWindow == null) {
@@ -346,17 +357,29 @@ public class MetalToolBarUI extends BasicToolBarUI
         }
     }
 
-    // No longer used. Cannot remove for compatibility reasons
+    /**
+     * No longer used. The class cannot be removed for compatibility reasons.
+     */
     protected class MetalContainerListener
         extends BasicToolBarUI.ToolBarContListener {}
 
-    // No longer used. Cannot remove for compatibility reasons
+    /**
+     * No longer used. The class cannot be removed for compatibility reasons.
+     */
     protected class MetalRolloverListener
         extends BasicToolBarUI.PropertyListener {}
 
+    /**
+     * {@code DockingListener} for {@code MetalToolBarUI}.
+     */
     protected class MetalDockingListener extends DockingListener {
         private boolean pressedInBumps = false;
 
+        /**
+         * Constructs the {@code MetalDockingListener}.
+         *
+         * @param t an instance of {@code JToolBar}
+         */
         public MetalDockingListener(JToolBar t) {
             super(t);
         }

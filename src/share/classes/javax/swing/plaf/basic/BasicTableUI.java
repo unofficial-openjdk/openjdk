@@ -64,12 +64,29 @@ public class BasicTableUI extends TableUI
 //
 
     // The JTable that is delegating the painting to this UI.
+    /**
+     * The instance of {@code JTable}.
+     */
     protected JTable table;
+
+    /**
+     * The instance of {@code CellRendererPane}.
+     */
     protected CellRendererPane rendererPane;
 
-    // Listeners that are attached to the JTable
+    /**
+     * {@code KeyListener} that are attached to the {@code JTable}.
+     */
     protected KeyListener keyListener;
+
+    /**
+     * {@code FocusListener} that are attached to the {@code JTable}.
+     */
     protected FocusListener focusListener;
+
+    /**
+     * {@code MouseInputListener} that are attached to the {@code JTable}.
+     */
     protected MouseInputListener mouseInputListener;
 
     private Handler handler;
@@ -1350,21 +1367,27 @@ public class BasicTableUI extends TableUI
     }
 
     /**
-     * Creates the key listener for handling keyboard navigation in the JTable.
+     * Creates the key listener for handling keyboard navigation in the {@code JTable}.
+     *
+     * @return the key listener for handling keyboard navigation in the {@code JTable}
      */
     protected KeyListener createKeyListener() {
         return null;
     }
 
     /**
-     * Creates the focus listener for handling keyboard navigation in the JTable.
+     * Creates the focus listener for handling keyboard navigation in the {@code JTable}.
+     *
+     * @return the focus listener for handling keyboard navigation in the {@code JTable}
      */
     protected FocusListener createFocusListener() {
         return getHandler();
     }
 
     /**
-     * Creates the mouse listener for the JTable.
+     * Creates the mouse listener for the {@code JTable}.
+     *
+     * @return the mouse listener for the {@code JTable}
      */
     protected MouseInputListener createMouseInputListener() {
         return getHandler();
@@ -1374,6 +1397,12 @@ public class BasicTableUI extends TableUI
 //  The installation/uninstall procedures and support
 //
 
+    /**
+     * Returns a new instance of {@code BasicTableUI}.
+     *
+     * @param c a component
+     * @return a new instance of {@code BasicTableUI}
+     */
     public static ComponentUI createUI(JComponent c) {
         return new BasicTableUI();
     }
@@ -1616,12 +1645,18 @@ public class BasicTableUI extends TableUI
         table = null;
     }
 
+    /**
+     * Uninstalls default properties.
+     */
     protected void uninstallDefaults() {
         if (table.getTransferHandler() instanceof UIResource) {
             table.setTransferHandler(null);
         }
     }
 
+    /**
+     * Unregisters listeners.
+     */
     protected void uninstallListeners() {
         table.removeFocusListener(focusListener);
         table.removeKeyListener(keyListener);
@@ -1638,6 +1673,9 @@ public class BasicTableUI extends TableUI
         handler = null;
     }
 
+    /**
+     * Unregisters keyboard actions.
+     */
     protected void uninstallKeyboardActions() {
         SwingUtilities.replaceUIInputMap(table, JComponent.
                                    WHEN_ANCESTOR_OF_FOCUSED_COMPONENT, null);
@@ -1710,9 +1748,9 @@ public class BasicTableUI extends TableUI
      */
     public Dimension getMinimumSize(JComponent c) {
         long width = 0;
-        Enumeration enumeration = table.getColumnModel().getColumns();
+        Enumeration<TableColumn> enumeration = table.getColumnModel().getColumns();
         while (enumeration.hasMoreElements()) {
-            TableColumn aColumn = (TableColumn)enumeration.nextElement();
+            TableColumn aColumn = enumeration.nextElement();
             width = width + aColumn.getMinWidth();
         }
         return createTableSize(width);
@@ -1725,9 +1763,9 @@ public class BasicTableUI extends TableUI
      */
     public Dimension getPreferredSize(JComponent c) {
         long width = 0;
-        Enumeration enumeration = table.getColumnModel().getColumns();
+        Enumeration<TableColumn> enumeration = table.getColumnModel().getColumns();
         while (enumeration.hasMoreElements()) {
-            TableColumn aColumn = (TableColumn)enumeration.nextElement();
+            TableColumn aColumn = enumeration.nextElement();
             width = width + aColumn.getPreferredWidth();
         }
         return createTableSize(width);
@@ -1740,9 +1778,9 @@ public class BasicTableUI extends TableUI
      */
     public Dimension getMaximumSize(JComponent c) {
         long width = 0;
-        Enumeration enumeration = table.getColumnModel().getColumns();
+        Enumeration<TableColumn> enumeration = table.getColumnModel().getColumns();
         while (enumeration.hasMoreElements()) {
-            TableColumn aColumn = (TableColumn)enumeration.nextElement();
+            TableColumn aColumn = enumeration.nextElement();
             width = width + aColumn.getMaxWidth();
         }
         return createTableSize(width);
@@ -2182,29 +2220,29 @@ public class BasicTableUI extends TableUI
                     return null;
                 }
 
-                StringBuffer plainBuf = new StringBuffer();
-                StringBuffer htmlBuf = new StringBuffer();
+                StringBuilder plainStr = new StringBuilder();
+                StringBuilder htmlStr = new StringBuilder();
 
-                htmlBuf.append("<html>\n<body>\n<table>\n");
+                htmlStr.append("<html>\n<body>\n<table>\n");
 
                 for (int row = 0; row < rows.length; row++) {
-                    htmlBuf.append("<tr>\n");
+                    htmlStr.append("<tr>\n");
                     for (int col = 0; col < cols.length; col++) {
                         Object obj = table.getValueAt(rows[row], cols[col]);
                         String val = ((obj == null) ? "" : obj.toString());
-                        plainBuf.append(val + "\t");
-                        htmlBuf.append("  <td>" + val + "</td>\n");
+                        plainStr.append(val + "\t");
+                        htmlStr.append("  <td>" + val + "</td>\n");
                     }
                     // we want a newline at the end of each line and not a tab
-                    plainBuf.deleteCharAt(plainBuf.length() - 1).append("\n");
-                    htmlBuf.append("</tr>\n");
+                    plainStr.deleteCharAt(plainStr.length() - 1).append("\n");
+                    htmlStr.append("</tr>\n");
                 }
 
                 // remove the last newline
-                plainBuf.deleteCharAt(plainBuf.length() - 1);
-                htmlBuf.append("</table>\n</body>\n</html>");
+                plainStr.deleteCharAt(plainStr.length() - 1);
+                htmlStr.append("</table>\n</body>\n</html>");
 
-                return new BasicTransferable(plainBuf.toString(), htmlBuf.toString());
+                return new BasicTransferable(plainStr.toString(), htmlStr.toString());
             }
 
             return null;

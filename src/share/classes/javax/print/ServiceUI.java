@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -131,8 +131,7 @@ public class ServiceUI {
      *    }
      * }
      * }</pre>
-     * <p>
-
+     *
      * @param gc used to select screen. null means primary or default screen.
      * @param x location of dialog including border in screen coordinates
      * @param y location of dialog including border in screen coordinates
@@ -228,9 +227,9 @@ public class ServiceUI {
 
         if (dialog.getStatus() == ServiceDialog.APPROVE) {
             PrintRequestAttributeSet newas = dialog.getAttributes();
-            Class dstCategory = Destination.class;
-            Class amCategory = SunAlternateMedia.class;
-            Class fdCategory = Fidelity.class;
+            Class<?> dstCategory = Destination.class;
+            Class<?> amCategory = SunAlternateMedia.class;
+            Class<?> fdCategory = Fidelity.class;
 
             if (attributes.containsKey(dstCategory) &&
                 !newas.containsKey(dstCategory))
@@ -315,7 +314,7 @@ public class ServiceUI {
             Attribute[] usAttrs = asUnsupported.toArray();
 
             for (int i=0; i<usAttrs.length; i++) {
-                Class category = usAttrs[i].getCategory();
+                Class<? extends Attribute> category = usAttrs[i].getCategory();
 
                 if (ps.isAttributeCategorySupported(category)) {
                     Attribute attr =

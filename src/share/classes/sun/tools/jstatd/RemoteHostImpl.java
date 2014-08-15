@@ -62,9 +62,9 @@ public class RemoteHostImpl implements RemoteHost, HostListener {
 
     public RemoteVm attachVm(int lvmid, String mode)
                     throws RemoteException, MonitorException {
-        Integer v = new Integer(lvmid);
+        Integer v = lvmid;
         RemoteVm stub = null;
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
 
         sb.append("local://").append(lvmid).append("@localhost");
         if (mode != null) {

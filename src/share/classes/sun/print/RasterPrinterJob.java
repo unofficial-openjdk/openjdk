@@ -72,6 +72,7 @@ import javax.print.attribute.Attribute;
 import javax.print.attribute.AttributeSet;
 import javax.print.attribute.HashPrintRequestAttributeSet;
 import javax.print.attribute.PrintRequestAttributeSet;
+import javax.print.attribute.ResolutionSyntax;
 import javax.print.attribute.Size2DSyntax;
 import javax.print.attribute.standard.Chromaticity;
 import javax.print.attribute.standard.Copies;
@@ -86,6 +87,7 @@ import javax.print.attribute.standard.MediaSize;
 import javax.print.attribute.standard.MediaSizeName;
 import javax.print.attribute.standard.OrientationRequested;
 import javax.print.attribute.standard.PageRanges;
+import javax.print.attribute.standard.PrinterResolution;
 import javax.print.attribute.standard.PrinterState;
 import javax.print.attribute.standard.PrinterStateReason;
 import javax.print.attribute.standard.PrinterStateReasons;
@@ -273,7 +275,7 @@ public abstract class RasterPrinterJob extends PrinterJob {
     /**
      * List of areas & the graphics state for redrawing
      */
-    private ArrayList redrawList = new ArrayList();
+    private ArrayList<GraphicsState> redrawList = new ArrayList<>();
 
 
     /* variables representing values extracted from an attribute set.
@@ -283,6 +285,7 @@ public abstract class RasterPrinterJob extends PrinterJob {
     private String jobNameAttr;
     private String userNameAttr;
     private PageRanges pageRangesAttr;
+    protected PrinterResolution printerResAttr;
     protected Sides sidesAttr;
     protected String destinationAttr;
     protected boolean noJobSheet = false;
@@ -712,10 +715,9 @@ public abstract class RasterPrinterJob extends PrinterJob {
           GraphicsEnvironment.getLocalGraphicsEnvironment().
           getDefaultScreenDevice().getDefaultConfiguration();
 
-        PrintService service =
-            (PrintService)java.security.AccessController.doPrivileged(
-                                        new java.security.PrivilegedAction() {
-                public Object run() {
+        PrintService service = java.security.AccessController.doPrivileged(
+                               new java.security.PrivilegedAction<PrintService>() {
+                public PrintService run() {
                     PrintService service = getPrintService();
                     if (service == null) {
                         ServiceDialog.showNoPrintService(gc);
@@ -768,10 +770,9 @@ public abstract class RasterPrinterJob extends PrinterJob {
         int x = bounds.x+bounds.width/3;
         int y = bounds.y+bounds.height/3;
 
-        PrintService service =
-            (PrintService)java.security.AccessController.doPrivileged(
-                                        new java.security.PrivilegedAction() {
-                public Object run() {
+        PrintService service = java.security.AccessController.doPrivileged(
+                               new java.security.PrivilegedAction<PrintService>() {
+                public PrintService run() {
                     PrintService service = getPrintService();
                     if (service == null) {
                         ServiceDialog.showNoPrintService(gc);
@@ -793,7 +794,7 @@ public abstract class RasterPrinterJob extends PrinterJob {
         if (pageDialog.getStatus() == ServiceDialog.APPROVE) {
             PrintRequestAttributeSet newas =
                 pageDialog.getAttributes();
-            Class amCategory = SunAlternateMedia.class;
+            Class<?> amCategory = SunAlternateMedia.class;
 
             if (attributes.containsKey(amCategory) &&
                 !newas.containsKey(amCategory)) {
@@ -868,10 +869,9 @@ public abstract class RasterPrinterJob extends PrinterJob {
             GraphicsEnvironment.getLocalGraphicsEnvironment().
             getDefaultScreenDevice().getDefaultConfiguration();
 
-        PrintService service =
-            (PrintService)java.security.AccessController.doPrivileged(
-                       new java.security.PrivilegedAction() {
-                public Object run() {
+        PrintService service = java.security.AccessController.doPrivileged(
+                               new java.security.PrivilegedAction<PrintService>() {
+                public PrintService run() {
                     PrintService service = getPrintService();
                     if (service == null) {
                         ServiceDialog.showNoPrintService(gc);
@@ -894,10 +894,9 @@ public abstract class RasterPrinterJob extends PrinterJob {
                 services[i] = spsFactories[i].getPrintService(null);
             }
         } else {
-            services =
-            (PrintService[])java.security.AccessController.doPrivileged(
-                       new java.security.PrivilegedAction() {
-                public Object run() {
+            services = java.security.AccessController.doPrivileged(
+                       new java.security.PrivilegedAction<PrintService[]>() {
+                public PrintService[] run() {
                     PrintService[] services = PrinterJob.lookupPrintServices();
                     return services;
                 }
@@ -1068,6 +1067,14 @@ public abstract class RasterPrinterJob extends PrinterJob {
                                           attrset));
     }
 
+    /**
+     * Set the device resolution.
+     * Overridden and used only by the postscript code.
+     * Windows code pulls the information from the attribute set itself.
+     */
+    protected void setXYRes(double x, double y) {
+    }
+
     /* subclasses may need to pull extra information out of the attribute set
      * They can override this method & call super.setAttributes()
      */
@@ -1076,6 +1083,7 @@ public abstract class RasterPrinterJob extends PrinterJob {
         /*  reset all values to defaults */
         setCollated(false);
         sidesAttr = null;
+        printerResAttr = null;
         pageRangesAttr = null;
         copiesAttr = 0;
         jobNameAttr = null;
@@ -1119,6 +1127,18 @@ public abstract class RasterPrinterJob extends PrinterJob {
         sidesAttr = (Sides)attributes.get(Sides.class);
         if (!isSupportedValue(sidesAttr,  attributes)) {
             sidesAttr = Sides.ONE_SIDED;
+        }
+
+        printerResAttr = (PrinterResolution)attributes.get(PrinterResolution.class);
+        if (service.isAttributeCategorySupported(PrinterResolution.class)) {
+            if (!isSupportedValue(printerResAttr,  attributes)) {
+               printerResAttr = (PrinterResolution)
+                   service.getDefaultAttributeValue(PrinterResolution.class);
+            }
+            double xr =
+               printerResAttr.getCrossFeedResolution(ResolutionSyntax.DPI);
+            double yr = printerResAttr.getFeedResolution(ResolutionSyntax.DPI);
+            setXYRes(xr, yr);
         }
 
         pageRangesAttr =  (PageRanges)attributes.get(PageRanges.class);
@@ -2131,7 +2151,7 @@ public abstract class RasterPrinterJob extends PrinterJob {
                 painter.print(pathGraphics, origPage, pageIndex);
 
                 for (int i=0;i<redrawList.size();i++) {
-                   GraphicsState gstate = (GraphicsState)redrawList.get(i);
+                   GraphicsState gstate = redrawList.get(i);
                    pathGraphics.setTransform(initialTx);
                    ((PathGraphics)pathGraphics).redrawRegion(
                                                          gstate.region,

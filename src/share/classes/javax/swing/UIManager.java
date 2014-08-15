@@ -173,6 +173,7 @@ import sun.awt.AWTAccessor;
  *
  * @author Thomas Ball
  * @author Hans Muller
+ * @since 1.2
  */
 @SuppressWarnings("serial") // Same-version serialization only
 public class UIManager implements Serializable
@@ -580,7 +581,7 @@ public class UIManager implements Serializable
             setLookAndFeel(new javax.swing.plaf.metal.MetalLookAndFeel());
         }
         else {
-            Class lnfClass = SwingUtilities.loadSystemClass(className);
+            Class<?> lnfClass = SwingUtilities.loadSystemClass(className);
             setLookAndFeel((LookAndFeel)(lnfClass.newInstance()));
         }
     }
@@ -1048,7 +1049,7 @@ public class UIManager implements Serializable
             String defaultName = "javax.swing.plaf.multi.MultiLookAndFeel";
             String className = getLAFState().swingProps.getProperty(multiplexingLAFKey, defaultName);
             try {
-                Class lnfClass = SwingUtilities.loadSystemClass(className);
+                Class<?> lnfClass = SwingUtilities.loadSystemClass(className);
                 multiLookAndFeel = (LookAndFeel)lnfClass.newInstance();
             } catch (Exception exc) {
                 System.err.println("UIManager: failed loading " + className);
@@ -1106,6 +1107,8 @@ public class UIManager implements Serializable
      * UI class is created or when the default look and feel is changed
      * on a component instance.
      * <p>Note these are not the same as the installed look and feels.
+     *
+     * @param laf the {@code LookAndFeel} to be removed
      * @return true if the <code>LookAndFeel</code> was removed from the list
      * @see #removeAuxiliaryLookAndFeel
      * @see #getAuxiliaryLookAndFeels
@@ -1336,10 +1339,11 @@ public class UIManager implements Serializable
         // Try to get default LAF from system property, then from AppContext
         // (6653395), then use cross-platform one by default.
         String lafName = null;
-        HashMap lafData =
+        @SuppressWarnings("unchecked")
+        HashMap<Object, String> lafData =
                 (HashMap) AppContext.getAppContext().remove("swing.lafdata");
         if (lafData != null) {
-            lafName = (String) lafData.remove("defaultlaf");
+            lafName = lafData.remove("defaultlaf");
         }
         if (lafName == null) {
             lafName = getCrossPlatformLookAndFeelClassName();
@@ -1379,7 +1383,7 @@ public class UIManager implements Serializable
         while (p.hasMoreTokens()) {
             String className = p.nextToken();
             try {
-                Class lnfClass = SwingUtilities.loadSystemClass(className);
+                Class<?> lnfClass = SwingUtilities.loadSystemClass(className);
                 LookAndFeel newLAF = (LookAndFeel)lnfClass.newInstance();
                 newLAF.initialize();
                 auxLookAndFeels.addElement(newLAF);

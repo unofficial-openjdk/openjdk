@@ -33,8 +33,8 @@ import javax.print.attribute.standard.MediaSizeName;
 import java.util.ArrayList;
 
 class CustomMediaSizeName extends MediaSizeName {
-    private static ArrayList customStringTable = new ArrayList();
-    private static ArrayList customEnumTable = new ArrayList();
+    private static ArrayList<String> customStringTable = new ArrayList<>();
+    private static ArrayList<MediaSizeName> customEnumTable = new ArrayList<>();
     private String choiceName;
     private MediaSizeName mediaName;
 
@@ -66,6 +66,22 @@ class CustomMediaSizeName extends MediaSizeName {
             mediaName = MediaSize.findMedia(width, length,
                                             MediaSize.INCH);
         } catch (IllegalArgumentException iae) {
+        }
+        // The public API method finds a closest match even if it not
+        // all that close. Here we want to be sure its *really* close.
+        if (mediaName != null) {
+            MediaSize sz = MediaSize.getMediaSizeForName(mediaName);
+            if (sz == null) {
+                mediaName = null;
+            } else {
+                float w = sz.getX(MediaSize.INCH);
+                float h = sz.getY(MediaSize.INCH);
+                float dw = Math.abs(w - width);
+                float dh = Math.abs(h - length);
+                if (dw > 0.1 || dh > 0.1) {
+                    mediaName = null;
+                }
+            }
         }
     }
 
@@ -162,7 +178,7 @@ class CustomMediaSizeName extends MediaSizeName {
      */
     protected String[] getStringTable() {
       String[] nameTable = new String[customStringTable.size()];
-      return (String[])customStringTable.toArray(nameTable);
+      return customStringTable.toArray(nameTable);
     }
 
     /**
@@ -170,7 +186,7 @@ class CustomMediaSizeName extends MediaSizeName {
      */
     protected EnumSyntax[] getEnumValueTable() {
       MediaSizeName[] enumTable = new MediaSizeName[customEnumTable.size()];
-      return (MediaSizeName[])customEnumTable.toArray(enumTable);
+      return customEnumTable.toArray(enumTable);
     }
 
 }

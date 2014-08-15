@@ -94,8 +94,8 @@ public class CCacheInputStream extends KrbDataInputStream implements FileCCacheC
             taglen = read(2);
             switch (tag) {
             case FCC_TAG_DELTATIME:
-                time_offset = new Integer(read(4));
-                usec_offset = new Integer(read(4));
+                time_offset = read(4);
+                usec_offset = read(4);
                 break;
             default:
             }
@@ -186,7 +186,7 @@ public class CCacheInputStream extends KrbDataInputStream implements FileCCacheC
             read(2); /* keytype recorded twice in fvno 3 */
         keyLen = read(4);
         byte[] bytes = IOUtils.readFully(this, keyLen, true);
-        return new EncryptionKey(bytes, keyType, new Integer(version));
+        return new EncryptionKey(bytes, keyType, version);
     }
 
     long[] readTimes() throws IOException {
@@ -334,15 +334,29 @@ public class CCacheInputStream extends KrbDataInputStream implements FileCCacheC
      * returns null.
      */
     Credentials readCred(int version) throws IOException,RealmException, KrbApErrException, Asn1Exception {
-        PrincipalName cpname = readPrincipal(version);
-        if (DEBUG)
+        PrincipalName cpname = null;
+        try {
+            cpname = readPrincipal(version);
+        } catch (Exception e) {
+            // Do not return here. All data for this cred should be fully
+            // consumed so that we can read the next one.
+        }
+        if (DEBUG) {
             System.out.println(">>>DEBUG <CCacheInputStream>  client principal is " + cpname);
-        PrincipalName spname = readPrincipal(version);
-        if (DEBUG)
+        }
+        PrincipalName spname = null;
+        try {
+            spname = readPrincipal(version);
+        } catch (Exception e) {
+            // same as above
+        }
+        if (DEBUG) {
             System.out.println(">>>DEBUG <CCacheInputStream> server principal is " + spname);
+        }
         EncryptionKey key = readKey(version);
-        if (DEBUG)
+        if (DEBUG) {
             System.out.println(">>>DEBUG <CCacheInputStream> key type: " + key.getEType());
+        }
         long times[] = readTimes();
         KerberosTime authtime = new KerberosTime(times[0]);
         KerberosTime starttime =
@@ -374,6 +388,11 @@ public class CCacheInputStream extends KrbDataInputStream implements FileCCacheC
         }
         byte[] ticketData = readData();
         byte[] ticketData2 = readData();
+
+        // Skip this cred if either cpname or spname isn't created.
+        if (cpname == null || spname == null) {
+            return null;
+        }
 
         try {
             return new Credentials(cpname, spname, key, authtime, starttime,

@@ -96,13 +96,13 @@ class RTFGenerator extends Object
     static {
         MagicToken = new Object();
 
-        Dictionary textKeywordDictionary = RTFReader.textKeywords;
-        Enumeration keys = textKeywordDictionary.keys();
+        Dictionary<String, String> textKeywordDictionary = RTFReader.textKeywords;
+        Enumeration<String> keys = textKeywordDictionary.keys();
         Vector<CharacterKeywordPair> tempPairs = new Vector<CharacterKeywordPair>();
         while(keys.hasMoreElements()) {
             CharacterKeywordPair pair = new CharacterKeywordPair();
-            pair.keyword = (String)keys.nextElement();
-            pair.character = ((String)textKeywordDictionary.get(pair.keyword)).charAt(0);
+            pair.keyword = keys.nextElement();
+            pair.character = textKeywordDictionary.get(pair.keyword).charAt(0);
             tempPairs.addElement(pair);
         }
         textKeywords = new CharacterKeywordPair[tempPairs.size()];
@@ -165,14 +165,14 @@ public void examineElement(Element el)
         foregroundColor = StyleConstants.getForeground(a);
         if (foregroundColor != null &&
             colorTable.get(foregroundColor) == null) {
-            colorTable.put(foregroundColor, new Integer(colorCount));
+            colorTable.put(foregroundColor, colorCount);
             colorCount ++;
         }
 
         backgroundColor = a.getAttribute(StyleConstants.Background);
         if (backgroundColor != null &&
             colorTable.get(backgroundColor) == null) {
-            colorTable.put(backgroundColor, new Integer(colorCount));
+            colorTable.put(backgroundColor, colorCount);
             colorCount ++;
         }
 
@@ -183,7 +183,7 @@ public void examineElement(Element el)
 
         if (fontName != null &&
             fontTable.get(fontName) == null) {
-            fontTable.put(fontName, new Integer(fontCount));
+            fontTable.put(fontName, fontCount);
             fontCount ++;
         }
     }
@@ -200,7 +200,7 @@ private void tallyStyles(AttributeSet a) {
             Integer aNum = styleTable.get(a);
             if (aNum == null) {
                 styleCount = styleCount + 1;
-                aNum = new Integer(styleCount);
+                aNum = styleCount;
                 styleTable.put(a, aNum);
             }
         }
@@ -340,7 +340,7 @@ public void writeRTFHeader()
     /* write color table */
     if (colorCount > 1) {
         Color[] sortedColorTable = new Color[colorCount];
-        Enumeration colors = colorTable.keys();
+        Enumeration<Object> colors = colorTable.keys();
         Color color;
         while(colors.hasMoreElements()) {
             color = (Color)colors.nextElement();

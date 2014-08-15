@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -437,7 +437,7 @@ public class EventHandler implements InvocationHandler {
         if (method.getDeclaringClass() == Object.class)  {
             // Handle the Object public methods.
             if (methodName.equals("hashCode"))  {
-                return new Integer(System.identityHashCode(proxy));
+                return System.identityHashCode(proxy);
             } else if (methodName.equals("equals")) {
                 return (proxy == arguments[0] ? Boolean.TRUE : Boolean.FALSE);
             } else if (methodName.equals("toString")) {
@@ -446,7 +446,7 @@ public class EventHandler implements InvocationHandler {
         }
 
         if (listenerMethodName == null || listenerMethodName.equals(methodName)) {
-            Class[] argTypes = null;
+            Class<?>[] argTypes = null;
             Object[] newArgs = null;
 
             if (eventPropertyName == null) {     // Nullary method.

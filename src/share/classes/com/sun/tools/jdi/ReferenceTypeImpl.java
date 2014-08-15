@@ -529,7 +529,7 @@ implements ReferenceType {
          * to filter that ordered collection.
          */
         List<Method> list = allMethods();
-        list.retainAll(map.values());
+        list.retainAll(new HashSet<Method>(map.values()));
         return list;
     }
 
@@ -751,7 +751,7 @@ implements ReferenceType {
     String baseSourceDir() {
         if (baseSourceDir == null) {
             String typeName = name();
-            StringBuffer sb = new StringBuffer(typeName.length() + 10);
+            StringBuilder sb = new StringBuilder(typeName.length() + 10);
             int index = 0;
             int nextIndex;
 

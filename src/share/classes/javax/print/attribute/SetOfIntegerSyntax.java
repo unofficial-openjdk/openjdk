@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2004, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -75,7 +75,6 @@ import java.util.Vector;
  * Class SetOfIntegerSyntax has operations to return the set's members in
  * canonical array form, to test whether a given integer is a member of the
  * set, and to iterate through the members of the set.
- * <P>
  *
  * @author  David Mendenhall
  * @author  Alan Kaminsky
@@ -112,7 +111,7 @@ public abstract class SetOfIntegerSyntax implements Serializable, Cloneable {
     private static int[][] parse(String members) {
         // Create vector to hold int[] elements, each element being one range
         // parsed out of members.
-        Vector theRanges = new Vector();
+        Vector<int[]> theRanges = new Vector<>();
 
         // Run state machine over members.
         int n = (members == null ? 0 : members.length());
@@ -243,7 +242,7 @@ public abstract class SetOfIntegerSyntax implements Serializable, Cloneable {
      * Accumulate the given range (lb .. ub) into the canonical array form
      * into the given vector of int[] objects.
      */
-    private static void accumulate(Vector ranges, int lb,int ub) {
+    private static void accumulate(Vector<int[]> ranges, int lb,int ub) {
         // Make sure range is non-null.
         if (lb <= ub) {
             // Stick range at the back of the vector.
@@ -253,10 +252,10 @@ public abstract class SetOfIntegerSyntax implements Serializable, Cloneable {
             // with the existing ranges.
             for (int j = ranges.size()-2; j >= 0; -- j) {
             // Get lower and upper bounds of the two ranges being compared.
-                int[] rangea = (int[]) ranges.elementAt (j);
+                int[] rangea = ranges.elementAt (j);
                 int lba = rangea[0];
                 int uba = rangea[1];
-                int[] rangeb = (int[]) ranges.elementAt (j+1);
+                int[] rangeb = ranges.elementAt (j+1);
                 int lbb = rangeb[0];
                 int ubb = rangeb[1];
 
@@ -293,8 +292,8 @@ public abstract class SetOfIntegerSyntax implements Serializable, Cloneable {
     /**
      * Convert the given vector of int[] objects to canonical array form.
      */
-    private static int[][] canonicalArrayForm(Vector ranges) {
-        return (int[][]) ranges.toArray (new int[ranges.size()][]);
+    private static int[][] canonicalArrayForm(Vector<int[]> ranges) {
+        return ranges.toArray (new int[ranges.size()][]);
     }
 
     /**
@@ -323,7 +322,7 @@ public abstract class SetOfIntegerSyntax implements Serializable, Cloneable {
     private static int[][] parse(int[][] members) {
         // Create vector to hold int[] elements, each element being one range
         // parsed out of members.
-        Vector ranges = new Vector();
+        Vector<int[]> ranges = new Vector<>();
 
         // Process all integer groups in members.
         int n = (members == null ? 0 : members.length);
@@ -540,7 +539,7 @@ public abstract class SetOfIntegerSyntax implements Serializable, Cloneable {
      * <CODE>"<I>i</I>-<I>j</I>"</CODE> otherwise.
      */
     public String toString() {
-        StringBuffer result = new StringBuffer();
+        StringBuilder result = new StringBuilder();
         int n = members.length;
         for (int i = 0; i < n; i++) {
             if (i > 0) {

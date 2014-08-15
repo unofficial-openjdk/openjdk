@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -77,7 +77,6 @@ import java.io.Serializable;
  * client's units will be an exact integer. If the conversion factor isn't an
  * exact integer, resolution values in the client's units won't be stored
  * precisely.
- * <P>
  *
  * @author  Alan Kaminsky
  */
@@ -257,7 +256,7 @@ public abstract class Size2DSyntax implements Serializable, Cloneable {
      *     (unchecked exception) Thrown if {@code units < 1}.
      */
     public String toString(int units, String unitsName) {
-        StringBuffer result = new StringBuffer();
+        StringBuilder result = new StringBuilder();
         result.append(getX (units));
         result.append('x');
         result.append(getY (units));
@@ -312,7 +311,7 @@ public abstract class Size2DSyntax implements Serializable, Cloneable {
      * The values are reported in the internal units of micrometers.
      */
     public String toString() {
-        StringBuffer result = new StringBuffer();
+        StringBuilder result = new StringBuilder();
         result.append(x);
         result.append('x');
         result.append(y);

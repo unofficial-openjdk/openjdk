@@ -84,7 +84,7 @@ final class LdapSchemaParser {
     // Object Class specific IDs
     private static final String    ABSTRACT_ID = "ABSTRACT";
     private static final String  STRUCTURAL_ID = "STRUCTURAL";
-    private static final String    AUXILARY_ID = "AUXILIARY";
+    private static final String   AUXILIARY_ID = "AUXILIARY";
     private static final String        MUST_ID = "MUST";
     private static final String         MAY_ID = "MAY";
 
@@ -300,8 +300,8 @@ final class LdapSchemaParser {
         return new Object[] {currentName, attrs};
     }
 
-    // returns the index of the first whitespace char of a linear whitspace
-    // sequince ending at the given position.
+    // returns the index of the first whitespace char of a linear whitespace
+    // sequence ending at the given position.
     final private static int findTrailingWhitespace(String string, int pos) {
         for(int i = pos; i > 0; i--) {
             if(string.charAt(i) != WHSP) {
@@ -423,7 +423,7 @@ final class LdapSchemaParser {
         if (tag.equals(OBSOLETE_ID) ||
             tag.equals(ABSTRACT_ID) ||
             tag.equals(STRUCTURAL_ID) ||
-            tag.equals(AUXILARY_ID) ||
+            tag.equals(AUXILIARY_ID) ||
             tag.equals(SINGLE_VAL_ID) ||
             tag.equals(COLLECTIVE_ID) ||
             tag.equals(NO_USER_MOD_ID)) {
@@ -767,7 +767,7 @@ final class LdapSchemaParser {
     final private String classDef2ObjectDesc(Attributes attrs)
         throws NamingException {
 
-        StringBuffer objectDesc = new StringBuffer("( ");
+        StringBuilder objectDesc = new StringBuilder("( ");
 
         Attribute attr = null;
         int count = 0;
@@ -819,7 +819,7 @@ final class LdapSchemaParser {
             count++;
         }
 
-        attr = attrs.get(AUXILARY_ID);
+        attr = attrs.get(AUXILIARY_ID);
         if (attr != null) {
             objectDesc.append(writeBoolean(attr));
             count++;
@@ -856,7 +856,7 @@ final class LdapSchemaParser {
                     attrId.equals(MUST_ID) ||
                     attrId.equals(STRUCTURAL_ID) ||
                     attrId.equals(DESC_ID) ||
-                    attrId.equals(AUXILARY_ID) ||
+                    attrId.equals(AUXILIARY_ID) ||
                     attrId.equals(ABSTRACT_ID) ||
                     attrId.equals(OBSOLETE_ID)) {
                     continue;
@@ -879,7 +879,7 @@ final class LdapSchemaParser {
     final private String attrDef2AttrDesc(Attributes attrs)
         throws NamingException {
 
-        StringBuffer attrDesc = new StringBuffer("( "); // opening parens
+        StringBuilder attrDesc = new StringBuilder("( "); // opening parens
 
         Attribute attr = null;
         int count = 0;
@@ -1012,7 +1012,7 @@ final class LdapSchemaParser {
     final private String syntaxDef2SyntaxDesc(Attributes attrs)
         throws NamingException {
 
-        StringBuffer syntaxDesc = new StringBuffer("( "); // opening parens
+        StringBuilder syntaxDesc = new StringBuilder("( "); // opening parens
 
         Attribute attr = null;
         int count = 0;
@@ -1068,7 +1068,7 @@ final class LdapSchemaParser {
     final private String matchRuleDef2MatchRuleDesc(Attributes attrs)
         throws NamingException {
 
-        StringBuffer matchRuleDesc = new StringBuffer("( "); // opening parens
+        StringBuilder matchRuleDesc = new StringBuilder("( "); // opening parens
 
         Attribute attr = null;
         int count = 0;
@@ -1196,7 +1196,7 @@ final class LdapSchemaParser {
 
         // write QDList
 
-        StringBuffer qdList = new StringBuffer(attr.getID());
+        StringBuilder qdList = new StringBuilder(attr.getID());
         qdList.append(WHSP);
         qdList.append(OID_LIST_BEGIN);
 
@@ -1233,7 +1233,7 @@ final class LdapSchemaParser {
 
         // write OID List
 
-        StringBuffer oidList = new StringBuffer(oidsAttr.getID());
+        StringBuilder oidList = new StringBuilder(oidsAttr.getID());
         oidList.append(WHSP);
         oidList.append(OID_LIST_BEGIN);
 

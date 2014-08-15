@@ -59,8 +59,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.security.AccessController;
 
 public abstract class SunToolkit extends Toolkit
-    implements WindowClosingSupport, WindowClosingListener,
-    ComponentFactory, InputMethodSupport, KeyboardFocusManagerPeerProvider {
+    implements ComponentFactory, InputMethodSupport, KeyboardFocusManagerPeerProvider {
 
     // 8014718: logging has been removed from SunToolkit
 
@@ -850,22 +849,30 @@ public abstract class SunToolkit extends Toolkit
 
     private int checkResolutionVariant(Image img, int w, int h, ImageObserver o) {
         ToolkitImage rvImage = getResolutionVariant(img);
+        int rvw = getRVSize(w);
+        int rvh = getRVSize(h);
         // Ignore the resolution variant in case of error
         return (rvImage == null || rvImage.hasError()) ? 0xFFFF :
-                checkImage(rvImage, 2 * w, 2 * h, MultiResolutionToolkitImage.
+                checkImage(rvImage, rvw, rvh, MultiResolutionToolkitImage.
                                 getResolutionVariantObserver(
-                                        img, o, w, h, 2 * w, 2 * h));
+                                        img, o, w, h, rvw, rvh, true));
     }
 
     private boolean prepareResolutionVariant(Image img, int w, int h,
             ImageObserver o) {
 
         ToolkitImage rvImage = getResolutionVariant(img);
+        int rvw = getRVSize(w);
+        int rvh = getRVSize(h);
         // Ignore the resolution variant in case of error
         return rvImage == null || rvImage.hasError() || prepareImage(
-                rvImage, 2 * w, 2 * h,
+                rvImage, rvw, rvh,
                 MultiResolutionToolkitImage.getResolutionVariantObserver(
-                        img, o, w, h, 2 * w, 2 * h));
+                        img, o, w, h, rvw, rvh, true));
+    }
+
+    private static int getRVSize(int size){
+        return size == -1 ? -1 : 2 * size;
     }
 
     private static ToolkitImage getResolutionVariant(Image image) {
@@ -1191,42 +1198,6 @@ public abstract class SunToolkit extends Toolkit
      */
     public Locale getDefaultKeyboardLocale() {
         return getStartupLocale();
-    }
-
-    // Support for window closing event notifications
-    private transient WindowClosingListener windowClosingListener = null;
-    /**
-     * @see sun.awt.WindowClosingSupport#getWindowClosingListener
-     */
-    public WindowClosingListener getWindowClosingListener() {
-        return windowClosingListener;
-    }
-    /**
-     * @see sun.awt.WindowClosingSupport#setWindowClosingListener
-     */
-    public void setWindowClosingListener(WindowClosingListener wcl) {
-        windowClosingListener = wcl;
-    }
-
-    /**
-     * @see sun.awt.WindowClosingListener#windowClosingNotify
-     */
-    public RuntimeException windowClosingNotify(WindowEvent event) {
-        if (windowClosingListener != null) {
-            return windowClosingListener.windowClosingNotify(event);
-        } else {
-            return null;
-        }
-    }
-    /**
-     * @see sun.awt.WindowClosingListener#windowClosingDelivered
-     */
-    public RuntimeException windowClosingDelivered(WindowEvent event) {
-        if (windowClosingListener != null) {
-            return windowClosingListener.windowClosingDelivered(event);
-        } else {
-            return null;
-        }
     }
 
     private static DefaultMouseInfoPeer mPeer = null;

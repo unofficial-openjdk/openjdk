@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -159,6 +159,8 @@ public abstract class RowFilter<M,I> {
      * {@link java.util.regex.Pattern} for a complete description of
      * the supported regular-expression constructs.
      *
+     * @param <M> the type of the model to which the {@code RowFilter} applies
+     * @param <I> the type of the identifier passed to the {@code RowFilter}
      * @param regex the regular expression to filter on
      * @param indices the indices of the values to check.  If not supplied all
      *               values are evaluated
@@ -173,8 +175,7 @@ public abstract class RowFilter<M,I> {
      */
     public static <M,I> RowFilter<M,I> regexFilter(String regex,
                                                        int... indices) {
-        return (RowFilter<M,I>)new RegexFilter(Pattern.compile(regex),
-                                               indices);
+        return new RegexFilter<M, I>(Pattern.compile(regex), indices);
     }
 
     /**
@@ -186,6 +187,8 @@ public abstract class RowFilter<M,I> {
      *   RowFilter.dateFilter(ComparisonType.AFTER, new Date());
      * </pre>
      *
+     * @param <M> the type of the model to which the {@code RowFilter} applies
+     * @param <I> the type of the identifier passed to the {@code RowFilter}
      * @param type the type of comparison to perform
      * @param date the date to compare against
      * @param indices the indices of the values to check.  If not supplied all
@@ -201,7 +204,7 @@ public abstract class RowFilter<M,I> {
      */
     public static <M,I> RowFilter<M,I> dateFilter(ComparisonType type,
                                             Date date, int... indices) {
-        return (RowFilter<M,I>)new DateFilter(type, date.getTime(), indices);
+        return new DateFilter<M, I>(type, date.getTime(), indices);
     }
 
     /**
@@ -214,7 +217,10 @@ public abstract class RowFilter<M,I> {
      *   RowFilter.numberFilter(ComparisonType.EQUAL, 10);
      * </pre>
      *
+     * @param <M> the type of the model to which the {@code RowFilter} applies
+     * @param <I> the type of the identifier passed to the {@code RowFilter}
      * @param type the type of comparison to perform
+     * @param number a {@code Number} value to compare against
      * @param indices the indices of the values to check.  If not supplied all
      *               values are evaluated
      * @return a <code>RowFilter</code> implementing the specified criteria
@@ -224,7 +230,7 @@ public abstract class RowFilter<M,I> {
      */
     public static <M,I> RowFilter<M,I> numberFilter(ComparisonType type,
                                             Number number, int... indices) {
-        return (RowFilter<M,I>)new NumberFilter(type, number, indices);
+        return new NumberFilter<M, I>(type, number, indices);
     }
 
     /**
@@ -241,6 +247,8 @@ public abstract class RowFilter<M,I> {
      *   RowFilter&lt;Object,Object&gt; fooBarFilter = RowFilter.orFilter(filters);
      * </pre>
      *
+     * @param <M> the type of the model to which the {@code RowFilter} applies
+     * @param <I> the type of the identifier passed to the {@code RowFilter}
      * @param filters the <code>RowFilter</code>s to test
      * @throws IllegalArgumentException if any of the filters
      *         are <code>null</code>
@@ -267,6 +275,8 @@ public abstract class RowFilter<M,I> {
      *   RowFilter&lt;Object,Object&gt; fooBarFilter = RowFilter.andFilter(filters);
      * </pre>
      *
+     * @param <M> the type of the model the {@code RowFilter} applies to
+     * @param <I> the type of the identifier passed to the {@code RowFilter}
      * @param filters the <code>RowFilter</code>s to test
      * @return a <code>RowFilter</code> implementing the specified criteria
      * @throws IllegalArgumentException if any of the filters
@@ -283,6 +293,8 @@ public abstract class RowFilter<M,I> {
      * Returns a <code>RowFilter</code> that includes entries if the
      * supplied filter does not include the entry.
      *
+     * @param <M> the type of the model to which the {@code RowFilter} applies
+     * @param <I> the type of the identifier passed to the {@code RowFilter}
      * @param filter the <code>RowFilter</code> to negate
      * @return a <code>RowFilter</code> implementing the specified criteria
      * @throws IllegalArgumentException if <code>filter</code> is
@@ -397,7 +409,7 @@ public abstract class RowFilter<M,I> {
     }
 
 
-    private static abstract class GeneralFilter extends RowFilter<Object,Object> {
+    private static abstract class GeneralFilter<M, I> extends RowFilter<M, I> {
         private int[] columns;
 
         GeneralFilter(int[] columns) {
@@ -405,7 +417,8 @@ public abstract class RowFilter<M,I> {
             this.columns = columns;
         }
 
-        public boolean include(Entry<? extends Object,? extends Object> value){
+        @Override
+        public boolean include(Entry<? extends M, ? extends I> value){
             int count = value.getValueCount();
             if (columns.length > 0) {
                 for (int i = columns.length - 1; i >= 0; i--) {
@@ -416,8 +429,7 @@ public abstract class RowFilter<M,I> {
                         }
                     }
                 }
-            }
-            else {
+            } else {
                 while (--count >= 0) {
                     if (include(value, count)) {
                         return true;
@@ -428,11 +440,11 @@ public abstract class RowFilter<M,I> {
         }
 
         protected abstract boolean include(
-              Entry<? extends Object,? extends Object> value, int index);
+              Entry<? extends M, ? extends I> value, int index);
     }
 
 
-    private static class RegexFilter extends GeneralFilter {
+    private static class RegexFilter<M, I> extends GeneralFilter<M, I> {
         private Matcher matcher;
 
         RegexFilter(Pattern regex, int[] columns) {
@@ -443,15 +455,16 @@ public abstract class RowFilter<M,I> {
             matcher = regex.matcher("");
         }
 
+        @Override
         protected boolean include(
-                Entry<? extends Object,? extends Object> value, int index) {
+                Entry<? extends M, ? extends I> value, int index) {
             matcher.reset(value.getStringValue(index));
             return matcher.find();
         }
     }
 
 
-    private static class DateFilter extends GeneralFilter {
+    private static class DateFilter<M, I> extends GeneralFilter<M, I> {
         private long date;
         private ComparisonType type;
 
@@ -464,8 +477,9 @@ public abstract class RowFilter<M,I> {
             this.date = date;
         }
 
+        @Override
         protected boolean include(
-                Entry<? extends Object,? extends Object> value, int index) {
+                Entry<? extends M, ? extends I> value, int index) {
             Object v = value.getValue(index);
 
             if (v instanceof Date) {
@@ -487,10 +501,7 @@ public abstract class RowFilter<M,I> {
         }
     }
 
-
-
-
-    private static class NumberFilter extends GeneralFilter {
+    private static class NumberFilter<M, I> extends GeneralFilter<M, I> {
         private boolean isComparable;
         private Number number;
         private ComparisonType type;
@@ -506,15 +517,16 @@ public abstract class RowFilter<M,I> {
             isComparable = (number instanceof Comparable);
         }
 
+        @Override
         @SuppressWarnings("unchecked")
         protected boolean include(
-                Entry<? extends Object,? extends Object> value, int index) {
+                Entry<? extends M, ? extends I> value, int index) {
             Object v = value.getValue(index);
 
             if (v instanceof Number) {
                 boolean compared = true;
                 int compareResult;
-                Class vClass = v.getClass();
+                Class<?> vClass = v.getClass();
                 if (number.getClass() == vClass && isComparable) {
                     compareResult = ((Comparable)number).compareTo(v);
                 }

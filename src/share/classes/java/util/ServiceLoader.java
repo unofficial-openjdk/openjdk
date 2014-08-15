@@ -574,9 +574,11 @@ public final class ServiceLoader<S>
      * service iterators.
      */
     private class LookupIterator implements Iterator<S> {
-        ServicesIterator[] iterators;
+        final ServicesIterator[] iterators;
         int index;
 
+        @SuppressWarnings({"varargs"})
+        @SafeVarargs
         LookupIterator(ServicesIterator... iterators) {
             this.iterators = iterators;
             this.index = 0;

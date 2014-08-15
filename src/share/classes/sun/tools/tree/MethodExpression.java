@@ -78,7 +78,7 @@ class MethodExpression extends NaryExpression {
     /**
      * Check expression type
      */
-    public Vset checkValue(Environment env, Context ctx, Vset vset, Hashtable exp) {
+    public Vset checkValue(Environment env, Context ctx, Vset vset, Hashtable<Object, Object> exp) {
         ClassDeclaration c = null;
         boolean isArray = false;
         boolean staticRef = false;
@@ -587,7 +587,7 @@ class MethodExpression extends NaryExpression {
     /**
      * Check void expression
      */
-    public Vset check(Environment env, Context ctx, Vset vset, Hashtable exp) {
+    public Vset check(Environment env, Context ctx, Vset vset, Hashtable<Object, Object> exp) {
         return checkValue(env, ctx, vset, exp);
     }
 
@@ -857,7 +857,7 @@ class MethodExpression extends NaryExpression {
                 right.code(env, ctx, asm);
             }
         } else if (right == null) {
-            asm.add(where, opc_aload, new Integer(0));
+            asm.add(where, opc_aload, 0);
         } else if (right.op == SUPER) {
             // 'super.<method>(...)', 'super(...)', or '<expr>.super(...)'
             /*****

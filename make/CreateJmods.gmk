@@ -41,7 +41,6 @@ include HotspotImport.gmk
 
 include gendata/GendataFontConfig.gmk
 GENDATA_TZDB    = $(JDK_OUTPUTDIR)/lib/tzdb.dat
-GENDATA_CURDATA = $(JDK_OUTPUTDIR)/lib/currency.data
 
 #
 # Jurisdiction policy files are built in JDK_OUTPUTDIR/lib/security
@@ -78,7 +77,7 @@ all: $(BUILD_CLASSANALYZER)
                 --native="$(BASE_LIBRARIES) $(MSVCR_TARGET) $(JVM_LIBRARIES)" \
                 --cmds="$(BASE_LAUNCHERS)" \
 		--conf="$(JVMCFG)" \
-                --conf="$(BASE_CONF_FILES) $(NET_CONF_FILES) $(GENDATA_TZDB) $(GENDATA_CURDATA)" \
+                --conf="$(BASE_CONF_FILES) $(NET_CONF_FILES) $(GENDATA_TZDB)" \
 		--conf="$(BASE_POLICY_JAR_FILES)" \
             --module java.desktop \
                 --native="$(DESKTOP_LIBRARIES) $(FREETYPE_LIB)" \

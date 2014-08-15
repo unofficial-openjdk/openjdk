@@ -49,7 +49,7 @@ class IncDecExpression extends UnaryExpression {
     /**
      * Check an increment or decrement expression
      */
-    public Vset checkValue(Environment env, Context ctx, Vset vset, Hashtable exp) {
+    public Vset checkValue(Environment env, Context ctx, Vset vset, Hashtable<Object, Object> exp) {
         vset = right.checkAssignOp(env, ctx, vset, exp, this);
         if (right.type.inMask(TM_NUMBER)) {
             type = right.type;
@@ -66,7 +66,7 @@ class IncDecExpression extends UnaryExpression {
     /**
      * Check void expression
      */
-    public Vset check(Environment env, Context ctx, Vset vset, Hashtable exp) {
+    public Vset check(Environment env, Context ctx, Vset vset, Hashtable<Object, Object> exp) {
         return checkValue(env, ctx, vset, exp);
     }
 
@@ -112,26 +112,26 @@ class IncDecExpression extends UnaryExpression {
     private void codeIncDecOp(Assembler asm, boolean inc) {
         switch (type.getTypeCode()) {
           case TC_BYTE:
-            asm.add(where, opc_ldc, new Integer(1));
+            asm.add(where, opc_ldc, 1);
             asm.add(where, inc ? opc_iadd : opc_isub);
             asm.add(where, opc_i2b);
             break;
           case TC_SHORT:
-            asm.add(where, opc_ldc, new Integer(1));
+            asm.add(where, opc_ldc, 1);
             asm.add(where, inc ? opc_iadd : opc_isub);
             asm.add(where, opc_i2s);
             break;
           case TC_CHAR:
-            asm.add(where, opc_ldc, new Integer(1));
+            asm.add(where, opc_ldc, 1);
             asm.add(where, inc ? opc_iadd : opc_isub);
             asm.add(where, opc_i2c);
             break;
           case TC_INT:
-            asm.add(where, opc_ldc, new Integer(1));
+            asm.add(where, opc_ldc, 1);
             asm.add(where, inc ? opc_iadd : opc_isub);
             break;
           case TC_LONG:
-            asm.add(where, opc_ldc2_w, new Long(1));
+            asm.add(where, opc_ldc2_w, 1L);
             asm.add(where, inc ? opc_ladd : opc_lsub);
             break;
           case TC_FLOAT:

@@ -116,8 +116,8 @@ public class Jstat {
             Collections.sort(logged, arguments.comparator());
             List<Monitor> constants = new ArrayList<Monitor>();
 
-            for (Iterator i = logged.iterator(); i.hasNext(); /* empty */) {
-                Monitor m = (Monitor)i.next();
+            for (Iterator<Monitor> i = logged.iterator(); i.hasNext(); /* empty */) {
+                Monitor m = i.next();
                 if (!(m.isSupported() || arguments.showUnsupported())) {
                     i.remove();
                     continue;
@@ -158,7 +158,7 @@ public class Jstat {
         // handle target termination events for targets other than ourself
         HostListener terminator = new HostListener() {
             public void vmStatusChanged(VmStatusChangeEvent ev) {
-                Integer lvmid = new Integer(vmId.getLocalVmId());
+                Integer lvmid = vmId.getLocalVmId();
                 if (ev.getTerminated().contains(lvmid)) {
                     logger.stopLogging();
                 } else if (!ev.getActive().contains(lvmid)) {

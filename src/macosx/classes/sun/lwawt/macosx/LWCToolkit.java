@@ -32,6 +32,7 @@ import java.awt.dnd.peer.DragSourceContextPeer;
 import java.awt.event.InputEvent;
 import java.awt.event.InvocationEvent;
 import java.awt.event.KeyEvent;
+import java.awt.font.TextAttribute;
 import java.awt.im.InputMethodHighlight;
 import java.awt.im.spi.InputMethodDescriptor;
 import java.awt.peer.*;
@@ -44,6 +45,7 @@ import java.net.MalformedURLException;
 
 import sun.awt.*;
 import sun.awt.datatransfer.DataTransferer;
+import sun.awt.util.ThreadGroupUtils;
 import sun.java2d.opengl.OGLRenderQueue;
 import sun.lwawt.*;
 import sun.lwawt.LWWindowPeer.PeerType;
@@ -70,7 +72,7 @@ public final class LWCToolkit extends LWToolkit {
     private static final int BUTTONS = 5;
 
     private static native void initIDs();
-
+    private static native void initAppkit(ThreadGroup appKitThreadGroup, boolean headless);
     private static CInputMethodDescriptor sInputMethodDescriptor;
 
     static {
@@ -119,6 +121,7 @@ public final class LWCToolkit extends LWToolkit {
         areExtraMouseButtonsEnabled = Boolean.parseBoolean(System.getProperty("sun.awt.enableExtraMouseButtons", "true"));
         //set system property if not yet assigned
         System.setProperty("sun.awt.enableExtraMouseButtons", ""+areExtraMouseButtonsEnabled);
+        initAppkit(ThreadGroupUtils.getRootThreadGroup(), GraphicsEnvironment.isHeadless());
     }
 
     /*
@@ -166,7 +169,7 @@ public final class LWCToolkit extends LWToolkit {
     // This is only called from native code.
     static void systemColorsChanged() {
         EventQueue.invokeLater(() -> {
-            AccessController.doPrivileged ((PrivilegedAction<Object>) () -> {
+            AccessController.doPrivileged( (PrivilegedAction<Object>) () -> {
                 AWTAccessor.getSystemColorAccessor().updateSystemColors();
                 return null;
             });
@@ -523,7 +526,7 @@ public final class LWCToolkit extends LWToolkit {
      *                 that is used for menu shortcuts on this toolkit.
      * @see       java.awt.MenuBar
      * @see       java.awt.MenuShortcut
-     * @since     JDK1.1
+     * @since     1.1
      */
     @Override
     public int getMenuShortcutKeyMask() {
@@ -541,9 +544,9 @@ public final class LWCToolkit extends LWToolkit {
             return super.getImage(filename);
         }
 
-        String fileneame2x = getScaledImageName(filename);
-        return (imageExists(fileneame2x))
-                ? getImageWithResolutionVariant(filename, fileneame2x)
+        String filename2x = getScaledImageName(filename);
+        return (imageExists(filename2x))
+                ? getImageWithResolutionVariant(filename, filename2x)
                 : super.getImage(filename);
     }
 
@@ -689,6 +692,7 @@ public final class LWCToolkit extends LWToolkit {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public <T extends DragGestureRecognizer> T createDragGestureRecognizer(
             Class<T> abstractRecognizerClass, DragSource ds, Component c,
             int srcActions, DragGestureListener dgl) {
@@ -741,7 +745,7 @@ public final class LWCToolkit extends LWToolkit {
      * @since 1.3
      */
     @Override
-    public Map mapInputMethodHighlight(InputMethodHighlight highlight) {
+    public Map<TextAttribute, ?> mapInputMethodHighlight(InputMethodHighlight highlight) {
         return CInputMethod.mapInputMethodHighlight(highlight);
     }
 
@@ -789,6 +793,13 @@ public final class LWCToolkit extends LWToolkit {
      * Returns true if the application (one of its windows) owns keyboard focus.
      */
     native boolean isApplicationActive();
+
+    /**
+     * Returns true if AWT toolkit is embedded, false otherwise.
+     *
+     * @return true if AWT toolkit is embedded, false otherwise
+     */
+    public static native boolean isEmbedded();
 
     /************************
      * Native methods section
@@ -897,6 +908,9 @@ public final class LWCToolkit extends LWToolkit {
     }
 
     private static boolean isValidPath(String path) {
-        return !path.isEmpty() && !path.endsWith("/") && !path.endsWith(".");
+        return path != null &&
+                !path.isEmpty() &&
+                !path.endsWith("/") &&
+                !path.endsWith(".");
     }
 }

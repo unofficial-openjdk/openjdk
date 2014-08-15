@@ -168,13 +168,6 @@ public class PSPrinterJob extends RasterPrinterJob {
     private static final String IMAGE_STR =     " string /imStr exch def";
     private static final String IMAGE_RESTORE = "imSave restore";
 
-    private static final String COORD_PREP =    " 0 exch translate "
-                                              + "1 -1 scale"
-                                              + "[72 " + PS_XRES + " div "
-                                              + "0 0 "
-                                              + "72 " + PS_YRES + " div "
-                                              + "0 0]concat";
-
     private static final String SetFontName = "F";
 
     private static final String DrawStringName = "S";
@@ -275,6 +268,9 @@ public class PSPrinterJob extends RasterPrinterJob {
 
    private AffineTransform mLastTransform;
 
+   private double xres = PS_XRES;
+   private double yres = PS_XRES;
+
    /* non-null if printing EPS for Java Plugin */
    private EPSPrinter epsPrinter = null;
 
@@ -310,7 +306,7 @@ public class PSPrinterJob extends RasterPrinterJob {
    /**
     * A stack that represents the PostScript gstate stack.
     */
-   ArrayList mGStateStack = new ArrayList();
+   ArrayList<GState> mGStateStack = new ArrayList<>();
 
    /**
     * The x coordinate of the current pen position.
@@ -346,7 +342,7 @@ public class PSPrinterJob extends RasterPrinterJob {
        //enable priviledges so initProps can access system properties,
         // open the property file, etc.
         java.security.AccessController.doPrivileged(
-                            new java.security.PrivilegedAction() {
+                            new java.security.PrivilegedAction<Object>() {
             public Object run() {
                 mFontProps = initProps();
                 String osName = System.getProperty("os.name");
@@ -622,11 +618,11 @@ public class PSPrinterJob extends RasterPrinterJob {
                                            paperWidth + " "+ paperHeight+"]");
 
             final PrintService pservice = getPrintService();
-            Boolean isPS = (Boolean)java.security.AccessController.doPrivileged(
-                new java.security.PrivilegedAction() {
-                    public Object run() {
+            Boolean isPS = java.security.AccessController.doPrivileged(
+                new java.security.PrivilegedAction<Boolean>() {
+                    public Boolean run() {
                        try {
-                           Class psClass = Class.forName("sun.print.IPPPrintService");
+                           Class<?> psClass = Class.forName("sun.print.IPPPrintService");
                            if (psClass.isInstance(pservice)) {
                                Method isPSMethod = psClass.getMethod("isPostscript",
                                                                      (Class[])null);
@@ -660,11 +656,11 @@ public class PSPrinterJob extends RasterPrinterJob {
 
     // Inner class to run "privileged" to open the printer output stream.
 
-    private class PrinterOpener implements java.security.PrivilegedAction {
+    private class PrinterOpener implements java.security.PrivilegedAction<OutputStream> {
         PrinterException pex;
         OutputStream result;
 
-        public Object run() {
+        public OutputStream run() {
             try {
 
                     /* Write to a temporary file which will be spooled to
@@ -687,7 +683,7 @@ public class PSPrinterJob extends RasterPrinterJob {
 
     // Inner class to run "privileged" to invoke the system print command
 
-    private class PrinterSpooler implements java.security.PrivilegedAction {
+    private class PrinterSpooler implements java.security.PrivilegedAction<Object> {
         PrinterException pex;
 
         private void handleProcessFailure(final Process failedProcess,
@@ -708,8 +704,8 @@ public class PSPrinterJob extends RasterPrinterJob {
                     }
                 } finally {
                     pw.flush();
-                    throw new IOException(sw.toString());
                 }
+                throw new IOException(sw.toString());
             }
         }
 
@@ -753,7 +749,7 @@ public class PSPrinterJob extends RasterPrinterJob {
             mPSStream.close();
         }
         java.security.AccessController.doPrivileged(
-            new java.security.PrivilegedAction() {
+            new java.security.PrivilegedAction<Object>() {
 
             public Object run() {
                if (spoolFile != null && spoolFile.exists()) {
@@ -796,6 +792,15 @@ public class PSPrinterJob extends RasterPrinterJob {
         }
     }
 
+    private String getCoordPrep() {
+        return " 0 exch translate "
+             + "1 -1 scale"
+             + "[72 " + getXRes() + " div "
+             + "0 0 "
+             + "72 " + getYRes() + " div "
+             + "0 0]concat";
+    }
+
     /**
      * The RasterPrintJob super class calls this method
      * at the start of each page.
@@ -812,7 +817,7 @@ public class PSPrinterJob extends RasterPrinterJob {
          * It will have the default PostScript gstate
          * attributes.
          */
-        mGStateStack = new ArrayList();
+        mGStateStack = new ArrayList<>();
         mGStateStack.add(new GState());
 
         mPSStream.println(PAGE_COMMENT + pageNumber + " " + pageNumber);
@@ -825,13 +830,11 @@ public class PSPrinterJob extends RasterPrinterJob {
                             paperWidth + " " + paperHeight + "]");
 
             final PrintService pservice = getPrintService();
-            Boolean isPS =
-                (Boolean)java.security.AccessController.doPrivileged(
-
-                new java.security.PrivilegedAction() {
-                    public Object run() {
+            Boolean isPS = java.security.AccessController.doPrivileged(
+                new java.security.PrivilegedAction<Boolean>() {
+                    public Boolean run() {
                         try {
-                            Class psClass =
+                            Class<?> psClass =
                                 Class.forName("sun.print.IPPPrintService");
                             if (psClass.isInstance(pservice)) {
                                 Method isPSMethod =
@@ -854,7 +857,7 @@ public class PSPrinterJob extends RasterPrinterJob {
             mPSStream.println(" >> setpagedevice");
         }
         mPSStream.println(PAGE_SAVE);
-        mPSStream.println(paperHeight + COORD_PREP);
+        mPSStream.println(paperHeight + getCoordPrep());
     }
 
     /**
@@ -1269,7 +1272,7 @@ public class PSPrinterJob extends RasterPrinterJob {
                     CharsetString cs = acs[i];
                     CharsetEncoder fontCS = cs.fontDescriptor.encoder;
 
-                    StringBuffer nativeStr = new StringBuffer();
+                    StringBuilder nativeStr = new StringBuilder();
                     byte[] strSeg = new byte[cs.length * 2];
                     int len = 0;
                     try {
@@ -1495,14 +1498,22 @@ public class PSPrinterJob extends RasterPrinterJob {
      * to be rendered.
      */
     protected double getXRes() {
-        return PS_XRES;
+        return xres;
     }
     /**
      * Return the y resolution of the coordinates
      * to be rendered.
      */
     protected double getYRes() {
-        return PS_YRES;
+        return yres;
+    }
+
+    /**
+     * Set the resolution at which to print.
+     */
+    protected void setXYRes(double x, double y) {
+        xres = x;
+        yres = y;
     }
 
     /**
@@ -1720,7 +1731,7 @@ public class PSPrinterJob extends RasterPrinterJob {
      */
     private GState getGState() {
         int count = mGStateStack.size();
-        return (GState) mGStateStack.get(count - 1);
+        return mGStateStack.get(count - 1);
     }
 
     /**

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1995, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -68,7 +68,7 @@ import javax.accessibility.*;
  *
  * @author      Sami Shaio
  * @author      Arthur van Hoff
- * @since       JDK1.0
+ * @since       1.0
  */
 public class Choice extends Component implements ItemSelectable, Accessible {
     /**
@@ -156,15 +156,19 @@ public class Choice extends Component implements ItemSelectable, Accessible {
 
     /**
      * Returns the number of items in this <code>Choice</code> menu.
+     *
      * @return the number of items in this <code>Choice</code> menu
      * @see     #getItem
-     * @since   JDK1.1
+     * @since   1.1
      */
     public int getItemCount() {
         return countItems();
     }
 
     /**
+     * Returns the number of items in this {@code Choice} menu.
+     *
+     * @return the number of items in this {@code Choice} menu
      * @deprecated As of JDK version 1.1,
      * replaced by <code>getItemCount()</code>.
      */
@@ -176,8 +180,10 @@ public class Choice extends Component implements ItemSelectable, Accessible {
     /**
      * Gets the string at the specified index in this
      * <code>Choice</code> menu.
-     * @param      index the index at which to begin
-     * @see        #getItemCount
+     *
+     * @param  index the index at which to begin
+     * @return the item at the specified index
+     * @see    #getItemCount
      */
     public String getItem(int index) {
         return getItemImpl(index);
@@ -196,7 +202,7 @@ public class Choice extends Component implements ItemSelectable, Accessible {
      * @param      item    the item to be added
      * @exception  NullPointerException   if the item's value is
      *                  <code>null</code>
-     * @since      JDK1.1
+     * @since      1.1
      */
     public void add(String item) {
         addItem(item);
@@ -291,7 +297,7 @@ public class Choice extends Component implements ItemSelectable, Accessible {
      * @param      item  the item to remove from this <code>Choice</code> menu
      * @exception  IllegalArgumentException  if the item doesn't
      *                     exist in the choice menu
-     * @since      JDK1.1
+     * @since      1.1
      */
     public void remove(String item) {
         synchronized (this) {
@@ -319,7 +325,7 @@ public class Choice extends Component implements ItemSelectable, Accessible {
      * @param      position the position of the item
      * @throws IndexOutOfBoundsException if the specified
      *          position is out of bounds
-     * @since      JDK1.1
+     * @since      1.1
      */
     public void remove(int position) {
         synchronized (this) {
@@ -357,7 +363,7 @@ public class Choice extends Component implements ItemSelectable, Accessible {
     /**
      * Removes all items from the choice menu.
      * @see       #remove
-     * @since     JDK1.1
+     * @since     1.1
      */
     public void removeAll() {
         synchronized (this) {
@@ -475,7 +481,7 @@ public class Choice extends Component implements ItemSelectable, Accessible {
      * @see           #select
      * @see           java.awt.event.ItemEvent
      * @see           java.awt.event.ItemListener
-     * @since         JDK1.1
+     * @since         1.1
      */
     public synchronized void addItemListener(ItemListener l) {
         if (l == null) {
@@ -497,7 +503,7 @@ public class Choice extends Component implements ItemSelectable, Accessible {
      * @see           #getItemListeners
      * @see           java.awt.event.ItemEvent
      * @see           java.awt.event.ItemListener
-     * @since         JDK1.1
+     * @since         1.1
      */
     public synchronized void removeItemListener(ItemListener l) {
         if (l == null) {
@@ -591,7 +597,7 @@ public class Choice extends Component implements ItemSelectable, Accessible {
      * @param      e the event
      * @see        java.awt.event.ItemEvent
      * @see        #processItemEvent
-     * @since      JDK1.1
+     * @since      1.1
      */
     protected void processEvent(AWTEvent e) {
         if (e instanceof ItemEvent) {
@@ -623,7 +629,7 @@ public class Choice extends Component implements ItemSelectable, Accessible {
      * @see         java.awt.event.ItemListener
      * @see         #addItemListener(ItemListener)
      * @see         java.awt.Component#enableEvents
-     * @since       JDK1.1
+     * @since       1.1
      */
     protected void processItemEvent(ItemEvent e) {
         ItemListener listener = itemListener;
@@ -759,6 +765,9 @@ public class Choice extends Component implements ItemSelectable, Accessible {
          */
         private static final long serialVersionUID = 7175603582428509322L;
 
+        /**
+         * Constructor for {@code AccessibleAWTChoice}
+         */
         public AccessibleAWTChoice() {
             super();
         }

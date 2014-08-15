@@ -160,6 +160,7 @@ import java.io.Serializable;
  * @see #setActionCommand
  * @see JPasswordField
  * @see #addActionListener
+ * @since 1.2
  */
 @SuppressWarnings("serial") // Same-version serialization only
 public class JTextField extends JTextComponent implements SwingConstants {
@@ -586,7 +587,7 @@ public class JTextField extends JTextComponent implements SwingConstants {
         }
     }
 
-    private boolean isListener(Class c, ActionListener a) {
+    private boolean isListener(Class<?> c, ActionListener a) {
         boolean isListener = false;
         Object[] listeners = listenerList.getListenerList();
         for (int i = listeners.length-2; i>=0; i-=2) {
@@ -674,6 +675,9 @@ public class JTextField extends JTextComponent implements SwingConstants {
      * that of the <code>Action</code>.
      *
      * @param a the textfield's action
+     * @return a {@code PropertyChangeListener} that is responsible for
+     *         listening for changes from the specified {@code Action} and
+     *         updating the appropriate properties
      * @since 1.3
      * @see Action
      * @see #setAction

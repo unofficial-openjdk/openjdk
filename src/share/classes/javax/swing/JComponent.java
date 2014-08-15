@@ -63,6 +63,7 @@ import javax.swing.plaf.*;
 import static javax.swing.ClientPropertyKey.*;
 import javax.accessibility.*;
 
+import sun.awt.SunToolkit;
 import sun.swing.SwingUtilities2;
 import sun.swing.UIClientPropertyKey;
 
@@ -178,6 +179,7 @@ import sun.swing.UIClientPropertyKey;
  *
  * @author Hans Muller
  * @author Arnaud Weber
+ * @since 1.2
  */
 @SuppressWarnings("serial") // Same-version serialization only
 public abstract class JComponent extends Container implements Serializable,
@@ -494,6 +496,7 @@ public abstract class JComponent extends Container implements Serializable,
     /**
      * Returns true if the JPopupMenu should be inherited from the parent.
      *
+     * @return true if the JPopupMenu should be inherited from the parent
      * @see #setComponentPopupMenu
      * @since 1.5
      */
@@ -1300,6 +1303,7 @@ public abstract class JComponent extends Container implements Serializable,
      * <code>SortingFocusTraversalPolicy</code> from considering descendants
      * of this JComponent when computing a focus traversal cycle.
      *
+     * @return false
      * @see java.awt.Component#setFocusTraversalKeys
      * @see SortingFocusTraversalPolicy
      * @deprecated As of 1.4, replaced by
@@ -2109,6 +2113,7 @@ public abstract class JComponent extends Container implements Serializable,
     private void registerWithKeyboardManager(boolean onlyIfNew) {
         InputMap inputMap = getInputMap(WHEN_IN_FOCUSED_WINDOW, false);
         KeyStroke[] strokes;
+        @SuppressWarnings("unchecked")
         Hashtable<KeyStroke, KeyStroke> registered =
                 (Hashtable<KeyStroke, KeyStroke>)getClientProperty
                                 (WHEN_IN_FOCUSED_WINDOW_BINDINGS);
@@ -2162,6 +2167,7 @@ public abstract class JComponent extends Container implements Serializable,
      * <code>WHEN_IN_FOCUSED_WINDOW</code> <code>KeyStroke</code> bindings.
      */
     private void unregisterWithKeyboardManager() {
+        @SuppressWarnings("unchecked")
         Hashtable<KeyStroke, KeyStroke> registered =
                 (Hashtable<KeyStroke, KeyStroke>)getClientProperty
                                 (WHEN_IN_FOCUSED_WINDOW_BINDINGS);
@@ -2209,6 +2215,13 @@ public abstract class JComponent extends Container implements Serializable,
      * This method is now obsolete, please use a combination of
      * <code>getActionMap()</code> and <code>getInputMap()</code> for
      * similar behavior.
+     *
+     * @param anAction  action to be registered to given keystroke and condition
+     * @param aKeyStroke  a {@code KeyStroke}
+     * @param aCondition  the condition to be associated with given keystroke
+     *                    and action
+     * @see #getActionMap
+     * @see #getInputMap(int)
      */
     public void registerKeyboardAction(ActionListener anAction,KeyStroke aKeyStroke,int aCondition) {
         registerKeyboardAction(anAction,null,aKeyStroke,aCondition);
@@ -2227,6 +2240,9 @@ public abstract class JComponent extends Container implements Serializable,
      * Unregisters a keyboard action.
      * This will remove the binding from the <code>ActionMap</code>
      * (if it exists) as well as the <code>InputMap</code>s.
+     *
+     * @param aKeyStroke  the keystroke for which to unregister its
+     *                    keyboard action
      */
     public void unregisterKeyboardAction(KeyStroke aKeyStroke) {
         ActionMap am = getActionMap(false);
@@ -2282,6 +2298,8 @@ public abstract class JComponent extends Container implements Serializable,
      * conditions <code>WHEN_FOCUSED</code> and
      * <code>WHEN_IN_FOCUSED_WINDOW</code> condition.
      *
+     * @param aKeyStroke  the keystroke for which to request an
+     *                    action-keystroke condition
      * @return the action-keystroke condition
      */
     public int getConditionForKeyStroke(KeyStroke aKeyStroke) {
@@ -2298,6 +2316,7 @@ public abstract class JComponent extends Container implements Serializable,
      * Returns the object that will perform the action registered for a
      * given keystroke.
      *
+     * @param aKeyStroke  the keystroke for which to return a listener
      * @return the <code>ActionListener</code>
      *          object invoked when the keystroke occurs
      */
@@ -2606,6 +2625,8 @@ public abstract class JComponent extends Container implements Serializable,
      * <code>FocusTraversalPolicy</code> of this <code>JComponent</code>'s
      * focus-cycle-root ancestor is used.
      *
+     * @return true if this component can request to get the input focus,
+     *              false if it can not
      * @see java.awt.FocusTraversalPolicy#getDefaultComponent
      * @deprecated As of 1.4, replaced by
      * <code>FocusTraversalPolicy.getDefaultComponent(Container).requestFocus()</code>
@@ -2817,6 +2838,8 @@ public abstract class JComponent extends Container implements Serializable,
      * normally override this method if they process some
      * key events themselves.  If the event is processed,
      * it should be consumed.
+     *
+     * @param e the event to be processed
      */
     protected void processComponentKeyEvent(KeyEvent e) {
     }
@@ -3028,6 +3051,10 @@ public abstract class JComponent extends Container implements Serializable,
      * <code>setToolTipText</code>.  If a component provides
      * more extensive API to support differing tooltips at different locations,
      * this method should be overridden.
+     *
+     * @param event the {@code MouseEvent} that initiated the
+     *              {@code ToolTip} display
+     * @return a string containing the  tooltip
      */
     public String getToolTipText(MouseEvent event) {
         return getToolTipText();
@@ -3678,8 +3705,8 @@ public abstract class JComponent extends Container implements Serializable,
         private volatile transient int propertyListenersCount = 0;
 
         /**
-         * This field duplicates the one in java.awt.Component.AccessibleAWTComponent,
-         * so it has been deprecated.
+         * This field duplicates the function of the accessibleAWTFocusHandler field
+         * in java.awt.Component.AccessibleAWTComponent, so it has been deprecated.
          */
         @Deprecated
         protected FocusListener accessibleFocusHandler = null;
@@ -3737,14 +3764,10 @@ public abstract class JComponent extends Container implements Serializable,
          * @param listener  the PropertyChangeListener to be added
          */
         public void addPropertyChangeListener(PropertyChangeListener listener) {
-            if (accessibleFocusHandler == null) {
-                accessibleFocusHandler = new AccessibleFocusHandler();
-            }
             if (accessibleContainerHandler == null) {
                 accessibleContainerHandler = new AccessibleContainerHandler();
             }
             if (propertyListenersCount++ == 0) {
-                JComponent.this.addFocusListener(accessibleFocusHandler);
                 JComponent.this.addContainerListener(accessibleContainerHandler);
             }
             super.addPropertyChangeListener(listener);
@@ -3759,7 +3782,6 @@ public abstract class JComponent extends Container implements Serializable,
          */
         public void removePropertyChangeListener(PropertyChangeListener listener) {
             if (--propertyListenersCount == 0) {
-                JComponent.this.removeFocusListener(accessibleFocusHandler);
                 JComponent.this.removeContainerListener(accessibleContainerHandler);
             }
             super.removePropertyChangeListener(listener);
@@ -3775,6 +3797,10 @@ public abstract class JComponent extends Container implements Serializable,
          * but not very pretty outside borders in compound border situations.
          * It's rather arbitrary, but hopefully decent UI programmers will
          * not create multiple titled borders for the same component.
+         *
+         * @param b  the {@code Border} for which to retrieve its title
+         * @return the border's title as a {@code String}, null if it has
+         *         no title
          */
         protected String getBorderTitle(Border b) {
             String s;
@@ -4129,16 +4155,20 @@ public abstract class JComponent extends Container implements Serializable,
                 setFlag(AUTOSCROLLS_SET, false);
             }
         } else if (propertyName == "focusTraversalKeysForward") {
+            @SuppressWarnings("unchecked")
+            Set<AWTKeyStroke> strokeSet = (Set<AWTKeyStroke>) value;
             if (!getFlag(FOCUS_TRAVERSAL_KEYS_FORWARD_SET)) {
                 super.setFocusTraversalKeys(KeyboardFocusManager.
                                             FORWARD_TRAVERSAL_KEYS,
-                                            (Set<AWTKeyStroke>)value);
+                                            strokeSet);
             }
         } else if (propertyName == "focusTraversalKeysBackward") {
+            @SuppressWarnings("unchecked")
+            Set<AWTKeyStroke> strokeSet = (Set<AWTKeyStroke>) value;
             if (!getFlag(FOCUS_TRAVERSAL_KEYS_BACKWARD_SET)) {
                 super.setFocusTraversalKeys(KeyboardFocusManager.
                                             BACKWARD_TRAVERSAL_KEYS,
-                                            (Set<AWTKeyStroke>)value);
+                                            strokeSet);
             }
         } else {
             throw new IllegalArgumentException("property \""+
@@ -4195,6 +4225,7 @@ public abstract class JComponent extends Container implements Serializable,
      * Returns true if this component is lightweight, that is, if it doesn't
      * have a native window system peer.
      *
+     * @param c  the {@code Component} to be checked
      * @return true if this component is lightweight
      */
     @SuppressWarnings("deprecation")
@@ -4716,6 +4747,7 @@ public abstract class JComponent extends Container implements Serializable,
      * @see #getVetoableChangeListeners
      * @see #getAncestorListeners
      */
+    @SuppressWarnings("unchecked") // Casts to (T[])
     public <T extends EventListener> T[] getListeners(Class<T> listenerType) {
         T[] result;
         if (listenerType == AncestorListener.class) {
@@ -4802,7 +4834,8 @@ public abstract class JComponent extends Container implements Serializable,
      * @see RepaintManager#addDirtyRegion
      */
     public void repaint(long tm, int x, int y, int width, int height) {
-        RepaintManager.currentManager(this).addDirtyRegion(this, x, y, width, height);
+        RepaintManager.currentManager(SunToolkit.targetToAppContext(this))
+                      .addDirtyRegion(this, x, y, width, height);
     }
 
 
@@ -4856,7 +4889,7 @@ public abstract class JComponent extends Container implements Serializable,
             // which was causing some people grief.
             return;
         }
-        if (SwingUtilities.isEventDispatchThread()) {
+        if (SunToolkit.isDispatchThreadForAppContext(this)) {
             invalidate();
             RepaintManager.currentManager(this).addInvalidComponent(this);
         }
@@ -4870,15 +4903,12 @@ public abstract class JComponent extends Container implements Serializable,
                 }
                 setFlag(REVALIDATE_RUNNABLE_SCHEDULED, true);
             }
-            Runnable callRevalidate = new Runnable() {
-                public void run() {
-                    synchronized(JComponent.this) {
-                        setFlag(REVALIDATE_RUNNABLE_SCHEDULED, false);
-                    }
-                    revalidate();
+            SunToolkit.executeOnEventHandlerThread(this, () -> {
+                synchronized(JComponent.this) {
+                    setFlag(REVALIDATE_RUNNABLE_SCHEDULED, false);
                 }
-            };
-            SwingUtilities.invokeLater(callRevalidate);
+                revalidate();
+            });
         }
     }
 

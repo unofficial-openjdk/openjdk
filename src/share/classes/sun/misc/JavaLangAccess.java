@@ -138,4 +138,14 @@ public interface JavaLangAccess {
      * class loader.
      */
     ModuleCatalog getModuleCatalog(ClassLoader cl);
+
+    /**
+     * Invokes Long.formatUnsignedLong(long val, int shift, char[] buf, int offset, int len)
+     */
+    void formatUnsignedLong(long val, int shift, char[] buf, int offset, int len);
+
+    /**
+     * Invokes Integer.formatUnsignedInt(long val, int shift, char[] buf, int offset, int len)
+     */
+    void formatUnsignedInt(int val, int shift, char[] buf, int offset, int len);
 }

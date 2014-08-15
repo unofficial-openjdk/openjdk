@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -120,6 +120,8 @@ public class EventListenerList implements Serializable {
      * any such manipulation is necessary, it should be done
      * on a copy of the array returned rather than the array
      * itself.
+     *
+     * @return array of ListenerType-listener pairs
      */
     public Object[] getListenerList() {
         return listenerList;
@@ -127,6 +129,9 @@ public class EventListenerList implements Serializable {
 
     /**
      * Return an array of all the listeners of the given type.
+     *
+     * @param <T> the type of {@code EventListener} to search for
+     * @param t the type of {@code EventListener} classes to be returned
      * @return all of the listeners of the specified type.
      * @exception  ClassCastException if the supplied class
      *          is not assignable to EventListener
@@ -136,11 +141,14 @@ public class EventListenerList implements Serializable {
     public <T extends EventListener> T[] getListeners(Class<T> t) {
         Object[] lList = listenerList;
         int n = getListenerCount(lList, t);
+        @SuppressWarnings("unchecked")
         T[] result = (T[])Array.newInstance(t, n);
         int j = 0;
         for (int i = lList.length-2; i>=0; i-=2) {
             if (lList[i] == t) {
-                result[j++] = (T)lList[i+1];
+                @SuppressWarnings("unchecked")
+                T tmp = (T)lList[i+1];
+                result[j++] = tmp;
             }
         }
         return result;
@@ -148,6 +156,8 @@ public class EventListenerList implements Serializable {
 
     /**
      * Returns the total number of listeners for this listener list.
+     *
+     * @return an integer count of total number of listeners
      */
     public int getListenerCount() {
         return listenerList.length/2;
@@ -156,13 +166,16 @@ public class EventListenerList implements Serializable {
     /**
      * Returns the total number of listeners of the supplied type
      * for this listener list.
+     *
+     * @param t the type of listeners to count
+     * @return the number of listeners of type {@code t}
      */
     public int getListenerCount(Class<?> t) {
         Object[] lList = listenerList;
         return getListenerCount(lList, t);
     }
 
-    private int getListenerCount(Object[] list, Class t) {
+    private int getListenerCount(Object[] list, Class<?> t) {
         int count = 0;
         for (int i = 0; i < list.length; i+=2) {
             if (t == (Class)list[i])
@@ -173,7 +186,9 @@ public class EventListenerList implements Serializable {
 
     /**
      * Adds the listener as a listener of the specified type.
-     * @param t the type of the listener to be added
+     *
+     * @param <T> the type of {@code EventListener} to add
+     * @param t the type of the {@code EventListener} class to add
      * @param l the listener to be added
      */
     public synchronized <T extends EventListener> void add(Class<T> t, T l) {
@@ -206,6 +221,8 @@ public class EventListenerList implements Serializable {
 
     /**
      * Removes the listener as a listener of the specified type.
+     *
+     * @param <T> the type of {@code EventListener}
      * @param t the type of the listener to be removed
      * @param l the listener to be removed
      */
@@ -274,7 +291,9 @@ public class EventListenerList implements Serializable {
             EventListener l = (EventListener)s.readObject();
             String name = (String) listenerTypeOrNull;
             ReflectUtil.checkPackageAccess(name);
-            add((Class<EventListener>)Class.forName(name, true, cl), l);
+            @SuppressWarnings("unchecked")
+            Class<EventListener> tmp = (Class<EventListener>)Class.forName(name, true, cl);
+            add(tmp, l);
         }
     }
 

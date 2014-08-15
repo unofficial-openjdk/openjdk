@@ -79,21 +79,21 @@ class FieldExpression extends UnaryExpression {
      * Convert an '.' expression to a qualified identifier
      */
     static public Identifier toIdentifier(Expression e) {
-        StringBuffer buf = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         while (e.op == FIELD) {
             FieldExpression fe = (FieldExpression)e;
             if (fe.id == idThis || fe.id == idClass) {
                 return null;
             }
-            buf.insert(0, fe.id);
-            buf.insert(0, '.');
+            sb.insert(0, fe.id);
+            sb.insert(0, '.');
             e = fe.right;
         }
         if (e.op != IDENT) {
             return null;
         }
-        buf.insert(0, ((IdentifierExpression)e).id);
-        return Identifier.lookup(buf.toString());
+        sb.insert(0, ((IdentifierExpression) e).id);
+        return Identifier.lookup(sb.toString());
     }
 
     /**
@@ -219,7 +219,7 @@ class FieldExpression extends UnaryExpression {
      */
 
     public Vset checkAmbigName(Environment env, Context ctx,
-                               Vset vset, Hashtable exp,
+                               Vset vset, Hashtable<Object, Object> exp,
                                UnaryExpression loc) {
         if (id == idThis || id == idClass) {
             loc = null;         // this cannot be a type or package
@@ -232,7 +232,7 @@ class FieldExpression extends UnaryExpression {
      */
 
     public Vset checkValue(Environment env, Context ctx,
-                           Vset vset, Hashtable exp) {
+                           Vset vset, Hashtable<Object, Object> exp) {
         vset = checkCommon(env, ctx, vset, exp, null, false);
         if (id == idSuper && type != Type.tError) {
             // "super" is not allowed in this context.
@@ -416,7 +416,7 @@ class FieldExpression extends UnaryExpression {
      */
 
     private Vset checkCommon(Environment env, Context ctx,
-                             Vset vset, Hashtable exp,
+                             Vset vset, Hashtable<Object, Object> exp,
                              UnaryExpression loc, boolean isLHS) {
 
         // Handle class literal, e.g., 'x.class'.
@@ -850,7 +850,7 @@ class FieldExpression extends UnaryExpression {
      * Finish checking it.
      */
     private Vset checkInnerClass(Environment env, Context ctx,
-                                 Vset vset, Hashtable exp,
+                                 Vset vset, Hashtable<Object, Object> exp,
                                  UnaryExpression loc) {
         ClassDefinition inner = field.getInnerClass();
         type = inner.getType();
@@ -903,7 +903,7 @@ class FieldExpression extends UnaryExpression {
      * Check the expression if it appears on the LHS of an assignment
      */
     public Vset checkLHS(Environment env, Context ctx,
-                         Vset vset, Hashtable exp) {
+                         Vset vset, Hashtable<Object, Object> exp) {
         boolean hadField = (field != null);
 
         //checkValue(env, ctx, vset, exp);
@@ -945,7 +945,7 @@ class FieldExpression extends UnaryExpression {
      * Check the expression if it appears on the LHS of an op= expression
      */
     public Vset checkAssignOp(Environment env, Context ctx,
-                              Vset vset, Hashtable exp, Expression outside) {
+                              Vset vset, Hashtable<Object, Object> exp, Expression outside) {
 
         //checkValue(env, ctx, vset, exp);
         checkCommon(env, ctx, vset, exp, null, true);

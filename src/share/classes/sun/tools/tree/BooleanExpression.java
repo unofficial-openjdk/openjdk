@@ -52,7 +52,7 @@ class BooleanExpression extends ConstantExpression {
      * Get the value
      */
     public Object getValue() {
-        return new Integer(value ? 1 : 0);
+        return value ? 1 : 0;
     }
 
     /**
@@ -86,7 +86,7 @@ class BooleanExpression extends ConstantExpression {
      */
 
     public void checkCondition(Environment env, Context ctx,
-                               Vset vset, Hashtable exp, ConditionVars cvars) {
+                               Vset vset, Hashtable<Object, Object> exp, ConditionVars cvars) {
         if (value) {
             cvars.vsFalse = Vset.DEAD_END;
             cvars.vsTrue = vset;
@@ -106,7 +106,7 @@ class BooleanExpression extends ConstantExpression {
         }
     }
     public void codeValue(Environment env, Context ctx, Assembler asm) {
-        asm.add(where, opc_ldc, new Integer(value ? 1 : 0));
+        asm.add(where, opc_ldc, value ? 1 : 0);
     }
 
     /**

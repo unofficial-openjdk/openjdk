@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1996, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,12 +22,13 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-
 package java.beans;
 
 import java.lang.ref.Reference;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+
+import com.sun.beans.introspect.EventSetInfo;
 
 /**
  * An EventSetDescriptor describes a group of events that a given Java
@@ -36,6 +37,8 @@ import java.lang.reflect.Modifier;
  * The given group of events are all delivered as method calls on a single
  * event listener interface, and an event listener object can be registered
  * via a call on a registration method supplied by the event source.
+ *
+ * @since 1.1
  */
 public class EventSetDescriptor extends FeatureDescriptor {
 
@@ -81,7 +84,7 @@ public class EventSetDescriptor extends FeatureDescriptor {
         String eventName = NameGenerator.capitalize(eventSetName) + "Event";
         Method[] listenerMethods = getListenerMethods();
         if (listenerMethods.length > 0) {
-            Class[] args = getParameterTypes(getClass0(), listenerMethods[0]);
+            Class<?>[] args = getParameterTypes(getClass0(), listenerMethods[0]);
             // Check for EventSet compliance. Special case for vetoableChange. See 4529996
             if (!"vetoableChange".equals(eventSetName) && !args[0].getName().endsWith(eventName)) {
                 throw new IntrospectionException("Method \"" + listenerMethodName +
@@ -251,6 +254,16 @@ public class EventSetDescriptor extends FeatureDescriptor {
         setRemoveListenerMethod( removeListenerMethod);
         setGetListenerMethod(getListenerMethod);
         setListenerType(listenerType);
+    }
+
+    EventSetDescriptor(String base, EventSetInfo info, Method... methods) {
+        setName(Introspector.decapitalize(base));
+        setListenerMethods(methods);
+        setAddListenerMethod(info.getAddMethod());
+        setRemoveListenerMethod(info.getRemoveMethod());
+        setGetListenerMethod(info.getGetMethod());
+        setListenerType(info.getListenerType());
+        setUnicast(info.isUnicast());
     }
 
     /**

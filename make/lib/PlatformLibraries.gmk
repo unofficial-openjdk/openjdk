@@ -39,14 +39,11 @@ ifeq ($(OPENJDK_TARGET_OS), macosx)
       OPTIMIZATION := LOW, \
       CFLAGS := $(CFLAGS_JDKLIB) \
           -I$(LIBAPPLESCRIPTENGINE_SRC) \
-          -I$(JDK_OUTPUTDIR)/gensrc_headers/jdk.deploy.osx \
-          -F/System/Library/Frameworks/JavaVM.framework/Frameworks \
-          -F/System/Library/Frameworks/ApplicationServices.framework/Frameworks, \
+          -I$(JDK_OUTPUTDIR)/gensrc_headers/jdk.deploy.osx, \
       LDFLAGS := $(LDFLAGS_JDKLIB) \
           $(call SET_SHARED_LIBRARY_ORIGIN), \
       LDFLAGS_SUFFIX := -framework Cocoa \
           -framework Carbon \
-          -F/System/Library/Frameworks/JavaVM.framework/Frameworks \
           -framework JavaNativeFoundation \
           $(LDFLAGS_JDKLIB_SUFFIX), \
       OBJECT_DIR := $(JDK_OUTPUTDIR)/objs/libAppleScriptEngine, \
@@ -76,9 +73,7 @@ ifeq ($(OPENJDK_TARGET_OS), macosx)
       OPTIMIZATION := LOW, \
       CFLAGS := $(CFLAGS_JDKLIB) \
           $(addprefix -I, $(LIBOSXAPP_SRC)) \
-          -I$(JDK_OUTPUTDIR)/gensrc_headers_icons \
-          -F/System/Library/Frameworks/JavaVM.framework/Frameworks \
-          -F/System/Library/Frameworks/ApplicationServices.framework/Frameworks, \
+          -I$(JDK_OUTPUTDIR)/gensrc_headers_icons, \
       LDFLAGS := $(LDFLAGS_JDKLIB) \
           $(call SET_SHARED_LIBRARY_ORIGIN), \
       LDFLAGS_SUFFIX_macosx := \
@@ -89,7 +84,6 @@ ifeq ($(OPENJDK_TARGET_OS), macosx)
           -framework Cocoa \
           -framework Security \
           -framework ExceptionHandling \
-          -F/System/Library/Frameworks/JavaVM.framework/Frameworks \
           -framework JavaNativeFoundation \
           -framework JavaRuntimeSupport \
           -framework OpenGL \
@@ -120,13 +114,14 @@ ifeq ($(OPENJDK_TARGET_OS), macosx)
       $(JDK_TOPDIR)/src/macosx/native/com/apple/concurrent \
       $(JDK_TOPDIR)/src/macosx/native/com/apple/eio \
       $(JDK_TOPDIR)/src/macosx/native/apple/security \
-        $(JDK_TOPDIR)/src/macosx/native/apple/launcher \
+      $(JDK_TOPDIR)/src/macosx/native/apple/security \
         #
     LIBOSX_CFLAGS := \
         $(addprefix -I, $(LIBOSX_DIRS)) \
         -I$(JDK_TOPDIR)/src/macosx/native/sun/osxapp \
         #
   endif
+      $(JDK_TOPDIR)/src/macosx/native/apple/security
 
   $(eval $(call SetupNativeCompilation,BUILD_LIBOSX, \
       LIBRARY := osx, \
@@ -135,16 +130,13 @@ ifeq ($(OPENJDK_TARGET_OS), macosx)
       LANG := C, \
       OPTIMIZATION := LOW, \
       CFLAGS := $(CFLAGS_JDKLIB) \
-          $(LIBOSX_CFLAGS) \
-          -F/System/Library/Frameworks/JavaVM.framework/Frameworks \
-          -F/System/Library/Frameworks/ApplicationServices.framework/Frameworks, \
+          $(LIBOSX_CFLAGS), \
       LDFLAGS := $(LDFLAGS_JDKLIB) \
           $(call SET_SHARED_LIBRARY_ORIGIN), \
       LDFLAGS_SUFFIX_macosx := \
           -losxapp \
           -framework Cocoa \
           -framework ApplicationServices \
-          -F/System/Library/Frameworks/JavaVM.framework/Frameworks \
           -framework JavaNativeFoundation \
           -framework JavaRuntimeSupport \
           -framework Security \

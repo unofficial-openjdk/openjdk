@@ -167,6 +167,7 @@ import java.beans.Transient;
  *   description: A specialized container that manages a viewport, optional scrollbars and headers
  *
  * @author Hans Muller
+ * @since 1.2
  */
 @SuppressWarnings("serial") // Same-version serialization only
 public class JScrollPane extends JComponent implements ScrollPaneConstants, Accessible
@@ -1101,6 +1102,7 @@ public class JScrollPane extends JComponent implements ScrollPaneConstants, Acce
      * <code>setColumnHeaderView</code>
      * to add a column header component and its viewport to the scroll pane.
      *
+     * @param columnHeader  a {@code JViewport} which is the new column header
      * @see #getColumnHeader
      * @see #setColumnHeaderView
      *
@@ -1298,6 +1300,7 @@ public class JScrollPane extends JComponent implements ScrollPaneConstants, Acce
      * Indicates whether or not scrolling will take place in response to the
      * mouse wheel.  Wheel scrolling is enabled by default.
      *
+     * @return true if mouse wheel scrolling is enabled, false otherwise
      * @see #setWheelScrollingEnabled
      * @since 1.4
      * @beaninfo
@@ -1447,9 +1450,12 @@ public class JScrollPane extends JComponent implements ScrollPaneConstants, Acce
     protected class AccessibleJScrollPane extends AccessibleJComponent
         implements ChangeListener, PropertyChangeListener {
 
+        /**
+         * this {@code JScrollPane}'s current {@code JViewport}
+         */
         protected JViewport viewPort = null;
 
-        /*
+        /**
          * Resets the viewport ChangeListener and PropertyChangeListener
          */
         public void resetViewPort() {

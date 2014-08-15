@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1995, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -143,7 +143,7 @@ import sun.util.logging.PlatformLogger;
  * @see WindowEvent
  * @see #addWindowListener
  * @see java.awt.BorderLayout
- * @since       JDK1.0
+ * @since       1.0
  */
 public class Window extends Container implements Accessible {
 
@@ -753,7 +753,7 @@ public class Window extends Container implements Accessible {
      * not be called directly by programs.
      * @see Component#isDisplayable
      * @see Container#removeNotify
-     * @since JDK1.0
+     * @since 1.0
      */
     public void addNotify() {
         synchronized (getTreeLock()) {
@@ -1405,7 +1405,7 @@ public class Window extends Container implements Accessible {
      * is returned.
      * @return    the locale that is set for this window.
      * @see       java.util.Locale
-     * @since     JDK1.1
+     * @since     1.1
      */
     public Locale getLocale() {
       if (this.locale == null) {
@@ -1441,7 +1441,7 @@ public class Window extends Container implements Accessible {
      *            Cursor.DEFAULT_CURSOR.
      * @see       Component#getCursor
      * @see       Cursor
-     * @since     JDK1.1
+     * @since     1.1
      */
     public void setCursor(Cursor cursor) {
         if (cursor == null) {
@@ -1452,6 +1452,8 @@ public class Window extends Container implements Accessible {
 
     /**
      * Returns the owner of this window.
+     *
+     * @return the owner of this window
      * @since 1.2
      */
     public Window getOwner() {
@@ -1464,6 +1466,8 @@ public class Window extends Container implements Accessible {
     /**
      * Return an array containing all the windows this
      * window currently owns.
+     *
+     * @return the array of all the owned windows
      * @since 1.2
      */
     public Window[] getOwnedWindows() {
@@ -1586,6 +1590,7 @@ public class Window extends Container implements Accessible {
      * dialogs such as component positions, {@code LayoutManager}s
      * or serialization.
      *
+     * @return the array of all the {@code Window}s created by the application
      * @see Frame#getFrames
      * @see Window#getOwnerlessWindows
      *
@@ -1608,6 +1613,8 @@ public class Window extends Container implements Accessible {
      * dialogs such as component positions, {@code LayoutManager}s
      * or serialization.
      *
+     * @return the array of all the ownerless {@code Window}s
+     *         created by this application
      * @see Frame#getFrames
      * @see Window#getWindows()
      *
@@ -2849,6 +2856,7 @@ public class Window extends Container implements Accessible {
      *
      * This method can only be called while the window is not displayable.
      *
+     * @param  type the window type
      * @throws IllegalComponentStateException if the window
      *         is displayable.
      * @throws IllegalArgumentException if the type is {@code null}
@@ -2874,6 +2882,7 @@ public class Window extends Container implements Accessible {
     /**
      * Returns the type of the window.
      *
+     * @return the type of the window
      * @see   #setType
      * @since 1.7
      */

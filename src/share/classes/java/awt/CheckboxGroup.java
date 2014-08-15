@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1995, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -52,7 +52,7 @@ package java.awt;
  *
  * @author      Sami Shaio
  * @see         java.awt.Checkbox
- * @since       JDK1.0
+ * @since       1.0
  */
 public class CheckboxGroup implements java.io.Serializable {
     /**
@@ -84,13 +84,17 @@ public class CheckboxGroup implements java.io.Serializable {
      *                 "on" state, or <code>null</code>.
      * @see      java.awt.Checkbox
      * @see      java.awt.CheckboxGroup#setSelectedCheckbox
-     * @since    JDK1.1
+     * @since    1.1
      */
     public Checkbox getSelectedCheckbox() {
         return getCurrent();
     }
 
     /**
+     * Returns the current choice from this check box group
+     * or {@code null} if none of checkboxes are selected.
+     *
+     * @return the selected checkbox
      * @deprecated As of JDK version 1.1,
      * replaced by <code>getSelectedCheckbox()</code>.
      */
@@ -113,13 +117,18 @@ public class CheckboxGroup implements java.io.Serializable {
      *                      current selection.
      * @see      java.awt.Checkbox
      * @see      java.awt.CheckboxGroup#getSelectedCheckbox
-     * @since    JDK1.1
+     * @since    1.1
      */
     public void setSelectedCheckbox(Checkbox box) {
         setCurrent(box);
     }
 
     /**
+     * Sets the currently selected check box in this group
+     * to be the specified check box and unsets all others.
+     *
+     * @param  box the {@code Checkbox} to set as the
+     *         current selection.
      * @deprecated As of JDK version 1.1,
      * replaced by <code>setSelectedCheckbox(Checkbox)</code>.
      */

@@ -1743,7 +1743,7 @@ public class ProxyGenerator {
          * Get or assign the index for a CONSTANT_Integer entry.
          */
         public short getInteger(int i) {
-            return getValue(new Integer(i));
+            return getValue(i);
         }
 
         /**
@@ -1885,7 +1885,7 @@ public class ProxyGenerator {
                         "late constant pool addition: " + key);
                 }
                 short i = addEntry(new ValueEntry(key));
-                map.put(key, new Short(i));
+                map.put(key, i);
                 return i;
             }
         }
@@ -1903,7 +1903,7 @@ public class ProxyGenerator {
                     throw new InternalError("late constant pool addition");
                 }
                 short i = addEntry(e);
-                map.put(e, new Short(i));
+                map.put(e, i);
                 return i;
             }
         }

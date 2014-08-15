@@ -82,6 +82,7 @@ import java.applet.Applet;
  * @author Georges Saab
  * @author David Karlton
  * @author Arnaud Weber
+ * @since 1.2
  */
 @SuppressWarnings("serial")
 public class JPopupMenu extends JComponent implements Accessible,MenuElement {
@@ -297,6 +298,7 @@ public class JPopupMenu extends JComponent implements Accessible,MenuElement {
      * it to the end of this menu.
      *
      * @param s the string for the menu item to be added
+     * @return a new {@code JMenuItem} created using {@code s}
      */
     public JMenuItem add(String s) {
         return add(new JMenuItem(s));
@@ -451,6 +453,9 @@ public class JPopupMenu extends JComponent implements Accessible,MenuElement {
     /**
      * Returns a properly configured <code>PropertyChangeListener</code>
      * which updates the control as changes to the <code>Action</code> occur.
+     *
+     * @param b the menu item for which to create a listener
+     * @return a properly configured {@code PropertyChangeListener}
      */
     protected PropertyChangeListener createActionChangeListener(JMenuItem b) {
         return b.createActionPropertyChangeListener0(b.getAction());
@@ -1529,6 +1534,9 @@ public class JPopupMenu extends JComponent implements Accessible,MenuElement {
     @SuppressWarnings("serial")
     static public class Separator extends JSeparator
     {
+        /**
+         * Constructs a popup menu-specific Separator.
+         */
         public Separator( )
         {
             super( JSeparator.HORIZONTAL );
@@ -1552,6 +1560,7 @@ public class JPopupMenu extends JComponent implements Accessible,MenuElement {
      * Returns true if the <code>MouseEvent</code> is considered a popup trigger
      * by the <code>JPopupMenu</code>'s currently installed UI.
      *
+     * @param e a {@code MouseEvent}
      * @return true if the mouse event is a popup trigger
      * @since 1.3
      */

@@ -120,7 +120,7 @@ public class SynthComboBoxUI extends BasicComboBoxUI implements
         updateStyle(comboBox);
     }
 
-    private void updateStyle(JComboBox comboBox) {
+    private void updateStyle(JComboBox<?> comboBox) {
         SynthStyle oldStyle = style;
         SynthContext context = getContext(comboBox, ENABLED);
 
@@ -208,8 +208,7 @@ public class SynthComboBoxUI extends BasicComboBoxUI implements
     }
 
     private SynthContext getContext(JComponent c, int state) {
-        return SynthContext.getContext(SynthContext.class, c,
-                    SynthLookAndFeel.getRegion(c), style, state);
+        return SynthContext.getContext(c, style, state);
     }
 
     private int getComponentState(JComponent c) {
@@ -221,7 +220,7 @@ public class SynthComboBoxUI extends BasicComboBoxUI implements
         // instead of doing anything special
         if (!(c instanceof JComboBox)) return SynthLookAndFeel.getComponentState(c);
 
-        JComboBox box = (JComboBox)c;
+        JComboBox<?> box = (JComboBox)c;
         if (shouldActLikeButton()) {
             int state = ENABLED;
             if ((!c.isEnabled())) {
@@ -264,7 +263,7 @@ public class SynthComboBoxUI extends BasicComboBoxUI implements
      * {@inheritDoc}
      */
     @Override
-    protected ListCellRenderer createRenderer() {
+    protected ListCellRenderer<Object> createRenderer() {
         return new SynthComboBoxRenderer();
     }
 
@@ -373,7 +372,7 @@ public class SynthComboBoxUI extends BasicComboBoxUI implements
      */
     @Override
     public void paintCurrentValue(Graphics g,Rectangle bounds,boolean hasFocus) {
-        ListCellRenderer renderer = comboBox.getRenderer();
+        ListCellRenderer<Object> renderer = comboBox.getRenderer();
         Component c;
 
         c = renderer.getListCellRendererComponent(
@@ -711,11 +710,11 @@ public class SynthComboBoxUI extends BasicComboBoxUI implements
      */
     private static class EditorFocusHandler implements FocusListener,
             PropertyChangeListener {
-        private JComboBox comboBox;
+        private JComboBox<?> comboBox;
         private ComboBoxEditor editor = null;
         private Component editorComponent = null;
 
-        private EditorFocusHandler(JComboBox comboBox) {
+        private EditorFocusHandler(JComboBox<?> comboBox) {
             this.comboBox = comboBox;
             editor = comboBox.getEditor();
             if (editor != null){

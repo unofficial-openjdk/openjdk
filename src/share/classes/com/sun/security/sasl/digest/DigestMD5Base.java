@@ -387,7 +387,7 @@ abstract class DigestMD5Base extends AbstractSaslImpl {
     protected byte[] binaryToHex(byte[] digest) throws
     UnsupportedEncodingException {
 
-        StringBuffer digestString = new StringBuffer();
+        StringBuilder digestString = new StringBuilder();
 
         for (int i = 0; i < digest.length; i ++) {
             if ((digest[i] & 0x000000ff) < 0x10) {
@@ -598,7 +598,7 @@ abstract class DigestMD5Base extends AbstractSaslImpl {
     protected static String nonceCountToHex(int count) {
 
         String str = Integer.toHexString(count);
-        StringBuffer pad = new StringBuffer();
+        StringBuilder pad = new StringBuilder();
 
         if (str.length() < 8) {
             for (int i = 0; i < 8-str.length(); i ++) {
@@ -1410,7 +1410,7 @@ abstract class DigestMD5Base extends AbstractSaslImpl {
             if (logger.isLoggable(Level.FINEST)) {
                 logger.log(Level.FINEST,
                     "DIGEST33:Expecting sequence num: {0}",
-                    new Integer(peerSeqNum));
+                    peerSeqNum);
                 traceOutput(DP_CLASS_NAME, "unwrap", "DIGEST34:incoming: ",
                     encryptedMsg);
             }
@@ -1460,7 +1460,7 @@ abstract class DigestMD5Base extends AbstractSaslImpl {
                     if (logger.isLoggable(Level.INFO)) {
                         logger.log(Level.INFO,
                             "DIGEST39:Incorrect padding: {0}",
-                            new Byte(msgWithPadding[msgWithPadding.length - 1]));
+                            msgWithPadding[msgWithPadding.length - 1]);
                     }
                     return EMPTY_BYTE_ARRAY;
                 }

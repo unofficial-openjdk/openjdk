@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1995, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -164,7 +164,7 @@ import sun.awt.image.MultiResolutionToolkitImage;
  * } </pre></blockquote><hr>
  *
  * @author      Jim Graham
- * @since       JDK1.0
+ * @since       1.0
  */
 public class MediaTracker implements java.io.Serializable {
 
@@ -226,7 +226,9 @@ public class MediaTracker implements java.io.Serializable {
         addImageImpl(image, id, w, h);
         Image rvImage = getResolutionVariant(image);
         if (rvImage != null) {
-            addImageImpl(rvImage, id, 2 * w, 2 * h);
+            addImageImpl(rvImage, id,
+                    w == -1 ? -1 : 2 * w,
+                    h == -1 ? -1 : 2 * h);
         }
     }
 
@@ -641,9 +643,11 @@ public class MediaTracker implements java.io.Serializable {
      * image is considered to have finished loading. Use the
      * <code>statusID</code>, <code>isErrorID</code>, and
      * <code>isErrorAny</code> methods to check for errors.
-     * @param         id   the identifier of the images to check
-     * @param         ms   the length of time, in milliseconds, to wait
-     *                           for the loading to complete
+     * @param  id the identifier of the images to check
+     * @param  ms the length of time, in milliseconds, to wait
+     *         for the loading to complete
+     * @return {@code true} if the loading completed in time;
+     *         otherwise {@code false}
      * @see           java.awt.MediaTracker#waitForAll
      * @see           java.awt.MediaTracker#waitForID(int)
      * @see           java.awt.MediaTracker#statusID
@@ -724,7 +728,7 @@ public class MediaTracker implements java.io.Serializable {
      * @param   image     the image to be removed
      * @see     java.awt.MediaTracker#removeImage(java.awt.Image, int)
      * @see     java.awt.MediaTracker#removeImage(java.awt.Image, int, int, int)
-     * @since   JDK1.1
+     * @since   1.1
      */
     public synchronized void removeImage(Image image) {
         removeImageImpl(image);
@@ -763,7 +767,7 @@ public class MediaTracker implements java.io.Serializable {
      * @param      id the tracking ID from which to remove the image
      * @see        java.awt.MediaTracker#removeImage(java.awt.Image)
      * @see        java.awt.MediaTracker#removeImage(java.awt.Image, int, int, int)
-     * @since      JDK1.1
+     * @since      1.1
      */
     public synchronized void removeImage(Image image, int id) {
         removeImageImpl(image, id);
@@ -803,15 +807,16 @@ public class MediaTracker implements java.io.Serializable {
      * @param   height the height to remove (-1 for unscaled)
      * @see     java.awt.MediaTracker#removeImage(java.awt.Image)
      * @see     java.awt.MediaTracker#removeImage(java.awt.Image, int)
-     * @since   JDK1.1
+     * @since   1.1
      */
     public synchronized void removeImage(Image image, int id,
                                          int width, int height) {
         removeImageImpl(image, id, width, height);
         Image rvImage = getResolutionVariant(image);
         if (rvImage != null) {
-            removeImageImpl(rvImage, id, 2 * width, 2 * height);
-
+            removeImageImpl(rvImage, id,
+                    width == -1 ? -1 : 2 * width,
+                    height == -1 ? -1 : 2 * height);
         }
         notifyAll();    // Notify in case remaining images are "done".
     }

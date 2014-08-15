@@ -173,8 +173,7 @@ public class SynthTreeUI extends BasicTreeUI
     }
 
     private SynthContext getContext(JComponent c, int state) {
-        return SynthContext.getContext(SynthContext.class, c,
-                    SynthLookAndFeel.getRegion(c), style, state);
+        return SynthContext.getContext(c, style, state);
     }
 
     private SynthContext getContext(JComponent c, Region region) {
@@ -182,8 +181,7 @@ public class SynthTreeUI extends BasicTreeUI
     }
 
     private SynthContext getContext(JComponent c, Region region, int state) {
-        return SynthContext.getContext(SynthContext.class, c,
-                                       region, cellStyle, state);
+        return SynthContext.getContext(c, region, cellStyle, state);
     }
 
     private int getComponentState(JComponent c, Region region) {
@@ -314,7 +312,7 @@ public class SynthTreeUI extends BasicTreeUI
         Insets insets = tree.getInsets();
         TreePath initialPath = getClosestPathForLocation(tree, 0,
                                                          paintBounds.y);
-        Enumeration paintingEnumerator = treeState.getVisiblePathsFrom
+        Enumeration<?> paintingEnumerator = treeState.getVisiblePathsFrom
                                               (initialPath);
         int row = treeState.getRowForPath(initialPath);
         int endY = paintBounds.y + paintBounds.height;

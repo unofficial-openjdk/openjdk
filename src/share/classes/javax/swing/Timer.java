@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -145,6 +145,7 @@ import javax.swing.event.EventListenerList;
  *
  *
  * @author Dave Moore
+ * @since 1.2
  */
 @SuppressWarnings("serial")
 public class Timer implements Serializable
@@ -153,6 +154,9 @@ public class Timer implements Serializable
      * NOTE: all fields need to be handled in readResolve
      */
 
+    /**
+     * The collection of registered listeners
+     */
     protected EventListenerList listenerList = new EventListenerList();
 
     // The following field strives to maintain the following:
@@ -334,6 +338,7 @@ public class Timer implements Serializable
      * If no such listeners exist,
      * this method returns an empty array.
      *
+     * @param <T> the type of {@code EventListener} class being requested
      * @param listenerType  the type of listeners requested;
      *          this parameter should specify an interface
      *          that descends from <code>java.util.EventListener</code>
@@ -409,6 +414,7 @@ public class Timer implements Serializable
      * Returns the delay, in milliseconds,
      * between firings of action events.
      *
+     * @return the delay, in milliseconds, between firings of action events
      * @see #setDelay
      * @see #getInitialDelay
      */
@@ -440,8 +446,9 @@ public class Timer implements Serializable
 
 
     /**
-     * Returns the <code>Timer</code>'s initial delay.
+     * Returns the {@code Timer}'s initial delay.
      *
+     * @return the {@code Timer}'s intial delay, in milliseconds
      * @see #setInitialDelay
      * @see #setDelay
      */
@@ -469,6 +476,8 @@ public class Timer implements Serializable
      * an action event
      * to its listeners multiple times.
      *
+     * @return true if the {@code Timer} will send an action event to its
+     *              listeners multiple times
      * @see #setRepeats
      */
     public boolean isRepeats() {
@@ -505,9 +514,11 @@ public class Timer implements Serializable
 
 
     /**
-     * Returns <code>true</code> if the <code>Timer</code> coalesces
+     * Returns {@code true} if the {@code Timer} coalesces
      * multiple pending action events.
      *
+     * @return true if the {@code Timer} coalesces multiple pending
+     *              action events
      * @see #setCoalesce
      */
     public boolean isCoalesce() {
@@ -554,8 +565,9 @@ public class Timer implements Serializable
 
 
     /**
-     * Returns <code>true</code> if the <code>Timer</code> is running.
+     * Returns {@code true} if the {@code Timer} is running.
      *
+     * @return true if the {@code Timer} is running, false otherwise
      * @see #start
      */
     public boolean isRunning() {
