@@ -3340,11 +3340,6 @@ jint Threads::create_vm(JavaVMInitArgs* args, bool* canTryAgain) {
   jint parse_result = Arguments::parse(args);
   if (parse_result != JNI_OK) return parse_result;
 
-  // when not running with modules then need a full boot class path
-  if (!UseModuleBoundaries) {
-    os::set_expanded_boot_path();
-  }
-
   os::init_before_ergo();
 
   jint ergo_result = Arguments::apply_ergo();
