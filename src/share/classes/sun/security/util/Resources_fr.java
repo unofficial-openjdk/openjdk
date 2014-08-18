@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -444,7 +444,7 @@ public class Resources_fr extends java.util.ListResourceBundle {
         {"Retain", "Conserver"},
 
         {"Warning.File.name.may.include.escaped.backslash.characters.It.is.not.necessary.to.escape.backslash.characters.the.tool.escapes",
-            "Avertissement : il se peut que le nom de fichier contienne des barres obliques inverses avec caract\u00E8re d'\u00E9chappement. Il n'est pas n\u00E9cessaire d'ajouter un caract\u00E8re d'\u00E9chappement aux barres obliques inverses. L'outil proc\u00E8de \u00E0 l'\u00E9chappement si n\u00E9cessaire lorsqu'il \u00E9crit le contenu des r\u00E8gles dans la zone de stockage persistant).\n\nCliquez sur Conserver pour garder le nom saisi ou sur Modifier pour le remplacer."},
+            "Avertissement : il se peut que le nom de fichier contienne des barres obliques inverses avec caract\u00E8re d'\u00E9chappement. Il n'est pas n\u00E9cessaire d'ajouter un caract\u00E8re d'\u00E9chappement aux barres obliques inverses. (L'outil proc\u00E8de \u00E0 l'\u00E9chappement si n\u00E9cessaire lorsqu'il \u00E9crit le contenu des r\u00E8gles dans la zone de stockage persistant).\n\nCliquez sur Conserver pour garder le nom saisi ou sur Modifier pour le remplacer."},
 
         {"Add.Public.Key.Alias", "Ajouter un alias de cl\u00E9 publique"},
         {"Remove.Public.Key.Alias", "Enlever un alias de cl\u00E9 publique"},
