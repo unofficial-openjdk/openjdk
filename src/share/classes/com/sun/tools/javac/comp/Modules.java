@@ -30,6 +30,7 @@ import com.sun.tools.javac.code.Directive.PermitsDirective;
 import com.sun.tools.javac.code.Directive.RequiresDirective;
 import com.sun.tools.javac.code.Directive.RequiresFlag;
 import com.sun.tools.javac.code.Scope;
+import com.sun.tools.javac.code.Scope.WriteableScope;
 import com.sun.tools.javac.code.Symbol.ClassSymbol;
 import com.sun.tools.javac.code.Symbol.ModuleSymbol;
 import com.sun.tools.javac.code.Symtab;
@@ -85,7 +86,7 @@ public class Modules extends JCTree.Visitor {
             sym.module_info.fullname = ClassSymbol.formFullName(sym.module_info.name, sym);
             sym.module_info.flatname = ClassSymbol.formFlatName(sym.module_info.name, sym);
             sym.module_info.sourcefile = env.toplevel.sourcefile;
-            sym.module_info.members_field = new Scope(sym.module_info);
+            sym.module_info.members_field = WriteableScope.create(sym.module_info);
             sym.completer = null;
         }
 

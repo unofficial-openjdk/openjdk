@@ -25,6 +25,8 @@
 
 package com.sun.tools.javac.tree;
 
+import java.util.Iterator;
+
 import com.sun.tools.javac.code.*;
 import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.code.Type.*;
@@ -735,13 +737,36 @@ public class TreeMaker implements JCTree.Factory {
             break;
         }
         case CLASS:
-            Type outer = t.getEnclosingType();
-            JCExpression clazz = outer.hasTag(CLASS) && t.tsym.owner.kind == TYP
-                ? Select(Type(outer), t.tsym)
-                : QualIdent(t.tsym);
-            tp = t.getTypeArguments().isEmpty()
-                ? clazz
-                : TypeApply(clazz, Types(t.getTypeArguments()));
+            switch (t.getKind()) {
+            case UNION: {
+                UnionClassType tu = (UnionClassType)t;
+                ListBuffer<JCExpression> la = new ListBuffer<>();
+                for (Type ta : tu.getAlternativeTypes()) {
+                    la.add(Type(ta));
+                }
+                tp = TypeUnion(la.toList());
+                break;
+            }
+            case INTERSECTION: {
+                IntersectionClassType it = (IntersectionClassType)t;
+                ListBuffer<JCExpression> la = new ListBuffer<>();
+                for (Type ta : it.getExplicitComponents()) {
+                    la.add(Type(ta));
+                }
+                tp = TypeIntersection(la.toList());
+                break;
+            }
+            default: {
+                Type outer = t.getEnclosingType();
+                JCExpression clazz = outer.hasTag(CLASS) && t.tsym.owner.kind == TYP
+                        ? Select(Type(outer), t.tsym)
+                        : QualIdent(t.tsym);
+                tp = t.getTypeArguments().isEmpty()
+                        ? clazz
+                        : TypeApply(clazz, Types(t.getTypeArguments()));
+                break;
+            }
+            }
             break;
         case ARRAY:
             tp = TypeArray(Type(types.elemtype(t)));
@@ -998,24 +1023,26 @@ public class TreeMaker implements JCTree.Factory {
             sym.owner.kind == MTH || sym.owner.kind == VAR) {
             return true;
         } else if (sym.kind == TYP && toplevel != null) {
-            Scope.Entry e;
-            e = toplevel.namedImportScope.lookup(sym.name);
-            if (e.scope != null) {
+            Iterator<Symbol> it = toplevel.namedImportScope.getSymbolsByName(sym.name).iterator();
+            if (it.hasNext()) {
+                Symbol s = it.next();
                 return
-                  e.sym == sym &&
-                  e.next().scope == null;
+                  s == sym &&
+                  !it.hasNext();
             }
-            e = toplevel.packge.members().lookup(sym.name);
-            if (e.scope != null) {
+            it = toplevel.packge.members().getSymbolsByName(sym.name).iterator();
+            if (it.hasNext()) {
+                Symbol s = it.next();
                 return
-                  e.sym == sym &&
-                  e.next().scope == null;
+                  s == sym &&
+                  !it.hasNext();
             }
-            e = toplevel.starImportScope.lookup(sym.name);
-            if (e.scope != null) {
+            it = toplevel.starImportScope.getSymbolsByName(sym.name).iterator();
+            if (it.hasNext()) {
+                Symbol s = it.next();
                 return
-                  e.sym == sym &&
-                  e.next().scope == null;
+                  s == sym &&
+                  !it.hasNext();
             }
         }
         return false;

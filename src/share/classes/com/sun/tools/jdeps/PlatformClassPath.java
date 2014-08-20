@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,9 +24,12 @@
  */
 package com.sun.tools.jdeps;
 
+import com.sun.tools.classfile.Annotation;
 import com.sun.tools.classfile.ClassFile;
+import com.sun.tools.classfile.ConstantPool;
 import com.sun.tools.classfile.ConstantPoolException;
-import com.sun.tools.classfile.Dependencies;
+import com.sun.tools.classfile.RuntimeAnnotations_attribute;
+import com.sun.tools.classfile.Dependencies.ClassFileError;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.FileVisitResult;
@@ -36,9 +39,10 @@ import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
-import javax.xml.stream.XMLStreamException;
+import java.util.jar.*;
+
+import static com.sun.tools.classfile.Attribute.*;
+import static com.sun.tools.jdeps.ClassFileReader.*;
 
 /**
  * ClassPath for Java SE and JDK
@@ -72,26 +76,24 @@ class PlatformClassPath {
 
     private static List<Archive> initPlatformArchives(Path mpath) throws IOException {
         Path home = Paths.get(System.getProperty("java.home"));
-        Path mlib = home.resolve("lib").resolve("modules");
-        if (Files.exists(mlib)) {
-            modules = mpath != null ? initModuleImage(mpath, mlib)
-                                     : initModuleImage(mlib);
-        } else {
-            modules = initLegacyImage(home);
+        if (mpath == null && !home.endsWith("jre")) {
+            // jdk build
+            Path p = home.resolve("modules");
+            if (Files.isDirectory(p)) {
+                mpath = p;
+            }
         }
+        modules = mpath != null ? initModules(mpath) : initLegacyImage(home);
         if (findModule("java.base") != null) {
             Profile.initProfiles();
         }
         return modules;
     }
 
-    private static List<Archive> initModuleImage(Path... mpaths) throws IOException {
+    private static List<Archive> initModules(Path mpath) throws IOException {
         try (InputStream in = PlatformClassPath.class
                 .getResourceAsStream("resources/modules.xml")) {
-            ModulesXmlReader reader = new ModulesXmlReader(mpaths);
-            return new ArrayList<Archive>(reader.load(in));
-        } catch (XMLStreamException ex) {
-            throw new RuntimeException(ex);
+            return new ArrayList<Archive>(ModulesXmlReader.load(mpath, in));
         }
     }
 
@@ -100,41 +102,47 @@ class PlatformClassPath {
         List<Archive> archives = new ArrayList<>(cfr.nonPlatformArchives);
         try (InputStream in = PlatformClassPath.class
                 .getResourceAsStream("resources/modules.xml")) {
-            ModulesXmlReader reader = new ModulesXmlReader(cfr);
-            archives.addAll(reader.load(in));
+            archives.addAll(ModulesXmlReader.loadFromImage(cfr, in));
             return archives;
-        } catch (XMLStreamException ex) {
-            throw new RuntimeException(ex);
         }
     }
 
     static class LegacyImageHelper {
-        static final List<String> NON_PLATFORM_JARFILES =
-            Arrays.asList("alt-rt.jar", "jfxrt.jar", "ant-javafx.jar", "javafx-mx.jar");
+        private static final List<String> NON_PLATFORM_JARFILES =
+                Arrays.asList("alt-rt.jar", "jfxrt.jar", "ant-javafx.jar", "javafx-mx.jar");
         final List<Archive> nonPlatformArchives = new ArrayList<>();
         final List<JarFile> jarfiles = new ArrayList<>();
         final Path home;
-        LegacyImageHelper(Path home) throws IOException {
+
+        LegacyImageHelper(Path home) {
             this.home = home;
-            if (home.endsWith("jre")) {
-                // jar files in <javahome>/jre/lib
-                addJarFiles(home.resolve("lib"));
-            } else if (Files.exists(home.resolve("lib"))) {
-                // either a JRE or a jdk build image
-                Path classes = home.resolve("classes");
-                if (Files.isDirectory(classes)) {
-                    // legacy jdk build outputdir - unsupported
-                    nonPlatformArchives.add(Archive.getInstance(classes));
+            try {
+                if (home.endsWith("jre")) {
+                    // jar files in <javahome>/jre/lib
+                    addJarFiles(home.resolve("lib"));
+                    if (home.getParent() != null) {
+                        // add tools.jar and other JDK jar files
+                        Path lib = home.getParent().resolve("lib");
+                        if (Files.exists(lib)) {
+                            addJarFiles(lib);
+                        }
+                    }
+                } else if (Files.exists(home.resolve("lib"))) {
+                    // add other JAR files
+                    addJarFiles(home.resolve("lib"));
+                } else {
+                    throw new RuntimeException("\"" + home + "\" not a JDK home");
                 }
-                // add other JAR files
-                addJarFiles(home.resolve("lib"));
-            } else {
-                throw new RuntimeException("\"" + home + "\" not a JDK home");
+            } catch (IOException e) {
+                throw new Error(e);
             }
         }
 
-        ClassFileReader getClassReader(String name, Set<String> packages) {
-            return new ModuleClassReader(name, packages);
+        /**
+         * Returns a ClassFileReader that only reads classes for the given modulename.
+         */
+        ClassFileReader getClassReader(String modulename, Set<String> packages) throws IOException {
+            return new ModuleClassReader(modulename, packages);
         }
 
         private void addJarFiles(final Path root) throws IOException {
@@ -142,7 +150,8 @@ class PlatformClassPath {
             Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
                 @Override
                 public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs)
-                        throws IOException {
+                    throws IOException
+                {
                     if (dir.equals(root) || dir.equals(ext)) {
                         return FileVisitResult.CONTINUE;
                     } else {
@@ -153,12 +162,13 @@ class PlatformClassPath {
 
                 @Override
                 public FileVisitResult visitFile(Path p, BasicFileAttributes attrs)
-                        throws IOException {
+                    throws IOException
+                {
                     String fn = p.getFileName().toString();
                     if (fn.endsWith(".jar")) {
+                        // JDK may cobundle with JavaFX that doesn't belong to any profile
+                        // Treat jfxrt.jar as regular Archive
                         if (NON_PLATFORM_JARFILES.contains(fn)) {
-                            // JDK may cobundle with JavaFX that doesn't belong to any profile
-                            // Treat jfxrt.jar as regular Archive
                             nonPlatformArchives.add(Archive.getInstance(p));
                         } else {
                             jarfiles.add(new JarFile(p.toFile()));
@@ -169,20 +179,21 @@ class PlatformClassPath {
             });
         }
 
-        class ModuleClassReader extends ClassFileReader {
+        /**
+         * ModuleClassFile reads classes for the specified module from the legacy image.
+         *
+         */
+        class ModuleClassReader extends JarFileReader {
             private JarFile cachedJarFile = getJarFile(0);
             private final Set<String> packages;
             private final String module;
-
-            ModuleClassReader(String module, Set<String> packages) {
-                super(home);
+            ModuleClassReader(String module, Set<String> packages) throws IOException {
+                super(home, null);
                 this.module = module;
                 this.packages = packages;
-                    // System.err.println(module);
-                // packages.stream().sorted().forEach(p -> System.err.println("   " + p));
             }
 
-            boolean includes(String name) {
+            private boolean includes(String name) {
                 String cn = name.replace('/', '.');
                 int i = cn.lastIndexOf('.');
                 String pn = i > 0 ? cn.substring(0, i) : "";
@@ -197,6 +208,11 @@ class PlatformClassPath {
                 return e;
             }
 
+            public String toString() {
+                return module + " " + packages.size() + " " + packages;
+            }
+
+            @Override
             public ClassFile getClassFile(String name) throws IOException {
                 if (jarfiles.isEmpty() || !includes(name)) {
                     return null;
@@ -215,6 +231,7 @@ class PlatformClassPath {
                         if (jf == cachedJarFile) {
                             continue;
                         }
+                        System.err.format("find jar entry %s at %s%n", entryName, jf);
                         e = findJarEntry(jf, entryName, innerClassName);
                         if (e != null) {
                             cachedJarFile = jf;
@@ -241,22 +258,9 @@ class PlatformClassPath {
                 return null;
             }
 
-            private ClassFile readClassFile(JarFile jarfile, JarEntry e) throws IOException {
-                InputStream is = null;
-                try {
-                    is = jarfile.getInputStream(e);
-                    return ClassFile.read(is);
-                } catch (ConstantPoolException ex) {
-                    throw new Dependencies.ClassFileError(ex);
-                } finally {
-                    if (is != null) {
-                        is.close();
-                    }
-                }
-            }
-
+            @Override
             public Iterable<ClassFile> getClassFiles() throws IOException {
-                final Iterator<ClassFile> iter = new ModuleClassIterator();
+                final Iterator<ClassFile> iter = new ModuleClassIterator(this);
                 return new Iterable<ClassFile>() {
                     public Iterator<ClassFile> iterator() {
                         return iter;
@@ -268,58 +272,19 @@ class PlatformClassPath {
                 return index < jarfiles.size() ? jarfiles.get(index) : null;
             }
 
-            class ModuleClassIterator implements Iterator<ClassFile> {
-                private Enumeration<JarEntry> entries;
-                private JarFile jarfile;
-                private JarEntry nextEntry;
+            class ModuleClassIterator extends JarFileIterator {
                 private int index;
-                private ClassFile cf;
-
-                ModuleClassIterator() {
+                ModuleClassIterator(ModuleClassReader reader) {
+                    super(reader);
                     this.index = 0;
-                    this.jarfile = getJarFile(index);
-                    this.entries = jarfile != null ? jarfile.entries() : null;
+                    this.jf = getJarFile(0);
+                    this.entries = jf != null ? jf.entries() : null;
                     this.nextEntry = nextEntry();
                 }
 
-                private String errorMessage(Throwable t) {
-                    if (t.getCause() != null) {
-                        return t.getCause().toString();
-                    } else {
-                        return t.toString();
-                    }
-                }
-
-                public boolean hasNext() {
-                    if (nextEntry != null && cf != null) {
-                        return true;
-                    }
-                    while (nextEntry != null) {
-                        try {
-                            cf = readClassFile(jarfile, nextEntry);
-                            return true;
-                        } catch (Dependencies.ClassFileError ex) {
-                            System.err.println("Bad entry: " + nextEntry + " " + errorMessage(ex));
-                        } catch (IOException ex) {
-                            System.err.println("IO error: " + nextEntry + " " + errorMessage(ex));
-                        }
-                        nextEntry = nextEntry();
-                    }
-                    return false;
-                }
-
-                public ClassFile next() {
-                    if (!hasNext()) {
-                        throw new NoSuchElementException();
-                    }
-                    ClassFile classFile = cf;
-                    cf = null;
-                    nextEntry = nextEntry();
-                    return classFile;
-                }
-
-                private JarEntry nextEntry() {
-                    while (jarfile != null) {
+                @Override
+                protected JarEntry nextEntry() {
+                    while (jf != null) {
                         while (entries.hasMoreElements()) {
                             JarEntry e = entries.nextElement();
                             String name = e.getName();
@@ -327,15 +292,10 @@ class PlatformClassPath {
                                 return e;
                             }
                         }
-                        System.err.format("%d: %s done%n", index, jarfile.getName());
-                        jarfile = getJarFile(++index);
-                        entries = jarfile != null ? jarfile.entries() : null;
+                        jf = getJarFile(++index);
+                        entries = jf != null ? jf.entries() : null;
                     }
                     return null;
-                }
-
-                public void remove() {
-                    throw new UnsupportedOperationException("Not supported yet.");
                 }
             }
         }

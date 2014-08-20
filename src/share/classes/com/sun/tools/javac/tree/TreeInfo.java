@@ -136,6 +136,14 @@ public class TreeInfo {
         }
     }
 
+    public static boolean isReceiverParam(JCTree tree) {
+        if (tree.hasTag(VARDEF)) {
+            return ((JCVariableDecl)tree).nameexpr != null;
+        } else {
+            return false;
+        }
+    }
+
     /** Is there a constructor declaration in the given list of trees?
      */
     public static boolean hasConstructors(List<JCTree> trees) {
@@ -648,6 +656,10 @@ public class TreeInfo {
             public void visitTopLevel(JCCompilationUnit that) {
                 if (that.packge == sym) result = that;
                 else super.visitTopLevel(that);
+            }
+            public void visitPackageDef(JCPackageDecl that) {
+                if (that.packge == sym) result = that;
+                else super.visitPackageDef(that);
             }
             public void visitClassDef(JCClassDecl that) {
                 if (that.sym == sym) result = that;

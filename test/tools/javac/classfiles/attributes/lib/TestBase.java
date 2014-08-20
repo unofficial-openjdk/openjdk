@@ -24,46 +24,105 @@
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
+import java.util.function.Function;
 import java.util.stream.Stream;
+import javax.tools.DiagnosticCollector;
 import javax.tools.JavaCompiler;
 import javax.tools.JavaFileObject;
 import javax.tools.ToolProvider;
 
 import static java.lang.String.format;
+import static java.lang.System.lineSeparator;
+import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
+import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 
+/**
+ * Base class for class file attribute tests.
+ * Contains methods for compiling generated sources in memory,
+ * for reading files from disk and a lot of assert* methods.
+ */
 public class TestBase {
 
-    public Map<String, ? extends JavaFileObject> compile(String... sources) throws IOException,
+    public static final String LINE_SEPARATOR = lineSeparator();
+
+    private <S> InMemoryFileManager compile(
+            List<String> options,
+            Function<S, ? extends JavaFileObject> src2JavaFileObject,
+            List<S> sources)
+            throws IOException, CompilationException {
+
+        JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
+        List<? extends JavaFileObject> src = sources.stream()
+                .map(src2JavaFileObject)
+                .collect(toList());
+
+        DiagnosticCollector<? super JavaFileObject> dc = new DiagnosticCollector<>();
+        try (InMemoryFileManager fileManager
+                     = new InMemoryFileManager(compiler.getStandardFileManager(null, null, null))) {
+            JavaCompiler.CompilationTask task = compiler.getTask(null, fileManager, dc, options, null, src);
+            boolean success = task.call();
+            if (!success) {
+                String errorMessage = dc.getDiagnostics().stream()
+                        .map(Object::toString)
+                        .collect(joining("\n"));
+                throw new CompilationException("Compilation Error\n\n" + errorMessage);
+            }
+            return fileManager;
+        }
+    }
+
+    /**
+     * Compiles sources in memory.
+     *
+     * @param sources to compile.
+     * @return memory file manager which contains class files and class loader.
+     */
+    public InMemoryFileManager compile(String... sources)
+            throws IOException, CompilationException {
+        return compile(emptyList(), sources);
+    }
+
+    /**
+     * Compiles sources in memory.
+     *
+     * @param options compiler options.
+     * @param sources sources to compile.
+     * @return map where key is className, value is corresponding ClassFile.
+     */
+    public InMemoryFileManager compile(List<String> options, String... sources)
+            throws IOException, CompilationException {
+        return compile(options, ToolBox.JavaSource::new, asList(sources));
+    }
+
+    /**
+     * Compiles sources in memory.
+     *
+     * @param sources sources[i][0] - name of file, sources[i][1] - sources.
+     * @return map where key is className, value is corresponding ClassFile.
+     */
+    public InMemoryFileManager compile(String[]... sources) throws IOException,
             CompilationException {
         return compile(emptyList(), sources);
     }
 
     /**
-     * @param options -  compiler options
-     * @param sources
+     * Compiles sources in memory.
+     *
+     * @param options compiler options
+     * @param sources sources[i][0] - name of file, sources[i][1] - sources.
      * @return map where key is className, value is corresponding ClassFile.
-     * @throws IOException
      */
-    public Map<String, ? extends JavaFileObject> compile(List<String> options, String... sources) throws IOException,
-            CompilationException {
-
-        JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
-        List<? extends JavaFileObject> src = Stream.of(sources).map(ToolBox.JavaSource::new).collect(toList());
-
-        try (InMemoryFileManager fileManager = new InMemoryFileManager(compiler.getStandardFileManager(null, null, null))) {
-            boolean success = compiler.getTask(null, fileManager, null, options, null, src).call();
-            if (!success) throw new CompilationException("Compilation Error");
-            return fileManager.getClasses();
-        }
+    public InMemoryFileManager compile(List<String> options, String[]... sources)
+            throws IOException, CompilationException {
+        return compile(options, src -> new ToolBox.JavaSource(src[0], src[1]), asList(sources));
     }
 
     public void assertEquals(Object actual, Object expected, String message) {
         if (!Objects.equals(actual, expected))
-            throw new AssertionFailedException(format("%s%nGot: %s, Expected: ", message, actual, expected));
+            throw new AssertionFailedException(format("%s%nGot: %s, Expected: %s", message, actual, expected));
     }
 
     public void assertNull(Object actual, String message) {
@@ -80,16 +139,52 @@ public class TestBase {
         assertEquals(actual, true, message);
     }
 
+    public void assertFalse(boolean actual, String message) {
+        assertEquals(actual, false, message);
+    }
+
+    public File getSourceDir() {
+        return new File(System.getProperty("test.src", "."));
+    }
+
+    public File getClassDir() {
+        return new File(System.getProperty("test.classes", TestBase.class.getResource(".").getPath()));
+    }
+
     public File getSourceFile(String fileName) {
-        return new File(System.getProperty("test.src", "."), fileName);
+        return new File(getSourceDir(), fileName);
     }
 
     public File getClassFile(String fileName) {
-        return new File(System.getProperty("test.classes", TestBase.class.getResource(".").getPath()), fileName);
+        return new File(getClassDir(), fileName);
     }
 
     public File getClassFile(Class clazz) {
         return getClassFile(clazz.getName().replace(".", "/") + ".class");
+    }
+
+    /**
+     * Prints message to standard error. New lines are converted to system dependent NL.
+     *
+     * @param message string to print.
+     */
+    public void echo(String message) {
+        System.err.println(message.replace("\n", LINE_SEPARATOR));
+    }
+
+    /**
+     * Substitutes args in template and prints result to standard error. New lines are converted to system dependent NL.
+     *
+     * @param template template in standard String.format(...) format.
+     * @param args arguments to substitute in template.
+     */
+    public void printf(String template, Object... args) {
+        System.err.printf(template, Stream.of(args)
+                .map(Objects::toString)
+                .map(m -> m.replace("\n", LINE_SEPARATOR))
+                .collect(toList())
+                .toArray());
+
     }
 
     public static class CompilationException extends Exception {

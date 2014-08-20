@@ -34,7 +34,7 @@ import java.util.Set;
 /**
  * JDeps internal representation of module for dependency analysis.
  */
-public final class Module extends Archive {
+final class Module extends Archive {
     private final String moduleName;
     private final Map<String, Boolean> requires;
     private final Map<String, Set<String>> exports;
@@ -55,8 +55,8 @@ public final class Module extends Archive {
         return moduleName;
     }
 
-    public Set<String> requires() {
-        return requires.keySet();
+    public Map<String, Boolean> requires() {
+        return requires;
     }
 
     public Map<String, Set<String>> exports() {
@@ -68,10 +68,34 @@ public final class Module extends Archive {
     }
 
     /**
+     * Tests if this module can read m
+     */
+    public boolean canRead(Module m) {
+        // ## TODO: handle "re-exported=true"
+        // all JDK modules require all modules containing its direct dependences
+        // should not be an issue
+        return requires.containsKey(m.name());
+    }
+
+    /**
+     * Tests if a given fully-qualified name is an exported type.
+     */
+    public boolean isExported(String cn) {
+        int i = cn.lastIndexOf('.');
+        String pn = i > 0 ? cn.substring(0, i) : "";
+
+        return isExportedPackage(pn);
+    }
+
+    /**
+     * Tests if a given package name is exported.
+     */
+    public boolean isExportedPackage(String pn) {
+        return exports.containsKey(pn) ? exports.get(pn).isEmpty() : false;
+    }
+
+    /**
      * Tests if the given classname is accessible to module m
-     * @param classname
-     * @param m
-     * @return
      */
     public boolean isAccessibleTo(String classname, Module m) {
         int i = classname.lastIndexOf('.');
@@ -80,20 +104,27 @@ public final class Module extends Archive {
             throw new IllegalArgumentException(classname + " is not a member of module " + name());
         }
 
-        // ## TODO: check API dependences
-        if (m != null && !m.requires().contains(name())) {
-            System.err.format("%s not readable by %s%n", this.name(), m.name());
+        if (m != null && !m.canRead(this)) {
+            trace("%s not readable by %s%n", this.name(), m.name());
             return false;
         }
+
         // exported API
         Set<String> ms = exports().get(pn);
         String mname = m != null ? m.name() : "unnamed";
         if (ms == null) {
-            System.err.format("%s not exported in %s%n", classname, this.name());
+            trace("%s not exported in %s%n", classname, this.name());
         } else if (!(ms.isEmpty() || ms.contains(mname))) {
-            System.err.format("%s not permit to %s %s%n", classname, mname, ms);
+            trace("%s not permit to %s %s%n", classname, mname, ms);
         }
         return ms != null && (ms.isEmpty() || ms.contains(mname));
+    }
+
+    private static final boolean traceOn = Boolean.getBoolean("jdeps.debug");
+    private void trace(String fmt, Object... args) {
+        if (traceOn) {
+            System.err.format(fmt, args);
+        }
     }
 
     @Override
@@ -137,6 +168,7 @@ public final class Module extends Archive {
         }
 
         public Builder require(String d, boolean reexport) {
+         //   System.err.format("%s depend %s reexports %s%n", name, d, reexport);
             requires.put(d, reexport);
             return this;
         }

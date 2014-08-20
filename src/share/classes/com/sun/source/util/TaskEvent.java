@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -68,21 +68,56 @@ public final class TaskEvent
         /**
          * For events relating to an individual annotation processing round.
          **/
-        ANNOTATION_PROCESSING_ROUND
+        ANNOTATION_PROCESSING_ROUND,
+        /**
+         * Sent before parsing first source file, and after writing the last output file.
+         * This event is not sent when using {@link JavacTask#parse()},
+         * {@link JavacTask#analyze()} or {@link JavacTask#generate()}.
+         *
+         * @since 1.9
+         */
+        COMPILATION,
     }
 
+    /**
+     * Creates a task event for a given kind.
+     * The source file, compilation unit and type element
+     * are all set to {@code null}.
+     * @param kind the kind of the event
+     */
     public TaskEvent(Kind kind) {
         this(kind, null, null, null);
     }
 
+    /**
+     * Creates a task event for a given kind and source file.
+     * The compilation unit and type element are both set to {@code null}.
+     * @param kind the kind of the event
+     * @param sourceFile the source file
+     */
     public TaskEvent(Kind kind, JavaFileObject sourceFile) {
         this(kind, sourceFile, null, null);
     }
 
+    /**
+     * Creates a task event for a given kind and compilation unit.
+     * The source file is set from the compilation unit,
+     * and the type element is set to {@code null}.
+     * @param kind the kind of the event
+     * @param unit the compilation unit
+     */
     public TaskEvent(Kind kind, CompilationUnitTree unit) {
         this(kind, unit.getSourceFile(), unit, null);
     }
 
+    /**
+     * Creates a task event for a given kind, compilation unit
+     * and type element.
+     * The source file is set from the compilation unit.
+     * @param kind the kind of the event
+     * @param unit the compilation unit
+     * @param clazz the type element
+     */
     public TaskEvent(Kind kind, CompilationUnitTree unit, TypeElement clazz) {
         this(kind, unit.getSourceFile(), unit, clazz);
     }
@@ -94,22 +129,42 @@ public final class TaskEvent
         this.clazz = clazz;
     }
 
+    /**
+     * Returns the kind for this event.
+     * @return the kind
+     */
     public Kind getKind() {
         return kind;
     }
 
+    /**
+     * Returns the source file for this event.
+     * May be {@code null}.
+     * @return the source file
+     */
     public JavaFileObject getSourceFile() {
         return file;
     }
 
+    /**
+     * Returns the compilation unit for this event.
+     * May be {@code null}.
+     * @return the compilation unit
+     */
     public CompilationUnitTree getCompilationUnit() {
         return unit;
     }
 
+    /**
+     * Returns the type element for this event.
+     * May be {@code null}.
+     * @return the type element
+     */
     public TypeElement getTypeElement() {
         return clazz;
     }
 
+    @Override
     public String toString() {
         return "TaskEvent["
             + kind + ","

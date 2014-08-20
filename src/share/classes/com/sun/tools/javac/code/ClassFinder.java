@@ -37,6 +37,7 @@ import javax.tools.StandardJavaFileManager;
 import static javax.tools.StandardLocation.*;
 
 import com.sun.tools.javac.comp.Annotate;
+import com.sun.tools.javac.code.Scope.WriteableScope;
 import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.jvm.ClassReader;
 import com.sun.tools.javac.util.*;
@@ -102,6 +103,10 @@ public class ClassFinder {
      */
     private final JavaFileManager fileManager;
 
+    /** Dependency tracker
+     */
+    private final Dependencies dependencies;
+
     /** Factory for diagnostics
      */
     JCDiagnostic.Factory diagFactory;
@@ -149,6 +154,7 @@ public class ClassFinder {
         names = Names.instance(context);
         syms = Symtab.instance(context);
         fileManager = context.get(JavaFileManager.class);
+        dependencies = Dependencies.instance(context);
         if (fileManager == null)
             throw new AssertionError("FileManager initialization error");
         diagFactory = JCDiagnostic.Factory.instance(context);
@@ -178,18 +184,23 @@ public class ClassFinder {
      */
     private void complete(Symbol sym) throws CompletionFailure {
         if (sym.kind == TYP) {
-            ClassSymbol c = (ClassSymbol)sym;
-            c.members_field = new Scope.ErrorScope(c); // make sure it's always defined
-            annotate.enterStart();
             try {
-                completeOwners(c.owner);
-                completeEnclosing(c);
+                ClassSymbol c = (ClassSymbol) sym;
+                dependencies.push(c);
+                c.members_field = new Scope.ErrorScope(c); // make sure it's always defined
+                annotate.enterStart();
+                try {
+                    completeOwners(c.owner);
+                    completeEnclosing(c);
+                } finally {
+                    // The flush needs to happen only after annotations
+                    // are filled in.
+                    annotate.enterDoneWithoutFlush();
+                }
+                fillIn(c);
             } finally {
-                // The flush needs to happen only after annotations
-                // are filled in.
-                annotate.enterDoneWithoutFlush();
+                dependencies.pop();
             }
-            fillIn(c);
         } else if (sym.kind == PCK) {
             PackageSymbol p = (PackageSymbol)sym;
             try {
@@ -218,7 +229,7 @@ public class ClassFinder {
         if (c.owner.kind == PCK) {
             Symbol owner = c.owner;
             for (Name name : Convert.enclosingCandidates(Convert.shortName(c.name))) {
-                Symbol encl = owner.members().lookup(name).sym;
+                Symbol encl = owner.members().findFirst(name);
                 if (encl == null)
                     encl = syms.classes.get(TypeSymbol.formFlatName(name, owner));
                 if (encl != null)
@@ -256,7 +267,6 @@ public class ClassFinder {
                                                         + classfile.toUri());
                     }
                 }
-                return;
             } finally {
                 currentClassFile = previousClassFile;
             }
@@ -335,7 +345,7 @@ public class ClassFinder {
         boolean isPkgInfo = classname == names.package_info;
         ClassSymbol c = isPkgInfo
             ? p.package_info
-            : (ClassSymbol) p.members_field.lookup(classname).sym;
+            : (ClassSymbol) p.members_field.findFirst(classname);
         if (c == null) {
             c = syms.enterClass(classname, p);
             if (c.classfile == null) // only update the file if's it's newly created
@@ -399,7 +409,7 @@ public class ClassFinder {
      */
     private void fillIn(PackageSymbol p) throws IOException {
         if (p.members_field == null)
-            p.members_field = new Scope(p);
+            p.members_field = WriteableScope.create(p);
 
         preferCurrent = false;
         if (userPathsFirst) {

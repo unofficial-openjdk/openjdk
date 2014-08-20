@@ -144,13 +144,6 @@ public class JavacParser implements Parser {
         this.log = fac.log;
         this.names = fac.names;
         this.source = fac.source;
-        this.allowGenerics = source.allowGenerics();
-        this.allowVarargs = source.allowVarargs();
-        this.allowAsserts = source.allowAsserts();
-        this.allowEnums = source.allowEnums();
-        this.allowForeach = source.allowForeach();
-        this.allowStaticImport = source.allowStaticImport();
-        this.allowAnnotations = source.allowAnnotations();
         this.allowTWR = source.allowTryWithResources();
         this.allowDiamond = source.allowDiamond();
         this.allowMulticatch = source.allowMulticatch();
@@ -180,10 +173,6 @@ public class JavacParser implements Parser {
         return keepDocComments ? new LazyDocCommentTable(fac) : null;
     }
 
-    /** Switch: Should generics be recognized?
-     */
-    boolean allowGenerics;
-
     /** Switch: Should diamond operator be recognized?
      */
     boolean allowDiamond;
@@ -191,30 +180,6 @@ public class JavacParser implements Parser {
     /** Switch: Should multicatch clause be accepted?
      */
     boolean allowMulticatch;
-
-    /** Switch: Should varargs be recognized?
-     */
-    boolean allowVarargs;
-
-    /** Switch: should we recognize assert statements, or just give a warning?
-     */
-    boolean allowAsserts;
-
-    /** Switch: should we recognize enums, or just give a warning?
-     */
-    boolean allowEnums;
-
-    /** Switch: should we recognize foreach?
-     */
-    boolean allowForeach;
-
-    /** Switch: should we recognize foreach?
-     */
-    boolean allowStaticImport;
-
-    /** Switch: should we recognize annotations?
-     */
-    boolean allowAnnotations;
 
     /** Switch: should we recognize try-with-resources?
      */
@@ -417,6 +382,13 @@ public class JavacParser implements Parser {
                 case ELSE:
                 case FINALLY:
                 case CATCH:
+                case THIS:
+                case SUPER:
+                case NEW:
+                    if (stopAtStatement)
+                        return;
+                    break;
+                case ASSERT:
                     if (stopAtStatement)
                         return;
                     break;
@@ -602,27 +574,13 @@ public class JavacParser implements Parser {
             nextToken();
             return name;
         } else if (token.kind == ASSERT) {
-            if (allowAsserts) {
-                error(token.pos, "assert.as.identifier");
-                nextToken();
-                return names.error;
-            } else {
-                warning(token.pos, "assert.as.identifier");
-                Name name = token.name();
-                nextToken();
-                return name;
-            }
+            error(token.pos, "assert.as.identifier");
+            nextToken();
+            return names.error;
         } else if (token.kind == ENUM) {
-            if (allowEnums) {
-                error(token.pos, "enum.as.identifier");
-                nextToken();
-                return names.error;
-            } else {
-                warning(token.pos, "enum.as.identifier");
-                Name name = token.name();
-                nextToken();
-                return name;
-            }
+            error(token.pos, "enum.as.identifier");
+            nextToken();
+            return names.error;
         } else if (token.kind == THIS) {
             if (allowThisIdent) {
                 // Make sure we're using a supported source version.
@@ -1338,7 +1296,6 @@ public class JavacParser implements Parser {
                             }
                             accept(GT);
                             t = toP(F.at(pos1).TypeApply(t, args.toList()));
-                            checkGenerics();
                             while (token.kind == DOT) {
                                 nextToken();
                                 mode = TYPE;
@@ -1813,7 +1770,6 @@ public class JavacParser implements Parser {
             (mode & TYPE) != 0 &&
             (mode & NOPARAMS) == 0) {
             mode = TYPE;
-            checkGenerics();
             return typeArguments(t, false);
         } else {
             return t;
@@ -1825,7 +1781,6 @@ public class JavacParser implements Parser {
 
     List<JCExpression> typeArgumentsOpt(int useMode) {
         if (token.kind == LT) {
-            checkGenerics();
             if ((mode & useMode) == 0 ||
                 (mode & NOPARAMS) != 0) {
                 illegal();
@@ -2058,7 +2013,6 @@ public class JavacParser implements Parser {
         boolean diamondFound = false;
         int lastTypeargsPos = -1;
         if (token.kind == LT) {
-            checkGenerics();
             lastTypeargsPos = token.pos;
             t = typeArguments(t, true);
             diamondFound = (mode & DIAMOND) != 0;
@@ -2079,7 +2033,6 @@ public class JavacParser implements Parser {
 
             if (token.kind == LT) {
                 lastTypeargsPos = token.pos;
-                checkGenerics();
                 t = typeArguments(t, true);
                 diamondFound = (mode & DIAMOND) != 0;
             }
@@ -2151,7 +2104,6 @@ public class JavacParser implements Parser {
 
         if (token.kind == LT) {
             int oldmode = mode;
-            checkGenerics();
             t = typeArguments(t, true);
             mode = oldmode;
         }
@@ -2355,7 +2307,6 @@ public class JavacParser implements Parser {
         }
     }
 
-    @SuppressWarnings("fallthrough")
     List<JCStatement> blockStatement() {
         //todo: skip to anchor on error(?)
         int pos = token.pos;
@@ -2372,15 +2323,15 @@ public class JavacParser implements Parser {
             JCModifiers mods = modifiersOpt();
             if (token.kind == INTERFACE ||
                 token.kind == CLASS ||
-                allowEnums && token.kind == ENUM) {
+                token.kind == ENUM) {
                 return List.of(classOrInterfaceOrEnumDeclaration(mods, dc));
             } else {
                 JCExpression t = parseType();
                 ListBuffer<JCStatement> stats =
                         variableDeclarators(mods, t, new ListBuffer<JCStatement>());
                 // A "LocalVariableDeclarationStatement" subsumes the terminating semicolon
-                storeEnd(stats.last(), token.endPos);
                 accept(SEMI);
+                storeEnd(stats.last(), S.prevToken().endPos);
                 return stats.toList();
             }
         }
@@ -2394,15 +2345,11 @@ public class JavacParser implements Parser {
             Comment dc = token.comment(CommentStyle.JAVADOC);
             return List.of(classOrInterfaceOrEnumDeclaration(modifiersOpt(), dc));
         case ENUM:
+            error(token.pos, "local.enum");
+            dc = token.comment(CommentStyle.JAVADOC);
+            return List.of(classOrInterfaceOrEnumDeclaration(modifiersOpt(), dc));
         case ASSERT:
-            if (allowEnums && token.kind == ENUM) {
-                error(token.pos, "local.enum");
-                dc = token.comment(CommentStyle.JAVADOC);
-                return List.of(classOrInterfaceOrEnumDeclaration(modifiersOpt(), dc));
-            } else if (allowAsserts && token.kind == ASSERT) {
-                return List.of(parseStatement());
-            }
-            /* fall through to default */
+            return List.of(parseStatement());
         default:
             Token prevToken = token;
             JCExpression t = term(EXPR | TYPE);
@@ -2417,13 +2364,14 @@ public class JavacParser implements Parser {
                 ListBuffer<JCStatement> stats =
                         variableDeclarators(mods, t, new ListBuffer<JCStatement>());
                 // A "LocalVariableDeclarationStatement" subsumes the terminating semicolon
-                storeEnd(stats.last(), token.endPos);
                 accept(SEMI);
+                storeEnd(stats.last(), S.prevToken().endPos);
                 return stats.toList();
             } else {
                 // This Exec is an "ExpressionStatement"; it subsumes the terminating semicolon
-                JCExpressionStatement expr = to(F.at(pos).Exec(checkExprStat(t)));
+                t = checkExprStat(t);
                 accept(SEMI);
+                JCExpressionStatement expr = toP(F.at(pos).Exec(t));
                 return List.<JCStatement>of(expr);
             }
         }
@@ -2449,7 +2397,6 @@ public class JavacParser implements Parser {
      *     | ExpressionStatement
      *     | Ident ":" Statement
      */
-    @SuppressWarnings("fallthrough")
     public JCStatement parseStatement() {
         int pos = token.pos;
         switch (token.kind) {
@@ -2474,7 +2421,6 @@ public class JavacParser implements Parser {
                 inits.head.hasTag(VARDEF) &&
                 ((JCVariableDecl) inits.head).init == null &&
                 token.kind == COLON) {
-                checkForeach();
                 JCVariableDecl var = (JCVariableDecl)inits.head;
                 accept(COLON);
                 JCExpression expr = parseExpression();
@@ -2502,8 +2448,8 @@ public class JavacParser implements Parser {
             JCStatement body = parseStatementAsBlock();
             accept(WHILE);
             JCExpression cond = parExpression();
-            JCDoWhileLoop t = to(F.at(pos).DoLoop(body, cond));
             accept(SEMI);
+            JCDoWhileLoop t = toP(F.at(pos).DoLoop(body, cond));
             return t;
         }
         case TRY: {
@@ -2551,29 +2497,29 @@ public class JavacParser implements Parser {
         case RETURN: {
             nextToken();
             JCExpression result = token.kind == SEMI ? null : parseExpression();
-            JCReturn t = to(F.at(pos).Return(result));
             accept(SEMI);
+            JCReturn t = toP(F.at(pos).Return(result));
             return t;
         }
         case THROW: {
             nextToken();
             JCExpression exc = parseExpression();
-            JCThrow t = to(F.at(pos).Throw(exc));
             accept(SEMI);
+            JCThrow t = toP(F.at(pos).Throw(exc));
             return t;
         }
         case BREAK: {
             nextToken();
             Name label = LAX_IDENTIFIER.accepts(token.kind) ? ident() : null;
-            JCBreak t = to(F.at(pos).Break(label));
             accept(SEMI);
+            JCBreak t = toP(F.at(pos).Break(label));
             return t;
         }
         case CONTINUE: {
             nextToken();
             Name label = LAX_IDENTIFIER.accepts(token.kind) ? ident() : null;
-            JCContinue t =  to(F.at(pos).Continue(label));
             accept(SEMI);
+            JCContinue t =  toP(F.at(pos).Continue(label));
             return t;
         }
         case SEMI:
@@ -2590,19 +2536,16 @@ public class JavacParser implements Parser {
         case CATCH:
             return doRecover(token.pos, BasicErrorRecoveryAction.CATCH_CLAUSE, "catch.without.try");
         case ASSERT: {
-            if (allowAsserts && token.kind == ASSERT) {
+            nextToken();
+            JCExpression assertion = parseExpression();
+            JCExpression message = null;
+            if (token.kind == COLON) {
                 nextToken();
-                JCExpression assertion = parseExpression();
-                JCExpression message = null;
-                if (token.kind == COLON) {
-                    nextToken();
-                    message = parseExpression();
-                }
-                JCAssert t = to(F.at(pos).Assert(assertion, message));
-                accept(SEMI);
-                return t;
+                message = parseExpression();
             }
-            /* else fall through to default case */
+            accept(SEMI);
+            JCAssert t = toP(F.at(pos).Assert(assertion, message));
+            return t;
         }
         case ENUM:
         default:
@@ -2614,8 +2557,9 @@ public class JavacParser implements Parser {
                 return F.at(pos).Labelled(prevToken.name(), stat);
             } else {
                 // This Exec is an "ExpressionStatement"; it subsumes the terminating semicolon
-                JCExpressionStatement stat = to(F.at(pos).Exec(checkExprStat(expr)));
+                expr = checkExprStat(expr);
                 accept(SEMI);
+                JCExpressionStatement stat = toP(F.at(pos).Exec(expr));
                 return stat;
             }
         }
@@ -2827,7 +2771,6 @@ public class JavacParser implements Parser {
             lastPos = token.pos;
             nextToken();
             if (flag == Flags.ANNOTATION) {
-                checkAnnotations();
                 if (token.kind != INTERFACE) {
                     JCAnnotation ann = annotation(lastPos, Tag.ANNOTATION);
                     // if first modifier is an annotation, set pos to annotation's.
@@ -2863,7 +2806,6 @@ public class JavacParser implements Parser {
      */
     JCAnnotation annotation(int pos, Tag kind) {
         // accept(AT); // AT consumed by caller
-        checkAnnotations();
         if (kind == Tag.TYPE_ANNOTATION) {
             checkTypeAnnotations();
         }
@@ -3244,7 +3186,6 @@ public class JavacParser implements Parser {
         nextToken();
         boolean importStatic = false;
         if (token.kind == STATIC) {
-            checkStaticImports();
             importStatic = true;
             nextToken();
         }
@@ -3287,27 +3228,9 @@ public class JavacParser implements Parser {
             return classDeclaration(mods, dc);
         } else if (token.kind == INTERFACE) {
             return interfaceDeclaration(mods, dc);
-        } else if (allowEnums) {
-            if (token.kind == ENUM) {
-                return enumDeclaration(mods, dc);
-            } else {
-                int pos = token.pos;
-                List<JCTree> errs;
-                if (LAX_IDENTIFIER.accepts(token.kind)) {
-                    errs = List.<JCTree>of(mods, toP(F.at(pos).Ident(ident())));
-                    setErrorEndPos(token.pos);
-                } else {
-                    errs = List.<JCTree>of(mods);
-                }
-                return toP(F.Exec(syntaxError(pos, errs, "expected3",
-                                              CLASS, INTERFACE, ENUM)));
-            }
+        } else if (token.kind == ENUM) {
+            return enumDeclaration(mods, dc);
         } else {
-            if (token.kind == ENUM) {
-                error(token.pos, "enums.not.supported.in.source", source.name);
-                allowEnums = true;
-                return enumDeclaration(mods, dc);
-            }
             int pos = token.pos;
             List<JCTree> errs;
             if (LAX_IDENTIFIER.accepts(token.kind)) {
@@ -3316,8 +3239,8 @@ public class JavacParser implements Parser {
             } else {
                 errs = List.<JCTree>of(mods);
             }
-            return toP(F.Exec(syntaxError(pos, errs, "expected2",
-                                          CLASS, INTERFACE)));
+            return toP(F.Exec(syntaxError(pos, errs, "expected3",
+                                          CLASS, INTERFACE, ENUM)));
         }
     }
 
@@ -3393,7 +3316,7 @@ public class JavacParser implements Parser {
         mods.flags |= Flags.ENUM;
         JCClassDecl result = toP(F.at(pos).
             ClassDef(mods, name, List.<JCTypeParameter>nil(),
-                null, implementing, defs));
+                     null, implementing, defs));
         attach(result, dc);
         return result;
     }
@@ -3543,7 +3466,7 @@ public class JavacParser implements Parser {
             JCModifiers mods = modifiersOpt();
             if (token.kind == CLASS ||
                 token.kind == INTERFACE ||
-                allowEnums && token.kind == ENUM) {
+                token.kind == ENUM) {
                 return List.<JCTree>of(classOrInterfaceOrEnumDeclaration(mods, dc));
             } else if (token.kind == LBRACE &&
                        (mods.flags & Flags.StandardFlags & ~Flags.STATIC) == 0 &&
@@ -3600,8 +3523,8 @@ public class JavacParser implements Parser {
                         List<JCTree> defs =
                             variableDeclaratorsRest(pos, mods, type, name, isInterface, dc,
                                                     new ListBuffer<JCTree>()).toList();
-                        storeEnd(defs.last(), token.endPos);
                         accept(SEMI);
+                        storeEnd(defs.last(), S.prevToken().endPos);
                         return defs;
                     } else {
                         pos = token.pos;
@@ -3712,7 +3635,6 @@ public class JavacParser implements Parser {
      */
     List<JCTypeParameter> typeParametersOpt() {
         if (token.kind == LT) {
-            checkGenerics();
             ListBuffer<JCTypeParameter> typarams = new ListBuffer<>();
             nextToken();
             typarams.append(typeParameter());
@@ -3900,7 +3822,6 @@ public class JavacParser implements Parser {
         if (token.kind == ELLIPSIS) {
             List<JCAnnotation> varargsAnnos = typeAnnotationsPushedBack;
             typeAnnotationsPushedBack = List.nil();
-            checkVarargs();
             mods.flags |= Flags.VARARGS;
             // insert var arg type annotations
             type = insertAnnotationsToMostInner(type, varargsAnnos, true);
@@ -4087,36 +4008,6 @@ public class JavacParser implements Parser {
         }
     }
 
-    void checkGenerics() {
-        if (!allowGenerics) {
-            error(token.pos, "generics.not.supported.in.source", source.name);
-            allowGenerics = true;
-        }
-    }
-    void checkVarargs() {
-        if (!allowVarargs) {
-            error(token.pos, "varargs.not.supported.in.source", source.name);
-            allowVarargs = true;
-        }
-    }
-    void checkForeach() {
-        if (!allowForeach) {
-            error(token.pos, "foreach.not.supported.in.source", source.name);
-            allowForeach = true;
-        }
-    }
-    void checkStaticImports() {
-        if (!allowStaticImport) {
-            error(token.pos, "static.import.not.supported.in.source", source.name);
-            allowStaticImport = true;
-        }
-    }
-    void checkAnnotations() {
-        if (!allowAnnotations) {
-            error(token.pos, "annotations.not.supported.in.source", source.name);
-            allowAnnotations = true;
-        }
-    }
     void checkDiamond() {
         if (!allowDiamond) {
             error(token.pos, "diamond.not.supported.in.source", source.name);

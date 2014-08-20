@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,7 +24,9 @@
  */
 package com.sun.tools.jdeps;
 
+import com.sun.tools.classfile.ClassFile;
 import com.sun.tools.classfile.Dependency.Location;
+
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.HashSet;
@@ -36,20 +38,35 @@ import java.util.concurrent.ConcurrentHashMap;
  * Represents the source of the class files.
  */
 public class Archive {
-    private final Map<Location, Set<Location>> deps = new ConcurrentHashMap<>();
-    private final Path path;
-    private final String name;
-    private final ClassFileReader reader;
+    public static Archive getInstance(Path p) throws IOException {
+        return new Archive(p, ClassFileReader.newInstance(p));
+    }
 
-    Archive(String name, ClassFileReader reader) {
-        this.name = name;
-        this.path = reader != null ? reader.path : null;
+    private final Path path;
+    private final String filename;
+    private final ClassFileReader reader;
+    protected Map<Location, Set<Location>> deps = new ConcurrentHashMap<>();
+
+    protected Archive(String name) {
+        this(name, null);
+    }
+    protected Archive(String name, ClassFileReader reader) {
+        this.path = null;
+        this.filename = name;
         this.reader = reader;
     }
-    Archive(Path p, ClassFileReader reader) {
+    protected Archive(Path p, ClassFileReader reader) {
         this.path = p;
-        this.name = path.getFileName().toString();
+        this.filename = path.getFileName().toString();
         this.reader = reader;
+    }
+
+    public ClassFileReader reader() {
+        return reader;
+    }
+
+    public String getName() {
+        return filename;
     }
 
     public void addClass(Location origin) {
@@ -73,10 +90,6 @@ public class Archive {
         return deps.keySet();
     }
 
-    public boolean isEmpty() {
-        return getClasses().isEmpty();
-    }
-
     public void visitDependences(Visitor v) {
         for (Map.Entry<Location,Set<Location>> e: deps.entrySet()) {
             for (Location target : e.getValue()) {
@@ -85,27 +98,19 @@ public class Archive {
         }
     }
 
-    public ClassFileReader reader() {
-        return reader;
-    }
-
-    public String getName() {
-        return name;
+    public boolean isEmpty() {
+        return getClasses().isEmpty();
     }
 
     public String getPathName() {
-        return path != null ? path.toString() : name;
+        return path != null ? path.toString() : filename;
     }
 
     public String toString() {
-        return getPathName();
+        return filename;
     }
 
     interface Visitor {
         void visit(Location origin, Location target);
-    }
-
-    public static Archive getInstance(Path p) throws IOException {
-        return new Archive(p, ClassFileReader.newInstance(p));
     }
 }

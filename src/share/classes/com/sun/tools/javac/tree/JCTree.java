@@ -503,8 +503,10 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
         public Location locn;
         /** The package to which this compilation unit belongs. */
         public PackageSymbol packge;
+        /** A scope containing top level classes. */
+        public WriteableScope toplevelScope;
         /** A scope for all named imports. */
-        public ImportScope namedImportScope;
+        public NamedImportScope namedImportScope;
         /** A scope for all import-on-demands. */
         public StarImportScope starImportScope;
         /** Line starting positions, defined only if option -g is set. */

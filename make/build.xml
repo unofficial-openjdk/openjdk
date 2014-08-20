@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
- Copyright (c) 2007, 2013, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2007, 2014, Oracle and/or its affiliates. All rights reserved.
  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 
  This code is free software; you can redistribute it and/or modify it
@@ -457,6 +457,46 @@
         </javac>
     </target>
 
+    <!-- Generate API docs for "important" test classes that are used by
+         multiple tests.
+    -->
+    <target name="test-framework-docs" depends="build-all-classes">
+        <javadoc executable="${target.java.home}/bin/javadoc"
+                destdir="${build.dir}/testframeworkdocs">
+            <!-- disable doclint for now; it might be good to enable -Xdoclint:missing -->
+            <arg value="-Xdoclint:none"/>
+            <!-- source files to be documented -->
+            <sourcefiles>
+                <fileset dir="${test.dir}">
+                    <include name="**/ToolBox.java"/>
+                    <include name="**/*Tester.java"/>
+                    <include name="**/*TestBase.java"/>
+                    <include name="**/*Testing*.java"/>
+                </fileset>
+            </sourcefiles>
+            <!-- source path used for documentation -->
+            <sourcepath>
+                <pathelement path="${test.dir}/lib"/>
+                <pathelement path="${test.dir}/lib/combo"/>
+                <pathelement path="${test.dir}/tools/javac/lib"/>
+                <pathelement path="${test.dir}/tools/javac/classfiles/attributes/LocalVariableTable"/>
+            </sourcepath>
+            <!-- exclude the following "packages" found by <javadoc>
+                on the sourcepath -->
+            <excludepackage name="combo.tools.javac.combo"/>
+            <excludepackage name="tools.javac.combo"/>
+            <!-- library classes used for documentation -->
+            <classpath>
+                <pathelement path="${jtreg.home}/lib/testng.jar"/>
+            </classpath>
+            <!-- platform classes used for documentation -->
+            <bootclasspath>
+                <pathelement path="${build.dir}/classes"/>
+                <pathelement path="${target.java.home}/jre/lib/rt.jar"/>
+            </bootclasspath>
+        </javadoc>
+    </target>
+
     <!--
     **** Debugging/diagnostic targets.
     -->
@@ -720,7 +760,8 @@
     **** crules targets.
     -->
 
-    <target name="build-crules" depends="-def-compilecrules,-def-build-jar-with-services">
+    <target name="build-crules"
+            depends="-def-compilecrules,-def-build-jar-with-services,build-bootstrap-javac,-create-import-jdk-stubs">
         <compilecrules/>
         <build-jar-with-services
                     name="crules"
@@ -730,13 +771,19 @@
                     jarmainclass=""
                     jarclasspath="crules.jar"
                     service.type="com.sun.source.util.Plugin"
-                    service.provider="crules.MutableFieldsAnalyzer"/>
+                    service.provider="crules.CodingRulesAnalyzerPlugin"/>
         <build-tool name="crules"/>
+    </target>
+
+    <target name="jtreg-crules" depends="build-javac,build-crules,-def-jtreg">
+        <jtreg-tool name="crules"
+                    tests="${crules.tests}"
+                    extra.jvmargs="-Xbootclasspath/a:${build.toolclasses.dir}/crules.jar" />
     </target>
 
     <target name="check-coding-rules" depends="build-bootstrap-javac,-create-import-jdk-stubs,build-crules">
         <build-classes includes="${javac.includes}"
-            plugin.options="-J-Xbootclasspath/a:${build.toolclasses.dir}/crules.jar -Xplugin:mutable_fields_analyzer" />
+            plugin.options="-J-Xbootclasspath/a:${build.toolclasses.dir}/crules.jar -Xplugin:coding_rules" />
     </target>
 
     <!--
@@ -752,6 +799,23 @@
         />
     </target>
 
+    <!--
+    **** IDE support
+    -->
+
+    <target name="idea">
+        <mkdir dir=".idea"/>
+        <copy todir=".idea" >
+            <fileset dir="make/intellij" excludes="**/src/**"/>
+        </copy>
+        <condition property="jtreg.idea.home" value="${jtreg.home}" else = "[jtreg.home]">
+            <isset property="jtreg.home"/>
+        </condition>
+        <replace file=".idea/ant.xml" token="@@@" value="${jtreg.idea.home}"/>
+        <mkdir dir=".idea/classes"/>
+        <javac srcdir="make/intellij/src"
+               destdir=".idea/classes"/>
+    </target>
 
     <!--
     **** Check targets.
@@ -1093,6 +1157,7 @@
             <attribute name="options" default="${other.jtreg.options}"/>
             <attribute name="keywords" default="-keywords:!ignore"/>
             <attribute name="jpda.jvmargs" default=""/>
+            <attribute name="extra.jvmargs" default=""/>
             <sequential>
                 <property name="coverage.options" value=""/>              <!-- default -->
                 <property name="coverage.classpath" value=""/>            <!-- default -->
@@ -1106,7 +1171,7 @@
                     samevm="@{samevm}" verbose="@{verbose}"
                     failonerror="false" resultproperty="jtreg.@{name}.result"
                     javacoptions="-g"
-                    vmoptions="${coverage.options} -Xbootclasspath/p:${coverage.classpath}${path.separator}${build.classes.dir} @{jpda.jvmargs}">
+                    vmoptions="${coverage.options} -Xbootclasspath/p:${coverage.classpath}${path.separator}${build.classes.dir} @{jpda.jvmargs} @{extra.jvmargs}">
                     <arg line="@{keywords}"/>
                     <arg line="@{options}"/>
                     <arg line="@{tests}"/>

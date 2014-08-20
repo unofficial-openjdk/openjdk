@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -45,10 +45,6 @@ import static com.sun.tools.javac.util.LayoutCharacters.*;
 public class JavaTokenizer {
 
     private static final boolean scannerDebug = false;
-
-    /** Allow hex floating-point literals.
-     */
-    private boolean allowHexFloats;
 
     /** Allow binary literals.
      */
@@ -126,7 +122,6 @@ public class JavaTokenizer {
         this.source = fac.source;
         this.reader = reader;
         this.allowBinaryLiterals = source.allowBinaryLiterals();
-        this.allowHexFloats = source.allowHexFloats();
         this.allowUnderscoresInLiterals = source.allowUnderscoresInLiterals();
     }
 
@@ -218,13 +213,9 @@ public class JavaTokenizer {
                 reader.putChar(true);
             }
             skipIllegalUnderscores();
-            if ('0' <= reader.ch && reader.ch <= '9') {
+            if (reader.digit(pos, 10) >= 0) {
                 scanDigits(pos, 10);
-                if (!allowHexFloats) {
-                    lexError(pos, "unsupported.fp.lit", source.name);
-                    allowHexFloats = true;
-                }
-                else if (!hexFloatsWork)
+                if (!hexFloatsWork)
                     lexError(pos, "unsupported.cross.fp.lit");
             } else
                 lexError(pos, "malformed.fp.lit");
@@ -248,7 +239,7 @@ public class JavaTokenizer {
      */
     private void scanFraction(int pos) {
         skipIllegalUnderscores();
-        if ('0' <= reader.ch && reader.ch <= '9') {
+        if (reader.digit(pos, 10) >= 0) {
             scanDigits(pos, 10);
         }
         int sp1 = reader.sp;
@@ -259,7 +250,7 @@ public class JavaTokenizer {
                 reader.putChar(true);
             }
             skipIllegalUnderscores();
-            if ('0' <= reader.ch && reader.ch <= '9') {
+            if (reader.digit(pos, 10) >= 0) {
                 scanDigits(pos, 10);
                 return;
             }
@@ -393,11 +384,11 @@ public class JavaTokenizer {
                         reader.scanChar();
                         continue;
                     } else {
-                        high = reader.scanSurrogates();
-                        if (high != 0) {
-                            reader.putChar(high);
-                            isJavaIdentifierPart = Character.isJavaIdentifierPart(
-                                Character.toCodePoint(high, reader.ch));
+                        int codePoint = reader.peekSurrogates();
+                        if (codePoint >= 0) {
+                            if (isJavaIdentifierPart = Character.isJavaIdentifierPart(codePoint)) {
+                                reader.putChar(true);
+                            }
                         } else {
                             isJavaIdentifierPart = Character.isJavaIdentifierPart(reader.ch);
                         }
@@ -539,7 +530,7 @@ public class JavaTokenizer {
                     break loop;
                 case '.':
                     reader.scanChar();
-                    if ('0' <= reader.ch && reader.ch <= '9') {
+                    if (reader.digit(pos, 10) >= 0) {
                         reader.putChar('.');
                         scanFractionAndSuffix(pos);
                     } else if (reader.ch == '.') {
@@ -622,11 +613,11 @@ public class JavaTokenizer {
                     reader.scanChar();
                     if (reader.ch == '\'') {
                         lexError(pos, "empty.char.lit");
+                        reader.scanChar();
                     } else {
                         if (reader.ch == CR || reader.ch == LF)
                             lexError(pos, "illegal.line.end.in.char.lit");
                         scanLitChar(pos);
-                        char ch2 = reader.ch;
                         if (reader.ch == '\'') {
                             reader.scanChar();
                             tk = TokenKind.CHARLITERAL;
@@ -651,29 +642,39 @@ public class JavaTokenizer {
                         scanOperator();
                     } else {
                         boolean isJavaIdentifierStart;
+                        int codePoint = -1;
                         if (reader.ch < '\u0080') {
                             // all ASCII range chars already handled, above
                             isJavaIdentifierStart = false;
                         } else {
-                            char high = reader.scanSurrogates();
-                            if (high != 0) {
-                                reader.putChar(high);
-
-                                isJavaIdentifierStart = Character.isJavaIdentifierStart(
-                                    Character.toCodePoint(high, reader.ch));
+                            codePoint = reader.peekSurrogates();
+                            if (codePoint >= 0) {
+                                if (isJavaIdentifierStart = Character.isJavaIdentifierStart(codePoint)) {
+                                    reader.putChar(true);
+                                }
                             } else {
                                 isJavaIdentifierStart = Character.isJavaIdentifierStart(reader.ch);
                             }
                         }
                         if (isJavaIdentifierStart) {
                             scanIdent();
+                        } else if (reader.digit(pos, 10) >= 0) {
+                            scanNumber(pos, 10);
                         } else if (reader.bp == reader.buflen || reader.ch == EOI && reader.bp + 1 == reader.buflen) { // JLS 3.5
                             tk = TokenKind.EOF;
                             pos = reader.buflen;
                         } else {
-                            String arg = (32 < reader.ch && reader.ch < 127) ?
-                                            String.format("%s", reader.ch) :
-                                            String.format("\\u%04x", (int)reader.ch);
+                            String arg;
+
+                            if (codePoint >= 0) {
+                                char high = reader.ch;
+                                reader.scanChar();
+                                arg = String.format("\\u%04x\\u%04x", (int) high, (int)reader.ch);
+                            } else {
+                                arg = (32 < reader.ch && reader.ch < 127) ?
+                                                String.format("%s", reader.ch) :
+                                                String.format("\\u%04x", (int)reader.ch);
+                            }
                             lexError(pos, "illegal.char", arg);
                             reader.scanChar();
                         }

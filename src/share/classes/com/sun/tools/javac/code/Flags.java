@@ -66,7 +66,7 @@ public class Flags {
                 flags &= ~flag.value;
             }
         }
-        Assert.check(flags == 0, "Flags parameter contains unknown flags " + flags);
+        Assert.check(flags == 0);
         return flagSet;
     }
 
@@ -277,6 +277,11 @@ public class Flags {
      */
     public static final long LAMBDA_METHOD = 1L<<49;
 
+    /**
+     * Flag to control recursion in TransTypes
+     */
+    public static final long TYPE_TRANSLATED = 1L<<50;
+
     /** Modifier masks.
      */
     public static final int
@@ -296,7 +301,8 @@ public class Flags {
         ModifierFlags               = ((long)StandardFlags & ~INTERFACE) | DEFAULT,
         InterfaceMethodMask         = ABSTRACT | STATIC | PUBLIC | STRICTFP | DEFAULT,
         AnnotationTypeElementMask   = ABSTRACT | PUBLIC,
-        LocalVarFlags               = FINAL | PARAMETER;
+        LocalVarFlags               = FINAL | PARAMETER,
+        ReceiverParamFlags          = PARAMETER;
 
 
     public static Set<Modifier> asModifierSet(long flags) {
@@ -385,7 +391,8 @@ public class Flags {
         BAD_OVERRIDE(Flags.BAD_OVERRIDE),
         SIGNATURE_POLYMORPHIC(Flags.SIGNATURE_POLYMORPHIC),
         THROWS(Flags.THROWS),
-        LAMBDA_METHOD(Flags.LAMBDA_METHOD);
+        LAMBDA_METHOD(Flags.LAMBDA_METHOD),
+        TYPE_TRANSLATED(Flags.TYPE_TRANSLATED);
 
         Flag(long flag) {
             this.value = flag;

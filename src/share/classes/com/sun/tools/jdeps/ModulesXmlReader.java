@@ -24,12 +24,15 @@
  */
 package com.sun.tools.jdeps;
 
+import com.sun.tools.classfile.ClassFile;
 import com.sun.tools.jdeps.PlatformClassPath.LegacyImageHelper;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import javax.xml.namespace.QName;
 import javax.xml.stream.XMLEventReader;
@@ -38,17 +41,76 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.events.Attribute;
 import javax.xml.stream.events.XMLEvent;
 
-public class ModulesXmlReader {
-    private final Path[] mpaths;
-    private final LegacyImageHelper helper;
+abstract class ModulesXmlReader {
+    abstract ClassFileReader getClassFileReader(String modulename, Set<String> packages)
+        throws IOException;
 
-    ModulesXmlReader(Path... mpaths) {
-        this.mpaths = mpaths;
-        this.helper = null;
+    static class ImageReader extends ModulesXmlReader {
+        final LegacyImageHelper helper;
+        ImageReader(LegacyImageHelper helper) {
+            this.helper = helper;
+        }
+        ClassFileReader getClassFileReader(String modulename, Set<String> packages)
+            throws IOException
+        {
+            return helper.getClassReader(modulename, packages);
+        }
     }
-    ModulesXmlReader(LegacyImageHelper helper) {
-        this.mpaths = new Path[0];
-        this.helper = helper;
+
+    static class ModulePathReader extends ModulesXmlReader {
+        final Path mpath;
+        final ClassFileReader defaultReader;
+        ModulePathReader(Path mp) throws IOException {
+            this.mpath = mp;
+            this.defaultReader = new NonExistModuleReader(mpath);
+        }
+        ClassFileReader getClassFileReader(String modulename, Set<String> packages)
+            throws IOException
+        {
+            Path mdir = mpath.resolve(modulename);
+            if (Files.exists(mdir) && Files.isDirectory(mdir)) {
+                return ClassFileReader.newInstance(mdir);
+            } else {
+                // aggregator module or os-specific module in modules.xml
+                // mdir not exist
+                return defaultReader;
+            }
+        }
+        class NonExistModuleReader extends ClassFileReader {
+            private final List<ClassFile> classes = Collections.emptyList();
+            private NonExistModuleReader(Path mpath) {
+                super(mpath);
+            }
+
+            public ClassFile getClassFile(String name) throws IOException {
+                return null;
+            }
+            public Iterable<ClassFile> getClassFiles() throws IOException {
+                return classes;
+            }
+        }
+    }
+
+    public static Set<Module> load(Path mpath, InputStream in)
+        throws IOException
+    {
+        try {
+            ModulePathReader reader = new ModulePathReader(mpath);
+            return reader.load(in);
+        } catch (XMLStreamException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static Set<Module> loadFromImage(LegacyImageHelper helper, InputStream in)
+        throws IOException
+    {
+        try {
+            ImageReader reader = new ImageReader(helper);
+            return reader.load(in);
+        } catch (XMLStreamException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private static final String MODULES   = "modules";
@@ -62,7 +124,7 @@ public class ModulesXmlReader {
     public Set<Module> load(InputStream in) throws XMLStreamException, IOException {
         Set<Module> modules = new HashSet<>();
         if (in == null) {
-            System.err.println("modules.xml doesn't exist");
+            System.err.println("WARNING: modules.xml doesn't exist");
             return modules;
         }
         XMLInputFactory factory = XMLInputFactory.newInstance();
@@ -111,13 +173,14 @@ public class ModulesXmlReader {
                         permits.add(getData(reader));
                         break;
                     default:
-                        // System.err.println(event);
+                        throw new RuntimeException("invalid element: " + event);
                 }
             } else if (event.isEndElement()) {
                 String endTag = event.asEndElement().getName().getLocalPart();
                 switch (endTag) {
                     case MODULE:
-                        setModuleClassReader(modulename, mb);
+                        ClassFileReader cfr = getClassFileReader(modulename, mb.packages);
+                        mb.classes(cfr);
                         modules.add(mb.build());
                         mb = null;
                         break;
@@ -140,28 +203,6 @@ public class ModulesXmlReader {
         }
         return modules;
     }
-
-    private void setModuleClassReader(String modulename, Module.Builder mb) throws IOException {
-        ClassFileReader cfr = null;
-        if (helper != null) {
-            cfr = helper.getClassReader(modulename, mb.packages);
-        }
-        for (Path p : mpaths) {
-            Path mdir = p.resolve(modulename);
-            if (Files.exists(mdir) && Files.isDirectory(mdir)) {
-                Path mclasses = mdir.resolve("classes");
-                cfr = Files.exists(mclasses)
-                        ? ClassFileReader.newInstance(mclasses)
-                        : ClassFileReader.newInstance(mdir);
-                break;
-            }
-        }
-        if (cfr == null) {
-            throw new Error("can't find module " + modulename);
-        }
-        mb.classes(cfr);
-    }
-
     private String getData(XMLEventReader reader) throws XMLStreamException {
         XMLEvent e = reader.nextEvent();
         if (e.isCharacters()) {
