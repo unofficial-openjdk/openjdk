@@ -188,12 +188,6 @@ public final class ImageFile {
                 }
             }
         }
-        // ## temporary - replaced with the readability graph
-        Path modulesSer = root.resolve("lib").resolve("modules.ser");
-        try (OutputStream os = Files.newOutputStream(modulesSer);
-                ObjectOutputStream oos = new ObjectOutputStream(os)) {
-            oos.writeObject(builder.modules().toArray(new ModuleDescriptor[0]));
-        }
     }
 
     private static String moduleName(Path jmod) {
