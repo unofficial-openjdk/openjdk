@@ -52,17 +52,7 @@ ifeq ($(SHUFFLED), true)
     ALL_SRC_DIRS += $(wildcard $(JDK_TOPDIR)/src_shuffled/closed/*/*/classes)
   endif
 
-  $(MODULES_SER_OUT): $(BUILD_CLASSANALYZER) \
-      $(wildcard $(JDK_OUTPUTDIR)/modules/_* $(JDK_OUTPUTDIR)/modules/*/_*) \
-      $(wildcard $(ALL_SRC_DIRS)/module-info.java)
-	$(RM) $@
-	$(MKDIR) -p $(@D)
-	$(TOOL_GENMODULEGRAPH) \
-	  -sourcepath "$(subst $(SPACE),$(PATH_SEP),$(ALL_SRC_DIRS))" \
-	  -buildmodules $(JDK_OUTPUTDIR)/modules \
-	  -o $@
-
-  $(GENGRAPHS_DIR)/jdk.dot: $(BUILD_DEPS_TOOLS) $(MODULES_SER_OUT)
+  $(GENGRAPHS_DIR)/jdk.dot: $(BUILD_DEPS_TOOLS)
 	$(TOOL_GENGRAPHS) $(GENGRAPHS_DIR)
 
   MODULES_XML := $(JDK_OUTPUTDIR)/$(MODULES_SUBDIR)/$(JDK_DEV_SUBDIR)/com/sun/tools/jdeps/resources/modules.xml
@@ -76,7 +66,7 @@ ifeq ($(SHUFFLED), true)
 	$(MKDIR) -p $(@D)
 	$(TOOL_MODULESUMMARY) -o $@ -mp $(JDK_OUTPUTDIR)/jmods
 
-all: $(MODULES_SER_OUT) $(MODULES_XML) $(GENGRAPHS_DIR)/jdk.dot
+all: $(MODULES_XML) $(GENGRAPHS_DIR)/jdk.dot
 
 postjmods: $(GENGRAPHS_DIR)/module-summary.html
 
@@ -94,25 +84,24 @@ else
   # add this option to run ClassAnalyzer
   #     --os-source-path $(OPENJDK_TARGET_OS)
 
-  $(MODULES_SER_OUT): $(BUILD_CLASSANALYZER) \
+  MODULES_CONFIG := $(MODULEINFO_DIR)/modules.config
+  $(MODULES_CONFIG): $(BUILD_CLASSANALYZER) \
       $(wildcard $(JDK_OUTPUTDIR)/classes/_the*) \
       $(JDK_OUTPUTDIR)/lib/ext/nashorn.jar
 	$(RM) -rf $(MODULE_CLASSLIST_DIR) \
 	  $(MODULEINFO_DIR) \
-	  $(MODULES_SER_OUT) \
 	  $(JDK_OUTPUTDIR)/modules
 	$(TOOL_CLASSANALYZER) \
 	  --os-source-path $(OPENJDK_TARGET_OS) \
 	  --version $(MODULE_VERSION) \
 	  --classlist $(MODULE_CLASSLIST_DIR) \
-	  --out $(MODULES_SER_OUT) \
 	  --moduleinfo $(MODULEINFO_DIR)
 	if [ -f $(MODULE_CLASSLIST_DIR)/unknown.summary ] ; then \
 	  $(ECHO) "ERROR: Check module \"unknown\". modules.config possibly requires update." ; \
 	  exit 2; \
 	fi
 
-all: $(MODULES_SER_OUT)
+all: $(MODULES_CONFIG)
 
 postjmods:
 endif

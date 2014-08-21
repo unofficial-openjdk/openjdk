@@ -260,27 +260,4 @@ public class JigsawModules {
         }
         return sb;
     }
-
-    /**
-     * Load the module graph.
-     */
-    public static void main(String... argv) throws Exception {
-        JigsawModules graph = new JigsawModules();
-        if (argv.length == 0) {
-            // default path
-            try (InputStream in = ClassLoader.getSystemResourceAsStream(MODULE_GRAPH)) {
-                graph.load(in);
-            }
-        } else {
-            System.out.println("reading from " + argv[0]);
-            try (FileInputStream in = new FileInputStream(argv[0])) {
-                graph.load(in);
-            }
-        }
-        PrintWriter writer = new PrintWriter(System.out);
-        for (ModuleDescriptor m : graph.modules.values()) {
-            graph.printModule(writer, m);
-        }
-        writer.flush();
-    }
 }

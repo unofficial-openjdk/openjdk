@@ -71,7 +71,6 @@ all: $(BUILD_CLASSANALYZER)
 	    $(COMPRESSION_OPTION) \
             --javahome $(JDK_OUTPUTDIR) \
             --classlist $(MODULE_CLASSLIST_DIR) \
-            --graph $(MODULES_SER_OUT) \
             --jmods $(JMODS_DIR) \
             --module java.base \
                 --native="$(BASE_LIBRARIES) $(MSVCR_TARGET) $(JVM_LIBRARIES)" \

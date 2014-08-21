@@ -29,10 +29,8 @@ include MakeBase.gmk
 include JavaCompilation.gmk
 include Setup.gmk
 ifeq ($(SHUFFLED), true)
-  MODULES_SER_OUT := $(JDK_OUTPUTDIR)/modules/java.base/jdk/jigsaw/module/resources/modules.ser
   CLASSANALYZER_CLASSES := $(JDK_OUTPUTDIR)/bt_classanalyzer_classes
 else
-  MODULES_SER_OUT := $(JDK_OUTPUTDIR)/classes/jdk/jigsaw/module/resources/modules.ser
   GENMODULES_DIR := $(JDK_OUTPUTDIR)/genmodules
   MODULEINFO_DIR := $(GENMODULES_DIR)/src
   MODULE_CLASSLIST_DIR := $(GENMODULES_DIR)/classlist

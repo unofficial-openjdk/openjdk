@@ -52,25 +52,20 @@ import javax.xml.stream.events.XMLEvent;
  * This tool is used to generate com/sun/tools/jdeps/resources/modules.xml
  * for jdeps to analyze dependencies and enforce module boundaries.
  *
- * Run GenerateModulesXml -nopackages output-filename build/modules
- * on jake and check in the output file into
- *     jdk9/jdk/make/data/checkdeps/modules.xml
+ * To generate modules.xml for JDK 9:
+ * run GenerateModulesXml -nopackages output-filename build/modules
  *
- * In JDK 9 legacy build, two steps involved:
- * 1. Run GenerateModulesXml -usemetadata \
- *        com/sun/tools/jdeps/resources/modules.xml build/modules
- *
- * This will generate modules.xml as jdeps resources that extend
- * the metadata to include module membership (jdeps needs the
- * membership information to determine which module a type belongs to.)
- *
- * 2. OUTPUTDIR/bin/jdeps -verify:access -mp OUTPUTDIR/modules
- *
- * This will verify the module access.
+ * This generates a single modules.xml for all open/closed modules
+ * for the platform that this tool is run on.  There are several platform
+ * specific modules that need to be merged before checking in for jdk9 use.
+ *   jdk.crypto.ucrypto  - solaris only
+ *   jdk.crypto.mscapi   - windows only
+ *   jdk.deploy.osx      - macosx only
+ *   oracle.accessbridge - windows only
  */
 public final class GenerateModulesXml {
     private final static String USAGE =
-        "Usage: GenerateModulesXml [-usemetadata] [-nopackages] <output file> build/modules";
+        "Usage: GenerateModulesXml [-nopackages] <output file> build/modules";
 
     public static void main(String[] args) throws Exception {
         if (args.length < 2) {
@@ -84,6 +79,7 @@ public final class GenerateModulesXml {
             String arg = args[i++];
             switch (arg) {
                 case "-usemetadata":
+                    // GenerateModulesXml in jdk9 repo has this flag on by default
                     useMetadata = true;
                     break;
                 case "-nopackages":
@@ -237,8 +233,8 @@ public final class GenerateModulesXml {
         XMLOutputFactory xof = XMLOutputFactory.newInstance();
         try (OutputStream out = Files.newOutputStream(path)) {
             int depth = 0;
-            XMLStreamWriter xtw = xof.createXMLStreamWriter(out, "UTF-8");
-            xtw.writeStartDocument("utf-8","1.0");
+            XMLStreamWriter xtw = xof.createXMLStreamWriter(out, "US-ASCII");
+            xtw.writeStartDocument("us-ascii","1.0");
             writeStartElement(xtw, MODULES, depth);
             modules.stream()
                    .sorted(Comparator.comparing(Module::name))
@@ -337,7 +333,7 @@ public final class GenerateModulesXml {
     }
 
     private String packageName(Path p) {
-        return packageName(p.toString().replace(File.pathSeparatorChar, '/'));
+        return packageName(p.toString().replace(File.separatorChar, '/'));
     }
     private String packageName(String name) {
         int i = name.lastIndexOf('/');
