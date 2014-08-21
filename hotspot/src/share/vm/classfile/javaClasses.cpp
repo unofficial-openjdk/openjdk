@@ -1239,6 +1239,16 @@ oop java_lang_Throwable::message(Handle throwable) {
 }
 
 
+// Return Symbol for detailed_message or NULL
+Symbol* java_lang_Throwable::detail_message(oop throwable) {
+  PRESERVE_EXCEPTION_MARK;  // Keep original exception
+  oop detailed_message = java_lang_Throwable::message(throwable);
+  if (detailed_message != NULL) {
+    return java_lang_String::as_symbol(detailed_message, THREAD);
+  }
+  return NULL;
+}
+
 void java_lang_Throwable::set_message(oop throwable, oop value) {
   throwable->obj_field_put(detailMessage_offset, value);
 }
@@ -1629,9 +1639,9 @@ void java_lang_Throwable::fill_in_stack_trace(Handle throwable, methodHandle met
       if (fr.is_first_frame()) break;
       address pc = fr.pc();
       if (fr.is_interpreted_frame()) {
-        intptr_t bcx = fr.interpreter_frame_bcx();
+        address bcp = fr.interpreter_frame_bcp();
         method = fr.interpreter_frame_method();
-        bci =  fr.is_bci(bcx) ? bcx : method->bci_from((address)bcx);
+        bci =  method->bci_from(bcp);
         fr = fr.sender(&map);
       } else {
         CodeBlob* cb = fr.cb();

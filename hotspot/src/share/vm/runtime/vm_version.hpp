@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -42,6 +42,7 @@ class Abstract_VM_Version: AllStatic {
   static bool         _supports_atomic_getadd4;
   static bool         _supports_atomic_getadd8;
   static unsigned int _logical_processors_per_package;
+  static unsigned int _L1_data_cache_line_size;
   static int          _vm_major_version;
   static int          _vm_minor_version;
   static int          _vm_micro_version;
@@ -98,6 +99,10 @@ class Abstract_VM_Version: AllStatic {
     return _logical_processors_per_package;
   }
 
+  static unsigned int L1_data_cache_line_size() {
+    return _L1_data_cache_line_size;
+  }
+
   // Need a space at the end of TLAB for prefetch instructions
   // which may fault when accessing memory outside of heap.
   static int reserve_for_allocation_prefetch() {
@@ -122,5 +127,21 @@ class Abstract_VM_Version: AllStatic {
   // be VM version specific.
   static unsigned int calc_parallel_worker_threads();
 };
+
+#ifdef TARGET_ARCH_x86
+# include "vm_version_x86.hpp"
+#endif
+#ifdef TARGET_ARCH_sparc
+# include "vm_version_sparc.hpp"
+#endif
+#ifdef TARGET_ARCH_zero
+# include "vm_version_zero.hpp"
+#endif
+#ifdef TARGET_ARCH_arm
+# include "vm_version_arm.hpp"
+#endif
+#ifdef TARGET_ARCH_ppc
+# include "vm_version_ppc.hpp"
+#endif
 
 #endif // SHARE_VM_RUNTIME_VM_VERSION_HPP
