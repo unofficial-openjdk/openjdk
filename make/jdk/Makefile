@@ -1,5 +1,5 @@
 #
-# Copyright (c) 1996, 2010, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -23,39 +23,18 @@
 # questions.
 #
 
-FILES_c = \
-        DatagramPacket.c \
-        ExtendedOptionsImpl.c \
-        InetAddress.c \
-        Inet4Address.c \
-        Inet6Address.c \
-        NetworkInterface.c \
-        InetAddressImplFactory.c \
-        Inet4AddressImpl.c \
-        Inet6AddressImpl.c \
-        SocketInputStream.c \
-        SocketOutputStream.c \
-        net_util.c \
-        net_util_md.c \
-        portconfig.c \
-        ResolverConfigurationImpl.c \
-        DefaultProxySelector.c
+#
+# Makefile for building jdk sub dir
+#
 
-ifeq ($(PLATFORM), linux)
-    FILES_c += linux_close.c
-endif
+BUILDDIR = ..
+PRODUCT = jdk
+include $(BUILDDIR)/common/Defs.gmk
 
-ifeq ($(PLATFORM), macosx)
-    FILES_c += bsd_close.c
-endif
+SUBDIRS = net
 
-ifeq ($(PLATFORM), windows)
-    FILES_c += TwoStacksPlainSocketImpl.c
-    FILES_c += DualStackPlainSocketImpl.c
-    FILES_c += TwoStacksPlainDatagramSocketImpl.c
-    FILES_c += DualStackPlainDatagramSocketImpl.c
-else
-    FILES_c += PlainSocketImpl.c
-    FILES_c += PlainDatagramSocketImpl.c
-endif
+include $(BUILDDIR)/common/Subdirs.gmk
+
+all build clean clobber::
+	$(SUBDIRS-loop)
 

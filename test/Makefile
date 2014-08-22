@@ -1,5 +1,5 @@
 #
-# Copyright (c) 1995, 2012, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 1995, 2014, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -524,7 +524,7 @@ jdk_other: $(call TestDirs, \
 
 # Stable samevm testruns (minus items from PROBLEM_LIST)
 JDK_ALL_TARGETS += jdk_net
-jdk_net: $(call TestDirs, com/sun/net java/net sun/net com/oracle/net)
+jdk_net: $(call TestDirs, com/sun/net java/net jdk/net sun/net com/oracle/net)
 	$(call RunAgentvmBatch)
 
 # Stable samevm testruns (minus items from PROBLEM_LIST)
