@@ -181,7 +181,7 @@ shuffle-%-only: start-make
 
 # Note: This double-colon rule is intentional, to support
 # custom make file integration.
-images:: source-tips demos nashorn jmods images-only
+images:: source-tips demos nashorn images-only
 images-only: start-make
 	@$(call TargetEnter)
 	@($(CD) $(JDK_TOPDIR)/make && $(BUILD_LOG_WRAPPER) $(MAKE) $(MAKE_ARGS) -f BuildJdk.gmk images)
