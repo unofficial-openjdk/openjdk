@@ -61,4 +61,4 @@ IDL_TARGET_FILES := $(JDK_OUTPUTDIR)/lib/orb.idl $(JDK_OUTPUTDIR)/lib/ir.idl
 
 ################################################################################
 
-all: $(BUILD_INTERIM_CORBA) $(IDL_TARGET_FILES)
+  all: $(BUILD_INTERIM_CORBA) $(IDL_TARGET_FILES)
