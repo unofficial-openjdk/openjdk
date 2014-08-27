@@ -3582,6 +3582,10 @@ jint Arguments::parse(const JavaVMInitArgs* args) {
       CommandLineFlags::printFlags(tty, false);
       vm_exit(0);
     }
+    if (match_option(option, "-XX:-UseModuleBoundaries", &tail)) {
+      // boot class path needs to be expanded before other argument handling
+      os::set_expanded_boot_path();
+    }
     if (match_option(option, "-XX:NativeMemoryTracking", &tail)) {
 #if INCLUDE_NMT
       MemTracker::init_tracking_options(tail);

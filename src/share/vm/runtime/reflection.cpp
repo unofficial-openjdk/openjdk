@@ -40,6 +40,7 @@
 #include "runtime/arguments.hpp"
 #include "runtime/handles.inline.hpp"
 #include "runtime/javaCalls.hpp"
+#include "runtime/module.hpp"
 #include "runtime/reflection.hpp"
 #include "runtime/reflectionUtils.hpp"
 #include "runtime/signature.hpp"
@@ -409,6 +410,14 @@ oop Reflection::array_component_type(oop mirror, TRAPS) {
   return result;
 }
 
+static const char* package_name(Klass* k) {
+  char* name = (char*) k->external_name();
+  char* last = strrchr(name, '.');
+  if (last != NULL) {
+    *last = '\0';
+  }
+  return (last == NULL) ? "" : name;
+}
 
 bool Reflection::verify_class_access(Klass* current_class, Klass* new_class, bool classloader_only) {
   // Verify that current_class can access new_class.  If the classloader_only
@@ -416,7 +425,6 @@ bool Reflection::verify_class_access(Klass* current_class, Klass* new_class, boo
   // doesn't have a classloader.
   if ((current_class == NULL) ||
       (current_class == new_class) ||
-      (new_class->is_public()) ||
       is_same_class_package(current_class, new_class)) {
     return true;
   }
@@ -424,6 +432,58 @@ bool Reflection::verify_class_access(Klass* current_class, Klass* new_class, boo
   // succeed trivially.
   if (current_class->is_subclass_of(SystemDictionary::reflect_MagicAccessorImpl_klass())) {
     return true;
+  }
+
+  // module boundaries
+  if (new_class->is_public()) {
+    if (!UseModuleBoundaries)
+      return true;
+
+    Module* m1 = Module::module_for(current_class);
+    Module* m2 = Module::module_for(new_class);
+
+    // both in same module or unnamed module
+    if (m1 == m2)
+      return true;
+
+    // a type in a module trying to access a type in the unamed module
+    if (m2 == NULL)
+      return true;
+
+    // m1 does not require m2
+    if (m1 != NULL && !m1->requires(m2)) {
+      if (TraceAccessControlErrors) {
+        ResourceMark rm;
+        tty->print_cr("Type in module %s (%s) cannot access type in module %s (%s), not readable",
+          m1->name(), current_class->external_name(), m2->name(), new_class->external_name());
+      }
+      return false;
+    }
+
+    // ## FIXME using package name for now
+    ResourceMark rm;
+    const char* pkg = package_name(new_class);
+
+    // if requester is in named module then type must be exported
+    // to that module (no permits or m1 is permitted)
+    if (m1 != NULL) {
+      bool okay = m2->is_exported_to_module(pkg, m1);
+      if (!okay && TraceAccessControlErrors) {
+        tty->print_cr("Type in module %s (%s) cannot access type in module %s (%s), not exported",
+          m1->name(), current_class->external_name(), m2->name(), new_class->external_name());
+      }
+      return okay;
+    }
+
+    // requester is in unnamed module, okay if exported without permits
+    if (m2->is_exported_without_permits(pkg))
+      return true;
+
+    // type in unnamed module trying to access a type that is not exported
+    // special (backdoor) access may be setup.
+    int loader_tag = ClassLoader::tag_for(current_class->class_loader());
+    const char* who = package_name(current_class);
+    return m2->has_backdoor_access(pkg, loader_tag, who);
   }
 
   return can_relax_access_check_for(current_class, new_class, classloader_only);

@@ -136,6 +136,23 @@ class LazyClassPathEntry: public ClassPathEntry {
   NOT_PRODUCT(bool is_rt_jar();)
 };
 
+// For java image files
+class ImageFile;
+class ClassPathImageEntry: public ClassPathEntry {
+private:
+  ImageFile *_image;
+public:
+  bool is_jar_file()  { return false;  }
+  bool is_open()  { return _image != NULL; }
+  const char* name();
+  ClassPathImageEntry(char* name);
+  ~ClassPathImageEntry();
+  ClassFileStream* open_stream(const char* name, TRAPS);
+  // Debugging
+  NOT_PRODUCT(void compile_the_world(Handle loader, TRAPS);)
+  NOT_PRODUCT(bool is_rt_jar();)
+};
+
 class PackageHashtable;
 class PackageInfo;
 template <MEMFLAGS F> class HashtableBucket;
@@ -210,6 +227,10 @@ class ClassLoader: AllStatic {
   // Canonicalizes path names, so strcmp will work properly. This is mainly
   // to avoid confusing the zip library
   static bool get_canonical_path(char* orig, char* out, int len);
+
+  // used to compute the per-loader tag
+  static int _next_loader_tag;
+
  public:
   // Used by the kernel jvm.
   static void update_class_path_entry_list(char *path,
@@ -331,6 +352,12 @@ class ClassLoader: AllStatic {
 
   // creates a class path zip entry (returns NULL if JAR file cannot be opened)
   static ClassPathZipEntry* create_class_path_zip_entry(const char *apath);
+
+  // add a path to class path list
+  static void add_to_list(const char* apath);
+
+  /* returns a unique tag for the given loader */
+  static int tag_for(Handle loader);
 
   // Debugging
   static void verify()              PRODUCT_RETURN;

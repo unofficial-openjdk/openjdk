@@ -52,6 +52,8 @@
 #include "runtime/java.hpp"
 #include "runtime/javaCalls.hpp"
 #include "runtime/jfieldIDWorkaround.hpp"
+#include "runtime/module.hpp"
+#include "runtime/moduleLookup.hpp"
 #include "runtime/orderAccess.inline.hpp"
 #include "runtime/os.inline.hpp"
 #include "runtime/perfData.hpp"
@@ -384,6 +386,14 @@ JVM_ENTRY(jobject, JVM_InitProperties(JNIEnv *env, jobject properties))
         (Arguments::mode() != Arguments::_int)) {
       PUTPROP(props, "sun.management.compiler", compiler_name);
     }
+  }
+
+  // Additional module dependences and exports
+  if (strlen(AddModuleRequires) > 0) {
+    PUTPROP(props, "jdk.runtime.addModuleRequires", AddModuleRequires);
+  }
+  if (strlen(AddModuleExports) > 0) {
+    PUTPROP(props, "jdk.runtime.addModuleExports", AddModuleExports);
   }
 
   return properties;
@@ -996,6 +1006,110 @@ JVM_ENTRY(jclass, JVM_FindLoadedClass(JNIEnv *env, jobject loader, jstring name)
 
   return (k == NULL) ? NULL :
             (jclass) JNIHandles::make_local(env, k->java_mirror());
+JVM_END
+
+// Module support //////////////////////////////////////////////////////////////////////////////
+
+JVM_ENTRY(void*, JVM_DefineBootModule(JNIEnv* env, jstring name))
+  JVMWrapper("JVM_DefineBootModule");
+  ResourceMark rm(THREAD);
+  const char* name_str = java_lang_String::as_utf8_string(JNIHandles::resolve_non_null(name));
+
+  const char* home = Arguments::get_java_home();
+  size_t home_len = strlen(home);
+  size_t name_len = strlen(name_str);
+  char fileSep = os::file_separator()[0];
+  size_t len = home_len + name_len + 32;
+  char* path = NEW_C_HEAP_ARRAY(char, len, mtInternal);
+
+  // Check if ${java.home}/lib/modules/$MODULE/classes exists, if not then
+  // assume the exploded form ${java.home}/modules/$MODULE
+  bool extend_bcp;
+  struct stat st;
+  jio_snprintf(path, len, "%s%clib%cmodules%c%s%cclasses",
+               home, fileSep, fileSep, fileSep, name_str, fileSep);
+  extend_bcp = (os::stat(path, &st) == 0);
+  if (!extend_bcp) {
+    jio_snprintf(path, len, "%s%cmodules%c%s", home, fileSep, fileSep, name_str);
+    extend_bcp = (os::stat(path, &st) == 0);
+  }
+
+  // extend boot class path
+  if (extend_bcp) {
+    HandleMark hm;
+    Handle loader_lock = Handle(THREAD, SystemDictionary::system_loader_lock());
+    ObjectLocker ol(loader_lock, THREAD);
+    if (TraceClassLoading) {
+      tty->print_cr("[Opened %s]", path);
+    }
+    ClassLoader::add_to_list(path);
+  }
+
+  // define module
+  return (void*) Module::define_module(name_str);
+JVM_END
+
+JVM_ENTRY(void*, JVM_DefineModule(JNIEnv* env, jstring name))
+  JVMWrapper("JVM_DefineModule");
+  ResourceMark rm(THREAD);
+  const char* name_str = java_lang_String::as_utf8_string(JNIHandles::resolve_non_null(name));
+  return (void*) Module::define_module(name_str);
+JVM_END
+
+JVM_ENTRY(void, JVM_BindToModule(JNIEnv *env, jobject loader, jstring pkg, void* handle))
+  JVMWrapper("JVM_BindToModule");
+  assert(handle != NULL, "can't be NULL");
+  ResourceMark rm(THREAD);
+  Handle h_loader(THREAD, JNIHandles::resolve(loader));
+  const char* pkg_str = java_lang_String::as_utf8_string(JNIHandles::resolve_non_null(pkg));
+  ModuleLookup::bind_to_module(h_loader, pkg_str, (Module*)handle);
+JVM_END
+
+JVM_ENTRY(void, JVM_AddRequires(JNIEnv *env, void* handle1, void* handle2))
+  JVMWrapper("JVM_AddRequires");
+  assert(handle1 != NULL && handle2 != NULL, "can't be NULL");
+  ((Module*)handle1)->add_requires((Module*)handle2);
+JVM_END
+
+JVM_ENTRY(void, JVM_AddExports(JNIEnv *env, void* handle, jstring pkg))
+  JVMWrapper("JVM_AddExports");
+  assert(handle != NULL, "can't be NULL");
+  ResourceMark rm(THREAD);
+  const char* pkg_str = java_lang_String::as_utf8_string(JNIHandles::resolve_non_null(pkg));
+  ((Module*)handle)->export_without_permits(pkg_str);
+JVM_END
+
+JVM_ENTRY(void, JVM_AddExportsWithPermits(JNIEnv *env, void* handle1, jstring pkg, void* handle2))
+  JVMWrapper("JVM_AddExportsWithPermits");
+  assert(handle1 != NULL && handle2 != NULL, "can't be NULL");
+  ResourceMark rm(THREAD);
+  const char* pkg_str = java_lang_String::as_utf8_string(JNIHandles::resolve_non_null(pkg));
+  ((Module*)handle1)->export_with_permits(pkg_str, (Module*)handle2);
+JVM_END
+
+JVM_ENTRY(void, JVM_AddBackdoorAccess(JNIEnv *env, jobject loader, jstring pkg,
+                                      jobject toLoader, jstring toPackage))
+  JVMWrapper("JVM_AddBackdoorAccess");
+  Handle loader_h(THREAD, JNIHandles::resolve(loader));
+  ModuleLookup* lookup = ModuleLookup::module_lookup_or_null(loader_h);
+  if (lookup == NULL) {
+    // no modules associated with loader, no special access required
+    return;
+  }
+
+  ResourceMark rm(THREAD);
+  const char* pkg_str = java_lang_String::as_utf8_string(JNIHandles::resolve_non_null(pkg));
+  Module* module = lookup->lookup(pkg_str);
+  if (module == NULL || module->is_exported_without_permits(pkg_str)) {
+    // not in a module or package is exported
+    return;
+  }
+
+  Handle to_loader_h(THREAD, JNIHandles::resolve(toLoader));
+  int to_loader_tag = ClassLoader::tag_for(to_loader_h);
+  const char* to_pkg_str= java_lang_String::as_utf8_string(JNIHandles::resolve_non_null(toPackage));
+
+  module->add_backdoor_access(pkg_str, to_loader_tag, to_pkg_str);
 JVM_END
 
 

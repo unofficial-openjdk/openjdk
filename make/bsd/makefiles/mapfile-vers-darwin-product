@@ -243,6 +243,15 @@
                 _JVM_Yield
                 _JVM_handle_bsd_signal
 
+                # Modules
+                _JVM_DefineBootModule
+                _JVM_DefineModule
+                _JVM_BindToModule
+                _JVM_AddRequires
+                _JVM_AddExports
+                _JVM_AddExportsWithPermits
+                _JVM_AddBackdoorAccess
+
                 # miscellaneous functions
                 _jio_fprintf
                 _jio_printf
