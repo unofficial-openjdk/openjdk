@@ -26,17 +26,12 @@
 # This must be the first rule
 default: all
 
-include $(SPEC)
-include JigsawSpecMod.gmk
+-include $(SPEC)
 include MakeBase.gmk
 include JavaCompilation.gmk
 
-ifeq ($(SHUFFLED), true)
   JDK_CLASSES := $(subst $(SPACE),$(PATH_SEP),$(strip $(addprefix $(JDK_OUTPUTDIR)/modules/, \
       java.base java.logging java.scripting)))
-else
-  JDK_CLASSES := $(JDK_OUTPUTDIR)/classes
-endif
 
 NASHORN_JAR := $(NASHORN_DIST)/nashorn.jar
 NASHORN_VERSION := $(JDK_VERSION)
@@ -49,34 +44,22 @@ ifdef MILESTONE
 endif
 
 # Need to use source and target 7 for nasgen to work.
-# ## source/target updated to 9 to support compilation of module-info
 $(eval $(call SetupJavaCompiler,GENERATE_NEWBYTECODE_DEBUG, \
     JVM := $(JAVA), \
     JAVAC := $(NEW_JAVAC), \
-    FLAGS := -g -source 9 -target 9 -bootclasspath "$(JDK_CLASSES)", \
+    FLAGS := -g -source 7 -target 7 -bootclasspath "$(JDK_CLASSES)", \
     SERVER_DIR := $(SJAVAC_SERVER_DIR), \
     SERVER_JVM := $(SJAVAC_SERVER_JAVA)))
-
-ifeq ($(SHUFFLED), true)
-  NASHORN_SRC := $(NASHORN_TOPDIR)/$(SRC_SUBDIR)/jdk.scripting.nashorn/share/classes
-else
-  NASHORN_SRC := $(NASHORN_TOPDIR)/src
-endif
 
 # Build nashorn into intermediate directory
 $(eval $(call SetupJavaCompilation,BUILD_NASHORN, \
     SETUP := GENERATE_NEWBYTECODE_DEBUG, \
-    SRC := $(NASHORN_SRC), \
-    EXCLUDES := share, \
+    SRC := $(NASHORN_TOPDIR)/src/jdk.scripting.nashorn/share/classes, \
     COPY := .properties .js, \
     BIN := $(NASHORN_OUTPUTDIR)/nashorn_classes))
 
 NASGEN_SRC := $(NASHORN_TOPDIR)/buildtools/nasgen/src
-ifeq ($(SHUFFLED), true)
-  ASM_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/classes/jdk/internal/org/objectweb/asm
-else
-  ASM_SRC := $(JDK_TOPDIR)/src/share/classes/jdk/internal/org/objectweb/asm
-endif
+ASM_SRC := $(JDK_TOPDIR)/src/java.base/share/classes/jdk/internal/org/objectweb/asm
 
 # Build nasgen
 $(eval $(call SetupJavaCompilation,BUILD_NASGEN, \
@@ -88,11 +71,7 @@ $(eval $(call SetupJavaCompilation,BUILD_NASGEN, \
 # Nasgen needs nashorn classes
 $(BUILD_NASGEN): $(BUILD_NASHORN)
 
-ifeq ($(SHUFFLED), true)
-  NASHORN_CLASSES_DIR := $(JDK_OUTPUTDIR)/modules/jdk.scripting.nashorn
-else
-  NASHORN_CLASSES_DIR := $(NASHORN_OUTPUTDIR)/classes
-endif
+NASHORN_CLASSES_DIR := $(JDK_OUTPUTDIR)/modules/jdk.scripting.nashorn
 NASGEN_RUN_FILE := $(NASHORN_CLASSES_DIR)/_the.nasgen.run
 
 # Copy classes to final classes dir and run nasgen to modify classes in jdk.nashorn.internal.objects package
@@ -107,13 +86,8 @@ $(NASGEN_RUN_FILE): $(BUILD_NASGEN)
 	$(TOUCH) $@
 
 # Version file needs to be processed with version numbers
-ifeq ($(SHUFFLED), true)
   VERSION_FILE := $(JDK_OUTPUTDIR)/modules/jdk.scripting.nashorn/jdk/nashorn/internal/runtime/resources/version.properties
-  VERSION_SRC := $(NASHORN_TOPDIR)/$(SRC_SUBDIR)/jdk.scripting.nashorn/share/classes/jdk/nashorn/internal/runtime/resources/version.properties-template
-else
-  VERSION_FILE := $(NASHORN_OUTPUTDIR)/classes/jdk/nashorn/internal/runtime/resources/version.properties
-  VERSION_SRC := $(NASHORN_TOPDIR)/src/jdk/nashorn/internal/runtime/resources/version.properties-template
-endif
+VERSION_SRC := $(NASHORN_TOPDIR)/src/jdk.scripting.nashorn/share/classes/jdk/nashorn/internal/runtime/resources/version.properties-template
 
 # Needs to happen after nasgen run since nasgen run deletes it
 $(VERSION_FILE): $(NASGEN_RUN_FILE)
@@ -133,7 +107,7 @@ $(eval $(call SetupArchive,BUILD_NASHORN_JAR, \
     $(VERSION_FILE), \
     SRCS := $(NASHORN_CLASSES_DIR), \
     SUFFIXES := .class .js .properties Factory, \
-    MANIFEST := $(NASHORN_TOPDIR)/src/META-INF/MANIFEST.MF, \
+    MANIFEST := $(NASHORN_TOPDIR)/src/jdk.scripting.nashorn/share/classes/META-INF/MANIFEST.MF, \
     EXTRA_MANIFEST_ATTR := $(MANIFEST_ATTRIBUTES), \
     SKIP_METAINF := true, \
     JAR := $(NASHORN_JAR)))
