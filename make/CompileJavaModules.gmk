@@ -27,23 +27,19 @@
 default: all
 
 include $(SPEC)
-include JigsawSpecMod.gmk
 include MakeBase.gmk
 include JavaCompilation.gmk
+include SetupJava.gmk
 
-#JAVAC_WARNINGS := -Xlint:-unchecked,-deprecation,-overrides,auxiliaryclass,classfile,dep-ann,divzero,empty,try,varargs -Werror
-
-$(eval $(call SetupJavaCompiler,GENERATE_JDKBYTECODE, \
-    JVM := $(JAVA), \
-    JAVAC := $(NEW_JAVAC), \
-    FLAGS := -source 9 -target 9 \
-        -encoding ascii -XDignore.symbol.file=true $(JAVAC_WARNINGS) \
-        $(GENERATE_JDKBYTECODE_EXTRA_FLAGS), \
-    SERVER_DIR := $(SJAVAC_SERVER_DIR), \
-    SERVER_JVM := $(SJAVAC_SERVER_JAVA)))
+# Hook to include the corresponding custom file, if present.
+$(eval $(call IncludeCustomExtension, , CompileJavaModules.gmk))
 
 ################################################################################
 # Module specific build settings
+
+java.activation_SETUP := GENERATE_JDKBYTECODE_NOWARNINGS
+
+################################################################################
 
 java.base_COPY := .icu .dat .spp content-types.properties
 java.base_CLEAN := intrinsic.properties
@@ -53,15 +49,9 @@ java.base_EXCLUDES += java/lang/doc-files
 # Exclude BreakIterator classes that are just used in compile process to generate
 # data files and shouldn't go in the product
 java.base_EXCLUDE_FILES += sun/text/resources/BreakIteratorRules.java
-java.base_EXCLUDE_FILES += sun/util/locale/AsciiUtil.java
-
-ifndef OPENJDK
-  # Use the closed version of this file
-  java.base_EXCLUDE_FILES += $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/classes/javax/crypto/JarVerifier.java
-endif
 
 ifeq ($(OPENJDK_TARGET_OS), macosx)
-  JAVA_BASE_UNIX_DIR := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/unix/classes
+  JAVA_BASE_UNIX_DIR := $(JDK_TOPDIR)/src/java.base/unix/classes
   # TODO: make JavaCompilation handle overrides automatically instead of excluding here
   # These files are overridden in macosx
   java.base_EXCLUDE_FILES += \
@@ -76,69 +66,8 @@ endif
 
 ifneq ($(OPENJDK_TARGET_OS), solaris)
   java.base_EXCLUDE_FILES += \
-      SolarisAclFileAttributeView.java \
-      SolarisFileStore.java \
-      SolarisFileSystem.java \
-      SolarisFileSystemProvider.java \
-      SolarisNativeDispatcher.java \
-      SolarisUserDefinedFileAttributeView.java \
-      SolarisWatchService.java \
-      SolarisAclFileAttributeView.java \
       SolarisLoginModule.java \
       SolarisSystem.java \
-      sun/nio/ch/DevPollArrayWrapper.java \
-      sun/nio/ch/DevPollSelectorImpl.java \
-      sun/nio/ch/DevPollSelectorProvider.java \
-      sun/nio/ch/EventPortSelectorImpl.java \
-      sun/nio/ch/EventPortSelectorProvider.java \
-      sun/nio/ch/EventPortWrapper.java \
-      sun/nio/ch/SolarisAsynchronousChannelProvider.java \
-      sun/nio/ch/SolarisEventPort.java \
-      #
-endif
-
-ifneq ($(OPENJDK_TARGET_OS), linux)
-  java.base_EXCLUDE_FILES += \
-      sun/nio/ch/EPoll.java \
-      sun/nio/ch/EPollArrayWrapper.java \
-      sun/nio/ch/EPollPort.java \
-      sun/nio/ch/EPollSelectorImpl.java \
-      sun/nio/ch/EPollSelectorProvider.java \
-      sun/nio/ch/LinuxAsynchronousChannelProvider.java \
-      sun/nio/fs/LinuxDosFileAttributeView.java \
-      sun/nio/fs/LinuxFileStore.java \
-      sun/nio/fs/LinuxFileSystem.java \
-      sun/nio/fs/LinuxFileSystemProvider.java \
-      sun/nio/fs/MagicFileTypeDetector.java \
-      sun/nio/fs/LinuxNativeDispatcher.java \
-      sun/nio/fs/LinuxUserDefinedFileAttributeView.java \
-      sun/nio/fs/LinuxWatchService.java \
-      #
-endif
-
-ifneq ($(OPENJDK_TARGET_OS), macosx)
-  java.base_EXCLUDE_FILES += \
-      sun/nio/ch/BsdAsynchronousChannelProvider.java \
-      sun/nio/ch/KQueue.java \
-      sun/nio/ch/KQueuePort.java \
-      sun/nio/fs/BsdFileStore.java \
-      sun/nio/fs/BsdFileSystem.java \
-      sun/nio/fs/BsdFileSystemProvider.java \
-      sun/nio/fs/BsdNativeDispatcher.java \
-      sun/nio/fs/MacOSXFileSystemProvider.java \
-      sun/nio/fs/MacOSXFileSystem.java \
-      sun/nio/fs/MacOSXNativeDispatcher.java \
-      #
-endif
-
-ifneq ($(OPENJDK_TARGET_OS),aix)
-  java.base_EXCLUDE_FILES += \
-      sun/nio/ch/AixAsynchronousChannelProvider.java \
-      sun/nio/ch/AixPollPort.java \
-      sun/nio/fs/AixFileStore.java \
-      sun/nio/fs/AixFileSystem.java \
-      sun/nio/fs/AixFileSystemProvider.java \
-      sun/nio/fs/AixNativeDispatcher.java \
       #
 endif
 
@@ -159,7 +88,7 @@ endif
 
 ################################################################################
 
-java.desktop_COPY := .gif .png .wav .txt .xml .css
+java.desktop_COPY := .gif .png .wav .txt .xml .css flavormap.properties
 java.desktop_CLEAN := iio-plugin.properties
 
 java.desktop_EXCLUDES += \
@@ -212,7 +141,7 @@ ifeq ($(OPENJDK_TARGET_OS), macosx)
   # exclude all X11 on Mac.
   java.desktop_EXCLUDES += sun/awt/X11
   java.desktop_EXCLUDE_FILES += \
-      $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/unix/classes/sun/java2d/BackBufferCapsProvider.java \
+      $(JDK_TOPDIR)/src/java.desktop/unix/classes/sun/java2d/BackBufferCapsProvider.java \
       #
 else
   # TBD: figure out how to eliminate this long list
@@ -261,14 +190,6 @@ else
       sun/awt/X11/XwcTextItem.java
 endif
 
-ifndef OPENJDK
-  ifeq ($(OPENJDK_TARGET_OS), windows)
-    # This gets built on unix platforms implicitly in the old build even though
-    # it's excluded in the closed build.
-    java.desktop_EXCLUDES += sun/java2d/pisces
-  endif
-endif
-
 ifeq ($(OPENJDK_TARGET_OS), windows)
   java.desktop_EXCLUDES += com/sun/java/swing/plaf/gtk
 endif
@@ -277,9 +198,9 @@ ifdef BUILD_HEADLESS_ONLY
   java.desktop_EXCLUDES += sun/applet
 endif
 
+# Why is this in the open source tree?
 ifdef OPENJDK
-  java.desktop_EXCLUDES += sun/java2d/cmm/kcms \
-      sun/dc
+  java.desktop_EXCLUDES += sun/dc
 endif
 
 # Used on windows and macosx
@@ -307,20 +228,25 @@ java.desktop_EXCLUDE_FILES += \
 ifeq ($(OPENJDK_TARGET_OS), macosx)
   # These files are duplicated in MACOSX_SRC_DIRS
   java.desktop_EXCLUDE_FILES += \
-      $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/unix/classes/sun/java2d/BackBufferCapsProvider.java \
+      $(JDK_TOPDIR)/src/java.desktop/unix/classes/sun/java2d/BackBufferCapsProvider.java \
       #
 endif
 
 ################################################################################
 
+java.sql_SETUP := GENERATE_JDKBYTECODE_NOWARNINGS
+
+################################################################################
+
 java.sql.rowset_CLEAN_FILES := $(wildcard \
-    $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.sql.rowset/share/classes/com/sun/rowset/*.properties \
-    $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.sql.rowset/share/classes/javax/sql/rowset/*.properties)
+    $(JDK_TOPDIR)/src/java.sql.rowset/share/classes/com/sun/rowset/*.properties \
+    $(JDK_TOPDIR)/src/java.sql.rowset/share/classes/javax/sql/rowset/*.properties)
 
 ################################################################################
 # Exclude building of IIOP transport for RMI Connector
 java.management_EXCLUDES := com/sun/jmx/remote/protocol/iiop
 
+# Why is this in the open source tree?
 ifdef OPENJDK
   java.management_EXCLUDES := \
       com/sun/jmx/snmp \
@@ -335,10 +261,12 @@ endif
 ################################################################################
 
 java.rmi_CLEAN_FILES := $(wildcard \
-    $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.rmi/share/classes/sun/rmi/registry/resources/*.properties \
-    $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.rmi/share/classes/sun/rmi/server/resources/*.properties)
+    $(JDK_TOPDIR)/src/java.rmi/share/classes/sun/rmi/registry/resources/*.properties \
+    $(JDK_TOPDIR)/src/java.rmi/share/classes/sun/rmi/server/resources/*.properties)
 
 ################################################################################
+
+java.corba_SETUP := GENERATE_JDKBYTECODE_NOWARNINGS
 
 java.corba_COPY := .prp
 java.corba_CLEAN := .properties
@@ -359,18 +287,22 @@ java.corba_EXCLUDE_FILES := \
 
 ################################################################################
 
+java.xml_SETUP := GENERATE_JDKBYTECODE_NOWARNINGS
 java.xml_CLEAN := .properties
 
 ################################################################################
 
+java.xml.bind_SETUP := GENERATE_JDKBYTECODE_NOWARNINGS
 java.xml.bind_CLEAN := .properties
 
 ################################################################################
 
+java.xml.soap_SETUP := GENERATE_JDKBYTECODE_NOWARNINGS
 java.xml.soap_CLEAN := .properties
 
 ################################################################################
 
+java.xml.ws_SETUP := GENERATE_JDKBYTECODE_NOWARNINGS
 java.xml.ws_COPY := .xml
 java.xml.ws_CLEAN := .properties
 
@@ -405,31 +337,32 @@ jdk.javadoc_COPY := .xml .css .js
 
 ################################################################################
 
-ifndef OPENJDK
-  jdk.jfr_COPY := .xsd
-endif
-
-################################################################################
-
+jdk.rmic_SETUP := GENERATE_JDKBYTECODE_NOWARNINGS
 jdk.rmic_CLEAN := .properties
 
 ################################################################################
 
+# No SCTP implementation on Mac OS X or AIX. These classes should be excluded.
+SCTP_IMPL_CLASSES = \
+    $(JDK_TOPDIR)/src/jdk.sctp/unix/classes/sun/nio/ch/sctp/AssociationChange.java \
+    $(JDK_TOPDIR)/src/jdk.sctp/unix/classes/sun/nio/ch/sctp/AssociationImpl.java \
+    $(JDK_TOPDIR)/src/jdk.sctp/unix/classes/sun/nio/ch/sctp/PeerAddrChange.java \
+    $(JDK_TOPDIR)/src/jdk.sctp/unix/classes/sun/nio/ch/sctp/ResultContainer.java \
+    $(JDK_TOPDIR)/src/jdk.sctp/unix/classes/sun/nio/ch/sctp/SctpChannelImpl.java \
+    $(JDK_TOPDIR)/src/jdk.sctp/unix/classes/sun/nio/ch/sctp/SctpMultiChannelImpl.java \
+    $(JDK_TOPDIR)/src/jdk.sctp/unix/classes/sun/nio/ch/sctp/SctpNet.java \
+    $(JDK_TOPDIR)/src/jdk.sctp/unix/classes/sun/nio/ch/sctp/SctpNotification.java \
+    $(JDK_TOPDIR)/src/jdk.sctp/unix/classes/sun/nio/ch/sctp/SctpServerChannelImpl.java \
+    $(JDK_TOPDIR)/src/jdk.sctp/unix/classes/sun/nio/ch/sctp/SendFailed.java \
+    $(JDK_TOPDIR)/src/jdk.sctp/unix/classes/sun/nio/ch/sctp/Shutdown.java
+
 ifeq ($(OPENJDK_TARGET_OS), macosx)
-  jdk.sctp_EXCLUDE_FILES := \
-      $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.sctp/unix/classes/sun/nio/ch/sctp/SctpChannelImpl.java \
-      $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.sctp/unix/classes/sun/nio/ch/sctp/SctpMultiChannelImpl.java \
-      $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.sctp/unix/classes/sun/nio/ch/sctp/SctpServerChannelImpl.java \
-      #
+  jdk.sctp_EXCLUDE_FILES := $(SCTP_IMPL_CLASSES)
 endif
 
 ifeq ($(OPENJDK_TARGET_OS),aix)
   # These files are duplicated in AIX_SRC_DIRS
-  jdk.sctp_EXCLUDE_FILES += \
-      $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.sctp/unix/classes/sun/nio/ch/sctp/SctpChannelImpl.java \
-      $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.sctp/unix/classes/sun/nio/ch/sctp/SctpMultiChannelImpl.java \
-      $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.sctp/unix/classes/sun/nio/ch/sctp/SctpServerChannelImpl.java \
-      #
+  jdk.sctp_EXCLUDE_FILES := $(SCTP_IMPL_CLASSES)
 endif
 
 ################################################################################
@@ -437,12 +370,12 @@ endif
 jdk.jconsole_COPY := .gif .png
 
 jdk.jconsole_CLEAN_FILES := $(wildcard \
-    $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.jconsole/share/classes/sun/tools/jconsole/resources/*.properties)
+    $(JDK_TOPDIR)/src/jdk.jconsole/share/classes/sun/tools/jconsole/resources/*.properties)
 
 ################################################################################
 
 jdk.compiler_CLEAN_FILES := $(wildcard \
-    $(patsubst %, $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.compiler/share/classes/%/*.properties, \
+    $(patsubst %, $(JDK_TOPDIR)/src/jdk.compiler/share/classes/%/*.properties, \
         sun/tools/serialver/resources))
 
 ################################################################################
@@ -459,7 +392,7 @@ jdk.jdi_EXCLUDE_FILES += jdi-overview.html
 ################################################################################
 
 jdk.dev_CLEAN_FILES := $(wildcard \
-    $(patsubst %, $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.dev/share/classes/%/*.properties, \
+    $(patsubst %, $(JDK_TOPDIR)/src/jdk.dev/share/classes/%/*.properties, \
         com/sun/tools/script/shell))
 
 jdk.dev_COPY := .js oqlhelp.html .txt
@@ -500,22 +433,14 @@ jdk.jvmstat_COPY := aliasmap
 
 ################################################################################
 
+jdk.xml.bind_SETUP := GENERATE_JDKBYTECODE_NOWARNINGS
 jdk.xml.bind_CLEAN := .properties
 jdk.xml.bind_COPY := .xsd JAXBContextFactory.java ZeroOneBooleanAdapter.java
 
 ################################################################################
 
+jdk.xml.ws_SETUP := GENERATE_JDKBYTECODE_NOWARNINGS
 jdk.xml.ws_CLEAN := .properties
-
-################################################################################
-
-oracle.accessbridge_EXCLUDES += com/sun/java/accessibility/extensions
-# AccessBridge is compiled separately below.
-oracle.accessbridge_EXCLUDE_FILES += \
-    AccessBridge.java \
-    AccessBridgeLoader.java \
-    com/sun/java/accessibility/util/java/awt/ChoiceTranslator.java \
-    #
 
 ################################################################################
 
@@ -538,12 +463,6 @@ jdk.localedata_EXCLUDE_FILES := sun/text/resources/th/BreakIteratorRules_th.java
 # source before static source and platform specific source before shared.
 #
 # To use this variable, use $(call ALL_SRC_DIRS,module) with no space.
-ifndef OPENJDK
-  OS_SRC_DIRS += $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/$1/$(OPENJDK_TARGET_OS)/classes
-  OS_API_SRC_DIRS += $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/$1/$(OPENJDK_TARGET_OS_API_DIR)/classes
-  SHARE_SRC_DIRS += $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/$1/share/classes
-endif
-
 GENERATED_SRC_DIRS += \
     $(JDK_OUTPUTDIR)/gensrc/$1 \
     $(LANGTOOLS_OUTPUTDIR)/gensrc/$1 \
@@ -551,16 +470,17 @@ GENERATED_SRC_DIRS += \
     $(JDK_OUTPUTDIR)/gensrc_no_srczip/$1 \
     #
 
-OS_SRC_DIRS += $(JDK_TOPDIR)/$(SRC_SUBDIR)/$1/$(OPENJDK_TARGET_OS)/classes
-
-OS_API_SRC_DIRS += $(JDK_TOPDIR)/$(SRC_SUBDIR)/$1/$(OPENJDK_TARGET_OS_API_DIR)/classes
+OS_SRC_DIRS += $(JDK_TOPDIR)/src/$1/$(OPENJDK_TARGET_OS)/classes
+ifneq ($(OPENJDK_TARGET_OS), $(OPENJDK_TARGET_OS_API_DIR))
+OS_API_SRC_DIRS += $(JDK_TOPDIR)/src/$1/$(OPENJDK_TARGET_OS_API_DIR)/classes
+endif
 
 SHARE_SRC_DIRS += \
-    $(JDK_TOPDIR)/$(SRC_SUBDIR)/$1/share/classes \
-    $(LANGTOOLS_TOPDIR)/$(SRC_SUBDIR)/$1/share/classes \
-    $(CORBA_TOPDIR)/$(SRC_SUBDIR)/$1/share/classes \
-    $(JAXP_TOPDIR)/$(SRC_SUBDIR)/$1/share/classes \
-    $(JAXWS_TOPDIR)/$(SRC_SUBDIR)/$1/share/classes \
+    $(JDK_TOPDIR)/src/$1/share/classes \
+    $(LANGTOOLS_TOPDIR)/src/$1/share/classes \
+    $(CORBA_TOPDIR)/src/$1/share/classes \
+    $(JAXP_TOPDIR)/src/$1/share/classes \
+    $(JAXWS_TOPDIR)/src/$1/share/classes \
     #
 
 ALL_SRC_DIRS = \
@@ -574,6 +494,12 @@ ALL_SRC_DIRS = \
 # compiled separately.
 ALL_JAVA_MODULES := $(filter-out jdk.scripting.nashorn, $(call FindJavaModules))
 JAVA_MODULES := $(ALL_JAVA_MODULES)
+
+# The JDK_USER_DEFINED_FILTER is a poor man's incremental build: by specifying
+# JDK_FILTER at the make command line, only a subset of the JDK java files will
+# be recompiled. If multiple paths are separated by comma, convert that into a
+# space separated list.
+JDK_USER_DEFINED_FILTER := $(strip $(subst $(COMMA),$(SPACE), $(JDK_FILTER)))
 
 # This macro sets up compilation of a module and declares dependencies for it.
 # Param 1 - module name
@@ -591,8 +517,9 @@ define SetupModuleCompilation
   $1_JAVAC_FLAGS := -bootclasspath "$$($1_CLASSPATH)"
 
   $$(eval $$(call SetupJavaCompilation,$1, \
-      SETUP := GENERATE_JDKBYTECODE, \
+      SETUP := $$(if $$($1_SETUP), $$($1_SETUP), GENERATE_JDKBYTECODE), \
       SRC := $$(wildcard $$(call ALL_SRC_DIRS,$1)), \
+      INCLUDES:=$(JDK_USER_DEFINED_FILTER),\
       BIN := $(JDK_OUTPUTDIR)/modules/$1, \
       HEADERS := $(JDK_OUTPUTDIR)/gensrc_headers/$1, \
       ADD_JAVAC_FLAGS := $$($1_JAVAC_FLAGS)))
@@ -603,8 +530,8 @@ define SetupModuleCompilation
   # Since not all modules have been declared yet, or might be declared
   # in different invocations of this file, use the macro to find the 
   # correct target file to depend on.
-# Only the javac compilation actually depends on other modules so limit
-# dependency declaration to that by using the *_COMPILE_TARGET variable.
+  # Only the javac compilation actually depends on other modules so limit
+  # dependency declaration to that by using the *_COMPILE_TARGET variable.
   $$($1_COMPILE_TARGETS): $$(foreach d,$$($1_DEPS), \
       $$(call SetupJavaCompilationCompileTarget, $$d, $(JDK_OUTPUTDIR)/modules/$$d))
 endef
@@ -619,7 +546,7 @@ $(JDK_OUTPUTDIR)/modules/%_zh_HK.properties: $(JDK_OUTPUTDIR)/modules/%_zh_TW.pr
 	$(install-file)
 
 define CreateHkTargets
-  $(patsubst $(JDK_TOPDIR)/$(SRC_SUBDIR)/%, $(JDK_OUTPUTDIR)/modules/%, \
+  $(patsubst $(JDK_TOPDIR)/src/%, $(JDK_OUTPUTDIR)/modules/%, \
     $(subst /share/classes,, \
       $(subst _zh_TW,_zh_HK, $(filter %_zh_TW.properties, $1))))
 endef
@@ -627,54 +554,6 @@ endef
 java.sql.rowset: $(call CreateHkTargets, $(java.sql.rowset_CLEAN_FILES))
 java.rmi: $(call CreateHkTargets, $(java.rmi_CLEAN_FILES))
 
-################################################################################
-
-# Compile accessbridge separately. Need to figure out how to handle this properly.
-ifndef OPENJDK
-  ifeq ($(OPENJDK_TARGET_OS), windows)
-    AB_CLASSPATH := $(oracle.accessbridge_CLASSPATH)$(PATH_SEP)$(JDK_OUTPUTDIR)/modules/oracle.accessbridge
-    ifeq ($(OPENJDK_TARGET_CPU_BITS), 32)
-      $(eval $(call SetupJavaCompilation,BUILD_ACCESSBRIDGE_32, \
-          SETUP := GENERATE_JDKBYTECODE, \
-          ADD_JAVAC_FLAGS := -bootclasspath "$(AB_CLASSPATH)", \
-          SRC := $(JDK_OUTPUTDIR)/gensrc_ab/32bit, \
-          BIN := $(JDK_OUTPUTDIR)/$(MODULES_SUBDIR)$(ORACLE_ACCESSBRIDGE_SUBDIR), \
-          HEADERS := $(JDK_OUTPUTDIR)/gensrc_headers_ab/32))
-
-      $(BUILD_ACCESSBRIDGE_32_COMPILE_TARGETS): $(oracle.accessbridge_COMPILE_TARGETS)
-
-      ## TODO: legacy AccessBridge ignored for now
-      $(eval $(call SetupJavaCompilation,BUILD_ACCESSBRIDGE_LEGACY, \
-          SETUP := GENERATE_JDKBYTECODE, \
-          ADD_JAVAC_FLAGS := -bootclasspath "$(AB_CLASSPATH)", \
-          SRC := $(JDK_OUTPUTDIR)/gensrc_ab/legacy, \
-          BIN := $(JDK_OUTPUTDIR)/classes_ab/legacy, \
-          HEADERS := $(JDK_OUTPUTDIR)/gensrc_headers_ab/legacy))
-
-      $(BUILD_ACCESSBRIDGE_LEGACY_COMPILE_TARGETS): $(oracle.accessbridge_COMPILE_TARGETS)
-
-    else
-
-      $(eval $(call SetupJavaCompilation,BUILD_ACCESSBRIDGE_64, \
-          SETUP := GENERATE_JDKBYTECODE, \
-          ADD_JAVAC_FLAGS := -bootclasspath "$(AB_CLASSPATH)", \
-          SRC := $(JDK_OUTPUTDIR)/gensrc_ab/64bit, \
-          BIN := $(JDK_OUTPUTDIR)/$(MODULES_SUBDIR)$(ORACLE_ACCESSBRIDGE_SUBDIR), \
-          HEADERS := $(JDK_OUTPUTDIR)/gensrc_headers_ab/64))
-
-      $(BUILD_ACCESSBRIDGE_64_COMPILE_TARGETS): $(oracle.accessbridge_COMPILE_TARGETS)
-
-    endif
-    oracle.accessbridge : $(BUILD_ACCESSBRIDGE_32) $(BUILD_ACCESSBRIDGE_64) \
-        $(BUILD_ACCESSBRIDGE_LEGACY)
-  endif
-endif
-
-################################################################################
-
-all: $(JAVA_MODULES) \
-    $(BUILD_ACCESSBRIDGE_32) \
-    $(BUILD_ACCESSBRIDGE_64) \
-    $(BUILD_ACCESSBRIDGE_LEGACY)
+all: $(JAVA_MODULES)
 
 .PHONY: all $(JAVA_MODULES)

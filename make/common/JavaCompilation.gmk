@@ -580,7 +580,7 @@ define SetupJavaCompilation
 	$(ECHO) Compiling $1
 	($$($1_JVM) $$($1_SJAVAC) \
 	    $$($1_REMOTE) \
-	    -j $(JOBS) \
+	    -j 1 \
 	    --permit-unidentified-artifacts \
 	    --permit-sources-without-package \
 	    --compare-found-sources $$($1_BIN)/_the.$1_batch.tmp \
@@ -590,6 +590,8 @@ define SetupJavaCompilation
 	    $$($1_HEADERS_ARG) \
 	    -d $$($1_BIN) && \
 	$(MV) $$($1_BIN)/_the.$1_batch.tmp $$($1_BIN)/_the.$1_batch)
+        # sjavac doesn't touch this if nothing has changed
+	$(TOUCH) $$@
   else
     # Using plain javac to batch compile everything.
     $1_COMPILE_TARGETS := $$($1_BIN)/_the.$1_batch

@@ -433,6 +433,9 @@ endif
 containing = $(strip $(foreach v,$(strip $2),$(if $(findstring $(strip $1),$v),$v)))
 not-containing = $(strip $(foreach v,$(strip $2),$(if $(findstring $(strip $1),$v),,$v)))
 
+# Filter out duplicate sub strings while preserving order. Keeps the first occurance.
+uniq = $(if $1,$(firstword $1) $(call uniq,$(filter-out $(firstword $1),$1)))
+
 ifneq ($(DISABLE_CACHE_FIND), true)
   ################################################################################
   # In Cygwin, finds are very costly, both because of expensive forks and because
@@ -533,24 +536,16 @@ endef
 # Module list macros
 
 ALL_TOP_SRC_DIRS := \
-    $(JDK_TOPDIR)/$(SRC_SUBDIR) \
-    $(LANGTOOLS_TOPDIR)/$(SRC_SUBDIR) \
-    $(CORBA_TOPDIR)/$(SRC_SUBDIR) \
-    $(JAXP_TOPDIR)/$(SRC_SUBDIR) \
-    $(JAXWS_TOPDIR)/$(SRC_SUBDIR) \
-    $(NASHORN_TOPDIR)/$(SRC_SUBDIR) \
+    $(JDK_TOPDIR)/src \
+    $(LANGTOOLS_TOPDIR)/src \
+    $(CORBA_TOPDIR)/src \
+    $(JAXP_TOPDIR)/src \
+    $(JAXWS_TOPDIR)/src \
+    $(NASHORN_TOPDIR)/src \
     #
 
-ifndef OPENJDK
-  ALL_TOP_SRC_DIRS += $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed
-endif
-
 # There are snmp classes in the open but they are not included in OpenJDK
-ifdef OPENJDK
-  JAVA_MODULES_FILTER := jdk.snmp
-else 
-  JAVA_MODULES_FILTER := oracle.jrecreate
-endif
+JAVA_MODULES_FILTER := jdk.snmp
 
 # Find all modules with java sources by looking in the source dirs
 define FindJavaModules
@@ -561,14 +556,7 @@ define FindJavaModules
           $(patsubst %,%/*/$(OPENJDK_TARGET_OS)/classes/*, $(ALL_TOP_SRC_DIRS))))))))))))
 endef
 
-define FindNativeModules
-  $(sort $(notdir $(patsubst %/,%, $(dir $(patsubst %/,%, $(dir \
-  $(wildcard $(JDK_TOPDIR)/$(SRC_SUBDIR)/*/share/native \
-      $(JDK_TOPDIR)/$(SRC_SUBDIR)/*/$(OPENJDK_TARGET_OS_API_DIR)/native \
-      $(JDK_TOPDIR)/$(SRC_SUBDIR)/*/$(OPENJDK_TARGET_OS)/native)))))))
-endef
-
-MODULES_LIST_FILE := $(OUTPUT_ROOT)/jdk/genmodules/classlist/modules.list
+MODULES_LIST_FILE := $(SRC_ROOT)/make/common/modules.list
 
 # Param 1: Module to find deps for
 define FindDepsForModule
@@ -584,5 +572,34 @@ define FindAllModules
 endef
 
 ################################################################################
+
+MAKE_DIR_LIST := $(JDK_TOPDIR)/make
+
+# Find all modules that has a makefile for a certain build phase
+# Param 1: Make subdir to look in
+# Param 2: File prefix to look for
+FindModulesWithMakefileFor = $(sort $(foreach d, $(MAKE_DIR_LIST), \
+    $(patsubst $d/$(strip $1)/$(strip $2)-%.gmk,%, \
+    $(wildcard $d/$(strip $1)/$(strip $2)-*.gmk))))
+
+# Declare a recipe for calling such a makefile
+# Param 1: Module name
+# Param 2: Suffix for rule
+# Param 3: Make subdir
+# Param 4: Makefile prefix
+define DeclareRecipeForModuleMakefile
+  $$(strip $1)-$$(strip $2):
+	+($(CD) $$(dir $$(firstword $$(wildcard $$(addsuffix /$$(strip $3)/$$(strip $4)-$$(strip $1).gmk, \
+	        $(MAKE_DIR_LIST))))) \
+	    && $(MAKE) $(MAKE_ARGS) \
+	    -f $$(strip $4)-$$(strip $1).gmk \
+	    $$(addprefix -I, $$(wildcard $(MAKE_DIR_LIST) \
+	        $$(addsuffix /$$(strip $3), $(MAKE_DIR_LIST)))))
+endef
+
+################################################################################
+
+# Hook to include the corresponding custom file, if present.
+$(eval $(call IncludeCustomExtension, , common/MakeBase.gmk))
 
 endif # _MAKEBASE_GMK
