@@ -42,6 +42,8 @@ ifeq (, $(BUILD_TOOLS_JDK))
   $(eval $(call SetupJavaCompilation,BUILD_TOOLS_JDK, \
       SETUP := GENERATE_OLDBYTECODE, \
       SRC := $(JDK_TOPDIR)/make/src/classes, \
+      EXCLUDES := build/tools/deps \
+                  build/tools/module, \
       BIN := $(JDK_OUTPUTDIR)/btclasses))
 endif
 

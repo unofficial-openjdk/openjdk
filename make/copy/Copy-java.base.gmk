@@ -236,6 +236,19 @@ ifeq ($(OPENJDK_TARGET_OS), solaris)
   NET_CONF_FILES += $(JDK_OUTPUTDIR)/lib/sdp/sdp.conf.template
 endif
 
+##########################################################################################
+
+$(JDK_OUTPUTDIR)/lib/%.modules: $(JDK_TOPDIR)/src/java.base/share/conf/%.modules
+	$(call install-file)
+
+MODULES_CONF_FILES := \
+    $(JDK_OUTPUTDIR)/lib/boot.modules \
+    $(JDK_OUTPUTDIR)/lib/ext.modules \
+    $(JDK_OUTPUTDIR)/lib/system.modules \
+    #
+
+BASE_CONF_FILES += $(MODULES_CONF_FILES)
+
 ################################################################################
 
 java.base: $(BASE_CONF_FILES) $(NET_CONF_FILES) $(JAVA_BASE_HEADERS) $(MSVCR_TARGET)
