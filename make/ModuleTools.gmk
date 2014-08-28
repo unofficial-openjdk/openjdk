@@ -26,12 +26,12 @@
 include $(SPEC)
 include MakeBase.gmk
 include JavaCompilation.gmk
-SetupJava.gmk
+include SetupJava.gmk
 
 GENMODULES_DIR := $(JDK_OUTPUTDIR)/genmodules
 MODULEINFO_DIR := $(GENMODULES_DIR)/src
 MODULE_CLASSLIST_DIR := $(GENMODULES_DIR)/classlist
-CLASSANALYZER_CLASSES  := $(JDK_OUTPUTDIR)/bt_classanalyzer_classes
+CLASSANALYZER_CLASSES := $(JDK_OUTPUTDIR)/bt_classanalyzer_classes
 JMODS_DIR := $(JDK_OUTPUTDIR)/jmods
 GENGRAPHS_DIR := $(JDK_OUTPUTDIR)/gengraphs
 
@@ -54,9 +54,9 @@ $(eval $(call SetupJavaCompilation,BUILD_MODULE_TOOL, \
     BIN := $(JDK_OUTPUTDIR)/btclasses))
 
 ifndef OPENJDK
-   CLOSED_MODULES := true
+  CLOSED_MODULES := true
 else
-   CLOSED_MODULES := false
+  CLOSED_MODULES := false
 endif
 
 TOOL_CLASSANALYZER=$(BUILD_JAVA) -esa -ea -cp $(CLASSANALYZER_CLASSES) \
