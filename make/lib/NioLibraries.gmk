@@ -23,88 +23,39 @@
 # questions.
 #
 
-ifeq ($(SHUFFLED), true)
-  BUILD_LIBNIO_SRC := \
-      $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/libnio/ch \
-      $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/$(OPENJDK_TARGET_OS_API_DIR)/native/libnio \
-      $(sort $(wildcard \
-        $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/$(OPENJDK_TARGET_OS_API_DIR)/native/libnio/ch \
-        $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/$(OPENJDK_TARGET_OS_API_DIR)/native/libnio/fs \
-        $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/$(OPENJDK_TARGET_OS)/native/libnio/ch \
-        $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/$(OPENJDK_TARGET_OS)/native/libnio/fs)) \
-      #
+BUILD_LIBNIO_SRC := \
+    $(JDK_TOPDIR)/src/java.base/share/native/libnio/ch \
+    $(JDK_TOPDIR)/src/java.base/$(OPENJDK_TARGET_OS_API_DIR)/native/libnio \
+    $(sort $(wildcard \
+      $(JDK_TOPDIR)/src/java.base/$(OPENJDK_TARGET_OS_API_DIR)/native/libnio/ch \
+      $(JDK_TOPDIR)/src/java.base/$(OPENJDK_TARGET_OS_API_DIR)/native/libnio/fs \
+      $(JDK_TOPDIR)/src/java.base/$(OPENJDK_TARGET_OS)/native/libnio/ch \
+      $(JDK_TOPDIR)/src/java.base/$(OPENJDK_TARGET_OS)/native/libnio/fs)) \
+    #
 
-  BUILD_LIBNIO_CFLAGS := \
-      $(addprefix -I, $(BUILD_LIBNIO_SRC)) \
-      -I$(JDK_OUTPUTDIR)/gensrc_headers/java.base \
-      $(addprefix -I, $(BUILD_LIBJAVA_SRC) $(BUILD_LIBNET_SRC))
-else
-  BUILD_LIBNIO_SRC := \
-    $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/java/nio \
-    $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/sun/nio/ch \
-    $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/sun/nio/fs
-
-  BUILD_LIBNIO_CFLAGS := \
-    -I$(JDK_TOPDIR)/src/share/native/sun/nio/ch \
-    -I$(JDK_TOPDIR)/src/share/native/java/io \
-    -I$(JDK_TOPDIR)/src/share/native/java/net \
-    -I$(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/java/net
-
-  BUILD_LIBNIO_EXFILES := \
-      genSolarisConstants.c \
-      genUnixConstants.c \
-      #
-endif
+BUILD_LIBNIO_CFLAGS := \
+    $(addprefix -I, $(BUILD_LIBNIO_SRC)) \
+    -I$(JDK_OUTPUTDIR)/gensrc_headers/java.base \
+    $(LIBJAVA_HEADER_FLAGS) \
+    $(addprefix -I, $(BUILD_LIBNET_SRC))
 
 ifeq ($(OPENJDK_TARGET_OS), linux)
   BUILD_LIBNIO_MAPFILE := $(JDK_TOPDIR)/make/mapfiles/libnio/mapfile-$(OPENJDK_TARGET_OS)
-else
-  BUILD_LIBNIO_EXFILES += \
-      EPoll.c \
-      EPollArrayWrapper.c \
-      EPollPort.c \
-      MagicFileTypeDetector.c \
-      LinuxNativeDispatcher.c \
-      LinuxWatchService.c \
-      #
 endif
 
 ifeq ($(OPENJDK_TARGET_OS), macosx)
   BUILD_LIBNIO_MAPFILE := $(JDK_TOPDIR)/make/mapfiles/libnio/mapfile-$(OPENJDK_TARGET_OS)
-  ifneq ($(SHUFFLED), true)
-    BUILD_LIBNIO_SRC += $(JDK_TOPDIR)/src/macosx/native/sun/nio/ch
-  endif
   BUILD_LIBNIO_EXFILES += \
       GnomeFileTypeDetector.c \
-      #
-else
-  BUILD_LIBNIO_EXFILES += \
-      BsdNativeDispatcher.c \
-      MacOSXNativeDispatcher.c \
-      KQueue.c \
-      KQueuePort.c \
-      KQueueArrayWrapper.c \
       #
 endif
 
 ifeq ($(OPENJDK_TARGET_OS), solaris)
   BUILD_LIBNIO_MAPFILE := $(JDK_TOPDIR)/make/mapfiles/libnio/mapfile-$(OPENJDK_TARGET_OS)
-else
-  BUILD_LIBNIO_EXFILES += \
-      DevPollArrayWrapper.c \
-      SolarisEventPort.c \
-      SolarisNativeDispatcher.c \
-      SolarisWatchService.c \
-      #
 endif
 
 ifeq ($(OPENJDK_TARGET_OS), aix)
   BUILD_LIBNIO_MAPFILE:=$(JDK_TOPDIR)/make/mapfiles/libnio/mapfile-$(OPENJDK_TARGET_OS)
-  ifneq ($(SHUFFLED), true)
-    BUILD_LIBNIO_SRC += \
-        $(JDK_TOPDIR)/src/aix/native/sun/nio/ch \
-        $(JDK_TOPDIR)/src/aix/native/sun/nio/fs
-  endif
   BUILD_LIBNIO_FILES += \
       AixPollPort.c \
       InheritedChannel.c \
@@ -152,52 +103,3 @@ BASE_LIBRARIES += $(BUILD_LIBNIO)
 
 $(BUILD_LIBNIO): $(BUILD_LIBNET)
 
-##########################################################################################
-
-ifeq ($(OPENJDK_TARGET_OS_API), posix)
-
-  ifeq (, $(filter $(OPENJDK_TARGET_OS), macosx aix))
-
-    # Suppress unused parameters required by exported JNI functions.
-    SCTP_WERROR := -Werror -Wno-error=unused-parameter
-    ifeq ($(OPENJDK_TARGET_CPU_ARCH), ppc)
-      SCTP_WERROR :=
-    endif
-
-    ifeq ($(SHUFFLED), true)
-      LIBSCTP_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.sctp/$(OPENJDK_TARGET_OS_API_DIR)/native/libsctp
-      LIBSCTP_CFLAGS := $(addprefix -I, $(BUILD_LIBNIO_SRC) $(BUILD_LIBNET_SRC) $(BUILD_LIBJAVA_SRC)) \
-          -I$(JDK_OUTPUTDIR)/gensrc_headers/jdk.sctp \
-          -I$(JDK_OUTPUTDIR)/gensrc_headers/java.base
-    else
-      LIBSCTP_SRC := $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/sun/nio/ch/sctp
-      LIBSCTP_CFLAGS := -I$(JDK_TOPDIR)/src/share/native/sun/nio/ch \
-          -I$(JDK_TOPDIR)/src/share/native/sun/nio/ch/sctp \
-          -I$(JDK_TOPDIR)/src/share/native/java/net \
-          -I$(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/sun/nio/ch \
-          -I$(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/java/net
-    endif
-
-    $(eval $(call SetupNativeCompilation,BUILD_LIBSCTP, \
-        LIBRARY := sctp, \
-        OUTPUT_DIR := $(INSTALL_LIBRARIES_HERE), \
-        SRC := $(LIBSCTP_SRC), \
-        LANG := C, \
-        OPTIMIZATION := LOW, \
-        CFLAGS := $(CFLAGS_JDKLIB) $(LIBSCTP_CFLAGS), \
-        CFLAGS_linux := $(SCTP_WERROR), \
-        MAPFILE := $(JDK_TOPDIR)/make/mapfiles/libsctp/mapfile-vers, \
-        LDFLAGS := $(LDFLAGS_JDKLIB) \
-            $(call SET_SHARED_LIBRARY_ORIGIN), \
-        LDFLAGS_SUFFIX_linux := -lpthread $(LIBDL) -ljava -ljvm, \
-        LDFLAGS_SUFFIX_posix := -lnio -lnet, \
-        LDFLAGS_SUFFIX_solaris := -lsocket -ljava -ljvm -lc, \
-        LDFLAGS_SUFFIX_macosx := -ljava -ljvm, \
-        OBJECT_DIR := $(JDK_OUTPUTDIR)/objs/libsctp, \
-        DEBUG_SYMBOLS := $(DEBUG_ALL_BINARIES)))
-
-    SCTP_LIBRARIES += $(BUILD_LIBSCTP)
-
-    $(BUILD_LIBSCTP): $(BUILD_LIBNIO)
-  endif
-endif

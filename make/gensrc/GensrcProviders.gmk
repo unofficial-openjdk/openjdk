@@ -32,15 +32,20 @@ endef
 
 ################################################################################
 
-ifeq ($(SHUFFLED), true)
-
-  # Filter AttachProvider
-  $(JDK_OUTPUTDIR)/gensrc/jdk.attach/META-INF/services/com.sun.tools.attach.spi.AttachProvider: \
-      $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.attach/share/classes/META-INF/services/com.sun.tools.attach.spi.AttachProvider
+# Filter com.sun.tools.attach.spi.AttachProvider
+$(JDK_OUTPUTDIR)/gensrc/jdk.attach/META-INF/services/com.sun.tools.attach.spi.AttachProvider: \
+    $(JDK_TOPDIR)/src/jdk.attach/share/classes/META-INF/services/com.sun.tools.attach.spi.AttachProvider
 	$(process-provider)
 
-  GENSRC_JDK_ATTACH += $(JDK_OUTPUTDIR)/gensrc/jdk.attach/META-INF/services/com.sun.tools.attach.spi.AttachProvider
+GENSRC_JDK_ATTACH += $(JDK_OUTPUTDIR)/gensrc/jdk.attach/META-INF/services/com.sun.tools.attach.spi.AttachProvider
 
-endif
+################################################################################
+
+# Filter com.sun.jdi.connect.Connector
+$(JDK_OUTPUTDIR)/gensrc/jdk.jdi/META-INF/services/com.sun.jdi.connect.Connector: \
+    $(JDK_TOPDIR)/src/jdk.jdi/share/classes/META-INF/services/com.sun.jdi.connect.Connector
+	$(process-provider)
+
+GENSRC_JDK_JDI += $(JDK_OUTPUTDIR)/gensrc/jdk.jdi/META-INF/services/com.sun.jdi.connect.Connector
 
 ################################################################################

@@ -27,21 +27,18 @@
 default: all
 
 include $(SPEC)
-include JigsawSpecMod.gmk
-include Modules.gmk
+include ModuleTools.gmk
 include MakeBase.gmk
-include Setup.gmk
 
-ifeq ($(SHUFFLED), true)
 
   ALL_SRC_DIRS := \
       $(wildcard \
-        $(JDK_TOPDIR)/src_shuffled/*/*/classes \
-        $(LANGTOOLS_TOPDIR)/src_shuffled/*/*/classes \
-        $(CORBA_TOPDIR)/src_shuffled/*/*/classes \
-        $(JAXP_TOPDIR)/src_shuffled/*/*/classes \
-        $(JAXWS_TOPDIR)/src_shuffled/*/*/classes \
-        $(NASHORN_TOPDIR)/src_shuffled/*/*/classes) \
+      $(JDK_TOPDIR)/src/*/*/classes \
+      $(LANGTOOLS_TOPDIR)/src/*/*/classes \
+      $(CORBA_TOPDIR)/src/*/*/classes \
+      $(JAXP_TOPDIR)/src/*/*/classes \
+      $(JAXWS_TOPDIR)/src/*/*/classes \
+      $(NASHORN_TOPDIR)/src/*/*/classes) \
       $(JDK_OUTPUTDIR)/gensrc \
       $(LANGTOOLS_OUTPUTDIR)/gensrc \
       $(CORBA_OUTPUTDIR)/gensrc \
@@ -49,18 +46,18 @@ ifeq ($(SHUFFLED), true)
       #
 
   ifndef OPENJDK
-    ALL_SRC_DIRS += $(wildcard $(JDK_TOPDIR)/src_shuffled/closed/*/*/classes)
+  ALL_SRC_DIRS += $(wildcard $(JDK_TOPDIR)/src/closed/*/*/classes)
   endif
 
   $(GENGRAPHS_DIR)/jdk.dot: $(BUILD_DEPS_TOOLS)
 	$(TOOL_GENGRAPHS) $(GENGRAPHS_DIR)
 
-  MODULES_XML := $(JDK_OUTPUTDIR)/$(MODULES_SUBDIR)/$(JDK_DEV_SUBDIR)/com/sun/tools/jdeps/resources/modules.xml
+MODULES_XML := $(JDK_OUTPUTDIR)/modules/jdk.dev/com/sun/tools/jdeps/resources/modules.xml
 
   $(MODULES_XML): $(BUILD_MODULE_TOOL)
 	$(MKDIR) -p $(@D)
 	$(RM) $@
-	$(TOOL_GENMODULESXML) $@ $(JDK_OUTPUTDIR)/$(MODULES_SUBDIR)
+	$(TOOL_GENMODULESXML) $@ $(JDK_OUTPUTDIR)/modules
 
   $(GENGRAPHS_DIR)/module-summary.html: $(BUILD_MODULE_TOOL)
 	$(MKDIR) -p $(@D)
@@ -69,41 +66,5 @@ ifeq ($(SHUFFLED), true)
 all: $(MODULES_XML) $(GENGRAPHS_DIR)/jdk.dot
 
 postjmods: $(GENGRAPHS_DIR)/module-summary.html
-
-else
-
-  # Import nashorn.jar from nashorn dist dir.
-  $(JDK_OUTPUTDIR)/lib/ext/nashorn.jar: $(NASHORN_DIST)/nashorn.jar
-	$(install-file)
-
-  # To generate module-info.java per the new source layout:
-  #   src/$MODULE/share/classes/module-info.java
-  #   src/$MODULE/$OS/classes/module-info.java
-  #   src/closed/$MODULE/$OS/classes/module-info.java
-  #
-  # add this option to run ClassAnalyzer
-  #     --os-source-path $(OPENJDK_TARGET_OS)
-
-  MODULES_CONFIG := $(MODULEINFO_DIR)/modules.config
-  $(MODULES_CONFIG): $(BUILD_CLASSANALYZER) \
-      $(wildcard $(JDK_OUTPUTDIR)/classes/_the*) \
-      $(JDK_OUTPUTDIR)/lib/ext/nashorn.jar
-	$(RM) -rf $(MODULE_CLASSLIST_DIR) \
-	  $(MODULEINFO_DIR) \
-	  $(JDK_OUTPUTDIR)/modules
-	$(TOOL_CLASSANALYZER) \
-	  --os-source-path $(OPENJDK_TARGET_OS) \
-	  --version $(MODULE_VERSION) \
-	  --classlist $(MODULE_CLASSLIST_DIR) \
-	  --moduleinfo $(MODULEINFO_DIR)
-	if [ -f $(MODULE_CLASSLIST_DIR)/unknown.summary ] ; then \
-	  $(ECHO) "ERROR: Check module \"unknown\". modules.config possibly requires update." ; \
-	  exit 2; \
-	fi
-
-all: $(MODULES_CONFIG)
-
-postjmods:
-endif
 
 .PHONY: all postjmods

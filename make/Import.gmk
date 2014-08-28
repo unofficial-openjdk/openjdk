@@ -26,105 +26,81 @@
 default: all
 
 include $(SPEC)
-include JigsawSpecMod.gmk
 include MakeBase.gmk
 
-#######
-
-IMPORT_TARGET_FILES :=
-
-IMPORT_CLASSES := CORBA JAXP JAXWS LANGTOOLS
-IMPORT_SOURCES := CORBA JAXP JAXWS LANGTOOLS
-# Only Corba has binaries
-IMPORT_BINARIES := CORBA
-
-#######
+################################################################################
 
 # Put the libraries here. Different locations for different target apis.
 ifeq ($(OPENJDK_TARGET_OS_API), posix)
   INSTALL_LIBRARIES_HERE := $(JDK_OUTPUTDIR)/lib$(OPENJDK_TARGET_CPU_LIBDIR)
+  HOTSPOT_LIB_DIR := $(HOTSPOT_DIST)/jre/lib$(OPENJDK_TARGET_CPU_LIBDIR)
 else
   INSTALL_LIBRARIES_HERE := $(JDK_OUTPUTDIR)/bin
+  HOTSPOT_LIB_DIR := $(HOTSPOT_DIST)/jre/bin
 endif
 
-include HotspotImport.gmk
+################################################################################
 
-#######
-
-#
-# jar xf/unzip fails when executing them all in parallel
-# introduce artificial dependency (_DEP) buuhhh
-
-define ImportClasses
-  $1_CLASSES_DEP := $$(IMPORT_TARGET_CLASSES)
-  IMPORT_TARGET_CLASSES += $(JDK_OUTPUTDIR)/classes/_the.$1.classes.imported
-
-  $(JDK_OUTPUTDIR)/classes/_the.$1.classes.imported: $$($1_DIST)/lib/classes.jar $$($1_CLASSES_DEP)
-	$(ECHO) Importing $1 classes.jar
-	$(MKDIR) -p $$(@D)
-	$(RM) $$@ $$@.tmp
-	($(CD) $$(@D) && $(JAR) xvf $$< > $$@.tmp)
-	$(MV) $$@.tmp $$@
+define CopyDir
+  $1_SRC_FILES := $(shell $(FIND) $2 -type f -a \( -name DUMMY $(addprefix -o$(SPACE)-name$(SPACE),$4) \))
+  $1_DST_FILES := $$(patsubst $2/%,$3/%,$$($1_SRC_FILES))
+  HOTSPOT_IMPORT_TARGET_FILES += $$($1_DST_FILES)
+  $3/%: $2/%
+	$(ECHO) $(LOG_INFO) Copying $$(@F)
+	$$(install-file)
 endef
 
-define ImportSources
-  $1_SOURCES_DEP := $$(IMPORT_TARGET_SOURCES)
-  IMPORT_TARGET_SOURCES += $(JDK_OUTPUTDIR)/impsrc/_the.$1.src.imported
-
-  $(JDK_OUTPUTDIR)/impsrc/_the.$1.src.imported: $$($1_DIST)/lib/src.zip $$($1_SOURCES_DEP)
-	$(ECHO) Importing $1 src.zip
-	$(MKDIR) -p $$(@D)
-	$(RM) $$@ $$@.tmp
-	($(CD) $$(@D) && $(JAR) xvf $$< > $$@.tmp)
-	$(MV) $$@.tmp $$@
-endef
-
-define ImportBinaries
-  $1_BINARIES_DEP := $$(IMPORT_TARGET_BINARIES)
-  IMPORT_TARGET_BINARIES += $(JDK_OUTPUTDIR)/_the.$1.binaries.imported
-
-  $(JDK_OUTPUTDIR)/_the.$1.binaries.imported: $$($1_DIST)/lib/bin.zip $$($1_BINARIES_DEP)
-	$(ECHO) Importing $1 bin.zip
-	$(MKDIR) -p $$(@D)
-	$(RM) $$@ $$@.tmp
-	($(CD) $$(@D) && $(JAR) xvf $$< > $$@.tmp)
-	$(MV) $$@.tmp $$@
-endef
-
-#######
-
-$(foreach I, $(IMPORT_CLASSES), $(eval $(call ImportClasses,$I)))
-$(foreach I, $(IMPORT_SOURCES), $(eval $(call ImportSources,$I)))
-$(foreach I, $(IMPORT_BINARIES), $(eval $(call ImportBinaries,$I)))
-
-IMPORT_TARGET_FILES += $(IMPORT_TARGET_CLASSES) $(IMPORT_TARGET_SOURCES) $(IMPORT_TARGET_BINARIES)
-
-#######
+################################################################################
 
 #
 # Import hotspot
 #
+HOTSPOT_IMPORT_FILES := $(addprefix $(LIBRARY_PREFIX), jvm.* saproc.* jsig.* sawindbg.* jvm_db.* jvm_dtrace.*) \
+    Xusage.txt sa-jdi.jar
+$(eval $(call CopyDir,HOTSPOT0, $(HOTSPOT_LIB_DIR), $(INSTALL_LIBRARIES_HERE), $(HOTSPOT_IMPORT_FILES)))
+$(eval $(call CopyDir,HOTSPOT1, $(HOTSPOT_DIST)/lib, $(JDK_OUTPUTDIR)/lib, $(HOTSPOT_IMPORT_FILES)))
 
-define link-file-in-parent-dir
+ifeq ($(OPENJDK_TARGET_OS), macosx)
+  JSIG_DEBUGINFO := $(strip $(wildcard $(HOTSPOT_DIST)/jre/lib$(OPENJDK_TARGET_CPU_LIBDIR)/libjsig$(SHARED_LIBRARY_SUFFIX).dSYM) \
+      $(wildcard $(HOTSPOT_DIST)/jre/lib$(OPENJDK_TARGET_CPU_LIBDIR)/libjsig.diz) )
+else
+  JSIG_DEBUGINFO := $(strip $(wildcard $(HOTSPOT_DIST)/jre/lib$(OPENJDK_TARGET_CPU_LIBDIR)/libjsig.debuginfo) \
+      $(wildcard $(HOTSPOT_DIST)/jre/lib$(OPENJDK_TARGET_CPU_LIBDIR)/libjsig.diz) )
+endif
+
+ifneq ($(OPENJDK_TARGET_OS), windows)
+  ifeq ($(JVM_VARIANT_SERVER), true)
+    HOTSPOT_IMPORT_TARGET_FILES += $(INSTALL_LIBRARIES_HERE)/server/$(LIBRARY_PREFIX)jsig$(SHARED_LIBRARY_SUFFIX)
+    ifneq (, $(JSIG_DEBUGINFO))
+      HOTSPOT_IMPORT_TARGET_FILES += $(INSTALL_LIBRARIES_HERE)/server/$(foreach I,$(JSIG_DEBUGINFO),$(notdir $I))
+    endif
+  endif
+  ifeq ($(JVM_VARIANT_CLIENT), true)
+    HOTSPOT_IMPORT_TARGET_FILES += $(INSTALL_LIBRARIES_HERE)/client/$(LIBRARY_PREFIX)jsig$(SHARED_LIBRARY_SUFFIX)
+    ifneq (, $(JSIG_DEBUGINFO))
+      HOTSPOT_IMPORT_TARGET_FILES += $(INSTALL_LIBRARIES_HERE)/client/$(foreach I,$(JSIG_DEBUGINFO),$(notdir $I))
+    endif
+  endif
+  ifneq ($(OPENJDK_TARGET_OS), macosx)
+    ifeq ($(JVM_VARIANT_MINIMAL1), true)
+      HOTSPOT_IMPORT_TARGET_FILES += $(INSTALL_LIBRARIES_HERE)/minimal/$(LIBRARY_PREFIX)jsig$(SHARED_LIBRARY_SUFFIX)
+      ifneq (,$(JSIG_DEBUGINFO))
+        HOTSPOT_IMPORT_TARGET_FILES += $(INSTALL_LIBRARIES_HERE)/minimal/$(foreach I,$(JSIG_DEBUGINFO),$(notdir $I))
+      endif
+    endif
+  endif
+endif
+
+$(INSTALL_LIBRARIES_HERE)/server/%$(SHARED_LIBRARY_SUFFIX): $(INSTALL_LIBRARIES_HERE)/%$(SHARED_LIBRARY_SUFFIX)
 	$(MKDIR) -p $(@D)
 	$(RM) $@
 	$(LN) -s ../$(@F) $@
-endef
-
-HOTSPOT_IMPORT_TARGET_FILES += $(HOTSPOT_LIBRARIES) $(SAJDI_LIBRARIES)
-
-$(JDK_OUTPUTDIR)/lib/%: $(HOTSPOT_DIST)/lib/%
-	$(install-file)
-
-$(INSTALL_LIBRARIES_HERE)/%: $(HOTSPOT_LIB_DIR)/%
-	$(install-file)
-
-$(INSTALL_LIBRARIES_HERE)/server/%$(SHARED_LIBRARY_SUFFIX): $(INSTALL_LIBRARIES_HERE)/%$(SHARED_LIBRARY_SUFFIX)
-	$(link-file-in-parent-dir)
 
 ifeq ($(OPENJDK_TARGET_OS), macosx)
   $(INSTALL_LIBRARIES_HERE)/server/%.dSYM : $(INSTALL_LIBRARIES_HERE)/%.dSYM
-	$(link-file-in-parent-dir)
+	$(MKDIR) -p $(@D)
+	$(RM) $@
+	$(LN) -s ../$(@F) $@
 
   $(INSTALL_LIBRARIES_HERE)/server/%.diz : $(INSTALL_LIBRARIES_HERE)/%.diz
 	$(MKDIR) -p $(@D)
@@ -136,7 +112,9 @@ ifeq ($(OPENJDK_TARGET_OS), macosx)
 	$(MV) $@.tmp $@
 else
   $(INSTALL_LIBRARIES_HERE)/server/%.debuginfo: $(INSTALL_LIBRARIES_HERE)/%.debuginfo
-	$(link-file-in-parent-dir)
+	$(MKDIR) -p $(@D)
+	$(RM) $@
+	$(LN) -s ../$(@F) $@
 
   $(INSTALL_LIBRARIES_HERE)/server/%.diz: $(INSTALL_LIBRARIES_HERE)/%.diz
 	$(MKDIR) -p $(@D)
@@ -149,11 +127,15 @@ else
 endif
 
 $(INSTALL_LIBRARIES_HERE)/client/%$(SHARED_LIBRARY_SUFFIX): $(INSTALL_LIBRARIES_HERE)/%$(SHARED_LIBRARY_SUFFIX)
-	$(link-file-in-parent-dir)
+	$(MKDIR) -p $(@D)
+	$(RM) $@
+	$(LN) -s ../$(@F) $@
 
 ifeq ($(OPENJDK_TARGET_OS), macosx)
   $(INSTALL_LIBRARIES_HERE)/client/%.dSYM : $(INSTALL_LIBRARIES_HERE)/%.dSYM
-	$(link-file-in-parent-dir)
+	$(MKDIR) -p $(@D)
+	$(RM) $@
+	$(LN) -s ../$(@F) $@
 
   $(INSTALL_LIBRARIES_HERE)/client/%.diz : $(INSTALL_LIBRARIES_HERE)/%.diz
 	$(MKDIR) -p $(@D)
@@ -165,7 +147,9 @@ ifeq ($(OPENJDK_TARGET_OS), macosx)
 	$(MV) $@.tmp $@
 else
   $(INSTALL_LIBRARIES_HERE)/client/%.debuginfo: $(INSTALL_LIBRARIES_HERE)/%.debuginfo
-	$(link-file-in-parent-dir)
+	$(MKDIR) -p $(@D)
+	$(RM) $@
+	$(LN) -s ../$(@F) $@
 
   $(INSTALL_LIBRARIES_HERE)/client/%.diz: $(INSTALL_LIBRARIES_HERE)/%.diz
 	$(MKDIR) -p $(@D)
@@ -178,11 +162,15 @@ else
 endif
 
 $(INSTALL_LIBRARIES_HERE)/minimal/%$(SHARED_LIBRARY_SUFFIX): $(INSTALL_LIBRARIES_HERE)/%$(SHARED_LIBRARY_SUFFIX)
-	$(link-file-in-parent-dir)
+	$(MKDIR) -p $(@D)
+	$(RM) $@
+	$(LN) -s ../$(@F) $@
 
 ifneq ($(OPENJDK_TARGET_OS), macosx)
   $(INSTALL_LIBRARIES_HERE)/minimal/%.debuginfo: $(INSTALL_LIBRARIES_HERE)/%.debuginfo
-	$(link-file-in-parent-dir)
+	$(MKDIR) -p $(@D)
+	$(RM) $@
+	$(LN) -s ../$(@F) $@
 
   $(INSTALL_LIBRARIES_HERE)/minimal/%.diz: $(INSTALL_LIBRARIES_HERE)/%.diz
 	$(MKDIR) -p $(@D)
@@ -194,74 +182,10 @@ ifneq ($(OPENJDK_TARGET_OS), macosx)
 	$(MV) $@.tmp $@
 endif
 
-# TODO jdk9: When merging to jdk9 first milestone, disable unpacking of sajdi.
-ifeq ($(SHUFFLED), true)
-  $(JDK_OUTPUTDIR)/modules/jdk.hotspot.agent/_the.sa.jar.unpacked: $(SRC_SAJDI_JAR)
-	$(ECHO) $(LOG_INFO) Unzipping $(<F)
-	$(RM) -r $(@D)
-	$(MKDIR) -p $(@D)
-	$(CD) $(@D) && $(UNZIP) $< $(LOG_DEBUG)
-	$(TOUCH) $@
-
-  HOTSPOT_IMPORT_TARGET_FILES += $(JDK_OUTPUTDIR)/modules/jdk.hotspot.agent/_the.sa.jar.unpacked
-
-else
-  # Unzip sa-jdi.jar for the shuffle target.
-  SA_CLASSES := $(JDK_OUTPUTDIR)/classes_sa
-
-  $(SA_CLASSES)/_the.sa.jar.unpacked: $(SRC_SAJDI_JAR)
-	$(ECHO) $(LOG_INFO) Unzipping $(<F)
-	$(RM) -r $(@D)
-	$(MKDIR) -p $(@D)
-	$(CD) $(@D) && $(UNZIP) $< $(LOG_DEBUG)
-	$(TOUCH) $@
-
-  HOTSPOT_IMPORT_TARGET_FILES += $(SAJDI_JAR) $(SA_CLASSES)/_the.sa.jar.unpacked
-endif
-
-##########################################################################################
-# Unpack the binary distributions of the crypto classes if they exist.
-SEC_FILES_ZIP := $(JDK_TOPDIR)/make/tools/crypto/sec-bin.zip
-SEC_FILES_WIN_ZIP := $(JDK_TOPDIR)/make/tools/crypto/sec-windows-bin.zip
-JGSS_WIN32_FILES_ZIP := $(JDK_TOPDIR)/make/tools/crypto/jgss-windows-i586-bin.zip
-JGSS_WIN64_FILES_ZIP := $(JDK_TOPDIR)/make/tools/crypto/jgss-windows-x64-bin.zip
-
-define unzip-sec-file
-	$(ECHO) Unzipping $(<F)
-	$(MKDIR) -p $(@D)
-	$(RM) $@
-	($(CD) $(JDK_OUTPUTDIR) && $(UNZIP) -q -o $< > $@.tmp)
-	$(MV) $@.tmp $@
-endef
-
-$(JDK_OUTPUTDIR)/classes/_the.sec-bin.unzipped: $(SEC_FILES_ZIP)
-	$(call unzip-sec-file)
-
-$(JDK_OUTPUTDIR)/classes/_the.sec-windows-bin.unzipped: $(SEC_FILES_WIN_ZIP)
-	$(call unzip-sec-file)
-
-$(JDK_OUTPUTDIR)/classes/_the.jgss-windows-i586-bin.unzipped: $(JGSS_WIN32_FILES_ZIP)
-	$(call unzip-sec-file)
-
-$(JDK_OUTPUTDIR)/classes/_the.jgss-windows-x64-bin.unzipped: $(JGSS_WIN64_FILES_ZIP)
-	$(call unzip-sec-file)
-
-ifneq ($(wildcard $(SEC_FILES_ZIP)), )
-  IMPORT_TARGET_FILES += $(JDK_OUTPUTDIR)/classes/_the.sec-bin.unzipped
-  ifeq ($(OPENJDK_TARGET_OS), windows)
-    IMPORT_TARGET_FILES += $(JDK_OUTPUTDIR)/classes/_the.sec-windows-bin.unzipped
-    ifeq ($(OPENJDK_TARGET_CPU), x86)
-      IMPORT_TARGET_FILES += $(JDK_OUTPUTDIR)/classes/_the.jgss-windows-i586-bin.unzipped
-    endif
-    ifeq ($(OPENJDK_TARGET_CPU), x86_64)
-      IMPORT_TARGET_FILES += $(JDK_OUTPUTDIR)/classes/_the.jgss-windows-x64-bin.unzipped
-    endif
-  endif
-endif
-
 ##########################################################################################
 
 hotspot: $(HOTSPOT_IMPORT_TARGET_FILES)
 
-all: $(IMPORT_TARGET_FILES) hotspot
+all: hotspot
 
+.PHONY: hotspot all

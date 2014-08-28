@@ -268,13 +268,8 @@ include profile-rtjar-includes.txt
 # NOTE: Files found by wildcard are stipped of extra $, so call DoubleDollar
 # to keep the file names compatible with make.
 # But note that if you echo these values they will NOT display as expected.
-ifeq ($(SHUFFLED), true)
-  class_list = $(foreach dir, $(JDK_OUT_CLASSES), $(patsubst $(dir)/%,%, \
-      $(foreach i, $(1), $(call DoubleDollar, $(wildcard $(dir)/$i)))))
-else
-  class_list = $(patsubst $(JDK_OUTPUTDIR)/classes/%,%, \
-      $(foreach i, $(1), $(call DoubleDollar, $(wildcard $(JDK_OUTPUTDIR)/classes/$i))))
-endif
+class_list = $(foreach dir, $(JDK_OUT_CLASSES), $(patsubst $(dir)/%,%, \
+    $(foreach i, $(1), $(call DoubleDollar, $(wildcard $(dir)/$i)))))
 
 ifeq ($(PROFILE), profile_1)
   RT_JAR_EXCLUDES += \
