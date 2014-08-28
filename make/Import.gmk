@@ -182,7 +182,18 @@ ifneq ($(OPENJDK_TARGET_OS), macosx)
 	$(MV) $@.tmp $@
 endif
 
-##########################################################################################
+################################################################################
+
+$(JDK_OUTPUTDIR)/modules/jdk.hotspot.agent/_the.sa.jar.unpacked: $(HOTSPOT_DIST)/lib/sa-jdi.jar
+	$(ECHO) $(LOG_INFO) Unzipping $(<F)
+	$(RM) -r $(@D)
+	$(MKDIR) -p $(@D)
+	$(CD) $(@D) && $(UNZIP) $< $(LOG_DEBUG)
+	$(TOUCH) $@
+
+HOTSPOT_IMPORT_TARGET_FILES += $(JDK_OUTPUTDIR)/modules/jdk.hotspot.agent/_the.sa.jar.unpacked
+
+################################################################################
 
 hotspot: $(HOTSPOT_IMPORT_TARGET_FILES)
 
