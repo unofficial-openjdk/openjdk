@@ -47,15 +47,18 @@ public class bug8046391  {
             return;
         }
 
-        SwingUtilities.invokeAndWait(() -> {
-            try {
-                UIManager.setLookAndFeel(new WindowsLookAndFeel());
-            } catch (UnsupportedLookAndFeelException e) {
-                e.printStackTrace();
+        SwingUtilities.invokeAndWait(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    UIManager.setLookAndFeel(new WindowsLookAndFeel());
+                } catch (UnsupportedLookAndFeelException e) {
+                    e.printStackTrace();
+                }
+                System.out.println("Creating JFileChooser...");
+                JFileChooser fileChooser = new JFileChooser();
+                System.out.println("Test passed: chooser = " + fileChooser);
             }
-            System.out.println("Creating JFileChooser...");
-            JFileChooser fileChooser = new JFileChooser();
-            System.out.println("Test passed: chooser = " + fileChooser);
         });
         // Test fails if creating JFileChooser hangs
     }
