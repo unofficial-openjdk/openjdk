@@ -1891,7 +1891,7 @@ public class File
 
             String name = prefix + Long.toString(n) + suffix;
             File f = new File(dir, name);
-            if (!name.equals(f.getName())) {
+            if (!name.equals(f.getName()) || f.isInvalid()) {
                 if (System.getSecurityManager() != null)
                     throw new IOException("Unable to create temporary file");
                 else
@@ -1981,19 +1981,26 @@ public class File
 
         File tmpdir = (directory != null) ? directory
                                           : TempDirectory.location();
+        SecurityManager sm = System.getSecurityManager();
         File f;
-        try {
-            do {
-                f = TempDirectory.generateFile(prefix, suffix, tmpdir);
-            } while (f.exists());
-            if (!f.createNewFile())
-                throw new IOException("Unable to create temporary file");
-        } catch (SecurityException se) {
-            // don't reveal temporary directory location
-            if (directory == null)
-                throw new SecurityException("Unable to create temporary file");
-            throw se;
-        }
+        do {
+            f = TempDirectory.generateFile(prefix, suffix, tmpdir);
+
+            if (sm != null) {
+                try {
+                    sm.checkWrite(f.getPath());
+                } catch (SecurityException se) {
+                    // don't reveal temporary directory location
+                    if (directory == null)
+                        throw new SecurityException("Unable to create temporary file");
+                    throw se;
+                }
+            }
+        } while ((fs.getBooleanAttributes(f) & FileSystem.BA_EXISTS) != 0);
+
+        if (!fs.createFileExclusively(f.getPath()))
+            throw new IOException("Unable to create temporary file");
+
         return f;
     }
 
