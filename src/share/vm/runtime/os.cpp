@@ -1290,7 +1290,16 @@ bool os::set_expanded_boot_path() {
   struct stat st;
   char* sysclasspath = NULL;
 
-  // ${java.home}/lib/moduels/$MODULE/classes
+  // no boot class path expansion with jimage
+  char* jimage = format_boot_path("%/lib/modules/bootmodules.jimage", home, home_len, fileSep, pathSep);
+  if (jimage == NULL) return false;
+  bool has_jimage = (os::stat(jimage, &st) == 0);
+  FREE_C_HEAP_ARRAY(char, jimage, mtInternal);
+  if (has_jimage) {
+    return true; // nothing to do
+  }
+
+  // ${java.home}/lib/modules/$MODULE/classes
   char* modules_dir = format_boot_path("%/lib/modules", home, home_len, fileSep, pathSep);
   if (modules_dir == NULL) return false;
   if (os::stat(modules_dir, &st) == 0) {
