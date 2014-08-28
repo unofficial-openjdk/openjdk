@@ -201,7 +201,7 @@ ALL_TARGETS += $(LAUNCHER_TARGETS)
 ifeq ($(BUILD_HOTSPOT),true)
   hotspot:
 	($(CD) $(SRC_ROOT)/make && $(MAKE) $(MAKE_ARGS) -f HotspotWrapper.gmk)
-endif
+        endif
 
 ALL_TARGETS += hotspot
 
@@ -219,6 +219,12 @@ ALL_TARGETS += demos samples
 ################################################################################
 # Create jmods and module images
 
+analyze-classes:
+	+($(CD) $(SRC_ROOT)/make && $(MAKE) -f AnalyzeClasses.gmk)
+
+module-info:
+	+($(CD) $(SRC_ROOT)/make && $(MAKE) -f CompileModuleInfos.gmk)
+
 generate-modules:
 	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f GenerateModules.gmk)
 
@@ -235,7 +241,8 @@ module-jimages:
 	+($(CD) $(SRC_ROOT)/make && $(MAKE) -I $(JDK_TOPDIR)/make \
 	    -f Images.gmk jdk-jimage SHUFFLED=true)
 
-ALL_TARGETS += generate-modules jmods module-images module-jimage
+ALL_TARGETS += analyze-classes module-info generate-modules jmods \
+    module-images module-jimage
 
 ################################################################################
 # Legacy images targets
@@ -443,6 +450,10 @@ else
   docs-jvmtidoc: hotspot
 
   test: exploded-image
+
+  analyze-classes: java gendata import-hotspot
+
+  module-info: analyze-classes
 
 #  modules-xml: build-tools-jdk java
 
