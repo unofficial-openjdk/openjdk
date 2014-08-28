@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004, 2006, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2004, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -58,6 +58,8 @@ public class ThemeReader {
     private static final Lock writeLock = readWriteLock.writeLock();
     private static volatile boolean valid = false;
 
+    static volatile boolean xpStyleEnabled;
+
     static void flush() {
         // Could be called on Toolkit thread, so do not try to aquire locks
         // to avoid deadlock with theme initialization
@@ -65,6 +67,10 @@ public class ThemeReader {
     }
 
     public native static boolean isThemed();
+
+    public static boolean isXPStyleEnabled() {
+        return xpStyleEnabled;
+    }
 
     // this should be called only with writeLock held
     private static Long getThemeImpl(String widget) {

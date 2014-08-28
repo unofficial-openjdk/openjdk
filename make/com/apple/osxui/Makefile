@@ -67,6 +67,7 @@ FILES_export = \
 
 RESOURCE_BUNDLES_COMPILED_PROPERTIES += \
 	com/apple/laf/resources/aqua.properties
+LOCALE_SET_DEFINITION = jre
 
 #
 # Rules

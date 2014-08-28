@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006, 2007, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2006, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,6 +32,7 @@ import java.security.spec.*;
 import javax.crypto.SecretKey;
 import javax.crypto.KeyAgreement;
 import javax.crypto.spec.*;
+import javax.net.ssl.SSLHandshakeException;
 
 /**
  * Helper class for the ECDH key exchange. It generates the appropriate
@@ -89,19 +90,20 @@ final class ECDHCrypt {
     }
 
     // called by ClientHandshaker with either the server's static or ephemeral public key
-    SecretKey getAgreedSecret(PublicKey peerPublicKey) {
+    SecretKey getAgreedSecret(PublicKey peerPublicKey) throws SSLHandshakeException {
         try {
             KeyAgreement ka = JsseJce.getKeyAgreement("ECDH");
             ka.init(privateKey);
             ka.doPhase(peerPublicKey, true);
             return ka.generateSecret("TlsPremasterSecret");
         } catch (GeneralSecurityException e) {
-            throw new RuntimeException("Could not generate secret", e);
+            throw (SSLHandshakeException) new SSLHandshakeException(
+                "Could not generate secret").initCause(e);
         }
     }
 
     // called by ServerHandshaker
-    SecretKey getAgreedSecret(byte[] encodedPoint) {
+    SecretKey getAgreedSecret(byte[] encodedPoint) throws SSLHandshakeException {
         try {
             ECParameterSpec params = publicKey.getParams();
             ECPoint point = JsseJce.decodePoint(encodedPoint, params.getCurve());
@@ -109,10 +111,9 @@ final class ECDHCrypt {
             ECPublicKeySpec spec = new ECPublicKeySpec(point, params);
             PublicKey peerPublicKey = kf.generatePublic(spec);
             return getAgreedSecret(peerPublicKey);
-        } catch (GeneralSecurityException e) {
-            throw new RuntimeException("Could not generate secret", e);
-        } catch (java.io.IOException e) {
-            throw new RuntimeException("Could not generate secret", e);
+        } catch (GeneralSecurityException | java.io.IOException e) {
+            throw (SSLHandshakeException) new SSLHandshakeException(
+                "Could not generate secret").initCause(e);
         }
     }
 

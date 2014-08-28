@@ -73,7 +73,7 @@ public class bug8036819 {
         usernameLabel.setLabelFor(usernameField);
 
         JLabel pwdLabel = new JLabel("Password: ");
-        JTextField pwdField = new JTextField(20);
+        final JTextField pwdField = new JTextField(20);
         pwdLabel.setDisplayedMnemonic(KeyEvent.VK_P);
         pwdLabel.setLabelFor(pwdField);
 

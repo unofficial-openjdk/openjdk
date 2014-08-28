@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -90,9 +90,10 @@ public class WindowsTableHeaderUI extends BasicTableHeaderUI {
             this.column = column;
             this.hasRollover = (column == getRolloverColumn());
             if (skin == null) {
-                skin = XPStyle.getXP().getSkin(header, Part.HP_HEADERITEM);
+                XPStyle xp = XPStyle.getXP();
+                skin = (xp != null) ? xp.getSkin(header, Part.HP_HEADERITEM) : null;
             }
-            Insets margins = skin.getContentMargin();
+            Insets margins = (skin != null) ? skin.getContentMargin() : null;
             Border border = null;
             int contentTop = 0;
             int contentLeft = 0;
