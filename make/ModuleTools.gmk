@@ -28,54 +28,30 @@ include MakeBase.gmk
 include JavaCompilation.gmk
 include SetupJava.gmk
 
-GENMODULES_DIR := $(JDK_OUTPUTDIR)/genmodules
-MODULEINFO_DIR := $(GENMODULES_DIR)/src
-MODULE_CLASSLIST_DIR := $(GENMODULES_DIR)/classlist
-CLASSANALYZER_CLASSES := $(JDK_OUTPUTDIR)/bt_classanalyzer_classes
-JMODS_DIR := $(JDK_OUTPUTDIR)/jmods
-GENGRAPHS_DIR := $(JDK_OUTPUTDIR)/gengraphs
-
-$(eval $(call SetupJavaCompilation,BUILD_CLASSANALYZER, \
-    SETUP := GENERATE_USINGJDKBYTECODE, \
-    SRC := $(JDK_TOPDIR)/make/modules/tools/src, \
-    BIN := $(CLASSANALYZER_CLASSES), \
-    COPY := .properties .def))
-
 $(eval $(call SetupJavaCompilation,BUILD_DEPS_TOOLS, \
     SETUP := GENERATE_USINGJDKBYTECODE, \
     SRC := $(JDK_TOPDIR)/make/src/classes, \
     INCLUDES := build/tools/deps, \
     BIN := $(JDK_OUTPUTDIR)/btclasses))
 
-$(eval $(call SetupJavaCompilation,BUILD_MODULE_TOOL, \
+$(eval $(call SetupJavaCompilation,BUILD_MODULE_TOOLS, \
     SETUP := GENERATE_USINGJDKBYTECODE, \
     SRC := $(JDK_TOPDIR)/make/src/classes, \
     INCLUDES := build/tools/module, \
     BIN := $(JDK_OUTPUTDIR)/btclasses))
 
-ifndef OPENJDK
-  CLOSED_MODULES := true
-else
-  CLOSED_MODULES := false
-endif
 
-TOOL_CLASSANALYZER=$(BUILD_JAVA) -esa -ea -cp $(CLASSANALYZER_CLASSES) \
-    -Dclassanalyzer.closed.modules=$(CLOSED_MODULES) \
-    -Xbootclasspath/a:$(JDK_OUTPUTDIR)/classes_security \
-    com.sun.tools.classanalyzer.ClassAnalyzer
-
-TOOL_MODULARIZER=$(BUILD_JAVA) -esa -ea -cp $(CLASSANALYZER_CLASSES) \
+TOOL_MODULARIZER := $(BUILD_JAVA) -esa -ea -cp $(CLASSANALYZER_CLASSES) \
     com.sun.tools.classanalyzer.Modularizer
 
-JIGSAW_JAVA = $(JDK_OUTPUTDIR)/bin/java
-TOOL_GENMODULEGRAPH =$(FIXPATH) $(JIGSAW_JAVA) -esa -ea -cp $(CLASSANALYZER_CLASSES) \
+TOOL_GENMODULEGRAPH := $(BUILD_JAVA) -esa -ea -cp $(CLASSANALYZER_CLASSES) \
     com.sun.tools.classanalyzer.GenModuleGraph
 
-TOOL_GENGRAPHS =$(FIXPATH) $(JIGSAW_JAVA) -esa -ea -cp $(JDK_OUTPUTDIR)/btclasses \
+TOOL_GENGRAPHS := $(BUILD_JAVA) -esa -ea -cp $(JDK_OUTPUTDIR)/btclasses \
     build.tools.module.GenGraphs
 
-TOOL_GENMODULESXML =$(FIXPATH) $(JIGSAW_JAVA) -esa -ea -cp $(JDK_OUTPUTDIR)/btclasses \
+TOOL_GENMODULESXML := $(BUILD_JAVA) -esa -ea -cp $(JDK_OUTPUTDIR)/btclasses \
     build.tools.module.GenerateModulesXml
 
-TOOL_MODULESUMMARY =$(FIXPATH) $(JIGSAW_JAVA) -esa -ea -cp $(JDK_OUTPUTDIR)/btclasses \
+TOOL_MODULESUMMARY := $(BUILD_JAVA) -esa -ea -cp $(JDK_OUTPUTDIR)/btclasses \
     -XX:-UseModuleBoundaries build.tools.module.ModuleSummary

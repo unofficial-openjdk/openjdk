@@ -134,10 +134,6 @@ TOOL_CHECKDEPS = $(JAVA_SMALL) -Xbootclasspath/p:$(INTERIM_LANGTOOLS_JAR) \
     -cp "$(JDK_OUTPUTDIR)/btclasses$(PATH_SEP)$(JDK_OUTPUTDIR)" \
     build.tools.deps.CheckDeps
 
-TOOL_GENMODULESXML = $(JAVA_SMALL) -Xbootclasspath/p:$(INTERIM_LANGTOOLS_JAR) \
-    -cp "$(JDK_OUTPUTDIR)/btclasses$(PATH_SEP)$(JDK_OUTPUTDIR)" \
-    build.tools.module.GenerateModulesXml
-
 TOOL_ADDTORESTRICTEDPKGS = $(JAVA_SMALL) -cp $(JDK_OUTPUTDIR)/btclasses \
     build.tools.addtorestrictedpkgs.AddToRestrictedPkgs
 

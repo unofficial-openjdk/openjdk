@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -23,48 +23,19 @@
 # questions.
 #
 
-# Default target declared first
-default: all
-
-include $(SPEC)
+include GendataCommon.gmk
 include ModuleTools.gmk
-include MakeBase.gmk
 
-
-  ALL_SRC_DIRS := \
-      $(wildcard \
-      $(JDK_TOPDIR)/src/*/*/classes \
-      $(LANGTOOLS_TOPDIR)/src/*/*/classes \
-      $(CORBA_TOPDIR)/src/*/*/classes \
-      $(JAXP_TOPDIR)/src/*/*/classes \
-      $(JAXWS_TOPDIR)/src/*/*/classes \
-      $(NASHORN_TOPDIR)/src/*/*/classes) \
-      $(JDK_OUTPUTDIR)/gensrc \
-      $(LANGTOOLS_OUTPUTDIR)/gensrc \
-      $(CORBA_OUTPUTDIR)/gensrc \
-      $(JDK_OUTPUTDIR)/gensrc_no_srczip \
-      #
-
-  ifndef OPENJDK
-  ALL_SRC_DIRS += $(wildcard $(JDK_TOPDIR)/src/closed/*/*/classes)
-  endif
-
-  $(GENGRAPHS_DIR)/jdk.dot: $(BUILD_DEPS_TOOLS)
-	$(TOOL_GENGRAPHS) $(GENGRAPHS_DIR)
 
 MODULES_XML := $(JDK_OUTPUTDIR)/modules/jdk.dev/com/sun/tools/jdeps/resources/modules.xml
 
-  $(MODULES_XML): $(BUILD_MODULE_TOOL)
+$(MODULES_XML): $(BUILD_MODULE_TOOLS)
 	$(MKDIR) -p $(@D)
 	$(RM) $@
 	$(TOOL_GENMODULESXML) $@ $(JDK_OUTPUTDIR)/modules
 
-  $(GENGRAPHS_DIR)/module-summary.html: $(BUILD_MODULE_TOOL)
-	$(MKDIR) -p $(@D)
-	$(TOOL_MODULESUMMARY) -o $@ -mp $(JDK_OUTPUTDIR)/jmods
+jdk.dev: $(MODULES_XML)
 
-all: $(MODULES_XML) $(GENGRAPHS_DIR)/jdk.dot
+all: jdk.dev
 
-postjmods: $(GENGRAPHS_DIR)/module-summary.html
-
-.PHONY: all postjmods
+.PHONY: all jdk.dev
