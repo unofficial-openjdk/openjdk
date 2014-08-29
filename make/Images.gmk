@@ -28,10 +28,7 @@
 all: jdk-image
 
 include $(SPEC)
-include JigsawSpecMod.gmk
 include MakeBase.gmk
-include CreateJmods.gmk
-
 
 ############################################################################
 
@@ -71,6 +68,8 @@ endif
 # with one comma properly as with make 4.0
 
 MODS := $(subst $(COMMA)$(COMMA),$(COMMA),$(subst $(SPACE),$(COMMA),$(JDK_MODULES)))
+
+JMODS := $(wildcard $(JDK_OUTPUTDIR)/jmods/*.jmod)
 
 $(IMAGES_OUTPUTDIR)/_jdk-images-create.marker: $(JMODS)
 	$(ECHO) Creating jdk-module-image

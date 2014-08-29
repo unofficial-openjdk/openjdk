@@ -56,7 +56,7 @@ TOOL_CLASSANALYZER := $(BUILD_JAVA) -esa -ea -cp $(CLASSANALYZER_CLASSES) \
 MODULES_CONFIG := $(MODULEINFO_DIR)/modules.config
 
 $(MODULES_CONFIG): $(BUILD_CLASSANALYZER) \
-    $(wildcard $(JDK_OUTPUTDIR)/modules/*/_the*)
+    $(filter-out %module-info_batch, $(wildcard $(JDK_OUTPUTDIR)/modules/*/_the*))
 	$(RM) -rf $(MODULE_CLASSLIST_DIR) \
 	    $(MODULEINFO_DIR) \
 	    $(JDK_OUTPUTDIR)/modules/*/module-info.class
