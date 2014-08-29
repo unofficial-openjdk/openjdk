@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,37 +22,31 @@
  */
 
 /**
- * JDK-8015969: Needs to enforce and document that global "context" and "engine" can't be modified when running via jsr223
- *
  * @test
- * @option -scripting
+ * @bug 8036987
  * @run
  */
 
-var m = new javax.script.ScriptEngineManager();
-var e = m.getEngineByName("nashorn");
+var factory = Java.type('jdk.nashorn.api.scripting.NashornScriptEngineFactory')
+var engine  = new factory().getScriptEngine(function(str){
+    return str.indexOf('java.util') != -1;
+})
 
-e.put("fail", fail);
-e.eval(<<EOF
+load("nashorn:mozilla_compat.js");
+engine.eval("load('nashorn:mozilla_compat.js');")
 
-'use strict';
-
-try {
-    delete context;
-    fail("FAILED!! context delete should have thrown error");
-} catch (e) {
-    if (! (e instanceof SyntaxError)) {
-        fail("SyntaxError expected but got " + e);
-    }
+function tryEval (str) {
+        try {
+            print(eval(str))
+            print(engine.eval(str))
+        } catch (exc) {
+            print(exc.message)
+        }
 }
 
-try {
-    delete engine;
-    fail("FAILED!! engine delete should have thrown error");
-} catch (e) {
-    if (! (e instanceof SyntaxError)) {
-        fail("SyntaxError expected but got " + e);
-    }
-}
-
-EOF);
+tryEval("new JavaAdapter(javax.script.ScriptContext){}.class")
+tryEval("new JavaAdapter(java.util.ArrayList){}.class")
+tryEval("importClass(java.lang.Integer); Integer")
+tryEval("importClass(java.util.HashSet); HashSet")
+tryEval("importPackage(java.lang); Integer")
+tryEval("importPackage(java.util); HashMap")

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,37 +22,16 @@
  */
 
 /**
- * JDK-8015969: Needs to enforce and document that global "context" and "engine" can't be modified when running via jsr223
+ * JDK-8055796: JSObject and browser JSObject linkers should provide fallback to call underlying Java methods directly
  *
  * @test
- * @option -scripting
  * @run
  */
 
 var m = new javax.script.ScriptEngineManager();
 var e = m.getEngineByName("nashorn");
+var jsobj = e.eval("({ foo: 33, valueOf: function() 42 })");
 
-e.put("fail", fail);
-e.eval(<<EOF
-
-'use strict';
-
-try {
-    delete context;
-    fail("FAILED!! context delete should have thrown error");
-} catch (e) {
-    if (! (e instanceof SyntaxError)) {
-        fail("SyntaxError expected but got " + e);
-    }
-}
-
-try {
-    delete engine;
-    fail("FAILED!! engine delete should have thrown error");
-} catch (e) {
-    if (! (e instanceof SyntaxError)) {
-        fail("SyntaxError expected but got " + e);
-    }
-}
-
-EOF);
+print("foo =", jsobj['getMember(java.lang.String)']("foo"));
+print("eval =", jsobj['eval(String)']("this + 44"));
+print("valueOf function? =", (jsobj.valueOf)['isFunction()']());
