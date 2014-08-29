@@ -138,7 +138,10 @@ void StackMapTable::check_jump_target(
 
 void StackMapTable::check_new_object(
     const StackMapFrame* frame, int32_t target, TRAPS) const {
-  if (frame->offset() > target && frame->has_new_object()) {
+  int frame_index = get_index_from_offset(target);
+  assert(frame_index >= 0 && frame_index < _frame_count, "bad frame index");
+  if (frame->offset() > target &&
+      frame->has_nonmatching_new_object(_frame_array[frame_index])) {
     frame->verifier()->verify_error(
         ErrorContext::bad_code(frame->offset()),
         "Uninitialized object exists on backward branch %d", target);

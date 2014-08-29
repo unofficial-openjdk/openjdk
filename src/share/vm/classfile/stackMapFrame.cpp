@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -54,15 +54,19 @@ StackMapFrame* StackMapFrame::frame_in_exception_handler(u1 flags) {
   return frame;
 }
 
-bool StackMapFrame::has_new_object() const {
+// Return true if frame has an uninitialized (new) object that differs
+// from the target frame's object.
+bool StackMapFrame::has_nonmatching_new_object(const StackMapFrame *target_frame) const {
   int32_t i;
   for (i = 0; i < _max_locals; i++) {
-    if (_locals[i].is_uninitialized()) {
+    if (_locals[i].is_uninitialized() &&
+        !_locals[i].equals(target_frame->_locals[i])) {
       return true;
     }
   }
   for (i = 0; i < _stack_size; i++) {
-    if (_stack[i].is_uninitialized()) {
+    if (_stack[i].is_uninitialized() &&
+        !_stack[i].equals(target_frame->_stack[i])) {
       return true;
     }
   }
