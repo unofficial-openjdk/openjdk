@@ -505,13 +505,14 @@ public enum LauncherHelper {
             return mainClass;
         }
 
-        // read extended module descriptor's main class.
-        // (only jmod for now)
+        // read extended module descriptor's main class (only jmod for now)
         URL url = artifact.location();
-        if (!url.getProtocol().equalsIgnoreCase("jmod")) {
+        String s = url.toString();
+        if (!url.getProtocol().equalsIgnoreCase("file") || !s.endsWith(".jmod")) {
             abort(null, "java.launcher.module.error4", query);
         }
-        ZipFile zf = JModCache.get(url);
+        // convert to jmod URL for direct access
+        ZipFile zf = JModCache.get(new URL("jmod" + s.substring(4)));
         ZipEntry ze = zf.getEntry("module/main-class");
         if (ze == null) {
             abort(null, "java.launcher.module.error5", url);

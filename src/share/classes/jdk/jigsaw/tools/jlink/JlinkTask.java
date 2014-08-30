@@ -425,7 +425,7 @@ class JlinkTask {
             }
 
             String scheme = url.getProtocol();
-            if (!scheme.equalsIgnoreCase("jmod")) {
+            if (!scheme.equalsIgnoreCase("file") || !url.toString().endsWith(".jmod")) {
                 // only jmods supported at this time
                 fail(RuntimeException.class,
                      "Selected module %s (%s) not in jmod format",
@@ -434,8 +434,7 @@ class JlinkTask {
             }
 
             try {
-                URI fileUri = URI.create("file" + url.toURI().toString().substring(4));
-                modPaths.add(Paths.get(fileUri));
+                modPaths.add(Paths.get(url.toURI()));
             } catch (URISyntaxException e) {
                 fail(InternalError.class, "Unable create file URI from %s: %s", url, e);
             }

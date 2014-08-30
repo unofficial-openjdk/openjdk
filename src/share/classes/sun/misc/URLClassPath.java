@@ -362,13 +362,13 @@ public class URLClassPath {
                             return new Loader(url);
                         }
                     } else {
-                        if (file.endsWith(".jmod")) {
-                            return new JModLoader(url);
-                        } else if (file.endsWith(".jimage")) {
-                            return new JImageLoader(url);
-                        } else {
-                            return new JarLoader(url, jarHandler, lmap);
+                        if (file != null && "file".equals(url.getProtocol())) {
+                            if (file.endsWith(".jmod"))
+                                return new JModLoader(url);
+                            if (file.endsWith(".jimage"))
+                                return new JImageLoader(url);
                         }
+                        return new JarLoader(url, jarHandler, lmap);
                     }
                 }
             });
@@ -1109,9 +1109,13 @@ public class URLClassPath {
     private static class JModLoader extends Loader {
         private final ZipFile zipfile;
 
+        static URL toJModURL(URL url) throws MalformedURLException {
+            return new URL("jmod" + url.toString().substring(4));
+        }
+
         JModLoader(URL url) throws IOException {
-            super(url);
-            this.zipfile = JModCache.get(url);
+            super(toJModURL(url));
+            this.zipfile = JModCache.get(getBaseURL());
         }
 
         private String toEntryName(String name) {
@@ -1179,9 +1183,13 @@ public class URLClassPath {
     private static class JImageLoader extends Loader {
         private final ImageReader jimage;
 
+        static URL toJImageURL(URL url) throws MalformedURLException {
+            return new URL("jimage" + url.toString().substring(4));
+        }
+
         JImageLoader(URL url) throws IOException {
-            super(url);
-            this.jimage = JImageCache.get(url);
+            super(toJImageURL(url));
+            this.jimage = JImageCache.get(getBaseURL());
         }
 
         private String toEntryName(String name) {

@@ -540,11 +540,7 @@ public class Launcher {
         } catch (IOException e) {}
 
         try {
-            URL u = ParseUtil.fileToEncodedURL(file);
-            String s = u.toString();
-            if (s.endsWith(".jimage"))
-                u = new URL("jimage" + s.substring(4));
-            return u;
+            return ParseUtil.fileToEncodedURL(file);
         } catch (MalformedURLException e) {
             // Should never happen since we specify the protocol...
             throw new InternalError(e);

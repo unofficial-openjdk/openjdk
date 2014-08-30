@@ -385,11 +385,11 @@ class ModulePath implements ModuleArtifactFinder {
      * file system.
      */
     private ModuleArtifact readJMod(Path file) throws IOException {
-        // file -> jmod URL
-        String s = file.toUri().toURL().toString();
-        URL url = new URL("jmod" + s.substring(4));
+        URL url = file.toUri().toURL();
 
-        ZipFile zf = JModCache.get(url);
+        // file -> jmod URL for direct access
+        URL jmodUrl = new URL("jmod" + url.toString().substring(4));
+        ZipFile zf = JModCache.get(jmodUrl);
         ZipEntry ze = zf.getEntry("classes/" + MODULE_INFO);
         if (ze == null) {
             // jmod without classes/module-info, ignore for now
