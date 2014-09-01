@@ -239,17 +239,17 @@ ALL_TARGETS += analyze-classes module-info generate-summary
 jmods:
 	+($(CD) $(SRC_ROOT)/make && $(MAKE) -I $(JDK_TOPDIR)/make \
 	    $(addprefix -I, $(foreach d, lib gensrc gendata copy launcher, $(addsuffix /$d, $(MAKE_DIR_LIST)))) \
-	    -f CreateJmods.gmk SHUFFLED=true jmods)
+	    -f CreateJmods.gmk jmods)
 
 module-images:
 	+($(CD) $(SRC_ROOT)/make && $(MAKE) -I $(JDK_TOPDIR)/make \
-	    -f Images.gmk SHUFFLED=true)
+	    -f Images.gmk)
 
 module-jimages:
 	+($(CD) $(SRC_ROOT)/make && $(MAKE) -I $(JDK_TOPDIR)/make \
-	    -f Images.gmk jdk-jimage SHUFFLED=true)
+	    -f Images.gmk jdk-jimage)
 
-ALL_TARGETS += jmods module-images module-jimage
+ALL_TARGETS += jmods module-images module-jimages
 
 ################################################################################
 # Legacy images targets

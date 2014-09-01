@@ -582,6 +582,14 @@ FindModulesWithMakefileFor = $(sort $(foreach d, $(MAKE_DIR_LIST), \
     $(patsubst $d/$(strip $1)/$(strip $2)-%.gmk,%, \
     $(wildcard $d/$(strip $1)/$(strip $2)-*.gmk))))
 
+# Find the correct makefile for a module and a build phase
+# Param 1: Module name
+# Param 2: Make subdir
+# Param 3: Makefile prefix
+FindMakefileForModule = \
+    $(firstword $(wildcard $(addsuffix /$(strip $2)/$(strip $3)-$(strip $1).gmk, \
+    $(MAKE_DIR_LIST))))
+
 # Declare a recipe for calling such a makefile
 # Param 1: Module name
 # Param 2: Suffix for rule
@@ -589,8 +597,7 @@ FindModulesWithMakefileFor = $(sort $(foreach d, $(MAKE_DIR_LIST), \
 # Param 4: Makefile prefix
 define DeclareRecipeForModuleMakefile
   $$(strip $1)-$$(strip $2):
-	+($(CD) $$(dir $$(firstword $$(wildcard $$(addsuffix /$$(strip $3)/$$(strip $4)-$$(strip $1).gmk, \
-	        $(MAKE_DIR_LIST))))) \
+	+($(CD) $$(dir $$(call FindMakefileForModule, $1, $3, $4)) \
 	    && $(MAKE) $(MAKE_ARGS) \
 	    -f $$(strip $4)-$$(strip $1).gmk \
 	    $$(addprefix -I, $$(wildcard $(MAKE_DIR_LIST) \
