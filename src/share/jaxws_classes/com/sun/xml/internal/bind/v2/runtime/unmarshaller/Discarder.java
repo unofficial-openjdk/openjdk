@@ -44,8 +44,8 @@ public final class Discarder extends Loader {
 
     @Override
     public void childElement(UnmarshallingContext.State state, TagName ea) {
-        state.target = null;
+        state.setTarget(null);
         // registering this allows the discarder to process the whole subtree.
-        state.loader = this;
+        state.setLoader(this);
     }
 }

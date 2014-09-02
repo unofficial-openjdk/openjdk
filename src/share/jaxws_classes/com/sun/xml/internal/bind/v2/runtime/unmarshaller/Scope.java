@@ -97,7 +97,7 @@ public final class Scope<BeanT,PropT,ItemT,PackT> {
     public void add( Accessor<BeanT,PropT> acc, Lister<BeanT,PropT,ItemT,PackT> lister, ItemT value) throws SAXException{
         try {
             if(!hasStarted()) {
-                this.bean = (BeanT)context.getCurrentState().target;
+                this.bean = (BeanT)context.getCurrentState().getTarget();
                 this.acc = acc;
                 this.lister = lister;
                 this.pack = lister.startPacking(bean,acc);
@@ -121,7 +121,7 @@ public final class Scope<BeanT,PropT,ItemT,PackT> {
     public void start( Accessor<BeanT,PropT> acc, Lister<BeanT,PropT,ItemT,PackT> lister) throws SAXException{
         try {
             if(!hasStarted()) {
-                this.bean = (BeanT)context.getCurrentState().target;
+                this.bean = (BeanT)context.getCurrentState().getTarget();
                 this.acc = acc;
                 this.lister = lister;
                 this.pack = lister.startPacking(bean,acc);

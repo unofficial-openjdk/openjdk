@@ -98,7 +98,7 @@ abstract class ArrayERProperty<BeanT,ListT,ItemT> extends ArrayProperty<BeanT,Li
             UnmarshallingContext context = state.getContext();
             context.startScope(1);
             // inherit the target so that our children can access its target
-            state.target = state.prev.target;
+            state.setTarget(state.getPrev().getTarget());
 
             // start it now, so that even if there's no children we can still return empty collection
             context.getScope(0).start(acc,lister);
@@ -116,8 +116,8 @@ abstract class ArrayERProperty<BeanT,ListT,ItemT> extends ArrayProperty<BeanT,Li
                 super.childElement(state,ea);
                 return;
             }
-            state.loader = child.loader;
-            state.receiver = child.receiver;
+            state.setLoader(child.loader);
+            state.setReceiver(child.receiver);
         }
 
         @Override

@@ -98,10 +98,10 @@ public class DomLoader<ResultT extends Result> extends Loader {
     @Override
     public void startElement(UnmarshallingContext.State state, TagName ea) throws SAXException {
         UnmarshallingContext context = state.getContext();
-        if (state.target == null)
-            state.target = new State(context);
+        if (state.getTarget() == null)
+            state.setTarget(new State(context));
 
-        State s = (State) state.target;
+        State s = (State) state.getTarget();
         try {
             s.declarePrefixes(context, context.getNewlyDeclaredPrefixes());
             s.handler.startElement(ea.uri, ea.local, ea.getQname(), ea.atts);
@@ -113,10 +113,10 @@ public class DomLoader<ResultT extends Result> extends Loader {
 
     @Override
     public void childElement(UnmarshallingContext.State state, TagName ea) throws SAXException {
-        state.loader = this;
-        State s = (State) state.prev.target;
+        state.setLoader(this);
+        State s = (State) state.getPrev().getTarget();
         s.depth++;
-        state.target = s;
+        state.setTarget(s);
     }
 
     @Override
@@ -124,7 +124,7 @@ public class DomLoader<ResultT extends Result> extends Loader {
         if(text.length()==0)
             return;     // there's no point in creating an empty Text node in DOM.
         try {
-            State s = (State) state.target;
+            State s = (State) state.getTarget();
             s.handler.characters(text.toString().toCharArray(),0,text.length());
         } catch( SAXException e ) {
             state.getContext().handleError(e);
@@ -134,7 +134,7 @@ public class DomLoader<ResultT extends Result> extends Loader {
 
     @Override
     public void leaveElement(UnmarshallingContext.State state, TagName ea) throws SAXException {
-        State s = (State) state.target;
+        State s = (State) state.getTarget();
         UnmarshallingContext context = state.getContext();
 
         try {
@@ -156,7 +156,7 @@ public class DomLoader<ResultT extends Result> extends Loader {
             }
 
             // we are done
-            state.target = s.getElement();
+            state.setTarget(s.getElement());
         }
     }
 
