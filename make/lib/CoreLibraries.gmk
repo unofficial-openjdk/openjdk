@@ -33,13 +33,8 @@ ifneq ($(OPENJDK_TARGET_OS), solaris)
   BUILD_LIBFDLIBM_OPTIMIZATION := NONE
 endif
 
-ifeq ($(SHUFFLED), true)
-  LIBFDLIBM_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/libfdlibm
-  LIBFDLIBM_CFLAGS := -I$(LIBFDLIBM_SRC)
-else
-  LIBFDLIBM_SRC := $(JDK_TOPDIR)/src/share/native/java/lang/fdlibm/src
-  LIBFDLIBM_CFLAGS := -I$(JDK_TOPDIR)/src/share/native/java/lang/fdlibm/include
-endif
+LIBFDLIBM_SRC := $(JDK_TOPDIR)/src/java.base/share/native/libfdlibm
+LIBFDLIBM_CFLAGS := -I$(LIBFDLIBM_SRC)
 
 ifneq ($(OPENJDK_TARGET_OS), macosx)
   $(eval $(call SetupNativeCompilation,BUILD_LIBFDLIBM, \
@@ -77,12 +72,7 @@ endif
 
 ##########################################################################################
 
-ifeq ($(SHUFFLED), true)
-  LIBVERIFY_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/libverify
-else
-  LIBVERIFY_SRC := $(JDK_TOPDIR)/src/share/native/common
-  BUILD_LIBVERIFY_INCLUDE := check_code.c check_format.c
-endif
+BUILD_LIBVERIFY_SRC := check_code.c check_format.c
 
 ifeq ($(OPENJDK_TARGET_OS), solaris)
   ifneq ($(OPENJDK_TARGET_CPU), x86_64)
@@ -100,8 +90,7 @@ endif
 $(eval $(call SetupNativeCompilation,BUILD_LIBVERIFY, \
     LIBRARY := verify, \
     OUTPUT_DIR := $(INSTALL_LIBRARIES_HERE), \
-    SRC := $(LIBVERIFY_SRC), \
-    INCLUDE_FILES := $(BUILD_LIBVERIFY_INCLUDE), \
+    SRC := $(JDK_TOPDIR)/src/java.base/share/native/libverify, \
     LANG := C, \
     OPTIMIZATION := $(LIBVERIFY_OPTIMIZATION), \
     CFLAGS := $(CFLAGS_JDKLIB), \
@@ -123,53 +112,16 @@ BASE_LIBRARIES += $(BUILD_LIBVERIFY)
 
 ##########################################################################################
 
-ifeq ($(SHUFFLED), true)
-  ifeq ($(OPENJDK_TARGET_OS), macosx)
-    LIBJAVA_SRC_DIRS += $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/macosx/native/libjava
-    LIBJAVA_EXCLUDE_FILES += $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/unix/native/libjava/HostLocaleProviderAdapter_md.c
-  endif
+LIBJAVA_SRC_DIRS := $(call FindSrcDirsForLib, java.base, java)
 
-  LIBJAVA_SRC_DIRS += $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/$(OPENJDK_TARGET_OS_API_DIR)/native/libjava \
-      $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/libjava
-
-  LIBJAVA_CFLAGS := $(foreach dir, $(LIBJAVA_SRC_DIRS), -I$(dir)) \
-      -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/libfdlibm \
-      -I$(JDK_OUTPUTDIR)/gensrc_headers/java.base \
-      -DARCHPROPNAME='"$(OPENJDK_TARGET_CPU_OSARCH)"'
-else
-LIBJAVA_SRC_DIRS := $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/java/lang \
-    $(JDK_TOPDIR)/src/share/native/java/lang \
-    $(JDK_TOPDIR)/src/share/native/java/lang/reflect \
-    $(JDK_TOPDIR)/src/share/native/java/io \
-    $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/java/io \
-    $(JDK_TOPDIR)/src/share/native/java/nio \
-    $(JDK_TOPDIR)/src/share/native/java/security \
-    $(JDK_TOPDIR)/src/share/native/common \
-    $(JDK_TOPDIR)/src/share/native/sun/misc \
-    $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/sun/misc \
-    $(JDK_TOPDIR)/src/share/native/sun/reflect \
-    $(JDK_TOPDIR)/src/share/native/java/util \
-    $(JDK_TOPDIR)/src/share/native/java/util/concurrent/atomic \
-    $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/common \
-    $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/java/util
-
-ifeq ($(OPENJDK_TARGET_OS), windows)
-  LIBJAVA_SRC_DIRS += $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/sun/util/locale/provider
-else ifeq ($(OPENJDK_TARGET_OS), macosx)
-  LIBJAVA_SRC_DIRS += $(JDK_TOPDIR)/src/macosx/native/sun/util/locale/provider
+ifeq ($(OPENJDK_TARGET_OS), macosx)
+  LIBJAVA_EXCLUDE_FILES += $(JDK_TOPDIR)/src/java.base/unix/native/libjava/HostLocaleProviderAdapter_md.c
 endif
 
-ifeq ($(OPENJDK_TARGET_OS), windows)
-  LIBJAVA_SRC_DIRS += $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/sun/security/provider \
-      $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/sun/io
-endif
-
-    LIBJAVA_EXCLUDE_FILES := check_code.c check_format.c jspawnhelper.c
-
-LIBJAVA_CFLAGS := $(foreach dir, $(LIBJAVA_SRC_DIRS), -I$(dir)) \
-    -I$(JDK_TOPDIR)/src/share/native/java/lang/fdlibm/include \
+LIBJAVA_CFLAGS := $(addprefix -I, $(LIBJAVA_SRC_DIRS)) \
+    -I$(JDK_TOPDIR)/src/java.base/share/native/libfdlibm \
+    -I$(JDK_OUTPUTDIR)/gensrc_headers/java.base \
     -DARCHPROPNAME='"$(OPENJDK_TARGET_CPU_OSARCH)"'
-endif
 
 LIBJAVA_CFLAGS += -DJDK_MAJOR_VERSION='"$(JDK_MAJOR_VERSION)"' \
     -DJDK_MINOR_VERSION='"$(JDK_MINOR_VERSION)"' \
@@ -235,27 +187,9 @@ $(BUILD_LIBJAVA): $(BUILD_LIBFDLIBM)
 
 ##########################################################################################
 
-ifeq ($(SHUFFLED), true)
-  LIBZIP_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/libzip
-  LIBZIP_CPPFLAGS := -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/libjava \
-      -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/$(OPENJDK_TARGET_OS_API_DIR)/native/libjava \
-      -I$(JDK_OUTPUTDIR)/gensrc_headers/java.base
-else
-  LIBZIP_SRC := $(JDK_TOPDIR)/src/share/native/java/util/zip
-  LIBZIP_CPPFLAGS := -I$(JDK_TOPDIR)/src/share/native/java/io \
-      -I$(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/java/io
-endif
-
 BUILD_LIBZIP_EXCLUDES :=
 ifeq ($(USE_EXTERNAL_LIBZ), true)
-  LIBZ := -lz
   LIBZIP_EXCLUDES += zlib-1.2.8
-else
-  ifeq ($(SHUFFLED), true)
-    ZLIB_CPPFLAGS := -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/libzip/zlib-1.2.8
-  else
-  ZLIB_CPPFLAGS := -I$(JDK_TOPDIR)/src/share/native/java/util/zip/zlib-1.2.8
-endif
 endif
 
 BUILD_LIBZIP_REORDER :=
@@ -274,11 +208,13 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBZIP, \
     OUTPUT_DIR := $(INSTALL_LIBRARIES_HERE), \
     LANG := C, \
     OPTIMIZATION := LOW, \
-    SRC := $(LIBZIP_SRC), \
+    SRC := $(JDK_TOPDIR)/src/java.base/share/native/libzip, \
     EXCLUDES := $(LIBZIP_EXCLUDES), \
     CFLAGS := $(CFLAGS_JDKLIB) \
         $(ZLIB_CPPFLAGS) \
-        $(LIBZIP_CPPFLAGS), \
+        -I$(JDK_TOPDIR)/src/java.base/share/native/libjava \
+        -I$(JDK_TOPDIR)/src/java.base/$(OPENJDK_TARGET_OS_API_DIR)/native/libjava \
+        -I$(JDK_OUTPUTDIR)/gensrc_headers/java.base, \
     CFLAGS_posix := $(BUILD_LIBZIP_MMAP) -UDEBUG, \
     MAPFILE := $(JDK_TOPDIR)/make/mapfiles/libzip/mapfile-vers, \
     REORDER := $(BUILD_LIBZIP_REORDER), \
@@ -307,99 +243,8 @@ BASE_LIBRARIES += $(BUILD_LIBZIP)
 
 ##########################################################################################
 
-ifeq ($(SHUFFLED), true)
-  ifeq ($(OPENJDK_TARGET_OS), macosx)
-    LIBPREF_SRC_DIRS := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.prefs/macosx/native/libprefs
-  else
-    LIBPREF_SRC_DIRS := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.prefs/$(OPENJDK_TARGET_OS_API_DIR)/native/libprefs
-  endif
-else
-ifeq ($(OPENJDK_TARGET_OS), macosx)
-  LIBPREF_SRC_DIRS := $(JDK_TOPDIR)/src/macosx/native/java/util/prefs
-else
-  LIBPREF_SRC_DIRS := $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/java/util/prefs
-endif
-endif
-
-$(eval $(call SetupNativeCompilation,BUILD_LIBPREFS, \
-    LIBRARY := prefs, \
-    OUTPUT_DIR := $(INSTALL_LIBRARIES_HERE), \
-    SRC := $(LIBPREF_SRC_DIRS), \
-    LANG := C, \
-    OPTIMIZATION := HIGH, \
-    CFLAGS := $(CFLAGS_JDKLIB) $(addprefix -I, $(LIBPREF_SRC_DIRS) $(LIBJAVA_SRC_DIRS)), \
-    MAPFILE := $(JDK_TOPDIR)/make/mapfiles/libprefs/mapfile-vers, \
-    LDFLAGS := $(LDFLAGS_JDKLIB) \
-        $(call SET_SHARED_LIBRARY_ORIGIN), \
-    LDFLAGS_SUFFIX_linux := -ljvm -ljava, \
-    LDFLAGS_SUFFIX_solaris := -ljvm -ljava -lc, \
-    LDFLAGS_SUFFIX_aix := -ljvm -ljava, \
-    LDFLAGS_SUFFIX_windows := advapi32.lib jvm.lib $(WIN_JAVA_LIB), \
-    LDFLAGS_SUFFIX_macosx := -ljvm -framework CoreFoundation -framework Foundation, \
-    VERSIONINFO_RESOURCE := $(GLOBAL_VERSION_INFO_RESOURCE), \
-    RC_FLAGS := $(RC_FLAGS) \
-        -D "JDK_FNAME=prefs.dll" \
-        -D "JDK_INTERNAL_NAME=prefs" \
-        -D "JDK_FTYPE=0x2L", \
-    OBJECT_DIR := $(JDK_OUTPUTDIR)/objs/libprefs, \
-    DEBUG_SYMBOLS := $(DEBUG_ALL_BINARIES)))
-
-$(BUILD_LIBPREFS): $(BUILD_LIBJAVA)
-    
-PREFS_LIBRARIES += $(BUILD_LIBPREFS)
-
-##########################################################################################
-
-ifeq ($(SHUFFLED), true)
-  LIBUNPACK_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.runtime/share/native/libunpack \
-      $(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.runtime/share/native/common-unpack
-  LIBUNPACK_CPPFLAGS := -I$(JDK_OUTPUTDIR)/gensrc_headers/java.base \
-      -I$(JDK_TOPDIR)/$(SRC_SUBDIR)/jdk.runtime/share/native/common-unpack \
-      $(addprefix -I, $(BUILD_LIBJAVA_SRC)) \
-      #
-else
-  LIBUNPACK_SRC := $(JDK_TOPDIR)/src/share/native/com/sun/java/util/jar/pack
-  LIBUNPACK_EXFILES := main.cpp
-endif
-
-$(eval $(call SetupNativeCompilation,BUILD_LIBUNPACK, \
-    LIBRARY := unpack, \
-    OUTPUT_DIR := $(INSTALL_LIBRARIES_HERE), \
-    SRC := $(LIBUNPACK_SRC), \
-    EXCLUDE_FILES := $(LIBUNPACK_EXFILES), \
-    LANG := C++, \
-    OPTIMIZATION := LOW, \
-    CFLAGS := $(CXXFLAGS_JDKLIB) \
-        -DNO_ZLIB -DUNPACK_JNI -DFULL \
-        $(LIBUNPACK_CPPFLAGS), \
-    CFLAGS_release := -DPRODUCT, \
-    MAPFILE := $(JDK_TOPDIR)/make/mapfiles/libunpack/mapfile-vers, \
-    LDFLAGS := $(LDFLAGS_JDKLIB) $(LDFLAGS_CXX_JDK) \
-        $(call SET_SHARED_LIBRARY_ORIGIN), \
-    LDFLAGS_windows := -map:$(JDK_OUTPUTDIR)/objs/unpack.map -debug \
-        jvm.lib $(WIN_JAVA_LIB), \
-    LDFLAGS_SUFFIX_posix := -ljvm $(LIBCXX) -ljava -lc, \
-    OBJECT_DIR := $(JDK_OUTPUTDIR)/objs/libunpack, \
-    VERSIONINFO_RESOURCE := $(GLOBAL_VERSION_INFO_RESOURCE), \
-    RC_FLAGS := $(RC_FLAGS) \
-        -D "JDK_FNAME=unpack.dll" \
-        -D "JDK_INTERNAL_NAME=unpack" \
-        -D "JDK_FTYPE=0x2L", \
-    DEBUG_SYMBOLS := $(DEBUG_ALL_BINARIES)))
-
-$(BUILD_LIBUNPACK): $(BUILD_LIBJAVA)
-
-UNPACK_LIBRARIES += $(BUILD_LIBUNPACK)
-
-##########################################################################################
-
-ifeq ($(SHUFFLED), true)
-  BUILD_LIBJLI_SRC_DIRS := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/libjli \
-      $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/$(OPENJDK_TARGET_OS_API_DIR)/native/libjli
-else
-  BUILD_LIBJLI_SRC_DIRS := $(JDK_TOPDIR)/src/share/bin \
-      $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/bin
-endif
+BUILD_LIBJLI_SRC_DIRS := $(JDK_TOPDIR)/src/java.base/share/native/libjli \
+    $(JDK_TOPDIR)/src/java.base/$(OPENJDK_TARGET_OS_API_DIR)/native/libjli
 
 LIBJLI_CFLAGS := $(CFLAGS_JDKLIB)
 
@@ -422,12 +267,7 @@ else
 endif
 
 ifeq ($(OPENJDK_TARGET_OS), macosx)
-  ifeq ($(SHUFFLED), true)
-    BUILD_LIBJLI_SRC_DIRS += $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/macosx/native/libjli
-  else
-    BUILD_LIBJLI_SRC_DIRS += $(JDK_TOPDIR)/src/macosx/bin
-  LIBJLI_CFLAGS += -I$(JDK_TOPDIR)/src/macosx/bin
-  endif
+  BUILD_LIBJLI_SRC_DIRS += $(JDK_TOPDIR)/src/java.base/macosx/native/libjli
   BUILD_LIBJLI_FILES += java_md_common.c java_md_macosx.c
 
   BUILD_LIBJLI_java_md_macosx.c_CFLAGS := -x objective-c
@@ -448,7 +288,7 @@ else ifneq ($(OPENJDK_TARGET_OS), macosx)
 
   # if the architecture specific ergo file exists then
   # use it, else use the generic definitions from ergo.c
-  ifneq ($(wildcard $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/bin/$(ERGO_ARCH_FILE)), )
+  ifneq ($(wildcard $(JDK_TOPDIR)/src/java.base/$(OPENJDK_TARGET_OS_API_DIR)/native/libjli/$(ERGO_ARCH_FILE)), )
     BUILD_LIBJLI_FILES += $(ERGO_ARCH_FILE)
   else # !ERGO_ARCH_FILE
     LIBJLI_CFLAGS += -DUSE_GENERIC_ERGO
@@ -465,11 +305,7 @@ ifeq ($(OPENJDK_TARGET_OS), macosx)
 endif
 
 ifneq ($(USE_EXTERNAL_LIBZ), true)
-  ifeq ($(SHUFFLED), true)
-    BUILD_LIBJLI_SRC_DIRS += $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/share/native/libzip/zlib-1.2.8
-  else
-  BUILD_LIBJLI_SRC_DIRS += $(JDK_TOPDIR)/src/share/native/java/util/zip/zlib-1.2.8
-  endif
+  BUILD_LIBJLI_SRC_DIRS += $(JDK_TOPDIR)/src/java.base/share/native/libzip/zlib-1.2.8
   LIBJLI_CFLAGS += $(ZLIB_CPPFLAGS)
   BUILD_LIBJLI_FILES += \
       inflate.c \
@@ -588,3 +424,4 @@ else ifeq ($(OPENJDK_TARGET_OS), aix)
   BASE_STATIC_LIBRARIES += $(BUILD_LIBJLI_STATIC)
 
 endif
+

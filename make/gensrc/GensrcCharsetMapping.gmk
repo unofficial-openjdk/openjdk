@@ -31,8 +31,8 @@ CHARSET_DATA_DIR := $(JDK_TOPDIR)/make/data/charsetmapping
 ### Generate files using the charsetmapping tool
 ###
 
-CHARSET_GENSRC_JAVA_DIR_CS := $(JDK_OUTPUTDIR)/gensrc$(JDK_CHARSETS_SUBDIR)/sun/nio/cs/ext
-CHARSET_GENSRC_JAVA_DIR_BASE := $(JDK_OUTPUTDIR)/gensrc$(JAVA_BASE_SUBDIR)/sun/nio/cs
+CHARSET_GENSRC_JAVA_DIR_CS := $(JDK_OUTPUTDIR)/gensrc/jdk.charsets/sun/nio/cs/ext
+CHARSET_GENSRC_JAVA_DIR_BASE := $(JDK_OUTPUTDIR)/gensrc/java.base/sun/nio/cs
 CHARSET_DONE_CS := $(CHARSET_GENSRC_JAVA_DIR_CS)/_the.charsetmapping
 CHARSET_DONE_BASE := $(CHARSET_GENSRC_JAVA_DIR_BASE)/_the.charsetmapping
 CHARSET_COPYRIGHT_HEADER_BASE := $(JDK_TOPDIR)/make/src/classes/build/tools/charsetmapping
@@ -159,8 +159,8 @@ $(CHARSET_STANDARD_GENSRC_DIR)/cache-map.java.snippet: $(CHARSET_STANDARD_GENSRC
 	$(TOOL_HASHER) -i -e Cache -t Charset < '$<' > '$@'
 
 $(eval $(call SetupTextFileProcessing, BUILD_CHARSET_STANDARD, \
-    SOURCE_FILES := $(JDK_TOPDIR)/$(SRC_SUBDIR)$(JAVA_BASE_SUBDIR)/share/classes/$(CHARSET_STANDARD_JAVA).template, \
-    OUTPUT_FILE := $(JDK_OUTPUTDIR)/gensrc$(JAVA_BASE_SUBDIR)/$(CHARSET_STANDARD_JAVA), \
+    SOURCE_FILES := $(JDK_TOPDIR)/src/java.base/share/classes/$(CHARSET_STANDARD_JAVA).template, \
+    OUTPUT_FILE := $(JDK_OUTPUTDIR)/gensrc/java.base/$(CHARSET_STANDARD_JAVA), \
     INCLUDES := \
         _INCLUDE_ALIASES_TABLES_ => $(CHARSET_STANDARD_GENSRC_DIR)/aliases-tables.java.snippet ; \
         _INCLUDE_ALIASES_MAP_ => $(CHARSET_STANDARD_GENSRC_DIR)/aliases-map.java.snippet ; \

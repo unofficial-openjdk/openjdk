@@ -46,6 +46,7 @@ class ClassPath {
      *    javahome/lib/*.jar
      *    javahome/lib/ext/*.jar
      *    javahome/../lib/*.jar
+     *    javahome/modules/*
      *
      * It will filter out the cobundled JAR files such as FX, JMC, JVisualVM
      */
@@ -63,6 +64,12 @@ class ClassPath {
             if (classes.exists() && classes.isDirectory()) {
                 // jdk build outputdir
                 result.add(new Archive(classes, ClassFileReader.newInstance(classes)));
+            }
+            File modules = home.resolve("modules").toFile();
+            if (modules.isDirectory()) {
+                for (File moduleSubdir: modules.listFiles()) {
+                    result.add(new Archive(moduleSubdir, ClassFileReader.newInstance(moduleSubdir)));
+                }
             }
             File securityClasses = home.resolve("classes_security").toFile();
             if (securityClasses.exists() && securityClasses.isDirectory()) {

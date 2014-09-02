@@ -26,13 +26,12 @@
 default: all
 
 include $(SPEC)
-include JigsawSpecMod.gmk
 include MakeBase.gmk
 include JavaCompilation.gmk
 include NativeCompilation.gmk
 
 # Setup the java compilers for the JDK build.
-include Setup.gmk
+include SetupJava.gmk
 
 # Prepare the find cache.
 $(eval $(call FillCacheFind, $(JDK_TOPDIR)/src))
@@ -44,31 +43,18 @@ BUILD_DEMOS =
 # Now every other demo has its own quirks where to put the
 # READMEs and other files.
 
-ifeq ($(SHUFFLED), true)
-  DEMO_SHARE_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/demo/share
-  DEMO_CLOSED_SHARE_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/demo/share
-  DEMO_SOLARIS_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/demo/solaris
-  DEMO_OS_API_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/demo/$(OPENJDK_TARGET_OS_API_DIR)
-  VERSION_INFO_RESOURCE := $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.base/windows/native/common/version.rc
-else
-  DEMO_SHARE_SRC := $(JDK_TOPDIR)/src/share/demo
-  DEMO_CLOSED_SHARE_SRC := $(JDK_TOPDIR)/src/closed/share/demo
-  DEMO_SOLARIS_SRC := $(JDK_TOPDIR)/src/solaris/demo
-  DEMO_OS_API_SRC := $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/demo
-  VERSION_INFO_RESOURCE := $(JDK_TOPDIR)/src/windows/resource/version.rc
-endif
+DEMO_SHARE_SRC := $(JDK_TOPDIR)/src/demo/share
+DEMO_CLOSED_SHARE_SRC := $(JDK_TOPDIR)/src/closed/demo/share
+DEMO_SOLARIS_SRC := $(JDK_TOPDIR)/src/demo/solaris
+DEMO_OS_API_SRC := $(JDK_TOPDIR)/src/demo/$(OPENJDK_TARGET_OS_API_DIR)
+VERSION_INFO_RESOURCE := $(JDK_TOPDIR)/src/java.base/windows/native/common/version.rc
 
 ##################################################################################################
 
 define SetupAppletDemo
-  ifeq ($(SHUFFLED), true)
-    $1_APPLET_DEMO_SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/$3demo/share/applets/$1
-  else
-    $1_APPLET_DEMO_SRC := $(JDK_TOPDIR)/src/$3share/demo/applets/$1
-  endif
   $$(eval $$(call SetupJavaCompilation,BUILD_DEMO_APPLET_$1, \
       SETUP := GENERATE_USINGJDKBYTECODE, \
-      SRC := $$($1_APPLET_DEMO_SRC), \
+      SRC := $(JDK_TOPDIR)/src/$3demo/share/applets/$1, \
       BIN := $(JDK_OUTPUTDIR)/demo/applets/$1, \
       COPY := .html .java .xyz .obj .au .gif, \
       DISABLE_SJAVAC := $2))
@@ -116,11 +102,7 @@ define SetupDemo
   # Param 11 = Extra manifest attribute
   # Param 12 = Suffix for compiler setup name
 
-  ifeq ($(SHUFFLED), true)
-    $1_SRC_BASE := $(JDK_TOPDIR)/$(SRC_SUBDIR)/$6demo/share/$2/$1
-  else
-    $1_SRC_BASE := $(JDK_TOPDIR)/src/$6share/demo/$2/$1
-  endif
+  $1_SRC_BASE := $(JDK_TOPDIR)/src/$6demo/share/$2/$1
   # In some demos the source is found in a subdir called src.
   $1_MAIN_SRC := $$(wildcard $$($1_SRC_BASE)/src)
   ifeq ($$($1_MAIN_SRC), )
@@ -244,8 +226,8 @@ define SetupJVMTIDemo
       $$(wildcard $$(addprefix $(DEMO_SHARE_SRC)/jvmti/, $2)) \
       $9
   BUILD_DEMO_JVMTI_$1_EXTRA_SRC_EXCLUDE := \
-      $$(wildcard $$(addprefix $(DEMO_SHARE_SRC)/jvmti/, $2)/README.txt) \
-      $$(wildcard $$(addprefix $(DEMO_SHARE_SRC)/jvmti/, $2)/sample.makefile.txt)
+      $$(wildcard $$(patsubst %, $(DEMO_SHARE_SRC)/jvmti/%/README.txt, $2)) \
+      $$(wildcard $$(patsubst %, $(DEMO_SHARE_SRC)/jvmti/%/sample.makefile.txt, $2))
   BUILD_DEMO_JVMTI_$1_EXTRA_INC := $$(addprefix -I, $$(BUILD_DEMO_JVMTI_$1_EXTRA_SRC))
   BUILD_DEMO_JVMTI_$1_LANG := C
   ifneq (, $4)
@@ -354,56 +336,31 @@ $(eval $(call SetupJVMTIDemo,versionCheck, agent_util))
 
 ##################################################################################################
 
-ifeq ($(SHUFFLED), true)
-
-  $(JDK_OUTPUTDIR)/demo/jpda/com/sun/tools/example/README: \
-      $(JDK_TOPDIR)/$(SRC_SUBDIR)/demo/share/jpda/com/sun/tools/example/README
-		$(call install-file)
-		$(CHMOD) -f ug+w $@
-
-  $(eval $(call SetupArchive,JPDA_JAR, \
-      $(JDK_OUTPUTDIR)/demo/jpda/com/sun/tools/example/README, \
-      SRCS := $(JDK_TOPDIR)/$(SRC_SUBDIR)/demo/share/jpda \
-          $(JDK_TOPDIR)/$(SRC_SUBDIR)$(JDK_JDI_SUBDIR)/share/classes/com/sun/tools/example \
-          $(JDK_OUTPUTDIR)/demo/jpda/com/sun/tools/example, \
-      SUFFIXES := .java .html .jj README, \
-      JAR := $(JDK_OUTPUTDIR)/demo/jpda/examples.jar))
-
-  $(eval $(call SetupZipArchive,JPDA_ZIP, \
-      SRC := $(JDK_TOPDIR)/$(SRC_SUBDIR)/demo/share/jpda, \
-      SUFFIXES := .java .html .jj, \
-      ZIP := $(JDK_OUTPUTDIR)/demo/jpda/src.zip))
-
-  BUILD_DEMOS += $(JPDA_JAR) $(JPDA_ZIP)
-else
-# The jpda demo (com/sun/tools/example) is oddly enough stored in src/share/classes.
-# At least, we do not need to compile the jpda demo, just jar/zip up the sources.
-JPDA_SOURCES := $(call CacheFind, $(JDK_TOPDIR)/src/share/classes/com/sun/tools/example)
-# The number of files are few enough so that we can use echo safely below to list them.
-JPDA_FILES := $(subst $(JDK_TOPDIR)/src/share/classes/,,$(JPDA_SOURCES))
-
-$(JDK_OUTPUTDIR)/demo/jpda/src.zip: $(JPDA_SOURCES)
-	$(MKDIR) -p $(@D)
-	(cd $(JDK_TOPDIR)/src/share/classes && $(ZIP) -qru $@ com -i "com/sun/tools/example/*")
-
-$(JDK_OUTPUTDIR)/demo/jpda/examples.jar: $(JPDA_SOURCES)
-	$(MKDIR) -p $(@D)
-	$(RM) $(@D)/_the.sources
-	$(call ListPathsSafely,JPDA_FILES,\n, >> $(@D)/_the.sources)
-	$(SED) -e "s#@@RELEASE@@#$(RELEASE)#" \
-	    -e "s#@@COMPANY_NAME@@#$(COMPANY_NAME)#" $(JDK_TOPDIR)/make/data/mainmanifest/manifest.mf > $(@D)/_the.manifest
-	$(ECHO) "Main-Class: " >> $(@D)/_the.manifest
-	(cd $(JDK_TOPDIR)/src/share/classes && $(JAR) cfm $@ $(@D)/_the.manifest @$(@D)/_the.sources)
-	(cd $(JDK_TOPDIR)/src/share/classes/com/sun/tools/example && $(JAR) uf $@ README)
-
-$(JDK_OUTPUTDIR)/demo/jpda/com/sun/tools/example/README: $(JDK_TOPDIR)/src/share/classes/com/sun/tools/example/README
+$(JDK_OUTPUTDIR)/demo/jpda/com/sun/tools/example/README: \
+    $(JDK_TOPDIR)/src/demo/share/jpda/com/sun/tools/example/README
 	$(call install-file)
 	$(CHMOD) -f ug+w $@
 
-BUILD_DEMOS += $(JDK_OUTPUTDIR)/demo/jpda/src.zip $(JDK_OUTPUTDIR)/demo/jpda/examples.jar \
-    $(JDK_OUTPUTDIR)/demo/jpda/com/sun/tools/example/README
+$(eval $(call SetupArchive,JPDA_JAR, \
+    $(JDK_OUTPUTDIR)/demo/jpda/com/sun/tools/example/README, \
+    SRCS := $(JDK_TOPDIR)/src/demo/share/jpda \
+        $(JDK_TOPDIR)/src/jdk.jdi/share/classes \
+        $(JDK_OUTPUTDIR)/demo/jpda/com/sun/tools/example, \
+    INCLUDES := com/sun/tools/example README, \
+    SUFFIXES := .java .html .jj README, \
+    JAR := $(JDK_OUTPUTDIR)/demo/jpda/examples.jar, \
+    MANIFEST := $(JDK_TOPDIR)/make/data/mainmanifest/manifest.mf, \
+    EXTRA_MANIFEST_ATTR := Main-Class:$$(SPACE), \
+    SKIP_METAINF := true))
 
-endif
+$(eval $(call SetupZipArchive,JPDA_ZIP, \
+    SRC := $(JDK_TOPDIR)/src/demo/share/jpda \
+        $(JDK_TOPDIR)/src/jdk.jdi/share/classes, \
+    INCLUDES := com/sun/tools/example, \
+    SUFFIXES := .java .html .jj README, \
+    ZIP := $(JDK_OUTPUTDIR)/demo/jpda/src.zip))
+
+BUILD_DEMOS += $(JPDA_JAR) $(JPDA_ZIP)
 
 ##################################################################################################
 
@@ -502,11 +459,7 @@ endif
 ##################################################################################################
 
 ifndef OPENJDK
-  ifeq ($(SHUFFLED), true)
-    DB_ZIP_DIR := $(wildcard $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/db)
-  else
-    DB_ZIP_DIR := $(wildcard $(JDK_TOPDIR)/src/closed/share/db)
-  endif
+  DB_ZIP_DIR := $(wildcard $(JDK_TOPDIR)/src/closed/db)
   DB_DEMO_ZIPFILE := $(wildcard $(DB_ZIP_DIR)/*.zip)
 
   $(JDK_OUTPUTDIR)/demo/_the.db.unzipped: $(DB_DEMO_ZIPFILE)

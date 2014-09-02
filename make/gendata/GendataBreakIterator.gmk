@@ -33,12 +33,8 @@
 # They are used at JDK build phase in order to create $(BIFILES) which
 # are used on runtime instead.
 #
-ifeq ($(SHUFFLED), true)
-  TEXT_SRCDIR = $(JDK_TOPDIR)/$(SRC_SUBDIR)$(JAVA_BASE_SUBDIR)/share/classes \
-      $(JDK_TOPDIR)/$(SRC_SUBDIR)$(JDK_LOCALEDATA_SUBDIR)/share/classes
-else
-  TEXT_SRCDIR = $(JDK_TOPDIR)/$(SRC_SUBDIR)$(JAVA_BASE_SUBDIR)/share/classes
-endif
+TEXT_SRCDIR = $(JDK_TOPDIR)/src/java.base/share/classes \
+    $(JDK_TOPDIR)/src/jdk.localedata/share/classes
 TEXT_PKG = sun/text/resources
 TEXT_SOURCES = $(TEXT_PKG)/BreakIteratorRules.java \
     $(TEXT_PKG)/BreakIteratorInfo.java \
@@ -69,8 +65,8 @@ $(eval $(call SetupJavaCompilation,BUILD_BREAKITERATOR, \
 UNICODEDATA = $(JDK_TOPDIR)/make/data/unicodedata/UnicodeData.txt
 
 # output
-BASE_DATA_PKG_DIR = $(JDK_OUTPUTDIR)/$(MODULES_SUBDIR)$(JAVA_BASE_SUBDIR)/sun/text/resources
-SL_DATA_PKG_DIR = $(JDK_OUTPUTDIR)/$(MODULES_SUBDIR)$(JDK_LOCALEDATA_SUBDIR)/sun/text/resources
+BASE_DATA_PKG_DIR = $(JDK_OUTPUTDIR)/modules/java.base/sun/text/resources
+SL_DATA_PKG_DIR = $(JDK_OUTPUTDIR)/modules/jdk.localedata/sun/text/resources
 BIFILES = $(BASE_DATA_PKG_DIR)/CharacterBreakIteratorData \
     $(BASE_DATA_PKG_DIR)/WordBreakIteratorData \
     $(BASE_DATA_PKG_DIR)/LineBreakIteratorData \

@@ -23,25 +23,19 @@
 # questions.
 #
 
-ifeq ($(SHUFFLED), true)
-  LIBJSOUND_SRC_DIRS := \
-      $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/share/native/libjsound \
-      $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/$(OPENJDK_TARGET_OS_API_DIR)/native/libjsound \
-      #
-  LIBJSOUND_CFLAGS := \
-      -I$(JDK_OUTPUTDIR)/gensrc_headers/java.desktop \
-      $(addprefix -I, $(BUILD_LIBJAVA_SRC))
-      #
-else
-  LIBJSOUND_SRC_DIRS := \
-    $(JDK_TOPDIR)/src/share/native/com/sun/media/sound \
-    $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/com/sun/media/sound
-endif
+LIBJSOUND_SRC_DIRS := \
+    $(JDK_TOPDIR)/src/java.desktop/share/native/libjsound \
+    $(JDK_TOPDIR)/src/java.desktop/$(OPENJDK_TARGET_OS_API_DIR)/native/libjsound \
+    #
+LIBJSOUND_CFLAGS := \
+    -I$(JDK_OUTPUTDIR)/gensrc_headers/java.desktop \
+    $(LIBJAVA_HEADER_FLAGS) \
+    $(foreach dir, $(LIBJSOUND_SRC_DIRS), -I$(dir)) \
+    #
 
 LIBJSOUND_SRC_FILES := Utilities.c Platform.c
 
 LIBJSOUND_LANG := C
-LIBJSOUND_CFLAGS += $(foreach dir, $(LIBJSOUND_SRC_DIRS), -I$(dir))
 
 EXTRA_SOUND_JNI_LIBS :=
 
@@ -93,11 +87,7 @@ ifeq ($(OPENJDK_TARGET_OS), macosx)
       -DUSE_DAUDIO=TRUE \
       -DUSE_PLATFORM_MIDI_OUT=TRUE \
       -DUSE_PLATFORM_MIDI_IN=TRUE
-  ifeq ($(SHUFFLED), true)
-    LIBJSOUND_SRC_DIRS += $(JDK_TOPDIR)/$(SRC_SUBDIR)/java.desktop/macosx/native/libjsound
-  else
-    LIBJSOUND_SRC_DIRS += $(JDK_TOPDIR)/src/macosx/native/com/sun/media/sound
-  endif
+  LIBJSOUND_SRC_DIRS += $(JDK_TOPDIR)/src/java.desktop/macosx/native/libjsound
   LIBJSOUND_SRC_FILES += \
       PLATFORM_API_MacOSX_Utils.cpp \
       PLATFORM_API_MacOSX_PCM.cpp \

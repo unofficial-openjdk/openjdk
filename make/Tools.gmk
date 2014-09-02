@@ -29,11 +29,10 @@ _TOOLS_GMK := 1
 default: all
 
 include $(SPEC)
-include JigsawSpecMod.gmk
 include MakeBase.gmk
 include JavaCompilation.gmk
 include NativeCompilation.gmk
-include Setup.gmk
+include SetupJava.gmk
 
 # Cache all finds needed for this file.
 $(eval $(call FillCacheFind, $(JDK_TOPDIR)/make/src/classes))
@@ -49,10 +48,10 @@ ifeq (, $(BUILD_TOOLS_JDK))
 endif
 
 $(JDK_OUTPUTDIR)/btclasses/build/tools/generatenimbus/resources/%.template: \
-    $(JDK_TOPDIR)/$(SRC_SUBDIR)$(JAVA_DESKTOP_SUBDIR)/share/classes/javax/swing/plaf/nimbus/%.template
+    $(JDK_TOPDIR)/src/java.desktop/share/classes/javax/swing/plaf/nimbus/%.template
 	$(call install-file)
 
-BUILD_TOOLS_JDK += $(foreach i, $(wildcard $(JDK_TOPDIR)/$(SRC_SUBDIR)$(JAVA_DESKTOP_SUBDIR)/share/classes/javax/swing/plaf/nimbus/*.template), $(JDK_OUTPUTDIR)/btclasses/build/tools/generatenimbus/resources/$(notdir $i))
+BUILD_TOOLS_JDK += $(foreach i, $(wildcard $(JDK_TOPDIR)/src/java.desktop/share/classes/javax/swing/plaf/nimbus/*.template), $(JDK_OUTPUTDIR)/btclasses/build/tools/generatenimbus/resources/$(notdir $i))
 
 # Resource used by CheckDeps tool
 $(JDK_OUTPUTDIR)/btclasses/build/tools/deps/refs.allowed: \
@@ -132,7 +131,7 @@ TOOL_CLDRCONVERTER = $(JAVA_SMALL) -cp $(JDK_OUTPUTDIR)/btclasses \
     build.tools.cldrconverter.CLDRConverter
 
 TOOL_CHECKDEPS = $(JAVA_SMALL) -Xbootclasspath/p:$(INTERIM_LANGTOOLS_JAR) \
-    -cp $(JDK_OUTPUTDIR)/btclasses:$(JDK_OUTPUTDIR) \
+    -cp "$(JDK_OUTPUTDIR)/btclasses$(PATH_SEP)$(JDK_OUTPUTDIR)" \
     build.tools.deps.CheckDeps
 
 TOOL_ADDTORESTRICTEDPKGS = $(JAVA_SMALL) -cp $(JDK_OUTPUTDIR)/btclasses \

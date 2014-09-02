@@ -28,7 +28,7 @@
 # into LocaleDataMetaInfo.java
 
 # First go look for all locale files
-LOCALE_FILES := $(shell $(FIND) $(JDK_TOPDIR)/$(SRC_SUBDIR)/$(MODULES_WILDCARD)/share/classes \
+LOCALE_FILES := $(shell $(FIND) $(JDK_TOPDIR)/src/*/share/classes \
     -name "FormatData_*.java" -o -name "FormatData_*.properties" -o \
     -name "CollationData_*.java" -o -name "CollationData_*.properties" -o \
     -name "TimeZoneNames_*.java" -o -name "TimeZoneNames_*.properties" -o \
@@ -101,23 +101,23 @@ $(eval $(call CaptureLocale,CalendarData))
 SED_ARGS += -e 's/$(HASH)AvailableLocales_ENLocales$(HASH)/$(sort $(ALL_EN_LOCALES))/g'
 SED_ARGS += -e 's/$(HASH)AvailableLocales_NonENLocales$(HASH)/$(sort $(ALL_NON_EN_LOCALES))/g'
 
-$(JDK_OUTPUTDIR)/gensrc$(JAVA_BASE_SUBDIR)/sun/util/locale/provider/LocaleDataMetaInfo.java: \
-    $(JDK_TOPDIR)/$(SRC_SUBDIR)$(JAVA_BASE_SUBDIR)/share/classes/sun/util/locale/provider/LocaleDataMetaInfo-XLocales.java.template
+$(JDK_OUTPUTDIR)/gensrc/java.base/sun/util/locale/provider/LocaleDataMetaInfo.java: \
+    $(JDK_TOPDIR)/src/java.base/share/classes/sun/util/locale/provider/LocaleDataMetaInfo-XLocales.java.template
 	$(MKDIR) -p $(@D)
 	$(ECHO) Creating sun/util/LocaleDataMetaInfo.java from $(words $(LOCALE_RESOURCES)) found resources.
 	$(PRINTF) "PREV_LOCALE_RESOURCES:=$(LOCALE_RESOURCES)" > $(JDK_OUTPUTDIR)/gensrc/_the.locale_resources
 	$(SED) $(SED_ARGS) $< > $@
 
-GENSRC_LOCALEDATAMETAINFO := $(JDK_OUTPUTDIR)/gensrc$(JAVA_BASE_SUBDIR)/sun/util/locale/provider/LocaleDataMetaInfo.java
+GENSRC_LOCALEDATAMETAINFO := $(JDK_OUTPUTDIR)/gensrc/java.base/sun/util/locale/provider/LocaleDataMetaInfo.java
 
 ################################################################################
 
-GENSRC_CRBC_DST := $(JDK_OUTPUTDIR)/gensrc$(JAVA_BASE_SUBDIR)/sun/util/CoreResourceBundleControl.java
+GENSRC_CRBC_DST := $(JDK_OUTPUTDIR)/gensrc/java.base/sun/util/CoreResourceBundleControl.java
 GENSRC_CRBC_CMD := $(JDK_TOPDIR)/make/scripts/localelist.sh
 
 JRE_NONEXIST_LOCALES := en en_US de_DE es_ES fr_FR it_IT ja_JP ko_KR sv_SE zh
 
-$(GENSRC_CRBC_DST): $(JDK_TOPDIR)/$(SRC_SUBDIR)$(JAVA_BASE_SUBDIR)/share/classes/sun/util/CoreResourceBundleControl-XLocales.java.template \
+$(GENSRC_CRBC_DST): $(JDK_TOPDIR)/src/java.base/share/classes/sun/util/CoreResourceBundleControl-XLocales.java.template \
     $(GENSRC_CRBC_CMD)
 	$(MKDIR) -p $(@D)
 	NAWK="$(NAWK)" SED="$(SED)" $(SH) $(GENSRC_CRBC_CMD) "$(JRE_NONEXIST_LOCALES)" $< $@

@@ -24,10 +24,8 @@
 #
 
 include $(SPEC)
-include JigsawSpecMod.gmk
 include MakeBase.gmk
 include JavaCompilation.gmk
-include Setup.gmk
 
 default: images
 
@@ -525,11 +523,8 @@ $(foreach f,$(call CacheFind,$(JDK_OUTPUTDIR)/sample), \
 # /db dir
 
 ifndef OPENJDK
-  ifeq ($(SHUFFLED), true)
-    DB_ZIP_DIR := $(wildcard $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/db)
-  else
-    DB_ZIP_DIR := $(wildcard $(JDK_TOPDIR)/src/closed/share/db)
-  endif
+  DB_ZIP_DIR := $(wildcard $(JDK_TOPDIR)/src/closed/db)
+
   $(IMAGES_OUTPUTDIR)/_unzip/%.unzipped: $(DB_ZIP_DIR)/%
 	$(ECHO) Unzipping $(patsubst $(SRC_ROOT)/%,%,$<)
 	$(RM) -r $(JDK_IMAGE_DIR)/db
@@ -578,13 +573,8 @@ else
     JRE_DOC_FILES += README
   endif
   JDK_DOC_FILES += demo/DEMOS_LICENSE sample/SAMPLES_LICENSE
-  ifeq ($(SHUFFLED), true)
-    JRE_DOC_LOCATION := $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/doc/jre
-    JDK_DOC_LOCATION := $(JDK_TOPDIR)/$(SRC_SUBDIR)/closed/doc/jdk
-  else
-    JRE_DOC_LOCATION := $(JDK_TOPDIR)/src/closed/share/doc/jre
-    JDK_DOC_LOCATION := $(JDK_TOPDIR)/src/closed/share/doc/jdk
-  endif
+  JRE_DOC_LOCATION := $(JDK_TOPDIR)/src/closed/doc/jre
+  JDK_DOC_LOCATION := $(JDK_TOPDIR)/src/closed/doc/jdk
 endif
 JRE_DOC_TARGETS := $(addprefix $(JRE_IMAGE_DIR)/, $(JRE_DOC_FILES))
 JDKJRE_DOC_TARGETS := $(addprefix $(JDK_IMAGE_DIR)/jre/, $(JRE_DOC_FILES))
@@ -750,14 +740,12 @@ $(eval $(call IncludeCustomExtension, jdk, Images.gmk))
 # Main targets
 
 jre-image: $(JRE_BIN_TARGETS) $(JRE_LIB_TARGETS) $(JRE_IMAGE_DIR)/lib/applet \
-    $(JRE_MODULE_TARGETS) \
     $(JRE_IMAGE_DIR)/lib/meta-index $(JRE_IMAGE_DIR)/lib/ext/meta-index \
     $(JRE_MAN_PAGE_LIST) $(JRE_DOC_TARGETS) $(JRE_INFO_FILE) $(JRE_STRIP_LIST) \
     $(JRE_BIN_ISADIR_LINK_TARGETS)
 
 jdk-image: $(JDK_BIN_TARGETS) $(JDKJRE_BIN_TARGETS) \
     $(JDK_LIB_TARGETS) $(JDKJRE_LIB_TARGETS) \
-    $(JDKJRE_MODULE_TARGETS) \
     $(JDK_IMAGE_DIR)/jre/lib/applet \
     $(JDK_DEMO_TARGETS) \
     $(JDK_IMAGE_DIR)/jre/lib/meta-index $(JDK_IMAGE_DIR)/jre/lib/ext/meta-index \
