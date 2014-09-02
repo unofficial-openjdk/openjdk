@@ -90,7 +90,7 @@ final class ValueListBeanInfoImpl extends JaxBeanInfo {
                 idx = p;
             }
 
-            state.target = toArray(r);
+            state.setTarget(toArray(r));
         }
     };
 

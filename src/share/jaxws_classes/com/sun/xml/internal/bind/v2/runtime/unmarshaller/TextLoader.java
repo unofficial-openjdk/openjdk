@@ -51,7 +51,7 @@ public class TextLoader extends Loader {
 
     public void text(UnmarshallingContext.State state, CharSequence text) throws SAXException {
         try {
-            state.target = xducer.parse(text);
+            state.setTarget(xducer.parse(text));
         } catch (AccessorException e) {
             handleGenericException(e,true);
         } catch (RuntimeException e) {
