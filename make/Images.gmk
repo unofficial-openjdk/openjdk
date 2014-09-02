@@ -69,13 +69,13 @@ endif
 
 MODS := $(subst $(COMMA)$(COMMA),$(COMMA),$(subst $(SPACE),$(COMMA),$(JDK_MODULES)))
 
-JMODS := $(wildcard $(JDK_OUTPUTDIR)/jmods/*.jmod)
+JMODS := $(wildcard $(IMAGES_OUTPUTDIR)/jmods/*.jmod)
 
 $(IMAGES_OUTPUTDIR)/_jdk-images-create.marker: $(JMODS)
 	$(ECHO) Creating jdk-module-image
 	$(RM) -r $(JDK_MODULE_IMAGE_DIR)
 	$(JLINK) --format image --output $(JDK_MODULE_IMAGE_DIR) \
-            --module-path $(JDK_OUTPUTDIR)/jmods --mods "$(MODS)"
+            --module-path $(IMAGES_OUTPUTDIR)/jmods --mods "$(MODS)"
 	$(TOUCH) $@
 
 jdk-image: $(IMAGES_OUTPUTDIR)/_jdk-images-create.marker
@@ -87,7 +87,7 @@ $(IMAGES_OUTPUTDIR)/_jdk-jimages-create.marker: $(JMODS)
 	$(ECHO) Creating jdk-module-jimage
 	$(RM) -r $(JDK_MODULE_JIMAGE_DIR)
 	$(JLINK) --format jimage --output $(JDK_MODULE_JIMAGE_DIR) \
-            --module-path $(JDK_OUTPUTDIR)/jmods --mods "$(MODS)"
+            --module-path $(IMAGES_OUTPUTDIR)/jmods --mods "$(MODS)"
 	$(TOUCH) $@
 jdk-jimage: $(IMAGES_OUTPUTDIR)/_jdk-jimages-create.marker
 

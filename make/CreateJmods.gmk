@@ -108,7 +108,7 @@ define CreateJmod
   endif
 
   # TODO: What about headers?
-  $(JDK_OUTPUTDIR)/jmods/$1.jmod: \
+  $(IMAGES_OUTPUTDIR)/jmods/$1.jmod: \
       $$($1_COPY_NATIVE_LIB) $$($1_COPY_NATIVE_BIN) $$($1_COPY_CMDS) \
       $$($1_COPY_CONF) $$($1_DEPS)
 		$(ECHO) Creating jmods/$1.jmod
@@ -117,7 +117,7 @@ define CreateJmod
 		$(JLINK) --format jmod --mid $1@9.0 \
 		    --output $$@ $$($1_JLINK_FLAGS) 
 
-  JMODS += $(JDK_OUTPUTDIR)/jmods/$1.jmod
+  JMODS += $(IMAGES_OUTPUTDIR)/jmods/$1.jmod
 endef
 
 ################################################################################
@@ -180,9 +180,10 @@ endif
 
 ################################################################################
 
-# Until there is a source dir for all modules, add those without java source 
-# explicitly here for now
-ALL_MODULES := $(call FindAllModules) jdk.hotspot.agent java.se
+# Until there is a source dir for all modules, use the output dir as the list
+# of modules to create jmods for
+#ALL_MODULES := $(call FindAllModules) jdk.hotspot.agent java.se
+ALL_MODULES := $(notdir $(patsubst %/,%, $(wildcard $(JDK_OUTPUTDIR)/modules/*)))
 
 $(foreach m, $(ALL_MODULES), $(eval $(call CreateJmod,$m)))
 
