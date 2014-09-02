@@ -81,8 +81,6 @@ $(IMAGES_OUTPUTDIR)/_jdk-images-create.marker: $(JMODS)
 jdk-image: $(IMAGES_OUTPUTDIR)/_jdk-images-create.marker
 
 ################################################################################
-JDK_MODULE_JIMAGE_DIR := $(OUTPUT_ROOT)/images/jdk-module-jimage
-
 $(IMAGES_OUTPUTDIR)/_jdk-jimages-create.marker: $(JMODS)
 	$(ECHO) Creating jdk-module-jimage
 	$(RM) -r $(JDK_MODULE_JIMAGE_DIR)
