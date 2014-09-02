@@ -38,6 +38,6 @@ $(GENGRAPHS_DIR)/jdk.dot: $(BUILD_DEPS_TOOLS)
 
 $(GENGRAPHS_DIR)/module-summary.html: $(BUILD_MODULE_TOOLS)
 	$(MKDIR) -p $(@D)
-	$(TOOL_MODULESUMMARY) -o $@ -mp $(JDK_OUTPUTDIR)/jmods
+	$(TOOL_MODULESUMMARY) -o $@ -mp $(IMAGES_OUTPUTDIR)/jmods
 
 all: $(GENGRAPHS_DIR)/jdk.dot $(GENGRAPHS_DIR)/module-summary.html
