@@ -42,6 +42,8 @@ ifeq (, $(BUILD_TOOLS_JDK))
   $(eval $(call SetupJavaCompilation,BUILD_TOOLS_JDK, \
       SETUP := GENERATE_OLDBYTECODE, \
       SRC := $(JDK_TOPDIR)/make/src/classes, \
+      EXCLUDES := build/tools/deps \
+                  build/tools/module, \
       BIN := $(JDK_OUTPUTDIR)/btclasses))
 endif
 
@@ -134,10 +136,6 @@ TOOL_CLDRCONVERTER = $(JAVA_SMALL) -cp $(JDK_OUTPUTDIR)/btclasses \
 TOOL_CHECKDEPS = $(JAVA_SMALL) -Xbootclasspath/p:$(INTERIM_LANGTOOLS_JAR) \
     -cp "$(JDK_OUTPUTDIR)/btclasses$(PATH_SEP)$(JDK_OUTPUTDIR)" \
     build.tools.deps.CheckDeps
-
-TOOL_GENMODULESXML = $(JAVA_SMALL) -Xbootclasspath/p:$(INTERIM_LANGTOOLS_JAR) \
-    -cp "$(JDK_OUTPUTDIR)/btclasses$(PATH_SEP)$(JDK_OUTPUTDIR)" \
-    build.tools.module.GenerateModulesXml
 
 ##########################################################################################
 

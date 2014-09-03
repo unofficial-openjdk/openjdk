@@ -1,0 +1,13 @@
+jdk.attach
+jdk.compiler
+jdk.dev
+jdk.hotspot.agent
+jdk.javadoc
+jdk.jcmd
+jdk.jconsole
+jdk.jdi
+jdk.jvmstat
+jdk.runtime
+jdk.rmic
+jdk.xml.bind
+jdk.xml.ws

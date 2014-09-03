@@ -52,45 +52,65 @@ import javax.xml.stream.events.XMLEvent;
  * This tool is used to generate com/sun/tools/jdeps/resources/modules.xml
  * for jdeps to analyze dependencies and enforce module boundaries.
  *
- * $ java build.tools.module.GenerateModulesXml \
- *        com/sun/tools/jdeps/resources/modules.xml $OUTPUTDIR/modules
+ * To generate modules.xml for JDK 9:
+ * run GenerateModulesXml -nopackages output-filename build/modules
  *
- * This will generate modules.xml as jdeps resources that extend
- * the metadata to include module membership (jdeps needs the
- * membership information to determine which module a type belongs to.)
+ * This generates a single modules.xml for all open/closed modules
+ * for the platform that this tool is run on.  There are several platform
+ * specific modules that need to be merged before checking in for jdk9 use.
+ *   jdk.crypto.ucrypto  - solaris only
+ *   jdk.crypto.mscapi   - windows only
+ *   jdk.deploy.osx      - macosx only
+ *   oracle.accessbridge - windows only
  */
 public final class GenerateModulesXml {
     private final static String USAGE =
-        "Usage: GenerateModulesXml <output file> build/modules";
+        "Usage: GenerateModulesXml [-nopackages] <output file> build/modules";
 
     public static void main(String[] args) throws Exception {
         if (args.length < 2) {
             System.err.println(USAGE);
             System.exit(-1);
         }
+        boolean useMetadata = false;
+        boolean nopackages = false;
+        int i=0;
+        while (i < args.length && args[i].startsWith("-")) {
+            String arg = args[i++];
+            switch (arg) {
+                case "-usemetadata":
+                    // GenerateModulesXml in jdk9 repo has this flag on by default
+                    useMetadata = true;
+                    break;
+                case "-nopackages":
+                    nopackages = true;
+                    break;
+                default:
+                    System.err.println(USAGE);
+                    System.exit(-1);
+            }
+        }
+        if (i+2 != args.length) {
+            System.err.println(USAGE);
+            System.exit(-1);
+        }
 
-        Path outfile = Paths.get(args[0]);
-        Path modulepath = Paths.get(args[1]);
+        Path outfile = Paths.get(args[i++]);
+        Path modulepath = Paths.get(args[i++]);
 
         if (!Files.isDirectory(modulepath)) {
             System.err.println(modulepath + " is not a directory");
             System.exit(1);
         }
-        GenerateModulesXml gentool =
-            new GenerateModulesXml(modulepath);
+        GenerateModulesXml gentool = new GenerateModulesXml(modulepath);
         Set<Module> modules;
-        try (InputStream in = GenerateModulesXml.class.getResourceAsStream("modules.xml")) {
-            modules = gentool.load(in);
-        }
-
-        InputStream in = GenerateModulesXml.class.getResourceAsStream("closed/modules.xml");
-        if (in != null) {
-            try {
-                Set<Module> mods = gentool.load(in);
-                modules.addAll(mods);
-            } finally {
-                in.close();
+        if (useMetadata) {
+            try (InputStream in = GenerateModulesXml.class.getResourceAsStream("modules.xml")) {
+                modules = gentool.load(in);
             }
+        } else {
+            JigsawModules jms = new JigsawModules(gentool, nopackages);
+            modules = jms.load();
         }
 
         Files.createDirectories(outfile.getParent());
@@ -110,6 +130,7 @@ public final class GenerateModulesXml {
     private static final String TO        = "to";
     private static final String INCLUDE   = "include";
     private static final QName  REEXPORTS = new QName("re-exports");
+
     private Set<Module> load(InputStream in) throws XMLStreamException, IOException {
         Set<Module> modules = new HashSet<>();
         XMLInputFactory factory = XMLInputFactory.newInstance();
@@ -208,11 +229,12 @@ public final class GenerateModulesXml {
     private void writeXML(Set<Module> modules, Path path)
             throws IOException, XMLStreamException
     {
+        System.out.println("Writing to " + path.toString());
         XMLOutputFactory xof = XMLOutputFactory.newInstance();
         try (OutputStream out = Files.newOutputStream(path)) {
             int depth = 0;
-            XMLStreamWriter xtw = xof.createXMLStreamWriter(out, "UTF-8");
-            xtw.writeStartDocument("utf-8","1.0");
+            XMLStreamWriter xtw = xof.createXMLStreamWriter(out, "US-ASCII");
+            xtw.writeStartDocument("us-ascii","1.0");
             writeStartElement(xtw, MODULES, depth);
             modules.stream()
                    .sorted(Comparator.comparing(Module::name))
@@ -324,13 +346,23 @@ public final class GenerateModulesXml {
 
     public void buildIncludes(Module.Builder mb, String modulename) throws IOException {
         Path mclasses = modulepath.resolve(modulename);
-        try {
-            Files.find(mclasses, Integer.MAX_VALUE, (Path p, BasicFileAttributes attr)
-                         -> includes(p.getFileName().toString()))
-                 .map(p -> packageName(mclasses.relativize(p)))
-                 .forEach(mb::include);
-        } catch (NoSuchFileException e) {
-            // aggregate module may not have class
+        if (Files.exists(mclasses.resolve("classes"))) {
+            // zip file
+            try (JarFile jf = new JarFile(mclasses.resolve("classes").toFile())) {
+                jf.stream().filter(je -> includes(je.getName()))
+                           .map(JarEntry::getName)
+                           .map(this::packageName)
+                           .forEach(mb::include);
+            }
+        } else {
+            try {
+                Files.find(mclasses, Integer.MAX_VALUE, (Path p, BasicFileAttributes attr)
+                             -> includes(p.getFileName().toString()))
+                     .map(p -> packageName(mclasses.relativize(p)))
+                     .forEach(mb::include);
+            } catch (NoSuchFileException e) {
+                // aggregate module may not have class
+            }
         }
     }
 
