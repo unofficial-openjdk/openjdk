@@ -78,6 +78,7 @@ TREEAPI_FIRST_COPYRIGHT_YEAR = 2005
 JNLP_FIRST_COPYRIGHT_YEAR = 1998
 PLUGIN2_FIRST_COPYRIGHT_YEAR = 2007
 JDKNET_FIRST_COPYRIGHT_YEAR = 2014
+MODULE_FIRST_COPYRIGHT_YEAR = 2014
 
 # Oracle name
 FULL_COMPANY_NAME = Oracle and/or its affiliates
@@ -1222,6 +1223,42 @@ $(JDKNET_OPTIONS_FILE):
 $(JDKNET_PACKAGES_FILE): $(call PackageDependencies,$(JDKNET_PKGS))
 	$(prep-target)
 	$(call PackageFilter,$(JDKNET_PKGS))
+
+#############################################################
+#
+# moduledocs
+#
+
+ALL_OTHER_TARGETS += moduledocs
+
+MODULE_DOCDIR := $(JRE_API_DOCSDIR)/module/spec
+MODULE2COREAPI := ../../$(JDKJRE2COREAPI)
+MODULE_DOCTITLE := Module API
+MODULE_WINDOWTITLE := Module API
+MODULE_HEADER := <strong>Module API API</strong>
+MODULE_BOTTOM := $(call CommonBottom,$(MODULE_FIRST_COPYRIGHT_YEAR))
+# MODULE_PKGS is located in NON_CORE_PKGS.gmk
+
+MODULE_INDEX_HTML = $(MODULE_DOCDIR)/index.html
+MODULE_PACKAGES_FILE = $(DOCSTMPDIR)/module.packages
+
+moduledocs: $(MODULE_INDEX_HTML)
+
+# Set relative location to core api document root
+$(MODULE_INDEX_HTML): GET2DOCSDIR=$(MODULE2COREAPI)/..
+
+# Run javadoc if the index file is out of date or missing
+# Note that we use the core API options for this API
+$(MODULE_INDEX_HTML): $(MODULE_PACKAGES_FILE) $(COREAPI_OPTIONS_FILE) $(COREAPI_INDEX_FILE)
+	$(prep-javadoc)
+	$(call JavadocSummary,$(COREAPI_OPTIONS_FILE),$(MODULE_PACKAGES_FILE))
+	$(JAVADOC_CMD) -d $(@D) \
+	  @$(COREAPI_OPTIONS_FILE) @$(MODULE_PACKAGES_FILE)
+
+# Create a file with the package names in it
+$(MODULE_PACKAGES_FILE): $(call PackageDependencies,$(MODULE_PKGS))
+	$(prep-target)
+	$(call PackageFilter,$(MODULE_PKGS))
 
 #############################################################
 #release version of core packages ########
