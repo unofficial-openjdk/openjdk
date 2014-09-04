@@ -36,7 +36,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -49,6 +48,7 @@ import java.util.zip.Inflater;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import jdk.jigsaw.module.internal.ImageModules.Loader;
+import jdk.jigsaw.module.internal.ImageModules.ModuleIndex;
 
 /**
  * An image (native endian.)
@@ -60,7 +60,6 @@ import jdk.jigsaw.module.internal.ImageModules.Loader;
  *   u4 location_count;
  *   u4 location_attributes_size;
  *   u4 strings_size;
- *   u4 packages_size;
  *   u4 redirect[location_count];
  *   u4 offsets[location_count];
  *   u1 location_attributes[location_attributes_size];
@@ -144,9 +143,12 @@ public final class ImageFile {
                 ImageWriter writer = new ImageWriter();
                 Set<String> duplicates = new HashSet<>();
 
+                // build package map for modules and add as resources
+                ModuleIndex mindex = modules.buildModuleIndex(l, writer);
+                long offset = mindex.size();
+
                 // the order of traversing the resources and the order of
-                // writing the module content must be the same
-                long offset = 0;
+                // the module content being written must be the same
                 for (String mn : mods) {
                     for (Resource res : resourcesForModule.get(mn)) {
                         String fn = res.name();
@@ -160,8 +162,12 @@ public final class ImageFile {
                     }
                 }
 
+                // write header and indices
                 byte[] bytes = writer.getBytes();
                 out.write(bytes, 0, bytes.length);
+
+                // write module table and packages
+                mindex.writeTo(out);
 
                 // write module content
                 for (String mn : mods) {
@@ -281,15 +287,15 @@ public final class ImageFile {
                             }
                             break;
                         case NATIVE_LIBS:
-                            ModuleEntryWriter.this.writeEntry(in, destFile(nativeDir(), filename));
+                            writeEntry(in, destFile(nativeDir(), filename));
                             break;
                         case NATIVE_CMDS:
                             Path path = destFile("bin", filename);
-                            ModuleEntryWriter.this.writeEntry(in, path);
+                            writeEntry(in, path);
                             path.toFile().setExecutable(true);
                             break;
                         case CONFIG:
-                            ModuleEntryWriter.this.writeEntry(in, destFile("lib", filename));
+                            writeEntry(in, destFile("lib", filename));
                             break;
                         case MODULE_NAME:
                             // skip

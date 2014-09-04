@@ -35,6 +35,7 @@ import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 public final class ImageReader {
     private String imagePath;
@@ -48,6 +49,7 @@ public final class ImageReader {
     private ByteBuffer locationsBuffer;
     private ByteBuffer stringsBuffer;
     private ImageStrings strings;
+    private Map<String,String> packageMap;
 
     public ImageReader(String imagePath) {
         this(imagePath, ByteOrder.nativeOrder());
@@ -68,6 +70,8 @@ public final class ImageReader {
         locationsBuffer = getByteBuffer(header.getLocationsOffset(), header.getLocationsSize());
         stringsBuffer = getByteBuffer(header.getStringsOffset(), header.getStringsSize());
         strings = new ImageStrings(new ImageStream(stringsBuffer));
+
+        packageMap = ImageModules.readFrom(this);
     }
 
     public void close() throws IOException {
@@ -134,6 +138,18 @@ public final class ImageReader {
         return array;
     }
 
+    /**
+     * Finds the module containing the given classfile entry.
+     */
+    public String findModule(String entry) {
+        if (!entry.endsWith(".class")) {
+            return null;
+        }
+        int i = entry.lastIndexOf('/');
+        String pn = i > 0 ? entry.substring(0, i) : "";
+        return packageMap.get(pn);
+    }
+
     private IntBuffer getIntBuffer(long offset, long size) throws IOException {
         MappedByteBuffer buffer = channel.map(FileChannel.MapMode.READ_ONLY, offset, size);
         buffer.order(byteOrder);
@@ -158,6 +174,10 @@ public final class ImageReader {
 
     private ImageLocation getLocation(int offset) {
         return ImageLocation.readFrom(locationsBuffer, offset, strings);
+    }
+
+    String getString(int offset) {
+        return strings.get(offset).toString();
     }
 
     synchronized public byte[] getResource(long offset, long size) throws IOException {

@@ -32,6 +32,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.nio.ByteBuffer;
+import java.nio.IntBuffer;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumSet;
@@ -39,10 +42,10 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-
 import jdk.jigsaw.module.Configuration;
 import jdk.jigsaw.module.ExtendedModuleDescriptor;
 import jdk.jigsaw.module.ModuleDependence;
@@ -189,7 +192,7 @@ public final class ImageModules {
         reader.load(in);
     }
 
-    /**
+    /*
      * Returns the modules installed in the image.
      */
     public Set<ExtendedModuleDescriptor> modules() {
@@ -269,7 +272,6 @@ public final class ImageModules {
         return builder.build();
     }
 
-
     enum Loader {
         BOOT_LOADER(0, "bootmodules"),
         EXT_LOADER(1, "extmodules"),
@@ -306,6 +308,85 @@ public final class ImageModules {
 
         Set<String> modules() {
             return modules;
+        }
+    }
+
+    ModuleIndex buildModuleIndex(Loader type, ImageWriter writer) {
+        return new ModuleIndex(getModules(type), writer);
+    }
+
+    /*
+     * Returns a package-to-module map.
+     *
+     * The package name is in binary name format.
+     */
+    static Map<String,String> readFrom(ImageReader reader) throws IOException {
+        Map<String,String> result = new HashMap<>();
+        ImageLocation loc = reader.findLocation(ModuleIndex.MODULES_ENTRY);
+        byte[] bytes = reader.getResource(loc.getContentOffset(), loc.getUncompressedSize());
+        IntBuffer mbufs = ByteBuffer.wrap(bytes).asIntBuffer();
+        List<String> mnames = new ArrayList<>();
+        while (mbufs.hasRemaining()) {
+            int moffset = mbufs.get();
+            mnames.add(reader.getString(moffset));
+        }
+
+        for (String mn : mnames) {
+            ImageLocation mindex = reader.findLocation("module/" + mn + ModuleIndex.METADATA_EXT);
+            byte[] poffsets = reader.getResource(mindex.getContentOffset(), mindex.getUncompressedSize());
+            IntBuffer pbufs = ByteBuffer.wrap(poffsets).asIntBuffer();
+            while (pbufs.hasRemaining()) {
+                int poffset = pbufs.get();
+                String pn = reader.getString(poffset);
+                result.put(pn, mn);
+            }
+        }
+        return result;
+    }
+
+    /*
+     * Generate module name table and the package map as resources
+     * in the modular image
+     */
+    class ModuleIndex {
+        static final String METADATA_EXT = ".mindex";
+        static final String MODULES_ENTRY = "module/modules" + METADATA_EXT;
+        final Map<String, Integer> moduleOffsets = new LinkedHashMap<>();
+        final Map<String, List<Integer>> packageOffsets = new HashMap<>();
+        final int size;
+        ModuleIndex(Set<String> mods, ImageWriter writer) {
+            // module name offsets
+            writer.addLocation(MODULES_ENTRY, 0, 0, mods.size() * 4);
+            long offset = mods.size() * 4;
+            for (String mn : mods) {
+                moduleOffsets.put(mn, writer.addString(mn));
+                List<Integer> poffsets = localPkgs.get(mn).stream()
+                        .map(pn -> pn.replace('.', '/'))
+                        .map(writer::addString)
+                        .collect(Collectors.toList());
+                // package name offsets per module
+                String entry = "module/" + mn + METADATA_EXT;
+                int bytes =  poffsets.size() * 4;
+                writer.addLocation(entry, offset, 0, bytes);
+                offset += bytes;
+                packageOffsets.put(mn, poffsets);
+            }
+            this.size = (int) offset;
+        }
+
+        void writeTo(DataOutputStream out) throws IOException {
+            for (int moffset : moduleOffsets.values()) {
+                out.writeInt(moffset);
+            }
+            for (String mn : moduleOffsets.keySet()) {
+                for (int poffset : packageOffsets.get(mn)) {
+                    out.writeInt(poffset);
+                }
+            }
+        }
+
+        int size() {
+            return size;
         }
     }
 
