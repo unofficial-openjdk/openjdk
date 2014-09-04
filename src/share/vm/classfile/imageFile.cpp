@@ -42,7 +42,7 @@
 #endif
 
 #include "runtime/mutex.hpp"
-
+#include "utilities/bytes.hpp"
 
 
 // Compute the Perfect Hashing hash code for the supplied string.
