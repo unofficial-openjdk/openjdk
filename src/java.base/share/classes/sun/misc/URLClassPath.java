@@ -1251,7 +1251,7 @@ public class URLClassPath {
                 public URL getCodeSourceURL() {
                     try {
                         String name = findModule(entry);
-                        return URI.create("module:///" + name).toURL();
+                        return URI.create("module:" + name).toURL();
                     } catch (MalformedURLException e) {
                         throw new InternalError(e);
                     }

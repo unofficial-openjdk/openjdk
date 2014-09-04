@@ -51,7 +51,7 @@ class ModuleArtifactLibrary implements ModuleArtifactFinder {
 
                 URL url;
                 try {
-                     url = URI.create("module:///" + descriptor.id()).toURL();
+                     url = URI.create("module:" + descriptor.id()).toURL();
                 } catch (MalformedURLException e) {
                     throw new InternalError(e);
                 }

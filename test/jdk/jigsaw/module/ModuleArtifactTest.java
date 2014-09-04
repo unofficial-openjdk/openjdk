@@ -55,7 +55,7 @@ public class ModuleArtifactTest {
         Set<String> packages =
             Stream.of("p", "q", "p.internal").collect(Collectors.toSet());
 
-        URL url = URI.create("module://m").toURL();
+        URL url = URI.create("module:m").toURL();
 
         ModuleArtifact artifact = new ModuleArtifact(descriptor, packages, url);
 
@@ -67,7 +67,7 @@ public class ModuleArtifactTest {
     @Test(expectedExceptions = { NullPointerException.class })
     public void testNullDescriptor() throws Exception {
         Set<String> packages = Stream.of("p").collect(Collectors.toSet());
-        URL url = URI.create("module://m").toURL();
+        URL url = URI.create("module:m").toURL();
         new ModuleArtifact(null, packages, url);
     }
 
@@ -78,7 +78,7 @@ public class ModuleArtifactTest {
                         .export("p")
                         .export("q")
                         .build();
-        URL url = URI.create("module://m").toURL();
+        URL url = URI.create("module:m").toURL();
         new ModuleArtifact(descriptor, null, url);
     }
 
@@ -115,7 +115,7 @@ public class ModuleArtifactTest {
                 new ExtendedModuleDescriptor.Builder("m")
                         .export("p")
                         .build();
-        URL url = URI.create("module://m").toURL();
+        URL url = URI.create("module:m").toURL();
 
         // should throw IAE
         new ModuleArtifact(descriptor, packages, url);

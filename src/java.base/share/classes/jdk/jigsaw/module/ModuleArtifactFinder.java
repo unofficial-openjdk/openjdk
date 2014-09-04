@@ -215,7 +215,7 @@ class InstalledModuleFinder implements ModuleArtifactFinder {
                 String name = descriptor.name();
                 URL url;
                 try {
-                    url = URI.create("module:///" + name).toURL();
+                    url = URI.create("module:" + name).toURL();
                 } catch (MalformedURLException e) {
                     throw new InternalError(e);
                 }
