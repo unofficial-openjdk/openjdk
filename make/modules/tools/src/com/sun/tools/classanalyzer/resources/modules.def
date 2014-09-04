@@ -771,8 +771,9 @@ module jdk.dev {
     include sun.security.tools.jarsigner.**,
             com.sun.jarsigner.**;
 
-    // jlink
-    include jdk.jigsaw.tools.jlink.**;
+    // jlink, jimage
+    include jdk.jigsaw.tools.jlink.**,
+            jdk.jigsaw.tools.jimage.**;
 
     // jdeps
     include com.sun.tools.jdeps.**;
