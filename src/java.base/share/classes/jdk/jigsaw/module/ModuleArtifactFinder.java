@@ -207,11 +207,11 @@ class InstalledModuleFinder implements ModuleArtifactFinder {
 
             ImageModules image = ImageModules.load(in);
 
-            Set<ModuleDescriptor> descriptors = image.modules();
+            Set<ExtendedModuleDescriptor> descriptors = image.modules();
             Map<String, Set<String>> packageMap = image.packages();
 
             Set<ModuleArtifact> artifacts = new HashSet<>();
-            for (ModuleDescriptor descriptor: descriptors) {
+            for (ExtendedModuleDescriptor descriptor: descriptors) {
                 String name = descriptor.name();
                 URL url;
                 try {
@@ -223,15 +223,8 @@ class InstalledModuleFinder implements ModuleArtifactFinder {
                 if (packages == null)
                     packages = Collections.emptySet();
 
-                ExtendedModuleDescriptor extendedDescriptor =
-                    new ExtendedModuleDescriptor(ModuleId.parse(descriptor.name()),
-                        descriptor.moduleDependences(),
-                        descriptor.serviceDependences(),
-                        descriptor.exports(),
-                        descriptor.services());
-
                 ModuleArtifact artifact =
-                    new ModuleArtifact(extendedDescriptor,
+                    new ModuleArtifact(descriptor,
                                        packages,
                                        url);
                 artifacts.add(artifact);

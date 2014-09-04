@@ -29,6 +29,7 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.JarURLConnection;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLStreamHandler;
@@ -1221,12 +1222,25 @@ public class URLClassPath {
             return toURL(entry);
         }
 
+        // Returns the module name containing the given entry of a class file;
+        // otherwise return null
+        String findModule(String entry) {
+            if (entry.endsWith(".class")) {
+                return jimage.findModule(entry);
+            }
+            return null;
+        }
+
         @Override
         Resource getResource(String name, boolean check) {
             final String entry = toEntryName(name);
             ImageLocation location = jimage.findLocation(entry);
             if (location == null)
                 return null;
+            if (DEBUG) {
+                System.err.println("JImageLoader.getResource(\"" + name + "\") module: " +
+                                   findModule(entry) + " " + location);
+            }
             final URL url = toURL(entry);
             return new Resource() {
                 @Override
@@ -1234,7 +1248,14 @@ public class URLClassPath {
                 @Override
                 public URL getURL() { return url; }
                 @Override
-                public URL getCodeSourceURL() { return getBaseURL(); }
+                public URL getCodeSourceURL() {
+                    try {
+                        String name = findModule(entry);
+                        return URI.create("module:///" + name).toURL();
+                    } catch (MalformedURLException e) {
+                        throw new InternalError(e);
+                    }
+                }
                 @Override
                 public InputStream getInputStream() throws IOException {
                     long offset = location.getContentOffset();

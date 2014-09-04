@@ -60,6 +60,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Formatter;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -76,7 +77,6 @@ import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
-
 import jdk.jigsaw.module.Configuration;
 import jdk.jigsaw.module.Layer;
 import jdk.jigsaw.module.ModuleArtifactFinder;
@@ -442,31 +442,6 @@ class JlinkTask {
         return modPaths;
     }
 
-    /*
-     * Extract Jmod files and write classes and resource files
-     * into per-module "classes" zip file and write module graph
-     * in the java.base module.
-     */
-    private void extractJMods(Path output, Set<ModuleDescriptor> mods, Set<Path> jmods)
-        throws IOException
-    {
-        Path modulesPath = output.resolve("lib/modules");
-        Files.createDirectories(modulesPath);
-        for (Path jmod : jmods) {
-            String fileName = jmod.getFileName().toString();
-            String modName = fileName.substring(0, fileName.indexOf(".jmod"));
-            Path modPath = modulesPath.resolve(modName);
-            Files.createDirectories(modPath);
-
-            try (JmodFileReader reader = new JmodFileReader(jmod, modPath, output)) {
-                reader.extract();
-                if (modName.equals("java.base")) {
-                    reader.writeModulesLists(mods);
-                }
-            }
-        }
-    }
-
     /**
      * chmod ugo+x file
      */
@@ -490,15 +465,13 @@ class JlinkTask {
                                                  ModuleArtifactFinder.nullFinder(),
                                                  options.jmods);
 
-        Set<ModuleDescriptor> modules = cf.descriptors();
-
-        Set<Path> jmods = modulesToPath(modules);
+        Set<Path> jmods = modulesToPath(cf.descriptors());
 
         ImageFileHelper imageHelper = new ImageFileHelper(cf, jmods);
         if (options.format == Format.IMAGE) {
-            extractJMods(output, modules, jmods);
+            imageHelper.createLegacyFormat(output);
         } else if (options.format == Format.JIMAGE) {
-            imageHelper.createImageFile(output);
+            imageHelper.createModularImage(output);
         } else {
             throw new InternalError("should never reach here");
         }
@@ -539,8 +512,7 @@ class JlinkTask {
         }
     }
 
-    static class ImageFileHelper {
-        static final Path IMODULES_FILE = Paths.get("lib", "modules", ImageModules.FILE);
+    private class ImageFileHelper {
         final Set<ModuleDescriptor> modules;
         final Set<ModuleDescriptor> bootModules;
         final Set<ModuleDescriptor> extModules;
@@ -567,16 +539,42 @@ class JlinkTask {
                     .filter(m -> !bootModules.contains(m) && !extModules.contains(m))
                     .collect(Collectors.toSet());
             this.imf = new ImageModules(cf, bootModules,
-                                        extModules, appModules, jmods);
+                                        extModules, appModules);
         }
 
-        void createImageFile(Path output) throws IOException {
-            ImageFile.create(output, jmods, bootModules, extModules, appModules);
+        void createModularImage(Path output) throws IOException {
+            ImageFile.create(output, jmods, imf);
         }
 
+        /*
+         * Extract Jmod files and write classes and resource files
+         * into per-module "classes" zip file and write module graph
+         * in the java.base module.
+         */
+        void createLegacyFormat(Path output) throws IOException {
+            Path modulesPath = output.resolve("lib/modules");
+            Files.createDirectories(modulesPath);
+            for (Path jmod : jmods) {
+                String fileName = jmod.getFileName().toString();
+                String modName = fileName.substring(0, fileName.indexOf(".jmod"));
+                Path modPath = modulesPath.resolve(modName);
+                Files.createDirectories(modPath);
+
+                try (JmodFileReader reader = new JmodFileReader(jmod, modPath, output)) {
+                    reader.extract();
+
+                    // set the package map
+                    imf.setPackages(modName, reader.packages());
+
+                    if (modName.equals("java.base")) {
+                        reader.writeModulesLists(modules);
+                    }
+                }
+            }
+        }
         void writeInstalledModules(Path output) throws IOException {
-            Path path = output.resolve(IMODULES_FILE);
-            try (OutputStream out = Files.newOutputStream(path)) {
+            Path mfile = Paths.get("lib", "modules", ImageModules.FILE);
+            try (OutputStream out = Files.newOutputStream(output.resolve(mfile))) {
                 imf.store(out);
             }
         }
@@ -591,6 +589,7 @@ class JlinkTask {
         final ZipFile moduleFile;
         final Path output;
         final Path classesPath;
+        final Set<String> packages;
         JarOutputStream classesJar;  //lazy
 
         JmodFileReader(Path jmod, Path modulePrivatePath, Path outputDir)
@@ -599,6 +598,11 @@ class JlinkTask {
             moduleFile = new ZipFile(jmod.toFile());
             output = outputDir;
             classesPath = modulePrivatePath.resolve(Section.CLASSES.imageDir());
+            packages = new HashSet<>();
+        }
+
+        Set<String> packages() {
+            return packages;
         }
 
         void extract() throws IOException {
@@ -728,9 +732,24 @@ class JlinkTask {
             if (classesJar == null) // lazy creation of classes archive
                 classesJar = new JarOutputStream(new FileOutputStream(classesPath.toFile()));
 
+            if (filename.endsWith(".class") && !filename.equals("module-info.class")) {
+                packages.add(toPackage(filename));
+            }
+
             classesJar.putNextEntry(new JarEntry(filename));
             copy(is, classesJar);
             classesJar.closeEntry();
+        }
+
+        private String toPackage(String name) {
+            int index = name.lastIndexOf('/');
+            if (index > 0) {
+                return name.substring(0, index).replace('/', '.');
+            } else {
+                // ## unnamed package
+                System.err.format("Warning: unnamed package %s%n", name);
+                return "";
+            }
         }
 
         private void writeFile(InputStream is, Path dstFile, Section section)
