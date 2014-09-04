@@ -332,7 +332,7 @@ public final class ImageModules {
         }
 
         for (String mn : mnames) {
-            ImageLocation mindex = reader.findLocation("module/" + mn + ModuleIndex.METADATA_EXT);
+            ImageLocation mindex = reader.findLocation(mn + "/" + ModuleIndex.PACKAGES_ENTRY);
             byte[] poffsets = reader.getResource(mindex.getContentOffset(), mindex.getUncompressedSize());
             IntBuffer pbufs = ByteBuffer.wrap(poffsets).asIntBuffer();
             while (pbufs.hasRemaining()) {
@@ -349,8 +349,8 @@ public final class ImageModules {
      * in the modular image
      */
     class ModuleIndex {
-        static final String METADATA_EXT = ".mindex";
-        static final String MODULES_ENTRY = "module/modules" + METADATA_EXT;
+        static final String MODULES_ENTRY = "module/modules.offsets";
+        static final String PACKAGES_ENTRY = "packages.offsets";
         final Map<String, Integer> moduleOffsets = new LinkedHashMap<>();
         final Map<String, List<Integer>> packageOffsets = new HashMap<>();
         final int size;
@@ -365,7 +365,7 @@ public final class ImageModules {
                         .map(writer::addString)
                         .collect(Collectors.toList());
                 // package name offsets per module
-                String entry = "module/" + mn + METADATA_EXT;
+                String entry = mn + "/" + PACKAGES_ENTRY;
                 int bytes =  poffsets.size() * 4;
                 writer.addLocation(entry, offset, 0, bytes);
                 offset += bytes;
