@@ -197,6 +197,9 @@ public:
 
   // Return the reource for the supplied location info.
   u1* getResource(ImageLocation& location) const;
+
+  // Return an array of packages for a given module
+  GrowableArray<const char*>* packages(const char* name);
 };
 
 #endif // SHARE_VM_CLASSFILE_IMAGEFILE_HPP

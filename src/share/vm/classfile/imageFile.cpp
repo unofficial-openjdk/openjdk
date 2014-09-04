@@ -245,7 +245,7 @@ bool ImageFile::verifyLocation(ImageLocation& location, const char* name) const 
   return next && *next == '\0';
 }
 
-// Return the reource for the supplied location.
+// Return the resource for the supplied location.
 u1* ImageFile::getResource(ImageLocation& location) const {
   // Retrieve the byte offset and size of the resource.
   u8 offset = _indexSize + location.getAttribute(ImageLocation::ATTRIBUTE_OFFSET);
@@ -277,4 +277,36 @@ u1* ImageFile::getResource(ImageLocation& location) const {
   // TODO decompress(data, compressedSize, uncompressed, size);
   FREE_RESOURCE_ARRAY(u1, data, size);
   return uncompressed;
+}
+
+GrowableArray<const char*>* ImageFile::packages(const char* name) {
+  char entry[JVM_MAXPATHLEN];
+  if (jio_snprintf(entry, sizeof(entry), "%s/packages.offsets", name) == -1) {
+    return NULL;
+  }
+
+  u1* data = findLocationData(entry);
+  if (!data) {
+    tty->print_cr("ERROR: %s\n", entry);
+    return NULL;
+  }
+  ImageLocation location(data);
+  if (verifyLocation(location, entry)) {
+    u8 size = location.getAttribute(ImageLocation::ATTRIBUTE_UNCOMPRESSED);
+    u1* buffer = getResource(location);
+    if (!buffer) {
+        return NULL;
+    }
+
+    ImageStrings strings(_stringBytes, _header._stringsSize);
+    GrowableArray<const char*>* pkgs = new GrowableArray<const char*>();
+    int count = size / 4;
+    for (int i=0; i < count; i++) {
+      u4 offset = Bytes::get_Java_u4(buffer + (i*4));
+      const char* p = strings.get(offset);
+      pkgs->append(p);
+    }
+    return pkgs;
+  }
+  return NULL;
 }
