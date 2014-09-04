@@ -2080,6 +2080,9 @@ bool Arguments::check_vm_args_consistency() {
                                      1, 100, "TLABWasteTargetPercent");
 
   status = status && verify_object_alignment();
+#ifdef COMPILER1
+  status = status && verify_min_value(ValueMapInitialSize, 1, "ValueMapInitialSize");
+#endif
 
 #ifdef SPARC
   if (UseConcMarkSweepGC || UseG1GC) {
