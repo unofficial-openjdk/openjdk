@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -88,6 +88,7 @@
 class klassVtable;
 class KlassHandle;
 class OrderAccess;
+class fieldDescriptor;
 
 // Holder (or cage) for the C++ vtable of each kind of Klass.
 // We want to tightly constrain the location of the C++ vtable in the overall layout.
@@ -514,6 +515,7 @@ class Klass : public Klass_vtbl {
   virtual void initialize(TRAPS);
   // lookup operation for MethodLookupCache
   friend class MethodLookupCache;
+  virtual klassOop find_field(Symbol* name, Symbol* signature, fieldDescriptor* fd) const;
   virtual methodOop uncached_lookup_method(Symbol* name, Symbol* signature) const;
  public:
   methodOop lookup_method(Symbol* name, Symbol* signature) const {

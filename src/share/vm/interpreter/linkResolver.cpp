@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -187,6 +187,14 @@ void LinkResolver::resolve_klass_no_update(KlassHandle& result, constantPoolHand
 
 void LinkResolver::lookup_method_in_klasses(methodHandle& result, KlassHandle klass, Symbol* name, Symbol* signature, TRAPS) {
   methodOop result_oop = klass->uncached_lookup_method(name, signature);
+
+  //JDK 7 does not support default methods, but this code ported from JDK8 to keep code consistent for all JDK.
+  if (klass->oop_is_array()) {
+    // Only consider klass and super klass for arrays
+    result = methodHandle(THREAD, result_oop);
+    return;
+  }
+
   if (EnableInvokeDynamic && result_oop != NULL) {
     vmIntrinsics::ID iid = result_oop->intrinsic_id();
     if (MethodHandles::is_signature_polymorphic(iid)) {
@@ -421,7 +429,7 @@ void LinkResolver::resolve_method(methodHandle& resolved_method, KlassHandle res
   // 2. lookup method in resolved klass and its super klasses
   lookup_method_in_klasses(resolved_method, resolved_klass, method_name, method_signature, CHECK);
 
-  if (resolved_method.is_null()) { // not found in the class hierarchy
+  if (resolved_method.is_null() && !resolved_klass->oop_is_array()) { // not found in the class hierarchy
     // 3. lookup method in all the interfaces implemented by the resolved klass
     lookup_method_in_interfaces(resolved_method, resolved_klass, method_name, method_signature, CHECK);
 
@@ -434,16 +442,16 @@ void LinkResolver::resolve_method(methodHandle& resolved_method, KlassHandle res
         CLEAR_PENDING_EXCEPTION;
       }
     }
+  }
 
-    if (resolved_method.is_null()) {
-      // 4. method lookup failed
-      ResourceMark rm(THREAD);
-      THROW_MSG_CAUSE(vmSymbols::java_lang_NoSuchMethodError(),
-                      methodOopDesc::name_and_sig_as_C_string(Klass::cast(resolved_klass()),
-                                                              method_name,
-                                                              method_signature),
-                      nested_exception);
-    }
+  if (resolved_method.is_null()) {
+    // 4. method lookup failed
+    ResourceMark rm(THREAD);
+    THROW_MSG_CAUSE(vmSymbols::java_lang_NoSuchMethodError(),
+                    methodOopDesc::name_and_sig_as_C_string(Klass::cast(resolved_klass()),
+                                                            method_name,
+                                                            method_signature),
+                    nested_exception);
   }
 
   // 5. check if method is concrete
@@ -514,17 +522,18 @@ void LinkResolver::resolve_interface_method(methodHandle& resolved_method,
   // lookup method in this interface or its super, java.lang.Object
   lookup_instance_method_in_klasses(resolved_method, resolved_klass, method_name, method_signature, CHECK);
 
-  if (resolved_method.is_null()) {
+  if (resolved_method.is_null() && !resolved_klass->oop_is_array()) {
     // lookup method in all the super-interfaces
     lookup_method_in_interfaces(resolved_method, resolved_klass, method_name, method_signature, CHECK);
-    if (resolved_method.is_null()) {
-      // no method found
-      ResourceMark rm(THREAD);
-      THROW_MSG(vmSymbols::java_lang_NoSuchMethodError(),
-                methodOopDesc::name_and_sig_as_C_string(Klass::cast(resolved_klass()),
-                                                        method_name,
-                                                        method_signature));
-    }
+  }
+
+  if (resolved_method.is_null()) {
+    // no method found
+    ResourceMark rm(THREAD);
+    THROW_MSG(vmSymbols::java_lang_NoSuchMethodError(),
+              methodOopDesc::name_and_sig_as_C_string(Klass::cast(resolved_klass()),
+                                                      method_name,
+                                                      method_signature));
   }
 
   if (check_access) {
@@ -614,7 +623,7 @@ void LinkResolver::resolve_field(FieldAccessInfo& result, constantPoolHandle poo
 
   // Resolve instance field
   fieldDescriptor fd; // find_field initializes fd if found
-  KlassHandle sel_klass(THREAD, instanceKlass::cast(resolved_klass())->find_field(field, sig, &fd));
+  KlassHandle sel_klass(THREAD, resolved_klass->find_field(field, sig, &fd));
   // check if field exists; i.e., if a klass containing the field def has been selected
   if (sel_klass.is_null()){
     ResourceMark rm(THREAD);

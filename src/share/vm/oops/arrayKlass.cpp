@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -62,6 +62,13 @@ klassOop arrayKlass::java_super() const {
 oop arrayKlass::multi_allocate(int rank, jint* sizes, TRAPS) {
   ShouldNotReachHere();
   return NULL;
+}
+
+// find field according to JVM spec 5.4.3.2, returns the klass in which the field is defined
+klassOop arrayKlass::find_field(Symbol* name, Symbol* sig, fieldDescriptor* fd) const {
+  // There are no fields in an array klass but look to the super class (Object)
+  assert(super(), "super klass must be present");
+  return Klass::cast(super())->find_field(name, sig, fd);
 }
 
 methodOop arrayKlass::uncached_lookup_method(Symbol* name, Symbol* signature) const {
