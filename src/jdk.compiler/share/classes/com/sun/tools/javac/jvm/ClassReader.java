@@ -48,6 +48,7 @@ import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.code.Symtab;
 import com.sun.tools.javac.file.BaseFileObject;
 import com.sun.tools.javac.util.*;
+import com.sun.tools.javac.util.DefinedBy.Api;
 import com.sun.tools.javac.util.JCDiagnostic.DiagnosticPosition;
 
 import static com.sun.tools.javac.code.Flags.*;
@@ -685,7 +686,7 @@ public class ClassReader {
                 outer = new ClassType(outer, sigToTypes('>'), t,
                                       Type.noAnnotations) {
                         boolean completed = false;
-                        @Override
+                        @Override @DefinedBy(Api.LANGUAGE_MODEL)
                         public Type getEnclosingType() {
                             if (!completed) {
                                 completed = true;
@@ -1729,7 +1730,7 @@ public class ClassReader {
             this.enumerator = enumerator;
         }
         public void accept(Visitor v) { ((ProxyVisitor)v).visitEnumAttributeProxy(this); }
-        @Override
+        @Override @DefinedBy(Api.LANGUAGE_MODEL)
         public String toString() {
             return "/*proxy enum*/" + enumType + "." + enumerator;
         }
@@ -1742,7 +1743,7 @@ public class ClassReader {
             this.values = values;
         }
         public void accept(Visitor v) { ((ProxyVisitor)v).visitArrayAttributeProxy(this); }
-        @Override
+        @Override @DefinedBy(Api.LANGUAGE_MODEL)
         public String toString() {
             return "{" + values + "}";
         }
@@ -1758,7 +1759,7 @@ public class ClassReader {
             this.values = values;
         }
         public void accept(Visitor v) { ((ProxyVisitor)v).visitCompoundAnnotationProxy(this); }
-        @Override
+        @Override @DefinedBy(Api.LANGUAGE_MODEL)
         public String toString() {
             StringBuilder buf = new StringBuilder();
             buf.append("@");
@@ -2499,7 +2500,7 @@ public class ClassReader {
             this.flatname = flatname;
         }
 
-        @Override
+        @Override @DefinedBy(Api.COMPILER)
         public URI toUri() {
             try {
                 return new URI(null, name.toString(), null);
@@ -2508,7 +2509,7 @@ public class ClassReader {
             }
         }
 
-        @Override
+        @Override @DefinedBy(Api.COMPILER)
         public String getName() {
             return name.toString();
         }
@@ -2518,42 +2519,42 @@ public class ClassReader {
             return getName();
         }
 
-        @Override
+        @Override @DefinedBy(Api.COMPILER)
         public JavaFileObject.Kind getKind() {
             return getKind(getName());
         }
 
-        @Override
+        @Override @DefinedBy(Api.COMPILER)
         public InputStream openInputStream() {
             throw new UnsupportedOperationException();
         }
 
-        @Override
+        @Override @DefinedBy(Api.COMPILER)
         public OutputStream openOutputStream() {
             throw new UnsupportedOperationException();
         }
 
-        @Override
+        @Override @DefinedBy(Api.COMPILER)
         public CharBuffer getCharContent(boolean ignoreEncodingErrors) {
             throw new UnsupportedOperationException();
         }
 
-        @Override
+        @Override @DefinedBy(Api.COMPILER)
         public Reader openReader(boolean ignoreEncodingErrors) {
             throw new UnsupportedOperationException();
         }
 
-        @Override
+        @Override @DefinedBy(Api.COMPILER)
         public Writer openWriter() {
             throw new UnsupportedOperationException();
         }
 
-        @Override
+        @Override @DefinedBy(Api.COMPILER)
         public long getLastModified() {
             throw new UnsupportedOperationException();
         }
 
-        @Override
+        @Override @DefinedBy(Api.COMPILER)
         public boolean delete() {
             throw new UnsupportedOperationException();
         }
@@ -2563,7 +2564,7 @@ public class ClassReader {
             return flatname.toString();
         }
 
-        @Override
+        @Override @DefinedBy(Api.COMPILER)
         public boolean isNameCompatible(String simpleName, JavaFileObject.Kind kind) {
             return true; // fail-safe mode
         }

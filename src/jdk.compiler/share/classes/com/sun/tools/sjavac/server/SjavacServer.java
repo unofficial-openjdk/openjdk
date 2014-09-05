@@ -310,7 +310,7 @@ public class SjavacServer implements Terminable {
 
     @Override
     public void shutdown(String quitMsg) {
-        if (!keepAcceptingRequests.compareAndSet(false, true)) {
+        if (!keepAcceptingRequests.compareAndSet(true, false)) {
             // Already stopped, no need to shut down again
             return;
         }
@@ -331,19 +331,6 @@ public class SjavacServer implements Terminable {
             serverSocket.close();
         } catch (IOException e) {
             e.printStackTrace(theLog);
-        }
-    }
-
-    public static void cleanup(String... args) {
-        String settings = Util.findServerSettings(args);
-        if (settings == null) return;
-        String portfile = Util.extractStringOption("portfile", settings);
-        String background = Util.extractStringOption("background", settings);
-        if (background != null && background.equals("false")) {
-            // If the server runs within this jvm, then delete the portfile,
-            // since this jvm is about to exit soon.
-            File f = new File(portfile);
-            f.delete();
         }
     }
 }

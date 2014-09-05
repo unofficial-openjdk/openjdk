@@ -57,6 +57,8 @@ import com.sun.tools.javac.jvm.Target;
 import com.sun.tools.javac.util.Assert;
 import com.sun.tools.javac.util.Context;
 import com.sun.tools.javac.util.Convert;
+import com.sun.tools.javac.util.DefinedBy;
+import com.sun.tools.javac.util.DefinedBy.Api;
 import com.sun.tools.javac.util.JavacMessages;
 import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.util.Log;
@@ -452,6 +454,7 @@ public class Symtab {
                 }
             };
         noSymbol = new TypeSymbol(Kinds.NIL, 0, names.empty, Type.noType, rootPackage) {
+            @DefinedBy(Api.LANGUAGE_MODEL)
             public <R, P> R accept(ElementVisitor<R, P> v, P p) {
                 return v.visitUnknown(this, p);
             }

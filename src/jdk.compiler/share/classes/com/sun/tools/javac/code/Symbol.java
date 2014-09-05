@@ -42,6 +42,7 @@ import com.sun.tools.javac.comp.Env;
 import com.sun.tools.javac.jvm.*;
 import com.sun.tools.javac.tree.JCTree.JCVariableDecl;
 import com.sun.tools.javac.util.*;
+import com.sun.tools.javac.util.DefinedBy.Api;
 import com.sun.tools.javac.util.Name;
 import static com.sun.tools.javac.code.Directive.*;
 import static com.sun.tools.javac.code.Flags.*;
@@ -575,22 +576,27 @@ public abstract class Symbol extends AnnoConstruct implements Element {
         return true;
     }
 
+    @DefinedBy(Api.LANGUAGE_MODEL)
     public Type asType() {
         return type;
     }
 
+    @DefinedBy(Api.LANGUAGE_MODEL)
     public Symbol getEnclosingElement() {
         return owner;
     }
 
+    @DefinedBy(Api.LANGUAGE_MODEL)
     public ElementKind getKind() {
         return ElementKind.OTHER;       // most unkind
     }
 
+    @DefinedBy(Api.LANGUAGE_MODEL)
     public Set<Modifier> getModifiers() {
         return Flags.asModifierSet(flags());
     }
 
+    @DefinedBy(Api.LANGUAGE_MODEL)
     public Name getSimpleName() {
         return name;
     }
@@ -599,13 +605,14 @@ public abstract class Symbol extends AnnoConstruct implements Element {
      * This is the implementation for {@code
      * javax.lang.model.element.Element.getAnnotationMirrors()}.
      */
-    @Override
+    @Override @DefinedBy(Api.LANGUAGE_MODEL)
     public List<Attribute.Compound> getAnnotationMirrors() {
         return getRawAttributes();
     }
 
 
     // TODO: getEnclosedElements should return a javac List, fix in FilteredMemberList
+    @DefinedBy(Api.LANGUAGE_MODEL)
     public java.util.List<Symbol> getEnclosedElements() {
         return List.nil();
     }
@@ -648,6 +655,7 @@ public abstract class Symbol extends AnnoConstruct implements Element {
         public Symbol asMemberOf(Type site, Types types) { return other.asMemberOf(site, types); }
         public void complete() throws CompletionFailure { other.complete(); }
 
+        @DefinedBy(Api.LANGUAGE_MODEL)
         public <R, P> R accept(ElementVisitor<R, P> v, P p) {
             return other.accept(v, p);
         }
@@ -718,7 +726,7 @@ public abstract class Symbol extends AnnoConstruct implements Element {
             return type.hasTag(TYPEVAR);
         }
 
-        @Override
+        @Override @DefinedBy(Api.LANGUAGE_MODEL)
         public java.util.List<Symbol> getEnclosedElements() {
             List<Symbol> list = List.nil();
             if (kind == TYP && type.hasTag(TYPEVAR)) {
@@ -747,15 +755,17 @@ public abstract class Symbol extends AnnoConstruct implements Element {
             super(TYP, flags, name, type, owner);
         }
 
+        @DefinedBy(Api.LANGUAGE_MODEL)
         public ElementKind getKind() {
             return ElementKind.TYPE_PARAMETER;
         }
 
-        @Override
+        @Override @DefinedBy(Api.LANGUAGE_MODEL)
         public Symbol getGenericElement() {
             return owner;
         }
 
+        @DefinedBy(Api.LANGUAGE_MODEL)
         public List<Type> getBounds() {
             TypeVar t = (TypeVar)type;
             Type bound = t.getUpperBound();
@@ -771,7 +781,7 @@ public abstract class Symbol extends AnnoConstruct implements Element {
             }
         }
 
-        @Override
+        @Override @DefinedBy(Api.LANGUAGE_MODEL)
         public List<Attribute.Compound> getAnnotationMirrors() {
             // Declaration annotations on type variables are stored in type attributes
             // on the owner of the TypeVariableSymbol
@@ -810,7 +820,7 @@ public abstract class Symbol extends AnnoConstruct implements Element {
             }
 
 
-        @Override
+        @Override @DefinedBy(Api.LANGUAGE_MODEL)
         public <R, P> R accept(ElementVisitor<R, P> v, P p) {
             return v.visitTypeParameter(this, p);
         }
@@ -905,10 +915,12 @@ public abstract class Symbol extends AnnoConstruct implements Element {
             return fullname.toString();
         }
 
+        @DefinedBy(Api.LANGUAGE_MODEL)
         public Name getQualifiedName() {
             return fullname;
         }
 
+        @DefinedBy(Api.LANGUAGE_MODEL)
         public boolean isUnnamed() {
             return name.isEmpty() && owner != null;
         }
@@ -948,14 +960,17 @@ public abstract class Symbol extends AnnoConstruct implements Element {
             return (flags_field & EXISTS) != 0;
         }
 
+        @DefinedBy(Api.LANGUAGE_MODEL)
         public ElementKind getKind() {
             return ElementKind.PACKAGE;
         }
 
+        @DefinedBy(Api.LANGUAGE_MODEL)
         public Symbol getEnclosingElement() {
             return null;
         }
 
+        @DefinedBy(Api.LANGUAGE_MODEL)
         public <R, P> R accept(ElementVisitor<R, P> v, P p) {
             return v.visitPackage(this, p);
         }
@@ -1076,6 +1091,7 @@ public abstract class Symbol extends AnnoConstruct implements Element {
                 return fullname.toString();
         }
 
+        @DefinedBy(Api.LANGUAGE_MODEL)
         public Name getQualifiedName() {
             return fullname;
         }
@@ -1113,6 +1129,7 @@ public abstract class Symbol extends AnnoConstruct implements Element {
             }
         }
 
+        @DefinedBy(Api.LANGUAGE_MODEL)
         public List<Type> getInterfaces() {
             complete();
             if (type instanceof ClassType) {
@@ -1127,6 +1144,7 @@ public abstract class Symbol extends AnnoConstruct implements Element {
             }
         }
 
+        @DefinedBy(Api.LANGUAGE_MODEL)
         public Type getSuperclass() {
             complete();
             if (type instanceof ClassType) {
@@ -1167,6 +1185,7 @@ public abstract class Symbol extends AnnoConstruct implements Element {
         }
 
 
+        @DefinedBy(Api.LANGUAGE_MODEL)
         public ElementKind getKind() {
             long flags = flags();
             if ((flags & ANNOTATION) != 0)
@@ -1179,12 +1198,13 @@ public abstract class Symbol extends AnnoConstruct implements Element {
                 return ElementKind.CLASS;
         }
 
-        @Override
+        @Override @DefinedBy(Api.LANGUAGE_MODEL)
         public Set<Modifier> getModifiers() {
             long flags = flags();
             return Flags.asModifierSet(flags & ~DEFAULT);
         }
 
+        @DefinedBy(Api.LANGUAGE_MODEL)
         public NestingKind getNestingKind() {
             complete();
             if (owner.kind == PCK)
@@ -1216,6 +1236,7 @@ public abstract class Symbol extends AnnoConstruct implements Element {
 
 
 
+        @DefinedBy(Api.LANGUAGE_MODEL)
         public <R, P> R accept(ElementVisitor<R, P> v, P p) {
             return v.visitType(this, p);
         }
@@ -1295,6 +1316,7 @@ public abstract class Symbol extends AnnoConstruct implements Element {
             return new VarSymbol(flags_field, name, types.memberType(site, this), owner);
         }
 
+        @DefinedBy(Api.LANGUAGE_MODEL)
         public ElementKind getKind() {
             long flags = flags();
             if ((flags & PARAMETER) != 0) {
@@ -1313,10 +1335,12 @@ public abstract class Symbol extends AnnoConstruct implements Element {
             }
         }
 
+        @DefinedBy(Api.LANGUAGE_MODEL)
         public <R, P> R accept(ElementVisitor<R, P> v, P p) {
             return v.visitVariable(this, p);
         }
 
+        @DefinedBy(Api.LANGUAGE_MODEL)
         public Object getConstantValue() { // Mirror API
             return Constants.decode(getConstValue(), type);
         }
@@ -1422,7 +1446,7 @@ public abstract class Symbol extends AnnoConstruct implements Element {
             return m;
         }
 
-        @Override
+        @Override @DefinedBy(Api.LANGUAGE_MODEL)
         public Set<Modifier> getModifiers() {
             long flags = flags();
             return Flags.asModifierSet((flags & DEFAULT) != 0 ? flags & ~ABSTRACT : flags);
@@ -1684,6 +1708,7 @@ public abstract class Symbol extends AnnoConstruct implements Element {
             return new MethodSymbol(flags_field, name, types.memberType(site, this), owner);
         }
 
+        @DefinedBy(Api.LANGUAGE_MODEL)
         public ElementKind getKind() {
             if (name == name.table.names.init)
                 return ElementKind.CONSTRUCTOR;
@@ -1700,22 +1725,27 @@ public abstract class Symbol extends AnnoConstruct implements Element {
                     getKind() == ElementKind.INSTANCE_INIT;
         }
 
+        @DefinedBy(Api.LANGUAGE_MODEL)
         public Attribute getDefaultValue() {
             return defaultValue;
         }
 
+        @DefinedBy(Api.LANGUAGE_MODEL)
         public List<VarSymbol> getParameters() {
             return params();
         }
 
+        @DefinedBy(Api.LANGUAGE_MODEL)
         public boolean isVarArgs() {
             return (flags() & VARARGS) != 0;
         }
 
+        @DefinedBy(Api.LANGUAGE_MODEL)
         public boolean isDefault() {
             return (flags() & DEFAULT) != 0;
         }
 
+        @DefinedBy(Api.LANGUAGE_MODEL)
         public <R, P> R accept(ElementVisitor<R, P> v, P p) {
             return v.visitExecutable(this, p);
         }
@@ -1724,14 +1754,17 @@ public abstract class Symbol extends AnnoConstruct implements Element {
             return v.visitMethodSymbol(this, p);
         }
 
+        @DefinedBy(Api.LANGUAGE_MODEL)
         public Type getReceiverType() {
             return asType().getReceiverType();
         }
 
+        @DefinedBy(Api.LANGUAGE_MODEL)
         public Type getReturnType() {
             return asType().getReturnType();
         }
 
+        @DefinedBy(Api.LANGUAGE_MODEL)
         public List<Type> getThrownTypes() {
             return asType().getThrownTypes();
         }
