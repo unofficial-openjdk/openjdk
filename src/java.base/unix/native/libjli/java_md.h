@@ -58,6 +58,9 @@ static jboolean GetJVMPath(const char *jrepath, const char *jvmtype,
 static jboolean GetJREPath(char *path, jint pathsize, const char * arch,
                            jboolean speculative);
 
+static const char* APP_JAR = "/lib/app/app.jar";
+static const char* APP_CLASS = "/lib/app/cmdClass";
+
 #ifdef MACOSX
 #include "java_md_macosx.h"
 #else  /* !MACOSX */

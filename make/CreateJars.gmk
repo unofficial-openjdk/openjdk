@@ -223,6 +223,7 @@ RT_JAR_EXCLUDES += \
     com/sun/java/swing/action \
     com/sun/java/swing/ui \
     com/oracle/security \
+    module-info.class \
     #
 
 # Find all files in the classes dir to use as dependencies. This could be more fine granular.

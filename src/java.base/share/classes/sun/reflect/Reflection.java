@@ -25,9 +25,14 @@
 
 package sun.reflect;
 
+import sun.misc.JavaLangAccess;
+import sun.misc.JavaLangReflectAccess;
+import sun.misc.SharedSecrets;
+
 import java.lang.reflect.*;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 /** Common utility routines used by both java.lang and
     java.lang.reflect */
@@ -41,6 +46,9 @@ public class Reflection {
     private static volatile Map<Class<?>,String[]> fieldFilterMap;
     private static volatile Map<Class<?>,String[]> methodFilterMap;
 
+    // access to java.lang.reflect.Module, initialized lazily
+    private static volatile JavaLangReflectAccess reflectAccess;
+
     static {
         Map<Class<?>,String[]> map = new HashMap<Class<?>,String[]>();
         map.put(Reflection.class,
@@ -49,6 +57,29 @@ public class Reflection {
         fieldFilterMap = map;
 
         methodFilterMap = new HashMap<>();
+    }
+
+    // set to true when modules initialized
+    private static volatile boolean modulesInitialized;
+
+    // set to true to enable module checks
+    private static volatile boolean moduleChecksEnabled;
+
+    // set to true to debug failing module checks
+    private static boolean moduleChecksDebugging;
+
+    public static boolean modulesInitialized() {
+        return modulesInitialized;
+    }
+
+    public static void enableModules(boolean enableModuleChecks,
+                                     boolean debugging) {
+        moduleChecksEnabled = enableModuleChecks;
+        moduleChecksDebugging = debugging;
+        modulesInitialized = true;
+
+        JavaLangAccess langAccess = SharedSecrets.getJavaLangAccess();
+        reflectAccess = SharedSecrets.getJavaLangReflectAccess();
     }
 
     /** Returns the class of the caller of the method calling this method,
@@ -80,7 +111,15 @@ public class Reflection {
     public static boolean quickCheckMemberAccess(Class<?> memberClass,
                                                  int modifiers)
     {
-        return Modifier.isPublic(getClassAccessFlags(memberClass) & modifiers);
+      if (!Modifier.isPublic(getClassAccessFlags(memberClass) & modifiers))
+          return false;
+
+      if (moduleChecksEnabled) {
+          // no quick check if member is a public type in a named module
+          return (memberClass.getModule() == null);
+      } else {
+          return true;
+      }
     }
 
     public static void ensureMemberAccess(Class<?> currentClass,
@@ -94,12 +133,27 @@ public class Reflection {
         }
 
         if (!verifyMemberAccess(currentClass, memberClass, target, modifiers)) {
-            throw new IllegalAccessException("Class " + currentClass.getName() +
-                                             " can not access a member of class " +
-                                             memberClass.getName() +
-                                             " with modifiers \"" +
-                                             Modifier.toString(modifiers) +
-                                             "\"");
+            String currentSuffix = "";
+            String memberSuffix = "";
+            if (moduleChecksEnabled) {
+                Module m1 = currentClass.getModule();
+                if (m1 != null)
+                    currentSuffix = " (" + m1 + ")";
+                Module m2 = memberClass.getModule();
+                if (m2 != null)
+                    memberSuffix = " (" + m2 + ")";
+            }
+            IllegalAccessException iae =
+                new IllegalAccessException("Class " + currentClass.getName() +
+                                           currentSuffix +
+                                           " can not access a member of class " +
+                                           memberClass.getName() + memberSuffix +
+                                           " with modifiers \"" +
+                                           Modifier.toString(modifiers) +
+                                           "\"");
+            if (moduleChecksDebugging)
+                iae.printStackTrace();
+            throw iae;
         }
     }
 
@@ -121,6 +175,12 @@ public class Reflection {
         if (currentClass == memberClass) {
             // Always succeeds
             return true;
+        }
+
+        if (moduleChecksEnabled) {
+            if (!verifyModuleAccess(currentClass, memberClass)) {
+                return false;
+            }
         }
 
         if (!Modifier.isPublic(getClassAccessFlags(memberClass))) {
@@ -179,6 +239,42 @@ public class Reflection {
         }
 
         return true;
+    }
+
+    /**
+     * Returns {@ocde true} if memberClass's module is readable by currentClass's
+     * module and memberClass's's module exports memberClass's package to
+     * currentClass's module.
+     */
+    public static boolean verifyModuleAccess(Class<?> currentClass,
+                                             Class<?> memberClass) {
+        Module m1 = currentClass.getModule();
+        Module m2 = memberClass.getModule();
+
+        if (m1 == m2)
+            return true;  // same module (named or unnamed)
+
+        if (m1 != null) {
+            // named module trying to access member in unnamed module
+            if (m2 == null)
+                return true;
+
+            // named module trying to access member in another named module
+            if (!m1.canRead(m2))
+                return false;
+        }
+
+        // check that m1 package is exported to m1
+        return reflectAccess.isExported(m2, packageName(memberClass), m1);
+    }
+
+    private static String packageName(Class<?> c) {
+        String name = c.getName();
+        int i = name.lastIndexOf('.');
+        if (i == -1)
+            return "";
+        int start = name.startsWith("[L") ? 2 : 0;
+        return name.substring(start, i);
     }
 
     private static boolean isSameClassPackage(Class<?> c1, Class<?> c2) {

@@ -25,7 +25,6 @@
 
 package build.tools.module;
 
-import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -50,57 +49,68 @@ import javax.xml.stream.events.Attribute;
 import javax.xml.stream.events.XMLEvent;
 
 /**
- * GenJdepsModulesXml augments the input modules.xml file(s)
- * to include the module membership from the given path to
- * the JDK exploded image.  The output file is used by jdeps
- * to analyze dependencies and enforce module boundaries.
+ * This tool is used to generate com/sun/tools/jdeps/resources/modules.xml
+ * for jdeps to analyze dependencies and enforce module boundaries.
  *
- * The input modules.xml file defines the modular structure of
- * the JDK as described in JEP 200: The Modular JDK
- * (http://openjdk.java.net/jeps/200).
+ * To generate modules.xml for JDK 9:
+ * run GenerateModulesXml -nopackages output-filename build/modules
  *
- * $ java build.tools.module.GenJdepsModulesXml \
- *        -o com/sun/tools/jdeps/resources/modules.xml \
- *        -mp $OUTPUTDIR/modules \
- *        top/modules.xml
+ * This generates a single modules.xml for all open/closed modules
+ * for the platform that this tool is run on.  There are several platform
+ * specific modules that need to be merged before checking in for jdk9 use.
+ *   jdk.crypto.ucrypto  - solaris only
+ *   jdk.crypto.mscapi   - windows only
+ *   jdk.deploy.osx      - macosx only
+ *   oracle.accessbridge - windows only
  */
-public final class GenJdepsModulesXml {
+public final class GenerateModulesXml {
     private final static String USAGE =
-        "Usage: GenJdepsModulesXml -o <output file> -mp build/modules path-to-modules-xml";
+        "Usage: GenerateModulesXml [-nopackages] <output file> build/modules";
 
     public static void main(String[] args) throws Exception {
-        Path outfile = null;
-        Path modulepath = null;
-        int i = 0;
-        while (i < args.length) {
-            String arg = args[i];
-            if (arg.equals("-o")) {
-                outfile = Paths.get(args[i+1]);
-                i = i+2;
-            } else if (arg.equals("-mp")) {
-                modulepath = Paths.get(args[i+1]);
-                i = i+2;
-                if (!Files.isDirectory(modulepath)) {
-                    System.err.println(modulepath + " is not a directory");
-                    System.exit(1);
-                }
-            } else {
-                break;
+        if (args.length < 2) {
+            System.err.println(USAGE);
+            System.exit(-1);
+        }
+        boolean useMetadata = false;
+        boolean nopackages = false;
+        int i=0;
+        while (i < args.length && args[i].startsWith("-")) {
+            String arg = args[i++];
+            switch (arg) {
+                case "-usemetadata":
+                    // GenerateModulesXml in jdk9 repo has this flag on by default
+                    useMetadata = true;
+                    break;
+                case "-nopackages":
+                    nopackages = true;
+                    break;
+                default:
+                    System.err.println(USAGE);
+                    System.exit(-1);
             }
         }
-        if (outfile == null || modulepath == null || i >= args.length) {
+        if (i+2 != args.length) {
             System.err.println(USAGE);
             System.exit(-1);
         }
 
-        GenJdepsModulesXml gentool = new GenJdepsModulesXml(modulepath);
-        Set<Module> modules = new HashSet<>();
-        for (; i < args.length; i++) {
-            Path p = Paths.get(args[i]);
-            try (InputStream in = new BufferedInputStream(Files.newInputStream(p))) {
-                Set<Module> mods = gentool.load(in);
-                modules.addAll(mods);
-            }
+        Path outfile = Paths.get(args[i++]);
+        Path modulepath = Paths.get(args[i++]);
+
+        if (!Files.isDirectory(modulepath)) {
+            System.err.println(modulepath + " is not a directory");
+            System.exit(1);
+        }
+        GenerateModulesXml gentool = new GenerateModulesXml(modulepath);
+        Set<Module> modules;
+        if (useMetadata) {
+            try (InputStream in = GenerateModulesXml.class.getResourceAsStream("modules.xml")) {
+                modules = gentool.load(in);
+        }
+        } else {
+            JigsawModules jms = new JigsawModules(gentool, nopackages);
+            modules = jms.load();
         }
 
         Files.createDirectories(outfile.getParent());
@@ -108,7 +118,7 @@ public final class GenJdepsModulesXml {
     }
 
     final Path modulepath;
-    public GenJdepsModulesXml(Path modulepath) {
+    public GenerateModulesXml(Path modulepath) {
         this.modulepath = modulepath;
     }
 
@@ -120,6 +130,7 @@ public final class GenJdepsModulesXml {
     private static final String TO        = "to";
     private static final String INCLUDE   = "include";
     private static final QName  REEXPORTS = new QName("re-exports");
+
     private Set<Module> load(InputStream in) throws XMLStreamException, IOException {
         Set<Module> modules = new HashSet<>();
         XMLInputFactory factory = XMLInputFactory.newInstance();
@@ -218,11 +229,12 @@ public final class GenJdepsModulesXml {
     private void writeXML(Set<Module> modules, Path path)
             throws IOException, XMLStreamException
     {
+        System.out.println("Writing to " + path.toString());
         XMLOutputFactory xof = XMLOutputFactory.newInstance();
         try (OutputStream out = Files.newOutputStream(path)) {
             int depth = 0;
-            XMLStreamWriter xtw = xof.createXMLStreamWriter(out, "UTF-8");
-            xtw.writeStartDocument("utf-8","1.0");
+            XMLStreamWriter xtw = xof.createXMLStreamWriter(out, "US-ASCII");
+            xtw.writeStartDocument("us-ascii","1.0");
             writeStartElement(xtw, MODULES, depth);
             modules.stream()
                    .sorted(Comparator.comparing(Module::name))
@@ -285,7 +297,7 @@ public final class GenJdepsModulesXml {
             m.exports().keySet().stream()
                        .filter(pn -> m.exports().get(pn).isEmpty())
                        .sorted()
-                       .forEach(pn -> writeExportElement(xtw, pn, depth+1));
+                       .forEach(pn -> GenerateModulesXml.this.writeExportElement(xtw, pn, depth+1));
             m.exports().entrySet().stream()
                        .filter(e -> !e.getValue().isEmpty())
                        .sorted(Map.Entry.comparingByKey())
@@ -334,6 +346,15 @@ public final class GenJdepsModulesXml {
 
     public void buildIncludes(Module.Builder mb, String modulename) throws IOException {
         Path mclasses = modulepath.resolve(modulename);
+        if (Files.exists(mclasses.resolve("classes"))) {
+            // zip file
+            try (JarFile jf = new JarFile(mclasses.resolve("classes").toFile())) {
+                jf.stream().filter(je -> includes(je.getName()))
+                           .map(JarEntry::getName)
+                           .map(this::packageName)
+                           .forEach(mb::include);
+            }
+        } else {
         try {
             Files.find(mclasses, Integer.MAX_VALUE, (Path p, BasicFileAttributes attr)
                          -> includes(p.getFileName().toString()))
@@ -342,6 +363,7 @@ public final class GenJdepsModulesXml {
         } catch (NoSuchFileException e) {
             // aggregate module may not have class
         }
+    }
     }
 
     static class Module {

@@ -33,6 +33,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Member;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.Module;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -851,7 +852,14 @@ import java.util.Objects;
 
     public IllegalAccessException makeAccessException(String message, Object from) {
         message = message + ": "+ toString();
-        if (from != null)  message += ", from " + from;
+        if (from != null)  {
+            message += ", from " + from;
+            if (from instanceof MethodHandles.Lookup) {
+                MethodHandles.Lookup lookup = (MethodHandles.Lookup)from;
+                Module m = lookup.lookupClass().getModule();
+                if (m != null) message += " (" + m + ")";
+            }
+        }
         return new IllegalAccessException(message);
     }
     private String message() {
