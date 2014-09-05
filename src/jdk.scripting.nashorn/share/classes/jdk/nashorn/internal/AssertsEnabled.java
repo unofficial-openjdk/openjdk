@@ -1,10 +1,12 @@
 /*
- * Copyright (c) 2010, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.
+ * published by the Free Software Foundation.  Oracle designates this
+ * particular file as subject to the "Classpath" exception as provided
+ * by Oracle in the LICENSE file that accompanied this code.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -21,38 +23,23 @@
  * questions.
  */
 
+package jdk.nashorn.internal;
+
 /**
- * JDK-8015969: Needs to enforce and document that global "context" and "engine" can't be modified when running via jsr223
+ * Class that exposes the current state of asserts.
  *
- * @test
- * @option -scripting
- * @run
  */
+public final class AssertsEnabled {
+    private static boolean assertsEnabled = false;
+    static {
+        assert assertsEnabled = true; // Intentional side effect
+    }
 
-var m = new javax.script.ScriptEngineManager();
-var e = m.getEngineByName("nashorn");
-
-e.put("fail", fail);
-e.eval(<<EOF
-
-'use strict';
-
-try {
-    delete context;
-    fail("FAILED!! context delete should have thrown error");
-} catch (e) {
-    if (! (e instanceof SyntaxError)) {
-        fail("SyntaxError expected but got " + e);
+    /**
+     * Returns true if asserts are enabled
+     * @return true if asserts are enabled
+     */
+    public static boolean assertsEnabled() {
+        return assertsEnabled;
     }
 }
-
-try {
-    delete engine;
-    fail("FAILED!! engine delete should have thrown error");
-} catch (e) {
-    if (! (e instanceof SyntaxError)) {
-        fail("SyntaxError expected but got " + e);
-    }
-}
-
-EOF);
