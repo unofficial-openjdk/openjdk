@@ -1299,8 +1299,6 @@ bool os::set_boot_path(char fileSep, char pathSep) {
 
 // used to set the boot class path when running without modules
 bool os::set_expanded_boot_path() {
-  assert(!UseModuleBoundaries, "should not get here");
-
   const char* home = Arguments::get_java_home();
   int home_len = (int)strlen(home);
 
