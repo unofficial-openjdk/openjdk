@@ -1,0 +1,92 @@
+#
+# Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+#
+# This code is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License version 2 only, as
+# published by the Free Software Foundation.  Oracle designates this
+# particular file as subject to the "Classpath" exception as provided
+# by Oracle in the LICENSE file that accompanied this code.
+#
+# This code is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# version 2 for more details (a copy is included in the LICENSE file that
+# accompanied this code).
+#
+# You should have received a copy of the GNU General Public License version
+# 2 along with this work; if not, write to the Free Software Foundation,
+# Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+#
+# Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+# or visit www.oracle.com if you need additional information or have any
+# questions.
+#
+
+# Use a different default target than "default" and "all" so that we don't 
+# re-evaluate all the targets in the included makefiles.
+all: jdk-image
+
+include $(SPEC)
+include MakeBase.gmk
+
+############################################################################
+
+# Dropping jdk.deploy since it currently doesn't exist.
+JDK_MODULES := java.se java.smartcardio jdk.httpserver jdk.sctp \
+               jdk.security.auth jdk.runtime
+
+# providers
+JDK_MODULES += jdk.charsets jdk.crypto.ec jdk.crypto.pkcs11 jdk.jvmstat jdk.localedata \
+               jdk.naming.dns jdk.naming.rmi jdk.scripting.nashorn jdk.zipfs
+
+# tools
+JDK_MODULES += jdk.attach jdk.compiler jdk.dev jdk.javadoc jdk.jcmd jdk.jconsole \
+               jdk.hotspot.agent jdk.hprof.agent jdk.jdi jdk.jdwp.agent jdk.rmic \
+               jdk.xml.bind jdk.xml.ws
+
+ifeq ($(OPENJDK_TARGET_OS), windows)
+  JDK_MODULES += jdk.crypto.mscapi
+endif
+
+ifeq ($(OPENJDK_TARGET_OS), macosx)
+  JDK_MODULES += jdk.deploy.osx
+endif
+
+ifndef OPENJDK
+  JDK_MODULES += jdk.jfr jdk.snmp
+  ifeq ($(OPENJDK_TARGET_OS), solaris)
+    JDK_MODULES += jdk.crypto.ucrypto
+  endif
+  ifeq ($(OPENJDK_TARGET_OS), windows)
+    JDK_MODULES += oracle.accessbridge
+  endif
+endif
+
+# Replacing double-comma with a single comma is to workaround the issue
+# with some version of make on windows that doesn't substitute spaces 
+# with one comma properly as with make 4.0
+
+MODS := $(subst $(COMMA)$(COMMA),$(COMMA),$(subst $(SPACE),$(COMMA),$(JDK_MODULES)))
+
+JMODS := $(wildcard $(IMAGES_OUTPUTDIR)/jmods/*.jmod)
+
+$(IMAGES_OUTPUTDIR)/_jdk-images-create.marker: $(JMODS)
+	$(ECHO) Creating jdk-module-image
+	$(RM) -r $(JDK_MODULE_IMAGE_DIR)
+	$(JLINK) --format image --output $(JDK_MODULE_IMAGE_DIR) \
+            --module-path $(IMAGES_OUTPUTDIR)/jmods --mods "$(MODS)"
+	$(TOUCH) $@
+
+jdk-image: $(IMAGES_OUTPUTDIR)/_jdk-images-create.marker
+
+################################################################################
+$(IMAGES_OUTPUTDIR)/_jdk-jimages-create.marker: $(JMODS)
+	$(ECHO) Creating jdk-module-jimage
+	$(RM) -r $(JDK_MODULE_JIMAGE_DIR)
+	$(JLINK) --format jimage --output $(JDK_MODULE_JIMAGE_DIR) \
+            --module-path $(IMAGES_OUTPUTDIR)/jmods --mods "$(MODS)"
+	$(TOUCH) $@
+jdk-jimage: $(IMAGES_OUTPUTDIR)/_jdk-jimages-create.marker
+
+################################################################################

@@ -218,7 +218,42 @@ samples:
 ALL_TARGETS += demos samples
 
 ################################################################################
-# Image targets
+# Jigsaw specific data and analysis targets.
+
+# This runs the class analyzer which generates module-info.java files
+analyze-classes:
+	+($(CD) $(SRC_ROOT)/make && $(MAKE) -f AnalyzeClasses.gmk)
+
+# This compiles the module-info.java files into module-info.class files in the
+# jdk/modules dir.
+module-info:
+	+($(CD) $(SRC_ROOT)/make && $(MAKE) -f CompileModuleInfos.gmk)
+
+generate-summary:
+	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f GenerateModuleSummary.gmk)
+
+ALL_TARGETS += analyze-classes module-info generate-summary
+
+################################################################################
+# Create jmods and module images
+
+jmods:
+	+($(CD) $(SRC_ROOT)/make && $(MAKE) -I $(JDK_TOPDIR)/make \
+	    $(addprefix -I, $(foreach d, lib gensrc gendata copy launcher, $(addsuffix /$d, $(MAKE_DIR_LIST)))) \
+	    -f CreateJmods.gmk jmods)
+
+module-images:
+	+($(CD) $(SRC_ROOT)/make && $(MAKE) -I $(JDK_TOPDIR)/make \
+	    -f Images.gmk)
+
+module-jimages:
+	+($(CD) $(SRC_ROOT)/make && $(MAKE) -I $(JDK_TOPDIR)/make \
+	    -f Images.gmk jdk-jimage)
+
+ALL_TARGETS += jmods module-images module-jimages
+
+################################################################################
+# Legacy images targets
 
 # Stores the tips for each repository. This file is be used when constructing the jdk image and can be
 # used to track the exact sources used to build that image.
@@ -385,7 +420,15 @@ else
   # Explicitly add dependencies for special targets
   java.base-java: unpack-sec
 
-  jdk.dev-gendata: java rmic
+  jmods: exploded-image
+
+  module-images: jmods
+
+  module-jimages: jmods
+
+  # To generate modules.xml all classes and a runnable image must be 
+  # present.
+  jdk.dev-gendata: java rmic module-info
 
   security-jars: java
 
@@ -419,7 +462,15 @@ else
 
   test: exploded-image
 
+  # Analyze classes needs a runnable image to be present, but can't run before
+  # jdk.dev-gendata.
+  analyze-classes: java $(filter-out jdk.dev-gendata, $(GENDATA_TARGETS)) \
+      libs launchers copy
+
   verify-modules: exploded-image
+
+  module-info: analyze-classes
+  generate-summary: jmods
 
 endif
 
@@ -456,7 +507,7 @@ $(foreach m, $(COPY_MODULES), $(eval $m: $m-copy))
 ALL_MODULE_TARGETS := $(sort $(GENSRC_MODULES) $(JAVA_MODULES) \
     $(GENDATA_MODULES) $(LIB_MODULES) $(LAUNCHER_MODULES) $(COPY_MODULES))
 
-exploded-image: $(ALL_MODULE_TARGETS)
+exploded-image: $(ALL_MODULE_TARGETS) module-info
 # The old 'jdk' target most closely matches the new exploded-image. Keep an
 # alias for ease of use.
 jdk: exploded-image
@@ -476,7 +527,7 @@ ALL_TARGETS += gensrc gendata copy java rmic libs launchers \
 
 ################################################################################
 
-all: images docs verify-modules
+all: images module-images module-jimages docs generate-summary
 default: exploded-image
 
 ALL_TARGETS += default all
