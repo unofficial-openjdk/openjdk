@@ -26,7 +26,6 @@
 package jdk.jigsaw.tools.jimage;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Files;
@@ -36,6 +35,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
+import jdk.jigsaw.module.internal.ImageHeader;
 import jdk.jigsaw.module.internal.ImageLocation;
 import jdk.jigsaw.module.internal.ImageReader;
 import static sun.tools.javac.Main.*;
@@ -135,7 +135,7 @@ class JImageTask {
     };
 
     static class Options {
-        Task task;
+        Task task = Task.LIST;
         String directory = ".";
         boolean fullVersion;
         boolean help;
@@ -149,7 +149,9 @@ class JImageTask {
 
     enum Task {
         EXPAND,
-        LIST
+        INFO,
+        LIST,
+        VERIFY
     };
 
     int run(String[] args) {
@@ -283,6 +285,28 @@ class JImageTask {
         }
     }
 
+    private void info() throws IOException {
+        for (File file : options.jimages) {
+            String path = file.getCanonicalPath();
+            ImageReader reader = new ImageReader(path);
+            reader.open();
+
+            log.println("jimage: " + file.getName());
+
+            ImageHeader header = reader.getHeader();
+            log.println(" Major Version: " + header.getMajorVersion());
+            log.println(" Minor Version: " + header.getMinorVersion());
+            log.println(" Location Count: " + header.getLocationCount());
+            log.println(" Offsets Size: " + header.getOffsetsSize());
+            log.println(" Redirects Size: " + header.getRedirectSize());
+            log.println(" Locations Size: " + header.getLocationsSize());
+            log.println(" Strings Size: " + header.getStringsSize());
+            log.println(" Index Size: " + header.getIndexSize());
+
+            reader.close();
+        }
+    }
+
     private void list() throws IOException {
         for (File file : options.jimages) {
             String path = file.getCanonicalPath();
@@ -290,9 +314,7 @@ class JImageTask {
             reader.open();
             String[] entryNames = reader.getEntryNames(true);
 
-            if (options.jimages.size() != 1) {
-                log.println("jimage: " + file.getName());
-            }
+            log.println("jimage: " + file.getName());
 
             if (options.verbose) {
                 log.print(pad("Offset", OFFSET_WIDTH));
@@ -309,13 +331,59 @@ class JImageTask {
         }
     }
 
+    private void verify() throws IOException {
+        for (File file : options.jimages) {
+            String path = file.getCanonicalPath();
+            ImageReader reader = new ImageReader(path);
+            reader.open();
+            String[] entryNames = reader.getEntryNames(true);
+
+            for (String entry : entryNames) {
+                if (!entry.endsWith(".class")) {
+                    continue;
+                }
+
+                ImageLocation location = reader.findLocation(entry);
+                long offset = location.getContentOffset();
+                long size = location.getUncompressedSize();
+                long compressedSize = location.getCompressedSize();
+                boolean isCompressed = compressedSize != 0;
+
+                byte[] bytes;
+
+                if (isCompressed) {
+                    bytes = reader.getResource(offset, compressedSize);
+                    // TODO compression
+                } else {
+                    bytes = reader.getResource(offset, size);
+                }
+
+                if ((bytes[0] & 0xFF) != 0xCA ||
+                    (bytes[1] & 0xFF) != 0xFE ||
+                    (bytes[2] & 0xFF) != 0xBA ||
+                    (bytes[3] & 0xFF) != 0xBE) {
+                    log.print(" NOT A CLASS: ");
+                    print(reader, entry);
+                 }
+            }
+
+            reader.close();
+        }
+    }
+
     private boolean run() throws IOException, BadArgs {
         switch (options.task) {
             case EXPAND:
                 expand();
                 break;
+            case INFO:
+                info();
+                break;
             case LIST:
                 list();
+                break;
+            case VERIFY:
+                verify();
                 break;
             default:
                 throw new BadArgs("err.invalid.task", options.task.name()).showUsage(true);
@@ -329,21 +397,26 @@ class JImageTask {
     }
     public void handleOptions(String[] args) throws BadArgs {
         // process options
+        int first = 0;
 
         if (args.length == 0) {
-            options.task = Task.LIST;
-        } else if (args.length > 1) {
-            String arg = args[0];
+            return;
+        }
 
+        String arg = args[first];
+
+        if (!arg.startsWith("-")) {
             try {
                 options.task = Enum.valueOf(Task.class, arg.toUpperCase());
+                first++;
             } catch (IllegalArgumentException e) {
                 throw new BadArgs("err.invalid.task", arg).showUsage(true);
             }
         }
 
-        for (int i = 1; i < args.length; i++) {
-            String arg = args[i];
+        for (int i = first; i < args.length; i++) {
+            arg = args[i];
+
             if (arg.charAt(0) == '-') {
                 Option option = getOption(arg);
                 String param = null;

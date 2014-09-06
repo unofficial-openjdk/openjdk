@@ -95,27 +95,27 @@ public final class ImageHeader {
         return minorVersion;
     }
 
-    int getLocationCount() {
+    public int getLocationCount() {
         return locationCount;
     }
 
-    int getRedirectSize() {
+    public int getRedirectSize() {
         return locationCount* 4;
     }
 
-    int getOffsetsSize() {
+    public int getOffsetsSize() {
         return locationCount* 4;
     }
 
-    int getLocationsSize() {
+    public int getLocationsSize() {
         return locationsSize;
     }
 
-    int getStringsSize() {
+    public int getStringsSize() {
         return stringsSize;
     }
 
-    int getIndexSize() {
+    public int getIndexSize() {
         return getHeaderSize() +
                getRedirectSize() +
                getOffsetsSize() +

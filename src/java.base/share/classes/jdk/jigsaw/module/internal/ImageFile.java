@@ -152,13 +152,20 @@ public final class ImageFile {
                 for (String mn : mods) {
                     for (Resource res : resourcesForModule.get(mn)) {
                         String fn = res.name();
+                        long uncompressedSize = res.size();
+                        long compressedSize = res.csize();
+                        long onFileSize = compressedSize != 0 ? compressedSize : uncompressedSize;
+
                         if (duplicates.contains(fn)) {
                             System.err.format("duplicate resource \"%s\", skipping%n", fn);
+                            // TODO Need to hang bytes on resource and write from resource not zip.
+                            // Skipping resource throws off writing from zip.
+                            offset += onFileSize;
                             continue;
                         }
                         duplicates.add(fn);
-                        writer.addLocation(fn, offset, res.csize(), res.size());
-                        offset += res.csize() != 0 ? res.csize() : res.size();
+                        writer.addLocation(fn, offset, compressedSize, uncompressedSize);
+                        offset += onFileSize;
                     }
                 }
 
@@ -331,8 +338,13 @@ public final class ImageFile {
                 }
             } else {
                 int size = in.available();
+                int offset = 0;
                 byte[] inBytes = new byte[size];
-                in.read(inBytes);
+                while (offset < size) {
+                    int count = in.read(inBytes, offset, size);
+                    offset += count;
+                    size -= count;
+                }
                 byte[] outBytes = Compression.compress(inBytes);
                 out.write(outBytes, 0, outBytes.length);
             }
