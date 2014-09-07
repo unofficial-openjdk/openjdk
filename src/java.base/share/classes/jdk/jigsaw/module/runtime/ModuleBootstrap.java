@@ -26,6 +26,10 @@
 package jdk.jigsaw.module.runtime;
 
 import java.io.File;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
@@ -38,10 +42,11 @@ import jdk.jigsaw.module.Configuration;
 import jdk.jigsaw.module.Layer;
 import jdk.jigsaw.module.ModuleArtifact;
 import jdk.jigsaw.module.ModuleArtifactFinder;
-import jdk.jigsaw.module.ModuleDescriptor;
 import jdk.jigsaw.module.ModuleId;
 
 import sun.misc.Launcher;
+import sun.misc.SharedSecrets;
+import sun.misc.URLClassPath;
 import sun.reflect.Reflection;
 
 /**
@@ -149,6 +154,24 @@ class ModuleBootstrap {
 
         // setup module to ClassLoader mapping
         Map<ModuleArtifact, ClassLoader> moduleToLoaders = loaderMap(systemLibrary);
+
+        // -Xoverride
+        String override = System.getProperty("jdk.runtime.override");
+        if (override != null) {
+            Set<ModuleArtifact> systemModules = systemLibrary.allModules();
+            cf.descriptors().stream()
+                            .map(md -> cf.findArtifact(md.name()))
+                            .filter(systemModules::contains)
+                            .forEach(artifact -> {
+                                ClassLoader loader = moduleToLoaders.get(artifact);
+                                if (loader != null) {
+                                    String name = artifact.descriptor().name();
+                                    setOverrideDirectory(override, loader, name);
+                                }
+                            });
+        }
+
+        // if -modulepath specified then need to add to system class loader
         if (launcherModulePath != null) {
             Set<ModuleArtifact> systemModules = systemLibrary.allModules();
             Launcher launcher = Launcher.getLauncher();
@@ -194,5 +217,22 @@ class ModuleBootstrap {
                 moduleToLoaders.put(artifact, appClassLoader);
         }
         return moduleToLoaders;
+    }
+
+    /**
+     * Add an override directory for the given ClassLoader/module-name
+     */
+    private static void setOverrideDirectory(String override, ClassLoader cl, String name) {
+        Path dir = Paths.get(override, name);
+        if (Files.exists(dir)) {
+            URLClassLoader loader = (URLClassLoader)cl;
+            URLClassPath ucp = SharedSecrets.getJavaNetAccess().getURLClassPath(loader);
+            try {
+                URL url = dir.toUri().toURL();
+                ucp.prependURL(url);
+            } catch (MalformedURLException e) {
+                throw new InternalError(e);
+            }
+        }
     }
 }

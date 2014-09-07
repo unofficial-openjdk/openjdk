@@ -153,6 +153,14 @@ public class URLClassPath {
     }
 
     /**
+     * Prepends the specific URL to the search path
+     */
+    public synchronized void prependURL(URL url) {
+        urls.push(url);
+        path.add(0, url);
+    }
+
+    /**
      * Returns the original search path of URLs.
      */
     public URL[] getURLs() {
