@@ -392,6 +392,11 @@ JVM_ENTRY(jobject, JVM_InitProperties(JNIEnv *env, jobject properties))
     }
   }
 
+  // -Xoverride
+  if (Arguments::override_dir() != NULL) {
+    PUTPROP(props, "jdk.runtime.override", Arguments::override_dir());
+  }
+
   // Additional module dependences and exports
   if (strlen(AddModuleRequires) > 0) {
     PUTPROP(props, "jdk.runtime.addModuleRequires", AddModuleRequires);
@@ -1027,34 +1032,51 @@ JVM_ENTRY(void*, JVM_DefineBootModule(JNIEnv* env, jstring name))
   ResourceMark rm(THREAD);
   const char* name_str = java_lang_String::as_utf8_string(JNIHandles::resolve_non_null(name));
 
-  const char* home = Arguments::get_java_home();
-  size_t home_len = strlen(home);
-  size_t name_len = strlen(name_str);
-  char fileSep = os::file_separator()[0];
-  size_t len = home_len + name_len + 32;
-  char* path = NEW_C_HEAP_ARRAY(char, len, mtInternal);
+  if (strcmp(name_str, "java.base") != 0) {
+    size_t name_len = strlen(name_str);
+    char fileSep = os::file_separator()[0];
 
-  // Check if ${java.home}/lib/modules/$MODULE/classes exists, if not then
-  // assume the exploded form ${java.home}/modules/$MODULE
-  bool extend_bcp;
-  struct stat st;
-  jio_snprintf(path, len, "%s%clib%cmodules%c%s%cclasses",
-               home, fileSep, fileSep, fileSep, name_str, fileSep);
-  extend_bcp = (os::stat(path, &st) == 0);
-  if (!extend_bcp) {
-    jio_snprintf(path, len, "%s%cmodules%c%s", home, fileSep, fileSep, name_str);
-    extend_bcp = (os::stat(path, &st) == 0);
-  }
-
-  // extend boot class path
-  if (extend_bcp) {
-    HandleMark hm;
-    Handle loader_lock = Handle(THREAD, SystemDictionary::system_loader_lock());
-    ObjectLocker ol(loader_lock, THREAD);
-    if (TraceClassLoading) {
-      tty->print_cr("[Opened %s]", path);
+    // -Xoverride
+    char* prefix_path = NULL;
+    if (Arguments::override_dir() != NULL) {
+      size_t len = strlen(Arguments::override_dir()) + name_len + 2;
+      prefix_path = NEW_C_HEAP_ARRAY(char, len, mtInternal);
+      jio_snprintf(prefix_path, len, "%s%c%s", Arguments::override_dir(), fileSep, name_str);
     }
-    ClassLoader::add_to_list(path);
+
+    // location of classes (not jimages case)
+    const char* home = Arguments::get_java_home();
+    size_t home_len = strlen(home);
+    size_t len = home_len + name_len + 32;
+    char* path = NEW_C_HEAP_ARRAY(char, len, mtInternal);
+
+    // Check if ${java.home}/lib/modules/$MODULE/classes exists, if not then
+    // assume the exploded form ${java.home}/modules/$MODULE
+    struct stat st;
+    jio_snprintf(path, len, "%s%clib%cmodules%c%s%cclasses",
+                home, fileSep, fileSep, fileSep, name_str, fileSep);
+    if (os::stat(path, &st) != 0) {
+      jio_snprintf(path, len, "%s%cmodules%c%s", home, fileSep, fileSep, name_str);
+      if ((os::stat(path, &st) != 0)) {
+        FREE_C_HEAP_ARRAY(char, path, mtInternal);
+        path = NULL;
+      }
+    }
+
+    if (prefix_path != NULL || path != NULL) {
+      HandleMark hm;
+      Handle loader_lock = Handle(THREAD, SystemDictionary::system_loader_lock());
+      ObjectLocker ol(loader_lock, THREAD);
+
+      if (prefix_path != NULL) {
+        if (TraceClassLoading) tty->print_cr("[Opened %s]", prefix_path);
+        ClassLoader::add_to_list(prefix_path);
+      }
+      if (path != NULL) {
+        if (TraceClassLoading) tty->print_cr("[Opened %s]", path);
+        ClassLoader::add_to_list(path);
+      }
+    }
   }
 
   // define module
