@@ -81,8 +81,12 @@ import jdk.jigsaw.module.Configuration;
 import jdk.jigsaw.module.Layer;
 import jdk.jigsaw.module.ModuleArtifactFinder;
 import jdk.jigsaw.module.ModuleDescriptor;
+import jdk.jigsaw.module.internal.Archive;
 import jdk.jigsaw.module.internal.ImageFile;
 import jdk.jigsaw.module.internal.ImageModules;
+import jdk.jigsaw.module.internal.JmodArchive;
+import jdk.jigsaw.module.internal.JmodEntryWriter;
+
 
 /**
  * Implementation for the jlink tool.
@@ -543,7 +547,10 @@ class JlinkTask {
         }
 
         void createModularImage(Path output) throws IOException {
-            ImageFile.create(output, jmods, imf);
+            Set<Archive> archives = jmods.stream()
+                    .map(JmodArchive::new)
+                    .collect(Collectors.toSet());
+            ImageFile.create(output, archives, imf);
         }
 
         /*
