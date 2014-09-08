@@ -1745,7 +1745,7 @@ public:
 
   inline void swap( Register s1, Register s2, Register d );
   inline void swap( Register s1, int simm13a, Register d);
-  inline void swap( Address& a,               Register d, int offset = 0 );
+  inline void swap( const Address& a, Register d, int offset = 0 );
 
   // pp 232
 
