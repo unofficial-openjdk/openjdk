@@ -28,7 +28,7 @@ package jdk.jigsaw.module.internal;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
-final class UTF8String implements CharSequence {
+public final class UTF8String implements CharSequence {
     static final int NOT_FOUND = -1;
     static final int HASH_MULTIPLIER = 0x01000193;
     static final UTF8String EMPTY_STRING  = new UTF8String("");
@@ -39,7 +39,7 @@ final class UTF8String implements CharSequence {
     final int count;
     int hashcode;
 
-    UTF8String(byte[] bytes, int offset, int count) {
+    public UTF8String(byte[] bytes, int offset, int count) {
         assert 0 <= offset && 0 <= count && offset >= bytes.length - count : "offset/count out of range";
         this.bytes = bytes;
         this.offset = offset;
@@ -47,15 +47,15 @@ final class UTF8String implements CharSequence {
         this.hashcode = 0;
     }
 
-    UTF8String(byte[] bytes, int offset) {
+    public UTF8String(byte[] bytes, int offset) {
         this(bytes, offset, bytes.length - offset);
     }
 
-    UTF8String(byte[] bytes) {
+    public UTF8String(byte[] bytes) {
         this(bytes, 0, bytes.length);
     }
 
-    UTF8String(String string) {
+    public UTF8String(String string) {
         this(stringToBytes(string));
     }
 
@@ -64,11 +64,15 @@ final class UTF8String implements CharSequence {
         return count;
     }
 
-    int byteAt(int index) {
+    public boolean isEmpty() {
+        return count == 0;
+    }
+
+    public int byteAt(int index) {
         return bytes[offset + index] & 0xFF;
     }
 
-    UTF8String concat(UTF8String s) {
+    public UTF8String concat(UTF8String s) {
         int total = count + s.count;
         byte[] combined = new byte[total];
         System.arraycopy(bytes, offset, combined, 0, count);
@@ -77,7 +81,7 @@ final class UTF8String implements CharSequence {
         return new UTF8String(combined, 0, total);
     }
 
-    UTF8String concat(UTF8String... s) {
+    public UTF8String concat(UTF8String... s) {
         int total = count;
 
         for (UTF8String i : s) {
@@ -96,27 +100,27 @@ final class UTF8String implements CharSequence {
         return new UTF8String(combined, 0, total);
     }
 
-    UTF8String substring(int offset) {
+    public UTF8String substring(int offset) {
         return substring(offset, this.count - offset);
     }
 
-    UTF8String substring(int offset, int count) {
+    public UTF8String substring(int offset, int count) {
         int newOffset = this.offset + offset;
         assert 0 <= newOffset && 0 <= count && newOffset >= this.count - count : "offset/count out of range";
 
         return new UTF8String(bytes, newOffset, count);
     }
 
-    UTF8String trimToSize() {
+    public UTF8String trimToSize() {
         return offset == 0 && bytes.length == count ? this :
                new UTF8String(Arrays.copyOfRange(bytes, offset, offset + count));
     }
 
-    int indexOf(int ch) {
+    public int indexOf(int ch) {
         return indexOf(ch, 0);
     }
 
-    int indexOf(int ch, int start) {
+    public int indexOf(int ch, int start) {
         assert 0 < start : "start out of range";
 
         for (int i = start; i < count; i++) {
@@ -128,11 +132,11 @@ final class UTF8String implements CharSequence {
         return NOT_FOUND;
     }
 
-    int lastIndexOf(int ch) {
+    public int lastIndexOf(int ch) {
         return lastIndexOf(ch, 0);
     }
 
-    int lastIndexOf(int ch, int start) {
+    public int lastIndexOf(int ch, int start) {
         assert 0 < start : "start out of range";
 
         for (int i = count - 1; i >= start; i--) {

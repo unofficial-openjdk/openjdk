@@ -56,6 +56,7 @@ import jdk.jigsaw.module.ModuleId;
 import jdk.jigsaw.module.ServiceDependence;
 
 import static jdk.jigsaw.module.internal.ImageModules.Loader.*;
+import static jdk.jigsaw.module.internal.PackageModuleMap.*;
 
 /**
  * Installed Modules stored in the modular image on disk format.
@@ -316,41 +317,10 @@ public final class ImageModules {
     }
 
     /*
-     * Returns a package-to-module map.
-     *
-     * The package name is in binary name format.
-     */
-    static Map<String,String> readFrom(ImageReader reader) throws IOException {
-        Map<String,String> result = new HashMap<>();
-        ImageLocation loc = reader.findLocation(ModuleIndex.MODULES_ENTRY);
-        byte[] bytes = reader.getResource(loc.getContentOffset(), loc.getUncompressedSize());
-        IntBuffer mbufs = ByteBuffer.wrap(bytes).asIntBuffer();
-        List<String> mnames = new ArrayList<>();
-        while (mbufs.hasRemaining()) {
-            int moffset = mbufs.get();
-            mnames.add(reader.getString(moffset));
-        }
-
-        for (String mn : mnames) {
-            ImageLocation mindex = reader.findLocation(mn + "/" + ModuleIndex.PACKAGES_ENTRY);
-            byte[] poffsets = reader.getResource(mindex.getContentOffset(), mindex.getUncompressedSize());
-            IntBuffer pbufs = ByteBuffer.wrap(poffsets).asIntBuffer();
-            while (pbufs.hasRemaining()) {
-                int poffset = pbufs.get();
-                String pn = reader.getString(poffset);
-                result.put(pn, mn);
-            }
-        }
-        return result;
-    }
-
-    /*
      * Generate module name table and the package map as resources
      * in the modular image
      */
     class ModuleIndex {
-        static final String MODULES_ENTRY = "module/modules.offsets";
-        static final String PACKAGES_ENTRY = "packages.offsets";
         final Map<String, Integer> moduleOffsets = new LinkedHashMap<>();
         final Map<String, List<Integer>> packageOffsets = new HashMap<>();
         final int size;

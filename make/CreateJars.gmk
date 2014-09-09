@@ -374,7 +374,7 @@ $(eval $(call SetupArchive,BUILD_CHARSETS_JAR, , \
 ##########################################################################################
 
 $(eval $(call SetupArchive,BUILD_ZIPFS_JAR, , \
-    SRCS := $(JDK_OUT_CLASSES), \
+    SRCS := $(JDK_OUT_CLASSES)/modules/jdk.zipfs, \
     INCLUDES := jdk/nio/zipfs, \
     EXTRA_FILES := META-INF/services/java.nio.file.spi.FileSystemProvider, \
     JAR := $(IMAGES_OUTPUTDIR)/lib/ext/zipfs.jar, \

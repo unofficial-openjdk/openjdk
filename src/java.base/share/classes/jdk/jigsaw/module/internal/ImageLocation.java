@@ -306,11 +306,19 @@ public final class ImageLocation {
         return (int)getAttribute(ATTRIBUTE_EXTENSION);
     }
 
+    UTF8String getName() {
+        return getBase().concat(getExtension());
+    }
+
+    String getNameString() {
+        return getName().toString();
+    }
+
     UTF8String getFullname() {
         return getParent().concat(getBase(), getExtension());
     }
 
-    public String getFullnameString() {
+    String getFullnameString() {
         return getFullname().toString();
     }
 
