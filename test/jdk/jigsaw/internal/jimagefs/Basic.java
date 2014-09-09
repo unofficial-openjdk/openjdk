@@ -29,10 +29,8 @@ import java.net.URI;
 import java.io.IOException;
 
 /**
- *
  * @test
  * @summary Basic test for jimage provider
- *
  * @run main Basic
  */
 
@@ -50,24 +48,19 @@ public class Basic {
         if (!found)
             throw new RuntimeException("'jimage' provider not installed");
 
-        // assumption: jtreg is run with $JAKE/build/<platform>/images/j2sdk-image.
-        // jimage modules directory relative path is assumed from the jake build.
-        //
-        // For example, on Linux we have the following structure:
-        //
-        // $JAKE/build/linux-x86-normal-server-release/images/j2sdk-image
-        // $JAKE/build/linux-x86-normal-server-release/images/jdk-module-jimage/lib/modules
-        Path bootImgFile = Paths.get(System.getProperty("test.jdk"),
-               "..", "jdk-module-jimage", "lib", "modules", "bootmodules.jimage");
-        if (Files.notExists(bootImgFile))
-            throw new RuntimeException(bootImgFile + " not found");
+        String home = System.getProperty("java.home");
+        Path bootmodules  = Paths.get(home, "lib", "modules", "bootmodules.jimage");
+        if (Files.notExists(bootmodules)) {
+            System.out.println("This runtime not a jimage build");
+            return;
+        }
 
         // Test: FileSystems#newFileSystem(Path)
         Map<String,?> env = new HashMap<String,Object>();
-        FileSystems.newFileSystem(bootImgFile, null).close();
+        FileSystems.newFileSystem(bootmodules, null).close();
 
         // Test: FileSystems#newFileSystem(URI)
-        URI uri = new URI("jimage", bootImgFile.toUri().toString(), null);
+        URI uri = new URI("jimage", bootmodules.toUri().toString(), null);
         FileSystem fs = FileSystems.newFileSystem(uri, env, null);
 
         // Test: exercise toUri method

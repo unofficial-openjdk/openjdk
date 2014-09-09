@@ -27,10 +27,8 @@ import java.util.*;
 import java.io.IOException;
 
 /**
- *
  * @test
  * @summary Tests path operations for jimage provider.
- *
  * @run main PathOps
  */
 
@@ -451,19 +449,13 @@ public class PathOps {
     }
 
     public static void main(String[] args) throws Throwable {
-        // assumption: jtreg is run with $JAKE/build/<platform>/images/j2sdk-image.
-        // jimage modules directory relative path is assumed from the jake build.
-        //
-        // For example, on Linux we have the following structure:
-        //
-        // $JAKE/build/linux-x86-normal-server-release/images/j2sdk-image
-        // $JAKE/build/linux-x86-normal-server-release/images/jdk-module-jimage/lib/modules
-        Path bootImgFile = Paths.get(System.getProperty("test.jdk"),
-               "..", "jdk-module-jimage", "lib", "modules", "bootmodules.jimage");
-        if (Files.notExists(bootImgFile))
-            throw new RuntimeException(bootImgFile + " not found");
-
-        fs = FileSystems.newFileSystem(bootImgFile, null);
+        String home = System.getProperty("java.home");
+        Path bootmodules  = Paths.get(home, "lib", "modules", "bootmodules.jimage");
+        if (Files.notExists(bootmodules)) {
+            System.out.println("This runtime not a jimage build");
+            return;
+        }
+        fs = FileSystems.newFileSystem(bootmodules, null);
         npes();
         doPathOpTests();
         fs.close();
