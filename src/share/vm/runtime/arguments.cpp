@@ -2084,19 +2084,6 @@ bool Arguments::check_vm_args_consistency() {
   status = status && verify_min_value(ValueMapInitialSize, 1, "ValueMapInitialSize");
 #endif
 
-#ifdef SPARC
-  if (UseConcMarkSweepGC || UseG1GC) {
-    // Issue a stern warning if the user has explicitly set
-    // UseMemSetInBOT (it is known to cause issues), but allow
-    // use for experimentation and debugging.
-    if (VM_Version::is_sun4v() && UseMemSetInBOT) {
-      assert(!FLAG_IS_DEFAULT(UseMemSetInBOT), "Error");
-      warning("Experimental flag -XX:+UseMemSetInBOT is known to cause instability"
-          " on sun4v; please understand that you are using at your own risk!");
-    }
-  }
-#endif // SPARC
-
   // check native memory tracking flags
   if (PrintNMTStatistics && MemTracker::tracking_level() == MemTracker::NMT_off) {
     warning("PrintNMTStatistics is disabled, because native memory tracking is not enabled");
