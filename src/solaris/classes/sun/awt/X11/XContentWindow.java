@@ -24,9 +24,7 @@
  */
 package sun.awt.X11;
 
-import java.awt.Component;
-import java.awt.Rectangle;
-import java.awt.Insets;
+import java.awt.*;
 
 import java.awt.event.ComponentEvent;
 
@@ -160,6 +158,23 @@ public final class XContentWindow extends XWindow {
             // Normal case: [it is not a frame or] the frame is not iconified.
             super.handleExposeEvent(target, x, y, w, h);
         }
+    }
+
+    public void handleButtonPressRelease(XEvent xev) {
+        if (xev.get_type() == XConstants.ButtonPress) {
+            Window parentWindow = (Window)parentFrame.getTarget();
+            /*
+             * In case the decorated frame is active but not focused
+             * (that is an owned window is currently focused)
+             * it should be made a focused window.
+             * This is needed to focus the frame when it's clicked
+             * in an empty spot of its content area. See 6886678.
+             */
+            if (parentWindow != null && parentWindow.isActive() && !parentWindow.isFocused()) {
+                parentFrame.requestWindowFocus();
+            }
+        }
+        super.handleButtonPressRelease(xev);
     }
 
     void purgeIconifiedExposeEvents() {
