@@ -245,7 +245,7 @@ class JImageTask {
         }
 
         File jimage = options.jimages.get(0);
-        List<File> files = new ArrayList<>();
+        final List<File> files = new ArrayList<>();
 
         BasicImageWriter writer = new BasicImageWriter();
         long total = Files.walk(dirPath).reduce(0L, (offset, path) -> {
@@ -270,9 +270,9 @@ class JImageTask {
                         files.add(file);
                     }
 
-                    return size;
+                    return offset + size;
                 },
-                (offset, size) -> offset + size);
+                (offsetL, offsetR) -> 0L);
 
         if (jimage.createNewFile()) {
             try (OutputStream os = Files.newOutputStream(jimage.toPath());
