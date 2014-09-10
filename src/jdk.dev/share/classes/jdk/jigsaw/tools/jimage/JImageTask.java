@@ -25,19 +25,25 @@
 
 package jdk.jigsaw.tools.jimage;
 
+import java.io.BufferedOutputStream;
+import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.text.MessageFormat;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
+import jdk.jigsaw.module.internal.BasicImageReader;
+import jdk.jigsaw.module.internal.BasicImageWriter;
 import jdk.jigsaw.module.internal.ImageHeader;
 import jdk.jigsaw.module.internal.ImageLocation;
-import jdk.jigsaw.module.internal.ImageReader;
 import static sun.tools.javac.Main.*;
 
 class JImageTask {
@@ -148,82 +154,12 @@ class JImageTask {
     private final Options options = new Options();
 
     enum Task {
+        CREATE,
         EXPAND,
         INFO,
         LIST,
         VERIFY
     };
-
-    int run(String[] args) {
-        if (log == null) {
-            log = new PrintWriter(System.out);
-        }
-        try {
-            handleOptions(args);
-            if (options.help) {
-                showHelp();
-            }
-            if (options.version || options.fullVersion) {
-                showVersion(options.fullVersion);
-            }
-            boolean ok = run();
-            return ok ? EXIT_OK : EXIT_ERROR;
-        } catch (BadArgs e) {
-            reportError(e.key, e.args);
-            if (e.showUsage) {
-                log.println(getMessage("main.usage.summary", PROGNAME));
-            }
-            return EXIT_CMDERR;
-        } catch (Exception x) {
-            x.printStackTrace();
-            return EXIT_ABNORMAL;
-        } finally {
-            log.flush();
-        }
-    }
-
-    private void expand() throws IOException, BadArgs {
-        File directory = new File(options.directory);
-
-        for (File file : options.jimages) {
-            String path = file.getCanonicalPath();
-            ImageReader reader = new ImageReader(path);
-            reader.open();
-            String[] entryNames = reader.getEntryNames(true);
-
-            for (String entry : entryNames) {
-                ImageLocation location = reader.findLocation(entry);
-                long offset = location.getContentOffset();
-                long size = location.getUncompressedSize();
-                long compressedSize = location.getCompressedSize();
-                boolean isCompressed = compressedSize != 0;
-
-                byte[] bytes;
-
-                if (isCompressed) {
-                    bytes = reader.getResource(offset, compressedSize);
-                    // TODO compression
-                } else {
-                    bytes = reader.getResource(offset, size);
-                }
-
-                File resource =  new File(directory, entry);
-                File parent = resource.getParentFile();
-
-                if (parent.exists()) {
-                    if (!parent.isDirectory()) {
-                        throw new JImageTask.BadArgs("err.cannot.create.dir", parent.getAbsolutePath());
-                    }
-                } else if (!parent.mkdirs()) {
-                    throw new JImageTask.BadArgs("err.cannot.create.dir", parent.getAbsolutePath());
-                }
-
-                Files.write(resource.toPath(), bytes);
-            }
-
-            reader.close();
-        }
-    }
 
     private String pad(String string, int width, boolean justifyRight) {
         int length = string.length();
@@ -264,6 +200,156 @@ class JImageTask {
         return pad(Long.toString(value), width, true);
     }
 
+    int run(String[] args) {
+        if (log == null) {
+            log = new PrintWriter(System.out);
+        }
+
+        try {
+            handleOptions(args);
+            if (options.help) {
+                showHelp();
+            }
+            if (options.version || options.fullVersion) {
+                showVersion(options.fullVersion);
+            }
+            boolean ok = run();
+            return ok ? EXIT_OK : EXIT_ERROR;
+        } catch (BadArgs e) {
+            reportError(e.key, e.args);
+            if (e.showUsage) {
+                log.println(getMessage("main.usage.summary", PROGNAME));
+            }
+            return EXIT_CMDERR;
+        } catch (Exception x) {
+            x.printStackTrace();
+            return EXIT_ABNORMAL;
+        } finally {
+            log.flush();
+        }
+    }
+
+   private void create() throws IOException, BadArgs {
+        File directory = new File(options.directory);
+        Path dirPath = directory.toPath();
+        int chop = dirPath.toString().length() + 1;
+
+        if (!directory.isDirectory()) {
+            throw new BadArgs("err.not.a.dir", directory.getAbsolutePath());
+        }
+
+        if (options.jimages.isEmpty()) {
+            throw new BadArgs("err.jimage.not.specified");
+        } else if (options.jimages.size() != 1) {
+            throw new BadArgs("err.only.one.jimage");
+        }
+
+        File jimage = options.jimages.get(0);
+        List<File> files = new ArrayList<>();
+
+        BasicImageWriter writer = new BasicImageWriter();
+        long total = Files.walk(dirPath).reduce(0L, (offset, path) -> {
+                    String pathString = path.toString();
+
+                    if (pathString.length() < chop || pathString.startsWith(".")) {
+                        return 0L;
+                    }
+
+                    String localName = pathString.substring(chop);
+
+                    File file = path.toFile();
+                    long size = 0;
+
+                    if (file.isFile()) {
+                        if (options.verbose) {
+                            log.println(localName);
+                        }
+
+                        size = file.length();
+                        writer.addLocation(localName, offset, 0L, size);
+                        files.add(file);
+                    }
+
+                    return size;
+                },
+                (offset, size) -> offset + size);
+
+        if (jimage.createNewFile()) {
+            try (OutputStream os = Files.newOutputStream(jimage.toPath());
+                    BufferedOutputStream bos = new BufferedOutputStream(os);
+                    DataOutputStream out = new DataOutputStream(bos)) {
+
+                byte[] index = writer.getBytes();
+                out.write(index, 0, index.length);
+
+                for (File file : files) {
+                    try {
+                        byte[] bytes = Files.readAllBytes(file.toPath());
+                        out.write(bytes, 0, bytes.length);
+                    } catch (IOException ex) {
+                        throw new BadArgs("err.cannot.read.file", file.getName());
+                    }
+                }
+            }
+        } else {
+            throw new BadArgs("err.jimage.already.exists", jimage.getName());
+        }
+
+    }
+
+    private void title(File file, BasicImageReader reader) {
+        log.println("jimage: " + file.getName());
+    }
+
+    private void listTitle(File file, BasicImageReader reader) {
+        title(file, reader);
+
+        if (options.verbose) {
+            log.print(pad("Offset", OFFSET_WIDTH + 1));
+            log.print(pad("Size", SIZE_WIDTH + 1));
+            log.print(pad("Compressed", COMPRESSEDSIZE_WIDTH + 1));
+            log.println(" Entry");
+        }
+    }
+
+    private interface JImageAction {
+        public void apply(File file, BasicImageReader reader) throws IOException, BadArgs;
+    }
+
+    private interface ResourceAction {
+        public void apply(BasicImageReader reader, String name, ImageLocation location) throws IOException, BadArgs;
+    }
+
+    private void expand(BasicImageReader reader, String name, ImageLocation location) throws IOException, BadArgs {
+        File directory = new File(options.directory);
+        long offset = location.getContentOffset();
+        long size = location.getUncompressedSize();
+        long compressedSize = location.getCompressedSize();
+        boolean isCompressed = compressedSize != 0;
+
+        byte[] bytes;
+
+        if (isCompressed) {
+            bytes = reader.getResource(offset, compressedSize);
+            // TODO compression
+        } else {
+            bytes = reader.getResource(offset, size);
+        }
+
+        File resource =  new File(directory, name);
+        File parent = resource.getParentFile();
+
+        if (parent.exists()) {
+            if (!parent.isDirectory()) {
+                throw new BadArgs("err.cannot.create.dir", parent.getAbsolutePath());
+            }
+        } else if (!parent.mkdirs()) {
+            throw new BadArgs("err.cannot.create.dir", parent.getAbsolutePath());
+        }
+
+        Files.write(resource.toPath(), bytes);
+    }
+
     private static final int NAME_WIDTH = 40;
     private static final int NUMBER_WIDTH = 12;
     private static final int OFFSET_WIDTH = NUMBER_WIDTH;
@@ -271,13 +357,13 @@ class JImageTask {
     private static final int COMPRESSEDSIZE_WIDTH = NUMBER_WIDTH;
 
     private void print(String entry, ImageLocation location) {
-        log.print(pad(location.getContentOffset(), OFFSET_WIDTH));
-        log.print(pad(location.getUncompressedSize(), SIZE_WIDTH));
-        log.print(pad(location.getCompressedSize(), COMPRESSEDSIZE_WIDTH));
-        log.println(" " + entry);
+        log.print(pad(location.getContentOffset(), OFFSET_WIDTH) + " ");
+        log.print(pad(location.getUncompressedSize(), SIZE_WIDTH) + " ");
+        log.print(pad(location.getCompressedSize(), COMPRESSEDSIZE_WIDTH) + " ");
+        log.println(entry);
     }
 
-    private void print(ImageReader reader, String entry) {
+    private void print(BasicImageReader reader, String entry) {
         if (options.verbose) {
             print(entry, reader.findLocation(entry));
         } else {
@@ -285,105 +371,98 @@ class JImageTask {
         }
     }
 
-    private void info() throws IOException {
-        for (File file : options.jimages) {
-            String path = file.getCanonicalPath();
-            ImageReader reader = new ImageReader(path);
-            reader.open();
+    private void info(File file, BasicImageReader reader) {
+        ImageHeader header = reader.getHeader();
 
-            log.println("jimage: " + file.getName());
-
-            ImageHeader header = reader.getHeader();
-            log.println(" Major Version: " + header.getMajorVersion());
-            log.println(" Minor Version: " + header.getMinorVersion());
-            log.println(" Location Count: " + header.getLocationCount());
-            log.println(" Offsets Size: " + header.getOffsetsSize());
-            log.println(" Redirects Size: " + header.getRedirectSize());
-            log.println(" Locations Size: " + header.getLocationsSize());
-            log.println(" Strings Size: " + header.getStringsSize());
-            log.println(" Index Size: " + header.getIndexSize());
-
-            reader.close();
-        }
+        log.println(" Major Version:  " + header.getMajorVersion());
+        log.println(" Minor Version:  " + header.getMinorVersion());
+        log.println(" Location Count: " + header.getLocationCount());
+        log.println(" Offsets Size:   " + header.getOffsetsSize());
+        log.println(" Redirects Size: " + header.getRedirectSize());
+        log.println(" Locations Size: " + header.getLocationsSize());
+        log.println(" Strings Size:   " + header.getStringsSize());
+        log.println(" Index Size:     " + header.getIndexSize());
     }
 
-    private void list() throws IOException {
-        for (File file : options.jimages) {
-            String path = file.getCanonicalPath();
-            ImageReader reader = new ImageReader(path);
-            reader.open();
-            String[] entryNames = reader.getEntryNames(true);
-
-            log.println("jimage: " + file.getName());
-
-            if (options.verbose) {
-                log.print(pad("Offset", OFFSET_WIDTH));
-                log.print(pad("Size", SIZE_WIDTH));
-                log.print(pad("Compressed", COMPRESSEDSIZE_WIDTH));
-                log.println(" Entry");
-            }
-
-            for (String entry : entryNames) {
-                print(reader, entry);
-            }
-
-            reader.close();
-        }
+    private void list(BasicImageReader reader, String name, ImageLocation location) {
+        print(reader, name);
     }
 
-    private void verify() throws IOException {
-        for (File file : options.jimages) {
-            String path = file.getCanonicalPath();
-            ImageReader reader = new ImageReader(path);
-            reader.open();
-            String[] entryNames = reader.getEntryNames(true);
+    void verify(BasicImageReader reader, String name, ImageLocation location) {
+        if (name.endsWith(".class")) {
+            long offset = location.getContentOffset();
+            long size = location.getUncompressedSize();
+            long compressedSize = location.getCompressedSize();
+            boolean isCompressed = compressedSize != 0;
 
-            for (String entry : entryNames) {
-                if (!entry.endsWith(".class")) {
-                    continue;
-                }
+            byte[] bytes;
 
-                ImageLocation location = reader.findLocation(entry);
-                long offset = location.getContentOffset();
-                long size = location.getUncompressedSize();
-                long compressedSize = location.getCompressedSize();
-                boolean isCompressed = compressedSize != 0;
-
-                byte[] bytes;
-
+            try {
                 if (isCompressed) {
                     bytes = reader.getResource(offset, compressedSize);
                     // TODO compression
                 } else {
                     bytes = reader.getResource(offset, size);
                 }
-
-                if ((bytes[0] & 0xFF) != 0xCA ||
-                    (bytes[1] & 0xFF) != 0xFE ||
-                    (bytes[2] & 0xFF) != 0xBA ||
-                    (bytes[3] & 0xFF) != 0xBE) {
-                    log.print(" NOT A CLASS: ");
-                    print(reader, entry);
-                 }
+            } catch (IOException ex) {
+                log.println(ex);
+                bytes = null;
             }
 
-            reader.close();
+            if (bytes == null || bytes.length <= 4 ||
+                (bytes[0] & 0xFF) != 0xCA ||
+                (bytes[1] & 0xFF) != 0xFE ||
+                (bytes[2] & 0xFF) != 0xBA ||
+                (bytes[3] & 0xFF) != 0xBE) {
+                log.print(" NOT A CLASS: ");
+                print(reader, name);
+            }
         }
+    }
+
+    private void iterate(JImageAction jimageAction, ResourceAction resourceAction) throws IOException, BadArgs {
+        for (File file : options.jimages) {
+            if (!file.exists() || !file.isFile()) {
+                throw new BadArgs("err.not.a.jimage", file.getName());
+            }
+
+            String path = file.getCanonicalPath();
+            BasicImageReader reader = new BasicImageReader(path);
+            reader.open();
+
+            if (jimageAction != null) {
+                jimageAction.apply(file, reader);
+            }
+
+            if (resourceAction != null) {
+                String[] entryNames = reader.getEntryNames(true);
+
+                for (String name : entryNames) {
+                    ImageLocation location = reader.findLocation(name);
+                    resourceAction.apply(reader, name, location);
+                }
+            }
+
+            reader.open();
+       }
     }
 
     private boolean run() throws IOException, BadArgs {
         switch (options.task) {
+            case CREATE:
+                create();
+                break;
             case EXPAND:
-                expand();
+                iterate(null, this::expand);
                 break;
             case INFO:
-                info();
+                iterate(this::info, null);
                 break;
             case LIST:
-                list();
+                iterate(this::listTitle, this::list);
                 break;
             case VERIFY:
-                verify();
+                iterate(this::title, this::verify);
                 break;
             default:
                 throw new BadArgs("err.invalid.task", options.task.name()).showUsage(true);
@@ -440,12 +519,7 @@ class JImageTask {
                 }
             } else {
                 File file = new File(arg);
-
-                if (file.exists() & file.isFile()) {
-                    options.jimages.add(file);
-                } else {
-                    throw new BadArgs("err.not.a.jimage", arg).showUsage(true);
-                }
+                options.jimages.add(file);
             }
         }
     }
