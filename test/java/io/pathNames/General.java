@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2000, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,6 +28,7 @@
 
 import java.io.*;
 import java.util.*;
+import java.nio.file.*;
 
 
 public class General {
@@ -38,12 +39,40 @@ public class General {
 
     private static int gensymCounter = 0;
 
+    protected static final String userDir = System.getProperty("user.dir");
+
+    protected static String baseDir = null;
+    protected static String relative = null;
 
     /* Generate a filename unique to this run */
     private static String gensym() {
         return "x." + ++gensymCounter;
     }
 
+    /**
+     * Create files and folders in the test working directory.
+     * The purpose is to make sure the test will not go out of
+     * its user dir when walking the file tree.
+     *
+     * @param  depth    The number of directory levels to be created under
+     *                  the user directory. It should be the maximum value
+     *                  of the depths passed to checkNames method (including
+     *                  direct or indirect calling) in a whole test.
+     */
+    protected static void initTestData(int depth) throws IOException {
+        File parent = new File(userDir);
+        for (int i = 0; i < depth; i++) {
+            File tmp = new File(parent, gensym());
+            tmp.createNewFile();
+            tmp = new File(parent, gensym());
+            if (tmp.mkdir())
+                parent = tmp;
+            else
+                throw new IOException("Fail to create directory, " + tmp);
+        }
+        baseDir = parent.getAbsolutePath();
+        relative = baseDir.substring(userDir.length() + 1);
+    }
 
     /**
      * Find a file in the given subdirectory, or descend into further
@@ -57,7 +86,7 @@ public class General {
         for (int i = 0; i < dl.length; i++) {
             File f = new File(subdir, dl[i]);
             File df = new File(dir, f.getPath());
-            if (df.exists() && df.isFile()) {
+            if (Files.isRegularFile(df.toPath(), LinkOption.NOFOLLOW_LINKS)) {
                 return f.getPath();
             }
         }
@@ -65,7 +94,7 @@ public class General {
             File f = (subdir.length() == 0) ? new File(dl[i])
                                             : new File(subdir, dl[i]);
             File df = new File(dir, f.getPath());
-            if (df.exists() && df.isDirectory()) {
+            if (Files.isDirectory(df.toPath(), LinkOption.NOFOLLOW_LINKS)) {
                 String[] dl2 = df.list();
                 if (dl2 != null) {
                     String ff = findSomeFile(dir, f.getPath(), dl2);
@@ -90,7 +119,7 @@ public class General {
         }
         for (int i = 0; i < dl.length; i++) {
             File f = new File(dir, dl[i]);
-            if (f.isFile()) {
+            if (Files.isRegularFile(f.toPath(), LinkOption.NOFOLLOW_LINKS)) {
                 return dl[i];
             }
         }
@@ -127,9 +156,9 @@ public class General {
         }
         for (int i = 0; i < dl.length; i++) {
             File f = new File(d, dl[i]);
-            if (f.isDirectory() && f.canRead()) {
+            if (Files.isDirectory(f.toPath(), LinkOption.NOFOLLOW_LINKS)) {
                 String[] dl2 = f.list();
-                if (dl2.length >= 250) {
+                if (dl2 == null || dl2.length >= 250) {
                     /* Heuristic to avoid scanning huge directories */
                     continue;
                 }
@@ -213,7 +242,7 @@ public class General {
 
 
     /** Hash table of input pathnames, used to detect duplicates */
-    private static Hashtable checked = new Hashtable();
+    private static Hashtable<String, String> checked = new Hashtable<>();
 
     /**
      * Check the given pathname.  Its canonical pathname should be the given
@@ -271,7 +300,7 @@ public class General {
 
 
     /** Check a single slash case, plus its children */
-    public static void checkSlash(int depth, boolean create,
+    private static void checkSlash(int depth, boolean create,
                                   String ans, String ask, String slash)
         throws Exception
     {
@@ -314,7 +343,7 @@ public class General {
 
         /* Normal name */
         if (f.exists()) {
-            if (f.isDirectory() && f.canRead()) {
+            if (Files.isDirectory(f.toPath(), LinkOption.NOFOLLOW_LINKS) && f.list() != null) {
                 if ((n = findSomeFile(ans, create)) != null)
                     checkSlashes(d, create, ans + n, ask + n);
                 if ((n = findSomeDir(ans, create)) != null)
