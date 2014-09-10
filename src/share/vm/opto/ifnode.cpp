@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -503,7 +503,7 @@ int IfNode::is_range_check(Node* &range, Node* &index, jint &offset) {
   jint  off = 0;
   if (l->is_top()) {
     return 0;
-  } else if (l->is_Add()) {
+  } else if (l->Opcode() == Op_AddI) {
     if ((off = l->in(1)->find_int_con(0)) != 0) {
       ind = l->in(2);
     } else if ((off = l->in(2)->find_int_con(0)) != 0) {
