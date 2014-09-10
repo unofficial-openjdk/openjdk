@@ -26,146 +26,60 @@ package jdk.jigsaw.module.internal;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.RandomAccessFile;
-import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.nio.IntBuffer;
-import java.nio.MappedByteBuffer;
-import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 
-public final class ImageReader {
+public class ImageReader extends BasicImageReader {
     // well-known strings needed for image file system.
     static final UTF8String ROOT_STRING   = new UTF8String("/");
     static final UTF8String META_INF_STRING = new UTF8String("META-INF");
     static final UTF8String PKG_MAP_STRING = new UTF8String("META-INF/package-to-module.properties");
 
-    private String imagePath;
-    private volatile RandomAccessFile file;
-    private volatile FileChannel channel;
     // attributes of the .jimage file. jimage file does not contain
     // attributes for the individual resources (yet). We use attributes
     // of the jimage file itself (creation, modification, access times).
     private volatile BasicFileAttributes imageFileAttrs;
-    private ByteOrder byteOrder;
-    private ImageHeader header;
-    private int indexSize;
-    private IntBuffer redirectBuffer;
-    private IntBuffer offsetsBuffer;
-    private ByteBuffer locationsBuffer;
-    private ByteBuffer stringsBuffer;
-    private ImageStrings strings;
     private Map<String,String> packageMap;
 
+    // directory management implementation
+    private final Map<UTF8String, Node> nodes;
+    private volatile Directory rootDir;
+
     public ImageReader(String imagePath) {
-        this(imagePath, ByteOrder.nativeOrder());
+        super(imagePath);
+        this.nodes = Collections.synchronizedMap(new HashMap<>());
     }
 
     public ImageReader(String imagePath, ByteOrder byteOrder) {
-        this.imagePath = imagePath;
-        this.byteOrder = byteOrder;
+        super(imagePath, byteOrder);
+        this.nodes = Collections.synchronizedMap(new HashMap<>());
     }
 
+    @Override
     public synchronized void open() throws IOException {
-        this.file = new RandomAccessFile(imagePath, "r");
-        this.channel = file.getChannel();
-        this.imageFileAttrs = Files.readAttributes(
+        super.open();
+        imageFileAttrs = Files.readAttributes(
                 new File(imagePath).toPath(), BasicFileAttributes.class);
-        header = ImageHeader.readFrom(byteOrder, getIntBuffer(0, ImageHeader.getHeaderSize()));
-        indexSize = header.getIndexSize();
-        redirectBuffer = getIntBuffer(header.getRedirectOffset(), header.getRedirectSize());
-        offsetsBuffer = getIntBuffer(header.getOffsetsOffset(), header.getOffsetsSize());
-        locationsBuffer = getByteBuffer(header.getLocationsOffset(), header.getLocationsSize());
-        stringsBuffer = getByteBuffer(header.getStringsOffset(), header.getStringsSize());
-        strings = new ImageStrings(new ImageStream(stringsBuffer));
         packageMap = PackageModuleMap.readFrom(this);
     }
 
-    public boolean isOpen() {
-        return file != null && channel != null;
-    }
-
+    @Override
     public synchronized void close() throws IOException {
-        channel.close();
-        file.close();
-
-        channel = null;
-        file = null;
+        super.close();
         imageFileAttrs = null;
         clearNodes();
     }
 
-    public ImageHeader getHeader() {
-        return header;
-    }
-
-    public ImageLocation findLocation(String name) {
-        return findLocation(new UTF8String(name));
-    }
-
-    public ImageLocation findLocation(byte[] name) {
-        return findLocation(new UTF8String(name));
-    }
-
-    public ImageLocation findLocation(UTF8String name) {
-        int count = header.getLocationCount();
-        int hash = name.hashCode() % count;
-        int redirect = getRedirect(hash);
-
-        if (redirect == 0) {
-            return null;
-        }
-
-        int index;
-
-        if (redirect < 0) {
-            // If no collision.
-            index = -redirect - 1;
-        } else {
-            // If collision, recompute hash code.
-            index = name.hashCode(redirect) % count;
-        }
-
-        int offset = getOffset(index);
-        ImageLocation location = getLocation(offset);
-
-        return location.verify(name) ? location : null;
-    }
-
-    public String[] getEntryNames() {
-        return getEntryNames(true);
-    }
-
-    public String[] getEntryNames(boolean sorted) {
-        int count = header.getLocationCount();
-        List<String> list = new ArrayList<>();
-
-        for (int i = 0; i < count; i++) {
-            int offset = offsetsBuffer.get(i);
-            ImageLocation location = ImageLocation.readFrom(locationsBuffer, offset, strings);
-            list.add(location.getFullnameString());
-        }
-
-        String[] array = list.toArray(new String[0]);
-
-        if (sorted) {
-            Arrays.sort(array);
-        }
-
-        return array;
-    }
-
-    // jimage file does not store directory structure. We build nodes
+     // jimage file does not store directory structure. We build nodes
     // using the "path" strings found in the jimage file.
     // Node can be a directory or a resource
     public static abstract class Node {
@@ -378,32 +292,9 @@ public final class ImageReader {
         return nodes.get(name);
     }
 
-    // directory management implementation
-    private final Map<UTF8String, Node> nodes = Collections.synchronizedMap(new HashMap<>());
-    private volatile Directory rootDir;
-
     private synchronized void clearNodes() {
         nodes.clear();
         rootDir = null;
-    }
-
-    private ImageLocation[] getAllLocations(boolean sorted) {
-        int count = header.getLocationCount();
-        List<ImageLocation> list = new ArrayList<>();
-
-        for (int i = 0; i < count; i++) {
-            int offset = offsetsBuffer.get(i);
-            ImageLocation location = ImageLocation.readFrom(locationsBuffer, offset, strings);
-            list.add(location);
-        }
-
-        ImageLocation[] array = list.toArray(new ImageLocation[0]);
-
-        if (sorted) {
-            Arrays.sort(array, (ImageLocation loc1, ImageLocation loc2) -> loc1.getFullnameString().compareTo(loc2.getFullnameString()));
-        }
-
-        return array;
     }
 
     private synchronized Directory buildRootDirectory() {
@@ -502,19 +393,21 @@ public final class ImageReader {
     // lazily create computed resource data for package-to-module.properties
     private byte[] makePackageMapData() {
         StringBuilder buf = new StringBuilder();
-        for (Map.Entry<String, String> entry : packageMap.entrySet()) {
+        packageMap.entrySet().stream().map((entry) -> {
             buf.append(entry.getKey());
+            return entry;
+        }).map((entry) -> {
             buf.append('=');
             buf.append(entry.getValue());
+            return entry;
+        }).forEach((_item) -> {
             buf.append('\n');
-        }
+        });
 
         return buf.toString().getBytes(StandardCharsets.UTF_8);
     }
 
-    /**
-     * Finds the module containing the given classfile entry.
-     */
+    // Finds the module containing the given class file entry.
     public String findModule(String entry) {
         if (!entry.endsWith(".class")) {
             return null;
@@ -524,51 +417,8 @@ public final class ImageReader {
         return packageMap.get(pn);
     }
 
-    private IntBuffer getIntBuffer(long offset, long size) throws IOException {
-        MappedByteBuffer buffer = channel.map(FileChannel.MapMode.READ_ONLY, offset, size);
-        buffer.order(byteOrder);
-
-        return buffer.asIntBuffer();
-    }
-
-    private ByteBuffer getByteBuffer(long offset, long size) throws IOException {
-        MappedByteBuffer buffer = channel.map(FileChannel.MapMode.READ_ONLY, offset, size);
-        buffer.order(byteOrder);
-
-        return buffer.asReadOnlyBuffer();
-    }
-
-    private int getRedirect(int index) {
-        return redirectBuffer.get(index);
-    }
-
-    private int getOffset(int index) {
-        return offsetsBuffer.get(index);
-    }
-
-    private ImageLocation getLocation(int offset) {
-        return ImageLocation.readFrom(locationsBuffer, offset, strings);
-    }
-
-    String getString(int offset) {
-        return strings.get(offset).toString();
-    }
-
-    synchronized public byte[] getResource(long offset, long size) throws IOException {
-        byte[] bytes = new byte[(int)size];
-        file.seek(indexSize + offset);
-        file.read(bytes);
-
-        return bytes;
-    }
-
-    private byte[] getResource(ImageLocation loc) throws IOException {
-        // handle decompression here!
-        return getResource(loc.getContentOffset(), loc.getUncompressedSize());
-    }
-
     public byte[] getResource(Resource rs) throws IOException {
         return rs instanceof ComputedResource?
-            ((ComputedResource)rs).getData() : getResource(rs.getLocation());
+            ((ComputedResource)rs).getData() : super.getResource(rs.getLocation());
     }
 }

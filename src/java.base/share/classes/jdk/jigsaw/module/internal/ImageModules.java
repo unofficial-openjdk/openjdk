@@ -312,7 +312,7 @@ public final class ImageModules {
         }
     }
 
-    ModuleIndex buildModuleIndex(Loader type, ImageWriter writer) {
+    ModuleIndex buildModuleIndex(Loader type, BasicImageWriter writer) {
         return new ModuleIndex(getModules(type), writer);
     }
 
@@ -324,7 +324,7 @@ public final class ImageModules {
         final Map<String, Integer> moduleOffsets = new LinkedHashMap<>();
         final Map<String, List<Integer>> packageOffsets = new HashMap<>();
         final int size;
-        ModuleIndex(Set<String> mods, ImageWriter writer) {
+        ModuleIndex(Set<String> mods, BasicImageWriter writer) {
             // module name offsets
             writer.addLocation(MODULES_ENTRY, 0, 0, mods.size() * 4);
             long offset = mods.size() * 4;

@@ -143,7 +143,7 @@ public final class ImageFile {
                     BufferedOutputStream bos = new BufferedOutputStream(fos);
                     DataOutputStream out = new DataOutputStream(bos)) {
                 // store index in addition of the class loader map for boot loader
-                ImageWriter writer = new ImageWriter();
+                BasicImageWriter writer = new BasicImageWriter();
                 Set<String> duplicates = new HashSet<>();
 
                 // build package map for modules and add as resources

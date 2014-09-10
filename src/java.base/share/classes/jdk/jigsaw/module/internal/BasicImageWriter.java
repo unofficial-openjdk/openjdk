@@ -31,7 +31,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public final class ImageWriter {
+public final class BasicImageWriter {
     private ByteOrder byteOrder;
     private ImageStrings strings;
     private int count;
@@ -84,11 +84,11 @@ public final class ImageWriter {
         }
     }
 
-    public ImageWriter() {
+    public BasicImageWriter() {
         this(ByteOrder.nativeOrder());
     }
 
-    public ImageWriter(ByteOrder byteOrder) {
+    public BasicImageWriter(ByteOrder byteOrder) {
         this.byteOrder = byteOrder;
         this.input = new ArrayList<>();
         this.strings = new ImageStrings();
