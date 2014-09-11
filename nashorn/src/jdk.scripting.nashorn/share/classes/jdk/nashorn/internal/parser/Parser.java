@@ -45,6 +45,7 @@ import static jdk.nashorn.internal.parser.TokenType.IDENT;
 import static jdk.nashorn.internal.parser.TokenType.IF;
 import static jdk.nashorn.internal.parser.TokenType.INCPOSTFIX;
 import static jdk.nashorn.internal.parser.TokenType.LBRACE;
+import static jdk.nashorn.internal.parser.TokenType.LET;
 import static jdk.nashorn.internal.parser.TokenType.LPAREN;
 import static jdk.nashorn.internal.parser.TokenType.RBRACE;
 import static jdk.nashorn.internal.parser.TokenType.RBRACKET;
@@ -106,6 +107,8 @@ import jdk.nashorn.internal.ir.UnaryNode;
 import jdk.nashorn.internal.ir.VarNode;
 import jdk.nashorn.internal.ir.WhileNode;
 import jdk.nashorn.internal.ir.WithNode;
+import jdk.nashorn.internal.ir.debug.ASTWriter;
+import jdk.nashorn.internal.ir.debug.PrintVisitor;
 import jdk.nashorn.internal.runtime.Context;
 import jdk.nashorn.internal.runtime.ErrorManager;
 import jdk.nashorn.internal.runtime.JSErrorType;
@@ -114,6 +117,7 @@ import jdk.nashorn.internal.runtime.RecompilableScriptFunctionData;
 import jdk.nashorn.internal.runtime.ScriptEnvironment;
 import jdk.nashorn.internal.runtime.ScriptingFunctions;
 import jdk.nashorn.internal.runtime.Source;
+import jdk.nashorn.internal.runtime.Timing;
 import jdk.nashorn.internal.runtime.logging.DebugLogger;
 import jdk.nashorn.internal.runtime.logging.Loggable;
 import jdk.nashorn.internal.runtime.logging.Logger;
@@ -220,7 +224,7 @@ public class Parser extends AbstractParser implements Loggable {
      * @param name the name for the first parsed function.
      */
     public void setFunctionName(final String name) {
-        defaultNames.push(new IdentNode(0, 0, name));
+        defaultNames.push(createIdentNode(0, 0, name));
     }
 
     /**
@@ -255,7 +259,7 @@ public class Parser extends AbstractParser implements Loggable {
      */
     public FunctionNode parse(final String scriptName, final int startPos, final int len, final boolean allowPropertyFunction) {
         final boolean isTimingEnabled = env.isTimingEnabled();
-        final long t0 = isTimingEnabled ? System.currentTimeMillis() : 0L;
+        final long t0 = isTimingEnabled ? System.nanoTime() : 0L;
         log.info(this, " begin for '", scriptName, "'");
 
         try {
@@ -276,8 +280,8 @@ public class Parser extends AbstractParser implements Loggable {
         } finally {
             final String end = this + " end '" + scriptName + "'";
             if (isTimingEnabled) {
-                env._timing.accumulateTime(toString(), System.currentTimeMillis() - t0);
-                log.info(end, "' in ", System.currentTimeMillis() - t0, " ms");
+                env._timing.accumulateTime(toString(), System.nanoTime() - t0);
+                log.info(end, "' in ", Timing.toMillisPrint(System.nanoTime() - t0), " ms");
             } else {
                 log.info(end);
             }
@@ -346,9 +350,10 @@ public class Parser extends AbstractParser implements Loggable {
             expect(EOF);
 
             function.setFinish(source.getLength() - 1);
-
             function = restoreFunctionNode(function, token); //commit code
             function = function.setBody(lc, function.getBody().setNeedsScope(lc));
+
+            printAST(function);
             return function;
         } catch (final Exception e) {
             handleParseException(e);
@@ -477,8 +482,7 @@ loop:
                 name,
                 parameters,
                 kind,
-                flags,
-                sourceURL);
+                flags);
 
         lc.push(functionNode);
         // Create new block, and just put it on the context stack, restoreFunctionNode() will associate it with the
@@ -574,6 +578,10 @@ loop:
         if (isArguments(ident)) {
             lc.setFlag(lc.getCurrentFunction(), FunctionNode.USES_ARGUMENTS);
         }
+    }
+
+    private boolean useBlockScope() {
+        return env._es6;
     }
 
     private static boolean isArguments(final String name) {
@@ -691,9 +699,20 @@ loop:
             FunctionNode.Kind.SCRIPT,
             functionLine);
 
+        // If ES6 block scope is enabled add a per-script block for top-level LET and CONST declarations.
+        final int startLine = start;
+        Block outer = useBlockScope() ? newBlock() : null;
         functionDeclarations = new ArrayList<>();
-        sourceElements(allowPropertyFunction);
-        addFunctionDeclarations(script);
+
+        try {
+            sourceElements(allowPropertyFunction);
+            addFunctionDeclarations(script);
+        } finally {
+            if (outer != null) {
+                outer = restoreBlock(outer);
+                appendStatement(new BlockStatement(startLine, outer));
+            }
+        }
         functionDeclarations = null;
 
         expect(EOF);
@@ -702,10 +721,6 @@ loop:
 
         script = restoreFunctionNode(script, token); //commit code
         script = script.setBody(lc, script.getBody().setNeedsScope(lc));
-        // user may have directive comment to set sourceURL
-        if (sourceURL != null) {
-            script = script.setSourceURL(lc, sourceURL);
-        }
 
         return script;
     }
@@ -805,6 +820,12 @@ loop:
                                         verifyStrictIdent(param, "function parameter");
                                     }
                                 }
+                            } else if (Context.DEBUG) {
+                                final int flag = FunctionNode.getDirectiveFlag(directive);
+                                if (flag != 0) {
+                                    final FunctionNode function = lc.getCurrentFunction();
+                                    lc.setFlag(function, flag);
+                                }
                             }
                         }
                     }
@@ -863,7 +884,7 @@ loop:
             block();
             break;
         case VAR:
-            variableStatement(true);
+            variableStatement(type, true);
             break;
         case SEMICOLON:
             emptyStatement();
@@ -913,8 +934,12 @@ loop:
             expect(SEMICOLON);
             break;
         default:
+            if (useBlockScope() && (type == LET || type == CONST)) {
+                variableStatement(type, true);
+                break;
+            }
             if (env._const_as_var && type == CONST) {
-                variableStatement(true);
+                variableStatement(TokenType.VAR, true);
                 break;
             }
 
@@ -1030,11 +1055,17 @@ loop:
      * Parse a VAR statement.
      * @param isStatement True if a statement (not used in a FOR.)
      */
-    private List<VarNode> variableStatement(final boolean isStatement) {
+    private List<VarNode> variableStatement(final TokenType varType, final boolean isStatement) {
         // VAR tested in caller.
         next();
 
         final List<VarNode> vars = new ArrayList<>();
+        int varFlags = VarNode.IS_STATEMENT;
+        if (varType == LET) {
+            varFlags |= VarNode.IS_LET;
+        } else if (varType == CONST) {
+            varFlags |= VarNode.IS_CONST;
+        }
 
         while (true) {
             // Get starting token.
@@ -1058,10 +1089,12 @@ loop:
                 } finally {
                     defaultNames.pop();
                 }
+            } else if (varType == CONST) {
+                throw error(AbstractParser.message("missing.const.assignment", name.getName()));
             }
 
             // Allocate var node.
-            final VarNode var = new VarNode(varLine, varToken, finish, name, init);
+            final VarNode var = new VarNode(varLine, varToken, finish, name.setIsDeclaredHere(), init, varFlags);
             vars.add(var);
             appendStatement(var);
 
@@ -1175,9 +1208,12 @@ loop:
      * Parse a FOR statement.
      */
     private void forStatement() {
+        // When ES6 for-let is enabled we create a container block to capture the LET.
+        final int startLine = start;
+        Block outer = useBlockScope() ? newBlock() : null;
+
         // Create FOR node, capturing FOR token.
         ForNode forNode = new ForNode(line, token, Token.descPosition(token), null, ForNode.IS_FOR);
-
         lc.push(forNode);
 
         try {
@@ -1198,14 +1234,19 @@ loop:
             switch (type) {
             case VAR:
                 // Var statements captured in for outer block.
-                vars = variableStatement(false);
+                vars = variableStatement(type, false);
                 break;
             case SEMICOLON:
                 break;
             default:
+                if (useBlockScope() && (type == LET || type == CONST)) {
+                    // LET/CONST captured in container block created above.
+                    vars = variableStatement(type, false);
+                    break;
+                }
                 if (env._const_as_var && type == CONST) {
                     // Var statements captured in for outer block.
-                    vars = variableStatement(false);
+                    vars = variableStatement(TokenType.VAR, false);
                     break;
                 }
 
@@ -1285,8 +1326,13 @@ loop:
             appendStatement(forNode);
         } finally {
             lc.pop(forNode);
+            if (outer != null) {
+                outer.setFinish(forNode.getFinish());
+                outer = restoreBlock(outer);
+                appendStatement(new BlockStatement(startLine, outer));
+            }
         }
-     }
+    }
 
     /**
      * ... IterationStatement :
@@ -1717,7 +1763,7 @@ loop:
         }
     }
 
-   /**
+    /**
      * ThrowStatement :
      *      throw Expression ; // [no LineTerminator here]
      *
@@ -2239,7 +2285,7 @@ loop:
                 }
             }
 
-            propertyName =  new IdentNode(propertyToken, finish, ident).setIsPropertyName();
+            propertyName =  createIdentNode(propertyToken, finish, ident).setIsPropertyName();
         } else {
             propertyName = propertyName();
         }
@@ -2257,7 +2303,7 @@ loop:
     private PropertyFunction propertyGetterFunction(final long getSetToken, final int functionLine) {
         final PropertyKey getIdent = propertyName();
         final String getterName = getIdent.getPropertyName();
-        final IdentNode getNameNode = new IdentNode(((Node)getIdent).getToken(), finish, NameCodec.encode("get " + getterName));
+        final IdentNode getNameNode = createIdentNode(((Node)getIdent).getToken(), finish, NameCodec.encode("get " + getterName));
         expect(LPAREN);
         expect(RPAREN);
         final FunctionNode functionNode = functionBody(getSetToken, getNameNode, new ArrayList<IdentNode>(), FunctionNode.Kind.GETTER, functionLine);
@@ -2268,7 +2314,7 @@ loop:
     private PropertyFunction propertySetterFunction(final long getSetToken, final int functionLine) {
         final PropertyKey setIdent = propertyName();
         final String setterName = setIdent.getPropertyName();
-        final IdentNode setNameNode = new IdentNode(((Node)setIdent).getToken(), finish, NameCodec.encode("set " + setterName));
+        final IdentNode setNameNode = createIdentNode(((Node)setIdent).getToken(), finish, NameCodec.encode("set " + setterName));
         expect(LPAREN);
         // be sloppy and allow missing setter parameter even though
         // spec does not permit it!
@@ -2604,7 +2650,7 @@ loop:
         FunctionNode functionNode = functionBody(functionToken, name, parameters, FunctionNode.Kind.NORMAL, functionLine);
 
         if (isStatement) {
-            if (topLevel) {
+            if (topLevel || useBlockScope()) {
                 functionNode = functionNode.setFlag(lc, FunctionNode.IS_DECLARED);
             } else if (isStrictMode) {
                 throw error(JSErrorType.SYNTAX_ERROR, AbstractParser.message("strict.no.func.decl.here"), functionToken);
@@ -2656,9 +2702,16 @@ loop:
         }
 
         if (isStatement) {
-            final VarNode varNode = new VarNode(functionLine, functionToken, finish, name, functionNode, VarNode.IS_STATEMENT);
+            int varFlags = VarNode.IS_STATEMENT;
+            if (!topLevel && useBlockScope()) {
+                // mark ES6 block functions as lexically scoped
+                varFlags |= VarNode.IS_LET;
+            }
+            final VarNode varNode = new VarNode(functionLine, functionToken, finish, name, functionNode, varFlags);
             if (topLevel) {
                 functionDeclarations.add(varNode);
+            } else if (useBlockScope()) {
+                prependStatement(varNode); // Hoist to beginning of current block
             } else {
                 appendStatement(varNode);
             }
@@ -2814,16 +2867,25 @@ loop:
                 lastToken = token;
                 expect(RBRACE);
                 functionNode.setFinish(finish);
-
             }
         } finally {
             functionNode = restoreFunctionNode(functionNode, lastToken);
         }
+        printAST(functionNode);
         return functionNode;
     }
 
+    private void printAST(final FunctionNode functionNode) {
+        if (functionNode.getFlag(FunctionNode.IS_PRINT_AST)) {
+            env.getErr().println(new ASTWriter(functionNode));
+        }
+
+        if (functionNode.getFlag(FunctionNode.IS_PRINT_PARSE)) {
+            env.getErr().println(new PrintVisitor(functionNode, true, false));
+        }
+    }
+
     private void addFunctionDeclarations(final FunctionNode functionNode) {
-        assert lc.peek() == lc.getFunctionBody(functionNode);
         VarNode lastDecl = null;
         for (int i = functionDeclarations.size() - 1; i >= 0; i--) {
             Statement decl = functionDeclarations.get(i);

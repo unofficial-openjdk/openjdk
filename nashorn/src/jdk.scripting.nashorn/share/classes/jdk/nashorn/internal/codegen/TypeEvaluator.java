@@ -108,13 +108,21 @@ final class TypeEvaluator {
 
         // Safely evaluate the property, and return the narrowest type for the actual value (e.g. Type.INT for a boxed
         // integer).
-        final Object value = property.getObjectValue(owner, owner);
+        final Object value = property.needsDeclaration() ? ScriptRuntime.UNDEFINED : property.getObjectValue(owner, owner);
         if (value == ScriptRuntime.UNDEFINED) {
             return null;
         }
         return Type.typeFor(JSType.unboxedFieldType(value));
     }
 
+    /**
+     * Declares a symbol name as belonging to a non-scoped local variable during an on-demand compilation of a single
+     * function. This method will add an explicit Undefined binding for the local into the runtime scope if it's
+     * otherwise implicitly undefined so that when an expression is evaluated for the name, it won't accidentally find
+     * an unrelated value higher up the scope chain. It is only required to call this method when doing an optimistic
+     * on-demand compilation.
+     * @param symbolName the name of the symbol that is to be declared as being a non-scoped local variable.
+     */
     void declareLocalSymbol(final String symbolName) {
         assert
             compiler.useOptimisticTypes() &&

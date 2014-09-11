@@ -27,7 +27,7 @@
 #include "gc_implementation/g1/g1BlockOffsetTable.inline.hpp"
 #include "gc_implementation/g1/g1CollectedHeap.inline.hpp"
 #include "gc_implementation/g1/heapRegionRemSet.hpp"
-#include "gc_implementation/g1/heapRegionSeq.inline.hpp"
+#include "gc_implementation/g1/heapRegionManager.inline.hpp"
 #include "memory/allocation.hpp"
 #include "memory/padded.inline.hpp"
 #include "memory/space.inline.hpp"
@@ -289,7 +289,7 @@ OtherRegionsTable::OtherRegionsTable(HeapRegion* hr, Mutex* m) :
   }
 
   _fine_grain_regions = NEW_C_HEAP_ARRAY3(PerRegionTablePtr, _max_fine_entries,
-                        mtGC, 0, AllocFailStrategy::RETURN_NULL);
+                        mtGC, CURRENT_PC, AllocFailStrategy::RETURN_NULL);
 
   if (_fine_grain_regions == NULL) {
     vm_exit_out_of_memory(sizeof(void*)*_max_fine_entries, OOM_MALLOC_ERROR,
@@ -373,17 +373,17 @@ void FromCardCache::initialize(uint n_par_rs, uint max_num_regions) {
                                                        _max_regions,
                                                        &_static_mem_size);
 
-  for (uint i = 0; i < n_par_rs; i++) {
-    for (uint j = 0; j < _max_regions; j++) {
-      set(i, j, InvalidCard);
-    }
-  }
+  invalidate(0, _max_regions);
 }
 
-void FromCardCache::shrink(uint new_num_regions) {
+void FromCardCache::invalidate(uint start_idx, size_t new_num_regions) {
+  guarantee((size_t)start_idx + new_num_regions <= max_uintx,
+            err_msg("Trying to invalidate beyond maximum region, from %u size "SIZE_FORMAT,
+                    start_idx, new_num_regions));
   for (uint i = 0; i < HeapRegionRemSet::num_par_rem_sets(); i++) {
-    assert(new_num_regions <= _max_regions, "Must be within max.");
-    for (uint j = new_num_regions; j < _max_regions; j++) {
+    uint end_idx = (start_idx + (uint)new_num_regions);
+    assert(end_idx <= _max_regions, "Must be within max.");
+    for (uint j = start_idx; j < end_idx; j++) {
       set(i, j, InvalidCard);
     }
   }
@@ -407,12 +407,12 @@ void FromCardCache::clear(uint region_idx) {
   }
 }
 
-void OtherRegionsTable::init_from_card_cache(uint max_regions) {
+void OtherRegionsTable::initialize(uint max_regions) {
   FromCardCache::initialize(HeapRegionRemSet::num_par_rem_sets(), max_regions);
 }
 
-void OtherRegionsTable::shrink_from_card_cache(uint new_num_regions) {
-  FromCardCache::shrink(new_num_regions);
+void OtherRegionsTable::invalidate(uint start_idx, size_t num_regions) {
+  FromCardCache::invalidate(start_idx, num_regions);
 }
 
 void OtherRegionsTable::print_from_card_cache() {
@@ -420,7 +420,7 @@ void OtherRegionsTable::print_from_card_cache() {
 }
 
 void OtherRegionsTable::add_reference(OopOrNarrowOopStar from, int tid) {
-  uint cur_hrs_ind = hr()->hrs_index();
+  uint cur_hrm_ind = hr()->hrm_index();
 
   if (G1TraceHeapRegionRememberedSet) {
     gclog_or_tty->print_cr("ORT::add_reference_work(" PTR_FORMAT "->" PTR_FORMAT ").",
@@ -435,10 +435,10 @@ void OtherRegionsTable::add_reference(OopOrNarrowOopStar from, int tid) {
   if (G1TraceHeapRegionRememberedSet) {
     gclog_or_tty->print_cr("Table for [" PTR_FORMAT "...): card %d (cache = %d)",
                   hr()->bottom(), from_card,
-                  FromCardCache::at((uint)tid, cur_hrs_ind));
+                  FromCardCache::at((uint)tid, cur_hrm_ind));
   }
 
-  if (FromCardCache::contains_or_replace((uint)tid, cur_hrs_ind, from_card)) {
+  if (FromCardCache::contains_or_replace((uint)tid, cur_hrm_ind, from_card)) {
     if (G1TraceHeapRegionRememberedSet) {
       gclog_or_tty->print_cr("  from-card cache hit.");
     }
@@ -448,7 +448,7 @@ void OtherRegionsTable::add_reference(OopOrNarrowOopStar from, int tid) {
 
   // Note that this may be a continued H region.
   HeapRegion* from_hr = _g1h->heap_region_containing_raw(from);
-  RegionIdx_t from_hrs_ind = (RegionIdx_t) from_hr->hrs_index();
+  RegionIdx_t from_hrs_ind = (RegionIdx_t) from_hr->hrm_index();
 
   // If the region is already coarsened, return.
   if (_coarse_map.at(from_hrs_ind)) {
@@ -495,7 +495,7 @@ void OtherRegionsTable::add_reference(OopOrNarrowOopStar from, int tid) {
         if (G1TraceHeapRegionRememberedSet) {
           gclog_or_tty->print_cr("   [tid %d] sparse table entry "
                         "overflow(f: %d, t: %u)",
-                        tid, from_hrs_ind, cur_hrs_ind);
+                        tid, from_hrs_ind, cur_hrm_ind);
         }
       }
 
@@ -607,9 +607,9 @@ PerRegionTable* OtherRegionsTable::delete_region_table() {
   guarantee(max != NULL, "Since _n_fine_entries > 0");
 
   // Set the corresponding coarse bit.
-  size_t max_hrs_index = (size_t) max->hr()->hrs_index();
-  if (!_coarse_map.at(max_hrs_index)) {
-    _coarse_map.at_put(max_hrs_index, true);
+  size_t max_hrm_index = (size_t) max->hr()->hrm_index();
+  if (!_coarse_map.at(max_hrm_index)) {
+    _coarse_map.at_put(max_hrm_index, true);
     _n_coarse_entries++;
     if (G1TraceHeapRegionRememberedSet) {
       gclog_or_tty->print("Coarsened entry in region [" PTR_FORMAT "...] "
@@ -633,7 +633,7 @@ void OtherRegionsTable::scrub(CardTableModRefBS* ctbs,
                               BitMap* region_bm, BitMap* card_bm) {
   // First eliminated garbage regions from the coarse map.
   if (G1RSScrubVerbose) {
-    gclog_or_tty->print_cr("Scrubbing region %u:", hr()->hrs_index());
+    gclog_or_tty->print_cr("Scrubbing region %u:", hr()->hrm_index());
   }
 
   assert(_coarse_map.size() == region_bm->size(), "Precondition");
@@ -656,9 +656,9 @@ void OtherRegionsTable::scrub(CardTableModRefBS* ctbs,
       // If the entire region is dead, eliminate.
       if (G1RSScrubVerbose) {
         gclog_or_tty->print_cr("     For other region %u:",
-                               cur->hr()->hrs_index());
+                               cur->hr()->hrm_index());
       }
-      if (!region_bm->at((size_t) cur->hr()->hrs_index())) {
+      if (!region_bm->at((size_t) cur->hr()->hrm_index())) {
         *prev = nxt;
         cur->set_collision_list_next(NULL);
         _n_fine_entries--;
@@ -695,6 +695,9 @@ void OtherRegionsTable::scrub(CardTableModRefBS* ctbs,
   clear_fcc();
 }
 
+bool OtherRegionsTable::is_empty() const {
+  return occ_sparse() == 0 && occ_coarse() == 0 && _first_all_fine_prts == NULL;
+}
 
 size_t OtherRegionsTable::occupied() const {
   size_t sum = occ_fine();
@@ -749,7 +752,7 @@ size_t OtherRegionsTable::fl_mem_size() {
 }
 
 void OtherRegionsTable::clear_fcc() {
-  FromCardCache::clear(hr()->hrs_index());
+  FromCardCache::clear(hr()->hrm_index());
 }
 
 void OtherRegionsTable::clear() {
@@ -800,7 +803,7 @@ bool OtherRegionsTable::contains_reference(OopOrNarrowOopStar from) const {
 
 bool OtherRegionsTable::contains_reference_locked(OopOrNarrowOopStar from) const {
   HeapRegion* hr = _g1h->heap_region_containing_raw(from);
-  RegionIdx_t hr_ind = (RegionIdx_t) hr->hrs_index();
+  RegionIdx_t hr_ind = (RegionIdx_t) hr->hrm_index();
   // Is this region in the coarse map?
   if (_coarse_map.at(hr_ind)) return true;
 
@@ -837,8 +840,8 @@ uint HeapRegionRemSet::num_par_rem_sets() {
 HeapRegionRemSet::HeapRegionRemSet(G1BlockOffsetSharedArray* bosa,
                                    HeapRegion* hr)
   : _bosa(bosa),
-    _m(Mutex::leaf, FormatBuffer<128>("HeapRegionRemSet lock #%u", hr->hrs_index()), true),
-    _code_roots(), _other_regions(hr, &_m) {
+    _m(Mutex::leaf, FormatBuffer<128>("HeapRegionRemSet lock #%u", hr->hrm_index()), true),
+    _code_roots(), _other_regions(hr, &_m), _iter_state(Unclaimed), _iter_claimed(0) {
   reset_for_par_iteration();
 }
 
