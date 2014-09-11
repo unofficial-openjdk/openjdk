@@ -26,7 +26,7 @@ import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.ConnectException;
 import java.net.ServerSocket;
-import java.rmi.NoSuchObjectException;
+import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.util.ArrayList;
@@ -53,7 +53,7 @@ import jdk.testlibrary.JDKToolLauncher;
  * @bug 7110104
  * @library /lib/testlibrary
  * @build jdk.testlibrary.* JMXStartStopTest JMXStartStopDoSomething
- * @run main/othervm/timeout=600 JMXStartStopTest
+ * @run main/othervm/timeout=600 -XX:+UsePerfData JMXStartStopTest
  * @summary Makes sure that enabling/disabling the management agent through
  *          JCMD achieves the desired results
  */
@@ -174,9 +174,9 @@ public class JMXStartStopTest {
         } catch (Exception e) {
             Throwable t = e;
             while (t != null) {
-                if (t instanceof NoSuchObjectException ||
-                    t instanceof ConnectException ||
-                    t instanceof SSLHandshakeException) {
+                if (t instanceof RemoteException ||
+                    t instanceof SSLHandshakeException ||
+                    t instanceof ConnectException) {
                     break;
                 }
                 t = t.getCause();
@@ -617,7 +617,10 @@ public class JMXStartStopTest {
                 busyPort = ss.getLocalPort();
                 jcmd(
                     line -> {
-                        if (line.contains("Port already in use: " + busyPort)) {
+                        boolean match = line.contains("Port already in use: " +
+                                                      busyPort);
+                        System.out.println("[match] " + line + " => "  + match);
+                        if (match) {
                             checks.getAndUpdate((op) -> op | 4);
                         }
                     },
