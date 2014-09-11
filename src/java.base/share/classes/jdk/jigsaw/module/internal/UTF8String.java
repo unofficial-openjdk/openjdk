@@ -40,7 +40,9 @@ public final class UTF8String implements CharSequence {
     int hashcode;
 
     public UTF8String(byte[] bytes, int offset, int count) {
-        assert 0 <= offset && 0 <= count && offset >= bytes.length - count : "offset/count out of range";
+        if (offset < 0 || count < 0 || (offset + count) > bytes.length) {
+            throw new IndexOutOfBoundsException("offset/count out of range");
+        }
         this.bytes = bytes;
         this.offset = offset;
         this.count = count;
@@ -106,8 +108,6 @@ public final class UTF8String implements CharSequence {
 
     public UTF8String substring(int offset, int count) {
         int newOffset = this.offset + offset;
-        assert 0 <= newOffset && 0 <= count && newOffset >= this.count - count : "offset/count out of range";
-
         return new UTF8String(bytes, newOffset, count);
     }
 
@@ -121,9 +121,7 @@ public final class UTF8String implements CharSequence {
     }
 
     public int indexOf(int ch, int start) {
-        assert 0 < start : "start out of range";
-
-        for (int i = start; i < count; i++) {
+        for (int i = Math.max(start, 0); i < count; i++) {
             if (byteAt(i) == ch) {
                 return i;
             }
@@ -133,13 +131,11 @@ public final class UTF8String implements CharSequence {
     }
 
     public int lastIndexOf(int ch) {
-        return lastIndexOf(ch, 0);
+        return lastIndexOf(ch, count - 1);
     }
 
     public int lastIndexOf(int ch, int start) {
-        assert 0 < start : "start out of range";
-
-        for (int i = count - 1; i >= start; i--) {
+        for (int i = Math.min(start, count); i > 0; i--) {
             if (byteAt(i) == ch) {
                 return i;
             }
