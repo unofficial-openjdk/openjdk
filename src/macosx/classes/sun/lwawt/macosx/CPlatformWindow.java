@@ -580,7 +580,12 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
         if (visible) {
             // Apply the extended state as expected in shared code
             if (target instanceof Frame) {
-                switch (((Frame)target).getExtendedState()) {
+                int frameState = ((Frame)target).getExtendedState();
+                if ((frameState & Frame.ICONIFIED) != 0) {
+                    // Treat all state bit masks with ICONIFIED bit as ICONIFIED state.
+                    frameState = Frame.ICONIFIED;
+                }
+                switch (frameState) {
                     case Frame.ICONIFIED:
                         CWrapper.NSWindow.miniaturize(nsWindowPtr);
                         break;
@@ -806,6 +811,10 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
         if (prevWindowState == windowState) return;
 
         final long nsWindowPtr = getNSWindowPtr();
+        if ((windowState & Frame.ICONIFIED) != 0) {
+            // Treat all state bit masks with ICONIFIED bit as ICONIFIED state.
+            windowState = Frame.ICONIFIED;
+        }
         switch (windowState) {
             case Frame.ICONIFIED:
                 if (prevWindowState == Frame.MAXIMIZED_BOTH) {

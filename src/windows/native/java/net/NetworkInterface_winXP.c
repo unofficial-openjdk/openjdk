@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -145,8 +145,12 @@ IP_ADAPTER_ADDRESSES *getAdapter (JNIEnv *env,  jint index) {
     ptr = adapterInfo;
     ret = NULL;
     while (ptr != NULL) {
-      // IPv4 interface
-      if (ptr->Ipv6IfIndex == index) {
+      // in theory the IPv4 index and the IPv6 index can be the same
+      // where an interface is enabled for v4 and v6
+      // IfIndex == 0 IPv4 not available on this interface
+      // Ipv6IfIndex == 0 IPv6 not available on this interface
+      if (((ptr->IfIndex != 0)&&(ptr->IfIndex == index)) ||
+          ((ptr->Ipv6IfIndex !=0) && (ptr->Ipv6IfIndex == index))) {
         ret = (IP_ADAPTER_ADDRESSES *) malloc(sizeof(IP_ADAPTER_ADDRESSES));
         memcpy(ret, ptr, sizeof(IP_ADAPTER_ADDRESSES));
       }
@@ -241,7 +245,7 @@ int getAllInterfacesAndAddresses (JNIEnv *env, netif **netifPP)
                          * set the index to the IPv6 index and add the
                          * IPv6 addresses
                          */
-                        nif->index = ptr->Ipv6IfIndex;
+                        nif->ipv6Index = ptr->Ipv6IfIndex;
                         c = getAddrsFromAdapter(ptr, &nif->addrs);
                         nif->naddrs += c;
                         break;
@@ -286,6 +290,9 @@ int getAllInterfacesAndAddresses (JNIEnv *env, netif **netifPP)
                     strcpy (nif->name, newname);
                     wcscpy ((PWCHAR)nif->displayName, ptr->FriendlyName);
                     nif->dNameIsUnicode = TRUE;
+
+                    // the java.net.NetworkInterface abstraction only has index
+                    // so the Ipv6IfIndex needs to map onto index
                     nif->index = ptr->Ipv6IfIndex;
                     nif->ipv6Index = ptr->Ipv6IfIndex;
                     nif->hasIpv6Address = TRUE;
@@ -442,7 +449,6 @@ static jobject createNetworkInterfaceXP(JNIEnv *env, netif *ifs)
     (*env)->SetObjectField(env, netifObj, ni_nameID, name);
     (*env)->SetObjectField(env, netifObj, ni_displayNameID, displayName);
     (*env)->SetIntField(env, netifObj, ni_indexID, ifs->index);
-
     /*
      * Get the IP addresses for this interface if necessary
      * Note that 0 is a valid number of addresses.
