@@ -124,6 +124,9 @@ public class Names {
     // package names
     public final Name java_lang;
 
+    // module names
+    public final Name java_base;
+
     // attribute names
     public final Name Annotation;
     public final Name AnnotationDefault;
@@ -182,7 +185,7 @@ public class Names {
     public final Name module_info;
     public final Name package_info;
 
-    //lambda-related
+    // lambda-related
     public final Name lambda;
     public final Name metafactory;
     public final Name altMetafactory;
@@ -269,6 +272,9 @@ public class Names {
 
         // package names
         java_lang = fromString("java.lang");
+
+        // module names
+        java_base = fromString("java.base");
 
         // attribute names
         Annotation = fromString("Annotation");

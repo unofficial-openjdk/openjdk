@@ -4430,6 +4430,24 @@ public class Attr extends JCTree.Visitor {
         tree.sym.directives = List.nil();
         attribStats(tree.directives, env);
         tree.sym.directives = tree.sym.directives.reverse();
+
+        boolean foundJavaBase = false;
+        for (Directive d: tree.sym.directives) {
+            if (d.getKind() == Directive.Kind.REQUIRES) {
+                Directive.RequiresDirective rd = (Directive.RequiresDirective) d;
+                if (rd.moduleName == names.java_base) {
+                    foundJavaBase = true;
+                    break;
+                }
+
+            }
+        }
+        if (!foundJavaBase) {
+            Directive.RequiresDirective java_base =
+                    new Directive.RequiresDirective(names.java_base,
+                            EnumSet.of(Directive.RequiresFlag.MANDATED));
+            tree.sym.directives = tree.sym.directives.prepend(java_base);
+        }
     }
 
     public void visitExports(JCExports tree) {
