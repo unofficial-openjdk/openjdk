@@ -4431,18 +4431,23 @@ public class Attr extends JCTree.Visitor {
         attribStats(tree.directives, env);
         tree.sym.directives = tree.sym.directives.reverse();
 
-        boolean foundJavaBase = false;
-        for (Directive d: tree.sym.directives) {
-            if (d.getKind() == Directive.Kind.REQUIRES) {
-                Directive.RequiresDirective rd = (Directive.RequiresDirective) d;
-                if (rd.moduleName == names.java_base) {
-                    foundJavaBase = true;
-                    break;
-                }
+        boolean requireJavaBase = true;
+        if (tree.sym.fullname == names.java_base)
+            requireJavaBase = false;
+        else {
+            for (Directive d: tree.sym.directives) {
+                if (d.getKind() == Directive.Kind.REQUIRES) {
+                    Directive.RequiresDirective rd = (Directive.RequiresDirective) d;
+                    if (rd.moduleName == names.java_base) {
+                        requireJavaBase = false;
+                        break;
+                    }
 
+                }
             }
         }
-        if (!foundJavaBase) {
+
+        if (requireJavaBase) {
             Directive.RequiresDirective java_base =
                     new Directive.RequiresDirective(names.java_base,
                             EnumSet.of(Directive.RequiresFlag.MANDATED));
