@@ -36,6 +36,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import jdk.jigsaw.module.Configuration;
@@ -45,6 +46,10 @@ import jdk.jigsaw.module.ModuleArtifactFinder;
 import jdk.jigsaw.module.ModuleDescriptor;
 import static jdk.jigsaw.module.ModuleDependence.Modifier.PUBLIC;
 
+/**
+ * Generate the DOT file for a module graph for each module in the JDK
+ * after transitive reduction.
+ */
 public class GenGraphs {
 
     public static void main(String[] args) throws Exception {
@@ -60,15 +65,16 @@ public class GenGraphs {
 
         Set<ModuleDescriptor> javaSEModules
             = new TreeSet<>(finder.allModules().stream()
-                            .map(ModuleArtifact::descriptor)
-                            .filter(m -> (m.id().name().startsWith("java.") &&
-                                    !m.id().name().equals("java.smartcardio")))
-                            .collect(Collectors.toSet()));
+                                  .map(ModuleArtifact::descriptor)
+                                  .filter(m -> (m.id().name().startsWith("java.") &&
+                                               !m.id().name().equals("java.smartcardio")))
+                                  .collect(Collectors.toSet()));
         Set<ModuleDescriptor> jdkModules
             = new TreeSet<>(finder.allModules().stream()
-                            .map(ModuleArtifact::descriptor)
-                            .filter(m -> !javaSEModules.contains(m))
-                            .collect(Collectors.toSet()));
+                                  .map(ModuleArtifact::descriptor)
+                                  .filter(m -> !javaSEModules.contains(m))
+                                  .collect(Collectors.toSet()));
+
         GenGraphs genGraphs = new GenGraphs(javaSEModules, jdkModules);
         Set<String> mods = new HashSet<>();
         for (ModuleArtifact artifact: finder.allModules()) {
@@ -82,16 +88,16 @@ public class GenGraphs {
             }
             mods.add(name);
             Configuration cf = Configuration.resolve(finder,
-                                                     Layer.emptyLayer(),
-                                                     ModuleArtifactFinder.nullFinder(),
-                                                     name);
+                    Layer.emptyLayer(),
+                    ModuleArtifactFinder.nullFinder(),
+                    name);
             genGraphs.genDotFile(dir, name, cf);
         }
 
         Configuration cf = Configuration.resolve(finder,
-                                                 Layer.emptyLayer(),
-                                                 ModuleArtifactFinder.nullFinder(),
-                                                 mods);
+                Layer.emptyLayer(),
+                ModuleArtifactFinder.nullFinder(),
+                mods);
         genGraphs.genDotFile(dir, "jdk", cf);
 
     }
@@ -141,6 +147,9 @@ public class GenGraphs {
         try (PrintStream out
                  = new PrintStream(Files.newOutputStream(dir.resolve(name + ".dot")))) {
 
+            Map<String,ModuleDescriptor> nameToModule = cf.descriptors().stream()
+                    .collect(Collectors.toMap(ModuleDescriptor::name, Function.identity()));
+
             out.format("digraph \"%s\" {%n", name);
             out.format("size=\"25,25\";");
             out.format("nodesep=.5;%n");
@@ -161,14 +170,16 @@ public class GenGraphs {
                 .forEach(mn -> out.format("  \"%s\" [fontcolor=\"%s\", group=%s];%n",
                                           mn, BLUE, "jdk"));
 
+            // transitive reduction
+            Graph<String> graph = gengraph(cf);
             cf.descriptors().forEach(md -> {
                 String mn = md.name();
-                Set<String> requiresPublic = (md.moduleDependences().stream()
-                                              .filter(d -> d.modifiers().contains(PUBLIC))
-                                              .map(d -> d.query().name())
-                                              .collect(Collectors.toSet()));
-                cf.readDependences(md).forEach(d -> {
-                    String dn = d.name();
+                Set<String> requiresPublic = md.moduleDependences().stream()
+                        .filter(d -> d.modifiers().contains(PUBLIC))
+                        .map(d -> d.query().name())
+                        .collect(Collectors.toSet());
+
+                graph.adjacentNodes(mn).forEach(dn -> {
                     String attr = dn.equals("java.base") ? REQUIRES_BASE
                             : (requiresPublic.contains(dn) ? REEXPORTS : REQUIRES);
                     int w = weightOf(mn, dn);
@@ -182,4 +193,42 @@ public class GenGraphs {
         }
     }
 
+    /**
+     * Returns a Graph of the given Configuration after transitive reduction.
+     *
+     * Transitive reduction of requires public edge and requires edge have
+     * to be applied separately to prevent the requires public edges
+     * (e.g. U -> V) from being reduced by a path (U -> X -> Y -> V)
+     * in which  V would not be re-exported from U.
+     */
+    private Graph<String> gengraph(Configuration cf) {
+        Graph.Builder<String> builder = new Graph.Builder<>();
+        cf.descriptors().forEach(md -> {
+            String mn = md.name();
+            builder.addNode(mn);
+            cf.readDependences(md).stream()
+                    .map(d -> d.name())
+                    .forEach(d -> builder.addEdge(mn, d));
+        });
+
+        Graph<String> rpg = requiresPublicGraph(cf);
+        return builder.build().reduce(rpg);
+    }
+
+    /**
+     * Returns a Graph containing only requires public edges
+     * with transitive reduction.
+     */
+    private Graph<String> requiresPublicGraph(Configuration cf) {
+        Graph.Builder<String> builder = new Graph.Builder<>();
+        cf.descriptors().forEach(md -> {
+            String mn = md.name();
+            md.moduleDependences().stream()
+                    .filter(d -> d.modifiers().contains(PUBLIC))
+                    .map(d -> d.query().name())
+                    .forEach(d -> builder.addEdge(mn, d));
+        });
+
+        return builder.build().reduce();
+    }
 }
