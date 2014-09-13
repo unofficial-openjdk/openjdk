@@ -22,6 +22,5 @@
  */
 
 module test {
-    requires java.base; // workaround javac bug
 }
 

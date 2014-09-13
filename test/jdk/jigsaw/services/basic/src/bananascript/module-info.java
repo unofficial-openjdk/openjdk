@@ -22,7 +22,6 @@
  */
 
 module bananascript {
-    requires java.base; // workaround javac bug
     requires java.scripting;
 
     provides javax.script.ScriptEngineFactory

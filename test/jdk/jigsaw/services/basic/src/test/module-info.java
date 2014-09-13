@@ -22,7 +22,6 @@
  */
 
 module test {
-    requires java.base; // workaround javac bug
     requires java.scripting;
 
     uses javax.script.ScriptEngineFactory;

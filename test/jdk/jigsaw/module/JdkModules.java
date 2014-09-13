@@ -43,6 +43,7 @@ public class JdkModules {
 
     private void compact2(ModuleDescriptor m) {
         ModuleDependence[] deps = new ModuleDependence[] {
+            moduleDep("java.base"),
             modulePublicDep("java.compact1"),
             modulePublicDep("java.rmi"),
             modulePublicDep("java.sql"),

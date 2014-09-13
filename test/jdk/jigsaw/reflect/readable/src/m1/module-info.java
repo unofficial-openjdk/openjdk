@@ -22,6 +22,5 @@
  */
 
 module m1 {
-    requires java.base; // workaround javac bug
 }
 

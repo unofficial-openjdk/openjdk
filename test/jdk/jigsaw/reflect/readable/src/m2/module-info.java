@@ -22,7 +22,5 @@
  */
 
 module m2 {
-    requires java.base; // workaround javac bug
-
     exports jdk.two;
 }
