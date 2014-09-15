@@ -413,10 +413,10 @@ class JlinkTask {
 
     private static final String APP_DIR = "lib" + File.separator + "app";
 
-    private Set<Path> modulesToPath(Set<ModuleDescriptor> modules) {
+    private Map<String,Path> modulesToPath(Set<ModuleDescriptor> modules) {
         ModuleArtifactFinder finder = options.moduleFinder;
 
-        Set<Path> modPaths = new TreeSet<>();
+        Map<String,Path> modPaths = new HashMap<>();
         for (ModuleDescriptor m : modules) {
             String name = m.name();
 
@@ -438,7 +438,7 @@ class JlinkTask {
             }
 
             try {
-                modPaths.add(Paths.get(url.toURI()));
+                modPaths.put(name, Paths.get(url.toURI()));
             } catch (URISyntaxException e) {
                 fail(InternalError.class, "Unable create file URI from %s: %s", url, e);
             }
@@ -469,7 +469,7 @@ class JlinkTask {
                                                  ModuleArtifactFinder.nullFinder(),
                                                  options.jmods);
 
-        Set<Path> jmods = modulesToPath(cf.descriptors());
+        Map<String,Path> jmods = modulesToPath(cf.descriptors());
 
         ImageFileHelper imageHelper = new ImageFileHelper(cf, jmods);
         if (options.format == Format.IMAGE) {
@@ -521,10 +521,10 @@ class JlinkTask {
         final Set<ModuleDescriptor> bootModules;
         final Set<ModuleDescriptor> extModules;
         final Set<ModuleDescriptor> appModules;
-        final Set<Path> jmods;
+        final Map<String,Path> jmods;
         final ImageModules imf;
 
-        ImageFileHelper(Configuration cf, Set<Path> jmods) throws IOException {
+        ImageFileHelper(Configuration cf, Map<String,Path> jmods) throws IOException {
             this.modules = cf.descriptors();
             this.jmods = jmods;
             Map<String, ModuleDescriptor> mods = new HashMap<>();
@@ -547,8 +547,8 @@ class JlinkTask {
         }
 
         void createModularImage(Path output) throws IOException {
-            Set<Archive> archives = jmods.stream()
-                    .map(JmodArchive::new)
+            Set<Archive> archives = jmods.entrySet().stream()
+                    .map(e -> new JmodArchive(e.getKey(), e.getValue()))
                     .collect(Collectors.toSet());
             ImageFile.create(output, archives, imf);
         }
@@ -561,9 +561,10 @@ class JlinkTask {
         void createLegacyFormat(Path output) throws IOException {
             Path modulesPath = output.resolve("lib/modules");
             Files.createDirectories(modulesPath);
-            for (Path jmod : jmods) {
+            for (Map.Entry<String,Path> e : jmods.entrySet()) {
+                String modName = e.getKey();
+                Path jmod = e.getValue();
                 String fileName = jmod.getFileName().toString();
-                String modName = fileName.substring(0, fileName.indexOf(".jmod"));
                 Path modPath = modulesPath.resolve(modName);
                 Files.createDirectories(modPath);
 

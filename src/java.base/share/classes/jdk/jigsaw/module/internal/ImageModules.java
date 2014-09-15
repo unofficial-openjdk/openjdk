@@ -215,7 +215,11 @@ public final class ImageModules {
      * Returns the name of modules mapped to a given class loader in the image
      */
     Set<String> getModules(Loader type) {
-        return loaders.get(type).modules();
+        if (loaders.containsKey(type)) {
+            return loaders.get(type).modules();
+        } else {
+            return Collections.emptySet();
+        }
     }
 
     /**
@@ -325,21 +329,24 @@ public final class ImageModules {
         final Map<String, List<Integer>> packageOffsets = new HashMap<>();
         final int size;
         ModuleIndex(Set<String> mods, BasicImageWriter writer) {
-            // module name offsets
-            writer.addLocation(MODULES_ENTRY, 0, 0, mods.size() * 4);
-            long offset = mods.size() * 4;
-            for (String mn : mods) {
-                moduleOffsets.put(mn, writer.addString(mn));
-                List<Integer> poffsets = localPkgs.get(mn).stream()
-                        .map(pn -> pn.replace('.', '/'))
-                        .map(writer::addString)
-                        .collect(Collectors.toList());
-                // package name offsets per module
-                String entry = mn + "/" + PACKAGES_ENTRY;
-                int bytes =  poffsets.size() * 4;
-                writer.addLocation(entry, offset, 0, bytes);
-                offset += bytes;
-                packageOffsets.put(mn, poffsets);
+            long offset = 0;
+            if (!mods.isEmpty()) {
+                // module name offsets
+                writer.addLocation(MODULES_ENTRY, 0, 0, mods.size() * 4);
+                offset = mods.size() * 4;
+                for (String mn : mods) {
+                    moduleOffsets.put(mn, writer.addString(mn));
+                    List<Integer> poffsets = localPkgs.get(mn).stream()
+                            .map(pn -> pn.replace('.', '/'))
+                            .map(writer::addString)
+                            .collect(Collectors.toList());
+                    // package name offsets per module
+                    String entry = mn + "/" + PACKAGES_ENTRY;
+                    int bytes = poffsets.size() * 4;
+                    writer.addLocation(entry, offset, 0, bytes);
+                    offset += bytes;
+                    packageOffsets.put(mn, poffsets);
+                }
             }
             this.size = (int) offset;
         }
@@ -659,46 +666,41 @@ public final class ImageModules {
                 loaders.put(loader, new LoaderModuleData(loader, mods));
             }
         }
+    }
+    // for debugging
+    private void dumpModule(PrintStream out, String mn) {
+        ModuleDescriptor m = nameToModule.get(mn);
+        out.format("module %s%n", m.name());
+        m.moduleDependences().forEach(md -> out.format("  requires %s%s%n",
+                md.modifiers().contains(Modifier.PUBLIC) ? "public" : "", md.query().name()));
+        m.exports().stream().filter(e -> e.permit() == null)
+                .sorted(Comparator.comparing(ModuleExport::pkg))
+                .forEach(e -> out.format("  exports %s%n", e.pkg()));
+        m.exports().stream().filter(e -> e.permit() != null)
+                .sorted(Comparator.comparing(ModuleExport::pkg))
+                .forEach(e -> out.format("  exports %s to %s%n", e.pkg(), e.permit()));
+        m.serviceDependences().forEach(sd -> out.format("  uses %s%n", sd.service()));
+        m.services().entrySet().stream()
+                .sorted(Map.Entry.comparingByKey())
+                .forEach(e -> e.getValue().stream()
+                        .sorted().forEach(impl -> out.format("  provides %s with %s%n", e.getKey(), impl)));
+    }
 
-        // for debugging
-        private void dumpModule(PrintStream out, String mn) {
-            ModuleDescriptor m = nameToModule.get(mn);
-            out.format("Module { id: %s%n", m.name());
-            m.moduleDependences().forEach(md -> out.format("  requires %s%s%n",
-                    md.modifiers().contains(Modifier.PUBLIC) ? "public" : "", md.query().name()));
-            m.exports().stream().filter(e -> e.permit() == null)
-                    .sorted(Comparator.comparing(ModuleExport::pkg))
-                    .forEach(e -> out.format("  exports %s%n", e.pkg()));
-            m.exports().stream().filter(e -> e.permit() != null)
-                    .sorted(Comparator.comparing(ModuleExport::pkg))
-                    .forEach(e -> out.format("  exports %s to %s%n", e.pkg(), e.permit()));
-            m.serviceDependences().forEach(sd -> out.format("  uses %s%n", sd.service()));
-            m.services().entrySet().stream()
-                    .sorted(Map.Entry.comparingByKey())
-                    .forEach(e -> e.getValue().stream()
-                            .sorted().forEach(impl -> out.format("  provides %s with %s%n", e.getKey(), impl)));
-        }
-
-        public void dump(PrintStream out) {
-            out.format("Total %d modules.%n", indexToModule.size());
-            indexToModule.entrySet().stream()
-                    .forEach(e -> out.format("%d: %s%n", e.getKey(), e.getValue()));
-            out.format("Service providers:%n");
-            indexToService.entrySet().stream()
-                    .forEach(e -> out.format("%d: %s%n", e.getKey(), e.getValue()));
-            services.entrySet().stream()
-                    .sorted(Map.Entry.comparingByKey())
-                    .forEach(e -> e.getValue().stream()
-                            .sorted().forEach(impl -> out.format("  provides %s with %s%n", e.getKey(), impl)));
-            out.println("Readability graph");
-            readableModules.entrySet().stream()
-                    .forEach(e -> {
-                        out.format("  %s -> %s%n",
-                                e.getKey().isEmpty() ? "unnamed" : e.getKey(),
-                                e.getValue().stream().sorted().collect(Collectors.joining(", ")));
-                    });
-            loaders.values().stream().forEach(l
-                    -> l.modules().stream().forEach(mn -> dumpModule(out, mn)));
-        }
+    public void dump(PrintStream out) {
+        out.format("Total %d modules.%n", readableModules.size());
+        out.format("Service providers:%n");
+        services.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey())
+                .forEach(e -> e.getValue().stream()
+                        .sorted().forEach(impl -> out.format("  provides %s with %s%n", e.getKey(), impl)));
+        out.println("Readability graph");
+        readableModules.entrySet().stream()
+                .forEach(e -> {
+                    out.format("  %s -> %s%n",
+                            e.getKey().isEmpty() ? "unnamed" : e.getKey(),
+                            e.getValue().stream().sorted().collect(Collectors.joining(", ")));
+                });
+        loaders.values().stream().forEach(l
+                -> l.modules().stream().forEach(mn -> dumpModule(out, mn)));
     }
 }

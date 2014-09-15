@@ -19,12 +19,12 @@ public class JmodArchive implements Archive {
     private final Path jmod;
     private final String moduleName;
 
-    public JmodArchive(Path jmod) {
+    public JmodArchive(String mn, Path jmod) {
         String filename = jmod.getFileName().toString();
         if (!filename.endsWith(JMOD_EXT))
             throw new UnsupportedOperationException("Unsupported format: " + filename);
+        this.moduleName = mn;
         this.jmod = jmod;
-        moduleName = filename.substring(0, filename.length() - JMOD_EXT.length());
     }
 
     @Override
