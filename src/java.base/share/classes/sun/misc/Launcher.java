@@ -120,24 +120,6 @@ public class Launcher {
         return loader;
     }
 
-
-    /**
-     * Appends the URL to the list of URLs to search for classes and
-     * resources.
-     */
-    public void addAppClassLoaderURL(URL url) {
-        loader.addURL(url);
-    }
-
-
-    /**
-     * Returns a list of the module names for the modules installed for
-     * the system/application class loader.
-     */
-    public List<String> getAppModuleNames() {
-        return loader.installedModules();
-    }
-
     /**
      * Returns the extensions class loader.
      */
@@ -145,18 +127,10 @@ public class Launcher {
         return extcl;
     }
 
-    /**
-     * Returns a list of the module names for the modules installed for
-     * the extensions class loader.
-     */
-    public List<String> getExtModuleNames() {
-        return extcl.installedModules();
-    }
-
     /*
      * The class loader used for loading installed extensions.
      */
-    static class ExtClassLoader extends URLClassLoader {
+    static class ExtClassLoader extends URLClassLoader implements ModuleLoader {
         static {
             ClassLoader.registerAsParallelCapable();
         }
@@ -198,12 +172,25 @@ public class Launcher {
             }
         }
 
-        void addExtURL(URL url) {
-            super.addURL(url);
-        }
+        private final URLClassPath ucp = SharedSecrets.getJavaNetAccess().getURLClassPath(this);
 
+        @Override
         public List<String> installedModules() {
             return modules;
+        }
+
+        @Override
+        public void addURL(Set<String> packages, URL url) {
+            ucp.addURL(packages, url);
+        }
+
+        @Override
+        public void prependURL(URL url) {
+            ucp.prependURL(url);
+        }
+
+        void addExtURL(URL url) {
+            super.addURL(url);
         }
 
         /*
@@ -316,10 +303,15 @@ public class Launcher {
      * The class loader used for loading from java.class.path.
      * runs in a restricted security context.
      */
-    static class AppClassLoader extends URLClassLoader {
+    static class AppClassLoader extends URLClassLoader implements ModuleLoader {
         static {
             ClassLoader.registerAsParallelCapable();
         }
+
+        // experimental property
+        static final boolean SKIP_DELEGATION =
+            Boolean.getBoolean("skipDelegationToExtLoaderWhenPossible");
+
         static final List<String> systemModules = Launcher.readModulesList("system.modules");
         static final Path appmodules =
             Paths.get(System.getProperty("java.home"), "lib", "modules", "appmodules.jimage");
@@ -354,6 +346,8 @@ public class Launcher {
                 });
         }
 
+        private final URLClassPath ucp = SharedSecrets.getJavaNetAccess().getURLClassPath(this);
+
         /*
          * Creates a new AppClassLoader
          */
@@ -362,16 +356,18 @@ public class Launcher {
         }
 
         @Override
-        public void addURL(URL url) {
-            super.addURL(url);
-        }
-
-        /**
-         * Returns the list of the module names that are installed and
-         * associated with this loader.
-         */
         public List<String> installedModules() {
             return systemModules;
+        }
+
+        @Override
+        public void addURL(Set<String> packages, URL url) {
+            ucp.addURL(packages, url);
+        }
+
+        @Override
+        public void prependURL(URL url) {
+            ucp.prependURL(url);
         }
 
         /**
@@ -387,14 +383,42 @@ public class Launcher {
                     sm.checkPackageAccess(name.substring(0, i));
                 }
             }
-            return (super.loadClass(name, resolve));
+
+            boolean skipParent = SKIP_DELEGATION;
+            if (skipParent) {
+                boolean known;
+                i = name.lastIndexOf('.');
+                if (i > 0) {
+                    String pkg = name.substring(0, i);
+                    known = ucp.isKnownPackage(pkg);
+                } else {
+                    known = false;
+                }
+                if (!known)
+                    skipParent = false;
+            }
+
+
+            if (!skipParent)
+                return (super.loadClass(name, resolve));
+
+            synchronized (getClassLoadingLock(name)) {
+                // First, check if the class has already been loaded
+                Class<?> c = findLoadedClass(name);
+                if (c == null) {
+                    c = findClass(name);
+                }
+                if (resolve) {
+                    resolveClass(c);
+                }
+                return c;
+            }
         }
 
         /**
          * allow any classes loaded from classpath to exit the VM.
          */
-        protected PermissionCollection getPermissions(CodeSource codesource)
-        {
+        protected PermissionCollection getPermissions(CodeSource codesource) {
             PermissionCollection perms = super.getPermissions(codesource);
             perms.add(new RuntimePermission("exitVM"));
             return perms;

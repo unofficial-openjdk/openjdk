@@ -28,7 +28,6 @@ package jdk.jigsaw.module.runtime;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -45,8 +44,7 @@ import jdk.jigsaw.module.ModuleArtifactFinder;
 import jdk.jigsaw.module.ModuleId;
 
 import sun.misc.Launcher;
-import sun.misc.SharedSecrets;
-import sun.misc.URLClassPath;
+import sun.misc.ModuleLoader;
 import sun.reflect.Reflection;
 
 /**
@@ -174,13 +172,18 @@ class ModuleBootstrap {
         // if -modulepath specified then need to add to system class loader
         if (launcherModulePath != null) {
             Set<ModuleArtifact> systemModules = systemLibrary.allModules();
-            Launcher launcher = Launcher.getLauncher();
+
+            ClassLoader cl = ClassLoader.getSystemClassLoader();
+            if (!(cl instanceof ModuleLoader))
+                throw new Error("System class loader does not support modules");
+
+            ModuleLoader ml = (ModuleLoader) cl;
             cf.descriptors().stream()
                             .map(md -> cf.findArtifact(md.name()))
                             .filter(artifact -> !systemModules.contains(artifact))
                             .forEach(artifact -> {
-                                moduleToLoaders.put(artifact, launcher.getClassLoader());
-                                launcher.addAppClassLoaderURL(artifact.location());
+                                moduleToLoaders.put(artifact, cl);
+                                ml.addURL(artifact.packages(), artifact.location());
                             });
         }
 
@@ -202,20 +205,25 @@ class ModuleBootstrap {
      */
     private static Map<ModuleArtifact, ClassLoader> loaderMap(ModuleArtifactFinder systemLibrary) {
         Map<ModuleArtifact, ClassLoader> moduleToLoaders = new HashMap<>();
-        Launcher launcher = Launcher.getLauncher();
-        ClassLoader extClassLoader = launcher.getExtClassLoader();
-        for (String name: launcher.getExtModuleNames()) {
+
+        ClassLoader extClassLoader = Launcher.getLauncher().getExtClassLoader();
+        for (String name: ((ModuleLoader)extClassLoader).installedModules()) {
             ModuleArtifact artifact = systemLibrary.find(name);
             if (artifact != null) {
                 moduleToLoaders.put(artifact, extClassLoader);
             }
         }
-        ClassLoader appClassLoader = launcher.getClassLoader();
-        for (String name: launcher.getAppModuleNames()) {
+
+        // the modules linked into the image that are associated with the system class loader
+        // need to be associated with Launcher$AppClassLoader even if the system class loader
+        // is overridden
+        ClassLoader sysClassLoader = Launcher.getLauncher().getClassLoader();
+        for (String name: ((ModuleLoader)sysClassLoader).installedModules()) {
             ModuleArtifact artifact = systemLibrary.find(name);
             if (artifact != null)
-                moduleToLoaders.put(artifact, appClassLoader);
+                moduleToLoaders.put(artifact, sysClassLoader);
         }
+
         return moduleToLoaders;
     }
 
@@ -223,13 +231,16 @@ class ModuleBootstrap {
      * Add an override directory for the given ClassLoader/module-name
      */
     private static void setOverrideDirectory(String override, ClassLoader cl, String name) {
+        if (!(cl instanceof ModuleLoader)) {
+            // this should not happen as custom system class loaders don't support modules
+            throw new Error(cl + " does not support -Xoverride");
+        }
+
         Path dir = Paths.get(override, name);
         if (Files.exists(dir)) {
-            URLClassLoader loader = (URLClassLoader)cl;
-            URLClassPath ucp = SharedSecrets.getJavaNetAccess().getURLClassPath(loader);
             try {
                 URL url = dir.toUri().toURL();
-                ucp.prependURL(url);
+                ((ModuleLoader)cl).prependURL(url);
             } catch (MalformedURLException e) {
                 throw new InternalError(e);
             }

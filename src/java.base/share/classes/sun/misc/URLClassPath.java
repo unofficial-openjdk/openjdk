@@ -41,6 +41,7 @@ import java.security.Permission;
 import java.security.PrivilegedExceptionAction;
 import java.security.cert.Certificate;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.jar.Attributes;
 import java.util.jar.Attributes.Name;
 import java.util.jar.JarEntry;
@@ -93,6 +94,10 @@ public class URLClassPath {
     /* Whether this URLClassLoader has been closed yet */
     private boolean closed = false;
 
+    /* package name -> loader index for artifacts on the module path, created lazily */
+    private volatile Map<String, Integer> packages;
+    private volatile boolean usePackageMap = true;
+
     /**
      * Creates a new URLClassPath for the given URLs. The URLs will be
      * searched in the order specified for classes and resources. A URL
@@ -140,7 +145,7 @@ public class URLClassPath {
      * If the URL specified is null or is already in the list of
      * URLs, then invoking this method has no effect.
      */
-    public synchronized void addURL(URL url) {
+    public synchronized void addURL(Set<String> pkgs, URL url) {
         if (closed)
             return;
         synchronized (urls) {
@@ -149,7 +154,21 @@ public class URLClassPath {
 
             urls.add(0, url);
             path.add(url);
+
+            // init/update packages map so classes can be found quickly
+            if (usePackageMap) {
+                if (packages == null)
+                    packages = new ConcurrentHashMap<>();
+                Integer index = path.size() - 1;
+                for (String pkg: pkgs) {
+                    packages.putIfAbsent(pkg, index);
+                }
+            }
         }
+    }
+
+    public void addURL(URL url) {
+        addURL(Collections.emptySet(), url);
     }
 
     /**
@@ -158,6 +177,22 @@ public class URLClassPath {
     public synchronized void prependURL(URL url) {
         urls.push(url);
         path.add(0, url);
+        if (packages != null)
+            packages.clear();
+        usePackageMap = false;
+    }
+
+    /**
+     * Returns {@code true}
+     */
+    public boolean isKnownPackage(String pkg) {
+        if (usePackageMap) {
+            Map<String, Integer> packages = this.packages;
+            if (packages != null) {
+                return packages.containsKey(pkg);
+            }
+        }
+        return false;
     }
 
     /**
@@ -180,7 +215,8 @@ public class URLClassPath {
      */
     public URL findResource(String name, boolean check) {
         Loader loader;
-        for (int i = 0; (loader = getLoader(i)) != null; i++) {
+        int start = getLoaderIndex(name);
+        for (int i = start; (loader = getLoader(i)) != null; i++) {
             URL url = loader.findResource(name, check);
             if (url != null) {
                 return url;
@@ -203,7 +239,8 @@ public class URLClassPath {
         }
 
         Loader loader;
-        for (int i = 0; (loader = getLoader(i)) != null; i++) {
+        int start = getLoaderIndex(name);
+        for (int i = start; (loader = getLoader(i)) != null; i++) {
             Resource res = loader.getResource(name, check);
             if (res != null) {
                 return res;
@@ -220,7 +257,7 @@ public class URLClassPath {
      * @return an Enumeration of all the urls having the specified name
      */
     public Enumeration<URL> findResources(final String name,
-                                     final boolean check) {
+                                      final boolean check) {
         return new Enumeration<URL>() {
             private int index = 0;
             private URL url = null;
@@ -267,7 +304,7 @@ public class URLClassPath {
      * @return an Enumeration of all the resources having the specified name
      */
     public Enumeration<Resource> getResources(final String name,
-                                    final boolean check) {
+                                      final boolean check) {
         return new Enumeration<Resource>() {
             private int index = 0;
             private Resource res = null;
@@ -304,6 +341,22 @@ public class URLClassPath {
 
     public Enumeration<Resource> getResources(final String name) {
         return getResources(name, true);
+    }
+
+    /**
+     * Returns the index of the loader to search first.
+     */
+    private synchronized int getLoaderIndex(String name) {
+        if (!usePackageMap || packages == null || !name.endsWith(".class"))
+            return 0;
+
+        int pos = name.lastIndexOf('/');
+        if (pos == -1)
+            return 0;  // unnamed
+
+        String pkg = name.substring(0, pos).replace('/', '.');
+        Integer result = packages.get(pkg);
+        return (result == null) ? 0 : result.intValue();
     }
 
     /*
