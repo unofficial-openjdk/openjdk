@@ -1293,6 +1293,15 @@ class CommandLineFlags {
           "Decay time (in milliseconds) to re-enable bulk rebiasing of a "  \
           "type after previous bulk rebias")                                \
                                                                             \
+  product(bool, UseModuleBoundaries, true,                                  \
+          "Use access control to enforce module boundaries")                \
+                                                                            \
+  product(ccstrlist, AddModuleRequires, "",                                 \
+          "Additional module dependences, for example jtreg=java.xml")      \
+                                                                            \
+  product(ccstrlist, AddModuleExports, "",                                  \
+          "Additional module exports, for example java.base/sun.misc")      \
+                                                                            \
   /* tracing */                                                             \
                                                                             \
   notproduct(bool, TraceRuntimeCalls, false,                                \
@@ -1403,6 +1412,9 @@ class CommandLineFlags {
                                                                             \
   product(bool, TraceMonitorInflation, false,                               \
           "Trace monitor inflation in JVM")                                 \
+                                                                            \
+  product(bool, TraceAccessControlErrors, false,                            \
+          "Trace access control errors")                                    \
                                                                             \
   /* gc */                                                                  \
                                                                             \

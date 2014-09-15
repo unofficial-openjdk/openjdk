@@ -128,6 +128,8 @@ Mutex*   Management_lock              = NULL;
 Monitor* Service_lock                 = NULL;
 Monitor* PeriodicTask_lock            = NULL;
 
+Mutex*   LoaderTag_lock               = NULL;
+
 #ifdef INCLUDE_TRACE
 Mutex*   JfrStacktrace_lock           = NULL;
 Monitor* JfrMsg_lock                  = NULL;
@@ -278,6 +280,8 @@ void mutex_init() {
   def(ProfileVM_lock               , Monitor, special,   false); // used for profiling of the VMThread
   def(CompileThread_lock           , Monitor, nonleaf+5,   false );
   def(PeriodicTask_lock            , Monitor, nonleaf+5,   true);
+
+  def(LoaderTag_lock               , Mutex,   leaf,        true);
 
 #ifdef INCLUDE_TRACE
   def(JfrMsg_lock                  , Monitor, leaf,        true);

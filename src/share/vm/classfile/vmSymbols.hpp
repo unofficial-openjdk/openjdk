@@ -123,6 +123,10 @@
   template(java_runtime_name_name,                    "java_runtime_name")                        \
   template(java_runtime_version_name,                 "java_runtime_version")                     \
                                                                                                   \
+  /* Module system */                                                                             \
+  template(jdk_jigsaw_module_runtime_ModuleBootstrap, "jdk/jigsaw/module/runtime/ModuleBootstrap") \
+  template(boot_name,                                 "boot")                                     \
+                                                                                                  \
   /* class file format tags */                                                                    \
   template(tag_source_file,                           "SourceFile")                               \
   template(tag_inner_classes,                         "InnerClasses")                             \
@@ -402,7 +406,9 @@
   template(init_lock_name,                            "init_lock")                                \
   template(signers_name,                              "signers_name")                             \
   template(loader_data_name,                          "loader_data")                              \
+  template(loader_tag_name,                           "loader_tag")                               \
   template(dependencies_name,                         "dependencies")                             \
+  template(module_lookup_name,                        "module_lookup")                            \
   template(input_stream_void_signature,               "(Ljava/io/InputStream;)V")                 \
   template(getFileURL_name,                           "getFileURL")                               \
   template(getFileURL_signature,                      "(Ljava/io/File;)Ljava/net/URL;")           \

@@ -310,6 +310,10 @@ class Arguments : AllStatic {
   static void set_java_compiler(bool arg) { _java_compiler = arg; }
   static bool java_compiler()   { return _java_compiler; }
 
+  // -Xoverride flag
+  static const char* _override_dir;
+  static void set_override_dir(const char* dir) { _override_dir = dir; }
+
   // -Xdebug flag
   static bool _xdebug_mode;
   static void set_xdebug_mode(bool arg) { _xdebug_mode = arg; }
@@ -515,6 +519,9 @@ class Arguments : AllStatic {
   // -Xms
   static uintx min_heap_size()              { return _min_heap_size; }
   static void  set_min_heap_size(uintx v)   { _min_heap_size = v;  }
+
+  // -Xoverride
+  static const char* override_dir()         { return _override_dir; }
 
   // -Xrun
   static AgentLibrary* libraries()          { return _libraryList.first(); }
