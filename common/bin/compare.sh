@@ -301,7 +301,7 @@ compare_general_files() {
         ! -name "*.debuginfo" ! -name "*.dylib" ! -name "jexec" \
         ! -name "ct.sym" ! -name "*.diz" ! -name "*.dll" \
         ! -name "*.pdb" ! -name "*.exp" ! -name "*.ilk" \
-        ! -name "*.lib" ! -name "*.war" ! -name "JavaControlPanel" \
+        ! -name "*.lib" ! -name "*.war" ! -name "JavaControlPanel" ! -name "*.jmod" \
         | $GREP -v "./bin/"  | $SORT | $FILTER)
 
     echo General files...
