@@ -31,6 +31,7 @@ import java.io.Serializable;
 import java.util.Properties;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+import java.lang.reflect.Method;
 
 import javax.xml.XMLConstants;
 import javax.xml.transform.Templates;
@@ -342,6 +343,17 @@ public final class TemplatesImpl implements Templates, Serializable {
                 _auxClasses = new Hashtable();
             }
 
+            int last = _name.lastIndexOf(".");
+            String pkg = (last != -1) ? _name.substring(0, last) : "";
+
+            // template classes require access to these API packages
+            ensureAccess(loader, pkg, "com.sun.org.apache.xalan.internal.xsltc");
+            ensureAccess(loader, pkg, "com.sun.org.apache.xalan.internal.xsltc.runtime");
+            ensureAccess(loader, pkg, "com.sun.org.apache.xalan.internal.xsltc.dom");
+            ensureAccess(loader, pkg, "com.sun.org.apache.xml.internal.serializer");
+            ensureAccess(loader, pkg, "com.sun.org.apache.xml.internal.dtm");
+            ensureAccess(loader, pkg, "com.sun.org.apache.xml.internal.dtm.ref");
+
             for (int i = 0; i < classCount; i++) {
                 _class[i] = loader.defineClass(_bytecodes[i]);
                 final Class superClass = _class[i].getSuperclass();
@@ -366,7 +378,23 @@ public final class TemplatesImpl implements Templates, Serializable {
         }
         catch (LinkageError e) {
             ErrorMsg err = new ErrorMsg(ErrorMsg.TRANSLET_OBJECT_ERR, _name);
-            throw new TransformerConfigurationException(err.toString());
+            throw new TransformerConfigurationException(err.toString(), e);
+        }
+    }
+
+    private static void ensureAccess(ClassLoader loader, String pkg, String target) {
+        // use reflection as JAXP is compiled before the jdk reposotory in a
+        // regular build
+        try {
+            Class<?> vm = Class.forName("sun.misc.VM");
+            Method m = vm.getDeclaredMethod("addBackdoorAccess",
+                                            ClassLoader.class,
+                                            String.class,
+                                            ClassLoader.class,
+                                            String.class);
+            m.invoke(null, null, target, loader, pkg);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
 
