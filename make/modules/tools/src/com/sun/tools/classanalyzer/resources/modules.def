@@ -207,6 +207,7 @@ module java.base {
     uses java.util.spi.ResourceBundleControlProvider;
     uses java.util.spi.TimeZoneNameProvider;
     uses sun.net.spi.nameservice.NameServiceDescriptor;
+    uses sun.util.locale.provider.LocaleDataMetaInfo;
 
     //
     // qualified exports for open/closed and platform-specific content
@@ -626,6 +627,8 @@ module jdk.localedata {
             sun.text.resources.**;
     include sun.util.resources.cldr.**,
             sun.text.resources.cldr.**;
+
+    provides sun.util.locale.provider.LocaleDataMetaInfo with sun.util.resources.provider.NonEnLocaleDataMetaInfo;
 }
 
 module jdk.jfr {
