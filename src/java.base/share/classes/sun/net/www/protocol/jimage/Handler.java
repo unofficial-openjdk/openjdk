@@ -26,20 +26,21 @@
 package sun.net.www.protocol.jimage;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.InputStream;
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLStreamHandler;
+import java.net.URISyntaxException;
 import java.net.MalformedURLException;
 
 import jdk.internal.jimage.ImageReader;
 import jdk.internal.jimage.ImageLocation;
 
 /**
- * Experimental protocol handler for accessing jimages on the module path.
- *
- * ##FIXME: No permission checking or support for jimages not on the module path.
+ * JDK internal (and unsupported) protocol handler for accessing jimage files
+ * on the file system.
  */
 
 public class Handler extends URLStreamHandler {
@@ -52,9 +53,17 @@ public class Handler extends URLStreamHandler {
         if (index == -1)
             throw new MalformedURLException("no !/ found in url spec:" + s);
         URL base = new URL(s.substring(0, index++));
+
+        // check permission to access jimage
+        SecurityManager sm = System.getSecurityManager();
+        if (sm != null)
+            checkAccess(base);
+
+        // use jiage cache to open or get existing connection to jimage file
         final ImageReader jimage = sun.misc.JImageCache.get(base);
         if (jimage == null)
-            throw new IOException("jimage not in cache");
+            throw new IOException("cannot open " + base);
+
         String entry = sun.net.www.ParseUtil.decode(s.substring(index+1));
         final ImageLocation location = jimage.findLocation(entry);
         if (location == null)
@@ -79,5 +88,21 @@ public class Handler extends URLStreamHandler {
                 return new ByteArrayInputStream(resource);
             }
         };
+    }
+
+    /**
+     * Checks that caller has access to a jimage on the file system
+     */
+    private static void checkAccess(URL url) throws MalformedURLException {
+        if (!url.getProtocol().equalsIgnoreCase("jimage"))
+            throw new MalformedURLException(url + "not a jimage URL");
+        URL fileURL = new URL("file" + url.toString().substring(6));
+        File f;
+        try {
+            f = new File(fileURL.toURI());
+        } catch (URISyntaxException e) {
+            throw new MalformedURLException(e.getMessage());
+        }
+        System.getSecurityManager().checkRead(f.toString());
     }
 }
