@@ -50,7 +50,7 @@ import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-import jdk.internal.jimage.ImageModules;
+import jdk.internal.jimage.JigsawImageModules;
 import sun.misc.JModCache;
 
 /**
@@ -199,13 +199,13 @@ class InstalledModuleFinder implements ModuleArtifactFinder {
 
     private static Path imageModulesPath() {
         String home = System.getProperty("java.home");
-        return Paths.get(home, "lib", "modules", ImageModules.FILE);
+        return Paths.get(home, "lib", "modules", JigsawImageModules.FILE);
     }
 
     private Set<ModuleArtifact> modules() {
         try (InputStream in = Files.newInputStream(imageModulesPath())) {
 
-            ImageModules image = ImageModules.load(in);
+            JigsawImageModules image = JigsawImageModules.load(in);
 
             Set<ExtendedModuleDescriptor> descriptors = image.modules();
             Map<String, Set<String>> packageMap = image.packages();

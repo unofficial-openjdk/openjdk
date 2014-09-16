@@ -83,7 +83,7 @@ import jdk.jigsaw.module.ModuleArtifactFinder;
 import jdk.jigsaw.module.ModuleDescriptor;
 import jdk.internal.jimage.Archive;
 import jdk.internal.jimage.ImageFile;
-import jdk.internal.jimage.ImageModules;
+import jdk.internal.jimage.JigsawImageModules;
 import jdk.internal.jimage.JmodArchive;
 import jdk.internal.jimage.JmodEntryWriter;
 
@@ -522,7 +522,7 @@ class JlinkTask {
         final Set<ModuleDescriptor> extModules;
         final Set<ModuleDescriptor> appModules;
         final Map<String,Path> jmods;
-        final ImageModules imf;
+        final JigsawImageModules imf;
 
         ImageFileHelper(Configuration cf, Map<String,Path> jmods) throws IOException {
             this.modules = cf.descriptors();
@@ -542,8 +542,8 @@ class JlinkTask {
             this.appModules = modules.stream()
                     .filter(m -> !bootModules.contains(m) && !extModules.contains(m))
                     .collect(Collectors.toSet());
-            this.imf = new ImageModules(cf, bootModules,
-                                        extModules, appModules);
+            this.imf = new JigsawImageModules(cf, bootModules,
+                                              extModules, appModules);
         }
 
         void createModularImage(Path output) throws IOException {
@@ -581,7 +581,7 @@ class JlinkTask {
             }
         }
         void writeInstalledModules(Path output) throws IOException {
-            Path mfile = Paths.get("lib", "modules", ImageModules.FILE);
+            Path mfile = Paths.get("lib", "modules", JigsawImageModules.FILE);
             try (OutputStream out = Files.newOutputStream(output.resolve(mfile))) {
                 imf.store(out);
             }
