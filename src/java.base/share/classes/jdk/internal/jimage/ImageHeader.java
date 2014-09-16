@@ -23,7 +23,7 @@
  * questions.
 */
 
-package jdk.jigsaw.module.internal;
+package jdk.internal.jimage;
 
 import java.nio.ByteOrder;
 import java.nio.IntBuffer;

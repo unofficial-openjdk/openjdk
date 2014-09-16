@@ -33,8 +33,8 @@ import java.net.URLConnection;
 import java.net.URLStreamHandler;
 import java.net.MalformedURLException;
 
-import jdk.jigsaw.module.internal.ImageReader;
-import jdk.jigsaw.module.internal.ImageLocation;
+import jdk.internal.jimage.ImageReader;
+import jdk.internal.jimage.ImageLocation;
 
 /**
  * Experimental protocol handler for accessing jimages on the module path.

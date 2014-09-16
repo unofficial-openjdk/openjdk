@@ -23,7 +23,7 @@
  * questions.
  */
 
-package jdk.jigsaw.tools.jimage;
+package jdk.tools.jimage;
 
 import java.io.BufferedOutputStream;
 import java.io.DataOutputStream;
@@ -40,10 +40,10 @@ import java.util.List;
 import java.util.Locale;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
-import jdk.jigsaw.module.internal.BasicImageReader;
-import jdk.jigsaw.module.internal.BasicImageWriter;
-import jdk.jigsaw.module.internal.ImageHeader;
-import jdk.jigsaw.module.internal.ImageLocation;
+import jdk.internal.jimage.BasicImageReader;
+import jdk.internal.jimage.BasicImageWriter;
+import jdk.internal.jimage.ImageHeader;
+import jdk.internal.jimage.ImageLocation;
 import static sun.tools.javac.Main.*;
 
 class JImageTask {
@@ -575,7 +575,7 @@ class JImageTask {
         static {
             Locale locale = Locale.getDefault();
             try {
-                bundle = ResourceBundle.getBundle("jdk.jigsaw.tools.jimage.resources.jimage", locale);
+                bundle = ResourceBundle.getBundle("jdk.tools.jimage.resources.jimage", locale);
             } catch (MissingResourceException e) {
                 throw new InternalError("Cannot find jimage resource bundle for locale " + locale);
             }

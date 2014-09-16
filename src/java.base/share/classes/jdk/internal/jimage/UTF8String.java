@@ -23,7 +23,7 @@
  * questions.
  */
 
-package jdk.jigsaw.module.internal;
+package jdk.internal.jimage;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;

@@ -22,7 +22,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package jdk.jigsaw.module.internal.imagefs;
+package jdk.internal.jimagefs;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -32,20 +32,45 @@ import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.*;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.*;
-import java.nio.file.attribute.*;
-import java.nio.file.spi.*;
+import java.nio.file.AccessMode;
+import java.nio.file.ClosedFileSystemException;
+import java.nio.file.CopyOption;
+import java.nio.file.DirectoryStream;
+import java.nio.file.FileStore;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystemException;
+import java.nio.file.FileSystemNotFoundException;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.NotDirectoryException;
+import java.nio.file.OpenOption;
+import java.nio.file.Path;
+import java.nio.file.PathMatcher;
+import java.nio.file.ReadOnlyFileSystemException;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
+import java.nio.file.WatchService;
+import java.nio.file.attribute.FileAttribute;
+import java.nio.file.attribute.FileTime;
+import java.nio.file.attribute.UserPrincipalLookupService;
+import java.nio.file.spi.FileSystemProvider;
 import java.security.AccessController;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.regex.Pattern;
-import jdk.jigsaw.module.internal.ImageReader;
-import jdk.jigsaw.module.internal.ImageReader.Directory;
-import jdk.jigsaw.module.internal.ImageReader.Node;
-import jdk.jigsaw.module.internal.ImageReader.Resource;
-import jdk.jigsaw.module.internal.UTF8String;
-import static jdk.jigsaw.module.internal.imagefs.ImageUtils.*;
+import jdk.internal.jimage.ImageReader;
+import jdk.internal.jimage.ImageReader.Directory;
+import jdk.internal.jimage.ImageReader.Node;
+import jdk.internal.jimage.ImageReader.Resource;
+import jdk.internal.jimage.UTF8String;
 
 /**
  * A FileSystem built on a jimage file
@@ -191,7 +216,7 @@ final class ImageFileSystem extends FileSystem {
         String input = syntaxAndInput.substring(pos + 1);
         String expr;
         if (syntax.equals(GLOB_SYNTAX)) {
-            expr = toRegexPattern(input);
+            expr = ImageUtils.toRegexPattern(input);
         } else {
             if (syntax.equals(REGEX_SYNTAX)) {
                 expr = input;

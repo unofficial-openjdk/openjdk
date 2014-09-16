@@ -22,7 +22,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package jdk.jigsaw.module.internal;
+package jdk.internal.jimage;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;

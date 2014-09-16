@@ -1,4 +1,4 @@
-  /*
+/*
  * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -23,7 +23,7 @@
  * questions.
 */
 
-package jdk.jigsaw.module.internal;
+package jdk.internal.jimage;
 
 import java.io.PrintStream;
 import java.nio.ByteOrder;

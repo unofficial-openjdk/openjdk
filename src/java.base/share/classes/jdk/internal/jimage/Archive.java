@@ -22,31 +22,44 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+package jdk.internal.jimage;
 
-package jdk.jigsaw.tools.jimage;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.file.Path;
+import java.util.function.Consumer;
 
-import java.io.PrintWriter;
+/**
+ * An Archive of all content, classes, resources, configuration files, and
+ * other, for a module.
+ */
+public interface Archive {
+    /**
+     * The module name.
+     */
+    String moduleName();
 
+    /**
+     * Visits all classes and resources.
+     */
+    void visitResources(Consumer<Resource> consumer);
 
-public class Main {
-    public static void main(String[] args) throws Exception {
-        JImageTask t = new JImageTask();
-        int rc = t.run(args);
-        System.exit(rc);
+    /**
+     * Visits all entries in the Archive.
+     */
+    void visitEntries(Consumer<Entry> consumer) ;
+
+    /**
+     * An entries in the Archive.
+     */
+    interface Entry {
+        String getName();
+        InputStream getInputStream();
+        boolean isDirectory();
     }
 
     /**
-     * Entry point that does <i>not</i> call System.exit.
-     *
-     * @param args command line arguments
-     * @param out output stream
-     * @return an exit code. 0 means success, non-zero means an error occurred.
+     * A Consumer suitable for writing Entries from this Archive.
      */
-    public static int run(String[] args, PrintWriter out) {
-        JImageTask t = new JImageTask();
-        t.setLog(out);
-        return t.run(args);
-    }
+    Consumer<Entry> defaultImageWriter(Path path, OutputStream out);
 }
-
-

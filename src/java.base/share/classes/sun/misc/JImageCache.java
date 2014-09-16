@@ -30,7 +30,7 @@ import java.net.URI;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.io.IOException;
-import jdk.jigsaw.module.internal.ImageReader;
+import jdk.internal.jimage.ImageReader;
 
 /**
  * A simple cache of open jimage files used to support URL connections

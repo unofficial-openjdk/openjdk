@@ -23,7 +23,7 @@
  * questions.
  */
 
-package jdk.jigsaw.module.internal;
+package jdk.internal.jimage;
 
 import java.io.BufferedInputStream;
 import java.io.DataInputStream;
@@ -32,9 +32,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
-import java.nio.ByteBuffer;
-import java.nio.IntBuffer;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumSet;
@@ -55,8 +52,8 @@ import jdk.jigsaw.module.ModuleExport;
 import jdk.jigsaw.module.ModuleId;
 import jdk.jigsaw.module.ServiceDependence;
 
-import static jdk.jigsaw.module.internal.ImageModules.Loader.*;
-import static jdk.jigsaw.module.internal.PackageModuleMap.*;
+import static jdk.internal.jimage.ImageModules.Loader.*;
+import static jdk.internal.jimage.PackageModuleMap.*;
 
 /**
  * Installed Modules stored in the modular image on disk format.
@@ -244,7 +241,7 @@ public final class ImageModules {
                     nameToModule.put(mn, toExtendedModuleDescriptor(m));
                     mods.add(mn);
                 });
-        modules.stream().sorted(Comparator.comparing(m -> m.name()))
+        modules.stream().sorted(Comparator.comparing(ModuleDescriptor::name))
                .filter(m ->  !m.name().equals("java.base"))
                .forEach(m -> {
                    String mn = m.name();

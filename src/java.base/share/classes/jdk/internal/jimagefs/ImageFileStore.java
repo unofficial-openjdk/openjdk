@@ -23,7 +23,7 @@
  * questions.
  */
 
-package jdk.jigsaw.module.internal.imagefs;
+package jdk.internal.jimagefs;
 
 import java.io.IOException;
 import java.nio.file.Files;

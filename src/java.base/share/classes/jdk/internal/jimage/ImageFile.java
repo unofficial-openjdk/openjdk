@@ -22,15 +22,13 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package jdk.jigsaw.module.internal;
+package jdk.internal.jimage;
 
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -46,10 +44,8 @@ import java.util.stream.Collectors;
 import java.util.zip.DataFormatException;
 import java.util.zip.Deflater;
 import java.util.zip.Inflater;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
-import jdk.jigsaw.module.internal.ImageModules.Loader;
-import jdk.jigsaw.module.internal.ImageModules.ModuleIndex;
+import jdk.internal.jimage.ImageModules.Loader;
+import jdk.internal.jimage.ImageModules.ModuleIndex;
 
 /**
  * An image (native endian.)

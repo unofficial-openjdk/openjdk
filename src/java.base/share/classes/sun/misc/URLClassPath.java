@@ -49,8 +49,8 @@ import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
-import jdk.jigsaw.module.internal.ImageLocation;
-import jdk.jigsaw.module.internal.ImageReader;
+import jdk.internal.jimage.ImageLocation;
+import jdk.internal.jimage.ImageReader;
 import sun.net.util.URLUtil;
 import sun.net.www.ParseUtil;
 

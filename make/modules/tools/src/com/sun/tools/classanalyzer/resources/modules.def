@@ -59,6 +59,8 @@ module java.base {
 
     // jigsaw
     include jdk.jigsaw.module.**,
+            jdk.internal.jimage.**,
+            jdk.internal.jimagefs.**,
             jdk.joptsimple.**;
 
     // Oracle-private APIs
@@ -776,7 +778,7 @@ module jdk.dev {
 
     // jlink, jimage
     include jdk.jigsaw.tools.jlink.**,
-            jdk.jigsaw.tools.jimage.**;
+            jdk.tools.jimage.**;
 
     // jdeps
     include com.sun.tools.jdeps.**;

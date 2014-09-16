@@ -1,1 +1,1 @@
-jdk.jigsaw.module.internal.imagefs.ImageFileSystemProvider
+jdk.internal.jimagefs.ImageFileSystemProvider

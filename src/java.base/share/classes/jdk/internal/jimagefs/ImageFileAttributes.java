@@ -23,12 +23,12 @@
  * questions.
  */
 
-package jdk.jigsaw.module.internal.imagefs;
+package jdk.internal.jimagefs;
 
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
 import java.util.Formatter;
-import jdk.jigsaw.module.internal.ImageReader.Node;
+import jdk.internal.jimage.ImageReader.Node;
 
 final class ImageFileAttributes implements BasicFileAttributes
 {

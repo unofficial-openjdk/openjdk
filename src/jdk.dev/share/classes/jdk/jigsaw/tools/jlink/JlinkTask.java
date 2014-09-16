@@ -81,11 +81,11 @@ import jdk.jigsaw.module.Configuration;
 import jdk.jigsaw.module.Layer;
 import jdk.jigsaw.module.ModuleArtifactFinder;
 import jdk.jigsaw.module.ModuleDescriptor;
-import jdk.jigsaw.module.internal.Archive;
-import jdk.jigsaw.module.internal.ImageFile;
-import jdk.jigsaw.module.internal.ImageModules;
-import jdk.jigsaw.module.internal.JmodArchive;
-import jdk.jigsaw.module.internal.JmodEntryWriter;
+import jdk.internal.jimage.Archive;
+import jdk.internal.jimage.ImageFile;
+import jdk.internal.jimage.ImageModules;
+import jdk.internal.jimage.JmodArchive;
+import jdk.internal.jimage.JmodEntryWriter;
 
 
 /**

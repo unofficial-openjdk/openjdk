@@ -50,7 +50,7 @@ import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-import jdk.jigsaw.module.internal.ImageModules;
+import jdk.internal.jimage.ImageModules;
 import sun.misc.JModCache;
 
 /**
