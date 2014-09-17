@@ -44,7 +44,6 @@ import jdk.internal.jimage.BasicImageReader;
 import jdk.internal.jimage.BasicImageWriter;
 import jdk.internal.jimage.ImageHeader;
 import jdk.internal.jimage.ImageLocation;
-import static sun.tools.javac.Main.*;
 
 class JImageTask {
     static class BadArgs extends Exception {
@@ -199,6 +198,12 @@ class JImageTask {
     private String pad(long value, int width) {
         return pad(Long.toString(value), width, true);
     }
+
+    private static final int EXIT_OK = 0;        // No errors.
+    private static final int EXIT_ERROR = 1;     // Completed but reported errors.
+    private static final int EXIT_CMDERR = 2;    // Bad command-line arguments and/or switches.
+    private static final int EXIT_SYSERR = 3;    // System error or resource exhaustion.
+    private static final int EXIT_ABNORMAL = 4;  // Terminated abnormally.
 
     int run(String[] args) {
         if (log == null) {
