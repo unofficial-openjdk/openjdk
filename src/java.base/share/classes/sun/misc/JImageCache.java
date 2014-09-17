@@ -25,11 +25,15 @@
 
 package sun.misc;
 
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.io.File;
 import java.io.IOException;
+
 import jdk.internal.jimage.ImageReader;
 
 /**
@@ -52,6 +56,11 @@ public class JImageCache {
      * @throws java.io.IOException
      */
     public static ImageReader get(URL url) throws IOException {
+        // check permission to access jimage
+        SecurityManager sm = System.getSecurityManager();
+        if (sm != null)
+            checkAccess(url);
+
         ImageReader jimage = jimages.get(url);
         if (jimage != null)
             return jimage;
@@ -89,5 +98,21 @@ public class JImageCache {
             }
         }
         return jimage;
+    }
+
+    /**
+     * Checks that caller has access to a jimage on the file system
+     */
+    private static void checkAccess(URL url) throws MalformedURLException {
+        if (!url.getProtocol().equalsIgnoreCase("jimage"))
+            throw new MalformedURLException(url + "not a jimage URL");
+        URL fileURL = new URL("file" + url.toString().substring(6));
+        File f;
+        try {
+            f = new File(fileURL.toURI());
+        } catch (URISyntaxException e) {
+            throw new MalformedURLException(e.getMessage());
+        }
+        System.getSecurityManager().checkRead(f.toString());
     }
 }

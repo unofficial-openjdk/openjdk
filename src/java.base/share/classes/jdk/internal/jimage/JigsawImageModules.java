@@ -321,11 +321,8 @@ public final class JigsawImageModules extends ImageModules {
         void storeGraph(DataOutputStream out) throws IOException {
             // readability graph in per-class loader order
             out.writeInt(readableModules.keySet().size());
-            System.out.println("chegar: storeGraph: readableModules.keySet().size():" + readableModules.keySet().size());
             for (LoaderModuleData l : loaders.values()) {
-                System.out.println("chegar: loaderModuleData: " + l.loader());
                 for (String mn : l.modules()) {
-                    System.out.println("chegar: loaderModuleData: mn: " +mn);
                     int mid = indexForModule.get(mn);
                     out.writeInt(mid);
                     // readable modules

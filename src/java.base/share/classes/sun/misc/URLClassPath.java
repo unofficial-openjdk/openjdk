@@ -1239,8 +1239,6 @@ public class URLClassPath {
 
     /**
      * A Loader of classes and resources from a jimage file.
-     *
-     * ###FIXME: permission checks not implemented yet
      */
     private static class JImageLoader extends Loader {
         private final ImageReader jimage;
