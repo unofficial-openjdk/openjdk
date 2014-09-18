@@ -753,6 +753,7 @@ MCS
 GNM
 NM
 STRIP
+MSBUILD
 DUMPBIN
 RC
 MT
@@ -1089,6 +1090,7 @@ with_cups_include
 with_freetype
 with_freetype_include
 with_freetype_lib
+with_freetype_src
 enable_freetype_bundling
 with_alsa
 with_alsa_include
@@ -1943,6 +1945,9 @@ Optional Packages:
                           headers under PATH/include)
   --with-freetype-include specify directory for the freetype include files
   --with-freetype-lib     specify directory for the freetype library
+  --with-freetype-src     specify directory with freetype sources to
+                          automatically build the library (experimental,
+                          Windows-only)
   --with-alsa             specify prefix directory for the alsa package
                           (expecting the libraries under PATH/lib and the
                           headers under PATH/include)
@@ -3894,20 +3899,18 @@ cygwin_help() {
       HELP_MSG="You might be able to fix this by running '$PKGHANDLER_COMMAND'."
       ;;
     freetype)
-      if test "x$OPENJDK_TARGET_CPU_BITS" = x32; then
-        HELP_MSG="To install freetype, run:
-wget \"http://gnuwin32.sourceforge.net/downlinks/freetype.php\" -O /tmp/freetype-setup.exe
-chmod +x /tmp/freetype-setup.exe
-/tmp/freetype-setup.exe
-Follow GUI prompts, and install to default directory \"C:\Program Files (x86)\GnuWin32\".
-After installation, locate lib/libfreetype.dll.a and make a copy with the name freetype.dll."
-      else
-        HELP_MSG="You need to build a 64-bit version of freetype.
-This is not readily available.
-You can find source code and build instructions on
-http://www.freetype.org/
-If you put the resulting build in \"C:\Program Files\GnuWin32\", it will be found automatically."
-      fi
+      HELP_MSG="
+The freetype library can now be build during the configure process.
+Download the freetype sources and unpack them into an arbitrary directory:
+
+wget http://download.savannah.gnu.org/releases/freetype/freetype-2.5.3.tar.gz
+tar -xzf freetype-2.5.3.tar.gz
+
+Then run configure with '--with-freetype-src=<freetype_src>'. This will
+automatically build the freetype library into '<freetype_src>/lib64' for 64-bit
+builds or into '<freetype_src>/lib32' for 32-bit builds.
+Afterwards you can always use '--with-freetype-include=<freetype_src>/include'
+and '--with-freetype-lib=<freetype_src>/lib32|64' for other builds."
       ;;
   esac
 }
@@ -4054,6 +4057,8 @@ pkgadd_help() {
 # or visit www.oracle.com if you need additional information or have any
 # questions.
 #
+
+
 
 
 
@@ -4327,13 +4332,14 @@ TOOLCHAIN_DESCRIPTION_xlc="IBM XL C/C++"
 
 
 
+
 # This line needs to be here, verbatim, after all includes and the dummy hook
 # definitions. It is replaced with custom functionality when building
 # custom sources.
 #CUSTOM_AUTOCONF_INCLUDE
 
 # Do not change or remove the following line, it is needed for consistency checks:
-DATE_WHEN_GENERATED=1409920992
+DATE_WHEN_GENERATED=1410377275
 
 ###############################################################################
 #
@@ -26901,6 +26907,10 @@ $as_echo "no" >&6; }
         { $as_echo "$as_me:${as_lineno-$LINENO}: Found Visual Studio installation at $VS100BASE using $METHOD" >&5
 $as_echo "$as_me: Found Visual Studio installation at $VS100BASE using $METHOD" >&6;}
         VS_ENV_CMD="$VS100BASE/$VCVARSFILE"
+        # PLATFORM_TOOLSET is used during the compilation of the freetype sources (see
+        # 'LIB_BUILD_FREETYPE' in libraries.m4) and must be one of 'v100', 'v110' or 'v120' for VS 2010, 2012 or VS2013
+        # TODO: improve detection for other versions of VS
+        PLATFORM_TOOLSET="v100"
       else
         { $as_echo "$as_me:${as_lineno-$LINENO}: Found Visual Studio installation at $VS100BASE using $METHOD" >&5
 $as_echo "$as_me: Found Visual Studio installation at $VS100BASE using $METHOD" >&6;}
@@ -26942,6 +26952,10 @@ $as_echo "$as_me: Please point to the VC/bin directory within the Visual Studio 
         { $as_echo "$as_me:${as_lineno-$LINENO}: Found Visual Studio installation at $VS100BASE using $METHOD" >&5
 $as_echo "$as_me: Found Visual Studio installation at $VS100BASE using $METHOD" >&6;}
         VS_ENV_CMD="$VS100BASE/$VCVARSFILE"
+        # PLATFORM_TOOLSET is used during the compilation of the freetype sources (see
+        # 'LIB_BUILD_FREETYPE' in libraries.m4) and must be one of 'v100', 'v110' or 'v120' for VS 2010, 2012 or VS2013
+        # TODO: improve detection for other versions of VS
+        PLATFORM_TOOLSET="v100"
       else
         { $as_echo "$as_me:${as_lineno-$LINENO}: Found Visual Studio installation at $VS100BASE using $METHOD" >&5
 $as_echo "$as_me: Found Visual Studio installation at $VS100BASE using $METHOD" >&6;}
@@ -26972,6 +26986,10 @@ $as_echo "$as_me: Warning: $VCVARSFILE is missing, this is probably Visual Studi
         { $as_echo "$as_me:${as_lineno-$LINENO}: Found Visual Studio installation at $VS100BASE using $METHOD" >&5
 $as_echo "$as_me: Found Visual Studio installation at $VS100BASE using $METHOD" >&6;}
         VS_ENV_CMD="$VS100BASE/$VCVARSFILE"
+        # PLATFORM_TOOLSET is used during the compilation of the freetype sources (see
+        # 'LIB_BUILD_FREETYPE' in libraries.m4) and must be one of 'v100', 'v110' or 'v120' for VS 2010, 2012 or VS2013
+        # TODO: improve detection for other versions of VS
+        PLATFORM_TOOLSET="v100"
       else
         { $as_echo "$as_me:${as_lineno-$LINENO}: Found Visual Studio installation at $VS100BASE using $METHOD" >&5
 $as_echo "$as_me: Found Visual Studio installation at $VS100BASE using $METHOD" >&6;}
@@ -27001,6 +27019,10 @@ $as_echo "$as_me: Warning: $VCVARSFILE is missing, this is probably Visual Studi
         { $as_echo "$as_me:${as_lineno-$LINENO}: Found Visual Studio installation at $VS100BASE using $METHOD" >&5
 $as_echo "$as_me: Found Visual Studio installation at $VS100BASE using $METHOD" >&6;}
         VS_ENV_CMD="$VS100BASE/$VCVARSFILE"
+        # PLATFORM_TOOLSET is used during the compilation of the freetype sources (see
+        # 'LIB_BUILD_FREETYPE' in libraries.m4) and must be one of 'v100', 'v110' or 'v120' for VS 2010, 2012 or VS2013
+        # TODO: improve detection for other versions of VS
+        PLATFORM_TOOLSET="v100"
       else
         { $as_echo "$as_me:${as_lineno-$LINENO}: Found Visual Studio installation at $VS100BASE using $METHOD" >&5
 $as_echo "$as_me: Found Visual Studio installation at $VS100BASE using $METHOD" >&6;}
@@ -27029,6 +27051,10 @@ $as_echo "$as_me: Warning: $VCVARSFILE is missing, this is probably Visual Studi
         { $as_echo "$as_me:${as_lineno-$LINENO}: Found Visual Studio installation at $VS100BASE using $METHOD" >&5
 $as_echo "$as_me: Found Visual Studio installation at $VS100BASE using $METHOD" >&6;}
         VS_ENV_CMD="$VS100BASE/$VCVARSFILE"
+        # PLATFORM_TOOLSET is used during the compilation of the freetype sources (see
+        # 'LIB_BUILD_FREETYPE' in libraries.m4) and must be one of 'v100', 'v110' or 'v120' for VS 2010, 2012 or VS2013
+        # TODO: improve detection for other versions of VS
+        PLATFORM_TOOLSET="v100"
       else
         { $as_echo "$as_me:${as_lineno-$LINENO}: Found Visual Studio installation at $VS100BASE using $METHOD" >&5
 $as_echo "$as_me: Found Visual Studio installation at $VS100BASE using $METHOD" >&6;}
@@ -27071,6 +27097,10 @@ $as_echo "$as_me: Found Windows SDK installation at $WIN_SDK_BASE using $METHOD"
         else
           VS_ENV_ARGS="/x64"
         fi
+        # PLATFORM_TOOLSET is used during the compilation of the freetype sources (see
+        # 'LIB_BUILD_FREETYPE' in libraries.m4) and must be 'Windows7.1SDK' for Windows7.1SDK
+        # TODO: improve detection for other versions of SDK
+        PLATFORM_TOOLSET="Windows7.1SDK"
       else
         { $as_echo "$as_me:${as_lineno-$LINENO}: Found Windows SDK installation at $WIN_SDK_BASE using $METHOD" >&5
 $as_echo "$as_me: Found Windows SDK installation at $WIN_SDK_BASE using $METHOD" >&6;}
@@ -27113,6 +27143,10 @@ $as_echo "$as_me: Found Windows SDK installation at $WIN_SDK_BASE using $METHOD"
         else
           VS_ENV_ARGS="/x64"
         fi
+        # PLATFORM_TOOLSET is used during the compilation of the freetype sources (see
+        # 'LIB_BUILD_FREETYPE' in libraries.m4) and must be 'Windows7.1SDK' for Windows7.1SDK
+        # TODO: improve detection for other versions of SDK
+        PLATFORM_TOOLSET="Windows7.1SDK"
       else
         { $as_echo "$as_me:${as_lineno-$LINENO}: Found Windows SDK installation at $WIN_SDK_BASE using $METHOD" >&5
 $as_echo "$as_me: Found Windows SDK installation at $WIN_SDK_BASE using $METHOD" >&6;}
@@ -27152,9 +27186,13 @@ $as_echo "$as_me: Found Windows SDK installation at $WIN_SDK_BASE using $METHOD"
         VS_ENV_CMD="$WIN_SDK_BASE/SetEnv.Cmd"
         if test "x$OPENJDK_TARGET_CPU_BITS" = x32; then
           VS_ENV_ARGS="/x86"
-        else
+      else
           VS_ENV_ARGS="/x64"
-        fi
+      fi
+        # PLATFORM_TOOLSET is used during the compilation of the freetype sources (see
+        # 'LIB_BUILD_FREETYPE' in libraries.m4) and must be 'Windows7.1SDK' for Windows7.1SDK
+        # TODO: improve detection for other versions of SDK
+        PLATFORM_TOOLSET="Windows7.1SDK"
       else
         { $as_echo "$as_me:${as_lineno-$LINENO}: Found Windows SDK installation at $WIN_SDK_BASE using $METHOD" >&5
 $as_echo "$as_me: Found Windows SDK installation at $WIN_SDK_BASE using $METHOD" >&6;}
@@ -27196,6 +27234,10 @@ $as_echo "$as_me: Found Windows SDK installation at $WIN_SDK_BASE using $METHOD"
         else
           VS_ENV_ARGS="/x64"
         fi
+        # PLATFORM_TOOLSET is used during the compilation of the freetype sources (see
+        # 'LIB_BUILD_FREETYPE' in libraries.m4) and must be 'Windows7.1SDK' for Windows7.1SDK
+        # TODO: improve detection for other versions of SDK
+        PLATFORM_TOOLSET="Windows7.1SDK"
       else
         { $as_echo "$as_me:${as_lineno-$LINENO}: Found Windows SDK installation at $WIN_SDK_BASE using $METHOD" >&5
 $as_echo "$as_me: Found Windows SDK installation at $WIN_SDK_BASE using $METHOD" >&6;}
@@ -27236,6 +27278,10 @@ $as_echo "$as_me: Found Windows SDK installation at $WIN_SDK_BASE using $METHOD"
         else
           VS_ENV_ARGS="/x64"
         fi
+        # PLATFORM_TOOLSET is used during the compilation of the freetype sources (see
+        # 'LIB_BUILD_FREETYPE' in libraries.m4) and must be 'Windows7.1SDK' for Windows7.1SDK
+        # TODO: improve detection for other versions of SDK
+        PLATFORM_TOOLSET="Windows7.1SDK"
       else
         { $as_echo "$as_me:${as_lineno-$LINENO}: Found Windows SDK installation at $WIN_SDK_BASE using $METHOD" >&5
 $as_echo "$as_me: Found Windows SDK installation at $WIN_SDK_BASE using $METHOD" >&6;}
@@ -27348,7 +27394,7 @@ $as_echo "$as_me: Neither \"$new_path\" nor \"$new_path.exe/cmd\" can be found" 
       input_path=`$CYGPATH -u "$shortmode_path"`
       new_path="$input_path"
     fi
-  fi
+      fi
 
   test_cygdrive_prefix=`$ECHO $input_path | $GREP ^/cygdrive/`
   if test "x$test_cygdrive_prefix" = x; then
@@ -27425,7 +27471,7 @@ $as_echo "$as_me: Neither \"$new_path\" nor \"$new_path.exe/cmd\" can be found" 
     new_path="$unix_path"
   fi
 
-    fi
+        fi
 
     if test "x$new_path" = x; then
       # It's still not found. Now this is an unrecoverable error.
@@ -27480,12 +27526,12 @@ $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, wh
 
   else
     # We're on a posix platform. Hooray! :)
-    # First separate the path from the arguments. This will split at the first
-    # space.
-    complete="$VS_ENV_CMD"
-    path="${complete%% *}"
-    tmp="$complete EOL"
-    arguments="${tmp#* }"
+  # First separate the path from the arguments. This will split at the first
+  # space.
+  complete="$VS_ENV_CMD"
+  path="${complete%% *}"
+  tmp="$complete EOL"
+  arguments="${tmp#* }"
 
     # Cannot rely on the command "which" here since it doesn't always work.
     is_absolute_path=`$ECHO "$path" | $GREP ^/`
@@ -27497,7 +27543,7 @@ $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, wh
         if test -f "$p/$path" && test -x "$p/$path"; then
           new_path="$p/$path"
           break
-        fi
+  fi
       done
       IFS="$IFS_save"
     else
@@ -27550,7 +27596,7 @@ $as_echo "$as_me: Trying to extract Visual Studio environment variables" >&6;}
   elif test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.msys"; then
     windows_path=`cmd //c echo $unix_path`
     WINPATH_VS_ENV_CMD="$windows_path"
-  fi
+    fi
 
     WINPATH_BASH="$BASH"
 
@@ -27597,7 +27643,7 @@ $as_echo "$as_me: Try setting --with-tools-dir to the VC/bin directory within th
       { $as_echo "$as_me:${as_lineno-$LINENO}: or run \"bash.exe -l\" from a VS command prompt and then run configure from there." >&5
 $as_echo "$as_me: or run \"bash.exe -l\" from a VS command prompt and then run configure from there." >&6;}
       as_fn_error $? "Cannot continue" "$LINENO" 5
-    fi
+  fi
 
     # Now set all paths and other env variables. This will allow the rest of
     # the configure script to find and run the compiler in the proper way.
@@ -27650,13 +27696,13 @@ $as_echo "$as_me: nor is this script run from a Visual Studio command prompt." >
     else
       { $as_echo "$as_me:${as_lineno-$LINENO}: Running the extraction script failed." >&5
 $as_echo "$as_me: Running the extraction script failed." >&6;}
-    fi
+      fi
     { $as_echo "$as_me:${as_lineno-$LINENO}: Try setting --with-tools-dir to the VC/bin directory within the VS installation" >&5
 $as_echo "$as_me: Try setting --with-tools-dir to the VC/bin directory within the VS installation" >&6;}
     { $as_echo "$as_me:${as_lineno-$LINENO}: or run \"bash.exe -l\" from a VS command prompt and then run configure from there." >&5
 $as_echo "$as_me: or run \"bash.exe -l\" from a VS command prompt and then run configure from there." >&6;}
     as_fn_error $? "Cannot continue" "$LINENO" 5
-  fi
+    fi
 
     # Reset path to VS_PATH. It will include everything that was on PATH at the time we
     # ran TOOLCHAIN_SETUP_VISUAL_STUDIO_ENV.
@@ -27706,7 +27752,7 @@ set dummy $ac_prog; ac_word=$2
 $as_echo_n "checking for $ac_word... " >&6; }
 if ${ac_cv_path_POTENTIAL_CC+:} false; then :
   $as_echo_n "(cached) " >&6
-else
+  else
   case $POTENTIAL_CC in
   [\\/]* | ?:[\\/]*)
   ac_cv_path_POTENTIAL_CC="$POTENTIAL_CC" # Let the user override the test with a path.
@@ -27722,14 +27768,14 @@ do
     ac_cv_path_POTENTIAL_CC="$as_dir/$ac_word$ac_exec_ext"
     $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
     break 2
-  fi
-done
+        fi
+      done
   done
 IFS=$as_save_IFS
 
   ;;
 esac
-fi
+    fi
 POTENTIAL_CC=$ac_cv_path_POTENTIAL_CC
 if test -n "$POTENTIAL_CC"; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $POTENTIAL_CC" >&5
@@ -27752,8 +27798,8 @@ done
       # Otherwise it might already be a complete path
       if test ! -x "$CC"; then
         as_fn_error $? "User supplied compiler CC=$CC does not exist" "$LINENO" 5
-      fi
     fi
+  fi
   else
     # No user supplied value. Locate compiler ourselves.
 
@@ -27780,7 +27826,7 @@ set dummy $ac_prog; ac_word=$2
 $as_echo_n "checking for $ac_word... " >&6; }
 if ${ac_cv_path_TOOLCHAIN_PATH_CC+:} false; then :
   $as_echo_n "(cached) " >&6
-else
+  else
   case $TOOLCHAIN_PATH_CC in
   [\\/]* | ?:[\\/]*)
   ac_cv_path_TOOLCHAIN_PATH_CC="$TOOLCHAIN_PATH_CC" # Let the user override the test with a path.
@@ -27811,7 +27857,7 @@ $as_echo "$TOOLCHAIN_PATH_CC" >&6; }
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-fi
+  fi
 
 
   test -n "$TOOLCHAIN_PATH_CC" && break
@@ -27819,7 +27865,7 @@ done
 
       CC=$TOOLCHAIN_PATH_CC
       PATH="$PATH_save"
-    fi
+  fi
 
     # AC_PATH_PROGS can't be run multiple times with the same variable,
     # so create a new name for this run.
@@ -27855,15 +27901,15 @@ IFS=$as_save_IFS
 
   ;;
 esac
-fi
+    fi
 POTENTIAL_CC=$ac_cv_path_POTENTIAL_CC
 if test -n "$POTENTIAL_CC"; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $POTENTIAL_CC" >&5
 $as_echo "$POTENTIAL_CC" >&6; }
-else
+  else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-fi
+  fi
 
 
   test -n "$POTENTIAL_CC" && break
@@ -27904,7 +27950,7 @@ done
   fi
 
       as_fn_error $? "Could not find a $COMPILER_NAME compiler. $HELP_MSG" "$LINENO" 5
-    fi
+  fi
   fi
 
   # Now we have a compiler binary in CC. Make sure it's okay.
@@ -27955,10 +28001,10 @@ $as_echo "$as_me: The path of CC, which resolves as \"$complete\", is not found.
       if test "x$has_space" != x; then
         { $as_echo "$as_me:${as_lineno-$LINENO}: You might be mixing spaces in the path and extra arguments, which is not allowed." >&5
 $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, which is not allowed." >&6;}
-      fi
-      as_fn_error $? "Cannot locate the the path of CC" "$LINENO" 5
-    fi
   fi
+      as_fn_error $? "Cannot locate the the path of CC" "$LINENO" 5
+fi
+fi
 
   # Cygwin tries to hide some aspects of the Windows file system, such that binaries are
   # named .exe but called without that suffix. Therefore, "foo" and "foo.exe" are considered
@@ -27975,16 +28021,16 @@ $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, wh
       input_to_shortpath="${new_path}.exe"
     elif test -f "${new_path}.cmd"; then
       input_to_shortpath="${new_path}.cmd"
-    else
+      else
       { $as_echo "$as_me:${as_lineno-$LINENO}: The path of CC, which resolves as \"$new_path\", is invalid." >&5
 $as_echo "$as_me: The path of CC, which resolves as \"$new_path\", is invalid." >&6;}
       { $as_echo "$as_me:${as_lineno-$LINENO}: Neither \"$new_path\" nor \"$new_path.exe/cmd\" can be found" >&5
 $as_echo "$as_me: Neither \"$new_path\" nor \"$new_path.exe/cmd\" can be found" >&6;}
       as_fn_error $? "Cannot locate the the path of CC" "$LINENO" 5
-    fi
-  else
+      fi
+    else
     input_to_shortpath="$new_path"
-  fi
+    fi
 
   # Call helper function which possibly converts this using DOS-style short mode.
   # If so, the updated path is stored in $new_path.
@@ -28017,8 +28063,8 @@ $as_echo "$as_me: Neither \"$new_path\" nor \"$new_path.exe/cmd\" can be found" 
       # The path is in a Cygwin special directory (e.g. /home). We need this converted to
       # a path prefixed by /cygdrive for fixpath to work.
       new_path="$CYGWIN_ROOT_PATH$input_path"
-    fi
-  fi
+fi
+fi
 
   # remove trailing .exe if any
   new_path="${new_path/%.exe/}"
@@ -28065,7 +28111,7 @@ $as_echo "$as_me: Neither \"$new_path\" nor \"$new_path.exe/cmd\" can be found" 
   elif test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.msys"; then
     unix_path=`$ECHO "$windows_path" | $SED -e 's,^\\(.\\):,/\\1,g' -e 's,\\\\,/,g'`
     new_path="$unix_path"
-  fi
+    fi
 
 
     new_path=`$WHICH "$new_path" 2> /dev/null`
@@ -28118,7 +28164,7 @@ $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, wh
   if test "x$has_forbidden_chars" != x; then
     # Now convert it to mixed DOS-style, short mode (no spaces, and / instead of \)
     new_path=`cmd /c "for %A in (\"$input_path\") do @echo %~sA"|$TR \\\\\\\\ / | $TR 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' 'abcdefghijklmnopqrstuvwxyz'`
-  fi
+    fi
 
     # Output is in $new_path
 
@@ -28140,12 +28186,12 @@ $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, wh
 
   else
     # We're on a posix platform. Hooray! :)
-    # First separate the path from the arguments. This will split at the first
-    # space.
-    complete="$CC"
-    path="${complete%% *}"
-    tmp="$complete EOL"
-    arguments="${tmp#* }"
+  # First separate the path from the arguments. This will split at the first
+  # space.
+  complete="$CC"
+  path="${complete%% *}"
+  tmp="$complete EOL"
+  arguments="${tmp#* }"
 
     # Cannot rely on the command "which" here since it doesn't always work.
     is_absolute_path=`$ECHO "$path" | $GREP ^/`
@@ -28157,7 +28203,7 @@ $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, wh
         if test -f "$p/$path" && test -x "$p/$path"; then
           new_path="$p/$path"
           break
-        fi
+  fi
       done
       IFS="$IFS_save"
     else
@@ -28180,9 +28226,9 @@ $as_echo "$as_me: This might be caused by spaces in the path, which is not allow
   # Now join together the path and the arguments once again
   if test "x$arguments" != xEOL; then
     new_complete="$new_path ${arguments% *}"
-  else
+    else
     new_complete="$new_path"
-  fi
+    fi
 
   if test "x$complete" != "x$new_complete"; then
     CC="$new_complete"
@@ -28211,8 +28257,8 @@ $as_echo_n "checking resolved symbolic links for CC... " >&6; }
         # Are there other non-GNU readlinks out there?
         READLINK_TESTED=yes
         READLINK=
-      fi
     fi
+  fi
 
     if test "x$READLINK" != x; then
       TEST_COMPILER=`$READLINK -f $TEST_COMPILER`
@@ -28293,8 +28339,8 @@ done
   done
 IFS=$as_save_IFS
 
-fi
-fi
+  fi
+  fi
 PROPER_COMPILER_CC=$ac_cv_prog_PROPER_COMPILER_CC
 if test -n "$PROPER_COMPILER_CC"; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PROPER_COMPILER_CC" >&5
@@ -28302,12 +28348,12 @@ $as_echo "$PROPER_COMPILER_CC" >&6; }
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-fi
+  fi
 
 
     test -n "$PROPER_COMPILER_CC" && break
   done
-fi
+      fi
 if test -z "$PROPER_COMPILER_CC"; then
   ac_ct_PROPER_COMPILER_CC=$PROPER_COMPILER_CC
   for ac_prog in $TOOLCHAIN_CC_BINARY
@@ -28332,7 +28378,7 @@ do
     ac_cv_prog_ac_ct_PROPER_COMPILER_CC="$ac_prog"
     $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
     break 2
-  fi
+    fi
 done
   done
 IFS=$as_save_IFS
@@ -28343,7 +28389,7 @@ ac_ct_PROPER_COMPILER_CC=$ac_cv_prog_ac_ct_PROPER_COMPILER_CC
 if test -n "$ac_ct_PROPER_COMPILER_CC"; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_ct_PROPER_COMPILER_CC" >&5
 $as_echo "$ac_ct_PROPER_COMPILER_CC" >&6; }
-else
+  else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 fi
@@ -28363,17 +28409,17 @@ ac_tool_warned=yes ;;
 esac
     PROPER_COMPILER_CC=$ac_ct_PROPER_COMPILER_CC
   fi
-fi
+  fi
 
 
   if test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.cygwin"; then
 
-  # First separate the path from the arguments. This will split at the first
-  # space.
+    # First separate the path from the arguments. This will split at the first
+    # space.
   complete="$PROPER_COMPILER_CC"
-  path="${complete%% *}"
-  tmp="$complete EOL"
-  arguments="${tmp#* }"
+    path="${complete%% *}"
+    tmp="$complete EOL"
+    arguments="${tmp#* }"
 
   # Input might be given as Windows format, start by converting to
   # unix format.
@@ -28387,7 +28433,7 @@ fi
       && test "x`$ECHO \"$path\" | $GREP -i -e \"\\.bat$\" -e \"\\.cmd$\"`" != x \
       && test "x`$LS \"$path\" 2>/dev/null`" != x; then
     new_path=`$CYGPATH -u "$path"`
-  fi
+        fi
   if test "x$new_path" = x; then
     # Oops. Which didn't find the executable.
     # The splitting of arguments from the executable at a space might have been incorrect,
@@ -28432,13 +28478,13 @@ $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, wh
       input_to_shortpath="${new_path}.exe"
     elif test -f "${new_path}.cmd"; then
       input_to_shortpath="${new_path}.cmd"
-    else
+  else
       { $as_echo "$as_me:${as_lineno-$LINENO}: The path of PROPER_COMPILER_CC, which resolves as \"$new_path\", is invalid." >&5
 $as_echo "$as_me: The path of PROPER_COMPILER_CC, which resolves as \"$new_path\", is invalid." >&6;}
       { $as_echo "$as_me:${as_lineno-$LINENO}: Neither \"$new_path\" nor \"$new_path.exe/cmd\" can be found" >&5
 $as_echo "$as_me: Neither \"$new_path\" nor \"$new_path.exe/cmd\" can be found" >&6;}
       as_fn_error $? "Cannot locate the the path of PROPER_COMPILER_CC" "$LINENO" 5
-    fi
+  fi
   else
     input_to_shortpath="$new_path"
   fi
@@ -28464,8 +28510,8 @@ $as_echo "$as_me: Neither \"$new_path\" nor \"$new_path.exe/cmd\" can be found" 
       # Now convert it back to Unix-stile (cygpath)
       input_path=`$CYGPATH -u "$shortmode_path"`
       new_path="$input_path"
+      fi
     fi
-  fi
 
   test_cygdrive_prefix=`$ECHO $input_path | $GREP ^/cygdrive/`
   if test "x$test_cygdrive_prefix" = x; then
@@ -28474,8 +28520,8 @@ $as_echo "$as_me: Neither \"$new_path\" nor \"$new_path.exe/cmd\" can be found" 
       # The path is in a Cygwin special directory (e.g. /home). We need this converted to
       # a path prefixed by /cygdrive for fixpath to work.
       new_path="$CYGWIN_ROOT_PATH$input_path"
+        fi
     fi
-  fi
 
   # remove trailing .exe if any
   new_path="${new_path/%.exe/}"
@@ -28540,9 +28586,9 @@ $as_echo "$as_me: Neither \"$new_path\" nor \"$new_path.exe/cmd\" can be found" 
   elif test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.msys"; then
     unix_path=`$ECHO "$windows_path" | $SED -e 's,^\\(.\\):,/\\1,g' -e 's,\\\\,/,g'`
     new_path="$unix_path"
-  fi
+fi
 
-    fi
+  fi
 
     if test "x$new_path" = x; then
       # It's still not found. Now this is an unrecoverable error.
@@ -28552,17 +28598,17 @@ $as_echo "$as_me: The path of PROPER_COMPILER_CC, which resolves as \"$complete\
       if test "x$has_space" != x; then
         { $as_echo "$as_me:${as_lineno-$LINENO}: You might be mixing spaces in the path and extra arguments, which is not allowed." >&5
 $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, which is not allowed." >&6;}
-      fi
+fi
       as_fn_error $? "Cannot locate the the path of PROPER_COMPILER_CC" "$LINENO" 5
     fi
-  fi
+fi
 
   # Now new_path has a complete unix path to the binary
   if test "x`$ECHO $new_path | $GREP ^/bin/`" != x; then
     # Keep paths in /bin as-is, but remove trailing .exe if any
     new_path="${new_path/%.exe/}"
     # Do not save /bin paths to all_fixpath_prefixes!
-  else
+else
     # Not in mixed or Windows style, start by that.
     new_path=`cmd //c echo $new_path`
 
@@ -28575,7 +28621,7 @@ $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, wh
   if test "x$has_forbidden_chars" != x; then
     # Now convert it to mixed DOS-style, short mode (no spaces, and / instead of \)
     new_path=`cmd /c "for %A in (\"$input_path\") do @echo %~sA"|$TR \\\\\\\\ / | $TR 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' 'abcdefghijklmnopqrstuvwxyz'`
-  fi
+fi
 
     # Output is in $new_path
 
@@ -28586,7 +28632,7 @@ $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, wh
   elif test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.msys"; then
     unix_path=`$ECHO "$windows_path" | $SED -e 's,^\\(.\\):,/\\1,g' -e 's,\\\\,/,g'`
     new_path="$unix_path"
-  fi
+fi
 
     # remove trailing .exe if any
     new_path="${new_path/%.exe/}"
@@ -28597,12 +28643,12 @@ $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, wh
 
   else
     # We're on a posix platform. Hooray! :)
-    # First separate the path from the arguments. This will split at the first
-    # space.
-    complete="$PROPER_COMPILER_CC"
-    path="${complete%% *}"
-    tmp="$complete EOL"
-    arguments="${tmp#* }"
+  # First separate the path from the arguments. This will split at the first
+  # space.
+  complete="$PROPER_COMPILER_CC"
+  path="${complete%% *}"
+  tmp="$complete EOL"
+  arguments="${tmp#* }"
 
     # Cannot rely on the command "which" here since it doesn't always work.
     is_absolute_path=`$ECHO "$path" | $GREP ^/`
@@ -28614,7 +28660,7 @@ $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, wh
         if test -f "$p/$path" && test -x "$p/$path"; then
           new_path="$p/$path"
           break
-        fi
+  fi
       done
       IFS="$IFS_save"
     else
@@ -28637,9 +28683,9 @@ $as_echo "$as_me: This might be caused by spaces in the path, which is not allow
   # Now join together the path and the arguments once again
   if test "x$arguments" != xEOL; then
     new_complete="$new_path ${arguments% *}"
-  else
+    else
     new_complete="$new_path"
-  fi
+    fi
 
   if test "x$complete" != "x$new_complete"; then
     PROPER_COMPILER_CC="$new_complete"
@@ -28665,8 +28711,8 @@ $as_echo_n "checking for resolved symbolic links for CC... " >&6; }
         # Are there other non-GNU readlinks out there?
         READLINK_TESTED=yes
         READLINK=
-      fi
     fi
+  fi
 
     if test "x$READLINK" != x; then
       PROPER_COMPILER_CC=`$READLINK -f $PROPER_COMPILER_CC`
@@ -28726,7 +28772,7 @@ $as_echo "$as_me: The result from running with -V was: \"$COMPILER_VERSION_OUTPU
       { $as_echo "$as_me:${as_lineno-$LINENO}: The result from running with --version was: \"$ALT_VERSION_OUTPUT\"" >&5
 $as_echo "$as_me: The result from running with --version was: \"$ALT_VERSION_OUTPUT\"" >&6;}
       as_fn_error $? "A $TOOLCHAIN_TYPE compiler is required. Try setting --with-tools-dir." "$LINENO" 5
-    fi
+  fi
     # Remove usage instructions (if present), and
     # collapse compiler output into a single line
     COMPILER_VERSION_STRING=`$ECHO $COMPILER_VERSION_OUTPUT | \
@@ -28862,21 +28908,21 @@ done
   done
 IFS=$as_save_IFS
 
-fi
-fi
+    fi
+      fi
 CC=$ac_cv_prog_CC
 if test -n "$CC"; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $CC" >&5
 $as_echo "$CC" >&6; }
-else
+  else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-fi
+  fi
 
 
     test -n "$CC" && break
   done
-fi
+  fi
 if test -z "$CC"; then
   ac_ct_CC=$CC
   for ac_prog in $CC
@@ -28890,7 +28936,7 @@ if ${ac_cv_prog_ac_ct_CC+:} false; then :
 else
   if test -n "$ac_ct_CC"; then
   ac_cv_prog_ac_ct_CC="$ac_ct_CC" # Let the user override the test.
-else
+  else
 as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
 for as_dir in $PATH
 do
@@ -28901,21 +28947,21 @@ do
     ac_cv_prog_ac_ct_CC="$ac_prog"
     $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
     break 2
-  fi
-done
+        fi
+      done
   done
 IFS=$as_save_IFS
 
-fi
-fi
+      fi
+    fi
 ac_ct_CC=$ac_cv_prog_ac_ct_CC
 if test -n "$ac_ct_CC"; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_ct_CC" >&5
 $as_echo "$ac_ct_CC" >&6; }
-else
+  else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-fi
+  fi
 
 
   test -n "$ac_ct_CC" && break
@@ -28931,8 +28977,8 @@ $as_echo "$as_me: WARNING: using cross tools not prefixed with host triplet" >&2
 ac_tool_warned=yes ;;
 esac
     CC=$ac_ct_CC
-  fi
-fi
+      fi
+    fi
 
 
 test -z "$CC" && { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
@@ -29015,7 +29061,7 @@ $as_echo "$ac_try_echo"; } >&5
 # so that the user can short-circuit this test for compilers unknown to
 # Autoconf.
 for ac_file in $ac_files ''
-do
+  do
   test -f "$ac_file" || continue
   case $ac_file in
     *.$ac_ext | *.xcoff | *.tds | *.d | *.pdb | *.xSYM | *.bb | *.bbg | *.map | *.inf | *.dSYM | *.o | *.obj )
@@ -29028,7 +29074,7 @@ do
 	if test "${ac_cv_exeext+set}" = set && test "$ac_cv_exeext" != no;
 	then :; else
 	   ac_cv_exeext=`expr "$ac_file" : '[^.]*\(\..*\)'`
-	fi
+  fi
 	# We set ac_cv_exeext here because the later test for it is not
 	# safe: cross compilers may not add the suffix if given an `-o'
 	# argument, so we may need to know it at that point already.
@@ -29091,13 +29137,13 @@ for ac_file in conftest.exe conftest conftest.*; do
 	  break;;
     * ) break;;
   esac
-done
+  done
 else
   { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
 $as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
 as_fn_error $? "cannot compute suffix of executables: cannot compile and link
 See \`config.log' for more details" "$LINENO" 5; }
-fi
+  fi
 rm -f conftest conftest$ac_cv_exeext
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_exeext" >&5
 $as_echo "$ac_cv_exeext" >&6; }
@@ -29147,18 +29193,18 @@ $as_echo "$ac_try_echo"; } >&5
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; }; then
     cross_compiling=no
-  else
+else
     if test "$cross_compiling" = maybe; then
 	cross_compiling=yes
-    else
+  else
 	{ { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
 $as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
 as_fn_error $? "cannot run C compiled programs.
 If you meant to cross compile, use \`--host'.
 See \`config.log' for more details" "$LINENO" 5; }
-    fi
   fi
 fi
+  fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $cross_compiling" >&5
 $as_echo "$cross_compiling" >&6; }
 
@@ -29169,7 +29215,7 @@ $as_echo_n "checking for suffix of object files... " >&6; }
 if ${ac_cv_objext+:} false; then :
   $as_echo_n "(cached) " >&6
 else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
 int
@@ -29197,11 +29243,11 @@ $as_echo "$ac_try_echo"; } >&5
   case $ac_file in
     *.$ac_ext | *.xcoff | *.tds | *.d | *.pdb | *.xSYM | *.bb | *.bbg | *.map | *.inf | *.dSYM ) ;;
     *) ac_cv_objext=`expr "$ac_file" : '.*\.\(.*\)'`
-       break;;
+	break;;
   esac
 done
 else
-  $as_echo "$as_me: failed program was:" >&5
+$as_echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
 { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
@@ -29462,7 +29508,7 @@ do
     ac_cv_path_POTENTIAL_CXX="$as_dir/$ac_word$ac_exec_ext"
     $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
     break 2
-  fi
+fi
 done
   done
 IFS=$as_save_IFS
@@ -29494,7 +29540,7 @@ done
         as_fn_error $? "User supplied compiler CXX=$CXX does not exist" "$LINENO" 5
       fi
     fi
-  else
+else
     # No user supplied value. Locate compiler ourselves.
 
     # If we are cross compiling, assume cross compilation tools follows the
@@ -29548,7 +29594,7 @@ TOOLCHAIN_PATH_CXX=$ac_cv_path_TOOLCHAIN_PATH_CXX
 if test -n "$TOOLCHAIN_PATH_CXX"; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $TOOLCHAIN_PATH_CXX" >&5
 $as_echo "$TOOLCHAIN_PATH_CXX" >&6; }
-else
+  else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 fi
@@ -29559,7 +29605,7 @@ done
 
       CXX=$TOOLCHAIN_PATH_CXX
       PATH="$PATH_save"
-    fi
+fi
 
     # AC_PATH_PROGS can't be run multiple times with the same variable,
     # so create a new name for this run.
@@ -29609,7 +29655,7 @@ fi
   test -n "$POTENTIAL_CXX" && break
 done
 
-      CXX=$POTENTIAL_CXX
+        CXX=$POTENTIAL_CXX
     fi
 
     if test "x$CXX" = x; then
@@ -29622,7 +29668,7 @@ done
     cygwin_help $MISSING_DEPENDENCY
   elif test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.msys"; then
     msys_help $MISSING_DEPENDENCY
-  else
+      else
     PKGHANDLER_COMMAND=
 
     case $PKGHANDLER in
@@ -29698,7 +29744,7 @@ $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, wh
       fi
       as_fn_error $? "Cannot locate the the path of CXX" "$LINENO" 5
     fi
-  fi
+      fi
 
   # Cygwin tries to hide some aspects of the Windows file system, such that binaries are
   # named .exe but called without that suffix. Therefore, "foo" and "foo.exe" are considered
@@ -29721,10 +29767,10 @@ $as_echo "$as_me: The path of CXX, which resolves as \"$new_path\", is invalid."
       { $as_echo "$as_me:${as_lineno-$LINENO}: Neither \"$new_path\" nor \"$new_path.exe/cmd\" can be found" >&5
 $as_echo "$as_me: Neither \"$new_path\" nor \"$new_path.exe/cmd\" can be found" >&6;}
       as_fn_error $? "Cannot locate the the path of CXX" "$LINENO" 5
-    fi
+      fi
   else
     input_to_shortpath="$new_path"
-  fi
+    fi
 
   # Call helper function which possibly converts this using DOS-style short mode.
   # If so, the updated path is stored in $new_path.
@@ -29757,8 +29803,8 @@ $as_echo "$as_me: Neither \"$new_path\" nor \"$new_path.exe/cmd\" can be found" 
       # The path is in a Cygwin special directory (e.g. /home). We need this converted to
       # a path prefixed by /cygdrive for fixpath to work.
       new_path="$CYGWIN_ROOT_PATH$input_path"
-    fi
-  fi
+fi
+fi
 
   # remove trailing .exe if any
   new_path="${new_path/%.exe/}"
@@ -29805,7 +29851,7 @@ $as_echo "$as_me: Neither \"$new_path\" nor \"$new_path.exe/cmd\" can be found" 
   elif test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.msys"; then
     unix_path=`$ECHO "$windows_path" | $SED -e 's,^\\(.\\):,/\\1,g' -e 's,\\\\,/,g'`
     new_path="$unix_path"
-  fi
+    fi
 
 
     new_path=`$WHICH "$new_path" 2> /dev/null`
@@ -29858,7 +29904,7 @@ $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, wh
   if test "x$has_forbidden_chars" != x; then
     # Now convert it to mixed DOS-style, short mode (no spaces, and / instead of \)
     new_path=`cmd /c "for %A in (\"$input_path\") do @echo %~sA"|$TR \\\\\\\\ / | $TR 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' 'abcdefghijklmnopqrstuvwxyz'`
-  fi
+    fi
 
     # Output is in $new_path
 
@@ -29880,12 +29926,12 @@ $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, wh
 
   else
     # We're on a posix platform. Hooray! :)
-    # First separate the path from the arguments. This will split at the first
-    # space.
-    complete="$CXX"
-    path="${complete%% *}"
-    tmp="$complete EOL"
-    arguments="${tmp#* }"
+  # First separate the path from the arguments. This will split at the first
+  # space.
+  complete="$CXX"
+  path="${complete%% *}"
+  tmp="$complete EOL"
+  arguments="${tmp#* }"
 
     # Cannot rely on the command "which" here since it doesn't always work.
     is_absolute_path=`$ECHO "$path" | $GREP ^/`
@@ -29897,7 +29943,7 @@ $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, wh
         if test -f "$p/$path" && test -x "$p/$path"; then
           new_path="$p/$path"
           break
-        fi
+  fi
       done
       IFS="$IFS_save"
     else
@@ -30017,7 +30063,7 @@ if ${ac_cv_prog_PROPER_COMPILER_CXX+:} false; then :
 else
   if test -n "$PROPER_COMPILER_CXX"; then
   ac_cv_prog_PROPER_COMPILER_CXX="$PROPER_COMPILER_CXX" # Let the user override the test.
-else
+    else
 as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
 for as_dir in $PATH
 do
@@ -30034,15 +30080,15 @@ done
 IFS=$as_save_IFS
 
 fi
-fi
+    fi
 PROPER_COMPILER_CXX=$ac_cv_prog_PROPER_COMPILER_CXX
 if test -n "$PROPER_COMPILER_CXX"; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PROPER_COMPILER_CXX" >&5
 $as_echo "$PROPER_COMPILER_CXX" >&6; }
-else
+  else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-fi
+  fi
 
 
     test -n "$PROPER_COMPILER_CXX" && break
@@ -30078,7 +30124,7 @@ done
 IFS=$as_save_IFS
 
 fi
-fi
+    fi
 ac_ct_PROPER_COMPILER_CXX=$ac_cv_prog_ac_ct_PROPER_COMPILER_CXX
 if test -n "$ac_ct_PROPER_COMPILER_CXX"; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_ct_PROPER_COMPILER_CXX" >&5
@@ -30086,7 +30132,7 @@ $as_echo "$ac_ct_PROPER_COMPILER_CXX" >&6; }
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-fi
+  fi
 
 
   test -n "$ac_ct_PROPER_COMPILER_CXX" && break
@@ -30102,8 +30148,8 @@ $as_echo "$as_me: WARNING: using cross tools not prefixed with host triplet" >&2
 ac_tool_warned=yes ;;
 esac
     PROPER_COMPILER_CXX=$ac_ct_PROPER_COMPILER_CXX
+    fi
   fi
-fi
 
 
   if test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.cygwin"; then
@@ -30143,7 +30189,7 @@ fi
         && test "x`$ECHO \"$path\" | $GREP -i -e \"\\.bat$\" -e \"\\.cmd$\"`" != x \
         && test "x`$LS \"$path\" 2>/dev/null`" != x; then
       new_path=`$CYGPATH -u "$path"`
-    fi
+  fi
     if test "x$new_path" = x; then
       # It's still not found. Now this is an unrecoverable error.
       { $as_echo "$as_me:${as_lineno-$LINENO}: The path of PROPER_COMPILER_CXX, which resolves as \"$complete\", is not found." >&5
@@ -30172,13 +30218,13 @@ $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, wh
       input_to_shortpath="${new_path}.exe"
     elif test -f "${new_path}.cmd"; then
       input_to_shortpath="${new_path}.cmd"
-    else
+  else
       { $as_echo "$as_me:${as_lineno-$LINENO}: The path of PROPER_COMPILER_CXX, which resolves as \"$new_path\", is invalid." >&5
 $as_echo "$as_me: The path of PROPER_COMPILER_CXX, which resolves as \"$new_path\", is invalid." >&6;}
       { $as_echo "$as_me:${as_lineno-$LINENO}: Neither \"$new_path\" nor \"$new_path.exe/cmd\" can be found" >&5
 $as_echo "$as_me: Neither \"$new_path\" nor \"$new_path.exe/cmd\" can be found" >&6;}
       as_fn_error $? "Cannot locate the the path of PROPER_COMPILER_CXX" "$LINENO" 5
-    fi
+  fi
   else
     input_to_shortpath="$new_path"
   fi
@@ -30204,8 +30250,8 @@ $as_echo "$as_me: Neither \"$new_path\" nor \"$new_path.exe/cmd\" can be found" 
       # Now convert it back to Unix-stile (cygpath)
       input_path=`$CYGPATH -u "$shortmode_path"`
       new_path="$input_path"
+      fi
     fi
-  fi
 
   test_cygdrive_prefix=`$ECHO $input_path | $GREP ^/cygdrive/`
   if test "x$test_cygdrive_prefix" = x; then
@@ -30214,8 +30260,8 @@ $as_echo "$as_me: Neither \"$new_path\" nor \"$new_path.exe/cmd\" can be found" 
       # The path is in a Cygwin special directory (e.g. /home). We need this converted to
       # a path prefixed by /cygdrive for fixpath to work.
       new_path="$CYGWIN_ROOT_PATH$input_path"
+        fi
     fi
-  fi
 
   # remove trailing .exe if any
   new_path="${new_path/%.exe/}"
@@ -30282,7 +30328,7 @@ $as_echo "$as_me: Neither \"$new_path\" nor \"$new_path.exe/cmd\" can be found" 
     new_path="$unix_path"
   fi
 
-    fi
+  fi
 
     if test "x$new_path" = x; then
       # It's still not found. Now this is an unrecoverable error.
@@ -30292,10 +30338,10 @@ $as_echo "$as_me: The path of PROPER_COMPILER_CXX, which resolves as \"$complete
       if test "x$has_space" != x; then
         { $as_echo "$as_me:${as_lineno-$LINENO}: You might be mixing spaces in the path and extra arguments, which is not allowed." >&5
 $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, which is not allowed." >&6;}
-      fi
+fi
       as_fn_error $? "Cannot locate the the path of PROPER_COMPILER_CXX" "$LINENO" 5
-    fi
-  fi
+fi
+fi
 
   # Now new_path has a complete unix path to the binary
   if test "x`$ECHO $new_path | $GREP ^/bin/`" != x; then
@@ -30315,7 +30361,7 @@ $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, wh
   if test "x$has_forbidden_chars" != x; then
     # Now convert it to mixed DOS-style, short mode (no spaces, and / instead of \)
     new_path=`cmd /c "for %A in (\"$input_path\") do @echo %~sA"|$TR \\\\\\\\ / | $TR 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' 'abcdefghijklmnopqrstuvwxyz'`
-  fi
+fi
 
     # Output is in $new_path
 
@@ -30326,7 +30372,7 @@ $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, wh
   elif test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.msys"; then
     unix_path=`$ECHO "$windows_path" | $SED -e 's,^\\(.\\):,/\\1,g' -e 's,\\\\,/,g'`
     new_path="$unix_path"
-  fi
+fi
 
     # remove trailing .exe if any
     new_path="${new_path/%.exe/}"
@@ -30354,13 +30400,13 @@ $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, wh
         if test -f "$p/$path" && test -x "$p/$path"; then
           new_path="$p/$path"
           break
-        fi
+  fi
       done
       IFS="$IFS_save"
     else
       # This is an absolute path, we can use it without further modifications.
       new_path="$path"
-    fi
+fi
 
     if test "x$new_path" = x; then
       { $as_echo "$as_me:${as_lineno-$LINENO}: The path of PROPER_COMPILER_CXX, which resolves as \"$complete\", is not found." >&5
@@ -30377,9 +30423,9 @@ $as_echo "$as_me: This might be caused by spaces in the path, which is not allow
   # Now join together the path and the arguments once again
   if test "x$arguments" != xEOL; then
     new_complete="$new_path ${arguments% *}"
-  else
+    else
     new_complete="$new_path"
-  fi
+    fi
 
   if test "x$complete" != "x$new_complete"; then
     PROPER_COMPILER_CXX="$new_complete"
@@ -30405,8 +30451,8 @@ $as_echo_n "checking for resolved symbolic links for CXX... " >&6; }
         # Are there other non-GNU readlinks out there?
         READLINK_TESTED=yes
         READLINK=
-      fi
     fi
+  fi
 
     if test "x$READLINK" != x; then
       PROPER_COMPILER_CXX=`$READLINK -f $PROPER_COMPILER_CXX`
@@ -30426,7 +30472,7 @@ $as_echo_n "checking for resolved symbolic links for CXX... " >&6; }
         if test "x$ISLINK" == x; then
           # This is not a symbolic link! We are done!
           break
-        fi
+    fi
         # Again resolve directory symlinks since the target of the just found
         # link could be in a different directory
         cd `$DIRNAME $ISLINK`
@@ -30436,7 +30482,7 @@ $as_echo_n "checking for resolved symbolic links for CXX... " >&6; }
       done
       cd $STARTDIR
       PROPER_COMPILER_CXX=$sym_link_dir/$sym_link_file
-    fi
+  fi
   fi
 
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PROPER_COMPILER_CXX" >&5
@@ -30466,7 +30512,7 @@ $as_echo "$as_me: The result from running with -V was: \"$COMPILER_VERSION_OUTPU
       { $as_echo "$as_me:${as_lineno-$LINENO}: The result from running with --version was: \"$ALT_VERSION_OUTPUT\"" >&5
 $as_echo "$as_me: The result from running with --version was: \"$ALT_VERSION_OUTPUT\"" >&6;}
       as_fn_error $? "A $TOOLCHAIN_TYPE compiler is required. Try setting --with-tools-dir." "$LINENO" 5
-    fi
+  fi
     # Remove usage instructions (if present), and
     # collapse compiler output into a single line
     COMPILER_VERSION_STRING=`$ECHO $COMPILER_VERSION_OUTPUT | \
@@ -30507,7 +30553,7 @@ $as_echo "$as_me: The $COMPILER_NAME compiler (located as $COMPILER) does not se
       { $as_echo "$as_me:${as_lineno-$LINENO}: The result from running it was: \"$COMPILER_VERSION_OUTPUT\"" >&5
 $as_echo "$as_me: The result from running it was: \"$COMPILER_VERSION_OUTPUT\"" >&6;}
       as_fn_error $? "A $TOOLCHAIN_TYPE compiler is required. Try setting --with-tools-dir." "$LINENO" 5
-    fi
+      fi
     # Collapse compiler output into a single line
     COMPILER_VERSION_STRING=`$ECHO $COMPILER_VERSION_OUTPUT`
     COMPILER_VERSION_NUMBER=`$ECHO $COMPILER_VERSION_OUTPUT | \
@@ -30551,7 +30597,7 @@ $as_echo "$as_me: The $COMPILER_NAME compiler (located as $COMPILER) does not se
       { $as_echo "$as_me:${as_lineno-$LINENO}: The result from running with --version was: \"$COMPILER_VERSION_OUTPUT\"" >&5
 $as_echo "$as_me: The result from running with --version was: \"$COMPILER_VERSION_OUTPUT\"" >&6;}
       as_fn_error $? "A $TOOLCHAIN_TYPE compiler is required. Try setting --with-tools-dir." "$LINENO" 5
-    fi
+  fi
     # Collapse compiler output into a single line
     COMPILER_VERSION_STRING=`$ECHO $COMPILER_VERSION_OUTPUT`
     COMPILER_VERSION_NUMBER=`$ECHO $COMPILER_VERSION_OUTPUT | \
@@ -30615,12 +30661,12 @@ $as_echo "$CXX" >&6; }
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-fi
+  fi
 
 
     test -n "$CXX" && break
   done
-fi
+        fi
 if test -z "$CXX"; then
   ac_ct_CXX=$CXX
   for ac_prog in $CXX
@@ -30634,7 +30680,7 @@ if ${ac_cv_prog_ac_ct_CXX+:} false; then :
 else
   if test -n "$ac_ct_CXX"; then
   ac_cv_prog_ac_ct_CXX="$ac_ct_CXX" # Let the user override the test.
-else
+    else
 as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
 for as_dir in $PATH
 do
@@ -30645,21 +30691,21 @@ do
     ac_cv_prog_ac_ct_CXX="$ac_prog"
     $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
     break 2
-  fi
+    fi
 done
   done
 IFS=$as_save_IFS
 
-fi
-fi
+      fi
+    fi
 ac_ct_CXX=$ac_cv_prog_ac_ct_CXX
 if test -n "$ac_ct_CXX"; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_ct_CXX" >&5
 $as_echo "$ac_ct_CXX" >&6; }
-else
+  else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-fi
+  fi
 
 
   test -n "$ac_ct_CXX" && break
@@ -30675,11 +30721,11 @@ $as_echo "$as_me: WARNING: using cross tools not prefixed with host triplet" >&2
 ac_tool_warned=yes ;;
 esac
     CXX=$ac_ct_CXX
-  fi
-fi
+      fi
+    fi
 
-  fi
-fi
+        fi
+    fi
 # Provide some information about the compiler.
 $as_echo "$as_me:${as_lineno-$LINENO}: checking for C++ compiler version" >&5
 set X $ac_compile
@@ -30709,7 +30755,7 @@ done
 $as_echo_n "checking whether we are using the GNU C++ compiler... " >&6; }
 if ${ac_cv_cxx_compiler_gnu+:} false; then :
   $as_echo_n "(cached) " >&6
-else
+  else
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -30732,14 +30778,14 @@ fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 ac_cv_cxx_compiler_gnu=$ac_compiler_gnu
 
-fi
+    fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cxx_compiler_gnu" >&5
 $as_echo "$ac_cv_cxx_compiler_gnu" >&6; }
 if test $ac_compiler_gnu = yes; then
   GXX=yes
 else
   GXX=
-fi
+    fi
 ac_test_CXXFLAGS=${CXXFLAGS+set}
 ac_save_CXXFLAGS=$CXXFLAGS
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $CXX accepts -g" >&5
@@ -30799,10 +30845,10 @@ fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
+    fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
    ac_cxx_werror_flag=$ac_save_cxx_werror_flag
-fi
+    fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_prog_cxx_g" >&5
 $as_echo "$ac_cv_prog_cxx_g" >&6; }
 if test "$ac_test_CXXFLAGS" = set; then
@@ -30812,15 +30858,15 @@ elif test $ac_cv_prog_cxx_g = yes; then
     CXXFLAGS="-g -O2"
   else
     CXXFLAGS="-g"
-  fi
+    fi
 else
   if test "$GXX" = yes; then
     CXXFLAGS="-O2"
   else
     CXXFLAGS=
   fi
-fi
-ac_ext=cpp
+  fi
+  ac_ext=cpp
 ac_cpp='$CXXCPP $CPPFLAGS'
 ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
@@ -30844,13 +30890,13 @@ fi
 if test -z "$CPP"; then
   if ${ac_cv_prog_CPP+:} false; then :
   $as_echo_n "(cached) " >&6
-else
+  else
       # Double quotes because CPP needs to be expanded
     for CPP in "$CC -E" "$CC -E -traditional-cpp" "/lib/cpp"
     do
       ac_preproc_ok=false
 for ac_c_preproc_warn_flag in '' yes
-do
+  do
   # Use a header file that comes with gcc, so configuring glibc
   # with a fresh cross-compiler works.
   # Prefer <limits.h> to <assert.h> if __STDC__ is defined, since
@@ -30887,7 +30933,7 @@ else
   # Passes both tests.
 ac_preproc_ok=:
 break
-fi
+  fi
 rm -f conftest.err conftest.i conftest.$ac_ext
 
 done
@@ -30897,7 +30943,7 @@ if $ac_preproc_ok; then :
   break
 fi
 
-    done
+  done
     ac_cv_prog_CPP=$CPP
 
 fi
@@ -30930,7 +30976,7 @@ if ac_fn_c_try_cpp "$LINENO"; then :
 else
   # Broken: fails on valid input.
 continue
-fi
+  fi
 rm -f conftest.err conftest.i conftest.$ac_ext
 
   # OK, works on sane cases.  Now check whether nonexistent headers
@@ -30954,12 +31000,12 @@ done
 rm -f conftest.i conftest.err conftest.$ac_ext
 if $ac_preproc_ok; then :
 
-else
+  else
   { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
 $as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
 as_fn_error $? "C preprocessor \"$CPP\" fails sanity check
 See \`config.log' for more details" "$LINENO" 5; }
-fi
+  fi
 
 ac_ext=cpp
 ac_cpp='$CXXCPP $CPPFLAGS'
@@ -31017,7 +31063,7 @@ $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, wh
       fi
       as_fn_error $? "Cannot locate the the path of CPP" "$LINENO" 5
     fi
-  fi
+fi
 
   # Cygwin tries to hide some aspects of the Windows file system, such that binaries are
   # named .exe but called without that suffix. Therefore, "foo" and "foo.exe" are considered
@@ -31040,10 +31086,10 @@ $as_echo "$as_me: The path of CPP, which resolves as \"$new_path\", is invalid."
       { $as_echo "$as_me:${as_lineno-$LINENO}: Neither \"$new_path\" nor \"$new_path.exe/cmd\" can be found" >&5
 $as_echo "$as_me: Neither \"$new_path\" nor \"$new_path.exe/cmd\" can be found" >&6;}
       as_fn_error $? "Cannot locate the the path of CPP" "$LINENO" 5
-    fi
-  else
+fi
+else
     input_to_shortpath="$new_path"
-  fi
+fi
 
   # Call helper function which possibly converts this using DOS-style short mode.
   # If so, the updated path is stored in $new_path.
@@ -31102,7 +31148,7 @@ $as_echo "$as_me: Neither \"$new_path\" nor \"$new_path.exe/cmd\" can be found" 
   elif test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.msys"; then
     unix_path=`$ECHO "$windows_path" | $SED -e 's,^\\(.\\):,/\\1,g' -e 's,\\\\,/,g'`
     new_path="$unix_path"
-  fi
+fi
 
 
   # Now try to locate executable using which
@@ -31124,7 +31170,7 @@ $as_echo "$as_me: Neither \"$new_path\" nor \"$new_path.exe/cmd\" can be found" 
   elif test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.msys"; then
     unix_path=`$ECHO "$windows_path" | $SED -e 's,^\\(.\\):,/\\1,g' -e 's,\\\\,/,g'`
     new_path="$unix_path"
-  fi
+fi
 
 
     new_path=`$WHICH "$new_path" 2> /dev/null`
@@ -31142,9 +31188,9 @@ $as_echo "$as_me: Neither \"$new_path\" nor \"$new_path.exe/cmd\" can be found" 
   elif test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.msys"; then
     unix_path=`$ECHO "$windows_path" | $SED -e 's,^\\(.\\):,/\\1,g' -e 's,\\\\,/,g'`
     new_path="$unix_path"
-  fi
+fi
 
-    fi
+fi
 
     if test "x$new_path" = x; then
       # It's still not found. Now this is an unrecoverable error.
@@ -31156,8 +31202,8 @@ $as_echo "$as_me: The path of CPP, which resolves as \"$complete\", is not found
 $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, which is not allowed." >&6;}
       fi
       as_fn_error $? "Cannot locate the the path of CPP" "$LINENO" 5
-    fi
-  fi
+fi
+fi
 
   # Now new_path has a complete unix path to the binary
   if test "x`$ECHO $new_path | $GREP ^/bin/`" != x; then
@@ -31231,7 +31277,7 @@ $as_echo "$as_me: The path of CPP, which resolves as \"$complete\", is not found
       if test "x$has_space" != x; then
         { $as_echo "$as_me:${as_lineno-$LINENO}: This might be caused by spaces in the path, which is not allowed." >&5
 $as_echo "$as_me: This might be caused by spaces in the path, which is not allowed." >&6;}
-      fi
+fi
       as_fn_error $? "Cannot locate the the path of CPP" "$LINENO" 5
     fi
   fi
@@ -31239,7 +31285,7 @@ $as_echo "$as_me: This might be caused by spaces in the path, which is not allow
   # Now join together the path and the arguments once again
   if test "x$arguments" != xEOL; then
     new_complete="$new_path ${arguments% *}"
-  else
+else
     new_complete="$new_path"
   fi
 
@@ -31247,7 +31293,7 @@ $as_echo "$as_me: This might be caused by spaces in the path, which is not allow
     CPP="$new_complete"
     { $as_echo "$as_me:${as_lineno-$LINENO}: Rewriting CPP to \"$new_complete\"" >&5
 $as_echo "$as_me: Rewriting CPP to \"$new_complete\"" >&6;}
-  fi
+fi
 
   ac_ext=cpp
 ac_cpp='$CXXCPP $CPPFLAGS'
@@ -31263,7 +31309,7 @@ else
       # Double quotes because CXXCPP needs to be expanded
     for CXXCPP in "$CXX -E" "/lib/cpp"
     do
-      ac_preproc_ok=false
+ac_preproc_ok=false
 for ac_cxx_preproc_warn_flag in '' yes
 do
   # Use a header file that comes with gcc, so configuring glibc
@@ -31315,11 +31361,11 @@ fi
     done
     ac_cv_prog_CXXCPP=$CXXCPP
 
-fi
+    fi
   CXXCPP=$ac_cv_prog_CXXCPP
-else
+  else
   ac_cv_prog_CXXCPP=$CXXCPP
-fi
+  fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $CXXCPP" >&5
 $as_echo "$CXXCPP" >&6; }
 ac_preproc_ok=false
@@ -31345,7 +31391,7 @@ if ac_fn_cxx_try_cpp "$LINENO"; then :
 else
   # Broken: fails on valid input.
 continue
-fi
+    fi
 rm -f conftest.err conftest.i conftest.$ac_ext
 
   # OK, works on sane cases.  Now check whether nonexistent headers
@@ -31374,7 +31420,7 @@ else
 $as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
 as_fn_error $? "C++ preprocessor \"$CXXCPP\" fails sanity check
 See \`config.log' for more details" "$LINENO" 5; }
-fi
+  fi
 
 ac_ext=cpp
 ac_cpp='$CXXCPP $CPPFLAGS'
@@ -31420,7 +31466,7 @@ ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
         && test "x`$ECHO \"$path\" | $GREP -i -e \"\\.bat$\" -e \"\\.cmd$\"`" != x \
         && test "x`$LS \"$path\" 2>/dev/null`" != x; then
       new_path=`$CYGPATH -u "$path"`
-    fi
+  fi
     if test "x$new_path" = x; then
       # It's still not found. Now this is an unrecoverable error.
       { $as_echo "$as_me:${as_lineno-$LINENO}: The path of CXXCPP, which resolves as \"$complete\", is not found." >&5
@@ -31494,21 +31540,21 @@ $as_echo "$as_me: Neither \"$new_path\" nor \"$new_path.exe/cmd\" can be found" 
     fi
   fi
 
-  # remove trailing .exe if any
-  new_path="${new_path/%.exe/}"
+    # remove trailing .exe if any
+    new_path="${new_path/%.exe/}"
 
   elif test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.msys"; then
 
-  # First separate the path from the arguments. This will split at the first
-  # space.
+    # First separate the path from the arguments. This will split at the first
+    # space.
   complete="$CXXCPP"
-  path="${complete%% *}"
-  tmp="$complete EOL"
-  arguments="${tmp#* }"
+    path="${complete%% *}"
+    tmp="$complete EOL"
+    arguments="${tmp#* }"
 
   # Input might be given as Windows format, start by converting to
   # unix format.
-  new_path="$path"
+      new_path="$path"
 
   windows_path="$new_path"
   if test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.cygwin"; then
@@ -31517,13 +31563,13 @@ $as_echo "$as_me: Neither \"$new_path\" nor \"$new_path.exe/cmd\" can be found" 
   elif test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.msys"; then
     unix_path=`$ECHO "$windows_path" | $SED -e 's,^\\(.\\):,/\\1,g' -e 's,\\\\,/,g'`
     new_path="$unix_path"
-  fi
+    fi
 
 
   # Now try to locate executable using which
   new_path=`$WHICH "$new_path" 2> /dev/null`
 
-  if test "x$new_path" = x; then
+    if test "x$new_path" = x; then
     # Oops. Which didn't find the executable.
     # The splitting of arguments from the executable at a space might have been incorrect,
     # since paths with space are more likely in Windows. Give it another try with the whole
@@ -31539,7 +31585,7 @@ $as_echo "$as_me: Neither \"$new_path\" nor \"$new_path.exe/cmd\" can be found" 
   elif test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.msys"; then
     unix_path=`$ECHO "$windows_path" | $SED -e 's,^\\(.\\):,/\\1,g' -e 's,\\\\,/,g'`
     new_path="$unix_path"
-  fi
+      fi
 
 
     new_path=`$WHICH "$new_path" 2> /dev/null`
@@ -31559,7 +31605,7 @@ $as_echo "$as_me: Neither \"$new_path\" nor \"$new_path.exe/cmd\" can be found" 
     new_path="$unix_path"
   fi
 
-    fi
+fi
 
     if test "x$new_path" = x; then
       # It's still not found. Now this is an unrecoverable error.
@@ -31579,7 +31625,7 @@ $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, wh
     # Keep paths in /bin as-is, but remove trailing .exe if any
     new_path="${new_path/%.exe/}"
     # Do not save /bin paths to all_fixpath_prefixes!
-  else
+else
     # Not in mixed or Windows style, start by that.
     new_path=`cmd //c echo $new_path`
 
@@ -31610,7 +31656,7 @@ $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, wh
 
     # Save the first 10 bytes of this path to the storage, so fixpath can work.
     all_fixpath_prefixes=("${all_fixpath_prefixes[@]}" "${new_path:0:10}")
-  fi
+fi
 
   else
     # We're on a posix platform. Hooray! :)
@@ -31630,9 +31676,9 @@ $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, wh
       for p in $PATH; do
         if test -f "$p/$path" && test -x "$p/$path"; then
           new_path="$p/$path"
-          break
-        fi
-      done
+  break
+fi
+    done
       IFS="$IFS_save"
     else
       # This is an absolute path, we can use it without further modifications.
@@ -31649,12 +31695,12 @@ $as_echo "$as_me: This might be caused by spaces in the path, which is not allow
       fi
       as_fn_error $? "Cannot locate the the path of CXXCPP" "$LINENO" 5
     fi
-  fi
+fi
 
   # Now join together the path and the arguments once again
   if test "x$arguments" != xEOL; then
     new_complete="$new_path ${arguments% *}"
-  else
+else
     new_complete="$new_path"
   fi
 
@@ -31662,7 +31708,7 @@ $as_echo "$as_me: This might be caused by spaces in the path, which is not allow
     CXXCPP="$new_complete"
     { $as_echo "$as_me:${as_lineno-$LINENO}: Rewriting CXXCPP to \"$new_complete\"" >&5
 $as_echo "$as_me: Rewriting CXXCPP to \"$new_complete\"" >&6;}
-  fi
+fi
 
 
   #
@@ -31692,14 +31738,14 @@ do
   if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
     if test "$as_dir/$ac_word$ac_exec_ext" = "$CYGWIN_LINK"; then
        ac_prog_rejected=yes
-       continue
-     fi
+continue
+fi
     ac_cv_prog_LD="link"
     $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
     break 2
-  fi
+fi
 done
-  done
+done
 IFS=$as_save_IFS
 
 if test $ac_prog_rejected = yes; then
@@ -32066,14 +32112,14 @@ do
     ac_cv_path_AS="$as_dir/$ac_word$ac_exec_ext"
     $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
     break 2
-  fi
+    fi
 done
   done
 IFS=$as_save_IFS
 
   ;;
 esac
-fi
+    fi
 AS=$ac_cv_path_AS
 if test -n "$AS"; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $AS" >&5
@@ -32081,7 +32127,7 @@ $as_echo "$AS" >&6; }
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-fi
+  fi
 
 
   test -n "$AS" && break
@@ -32139,7 +32185,7 @@ $as_echo "$AS" >&6; }
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-fi
+  fi
 
 
   test -n "$AS" && break
@@ -32197,7 +32243,7 @@ $as_echo "$AS" >&6; }
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-fi
+    fi
 
 
         if test "x$AS" = x; then
@@ -32224,12 +32270,12 @@ $as_echo "$tool_specified" >&6; }
 
   if test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.cygwin"; then
 
-  # First separate the path from the arguments. This will split at the first
-  # space.
+    # First separate the path from the arguments. This will split at the first
+    # space.
   complete="$AS"
-  path="${complete%% *}"
-  tmp="$complete EOL"
-  arguments="${tmp#* }"
+    path="${complete%% *}"
+    tmp="$complete EOL"
+    arguments="${tmp#* }"
 
   # Input might be given as Windows format, start by converting to
   # unix format.
@@ -32243,7 +32289,7 @@ $as_echo "$tool_specified" >&6; }
       && test "x`$ECHO \"$path\" | $GREP -i -e \"\\.bat$\" -e \"\\.cmd$\"`" != x \
       && test "x`$LS \"$path\" 2>/dev/null`" != x; then
     new_path=`$CYGPATH -u "$path"`
-  fi
+        fi
   if test "x$new_path" = x; then
     # Oops. Which didn't find the executable.
     # The splitting of arguments from the executable at a space might have been incorrect,
@@ -32449,9 +32495,9 @@ $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, wh
 
     # Save the first 10 bytes of this path to the storage, so fixpath can work.
     all_fixpath_prefixes=("${all_fixpath_prefixes[@]}" "${new_path:0:10}")
-  fi
+      fi
 
-  else
+else
     # We're on a posix platform. Hooray! :)
     # First separate the path from the arguments. This will split at the first
     # space.
@@ -32470,8 +32516,8 @@ $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, wh
         if test -f "$p/$path" && test -x "$p/$path"; then
           new_path="$p/$path"
           break
-        fi
-      done
+  fi
+done
       IFS="$IFS_save"
     else
       # This is an absolute path, we can use it without further modifications.
@@ -32488,14 +32534,14 @@ $as_echo "$as_me: This might be caused by spaces in the path, which is not allow
       fi
       as_fn_error $? "Cannot locate the the path of AS" "$LINENO" 5
     fi
-  fi
+fi
 
   # Now join together the path and the arguments once again
   if test "x$arguments" != xEOL; then
     new_complete="$new_path ${arguments% *}"
-  else
+else
     new_complete="$new_path"
-  fi
+fi
 
   if test "x$complete" != "x$new_complete"; then
     AS="$new_complete"
@@ -32503,7 +32549,7 @@ $as_echo "$as_me: This might be caused by spaces in the path, which is not allow
 $as_echo "$as_me: Rewriting AS to \"$new_complete\"" >&6;}
   fi
 
-  else
+    else
     # FIXME: is this correct for microsoft?
     AS="$CC -c"
   fi
@@ -32524,7 +32570,7 @@ else
   if test -n "$AR"; then
   ac_cv_prog_AR="$AR" # Let the user override the test.
 else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
 for as_dir in $PATH
 do
   IFS=$as_save_IFS
@@ -32551,7 +32597,7 @@ $as_echo "no" >&6; }
 fi
 
 
-  else
+      else
 
 
   # Publish this variable in the help.
@@ -32568,7 +32614,7 @@ set dummy $ac_tool_prefix$ac_prog; ac_word=$2
 $as_echo_n "checking for $ac_word... " >&6; }
 if ${ac_cv_prog_AR+:} false; then :
   $as_echo_n "(cached) " >&6
-else
+    else
   if test -n "$AR"; then
   ac_cv_prog_AR="$AR" # Let the user override the test.
 else
@@ -32593,15 +32639,15 @@ AR=$ac_cv_prog_AR
 if test -n "$AR"; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $AR" >&5
 $as_echo "$AR" >&6; }
-else
+  else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-fi
+  fi
 
 
     test -n "$AR" && break
   done
-fi
+    fi
 if test -z "$AR"; then
   ac_ct_AR=$AR
   for ac_prog in ar
@@ -32632,7 +32678,7 @@ done
 IFS=$as_save_IFS
 
 fi
-fi
+    fi
 ac_ct_AR=$ac_cv_prog_ac_ct_AR
 if test -n "$ac_ct_AR"; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_ct_AR" >&5
@@ -32640,7 +32686,7 @@ $as_echo "$ac_ct_AR" >&6; }
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-fi
+  fi
 
 
   test -n "$ac_ct_AR" && break
@@ -32657,7 +32703,7 @@ ac_tool_warned=yes ;;
 esac
     AR=$ac_ct_AR
   fi
-fi
+  fi
 
   else
     # The variable is set, but is it from the command line or the environment?
@@ -32670,7 +32716,7 @@ fi
       if test "xAR" != xBASH; then
         { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Ignoring value of AR from the environment. Use command line variables instead." >&5
 $as_echo "$as_me: WARNING: Ignoring value of AR from the environment. Use command line variables instead." >&2;}
-      fi
+  fi
       # Try to locate tool using the code snippet
       if test -n "$ac_tool_prefix"; then
   for ac_prog in ar
@@ -32695,26 +32741,26 @@ do
     ac_cv_prog_AR="$ac_tool_prefix$ac_prog"
     $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
     break 2
-  fi
+    fi
 done
   done
 IFS=$as_save_IFS
 
-fi
-fi
+      fi
+    fi
 AR=$ac_cv_prog_AR
 if test -n "$AR"; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $AR" >&5
 $as_echo "$AR" >&6; }
-else
+  else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-fi
+  fi
 
 
     test -n "$AR" && break
   done
-fi
+  fi
 if test -z "$AR"; then
   ac_ct_AR=$AR
   for ac_prog in ar
@@ -32728,7 +32774,7 @@ if ${ac_cv_prog_ac_ct_AR+:} false; then :
 else
   if test -n "$ac_ct_AR"; then
   ac_cv_prog_ac_ct_AR="$ac_ct_AR" # Let the user override the test.
-else
+  else
 as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
 for as_dir in $PATH
 do
@@ -32739,13 +32785,13 @@ do
     ac_cv_prog_ac_ct_AR="$ac_prog"
     $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
     break 2
-  fi
-done
+        fi
+      done
   done
 IFS=$as_save_IFS
 
-fi
-fi
+      fi
+    fi
 ac_ct_AR=$ac_cv_prog_ac_ct_AR
 if test -n "$ac_ct_AR"; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_ct_AR" >&5
@@ -32753,7 +32799,7 @@ $as_echo "$ac_ct_AR" >&6; }
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-fi
+  fi
 
 
   test -n "$ac_ct_AR" && break
@@ -32772,7 +32818,7 @@ esac
   fi
 fi
 
-    else
+  else
       # If it succeeded, then it was overridden by the user. We will use it
       # for the tool.
 
@@ -32799,7 +32845,7 @@ else
   ac_cv_path_AR="$AR" # Let the user override the test with a path.
   ;;
   *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
 for as_dir in $PATH
 do
   IFS=$as_save_IFS
@@ -32830,7 +32876,7 @@ fi
         if test "x$AR" = x; then
           as_fn_error $? "User supplied tool $tool_basename could not be found" "$LINENO" 5
         fi
-      else
+  else
         # Otherwise we believe it is a complete path. Use it as it is.
         { $as_echo "$as_me:${as_lineno-$LINENO}: Will use user supplied tool AR=$tool_specified" >&5
 $as_echo "$as_me: Will use user supplied tool AR=$tool_specified" >&6;}
@@ -32871,7 +32917,7 @@ $as_echo "$tool_specified" >&6; }
       && test "x`$ECHO \"$path\" | $GREP -i -e \"\\.bat$\" -e \"\\.cmd$\"`" != x \
       && test "x`$LS \"$path\" 2>/dev/null`" != x; then
     new_path=`$CYGPATH -u "$path"`
-  fi
+fi
   if test "x$new_path" = x; then
     # Oops. Which didn't find the executable.
     # The splitting of arguments from the executable at a space might have been incorrect,
@@ -32887,7 +32933,7 @@ $as_echo "$tool_specified" >&6; }
         && test "x`$ECHO \"$path\" | $GREP -i -e \"\\.bat$\" -e \"\\.cmd$\"`" != x \
         && test "x`$LS \"$path\" 2>/dev/null`" != x; then
       new_path=`$CYGPATH -u "$path"`
-    fi
+fi
     if test "x$new_path" = x; then
       # It's still not found. Now this is an unrecoverable error.
       { $as_echo "$as_me:${as_lineno-$LINENO}: The path of AR, which resolves as \"$complete\", is not found." >&5
@@ -32896,9 +32942,9 @@ $as_echo "$as_me: The path of AR, which resolves as \"$complete\", is not found.
       if test "x$has_space" != x; then
         { $as_echo "$as_me:${as_lineno-$LINENO}: You might be mixing spaces in the path and extra arguments, which is not allowed." >&5
 $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, which is not allowed." >&6;}
-      fi
+fi
       as_fn_error $? "Cannot locate the the path of AR" "$LINENO" 5
-    fi
+fi
   fi
 
   # Cygwin tries to hide some aspects of the Windows file system, such that binaries are
@@ -32922,10 +32968,10 @@ $as_echo "$as_me: The path of AR, which resolves as \"$new_path\", is invalid." 
       { $as_echo "$as_me:${as_lineno-$LINENO}: Neither \"$new_path\" nor \"$new_path.exe/cmd\" can be found" >&5
 $as_echo "$as_me: Neither \"$new_path\" nor \"$new_path.exe/cmd\" can be found" >&6;}
       as_fn_error $? "Cannot locate the the path of AR" "$LINENO" 5
-    fi
-  else
+fi
+else
     input_to_shortpath="$new_path"
-  fi
+fi
 
   # Call helper function which possibly converts this using DOS-style short mode.
   # If so, the updated path is stored in $new_path.
@@ -32958,8 +33004,8 @@ $as_echo "$as_me: Neither \"$new_path\" nor \"$new_path.exe/cmd\" can be found" 
       # The path is in a Cygwin special directory (e.g. /home). We need this converted to
       # a path prefixed by /cygdrive for fixpath to work.
       new_path="$CYGWIN_ROOT_PATH$input_path"
-    fi
   fi
+fi
 
   # remove trailing .exe if any
   new_path="${new_path/%.exe/}"
@@ -33026,7 +33072,7 @@ $as_echo "$as_me: Neither \"$new_path\" nor \"$new_path.exe/cmd\" can be found" 
     new_path="$unix_path"
   fi
 
-    fi
+fi
 
     if test "x$new_path" = x; then
       # It's still not found. Now this is an unrecoverable error.
@@ -33036,7 +33082,7 @@ $as_echo "$as_me: The path of AR, which resolves as \"$complete\", is not found.
       if test "x$has_space" != x; then
         { $as_echo "$as_me:${as_lineno-$LINENO}: You might be mixing spaces in the path and extra arguments, which is not allowed." >&5
 $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, which is not allowed." >&6;}
-      fi
+fi
       as_fn_error $? "Cannot locate the the path of AR" "$LINENO" 5
     fi
   fi
@@ -33046,7 +33092,7 @@ $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, wh
     # Keep paths in /bin as-is, but remove trailing .exe if any
     new_path="${new_path/%.exe/}"
     # Do not save /bin paths to all_fixpath_prefixes!
-  else
+else
     # Not in mixed or Windows style, start by that.
     new_path=`cmd //c echo $new_path`
 
@@ -33070,16 +33116,16 @@ $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, wh
   elif test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.msys"; then
     unix_path=`$ECHO "$windows_path" | $SED -e 's,^\\(.\\):,/\\1,g' -e 's,\\\\,/,g'`
     new_path="$unix_path"
-  fi
+fi
 
     # remove trailing .exe if any
     new_path="${new_path/%.exe/}"
 
     # Save the first 10 bytes of this path to the storage, so fixpath can work.
     all_fixpath_prefixes=("${all_fixpath_prefixes[@]}" "${new_path:0:10}")
-  fi
+fi
 
-  else
+else
     # We're on a posix platform. Hooray! :)
     # First separate the path from the arguments. This will split at the first
     # space.
@@ -33101,10 +33147,10 @@ $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, wh
         fi
       done
       IFS="$IFS_save"
-    else
+else
       # This is an absolute path, we can use it without further modifications.
       new_path="$path"
-    fi
+  fi
 
     if test "x$new_path" = x; then
       { $as_echo "$as_me:${as_lineno-$LINENO}: The path of AR, which resolves as \"$complete\", is not found." >&5
@@ -33113,10 +33159,10 @@ $as_echo "$as_me: The path of AR, which resolves as \"$complete\", is not found.
       if test "x$has_space" != x; then
         { $as_echo "$as_me:${as_lineno-$LINENO}: This might be caused by spaces in the path, which is not allowed." >&5
 $as_echo "$as_me: This might be caused by spaces in the path, which is not allowed." >&6;}
-      fi
+fi
       as_fn_error $? "Cannot locate the the path of AR" "$LINENO" 5
-    fi
-  fi
+fi
+fi
 
   # Now join together the path and the arguments once again
   if test "x$arguments" != xEOL; then
@@ -33129,7 +33175,7 @@ $as_echo "$as_me: This might be caused by spaces in the path, which is not allow
     AR="$new_complete"
     { $as_echo "$as_me:${as_lineno-$LINENO}: Rewriting AR to \"$new_complete\"" >&5
 $as_echo "$as_me: Rewriting AR to \"$new_complete\"" >&6;}
-  fi
+fi
 
 
 
@@ -33152,7 +33198,7 @@ else
   if test -n "$OBJC"; then
   ac_cv_prog_OBJC="$OBJC" # Let the user override the test.
 else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
 for as_dir in $PATH
 do
   IFS=$as_save_IFS
@@ -33173,15 +33219,15 @@ OBJC=$ac_cv_prog_OBJC
 if test -n "$OBJC"; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $OBJC" >&5
 $as_echo "$OBJC" >&6; }
-else
+      else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-fi
+      fi
 
 
     test -n "$OBJC" && break
   done
-fi
+    fi
 if test -z "$OBJC"; then
   ac_ct_OBJC=$OBJC
   for ac_prog in gcc objcc objc cc CC
@@ -33212,15 +33258,15 @@ done
 IFS=$as_save_IFS
 
 fi
-fi
+    fi
 ac_ct_OBJC=$ac_cv_prog_ac_ct_OBJC
 if test -n "$ac_ct_OBJC"; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_ct_OBJC" >&5
 $as_echo "$ac_ct_OBJC" >&6; }
-else
+  else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-fi
+  fi
 
 
   test -n "$ac_ct_OBJC" && break
@@ -33236,8 +33282,8 @@ $as_echo "$as_me: WARNING: using cross tools not prefixed with host triplet" >&2
 ac_tool_warned=yes ;;
 esac
     OBJC=$ac_ct_OBJC
+    fi
   fi
-fi
 
 # Provide some information about the compiler.
 $as_echo "$as_me:${as_lineno-$LINENO}: checking for Objective C compiler version" >&5
@@ -33258,7 +33304,7 @@ $as_echo "$ac_try_echo"; } >&5
 ... rest of stderr output deleted ...
          10q' conftest.err >conftest.er1
     cat conftest.er1 >&5
-  fi
+    fi
   rm -f conftest.er1 conftest.err
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }
@@ -33298,7 +33344,7 @@ if test $ac_compiler_gnu = yes; then
   GOBJC=yes
 else
   GOBJC=
-fi
+  fi
 ac_test_OBJCFLAGS=${OBJCFLAGS+set}
 ac_save_OBJCFLAGS=$OBJCFLAGS
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $OBJC accepts -g" >&5
@@ -33354,14 +33400,14 @@ main ()
 _ACEOF
 if ac_fn_objc_try_compile "$LINENO"; then :
   ac_cv_prog_objc_g=yes
-fi
+  fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
+    fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
+      fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
    ac_objc_werror_flag=$ac_save_objc_werror_flag
-fi
+    fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_prog_objc_g" >&5
 $as_echo "$ac_cv_prog_objc_g" >&6; }
 if test "$ac_test_OBJCFLAGS" = set; then
@@ -33372,13 +33418,13 @@ elif test $ac_cv_prog_objc_g = yes; then
   else
     OBJCFLAGS="-g"
   fi
-else
+  else
   if test "$GOBJC" = yes; then
     OBJCFLAGS="-O2"
   else
     OBJCFLAGS=
-  fi
-fi
+        fi
+    fi
 ac_ext=cpp
 ac_cpp='$CXXCPP $CPPFLAGS'
 ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
@@ -33408,7 +33454,7 @@ ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
       && test "x`$LS \"$path\" 2>/dev/null`" != x; then
     new_path=`$CYGPATH -u "$path"`
   fi
-  if test "x$new_path" = x; then
+    if test "x$new_path" = x; then
     # Oops. Which didn't find the executable.
     # The splitting of arguments from the executable at a space might have been incorrect,
     # since paths with space are more likely in Windows. Give it another try with the whole
@@ -33452,13 +33498,13 @@ $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, wh
       input_to_shortpath="${new_path}.exe"
     elif test -f "${new_path}.cmd"; then
       input_to_shortpath="${new_path}.cmd"
-    else
+  else
       { $as_echo "$as_me:${as_lineno-$LINENO}: The path of OBJC, which resolves as \"$new_path\", is invalid." >&5
 $as_echo "$as_me: The path of OBJC, which resolves as \"$new_path\", is invalid." >&6;}
       { $as_echo "$as_me:${as_lineno-$LINENO}: Neither \"$new_path\" nor \"$new_path.exe/cmd\" can be found" >&5
 $as_echo "$as_me: Neither \"$new_path\" nor \"$new_path.exe/cmd\" can be found" >&6;}
       as_fn_error $? "Cannot locate the the path of OBJC" "$LINENO" 5
-    fi
+  fi
   else
     input_to_shortpath="$new_path"
   fi
@@ -33494,8 +33540,8 @@ $as_echo "$as_me: Neither \"$new_path\" nor \"$new_path.exe/cmd\" can be found" 
       # The path is in a Cygwin special directory (e.g. /home). We need this converted to
       # a path prefixed by /cygdrive for fixpath to work.
       new_path="$CYGWIN_ROOT_PATH$input_path"
-    fi
-  fi
+fi
+fi
 
   # remove trailing .exe if any
   new_path="${new_path/%.exe/}"
@@ -33520,7 +33566,7 @@ $as_echo "$as_me: Neither \"$new_path\" nor \"$new_path.exe/cmd\" can be found" 
   elif test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.msys"; then
     unix_path=`$ECHO "$windows_path" | $SED -e 's,^\\(.\\):,/\\1,g' -e 's,\\\\,/,g'`
     new_path="$unix_path"
-  fi
+fi
 
 
   # Now try to locate executable using which
@@ -33542,7 +33588,7 @@ $as_echo "$as_me: Neither \"$new_path\" nor \"$new_path.exe/cmd\" can be found" 
   elif test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.msys"; then
     unix_path=`$ECHO "$windows_path" | $SED -e 's,^\\(.\\):,/\\1,g' -e 's,\\\\,/,g'`
     new_path="$unix_path"
-  fi
+fi
 
 
     new_path=`$WHICH "$new_path" 2> /dev/null`
@@ -33562,7 +33608,7 @@ $as_echo "$as_me: Neither \"$new_path\" nor \"$new_path.exe/cmd\" can be found" 
     new_path="$unix_path"
   fi
 
-    fi
+fi
 
     if test "x$new_path" = x; then
       # It's still not found. Now this is an unrecoverable error.
@@ -33574,7 +33620,7 @@ $as_echo "$as_me: The path of OBJC, which resolves as \"$complete\", is not foun
 $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, which is not allowed." >&6;}
       fi
       as_fn_error $? "Cannot locate the the path of OBJC" "$LINENO" 5
-    fi
+fi
   fi
 
   # Now new_path has a complete unix path to the binary
@@ -33582,7 +33628,7 @@ $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, wh
     # Keep paths in /bin as-is, but remove trailing .exe if any
     new_path="${new_path/%.exe/}"
     # Do not save /bin paths to all_fixpath_prefixes!
-  else
+else
     # Not in mixed or Windows style, start by that.
     new_path=`cmd //c echo $new_path`
 
@@ -33595,7 +33641,7 @@ $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, wh
   if test "x$has_forbidden_chars" != x; then
     # Now convert it to mixed DOS-style, short mode (no spaces, and / instead of \)
     new_path=`cmd /c "for %A in (\"$input_path\") do @echo %~sA"|$TR \\\\\\\\ / | $TR 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' 'abcdefghijklmnopqrstuvwxyz'`
-  fi
+fi
 
     # Output is in $new_path
 
@@ -33615,14 +33661,14 @@ $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, wh
     all_fixpath_prefixes=("${all_fixpath_prefixes[@]}" "${new_path:0:10}")
   fi
 
-  else
+else
     # We're on a posix platform. Hooray! :)
-    # First separate the path from the arguments. This will split at the first
-    # space.
-    complete="$OBJC"
-    path="${complete%% *}"
-    tmp="$complete EOL"
-    arguments="${tmp#* }"
+  # First separate the path from the arguments. This will split at the first
+  # space.
+  complete="$OBJC"
+  path="${complete%% *}"
+  tmp="$complete EOL"
+  arguments="${tmp#* }"
 
     # Cannot rely on the command "which" here since it doesn't always work.
     is_absolute_path=`$ECHO "$path" | $GREP ^/`
@@ -33634,7 +33680,7 @@ $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, wh
         if test -f "$p/$path" && test -x "$p/$path"; then
           new_path="$p/$path"
           break
-        fi
+  fi
       done
       IFS="$IFS_save"
     else
@@ -33682,7 +33728,7 @@ set dummy $ac_prog; ac_word=$2
 $as_echo_n "checking for $ac_word... " >&6; }
 if ${ac_cv_path_LIPO+:} false; then :
   $as_echo_n "(cached) " >&6
-else
+    else
   case $LIPO in
   [\\/]* | ?:[\\/]*)
   ac_cv_path_LIPO="$LIPO" # Let the user override the test with a path.
@@ -33705,15 +33751,15 @@ IFS=$as_save_IFS
 
   ;;
 esac
-fi
+    fi
 LIPO=$ac_cv_path_LIPO
 if test -n "$LIPO"; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $LIPO" >&5
 $as_echo "$LIPO" >&6; }
-else
+  else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-fi
+  fi
 
 
   test -n "$LIPO" && break
@@ -33763,7 +33809,7 @@ IFS=$as_save_IFS
 
   ;;
 esac
-fi
+    fi
 LIPO=$ac_cv_path_LIPO
 if test -n "$LIPO"; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $LIPO" >&5
@@ -33771,7 +33817,7 @@ $as_echo "$LIPO" >&6; }
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-fi
+  fi
 
 
   test -n "$LIPO" && break
@@ -33965,21 +34011,21 @@ $as_echo "$as_me: Neither \"$new_path\" nor \"$new_path.exe/cmd\" can be found" 
     fi
   fi
 
-  # remove trailing .exe if any
-  new_path="${new_path/%.exe/}"
+    # remove trailing .exe if any
+    new_path="${new_path/%.exe/}"
 
   elif test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.msys"; then
 
-  # First separate the path from the arguments. This will split at the first
-  # space.
+    # First separate the path from the arguments. This will split at the first
+    # space.
   complete="$LIPO"
-  path="${complete%% *}"
-  tmp="$complete EOL"
-  arguments="${tmp#* }"
+    path="${complete%% *}"
+    tmp="$complete EOL"
+    arguments="${tmp#* }"
 
   # Input might be given as Windows format, start by converting to
   # unix format.
-  new_path="$path"
+      new_path="$path"
 
   windows_path="$new_path"
   if test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.cygwin"; then
@@ -34030,7 +34076,7 @@ $as_echo "$as_me: Neither \"$new_path\" nor \"$new_path.exe/cmd\" can be found" 
     new_path="$unix_path"
   fi
 
-    fi
+  fi
 
     if test "x$new_path" = x; then
       # It's still not found. Now this is an unrecoverable error.
@@ -34043,14 +34089,14 @@ $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, wh
       fi
       as_fn_error $? "Cannot locate the the path of LIPO" "$LINENO" 5
     fi
-  fi
+fi
 
   # Now new_path has a complete unix path to the binary
   if test "x`$ECHO $new_path | $GREP ^/bin/`" != x; then
     # Keep paths in /bin as-is, but remove trailing .exe if any
     new_path="${new_path/%.exe/}"
     # Do not save /bin paths to all_fixpath_prefixes!
-  else
+else
     # Not in mixed or Windows style, start by that.
     new_path=`cmd //c echo $new_path`
 
@@ -34074,7 +34120,7 @@ $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, wh
   elif test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.msys"; then
     unix_path=`$ECHO "$windows_path" | $SED -e 's,^\\(.\\):,/\\1,g' -e 's,\\\\,/,g'`
     new_path="$unix_path"
-  fi
+fi
 
     # remove trailing .exe if any
     new_path="${new_path/%.exe/}"
@@ -34102,13 +34148,13 @@ $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, wh
         if test -f "$p/$path" && test -x "$p/$path"; then
           new_path="$p/$path"
           break
-        fi
+      fi
       done
       IFS="$IFS_save"
-    else
+else
       # This is an absolute path, we can use it without further modifications.
       new_path="$path"
-    fi
+  fi
 
     if test "x$new_path" = x; then
       { $as_echo "$as_me:${as_lineno-$LINENO}: The path of LIPO, which resolves as \"$complete\", is not found." >&5
@@ -34120,14 +34166,14 @@ $as_echo "$as_me: This might be caused by spaces in the path, which is not allow
       fi
       as_fn_error $? "Cannot locate the the path of LIPO" "$LINENO" 5
     fi
-  fi
+fi
 
   # Now join together the path and the arguments once again
   if test "x$arguments" != xEOL; then
     new_complete="$new_path ${arguments% *}"
-  else
+else
     new_complete="$new_path"
-  fi
+fi
 
   if test "x$complete" != "x$new_complete"; then
     LIPO="$new_complete"
@@ -34135,7 +34181,7 @@ $as_echo "$as_me: This might be caused by spaces in the path, which is not allow
 $as_echo "$as_me: Rewriting LIPO to \"$new_complete\"" >&6;}
   fi
 
-  else
+    else
     OBJC=
   fi
 
@@ -34151,7 +34197,7 @@ else
   ac_cv_prog_MT="$MT" # Let the user override the test.
 else
   ac_prog_rejected=no
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
 for as_dir in $PATH
 do
   IFS=$as_save_IFS
@@ -34180,9 +34226,9 @@ if test $ac_prog_rejected = yes; then
     # first if we set MT to just the basename; use the full file name.
     shift
     ac_cv_prog_MT="$as_dir/$ac_word${1+' '}$@"
+    fi
   fi
-fi
-fi
+    fi
 fi
 MT=$ac_cv_prog_MT
 if test -n "$MT"; then
@@ -34838,7 +34884,7 @@ done
   done
 IFS=$as_save_IFS
 
-fi
+  fi
 fi
 DUMPBIN=$ac_cv_prog_DUMPBIN
 if test -n "$DUMPBIN"; then
@@ -35132,6 +35178,50 @@ $as_echo "$as_me: This might be caused by spaces in the path, which is not allow
 $as_echo "$as_me: Rewriting DUMPBIN to \"$new_complete\"" >&6;}
   fi
 
+    # We need to check for 'msbuild.exe' because at the place where we expect to
+    # find 'msbuild.exe' there's also a directory called 'msbuild' and configure
+    # won't find the 'msbuild.exe' executable in that case (and the
+    # 'ac_executable_extensions' is unusable due to performance reasons).
+    # Notice that we intentionally don't fix up the path to MSBUILD because we
+    # will call it in a DOS shell during freetype detection on Windows (see
+    # 'LIB_SETUP_FREETYPE' in "libraries.m4"
+    # Extract the first word of "msbuild.exe", so it can be a program name with args.
+set dummy msbuild.exe; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_MSBUILD+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$MSBUILD"; then
+  ac_cv_prog_MSBUILD="$MSBUILD" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_MSBUILD="msbuild.exe"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+MSBUILD=$ac_cv_prog_MSBUILD
+if test -n "$MSBUILD"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $MSBUILD" >&5
+$as_echo "$MSBUILD" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
   fi
 
   if test "x$OPENJDK_TARGET_OS" = xsolaris; then
@@ -35166,22 +35256,22 @@ do
     ac_cv_path_STRIP="$as_dir/$ac_word$ac_exec_ext"
     $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
     break 2
-  fi
+    fi
 done
   done
 IFS=$as_save_IFS
 
   ;;
 esac
-fi
+    fi
 STRIP=$ac_cv_path_STRIP
 if test -n "$STRIP"; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $STRIP" >&5
 $as_echo "$STRIP" >&6; }
-else
+  else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-fi
+  fi
 
 
   test -n "$STRIP" && break
@@ -35198,7 +35288,7 @@ done
       if test "xSTRIP" != xBASH; then
         { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Ignoring value of STRIP from the environment. Use command line variables instead." >&5
 $as_echo "$as_me: WARNING: Ignoring value of STRIP from the environment. Use command line variables instead." >&2;}
-      fi
+    fi
       # Try to locate tool using the code snippet
       for ac_prog in strip
 do
@@ -35231,7 +35321,7 @@ IFS=$as_save_IFS
 
   ;;
 esac
-fi
+    fi
 STRIP=$ac_cv_path_STRIP
 if test -n "$STRIP"; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $STRIP" >&5
@@ -35239,7 +35329,7 @@ $as_echo "$STRIP" >&6; }
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-fi
+  fi
 
 
   test -n "$STRIP" && break
@@ -35297,12 +35387,12 @@ $as_echo "$STRIP" >&6; }
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-fi
+  fi
 
 
         if test "x$STRIP" = x; then
           as_fn_error $? "User supplied tool $tool_basename could not be found" "$LINENO" 5
-        fi
+  fi
       else
         # Otherwise we believe it is a complete path. Use it as it is.
         { $as_echo "$as_me:${as_lineno-$LINENO}: Will use user supplied tool STRIP=$tool_specified" >&5
@@ -35313,7 +35403,7 @@ $as_echo_n "checking for STRIP... " >&6; }
           { $as_echo "$as_me:${as_lineno-$LINENO}: result: not found" >&5
 $as_echo "not found" >&6; }
           as_fn_error $? "User supplied tool STRIP=$tool_specified does not exist or is not executable" "$LINENO" 5
-        fi
+    fi
         { $as_echo "$as_me:${as_lineno-$LINENO}: result: $tool_specified" >&5
 $as_echo "$tool_specified" >&6; }
       fi
@@ -35324,12 +35414,12 @@ $as_echo "$tool_specified" >&6; }
 
   if test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.cygwin"; then
 
-  # First separate the path from the arguments. This will split at the first
-  # space.
+    # First separate the path from the arguments. This will split at the first
+    # space.
   complete="$STRIP"
-  path="${complete%% *}"
-  tmp="$complete EOL"
-  arguments="${tmp#* }"
+    path="${complete%% *}"
+    tmp="$complete EOL"
+    arguments="${tmp#* }"
 
   # Input might be given as Windows format, start by converting to
   # unix format.
@@ -35430,7 +35520,7 @@ $as_echo "$as_me: Neither \"$new_path\" nor \"$new_path.exe/cmd\" can be found" 
       # The path is in a Cygwin special directory (e.g. /home). We need this converted to
       # a path prefixed by /cygdrive for fixpath to work.
       new_path="$CYGWIN_ROOT_PATH$input_path"
-    fi
+  fi
   fi
 
   # remove trailing .exe if any
@@ -35478,7 +35568,7 @@ $as_echo "$as_me: Neither \"$new_path\" nor \"$new_path.exe/cmd\" can be found" 
   elif test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.msys"; then
     unix_path=`$ECHO "$windows_path" | $SED -e 's,^\\(.\\):,/\\1,g' -e 's,\\\\,/,g'`
     new_path="$unix_path"
-  fi
+fi
 
 
     new_path=`$WHICH "$new_path" 2> /dev/null`
@@ -35498,7 +35588,7 @@ $as_echo "$as_me: Neither \"$new_path\" nor \"$new_path.exe/cmd\" can be found" 
     new_path="$unix_path"
   fi
 
-    fi
+      fi
 
     if test "x$new_path" = x; then
       # It's still not found. Now this is an unrecoverable error.
@@ -35508,10 +35598,10 @@ $as_echo "$as_me: The path of STRIP, which resolves as \"$complete\", is not fou
       if test "x$has_space" != x; then
         { $as_echo "$as_me:${as_lineno-$LINENO}: You might be mixing spaces in the path and extra arguments, which is not allowed." >&5
 $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, which is not allowed." >&6;}
-      fi
-      as_fn_error $? "Cannot locate the the path of STRIP" "$LINENO" 5
-    fi
   fi
+      as_fn_error $? "Cannot locate the the path of STRIP" "$LINENO" 5
+fi
+fi
 
   # Now new_path has a complete unix path to the binary
   if test "x`$ECHO $new_path | $GREP ^/bin/`" != x; then
@@ -35549,16 +35639,16 @@ $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, wh
 
     # Save the first 10 bytes of this path to the storage, so fixpath can work.
     all_fixpath_prefixes=("${all_fixpath_prefixes[@]}" "${new_path:0:10}")
-  fi
+fi
 
-  else
+      else
     # We're on a posix platform. Hooray! :)
-    # First separate the path from the arguments. This will split at the first
-    # space.
-    complete="$STRIP"
-    path="${complete%% *}"
-    tmp="$complete EOL"
-    arguments="${tmp#* }"
+  # First separate the path from the arguments. This will split at the first
+  # space.
+  complete="$STRIP"
+  path="${complete%% *}"
+  tmp="$complete EOL"
+  arguments="${tmp#* }"
 
     # Cannot rely on the command "which" here since it doesn't always work.
     is_absolute_path=`$ECHO "$path" | $GREP ^/`
@@ -35570,7 +35660,7 @@ $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, wh
         if test -f "$p/$path" && test -x "$p/$path"; then
           new_path="$p/$path"
           break
-        fi
+  fi
       done
       IFS="$IFS_save"
     else
@@ -35593,9 +35683,9 @@ $as_echo "$as_me: This might be caused by spaces in the path, which is not allow
   # Now join together the path and the arguments once again
   if test "x$arguments" != xEOL; then
     new_complete="$new_path ${arguments% *}"
-  else
+    else
     new_complete="$new_path"
-  fi
+    fi
 
   if test "x$complete" != "x$new_complete"; then
     STRIP="$new_complete"
@@ -35634,14 +35724,14 @@ do
     ac_cv_path_NM="$as_dir/$ac_word$ac_exec_ext"
     $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
     break 2
-  fi
+    fi
 done
   done
 IFS=$as_save_IFS
 
   ;;
 esac
-fi
+    fi
 NM=$ac_cv_path_NM
 if test -n "$NM"; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $NM" >&5
@@ -35649,7 +35739,7 @@ $as_echo "$NM" >&6; }
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-fi
+  fi
 
 
   test -n "$NM" && break
@@ -35707,7 +35797,7 @@ $as_echo "$NM" >&6; }
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-fi
+  fi
 
 
   test -n "$NM" && break
@@ -35765,7 +35855,7 @@ $as_echo "$NM" >&6; }
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-fi
+  fi
 
 
         if test "x$NM" = x; then
@@ -35784,7 +35874,7 @@ $as_echo "not found" >&6; }
         fi
         { $as_echo "$as_me:${as_lineno-$LINENO}: result: $tool_specified" >&5
 $as_echo "$tool_specified" >&6; }
-      fi
+    fi
     fi
   fi
 
@@ -35812,7 +35902,7 @@ $as_echo "$tool_specified" >&6; }
       && test "x`$LS \"$path\" 2>/dev/null`" != x; then
     new_path=`$CYGPATH -u "$path"`
   fi
-  if test "x$new_path" = x; then
+    if test "x$new_path" = x; then
     # Oops. Which didn't find the executable.
     # The splitting of arguments from the executable at a space might have been incorrect,
     # since paths with space are more likely in Windows. Give it another try with the whole
@@ -35901,21 +35991,21 @@ $as_echo "$as_me: Neither \"$new_path\" nor \"$new_path.exe/cmd\" can be found" 
     fi
   fi
 
-  # remove trailing .exe if any
-  new_path="${new_path/%.exe/}"
+    # remove trailing .exe if any
+    new_path="${new_path/%.exe/}"
 
   elif test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.msys"; then
 
-  # First separate the path from the arguments. This will split at the first
-  # space.
+    # First separate the path from the arguments. This will split at the first
+    # space.
   complete="$NM"
-  path="${complete%% *}"
-  tmp="$complete EOL"
-  arguments="${tmp#* }"
+    path="${complete%% *}"
+    tmp="$complete EOL"
+    arguments="${tmp#* }"
 
   # Input might be given as Windows format, start by converting to
   # unix format.
-  new_path="$path"
+      new_path="$path"
 
   windows_path="$new_path"
   if test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.cygwin"; then
@@ -35946,7 +36036,7 @@ $as_echo "$as_me: Neither \"$new_path\" nor \"$new_path.exe/cmd\" can be found" 
   elif test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.msys"; then
     unix_path=`$ECHO "$windows_path" | $SED -e 's,^\\(.\\):,/\\1,g' -e 's,\\\\,/,g'`
     new_path="$unix_path"
-  fi
+fi
 
 
     new_path=`$WHICH "$new_path" 2> /dev/null`
@@ -35966,7 +36056,7 @@ $as_echo "$as_me: Neither \"$new_path\" nor \"$new_path.exe/cmd\" can be found" 
     new_path="$unix_path"
   fi
 
-    fi
+  fi
 
     if test "x$new_path" = x; then
       # It's still not found. Now this is an unrecoverable error.
@@ -35979,14 +36069,14 @@ $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, wh
       fi
       as_fn_error $? "Cannot locate the the path of NM" "$LINENO" 5
     fi
-  fi
+fi
 
   # Now new_path has a complete unix path to the binary
   if test "x`$ECHO $new_path | $GREP ^/bin/`" != x; then
     # Keep paths in /bin as-is, but remove trailing .exe if any
     new_path="${new_path/%.exe/}"
     # Do not save /bin paths to all_fixpath_prefixes!
-  else
+else
     # Not in mixed or Windows style, start by that.
     new_path=`cmd //c echo $new_path`
 
@@ -36017,7 +36107,7 @@ $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, wh
 
     # Save the first 10 bytes of this path to the storage, so fixpath can work.
     all_fixpath_prefixes=("${all_fixpath_prefixes[@]}" "${new_path:0:10}")
-  fi
+fi
 
   else
     # We're on a posix platform. Hooray! :)
@@ -36039,7 +36129,7 @@ $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, wh
           new_path="$p/$path"
           break
         fi
-      done
+done
       IFS="$IFS_save"
     else
       # This is an absolute path, we can use it without further modifications.
@@ -36061,7 +36151,7 @@ $as_echo "$as_me: This might be caused by spaces in the path, which is not allow
   # Now join together the path and the arguments once again
   if test "x$arguments" != xEOL; then
     new_complete="$new_path ${arguments% *}"
-  else
+    else
     new_complete="$new_path"
   fi
 
@@ -36123,7 +36213,7 @@ fi
   test -n "$GNM" && break
 done
 
-  else
+      else
     # The variable is set, but is it from the command line or the environment?
 
     # Try to remove the string !GNM! from our list.
@@ -36134,7 +36224,7 @@ done
       if test "xGNM" != xBASH; then
         { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Ignoring value of GNM from the environment. Use command line variables instead." >&5
 $as_echo "$as_me: WARNING: Ignoring value of GNM from the environment. Use command line variables instead." >&2;}
-      fi
+  fi
       # Try to locate tool using the code snippet
       for ac_prog in gnm
 do
@@ -36144,7 +36234,7 @@ set dummy $ac_prog; ac_word=$2
 $as_echo_n "checking for $ac_word... " >&6; }
 if ${ac_cv_path_GNM+:} false; then :
   $as_echo_n "(cached) " >&6
-else
+    else
   case $GNM in
   [\\/]* | ?:[\\/]*)
   ac_cv_path_GNM="$GNM" # Let the user override the test with a path.
@@ -36225,7 +36315,7 @@ IFS=$as_save_IFS
 
   ;;
 esac
-fi
+    fi
 GNM=$ac_cv_path_GNM
 if test -n "$GNM"; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $GNM" >&5
@@ -36233,7 +36323,7 @@ $as_echo "$GNM" >&6; }
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-fi
+  fi
 
 
         if test "x$GNM" = x; then
@@ -36366,8 +36456,8 @@ $as_echo "$as_me: Neither \"$new_path\" nor \"$new_path.exe/cmd\" can be found" 
       # The path is in a Cygwin special directory (e.g. /home). We need this converted to
       # a path prefixed by /cygdrive for fixpath to work.
       new_path="$CYGWIN_ROOT_PATH$input_path"
-    fi
-  fi
+fi
+fi
 
   # remove trailing .exe if any
   new_path="${new_path/%.exe/}"
@@ -36392,7 +36482,7 @@ $as_echo "$as_me: Neither \"$new_path\" nor \"$new_path.exe/cmd\" can be found" 
   elif test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.msys"; then
     unix_path=`$ECHO "$windows_path" | $SED -e 's,^\\(.\\):,/\\1,g' -e 's,\\\\,/,g'`
     new_path="$unix_path"
-  fi
+fi
 
 
   # Now try to locate executable using which
@@ -36432,9 +36522,9 @@ $as_echo "$as_me: Neither \"$new_path\" nor \"$new_path.exe/cmd\" can be found" 
   elif test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.msys"; then
     unix_path=`$ECHO "$windows_path" | $SED -e 's,^\\(.\\):,/\\1,g' -e 's,\\\\,/,g'`
     new_path="$unix_path"
-  fi
+        fi
 
-    fi
+        fi
 
     if test "x$new_path" = x; then
       # It's still not found. Now this is an unrecoverable error.
@@ -36489,12 +36579,12 @@ $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, wh
 
   else
     # We're on a posix platform. Hooray! :)
-    # First separate the path from the arguments. This will split at the first
-    # space.
-    complete="$GNM"
-    path="${complete%% *}"
-    tmp="$complete EOL"
-    arguments="${tmp#* }"
+  # First separate the path from the arguments. This will split at the first
+  # space.
+  complete="$GNM"
+  path="${complete%% *}"
+  tmp="$complete EOL"
+  arguments="${tmp#* }"
 
     # Cannot rely on the command "which" here since it doesn't always work.
     is_absolute_path=`$ECHO "$path" | $GREP ^/`
@@ -36603,7 +36693,7 @@ done
       if test "xMCS" != xBASH; then
         { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Ignoring value of MCS from the environment. Use command line variables instead." >&5
 $as_echo "$as_me: WARNING: Ignoring value of MCS from the environment. Use command line variables instead." >&2;}
-      fi
+    fi
       # Try to locate tool using the code snippet
       for ac_prog in mcs
 do
@@ -36629,14 +36719,14 @@ do
     ac_cv_path_MCS="$as_dir/$ac_word$ac_exec_ext"
     $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
     break 2
-  fi
+      fi
 done
   done
 IFS=$as_save_IFS
 
   ;;
 esac
-fi
+    fi
 MCS=$ac_cv_path_MCS
 if test -n "$MCS"; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $MCS" >&5
@@ -36644,7 +36734,7 @@ $as_echo "$MCS" >&6; }
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-fi
+  fi
 
 
   test -n "$MCS" && break
@@ -36671,7 +36761,7 @@ set dummy $tool_basename; ac_word=$2
 $as_echo_n "checking for $ac_word... " >&6; }
 if ${ac_cv_path_MCS+:} false; then :
   $as_echo_n "(cached) " >&6
-else
+    else
   case $MCS in
   [\\/]* | ?:[\\/]*)
   ac_cv_path_MCS="$MCS" # Let the user override the test with a path.
@@ -36694,15 +36784,15 @@ IFS=$as_save_IFS
 
   ;;
 esac
-fi
+    fi
 MCS=$ac_cv_path_MCS
 if test -n "$MCS"; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $MCS" >&5
 $as_echo "$MCS" >&6; }
-else
+  else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-fi
+  fi
 
 
         if test "x$MCS" = x; then
@@ -36718,10 +36808,10 @@ $as_echo_n "checking for MCS... " >&6; }
           { $as_echo "$as_me:${as_lineno-$LINENO}: result: not found" >&5
 $as_echo "not found" >&6; }
           as_fn_error $? "User supplied tool MCS=$tool_specified does not exist or is not executable" "$LINENO" 5
-        fi
+    fi
         { $as_echo "$as_me:${as_lineno-$LINENO}: result: $tool_specified" >&5
 $as_echo "$tool_specified" >&6; }
-      fi
+  fi
     fi
   fi
 
@@ -36764,7 +36854,7 @@ $as_echo "$tool_specified" >&6; }
         && test "x`$ECHO \"$path\" | $GREP -i -e \"\\.bat$\" -e \"\\.cmd$\"`" != x \
         && test "x`$LS \"$path\" 2>/dev/null`" != x; then
       new_path=`$CYGPATH -u "$path"`
-    fi
+        fi
     if test "x$new_path" = x; then
       # It's still not found. Now this is an unrecoverable error.
       { $as_echo "$as_me:${as_lineno-$LINENO}: The path of MCS, which resolves as \"$complete\", is not found." >&5
@@ -36883,7 +36973,7 @@ $as_echo "$as_me: Neither \"$new_path\" nor \"$new_path.exe/cmd\" can be found" 
   elif test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.msys"; then
     unix_path=`$ECHO "$windows_path" | $SED -e 's,^\\(.\\):,/\\1,g' -e 's,\\\\,/,g'`
     new_path="$unix_path"
-  fi
+fi
 
 
     new_path=`$WHICH "$new_path" 2> /dev/null`
@@ -36915,7 +37005,7 @@ $as_echo "$as_me: The path of MCS, which resolves as \"$complete\", is not found
 $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, which is not allowed." >&6;}
       fi
       as_fn_error $? "Cannot locate the the path of MCS" "$LINENO" 5
-    fi
+      fi
   fi
 
   # Now new_path has a complete unix path to the binary
@@ -36923,7 +37013,7 @@ $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, wh
     # Keep paths in /bin as-is, but remove trailing .exe if any
     new_path="${new_path/%.exe/}"
     # Do not save /bin paths to all_fixpath_prefixes!
-  else
+else
     # Not in mixed or Windows style, start by that.
     new_path=`cmd //c echo $new_path`
 
@@ -36936,7 +37026,7 @@ $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, wh
   if test "x$has_forbidden_chars" != x; then
     # Now convert it to mixed DOS-style, short mode (no spaces, and / instead of \)
     new_path=`cmd /c "for %A in (\"$input_path\") do @echo %~sA"|$TR \\\\\\\\ / | $TR 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' 'abcdefghijklmnopqrstuvwxyz'`
-  fi
+fi
 
     # Output is in $new_path
 
@@ -36956,14 +37046,14 @@ $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, wh
     all_fixpath_prefixes=("${all_fixpath_prefixes[@]}" "${new_path:0:10}")
   fi
 
-  else
+else
     # We're on a posix platform. Hooray! :)
     # First separate the path from the arguments. This will split at the first
-    # space.
-    complete="$MCS"
-    path="${complete%% *}"
-    tmp="$complete EOL"
-    arguments="${tmp#* }"
+  # space.
+  complete="$MCS"
+  path="${complete%% *}"
+  tmp="$complete EOL"
+  arguments="${tmp#* }"
 
     # Cannot rely on the command "which" here since it doesn't always work.
     is_absolute_path=`$ECHO "$path" | $GREP ^/`
@@ -36975,7 +37065,7 @@ $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, wh
         if test -f "$p/$path" && test -x "$p/$path"; then
           new_path="$p/$path"
           break
-        fi
+  fi
       done
       IFS="$IFS_save"
     else
@@ -37029,7 +37119,7 @@ if ${ac_cv_prog_STRIP+:} false; then :
 else
   if test -n "$STRIP"; then
   ac_cv_prog_STRIP="$STRIP" # Let the user override the test.
-else
+    else
 as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
 for as_dir in $PATH
 do
@@ -37046,20 +37136,20 @@ done
 IFS=$as_save_IFS
 
 fi
-fi
+    fi
 STRIP=$ac_cv_prog_STRIP
 if test -n "$STRIP"; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $STRIP" >&5
 $as_echo "$STRIP" >&6; }
-else
+  else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-fi
+  fi
 
 
     test -n "$STRIP" && break
   done
-fi
+    fi
 if test -z "$STRIP"; then
   ac_ct_STRIP=$STRIP
   for ac_prog in strip
@@ -37090,7 +37180,7 @@ done
 IFS=$as_save_IFS
 
 fi
-fi
+    fi
 ac_ct_STRIP=$ac_cv_prog_ac_ct_STRIP
 if test -n "$ac_ct_STRIP"; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_ct_STRIP" >&5
@@ -37098,7 +37188,7 @@ $as_echo "$ac_ct_STRIP" >&6; }
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-fi
+  fi
 
 
   test -n "$ac_ct_STRIP" && break
@@ -37167,12 +37257,12 @@ $as_echo "$STRIP" >&6; }
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-fi
+  fi
 
 
     test -n "$STRIP" && break
   done
-fi
+  fi
 if test -z "$STRIP"; then
   ac_ct_STRIP=$STRIP
   for ac_prog in strip
@@ -37197,21 +37287,21 @@ do
     ac_cv_prog_ac_ct_STRIP="$ac_prog"
     $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
     break 2
-  fi
+    fi
 done
   done
 IFS=$as_save_IFS
 
-fi
-fi
+      fi
+    fi
 ac_ct_STRIP=$ac_cv_prog_ac_ct_STRIP
 if test -n "$ac_ct_STRIP"; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_ct_STRIP" >&5
 $as_echo "$ac_ct_STRIP" >&6; }
-else
+  else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-fi
+  fi
 
 
   test -n "$ac_ct_STRIP" && break
@@ -37227,10 +37317,10 @@ $as_echo "$as_me: WARNING: using cross tools not prefixed with host triplet" >&2
 ac_tool_warned=yes ;;
 esac
     STRIP=$ac_ct_STRIP
-  fi
-fi
+        fi
+    fi
 
-    else
+  else
       # If it succeeded, then it was overridden by the user. We will use it
       # for the tool.
 
@@ -37257,7 +37347,7 @@ else
   ac_cv_path_STRIP="$STRIP" # Let the user override the test with a path.
   ;;
   *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
 for as_dir in $PATH
 do
   IFS=$as_save_IFS
@@ -37287,8 +37377,8 @@ fi
 
         if test "x$STRIP" = x; then
           as_fn_error $? "User supplied tool $tool_basename could not be found" "$LINENO" 5
-        fi
-      else
+fi
+else
         # Otherwise we believe it is a complete path. Use it as it is.
         { $as_echo "$as_me:${as_lineno-$LINENO}: Will use user supplied tool STRIP=$tool_specified" >&5
 $as_echo "$as_me: Will use user supplied tool STRIP=$tool_specified" >&6;}
@@ -37405,8 +37495,8 @@ $as_echo "$as_me: Neither \"$new_path\" nor \"$new_path.exe/cmd\" can be found" 
       # Now convert it back to Unix-stile (cygpath)
       input_path=`$CYGPATH -u "$shortmode_path"`
       new_path="$input_path"
-    fi
-  fi
+fi
+fi
 
   test_cygdrive_prefix=`$ECHO $input_path | $GREP ^/cygdrive/`
   if test "x$test_cygdrive_prefix" = x; then
@@ -37416,7 +37506,7 @@ $as_echo "$as_me: Neither \"$new_path\" nor \"$new_path.exe/cmd\" can be found" 
       # a path prefixed by /cygdrive for fixpath to work.
       new_path="$CYGWIN_ROOT_PATH$input_path"
     fi
-  fi
+fi
 
   # remove trailing .exe if any
   new_path="${new_path/%.exe/}"
@@ -37463,7 +37553,7 @@ $as_echo "$as_me: Neither \"$new_path\" nor \"$new_path.exe/cmd\" can be found" 
   elif test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.msys"; then
     unix_path=`$ECHO "$windows_path" | $SED -e 's,^\\(.\\):,/\\1,g' -e 's,\\\\,/,g'`
     new_path="$unix_path"
-  fi
+fi
 
 
     new_path=`$WHICH "$new_path" 2> /dev/null`
@@ -37481,9 +37571,9 @@ $as_echo "$as_me: Neither \"$new_path\" nor \"$new_path.exe/cmd\" can be found" 
   elif test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.msys"; then
     unix_path=`$ECHO "$windows_path" | $SED -e 's,^\\(.\\):,/\\1,g' -e 's,\\\\,/,g'`
     new_path="$unix_path"
-  fi
+      fi
 
-    fi
+  fi
 
     if test "x$new_path" = x; then
       # It's still not found. Now this is an unrecoverable error.
@@ -37493,10 +37583,10 @@ $as_echo "$as_me: The path of STRIP, which resolves as \"$complete\", is not fou
       if test "x$has_space" != x; then
         { $as_echo "$as_me:${as_lineno-$LINENO}: You might be mixing spaces in the path and extra arguments, which is not allowed." >&5
 $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, which is not allowed." >&6;}
-      fi
+fi
       as_fn_error $? "Cannot locate the the path of STRIP" "$LINENO" 5
-    fi
-  fi
+fi
+fi
 
   # Now new_path has a complete unix path to the binary
   if test "x`$ECHO $new_path | $GREP ^/bin/`" != x; then
@@ -37516,7 +37606,7 @@ $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, wh
   if test "x$has_forbidden_chars" != x; then
     # Now convert it to mixed DOS-style, short mode (no spaces, and / instead of \)
     new_path=`cmd /c "for %A in (\"$input_path\") do @echo %~sA"|$TR \\\\\\\\ / | $TR 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' 'abcdefghijklmnopqrstuvwxyz'`
-  fi
+fi
 
     # Output is in $new_path
 
@@ -37527,7 +37617,7 @@ $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, wh
   elif test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.msys"; then
     unix_path=`$ECHO "$windows_path" | $SED -e 's,^\\(.\\):,/\\1,g' -e 's,\\\\,/,g'`
     new_path="$unix_path"
-  fi
+fi
 
     # remove trailing .exe if any
     new_path="${new_path/%.exe/}"
@@ -37536,7 +37626,7 @@ $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, wh
     all_fixpath_prefixes=("${all_fixpath_prefixes[@]}" "${new_path:0:10}")
   fi
 
-  else
+    else
     # We're on a posix platform. Hooray! :)
     # First separate the path from the arguments. This will split at the first
     # space.
@@ -37558,10 +37648,10 @@ $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, wh
         fi
       done
       IFS="$IFS_save"
-    else
+else
       # This is an absolute path, we can use it without further modifications.
       new_path="$path"
-    fi
+  fi
 
     if test "x$new_path" = x; then
       { $as_echo "$as_me:${as_lineno-$LINENO}: The path of STRIP, which resolves as \"$complete\", is not found." >&5
@@ -37572,21 +37662,21 @@ $as_echo "$as_me: The path of STRIP, which resolves as \"$complete\", is not fou
 $as_echo "$as_me: This might be caused by spaces in the path, which is not allowed." >&6;}
       fi
       as_fn_error $? "Cannot locate the the path of STRIP" "$LINENO" 5
-    fi
+fi
   fi
 
   # Now join together the path and the arguments once again
   if test "x$arguments" != xEOL; then
     new_complete="$new_path ${arguments% *}"
-  else
+      else
     new_complete="$new_path"
-  fi
+        fi
 
   if test "x$complete" != "x$new_complete"; then
     STRIP="$new_complete"
     { $as_echo "$as_me:${as_lineno-$LINENO}: Rewriting STRIP to \"$new_complete\"" >&5
 $as_echo "$as_me: Rewriting STRIP to \"$new_complete\"" >&6;}
-  fi
+    fi
 
 
 
@@ -37623,8 +37713,8 @@ done
   done
 IFS=$as_save_IFS
 
-fi
-fi
+  fi
+    fi
 NM=$ac_cv_prog_NM
 if test -n "$NM"; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $NM" >&5
@@ -37632,12 +37722,12 @@ $as_echo "$NM" >&6; }
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-fi
+      fi
 
 
     test -n "$NM" && break
   done
-fi
+    fi
 if test -z "$NM"; then
   ac_ct_NM=$NM
   for ac_prog in nm
@@ -37668,15 +37758,15 @@ done
 IFS=$as_save_IFS
 
 fi
-fi
+    fi
 ac_ct_NM=$ac_cv_prog_ac_ct_NM
 if test -n "$ac_ct_NM"; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_ct_NM" >&5
 $as_echo "$ac_ct_NM" >&6; }
-else
+  else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-fi
+  fi
 
 
   test -n "$ac_ct_NM" && break
@@ -37692,8 +37782,8 @@ $as_echo "$as_me: WARNING: using cross tools not prefixed with host triplet" >&2
 ac_tool_warned=yes ;;
 esac
     NM=$ac_ct_NM
+    fi
   fi
-fi
 
   else
     # The variable is set, but is it from the command line or the environment?
@@ -37706,7 +37796,7 @@ fi
       if test "xNM" != xBASH; then
         { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Ignoring value of NM from the environment. Use command line variables instead." >&5
 $as_echo "$as_me: WARNING: Ignoring value of NM from the environment. Use command line variables instead." >&2;}
-      fi
+    fi
       # Try to locate tool using the code snippet
       if test -n "$ac_tool_prefix"; then
   for ac_prog in nm
@@ -37737,7 +37827,7 @@ done
 IFS=$as_save_IFS
 
 fi
-fi
+  fi
 NM=$ac_cv_prog_NM
 if test -n "$NM"; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $NM" >&5
@@ -37745,12 +37835,12 @@ $as_echo "$NM" >&6; }
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-fi
+  fi
 
 
     test -n "$NM" && break
   done
-fi
+  fi
 if test -z "$NM"; then
   ac_ct_NM=$NM
   for ac_prog in nm
@@ -37775,21 +37865,21 @@ do
     ac_cv_prog_ac_ct_NM="$ac_prog"
     $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
     break 2
-  fi
+    fi
 done
   done
 IFS=$as_save_IFS
 
-fi
-fi
+      fi
+    fi
 ac_ct_NM=$ac_cv_prog_ac_ct_NM
 if test -n "$ac_ct_NM"; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_ct_NM" >&5
 $as_echo "$ac_ct_NM" >&6; }
-else
+  else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-fi
+  fi
 
 
   test -n "$ac_ct_NM" && break
@@ -37805,10 +37895,10 @@ $as_echo "$as_me: WARNING: using cross tools not prefixed with host triplet" >&2
 ac_tool_warned=yes ;;
 esac
     NM=$ac_ct_NM
+    fi
   fi
-fi
 
-    else
+  else
       # If it succeeded, then it was overridden by the user. We will use it
       # for the tool.
 
@@ -37835,7 +37925,7 @@ else
   ac_cv_path_NM="$NM" # Let the user override the test with a path.
   ;;
   *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
 for as_dir in $PATH
 do
   IFS=$as_save_IFS
@@ -37865,8 +37955,8 @@ fi
 
         if test "x$NM" = x; then
           as_fn_error $? "User supplied tool $tool_basename could not be found" "$LINENO" 5
-        fi
-      else
+fi
+else
         # Otherwise we believe it is a complete path. Use it as it is.
         { $as_echo "$as_me:${as_lineno-$LINENO}: Will use user supplied tool NM=$tool_specified" >&5
 $as_echo "$as_me: Will use user supplied tool NM=$tool_specified" >&6;}
@@ -37906,7 +37996,7 @@ $as_echo "$tool_specified" >&6; }
       && test "x`$ECHO \"$path\" | $GREP -i -e \"\\.bat$\" -e \"\\.cmd$\"`" != x \
       && test "x`$LS \"$path\" 2>/dev/null`" != x; then
     new_path=`$CYGPATH -u "$path"`
-  fi
+fi
   if test "x$new_path" = x; then
     # Oops. Which didn't find the executable.
     # The splitting of arguments from the executable at a space might have been incorrect,
@@ -37933,7 +38023,7 @@ $as_echo "$as_me: The path of NM, which resolves as \"$complete\", is not found.
 $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, which is not allowed." >&6;}
       fi
       as_fn_error $? "Cannot locate the the path of NM" "$LINENO" 5
-    fi
+fi
   fi
 
   # Cygwin tries to hide some aspects of the Windows file system, such that binaries are
@@ -37958,9 +38048,9 @@ $as_echo "$as_me: The path of NM, which resolves as \"$new_path\", is invalid." 
 $as_echo "$as_me: Neither \"$new_path\" nor \"$new_path.exe/cmd\" can be found" >&6;}
       as_fn_error $? "Cannot locate the the path of NM" "$LINENO" 5
     fi
-  else
+else
     input_to_shortpath="$new_path"
-  fi
+fi
 
   # Call helper function which possibly converts this using DOS-style short mode.
   # If so, the updated path is stored in $new_path.
@@ -37993,8 +38083,8 @@ $as_echo "$as_me: Neither \"$new_path\" nor \"$new_path.exe/cmd\" can be found" 
       # The path is in a Cygwin special directory (e.g. /home). We need this converted to
       # a path prefixed by /cygdrive for fixpath to work.
       new_path="$CYGWIN_ROOT_PATH$input_path"
-    fi
   fi
+fi
 
   # remove trailing .exe if any
   new_path="${new_path/%.exe/}"
@@ -38019,7 +38109,7 @@ $as_echo "$as_me: Neither \"$new_path\" nor \"$new_path.exe/cmd\" can be found" 
   elif test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.msys"; then
     unix_path=`$ECHO "$windows_path" | $SED -e 's,^\\(.\\):,/\\1,g' -e 's,\\\\,/,g'`
     new_path="$unix_path"
-  fi
+      fi
 
 
   # Now try to locate executable using which
@@ -38059,9 +38149,9 @@ $as_echo "$as_me: Neither \"$new_path\" nor \"$new_path.exe/cmd\" can be found" 
   elif test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.msys"; then
     unix_path=`$ECHO "$windows_path" | $SED -e 's,^\\(.\\):,/\\1,g' -e 's,\\\\,/,g'`
     new_path="$unix_path"
-  fi
+fi
 
-    fi
+  fi
 
     if test "x$new_path" = x; then
       # It's still not found. Now this is an unrecoverable error.
@@ -38071,9 +38161,9 @@ $as_echo "$as_me: The path of NM, which resolves as \"$complete\", is not found.
       if test "x$has_space" != x; then
         { $as_echo "$as_me:${as_lineno-$LINENO}: You might be mixing spaces in the path and extra arguments, which is not allowed." >&5
 $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, which is not allowed." >&6;}
-      fi
+fi
       as_fn_error $? "Cannot locate the the path of NM" "$LINENO" 5
-    fi
+fi
   fi
 
   # Now new_path has a complete unix path to the binary
@@ -38081,7 +38171,7 @@ $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, wh
     # Keep paths in /bin as-is, but remove trailing .exe if any
     new_path="${new_path/%.exe/}"
     # Do not save /bin paths to all_fixpath_prefixes!
-  else
+else
     # Not in mixed or Windows style, start by that.
     new_path=`cmd //c echo $new_path`
 
@@ -38094,7 +38184,7 @@ $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, wh
   if test "x$has_forbidden_chars" != x; then
     # Now convert it to mixed DOS-style, short mode (no spaces, and / instead of \)
     new_path=`cmd /c "for %A in (\"$input_path\") do @echo %~sA"|$TR \\\\\\\\ / | $TR 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' 'abcdefghijklmnopqrstuvwxyz'`
-  fi
+fi
 
     # Output is in $new_path
 
@@ -38112,9 +38202,9 @@ $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, wh
 
     # Save the first 10 bytes of this path to the storage, so fixpath can work.
     all_fixpath_prefixes=("${all_fixpath_prefixes[@]}" "${new_path:0:10}")
-  fi
+fi
 
-  else
+    else
     # We're on a posix platform. Hooray! :)
     # First separate the path from the arguments. This will split at the first
     # space.
@@ -38136,10 +38226,10 @@ $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, wh
         fi
       done
       IFS="$IFS_save"
-    else
+else
       # This is an absolute path, we can use it without further modifications.
       new_path="$path"
-    fi
+  fi
 
     if test "x$new_path" = x; then
       { $as_echo "$as_me:${as_lineno-$LINENO}: The path of NM, which resolves as \"$complete\", is not found." >&5
@@ -38150,21 +38240,21 @@ $as_echo "$as_me: The path of NM, which resolves as \"$complete\", is not found.
 $as_echo "$as_me: This might be caused by spaces in the path, which is not allowed." >&6;}
       fi
       as_fn_error $? "Cannot locate the the path of NM" "$LINENO" 5
-    fi
-  fi
+fi
+fi
 
   # Now join together the path and the arguments once again
   if test "x$arguments" != xEOL; then
     new_complete="$new_path ${arguments% *}"
-  else
+      else
     new_complete="$new_path"
-  fi
+        fi
 
   if test "x$complete" != "x$new_complete"; then
     NM="$new_complete"
     { $as_echo "$as_me:${as_lineno-$LINENO}: Rewriting NM to \"$new_complete\"" >&5
 $as_echo "$as_me: Rewriting NM to \"$new_complete\"" >&6;}
-  fi
+      fi
 
     GNM="$NM"
 
@@ -38208,8 +38298,8 @@ done
   done
 IFS=$as_save_IFS
 
-fi
-fi
+  fi
+    fi
 OBJCOPY=$ac_cv_prog_OBJCOPY
 if test -n "$OBJCOPY"; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $OBJCOPY" >&5
@@ -38217,12 +38307,12 @@ $as_echo "$OBJCOPY" >&6; }
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-fi
+      fi
 
 
     test -n "$OBJCOPY" && break
   done
-fi
+    fi
 if test -z "$OBJCOPY"; then
   ac_ct_OBJCOPY=$OBJCOPY
   for ac_prog in gobjcopy objcopy
@@ -38253,15 +38343,15 @@ done
 IFS=$as_save_IFS
 
 fi
-fi
+    fi
 ac_ct_OBJCOPY=$ac_cv_prog_ac_ct_OBJCOPY
 if test -n "$ac_ct_OBJCOPY"; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_ct_OBJCOPY" >&5
 $as_echo "$ac_ct_OBJCOPY" >&6; }
-else
+  else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-fi
+  fi
 
 
   test -n "$ac_ct_OBJCOPY" && break
@@ -38277,8 +38367,8 @@ $as_echo "$as_me: WARNING: using cross tools not prefixed with host triplet" >&2
 ac_tool_warned=yes ;;
 esac
     OBJCOPY=$ac_ct_OBJCOPY
+    fi
   fi
-fi
 
   else
     # The variable is set, but is it from the command line or the environment?
@@ -38291,7 +38381,7 @@ fi
       if test "xOBJCOPY" != xBASH; then
         { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Ignoring value of OBJCOPY from the environment. Use command line variables instead." >&5
 $as_echo "$as_me: WARNING: Ignoring value of OBJCOPY from the environment. Use command line variables instead." >&2;}
-      fi
+    fi
       # Try to locate tool using the code snippet
       if test -n "$ac_tool_prefix"; then
   for ac_prog in gobjcopy objcopy
@@ -38322,7 +38412,7 @@ done
 IFS=$as_save_IFS
 
 fi
-fi
+  fi
 OBJCOPY=$ac_cv_prog_OBJCOPY
 if test -n "$OBJCOPY"; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $OBJCOPY" >&5
@@ -38330,12 +38420,12 @@ $as_echo "$OBJCOPY" >&6; }
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-fi
+  fi
 
 
     test -n "$OBJCOPY" && break
   done
-fi
+  fi
 if test -z "$OBJCOPY"; then
   ac_ct_OBJCOPY=$OBJCOPY
   for ac_prog in gobjcopy objcopy
@@ -38360,21 +38450,21 @@ do
     ac_cv_prog_ac_ct_OBJCOPY="$ac_prog"
     $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
     break 2
-  fi
+    fi
 done
   done
 IFS=$as_save_IFS
 
-fi
-fi
+      fi
+    fi
 ac_ct_OBJCOPY=$ac_cv_prog_ac_ct_OBJCOPY
 if test -n "$ac_ct_OBJCOPY"; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_ct_OBJCOPY" >&5
 $as_echo "$ac_ct_OBJCOPY" >&6; }
-else
+  else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-fi
+  fi
 
 
   test -n "$ac_ct_OBJCOPY" && break
@@ -38390,10 +38480,10 @@ $as_echo "$as_me: WARNING: using cross tools not prefixed with host triplet" >&2
 ac_tool_warned=yes ;;
 esac
     OBJCOPY=$ac_ct_OBJCOPY
-  fi
-fi
+        fi
+    fi
 
-    else
+  else
       # If it succeeded, then it was overridden by the user. We will use it
       # for the tool.
 
@@ -38420,7 +38510,7 @@ else
   ac_cv_path_OBJCOPY="$OBJCOPY" # Let the user override the test with a path.
   ;;
   *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
 for as_dir in $PATH
 do
   IFS=$as_save_IFS
@@ -38450,8 +38540,8 @@ fi
 
         if test "x$OBJCOPY" = x; then
           as_fn_error $? "User supplied tool $tool_basename could not be found" "$LINENO" 5
-        fi
-      else
+fi
+else
         # Otherwise we believe it is a complete path. Use it as it is.
         { $as_echo "$as_me:${as_lineno-$LINENO}: Will use user supplied tool OBJCOPY=$tool_specified" >&5
 $as_echo "$as_me: Will use user supplied tool OBJCOPY=$tool_specified" >&6;}
@@ -38461,12 +38551,12 @@ $as_echo_n "checking for OBJCOPY... " >&6; }
           { $as_echo "$as_me:${as_lineno-$LINENO}: result: not found" >&5
 $as_echo "not found" >&6; }
           as_fn_error $? "User supplied tool OBJCOPY=$tool_specified does not exist or is not executable" "$LINENO" 5
-        fi
+  fi
         { $as_echo "$as_me:${as_lineno-$LINENO}: result: $tool_specified" >&5
 $as_echo "$tool_specified" >&6; }
-      fi
-    fi
-  fi
+fi
+fi
+fi
 
 
     # Only call fixup if objcopy was found.
@@ -38538,16 +38628,16 @@ $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, wh
       input_to_shortpath="${new_path}.exe"
     elif test -f "${new_path}.cmd"; then
       input_to_shortpath="${new_path}.cmd"
-    else
+  else
       { $as_echo "$as_me:${as_lineno-$LINENO}: The path of OBJCOPY, which resolves as \"$new_path\", is invalid." >&5
 $as_echo "$as_me: The path of OBJCOPY, which resolves as \"$new_path\", is invalid." >&6;}
       { $as_echo "$as_me:${as_lineno-$LINENO}: Neither \"$new_path\" nor \"$new_path.exe/cmd\" can be found" >&5
 $as_echo "$as_me: Neither \"$new_path\" nor \"$new_path.exe/cmd\" can be found" >&6;}
       as_fn_error $? "Cannot locate the the path of OBJCOPY" "$LINENO" 5
-    fi
+  fi
   else
     input_to_shortpath="$new_path"
-  fi
+fi
 
   # Call helper function which possibly converts this using DOS-style short mode.
   # If so, the updated path is stored in $new_path.
@@ -38580,7 +38670,7 @@ $as_echo "$as_me: Neither \"$new_path\" nor \"$new_path.exe/cmd\" can be found" 
       # The path is in a Cygwin special directory (e.g. /home). We need this converted to
       # a path prefixed by /cygdrive for fixpath to work.
       new_path="$CYGWIN_ROOT_PATH$input_path"
-    fi
+      fi
   fi
 
   # remove trailing .exe if any
@@ -38606,7 +38696,7 @@ $as_echo "$as_me: Neither \"$new_path\" nor \"$new_path.exe/cmd\" can be found" 
   elif test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.msys"; then
     unix_path=`$ECHO "$windows_path" | $SED -e 's,^\\(.\\):,/\\1,g' -e 's,\\\\,/,g'`
     new_path="$unix_path"
-  fi
+fi
 
 
   # Now try to locate executable using which
@@ -38628,7 +38718,7 @@ $as_echo "$as_me: Neither \"$new_path\" nor \"$new_path.exe/cmd\" can be found" 
   elif test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.msys"; then
     unix_path=`$ECHO "$windows_path" | $SED -e 's,^\\(.\\):,/\\1,g' -e 's,\\\\,/,g'`
     new_path="$unix_path"
-  fi
+fi
 
 
     new_path=`$WHICH "$new_path" 2> /dev/null`
@@ -38646,9 +38736,9 @@ $as_echo "$as_me: Neither \"$new_path\" nor \"$new_path.exe/cmd\" can be found" 
   elif test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.msys"; then
     unix_path=`$ECHO "$windows_path" | $SED -e 's,^\\(.\\):,/\\1,g' -e 's,\\\\,/,g'`
     new_path="$unix_path"
-  fi
+fi
 
-    fi
+  fi
 
     if test "x$new_path" = x; then
       # It's still not found. Now this is an unrecoverable error.
@@ -38658,9 +38748,9 @@ $as_echo "$as_me: The path of OBJCOPY, which resolves as \"$complete\", is not f
       if test "x$has_space" != x; then
         { $as_echo "$as_me:${as_lineno-$LINENO}: You might be mixing spaces in the path and extra arguments, which is not allowed." >&5
 $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, which is not allowed." >&6;}
-      fi
+fi
       as_fn_error $? "Cannot locate the the path of OBJCOPY" "$LINENO" 5
-    fi
+fi
   fi
 
   # Now new_path has a complete unix path to the binary
@@ -38668,7 +38758,7 @@ $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, wh
     # Keep paths in /bin as-is, but remove trailing .exe if any
     new_path="${new_path/%.exe/}"
     # Do not save /bin paths to all_fixpath_prefixes!
-  else
+else
     # Not in mixed or Windows style, start by that.
     new_path=`cmd //c echo $new_path`
 
@@ -38681,7 +38771,7 @@ $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, wh
   if test "x$has_forbidden_chars" != x; then
     # Now convert it to mixed DOS-style, short mode (no spaces, and / instead of \)
     new_path=`cmd /c "for %A in (\"$input_path\") do @echo %~sA"|$TR \\\\\\\\ / | $TR 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' 'abcdefghijklmnopqrstuvwxyz'`
-  fi
+fi
 
     # Output is in $new_path
 
@@ -38701,7 +38791,7 @@ $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, wh
     all_fixpath_prefixes=("${all_fixpath_prefixes[@]}" "${new_path:0:10}")
   fi
 
-  else
+    else
     # We're on a posix platform. Hooray! :)
     # First separate the path from the arguments. This will split at the first
     # space.
@@ -38723,10 +38813,10 @@ $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, wh
         fi
       done
       IFS="$IFS_save"
-    else
+else
       # This is an absolute path, we can use it without further modifications.
       new_path="$path"
-    fi
+  fi
 
     if test "x$new_path" = x; then
       { $as_echo "$as_me:${as_lineno-$LINENO}: The path of OBJCOPY, which resolves as \"$complete\", is not found." >&5
@@ -38737,21 +38827,21 @@ $as_echo "$as_me: The path of OBJCOPY, which resolves as \"$complete\", is not f
 $as_echo "$as_me: This might be caused by spaces in the path, which is not allowed." >&6;}
       fi
       as_fn_error $? "Cannot locate the the path of OBJCOPY" "$LINENO" 5
-    fi
-  fi
+fi
+fi
 
   # Now join together the path and the arguments once again
   if test "x$arguments" != xEOL; then
     new_complete="$new_path ${arguments% *}"
-  else
+      else
     new_complete="$new_path"
-  fi
+        fi
 
   if test "x$complete" != "x$new_complete"; then
     OBJCOPY="$new_complete"
     { $as_echo "$as_me:${as_lineno-$LINENO}: Rewriting OBJCOPY to \"$new_complete\"" >&5
 $as_echo "$as_me: Rewriting OBJCOPY to \"$new_complete\"" >&6;}
-  fi
+      fi
 
     fi
   fi
@@ -38791,8 +38881,8 @@ done
   done
 IFS=$as_save_IFS
 
-fi
-fi
+  fi
+    fi
 OBJDUMP=$ac_cv_prog_OBJDUMP
 if test -n "$OBJDUMP"; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $OBJDUMP" >&5
@@ -38800,12 +38890,12 @@ $as_echo "$OBJDUMP" >&6; }
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-fi
+      fi
 
 
     test -n "$OBJDUMP" && break
   done
-fi
+    fi
 if test -z "$OBJDUMP"; then
   ac_ct_OBJDUMP=$OBJDUMP
   for ac_prog in gobjdump objdump
@@ -38836,15 +38926,15 @@ done
 IFS=$as_save_IFS
 
 fi
-fi
+    fi
 ac_ct_OBJDUMP=$ac_cv_prog_ac_ct_OBJDUMP
 if test -n "$ac_ct_OBJDUMP"; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_ct_OBJDUMP" >&5
 $as_echo "$ac_ct_OBJDUMP" >&6; }
-else
+  else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-fi
+  fi
 
 
   test -n "$ac_ct_OBJDUMP" && break
@@ -38860,8 +38950,8 @@ $as_echo "$as_me: WARNING: using cross tools not prefixed with host triplet" >&2
 ac_tool_warned=yes ;;
 esac
     OBJDUMP=$ac_ct_OBJDUMP
+    fi
   fi
-fi
 
   else
     # The variable is set, but is it from the command line or the environment?
@@ -38874,7 +38964,7 @@ fi
       if test "xOBJDUMP" != xBASH; then
         { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Ignoring value of OBJDUMP from the environment. Use command line variables instead." >&5
 $as_echo "$as_me: WARNING: Ignoring value of OBJDUMP from the environment. Use command line variables instead." >&2;}
-      fi
+    fi
       # Try to locate tool using the code snippet
       if test -n "$ac_tool_prefix"; then
   for ac_prog in gobjdump objdump
@@ -38905,7 +38995,7 @@ done
 IFS=$as_save_IFS
 
 fi
-fi
+  fi
 OBJDUMP=$ac_cv_prog_OBJDUMP
 if test -n "$OBJDUMP"; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $OBJDUMP" >&5
@@ -38913,12 +39003,12 @@ $as_echo "$OBJDUMP" >&6; }
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-fi
+  fi
 
 
     test -n "$OBJDUMP" && break
   done
-fi
+  fi
 if test -z "$OBJDUMP"; then
   ac_ct_OBJDUMP=$OBJDUMP
   for ac_prog in gobjdump objdump
@@ -38943,13 +39033,13 @@ do
     ac_cv_prog_ac_ct_OBJDUMP="$ac_prog"
     $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
     break 2
-  fi
+    fi
 done
   done
 IFS=$as_save_IFS
 
-fi
-fi
+      fi
+    fi
 ac_ct_OBJDUMP=$ac_cv_prog_ac_ct_OBJDUMP
 if test -n "$ac_ct_OBJDUMP"; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_ct_OBJDUMP" >&5
@@ -38957,7 +39047,7 @@ $as_echo "$ac_ct_OBJDUMP" >&6; }
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-fi
+  fi
 
 
   test -n "$ac_ct_OBJDUMP" && break
@@ -38974,9 +39064,9 @@ ac_tool_warned=yes ;;
 esac
     OBJDUMP=$ac_ct_OBJDUMP
   fi
-fi
+  fi
 
-    else
+  else
       # If it succeeded, then it was overridden by the user. We will use it
       # for the tool.
 
@@ -39003,7 +39093,7 @@ else
   ac_cv_path_OBJDUMP="$OBJDUMP" # Let the user override the test with a path.
   ;;
   *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
 for as_dir in $PATH
 do
   IFS=$as_save_IFS
@@ -39033,8 +39123,8 @@ fi
 
         if test "x$OBJDUMP" = x; then
           as_fn_error $? "User supplied tool $tool_basename could not be found" "$LINENO" 5
-        fi
-      else
+fi
+else
         # Otherwise we believe it is a complete path. Use it as it is.
         { $as_echo "$as_me:${as_lineno-$LINENO}: Will use user supplied tool OBJDUMP=$tool_specified" >&5
 $as_echo "$as_me: Will use user supplied tool OBJDUMP=$tool_specified" >&6;}
@@ -39077,7 +39167,7 @@ $as_echo "$tool_specified" >&6; }
       && test "x`$ECHO \"$path\" | $GREP -i -e \"\\.bat$\" -e \"\\.cmd$\"`" != x \
       && test "x`$LS \"$path\" 2>/dev/null`" != x; then
     new_path=`$CYGPATH -u "$path"`
-  fi
+fi
   if test "x$new_path" = x; then
     # Oops. Which didn't find the executable.
     # The splitting of arguments from the executable at a space might have been incorrect,
@@ -39105,7 +39195,7 @@ $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, wh
       fi
       as_fn_error $? "Cannot locate the the path of OBJDUMP" "$LINENO" 5
     fi
-  fi
+fi
 
   # Cygwin tries to hide some aspects of the Windows file system, such that binaries are
   # named .exe but called without that suffix. Therefore, "foo" and "foo.exe" are considered
@@ -39129,9 +39219,9 @@ $as_echo "$as_me: The path of OBJDUMP, which resolves as \"$new_path\", is inval
 $as_echo "$as_me: Neither \"$new_path\" nor \"$new_path.exe/cmd\" can be found" >&6;}
       as_fn_error $? "Cannot locate the the path of OBJDUMP" "$LINENO" 5
     fi
-  else
+else
     input_to_shortpath="$new_path"
-  fi
+fi
 
   # Call helper function which possibly converts this using DOS-style short mode.
   # If so, the updated path is stored in $new_path.
@@ -39164,8 +39254,8 @@ $as_echo "$as_me: Neither \"$new_path\" nor \"$new_path.exe/cmd\" can be found" 
       # The path is in a Cygwin special directory (e.g. /home). We need this converted to
       # a path prefixed by /cygdrive for fixpath to work.
       new_path="$CYGWIN_ROOT_PATH$input_path"
-    fi
   fi
+fi
 
   # remove trailing .exe if any
   new_path="${new_path/%.exe/}"
@@ -39212,7 +39302,7 @@ $as_echo "$as_me: Neither \"$new_path\" nor \"$new_path.exe/cmd\" can be found" 
   elif test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.msys"; then
     unix_path=`$ECHO "$windows_path" | $SED -e 's,^\\(.\\):,/\\1,g' -e 's,\\\\,/,g'`
     new_path="$unix_path"
-  fi
+fi
 
 
     new_path=`$WHICH "$new_path" 2> /dev/null`
@@ -39230,9 +39320,9 @@ $as_echo "$as_me: Neither \"$new_path\" nor \"$new_path.exe/cmd\" can be found" 
   elif test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.msys"; then
     unix_path=`$ECHO "$windows_path" | $SED -e 's,^\\(.\\):,/\\1,g' -e 's,\\\\,/,g'`
     new_path="$unix_path"
-  fi
+fi
 
-    fi
+  fi
 
     if test "x$new_path" = x; then
       # It's still not found. Now this is an unrecoverable error.
@@ -39242,17 +39332,17 @@ $as_echo "$as_me: The path of OBJDUMP, which resolves as \"$complete\", is not f
       if test "x$has_space" != x; then
         { $as_echo "$as_me:${as_lineno-$LINENO}: You might be mixing spaces in the path and extra arguments, which is not allowed." >&5
 $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, which is not allowed." >&6;}
-      fi
+fi
       as_fn_error $? "Cannot locate the the path of OBJDUMP" "$LINENO" 5
     fi
-  fi
+fi
 
   # Now new_path has a complete unix path to the binary
   if test "x`$ECHO $new_path | $GREP ^/bin/`" != x; then
     # Keep paths in /bin as-is, but remove trailing .exe if any
     new_path="${new_path/%.exe/}"
     # Do not save /bin paths to all_fixpath_prefixes!
-  else
+else
     # Not in mixed or Windows style, start by that.
     new_path=`cmd //c echo $new_path`
 
@@ -39265,7 +39355,7 @@ $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, wh
   if test "x$has_forbidden_chars" != x; then
     # Now convert it to mixed DOS-style, short mode (no spaces, and / instead of \)
     new_path=`cmd /c "for %A in (\"$input_path\") do @echo %~sA"|$TR \\\\\\\\ / | $TR 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' 'abcdefghijklmnopqrstuvwxyz'`
-  fi
+fi
 
     # Output is in $new_path
 
@@ -39285,7 +39375,7 @@ $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, wh
     all_fixpath_prefixes=("${all_fixpath_prefixes[@]}" "${new_path:0:10}")
   fi
 
-  else
+    else
     # We're on a posix platform. Hooray! :)
     # First separate the path from the arguments. This will split at the first
     # space.
@@ -39307,10 +39397,10 @@ $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, wh
         fi
       done
       IFS="$IFS_save"
-    else
+else
       # This is an absolute path, we can use it without further modifications.
       new_path="$path"
-    fi
+  fi
 
     if test "x$new_path" = x; then
       { $as_echo "$as_me:${as_lineno-$LINENO}: The path of OBJDUMP, which resolves as \"$complete\", is not found." >&5
@@ -39321,23 +39411,23 @@ $as_echo "$as_me: The path of OBJDUMP, which resolves as \"$complete\", is not f
 $as_echo "$as_me: This might be caused by spaces in the path, which is not allowed." >&6;}
       fi
       as_fn_error $? "Cannot locate the the path of OBJDUMP" "$LINENO" 5
-    fi
-  fi
+fi
+fi
 
   # Now join together the path and the arguments once again
   if test "x$arguments" != xEOL; then
     new_complete="$new_path ${arguments% *}"
-  else
+      else
     new_complete="$new_path"
-  fi
+        fi
 
   if test "x$complete" != "x$new_complete"; then
     OBJDUMP="$new_complete"
     { $as_echo "$as_me:${as_lineno-$LINENO}: Rewriting OBJDUMP to \"$new_complete\"" >&5
 $as_echo "$as_me: Rewriting OBJDUMP to \"$new_complete\"" >&6;}
-  fi
+      fi
 
-  fi
+    fi
 
 
   # Restore old path.
@@ -39425,7 +39515,7 @@ done
       if test "xBUILD_CC" != xBASH; then
         { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Ignoring value of BUILD_CC from the environment. Use command line variables instead." >&5
 $as_echo "$as_me: WARNING: Ignoring value of BUILD_CC from the environment. Use command line variables instead." >&2;}
-      fi
+    fi
       # Try to locate tool using the code snippet
       for ac_prog in cl cc gcc
 do
@@ -39451,14 +39541,14 @@ do
     ac_cv_path_BUILD_CC="$as_dir/$ac_word$ac_exec_ext"
     $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
     break 2
-  fi
+      fi
 done
   done
 IFS=$as_save_IFS
 
   ;;
 esac
-fi
+    fi
 BUILD_CC=$ac_cv_path_BUILD_CC
 if test -n "$BUILD_CC"; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $BUILD_CC" >&5
@@ -39466,7 +39556,7 @@ $as_echo "$BUILD_CC" >&6; }
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-fi
+  fi
 
 
   test -n "$BUILD_CC" && break
@@ -39493,7 +39583,7 @@ set dummy $tool_basename; ac_word=$2
 $as_echo_n "checking for $ac_word... " >&6; }
 if ${ac_cv_path_BUILD_CC+:} false; then :
   $as_echo_n "(cached) " >&6
-else
+    else
   case $BUILD_CC in
   [\\/]* | ?:[\\/]*)
   ac_cv_path_BUILD_CC="$BUILD_CC" # Let the user override the test with a path.
@@ -39516,15 +39606,15 @@ IFS=$as_save_IFS
 
   ;;
 esac
-fi
+    fi
 BUILD_CC=$ac_cv_path_BUILD_CC
 if test -n "$BUILD_CC"; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $BUILD_CC" >&5
 $as_echo "$BUILD_CC" >&6; }
-else
+  else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-fi
+  fi
 
 
         if test "x$BUILD_CC" = x; then
@@ -39540,10 +39630,10 @@ $as_echo_n "checking for BUILD_CC... " >&6; }
           { $as_echo "$as_me:${as_lineno-$LINENO}: result: not found" >&5
 $as_echo "not found" >&6; }
           as_fn_error $? "User supplied tool BUILD_CC=$tool_specified does not exist or is not executable" "$LINENO" 5
-        fi
+    fi
         { $as_echo "$as_me:${as_lineno-$LINENO}: result: $tool_specified" >&5
 $as_echo "$tool_specified" >&6; }
-      fi
+  fi
     fi
   fi
 
@@ -39586,7 +39676,7 @@ $as_echo "$tool_specified" >&6; }
         && test "x`$ECHO \"$path\" | $GREP -i -e \"\\.bat$\" -e \"\\.cmd$\"`" != x \
         && test "x`$LS \"$path\" 2>/dev/null`" != x; then
       new_path=`$CYGPATH -u "$path"`
-    fi
+  fi
     if test "x$new_path" = x; then
       # It's still not found. Now this is an unrecoverable error.
       { $as_echo "$as_me:${as_lineno-$LINENO}: The path of BUILD_CC, which resolves as \"$complete\", is not found." >&5
@@ -39657,7 +39747,7 @@ $as_echo "$as_me: Neither \"$new_path\" nor \"$new_path.exe/cmd\" can be found" 
       # The path is in a Cygwin special directory (e.g. /home). We need this converted to
       # a path prefixed by /cygdrive for fixpath to work.
       new_path="$CYGWIN_ROOT_PATH$input_path"
-    fi
+  fi
   fi
 
   # remove trailing .exe if any
@@ -39725,7 +39815,7 @@ $as_echo "$as_me: Neither \"$new_path\" nor \"$new_path.exe/cmd\" can be found" 
     new_path="$unix_path"
   fi
 
-    fi
+  fi
 
     if test "x$new_path" = x; then
       # It's still not found. Now this is an unrecoverable error.
@@ -39737,8 +39827,8 @@ $as_echo "$as_me: The path of BUILD_CC, which resolves as \"$complete\", is not 
 $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, which is not allowed." >&6;}
       fi
       as_fn_error $? "Cannot locate the the path of BUILD_CC" "$LINENO" 5
-    fi
-  fi
+fi
+fi
 
   # Now new_path has a complete unix path to the binary
   if test "x`$ECHO $new_path | $GREP ^/bin/`" != x; then
@@ -39758,7 +39848,7 @@ $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, wh
   if test "x$has_forbidden_chars" != x; then
     # Now convert it to mixed DOS-style, short mode (no spaces, and / instead of \)
     new_path=`cmd /c "for %A in (\"$input_path\") do @echo %~sA"|$TR \\\\\\\\ / | $TR 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' 'abcdefghijklmnopqrstuvwxyz'`
-  fi
+      fi
 
     # Output is in $new_path
 
@@ -39769,7 +39859,7 @@ $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, wh
   elif test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.msys"; then
     unix_path=`$ECHO "$windows_path" | $SED -e 's,^\\(.\\):,/\\1,g' -e 's,\\\\,/,g'`
     new_path="$unix_path"
-  fi
+fi
 
     # remove trailing .exe if any
     new_path="${new_path/%.exe/}"
@@ -39778,7 +39868,7 @@ $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, wh
     all_fixpath_prefixes=("${all_fixpath_prefixes[@]}" "${new_path:0:10}")
   fi
 
-  else
+    else
     # We're on a posix platform. Hooray! :)
     # First separate the path from the arguments. This will split at the first
     # space.
@@ -40205,7 +40295,7 @@ $as_echo "$as_me: The path of BUILD_CXX, which resolves as \"$complete\", is not
 $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, which is not allowed." >&6;}
       fi
       as_fn_error $? "Cannot locate the the path of BUILD_CXX" "$LINENO" 5
-    fi
+fi
   fi
 
   # Now new_path has a complete unix path to the binary
@@ -40266,7 +40356,7 @@ $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, wh
           new_path="$p/$path"
           break
         fi
-      done
+done
       IFS="$IFS_save"
     else
       # This is an absolute path, we can use it without further modifications.
@@ -40296,7 +40386,7 @@ $as_echo "$as_me: This might be caused by spaces in the path, which is not allow
     BUILD_CXX="$new_complete"
     { $as_echo "$as_me:${as_lineno-$LINENO}: Rewriting BUILD_CXX to \"$new_complete\"" >&5
 $as_echo "$as_me: Rewriting BUILD_CXX to \"$new_complete\"" >&6;}
-  fi
+      fi
 
 
 
@@ -40350,7 +40440,7 @@ fi
   test -n "$BUILD_LD" && break
 done
 
-  else
+    else
     # The variable is set, but is it from the command line or the environment?
 
     # Try to remove the string !BUILD_LD! from our list.
@@ -40429,7 +40519,7 @@ set dummy $tool_basename; ac_word=$2
 $as_echo_n "checking for $ac_word... " >&6; }
 if ${ac_cv_path_BUILD_LD+:} false; then :
   $as_echo_n "(cached) " >&6
-else
+    else
   case $BUILD_LD in
   [\\/]* | ?:[\\/]*)
   ac_cv_path_BUILD_LD="$BUILD_LD" # Let the user override the test with a path.
@@ -40452,15 +40542,15 @@ IFS=$as_save_IFS
 
   ;;
 esac
-fi
+    fi
 BUILD_LD=$ac_cv_path_BUILD_LD
 if test -n "$BUILD_LD"; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $BUILD_LD" >&5
 $as_echo "$BUILD_LD" >&6; }
-else
+  else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-fi
+  fi
 
 
         if test "x$BUILD_LD" = x; then
@@ -40476,10 +40566,10 @@ $as_echo_n "checking for BUILD_LD... " >&6; }
           { $as_echo "$as_me:${as_lineno-$LINENO}: result: not found" >&5
 $as_echo "not found" >&6; }
           as_fn_error $? "User supplied tool BUILD_LD=$tool_specified does not exist or is not executable" "$LINENO" 5
-        fi
+    fi
         { $as_echo "$as_me:${as_lineno-$LINENO}: result: $tool_specified" >&5
 $as_echo "$tool_specified" >&6; }
-      fi
+  fi
     fi
   fi
 
@@ -40522,7 +40612,7 @@ $as_echo "$tool_specified" >&6; }
         && test "x`$ECHO \"$path\" | $GREP -i -e \"\\.bat$\" -e \"\\.cmd$\"`" != x \
         && test "x`$LS \"$path\" 2>/dev/null`" != x; then
       new_path=`$CYGPATH -u "$path"`
-    fi
+  fi
     if test "x$new_path" = x; then
       # It's still not found. Now this is an unrecoverable error.
       { $as_echo "$as_me:${as_lineno-$LINENO}: The path of BUILD_LD, which resolves as \"$complete\", is not found." >&5
@@ -40583,7 +40673,7 @@ $as_echo "$as_me: Neither \"$new_path\" nor \"$new_path.exe/cmd\" can be found" 
       # Now convert it back to Unix-stile (cygpath)
       input_path=`$CYGPATH -u "$shortmode_path"`
       new_path="$input_path"
-    fi
+  fi
   fi
 
   test_cygdrive_prefix=`$ECHO $input_path | $GREP ^/cygdrive/`
@@ -40593,8 +40683,8 @@ $as_echo "$as_me: Neither \"$new_path\" nor \"$new_path.exe/cmd\" can be found" 
       # The path is in a Cygwin special directory (e.g. /home). We need this converted to
       # a path prefixed by /cygdrive for fixpath to work.
       new_path="$CYGWIN_ROOT_PATH$input_path"
+      fi
     fi
-  fi
 
   # remove trailing .exe if any
   new_path="${new_path/%.exe/}"
@@ -40681,7 +40771,7 @@ $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, wh
     # Keep paths in /bin as-is, but remove trailing .exe if any
     new_path="${new_path/%.exe/}"
     # Do not save /bin paths to all_fixpath_prefixes!
-  else
+else
     # Not in mixed or Windows style, start by that.
     new_path=`cmd //c echo $new_path`
 
@@ -40705,14 +40795,14 @@ $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, wh
   elif test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.msys"; then
     unix_path=`$ECHO "$windows_path" | $SED -e 's,^\\(.\\):,/\\1,g' -e 's,\\\\,/,g'`
     new_path="$unix_path"
-  fi
+fi
 
     # remove trailing .exe if any
     new_path="${new_path/%.exe/}"
 
     # Save the first 10 bytes of this path to the storage, so fixpath can work.
     all_fixpath_prefixes=("${all_fixpath_prefixes[@]}" "${new_path:0:10}")
-  fi
+fi
 
   else
     # We're on a posix platform. Hooray! :)
@@ -40734,9 +40824,9 @@ $as_echo "$as_me: You might be mixing spaces in the path and extra arguments, wh
           new_path="$p/$path"
           break
         fi
-      done
+done
       IFS="$IFS_save"
-    else
+  else
       # This is an absolute path, we can use it without further modifications.
       new_path="$path"
     fi
@@ -40751,12 +40841,12 @@ $as_echo "$as_me: This might be caused by spaces in the path, which is not allow
       fi
       as_fn_error $? "Cannot locate the the path of BUILD_LD" "$LINENO" 5
     fi
-  fi
+      fi
 
   # Now join together the path and the arguments once again
   if test "x$arguments" != xEOL; then
     new_complete="$new_path ${arguments% *}"
-  else
+else
     new_complete="$new_path"
   fi
 
@@ -40764,15 +40854,15 @@ $as_echo "$as_me: This might be caused by spaces in the path, which is not allow
     BUILD_LD="$new_complete"
     { $as_echo "$as_me:${as_lineno-$LINENO}: Rewriting BUILD_LD to \"$new_complete\"" >&5
 $as_echo "$as_me: Rewriting BUILD_LD to \"$new_complete\"" >&6;}
-  fi
+fi
 
-  else
+else
     # If we are not cross compiling, use the normal target compilers for
     # building the build platform executables.
     BUILD_CC="$CC"
     BUILD_CXX="$CXX"
     BUILD_LD="$LD"
-  fi
+fi
 
 
 
@@ -40794,7 +40884,7 @@ $as_echo "$as_me: Rewriting BUILD_LD to \"$new_complete\"" >&6;}
   elif test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.msys"; then
     windows_path=`cmd //c echo $unix_path`
     HOTSPOT_CXX="$windows_path"
-  fi
+        fi
 
 
   unix_path="$HOTSPOT_LD"
@@ -40804,7 +40894,7 @@ $as_echo "$as_me: Rewriting BUILD_LD to \"$new_complete\"" >&6;}
   elif test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.msys"; then
     windows_path=`cmd //c echo $unix_path`
     HOTSPOT_LD="$windows_path"
-  fi
+      fi
 
 
   unix_path="$HOTSPOT_MT"
@@ -40814,7 +40904,7 @@ $as_echo "$as_me: Rewriting BUILD_LD to \"$new_complete\"" >&6;}
   elif test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.msys"; then
     windows_path=`cmd //c echo $unix_path`
     HOTSPOT_MT="$windows_path"
-  fi
+    fi
 
 
   unix_path="$HOTSPOT_RC"
@@ -40863,7 +40953,7 @@ $as_echo "$as_me: Rewriting BUILD_LD to \"$new_complete\"" >&6;}
     if test "x$OPENJDK_TARGET_CPU" = "xx86"; then
       if test "x$COMPILER_CPU_TEST" != "x80x86"; then
         as_fn_error $? "Target CPU mismatch. We are building for $OPENJDK_TARGET_CPU but CL is for \"$COMPILER_CPU_TEST\"; expected \"80x86\"." "$LINENO" 5
-      fi
+    fi
     elif test "x$OPENJDK_TARGET_CPU" = "xx86_64"; then
       if test "x$COMPILER_CPU_TEST" != "xx64"; then
         as_fn_error $? "Target CPU mismatch. We are building for $OPENJDK_TARGET_CPU but CL is for \"$COMPILER_CPU_TEST\"; expected \"x64\"." "$LINENO" 5
@@ -40899,7 +40989,7 @@ if ac_fn_c_try_compile "$LINENO"; then :
 
 else
   supports=no
-fi
+    fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
   ac_ext=cpp
 ac_cpp='$CXXCPP $CPPFLAGS'
@@ -40993,7 +41083,7 @@ if ac_fn_cxx_try_compile "$LINENO"; then :
 
 else
   supports=no
-fi
+  fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
   ac_ext=cpp
 ac_cpp='$CXXCPP $CPPFLAGS'
@@ -41040,9 +41130,9 @@ main ()
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
 
-else
+  else
   supports=no
-fi
+  fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
   ac_ext=cpp
@@ -41092,7 +41182,7 @@ if ac_fn_c_try_link "$LINENO"; then :
 
 else
   supports=no
-fi
+  fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
   ac_ext=cpp
@@ -41141,9 +41231,9 @@ $as_echo "yes" >&6; }
 # Check whether --with-jtreg was given.
 if test "${with_jtreg+set}" = set; then :
   withval=$with_jtreg;
-else
+  else
   with_jtreg=no
-fi
+  fi
 
 
   if test "x$with_jtreg" = xno; then
@@ -41156,7 +41246,7 @@ $as_echo "no" >&6; }
     if test "x$with_jtreg" != xyes; then
       # with path specified.
       JT_HOME="$with_jtreg"
-    fi
+  fi
 
     if test "x$JT_HOME" != x; then
       { $as_echo "$as_me:${as_lineno-$LINENO}: checking for jtreg" >&5
@@ -41233,7 +41323,7 @@ $as_echo "$as_me: Rewriting JT_HOME to \"$new_path\"" >&6;}
   if test "x$has_colon" = x; then
     # Not in mixed or Windows style, start by that.
     new_path=`cmd //c echo $path`
-  fi
+fi
 
 
   input_path="$new_path"
@@ -41261,7 +41351,7 @@ $as_echo "$as_me: Rewriting JT_HOME to \"$new_path\"" >&6;}
     JT_HOME="$new_path"
     { $as_echo "$as_me:${as_lineno-$LINENO}: Rewriting JT_HOME to \"$new_path\"" >&5
 $as_echo "$as_me: Rewriting JT_HOME to \"$new_path\"" >&6;}
-  fi
+fi
 
   # Save the first 10 bytes of this path to the storage, so fixpath can work.
   all_fixpath_prefixes=("${all_fixpath_prefixes[@]}" "${new_path:0:10}")
@@ -41274,7 +41364,7 @@ $as_echo "$as_me: Rewriting JT_HOME to \"$new_path\"" >&6;}
       { $as_echo "$as_me:${as_lineno-$LINENO}: The path of JT_HOME, which resolves as \"$path\", is invalid." >&5
 $as_echo "$as_me: The path of JT_HOME, which resolves as \"$path\", is invalid." >&6;}
       as_fn_error $? "Spaces are not allowed in this path." "$LINENO" 5
-    fi
+  fi
 
     # Use eval to expand a potential ~
     eval path="$path"
@@ -41295,7 +41385,7 @@ $as_echo "$as_me: The path of JT_HOME, which resolves as \"$path\", is invalid."
 
       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $JTREGEXE" >&5
 $as_echo "$JTREGEXE" >&6; }
-    else
+else
       # try to find jtreg on path
 
 
@@ -41329,7 +41419,7 @@ do
     ac_cv_path_JTREGEXE="$as_dir/$ac_word$ac_exec_ext"
     $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
     break 2
-  fi
+fi
 done
   done
 IFS=$as_save_IFS
@@ -41341,10 +41431,10 @@ JTREGEXE=$ac_cv_path_JTREGEXE
 if test -n "$JTREGEXE"; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $JTREGEXE" >&5
 $as_echo "$JTREGEXE" >&6; }
-else
+  else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-fi
+  fi
 
 
   test -n "$JTREGEXE" && break
@@ -41361,7 +41451,7 @@ done
       if test "xJTREGEXE" != xBASH; then
         { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Ignoring value of JTREGEXE from the environment. Use command line variables instead." >&5
 $as_echo "$as_me: WARNING: Ignoring value of JTREGEXE from the environment. Use command line variables instead." >&2;}
-      fi
+fi
       # Try to locate tool using the code snippet
       for ac_prog in jtreg
 do
@@ -41371,7 +41461,7 @@ set dummy $ac_prog; ac_word=$2
 $as_echo_n "checking for $ac_word... " >&6; }
 if ${ac_cv_path_JTREGEXE+:} false; then :
   $as_echo_n "(cached) " >&6
-else
+  else
   case $JTREGEXE in
   [\\/]* | ?:[\\/]*)
   ac_cv_path_JTREGEXE="$JTREGEXE" # Let the user override the test with a path.
@@ -41408,7 +41498,7 @@ fi
   test -n "$JTREGEXE" && break
 done
 
-    else
+else
       # If it succeeded, then it was overridden by the user. We will use it
       # for the tool.
 
@@ -41429,7 +41519,7 @@ set dummy $tool_basename; ac_word=$2
 $as_echo_n "checking for $ac_word... " >&6; }
 if ${ac_cv_path_JTREGEXE+:} false; then :
   $as_echo_n "(cached) " >&6
-else
+  else
   case $JTREGEXE in
   [\\/]* | ?:[\\/]*)
   ac_cv_path_JTREGEXE="$JTREGEXE" # Let the user override the test with a path.
@@ -41452,13 +41542,13 @@ IFS=$as_save_IFS
 
   ;;
 esac
-fi
+  fi
 JTREGEXE=$ac_cv_path_JTREGEXE
 if test -n "$JTREGEXE"; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $JTREGEXE" >&5
 $as_echo "$JTREGEXE" >&6; }
 else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+      { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 fi
 
@@ -41466,7 +41556,7 @@ fi
         if test "x$JTREGEXE" = x; then
           as_fn_error $? "User supplied tool $tool_basename could not be found" "$LINENO" 5
         fi
-      else
+    else
         # Otherwise we believe it is a complete path. Use it as it is.
         { $as_echo "$as_me:${as_lineno-$LINENO}: Will use user supplied tool JTREGEXE=$tool_specified" >&5
 $as_echo "$as_me: Will use user supplied tool JTREGEXE=$tool_specified" >&6;}
@@ -41492,7 +41582,7 @@ $as_echo "$tool_specified" >&6; }
 
       JT_HOME="`$DIRNAME $JTREGEXE`"
     fi
-  fi
+fi
 
 
 
@@ -41571,7 +41661,7 @@ $as_echo "$tool_specified" >&6; }
     RC_FLAGS="-nologo -l 0x409 -r"
     if test "x$VARIANT" = xOPT; then
       RC_FLAGS="$RC_FLAGS -d NDEBUG"
-    fi
+  fi
 
     # The version variables used to create RC_FLAGS may be overridden
     # in a custom configure script, or possibly the command line.
@@ -41620,14 +41710,14 @@ $as_echo "$tool_specified" >&6; }
     LEGACY_EXTRA_CFLAGS="$LEGACY_EXTRA_CFLAGS $SYSROOT_CFLAGS"
     LEGACY_EXTRA_CXXFLAGS="$LEGACY_EXTRA_CXXFLAGS $SYSROOT_CFLAGS"
     LEGACY_EXTRA_LDFLAGS="$LEGACY_EXTRA_LDFLAGS $SYSROOT_LDFLAGS"
-  fi
+    fi
 
   # These always need to be set, or we can't find the frameworks embedded in JavaVM.framework
   # set this here so it doesn't have to be peppered throughout the forest
   if test "x$OPENJDK_TARGET_OS" = xmacosx; then
     SYSROOT_CFLAGS="$SYSROOT_CFLAGS -F\"$SYSROOT/System/Library/Frameworks/JavaVM.framework/Frameworks\""
     SYSROOT_LDFLAGS="$SYSROOT_LDFLAGS -F\"$SYSROOT/System/Library/Frameworks/JavaVM.framework/Frameworks\""
-  fi
+    fi
 
 
 
@@ -41641,7 +41731,7 @@ $as_echo "$tool_specified" >&6; }
 $as_echo_n "checking for ANSI C header files... " >&6; }
 if ${ac_cv_header_stdc+:} false; then :
   $as_echo_n "(cached) " >&6
-else
+    else
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 #include <stdlib.h>
@@ -41676,7 +41766,7 @@ if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
 
 else
   ac_cv_header_stdc=no
-fi
+  fi
 rm -f conftest*
 
 fi
@@ -41732,15 +41822,15 @@ main ()
 _ACEOF
 if ac_fn_cxx_try_run "$LINENO"; then :
 
-else
+  else
   ac_cv_header_stdc=no
 fi
 rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
   conftest.$ac_objext conftest.beam conftest.$ac_ext
 fi
 
-fi
-fi
+      fi
+  fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_header_stdc" >&5
 $as_echo "$ac_cv_header_stdc" >&6; }
 if test $ac_cv_header_stdc = yes; then
@@ -41852,7 +41942,7 @@ done
 $as_echo_n "checking size of int *... " >&6; }
 if ${ac_cv_sizeof_int_p+:} false; then :
   $as_echo_n "(cached) " >&6
-else
+  else
   if ac_fn_cxx_compute_int "$LINENO" "(long int) (sizeof (int *))" "ac_cv_sizeof_int_p"        "$ac_includes_default"; then :
 
 else
@@ -41861,10 +41951,10 @@ else
 $as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
 as_fn_error 77 "cannot compute sizeof (int *)
 See \`config.log' for more details" "$LINENO" 5; }
-   else
+  else
      ac_cv_sizeof_int_p=0
    fi
-fi
+  fi
 
 fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_sizeof_int_p" >&5
@@ -41938,9 +42028,9 @@ See \`config.log' for more details" "$LINENO" 5; }
    else
      ac_cv_sizeof_int_p=0
    fi
-fi
+  fi
 
-fi
+      fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_sizeof_int_p" >&5
 $as_echo "$ac_cv_sizeof_int_p" >&6; }
 
@@ -41977,7 +42067,7 @@ if ${ac_cv_c_bigendian+:} false; then :
 else
   ac_cv_c_bigendian=unknown
     # See if we're dealing with a universal compiler.
-    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 #ifndef __APPLE_CC__
 	       not a universal capable compiler
@@ -41997,7 +42087,7 @@ if ac_fn_cxx_try_compile "$LINENO"; then :
 	     i?86 | x86_64 | ppc | ppc64)
 	       if test -z "$ac_arch" || test "$ac_arch" = "$ac_word"; then
 		 ac_arch=$ac_word
-	       else
+else
 		 ac_cv_c_bigendian=universal
 		 break
 	       fi
@@ -42032,7 +42122,7 @@ main ()
 _ACEOF
 if ac_fn_cxx_try_compile "$LINENO"; then :
   # It does; now see whether it defined to BIG_ENDIAN or not.
-	 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 #include <sys/types.h>
 		#include <sys/param.h>
@@ -42056,7 +42146,7 @@ fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-    fi
+fi
     if test $ac_cv_c_bigendian = unknown; then
       # See if <limits.h> defines _LITTLE_ENDIAN or _BIG_ENDIAN (e.g., Solaris).
       cat confdefs.h - <<_ACEOF >conftest.$ac_ext
@@ -42076,7 +42166,7 @@ main ()
 _ACEOF
 if ac_fn_cxx_try_compile "$LINENO"; then :
   # It does; now see whether it defined to _BIG_ENDIAN or not.
-	 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 #include <limits.h>
 
@@ -42099,7 +42189,7 @@ fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-    fi
+fi
     if test $ac_cv_c_bigendian = unknown; then
       # Compile a test program.
       if test "$cross_compiling" = yes; then :
@@ -42133,15 +42223,15 @@ _ACEOF
 if ac_fn_cxx_try_compile "$LINENO"; then :
   if grep BIGenDianSyS conftest.$ac_objext >/dev/null; then
 	      ac_cv_c_bigendian=yes
-	    fi
+fi
 	    if grep LiTTleEnDian conftest.$ac_objext >/dev/null ; then
 	      if test "$ac_cv_c_bigendian" = unknown; then
 		ac_cv_c_bigendian=no
 	      else
 		# finding both strings is unlikely to happen, but who knows?
 		ac_cv_c_bigendian=unknown
-	      fi
-	    fi
+fi
+fi
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 else
@@ -42169,10 +42259,10 @@ if ac_fn_cxx_try_run "$LINENO"; then :
   ac_cv_c_bigendian=no
 else
   ac_cv_c_bigendian=yes
-fi
+    fi
 rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
   conftest.$ac_objext conftest.beam conftest.$ac_ext
-fi
+  fi
 
     fi
 fi
@@ -42193,10 +42283,10 @@ $as_echo "$ac_cv_c_bigendian" >&6; }
 
   if test "x$ENDIAN" = xuniversal_endianness; then
     as_fn_error $? "Building with both big and little endianness is not supported" "$LINENO" 5
-  fi
+   fi
   if test "x$ENDIAN" != "x$OPENJDK_TARGET_CPU_ENDIAN"; then
     as_fn_error $? "The tested endian in the target ($ENDIAN) differs from the endian expected to be found in the target ($OPENJDK_TARGET_CPU_ENDIAN)" "$LINENO" 5
-  fi
+fi
 
 
 # Configure flags for the tools
@@ -42238,7 +42328,7 @@ $as_echo "$ac_cv_c_bigendian" >&6; }
       SET_SHARED_LIBRARY_ORIGIN="$SET_EXECUTABLE_ORIGIN"
       SET_SHARED_LIBRARY_NAME='-Xlinker -install_name -Xlinker @rpath/$1'
       SET_SHARED_LIBRARY_MAPFILE=''
-    else
+  else
       # Default works for linux, might work on other platforms as well.
       SHARED_LIBRARY_FLAGS='-shared'
       SET_EXECUTABLE_ORIGIN='-Xlinker -rpath -Xlinker \$$$$ORIGIN$1'
@@ -42287,7 +42377,7 @@ $as_echo "$ac_cv_c_bigendian" >&6; }
     CFLAGS_JDK="${CFLAGS_JDK} -D__solaris__"
     CXXFLAGS_JDK="${CXXFLAGS_JDK} -D__solaris__"
     CFLAGS_JDKLIB_EXTRA='-xstrconst'
-  fi
+   fi
   # The (cross) compiler is now configured, we can now test capabilities
   # of the target platform.
 
@@ -42327,7 +42417,7 @@ $as_echo "$ac_cv_c_bigendian" >&6; }
     else
       CFLAGS_DEBUG_SYMBOLS="-g"
       CXXFLAGS_DEBUG_SYMBOLS="-g"
-    fi
+      fi
   elif test "x$TOOLCHAIN_TYPE" = xclang; then
     CFLAGS_DEBUG_SYMBOLS="-g"
     CXXFLAGS_DEBUG_SYMBOLS="-g"
@@ -42338,7 +42428,7 @@ $as_echo "$ac_cv_c_bigendian" >&6; }
   elif test "x$TOOLCHAIN_TYPE" = xxlc; then
     CFLAGS_DEBUG_SYMBOLS="-g"
     CXXFLAGS_DEBUG_SYMBOLS="-g"
-  fi
+    fi
 
 
 
@@ -42358,10 +42448,10 @@ $as_echo "$ac_cv_c_bigendian" >&6; }
       if test "x$HAS_CFLAG_DETECT_UNDEFINED_BEHAVIOR" = "xtrue"; then
         CFLAGS_DEBUG_OPTIONS="$CFLAGS_DEBUG_OPTIONS  $CFLAG_DETECT_UNDEFINED_BEHAVIOR_FLAG"
         CXXFLAGS_DEBUG_OPTIONS="$CXXFLAGS_DEBUG_OPTIONS $CFLAG_DETECT_UNDEFINED_BEHAVIsOR_FLAG"
-      fi
-      ;;
-    esac
-  fi
+	       fi
+	       ;;
+	   esac
+	 fi
 
 
 
@@ -42384,7 +42474,7 @@ $as_echo "$ac_cv_c_bigendian" >&6; }
       if test "x$OPENJDK_TARGET_CPU_BITS" = "x32"; then
         C_O_FLAG_HIGHEST="$C_O_FLAG_HIGHEST -xchip=pentium"
         CXX_O_FLAG_HIGHEST="$CXX_O_FLAG_HIGHEST -xchip=pentium"
-      fi
+fi
     elif test "x$OPENJDK_TARGET_CPU_ARCH" = "xsparc"; then
       C_O_FLAG_HIGHEST="-xO4 -Wc,-Qrm-s -Wc,-Qiselect-T0 $CC_HIGHEST -xalias_level=basic -xprefetch=auto,explicit -xchip=ultra"
       C_O_FLAG_HI="-xO4 -Wc,-Qrm-s -Wc,-Qiselect-T0"
@@ -42396,7 +42486,7 @@ $as_echo "$ac_cv_c_bigendian" >&6; }
       CXX_O_FLAG_NORM="-xO2 -Qoption cg -Qrm-s -Qoption cg -Qiselect-T0"
       C_O_FLAG_DEBUG=""
       CXX_O_FLAG_NONE=""
-    fi
+fi
   else
     # The remaining toolchains share opt flags between CC and CXX;
     # setup for C and duplicate afterwards.
@@ -42421,11 +42511,11 @@ $as_echo "$ac_cv_c_bigendian" >&6; }
         C_O_FLAG_HIGHEST="-Os"
         C_O_FLAG_HI="-Os"
         C_O_FLAG_NORM="-Os"
-      else
+else
         C_O_FLAG_HIGHEST="-O3"
         C_O_FLAG_HI="-O3"
         C_O_FLAG_NORM="-O2"
-      fi
+fi
       C_O_FLAG_DEBUG="-O0"
       C_O_FLAG_NONE="-O0"
     elif test "x$TOOLCHAIN_TYPE" = xxlc; then
@@ -42440,13 +42530,13 @@ $as_echo "$ac_cv_c_bigendian" >&6; }
       C_O_FLAG_NORM="-O1"
       C_O_FLAG_DEBUG="-Od"
       C_O_FLAG_NONE="-Od"
-    fi
+fi
     CXX_O_FLAG_HIGHEST="$C_O_FLAG_HIGHEST"
     CXX_O_FLAG_HI="$C_O_FLAG_HI"
     CXX_O_FLAG_NORM="$C_O_FLAG_NORM"
     CXX_O_FLAG_DEBUG="$C_O_FLAG_DEBUG"
     CXX_O_FLAG_NONE="$C_O_FLAG_NONE"
-  fi
+    fi
 
   # Adjust optimization flags according to debug level.
   case $DEBUG_LEVEL in
@@ -42491,22 +42581,22 @@ $as_echo "$ac_cv_c_bigendian" >&6; }
     LDFLAGS_JDK="${LDFLAGS_JDK} -q64 -brtl -bnolibpath -liconv -bexpall"
     CFLAGS_JDK="${CFLAGS_JDK} -qchars=signed -q64 -qfullpath -qsaveopt"
     CXXFLAGS_JDK="${CXXFLAGS_JDK} -qchars=signed -q64 -qfullpath -qsaveopt"
-  fi
+	    fi
 
   if test "x$CFLAGS" != "x${ADDED_CFLAGS}"; then
     { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Ignoring CFLAGS($CFLAGS) found in environment. Use --with-extra-cflags" >&5
 $as_echo "$as_me: WARNING: Ignoring CFLAGS($CFLAGS) found in environment. Use --with-extra-cflags" >&2;}
-  fi
+	      fi
 
   if test "x$CXXFLAGS" != "x${ADDED_CXXFLAGS}"; then
     { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Ignoring CXXFLAGS($CXXFLAGS) found in environment. Use --with-extra-cxxflags" >&5
 $as_echo "$as_me: WARNING: Ignoring CXXFLAGS($CXXFLAGS) found in environment. Use --with-extra-cxxflags" >&2;}
-  fi
+	    fi
 
   if test "x$LDFLAGS" != "x${ADDED_LDFLAGS}"; then
     { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Ignoring LDFLAGS($LDFLAGS) found in environment. Use --with-extra-ldflags" >&5
 $as_echo "$as_me: WARNING: Ignoring LDFLAGS($LDFLAGS) found in environment. Use --with-extra-ldflags" >&2;}
-  fi
+fi
 
 
 # Check whether --with-extra-cflags was given.
@@ -42526,7 +42616,7 @@ fi
 # Check whether --with-extra-ldflags was given.
 if test "${with_extra_ldflags+set}" = set; then :
   withval=$with_extra_ldflags;
-fi
+    fi
 
 
   CFLAGS_JDK="${CFLAGS_JDK} $with_extra_cflags"
@@ -42591,7 +42681,7 @@ fi
     else
       COMMON_CCXXFLAGS_JDK="$COMMON_CCXXFLAGS_JDK -D_X86_ -Dx86"
     fi
-  fi
+    fi
 
   ###############################################################################
 
@@ -42726,13 +42816,13 @@ fi
     # We have previously set HAS_GNU_HASH if this is the case
     if test -n "$HAS_GNU_HASH"; then
       LDFLAGS_JDK="${LDFLAGS_JDK} -Xlinker --hash-style=both"
-    fi
+  fi
     if test "x$OPENJDK_TARGET_OS" = xlinux; then
       # And since we now know that the linker is gnu, then add -z defs, to forbid
       # undefined symbols in object files.
       LDFLAGS_JDK="${LDFLAGS_JDK} -Xlinker -z -Xlinker defs"
-      case $DEBUG_LEVEL in
-        release )
+    case $DEBUG_LEVEL in
+    release )
           # tell linker to optimize libraries.
           # Should this be supplied to the OSS linker as well?
           LDFLAGS_JDK="${LDFLAGS_JDK} -Xlinker -O1"
@@ -42748,8 +42838,8 @@ fi
             LDFLAGS_JDK="$LDFLAGS_JDK $LINKER_RELRO_FLAG"
             LDFLAGS_CXX_JDK="$LDFLAGS_CXX_JDK $LINKER_RELRO_FLAG"
           fi
-          ;;
-        fastdebug )
+      ;;
+    fastdebug )
           if test "x$HAS_LINKER_RELRO" = "xtrue"; then
             # mark relocations read only
             LDFLAGS_JDK="$LDFLAGS_JDK $LINKER_RELRO_FLAG"
@@ -42770,16 +42860,16 @@ fi
     # If undefined behaviour detection is enabled then we need to tell linker.
     case $DEBUG_LEVEL in
       release | fastdebug )
-        ;;
-      slowdebug )
+      ;;
+    slowdebug )
         { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $HAS_CFLAG_DETECT_UNDEFINED_BEHAVIOR" >&5
 $as_echo "$as_me: WARNING: $HAS_CFLAG_DETECT_UNDEFINED_BEHAVIOR" >&2;}
-        if test "x$HAS_CFLAG_DETECT_UNDEFINED_BEHAVIOR" = "xtrue"; then
+      if test "x$HAS_CFLAG_DETECT_UNDEFINED_BEHAVIOR" = "xtrue"; then
           # enable undefined behaviour checking
           LDFLAGS_JDK="$LDFLAGS_JDK `$ECHO -n $CFLAG_DETECT_UNDEFINED_BEHAVIOR_FLAG | sed -e "s/ *\(^ \+\)/ -Xlinker \1/g"`"
           LDFLAGS_CXX_JDK="$LDFLAGS_CXX_JDK `$ECHO -n $CFLAG_DETECT_UNDEFINED_BEHAVIOR_FLAG | sed -e "s/ *\(^ \+\)/ -Xlinker \1/g"`"
-        fi
-        ;;
+      fi
+      ;;
       * )
         as_fn_error $? "Unrecognized \$DEBUG_LEVEL: $DEBUG_LEVEL" "$LINENO" 5
         ;;
@@ -42793,9 +42883,9 @@ $as_echo "$as_me: WARNING: $HAS_CFLAG_DETECT_UNDEFINED_BEHAVIOR" >&2;}
   if test "x$TOOLCHAIN_TYPE" = xmicrosoft; then
     if test "x$OPENJDK_TARGET_CPU_BITS" = "x64"; then
       LDFLAGS_STACK_SIZE=1048576
-    else
+  else
       LDFLAGS_STACK_SIZE=327680
-    fi
+      fi
     LDFLAGS_JDKEXE="${LDFLAGS_JDKEXE} /STACK:$LDFLAGS_STACK_SIZE"
   elif test "x$OPENJDK_TARGET_OS" = xlinux; then
     LDFLAGS_JDKEXE="$LDFLAGS_JDKEXE -Xlinker --allow-shlib-undefined"
@@ -42868,7 +42958,7 @@ if ac_fn_c_try_compile "$LINENO"; then :
 
 else
   supports=no
-fi
+  fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
   ac_ext=cpp
 ac_cpp='$CXXCPP $CPPFLAGS'
@@ -42910,7 +43000,7 @@ $as_echo "$supports" >&6; }
     :
   else
     ZERO_ARCHFLAG=""
-  fi
+fi
 
 
 
@@ -42935,9 +43025,9 @@ int i;
 _ACEOF
 if ac_fn_c_try_compile "$LINENO"; then :
 
-else
+    else
   supports=no
-fi
+    fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
   ac_ext=cpp
 ac_cpp='$CXXCPP $CPPFLAGS'
@@ -42961,9 +43051,9 @@ int i;
 _ACEOF
 if ac_fn_cxx_try_compile "$LINENO"; then :
 
-else
+    else
   supports=no
-fi
+    fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
   ac_ext=cpp
 ac_cpp='$CXXCPP $CPPFLAGS'
@@ -43068,7 +43158,7 @@ $as_echo "${enable_zip_debug_info}" >&6; }
 ###############################################################################
 #
 # Check dependencies for external and internal libraries.
-#
+  #
 ###############################################################################
 
 # After we have toolchain, we can compile fixpath. It's needed by the lib checks.
@@ -43122,11 +43212,11 @@ $as_echo_n "checking if fixpath.exe works... " >&6; }
 $as_echo "no" >&6; }
       cat $OUTPUT_ROOT/fixpath2.log
       as_fn_error $? "fixpath did not work!" "$LINENO" 5
-    fi
+          fi
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
     rm -f $OUTPUT_ROOT/fixpath?.??? $OUTPUT_ROOT/fixpath.obj
-  fi
+          fi
 
 
 
@@ -43152,7 +43242,7 @@ $as_echo_n "checking what is not needed on Solaris?... " >&6; }
     PULSE_NOT_NEEDED=yes
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: alsa pulse" >&5
 $as_echo "alsa pulse" >&6; }
-  fi
+    fi
 
   if test "x$OPENJDK_TARGET_OS" = xaix; then
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking what is not needed on AIX?" >&5
@@ -43161,7 +43251,7 @@ $as_echo_n "checking what is not needed on AIX?... " >&6; }
     PULSE_NOT_NEEDED=yes
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: alsa pulse" >&5
 $as_echo "alsa pulse" >&6; }
-  fi
+    fi
 
 
   if test "x$OPENJDK_TARGET_OS" = xwindows; then
@@ -43228,7 +43318,7 @@ $as_echo "alsa" >&6; }
         elif test -f "$SYSROOT/usr/lib/libX11.so"; then
           x_libraries="$SYSROOT/usr/lib"
         fi
-      fi
+fi
     fi
   fi
 
@@ -43385,10 +43475,10 @@ do
     if test -r "$ac_dir/libX11.$ac_extension"; then
       ac_x_libraries=$ac_dir
       break 2
-    fi
+fi
   done
 done
-fi
+  fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
 fi # $ac_x_libraries = no
@@ -43402,7 +43492,7 @@ case $ac_x_includes,$ac_x_libraries in #(
     ac_cv_have_x="have_x=yes\
 	ac_x_includes='$ac_x_includes'\
 	ac_x_libraries='$ac_x_libraries'"
-esac
+  esac
 fi
 ;; #(
     *) have_x=yes;;
@@ -43435,7 +43525,7 @@ $as_echo "#define X_DISPLAY_MISSING 1" >>confdefs.h
 else
   if test -n "$x_includes"; then
     X_CFLAGS="$X_CFLAGS -I$x_includes"
-  fi
+    fi
 
   # It would also be nice to do this for all -L options, not just this one.
   if test -n "$x_libraries"; then
@@ -43459,7 +43549,7 @@ main ()
 }
 _ACEOF
 if ac_fn_cxx_try_link "$LINENO"; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+      { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
        X_LIBS="$X_LIBS -R$x_libraries"
 else
@@ -43476,7 +43566,7 @@ main ()
 }
 _ACEOF
 if ac_fn_cxx_try_link "$LINENO"; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
 	  X_LIBS="$X_LIBS -R $x_libraries"
 else
@@ -43485,7 +43575,7 @@ $as_echo "neither works" >&6; }
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
-fi
+    fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
     ac_cxx_werror_flag=$ac_xsave_cxx_werror_flag
@@ -43553,16 +43643,16 @@ if ac_fn_cxx_try_link "$LINENO"; then :
   ac_cv_lib_dnet_dnet_ntoa=yes
 else
   ac_cv_lib_dnet_dnet_ntoa=no
-fi
+  fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
-fi
+  fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_dnet_dnet_ntoa" >&5
 $as_echo "$ac_cv_lib_dnet_dnet_ntoa" >&6; }
 if test "x$ac_cv_lib_dnet_dnet_ntoa" = xyes; then :
   X_EXTRA_LIBS="$X_EXTRA_LIBS -ldnet"
-fi
+  fi
 
     if test $ac_cv_lib_dnet_dnet_ntoa = no; then
       { $as_echo "$as_me:${as_lineno-$LINENO}: checking for dnet_ntoa in -ldnet_stub" >&5
@@ -43594,19 +43684,19 @@ if ac_fn_cxx_try_link "$LINENO"; then :
   ac_cv_lib_dnet_stub_dnet_ntoa=yes
 else
   ac_cv_lib_dnet_stub_dnet_ntoa=no
-fi
+  fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
-fi
+  fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_dnet_stub_dnet_ntoa" >&5
 $as_echo "$ac_cv_lib_dnet_stub_dnet_ntoa" >&6; }
 if test "x$ac_cv_lib_dnet_stub_dnet_ntoa" = xyes; then :
   X_EXTRA_LIBS="$X_EXTRA_LIBS -ldnet_stub"
-fi
+  fi
 
-    fi
-fi
+  fi
+  fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
     LIBS="$ac_xsave_LIBS"
@@ -43632,7 +43722,7 @@ if ${ac_cv_lib_nsl_gethostbyname+:} false; then :
 else
   ac_check_lib_save_LIBS=$LIBS
 LIBS="-lnsl  $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
 /* Override any GCC internal prototype to avoid an error.
@@ -43658,7 +43748,7 @@ fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
-fi
+  fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_nsl_gethostbyname" >&5
 $as_echo "$ac_cv_lib_nsl_gethostbyname" >&6; }
 if test "x$ac_cv_lib_nsl_gethostbyname" = xyes; then :
@@ -43673,7 +43763,7 @@ if ${ac_cv_lib_bsd_gethostbyname+:} false; then :
 else
   ac_check_lib_save_LIBS=$LIBS
 LIBS="-lbsd  $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
 /* Override any GCC internal prototype to avoid an error.
@@ -43768,7 +43858,7 @@ fi
     ac_fn_cxx_check_func "$LINENO" "remove" "ac_cv_func_remove"
 if test "x$ac_cv_func_remove" = xyes; then :
 
-fi
+  fi
 
     if test $ac_cv_func_remove = no; then
       { $as_echo "$as_me:${as_lineno-$LINENO}: checking for remove in -lposix" >&5
@@ -43778,7 +43868,7 @@ if ${ac_cv_lib_posix_remove+:} false; then :
 else
   ac_check_lib_save_LIBS=$LIBS
 LIBS="-lposix  $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
 /* Override any GCC internal prototype to avoid an error.
@@ -43811,7 +43901,7 @@ if test "x$ac_cv_lib_posix_remove" = xyes; then :
   X_EXTRA_LIBS="$X_EXTRA_LIBS -lposix"
 fi
 
-    fi
+fi
 
     # BSDI BSD/OS 2.1 needs -lipc for XOpenDisplay.
     ac_fn_cxx_check_func "$LINENO" "shmat" "ac_cv_func_shmat"
@@ -43861,7 +43951,7 @@ if test "x$ac_cv_lib_ipc_shmat" = xyes; then :
 fi
 
     fi
-  fi
+fi
 
   # Check for libraries that X11R6 Xt/Xaw programs need.
   ac_save_LDFLAGS=$LDFLAGS
@@ -43921,7 +44011,7 @@ fi
   # this doesn't make sense so we remove it.
   if test "x$COMPILE_TYPE" = xcross; then
     X_LIBS=`$ECHO $X_LIBS | $SED 's/-R \{0,1\}[^ ]*//g'`
-  fi
+fi
 
   if test "x$no_x" = xyes && test "x$X11_NOT_NEEDED" != xyes; then
 
@@ -43952,7 +44042,7 @@ fi
     if test "x$PKGHANDLER_COMMAND" != x; then
       HELP_MSG="You might be able to fix this by running '$PKGHANDLER_COMMAND'."
     fi
-  fi
+fi
 
     as_fn_error $? "Could not find X11 libraries. $HELP_MSG" "$LINENO" 5
   fi
@@ -43974,7 +44064,7 @@ fi
       if test "`${EGREP} -c XLinearGradient ${OPENWIN_HOME}/share/include/X11/extensions/Xrender.h`" = "0"; then
         X_CFLAGS="${X_CFLAGS} -DSOLARIS10_NO_XRENDER_STRUCTS"
       fi
-    fi
+fi
   fi
 
   ac_ext=c
@@ -44026,7 +44116,7 @@ ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
     cygwin_help $MISSING_DEPENDENCY
   elif test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.msys"; then
     msys_help $MISSING_DEPENDENCY
-  else
+else
     PKGHANDLER_COMMAND=
 
     case $PKGHANDLER in
@@ -44044,11 +44134,11 @@ ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
 
     if test "x$PKGHANDLER_COMMAND" != x; then
       HELP_MSG="You might be able to fix this by running '$PKGHANDLER_COMMAND'."
-    fi
-  fi
+fi
+fi
 
     as_fn_error $? "Could not find all X11 headers (shape.h Xrender.h XTest.h Intrinsic.h). $HELP_MSG" "$LINENO" 5
-  fi
+fi
 
 
 
@@ -44063,36 +44153,36 @@ ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
 # Check whether --with-cups was given.
 if test "${with_cups+set}" = set; then :
   withval=$with_cups;
-fi
+      fi
 
 
 # Check whether --with-cups-include was given.
 if test "${with_cups_include+set}" = set; then :
   withval=$with_cups_include;
-fi
+    fi
 
 
   if test "x$CUPS_NOT_NEEDED" = xyes; then
     if test "x${with_cups}" != x || test "x${with_cups_include}" != x; then
       { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: cups not used, so --with-cups is ignored" >&5
 $as_echo "$as_me: WARNING: cups not used, so --with-cups is ignored" >&2;}
-    fi
+fi
     CUPS_CFLAGS=
-  else
+else
     CUPS_FOUND=no
 
     if test "x${with_cups}" = xno || test "x${with_cups_include}" = xno; then
       as_fn_error $? "It is not possible to disable the use of cups. Remove the --without-cups option." "$LINENO" 5
-    fi
+fi
 
     if test "x${with_cups}" != x; then
       CUPS_CFLAGS="-I${with_cups}/include"
       CUPS_FOUND=yes
-    fi
+fi
     if test "x${with_cups_include}" != x; then
       CUPS_CFLAGS="-I${with_cups_include}"
       CUPS_FOUND=yes
-    fi
+fi
     if test "x$CUPS_FOUND" = xno; then
 
 
@@ -44113,7 +44203,7 @@ $as_echo "$as_me: WARNING: cups not used, so --with-cups is ignored" >&2;}
       # Ok, lets instead look for a generic resource
       # (The cups comes from M4 and not the shell, thus no need for eval here.)
       resource=${builddep_cups}
-    fi
+fi
     if test "x$resource" != x; then
       { $as_echo "$as_me:${as_lineno-$LINENO}: Using builddeps $resource for cups" >&5
 $as_echo "$as_me: Using builddeps $resource for cups" >&6;}
@@ -44121,7 +44211,7 @@ $as_echo "$as_me: Using builddeps $resource for cups" >&6;}
       # for example /java/linux/cups
       if test -d ${resource}; then
         depdir=${resource}
-      else
+else
 
   # cups is for example mymodule
   # $resource is for example libs/general/libmymod_1_2_3.zip
@@ -44140,15 +44230,15 @@ $as_echo "$as_me: Using builddeps $resource for cups" >&6;}
 $as_echo "$as_me: Downloading build dependency cups from $with_builddeps_server/$resource and installing into $installdir" >&6;}
     if test ! -d $installdir; then
       mkdir -p $installdir
-    fi
+fi
     if test ! -d $installdir; then
       as_fn_error $? "Could not create directory $installdir" "$LINENO" 5
-    fi
+fi
     tmpfile=`mktemp $installdir/cups.XXXXXXXXX`
     touch $tmpfile
     if test ! -f $tmpfile; then
       as_fn_error $? "Could not create files in directory $installdir" "$LINENO" 5
-    fi
+fi
 
   # $with_builddeps_server/$resource  is the ftp://abuilddeps.server.com/libs/cups.zip
   # $tmpfile is the local file name for the downloaded file.
@@ -44156,11 +44246,11 @@ $as_echo "$as_me: Downloading build dependency cups from $with_builddeps_server/
   if test "x$BDEPS_FTP" = xwget; then
     VALID_TOOL=yes
     wget -O $tmpfile $with_builddeps_server/$resource
-  fi
+    fi
   if test "x$BDEPS_FTP" = xlftp; then
     VALID_TOOL=yes
     lftp -c "get $with_builddeps_server/$resource  -o $tmpfile"
-  fi
+fi
   if test "x$BDEPS_FTP" = xftp; then
     VALID_TOOL=yes
     FTPSERVER=`echo $with_builddeps_server/$resource  | cut -f 3 -d '/'`
@@ -44170,10 +44260,10 @@ $as_echo "$as_me: Downloading build dependency cups from $with_builddeps_server/
       FTPUSER=${userpwd%%:*}
       FTPPWD=${userpwd#*@}
       FTPSERVER=${FTPSERVER#*@}
-    else
+else
       FTPUSER=ftp
       FTPPWD=ftp
-    fi
+fi
     # the "pass" command does not work on some
     # ftp clients (read ftp.exe) but if it works,
     # passive mode is better!
@@ -44183,10 +44273,10 @@ $as_echo "$as_me: Downloading build dependency cups from $with_builddeps_server/
         echo "bin"                          ; \
         echo "get $FTPPATH $tmpfile"              ; \
     ) | ftp -in $FTPSERVER
-  fi
+fi
   if test "x$VALID_TOOL" != xyes; then
     as_fn_error $? "I do not know how to use the tool: $BDEPS_FTP" "$LINENO" 5
-  fi
+fi
 
     mv $tmpfile $installdir/$filename
     if test ! -s $installdir/$filename; then
@@ -44233,11 +44323,11 @@ $as_echo "$as_me: Downloading build dependency cups from $with_builddeps_server/
       fi
       CUPS_FOUND=yes
 
-    fi
+fi
 
-  fi
+fi
 
-    fi
+fi
     if test "x$CUPS_FOUND" = xno; then
       # Are the cups headers installed in the default /usr/include location?
       for ac_header in cups/cups.h cups/ppd.h
@@ -44275,7 +44365,7 @@ $as_echo_n "checking for cups headers... " >&6; }
       fi
       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $CUPS_FOUND" >&5
 $as_echo "$CUPS_FOUND" >&6; }
-    fi
+  fi
     if test "x$CUPS_FOUND" = xno; then
 
   # Print a helpful message on how to acquire the necessary build dependency.
@@ -44338,6 +44428,12 @@ if test "${with_freetype_lib+set}" = set; then :
   withval=$with_freetype_lib;
 fi
 
+
+# Check whether --with-freetype-src was given.
+if test "${with_freetype_src+set}" = set; then :
+  withval=$with_freetype_src;
+fi
+
   # Check whether --enable-freetype-bundling was given.
 if test "${enable_freetype_bundling+set}" = set; then :
   enableval=$enable_freetype_bundling;
@@ -44349,18 +44445,441 @@ fi
   FREETYPE_BUNDLE_LIB_PATH=
 
   if test "x$FREETYPE_NOT_NEEDED" = xyes; then
-    if test "x$with_freetype" != x || test "x$with_freetype_include" != x || test "x$with_freetype_lib" != x; then
+    if test "x$with_freetype" != x || test "x$with_freetype_include" != x || test "x$with_freetype_lib" != x || test "x$with_freetype_src" != x; then
       { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: freetype not used, so --with-freetype is ignored" >&5
 $as_echo "$as_me: WARNING: freetype not used, so --with-freetype is ignored" >&2;}
     fi
     if test "x$enable_freetype_bundling" != x; then
       { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: freetype not used, so --enable-freetype-bundling is ignored" >&5
 $as_echo "$as_me: WARNING: freetype not used, so --enable-freetype-bundling is ignored" >&2;}
-    fi
+  fi
   else
     # freetype is needed to build; go get it!
 
     BUNDLE_FREETYPE="$enable_freetype_bundling"
+
+    if  test "x$with_freetype_src" != x; then
+      if test "x$OPENJDK_TARGET_OS" = xwindows; then
+        # Try to build freetype if --with-freetype-src was given on Windows
+
+  FREETYPE_SRC_PATH="$with_freetype_src"
+  BUILD_FREETYPE=yes
+
+  # Check if the freetype sources are acessible..
+  if ! test -d $FREETYPE_SRC_PATH; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: --with-freetype-src specified, but can't find path \"$FREETYPE_SRC_PATH\" - ignoring --with-freetype-src" >&5
+$as_echo "$as_me: WARNING: --with-freetype-src specified, but can't find path \"$FREETYPE_SRC_PATH\" - ignoring --with-freetype-src" >&2;}
+    BUILD_FREETYPE=no
+  fi
+  # ..and contain a vc2010 project file
+  vcxproj_path="$FREETYPE_SRC_PATH/builds/windows/vc2010/freetype.vcxproj"
+  if test "x$BUILD_FREETYPE" = xyes && ! test -s $vcxproj_path; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Can't find project file $vcxproj_path (you may try a newer freetype version) - ignoring --with-freetype-src" >&5
+$as_echo "$as_me: WARNING: Can't find project file $vcxproj_path (you may try a newer freetype version) - ignoring --with-freetype-src" >&2;}
+    BUILD_FREETYPE=no
+  fi
+  # Now check if configure found a version of 'msbuild.exe'
+  if test "x$BUILD_FREETYPE" = xyes && test "x$MSBUILD" == x ; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Can't find an msbuild.exe executable (you may try to install .NET 4.0) - ignoring --with-freetype-src" >&5
+$as_echo "$as_me: WARNING: Can't find an msbuild.exe executable (you may try to install .NET 4.0) - ignoring --with-freetype-src" >&2;}
+    BUILD_FREETYPE=no
+  fi
+
+  # Ready to go..
+  if test "x$BUILD_FREETYPE" = xyes; then
+
+    # msbuild requires trailing slashes for output directories
+    freetype_lib_path="$FREETYPE_SRC_PATH/lib$OPENJDK_TARGET_CPU_BITS/"
+    freetype_lib_path_unix="$freetype_lib_path"
+    freetype_obj_path="$FREETYPE_SRC_PATH/obj$OPENJDK_TARGET_CPU_BITS/"
+
+  unix_path="$vcxproj_path"
+  if test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.cygwin"; then
+    windows_path=`$CYGPATH -m "$unix_path"`
+    vcxproj_path="$windows_path"
+  elif test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.msys"; then
+    windows_path=`cmd //c echo $unix_path`
+    vcxproj_path="$windows_path"
+  fi
+
+
+  unix_path="$freetype_lib_path"
+  if test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.cygwin"; then
+    windows_path=`$CYGPATH -m "$unix_path"`
+    freetype_lib_path="$windows_path"
+  elif test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.msys"; then
+    windows_path=`cmd //c echo $unix_path`
+    freetype_lib_path="$windows_path"
+fi
+
+
+  unix_path="$freetype_obj_path"
+  if test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.cygwin"; then
+    windows_path=`$CYGPATH -m "$unix_path"`
+    freetype_obj_path="$windows_path"
+  elif test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.msys"; then
+    windows_path=`cmd //c echo $unix_path`
+    freetype_obj_path="$windows_path"
+    fi
+
+    if test "x$OPENJDK_TARGET_CPU_BITS" = x64; then
+      freetype_platform=x64
+  else
+      freetype_platform=win32
+    fi
+
+    # The original freetype project file is for VS 2010 (i.e. 'v100'),
+    # so we have to adapt the toolset if building with any other toolsed (i.e. SDK).
+    # Currently 'PLATFORM_TOOLSET' is set in 'TOOLCHAIN_CHECK_POSSIBLE_VISUAL_STUDIO_ROOT'/
+    # 'TOOLCHAIN_CHECK_POSSIBLE_WIN_SDK_ROOT' in toolchain_windows.m4
+    { $as_echo "$as_me:${as_lineno-$LINENO}: Trying to compile freetype sources with PlatformToolset=$PLATFORM_TOOLSET to $freetype_lib_path_unix ..." >&5
+$as_echo "$as_me: Trying to compile freetype sources with PlatformToolset=$PLATFORM_TOOLSET to $freetype_lib_path_unix ..." >&6;}
+
+    # First we try to build the freetype.dll
+    $ECHO -e "@echo off\n"\
+	     "$MSBUILD $vcxproj_path "\
+		       "/p:PlatformToolset=$PLATFORM_TOOLSET "\
+		       "/p:Configuration=\"Release Multithreaded\" "\
+		       "/p:Platform=$freetype_platform "\
+		       "/p:ConfigurationType=DynamicLibrary "\
+		       "/p:TargetName=freetype "\
+		       "/p:OutDir=\"$freetype_lib_path\" "\
+		       "/p:IntDir=\"$freetype_obj_path\" > freetype.log" > freetype.bat
+    cmd /c freetype.bat
+
+    if test -s "$freetype_lib_path_unix/freetype.dll"; then
+      # If that succeeds we also build freetype.lib
+      $ECHO -e "@echo off\n"\
+	       "$MSBUILD $vcxproj_path "\
+			 "/p:PlatformToolset=$PLATFORM_TOOLSET "\
+			 "/p:Configuration=\"Release Multithreaded\" "\
+			 "/p:Platform=$freetype_platform "\
+			 "/p:ConfigurationType=StaticLibrary "\
+			 "/p:TargetName=freetype "\
+			 "/p:OutDir=\"$freetype_lib_path\" "\
+			 "/p:IntDir=\"$freetype_obj_path\" >> freetype.log" > freetype.bat
+      cmd /c freetype.bat
+
+      if test -s "$freetype_lib_path_unix/freetype.lib"; then
+	# Once we build both, lib and dll, set freetype lib and include path appropriately
+	POTENTIAL_FREETYPE_INCLUDE_PATH="$FREETYPE_SRC_PATH/include"
+	POTENTIAL_FREETYPE_LIB_PATH="$freetype_lib_path_unix"
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: Compiling freetype sources succeeded! (see freetype.log for build results)" >&5
+$as_echo "$as_me: Compiling freetype sources succeeded! (see freetype.log for build results)" >&6;}
+      else
+	BUILD_FREETYPE=no
+    fi
+    else
+      BUILD_FREETYPE=no
+    fi
+    fi
+
+        if test "x$BUILD_FREETYPE" = xyes; then
+          # Okay, we built it. Check that it works.
+
+  POTENTIAL_FREETYPE_INCLUDE_PATH="$POTENTIAL_FREETYPE_INCLUDE_PATH"
+  POTENTIAL_FREETYPE_LIB_PATH="$POTENTIAL_FREETYPE_LIB_PATH"
+  METHOD="--with-freetype-src"
+
+  # First check if the files exists.
+  if test -s "$POTENTIAL_FREETYPE_INCLUDE_PATH/ft2build.h"; then
+    # We found an arbitrary include file. That's a good sign.
+    { $as_echo "$as_me:${as_lineno-$LINENO}: Found freetype include files at $POTENTIAL_FREETYPE_INCLUDE_PATH using $METHOD" >&5
+$as_echo "$as_me: Found freetype include files at $POTENTIAL_FREETYPE_INCLUDE_PATH using $METHOD" >&6;}
+    FOUND_FREETYPE=yes
+
+    FREETYPE_LIB_NAME="${LIBRARY_PREFIX}freetype${SHARED_LIBRARY_SUFFIX}"
+    if ! test -s "$POTENTIAL_FREETYPE_LIB_PATH/$FREETYPE_LIB_NAME"; then
+      { $as_echo "$as_me:${as_lineno-$LINENO}: Could not find $POTENTIAL_FREETYPE_LIB_PATH/$FREETYPE_LIB_NAME. Ignoring location." >&5
+$as_echo "$as_me: Could not find $POTENTIAL_FREETYPE_LIB_PATH/$FREETYPE_LIB_NAME. Ignoring location." >&6;}
+      FOUND_FREETYPE=no
+    else
+      if test "x$OPENJDK_TARGET_OS" = xwindows; then
+        # On Windows, we will need both .lib and .dll file.
+        if ! test -s "$POTENTIAL_FREETYPE_LIB_PATH/freetype.lib"; then
+          { $as_echo "$as_me:${as_lineno-$LINENO}: Could not find $POTENTIAL_FREETYPE_LIB_PATH/freetype.lib. Ignoring location." >&5
+$as_echo "$as_me: Could not find $POTENTIAL_FREETYPE_LIB_PATH/freetype.lib. Ignoring location." >&6;}
+          FOUND_FREETYPE=no
+  fi
+      elif test "x$OPENJDK_TARGET_OS" = xsolaris \
+          && test -s "$POTENTIAL_FREETYPE_LIB_PATH$OPENJDK_TARGET_CPU_ISADIR/$FREETYPE_LIB_NAME"; then
+        # Found lib in isa dir, use that instead.
+        POTENTIAL_FREETYPE_LIB_PATH="$POTENTIAL_FREETYPE_LIB_PATH$OPENJDK_TARGET_CPU_ISADIR"
+  fi
+    fi
+  fi
+
+  if test "x$FOUND_FREETYPE" = xyes; then
+
+  if test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.cygwin"; then
+
+  # Input might be given as Windows format, start by converting to
+  # unix format.
+  path="$POTENTIAL_FREETYPE_INCLUDE_PATH"
+  new_path=`$CYGPATH -u "$path"`
+
+  # Cygwin tries to hide some aspects of the Windows file system, such that binaries are
+  # named .exe but called without that suffix. Therefore, "foo" and "foo.exe" are considered
+  # the same file, most of the time (as in "test -f"). But not when running cygpath -s, then
+  # "foo.exe" is OK but "foo" is an error.
+  #
+  # This test is therefore slightly more accurate than "test -f" to check for file precense.
+  # It is also a way to make sure we got the proper file name for the real test later on.
+  test_shortpath=`$CYGPATH -s -m "$new_path" 2> /dev/null`
+  if test "x$test_shortpath" = x; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: The path of POTENTIAL_FREETYPE_INCLUDE_PATH, which resolves as \"$path\", is invalid." >&5
+$as_echo "$as_me: The path of POTENTIAL_FREETYPE_INCLUDE_PATH, which resolves as \"$path\", is invalid." >&6;}
+    as_fn_error $? "Cannot locate the the path of POTENTIAL_FREETYPE_INCLUDE_PATH" "$LINENO" 5
+  fi
+
+  # Call helper function which possibly converts this using DOS-style short mode.
+  # If so, the updated path is stored in $new_path.
+
+  input_path="$new_path"
+  # Check if we need to convert this using DOS-style short mode. If the path
+  # contains just simple characters, use it. Otherwise (spaces, weird characters),
+  # take no chances and rewrite it.
+  # Note: m4 eats our [], so we need to use [ and ] instead.
+  has_forbidden_chars=`$ECHO "$input_path" | $GREP [^-._/a-zA-Z0-9]`
+  if test "x$has_forbidden_chars" != x; then
+    # Now convert it to mixed DOS-style, short mode (no spaces, and / instead of \)
+    shortmode_path=`$CYGPATH -s -m -a "$input_path"`
+    path_after_shortmode=`$CYGPATH -u "$shortmode_path"`
+    if test "x$path_after_shortmode" != "x$input_to_shortpath"; then
+      # Going to short mode and back again did indeed matter. Since short mode is
+      # case insensitive, let's make it lowercase to improve readability.
+      shortmode_path=`$ECHO "$shortmode_path" | $TR 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' 'abcdefghijklmnopqrstuvwxyz'`
+      # Now convert it back to Unix-stile (cygpath)
+      input_path=`$CYGPATH -u "$shortmode_path"`
+      new_path="$input_path"
+    fi
+  fi
+
+  test_cygdrive_prefix=`$ECHO $input_path | $GREP ^/cygdrive/`
+  if test "x$test_cygdrive_prefix" = x; then
+    # As a simple fix, exclude /usr/bin since it's not a real path.
+    if test "x`$ECHO $new_path | $GREP ^/usr/bin/`" = x; then
+      # The path is in a Cygwin special directory (e.g. /home). We need this converted to
+      # a path prefixed by /cygdrive for fixpath to work.
+      new_path="$CYGWIN_ROOT_PATH$input_path"
+      fi
+      fi
+
+
+  if test "x$path" != "x$new_path"; then
+    POTENTIAL_FREETYPE_INCLUDE_PATH="$new_path"
+    { $as_echo "$as_me:${as_lineno-$LINENO}: Rewriting POTENTIAL_FREETYPE_INCLUDE_PATH to \"$new_path\"" >&5
+$as_echo "$as_me: Rewriting POTENTIAL_FREETYPE_INCLUDE_PATH to \"$new_path\"" >&6;}
+    fi
+
+  elif test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.msys"; then
+
+  path="$POTENTIAL_FREETYPE_INCLUDE_PATH"
+  has_colon=`$ECHO $path | $GREP ^.:`
+  new_path="$path"
+  if test "x$has_colon" = x; then
+    # Not in mixed or Windows style, start by that.
+    new_path=`cmd //c echo $path`
+    fi
+
+
+  input_path="$new_path"
+  # Check if we need to convert this using DOS-style short mode. If the path
+  # contains just simple characters, use it. Otherwise (spaces, weird characters),
+  # take no chances and rewrite it.
+  # Note: m4 eats our [], so we need to use [ and ] instead.
+  has_forbidden_chars=`$ECHO "$input_path" | $GREP [^-_/:a-zA-Z0-9]`
+  if test "x$has_forbidden_chars" != x; then
+    # Now convert it to mixed DOS-style, short mode (no spaces, and / instead of \)
+    new_path=`cmd /c "for %A in (\"$input_path\") do @echo %~sA"|$TR \\\\\\\\ / | $TR 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' 'abcdefghijklmnopqrstuvwxyz'`
+fi
+
+
+  windows_path="$new_path"
+  if test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.cygwin"; then
+    unix_path=`$CYGPATH -u "$windows_path"`
+    new_path="$unix_path"
+  elif test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.msys"; then
+    unix_path=`$ECHO "$windows_path" | $SED -e 's,^\\(.\\):,/\\1,g' -e 's,\\\\,/,g'`
+    new_path="$unix_path"
+    fi
+
+  if test "x$path" != "x$new_path"; then
+    POTENTIAL_FREETYPE_INCLUDE_PATH="$new_path"
+    { $as_echo "$as_me:${as_lineno-$LINENO}: Rewriting POTENTIAL_FREETYPE_INCLUDE_PATH to \"$new_path\"" >&5
+$as_echo "$as_me: Rewriting POTENTIAL_FREETYPE_INCLUDE_PATH to \"$new_path\"" >&6;}
+  fi
+
+  # Save the first 10 bytes of this path to the storage, so fixpath can work.
+  all_fixpath_prefixes=("${all_fixpath_prefixes[@]}" "${new_path:0:10}")
+
+  else
+    # We're on a posix platform. Hooray! :)
+    path="$POTENTIAL_FREETYPE_INCLUDE_PATH"
+    has_space=`$ECHO "$path" | $GREP " "`
+    if test "x$has_space" != x; then
+      { $as_echo "$as_me:${as_lineno-$LINENO}: The path of POTENTIAL_FREETYPE_INCLUDE_PATH, which resolves as \"$path\", is invalid." >&5
+$as_echo "$as_me: The path of POTENTIAL_FREETYPE_INCLUDE_PATH, which resolves as \"$path\", is invalid." >&6;}
+      as_fn_error $? "Spaces are not allowed in this path." "$LINENO" 5
+    fi
+
+    # Use eval to expand a potential ~
+    eval path="$path"
+    if test ! -f "$path" && test ! -d "$path"; then
+      as_fn_error $? "The path of POTENTIAL_FREETYPE_INCLUDE_PATH, which resolves as \"$path\", is not found." "$LINENO" 5
+      fi
+
+    POTENTIAL_FREETYPE_INCLUDE_PATH="`cd "$path"; $THEPWDCMD -L`"
+    fi
+
+
+  if test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.cygwin"; then
+
+  # Input might be given as Windows format, start by converting to
+  # unix format.
+  path="$POTENTIAL_FREETYPE_LIB_PATH"
+  new_path=`$CYGPATH -u "$path"`
+
+  # Cygwin tries to hide some aspects of the Windows file system, such that binaries are
+  # named .exe but called without that suffix. Therefore, "foo" and "foo.exe" are considered
+  # the same file, most of the time (as in "test -f"). But not when running cygpath -s, then
+  # "foo.exe" is OK but "foo" is an error.
+  #
+  # This test is therefore slightly more accurate than "test -f" to check for file precense.
+  # It is also a way to make sure we got the proper file name for the real test later on.
+  test_shortpath=`$CYGPATH -s -m "$new_path" 2> /dev/null`
+  if test "x$test_shortpath" = x; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: The path of POTENTIAL_FREETYPE_LIB_PATH, which resolves as \"$path\", is invalid." >&5
+$as_echo "$as_me: The path of POTENTIAL_FREETYPE_LIB_PATH, which resolves as \"$path\", is invalid." >&6;}
+    as_fn_error $? "Cannot locate the the path of POTENTIAL_FREETYPE_LIB_PATH" "$LINENO" 5
+  fi
+
+  # Call helper function which possibly converts this using DOS-style short mode.
+  # If so, the updated path is stored in $new_path.
+
+  input_path="$new_path"
+  # Check if we need to convert this using DOS-style short mode. If the path
+  # contains just simple characters, use it. Otherwise (spaces, weird characters),
+  # take no chances and rewrite it.
+  # Note: m4 eats our [], so we need to use [ and ] instead.
+  has_forbidden_chars=`$ECHO "$input_path" | $GREP [^-._/a-zA-Z0-9]`
+  if test "x$has_forbidden_chars" != x; then
+    # Now convert it to mixed DOS-style, short mode (no spaces, and / instead of \)
+    shortmode_path=`$CYGPATH -s -m -a "$input_path"`
+    path_after_shortmode=`$CYGPATH -u "$shortmode_path"`
+    if test "x$path_after_shortmode" != "x$input_to_shortpath"; then
+      # Going to short mode and back again did indeed matter. Since short mode is
+      # case insensitive, let's make it lowercase to improve readability.
+      shortmode_path=`$ECHO "$shortmode_path" | $TR 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' 'abcdefghijklmnopqrstuvwxyz'`
+      # Now convert it back to Unix-stile (cygpath)
+      input_path=`$CYGPATH -u "$shortmode_path"`
+      new_path="$input_path"
+    fi
+  fi
+
+  test_cygdrive_prefix=`$ECHO $input_path | $GREP ^/cygdrive/`
+  if test "x$test_cygdrive_prefix" = x; then
+    # As a simple fix, exclude /usr/bin since it's not a real path.
+    if test "x`$ECHO $new_path | $GREP ^/usr/bin/`" = x; then
+      # The path is in a Cygwin special directory (e.g. /home). We need this converted to
+      # a path prefixed by /cygdrive for fixpath to work.
+      new_path="$CYGWIN_ROOT_PATH$input_path"
+    fi
+  fi
+
+
+  if test "x$path" != "x$new_path"; then
+    POTENTIAL_FREETYPE_LIB_PATH="$new_path"
+    { $as_echo "$as_me:${as_lineno-$LINENO}: Rewriting POTENTIAL_FREETYPE_LIB_PATH to \"$new_path\"" >&5
+$as_echo "$as_me: Rewriting POTENTIAL_FREETYPE_LIB_PATH to \"$new_path\"" >&6;}
+  fi
+
+  elif test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.msys"; then
+
+  path="$POTENTIAL_FREETYPE_LIB_PATH"
+  has_colon=`$ECHO $path | $GREP ^.:`
+  new_path="$path"
+  if test "x$has_colon" = x; then
+    # Not in mixed or Windows style, start by that.
+    new_path=`cmd //c echo $path`
+  fi
+
+
+  input_path="$new_path"
+  # Check if we need to convert this using DOS-style short mode. If the path
+  # contains just simple characters, use it. Otherwise (spaces, weird characters),
+  # take no chances and rewrite it.
+  # Note: m4 eats our [], so we need to use [ and ] instead.
+  has_forbidden_chars=`$ECHO "$input_path" | $GREP [^-_/:a-zA-Z0-9]`
+  if test "x$has_forbidden_chars" != x; then
+    # Now convert it to mixed DOS-style, short mode (no spaces, and / instead of \)
+    new_path=`cmd /c "for %A in (\"$input_path\") do @echo %~sA"|$TR \\\\\\\\ / | $TR 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' 'abcdefghijklmnopqrstuvwxyz'`
+  fi
+
+
+  windows_path="$new_path"
+  if test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.cygwin"; then
+    unix_path=`$CYGPATH -u "$windows_path"`
+    new_path="$unix_path"
+  elif test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.msys"; then
+    unix_path=`$ECHO "$windows_path" | $SED -e 's,^\\(.\\):,/\\1,g' -e 's,\\\\,/,g'`
+    new_path="$unix_path"
+  fi
+
+  if test "x$path" != "x$new_path"; then
+    POTENTIAL_FREETYPE_LIB_PATH="$new_path"
+    { $as_echo "$as_me:${as_lineno-$LINENO}: Rewriting POTENTIAL_FREETYPE_LIB_PATH to \"$new_path\"" >&5
+$as_echo "$as_me: Rewriting POTENTIAL_FREETYPE_LIB_PATH to \"$new_path\"" >&6;}
+fi
+
+  # Save the first 10 bytes of this path to the storage, so fixpath can work.
+  all_fixpath_prefixes=("${all_fixpath_prefixes[@]}" "${new_path:0:10}")
+
+  else
+    # We're on a posix platform. Hooray! :)
+    path="$POTENTIAL_FREETYPE_LIB_PATH"
+    has_space=`$ECHO "$path" | $GREP " "`
+    if test "x$has_space" != x; then
+      { $as_echo "$as_me:${as_lineno-$LINENO}: The path of POTENTIAL_FREETYPE_LIB_PATH, which resolves as \"$path\", is invalid." >&5
+$as_echo "$as_me: The path of POTENTIAL_FREETYPE_LIB_PATH, which resolves as \"$path\", is invalid." >&6;}
+      as_fn_error $? "Spaces are not allowed in this path." "$LINENO" 5
+fi
+
+    # Use eval to expand a potential ~
+    eval path="$path"
+    if test ! -f "$path" && test ! -d "$path"; then
+      as_fn_error $? "The path of POTENTIAL_FREETYPE_LIB_PATH, which resolves as \"$path\", is not found." "$LINENO" 5
+fi
+
+    POTENTIAL_FREETYPE_LIB_PATH="`cd "$path"; $THEPWDCMD -L`"
+fi
+
+
+    FREETYPE_INCLUDE_PATH="$POTENTIAL_FREETYPE_INCLUDE_PATH"
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for freetype includes" >&5
+$as_echo_n "checking for freetype includes... " >&6; }
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: $FREETYPE_INCLUDE_PATH" >&5
+$as_echo "$FREETYPE_INCLUDE_PATH" >&6; }
+    FREETYPE_LIB_PATH="$POTENTIAL_FREETYPE_LIB_PATH"
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for freetype libraries" >&5
+$as_echo_n "checking for freetype libraries... " >&6; }
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: $FREETYPE_LIB_PATH" >&5
+$as_echo "$FREETYPE_LIB_PATH" >&6; }
+  fi
+
+          if test "x$FOUND_FREETYPE" != xyes; then
+            as_fn_error $? "Can not use the built freetype at location given by --with-freetype-src" "$LINENO" 5
+    fi
+        else
+          { $as_echo "$as_me:${as_lineno-$LINENO}: User specified --with-freetype-src but building freetype failed. (see freetype.log for build results)" >&5
+$as_echo "$as_me: User specified --with-freetype-src but building freetype failed. (see freetype.log for build results)" >&6;}
+          as_fn_error $? "Consider building freetype manually and using --with-freetype instead." "$LINENO" 5
+    fi
+  else
+        { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: --with-freetype-src is currently only supported on Windows - ignoring" >&5
+$as_echo "$as_me: WARNING: --with-freetype-src is currently only supported on Windows - ignoring" >&2;}
+      fi
+    fi
 
     if test "x$with_freetype" != x || test "x$with_freetype_include" != x || test "x$with_freetype_lib" != x; then
       # User has specified settings
@@ -51847,4 +52366,5 @@ $CHMOD +x $OUTPUT_ROOT/compare.sh
     printf "You should run without '--no-create | -n' to create the configuration.\n"
     printf "\n"
   fi
+
 
