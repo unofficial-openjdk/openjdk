@@ -27,8 +27,12 @@ package com.sun.tools.javac.file;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -41,6 +45,7 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
+import java.util.stream.Collectors;
 import java.util.zip.ZipFile;
 
 import javax.tools.JavaFileManager;
@@ -173,14 +178,14 @@ public class Locations {
      * Utility class to help evaluate a path option. Duplicate entries are ignored, jar class paths
      * can be expanded.
      */
-    private class Path extends LinkedHashSet<File> {
+    private class SearchPath extends LinkedHashSet<File> {
 
         private static final long serialVersionUID = 0;
 
         private boolean expandJarClassPaths = false;
         private final Set<File> canonicalValues = new HashSet<>();
 
-        public Path expandJarClassPaths(boolean x) {
+        public SearchPath expandJarClassPaths(boolean x) {
             expandJarClassPaths = x;
             return this;
         }
@@ -190,12 +195,12 @@ public class Locations {
          */
         private File emptyPathDefault = null;
 
-        public Path emptyPathDefault(File x) {
+        public SearchPath emptyPathDefault(File x) {
             emptyPathDefault = x;
             return this;
         }
 
-        public Path addDirectories(String dirs, boolean warn) {
+        public SearchPath addDirectories(String dirs, boolean warn) {
             boolean prev = expandJarClassPaths;
             expandJarClassPaths = true;
             try {
@@ -210,7 +215,7 @@ public class Locations {
             }
         }
 
-        public Path addDirectories(String dirs) {
+        public SearchPath addDirectories(String dirs) {
             return addDirectories(dirs, warn);
         }
 
@@ -235,18 +240,18 @@ public class Locations {
             }
         }
 
-        public Path addFiles(String files, boolean warn) {
+        public SearchPath addFiles(String files, boolean warn) {
             if (files != null) {
                 addFiles(getPathEntries(files, emptyPathDefault), warn);
             }
             return this;
         }
 
-        public Path addFiles(String files) {
+        public SearchPath addFiles(String files) {
             return addFiles(files, warn);
         }
 
-        public Path addFiles(Iterable<? extends File> files, boolean warn) {
+        public SearchPath addFiles(Iterable<? extends File> files, boolean warn) {
             if (files != null) {
                 for (File file : files) {
                     addFile(file, warn);
@@ -255,7 +260,7 @@ public class Locations {
             return this;
         }
 
-        public Path addFiles(Iterable<? extends File> files) {
+        public SearchPath addFiles(Iterable<? extends File> files) {
             return addFiles(files, warn);
         }
 
@@ -283,7 +288,7 @@ public class Locations {
 
             if (fsInfo.isFile(file)) {
                 /* File is an ordinary file. */
-                if (!isArchive(file)) {
+                if (!isArchive(file) && !file.getName().endsWith(".jimage")) {
                     /* Not a recognized extension; open it to see if
                      it looks like a valid zip file. */
                     try {
@@ -309,7 +314,7 @@ public class Locations {
             super.add(file);
             canonicalValues.add(canonFile);
 
-            if (expandJarClassPaths && fsInfo.isFile(file)) {
+            if (expandJarClassPaths && fsInfo.isFile(file) && !file.getName().endsWith(".jimage")) {
                 addJarClassPath(file, warn);
             }
         }
@@ -458,7 +463,7 @@ public class Locations {
 
         @Override
         void setLocation(Iterable<? extends File> files) {
-            Path p;
+            SearchPath p;
             if (files == null) {
                 p = computePath(null);
             } else {
@@ -467,12 +472,12 @@ public class Locations {
             searchPath = Collections.unmodifiableCollection(p);
         }
 
-        protected Path computePath(String value) {
+        protected SearchPath computePath(String value) {
             return createPath().addFiles(value);
         }
 
-        protected Path createPath() {
-            return new Path();
+        protected SearchPath createPath() {
+            return new SearchPath();
         }
     }
 
@@ -494,7 +499,7 @@ public class Locations {
         }
 
         @Override
-        protected Path computePath(String value) {
+        protected SearchPath computePath(String value) {
             String cp = value;
 
             // CLASSPATH environment variable when run from `javac'.
@@ -517,8 +522,8 @@ public class Locations {
         }
 
         @Override
-        protected Path createPath() {
-            return new Path()
+        protected SearchPath createPath() {
+            return new SearchPath()
                     .expandJarClassPaths(true) // Only search user jars for Class-Paths
                     .emptyPathDefault(new File("."));  // Empty path elt ==> current directory
         }
@@ -616,15 +621,15 @@ public class Locations {
             } else {
                 defaultBootClassPathRtJar = null;
                 isDefaultBootClassPath = false;
-                Path p = new Path().addFiles(files, false);
+                SearchPath p = new SearchPath().addFiles(files, false);
                 searchPath = Collections.unmodifiableCollection(p);
                 optionValues.clear();
             }
         }
 
-        Path computePath() {
+        SearchPath computePath() throws IOException {
             defaultBootClassPathRtJar = null;
-            Path path = new Path();
+            SearchPath path = new SearchPath();
 
             String bootclasspathOpt = optionValues.get(BOOTCLASSPATH);
             String endorseddirsOpt = optionValues.get(ENDORSEDDIRS);
@@ -643,12 +648,17 @@ public class Locations {
                 path.addFiles(bootclasspathOpt);
             } else {
                 // Standard system classes for this compiler's release.
-                String files = System.getProperty("sun.boot.class.path");
-                path.addFiles(files, false);
-                File rt_jar = new File("rt.jar");
-                for (File file : getPathEntries(files)) {
-                    if (new File(file.getName()).equals(rt_jar)) {
-                        defaultBootClassPathRtJar = file;
+                Collection<File> systemClasses = systemClasses();
+                if (systemClasses != null) {
+                    path.addFiles(systemClasses, false);
+                } else {
+                    // fallback to the value of sun.boot.class.path
+                    String files = System.getProperty("sun.boot.class.path");
+                    path.addFiles(files, false);
+                    File rt_jar = new File("rt.jar");
+                    for (File file : getPathEntries(files)) {
+                        if (new File(file.getName()).equals(rt_jar))
+                            defaultBootClassPathRtJar = file;
                     }
                 }
             }
@@ -672,9 +682,53 @@ public class Locations {
             return path;
         }
 
+        /**
+         * Return a collection of files containing system classes.
+         * Returns {@code null} if not running on a modular image.
+         *
+         * @throws UncheckedIOException if an I/O errors occurs
+         */
+        private Collection<File> systemClasses() throws IOException {
+            String home = System.getProperty("java.home");
+            // Return .jimage files if available
+            Path libModules = Paths.get(home, "lib", "modules");
+            if (Files.exists(libModules)) {
+                Collection<File> images = Files.list(libModules)
+                        .filter(f -> f.getFileName().toString().endsWith(".jimage"))
+                        .map(Path::toFile)
+                        .collect(Collectors.toList());
+                if (!images.isEmpty())
+                    return images;
+            }
+
+            // Temporary: if no .jimage files, return individual modules
+            if (Files.exists(libModules.resolve("java.base"))) {
+                return Files.list(libModules)
+                            .map(d -> d.resolve("classes"))
+                            .map(Path::toFile)
+                            .collect(Collectors.toList());
+            }
+
+            // Exploded module image
+            Path modules = Paths.get(home, "modules");
+            if (Files.isDirectory(modules.resolve("java.base"))) {
+                return Files.list(modules)
+                            .map(Path::toFile)
+                            .collect(Collectors.toList());
+            }
+
+            // not a modular image that we know about
+            return null;
+        }
+
         private void lazy() {
             if (searchPath == null) {
-                searchPath = Collections.unmodifiableCollection(computePath());
+                try {
+                    searchPath = Collections.unmodifiableCollection(computePath());
+                } catch (IOException e) {
+                    // TODO: need better handling here, e.g. javac Abort?
+                    throw new UncheckedIOException(e);
+                }
             }
         }
     }
