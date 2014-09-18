@@ -32,7 +32,7 @@ public class Resource {
     private final long size;
     private final long csize;
 
-    Resource(String name, long size, long csize) {
+    public Resource(String name, long size, long csize) {
         this.name = name;
         this.size = size;
         this.csize = csize;
