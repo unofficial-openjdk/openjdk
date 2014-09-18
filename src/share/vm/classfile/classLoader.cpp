@@ -192,9 +192,10 @@ bool ClassPathEntry::is_lazy() {
   return false;
 }
 
-ClassPathDirEntry::ClassPathDirEntry(char* dir) : ClassPathEntry() {
-  _dir = NEW_C_HEAP_ARRAY(char, strlen(dir)+1, mtClass);
-  strcpy(_dir, dir);
+ClassPathDirEntry::ClassPathDirEntry(const char* dir) : ClassPathEntry() {
+  char* copy = NEW_C_HEAP_ARRAY(char, strlen(dir)+1, mtClass);
+  strcpy(copy, dir);
+  _dir = copy;
 }
 
 
@@ -238,8 +239,9 @@ ClassFileStream* ClassPathDirEntry::open_stream(const char* name, TRAPS) {
 
 ClassPathZipEntry::ClassPathZipEntry(jzfile* zip, const char* zip_name) : ClassPathEntry() {
   _zip = zip;
-  _zip_name = NEW_C_HEAP_ARRAY(char, strlen(zip_name)+1, mtClass);
-  strcpy(_zip_name, zip_name);
+  char *copy = NEW_C_HEAP_ARRAY(char, strlen(zip_name)+1, mtClass);
+  strcpy(copy, zip_name);
+  _zip_name = copy;
 }
 
 ClassPathZipEntry::~ClassPathZipEntry() {
@@ -307,7 +309,7 @@ void ClassPathZipEntry::contents_do(void f(const char* name, void* context), voi
   }
 }
 
-LazyClassPathEntry::LazyClassPathEntry(char* path, const struct stat* st, bool throw_exception) : ClassPathEntry() {
+LazyClassPathEntry::LazyClassPathEntry(const char* path, const struct stat* st, bool throw_exception) : ClassPathEntry() {
   _path = os::strdup_check_oom(path);
   _st = *st;
   _meta_index = NULL;
@@ -317,7 +319,7 @@ LazyClassPathEntry::LazyClassPathEntry(char* path, const struct stat* st, bool t
 }
 
 LazyClassPathEntry::~LazyClassPathEntry() {
-  os::free(_path);
+  os::free((void*)_path);
 }
 
 bool LazyClassPathEntry::is_jar_file() {
@@ -641,17 +643,19 @@ void ClassLoader::check_shared_classpath(const char *path) {
 
 void ClassLoader::setup_bootstrap_search_path() {
   assert(_first_entry == NULL, "should not setup bootstrap class search path twice");
-  char* sys_class_path = os::strdup_check_oom(Arguments::get_sysclasspath());
-  if (!PrintSharedArchiveAndExit) {
+  const char* sys_class_path = Arguments::get_sysclasspath();
+  if (PrintSharedArchiveAndExit) {
+    // Don't print sys_class_path - this is the bootcp of this current VM process, not necessarily
+    // the same as the bootcp of the shared archive.
+  } else {
     trace_class_path("[Bootstrap loader class path=", sys_class_path);
   }
 #if INCLUDE_CDS
   if (DumpSharedSpaces) {
-    _shared_paths_misc_info->add_boot_classpath(Arguments::get_sysclasspath());
+    _shared_paths_misc_info->add_boot_classpath(sys_class_path);
   }
 #endif
   setup_search_path(sys_class_path);
-  os::free(sys_class_path);
 }
 
 #if INCLUDE_CDS
@@ -671,7 +675,7 @@ bool ClassLoader::check_shared_paths_misc_info(void *buf, int size) {
   }
 #endif
 
-void ClassLoader::setup_search_path(char *class_path) {
+void ClassLoader::setup_search_path(const char *class_path) {
   int offset = 0;
   int len = (int)strlen(class_path);
   int end = 0;
@@ -698,7 +702,7 @@ void ClassLoader::setup_search_path(char *class_path) {
   }
 }
 
-ClassPathEntry* ClassLoader::create_class_path_entry(char *path, const struct stat* st,
+ClassPathEntry* ClassLoader::create_class_path_entry(const char *path, const struct stat* st,
                                                      bool lazy, bool throw_exception, TRAPS) {
   JavaThread* thread = JavaThread::current();
   if (lazy) {
@@ -771,11 +775,8 @@ ClassPathZipEntry* ClassLoader::create_class_path_zip_entry(const char *path) {
   struct stat st;
   if (os::stat(path, &st) == 0) {
     if ((st.st_mode & S_IFREG) == S_IFREG) {
-      char orig_path[JVM_MAXPATHLEN];
       char canonical_path[JVM_MAXPATHLEN];
-
-      strcpy(orig_path, path);
-      if (get_canonical_path(orig_path, canonical_path, JVM_MAXPATHLEN)) {
+      if (get_canonical_path(path, canonical_path, JVM_MAXPATHLEN)) {
         char* error_msg = NULL;
         jzfile* zip;
         {
@@ -825,7 +826,7 @@ void ClassLoader::add_to_list(const char *apath) {
 }
 
 // Returns true IFF the file/dir exists and the entry was successfully created.
-bool ClassLoader::update_class_path_entry_list(char *path,
+bool ClassLoader::update_class_path_entry_list(const char *path,
                                                bool check_for_duplicates,
                                                bool throw_exception) {
   struct stat st;
@@ -850,8 +851,8 @@ bool ClassLoader::update_class_path_entry_list(char *path,
     if (DumpSharedSpaces) {
       _shared_paths_misc_info->add_nonexist_path(path);
     }
-    return false;
 #endif
+    return false;
   }
 }
 
@@ -1381,11 +1382,17 @@ void classLoader_init() {
 }
 
 
-bool ClassLoader::get_canonical_path(char* orig, char* out, int len) {
+bool ClassLoader::get_canonical_path(const char* orig, char* out, int len) {
   assert(orig != NULL && out != NULL && len > 0, "bad arguments");
   if (CanonicalizeEntry != NULL) {
-    JNIEnv* env = JavaThread::current()->jni_environment();
-    if ((CanonicalizeEntry)(env, os::native_path(orig), out, len) < 0) {
+    JavaThread* THREAD = JavaThread::current();
+    JNIEnv* env = THREAD->jni_environment();
+    ResourceMark rm(THREAD);
+
+    // os::native_path writes into orig_copy
+    char* orig_copy = NEW_RESOURCE_ARRAY_IN_THREAD(THREAD, char, strlen(orig)+1);
+    strcpy(orig_copy, orig);
+    if ((CanonicalizeEntry)(env, os::native_path(orig_copy), out, len) < 0) {
       return false;
     }
   } else {
