@@ -39,6 +39,7 @@ import java.util.zip.ZipFile;
  */
 public class JmodArchive implements Archive {
     private static final String JMOD_EXT = ".jmod";
+    private static final String MODULE_INFO = "module-info.class";
     private final Path jmod;
     private final String moduleName;
 
@@ -61,19 +62,21 @@ public class JmodArchive implements Archive {
             zf.stream()
                 .filter(ze -> !ze.isDirectory() &&
                         ze.getName().startsWith("classes"))
-                .filter(ze -> !ze.getName().startsWith("classes/_") &&
-                        !ze.getName().equals("classes/module-info.class"))
-                .map(JmodArchive::toResource)
+                .filter(ze -> !ze.getName().startsWith("classes/_"))
+                .map(this::toResource)
                 .forEach(consumer::accept);
         } catch (IOException ioe) {
             throw new UncheckedIOException(ioe);
         }
     }
 
-    private static Resource toResource(ZipEntry ze) {
+    private Resource toResource(ZipEntry ze) {
         String name = ze.getName();
         // trim the "classes/" path
         String fn = name.substring(name.indexOf('/') + 1);
+        if (fn.equals(MODULE_INFO)) {
+            fn = moduleName + "/" + MODULE_INFO;
+        }
         long entrySize = ze.getSize();
         return new Resource(fn, entrySize, 0 /* no compression support yet */);
     }

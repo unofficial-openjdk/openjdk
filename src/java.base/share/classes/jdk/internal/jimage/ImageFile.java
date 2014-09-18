@@ -195,7 +195,7 @@ public final class ImageFile {
             resourcesForModule.put(mn, res);
 
             Set<String> pkgs = res.stream().map(Resource::name)
-                    .filter(n -> n.endsWith(".class"))
+                    .filter(n -> n.endsWith(".class") && !n.endsWith("module-info.class"))
                     .map(this::toPackage)
                     .distinct()
                     .collect(Collectors.toSet());

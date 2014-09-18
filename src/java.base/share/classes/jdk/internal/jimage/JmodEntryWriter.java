@@ -46,7 +46,6 @@ public class JmodEntryWriter implements Consumer<Archive.Entry> {
     private static final String NATIVE_CMDS = "bin";
     private static final String CONFIG      = "conf";
     private static final String SERVICES    = "module/services";
-    private static final String MODULE_INFO = "module-info.class";
     private final Path root;
     private final OutputStream out;
 
@@ -68,7 +67,7 @@ public class JmodEntryWriter implements Consumer<Archive.Entry> {
             try (InputStream in = entry.getInputStream()) {
                 switch (section) {
                     case CLASSES:
-                        if (!filename.equals(MODULE_INFO) && !filename.startsWith("_")) {
+                        if (!filename.startsWith("_")) {
                             writeEntry(in);
                         }
                         break;
