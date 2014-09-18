@@ -104,6 +104,7 @@ ifeq ($(PROFILE), )
       javah$(EXE_SUFFIX) \
       javap$(EXE_SUFFIX) \
       jdeps$(EXE_SUFFIX) \
+      jlink$(EXE_SUFFIX) \
       jcmd$(EXE_SUFFIX) \
       jdb$(EXE_SUFFIX) \
       jps$(EXE_SUFFIX) \

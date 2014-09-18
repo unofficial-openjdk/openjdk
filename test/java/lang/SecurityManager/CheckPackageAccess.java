@@ -84,6 +84,7 @@ public class CheckPackageAccess {
         "jdk.internal.",
         "jdk.nashorn.internal.",
         "jdk.nashorn.tools.",
+        "jdk.tools.jimage.",
         "com.sun.activation.registries."
     };
 

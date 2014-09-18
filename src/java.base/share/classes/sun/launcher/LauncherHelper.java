@@ -39,14 +39,18 @@ package sun.launcher;
  * The following are helper methods that the native launcher uses
  * to perform checks etc. using JNI, see src/share/bin/java.c
  */
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
@@ -55,17 +59,33 @@ import java.text.Normalizer;
 import java.util.ResourceBundle;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Locale.Category;
 import java.util.Properties;
+import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
+
+import jdk.jigsaw.module.Layer;
+import jdk.jigsaw.module.ModuleArtifact;
+import jdk.jigsaw.module.ModuleArtifactFinder;
+import jdk.jigsaw.module.ModuleDependence;
+import jdk.jigsaw.module.ModuleExport;
+import jdk.jigsaw.module.ModuleId;
+import jdk.jigsaw.module.ServiceDependence;
+
+import sun.misc.JModCache;
 
 public enum LauncherHelper {
     INSTANCE;
@@ -438,12 +458,77 @@ public enum LauncherHelper {
         return null;
     }
 
+    /**
+     * Returns the main class for a module. The query is either a module-id
+     * or module-id/main-class. For the former then the module's main class
+     * is read from its extended module descriptor (jmod for now).
+     */
+    static String getMainClassForModule(String query) throws IOException {
+        int i = query.indexOf('/');
+        String mainModule;
+        String mainClass;
+        if (i == -1) {
+            mainModule = query;
+            mainClass = null;
+        } else {
+            mainModule = query.substring(0, i);
+            mainClass = query.substring(i+1);
+        }
+
+        // main module should be in the boot layer
+        ModuleId mid = ModuleId.parse(mainModule);
+        Layer layer = Layer.bootLayer();
+        ModuleArtifact artifact = layer.configuration().findArtifact(mid.name());
+        if (artifact == null)
+            abort(null, "java.launcher.module.error1", mainModule);
+
+        // if a version is specified to -m then it needs to be checked
+        if (mid.version() != null) {
+            ModuleId actual = artifact.descriptor().id();
+            if (!actual.equals(mid))
+                abort(null, "java.launcher.module.error2", actual, mid);
+        }
+
+        // if query included the main-class then we return that
+        if (mainClass != null) {
+            i = mainClass.lastIndexOf('.');
+            if (i > 0) {
+                String pkg = mainClass.substring(0, i);
+                if (!artifact.packages().contains(pkg)) {
+                    // main class not in a package that the module defines
+                    abort(null, "java.launcher.module.error3", mainModule, mainClass);
+                }
+            } else {
+                // main-class cannot be in the unnamed package
+                abort(null, "java.launcher.module.error3", mainModule, "<unnamed>");
+            }
+            return mainClass;
+        }
+
+        // read extended module descriptor's main class (only jmod for now)
+        URL url = artifact.location();
+        String s = url.toString();
+        if (!url.getProtocol().equalsIgnoreCase("file") || !s.endsWith(".jmod")) {
+            abort(null, "java.launcher.module.error4", query);
+        }
+        // convert to jmod URL for direct access
+        ZipFile zf = JModCache.get(new URL("jmod" + s.substring(4)));
+        ZipEntry ze = zf.getEntry("module/main-class");
+        if (ze == null) {
+            abort(null, "java.launcher.module.error5", url);
+        }
+        try (InputStream in = zf.getInputStream(ze)) {
+            return new BufferedReader(new InputStreamReader(in, "UTF-8")).readLine();
+        }
+    }
+
     // From src/share/bin/java.c:
-    //   enum LaunchMode { LM_UNKNOWN = 0, LM_CLASS, LM_JAR };
+    //   enum LaunchMode { LM_UNKNOWN = 0, LM_CLASS, LM_JAR, LM_MODULE }
 
     private static final int LM_UNKNOWN = 0;
     private static final int LM_CLASS   = 1;
     private static final int LM_JAR     = 2;
+    private static final int LM_MODULE  = 3;
 
     static void abort(Throwable t, String msgKey, Object... args) {
         if (msgKey != null) {
@@ -483,8 +568,11 @@ public enum LauncherHelper {
      */
     public static Class<?> checkAndLoadMain(boolean printToStderr,
                                             int mode,
-                                            String what) {
+                                            String what)
+        throws Exception
+    {
         initOutput(printToStderr);
+
         // get the class name
         String cn = null;
         switch (mode) {
@@ -493,6 +581,9 @@ public enum LauncherHelper {
                 break;
             case LM_JAR:
                 cn = getMainClassFromJar(what);
+                break;
+            case LM_MODULE:
+                cn = getMainClassForModule(what);
                 break;
             default:
                 // should never happen
@@ -772,5 +863,95 @@ public enum LauncherHelper {
             fxLauncherMethod.invoke(null,
                     new Object[] {fxLaunchName, fxLaunchMode, args});
         }
+    }
+
+    private static void formatCommaList(PrintStream out,
+                                        String prefix,
+                                        Collection<?> list)
+    {
+        if (list.isEmpty())
+            return;
+        out.format("%s", prefix);
+        boolean first = true;
+        for (Object ob : list) {
+            if (first) {
+                out.format(" %s", ob);
+                first = false;
+            } else {
+                out.format(", %s", ob);
+            }
+        }
+        out.format("%n");
+    }
+
+    /**
+     * Called by the launcher to list the installed modules.
+     * If called without any sub-options then it the output is a simple
+     * list of the moduels. If called with the verbose sub-option
+     * (-XlistModules:verbose) then the dependences and other details
+     * are also printed.
+     */
+    static void listModules(boolean printToStderr, String optionFlag)
+        throws IOException, ClassNotFoundException
+    {
+        initOutput(printToStderr);
+
+        boolean verbose = false;
+        int colon = optionFlag.indexOf(':');
+        if (colon >= 0) {
+            String[] subOptions = optionFlag.substring(colon+1).split(",");
+            for (String subOption: subOptions) {
+                 switch (subOption) {
+                     case "verbose" : verbose = true; break;
+                     default : /* do nothing for now */
+                 }
+            }
+        }
+
+        boolean detail = verbose;
+        ModuleArtifactFinder.installedModules()
+                            .allModules()
+                            .stream()
+                            .map(ModuleArtifact::descriptor)
+                            .sorted()
+                            .forEach(md -> {
+            ostream.println(md.id());
+            if (detail) {
+                for (ModuleDependence d : md.moduleDependences()) {
+                    ostream.format("  %s%n", d);
+                }
+                for (ServiceDependence d : md.serviceDependences()) {
+                    ostream.format("  %s%n", d);
+                }
+
+                // sorted exports
+                Map<String, Set<String>> exports = new TreeMap<>();
+                for (ModuleExport export : md.exports()) {
+                    String pkg = export.pkg();
+                    String who = export.permit();
+                    Set<String> permits = exports.computeIfAbsent(pkg, k -> new HashSet<>());
+                    if (who != null) {
+                        permits.add(who);
+                    }
+                }
+                for (Map.Entry<String, Set<String>> entry : exports.entrySet()) {
+                    ostream.format("  exports %s", entry.getKey());
+                    Set<String> who = entry.getValue();
+                    if (who.isEmpty()) {
+                        ostream.println();
+                    } else {
+                        formatCommaList(ostream, " to", who);
+                    }
+                }
+
+                Map<String, Set<String>> services = md.services();
+                for (Map.Entry<String, Set<String>> entry : services.entrySet()) {
+                    String sn = entry.getKey();
+                    for (String impl : entry.getValue()) {
+                        ostream.format("  provides service %s with %s%n", sn, impl);
+                    }
+                }
+            }
+        });
     }
 }

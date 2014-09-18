@@ -236,6 +236,7 @@ RT_JAR_EXCLUDES += \
     com/sun/java/swing/action \
     com/sun/java/swing/ui \
     com/oracle/security \
+    module-info.class \
     #
 
 # Find all files in the classes dir to use as dependencies. This could be more fine granular.
@@ -386,7 +387,7 @@ $(eval $(call SetupArchive,BUILD_CHARSETS_JAR, , \
 ##########################################################################################
 
 $(eval $(call SetupArchive,BUILD_ZIPFS_JAR, , \
-    SRCS := $(JDK_OUT_CLASSES), \
+    SRCS := $(JDK_OUTPUTDIR)/modules/jdk.zipfs, \
     INCLUDES := jdk/nio/zipfs, \
     EXTRA_FILES := META-INF/services/java.nio.file.spi.FileSystemProvider, \
     JAR := $(IMAGES_OUTPUTDIR)/lib/ext/zipfs.jar, \

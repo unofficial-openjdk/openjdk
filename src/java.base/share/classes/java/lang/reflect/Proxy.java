@@ -633,6 +633,17 @@ public class Proxy implements java.io.Serializable {
             long num = nextUniqueNumber.getAndIncrement();
             String proxyName = proxyPkg + proxyClassNamePrefix + num;
 
+            /**
+             * Augment access control rules to give proxy class access to the interfaces
+             * that it will implement.
+             */
+            for (Class<?> interf: interfaces) {
+                ensureAccess(loader, proxyPkg, interf);
+                for (Class<?> superInterf: interf.getInterfaces()) {
+                    ensureAccess(loader, proxyPkg, superInterf);
+                }
+            }
+
             /*
              * Generate the specified proxy class.
              */
@@ -652,6 +663,22 @@ public class Proxy implements java.io.Serializable {
                 throw new IllegalArgumentException(e.toString());
             }
         }
+    }
+
+    private static void ensureAccess(ClassLoader loader, String pkg, Class<?> target) {
+        int len = pkg.length();
+        if (len > 0 && pkg.charAt(len-1) == '.')
+            pkg = pkg.substring(0, len-1);
+        sun.misc.VM.addBackdoorAccess(target.getClassLoader(),
+                                      packageName(target),
+                                      loader,
+                                      pkg);
+    }
+
+    private static String packageName(Class<?> c) {
+        String cn = c.getName();
+        int last = cn.lastIndexOf(".");
+        return (last != -1) ? cn.substring(0, last) : "";
     }
 
     /**
