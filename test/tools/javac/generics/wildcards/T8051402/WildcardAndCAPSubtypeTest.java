@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,12 +21,20 @@
  * questions.
  */
 
-package m;
+/*
+ * @test
+ * @bug 8051402
+ * @summary javac, type containment should accept that CAP <= ? extends CAP and CAP <= ? super CAP
+ * @compile WildcardAndCAPSubtypeTest.java
+ */
 
+import java.util.List;
 
-class Gee extends g.G {
-    public sun.misc.Lock lock;
-    public com.sun.tools.classfile.ClassFile cf;     // @jdk.Exported(false)
-    public com.sun.source.tree.BinaryTree tree;      // @jdk.Exported
-    public com.sun.management.ThreadMXBean mxbean;   // @jdk.Exported on package-info
+public abstract class WildcardAndCAPSubtypeTest {
+    abstract <T> List<T> copyOf(List<? extends T> lx);
+    abstract <E> List<E> filter(List<E> lx);
+
+    void g(List<?> lx) {
+        copyOf(filter(lx));
+    }
 }
