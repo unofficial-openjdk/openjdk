@@ -1269,12 +1269,7 @@ public class URLClassPath {
 
         @Override
         URL findResource(String name, boolean check) {
-            String entry;
-            if (name.startsWith("META-INF/services/")) {
-                entry = "module/" + name.substring(9);
-            } else {
-                entry = toEntryName(name);
-            }
+            String entry = toEntryName(name);
             ImageLocation location = jimage.findLocation(entry);
             if (location == null)
                 return null;

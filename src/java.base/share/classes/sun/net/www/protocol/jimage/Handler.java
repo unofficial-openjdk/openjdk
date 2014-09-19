@@ -77,8 +77,11 @@ public class Handler extends URLStreamHandler {
                 } else {
                     resource = jimage.getResource(offset, size);
                 }
-
                 return new ByteArrayInputStream(resource);
+            }
+            @Override
+            public long getContentLengthLong() {
+                return location.getUncompressedSize();
             }
         };
     }
