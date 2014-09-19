@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2001, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,32 +23,32 @@
  * questions.
  */
 
-/*
- * Fix 4221246: Export functions for Netscape to use to get AWT info
+package com.sun.tools.attach;
+
+import java.io.IOException;
+
+/**
+ * Exception type to signal that an attach operation failed in the target VM.
+ *
+ * <p> This exception can be thrown by the various operations of
+ * {@link com.sun.tools.attach.VirtualMachine} when the operation
+ * fails in the target VM. If there is a communication error,
+ * a regular IOException will be thrown.
+ *
+ * @since 1.9
  */
+@jdk.Exported
+public class AttachOperationFailedException extends IOException {
 
-#ifndef _AWT_PLUGIN_H_
-#define _AWT_PLUGIN_H_
+    private static final long serialVersionUID = 2140308168167478043L;
 
-#include <jni.h>
-#include <X11/Xlib.h>
-#include <X11/Xutil.h>
-
-void getAwtLockFunctions(void (**AwtLock)(JNIEnv *),
-                         void (**AwtUnlock)(JNIEnv *),
-                         void (**AwtNoFlushUnlock)(JNIEnv *),
-                         void *);
-
-void getExtAwtData(Display *,
-                   int32_t,
-                   int32_t *,      /* awt_depth */
-                   Colormap *,     /* awt_cmap  */
-                   Visual **,      /* awt_visInfo.visual */
-                   int32_t *,      /* awt_num_colors */
-                   void *);
-
-void getAwtData(int32_t *, Colormap *, Visual **, int32_t *, void *);
-
-Display *getAwtDisplay(void);
-
-#endif /* _AWT_PLUGIN_H_ */
+    /**
+     * Constructs an <code>AttachOperationFailedException</code> with
+     * the specified detail message.
+     *
+     * @param   s   the detail message.
+     */
+    public AttachOperationFailedException(String message) {
+        super(message);
+    }
+}
