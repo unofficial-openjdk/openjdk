@@ -32,11 +32,10 @@ import java.lang.invoke.MethodType;
 import jdk.internal.dynalink.CallSiteDescriptor;
 import jdk.internal.dynalink.linker.GuardedInvocation;
 import jdk.internal.dynalink.linker.LinkRequest;
-import jdk.internal.dynalink.support.CallSiteDescriptorFactory;
 import jdk.internal.dynalink.support.Guards;
-import jdk.nashorn.internal.lookup.Lookup;
 import jdk.nashorn.internal.runtime.FindProperty;
 import jdk.nashorn.internal.runtime.ScriptObject;
+import jdk.nashorn.internal.runtime.UserAccessorProperty;
 
 /**
  * Implements lookup of methods to link for dynamic operations on JavaScript primitive values (booleans, strings, and
@@ -59,6 +58,7 @@ public final class PrimitiveLookup {
      * creates a transient native wrapper of the same type as {@code wrappedReceiver} for subsequent invocations of the
      * method - it will be combined into the returned invocation as an argument filter on the receiver.
      * @return a guarded invocation representing the operation at the call site when performed on a JavaScript primitive
+     * @param protoFilter A method handle that walks up the proto chain of this receiver object
      * type {@code receiverClass}.
      */
     public static GuardedInvocation lookupPrimitive(final LinkRequest request, final Class<?> receiverClass,
@@ -77,6 +77,7 @@ public final class PrimitiveLookup {
      * @param wrapFilter A method handle that takes a primitive value of type guarded by the {@code guard} and
      * creates a transient native wrapper of the same type as {@code wrappedReceiver} for subsequent invocations of the
      * method - it will be combined into the returned invocation as an argument filter on the receiver.
+     * @param protoFilter A method handle that walks up the proto chain of this receiver object
      * @return a guarded invocation representing the operation at the call site when performed on a JavaScript primitive
      * type (that is implied by both {@code guard} and {@code wrappedReceiver}).
      */
@@ -84,15 +85,6 @@ public final class PrimitiveLookup {
                                                     final ScriptObject wrappedReceiver, final MethodHandle wrapFilter,
                                                     final MethodHandle protoFilter) {
         final CallSiteDescriptor desc = request.getCallSiteDescriptor();
-        final String operator = CallSiteDescriptorFactory.tokenizeOperators(desc).get(0);
-        if ("setProp".equals(operator) || "setElem".equals(operator)) {
-            MethodType type = desc.getMethodType();
-            MethodHandle method = MH.asType(Lookup.EMPTY_SETTER, MH.type(void.class, Object.class, type.parameterType(1)));
-            if (type.parameterCount() == 3) {
-                method = MH.dropArguments(method, 2, type.parameterType(2));
-            }
-            return new GuardedInvocation(method, guard);
-        }
 
         if(desc.getNameTokenCount() > 2) {
             final String name = desc.getNameToken(CallSiteDescriptor.NAME_OPERAND);
@@ -100,7 +92,7 @@ public final class PrimitiveLookup {
             if(find == null) {
                 // Give up early, give chance to BeanLinker and NashornBottomLinker to deal with it.
                 return null;
-            } else if (find.isInherited() && !find.getProperty().hasGetterFunction(find.getOwner())) {
+            } else if (find.isInherited() && !(find.getProperty() instanceof UserAccessorProperty)) {
                 // If property is found in the prototype object bind the method handle directly to
                 // the proto filter instead of going through wrapper instantiation below.
                 final ScriptObject proto = wrappedReceiver.getProto();
@@ -124,7 +116,7 @@ public final class PrimitiveLookup {
                 assert receiverType.isAssignableFrom(wrapType.returnType());
                 method = MH.filterArguments(method, 0, MH.asType(wrapFilter, wrapType.changeReturnType(receiverType)));
             }
-            return new GuardedInvocation(method, guard, link.getSwitchPoint());
+            return new GuardedInvocation(method, guard, link.getSwitchPoints(), null);
         }
         return null;
     }
