@@ -93,7 +93,7 @@ public class BasicImageReader {
         return findLocation(new UTF8String(name));
     }
 
-    public ImageLocation findLocation(UTF8String name) {
+    public synchronized ImageLocation findLocation(UTF8String name) {
         int count = header.getLocationCount();
         int hash = name.hashCode() % count;
         int redirect = getRedirect(hash);

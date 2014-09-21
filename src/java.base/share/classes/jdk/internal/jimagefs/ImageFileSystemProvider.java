@@ -99,10 +99,10 @@ public final class ImageFileSystemProvider extends FileSystemProvider {
     public FileSystem newFileSystem(Path path, Map<String, ?> env)
         throws IOException
     {
-        if (path.getFileSystem() != FileSystems.getDefault()) {
+        if (!path.toString().endsWith(".jimage") || !Files.isRegularFile(path) ||
+            (path.getFileSystem() != FileSystems.getDefault())) {
             throw new UnsupportedOperationException();
         }
-        ensureFile(path);
         return new ImageFileSystem(this, path, env);
     }
 
