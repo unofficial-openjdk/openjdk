@@ -51,12 +51,15 @@ rm -rf mlib myimage myjimage
 
 # create jmod
 mkdir mlib
-$JLINK --format jmod --class-path mods/test --mid test@1.0 --output mlib/test@1.0.jmod
+$JLINK --format jmod --class-path mods/test --mid test@1.0 --main-class jdk.test.Test \
+    --output mlib/test@1.0.jmod
 
-# create modular image
+# legacy image
 $JLINK --module-path $TESTJAVA/../jmods:mlib --format image --output myimage --mods test
-myimage/bin/java jdk.test.Test
+myimage/bin/test a b c
 
+# jimage
 $JLINK --module-path $TESTJAVA/../jmods:mlib --format jimage --output myjimage --mods test
-myjimage/bin/java jdk.test.Test
+myjimage/bin/test 1 2 3
+
 exit 0

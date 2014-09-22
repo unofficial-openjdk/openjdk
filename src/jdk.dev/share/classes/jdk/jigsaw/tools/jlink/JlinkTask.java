@@ -41,7 +41,6 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.UncheckedIOException;
 import java.lang.reflect.InvocationTargetException;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -77,6 +76,7 @@ import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
+
 import jdk.jigsaw.module.Configuration;
 import jdk.jigsaw.module.Layer;
 import jdk.jigsaw.module.ModuleArtifactFinder;
@@ -85,7 +85,6 @@ import jdk.internal.jimage.Archive;
 import jdk.internal.jimage.ImageFile;
 import jdk.internal.jimage.JigsawImageModules;
 import jdk.internal.jimage.JmodArchive;
-import jdk.internal.jimage.JmodEntryWriter;
 
 
 /**
@@ -199,16 +198,6 @@ class JlinkTask {
         new Option(true, "--cmds") {
             void process(JlinkTask task, String opt, String arg) throws BadArgs {
                 task.options.cmds = splitPath(arg, File.pathSeparator);
-            }
-        },
-        new Option(true, "--command") {
-            void process(JlinkTask task, String opt, String arg) throws BadArgs {
-                int index = arg.indexOf(':');
-                if (index == -1)
-                    throw new BadArgs("err.invalid.arg.for.option", opt);
-                String name = arg.substring(0, index);
-                String main = arg.substring(index+1, arg.length());
-                task.options.launchers.put(name, main);
             }
         },
         new Option(true, "--config") {
@@ -326,7 +315,6 @@ class JlinkTask {
         Set<String> jmods = new TreeSet<>();
         Format format = null;
         Path output;
-        Map<String,String> launchers = new HashMap<>();
         String moduleId;
         String mainClass;
     }
@@ -363,15 +351,6 @@ class JlinkTask {
                 if (options.jmods.isEmpty())  // ## default to jdk.base ??
                     throw new BadArgs("err.mods.must.be.specified").showUsage(true);
 
-                if (options.classpath != null) {
-                    if (options.launchers.isEmpty())
-                        throw new BadArgs("err.cmds.must.be.specified").showUsage(true);
-                } else {
-                    // support launchers with main entry point in the JDK
-                    // if (options.commandName != null || options.commandClass != null)
-                    //    throw new BadArgs("err.cp.must.be.specified").showUsage(true);
-
-                }
             } else if (options.format.equals(Format.JMOD)) {
                 Path path = options.output;
                 if (path == null)
@@ -497,22 +476,42 @@ class JlinkTask {
                 setExecutable(jspawnhelper);
         }
 
-        // application script
-        for (Map.Entry<String,String> e : options.launchers.entrySet()) {
-            // create a script to launch main class to support multiple commands
-            // before the proper launcher support is added.
-            StringBuilder sb = new StringBuilder();
-            sb.append("#!/bin/sh").append("\n");
-            sb.append("DIR=`dirname $0`").append("\n");
-            sb.append("$DIR/java -cp $DIR/../lib/app/app.jar ");
-            sb.append(e.getValue()).append(" $@\n");
-            Path cmd = output.resolve("bin").resolve(e.getKey());
-            try (BufferedWriter writer = Files.newBufferedWriter(cmd,
-                                                            StandardCharsets.ISO_8859_1,
-                                                            StandardOpenOption.CREATE_NEW)) {
-                writer.write(sb.toString());
+        // generate launch scripts for the modules with a main class
+        for (Map.Entry<String, Path> entry: jmods.entrySet()) {
+            String module = entry.getKey();
+            Path jmodpath = entry.getValue();
+
+            String mainClass = null;
+            try (ZipFile zf = new ZipFile(jmodpath.toString())) {
+                ZipEntry ze = zf.getEntry("module/main-class");
+                if (ze != null) {
+                    try (InputStream in = zf.getInputStream(ze)) {
+                        mainClass = new BufferedReader(new InputStreamReader(in, "UTF-8")).readLine();
+                    }
+                }
             }
-            setExecutable(cmd);
+
+            if (mainClass != null) {
+                Path cmd = output.resolve("bin").resolve(module);
+                if (!Files.exists(cmd)) {
+                    StringBuilder sb = new StringBuilder();
+                    sb.append("#!/bin/sh")
+                      .append("\n");
+                    sb.append("DIR=`dirname $0`")
+                      .append("\n");
+                    sb.append("$DIR/java -m ")
+                      .append(module).append('/')
+                      .append(mainClass)
+                      .append(" $@\n");
+
+                    try (BufferedWriter writer = Files.newBufferedWriter(cmd,
+                            StandardCharsets.ISO_8859_1,
+                            StandardOpenOption.CREATE_NEW)) {
+                        writer.write(sb.toString());
+                    }
+                    setExecutable(cmd);
+                }
+            }
         }
     }
 
