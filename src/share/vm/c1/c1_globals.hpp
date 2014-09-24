@@ -320,9 +320,6 @@
   develop(bool, PrintCFGToFile, false,                                      \
           "print control flow graph to a separate file during compilation") \
                                                                             \
-  develop(intx, MaxForceInlineLevel, 100,                                   \
-          "maximum number of nested @ForceInline calls that are inlined")   \
-                                                                            \
 
 
 // Read default values for c1 globals
