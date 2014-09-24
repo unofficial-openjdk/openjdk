@@ -25,6 +25,7 @@
 
 package jdk.jigsaw.module;
 
+import java.lang.reflect.Module;
 import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.Collections;
@@ -93,6 +94,7 @@ class Resolver {
             // bind service and create a new readability graph
             resolver.bind(r);
             resolver.makeGraph(r);
+            resolver.checkVersionConstraints(r);
             return r;
         }
     }
@@ -129,6 +131,8 @@ class Resolver {
 
         resolve(r, q);
         makeGraph(r);
+        checkVersionConstraints(r);
+
         return r;
     }
 
@@ -368,6 +372,47 @@ class Resolver {
         // m1. Need to watch out for the "hollowed-out case" where m2 is an aggregator.
 
         r.graph = g1;
+    }
+
+    /**
+     * Check the selected modules to make sure that they don't violate any
+     * version constraints.
+     */
+    private void checkVersionConstraints(Resolution r) {
+        for (ModuleDescriptor descriptor: r.selected()) {
+            for (ModuleDependence md: descriptor.moduleDependences()) {
+                ModuleIdQuery query = md.query();
+                String dn = query.name();
+
+                ModuleDescriptor other;
+                ModuleArtifact artifact = r.findArtifact(dn);
+                if (artifact != null) {
+                    other = artifact.descriptor();
+                } else {
+                    Module m = layer.findModule(dn);
+                    if (m == null)
+                        throw new InternalError("Module " + dn + " not found");
+                    other = m.descriptor();
+                }
+
+                ModuleId mid;
+                if (other instanceof ExtendedModuleDescriptor) {
+                    mid = ((ExtendedModuleDescriptor)other).id();
+                } else {
+                    mid = ModuleId.parse(dn); // shouldn't happen
+                }
+
+                if (!query.matches(mid)) {
+                    String name = descriptor.name();
+                    if (mid.version() == null) {
+                        fail("%s requires %s, %s does not have a version",
+                            name, query, dn);
+                    } else {
+                        fail("%s requires %s, selected %s", name, query, mid);
+                    }
+                }
+            }
+        }
     }
 
     private static void fail(String fmt, Object ... args) {

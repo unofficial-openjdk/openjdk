@@ -234,7 +234,7 @@ class ArtifactInterposer implements ModuleArtifactFinder {
         newDependences.forEach(builder::requires);
         descriptor.serviceDependences().forEach(builder::requires);
         newExports.forEach(builder::export);
-        ExtendedModuleDescriptor newDescriptor =  builder.build();
+        ExtendedModuleDescriptor newDescriptor = builder.build();
 
         return new ModuleArtifact(newDescriptor, artifact.packages(), artifact.location());
     }

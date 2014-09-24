@@ -23,8 +23,6 @@
  * questions.
  */
 
-import jdk.jigsaw.module.*;
-
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
@@ -33,6 +31,11 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import jdk.jigsaw.module.ExtendedModuleDescriptor;
+import jdk.jigsaw.module.ModuleArtifact;
+import jdk.jigsaw.module.ModuleArtifactFinder;
+import jdk.jigsaw.module.ModuleExport;
 
 /**
  * A container of modules that acts as a ModuleArtifactFinder for testing

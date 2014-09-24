@@ -77,14 +77,16 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
-import jdk.jigsaw.module.Configuration;
-import jdk.jigsaw.module.Layer;
-import jdk.jigsaw.module.ModuleArtifactFinder;
-import jdk.jigsaw.module.ModuleDescriptor;
 import jdk.internal.jimage.Archive;
 import jdk.internal.jimage.ImageFile;
 import jdk.internal.jimage.JigsawImageModules;
 import jdk.internal.jimage.JmodArchive;
+import jdk.jigsaw.module.Configuration;
+import jdk.jigsaw.module.Layer;
+import jdk.jigsaw.module.ModuleArtifactFinder;
+import jdk.jigsaw.module.ModuleDescriptor;
+import jdk.jigsaw.module.ModuleId;
+import jdk.jigsaw.module.internal.ControlFile;
 
 
 /**
@@ -245,6 +247,11 @@ class JlinkTask {
                 task.options.moduleId = arg;
             }
         },
+        new Option(true, "--control-file") {
+            void process(JlinkTask task, String opt, String arg) throws BadArgs {
+                task.options.controlFile = arg;
+            }
+        },
         new Option(true, "--mods") {
             void process(JlinkTask task, String opt, String arg) throws BadArgs {
                 for (String mn : arg.split(",")) {
@@ -317,6 +324,7 @@ class JlinkTask {
         Path output;
         String moduleId;
         String mainClass;
+        String controlFile;
     }
 
     int run(String[] args) {
@@ -357,8 +365,6 @@ class JlinkTask {
                     throw new BadArgs("err.output.must.be.specified").showUsage(true);
                 if (Files.exists(path))
                     throw new BadArgs("err.file.already.exists", path);
-                if (options.moduleId == null)
-                    throw new BadArgs("err.mid.must.be.specified").showUsage(true);
             }
 
             // additional option combination validation
@@ -483,10 +489,10 @@ class JlinkTask {
 
             String mainClass = null;
             try (ZipFile zf = new ZipFile(jmodpath.toString())) {
-                ZipEntry ze = zf.getEntry("module/main-class");
+                ZipEntry ze = zf.getEntry(ControlFile.CONTROL_FILE);
                 if (ze != null) {
                     try (InputStream in = zf.getInputStream(ze)) {
-                        mainClass = new BufferedReader(new InputStreamReader(in, "UTF-8")).readLine();
+                        mainClass = ControlFile.parse(in).mainClass();
                     }
                 }
             }
@@ -798,19 +804,55 @@ class JlinkTask {
         final Path output = options.output;
         final String moduleId = options.moduleId;
         final String mainClass = options.mainClass;
+        final String controlFile = options.controlFile;
 
-        JmodFileWriter jmod = new JmodFileWriter(moduleId, mainClass);
+        JmodFileWriter jmod = new JmodFileWriter(moduleId, mainClass, controlFile);
         try (OutputStream os = Files.newOutputStream(output)) {
             jmod.write(os, classes, libs, configs, cmds);
         }
     }
 
     private class JmodFileWriter {
-        final String mid;
+        final String moduleId;
         final String mainClass;
-        JmodFileWriter(String moduleId, String mainClass) {
-            this.mid = moduleId;
+        final String controlFile;
+
+        JmodFileWriter(String moduleId, String mainClass, String controlFile) {
+            this.moduleId = moduleId;
             this.mainClass = mainClass;
+            this.controlFile = controlFile;
+        }
+
+        /**
+         * Writes the jmod control file with the meta-data for the extended
+         * module descriptor.
+         */
+        private void writeControlFile(ZipOutputStream zos) throws IOException {
+            ControlFile cf;
+
+            // user-supplied control file
+            if (controlFile != null) {
+                try (InputStream in = Files.newInputStream(Paths.get(controlFile))) {
+                    cf = ControlFile.parse(in);
+                }
+            } else {
+                cf = new ControlFile();
+            }
+
+            // override module id or main-class if specified as options
+            if (moduleId != null) {
+                ModuleId id = ModuleId.parse(moduleId);
+                cf.name(id.name());
+                if (id.version() != null)
+                    cf.version(id.version().toString());
+            }
+            if (mainClass != null)
+                cf.mainClass(mainClass);
+
+            ZipEntry ze = new ZipEntry(ControlFile.CONTROL_FILE);
+            zos.putNextEntry(ze);
+            cf.write(zos);
+            zos.closeEntry();
         }
 
         void write(OutputStream os, List<Path> classes,
@@ -818,10 +860,10 @@ class JlinkTask {
             throws IOException
         {
             try (ZipOutputStream zos = new ZipOutputStream(os)) {
-                // write extended module descriptor, module/id and module/main for now
-                writeZipEntry(zos, mid.getBytes("UTF-8"), "module", "id");
-                if (mainClass != null)
-                    writeZipEntry(zos, mainClass.getBytes("UTF-8"), "module", "main-class");
+                // if module id, main-class or an explicit control file then
+                // we need to write this into the jmod
+                if (moduleId != null || mainClass != null || controlFile != null)
+                    writeControlFile(zos);
 
                 // classes / services
                 processClasses(zos, classes);

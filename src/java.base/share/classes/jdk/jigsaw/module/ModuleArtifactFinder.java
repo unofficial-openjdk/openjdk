@@ -25,11 +25,9 @@
 
 package jdk.jigsaw.module;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.UncheckedIOException;
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -50,6 +48,7 @@ import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+import jdk.jigsaw.module.internal.ControlFile;
 import jdk.internal.jimage.JigsawImageModules;
 import sun.misc.JModCache;
 
@@ -223,10 +222,9 @@ class InstalledModuleFinder implements ModuleArtifactFinder {
                 if (packages == null)
                     packages = Collections.emptySet();
 
-                ModuleArtifact artifact =
-                    new ModuleArtifact(descriptor,
-                                       packages,
-                                       url);
+                ModuleArtifact artifact = new ModuleArtifact(descriptor,
+                                                             packages,
+                                                             url);
                 artifacts.add(artifact);
             }
 
@@ -261,9 +259,6 @@ class InstalledModuleFinder implements ModuleArtifactFinder {
  */
 class ModulePath implements ModuleArtifactFinder {
     private static final String MODULE_INFO = "module-info.class";
-
-    // module id in extended module descriptor
-    private static final String EXTENDED_MODULE_DESCRIPTOR_MID = "module/id";
 
     // the directories on this module path
     private final Path[] dirs;
@@ -370,7 +365,6 @@ class ModulePath implements ModuleArtifactFinder {
             // warn for now, needs to be re-examined
             System.err.println(ioe);
         }
-
     }
 
     /**
@@ -394,26 +388,26 @@ class ModulePath implements ModuleArtifactFinder {
             mi = ModuleInfo.read(in);
         }
 
-        // read module id from extended module descriptor
-        String id = mi.name();
-        ze = zf.getEntry(EXTENDED_MODULE_DESCRIPTOR_MID);
+        // extended module descriptor is a Debian-like control file for now
+        ControlFile cf;
+        ze = zf.getEntry(ControlFile.CONTROL_FILE);
         if (ze != null) {
             try (InputStream in = zf.getInputStream(ze)) {
-                id = new BufferedReader(
-                        new InputStreamReader(in, "UTF-8")).readLine();
+                cf = ControlFile.parse(in);
             }
+        } else {
+            cf = new ControlFile();
         }
 
-        Set<String> packages =
-                zf.stream()
-                        .filter(e -> e.getName().startsWith("classes/") &&
-                                e.getName().endsWith(".class"))
-                        .map(e -> toPackageName(e))
-                        .filter(pkg -> pkg.length() > 0)   // module-info
-                        .distinct()
-                        .collect(Collectors.toSet());
-        // id not null
-        return new ModuleArtifact(mi, id, packages, url);
+        Set<String> packages = zf.stream()
+                                 .filter(e -> e.getName().startsWith("classes/") &&
+                                         e.getName().endsWith(".class"))
+                                 .map(e -> toPackageName(e))
+                                 .filter(pkg -> pkg.length() > 0)   // module-info
+                                 .distinct()
+                                 .collect(Collectors.toSet());
+
+        return new ModuleArtifact(mi, packages, url, cf);
     }
 
     /**
@@ -429,16 +423,14 @@ class ModulePath implements ModuleArtifactFinder {
             }
 
             URL url = file.toUri().toURL();
-
             ModuleInfo mi = ModuleInfo.read(jf.getInputStream(entry));
 
-            Set<String> packages =
-                    jf.stream()
-                            .filter(e -> e.getName().endsWith(".class"))
-                            .map(e -> toPackageName(e))
-                            .filter(pkg -> pkg.length() > 0)   // module-info
-                            .distinct()
-                            .collect(Collectors.toSet());
+            Set<String> packages = jf.stream()
+                                     .filter(e -> e.getName().endsWith(".class"))
+                                     .map(e -> toPackageName(e))
+                                     .filter(pkg -> pkg.length() > 0)   // module-info
+                                     .distinct()
+                                     .collect(Collectors.toSet());
 
             return new ModuleArtifact(mi, packages, url);
         }

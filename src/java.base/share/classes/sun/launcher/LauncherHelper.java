@@ -39,11 +39,9 @@ package sun.launcher;
  * The following are helper methods that the native launcher uses
  * to perform checks etc. using JNI, see src/share/bin/java.c
  */
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Method;
@@ -84,7 +82,7 @@ import jdk.jigsaw.module.ModuleDependence;
 import jdk.jigsaw.module.ModuleExport;
 import jdk.jigsaw.module.ModuleId;
 import jdk.jigsaw.module.ServiceDependence;
-
+import jdk.jigsaw.module.internal.ControlFile;
 import sun.misc.JModCache;
 
 public enum LauncherHelper {
@@ -513,12 +511,16 @@ public enum LauncherHelper {
         }
         // convert to jmod URL for direct access
         ZipFile zf = JModCache.get(new URL("jmod" + s.substring(4)));
-        ZipEntry ze = zf.getEntry("module/main-class");
+        ZipEntry ze = zf.getEntry(ControlFile.CONTROL_FILE);
         if (ze == null) {
             abort(null, "java.launcher.module.error5", url);
         }
         try (InputStream in = zf.getInputStream(ze)) {
-            return new BufferedReader(new InputStreamReader(in, "UTF-8")).readLine();
+            ControlFile cf = ControlFile.parse(in);
+            mainClass = cf.mainClass();
+            if (mainClass == null)
+                abort(null, "java.launcher.module.error5", url);
+            return mainClass;
         }
     }
 

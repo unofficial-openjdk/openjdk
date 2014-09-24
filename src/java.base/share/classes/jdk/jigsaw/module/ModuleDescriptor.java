@@ -136,6 +136,7 @@ public class ModuleDescriptor
          * Adds a module dependence.
          */
         public Builder requires(ModuleDependence md) {
+            // should this disallow adding a dependence with a version query?
             moduleDeps.add(requireNonNull(md));
             return this;
         }

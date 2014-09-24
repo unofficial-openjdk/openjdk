@@ -25,18 +25,15 @@
 
 package jdk.jigsaw.module;
 
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-
-import static java.util.Objects.requireNonNull;
 
 /**
  * An extended module descriptor.
  *
- * @apiNote This class will eventually define methods to support versions
- * and version constraints, OS/architecture, maybe entry points and maybe
- * a hash of the module descriptor and its contents.
+ * @apiNote This class will eventually define methods to support OS/architecture,
+ * license, maintainer email, and other meta data. It will also likely have a hash
+ * of the module descriptor and its contents.
  */
 
 @SuppressWarnings("serial")             // serialVersionUID intentionally omitted
@@ -56,7 +53,7 @@ public class ExtendedModuleDescriptor
     }
 
     /**
-     * The module identifier.
+     * Returns the module identifier.
      */
     public ModuleId id() {
         return id;
