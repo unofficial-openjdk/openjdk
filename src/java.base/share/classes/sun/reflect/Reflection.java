@@ -264,7 +264,7 @@ public class Reflection {
                 return false;
         }
 
-        // check that m1 package is exported to m1
+        // check that m2 exports the package to m1
         return reflectAccess.isExported(m2, packageName(memberClass), m1);
     }
 
