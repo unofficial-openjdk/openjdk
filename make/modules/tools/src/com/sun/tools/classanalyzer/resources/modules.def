@@ -313,6 +313,7 @@ module java.desktop {
     uses javax.sound.sampled.spi.AudioFileWriter;
     uses javax.sound.sampled.spi.FormatConversionProvider;
     uses javax.sound.sampled.spi.MixerProvider;
+    uses sun.datatransfer.DesktopDatatransferService;
 }
 
 module oracle.accessbridge {
