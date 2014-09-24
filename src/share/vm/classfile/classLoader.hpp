@@ -153,6 +153,9 @@ public:
   ClassPathImageEntry(char* name);
   ~ClassPathImageEntry();
   ClassFileStream* open_stream(const char* name, TRAPS);
+
+  static jboolean decompress(void *in, u8 inSize, void *out, u8 outSize, char **pmsg);
+
   // Debugging
   NOT_PRODUCT(void compile_the_world(Handle loader, TRAPS);)
   NOT_PRODUCT(bool is_rt_jar();)

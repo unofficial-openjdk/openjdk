@@ -271,11 +271,15 @@ u1* ImageFile::getResource(ImageLocation& location) const {
     return data;
   }
 
-  assert(false, "TODO decompress(data, compressedSize, uncompressed, size);");
-
   u1* uncompressed = NEW_RESOURCE_ARRAY(u1, size);
-  // TODO decompress(data, compressedSize, uncompressed, size);
+  char* msg = NULL;
+  jboolean res = ClassPathImageEntry::decompress(data, compressedSize, uncompressed, size, &msg);
   FREE_RESOURCE_ARRAY(u1, data, size);
+  if (!res) {
+      tty->print_cr("compression failed due to %s\n", msg);
+      return NULL;
+  }
+
   return uncompressed;
 }
 
