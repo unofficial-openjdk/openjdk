@@ -33,18 +33,19 @@ import java.util.*;
 enum Profile {
     COMPACT1("compact1", 1, "java.compact1"),
     COMPACT2("compact2", 2, "java.compact2"),
-    COMPACT3("compact3", 3, "java.compact3"),
+    COMPACT3("compact3", 3, "java.compact3", "java.smartcardio", "jdk.sctp",
+                            "jdk.httpserver", "jdk.security.auth"),
     FULL_JRE("Full JRE", 4, "java.se");
 
     final String name;
     final int profile;
-    final String moduleName;
+    final String[] mnames;
     final Set<Module> modules = new HashSet<>();
 
-    Profile(String name, int profile, String moduleName) {
+    Profile(String name, int profile, String... mnames) {
         this.name = name;
         this.profile = profile;
-        this.moduleName = moduleName;
+        this.mnames = mnames;
     }
 
     public String profileName() {
@@ -53,7 +54,7 @@ enum Profile {
 
     @Override
     public String toString() {
-        return moduleName;
+        return mnames[0];
     }
 
     public static int getProfileCount() {
@@ -86,21 +87,28 @@ enum Profile {
         return null;
     }
 
-    final static Set<Module> JDK = new HashSet<>();
-    static void initProfiles() {
+    private final static Set<Module> JDK = new HashSet<>();
+    static void initProfiles(List<Archive> modules) {
+        // add all modules into  JDK
+        modules.forEach(m -> JDK.add((Module)m));
+
         for (Profile p : Profile.values()) {
-            Module m = PlatformClassPath.findModule(p.moduleName);
-            if (m == null)
-                throw new Error(p.moduleName + " doesn't exist");
-            p.modules.add(m);
-            JDK.add(m);
-            for (String n : m.requires().keySet()) {
-                Module d = PlatformClassPath.findModule(n);
-                if (d == null)
-                    throw new Error(n + " doesn't exist");
-                p.modules.add(d);
-                JDK.add(d);
+            for (String mn : p.mnames) {
+                 p.addModule(mn);
             }
+        }
+    }
+
+    private void addModule(String mn) {
+        Module m = PlatformClassPath.findModule(mn);
+        if (m == null)
+            throw new Error(mn + " doesn't exist");
+        modules.add(m);
+        for (String n : m.requires().keySet()) {
+            Module d = PlatformClassPath.findModule(n);
+            if (d == null)
+                throw new Error(n + " doesn't exist");
+            modules.add(d);
         }
     }
     // for debugging

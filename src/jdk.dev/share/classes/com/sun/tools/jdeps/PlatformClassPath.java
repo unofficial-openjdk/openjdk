@@ -24,11 +24,7 @@
  */
 package com.sun.tools.jdeps;
 
-import com.sun.tools.classfile.Annotation;
 import com.sun.tools.classfile.ClassFile;
-import com.sun.tools.classfile.ConstantPool;
-import com.sun.tools.classfile.ConstantPoolException;
-import com.sun.tools.classfile.RuntimeAnnotations_attribute;
 import com.sun.tools.classfile.Dependencies.ClassFileError;
 import java.io.IOException;
 import java.io.InputStream;
@@ -42,7 +38,6 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 import java.util.jar.*;
 
-import static com.sun.tools.classfile.Attribute.*;
 import static com.sun.tools.jdeps.ClassFileReader.*;
 
 /**
@@ -78,45 +73,216 @@ class PlatformClassPath {
     private static List<Archive> initPlatformArchives(Path mpath) throws IOException {
         Path home = Paths.get(System.getProperty("java.home"));
         if (mpath == null && !home.endsWith("jre")) {
-            // jdk build
-            Path p = home.resolve("modules");
-            if (Files.isDirectory(p)) {
-                mpath = p;
+            if (Files.isDirectory(home.resolve("lib").resolve("modules")) ||
+                Files.isDirectory(home.resolve("modules"))) {
+                // jimage or exploded image
+                mpath = home;
             }
         }
         modules = mpath != null ? initModules(mpath) : initLegacyImage(home);
         if (findModule("java.base") != null) {
-            Profile.initProfiles();
+            Profile.initProfiles(modules);
         }
         return modules;
     }
 
     private static List<Archive> initModules(Path mpath) throws IOException {
+        Path home = Paths.get(System.getProperty("java.home"));
+        ImageHelper helper;
+        if (mpath.equals(home)) {
+            Path mlib = home.resolve("lib").resolve("modules");
+            if (Files.isDirectory(mlib)) {
+                // jimage
+                helper = new JimageHelper(mlib);
+            } else {
+                // exploded modules
+                mlib = home.resolve("modules");
+                helper = new ModulePathHelper(mlib);
+            }
+        } else {
+            helper = new ModulePathHelper(mpath);
+        }
+
         String fn = System.getProperty("jdeps.modules.xml");
-        if (fn!= null) {
+        if (fn != null) {
             Path p = Paths.get(fn);
             try (InputStream in = new BufferedInputStream(Files.newInputStream(p))) {
-                return new ArrayList<Archive>(ModulesXmlReader.load(mpath, in));
+                return new ArrayList<>(ModulesXmlReader.load(helper, in));
             }
         } else {
             try (InputStream in = PlatformClassPath.class
                     .getResourceAsStream("resources/jdeps-modules.xml")) {
-                return new ArrayList<Archive>(ModulesXmlReader.load(mpath, in));
+                return new ArrayList<>(ModulesXmlReader.load(helper, in));
             }
         }
     }
 
+    interface ImageHelper {
+        /**
+         * Returns a ClassFileReader that only reads classes for the given modulename.
+         */
+        ClassFileReader getClassFileReader(String modulename, Set<String> packages) throws IOException;
+    }
+
+    static class JimageHelper implements ImageHelper {
+        final Path mlib;
+        final FileSystemReader reader;
+        JimageHelper(Path mlib) throws IOException {
+            this.mlib = mlib;
+            this.reader = new FileSystemReader(mlib, "*.jimage");
+        }
+
+        public ClassFileReader getClassFileReader(String modulename, Set<String> packages) throws IOException {
+            return new ModuleClassReader(modulename, packages);
+        }
+
+        /**
+         * ModuleClassFile reads classes for the specified module from the jimage.
+         */
+        class ModuleClassReader extends ClassFileReader {
+            private final Set<String> packages;
+            private final String module;
+            private final FileSystemReader.Container container;
+            ModuleClassReader(String module, Set<String> packages) throws IOException {
+                super(reader.path);
+                this.module = module;
+                this.packages = packages;
+                this.container = packages.isEmpty() ? null : reader.findContainer(module, packages);
+            }
+
+            private boolean includes(Path p) {
+                String pn = container.toPackage(p);
+                return packages.contains(pn);
+            }
+
+            public String toString() {
+                return module + " " + packages.size() + " " + packages;
+            }
+
+            @Override
+            public ClassFile getClassFile(String name) throws IOException {
+                if (container == null) {
+                    return null;
+                }
+                String pn;
+                if (name.indexOf('.') > 0) {
+                    int i = name.lastIndexOf('.');
+                    pn = i > 0 ? name.substring(0, i) : "";
+                } else {
+                    int i = name.lastIndexOf('/');
+                    pn = i > 0 ? name.substring(0, i).replace('/', '.') : "";
+                }
+                if (packages.contains(pn)) {
+                    Path p = container.findClass(name);
+                    if (p != null && includes(p)) {
+                        return readClassFile(p);
+                    }
+                }
+                return null;
+            }
+
+            @Override
+            public Iterable<ClassFile> getClassFiles() throws IOException {
+                final Iterator<ClassFile> iter = new ModuleClassIterator(container);
+                return new Iterable<ClassFile>() {
+                    public Iterator<ClassFile> iterator() {
+                        return iter;
+                    }
+                };
+            }
+
+            class ModuleClassIterator implements Iterator<ClassFile> {
+                private final FileSystemReader.Container container;
+                private final List<Path> entries;
+                private Path nextEntry;
+                private int index;
+                ModuleClassIterator(FileSystemReader.Container container) throws IOException {
+                    this.container = container;
+                    this.entries = container != null ? container.entries() : Collections.emptyList();
+                    this.index = 0;
+                }
+                public synchronized boolean hasNext() {
+                    if (nextEntry == null) {
+                        while (index < entries.size()) {
+                            Path p = entries.get(index++);
+                            if (includes(p)) {
+                                nextEntry = p;
+                            }
+                        }
+                    }
+                    return nextEntry != null;
+                }
+
+                public synchronized ClassFile next() {
+                    if (!hasNext()) {
+                        throw new NoSuchElementException();
+                    }
+                    Path path = nextEntry;
+                    nextEntry = null;
+                    try {
+                        return readClassFile(path);
+                    } catch (IOException e) {
+                        throw new ClassFileError(e);
+                    }
+                }
+
+                public void remove() {
+                    throw new UnsupportedOperationException("Not supported yet.");
+                }
+            }
+        }
+    }
+
+    static class ModulePathHelper implements ImageHelper {
+        final Path mpath;
+        final ClassFileReader defaultReader;
+        ModulePathHelper(Path mp) throws IOException {
+            this.mpath = mp;
+            this.defaultReader = new NonExistModuleReader(mpath);
+        }
+
+        public ClassFileReader getClassFileReader(String modulename, Set<String> packages)
+            throws IOException
+        {
+            Path mdir = mpath.resolve(modulename);
+            if (Files.exists(mdir) && Files.isDirectory(mdir)) {
+                return ClassFileReader.newInstance(mdir);
+            } else {
+                // aggregator module or os-specific module in jdeps-modules.xml
+                // mdir not exist
+                return defaultReader;
+            }
+        }
+
+        class NonExistModuleReader extends ClassFileReader {
+            private final List<ClassFile> classes = Collections.emptyList();
+            private NonExistModuleReader(Path mpath) {
+                super(mpath);
+            }
+
+            public ClassFile getClassFile(String name) throws IOException {
+                return null;
+            }
+
+            public Iterable<ClassFile> getClassFiles() throws IOException {
+                return classes;
+            }
+        }
+    }
+
+    // -------------  legacy image support -----------------
+
     private static List<Archive> initLegacyImage(Path home) throws IOException {
-        LegacyImageHelper cfr = new LegacyImageHelper(home);
-        List<Archive> archives = new ArrayList<>(cfr.nonPlatformArchives);
+        LegacyImageHelper helper = new LegacyImageHelper(home);
+        List<Archive> archives = new ArrayList<>(helper.nonPlatformArchives);
         try (InputStream in = PlatformClassPath.class
                 .getResourceAsStream("resources/jdeps-modules.xml")) {
-            archives.addAll(ModulesXmlReader.loadFromImage(cfr, in));
+            archives.addAll(ModulesXmlReader.load(helper, in));
             return archives;
         }
     }
 
-    static class LegacyImageHelper {
+    static class LegacyImageHelper implements ImageHelper {
         private static final List<String> NON_PLATFORM_JARFILES =
                 Arrays.asList("alt-rt.jar", "jfxrt.jar", "ant-javafx.jar", "javafx-mx.jar");
         final List<Archive> nonPlatformArchives = new ArrayList<>();
@@ -147,10 +313,7 @@ class PlatformClassPath {
             }
         }
 
-        /**
-         * Returns a ClassFileReader that only reads classes for the given modulename.
-         */
-        ClassFileReader getClassReader(String modulename, Set<String> packages) throws IOException {
+        public ClassFileReader getClassFileReader(String modulename, Set<String> packages) throws IOException {
             return new ModuleClassReader(modulename, packages);
         }
 
