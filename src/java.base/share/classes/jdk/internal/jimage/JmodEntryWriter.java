@@ -25,6 +25,7 @@
 
 package jdk.internal.jimage;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -40,6 +41,7 @@ import java.util.zip.ZipFile;
  * appropriate location.
  */
 public class JmodEntryWriter implements Consumer<Archive.Entry> {
+    private static final int BUF_SIZE = 8192;
     private static final String MODULE_NAME = "module";
     private static final String CLASSES     = "classes";
     private static final String NATIVE_LIBS = "native";
@@ -48,10 +50,16 @@ public class JmodEntryWriter implements Consumer<Archive.Entry> {
     private static final String SERVICES    = "module/services";
     private final Path root;
     private final OutputStream out;
+    private final boolean compress;
 
     JmodEntryWriter(Path root, OutputStream out) {
+        this(root, out, false);
+    }
+
+    JmodEntryWriter(Path root, OutputStream out, boolean compress) {
         this.root = root;
         this.out = out;
+        this.compress = compress;
     }
 
     @Override
@@ -109,24 +117,37 @@ public class JmodEntryWriter implements Consumer<Archive.Entry> {
         Files.copy(in, dstFile);
     }
 
+    static long calcCompressedSize(InputStream is) {
+        try {
+            byte[] inBytes = readAllBytes(is);
+            return ImageFile.Compressor.compress(inBytes).length;
+        } catch (IOException ioe) {
+            throw new UncheckedIOException(ioe);
+        }
+    }
+
+    private static byte[] readAllBytes(InputStream is) throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        byte[] buf = new byte[BUF_SIZE];
+        while(true) {
+            int n = is.read(buf);
+            if( n < 0 ) break;
+            baos.write(buf,0,n);
+        }
+        return baos.toByteArray();
+    }
+
     private void writeEntry(InputStream in) throws IOException {
-        if (true) { // testing compression
-            byte[] buf = new byte[8192];
+        if (compress) {
+            byte[] inBytes = readAllBytes(in);
+            byte[] outBytes = ImageFile.Compressor.compress(inBytes);
+            out.write(outBytes, 0, outBytes.length);
+        } else {
+            byte[] buf = new byte[BUF_SIZE];
             int n;
             while ((n = in.read(buf)) > 0) {
                 out.write(buf, 0, n);
             }
-        } else {
-            int size = in.available();
-            int offset = 0;
-            byte[] inBytes = new byte[size];
-            while (offset < size) {
-                int count = in.read(inBytes, offset, size);
-                offset += count;
-                size -= count;
-            }
-            byte[] outBytes = ImageFile.Compressor.compress(inBytes);   // TODO: is Compression in the right place???
-            out.write(outBytes, 0, outBytes.length);
         }
     }
 

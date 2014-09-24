@@ -42,13 +42,21 @@ public class JmodArchive implements Archive {
     private static final String MODULE_INFO = "module-info.class";
     private final Path jmod;
     private final String moduleName;
+    private final boolean compress;
+    // currently processed ZipFile
+    private ZipFile zipFile;
 
     public JmodArchive(String mn, Path jmod) {
+        this(mn, jmod, false);
+    }
+
+    public JmodArchive(String mn, Path jmod, boolean compress) {
         String filename = jmod.getFileName().toString();
         if (!filename.endsWith(JMOD_EXT))
             throw new UnsupportedOperationException("Unsupported format: " + filename);
         this.moduleName = mn;
         this.jmod = jmod;
+        this.compress = compress;
     }
 
     @Override
@@ -59,6 +67,7 @@ public class JmodArchive implements Archive {
     @Override
     public void visitResources(Consumer<Resource> consumer) {
         try (ZipFile zf = new ZipFile(jmod.toFile())) {
+            this.zipFile = zf;
             zf.stream()
                 .filter(ze -> !ze.isDirectory() &&
                         ze.getName().startsWith("classes"))
@@ -78,7 +87,15 @@ public class JmodArchive implements Archive {
             fn = moduleName + "/" + MODULE_INFO;
         }
         long entrySize = ze.getSize();
-        return new Resource(fn, entrySize, 0 /* no compression support yet */);
+        long compressedSize = 0;
+        if (compress) {
+            try (InputStream is = zipFile.getInputStream(ze)) {
+                compressedSize = JmodEntryWriter.calcCompressedSize(is);
+            } catch (IOException ioe) {
+                throw new UncheckedIOException(ioe);
+            }
+        }
+        return new Resource(fn, entrySize, compressedSize);
     }
 
     @Override
@@ -122,7 +139,7 @@ public class JmodArchive implements Archive {
     }
 
     public Consumer<Entry> defaultImageWriter(Path path, OutputStream out) {
-        return new JmodEntryWriter(path, out);
+        return new JmodEntryWriter(path, out, compress);
     }
 }
 

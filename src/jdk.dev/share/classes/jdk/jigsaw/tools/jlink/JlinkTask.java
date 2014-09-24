@@ -216,6 +216,11 @@ class JlinkTask {
                 }
             }
         },
+        new Option(false, "--compress") {
+            void process(JlinkTask task, String opt, String arg) throws BadArgs {
+                task.options.compress = true;
+            }
+        },
         new Option(false, "--help") {
             void process(JlinkTask task, String opt, String arg) {
                 task.options.help = true;
@@ -321,6 +326,7 @@ class JlinkTask {
         ModuleArtifactFinder moduleFinder;
         Set<String> jmods = new TreeSet<>();
         Format format = null;
+        boolean compress = false;
         Path output;
         String moduleId;
         String mainClass;
@@ -553,7 +559,7 @@ class JlinkTask {
 
         void createModularImage(Path output) throws IOException {
             Set<Archive> archives = jmods.entrySet().stream()
-                    .map(e -> new JmodArchive(e.getKey(), e.getValue()))
+                    .map(e -> new JmodArchive(e.getKey(), e.getValue(), options.compress))
                     .collect(Collectors.toSet());
             ImageFile.create(output, archives, imf);
         }

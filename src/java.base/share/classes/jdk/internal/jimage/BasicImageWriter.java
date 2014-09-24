@@ -104,7 +104,7 @@ public final class BasicImageWriter {
     }
 
     public void addLocation(String fullname, long contentOffset, long compressedSize, long uncompressedSize) {
-        ImageLocation location = ImageLocation.newLocation(new UTF8String(fullname), strings, contentOffset, uncompressedSize);
+        ImageLocation location = ImageLocation.newLocation(new UTF8String(fullname), strings, contentOffset, compressedSize, uncompressedSize);
         input.add(location);
         count++;
     }

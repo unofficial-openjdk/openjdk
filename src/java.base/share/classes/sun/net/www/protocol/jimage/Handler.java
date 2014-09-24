@@ -66,17 +66,7 @@ public class Handler extends URLStreamHandler {
             public void connect() { }
             @Override
             public InputStream getInputStream() throws IOException {
-                long offset = location.getContentOffset();
-                long size = location.getUncompressedSize();
-                long compressedSize = location.getCompressedSize();
-                byte[] resource;
-                if (compressedSize != 0) {
-                    // TODO - handle compression.
-                    resource = jimage.getResource(offset, compressedSize);
-                    // resource = decompress(resource);
-                } else {
-                    resource = jimage.getResource(offset, size);
-                }
+                byte[] resource = jimage.getResource(location);
                 return new ByteArrayInputStream(resource);
             }
             @Override

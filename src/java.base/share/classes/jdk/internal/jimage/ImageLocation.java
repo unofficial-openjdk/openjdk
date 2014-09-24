@@ -186,7 +186,7 @@ public final class ImageLocation {
         }
     }
 
-    static ImageLocation newLocation(UTF8String fullname, ImageStrings strings, long contentOffset, long uncompressedSize) {
+    static ImageLocation newLocation(UTF8String fullname, ImageStrings strings, long contentOffset, long compressedSize, long uncompressedSize) {
         UTF8String base;
         UTF8String extension = extension(fullname);
         int parentOffset = ImageStrings.EMPTY_OFFSET;
@@ -209,6 +209,7 @@ public final class ImageLocation {
                .addAttribute(ATTRIBUTE_PARENT, parentOffset)
                .addAttribute(ATTRIBUTE_EXTENSION, extensionOffset)
                .addAttribute(ATTRIBUTE_OFFSET, contentOffset)
+               .addAttribute(ATTRIBUTE_COMPRESSED, compressedSize)
                .addAttribute(ATTRIBUTE_UNCOMPRESSED, uncompressedSize);
     }
 

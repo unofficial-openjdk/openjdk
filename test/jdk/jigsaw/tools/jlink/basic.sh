@@ -55,11 +55,16 @@ $JLINK --format jmod --class-path mods/test --mid test@1.0 --main-class jdk.test
     --output mlib/test@1.0.jmod
 
 # legacy image
-$JLINK --module-path $TESTJAVA/../jmods:mlib --format image --output myimage --mods test
+$JLINK --module-path $TESTJAVA/../jmods:mlib --mods test --format image --output myimage
 myimage/bin/test a b c
 
 # jimage
-$JLINK --module-path $TESTJAVA/../jmods:mlib --format jimage --output myjimage --mods test
+$JLINK --module-path $TESTJAVA/../jmods:mlib --mods test --format jimage --output myjimage
 myjimage/bin/test 1 2 3
+
+# jimage compressed
+$JLINK --module-path $TESTJAVA/../jmods:mlib --mods test --format jimage \
+  --output mysmalljimage --compress
+mysmalljimage/bin/test 1 2 3
 
 exit 0

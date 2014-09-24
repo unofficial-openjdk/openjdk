@@ -190,7 +190,7 @@ public class BasicImageReader {
         return strings.get(offset).toString();
     }
 
-    synchronized public byte[] getResource(long offset, long size) throws IOException {
+    synchronized private byte[] read(long offset, long size) throws IOException {
         byte[] bytes = new byte[(int)size];
         file.seek(indexSize + offset);
         file.read(bytes);
@@ -198,8 +198,13 @@ public class BasicImageReader {
         return bytes;
     }
 
-    protected byte[] getResource(ImageLocation loc) throws IOException {
-        // handle decompression here!
-        return getResource(loc.getContentOffset(), loc.getUncompressedSize());
+    public byte[] getResource(ImageLocation loc) throws IOException {
+        long compressedSize = loc.getCompressedSize();
+        if (compressedSize == 0) {
+            return read(loc.getContentOffset(), loc.getUncompressedSize());
+        } else {
+            byte[] buf = read(loc.getContentOffset(), compressedSize);
+            return ImageFile.Compressor.decompress(buf);
+        }
     }
 }

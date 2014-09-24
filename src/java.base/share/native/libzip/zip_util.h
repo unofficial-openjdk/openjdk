@@ -270,4 +270,7 @@ jint ZIP_Read(jzfile *zip, jzentry *entry, jlong pos, void *buf, jint len);
 void ZIP_FreeEntry(jzfile *zip, jzentry *ze);
 jlong ZIP_GetEntryDataOffset(jzfile *zip, jzentry *entry);
 
+jboolean JNICALL
+ZIP_InflateFully(void *inBuf, jlong inLen, void *outBuf, jlong outLen, char **pmsg);
+
 #endif /* !_ZIP_H_ */

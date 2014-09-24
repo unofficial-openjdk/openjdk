@@ -49,7 +49,7 @@ final class PackageModuleMap {
     static Map<String,String> readFrom(ImageReader reader) throws IOException {
         Map<String,String> result = new HashMap<>();
         ImageLocation loc = reader.findLocation(MODULES_ENTRY);
-        byte[] bytes = reader.getResource(loc.getContentOffset(), loc.getUncompressedSize());
+        byte[] bytes = reader.getResource(loc);
         IntBuffer mbufs = ByteBuffer.wrap(bytes).asIntBuffer();
         List<String> mnames = new ArrayList<>();
         while (mbufs.hasRemaining()) {
@@ -59,7 +59,7 @@ final class PackageModuleMap {
 
         for (String mn : mnames) {
             ImageLocation mindex = reader.findLocation(mn + "/" + PACKAGES_ENTRY);
-            byte[] poffsets = reader.getResource(mindex.getContentOffset(), mindex.getUncompressedSize());
+            byte[] poffsets = reader.getResource(mindex);
             IntBuffer pbufs = ByteBuffer.wrap(poffsets).asIntBuffer();
             while (pbufs.hasRemaining()) {
                 int poffset = pbufs.get();

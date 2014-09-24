@@ -327,20 +327,7 @@ class JImageTask {
 
     private void expand(BasicImageReader reader, String name, ImageLocation location) throws IOException, BadArgs {
         File directory = new File(options.directory);
-        long offset = location.getContentOffset();
-        long size = location.getUncompressedSize();
-        long compressedSize = location.getCompressedSize();
-        boolean isCompressed = compressedSize != 0;
-
-        byte[] bytes;
-
-        if (isCompressed) {
-            bytes = reader.getResource(offset, compressedSize);
-            // TODO compression
-        } else {
-            bytes = reader.getResource(offset, size);
-        }
-
+        byte[] bytes = reader.getResource(location);
         File resource =  new File(directory, name);
         File parent = resource.getParentFile();
 
@@ -395,20 +382,9 @@ class JImageTask {
 
     void verify(BasicImageReader reader, String name, ImageLocation location) {
         if (name.endsWith(".class")) {
-            long offset = location.getContentOffset();
-            long size = location.getUncompressedSize();
-            long compressedSize = location.getCompressedSize();
-            boolean isCompressed = compressedSize != 0;
-
             byte[] bytes;
-
             try {
-                if (isCompressed) {
-                    bytes = reader.getResource(offset, compressedSize);
-                    // TODO compression
-                } else {
-                    bytes = reader.getResource(offset, size);
-                }
+                bytes = reader.getResource(location);
             } catch (IOException ex) {
                 log.println(ex);
                 bytes = null;
