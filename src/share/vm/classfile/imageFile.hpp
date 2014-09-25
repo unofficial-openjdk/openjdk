@@ -25,6 +25,7 @@
 #ifndef SHARE_VM_CLASSFILE_IMAGEFILE_HPP
 #define SHARE_VM_CLASSFILE_IMAGEFILE_HPP
 
+#include "classfile/classLoader.hpp"
 #include "memory/allocation.hpp"
 #include "memory/allocation.inline.hpp"
 #include "utilities/globalDefinitions.hpp"
