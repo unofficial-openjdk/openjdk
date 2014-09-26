@@ -27,8 +27,6 @@ package jdk.jigsaw.tools.jlink;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.DataInputStream;
 import java.io.File;
@@ -37,7 +35,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.UncheckedIOException;
 import java.lang.reflect.InvocationTargetException;
@@ -56,7 +53,6 @@ import java.nio.file.attribute.PosixFileAttributeView;
 import java.nio.file.attribute.PosixFilePermission;
 import java.text.MessageFormat;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Formatter;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -708,10 +704,7 @@ class JlinkTask {
 
              // Remove jmod prefix, native, conf, classes, etc
             String filename = fullFilename.substring(fullFilename.indexOf('/') + 1);
-            if (Section.CLASSES.equals(section)
-                || Section.MODULE_SERVICES.equals(section)) {
-                if (Section.MODULE_SERVICES.equals(section))
-                    filename = "META-INF/" + filename;
+            if (Section.CLASSES.equals(section)) {
                 writeJarEntry(moduleFile.getInputStream(ze), filename);
             } else {
                 Path dstFile = output.resolve(section.imageDir()).resolve(filename);
@@ -719,13 +712,6 @@ class JlinkTask {
                 setExecutable(section, dstFile);
             }
         }
-
-        private final String BOOT_MODULES_IMAGE_FILE =
-                Section.CONFIG.imageDir() + '/' + BOOT_MODULES;
-        private final String EXT_MODULES_IMAGE_FILE =
-                Section.CONFIG.imageDir() + '/' + EXT_MODULES;
-        private final String SYSTEM_MODULES_IMAGE_FILE =
-                Section.CONFIG.imageDir() + '/' + SYSTEM_MODULES;
 
         private void writeJarEntry(InputStream is, String filename)
             throws IOException
@@ -853,7 +839,7 @@ class JlinkTask {
                 if (moduleId != null || mainClass != null || controlFile != null)
                     writeControlFile(zos);
 
-                // classes / services
+                // classes
                 processClasses(zos, classes);
 
                 processSection(zos, Section.NATIVE_CMDS, cmds);
@@ -904,13 +890,6 @@ class JlinkTask {
                     assert file.toString().startsWith(pathPrefix);
                     String f = file.toString().substring(pathPrefixLength + 1);
                     String prefix = section.jmodDir();
-                    // ## TODO: module services
-                    /*
-                    if (f.startsWith(SERVICES)) {
-                        f = f.toString().substring(SERVICES.length() + 1);
-                        prefix = Section.MODULE_SERVICES.jmodDir();
-                    }
-                    */
                     byte[] data = Files.readAllBytes(file);
                     writeZipEntry(zos, data, prefix, f);
                     return FileVisitResult.CONTINUE;
@@ -951,19 +930,16 @@ class JlinkTask {
             @Override
             public boolean test(JarEntry je) {
                 String name = je.getName();
-                return !je.isDirectory()
-                        && (!name.startsWith("META-INF") || name.startsWith(SERVICES));
+                return !je.isDirectory();
             }
         }
     }
 
-    private static String SERVICES = "META-INF/services";
     private static enum Section {
         NATIVE_LIBS("native", nativeDir()),
         NATIVE_CMDS("bin", "bin"),
         CLASSES("classes", "classes"),
         CONFIG("conf", "lib"),
-        MODULE_SERVICES("module/services", "classes"),
         UNKNOWN("unknown", "unknown");
 
         private static String nativeDir() {
@@ -998,8 +974,6 @@ class JlinkTask {
                 return Section.CLASSES;
             else if (Section.CONFIG.matches(dir))
                 return Section.CONFIG;
-            else if (Section.MODULE_SERVICES.matches(dir))
-                return Section.MODULE_SERVICES;
             else
                 return Section.UNKNOWN;
         }
