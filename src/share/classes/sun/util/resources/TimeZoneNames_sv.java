@@ -45,8 +45,8 @@ public final class TimeZoneNames_sv extends TimeZoneNamesBundle {
     protected final Object[][] getContents() {
         String ACT[] = new String[] {"Acre, normaltid", "ACT",
                                      "Acre, sommartid", "ACST"};
-        String ADELAIDE[] = new String[] {"Central standardtid (Sydaustralien)", "CST",
-                                          "Central sommartid (South Australia)", "CST"};
+        String ADELAIDE[] = new String[] {"Central standardtid (Sydaustralien)", "ACST",
+                                          "Central sommartid (South Australia)", "ACDT"};
         String AGT[] = new String[] {"Argentina, normaltid", "ART",
                                      "Argentina, sommartid", "ARST"};
         String AKST[] = new String[] {"Alaska, normaltid", "AKST",
@@ -61,10 +61,10 @@ public final class TimeZoneNames_sv extends TimeZoneNamesBundle {
                                      "Atlantisk sommartid", "ADT"};
         String BDT[] = new String[] {"Bangladesh, normaltid", "BDT",
                                      "Bangladesh, sommartid", "BDST"};
-        String BRISBANE[] = new String[] {"\u00D6stlig standardtid (Queensland)", "EST",
-                                          "\u00D6stlig sommartid (Queensland)", "EST"};
-        String BROKEN_HILL[] = new String[] {"Central standardtid (Sydaustralien/New South Wales)", "CST",
-                                             "Central sommartid (South Australia/New South Wales)", "CST"};
+        String BRISBANE[] = new String[] {"\u00D6stlig standardtid (Queensland)", "AEST",
+                                          "\u00D6stlig sommartid (Queensland)", "AEDT"};
+        String BROKEN_HILL[] = new String[] {"Central standardtid (Sydaustralien/New South Wales)", "ACST",
+                                             "Central sommartid (South Australia/New South Wales)", "ACDT"};
         String BRT[] = new String[] {"Brasilien, normaltid", "BRT",
                                      "Brasilien, sommartid", "BRST"};
         String BTT[] = new String[] {"Bhutan, normaltid", "BTT",
@@ -89,8 +89,8 @@ public final class TimeZoneNames_sv extends TimeZoneNamesBundle {
                                      "Kina, sommartid", "CDT"};
         String CUBA[] = new String[] {"Kuba, normaltid", "CST",
                                       "Kuba, sommartid", "CDT"};
-        String DARWIN[] = new String[] {"Central standardtid (Nordterritoriet)", "CST",
-                                        "Central sommartid (Nordterritoriet)", "CST"};
+        String DARWIN[] = new String[] {"Central standardtid (Nordterritoriet)", "ACST",
+                                        "Central sommartid (Nordterritoriet)", "ACDT"};
         String DUBLIN[] = new String[] {"Greenwichtid", "GMT",
                                         "Irland, sommartid", "IST"};
         String EAT[] = new String[] {"\u00d6stafrikansk tid", "EAT",
@@ -103,8 +103,8 @@ public final class TimeZoneNames_sv extends TimeZoneNamesBundle {
                                      "\u00d6stgr\u00f6nl\u00e4ndsk sommartid", "EGST"};
         String EST[] = new String[] {"Eastern, normaltid", "EST",
                                      "Eastern, sommartid", "EDT"};
-        String EST_NSW[] = new String[] {"\u00D6stlig standardtid (New South Wales)", "EST",
-                                         "\u00D6stlig sommartid (New South Wales)", "EST"};
+        String EST_NSW[] = new String[] {"\u00D6stlig standardtid (New South Wales)", "AEST",
+                                         "\u00D6stlig sommartid (New South Wales)", "AEDT"};
         String FET[] = new String[] {"Kaliningradtid", "FET",
                                      "\u00D6steuropeisk sommartid", "FEST"};
         String GHMT[] = new String[] {"Ghana, normaltid", "GMT",
@@ -133,10 +133,12 @@ public final class TimeZoneNames_sv extends TimeZoneNamesBundle {
                                      "Indien, sommartid", "IDT"};
         String JST[] = new String[] {"Japan, normaltid", "JST",
                                      "Japan, sommartid", "JDT"};
+        String KRAT[] = new String[] {"Krasnojarsk, normaltid", "KRAT",
+                                      "Krasnojarsk, sommartid", "KRAST"};
         String KST[] = new String[] {"Korea, normaltid", "KST",
                                      "Korea, sommartid", "KDT"};
         String LORD_HOWE[] = new String[] {"Lord Howe, normaltid", "LHST",
-                                           "Lord Howe, sommartid", "LHST"};
+                                           "Lord Howe, sommartid", "LHDT"};
         String MHT[] = new String[] {"Marshall\u00f6arna, normaltid", "MHT",
                                      "Marshall\u00f6arna, sommartid", "MHST"};
         String MSK[] = new String[] {"Moskva, normaltid", "MSK",
@@ -165,16 +167,16 @@ public final class TimeZoneNames_sv extends TimeZoneNamesBundle {
                                      "Stilla havet, sommartid", "PDT"};
         String SAMOA[] = new String[] {"Samoa, normaltid", "SST",
                                        "Samoa, sommartid", "SDT"};
+        String IRKT[] = new String[] {"Irkutsk, normaltid", "IRKT",
+                                      "Irkutsk, sommartid", "IRKST"};
         String SAST[] = new String[] {"Sydafrika, normaltid", "SAST",
                                       "Sydafrika, sommartid", "SAST"};
         String SBT[] = new String[] {"Salomon\u00f6arna, normaltid", "SBT",
                                      "Salomon\u00f6arna, sommartid", "SBST"};
         String SGT[] = new String[] {"Singapore, normaltid", "SGT",
                                      "Singapore, sommartid", "SGST"};
-        String SLST[] = new String[] {"Greenwichtid", "GMT",
-                                      "Sierra Leone, sommartid", "SLST"};
-        String TASMANIA[] = new String[] {"\u00D6stlig standardtid (Tasmania)", "EST",
-                                          "\u00D6stlig sommartid (Tasmanien)", "EST"};
+        String TASMANIA[] = new String[] {"\u00D6stlig standardtid (Tasmania)", "AEST",
+                                          "\u00D6stlig sommartid (Tasmanien)", "AEDT"};
         String TMT[] = new String[] {"Turkmenistan, normaltid", "TMT",
                                      "Turkmenistan, sommartid", "TMST"};
         String ULAT[]= new String[] {"Ulaanbaatar, normaltid", "ULAT",
@@ -183,22 +185,22 @@ public final class TimeZoneNames_sv extends TimeZoneNamesBundle {
                                      "Koordinerad universell tid", "UTC"};
         String UZT[] = new String[] {"Uzbekistan, normaltid", "UZT",
                                      "Uzbekistan, sommartid", "UZST"};
-        String VICTORIA[] = new String[] {"\u00D6stlig standardtid (Victoria)", "EST",
-                                          "\u00D6stlig sommartid (Victoria)", "EST"};
+        String VICTORIA[] = new String[] {"\u00D6stlig standardtid (Victoria)", "AEST",
+                                          "\u00D6stlig sommartid (Victoria)", "AEDT"};
         String VLAT[] = new String[] {"Vladivostok, normaltid", "VLAT",
                                       "Vladivostok, sommartid", "VLAST"};
-        String WART[] = new String[] {"V\u00e4stargentina, normaltid", "WART",
-                                      "V\u00e4stargentina, sommartid", "WARST"};
         String WAT[] = new String[] {"V\u00e4stafrikansk tid", "WAT",
                                      "V\u00e4stafrikansk sommartid", "WAST"};
         String WET[] = new String[] {"V\u00e4steuropeisk tid", "WET",
                                      "V\u00e4steuropeisk sommartid", "WEST"};
         String WIT[] = new String[] {"V\u00e4stindonesisk tid", "WIB",
                                      "V\u00e4stindonesisk sommartid", "WIST"};
-        String WST_AUS[] = new String[] {"Western Standard Time (Australien)", "WST",
-                                         "V\u00E4stlig sommartid (Australien)", "WST"};
-        String WST_SAMOA[] = new String[] {"V\u00e4stsamoansk tid", "WST",
+        String WST_AUS[] = new String[] {"Western Standard Time (Australien)", "AWST",
+                                         "V\u00E4stlig sommartid (Australien)", "AWDT"};
+        String WST_SAMOA[] = new String[] {"V\u00e4stsamoansk tid", "WSST",
                                            "V\u00e4stsamoansk sommartid", "WSDT"};
+        String XJT[] = new String[] {"Kina, normaltid", "XJT",
+                                     "Kina, sommartid", "XJDT"};
         String YAKT[] = new String[] {"Jakutsk, normaltid", "YAKT",
                                       "Jakutsk, sommartid", "YAKST"};
 
@@ -262,7 +264,7 @@ public final class TimeZoneNames_sv extends TimeZoneNamesBundle {
             {"Africa/Djibouti", EAT},
             {"Africa/Douala", WAT},
             {"Africa/El_Aaiun", WET},
-            {"Africa/Freetown", SLST},
+            {"Africa/Freetown", GMT},
             {"Africa/Gaborone", CAT},
             {"Africa/Harare", CAT},
             {"Africa/Johannesburg", SAST},
@@ -358,7 +360,7 @@ public final class TimeZoneNames_sv extends TimeZoneNamesBundle {
             {"America/Godthab", new String[] {"V\u00e4stra Gr\u00f6nland, normaltid", "WGT",
                                               "V\u00e4stra Gr\u00f6nland, sommartid", "WGST"}},
             {"America/Goose_Bay", AST},
-            {"America/Grand_Turk", EST},
+            {"America/Grand_Turk", AST},
             {"America/Grenada", AST},
             {"America/Guadeloupe", AST},
             {"America/Guatemala", CST},
@@ -401,8 +403,7 @@ public final class TimeZoneNames_sv extends TimeZoneNamesBundle {
             {"America/Mendoza", AGT},
             {"America/Menominee", CST},
             {"America/Merida", CST},
-            {"America/Metlakatla", new String[] {"Metlakatla, normaltid", "MeST",
-                                                 "Metlakatla, sommartid", "MeDT"}},
+            {"America/Metlakatla", PST},
             {"America/Mexico_City", CST},
             {"America/Miquelon", new String[] {"Saint-Pierre-et-Miquelon, normaltid", "PMST",
                                                "Saint-Pierre-et-Miquelon, sommartid", "PMDT"}},
@@ -467,7 +468,7 @@ public final class TimeZoneNames_sv extends TimeZoneNamesBundle {
             {"Antarctica/DumontDUrville", new String[] {"Dumont-d'Urville, normaltid", "DDUT",
                                                         "Dumont-d'Urville, sommartid", "DDUST"}},
             {"Antarctica/Macquarie", new String[] {"Macquarie\u00F6n, normaltid", "MIST",
-                                                   "Macquarie\u00F6n, sommartid", "MIST"}},
+                                                   "Macquarie\u00F6n, sommartid", "MIDT"}},
             {"Antarctica/Mawson", new String[] {"Mawson, normaltid", "MAWT",
                                                 "Mawson, sommartid", "MAWST"}},
             {"Antarctica/McMurdo", NZST},
@@ -509,6 +510,7 @@ public final class TimeZoneNames_sv extends TimeZoneNamesBundle {
                                               "Choibalsan, sommartid", "CHOST"}},
             {"Asia/Chongqing", CTT},
             {"Asia/Chungking", CTT},
+            {"Asia/Chita", IRKT},
             {"Asia/Colombo", IST},
             {"Asia/Dacca", BDT},
             {"Asia/Dhaka", BDT},
@@ -525,8 +527,7 @@ public final class TimeZoneNames_sv extends TimeZoneNamesBundle {
             {"Asia/Hong_Kong", HKT},
             {"Asia/Hovd", new String[] {"Hovd, normaltid", "HOVT",
                                         "Hovd, sommartid", "HOVST"}},
-            {"Asia/Irkutsk", new String[] {"Irkutsk, normaltid", "IRKT",
-                                           "Irkutsk, sommartid", "IRKST"}},
+            {"Asia/Irkutsk", IRKT},
             {"Asia/Istanbul", EET},
             {"Asia/Jakarta", WIT},
             {"Asia/Jayapura", new String[] {"\u00d6stindonesisk tid", "WIT",
@@ -536,14 +537,13 @@ public final class TimeZoneNames_sv extends TimeZoneNamesBundle {
             {"Asia/Kamchatka", new String[] {"Petropavlovsk-Kamtjatka, normaltid", "PETT",
                                              "Petropavlovsk-Kamtjatka, sommartid", "PETST"}},
             {"Asia/Karachi", PKT},
-            {"Asia/Kashgar", CTT},
+            {"Asia/Kashgar", XJT},
             {"Asia/Kathmandu", NPT},
             {"Asia/Katmandu", NPT},
             {"Asia/Khandyga", new String[] {"Khandyga, normaltid", "YAKT",
                                             "Khandyga, sommartid", "YAKST"}},
             {"Asia/Kolkata", IST},
-            {"Asia/Krasnoyarsk", new String[] {"Krasnojarsk, normaltid", "KRAT",
-                                               "Krasnojarsk, sommartid", "KRAST"}},
+            {"Asia/Krasnoyarsk", KRAT},
             {"Asia/Kuala_Lumpur", MYT},
             {"Asia/Kuching", MYT},
             {"Asia/Kuwait", ARAST},
@@ -556,7 +556,7 @@ public final class TimeZoneNames_sv extends TimeZoneNamesBundle {
                                           "Filippinerna, sommartid", "PHST"}},
             {"Asia/Muscat", GST},
             {"Asia/Nicosia", EET},
-            {"Asia/Novokuznetsk", NOVT},
+            {"Asia/Novokuznetsk", KRAT},
             {"Asia/Novosibirsk", NOVT},
             {"Asia/Oral", new String[] {"Oral, normaltid", "ORAT",
                                         "Oral, sommartid", "ORAST"}},
@@ -577,6 +577,8 @@ public final class TimeZoneNames_sv extends TimeZoneNamesBundle {
             {"Asia/Samarkand", UZT},
             {"Asia/Seoul", KST},
             {"Asia/Singapore", SGT},
+            {"Asia/Srednekolymsk", new String[] {"Srednekolymsk Time", "SRET",
+                                                 "Srednekolymsk Daylight Time", "SREDT"}},
             {"Asia/Taipei", CTT},
             {"Asia/Tel_Aviv", ISRAEL},
             {"Asia/Tashkent", UZT},
@@ -588,7 +590,7 @@ public final class TimeZoneNames_sv extends TimeZoneNamesBundle {
             {"Asia/Ujung_Pandang", CIT},
             {"Asia/Ulaanbaatar", ULAT},
             {"Asia/Ulan_Bator", ULAT},
-            {"Asia/Urumqi", CTT},
+            {"Asia/Urumqi", XJT},
             {"Asia/Ust-Nera", new String[] {"Ust-Nera, normaltid", "VLAT",
                                             "Ust-Nera, sommartid", "VLAST"}},
             {"Asia/Vientiane", ICT},
@@ -620,8 +622,8 @@ public final class TimeZoneNames_sv extends TimeZoneNamesBundle {
             {"Australia/Canberra", EST_NSW},
             {"Australia/Currie", EST_NSW},
             {"Australia/Darwin", DARWIN},
-            {"Australia/Eucla", new String[] {"Central v\u00E4stlig normaltid (Australien)", "CWST",
-                                              "Central v\u00E4stlig sommartid (Australien)", "CWST"}},
+            {"Australia/Eucla", new String[] {"Central v\u00E4stlig normaltid (Australien)", "ACWST",
+                                              "Central v\u00E4stlig sommartid (Australien)", "ACWDT"}},
             {"Australia/Hobart", TASMANIA},
             {"Australia/LHI", LORD_HOWE},
             {"Australia/Lindeman", BRISBANE},
@@ -687,7 +689,7 @@ public final class TimeZoneNames_sv extends TimeZoneNamesBundle {
             {"Europe/Isle_of_Man", GMTBST},
             {"Europe/Istanbul", EET},
             {"Europe/Jersey", GMTBST},
-            {"Europe/Kaliningrad", FET},
+            {"Europe/Kaliningrad", EET},
             {"Europe/Kiev", EET},
             {"Europe/Lisbon", WET},
             {"Europe/Ljubljana", CET},
@@ -721,8 +723,7 @@ public final class TimeZoneNames_sv extends TimeZoneNamesBundle {
             {"Europe/Vatican", CET},
             {"Europe/Vienna", CET},
             {"Europe/Vilnius", EET},
-            {"Europe/Volgograd", new String[] {"Volgograd-tid", "VOLT",
-                                               "Volgograd, sommartid", "VOLST"}},
+            {"Europe/Volgograd", MSK},
             {"Europe/Warsaw", CET},
             {"Europe/Zagreb", CET},
             {"Europe/Zaporozhye", EET},

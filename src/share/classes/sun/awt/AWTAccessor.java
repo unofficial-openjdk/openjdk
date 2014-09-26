@@ -492,6 +492,11 @@ public final class AWTAccessor {
          */
         void invokeAndWait(Object source, Runnable r)
             throws InterruptedException, InvocationTargetException;
+
+        /**
+         * Gets most recent event time in the EventQueue
+         */
+        long getMostRecentEventTime(EventQueue eventQueue);
     }
 
     /*

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -215,6 +215,11 @@ final public class SSLEngineImpl extends SSLEngine {
     static final byte           clauth_required = 2;
 
     /*
+     * Flag indicating that the engine has received a ChangeCipherSpec message.
+     */
+    private boolean             receivedCCS;
+
+    /*
      * Flag indicating if the next record we receive MUST be a Finished
      * message. Temporarily set during the handshake to ensure that
      * a change cipher spec message is followed by a finished message.
@@ -363,6 +368,7 @@ final public class SSLEngineImpl extends SSLEngine {
          */
         roleIsServer = true;
         connectionState = cs_START;
+        receivedCCS = false;
 
         /*
          * default read and write side cipher and MAC support
@@ -1006,6 +1012,7 @@ final public class SSLEngineImpl extends SSLEngine {
 
                     if (handshaker.invalidated) {
                         handshaker = null;
+                        receivedCCS = false;
                         // if state is cs_RENEGOTIATE, revert it to cs_DATA
                         if (connectionState == cs_RENEGOTIATE) {
                             connectionState = cs_DATA;
@@ -1024,6 +1031,7 @@ final public class SSLEngineImpl extends SSLEngine {
                         }
                         handshaker = null;
                         connectionState = cs_DATA;
+                        receivedCCS = false;
 
                         // No handshakeListeners here.  That's a
                         // SSLSocket thing.
@@ -1063,12 +1071,24 @@ final public class SSLEngineImpl extends SSLEngine {
                 case Record.ct_change_cipher_spec:
                     if ((connectionState != cs_HANDSHAKE
                                 && connectionState != cs_RENEGOTIATE)
-                            || inputRecord.available() != 1
-                            || inputRecord.read() != 1) {
+                            || !handshaker.sessionKeysCalculated()
+                            || receivedCCS) {
+                        // For the CCS message arriving in the wrong state
                         fatal(Alerts.alert_unexpected_message,
-                            "illegal change cipher spec msg, state = "
-                            + connectionState);
+                                "illegal change cipher spec msg, conn state = "
+                                + connectionState + ", handshake state = "
+                                + handshaker.state);
+                    } else if (inputRecord.available() != 1
+                            || inputRecord.read() != 1) {
+                        // For structural/content issues with the CCS
+                        fatal(Alerts.alert_unexpected_message,
+                                "Malformed change cipher spec msg");
                     }
+
+                    // Once we've received CCS, update the flag.
+                    // If the remote endpoint sends it again in this handshake
+                    // we won't process it.
+                    receivedCCS = true;
 
                     //
                     // The first message after a change_cipher_spec
