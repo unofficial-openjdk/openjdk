@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -669,6 +669,7 @@ Compile::Compile( ciEnv* ci_env, C2Compiler* compiler, ciMethod* target, int osr
 #endif
   set_print_inlining(PrintInlining || method()->has_option("PrintInlining") NOT_PRODUCT( || PrintOptoInlining));
   set_print_intrinsics(PrintIntrinsics || method()->has_option("PrintIntrinsics"));
+  set_has_irreducible_loop(true); // conservative until build_loop_tree() reset it
 
   if (ProfileTraps) {
     // Make sure the method being compiled gets its own MDO,
@@ -936,6 +937,8 @@ Compile::Compile( ciEnv* ci_env,
   set_print_assembly(PrintFrameConverterAssembly);
   set_parsed_irreducible_loop(false);
 #endif
+  set_has_irreducible_loop(false); // no loops
+
   CompileWrapper cw(this);
   Init(/*AliasLevel=*/ 0);
   init_tf((*generator)());
@@ -1100,7 +1103,7 @@ StartNode* Compile::start() const {
     if( start->is_Start() )
       return start->as_Start();
   }
-  ShouldNotReachHere();
+  fatal("Did not find Start node!");
   return NULL;
 }
 
