@@ -83,7 +83,7 @@ public final class ServiceDependence
 
     @Override
     public String toString() {
-        return Dependence.toString(mods, "service " + service);
+        return Dependence.toString(mods, service);
     }
 
 }

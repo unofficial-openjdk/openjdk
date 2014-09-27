@@ -75,6 +75,7 @@ import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+import jdk.jigsaw.module.ExtendedModuleDescriptor;
 import jdk.jigsaw.module.Layer;
 import jdk.jigsaw.module.ModuleArtifact;
 import jdk.jigsaw.module.ModuleArtifactFinder;
@@ -888,42 +889,39 @@ public enum LauncherHelper {
 
     /**
      * Called by the launcher to list the installed modules.
-     * If called without any sub-options then it the output is a simple
-     * list of the moduels. If called with the verbose sub-option
-     * (-XlistModules:verbose) then the dependences and other details
-     * are also printed.
+     * If called without any sub-options then the output is a simple list of
+     * the modules. If called with sub-options then the sub-options are the
+     * names of the modules to list (-XlistModules:java.base,java.desktop for
+     * example).
      */
     static void listModules(boolean printToStderr, String optionFlag)
         throws IOException, ClassNotFoundException
     {
         initOutput(printToStderr);
 
-        boolean verbose = false;
+        ModuleArtifactFinder finder = ModuleArtifactFinder.installedModules();
         int colon = optionFlag.indexOf(':');
-        if (colon >= 0) {
-            String[] subOptions = optionFlag.substring(colon+1).split(",");
-            for (String subOption: subOptions) {
-                 switch (subOption) {
-                     case "verbose" : verbose = true; break;
-                     default : /* do nothing for now */
-                 }
-            }
-        }
+        if (colon == -1) {
+            finder.allModules()
+                  .stream()
+                  .map(ModuleArtifact::descriptor)
+                  .sorted()
+                  .forEach(md -> ostream.println(md.id()));
+        } else {
+            String[] names = optionFlag.substring(colon+1).split(",");
+            for (String name: names) {
+                ModuleArtifact artifact = finder.find(name);
+                if (artifact == null) {
+                    throw new RuntimeException(name + " not installed");
+                }
+                ExtendedModuleDescriptor md = artifact.descriptor();
+                ostream.println(md.id());
 
-        boolean detail = verbose;
-        ModuleArtifactFinder.installedModules()
-                            .allModules()
-                            .stream()
-                            .map(ModuleArtifact::descriptor)
-                            .sorted()
-                            .forEach(md -> {
-            ostream.println(md.id());
-            if (detail) {
                 for (ModuleDependence d : md.moduleDependences()) {
-                    ostream.format("  %s%n", d);
+                    ostream.format("  requires %s%n", d);
                 }
                 for (ServiceDependence d : md.serviceDependences()) {
-                    ostream.format("  %s%n", d);
+                    ostream.format("  uses %s%n", d);
                 }
 
                 // sorted exports
@@ -950,10 +948,10 @@ public enum LauncherHelper {
                 for (Map.Entry<String, Set<String>> entry : services.entrySet()) {
                     String sn = entry.getKey();
                     for (String impl : entry.getValue()) {
-                        ostream.format("  provides service %s with %s%n", sn, impl);
+                        ostream.format("  provides %s with %s%n", sn, impl);
                     }
                 }
             }
-        });
+        }
     }
 }

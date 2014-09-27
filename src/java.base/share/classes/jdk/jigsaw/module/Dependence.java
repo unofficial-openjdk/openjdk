@@ -38,10 +38,8 @@ class Dependence {
     }
 
     static <M> String toString(Set<M> mods, String what) {
-        return (Stream.concat(Stream.of("requires"),
-                              Stream.concat(toStringStream(mods),
-                                            Stream.of(what)))
-                .collect(Collectors.joining(" ")));
+        return (Stream.concat(toStringStream(mods), Stream.of(what)))
+                      .collect(Collectors.joining(" "));
     }
 
 }

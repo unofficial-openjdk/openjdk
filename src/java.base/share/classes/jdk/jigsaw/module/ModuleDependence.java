@@ -85,7 +85,7 @@ public final class ModuleDependence
 
     @Override
     public String toString() {
-        return Dependence.toString(mods, "module " + midq.toString());
+        return Dependence.toString(mods, midq.toString());
     }
 
 }
