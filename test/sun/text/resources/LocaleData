@@ -574,7 +574,6 @@ FormatData/es_PA/DateTimePatterns/8={1} {0}
 FormatData/es_PA/NumberElements/0=.
 FormatData/es_PA/NumberElements/1=,
 FormatData/es_PA/NumberElements/2=;
-CurrencyNames/es_PE/PEN=S/
 FormatData/es_PE/NumberPatterns/0=#,##0.###;-#,##0.###
 # FormatData/es_PE/NumberPatterns/1=S/#,##0.00;S/-#,##0.00 # Changed; see bug 4122840
 FormatData/es_PE/NumberPatterns/2=#,##0%
@@ -7012,3 +7011,19 @@ CurrencyNames/zh_TW/zwl=\u8f9b\u5df4\u5a01\u5143 (2009)
 FormatData/sl/DateTimePatterns/4=EEEE, dd. MMMM y
 FormatData/sl/DateTimePatterns/5=dd. MMMM y
 
+# bug 7085757
+CurrencyNames//SSP=SSP
+CurrencyNames//ssp=South Sudanese Pound
+CurrencyNames//xsu=Sucre
+CurrencyNames//xua=ADB Unit of Account
+LocaleNames//SS=South Sudan
+LocaleNames/en/SS=South Sudan
+
+# bug 7028073
+CurrencyNames/es_PE/PEN=S/.
+
+# bug 7195759
+CurrencyNames//ZMW=ZMW
+
+# bug 8021121
+CurrencyNames/lv_LV/EUR=\u20AC
