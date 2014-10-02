@@ -23,22 +23,23 @@
 
 /*
  * @test
- * @bug 8032207
- * @summary Invalid node sizing for loadUS2L_immI16 and loadI2L_immI
- * @run main/othervm -Xbatch -XX:CompileCommand=compileonly,LoadWithMask.foo LoadWithMask
- *
+ * @key regression
+ * @bug 8058927
+ * @summary Make sure array class has the right class loader
+ * @run main ShowClassLoader
  */
-public class LoadWithMask {
-  static int x[] = new int[1];
-  static long foo() {
-    return x[0] & 0xfff0ffff;
-  }
 
-  public static void main(String[] args) {
-    x[0] = -1;
-    long l = 0;
-    for (int i = 0; i < 100000; ++i) {
-      l = foo();
+public class ShowClassLoader {
+
+    public static void main(String[] args) {
+        Object[] oa = new Object[0];
+        ShowClassLoader[] sa = new ShowClassLoader[0];
+
+        System.out.println("Classloader for Object[] is " + oa.getClass().getClassLoader());
+        System.out.println("Classloader for SCL[] is " + sa.getClass().getClassLoader() );
+
+        if (sa.getClass().getClassLoader() == null) {
+            throw new RuntimeException("Wrong class loader");
+        }
     }
-  }
 }
