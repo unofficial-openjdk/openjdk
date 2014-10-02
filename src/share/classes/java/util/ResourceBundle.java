@@ -2577,7 +2577,10 @@ public abstract class ResourceBundle {
                 } catch (ClassNotFoundException e) {
                 }
             } else if (format.equals("java.properties")) {
-                final String resourceName = toResourceName(bundleName, "properties");
+                final String resourceName = toResourceName0(bundleName, "properties");
+                if (resourceName == null) {
+                    return bundle;
+                }
                 final ClassLoader classLoader = loader;
                 final boolean reloadFlag = reload;
                 InputStream stream = null;
@@ -2731,7 +2734,10 @@ public abstract class ResourceBundle {
             }
             boolean result = false;
             try {
-                String resourceName = toResourceName(toBundleName(baseName, locale), format);
+                String resourceName = toResourceName0(toBundleName(baseName, locale), format);
+                if (resourceName == null) {
+                    return result;
+                }
                 URL url = loader.getResource(resourceName);
                 if (url != null) {
                     long lastModified = 0;
@@ -2864,6 +2870,15 @@ public abstract class ResourceBundle {
             StringBuilder sb = new StringBuilder(bundleName.length() + 1 + suffix.length());
             sb.append(bundleName.replace('.', '/')).append('.').append(suffix);
             return sb.toString();
+        }
+
+        private String toResourceName0(String bundleName, String suffix) {
+            // application protocol check
+            if (bundleName.contains("://")) {
+                return null;
+            } else {
+                return toResourceName(bundleName, suffix);
+            }
         }
     }
 
