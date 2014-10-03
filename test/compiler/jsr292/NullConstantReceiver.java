@@ -21,24 +21,42 @@
  * questions.
  */
 
-/*
+/**
  * @test
- * @bug 8032207
- * @summary Invalid node sizing for loadUS2L_immI16 and loadI2L_immI
- * @run main/othervm -Xbatch -XX:CompileCommand=compileonly,LoadWithMask.foo LoadWithMask
- *
+ * @bug 8059556
+ * @run main/othervm -Xbatch NullConstantReceiver
  */
-public class LoadWithMask {
-  static int x[] = new int[1];
-  static long foo() {
-    return x[0] & 0xfff0ffff;
-  }
 
-  public static void main(String[] args) {
-    x[0] = -1;
-    long l = 0;
-    for (int i = 0; i < 100000; ++i) {
-      l = foo();
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
+
+public class NullConstantReceiver {
+    static final MethodHandle target;
+    static {
+        try {
+            target = MethodHandles.lookup().findVirtual(NullConstantReceiver.class, "test", MethodType.methodType(void.class));
+        } catch (ReflectiveOperationException e) {
+            throw new Error(e);
+        }
     }
-  }
+
+    public void test() {}
+
+    static void run() throws Throwable {
+        target.invokeExact((NullConstantReceiver) null);
+    }
+
+    public static void main(String[] args) throws Throwable {
+        for (int i = 0; i<15000; i++) {
+            try {
+                run();
+            } catch (NullPointerException e) {
+                // expected
+                continue;
+            }
+            throw new AssertionError("NPE wasn't thrown");
+        }
+        System.out.println("TEST PASSED");
+    }
 }
