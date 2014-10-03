@@ -86,6 +86,8 @@ public class CipherInputStream extends FilterInputStream {
     private int ostart = 0;
     // the offset pointing to the last "new" byte
     private int ofinish = 0;
+    // stream status
+    private boolean closed = false;
     // The stream has been read from.  False if the stream has never been read.
     private boolean read = false;
 
@@ -303,10 +305,17 @@ public class CipherInputStream extends FilterInputStream {
      * @since JCE1.2
      */
     public void close() throws IOException {
+        if (closed) {
+            return;
+        }
+
+        closed = true;
         input.close();
         try {
             // throw away the unprocessed data
-            cipher.doFinal();
+            if (!done) {
+                cipher.doFinal();
+            }
         }
         catch (BadPaddingException ex) {
             /* If no data has been read from the stream to be en/decrypted,
