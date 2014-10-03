@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2007, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -86,6 +86,8 @@ public class CipherInputStream extends FilterInputStream {
     private int ostart = 0;
     // the offset pointing to the last "new" byte
     private int ofinish = 0;
+    // The stream has been read from.  False if the stream has never been read.
+    private boolean read = false;
 
     /**
      * private convenience function.
@@ -101,13 +103,18 @@ public class CipherInputStream extends FilterInputStream {
     private int getMoreData() throws IOException {
         if (done) return -1;
         int readin = input.read(ibuffer);
+        read = true;
         if (readin == -1) {
             done = true;
             try {
                 obuffer = cipher.doFinal();
+            } catch (IllegalBlockSizeException e) {
+                obuffer = null;
+                throw new IOException(e);
+            } catch (BadPaddingException e) {
+                obuffer = null;
+                throw new IOException(e);
             }
-            catch (IllegalBlockSizeException e) {obuffer = null;}
-            catch (BadPaddingException e) {obuffer = null;}
             if (obuffer == null)
                 return -1;
             else {
@@ -118,7 +125,10 @@ public class CipherInputStream extends FilterInputStream {
         }
         try {
             obuffer = cipher.update(ibuffer, 0, readin);
-        } catch (IllegalStateException e) {obuffer = null;};
+        } catch (IllegalStateException e) {
+            obuffer = null;
+            throw e;
+        }
         ostart = 0;
         if (obuffer == null)
             ofinish = 0;
@@ -299,8 +309,18 @@ public class CipherInputStream extends FilterInputStream {
             cipher.doFinal();
         }
         catch (BadPaddingException ex) {
+            /* If no data has been read from the stream to be en/decrypted,
+               we supress any exceptions, and close quietly. */
+            if (read) {
+                throw new IOException(ex);
+            }
         }
         catch (IllegalBlockSizeException ex) {
+            /* If no data has been read from the stream to be en/decrypted,
+               we supress any exceptions, and close quietly. */
+            if (read) {
+                throw new IOException(ex);
+            }
         }
         ostart = 0;
         ofinish = 0;
