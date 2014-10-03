@@ -30,8 +30,10 @@
  */
 
 import java.net.*;
+import java.io.IOException;
 import java.nio.channels.*;
 import java.util.concurrent.*;
+import java.util.Set;
 import jdk.net.*;
 
 public class Test {
@@ -76,6 +78,16 @@ public class Test {
 
         DatagramSocket dg = new DatagramSocket(0);
         udp_port = dg.getLocalPort();
+
+        // If option not available, end test
+        Set<SocketOption<?>> options = Sockets.supportedOptions(
+            DatagramSocket.class
+        );
+
+        if (!options.contains(ExtendedSocketOptions.SO_FLOW_SLA)) {
+            System.out.println("SO_FLOW_SLA not supported");
+            return;
+        }
 
         s = new Socket("127.0.0.1", tcp_port);
         sc = SocketChannel.open();
@@ -125,7 +137,14 @@ public class Test {
             if (success) {
                 throw new RuntimeException("Test failed");
             }
-        } catch (UnsupportedOperationException e) {}
+        } catch (UnsupportedOperationException e) {
+            System.out.println (e);
+        } catch (IOException e) {
+            // Probably a permission error, but we're not
+            // going to check unless a specific permission exception
+            // is defined.
+            System.out.println (e);
+        }
     }
 
     static void doTest2() throws Exception {
@@ -138,7 +157,14 @@ public class Test {
             if (success) {
                 throw new RuntimeException("Test failed");
             }
-        } catch (UnsupportedOperationException e) {}
+        } catch (UnsupportedOperationException e) {
+            System.out.println (e);
+        } catch (IOException e) {
+            // Probably a permission error, but we're not
+            // going to check unless a specific permission exception
+            // is defined.
+            System.out.println (e);
+        }
     }
 
     static void doTest3() throws Exception {
@@ -151,7 +177,14 @@ public class Test {
             if (success) {
                 throw new RuntimeException("Test failed");
             }
-        } catch (UnsupportedOperationException e) {}
+        } catch (UnsupportedOperationException e) {
+            System.out.println (e);
+        } catch (IOException e) {
+            // Probably a permission error, but we're not
+            // going to check unless a specific permission exception
+            // is defined.
+            System.out.println (e);
+        }
     }
 
     static void doTest4() throws Exception {
@@ -164,7 +197,14 @@ public class Test {
             if (success) {
                 throw new RuntimeException("Test failed");
             }
-        } catch (UnsupportedOperationException e) {}
+        } catch (UnsupportedOperationException e) {
+            System.out.println (e);
+        } catch (IOException e) {
+            // Probably a permission error, but we're not
+            // going to check unless a specific permission exception
+            // is defined.
+            System.out.println (e);
+        }
     }
 
     static void doTest5() throws Exception {
@@ -179,7 +219,14 @@ public class Test {
             if (success) {
                 throw new RuntimeException("Test failed");
             }
-        } catch (UnsupportedOperationException e) {}
+        } catch (UnsupportedOperationException e) {
+            System.out.println (e);
+        } catch (IOException e) {
+            // Probably a permission error, but we're not
+            // going to check unless a specific permission exception
+            // is defined.
+            System.out.println (e);
+        }
     }
 
     static void doTest6() throws Exception {
@@ -195,7 +242,14 @@ public class Test {
             if (success) {
                 throw new RuntimeException("Test failed");
             }
-        } catch (UnsupportedOperationException e) {}
+        } catch (UnsupportedOperationException e) {
+            System.out.println (e);
+        } catch (IOException e) {
+            // Probably a permission error, but we're not
+            // going to check unless a specific permission exception
+            // is defined.
+            System.out.println (e);
+        }
     }
 
     static void doTest7() throws Exception {
@@ -210,7 +264,14 @@ public class Test {
             if (success) {
                 throw new RuntimeException("Test failed");
             }
-        } catch (UnsupportedOperationException e) {}
+        } catch (UnsupportedOperationException e) {
+            System.out.println (e);
+        } catch (IOException e) {
+            // Probably a permission error, but we're not
+            // going to check unless a specific permission exception
+            // is defined.
+            System.out.println (e);
+        }
     }
 
     static void doTest8() throws Exception {
@@ -226,6 +287,13 @@ public class Test {
             if (success) {
                 throw new RuntimeException("Test failed");
             }
-        } catch (UnsupportedOperationException e) {}
+        } catch (UnsupportedOperationException e) {
+            System.out.println (e);
+        } catch (IOException e) {
+            // Probably a permission error, but we're not
+            // going to check unless a specific permission exception
+            // is defined.
+            System.out.println (e);
+        }
     }
 }
