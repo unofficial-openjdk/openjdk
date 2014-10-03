@@ -33,6 +33,9 @@ import java.security.spec.*;
 import javax.crypto.*;
 import javax.crypto.spec.*;
 
+import sun.security.internal.spec.TlsRsaPremasterSecretParameterSpec;
+import sun.security.util.KeyUtil;
+
 /**
  * RSA cipher implementation using the Microsoft Crypto API.
  * Supports RSA en/decryption and signing/verifying using PKCS#1 v1.5 padding.
@@ -89,8 +92,15 @@ public final class RSACipher extends CipherSpi {
 
     // the public key, if we were initialized using a public key
     private sun.security.mscapi.Key publicKey;
+
     // the private key, if we were initialized using a private key
     private sun.security.mscapi.Key privateKey;
+
+    // cipher parameter for TLS RSA premaster secret
+    private AlgorithmParameterSpec spec = null;
+
+    // the source of randomness
+    private SecureRandom random;
 
     public RSACipher() {
         SunMSCAPI.verifySelfIntegrity(getClass());
@@ -153,8 +163,12 @@ public final class RSACipher extends CipherSpi {
             throws InvalidKeyException, InvalidAlgorithmParameterException {
 
         if (params != null) {
-            throw new InvalidAlgorithmParameterException
-                ("Parameters not supported");
+            if (!(params instanceof TlsRsaPremasterSecretParameterSpec)) {
+                throw new InvalidAlgorithmParameterException(
+                        "Parameters not supported");
+            }
+            spec = params;
+            this.random = random;   // for TLS RSA premaster secret
         }
         init(opmode, key);
     }
@@ -319,39 +333,47 @@ public final class RSACipher extends CipherSpi {
     }
 
     // see JCE spec
-    protected java.security.Key engineUnwrap(byte[] wrappedKey, String algorithm,
+    protected java.security.Key engineUnwrap(byte[] wrappedKey,
+            String algorithm,
             int type) throws InvalidKeyException, NoSuchAlgorithmException {
 
         if (wrappedKey.length > buffer.length) {
             throw new InvalidKeyException("Key is too long for unwrapping");
         }
+
+        boolean isTlsRsaPremasterSecret =
+                algorithm.equals("TlsRsaPremasterSecret");
+        Exception failover = null;
+        byte[] encoded = null;
+
         update(wrappedKey, 0, wrappedKey.length);
-
         try {
-            byte[] encoding = doFinal();
-
-            switch (type) {
-            case Cipher.PUBLIC_KEY:
-                return constructPublicKey(encoding, algorithm);
-
-            case Cipher.PRIVATE_KEY:
-                return constructPrivateKey(encoding, algorithm);
-
-            case Cipher.SECRET_KEY:
-                return constructSecretKey(encoding, algorithm);
-
-            default:
-                throw new InvalidKeyException("Unknown key type " + type);
-            }
-
+            encoded = doFinal();
         } catch (BadPaddingException e) {
-            // should not occur
-            throw new InvalidKeyException("Unwrapping failed", e);
-
+            if (isTlsRsaPremasterSecret) {
+                failover = e;
+            } else {
+                throw new InvalidKeyException("Unwrapping failed", e);
+            }
         } catch (IllegalBlockSizeException e) {
             // should not occur, handled with length check above
             throw new InvalidKeyException("Unwrapping failed", e);
         }
+
+        if (isTlsRsaPremasterSecret) {
+            if (!(spec instanceof TlsRsaPremasterSecretParameterSpec)) {
+                throw new IllegalStateException(
+                        "No TlsRsaPremasterSecretParameterSpec specified");
+            }
+
+            // polish the TLS premaster secret
+            encoded = KeyUtil.checkTlsPreMasterSecretKey(
+                ((TlsRsaPremasterSecretParameterSpec)spec).getClientVersion(),
+                ((TlsRsaPremasterSecretParameterSpec)spec).getServerVersion(),
+                random, encoded, (failover != null));
+        }
+
+        return constructKey(encoded, algorithm, type);
     }
 
     // see JCE spec
@@ -409,6 +431,22 @@ public final class RSACipher extends CipherSpi {
         String encodedKeyAlgorithm) {
 
         return new SecretKeySpec(encodedKey, encodedKeyAlgorithm);
+    }
+
+    private static Key constructKey(byte[] encodedKey,
+            String encodedKeyAlgorithm,
+            int keyType) throws InvalidKeyException, NoSuchAlgorithmException {
+
+        switch (keyType) {
+            case Cipher.PUBLIC_KEY:
+                return constructPublicKey(encodedKey, encodedKeyAlgorithm);
+            case Cipher.PRIVATE_KEY:
+                return constructPrivateKey(encodedKey, encodedKeyAlgorithm);
+            case Cipher.SECRET_KEY:
+                return constructSecretKey(encodedKey, encodedKeyAlgorithm);
+            default:
+                throw new InvalidKeyException("Unknown key type " + keyType);
+        }
     }
 
     /*
