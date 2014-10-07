@@ -1,5 +1,5 @@
 #
-# Copyright (c) 1995, 2012, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 1995, 2014, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -524,7 +524,7 @@ jdk_other: $(call TestDirs, \
 
 # Stable samevm testruns (minus items from PROBLEM_LIST)
 JDK_ALL_TARGETS += jdk_net
-jdk_net: $(call TestDirs, com/sun/net java/net sun/net com/oracle/net)
+jdk_net: $(call TestDirs, com/sun/net java/net jdk/net sun/net com/oracle/net)
 	$(call RunAgentvmBatch)
 
 # Stable samevm testruns (minus items from PROBLEM_LIST)
@@ -550,21 +550,41 @@ jdk_security1: $(call TestDirs, java/security)
 # Stable othervm testruns (minus items from PROBLEM_LIST)
 #   Using samevm has serious problems with these tests
 JDK_ALL_TARGETS += jdk_security2
-jdk_security2: $(call TestDirs, javax/crypto com/sun/crypto)
+jdk_security2: $(call TestDirs, javax/crypto com/sun/crypto javax/xml/crypto)
 	$(call RunAgentvmBatch)
 
 # Stable othervm testruns (minus items from PROBLEM_LIST)
 #   Using samevm has serious problems with these tests
 JDK_ALL_TARGETS += jdk_security3
-jdk_security3: $(call TestDirs, com/sun/security lib/security \
-		javax/security sun/security \
+jdk_security3: $(call TestDirs, com/sun/security/auth \
+		com/sun/security/sasl lib/security \
+		javax/security/sasl javax/security/auth/login \
+		javax/security/auth/PrivateCredentialPermission \
+		javax/security/auth/Subject \
+		javax/security/auth/SubjectDomainCombiner \
+		javax/security/auth/x500 sun/security/acl \
+		sun/security/action sun/security/ec sun/security/mscapi \
+		sun/security/pkcs sun/security/pkcs11 sun/security/pkcs12 \
+		sun/security/provider sun/security/rsa sun/security/ssl \
+		sun/security/smartcardio sun/security/tools \
+		sun/security/util sun/security/validator sun/security/x509 \
 		com/sun/org/apache/xml/internal/security \
 		com/oracle/security)
 	$(call SharedLibraryPermissions,sun/security)
 	$(call RunAgentvmBatch)
 
+# Stable othervm testruns (minus items from PROBLEM_LIST)
+#   Using samevm has serious problems with these tests
+JDK_ALL_TARGETS += jdk_security4
+jdk_security4: $(call TestDirs, com/sun/security/jgss \
+		javax/security/auth/kerberos \
+		sun/security/krb5 \
+		sun/security/jgss)
+	$(call SharedLibraryPermissions,sun/security)
+	$(call RunAgentvmBatch)
+
 # All security tests
-jdk_security: jdk_security1 jdk_security2 jdk_security3
+jdk_security: jdk_security1 jdk_security2 jdk_security3 jdk_security4
 	@$(SummaryInfo)
 
 # Stable samevm testruns (minus items from PROBLEM_LIST)

@@ -468,6 +468,10 @@ Java_java_net_TwoStacksPlainSocketImpl_socketBind(JNIEnv *env, jobject this,
                     (*env)->SetIntField(env, fd1Obj, IO_fd_fdID, fd1);
                 }
             }
+        } else {
+            /* NET_BindV6() closes both sockets upon a failure */
+            (*env)->SetObjectField(env, this, psi_fdID, NULL);
+            (*env)->SetObjectField(env, this, psi_fd1ID, NULL);
         }
     } else {
         rv = NET_WinBind(fd, (struct sockaddr *)&him, len, exclBind);
@@ -576,6 +580,7 @@ Java_java_net_TwoStacksPlainSocketImpl_socketAccept(JNIEnv *env, jobject this,
 {
     /* fields on this */
     jint port;
+    jint scope;
     jint timeout = (*env)->GetIntField(env, this, psi_timeoutID);
     jobject fdObj = (*env)->GetObjectField(env, this, psi_fdID);
     jobject fd1Obj = (*env)->GetObjectField(env, this, psi_fd1ID);
@@ -751,9 +756,12 @@ Java_java_net_TwoStacksPlainSocketImpl_socketAccept(JNIEnv *env, jobject this,
             return;
         }
         setInet6Address_ipaddress(env, socketAddressObj, (const char *)&him.him6.sin6_addr);
-
         setInetAddress_family(env, socketAddressObj, IPv6);
-        setInet6Address_scopeid(env, socketAddressObj, him.him6.sin6_scope_id);
+        scope = him.him6.sin6_scope_id;
+        (*env)->SetIntField(env, socketAddressObj, ia6_scopeidID, scope);
+        if(scope>0) {
+            (*env)->SetBooleanField(env, socketAddressObj, ia6_scopeidsetID, JNI_TRUE);
+        }
     }
     /* fields common to AF_INET and AF_INET6 */
 

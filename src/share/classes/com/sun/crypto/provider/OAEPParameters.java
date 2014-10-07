@@ -106,20 +106,6 @@ public final class OAEPParameters extends AlgorithmParametersSpi {
         }
     }
 
-    private static String convertToStandardName(String internalName) {
-        if (internalName.equals("SHA")) {
-            return "SHA-1";
-        } else if (internalName.equals("SHA256")) {
-            return "SHA-256";
-        } else if (internalName.equals("SHA384")) {
-            return "SHA-384";
-        } else if (internalName.equals("SHA512")) {
-            return "SHA-512";
-        } else {
-            return internalName;
-        }
-    }
-
     protected void engineInit(byte[] encoded)
         throws IOException {
         DerInputStream der = new DerInputStream(encoded);
@@ -131,7 +117,7 @@ public final class OAEPParameters extends AlgorithmParametersSpi {
             DerValue data = datum[i];
             if (data.isContextSpecific((byte) 0x00)) {
                 // hash algid
-                mdName = convertToStandardName(AlgorithmId.parse
+                mdName = AlgorithmId.getStandardDigestName(AlgorithmId.parse
                     (data.data.getDerValue()).getName());
             } else if (data.isContextSpecific((byte) 0x01)) {
                 // mgf algid
@@ -141,7 +127,8 @@ public final class OAEPParameters extends AlgorithmParametersSpi {
                 }
                 AlgorithmId params = AlgorithmId.parse(
                     new DerValue(val.getEncodedParams()));
-                String mgfDigestName = convertToStandardName(params.getName());
+                String mgfDigestName = AlgorithmId.getStandardDigestName(
+                        params.getName());
                 if (mgfDigestName.equals("SHA-1")) {
                     mgfSpec = MGF1ParameterSpec.SHA1;
                 } else if (mgfDigestName.equals("SHA-256")) {
