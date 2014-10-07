@@ -224,14 +224,21 @@ class java_lang_Class : AllStatic {
   static int _oop_size_offset;
   static int _static_oop_field_count_offset;
 
+  static int _class_loader_offset;
+
   static bool offsets_computed;
   static int classRedefinedCount_offset;
 
+  static void set_class_loader(oop java_class, oop class_loader);
  public:
   static void compute_offsets();
 
   // Instance creation
-  static oop  create_mirror(KlassHandle k, TRAPS);
+  static oop  create_mirror(KlassHandle k, Handle class_loader, TRAPS);
+  static oop  create_mirror(KlassHandle k, TRAPS) {
+    return create_mirror(k, Handle(), THREAD);
+  }
+
   static void fixup_mirror(KlassHandle k, TRAPS);
   static oop  create_basic_type_mirror(const char* basic_type_name, BasicType type, TRAPS);
   // Conversion
@@ -266,6 +273,8 @@ class java_lang_Class : AllStatic {
   // Support for classRedefinedCount field
   static int classRedefinedCount(oop the_class_mirror);
   static void set_classRedefinedCount(oop the_class_mirror, int value);
+
+  static oop class_loader(oop java_class);
 
   static int oop_size(oop java_class);
   static void set_oop_size(oop java_class, int size);

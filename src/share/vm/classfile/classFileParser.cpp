@@ -2676,7 +2676,7 @@ void ClassFileParser::parse_classfile_bootstrap_methods_attribute(constantPoolHa
   ClassFileStream* cfs = stream();
   u1* current_start = cfs->current();
 
-  guarantee_property(attribute_byte_length > sizeof(u2),
+  guarantee_property(attribute_byte_length >= sizeof(u2),
                      "Invalid BootstrapMethods attribute length %u in class file %s",
                      attribute_byte_length,
                      CHECK);
@@ -3747,7 +3747,7 @@ instanceKlassHandle ClassFileParser::parseClassFile(Symbol* name,
     }
 
     // Allocate mirror and initialize static fields
-    java_lang_Class::create_mirror(this_klass, CHECK_(nullHandle));
+    java_lang_Class::create_mirror(this_klass, class_loader, CHECK_(nullHandle));
 
     ClassLoadingService::notify_class_loaded(instanceKlass::cast(this_klass()),
                                              false /* not shared class */);
