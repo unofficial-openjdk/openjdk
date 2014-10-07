@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -96,7 +96,7 @@ public:
   // the "i" passed to the calling thread's work(i) function.
   // In the sequential case this param will be ignored.
   void oops_into_collection_set_do(OopsInHeapRegionClosure* blk,
-                                   CodeBlobToOopClosure* code_root_cl,
+                                   CodeBlobClosure* code_root_cl,
                                    uint worker_i);
 
   // Prepare for and cleanup after an oops_into_collection_set_do
@@ -108,7 +108,7 @@ public:
   void cleanup_after_oops_into_collection_set_do();
 
   void scanRS(OopsInHeapRegionClosure* oc,
-              CodeBlobToOopClosure* code_root_cl,
+              CodeBlobClosure* code_root_cl,
               uint worker_i);
 
   void updateRS(DirtyCardQueue* into_cset_dcq, uint worker_i);
