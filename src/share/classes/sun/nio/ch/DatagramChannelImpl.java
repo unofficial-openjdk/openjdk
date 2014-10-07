@@ -523,6 +523,26 @@ class DatagramChannelImpl
                         sm.checkListen(isa.getPort());
                     Net.bind(fd, isa.getAddress(), isa.getPort());
                     localAddress = Net.localAddress(fd);
+
+                    // flush any packets already received.
+                    boolean blocking = false;
+                    synchronized (blockingLock()) {
+                        try {
+                            blocking = isBlocking();
+                            // remainder of each packet thrown away
+                            ByteBuffer tmpBuf = ByteBuffer.allocate(1);
+                            if (blocking) {
+                                configureBlocking(false);
+                            }
+                            do {
+                                tmpBuf.clear();
+                            } while (read(tmpBuf) > 0);
+                        } finally {
+                            if (blocking) {
+                                configureBlocking(true);
+                            }
+                        }
+                    }
                 }
             }
         }
