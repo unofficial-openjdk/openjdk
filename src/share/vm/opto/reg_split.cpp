@@ -316,10 +316,13 @@ Node *PhaseChaitin::split_Rematerialize( Node *def, Block *b, uint insidx, uint 
   if( def->req() > 1 ) {
     for( uint i = 1; i < def->req(); i++ ) {
       Node *in = def->in(i);
-      // Check for single-def (LRG cannot redefined)
       uint lidx = n2lidx(in);
-      if( lidx >= _maxlrg ) continue; // Value is a recent spill-copy
-      if (lrgs(lidx).is_singledef()) continue;
+      // We do not need this for live ranges that are only defined once.
+      // However, this is not true for spill copies that are added in this
+      // Split() pass, since they might get coalesced later on in this pass.
+      if (lidx < _maxlrg && lrgs(lidx).is_singledef()) {
+         continue;
+       }
 
       Block *b_def = _cfg._bbs[def->_idx];
       int idx_def = b_def->find_node(def);
