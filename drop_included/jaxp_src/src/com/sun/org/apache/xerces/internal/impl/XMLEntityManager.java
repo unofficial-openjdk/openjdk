@@ -43,6 +43,7 @@ import java.util.Iterator;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Stack;
+import javax.xml.stream.XMLInputFactory;
 
 
 import com.sun.org.apache.xerces.internal.impl.io.*;
@@ -302,6 +303,10 @@ protected static final String PARSER_SETTINGS =
     /** Property Manager. This is used from Stax */
     protected PropertyManager fPropertyManager ;
 
+    /** StAX properties */
+    boolean fSupportDTD = true;
+    boolean fReplaceEntityReferences = true;
+    boolean fSupportExternalEntities = true;
     
     // settings
     
@@ -1138,7 +1143,8 @@ protected static final String PARSER_SETTINGS =
             boolean parameter = entityName.startsWith("%");
             boolean general = !parameter;
             if (unparsed || (general && !fExternalGeneralEntities) ||
-                    (parameter && !fExternalParameterEntities)) {
+                    (parameter && !fExternalParameterEntities) ||
+                    !fSupportDTD || !fSupportExternalEntities) {
                 
                 if (fEntityHandler != null) {
                     fResourceIdentifier.clear();
@@ -1437,6 +1443,10 @@ protected static final String PARSER_SETTINGS =
             fStaxEntityResolver = null;
         }
         
+        fSupportDTD = ((Boolean)propertyManager.getProperty(XMLInputFactory.SUPPORT_DTD)).booleanValue();
+        fReplaceEntityReferences = ((Boolean)propertyManager.getProperty(XMLInputFactory.IS_REPLACING_ENTITY_REFERENCES)).booleanValue();
+        fSupportExternalEntities = ((Boolean)propertyManager.getProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES)).booleanValue();
+
         fSecurityManager = (XMLSecurityManager)propertyManager.getProperty(SECURITY_MANAGER);
 
         // initialize state
@@ -1551,6 +1561,11 @@ protected static final String PARSER_SETTINGS =
             fSecurityManager = null;
         }
         entityExpansionIndex = fSecurityManager.getIndex(Constants.JDK_ENTITY_EXPANSION_LIMIT);
+
+        //StAX Property
+        fSupportDTD = true;
+        fReplaceEntityReferences = true;
+        fSupportExternalEntities = true;
 
         //reset general state
         reset();
