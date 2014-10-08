@@ -122,7 +122,7 @@ public class Init {
         }
         try {
             AccessController.doPrivileged(new PrivilegedExceptionAction<Void>(){
-                @Override public Void run() throws XMLSecurityException {
+                public Void run() throws XMLSecurityException {
                     //
                     // Bind the default prefixes
                     //
