@@ -557,7 +557,7 @@ jdk_security2: $(call TestDirs, javax/crypto com/sun/crypto javax/xml/crypto)
 #   Using samevm has serious problems with these tests
 JDK_ALL_TARGETS += jdk_security3
 jdk_security3: $(call TestDirs, com/sun/security/auth \
-		com/sun/security/sasl lib/security \
+		com/sun/security/sasl lib/security javax/net \
 		javax/security/sasl javax/security/auth/login \
 		javax/security/auth/PrivateCredentialPermission \
 		javax/security/auth/Subject \
