@@ -29,6 +29,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.ByteOrder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -111,16 +112,26 @@ public final class ImageFile {
                                    ImageModules modules)
         throws IOException
     {
+        return ImageFile.create(output, archives, modules, ByteOrder.nativeOrder());
+    }
+
+    public static ImageFile create(Path output,
+                                   Set<Archive> archives,
+                                   ImageModules modules,
+                                   ByteOrder byteOrder)
+        throws IOException
+    {
         ImageFile lib = new ImageFile(output);
         // get all resources
         lib.readModuleEntries(modules, archives);
         // write to modular image
-        lib.writeImage(modules, archives);
+        lib.writeImage(modules, archives, byteOrder);
         return lib;
     }
 
     private void writeImage(ImageModules modules,
-                            Set<Archive> archives)
+                            Set<Archive> archives,
+                            ByteOrder byteOrder)
         throws IOException
     {
         // name to Archive file
@@ -139,7 +150,7 @@ public final class ImageFile {
                     BufferedOutputStream bos = new BufferedOutputStream(fos);
                     DataOutputStream out = new DataOutputStream(bos)) {
                 // store index in addition of the class loader map for boot loader
-                BasicImageWriter writer = new BasicImageWriter();
+                BasicImageWriter writer = new BasicImageWriter(byteOrder);
                 Set<String> duplicates = new HashSet<>();
 
                 // build package map for modules and add as resources
