@@ -384,9 +384,6 @@ java/text/Bidi/Bug6665028.java                                  linux-x64
 
 # jdk_tools
 
-# 6461635
-com/sun/tools/attach/BasicTests.sh                              generic-all
-
 # Filed 6986875
 sun/tools/jps/jps-Vvml.sh                                       generic-all
 
