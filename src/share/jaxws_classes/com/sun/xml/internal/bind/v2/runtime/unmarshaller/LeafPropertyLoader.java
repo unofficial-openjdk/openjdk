@@ -47,7 +47,7 @@ public class LeafPropertyLoader extends Loader {
 
     public void text(UnmarshallingContext.State state, CharSequence text) throws SAXException {
         try {
-            xacc.parse(state.prev.target,text);
+            xacc.parse(state.getPrev().getTarget(), text);
         } catch (AccessorException e) {
             handleGenericException(e,true);
         } catch (RuntimeException e) {
