@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -340,7 +340,7 @@ public class Resources_it extends java.util.ListResourceBundle {
                  "Immettere un nuovo nome alias\t(premere INVIO per annullare l'importazione della voce):  "},
         {"Enter.alias.name.", "Immettere nome alias:  "},
         {".RETURN.if.same.as.for.otherAlias.",
-                "\t(INVIO se corrisponde al nome di <{0}>"},
+                "\t(INVIO se corrisponde al nome di <{0}>)"},
         {".PATTERN.printX509Cert",
                 "Proprietario: {0}\nAutorit\u00E0 emittente: {1}\nNumero di serie: {2}\nValido da: {3} a: {4}\nImpronte digitali certificato:\n\t MD5:  {5}\n\t SHA1: {6}\n\t SHA256: {7}\n\t Nome algoritmo firma: {8}\n\t Versione: {9}"},
         {"What.is.your.first.and.last.name.",
