@@ -46,33 +46,48 @@ public class Handler extends URLStreamHandler {
 
     @Override
     protected URLConnection openConnection(URL url) throws IOException {
+        return new JImageURLConnection(url);
+    }
+}
+
+class JImageURLConnection extends URLConnection {
+    private final ImageReader jimage;
+    private final ImageLocation location;
+
+    JImageURLConnection(URL url) throws IOException {
+        super(url);
+
         String s = url.toString();
         int index = s.indexOf("!/");
         if (index == -1)
             throw new MalformedURLException("no !/ found in url spec:" + s);
         URL base = new URL(s.substring(0, index++));
 
-        // use jiage cache to open or get existing connection to jimage file
-        final ImageReader jimage = sun.misc.JImageCache.get(base);
+        // use jimage cache to open or get existing connection to jimage file
+        // (this checks access to the jimage file)
+        ImageReader jimage = sun.misc.JImageCache.get(base);
         if (jimage == null)
             throw new IOException("cannot open " + base);
 
         String entry = sun.net.www.ParseUtil.decode(s.substring(index+1));
-        final ImageLocation location = jimage.findLocation(entry);
+        ImageLocation location = jimage.findLocation(entry);
         if (location == null)
             throw new IOException(entry + " not found");
-        return new URLConnection(url) {
-            @Override
-            public void connect() { }
-            @Override
-            public InputStream getInputStream() throws IOException {
-                byte[] resource = jimage.getResource(location);
-                return new ByteArrayInputStream(resource);
-            }
-            @Override
-            public long getContentLengthLong() {
-                return location.getUncompressedSize();
-            }
-        };
+
+        this.jimage = jimage;
+        this.location = location;
+    }
+
+    @Override
+    public void connect() { }
+
+    @Override
+    public InputStream getInputStream() throws IOException {
+        byte[] resource = jimage.getResource(location);
+        return new ByteArrayInputStream(resource);
+    }
+    @Override
+    public long getContentLengthLong() {
+        return location.getUncompressedSize();
     }
 }

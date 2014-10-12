@@ -190,7 +190,7 @@ public class BasicImageReader {
         return strings.get(offset).toString();
     }
 
-    synchronized private byte[] read(long offset, long size) throws IOException {
+    private synchronized byte[] read(long offset, long size) throws IOException {
         byte[] bytes = new byte[(int)size];
         file.seek(indexSize + offset);
         file.read(bytes);
