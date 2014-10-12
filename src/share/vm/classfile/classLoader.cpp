@@ -76,9 +76,7 @@ typedef jzentry* (JNICALL *FindEntry_t)(jzfile *zip, const char *name, jint *siz
 typedef jboolean (JNICALL *ReadEntry_t)(jzfile *zip, jzentry *entry, unsigned char *buf, char *namebuf);
 typedef jboolean (JNICALL *ReadMappedEntry_t)(jzfile *zip, jzentry *entry, unsigned char **buf, char *namebuf);
 typedef jzentry* (JNICALL *GetNextEntry_t)(jzfile *zip, jint n);
-
-typedef jboolean (JNICALL *ZipInflateFully_t)(
-    void *inBuf, jlong inLen, void *outBuf, jlong outLen, char **pmsg);
+typedef jboolean (JNICALL *ZipInflateFully_t)(void *inBuf, jlong inLen, void *outBuf, jlong outLen, char **pmsg);
 
 static ZipOpen_t         ZipOpen            = NULL;
 static ZipClose_t        ZipClose           = NULL;
@@ -87,8 +85,7 @@ static ReadEntry_t       ReadEntry          = NULL;
 static ReadMappedEntry_t ReadMappedEntry    = NULL;
 static GetNextEntry_t    GetNextEntry       = NULL;
 static canonicalize_fn_t CanonicalizeEntry  = NULL;
-
-static ZipInflateFully_t  ZipInflateFully = NULL;
+static ZipInflateFully_t  ZipInflateFully   = NULL;
 
 // Globals
 
@@ -431,7 +428,7 @@ ClassFileStream* ClassPathImageEntry::open_stream(const char* name, TRAPS) {
 }
 
 jboolean ClassPathImageEntry::decompress(void *in, u8 inSize, void *out, u8 outSize, char **pmsg) {
-    return (*ZipInflateFully)(in, inSize, out, outSize, pmsg);
+  return (*ZipInflateFully)(in, inSize, out, outSize, pmsg);
 }
 
 #ifndef PRODUCT
