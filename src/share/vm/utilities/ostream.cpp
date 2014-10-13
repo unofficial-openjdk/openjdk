@@ -405,6 +405,11 @@ static const char* make_log_name_internal(const char* log_name, const char* forc
     buffer_length += strlen(tms);
   }
 
+  // File name is too long.
+  if (buffer_length > JVM_MAXPATHLEN) {
+    return NULL;
+  }
+
   // Create big enough buffer.
   char *buf = NEW_C_HEAP_ARRAY(char, buffer_length, mtInternal);
 
@@ -472,53 +477,6 @@ static const char* make_log_name(const char* log_name, const char* force_directo
   return make_log_name_internal(log_name, force_directory, os::current_process_id(),
                                 timestr);
 }
-
-#ifndef PRODUCT
-void test_loggc_filename() {
-  int pid;
-  char  tms[32];
-  char  i_result[FILENAMEBUFLEN];
-  const char* o_result;
-  get_datetime_string(tms, sizeof(tms));
-  pid = os::current_process_id();
-
-  // test.log
-  jio_snprintf(i_result, sizeof(char)*FILENAMEBUFLEN, "test.log", tms);
-  o_result = make_log_name_internal("test.log", NULL, pid, tms);
-  assert(strcmp(i_result, o_result) == 0, "failed on testing make_log_name(\"test.log\", NULL)");
-  FREE_C_HEAP_ARRAY(char, o_result, mtInternal);
-
-  // test-%t-%p.log
-  jio_snprintf(i_result, sizeof(char)*FILENAMEBUFLEN, "test-%s-pid%u.log", tms, pid);
-  o_result = make_log_name_internal("test-%t-%p.log", NULL, pid, tms);
-  assert(strcmp(i_result, o_result) == 0, "failed on testing make_log_name(\"test-%%t-%%p.log\", NULL)");
-  FREE_C_HEAP_ARRAY(char, o_result, mtInternal);
-
-  // test-%t%p.log
-  jio_snprintf(i_result, sizeof(char)*FILENAMEBUFLEN, "test-%spid%u.log", tms, pid);
-  o_result = make_log_name_internal("test-%t%p.log", NULL, pid, tms);
-  assert(strcmp(i_result, o_result) == 0, "failed on testing make_log_name(\"test-%%t%%p.log\", NULL)");
-  FREE_C_HEAP_ARRAY(char, o_result, mtInternal);
-
-  // %p%t.log
-  jio_snprintf(i_result, sizeof(char)*FILENAMEBUFLEN, "pid%u%s.log", pid, tms);
-  o_result = make_log_name_internal("%p%t.log", NULL, pid, tms);
-  assert(strcmp(i_result, o_result) == 0, "failed on testing make_log_name(\"%%p%%t.log\", NULL)");
-  FREE_C_HEAP_ARRAY(char, o_result, mtInternal);
-
-  // %p-test.log
-  jio_snprintf(i_result, sizeof(char)*FILENAMEBUFLEN, "pid%u-test.log", pid);
-  o_result = make_log_name_internal("%p-test.log", NULL, pid, tms);
-  assert(strcmp(i_result, o_result) == 0, "failed on testing make_log_name(\"%%p-test.log\", NULL)");
-  FREE_C_HEAP_ARRAY(char, o_result, mtInternal);
-
-  // %t.log
-  jio_snprintf(i_result, sizeof(char)*FILENAMEBUFLEN, "%s.log", tms);
-  o_result = make_log_name_internal("%t.log", NULL, pid, tms);
-  assert(strcmp(i_result, o_result) == 0, "failed on testing make_log_name(\"%%t.log\", NULL)");
-  FREE_C_HEAP_ARRAY(char, o_result, mtInternal);
-}
-#endif // PRODUCT
 
 fileStream::fileStream(const char* file_name) {
   _file = fopen(file_name, "w");
@@ -805,92 +763,118 @@ bool defaultStream::has_log_file() {
   return _log_file != NULL;
 }
 
+fileStream* defaultStream::open_file(const char* log_name) {
+  const char* try_name = make_log_name(log_name, NULL);
+  if (try_name == NULL) {
+    warning("Cannot open file %s: file name is too long.\n", log_name);
+    return NULL;
+  }
+
+  fileStream* file = new(ResourceObj::C_HEAP, mtInternal) fileStream(try_name);
+  FREE_C_HEAP_ARRAY(char, try_name, mtInternal);
+  if (file->is_open()) {
+    return file;
+  }
+
+  // Try again to open the file in the temp directory.
+  delete file;
+  char warnbuf[O_BUFLEN*2];
+  jio_snprintf(warnbuf, sizeof(warnbuf), "Warning:  Cannot open log file: %s\n", log_name);
+  // Note:  This feature is for maintainer use only.  No need for L10N.
+  jio_print(warnbuf);
+  try_name = make_log_name(log_name, os::get_temp_directory());
+  if (try_name == NULL) {
+    warning("Cannot open file %s: file name is too long for directory %s.\n", log_name, os::get_temp_directory());
+    return NULL;
+  }
+
+  jio_snprintf(warnbuf, sizeof(warnbuf),
+               "Warning:  Forcing option -XX:LogFile=%s\n", try_name);
+  jio_print(warnbuf);
+
+  file = new(ResourceObj::C_HEAP, mtInternal) fileStream(try_name);
+  FREE_C_HEAP_ARRAY(char, try_name, mtInternal);
+  if (file->is_open()) {
+    return file;
+  }
+
+  delete file;
+  return NULL;
+}
+
 void defaultStream::init_log() {
   // %%% Need a MutexLocker?
   const char* log_name = LogFile != NULL ? LogFile : "hotspot.log";
-  const char* try_name = make_log_name(log_name, NULL);
-  fileStream* file = new(ResourceObj::C_HEAP, mtInternal) fileStream(try_name);
-  if (!file->is_open()) {
-    // Try again to open the file.
-    char warnbuf[O_BUFLEN*2];
-    jio_snprintf(warnbuf, sizeof(warnbuf),
-                 "Warning:  Cannot open log file: %s\n", try_name);
-    // Note:  This feature is for maintainer use only.  No need for L10N.
-    jio_print(warnbuf);
-    FREE_C_HEAP_ARRAY(char, try_name, mtInternal);
-    try_name = make_log_name("hs_pid%p.log", os::get_temp_directory());
-    jio_snprintf(warnbuf, sizeof(warnbuf),
-                 "Warning:  Forcing option -XX:LogFile=%s\n", try_name);
-    jio_print(warnbuf);
-    delete file;
-    file = new(ResourceObj::C_HEAP, mtInternal) fileStream(try_name);
-    FREE_C_HEAP_ARRAY(char, try_name, mtInternal);
-  }
-  if (file->is_open()) {
+  fileStream* file = open_file(log_name);
+
+  if (file != NULL) {
     _log_file = file;
-    xmlStream* xs = new(ResourceObj::C_HEAP, mtInternal) xmlStream(file);
-    _outer_xmlStream = xs;
-    if (this == tty)  xtty = xs;
-    // Write XML header.
-    xs->print_cr("<?xml version='1.0' encoding='UTF-8'?>");
-    // (For now, don't bother to issue a DTD for this private format.)
-    jlong time_ms = os::javaTimeMillis() - tty->time_stamp().milliseconds();
-    // %%% Should be: jlong time_ms = os::start_time_milliseconds(), if
-    // we ever get round to introduce that method on the os class
-    xs->head("hotspot_log version='%d %d'"
-             " process='%d' time_ms='"INT64_FORMAT"'",
-             LOG_MAJOR_VERSION, LOG_MINOR_VERSION,
-             os::current_process_id(), time_ms);
-    // Write VM version header immediately.
-    xs->head("vm_version");
-    xs->head("name"); xs->text("%s", VM_Version::vm_name()); xs->cr();
-    xs->tail("name");
-    xs->head("release"); xs->text("%s", VM_Version::vm_release()); xs->cr();
-    xs->tail("release");
-    xs->head("info"); xs->text("%s", VM_Version::internal_vm_info_string()); xs->cr();
-    xs->tail("info");
-    xs->tail("vm_version");
-    // Record information about the command-line invocation.
-    xs->head("vm_arguments");  // Cf. Arguments::print_on()
-    if (Arguments::num_jvm_flags() > 0) {
-      xs->head("flags");
-      Arguments::print_jvm_flags_on(xs->text());
-      xs->tail("flags");
-    }
-    if (Arguments::num_jvm_args() > 0) {
-      xs->head("args");
-      Arguments::print_jvm_args_on(xs->text());
-      xs->tail("args");
-    }
-    if (Arguments::java_command() != NULL) {
-      xs->head("command"); xs->text()->print_cr("%s", Arguments::java_command());
-      xs->tail("command");
-    }
-    if (Arguments::sun_java_launcher() != NULL) {
-      xs->head("launcher"); xs->text()->print_cr("%s", Arguments::sun_java_launcher());
-      xs->tail("launcher");
-    }
-    if (Arguments::system_properties() !=  NULL) {
-      xs->head("properties");
-      // Print it as a java-style property list.
-      // System properties don't generally contain newlines, so don't bother with unparsing.
-      for (SystemProperty* p = Arguments::system_properties(); p != NULL; p = p->next()) {
-        xs->text()->print_cr("%s=%s", p->key(), p->value());
-      }
-      xs->tail("properties");
-    }
-    xs->tail("vm_arguments");
-    // tty output per se is grouped under the <tty>...</tty> element.
-    xs->head("tty");
-    // All further non-markup text gets copied to the tty:
-    xs->_text = this;  // requires friend declaration!
+    _outer_xmlStream = new(ResourceObj::C_HEAP, mtInternal) xmlStream(file);
+    start_log();
   } else {
-    delete(file);
     // and leave xtty as NULL
     LogVMOutput = false;
     DisplayVMOutput = true;
     LogCompilation = false;
   }
+}
+
+void defaultStream::start_log() {
+  xmlStream* xs = _outer_xmlStream;
+  if (this == tty)  xtty = xs;
+  // Write XML header.
+  xs->print_cr("<?xml version='1.0' encoding='UTF-8'?>");
+  // (For now, don't bother to issue a DTD for this private format.)
+  jlong time_ms = os::javaTimeMillis() - tty->time_stamp().milliseconds();
+  // %%% Should be: jlong time_ms = os::start_time_milliseconds(), if
+  // we ever get round to introduce that method on the os class
+  xs->head("hotspot_log version='%d %d'"
+           " process='%d' time_ms='"INT64_FORMAT"'",
+           LOG_MAJOR_VERSION, LOG_MINOR_VERSION,
+           os::current_process_id(), time_ms);
+  // Write VM version header immediately.
+  xs->head("vm_version");
+  xs->head("name"); xs->text("%s", VM_Version::vm_name()); xs->cr();
+  xs->tail("name");
+  xs->head("release"); xs->text("%s", VM_Version::vm_release()); xs->cr();
+  xs->tail("release");
+  xs->head("info"); xs->text("%s", VM_Version::internal_vm_info_string()); xs->cr();
+  xs->tail("info");
+  xs->tail("vm_version");
+  // Record information about the command-line invocation.
+  xs->head("vm_arguments");  // Cf. Arguments::print_on()
+  if (Arguments::num_jvm_flags() > 0) {
+    xs->head("flags");
+    Arguments::print_jvm_flags_on(xs->text());
+    xs->tail("flags");
+  }
+  if (Arguments::num_jvm_args() > 0) {
+    xs->head("args");
+    Arguments::print_jvm_args_on(xs->text());
+    xs->tail("args");
+  }
+  if (Arguments::java_command() != NULL) {
+    xs->head("command"); xs->text()->print_cr("%s", Arguments::java_command());
+    xs->tail("command");
+  }
+  if (Arguments::sun_java_launcher() != NULL) {
+    xs->head("launcher"); xs->text()->print_cr("%s", Arguments::sun_java_launcher());
+    xs->tail("launcher");
+  }
+  if (Arguments::system_properties() !=  NULL) {
+    xs->head("properties");
+    // Print it as a java-style property list.
+    // System properties don't generally contain newlines, so don't bother with unparsing.
+    for (SystemProperty* p = Arguments::system_properties(); p != NULL; p = p->next()) {
+      xs->text()->print_cr("%s=%s", p->key(), p->value());
+    }
+    xs->tail("properties");
+  }
+  xs->tail("vm_arguments");
+  // tty output per se is grouped under the <tty>...</tty> element.
+  xs->head("tty");
+  // All further non-markup text gets copied to the tty:
+  xs->_text = this;  // requires friend declaration!
 }
 
 // finish_log() is called during normal VM shutdown. finish_log_on_error() is
@@ -1251,6 +1235,50 @@ bufferedStream::~bufferedStream() {
 }
 
 #ifndef PRODUCT
+void test_loggc_filename() {
+  const char* o_result;
+
+  {
+    // longest filename
+    char longest_name[JVM_MAXPATHLEN];
+    memset(longest_name, 'a', sizeof(longest_name));
+    longest_name[JVM_MAXPATHLEN - 1] = '\0';
+    o_result = make_log_name((const char*)&longest_name, NULL);
+    assert(strcmp(longest_name, o_result) == 0, err_msg("longest name does not match. expected '%s' but got '%s'", longest_name, o_result));
+    FREE_C_HEAP_ARRAY(char, o_result, mtInternal);
+  }
+
+  {
+    // too long file name
+    char too_long_name[JVM_MAXPATHLEN + 100];
+    int too_long_length = sizeof(too_long_name);
+    memset(too_long_name, 'a', too_long_length);
+    too_long_name[too_long_length - 1] = '\0';
+    o_result = make_log_name((const char*)&too_long_name, NULL);
+    assert(o_result == NULL, err_msg("Too long file name should return NULL, but got '%s'", o_result));
+  }
+
+  {
+    // too long with pid
+    char longest_name[JVM_MAXPATHLEN];
+    memset(longest_name, 'a', JVM_MAXPATHLEN);
+    longest_name[JVM_MAXPATHLEN - 3] = '%';
+    longest_name[JVM_MAXPATHLEN - 2] = 'p';
+    longest_name[JVM_MAXPATHLEN - 1] = '\0';
+    o_result = make_log_name((const char*)&longest_name, NULL);
+    assert(o_result == NULL, err_msg("Too long file name after %%p pid expansion should return NULL, but got '%s'", o_result));
+  }
+
+  {
+    // too long with pid (star)
+    char longest_name[JVM_MAXPATHLEN];
+    memset(longest_name, 'a', JVM_MAXPATHLEN);
+    longest_name[JVM_MAXPATHLEN - 2] = '*';
+    longest_name[JVM_MAXPATHLEN - 1] = '\0';
+    o_result = make_log_name((const char*)&longest_name, NULL);
+    assert(o_result == NULL, err_msg("Too long file name after star (pid) expansion should return NULL, but got '%s'", o_result));
+  }
+}
 
 #if defined(SOLARIS) || defined(LINUX) || defined(_ALLBSD_SOURCE)
 #include <sys/types.h>
