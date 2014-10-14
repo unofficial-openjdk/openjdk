@@ -28,6 +28,7 @@
  * @run main/othervm WithSecurityManager deny
  */
 
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -54,14 +55,10 @@ public class WithSecurityManager {
 
         System.setSecurityManager(new SecurityManager());
 
-        try {
-            ClassLoader.getSystemResourceAsStream("java/lang/Object.class");
-            if (!allow)
-                throw new RuntimeException("SecurityException expected");
-        } catch (SecurityException e) {
-            if (allow)
-                throw new RuntimeException("SecurityException not expected");
-        }
-
+        InputStream in = ClassLoader.getSystemResourceAsStream("java/lang/Object.class");
+        if (in == null && allow)
+            throw new RuntimeException("access expected");
+        if (in != null && !allow)
+            throw new RuntimeException("access not expected");
     }
 }

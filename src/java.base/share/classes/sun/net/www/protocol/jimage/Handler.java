@@ -26,12 +26,15 @@
 package sun.net.www.protocol.jimage;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FilePermission;
 import java.io.InputStream;
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLStreamHandler;
 import java.net.MalformedURLException;
+import java.security.Permission;
 
 import jdk.internal.jimage.ImageReader;
 import jdk.internal.jimage.ImageLocation;
@@ -51,8 +54,12 @@ public class Handler extends URLStreamHandler {
 }
 
 class JImageURLConnection extends URLConnection {
+    private final URL base;
     private final ImageReader jimage;
     private final ImageLocation location;
+
+    // set lazily if needed
+    private volatile Permission permission;
 
     JImageURLConnection(URL url) throws IOException {
         super(url);
@@ -64,7 +71,6 @@ class JImageURLConnection extends URLConnection {
         URL base = new URL(s.substring(0, index++));
 
         // use jimage cache to open or get existing connection to jimage file
-        // (this checks access to the jimage file)
         ImageReader jimage = sun.misc.JImageCache.get(base);
         if (jimage == null)
             throw new IOException("cannot open " + base);
@@ -74,6 +80,7 @@ class JImageURLConnection extends URLConnection {
         if (location == null)
             throw new IOException(entry + " not found");
 
+        this.base = base;
         this.jimage = jimage;
         this.location = location;
     }
@@ -89,5 +96,20 @@ class JImageURLConnection extends URLConnection {
     @Override
     public long getContentLengthLong() {
         return location.getUncompressedSize();
+    }
+
+    @Override
+    public Permission getPermission() throws IOException {
+        Permission p = this.permission;
+        if (p == null) {
+            assert base.getProtocol().equalsIgnoreCase("jimage");
+            URL fileURL = new URL("file" + base.toString().substring(6));
+            String decodedPath = sun.net.www.ParseUtil.decode(fileURL.getPath());
+            if (File.separatorChar != '/')
+                decodedPath = decodedPath.replace('/',File.separatorChar);
+            p = new FilePermission(decodedPath, "read");
+            this.permission = p;
+        }
+        return p;
     }
 }
