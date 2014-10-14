@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014 Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,34 +21,27 @@
  * questions.
  */
 
-/* @test
- * @bug 6304463
- * @summary Test whether the zip file still can be read after thread is interrupted
+/*
+ * @test
+ * @bug 8060052
+ * @summary FutureTask; fix underflow when timeout = Long.MIN_VALUE
+ * @author Chris Hegarty
  */
 
-import java.io.*;
-import java.util.zip.*;
+import java.util.concurrent.FutureTask;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.TimeUnit;
 
-public class InterruptibleZip {
+// If the bug exists the test will eventually be interrupted by the
+// test harness and fail with an InterruptedException, otherwise it
+// will throw a TimeoutException almost immediately and return silently.
 
+public class NegativeTimeout {
     public static void main(String[] args) throws Exception {
-        /* Interrupt the current thread. The is.read call below
-           should continue reading input.jar.
-        */
-        Thread.currentThread().interrupt();
-        ZipFile zf = new ZipFile(new File(System.getProperty("test.src", "."), "input.jar"));
-        ZipEntry ze = zf.getEntry("Available.java");
-        InputStream is = zf.getInputStream(ze);
-        byte[] buf = new byte[512];
-        int n = is.read(buf);
-        boolean interrupted = Thread.interrupted();
-        System.out.printf("interrupted=%s n=%d name=%s%n",
-                          interrupted, n, ze.getName());
-        if (! interrupted) {
-            throw new Error("Wrong interrupt status");
-        }
-        if (n != buf.length) {
-            throw new Error("Read error");
-        }
+        FutureTask<Void> task = new FutureTask<>( () -> { return null; } );
+        try {
+            task.get(Long.MIN_VALUE, TimeUnit.NANOSECONDS);
+        } catch (TimeoutException success) {}
     }
 }
+
