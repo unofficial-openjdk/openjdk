@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1519,7 +1519,7 @@ bool G1CollectedHeap::do_collection(bool explicit_gc,
     }
 
     if (G1Log::finer()) {
-      g1_policy()->print_detailed_heap_transition();
+      g1_policy()->print_detailed_heap_transition(true /* full */);
     }
 
     print_heap_after_gc();
@@ -6628,6 +6628,35 @@ void OldGCAllocRegion::retire_region(HeapRegion* alloc_region,
   _g1h->retire_gc_alloc_region(alloc_region, allocated_bytes,
                                GCAllocForTenured);
 }
+
+HeapRegion* OldGCAllocRegion::release() {
+  HeapRegion* cur = get();
+  if (cur != NULL) {
+    // Determine how far we are from the next card boundary. If it is smaller than
+    // the minimum object size we can allocate into, expand into the next card.
+    HeapWord* top = cur->top();
+    HeapWord* aligned_top = (HeapWord*)align_ptr_up(top, G1BlockOffsetSharedArray::N_bytes);
+
+    size_t to_allocate_words = pointer_delta(aligned_top, top, HeapWordSize);
+
+    if (to_allocate_words != 0) {
+      // We are not at a card boundary. Fill up, possibly into the next, taking the
+      // end of the region and the minimum object size into account.
+      to_allocate_words = MIN2(pointer_delta(cur->end(), cur->top(), HeapWordSize),
+                               MAX2(to_allocate_words, G1CollectedHeap::min_fill_size()));
+
+      // Skip allocation if there is not enough space to allocate even the smallest
+      // possible object. In this case this region will not be retained, so the
+      // original problem cannot occur.
+      if (to_allocate_words >= G1CollectedHeap::min_fill_size()) {
+        HeapWord* dummy = attempt_allocation(to_allocate_words, true /* bot_updates */);
+        CollectedHeap::fill_with_object(dummy, to_allocate_words);
+      }
+    }
+  }
+  return G1AllocRegion::release();
+}
+
 // Heap region set verification
 
 class VerifyRegionListsClosure : public HeapRegionClosure {
