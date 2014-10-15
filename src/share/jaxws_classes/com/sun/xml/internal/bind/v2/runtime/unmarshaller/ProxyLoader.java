@@ -41,7 +41,7 @@ public abstract class ProxyLoader extends Loader {
     @Override
     public final void startElement(UnmarshallingContext.State state, TagName ea) throws SAXException {
         Loader loader = selectLoader(state,ea);
-        state.loader = loader;
+        state.setLoader(loader);
         loader.startElement(state,ea);
     }
 

@@ -183,20 +183,19 @@ public final class UnmarshallingContext extends Coordinator
         /**
          * Loader that owns this element.
          */
-        public Loader loader;
+        private Loader loader;
         /**
          * Once {@link #loader} is completed, this receiver
          * receives the result.
          */
-        public Receiver receiver;
+        private Receiver receiver;
 
-        public Intercepter intercepter;
-
+        private Intercepter intercepter;
 
         /**
          * Object being unmarshalled by this {@link #loader}.
          */
-        public Object target;
+        private Object target;
 
         /**
          * Hack for making JAXBElement unmarshalling work.
@@ -225,7 +224,7 @@ public final class UnmarshallingContext extends Coordinator
          * @see ElementBeanInfoImpl.IntercepterLoader#startElement(State, TagName)
          * @see ElementBeanInfoImpl.IntercepterLoader#intercept(State, Object)
          */
-        public Object backup;
+        private Object backup;
 
         /**
          * Number of {@link UnmarshallingContext#nsBind}s declared thus far.
@@ -241,17 +240,22 @@ public final class UnmarshallingContext extends Coordinator
          * or by a child {@link Loader} when
          * {@link Loader#startElement(State, TagName)} is called.
          */
-        public String elementDefaultValue;
+        private String elementDefaultValue;
 
         /**
          * {@link State} for the parent element
          *
          * {@link State} objects form a doubly linked list.
          */
-        public State prev;
+        private State prev;
         private State next;
 
-        public boolean nil = false;
+        private boolean nil = false;
+
+        /**
+         * specifies that we are working with mixed content
+         */
+        private boolean mixed = false;
 
         /**
          * Gets the context.
@@ -262,13 +266,17 @@ public final class UnmarshallingContext extends Coordinator
 
         private State(State prev) {
             this.prev = prev;
-            if(prev!=null)
+            if(prev!=null) {
                 prev.next = this;
+                if (prev.mixed) // parent is in mixed mode
+                    this.mixed = true;
+            }
         }
 
         private void push() {
-            if(next==null)
-                allocateMoreStates();
+            if(next==null) {
+                next = new State(this);
+            }
             State n = next;
             n.numNsDecl = nsLen;
             current = n;
@@ -278,11 +286,71 @@ public final class UnmarshallingContext extends Coordinator
             assert prev!=null;
             loader = null;
             nil = false;
+            mixed = false;
             receiver = null;
             intercepter = null;
             elementDefaultValue = null;
             target = null;
             current = prev;
+            next = null;
+        }
+
+        public boolean isMixed() {
+            return mixed;
+        }
+
+        public Object getTarget() {
+            return target;
+        }
+
+        public void setLoader(Loader loader) {
+            if (loader instanceof StructureLoader) // set mixed mode
+                mixed = !((StructureLoader)loader).getBeanInfo().hasElementOnlyContentModel();
+            this.loader = loader;
+        }
+
+        public void setReceiver(Receiver receiver) {
+            this.receiver = receiver;
+        }
+
+        public State getPrev() {
+            return prev;
+        }
+
+        public void setIntercepter(Intercepter intercepter) {
+            this.intercepter = intercepter;
+        }
+
+        public void setBackup(Object backup) {
+            this.backup = backup;
+        }
+
+        public void setTarget(Object target) {
+            this.target = target;
+        }
+
+        public Object getBackup() {
+            return backup;
+        }
+
+        public boolean isNil() {
+            return nil;
+        }
+
+        public void setNil(boolean nil) {
+            this.nil = nil;
+        }
+
+        public Loader getLoader() {
+            return loader;
+        }
+
+        public String getElementDefaultValue() {
+            return elementDefaultValue;
+        }
+
+        public void setElementDefaultValue(String elementDefaultValue) {
+            this.elementDefaultValue = elementDefaultValue;
         }
     }
 
@@ -322,7 +390,6 @@ public final class UnmarshallingContext extends Coordinator
         this.parent = _parent;
         this.assoc = assoc;
         this.root = this.current = new State(null);
-        allocateMoreStates();
     }
 
     public void reset(InfosetScanner scanner,boolean isInplaceMode, JaxBeanInfo expectedType, IDResolver idResolver) {
@@ -367,22 +434,6 @@ public final class UnmarshallingContext extends Coordinator
         }
 
         return null;
-    }
-
-    /**
-     * Allocates a few more {@link State}s.
-     *
-     * Allocating multiple {@link State}s at once allows those objects
-     * to be allocated near each other, which reduces the working set
-     * of CPU. It improves the chance the relevant data is in the cache.
-     */
-    private void allocateMoreStates() {
-        // this method should be used only when we run out of a state.
-        assert current.next==null;
-
-        State s = current;
-        for( int i=0; i<8; i++ )
-            s = new State(s);
     }
 
     public void clearStates() {
@@ -487,16 +538,15 @@ public final class UnmarshallingContext extends Coordinator
     }
 
     public void text(CharSequence pcdata) throws SAXException {
-        State cur = current;
         pushCoordinator();
         try {
-            if(cur.elementDefaultValue!=null) {
-                if(pcdata.length()==0) {
+            if (current.elementDefaultValue != null) {
+                if (pcdata.length() == 0) {
                     // send the default value into the unmarshaller instead
-                    pcdata = cur.elementDefaultValue;
+                    pcdata = current.elementDefaultValue;
                 }
             }
-            cur.loader.text(cur,pcdata);
+            current.loader.text(current, pcdata);
         } finally {
             popCoordinator();
         }
