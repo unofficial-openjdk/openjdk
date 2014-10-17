@@ -575,6 +575,7 @@ oop java_lang_Class::create_mirror(KlassHandle k, Handle class_loader, TRAPS) {
       instanceKlass::cast(k())->do_local_static_fields(&initialize_static_field, CHECK_NULL);
     }
     // set the classLoader field in the java_lang_Class instance
+    assert(class_loader() == k->class_loader(), "should be same");
     set_class_loader(mirror(), class_loader());
     return mirror();
   } else {

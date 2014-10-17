@@ -68,7 +68,7 @@ class objArrayKlass : public arrayKlass {
   // Compute protection domain
   oop protection_domain() { return Klass::cast(bottom_klass())->protection_domain(); }
   // Compute class loader
-  oop class_loader() const { return Klass::cast(bottom_klass())->class_loader(); }
+  oop class_loader() const;
 
  private:
   // Either oop or narrowOop depending on UseCompressedOops.
