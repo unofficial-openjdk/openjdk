@@ -68,6 +68,7 @@
                 _JVM_DumpAllStacks
                 _JVM_DumpThreads
                 _JVM_FillInStackTrace
+                _JVM_FindClassFromCaller
                 _JVM_FindClassFromClass
                 _JVM_FindClassFromClassLoader
                 _JVM_FindClassFromBootLoader
