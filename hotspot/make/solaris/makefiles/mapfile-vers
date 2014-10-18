@@ -70,6 +70,7 @@ SUNWprivate_1.1 {
                 JVM_DumpAllStacks;
                 JVM_DumpThreads;
                 JVM_FillInStackTrace;
+                JVM_FindClassFromCaller;
                 JVM_FindClassFromClass;
                 JVM_FindClassFromClassLoader;
                 JVM_FindClassFromBootLoader;
