@@ -1067,7 +1067,7 @@ public class Gen extends JCTree.Visitor {
                              boolean testFirst) {
             Env<GenContext> loopEnv = env.dup(loop, new GenContext());
             int startpc = code.entryPoint();
-            if (testFirst) {
+            if (testFirst) { //while or for loop
                 CondItem c;
                 if (cond != null) {
                     code.statBegin(cond.pos);
@@ -1097,6 +1097,9 @@ public class Gen extends JCTree.Visitor {
                 code.resolve(c.falseJumps);
             }
             code.resolve(loopEnv.info.exit);
+            if (loopEnv.info.exit != null) {
+                loopEnv.info.exit.state.defined.excludeFrom(code.nextreg);
+            }
         }
 
     public void visitForeachLoop(JCEnhancedForLoop tree) {
