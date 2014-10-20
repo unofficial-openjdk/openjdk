@@ -320,6 +320,8 @@ struct Flag {
   bool is_writeable_ext() const;
   bool is_external_ext() const;
 
+  void unlock_diagnostic();
+
   void get_locked_message(char*, int) const;
   void get_locked_message_ext(char*, int) const;
 
@@ -454,7 +456,7 @@ class CommandLineFlags {
 // notproduct flags are settable / visible only during development and are not declared in the PRODUCT version
 
 // A flag must be declared with one of the following types:
-// bool, intx, uintx, ccstr.
+// bool, intx, uintx, ccstr, double, or uint64_t.
 // The type "ccstr" is an alias for "const char*" and is used
 // only in this file, because the macrology requires single-token type names.
 
@@ -1177,11 +1179,11 @@ class CommandLineFlags {
           "When true prevents OS-level spurious, or premature, wakeups "    \
           "from Object.wait (Ignored for Windows)")                         \
                                                                             \
-  product(intx, NativeMonitorTimeout, -1, "(Unstable)")                     \
+  experimental(intx, NativeMonitorTimeout, -1, "(Unstable)")                \
                                                                             \
-  product(intx, NativeMonitorFlags, 0, "(Unstable)")                        \
+  experimental(intx, NativeMonitorFlags, 0, "(Unstable)")                   \
                                                                             \
-  product(intx, NativeMonitorSpinLimit, 20, "(Unstable)")                   \
+  experimental(intx, NativeMonitorSpinLimit, 20, "(Unstable)")              \
                                                                             \
   develop(bool, UsePthreads, false,                                         \
           "Use pthread-based instead of libthread-based synchronization "   \
@@ -3581,6 +3583,10 @@ class CommandLineFlags {
   product_pd(intx, CompileThreshold,                                        \
           "number of interpreted method invocations before (re-)compiling") \
                                                                             \
+  product(double, CompileThresholdScaling, 1.0,                             \
+          "Factor to control when first compilation happens "               \
+          "(both with and without tiered compilation)")                     \
+                                                                            \
   product(intx, Tier0InvokeNotifyFreqLog, 7,                                \
           "Interpreter (tier 0) invocation notification frequency")         \
                                                                             \
@@ -3792,6 +3798,10 @@ class CommandLineFlags {
                                                                             \
   product(bool, UseSharedSpaces, true,                                      \
           "Use shared spaces for metadata")                                 \
+                                                                            \
+  product(bool, VerifySharedSpaces, false,                                  \
+          "Verify shared spaces (false for default archive, true for "      \
+          "archive specified by -XX:SharedArchiveFile)")                    \
                                                                             \
   product(bool, RequireSharedSpaces, false,                                 \
           "Require shared spaces for metadata")                             \
