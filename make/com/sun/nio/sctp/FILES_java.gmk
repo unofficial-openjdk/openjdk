@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2009, 2014, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -23,7 +23,7 @@
 # questions.
 #
 FILES_java = \
-        com/sun/nio/sctp/AbstractNotificationHandler.java \
+	com/sun/nio/sctp/AbstractNotificationHandler.java \
 	com/sun/nio/sctp/Association.java \
 	com/sun/nio/sctp/AssociationChangeNotification.java \
 	com/sun/nio/sctp/HandlerResult.java \
@@ -43,9 +43,13 @@ FILES_java = \
 	com/sun/nio/sctp/ShutdownNotification.java \
 	\
 	sun/nio/ch/SctpMessageInfoImpl.java \
-	sun/nio/ch/SctpStdSocketOption.java
+	sun/nio/ch/SctpStdSocketOption.java \
+	sun/nio/ch/SctpChannelImpl.java \
+	sun/nio/ch/SctpMultiChannelImpl.java \
+	sun/nio/ch/SctpServerChannelImpl.java
 
 ifneq ($(PLATFORM), windows)
+ifneq ($(PLATFORM), macosx)
 FILES_java += \
 	sun/nio/ch/SctpAssocChange.java \
 	sun/nio/ch/SctpAssociationImpl.java \
@@ -58,9 +62,5 @@ FILES_java += \
 	sun/nio/ch/SctpSendFailed.java \
 	sun/nio/ch/SctpServerChannelImpl.java \
 	sun/nio/ch/SctpShutdown.java
-else
-FILES_java += \
-	sun/nio/ch/SctpChannelImpl.java \
-	sun/nio/ch/SctpMultiChannelImpl.java \
-	sun/nio/ch/SctpServerChannelImpl.java
+endif
 endif
