@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1996, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,8 +36,8 @@ import java.lang.reflect.Constructor;
 public class PropertyDescriptor extends FeatureDescriptor {
 
     private Reference<Class> propertyTypeRef;
-    private Reference<Method> readMethodRef;
-    private Reference<Method> writeMethodRef;
+    private final MethodRef readMethodRef = new MethodRef();
+    private final MethodRef writeMethodRef = new MethodRef();
     private Reference<Class> propertyEditorClassRef;
 
     private boolean bound;
@@ -68,8 +68,8 @@ public class PropertyDescriptor extends FeatureDescriptor {
     public PropertyDescriptor(String propertyName, Class<?> beanClass)
                 throws IntrospectionException {
         this(propertyName, beanClass,
-             Introspector.IS_PREFIX + NameGenerator.capitalize(propertyName),
-             Introspector.SET_PREFIX + NameGenerator.capitalize(propertyName));
+                Introspector.IS_PREFIX + NameGenerator.capitalize(propertyName),
+                Introspector.SET_PREFIX + NameGenerator.capitalize(propertyName));
     }
 
     /**
@@ -203,10 +203,10 @@ public class PropertyDescriptor extends FeatureDescriptor {
      * May return null if the property can't be read.
      */
     public synchronized Method getReadMethod() {
-        Method readMethod = getReadMethod0();
+        Method readMethod = this.readMethodRef.get();
         if (readMethod == null) {
             Class cls = getClass0();
-            if (cls == null || (readMethodName == null && readMethodRef == null)) {
+            if (cls == null || (readMethodName == null && !this.readMethodRef.isSet())) {
                 // The read method was explicitly set to null.
                 return null;
             }
@@ -246,17 +246,16 @@ public class PropertyDescriptor extends FeatureDescriptor {
      */
     public synchronized void setReadMethod(Method readMethod)
                                 throws IntrospectionException {
+        this.readMethodRef.set(readMethod);
         if (readMethod == null) {
             readMethodName = null;
-            readMethodRef = null;
             return;
         }
         // The property type is determined by the read method.
-        setPropertyType(findPropertyType(readMethod, getWriteMethod0()));
+        setPropertyType(findPropertyType(readMethod, this.writeMethodRef.get()));
         setClass0(readMethod.getDeclaringClass());
 
         readMethodName = readMethod.getName();
-        this.readMethodRef = getSoftReference(readMethod);
         setTransient(readMethod.getAnnotation(Transient.class));
     }
 
@@ -267,10 +266,10 @@ public class PropertyDescriptor extends FeatureDescriptor {
      * May return null if the property can't be written.
      */
     public synchronized Method getWriteMethod() {
-        Method writeMethod = getWriteMethod0();
+        Method writeMethod = this.writeMethodRef.get();
         if (writeMethod == null) {
             Class cls = getClass0();
-            if (cls == null || (writeMethodName == null && writeMethodRef == null)) {
+            if (cls == null || (writeMethodName == null && !this.writeMethodRef.isSet())) {
                 // The write method was explicitly set to null.
                 return null;
             }
@@ -316,9 +315,9 @@ public class PropertyDescriptor extends FeatureDescriptor {
      */
     public synchronized void setWriteMethod(Method writeMethod)
                                 throws IntrospectionException {
+        this.writeMethodRef.set(writeMethod);
         if (writeMethod == null) {
             writeMethodName = null;
-            writeMethodRef = null;
             return;
         }
         // Set the property type - which validates the method
@@ -326,20 +325,7 @@ public class PropertyDescriptor extends FeatureDescriptor {
         setClass0(writeMethod.getDeclaringClass());
 
         writeMethodName = writeMethod.getName();
-        this.writeMethodRef = getSoftReference(writeMethod);
         setTransient(writeMethod.getAnnotation(Transient.class));
-    }
-
-    private Method getReadMethod0() {
-        return (this.readMethodRef != null)
-                ? this.readMethodRef.get()
-                : null;
-    }
-
-    private Method getWriteMethod0() {
-        return (this.writeMethodRef != null)
-                ? this.writeMethodRef.get()
-                : null;
     }
 
     /**
@@ -618,8 +604,8 @@ public class PropertyDescriptor extends FeatureDescriptor {
     PropertyDescriptor(PropertyDescriptor old) {
         super(old);
         propertyTypeRef = old.propertyTypeRef;
-        readMethodRef = old.readMethodRef;
-        writeMethodRef = old.writeMethodRef;
+        this.readMethodRef.set(old.readMethodRef.get());
+        this.writeMethodRef.set(old.writeMethodRef.get());
         propertyEditorClassRef = old.propertyEditorClassRef;
 
         writeMethodName = old.writeMethodName;
@@ -633,7 +619,7 @@ public class PropertyDescriptor extends FeatureDescriptor {
     void updateGenericsFor(Class<?> type) {
         setClass0(type);
         try {
-            setPropertyType(findPropertyType(getReadMethod0(), getWriteMethod0()));
+            setPropertyType(findPropertyType(this.readMethodRef.get(), this.writeMethodRef.get()));
         }
         catch (IntrospectionException exception) {
             setPropertyType(null);
@@ -724,8 +710,8 @@ public class PropertyDescriptor extends FeatureDescriptor {
         appendTo(sb, "constrained", this.constrained);
         appendTo(sb, "propertyEditorClass", this.propertyEditorClassRef);
         appendTo(sb, "propertyType", this.propertyTypeRef);
-        appendTo(sb, "readMethod", this.readMethodRef);
-        appendTo(sb, "writeMethod", this.writeMethodRef);
+        appendTo(sb, "readMethod", this.readMethodRef.get());
+        appendTo(sb, "writeMethod", this.writeMethodRef.get());
     }
 
     private boolean isAssignable(Method m1, Method m2) {

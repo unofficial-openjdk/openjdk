@@ -225,6 +225,10 @@ $(GENSRCDIR)/%_zh_HK.java: $(PLATFORM_SRC)/classes/%_zh_TW.properties
 	$(add-property-java-file)
 $(GENSRCDIR)/%_zh_HK.java: $(SHARE_SRC)/classes/%_zh_TW.properties
 	$(add-property-java-file)
+ifdef PLATFORM_SRC_MACOS
+$(GENSRCDIR)/%_zh_HK.java: $(PLATFORM_SRC_MACOS)/classes/%_zh_TW.properties
+	$(add-property-java-file)
+endif
 
 # Simple delivery of zh_HK properties files just copies zh_TW properties files
 $(CLASSDESTDIR)/%_zh_HK.properties: \
