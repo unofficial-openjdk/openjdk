@@ -706,6 +706,7 @@ typedef TwoOopHashtable<Symbol*, mtClass>     SymbolTwoOopHashtable;
       static_field(SystemDictionary,            WK_KLASS(WeakReference_klass),                 klassOop)                             \
       static_field(SystemDictionary,            WK_KLASS(FinalReference_klass),                klassOop)                             \
       static_field(SystemDictionary,            WK_KLASS(PhantomReference_klass),              klassOop)                             \
+      static_field(SystemDictionary,            WK_KLASS(Cleaner_klass),                       klassOop)                             \
       static_field(SystemDictionary,            WK_KLASS(Finalizer_klass),                     klassOop)                             \
       static_field(SystemDictionary,            WK_KLASS(Thread_klass),                        klassOop)                             \
       static_field(SystemDictionary,            WK_KLASS(ThreadGroup_klass),                   klassOop)                             \
