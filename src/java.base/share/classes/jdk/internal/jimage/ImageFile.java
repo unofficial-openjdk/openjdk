@@ -32,7 +32,6 @@ import java.io.OutputStream;
 import java.nio.ByteOrder;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -76,7 +75,7 @@ public final class ImageFile {
 
     private ImageFile(Path path) {
         this.root = path;
-        this.mdir = root.resolve(Paths.get("lib", "modules"));
+        this.mdir = root.resolve(path.getFileSystem().getPath("lib", "modules"));
     }
 
     public static ImageFile open(Path path) throws IOException {

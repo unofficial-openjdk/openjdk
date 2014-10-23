@@ -23,19 +23,23 @@
  * questions.
  */
 
-package sun.net.www.protocol.module;
+package sun.net.www.protocol.jrt;
 
+import java.io.IOException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLStreamHandler;
-import java.io.IOException;
 
 /**
- * Minimal protocol handler to address modules linked into the runtime image.
+ * Protocol handler for accessing resources in the runtime image.
  */
+
 public class Handler extends URLStreamHandler {
-    public URLConnection openConnection(URL u) throws IOException {
-        throw new IOException("Can't connect to module");
+    public Handler() { }
+
+    @Override
+    protected URLConnection openConnection(URL url) throws IOException {
+        return new JavaRuntimeURLConnection(url);
     }
 }
 

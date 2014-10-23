@@ -24,13 +24,16 @@
  */
 package jdk.internal.jimage;
 
-import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
+import java.nio.file.spi.FileSystemProvider;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -44,11 +47,28 @@ public class ImageReader extends BasicImageReader {
     static final UTF8String META_INF_STRING = new UTF8String("META-INF");
     static final UTF8String PKG_MAP_STRING = new UTF8String("META-INF/package-to-module.properties");
 
+    /**
+     * The reader must use the underlying system file system provider, even if
+     * the default provider is configured to something else. This is to avoid
+     * recursive initialization issues trying to load the configured provider
+     * with the system class loader.
+     */
+    static final FileSystem FILE_SYSTEM;
+    static {
+        String s = System.getProperty("java.nio.file.spi.DefaultFileSystemProvider");
+        if (s == null) {
+            FILE_SYSTEM = FileSystems.getDefault();
+        } else {
+            FileSystemProvider provider = sun.nio.fs.DefaultFileSystemProvider.create();
+            FILE_SYSTEM = provider.getFileSystem(URI.create("file:///"));
+        }
+    }
+
     // attributes of the .jimage file. jimage file does not contain
     // attributes for the individual resources (yet). We use attributes
     // of the jimage file itself (creation, modification, access times).
     private volatile BasicFileAttributes imageFileAttrs;
-    private Map<String,String> packageMap;
+    private Map<String, String> packageMap;
 
     // directory management implementation
     private final Map<UTF8String, Node> nodes;
@@ -67,9 +87,18 @@ public class ImageReader extends BasicImageReader {
     @Override
     public synchronized void open() throws IOException {
         super.open();
-        imageFileAttrs = Files.readAttributes(
-                new File(imagePath).toPath(), BasicFileAttributes.class);
+        imageFileAttrs = Files.readAttributes(FILE_SYSTEM.getPath(imagePath),
+                                              BasicFileAttributes.class);
         packageMap = PackageModuleMap.readFrom(this);
+    }
+
+    /**
+     * Opens the given file path as an image file, returning an {@code ImageReader}.
+     */
+    public static ImageReader open(String imagePath) throws IOException {
+        ImageReader reader = new ImageReader(imagePath);
+        reader.open();
+        return reader;
     }
 
     @Override
@@ -77,6 +106,13 @@ public class ImageReader extends BasicImageReader {
         super.close();
         imageFileAttrs = null;
         clearNodes();
+    }
+
+    /**
+     * Return the module name that contains the given package name.
+     */
+    public String getModule(String pkg) {
+        return packageMap.get(pkg);
     }
 
      // jimage file does not store directory structure. We build nodes
@@ -405,16 +441,6 @@ public class ImageReader extends BasicImageReader {
         });
 
         return buf.toString().getBytes(StandardCharsets.UTF_8);
-    }
-
-    // Finds the module containing the given class file entry.
-    public String findModule(String entry) {
-        if (!entry.endsWith(".class")) {
-            return null;
-        }
-        int i = entry.lastIndexOf('/');
-        String pn = i > 0 ? entry.substring(0, i) : "";
-        return packageMap.get(pn);
     }
 
     public byte[] getResource(Resource rs) throws IOException {
