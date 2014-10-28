@@ -614,8 +614,8 @@ class StubGenerator: public StubCodeGenerator {
     // Save the regs and make space for a C call
     __ save(SP, -96, SP);
     __ save_all_globals_into_locals();
-    BLOCK_COMMENT("call os::naked_sleep");
-    __ call(CAST_FROM_FN_PTR(address, os::naked_sleep));
+    BLOCK_COMMENT("call os::naked_short_sleep");
+    __ call(CAST_FROM_FN_PTR(address, os::naked_short_sleep));
     __ delayed()->nop();
     __ restore_globals_from_locals();
     __ restore();

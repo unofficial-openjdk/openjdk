@@ -530,10 +530,10 @@ void java_lang_Class::fixup_mirror(KlassHandle k, TRAPS) {
       }
     }
   }
-  create_mirror(k, CHECK);
+  create_mirror(k, Handle(NULL), CHECK);
 }
 
-oop java_lang_Class::create_mirror(KlassHandle k, TRAPS) {
+oop java_lang_Class::create_mirror(KlassHandle k, Handle class_loader, TRAPS) {
   assert(k->java_mirror() == NULL, "should only assign mirror once");
   // Use this moment of initialization to cache modifier_flags also,
   // to support Class.getModifiers().  Instance classes recalculate
@@ -574,6 +574,8 @@ oop java_lang_Class::create_mirror(KlassHandle k, TRAPS) {
       // Initialize static fields
       instanceKlass::cast(k())->do_local_static_fields(&initialize_static_field, CHECK_NULL);
     }
+    // set the classLoader field in the java_lang_Class instance
+    set_class_loader(mirror(), class_loader());
     return mirror();
   } else {
     return NULL;
@@ -597,6 +599,18 @@ int  java_lang_Class::static_oop_field_count(oop java_class) {
 void java_lang_Class::set_static_oop_field_count(oop java_class, int size) {
   assert(_static_oop_field_count_offset != 0, "must be set");
   java_class->int_field_put(_static_oop_field_count_offset, size);
+}
+
+void java_lang_Class::set_class_loader(oop java_class, oop loader) {
+  // jdk7 runs Queens in bootstrapping and jdk8-9 has no coordinated pushes yet.
+  if (_class_loader_offset != 0) {
+    java_class->obj_field_put(_class_loader_offset, loader);
+  }
+}
+
+oop java_lang_Class::class_loader(oop java_class) {
+  assert(_class_loader_offset != 0, "must be set");
+  return java_class->obj_field(_class_loader_offset);
 }
 
 oop java_lang_Class::create_basic_type_mirror(const char* basic_type_name, BasicType type, TRAPS) {
@@ -761,6 +775,12 @@ void java_lang_Class::compute_offsets() {
   // so don't go fatal.
   compute_optional_offset(classRedefinedCount_offset,
                           klass_oop, vmSymbols::classRedefinedCount_name(), vmSymbols::int_signature());
+
+  // Needs to be optional because the old build runs Queens during bootstrapping
+  // and jdk8-9 doesn't have coordinated pushes yet.
+  compute_optional_offset(_class_loader_offset,
+                 klass_oop, vmSymbols::classClassLoader_name(),
+                 vmSymbols::classloader_signature());
 
   CLASS_INJECTED_FIELDS(INJECTED_FIELD_COMPUTE_OFFSET);
 }
@@ -2830,6 +2850,7 @@ int java_lang_Class::_array_klass_offset;
 int java_lang_Class::_resolved_constructor_offset;
 int java_lang_Class::_oop_size_offset;
 int java_lang_Class::_static_oop_field_count_offset;
+int java_lang_Class::_class_loader_offset;
 int java_lang_Throwable::backtrace_offset;
 int java_lang_Throwable::detailMessage_offset;
 int java_lang_Throwable::cause_offset;
@@ -3277,3 +3298,4 @@ void javaClasses_init() {
   JavaClasses::check_offsets();
   FilteredFieldsMap::initialize();  // must be done after computing offsets.
 }
+
