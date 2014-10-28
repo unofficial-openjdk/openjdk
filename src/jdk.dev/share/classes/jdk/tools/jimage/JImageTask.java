@@ -408,8 +408,7 @@ class JImageTask {
             }
 
             String path = file.getCanonicalPath();
-            BasicImageReader reader = new BasicImageReader(path);
-            reader.open();
+            BasicImageReader reader = BasicImageReader.open(path);
 
             if (jimageAction != null) {
                 jimageAction.apply(file, reader);
@@ -423,8 +422,6 @@ class JImageTask {
                     resourceAction.apply(reader, name, location);
                 }
             }
-
-            reader.open();
        }
     }
 

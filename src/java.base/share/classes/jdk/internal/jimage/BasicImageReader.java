@@ -36,49 +36,46 @@ import java.util.Arrays;
 import java.util.List;
 
 public class BasicImageReader {
-    protected String imagePath;
-    private volatile RandomAccessFile file;
-    private volatile FileChannel channel;
-    private ByteOrder byteOrder;
-    private ImageHeader header;
-    private int indexSize;
-    private IntBuffer redirectBuffer;
-    private IntBuffer offsetsBuffer;
-    private ByteBuffer locationsBuffer;
-    private ByteBuffer stringsBuffer;
-    private ImageStrings strings;
+    private final String imagePath;
+    private final RandomAccessFile file;
+    private final FileChannel channel;
+    private final ByteOrder byteOrder;
+    private final ImageHeader header;
+    private final int indexSize;
+    private final IntBuffer redirectBuffer;
+    private final IntBuffer offsetsBuffer;
+    private final ByteBuffer locationsBuffer;
+    private final ByteBuffer stringsBuffer;
+    private final ImageStrings strings;
 
-    public BasicImageReader(String imagePath) {
+    protected BasicImageReader(String imagePath, ByteOrder byteOrder) throws IOException {
+        this.imagePath = imagePath;
+        this.file = new RandomAccessFile(imagePath, "r");
+        this.channel = file.getChannel();
+        this.byteOrder = byteOrder;
+        this.header = ImageHeader.readFrom(byteOrder, getIntBuffer(0, ImageHeader.getHeaderSize()));
+        this.indexSize = header.getIndexSize();
+        this.redirectBuffer = getIntBuffer(header.getRedirectOffset(), header.getRedirectSize());
+        this.offsetsBuffer = getIntBuffer(header.getOffsetsOffset(), header.getOffsetsSize());
+        this.locationsBuffer = getByteBuffer(header.getLocationsOffset(), header.getLocationsSize());
+        this.stringsBuffer = getByteBuffer(header.getStringsOffset(), header.getStringsSize());
+        this.strings = new ImageStrings(new ImageStream(stringsBuffer));
+    }
+
+    protected BasicImageReader(String imagePath) throws IOException {
         this(imagePath, ByteOrder.nativeOrder());
     }
 
-    public BasicImageReader(String imagePath, ByteOrder byteOrder) {
-        this.imagePath = imagePath;
-        this.byteOrder = byteOrder;
+    public static BasicImageReader open(String imagePath) throws IOException {
+        return new BasicImageReader(imagePath, ByteOrder.nativeOrder());
     }
 
-    public synchronized void open() throws IOException {
-        file = new RandomAccessFile(imagePath, "r");
-        channel = file.getChannel();
-        header = ImageHeader.readFrom(byteOrder, getIntBuffer(0, ImageHeader.getHeaderSize()));
-        indexSize = header.getIndexSize();
-        redirectBuffer = getIntBuffer(header.getRedirectOffset(), header.getRedirectSize());
-        offsetsBuffer = getIntBuffer(header.getOffsetsOffset(), header.getOffsetsSize());
-        locationsBuffer = getByteBuffer(header.getLocationsOffset(), header.getLocationsSize());
-        stringsBuffer = getByteBuffer(header.getStringsOffset(), header.getStringsSize());
-        strings = new ImageStrings(new ImageStream(stringsBuffer));
-     }
-
     public boolean isOpen() {
-        return file != null && channel != null;
+        return channel.isOpen();
     }
 
     public synchronized void close() throws IOException {
         channel.close();
-        file.close();
-
-        channel = null;
-        file = null;
     }
 
     public ImageHeader getHeader() {

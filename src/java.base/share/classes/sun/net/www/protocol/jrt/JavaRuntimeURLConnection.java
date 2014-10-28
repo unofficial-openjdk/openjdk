@@ -31,7 +31,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLConnection;
 import java.security.AccessController;
 import java.security.Permission;
 import java.security.PrivilegedAction;
@@ -40,6 +39,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 import sun.misc.Resource;
 import sun.net.www.ParseUtil;
+import sun.net.www.URLConnection;
 
 /**
  * URLConnection implementation that can be used to connect to resources
@@ -57,7 +57,7 @@ public class JavaRuntimeURLConnection extends URLConnection {
     /**
      * The list of resource finders for jimages in the runtime image.
      */
-    private static List<ResourceFinder> finders = new CopyOnWriteArrayList<>();
+    private static final List<ResourceFinder> finders = new CopyOnWriteArrayList<>();
 
     /**
      * Called on behalf of the boot, extension and system class loaders to
@@ -133,6 +133,12 @@ public class JavaRuntimeURLConnection extends URLConnection {
         } catch (IOException ioe) {
             return -1L;
         }
+    }
+
+    @Override
+    public int getContentLength() {
+        long len = getContentLengthLong();
+        return Math.min((int)len, Integer.MAX_VALUE);
     }
 
     @Override

@@ -92,10 +92,8 @@ final class ImageFileSystem extends FileSystem {
         if (Files.notExists(imagePath)) {
             throw new FileSystemNotFoundException(imagePath.toString());
         }
-        // sm and existence check
-        imagePath.getFileSystem().provider().checkAccess(imagePath, AccessMode.READ);
-        this.jimage = new ImageReader(imagePath.toString());
-        jimage.open();
+        // open image file
+        this.jimage = ImageReader.open(imagePath.toString());
         // build directory structure
         jimage.getRootDirectory();
         rootPath = new ImagePath(this, new byte[]{'/'});

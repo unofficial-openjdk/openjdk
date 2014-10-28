@@ -34,18 +34,20 @@ public final class ImageHeader {
     public static final short MAJOR_VERSION = 0;
     public static final short MINOR_VERSION = 1;
 
-    final int magic;
-    final short majorVersion;
-    final short minorVersion;
-    final int locationCount;
-    final int locationsSize;
-    final int stringsSize;
+    private final int magic;
+    private final short majorVersion;
+    private final short minorVersion;
+    private final int locationCount;
+    private final int locationsSize;
+    private final int stringsSize;
 
     ImageHeader(int locationCount, int locationsSize, int stringsSize) {
         this(MAGIC, MAJOR_VERSION, MINOR_VERSION, locationCount, locationsSize, stringsSize);
     }
 
-    ImageHeader(int magic, short majorVersion, short minorVersion, int locationCount, int locationsSize, int stringsSize) {
+    ImageHeader(int magic, short majorVersion, short minorVersion, int locationCount,
+                int locationsSize, int stringsSize)
+    {
         this.magic = magic;
         this.majorVersion = majorVersion;
         this.minorVersion = minorVersion;
@@ -65,13 +67,16 @@ public final class ImageHeader {
     static ImageHeader readFrom(ByteOrder byteOrder, IntBuffer buffer) {
         int magic = buffer.get(0);
         int version = buffer.get(1);
-        short majorVersion = (short)(byteOrder == ByteOrder.BIG_ENDIAN ? version >>> 16 : (version & 0xFFFF));
-        short minorVersion = (short)(byteOrder == ByteOrder.BIG_ENDIAN ? (version & 0xFFFF) : version >>> 16);
+        short majorVersion = (short)(byteOrder == ByteOrder.BIG_ENDIAN ?
+            version >>> 16 : (version & 0xFFFF));
+        short minorVersion = (short)(byteOrder == ByteOrder.BIG_ENDIAN ?
+            (version & 0xFFFF) : version >>> 16);
         int locationCount = buffer.get(2);
         int locationsSize = buffer.get(3);
         int stringsSize = buffer.get(4);
 
-        return new ImageHeader(magic, majorVersion, minorVersion, locationCount, locationsSize, stringsSize);
+        return new ImageHeader(magic, majorVersion, minorVersion, locationCount,
+                               locationsSize, stringsSize);
     }
 
     void writeTo(ImageStream stream) {
