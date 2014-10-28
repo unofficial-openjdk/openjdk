@@ -238,13 +238,8 @@ AwtTextField::HandleEvent(MSG *msg, BOOL synthetic)
               break;
           }
     }
-    /*
-     * Store the 'synthetic' parameter so that the WM_PASTE security check
-     * happens only for synthetic events.
-     */
-    m_synthetic = synthetic;
-    returnVal = AwtComponent::HandleEvent(msg, synthetic);
-    m_synthetic = FALSE;
+
+    returnVal = AwtTextComponent::HandleEvent(msg, synthetic);
 
     if(systemBeeperEnabled){
       SystemParametersInfo(SPI_SETBEEP, 1, NULL, 0);

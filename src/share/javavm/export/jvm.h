@@ -437,9 +437,6 @@ JVM_GetClassName(JNIEnv *env, jclass cls);
 JNIEXPORT jobjectArray JNICALL
 JVM_GetClassInterfaces(JNIEnv *env, jclass cls);
 
-JNIEXPORT jobject JNICALL
-JVM_GetClassLoader(JNIEnv *env, jclass cls);
-
 JNIEXPORT jboolean JNICALL
 JVM_IsInterface(JNIEnv *env, jclass cls);
 
@@ -1319,6 +1316,9 @@ JVM_GetManagement(jint version);
  */
 JNIEXPORT jobject JNICALL
 JVM_InitAgentProperties(JNIEnv *env, jobject agent_props);
+
+JNIEXPORT jstring JNICALL
+JVM_GetTemporaryDirectory(JNIEnv *env);
 
 /* Generics reflection support.
  *
