@@ -320,7 +320,8 @@ AWT_ASSERT_APPKIT_THREAD;
 
 // return id for the topmost window under mouse
 + (NSInteger) getTopmostWindowUnderMouseID {
-
+    NSInteger result = -1;
+    
     NSRect screenRect = [[NSScreen mainScreen] frame];
     NSPoint nsMouseLocation = [NSEvent mouseLocation];
     CGPoint cgMouseLocation = CGPointMake(nsMouseLocation.x, screenRect.size.height - nsMouseLocation.y);
@@ -334,11 +335,13 @@ AWT_ASSERT_APPKIT_THREAD;
             CGRect rect;
             CGRectMakeWithDictionaryRepresentation((CFDictionaryRef)[window objectForKey:(id)kCGWindowBounds], &rect);
             if (CGRectContainsPoint(rect, cgMouseLocation)) {
-                return [[window objectForKey:(id)kCGWindowNumber] integerValue];
+                result = [[window objectForKey:(id)kCGWindowNumber] integerValue];
+                break;
             }
         }
     }
-    return -1;
+    [windows release];
+    return result;
 }
 
 // checks that this window is under the mouse cursor and this point is not overlapped by other windows
