@@ -435,8 +435,8 @@ jboolean ClassPathImageEntry::decompress(void *in, u8 inSize, void *out, u8 outS
 void ClassPathImageEntry::compile_the_world(Handle loader, TRAPS) {
   tty->print_cr("CompileTheWorld : Compiling all classes in %s", name());
   tty->cr();
-/*
-  ImageStrings strings = _image->getStrings();
+  const ImageStrings strings = _image->getStrings();
+  // Retrieve each path component string.
   u4 count = _image->getLocationCount();
   for (u4 i = 0; i < count; i++) {
     ImageLocation location(_image->getLocationData(i));
@@ -459,7 +459,6 @@ void ClassPathImageEntry::compile_the_world(Handle loader, TRAPS) {
     tty->print_cr("\nCompileTheWorld : Unexpected exception occurred\n");
   }
   }
-*/
 }
 
 bool ClassPathImageEntry::is_rt_jar() {
@@ -1513,7 +1512,7 @@ bool ClassPathZipEntry::is_rt_jar() {
   // Check whether zip name ends in "rt.jar"
   // This will match other archives named rt.jar as well, but this is
   // only used for debugging.
-  return (len >= 6) && (strcasecmp(zip->name + len - 6, "rt.jar") == 0);
+  return string_ends_with(zip->name, "rt.jar");
 }
 
 void LazyClassPathEntry::compile_the_world(Handle loader, TRAPS) {
@@ -1590,9 +1589,9 @@ static bool can_be_compiled(methodHandle m, int comp_level) {
 }
 
 void ClassLoader::compile_the_world_in(char* name, Handle loader, TRAPS) {
-  int len = (int)strlen(name);
-  if (len > 6 && strcmp(".class", name + len - 6) == 0) {
+  if (string_ends_with(name, ".class")) {
     // We have a .class file
+    int len = (int)strlen(name);
     char buffer[2048];
     strncpy(buffer, name, len - 6);
     buffer[len-6] = 0;

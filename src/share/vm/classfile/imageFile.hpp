@@ -180,6 +180,11 @@ public:
     return _name;
   }
 
+  // Return a string table accessor.
+  inline const ImageStrings getStrings() const {
+    return ImageStrings(_stringBytes, _header._stringsSize);
+  }
+
   // Return number of locations in image file index.
   inline u4 getLocationCount() const {
     return _header._locationCount;
