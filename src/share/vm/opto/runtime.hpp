@@ -85,7 +85,7 @@ private:
 
   NamedCounter* next() const    { return _next; }
   void set_next(NamedCounter* next) {
-    assert(_next == NULL, "already set");
+    assert(_next == NULL || next == NULL, "already set");
     _next = next;
   }
 
