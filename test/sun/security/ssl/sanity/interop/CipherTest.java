@@ -394,6 +394,10 @@ public class CipherTest {
 
     public static void main(PeerFactory peerFactory, String[] args)
             throws Exception {
+        // reset the security property to make sure that the algorithms
+        // and keys used in this test are not disabled.
+        Security.setProperty("jdk.tls.disabledAlgorithms", "");
+
         long time = System.currentTimeMillis();
         String relPath;
         if ((args != null) && (args.length > 0) && args[0].equals("sh")) {
