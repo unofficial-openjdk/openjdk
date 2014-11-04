@@ -30,7 +30,7 @@
  * @library ../pkcs11/sslecc
  * @library ../../../java/security/testlibrary
  * @compile -XDignore.symbol.file TestEC.java
- * @run main TestEC
+ * @run main/othervm TestEC
  */
 
 import java.security.Provider;
@@ -53,6 +53,10 @@ import java.security.Security;
 public class TestEC {
 
     public static void main(String[] args) throws Exception {
+        // reset the security property to make sure that the algorithms
+        // and keys used in this test are not disabled.
+        Security.setProperty("jdk.tls.disabledAlgorithms", "");
+
         ProvidersSnapshot snapshot = ProvidersSnapshot.create();
         try {
             main0(args);
