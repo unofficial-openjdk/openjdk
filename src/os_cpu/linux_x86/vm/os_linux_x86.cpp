@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -899,7 +899,7 @@ void os::workaround_expand_exec_shield_cs_limit() {
    */
   char* hint = (char*) (Linux::initial_thread_stack_bottom() -
                         ((StackYellowPages + StackRedPages + 1) * page_size));
-  char* codebuf = os::reserve_memory(page_size, hint);
+  char* codebuf = os::pd_attempt_reserve_memory_at(page_size, hint);
   if ( (codebuf == NULL) || (!os::commit_memory(codebuf, page_size, true)) ) {
     return; // No matter, we tried, best effort.
   }
