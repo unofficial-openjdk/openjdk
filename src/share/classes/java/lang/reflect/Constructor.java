@@ -65,8 +65,8 @@ public final
 
     private Class<T>            clazz;
     private int                 slot;
-    private Class[]             parameterTypes;
-    private Class[]             exceptionTypes;
+    private Class<?>[]          parameterTypes;
+    private Class<?>[]          exceptionTypes;
     private int                 modifiers;
     // Generics and annotations support
     private transient String    signature;
@@ -118,8 +118,8 @@ public final
      * package via sun.reflect.LangReflectAccess.
      */
     Constructor(Class<T> declaringClass,
-                Class[] parameterTypes,
-                Class[] checkedExceptions,
+                Class<?>[] parameterTypes,
+                Class<?>[] checkedExceptions,
                 int modifiers,
                 int slot,
                 String signature,
@@ -366,14 +366,14 @@ public final
             }
             sb.append(Field.getTypeName(getDeclaringClass()));
             sb.append("(");
-            Class[] params = parameterTypes; // avoid clone
+            Class<?>[] params = parameterTypes; // avoid clone
             for (int j = 0; j < params.length; j++) {
                 sb.append(Field.getTypeName(params[j]));
                 if (j < (params.length - 1))
                     sb.append(",");
             }
             sb.append(")");
-            Class[] exceptions = exceptionTypes; // avoid clone
+            Class<?>[] exceptions = exceptionTypes; // avoid clone
             if (exceptions.length > 0) {
                 sb.append(" throws ");
                 for (int k = 0; k < exceptions.length; k++) {
@@ -454,7 +454,7 @@ public final
                 sb.append(" throws ");
                 for (int k = 0; k < exceptions.length; k++) {
                     sb.append((exceptions[k] instanceof Class)?
-                              ((Class)exceptions[k]).getName():
+                              ((Class<?>)exceptions[k]).getName():
                               exceptions[k].toString());
                     if (k < (exceptions.length - 1))
                         sb.append(",");
@@ -630,9 +630,9 @@ public final
         return declaredAnnotations().values().toArray(EMPTY_ANNOTATION_ARRAY);
     }
 
-    private transient Map<Class, Annotation> declaredAnnotations;
+    private transient Map<Class<? extends Annotation>, Annotation> declaredAnnotations;
 
-    private synchronized  Map<Class, Annotation> declaredAnnotations() {
+    private synchronized  Map<Class<? extends Annotation>, Annotation> declaredAnnotations() {
         if (declaredAnnotations == null) {
             declaredAnnotations = AnnotationParser.parseAnnotations(
                 annotations, sun.misc.SharedSecrets.getJavaLangAccess().

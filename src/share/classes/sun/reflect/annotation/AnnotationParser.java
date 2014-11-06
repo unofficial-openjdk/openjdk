@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2005, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -59,15 +59,15 @@ public class AnnotationParser {
      * @throws AnnotationFormatError if an annotation is found to be
      *         malformed.
      */
-    public static Map<Class, Annotation> parseAnnotations(
+    public static Map<Class<? extends Annotation>, Annotation> parseAnnotations(
                 byte[] rawAnnotations,
                 ConstantPool constPool,
-                Class container) {
+                Class<?> container) {
         if (rawAnnotations == null)
             return Collections.emptyMap();
 
         try {
-            return parseAnnotations2(rawAnnotations, constPool, container);
+            return parseAnnotations2(rawAnnotations, constPool, container, null);
         } catch(BufferUnderflowException e) {
             throw new AnnotationFormatError("Unexpected end of annotations.");
         } catch(IllegalArgumentException e) {
@@ -76,23 +76,52 @@ public class AnnotationParser {
         }
     }
 
-    private static Map<Class, Annotation> parseAnnotations2(
+    /**
+     * Like {@link #parseAnnotations(byte[], sun.reflect.ConstantPool, Class)}
+     * with an additional parameter {@code selectAnnotationClasses} which selects the
+     * annotation types to parse (other than selected are quickly skipped).<p>
+     * This method is only used to parse select meta annotations in the construction
+     * phase of {@link AnnotationType} instances to prevent infinite recursion.
+     *
+     * @param selectAnnotationClasses an array of annotation types to select when parsing
+     */
+    static Map<Class<? extends Annotation>, Annotation> parseSelectAnnotations(
                 byte[] rawAnnotations,
                 ConstantPool constPool,
-                Class container) {
-        Map<Class, Annotation> result = new LinkedHashMap<Class, Annotation>();
+                Class<?> container,
+                Class<? extends Annotation> ... selectAnnotationClasses) {
+        if (rawAnnotations == null)
+            return Collections.emptyMap();
+
+        try {
+            return parseAnnotations2(rawAnnotations, constPool, container, selectAnnotationClasses);
+        } catch(BufferUnderflowException e) {
+            throw new AnnotationFormatError("Unexpected end of annotations.");
+        } catch(IllegalArgumentException e) {
+            // Type mismatch in constant pool
+            throw new AnnotationFormatError(e);
+        }
+    }
+
+    private static Map<Class<? extends Annotation>, Annotation> parseAnnotations2(
+                byte[] rawAnnotations,
+                ConstantPool constPool,
+                Class<?> container,
+                Class<? extends Annotation>[] selectAnnotationClasses) {
+        Map<Class<? extends Annotation>, Annotation> result =
+            new LinkedHashMap<Class<? extends Annotation>, Annotation>();
         ByteBuffer buf = ByteBuffer.wrap(rawAnnotations);
         int numAnnotations = buf.getShort() & 0xFFFF;
         for (int i = 0; i < numAnnotations; i++) {
-            Annotation a = parseAnnotation(buf, constPool, container, false);
+            Annotation a = parseAnnotation2(buf, constPool, container, false, selectAnnotationClasses);
             if (a != null) {
-                Class klass = a.annotationType();
-                AnnotationType type = AnnotationType.getInstance(klass);
-                if (type.retention() == RetentionPolicy.RUNTIME)
-                    if (result.put(klass, a) != null)
+                Class<? extends Annotation> klass = a.annotationType();
+                if (AnnotationType.getInstance(klass).retention() == RetentionPolicy.RUNTIME &&
+                    result.put(klass, a) != null) {
                         throw new AnnotationFormatError(
                             "Duplicate annotation for class: "+klass+": " + a);
             }
+        }
         }
         return result;
     }
@@ -123,7 +152,7 @@ public class AnnotationParser {
     public static Annotation[][] parseParameterAnnotations(
                     byte[] rawAnnotations,
                     ConstantPool constPool,
-                    Class container) {
+                    Class<?> container) {
         try {
             return parseParameterAnnotations2(rawAnnotations, constPool, container);
         } catch(BufferUnderflowException e) {
@@ -138,7 +167,7 @@ public class AnnotationParser {
     private static Annotation[][] parseParameterAnnotations2(
                     byte[] rawAnnotations,
                     ConstantPool constPool,
-                    Class container) {
+                    Class<?> container) {
         ByteBuffer buf = ByteBuffer.wrap(rawAnnotations);
         int numParameters = buf.get() & 0xFF;
         Annotation[][] result = new Annotation[numParameters][];
@@ -188,15 +217,24 @@ public class AnnotationParser {
      */
     private static Annotation parseAnnotation(ByteBuffer buf,
                                               ConstantPool constPool,
-                                              Class container,
+                                              Class<?> container,
                                               boolean exceptionOnMissingAnnotationClass) {
+       return parseAnnotation2(buf, constPool, container, exceptionOnMissingAnnotationClass, null);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Annotation parseAnnotation2(ByteBuffer buf,
+                                              ConstantPool constPool,
+                                              Class<?> container,
+                                              boolean exceptionOnMissingAnnotationClass,
+                                              Class<? extends Annotation>[] selectAnnotationClasses) {
         int typeIndex = buf.getShort() & 0xFFFF;
-        Class annotationClass = null;
+        Class<? extends Annotation> annotationClass = null;
         String sig = "[unknown]";
         try {
             try {
                 sig = constPool.getUTF8At(typeIndex);
-                annotationClass = parseSig(sig, container);
+                annotationClass = (Class<? extends Annotation>)parseSig(sig, container);
             } catch (IllegalArgumentException ex) {
                 // support obsolete early jsr175 format class files
                 annotationClass = constPool.getClassAt(typeIndex);
@@ -215,6 +253,10 @@ public class AnnotationParser {
             skipAnnotation(buf, false);
             return null;
         }
+        if (selectAnnotationClasses != null && !contains(selectAnnotationClasses, annotationClass)) {
+            skipAnnotation(buf, false);
+            return null;
+        }
         AnnotationType type = null;
         try {
             type = AnnotationType.getInstance(annotationClass);
@@ -223,7 +265,7 @@ public class AnnotationParser {
             return null;
         }
 
-        Map<String, Class> memberTypes = type.memberTypes();
+        Map<String, Class<?>> memberTypes = type.memberTypes();
         Map<String, Object> memberValues =
             new LinkedHashMap<String, Object>(type.memberDefaults());
 
@@ -231,7 +273,7 @@ public class AnnotationParser {
         for (int i = 0; i < numMembers; i++) {
             int memberNameIndex = buf.getShort() & 0xFFFF;
             String memberName = constPool.getUTF8At(memberNameIndex);
-            Class memberType = memberTypes.get(memberName);
+            Class<?> memberType = memberTypes.get(memberName);
 
             if (memberType == null) {
                 // Member is no longer present in annotation type; ignore it
@@ -252,7 +294,7 @@ public class AnnotationParser {
      * member -> value map.
      */
     public static Annotation annotationForMap(
-        Class type, Map<String, Object> memberValues)
+        Class<? extends Annotation> type, Map<String, Object> memberValues)
     {
         return (Annotation) Proxy.newProxyInstance(
             type.getClassLoader(), new Class[] { type },
@@ -286,14 +328,15 @@ public class AnnotationParser {
      * The member must be of the indicated type. If it is not, this
      * method returns an AnnotationTypeMismatchExceptionProxy.
      */
-    public static Object parseMemberValue(Class memberType, ByteBuffer buf,
+    public static Object parseMemberValue(Class<?> memberType,
+                                          ByteBuffer buf,
                                           ConstantPool constPool,
-                                          Class container) {
+                                          Class<?> container) {
         Object result = null;
         int tag = buf.get();
         switch(tag) {
           case 'e':
-              return parseEnumValue(memberType, buf, constPool, container);
+              return parseEnumValue((Class<? extends Enum<?>>)memberType, buf, constPool, container);
           case 'c':
               result = parseClassValue(buf, constPool, container);
               break;
@@ -361,7 +404,7 @@ public class AnnotationParser {
      */
     private static Object parseClassValue(ByteBuffer buf,
                                           ConstantPool constPool,
-                                          Class container) {
+                                          Class<?> container) {
         int classIndex = buf.getShort() & 0xFFFF;
         try {
             try {
@@ -379,7 +422,7 @@ public class AnnotationParser {
         }
     }
 
-    private static Class<?> parseSig(String sig, Class container) {
+    private static Class<?> parseSig(String sig, Class<?> container) {
         if (sig.equals("V")) return void.class;
         SignatureParser parser = SignatureParser.make();
         TypeSignature typeSig = parser.parseTypeSig(sig);
@@ -389,7 +432,7 @@ public class AnnotationParser {
         Type result = reify.getResult();
         return toClass(result);
     }
-    static Class toClass(Type o) {
+    static Class<?> toClass(Type o) {
         if (o instanceof GenericArrayType)
             return Array.newInstance(toClass(((GenericArrayType)o).getGenericComponentType()),
                                      0)
@@ -409,9 +452,9 @@ public class AnnotationParser {
      *           u2   const_name_index;
      *       } enum_const_value;
      */
-    private static Object parseEnumValue(Class enumType, ByteBuffer buf,
+    private static Object parseEnumValue(Class<? extends Enum> enumType, ByteBuffer buf,
                                          ConstantPool constPool,
-                                         Class container) {
+                                         Class<?> container) {
         int typeNameIndex = buf.getShort() & 0xFFFF;
         String typeName  = constPool.getUTF8At(typeNameIndex);
         int constNameIndex = buf.getShort() & 0xFFFF;
@@ -449,12 +492,12 @@ public class AnnotationParser {
      * If the array values do not match arrayType, an
      * AnnotationTypeMismatchExceptionProxy will be returned.
      */
-    private static Object parseArray(Class arrayType,
+    private static Object parseArray(Class<?> arrayType,
                                      ByteBuffer buf,
                                      ConstantPool constPool,
-                                     Class container) {
+                                     Class<?> container) {
         int length = buf.getShort() & 0xFFFF;  // Number of array components
-        Class componentType = arrayType.getComponentType();
+        Class<?> componentType = arrayType.getComponentType();
 
         if (componentType == byte.class) {
             return parseByteArray(length, buf, constPool);
@@ -477,11 +520,11 @@ public class AnnotationParser {
         } else if (componentType == Class.class) {
             return parseClassArray(length, buf, constPool, container);
         } else if (componentType.isEnum()) {
-            return parseEnumArray(length, componentType, buf,
+            return parseEnumArray(length, (Class<? extends Enum>)componentType, buf,
                                   constPool, container);
         } else {
             assert componentType.isAnnotation();
-            return parseAnnotationArray(length, componentType, buf,
+            return parseAnnotationArray(length, (Class <? extends Annotation>)componentType, buf,
                                         constPool, container);
         }
     }
@@ -660,8 +703,8 @@ public class AnnotationParser {
     private static Object parseClassArray(int length,
                                           ByteBuffer buf,
                                           ConstantPool constPool,
-                                          Class container) {
-        Object[] result = new Class[length];
+                                          Class<?> container) {
+        Object[] result = new Class<?>[length];
         boolean typeMismatch = false;
         int tag = 0;
 
@@ -677,10 +720,10 @@ public class AnnotationParser {
         return typeMismatch ? exceptionProxy(tag) : result;
     }
 
-    private static Object parseEnumArray(int length, Class enumType,
+    private static Object parseEnumArray(int length, Class<? extends Enum> enumType,
                                          ByteBuffer buf,
                                          ConstantPool constPool,
-                                         Class container) {
+                                         Class<?> container) {
         Object[] result = (Object[]) Array.newInstance(enumType, length);
         boolean typeMismatch = false;
         int tag = 0;
@@ -698,10 +741,10 @@ public class AnnotationParser {
     }
 
     private static Object parseAnnotationArray(int length,
-                                               Class annotationType,
+                                               Class<? extends Annotation> annotationType,
                                                ByteBuffer buf,
                                                ConstantPool constPool,
-                                               Class container) {
+                                               Class<?> container) {
         Object[] result = (Object[]) Array.newInstance(annotationType, length);
         boolean typeMismatch = false;
         int tag = 0;
@@ -788,4 +831,16 @@ public class AnnotationParser {
         for (int i = 0; i < length; i++)
             skipMemberValue(buf);
     }
+
+    /**
+     * Searches for given {@code element} in given {@code array} by identity.
+     * Returns {@code true} if found {@code false} if not.
+     */
+    private static boolean contains(Object[] array, Object element) {
+        for (Object e : array)
+            if (e == element)
+                return true;
+        return false;
+    }
+
 }

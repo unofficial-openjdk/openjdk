@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2006, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,16 +35,22 @@ public interface JavaLangAccess {
     ConstantPool getConstantPool(Class klass);
 
     /**
-     * Set the AnnotationType instance corresponding to this class.
+     * Compare-And-Swap the AnnotationType instance corresponding to this class.
      * (This method only applies to annotation types.)
      */
-    void setAnnotationType(Class klass, AnnotationType annotationType);
+    boolean casAnnotationType(Class<?> klass, AnnotationType oldType, AnnotationType newType);
 
     /**
      * Get the AnnotationType instance corresponding to this class.
      * (This method only applies to annotation types.)
      */
     AnnotationType getAnnotationType(Class klass);
+
+    /**
+     * Get the array of bytes that is the class-file representation
+     * of this Class' annotations.
+     */
+    byte[] getRawClassAnnotations(Class<?> klass);
 
     /**
      * Returns the elements of an enum class or null if the
