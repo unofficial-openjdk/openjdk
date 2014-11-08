@@ -66,7 +66,7 @@ class ClassPathEntry: public CHeapObj<mtClass> {
   virtual ClassFileStream* open_stream(const char* name, TRAPS) = 0;
   // Debugging
   NOT_PRODUCT(virtual void compile_the_world(Handle loader, TRAPS) = 0;)
-  NOT_PRODUCT(virtual bool is_rt_jar() = 0;)
+  NOT_PRODUCT(virtual bool is_jrt() = 0;)
 };
 
 
@@ -80,7 +80,7 @@ class ClassPathDirEntry: public ClassPathEntry {
   ClassFileStream* open_stream(const char* name, TRAPS);
   // Debugging
   NOT_PRODUCT(void compile_the_world(Handle loader, TRAPS);)
-  NOT_PRODUCT(bool is_rt_jar();)
+  NOT_PRODUCT(bool is_jrt();)
 };
 
 
@@ -100,7 +100,7 @@ typedef struct {
 
 class ClassPathZipEntry: public ClassPathEntry {
  private:
-  jzfile* _zip;        // The zip archive
+  jzfile* _zip;              // The zip archive
   const char*   _zip_name;   // Name of zip archive
  public:
   bool is_jar_file()  { return true;  }
@@ -112,7 +112,7 @@ class ClassPathZipEntry: public ClassPathEntry {
   void contents_do(void f(const char* name, void* context), void* context);
   // Debugging
   NOT_PRODUCT(void compile_the_world(Handle loader, TRAPS);)
-  NOT_PRODUCT(bool is_rt_jar();)
+  NOT_PRODUCT(bool is_jrt();)
 };
 
 
@@ -138,7 +138,7 @@ class LazyClassPathEntry: public ClassPathEntry {
   virtual bool is_lazy();
   // Debugging
   NOT_PRODUCT(void compile_the_world(Handle loader, TRAPS);)
-  NOT_PRODUCT(bool is_rt_jar();)
+  NOT_PRODUCT(bool is_jrt();)
 };
 
 // For java image files
@@ -154,11 +154,9 @@ public:
   ~ClassPathImageEntry();
   ClassFileStream* open_stream(const char* name, TRAPS);
 
-  static jboolean decompress(void *in, u8 inSize, void *out, u8 outSize, char **pmsg);
-
   // Debugging
   NOT_PRODUCT(void compile_the_world(Handle loader, TRAPS);)
-  NOT_PRODUCT(bool is_rt_jar();)
+  NOT_PRODUCT(bool is_jrt();)
 };
 
 class PackageHashtable;
@@ -250,6 +248,7 @@ class ClassLoader: AllStatic {
   static int _next_loader_tag;
 
  public:
+  static jboolean decompress(void *in, u8 inSize, void *out, u8 outSize, char **pmsg);
   static bool update_class_path_entry_list(const char *path,
                                            bool check_for_duplicates,
                                            bool throw_exception=true);

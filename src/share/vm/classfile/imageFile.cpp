@@ -46,21 +46,21 @@
 
 
 // Compute the Perfect Hashing hash code for the supplied string.
-u4 ImageStrings::hashCode(const char* string, u4 base) {
+u4 ImageStrings::hashCode(const char* string, u4 seed) {
   u1* bytes = (u1*)string;
 
   // Ensure better uniformity.
-  if (base == 0) {
-    base = HASH_MULTIPLIER;
+  if (seed == 0) {
+    seed = HASH_MULTIPLIER;
   }
 
   // Compute hash code.
   for (u1 byte = *bytes++; byte; byte = *bytes++) {
-    base = (base * HASH_MULTIPLIER) ^ byte;
+    seed = (seed * HASH_MULTIPLIER) ^ byte;
   }
 
   // Ensure the result is unsigned.
-  return base & 0x7FFFFFFF;
+  return seed & 0x7FFFFFFF;
 }
 
 // Test to see if string begins with start.  If so returns remaining portion
@@ -105,14 +105,9 @@ ImageFile::ImageFile(const char* name) {
   _fd = -1;
   _memoryMapped = true;
   _indexData = NULL;
-
-  // Seek and read lock
-  _readLock = new Mutex(Mutex::leaf, "imagefile", true);
 }
 
 ImageFile::~ImageFile() {
-  delete _readLock;
-
   // Ensure file is closed.
   close();
 
@@ -256,15 +251,8 @@ u1* ImageFile::getResource(ImageLocation& location) const {
   // Allocate space for the resource.
   u1* data = NEW_RESOURCE_ARRAY(u1, readSize);
 
-  _readLock->lock();
-  bool isRead = os::seek_to_file_offset(_fd, offset) != -1 && os::read(_fd, data, readSize) == readSize;
-  _readLock->unlock();
-
-  // Clean up if read fails.
-  if (!isRead) {
-    FREE_RESOURCE_ARRAY(u1, data, readSize);
-    return NULL;
-  }
+  bool isRead = os::read_at(_fd, data, readSize, offset) == readSize;
+  guarantee(isRead, "error reading from image or short read");
 
   // If not compressed, just return the data.
   if (!compressedSize) {
@@ -273,14 +261,28 @@ u1* ImageFile::getResource(ImageLocation& location) const {
 
   u1* uncompressed = NEW_RESOURCE_ARRAY(u1, size);
   char* msg = NULL;
-  jboolean res = ClassPathImageEntry::decompress(data, compressedSize, uncompressed, size, &msg);
-  FREE_RESOURCE_ARRAY(u1, data, size);
+  jboolean res = ClassLoader::decompress(data, compressedSize, uncompressed, size, &msg);
+  FREE_RESOURCE_ARRAY(u1, data, readSize);
   if (!res) {
+      FREE_RESOURCE_ARRAY(u1, uncompressed, size);
       warning("compression failed due to %s\n", msg);
       return NULL;
   }
 
   return uncompressed;
+}
+
+void ImageFile::getResource(const char* name, u1*& buffer, u8& size) const {
+  buffer = NULL;
+  size = 0;
+  u1* data = findLocationData(name);
+  if (data) {
+    ImageLocation location(data);
+    if (verifyLocation(location, name)) {
+      size = location.getAttribute(ImageLocation::ATTRIBUTE_UNCOMPRESSED);
+      buffer = getResource(location);
+    }
+  }
 }
 
 GrowableArray<const char*>* ImageFile::packages(const char* name) {
@@ -289,28 +291,24 @@ GrowableArray<const char*>* ImageFile::packages(const char* name) {
     return NULL;
   }
 
-  u1* data = findLocationData(entry);
-  if (!data) {
+  u1* buffer;
+  u8 size;
+
+  getResource(entry, buffer, size);
+
+  if (!buffer) {
     tty->print_cr("ERROR: %s\n", entry);
     return NULL;
   }
-  ImageLocation location(data);
-  if (verifyLocation(location, entry)) {
-    u8 size = location.getAttribute(ImageLocation::ATTRIBUTE_UNCOMPRESSED);
-    u1* buffer = getResource(location);
-    if (!buffer) {
-        return NULL;
-    }
 
-    ImageStrings strings(_stringBytes, _header._stringsSize);
-    GrowableArray<const char*>* pkgs = new GrowableArray<const char*>();
-    int count = size / 4;
-    for (int i=0; i < count; i++) {
-      u4 offset = Bytes::get_Java_u4(buffer + (i*4));
-      const char* p = strings.get(offset);
-      pkgs->append(p);
-    }
-    return pkgs;
+  ImageStrings strings(_stringBytes, _header._stringsSize);
+  GrowableArray<const char*>* pkgs = new GrowableArray<const char*>();
+  int count = size / 4;
+  for (int i = 0; i < count; i++) {
+    u4 offset = Bytes::get_Java_u4(buffer + (i*4));
+    const char* p = strings.get(offset);
+    pkgs->append(p);
   }
-  return NULL;
+
+  return pkgs;
 }

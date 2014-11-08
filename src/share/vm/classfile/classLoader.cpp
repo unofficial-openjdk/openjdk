@@ -371,13 +371,6 @@ bool LazyClassPathEntry::is_lazy() {
   return true;
 }
 
-ClassPathImageEntry::ClassPathImageEntry(char* name) : ClassPathEntry(), _image(new ImageFile(name)) {
-  bool opened = _image->open();
-  if (!opened) {
-    _image = NULL;
-  }
-}
-
 u1* LazyClassPathEntry::open_entry(const char* name, jint* filesize, bool nul_terminate, TRAPS) {
   if (_has_error) {
     return NULL;
@@ -395,6 +388,13 @@ u1* LazyClassPathEntry::open_entry(const char* name, jint* filesize, bool nul_te
   }
 }
 
+ClassPathImageEntry::ClassPathImageEntry(char* name) : ClassPathEntry(), _image(new ImageFile(name)) {
+  bool opened = _image->open();
+  if (!opened) {
+    _image = NULL;
+  }
+}
+
 ClassPathImageEntry::~ClassPathImageEntry() {
   if (_image) {
     _image->close();
@@ -407,17 +407,11 @@ const char* ClassPathImageEntry::name() {
 }
 
 ClassFileStream* ClassPathImageEntry::open_stream(const char* name, TRAPS) {
-  u1* data = _image->findLocationData(name);
-  if (!data) {
-    return NULL;
-  }
-  ImageLocation location(data);
-  if (_image->verifyLocation(location, name)) {
-    u8 size = location.getAttribute(ImageLocation::ATTRIBUTE_UNCOMPRESSED);
-    u1* buffer = _image->getResource(location);
-    if (!buffer) {
-        return NULL;
-    }
+  u1* buffer;
+  u8 size;
+  _image->getResource(name, buffer, size);
+
+  if (buffer) {
     if (UsePerfData) {
       ClassLoader::perf_sys_classfile_bytes_read()->inc(size);
     }
@@ -425,10 +419,6 @@ ClassFileStream* ClassPathImageEntry::open_stream(const char* name, TRAPS) {
   }
 
   return NULL;
-}
-
-jboolean ClassPathImageEntry::decompress(void *in, u8 inSize, void *out, u8 outSize, char **pmsg) {
-  return (*ZipInflateFully)(in, inSize, out, outSize, pmsg);
 }
 
 #ifndef PRODUCT
@@ -461,8 +451,8 @@ void ClassPathImageEntry::compile_the_world(Handle loader, TRAPS) {
   }
 }
 
-bool ClassPathImageEntry::is_rt_jar() {
-  return string_ends_with(name(), "java.base/bootmodules.jimage");
+bool ClassPathImageEntry::is_jrt() {
+  return string_ends_with(name(), "bootmodules.jimage");
 }
 #endif
 
@@ -714,13 +704,7 @@ ClassPathEntry* ClassLoader::create_class_path_entry(const char *path, const str
     return new LazyClassPathEntry(path, st, throw_exception);
   }
   ClassPathEntry* new_entry = NULL;
-  if ((st->st_mode & S_IFREG) != S_IFREG) {
-    // Directory
-    new_entry = new ClassPathDirEntry(path);
-    if (TraceClassLoading) {
-      tty->print_cr("[Path %s]", path);
-    }
-  } else {
+  if ((st->st_mode & S_IFREG) == S_IFREG) {
     // Regular file, should be a zip or image file
     // Canonicalized filename
     char canonical_path[JVM_MAXPATHLEN];
@@ -767,6 +751,12 @@ ClassPathEntry* ClassLoader::create_class_path_entry(const char *path, const str
     }
     if (TraceClassLoading || TraceClassPaths) {
       tty->print_cr("[Opened %s]", path);
+    }
+  } else  {
+    // Directory
+    new_entry = new ClassPathDirEntry(path);
+    if (TraceClassLoading) {
+      tty->print_cr("[Path %s]", path);
     }
   }
   return new_entry;
@@ -908,6 +898,10 @@ void ClassLoader::load_zip_library() {
   void *javalib_handle = os::native_java_library();
   CanonicalizeEntry = CAST_TO_FN_PTR(canonicalize_fn_t, os::dll_lookup(javalib_handle, "Canonicalize"));
   // This lookup only works on 1.3. Do not check for non-null here
+}
+
+jboolean ClassLoader::decompress(void *in, u8 inSize, void *out, u8 outSize, char **pmsg) {
+  return (*ZipInflateFully)(in, inSize, out, outSize, pmsg);
 }
 
 // Returns the unique tag for the given loader, generating it if required
@@ -1481,7 +1475,7 @@ void ClassPathDirEntry::compile_the_world(Handle loader, TRAPS) {
   tty->cr();
 }
 
-bool ClassPathDirEntry::is_rt_jar() {
+bool ClassPathDirEntry::is_jrt() {
   return false;
 }
 
@@ -1506,7 +1500,7 @@ void ClassPathZipEntry::compile_the_world(Handle loader, TRAPS) {
   }
 }
 
-bool ClassPathZipEntry::is_rt_jar() {
+bool ClassPathZipEntry::is_jrt() {
   real_jzfile* zip = (real_jzfile*) _zip;
   int len = (int)strlen(zip->name);
   // Check whether zip name ends in "rt.jar"
@@ -1522,7 +1516,7 @@ void LazyClassPathEntry::compile_the_world(Handle loader, TRAPS) {
   }
 }
 
-bool LazyClassPathEntry::is_rt_jar() {
+bool LazyClassPathEntry::is_jrt() {
   Thread* THREAD = Thread::current();
   ClassPathEntry* cpe = resolve_entry(THREAD);
   return (cpe != NULL) ? cpe->is_jar_file() : false;
@@ -1541,7 +1535,7 @@ void ClassLoader::compile_the_world() {
   jlong start = os::javaTimeMillis();
   while (e != NULL) {
     // We stop at rt.jar, unless it is the first bootstrap path entry
-    if (e->is_rt_jar() && e != _first_entry) break;
+    if (e->is_jrt() && e != _first_entry) break;
     e->compile_the_world(system_class_loader, CATCH);
     e = e->next();
   }
