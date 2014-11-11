@@ -25,7 +25,6 @@
 package jdk.internal.jimage;
 
 import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.IntBuffer;
@@ -37,8 +36,7 @@ import java.util.List;
 
 public class BasicImageReader {
     private final String imagePath;
-    private final RandomAccessFile file;
-    private final FileChannel channel;
+    private final PReader preader;
     private final ByteOrder byteOrder;
     private final ImageHeader header;
     private final int indexSize;
@@ -50,8 +48,7 @@ public class BasicImageReader {
 
     protected BasicImageReader(String imagePath, ByteOrder byteOrder) throws IOException {
         this.imagePath = imagePath;
-        this.file = new RandomAccessFile(imagePath, "r");
-        this.channel = file.getChannel();
+        this.preader = PReader.open(imagePath);
         this.byteOrder = byteOrder;
         this.header = ImageHeader.readFrom(byteOrder, getIntBuffer(0, ImageHeader.getHeaderSize()));
         this.indexSize = header.getIndexSize();
@@ -71,11 +68,11 @@ public class BasicImageReader {
     }
 
     public boolean isOpen() {
-        return channel.isOpen();
+        return preader.isOpen();
     }
 
-    public synchronized void close() throws IOException {
-        channel.close();
+    public void close() throws IOException {
+        preader.close();
     }
 
     public ImageHeader getHeader() {
@@ -151,21 +148,22 @@ public class BasicImageReader {
         ImageLocation[] array = list.toArray(new ImageLocation[0]);
 
         if (sorted) {
-            Arrays.sort(array, (ImageLocation loc1, ImageLocation loc2) -> loc1.getFullnameString().compareTo(loc2.getFullnameString()));
+            Arrays.sort(array, (ImageLocation loc1, ImageLocation loc2) ->
+                    loc1.getFullnameString().compareTo(loc2.getFullnameString()));
         }
 
         return array;
     }
 
     private IntBuffer getIntBuffer(long offset, long size) throws IOException {
-        MappedByteBuffer buffer = channel.map(FileChannel.MapMode.READ_ONLY, offset, size);
+        MappedByteBuffer buffer = preader.channel().map(FileChannel.MapMode.READ_ONLY, offset, size);
         buffer.order(byteOrder);
 
         return buffer.asIntBuffer();
     }
 
     private ByteBuffer getByteBuffer(long offset, long size) throws IOException {
-        MappedByteBuffer buffer = channel.map(FileChannel.MapMode.READ_ONLY, offset, size);
+        MappedByteBuffer buffer = preader.channel().map(FileChannel.MapMode.READ_ONLY, offset, size);
         buffer.order(byteOrder);
 
         return buffer.asReadOnlyBuffer();
@@ -187,20 +185,16 @@ public class BasicImageReader {
         return strings.get(offset).toString();
     }
 
-    private synchronized byte[] read(long offset, long size) throws IOException {
-        byte[] bytes = new byte[(int)size];
-        file.seek(indexSize + offset);
-        file.read(bytes);
-
-        return bytes;
-    }
-
     public byte[] getResource(ImageLocation loc) throws IOException {
         long compressedSize = loc.getCompressedSize();
+        assert compressedSize < Integer.MAX_VALUE;
+
         if (compressedSize == 0) {
-            return read(loc.getContentOffset(), loc.getUncompressedSize());
+            return preader.read((int)loc.getUncompressedSize(),
+                                indexSize + loc.getContentOffset());
         } else {
-            byte[] buf = read(loc.getContentOffset(), compressedSize);
+            byte[] buf = preader.read((int)compressedSize,
+                                      indexSize + loc.getContentOffset());
             return ImageFile.Compressor.decompress(buf);
         }
     }
