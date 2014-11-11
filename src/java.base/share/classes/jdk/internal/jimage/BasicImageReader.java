@@ -67,6 +67,10 @@ public class BasicImageReader {
         return new BasicImageReader(imagePath, ByteOrder.nativeOrder());
     }
 
+    public String imagePath() {
+        return imagePath;
+    }
+
     public boolean isOpen() {
         return preader.isOpen();
     }

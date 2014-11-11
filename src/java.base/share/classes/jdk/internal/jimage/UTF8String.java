@@ -25,10 +25,14 @@
 
 package jdk.internal.jimage;
 
-import java.nio.charset.StandardCharsets;
+import java.nio.charset.Charset;
 import java.util.Arrays;
 
 public final class UTF8String implements CharSequence {
+
+    // Same as StandardCharsets.UTF_8 without loading all of the standard charsets
+    static final Charset UTF_8 = Charset.forName("UTF-8");
+
     static final int NOT_FOUND = -1;
     static final int HASH_MULTIPLIER = 0x01000193;
     static final UTF8String EMPTY_STRING  = new UTF8String("");
@@ -220,12 +224,12 @@ public final class UTF8String implements CharSequence {
     }
 
     private static byte[] stringToBytes(String string) {
-        return string.getBytes(StandardCharsets.UTF_8);
+        return string.getBytes(UTF_8);
     }
 
     @Override
     public String toString() {
-        return new String(bytes, offset, count, StandardCharsets.UTF_8);
+        return new String(bytes, offset, count, UTF_8);
     }
 
     @Override

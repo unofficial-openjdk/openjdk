@@ -25,15 +25,15 @@
 package jdk.internal.jimage;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.net.URI;
 import java.nio.ByteOrder;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
-import java.nio.file.spi.FileSystemProvider;
+import java.nio.file.Paths;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -47,27 +47,12 @@ public class ImageReader extends BasicImageReader {
     static final UTF8String META_INF_STRING = new UTF8String("META-INF");
     static final UTF8String PKG_MAP_STRING = new UTF8String("META-INF/package-to-module.properties");
 
-    /**
-     * The reader must use the underlying system file system provider, even if
-     * the default provider is configured to something else. This is to avoid
-     * recursive initialization issues trying to load the configured provider
-     * with the system class loader.
-     */
-    static final FileSystem FILE_SYSTEM;
-    static {
-        String s = System.getProperty("java.nio.file.spi.DefaultFileSystemProvider");
-        if (s == null) {
-            FILE_SYSTEM = FileSystems.getDefault();
-        } else {
-            FileSystemProvider provider = sun.nio.fs.DefaultFileSystemProvider.create();
-            FILE_SYSTEM = provider.getFileSystem(URI.create("file:///"));
-        }
-    }
-
     // attributes of the .jimage file. jimage file does not contain
     // attributes for the individual resources (yet). We use attributes
     // of the jimage file itself (creation, modification, access times).
-    private final BasicFileAttributes imageFileAttrs;
+    // Iniitalized lazily, see {@link #imageFileAttributes()}.
+    private BasicFileAttributes imageFileAttributes;
+
     private final Map<String, String> packageMap;
 
     // directory management implementation
@@ -76,9 +61,6 @@ public class ImageReader extends BasicImageReader {
 
     ImageReader(String imagePath, ByteOrder byteOrder) throws IOException {
         super(imagePath, byteOrder);
-
-        this.imageFileAttrs = Files.readAttributes(FILE_SYSTEM.getPath(imagePath),
-                                                   BasicFileAttributes.class);
         this.packageMap = PackageModuleMap.readFrom(this);
         this.nodes = Collections.synchronizedMap(new HashMap<>());
     }
@@ -329,6 +311,23 @@ public class ImageReader extends BasicImageReader {
         rootDir = null;
     }
 
+    /**
+     * Returns the file attributes of the image file.
+     */
+    private BasicFileAttributes imageFileAttributes() {
+        BasicFileAttributes attrs = imageFileAttributes;
+        if (attrs == null) {
+            try {
+                Path file = Paths.get(imagePath());
+                attrs = Files.readAttributes(file, BasicFileAttributes.class);
+            } catch (IOException ioe) {
+                throw new UncheckedIOException(ioe);
+            }
+            imageFileAttributes = attrs;
+        }
+        return attrs;
+    }
+
     private synchronized Directory buildRootDirectory() {
         if (rootDir != null) {
             return rootDir;
@@ -337,7 +336,7 @@ public class ImageReader extends BasicImageReader {
         // FIXME no time information per resource in jimage file (yet?)
         // we use file attributes of jimage itself.
         // root directory
-        rootDir = new Directory(null, ROOT_STRING, imageFileAttrs);
+        rootDir = new Directory(null, ROOT_STRING, imageFileAttributes());
         nodes.put(rootDir.getName(), rootDir);
         nodes.put(UTF8String.EMPTY_STRING, rootDir);
 
@@ -359,7 +358,7 @@ public class ImageReader extends BasicImageReader {
                     dir = makeDirectories(parent);
                 }
             }
-            Resource entry = new Resource(dir, loc, imageFileAttrs);
+            Resource entry = new Resource(dir, loc, imageFileAttributes());
             nodes.put(entry.getName(), entry);
         }
 
@@ -369,7 +368,7 @@ public class ImageReader extends BasicImageReader {
     }
 
     private Directory newDirectory(Directory parent, UTF8String name) {
-        Directory dir = new Directory(parent, name, imageFileAttrs);
+        Directory dir = new Directory(parent, name, imageFileAttributes());
         nodes.put(dir.getName(), dir);
         return dir;
     }
@@ -421,7 +420,7 @@ public class ImageReader extends BasicImageReader {
         if (metaInfDir != null) {
             Resource rs = new ComputedResource(
                     metaInfDir, PKG_MAP_STRING,
-                    imageFileAttrs, this::makePackageMapData);
+                    imageFileAttributes(), this::makePackageMapData);
             nodes.put(rs.getName(), rs);
         }
     }
@@ -440,7 +439,7 @@ public class ImageReader extends BasicImageReader {
             buf.append('\n');
         });
 
-        return buf.toString().getBytes(StandardCharsets.UTF_8);
+        return buf.toString().getBytes(UTF8String.UTF_8);
     }
 
     public byte[] getResource(Resource rs) throws IOException {
