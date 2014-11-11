@@ -1,12 +1,10 @@
 /*
- * Copyright (c) 2003, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Oracle designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Oracle in the LICENSE file that accompanied this code.
+ * published by the Free Software Foundation.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -22,17 +20,10 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+package util;
 
-package sun.reflect.generics.tree;
+import java.sql.NClob;
 
-import sun.reflect.generics.visitor.TypeTreeVisitor;
+public class StubNClob extends StubClob  implements NClob {
 
-public class BottomSignature implements FieldTypeSignature {
-    private static final BottomSignature singleton = new BottomSignature();
-
-    private BottomSignature(){}
-
-    public static BottomSignature make() {return singleton;}
-
-    public void accept(TypeTreeVisitor<?> v){v.visitBottomSignature(this);}
 }
