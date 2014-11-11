@@ -61,10 +61,10 @@ public final class TimeZoneNames_sv extends TimeZoneNamesBundle {
                                      "Atlantisk sommartid", "ADT"};
         String BDT[] = new String[] {"Bangladesh, normaltid", "BDT",
                                      "Bangladesh, sommartid", "BDST"};
-        String BRISBANE[] = new String[] {"\u00D6stlig standardtid (Queensland)", "EST",
-                                          "\u00D6stlig sommartid (Queensland)", "EST"};
-        String BROKEN_HILL[] = new String[] {"Central standardtid (Sydaustralien/New South Wales)", "CST",
-                                             "Central sommartid (South Australia/New South Wales)", "CST"};
+        String BRISBANE[] = new String[] {"\u00D6stlig standardtid (Queensland)", "AEST",
+                                          "\u00D6stlig sommartid (Queensland)", "AEDT"};
+        String BROKEN_HILL[] = new String[] {"Central standardtid (Sydaustralien/New South Wales)", "ACST",
+                                             "Central sommartid (South Australia/New South Wales)", "ACDT"};
         String BRT[] = new String[] {"Brasilien, normaltid", "BRT",
                                      "Brasilien, sommartid", "BRST"};
         String BTT[] = new String[] {"Bhutan, normaltid", "BTT",
