@@ -44,8 +44,7 @@ import java.util.function.Supplier;
 public class ImageReader extends BasicImageReader {
     // well-known strings needed for image file system.
     static final UTF8String ROOT_STRING   = new UTF8String("/");
-    static final UTF8String META_INF_STRING = new UTF8String("META-INF");
-    static final UTF8String PKG_MAP_STRING = new UTF8String("META-INF/package-to-module.properties");
+    static final UTF8String META_INF_STRING   = new UTF8String("/META-INF/");
 
     // attributes of the .jimage file. jimage file does not contain
     // attributes for the individual resources (yet). We use attributes
@@ -93,11 +92,15 @@ public class ImageReader extends BasicImageReader {
         return packageMap.get(pkg);
     }
 
-     // jimage file does not store directory structure. We build nodes
+    // jimage file does not store directory structure. We build nodes
     // using the "path" strings found in the jimage file.
     // Node can be a directory or a resource
     public static abstract class Node {
+        private static final int ROOT_DIR = 0b0000_0000_0000_0001;
+        private static final int MODULE_DIR = 0b0000_0000_0000_0010;
+        private static final int METAINF_DIR = 0b0000_0000_0000_0100;
 
+        private int flags;
         private final UTF8String name;
         private final BasicFileAttributes fileAttrs;
 
@@ -108,12 +111,52 @@ public class ImageReader extends BasicImageReader {
             this.fileAttrs = fileAttrs;
         }
 
+        public void setIsRootDir() {
+            flags |= ROOT_DIR;
+        }
+
+        public boolean isRootDir() {
+            return (flags & ROOT_DIR) != 0;
+        }
+
+        public void setIsModuleDir() {
+            flags |= MODULE_DIR;
+        }
+
+        public boolean isModuleDir() {
+            return (flags & MODULE_DIR) != 0;
+        }
+
+        public void setIsMetaInfDir() {
+            flags |= METAINF_DIR;
+        }
+
+        public boolean isMetaInfDir() {
+            return (flags & METAINF_DIR) != 0;
+        }
+
         public final UTF8String getName() {
             return name;
         }
 
+        public final BasicFileAttributes getFileAttributes() {
+            return fileAttrs;
+        }
+
         public boolean isDirectory() {
             return false;
+        }
+
+        public List<Node> getChildren() {
+            throw new IllegalArgumentException("not a directory: " + getNameString());
+        }
+
+        public boolean isResource() {
+            return false;
+        }
+
+        public ImageLocation getLocation() {
+            throw new IllegalArgumentException("not a resource: " + getNameString());
         }
 
         public long size() {
@@ -172,9 +215,8 @@ public class ImageReader extends BasicImageReader {
         }
     }
 
-    // directory node - directory has full path name and no trailing "/"
+    // directory node - directory has full path name
     public static final class Directory extends Node {
-
         private final List<Node> children;
 
         @SuppressWarnings("LeakingThisInConstructor")
@@ -195,7 +237,7 @@ public class ImageReader extends BasicImageReader {
             return Collections.unmodifiableList(children);
         }
 
-        private void addChild(Node node) {
+        void addChild(Node node) {
             children.add(node);
         }
     }
@@ -203,24 +245,27 @@ public class ImageReader extends BasicImageReader {
     // "resource" is .class or any other resource (compressed/uncompressed) in a jimage.
     // full path of the resource is the "name" of the resource.
     public static class Resource extends Node {
-
         private final ImageLocation loc;
 
         @SuppressWarnings("LeakingThisInConstructor")
         Resource(Directory parent, ImageLocation loc, BasicFileAttributes fileAttrs) {
-            super(loc.getFullname(), fileAttrs);
+            this(parent, ROOT_STRING.concat(loc.getFullname()), loc, fileAttrs);
+        }
+
+        @SuppressWarnings("LeakingThisInConstructor")
+        Resource(Directory parent, UTF8String name, ImageLocation loc, BasicFileAttributes fileAttrs) {
+            super(name, fileAttrs);
             this.loc = loc;
             parent.addChild(this);
         }
 
-        @SuppressWarnings("LeakingThisInConstructor")
-        Resource(Directory parent, UTF8String name, BasicFileAttributes fileAttrs) {
-            super(name, fileAttrs);
-            this.loc = null;
-            parent.addChild(this);
+        @Override
+        public boolean isResource() {
+            return true;
         }
 
-        public final ImageLocation getLocation() {
+        @Override
+        public ImageLocation getLocation() {
             return loc;
         }
 
@@ -245,49 +290,6 @@ public class ImageReader extends BasicImageReader {
         }
     }
 
-    // a resource that is not in .jimage file - but has lazily computed data
-    public static final class ComputedResource extends Resource {
-        // function that supplies the data
-        private final Supplier<byte[]> supplier;
-        // lazily initialized data
-        private volatile byte[] buf;
-
-        ComputedResource(Directory parent, UTF8String name,
-                BasicFileAttributes fileAttrs, Supplier<byte[]> func) {
-            super(parent, name, fileAttrs);
-            func.getClass();
-            this.supplier = func;
-        }
-
-        @Override
-        public long size() {
-            return getData().length;
-        }
-
-        @Override
-        public long compressedSize() {
-            return 0L;
-        }
-
-        @Override
-        public String extension() {
-            return "";
-        }
-
-        @Override
-        public long contentOffset() {
-            return 0L;
-        }
-
-        public byte[] getData() {
-            if (buf == null) {
-                buf = supplier.get();
-            }
-
-            return buf;
-        }
-    }
-
     // directory management interface
     public Directory getRootDirectory() {
         return buildRootDirectory();
@@ -303,6 +305,22 @@ public class ImageReader extends BasicImageReader {
 
     public synchronized Node findNode(UTF8String name) {
         buildRootDirectory();
+        Node node = nodes.get(name);
+        if (node != null) {
+             return node;
+        }
+        // Try with front '/'
+        if (name.length() > 0 && name.charAt(0) != '/') {
+            name = ROOT_STRING.concat(name);
+        }
+        node = nodes.get(name);
+        if (node != null) {
+             return node;
+        }
+        // try with '/' at the end
+        if (name.charAt(name.length() - 1) != '/') {
+            name = name.concat(ROOT_STRING);
+        }
         return nodes.get(name);
     }
 
@@ -337,6 +355,7 @@ public class ImageReader extends BasicImageReader {
         // we use file attributes of jimage itself.
         // root directory
         rootDir = new Directory(null, ROOT_STRING, imageFileAttributes());
+        rootDir.setIsRootDir();
         nodes.put(rootDir.getName(), rootDir);
         nodes.put(UTF8String.EMPTY_STRING, rootDir);
 
@@ -351,7 +370,7 @@ public class ImageReader extends BasicImageReader {
             } else {
                 int idx = parent.lastIndexOf('/');
                 assert idx != -1 : "invalid parent string";
-                UTF8String name = parent.substring(0, idx);
+                UTF8String name = ROOT_STRING.concat(parent.substring(0, idx + 1));
                 dir = (Directory) nodes.get(name);
                 if (dir == null) {
                     // make all parent directories (as needed)
@@ -360,6 +379,11 @@ public class ImageReader extends BasicImageReader {
             }
             Resource entry = new Resource(dir, loc, imageFileAttributes());
             nodes.put(entry.getName(), entry);
+        }
+
+        Node metaInf = nodes.get(META_INF_STRING);
+        if (metaInf instanceof Directory) {
+            metaInf.setIsMetaInfDir();
         }
 
         fillPackageModuleInfo();
@@ -378,21 +402,17 @@ public class ImageReader extends BasicImageReader {
 
         int idx = parent.indexOf('/');
         assert idx != -1 : "invalid parent string";
-        UTF8String name = parent.substring(0, idx);
+        UTF8String name = ROOT_STRING.concat(parent.substring(0, idx + 1));
         Directory top = (Directory) nodes.get(name);
         if (top == null) {
             top = newDirectory(rootDir, name);
-            // support trailing '/' directory name as well
-            nodes.put(parent.substring(0, idx+1), top);
         }
         Directory last = top;
         while ((idx = parent.indexOf('/', idx + 1)) != -1) {
-            name = parent.substring(0, idx);
+            name = ROOT_STRING.concat(parent.substring(0, idx + 1));
             Directory nextDir = (Directory) nodes.get(name);
             if (nextDir == null) {
                 nextDir = newDirectory(last, name);
-                // support trailing '/' directory name as well
-                nodes.put(parent.substring(0, idx+1), nextDir);
             }
             last = nextDir;
         }
@@ -400,50 +420,53 @@ public class ImageReader extends BasicImageReader {
         return last;
     }
 
-    // fill META-INF/package-to-module.properties resource entry
     private void fillPackageModuleInfo() {
         assert rootDir != null;
 
-        // find or create /META-INF directory
-        Directory metaInfDir = null;
-        if (! nodes.containsKey(META_INF_STRING)) {
-            metaInfDir = makeDirectories(META_INF_STRING);
-            nodes.put(metaInfDir.getName(), metaInfDir);
-        } else {
-            Node node = nodes.get(META_INF_STRING);
-            if (node.isDirectory()) {
-                metaInfDir = (Directory)node;
-            }
-        }
-
-        // put "package-to-module.properties under it
-        if (metaInfDir != null) {
-            Resource rs = new ComputedResource(
-                    metaInfDir, PKG_MAP_STRING,
-                    imageFileAttributes(), this::makePackageMapData);
-            nodes.put(rs.getName(), rs);
-        }
+        packageMap.entrySet().stream().sorted((x, y)->x.getKey().compareTo(y.getKey())).forEach((entry) -> {
+              UTF8String moduleName = new UTF8String("/" + entry.getValue() + "/");
+              UTF8String fullName = moduleName.concat(new UTF8String(entry.getKey() + "/"));
+              if (! nodes.containsKey(fullName)) {
+                  Directory module = (Directory) nodes.get(moduleName);
+                  assert module != null : "module directory missing " + moduleName;
+                  module.setIsModuleDir();
+                  // package name without front '/'
+                  UTF8String pkgName = new UTF8String(entry.getKey() + "/");
+                  int idx = -1;
+                  Directory moduleSubDir = module;
+                  while ((idx = pkgName.indexOf('/', idx + 1)) != -1) {
+                      UTF8String subPkg = pkgName.substring(0, idx + 1);
+                      UTF8String moduleSubDirName = moduleName.concat(subPkg);
+                      Directory tmp = (Directory) nodes.get(moduleSubDirName);
+                      if (tmp == null) {
+                          moduleSubDir = newDirectory(moduleSubDir, moduleSubDirName);
+                      } else {
+                          moduleSubDir = tmp;
+                      }
+                  }
+                  // copy pkgDir "resources"
+                  Directory pkgDir = (Directory) nodes.get(ROOT_STRING.concat(pkgName));
+                  for (Node child : pkgDir.getChildren()) {
+                      if (child.isResource()) {
+                          ImageLocation loc = child.getLocation();
+                          BasicFileAttributes imageFileAttrs = child.getFileAttributes();
+                          UTF8String rsName = moduleName.concat(child.getName().substring(1));
+                          Resource rs = new Resource(moduleSubDir, rsName, loc, imageFileAttrs);
+                          nodes.put(rs.getName(), rs);
+                      }
+                  }
+              }
+        });
     }
 
-    // lazily create computed resource data for package-to-module.properties
-    private byte[] makePackageMapData() {
-        StringBuilder buf = new StringBuilder();
-        packageMap.entrySet().stream().map((entry) -> {
-            buf.append(entry.getKey());
-            return entry;
-        }).map((entry) -> {
-            buf.append('=');
-            buf.append(entry.getValue());
-            return entry;
-        }).forEach((_item) -> {
-            buf.append('\n');
-        });
-
-        return buf.toString().getBytes(UTF8String.UTF_8);
+    public byte[] getResource(Node node) throws IOException {
+        if (node.isResource()) {
+            return super.getResource(node.getLocation());
+        }
+        throw new IOException("Not a resource: " + node);
     }
 
     public byte[] getResource(Resource rs) throws IOException {
-        return rs instanceof ComputedResource?
-            ((ComputedResource)rs).getData() : super.getResource(rs.getLocation());
+        return super.getResource(rs.getLocation());
     }
 }
