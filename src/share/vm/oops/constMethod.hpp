@@ -277,7 +277,7 @@ public:
   bool has_stackmap_table() const { return _stackmap_data != NULL; }
 
   void init_fingerprint() {
-    const uint64_t initval = CONST64(0x8000000000000000);
+    const uint64_t initval = UCONST64(0x8000000000000000);
     _fingerprint = initval;
   }
 
@@ -372,6 +372,11 @@ public:
   ExceptionTableElement* exception_table_start() const;
 
   // method parameters table
+
+  // This returns -1 if no parameters are present, a non-negative
+  // value otherwise.  Note: sometimes, there are 0-length parameters
+  // attributes that must be reported up to the reflection API all the
+  // same.
   int method_parameters_length() const;
   MethodParametersElement* method_parameters_start() const;
 

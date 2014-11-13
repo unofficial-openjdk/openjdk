@@ -1657,7 +1657,17 @@ JVM_ENTRY(jobjectArray, JVM_GetMethodParameters(JNIEnv *env, jobject method))
   Handle reflected_method (THREAD, JNIHandles::resolve_non_null(method));
   const int num_params = mh->method_parameters_length();
 
-  if (0 != num_params) {
+  if (num_params < 0) {
+    // A -1 return value from method_parameters_length means there is no
+    // parameter data.  Return null to indicate this to the reflection
+    // API.
+    assert(num_params == -1, "num_params should be -1 if it is less than zero");
+    return (jobjectArray)NULL;
+  } else {
+    // Otherwise, we return something up to reflection, even if it is
+    // a zero-length array.  Why?  Because in some cases this can
+    // trigger a MalformedParametersException.
+
     // make sure all the symbols are properly formatted
     for (int i = 0; i < num_params; i++) {
       MethodParametersElement* params = mh->method_parameters_start();
@@ -1685,8 +1695,6 @@ JVM_ENTRY(jobjectArray, JVM_GetMethodParameters(JNIEnv *env, jobject method))
       result->obj_at_put(i, param);
     }
     return (jobjectArray)JNIHandles::make_local(env, result());
-  } else {
-    return (jobjectArray)NULL;
   }
 }
 JVM_END
@@ -2583,7 +2591,14 @@ ATTRIBUTE_PRINTF(3, 0)
 int jio_vsnprintf(char *str, size_t count, const char *fmt, va_list args) {
   // see bug 4399518, 4417214
   if ((intptr_t)count <= 0) return -1;
-  return vsnprintf(str, count, fmt, args);
+
+  int result = vsnprintf(str, count, fmt, args);
+  if ((result > 0 && (size_t)result >= count) || result == -1) {
+    str[count - 1] = '\0';
+    result = -1;
+  }
+
+  return result;
 }
 
 ATTRIBUTE_PRINTF(3, 0)
