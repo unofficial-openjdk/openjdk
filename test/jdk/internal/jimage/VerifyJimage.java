@@ -193,19 +193,26 @@ public class VerifyJimage {
         Path mlib = Paths.get(home, "lib", "modules");
         List<JimageReader> readers = Files.find(mlib, 1, (Path p, BasicFileAttributes attr)
                     -> p.getFileName().toString().endsWith(".jimage"))
-                .map(JimageReader::new)
+                .map(JimageReader::newInstance)
                 .collect(Collectors.toList());
         for (JimageReader reader : readers) {
-            System.out.println("opened " + reader.jimage);
-            reader.open();
+            System.out.println("opened " + reader.jimage + " " + reader.isOpen());
         }
 
         return readers;
     }
 
     static class JimageReader extends BasicImageReader {
+        static JimageReader newInstance(Path p) {
+            try {
+                return new JimageReader(p);
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        }
+
         final Path jimage;
-        JimageReader(Path p) {
+        JimageReader(Path p) throws IOException {
             super(p.toString());
             this.jimage = p;
         }

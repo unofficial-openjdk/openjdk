@@ -43,6 +43,5 @@ public interface JavaLangReflectAccess {
     boolean uses(Module m, String service);
     Set<String> provides(Module m, String service);
 
-    // for dynamic proxies
     void addPackage(Module m, String pkg);
 }
