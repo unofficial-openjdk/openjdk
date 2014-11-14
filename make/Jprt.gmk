@@ -53,8 +53,8 @@ endif
 # This target must be called in the context of a SPEC file
 jprt_bundle: $(JPRT_ARCHIVE_BUNDLE)
 
-SRC_JDK_IMAGE_DIR := $(JDK_MODULE_IMAGE_DIR)
-JDK_IMAGE_SUBDIR := $(JDK_MODULE_IMAGE_SUBDIR)
+SRC_JDK_IMAGE_DIR := $(JDK_MODULE_JIMAGE_DIR)
+JDK_IMAGE_SUBDIR := $(JDK_MODULE_JIMAGE_SUBDIR)
 
 # This target must be called in the context of a SPEC file
 $(JPRT_ARCHIVE_BUNDLE): bundles
