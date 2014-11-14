@@ -31,16 +31,18 @@ import java.util.Set;
 import jdk.jigsaw.module.ModuleDescriptor;
 
 public interface JavaLangReflectAccess {
-    Module defineUnnamedModule();
     Module defineModule(ClassLoader loader,
                         ModuleDescriptor descriptor,
                         Set<String> packages);
     void setDefined(Module m);
 
     void addReadsModule(Module m1, Module m2);
-    void addExport(Module m, String pkg, Module who);
+    void addExports(Module m, String pkg, Module who);
     boolean isExported(Module m, String pkg, Module who);
 
     boolean uses(Module m, String service);
     Set<String> provides(Module m, String service);
+
+    // for dynamic proxies
+    void addPackage(Module m, String pkg);
 }

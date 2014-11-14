@@ -134,10 +134,9 @@ public interface JavaLangAccess {
     void invokeFinalize(Object o) throws Throwable;
 
     /**
-     * Returns the ModuleCatalog for modules associated with the given
-     * class loader.
+     * Returns the ServicesCatalog for the given class loader.
      */
-    ModuleCatalog getModuleCatalog(ClassLoader cl);
+    ServicesCatalog getServicesCatalog(ClassLoader cl);
 
     /**
      * Invokes Long.formatUnsignedLong(long val, int shift, char[] buf, int offset, int len)

@@ -54,4 +54,4 @@ TOOL_GENMODULESXML := $(BUILD_JAVA) -esa -ea -cp $(JDK_OUTPUTDIR)/btclasses \
     build.tools.module.GenerateModulesXml
 
 TOOL_MODULESUMMARY := $(BUILD_JAVA) -esa -ea -cp $(JDK_OUTPUTDIR)/btclasses \
-    -XX:-UseModuleBoundaries build.tools.module.ModuleSummary
+    -XX:-UseModules build.tools.module.ModuleSummary

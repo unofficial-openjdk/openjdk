@@ -54,10 +54,6 @@ mkdir mlib
 $JLINK --format jmod --class-path mods/test --mid test@1.0 --main-class jdk.test.Test \
     --output mlib/test@1.0.jmod
 
-# legacy image
-$JLINK --module-path $TESTJAVA/../jmods:mlib --mods test --format image --output myimage
-myimage/bin/test a b c
-
 # jimage
 $JLINK --module-path $TESTJAVA/../jmods:mlib --mods test --format jimage --output myjimage
 myjimage/bin/test 1 2 3

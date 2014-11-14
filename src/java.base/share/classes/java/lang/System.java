@@ -38,7 +38,7 @@ import java.security.AllPermission;
 import java.nio.channels.Channel;
 import java.nio.channels.spi.SelectorProvider;
 import sun.nio.ch.Interruptible;
-import sun.misc.ModuleCatalog;
+import sun.misc.ServicesCatalog;
 import sun.reflect.CallerSensitive;
 import sun.reflect.Reflection;
 import sun.security.util.SecurityConstants;
@@ -1264,8 +1264,8 @@ public final class System {
             public void invokeFinalize(Object o) throws Throwable {
                 o.finalize();
             }
-            public ModuleCatalog getModuleCatalog(ClassLoader cl) {
-                return cl.getModuleCatalog();
+            public ServicesCatalog getServicesCatalog(ClassLoader cl) {
+                return cl.getServicesCatalog();
             }
             public void formatUnsignedLong(long val, int shift, char[] buf, int offset, int len) {
                 Long.formatUnsignedLong(val, shift, buf, offset, len);

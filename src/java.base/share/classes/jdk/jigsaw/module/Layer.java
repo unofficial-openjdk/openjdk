@@ -118,13 +118,13 @@ public final class Layer {
                 String pkg = export.pkg();
                 String permit = export.permit();
                 if (permit == null) {
-                    reflectAccess.addExport(m, pkg, null);
+                    reflectAccess.addExports(m, pkg, null);
                 } else {
                     // only export to modules that are in this layer
                     // (no forward references)
                     Module m2 = map.get(permit);
                     if (m2 != null)
-                        reflectAccess.addExport(m, pkg, m2);
+                        reflectAccess.addExports(m, pkg, m2);
                 }
             }
 

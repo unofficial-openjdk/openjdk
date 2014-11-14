@@ -57,7 +57,6 @@ import java.util.HashMap;
 import java.util.Objects;
 import java.util.StringJoiner;
 import sun.misc.Unsafe;
-import sun.misc.ModuleCatalog;
 import sun.reflect.CallerSensitive;
 import sun.reflect.ConstantPool;
 import sun.reflect.Reflection;
@@ -697,32 +696,14 @@ public final class Class<T> implements java.io.Serializable,
      * @since 1.9
      */
     public Module getModule() {
-        // implementation will be replaced (and ModuleCatalog will go away)
-        // once the VM support is further along.
-        Module m = module;
-        if (m == null && Reflection.modulesInitialized()) {
-            ClassLoader cl = getClassLoader0();
-            String name = getName();
-            int i = name.lastIndexOf('.');
-            if (i != -1) {
-                int start = name.startsWith("[L") ? 2 : 0;
-                String pkg = name.substring(start, i);
-                ModuleCatalog catalog;
-                if (cl == null) {
-                    catalog = ModuleCatalog.getSystemModuleCatalog();
-                } else {
-                    catalog = cl.getModuleCatalog();
-                }
-                m = catalog.getModule(pkg);
-            }
-            if (m == null)
-                m = ModuleCatalog.UNNAMED_MODULE;
-            module = m;
-        }
-        return (m != ModuleCatalog.UNNAMED_MODULE) ? m : null;
+        // this.module may be non-null when running with -XX:-UseModules so
+        // we have to call JVM_GetModule each time to get the right answer.
+        // This will be changed in the future to "return module".
+        return getModule0();
     }
 
-    private transient Module module;  // cached, no need to be volatile
+    private transient Module module;  // no need to be volatile
+    private native Module getModule0();
 
     // Initialized in JVM not by private constructor
     private final ClassLoader classLoader;

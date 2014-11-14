@@ -39,7 +39,7 @@ import java.security.PrivilegedAction;
 
 import sun.misc.JavaLangAccess;
 import sun.misc.JavaLangReflectAccess;
-import sun.misc.ModuleCatalog;
+import sun.misc.ServicesCatalog;
 import sun.misc.SharedSecrets;
 import sun.reflect.CallerSensitive;
 import sun.reflect.Reflection;
@@ -498,11 +498,11 @@ public final class ServiceLoader<S>
 
         // returns the services Iterator for the given class loader
         private Iterator<String> iteratorFor(ClassLoader loader) {
-            ModuleCatalog catalog;
+            ServicesCatalog catalog;
             if (currentLoader == null) {
-                catalog = ModuleCatalog.getSystemModuleCatalog();
+                catalog = ServicesCatalog.getSystemServicesCatalog();
             } else {
-                catalog = langAccess.getModuleCatalog(currentLoader);
+                catalog = langAccess.getServicesCatalog(currentLoader);
             }
             return catalog.findServices(service.getName()).iterator();
         }

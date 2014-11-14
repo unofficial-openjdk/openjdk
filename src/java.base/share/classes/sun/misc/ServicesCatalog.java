@@ -34,75 +34,45 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
- * A module catalog to support {@link Class#getModule}. Each {@code
- * ClassLoader} has an associated {@code ModuleCatalog} for modules that
- * are associated with that class loader. This class will go away once the
- * VM support for modules is further along.
+ * A services catalog. Each {@code ClassLoader} has an optional {@code
+ * ServicesCatalog} for modules that provide services.
  *
- * @implNote The ModuleCatalog for the null class loader is defined here
+ * @implNote The ServicesCatalog for the null class loader is defined here
  * rather than java.lang.ClassLoader to avoid early initialization.
  */
-public class ModuleCatalog {
+public class ServicesCatalog {
 
-    // ModuleCatalog for the null class loader
-    private static final ModuleCatalog SYSTEM_MODULE_CATALOG = new ModuleCatalog();
+    // ServiceCatalog for the null class loader
+    private static final ServicesCatalog SYSTEM_SERVICES_CATALOG = new ServicesCatalog();
 
-    // the unnamed modules, should not be leaked
-    public static final Module UNNAMED_MODULE =
-        SharedSecrets.getJavaLangReflectAccess().defineUnnamedModule();
-
-    // use RW locks as defineModule is rare
+    // use RW locks as register is rare
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
     private final Lock readLock = lock.readLock();
     private final Lock writeLock = lock.writeLock();
-
-    // used to ensure that duplicate module or contents cannot be defined
-    private final Set<String> moduleNames = new HashSet<>();
-    private final Set<String> modulePackages = new HashSet<>();
-
-    // maps package name to module
-    private final Map<String, Module> packageToModule = new HashMap<>();
 
     // service providers
     private final Map<String, Set<String>> loaderServices = new HashMap<>();
 
     /**
-     * Returns the ModuleCatalog for modules associated with the boot class loader.
+     * Returns the ServiceCatalog for modules associated with the boot class loader.
      */
-    public static ModuleCatalog getSystemModuleCatalog() {
-        return SYSTEM_MODULE_CATALOG;
+    public static ServicesCatalog getSystemServicesCatalog() {
+        return SYSTEM_SERVICES_CATALOG;
     }
 
     /**
      * Creates a new module catalog.
      */
-    public ModuleCatalog() { }
+    public ServicesCatalog() { }
 
     /**
      * Registers the module in this module catalog.
      */
     public void register(Module m) {
         ModuleDescriptor descriptor = m.descriptor();
-        String name = descriptor.name();
-        Set<String> packages = m.packages();
 
         writeLock.lock();
         try {
-            // validation
-            if (moduleNames.contains(name))
-                throw new Error("Module " + name + " already associated with class loader");
-            for (String pkg: packages) {
-                if (pkg.isEmpty())
-                    throw new Error("A module cannot include the <unnamed> package");
-                if (modulePackages.contains(pkg))
-                    throw new Error(pkg + " already defined by another module");
-            }
-
-            // update module catalog
-            moduleNames.add(name);
-            modulePackages.addAll(packages);
-            packages.forEach(p -> packageToModule.put(p, m));
-
             // extend the services map
             for (Map.Entry<String, Set<String>> entry: descriptor.services().entrySet()) {
                 String service = entry.getKey();
@@ -122,19 +92,6 @@ public class ModuleCatalog {
 
         } finally {
             writeLock.unlock();
-        }
-    }
-
-    /**
-     * Returns the module that the given API package is defined in, {@code null} if
-     * not defined in any module in this catalog.
-     */
-    public Module getModule(String pkg) {
-        readLock.lock();
-        try {
-            return packageToModule.get(pkg);
-        } finally {
-            readLock.unlock();
         }
     }
 

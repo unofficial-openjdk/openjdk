@@ -25,7 +25,6 @@
 
 package java.lang.reflect;
 
-import java.security.Permission;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -37,13 +36,10 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
-import jdk.jigsaw.module.Layer;
-import jdk.jigsaw.module.ModuleArtifact;
 import jdk.jigsaw.module.ModuleDescriptor;
 import jdk.jigsaw.module.ServiceDependence;
 
-import sun.misc.JavaLangAccess;
-import sun.misc.ModuleCatalog;
+import sun.misc.ServicesCatalog;
 import sun.misc.SharedSecrets;
 
 /**
@@ -65,17 +61,11 @@ import sun.misc.SharedSecrets;
  */
 public final class Module {
 
-    private static final JavaLangAccess langAccess =
-        SharedSecrets.getJavaLangAccess();
+    // no <clinit> as this class is initialized very early in the startup
 
-    private static final Permission ADD_READS_PERMISSION =
-        new ReflectPermission("addReadsModule");
-
+    // module name and loader
     private final String name;
     private final ClassLoader loader;
-
-    // handle to module in VM, this will go away
-    private final long handle;
 
     // initialized lazily for modules defined by VM during bootstrapping
     private volatile ModuleDescriptor descriptor;
@@ -100,44 +90,45 @@ public final class Module {
     Module(ClassLoader loader, String name) {
         this.loader = loader;
         this.name = name;
-        this.handle = 0L;
     }
 
-    Module(ClassLoader loader, ModuleDescriptor descriptor, Set<String> packages) {
-        this.name = descriptor.name();
-        this.loader = loader;
-        this.descriptor = descriptor;
-        this.packages = packages;
-        this.handle = sun.misc.VM.defineModule(name,
-                                               loader,
-                                               packages.toArray(new String[0]));
+    static Module defineModule(ClassLoader loader,
+                               ModuleDescriptor descriptor,
+                               Set<String> packages)
+    {
+        Module m;
 
-        // register this Module in the loader's catalog - this will go away
-        // once the Class#getModule has an implementation in the VM
-        ModuleCatalog catalog;
-        if (loader == null) {
-            catalog = ModuleCatalog.getSystemModuleCatalog();
+        // define modules, except java.base as it is defined by VM
+        if (loader == null && descriptor.name().equals("java.base")) {
+            m = Object.class.getModule();
+            assert m != null;
         } else {
-            catalog = langAccess.getModuleCatalog(loader);
+            int n = packages.size();
+            String[] array = new String[n];
+            int i = 0;
+            for (String pkg: packages) {
+                array[i++] = pkg.replace('.', '/');
+            }
+            m = sun.misc.VM.defineModule(descriptor.name(), loader, array);
         }
-        catalog.register(this);
-    }
 
-    /**
-     * Initialize descriptor and packages for modules that are defined during
-     * VM bootstrapping.
-     */
-    private void postBootInit() {
-        Layer bootLayer = Layer.bootLayer();
-        if (bootLayer == null)
-            throw new InternalError("boot layer not set");
+        // set fields as these are not set by the VM
+        m.descriptor = descriptor;
+        m.packages = packages;
 
-        ModuleArtifact artifact = bootLayer.configuration().findArtifact(name);
-        if (artifact == null)
-            throw new InternalError("boot layer does not include: " + name);
+        // register this Module in the service catalog if it provides services
+        Map<String, Set<String>> services = descriptor.services();
+        if (!services.isEmpty()) {
+            ServicesCatalog catalog;
+            if (loader == null) {
+                catalog = ServicesCatalog.getSystemServicesCatalog();
+            } else {
+                catalog = SharedSecrets.getJavaLangAccess().getServicesCatalog(loader);
+            }
+            catalog.register(m);
+        }
 
-        this.descriptor = artifact.descriptor();
-        this.packages = artifact.packages();
+        return m;
     }
 
     /**
@@ -159,10 +150,7 @@ public final class Module {
      */
     public ModuleDescriptor descriptor() {
         ModuleDescriptor descriptor = this.descriptor;
-        if (descriptor == null) {
-            postBootInit();
-            descriptor = this.descriptor;
-        }
+        assert descriptor != null;
         return descriptor;
     }
 
@@ -170,24 +158,25 @@ public final class Module {
      * Returns the set of packages that this module includes.
      */
     public Set<String> packages() {
-        if (descriptor == null)
-            postBootInit();
+        Set<String> packages = this.packages;
+        assert packages != null;
         return packages;
     }
 
     /**
      * Makes the given {@code Module} readable to this module. This method
      * is no-op if {@code target} is {@code null} (all modules can read the
-     * unanmed module).
+     * unnanmed module).
      *
      * @throws SecurityException if denied by the security manager
      */
     public void addReads(Module target) {
         if (target != null) {
             SecurityManager sm = System.getSecurityManager();
-            if (sm != null)
-                sm.checkPermission(ADD_READS_PERMISSION);
-
+            if (sm != null) {
+                ReflectPermission perm = new ReflectPermission("addReadsModule");
+                sm.checkPermission(perm);
+            }
             implAddReads(target);
         }
     }
@@ -195,7 +184,7 @@ public final class Module {
     void implAddReads(Module target) {
         writeLock.lock();
         try {
-            sun.misc.VM.addReadsModule(this.handle, target.handle);
+            sun.misc.VM.addReadsModule(this, target);
             reads.put(target, Boolean.TRUE);
         } finally {
             writeLock.unlock();
@@ -205,8 +194,7 @@ public final class Module {
     void implAddExports(String pkg, Module who) {
         writeLock.lock();
         try {
-            long h2 = (who != null) ? who.handle : 0L;
-            sun.misc.VM.addExports(this.handle, pkg, h2);
+            sun.misc.VM.addModuleExports(this, pkg.replace('.', '/'), who);
             Set<Module> permits = exports.computeIfAbsent(pkg, k -> new HashSet<>());
             if (who != null)
                 permits.add(who);
@@ -283,6 +271,17 @@ public final class Module {
     private volatile Set<String> uses;
 
     /**
+     * Dynamically adds a package to this module. This is used for dyanmic
+     * proxies.
+     */
+    void addPackage(String pkg) {
+        sun.misc.VM.addModulePackage(this, pkg.replace('.', '/'));
+        Set<String> pkgs = new HashSet<>(this.packages);
+        pkgs.add(pkg);
+        this.packages = Collections.unmodifiableSet(pkgs);
+    }
+
+    /**
      * Return the string representation of the module.
      */
     public String toString() {
@@ -293,14 +292,10 @@ public final class Module {
         sun.misc.SharedSecrets.setJavaLangReflectAccess(
             new sun.misc.JavaLangReflectAccess() {
                 @Override
-                public Module defineUnnamedModule() {
-                    return new Module(null, "<unnamed>");
-                }
-                @Override
                 public Module defineModule(ClassLoader loader,
                                            ModuleDescriptor descriptor,
                                            Set<String> packages) {
-                    return new Module(loader, descriptor, packages);
+                    return Module.defineModule(loader, descriptor, packages);
                 }
                 @Override
                 public void setDefined(Module m) {
@@ -311,7 +306,7 @@ public final class Module {
                    m1.implAddReads(m2);
                 }
                 @Override
-                public void addExport(Module m, String pkg, Module who) {
+                public void addExports(Module m, String pkg, Module who) {
                     m.implAddExports(pkg, who);
                 }
                 @Override
@@ -330,6 +325,10 @@ public final class Module {
                     } else {
                         return provides;
                     }
+                }
+                @Override
+                public void addPackage(Module m, String pkg) {
+                    m.addPackage(pkg);
                 }
             });
     }

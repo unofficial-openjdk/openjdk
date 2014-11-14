@@ -51,8 +51,8 @@ import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
 
 import sun.misc.CompoundEnumeration;
-import sun.misc.ModuleCatalog;
 import sun.misc.Resource;
+import sun.misc.ServicesCatalog;
 import sun.misc.URLClassPath;
 import sun.misc.Unsafe;
 import sun.reflect.CallerSensitive;
@@ -2176,32 +2176,32 @@ public abstract class ClassLoader {
 
 
     /**
-     * Returns the ModuleCatalog for modules associated with this class loader.
+     * Returns the ServiceCatalog for modules associated with this class loader.
      * The ModuleCatalog is created automatically on first usage.
      */
-    ModuleCatalog getModuleCatalog() {
-        ModuleCatalog catalog = moduleCatalog;
+    ServicesCatalog getServicesCatalog() {
+        ServicesCatalog catalog = servicesCatalog;
         if (catalog == null) {
-            catalog = new ModuleCatalog();
+            catalog = new ServicesCatalog();
             Unsafe unsafe = Unsafe.getUnsafe();
             Class<?> k = ClassLoader.class;
             long offset;
             try {
-                offset = unsafe.objectFieldOffset(k.getDeclaredField("moduleCatalog"));
+                offset = unsafe.objectFieldOffset(k.getDeclaredField("servicesCatalog"));
             } catch (NoSuchFieldException e) {
                 throw new InternalError(e);
             }
             boolean set = unsafe.compareAndSwapObject(this, offset, null, catalog);
             if (!set) {
                 // beaten by someone else
-                catalog = moduleCatalog;
+                catalog = servicesCatalog;
             }
         }
         return catalog;
     }
 
-    // the ModuleCatalog for modules associated with this class loader.
-    private volatile ModuleCatalog moduleCatalog;
+    // the ServiceCatalog for modules associated with this class loader.
+    private volatile ServicesCatalog servicesCatalog;
 }
 
 
