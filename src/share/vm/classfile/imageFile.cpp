@@ -24,29 +24,12 @@
 
 #include "precompiled.hpp"
 #include "classfile/imageFile.hpp"
-
-#ifdef TARGET_OS_FAMILY_linux
-# include "os_linux.inline.hpp"
-#endif
-#ifdef TARGET_OS_FAMILY_solaris
-# include "os_solaris.inline.hpp"
-#endif
-#ifdef TARGET_OS_FAMILY_windows
-# include "os_windows.inline.hpp"
-#endif
-#ifdef TARGET_OS_FAMILY_aix
-# include "os_aix.inline.hpp"
-#endif
-#ifdef TARGET_OS_FAMILY_bsd
-# include "os_bsd.inline.hpp"
-#endif
-
-#include "runtime/mutex.hpp"
+#include "runtime/os.inline.hpp"
 #include "utilities/bytes.hpp"
 
 
 // Compute the Perfect Hashing hash code for the supplied string.
-u4 ImageStrings::hashCode(const char* string, u4 seed) {
+u4 ImageStrings::hash_code(const char* string, u4 seed) {
   u1* bytes = (u1*)string;
 
   // Ensure better uniformity.
@@ -65,7 +48,7 @@ u4 ImageStrings::hashCode(const char* string, u4 seed) {
 
 // Test to see if string begins with start.  If so returns remaining portion
 // of string.  Otherwise, NULL.
-const char* ImageStrings::startsWith(const char* string, const char* start) {
+const char* ImageStrings::starts_with(const char* string, const char* start) {
   char ch1, ch2;
 
   // Match up the strings the best we can.
@@ -88,10 +71,10 @@ ImageLocation::ImageLocation(u1* data) {
   u1 byte;
 
   while ((byte = *data) != ATTRIBUTE_END) {
-    u1 kind = attributeKind(byte);
-    u1 n = attributeLength(byte);
+    u1 kind = attribute_kind(byte);
+    u1 n = attribute_length(byte);
     assert(kind < ATTRIBUTE_COUNT, "invalid image location attribute");
-    _attributes[kind] = attributeValue(data + 1, n);
+    _attributes[kind] = attribute_value(data + 1, n);
     data += n + 1;
   }
 }
@@ -103,8 +86,8 @@ ImageFile::ImageFile(const char* name) {
 
   // Initialize for a closed file.
   _fd = -1;
-  _memoryMapped = true;
-  _indexData = NULL;
+  _memory_mapped = true;
+  _index_data = NULL;
 }
 
 ImageFile::~ImageFile() {
@@ -125,30 +108,30 @@ bool ImageFile::open() {
   }
 
   // Read image file header and verify.
-  u8 headerSize = sizeof(ImageHeader);
-  if (os::read(_fd, &_header, headerSize) != headerSize ||
+  u8 header_size = sizeof(ImageHeader);
+  if (os::read(_fd, &_header, header_size) != header_size ||
     _header._magic != IMAGE_MAGIC ||
-    _header._majorVersion != MAJOR_VERSION ||
-    _header._minorVersion != MINOR_VERSION) {
+    _header._major_version != MAJOR_VERSION ||
+    _header._minor_version != MINOR_VERSION) {
     close();
     return false;
   }
 
   // Memory map index.
-  _indexSize = indexSize();
-  _indexData = (u1*)os::map_memory(_fd, _name, 0, NULL, _indexSize, true, false);
+  _index_size = index_size();
+  _index_data = (u1*)os::map_memory(_fd, _name, 0, NULL, _index_size, true, false);
 
   // Failing that, read index into C memory.
-  if (_indexData == NULL) {
-    _memoryMapped = false;
-    _indexData = NEW_RESOURCE_ARRAY(u1, _indexSize);
+  if (_index_data == NULL) {
+    _memory_mapped = false;
+    _index_data = NEW_RESOURCE_ARRAY(u1, _index_size);
 
     if (os::seek_to_file_offset(_fd, 0) == -1) {
       close();
       return false;
     }
 
-    if (os::read(_fd, _indexData, _indexSize) != _indexSize) {
+    if (os::read(_fd, _index_data, _index_size) != _index_size) {
       close();
       return false;
     }
@@ -160,10 +143,10 @@ bool ImageFile::open() {
 #undef nextPtr
 #define nextPtr(base, fromType, count, toType) (toType*)((fromType*)(base) + (count))
   // Pull tables out from the index.
-  _redirectTable = nextPtr(_indexData, u1, headerSize, s4);
-  _offsetsTable = nextPtr(_redirectTable, s4, _header._locationCount, u4);
-  _locationBytes = nextPtr(_offsetsTable, u4, _header._locationCount, u1);
-  _stringBytes = nextPtr(_locationBytes, u1, _header._locationsSize, u1);
+  _redirect_table = nextPtr(_index_data, u1, header_size, s4);
+  _offsets_table = nextPtr(_redirect_table, s4, _header._location_count, u4);
+  _location_bytes = nextPtr(_offsets_table, u4, _header._location_count, u1);
+  _string_bytes = nextPtr(_location_bytes, u1, _header._locations_size, u1);
 #undef nextPtr
 
   // Successful open.
@@ -172,14 +155,14 @@ bool ImageFile::open() {
 
 void ImageFile::close() {
   // Dealllocate the index.
-  if (_indexData) {
-    if (_memoryMapped) {
-      os::unmap_memory((char*)_indexData, _indexSize);
+  if (_index_data) {
+    if (_memory_mapped) {
+      os::unmap_memory((char*)_index_data, _index_size);
     } else {
-      FREE_RESOURCE_ARRAY(u1, _indexData, _indexSize);
+      FREE_RESOURCE_ARRAY(u1, _index_data, _index_size);
     }
 
-    _indexData = NULL;
+    _index_data = NULL;
   }
 
   // close file.
@@ -191,10 +174,10 @@ void ImageFile::close() {
 }
 
 // Return the attribute stream for a named resourced.
-u1* ImageFile::findLocationData(const char* name) const {
+u1* ImageFile::find_location_data(const char* path) const {
   // Compute hash.
-  u4 hash = ImageStrings::hashCode(name) % _header._locationCount;
-  s4 redirect = _redirectTable[hash];
+  u4 hash = ImageStrings::hash_code(path) % _header._location_count;
+  s4 redirect = _redirect_table[hash];
 
   if (!redirect) {
     return NULL;
@@ -207,62 +190,62 @@ u1* ImageFile::findLocationData(const char* name) const {
     index = -redirect - 1;
   } else {
     // If collision, recompute hash code.
-    index = ImageStrings::hashCode(name, redirect) % _header._locationCount;
+    index = ImageStrings::hash_code(path, redirect) % _header._location_count;
   }
 
-  assert(index < _header._locationCount, "index exceeds location count");
-  u4 offset = _offsetsTable[index];
-  assert(offset < _header._locationsSize, "offset exceeds location attributes size");
+  assert(index < _header._location_count, "index exceeds location count");
+  u4 offset = _offsets_table[index];
+  assert(offset < _header._locations_size, "offset exceeds location attributes size");
 
-  return _locationBytes + offset;
+  return _location_bytes + offset;
 }
 
-// Verify that a found location matches the supplied path name.
-bool ImageFile::verifyLocation(ImageLocation& location, const char* name) const {
+// Verify that a found location matches the supplied path.
+bool ImageFile::verify_location(ImageLocation& location, const char* path) const {
   // Retrieve each path component string.
-  ImageStrings strings(_stringBytes, _header._stringsSize);
+  ImageStrings strings(_string_bytes, _header._strings_size);
   // Match a path with each subcomponent without concatenation (copy).
   // Match up path parent.
-  const char* parent = location.getAttribute(ImageLocation::ATTRIBUTE_PARENT, strings);
-  const char* next = ImageStrings::startsWith(name, parent);
+  const char* parent = location.get_attribute(ImageLocation::ATTRIBUTE_PARENT, strings);
+  const char* next = ImageStrings::starts_with(path, parent);
   // Continue only if a complete match.
   if (!next) return false;
   // Match up path base.
-  const char* base = location.getAttribute(ImageLocation::ATTRIBUTE_BASE, strings);
-  next = ImageStrings::startsWith(next, base);
+  const char* base = location.get_attribute(ImageLocation::ATTRIBUTE_BASE, strings);
+  next = ImageStrings::starts_with(next, base);
   // Continue only if a complete match.
   if (!next) return false;
   // Match up path extension.
-  const char* extension = location.getAttribute(ImageLocation::ATTRIBUTE_EXTENSION, strings);
-  next = ImageStrings::startsWith(next, extension);
+  const char* extension = location.get_attribute(ImageLocation::ATTRIBUTE_EXTENSION, strings);
+  next = ImageStrings::starts_with(next, extension);
 
   // True only if complete match and no more characters.
   return next && *next == '\0';
 }
 
 // Return the resource for the supplied location.
-u1* ImageFile::getResource(ImageLocation& location) const {
+u1* ImageFile::get_resource(ImageLocation& location) const {
   // Retrieve the byte offset and size of the resource.
-  u8 offset = _indexSize + location.getAttribute(ImageLocation::ATTRIBUTE_OFFSET);
-  u8 size = location.getAttribute(ImageLocation::ATTRIBUTE_UNCOMPRESSED);
-  u8 compressedSize = location.getAttribute(ImageLocation::ATTRIBUTE_COMPRESSED);
-  u8 readSize = compressedSize ? compressedSize : size;
+  u8 offset = _index_size + location.get_attribute(ImageLocation::ATTRIBUTE_OFFSET);
+  u8 size = location.get_attribute(ImageLocation::ATTRIBUTE_UNCOMPRESSED);
+  u8 compressed_size = location.get_attribute(ImageLocation::ATTRIBUTE_COMPRESSED);
+  u8 read_size = compressed_size ? compressed_size : size;
 
   // Allocate space for the resource.
-  u1* data = NEW_RESOURCE_ARRAY(u1, readSize);
+  u1* data = NEW_RESOURCE_ARRAY(u1, read_size);
 
-  bool isRead = os::read_at(_fd, data, readSize, offset) == readSize;
-  guarantee(isRead, "error reading from image or short read");
+  bool is_read = os::read_at(_fd, data, read_size, offset) == read_size;
+  guarantee(is_read, "error reading from image or short read");
 
   // If not compressed, just return the data.
-  if (!compressedSize) {
+  if (!compressed_size) {
     return data;
   }
 
   u1* uncompressed = NEW_RESOURCE_ARRAY(u1, size);
   char* msg = NULL;
-  jboolean res = ClassLoader::decompress(data, compressedSize, uncompressed, size, &msg);
-  FREE_RESOURCE_ARRAY(u1, data, readSize);
+  jboolean res = ClassLoader::decompress(data, compressed_size, uncompressed, size, &msg);
+  FREE_RESOURCE_ARRAY(u1, data, read_size);
   if (!res) {
       FREE_RESOURCE_ARRAY(u1, uncompressed, size);
       warning("compression failed due to %s\n", msg);
@@ -272,36 +255,30 @@ u1* ImageFile::getResource(ImageLocation& location) const {
   return uncompressed;
 }
 
-void ImageFile::getResource(const char* name, u1*& buffer, u8& size) const {
+void ImageFile::get_resource(const char* path, u1*& buffer, u8& size) const {
   buffer = NULL;
   size = 0;
-  u1* data = findLocationData(name);
+  u1* data = find_location_data(path);
   if (data) {
     ImageLocation location(data);
-    if (verifyLocation(location, name)) {
-      size = location.getAttribute(ImageLocation::ATTRIBUTE_UNCOMPRESSED);
-      buffer = getResource(location);
+    if (verify_location(location, path)) {
+      size = location.get_attribute(ImageLocation::ATTRIBUTE_UNCOMPRESSED);
+      buffer = get_resource(location);
     }
   }
 }
 
 GrowableArray<const char*>* ImageFile::packages(const char* name) {
   char entry[JVM_MAXPATHLEN];
-  if (jio_snprintf(entry, sizeof(entry), "%s/packages.offsets", name) == -1) {
-    return NULL;
-  }
+  bool overflow = jio_snprintf(entry, sizeof(entry), "%s/packages.offsets", name) == -1;
+  guarantee(!overflow, "package name overflow");
 
   u1* buffer;
   u8 size;
 
-  getResource(entry, buffer, size);
-
-  if (!buffer) {
-    tty->print_cr("ERROR: %s\n", entry);
-    return NULL;
-  }
-
-  ImageStrings strings(_stringBytes, _header._stringsSize);
+  get_resource(entry, buffer, size);
+  guarantee(buffer, "missing module packages reource");
+  ImageStrings strings(_string_bytes, _header._strings_size);
   GrowableArray<const char*>* pkgs = new GrowableArray<const char*>();
   int count = size / 4;
   for (int i = 0; i < count; i++) {

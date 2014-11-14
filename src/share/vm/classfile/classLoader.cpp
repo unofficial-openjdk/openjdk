@@ -575,7 +575,7 @@ const char* ClassPathImageEntry::name() {
 ClassFileStream* ClassPathImageEntry::open_stream(const char* name, TRAPS) {
   u1* buffer;
   u8 size;
-  _image->getResource(name, buffer, size);
+  _image->get_resource(name, buffer, size);
 
   if (buffer) {
     if (UsePerfData) {
@@ -591,14 +591,14 @@ ClassFileStream* ClassPathImageEntry::open_stream(const char* name, TRAPS) {
 void ClassPathImageEntry::compile_the_world(Handle loader, TRAPS) {
   tty->print_cr("CompileTheWorld : Compiling all classes in %s", name());
   tty->cr();
-  const ImageStrings strings = _image->getStrings();
+  const ImageStrings strings = _image->get_strings();
   // Retrieve each path component string.
-  u4 count = _image->getLocationCount();
+  u4 count = _image->get_location_count();
   for (u4 i = 0; i < count; i++) {
-    ImageLocation location(_image->getLocationData(i));
-    const char* parent = location.getAttribute(ImageLocation::ATTRIBUTE_PARENT, strings);
-    const char* base = location.getAttribute(ImageLocation::ATTRIBUTE_BASE, strings);
-    const char* extension = location.getAttribute(ImageLocation::ATTRIBUTE_EXTENSION, strings);
+    ImageLocation location(_image->get_location_data(i));
+    const char* parent = location.get_attribute(ImageLocation::ATTRIBUTE_PARENT, strings);
+    const char* base = location.get_attribute(ImageLocation::ATTRIBUTE_BASE, strings);
+    const char* extension = location.get_attribute(ImageLocation::ATTRIBUTE_EXTENSION, strings);
     assert((strlen(parent) + strlen(base) + strlen(extension)) < JVM_MAXPATHLEN, "path exceeds buffer");
     char path[JVM_MAXPATHLEN];
     strcpy(path, parent);

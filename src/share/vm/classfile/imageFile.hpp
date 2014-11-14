@@ -150,17 +150,17 @@ public:
   }
 
   // Compute the Perfect Hashing hash code for the supplied string.
-  inline static u4 hashCode(const char* string) {
-    return hashCode(string, HASH_MULTIPLIER);
+  inline static u4 hash_code(const char* string) {
+    return hash_code(string, HASH_MULTIPLIER);
   }
 
   // Compute the Perfect Hashing hash code for the supplied string, starting at seed.
-  static u4 hashCode(const char* string, u4 seed);
+  static u4 hash_code(const char* string, u4 seed);
 
   // Test to see if string begins with start.  If so returns remaining portion
   // of string.  Otherwise, NULL.  Used to test sections of a path without
   // copying.
-  static const char* startsWith(const char* string, const char* start);
+  static const char* starts_with(const char* string, const char* start);
 
 };
 
@@ -215,19 +215,19 @@ private:
   u8 _attributes[ATTRIBUTE_COUNT];
 
   // Return the attribute value number of bytes.
-  inline static u1 attributeLength(u1 data) {
+  inline static u1 attribute_length(u1 data) {
     return (data & 0x7) + 1;
   }
 
   // Return the attribute kind.
-  inline static u1 attributeKind(u1 data) {
+  inline static u1 attribute_kind(u1 data) {
     u1 kind = data >> 3;
     assert(kind < ATTRIBUTE_COUNT, "invalid attribute kind");
     return kind;
   }
 
   // Return the attribute length.
-  inline static u8 attributeValue(u1* data, u1 n) {
+  inline static u8 attribute_value(u1* data, u1 n) {
     assert(0 < n && n <= 8, "invalid attribute value length");
     u8 value = 0;
 
@@ -244,14 +244,14 @@ public:
   ImageLocation(u1* data);
 
   // Retrieve an attribute value from the inflated array.
-  inline u8 getAttribute(u1 kind) const {
+  inline u8 get_attribute(u1 kind) const {
     assert(ATTRIBUTE_END < kind && kind < ATTRIBUTE_COUNT, "invalid attribute kind");
     return _attributes[kind];
   }
 
   // Retrieve an attribute string value from the inflated array.
-  inline const char* getAttribute(u4 kind, const ImageStrings& strings) const {
-    return strings.get((u4)getAttribute(kind));
+  inline const char* get_attribute(u4 kind, const ImageStrings& strings) const {
+    return strings.get((u4)get_attribute(kind));
   }
 };
 
@@ -266,31 +266,31 @@ private:
   static const u2 MINOR_VERSION = 1;
 
   struct ImageHeader {
-    u4 _magic;         // Image file marker
-    u2 _majorVersion;  // Image file major version number
-    u2 _minorVersion;  // Image file minor version number
-    u4 _locationCount; // Number of locations managed in index.
-    u4 _locationsSize; // Number of bytes in attribute table.
-    u4 _stringsSize;   // Number of bytes in string table.
+    u4 _magic;          // Image file marker
+    u2 _major_version;  // Image file major version number
+    u2 _minor_version;  // Image file minor version number
+    u4 _location_count; // Number of locations managed in index.
+    u4 _locations_size; // Number of bytes in attribute table.
+    u4 _strings_size;   // Number of bytes in string table.
   };
 
-  char* _name;         // Name of image
-  int _fd;             // File descriptor
-  bool _memoryMapped;  // Is file memory mapped
-  ImageHeader _header; // Image header
-  u8 _indexSize;       // Total size of index
-  u1* _indexData;      // Raw index data
-  s4* _redirectTable;  // Perfect hash redirect table
-  u4* _offsetsTable;   // Location offset table
-  u1* _locationBytes;  // Location attributes
-  u1* _stringBytes;    // String table
+  char* _name;          // Name of image
+  int _fd;              // File descriptor
+  bool _memory_mapped;  // Is file memory mapped
+  ImageHeader _header;  // Image header
+  u8 _index_size;       // Total size of index
+  u1* _index_data;      // Raw index data
+  s4* _redirect_table;  // Perfect hash redirect table
+  u4* _offsets_table;   // Location offset table
+  u1* _location_bytes;  // Location attributes
+  u1* _string_bytes;    // String table
 
   // Compute number of bytes in image file index.
-  inline u8 indexSize() {
+  inline u8 index_size() {
     return sizeof(ImageHeader) +
-    _header._locationCount * sizeof(u4) * 2 +
-    _header._locationsSize +
-    _header._stringsSize;
+    _header._location_count * sizeof(u4) * 2 +
+    _header._locations_size +
+    _header._strings_size;
   }
 
 public:
@@ -308,31 +308,31 @@ public:
   }
 
   // Return a string table accessor.
-  inline const ImageStrings getStrings() const {
-    return ImageStrings(_stringBytes, _header._stringsSize);
+  inline const ImageStrings get_strings() const {
+    return ImageStrings(_string_bytes, _header._strings_size);
   }
 
   // Return number of locations in image file index.
-  inline u4 getLocationCount() const {
-    return _header._locationCount;
+  inline u4 get_location_count() const {
+    return _header._location_count;
   }
 
   // Return location attribute stream for location i.
-  inline u1* getLocationData(u4 i) const {
-    return _locationBytes + _offsetsTable[i];
+  inline u1* get_location_data(u4 i) const {
+    return _location_bytes + _offsets_table[i];
   }
 
   // Return the attribute stream for a named resourced.
-  u1* findLocationData(const char* name) const;
+  u1* find_location_data(const char* path) const;
 
-  // Verify that a found location matches the supplied path name.
-  bool verifyLocation(ImageLocation& location, const char* name) const;
+  // Verify that a found location matches the supplied path.
+  bool verify_location(ImageLocation& location, const char* path) const;
 
   // Return the resource for the supplied location info.
-  u1* getResource(ImageLocation& location) const;
+  u1* get_resource(ImageLocation& location) const;
 
-  // Return the resource associated with the name else NULL if not found.
-  void getResource(const char* name, u1*& buffer, u8& size) const;
+  // Return the resource associated with the path else NULL if not found.
+  void get_resource(const char* path, u1*& buffer, u8& size) const;
 
   // Return an array of packages for a given module
   GrowableArray<const char*>* packages(const char* name);
