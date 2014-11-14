@@ -168,9 +168,10 @@ public class BasicImageReader {
 
     private ByteBuffer getByteBuffer(long offset, long size) throws IOException {
         MappedByteBuffer buffer = preader.channel().map(FileChannel.MapMode.READ_ONLY, offset, size);
-        buffer.order(byteOrder);
-
-        return buffer.asReadOnlyBuffer();
+        // order is not copied into the readonly copy.
+        ByteBuffer readOnly = buffer.asReadOnlyBuffer();
+        readOnly.order(byteOrder);
+        return readOnly;
     }
 
     private int getRedirect(int index) {
@@ -185,7 +186,7 @@ public class BasicImageReader {
         return ImageLocation.readFrom(locationsBuffer, offset, strings);
     }
 
-    String getString(int offset) {
+    public String getString(int offset) {
         return strings.get(offset).toString();
     }
 
@@ -201,5 +202,17 @@ public class BasicImageReader {
                                       indexSize + loc.getContentOffset());
             return ImageFile.Compressor.decompress(buf);
         }
+    }
+
+    public List<String> getNames(byte[] bytes) {
+        IntBuffer buffer = ByteBuffer.wrap(bytes).asIntBuffer();
+        List<String> names = new ArrayList<>();
+
+        while (buffer.hasRemaining()) {
+            int offset = buffer.get();
+            names.add(getString(offset));
+        }
+
+        return names;
     }
 }

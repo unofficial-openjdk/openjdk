@@ -99,7 +99,7 @@ public final class BasicImageWriter {
         this.allIndexStream = new ImageStream();
     }
 
-    int addString(String string) {
+    public int addString(String string) {
         return strings.add(new UTF8String(string));
     }
 

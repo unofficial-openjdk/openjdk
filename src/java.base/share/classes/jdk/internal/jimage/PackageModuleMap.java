@@ -35,11 +35,11 @@ import java.util.Map;
 
 // Utility to read module info from .jimage file.
 
-final class PackageModuleMap {
+public final class PackageModuleMap {
     private PackageModuleMap() {}
 
-    static final String MODULES_ENTRY = "module/modules.offsets";
-    static final String PACKAGES_ENTRY = "packages.offsets";
+    public static final String MODULES_ENTRY = "module/modules.offsets";
+    public static final String PACKAGES_ENTRY = "packages.offsets";
 
     /*
      * Returns a package-to-module map.
@@ -48,23 +48,15 @@ final class PackageModuleMap {
      */
     static Map<String,String> readFrom(ImageReader reader) throws IOException {
         Map<String,String> result = new HashMap<>();
-        ImageLocation loc = reader.findLocation(MODULES_ENTRY);
-        byte[] bytes = reader.getResource(loc);
-        IntBuffer mbufs = ByteBuffer.wrap(bytes).asIntBuffer();
-        List<String> mnames = new ArrayList<>();
-        while (mbufs.hasRemaining()) {
-            int moffset = mbufs.get();
-            mnames.add(reader.getString(moffset));
-        }
+        ImageLocation moduleLocation = reader.findLocation(MODULES_ENTRY);
+        List<String> moduleNames = reader.getNames(reader.getResource(moduleLocation));
 
-        for (String mn : mnames) {
-            ImageLocation mindex = reader.findLocation(mn + "/" + PACKAGES_ENTRY);
-            byte[] poffsets = reader.getResource(mindex);
-            IntBuffer pbufs = ByteBuffer.wrap(poffsets).asIntBuffer();
-            while (pbufs.hasRemaining()) {
-                int poffset = pbufs.get();
-                String pn = reader.getString(poffset);
-                result.put(pn, mn);
+        for (String moduleName : moduleNames) {
+            ImageLocation packageLocation = reader.findLocation(moduleName + "/" + PACKAGES_ENTRY);
+            List<String> packageNames = reader.getNames(reader.getResource(packageLocation));
+
+            for (String packageName : packageNames) {
+                result.put(packageName, moduleName);
             }
         }
         return result;
