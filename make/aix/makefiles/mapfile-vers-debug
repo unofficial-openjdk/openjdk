@@ -245,6 +245,15 @@ SUNWprivate_1.1 {
                 JVM_Yield;
                 JVM_handle_linux_signal;
 
+                # Modules
+                JVM_DefineModule;
+                JVM_AddReadsModule;
+                JVM_AddModuleExports;
+                JVM_CanReadModule;
+                JVM_IsExportedToModule;
+                JVM_GetModule;
+                JVM_AddModulePackage;
+
                 # debug JVM
                 JVM_AccessVMBooleanFlag;
                 JVM_AccessVMIntFlag;

@@ -25,6 +25,7 @@
 #include "precompiled.hpp"
 #include "classfile/classLoader.hpp"
 #include "classfile/javaClasses.hpp"
+#include "classfile/moduleEntry.hpp"
 #include "classfile/systemDictionary.hpp"
 #include "classfile/vmSymbols.hpp"
 #include "code/codeCache.hpp"
@@ -3263,6 +3264,9 @@ void Threads::initialize_java_lang_classes(JavaThread* main_thread, TRAPS) {
   // The VM creates & returns objects of this class. Make sure it's initialized.
   initialize_class(vmSymbols::java_lang_Class(), CHECK);
 
+  // The VM creates objects of this class.
+  initialize_class(vmSymbols::java_lang_reflect_Module(), CHECK);
+
   // The VM preresolves methods to these classes. Make sure that they get initialized
   initialize_class(vmSymbols::java_lang_reflect_Method(), CHECK);
   initialize_class(vmSymbols::java_lang_ref_Finalizer(), CHECK);
@@ -3471,6 +3475,10 @@ jint Threads::create_vm(JavaVMInitArgs* args, bool* canTryAgain) {
 
   initialize_java_lang_classes(main_thread, CHECK_JNI_ERR);
 
+  // Create and patch the java.lang.reflect.Module entry for module java.base
+  // into existing classes.
+  ModuleEntryTable::patch_javabase_entries(CHECK_JNI_ERR);
+
   // We need this for ClassDataSharing - the initial vm.info property is set
   // with the default value of CDS "sharing" which may be reset through
   // command line options.
@@ -3561,7 +3569,7 @@ jint Threads::create_vm(JavaVMInitArgs* args, bool* canTryAgain) {
   initialize_jsr292_core_classes(CHECK_JNI_ERR);
 
   // initialize the module system
-  if (UseModuleBoundaries) {
+  if (UseModules) {
     call_initModuleRuntime(CHECK_JNI_ERR);
   }
 

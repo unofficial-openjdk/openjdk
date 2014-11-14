@@ -2987,9 +2987,7 @@ jint Arguments::parse_each_vm_init_arg(const JavaVMInitArgs* args,
     } else if (match_option(option, "-Xoverride:", &tail)) {
       size_t len = strlen(tail);
       char* dir = NEW_C_HEAP_ARRAY(char, len+16, mtInternal);
-      strcpy(dir, tail);
-      strcat(dir, os::file_separator());
-      strcat(dir, "java.base");
+      sprintf(dir, "%s%sjava.base", tail, os::file_separator());
       scp_p->add_prefix(dir);
       *scp_assembly_required_p = true;
       dir[len] = '\0';
@@ -3665,7 +3663,7 @@ jint Arguments::parse(const JavaVMInitArgs* args) {
       CommandLineFlags::printFlags(tty, false);
       vm_exit(0);
     }
-    if (match_option(option, "-XX:-UseModuleBoundaries", &tail)) {
+    if (match_option(option, "-XX:-UseModules", &tail)) {
       // boot class path needs to be expanded before other argument handling
       os::set_expanded_boot_path();
     }

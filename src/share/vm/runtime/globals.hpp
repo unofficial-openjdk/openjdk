@@ -1293,7 +1293,7 @@ class CommandLineFlags {
           "Decay time (in milliseconds) to re-enable bulk rebiasing of a "  \
           "type after previous bulk rebias")                                \
                                                                             \
-  product(bool, UseModuleBoundaries, true,                                  \
+  product(bool, UseModules, true,                                           \
           "Use access control to enforce module boundaries")                \
                                                                             \
   product(ccstrlist, AddModuleRequires, "",                                 \
@@ -2377,6 +2377,12 @@ class CommandLineFlags {
                                                                             \
   develop(bool, TraceClassLoaderData, false,                                \
           "Trace class loader loader_data lifetime")                        \
+                                                                            \
+  develop(bool, TraceModules, false,                                        \
+          "Trace module creation and lifetime")                             \
+                                                                            \
+  develop(bool, TracePackages, false,                                       \
+          "Trace package creation and lifetime")                            \
                                                                             \
   product(uintx, InitialBootClassLoaderMetaspaceSize,                       \
           NOT_LP64(2200*K) LP64_ONLY(4*M),                                  \

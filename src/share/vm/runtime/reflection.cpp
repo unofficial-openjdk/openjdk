@@ -24,6 +24,8 @@
 
 #include "precompiled.hpp"
 #include "classfile/javaClasses.hpp"
+#include "classfile/moduleEntry.hpp"
+#include "classfile/packageEntry.hpp"
 #include "classfile/stringTable.hpp"
 #include "classfile/systemDictionary.hpp"
 #include "classfile/verifier.hpp"
@@ -40,7 +42,6 @@
 #include "runtime/arguments.hpp"
 #include "runtime/handles.inline.hpp"
 #include "runtime/javaCalls.hpp"
-#include "runtime/module.hpp"
 #include "runtime/reflection.hpp"
 #include "runtime/reflectionUtils.hpp"
 #include "runtime/signature.hpp"
@@ -410,15 +411,6 @@ oop Reflection::array_component_type(oop mirror, TRAPS) {
   return result;
 }
 
-static const char* package_name(Klass* k) {
-  char* name = (char*) k->external_name();
-  char* last = strrchr(name, '.');
-  if (last != NULL) {
-    *last = '\0';
-  }
-  return (last == NULL) ? "" : name;
-}
-
 bool Reflection::verify_class_access(Klass* current_class, Klass* new_class, bool classloader_only) {
   // Verify that current_class can access new_class.  If the classloader_only
   // flag is set, we automatically allow any accesses in which current_class
@@ -436,54 +428,69 @@ bool Reflection::verify_class_access(Klass* current_class, Klass* new_class, boo
 
   // module boundaries
   if (new_class->is_public()) {
-    if (!UseModuleBoundaries)
+    if (!UseModules) {
+      return true;
+    }
+
+    ModuleEntry* module_from = current_class->module();
+    ModuleEntry* module_to = new_class->module();
+
+    // both in same module or unnamed module.
+    if (module_from == module_to)
       return true;
 
-    Module* m1 = Module::module_for(current_class);
-    Module* m2 = Module::module_for(new_class);
-
-    // both in same module or unnamed module
-    if (m1 == m2)
+    // Acceptable access to a type in the unamed module.
+    if (module_to == NULL)
       return true;
 
-    // a type in a module trying to access a type in the unamed module
-    if (m2 == NULL)
-      return true;
-
-    // m1 does not require m2
-    if (m1 != NULL && !m1->requires(m2)) {
+    // Establish readability, check if module_from is allowed to read module_to.
+    if (module_from != NULL && !module_from->can_read(module_to)) {
       if (TraceAccessControlErrors) {
         ResourceMark rm;
         tty->print_cr("Type in module %s (%s) cannot access type in module %s (%s), not readable",
-          m1->name(), current_class->external_name(), m2->name(), new_class->external_name());
+          module_from->name()->as_C_string(), current_class->external_name(),
+          module_to->name()->as_C_string(), new_class->external_name());
       }
       return false;
     }
 
-    // ## FIXME using package name for now
-    ResourceMark rm;
-    const char* pkg = package_name(new_class);
+    PackageEntry* package_to = new_class->package();
+    assert(package_to != NULL, "cannot obtain new_class' package");
 
-    // if requester is in named module then type must be exported
-    // to that module (no permits or m1 is permitted)
-    if (m1 != NULL) {
-      bool okay = m2->is_exported_to_module(pkg, m1);
-      if (!okay && TraceAccessControlErrors) {
-        tty->print_cr("Type in module %s (%s) cannot access type in module %s (%s), not exported",
-          m1->name(), current_class->external_name(), m2->name(), new_class->external_name());
-      }
-      return okay;
+    // Once readability is established, if module_to exports T unqualifically,
+    // (to all modules), than whether module_from is in the unnamed module
+    // or not does not matter, access is allowed.
+    if (package_to->is_unqual_exported()) {
+      return true;
     }
 
-    // requester is in unnamed module, okay if exported without permits
-    if (m2->is_exported_without_permits(pkg))
-      return true;
-
-    // type in unnamed module trying to access a type that is not exported
-    // special (backdoor) access may be setup.
-    int loader_tag = ClassLoader::tag_for(current_class->class_loader());
-    const char* who = package_name(current_class);
-    return m2->has_backdoor_access(pkg, loader_tag, who);
+    if (module_from != NULL) {
+      // Check the case where module_from, the requester, is in a named module.
+      // Access is allowed if both 1 & 2 hold:
+      //   1. Readability, module_from can read module_to (established above).
+      //   2. Either module_to exports T to module_from qualifically.
+      //      or
+      //      module_to exports T unqualifically to all modules (checked above).
+      bool okay = package_to->is_qexported_to(module_from);
+      if (!okay && TraceAccessControlErrors) {
+    ResourceMark rm;
+        tty->print_cr("Type in module %s (%s) cannot access type in module %s (%s), not exported",
+          module_from->name()->as_C_string(), current_class->external_name(),
+          module_to->name()->as_C_string(), new_class->external_name());
+      }
+      return okay;
+    } else {
+      // Check the case where module_from, the requester, is in the unnamed module.
+      // Access is allowed if both 1 & 2 hold:
+      //   1. Readability, unnamed module can read all modules.
+      //   2. module_to exports T unqualifically to all modules (checked above).
+      if (TraceAccessControlErrors) {
+        ResourceMark rm;
+        tty->print_cr("Type in the unnamed module (%s) cannot access type in module %s (%s), not unqualifically exported",
+          current_class->external_name(), module_to->name()->as_C_string(), new_class->external_name());
+    }
+      return false;
+    }
   }
 
   return can_relax_access_check_for(current_class, new_class, classloader_only);

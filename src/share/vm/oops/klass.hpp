@@ -58,6 +58,8 @@
 // Forward declarations.
 template <class T> class Array;
 template <class T> class GrowableArray;
+class PackageEntry;
+class ModuleEntry;
 class ClassLoaderData;
 class klassVtable;
 class ParCompactionManager;
@@ -127,6 +129,9 @@ class Klass : public Metadata {
 
   // All klasses loaded by a class loader are chained through these links
   Klass*      _next_link;
+
+  // Package this klass is defined in
+  PackageEntry* _package;
 
   // The VM's representation of the ClassLoader used to load this class.
   // Provide access the corresponding instance java.lang.ClassLoader.
@@ -247,6 +252,13 @@ protected:
 
   void set_next_link(Klass* k) { _next_link = k; }
   Klass* next_link() const { return _next_link; }   // The next klass defined by the class loader.
+
+  // defining package information
+  PackageEntry* package() const     { return _package; }
+  ModuleEntry* module() const;
+  bool in_unnamed_package() const   { return (_package == NULL); }
+  void set_package(PackageEntry* p) { _package = p; }
+  void set_package(Symbol* name, ClassLoaderData* loader, TRAPS);
 
   // class loader data
   ClassLoaderData* class_loader_data() const               { return _class_loader_data; }

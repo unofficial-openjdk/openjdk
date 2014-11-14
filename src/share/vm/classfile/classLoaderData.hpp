@@ -52,6 +52,8 @@ class ClassLoaderData;
 class JNIMethodBlock;
 class JNIHandleBlock;
 class Metadebug;
+class ModuleEntryTable;
+class PackageEntryTable;
 
 // GC root for walking class loader data created
 
@@ -164,9 +166,11 @@ class ClassLoaderData : public CHeapObj<mtClass> {
   volatile int _claimed;   // true if claimed, for example during GC traces.
                            // To avoid applying oop closure more than once.
                            // Has to be an int because we cas it.
-  Klass* _klasses;         // The classes defined by the class loader.
-
   JNIHandleBlock* _handles; // Handles to constant pool arrays
+
+  Klass* _klasses;         // The classes defined by the class loader.
+  PackageEntryTable* _packages; // The packages defined by the class loader.
+  ModuleEntryTable* _modules;   // The modules defined by the class loader.
 
   // These method IDs are created for the class loader and set to NULL when the
   // class loader is unloaded.  They are rarely freed, only for redefine classes
@@ -289,6 +293,10 @@ class ClassLoaderData : public CHeapObj<mtClass> {
   bool contains_klass(Klass* k);
   void record_dependency(Klass* to, TRAPS);
   void init_dependencies(TRAPS);
+  PackageEntryTable* packages();
+  bool packageTable_is_null() { return (_packages == NULL); }
+  ModuleEntryTable* modules();
+  bool moduleTable_is_null() { return (_modules == NULL); }
 
   void add_to_deallocate_list(Metadata* m);
 

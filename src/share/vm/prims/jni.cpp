@@ -3430,6 +3430,21 @@ JNI_LEAF(jint, jni_GetJavaVM(JNIEnv *env, JavaVM **vm))
   return JNI_OK;
 JNI_END
 
+
+DT_RETURN_MARK_DECL(GetModule, jobject, HOTSPOT_JNI_GETMODULE_RETURN(_ret_ref));
+
+JNI_ENTRY(jobject, jni_GetModule(JNIEnv* env, jclass clazz))
+  JNIWrapper("GetModule");
+  HOTSPOT_JNI_GETMODULE_ENTRY(env, clazz);
+  jobject res;
+  DT_RETURN_MARK(GetModule, jobject, (const jobject&)res);
+  Handle h_clazz(THREAD, JNIHandles::resolve(clazz));
+  oop module = java_lang_Class::module(h_clazz());
+  res = JNIHandles::make_local(env, module);
+  return res;
+JNI_END
+
+
 // Structure containing all jni functions
 struct JNINativeInterface_ jni_NativeInterface = {
     NULL,
@@ -3709,7 +3724,11 @@ struct JNINativeInterface_ jni_NativeInterface = {
 
     // New 1_6 features
 
-    jni_GetObjectRefType
+    jni_GetObjectRefType,
+
+    // Module features
+
+    jni_GetModule
 };
 
 

@@ -456,28 +456,26 @@ JVM_DefineClassWithSourceCond(JNIEnv *env, const char *name,
  * Module support funcions
  */
 
-JNIEXPORT void * JNICALL
-JVM_DefineModule(JNIEnv *env, jstring name);
-
-/* special case for modules associated with the boot loader */
-JNIEXPORT void * JNICALL
-JVM_DefineBootModule(JNIEnv *env, jstring name);
+JNIEXPORT jobject JNICALL
+JVM_DefineModule(JNIEnv *env, jstring name, jobject loader, jobjectArray packages);
 
 JNIEXPORT void JNICALL
-JVM_BindToModule(JNIEnv *env, jobject loader, jstring pkg, void *handle);
+JVM_AddModuleExports(JNIEnv *env, jobject from_module, jstring package, jobject to_module);
 
 JNIEXPORT void JNICALL
-JVM_AddRequires(JNIEnv *env, void *handle1, void *handle2);
+JVM_AddReadsModule(JNIEnv *env, jobject from_module, jobject to_module);
+
+JNIEXPORT jboolean JNICALL
+JVM_CanReadModule(JNIEnv *env, jobject asking_module, jobject target_module);
+
+JNIEXPORT jboolean JNICALL
+JVM_IsExportedToModule(JNIEnv *env, jobject from_module, jstring package, jobject to_module);
+
+JNIEXPORT jobject JNICALL
+JVM_GetModule(JNIEnv* env, jclass clazz);
 
 JNIEXPORT void JNICALL
-JVM_AddExports(JNIEnv *env, void *handle, jstring pkg);
-
-JNIEXPORT void JNICALL
-JVM_AddExportsWithPermits(JNIEnv *env, void *handle1, jstring pkg, void *handle2);
-
-JNIEXPORT void JNICALL
-JVM_AddBackdoorAccess(JNIEnv *env, jobject loader, jstring pkg,
-                      jobject toLoader, jstring toPackage);
+JVM_AddModulePackage(JNIEnv* env,  jobject module, jstring package);
 
 /*
  * Reflection support functions
@@ -1067,6 +1065,7 @@ JVM_IsSameClassPackage(JNIEnv *env, jclass class1, jclass class2);
 #define JVM_ACC_SYNTHETIC     0x1000  /* compiler-generated class, method or field */
 #define JVM_ACC_ANNOTATION    0x2000  /* annotation type */
 #define JVM_ACC_ENUM          0x4000  /* field is declared as element of enum */
+#define JVM_ACC_MODULE        0x8000  /* module-info class file */
 
 #define JVM_ACC_PUBLIC_BIT        0
 #define JVM_ACC_PRIVATE_BIT       1

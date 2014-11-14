@@ -217,6 +217,9 @@ class ClassLoader: AllStatic {
   static PackageHashtable* _package_hash_table;
   static const char* _shared_archive;
 
+  // True if classpath has a bootmodules.jimage
+  static bool _has_bootmodules_jimage;
+
   // Info used by CDS
   CDS_ONLY(static SharedPathsMiscInfo * _shared_paths_misc_info;)
 
@@ -314,6 +317,11 @@ class ClassLoader: AllStatic {
   static PerfCounter* load_instance_class_failCounter() {
     return _load_instance_class_failCounter;
   }
+
+  // Sets _has_bootmodules_jimage to TRUE if bootmodules.jimage file exists.
+  static void set_has_bootmodules_jimage();
+
+  static bool has_bootmodules_jimage() { return _has_bootmodules_jimage; }
 
   // Load individual .class file
   static instanceKlassHandle load_classfile(Symbol* h_name, TRAPS);

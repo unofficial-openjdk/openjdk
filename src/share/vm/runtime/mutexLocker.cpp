@@ -41,6 +41,7 @@
 Mutex*   Patching_lock                = NULL;
 Monitor* SystemDictionary_lock        = NULL;
 Mutex*   PackageTable_lock            = NULL;
+Mutex*   Module_lock                  = NULL;
 Mutex*   CompiledIC_lock              = NULL;
 Mutex*   InlineCacheBuffer_lock       = NULL;
 Mutex*   VMStatistic_lock             = NULL;
@@ -219,6 +220,7 @@ void mutex_init() {
 
   def(SystemDictionary_lock        , Monitor, leaf,        true ); // lookups done by VM thread
   def(PackageTable_lock            , Mutex  , leaf,        false);
+  def(Module_lock                  , Mutex  , leaf,        true );
   def(InlineCacheBuffer_lock       , Mutex  , leaf,        true );
   def(VMStatistic_lock             , Mutex  , leaf,        false);
   def(ExpandHeap_lock              , Mutex  , leaf,        true ); // Used during compilation by VM thread
