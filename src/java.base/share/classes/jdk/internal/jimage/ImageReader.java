@@ -101,6 +101,7 @@ public class ImageReader extends BasicImageReader {
         private static final int ROOT_DIR = 0b0000_0000_0000_0001;
         private static final int MODULE_DIR = 0b0000_0000_0000_0010;
         private static final int METAINF_DIR = 0b0000_0000_0000_0100;
+        private static final int TOPLEVEL_PKG_DIR = 0b0000_0000_0000_1000;
 
         private int flags;
         private final UTF8String name;
@@ -135,6 +136,14 @@ public class ImageReader extends BasicImageReader {
 
         public boolean isMetaInfDir() {
             return (flags & METAINF_DIR) != 0;
+        }
+
+        public void setIsTopLevelPackageDir() {
+            flags |= TOPLEVEL_PKG_DIR;
+        }
+
+        public boolean isTopLevelPackageDir() {
+            return (flags & TOPLEVEL_PKG_DIR) != 0;
         }
 
         public final UTF8String getName() {
@@ -448,6 +457,7 @@ public class ImageReader extends BasicImageReader {
                   }
                   // copy pkgDir "resources"
                   Directory pkgDir = (Directory) nodes.get(ROOT_STRING.concat(pkgName));
+                  pkgDir.setIsTopLevelPackageDir();
                   for (Node child : pkgDir.getChildren()) {
                       if (child.isResource()) {
                           ImageLocation loc = child.getLocation();

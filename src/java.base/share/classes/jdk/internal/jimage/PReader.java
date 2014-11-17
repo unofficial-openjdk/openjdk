@@ -91,8 +91,17 @@ public abstract class PReader implements Closeable {
         try {
             Constructor<?> ctor = clazz.getConstructor(String.class);
             return (PReader) ctor.newInstance(file);
+        } catch (InvocationTargetException e) {
+            Throwable cause = e.getCause();
+            if (cause instanceof IOException)
+                throw (IOException) cause;
+            if (cause instanceof Error)
+                throw (Error) cause;
+            if (cause instanceof RuntimeException)
+                throw (RuntimeException) cause;
+            throw new Error(e);
         } catch (NoSuchMethodException | IllegalAccessException |
-                InstantiationException | InvocationTargetException e) {
+                InstantiationException e) {
             throw new InternalError(e);
         }
     }
