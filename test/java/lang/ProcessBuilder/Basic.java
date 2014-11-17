@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,10 +26,11 @@
  * @bug 4199068 4738465 4937983 4930681 4926230 4931433 4932663 4986689
  *      5026830 5023243 5070673 4052517 4811767 6192449 6397034 6413313
  *      6464154 6523983 6206031 4960438 6631352 6631966 6850957 6850958
- *      4947220 7018606 7034570
+ *      4947220 7018606 7034570 8047340
  * @summary Basic tests for Process and Environment Variable code
  * @run main/othervm/timeout=300 Basic
  * @run main/othervm/timeout=300 -Djdk.lang.Process.launchMechanism=fork Basic
+ * @run main/othervm/timeout=300 -DTurkeyTest Basic
  * @author Martin Buchholz
  */
 
@@ -1083,6 +1084,11 @@ public class Basic {
     }
 
     private static void realMain(String[] args) throws Throwable {
+        if (System.getProperty("TurkeyTest") != null) {
+            // static initializer test, set this early.
+            System.out.println("Testing with Turkish locale.");
+            Locale.setDefault(new Locale("tr", ""));
+        }
         if (Windows.is())
             System.out.println("This appears to be a Windows system.");
         if (Unix.is())
