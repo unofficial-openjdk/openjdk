@@ -595,6 +595,9 @@ class Method : public Metadata {
   // returns true if the method is an accessor function (setter/getter).
   bool is_accessor() const;
 
+  // returns true if the method does nothing but return a constant of primitive type
+  bool is_constant_getter() const;
+
   // returns true if the method is an initializer (<init> or <clinit>).
   bool is_initializer() const;
 
@@ -728,6 +731,11 @@ class Method : public Metadata {
   // refers to NULL (as is the case for any weak reference).
   static jmethodID make_jmethod_id(ClassLoaderData* loader_data, Method* mh);
   static void destroy_jmethod_id(ClassLoaderData* loader_data, jmethodID mid);
+
+  // Ensure there is enough capacity in the internal tracking data
+  // structures to hold the number of jmethodIDs you plan to generate.
+  // This saves substantial time doing allocations.
+  static void ensure_jmethod_ids(ClassLoaderData* loader_data, int capacity);
 
   // Use resolve_jmethod_id() in situations where the caller is expected
   // to provide a valid jmethodID; the only sanity checks are in asserts;

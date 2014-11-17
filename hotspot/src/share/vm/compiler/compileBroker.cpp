@@ -35,6 +35,7 @@
 #include "oops/method.hpp"
 #include "oops/oop.inline.hpp"
 #include "prims/nativeLookup.hpp"
+#include "prims/whitebox.hpp"
 #include "runtime/arguments.hpp"
 #include "runtime/atomic.inline.hpp"
 #include "runtime/compilationPolicy.hpp"
@@ -184,6 +185,14 @@ class CompilationLog : public StringEventLog {
     }
     lm.print("\n");
     log(thread, "%s", (const char*)lm);
+  }
+
+  void log_metaspace_failure(const char* reason) {
+    ResourceMark rm;
+    StringLogMessage lm;
+    lm.print("%4d   COMPILE PROFILING SKIPPED: %s", -1, reason);
+    lm.print("\n");
+    log(JavaThread::current(), "%s", (const char*)lm);
   }
 };
 
@@ -1817,6 +1826,18 @@ void CompileBroker::init_compiler_thread_log() {
     warning("Cannot open log file: %s", file_name);
 }
 
+void CompileBroker::log_metaspace_failure() {
+  const char* message = "some methods may not be compiled because metaspace "
+                        "is out of memory";
+  if (_compilation_log != NULL) {
+    _compilation_log->log_metaspace_failure(message);
+  }
+  if (PrintCompilation) {
+    tty->print_cr("COMPILE PROFILING SKIPPED: %s", message);
+  }
+}
+
+
 // ------------------------------------------------------------------
 // CompileBroker::set_should_block
 //
@@ -1943,6 +1964,12 @@ void CompileBroker::invoke_compiler_on_method(CompileTask* task) {
     if (comp == NULL) {
       ci_env.record_method_not_compilable("no compiler", !TieredCompilation);
     } else {
+      if (WhiteBoxAPI && WhiteBox::compilation_locked) {
+        MonitorLockerEx locker(Compilation_lock, Mutex::_no_safepoint_check_flag);
+        while (WhiteBox::compilation_locked) {
+          locker.wait(Mutex::_no_safepoint_check_flag);
+        }
+      }
       comp->compile_method(&ci_env, target, osr_bci);
     }
 

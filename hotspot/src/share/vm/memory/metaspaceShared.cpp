@@ -714,12 +714,19 @@ void MetaspaceShared::preload_and_dump(TRAPS) {
     int class_list_path_len = (int)strlen(class_list_path_str);
     if (class_list_path_len >= 3) {
       if (strcmp(class_list_path_str + class_list_path_len - 3, "lib") != 0) {
-        strcat(class_list_path_str, os::file_separator());
-        strcat(class_list_path_str, "lib");
+        if (class_list_path_len < JVM_MAXPATHLEN - 4) {
+          jio_snprintf(class_list_path_str + class_list_path_len,
+                       sizeof(class_list_path_str) - class_list_path_len,
+                       "%slib", os::file_separator());
+          class_list_path_len += 4;
+        }
       }
     }
-    strcat(class_list_path_str, os::file_separator());
-    strcat(class_list_path_str, "classlist");
+    if (class_list_path_len < JVM_MAXPATHLEN - 10) {
+      jio_snprintf(class_list_path_str + class_list_path_len,
+                   sizeof(class_list_path_str) - class_list_path_len,
+                   "%sclasslist", os::file_separator());
+    }
     class_list_path = class_list_path_str;
   } else {
     class_list_path = SharedClassListFile;
@@ -846,7 +853,7 @@ bool MetaspaceShared::try_link_class(InstanceKlass* ik, TRAPS) {
     ik->link_class(THREAD);
     if (HAS_PENDING_EXCEPTION) {
       ResourceMark rm;
-      tty->print_cr("Preload Error: Verification failed for %s",
+      tty->print_cr("Preload Warning: Verification failed for %s",
                     ik->external_name());
       CLEAR_PENDING_EXCEPTION;
       ik->set_in_error_state();
