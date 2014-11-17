@@ -28,10 +28,12 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Properties;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
-import java.lang.reflect.Method;
+import java.lang.reflect.Module;
 
 import javax.xml.XMLConstants;
 import javax.xml.transform.Templates;
@@ -41,11 +43,16 @@ import javax.xml.transform.URIResolver;
 
 import com.sun.org.apache.xalan.internal.xsltc.DOM;
 import com.sun.org.apache.xalan.internal.xsltc.Translet;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.Constants;
 import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ErrorMsg;
 import com.sun.org.apache.xalan.internal.xsltc.runtime.AbstractTranslet;
 import com.sun.org.apache.xalan.internal.xsltc.runtime.Hashtable;
 import com.sun.org.apache.xalan.internal.utils.ObjectFactory;
 import com.sun.org.apache.xalan.internal.utils.SecuritySupport;
+
+import jdk.jigsaw.module.ModuleDescriptor;
+import sun.misc.JavaLangReflectAccess;
+import sun.misc.SharedSecrets;
 
 /**
  * @author Morten Jorgensen
@@ -343,16 +350,30 @@ public final class TemplatesImpl implements Templates, Serializable {
                 _auxClasses = new Hashtable();
             }
 
-            int last = _name.lastIndexOf(".");
-            String pkg = (last != -1) ? _name.substring(0, last) : "";
+            // create a module for the translet
+            Module xmlModule = TemplatesImpl.class.getModule();
+            if (xmlModule != null) {
+                JavaLangReflectAccess jlra = SharedSecrets.getJavaLangReflectAccess();
 
-            // template classes require access to these API packages
-            ensureAccess(loader, pkg, "com.sun.org.apache.xalan.internal.xsltc");
-            ensureAccess(loader, pkg, "com.sun.org.apache.xalan.internal.xsltc.runtime");
-            ensureAccess(loader, pkg, "com.sun.org.apache.xalan.internal.xsltc.dom");
-            ensureAccess(loader, pkg, "com.sun.org.apache.xml.internal.serializer");
-            ensureAccess(loader, pkg, "com.sun.org.apache.xml.internal.dtm");
-            ensureAccess(loader, pkg, "com.sun.org.apache.xml.internal.dtm.ref");
+                ModuleDescriptor md = new ModuleDescriptor.Builder("jdk.translet").build();
+
+                String pkg = _tfactory.getPackageName();
+                assert pkg != null && pkg.length() > 0;
+                Module m = jlra.defineModule(loader, md, Collections.singleton(pkg));
+
+                // jdk.translate reads java.base && java.xml
+                jlra.addReadsModule(m, Object.class.getModule());
+                jlra.addReadsModule(m, xmlModule);
+
+                // jdk.translet needs access to runtime classes
+                Arrays.asList(Constants.PKGS_USED_BY_TRANSLET_CLASSES).forEach(p -> {
+                    jlra.addExports(xmlModule, p, m);
+                });
+
+                // java.xml needs to instanitate the translate class
+                jlra.addReadsModule(xmlModule, m);
+                jlra.addExports(m, pkg, xmlModule);
+            }
 
             for (int i = 0; i < classCount; i++) {
                 _class[i] = loader.defineClass(_bytecodes[i]);
@@ -379,22 +400,6 @@ public final class TemplatesImpl implements Templates, Serializable {
         catch (LinkageError e) {
             ErrorMsg err = new ErrorMsg(ErrorMsg.TRANSLET_OBJECT_ERR, _name);
             throw new TransformerConfigurationException(err.toString(), e);
-        }
-    }
-
-    private static void ensureAccess(ClassLoader loader, String pkg, String target) {
-        // use reflection as JAXP is compiled before the jdk reposotory in a
-        // regular build
-        try {
-            Class<?> vm = Class.forName("sun.misc.VM");
-            Method m = vm.getDeclaredMethod("addBackdoorAccess",
-                                            ClassLoader.class,
-                                            String.class,
-                                            ClassLoader.class,
-                                            String.class);
-            m.invoke(null, null, target, loader, pkg);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
         }
     }
 
