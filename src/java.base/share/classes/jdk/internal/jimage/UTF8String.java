@@ -50,7 +50,7 @@ public final class UTF8String implements CharSequence {
         this.bytes = bytes;
         this.offset = offset;
         this.count = count;
-        this.hashcode = 0;
+        this.hashcode = -1;
     }
 
     public UTF8String(byte[] bytes, int offset) {
@@ -152,16 +152,12 @@ public final class UTF8String implements CharSequence {
         buffer.put(bytes, offset, count);
     }
 
-    static int hashCode(int base, byte[] bytes, int offset, int count) {
-        if (base == 0) {
-            base = HASH_MULTIPLIER;
-        }
-
+    static int hashCode(int seed, byte[] bytes, int offset, int count) {
         for (int i = offset, limit = offset + count; i < limit; i++) {
-            base = (base * HASH_MULTIPLIER) ^ (bytes[i] & 0xFF);
+            seed = (seed * HASH_MULTIPLIER) ^ (bytes[i] & 0xFF);
         }
 
-        return base & 0x7FFFFFFF;
+        return seed & 0x7FFFFFFF;
     }
 
     int hashCode(int base) {
@@ -170,7 +166,7 @@ public final class UTF8String implements CharSequence {
 
     @Override
     public int hashCode() {
-        if (hashcode == 0) {
+        if (hashcode < 0) {
             hashcode = hashCode(HASH_MULTIPLIER, bytes, offset, count);
         }
 

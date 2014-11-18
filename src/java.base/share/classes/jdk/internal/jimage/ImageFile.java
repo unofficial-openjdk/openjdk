@@ -141,9 +141,6 @@ public final class ImageFile {
         Files.createDirectories(mdir);
         for (Loader l : Loader.values()) {
             Set<String> mods = modules.getModules(l);
-            if (mods.isEmpty()) {
-                continue;
-            }
 
             try (OutputStream fos = Files.newOutputStream(mdir.resolve(l.getName() + IMAGE_EXT));
                     BufferedOutputStream bos = new BufferedOutputStream(fos);
@@ -160,20 +157,20 @@ public final class ImageFile {
                 // the module content being written must be the same
                 for (String mn : mods) {
                     for (Resource res : resourcesForModule.get(mn)) {
-                        String fn = res.name();
+                        String path = res.name();
                         long uncompressedSize = res.size();
                         long compressedSize = res.csize();
                         long onFileSize = compressedSize != 0 ? compressedSize : uncompressedSize;
 
-                        if (duplicates.contains(fn)) {
-                            System.err.format("duplicate resource \"%s\", skipping%n", fn);
+                        if (duplicates.contains(path)) {
+                            System.err.format("duplicate resource \"%s\", skipping%n", path);
                             // TODO Need to hang bytes on resource and write from resource not zip.
                             // Skipping resource throws off writing from zip.
                             offset += onFileSize;
                             continue;
                         }
-                        duplicates.add(fn);
-                        writer.addLocation(fn, offset, compressedSize, uncompressedSize);
+                        duplicates.add(path);
+                        writer.addLocation(path, offset, compressedSize, uncompressedSize);
                         offset += onFileSize;
                     }
                 }

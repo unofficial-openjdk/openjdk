@@ -236,17 +236,5 @@ public class VerifyJimage {
                 throw new UncheckedIOException(e);
             }
         }
-
-        byte[] getResource(String name) {
-            try {
-                ImageLocation loc = findLocation(name);
-                if (loc == null) {
-                    failed.add(imageName() + ": Can't find " + name);
-                }
-                return getResource(loc);
-            } catch (IOException e) {
-                throw new UncheckedIOException(e);
-            }
-        }
     }
 }

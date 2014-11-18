@@ -48,12 +48,10 @@ public final class PackageModuleMap {
      */
     static Map<String,String> readFrom(ImageReader reader) throws IOException {
         Map<String,String> result = new HashMap<>();
-        ImageLocation moduleLocation = reader.findLocation(MODULES_ENTRY);
-        List<String> moduleNames = reader.getNames(reader.getResource(moduleLocation));
+        List<String> moduleNames = reader.getNames(MODULES_ENTRY);
 
         for (String moduleName : moduleNames) {
-            ImageLocation packageLocation = reader.findLocation(moduleName + "/" + PACKAGES_ENTRY);
-            List<String> packageNames = reader.getNames(reader.getResource(packageLocation));
+            List<String> packageNames = reader.getNames(moduleName + "/" + PACKAGES_ENTRY);
 
             for (String packageName : packageNames) {
                 result.put(packageName, moduleName);

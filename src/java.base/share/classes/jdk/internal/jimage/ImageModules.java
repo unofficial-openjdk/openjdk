@@ -143,24 +143,21 @@ public class ImageModules {
         final Map<String, List<Integer>> packageOffsets = new HashMap<>();
         final int size;
         public ModuleIndex(Set<String> mods, BasicImageWriter writer) {
-            long offset = 0;
-            if (!mods.isEmpty()) {
-                // module name offsets
-                writer.addLocation(MODULES_ENTRY, 0, 0, mods.size() * 4);
-                offset = mods.size() * 4;
-                for (String mn : mods) {
-                    moduleOffsets.put(mn, writer.addString(mn));
-                    List<Integer> poffsets = localPkgs.get(mn).stream()
-                            .map(pn -> pn.replace('.', '/'))
-                            .map(writer::addString)
-                            .collect(Collectors.toList());
-                    // package name offsets per module
-                    String entry = mn + "/" + PACKAGES_ENTRY;
-                    int bytes = poffsets.size() * 4;
-                    writer.addLocation(entry, offset, 0, bytes);
-                    offset += bytes;
-                    packageOffsets.put(mn, poffsets);
-                }
+            // module name offsets
+            writer.addLocation(MODULES_ENTRY, 0, 0, mods.size() * 4);
+            long offset = mods.size() * 4;
+            for (String mn : mods) {
+                moduleOffsets.put(mn, writer.addString(mn));
+                List<Integer> poffsets = localPkgs.get(mn).stream()
+                        .map(pn -> pn.replace('.', '/'))
+                        .map(writer::addString)
+                        .collect(Collectors.toList());
+                // package name offsets per module
+                String entry = mn + "/" + PACKAGES_ENTRY;
+                int bytes = poffsets.size() * 4;
+                writer.addLocation(entry, offset, 0, bytes);
+                offset += bytes;
+                packageOffsets.put(mn, poffsets);
             }
             this.size = (int) offset;
         }

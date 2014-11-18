@@ -32,6 +32,8 @@ import java.util.Arrays;
 import java.util.List;
 
 public final class BasicImageWriter {
+    private final static int RETRY_LIMIT = 1000;
+
     private ByteOrder byteOrder;
     private ImageStrings strings;
     private int count;
@@ -100,7 +102,11 @@ public final class BasicImageWriter {
     }
 
     public int addString(String string) {
-        return strings.add(new UTF8String(string));
+        return addString(new UTF8String(string));
+    }
+
+    public int addString(UTF8String string) {
+        return strings.add(string);
     }
 
     public void addLocation(String fullname, long contentOffset, long compressedSize, long uncompressedSize) {
@@ -110,23 +116,32 @@ public final class BasicImageWriter {
     }
 
     private void generatePerfectHash() {
-        redirect = new int[count];
-        locations = new ImageLocation[count];
+        redo:
+        while(true) {
+            redirect = new int[count];
+            locations = new ImageLocation[count];
 
-        ImageBucket[] sorted = createBuckets();
+            ImageBucket[] sorted = createBuckets();
 
-        int free = 0;
+            int free = 0;
 
-        for (ImageBucket bucket : sorted) {
-            if (bucket.getSize() != 1) {
-                collidedEntries(bucket, count);
-            } else {
-                for ( ; free < count && locations[free] != null; free++) {}
-                assert free < count : "no free slots";
-                locations[free] = bucket.getFirst();
-                redirect[bucket.hashCode() % count] = -1 - free;
-                free++;
+            for (ImageBucket bucket : sorted) {
+                if (bucket.getSize() != 1) {
+                    if (!packCollidedEntries(bucket, count)) {
+                        count = (count + 1) | 1;
+
+                        continue redo;
+                    }
+                } else {
+                    for ( ; free < count && locations[free] != null; free++) {}
+                    assert free < count : "no free slots";
+                    locations[free] = bucket.getFirst();
+                    redirect[bucket.hashCode() % count] = -1 - free;
+                    free++;
+                }
             }
+
+            break;
         }
     }
 
@@ -152,9 +167,11 @@ public final class BasicImageWriter {
         return sorted;
     }
 
-    private void collidedEntries(ImageBucket bucket, int count) {
+    private boolean packCollidedEntries(ImageBucket bucket, int count) {
         List<Integer> undo = new ArrayList<>();
         int base = UTF8String.HASH_MULTIPLIER + 1;
+
+        int retry = 0;
 
         redo:
         while (true) {
@@ -173,6 +190,10 @@ public final class BasicImageWriter {
                         base = 1;
                     }
 
+                    if (++retry > RETRY_LIMIT) {
+                        return false;
+                    }
+
                     continue redo;
                 }
 
@@ -184,6 +205,12 @@ public final class BasicImageWriter {
 
             break;
         }
+
+        return true;
+    }
+
+    private void prepareStringBytes() {
+        strings.getStream().align(2);
     }
 
     private void prepareRedirectBytes() {
@@ -193,16 +220,24 @@ public final class BasicImageWriter {
     }
 
     private void prepareLocationBytes() {
+        // Reserve location offset zero for empty locations
+        locationStream.put(ImageLocation.ATTRIBUTE_END << 3);
+
         for (int i = 0; i < count; i++) {
             ImageLocation location = locations[i];
-            location.writeTo(locationStream);
+
+            if (location != null) {
+                location.writeTo(locationStream);
+            }
         }
+
+        locationStream.align(2);
     }
 
     private void prepareOffsetBytes() {
         for (int i = 0; i < count; i++) {
             ImageLocation location = locations[i];
-            locationOffsetStream.putInt(location.getLocationOffset());
+            locationOffsetStream.putInt(location != null ? location.getLocationOffset() : 0);
         }
     }
 
@@ -222,6 +257,7 @@ public final class BasicImageWriter {
     public byte[] getBytes() {
         if (allIndexStream.getSize() == 0) {
             generatePerfectHash();
+            prepareStringBytes();
             prepareRedirectBytes();
             prepareLocationBytes();
             prepareOffsetBytes();

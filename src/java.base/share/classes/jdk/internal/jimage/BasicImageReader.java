@@ -111,6 +111,11 @@ public class BasicImageReader {
         }
 
         int offset = getOffset(index);
+
+        if (offset == 0) {
+            return null;
+        }
+
         ImageLocation location = getLocation(offset);
 
         return location.verify(name) ? location : null;
@@ -125,9 +130,12 @@ public class BasicImageReader {
         List<String> list = new ArrayList<>();
 
         for (int i = 0; i < count; i++) {
-            int offset = offsetsBuffer.get(i);
-            ImageLocation location = ImageLocation.readFrom(locationsBuffer, offset, strings);
-            list.add(location.getFullnameString());
+            int offset = getOffset(i);
+
+            if (offset != 0) {
+                ImageLocation location = ImageLocation.readFrom(locationsBuffer, offset, strings);
+                list.add(location.getFullnameString());
+            }
         }
 
         String[] array = list.toArray(new String[0]);
@@ -144,9 +152,12 @@ public class BasicImageReader {
         List<ImageLocation> list = new ArrayList<>();
 
         for (int i = 0; i < count; i++) {
-            int offset = offsetsBuffer.get(i);
-            ImageLocation location = ImageLocation.readFrom(locationsBuffer, offset, strings);
-            list.add(location);
+            int offset = getOffset(i);
+
+            if (offset != 0) {
+                ImageLocation location = ImageLocation.readFrom(locationsBuffer, offset, strings);
+                list.add(location);
+            }
         }
 
         ImageLocation[] array = list.toArray(new ImageLocation[0]);
@@ -202,6 +213,16 @@ public class BasicImageReader {
                                       indexSize + loc.getContentOffset());
             return ImageFile.Compressor.decompress(buf);
         }
+    }
+
+    public byte[] getResource(String name) throws IOException {
+        ImageLocation location = findLocation(name);
+
+        return location != null ? getResource(location) : null;
+    }
+
+    public List<String> getNames(String name) throws IOException {
+        return getNames(getResource(name));
     }
 
     public List<String> getNames(byte[] bytes) {

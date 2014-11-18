@@ -62,6 +62,16 @@ class ImageStream {
         this.buffer = buffer;
     }
 
+    ImageStream align(int alignment) {
+        int padding = (getSize() - 1) & ((1 << alignment) - 1);
+
+        for (int i = 0; i < padding; i++) {
+            put((byte)0);
+        }
+
+        return this;
+    }
+
     private void ensure(int needs) {
         assert 0 <= needs : "Negative needs";
 
