@@ -319,7 +319,9 @@ public:
 
   // Return location attribute stream for location i.
   inline u1* get_location_data(u4 i) const {
-    return _location_bytes + _offsets_table[i];
+    u4 offset = _offsets_table[i];
+
+    return offset != 0 ? _location_bytes + offset : NULL;
   }
 
   // Return the attribute stream for a named resourced.

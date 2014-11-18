@@ -595,16 +595,20 @@ void ClassPathImageEntry::compile_the_world(Handle loader, TRAPS) {
   // Retrieve each path component string.
   u4 count = _image->get_location_count();
   for (u4 i = 0; i < count; i++) {
-    ImageLocation location(_image->get_location_data(i));
-    const char* parent = location.get_attribute(ImageLocation::ATTRIBUTE_PARENT, strings);
-    const char* base = location.get_attribute(ImageLocation::ATTRIBUTE_BASE, strings);
-    const char* extension = location.get_attribute(ImageLocation::ATTRIBUTE_EXTENSION, strings);
-    assert((strlen(parent) + strlen(base) + strlen(extension)) < JVM_MAXPATHLEN, "path exceeds buffer");
-    char path[JVM_MAXPATHLEN];
-    strcpy(path, parent);
-    strcat(path, base);
-    strcat(path, extension);
-    ClassLoader::compile_the_world_in(path, loader, CHECK);
+    u1* location_data = _image->get_location_data(i);
+
+    if (location_data) {
+       ImageLocation location(location_data);
+       const char* parent = location.get_attribute(ImageLocation::ATTRIBUTE_PARENT, strings);
+       const char* base = location.get_attribute(ImageLocation::ATTRIBUTE_BASE, strings);
+       const char* extension = location.get_attribute(ImageLocation::ATTRIBUTE_EXTENSION, strings);
+       assert((strlen(parent) + strlen(base) + strlen(extension)) < JVM_MAXPATHLEN, "path exceeds buffer");
+       char path[JVM_MAXPATHLEN];
+       strcpy(path, parent);
+       strcat(path, base);
+       strcat(path, extension);
+       ClassLoader::compile_the_world_in(path, loader, CHECK);
+    }
   }
   if (HAS_PENDING_EXCEPTION) {
   if (PENDING_EXCEPTION->is_a(SystemDictionary::OutOfMemoryError_klass())) {

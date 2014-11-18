@@ -32,11 +32,6 @@
 u4 ImageStrings::hash_code(const char* string, u4 seed) {
   u1* bytes = (u1*)string;
 
-  // Ensure better uniformity.
-  if (seed == 0) {
-    seed = HASH_MULTIPLIER;
-  }
-
   // Compute hash code.
   for (u1 byte = *bytes++; byte; byte = *bytes++) {
     seed = (seed * HASH_MULTIPLIER) ^ byte;
@@ -197,6 +192,10 @@ u1* ImageFile::find_location_data(const char* path) const {
   u4 offset = _offsets_table[index];
   assert(offset < _header._locations_size, "offset exceeds location attributes size");
 
+  if (offset == 0) {
+    return NULL;
+  }
+
   return _location_bytes + offset;
 }
 
@@ -245,12 +244,8 @@ u1* ImageFile::get_resource(ImageLocation& location) const {
   u1* uncompressed = NEW_RESOURCE_ARRAY(u1, size);
   char* msg = NULL;
   jboolean res = ClassLoader::decompress(data, compressed_size, uncompressed, size, &msg);
-  FREE_RESOURCE_ARRAY(u1, data, read_size);
-  if (!res) {
-      FREE_RESOURCE_ARRAY(u1, uncompressed, size);
-      warning("compression failed due to %s\n", msg);
-      return NULL;
-  }
+  if (!res) warning("decompression failed due to %s\n", msg);
+  guarantee(res, "decompression failed");
 
   return uncompressed;
 }
