@@ -31,6 +31,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -42,7 +43,6 @@ import jdk.jigsaw.module.Layer;
 import jdk.jigsaw.module.ModuleArtifact;
 import jdk.jigsaw.module.ModuleArtifactFinder;
 import jdk.jigsaw.module.ModuleId;
-
 import sun.misc.Launcher;
 import sun.misc.ModuleLoader;
 import sun.reflect.Reflection;
@@ -51,7 +51,7 @@ import sun.reflect.Reflection;
  * Helper class used by the VM/runtime to initialize the module system.
  *
  * In summary, creates a Configuration by resolving a set of module names
- * specified via the launcher (or equivalent) -m and -mods options. The
+ * specified via the launcher (or equivalent) -m and -addmods options. The
  * Configuration is then used to define the selected modules to runtime
  * to create the boot Layer.
  */
@@ -63,36 +63,24 @@ class ModuleBootstrap {
      */
     static void boot() {
 
-        // module path of the installed modules
-        ModuleArtifactFinder systemLibrary = ModuleArtifactFinder.installedModules();
+        // system module path, aka the installed modules
+        ModuleArtifactFinder systemModulePath = ModuleArtifactFinder.installedModules();
 
         // if -XX:AddModuleRequires or -XX:AddModuleExports is specified then
-        // interpose on the system library so that the requires/exports are
-        // updated as they modules are found
+        // interpose on the system module path so that the requires/exports are
+        // updated as they modules are found. In time this will be extended to the
+        // application module path.
         String moreRequires = System.getProperty("jdk.runtime.addModuleRequires");
         String moreExports = System.getProperty("jdk.runtime.addModuleExports");
         if (moreRequires != null || moreExports != null) {
-            systemLibrary =  ArtifactInterposer.interpose(systemLibrary,
-                                                          moreRequires,
-                                                          moreExports);
+            systemModulePath =  ArtifactInterposer.interpose(systemModulePath,
+                                                             moreRequires,
+                                                             moreExports);
         }
 
-        // launcher -verbose:mods option
-        boolean verbose =
-            Boolean.parseBoolean(System.getProperty("jdk.launcher.modules.verbose"));
-
-        // initial module(s) as specified by -mods
-        Set<String> mods = new HashSet<>();
-        String propValue = System.getProperty("jdk.launcher.modules");
-        if (propValue != null) {
-            for (String mod: propValue.split(",")) {
-                mods.add(mod);
-            }
-        }
-
-        // launcher -modulepath option
-        ModuleArtifactFinder launcherModulePath;
-        propValue = System.getProperty("java.module.path");
+        // -modulepath specified to the launcher
+        ModuleArtifactFinder appModulePath = null;
+        String propValue = System.getProperty("java.module.path");
         if (propValue != null) {
             String[] dirs = propValue.split(File.pathSeparator);
             Path[] paths = new Path[dirs.length];
@@ -100,43 +88,57 @@ class ModuleBootstrap {
             for (String dir: dirs) {
                 paths[i++] = Paths.get(dir);
             }
-            launcherModulePath = ModuleArtifactFinder.ofDirectories(paths);
+            appModulePath = ModuleArtifactFinder.ofDirectories(paths);
+        }
+
+        // The module finder. For now this is the system module path followed
+        // by the application module path (if specified). In the future then
+        // the upgrade module path will be prepended.
+        ModuleArtifactFinder finder;
+        if (appModulePath != null) {
+            finder = ModuleArtifactFinder.concat(systemModulePath, appModulePath);
         } else {
-            launcherModulePath = null;
+            finder = systemModulePath;
         }
 
         // launcher -m option to specify the initial module
-        ModuleId mainMid;
+        ModuleId mainMid = null;
         propValue = System.getProperty("java.module.main");
         if (propValue != null) {
             int i = propValue.indexOf('/');
             String s = (i == -1) ? propValue : propValue.substring(0, i);
             mainMid = ModuleId.parse(s);
-        } else {
-            mainMid = null;
         }
 
-        // If neither -m nor -mods is specified then the initial module is the
-        // set of all installed modules, otherwise the initial module is the
-        // union of both -m (if specified) and -mods (if specified).
-        Set<String> input;
-        if (mainMid == null && mods.isEmpty()) {
-            input = systemLibrary.allModules()
-                                 .stream()
-                                 .map(md -> md.descriptor().name())
-                                 .collect(Collectors.toSet());
-        } else {
-            input = new HashSet<>(mods);
+        // additional module(s) specified by -addmods
+        Set<String> additionalMods = null;
+        propValue = System.getProperty("jdk.launcher.modules");
+        if (propValue != null) {
+            additionalMods = new HashSet<>();
+            for (String mod: propValue.split(",")) {
+                additionalMods.add(mod);
+            }
+        }
+
+        // If the class path is set then assume the unnamed module is observable.
+        // We implement this here by putting the names of all observable (named)
+        // modules into the set of modules to resolve.
+        Set<String> input = Collections.emptySet();
+        String cp = System.getProperty("java.class.path");
+        if (cp != null && cp.length() > 0) {
+            input = finder.allModules()
+                          .stream()
+                          .map(md -> md.descriptor().name())
+                          .collect(Collectors.toSet());
+        }
+
+        // If -m or -addmods is specified then these module names must be resolved
+        if (mainMid != null || additionalMods != null) {
+            input = new HashSet<>(input);
             if (mainMid != null)
                 input.add(mainMid.name());
-        }
-
-        // create the module finder
-        ModuleArtifactFinder finder;
-        if (launcherModulePath != null) {
-            finder = ModuleArtifactFinder.concat(systemLibrary, launcherModulePath);
-        } else {
-            finder = systemLibrary;
+            if (additionalMods != null)
+                input.addAll(additionalMods);
         }
 
         // run the resolver to create the configuration
@@ -144,19 +146,14 @@ class ModuleBootstrap {
                                                  Layer.emptyLayer(),
                                                  ModuleArtifactFinder.nullFinder(),
                                                  input).bind();
-        if (verbose) {
-            cf.descriptors().stream()
-                            .sorted()
-                            .forEach(md -> System.out.println(md.name()));
-        }
 
         // setup module to ClassLoader mapping
-        Map<ModuleArtifact, ClassLoader> moduleToLoaders = loaderMap(systemLibrary);
+        Map<ModuleArtifact, ClassLoader> moduleToLoaders = loaderMap(systemModulePath);
 
         // -Xoverride
         String override = System.getProperty("jdk.runtime.override");
         if (override != null) {
-            Set<ModuleArtifact> systemModules = systemLibrary.allModules();
+            Set<ModuleArtifact> systemModules = systemModulePath.allModules();
             cf.descriptors().stream()
                             .map(md -> cf.findArtifact(md.name()))
                             .filter(systemModules::contains)
@@ -170,8 +167,8 @@ class ModuleBootstrap {
         }
 
         // if -modulepath specified then need to add to system class loader
-        if (launcherModulePath != null) {
-            Set<ModuleArtifact> systemModules = systemLibrary.allModules();
+        if (appModulePath != null) {
+            Set<ModuleArtifact> systemModules = systemModulePath.allModules();
 
             ClassLoader cl = ClassLoader.getSystemClassLoader();
             if (!(cl instanceof ModuleLoader))
@@ -198,6 +195,13 @@ class ModuleBootstrap {
 
         // set system module graph so that other module graphs can be composed
         Layer.setBootLayer(bootLayer);
+
+        // launcher -verbose:mods option
+        if (Boolean.parseBoolean(System.getProperty("jdk.launcher.modules.verbose"))) {
+            cf.descriptors().stream()
+                            .sorted()
+                            .forEach(md -> System.out.println(md.name()));
+        }
     }
 
     /**

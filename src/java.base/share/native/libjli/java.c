@@ -100,7 +100,7 @@ static int numOptions, maxOptions;
 static void SetClassPath(const char *s);
 static void SetModulePath(const char *s);
 static void SetMainModule(const char *s);
-static void SetModulesProp(const char *mods);
+static void SetAddModulesProp(const char *mods);
 static void SelectVersion(int argc, char **argv, char **main_class);
 static void SetJvmEnvironment(int argc, char **argv);
 static jboolean ParseArguments(int *pargc, char ***pargv,
@@ -192,7 +192,6 @@ JLI_Launch(int argc, char ** argv,              /* main argc, argc */
 {
     int mode = LM_UNKNOWN;
     char *what = NULL;
-    char *cpath = 0;
     char *main_class = NULL;
     int ret;
     InvocationFunctions ifn;
@@ -275,13 +274,6 @@ JLI_Launch(int argc, char ** argv,              /* main argc, argc */
         if (!AddApplicationOptions(appclassc, appclassv)) {
             return(1);
         }
-    } else {
-        /* Set default CLASSPATH */
-        cpath = getenv("CLASSPATH");
-        if (cpath == NULL) {
-            cpath = ".";
-        }
-        SetClassPath(cpath);
     }
 
     /* Parse command line options; if the return value of
@@ -865,7 +857,7 @@ SetMainModule(const char *s)
 }
 
 static void
-SetModulesProp(const char *mods) {
+SetAddModulesProp(const char *mods) {
     size_t buflen = JLI_StrLen(mods) + 40;
     char *prop = (char *)JLI_MemAlloc(buflen);
     JLI_Snprintf(prop, buflen, "-Djdk.launcher.modules=%s", mods);
@@ -1149,9 +1141,9 @@ ParseArguments(int *pargc, char ***pargv,
             ARG_CHECK (argc, ARG_ERROR5, arg);
             SetMainModule(*argv);
             mode = LM_MODULE;
-        } else if (JLI_StrCmp(arg, "-mods") == 0 || JLI_StrCmp(arg, "-modules") == 0) {
+        } else if (JLI_StrCmp(arg, "-addmods") == 0) {
             ARG_CHECK (argc, ARG_ERROR6, arg);
-            SetModulesProp(*argv);
+            SetAddModulesProp(*argv);
             argv++; --argc;
         } else if (JLI_StrCmp(arg, "-help") == 0 ||
                    JLI_StrCmp(arg, "-h") == 0 ||
@@ -1249,6 +1241,11 @@ ParseArguments(int *pargc, char ***pargv,
     } else if (mode == LM_UNKNOWN) {
         /* default to LM_CLASS if -jar and -cp option are
          * not specified */
+        char* cpath = getenv("CLASSPATH");
+        if (cpath == NULL) {
+            cpath = ".";
+        }
+        SetClassPath(cpath);
         mode = LM_CLASS;
     }
 

@@ -22,9 +22,7 @@
 #
 
 # @test
-# @ignore until -limitmods is added
-# @summary Basic test of launcher -mods option
-# @run shell basic.sh
+# @summary Test application on class path making use of library on module path
 
 set -e
 
@@ -38,15 +36,17 @@ fi
 
 JAVAC="$COMPILEJAVA/bin/javac"
 JAVA="$TESTJAVA/bin/java"
+JLINK="$TESTJAVA/bin/jlink"
 
-mkdir -p mods/test
-$JAVAC -d mods/test `find $TESTSRC/src/test -name "*.java"`
+rm -rf mods
+mkdir -p mods/lib
+$JAVAC -d mods/lib `find $TESTSRC/src/lib -name "*.java"`
 
-# -classpath && -mods
-$JAVA -mods java.desktop -cp mods/test jdk.test.UseAWT expect-pass
-$JAVA -mods java.base -cp mods/test jdk.test.UseAWT expect-fail
+rm -rf classes
+mkdir -p classes
+$JAVAC -d classes -cp mods/lib `find $TESTSRC/src/app -name "*.java"`
 
-# -m && -mods
-$JAVA -mods java.base -mp mods -m test/jdk.test.UseAWT expect-pass
+# Run with both a module and class path
+$JAVA -mp mods -cp classes app.Main
 
 exit 0
