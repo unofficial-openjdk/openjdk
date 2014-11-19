@@ -23,6 +23,22 @@
 */
 
 #include "precompiled.hpp"
+#include "classfile/classLoader.hpp"
+#include "classfile/classLoaderData.inline.hpp"
+#include "classfile/javaAssertions.hpp"
+#include "classfile/javaClasses.hpp"
+#include "classfile/moduleEntry.hpp"
+#include "classfile/modules.hpp"
+#include "classfile/packageEntry.hpp"
+#include "classfile/stringTable.hpp"
+#include "classfile/vmSymbols.hpp"
+#include "oops/instanceKlass.hpp"
+#include "oops/objArrayKlass.hpp"
+#include "runtime/arguments.hpp"
+#include "runtime/handles.inline.hpp"
+#include "runtime/reflection.hpp"
+#include "utilities/utf8.hpp"
+
 
 static bool verify_module_name(char *module_name) {
   if (module_name == NULL) return false;
