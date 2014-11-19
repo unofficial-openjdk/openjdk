@@ -31,6 +31,7 @@
 
 #include "classfile/stringTable.hpp"
 #include "classfile/classLoaderData.hpp"
+#include "classfile/modules.hpp"
 
 #include "prims/whitebox.hpp"
 #include "prims/wbtestmethods/parserTests.hpp"

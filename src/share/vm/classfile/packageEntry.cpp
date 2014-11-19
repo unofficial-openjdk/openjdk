@@ -26,9 +26,10 @@
 #include "classfile/moduleEntry.hpp"
 #include "classfile/packageEntry.hpp"
 #include "oops/symbol.hpp"
+#include "runtime/handles.inline.hpp"
 #include "utilities/events.hpp"
 #include "utilities/growableArray.hpp"
-#include "utilities/hashtable.hpp"
+#include "utilities/hashtable.inline.hpp"
 
 QualifiedExportTable::QualifiedExportTable(int table_size)
                   : GrowableArray<jweak>(table_size, true) {

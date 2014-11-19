@@ -28,10 +28,11 @@
 #include "classfile/moduleEntry.hpp"
 #include "oops/symbol.hpp"
 #include "prims/jni.h"
+#include "runtime/handles.inline.hpp"
 #include "runtime/safepoint.hpp"
 #include "utilities/events.hpp"
 #include "utilities/growableArray.hpp"
-#include "utilities/hashtable.hpp"
+#include "utilities/hashtable.inline.hpp"
 
 bool ModuleEntryTable::_javabase_created;
 
