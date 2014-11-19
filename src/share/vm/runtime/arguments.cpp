@@ -266,6 +266,7 @@ static ObsoleteFlag obsolete_jvm_flags[] = {
   { "Tier1MaxInlineSize",  JDK_Version::jdk_update(7,40), JDK_Version::jdk(8) },
   { "Tier1LoopOptsCount",  JDK_Version::jdk_update(7,40), JDK_Version::jdk(8) },
   { "UseSpinning",         JDK_Version::jdk_update(7,40), JDK_Version::jdk(8) },
+  { "CompilationRepeat",   JDK_Version::jdk_update(7,80), JDK_Version::jdk(9) },
 #ifdef PRODUCT
   { "DesiredMethodLimit",
                            JDK_Version::jdk_update(7, 2), JDK_Version::jdk(8) },
