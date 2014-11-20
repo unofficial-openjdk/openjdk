@@ -112,12 +112,24 @@ class ModuleBootstrap {
 
         // additional module(s) specified by -addmods
         Set<String> additionalMods = null;
-        propValue = System.getProperty("jdk.launcher.modules");
+        propValue = System.getProperty("jdk.launcher.addmods");
         if (propValue != null) {
             additionalMods = new HashSet<>();
             for (String mod: propValue.split(",")) {
                 additionalMods.add(mod);
             }
+        }
+
+        // -limitmods
+        propValue = System.getProperty("jdk.launcher.limitmods");
+        if (propValue != null) {
+            Set<String> mods = new HashSet<>();
+            for (String mod: propValue.split(",")) {
+                mods.add(mod);
+            }
+            if (mainMid != null)
+                mods.add(mainMid.name());
+            finder = limitFinder(finder, mods);
         }
 
         // If the class path is set then assume the unnamed module is observable.
@@ -202,6 +214,40 @@ class ModuleBootstrap {
                             .sorted()
                             .forEach(md -> System.out.println(md.name()));
         }
+    }
+
+    /**
+     * Returns a ModuleArtifactFinder that locates modules via the given
+     * ModuleArtifactFinder but limits what can be found to the given
+     * modules and their transitive dependences.
+     */
+    private static ModuleArtifactFinder limitFinder(ModuleArtifactFinder finder,
+                                                    Set<String> mods)
+    {
+        Configuration cf = Configuration.resolve(finder,
+                                                 Layer.emptyLayer(),
+                                                 ModuleArtifactFinder.nullFinder(),
+                                                 mods);
+
+        // module name -> artifact
+        Map<String, ModuleArtifact> map = new HashMap<>();
+        cf.descriptors().forEach(md -> {
+            String name = md.name();
+            map.put(name, finder.find(name));
+        });
+
+        Set<ModuleArtifact> artifacts = new HashSet<>(map.values());
+
+        return new ModuleArtifactFinder() {
+            @Override
+            public ModuleArtifact find(String name) {
+                return map.get(name);
+            }
+            @Override
+            public Set<ModuleArtifact> allModules() {
+                return artifacts;
+            }
+        };
     }
 
     /**

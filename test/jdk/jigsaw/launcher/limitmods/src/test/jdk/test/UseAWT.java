@@ -23,6 +23,9 @@
 
 package jdk.test;
 
+import java.awt.Component;
+import java.lang.reflect.Module;
+
 public class UseAWT {
     public static void main(String[] args) {
         boolean expectFail = args[0].equals("expect-fail");
@@ -31,7 +34,13 @@ public class UseAWT {
             throw new RuntimeException("Need to run with expect-* argument");
 
         try {
-            Class<?> c = java.awt.Component.class;
+            Class<?> c = Component.class;
+
+            // workaround until VM throws NCFE for types in modules that
+            // aren't defined to the VM
+            if (c.getModule() == null)
+                throw new NoClassDefFoundError();
+
             if (expectFail) throw new RuntimeException("No Error thrown");
         } catch (NoClassDefFoundError e) {
             // exact Error is TBD, will likely be NoClassDefFoundError as

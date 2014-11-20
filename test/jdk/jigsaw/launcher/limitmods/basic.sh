@@ -22,8 +22,7 @@
 #
 
 # @test
-# @ignore until -limitmods is added
-# @summary Basic test of launcher -mods option
+# @summary Basic test of launcher -limitmods option
 # @run shell basic.sh
 
 set -e
@@ -42,11 +41,11 @@ JAVA="$TESTJAVA/bin/java"
 mkdir -p mods/test
 $JAVAC -d mods/test `find $TESTSRC/src/test -name "*.java"`
 
-# -classpath && -mods
-$JAVA -mods java.desktop -cp mods/test jdk.test.UseAWT expect-pass
-$JAVA -mods java.base -cp mods/test jdk.test.UseAWT expect-fail
+# -classpath && -limitmods
+$JAVA -limitmods java.desktop -cp mods/test jdk.test.UseAWT expect-pass
+$JAVA -limitmods java.base -cp mods/test jdk.test.UseAWT expect-fail
 
-# -m && -mods
-$JAVA -mods java.base -mp mods -m test/jdk.test.UseAWT expect-pass
+# -limitmods and -m
+$JAVA -limitmods java.base -mp mods -m test/jdk.test.UseAWT expect-pass
 
 exit 0

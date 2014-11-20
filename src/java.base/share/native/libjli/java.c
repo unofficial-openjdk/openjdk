@@ -101,6 +101,7 @@ static void SetClassPath(const char *s);
 static void SetModulePath(const char *s);
 static void SetMainModule(const char *s);
 static void SetAddModulesProp(const char *mods);
+static void SetLimitModulesProp(const char *mods);
 static void SelectVersion(int argc, char **argv, char **main_class);
 static void SetJvmEnvironment(int argc, char **argv);
 static jboolean ParseArguments(int *pargc, char ***pargv,
@@ -860,7 +861,15 @@ static void
 SetAddModulesProp(const char *mods) {
     size_t buflen = JLI_StrLen(mods) + 40;
     char *prop = (char *)JLI_MemAlloc(buflen);
-    JLI_Snprintf(prop, buflen, "-Djdk.launcher.modules=%s", mods);
+    JLI_Snprintf(prop, buflen, "-Djdk.launcher.addmods=%s", mods);
+    AddOption(prop, NULL);
+}
+
+static void
+SetLimitModulesProp(const char *mods) {
+    size_t buflen = JLI_StrLen(mods) + 40;
+    char *prop = (char *)JLI_MemAlloc(buflen);
+    JLI_Snprintf(prop, buflen, "-Djdk.launcher.limitmods=%s", mods);
     AddOption(prop, NULL);
 }
 
@@ -1144,6 +1153,10 @@ ParseArguments(int *pargc, char ***pargv,
         } else if (JLI_StrCmp(arg, "-addmods") == 0) {
             ARG_CHECK (argc, ARG_ERROR6, arg);
             SetAddModulesProp(*argv);
+            argv++; --argc;
+        } else if (JLI_StrCmp(arg, "-limitmods") == 0) {
+            ARG_CHECK (argc, ARG_ERROR6, arg);
+            SetLimitModulesProp(*argv);
             argv++; --argc;
         } else if (JLI_StrCmp(arg, "-help") == 0 ||
                    JLI_StrCmp(arg, "-h") == 0 ||
