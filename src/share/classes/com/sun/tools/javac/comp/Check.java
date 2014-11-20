@@ -2400,9 +2400,9 @@ public class Check {
             }
         });
         for (Scope.Entry e = a.annotationType.type.tsym.members().elems;
-             e != null;
-             e = e.sibling)
-            if (e.sym.kind == MTH)
+                e != null;
+                e = e.sibling)
+            if (e.sym.kind == MTH && e.sym.name != names.clinit)
                 members.add((MethodSymbol) e.sym);
 
         // count them off as they're annotated
