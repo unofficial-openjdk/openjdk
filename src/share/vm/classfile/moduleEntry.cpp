@@ -86,7 +86,6 @@ void ReadsModuleTable::purge_reads(BoolObjectClosure* is_alive_closure) {
 // Returns true if this module can read module m
 bool ModuleEntry::can_read(ModuleEntry* m) const {
   assert(m != NULL, "No module to lookup in this module's reads list");
-  assert(_reads != NULL, "No reads list to lookup module entry in");
   if (_reads == NULL) {
     return false;
   } else {

@@ -58,6 +58,13 @@ static bool verify_package_name(char *package_name) {
     ClassFileParser::LegalClass));
 }
 
+static bool verify_package_name(jstring package) {
+  ResourceMark rm;
+  char *package_name = java_lang_String::as_utf8_string(
+    JNIHandles::resolve_non_null(package));
+  return verify_package_name(package_name);
+}
+
 static ModuleEntryTable* get_module_entry_table(Handle h_loader, TRAPS) {
   h_loader = Handle(THREAD, java_lang_ClassLoader::non_reflection_class_loader(h_loader()));
   ClassLoaderData *loader_cld = SystemDictionary::register_loader(h_loader, CHECK_NULL);
@@ -158,9 +165,9 @@ jobject modules::define_module(JNIEnv *env, jstring name, jobject loader, jobjec
       "Module java.base is already defined");
   }
 
-  objArrayOop packages_oop = objArrayOop(JNIHandles::resolve_non_null(packages));
+  objArrayOop packages_oop = objArrayOop(JNIHandles::resolve(packages));
   objArrayHandle packages_h(THREAD, packages_oop);
-  int num_packages = packages_h->length();
+  int num_packages = (packages_h == NULL ? 0 : packages_h->length());
 
   // Check that the list of packages has no duplicates and that the
   // packages are syntactically ok.
@@ -289,15 +296,24 @@ void modules::add_module_exports(JNIEnv *env, jobject from_module, jstring packa
     }
   }
 
+  if (!verify_package_name(package)) {
+    ResourceMark rm;
+    THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(),
+      err_msg("Bad package for module %s",
+              from_module_entry->name()->as_C_string()));
+  }
+
   if (from_module_entry == to_module_entry) return;  // Trivial case.
 
   PackageEntry *package_entry = get_package_entry(from_module_entry, package,
     CHECK);
+
   if (package_entry == NULL) {
     ResourceMark rm;
     THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(),
-      err_msg("Package not found in from_module: %s",
-      from_module_entry->name()->as_C_string()));
+      err_msg("Package %s not found in from_module %s",
+        java_lang_String::as_utf8_string(JNIHandles::resolve_non_null(package)),
+        from_module_entry->name()->as_C_string()));
   }
   if (package_entry->module() != from_module_entry) {
     ResourceMark rm;
@@ -404,6 +420,13 @@ jboolean modules::is_exported_to_module(JNIEnv *env, jobject from_module, jstrin
         "to_module is invalid", JNI_FALSE);
     }
   }
+  if (!verify_package_name(package)) {
+    ResourceMark rm;
+    THROW_MSG_(vmSymbols::java_lang_IllegalArgumentException(),
+      err_msg("Bad exported package name, module %s",
+              from_module_entry->name()->as_C_string()), JNI_FALSE);
+  }
+
   PackageEntry *package_entry = get_package_entry(from_module_entry, package,
     CHECK_false);
   if (package_entry == NULL) {
