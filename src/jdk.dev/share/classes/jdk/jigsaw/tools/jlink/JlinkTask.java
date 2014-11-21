@@ -222,7 +222,7 @@ class JlinkTask {
                 task.options.help = true;
             }
         },
-        new Option(true, "--module-path", "--mp") {
+        new Option(true, "--modulepath", "--mp") {
             void process(JlinkTask task, String opt, String arg) {
                 String[] dirs = arg.split(File.pathSeparator);
                 Path[] paths = new Path[dirs.length];
@@ -253,7 +253,7 @@ class JlinkTask {
                 task.options.controlFile = arg;
             }
         },
-        new Option(true, "--mods") {
+        new Option(true, "--addmods") {
             void process(JlinkTask task, String opt, String arg) throws BadArgs {
                 for (String mn : arg.split(",")) {
                     if (mn.isEmpty())
