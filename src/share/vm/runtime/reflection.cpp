@@ -473,7 +473,7 @@ bool Reflection::verify_class_access(Klass* current_class, Klass* new_class, boo
       //      module_to exports T unqualifically to all modules (checked above).
       bool okay = package_to->is_qexported_to(module_from);
       if (!okay && TraceAccessControlErrors) {
-    ResourceMark rm;
+        ResourceMark rm;
         tty->print_cr("Type in module %s (%s) cannot access type in module %s (%s), not exported",
           module_from->name()->as_C_string(), current_class->external_name(),
           module_to->name()->as_C_string(), new_class->external_name());

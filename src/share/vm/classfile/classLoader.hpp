@@ -247,9 +247,6 @@ class ClassLoader: AllStatic {
   // to avoid confusing the zip library
   static bool get_canonical_path(const char* orig, char* out, int len);
 
-  // used to compute the per-loader tag
-  static int _next_loader_tag;
-
  public:
   static jboolean decompress(void *in, u8 inSize, void *out, u8 outSize, char **pmsg);
   static bool update_class_path_entry_list(const char *path,
@@ -392,9 +389,6 @@ class ClassLoader: AllStatic {
 
   // add a path to class path list
   static void add_to_list(const char* apath);
-
-  /* returns a unique tag for the given loader */
-  static int tag_for(Handle loader);
 
   // Debugging
   static void verify()              PRODUCT_RETURN;

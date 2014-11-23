@@ -129,8 +129,6 @@ int             ClassLoader::_num_entries         = 0;
 PackageHashtable* ClassLoader::_package_hash_table = NULL;
 bool            ClassLoader::_has_bootmodules_jimage = false;
 
-int ClassLoader::_next_loader_tag = 0;
-
 #if INCLUDE_CDS
 SharedPathsMiscInfo* ClassLoader::_shared_paths_misc_info = NULL;
 #endif
@@ -1095,30 +1093,6 @@ void ClassLoader::load_zip_library() {
 jboolean ClassLoader::decompress(void *in, u8 inSize, void *out, u8 outSize, char **pmsg) {
   return (*ZipInflateFully)(in, inSize, out, outSize, pmsg);
 }
-
-// Returns the unique tag for the given loader, generating it if required
-int ClassLoader::tag_for(Handle loader) {
-  // null loader
-  if (loader.is_null())
-     return 0;
-
-  jint tag = java_lang_ClassLoader::loader_tag(loader());
-  if (tag != 0)
-    return tag;
-
-  {
-    MutexLocker ml(LoaderTag_lock);
-    tag = ++_next_loader_tag;
-  }
-
-  jint* tag_addr = java_lang_ClassLoader::loader_tag_addr(loader());
-  jint prev = Atomic::cmpxchg(tag, tag_addr, 0);
-  if (prev != 0)
-    tag = prev;
-
-  return tag;
-}
-
 
 // PackageInfo data exists in order to support the java.lang.Package
 // class.  A Package object provides information about a java package

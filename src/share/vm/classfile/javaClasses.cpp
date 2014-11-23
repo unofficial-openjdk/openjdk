@@ -3086,8 +3086,6 @@ oop java_security_AccessControlContext::create(objArrayHandle context, bool isPr
 
 bool java_lang_ClassLoader::offsets_computed = false;
 int  java_lang_ClassLoader::_loader_data_offset = -1;
-int  java_lang_ClassLoader::_loader_tag_offset = -1;
-int  java_lang_ClassLoader::_module_lookup_offset = -1;
 int  java_lang_ClassLoader::parallelCapable_offset = -1;
 
 ClassLoaderData** java_lang_ClassLoader::loader_data_addr(oop loader) {
@@ -3097,15 +3095,6 @@ ClassLoaderData** java_lang_ClassLoader::loader_data_addr(oop loader) {
 
 ClassLoaderData* java_lang_ClassLoader::loader_data(oop loader) {
   return *java_lang_ClassLoader::loader_data_addr(loader);
-}
-
-jint* java_lang_ClassLoader::loader_tag_addr(oop loader) {
-  assert(loader != NULL && loader->is_oop(), "loader must be oop");
-  return (jint*) loader->address_field_addr(_loader_tag_offset);
-}
-
-jint java_lang_ClassLoader::loader_tag(oop loader) {
-  return *java_lang_ClassLoader::loader_tag_addr(loader);
 }
 
 void java_lang_ClassLoader::compute_offsets() {

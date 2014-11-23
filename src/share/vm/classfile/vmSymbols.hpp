@@ -408,7 +408,6 @@
   template(protection_domain_name,                    "protection_domain")                        \
   template(signers_name,                              "signers_name")                             \
   template(loader_data_name,                          "loader_data")                              \
-  template(loader_tag_name,                           "loader_tag")                               \
   template(dependencies_name,                         "dependencies")                             \
   template(loader_name,                               "loader")                                   \
   template(module_name,                               "module")                                   \
