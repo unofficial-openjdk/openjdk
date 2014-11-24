@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2009, 2014, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -41,7 +41,15 @@ include FILES_c.gmk
 include FILES_java.gmk
 include Exportedfiles.gmk
 
+ifeq ($(PLATFORM), windows)
+include $(BUILDDIR)/common/Classes.gmk
+endif
+ifeq ($(PLATFORM), macosx)
+include $(BUILDDIR)/common/Classes.gmk
+endif
+
 ifneq ($(PLATFORM), windows)
+ifneq ($(PLATFORM), macosx)
 include $(BUILDDIR)/common/Mapfile-vers.gmk
 include $(BUILDDIR)/common/Library.gmk
 
@@ -67,12 +75,9 @@ endif
 ifeq ($(PLATFORM), solaris)
 #LIBSCTP = -lsctp
 OTHER_LDLIBS += $(LIBSOCKET) -L$(LIBDIR)/$(LIBARCH) -lnet -lnio
-endif # PLATFORM
-
-else # windows
-include $(BUILDDIR)/common/Classes.gmk
-endif # ifneq windows
-
+endif
+endif # macosx
+endif # windows
 
 clean clobber::
 	$(RM) -r $(CLASSDESTDIR)/com/sun/nio/sctp
