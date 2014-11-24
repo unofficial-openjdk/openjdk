@@ -26,6 +26,8 @@
  * @bug 8028623
  * @summary Test hashing of extended characters in Serviceability Agent.
  * @library /testlibrary
+ * @compile -encoding utf8 Test8028623.java
+ * @run main Test8028623
  */
 
 import com.oracle.java.testlibrary.JDKToolLauncher;
@@ -36,12 +38,12 @@ import java.io.File;
 
 public class Test8028623 {
 
-  public static int Ã = 1;
+  public static int \u00CB = 1;
   public static String dumpFile = "heap.out";
 
   public static void main (String[] args) {
 
-    System.out.println(Ã);
+    System.out.println(\u00CB);
 
     try {
         int pid = ProcessTools.getProcessId();
