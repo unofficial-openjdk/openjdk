@@ -387,16 +387,6 @@ public class VM {
      */
     public static native void addModulePackage(Module m, String pkg);
 
-    /**
-     * Should not be used.
-     */
-    @Deprecated
-    public static void addBackdoorAccess(ClassLoader loader, String pkg,
-                                         ClassLoader toLoader, String toPackage)
-    {
-        throw new RuntimeException("removed");
-    }
-
     /******/
 
     /**
