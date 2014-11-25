@@ -1031,37 +1031,37 @@ JVM_END
 
 JVM_ENTRY(jobject, JVM_DefineModule(JNIEnv *env, jstring name, jobject loader, jobjectArray packages))
   JVMWrapper("JVM_DefineModule");
-  return modules::define_module(env, name, loader, packages);
+  return Modules::define_module(env, name, loader, packages);
 JVM_END
 
 JVM_ENTRY(void, JVM_AddModuleExports(JNIEnv *env, jobject from_module, jstring package, jobject to_module))
   JVMWrapper("JVM_AddModuleExports");
-  modules::add_module_exports(env, from_module, package, to_module);
+  Modules::add_module_exports(env, from_module, package, to_module);
 JVM_END
 
 JVM_ENTRY (void, JVM_AddReadsModule(JNIEnv *env, jobject from_module, jobject to_module))
   JVMWrapper("JVM_AddReadsModule");
-  modules::add_reads_module(env, from_module, to_module);
+  Modules::add_reads_module(env, from_module, to_module);
 JVM_END
 
 JVM_ENTRY(jboolean, JVM_CanReadModule(JNIEnv *env, jobject asking_module, jobject target_module))
   JVMWrapper("JVM_CanReadModule");
-  return modules::can_read_module(env, asking_module, target_module);
+  return Modules::can_read_module(env, asking_module, target_module);
 JVM_END
 
 JVM_ENTRY(jboolean, JVM_IsExportedToModule(JNIEnv *env, jobject from_module, jstring package, jobject to_module))
   JVMWrapper("JVM_IsExportedToModule");
-  return modules::is_exported_to_module(env, from_module, package, to_module);
+  return Modules::is_exported_to_module(env, from_module, package, to_module);
 JVM_END
 
 JVM_ENTRY(jobject, JVM_GetModule(JNIEnv* env, jclass clazz))
   JVMWrapper("GetModule");
-  return modules::get_module(env, clazz);
+  return Modules::get_module(env, clazz);
 JVM_END
 
 JVM_ENTRY (void, JVM_AddModulePackage(JNIEnv *env, jobject module, jstring package))
   JVMWrapper("JVM_AddModulePackage");
-  modules::add_module_package(env, module, package);
+  Modules::add_module_package(env, module, package);
 JVM_END
 
 

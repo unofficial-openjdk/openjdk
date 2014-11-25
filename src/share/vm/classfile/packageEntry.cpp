@@ -25,6 +25,7 @@
 #include "precompiled.hpp"
 #include "classfile/moduleEntry.hpp"
 #include "classfile/packageEntry.hpp"
+#include "memory/resourceArea.hpp"
 #include "oops/symbol.hpp"
 #include "runtime/handles.inline.hpp"
 #include "utilities/events.hpp"
@@ -170,24 +171,32 @@ PackageEntryTable::PackageEntryTable(int table_size)
 {
 }
 
-void PackageEntryTable::add_entry(Symbol* name, ModuleEntry* module) {
-  assert_locked_or_safepoint(Module_lock);
-  PackageEntry* entry = new_entry(compute_hash(name), name, module);
-  add_entry(index_for(name), entry);
-}
-
 void PackageEntryTable::add_entry(int index, PackageEntry* new_entry) {
   assert_locked_or_safepoint(Module_lock);
   Hashtable<Symbol*, mtClass>::add_entry(index, (HashtableEntry<Symbol*, mtClass>*)new_entry);
 }
 
-PackageEntry* PackageEntryTable::lookup(Symbol* name, ModuleEntry* module, TRAPS) {
+// Create package in loader's package entry table and return the entry.
+// If entry already exists, return null.  Assume Module lock was taken by caller.
+PackageEntry* PackageEntryTable::locked_create_entry_or_null(Symbol* name, ModuleEntry* module) {
+  assert_locked_or_safepoint(Module_lock);
+  // Check if package already exists.  Return NULL if it does.
+  if (lookup_only(name) != NULL) {
+    return NULL;
+  } else {
+    PackageEntry* entry = new_entry(compute_hash(name), name, module);
+    add_entry(index_for(name), entry);
+    return entry;
+  }
+}
+
+PackageEntry* PackageEntryTable::lookup(Symbol* name, ModuleEntry* module) {
   PackageEntry* p = lookup_only(name);
   if (p != NULL) {
     return p;
   } else {
     // If not found, add to table. Grab the PackageEntryTable lock first.
-    MutexLocker ml(Module_lock, THREAD);
+    MutexLocker ml(Module_lock);
 
     // Since look-up was done lock-free, we need to check if another thread beat
     // us in the race to insert the package.
@@ -205,7 +214,6 @@ PackageEntry* PackageEntryTable::lookup(Symbol* name, ModuleEntry* module, TRAPS
 
 PackageEntry* PackageEntryTable::lookup_only(Symbol* name) {
   int index = index_for(name);
-
   for (PackageEntry* p = bucket(index); p != NULL; p = p->next()) {
     if (p->name()->fast_compare(name) == 0) {
       return p;
@@ -213,28 +221,6 @@ PackageEntry* PackageEntryTable::lookup_only(Symbol* name) {
   }
   return NULL;
 }
-
-  // Create package in loader's package entry table and return the entry.
-  // If entry already exists, return null.  Assume Module lock was taken by
-  // caller.
-  PackageEntry* PackageEntryTable::locked_create_entry(Symbol* name, ModuleEntry* module, TRAPS) {
-    assert_locked_or_safepoint(Module_lock);
-    // Check if package already exists.  Return NULL if it does.
-    if (lookup_only(name) != NULL) {
-      return NULL;
-    } else {
-      PackageEntry* entry = new_entry(compute_hash(name), name, module);
-      add_entry(index_for(name), entry);
-      return entry;
-    }
-  }
-
-  // Create package in loader's package entry table and return the entry.
-  // If entry already exists, return null.
-  PackageEntry* PackageEntryTable::create_entry(Symbol* name, ModuleEntry* module, TRAPS) {
-    MutexLocker ml(Module_lock, THREAD);
-    return locked_create_entry(name, module, CHECK_NULL);
-  }
 
 void PackageEntryTable::free_entry(PackageEntry* entry) {
   // If we are at a safepoint, we don't have to establish the Module_lock.
@@ -270,8 +256,9 @@ void PackageEntryTable::delete_entry(PackageEntry* to_delete) {
 void PackageEntryTable::purge_all_package_exports(BoolObjectClosure* is_alive_closure) {
   assert(SafepointSynchronize::is_at_safepoint(), "must be at safepoint");
   for (int i = 0; i < table_size(); i++) {
-    for (PackageEntry** p = bucket_addr(i); *p != NULL;) {
-      PackageEntry* entry = *p;
+    for (PackageEntry* entry = bucket(i);
+                       entry != NULL;
+                       entry = entry->next()) {
       if (entry->exported_pending_delete()) {
         // exported list is pending deletion due to a transition
         // from qualified to unqualified
@@ -279,7 +266,6 @@ void PackageEntryTable::purge_all_package_exports(BoolObjectClosure* is_alive_cl
       } else if (entry->is_qual_exported()) {
         entry->purge_qualified_exports(is_alive_closure);
       }
-      *p = entry->next();
     }
   }
 }
@@ -288,10 +274,10 @@ void PackageEntryTable::purge_all_package_exports(BoolObjectClosure* is_alive_cl
 void PackageEntryTable::delete_all_entries() {
   assert(SafepointSynchronize::is_at_safepoint(), "must be at safepoint");
   for (int i = 0; i < table_size(); i++) {
-    for (PackageEntry** p = bucket_addr(i); *p != NULL;) {
-      PackageEntry* entry = *p;
-      *p = entry->next();
-      free_entry(entry);
+    for (PackageEntry* entry = bucket(i);
+                       entry != NULL;
+                       entry = entry->next()) {
+      delete_entry(entry);
     }
   }
 }
@@ -300,8 +286,8 @@ void PackageEntryTable::delete_all_entries() {
 void PackageEntryTable::print() {
   tty->print_cr("Package Entry Table (table_size=%d, entries=%d)",
                 table_size(), number_of_entries());
-  for (int index = 0; index < table_size(); index++) {
-    for (PackageEntry* probe = bucket(index);
+  for (int i = 0; i < table_size(); i++) {
+    for (PackageEntry* probe = bucket(i);
                               probe != NULL;
                               probe = probe->next()) {
       probe->print();
@@ -310,8 +296,11 @@ void PackageEntryTable::print() {
 }
 
 void PackageEntry::print() {
-  tty->print_cr("package entry "PTR_FORMAT" name "PTR_FORMAT" module "PTR_FORMAT" is_exported %d next "PTR_FORMAT,
-                p2i(this), p2i(literal()), p2i(module()), _is_exported, p2i(next()));
+  ResourceMark rm;
+  tty->print_cr("package entry "PTR_FORMAT" name %s module %s is_exported %d next "PTR_FORMAT,
+                p2i(this), name()->as_C_string(),
+                ((module() == NULL) ? "[unnamed]" : module()->name()->as_C_string()),
+                _is_exported, p2i(next()));
 }
 #endif
 
@@ -331,5 +320,5 @@ void PackageEntryTable::verify() {
 }
 
 void PackageEntry::verify() {
-  // FIX ME: ?
+  guarantee(name() != NULL, "A package entry must have a corresponding symbol name.");
 }

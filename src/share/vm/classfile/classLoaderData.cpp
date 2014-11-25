@@ -341,6 +341,11 @@ void ClassLoaderData::unload() {
 PackageEntryTable* ClassLoaderData::packages() {
   // Lazily create the package entry table at first request.
   if (_packages == NULL) {
+    MutexLockerEx m1(metaspace_lock(), Mutex::_no_safepoint_check_flag);
+    // Check again if _packages has been allocated while we were getting this lock.
+    if (_packages != NULL) {
+      return _packages;
+    }
     _packages = new PackageEntryTable(PackageEntryTable::_packagetable_entry_size);
   }
   return _packages;
@@ -349,6 +354,11 @@ PackageEntryTable* ClassLoaderData::packages() {
 ModuleEntryTable* ClassLoaderData::modules() {
   // Lazily create the module entry table at first request.
   if (_modules == NULL) {
+    MutexLockerEx m1(metaspace_lock(), Mutex::_no_safepoint_check_flag);
+    // Check again if _modules has been allocated while we were getting this lock.
+    if (_modules != NULL) {
+      return _modules;
+    }
     _modules = new ModuleEntryTable(ModuleEntryTable::_moduletable_entry_size);
   }
   return _modules;
@@ -801,14 +811,12 @@ bool ClassLoaderDataGraph::do_unloading(BoolObjectClosure* is_alive_closure) {
   data = _head;
   while (data != NULL) {
     if (data->is_alive(is_alive_closure)) {
-/*
       if (!data->packageTable_is_null()) {
         data->packages()->purge_all_package_exports(is_alive_closure);
       }
       if (!data->moduleTable_is_null()) {
         data->modules()->purge_all_module_reads(is_alive_closure);
       }
-*/
       data->free_deallocate_list();
       prev = data;
       data = data->next();

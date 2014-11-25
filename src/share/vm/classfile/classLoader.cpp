@@ -389,8 +389,6 @@ u1* LazyClassPathEntry::open_entry(const char* name, jint* filesize, bool nul_te
   }
 }
 
-static bool processed_javabase = false;
-
 // Find package names for java.base module by scanning directories starting
 // with java_base_path.  Add each found package to the boot classloader's
 // package_entry table.
@@ -405,6 +403,7 @@ static void package_list(char *java_base_path, ModuleEntry* jb_module) {
   struct dirent* dir_entry;
   char stat_path[JVM_MAXPATHLEN];
   ClassLoaderData* null_cld = ClassLoaderData::the_null_class_loader_data();
+  PackageEntryTable* null_cld_packages = null_cld->packages();
   const char* file_sep = os::file_separator();
 
   size_t start_len = strlen(java_base_path);
@@ -425,6 +424,8 @@ static void package_list(char *java_base_path, ModuleEntry* jb_module) {
 
     char *dbuf = NEW_C_HEAP_ARRAY(
       char, os::readdir_buf_size(current_path), mtInternal);
+
+    MutexLocker m1(Module_lock, THREAD);
 
     // Look at each entry in the directory.
     while ((dir_entry = os::readdir(dir, (dirent *)dbuf)) != NULL) {
@@ -458,17 +459,13 @@ static void package_list(char *java_base_path, ModuleEntry* jb_module) {
               }
             }
             // Found the package name, first look it up in the symbol table.
-            Symbol* pkg_name = SymbolTable::lookup(
-              package_name, (int) strlen(package_name), THREAD);
-            assert(pkg_name != NULL,
-              err_msg("Package %s not defined, should be in symbol table",
-                      package_name));
+            Symbol* pkg_name = SymbolTable::new_symbol(package_name, CHECK);
 
             // Insert into the null class loader's package entry table.
-            PackageEntry* pkg = null_cld->packages()->create_entry(
-              pkg_name, jb_module, THREAD);
+            PackageEntry* pkg = null_cld_packages->locked_create_entry_or_null(
+                                  pkg_name, jb_module);
             assert(pkg != NULL,
-              err_msg("Package %s not found in package entry table", package_name));
+                   err_msg("Package %s not found in package entry table", package_name));
             dir_already_listed = true;
             if (TraceClassLoading) {
               tty->print_cr("package:  %s", package_name);
@@ -495,11 +492,16 @@ static void process_javabase(const char* path) {
   // Get module entry table
   ModuleEntryTable* null_cld_modules = null_cld->modules();
   assert(null_cld_modules != NULL, "No module entry table for boot class loader?");
+
   // Add entry, without a java.lang.reflect.Module object yet.
   // The j.l.r.m will be added later.
-  ModuleEntry* jb_module = null_cld_modules->create_entry(
-    NULL, vmSymbols::java_base(), null_cld, THREAD);
-  assert(jb_module != NULL, "no entry created for java.base");
+  ModuleEntry* jb_module = NULL;
+  {
+    MutexLocker ml(Module_lock, THREAD);
+    jb_module = null_cld_modules->locked_create_entry_or_null(
+                  NULL, vmSymbols::java_base(), null_cld);
+    assert(jb_module != NULL, "no entry created for java.base");
+  }
 
   if (TraceClassLoading) {
     tty->print_cr("[Local packages for java.base:]");
@@ -508,11 +510,11 @@ static void process_javabase(const char* path) {
   char modules_path[JVM_MAXPATHLEN];
   strcpy(modules_path, path);
   package_list(modules_path, jb_module);
-  processed_javabase = true;
 }
 
 static void process_javabase(ImageFile *image) {
   Thread* THREAD = Thread::current();
+  ResourceMark rm(THREAD);
 
   // bootmodules.jimage being opened due to processing
   // the first well known class java/lang/Object.  Must create
@@ -521,33 +523,36 @@ static void process_javabase(ImageFile *image) {
   ClassLoaderData* null_cld = ClassLoaderData::the_null_class_loader_data();
 
   // Get module entry table
+  PackageEntryTable* null_cld_packages = null_cld->packages();
   ModuleEntryTable* null_cld_modules = null_cld->modules();
-  assert(null_cld_modules != NULL, "No module entry table for boot class loader?");
+  assert((null_cld_modules != NULL || null_cld_packages != NULL),
+         "No package and/or module table for boot class loader?");
+
   // Add entry, without a java.lang.reflect.Module object yet.
   // The j.l.r.m will be added later.
-  ModuleEntry* jb_module = null_cld_modules->create_entry(
-    NULL, vmSymbols::java_base(), null_cld, THREAD);
+  MutexLocker ml(Module_lock, THREAD);
+  ModuleEntry* jb_module = null_cld_modules->locked_create_entry_or_null(
+                             NULL, vmSymbols::java_base(), null_cld);
   assert(jb_module != NULL, "no entry created for java.base");
-  GrowableArray<const char*>* packages = image->packages("java.base");
 
   if (TraceClassLoading) {
     tty->print_cr("[Local packages for java.base:]");
   }
 
+  GrowableArray<const char*>* packages = image->packages(vmSymbols::java_base()->as_C_string());
+
   for (int i = 0; i < packages->length(); i++) {
     // Found the package name, first look it up in the symbol table.
-    Symbol* pkg_name = SymbolTable::lookup((const char*)packages->at(i), (int) strlen(packages->at(i)), THREAD);
-    assert(pkg_name != NULL, "Package should have been defined, should be in symbol table");
+    Symbol* pkg_name = SymbolTable::new_symbol((const char*)packages->at(i), CHECK);
 
     // Insert into the null class loader's package entry table.
-    PackageEntry* pkg = null_cld->packages()->create_entry(pkg_name, jb_module, THREAD);
+    PackageEntry* pkg = null_cld_packages->locked_create_entry_or_null(pkg_name, jb_module);
     assert(pkg != NULL, "Package should have been defined and found in package entry table");
 
     if (TraceClassLoading) {
       tty->print_cr("  %s", packages->at(i));
     }
   }
-  processed_javabase = true;
 }
 
 ClassPathImageEntry::ClassPathImageEntry(char* name) : ClassPathEntry(), _image(new ImageFile(name)) {
@@ -941,7 +946,7 @@ ClassPathEntry* ClassLoader::create_class_path_entry(const char *path, const str
   } else  {
     // Directory
     new_entry = new ClassPathDirEntry(path);
-    if (!processed_javabase && !ClassLoader::has_bootmodules_jimage() &&
+    if (!ModuleEntryTable::javabase_created() && !ClassLoader::has_bootmodules_jimage() &&
       string_ends_with(path, "java.base") && !is_override_dir(path)) {
       process_javabase(path);
     }

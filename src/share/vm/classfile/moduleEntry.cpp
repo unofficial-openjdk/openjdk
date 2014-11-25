@@ -26,6 +26,7 @@
 #include "classfile/classLoaderData.hpp"
 #include "classfile/javaClasses.hpp"
 #include "classfile/moduleEntry.hpp"
+#include "memory/resourceArea.hpp"
 #include "oops/symbol.hpp"
 #include "prims/jni.h"
 #include "runtime/handles.inline.hpp"
@@ -128,19 +129,13 @@ ModuleEntryTable::ModuleEntryTable(int table_size)
 {
 }
 
-void ModuleEntryTable::add_entry(oop module, Symbol *name, ClassLoaderData* loader) {
-  assert_locked_or_safepoint(Module_lock);
-  ModuleEntry* entry = new_entry(compute_hash(module), module, name, loader);
-  add_entry(index_for(module), entry);
-}
-
 void ModuleEntryTable::add_entry(int index, ModuleEntry* new_entry) {
   assert_locked_or_safepoint(Module_lock);
   Hashtable<oop, mtClass>::add_entry(index, (HashtableEntry<oop, mtClass>*)new_entry);
 }
 
-ModuleEntry* ModuleEntryTable::locked_create_entry(oop module, Symbol* module_name,
-                                                    ClassLoaderData* loader, TRAPS) {
+ModuleEntry* ModuleEntryTable::locked_create_entry_or_null(oop module, Symbol* module_name,
+                                                           ClassLoaderData* loader) {
   assert_locked_or_safepoint(Module_lock);
   // Check if module already exists.
   if (lookup_only(module) != NULL) {
@@ -152,18 +147,11 @@ ModuleEntry* ModuleEntryTable::locked_create_entry(oop module, Symbol* module_na
   }
 }
 
-ModuleEntry* ModuleEntryTable::create_entry(oop module, Symbol* module_name,
-                                            ClassLoaderData* loader, TRAPS) {
-    // Grab the Module lock first.
-    MutexLocker ml(Module_lock, THREAD);
-    return locked_create_entry(module, module_name, loader, CHECK_NULL);
-}
-
-// lookup_only by Symbol* is a slow way to find a ModuleEntry and should not be used often
-// Before a java.lang.Reflect.Module exists, however, only the name is available.
+// lookup_only by Symbol* to find a ModuleEntry. Before a java.lang.reflect.Module
+// exists only the module name is available.
 ModuleEntry* ModuleEntryTable::lookup_only(Symbol* name) {
-  for (int index = 0; index < table_size(); index++) {
-    for (ModuleEntry* m = bucket(index); m != NULL; m = m->next()) {
+  for (int i = 0; i < table_size(); i++) {
+    for (ModuleEntry* m = bucket(i); m != NULL; m = m->next()) {
       if (m->name()->fast_compare(name) == 0) {
         return m;
       }
@@ -188,7 +176,9 @@ void ModuleEntryTable::set_javabase_entry(oop m) {
   Thread* THREAD = Thread::current();
 
   ModuleEntry* jb_module = lookup_only(vmSymbols::java_base());
-  assert(jb_module != NULL, "No entry created for java.base?");
+  if (jb_module == NULL) {
+    vm_exit_during_initialization("No module entry for java.base located");
+  }
 
   // Set the j.l.r.M for java.base's ModuleEntry as well as the static
   // field within all ModuleEntryTables.
@@ -201,7 +191,8 @@ void ModuleEntryTable::patch_javabase_entries(TRAPS) {
 
   // Create the java.lang.reflect.Module object for module 'java.base'.
   Handle java_base = java_lang_String::create_from_str(vmSymbols::java_base()->as_C_string(), CHECK);
-  Handle jlrM_handle = java_lang_reflect_Module::create(Handle(ClassLoaderData::the_null_class_loader_data()->class_loader()), java_base, CHECK);
+  Handle jlrM_handle = java_lang_reflect_Module::create(
+                         Handle(ClassLoaderData::the_null_class_loader_data()->class_loader()), java_base, CHECK);
   if (jlrM_handle.is_null()) {
     fatal("Cannot create java.lang.reflect.Module object for java.base");
   }
@@ -235,8 +226,8 @@ void ModuleEntryTable::patch_javabase_entries(TRAPS) {
 }
 
 void ModuleEntryTable::oops_do(OopClosure* f) {
-  for (int index = 0; index < table_size(); index++) {
-    for (ModuleEntry* probe = bucket(index);
+  for (int i = 0; i < table_size(); i++) {
+    for (ModuleEntry* probe = bucket(i);
                               probe != NULL;
                               probe = probe->next()) {
       probe->oops_do(f);
@@ -279,10 +270,10 @@ void ModuleEntryTable::delete_entry(ModuleEntry* to_delete) {
 void ModuleEntryTable::purge_all_module_reads(BoolObjectClosure* is_alive_closure) {
   assert(SafepointSynchronize::is_at_safepoint(), "must be at safepoint");
   for (int i = 0; i < table_size(); i++) {
-    for (ModuleEntry** m = bucket_addr(i); *m != NULL;) {
-      ModuleEntry* entry = *m;
+    for (ModuleEntry* entry = bucket(i);
+                      entry != NULL;
+                      entry = entry->next()) {
       entry->purge_reads(is_alive_closure);
-      *m = entry->next();
     }
   }
 }
@@ -291,10 +282,10 @@ void ModuleEntryTable::purge_all_module_reads(BoolObjectClosure* is_alive_closur
 void ModuleEntryTable::delete_all_entries() {
   assert(SafepointSynchronize::is_at_safepoint(), "must be at safepoint");
   for (int i = 0; i < table_size(); i++) {
-    for (ModuleEntry** m = bucket_addr(i); *m != NULL;) {
-      ModuleEntry* entry = *m;
-      *m = entry->next();
-      free_entry(entry);
+    for (ModuleEntry* entry = bucket(i);
+                      entry != NULL;
+                      entry = entry->next()) {
+      delete_entry(entry);
     }
   }
 }
@@ -303,8 +294,8 @@ void ModuleEntryTable::delete_all_entries() {
 void ModuleEntryTable::print() {
   tty->print_cr("Module Entry Table (table_size=%d, entries=%d)",
                 table_size(), number_of_entries());
-  for (int index = 0; index < table_size(); index++) {
-    for (ModuleEntry* probe = bucket(index);
+  for (int i = 0; i < table_size(); i++) {
+    for (ModuleEntry* probe = bucket(i);
                               probe != NULL;
                               probe = probe->next()) {
       probe->print();
@@ -313,15 +304,17 @@ void ModuleEntryTable::print() {
 }
 
 void ModuleEntry::print() {
-  tty->print_cr("entry "PTR_FORMAT" oop "PTR_FORMAT" name "PTR_FORMAT" loader "PTR_FORMAT" pkgs_with_qexports %d next "PTR_FORMAT,
-                p2i(this), p2i(literal()), p2i(name()), p2i(loader()), _pkgs_with_qexports, p2i(next()));
+  ResourceMark rm;
+  tty->print_cr("entry "PTR_FORMAT" oop "PTR_FORMAT" name %s loader %s pkgs_with_qexports %d next "PTR_FORMAT,
+                p2i(this), p2i(literal()), name()->as_C_string(), loader()->loader_name(),
+                _pkgs_with_qexports, p2i(next()));
 }
 #endif
 
 void ModuleEntryTable::verify() {
   int element_count = 0;
-  for (int index = 0; index < table_size(); index++) {
-    for (ModuleEntry* probe = bucket(index);
+  for (int i = 0; i < table_size(); i++) {
+    for (ModuleEntry* probe = bucket(i);
                               probe != NULL;
                               probe = probe->next()) {
       probe->verify();

@@ -370,7 +370,7 @@ void Klass::set_package(Symbol* name, ClassLoaderData* loader, TRAPS) {
       // Found the package name, look it up in the symbol table.
       int length = last_slash - base_name;
       assert(length > 0, "Bad length for package name");
-      Symbol* pkg_name = SymbolTable::lookup((const char*)base_name, length, THREAD);
+      Symbol* pkg_name = SymbolTable::lookup((const char*)base_name, length, CHECK);
 
       // Find in class loader's package entry table.
       _package = loader->packages()->lookup_only(pkg_name);
@@ -379,7 +379,7 @@ void Klass::set_package(Symbol* name, ClassLoaderData* loader, TRAPS) {
       // entry table, it is an indication that the package has not
       // been defined. Consider it defined within the unnamed module.
       if (_package == NULL) {
-        _package = loader->packages()->lookup(pkg_name, NULL, THREAD);
+        _package = loader->packages()->lookup(pkg_name, NULL);
       }
 
       {

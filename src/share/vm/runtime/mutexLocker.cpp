@@ -218,7 +218,7 @@ void mutex_init() {
 
   def(SystemDictionary_lock        , Monitor, leaf,        true ); // lookups done by VM thread
   def(PackageTable_lock            , Mutex  , leaf,        false);
-  def(Module_lock                  , Mutex  , leaf,        true );
+  def(Module_lock                  , Mutex  , nonleaf  ,   true );
   def(InlineCacheBuffer_lock       , Mutex  , leaf,        true );
   def(VMStatistic_lock             , Mutex  , leaf,        false);
   def(ExpandHeap_lock              , Mutex  , leaf,        true ); // Used during compilation by VM thread

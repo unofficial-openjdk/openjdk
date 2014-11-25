@@ -144,23 +144,17 @@ private:
   }
 
   void add_entry(int index, PackageEntry* new_entry);
-  void add_entry(Symbol* name, ModuleEntry* module);
   void free_entry(PackageEntry *entry);
 
 public:
   PackageEntryTable(int table_size);
 
   // Create package in loader's package entry table and return the entry.
-  // If entry already exists, return null.
-  PackageEntry* create_entry(Symbol* name, ModuleEntry* module, TRAPS);
-
-  // Create package in loader's package entry table and return the entry.
-  // If entry already exists, return null.  Assume Module lock was taken by
-  // caller.
-  PackageEntry* locked_create_entry(Symbol* name, ModuleEntry* module, TRAPS);
+  // If entry already exists, return null.  Assume Module lock was taken by caller.
+  PackageEntry* locked_create_entry_or_null(Symbol* name, ModuleEntry* module);
 
   // lookup Package with loader's package entry table, if not found add
-  PackageEntry* lookup(Symbol* name, ModuleEntry* module, TRAPS);
+  PackageEntry* lookup(Symbol* name, ModuleEntry* module);
 
   // only lookup Package within loader's package entry table
   PackageEntry* lookup_only(Symbol* Package);

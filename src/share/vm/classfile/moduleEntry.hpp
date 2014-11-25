@@ -55,7 +55,7 @@ public:
 //   - ClassLoaderData*, class loader of this module.
 //   - a list containing weak references to j.l.r.Module objects that this
 //     module can read.
-//   - a flag indicating if any of the packages's defined within this module have qualified
+//   - a flag indicating if any of the packages defined within this module have qualified
 //     exports.
 //
 class ModuleEntry : public HashtableEntry<oop, mtClass> {
@@ -143,25 +143,17 @@ private:
     return entry;
   }
 
-  void add_entry(int index, ModuleEntry* new_entry);
-  void add_entry(oop module, Symbol *name, ClassLoaderData* loader);
-
   void set_javabase_entry(oop m);
-
+  void add_entry(int index, ModuleEntry* new_entry);
   void free_entry(ModuleEntry *entry);
 
 public:
   ModuleEntryTable(int table_size);
 
   // Create module in loader's module entry table, if already exists then
-  // return null
-  ModuleEntry* create_entry(oop module, Symbol* module_name,
-                            ClassLoaderData* loader, TRAPS);
-
-  // Create module in loader's module entry table, if already exists then
   // return null.  Assume Module_lock has been locked by caller.
-  ModuleEntry* locked_create_entry(oop module, Symbol* module_name,
-                                   ClassLoaderData* loader, TRAPS);
+  ModuleEntry* locked_create_entry_or_null(oop module, Symbol* module_name,
+                                           ClassLoaderData* loader);
 
   // only lookup module within loader's module entry table
   ModuleEntry* lookup_only(Symbol* name);

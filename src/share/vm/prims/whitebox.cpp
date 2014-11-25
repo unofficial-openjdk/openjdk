@@ -816,31 +816,31 @@ WB_ENTRY(void, WB_FreeMetaspace(JNIEnv* env, jobject wb, jobject class_loader, j
 WB_END
 
 WB_ENTRY(jobject, WB_DefineModule(JNIEnv* env, jobject o, jstring name, jobject loader, jobjectArray packages))
-  return modules::define_module(env, name, loader, packages);
+  return Modules::define_module(env, name, loader, packages);
 WB_END
 
 WB_ENTRY(void, WB_AddModuleExports(JNIEnv* env, jobject o, jobject from_module, jstring package, jobject to_module))
-  modules::add_module_exports(env, from_module, package, to_module);
+  Modules::add_module_exports(env, from_module, package, to_module);
 WB_END
 
 WB_ENTRY(void, WB_AddReadsModule(JNIEnv* env, jobject o, jobject from_module, jobject to_module))
-  modules::add_reads_module(env, from_module, to_module);
+  Modules::add_reads_module(env, from_module, to_module);
 WB_END
 
 WB_ENTRY(jboolean, WB_CanReadModule(JNIEnv* env, jobject o, jobject asking_module, jobject target_module))
-  return modules::can_read_module(env, asking_module, target_module);
+  return Modules::can_read_module(env, asking_module, target_module);
 WB_END
 
 WB_ENTRY(jboolean, WB_IsExportedToModule(JNIEnv* env, jobject o, jobject from_module, jstring package, jobject to_module))
-  return modules::is_exported_to_module(env, from_module, package, to_module);
+  return Modules::is_exported_to_module(env, from_module, package, to_module);
 WB_END
 
 WB_ENTRY(jobject, WB_GetModule(JNIEnv* env, jobject o, jclass clazz))
-  return modules::get_module(env, clazz);
+  return Modules::get_module(env, clazz);
 WB_END
 
 WB_ENTRY(void, WB_AddModulePackage(JNIEnv* env, jobject o, jclass module, jstring package))
-  modules::add_module_package(env, module, package);
+  Modules::add_module_package(env, module, package);
 WB_END
 
 //Some convenience methods to deal with objects from java

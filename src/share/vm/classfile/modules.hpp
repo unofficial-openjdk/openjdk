@@ -25,7 +25,7 @@
 #ifndef SHARE_VM_CLASSFILE_MODULES_HPP
 #define SHARE_VM_CLASSFILE_MODULES_HPP
 
-class modules : AllStatic {
+class Modules : AllStatic {
 
 public:
   // define_module defines a module containing the specified packages. It binds the
