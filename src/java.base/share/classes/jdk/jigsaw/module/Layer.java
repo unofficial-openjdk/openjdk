@@ -108,10 +108,24 @@ public final class Layer {
             map.put(name, m);
         }
 
-        // setup exports and readability
+        // setup readability and exports
         for (ModuleDescriptor descriptor: cf.descriptors()) {
             Module m = map.get(descriptor.name());
             assert m != null;
+
+            // reads
+            for (ModuleDescriptor other: cf.readDependences(descriptor)) {
+                String dn = other.name();
+                Module m2 = map.get(dn);
+                Layer parent = cf.layer();
+                if (m2 == null && parent != null)
+                    m2 = parent.findModule(other.name());
+                if (m2 == null) {
+                    throw new InternalError(descriptor.name() +
+                            " reads unknown module: " + other.name());
+                }
+                reflectAccess.addReadsModule(m, m2);
+            }
 
             // exports
             for (ModuleExport export: descriptor.exports()) {
@@ -128,19 +142,7 @@ public final class Layer {
                 }
             }
 
-            // reads
-            for (ModuleDescriptor other: cf.readDependences(descriptor)) {
-                String dn = other.name();
-                Module m2 = map.get(dn);
-                Layer parent = cf.layer();
-                if (m2 == null && parent != null)
-                    m2 = parent.findModule(other.name());
-                if (m2 == null) {
-                    throw new InternalError(descriptor.name() +
-                        " reads unknown module: " + other.name());
-                }
-                reflectAccess.addReadsModule(m, m2);
-            }
+
         }
 
         // modules are now defined

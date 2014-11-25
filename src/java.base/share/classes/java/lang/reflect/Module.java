@@ -75,7 +75,7 @@ public final class Module {
     private final Map<Module, Boolean> reads = new WeakHashMap<>();
 
     // this module's exports, cached here for access checks
-    private final Map<String, Set<Module>> exports = new HashMap<>();
+    private final Map<String, Map<Module, Boolean>> exports = new HashMap<>();
 
     // use RW locks (changes are rare)
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
@@ -165,13 +165,13 @@ public final class Module {
 
     /**
      * Makes the given {@code Module} readable to this module. This method
-     * is no-op if {@code target} is {@code null} (all modules can read the
-     * unnanmed module).
+     * is no-op if {@code target} is {@code null} or this module (all modules
+     * can read the unnanmed module or themselves)
      *
      * @throws SecurityException if denied by the security manager
      */
     public void addReads(Module target) {
-        if (target != null) {
+        if (target != null && target != this) {
             SecurityManager sm = System.getSecurityManager();
             if (sm != null) {
                 ReflectPermission perm = new ReflectPermission("addReadsModule");
@@ -195,9 +195,10 @@ public final class Module {
         writeLock.lock();
         try {
             sun.misc.VM.addModuleExports(this, pkg.replace('.', '/'), who);
-            Set<Module> permits = exports.computeIfAbsent(pkg, k -> new HashSet<>());
+            Map<Module, Boolean> permits =
+                exports.computeIfAbsent(pkg, k -> new WeakHashMap<>());
             if (who != null)
-                permits.add(who);
+                permits.put(who, Boolean.TRUE);
         } finally {
             writeLock.unlock();
         }
@@ -206,7 +207,7 @@ public final class Module {
     boolean isExported(String pkg, Module who) {
         readLock.lock();
         try {
-            Set<Module> permits = exports.get(pkg);
+            Map<Module, Boolean> permits = exports.get(pkg);
             if (permits == null)
                 return false; // not exported
 
@@ -214,7 +215,7 @@ public final class Module {
                 return true;  // exported
 
             //assert !permits.contains(null);
-            return permits.contains(who);
+            return permits.containsKey(who);
         } finally {
             readLock.unlock();
         }
