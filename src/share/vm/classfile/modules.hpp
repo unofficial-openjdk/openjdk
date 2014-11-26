@@ -35,8 +35,7 @@ public:
   // java.lang.reflect.Module object.As in JVM_DefineClass the jstring format
   // for all package names must use "/" and not "."
   //
-  //  IllegalAccessExceptions are thrown for the following :
-  // * Class loader does not exist
+  //  IllegalArgumentExceptions are thrown for the following :
   // * Class loader already has a module with that name
   // * Class loader has already defined types for any of the module's packages
   // * Module_name is 'java.base'
