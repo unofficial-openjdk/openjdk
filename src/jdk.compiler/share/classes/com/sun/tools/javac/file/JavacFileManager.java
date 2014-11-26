@@ -89,6 +89,7 @@ import static com.sun.tools.javac.util.BaseFileManager.getKind;
  */
 public class JavacFileManager extends BaseFileManager implements StandardJavaFileManager {
 
+    @SuppressWarnings("cast")
     public static char[] toArray(CharBuffer buffer) {
         if (buffer.hasArray())
             return ((CharBuffer)buffer.compact().flip()).array();
