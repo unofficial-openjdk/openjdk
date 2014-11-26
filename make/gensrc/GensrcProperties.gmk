@@ -81,7 +81,7 @@ define SetupCompileProperties
   $1_TARGET := $(JDK_OUTPUTDIR)/gensrc/$(MODULE)/_the.$1.done
   $1_CMDLINE_FILE := $(JDK_OUTPUTDIR)/gensrc/$(MODULE)/_the.$1.cmdline
 
-  # Now setup the rule for the generation of the resource bundles.
+# Now setup the rule for the generation of the resource bundles.
   $$($1_TARGET): $$($1_SRCS) $$($1_JAVAS) $(BUILD_TOOLS_JDK)
 	$(MKDIR) -p $$(@D) $$($1_DIRS)
 	$(ECHO) Compiling $$(words $$($1_SRCS)) properties into resource bundles for $(MODULE)

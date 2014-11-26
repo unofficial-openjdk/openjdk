@@ -27,9 +27,7 @@ package sun.misc;
 
 import static java.lang.Thread.State.*;
 import java.util.Properties;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.lang.reflect.Module;
 
 public class VM {
 
@@ -366,6 +364,30 @@ public class VM {
      * or null if only code from the null class loader is on the stack.
      */
     public static native ClassLoader latestUserDefinedLoader();
+
+    /**
+     * Define a new module with the given name and content. The module is associated
+     * with the given class loader.
+     */
+    public static native Module defineModule(String name, ClassLoader loader,
+                                             String[] pkgs);
+
+    /**
+     * Update a module to export a package.
+     */
+    public static native void addModuleExports(Module from, String pkg, Module to);
+
+    /**
+     * Adds a read-edge so that module {@code from} reads module {@code to}.
+     */
+    public static native void addReadsModule(Module from, Module to);
+
+    /**
+     * Adds a package to a module's content.
+     */
+    public static native void addModulePackage(Module m, String pkg);
+
+    /******/
 
     /**
      * Returns {@code true} if we are in a set UID program.

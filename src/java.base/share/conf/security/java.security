@@ -225,6 +225,7 @@ package.access=sun.,\
                jdk.internal.,\
                jdk.nashorn.internal.,\
                jdk.nashorn.tools.,\
+               jdk.tools.jimage.,\
                com.sun.activation.registries.,\
 #ifdef macosx
                apple.,\
@@ -274,6 +275,7 @@ package.definition=sun.,\
                    jdk.internal.,\
                    jdk.nashorn.internal.,\
                    jdk.nashorn.tools.,\
+                   jdk.tools.jimage.,\
                    com.sun.activation.registries.,\
 #ifdef macosx
                    apple.,\

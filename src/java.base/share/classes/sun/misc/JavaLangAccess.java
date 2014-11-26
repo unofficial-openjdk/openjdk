@@ -134,6 +134,11 @@ public interface JavaLangAccess {
     void invokeFinalize(Object o) throws Throwable;
 
     /**
+     * Returns the ServicesCatalog for the given class loader.
+     */
+    ServicesCatalog getServicesCatalog(ClassLoader cl);
+
+    /**
      * Invokes Long.formatUnsignedLong(long val, int shift, char[] buf, int offset, int len)
      */
     void formatUnsignedLong(long val, int shift, char[] buf, int offset, int len);

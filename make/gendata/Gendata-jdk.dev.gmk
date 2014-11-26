@@ -24,23 +24,18 @@
 #
 
 include GendataCommon.gmk
+include ModuleTools.gmk
 
-$(eval $(call IncludeCustomExtension, jdk, gendata/Gendata-jdk.dev.gmk))
 
-GENDATA := $(JDK_OUTPUTDIR)/modules/jdk.dev/com/sun/tools/jdeps/resources/jdeps-modules.xml
-METADATA_FILES += $(TOPDIR)/modules.xml
+MODULES_XML := $(JDK_OUTPUTDIR)/modules/jdk.dev/com/sun/tools/jdeps/resources/jdeps-modules.xml
 
-#
-# Generate modules.xml for jdeps to use
-# It augments $(TOPDIR)/modules.xml to include module membership
-#
-$(GENDATA): $(BUILD_TOOLS_JDK) $(METADATA_FILES)
+$(MODULES_XML): $(BUILD_MODULE_TOOLS)
 	$(MKDIR) -p $(@D)
 	$(RM) $@
-	$(TOOL_GENMODULESXML) -o $@ -mp $(JDK_OUTPUTDIR)/modules $(METADATA_FILES)
+	$(TOOL_GENMODULESXML) $@ $(JDK_OUTPUTDIR)/modules
 
-jdk.dev: $(GENDATA)
+jdk.dev: $(MODULES_XML)
 
-all: $(GENDATA)
+all: jdk.dev
 
 .PHONY: all jdk.dev

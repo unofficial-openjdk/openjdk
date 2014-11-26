@@ -33,6 +33,7 @@ import java.lang.reflect.Member;
 import java.lang.reflect.Field;
 import java.lang.reflect.Executable;
 import java.lang.reflect.Method;
+import java.lang.reflect.Module;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
@@ -689,6 +690,25 @@ public final class Class<T> implements java.io.Serializable,
 
     // Package-private to allow ClassLoader access
     ClassLoader getClassLoader0() { return classLoader; }
+
+    /**
+     * Returns the module that this class is a member of. Returns {@code null}
+     * if the class is a member of the unnamed module or a {@code Class}
+     * object for a primitive Java type. If invoked on a {@code Class} for
+     * an array type then this method returns the {@code Module} for the
+     * component type.
+     *
+     * @since 1.9
+     */
+    public Module getModule() {
+        // this.module may be non-null when running with -XX:-UseModules so
+        // we have to call JVM_GetModule each time to get the right answer.
+        // This will be changed in the future to "return module".
+        return getModule0();
+    }
+
+    private transient Module module;  // no need to be volatile
+    private native Module getModule0();
 
     // Initialized in JVM not by private constructor
     private final ClassLoader classLoader;
@@ -2819,15 +2839,15 @@ public final class Class<T> implements java.io.Serializable,
         private void remove(int i) {
             if (methods[i] != null && methods[i].isDefault())
                 defaults--;
-            methods[i] = null;
-        }
+                    methods[i] = null;
+                }
 
         private boolean matchesNameAndDescriptor(Method m1, Method m2) {
             return m1.getReturnType() == m2.getReturnType() &&
                    m1.getName() == m2.getName() && // name is guaranteed to be interned
                    arrayContentsEq(m1.getParameterTypes(),
                            m2.getParameterTypes());
-        }
+            }
 
         void compactAndTrim() {
             int newPos = 0;

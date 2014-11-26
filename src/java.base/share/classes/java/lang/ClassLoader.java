@@ -49,9 +49,12 @@ import java.util.Vector;
 import java.util.Hashtable;
 import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
+
 import sun.misc.CompoundEnumeration;
 import sun.misc.Resource;
+import sun.misc.ServicesCatalog;
 import sun.misc.URLClassPath;
+import sun.misc.Unsafe;
 import sun.reflect.CallerSensitive;
 import sun.reflect.Reflection;
 import sun.reflect.misc.ReflectUtil;
@@ -1572,18 +1575,18 @@ public abstract class ClassLoader {
                                     String implVendor, URL sealBase)
         throws IllegalArgumentException
     {
-        Package pkg = getPackage(name);
-        if (pkg != null) {
-            throw new IllegalArgumentException(name);
-        }
-        pkg = new Package(name, specTitle, specVersion, specVendor,
-                          implTitle, implVersion, implVendor,
-                          sealBase, this);
+            Package pkg = getPackage(name);
+            if (pkg != null) {
+                throw new IllegalArgumentException(name);
+            }
+            pkg = new Package(name, specTitle, specVersion, specVendor,
+                              implTitle, implVersion, implVendor,
+                              sealBase, this);
         if (packages.putIfAbsent(name, pkg) != null) {
             throw new IllegalArgumentException(name);
         }
-        return pkg;
-    }
+            return pkg;
+        }
 
     /**
      * Returns a <tt>Package</tt> that has been defined by this class loader
@@ -2153,6 +2156,35 @@ public abstract class ClassLoader {
 
     // Retrieves the assertion directives from the VM.
     private static native AssertionStatusDirectives retrieveDirectives();
+
+
+    /**
+     * Returns the ServiceCatalog for modules associated with this class loader.
+     * The ModuleCatalog is created automatically on first usage.
+     */
+    ServicesCatalog getServicesCatalog() {
+        ServicesCatalog catalog = servicesCatalog;
+        if (catalog == null) {
+            catalog = new ServicesCatalog();
+            Unsafe unsafe = Unsafe.getUnsafe();
+            Class<?> k = ClassLoader.class;
+            long offset;
+            try {
+                offset = unsafe.objectFieldOffset(k.getDeclaredField("servicesCatalog"));
+            } catch (NoSuchFieldException e) {
+                throw new InternalError(e);
+            }
+            boolean set = unsafe.compareAndSwapObject(this, offset, null, catalog);
+            if (!set) {
+                // beaten by someone else
+                catalog = servicesCatalog;
+            }
+        }
+        return catalog;
+    }
+
+    // the ServiceCatalog for modules associated with this class loader.
+    private volatile ServicesCatalog servicesCatalog;
 }
 
 

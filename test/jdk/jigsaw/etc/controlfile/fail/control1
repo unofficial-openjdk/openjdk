@@ -1,0 +1,3 @@
+Name: app
+Version: 2.0
+Depends: lib@\>2.0
