@@ -27,8 +27,12 @@ package com.sun.tools.javac.file;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -41,6 +45,7 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
+import java.util.stream.Collectors;
 import java.util.zip.ZipFile;
 
 import javax.tools.JavaFileManager;
@@ -283,7 +288,7 @@ public class Locations {
 
             if (fsInfo.isFile(file)) {
                 /* File is an ordinary file. */
-                if (!isArchive(file)) {
+                if (!isArchive(file) && !file.getName().endsWith(".jimage")) {
                     /* Not a recognized extension; open it to see if
                      it looks like a valid zip file. */
                     try {
@@ -309,7 +314,7 @@ public class Locations {
             super.add(file);
             canonicalValues.add(canonFile);
 
-            if (expandJarClassPaths && fsInfo.isFile(file)) {
+            if (expandJarClassPaths && fsInfo.isFile(file) && !file.getName().endsWith(".jimage")) {
                 addJarClassPath(file, warn);
             }
         }
@@ -622,7 +627,7 @@ public class Locations {
             }
         }
 
-        SearchPath computePath() {
+        SearchPath computePath() throws IOException {
             defaultBootClassPathRtJar = null;
             SearchPath path = new SearchPath();
 
@@ -643,12 +648,17 @@ public class Locations {
                 path.addFiles(bootclasspathOpt);
             } else {
                 // Standard system classes for this compiler's release.
-                String files = System.getProperty("sun.boot.class.path");
-                path.addFiles(files, false);
-                File rt_jar = new File("rt.jar");
-                for (File file : getPathEntries(files)) {
-                    if (new File(file.getName()).equals(rt_jar)) {
-                        defaultBootClassPathRtJar = file;
+                Collection<File> systemClasses = systemClasses();
+                if (systemClasses != null) {
+                    path.addFiles(systemClasses, false);
+                } else {
+                    // fallback to the value of sun.boot.class.path
+                    String files = System.getProperty("sun.boot.class.path");
+                    path.addFiles(files, false);
+                    File rt_jar = new File("rt.jar");
+                    for (File file : getPathEntries(files)) {
+                        if (new File(file.getName()).equals(rt_jar))
+                            defaultBootClassPathRtJar = file;
                     }
                 }
             }
@@ -672,9 +682,53 @@ public class Locations {
             return path;
         }
 
+        /**
+         * Return a collection of files containing system classes.
+         * Returns {@code null} if not running on a modular image.
+         *
+         * @throws UncheckedIOException if an I/O errors occurs
+         */
+        private Collection<File> systemClasses() throws IOException {
+            String home = System.getProperty("java.home");
+            // Return .jimage files if available
+            Path libModules = Paths.get(home, "lib", "modules");
+            if (Files.exists(libModules)) {
+                Collection<File> images = Files.list(libModules)
+                        .filter(f -> f.getFileName().toString().endsWith(".jimage"))
+                        .map(Path::toFile)
+                        .collect(Collectors.toList());
+                if (!images.isEmpty())
+                    return images;
+            }
+
+            // Temporary: if no .jimage files, return individual modules
+            if (Files.exists(libModules.resolve("java.base"))) {
+                return Files.list(libModules)
+                            .map(d -> d.resolve("classes"))
+                            .map(Path::toFile)
+                            .collect(Collectors.toList());
+            }
+
+            // Exploded module image
+            Path modules = Paths.get(home, "modules");
+            if (Files.isDirectory(modules.resolve("java.base"))) {
+                return Files.list(modules)
+                            .map(Path::toFile)
+                            .collect(Collectors.toList());
+            }
+
+            // not a modular image that we know about
+            return null;
+        }
+
         private void lazy() {
             if (searchPath == null) {
-                searchPath = Collections.unmodifiableCollection(computePath());
+                try {
+                    searchPath = Collections.unmodifiableCollection(computePath());
+                } catch (IOException e) {
+                    // TODO: need better handling here, e.g. javac Abort?
+                    throw new UncheckedIOException(e);
+                }
             }
         }
     }

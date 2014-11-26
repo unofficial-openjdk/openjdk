@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -65,6 +65,7 @@ public class Kinds {
         VAR(Category.BASIC, KindName.VAR, KindSelector.VAR),
         MTH(Category.BASIC, KindName.METHOD, KindSelector.MTH),
         POLY(Category.BASIC, KindSelector.POLY),
+        MDL(Category.BASIC, KindSelector.MDL),
         ERR(Category.ERROR, KindSelector.ERR),
         AMBIGUOUS(Category.OVERLOAD),
         HIDDEN(Category.OVERLOAD),
@@ -166,8 +167,9 @@ public class Kinds {
         public static final KindSelector VAR = new KindSelector(0x04);
         public static final KindSelector VAL = new KindSelector(0x0c);
         public static final KindSelector MTH = new KindSelector(0x10);
-        public static final KindSelector ERR = new KindSelector(0x3f);
         public static final KindSelector POLY = new KindSelector(0x20);
+        public static final KindSelector MDL = new KindSelector(0x40);
+        public static final KindSelector ERR = new KindSelector(0x7f);
 
         //common derived selectors
         public static final KindSelector TYP_PCK = of(TYP, PCK);
@@ -208,6 +210,7 @@ public class Kinds {
             if ((data & MTH.data) != 0) kinds.add(KindName.METHOD);
             if ((data & TYP.data) != 0) kinds.add(KindName.CLASS);
             if ((data & PCK.data) != 0) kinds.add(KindName.PACKAGE);
+            if ((data & MDL.data) != 0) kinds.add(KindName.MODULE);
             return kinds;
         }
     }
@@ -226,7 +229,8 @@ public class Kinds {
         CLASS("kindname.class"),
         STATIC_INIT("kindname.static.init"),
         INSTANCE_INIT("kindname.instance.init"),
-        PACKAGE("kindname.package");
+        PACKAGE("kindname.package"),
+        MODULE("kindname.module");
 
         private final String name;
 

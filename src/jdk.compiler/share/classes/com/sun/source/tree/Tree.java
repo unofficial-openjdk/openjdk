@@ -606,6 +606,41 @@ public interface Tree {
         ANNOTATION_TYPE(ClassTree.class),
 
         /**
+         * Used for instances of {@link ModuleTree} representing module declarations.
+         */
+        MODULE(ModuleTree.class),
+
+        /**
+         * Used for instances of {@link ExportsTree} representing
+         * export directives in a module declaration.
+         */
+        EXPORTS(ExportsTree.class),
+
+        /**
+         * Used for instances of {@link PermitsTree} representing
+         * export directives in a module declaration.
+         */
+        PERMITS(PermitsTree.class),
+
+        /**
+         * Used for instances of {@link ProvidesTree} representing
+         * export directives in a module declaration.
+         */
+        PROVIDES(ProvidesTree.class),
+
+        /**
+         * Used for instances of {@link RequiresTree} representing
+         * export directives in a module declaration.
+         */
+        REQUIRES(RequiresTree.class),
+
+        /**
+         * Used for instances of {@link UsesTree} representing
+         * export directives in a module declaration.
+         */
+        USES(UsesTree.class),
+
+        /**
          * An implementation-reserved node. This is the not the node
          * you are looking for.
          */
