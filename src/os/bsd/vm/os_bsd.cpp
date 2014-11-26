@@ -2576,6 +2576,10 @@ size_t os::read(int fd, void *buf, unsigned int nBytes) {
   RESTARTABLE_RETURN_INT(::read(fd, buf, nBytes));
 }
 
+size_t os::read_at(int fd, void *buf, unsigned int nBytes, jlong offset) {
+  RESTARTABLE_RETURN_INT(::pread(fd, buf, nBytes, offset));
+}
+
 void os::naked_short_sleep(jlong ms) {
   struct timespec req;
 

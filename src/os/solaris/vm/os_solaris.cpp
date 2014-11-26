@@ -3164,6 +3164,15 @@ size_t os::read(int fd, void *buf, unsigned int nBytes) {
   return res;
 }
 
+size_t os::read_at(int fd, void *buf, unsigned int nBytes, jlong offset) {
+  size_t res;
+  JavaThread* thread = (JavaThread*)Thread::current();
+  assert(thread->thread_state() == _thread_in_vm, "Assumed _thread_in_vm");
+  ThreadBlockInVM tbiv(thread);
+  RESTARTABLE(::pread(fd, buf, (size_t) nBytes, offset), res);
+  return res;
+}
+
 size_t os::restartable_read(int fd, void *buf, unsigned int nBytes) {
   size_t res;
   assert(((JavaThread*)Thread::current())->thread_state() == _thread_in_native,

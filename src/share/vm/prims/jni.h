@@ -765,6 +765,11 @@ struct JNINativeInterface_ {
 
     jobjectRefType (JNICALL *GetObjectRefType)
         (JNIEnv* env, jobject obj);
+
+    /* Module Features */
+
+    jobject (JNICALL *GetModule)
+       (JNIEnv* env, jclass clazz);
 };
 
 /*
@@ -1855,6 +1860,12 @@ struct JNIEnv_ {
     }
     jobjectRefType GetObjectRefType(jobject obj) {
         return functions->GetObjectRefType(this, obj);
+    }
+
+    /* Module Features */
+
+    jobject GetModule(jclass clazz) {
+        return functions->GetModule(this, clazz);
     }
 
 #endif /* __cplusplus */

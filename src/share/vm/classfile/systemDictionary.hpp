@@ -135,6 +135,7 @@ class Ticks;
   do_klass(Properties_klass,                            java_util_Properties,                      Pre                 ) \
   do_klass(reflect_AccessibleObject_klass,              java_lang_reflect_AccessibleObject,        Pre                 ) \
   do_klass(reflect_Field_klass,                         java_lang_reflect_Field,                   Pre                 ) \
+  do_klass(reflect_Module_klass,                        java_lang_reflect_Module,                  Pre                 ) \
   do_klass(reflect_Parameter_klass,                     java_lang_reflect_Parameter,               Opt                 ) \
   do_klass(reflect_Method_klass,                        java_lang_reflect_Method,                  Pre                 ) \
   do_klass(reflect_Constructor_klass,                   java_lang_reflect_Constructor,             Pre                 ) \

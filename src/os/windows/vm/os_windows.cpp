@@ -4376,6 +4376,23 @@ jlong os::lseek(int fd, jlong offset, int whence) {
   return (jlong) ::_lseeki64(fd, offset, whence);
 }
 
+size_t os::read_at(int fd, void *buf, unsigned int nBytes, jlong offset) {
+  OVERLAPPED ov;
+  DWORD nread;
+  BOOL result;
+
+  ZeroMemory(&ov, sizeof(ov));
+  ov.Offset = (DWORD)offset;
+  ov.OffsetHigh = (DWORD)(offset >> 32);
+
+  HANDLE h = (HANDLE)::_get_osfhandle(fd);
+
+  result = ReadFile(h, (LPVOID)buf, nBytes, &nread, &ov);
+
+  return result ? nread : 0;
+}
+
+
 // This method is a slightly reworked copy of JDK's sysNativePath
 // from src/windows/hpi/src/path_md.c
 

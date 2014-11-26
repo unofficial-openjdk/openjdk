@@ -500,6 +500,7 @@ class os: AllStatic {
   //File i/o operations
 
   static size_t read(int fd, void *buf, unsigned int nBytes);
+  static size_t read_at(int fd, void *buf, unsigned int nBytes, jlong offset);
   static size_t restartable_read(int fd, void *buf, unsigned int nBytes);
   static size_t write(int fd, const void *buf, unsigned int nBytes);
 
@@ -962,6 +963,8 @@ class os: AllStatic {
   static bool set_boot_path(char fileSep, char pathSep);
   static char** split_path(const char* path, int* n);
 
+ public:
+  static bool set_expanded_boot_path();
 };
 
 // Note that "PAUSE" is almost always used with synchronization

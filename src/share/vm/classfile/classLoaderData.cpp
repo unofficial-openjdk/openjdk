@@ -51,6 +51,8 @@
 #include "classfile/classLoaderData.inline.hpp"
 #include "classfile/javaClasses.hpp"
 #include "classfile/metadataOnStackMark.hpp"
+#include "classfile/moduleEntry.hpp"
+#include "classfile/packageEntry.hpp"
 #include "classfile/systemDictionary.hpp"
 #include "code/codeCache.hpp"
 #include "memory/gcLocker.hpp"
@@ -80,6 +82,7 @@ ClassLoaderData::ClassLoaderData(Handle h_class_loader, bool is_anonymous, Depen
   // The null-class-loader should always be kept alive.
   _keep_alive(is_anonymous || h_class_loader.is_null()),
   _metaspace(NULL), _unloading(false), _klasses(NULL),
+  _modules(NULL), _packages(NULL),
   _claimed(0), _jmethod_ids(NULL), _handles(NULL), _deallocate_list(NULL),
   _next(NULL), _dependencies(dependencies),
   _metaspace_lock(new Mutex(Monitor::leaf+1, "Metaspace allocation lock", true)) {
@@ -116,6 +119,9 @@ void ClassLoaderData::oops_do(OopClosure* f, KlassClosure* klass_closure, bool m
   _handles->oops_do(f);
   if (klass_closure != NULL) {
     classes_do(klass_closure);
+  }
+  if (_modules != NULL) {
+    _modules->oops_do(f);
   }
 }
 
@@ -332,6 +338,32 @@ void ClassLoaderData::unload() {
   }
 }
 
+PackageEntryTable* ClassLoaderData::packages() {
+  // Lazily create the package entry table at first request.
+  if (_packages == NULL) {
+    MutexLockerEx m1(metaspace_lock(), Mutex::_no_safepoint_check_flag);
+    // Check again if _packages has been allocated while we were getting this lock.
+    if (_packages != NULL) {
+      return _packages;
+    }
+    _packages = new PackageEntryTable(PackageEntryTable::_packagetable_entry_size);
+  }
+  return _packages;
+}
+
+ModuleEntryTable* ClassLoaderData::modules() {
+  // Lazily create the module entry table at first request.
+  if (_modules == NULL) {
+    MutexLockerEx m1(metaspace_lock(), Mutex::_no_safepoint_check_flag);
+    // Check again if _modules has been allocated while we were getting this lock.
+    if (_modules != NULL) {
+      return _modules;
+    }
+    _modules = new ModuleEntryTable(ModuleEntryTable::_moduletable_entry_size);
+  }
+  return _modules;
+}
+
 oop ClassLoaderData::keep_alive_object() const {
   assert(!keep_alive(), "Don't use with CLDs that are artificially kept alive");
   return is_anonymous() ? _klasses->java_mirror() : class_loader();
@@ -348,6 +380,22 @@ bool ClassLoaderData::is_alive(BoolObjectClosure* is_alive_closure) const {
 ClassLoaderData::~ClassLoaderData() {
   // Release C heap structures for all the classes.
   classes_do(InstanceKlass::release_C_heap_structures);
+
+  // Release C heap allocated hashtable for all the packages.
+  if (_packages != NULL) {
+    _packages->delete_all_entries();
+    // Destroy the table itself
+    delete _packages;
+    _packages = NULL;
+  }
+
+  // Release C heap allocated hashtable for all the modules.
+  if (_modules != NULL) {
+    _modules->delete_all_entries();
+    // Destroy the table itself
+    delete _modules;
+    _modules = NULL;
+  }
 
   Metaspace *m = _metaspace;
   if (m != NULL) {
@@ -747,6 +795,12 @@ bool ClassLoaderDataGraph::do_unloading(BoolObjectClosure* is_alive_closure, boo
   data = _head;
   while (data != NULL) {
     if (data->is_alive(is_alive_closure)) {
+      if (!data->packageTable_is_null()) {
+        data->packages()->purge_all_package_exports(is_alive_closure);
+      }
+      if (!data->moduleTable_is_null()) {
+        data->modules()->purge_all_module_reads(is_alive_closure);
+      }
       prev = data;
       data = data->next();
       continue;
@@ -813,7 +867,7 @@ void ClassLoaderDataGraph::purge() {
     classes_unloaded = true;
   }
   if (classes_unloaded) {
-    Metaspace::purge();
+  Metaspace::purge();
     set_metaspace_oom(false);
   }
 }

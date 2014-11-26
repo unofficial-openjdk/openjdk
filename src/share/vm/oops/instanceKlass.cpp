@@ -237,6 +237,7 @@ InstanceKlass::InstanceKlass(int vtable_len,
   init_implementor();
   set_fields(NULL, 0);
   set_constants(NULL);
+  set_package(NULL);
   set_class_loader_data(NULL);
   set_source_file_name_index(0);
   set_source_debug_extension(NULL, 0);
@@ -2552,22 +2553,30 @@ const char* InstanceKlass::signature_name() const {
 bool InstanceKlass::is_same_class_package(Klass* class2) {
   Klass* class1 = this;
   oop classloader1 = InstanceKlass::cast(class1)->class_loader();
-  Symbol* classname1 = class1->name();
+  PackageEntry* classpkg1 = InstanceKlass::cast(class1)->package();
 
   if (class2->oop_is_objArray()) {
     class2 = ObjArrayKlass::cast(class2)->bottom_klass();
   }
   oop classloader2;
+  PackageEntry* classpkg2;
   if (class2->oop_is_instance()) {
     classloader2 = InstanceKlass::cast(class2)->class_loader();
+    classpkg2 = InstanceKlass::cast(class2)->package();
   } else {
     assert(class2->oop_is_typeArray(), "should be type array");
     classloader2 = NULL;
+    classpkg2 = NULL;
   }
-  Symbol* classname2 = class2->name();
 
+  if (classpkg1 == classpkg2) {
+    return true;
+  } else {
+    Symbol* classname1 = class1->name();
+  Symbol* classname2 = class2->name();
   return InstanceKlass::is_same_class_package(classloader1, classname1,
                                               classloader2, classname2);
+}
 }
 
 bool InstanceKlass::is_same_class_package(oop classloader2, Symbol* classname2) {
@@ -2668,7 +2677,7 @@ bool InstanceKlass::is_same_package_member_impl(instanceKlassHandle class1,
   instanceKlassHandle class2(THREAD, class2_oop);
 
   // must be in same package before we try anything else
-  if (!class1->is_same_class_package(class2->class_loader(), class2->name()))
+  if (!class1->is_same_class_package(class2()))
     return false;
 
   // As long as there is an outer1.getEnclosingClass,

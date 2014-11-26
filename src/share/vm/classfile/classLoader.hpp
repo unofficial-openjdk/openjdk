@@ -66,7 +66,7 @@ class ClassPathEntry: public CHeapObj<mtClass> {
   virtual ClassFileStream* open_stream(const char* name, TRAPS) = 0;
   // Debugging
   NOT_PRODUCT(virtual void compile_the_world(Handle loader, TRAPS) = 0;)
-  NOT_PRODUCT(virtual bool is_rt_jar() = 0;)
+  NOT_PRODUCT(virtual bool is_jrt() = 0;)
 };
 
 
@@ -80,7 +80,7 @@ class ClassPathDirEntry: public ClassPathEntry {
   ClassFileStream* open_stream(const char* name, TRAPS);
   // Debugging
   NOT_PRODUCT(void compile_the_world(Handle loader, TRAPS);)
-  NOT_PRODUCT(bool is_rt_jar();)
+  NOT_PRODUCT(bool is_jrt();)
 };
 
 
@@ -112,7 +112,7 @@ class ClassPathZipEntry: public ClassPathEntry {
   void contents_do(void f(const char* name, void* context), void* context);
   // Debugging
   NOT_PRODUCT(void compile_the_world(Handle loader, TRAPS);)
-  NOT_PRODUCT(bool is_rt_jar();)
+  NOT_PRODUCT(bool is_jrt();)
 };
 
 
@@ -138,7 +138,25 @@ class LazyClassPathEntry: public ClassPathEntry {
   virtual bool is_lazy();
   // Debugging
   NOT_PRODUCT(void compile_the_world(Handle loader, TRAPS);)
-  NOT_PRODUCT(bool is_rt_jar();)
+  NOT_PRODUCT(bool is_jrt();)
+};
+
+// For java image files
+class ImageFile;
+class ClassPathImageEntry: public ClassPathEntry {
+private:
+  ImageFile *_image;
+public:
+  bool is_jar_file()  { return false;  }
+  bool is_open()  { return _image != NULL; }
+  const char* name();
+  ClassPathImageEntry(char* name);
+  ~ClassPathImageEntry();
+  ClassFileStream* open_stream(const char* name, TRAPS);
+
+  // Debugging
+  NOT_PRODUCT(void compile_the_world(Handle loader, TRAPS);)
+  NOT_PRODUCT(bool is_jrt();)
 };
 
 class PackageHashtable;
@@ -199,6 +217,9 @@ class ClassLoader: AllStatic {
   static PackageHashtable* _package_hash_table;
   static const char* _shared_archive;
 
+  // True if classpath has a bootmodules.jimage
+  static bool _has_bootmodules_jimage;
+
   // Info used by CDS
   CDS_ONLY(static SharedPathsMiscInfo * _shared_paths_misc_info;)
 
@@ -225,7 +246,9 @@ class ClassLoader: AllStatic {
   // Canonicalizes path names, so strcmp will work properly. This is mainly
   // to avoid confusing the zip library
   static bool get_canonical_path(const char* orig, char* out, int len);
+
  public:
+  static jboolean decompress(void *in, u8 inSize, void *out, u8 outSize, char **pmsg);
   static int crc32(int crc, const char* buf, int len);
   static bool update_class_path_entry_list(const char *path,
                                            bool check_for_duplicates,
@@ -293,6 +316,11 @@ class ClassLoader: AllStatic {
     return _load_instance_class_failCounter;
   }
 
+  // Sets _has_bootmodules_jimage to TRUE if bootmodules.jimage file exists.
+  static void set_has_bootmodules_jimage();
+
+  static bool has_bootmodules_jimage() { return _has_bootmodules_jimage; }
+
   // Load individual .class file
   static instanceKlassHandle load_classfile(Symbol* h_name, TRAPS);
 
@@ -359,6 +387,9 @@ class ClassLoader: AllStatic {
 
   // creates a class path zip entry (returns NULL if JAR file cannot be opened)
   static ClassPathZipEntry* create_class_path_zip_entry(const char *apath);
+
+  // add a path to class path list
+  static void add_to_list(const char* apath);
 
   // Debugging
   static void verify()              PRODUCT_RETURN;

@@ -31,6 +31,7 @@
 
 #include "classfile/stringTable.hpp"
 #include "classfile/classLoaderData.hpp"
+#include "classfile/modules.hpp"
 
 #include "prims/whitebox.hpp"
 #include "prims/wbtestmethods/parserTests.hpp"
@@ -282,7 +283,7 @@ WB_END
 // NMT picks it up correctly
 WB_ENTRY(jlong, WB_NMTMalloc(JNIEnv* env, jobject o, jlong size))
   jlong addr = 0;
-  addr = (jlong)(uintptr_t)os::malloc(size, mtTest);
+    addr = (jlong)(uintptr_t)os::malloc(size, mtTest);
   return addr;
 WB_END
 
@@ -387,8 +388,8 @@ WB_ENTRY(jint, WB_DeoptimizeMethod(JNIEnv* env, jobject o, jobject method, jbool
     result += mh->mark_osr_nmethods();
   } else if (mh->code() != NULL) {
     mh->code()->mark_for_deoptimization();
-    ++result;
-  }
+      ++result;
+    }
   result += CodeCache::mark_for_deoptimization(mh());
   if (result > 0) {
     VM_Deoptimize op;
@@ -849,6 +850,34 @@ WB_ENTRY(void, WB_FreeMetaspace(JNIEnv* env, jobject wb, jobject class_loader, j
   MetadataFactory::free_array(cld, (Array<u1>*)(uintptr_t)addr);
 WB_END
 
+WB_ENTRY(jobject, WB_DefineModule(JNIEnv* env, jobject o, jstring name, jobject loader, jobjectArray packages))
+  return Modules::define_module(env, name, loader, packages);
+WB_END
+
+WB_ENTRY(void, WB_AddModuleExports(JNIEnv* env, jobject o, jobject from_module, jstring package, jobject to_module))
+  Modules::add_module_exports(env, from_module, package, to_module);
+WB_END
+
+WB_ENTRY(void, WB_AddReadsModule(JNIEnv* env, jobject o, jobject from_module, jobject to_module))
+  Modules::add_reads_module(env, from_module, to_module);
+WB_END
+
+WB_ENTRY(jboolean, WB_CanReadModule(JNIEnv* env, jobject o, jobject asking_module, jobject target_module))
+  return Modules::can_read_module(env, asking_module, target_module);
+WB_END
+
+WB_ENTRY(jboolean, WB_IsExportedToModule(JNIEnv* env, jobject o, jobject from_module, jstring package, jobject to_module))
+  return Modules::is_exported_to_module(env, from_module, package, to_module);
+WB_END
+
+WB_ENTRY(jobject, WB_GetModule(JNIEnv* env, jobject o, jclass clazz))
+  return Modules::get_module(env, clazz);
+WB_END
+
+WB_ENTRY(void, WB_AddModulePackage(JNIEnv* env, jobject o, jclass module, jstring package))
+  Modules::add_module_package(env, module, package);
+WB_END
+
 WB_ENTRY(jlong, WB_IncMetaspaceCapacityUntilGC(JNIEnv* env, jobject wb, jlong inc))
   if (inc < 0) {
     THROW_MSG_0(vmSymbols::java_lang_IllegalArgumentException(),
@@ -1057,6 +1086,20 @@ static JNINativeMethod methods[] = {
                                                       (void*)&WB_GetNMethod         },
   {CC"getThreadStackSize", CC"()J",                   (void*)&WB_GetThreadStackSize },
   {CC"getThreadRemainingStackSize", CC"()J",          (void*)&WB_GetThreadRemainingStackSize },
+  {CC"DefineModule", CC"(Ljava/lang/String;Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object;",
+                                                      (void*)&WB_DefineModule },
+  {CC"AddModuleExports",   CC"(Ljava/lang/Object;Ljava/lang/String;Ljava/lang/Object;)V",
+                                                      (void*)&WB_AddModuleExports },
+  {CC"AddReadsModule", CC"(Ljava/lang/Object;Ljava/lang/Object;)V",
+                                                      (void*)&WB_AddReadsModule },
+  {CC"CanReadModule", CC"(Ljava/lang/Object;Ljava/lang/Object;)Z",
+                                                      (void*)&WB_CanReadModule },
+  {CC"IsExportedToModule", CC"(Ljava/lang/Object;Ljava/lang/String;Ljava/lang/Object;)Z",
+                                                      (void*)&WB_IsExportedToModule },
+  {CC"GetModule", CC"(Ljava/lang/Class;)Ljava/lang/Object;",
+                                                      (void*)&WB_GetModule },
+  {CC"AddModulePackage", CC"(Ljava/lang/Object;Ljava/lang/String;)V",
+                                                      (void*)&WB_AddModulePackage },
 };
 
 #undef CC
@@ -1070,8 +1113,8 @@ JVM_ENTRY(void, JVM_RegisterWhiteBoxMethods(JNIEnv* env, jclass wbclass))
       if (loader.is_null()) {
         WhiteBox::register_methods(env, wbclass, thread, methods, sizeof(methods) / sizeof(methods[0]));
         WhiteBox::register_extended(env, wbclass, thread);
-        WhiteBox::set_used();
+          WhiteBox::set_used();
+        }
       }
     }
-  }
 JVM_END

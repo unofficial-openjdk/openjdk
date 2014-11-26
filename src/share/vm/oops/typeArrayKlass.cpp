@@ -92,6 +92,7 @@ TypeArrayKlass::TypeArrayKlass(BasicType type, Symbol* name) : ArrayKlass(name) 
   set_max_length(arrayOopDesc::max_array_length(type));
   assert(size() >= TypeArrayKlass::header_size(), "bad size");
 
+  set_package(NULL);
   set_class_loader_data(ClassLoaderData::the_null_class_loader_data());
 }
 
