@@ -67,17 +67,26 @@ static bool verify_package_name(jstring package) {
 
 static ModuleEntryTable* get_module_entry_table(Handle h_loader, TRAPS) {
   h_loader = Handle(THREAD, java_lang_ClassLoader::non_reflection_class_loader(h_loader()));
+  // This code can be called during start-up, before the classLoader's classLoader data got
+  // created.  So, call register_loader() to make sure the classLoader data gets created.
   ClassLoaderData *loader_cld = SystemDictionary::register_loader(h_loader, CHECK_NULL);
   return loader_cld != NULL ? loader_cld->modules() : NULL;
 }
 
 static PackageEntryTable* get_package_entry_table(Handle h_loader, TRAPS) {
   h_loader = Handle(THREAD, java_lang_ClassLoader::non_reflection_class_loader(h_loader()));
+  // This code can be called during start-up, before the classLoader's classLoader data got
+  // created.  So, call register_loader() to make sure the classLoader data gets created.
   ClassLoaderData *loader_cld = SystemDictionary::register_loader(h_loader, CHECK_NULL);
   return loader_cld != NULL ? loader_cld->packages() : NULL;
 }
 
+// Check if -Xoverride:<path> was specified.  If so, prepend <path>/module_name,
+// if it exists, to bootpath so boot loader can find the class files.  Also, if
+// using exploded modules, prepend <java.home>/modules/module_name, if it exists,
+// to bootpath so that its class files can be found by the boot loader.
 static void add_to_boot_loader_list(char *module_name, TRAPS) {
+  // java.base should be handled by argument parsing.
   assert(strcmp(module_name, "java.base") != 0, "Unexpected java.base module name");
   char file_sep = os::file_separator()[0];
   size_t module_len = strlen(module_name);
@@ -88,10 +97,16 @@ static void add_to_boot_loader_list(char *module_name, TRAPS) {
     size_t len = strlen(Arguments::override_dir()) + module_len + 2;
     prefix_path = NEW_C_HEAP_ARRAY(char, len, mtInternal);
     jio_snprintf(prefix_path, len, "%s%c%s", Arguments::override_dir(), file_sep, module_name);
+    struct stat st;
+    // See if Xoverride module path exists.
+    if ((os::stat(prefix_path, &st) != 0)) {
+      FREE_C_HEAP_ARRAY(char, prefix_path, mtInternal);
+      prefix_path = NULL;
+    }
   }
 
-  // If bootmodules.jimage does not exist then assume exploded
-  // form ${java.home}/modules/$MODULE
+  // If bootmodules.jimage does not exist then assume exploded form
+  // ${java.home}/modules/<module-name>
   char* path = NULL;
   if (!ClassLoader::has_bootmodules_jimage()) {
     const char* home = Arguments::get_java_home();
@@ -153,7 +168,7 @@ jobject Modules::define_module(JNIEnv *env, jstring name, jobject loader, jobjec
     java_lang_String::as_utf8_string(JNIHandles::resolve_non_null(name));
 
   if (TraceModules) {
-    tty->print_cr("[JVM_DefineModule: Start of definition processing for module %s]", module_name);
+    tty->print_cr("[define_module(): Start of definition processing for module %s]", module_name);
   }
 
   if (!verify_module_name(module_name)) {
@@ -196,12 +211,14 @@ jobject Modules::define_module(JNIEnv *env, jstring name, jobject loader, jobjec
 
   Handle h_loader(THREAD, JNIHandles::resolve(loader));
   // Check that loader is a subclass of java.lang.ClassLoader.
-  if (loader != NULL) {
-    if (!java_lang_ClassLoader::is_subclass(h_loader->klass())) {
-      THROW_MSG_NULL(vmSymbols::java_lang_IllegalArgumentException(),
-                     "Class loader is not a subclass of java.lang.ClassLoader");
-    }
+  if (loader != NULL && !java_lang_ClassLoader::is_subclass(h_loader->klass())) {
+    THROW_MSG_NULL(vmSymbols::java_lang_IllegalArgumentException(),
+                   "Class loader is not a subclass of java.lang.ClassLoader");
   }
+
+  // Make sure loader is not the delegating class loader.
+  assert(h_loader() == java_lang_ClassLoader::non_reflection_class_loader(h_loader()),
+    "Defining a module with delegating class loader");
 
   ModuleEntryTable* module_table = get_module_entry_table(h_loader, CHECK_NULL);
   if (module_table == NULL) {
@@ -215,11 +232,6 @@ jobject Modules::define_module(JNIEnv *env, jstring name, jobject loader, jobjec
   // Create the java.lang.reflect.Module object.
   Handle h_name(THREAD, JNIHandles::resolve_non_null(name));
   Handle jlrM_handle = java_lang_reflect_Module::create(h_loader, h_name, CHECK_NULL);
-  if (jlrM_handle.is_null()) {
-    THROW_MSG_NULL(vmSymbols::java_lang_InternalError(),
-                   err_msg("java.lang.reflect.Module creation failed for module: %s",
-                           module_name));
-  }
 
   {
     MutexLocker ml(Module_lock, THREAD);
@@ -251,7 +263,7 @@ jobject Modules::define_module(JNIEnv *env, jstring name, jobject loader, jobjec
     }
 
     if (TraceModules) {
-      tty->print_cr("[JVM_DefineModule: creation of module = %s, package # = %d]", module_name, pkg_list->length());
+      tty->print_cr("[define_module(): creation of module = %s, package # = %d]", module_name, pkg_list->length());
     }
 
     // Add the packages.
@@ -261,13 +273,18 @@ jobject Modules::define_module(JNIEnv *env, jstring name, jobject loader, jobjec
       pkg = package_table->locked_create_entry_or_null(pkg_list->at(y), module_entry);
       assert(pkg != NULL, "Unable to create a module's package entry");
       if (TraceModules || TracePackages) {
-        tty->print_cr("[JVM_DefineModule: creation of package %s for module %s]",
+        tty->print_cr("[define_module(): creation of package %s for module %s]",
                       (pkg_list->at(y))->as_C_string(), module_name);
       }
     }
   }  // Release the lock
 
   if (loader == NULL) {
+    // Now that the module is defined, if it is in the bootloader, make sure that
+    // its classes can be found.  Check if -Xoverride:<path> was specified.  If
+    // so prepend <path>/module_name, if it exists, to bootpath.  Also, if using
+    // exploded modules, prepend <java.home>/modules/module_name, if it exists,
+    // to bootpath.
     add_to_boot_loader_list(module_name, CHECK_NULL);
   }
 
@@ -329,7 +346,7 @@ void Modules::add_module_exports(JNIEnv *env, jobject from_module, jstring packa
 
   if (TraceModules) {
     ResourceMark rm;
-    tty->print_cr("[JVM_AddModuleExports: package:module %s:%s is exported to module %s]",
+    tty->print_cr("[add_module_exports(): package:module %s:%s is exported to module %s]",
                   package_entry->name()->as_C_string(),
                   from_module_entry->name()->as_C_string(),
                   ((to_module_entry == NULL) ? NULL : to_module_entry->name()->as_C_string()));
@@ -363,13 +380,15 @@ void Modules::add_reads_module(JNIEnv *env, jobject from_module, jobject to_modu
 
   if (TraceModules) {
     ResourceMark rm;
-    tty->print_cr("[JVM_AddReadsModule: Adding read from module %s to module %s]",
+    tty->print_cr("[add_reads_module(): Adding read from module %s to module %s]",
       from_module_entry->name()->as_C_string(),
       to_module_entry->name()->as_C_string());
   }
 
-  if (from_module_entry == to_module_entry) return;
-  from_module_entry->add_read(to_module_entry, CHECK);
+  // if modules are the same, no need to add the read.
+  if (from_module_entry != to_module_entry) {
+    from_module_entry->add_read(to_module_entry, CHECK);
+  }
 }
 
 jboolean Modules::can_read_module(JNIEnv *env, jobject asking_module, jobject target_module) {
@@ -393,15 +412,15 @@ jboolean Modules::can_read_module(JNIEnv *env, jobject asking_module, jobject ta
 
   if (TraceModules) {
     ResourceMark rm;
-    tty->print_cr("[JVM_CanReadModule: module %s trying to read module %s, allowed = %d",
+    tty->print_cr("[can_read_module(): module %s trying to read module %s, allowed = %s",
                   asking_module_entry->name()->as_C_string(),
                   target_module_entry->name()->as_C_string(),
-                  ((asking_module_entry == target_module_entry) ||
-                   (asking_module_entry->can_read(target_module_entry))));
+                  BOOL_TO_STR((asking_module_entry == target_module_entry) ||
+                    (asking_module_entry->can_read(target_module_entry))));
   }
 
   if (asking_module_entry == target_module_entry) {
-    return JNI_TRUE;
+    return true;
   }
   return asking_module_entry->can_read(target_module_entry);
 }
@@ -455,18 +474,18 @@ jboolean Modules::is_exported_to_module(JNIEnv *env, jobject from_module, jstrin
 
   if (TracePackages) {
     ResourceMark rm;
-    tty->print_cr("[JVM_IsExportedToModule: package %s from module %s checking if exported to module %s, exported? = %d",
+    tty->print_cr("[is_exported_to_module: package %s from module %s checking if exported to module %s, exported? = %s",
                   package_entry->name()->as_C_string(),
                   from_module_entry->name()->as_C_string(),
                   to_module_entry->name()->as_C_string(),
-                  (package_entry->is_unqual_exported() ||
-                   (to_module != NULL && package_entry->is_qexported_to(to_module_entry)) ||
-                   (from_module_entry == to_module_entry)));
+                  BOOL_TO_STR(package_entry->is_unqual_exported() ||
+                    (to_module != NULL && package_entry->is_qexported_to(to_module_entry)) ||
+                    (from_module_entry == to_module_entry)));
   }
 
   return (package_entry->is_unqual_exported() ||
-          (to_module != NULL && package_entry->is_qexported_to(to_module_entry)) ||
-          (from_module_entry == to_module_entry));
+          (from_module_entry == to_module_entry) ||
+          (to_module != NULL && package_entry->is_qexported_to(to_module_entry)));
 }
 
 jobject Modules::get_module(JNIEnv *env, jclass clazz) {
@@ -474,16 +493,15 @@ jobject Modules::get_module(JNIEnv *env, jclass clazz) {
   if (mirror == NULL || java_lang_Class::is_primitive(mirror) ||
     !UseModules) {
     if (TraceModules && !UseModules) {
-      tty->print_cr("[JVM_GetModule: !UseModules, returning NULL]");
+      tty->print_cr("[get_module(): !UseModules, returning NULL]");
     }
     return NULL;
   }
 
   Klass* klass = java_lang_Class::as_Klass(mirror);
-  assert(klass->oop_is_instance() ||
-    klass->oop_is_objArray() ||
-    klass->oop_is_typeArray(),
-    "Bad Klass");
+  assert(klass->oop_is_instance() || klass->oop_is_objArray() ||
+    klass->oop_is_typeArray(), "Bad Klass");
+
   oop module;
   if (klass->oop_is_instance()) {
     module = java_lang_Class::module(mirror);
@@ -501,11 +519,11 @@ jobject Modules::get_module(JNIEnv *env, jclass clazz) {
     ResourceMark rm;
     if (module != NULL) {
       oop module_name = java_lang_reflect_Module::name(module);
-      tty->print("[JVM_GetModule: module ");
+      tty->print("[get_module(): module ");
       java_lang_String::print(module_name, tty);
     }
     else {
-      tty->print("[JVM_GetModule: unamed module");
+      tty->print("[get_module(): unamed module");
     }
     tty->print_cr(" for class %s]", klass->external_name());
   }
@@ -538,7 +556,7 @@ void Modules::add_module_package(JNIEnv *env, jobject module, jstring package) {
 
   if (TraceModules) {
     ResourceMark rm;
-    tty->print_cr("[JVM_AddModulePackage: Adding package %s to module %s]",
+    tty->print_cr("[add_module_package(): Adding package %s to module %s]",
                   package_name, module_entry->name()->as_C_string());
   }
 
