@@ -331,9 +331,10 @@ define DeclareRecipeForModuleMakefile
   $$(strip $1)-$$(strip $2):
 	+($(CD) $$(dir $$(call FindMakefileForModule, $1, $3, $4)) \
 	    && $(MAKE) $(MAKE_ARGS) \
-	    -f $$(strip $4)-$$(strip $1).gmk \
-	    $$(addprefix -I, $$(wildcard $(MAKE_DIR_LIST) \
-	        $$(addsuffix /$$(strip $3), $(MAKE_DIR_LIST)))))
+	        -f $$(strip $4)-$$(strip $1).gmk \
+	        $$(addprefix -I, $$(wildcard $(MAKE_DIR_LIST) \
+	            $$(addsuffix /$$(strip $3), $(MAKE_DIR_LIST)))) \
+	        MODULE=$$(strip $1))
 endef
 
 ################################################################################

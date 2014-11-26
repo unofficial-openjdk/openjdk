@@ -633,6 +633,7 @@ CCACHE
 USE_PRECOMPILED_HEADER
 SJAVAC_SERVER_DIR
 ENABLE_SJAVAC
+SJAVAC_SERVER_JAVA_FLAGS
 SJAVAC_SERVER_JAVA
 JAVA_TOOL_FLAGS_SMALL
 JAVA_FLAGS_SMALL
@@ -3955,7 +3956,7 @@ yum_help() {
     pulse)
       PKGHANDLER_COMMAND="sudo yum install pulseaudio-libs-devel" ;;
     x11)
-      PKGHANDLER_COMMAND="sudo yum install libXtst-devel libXt-devel libXrender-devel" ;;
+      PKGHANDLER_COMMAND="sudo yum install libXtst-devel libXt-devel libXrender-devel libXi-devel" ;;
     ccache)
       PKGHANDLER_COMMAND="sudo yum install ccache" ;;
   esac
@@ -4339,7 +4340,7 @@ TOOLCHAIN_DESCRIPTION_xlc="IBM XL C/C++"
 #CUSTOM_AUTOCONF_INCLUDE
 
 # Do not change or remove the following line, it is needed for consistency checks:
-DATE_WHEN_GENERATED=1411037296
+DATE_WHEN_GENERATED=1417015584
 
 ###############################################################################
 #
@@ -14654,7 +14655,7 @@ $as_echo "$DEBUG_LEVEL" >&6; }
       FASTDEBUG="false"
       DEBUG_CLASSFILES="true"
       BUILD_VARIANT_RELEASE="-debug"
-      HOTSPOT_DEBUG_LEVEL="jvmg"
+      HOTSPOT_DEBUG_LEVEL="debug"
       HOTSPOT_EXPORT="debug"
       ;;
     optimized )
@@ -15349,9 +15350,6 @@ $as_echo "$as_me: The path of OUTPUT_ROOT, which resolves as \"$path\", is inval
   OUTPUT_ROOT=$OUTPUT_ROOT
 
 
-  # Most of the probed defines are put into config.h
-  ac_config_headers="$ac_config_headers $OUTPUT_ROOT/config.h:$AUTOCONF_DIR/config.h.in"
-
   # The spec.gmk file contains all variables for the make system.
   ac_config_files="$ac_config_files $OUTPUT_ROOT/spec.gmk:$AUTOCONF_DIR/spec.gmk.in"
 
@@ -15363,9 +15361,6 @@ $as_echo "$as_me: The path of OUTPUT_ROOT, which resolves as \"$path\", is inval
 
   # The compare.sh is used to compare the build output to other builds.
   ac_config_files="$ac_config_files $OUTPUT_ROOT/compare.sh:$AUTOCONF_DIR/compare.sh.in"
-
-  # Spec.sh is currently used by compare-objects.sh
-  ac_config_files="$ac_config_files $OUTPUT_ROOT/spec.sh:$AUTOCONF_DIR/spec.sh.in"
 
   # The generated Makefile knows where the spec.gmk is and where the source is.
   # You can run make from the OUTPUT_ROOT, or from the top-level Makefile
@@ -20130,7 +20125,7 @@ fi
     if test "x$USER_RELEASE_SUFFIX" = x; then
       BUILD_DATE=`date '+%Y_%m_%d_%H_%M'`
       # Avoid [:alnum:] since it depends on the locale.
-      CLEAN_USERNAME=`echo "$USER" | $TR -d -c 'abcdefghijklmnopqrstuvqxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'`
+      CLEAN_USERNAME=`echo "$USER" | $TR -d -c 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'`
       USER_RELEASE_SUFFIX=`echo "${CLEAN_USERNAME}_${BUILD_DATE}" | $TR 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' 'abcdefghijklmnopqrstuvwxyz'`
     fi
   fi
@@ -41739,8 +41734,8 @@ $as_echo "$tool_specified" >&6; }
       SYSROOT_CFLAGS="-isysroot \"$SYSROOT\" -iframework\"$SYSROOT/System/Library/Frameworks\""
       SYSROOT_LDFLAGS=$SYSROOT_CFLAGS
     elif test "x$TOOLCHAIN_TYPE" = xgcc; then
-      SYSROOT_CFLAGS="--sysroot=\"$SYSROOT\""
-      SYSROOT_LDFLAGS="--sysroot=\"$SYSROOT\""
+      SYSROOT_CFLAGS="--sysroot=$SYSROOT"
+      SYSROOT_LDFLAGS="--sysroot=$SYSROOT"
     elif test "x$TOOLCHAIN_TYPE" = xclang; then
       SYSROOT_CFLAGS="-isysroot \"$SYSROOT\""
       SYSROOT_LDFLAGS="-isysroot \"$SYSROOT\""
@@ -43337,32 +43332,40 @@ $as_echo "alsa" >&6; }
   # Check for X Windows
   #
 
-  # Check if the user has specified sysroot, but not --x-includes or --x-libraries.
-  # Make a simple check for the libraries at the sysroot, and setup --x-includes and
-  # --x-libraries for the sysroot, if that seems to be correct.
-  if test "x$OPENJDK_TARGET_OS" = "xlinux"; then
-    if test "x$SYSROOT" != "x"; then
-      if test "x$x_includes" = xNONE; then
-        if test -f "$SYSROOT/usr/X11R6/include/X11/Xlib.h"; then
-          x_includes="$SYSROOT/usr/X11R6/include"
-        elif test -f "$SYSROOT/usr/include/X11/Xlib.h"; then
-          x_includes="$SYSROOT/usr/include"
+  if test "x$X11_NOT_NEEDED" = xyes; then
+    if test "x${with_x}" != x; then
+      { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: X11 is not used, so --with-x is ignored" >&5
+$as_echo "$as_me: WARNING: X11 is not used, so --with-x is ignored" >&2;}
+    fi
+    X_CFLAGS=
+    X_LIBS=
+  else
+    # Check if the user has specified sysroot, but not --x-includes or --x-libraries.
+    # Make a simple check for the libraries at the sysroot, and setup --x-includes and
+    # --x-libraries for the sysroot, if that seems to be correct.
+    if test "x$OPENJDK_TARGET_OS" = "xlinux"; then
+      if test "x$SYSROOT" != "x"; then
+        if test "x$x_includes" = xNONE; then
+          if test -f "$SYSROOT/usr/X11R6/include/X11/Xlib.h"; then
+            x_includes="$SYSROOT/usr/X11R6/include"
+          elif test -f "$SYSROOT/usr/include/X11/Xlib.h"; then
+            x_includes="$SYSROOT/usr/include"
+          fi
         fi
-      fi
-      if test "x$x_libraries" = xNONE; then
-        if test -f "$SYSROOT/usr/X11R6/lib/libX11.so"; then
-          x_libraries="$SYSROOT/usr/X11R6/lib"
-        elif test "$SYSROOT/usr/lib64/libX11.so" && test "x$OPENJDK_TARGET_CPU_BITS" = x64; then
-          x_libraries="$SYSROOT/usr/lib64"
-        elif test -f "$SYSROOT/usr/lib/libX11.so"; then
-          x_libraries="$SYSROOT/usr/lib"
+        if test "x$x_libraries" = xNONE; then
+          if test -f "$SYSROOT/usr/X11R6/lib/libX11.so"; then
+            x_libraries="$SYSROOT/usr/X11R6/lib"
+          elif test "$SYSROOT/usr/lib64/libX11.so" && test "x$OPENJDK_TARGET_CPU_BITS" = x64; then
+            x_libraries="$SYSROOT/usr/lib64"
+          elif test -f "$SYSROOT/usr/lib/libX11.so"; then
+            x_libraries="$SYSROOT/usr/lib"
+          fi
         fi
       fi
     fi
-  fi
 
-  # Now let autoconf do it's magic
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for X" >&5
+    # Now let autoconf do it's magic
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for X" >&5
 $as_echo_n "checking for X... " >&6; }
 
 
@@ -43555,7 +43558,7 @@ else
 $as_echo "libraries $x_libraries, headers $x_includes" >&6; }
 fi
 
-  if test "$no_x" = yes; then
+    if test "$no_x" = yes; then
   # Not all programs may use this symbol, but it does not hurt to define it.
 
 $as_echo "#define X_DISPLAY_MISSING 1" >>confdefs.h
@@ -44046,13 +44049,13 @@ fi
 fi
 
 
-  # AC_PATH_XTRA creates X_LIBS and sometimes adds -R flags. When cross compiling
-  # this doesn't make sense so we remove it.
-  if test "x$COMPILE_TYPE" = xcross; then
-    X_LIBS=`$ECHO $X_LIBS | $SED 's/-R \{0,1\}[^ ]*//g'`
-  fi
+    # AC_PATH_XTRA creates X_LIBS and sometimes adds -R flags. When cross compiling
+    # this doesn't make sense so we remove it.
+    if test "x$COMPILE_TYPE" = xcross; then
+      X_LIBS=`$ECHO $X_LIBS | $SED 's/-R \{0,1\}[^ ]*//g'`
+    fi
 
-  if test "x$no_x" = xyes && test "x$X11_NOT_NEEDED" != xyes; then
+    if test "x$no_x" = xyes; then
 
   # Print a helpful message on how to acquire the necessary build dependency.
   # x11 is the help tag: freetype, cups, pulse, alsa etc
@@ -44083,45 +44086,34 @@ fi
     fi
   fi
 
-    as_fn_error $? "Could not find X11 libraries. $HELP_MSG" "$LINENO" 5
-  fi
-
-  if test "x$OPENJDK_TARGET_OS" = xsolaris; then
-    OPENWIN_HOME="/usr/openwin"
-    X_CFLAGS="-I$SYSROOT$OPENWIN_HOME/include -I$SYSROOT$OPENWIN_HOME/include/X11/extensions"
-    X_LIBS="-L$SYSROOT$OPENWIN_HOME/sfw/lib$OPENJDK_TARGET_CPU_ISADIR \
-        -L$SYSROOT$OPENWIN_HOME/lib$OPENJDK_TARGET_CPU_ISADIR \
-        -R$OPENWIN_HOME/sfw/lib$OPENJDK_TARGET_CPU_ISADIR \
-        -R$OPENWIN_HOME/lib$OPENJDK_TARGET_CPU_ISADIR"
-  fi
-
-  #
-  # Weird Sol10 something check...TODO change to try compile
-  #
-  if test "x${OPENJDK_TARGET_OS}" = xsolaris; then
-    if test "`uname -r`" = "5.10"; then
-      if test "`${EGREP} -c XLinearGradient ${OPENWIN_HOME}/share/include/X11/extensions/Xrender.h`" = "0"; then
-        X_CFLAGS="${X_CFLAGS} -DSOLARIS10_NO_XRENDER_STRUCTS"
-      fi
+      as_fn_error $? "Could not find X11 libraries. $HELP_MSG" "$LINENO" 5
     fi
-  fi
 
-  ac_ext=c
+    if test "x$OPENJDK_TARGET_OS" = xsolaris; then
+      OPENWIN_HOME="/usr/openwin"
+      X_CFLAGS="-I$SYSROOT$OPENWIN_HOME/include -I$SYSROOT$OPENWIN_HOME/include/X11/extensions"
+      X_LIBS="-L$SYSROOT$OPENWIN_HOME/sfw/lib$OPENJDK_TARGET_CPU_ISADIR \
+          -L$SYSROOT$OPENWIN_HOME/lib$OPENJDK_TARGET_CPU_ISADIR \
+          -R$OPENWIN_HOME/sfw/lib$OPENJDK_TARGET_CPU_ISADIR \
+          -R$OPENWIN_HOME/lib$OPENJDK_TARGET_CPU_ISADIR"
+    fi
+
+    ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
 ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
-  OLD_CFLAGS="$CFLAGS"
-  CFLAGS="$CFLAGS $X_CFLAGS"
+    OLD_CFLAGS="$CFLAGS"
+    CFLAGS="$CFLAGS $SYSROOT_CFLAGS $X_CFLAGS"
 
-  # Need to include Xlib.h and Xutil.h to avoid "present but cannot be compiled" warnings on Solaris 10
-  for ac_header in X11/extensions/shape.h X11/extensions/Xrender.h X11/extensions/XTest.h X11/Intrinsic.h
+    # Need to include Xlib.h and Xutil.h to avoid "present but cannot be compiled" warnings on Solaris 10
+    for ac_header in X11/extensions/shape.h X11/extensions/Xrender.h X11/extensions/XTest.h X11/Intrinsic.h
 do :
   as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
 ac_fn_c_check_header_compile "$LINENO" "$ac_header" "$as_ac_Header" "
-        # include <X11/Xlib.h>
-        # include <X11/Xutil.h>
+          # include <X11/Xlib.h>
+          # include <X11/Xutil.h>
 
 
 "
@@ -44129,23 +44121,15 @@ if eval test \"x\$"$as_ac_Header"\" = x"yes"; then :
   cat >>confdefs.h <<_ACEOF
 #define `$as_echo "HAVE_$ac_header" | $as_tr_cpp` 1
 _ACEOF
- X11_A_OK=yes
+ X11_HEADERS_OK=yes
 else
-  X11_A_OK=no; break
+  X11_HEADERS_OK=no; break
 fi
 
 done
 
 
-  CFLAGS="$OLD_CFLAGS"
-  ac_ext=cpp
-ac_cpp='$CXXCPP $CPPFLAGS'
-ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
-ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
-
-
-  if test "x$X11_A_OK" = xno && test "x$X11_NOT_NEEDED" != xyes; then
+    if test "x$X11_HEADERS_OK" = xno; then
 
   # Print a helpful message on how to acquire the necessary build dependency.
   # x11 is the help tag: freetype, cups, pulse, alsa etc
@@ -44176,8 +44160,42 @@ ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
     fi
   fi
 
-    as_fn_error $? "Could not find all X11 headers (shape.h Xrender.h XTest.h Intrinsic.h). $HELP_MSG" "$LINENO" 5
-  fi
+      as_fn_error $? "Could not find all X11 headers (shape.h Xrender.h XTest.h Intrinsic.h). $HELP_MSG" "$LINENO" 5
+    fi
+
+    # If XLinearGradient isn't available in Xrender.h, signal that it needs to be
+    # defined in libawt_xawt.
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking if XlinearGradient is defined in Xrender.h" >&5
+$as_echo_n "checking if XlinearGradient is defined in Xrender.h... " >&6; }
+    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <X11/extensions/Xrender.h>
+int
+main ()
+{
+XLinearGradient x;
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+         X_CFLAGS="$X_CFLAGS -DSOLARIS10_NO_XRENDER_STRUCTS"
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+
+    CFLAGS="$OLD_CFLAGS"
+    ac_ext=cpp
+ac_cpp='$CXXCPP $CPPFLAGS'
+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
+
+  fi # X11_NOT_NEEDED
 
 
 
@@ -44479,6 +44497,8 @@ if test "${enable_freetype_bundling+set}" = set; then :
 fi
 
 
+  # Need to specify explicitly since it needs to be overridden on some versions of macosx
+  FREETYPE_BASE_NAME=freetype
   FREETYPE_CFLAGS=
   FREETYPE_LIBS=
   FREETYPE_BUNDLE_LIB_PATH=
@@ -44519,8 +44539,8 @@ $as_echo "$as_me: WARNING: Can't find project file $vcxproj_path (you may try a 
   fi
   # Now check if configure found a version of 'msbuild.exe'
   if test "x$BUILD_FREETYPE" = xyes && test "x$MSBUILD" == x ; then
-    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Can't find an msbuild.exe executable (you may try to install .NET 4.0) - ignoring --with-freetype-src" >&5
-$as_echo "$as_me: WARNING: Can't find an msbuild.exe executable (you may try to install .NET 4.0) - ignoring --with-freetype-src" >&2;}
+    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Can not find an msbuild.exe executable (you may try to install .NET 4.0) - ignoring --with-freetype-src" >&5
+$as_echo "$as_me: WARNING: Can not find an msbuild.exe executable (you may try to install .NET 4.0) - ignoring --with-freetype-src" >&2;}
     BUILD_FREETYPE=no
   fi
 
@@ -44620,30 +44640,55 @@ $as_echo "$as_me: Compiling freetype sources succeeded! (see freetype.log for bu
   POTENTIAL_FREETYPE_LIB_PATH="$POTENTIAL_FREETYPE_LIB_PATH"
   METHOD="--with-freetype-src"
 
-  # First check if the files exists.
-  if test -s "$POTENTIAL_FREETYPE_INCLUDE_PATH/ft2build.h"; then
-    # We found an arbitrary include file. That's a good sign.
+  # Let's start with an optimistic view of the world :-)
+  FOUND_FREETYPE=yes
+
+  # First look for the canonical freetype main include file ft2build.h.
+  if ! test -s "$POTENTIAL_FREETYPE_INCLUDE_PATH/ft2build.h"; then
+    # Oh no! Let's try in the freetype2 directory. This is needed at least at Mac OS X Yosemite.
+    POTENTIAL_FREETYPE_INCLUDE_PATH="$POTENTIAL_FREETYPE_INCLUDE_PATH/freetype2"
+    if ! test -s "$POTENTIAL_FREETYPE_INCLUDE_PATH/ft2build.h"; then
+      # Fail.
+      FOUND_FREETYPE=no
+    fi
+  fi
+
+  if test "x$FOUND_FREETYPE" = xyes; then
+    # Include file found, let's continue the sanity check.
     { $as_echo "$as_me:${as_lineno-$LINENO}: Found freetype include files at $POTENTIAL_FREETYPE_INCLUDE_PATH using $METHOD" >&5
 $as_echo "$as_me: Found freetype include files at $POTENTIAL_FREETYPE_INCLUDE_PATH using $METHOD" >&6;}
-    FOUND_FREETYPE=yes
 
-    FREETYPE_LIB_NAME="${LIBRARY_PREFIX}freetype${SHARED_LIBRARY_SUFFIX}"
+    # Reset to default value
+    FREETYPE_BASE_NAME=freetype
+    FREETYPE_LIB_NAME="${LIBRARY_PREFIX}${FREETYPE_BASE_NAME}${SHARED_LIBRARY_SUFFIX}"
     if ! test -s "$POTENTIAL_FREETYPE_LIB_PATH/$FREETYPE_LIB_NAME"; then
-      { $as_echo "$as_me:${as_lineno-$LINENO}: Could not find $POTENTIAL_FREETYPE_LIB_PATH/$FREETYPE_LIB_NAME. Ignoring location." >&5
+      if test "x$OPENJDK_TARGET_OS" = xmacosx \
+          && test -s "$POTENTIAL_FREETYPE_LIB_PATH/${LIBRARY_PREFIX}freetype.6${SHARED_LIBRARY_SUFFIX}"; then
+        # On Mac OS X Yosemite, the symlink from libfreetype.dylib to libfreetype.6.dylib disappeared. Check
+        # for the .6 version explicitly.
+        FREETYPE_BASE_NAME=freetype.6
+        FREETYPE_LIB_NAME="${LIBRARY_PREFIX}${FREETYPE_BASE_NAME}${SHARED_LIBRARY_SUFFIX}"
+        { $as_echo "$as_me:${as_lineno-$LINENO}: Compensating for missing symlink by using version 6 explicitly" >&5
+$as_echo "$as_me: Compensating for missing symlink by using version 6 explicitly" >&6;}
+      else
+        { $as_echo "$as_me:${as_lineno-$LINENO}: Could not find $POTENTIAL_FREETYPE_LIB_PATH/$FREETYPE_LIB_NAME. Ignoring location." >&5
 $as_echo "$as_me: Could not find $POTENTIAL_FREETYPE_LIB_PATH/$FREETYPE_LIB_NAME. Ignoring location." >&6;}
-      FOUND_FREETYPE=no
+        FOUND_FREETYPE=no
+      fi
     else
       if test "x$OPENJDK_TARGET_OS" = xwindows; then
         # On Windows, we will need both .lib and .dll file.
-        if ! test -s "$POTENTIAL_FREETYPE_LIB_PATH/freetype.lib"; then
-          { $as_echo "$as_me:${as_lineno-$LINENO}: Could not find $POTENTIAL_FREETYPE_LIB_PATH/freetype.lib. Ignoring location." >&5
-$as_echo "$as_me: Could not find $POTENTIAL_FREETYPE_LIB_PATH/freetype.lib. Ignoring location." >&6;}
+        if ! test -s "$POTENTIAL_FREETYPE_LIB_PATH/${FREETYPE_BASE_NAME}.lib"; then
+          { $as_echo "$as_me:${as_lineno-$LINENO}: Could not find $POTENTIAL_FREETYPE_LIB_PATH/${FREETYPE_BASE_NAME}.lib. Ignoring location." >&5
+$as_echo "$as_me: Could not find $POTENTIAL_FREETYPE_LIB_PATH/${FREETYPE_BASE_NAME}.lib. Ignoring location." >&6;}
           FOUND_FREETYPE=no
         fi
       elif test "x$OPENJDK_TARGET_OS" = xsolaris \
           && test -s "$POTENTIAL_FREETYPE_LIB_PATH$OPENJDK_TARGET_CPU_ISADIR/$FREETYPE_LIB_NAME"; then
         # Found lib in isa dir, use that instead.
         POTENTIAL_FREETYPE_LIB_PATH="$POTENTIAL_FREETYPE_LIB_PATH$OPENJDK_TARGET_CPU_ISADIR"
+        { $as_echo "$as_me:${as_lineno-$LINENO}: Rewriting to use $POTENTIAL_FREETYPE_LIB_PATH instead" >&5
+$as_echo "$as_me: Rewriting to use $POTENTIAL_FREETYPE_LIB_PATH instead" >&6;}
       fi
     fi
   fi
@@ -44948,30 +44993,55 @@ $as_echo "$as_me: WARNING: --with-freetype-src is currently only supported on Wi
   POTENTIAL_FREETYPE_LIB_PATH="$POTENTIAL_FREETYPE_LIB_PATH"
   METHOD="--with-freetype"
 
-  # First check if the files exists.
-  if test -s "$POTENTIAL_FREETYPE_INCLUDE_PATH/ft2build.h"; then
-    # We found an arbitrary include file. That's a good sign.
+  # Let's start with an optimistic view of the world :-)
+  FOUND_FREETYPE=yes
+
+  # First look for the canonical freetype main include file ft2build.h.
+  if ! test -s "$POTENTIAL_FREETYPE_INCLUDE_PATH/ft2build.h"; then
+    # Oh no! Let's try in the freetype2 directory. This is needed at least at Mac OS X Yosemite.
+    POTENTIAL_FREETYPE_INCLUDE_PATH="$POTENTIAL_FREETYPE_INCLUDE_PATH/freetype2"
+    if ! test -s "$POTENTIAL_FREETYPE_INCLUDE_PATH/ft2build.h"; then
+      # Fail.
+      FOUND_FREETYPE=no
+    fi
+  fi
+
+  if test "x$FOUND_FREETYPE" = xyes; then
+    # Include file found, let's continue the sanity check.
     { $as_echo "$as_me:${as_lineno-$LINENO}: Found freetype include files at $POTENTIAL_FREETYPE_INCLUDE_PATH using $METHOD" >&5
 $as_echo "$as_me: Found freetype include files at $POTENTIAL_FREETYPE_INCLUDE_PATH using $METHOD" >&6;}
-    FOUND_FREETYPE=yes
 
-    FREETYPE_LIB_NAME="${LIBRARY_PREFIX}freetype${SHARED_LIBRARY_SUFFIX}"
+    # Reset to default value
+    FREETYPE_BASE_NAME=freetype
+    FREETYPE_LIB_NAME="${LIBRARY_PREFIX}${FREETYPE_BASE_NAME}${SHARED_LIBRARY_SUFFIX}"
     if ! test -s "$POTENTIAL_FREETYPE_LIB_PATH/$FREETYPE_LIB_NAME"; then
-      { $as_echo "$as_me:${as_lineno-$LINENO}: Could not find $POTENTIAL_FREETYPE_LIB_PATH/$FREETYPE_LIB_NAME. Ignoring location." >&5
+      if test "x$OPENJDK_TARGET_OS" = xmacosx \
+          && test -s "$POTENTIAL_FREETYPE_LIB_PATH/${LIBRARY_PREFIX}freetype.6${SHARED_LIBRARY_SUFFIX}"; then
+        # On Mac OS X Yosemite, the symlink from libfreetype.dylib to libfreetype.6.dylib disappeared. Check
+        # for the .6 version explicitly.
+        FREETYPE_BASE_NAME=freetype.6
+        FREETYPE_LIB_NAME="${LIBRARY_PREFIX}${FREETYPE_BASE_NAME}${SHARED_LIBRARY_SUFFIX}"
+        { $as_echo "$as_me:${as_lineno-$LINENO}: Compensating for missing symlink by using version 6 explicitly" >&5
+$as_echo "$as_me: Compensating for missing symlink by using version 6 explicitly" >&6;}
+      else
+        { $as_echo "$as_me:${as_lineno-$LINENO}: Could not find $POTENTIAL_FREETYPE_LIB_PATH/$FREETYPE_LIB_NAME. Ignoring location." >&5
 $as_echo "$as_me: Could not find $POTENTIAL_FREETYPE_LIB_PATH/$FREETYPE_LIB_NAME. Ignoring location." >&6;}
-      FOUND_FREETYPE=no
+        FOUND_FREETYPE=no
+      fi
     else
       if test "x$OPENJDK_TARGET_OS" = xwindows; then
         # On Windows, we will need both .lib and .dll file.
-        if ! test -s "$POTENTIAL_FREETYPE_LIB_PATH/freetype.lib"; then
-          { $as_echo "$as_me:${as_lineno-$LINENO}: Could not find $POTENTIAL_FREETYPE_LIB_PATH/freetype.lib. Ignoring location." >&5
-$as_echo "$as_me: Could not find $POTENTIAL_FREETYPE_LIB_PATH/freetype.lib. Ignoring location." >&6;}
+        if ! test -s "$POTENTIAL_FREETYPE_LIB_PATH/${FREETYPE_BASE_NAME}.lib"; then
+          { $as_echo "$as_me:${as_lineno-$LINENO}: Could not find $POTENTIAL_FREETYPE_LIB_PATH/${FREETYPE_BASE_NAME}.lib. Ignoring location." >&5
+$as_echo "$as_me: Could not find $POTENTIAL_FREETYPE_LIB_PATH/${FREETYPE_BASE_NAME}.lib. Ignoring location." >&6;}
           FOUND_FREETYPE=no
         fi
       elif test "x$OPENJDK_TARGET_OS" = xsolaris \
           && test -s "$POTENTIAL_FREETYPE_LIB_PATH$OPENJDK_TARGET_CPU_ISADIR/$FREETYPE_LIB_NAME"; then
         # Found lib in isa dir, use that instead.
         POTENTIAL_FREETYPE_LIB_PATH="$POTENTIAL_FREETYPE_LIB_PATH$OPENJDK_TARGET_CPU_ISADIR"
+        { $as_echo "$as_me:${as_lineno-$LINENO}: Rewriting to use $POTENTIAL_FREETYPE_LIB_PATH instead" >&5
+$as_echo "$as_me: Rewriting to use $POTENTIAL_FREETYPE_LIB_PATH instead" >&6;}
       fi
     fi
   fi
@@ -45537,30 +45607,55 @@ $as_echo "yes (using pkg-config)" >&6; }
   POTENTIAL_FREETYPE_LIB_PATH="$FREETYPE_BASE_DIR/lib"
   METHOD="well-known location"
 
-  # First check if the files exists.
-  if test -s "$POTENTIAL_FREETYPE_INCLUDE_PATH/ft2build.h"; then
-    # We found an arbitrary include file. That's a good sign.
+  # Let's start with an optimistic view of the world :-)
+  FOUND_FREETYPE=yes
+
+  # First look for the canonical freetype main include file ft2build.h.
+  if ! test -s "$POTENTIAL_FREETYPE_INCLUDE_PATH/ft2build.h"; then
+    # Oh no! Let's try in the freetype2 directory. This is needed at least at Mac OS X Yosemite.
+    POTENTIAL_FREETYPE_INCLUDE_PATH="$POTENTIAL_FREETYPE_INCLUDE_PATH/freetype2"
+    if ! test -s "$POTENTIAL_FREETYPE_INCLUDE_PATH/ft2build.h"; then
+      # Fail.
+      FOUND_FREETYPE=no
+    fi
+  fi
+
+  if test "x$FOUND_FREETYPE" = xyes; then
+    # Include file found, let's continue the sanity check.
     { $as_echo "$as_me:${as_lineno-$LINENO}: Found freetype include files at $POTENTIAL_FREETYPE_INCLUDE_PATH using $METHOD" >&5
 $as_echo "$as_me: Found freetype include files at $POTENTIAL_FREETYPE_INCLUDE_PATH using $METHOD" >&6;}
-    FOUND_FREETYPE=yes
 
-    FREETYPE_LIB_NAME="${LIBRARY_PREFIX}freetype${SHARED_LIBRARY_SUFFIX}"
+    # Reset to default value
+    FREETYPE_BASE_NAME=freetype
+    FREETYPE_LIB_NAME="${LIBRARY_PREFIX}${FREETYPE_BASE_NAME}${SHARED_LIBRARY_SUFFIX}"
     if ! test -s "$POTENTIAL_FREETYPE_LIB_PATH/$FREETYPE_LIB_NAME"; then
-      { $as_echo "$as_me:${as_lineno-$LINENO}: Could not find $POTENTIAL_FREETYPE_LIB_PATH/$FREETYPE_LIB_NAME. Ignoring location." >&5
+      if test "x$OPENJDK_TARGET_OS" = xmacosx \
+          && test -s "$POTENTIAL_FREETYPE_LIB_PATH/${LIBRARY_PREFIX}freetype.6${SHARED_LIBRARY_SUFFIX}"; then
+        # On Mac OS X Yosemite, the symlink from libfreetype.dylib to libfreetype.6.dylib disappeared. Check
+        # for the .6 version explicitly.
+        FREETYPE_BASE_NAME=freetype.6
+        FREETYPE_LIB_NAME="${LIBRARY_PREFIX}${FREETYPE_BASE_NAME}${SHARED_LIBRARY_SUFFIX}"
+        { $as_echo "$as_me:${as_lineno-$LINENO}: Compensating for missing symlink by using version 6 explicitly" >&5
+$as_echo "$as_me: Compensating for missing symlink by using version 6 explicitly" >&6;}
+      else
+        { $as_echo "$as_me:${as_lineno-$LINENO}: Could not find $POTENTIAL_FREETYPE_LIB_PATH/$FREETYPE_LIB_NAME. Ignoring location." >&5
 $as_echo "$as_me: Could not find $POTENTIAL_FREETYPE_LIB_PATH/$FREETYPE_LIB_NAME. Ignoring location." >&6;}
-      FOUND_FREETYPE=no
+        FOUND_FREETYPE=no
+      fi
     else
       if test "x$OPENJDK_TARGET_OS" = xwindows; then
         # On Windows, we will need both .lib and .dll file.
-        if ! test -s "$POTENTIAL_FREETYPE_LIB_PATH/freetype.lib"; then
-          { $as_echo "$as_me:${as_lineno-$LINENO}: Could not find $POTENTIAL_FREETYPE_LIB_PATH/freetype.lib. Ignoring location." >&5
-$as_echo "$as_me: Could not find $POTENTIAL_FREETYPE_LIB_PATH/freetype.lib. Ignoring location." >&6;}
+        if ! test -s "$POTENTIAL_FREETYPE_LIB_PATH/${FREETYPE_BASE_NAME}.lib"; then
+          { $as_echo "$as_me:${as_lineno-$LINENO}: Could not find $POTENTIAL_FREETYPE_LIB_PATH/${FREETYPE_BASE_NAME}.lib. Ignoring location." >&5
+$as_echo "$as_me: Could not find $POTENTIAL_FREETYPE_LIB_PATH/${FREETYPE_BASE_NAME}.lib. Ignoring location." >&6;}
           FOUND_FREETYPE=no
         fi
       elif test "x$OPENJDK_TARGET_OS" = xsolaris \
           && test -s "$POTENTIAL_FREETYPE_LIB_PATH$OPENJDK_TARGET_CPU_ISADIR/$FREETYPE_LIB_NAME"; then
         # Found lib in isa dir, use that instead.
         POTENTIAL_FREETYPE_LIB_PATH="$POTENTIAL_FREETYPE_LIB_PATH$OPENJDK_TARGET_CPU_ISADIR"
+        { $as_echo "$as_me:${as_lineno-$LINENO}: Rewriting to use $POTENTIAL_FREETYPE_LIB_PATH instead" >&5
+$as_echo "$as_me: Rewriting to use $POTENTIAL_FREETYPE_LIB_PATH instead" >&6;}
       fi
     fi
   fi
@@ -45840,30 +45935,55 @@ $as_echo "$FREETYPE_LIB_PATH" >&6; }
   POTENTIAL_FREETYPE_LIB_PATH="$FREETYPE_BASE_DIR/lib"
   METHOD="well-known location"
 
-  # First check if the files exists.
-  if test -s "$POTENTIAL_FREETYPE_INCLUDE_PATH/ft2build.h"; then
-    # We found an arbitrary include file. That's a good sign.
+  # Let's start with an optimistic view of the world :-)
+  FOUND_FREETYPE=yes
+
+  # First look for the canonical freetype main include file ft2build.h.
+  if ! test -s "$POTENTIAL_FREETYPE_INCLUDE_PATH/ft2build.h"; then
+    # Oh no! Let's try in the freetype2 directory. This is needed at least at Mac OS X Yosemite.
+    POTENTIAL_FREETYPE_INCLUDE_PATH="$POTENTIAL_FREETYPE_INCLUDE_PATH/freetype2"
+    if ! test -s "$POTENTIAL_FREETYPE_INCLUDE_PATH/ft2build.h"; then
+      # Fail.
+      FOUND_FREETYPE=no
+    fi
+  fi
+
+  if test "x$FOUND_FREETYPE" = xyes; then
+    # Include file found, let's continue the sanity check.
     { $as_echo "$as_me:${as_lineno-$LINENO}: Found freetype include files at $POTENTIAL_FREETYPE_INCLUDE_PATH using $METHOD" >&5
 $as_echo "$as_me: Found freetype include files at $POTENTIAL_FREETYPE_INCLUDE_PATH using $METHOD" >&6;}
-    FOUND_FREETYPE=yes
 
-    FREETYPE_LIB_NAME="${LIBRARY_PREFIX}freetype${SHARED_LIBRARY_SUFFIX}"
+    # Reset to default value
+    FREETYPE_BASE_NAME=freetype
+    FREETYPE_LIB_NAME="${LIBRARY_PREFIX}${FREETYPE_BASE_NAME}${SHARED_LIBRARY_SUFFIX}"
     if ! test -s "$POTENTIAL_FREETYPE_LIB_PATH/$FREETYPE_LIB_NAME"; then
-      { $as_echo "$as_me:${as_lineno-$LINENO}: Could not find $POTENTIAL_FREETYPE_LIB_PATH/$FREETYPE_LIB_NAME. Ignoring location." >&5
+      if test "x$OPENJDK_TARGET_OS" = xmacosx \
+          && test -s "$POTENTIAL_FREETYPE_LIB_PATH/${LIBRARY_PREFIX}freetype.6${SHARED_LIBRARY_SUFFIX}"; then
+        # On Mac OS X Yosemite, the symlink from libfreetype.dylib to libfreetype.6.dylib disappeared. Check
+        # for the .6 version explicitly.
+        FREETYPE_BASE_NAME=freetype.6
+        FREETYPE_LIB_NAME="${LIBRARY_PREFIX}${FREETYPE_BASE_NAME}${SHARED_LIBRARY_SUFFIX}"
+        { $as_echo "$as_me:${as_lineno-$LINENO}: Compensating for missing symlink by using version 6 explicitly" >&5
+$as_echo "$as_me: Compensating for missing symlink by using version 6 explicitly" >&6;}
+      else
+        { $as_echo "$as_me:${as_lineno-$LINENO}: Could not find $POTENTIAL_FREETYPE_LIB_PATH/$FREETYPE_LIB_NAME. Ignoring location." >&5
 $as_echo "$as_me: Could not find $POTENTIAL_FREETYPE_LIB_PATH/$FREETYPE_LIB_NAME. Ignoring location." >&6;}
-      FOUND_FREETYPE=no
+        FOUND_FREETYPE=no
+      fi
     else
       if test "x$OPENJDK_TARGET_OS" = xwindows; then
         # On Windows, we will need both .lib and .dll file.
-        if ! test -s "$POTENTIAL_FREETYPE_LIB_PATH/freetype.lib"; then
-          { $as_echo "$as_me:${as_lineno-$LINENO}: Could not find $POTENTIAL_FREETYPE_LIB_PATH/freetype.lib. Ignoring location." >&5
-$as_echo "$as_me: Could not find $POTENTIAL_FREETYPE_LIB_PATH/freetype.lib. Ignoring location." >&6;}
+        if ! test -s "$POTENTIAL_FREETYPE_LIB_PATH/${FREETYPE_BASE_NAME}.lib"; then
+          { $as_echo "$as_me:${as_lineno-$LINENO}: Could not find $POTENTIAL_FREETYPE_LIB_PATH/${FREETYPE_BASE_NAME}.lib. Ignoring location." >&5
+$as_echo "$as_me: Could not find $POTENTIAL_FREETYPE_LIB_PATH/${FREETYPE_BASE_NAME}.lib. Ignoring location." >&6;}
           FOUND_FREETYPE=no
         fi
       elif test "x$OPENJDK_TARGET_OS" = xsolaris \
           && test -s "$POTENTIAL_FREETYPE_LIB_PATH$OPENJDK_TARGET_CPU_ISADIR/$FREETYPE_LIB_NAME"; then
         # Found lib in isa dir, use that instead.
         POTENTIAL_FREETYPE_LIB_PATH="$POTENTIAL_FREETYPE_LIB_PATH$OPENJDK_TARGET_CPU_ISADIR"
+        { $as_echo "$as_me:${as_lineno-$LINENO}: Rewriting to use $POTENTIAL_FREETYPE_LIB_PATH instead" >&5
+$as_echo "$as_me: Rewriting to use $POTENTIAL_FREETYPE_LIB_PATH instead" >&6;}
       fi
     fi
   fi
@@ -46134,30 +46254,55 @@ $as_echo "$FREETYPE_LIB_PATH" >&6; }
   POTENTIAL_FREETYPE_LIB_PATH="$FREETYPE_BASE_DIR/lib"
   METHOD="well-known location"
 
-  # First check if the files exists.
-  if test -s "$POTENTIAL_FREETYPE_INCLUDE_PATH/ft2build.h"; then
-    # We found an arbitrary include file. That's a good sign.
+  # Let's start with an optimistic view of the world :-)
+  FOUND_FREETYPE=yes
+
+  # First look for the canonical freetype main include file ft2build.h.
+  if ! test -s "$POTENTIAL_FREETYPE_INCLUDE_PATH/ft2build.h"; then
+    # Oh no! Let's try in the freetype2 directory. This is needed at least at Mac OS X Yosemite.
+    POTENTIAL_FREETYPE_INCLUDE_PATH="$POTENTIAL_FREETYPE_INCLUDE_PATH/freetype2"
+    if ! test -s "$POTENTIAL_FREETYPE_INCLUDE_PATH/ft2build.h"; then
+      # Fail.
+      FOUND_FREETYPE=no
+    fi
+  fi
+
+  if test "x$FOUND_FREETYPE" = xyes; then
+    # Include file found, let's continue the sanity check.
     { $as_echo "$as_me:${as_lineno-$LINENO}: Found freetype include files at $POTENTIAL_FREETYPE_INCLUDE_PATH using $METHOD" >&5
 $as_echo "$as_me: Found freetype include files at $POTENTIAL_FREETYPE_INCLUDE_PATH using $METHOD" >&6;}
-    FOUND_FREETYPE=yes
 
-    FREETYPE_LIB_NAME="${LIBRARY_PREFIX}freetype${SHARED_LIBRARY_SUFFIX}"
+    # Reset to default value
+    FREETYPE_BASE_NAME=freetype
+    FREETYPE_LIB_NAME="${LIBRARY_PREFIX}${FREETYPE_BASE_NAME}${SHARED_LIBRARY_SUFFIX}"
     if ! test -s "$POTENTIAL_FREETYPE_LIB_PATH/$FREETYPE_LIB_NAME"; then
-      { $as_echo "$as_me:${as_lineno-$LINENO}: Could not find $POTENTIAL_FREETYPE_LIB_PATH/$FREETYPE_LIB_NAME. Ignoring location." >&5
+      if test "x$OPENJDK_TARGET_OS" = xmacosx \
+          && test -s "$POTENTIAL_FREETYPE_LIB_PATH/${LIBRARY_PREFIX}freetype.6${SHARED_LIBRARY_SUFFIX}"; then
+        # On Mac OS X Yosemite, the symlink from libfreetype.dylib to libfreetype.6.dylib disappeared. Check
+        # for the .6 version explicitly.
+        FREETYPE_BASE_NAME=freetype.6
+        FREETYPE_LIB_NAME="${LIBRARY_PREFIX}${FREETYPE_BASE_NAME}${SHARED_LIBRARY_SUFFIX}"
+        { $as_echo "$as_me:${as_lineno-$LINENO}: Compensating for missing symlink by using version 6 explicitly" >&5
+$as_echo "$as_me: Compensating for missing symlink by using version 6 explicitly" >&6;}
+      else
+        { $as_echo "$as_me:${as_lineno-$LINENO}: Could not find $POTENTIAL_FREETYPE_LIB_PATH/$FREETYPE_LIB_NAME. Ignoring location." >&5
 $as_echo "$as_me: Could not find $POTENTIAL_FREETYPE_LIB_PATH/$FREETYPE_LIB_NAME. Ignoring location." >&6;}
-      FOUND_FREETYPE=no
+        FOUND_FREETYPE=no
+      fi
     else
       if test "x$OPENJDK_TARGET_OS" = xwindows; then
         # On Windows, we will need both .lib and .dll file.
-        if ! test -s "$POTENTIAL_FREETYPE_LIB_PATH/freetype.lib"; then
-          { $as_echo "$as_me:${as_lineno-$LINENO}: Could not find $POTENTIAL_FREETYPE_LIB_PATH/freetype.lib. Ignoring location." >&5
-$as_echo "$as_me: Could not find $POTENTIAL_FREETYPE_LIB_PATH/freetype.lib. Ignoring location." >&6;}
+        if ! test -s "$POTENTIAL_FREETYPE_LIB_PATH/${FREETYPE_BASE_NAME}.lib"; then
+          { $as_echo "$as_me:${as_lineno-$LINENO}: Could not find $POTENTIAL_FREETYPE_LIB_PATH/${FREETYPE_BASE_NAME}.lib. Ignoring location." >&5
+$as_echo "$as_me: Could not find $POTENTIAL_FREETYPE_LIB_PATH/${FREETYPE_BASE_NAME}.lib. Ignoring location." >&6;}
           FOUND_FREETYPE=no
         fi
       elif test "x$OPENJDK_TARGET_OS" = xsolaris \
           && test -s "$POTENTIAL_FREETYPE_LIB_PATH$OPENJDK_TARGET_CPU_ISADIR/$FREETYPE_LIB_NAME"; then
         # Found lib in isa dir, use that instead.
         POTENTIAL_FREETYPE_LIB_PATH="$POTENTIAL_FREETYPE_LIB_PATH$OPENJDK_TARGET_CPU_ISADIR"
+        { $as_echo "$as_me:${as_lineno-$LINENO}: Rewriting to use $POTENTIAL_FREETYPE_LIB_PATH instead" >&5
+$as_echo "$as_me: Rewriting to use $POTENTIAL_FREETYPE_LIB_PATH instead" >&6;}
       fi
     fi
   fi
@@ -46428,30 +46573,55 @@ $as_echo "$FREETYPE_LIB_PATH" >&6; }
   POTENTIAL_FREETYPE_LIB_PATH="$FREETYPE_BASE_DIR/lib"
   METHOD="well-known location"
 
-  # First check if the files exists.
-  if test -s "$POTENTIAL_FREETYPE_INCLUDE_PATH/ft2build.h"; then
-    # We found an arbitrary include file. That's a good sign.
+  # Let's start with an optimistic view of the world :-)
+  FOUND_FREETYPE=yes
+
+  # First look for the canonical freetype main include file ft2build.h.
+  if ! test -s "$POTENTIAL_FREETYPE_INCLUDE_PATH/ft2build.h"; then
+    # Oh no! Let's try in the freetype2 directory. This is needed at least at Mac OS X Yosemite.
+    POTENTIAL_FREETYPE_INCLUDE_PATH="$POTENTIAL_FREETYPE_INCLUDE_PATH/freetype2"
+    if ! test -s "$POTENTIAL_FREETYPE_INCLUDE_PATH/ft2build.h"; then
+      # Fail.
+      FOUND_FREETYPE=no
+    fi
+  fi
+
+  if test "x$FOUND_FREETYPE" = xyes; then
+    # Include file found, let's continue the sanity check.
     { $as_echo "$as_me:${as_lineno-$LINENO}: Found freetype include files at $POTENTIAL_FREETYPE_INCLUDE_PATH using $METHOD" >&5
 $as_echo "$as_me: Found freetype include files at $POTENTIAL_FREETYPE_INCLUDE_PATH using $METHOD" >&6;}
-    FOUND_FREETYPE=yes
 
-    FREETYPE_LIB_NAME="${LIBRARY_PREFIX}freetype${SHARED_LIBRARY_SUFFIX}"
+    # Reset to default value
+    FREETYPE_BASE_NAME=freetype
+    FREETYPE_LIB_NAME="${LIBRARY_PREFIX}${FREETYPE_BASE_NAME}${SHARED_LIBRARY_SUFFIX}"
     if ! test -s "$POTENTIAL_FREETYPE_LIB_PATH/$FREETYPE_LIB_NAME"; then
-      { $as_echo "$as_me:${as_lineno-$LINENO}: Could not find $POTENTIAL_FREETYPE_LIB_PATH/$FREETYPE_LIB_NAME. Ignoring location." >&5
+      if test "x$OPENJDK_TARGET_OS" = xmacosx \
+          && test -s "$POTENTIAL_FREETYPE_LIB_PATH/${LIBRARY_PREFIX}freetype.6${SHARED_LIBRARY_SUFFIX}"; then
+        # On Mac OS X Yosemite, the symlink from libfreetype.dylib to libfreetype.6.dylib disappeared. Check
+        # for the .6 version explicitly.
+        FREETYPE_BASE_NAME=freetype.6
+        FREETYPE_LIB_NAME="${LIBRARY_PREFIX}${FREETYPE_BASE_NAME}${SHARED_LIBRARY_SUFFIX}"
+        { $as_echo "$as_me:${as_lineno-$LINENO}: Compensating for missing symlink by using version 6 explicitly" >&5
+$as_echo "$as_me: Compensating for missing symlink by using version 6 explicitly" >&6;}
+      else
+        { $as_echo "$as_me:${as_lineno-$LINENO}: Could not find $POTENTIAL_FREETYPE_LIB_PATH/$FREETYPE_LIB_NAME. Ignoring location." >&5
 $as_echo "$as_me: Could not find $POTENTIAL_FREETYPE_LIB_PATH/$FREETYPE_LIB_NAME. Ignoring location." >&6;}
-      FOUND_FREETYPE=no
+        FOUND_FREETYPE=no
+      fi
     else
       if test "x$OPENJDK_TARGET_OS" = xwindows; then
         # On Windows, we will need both .lib and .dll file.
-        if ! test -s "$POTENTIAL_FREETYPE_LIB_PATH/freetype.lib"; then
-          { $as_echo "$as_me:${as_lineno-$LINENO}: Could not find $POTENTIAL_FREETYPE_LIB_PATH/freetype.lib. Ignoring location." >&5
-$as_echo "$as_me: Could not find $POTENTIAL_FREETYPE_LIB_PATH/freetype.lib. Ignoring location." >&6;}
+        if ! test -s "$POTENTIAL_FREETYPE_LIB_PATH/${FREETYPE_BASE_NAME}.lib"; then
+          { $as_echo "$as_me:${as_lineno-$LINENO}: Could not find $POTENTIAL_FREETYPE_LIB_PATH/${FREETYPE_BASE_NAME}.lib. Ignoring location." >&5
+$as_echo "$as_me: Could not find $POTENTIAL_FREETYPE_LIB_PATH/${FREETYPE_BASE_NAME}.lib. Ignoring location." >&6;}
           FOUND_FREETYPE=no
         fi
       elif test "x$OPENJDK_TARGET_OS" = xsolaris \
           && test -s "$POTENTIAL_FREETYPE_LIB_PATH$OPENJDK_TARGET_CPU_ISADIR/$FREETYPE_LIB_NAME"; then
         # Found lib in isa dir, use that instead.
         POTENTIAL_FREETYPE_LIB_PATH="$POTENTIAL_FREETYPE_LIB_PATH$OPENJDK_TARGET_CPU_ISADIR"
+        { $as_echo "$as_me:${as_lineno-$LINENO}: Rewriting to use $POTENTIAL_FREETYPE_LIB_PATH instead" >&5
+$as_echo "$as_me: Rewriting to use $POTENTIAL_FREETYPE_LIB_PATH instead" >&6;}
       fi
     fi
   fi
@@ -46723,30 +46893,55 @@ $as_echo "$FREETYPE_LIB_PATH" >&6; }
   POTENTIAL_FREETYPE_LIB_PATH="$FREETYPE_BASE_DIR/lib"
   METHOD="well-known location"
 
-  # First check if the files exists.
-  if test -s "$POTENTIAL_FREETYPE_INCLUDE_PATH/ft2build.h"; then
-    # We found an arbitrary include file. That's a good sign.
+  # Let's start with an optimistic view of the world :-)
+  FOUND_FREETYPE=yes
+
+  # First look for the canonical freetype main include file ft2build.h.
+  if ! test -s "$POTENTIAL_FREETYPE_INCLUDE_PATH/ft2build.h"; then
+    # Oh no! Let's try in the freetype2 directory. This is needed at least at Mac OS X Yosemite.
+    POTENTIAL_FREETYPE_INCLUDE_PATH="$POTENTIAL_FREETYPE_INCLUDE_PATH/freetype2"
+    if ! test -s "$POTENTIAL_FREETYPE_INCLUDE_PATH/ft2build.h"; then
+      # Fail.
+      FOUND_FREETYPE=no
+    fi
+  fi
+
+  if test "x$FOUND_FREETYPE" = xyes; then
+    # Include file found, let's continue the sanity check.
     { $as_echo "$as_me:${as_lineno-$LINENO}: Found freetype include files at $POTENTIAL_FREETYPE_INCLUDE_PATH using $METHOD" >&5
 $as_echo "$as_me: Found freetype include files at $POTENTIAL_FREETYPE_INCLUDE_PATH using $METHOD" >&6;}
-    FOUND_FREETYPE=yes
 
-    FREETYPE_LIB_NAME="${LIBRARY_PREFIX}freetype${SHARED_LIBRARY_SUFFIX}"
+    # Reset to default value
+    FREETYPE_BASE_NAME=freetype
+    FREETYPE_LIB_NAME="${LIBRARY_PREFIX}${FREETYPE_BASE_NAME}${SHARED_LIBRARY_SUFFIX}"
     if ! test -s "$POTENTIAL_FREETYPE_LIB_PATH/$FREETYPE_LIB_NAME"; then
-      { $as_echo "$as_me:${as_lineno-$LINENO}: Could not find $POTENTIAL_FREETYPE_LIB_PATH/$FREETYPE_LIB_NAME. Ignoring location." >&5
+      if test "x$OPENJDK_TARGET_OS" = xmacosx \
+          && test -s "$POTENTIAL_FREETYPE_LIB_PATH/${LIBRARY_PREFIX}freetype.6${SHARED_LIBRARY_SUFFIX}"; then
+        # On Mac OS X Yosemite, the symlink from libfreetype.dylib to libfreetype.6.dylib disappeared. Check
+        # for the .6 version explicitly.
+        FREETYPE_BASE_NAME=freetype.6
+        FREETYPE_LIB_NAME="${LIBRARY_PREFIX}${FREETYPE_BASE_NAME}${SHARED_LIBRARY_SUFFIX}"
+        { $as_echo "$as_me:${as_lineno-$LINENO}: Compensating for missing symlink by using version 6 explicitly" >&5
+$as_echo "$as_me: Compensating for missing symlink by using version 6 explicitly" >&6;}
+      else
+        { $as_echo "$as_me:${as_lineno-$LINENO}: Could not find $POTENTIAL_FREETYPE_LIB_PATH/$FREETYPE_LIB_NAME. Ignoring location." >&5
 $as_echo "$as_me: Could not find $POTENTIAL_FREETYPE_LIB_PATH/$FREETYPE_LIB_NAME. Ignoring location." >&6;}
-      FOUND_FREETYPE=no
+        FOUND_FREETYPE=no
+      fi
     else
       if test "x$OPENJDK_TARGET_OS" = xwindows; then
         # On Windows, we will need both .lib and .dll file.
-        if ! test -s "$POTENTIAL_FREETYPE_LIB_PATH/freetype.lib"; then
-          { $as_echo "$as_me:${as_lineno-$LINENO}: Could not find $POTENTIAL_FREETYPE_LIB_PATH/freetype.lib. Ignoring location." >&5
-$as_echo "$as_me: Could not find $POTENTIAL_FREETYPE_LIB_PATH/freetype.lib. Ignoring location." >&6;}
+        if ! test -s "$POTENTIAL_FREETYPE_LIB_PATH/${FREETYPE_BASE_NAME}.lib"; then
+          { $as_echo "$as_me:${as_lineno-$LINENO}: Could not find $POTENTIAL_FREETYPE_LIB_PATH/${FREETYPE_BASE_NAME}.lib. Ignoring location." >&5
+$as_echo "$as_me: Could not find $POTENTIAL_FREETYPE_LIB_PATH/${FREETYPE_BASE_NAME}.lib. Ignoring location." >&6;}
           FOUND_FREETYPE=no
         fi
       elif test "x$OPENJDK_TARGET_OS" = xsolaris \
           && test -s "$POTENTIAL_FREETYPE_LIB_PATH$OPENJDK_TARGET_CPU_ISADIR/$FREETYPE_LIB_NAME"; then
         # Found lib in isa dir, use that instead.
         POTENTIAL_FREETYPE_LIB_PATH="$POTENTIAL_FREETYPE_LIB_PATH$OPENJDK_TARGET_CPU_ISADIR"
+        { $as_echo "$as_me:${as_lineno-$LINENO}: Rewriting to use $POTENTIAL_FREETYPE_LIB_PATH instead" >&5
+$as_echo "$as_me: Rewriting to use $POTENTIAL_FREETYPE_LIB_PATH instead" >&6;}
       fi
     fi
   fi
@@ -47019,30 +47214,55 @@ $as_echo "$FREETYPE_LIB_PATH" >&6; }
   POTENTIAL_FREETYPE_LIB_PATH="$FREETYPE_BASE_DIR/lib/x86_64-linux-gnu"
   METHOD="well-known location"
 
-  # First check if the files exists.
-  if test -s "$POTENTIAL_FREETYPE_INCLUDE_PATH/ft2build.h"; then
-    # We found an arbitrary include file. That's a good sign.
+  # Let's start with an optimistic view of the world :-)
+  FOUND_FREETYPE=yes
+
+  # First look for the canonical freetype main include file ft2build.h.
+  if ! test -s "$POTENTIAL_FREETYPE_INCLUDE_PATH/ft2build.h"; then
+    # Oh no! Let's try in the freetype2 directory. This is needed at least at Mac OS X Yosemite.
+    POTENTIAL_FREETYPE_INCLUDE_PATH="$POTENTIAL_FREETYPE_INCLUDE_PATH/freetype2"
+    if ! test -s "$POTENTIAL_FREETYPE_INCLUDE_PATH/ft2build.h"; then
+      # Fail.
+      FOUND_FREETYPE=no
+    fi
+  fi
+
+  if test "x$FOUND_FREETYPE" = xyes; then
+    # Include file found, let's continue the sanity check.
     { $as_echo "$as_me:${as_lineno-$LINENO}: Found freetype include files at $POTENTIAL_FREETYPE_INCLUDE_PATH using $METHOD" >&5
 $as_echo "$as_me: Found freetype include files at $POTENTIAL_FREETYPE_INCLUDE_PATH using $METHOD" >&6;}
-    FOUND_FREETYPE=yes
 
-    FREETYPE_LIB_NAME="${LIBRARY_PREFIX}freetype${SHARED_LIBRARY_SUFFIX}"
+    # Reset to default value
+    FREETYPE_BASE_NAME=freetype
+    FREETYPE_LIB_NAME="${LIBRARY_PREFIX}${FREETYPE_BASE_NAME}${SHARED_LIBRARY_SUFFIX}"
     if ! test -s "$POTENTIAL_FREETYPE_LIB_PATH/$FREETYPE_LIB_NAME"; then
-      { $as_echo "$as_me:${as_lineno-$LINENO}: Could not find $POTENTIAL_FREETYPE_LIB_PATH/$FREETYPE_LIB_NAME. Ignoring location." >&5
+      if test "x$OPENJDK_TARGET_OS" = xmacosx \
+          && test -s "$POTENTIAL_FREETYPE_LIB_PATH/${LIBRARY_PREFIX}freetype.6${SHARED_LIBRARY_SUFFIX}"; then
+        # On Mac OS X Yosemite, the symlink from libfreetype.dylib to libfreetype.6.dylib disappeared. Check
+        # for the .6 version explicitly.
+        FREETYPE_BASE_NAME=freetype.6
+        FREETYPE_LIB_NAME="${LIBRARY_PREFIX}${FREETYPE_BASE_NAME}${SHARED_LIBRARY_SUFFIX}"
+        { $as_echo "$as_me:${as_lineno-$LINENO}: Compensating for missing symlink by using version 6 explicitly" >&5
+$as_echo "$as_me: Compensating for missing symlink by using version 6 explicitly" >&6;}
+      else
+        { $as_echo "$as_me:${as_lineno-$LINENO}: Could not find $POTENTIAL_FREETYPE_LIB_PATH/$FREETYPE_LIB_NAME. Ignoring location." >&5
 $as_echo "$as_me: Could not find $POTENTIAL_FREETYPE_LIB_PATH/$FREETYPE_LIB_NAME. Ignoring location." >&6;}
-      FOUND_FREETYPE=no
+        FOUND_FREETYPE=no
+      fi
     else
       if test "x$OPENJDK_TARGET_OS" = xwindows; then
         # On Windows, we will need both .lib and .dll file.
-        if ! test -s "$POTENTIAL_FREETYPE_LIB_PATH/freetype.lib"; then
-          { $as_echo "$as_me:${as_lineno-$LINENO}: Could not find $POTENTIAL_FREETYPE_LIB_PATH/freetype.lib. Ignoring location." >&5
-$as_echo "$as_me: Could not find $POTENTIAL_FREETYPE_LIB_PATH/freetype.lib. Ignoring location." >&6;}
+        if ! test -s "$POTENTIAL_FREETYPE_LIB_PATH/${FREETYPE_BASE_NAME}.lib"; then
+          { $as_echo "$as_me:${as_lineno-$LINENO}: Could not find $POTENTIAL_FREETYPE_LIB_PATH/${FREETYPE_BASE_NAME}.lib. Ignoring location." >&5
+$as_echo "$as_me: Could not find $POTENTIAL_FREETYPE_LIB_PATH/${FREETYPE_BASE_NAME}.lib. Ignoring location." >&6;}
           FOUND_FREETYPE=no
         fi
       elif test "x$OPENJDK_TARGET_OS" = xsolaris \
           && test -s "$POTENTIAL_FREETYPE_LIB_PATH$OPENJDK_TARGET_CPU_ISADIR/$FREETYPE_LIB_NAME"; then
         # Found lib in isa dir, use that instead.
         POTENTIAL_FREETYPE_LIB_PATH="$POTENTIAL_FREETYPE_LIB_PATH$OPENJDK_TARGET_CPU_ISADIR"
+        { $as_echo "$as_me:${as_lineno-$LINENO}: Rewriting to use $POTENTIAL_FREETYPE_LIB_PATH instead" >&5
+$as_echo "$as_me: Rewriting to use $POTENTIAL_FREETYPE_LIB_PATH instead" >&6;}
       fi
     fi
   fi
@@ -47311,30 +47531,55 @@ $as_echo "$FREETYPE_LIB_PATH" >&6; }
   POTENTIAL_FREETYPE_LIB_PATH="$FREETYPE_BASE_DIR/lib/i386-linux-gnu"
   METHOD="well-known location"
 
-  # First check if the files exists.
-  if test -s "$POTENTIAL_FREETYPE_INCLUDE_PATH/ft2build.h"; then
-    # We found an arbitrary include file. That's a good sign.
+  # Let's start with an optimistic view of the world :-)
+  FOUND_FREETYPE=yes
+
+  # First look for the canonical freetype main include file ft2build.h.
+  if ! test -s "$POTENTIAL_FREETYPE_INCLUDE_PATH/ft2build.h"; then
+    # Oh no! Let's try in the freetype2 directory. This is needed at least at Mac OS X Yosemite.
+    POTENTIAL_FREETYPE_INCLUDE_PATH="$POTENTIAL_FREETYPE_INCLUDE_PATH/freetype2"
+    if ! test -s "$POTENTIAL_FREETYPE_INCLUDE_PATH/ft2build.h"; then
+      # Fail.
+      FOUND_FREETYPE=no
+    fi
+  fi
+
+  if test "x$FOUND_FREETYPE" = xyes; then
+    # Include file found, let's continue the sanity check.
     { $as_echo "$as_me:${as_lineno-$LINENO}: Found freetype include files at $POTENTIAL_FREETYPE_INCLUDE_PATH using $METHOD" >&5
 $as_echo "$as_me: Found freetype include files at $POTENTIAL_FREETYPE_INCLUDE_PATH using $METHOD" >&6;}
-    FOUND_FREETYPE=yes
 
-    FREETYPE_LIB_NAME="${LIBRARY_PREFIX}freetype${SHARED_LIBRARY_SUFFIX}"
+    # Reset to default value
+    FREETYPE_BASE_NAME=freetype
+    FREETYPE_LIB_NAME="${LIBRARY_PREFIX}${FREETYPE_BASE_NAME}${SHARED_LIBRARY_SUFFIX}"
     if ! test -s "$POTENTIAL_FREETYPE_LIB_PATH/$FREETYPE_LIB_NAME"; then
-      { $as_echo "$as_me:${as_lineno-$LINENO}: Could not find $POTENTIAL_FREETYPE_LIB_PATH/$FREETYPE_LIB_NAME. Ignoring location." >&5
+      if test "x$OPENJDK_TARGET_OS" = xmacosx \
+          && test -s "$POTENTIAL_FREETYPE_LIB_PATH/${LIBRARY_PREFIX}freetype.6${SHARED_LIBRARY_SUFFIX}"; then
+        # On Mac OS X Yosemite, the symlink from libfreetype.dylib to libfreetype.6.dylib disappeared. Check
+        # for the .6 version explicitly.
+        FREETYPE_BASE_NAME=freetype.6
+        FREETYPE_LIB_NAME="${LIBRARY_PREFIX}${FREETYPE_BASE_NAME}${SHARED_LIBRARY_SUFFIX}"
+        { $as_echo "$as_me:${as_lineno-$LINENO}: Compensating for missing symlink by using version 6 explicitly" >&5
+$as_echo "$as_me: Compensating for missing symlink by using version 6 explicitly" >&6;}
+      else
+        { $as_echo "$as_me:${as_lineno-$LINENO}: Could not find $POTENTIAL_FREETYPE_LIB_PATH/$FREETYPE_LIB_NAME. Ignoring location." >&5
 $as_echo "$as_me: Could not find $POTENTIAL_FREETYPE_LIB_PATH/$FREETYPE_LIB_NAME. Ignoring location." >&6;}
-      FOUND_FREETYPE=no
+        FOUND_FREETYPE=no
+      fi
     else
       if test "x$OPENJDK_TARGET_OS" = xwindows; then
         # On Windows, we will need both .lib and .dll file.
-        if ! test -s "$POTENTIAL_FREETYPE_LIB_PATH/freetype.lib"; then
-          { $as_echo "$as_me:${as_lineno-$LINENO}: Could not find $POTENTIAL_FREETYPE_LIB_PATH/freetype.lib. Ignoring location." >&5
-$as_echo "$as_me: Could not find $POTENTIAL_FREETYPE_LIB_PATH/freetype.lib. Ignoring location." >&6;}
+        if ! test -s "$POTENTIAL_FREETYPE_LIB_PATH/${FREETYPE_BASE_NAME}.lib"; then
+          { $as_echo "$as_me:${as_lineno-$LINENO}: Could not find $POTENTIAL_FREETYPE_LIB_PATH/${FREETYPE_BASE_NAME}.lib. Ignoring location." >&5
+$as_echo "$as_me: Could not find $POTENTIAL_FREETYPE_LIB_PATH/${FREETYPE_BASE_NAME}.lib. Ignoring location." >&6;}
           FOUND_FREETYPE=no
         fi
       elif test "x$OPENJDK_TARGET_OS" = xsolaris \
           && test -s "$POTENTIAL_FREETYPE_LIB_PATH$OPENJDK_TARGET_CPU_ISADIR/$FREETYPE_LIB_NAME"; then
         # Found lib in isa dir, use that instead.
         POTENTIAL_FREETYPE_LIB_PATH="$POTENTIAL_FREETYPE_LIB_PATH$OPENJDK_TARGET_CPU_ISADIR"
+        { $as_echo "$as_me:${as_lineno-$LINENO}: Rewriting to use $POTENTIAL_FREETYPE_LIB_PATH instead" >&5
+$as_echo "$as_me: Rewriting to use $POTENTIAL_FREETYPE_LIB_PATH instead" >&6;}
       fi
     fi
   fi
@@ -47603,30 +47848,55 @@ $as_echo "$FREETYPE_LIB_PATH" >&6; }
   POTENTIAL_FREETYPE_LIB_PATH="$FREETYPE_BASE_DIR/lib32"
   METHOD="well-known location"
 
-  # First check if the files exists.
-  if test -s "$POTENTIAL_FREETYPE_INCLUDE_PATH/ft2build.h"; then
-    # We found an arbitrary include file. That's a good sign.
+  # Let's start with an optimistic view of the world :-)
+  FOUND_FREETYPE=yes
+
+  # First look for the canonical freetype main include file ft2build.h.
+  if ! test -s "$POTENTIAL_FREETYPE_INCLUDE_PATH/ft2build.h"; then
+    # Oh no! Let's try in the freetype2 directory. This is needed at least at Mac OS X Yosemite.
+    POTENTIAL_FREETYPE_INCLUDE_PATH="$POTENTIAL_FREETYPE_INCLUDE_PATH/freetype2"
+    if ! test -s "$POTENTIAL_FREETYPE_INCLUDE_PATH/ft2build.h"; then
+      # Fail.
+      FOUND_FREETYPE=no
+    fi
+  fi
+
+  if test "x$FOUND_FREETYPE" = xyes; then
+    # Include file found, let's continue the sanity check.
     { $as_echo "$as_me:${as_lineno-$LINENO}: Found freetype include files at $POTENTIAL_FREETYPE_INCLUDE_PATH using $METHOD" >&5
 $as_echo "$as_me: Found freetype include files at $POTENTIAL_FREETYPE_INCLUDE_PATH using $METHOD" >&6;}
-    FOUND_FREETYPE=yes
 
-    FREETYPE_LIB_NAME="${LIBRARY_PREFIX}freetype${SHARED_LIBRARY_SUFFIX}"
+    # Reset to default value
+    FREETYPE_BASE_NAME=freetype
+    FREETYPE_LIB_NAME="${LIBRARY_PREFIX}${FREETYPE_BASE_NAME}${SHARED_LIBRARY_SUFFIX}"
     if ! test -s "$POTENTIAL_FREETYPE_LIB_PATH/$FREETYPE_LIB_NAME"; then
-      { $as_echo "$as_me:${as_lineno-$LINENO}: Could not find $POTENTIAL_FREETYPE_LIB_PATH/$FREETYPE_LIB_NAME. Ignoring location." >&5
+      if test "x$OPENJDK_TARGET_OS" = xmacosx \
+          && test -s "$POTENTIAL_FREETYPE_LIB_PATH/${LIBRARY_PREFIX}freetype.6${SHARED_LIBRARY_SUFFIX}"; then
+        # On Mac OS X Yosemite, the symlink from libfreetype.dylib to libfreetype.6.dylib disappeared. Check
+        # for the .6 version explicitly.
+        FREETYPE_BASE_NAME=freetype.6
+        FREETYPE_LIB_NAME="${LIBRARY_PREFIX}${FREETYPE_BASE_NAME}${SHARED_LIBRARY_SUFFIX}"
+        { $as_echo "$as_me:${as_lineno-$LINENO}: Compensating for missing symlink by using version 6 explicitly" >&5
+$as_echo "$as_me: Compensating for missing symlink by using version 6 explicitly" >&6;}
+      else
+        { $as_echo "$as_me:${as_lineno-$LINENO}: Could not find $POTENTIAL_FREETYPE_LIB_PATH/$FREETYPE_LIB_NAME. Ignoring location." >&5
 $as_echo "$as_me: Could not find $POTENTIAL_FREETYPE_LIB_PATH/$FREETYPE_LIB_NAME. Ignoring location." >&6;}
-      FOUND_FREETYPE=no
+        FOUND_FREETYPE=no
+      fi
     else
       if test "x$OPENJDK_TARGET_OS" = xwindows; then
         # On Windows, we will need both .lib and .dll file.
-        if ! test -s "$POTENTIAL_FREETYPE_LIB_PATH/freetype.lib"; then
-          { $as_echo "$as_me:${as_lineno-$LINENO}: Could not find $POTENTIAL_FREETYPE_LIB_PATH/freetype.lib. Ignoring location." >&5
-$as_echo "$as_me: Could not find $POTENTIAL_FREETYPE_LIB_PATH/freetype.lib. Ignoring location." >&6;}
+        if ! test -s "$POTENTIAL_FREETYPE_LIB_PATH/${FREETYPE_BASE_NAME}.lib"; then
+          { $as_echo "$as_me:${as_lineno-$LINENO}: Could not find $POTENTIAL_FREETYPE_LIB_PATH/${FREETYPE_BASE_NAME}.lib. Ignoring location." >&5
+$as_echo "$as_me: Could not find $POTENTIAL_FREETYPE_LIB_PATH/${FREETYPE_BASE_NAME}.lib. Ignoring location." >&6;}
           FOUND_FREETYPE=no
         fi
       elif test "x$OPENJDK_TARGET_OS" = xsolaris \
           && test -s "$POTENTIAL_FREETYPE_LIB_PATH$OPENJDK_TARGET_CPU_ISADIR/$FREETYPE_LIB_NAME"; then
         # Found lib in isa dir, use that instead.
         POTENTIAL_FREETYPE_LIB_PATH="$POTENTIAL_FREETYPE_LIB_PATH$OPENJDK_TARGET_CPU_ISADIR"
+        { $as_echo "$as_me:${as_lineno-$LINENO}: Rewriting to use $POTENTIAL_FREETYPE_LIB_PATH instead" >&5
+$as_echo "$as_me: Rewriting to use $POTENTIAL_FREETYPE_LIB_PATH instead" >&6;}
       fi
     fi
   fi
@@ -48185,9 +48455,9 @@ $as_echo "$as_me: The path of FREETYPE_LIB_PATH, which resolves as \"$path\", is
   fi
 
       if test "x$OPENJDK_TARGET_OS" = xwindows; then
-        FREETYPE_LIBS="$FREETYPE_LIB_PATH/freetype.lib"
+        FREETYPE_LIBS="$FREETYPE_LIB_PATH/$FREETYPE_BASE_NAME.lib"
       else
-        FREETYPE_LIBS="-L$FREETYPE_LIB_PATH -lfreetype"
+        FREETYPE_LIBS="-L$FREETYPE_LIB_PATH -l$FREETYPE_BASE_NAME"
       fi
     fi
 
@@ -50531,7 +50801,7 @@ fi
   FOUND_WARN=`$ECHO "$OUTPUT" | grep -i warn`
   FOUND_VERSION=`$ECHO $OUTPUT | grep " version \""`
   if test "x$FOUND_VERSION" != x && test "x$FOUND_WARN" = x; then
-    SJAVAC_SERVER_JAVA="$SJAVAC_SERVER_JAVA -d64"
+    SJAVAC_SERVER_JAVA_FLAGS="$SJAVAC_SERVER_JAVA_FLAGS -d64"
     JVM_ARG_OK=true
   else
     $ECHO "Arg failed:" >&5
@@ -50569,13 +50839,14 @@ fi
   FOUND_WARN=`$ECHO "$OUTPUT" | grep -i warn`
   FOUND_VERSION=`$ECHO $OUTPUT | grep " version \""`
   if test "x$FOUND_VERSION" != x && test "x$FOUND_WARN" = x; then
-    SJAVAC_SERVER_JAVA="$SJAVAC_SERVER_JAVA -Xms${MS_VALUE}M -Xmx${MX_VALUE}M"
+    SJAVAC_SERVER_JAVA_FLAGS="$SJAVAC_SERVER_JAVA_FLAGS -Xms${MS_VALUE}M -Xmx${MX_VALUE}M"
     JVM_ARG_OK=true
   else
     $ECHO "Arg failed:" >&5
     $ECHO "$OUTPUT" >&5
     JVM_ARG_OK=false
   fi
+
 
 
   # Check whether --enable-sjavac was given.
@@ -51121,7 +51392,43 @@ test "x$prefix" = xNONE && prefix=$ac_default_prefix
 # Let make expand exec_prefix.
 test "x$exec_prefix" = xNONE && exec_prefix='${prefix}'
 
-DEFS=-DHAVE_CONFIG_H
+# Transform confdefs.h into DEFS.
+# Protect against shell expansion while executing Makefile rules.
+# Protect against Makefile macro expansion.
+#
+# If the first sed substitution is executed (which looks for macros that
+# take arguments), then branch to the quote section.  Otherwise,
+# look for a macro that doesn't take arguments.
+ac_script='
+:mline
+/\\$/{
+ N
+ s,\\\n,,
+ b mline
+}
+t clear
+:clear
+s/^[	 ]*#[	 ]*define[	 ][	 ]*\([^	 (][^	 (]*([^)]*)\)[	 ]*\(.*\)/-D\1=\2/g
+t quote
+s/^[	 ]*#[	 ]*define[	 ][	 ]*\([^	 ][^	 ]*\)[	 ]*\(.*\)/-D\1=\2/g
+t quote
+b any
+:quote
+s/[	 `~#$^&*(){}\\|;'\''"<>?]/\\&/g
+s/\[/\\&/g
+s/\]/\\&/g
+s/\$/$$/g
+H
+:any
+${
+	g
+	s/^\n//
+	s/\n/ /g
+	p
+}
+'
+DEFS=`sed -n "$ac_script" confdefs.h`
+
 
 ac_libobjs=
 ac_ltlibobjs=
@@ -51555,15 +51862,11 @@ case $ac_config_files in *"
 "*) set x $ac_config_files; shift; ac_config_files=$*;;
 esac
 
-case $ac_config_headers in *"
-"*) set x $ac_config_headers; shift; ac_config_headers=$*;;
-esac
 
 
 cat >>$CONFIG_STATUS <<_ACEOF || ac_write_fail=1
 # Files that config.status was made for.
 config_files="$ac_config_files"
-config_headers="$ac_config_headers"
 
 _ACEOF
 
@@ -51584,14 +51887,9 @@ Usage: $0 [OPTION]... [TAG]...
       --recheck    update $as_me by reconfiguring in the same conditions
       --file=FILE[:TEMPLATE]
                    instantiate the configuration file FILE
-      --header=FILE[:TEMPLATE]
-                   instantiate the configuration header FILE
 
 Configuration files:
 $config_files
-
-Configuration headers:
-$config_headers
 
 Report bugs to <build-dev@openjdk.java.net>.
 OpenJDK home page: <http://openjdk.java.net>."
@@ -51655,18 +51953,7 @@ do
     esac
     as_fn_append CONFIG_FILES " '$ac_optarg'"
     ac_need_defaults=false;;
-  --header | --heade | --head | --hea )
-    $ac_shift
-    case $ac_optarg in
-    *\'*) ac_optarg=`$as_echo "$ac_optarg" | sed "s/'/'\\\\\\\\''/g"` ;;
-    esac
-    as_fn_append CONFIG_HEADERS " '$ac_optarg'"
-    ac_need_defaults=false;;
-  --he | --h)
-    # Conflict between --help and --header
-    as_fn_error $? "ambiguous option: \`$1'
-Try \`$0 --help' for more information.";;
-  --help | --hel | -h )
+  --he | --h |  --help | --hel | -h )
     $as_echo "$ac_cs_usage"; exit ;;
   -q | -quiet | --quiet | --quie | --qui | --qu | --q \
   | -silent | --silent | --silen | --sile | --sil | --si | --s)
@@ -51722,12 +52009,10 @@ cat >>$CONFIG_STATUS <<\_ACEOF || ac_write_fail=1
 for ac_config_target in $ac_config_targets
 do
   case $ac_config_target in
-    "$OUTPUT_ROOT/config.h") CONFIG_HEADERS="$CONFIG_HEADERS $OUTPUT_ROOT/config.h:$AUTOCONF_DIR/config.h.in" ;;
     "$OUTPUT_ROOT/spec.gmk") CONFIG_FILES="$CONFIG_FILES $OUTPUT_ROOT/spec.gmk:$AUTOCONF_DIR/spec.gmk.in" ;;
     "$OUTPUT_ROOT/hotspot-spec.gmk") CONFIG_FILES="$CONFIG_FILES $OUTPUT_ROOT/hotspot-spec.gmk:$AUTOCONF_DIR/hotspot-spec.gmk.in" ;;
     "$OUTPUT_ROOT/bootcycle-spec.gmk") CONFIG_FILES="$CONFIG_FILES $OUTPUT_ROOT/bootcycle-spec.gmk:$AUTOCONF_DIR/bootcycle-spec.gmk.in" ;;
     "$OUTPUT_ROOT/compare.sh") CONFIG_FILES="$CONFIG_FILES $OUTPUT_ROOT/compare.sh:$AUTOCONF_DIR/compare.sh.in" ;;
-    "$OUTPUT_ROOT/spec.sh") CONFIG_FILES="$CONFIG_FILES $OUTPUT_ROOT/spec.sh:$AUTOCONF_DIR/spec.sh.in" ;;
     "$OUTPUT_ROOT/Makefile") CONFIG_FILES="$CONFIG_FILES $OUTPUT_ROOT/Makefile:$AUTOCONF_DIR/Makefile.in" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
@@ -51741,7 +52026,6 @@ done
 # bizarre bug on SunOS 4.1.3.
 if $ac_need_defaults; then
   test "${CONFIG_FILES+set}" = set || CONFIG_FILES=$config_files
-  test "${CONFIG_HEADERS+set}" = set || CONFIG_HEADERS=$config_headers
 fi
 
 # Have a temporary directory for convenience.  Make it in the build tree
@@ -51929,116 +52213,8 @@ fi
 cat >>$CONFIG_STATUS <<\_ACEOF || ac_write_fail=1
 fi # test -n "$CONFIG_FILES"
 
-# Set up the scripts for CONFIG_HEADERS section.
-# No need to generate them if there are no CONFIG_HEADERS.
-# This happens for instance with `./config.status Makefile'.
-if test -n "$CONFIG_HEADERS"; then
-cat >"$ac_tmp/defines.awk" <<\_ACAWK ||
-BEGIN {
-_ACEOF
 
-# Transform confdefs.h into an awk script `defines.awk', embedded as
-# here-document in config.status, that substitutes the proper values into
-# config.h.in to produce config.h.
-
-# Create a delimiter string that does not exist in confdefs.h, to ease
-# handling of long lines.
-ac_delim='%!_!# '
-for ac_last_try in false false :; do
-  ac_tt=`sed -n "/$ac_delim/p" confdefs.h`
-  if test -z "$ac_tt"; then
-    break
-  elif $ac_last_try; then
-    as_fn_error $? "could not make $CONFIG_HEADERS" "$LINENO" 5
-  else
-    ac_delim="$ac_delim!$ac_delim _$ac_delim!! "
-  fi
-done
-
-# For the awk script, D is an array of macro values keyed by name,
-# likewise P contains macro parameters if any.  Preserve backslash
-# newline sequences.
-
-ac_word_re=[_$as_cr_Letters][_$as_cr_alnum]*
-sed -n '
-s/.\{148\}/&'"$ac_delim"'/g
-t rset
-:rset
-s/^[	 ]*#[	 ]*define[	 ][	 ]*/ /
-t def
-d
-:def
-s/\\$//
-t bsnl
-s/["\\]/\\&/g
-s/^ \('"$ac_word_re"'\)\(([^()]*)\)[	 ]*\(.*\)/P["\1"]="\2"\
-D["\1"]=" \3"/p
-s/^ \('"$ac_word_re"'\)[	 ]*\(.*\)/D["\1"]=" \2"/p
-d
-:bsnl
-s/["\\]/\\&/g
-s/^ \('"$ac_word_re"'\)\(([^()]*)\)[	 ]*\(.*\)/P["\1"]="\2"\
-D["\1"]=" \3\\\\\\n"\\/p
-t cont
-s/^ \('"$ac_word_re"'\)[	 ]*\(.*\)/D["\1"]=" \2\\\\\\n"\\/p
-t cont
-d
-:cont
-n
-s/.\{148\}/&'"$ac_delim"'/g
-t clear
-:clear
-s/\\$//
-t bsnlc
-s/["\\]/\\&/g; s/^/"/; s/$/"/p
-d
-:bsnlc
-s/["\\]/\\&/g; s/^/"/; s/$/\\\\\\n"\\/p
-b cont
-' <confdefs.h | sed '
-s/'"$ac_delim"'/"\\\
-"/g' >>$CONFIG_STATUS || ac_write_fail=1
-
-cat >>$CONFIG_STATUS <<_ACEOF || ac_write_fail=1
-  for (key in D) D_is_set[key] = 1
-  FS = ""
-}
-/^[\t ]*#[\t ]*(define|undef)[\t ]+$ac_word_re([\t (]|\$)/ {
-  line = \$ 0
-  split(line, arg, " ")
-  if (arg[1] == "#") {
-    defundef = arg[2]
-    mac1 = arg[3]
-  } else {
-    defundef = substr(arg[1], 2)
-    mac1 = arg[2]
-  }
-  split(mac1, mac2, "(") #)
-  macro = mac2[1]
-  prefix = substr(line, 1, index(line, defundef) - 1)
-  if (D_is_set[macro]) {
-    # Preserve the white space surrounding the "#".
-    print prefix "define", macro P[macro] D[macro]
-    next
-  } else {
-    # Replace #undef with comments.  This is necessary, for example,
-    # in the case of _POSIX_SOURCE, which is predefined and required
-    # on some systems where configure will not decide to define it.
-    if (defundef == "undef") {
-      print "/*", prefix defundef, macro, "*/"
-      next
-    }
-  }
-}
-{ print }
-_ACAWK
-_ACEOF
-cat >>$CONFIG_STATUS <<\_ACEOF || ac_write_fail=1
-  as_fn_error $? "could not setup config headers machinery" "$LINENO" 5
-fi # test -n "$CONFIG_HEADERS"
-
-
-eval set X "  :F $CONFIG_FILES  :H $CONFIG_HEADERS    "
+eval set X "  :F $CONFIG_FILES      "
 shift
 for ac_tag
 do
@@ -52246,30 +52422,7 @@ which seems to be undefined.  Please make sure it is defined" >&2;}
   esac \
   || as_fn_error $? "could not create $ac_file" "$LINENO" 5
  ;;
-  :H)
-  #
-  # CONFIG_HEADER
-  #
-  if test x"$ac_file" != x-; then
-    {
-      $as_echo "/* $configure_input  */" \
-      && eval '$AWK -f "$ac_tmp/defines.awk"' "$ac_file_inputs"
-    } >"$ac_tmp/config.h" \
-      || as_fn_error $? "could not create $ac_file" "$LINENO" 5
-    if diff "$ac_file" "$ac_tmp/config.h" >/dev/null 2>&1; then
-      { $as_echo "$as_me:${as_lineno-$LINENO}: $ac_file is unchanged" >&5
-$as_echo "$as_me: $ac_file is unchanged" >&6;}
-    else
-      rm -f "$ac_file"
-      mv "$ac_tmp/config.h" "$ac_file" \
-	|| as_fn_error $? "could not create $ac_file" "$LINENO" 5
-    fi
-  else
-    $as_echo "/* $configure_input  */" \
-      && eval '$AWK -f "$ac_tmp/defines.awk"' "$ac_file_inputs" \
-      || as_fn_error $? "could not create -" "$LINENO" 5
-  fi
- ;;
+
 
 
   esac

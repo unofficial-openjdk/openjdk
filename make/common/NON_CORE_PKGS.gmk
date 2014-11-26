@@ -94,7 +94,8 @@ ifeq ($(PLATFORM), macosx)
 endif
 
 JDK_PKGS = jdk \
-      jdk.net
+      jdk.net \
+      jdk.management.cmm
 
 MODULE_PKGS = jdk.jigsaw.module
 

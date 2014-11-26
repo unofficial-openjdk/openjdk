@@ -1,54 +1,57 @@
 java.base: 
 java.logging: java.base
-java.security.sasl: java.logging java.base
-java.naming: java.security.sasl java.base
-java.security.acl: java.base
-jdk.charsets: java.base
+java.compiler: java.base java.logging
+jdk.compiler: java.base java.compiler
 java.scripting: java.base
+jdk.scripting.nashorn: java.scripting java.base java.logging
 java.xml: java.base
-java.sql: java.xml java.logging java.base
-jdk.scripting.nashorn: java.scripting java.logging java.base
-java.rmi: java.logging java.base
 java.prefs: java.xml java.base
-java.desktop: jdk.charsets java.prefs java.xml java.logging java.base
-java.corba: java.naming java.rmi java.desktop java.logging java.base
-java.compiler: java.logging java.base
-jdk.compiler: java.compiler java.base
-jdk.javadoc: java.compiler java.xml jdk.compiler java.base
-jdk.rmic: java.corba jdk.compiler jdk.javadoc java.base
-jdk.jvmstat: java.rmi java.base
-jdk.attach: jdk.jvmstat java.base
-jdk.jcmd: jdk.jvmstat jdk.attach java.base
-jdk.jdi: jdk.attach java.base
-jdk.hotspot.agent: java.rmi java.scripting java.desktop java.base jdk.jdi
-jdk.hprof.agent: java.base
-java.management: java.naming java.rmi java.logging java.base
-jdk.jconsole: java.management jdk.jvmstat java.rmi jdk.attach java.desktop java.logging java.base
-java.activation: java.desktop java.logging java.base
-java.xml.bind: java.activation java.compiler java.xml java.desktop java.logging java.base
-jdk.xml.bind: java.activation java.compiler java.xml.bind java.xml java.desktop java.logging jdk.compiler java.base
-jdk.httpserver: java.logging java.base
-java.annotations.common: java.base
-java.xml.soap: java.activation java.xml.bind java.xml java.desktop java.logging java.base
-java.xml.ws: java.activation java.management jdk.httpserver java.rmi java.annotations.common java.xml.bind java.xml java.desktop java.logging java.xml.soap java.base
-jdk.xml.ws: jdk.xml.bind java.compiler java.rmi java.xml.ws java.xml.bind java.xml java.logging java.base
-java.sql.rowset: java.naming java.sql java.xml java.logging java.base
+java.sql: java.xml java.base java.logging
+java.security.sasl: java.base java.logging
+java.naming: java.base java.security.sasl
+java.sql.rowset: java.xml java.base java.sql java.naming java.logging
+java.security.acl: java.base
+java.rmi: java.base java.logging
+java.xml.crypto: java.xml java.base java.logging
+java.security.jgss: java.base java.naming
 java.instrument: java.base
-java.security.jgss: java.naming java.security.sasl java.logging java.base
-java.xml.crypto: java.xml java.logging java.base
-jdk.localedata: java.base
-jdk.crypto.ec: java.base
-jdk.crypto.pkcs11: jdk.crypto.ec java.base
+java.management: java.base java.naming java.logging java.rmi
+jdk.charsets: java.base
+java.desktop: java.xml java.prefs jdk.charsets java.base java.logging
+java.activation: java.base java.desktop java.logging
+java.xml.bind: java.xml java.base java.desktop java.compiler java.activation java.logging
+java.xml.soap: java.xml java.base java.desktop java.activation java.xml.bind java.logging
+jdk.httpserver: java.base java.logging
+java.annotations.common: java.base
+java.xml.ws: jdk.httpserver java.xml java.xml.soap java.annotations.common java.base java.desktop java.activation java.xml.bind java.logging java.rmi java.management
+java.corba: java.base java.desktop java.naming java.logging java.rmi
+jdk.deploy.osx: java.scripting java.base java.desktop
+jdk.security.jgss: java.base java.security.jgss java.security.sasl java.logging
+jdk.jvmstat: java.base java.rmi
+jdk.attach: jdk.jvmstat java.base
+jdk.jconsole: jdk.jvmstat java.base java.desktop jdk.attach java.logging java.rmi java.management
 jdk.crypto.mscapi: java.base
-jdk.naming.rmi: java.naming java.rmi java.base
-jdk.zipfs: java.base
-jdk.naming.dns: java.naming java.base
+jdk.javadoc: jdk.compiler java.xml java.base java.compiler
+jdk.rmic: jdk.compiler jdk.javadoc java.base java.corba
+oracle.accessbridge: java.base java.desktop
+jdk.crypto.ec: java.base
+jdk.crypto.pkcs11: java.base jdk.crypto.ec
+jdk.jfr: java.xml java.base java.management
+jdk.crypto.ucrypto: java.base
+jdk.localedata: java.base
+jdk.naming.dns: java.base java.naming
+jdk.naming.rmi: java.base java.naming java.rmi
 java.smartcardio: java.base
-jdk.dev: jdk.xml.bind jdk.xml.ws java.scripting jdk.rmic java.xml jdk.compiler java.base
-jdk.snmp: java.management java.security.acl java.logging java.base
-jdk.jdwp.agent: java.base
-jdk.security.auth: java.naming java.security.jgss java.base
 jdk.sctp: java.base
-jdk.runtime: java.desktop java.base
-jdk.jfr: java.management java.xml java.base
-jdk.deploy.osx: java.scripting java.desktop java.base
+jdk.security.auth: java.base java.security.jgss java.naming
+jdk.jcmd: jdk.jvmstat java.base jdk.attach
+jdk.hprof.agent: java.base
+jdk.runtime: java.base java.desktop
+jdk.jdi: java.base jdk.attach
+jdk.xml.bind: jdk.compiler java.xml java.base java.desktop java.compiler java.activation java.xml.bind java.logging
+jdk.xml.ws: java.xml java.xml.ws java.base java.compiler java.xml.bind java.logging java.rmi jdk.xml.bind
+jdk.dev: jdk.compiler jdk.rmic java.xml java.scripting java.base jdk.xml.ws jdk.xml.bind
+jdk.snmp: java.security.acl java.base java.logging java.management
+jdk.zipfs: java.base
+jdk.hotspot.agent: java.scripting java.base java.desktop java.rmi jdk.jdi
+jdk.jdwp.agent: java.base

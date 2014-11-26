@@ -321,7 +321,7 @@ ALL_TARGETS += docs-javadoc docs-jvmtidoc
 
 test:
 	($(CD) $(SRC_ROOT)/test && $(MAKE) $(MAKE_ARGS) -j1 -k MAKEFLAGS= \
-	    JT_HOME=$(JT_HOME) PRODUCT_HOME=$(JDK_OUTPUT_DIR) \
+	    JT_HOME=$(JT_HOME) PRODUCT_HOME=$(JDK_OUTPUTDIR) \
 	    ALT_OUTPUTDIR=$(OUTPUT_ROOT) CONCURRENCY=$(JOBS) $(TEST)) || true
 
 test-make:
@@ -333,7 +333,9 @@ ALL_TARGETS += test test-make
 # Verification targets
 
 verify-modules:
+	@$(call TargetEnter)
 	+($(CD) $(SRC_ROOT)/make && $(MAKE) $(MAKE_ARGS) -f CheckModules.gmk)
+	@$(call TargetExit)
 
 ALL_TARGETS += verify-modules
 
@@ -417,6 +419,10 @@ else
   # header file used by jdk.jdwp libs.
   jdk.jdwp.agent-libs: jdk.jdi-gensrc
 
+  # The swing beans need to have java base properly generated to avoid errors
+  # in javadoc.
+  java.desktop-gensrc: java.base-gensrc
+
   # Explicitly add dependencies for special targets
   java.base-java: unpack-sec
 
@@ -443,7 +449,7 @@ else
     main-jars: java.security.jgss-libs
   endif
 
-  images: jars demos samples exploded-image source-tips
+  images: jars demos samples exploded-image verify-modules source-tips
 
   bootcycle-images: images
 
@@ -542,7 +548,7 @@ ALL_TARGETS += default all
 # file.
 
 CLEAN_COMPONENTS += langtools corba hotspot jdk nashorn images \
-    bootcycle-build docs docstemp test
+    bootcycle-build docs docstemp test make-support
 CLEAN_TARGETS := $(addprefix clean-, $(CLEAN_COMPONENTS))
 
 # Remove everything, except the output from configure.
@@ -559,7 +565,7 @@ clean-docs: clean-docstemp
 # If the output directory was created by configure and now becomes empty, remove it as well.
 dist-clean: clean
 	($(CD) $(OUTPUT_ROOT) && $(RM) -r *spec.gmk config.* configure-arguments \
-	    Makefile compare.sh spec.sh tmp javacservers)
+	    Makefile compare.sh tmp javacservers)
 	$(if $(filter $(CONF_NAME),$(notdir $(OUTPUT_ROOT))), \
 	  if test "x`$(LS) $(OUTPUT_ROOT)`" != x; then \
 	    $(ECHO) "Warning: Not removing non-empty configuration directory for '$(CONF_NAME)'" ; \
