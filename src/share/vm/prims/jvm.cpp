@@ -24,10 +24,15 @@
 
 #include "precompiled.hpp"
 #include "classfile/classLoader.hpp"
+#include "classfile/classLoaderExt.hpp"
 #include "classfile/javaAssertions.hpp"
 #include "classfile/javaClasses.hpp"
 #include "classfile/symbolTable.hpp"
 #include "classfile/systemDictionary.hpp"
+#if INCLUDE_CDS
+#include "classfile/sharedClassUtil.hpp"
+#include "classfile/systemDictionaryShared.hpp"
+#endif
 #include "classfile/vmSymbols.hpp"
 #include "gc_interface/collectedHeap.inline.hpp"
 #include "interpreter/bytecode.hpp"
@@ -51,6 +56,7 @@
 #include "runtime/java.hpp"
 #include "runtime/javaCalls.hpp"
 #include "runtime/jfieldIDWorkaround.hpp"
+#include "runtime/orderAccess.inline.hpp"
 #include "runtime/os.hpp"
 #include "runtime/perfData.hpp"
 #include "runtime/reflection.hpp"
@@ -387,6 +393,14 @@ JVM_ENTRY(jobject, JVM_InitProperties(JNIEnv *env, jobject properties))
       PUTPROP(props, "sun.management.compiler", compiler_name);
     }
   }
+
+  const char* enableSharedLookupCache = "false";
+#if INCLUDE_CDS
+  if (ClassLoaderExt::is_lookup_cache_enabled()) {
+    enableSharedLookupCache = "true";
+  }
+#endif
+  PUTPROP(props, "sun.cds.enableSharedLookupCache", enableSharedLookupCache);
 
   return properties;
 JVM_END
@@ -761,6 +775,36 @@ JVM_ENTRY(void, JVM_ResolveClass(JNIEnv* env, jclass cls))
 JVM_END
 
 
+JVM_ENTRY(jboolean, JVM_KnownToNotExist(JNIEnv *env, jobject loader, const char *classname))
+  JVMWrapper("JVM_KnownToNotExist");
+#if INCLUDE_CDS
+  return ClassLoaderExt::known_to_not_exist(env, loader, classname, CHECK_(false));
+#else
+  return false;
+#endif
+JVM_END
+
+
+JVM_ENTRY(jobjectArray, JVM_GetResourceLookupCacheURLs(JNIEnv *env, jobject loader))
+  JVMWrapper("JVM_GetResourceLookupCacheURLs");
+#if INCLUDE_CDS
+  return ClassLoaderExt::get_lookup_cache_urls(env, loader, CHECK_NULL);
+#else
+  return NULL;
+#endif
+JVM_END
+
+
+JVM_ENTRY(jintArray, JVM_GetResourceLookupCache(JNIEnv *env, jobject loader, const char *resource_name))
+  JVMWrapper("JVM_GetResourceLookupCache");
+#if INCLUDE_CDS
+  return ClassLoaderExt::get_lookup_cache(env, loader, resource_name, CHECK_NULL);
+#else
+  return NULL;
+#endif
+JVM_END
+
+
 // Returns a class loaded by the bootstrap class loader; or null
 // if not found.  ClassNotFoundException is not thrown.
 //
@@ -1032,7 +1076,15 @@ JVM_ENTRY(jclass, JVM_FindLoadedClass(JNIEnv *env, jobject loader, jstring name)
                                                               h_loader,
                                                               Handle(),
                                                               CHECK_NULL);
-
+#if INCLUDE_CDS
+  if (k == NULL) {
+    // If the class is not already loaded, try to see if it's in the shared
+    // archive for the current classloader (h_loader).
+    instanceKlassHandle ik = SystemDictionaryShared::find_or_load_shared_class(
+        klass_name, h_loader, CHECK_NULL);
+    k = ik();
+  }
+#endif
   return (k == NULL) ? NULL :
             (jclass) JNIHandles::make_local(env, k->java_mirror());
 JVM_END

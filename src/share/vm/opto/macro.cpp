@@ -699,6 +699,7 @@ bool PhaseMacroExpand::scalar_replacement(AllocateNode *alloc, GrowableArray <Sa
   ciType* elem_type;
 
   Node* res = alloc->result_cast();
+  assert(res == NULL || res->is_CheckCastPP(), "unexpected AllocateNode result");
   const TypeOopPtr* res_type = NULL;
   if (res != NULL) { // Could be NULL when there are no users
     res_type = _igvn.type(res)->isa_oopptr();
@@ -1030,6 +1031,8 @@ bool PhaseMacroExpand::eliminate_boxing_node(CallStaticJavaNode *boxing) {
   if (!C->eliminate_boxing() || boxing->proj_out(TypeFunc::Parms) != NULL) {
     return false;
   }
+
+  assert(boxing->result_cast() == NULL, "unexpected boxing node result");
 
   extract_call_projections(boxing);
 
@@ -2191,7 +2194,7 @@ void PhaseMacroExpand::expand_lock_node(LockNode *lock) {
     Node* klass_node = AllocateNode::Ideal_klass(obj, &_igvn);
     if (klass_node == NULL) {
       Node* k_adr = basic_plus_adr(obj, oopDesc::klass_offset_in_bytes());
-      klass_node = transform_later( LoadKlassNode::make(_igvn, mem, k_adr, _igvn.type(k_adr)->is_ptr()) );
+      klass_node = transform_later(LoadKlassNode::make(_igvn, NULL, mem, k_adr, _igvn.type(k_adr)->is_ptr()));
 #ifdef _LP64
       if (UseCompressedClassPointers && klass_node->is_DecodeNKlass()) {
         assert(klass_node->in(1)->Opcode() == Op_LoadNKlass, "sanity");

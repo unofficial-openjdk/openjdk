@@ -51,6 +51,7 @@
 #include "runtime/init.hpp"
 #include "runtime/reflection.hpp"
 #include "runtime/sharedRuntime.hpp"
+#include "runtime/thread.inline.hpp"
 #include "utilities/dtrace.hpp"
 #include "utilities/macros.hpp"
 #ifdef COMPILER1
@@ -85,7 +86,8 @@ static bool firstEnv = true;
 
 // ------------------------------------------------------------------
 // ciEnv::ciEnv
-ciEnv::ciEnv(CompileTask* task, int system_dictionary_modification_counter) {
+ciEnv::ciEnv(CompileTask* task, int system_dictionary_modification_counter)
+  : _ciEnv_arena(mtCompiler) {
   VM_ENTRY_MARK;
 
   // Set up ciEnv::current immediately, for the sake of ciObjectFactory, etc.
@@ -138,7 +140,7 @@ ciEnv::ciEnv(CompileTask* task, int system_dictionary_modification_counter) {
   _the_min_jint_string = NULL;
 }
 
-ciEnv::ciEnv(Arena* arena) {
+ciEnv::ciEnv(Arena* arena) : _ciEnv_arena(mtCompiler) {
   ASSERT_IN_VM;
 
   // Set up ciEnv::current immediately, for the sake of ciObjectFactory, etc.
@@ -557,7 +559,12 @@ ciConstant ciEnv::get_constant_by_index_impl(constantPoolHandle cpool,
     oop obj = cpool->resolved_references()->obj_at(cache_index);
     if (obj != NULL) {
       ciObject* ciobj = get_object(obj);
-      return ciConstant(T_OBJECT, ciobj);
+      if (ciobj->is_array()) {
+        return ciConstant(T_ARRAY, ciobj);
+      } else {
+        assert(ciobj->is_instance(), "should be an instance");
+        return ciConstant(T_OBJECT, ciobj);
+      }
     }
     index = cpool->object_to_cp_index(cache_index);
   }
@@ -584,8 +591,12 @@ ciConstant ciEnv::get_constant_by_index_impl(constantPoolHandle cpool,
       }
     }
     ciObject* constant = get_object(string);
-    assert (constant->is_instance(), "must be an instance, or not? ");
-    return ciConstant(T_OBJECT, constant);
+    if (constant->is_array()) {
+      return ciConstant(T_ARRAY, constant);
+    } else {
+      assert (constant->is_instance(), "must be an instance, or not? ");
+      return ciConstant(T_OBJECT, constant);
+    }
   } else if (tag.is_klass() || tag.is_unresolved_klass()) {
     // 4881222: allow ldc to take a class type
     ciKlass* klass = get_klass_by_index_impl(cpool, index, ignore_will_link, accessor);
@@ -1110,9 +1121,6 @@ int ciEnv::num_inlined_bytecodes() const {
 // ------------------------------------------------------------------
 // ciEnv::record_failure()
 void ciEnv::record_failure(const char* reason) {
-  if (log() != NULL) {
-    log()->elem("failure reason='%s'", reason);
-  }
   if (_failure_reason == NULL) {
     // Record the first failure reason.
     _failure_reason = reason;
