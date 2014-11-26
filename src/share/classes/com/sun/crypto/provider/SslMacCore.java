@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2007, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -226,9 +226,6 @@ final class SslMacCore {
 
         static final byte[] md5Pad1 = genPad((byte)0x36, 48);
         static final byte[] md5Pad2 = genPad((byte)0x5c, 48);
-        static {
-            SunJCE.ensureIntegrity(SslMacMD5.class);
-        }
     }
 
     // nested static class for the SslMacMD5 implementation
@@ -262,9 +259,6 @@ final class SslMacCore {
 
         static final byte[] shaPad1 = genPad((byte)0x36, 40);
         static final byte[] shaPad2 = genPad((byte)0x5c, 40);
-        static {
-            SunJCE.ensureIntegrity(SslMacSHA1.class);
-        }
     }
 
 }

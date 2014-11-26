@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004, 2007, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2004, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -65,12 +65,8 @@ public final class AESWrapCipher extends CipherSpi {
     /**
      * Creates an instance of AES KeyWrap cipher with default
      * mode, i.e. "ECB" and padding scheme, i.e. "NoPadding".
-     *
-     * @exception SecurityException if this constructor fails to verify
-     * its own integrity
      */
     public AESWrapCipher() {
-        SunJCE.ensureIntegrity(getClass());
         cipher = new AESCrypt();
     }
 

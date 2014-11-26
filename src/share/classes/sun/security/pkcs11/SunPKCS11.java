@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2007, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -372,24 +372,6 @@ public final class SunPKCS11 extends AuthProvider {
             sb.append(longs[i]);
         }
         return sb.toString();
-    }
-
-    // set to true once self verification is complete
-    private static volatile boolean integrityVerified;
-
-    static void verifySelfIntegrity(Class c) {
-        if (integrityVerified) {
-            return;
-        }
-        doVerifySelfIntegrity(c);
-    }
-
-    private static synchronized void doVerifySelfIntegrity(Class c) {
-        integrityVerified = JarVerifier.verify(c);
-        if (integrityVerified == false) {
-            throw new ProviderException
-                ("The SunPKCS11 provider may have been tampered with.");
-        }
     }
 
     public boolean equals(Object obj) {
@@ -878,7 +860,6 @@ public final class SunPKCS11 extends AuthProvider {
             if (type == MD) {
                 return new P11Digest(token, algorithm, mechanism);
             } else if (type == CIP) {
-                verifySelfIntegrity(getClass());
                 if (algorithm.startsWith("RSA")) {
                     return new P11RSACipher(token, algorithm, mechanism);
                 } else {
@@ -887,12 +868,10 @@ public final class SunPKCS11 extends AuthProvider {
             } else if (type == SIG) {
                 return new P11Signature(token, algorithm, mechanism);
             } else if (type == MAC) {
-                verifySelfIntegrity(getClass());
                 return new P11Mac(token, algorithm, mechanism);
             } else if (type == KPG) {
                 return new P11KeyPairGenerator(token, algorithm, mechanism);
             } else if (type == KA) {
-                verifySelfIntegrity(getClass());
                 if (algorithm.equals("ECDH")) {
                     return new P11ECDHKeyAgreement(token, algorithm, mechanism);
                 } else {
@@ -901,11 +880,8 @@ public final class SunPKCS11 extends AuthProvider {
             } else if (type == KF) {
                 return token.getKeyFactory(algorithm);
             } else if (type == SKF) {
-                verifySelfIntegrity(getClass());
                 return new P11SecretKeyFactory(token, algorithm);
             } else if (type == KG) {
-                verifySelfIntegrity(getClass());
-
                 // reference equality
                 if (algorithm == "SunTlsRsaPremasterSecret") {
                     return new P11TlsRsaPremasterSecretGenerator(

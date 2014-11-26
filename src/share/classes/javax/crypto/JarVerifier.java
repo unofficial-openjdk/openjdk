@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,9 +28,7 @@ package javax.crypto;
 import java.io.*;
 import java.net.*;
 import java.security.*;
-import java.util.*;
 import java.util.jar.*;
-import javax.crypto.CryptoPolicyParser.ParsingException;
 
 /**
  * This class verifies JAR files (and any supporting JAR files), and
@@ -132,17 +130,6 @@ final class JarVerifier {
                 jf.close();
             }
         }
-    }
-
-    /**
-     * Verify that the provided JarEntry was indeed signed by the
-     * framework signing certificate.
-     *
-     * @param je the URL of the jar entry to be checked.
-     * @throws Exception if the jar entry was not signed by
-     *          the proper certificate
-     */
-    static void verifyFrameworkSigned(URL je) throws Exception {
     }
 
     /**

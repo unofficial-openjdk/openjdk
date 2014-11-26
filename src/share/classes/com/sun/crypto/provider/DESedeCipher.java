@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2007, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -53,12 +53,8 @@ public final class DESedeCipher extends CipherSpi {
     /**
      * Creates an instance of DESede cipher with default ECB mode and
      * PKCS5Padding.
-     *
-     * @exception SecurityException if this constructor fails to verify
-     * its own integrity
      */
     public DESedeCipher() {
-        SunJCE.ensureIntegrity(getClass());
         core = new CipherCore(new DESedeCrypt(), DESConstants.DES_BLOCK_SIZE);
     }
 

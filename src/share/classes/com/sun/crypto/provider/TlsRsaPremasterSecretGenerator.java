@@ -48,7 +48,6 @@ public final class TlsRsaPremasterSecretGenerator extends KeyGeneratorSpi {
     private SecureRandom random;
 
     public TlsRsaPremasterSecretGenerator() {
-        SunJCE.ensureIntegrity(getClass());
     }
 
     protected void engineInit(SecureRandom random) {

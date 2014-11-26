@@ -59,16 +59,9 @@ extends KeyAgreementSpi {
     private BigInteger y = BigInteger.ZERO;
 
     /**
-     * Verify the SunJCE provider in the constructor.
-     *
-     * @exception SecurityException if fails to verify
-     * its own integrity
+     * Empty constructor
      */
     public DHKeyAgreement() {
-        if (!SunJCE.verifySelfIntegrity(this.getClass())) {
-            throw new SecurityException("The SunJCE provider may have been " +
-                                        "tampered.");
-        }
     }
 
     /**

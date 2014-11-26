@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2007, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -45,7 +45,6 @@ public final class RC2Cipher extends CipherSpi {
     private final RC2Crypt embeddedCipher;
 
     public RC2Cipher() {
-        SunJCE.ensureIntegrity(getClass());
         embeddedCipher = new RC2Crypt();
         core = new CipherCore(embeddedCipher, 8);
     }

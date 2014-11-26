@@ -116,7 +116,6 @@ public final class RSACipher extends CipherSpi {
     private SecureRandom random;
 
     public RSACipher() {
-        SunJCE.ensureIntegrity(getClass());
         paddingType = PAD_PKCS1;
     }
 

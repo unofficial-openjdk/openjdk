@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2007, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -44,16 +44,8 @@ public final class HmacMD5 extends MacSpi implements Cloneable {
 
     /**
      * Standard constructor, creates a new HmacMD5 instance.
-     * Verify the SunJCE provider in the constructor.
-     *
-     * @exception SecurityException if fails to verify
-     * its own integrity
      */
     public HmacMD5() throws NoSuchAlgorithmException {
-        if (!SunJCE.verifySelfIntegrity(this.getClass())) {
-            throw new SecurityException("The SunJCE provider may have " +
-                                        "been tampered.");
-        }
         hmac = new HmacCore(MessageDigest.getInstance("MD5"),
                             MD5_BLOCK_LENGTH);
     }

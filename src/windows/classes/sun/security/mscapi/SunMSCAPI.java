@@ -117,22 +117,4 @@ public final class SunMSCAPI extends Provider {
             AccessController.doPrivileged(new PutAllAction(this, map));
         }
     }
-
-    // set to true once self verification is complete
-    private static volatile boolean integrityVerified;
-
-    static void verifySelfIntegrity(Class c) {
-        if (integrityVerified) {
-            return;
-        }
-        doVerifySelfIntegrity(c);
-    }
-
-    private static synchronized void doVerifySelfIntegrity(Class c) {
-        integrityVerified = JarVerifier.verify(c);
-        if (integrityVerified == false) {
-            throw new ProviderException
-                ("The SunMSCAPI provider may have been tampered with.");
-        }
-    }
 }

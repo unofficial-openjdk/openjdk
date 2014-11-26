@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2007, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -42,17 +42,11 @@ import java.security.spec.InvalidKeySpecException;
 public final class DESKeyFactory extends SecretKeyFactorySpi {
 
     /**
-     * Verify the SunJCE provider in the constructor.
-     *
-     * @exception SecurityException if fails to verify
-     * its own integrity
+     * Empty constructor
      */
     public DESKeyFactory() {
-        if (!SunJCE.verifySelfIntegrity(this.getClass())) {
-            throw new SecurityException("The SunJCE provider may have " +
-                                        "been tampered.");
-        }
     }
+
     /**
      * Generates a <code>SecretKey</code> object from the provided key
      * specification (key material).
