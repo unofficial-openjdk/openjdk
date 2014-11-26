@@ -119,6 +119,8 @@ public class Sockets {
                 Throwable t = ((InvocationTargetException)e).getTargetException();
                 if (t instanceof IOException) {
                     throw (IOException)t;
+                } else if (t instanceof RuntimeException) {
+                    throw (RuntimeException)t;
                 }
             }
             throw new RuntimeException(e);
@@ -135,6 +137,8 @@ public class Sockets {
                 Throwable t = ((InvocationTargetException)e).getTargetException();
                 if (t instanceof IOException) {
                     throw (IOException)t;
+                } else if (t instanceof RuntimeException) {
+                    throw (RuntimeException)t;
                 }
             }
             throw new RuntimeException(e);
@@ -367,6 +371,7 @@ public class Sockets {
         set = new HashSet<>();
         set.add(StandardSocketOptions.SO_RCVBUF);
         set.add(StandardSocketOptions.SO_REUSEADDR);
+        set.add(StandardSocketOptions.IP_TOS);
         set = Collections.unmodifiableSet(set);
         options.put(ServerSocket.class, set);
 
