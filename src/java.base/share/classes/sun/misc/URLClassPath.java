@@ -1054,7 +1054,6 @@ public class URLClassPath {
             }
 
             ensureOpen();
-            parseExtensionsDependencies();
 
             if (SharedSecrets.javaUtilJarAccess().jarFileHasClassPathAttribute(jar)) { // Only get manifest when necessary
                 Manifest man = jar.getManifest();
@@ -1069,13 +1068,6 @@ public class URLClassPath {
                 }
             }
             return null;
-        }
-
-        /*
-         * parse the standard extension dependencies
-         */
-        private void  parseExtensionsDependencies() throws IOException {
-            ExtensionDependency.checkExtensionsDependencies(jar);
         }
 
         /*
@@ -1265,7 +1257,7 @@ public class URLClassPath {
             String urlPath = url.getFile().replace('/', File.separatorChar);
 
             File filePath = new File(ParseUtil.decode(urlPath));
-            File home = new File(JAVA_HOME);
+            File home = new File(JAVA_HOME).getCanonicalFile();
             File parent = filePath.getParentFile();
             while (parent != null) {
                 if (parent.equals(home))
