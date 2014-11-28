@@ -26,8 +26,8 @@
 package sun.misc;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.FilePermission;
+import java.io.IOException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.net.MalformedURLException;
@@ -36,11 +36,6 @@ import java.net.URLStreamHandlerFactory;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.StringTokenizer;
-import java.util.Set;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.security.PrivilegedExceptionAction;
@@ -50,17 +45,26 @@ import java.security.Permissions;
 import java.security.Permission;
 import java.security.ProtectionDomain;
 import java.security.CodeSource;
-import sun.security.util.SecurityConstants;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 import sun.net.www.ParseUtil;
+import sun.security.util.SecurityConstants;
 
 /**
  * This class is used by the system to launch the main application.
  */
 public class Launcher {
+
+    // ensure URLClassPath for boot loader is initialized first
+    static {
+        URLClassPath ucp = BootClassPathHolder.bcp;
+    }
+
     private static URLStreamHandlerFactory factory = new Factory();
     private static Launcher launcher = new Launcher();
-    private static String bootClassPath =
-        System.getProperty("sun.boot.class.path");
 
     public static Launcher getLauncher() {
         return launcher;
@@ -143,8 +147,6 @@ public class Launcher {
          * within a context that limits which files it can read
          */
         static ExtClassLoader getExtClassLoader() throws IOException {
-            final File[] dirs = getExtDirs();
-
             try {
                 // Prior implementations of this doPrivileged() block supplied
                 // aa synthesized ACC via a call to the private method
@@ -153,10 +155,6 @@ public class Launcher {
                 return AccessController.doPrivileged(
                     new PrivilegedExceptionAction<ExtClassLoader>() {
                         public ExtClassLoader run() throws IOException {
-                            int len = dirs.length;
-                            for (int i = 0; i < len; i++) {
-                                MetaIndex.registerDirectory(dirs[i]);
-                            }
                             List<String> locations;
                             if (Files.exists(extmodules)) {
                                 locations = new ArrayList<>();
@@ -164,7 +162,7 @@ public class Launcher {
                             } else {
                                 locations = toModuleLocations(modules);
                             }
-                            return new ExtClassLoader(locations, dirs);
+                            return new ExtClassLoader(locations);
                         }
                     });
             } catch (java.security.PrivilegedActionException e) {
@@ -197,88 +195,17 @@ public class Launcher {
          * Creates a new ExtClassLoader for the specified module locations and
          * ext  directories.
          */
-        public ExtClassLoader(List<String> modLocations, File[] dirs) throws IOException {
-            super(getExtURLs(modLocations, dirs), null, factory);
+        public ExtClassLoader(List<String> modLocations) throws IOException {
+            super(getExtURLs(modLocations), null, factory);
         }
 
-        private static File[] getExtDirs() {
-            String s = System.getProperty("java.ext.dirs");
-            File[] dirs;
-            if (s != null) {
-                StringTokenizer st =
-                    new StringTokenizer(s, File.pathSeparator);
-                int count = st.countTokens();
-                dirs = new File[count];
-                for (int i = 0; i < count; i++) {
-                    dirs[i] = new File(st.nextToken());
-                }
-            } else {
-                dirs = new File[0];
+        private static URL[] getExtURLs(List<String> modLocations) throws IOException {
+            int size = modLocations.size();
+            URL[] urls = new URL[size];
+            for (int i=0; i<size; i++) {
+                urls[i] = getFileURL(new File(modLocations.get(i)));
             }
-            return dirs;
-        }
-
-        private static URL[] getExtURLs(List<String> modLocations, File[] dirs) throws IOException {
-            List<URL> urls = new ArrayList<>();
-            for (String loc : modLocations) {
-                urls.add(getFileURL(new File(loc)));
-            }
-            for (int i = 0; i < dirs.length; i++) {
-                String[] files = dirs[i].list();
-                if (files != null) {
-                    for (int j = 0; j < files.length; j++) {
-                        if (!files[j].equals("meta-index")) {
-                            File f = new File(dirs[i], files[j]);
-                            urls.add(getFileURL(f));
-                        }
-                    }
-                }
-            }
-            return urls.toArray(new URL[0]);
-        }
-
-        /*
-         * Searches the installed extension directories for the specified
-         * library name. For each extension directory, we first look for
-         * the native library in the subdirectory whose name is the value
-         * of the system property <code>os.arch</code>. Failing that, we
-         * look in the extension directory itself.
-         */
-        public String findLibrary(String name) {
-            final String libname = System.mapLibraryName(name);
-            URL[] urls = super.getURLs();
-            File prevDir = null;
-            for (int i = 0; i < urls.length; i++) {
-                // Get the ext directory from the URL
-                File dir = new File(urls[i].getPath()).getParentFile();
-                if (dir != null && !dir.equals(prevDir)) {
-                    // Look in architecture-specific subdirectory first
-                    // Read from the saved system properties to avoid deadlock
-                    final String arch = VM.getSavedProperty("os.arch");
-                    String pathname = AccessController.doPrivileged(
-                        new PrivilegedAction<String>() {
-                            public String run() {
-                                if (arch != null) {
-                                    File file = new File(new File(dir, arch), libname);
-                                    if (file.exists()) {
-                                        return file.getAbsolutePath();
-                                    }
-                                }
-                                // Then check the extension directory
-                                File file = new File(dir, libname);
-                                if (file.exists()) {
-                                    return file.getAbsolutePath();
-                                }
-                                return null;
-                            }
-                        });
-                    if (pathname != null) {
-                        return pathname;
-                    }
-                }
-                prevDir = dir;
-            }
-            return null;
+            return urls;
         }
 
         private static AccessControlContext getContext(File[] dirs)
@@ -465,11 +392,12 @@ public class Launcher {
     private static class BootClassPathHolder {
         static final URLClassPath bcp;
         static {
-            URL[] urls;
-            if (bootClassPath != null) {
-                urls = AccessController.doPrivileged(
+            URL[] urls = AccessController.doPrivileged(
                     new PrivilegedAction<URL[]>() {
                         public URL[] run() {
+                            String bootClassPath = System.getProperty("sun.boot.class.path");
+                            if (bootClassPath == null)
+                                return new URL[0];
                             // Skip empty path in boot class path i.e. not default to use CWD
                             File[] classPath = getClassPath(bootClassPath, false);
                             int len = classPath.length;
@@ -488,10 +416,7 @@ public class Launcher {
                             return pathToURLs(classPath);
                         }
                     }
-                );
-            } else {
-                urls = new URL[0];
-            }
+            );
             bcp = new URLClassPath(urls, factory);
         }
     }

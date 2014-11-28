@@ -1,25 +1,25 @@
 // permissions required by each component
-grant codeBase "module:jdk.zipfs" {
+grant codeBase "jrt:/jdk.zipfs" {
         permission java.io.FilePermission "<<ALL FILES>>", "read,write,delete";
         permission java.lang.RuntimePermission "fileSystemProvider";
         permission java.util.PropertyPermission "*", "read";
 };
 
-grant codeBase "module:jdk.localedata" {
+grant codeBase "jrt:/jdk.localedata" {
         permission java.lang.RuntimePermission "accessClassInPackage.sun.text.*";
         permission java.lang.RuntimePermission "accessClassInPackage.sun.util.*";
         permission java.util.PropertyPermission "*", "read";
 };
 
-grant codeBase "module:jdk.naming.dns" {
+grant codeBase "jrt:/jdk.naming.dns" {
         permission java.security.AllPermission;
 };
 
-grant codeBase "module:jdk.scripting.nashorn" {
+grant codeBase "jrt:/jdk.scripting.nashorn" {
         permission java.security.AllPermission;
 };
 
-grant codeBase "module:jdk.crypto.ucrypto" {
+grant codeBase "jrt:/jdk.crypto.ucrypto" {
         permission java.lang.RuntimePermission "accessClassInPackage.sun.security.*";
         permission java.lang.RuntimePermission "accessClassInPackage.sun.nio.ch";
         permission java.lang.RuntimePermission "loadLibrary.j2ucrypto";
@@ -31,7 +31,7 @@ grant codeBase "module:jdk.crypto.ucrypto" {
         permission java.io.FilePermission "${java.home}/lib/security/ucrypto-solaris.cfg", "read";
 };
 
-grant codeBase "module:jdk.crypto.ec" {
+grant codeBase "jrt:/jdk.crypto.ec" {
         permission java.lang.RuntimePermission "accessClassInPackage.sun.security.*";
         permission java.lang.RuntimePermission "loadLibrary.sunec";
         permission java.util.PropertyPermission "*", "read";
@@ -40,7 +40,7 @@ grant codeBase "module:jdk.crypto.ec" {
         permission java.security.SecurityPermission "removeProviderProperty.SunEC";
 };
 
-grant codeBase "module:jdk.crypto.pkcs11" {
+grant codeBase "jrt:/jdk.crypto.pkcs11" {
         permission java.lang.RuntimePermission "accessClassInPackage.sun.security.*";
         permission java.lang.RuntimePermission "accessClassInPackage.sun.nio.ch";
         permission java.lang.RuntimePermission "loadLibrary.j2pkcs11";
