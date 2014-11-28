@@ -33,12 +33,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Deque;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import jdk.internal.jimage.BasicImageReader;
 import jdk.internal.jimage.ImageLocation;
@@ -65,7 +67,7 @@ public class VerifyJimage {
     public static void main(String... args) throws Exception {
         long start = System.nanoTime();
         int numThreads = Integer.getInteger("jdk.test.threads", 1);
-        List<JimageReader> readers = newJimageReaders();
+        List<JImageReader> readers = newJImageReaders();
         VerifyJimage verify = new VerifyJimage(readers, numThreads);
         if (args.length == 0) {
             // load classes from jimage
@@ -80,7 +82,7 @@ public class VerifyJimage {
         verify.waitForCompletion();
         long end = System.nanoTime();
         int entries = readers.stream()
-                             .mapToInt(JimageReader::entries)
+                             .mapToInt(JImageReader::entries)
                              .sum();
         System.out.format("%d entries %d files verified: %d ms %d errors%n",
                           entries, verify.count.get(),
@@ -91,10 +93,10 @@ public class VerifyJimage {
     }
 
     private final AtomicInteger count = new AtomicInteger(0);
-    private final List<JimageReader> readers;
+    private final List<JImageReader> readers;
     private final ExecutorService pool;
 
-    VerifyJimage(List<JimageReader> readers, int numThreads) {
+    VerifyJimage(List<JImageReader> readers, int numThreads) {
         this.readers = readers;
         this.pool = Executors.newFixedThreadPool(numThreads);
     }
@@ -116,7 +118,7 @@ public class VerifyJimage {
                             try {
                                 Files.find(mdir, Integer.MAX_VALUE, (Path p, BasicFileAttributes attr)
                                            -> !Files.isDirectory(p) &&
-                                              !mdir.relativize(p).toString().startsWith("_the") &&
+                                              !mdir.relativize(p).toString().startsWith("_") &&
                                               !p.getFileName().toString().equals("MANIFEST.MF"))
                                      .forEach(p -> compare(mdir, p, readers));
                             } catch (IOException e) {
@@ -140,7 +142,7 @@ public class VerifyJimage {
         "jdk.jdi/META-INF/services/com.sun.jdi.connect.Connector"
     );
 
-    private void compare(Path mdir, Path p, List<JimageReader> readers) {
+    private void compare(Path mdir, Path p, List<JImageReader> readers) {
         String entry = p.getFileName().toString().equals(MODULE_INFO)
                 ? mdir.getFileName().toString() + "/" + MODULE_INFO
                 : mdir.relativize(p).toString().replace(File.separatorChar, '/');
@@ -161,12 +163,12 @@ public class VerifyJimage {
         } else {
             jimage = "";
         }
-        JimageReader reader = readers.stream()
+        JImageReader reader = readers.stream()
                 .filter(r -> r.findLocation(entry) != null)
                 .filter(r -> jimage.isEmpty() || r.imageName().equals(jimage))
                 .findFirst().orElse(null);
         if (reader == null) {
-            failed.add(p.toString() + " not found in jimage");
+            failed.add(entry + " not found: " + p.getFileName().toString());
         } else {
             reader.compare(entry, p);
         }
@@ -174,7 +176,7 @@ public class VerifyJimage {
 
     private void loadClasses() {
         ClassLoader loader = ClassLoader.getSystemClassLoader();
-        for (JimageReader reader : readers) {
+        for (JImageReader reader : readers) {
             Arrays.stream(reader.getEntryNames())
                     .filter(n -> n.endsWith(".class") && !n.endsWith(MODULE_INFO))
                     .forEach(n -> {
@@ -188,31 +190,26 @@ public class VerifyJimage {
                     });
         }
     }
-    private static List<JimageReader> newJimageReaders() throws IOException {
+
+
+   private static List<JImageReader> newJImageReaders() throws IOException {
         String home = System.getProperty("java.home");
         Path mlib = Paths.get(home, "lib", "modules");
-        List<JimageReader> readers = Files.find(mlib, 1, (Path p, BasicFileAttributes attr)
-                    -> p.getFileName().toString().endsWith(".jimage"))
-                .map(JimageReader::newInstance)
-                .collect(Collectors.toList());
-        for (JimageReader reader : readers) {
-            System.out.println("opened " + reader.jimage + " " + reader.isOpen());
+        try (Stream<Path> paths = Files.list(mlib)) {
+            Set<Path> jimages = paths.filter(p -> p.toString().endsWith(".jimage"))
+                                     .collect(Collectors.toSet());
+            List<JImageReader> result = new ArrayList<>();
+            for (Path jimage: jimages) {
+                result.add(new JImageReader(jimage));
+                System.out.println("opened " + jimage);
+            }
+            return result;
         }
-
-        return readers;
     }
 
-    static class JimageReader extends BasicImageReader {
-        static JimageReader newInstance(Path p) {
-            try {
-                return new JimageReader(p);
-            } catch (IOException e) {
-                throw new UncheckedIOException(e);
-            }
-        }
-
+    static class JImageReader extends BasicImageReader {
         final Path jimage;
-        JimageReader(Path p) throws IOException {
+        JImageReader(Path p) throws IOException {
             super(p.toString());
             this.jimage = p;
         }

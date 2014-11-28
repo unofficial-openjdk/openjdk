@@ -40,10 +40,13 @@ import java.util.List;
 import java.util.Locale;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import jdk.internal.jimage.BasicImageReader;
 import jdk.internal.jimage.BasicImageWriter;
 import jdk.internal.jimage.ImageHeader;
 import jdk.internal.jimage.ImageLocation;
+import jdk.internal.jimage.PackageModuleMap;
 
 class JImageTask {
     static class BadArgs extends Exception {
@@ -153,8 +156,8 @@ class JImageTask {
     private final Options options = new Options();
 
     enum Task {
-        CREATE,
-        EXPAND,
+        RECREATE,
+        EXTRACT,
         INFO,
         LIST,
         VERIFY
@@ -234,7 +237,10 @@ class JImageTask {
         }
     }
 
-   private void create() throws IOException, BadArgs {
+    static final String MODULES_ENTRY = PackageModuleMap.MODULES_ENTRY;
+    static final String PACKAGES_ENTRY = "/" + PackageModuleMap.PACKAGES_ENTRY;
+
+    private void recreate() throws IOException, BadArgs {
         File directory = new File(options.directory);
         Path dirPath = directory.toPath();
         int chop = dirPath.toString().length() + 1;
@@ -251,33 +257,48 @@ class JImageTask {
 
         File jimage = options.jimages.get(0);
         final List<File> files = new ArrayList<>();
+        final BasicImageWriter writer = new BasicImageWriter();
+        final Long longZero = 0L;
 
-        BasicImageWriter writer = new BasicImageWriter();
-        long total = Files.walk(dirPath).reduce(0L, (offset, path) -> {
+        // Note: code sensitive to Netbeans parser crashing.
+        long total = Files.walk(dirPath).reduce(longZero, (Long offset, Path path) -> {
+                    long size = 0;
                     String pathString = path.toString();
 
                     if (pathString.length() < chop || pathString.startsWith(".")) {
                         return 0L;
                     }
 
-                    String localName = pathString.substring(chop);
+                    String name = pathString.substring(chop).replace('\\','/');
 
                     File file = path.toFile();
-                    long size = 0;
 
                     if (file.isFile()) {
                         if (options.verbose) {
-                            log.println(localName);
+                            log.println(name);
                         }
 
-                        size = file.length();
-                        writer.addLocation(localName, offset, 0L, size);
+                        if (name.endsWith(MODULES_ENTRY) || name.endsWith(PACKAGES_ENTRY)) {
+                            try {
+                                Stream<Integer> offsets = Files.readAllLines(path)
+                                        .stream()
+                                        .map(writer::addString);
+                                size = offsets.count() * 4;
+                            } catch (IOException ex) {
+                                // Caught again when writing file.
+                                size = 0;
+                            }
+                        } else {
+                            size = file.length();
+                        }
+
+                        writer.addLocation(name, offset, 0L, size);
                         files.add(file);
                     }
 
                     return offset + size;
                 },
-                (offsetL, offsetR) -> 0L);
+                (Long offsetL, Long offsetR) -> { return longZero; } );
 
         if (jimage.createNewFile()) {
             try (OutputStream os = Files.newOutputStream(jimage.toPath());
@@ -289,8 +310,21 @@ class JImageTask {
 
                 for (File file : files) {
                     try {
-                        byte[] bytes = Files.readAllBytes(file.toPath());
-                        out.write(bytes, 0, bytes.length);
+                        Path path = file.toPath();
+                        String name = path.toString();
+
+                        if (name.endsWith(MODULES_ENTRY) || name.endsWith(PACKAGES_ENTRY)) {
+                            List<Integer> offsets = Files.readAllLines(path)
+                                    .stream()
+                                    .map(writer::addString)
+                                    .collect(Collectors.toList());
+                            for (int off : offsets) {
+                                out.writeInt(off);
+                            }
+                        } else {
+                            byte[] bytes = Files.readAllBytes(path);
+                            out.write(bytes, 0, bytes.length);
+                        }
                     } catch (IOException ex) {
                         throw new BadArgs("err.cannot.read.file", file.getName());
                     }
@@ -325,7 +359,7 @@ class JImageTask {
         public void apply(BasicImageReader reader, String name, ImageLocation location) throws IOException, BadArgs;
     }
 
-    private void expand(BasicImageReader reader, String name, ImageLocation location) throws IOException, BadArgs {
+    private void extract(BasicImageReader reader, String name, ImageLocation location) throws IOException, BadArgs {
         File directory = new File(options.directory);
         byte[] bytes = reader.getResource(location);
         File resource =  new File(directory, name);
@@ -339,7 +373,12 @@ class JImageTask {
             throw new BadArgs("err.cannot.create.dir", parent.getAbsolutePath());
         }
 
-        Files.write(resource.toPath(), bytes);
+        if (name.endsWith(MODULES_ENTRY) || name.endsWith(PACKAGES_ENTRY)) {
+            List<String> names = reader.getNames(bytes);
+            Files.write(resource.toPath(), names);
+        } else {
+            Files.write(resource.toPath(), bytes);
+        }
     }
 
     private static final int NAME_WIDTH = 40;
@@ -427,11 +466,11 @@ class JImageTask {
 
     private boolean run() throws IOException, BadArgs {
         switch (options.task) {
-            case CREATE:
-                create();
+            case RECREATE:
+                recreate();
                 break;
-            case EXPAND:
-                iterate(null, this::expand);
+            case EXTRACT:
+                iterate(null, this::extract);
                 break;
             case INFO:
                 iterate(this::info, null);
