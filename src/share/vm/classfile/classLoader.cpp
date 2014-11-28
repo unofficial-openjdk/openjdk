@@ -88,7 +88,7 @@ static ReadEntry_t       ReadEntry          = NULL;
 static ReadMappedEntry_t ReadMappedEntry    = NULL;
 static GetNextEntry_t    GetNextEntry       = NULL;
 static canonicalize_fn_t CanonicalizeEntry  = NULL;
-static ZipInflateFully_t  ZipInflateFully   = NULL;
+static ZipInflateFully_t ZipInflateFully    = NULL;
 static Crc32_t           Crc32              = NULL;
 
 // Globals
@@ -328,6 +328,8 @@ LazyClassPathEntry::~LazyClassPathEntry() {
 }
 
 bool LazyClassPathEntry::is_jar_file() {
+  size_t len = strlen(_path);
+  if (len < 4 || strcmp(_path + len - 4, ".jar") != 0) return false;
   return ((_st.st_mode & S_IFREG) == S_IFREG);
 }
 
@@ -1079,9 +1081,8 @@ void ClassLoader::load_zip_library() {
   ReadEntry    = CAST_TO_FN_PTR(ReadEntry_t, os::dll_lookup(handle, "ZIP_ReadEntry"));
   ReadMappedEntry = CAST_TO_FN_PTR(ReadMappedEntry_t, os::dll_lookup(handle, "ZIP_ReadMappedEntry"));
   GetNextEntry = CAST_TO_FN_PTR(GetNextEntry_t, os::dll_lookup(handle, "ZIP_GetNextEntry"));
-  Crc32        = CAST_TO_FN_PTR(Crc32_t, os::dll_lookup(handle, "ZIP_CRC32"));
-
   ZipInflateFully = CAST_TO_FN_PTR(ZipInflateFully_t, os::dll_lookup(handle, "ZIP_InflateFully"));
+  Crc32        = CAST_TO_FN_PTR(Crc32_t, os::dll_lookup(handle, "ZIP_CRC32"));
 
   // ZIP_Close is not exported on Windows in JDK5.0 so don't abort if ZIP_Close is NULL
   if (ZipOpen == NULL || FindEntry == NULL || ReadEntry == NULL ||
@@ -1780,7 +1781,7 @@ static bool can_be_compiled(methodHandle m, int comp_level) {
 void ClassLoader::compile_the_world_in(char* name, Handle loader, TRAPS) {
   if (string_ends_with(name, ".class")) {
     // We have a .class file
-  int len = (int)strlen(name);
+    int len = (int)strlen(name);
     char buffer[2048];
     strncpy(buffer, name, len - 6);
     buffer[len-6] = 0;
