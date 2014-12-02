@@ -211,6 +211,7 @@ module java.base {
     uses java.util.spi.TimeZoneNameProvider;
     uses sun.net.spi.nameservice.NameServiceDescriptor;
     uses sun.util.locale.provider.LocaleDataMetaInfo;
+    uses sun.util.spi.CalendarProvider;
 
     //
     // qualified exports for open/closed and platform-specific content
