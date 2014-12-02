@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014 Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,31 +21,22 @@
  * questions.
  */
 
-/*
+/**
  * @test
- * @bug 6791458
- * @summary Reading from closed input files leaks native memory
+ * @bug 8066130
+ * @summary  Test HttpServer stop method invocation before a start has been called
  */
 
-import java.io.*;
+import java.net.InetSocketAddress;
+import com.sun.net.httpserver.HttpServer;
 
-public class MemoryLeak {
-    public static void main(String[] args) throws Throwable {
-        byte[] bytes = new byte[1 << 20];
-        String dir = System.getProperty("test.src", ".");
-        File testFile = new File(dir, "input.txt");
-        FileInputStream s = new FileInputStream(testFile);
-        s.close();
-        for (int i = 0; i < 10000; i++) {
-            try {
-                s.read(bytes);
-                throw new Error("expected IOException");
-            } catch (IOException expected) {
-                /* OK */
-            } catch (OutOfMemoryError oome) {
-                System.out.printf("Got OutOfMemoryError, i=%d%n", i);
-                throw oome;
-            }
-        }
+
+public class StopNoStartTest {
+
+    public static void main(String[] args) throws Exception {
+
+        InetSocketAddress serverAddr = new InetSocketAddress(0);
+        HttpServer server = HttpServer.create(serverAddr, 0);
+        server.stop(0);
     }
 }
