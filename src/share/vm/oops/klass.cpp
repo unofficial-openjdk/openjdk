@@ -389,13 +389,12 @@ void Klass::set_package(Symbol* name, ClassLoaderData* loader, TRAPS) {
       // been defined. Consider it defined within the unnamed module.
       if (_package == NULL) {
         _package = loader->packages()->lookup(pkg_name, NULL);
-      }
-
-      {
-        ResourceMark rm;
-        // A package should have been successfully created
-        assert(_package != NULL, err_msg("Package entry for class %s not found, loader %s",
-                                         name->as_C_string(), loader->loader_name()));
+        {
+          ResourceMark rm;
+          // A package should have been successfully created
+          assert(_package != NULL, err_msg("Package entry for class %s not found, loader %s",
+                                           name->as_C_string(), loader->loader_name()));
+        }
       }
 
       if (TracePackages) {
