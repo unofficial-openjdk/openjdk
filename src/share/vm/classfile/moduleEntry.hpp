@@ -45,7 +45,7 @@ public:
   ~ReadsModuleTable();
   void add_read(jweak module);
   bool can_read(oop module);
-  void purge_reads(BoolObjectClosure* is_alive_closure);
+  void purge_reads();
 };
 
 // A ModuleEntry describes a module that has been defined by a call to JVM_DefineModule.
@@ -101,7 +101,7 @@ public:
   }
 
   // Purge dead weak references out of reads list when any given class loader is unloaded.
-  void purge_reads(BoolObjectClosure* is_alive_closure);
+  void purge_reads();
   void delete_reads();
 
   void print() PRODUCT_RETURN;
@@ -194,9 +194,9 @@ public:
   void oops_do(OopClosure* f);
 
   // purge dead weak references out of reads list
-  void purge_all_module_reads(BoolObjectClosure* is_alive_closure);
+  void purge_all_module_reads();
 
-  void delete_entry(ModuleEntry* to_delete);
+  // remove all module entries from a given ModuleEntry table
   void delete_all_entries();
 
   void print() PRODUCT_RETURN;

@@ -71,14 +71,14 @@ bool ReadsModuleTable::can_read(oop m) {
 }
 
 // Remove dead weak references within the reads list
-void ReadsModuleTable::purge_reads(BoolObjectClosure* is_alive_closure) {
+void ReadsModuleTable::purge_reads() {
   assert(SafepointSynchronize::is_at_safepoint(), "must be at safepoint");
   int len = this->length();
 
   // Go backwards because this removes entries that are dead.
   for (int idx = len - 1; idx >= 0; idx--) {
     oop module_idx = JNIHandles::resolve(this->at(idx));
-    if (!is_alive_closure->do_object_b(module_idx)) {
+    if (module_idx == NULL) {
       this->remove_at(idx);
     }
   }
@@ -111,10 +111,10 @@ void ModuleEntry::add_read(ModuleEntry* m, TRAPS) {
 }
 
 // Purge dead weak references out of reads list when any given class loader is unloaded.
-void ModuleEntry::purge_reads(BoolObjectClosure* is_alive_closure) {
+void ModuleEntry::purge_reads() {
   assert(SafepointSynchronize::is_at_safepoint(), "must be at safepoint");
   if (_reads != NULL) {
-    _reads->purge_reads(is_alive_closure);
+    _reads->purge_reads();
   }
 }
 
@@ -246,46 +246,27 @@ void ModuleEntryTable::free_entry(ModuleEntry* entry) {
   Hashtable<oop, mtClass>::free_entry(entry);
 }
 
-void ModuleEntryTable::delete_entry(ModuleEntry* to_delete) {
-  unsigned int hash = compute_hash(to_delete->module());
-  int index = hash_to_index(hash);
-
-  ModuleEntry** m = bucket_addr(index);
-  ModuleEntry* entry = bucket(index);
-  while (true) {
-    assert(entry != NULL, "sanity");
-    if (entry == to_delete) {
-      *m = entry->next();
-      free_entry(entry);
-      break;
-    } else {
-      m = entry->next_addr();
-      entry = *m;
-    }
-  }
-}
-
 // Remove dead modules from all other alive modules' reads list.
 // This should only occur at class unloading.
-void ModuleEntryTable::purge_all_module_reads(BoolObjectClosure* is_alive_closure) {
+void ModuleEntryTable::purge_all_module_reads() {
   assert(SafepointSynchronize::is_at_safepoint(), "must be at safepoint");
   for (int i = 0; i < table_size(); i++) {
     for (ModuleEntry* entry = bucket(i);
                       entry != NULL;
                       entry = entry->next()) {
-      entry->purge_reads(is_alive_closure);
+      entry->purge_reads();
     }
   }
 }
 
-// Remove all entries from the table, this should only occur at class unloading.
+// Remove all entries from the table, this should only occur at class loader unloading.
 void ModuleEntryTable::delete_all_entries() {
   assert(SafepointSynchronize::is_at_safepoint(), "must be at safepoint");
   for (int i = 0; i < table_size(); i++) {
-    for (ModuleEntry* entry = bucket(i);
-                      entry != NULL;
-                      entry = entry->next()) {
-      delete_entry(entry);
+    for (ModuleEntry** m = bucket_addr(i); *m != NULL;) {
+      ModuleEntry* entry = *m;
+      *m = entry->next();
+      free_entry(entry);
     }
   }
 }

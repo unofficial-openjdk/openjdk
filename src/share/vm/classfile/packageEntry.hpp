@@ -42,7 +42,7 @@ public:
   ~QualifiedExportTable();
   void add_qexport(jweak module);
   bool is_qexported_to(oop module);
-  void purge_qualified_exports(BoolObjectClosure* is_alive_closure);
+  void purge_qualified_exports();
 };
 
 // A PackageEntry basically represents a Java package.  It contains:
@@ -109,7 +109,7 @@ public:
   }
 
   // Purge dead weak references out of exported list when any given class loader is unloaded.
-  void purge_qualified_exports(BoolObjectClosure* is_alive_closure);
+  void purge_qualified_exports();
   void delete_qualified_exports();
 
   void print() PRODUCT_RETURN;
@@ -176,10 +176,9 @@ public:
   }
 
   // purge dead weak references out of exported list
-  void purge_all_package_exports(BoolObjectClosure* is_alive_closure);
+  void purge_all_package_exports();
 
-  // remove obsolete package entry
-  void delete_entry(PackageEntry* to_delete);
+  // remove all package entries from a given PackageEntry table
   void delete_all_entries();
 
   void print() PRODUCT_RETURN;

@@ -796,10 +796,10 @@ bool ClassLoaderDataGraph::do_unloading(BoolObjectClosure* is_alive_closure, boo
   while (data != NULL) {
     if (data->is_alive(is_alive_closure)) {
       if (!data->packageTable_is_null()) {
-        data->packages()->purge_all_package_exports(is_alive_closure);
+        data->packages()->purge_all_package_exports();
       }
       if (!data->moduleTable_is_null()) {
-        data->modules()->purge_all_module_reads(is_alive_closure);
+        data->modules()->purge_all_module_reads();
       }
       prev = data;
       data = data->next();

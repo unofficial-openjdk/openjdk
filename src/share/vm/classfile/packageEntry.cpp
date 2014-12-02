@@ -67,14 +67,14 @@ bool QualifiedExportTable::is_qexported_to(oop module) {
 }
 
 // Remove dead weak references within the package's exported list.
-void QualifiedExportTable::purge_qualified_exports(BoolObjectClosure* is_alive_closure) {
+void QualifiedExportTable::purge_qualified_exports() {
   assert(SafepointSynchronize::is_at_safepoint(), "must be at safepoint");
   int len = this->length();
 
   // Go backwards because this removes entries that are dead.
   for (int idx = len - 1; idx >= 0; idx--) {
     oop module_idx = JNIHandles::resolve(this->at(idx));
-    if (!is_alive_closure->do_object_b(module_idx)) {
+    if (module_idx == NULL) {
       this->remove_at(idx);
     }
   }
@@ -142,10 +142,10 @@ void PackageEntry::set_exported(ModuleEntry* m, TRAPS) {
 }
 
 // Remove dead weak references within the package's exported list.
-void PackageEntry::purge_qualified_exports(BoolObjectClosure* is_alive_closure) {
+void PackageEntry::purge_qualified_exports() {
   assert(SafepointSynchronize::is_at_safepoint(), "must be at safepoint");
   if (_qualified_exports != NULL) {
-    _qualified_exports->purge_qualified_exports(is_alive_closure);
+    _qualified_exports->purge_qualified_exports();
   }
 }
 
@@ -233,27 +233,8 @@ void PackageEntryTable::free_entry(PackageEntry* entry) {
   Hashtable<Symbol*, mtClass>::free_entry(entry);
 }
 
-void PackageEntryTable::delete_entry(PackageEntry* to_delete) {
-  unsigned int hash = compute_hash(to_delete->name());
-  int index = hash_to_index(hash);
-
-  PackageEntry** p = bucket_addr(index);
-  PackageEntry* entry = bucket(index);
-  while (true) {
-    assert(entry != NULL, "sanity");
-    if (entry == to_delete) {
-      *p = entry->next();
-      free_entry(entry);
-      break;
-    } else {
-      p = entry->next_addr();
-      entry = *p;
-    }
-  }
-}
-
 // Remove dead entries from all packages' exported list
-void PackageEntryTable::purge_all_package_exports(BoolObjectClosure* is_alive_closure) {
+void PackageEntryTable::purge_all_package_exports() {
   assert(SafepointSynchronize::is_at_safepoint(), "must be at safepoint");
   for (int i = 0; i < table_size(); i++) {
     for (PackageEntry* entry = bucket(i);
@@ -264,20 +245,20 @@ void PackageEntryTable::purge_all_package_exports(BoolObjectClosure* is_alive_cl
         // from qualified to unqualified
         entry->delete_qualified_exports();
       } else if (entry->is_qual_exported()) {
-        entry->purge_qualified_exports(is_alive_closure);
+        entry->purge_qualified_exports();
       }
     }
   }
 }
 
-// Remove all entries from the table, this should only occur at class unloading
+// Remove all entries from the table, this should only occur at class loader unloading
 void PackageEntryTable::delete_all_entries() {
   assert(SafepointSynchronize::is_at_safepoint(), "must be at safepoint");
   for (int i = 0; i < table_size(); i++) {
-    for (PackageEntry* entry = bucket(i);
-                       entry != NULL;
-                       entry = entry->next()) {
-      delete_entry(entry);
+    for (PackageEntry** p = bucket_addr(i); *p != NULL;) {
+      PackageEntry* entry = *p;
+      *p = entry->next();
+      free_entry(entry);
     }
   }
 }
