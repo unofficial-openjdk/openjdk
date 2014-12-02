@@ -152,7 +152,7 @@ public abstract class Accessor<BeanT, ValueT> implements Receiver {
 
     public void receive(UnmarshallingContext.State state, Object o) throws SAXException {
         try {
-            set((BeanT) state.target, (ValueT) o);
+            set((BeanT) state.getTarget(), (ValueT) o);
         } catch (AccessorException e) {
             Loader.handleGenericException(e, true);
         } catch (IllegalAccessError iae) {
