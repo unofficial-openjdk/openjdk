@@ -48,6 +48,9 @@ if (! nashornJar.isAbsolute()) {
 
 var javahome = System.getProperty("java.home");
 var jdepsPath = javahome + "/../bin/jdeps".replaceAll(/\//g, File.separater);
+if (! new File(jdepsPath).isFile()) {
+    jdepsPath = javahome + "/bin/jdeps".replaceAll(/\//g, File.separater);
+}
 
 // run jdep on nashorn.jar - only summary but print profile info
 $ENV.PWD=System.getProperty("user.dir") // to avoid RE on Cygwin
