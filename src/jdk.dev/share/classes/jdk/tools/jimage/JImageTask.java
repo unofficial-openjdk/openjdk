@@ -280,10 +280,9 @@ class JImageTask {
 
                         if (name.endsWith(MODULES_ENTRY) || name.endsWith(PACKAGES_ENTRY)) {
                             try {
-                                Stream<Integer> offsets = Files.readAllLines(path)
-                                        .stream()
-                                        .map(writer::addString);
-                                size = offsets.count() * 4;
+                                try (Stream<String> lines = Files.lines(path)) {
+                                    size = lines.peek(s -> writer.addString(s)).count() * 4;
+                                }
                             } catch (IOException ex) {
                                 // Caught again when writing file.
                                 size = 0;
@@ -314,16 +313,12 @@ class JImageTask {
                         String name = path.toString();
 
                         if (name.endsWith(MODULES_ENTRY) || name.endsWith(PACKAGES_ENTRY)) {
-                            List<Integer> offsets = Files.readAllLines(path)
-                                    .stream()
-                                    .map(writer::addString)
-                                    .collect(Collectors.toList());
-                            for (int off : offsets) {
+                            for (String line: Files.readAllLines(path)) {
+                                int off = writer.addString(line);
                                 out.writeInt(off);
                             }
                         } else {
-                            byte[] bytes = Files.readAllBytes(path);
-                            out.write(bytes, 0, bytes.length);
+                            Files.copy(path, out);
                         }
                     } catch (IOException ex) {
                         throw new BadArgs("err.cannot.read.file", file.getName());
