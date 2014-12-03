@@ -29,91 +29,40 @@ jmods:
 
 include $(SPEC)
 include MakeBase.gmk
-# Temporary meassure until this file can be rewritten properly
-include MakeHelpers.gmk
-
-#
-# these defines the per-module libraries and conf files
-#
-# Include all module specific lib makefiles.
-$(foreach m, $(call FindModulesWithMakefileFor, lib, Lib), \
-    $(eval include $(call FindMakefileForModule, $m, lib, Lib)))
-
-$(foreach m, $(call FindModulesWithMakefileFor, copy, Copy), \
-    $(eval include $(call FindMakefileForModule, $m, copy, Copy)))
-
-$(foreach m, $(call FindModulesWithMakefileFor, launcher, Launcher), \
-    $(eval LAUNCHERS :=) \
-    $(eval LIBRARIES :=) \
-    $(eval include $(call FindMakefileForModule, $m, launcher, Launcher)) \
-    $(eval $m_CMDS := $$(LAUNCHERS)) \
-    $(eval $m_NATIVE := $$(LIBRARIES)))
-
-$(foreach m, $(call FindModulesWithMakefileFor, gendata, Gendata), \
-    $(eval GENDATA :=) \
-    $(eval include $(call FindMakefileForModule, $m, gendata, Gendata)) \
-    $(eval $m_CONF := $$(GENDATA)))
-
-include CreatePolicyJars.gmk
-include Import.gmk
-
-HOTSPOT_LIBS := $(filter-out %.debuginfo %.diz %.jar %.unpacked, $(HOTSPOT_IMPORT_TARGET_FILES))
-SA_PATTERNS := $(patsubst %, $(LIBRARY_PREFIX)%$(SHARED_LIBRARY_SUFFIX), saproc sawindbg)
-JVM_LIBS := $(filter-out $(addprefix %, $(SA_PATTERNS)), $(HOTSPOT_LIBS))
-SA_LIBS := $(filter $(addprefix %, $(SA_PATTERNS)), $(HOTSPOT_LIBS))
 
 ################################################################################
-# Must generate jmods into jdk outputdir for now since jlink cannot find them
-# otherwise.
 
-# Find all files in the modules output dir. Filter out inner classes since they
-# mess up in make dependencies and aren't needed for correct dependency analysis
-# anyway.
-ALL_CLASSES := $(shell $(FIND) $(JDK_OUTPUTDIR)/modules ! -name '*$$*')
+$(eval $(call FillCacheFind, \
+    $(SUPPORT_OUTPUTDIR)/modules_libs-stripped \
+    $(SUPPORT_OUTPUTDIR)/modules_cmds-stripped \
+    $(SUPPORT_OUTPUTDIR)/modules_conf \
+))
 
 # Param 1: Name of module
 define CreateJmod
 
-  $$(eval $$(call SetupCopyFiles,$1_COPY_NATIVE_LIB, \
-      SRC := $(JDK_OUTPUTDIR)/lib, \
-      DEST := $(JDK_OUTPUTDIR)/modules_tmp/$1/native, \
-      FILES := $$(filter $(JDK_OUTPUTDIR)/lib/%, $$($1_NATIVE))))
-
-  $$(eval $$(call SetupCopyFiles,$1_COPY_NATIVE_BIN, \
-      SRC := $(JDK_OUTPUTDIR)/bin, \
-      DEST := $(JDK_OUTPUTDIR)/modules_tmp/$1/native, \
-      FILES := $$(filter $(JDK_OUTPUTDIR)/bin/%, $$($1_NATIVE))))
-
-  $$(eval $$(call SetupCopyFiles,$1_COPY_CMDS, \
-      SRC := $(JDK_OUTPUTDIR)/bin, \
-      DEST := $(JDK_OUTPUTDIR)/modules_tmp/$1/bin, \
-      FILES := $$(filter $(JDK_OUTPUTDIR)/bin/%, $$($1_CMDS))))
-
-  $$(eval $$(call SetupCopyFiles,$1_COPY_CONF, \
-      SRC := $(JDK_OUTPUTDIR)/lib, \
-      DEST := $(JDK_OUTPUTDIR)/modules_tmp/$1/conf, \
-      FILES := $$(filter $(JDK_OUTPUTDIR)/lib/%, $$($1_CONF))))
-
-  ifneq ($$($1_COPY_NATIVE_LIB)$$($1_COPY_NATIVE_BIN), )
-    $1_JLINK_FLAGS += --libs $(JDK_OUTPUTDIR)/modules_tmp/$1/native
+  ifneq ($$(wildcard $(SUPPORT_OUTPUTDIR)/modules_libs-stripped/$1), )
+    $1_JLINK_FLAGS += --libs $(SUPPORT_OUTPUTDIR)/modules_libs-stripped/$1
+    $1_DEPS += $$(call CacheFind, $(SUPPORT_OUTPUTDIR)/modules_libs-stripped/$1)
   endif
-  ifneq ($$($1_COPY_CMDS), )
-    $1_JLINK_FLAGS += --cmds $(JDK_OUTPUTDIR)/modules_tmp/$1/bin
+  ifneq ($$(wildcard $(SUPPORT_OUTPUTDIR)/modules_cmds-stripped/$1), )
+    $1_JLINK_FLAGS += --cmds $(SUPPORT_OUTPUTDIR)/modules_cmds-stripped/$1
+    $1_DEPS += $$(call CacheFind, $(SUPPORT_OUTPUTDIR)/modules_cmds-stripped/$1)
   endif
-  ifneq ($$($1_COPY_CONF), )
-    $1_JLINK_FLAGS += --config $(JDK_OUTPUTDIR)/modules_tmp/$1/conf
+  ifneq ($$(wildcard $(SUPPORT_OUTPUTDIR)/modules_conf/$1), )
+    $1_JLINK_FLAGS += --config $(SUPPORT_OUTPUTDIR)/modules_conf/$1
+    $1_DEPS += $$(call CacheFind, $(SUPPORT_OUTPUTDIR)/modules_conf/$1)
   endif
   ifneq ($$(wildcard $(JDK_OUTPUTDIR)/modules/$1), )
     $1_JLINK_FLAGS += --class-path $(JDK_OUTPUTDIR)/modules/$1
-    $1_DEPS += $(wildcard $(JDK_OUTPUTDIR)/modules/$1/_*) \
-        $(filter $(JDK_OUTPUTDIR)/modules/$1/%, $(ALL_CLASSES))
+    $1_DEPS += $$(wildcard $(JDK_OUTPUTDIR)/modules/$1/_*)
   endif
 
   # TODO: What about headers?
   $(IMAGES_OUTPUTDIR)/jmods/$1.jmod: \
       $$($1_COPY_NATIVE_LIB) $$($1_COPY_NATIVE_BIN) $$($1_COPY_CMDS) \
       $$($1_COPY_CONF) $$($1_DEPS)
-		$(ECHO) Creating jmods/$1.jmod
+		$(ECHO) Creating $$(notdir $$@)
 		$(MKDIR) -p $$(@D)
 		$(RM) $$@
 		$(JLINK) --format jmod --mid $1@9.0 \
@@ -123,65 +72,6 @@ define CreateJmod
 endef
 
 ################################################################################
-
-java.base_NATIVE += $(BASE_LIBRARIES) $(MSVCR_TARGET) $(JVM_LIBS) $(NPT_LIBRARIES)
-java.base_CONF += $(BASE_CONF_FILES) $(NET_CONF_FILES) $(POLICY_JARS)
-
-java.desktop_NATIVE += $(DESKTOP_LIBRARIES) $(FREETYPE_TARGET_LIB)
-java.desktop_CONF += $(DESKTOP_CONF_FILES)
-
-java.logging_NATIVE += $(LOGGING_LIBRARIES)
-java.logging_CONF += $(LOGGING_CONF_FILES)
-
-java.instrument_NATIVE += $(INSTRUMENT_LIBRARIES)
-
-java.management_NATIVE += $(MANAGEMENT_LIBRARIES)
-java.management_CONF += $(MANAGEMENT_CONF_FILES)
-
-java.prefs_NATIVE += $(PREFS_LIBRARIES)
-
-java.security.jgss_NATIVE += $(SECURITY_KERBEROS_LIBRARIES)
-
-java.smartcardio_NATIVE += $(SECURITY_SMARTCARDIO_LIBRARIES)
-
-jdk.sctp_NATIVE += $(SCTP_LIBRARIES)
-
-jdk.crypto.ec_NATIVE += $(SECURITY_SUNEC_LIBRARIES)
-
-jdk.crypto.mscapi_NATIVE += $(SECURITY_MSCAPI_LIBRARIES)
-
-jdk.crypto.pkcs11_NATIVE += $(SECURITY_PKCS11_LIBRARIES)
-jdk.crypto.pkcs11_CONF += $(SECURITY_PKCS11_CONF_FILES)
-
-jdk.deploy.osx_NATIVE += $(DEPLOY_OSX_LIBRARIES)
-
-jdk.hotspot.agent_NATIVE += $(SA_LIBS)
-
-jdk.security.auth_NATIVE += $(SECURITY_JAAS_LIBRARIES)
-
-jdk.jdi_NATIVE += $(JDI_TRANSPORT_LIBRARIES)
-
-jdk.jdwp.agent_NATIVE += $(JDWP_LIBRARIES)
-
-jdk.hprof.agent_NATIVE += $(HPROF_LIBRARIES) $(CRW_LIBRARIES)
-jdk.hprof.agent_CONF += $(HPROF_CONF_FILES)
-
-jdk.attach_NATIVE += $(ATTACH_LIBRARIES)
-
-jdk.runtime_NATIVE += $(UNPACK_LIBRARIES) $(JSDT_LIBRARIES)
-
-ifndef OPENJDK
-  jdk.crypto.ucrypto_NATIVE += $(SECURITY_UCRYPTO_LIBRARIES)
-  jdk.crypto.ucrypto_CONF += $(SECURITY_UCRYPTO_CONF_FILES)
-
-  jdk.jfr_NATIVE += $(JFR_LIBRARIES)
-
-  oracle.accessbridge_NATIVE += $(ACCESSBRIDGE_LIBRARIES)
-  oracle.accessbridge_CONF += $(ACCESSBRIDGE_CONF_FILES)
-endif
-
-################################################################################
-
 # Until there is a source dir for all modules, use the output dir as the list
 # of modules to create jmods for
 #ALL_MODULES := $(call FindAllModules) jdk.hotspot.agent java.se

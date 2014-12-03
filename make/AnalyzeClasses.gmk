@@ -30,8 +30,8 @@ include MakeBase.gmk
 include JavaCompilation.gmk
 include SetupJavaCompilers.gmk
 
-CLASSANALYZER_CLASSES  := $(JDK_OUTPUTDIR)/bt_classanalyzer_classes
-GENMODULES_DIR := $(JDK_OUTPUTDIR)/genmodules
+CLASSANALYZER_CLASSES  := $(BUILDTOOLS_OUTPUTDIR)/classanalyzer_classes
+GENMODULES_DIR := $(SUPPORT_OUTPUTDIR)/genmodules
 MODULEINFO_DIR := $(GENMODULES_DIR)/src
 MODULE_CLASSLIST_DIR := $(GENMODULES_DIR)/classlist
 

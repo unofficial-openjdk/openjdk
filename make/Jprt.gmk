@@ -40,7 +40,7 @@ endif
 # When running in JPRT these will be provided. Need defaults so that this makefile
 # is valid anyway.
 ifndef JPRT_ARCHIVE_BUNDLE
-  JPRT_ARCHIVE_BUNDLE=/tmp/jprt_bundles/j2sdk-image.zip
+  JPRT_ARCHIVE_BUNDLE=/tmp/jprt_bundles/jdk-image.zip
 endif
 ifndef JPRT_ARCHIVE_INSTALL_BUNDLE
   JPRT_ARCHIVE_INSTALL_BUNDLE=/tmp/jprt_bundles/product-install.zip
@@ -53,17 +53,13 @@ endif
 # This target must be called in the context of a SPEC file
 jprt_bundle: $(JPRT_ARCHIVE_BUNDLE)
 
-SRC_JDK_IMAGE_DIR := $(JDK_MODULE_JIMAGE_DIR)
-JDK_IMAGE_SUBDIR := $(JDK_MODULE_JIMAGE_SUBDIR)
-
 # This target must be called in the context of a SPEC file
 $(JPRT_ARCHIVE_BUNDLE): bundles
 	$(MKDIR) -p $(@D)
 	$(RM) $@
 	$(CP) $(BUILD_OUTPUT)/bundles/$(JDK_IMAGE_SUBDIR).zip $@
 
-#SRC_JDK_IMAGE_DIR := $(JDK_IMAGE_DIR)
-
+SRC_JDK_IMAGE_DIR := $(JDK_IMAGE_DIR)
 SRC_JRE_IMAGE_DIR := $(JRE_IMAGE_DIR)
 SRC_JDK_BUNDLE_DIR := $(JDK_BUNDLE_DIR)
 SRC_JRE_BUNDLE_DIR := $(JRE_BUNDLE_DIR)
@@ -73,7 +69,7 @@ bundles: all
 	@$(call TargetEnter)
 	$(MKDIR) -p $(BUILD_OUTPUT)/bundles
 	$(CD) $(SRC_JDK_IMAGE_DIR) && $(ZIP) -y -q -r $(BUILD_OUTPUT)/bundles/$(JDK_IMAGE_SUBDIR).zip .
-#	$(CD) $(SRC_JRE_IMAGE_DIR) && $(ZIP) -y -q -r $(BUILD_OUTPUT)/bundles/$(JRE_IMAGE_SUBDIR).zip .
+	$(CD) $(SRC_JRE_IMAGE_DIR) && $(ZIP) -y -q -r $(BUILD_OUTPUT)/bundles/$(JRE_IMAGE_SUBDIR).zip .
 	if [ -d $(BUILD_OUTPUT)/install/bundles ] ; then \
 	  $(CD) $(BUILD_OUTPUT)/install/bundles && $(ZIP) -y -q -r $(JPRT_ARCHIVE_INSTALL_BUNDLE) . ; \
 	fi
