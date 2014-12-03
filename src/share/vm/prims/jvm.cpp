@@ -388,6 +388,23 @@ JVM_ENTRY(jobject, JVM_InitProperties(JNIEnv *env, jobject properties))
 JVM_END
 
 
+/*
+ * Return the temporary directory that the VM uses for the attach
+ * and perf data files.
+ *
+ * It is important that this directory is well-known and the
+ * same for all VM instances. It cannot be affected by configuration
+ * variables such as java.io.tmpdir.
+ */
+JVM_ENTRY(jstring, JVM_GetTemporaryDirectory(JNIEnv *env))
+  JVMWrapper("JVM_GetTemporaryDirectory");
+  HandleMark hm(THREAD);
+  const char* temp_dir = os::get_temp_directory();
+  Handle h = java_lang_String::create_from_platform_dependent_str(temp_dir, CHECK_NULL);
+  return (jstring) JNIHandles::make_local(env, h());
+JVM_END
+
+
 // java.lang.Runtime /////////////////////////////////////////////////////////////////////////
 
 extern volatile jint vm_created;
@@ -527,6 +544,12 @@ JVM_ENTRY(void, JVM_MonitorWait(JNIEnv* env, jobject handle, jlong ms))
   JavaThreadInObjectWaitState jtiows(thread, ms != 0);
   if (JvmtiExport::should_post_monitor_wait()) {
     JvmtiExport::post_monitor_wait((JavaThread *)THREAD, (oop)obj(), ms);
+
+    // The current thread already owns the monitor and it has not yet
+    // been added to the wait queue so the current thread cannot be
+    // made the successor. This means that the JVMTI_EVENT_MONITOR_WAIT
+    // event handler cannot accidentally consume an unpark() meant for
+    // the ParkEvent associated with this ObjectMonitor.
   }
   ObjectSynchronizer::wait(obj, ms, THREAD);
 JVM_END
