@@ -28,30 +28,26 @@ include MakeBase.gmk
 include JavaCompilation.gmk
 include SetupJavaCompilers.gmk
 
+TOOLS_CLASSES_DIR := $(BUILDTOOLS_OUTPUTDIR)/jdk_tools_classes
+
 $(eval $(call SetupJavaCompilation,BUILD_DEPS_TOOLS, \
     SETUP := GENERATE_USINGJDKBYTECODE, \
     SRC := $(JDK_TOPDIR)/make/src/classes, \
     INCLUDES := build/tools/deps, \
-    BIN := $(JDK_OUTPUTDIR)/btclasses))
+    BIN := $(TOOLS_CLASSES_DIR)))
 
 $(eval $(call SetupJavaCompilation,BUILD_MODULE_TOOLS, \
     SETUP := GENERATE_USINGJDKBYTECODE, \
     SRC := $(JDK_TOPDIR)/make/src/classes, \
     INCLUDES := build/tools/module, \
-    BIN := $(JDK_OUTPUTDIR)/btclasses))
+    BIN := $(TOOLS_CLASSES_DIR)))
 
 
-TOOL_MODULARIZER := $(BUILD_JAVA) -esa -ea -cp $(CLASSANALYZER_CLASSES) \
-    com.sun.tools.classanalyzer.Modularizer
-
-TOOL_GENMODULEGRAPH := $(BUILD_JAVA) -esa -ea -cp $(CLASSANALYZER_CLASSES) \
-    com.sun.tools.classanalyzer.GenModuleGraph
-
-TOOL_GENGRAPHS := $(BUILD_JAVA) -esa -ea -cp $(JDK_OUTPUTDIR)/btclasses \
+TOOL_GENGRAPHS := $(BUILD_JAVA) -esa -ea -cp $(TOOLS_CLASSES_DIR) \
     build.tools.module.GenGraphs
 
-TOOL_GENMODULESXML := $(BUILD_JAVA) -esa -ea -cp $(JDK_OUTPUTDIR)/btclasses \
+TOOL_GENMODULESXML := $(BUILD_JAVA) -esa -ea -cp $(TOOLS_CLASSES_DIR) \
     build.tools.module.GenerateModulesXml
 
-TOOL_MODULESUMMARY := $(BUILD_JAVA) -esa -ea -cp $(JDK_OUTPUTDIR)/btclasses \
+TOOL_MODULESUMMARY := $(BUILD_JAVA) -esa -ea -cp $(TOOLS_CLASSES_DIR) \
     -XX:-UseModules build.tools.module.ModuleSummary

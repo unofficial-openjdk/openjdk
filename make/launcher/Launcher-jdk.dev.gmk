@@ -50,8 +50,3 @@ $(eval $(call SetupLauncher,jhat, \
 $(eval $(call SetupLauncher,native2ascii, \
     -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "sun.tools.native2ascii.Main"$(COMMA) }'))
 
-jdk.dev: $(LAUNCHERS)
-
-all: jdk.dev
-
-.PHONY: all jdk.dev

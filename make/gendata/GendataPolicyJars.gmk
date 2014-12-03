@@ -32,14 +32,15 @@ include JavaCompilation.gmk
 
 ################################################################################
 
-US_EXPORT_POLICY_JAR_DST := $(JDK_OUTPUTDIR)/lib/security/US_export_policy.jar
+US_EXPORT_POLICY_JAR_DST := \
+    $(SUPPORT_OUTPUTDIR)/modules_libs/java.base/security/US_export_policy.jar
 
 ifneq ($(BUILD_CRYPTO), no)
 
-  US_EXPORT_POLICY_JAR_LIMITED_UNSIGNED := \
-      $(JDK_OUTPUTDIR)/jce/unsigned/policy/limited/US_export_policy.jar
-  US_EXPORT_POLICY_JAR_UNLIMITED_UNSIGNED := \
-      $(JDK_OUTPUTDIR)/jce/unsigned/policy/unlimited/US_export_policy.jar
+  US_EXPORT_POLICY_JAR_LIMITED := \
+      $(SUPPORT_OUTPUTDIR)/jce/policy/limited/US_export_policy.jar
+  US_EXPORT_POLICY_JAR_UNLIMITED := \
+      $(SUPPORT_OUTPUTDIR)/jce/policy/unlimited/US_export_policy.jar
 
   ifndef OPENJDK
     #
@@ -53,7 +54,8 @@ ifneq ($(BUILD_CRYPTO), no)
     # file in their environment.  Users/deployers simply need to overwrite
     # the files.  Consult README.txt (below) for more info.
     #
-    UNLIMITED_POLICY_DIR := $(JDK_OUTPUTDIR)/lib/security/unlimited_policy
+    UNLIMITED_POLICY_DIR := \
+        $(SUPPORT_OUTPUTDIR)/modules_libs/java.base/security/unlimited_policy
   endif
 
   #
@@ -68,7 +70,7 @@ ifneq ($(BUILD_CRYPTO), no)
   US_EXPORT_POLICY_JAR_SRC_DIR := \
       $(JDK_TOPDIR)/make/data/cryptopolicy/unlimited
   US_EXPORT_POLICY_JAR_TMP := \
-      $(JDK_OUTPUTDIR)/jce/unsigned/policy/unlimited/US_export_policy_jar.tmp
+      $(SUPPORT_OUTPUTDIR)/jce/policy/unlimited/US_export_policy_jar.tmp
 
   $(US_EXPORT_POLICY_JAR_TMP)/%: $(US_EXPORT_POLICY_JAR_SRC_DIR)/%
 	$(install-file)
@@ -80,32 +82,31 @@ ifneq ($(BUILD_CRYPTO), no)
       $(US_EXPORT_POLICY_JAR_DEPS), \
       SRCS := $(US_EXPORT_POLICY_JAR_TMP), \
       SUFFIXES := .policy, \
-      JAR := $(US_EXPORT_POLICY_JAR_UNLIMITED_UNSIGNED), \
+      JAR := $(US_EXPORT_POLICY_JAR_UNLIMITED), \
       EXTRA_MANIFEST_ATTR := Crypto-Strength: unlimited, \
       SKIP_METAINF := true))
 
-  $(US_EXPORT_POLICY_JAR_LIMITED_UNSIGNED): \
-      $(US_EXPORT_POLICY_JAR_UNLIMITED_UNSIGNED)
+  $(US_EXPORT_POLICY_JAR_LIMITED): \
+      $(US_EXPORT_POLICY_JAR_UNLIMITED)
 		$(ECHO) $(LOG_INFO) \
 		    Copying unlimited $(patsubst $(OUTPUT_ROOT)/%,%,$@)
 		$(install-file)
 
-  TARGETS += $(US_EXPORT_POLICY_JAR_LIMITED_UNSIGNED) \
-      $(US_EXPORT_POLICY_JAR_UNLIMITED_UNSIGNED)
+  TARGETS += $(US_EXPORT_POLICY_JAR_LIMITED) $(US_EXPORT_POLICY_JAR_UNLIMITED)
 endif
 
 ifeq ($(UNLIMITED_CRYPTO), true)
-  $(US_EXPORT_POLICY_JAR_DST): $(US_EXPORT_POLICY_JAR_UNLIMITED_UNSIGNED)
+  $(US_EXPORT_POLICY_JAR_DST): $(US_EXPORT_POLICY_JAR_UNLIMITED)
 	$(install-file)
 else
-  $(US_EXPORT_POLICY_JAR_DST): $(US_EXPORT_POLICY_JAR_LIMITED_UNSIGNED)
+  $(US_EXPORT_POLICY_JAR_DST): $(US_EXPORT_POLICY_JAR_LIMITED)
 	$(install-file)
 endif 
 
 ifndef OPENJDK
   ifneq ($(UNLIMITED_CRYPTO), true)
     $(UNLIMITED_POLICY_DIR)/US_export_policy.jar: \
-        $(US_EXPORT_POLICY_JAR_UNLIMITED_UNSIGNED)
+        $(US_EXPORT_POLICY_JAR_UNLIMITED)
 		$(install-file)
     TARGETS += $(UNLIMITED_POLICY_DIR)/US_export_policy.jar
   endif
@@ -115,23 +116,24 @@ POLICY_JARS += $(US_EXPORT_POLICY_JAR_DST)
 
 ################################################################################
 
-LOCAL_POLICY_JAR_DST := $(JDK_OUTPUTDIR)/lib/security/local_policy.jar
+LOCAL_POLICY_JAR_DST := \
+    $(SUPPORT_OUTPUTDIR)/modules_libs/java.base/security/local_policy.jar
 
 ifneq ($(BUILD_CRYPTO), no)
 
-  LOCAL_POLICY_JAR_LIMITED_UNSIGNED := \
-      $(JDK_OUTPUTDIR)/jce/unsigned/policy/limited/local_policy.jar
-  LOCAL_POLICY_JAR_UNLIMITED_UNSIGNED := \
-      $(JDK_OUTPUTDIR)/jce/unsigned/policy/unlimited/local_policy.jar
+  LOCAL_POLICY_JAR_LIMITED := \
+      $(SUPPORT_OUTPUTDIR)/jce/policy/limited/local_policy.jar
+  LOCAL_POLICY_JAR_UNLIMITED := \
+      $(SUPPORT_OUTPUTDIR)/jce/policy/unlimited/local_policy.jar
 
   #
   # TODO fix so that SetupArchive does not write files into SRCS
   # then we don't need this extra copying
   #
   LOCAL_POLICY_JAR_LIMITED_TMP := \
-      $(JDK_OUTPUTDIR)/jce/unsigned/policy/limited/local_policy_jar.tmp
+      $(SUPPORT_OUTPUTDIR)/jce/policy/limited/local_policy_jar.tmp
   LOCAL_POLICY_JAR_UNLIMITED_TMP := \
-      $(JDK_OUTPUTDIR)/jce/unsigned/policy/unlimited/local_policy_jar.tmp
+      $(SUPPORT_OUTPUTDIR)/jce/policy/unlimited/local_policy_jar.tmp
 
   $(LOCAL_POLICY_JAR_LIMITED_TMP)/%: \
       $(JDK_TOPDIR)/make/data/cryptopolicy/limited/%
@@ -146,7 +148,7 @@ ifneq ($(BUILD_CRYPTO), no)
       $(LOCAL_POLICY_JAR_LIMITED_TMP)/default_local.policy, \
       SRCS := $(LOCAL_POLICY_JAR_LIMITED_TMP), \
       SUFFIXES := .policy, \
-      JAR := $(LOCAL_POLICY_JAR_LIMITED_UNSIGNED), \
+      JAR := $(LOCAL_POLICY_JAR_LIMITED), \
       EXTRA_MANIFEST_ATTR := Crypto-Strength: limited, \
       SKIP_METAINF := true))
 
@@ -154,12 +156,11 @@ ifneq ($(BUILD_CRYPTO), no)
       $(LOCAL_POLICY_JAR_UNLIMITED_TMP)/default_local.policy, \
       SRCS := $(LOCAL_POLICY_JAR_UNLIMITED_TMP), \
       SUFFIXES := .policy, \
-      JAR := $(LOCAL_POLICY_JAR_UNLIMITED_UNSIGNED), \
+      JAR := $(LOCAL_POLICY_JAR_UNLIMITED), \
       EXTRA_MANIFEST_ATTR := Crypto-Strength: unlimited, \
       SKIP_METAINF := true))
 
-  TARGETS += $(LOCAL_POLICY_JAR_LIMITED_UNSIGNED) \
-      $(LOCAL_POLICY_JAR_UNLIMITED_UNSIGNED)
+  TARGETS += $(LOCAL_POLICY_JAR_LIMITED) $(LOCAL_POLICY_JAR_UNLIMITED)
 
   ifndef OPENJDK
     ifneq ($(UNLIMITED_CRYPTO), true)
@@ -173,17 +174,17 @@ ifneq ($(BUILD_CRYPTO), no)
 endif
 
 ifeq ($(UNLIMITED_CRYPTO), true)
-  $(LOCAL_POLICY_JAR_DST): $(LOCAL_POLICY_JAR_UNLIMITED_UNSIGNED)
+  $(LOCAL_POLICY_JAR_DST): $(LOCAL_POLICY_JAR_UNLIMITED)
 	$(install-file)
 else 
-  $(LOCAL_POLICY_JAR_DST): $(LOCAL_POLICY_JAR_LIMITED_UNSIGNED)
+  $(LOCAL_POLICY_JAR_DST): $(LOCAL_POLICY_JAR_LIMITED)
 	$(install-file)
 endif 
 
 ifndef OPENJDK
   ifneq ($(UNLIMITED_CRYPTO), true)
     $(UNLIMITED_POLICY_DIR)/local_policy.jar: \
-        $(LOCAL_POLICY_JAR_UNLIMITED_UNSIGNED)
+        $(LOCAL_POLICY_JAR_UNLIMITED)
 		$(install-file) 
     TARGETS += $(UNLIMITED_POLICY_DIR)/local_policy.jar
   endif
@@ -193,6 +194,4 @@ POLICY_JARS += $(LOCAL_POLICY_JAR_DST)
 TARGETS += $(POLICY_JARS)
 
 ################################################################################
-
-all: $(TARGETS)
 

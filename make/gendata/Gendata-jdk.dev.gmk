@@ -27,15 +27,11 @@ include GendataCommon.gmk
 include ModuleTools.gmk
 
 
-MODULES_XML := $(JDK_OUTPUTDIR)/modules/jdk.dev/com/sun/tools/jdeps/resources/jdeps-modules.xml
+JDEPS_MODULES_XML := $(JDK_OUTPUTDIR)/modules/jdk.dev/com/sun/tools/jdeps/resources/jdeps-modules.xml
 
-$(MODULES_XML): $(BUILD_MODULE_TOOLS)
+$(JDEPS_MODULES_XML): $(BUILD_MODULE_TOOLS)
 	$(MKDIR) -p $(@D)
 	$(RM) $@
 	$(TOOL_GENMODULESXML) $@ $(JDK_OUTPUTDIR)/modules
 
-jdk.dev: $(MODULES_XML)
-
-all: jdk.dev
-
-.PHONY: all jdk.dev
+TARGETS += $(JDEPS_MODULES_XML)

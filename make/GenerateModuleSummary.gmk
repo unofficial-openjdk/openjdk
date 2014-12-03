@@ -30,10 +30,11 @@ include $(SPEC)
 include MakeBase.gmk
 include ModuleTools.gmk
 
-GENGRAPHS_DIR := $(JDK_OUTPUTDIR)/gengraphs
+GENGRAPHS_DIR := $(IMAGES_OUTPUTDIR)/gengraphs
 TOOLS_MODULE_SRCDIR := $(JDK_TOPDIR)/make/src/classes/build/tools/module
 
 $(GENGRAPHS_DIR)/jdk.dot: $(BUILD_DEPS_TOOLS)
+	$(MKDIR) -p $(@D)
 	$(TOOL_GENGRAPHS) $(GENGRAPHS_DIR)
 
 $(GENGRAPHS_DIR)/technology-summary.html: $(TOOLS_MODULE_SRCDIR)/technology-summary.html
