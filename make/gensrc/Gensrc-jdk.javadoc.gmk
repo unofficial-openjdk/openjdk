@@ -23,13 +23,11 @@
 # questions.
 #
 
-# The BOOT_JAVAC setup uses the boot jdk compiler to compile the tools
-# and the interim javac, to be run by the boot jdk.
-$(eval $(call SetupJavaCompiler,BOOT_JAVAC, \
-    JAVAC := $(JAVAC), \
-    SERVER_DIR := $(SJAVAC_SERVER_DIR), \
-    SERVER_JVM := $(SJAVAC_SERVER_JAVA), \
-    FLAGS := -XDignore.symbol.file=true -g -Xlint:all$(COMMA)-deprecation -Werror))
+include GensrcCommon.gmk
 
-# javax.tools.JavaCompilerTool isn't really a suffix but this gets the file copied.
-RESOURCE_SUFFIXES := .gif .xml .css .js javax.tools.JavaCompilerTool
+$(eval $(call SetupVersionProperties,JAVADOC_VERSION,\
+    com/sun/tools/javadoc/resources/version.properties))
+
+$(eval $(call SetupCompileProperties,COMPILE_PROPERTIES, $(JAVADOC_VERSION)))
+
+all: $(COMPILE_PROPERTIES)
