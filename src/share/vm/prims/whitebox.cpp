@@ -26,46 +26,39 @@
 
 #include <new>
 
+#include "classfile/classLoaderData.hpp"
+#include "classfile/stringTable.hpp"
 #include "code/codeCache.hpp"
+#include "jvmtifiles/jvmtiEnv.hpp"
 #include "memory/metadataFactory.hpp"
 #include "memory/universe.hpp"
 #include "oops/oop.inline.hpp"
-
-#include "classfile/stringTable.hpp"
-#include "classfile/classLoaderData.hpp"
-
-#include "prims/whitebox.hpp"
 #include "prims/wbtestmethods/parserTests.hpp"
-
-#include "runtime/thread.hpp"
+#include "prims/whitebox.hpp"
 #include "runtime/arguments.hpp"
+#include "runtime/compilationPolicy.hpp"
 #include "runtime/deoptimization.hpp"
 #include "runtime/interfaceSupport.hpp"
 #include "runtime/os.hpp"
-#include "runtime/vm_version.hpp"
 #include "runtime/sweeper.hpp"
-
+#include "runtime/thread.hpp"
+#include "runtime/vm_version.hpp"
 #include "utilities/array.hpp"
 #include "utilities/debug.hpp"
-#include "utilities/macros.hpp"
 #include "utilities/exceptions.hpp"
-
+#include "utilities/macros.hpp"
 #if INCLUDE_ALL_GCS
 #include "gc_implementation/parallelScavenge/parallelScavengeHeap.inline.hpp"
 #include "gc_implementation/g1/concurrentMark.hpp"
 #include "gc_implementation/g1/g1CollectedHeap.inline.hpp"
 #include "gc_implementation/g1/heapRegionRemSet.hpp"
 #endif // INCLUDE_ALL_GCS
-
 #if INCLUDE_NMT
 #include "services/mallocSiteTable.hpp"
 #include "services/memTracker.hpp"
 #include "utilities/nativeCallStack.hpp"
 #endif // INCLUDE_NMT
 
-#include "compiler/compileBroker.hpp"
-#include "jvmtifiles/jvmtiEnv.hpp"
-#include "runtime/compilationPolicy.hpp"
 
 PRAGMA_FORMAT_MUTE_WARNINGS_FOR_GCC
 
@@ -971,6 +964,16 @@ WB_ENTRY(jobjectArray, WB_GetCodeHeapEntries(JNIEnv* env, jobject o, jint blob_t
   return result;
 WB_END
 
+WB_ENTRY(jint, WB_GetCompilationActivityMode(JNIEnv* env, jobject o))
+  return CompileBroker::get_compilation_activity_mode();
+WB_END
+
+WB_ENTRY(jobjectArray, WB_GetCodeBlob(JNIEnv* env, jobject o, jlong addr))
+    ThreadToNativeFromVM ttn(thread);
+    CodeBlobStub stub((CodeBlob*) addr);
+    return codeBlob2objectArray(thread, env, &stub);
+WB_END
+
 WB_ENTRY(jlong, WB_GetThreadStackSize(JNIEnv* env, jobject o))
   return (jlong) Thread::current()->stack_size();
 WB_END
@@ -1226,6 +1229,9 @@ static JNINativeMethod methods[] = {
   {CC"allocateCodeBlob",   CC"(II)J",                 (void*)&WB_AllocateCodeBlob   },
   {CC"freeCodeBlob",       CC"(J)V",                  (void*)&WB_FreeCodeBlob       },
   {CC"getCodeHeapEntries", CC"(I)[Ljava/lang/Object;",(void*)&WB_GetCodeHeapEntries },
+  {CC"getCompilationActivityMode",
+                           CC"()I",                   (void*)&WB_GetCompilationActivityMode},
+  {CC"getCodeBlob",        CC"(J)[Ljava/lang/Object;",(void*)&WB_GetCodeBlob        },
   {CC"getThreadStackSize", CC"()J",                   (void*)&WB_GetThreadStackSize },
   {CC"getThreadRemainingStackSize", CC"()J",          (void*)&WB_GetThreadRemainingStackSize },
 };
