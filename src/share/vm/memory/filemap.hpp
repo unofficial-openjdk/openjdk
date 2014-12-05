@@ -44,8 +44,13 @@ class Metaspace;
 class SharedClassPathEntry VALUE_OBJ_CLASS_SPEC {
 public:
   const char *_name;
-  time_t _timestamp;          // jar timestamp,  0 if is directory
-  long   _filesize;           // jar file size, -1 if is directory
+  time_t _timestamp;          // jar timestamp,  0 if is directory or other
+  long   _filesize;           // jar file size, -1 if is directory, -2 if other
+
+  // The _timestamp only gets set for jar files.
+  bool is_jar() {
+    return _timestamp != 0;
+  }
   bool is_dir() {
     return _filesize == -1;
   }

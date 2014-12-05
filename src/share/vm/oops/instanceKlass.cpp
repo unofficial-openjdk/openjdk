@@ -2345,8 +2345,9 @@ static void restore_unshareable_in_class(Klass* k, TRAPS) {
 }
 
 void InstanceKlass::restore_unshareable_info(ClassLoaderData* loader_data, Handle protection_domain, TRAPS) {
-  Klass::restore_unshareable_info(loader_data, protection_domain, CHECK);
   instanceKlassHandle ik(THREAD, this);
+  ik->set_package(ik->name(), loader_data, CHECK);
+  Klass::restore_unshareable_info(loader_data, protection_domain, CHECK);
 
   Array<Method*>* methods = ik->methods();
   int num_methods = methods->length();

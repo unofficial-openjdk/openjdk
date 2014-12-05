@@ -428,7 +428,9 @@ bool Reflection::verify_class_access(Klass* current_class, Klass* new_class, boo
 
   // module boundaries
   if (new_class->is_public()) {
-    if (!UseModules) {
+    // Ignore modules for DumpSharedSpaces because we do not have any package
+    // or module information for modules other than java.base.
+    if (!UseModules || DumpSharedSpaces) {
       return true;
     }
 

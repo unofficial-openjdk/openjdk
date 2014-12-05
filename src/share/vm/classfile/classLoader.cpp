@@ -563,8 +563,6 @@ ClassPathImageEntry::ClassPathImageEntry(char* name) : ClassPathEntry(), _image(
   bool opened = _image->open();
   if (!opened) {
     _image = NULL;
-  } else if (string_ends_with(name, "bootmodules.jimage")) {
-    process_javabase(_image);
   }
 }
 
@@ -828,7 +826,6 @@ void ClassLoader::setup_bootstrap_search_path() {
   }
 #endif
   setup_search_path(sys_class_path);
-  ClassLoader::set_has_bootmodules_jimage();
 }
 
 #if INCLUDE_CDS
@@ -950,8 +947,10 @@ ClassPathEntry* ClassLoader::create_class_path_entry(const char *path, const str
   } else {
     // Directory
     new_entry = new ClassPathDirEntry(path);
-    if (!ModuleEntryTable::javabase_created() && !ClassLoader::has_bootmodules_jimage() &&
-      string_ends_with(path, "java.base") && !is_override_dir(path)) {
+
+    if (!ModuleEntryTable::javabase_created() &&
+        !ClassLoader::has_bootmodules_jimage() &&
+        string_ends_with(path, "java.base") && !is_override_dir(path)) {
       process_javabase(path);
     }
     if (TraceClassLoading) {
@@ -1028,7 +1027,12 @@ bool ClassLoader::update_class_path_entry_list(const char *path,
     // File or directory found
     ClassPathEntry* new_entry = NULL;
     Thread* THREAD = Thread::current();
-    new_entry = create_class_path_entry(path, &st, LazyBootClassLoader, throw_exception, CHECK_(false));
+
+    // If entry is the bootmodules.jimage then pass FALSE for 'lazy' to ensure
+    // that the jimage is opened.  This will enable process_javabase() to read it.
+    bool lazy = string_ends_with(path, "bootmodules.jimage") ? false : LazyBootClassLoader;
+
+    new_entry = create_class_path_entry(path, &st, lazy, throw_exception, CHECK_(false));
     if (new_entry == NULL) {
       return false;
     }
@@ -1590,18 +1594,18 @@ bool ClassLoader::get_canonical_path(const char* orig, char* out, int len) {
 }
 
 
-// Set _has_bootmodules_jimage to TRUE if there is a ClassPathEntry ending
-// in "bootmodules.jimage".
-void ClassLoader::set_has_bootmodules_jimage() {
-  ClassPathEntry* e = _first_entry;
-  while (e != NULL) {
-    if (string_ends_with(e->name(), "bootmodules.jimage")) {
-      _has_bootmodules_jimage = true;
+void ClassLoader::process_jimage_file() {
+  ClassPathEntry* entry = _first_entry;
+  while (entry != NULL) {
+    ImageFile *image = entry->image();
+    if (image != NULL && string_ends_with(entry->name(), "bootmodules.jimage")) {
+      set_has_bootmodules_jimage(true);
+      process_javabase(image);
       return;
     }
-    e = e->next();
+    entry = entry->next();
   }
-  _has_bootmodules_jimage = false;
+  set_has_bootmodules_jimage(false);
 }
 
 #ifndef PRODUCT
