@@ -79,7 +79,7 @@ import sun.misc.SharedSecrets;
  * <p>
  * If neither of these properties is defined then the LogManager uses its
  * default configuration. The default configuration is typically loaded from the
- * properties file "{@code lib/logging.properties}" in the Java installation
+ * properties file "{@code conf/logging.properties}" in the Java installation
  * directory.
  * <p>
  * The properties for loggers and Handlers will have names starting
@@ -458,11 +458,11 @@ public class LogManager {
         JavaAWTAccess javaAwtAccess = SharedSecrets.getJavaAWTAccess();
         if (sm != null && javaAwtAccess != null) {
             // for each applet, it has its own LoggerContext isolated from others
-            synchronized (javaAwtAccess) {
-                // find the AppContext of the applet code
-                // will be null if we are in the main app context.
-                final Object ecx = javaAwtAccess.getAppletContext();
-                if (ecx != null) {
+            final Object ecx = javaAwtAccess.getAppletContext();
+            if (ecx != null) {
+                synchronized (javaAwtAccess) {
+                    // find the AppContext of the applet code
+                    // will be null if we are in the main app context.
                     if (contextsMap == null) {
                         contextsMap = new WeakHashMap<>();
                     }
@@ -1259,7 +1259,7 @@ public class LogManager {
             if (fname == null) {
                 throw new Error("Can't find java.home ??");
             }
-            File f = new File(fname, "lib");
+            File f = new File(fname, "conf");
             f = new File(f, "logging.properties");
             fname = f.getCanonicalPath();
         }
