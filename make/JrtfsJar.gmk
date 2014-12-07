@@ -32,6 +32,7 @@ include SetupJavaCompilers.gmk
 
 JIMAGE_PKGS := \
     jdk/internal/jimage \
+    jdk/internal/jimagefs \
     jdk/internal/jrtfs \
     #
 
