@@ -94,11 +94,11 @@ public final class BasicImageWriter {
         this.byteOrder = byteOrder;
         this.input = new ArrayList<>();
         this.strings = new ImageStrings();
-        this.headerStream = new ImageStream();
-        this.redirectStream = new ImageStream();
-        this.locationOffsetStream = new ImageStream();
-        this.locationStream = new ImageStream();
-        this.allIndexStream = new ImageStream();
+        this.headerStream = new ImageStream(byteOrder);
+        this.redirectStream = new ImageStream(byteOrder);
+        this.locationOffsetStream = new ImageStream(byteOrder);
+        this.locationStream = new ImageStream(byteOrder);
+        this.allIndexStream = new ImageStream(byteOrder);
     }
 
     public int addString(String string) {

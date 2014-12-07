@@ -23,7 +23,7 @@
  * questions.
  */
 
-package jdk.internal.jimagefs;
+package jdk.internal.jrtfs;
 
 import java.io.*;
 import java.net.URI;
@@ -36,19 +36,19 @@ import java.util.*;
 import static java.nio.file.StandardOpenOption.*;
 import static java.nio.file.StandardCopyOption.*;
 
-final class ImagePath implements Path {
+final class JrtPath implements Path {
 
-    private final ImageFileSystem imagefs;
+    private final JrtFileSystem jrtfs;
     private final byte[] path;
     private volatile int[] offsets;
     private int hashcode = 0;  // cached hashcode (created lazily)
 
-    ImagePath(ImageFileSystem imagefs, byte[] path) {
-        this(imagefs, path, false);
+    JrtPath(JrtFileSystem jrtfs, byte[] path) {
+        this(jrtfs, path, false);
     }
 
-    ImagePath(ImageFileSystem imagefs, byte[] path, boolean normalized) {
-        this.imagefs = imagefs;
+    JrtPath(JrtFileSystem jrtfs, byte[] path, boolean normalized) {
+        this.jrtfs = jrtfs;
         if (normalized)
             this.path = path;
         else
@@ -56,9 +56,9 @@ final class ImagePath implements Path {
     }
 
     @Override
-    public ImagePath getRoot() {
+    public JrtPath getRoot() {
         if (this.isAbsolute())
-            return imagefs.getRootPath();
+            return jrtfs.getRootPath();
         else
             return null;
     }
@@ -75,11 +75,11 @@ final class ImagePath implements Path {
         int len = path.length - lastOffset;
         byte[] result = new byte[len];
         System.arraycopy(path, lastOffset, result, 0, len);
-        return new ImagePath(imagefs, result);
+        return new JrtPath(jrtfs, result);
     }
 
     @Override
-    public ImagePath getParent() {
+    public JrtPath getParent() {
         initOffsets();
         int count = offsets.length;
         if (count == 0)    // no elements so no parent
@@ -89,7 +89,7 @@ final class ImagePath implements Path {
             return getRoot();
         byte[] result = new byte[len];
         System.arraycopy(path, 0, result, 0, len);
-        return new ImagePath(imagefs, result);
+        return new JrtPath(jrtfs, result);
     }
 
     @Override
@@ -99,7 +99,7 @@ final class ImagePath implements Path {
     }
 
     @Override
-    public ImagePath getName(int index) {
+    public JrtPath getName(int index) {
         initOffsets();
         if (index < 0 || index >= offsets.length)
             throw new IllegalArgumentException();
@@ -112,11 +112,11 @@ final class ImagePath implements Path {
         // construct result
         byte[] result = new byte[len];
         System.arraycopy(path, begin, result, 0, len);
-        return new ImagePath(imagefs, result);
+        return new JrtPath(jrtfs, result);
     }
 
     @Override
-    public ImagePath subpath(int beginIndex, int endIndex) {
+    public JrtPath subpath(int beginIndex, int endIndex) {
         initOffsets();
         if (beginIndex < 0 ||
             beginIndex >=  offsets.length ||
@@ -134,12 +134,12 @@ final class ImagePath implements Path {
         // construct result
         byte[] result = new byte[len];
         System.arraycopy(path, begin, result, 0, len);
-        return new ImagePath(imagefs, result);
+        return new JrtPath(jrtfs, result);
     }
 
     @Override
-    public ImagePath toRealPath(LinkOption... options) throws IOException {
-        ImagePath realPath = new ImagePath(imagefs, getResolvedPath()).toAbsolutePath();
+    public JrtPath toRealPath(LinkOption... options) throws IOException {
+        JrtPath realPath = new JrtPath(jrtfs, getResolvedPath()).toAbsolutePath();
         realPath.checkAccess();
         return realPath;
     }
@@ -149,7 +149,7 @@ final class ImagePath implements Path {
     }
 
     @Override
-    public ImagePath toAbsolutePath() {
+    public JrtPath toAbsolutePath() {
         if (isAbsolute()) {
             return this;
         } else {
@@ -157,24 +157,22 @@ final class ImagePath implements Path {
             byte[] tmp = new byte[path.length + 1];
             tmp[0] = '/';
             System.arraycopy(path, 0, tmp, 1, path.length);
-            return (ImagePath) new ImagePath(imagefs, tmp).normalize();
+            return (JrtPath) new JrtPath(jrtfs, tmp).normalize();
         }
     }
 
     @Override
     public URI toUri() {
         try {
-            return new URI("jimage",
-                           imagefs.getImageFile().toUri() +
-                           "!" +
-                           imagefs.getString(toAbsolutePath().path),
+            return new URI("jrt",
+                           JrtFileSystem.getString(toAbsolutePath().path),
                            null);
         } catch (URISyntaxException ex) {
             throw new AssertionError(ex);
         }
     }
 
-    private boolean equalsNameAt(ImagePath other, int index) {
+    private boolean equalsNameAt(JrtPath other, int index) {
         int mbegin = offsets[index];
         int mlen;
         if (index == (offsets.length-1))
@@ -200,9 +198,9 @@ final class ImagePath implements Path {
 
     @Override
     public Path relativize(Path other) {
-        final ImagePath o = checkPath(other);
+        final JrtPath o = checkPath(other);
         if (o.equals(this))
-            return new ImagePath(getFileSystem(), new byte[0], true);
+            return new JrtPath(getFileSystem(), new byte[0], true);
         if (/* this.getFileSystem() != o.getFileSystem() || */
             this.isAbsolute() != o.isAbsolute()) {
             throw new IllegalArgumentException();
@@ -234,12 +232,12 @@ final class ImagePath implements Path {
             System.arraycopy(o.path, o.offsets[i],
                              result, pos,
                              o.path.length - o.offsets[i]);
-        return new ImagePath(getFileSystem(), result);
+        return new JrtPath(getFileSystem(), result);
     }
 
     @Override
-    public ImageFileSystem getFileSystem() {
-        return imagefs;
+    public JrtFileSystem getFileSystem() {
+        return jrtfs;
     }
 
     @Override
@@ -248,8 +246,8 @@ final class ImagePath implements Path {
     }
 
     @Override
-    public ImagePath resolve(Path other) {
-        final ImagePath o = checkPath(other);
+    public JrtPath resolve(Path other) {
+        final JrtPath o = checkPath(other);
         if (o.isAbsolute())
             return o;
         byte[] res;
@@ -263,7 +261,7 @@ final class ImagePath implements Path {
             res[path.length] = '/';
             System.arraycopy(o.path, 0, res, path.length + 1, o.path.length);
         }
-        return new ImagePath(imagefs, res);
+        return new JrtPath(jrtfs, res);
     }
 
     @Override
@@ -276,7 +274,7 @@ final class ImagePath implements Path {
 
     @Override
     public boolean startsWith(Path other) {
-        final ImagePath o = checkPath(other);
+        final JrtPath o = checkPath(other);
         if (o.isAbsolute() != this.isAbsolute() ||
             o.path.length > this.path.length)
             return false;
@@ -293,7 +291,7 @@ final class ImagePath implements Path {
 
     @Override
     public boolean endsWith(Path other) {
-        final ImagePath o = checkPath(other);
+        final JrtPath o = checkPath(other);
         int olast = o.path.length - 1;
         if (olast > 0 && o.path[olast] == '/')
             olast--;
@@ -314,7 +312,7 @@ final class ImagePath implements Path {
     }
 
     @Override
-    public ImagePath resolve(String other) {
+    public JrtPath resolve(String other) {
         return resolve(getFileSystem().getPath(other));
     }
 
@@ -338,15 +336,15 @@ final class ImagePath implements Path {
         byte[] res = getResolved();
         if (res == path)    // no change
             return this;
-        return new ImagePath(imagefs, res, true);
+        return new JrtPath(jrtfs, res, true);
     }
 
-    private ImagePath checkPath(Path path) {
+    private JrtPath checkPath(Path path) {
         if (path == null)
             throw new NullPointerException();
-        if (!(path instanceof ImagePath))
+        if (!(path instanceof JrtPath))
             throw new ProviderMismatchException();
-        return (ImagePath) path;
+        return (JrtPath) path;
     }
 
     // create offset list if not already created
@@ -385,8 +383,9 @@ final class ImagePath implements Path {
         }
     }
 
-    // resolved path for locating image entry inside the image file,
+    // resolved path for locating jrt entry inside the jrt file,
     // the result path does not contain ./ and .. components
+    // resolved bytes will always start with '/'
     private volatile byte[] resolved = null;
     byte[] getResolvedPath() {
         byte[] r = resolved;
@@ -402,7 +401,7 @@ final class ImagePath implements Path {
 
     // removes redundant slashs, replace "\" to separator "/"
     // and check for invalid characters
-    private byte[] normalize(byte[] path) {
+    private static byte[] normalize(byte[] path) {
         if (path.length == 0)
             return path;
         byte prevC = 0;
@@ -413,14 +412,19 @@ final class ImagePath implements Path {
             if (c == (byte)'/' && prevC == '/')
                 return normalize(path, i - 1);
             if (c == '\u0000')
-                throw new InvalidPathException(imagefs.getString(path),
+                throw new InvalidPathException(JrtFileSystem.getString(path),
                                                "Path: nul character not allowed");
             prevC = c;
         }
+
+        if (path.length > 1 && path[path.length - 1] == '/') {
+            return Arrays.copyOf(path, path.length - 1);
+        }
+
         return path;
     }
 
-    private byte[] normalize(byte[] path, int off) {
+    private static byte[] normalize(byte[] path, int off) {
         byte[] to = new byte[path.length];
         int n = 0;
         while (n < off) {
@@ -436,7 +440,7 @@ final class ImagePath implements Path {
             if (c == (byte)'/' && prevC == (byte)'/')
                 continue;
             if (c == '\u0000')
-                throw new InvalidPathException(imagefs.getString(path),
+                throw new InvalidPathException(JrtFileSystem.getString(path),
                                                "Path: nul character not allowed");
             to[m++] = c;
             prevC = c;
@@ -455,6 +459,7 @@ final class ImagePath implements Path {
             if (c == (byte)'.')
                 return resolve0();
         }
+
         return path;
     }
 
@@ -505,7 +510,7 @@ final class ImagePath implements Path {
 
     @Override
     public String toString() {
-        return imagefs.getString(path);
+        return JrtFileSystem.getString(path);
     }
 
     @Override
@@ -519,14 +524,14 @@ final class ImagePath implements Path {
     @Override
     public boolean equals(Object obj) {
         return obj != null &&
-               obj instanceof ImagePath &&
-               this.imagefs == ((ImagePath)obj).imagefs &&
+               obj instanceof JrtPath &&
+               this.jrtfs == ((JrtPath)obj).jrtfs &&
                compareTo((Path) obj) == 0;
     }
 
     @Override
     public int compareTo(Path other) {
-        final ImagePath o = checkPath(other);
+        final JrtPath o = checkPath(other);
         int len1 = this.path.length;
         int len2 = o.path.length;
 
@@ -595,12 +600,17 @@ final class ImagePath implements Path {
     }
 
     /////////////////////////////////////////////////////////////////////
-    // Helpers for ImageFileSystemProvider
+    // Helpers for JrtFileSystemProvider and JrtFileSystem
+
+    int getPathLength() {
+        return path.length;
+    }
+
 
     void createDirectory(FileAttribute<?>... attrs)
         throws IOException
     {
-        imagefs.createDirectory(getResolvedPath(), attrs);
+        jrtfs.createDirectory(getResolvedPath(), attrs);
     }
 
     InputStream newInputStream(OpenOption... options) throws IOException
@@ -611,26 +621,26 @@ final class ImagePath implements Path {
                     throw new UnsupportedOperationException("'" + opt + "' not allowed");
             }
         }
-        return imagefs.newInputStream(getResolvedPath());
+        return jrtfs.newInputStream(getResolvedPath());
     }
 
     DirectoryStream<Path> newDirectoryStream(Filter<? super Path> filter)
         throws IOException
     {
-        return new ImageDirectoryStream(this, filter);
+        return new JrtDirectoryStream(this, filter);
     }
 
     void delete() throws IOException {
-        imagefs.deleteFile(getResolvedPath(), true);
+        jrtfs.deleteFile(getResolvedPath(), true);
     }
 
     void deleteIfExists() throws IOException {
-        imagefs.deleteFile(getResolvedPath(), false);
+        jrtfs.deleteFile(getResolvedPath(), false);
     }
 
-    ImageFileAttributes getAttributes() throws IOException
+    JrtFileAttributes getAttributes() throws IOException
     {
-        ImageFileAttributes zfas = imagefs.getFileAttributes(getResolvedPath());
+        JrtFileAttributes zfas = jrtfs.getFileAttributes(getResolvedPath());
         if (zfas == null)
             throw new NoSuchFileException(toString());
         return zfas;
@@ -649,7 +659,7 @@ final class ImagePath implements Path {
             type = attribute.substring(0, colonPos++);
             attr = attribute.substring(colonPos);
         }
-        ImageFileAttributeView view = ImageFileAttributeView.get(this, type);
+        JrtFileAttributeView view = JrtFileAttributeView.get(this, type);
         if (view == null)
             throw new UnsupportedOperationException("view <" + view + "> is not supported");
         view.setAttribute(attr, value);
@@ -658,7 +668,7 @@ final class ImagePath implements Path {
     void setTimes(FileTime mtime, FileTime atime, FileTime ctime)
         throws IOException
     {
-        imagefs.setTimes(getResolvedPath(), mtime, atime, ctime);
+        jrtfs.setTimes(getResolvedPath(), mtime, atime, ctime);
     }
 
     Map<String, Object> readAttributes(String attributes, LinkOption... options)
@@ -675,18 +685,18 @@ final class ImagePath implements Path {
             view = attributes.substring(0, colonPos++);
             attrs = attributes.substring(colonPos);
         }
-        ImageFileAttributeView imagefv = ImageFileAttributeView.get(this, view);
-        if (imagefv == null) {
+        JrtFileAttributeView jrtfv = JrtFileAttributeView.get(this, view);
+        if (jrtfv == null) {
             throw new UnsupportedOperationException("view not supported");
         }
-        return imagefv.readAttributes(attrs);
+        return jrtfv.readAttributes(attrs);
     }
 
     FileStore getFileStore() throws IOException {
-        // each ImageFileSystem only has one root (as requested for now)
+        // each JrtFileSystem only has one root (as requested for now)
         if (exists())
-            return imagefs.getFileStore(this);
-        throw new NoSuchFileException(imagefs.getString(path));
+            return jrtfs.getFileStore(this);
+        throw new NoSuchFileException(JrtFileSystem.getString(path));
     }
 
     boolean isSameFile(Path other) throws IOException {
@@ -696,16 +706,16 @@ final class ImagePath implements Path {
             this.getFileSystem() != other.getFileSystem())
             return false;
         this.checkAccess();
-        ((ImagePath)other).checkAccess();
+        ((JrtPath)other).checkAccess();
         return Arrays.equals(this.getResolvedPath(),
-                             ((ImagePath)other).getResolvedPath());
+                             ((JrtPath)other).getResolvedPath());
     }
 
     SeekableByteChannel newByteChannel(Set<? extends OpenOption> options,
                                        FileAttribute<?>... attrs)
         throws IOException
     {
-        return imagefs.newByteChannel(getResolvedPath(), options, attrs);
+        return jrtfs.newByteChannel(getResolvedPath(), options, attrs);
     }
 
 
@@ -713,7 +723,7 @@ final class ImagePath implements Path {
                                FileAttribute<?>... attrs)
         throws IOException
     {
-        return imagefs.newFileChannel(getResolvedPath(), options, attrs);
+        return jrtfs.newFileChannel(getResolvedPath(), options, attrs);
     }
 
     void checkAccess(AccessMode... modes) throws IOException {
@@ -733,11 +743,11 @@ final class ImagePath implements Path {
                     throw new UnsupportedOperationException();
             }
         }
-        ImageFileAttributes attrs = imagefs.getFileAttributes(getResolvedPath());
+        JrtFileAttributes attrs = jrtfs.getFileAttributes(getResolvedPath());
         if (attrs == null && (path.length != 1 || path[0] != '/'))
             throw new NoSuchFileException(toString());
         if (w) {
-            if (imagefs.isReadOnly())
+            if (jrtfs.isReadOnly())
                 throw new AccessDeniedException(toString());
         }
         if (x)
@@ -745,10 +755,10 @@ final class ImagePath implements Path {
     }
 
     boolean exists() {
-        if (path.length == 1 && path[0] == '/')
+        if (isAbsolute())
             return true;
         try {
-            return imagefs.exists(getResolvedPath());
+            return jrtfs.exists(getResolvedPath());
         } catch (IOException x) {}
         return false;
     }
@@ -756,17 +766,17 @@ final class ImagePath implements Path {
     OutputStream newOutputStream(OpenOption... options) throws IOException
     {
         if (options.length == 0)
-            return imagefs.newOutputStream(getResolvedPath(),
+            return jrtfs.newOutputStream(getResolvedPath(),
                                        CREATE_NEW, WRITE);
-        return imagefs.newOutputStream(getResolvedPath(), options);
+        return jrtfs.newOutputStream(getResolvedPath(), options);
     }
 
-    void move(ImagePath target, CopyOption... options)
+    void move(JrtPath target, CopyOption... options)
         throws IOException
     {
-        if (Files.isSameFile(this.imagefs.getImageFile(), target.imagefs.getImageFile()))
+        if (this.jrtfs == target.jrtfs)
         {
-            imagefs.copyFile(true,
+            jrtfs.copyFile(true,
                          getResolvedPath(), target.getResolvedPath(),
                          options);
         } else {
@@ -775,18 +785,18 @@ final class ImagePath implements Path {
         }
     }
 
-    void copy(ImagePath target, CopyOption... options)
+    void copy(JrtPath target, CopyOption... options)
         throws IOException
     {
-        if (Files.isSameFile(this.imagefs.getImageFile(), target.imagefs.getImageFile()))
-            imagefs.copyFile(false,
+        if (this.jrtfs == target.jrtfs)
+            jrtfs.copyFile(false,
                          getResolvedPath(), target.getResolvedPath(),
                          options);
         else
             copyToTarget(target, options);
     }
 
-    private void copyToTarget(ImagePath target, CopyOption... options)
+    private void copyToTarget(JrtPath target, CopyOption... options)
         throws IOException
     {
         boolean replaceExisting = false;
@@ -798,7 +808,7 @@ final class ImagePath implements Path {
                 copyAttrs = true;
         }
         // attributes of source file
-        ImageFileAttributes imagefas = getAttributes();
+        JrtFileAttributes jrtfas = getAttributes();
         // check if target exists
         boolean exists;
         if (replaceExisting) {
@@ -814,11 +824,11 @@ final class ImagePath implements Path {
         if (exists)
             throw new FileAlreadyExistsException(target.toString());
 
-        if (imagefas.isDirectory()) {
+        if (jrtfas.isDirectory()) {
             // create directory or file
             target.createDirectory();
         } else {
-            try (InputStream is = imagefs.newInputStream(getResolvedPath()); OutputStream os = target.newOutputStream()) {
+            try (InputStream is = jrtfs.newInputStream(getResolvedPath()); OutputStream os = target.newOutputStream()) {
                 byte[] buf = new byte[8192];
                 int n;
                 while ((n = is.read(buf)) != -1) {
@@ -828,11 +838,11 @@ final class ImagePath implements Path {
         }
         if (copyAttrs) {
             BasicFileAttributeView view =
-                ImageFileAttributeView.get(target, BasicFileAttributeView.class);
+                JrtFileAttributeView.get(target, BasicFileAttributeView.class);
             try {
-                view.setTimes(imagefas.lastModifiedTime(),
-                              imagefas.lastAccessTime(),
-                              imagefas.creationTime());
+                view.setTimes(jrtfas.lastModifiedTime(),
+                              jrtfas.lastAccessTime(),
+                              jrtfas.creationTime());
             } catch (IOException x) {
                 // rollback?
                 try {

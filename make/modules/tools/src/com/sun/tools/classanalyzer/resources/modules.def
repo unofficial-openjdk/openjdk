@@ -61,6 +61,7 @@ module java.base {
     include jdk.jigsaw.module.**,
             jdk.internal.jimage.**,
             jdk.internal.jimagefs.**,
+            jdk.internal.jrtfs.**,
             jdk.joptsimple.**;
 
     // Oracle-private APIs

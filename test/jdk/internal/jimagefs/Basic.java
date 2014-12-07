@@ -74,18 +74,6 @@ public class Basic {
         // Test: exercise directory iterator and retrieval of basic attributes
         Files.walkFileTree(fs.getPath("/"), new FileTreePrinter());
 
-        // Test: DirectoryStream
-        found = false;
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(fs.getPath("/"))) {
-            for (Path entry: stream) {
-                found = entry.toString().equals("META-INF");
-                if (found) break;
-            }
-        }
-
-        if (!found)
-            throw new RuntimeException("Expected file not found");
-
         // Test: copy file from jimage file to current (scratch) directory
         Path source = fs.getPath("/META-INF/services/java.nio.file.spi.FileSystemProvider");
         if (Files.exists(source)) {
