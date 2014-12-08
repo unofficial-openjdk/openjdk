@@ -41,6 +41,7 @@
 #include "runtime/interfaceSupport.hpp"
 #include "runtime/os.hpp"
 #include "runtime/sweeper.hpp"
+#include "runtime/javaCalls.hpp"
 #include "runtime/thread.hpp"
 #include "runtime/vm_version.hpp"
 #include "utilities/array.hpp"
@@ -76,6 +77,9 @@ WB_ENTRY(jint, WB_GetHeapOopSize(JNIEnv* env, jobject o))
   return heapOopSize;
 WB_END
 
+WB_ENTRY(jint, WB_GetVMPageSize(JNIEnv* env, jobject o))
+  return os::vm_page_size();
+WB_END
 
 class WBIsKlassAliveClosure : public KlassClosure {
     Symbol* _name;
@@ -327,7 +331,7 @@ WB_END
 
 // Free the memory allocated by NMTAllocTest
 WB_ENTRY(void, WB_NMTFree(JNIEnv* env, jobject o, jlong mem))
-  os::free((void*)(uintptr_t)mem, mtTest);
+  os::free((void*)(uintptr_t)mem);
 WB_END
 
 WB_ENTRY(jlong, WB_NMTReserveMemory(JNIEnv* env, jobject o, jlong size))
@@ -753,7 +757,7 @@ WB_ENTRY(void, WB_SetStringVMFlag(JNIEnv* env, jobject o, jstring name, jstring 
     env->ReleaseStringUTFChars(value, ccstrValue);
   }
   if (needFree) {
-    FREE_C_HEAP_ARRAY(char, ccstrResult, mtInternal);
+    FREE_C_HEAP_ARRAY(char, ccstrResult);
   }
 WB_END
 
@@ -768,8 +772,8 @@ WB_ENTRY(void, WB_UnlockCompilation(JNIEnv* env, jobject o))
   mo.notify_all();
 WB_END
 
-void WhiteBox::force_sweep() {
-  guarantee(WhiteBoxAPI, "internal testing API :: WhiteBox has to enabled");
+void WhiteBox::sweeper_thread_entry(JavaThread* thread, TRAPS) {
+  guarantee(WhiteBoxAPI, "internal testing API :: WhiteBox has to be enabled");
   {
     MutexLockerEx mu(CodeCache_lock, Mutex::_no_safepoint_check_flag);
     NMethodSweeper::_should_sweep = true;
@@ -777,8 +781,37 @@ void WhiteBox::force_sweep() {
   NMethodSweeper::possibly_sweep();
 }
 
-WB_ENTRY(void, WB_ForceNMethodSweep(JNIEnv* env, jobject o))
-  WhiteBox::force_sweep();
+JavaThread* WhiteBox::create_sweeper_thread(TRAPS) {
+  // create sweeper thread w/ custom entry -- one iteration instead of loop
+  CodeCacheSweeperThread* sweeper_thread = new CodeCacheSweeperThread();
+  sweeper_thread->set_entry_point(&WhiteBox::sweeper_thread_entry);
+
+  // create j.l.Thread object and associate it w/ sweeper thread
+  {
+    // inherit deamon property from current thread
+    bool is_daemon = java_lang_Thread::is_daemon(JavaThread::current()->threadObj());
+
+    HandleMark hm(THREAD);
+    Handle thread_group(THREAD, Universe::system_thread_group());
+    const char* name = "WB Sweeper thread";
+    sweeper_thread->allocate_threadObj(thread_group, name, is_daemon, THREAD);
+  }
+
+  {
+    MutexLocker mu(Threads_lock, THREAD);
+    Threads::add(sweeper_thread);
+  }
+  return sweeper_thread;
+}
+
+WB_ENTRY(jobject, WB_ForceNMethodSweep(JNIEnv* env, jobject o))
+  JavaThread* sweeper_thread = WhiteBox::create_sweeper_thread(Thread::current());
+  if (sweeper_thread == NULL) {
+    return NULL;
+  }
+  jobject result = JNIHandles::make_local(env, sweeper_thread->threadObj());
+  Thread::start(sweeper_thread);
+  return result;
 WB_END
 
 WB_ENTRY(jboolean, WB_IsInStringTable(JNIEnv* env, jobject o, jstring javaString))
@@ -828,12 +861,12 @@ WB_ENTRY(jstring, WB_GetCPUFeatures(JNIEnv* env, jobject o))
 WB_END
 
 int WhiteBox::get_blob_type(const CodeBlob* code) {
-  guarantee(WhiteBoxAPI, "internal testing API :: WhiteBox has to enabled");
+  guarantee(WhiteBoxAPI, "internal testing API :: WhiteBox has to be enabled");
   return CodeCache::get_code_heap(code)->code_blob_type();
 }
 
 CodeHeap* WhiteBox::get_code_heap(int blob_type) {
-  guarantee(WhiteBoxAPI, "internal testing API :: WhiteBox has to enabled");
+  guarantee(WhiteBoxAPI, "internal testing API :: WhiteBox has to be enabled");
   return CodeCache::get_code_heap(blob_type);
 }
 
@@ -909,7 +942,7 @@ WB_ENTRY(jobjectArray, WB_GetNMethod(JNIEnv* env, jobject o, jobject method, jbo
 WB_END
 
 CodeBlob* WhiteBox::allocate_code_blob(int size, int blob_type) {
-  guarantee(WhiteBoxAPI, "internal testing API :: WhiteBox has to enabled");
+  guarantee(WhiteBoxAPI, "internal testing API :: WhiteBox has to be enabled");
   BufferBlob* blob;
   int full_size = CodeBlob::align_code_offset(sizeof(BufferBlob));
   if (full_size < size) {
@@ -918,10 +951,10 @@ CodeBlob* WhiteBox::allocate_code_blob(int size, int blob_type) {
   {
     MutexLockerEx mu(CodeCache_lock, Mutex::_no_safepoint_check_flag);
     blob = (BufferBlob*) CodeCache::allocate(full_size, blob_type);
+    ::new (blob) BufferBlob("WB::DummyBlob", full_size);
   }
   // Track memory usage statistic after releasing CodeCache_lock
   MemoryService::track_code_cache_memory_usage();
-  ::new (blob) BufferBlob("WB::DummyBlob", full_size);
   return blob;
 }
 
@@ -1133,9 +1166,10 @@ static JNINativeMethod methods[] = {
   {CC"getObjectSize",      CC"(Ljava/lang/Object;)J", (void*)&WB_GetObjectSize     },
   {CC"isObjectInOldGen",   CC"(Ljava/lang/Object;)Z", (void*)&WB_isObjectInOldGen  },
   {CC"getHeapOopSize",     CC"()I",                   (void*)&WB_GetHeapOopSize    },
+  {CC"getVMPageSize",      CC"()I",                   (void*)&WB_GetVMPageSize     },
   {CC"isClassAlive0",      CC"(Ljava/lang/String;)Z", (void*)&WB_IsClassAlive      },
   {CC"parseCommandLine",
-      CC"(Ljava/lang/String;[Lsun/hotspot/parser/DiagnosticCommand;)[Ljava/lang/Object;",
+      CC"(Ljava/lang/String;C[Lsun/hotspot/parser/DiagnosticCommand;)[Ljava/lang/Object;",
       (void*) &WB_ParseCommandLine
   },
   {CC"addToBootstrapClassLoaderSearch", CC"(Ljava/lang/String;)V",
@@ -1231,7 +1265,7 @@ static JNINativeMethod methods[] = {
   {CC"getCPUFeatures",     CC"()Ljava/lang/String;",  (void*)&WB_GetCPUFeatures     },
   {CC"getNMethod",         CC"(Ljava/lang/reflect/Executable;Z)[Ljava/lang/Object;",
                                                       (void*)&WB_GetNMethod         },
-  {CC"forceNMethodSweep",  CC"()V",                   (void*)&WB_ForceNMethodSweep  },
+  {CC"forceNMethodSweep0", CC"()Ljava/lang/Thread;",  (void*)&WB_ForceNMethodSweep  },
   {CC"allocateCodeBlob",   CC"(II)J",                 (void*)&WB_AllocateCodeBlob   },
   {CC"freeCodeBlob",       CC"(J)V",                  (void*)&WB_FreeCodeBlob       },
   {CC"getCodeHeapEntries", CC"(I)[Ljava/lang/Object;",(void*)&WB_GetCodeHeapEntries },
