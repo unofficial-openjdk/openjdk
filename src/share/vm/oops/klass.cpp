@@ -25,6 +25,7 @@
 #include "precompiled.hpp"
 #include "classfile/javaClasses.hpp"
 #include "classfile/dictionary.hpp"
+#include "classfile/packageEntry.hpp"
 #include "classfile/systemDictionary.hpp"
 #include "classfile/vmSymbols.hpp"
 #include "gc_implementation/shared/markSweep.inline.hpp"
@@ -350,6 +351,63 @@ GrowableArray<Klass*>* Klass::compute_secondary_supers(int num_extra_slots) {
   return NULL;
 }
 
+void Klass::set_package(Symbol* name, ClassLoaderData* loader, TRAPS) {
+  if (name == NULL || loader == NULL) {
+    _package = NULL;
+  } else {
+    const jbyte *base_name = name->base();
+    const jbyte *last_slash = UTF8::strrchr(base_name, name->utf8_length(), '/');
+
+    if (last_slash == NULL) {
+      // No package name
+      _package = NULL;
+      return;
+    } else {
+      // Skip over '['s
+      if (*base_name == '[') {
+        do {
+          base_name++;
+        } while (*base_name == '[');
+        if (*base_name != 'L') {
+          // Something is terribly wrong.  Shouldn't be here.
+          assert(true, "Unable to obtain package name");
+          _package = NULL;
+          return;
+        }
+      }
+
+      // Found the package name, look it up in the symbol table.
+      int length = last_slash - base_name;
+      assert(length > 0, "Bad length for package name");
+      Symbol* pkg_name = SymbolTable::lookup((const char*)base_name, length, CHECK);
+
+      // Find in class loader's package entry table.
+      _package = loader->packages()->lookup_only(pkg_name);
+
+      // If the package name is not found in the loader's package
+      // entry table, it is an indication that the package has not
+      // been defined. Consider it defined within the unnamed module.
+      if (_package == NULL) {
+        _package = loader->packages()->lookup(pkg_name, NULL);
+        {
+          ResourceMark rm;
+          // A package should have been successfully created
+          assert(_package != NULL, err_msg("Package entry for class %s not found, loader %s",
+                                           name->as_C_string(), loader->loader_name()));
+        }
+      }
+
+      if (TracePackages) {
+        ResourceMark rm;
+        ModuleEntry* m = _package->module();
+        tty->print_cr("[Setting package: class %s, package = %s, module = %s]",
+                      external_name(),
+                      pkg_name->as_C_string(),
+                      ((m == NULL) ? "[unnamed]" : m->name()->as_C_string()));
+      }
+    }
+  }
+}
 
 InstanceKlass* Klass::superklass() const {
   assert(super() == NULL || super()->oop_is_instance(), "must be instance klass");
@@ -382,6 +440,10 @@ void Klass::append_to_sibling_list() {
   // make ourselves the superklass' first subklass
   super->set_subklass(this);
   debug_only(verify();)
+}
+
+ModuleEntry* Klass::module() const {
+  return (in_unnamed_package() ? NULL : _package->module());
 }
 
 bool Klass::is_loader_alive(BoolObjectClosure* is_alive) {
@@ -529,7 +591,12 @@ void Klass::restore_unshareable_info(ClassLoaderData* loader_data, Handle protec
   // gotten an OOM later but keep the mirror if it was created.
   if (java_mirror() == NULL) {
     Handle loader = loader_data->class_loader();
-    java_lang_Class::create_mirror(this, loader, protection_domain, CHECK);
+    // Obtain klass' module.
+    ModuleEntry* module_entry = this->module();
+    // Check for unnamed module, obtain j.l.r.Module if available
+    Handle class_module(THREAD, ((module_entry == NULL) ? (oop)NULL : module_entry->module()));
+
+    java_lang_Class::create_mirror(this, loader, class_module, protection_domain, CHECK);
   }
 }
 

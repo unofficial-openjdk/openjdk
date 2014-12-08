@@ -224,6 +224,9 @@ void FileMapInfo::allocate_classpath_entry_table() {
             }
             ent->_filesize = -1;
           } else {
+            // This class path entry is neither a jar file nor a directory.  Set
+            // _filesize to -2 to indicate that it is not a jar file nor a directory.
+            assert(strncmp(name + strlen(name) - 7, ".jimage", 7) == 0, "expect *.jimage file");
             ent->_filesize = -2;
           }
         }

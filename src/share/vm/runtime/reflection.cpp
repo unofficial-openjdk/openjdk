@@ -24,6 +24,8 @@
 
 #include "precompiled.hpp"
 #include "classfile/javaClasses.hpp"
+#include "classfile/moduleEntry.hpp"
+#include "classfile/packageEntry.hpp"
 #include "classfile/stringTable.hpp"
 #include "classfile/systemDictionary.hpp"
 #include "classfile/verifier.hpp"
@@ -409,14 +411,12 @@ oop Reflection::array_component_type(oop mirror, TRAPS) {
   return result;
 }
 
-
 bool Reflection::verify_class_access(Klass* current_class, Klass* new_class, bool classloader_only) {
   // Verify that current_class can access new_class.  If the classloader_only
   // flag is set, we automatically allow any accesses in which current_class
   // doesn't have a classloader.
   if ((current_class == NULL) ||
       (current_class == new_class) ||
-      (new_class->is_public()) ||
       is_same_class_package(current_class, new_class)) {
     return true;
   }
@@ -424,6 +424,75 @@ bool Reflection::verify_class_access(Klass* current_class, Klass* new_class, boo
   // succeed trivially.
   if (current_class->is_subclass_of(SystemDictionary::reflect_MagicAccessorImpl_klass())) {
     return true;
+  }
+
+  // module boundaries
+  if (new_class->is_public()) {
+    // Ignore modules for DumpSharedSpaces because we do not have any package
+    // or module information for modules other than java.base.
+    if (!UseModules || DumpSharedSpaces) {
+      return true;
+    }
+
+    ModuleEntry* module_from = current_class->module();
+    ModuleEntry* module_to = new_class->module();
+
+    // both in same module or unnamed module.
+    if (module_from == module_to)
+      return true;
+
+    // Acceptable access to a type in the unamed module.
+    if (module_to == NULL)
+      return true;
+
+    // Establish readability, check if module_from is allowed to read module_to.
+    if (module_from != NULL && !module_from->can_read(module_to)) {
+      if (TraceAccessControlErrors) {
+        ResourceMark rm;
+        tty->print_cr("Type in module %s (%s) cannot access type in module %s (%s), not readable",
+          module_from->name()->as_C_string(), current_class->external_name(),
+          module_to->name()->as_C_string(), new_class->external_name());
+      }
+      return false;
+    }
+
+    PackageEntry* package_to = new_class->package();
+    assert(package_to != NULL, "cannot obtain new_class' package");
+
+    // Once readability is established, if module_to exports T unqualifically,
+    // (to all modules), than whether module_from is in the unnamed module
+    // or not does not matter, access is allowed.
+    if (package_to->is_unqual_exported()) {
+      return true;
+    }
+
+    if (module_from != NULL) {
+      // Check the case where module_from, the requester, is in a named module.
+      // Access is allowed if both 1 & 2 hold:
+      //   1. Readability, module_from can read module_to (established above).
+      //   2. Either module_to exports T to module_from qualifically.
+      //      or
+      //      module_to exports T unqualifically to all modules (checked above).
+      bool okay = package_to->is_qexported_to(module_from);
+      if (!okay && TraceAccessControlErrors) {
+        ResourceMark rm;
+        tty->print_cr("Type in module %s (%s) cannot access type in module %s (%s), not exported",
+          module_from->name()->as_C_string(), current_class->external_name(),
+          module_to->name()->as_C_string(), new_class->external_name());
+      }
+      return okay;
+    } else {
+      // Check the case where module_from, the requester, is in the unnamed module.
+      // Access is allowed if both 1 & 2 hold:
+      //   1. Readability, unnamed module can read all modules.
+      //   2. module_to exports T unqualifically to all modules (checked above).
+      if (TraceAccessControlErrors) {
+        ResourceMark rm;
+        tty->print_cr("Type in the unnamed module (%s) cannot access type in module %s (%s), not unqualifically exported",
+          current_class->external_name(), module_to->name()->as_C_string(), new_class->external_name());
+    }
+      return false;
+    }
   }
 
   return can_relax_access_check_for(current_class, new_class, classloader_only);

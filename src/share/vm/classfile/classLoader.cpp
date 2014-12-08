@@ -30,6 +30,8 @@
 #include "classfile/classLoaderData.inline.hpp"
 #include "classfile/imageFile.hpp"
 #include "classfile/javaClasses.hpp"
+#include "classfile/moduleEntry.hpp"
+#include "classfile/packageEntry.hpp"
 #if INCLUDE_CDS
 #include "classfile/sharedPathsMiscInfo.hpp"
 #include "classfile/sharedClassUtil.hpp"
@@ -127,6 +129,7 @@ ClassPathEntry* ClassLoader::_first_entry         = NULL;
 ClassPathEntry* ClassLoader::_last_entry          = NULL;
 int             ClassLoader::_num_entries         = 0;
 PackageHashtable* ClassLoader::_package_hash_table = NULL;
+bool            ClassLoader::_has_bootmodules_jimage = false;
 
 #if INCLUDE_CDS
 SharedPathsMiscInfo* ClassLoader::_shared_paths_misc_info = NULL;
@@ -387,6 +390,172 @@ u1* LazyClassPathEntry::open_entry(const char* name, jint* filesize, bool nul_te
     ShouldNotReachHere();
     *filesize = 0;
     return NULL;
+  }
+}
+
+// Find package names for java.base module by scanning directories starting
+// with java_base_path.  Add each found package to the boot classloader's
+// package_entry table.
+// To find package names, look at each sub-directory.  If it contains one or
+// more '.class' files then create a package name from the sub-directory path
+// relative to java_base_path.  Also, make sure that the package name delimeters
+// are virgules.
+static void package_list(char *java_base_path, ModuleEntry* jb_module) {
+  Thread* THREAD = Thread::current();
+  ResourceMark rm(THREAD);
+  struct stat stat_buf;
+  struct dirent* dir_entry;
+  char stat_path[JVM_MAXPATHLEN];
+  ClassLoaderData* null_cld = ClassLoaderData::the_null_class_loader_data();
+  PackageEntryTable* null_cld_packages = null_cld->packages();
+  const char* file_sep = os::file_separator();
+
+  size_t start_len = strlen(java_base_path);
+  char *current_path = java_base_path;
+  GrowableArray<char *>* dir_stack = new GrowableArray<char *>(15);
+  if (TraceClassLoading) {
+    tty->print_cr("module path:  %s", java_base_path);
+  }
+
+  // Loop through all the sub-directories
+  while (current_path != NULL) {
+    bool dir_already_listed = false;
+    DIR *dir = os::opendir(current_path);
+    if (dir == NULL) {
+      vm_exit_during_initialization(
+        "Unable to open modules directory: ", current_path);
+    }
+
+    char *dbuf = NEW_C_HEAP_ARRAY(
+      char, os::readdir_buf_size(current_path), mtInternal);
+
+    MutexLocker m1(Module_lock, THREAD);
+
+    // Look at each entry in the directory.
+    while ((dir_entry = os::readdir(dir, (dirent *)dbuf)) != NULL) {
+      // Ignore anything starting with '.', including '.' and '..'.
+      if (dir_entry->d_name[0] != '.') {
+
+        // Create full path for stat().
+        sprintf(stat_path, "%s%s%s", current_path, file_sep, dir_entry->d_name);
+        int res = os::stat(stat_path, &stat_buf);
+        assert(res == 0, err_msg("os::stat() failed, file: %s", dir_entry->d_name));
+
+        if ((stat_buf.st_mode & S_IFMT) == S_IFDIR) {
+          // It's a sub-directory, push it on the stack to be looked at later.
+          char *dir_name = NEW_RESOURCE_ARRAY(char, strlen(stat_path) + 1);
+          strcpy(dir_name, stat_path);
+          dir_stack->push(dir_name);
+
+        } else if (!dir_already_listed &&
+                   ((stat_buf.st_mode & S_IFMT) == S_IFREG) &&
+                   string_ends_with(dir_entry->d_name, ".class")) {
+          // This directory entry is a file ending in '.class'.  Construct a
+          // package name from its dir by chopping off the original prefix and
+          // starting '/'.
+          char *package_name = current_path + start_len + 1;
+
+          // Ignore classes in .../modules/java.base directory.
+          if (strlen(package_name) != 0) {
+            if (file_sep[0] != '/') { // Change file separators to '/'.
+              for (char* p = package_name; *p != 0; ++p) {
+                if (*p == file_sep[0]) *p = '/';
+              }
+            }
+            // Found the package name, first look it up in the symbol table.
+            Symbol* pkg_name = SymbolTable::new_symbol(package_name, CHECK);
+
+            // Insert into the null class loader's package entry table.
+            PackageEntry* pkg = null_cld_packages->locked_create_entry_or_null(
+                                  pkg_name, jb_module);
+            assert(pkg != NULL,
+                   err_msg("Package %s not found in package entry table", package_name));
+            dir_already_listed = true;
+            if (TraceClassLoading) {
+              tty->print_cr("package:  %s", package_name);
+            }
+          }
+        }
+      }
+    }
+    FREE_C_HEAP_ARRAY(char, dbuf, mtInternal);
+    current_path = dir_stack->is_empty() ? NULL : dir_stack->pop();
+    os::closedir(dir);
+  }
+}
+
+static void process_javabase(const char* path) {
+  Thread* THREAD = Thread::current();
+
+  // The build exploded directory for java.base being opened due to
+  // processing the first well known class java/lang/Object.  Must create
+  // java.base's module entry and package entries for the null class
+  // loader prior to loading j.l.Ojbect.
+  ClassLoaderData* null_cld = ClassLoaderData::the_null_class_loader_data();
+
+  // Get module entry table
+  ModuleEntryTable* null_cld_modules = null_cld->modules();
+  assert(null_cld_modules != NULL, "No module entry table for boot class loader?");
+
+  // Add entry, without a java.lang.reflect.Module object yet.
+  // The j.l.r.m will be added later.
+  ModuleEntry* jb_module = NULL;
+  {
+    MutexLocker ml(Module_lock, THREAD);
+    jb_module = null_cld_modules->locked_create_entry_or_null(
+                  NULL, vmSymbols::java_base(), null_cld);
+    assert(jb_module != NULL, "no entry created for java.base");
+  }
+
+  if (TraceClassLoading) {
+    tty->print_cr("[Local packages for java.base:]");
+  }
+
+  char modules_path[JVM_MAXPATHLEN];
+  strcpy(modules_path, path);
+  package_list(modules_path, jb_module);
+}
+
+static void process_javabase(ImageFile *image) {
+  Thread* THREAD = Thread::current();
+  ResourceMark rm(THREAD);
+
+  // bootmodules.jimage being opened due to processing
+  // the first well known class java/lang/Object.  Must create
+  // java.base's module entry and package entries for the null
+  // class loader prior to loading j.l.Ojbect.
+  ClassLoaderData* null_cld = ClassLoaderData::the_null_class_loader_data();
+
+  // Get module entry table
+  PackageEntryTable* null_cld_packages = null_cld->packages();
+  ModuleEntryTable* null_cld_modules = null_cld->modules();
+  assert((null_cld_modules != NULL || null_cld_packages != NULL),
+         "No package and/or module table for boot class loader?");
+
+  // Add entry, without a java.lang.reflect.Module object yet.
+  // The j.l.r.m will be added later.
+  MutexLocker ml(Module_lock, THREAD);
+  ModuleEntry* jb_module = null_cld_modules->locked_create_entry_or_null(
+                             NULL, vmSymbols::java_base(), null_cld);
+  assert(jb_module != NULL, "no entry created for java.base");
+
+  if (TraceClassLoading) {
+    tty->print_cr("[Local packages for java.base:]");
+  }
+
+  GrowableArray<const char*>* packages = image->packages(vmSymbols::java_base()->as_C_string());
+
+  for (int i = 0; i < packages->length(); i++) {
+    // Found the package name, first look it up in the symbol table.
+    Symbol* pkg_name = SymbolTable::new_symbol((const char*)packages->at(i), CHECK);
+
+    // Insert into the null class loader's package entry table.
+    PackageEntry* pkg = null_cld_packages->locked_create_entry_or_null(pkg_name, jb_module);
+    assert(pkg != NULL, "Package should have been defined and found in package entry table");
+
+    if (TraceClassLoading) {
+      tty->print_cr("  %s", packages->at(i));
+    }
   }
 }
 
@@ -703,6 +872,23 @@ void ClassLoader::setup_search_path(const char *class_path) {
   }
 }
 
+static bool is_override_dir(const char *path) {
+  assert(string_ends_with(path, "java.base"), "must end in java.base");
+  if (Arguments::override_dir() != NULL) {
+    size_t path_len = strlen(path);
+    const char *override_path = Arguments::override_dir();
+    size_t override_len = strlen(override_path);
+
+    // Does path_len = override_len + strlen(/java.base)?
+    if(path_len == override_len + 1 + 9 &&
+      (path[override_len] ==  os::file_separator()[0]) &&
+      string_starts_with(path, override_path)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 ClassPathEntry* ClassLoader::create_class_path_entry(const char *path, const struct stat* st,
                                                      bool lazy, bool throw_exception, TRAPS) {
   JavaThread* thread = JavaThread::current();
@@ -761,6 +947,12 @@ ClassPathEntry* ClassLoader::create_class_path_entry(const char *path, const str
   } else {
     // Directory
     new_entry = new ClassPathDirEntry(path);
+
+    if (!ModuleEntryTable::javabase_created() &&
+        !ClassLoader::has_bootmodules_jimage() &&
+        string_ends_with(path, "java.base") && !is_override_dir(path)) {
+      process_javabase(path);
+    }
     if (TraceClassLoading) {
       tty->print_cr("[Path %s]", path);
     }
@@ -822,6 +1014,10 @@ void ClassLoader::add_to_list(ClassPathEntry *new_entry) {
   _num_entries ++;
 }
 
+void ClassLoader::add_to_list(const char *apath) {
+  update_class_path_entry_list((char*)apath, false);
+}
+
 // Returns true IFF the file/dir exists and the entry was successfully created.
 bool ClassLoader::update_class_path_entry_list(const char *path,
                                                bool check_for_duplicates,
@@ -831,7 +1027,12 @@ bool ClassLoader::update_class_path_entry_list(const char *path,
     // File or directory found
     ClassPathEntry* new_entry = NULL;
     Thread* THREAD = Thread::current();
-    new_entry = create_class_path_entry(path, &st, LazyBootClassLoader, throw_exception, CHECK_(false));
+
+    // If entry is the bootmodules.jimage then pass FALSE for 'lazy' to ensure
+    // that the jimage is opened.  This will enable process_javabase() to read it.
+    bool lazy = string_ends_with(path, "bootmodules.jimage") ? false : LazyBootClassLoader;
+
+    new_entry = create_class_path_entry(path, &st, lazy, throw_exception, CHECK_(false));
     if (new_entry == NULL) {
       return false;
     }
@@ -1390,6 +1591,21 @@ bool ClassLoader::get_canonical_path(const char* orig, char* out, int len) {
     out[len - 1] = '\0';
   }
   return true;
+}
+
+
+void ClassLoader::process_jimage_file() {
+  ClassPathEntry* entry = _first_entry;
+  while (entry != NULL) {
+    ImageFile *image = entry->image();
+    if (image != NULL && string_ends_with(entry->name(), "bootmodules.jimage")) {
+      set_has_bootmodules_jimage(true);
+      process_javabase(image);
+      return;
+    }
+    entry = entry->next();
+  }
+  set_has_bootmodules_jimage(false);
 }
 
 #ifndef PRODUCT

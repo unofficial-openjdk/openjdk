@@ -46,6 +46,8 @@ class MetaIndex: public CHeapObj<mtClass> {
 
 // Class path entry (directory or zip file)
 
+class ImageFile;
+
 class ClassPathEntry: public CHeapObj<mtClass> {
  private:
   ClassPathEntry* _next;
@@ -58,6 +60,7 @@ class ClassPathEntry: public CHeapObj<mtClass> {
   }
   virtual bool is_jar_file() = 0;
   virtual const char* name() = 0;
+  virtual ImageFile* image() = 0;
   virtual bool is_lazy();
   // Constructor
   ClassPathEntry();
@@ -76,6 +79,7 @@ class ClassPathDirEntry: public ClassPathEntry {
  public:
   bool is_jar_file()  { return false;  }
   const char* name()  { return _dir; }
+  ImageFile* image()  { return NULL; }
   ClassPathDirEntry(const char* dir);
   ClassFileStream* open_stream(const char* name, TRAPS);
   // Debugging
@@ -105,6 +109,7 @@ class ClassPathZipEntry: public ClassPathEntry {
  public:
   bool is_jar_file()  { return true;  }
   const char* name()  { return _zip_name; }
+  ImageFile* image()  { return NULL; }
   ClassPathZipEntry(jzfile* zip, const char* zip_name);
   ~ClassPathZipEntry();
   u1* open_entry(const char* name, jint* filesize, bool nul_terminate, TRAPS);
@@ -129,6 +134,7 @@ class LazyClassPathEntry: public ClassPathEntry {
  public:
   bool is_jar_file();
   const char* name()  { return _path; }
+  ImageFile* image()  { return NULL; }
   LazyClassPathEntry(const char* path, const struct stat* st, bool throw_exception);
   virtual ~LazyClassPathEntry();
   u1* open_entry(const char* name, jint* filesize, bool nul_terminate, TRAPS);
@@ -142,7 +148,6 @@ class LazyClassPathEntry: public ClassPathEntry {
 };
 
 // For java image files
-class ImageFile;
 class ClassPathImageEntry: public ClassPathEntry {
 private:
   ImageFile *_image;
@@ -150,6 +155,7 @@ public:
   bool is_jar_file()  { return false;  }
   bool is_open()  { return _image != NULL; }
   const char* name();
+  ImageFile* image()  { return _image; }
   ClassPathImageEntry(char* name);
   ~ClassPathImageEntry();
   ClassFileStream* open_stream(const char* name, TRAPS);
@@ -217,6 +223,9 @@ class ClassLoader: AllStatic {
   static PackageHashtable* _package_hash_table;
   static const char* _shared_archive;
 
+  // True if classpath has a bootmodules.jimage
+  static bool _has_bootmodules_jimage;
+
   // Info used by CDS
   CDS_ONLY(static SharedPathsMiscInfo * _shared_paths_misc_info;)
 
@@ -243,6 +252,7 @@ class ClassLoader: AllStatic {
   // Canonicalizes path names, so strcmp will work properly. This is mainly
   // to avoid confusing the zip library
   static bool get_canonical_path(const char* orig, char* out, int len);
+
  public:
   static jboolean decompress(void *in, u8 inSize, void *out, u8 outSize, char **pmsg);
   static int crc32(int crc, const char* buf, int len);
@@ -312,6 +322,17 @@ class ClassLoader: AllStatic {
     return _load_instance_class_failCounter;
   }
 
+  // Sets _has_bootmodules_jimage to TRUE if bootmodules.jimage file exists.
+  static void set_has_bootmodules_jimage(bool val) {
+    _has_bootmodules_jimage = val;
+  }
+
+  static bool has_bootmodules_jimage() { return _has_bootmodules_jimage; }
+
+  // Read the packages for module java.base from the bootmodules.jimage
+  // file, if it exists.
+  static void process_jimage_file();
+
   // Load individual .class file
   static instanceKlassHandle load_classfile(Symbol* h_name, TRAPS);
 
@@ -378,6 +399,9 @@ class ClassLoader: AllStatic {
 
   // creates a class path zip entry (returns NULL if JAR file cannot be opened)
   static ClassPathZipEntry* create_class_path_zip_entry(const char *apath);
+
+  // add a path to class path list
+  static void add_to_list(const char* apath);
 
   // Debugging
   static void verify()              PRODUCT_RETURN;

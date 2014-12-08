@@ -172,6 +172,7 @@ ObjArrayKlass::ObjArrayKlass(int n, KlassHandle element_klass, Symbol* name) : A
   }
   assert(bk != NULL && (bk->oop_is_instance() || bk->oop_is_typeArray()), "invalid bottom klass");
   this->set_bottom_klass(bk);
+  this->set_package(NULL);
   this->set_class_loader_data(bk->class_loader_data());
 
   this->set_layout_helper(array_layout_helper(T_OBJECT));
