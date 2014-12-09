@@ -298,7 +298,7 @@ u1* ImageFile::find_location_data(const char* path) const {
 void ImageFile::location_path(ImageLocation& location, char* path, int max) const {
   ImageStrings strings(_string_bytes, _header._strings_size);
   char* next = path;
-  int length;
+  size_t length;
 
   const char* module = location.get_attribute(ImageLocation::ATTRIBUTE_MODULE, strings);
   if (*module != '\0') {
