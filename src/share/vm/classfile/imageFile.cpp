@@ -295,7 +295,7 @@ u1* ImageFile::find_location_data(const char* path) const {
   return _location_bytes + offset;
 }
 
-void ImageFile::location_path(ImageLocation& location, char* path, int max) const {
+void ImageFile::location_path(ImageLocation& location, char* path, size_t max) const {
   ImageStrings strings(_string_bytes, _header._strings_size);
   char* next = path;
   size_t length;
@@ -330,7 +330,7 @@ void ImageFile::location_path(ImageLocation& location, char* path, int max) cons
     strcpy(next, extension); next += length;
   }
 
-  guarantee(next - path < max, "buffer overflow");
+  guarantee((size_t)(next - path) < max, "buffer overflow");
   *next = '\0';
 }
 

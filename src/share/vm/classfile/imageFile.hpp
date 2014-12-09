@@ -424,7 +424,7 @@ public:
   u1* find_location_data(const char* path) const;
 
   // Assemble the location path.
-  void location_path(ImageLocation& location, char* path, int max) const;
+  void location_path(ImageLocation& location, char* path, size_t max) const;
 
   // Verify that a found location matches the supplied path.
   bool verify_location(ImageLocation& location, const char* path) const;
