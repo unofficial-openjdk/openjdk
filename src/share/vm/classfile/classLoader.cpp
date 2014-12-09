@@ -622,7 +622,7 @@ void ClassPathImageEntry::compile_the_world(Handle loader, TRAPS) {
     if (location_data) {
        ImageLocation location(location_data);
        char path[JVM_MAXPATHLEN];
-       _image->location_path(location_data, path, JVM_MAXPATHLEN);
+       _image->location_path(location, path, JVM_MAXPATHLEN);
        ClassLoader::compile_the_world_in(path, loader, CHECK);
     }
   }
