@@ -42,7 +42,8 @@ public final class ImageHeader {
     private final int stringsSize;
 
     ImageHeader(int locationCount, int locationsSize, int stringsSize) {
-        this(MAGIC, MAJOR_VERSION, MINOR_VERSION, locationCount, locationsSize, stringsSize);
+        this(MAGIC, MAJOR_VERSION, MINOR_VERSION, locationCount,
+                locationsSize, stringsSize);
     }
 
     ImageHeader(int magic, short majorVersion, short minorVersion, int locationCount,

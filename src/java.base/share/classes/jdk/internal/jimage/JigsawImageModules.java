@@ -32,17 +32,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
-import java.nio.ByteBuffer;
-import java.nio.IntBuffer;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -56,7 +51,6 @@ import jdk.jigsaw.module.ModuleId;
 import jdk.jigsaw.module.ServiceDependence;
 
 import static jdk.internal.jimage.ImageModules.Loader.*;
-import static jdk.internal.jimage.PackageModuleMap.*;
 
 /**
  * Installed Modules stored in the modular image on disk format.
@@ -152,7 +146,8 @@ public final class JigsawImageModules extends ImageModules {
     private static final int MAJOR_VERSION = 0;
     private static final int MINOR_VERSION = 1;
 
-    private final Map<String, ExtendedModuleDescriptor> nameToModule = new LinkedHashMap<>(); // ordered
+    private final Map<String, ExtendedModuleDescriptor> nameToModule =
+            new LinkedHashMap<>(); // ordered
     private final Map<String, Set<String>> services = new HashMap<>();
     private final Map<String, Map<String, String>> exports = new HashMap<>();
     private final Map<String, Set<String>> readableModules = new HashMap<>();

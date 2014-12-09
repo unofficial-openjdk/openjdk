@@ -23,40 +23,17 @@
  * questions.
  */
 
-package jdk.internal.jimage;
+/*
+ * Usage: jjs jrtls.js
+ *
+ * Recursively list the content of / directory of the jrt fs.
+ */
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.IntBuffer;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+// classes used
+var Files = Java.type("java.nio.file.Files");
+var FileSystems = Java.type("java.nio.file.FileSystems");
+var URI = Java.type("java.net.URI");
 
-// Utility to read module info from .jimage file.
-
-public final class PackageModuleMap {
-    private PackageModuleMap() {}
-
-    public static final String MODULES_ENTRY = "module/modules.offsets";
-    public static final String PACKAGES_ENTRY = "packages.offsets";
-
-    /*
-     * Returns a package-to-module map.
-     *
-     * The package name is in binary name format.
-     */
-    static Map<String,String> readFrom(ImageReader reader) throws IOException {
-        Map<String,String> result = new HashMap<>();
-        List<String> moduleNames = reader.getNames(MODULES_ENTRY);
-
-        for (String moduleName : moduleNames) {
-            List<String> packageNames = reader.getNames(moduleName + "/" + PACKAGES_ENTRY);
-
-            for (String packageName : packageNames) {
-                result.put(packageName, moduleName);
-            }
-        }
-        return result;
-    }
-}
+var fs = FileSystems.getFileSystem(URI.create("jrt:/"));
+var root = fs.getPath('/');
+Files.walk(root).forEach(print);

@@ -29,14 +29,14 @@ import java.nio.charset.Charset;
 import java.util.Arrays;
 
 public final class UTF8String implements CharSequence {
-
     // Same as StandardCharsets.UTF_8 without loading all of the standard charsets
     static final Charset UTF_8 = Charset.forName("UTF-8");
 
     static final int NOT_FOUND = -1;
     static final int HASH_MULTIPLIER = 0x01000193;
-    static final UTF8String EMPTY_STRING  = new UTF8String("");
-    static final UTF8String CLASS_STRING  = new UTF8String(".class");
+    static final UTF8String EMPTY_STRING = new UTF8String("");
+    static final UTF8String SLASH_STRING = new UTF8String("/");
+    static final UTF8String DOT_STRING = new UTF8String(".");
 
     final byte[] bytes;
     final int offset;
@@ -160,8 +160,8 @@ public final class UTF8String implements CharSequence {
         return seed & 0x7FFFFFFF;
     }
 
-    int hashCode(int base) {
-        return hashCode(base, bytes, offset, count);
+    int hashCode(int seed) {
+        return hashCode(seed, bytes, offset, count);
     }
 
     @Override
@@ -186,7 +186,7 @@ public final class UTF8String implements CharSequence {
         return equals(this, (UTF8String)obj);
     }
 
-    private static boolean equals(UTF8String a, UTF8String b) {
+    public static boolean equals(UTF8String a, UTF8String b) {
         if (a == b) {
             return true;
         }
@@ -232,33 +232,11 @@ public final class UTF8String implements CharSequence {
     public char charAt(int index) {
         int ch = byteAt(index);
 
-        return (ch & 0x80) != 0 ? (char)ch : '\0';
+        return (ch & 0x80) == 0 ? (char)ch : '\0';
     }
 
     @Override
     public CharSequence subSequence(int start, int end) {
         return (CharSequence)substring(start, end - start);
-    }
-
-    static UTF8String match(UTF8String a, UTF8String b) {
-        int aCount = a.count;
-        int bCount = b.count;
-
-        if (aCount < bCount) {
-            return null;
-        }
-
-        byte[] aBytes = a.bytes;
-        byte[] bBytes = b.bytes;
-        int aOffset = a.offset;
-        int bOffset = b.offset;
-
-        for (int i = 0; i < bCount; i++) {
-            if (aBytes[aOffset + i] != bBytes[bOffset + i]) {
-                return null;
-            }
-        }
-
-        return new UTF8String(aBytes, aOffset + bCount, aCount - bCount);
     }
 }

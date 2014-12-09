@@ -29,13 +29,14 @@ import java.nio.ByteBuffer;
 
 public final class ImageLocation {
     final static int ATTRIBUTE_END = 0;
-    final static int ATTRIBUTE_BASE = 1;
+    final static int ATTRIBUTE_MODULE = 1;
     final static int ATTRIBUTE_PARENT = 2;
-    final static int ATTRIBUTE_EXTENSION = 3;
-    final static int ATTRIBUTE_OFFSET = 4;
-    final static int ATTRIBUTE_COMPRESSED = 5;
-    final static int ATTRIBUTE_UNCOMPRESSED = 6;
-    final static int ATTRIBUTE_COUNT = 7;
+    final static int ATTRIBUTE_BASE = 3;
+    final static int ATTRIBUTE_EXTENSION = 4;
+    final static int ATTRIBUTE_OFFSET = 5;
+    final static int ATTRIBUTE_COMPRESSED = 6;
+    final static int ATTRIBUTE_UNCOMPRESSED = 7;
+    final static int ATTRIBUTE_COUNT = 8;
 
     private int locationOffset;
     private long[] attributes;
@@ -52,7 +53,8 @@ public final class ImageLocation {
         stream.put(bytes, 0, bytes.length);
     }
 
-    static ImageLocation readFrom(ByteBuffer locationsBuffer, int offset, ImageStrings strings) {
+    static ImageLocation readFrom(ByteBuffer locationsBuffer, int offset,
+            ImageStrings strings) {
         final long[] attributes = new long[ATTRIBUTE_COUNT];
 
         for (int i = offset; true; ) {
@@ -90,23 +92,8 @@ public final class ImageLocation {
     }
 
     public boolean verify(UTF8String name) {
-        UTF8String match = UTF8String.match(name, getParent());
-
-        if (match == null) {
-            return false;
-        }
-
-        match = UTF8String.match(match, getBase());
-
-        if (match == null) {
-            return false;
-        }
-
-        match = UTF8String.match(match, getExtension());
-
-        return match != null && match.length() == 0;
+        return UTF8String.equals(getFullName(), name);
     }
-
 
     long getAttribute(int kind) {
         assert ATTRIBUTE_END < kind && kind < ATTRIBUTE_COUNT : "Invalid attribute kind";
@@ -131,6 +118,10 @@ public final class ImageLocation {
         decompress();
         attributes[kind] = value;
         return this;
+    }
+
+    ImageLocation addAttribute(int kind, UTF8String value) {
+        return addAttribute(kind, strings.add(value));
     }
 
     private void decompress() {
@@ -186,28 +177,38 @@ public final class ImageLocation {
         }
     }
 
-    static ImageLocation newLocation(UTF8String fullname, ImageStrings strings, long contentOffset, long compressedSize, long uncompressedSize) {
-        UTF8String base;
-        UTF8String extension = extension(fullname);
-        int parentOffset = ImageStrings.EMPTY_OFFSET;
-        int extensionOffset = ImageStrings.EMPTY_OFFSET;
-        int baseOffset;
+    static ImageLocation newLocation(UTF8String fullName, ImageStrings strings,
+            long contentOffset, long compressedSize, long uncompressedSize) {
+        UTF8String moduleName = UTF8String.EMPTY_STRING;
+        UTF8String parentName = UTF8String.EMPTY_STRING;
+        UTF8String baseName;
+        UTF8String extensionName = UTF8String.EMPTY_STRING;
 
-        if (extension.length() != 0) {
-            UTF8String parent = parent(fullname);
-            base = base(fullname);
-            parentOffset = strings.add(parent);
-            extensionOffset = strings.add(extension);
-        } else {
-            base = fullname;
+        int offset = fullName.indexOf('/', 1);
+        if (fullName.length() >= 2 && fullName.charAt(0) == '/' && offset != -1) {
+            moduleName = fullName.substring(1, offset - 1);
+            fullName = fullName.substring(offset + 1);
         }
 
-        baseOffset = strings.add(base);
+        offset = fullName.lastIndexOf('/');
+        if (offset != -1) {
+            parentName = fullName.substring(0, offset);
+            fullName = fullName.substring(offset + 1);
+        }
+
+        offset = fullName.lastIndexOf('.');
+        if (offset != -1) {
+            baseName = fullName.substring(0, offset);
+            extensionName = fullName.substring(offset + 1);
+        } else {
+            baseName = fullName;
+        }
 
         return new ImageLocation(strings)
-               .addAttribute(ATTRIBUTE_BASE, baseOffset)
-               .addAttribute(ATTRIBUTE_PARENT, parentOffset)
-               .addAttribute(ATTRIBUTE_EXTENSION, extensionOffset)
+               .addAttribute(ATTRIBUTE_MODULE, moduleName)
+               .addAttribute(ATTRIBUTE_PARENT, parentName)
+               .addAttribute(ATTRIBUTE_BASE, baseName)
+               .addAttribute(ATTRIBUTE_EXTENSION, extensionName)
                .addAttribute(ATTRIBUTE_OFFSET, contentOffset)
                .addAttribute(ATTRIBUTE_COMPRESSED, compressedSize)
                .addAttribute(ATTRIBUTE_UNCOMPRESSED, uncompressedSize);
@@ -215,11 +216,31 @@ public final class ImageLocation {
 
     @Override
     public int hashCode() {
-        return getExtension().hashCode(getBase().hashCode(getParent().hashCode()));
+        return hashCode(UTF8String.HASH_MULTIPLIER);
     }
 
-    int hashCode(int base) {
-        return getExtension().hashCode(getBase().hashCode(getParent().hashCode(base)));
+    int hashCode(int seed) {
+        int hash = seed;
+
+        if (getModuleOffset() != 0) {
+            hash = UTF8String.SLASH_STRING.hashCode(hash);
+            hash = getModule().hashCode(hash);
+            hash = UTF8String.SLASH_STRING.hashCode(hash);
+        }
+
+        if (getParentOffset() != 0) {
+            hash = getParent().hashCode(hash);
+            hash = UTF8String.SLASH_STRING.hashCode(hash);
+        }
+
+        hash = getBase().hashCode(hash);
+
+        if (getExtensionOffset() != 0) {
+            hash = UTF8String.DOT_STRING.hashCode(hash);
+            hash = getExtension().hashCode(hash);
+        }
+
+        return hash;
     }
 
     @Override
@@ -234,41 +255,26 @@ public final class ImageLocation {
 
         ImageLocation other = (ImageLocation)obj;
 
-        return getBaseOffset() == other.getBaseOffset() &&
+        return getModuleOffset() == other.getModuleOffset() &&
                getParentOffset() == other.getParentOffset() &&
+               getBaseOffset() == other.getBaseOffset() &&
                getExtensionOffset() == other.getExtensionOffset();
-    }
-
-    static UTF8String parent(UTF8String fullname) {
-        int slash = fullname.lastIndexOf('/');
-
-        return slash == UTF8String.NOT_FOUND ? UTF8String.EMPTY_STRING : fullname.substring(0, slash + 1);
-    }
-
-    static UTF8String extension(UTF8String fullname) {
-        int dot = fullname.lastIndexOf('.');
-
-        return dot == UTF8String.NOT_FOUND ? UTF8String.EMPTY_STRING : fullname.substring(dot);
-    }
-
-    static UTF8String base(UTF8String fullname) {
-        int slash = fullname.lastIndexOf('/');
-
-        if (slash != UTF8String.NOT_FOUND) {
-            fullname = fullname.substring(slash + 1);
-        }
-
-        int dot = fullname.lastIndexOf('.');
-
-        if (dot != UTF8String.NOT_FOUND) {
-            fullname = fullname.substring(0, dot);
-        }
-
-        return fullname;
     }
 
     int getLocationOffset() {
         return locationOffset;
+    }
+
+    UTF8String getModule() {
+        return getAttributeUTF8String(ATTRIBUTE_MODULE);
+    }
+
+    public String getModuleString() {
+        return getModule().toString();
+    }
+
+    int getModuleOffset() {
+        return (int)getAttribute(ATTRIBUTE_MODULE);
     }
 
     UTF8String getBase() {
@@ -307,20 +313,64 @@ public final class ImageLocation {
         return (int)getAttribute(ATTRIBUTE_EXTENSION);
     }
 
-    UTF8String getName() {
-        return getBase().concat(getExtension());
+    UTF8String getFullName() {
+        // Note: Consider a UTF8StringBuilder.
+        UTF8String fullName = UTF8String.EMPTY_STRING;
+
+        if (getModuleOffset() != 0) {
+            fullName = fullName.concat(UTF8String.SLASH_STRING,
+                                       getModule(),
+                                       UTF8String.SLASH_STRING);
+        }
+
+        if (getParentOffset() != 0) {
+            fullName = fullName.concat(getParent(),
+                                       UTF8String.SLASH_STRING);
+        }
+
+        fullName = fullName.concat(getBase());
+
+        if (getExtensionOffset() != 0) {
+                fullName = fullName.concat(UTF8String.DOT_STRING,
+                                           getExtension());
+        }
+
+        return fullName;
     }
 
-    String getNameString() {
-        return getName().toString();
+    UTF8String buildName(boolean includeModule, boolean includeParent,
+            boolean includeName) {
+        // Note: Consider a UTF8StringBuilder.
+        UTF8String name = UTF8String.EMPTY_STRING;
+
+        if (includeModule && getModuleOffset() != 0) {
+            name = name.concat(UTF8String.SLASH_STRING,
+                                       getModule());
+        }
+
+        if (includeParent && getParentOffset() != 0) {
+            name = name.concat(UTF8String.SLASH_STRING,
+                                       getParent());
+        }
+
+        if (includeName) {
+            if (includeModule || includeParent) {
+                name = name.concat(UTF8String.SLASH_STRING);
+            }
+
+            name = name.concat(getBase());
+
+            if (getExtensionOffset() != 0) {
+                name = name.concat(UTF8String.DOT_STRING,
+                                           getExtension());
+            }
+        }
+
+        return name;
     }
 
-    UTF8String getFullname() {
-        return getParent().concat(getBase(), getExtension());
-    }
-
-    String getFullnameString() {
-        return getFullname().toString();
+    String getFullNameString() {
+        return getFullName().toString();
     }
 
     public long getContentOffset() {
@@ -337,56 +387,24 @@ public final class ImageLocation {
 
     @Override
     public String toString() {
-        final StringBuilder sb = new StringBuilder();
         decompress();
+        final StringBuilder sb = new StringBuilder();
 
-        for (int kind = ATTRIBUTE_END + 1; kind < ATTRIBUTE_COUNT; kind++) {
-            long value = attributes[kind];
+        sb.append("Name: ");
+        sb.append(getFullNameString());
+        sb.append("; ");
 
-            if (value == 0) {
-                continue;
-            }
+        sb.append("Offset: ");
+        sb.append(getContentOffset());
+        sb.append("; ");
 
-            switch (kind) {
-                case ATTRIBUTE_BASE:
-                    sb.append("Base: ");
-                    sb.append(value);
-                    sb.append(' ');
-                    sb.append(strings.get((int)value).toString());
-                    break;
+        sb.append("Compressed: ");
+        sb.append(getCompressedSize());
+        sb.append("; ");
 
-                case ATTRIBUTE_PARENT:
-                    sb.append("Parent: ");
-                    sb.append(value);
-                    sb.append(' ');
-                    sb.append(strings.get((int)value).toString());
-                    break;
-
-                case ATTRIBUTE_EXTENSION:
-                    sb.append("Extension: ");
-                    sb.append(value);
-                    sb.append(' ');
-                    sb.append(strings.get((int)value).toString());
-                    break;
-
-                case ATTRIBUTE_OFFSET:
-                    sb.append("Offset: ");
-                    sb.append(value);
-                    break;
-
-                case ATTRIBUTE_COMPRESSED:
-                    sb.append("Compressed: ");
-                    sb.append(value);
-                    break;
-
-                case ATTRIBUTE_UNCOMPRESSED:
-                    sb.append("Uncompressed: ");
-                    sb.append(value);
-                    break;
-           }
-
-           sb.append("; ");
-        }
+        sb.append("Uncompressed: ");
+        sb.append(getUncompressedSize());
+        sb.append("; ");
 
         return sb.toString();
     }

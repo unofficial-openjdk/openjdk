@@ -25,7 +25,6 @@
 
 package jdk.internal.jimage;
 
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
@@ -36,7 +35,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static jdk.internal.jimage.PackageModuleMap.*;
 
 public class ImageModules {
     protected final Map<Loader, LoaderModuleData> loaders = new LinkedHashMap<>();
@@ -130,51 +128,20 @@ public class ImageModules {
         Loader loader() { return loader; }
     }
 
-    ModuleIndex buildModuleIndex(Loader type, BasicImageWriter writer) {
-        return new ModuleIndex(getModules(type), writer);
-    }
+    ImageModuleDataBuilder buildModuleData(Loader loader, BasicImageWriter writer) {
+        Set<String> modules = getModules(loader);
+        List<String> moduleNames = modules.stream()
+                .sorted()
+                .collect(Collectors.toList());
+        Map<String, List<String>> modulePackages = new LinkedHashMap<>();
+        moduleNames.stream().forEach((moduleName) -> {
+            List<String> localPackages = localPkgs.get(moduleName).stream()
+                    .map(pn -> pn.replace('.', '/'))
+                    .sorted()
+                    .collect(Collectors.toList());
+            modulePackages.put(moduleName, localPackages);
+        });
 
-    /*
-     * Generate module name table and the package map as resources
-     * in the modular image
-     */
-    public class ModuleIndex {
-        final Map<String, Integer> moduleOffsets = new LinkedHashMap<>();
-        final Map<String, List<Integer>> packageOffsets = new HashMap<>();
-        final int size;
-        public ModuleIndex(Set<String> mods, BasicImageWriter writer) {
-            // module name offsets
-            writer.addLocation(MODULES_ENTRY, 0, 0, mods.size() * 4);
-            long offset = mods.size() * 4;
-            for (String mn : mods) {
-                moduleOffsets.put(mn, writer.addString(mn));
-                List<Integer> poffsets = localPkgs.get(mn).stream()
-                        .map(pn -> pn.replace('.', '/'))
-                        .map(writer::addString)
-                        .collect(Collectors.toList());
-                // package name offsets per module
-                String entry = mn + "/" + PACKAGES_ENTRY;
-                int bytes = poffsets.size() * 4;
-                writer.addLocation(entry, offset, 0, bytes);
-                offset += bytes;
-                packageOffsets.put(mn, poffsets);
-            }
-            this.size = (int) offset;
-        }
-
-        void writeTo(DataOutputStream out) throws IOException {
-            for (int moffset : moduleOffsets.values()) {
-                out.writeInt(moffset);
-            }
-            for (String mn : moduleOffsets.keySet()) {
-                for (int poffset : packageOffsets.get(mn)) {
-                    out.writeInt(poffset);
-                }
-            }
-        }
-
-        int size() {
-            return size;
-        }
+        return new ImageModuleDataBuilder(writer, modulePackages);
     }
 }

@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (c) 2009, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -50,7 +50,7 @@ module java.base {
             javax.security.auth.**,
             javax.crypto.**;
 
-    // TLS 
+    // TLS
     include javax.net.**,
             javax.security.cert.*;
 
@@ -338,7 +338,7 @@ module java.management {
     exports com.sun.jmx.defaults to jdk.snmp;
     exports com.sun.jmx.mbeanserver to jdk.snmp;
     exports sun.management to jdk.snmp;
- 
+
     include java.lang.management.*, com.sun.management.**, sun.management.**;
     include javax.management.**, com.sun.jmx.**;
     include jdk.management.cmm.**;
@@ -488,7 +488,7 @@ module java.xml {
 }
 
 module java.naming {
-    // framework/API 
+    // framework/API
     include javax.naming.**,
             com.sun.naming.**,
             com.sun.jndi.toolkit.ctx.**,
@@ -618,7 +618,7 @@ module java.compiler {
             javax.annotation.processing.**;
     uses javax.tools.DocumentationTool;
     uses javax.tools.JavaCompiler;
-} 
+}
 
 module jdk.scripting.nashorn {
     include jdk.nashorn.**,
@@ -669,7 +669,7 @@ module jdk.deploy {
             com.sun.javaws.**,
             com.sun.jnlp.*;
 
-    // Split package issue: Hook for http authentication - see JDK-8004653 
+    // Split package issue: Hook for http authentication - see JDK-8004653
     include sun.net.www.protocol.http.AuthCacheBridge;
 }
 

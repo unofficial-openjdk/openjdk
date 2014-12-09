@@ -45,7 +45,6 @@ import java.util.zip.DataFormatException;
 import java.util.zip.Deflater;
 import java.util.zip.Inflater;
 import jdk.internal.jimage.ImageModules.Loader;
-import jdk.internal.jimage.ImageModules.ModuleIndex;
 
 /**
  * An image (native endian.)
@@ -67,7 +66,7 @@ import jdk.internal.jimage.ImageModules.ModuleIndex;
  */
 public final class ImageFile {
     private static final String JAVA_BASE = "java.base";
-    private static final String IMAGE_EXT = ".jimage";
+    public static final String IMAGE_EXT = ".jimage";
     private static final String JAR_EXT = ".jar";
     private final Path root;
     private final Path mdir;
@@ -139,25 +138,28 @@ public final class ImageFile {
                   .collect(Collectors.toMap(Archive::moduleName, Function.identity()));
 
         Files.createDirectories(mdir);
-        for (Loader l : Loader.values()) {
-            Set<String> mods = modules.getModules(l);
+        for (Loader loader : Loader.values()) {
+            Set<String> mods = modules.getModules(loader);
 
-            try (OutputStream fos = Files.newOutputStream(mdir.resolve(l.getName() + IMAGE_EXT));
+            try (OutputStream fos = Files.newOutputStream(mdir.resolve(loader.getName() + IMAGE_EXT));
                     BufferedOutputStream bos = new BufferedOutputStream(fos);
                     DataOutputStream out = new DataOutputStream(bos)) {
                 // store index in addition of the class loader map for boot loader
                 BasicImageWriter writer = new BasicImageWriter(byteOrder);
                 Set<String> duplicates = new HashSet<>();
 
-                // build package map for modules and add as resources
-                ModuleIndex mindex = modules.buildModuleIndex(l, writer);
-                long offset = mindex.size();
+                // build module and package map and add as resource
+                ImageModuleDataBuilder moduleData = modules.buildModuleData(loader, writer);
+                moduleData.addLocation(loader.getName(), writer);
+                long offset = moduleData.size();
 
                 // the order of traversing the resources and the order of
                 // the module content being written must be the same
                 for (String mn : mods) {
                     for (Resource res : resourcesForModule.get(mn)) {
-                        String path = res.name();
+                        String fn = res.name();
+                        String path = fn.startsWith("META-INF/") ? fn : ("/" + mn + "/" + fn);
+
                         long uncompressedSize = res.size();
                         long compressedSize = res.csize();
                         long onFileSize = compressedSize != 0 ? compressedSize : uncompressedSize;
@@ -179,8 +181,8 @@ public final class ImageFile {
                 byte[] bytes = writer.getBytes();
                 out.write(bytes, 0, bytes.length);
 
-                // write module table and packages
-                mindex.writeTo(out);
+                // write module meta data
+                moduleData.writeTo(out);
 
                 // write module content
                 for (String mn : mods) {

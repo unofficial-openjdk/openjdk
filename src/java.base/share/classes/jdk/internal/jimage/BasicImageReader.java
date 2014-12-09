@@ -50,12 +50,17 @@ public class BasicImageReader {
         this.imagePath = imagePath;
         this.preader = PReader.open(imagePath);
         this.byteOrder = byteOrder;
-        this.header = ImageHeader.readFrom(byteOrder, getIntBuffer(0, ImageHeader.getHeaderSize()));
+        this.header = ImageHeader.readFrom(byteOrder,
+                getIntBuffer(0, ImageHeader.getHeaderSize()));
         this.indexSize = header.getIndexSize();
-        this.redirectBuffer = getIntBuffer(header.getRedirectOffset(), header.getRedirectSize());
-        this.offsetsBuffer = getIntBuffer(header.getOffsetsOffset(), header.getOffsetsSize());
-        this.locationsBuffer = getByteBuffer(header.getLocationsOffset(), header.getLocationsSize());
-        this.stringsBuffer = getByteBuffer(header.getStringsOffset(), header.getStringsSize());
+        this.redirectBuffer = getIntBuffer(header.getRedirectOffset(),
+                header.getRedirectSize());
+        this.offsetsBuffer = getIntBuffer(header.getOffsetsOffset(),
+                header.getOffsetsSize());
+        this.locationsBuffer = getByteBuffer(header.getLocationsOffset(),
+                header.getLocationsSize());
+        this.stringsBuffer = getByteBuffer(header.getStringsOffset(),
+                header.getStringsSize());
         this.strings = new ImageStrings(new ImageStream(stringsBuffer));
     }
 
@@ -67,7 +72,21 @@ public class BasicImageReader {
         return new BasicImageReader(imagePath, ByteOrder.nativeOrder());
     }
 
+    public ByteOrder getByteOrder() {
+        return byteOrder;
+    }
+
     public String imagePath() {
+        return imagePath;
+    }
+
+    public String imagePathName() {
+        int slash = imagePath.lastIndexOf('/');
+
+        if (slash != -1) {
+            return imagePath.substring(slash + 1);
+        }
+
         return imagePath;
     }
 
@@ -93,6 +112,11 @@ public class BasicImageReader {
 
     public synchronized ImageLocation findLocation(UTF8String name) {
         int count = header.getLocationCount();
+
+        if (count == 0) {
+            return null;
+        }
+
         int hash = name.hashCode() % count;
         int redirect = getRedirect(hash);
 
@@ -133,8 +157,9 @@ public class BasicImageReader {
             int offset = getOffset(i);
 
             if (offset != 0) {
-                ImageLocation location = ImageLocation.readFrom(locationsBuffer, offset, strings);
-                list.add(location.getFullnameString());
+                ImageLocation location =
+                        ImageLocation.readFrom(locationsBuffer, offset, strings);
+                list.add(location.getFullNameString());
             }
         }
 
@@ -155,7 +180,8 @@ public class BasicImageReader {
             int offset = getOffset(i);
 
             if (offset != 0) {
-                ImageLocation location = ImageLocation.readFrom(locationsBuffer, offset, strings);
+                ImageLocation location =
+                        ImageLocation.readFrom(locationsBuffer, offset, strings);
                 list.add(location);
             }
         }
@@ -164,21 +190,23 @@ public class BasicImageReader {
 
         if (sorted) {
             Arrays.sort(array, (ImageLocation loc1, ImageLocation loc2) ->
-                    loc1.getFullnameString().compareTo(loc2.getFullnameString()));
+                    loc1.getFullNameString().compareTo(loc2.getFullNameString()));
         }
 
         return array;
     }
 
     private IntBuffer getIntBuffer(long offset, long size) throws IOException {
-        MappedByteBuffer buffer = preader.channel().map(FileChannel.MapMode.READ_ONLY, offset, size);
+        MappedByteBuffer buffer =
+                preader.channel().map(FileChannel.MapMode.READ_ONLY, offset, size);
         buffer.order(byteOrder);
 
         return buffer.asIntBuffer();
     }
 
     private ByteBuffer getByteBuffer(long offset, long size) throws IOException {
-        MappedByteBuffer buffer = preader.channel().map(FileChannel.MapMode.READ_ONLY, offset, size);
+        MappedByteBuffer buffer =
+                preader.channel().map(FileChannel.MapMode.READ_ONLY, offset, size);
         // order is not copied into the readonly copy.
         ByteBuffer readOnly = buffer.asReadOnlyBuffer();
         readOnly.order(byteOrder);
@@ -198,7 +226,11 @@ public class BasicImageReader {
     }
 
     public String getString(int offset) {
-        return strings.get(offset).toString();
+        return getUTF8String(offset).toString();
+    }
+
+    public UTF8String getUTF8String(int offset) {
+        return strings.get(offset);
     }
 
     public byte[] getResource(ImageLocation loc) throws IOException {

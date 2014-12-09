@@ -28,7 +28,6 @@ package jdk.internal.jimage;
 import java.io.PrintStream;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public final class BasicImageWriter {
@@ -46,46 +45,6 @@ public final class BasicImageWriter {
     private ImageStream locationStream;
     private ImageStream allIndexStream;
 
-    static class ImageBucket implements Comparable<ImageBucket> {
-        final List<ImageLocation> list;
-
-        ImageBucket() {
-            this.list = new ArrayList<>();
-        }
-
-        void add(ImageLocation location) {
-            list.add(location);
-        }
-
-        int getSize() {
-            return list.size();
-        }
-
-        List<ImageLocation> getList() {
-            return list;
-        }
-
-        ImageLocation getFirst() {
-            assert !list.isEmpty() : "bucket should never be empty";
-            return list.get(0);
-        }
-
-        @Override
-        public int hashCode() {
-            return getFirst().hashCode();
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            return this == obj;
-        }
-
-        @Override
-        public int compareTo(ImageBucket o) {
-            return o.getSize() - getSize();
-        }
-    }
-
     public BasicImageWriter() {
         this(ByteOrder.nativeOrder());
     }
@@ -101,6 +60,10 @@ public final class BasicImageWriter {
         this.allIndexStream = new ImageStream(byteOrder);
     }
 
+    public ByteOrder getByteOrder() {
+        return byteOrder;
+    }
+
     public int addString(String string) {
         return addString(new UTF8String(string));
     }
@@ -109,104 +72,33 @@ public final class BasicImageWriter {
         return strings.add(string);
     }
 
-    public void addLocation(String fullname, long contentOffset, long compressedSize, long uncompressedSize) {
-        ImageLocation location = ImageLocation.newLocation(new UTF8String(fullname), strings, contentOffset, compressedSize, uncompressedSize);
+    public void addLocation(String fullname, long contentOffset,
+            long compressedSize, long uncompressedSize) {
+        ImageLocation location =
+                ImageLocation.newLocation(new UTF8String(fullname), strings,
+                        contentOffset, compressedSize, uncompressedSize);
         input.add(location);
         count++;
     }
 
     private void generatePerfectHash() {
-        redo:
-        while(true) {
-            redirect = new int[count];
-            locations = new ImageLocation[count];
-
-            ImageBucket[] sorted = createBuckets();
-
-            int free = 0;
-
-            for (ImageBucket bucket : sorted) {
-                if (bucket.getSize() != 1) {
-                    if (!packCollidedEntries(bucket, count)) {
-                        count = (count + 1) | 1;
-
-                        continue redo;
-                    }
-                } else {
-                    for ( ; free < count && locations[free] != null; free++) {}
-                    assert free < count : "no free slots";
-                    locations[free] = bucket.getFirst();
-                    redirect[bucket.hashCode() % count] = -1 - free;
-                    free++;
-                }
-            }
-
-            break;
-        }
-    }
-
-    private ImageBucket[] createBuckets() {
-        ImageBucket[] buckets = new ImageBucket[count];
+        PerfectHashBuilder<ImageLocation> builder =
+                new PerfectHashBuilder<>(new PerfectHashBuilder.Entry<ImageLocation>().getClass(),
+                                         new PerfectHashBuilder.Bucket<ImageLocation>().getClass());
 
         input.stream().forEach((location) -> {
-            int index = location.hashCode() % count;
-            ImageBucket bucket = buckets[index];
-
-            if (bucket == null) {
-                buckets[index] = bucket = new ImageBucket();
-            }
-
-            bucket.add(location);
+            builder.put(location.getFullName(), location);
         });
 
-        ImageBucket[] sorted = Arrays.asList(buckets).stream()
-                .filter((bucket) -> (bucket != null))
-                .sorted()
-                .toArray(ImageBucket[]::new);
+        builder.generate();
 
-        return sorted;
-    }
+        redirect = builder.getRedirect();
+        PerfectHashBuilder.Entry<ImageLocation>[] order = builder.getOrder();
+        locations = new ImageLocation[order.length];
 
-    private boolean packCollidedEntries(ImageBucket bucket, int count) {
-        List<Integer> undo = new ArrayList<>();
-        int base = UTF8String.HASH_MULTIPLIER + 1;
-
-        int retry = 0;
-
-        redo:
-        while (true) {
-            for (ImageLocation location : bucket.getList()) {
-                int index = location.hashCode(base) % count;
-
-                if (locations[index] != null) {
-                    undo.stream().forEach((i) -> {
-                        locations[i] = null;
-                    });
-
-                    undo.clear();
-                    base++;
-
-                    if (base == 0) {
-                        base = 1;
-                    }
-
-                    if (++retry > RETRY_LIMIT) {
-                        return false;
-                    }
-
-                    continue redo;
-                }
-
-                locations[index] = location;
-                undo.add(index);
-            }
-
-            redirect[bucket.hashCode() % count] = base;
-
-            break;
+        for (int i = 0; i < order.length; i++) {
+            locations[i] = order[i].getValue();
         }
-
-        return true;
     }
 
     private void prepareStringBytes() {
