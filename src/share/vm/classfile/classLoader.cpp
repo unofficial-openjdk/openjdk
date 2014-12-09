@@ -582,6 +582,23 @@ ClassFileStream* ClassPathImageEntry::open_stream(const char* name, TRAPS) {
   u8 size;
   _image->get_resource(name, buffer, size);
 
+  if (!buffer) {
+    const char *pslash = strrchr(name, '/');
+
+    if (pslash) {
+      char path[JVM_MAXPATHLEN];
+      int len = pslash - name;
+      strncpy(path, name, len);
+      path[len] = '\0';
+      const char* moduleName = _image->module(path);
+
+      if (moduleName) {
+        jio_snprintf(path, JVM_MAXPATHLEN - 1, "/%s/%s", moduleName, name);
+        _image->get_resource(path, buffer, size);
+      }
+    }
+  }
+
   if (buffer) {
     if (UsePerfData) {
       ClassLoader::perf_sys_classfile_bytes_read()->inc(size);
@@ -604,14 +621,8 @@ void ClassPathImageEntry::compile_the_world(Handle loader, TRAPS) {
 
     if (location_data) {
        ImageLocation location(location_data);
-       const char* parent = location.get_attribute(ImageLocation::ATTRIBUTE_PARENT, strings);
-       const char* base = location.get_attribute(ImageLocation::ATTRIBUTE_BASE, strings);
-       const char* extension = location.get_attribute(ImageLocation::ATTRIBUTE_EXTENSION, strings);
-       assert((strlen(parent) + strlen(base) + strlen(extension)) < JVM_MAXPATHLEN, "path exceeds buffer");
        char path[JVM_MAXPATHLEN];
-       strcpy(path, parent);
-       strcat(path, base);
-       strcat(path, extension);
+       _image->location_path(location_data, path, JVM_MAXPATHLEN);
        ClassLoader::compile_the_world_in(path, loader, CHECK);
     }
   }

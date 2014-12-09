@@ -138,6 +138,9 @@ private:
   u4 _size;
 
 public:
+  // Not found result from find routine.
+  static const s4 NOT_FOUND = -1;
+
   // Prime used to generate hash for Perfect Hashing.
   static const u4 HASH_MULTIPLIER = 0x01000193;
 
@@ -155,13 +158,23 @@ public:
   }
 
   // Compute the Perfect Hashing hash code for the supplied string, starting at seed.
-  static u4 hash_code(const char* string, u4 seed);
+  static s4 hash_code(const char* string, s4 seed);
+
+  // Match up a string in the perfect hash table.  Still needs validation
+  // for exact match.
+  static s4 find(const char* name, s4* redirect, s4 length);
 
   // Test to see if string begins with start.  If so returns remaining portion
   // of string.  Otherwise, NULL.  Used to test sections of a path without
   // copying.
   static const char* starts_with(const char* string, const char* start);
 
+  // Test to see if string begins with start char.  If so returns remaining portion
+  // of string.  Otherwise, NULL.  Used to test sections of a path without
+  // copying.
+  inline static const char* starts_with(const char* string, const char ch) {
+    return *string == ch ? string + 1 : NULL;
+  }
 };
 
 // Manage image file location attribute streams.  Within an image, a location's
@@ -200,15 +213,17 @@ public:
 //
 class ImageLocation {
 public:
-  // Attribute kind enumeration.
-  static const u1 ATTRIBUTE_END = 0; // End of attribute stream marker
-  static const u1 ATTRIBUTE_BASE = 1; // String table offset of resource path base
-  static const u1 ATTRIBUTE_PARENT = 2; // String table offset of resource path parent
-  static const u1 ATTRIBUTE_EXTENSION = 3; // String table offset of resource path extension
-  static const u1 ATTRIBUTE_OFFSET = 4; // Container byte offset of resource
-  static const u1 ATTRIBUTE_COMPRESSED = 5; // In image byte size of the compressed resource
-  static const u1 ATTRIBUTE_UNCOMPRESSED = 6; // In memory byte size of the uncompressed resource
-  static const u1 ATTRIBUTE_COUNT = 7; // Number of attribute kinds
+  enum {
+    ATTRIBUTE_END,          // End of attribute stream marker
+    ATTRIBUTE_MODULE,       // String table offset of module name
+    ATTRIBUTE_PARENT,       // String table offset of resource path parent
+    ATTRIBUTE_BASE,         // String table offset of resource path base
+    ATTRIBUTE_EXTENSION,    // String table offset of resource path extension
+    ATTRIBUTE_OFFSET,       // Container byte offset of resource
+    ATTRIBUTE_COMPRESSED,   // In image byte size of the compressed resource
+    ATTRIBUTE_UNCOMPRESSED, // In memory byte size of the uncompressed resource
+    ATTRIBUTE_COUNT         // Number of attribute kinds
+  };
 
 private:
   // Values of inflated attributes.
@@ -255,6 +270,85 @@ public:
   }
 };
 
+//
+// NOTE: needs revision.
+// Each loader requires set of module meta data to identify which modules and
+// packages are managed by that loader.  Currently, there is one image file per
+// loader, so only one  module meta data resource per file.
+//
+// Each element in the module meta data is a native endian 4 byte integer.  Note
+// that entries with zero offsets for string table entries should be ignored (
+// padding for hash table lookup.)
+//
+// Format:
+//    Count of package to module entries
+//    Count of module to package entries
+//    Perfect Hash redirect table[Count of package to module entries]
+//    Package to module entries[Count of package to module entries]
+//        Offset to package name in string table
+//        Offset to module name in string table
+//    Perfect Hash redirect table[Count of module to package entries]
+//    Module to package entries[Count of module to package entries]
+//        Offset to module name in string table
+//        Count of packages in module
+//        Offset to first package in packages table
+//    Packages[]
+//        Offset to package name in string table
+//
+// Manage the image module meta data.
+class ImageModuleData : public CHeapObj<mtClass> {
+    struct Header {
+        s4 _ptm_count;          // Count of package to module entries
+        s4 _mtp_count;          // Count of module to package entries
+    };
+
+    // Hashtable entry
+    struct HashData {
+        s4 _name_offset;        // Name offset in string table
+    };
+
+    // Package to module hashtable entry
+    struct PTMData: public HashData {
+        s4 _module_name_offset; // Module name offset in string table
+    };
+
+    // Module to package hashtable entry
+
+    struct MTPData : public HashData {
+        s4 _package_count;      // Number of packages in module
+        s4 _package_offset;     // Offset in package list
+    };
+
+    ImageFile* _image_file;     // Source image file
+    ImageStrings _strings;      // Image file strings
+    u1* _data;                  // Module data resource data
+    u8 _data_size;              // Size of resource data
+    Header* _header;            // Module data header
+    s4* _ptm_redirect;          // Package to module hashtable redirect
+    PTMData* _ptm_data;         // Package to module data
+    s4* _mtp_redirect;          // Module to packages hashtable redirect
+    MTPData* _mtp_data;         // Module to packages data
+    s4* _mtp_packages;          // Package data (name offsets)
+
+    // Return a string from the string table.
+    inline const char* get_string(u4 offset) {
+      return _strings.get(offset);
+    }
+
+public:
+    ImageModuleData(ImageFile* image_file);
+    ~ImageModuleData();
+
+    // Return the name of tthe module data resource.
+    static void module_data_name(char* buffer, const char* image_file_name);
+
+    // Return the module name a package resides.  Returns NULL if not found.
+    const char* package_to_module(const char* package_name);
+
+    // Returns all the package names in a module.  Returns NULL if not found.
+    GrowableArray<const char*>* module_to_packages(const char* module_name);
+};
+
 // Manage the image file.
 class ImageFile: public CHeapObj<mtClass> {
 private:
@@ -284,6 +378,8 @@ private:
   u4* _offsets_table;   // Location offset table
   u1* _location_bytes;  // Location attributes
   u1* _string_bytes;    // String table
+
+  ImageModuleData* _module_data; // Module meta data
 
   // Compute number of bytes in image file index.
   inline u8 index_size() {
@@ -327,14 +423,22 @@ public:
   // Return the attribute stream for a named resourced.
   u1* find_location_data(const char* path) const;
 
+  // Assemble the location path.
+  void location_path(ImageLocation& location, char* path, int max) const;
+
   // Verify that a found location matches the supplied path.
   bool verify_location(ImageLocation& location, const char* path) const;
 
   // Return the resource for the supplied location info.
-  u1* get_resource(ImageLocation& location) const;
+  u1* get_resource(ImageLocation& location, bool is_C_heap = false) const;
 
   // Return the resource associated with the path else NULL if not found.
-  void get_resource(const char* path, u1*& buffer, u8& size) const;
+  void get_resource(const char* path, u1*& buffer, u8& size, bool is_C_heap = false) const;
+
+  // Return the module name a package resides.  Returns NULL if not found.
+  inline const char* module(const char* package_name) {
+    return _module_data->package_to_module(package_name);
+  }
 
   // Return an array of packages for a given module
   GrowableArray<const char*>* packages(const char* name);
