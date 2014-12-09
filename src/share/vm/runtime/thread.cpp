@@ -3567,9 +3567,6 @@ jint Threads::create_vm(JavaVMInitArgs* args, bool* canTryAgain) {
     create_vm_init_libraries();
   }
 
-  // Notify JVMTI agents that VM initialization is complete - nop if no agents.
-  JvmtiExport::post_vm_initialized();
-
   if (TRACE_START() != JNI_OK) {
     vm_exit_during_initialization("Failed to start tracing backend.");
   }
@@ -3593,6 +3590,9 @@ jint Threads::create_vm(JavaVMInitArgs* args, bool* canTryAgain) {
   if (UseModules) {
     call_initModuleRuntime(CHECK_JNI_ERR);
   }
+
+  // Notify JVMTI agents that VM initialization is complete - nop if no agents.
+  JvmtiExport::post_vm_initialized();
 
 #if INCLUDE_MANAGEMENT
   Management::initialize(THREAD);
