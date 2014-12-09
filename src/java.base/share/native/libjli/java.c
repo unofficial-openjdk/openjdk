@@ -1179,7 +1179,7 @@ ParseArguments(int *pargc, char ***pargv,
                 JLI_StrCCmp(arg, "-XshowSettings:") == 0) {
             showSettings = arg;
         } else if (JLI_StrCmp(arg, "-XlistModules") == 0 |
-                JLI_StrCCmp(arg, "-XlistModules:") == 0) {
+            JLI_StrCCmp(arg, "-XlistModules:") == 0) {
             listModules = arg;
         } else if (JLI_StrCmp(arg, "-Xdiag") == 0) {
             AddOption("-Dsun.java.launcher.diag=true", NULL);

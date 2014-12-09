@@ -39,9 +39,6 @@
 #define MAXPATHLEN      MAX_PATH
 #define MAXNAMELEN      MAX_PATH
 
-static const char* APP_JAR = "\\lib\\app\\app.jar";
-static const char* APP_CLASS = "\\lib\\app\\cmdClass";
-
 /*
  * Support for doing cheap, accurate interval timing.
  */
