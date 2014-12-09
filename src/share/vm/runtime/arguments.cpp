@@ -2064,7 +2064,7 @@ bool Arguments::check_vm_args_consistency() {
                                         "G1ConcMarkStepDurationMillis");
     status = status && verify_interval(G1ConcRSHotCardLimit, 0, max_jubyte,
                                        "G1ConcRSHotCardLimit");
-    status = status && verify_interval(G1ConcRSLogCacheSize, 0, 31,
+    status = status && verify_interval(G1ConcRSLogCacheSize, 0, 27,
                                        "G1ConcRSLogCacheSize");
   }
 #endif
