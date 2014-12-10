@@ -158,7 +158,15 @@ public final class ImageFile {
                 for (String mn : mods) {
                     for (Resource res : resourcesForModule.get(mn)) {
                         String fn = res.name();
-                        String path = fn.startsWith("META-INF/") || fn.endsWith("module-info.class") ? fn : ("/" + mn + "/" + fn);
+                        String path;
+
+                        if (fn.startsWith("META-INF/")) {
+                            path = fn;
+                        } else if (fn.endsWith("module-info.class")) {
+                            path = "/" + fn;
+                        } else {
+                            path = "/" + mn + "/" + fn;
+                        }
 
                         long uncompressedSize = res.size();
                         long compressedSize = res.csize();
