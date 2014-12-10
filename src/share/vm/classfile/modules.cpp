@@ -70,7 +70,7 @@ static ModuleEntryTable* get_module_entry_table(Handle h_loader, TRAPS) {
   // This code can be called during start-up, before the classLoader's classLoader data got
   // created.  So, call register_loader() to make sure the classLoader data gets created.
   ClassLoaderData *loader_cld = SystemDictionary::register_loader(h_loader, CHECK_NULL);
-  return loader_cld != NULL ? loader_cld->modules() : NULL;
+  return loader_cld->modules();
 }
 
 static PackageEntryTable* get_package_entry_table(Handle h_loader, TRAPS) {
@@ -78,7 +78,7 @@ static PackageEntryTable* get_package_entry_table(Handle h_loader, TRAPS) {
   // This code can be called during start-up, before the classLoader's classLoader data got
   // created.  So, call register_loader() to make sure the classLoader data gets created.
   ClassLoaderData *loader_cld = SystemDictionary::register_loader(h_loader, CHECK_NULL);
-  return loader_cld != NULL ? loader_cld->packages() : NULL;
+  return loader_cld->packages();
 }
 
 // Check if -Xoverride:<path> was specified.  If so, prepend <path>/module_name,
@@ -142,7 +142,8 @@ static ModuleEntry* get_module_entry(jobject module, TRAPS) {
   oop loader = java_lang_reflect_Module::loader(h_module());
   Handle h_loader = Handle(loader);
   ModuleEntryTable* module_table = get_module_entry_table(h_loader, CHECK_NULL);
-  return module_table != NULL ? module_table->lookup_only(h_module()) : NULL;
+  assert(module_table != NULL, "Unexpected null module entry table");
+  return module_table->lookup_only(h_module());
 }
 
 static PackageEntry* get_package_entry(ModuleEntry* module_entry, jstring package, TRAPS) {
@@ -152,7 +153,8 @@ static PackageEntry* get_package_entry(ModuleEntry* module_entry, jstring packag
   if (package_name == NULL) return NULL;
   Symbol *pkg_symbol = SymbolTable::new_symbol(package_name, CHECK_NULL);
   PackageEntryTable* package_entry_table = module_entry->loader()->packages();
-  return package_entry_table != NULL ? package_entry_table->lookup_only(pkg_symbol) : NULL;
+  assert(package_entry_table != NULL, "Unexpected null package entry table");
+  return package_entry_table->lookup_only(pkg_symbol);
 }
 
 
@@ -221,10 +223,7 @@ jobject Modules::define_module(JNIEnv *env, jstring name, jobject loader, jobjec
     "Defining a module with delegating class loader");
 
   ModuleEntryTable* module_table = get_module_entry_table(h_loader, CHECK_NULL);
-  if (module_table == NULL) {
-    THROW_MSG_NULL(vmSymbols::java_lang_IllegalArgumentException(),
-                   err_msg("Loader is invalid for module: %s", module_name));
-  }
+  assert(module_table != NULL, "module entry table shouldn't be null");
 
   // Create symbol* entry for module name.
   Symbol *module_symbol = SymbolTable::new_symbol(module_name, CHECK_NULL);
@@ -244,9 +243,16 @@ jobject Modules::define_module(JNIEnv *env, jstring name, jobject loader, jobjec
       // Check that none of the packages exist in the class loader's package table.
       for (int x = 0; x < pkg_list->length(); x++) {
         if (package_table->lookup_only(pkg_list->at(x))) {
-          THROW_MSG_NULL(vmSymbols::java_lang_IllegalArgumentException(),
-                         err_msg("Package %s for module %s already exists for class loader",
-                                 pkg_list->at(x)->as_C_string(), module_name));
+          // This could be because the module was already defined.  If so,
+          // report that error instead of the package error.
+          if (module_table->lookup_only(module_symbol) != NULL) {
+            THROW_MSG_NULL(vmSymbols::java_lang_IllegalArgumentException(),
+                           err_msg("Module %s is already defined", module_name));
+          } else {
+            THROW_MSG_NULL(vmSymbols::java_lang_IllegalArgumentException(),
+                           err_msg("Package %s for module %s already exists for class loader",
+                                   pkg_list->at(x)->as_C_string(), module_name));
+          }
         }
       }
     }  // if (num_packages > 0)...
