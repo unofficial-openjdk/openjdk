@@ -45,6 +45,7 @@ import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -143,6 +144,8 @@ public interface ModuleArtifactFinder {
                                               ModuleArtifactFinder second)
     {
         return new ModuleArtifactFinder() {
+            Set<ModuleArtifact> allModules;
+
             @Override
             public ModuleArtifact find(String name) {
                 ModuleArtifact m = first.find(name);
@@ -152,11 +155,15 @@ public interface ModuleArtifactFinder {
             }
             @Override
             public Set<ModuleArtifact> allModules() {
-                Set<ModuleArtifact> result = new HashSet<>();
-                // reverse order is important here
-                result.addAll(second.allModules());
-                result.addAll(first.allModules());
-                return result;
+                if (allModules == null) {
+                    allModules = Stream.concat(first.allModules().stream(),
+                                               second.allModules().stream())
+                                       .map(a -> a.descriptor().name())
+                                       .distinct()
+                                       .map(this::find)
+                                       .collect(Collectors.toSet());
+                }
+                return allModules;
             }
         };
     }

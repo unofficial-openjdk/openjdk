@@ -29,6 +29,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * The configuration that is the result of resolution or binding.
@@ -157,6 +158,13 @@ public class Configuration {
                 " not in this configuration");
         }
         return Collections.unmodifiableSet(reads);
+    }
+
+    @Override
+    public String toString() {
+        return descriptors().stream()
+                            .map(ModuleDescriptor::name)
+                            .collect(Collectors.joining(", "));
     }
 }
 
