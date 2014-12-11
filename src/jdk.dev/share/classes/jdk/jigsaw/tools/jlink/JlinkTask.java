@@ -553,9 +553,13 @@ class JlinkTask {
 
         void createModularImage(Path output) throws IOException {
             Set<Archive> archives = jmods.entrySet().stream()
-                    .map(e -> new JmodArchive(e.getKey(), e.getValue(), options.compress))
+                    .map(e -> new JmodArchive(e.getKey(), e.getValue()))
                     .collect(Collectors.toSet());
-            ImageFile.create(output, archives, imf);
+            try {
+                ImageFile.create(output, archives, imf, options.compress);
+            }catch(Exception ex) {
+                throw new IOException(ex);
+            }
             writeModulesLists(output, modules);
         }
 

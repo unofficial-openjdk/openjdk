@@ -27,36 +27,67 @@ package jdk.internal.jimage;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.util.function.Consumer;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
+import jdk.internal.jimage.Archive.Entry.EntryType;
 
 /**
  * An Archive backed by a jmod file.
  */
 public class JmodArchive implements Archive {
+
+    /**
+     * An entry located in a .jmod file.
+     */
+    private class JmodEntry extends Entry {
+
+        private final long size;
+        private final ZipEntry entry;
+        private final ZipFile file;
+
+        JmodEntry(String path, String name, EntryType type, ZipFile file, ZipEntry entry) {
+            super(JmodArchive.this, path, name, type);
+            this.entry = entry;
+            this.file = file;
+            size = entry.getSize();
+        }
+
+        /**
+         * Returns the number of uncompressed bytes for this entry.
+         */
+        @Override
+        public long size() {
+            return size;
+        }
+
+        @Override
+        public InputStream stream() throws IOException {
+            return file.getInputStream(entry);
+        }
+    }
+
     private static final String JMOD_EXT = ".jmod";
+    private static final String MODULE_NAME = "module";
     private static final String MODULE_INFO = "module-info.class";
+    private static final String CLASSES     = "classes";
+    private static final String NATIVE_LIBS = "native";
+    private static final String NATIVE_CMDS = "bin";
+    private static final String CONFIG      = "conf";
+    private static final String SERVICES    = "module/services";
     private final Path jmod;
     private final String moduleName;
-    private final boolean compress;
     // currently processed ZipFile
     private ZipFile zipFile;
 
     public JmodArchive(String mn, Path jmod) {
-        this(mn, jmod, false);
-    }
-
-    public JmodArchive(String mn, Path jmod, boolean compress) {
         String filename = jmod.getFileName().toString();
         if (!filename.endsWith(JMOD_EXT))
             throw new UnsupportedOperationException("Unsupported format: " + filename);
         this.moduleName = mn;
         this.jmod = jmod;
-        this.compress = compress;
     }
 
     @Override
@@ -65,81 +96,67 @@ public class JmodArchive implements Archive {
     }
 
     @Override
-    public void visitResources(Consumer<Resource> consumer) {
-        try (ZipFile zf = new ZipFile(jmod.toFile())) {
-            this.zipFile = zf;
-            zf.stream()
-                .filter(ze -> !ze.isDirectory() &&
-                        ze.getName().startsWith("classes"))
-                .filter(ze -> !ze.getName().startsWith("classes/_"))
-                .map(this::toResource)
-                .forEach(consumer::accept);
+    public void visitEntries(Consumer<Entry> consumer) {
+        try {
+            if (zipFile == null) {
+                open();
+            }
         } catch (IOException ioe) {
             throw new UncheckedIOException(ioe);
         }
+        zipFile.stream()
+                .map(this::toEntry).filter(n -> n != null)
+                .forEach(consumer::accept);
     }
 
-    private Resource toResource(ZipEntry ze) {
+    private static EntryType toResourceType(String section) {
+        switch (section) {
+            case CLASSES:
+                return EntryType.CLASS_RESOURCE;
+            case NATIVE_LIBS:
+                return EntryType.NATIVE_LIB;
+            case NATIVE_CMDS:
+                return EntryType.NATIVE_CMD;
+            case CONFIG:
+                return EntryType.CONFIG;
+            case MODULE_NAME:
+                return EntryType.MODULE_NAME;
+            case SERVICES:
+                //throw new UnsupportedOperationException(name + " in " + zipfile.toString()); //TODO
+                throw new UnsupportedOperationException(section);
+            default:
+                //throw new InternalError("unexpected entry: " + name + " " + zipfile.toString()); //TODO
+                throw new InternalError("unexpected entry: " + section);
+        }
+    }
+
+    private Entry toEntry(ZipEntry ze) {
         String name = ze.getName();
-        // trim the "classes/" path
         String fn = name.substring(name.indexOf('/') + 1);
+
+        if (ze.isDirectory() || fn.startsWith("_")) {
+            return null;
+        }
         if (fn.equals(MODULE_INFO)) {
             fn = moduleName + "/" + MODULE_INFO;
         }
-        long entrySize = ze.getSize();
-        long compressedSize = 0;
-        if (compress) {
-            try (InputStream is = zipFile.getInputStream(ze)) {
-                compressedSize = JmodEntryWriter.calcCompressedSize(is);
-            } catch (IOException ioe) {
-                throw new UncheckedIOException(ioe);
-            }
-        }
-        return new Resource(fn, entrySize, compressedSize);
+        String section = name.substring(0, name.indexOf('/'));
+        EntryType rt = toResourceType(section);
+
+        return new JmodEntry(ze.getName(), fn, rt, zipFile, ze);
     }
 
     @Override
-    public void visitEntries(Consumer<Entry> consumer) {
-        try (final ZipFile zf = new ZipFile(jmod.toFile())) {
-            zf.stream()
-              .filter(ze -> !ze.isDirectory() && !ze.getName().startsWith("classes/_"))
-              .map(ze -> JmodArchive.toEntry(zf, ze))
-              .forEach(consumer::accept);
-        } catch (IOException ioe) {
-            throw new UncheckedIOException(ioe);
-        }
+    public void close() throws IOException {
+        zipFile.close();
     }
 
-    static private class SimpleEntry implements Entry {
-        private final String name;
-        private final InputStream is;
-        private final boolean isDirectory;
-        SimpleEntry(String name, InputStream is, boolean isDirectory) {
-            this.name = name;
-            this.is = is;
-            this.isDirectory = isDirectory;
+    @Override
+    public void open() throws IOException {
+        if (zipFile != null) {
+            zipFile.close();
         }
-        public String getName() {
-            return name;
-        }
-        public InputStream getInputStream() {
-            return is;
-        }
-        public boolean isDirectory() {
-            return isDirectory;
-        }
-    }
-
-    private static Entry toEntry(ZipFile zf, ZipEntry ze) {
-        try {
-            return new SimpleEntry(ze.getName(), zf.getInputStream(ze), ze.isDirectory());
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
-    }
-
-    public Consumer<Entry> defaultImageWriter(Path path, OutputStream out) {
-        return new JmodEntryWriter(path, out, compress);
+        zipFile = new ZipFile(jmod.toFile());
     }
 }
 
