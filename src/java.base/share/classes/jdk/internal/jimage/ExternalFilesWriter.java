@@ -60,7 +60,7 @@ class ExternalFilesWriter implements Consumer<Entry> {
                         path.toFile().setExecutable(true);
                         break;
                     case CONFIG:
-                        writeEntry(in, destFile("lib", filename));
+                        writeEntry(in, destFile("conf", filename));
                         break;
                     case MODULE_NAME:
                         // skip
