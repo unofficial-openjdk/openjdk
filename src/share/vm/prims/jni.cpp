@@ -28,6 +28,7 @@
 #include "classfile/altHashing.hpp"
 #include "classfile/classLoader.hpp"
 #include "classfile/javaClasses.hpp"
+#include "classfile/modules.hpp"
 #include "classfile/symbolTable.hpp"
 #include "classfile/systemDictionary.hpp"
 #include "classfile/vmSymbols.hpp"
@@ -3440,9 +3441,7 @@ JNI_ENTRY(jobject, jni_GetModule(JNIEnv* env, jclass clazz))
   HOTSPOT_JNI_GETMODULE_ENTRY(env, clazz);
   jobject res;
   DT_RETURN_MARK(GetModule, jobject, (const jobject&)res);
-  Handle h_clazz(THREAD, JNIHandles::resolve(clazz));
-  oop module = java_lang_Class::module(h_clazz());
-  res = JNIHandles::make_local(env, module);
+  res = Modules::get_module(env, clazz);;
   return res;
 JNI_END
 
