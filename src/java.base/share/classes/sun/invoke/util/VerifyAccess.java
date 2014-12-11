@@ -171,7 +171,7 @@ public class VerifyAccess {
                (allowedModes & ~(ALL_ACCESS_MODES|PACKAGE_ALLOWED)) == 0);
         // check refc is in readable module and that refc is exported
         if (Reflection.modulesInitialized() && !sun.reflect.Reflection.verifyModuleAccess(lookupClass, refc))
-          return false;
+            return false;
         int mods = getClassModifiers(refc);
         if (isPublic(mods))
             return true;

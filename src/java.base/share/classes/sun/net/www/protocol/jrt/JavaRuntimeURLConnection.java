@@ -138,7 +138,7 @@ public class JavaRuntimeURLConnection extends URLConnection {
     @Override
     public int getContentLength() {
         long len = getContentLengthLong();
-        return Math.min((int)len, Integer.MAX_VALUE);
+        return len > Integer.MAX_VALUE ? -1 : (int)len;
     }
 
     @Override

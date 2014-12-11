@@ -387,7 +387,6 @@ public class VM {
      */
     public static native void addModulePackage(Module m, String pkg);
 
-    /******/
 
     /**
      * Returns {@code true} if we are in a set UID program.

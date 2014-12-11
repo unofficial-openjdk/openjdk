@@ -42,4 +42,3 @@ public class Handler extends URLStreamHandler {
         return new JavaRuntimeURLConnection(url);
     }
 }
-
