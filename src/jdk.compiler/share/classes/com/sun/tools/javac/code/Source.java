@@ -143,6 +143,9 @@ public enum Source {
     public boolean allowTryWithResources() {
         return compareTo(JDK1_7) >= 0;
     }
+    public boolean allowEffectivelyFinalVariablesInTryWithResources() {
+        return compareTo(JDK1_9) >= 0;
+    }
     public boolean allowBinaryLiterals() {
         return compareTo(JDK1_7) >= 0;
     }
@@ -151,6 +154,9 @@ public enum Source {
     }
     public boolean allowStringsInSwitch() {
         return compareTo(JDK1_7) >= 0;
+    }
+    public boolean allowDeprecationOnImport() {
+        return compareTo(JDK1_9) < 0;
     }
     public boolean allowSimplifiedVarargs() {
         return compareTo(JDK1_7) >= 0;

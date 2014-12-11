@@ -63,8 +63,8 @@ import com.sun.tools.javac.util.DefinedBy.Api;
  *  deletion without notice.</b>
  */
 public abstract class PathFileObject implements JavaFileObject {
-    private BaseFileManager fileManager;
-    private Path path;
+    private final BaseFileManager fileManager;
+    private final Path path;
 
     /**
      * Create a PathFileObject within a directory, such that the binary name
@@ -90,6 +90,21 @@ public abstract class PathFileObject implements JavaFileObject {
             @Override
             public String inferBinaryName(Iterable<? extends Path> paths) {
                 return toBinaryName(path);
+            }
+        };
+    }
+
+    /**
+     * Create a PathFileObject in a modular file system, such as jrt:, such that
+     * the binary name can be inferred from its position within the filesystem.
+     */
+    public static PathFileObject createJRTPathFileObject(BaseFileManager fileManager,
+            final Path path) {
+        return new PathFileObject(fileManager, path) {
+            @Override
+            public String inferBinaryName(Iterable<? extends Path> paths) {
+                // use subpath to ignore the leading component containing the module name
+                return toBinaryName(path.subpath(1, path.getNameCount()));
             }
         };
     }
@@ -148,7 +163,7 @@ public abstract class PathFileObject implements JavaFileObject {
      * Return the Path for this object.
      * @return the Path for this object.
      */
-    Path getPath() {
+    public Path getPath() {
         return path;
     }
 

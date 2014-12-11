@@ -170,6 +170,7 @@ public class Kinds {
         public static final KindSelector POLY = new KindSelector(0x20);
         public static final KindSelector MDL = new KindSelector(0x40);
         public static final KindSelector ERR = new KindSelector(0x7f);
+        public static final KindSelector ASG = new KindSelector(0x84);
 
         //common derived selectors
         public static final KindSelector TYP_PCK = of(TYP, PCK);
