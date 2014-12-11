@@ -25,49 +25,13 @@
 
 package jdk.internal.jimage;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UncheckedIOException;
 import java.nio.file.Path;
-import java.util.function.Consumer;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 import jdk.internal.jimage.Archive.Entry.EntryType;
 
 /**
  * An Archive backed by a jmod file.
  */
-public class JmodArchive implements Archive {
-
-    /**
-     * An entry located in a .jmod file.
-     */
-    private class JmodEntry extends Entry {
-
-        private final long size;
-        private final ZipEntry entry;
-        private final ZipFile file;
-
-        JmodEntry(String path, String name, EntryType type, ZipFile file, ZipEntry entry) {
-            super(JmodArchive.this, path, name, type);
-            this.entry = entry;
-            this.file = file;
-            size = entry.getSize();
-        }
-
-        /**
-         * Returns the number of uncompressed bytes for this entry.
-         */
-        @Override
-        public long size() {
-            return size;
-        }
-
-        @Override
-        public InputStream stream() throws IOException {
-            return file.getInputStream(entry);
-        }
-    }
+public class JmodArchive extends JarArchive {
 
     private static final String JMOD_EXT = ".jmod";
     private static final String MODULE_NAME = "module";
@@ -77,39 +41,16 @@ public class JmodArchive implements Archive {
     private static final String NATIVE_CMDS = "bin";
     private static final String CONFIG      = "conf";
     private static final String SERVICES    = "module/services";
-    private final Path jmod;
-    private final String moduleName;
-    // currently processed ZipFile
-    private ZipFile zipFile;
 
     public JmodArchive(String mn, Path jmod) {
+        super(mn, jmod);
         String filename = jmod.getFileName().toString();
         if (!filename.endsWith(JMOD_EXT))
             throw new UnsupportedOperationException("Unsupported format: " + filename);
-        this.moduleName = mn;
-        this.jmod = jmod;
     }
 
-    @Override
-    public String moduleName() {
-        return moduleName;
-    }
-
-    @Override
-    public void visitEntries(Consumer<Entry> consumer) {
-        try {
-            if (zipFile == null) {
-                open();
-            }
-        } catch (IOException ioe) {
-            throw new UncheckedIOException(ioe);
-        }
-        zipFile.stream()
-                .map(this::toEntry).filter(n -> n != null)
-                .forEach(consumer::accept);
-    }
-
-    private static EntryType toResourceType(String section) {
+    EntryType toEntryType(String entryName) {
+        String section = getSection(entryName);
         switch (section) {
             case CLASSES:
                 return EntryType.CLASS_RESOURCE;
@@ -130,33 +71,13 @@ public class JmodArchive implements Archive {
         }
     }
 
-    private Entry toEntry(ZipEntry ze) {
-        String name = ze.getName();
-        String fn = name.substring(name.indexOf('/') + 1);
-
-        if (ze.isDirectory() || fn.startsWith("_")) {
-            return null;
-        }
-        if (fn.equals(MODULE_INFO)) {
-            fn = moduleName + "/" + MODULE_INFO;
-        }
-        String section = name.substring(0, name.indexOf('/'));
-        EntryType rt = toResourceType(section);
-
-        return new JmodEntry(ze.getName(), fn, rt, zipFile, ze);
+    private static String getSection(String entryName) {
+        return entryName.substring(0, entryName.indexOf('/'));
     }
 
     @Override
-    public void close() throws IOException {
-        zipFile.close();
-    }
-
-    @Override
-    public void open() throws IOException {
-        if (zipFile != null) {
-            zipFile.close();
-        }
-        zipFile = new ZipFile(jmod.toFile());
+    String getFileName(String entryName) {
+        return entryName.substring(entryName.indexOf('/') + 1);
     }
 }
 

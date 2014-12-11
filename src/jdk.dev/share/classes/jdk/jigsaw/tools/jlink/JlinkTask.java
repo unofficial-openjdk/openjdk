@@ -77,6 +77,7 @@ import jdk.internal.jimage.Archive;
 import jdk.internal.jimage.ImageFile;
 import jdk.internal.jimage.JigsawImageModules;
 import jdk.internal.jimage.JmodArchive;
+import jdk.internal.jimage.ModularJarArchive;
 import jdk.jigsaw.module.Configuration;
 import jdk.jigsaw.module.Layer;
 import jdk.jigsaw.module.ModuleArtifactFinder;
@@ -414,10 +415,10 @@ class JlinkTask {
             }
 
             String scheme = url.getProtocol();
-            if (!scheme.equalsIgnoreCase("file") || !url.toString().endsWith(".jmod")) {
-                // only jmods supported at this time
+            if (!scheme.equalsIgnoreCase("file") ||
+                !(url.toString().endsWith(".jmod") || url.toString().endsWith(".jar"))) {
                 fail(RuntimeException.class,
-                     "Selected module %s (%s) not in jmod format",
+                     "Selected module %s (%s) not in jmod or modular jar format",
                      name,
                      url);
             }
@@ -454,9 +455,9 @@ class JlinkTask {
                                                  ModuleArtifactFinder.nullFinder(),
                                                  options.jmods);
 
-        Map<String,Path> jmods = modulesToPath(cf.descriptors());
+        Map<String,Path> mods = modulesToPath(cf.descriptors());
 
-        ImageFileHelper imageHelper = new ImageFileHelper(cf, jmods);
+        ImageFileHelper imageHelper = new ImageFileHelper(cf, mods);
         if (options.format == Format.IMAGE) {
             imageHelper.createLegacyFormat(output);
         } else if (options.format == Format.JIMAGE) {
@@ -483,7 +484,7 @@ class JlinkTask {
         }
 
         // generate launch scripts for the modules with a main class
-        for (Map.Entry<String, Path> entry: jmods.entrySet()) {
+        for (Map.Entry<String, Path> entry: mods.entrySet()) {
             String module = entry.getKey();
             Path jmodpath = entry.getValue();
 
@@ -526,12 +527,12 @@ class JlinkTask {
         final Set<ModuleDescriptor> bootModules;
         final Set<ModuleDescriptor> extModules;
         final Set<ModuleDescriptor> appModules;
-        final Map<String,Path> jmods;
+        final Map<String,Path> modsPaths;
         final JigsawImageModules imf;
 
-        ImageFileHelper(Configuration cf, Map<String,Path> jmods) throws IOException {
+        ImageFileHelper(Configuration cf, Map<String,Path> modsPaths) throws IOException {
             this.modules = cf.descriptors();
-            this.jmods = jmods;
+            this.modsPaths = modsPaths;
             Map<String, ModuleDescriptor> mods = new HashMap<>();
             for (ModuleDescriptor m : modules) {
                 mods.put(m.name(), m);
@@ -552,8 +553,8 @@ class JlinkTask {
         }
 
         void createModularImage(Path output) throws IOException {
-            Set<Archive> archives = jmods.entrySet().stream()
-                    .map(e -> new JmodArchive(e.getKey(), e.getValue()))
+            Set<Archive> archives = modsPaths.entrySet().stream()
+                    .map(e -> newArchive(e.getKey(), e.getValue()))
                     .collect(Collectors.toSet());
             try {
                 ImageFile.create(output, archives, imf, options.compress);
@@ -561,6 +562,22 @@ class JlinkTask {
                 throw new IOException(ex);
             }
             writeModulesLists(output, modules);
+        }
+
+        private Archive newArchive(String module, Path path) {
+            if(path.toString().endsWith(".jmod")) {
+                return new JmodArchive(module, path);
+            } else {
+                if(path.toString().endsWith(".jar")) {
+                    return new ModularJarArchive(module, path);
+                } else {
+                    fail(RuntimeException.class,
+                     "Selected module %s (%s) not in jmod or modular jar format",
+                     module,
+                     path);
+                }
+            }
+            return null;
         }
 
         /*
@@ -571,7 +588,7 @@ class JlinkTask {
         void createLegacyFormat(Path output) throws IOException {
             Path modulesPath = output.resolve("lib/modules");
             Files.createDirectories(modulesPath);
-            for (Map.Entry<String,Path> e : jmods.entrySet()) {
+            for (Map.Entry<String,Path> e : modsPaths.entrySet()) {
                 String modName = e.getKey();
                 Path jmod = e.getValue();
                 String fileName = jmod.getFileName().toString();
