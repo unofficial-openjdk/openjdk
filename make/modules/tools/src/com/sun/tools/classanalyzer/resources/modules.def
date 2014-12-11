@@ -607,7 +607,8 @@ module java.activation {
 
 // standalone technology (JSR-223)
 module java.scripting {
-    include javax.script.**;
+    include javax.script.**,
+            com.sun.tools.script.**;
 
     uses javax.script.ScriptEngineFactory;
 }
@@ -777,8 +778,7 @@ module jdk.dev {
             sun.tools.native2ascii.**;
 
     // jhat
-    include com.sun.tools.hat.**,
-            com.sun.tools.script.**;
+    include com.sun.tools.hat.**;
 
     // jar, jarsigner
     include sun.tools.jar.**;
