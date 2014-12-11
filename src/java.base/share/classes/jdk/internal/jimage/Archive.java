@@ -37,9 +37,9 @@ public interface Archive {
     /**
      * Entry is contained in an Archive
      */
-    abstract class Entry {
+    public abstract class Entry {
 
-        static enum EntryType {
+        public static enum EntryType {
 
             MODULE_NAME,
             CLASS_RESOURCE,

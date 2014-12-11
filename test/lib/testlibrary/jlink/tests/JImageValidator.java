@@ -71,7 +71,7 @@ public class JImageValidator {
     public void validate() throws Exception {
         for (String d : dirs) {
             File dir = new File(rootDir, d);
-            if (!dir.exists() || !dir.isDirectory()) {
+            if (!dir.isDirectory()) {
                 throw new Exception("Invalid directory " + d);
             }
         }

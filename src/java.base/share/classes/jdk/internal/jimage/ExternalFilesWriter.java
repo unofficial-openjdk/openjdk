@@ -83,9 +83,7 @@ class ExternalFilesWriter implements Consumer<Entry> {
     }
 
     private void writeEntry(InputStream in, Path dstFile) throws IOException {
-        if (Files.notExists(dstFile.getParent())) {
-            Files.createDirectories(dstFile.getParent());
-        }
+        Files.createDirectories(dstFile.getParent());
         Files.copy(in, dstFile);
     }
 

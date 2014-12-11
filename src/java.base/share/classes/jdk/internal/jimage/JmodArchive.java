@@ -40,7 +40,6 @@ public class JmodArchive extends JarArchive {
     private static final String NATIVE_LIBS = "native";
     private static final String NATIVE_CMDS = "bin";
     private static final String CONFIG      = "conf";
-    private static final String SERVICES    = "module/services";
 
     public JmodArchive(String mn, Path jmod) {
         super(mn, jmod);
@@ -62,9 +61,6 @@ public class JmodArchive extends JarArchive {
                 return EntryType.CONFIG;
             case MODULE_NAME:
                 return EntryType.MODULE_NAME;
-            case SERVICES:
-                //throw new UnsupportedOperationException(name + " in " + zipfile.toString()); //TODO
-                throw new UnsupportedOperationException(section);
             default:
                 //throw new InternalError("unexpected entry: " + name + " " + zipfile.toString()); //TODO
                 throw new InternalError("unexpected entry: " + section);

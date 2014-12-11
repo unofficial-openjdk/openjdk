@@ -556,19 +556,15 @@ class JlinkTask {
             Set<Archive> archives = modsPaths.entrySet().stream()
                     .map(e -> newArchive(e.getKey(), e.getValue()))
                     .collect(Collectors.toSet());
-            try {
-                ImageFile.create(output, archives, imf, options.compress);
-            }catch(Exception ex) {
-                throw new IOException(ex);
-            }
+            ImageFile.create(output, archives, imf, options.compress);
             writeModulesLists(output, modules);
         }
 
         private Archive newArchive(String module, Path path) {
-            if(path.toString().endsWith(".jmod")) {
+            if (path.toString().endsWith(".jmod")) {
                 return new JmodArchive(module, path);
             } else {
-                if(path.toString().endsWith(".jar")) {
+                if (path.toString().endsWith(".jar")) {
                     return new ModularJarArchive(module, path);
                 } else {
                     fail(RuntimeException.class,

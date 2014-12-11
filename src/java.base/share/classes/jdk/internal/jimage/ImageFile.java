@@ -140,7 +140,9 @@ public final class ImageFile {
             String mn = archive.moduleName();
             entriesForModule.put(mn, archiveResources);
             // Extract package names
-            List<Entry> classes = archiveResources.stream().filter(n -> n.type() == EntryType.CLASS_RESOURCE).collect(Collectors.toList());
+            List<Entry> classes = archiveResources.stream()
+                    .filter(n -> n.type() == EntryType.CLASS_RESOURCE)
+                    .collect(Collectors.toList());
             Set<String> pkgs = classes.stream().map(Entry::name)
                     .filter(n -> n.endsWith(".class") && !n.endsWith("module-info.class"))
                     .map(this::toPackage)
