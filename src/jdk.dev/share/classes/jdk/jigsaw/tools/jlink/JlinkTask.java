@@ -398,8 +398,6 @@ class JlinkTask {
         return true;
     }
 
-    private static final String APP_DIR = "lib" + File.separator + "app";
-
     private Map<String,Path> modulesToPath(Set<ModuleDescriptor> modules) {
         ModuleArtifactFinder finder = options.moduleFinder;
 
@@ -939,7 +937,7 @@ class JlinkTask {
         NATIVE_LIBS("native", nativeDir()),
         NATIVE_CMDS("bin", "bin"),
         CLASSES("classes", "classes"),
-        CONFIG("conf", "lib"),
+        CONFIG("conf", "conf"),
         UNKNOWN("unknown", "unknown");
 
         private static String nativeDir() {
