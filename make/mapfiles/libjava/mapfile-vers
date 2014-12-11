@@ -278,9 +278,9 @@ SUNWprivate_1.1 {
                 Java_sun_misc_VM_addReadsModule;
                 Java_sun_misc_VM_addModulePackage;
 
-                Java_sun_misc_VMSupport_initAgentProperties;
+		Java_sun_misc_VMSupport_initAgentProperties;
 		Java_sun_misc_VMSupport_getVMTemporaryDirectory;
-
+		
                 Java_jdk_internal_jimage_concurrent_ConcurrentPReader_initIDs;
                 Java_jdk_internal_jimage_concurrent_ConcurrentPReader_pread;
 

@@ -185,7 +185,7 @@ public class Launcher {
         @Override
         public void prependURL(URL url) {
             ucp.prependURL(url);
-        }
+            }
 
         void addExtURL(URL url) {
             super.addURL(url);
@@ -197,16 +197,16 @@ public class Launcher {
          */
         public ExtClassLoader(List<String> modLocations) throws IOException {
             super(getExtURLs(modLocations), null, factory);
-        }
+                                    }
 
         private static URL[] getExtURLs(List<String> modLocations) throws IOException {
             int size = modLocations.size();
             URL[] urls = new URL[size];
             for (int i=0; i<size; i++) {
                 urls[i] = getFileURL(new File(modLocations.get(i)));
-            }
+                                }
             return urls;
-        }
+                            }
 
         private static AccessControlContext getContext(File[] dirs)
             throws IOException
@@ -268,9 +268,9 @@ public class Launcher {
                     @Override
                     public AppClassLoader run() {
                         URL[] urls = pathToURLs(path);
-                        return new AppClassLoader(urls, extcl);
-                    }
-                });
+                    return new AppClassLoader(urls, extcl);
+                }
+            });
         }
 
         private final URLClassPath ucp = SharedSecrets.getJavaNetAccess().getURLClassPath(this);
@@ -327,7 +327,7 @@ public class Launcher {
 
 
             if (!skipParent)
-                return (super.loadClass(name, resolve));
+            return (super.loadClass(name, resolve));
 
             synchronized (getClassLoadingLock(name)) {
                 // First, check if the class has already been loaded
@@ -337,7 +337,7 @@ public class Launcher {
                 }
                 if (resolve) {
                     resolveClass(c);
-                }
+        }
                 return c;
             }
         }
@@ -416,7 +416,7 @@ public class Launcher {
                             return pathToURLs(classPath);
                         }
                     }
-            );
+                );
             bcp = new URLClassPath(urls, factory);
         }
     }

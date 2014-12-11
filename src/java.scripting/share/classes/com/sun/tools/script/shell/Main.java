@@ -474,9 +474,8 @@ public class Main {
              * know the class loader used by a specific engine, we
              * can't configure correct loader.
              */
-            ClassLoader parent = Main.class.getClassLoader();
             URL[] urls = pathToURLs(classPath);
-            URLClassLoader loader = new URLClassLoader(urls, parent);
+            URLClassLoader loader = new URLClassLoader(urls);
             Thread.currentThread().setContextClassLoader(loader);
         }
 

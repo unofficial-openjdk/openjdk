@@ -281,7 +281,7 @@ public class URLClassPath {
      * @return an Enumeration of all the urls having the specified name
      */
     public Enumeration<URL> findResources(final String name,
-                                      final boolean check) {
+                                     final boolean check) {
         return new Enumeration<URL>() {
             private int index = 0;
             private URL url = null;
@@ -328,7 +328,7 @@ public class URLClassPath {
      * @return an Enumeration of all the resources having the specified name
      */
     public Enumeration<Resource> getResources(final String name,
-                                      final boolean check) {
+                                    final boolean check) {
         return new Enumeration<Resource>() {
             private int index = 0;
             private Resource res = null;
