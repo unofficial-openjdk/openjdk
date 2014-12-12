@@ -1165,12 +1165,10 @@ char* os::format_boot_path(const char* format_string,
     return formatted_path;
 }
 
-// returns a PATH of all entries in the given directory with suffix if non-NULL
-static char* expand_entries_to_path(char* directory, char fileSep, char pathSep, const char* suffix) {
+// returns a PATH of all entries in the given directory that do not start with a '.'
+static char* expand_entries_to_path(char* directory, char fileSep, char pathSep) {
   DIR* dir = os::opendir(directory);
   if (dir == NULL) return NULL;
-
-  size_t suffix_len = (suffix == NULL) ? 0 : strlen(suffix);
 
   char* path = NULL;
   size_t path_len = 0;  // path length including \0 terminator
@@ -1180,13 +1178,10 @@ static char* expand_entries_to_path(char* directory, char fileSep, char pathSep,
   char* dbuf = NEW_C_HEAP_ARRAY(char, os::readdir_buf_size(directory), mtInternal);
   while ((entry = os::readdir(dir, (dirent *) dbuf)) != NULL) {
     const char* name = entry->d_name;
-    if (name[0] == '.') continue;  // module name cannot start with dot
+    if (name[0] == '.') continue;
 
     size_t name_len = strlen(name);
     size_t needed = directory_len + name_len + 2;
-    if (suffix_len > 0) {
-      needed += (suffix_len + 1);
-    }
     size_t new_len = path_len + needed;
     if (path == NULL) {
       path = NEW_C_HEAP_ARRAY(char, new_len, mtInternal);
@@ -1196,7 +1191,7 @@ static char* expand_entries_to_path(char* directory, char fileSep, char pathSep,
     if (path == NULL)
       break;
 
-    // append <pathSep>directory<fileSep>name[<pathSep><suffix>]
+    // append <pathSep>directory<fileSep>name
     char* p = path;
     if (path_len > 0) {
       p += (path_len -1);
@@ -1212,13 +1207,6 @@ static char* expand_entries_to_path(char* directory, char fileSep, char pathSep,
 
     strcpy(p, name);
     p += name_len;
-
-    if (suffix_len > 0) {
-      *p = fileSep;
-      p++;
-      strcpy(p, suffix);
-      p += suffix_len;
-    }
 
     path_len = new_len;
   }
@@ -1267,6 +1255,7 @@ bool os::set_boot_path(char fileSep, char pathSep) {
   if (rt_jar == NULL) return false;
   bool has_rt_jar = (os::stat(rt_jar, &st) == 0);
   FREE_C_HEAP_ARRAY(char, rt_jar, mtInternal);
+
   if (has_rt_jar) {
     // Any modification to the JAR-file list, for the boot classpath must be
     // aligned with install/install/make/common/Pack.gmk. Note: boot class
@@ -1317,7 +1306,7 @@ bool os::set_expanded_boot_path() {
   if (modules_dir == NULL) return false;
   if (os::stat(modules_dir, &st) == 0) {
     if ((st.st_mode & S_IFDIR) == S_IFDIR) {
-      sysclasspath = expand_entries_to_path(modules_dir, fileSep, pathSep, NULL);
+      sysclasspath = expand_entries_to_path(modules_dir, fileSep, pathSep);
       if (sysclasspath == NULL) return false;
     }
   }
@@ -1329,7 +1318,6 @@ bool os::set_expanded_boot_path() {
 
   return false;
 }
-
 
 /*
  * Splits a path, based on its separator, the number of
