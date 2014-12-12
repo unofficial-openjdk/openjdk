@@ -60,7 +60,6 @@ module java.base {
     // jigsaw
     include jdk.jigsaw.module.**,
             jdk.internal.jimage.**,
-            jdk.internal.jimagefs.**,
             jdk.internal.jrtfs.**,
             jdk.joptsimple.**;
 
