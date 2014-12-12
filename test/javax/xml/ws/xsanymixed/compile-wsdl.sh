@@ -1,5 +1,7 @@
+#! /bin/sh
+
 #
-# Copyright (c) 2005, 2010, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -21,31 +23,14 @@
 # questions.
 #
 
-# @test
-# @bug 6173612
-# @summary AttachProvider unit tests
 #
-# @build ProviderTest SimpleProvider
-# @run shell ProviderTests.sh
 
-if [ "${TESTSRC}" = "" ]
-then
-  echo "TESTSRC not set.  Test cannot execute.  Failed."
-  exit 1
+if [ "x$TESTJAVA" = x ]; then
+  TESTJAVA=$1; shift
+  TESTCLASSES=.
 fi
 
-. ${TESTSRC}/CommonSetup.sh
+echo "compiling [test-service.wsdl] wsdl ..."
+$TESTJAVA/bin/wsimport -keep  -d ${TESTCLASSES} ${TESTSRC}/service.wsdl
 
-echo "Creating JAR file ..."
-
-$JAR -cf ${TESTCLASSES}/SimpleProvider.jar \
-    -C ${TESTCLASSES} SimpleProvider.class \
-    -C ${TESTCLASSES} SimpleVirtualMachine.class \
-    -C "${TESTSRC}" META-INF/services/com.sun.tools.attach.spi.AttachProvider
-
-echo "Running test ..."
-
-$JAVA -classpath \
-  "${TESTCLASSES}${PS}${TESTCLASSES}/SimpleProvider.jar${PS}${TESTJAVA}/lib/tools.jar" \
-  ProviderTest
-
+echo "WSDL compiled. Main test class Test.java can be compiled now."

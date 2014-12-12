@@ -25,7 +25,7 @@
  * @test
  * @bug 4969459
  * @summary Delegated tasks are not reflecting the subclasses of SSLException
- *
+ * @run main/othervm DelegatedTaskWrongException
  */
 
 import javax.net.ssl.*;
@@ -110,6 +110,9 @@ public class DelegatedTaskWrongException {
     }
 
     public static void main(String args[]) throws Exception {
+        // reset the security property to make sure that the algorithms
+        // and keys used in this test are not disabled.
+        Security.setProperty("jdk.tls.disabledAlgorithms", "");
 
         DelegatedTaskWrongException test;
 
