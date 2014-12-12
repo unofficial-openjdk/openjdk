@@ -23,7 +23,7 @@
  * questions.
  */
 
-package build.tools.module;
+package build.tools.jigsaw;
 
 import java.io.IOException;
 import java.io.PrintStream;

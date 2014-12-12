@@ -40,7 +40,7 @@ ifeq (, $(BUILD_TOOLS_JDK))
       SETUP := GENERATE_OLDBYTECODE, \
       SRC := $(JDK_TOPDIR)/make/src/classes, \
       EXCLUDES := build/tools/deps \
-                  build/tools/module, \
+                  build/tools/jigsaw, \
       BIN := $(BUILDTOOLS_OUTPUTDIR)/jdk_tools_classes))
 endif
 
@@ -133,6 +133,10 @@ TOOL_CLDRCONVERTER = $(JAVA_SMALL) -cp $(BUILDTOOLS_OUTPUTDIR)/jdk_tools_classes
 TOOL_CHECKDEPS = $(JAVA_SMALL) -Xbootclasspath/p:$(INTERIM_LANGTOOLS_JAR) \
     -cp "$(BUILDTOOLS_OUTPUTDIR)/jdk_tools_classes$(PATH_SEP)$(JDK_OUTPUTDIR)" \
     build.tools.deps.CheckDeps
+
+TOOL_GENMODULESXML = $(JAVA_SMALL) -Xbootclasspath/p:$(INTERIM_LANGTOOLS_JAR) \
+    -cp "$(BUILDTOOLS_OUTPUTDIR)/jdk_tools_classes" \
+    build.tools.module.GenJdepsModulesXml
 
 ##########################################################################################
 

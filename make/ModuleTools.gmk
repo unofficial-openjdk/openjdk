@@ -28,26 +28,18 @@ include MakeBase.gmk
 include JavaCompilation.gmk
 include SetupJavaCompilers.gmk
 
-TOOLS_CLASSES_DIR := $(BUILDTOOLS_OUTPUTDIR)/jdk_tools_classes
+TOOLS_CLASSES_DIR := $(BUILDTOOLS_OUTPUTDIR)/tools_jigsaw_classes
 
-$(eval $(call SetupJavaCompilation,BUILD_DEPS_TOOLS, \
+$(eval $(call SetupJavaCompilation,BUILD_JIGSAW_TOOLS, \
     SETUP := GENERATE_USINGJDKBYTECODE, \
     SRC := $(JDK_TOPDIR)/make/src/classes, \
-    INCLUDES := build/tools/deps, \
-    BIN := $(TOOLS_CLASSES_DIR)))
-
-$(eval $(call SetupJavaCompilation,BUILD_MODULE_TOOLS, \
-    SETUP := GENERATE_USINGJDKBYTECODE, \
-    SRC := $(JDK_TOPDIR)/make/src/classes, \
-    INCLUDES := build/tools/module, \
+    INCLUDES := build/tools/deps \
+                build/tools/jigsaw, \
     BIN := $(TOOLS_CLASSES_DIR)))
 
 
 TOOL_GENGRAPHS := $(BUILD_JAVA) -esa -ea -cp $(TOOLS_CLASSES_DIR) \
-    build.tools.module.GenGraphs
-
-TOOL_GENMODULESXML := $(BUILD_JAVA) -esa -ea -cp $(TOOLS_CLASSES_DIR) \
-    build.tools.module.GenerateModulesXml
+    build.tools.jigsaw.GenGraphs
 
 TOOL_MODULESUMMARY := $(BUILD_JAVA) -esa -ea -cp $(TOOLS_CLASSES_DIR) \
-    -XX:-UseModules build.tools.module.ModuleSummary
+    -XX:-UseModules build.tools.jigsaw.ModuleSummary

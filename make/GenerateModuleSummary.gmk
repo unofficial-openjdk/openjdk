@@ -31,16 +31,16 @@ include MakeBase.gmk
 include ModuleTools.gmk
 
 GENGRAPHS_DIR := $(IMAGES_OUTPUTDIR)/gengraphs
-TOOLS_MODULE_SRCDIR := $(JDK_TOPDIR)/make/src/classes/build/tools/module
+TOOLS_MODULE_SRCDIR := $(JDK_TOPDIR)/make/src/classes/build/tools/jigsaw
 
-$(GENGRAPHS_DIR)/jdk.dot: $(BUILD_DEPS_TOOLS)
+$(GENGRAPHS_DIR)/jdk.dot: $(BUILD_JIGSAW_TOOLS)
 	$(MKDIR) -p $(@D)
 	$(TOOL_GENGRAPHS) $(GENGRAPHS_DIR)
 
 $(GENGRAPHS_DIR)/technology-summary.html: $(TOOLS_MODULE_SRCDIR)/technology-summary.html
 	$(install-file)
 
-$(GENGRAPHS_DIR)/module-summary.html: $(BUILD_MODULE_TOOLS) $(GENGRAPHS_DIR)/technology-summary.html
+$(GENGRAPHS_DIR)/module-summary.html: $(BUILD_JIGSAW_TOOLS) $(GENGRAPHS_DIR)/technology-summary.html
 	$(MKDIR) -p $(@D)
 	$(TOOL_MODULESUMMARY) -o $@ -mp $(IMAGES_OUTPUTDIR)/jmods
 

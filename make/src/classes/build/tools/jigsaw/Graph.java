@@ -23,7 +23,7 @@
  * questions.
  */
 
-package build.tools.module;
+package build.tools.jigsaw;
 
 import java.io.PrintStream;
 import java.util.Deque;

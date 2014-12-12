@@ -23,7 +23,7 @@
  * questions.
  */
 
-package build.tools.module;
+package build.tools.jigsaw;
 
 import com.sun.tools.classfile.AccessFlags;
 import static com.sun.tools.classfile.AccessFlags.ACC_PROTECTED;
