@@ -23,16 +23,18 @@
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
+import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.ProviderNotFoundException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.stream.Stream;
 import tests.JImageGenerator;
 import tests.JImageValidator;
 
@@ -56,44 +58,50 @@ public class JLinkTest {
     private static final List<String> notExtClasses = new ArrayList<>();
     private static final List<String> notAppClasses = new ArrayList<>();
 
-    static {
+    public static void main(String[] args) throws Exception {
+
+        FileSystem fs;
+        try {
+            fs = FileSystems.getFileSystem(URI.create("jrt:/"));
+        } catch (ProviderNotFoundException | FileSystemNotFoundException e) {
+            System.out.println("Not an image build, test skipped.");
+            return;
+        }
 
         // Build the set of locations expected in the Image
         expectedLocations.put(JImageValidator.APP_MODULES, appClasses);
         expectedLocations.put(JImageValidator.BOOT_MODULES, bootClasses);
 
         Consumer<Path> c = (p) -> {
-                // take only the .class resources.
-                if (Files.isRegularFile(p) && p.toString().endsWith(".class")
-                        && !p.toString().endsWith("module-info.class")) {
-                    String loc = p.toString();
-                    bootClasses.add(loc);
-                    notExtClasses.add(loc);
-                    notAppClasses.add(loc);
-                }
-            };
+               // take only the .class resources.
+               if (Files.isRegularFile(p) && p.toString().endsWith(".class")
+                       && !p.toString().endsWith("module-info.class")) {
+                   String loc = p.toString();
+                   bootClasses.add(loc);
+                   notExtClasses.add(loc);
+                   notAppClasses.add(loc);
+               }
+           };
 
-        Path javabase = FileSystems.getFileSystem(URI.create("jrt:/")).getPath("/java.base");
-        Path mgtbase = FileSystems.getFileSystem(URI.create("jrt:/")).getPath("/java.management");
-        try {
-            Files.walk(javabase).forEach(c);
-            Files.walk(mgtbase).forEach(c);
-        } catch (IOException ex) {
-            Logger.getLogger(JLinkTest.class.getName()).log(Level.SEVERE, null, ex);
-            throw new RuntimeException(ex);
+        Path javabase = fs.getPath("/java.base");
+        Path mgtbase = fs.getPath("/java.management");
+        try (Stream<Path> stream = Files.walk(javabase)) {
+            stream.forEach(c);
+        }
+        try (Stream<Path> stream = Files.walk(mgtbase)) {
+            stream.forEach(c);
         }
 
         System.out.println("Num of boot classes to check against " + bootClasses.size());
         if (bootClasses.isEmpty()) {
             throw new RuntimeException("No boot class to check against");
         }
+
         // Not expected
         notExpectedLocations.put(JImageValidator.BOOT_MODULES, notBootClasses);
         notExpectedLocations.put(JImageValidator.EXT_MODULES, notExtClasses);
         notExpectedLocations.put(JImageValidator.APP_MODULES, notAppClasses);
-    }
 
-    public static void main(String[] args) throws Exception {
         File jdkHome = new File(System.getProperty("test.jdk"));
         // JPRT not yet ready for jmods
         if (JImageGenerator.getJModsDir(jdkHome) == null) {
@@ -175,11 +183,19 @@ public class JLinkTest {
         }
     }
 
-    private static void generateJModule(JImageGenerator helper, String module, String... dependencies) throws Exception {
+    private static void generateJModule(JImageGenerator helper,
+                                        String module,
+                                        String... dependencies)
+        throws Exception
+    {
         helper.generateJModule(module, getClasses(module), dependencies);
     }
 
-    private static void generateJarModule(JImageGenerator helper, String module, String... dependencies) throws Exception {
+    private static void generateJarModule(JImageGenerator helper,
+                                          String module,
+                                          String... dependencies)
+        throws Exception
+    {
         helper.generateJarModule(module, getClasses(module), dependencies);
     }
 
@@ -210,14 +226,23 @@ public class JLinkTest {
         return classes;
     }
 
-    private static void checkImage(JImageGenerator helper, String module, String[] userOptions) throws Exception {
+    private static void checkImage(JImageGenerator helper,
+                                   String module,
+                                   String[] userOptions)
+        throws Exception
+    {
         File image = helper.generateImage(userOptions, module);
-        JImageValidator validator = new JImageValidator(expectedLocations, notExpectedLocations, image);
+        JImageValidator validator = new JImageValidator(expectedLocations,
+                                                        notExpectedLocations,
+                                                        image);
         validator.validate();
         System.out.println("*** Image " + module);
-        System.out.println(validator.getResourceExtractionTime() + "ms, Average time to extract "
-                + validator.getNumberOfResources() + " compressed resources " + validator.getAverageResourceExtractionTime() * 1000 + "microsecs");
-        System.out.println(validator.getResourceTime() + "ms total time, Average time "
-                + validator.getNumberOfResources() + " compressed resources " + validator.getAverageResourceTime() * 1000 + "microsecs");
+        System.out.println(validator.getResourceExtractionTime() +
+            "ms, Average time to extract " + validator.getNumberOfResources() +
+            " compressed resources " + validator.getAverageResourceExtractionTime() * 1000 +
+            "microsecs");
+        System.out.println(validator.getResourceTime() + "ms total time, Average time " +
+            validator.getNumberOfResources() + " compressed resources " +
+            validator.getAverageResourceTime() * 1000 + "microsecs");
     }
 }
