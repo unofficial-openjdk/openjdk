@@ -35,6 +35,7 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.events.Attribute;
 import javax.xml.stream.events.XMLEvent;
 import com.sun.tools.jdeps.PlatformClassPath.ImageHelper;
+import com.sun.tools.jdeps.ClassFileReader.ModuleClassReader;
 
 final class ModulesXmlReader {
     public static Set<Module> load(ImageHelper helper,InputStream in)
@@ -54,7 +55,6 @@ final class ModulesXmlReader {
     private static final String DEPEND    = "depend";
     private static final String EXPORT    = "export";
     private static final String TO        = "to";
-    private static final String INCLUDE   = "include";
     private static final QName  REEXPORTS = new QName("re-exports");
     private final ImageHelper helper;
     ModulesXmlReader(ImageHelper helper) {
@@ -102,9 +102,6 @@ final class ModulesXmlReader {
                         }
                         mb.require(getData(reader), reexports);
                         break;
-                    case INCLUDE:
-                        mb.include(getData(reader));
-                        break;
                     case EXPORT:
                         exportedPackage = getNextTag(reader, NAME);
                         break;
@@ -118,7 +115,7 @@ final class ModulesXmlReader {
                 String endTag = event.asEndElement().getName().getLocalPart();
                 switch (endTag) {
                     case MODULE:
-                        ClassFileReader cfr = helper.getClassFileReader(modulename, mb.packages);
+                        ModuleClassReader cfr = helper.getModuleClassReader(modulename);
                         mb.classes(cfr);
                         modules.add(mb.build());
                         mb = null;

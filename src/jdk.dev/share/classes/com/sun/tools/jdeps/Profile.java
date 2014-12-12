@@ -28,14 +28,18 @@ import java.io.IOException;
 import java.util.*;
 
 /**
- * Build the profile information from ct.sym if exists.
+ * Build the profile information.
  */
 enum Profile {
     COMPACT1("compact1", 1, "java.compact1"),
     COMPACT2("compact2", 2, "java.compact2"),
     COMPACT3("compact3", 3, "java.compact3", "java.smartcardio", "jdk.sctp",
-                            "jdk.httpserver", "jdk.security.auth"),
-    FULL_JRE("Full JRE", 4, "java.se");
+                            "jdk.httpserver", "jdk.security.auth",
+                            "jdk.naming.dns", "jdk.naming.rmi"),
+    FULL_JRE("Full JRE", 4, "java.se", "jdk.deploy.osx", "jdk.charsets",
+                            "jdk.crypto.ec", "jdk.crypto.pkcs11",
+                            "jdk.crypto.mscapi", "jdk.crypto.ucrypto", "jdk.jvmstat",
+                            "jdk.localedata", "jdk.scripting.nashorn", "jdk.zipfs");
 
     final String name;
     final int profile;
@@ -94,27 +98,30 @@ enum Profile {
 
         for (Profile p : Profile.values()) {
             for (String mn : p.mnames) {
-                 p.addModule(mn);
+                // this includes platform-dependent module that may not exist
+                Module m = PlatformClassPath.findModule(mn);
+                if (m != null) {
+                    p.addModule(m);
+                }
             }
         }
     }
 
-    private void addModule(String mn) {
-        Module m = PlatformClassPath.findModule(mn);
-        if (m == null)
-            throw new Error(mn + " doesn't exist");
+    private void addModule(Module m) {
         modules.add(m);
         for (String n : m.requires().keySet()) {
             Module d = PlatformClassPath.findModule(n);
-            if (d == null)
-                throw new Error(n + " doesn't exist");
+            if (d == null) {
+                throw new InternalError("module " + n + " required by " +
+                        m.name() + " doesn't exist");
+            }
             modules.add(d);
         }
     }
     // for debugging
     public static void main(String[] args) throws IOException {
         // find platform modules
-        PlatformClassPath.getArchives(null);
+        PlatformClassPath.getModules(null);
         if (Profile.getProfileCount() == 0) {
             System.err.println("No profile is present in this JDK");
         }

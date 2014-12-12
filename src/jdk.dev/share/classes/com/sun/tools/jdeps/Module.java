@@ -30,6 +30,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import com.sun.tools.jdeps.ClassFileReader.ModuleClassReader;
 
 /**
  * JDeps internal representation of module for dependency analysis.
@@ -168,13 +169,12 @@ final class Module extends Archive {
         }
 
         public Builder require(String d, boolean reexport) {
-         //   System.err.format("%s depend %s reexports %s%n", name, d, reexport);
             requires.put(d, reexport);
             return this;
         }
 
-        public Builder include(String p) {
-            packages.add(p);
+        public Builder packages(Set<String> pkgs) {
+            packages.addAll(pkgs);
             return this;
         }
 
@@ -184,10 +184,11 @@ final class Module extends Archive {
             exports.put(p, new HashSet<>(ms));
             return this;
         }
-        public Builder classes(ClassFileReader reader) {
+        public Builder classes(ModuleClassReader reader) {
             this.reader = reader;
             return this;
         }
+
         public Module build() {
             Module m = new Module(reader, name, requires, exports, packages);
             return m;

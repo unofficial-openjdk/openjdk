@@ -31,7 +31,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.DirectoryStream;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.FileVisitResult;
@@ -42,10 +41,12 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * ClassFileReader reads ClassFile(s) of a given path that can be
- * a .class file, a directory, a JAR file, or jimage.
+ * a .class file, a directory, or a JAR file.
  */
 public class ClassFileReader {
     /**
@@ -57,11 +58,9 @@ public class ClassFileReader {
         }
 
         if (Files.isDirectory(path)) {
-            return new FileSystemReader(path);
+            return new DirectoryReader(path);
         } else if (path.getFileName().toString().endsWith(".jar")) {
             return new JarFileReader(path);
-        } else if (path.getFileName().toString().endsWith(".jimage")) {
-            return new FileSystemReader(path);
         } else {
             return new ClassFileReader(path);
         }
@@ -166,126 +165,31 @@ public class ClassFileReader {
         return path.toString();
     }
 
-    /**
-     * Reader for file system reading from a given directory or jimage files.
-     */
-    static class FileSystemReader extends ClassFileReader {
-        private final List<Container> containers = new ArrayList<>();
-
-        static class Container {
-            private final FileSystem fs;
-            private final String fsSeparator;
-            private final Path root;
-            private final List<Path> classes = new ArrayList<>();
-            private boolean cachedEntries = false;
-            Container(FileSystem fs, Path root) {
-                this.fs = fs;
-                this.fsSeparator = fs.getSeparator();
-                this.root = root;
-            }
-
-            Path getPath(String pathname) {
-                return root != null ? root.resolve(pathname) : fs.getPath(pathname);
-            }
-
-            Path findClass(String name) throws IOException {
-                if (name.indexOf('.') > 0) {
-                    int i = name.lastIndexOf('.');
-                    String pathname = name.replace(".", fsSeparator) + ".class";
-                    Path p = getPath(pathname);
-                    if (!Files.exists(p)) {
-                        p = getPath(pathname.substring(0, i) + "$" +
-                                pathname.substring(i+1, pathname.length()));
-                    }
-                    if (Files.exists(p)) {
-                        return p;
-                    }
-                } else {
-                    String pathname = name.replace("/", fsSeparator) + ".class";
-                    Path p = getPath(pathname);
-                    if (Files.exists(p)) {
-                        return p;
-                    }
-                }
-                return null;
-            }
-
-            String toPackage(Path p) {
-                String name = p.toString();
-                int i = name.lastIndexOf(fsSeparator);
-                return i > 0 ? name.substring(0, i).replace(fsSeparator, ".") : "";
-            }
-
-            synchronized  List<Path> entries() throws IOException {
-                if (!cachedEntries) {
-                    cachedEntries = true;
-                    Path path = root != null ? root : fs.getPath("/");
-                    Files.walkFileTree(path, new SimpleFileVisitor<Path>() {
-                        public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
-                                throws IOException
-                        {
-                            if (file.getFileName().toString().endsWith(".class")) {
-                                classes.add(file);
-                            }
-                            return FileVisitResult.CONTINUE;
-                        }
-                    });
-                }
-                return classes;
-            }
-
-            @Override
-            public String toString() {
-                return fs.toString();
-            }
+    private static class DirectoryReader extends ClassFileReader {
+        protected final String fsSep;
+        DirectoryReader(Path path) throws IOException {
+            this(FileSystems.getDefault(), path);
         }
-
-        /**
-         * FileSystemReader constructor that can read classes files
-         * from a directory or a jimage file
-         */
-        FileSystemReader(Path path) throws IOException {
+        DirectoryReader(FileSystem fs, Path path) throws IOException {
             super(path);
-            FileSystem fs = Files.isDirectory(path)
-                                ? FileSystems.getDefault()
-                                : FileSystems.newFileSystem(path, null);
-            this.containers.add(new Container(fs, path));
-        }
-
-        /**
-         * FileSystemReader constructor that can read classes files
-         * from the matching files under the given directory.
-         */
-        FileSystemReader(Path dir, String glob) throws IOException {
-            super(dir);
-            try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir, glob)) {
-                for (Path p : stream) {
-                    FileSystem fs = FileSystems.newFileSystem(p, null);
-                    this.containers.add(new Container(fs, null));
-                }
-            }
-        }
-
-        /**
-         * Finds the container of the given module
-         */
-        Container findContainer(String modulename, Set<String> packages)
-            throws IOException
-        {
-            for (Container c : containers) {
-                if (c.entries().stream()
-                               .map(p -> c.toPackage(p))
-                               .anyMatch(packages::contains)) {
-                    return c;
-                }
-            }
-            return null;
+            this.fsSep = fs.getSeparator();
         }
 
         public ClassFile getClassFile(String name) throws IOException {
-            for (Container c : containers) {
-                Path p = c.findClass(name);
-                if (p != null) {
+            if (name.indexOf('.') > 0) {
+                int i = name.lastIndexOf('.');
+                String pathname = name.replace(".", fsSep) + ".class";
+                Path p = path.resolve(pathname);
+                if (!Files.exists(p)) {
+                    p = path.resolve(pathname.substring(0, i) + "$" +
+                            pathname.substring(i+1, pathname.length()));
+                }
+                if (Files.exists(p)) {
+                    return readClassFile(p);
+                }
+            } else {
+                Path p = path.resolve(name + ".class");
+                if (Files.exists(p)) {
                     return readClassFile(p);
                 }
             }
@@ -293,7 +197,7 @@ public class ClassFileReader {
         }
 
         public Iterable<ClassFile> getClassFiles() throws IOException {
-            final Iterator<ClassFile> iter = new FileSystemIterator();
+            final Iterator<ClassFile> iter = new DirectoryIterator();
             return new Iterable<ClassFile>() {
                 public Iterator<ClassFile> iterator() {
                     return iter;
@@ -301,18 +205,27 @@ public class ClassFileReader {
             };
         }
 
-        private List<Path> walkTree() throws IOException {
-            final List<Path> files = new ArrayList<>();
-            for (Container c : containers) {
-                files.addAll(c.entries());
+        private List<Path> entries;
+        protected synchronized List<Path> walkTree() throws IOException {
+            if (entries == null) {
+                entries = new ArrayList<>();
+                Files.walkFileTree(path, new SimpleFileVisitor<Path>() {
+                    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
+                            throws IOException {
+                        if (file.getFileName().toString().endsWith(".class")) {
+                            entries.add(file);
+                        }
+                        return FileVisitResult.CONTINUE;
+                    }
+                });
             }
-            return files;
+            return entries;
         }
 
-        class FileSystemIterator implements Iterator<ClassFile> {
+        class DirectoryIterator implements Iterator<ClassFile> {
             private List<Path> entries;
             private int index = 0;
-            FileSystemIterator() throws IOException {
+            DirectoryIterator() throws IOException {
                 entries = walkTree();
                 index = 0;
             }
@@ -455,6 +368,31 @@ public class ClassFileReader {
 
         public void remove() {
             throw new UnsupportedOperationException("Not supported yet.");
+        }
+    }
+
+    /**
+     * ClassFileReader for modules.
+     */
+    static class ModuleClassReader extends DirectoryReader {
+        final String modulename;
+        ModuleClassReader(FileSystem fs, String mn, Path root) throws IOException {
+            super(fs, root);
+            this.modulename = mn;
+        }
+
+        public Set<String> packages() throws IOException {
+            return walkTree().stream()
+                             .map(this::toPackageName)
+                             .sorted()
+                             .collect(Collectors.toSet());
+        }
+
+        String toPackageName(Path p) {
+            if (p.getParent() == null) {
+                return "";
+            }
+            return path.relativize(p.getParent()).toString().replace(fsSep, ".");
         }
     }
 }
