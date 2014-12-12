@@ -137,7 +137,7 @@ class ModuleBootstrap {
         // modules into the set of modules to resolve.
         Set<String> input = Collections.emptySet();
         String cp = System.getProperty("java.class.path");
-        if (cp != null && cp.length() > 0) {
+        if (mainMid == null || (cp != null && cp.length() > 0)) {
             input = finder.allModules()
                           .stream()
                           .map(md -> md.descriptor().name())
