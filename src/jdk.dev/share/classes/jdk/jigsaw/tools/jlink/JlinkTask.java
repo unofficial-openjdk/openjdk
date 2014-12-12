@@ -308,7 +308,6 @@ class JlinkTask {
 
     enum Format {
         JMOD,
-        IMAGE,
         JIMAGE;
     }
 
@@ -348,7 +347,7 @@ class JlinkTask {
                 } else {
                     throw new BadArgs("err.format.must.be.specified").showUsage(true);
                 }
-            } else if (options.format == Format.IMAGE || options.format == Format.JIMAGE) {
+            } else if (options.format == Format.JIMAGE) {
                 if (options.moduleFinder == null)
                     throw new BadArgs("err.modulepath.must.be.specified").showUsage(true);
 
@@ -389,7 +388,7 @@ class JlinkTask {
     }
 
     private boolean run() throws IOException {
-        if (options.format == Format.IMAGE || options.format == Format.JIMAGE)
+        if (options.format == Format.JIMAGE)
             createImage();
         else if (Format.JMOD.equals(options.format))
             createJmod();
@@ -458,13 +457,7 @@ class JlinkTask {
         Map<String,Path> mods = modulesToPath(cf.descriptors());
 
         ImageFileHelper imageHelper = new ImageFileHelper(cf, mods);
-        if (options.format == Format.IMAGE) {
-            imageHelper.createLegacyFormat(output);
-        } else if (options.format == Format.JIMAGE) {
-            imageHelper.createModularImage(output);
-        } else {
-            throw new InternalError("should never reach here");
-        }
+        imageHelper.createModularImage(output);
 
         // write installed modules file
         imageHelper.writeInstalledModules(output);
@@ -574,31 +567,6 @@ class JlinkTask {
                 }
             }
             return null;
-        }
-
-        /*
-         * Extract Jmod files and write classes and resource files
-         * into per-module "classes" zip file and write module graph
-         * in the java.base module.
-         */
-        void createLegacyFormat(Path output) throws IOException {
-            Path modulesPath = output.resolve("lib/modules");
-            Files.createDirectories(modulesPath);
-            for (Map.Entry<String,Path> e : modsPaths.entrySet()) {
-                String modName = e.getKey();
-                Path jmod = e.getValue();
-                String fileName = jmod.getFileName().toString();
-                Path modPath = modulesPath.resolve(modName);
-                Files.createDirectories(modPath);
-
-                try (JmodFileReader reader = new JmodFileReader(jmod, modPath, output)) {
-                    reader.extract();
-
-                    // set the package map
-                    imf.setPackages(modName, reader.packages());
-                }
-            }
-            writeModulesLists(output, modules);
         }
 
         /**
