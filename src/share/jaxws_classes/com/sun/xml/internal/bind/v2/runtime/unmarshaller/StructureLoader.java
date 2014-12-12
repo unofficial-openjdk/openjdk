@@ -171,7 +171,7 @@ public final class StructureLoader extends Loader {
 
         context.recordInnerPeer(child);
 
-        state.target = child;
+        state.setTarget(child);
 
         fireBeforeUnmarshal(beanInfo, child, state);
 
@@ -196,7 +196,7 @@ public final class StructureLoader extends Loader {
                         String qname = atts.getQName(i);
                         if(atts.getURI(i).equals(WellKnownNamespace.XML_SCHEMA_INSTANCE))
                             continue;   // xsi:* attributes are meant to be processed by us, not by user apps.
-                        Object o = state.target;
+                        Object o = state.getTarget();
                         Map<QName,String> map = attCatchAll.get(o);
                         if(map==null) {
                             // TODO: use  ClassFactory.inferImplClass(sig,knownImplClasses)
@@ -238,8 +238,8 @@ public final class StructureLoader extends Loader {
             }
         }
 
-        state.loader = child.loader;
-        state.receiver = child.receiver;
+        state.setLoader(child.loader);
+        state.setReceiver(child.receiver);
     }
 
     @Override
@@ -261,7 +261,7 @@ public final class StructureLoader extends Loader {
     @Override
     public void leaveElement(UnmarshallingContext.State state, TagName ea) throws SAXException {
         state.getContext().endScope(frameSize);
-        fireAfterUnmarshal(beanInfo, state.target, state.prev);
+        fireAfterUnmarshal(beanInfo, state.getTarget(), state.getPrev());
     }
 
     private static final QNameMap<TransducedAccessor> EMPTY = new QNameMap<TransducedAccessor>();
