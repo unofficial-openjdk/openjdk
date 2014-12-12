@@ -531,57 +531,30 @@ public class Launcher {
      */
     private static String toClassPath(List<String> modules) {
         String home = System.getProperty("java.home");
-        Path dir = Paths.get(home, "lib", "modules");
-        String suffix = null;
-        if (Files.exists(dir)) {
-            suffix = "classes";
-        } else {
-            dir = Paths.get(home, "modules");
-            if (Files.notExists(dir))
-                return "";
-        }
+        Path dir = Paths.get(home, "modules");
         StringBuilder sb = new StringBuilder();
-        for (String module : modules) {
-            if (sb.length() > 0)
-                sb.append(File.pathSeparator);
-            sb.append(dir.toString());
-            sb.append(File.separator);
-            sb.append(module);
-            if (suffix != null) {
+        if (Files.isDirectory(dir)) {
+            for (String module : modules) {
+                if (sb.length() > 0)
+                    sb.append(File.pathSeparator);
+                sb.append(dir.toString());
                 sb.append(File.separator);
-                sb.append(suffix);
+                sb.append(module);
             }
         }
         return sb.toString();
     }
 
     /**
-     * Expand the given list of modules to a list of module locations.
+     * Expand the given list of modules to a list of module locations in
+     * an exploded build.
      */
     private static List<String> toModuleLocations(List<String> modules) {
         List<String> result = new ArrayList<>();
         String home = System.getProperty("java.home");
-        Path dir = Paths.get(home, "lib", "modules");
-        boolean image;
-        if (Files.exists(dir)) {
-            image = true;
-        } else {
-            dir = Paths.get(home, "modules");
-            if (Files.notExists(dir))
-                return result;
-            image = false;
-        }
-        for (String m: modules) {
-            if (image) {
-                StringBuilder sb = new StringBuilder();
-                sb.append(dir);
-                sb.append(File.separator);
-                sb.append(m);
-                sb.append(File.separator);
-                sb.append("classes");
-                String s = sb.toString();
-                result.add(s);
-            } else {
+        Path dir = Paths.get(home, "modules");
+        if (Files.isDirectory(dir)) {
+            for (String m: modules) {
                 result.add(dir.resolve(m).toString());
             }
         }
