@@ -1253,17 +1253,10 @@ bool os::set_boot_path(char fileSep, char pathSep) {
   }
   FREE_C_HEAP_ARRAY(char, jimage, mtInternal);
 
-  // modular image if lib/java.base/classes or lib/java.base exists
-  char* base_classes = format_boot_path("%/lib/modules/java.base/classes", home, home_len, fileSep, pathSep);
+  // exploded build if lib/java.base exists
+  char* base_classes = format_boot_path("%/modules/java.base", home, home_len, fileSep, pathSep);
   if (base_classes == NULL) return false;
-  bool has_base_classes = (os::stat(base_classes, &st) == 0);
-  if (!has_base_classes) {
-    FREE_C_HEAP_ARRAY(char, base_classes, mtInternal);
-    base_classes = format_boot_path("%/modules/java.base", home, home_len, fileSep, pathSep);
-    if (base_classes == NULL) return false;
-    has_base_classes = (os::stat(base_classes, &st) == 0);
-  }
-  if (has_base_classes) {
+  if (os::stat(base_classes, &st) == 0) {
     Arguments::set_sysclasspath(base_classes);
     return true;
   }
@@ -1319,23 +1312,8 @@ bool os::set_expanded_boot_path() {
     return true; // nothing to do
   }
 
-  // ${java.home}/lib/modules/$MODULE/classes
-  char* modules_dir = format_boot_path("%/lib/modules", home, home_len, fileSep, pathSep);
-  if (modules_dir == NULL) return false;
-  if (os::stat(modules_dir, &st) == 0) {
-    if ((st.st_mode & S_IFDIR) == S_IFDIR) {
-      sysclasspath = expand_entries_to_path(modules_dir, fileSep, pathSep, "classes");
-      if (sysclasspath == NULL) return false;
-    }
-  }
-  FREE_C_HEAP_ARRAY(char, modules_dir, mtInternal);
-  if (sysclasspath != NULL) {
-    Arguments::set_sysclasspath(sysclasspath);
-    return true;
-  }
-
   // ${java.home}/modules/$MODULE
-  modules_dir = format_boot_path("%/modules", home, home_len, fileSep, pathSep);
+  char* modules_dir = format_boot_path("%/modules", home, home_len, fileSep, pathSep);
   if (modules_dir == NULL) return false;
   if (os::stat(modules_dir, &st) == 0) {
     if ((st.st_mode & S_IFDIR) == S_IFDIR) {
