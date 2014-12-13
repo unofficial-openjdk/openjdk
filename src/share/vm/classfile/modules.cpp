@@ -301,6 +301,10 @@ jobject Modules::define_module(JNIEnv *env, jstring name, jobject loader, jobjec
 void Modules::add_module_exports(JNIEnv *env, jobject from_module, jstring package, jobject to_module) {
   JavaThread *THREAD = JavaThread::thread_from_jni_environment(env);
 
+  if (package == NULL) {
+    THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(),
+              "package is null");
+  }
   if (from_module == NULL) {
     THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(),
               "from_module is null");
@@ -329,8 +333,6 @@ void Modules::add_module_exports(JNIEnv *env, jobject from_module, jstring packa
                       from_module_entry->name()->as_C_string()));
   }
 
-  if (from_module_entry == to_module_entry) return;  // Trivial case.
-
   PackageEntry *package_entry = get_package_entry(from_module_entry, package,
     CHECK);
 
@@ -358,7 +360,19 @@ void Modules::add_module_exports(JNIEnv *env, jobject from_module, jstring packa
                   ((to_module_entry == NULL) ? NULL : to_module_entry->name()->as_C_string()));
   }
 
-  package_entry->set_exported(to_module_entry, CHECK);
+  // If this is a qualified export, make sure the entry has not already been exported
+  // unqualifically.
+  if (to_module_entry != NULL && package_entry->is_unqual_exported()) {
+    THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(),
+              err_msg("Bad qualifed export, package %s in module %s is already unqualifically exported",
+                      package_entry->name()->as_C_string(),
+                      from_module_entry->name()->as_C_string()));
+  }
+
+  // Do nothing if modules are the same.
+  if (from_module_entry != to_module_entry) {
+    package_entry->set_exported(to_module_entry, CHECK);
+  }
 }
 
 void Modules::add_reads_module(JNIEnv *env, jobject from_module, jobject to_module) {
@@ -400,6 +414,11 @@ void Modules::add_reads_module(JNIEnv *env, jobject from_module, jobject to_modu
 jboolean Modules::can_read_module(JNIEnv *env, jobject asking_module, jobject target_module) {
   JavaThread *THREAD = JavaThread::thread_from_jni_environment(env);
 
+  if (asking_module == NULL) {
+    THROW_MSG_(vmSymbols::java_lang_IllegalArgumentException(),
+               "asking_module is null", JNI_FALSE);
+  }
+
   ModuleEntry* asking_module_entry = get_module_entry(asking_module, CHECK_false);
   if (asking_module_entry == NULL) {
     THROW_MSG_(vmSymbols::java_lang_IllegalArgumentException(),
@@ -434,6 +453,10 @@ jboolean Modules::can_read_module(JNIEnv *env, jobject asking_module, jobject ta
 jboolean Modules::is_exported_to_module(JNIEnv *env, jobject from_module, jstring package, jobject to_module) {
   JavaThread *THREAD = JavaThread::thread_from_jni_environment(env);
 
+  if (package == NULL) {
+    THROW_MSG_(vmSymbols::java_lang_IllegalArgumentException(),
+               "package is null", JNI_FALSE);
+  }
   if (from_module == NULL) {
     THROW_MSG_(vmSymbols::java_lang_IllegalArgumentException(),
                "from_module is null", JNI_FALSE);
@@ -449,7 +472,7 @@ jboolean Modules::is_exported_to_module(JNIEnv *env, jobject from_module, jstrin
   }
   else {
     to_module_entry = get_module_entry(to_module, CHECK_false);
-    if (to_module == NULL) {
+    if (to_module_entry == NULL) {
       THROW_MSG_(vmSymbols::java_lang_IllegalArgumentException(),
                  "to_module is invalid", JNI_FALSE);
     }
@@ -545,6 +568,10 @@ void Modules::add_module_package(JNIEnv *env, jobject module, jstring package) {
     THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(),
               "module is null");
   }
+  if (package == NULL) {
+    THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(),
+              "package is null");
+  }
   ModuleEntry* module_entry = get_module_entry(module, CHECK);
   if (module_entry == NULL) {
     THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(),
@@ -570,15 +597,20 @@ void Modules::add_module_package(JNIEnv *env, jobject module, jstring package) {
   PackageEntryTable* package_table = module_entry->loader()->packages();
   assert(package_table != NULL, "Missing package_table");
 
+  bool pkg_exists = false;
   {
     MutexLocker ml(Module_lock, THREAD);
 
     // Check that the package does not exist in the class loader's package table.
-    if (package_table->lookup_only(pkg_symbol)) {
-      THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(),
-                err_msg("Package %s already exists for class loader", package_name));
+    if (!package_table->lookup_only(pkg_symbol)) {
+      PackageEntry* pkg = package_table->locked_create_entry_or_null(pkg_symbol, module_entry);
+      assert(pkg != NULL, "Unable to create a module's package entry");
+    } else {
+      pkg_exists = true;
     }
-    PackageEntry* pkg = package_table->locked_create_entry_or_null(pkg_symbol, module_entry);
-    assert(pkg != NULL, "Unable to create a module's package entry");
+  }
+  if (pkg_exists) {
+    THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(),
+              err_msg("Package %s already exists for class loader", package_name));
   }
 }
