@@ -1443,7 +1443,7 @@ public abstract class ClassLoader {
             sun.misc.Launcher l = sun.misc.Launcher.getLauncher();
             if (l != null) {
                 Throwable oops = null;
-                scl = l.getClassLoader();
+                scl = l.getAppClassLoader();
                 try {
                     scl = AccessController.doPrivileged(
                         new SystemClassLoaderAction(scl));

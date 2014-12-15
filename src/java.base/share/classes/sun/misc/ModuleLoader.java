@@ -25,32 +25,22 @@
 
 package sun.misc;
 
-import java.net.URL;
-import java.util.Set;
+import jdk.jigsaw.module.ModuleArtifact;
 
 /**
- * Implemented by sub-classes of {@code URLCLassLoader} that additionally support
- * the loading of types in modules.
+ * Implemented by class loaders that define modules.
  */
 
 public interface ModuleLoader {
 
     /**
-     * Returns an object to iterate over the names of the modules that are
-     * associated with this loader.
+     * Define the module in the given module artifact to the class loader
+     * with the effect of making the types in the module visible.
+     *
+     * If {@code overrideDirectory} is non-null and overrideDirectory/$MODULE
+     * exists (where $MODULE is the module name), then overridden classes
+     * will be loaded from there rather than the module artifact.
      */
-    Iterable<String> installedModules();
+    void defineModule(ModuleArtifact md, String overrideDirectory);
 
-    /**
-     * Appends the specified URL to the list of URLs to search for classes and
-     * resources. The classes loaded from the URL are in the given set of
-     * packages.
-     */
-    void addURL(Set<String> packages, URL url);
-
-    /**
-     * Prepends the specified URL to the list of URLs to search for classes and
-     * resources. Used for overriding.
-     */
-    void prependURL(URL url);
 }

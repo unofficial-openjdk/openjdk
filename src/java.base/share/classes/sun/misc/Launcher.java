@@ -50,6 +50,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import jdk.jigsaw.module.ModuleArtifact;
 import sun.net.www.ParseUtil;
 import sun.security.util.SecurityConstants;
 
@@ -62,6 +63,8 @@ public class Launcher {
     static {
         URLClassPath ucp = BootClassPathHolder.bcp;
     }
+
+    private static String JAVA_HOME = System.getProperty("java.home");
 
     private static URLStreamHandlerFactory factory = new Factory();
     private static Launcher launcher = new Launcher();
@@ -120,7 +123,7 @@ public class Launcher {
     /*
      * Returns the class loader used to launch the main application.
      */
-    public ClassLoader getClassLoader() {
+    public ClassLoader getAppClassLoader() {
         return loader;
     }
 
@@ -138,9 +141,8 @@ public class Launcher {
         static {
             ClassLoader.registerAsParallelCapable();
         }
-        static final List<String> modules = Launcher.readModulesList("ext.modules");
         static final Path extmodules =
-            Paths.get(System.getProperty("java.home"), "lib", "modules", "extmodules.jimage");
+            Paths.get(JAVA_HOME, "lib", "modules", "extmodules.jimage");
 
         /**
          * create an ExtClassLoader. The ExtClassLoader is created
@@ -155,13 +157,9 @@ public class Launcher {
                 return AccessController.doPrivileged(
                     new PrivilegedExceptionAction<ExtClassLoader>() {
                         public ExtClassLoader run() throws IOException {
-                            List<String> locations;
-                            if (Files.exists(extmodules)) {
-                                locations = new ArrayList<>();
+                            List<String> locations = new ArrayList<>();
+                            if (Files.isRegularFile(extmodules))
                                 locations.add(extmodules.toString());
-                            } else {
-                                locations = toModuleLocations(modules);
-                            }
                             return new ExtClassLoader(locations);
                         }
                     });
@@ -173,22 +171,8 @@ public class Launcher {
         private final URLClassPath ucp = SharedSecrets.getJavaNetAccess().getURLClassPath(this);
 
         @Override
-        public List<String> installedModules() {
-            return modules;
-        }
-
-        @Override
-        public void addURL(Set<String> packages, URL url) {
-            ucp.addURL(packages, url);
-        }
-
-        @Override
-        public void prependURL(URL url) {
-            ucp.prependURL(url);
-        }
-
-        void addExtURL(URL url) {
-            super.addURL(url);
+        public void defineModule(ModuleArtifact artifact, String override) {
+            addModulesURLs(artifact, override, ucp);
         }
 
         /*
@@ -239,20 +223,15 @@ public class Launcher {
         static final boolean SKIP_DELEGATION =
             Boolean.getBoolean("skipDelegationToExtLoaderWhenPossible");
 
-        static final List<String> systemModules = Launcher.readModulesList("system.modules");
         static final Path appmodules =
-            Paths.get(System.getProperty("java.home"), "lib", "modules", "appmodules.jimage");
+            Paths.get(JAVA_HOME, "lib", "modules", "appmodules.jimage");
 
         public static AppClassLoader getAppClassLoader(final ClassLoader extcl)
             throws IOException
         {
             String cp = System.getProperty("java.class.path", ".");
-            if (Files.exists(appmodules)) {
+            if (Files.isRegularFile(appmodules)) {
                 cp = appmodules + File.pathSeparator + cp;
-            } else {
-                String mp = Launcher.toClassPath(systemModules);
-                if (mp.length() > 0)
-                    cp = mp + File.pathSeparator + cp;
             }
             final File[] path = getClassPath(cp, true);
 
@@ -283,18 +262,8 @@ public class Launcher {
         }
 
         @Override
-        public List<String> installedModules() {
-            return systemModules;
-        }
-
-        @Override
-        public void addURL(Set<String> packages, URL url) {
-            ucp.addURL(packages, url);
-        }
-
-        @Override
-        public void prependURL(URL url) {
-            ucp.prependURL(url);
+        public void defineModule(ModuleArtifact artifact, String override) {
+            addModulesURLs(artifact, override, ucp);
         }
 
         /**
@@ -515,50 +484,31 @@ public class Launcher {
     }
 
     /**
-     * Reads the contents of the given modules file in {@code ${java.home}/lib}.
+     * Adds the URL of the given module artifact to the given URLClassPath.
+     * If the overrideDirectory is specified and overrideDirectory/$MODULE is
+     * a directory then prepend this directory to the URLClassPath.
      */
-    private static List<String> readModulesList(String name) {
-        Path file = Paths.get(System.getProperty("java.home"), "lib", name);
-        try {
-            return Files.readAllLines(file);
-        } catch (IOException ioe) {
-            throw new java.io.UncheckedIOException(ioe);
-        }
-    }
+    private static void addModulesURLs(ModuleArtifact artifact,
+                                       String overrideDirectory,
+                                       URLClassPath ucp)
+    {
+        // add the URL if not in the jimage
+        URL url = artifact.location();
+        if (!url.getProtocol().equalsIgnoreCase("jrt"))
+            ucp.addURL(url);
 
-    /**
-     * Expand the given list of modules to a class path.
-     */
-    private static String toClassPath(List<String> modules) {
-        String home = System.getProperty("java.home");
-        Path dir = Paths.get(home, "modules");
-        StringBuilder sb = new StringBuilder();
-        if (Files.isDirectory(dir)) {
-            for (String module : modules) {
-                if (sb.length() > 0)
-                    sb.append(File.pathSeparator);
-                sb.append(dir.toString());
-                sb.append(File.separator);
-                sb.append(module);
+        // prepend the override directory if specified
+        if (overrideDirectory != null) {
+            String name = artifact.descriptor().name();
+            Path dir = Paths.get(overrideDirectory, name);
+            if (Files.isDirectory(dir)) {
+                try {
+                    ucp.prependURL(dir.toUri().toURL());
+                } catch (MalformedURLException e) {
+                    throw new InternalError(e);
+                }
             }
         }
-        return sb.toString();
-    }
-
-    /**
-     * Expand the given list of modules to a list of module locations in
-     * an exploded build.
-     */
-    private static List<String> toModuleLocations(List<String> modules) {
-        List<String> result = new ArrayList<>();
-        String home = System.getProperty("java.home");
-        Path dir = Paths.get(home, "modules");
-        if (Files.isDirectory(dir)) {
-            for (String m: modules) {
-                result.add(dir.resolve(m).toString());
-            }
-        }
-        return result;
     }
 }
 

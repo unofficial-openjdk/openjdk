@@ -26,8 +26,8 @@
 package jdk.jigsaw.module.runtime;
 
 import java.io.File;
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -37,11 +37,13 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import jdk.jigsaw.module.Configuration;
 import jdk.jigsaw.module.Layer;
 import jdk.jigsaw.module.ModuleArtifact;
 import jdk.jigsaw.module.ModuleArtifactFinder;
+import jdk.jigsaw.module.ModuleDescriptor;
 import jdk.jigsaw.module.ModuleId;
 import sun.misc.Launcher;
 import sun.misc.ModuleLoader;
@@ -66,18 +68,6 @@ class ModuleBootstrap {
         // system module path, aka the installed modules
         ModuleArtifactFinder systemModulePath = ModuleArtifactFinder.installedModules();
 
-        // if -XX:AddModuleRequires or -XX:AddModuleExports is specified then
-        // interpose on the system module path so that the requires/exports are
-        // updated as they modules are found. In time this will be extended to the
-        // application module path.
-        String moreRequires = System.getProperty("jdk.runtime.addModuleRequires");
-        String moreExports = System.getProperty("jdk.runtime.addModuleExports");
-        if (moreRequires != null || moreExports != null) {
-            systemModulePath =  ArtifactInterposer.interpose(systemModulePath,
-                                                             moreRequires,
-                                                             moreExports);
-        }
-
         // -modulepath specified to the launcher
         ModuleArtifactFinder appModulePath = null;
         String propValue = System.getProperty("java.module.path");
@@ -93,12 +83,20 @@ class ModuleBootstrap {
 
         // The module finder. For now this is the system module path followed
         // by the application module path (if specified). In the future then
-        // the upgrade module path will be prepended.
+        // an upgrade module path may need to be prepended.
         ModuleArtifactFinder finder;
         if (appModulePath != null) {
             finder = ModuleArtifactFinder.concat(systemModulePath, appModulePath);
         } else {
             finder = systemModulePath;
+        }
+
+        // if -XX:AddModuleRequires or -XX:AddModuleExports is specified then
+        // interpose on finder so that the requires/exports are updated
+        String moreRequires = System.getProperty("jdk.runtime.addModuleRequires");
+        String moreExports = System.getProperty("jdk.runtime.addModuleExports");
+        if (moreRequires != null || moreExports != null) {
+            finder = ArtifactInterposer.interpose(finder, moreRequires, moreExports);
         }
 
         // launcher -m option to specify the initial module
@@ -159,45 +157,15 @@ class ModuleBootstrap {
                                                  ModuleArtifactFinder.nullFinder(),
                                                  input).bind();
 
-        // setup module to ClassLoader mapping
-        Map<ModuleArtifact, ClassLoader> moduleToLoaders = loaderMap(systemModulePath);
+        // mapping of modules to class loaders
+        Layer.ClassLoaderFinder clf = classLoaderFinder(cf);
 
-        // -Xoverride
-        String override = System.getProperty("jdk.runtime.override");
-        if (override != null) {
-            Set<ModuleArtifact> systemModules = systemModulePath.allModules();
-            cf.descriptors().stream()
-                            .map(md -> cf.findArtifact(md.name()))
-                            .filter(systemModules::contains)
-                            .forEach(artifact -> {
-                                ClassLoader loader = moduleToLoaders.get(artifact);
-                                if (loader != null) {
-                                    String name = artifact.descriptor().name();
-                                    setOverrideDirectory(override, loader, name);
-                                }
-                            });
-        }
+        // define modules to VM/runtime
+        Layer bootLayer = Layer.create(cf, clf);
 
-        // if -modulepath specified then need to add to system class loader
-        if (appModulePath != null) {
-            Set<ModuleArtifact> systemModules = systemModulePath.allModules();
-
-            ClassLoader cl = ClassLoader.getSystemClassLoader();
-            if (!(cl instanceof ModuleLoader))
-                throw new Error("System class loader does not support modules");
-
-            ModuleLoader ml = (ModuleLoader) cl;
-            cf.descriptors().stream()
-                            .map(md -> cf.findArtifact(md.name()))
-                            .filter(artifact -> !systemModules.contains(artifact))
-                            .forEach(artifact -> {
-                                moduleToLoaders.put(artifact, cl);
-                                ml.addURL(artifact.packages(), artifact.location());
-                            });
-        }
-
-        // define to runtime
-        Layer bootLayer = Layer.create(cf, moduleToLoaders::get);
+        // define modules to class loaders
+        String overrideDirectory = System.getProperty("jdk.runtime.override");
+        defineModulesToClassLoaders(cf, clf, overrideDirectory);
 
         // reflection checks enabled?
         String s = System.getProperty("sun.reflect.enableModuleChecks");
@@ -251,49 +219,58 @@ class ModuleBootstrap {
     }
 
     /**
-     * Returns a map of module to class loader.
+     * Returns the ClassLoaderFinder that maps modules in the given
+     * Configuration to a ClassLoader.
      */
-    private static Map<ModuleArtifact, ClassLoader> loaderMap(ModuleArtifactFinder systemLibrary) {
-        Map<ModuleArtifact, ClassLoader> moduleToLoaders = new HashMap<>();
+    private static Layer.ClassLoaderFinder classLoaderFinder(Configuration cf) {
+        Set<String> bootModules = readModuleSet("boot.modules");
+        Set<String> extModules = readModuleSet("ext.modules");
 
         ClassLoader extClassLoader = Launcher.getLauncher().getExtClassLoader();
-        for (String name: ((ModuleLoader)extClassLoader).installedModules()) {
-            ModuleArtifact artifact = systemLibrary.find(name);
-            if (artifact != null) {
-                moduleToLoaders.put(artifact, extClassLoader);
-            }
-        }
+        ClassLoader appClassLoader = Launcher.getLauncher().getAppClassLoader();
 
-        // the modules linked into the image that are associated with the system class loader
-        // need to be associated with Launcher$AppClassLoader even if the system class loader
-        // is overridden
-        ClassLoader sysClassLoader = Launcher.getLauncher().getClassLoader();
-        for (String name: ((ModuleLoader)sysClassLoader).installedModules()) {
-            ModuleArtifact artifact = systemLibrary.find(name);
-            if (artifact != null)
-                moduleToLoaders.put(artifact, sysClassLoader);
-        }
-
-        return moduleToLoaders;
+        Map<ModuleArtifact, ClassLoader> map = new HashMap<>();
+        cf.descriptors()
+          .stream()
+          .map(ModuleDescriptor::name)
+          .filter(name -> !bootModules.contains(name))
+          .forEach(name -> {
+              ClassLoader cl = extModules.contains(name) ? extClassLoader : appClassLoader;
+              map.put(cf.findArtifact(name), cl);
+          });
+        return map::get;
     }
 
     /**
-     * Add an override directory for the given ClassLoader/module-name
+     * Defines the modules in the given Configuration to their
+     * respective ClassLoader.
      */
-    private static void setOverrideDirectory(String override, ClassLoader cl, String name) {
-        if (!(cl instanceof ModuleLoader)) {
-            // this should not happen as custom system class loaders don't support modules
-            throw new Error(cl + " does not support -Xoverride");
-        }
-
-        Path dir = Paths.get(override, name);
-        if (Files.exists(dir)) {
-            try {
-                URL url = dir.toUri().toURL();
-                ((ModuleLoader)cl).prependURL(url);
-            } catch (MalformedURLException e) {
-                throw new InternalError(e);
+    private static void defineModulesToClassLoaders(Configuration cf,
+                                                    Layer.ClassLoaderFinder clf,
+                                                    String overrideDirectory)
+    {
+        for (ModuleDescriptor md: cf.descriptors()) {
+            String name = md.name();
+            ModuleArtifact artifact = cf.findArtifact(name);
+            ClassLoader cl = clf.loaderForModule(artifact);
+            if (cl == null) {
+                // TBD: define modules to boot loader for the purposes
+                // of resource loading
+            } else {
+                ((ModuleLoader)cl).defineModule(artifact, overrideDirectory);
             }
+        }
+    }
+
+    /**
+     * Reads the contents of the given modules file in {@code ${java.home}/lib}.
+     */
+    private static Set<String> readModuleSet(String name) {
+        Path file = Paths.get(System.getProperty("java.home"), "lib", name);
+        try (Stream<String> stream = Files.lines(file)) {
+            return stream.collect(Collectors.toSet());
+        } catch (IOException ioe) {
+            throw new UncheckedIOException(ioe);
         }
     }
 }

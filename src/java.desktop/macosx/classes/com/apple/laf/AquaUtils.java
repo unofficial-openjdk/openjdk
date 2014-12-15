@@ -364,7 +364,8 @@ final class AquaUtils {
     // special casing naughty applications, like InstallAnywhere
     // <rdar://problem/4851533> REGR: JButton: Myst IV: the buttons of 1.0.3 updater have redraw issue
     static boolean shouldUseOpaqueButtons() {
-        final ClassLoader launcherClassLoader = Launcher.getLauncher().getClassLoader();
+        // can we use ClassLoader.getSystemClassLoader here?
+        final ClassLoader launcherClassLoader = Launcher.getLauncher().getAppClassLoader();
         if (classExists(launcherClassLoader, "com.installshield.wizard.platform.macosx.MacOSXUtils")) return true;
         return false;
     }
