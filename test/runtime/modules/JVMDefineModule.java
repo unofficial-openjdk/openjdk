@@ -24,73 +24,83 @@
 /*
  * @test
  * @library /testlibrary /testlibrary/whitebox
- * @build JVMCanReadModule
+ * @build JVMDefineModule
  * @run main ClassFileInstaller sun.hotspot.WhiteBox
  *                              sun.hotspot.WhiteBox$WhiteBoxPermission
- * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI JVMCanReadModule
+ * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI JVMDefineModule
  */
 
 import com.oracle.java.testlibrary.*;
 import sun.hotspot.WhiteBox;
 import static com.oracle.java.testlibrary.Asserts.*;
 
-public class JVMCanReadModule {
+public class JVMDefineModule {
 
     public static void main(String args[]) throws Exception {
         WhiteBox wb = WhiteBox.getWhiteBox();
-        MyClassLoader asking_cl = new MyClassLoader();
-        MyClassLoader target_cl = new MyClassLoader();
-        Object asking_module, target_module;
-        boolean result;
+        MyClassLoader cl = new MyClassLoader();
+        Object m;
 
-        asking_module = wb.DefineModule("asking_module", asking_cl, new String[] { "mypackage" });
-        assertNotNull(asking_module, "Module should not be null");
-        target_module = wb.DefineModule("target_module", target_cl, new String[] { "yourpackage" });
-        assertNotNull(target_module, "Module should not be null");
+        // NULL classloader argument, expect success
+        m = wb.DefineModule("mymodule", null, new String[] { "mypackage" });
+        assertNotNull(m, "Module should not be null");
 
-        // Set up relationship
-        wb.AddReadsModule(asking_module, target_module);
-
-        // Null asking_module argument, expect an IAE
+        // Invalid classloader argument, expect an IAE
         try {
-            result = wb.CanReadModule(null, target_module);
+            wb.DefineModule("mymodule1", new Object(), new String[] { "mypackage1" });
             throw new RuntimeException("Failed to get the expected IAE");
         } catch(IllegalArgumentException e) {
             // Expected
         }
 
-        // Bad asking_module argument, expect an IAE
+        // NULL package argument, should not throw an exception
+        m = wb.DefineModule("mymodule2", cl, null);
+        assertNotNull(m, "Module should not be null");
+
+        // NULL module name, expect an NPE
         try {
-            result = wb.CanReadModule(asking_cl, target_module);
+            wb.DefineModule(null, cl, new String[] { "mypackage2" });
+            throw new RuntimeException("Failed to get the expected NPE");
+        } catch(NullPointerException e) {
+            // Expected
+        }
+
+        // module name is java.base, expect an IAE
+        try {
+            wb.DefineModule("java.base", cl, new String[] { "mypackage3" });
             throw new RuntimeException("Failed to get the expected IAE");
         } catch(IllegalArgumentException e) {
             // Expected
         }
 
-        // Bad target_module argument, expect an IAE
+        // Duplicates in package list, expect an IAE
         try {
-            result = wb.CanReadModule(asking_module, asking_cl);
+            wb.DefineModule("java.base", cl, new String[] { "mypackage4", "mypackage5", "mypackage4" });
             throw new RuntimeException("Failed to get the expected IAE");
         } catch(IllegalArgumentException e) {
             // Expected
         }
 
-        // Verify modules can always read the unnamed module
-        result = wb.CanReadModule(target_module, null);
-        assertTrue(result, "target_module can read unnamed module");
+        // Duplicate module name, expect an IAE
+        m = wb.DefineModule("module.name", cl, new String[] { "mypackage6" });
+        assertNotNull(m, "Module should not be null");
+        try {
+            wb.DefineModule("module.name", cl, new String[] { "mypackage7" });
+            throw new RuntimeException("Failed to get the expected IAE");
+        } catch(IllegalArgumentException e) {
+            // Expected
+        }
 
-        // Verify asking_module can read itself
-        result = wb.CanReadModule(asking_module, asking_module);
-        assertTrue(result, "asking_module can read itself");
+        // Package is already defined for class loader, expect an IAE
+        try {
+            wb.DefineModule("dupl.pkg.module", cl, new String[] { "mypackage6" });
+            throw new RuntimeException("Failed to get the expected IAE");
+        } catch(IllegalArgumentException e) {
+            // Expected
+        }
 
-        // Verify asking_module can read target_module
-        result = wb.CanReadModule(asking_module, target_module);
-        assertTrue(result, "asking_module can read target_module");
-
-        // Verify target_module cannot read asking_module
-        result = wb.CanReadModule(target_module, asking_module);
-        assertTrue(!result, "target_module cannot read asking_module");
     }
 
     static class MyClassLoader extends ClassLoader { }
 }
+

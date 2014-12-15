@@ -163,7 +163,7 @@ jobject Modules::define_module(JNIEnv *env, jstring name, jobject loader, jobjec
   ResourceMark rm(THREAD);
 
   if (name == NULL) {
-    THROW_MSG_NULL(vmSymbols::java_lang_IllegalArgumentException(),
+    THROW_MSG_NULL(vmSymbols::java_lang_NullPointerException(),
                    "Null module name");
   }
   char *module_name =
@@ -232,6 +232,8 @@ jobject Modules::define_module(JNIEnv *env, jstring name, jobject loader, jobjec
   Handle h_name(THREAD, JNIHandles::resolve_non_null(name));
   Handle jlrM_handle = java_lang_reflect_Module::create(h_loader, h_name, CHECK_NULL);
 
+  int dupl_pkg_index = -1;
+  bool dupl_modules = false;
   {
     MutexLocker ml(Module_lock, THREAD);
 
@@ -246,44 +248,55 @@ jobject Modules::define_module(JNIEnv *env, jstring name, jobject loader, jobjec
           // This could be because the module was already defined.  If so,
           // report that error instead of the package error.
           if (module_table->lookup_only(module_symbol) != NULL) {
-            THROW_MSG_NULL(vmSymbols::java_lang_IllegalArgumentException(),
-                           err_msg("Module %s is already defined", module_name));
+            dupl_modules = true;
           } else {
-            THROW_MSG_NULL(vmSymbols::java_lang_IllegalArgumentException(),
-                           err_msg("Package %s for module %s already exists for class loader",
-                                   pkg_list->at(x)->as_C_string(), module_name));
+            dupl_pkg_index = x;
           }
+          break;
         }
       }
     }  // if (num_packages > 0)...
 
     // Add the module and its packages.
+    if (!dupl_modules && dupl_pkg_index == -1) {
+      // Create the entry for this module in the class loader's module entry table.
+      ModuleEntry* module_entry =
+        module_table->locked_create_entry_or_null(jlrM_handle(), module_symbol,
+          ClassLoaderData::class_loader_data_or_null(h_loader()));
+      if (module_entry == NULL) {
+        dupl_modules = true;
 
-    // Create the entry for this module in the class loader's module entry table.
-    ModuleEntry* module_entry =
-      module_table->locked_create_entry_or_null(jlrM_handle(), module_symbol,
-                                                ClassLoaderData::class_loader_data_or_null(h_loader()));
-    if (module_entry == NULL) {
-      THROW_MSG_NULL(vmSymbols::java_lang_IllegalArgumentException(),
-                     err_msg("Module %s is already defined", module_name));
-    }
+      } else {
+        if (TraceModules) {
+          tty->print_cr("[define_module(): creation of module = %s, package # = %d]",
+                        module_name, pkg_list->length());
+        }
 
-    if (TraceModules) {
-      tty->print_cr("[define_module(): creation of module = %s, package # = %d]", module_name, pkg_list->length());
-    }
-
-    // Add the packages.
-    assert(pkg_list->length() == 0 || package_table != NULL, "Bad package table");
-    PackageEntry* pkg;
-    for (int y = 0; y < pkg_list->length(); y++) {
-      pkg = package_table->locked_create_entry_or_null(pkg_list->at(y), module_entry);
-      assert(pkg != NULL, "Unable to create a module's package entry");
-      if (TraceModules || TracePackages) {
-        tty->print_cr("[define_module(): creation of package %s for module %s]",
-                      (pkg_list->at(y))->as_C_string(), module_name);
+        // Add the packages.
+        assert(pkg_list->length() == 0 || package_table != NULL, "Bad package table");
+        PackageEntry* pkg;
+        for (int y = 0; y < pkg_list->length(); y++) {
+          pkg = package_table->locked_create_entry_or_null(pkg_list->at(y), module_entry);
+          assert(pkg != NULL, "Unable to create a module's package entry");
+          if (TraceModules || TracePackages) {
+            tty->print_cr("[define_module(): creation of package %s for module %s]",
+                          (pkg_list->at(y))->as_C_string(), module_name);
+          }
+        }
       }
     }
   }  // Release the lock
+
+  // any errors ?
+  if (dupl_modules) {
+     THROW_MSG_NULL(vmSymbols::java_lang_IllegalArgumentException(),
+                    err_msg("Module %s is already defined", module_name));
+  }
+  if (dupl_pkg_index != -1) {
+    THROW_MSG_NULL(vmSymbols::java_lang_IllegalArgumentException(),
+                   err_msg("Package %s for module %s already exists for class loader",
+                            pkg_list->at(dupl_pkg_index)->as_C_string(), module_name));
+  }
 
   if (loader == NULL) {
     // Now that the module is defined, if it is in the bootloader, make sure that
@@ -302,11 +315,11 @@ void Modules::add_module_exports(JNIEnv *env, jobject from_module, jstring packa
   JavaThread *THREAD = JavaThread::thread_from_jni_environment(env);
 
   if (package == NULL) {
-    THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(),
+    THROW_MSG(vmSymbols::java_lang_NullPointerException(),
               "package is null");
   }
   if (from_module == NULL) {
-    THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(),
+    THROW_MSG(vmSymbols::java_lang_NullPointerException(),
               "from_module is null");
   }
   ModuleEntry* from_module_entry = get_module_entry(from_module, CHECK);
@@ -379,18 +392,18 @@ void Modules::add_reads_module(JNIEnv *env, jobject from_module, jobject to_modu
   JavaThread *THREAD = JavaThread::thread_from_jni_environment(env);
 
   if (from_module == NULL) {
-    THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(),
+    THROW_MSG(vmSymbols::java_lang_NullPointerException(),
               "from_module is null");
   }
   if (to_module == NULL) {
-    THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(),
+    THROW_MSG(vmSymbols::java_lang_NullPointerException(),
               "to_module is null");
   }
 
   ModuleEntry* from_module_entry = get_module_entry(from_module, CHECK);
   if (from_module_entry == NULL) {
     THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(),
-              "from_module is invalid");
+              "from_module is not valid");
   }
   ModuleEntry* to_module_entry = get_module_entry(to_module, CHECK);
   if (to_module_entry == NULL) {
@@ -415,7 +428,7 @@ jboolean Modules::can_read_module(JNIEnv *env, jobject asking_module, jobject ta
   JavaThread *THREAD = JavaThread::thread_from_jni_environment(env);
 
   if (asking_module == NULL) {
-    THROW_MSG_(vmSymbols::java_lang_IllegalArgumentException(),
+    THROW_MSG_(vmSymbols::java_lang_NullPointerException(),
                "asking_module is null", JNI_FALSE);
   }
 
@@ -454,11 +467,11 @@ jboolean Modules::is_exported_to_module(JNIEnv *env, jobject from_module, jstrin
   JavaThread *THREAD = JavaThread::thread_from_jni_environment(env);
 
   if (package == NULL) {
-    THROW_MSG_(vmSymbols::java_lang_IllegalArgumentException(),
+    THROW_MSG_(vmSymbols::java_lang_NullPointerException(),
                "package is null", JNI_FALSE);
   }
   if (from_module == NULL) {
-    THROW_MSG_(vmSymbols::java_lang_IllegalArgumentException(),
+    THROW_MSG_(vmSymbols::java_lang_NullPointerException(),
                "from_module is null", JNI_FALSE);
   }
   ModuleEntry* from_module_entry = get_module_entry(from_module, CHECK_false);
@@ -565,11 +578,11 @@ void Modules::add_module_package(JNIEnv *env, jobject module, jstring package) {
   ResourceMark rm;
 
   if (module == NULL) {
-    THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(),
+    THROW_MSG(vmSymbols::java_lang_NullPointerException(),
               "module is null");
   }
   if (package == NULL) {
-    THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(),
+    THROW_MSG(vmSymbols::java_lang_NullPointerException(),
               "package is null");
   }
   ModuleEntry* module_entry = get_module_entry(module, CHECK);

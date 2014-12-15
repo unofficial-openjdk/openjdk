@@ -57,11 +57,11 @@ public class JVMAddModulePackage {
         wb.AddModulePackage(module1, "package/num3");
         wb.AddModuleExports(module1, "package/num3", null);
 
-        // Null module argument, expect an IAE
+        // Null module argument, expect an NPE
         try {
             wb.AddModulePackage(null, "new_package");
-            throw new RuntimeException("Failed to get the expected IAE");
-        } catch(IllegalArgumentException e) {
+            throw new RuntimeException("Failed to get the expected NPE");
+        } catch(NullPointerException e) {
             // Expected
         }
 
@@ -73,11 +73,11 @@ public class JVMAddModulePackage {
             // Expected
         }
 
-        // Null package argument, expect an IAE
+        // Null package argument, expect an NPE
         try {
             wb.AddModulePackage(module1, null);
-            throw new RuntimeException("Failed to get the expected IAE");
-        } catch(IllegalArgumentException e) {
+            throw new RuntimeException("Failed to get the expected NPE");
+        } catch(NullPointerException e) {
             // Expected
         }
 

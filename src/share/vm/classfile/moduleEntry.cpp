@@ -138,7 +138,7 @@ ModuleEntry* ModuleEntryTable::locked_create_entry_or_null(oop module, Symbol* m
                                                            ClassLoaderData* loader) {
   assert_locked_or_safepoint(Module_lock);
   // Check if module already exists.
-  if (lookup_only(module) != NULL) {
+  if (lookup_only(module_name) != NULL) {
     return NULL;
   } else {
     ModuleEntry* entry = new_entry(compute_hash(module), module, module_name, loader);

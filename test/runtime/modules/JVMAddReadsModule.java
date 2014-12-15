@@ -47,27 +47,27 @@ public class JVMAddReadsModule {
         to_module = wb.DefineModule("to_module", to_cl, new String[] { "yourpackage" });
         assertNotNull(to_module, "Module should not be null");
 
-        // Null from_module argument, expect an IAE
+        // Null from_module argument, expect an NPE
         try {
             wb.AddReadsModule(null, to_module);
-            throw new RuntimeException("Failed to get the expected IAE");
-        } catch(IllegalArgumentException e) {
+            throw new RuntimeException("Failed to get the expected NPE");
+        } catch(NullPointerException e) {
             // Expected
         }
 
-        // Null to_module argument, expect an IAE
+        // Null to_module argument, expect an NPE
         try {
             wb.AddReadsModule(from_module, null);
-            throw new RuntimeException("Failed to get the expected IAE");
-        } catch(IllegalArgumentException e) {
+            throw new RuntimeException("Failed to get the expected NPE");
+        } catch(NullPointerException e) {
             // Expected
         }
 
-        // Null from_module and to_module arguments, expect an IAE
+        // Null from_module and to_module arguments, expect an NPE
         try {
             wb.AddReadsModule(null, null);
-            throw new RuntimeException("Failed to get the expected IAE");
-        } catch(IllegalArgumentException e) {
+            throw new RuntimeException("Failed to get the expected NPE");
+        } catch(NullPointerException e) {
             // Expected
         }
 
