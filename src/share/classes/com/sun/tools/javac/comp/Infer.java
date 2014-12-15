@@ -262,7 +262,7 @@ public class Infer {
             UndetVar uv = (UndetVar) l.head;
             TypeVar tv = (TypeVar)uv.qtype;
             ListBuffer<Type> hibounds = new ListBuffer<Type>();
-            for (Type t : that.getConstraints(tv, ConstraintKind.EXTENDS).prependList(types.getBounds(tv))) {
+            for (Type t : that.getConstraints(tv, ConstraintKind.EXTENDS)) {
                 if (!t.containsSome(that.tvars) && t.tag != BOT) {
                     hibounds.append(t);
                 }
@@ -286,7 +286,6 @@ public class Infer {
         // check bounds
         List<Type> targs = Type.map(undetvars, getInstFun);
         targs = types.subst(targs, that.tvars, targs);
-        checkWithinBounds(that.tvars, targs, warn);
         return chk.checkType(warn.pos(), that.inst(targs, types), to);
     }
 
@@ -402,7 +401,7 @@ public class Infer {
                         UndetVar uv = (UndetVar)t;
                         if (uv.qtype == tv) {
                             switch (ck) {
-                                case EXTENDS: return uv.hibounds;
+                                case EXTENDS: return uv.hibounds.appendList(types.subst(types.getBounds(tv), all_tvars, inferredTypes));
                                 case SUPER: return uv.lobounds;
                                 case EQUAL: return uv.inst != null ? List.of(uv.inst) : List.<Type>nil();
                             }
