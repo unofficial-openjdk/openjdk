@@ -273,9 +273,7 @@ struct BoolTest VALUE_OBJ_CLASS_SPEC {
   mask commute( ) const { return mask("038147858"[_test]-'0'); }
   mask negate( ) const { return mask(_test^4); }
   bool is_canonical( ) const { return (_test == BoolTest::ne || _test == BoolTest::lt || _test == BoolTest::le); }
-#ifndef PRODUCT
   void dump_on(outputStream *st) const;
-#endif
 };
 
 //------------------------------BoolNode---------------------------------------
