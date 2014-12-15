@@ -88,6 +88,39 @@ public class JVMAddModulePackage {
         } catch(IllegalArgumentException e) {
             // Expected
         }
+
+        // Invalid package name, expect an IAE
+        try {
+            wb.AddModulePackage(module1, "your.package");
+            throw new RuntimeException("Failed to get the expected IAE");
+        } catch(IllegalArgumentException e) {
+            // Expected
+        }
+
+        // Invalid package name, expect an IAE
+        try {
+            wb.AddModulePackage(module1, ";your/package");
+            throw new RuntimeException("Failed to get the expected IAE");
+        } catch(IllegalArgumentException e) {
+            // Expected
+        }
+
+        // Invalid package name, expect an IAE
+        try {
+            wb.AddModulePackage(module1, "7[743");
+            throw new RuntimeException("Failed to get the expected IAE");
+        } catch(IllegalArgumentException e) {
+            // Expected
+        }
+
+        // Empty package name, expect an IAE
+        try {
+            wb.AddModulePackage(module1, "");
+            throw new RuntimeException("Failed to get the expected IAE");
+        } catch(IllegalArgumentException e) {
+            // Expected
+        }
+
     }
 
     static class MyClassLoader extends ClassLoader { }

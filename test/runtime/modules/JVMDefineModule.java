@@ -81,6 +81,14 @@ public class JVMDefineModule {
             // Expected
         }
 
+        // Empty entry in package list, expect an IAE
+        try {
+            wb.DefineModule("java.base", cl, new String[] { "mypackageX", "", "mypackageY" });
+            throw new RuntimeException("Failed to get the expected IAE");
+        } catch(IllegalArgumentException e) {
+            // Expected
+        }
+
         // Duplicate module name, expect an IAE
         m = wb.DefineModule("module.name", cl, new String[] { "mypackage6" });
         assertNotNull(m, "Module should not be null");
@@ -99,6 +107,25 @@ public class JVMDefineModule {
             // Expected
         }
 
+        // Empty module name, expect an IAE
+        try {
+            wb.DefineModule("", cl, new String[] { "mypackage8" });
+            throw new RuntimeException("Failed to get the expected IAE");
+        } catch(IllegalArgumentException e) {
+            // Expected
+        }
+
+        // Bad module name, expect an IAE
+        try {
+            wb.DefineModule("bad;name", cl, new String[] { "mypackage9" });
+            throw new RuntimeException("Failed to get the expected IAE");
+        } catch(IllegalArgumentException e) {
+            // Expected
+        }
+
+        // Zero length package list, should be okay
+        m = wb.DefineModule("zero.packages", cl, new String[] { });
+        assertNotNull(m, "Module should not be null");
     }
 
     static class MyClassLoader extends ClassLoader { }

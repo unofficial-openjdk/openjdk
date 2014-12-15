@@ -41,7 +41,7 @@
 
 
 static bool verify_module_name(char *module_name) {
-  if (module_name == NULL) return false;
+  if (module_name == NULL || module_name[0] == 0) return false;
   int len = (int)strlen(module_name);
   return (len <= Symbol::max_length() &&
     UTF8::is_legal_utf8((unsigned char *)module_name, len, false) &&
@@ -50,7 +50,7 @@ static bool verify_module_name(char *module_name) {
 }
 
 static bool verify_package_name(char *package_name) {
-  if (package_name == NULL) return false;
+  if (package_name == NULL || package_name[0] == 0) return false;
   int len = (int)strlen(package_name);
   return (len <= Symbol::max_length() &&
     UTF8::is_legal_utf8((unsigned char *)package_name, len, false) &&
