@@ -19,6 +19,7 @@
  */
 package jdk.nashorn.internal.runtime.regexp.joni.ast;
 
+@SuppressWarnings("javadoc")
 public final class AnyCharNode extends Node {
     public AnyCharNode(){}
 
@@ -33,8 +34,8 @@ public final class AnyCharNode extends Node {
     }
 
     @Override
-    public String toString(int level) {
-        String value = "";
+    public String toString(final int level) {
+        final String value = "";
         return value;
     }
 }

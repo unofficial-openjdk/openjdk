@@ -26,7 +26,13 @@
 package jdk.nashorn.internal.objects;
 
 import static jdk.nashorn.internal.runtime.ECMAErrors.rangeError;
-
+import static jdk.nashorn.internal.runtime.ECMAErrors.typeError;
+import static jdk.nashorn.internal.runtime.UnwarrantedOptimismException.INVALID_PROGRAM_POINT;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import jdk.internal.dynalink.CallSiteDescriptor;
+import jdk.internal.dynalink.linker.GuardedInvocation;
+import jdk.internal.dynalink.linker.LinkRequest;
 import jdk.nashorn.internal.objects.annotations.Attribute;
 import jdk.nashorn.internal.objects.annotations.Getter;
 import jdk.nashorn.internal.objects.annotations.ScriptClass;
@@ -35,33 +41,56 @@ import jdk.nashorn.internal.runtime.PropertyMap;
 import jdk.nashorn.internal.runtime.ScriptObject;
 import jdk.nashorn.internal.runtime.ScriptRuntime;
 import jdk.nashorn.internal.runtime.arrays.ArrayData;
+import jdk.nashorn.internal.runtime.arrays.TypedArrayData;
 
+/**
+ * ArrayBufferView, es6 class or TypedArray implementation
+ */
 @ScriptClass("ArrayBufferView")
-abstract class ArrayBufferView extends ScriptObject {
+public abstract class ArrayBufferView extends ScriptObject {
+    private final NativeArrayBuffer buffer;
+    private final int byteOffset;
 
     // initialized by nasgen
     private static PropertyMap $nasgenmap$;
 
     private ArrayBufferView(final NativeArrayBuffer buffer, final int byteOffset, final int elementLength, final Global global) {
         super($nasgenmap$);
-        checkConstructorArgs(buffer, byteOffset, elementLength);
-        this.setProto(getPrototype(global));
-        this.setArray(factory().createArrayData(buffer, byteOffset, elementLength));
+
+        final int bytesPerElement = bytesPerElement();
+
+        checkConstructorArgs(buffer.getByteLength(), bytesPerElement, byteOffset, elementLength);
+        setProto(getPrototype(global));
+
+        this.buffer     = buffer;
+        this.byteOffset = byteOffset;
+
+        assert byteOffset % bytesPerElement == 0;
+        final int start = byteOffset / bytesPerElement;
+        final ByteBuffer newNioBuffer = buffer.getNioBuffer().duplicate().order(ByteOrder.nativeOrder());
+        final ArrayData  data         = factory().createArrayData(newNioBuffer, start, start + elementLength);
+
+        setArray(data);
     }
 
-    ArrayBufferView(final NativeArrayBuffer buffer, final int byteOffset, final int elementLength) {
+    /**
+     * Constructor
+     *
+     * @param buffer         underlying NativeArrayBuffer
+     * @param byteOffset     byte offset for buffer
+     * @param elementLength  element length in bytes
+     */
+    protected ArrayBufferView(final NativeArrayBuffer buffer, final int byteOffset, final int elementLength) {
         this(buffer, byteOffset, elementLength, Global.instance());
     }
 
-    private void checkConstructorArgs(final NativeArrayBuffer buffer, final int byteOffset, final int elementLength) {
+    private static void checkConstructorArgs(final int byteLength, final int bytesPerElement, final int byteOffset, final int elementLength) {
         if (byteOffset < 0 || elementLength < 0) {
-            throw new RuntimeException("byteOffset or length must not be negative");
-        }
-        if (byteOffset + elementLength * bytesPerElement() > buffer.getByteLength()) {
-            throw new RuntimeException("byteOffset + byteLength out of range");
-        }
-        if (byteOffset % bytesPerElement() != 0) {
-            throw new RuntimeException("byteOffset must be a multiple of the element size");
+            throw new RuntimeException("byteOffset or length must not be negative, byteOffset=" + byteOffset + ", elementLength=" + elementLength + ", bytesPerElement=" + bytesPerElement);
+        } else if (byteOffset + elementLength * bytesPerElement > byteLength) {
+            throw new RuntimeException("byteOffset + byteLength out of range, byteOffset=" + byteOffset + ", elementLength=" + elementLength + ", bytesPerElement=" + bytesPerElement);
+        } else if (byteOffset % bytesPerElement != 0) {
+            throw new RuntimeException("byteOffset must be a multiple of the element size, byteOffset=" + byteOffset + " bytesPerElement=" + bytesPerElement);
         }
     }
 
@@ -69,24 +98,44 @@ abstract class ArrayBufferView extends ScriptObject {
         return factory().bytesPerElement;
     }
 
+    /**
+     * Buffer getter as per spec
+     * @param self ArrayBufferView instance
+     * @return buffer
+     */
     @Getter(attributes = Attribute.NOT_ENUMERABLE | Attribute.NOT_WRITABLE | Attribute.NOT_CONFIGURABLE)
     public static Object buffer(final Object self) {
-        return ((ArrayDataImpl)((ArrayBufferView)self).getArray()).buffer;
+        return ((ArrayBufferView)self).buffer;
     }
 
+    /**
+     * Buffer offset getter as per spec
+     * @param self ArrayBufferView instance
+     * @return buffer offset
+     */
     @Getter(attributes = Attribute.NOT_ENUMERABLE | Attribute.NOT_WRITABLE | Attribute.NOT_CONFIGURABLE)
-    public static Object byteOffset(final Object self) {
-        return ((ArrayDataImpl)((ArrayBufferView)self).getArray()).byteOffset;
+    public static int byteOffset(final Object self) {
+        return ((ArrayBufferView)self).byteOffset;
     }
 
+    /**
+     * Byte length getter as per spec
+     * @param self ArrayBufferView instance
+     * @return array buffer view length in bytes
+     */
     @Getter(attributes = Attribute.NOT_ENUMERABLE | Attribute.NOT_WRITABLE | Attribute.NOT_CONFIGURABLE)
-    public static Object byteLength(final Object self) {
+    public static int byteLength(final Object self) {
         final ArrayBufferView view = (ArrayBufferView)self;
-        return ((ArrayDataImpl)view.getArray()).elementLength * view.bytesPerElement();
+        return ((TypedArrayData<?>)view.getArray()).getElementLength() * view.bytesPerElement();
     }
 
+    /**
+     * Length getter as per spec
+     * @param self ArrayBufferView instance
+     * @return length in elements
+     */
     @Getter(attributes = Attribute.NOT_ENUMERABLE | Attribute.NOT_WRITABLE | Attribute.NOT_CONFIGURABLE)
-    public static Object length(final Object self) {
+    public static int length(final Object self) {
         return ((ArrayBufferView)self).elementLength();
     }
 
@@ -96,221 +145,119 @@ abstract class ArrayBufferView extends ScriptObject {
     }
 
     private int elementLength() {
-        return ((ArrayDataImpl)getArray()).elementLength;
+        return ((TypedArrayData<?>)getArray()).getElementLength();
     }
 
-    protected static abstract class ArrayDataImpl extends ArrayData {
-        protected final NativeArrayBuffer buffer;
-        protected final int byteOffset;
-        private final int elementLength;
-
-        protected ArrayDataImpl(final NativeArrayBuffer buffer, final int byteOffset, final int elementLength) {
-            super(elementLength);
-            this.buffer = buffer;
-            this.byteOffset = byteOffset;
-            this.elementLength = elementLength;
-        }
-
-        @Override
-        public ArrayData copy() {
-            throw new UnsupportedOperationException();   // Not used for ArrayBuffers
-        }
-
-        @Override
-        public Object[] asObjectArray() {
-            final Object[] array = new Object[elementLength];
-            for (int i = 0; i < elementLength; i++) {
-                array[i] = getObjectImpl(i);
-            }
-            return array;
-        }
-
-        @Override
-        public ArrayData ensure(final long safeIndex) {
-            return this;
-        }
-
-        @Override
-        public void setLength(final long length) {
-            //empty?
-            //TODO is this right?
-        }
-
-        @Override
-        public ArrayData shrink(final long newLength) {
-            return this;
-        }
-
-        @Override
-        public ArrayData set(final int index, final Object value, final boolean strict) {
-            if (has(index)) {
-                setImpl(index, value);
-            }
-            return this;
-        }
-
-        @Override
-        public ArrayData set(final int index, final int value, final boolean strict) {
-            if (has(index)) {
-                setImpl(index, value);
-            }
-            return this;
-        }
-
-        @Override
-        public ArrayData set(final int index, final long value, final boolean strict) {
-            if (has(index)) {
-                setImpl(index, value);
-            }
-            return this;
-        }
-
-        @Override
-        public ArrayData set(final int index, final double value, final boolean strict) {
-            if (has(index)) {
-                setImpl(index, value);
-            }
-            return this;
-        }
-
-        @Override
-        public int getInt(final int index) {
-            return getIntImpl(index);
-        }
-
-        @Override
-        public long getLong(final int index) {
-            return getLongImpl(index);
-        }
-
-        @Override
-        public double getDouble(final int index) {
-            return getDoubleImpl(index);
-        }
-
-        @Override
-        public Object getObject(final int index) {
-            return getObjectImpl(index);
-        }
-
-        @Override
-        public boolean has(final int index) {
-            return index >= 0 && index < elementLength;
-        }
-
-        @Override
-        public boolean canDelete(final int index, final boolean strict) {
-            return false;
-        }
-
-        @Override
-        public boolean canDelete(final long fromIndex, final long toIndex, final boolean strict) {
-            return false;
-        }
-
-        @Override
-        public ArrayData delete(final int index) {
-            return this;
-        }
-
-        @Override
-        public ArrayData delete(final long fromIndex, final long toIndex) {
-            return this;
-        }
-
-        @Override
-        protected ArrayData convert(final Class<?> type) {
-            return this;
-        }
-
-        @Override
-        public void shiftLeft(final int by) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public ArrayData shiftRight(final int by) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public Object pop() {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public ArrayData slice(final long from, final long to) {
-            throw new UnsupportedOperationException();
-        }
-
-        protected abstract int getIntImpl(int key);
-
-        protected long getLongImpl(final int key) {
-            return getIntImpl(key);
-        }
-
-        protected double getDoubleImpl(final int key) {
-            return getIntImpl(key);
-        }
-
-        protected Object getObjectImpl(final int key) {
-            return getIntImpl(key);
-        }
-
-        protected abstract void setImpl(int key, int value);
-
-        protected void setImpl(final int key, final long value) {
-            setImpl(key, (int)value);
-        }
-
-        protected void setImpl(final int key, final double value) {
-            setImpl(key, JSType.toInt32(value));
-        }
-
-        protected void setImpl(final int key, final Object value) {
-            setImpl(key, JSType.toInt32(value));
-        }
-
-        protected abstract int byteIndex(int index);
-    }
-
+    /**
+     * Factory class for byte ArrayBufferViews
+     */
     protected static abstract class Factory {
         final int bytesPerElement;
         final int maxElementLength;
 
+        /**
+         * Constructor
+         *
+         * @param bytesPerElement number of bytes per element for this buffer
+         */
         public Factory(final int bytesPerElement) {
-            this.bytesPerElement = bytesPerElement;
+            this.bytesPerElement  = bytesPerElement;
             this.maxElementLength = Integer.MAX_VALUE / bytesPerElement;
         }
 
+        /**
+         * Factory method
+         *
+         * @param elementLength number of elements
+         * @return new ArrayBufferView
+         */
         public final ArrayBufferView construct(final int elementLength) {
-            if(elementLength > maxElementLength) {
+            if (elementLength > maxElementLength) {
                 throw rangeError("inappropriate.array.buffer.length", JSType.toString(elementLength));
             }
             return construct(new NativeArrayBuffer(elementLength * bytesPerElement), 0, elementLength);
         }
 
-        public abstract ArrayBufferView construct(NativeArrayBuffer buffer, int byteOffset, int elementLength);
+        /**
+         * Factory method
+         *
+         * @param buffer         underlying buffer
+         * @param byteOffset     byte offset
+         * @param elementLength  number of elements
+         *
+         * @return new ArrayBufferView
+         */
+        public abstract ArrayBufferView construct(final NativeArrayBuffer buffer, final int byteOffset, final int elementLength);
 
-        public abstract ArrayData createArrayData(NativeArrayBuffer buffer, int byteOffset, int elementLength);
+        /**
+         * Factory method for array data
+         *
+         * @param nb    underlying nativebuffer
+         * @param start start element
+         * @param end   end element
+         *
+         * @return      new array data
+         */
+        public abstract TypedArrayData<?> createArrayData(final ByteBuffer nb, final int start, final int end);
+
+        /**
+         * Get the class name for this type of buffer
+         *
+         * @return class name
+         */
+        public abstract String getClassName();
     }
 
+    /**
+     * Get the factor for this kind of buffer
+     * @return Factory
+     */
     protected abstract Factory factory();
 
+    /**
+     * Get the prototype for this ArrayBufferView
+     * @param global global instance
+     * @return prototype
+     */
     protected abstract ScriptObject getPrototype(final Global global);
 
+    @Override
+    public final String getClassName() {
+        return factory().getClassName();
+    }
+
+    /**
+     * Check if this array contains floats
+     * @return true if float array (or double)
+     */
     protected boolean isFloatArray() {
         return false;
     }
 
-    protected static ArrayBufferView constructorImpl(final Object[] args, final Factory factory) {
-        final Object arg0 = args.length != 0 ? args[0] : 0;
-        final ArrayBufferView dst;
-        final int length;
+    /**
+     * Inheritable constructor implementation
+     *
+     * @param newObj   is this a new constructor
+     * @param args     arguments
+     * @param factory  factory
+     *
+     * @return new ArrayBufferView
+     */
+    protected static ArrayBufferView constructorImpl(final boolean newObj, final Object[] args, final Factory factory) {
+        final Object          arg0 = args.length != 0 ? args[0] : 0;
+        final ArrayBufferView dest;
+        final int             length;
+
+        if (!newObj) {
+            throw typeError("constructor.requires.new", factory.getClassName());
+        }
+
+
         if (arg0 instanceof NativeArrayBuffer) {
             // Constructor(ArrayBuffer buffer, optional unsigned long byteOffset, optional unsigned long length)
-            final NativeArrayBuffer buffer = (NativeArrayBuffer) arg0;
-            final int byteOffset = args.length > 1 ? JSType.toInt32(args[1]) : 0;
+            final NativeArrayBuffer buffer     = (NativeArrayBuffer)arg0;
+            final int               byteOffset = args.length > 1 ? JSType.toInt32(args[1]) : 0;
+
             if (args.length > 2) {
                 length = JSType.toInt32(args[2]);
             } else {
@@ -319,27 +266,39 @@ abstract class ArrayBufferView extends ScriptObject {
                 }
                 length = (buffer.getByteLength() - byteOffset) / factory.bytesPerElement;
             }
+
             return factory.construct(buffer, byteOffset, length);
         } else if (arg0 instanceof ArrayBufferView) {
             // Constructor(TypedArray array)
             length = ((ArrayBufferView)arg0).elementLength();
-            dst = factory.construct(length);
+            dest   = factory.construct(length);
         } else if (arg0 instanceof NativeArray) {
             // Constructor(type[] array)
             length = lengthToInt(((NativeArray) arg0).getArray().length());
-            dst = factory.construct(length);
+            dest   = factory.construct(length);
         } else {
-            // Constructor(unsigned long length)
-            length = lengthToInt(JSType.toInt64(arg0));
+            // Constructor(unsigned long length). Treating infinity as 0 is a special case for ArrayBufferView.
+            final double dlen = JSType.toNumber(arg0);
+            length = lengthToInt(Double.isInfinite(dlen) ? 0L : JSType.toLong(dlen));
             return factory.construct(length);
         }
 
-        copyElements(dst, length, (ScriptObject)arg0, 0);
-        return dst;
+        copyElements(dest, length, (ScriptObject)arg0, 0);
+
+        return dest;
     }
 
+    /**
+     * Inheritable implementation of set, if no efficient implementation is available
+     *
+     * @param self     ArrayBufferView instance
+     * @param array    array
+     * @param offset0  array offset
+     *
+     * @return result of setter
+     */
     protected static Object setImpl(final Object self, final Object array, final Object offset0) {
-        final ArrayBufferView dest = ((ArrayBufferView)self);
+        final ArrayBufferView dest = (ArrayBufferView)self;
         final int length;
         if (array instanceof ArrayBufferView) {
             // void set(TypedArray array, optional unsigned long offset)
@@ -351,7 +310,7 @@ abstract class ArrayBufferView extends ScriptObject {
             throw new RuntimeException("argument is not of array type");
         }
 
-        final ScriptObject source = (ScriptObject) array;
+        final ScriptObject source = (ScriptObject)array;
         final int offset = JSType.toInt32(offset0); // default=0
 
         if (dest.elementLength() < length + offset || offset < 0) {
@@ -366,11 +325,11 @@ abstract class ArrayBufferView extends ScriptObject {
     private static void copyElements(final ArrayBufferView dest, final int length, final ScriptObject source, final int offset) {
         if (!dest.isFloatArray()) {
             for (int i = 0, j = offset; i < length; i++, j++) {
-                dest.set(j, source.getInt(i), false);
+                dest.set(j, source.getInt(i, INVALID_PROGRAM_POINT), 0);
             }
         } else {
             for (int i = 0, j = offset; i < length; i++, j++) {
-                dest.set(j, source.getDouble(i), false);
+                dest.set(j, source.getDouble(i, INVALID_PROGRAM_POINT), 0);
             }
         }
     }
@@ -379,15 +338,48 @@ abstract class ArrayBufferView extends ScriptObject {
         if (length > Integer.MAX_VALUE || length < 0) {
             throw rangeError("inappropriate.array.buffer.length", JSType.toString(length));
         }
-        return (int) (length & Integer.MAX_VALUE);
+        return (int)(length & Integer.MAX_VALUE);
     }
 
+    /**
+     * Implementation of subarray if no efficient override exists
+     *
+     * @param self    ArrayBufferView instance
+     * @param begin0  begin index
+     * @param end0    end index
+     *
+     * @return sub array
+     */
     protected static ScriptObject subarrayImpl(final Object self, final Object begin0, final Object end0) {
-        final ArrayBufferView arrayView = ((ArrayBufferView)self);
-        final int elementLength = arrayView.elementLength();
-        final int begin = NativeArrayBuffer.adjustIndex(JSType.toInt32(begin0), elementLength);
-        final int end = NativeArrayBuffer.adjustIndex(end0 != ScriptRuntime.UNDEFINED ? JSType.toInt32(end0) : elementLength, elementLength);
-        final ArrayDataImpl arrayData = (ArrayDataImpl)arrayView.getArray();
-        return arrayView.factory().construct(arrayData.buffer, arrayData.byteIndex(begin), Math.max(end - begin, 0));
+        final ArrayBufferView arrayView       = (ArrayBufferView)self;
+        final int             byteOffset      = arrayView.byteOffset;
+        final int             bytesPerElement = arrayView.bytesPerElement();
+        final int             elementLength   = arrayView.elementLength();
+        final int             begin           = NativeArrayBuffer.adjustIndex(JSType.toInt32(begin0), elementLength);
+        final int             end             = NativeArrayBuffer.adjustIndex(end0 != ScriptRuntime.UNDEFINED ? JSType.toInt32(end0) : elementLength, elementLength);
+        final int             length          = Math.max(end - begin, 0);
+
+        assert byteOffset % bytesPerElement == 0;
+
+        //second is byteoffset
+        return arrayView.factory().construct(arrayView.buffer, begin * bytesPerElement + byteOffset, length);
+    }
+
+    @Override
+    protected GuardedInvocation findGetIndexMethod(final CallSiteDescriptor desc, final LinkRequest request) {
+        final GuardedInvocation inv = getArray().findFastGetIndexMethod(getArray().getClass(), desc, request);
+        if (inv != null) {
+            return inv;
+        }
+        return super.findGetIndexMethod(desc, request);
+    }
+
+    @Override
+    protected GuardedInvocation findSetIndexMethod(final CallSiteDescriptor desc, final LinkRequest request) {
+        final GuardedInvocation inv = getArray().findFastSetIndexMethod(getArray().getClass(), desc, request);
+        if (inv != null) {
+            return inv;
+        }
+        return super.findSetIndexMethod(desc, request);
     }
 }

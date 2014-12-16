@@ -20,11 +20,11 @@
 package jdk.nashorn.internal.runtime.regexp.joni.ast;
 
 import java.util.Set;
-
 import jdk.nashorn.internal.runtime.regexp.joni.Config;
 import jdk.nashorn.internal.runtime.regexp.joni.WarnCallback;
 import jdk.nashorn.internal.runtime.regexp.joni.constants.NodeType;
 
+@SuppressWarnings("javadoc")
 public abstract class Node implements NodeType {
     public Node parent;
 
@@ -34,10 +34,14 @@ public abstract class Node implements NodeType {
         return 1 << getType();
     }
 
-    protected void setChild(Node tgt){}         // default definition
-    protected Node getChild(){return null;}     // default definition
+    protected void setChild(final Node tgt) {
+        //empty, default definition
+    }
+    protected Node getChild() {
+        return null; // default definition
+        }
 
-    public void swap(Node with) {
+    public void swap(final Node with) {
         Node tmp;
 
         //if (getChild() != null) getChild().parent = with;
@@ -47,9 +51,13 @@ public abstract class Node implements NodeType {
         //setChild(with.getChild());
         //with.setChild(tmp);
 
-        if (parent != null) parent.setChild(with);
+        if (parent != null) {
+            parent.setChild(with);
+        }
 
-        if (with.parent != null) with.parent.setChild(this);
+        if (with.parent != null) {
+            with.parent.setChild(this);
+        }
 
         tmp = parent;
         parent = with.parent;
@@ -57,7 +65,7 @@ public abstract class Node implements NodeType {
     }
 
     // overridden by ConsAltNode and CallNode
-    public void verifyTree(Set<Node> set, WarnCallback warnings) {
+    public void verifyTree(final Set<Node> set, final WarnCallback warnings) {
         if (!set.contains(this) && getChild() != null) {
             set.add(this);
             if (getChild().parent != this) {
@@ -76,22 +84,28 @@ public abstract class Node implements NodeType {
 
     @Override
     public final String toString() {
-        StringBuilder s = new StringBuilder();
+        final StringBuilder s = new StringBuilder();
         s.append("<" + getAddressName() + " (" + (parent == null ? "NULL" : parent.getAddressName())  + ")>");
         return s + toString(0);
     }
 
-    protected static String pad(Object value, int level) {
-        if (value == null) return "NULL";
+    protected static String pad(final Object value, final int level) {
+        if (value == null) {
+            return "NULL";
+        }
 
-        StringBuilder pad = new StringBuilder("  ");
-        for (int i=0; i<level; i++) pad.append(pad);
+        final StringBuilder pad = new StringBuilder("  ");
+        for (int i=0; i<level; i++) {
+            pad.append(pad);
+        }
 
         return value.toString().replace("\n",  "\n" + pad);
     }
 
     public final boolean isInvalidQuantifier() {
-        if (!Config.VANILLA) return false;
+        if (!Config.VANILLA) {
+            return false;
+        }
 
         ConsAltNode node;
 
@@ -108,14 +122,18 @@ public abstract class Node implements NodeType {
         case LIST:
             node = (ConsAltNode)this;
             do {
-                if (!node.car.isInvalidQuantifier()) return false;
+                if (!node.car.isInvalidQuantifier()) {
+                    return false;
+                }
             } while ((node = node.cdr) != null);
             return false;
 
         case ALT:
             node = (ConsAltNode)this;
             do {
-                if (node.car.isInvalidQuantifier()) return true;
+                if (node.car.isInvalidQuantifier()) {
+                    return true;
+                }
             } while ((node = node.cdr) != null);
             break;
 

@@ -24,9 +24,9 @@
  */
 package jdk.nashorn.internal.objects;
 
-import static jdk.nashorn.internal.runtime.ScriptRuntime.UNDEFINED;
 import static jdk.nashorn.internal.runtime.ECMAErrors.rangeError;
 import static jdk.nashorn.internal.runtime.ECMAErrors.typeError;
+import static jdk.nashorn.internal.runtime.ScriptRuntime.UNDEFINED;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -35,7 +35,6 @@ import jdk.nashorn.internal.objects.annotations.Constructor;
 import jdk.nashorn.internal.objects.annotations.Function;
 import jdk.nashorn.internal.objects.annotations.Property;
 import jdk.nashorn.internal.objects.annotations.ScriptClass;
-import jdk.nashorn.internal.objects.annotations.SpecializedConstructor;
 import jdk.nashorn.internal.objects.annotations.SpecializedFunction;
 import jdk.nashorn.internal.runtime.JSType;
 import jdk.nashorn.internal.runtime.PropertyMap;
@@ -88,15 +87,15 @@ public class NativeDataView extends ScriptObject {
     // underlying ByteBuffer
     private final ByteBuffer buf;
 
-    private NativeDataView(NativeArrayBuffer arrBuf) {
+    private NativeDataView(final NativeArrayBuffer arrBuf) {
         this(arrBuf, arrBuf.getBuffer(), 0);
     }
 
-    private NativeDataView(NativeArrayBuffer arrBuf, int offset) {
+    private NativeDataView(final NativeArrayBuffer arrBuf, final int offset) {
         this(arrBuf, bufferFrom(arrBuf, offset), offset);
     }
 
-    private NativeDataView(NativeArrayBuffer arrBuf, int offset, int length) {
+    private NativeDataView(final NativeArrayBuffer arrBuf, final int offset, final int length) {
         this(arrBuf, bufferFrom(arrBuf, offset, length), offset, length);
     }
 
@@ -106,10 +105,10 @@ public class NativeDataView extends ScriptObject {
 
     private NativeDataView(final NativeArrayBuffer arrBuf, final ByteBuffer buf, final int offset, final int length) {
         super(Global.instance().getDataViewPrototype(), $nasgenmap$);
-        this.buffer = arrBuf;
+        this.buffer     = arrBuf;
         this.byteOffset = offset;
         this.byteLength = length;
-        this.buf = buf;
+        this.buf        = buf;
     }
 
     /**
@@ -136,14 +135,14 @@ public class NativeDataView extends ScriptObject {
             throw typeError("not.an.arraybuffer.in.dataview");
         }
 
-        final NativeArrayBuffer arrBuf = (NativeArrayBuffer) args[0];
+        final NativeArrayBuffer arrBuf = (NativeArrayBuffer)args[0];
         switch (args.length) {
-            case 1:
-                return new NativeDataView(arrBuf);
-            case 2:
-                return new NativeDataView(arrBuf, JSType.toInt32(args[1]));
-            default:
-                return new NativeDataView(arrBuf, JSType.toInt32(args[1]), JSType.toInt32(args[2]));
+        case 1:
+            return new NativeDataView(arrBuf);
+        case 2:
+            return new NativeDataView(arrBuf, JSType.toInt32(args[1]));
+        default:
+            return new NativeDataView(arrBuf, JSType.toInt32(args[1]), JSType.toInt32(args[2]));
         }
     }
 
@@ -156,7 +155,7 @@ public class NativeDataView extends ScriptObject {
      * @param offset offset in bytes from the start of the ArrayBuffer
      * @return newly constructed DataView object
      */
-    @SpecializedConstructor
+    @SpecializedFunction(isConstructor=true)
     public static NativeDataView constructor(final boolean newObj, final Object self, final Object arrBuf, final int offset) {
         if (!(arrBuf instanceof NativeArrayBuffer)) {
             throw typeError("not.an.arraybuffer.in.dataview");
@@ -174,7 +173,7 @@ public class NativeDataView extends ScriptObject {
      * @param length is the number of bytes from the offset that this DataView will reference
      * @return newly constructed DataView object
      */
-    @SpecializedConstructor
+    @SpecializedFunction(isConstructor=true)
     public static NativeDataView constructor(final boolean newObj, final Object self, final Object arrBuf, final int offset, final int length) {
         if (!(arrBuf instanceof NativeArrayBuffer)) {
             throw typeError("not.an.arraybuffer.in.dataview");
@@ -204,8 +203,8 @@ public class NativeDataView extends ScriptObject {
     public static int getInt8(final Object self, final Object byteOffset) {
         try {
             return getBuffer(self).get(JSType.toInt32(byteOffset));
-        } catch (final IndexOutOfBoundsException ioe) {
-            throw rangeError(ioe, "dataview.offset");
+        } catch (final IllegalArgumentException iae) {
+            throw rangeError(iae, "dataview.offset");
         }
     }
 
@@ -220,8 +219,8 @@ public class NativeDataView extends ScriptObject {
     public static int getInt8(final Object self, final int byteOffset) {
         try {
             return getBuffer(self).get(byteOffset);
-        } catch (final IndexOutOfBoundsException ioe) {
-            throw rangeError(ioe, "dataview.offset");
+        } catch (final IllegalArgumentException iae) {
+            throw rangeError(iae, "dataview.offset");
         }
     }
 
@@ -235,9 +234,9 @@ public class NativeDataView extends ScriptObject {
     @Function(attributes = Attribute.NOT_ENUMERABLE)
     public static int getUint8(final Object self, final Object byteOffset) {
         try {
-            return (0xFF & getBuffer(self).get(JSType.toInt32(byteOffset)));
-        } catch (final IndexOutOfBoundsException ioe) {
-            throw rangeError(ioe, "dataview.offset");
+            return 0xFF & getBuffer(self).get(JSType.toInt32(byteOffset));
+        } catch (final IllegalArgumentException iae) {
+            throw rangeError(iae, "dataview.offset");
         }
     }
 
@@ -251,9 +250,9 @@ public class NativeDataView extends ScriptObject {
     @SpecializedFunction
     public static int getUint8(final Object self, final int byteOffset) {
         try {
-            return (0xFF & getBuffer(self).get(byteOffset));
-        } catch (final IndexOutOfBoundsException ioe) {
-            throw rangeError(ioe, "dataview.offset");
+            return 0xFF & getBuffer(self).get(byteOffset);
+        } catch (final IllegalArgumentException iae) {
+            throw rangeError(iae, "dataview.offset");
         }
     }
 
@@ -269,8 +268,8 @@ public class NativeDataView extends ScriptObject {
     public static int getInt16(final Object self, final Object byteOffset, final Object littleEndian) {
         try {
             return getBuffer(self, littleEndian).getShort(JSType.toInt32(byteOffset));
-        } catch (final IndexOutOfBoundsException ioe) {
-            throw rangeError(ioe, "dataview.offset");
+        } catch (final IllegalArgumentException iae) {
+            throw rangeError(iae, "dataview.offset");
         }
     }
 
@@ -285,8 +284,8 @@ public class NativeDataView extends ScriptObject {
     public static int getInt16(final Object self, final int byteOffset) {
         try {
             return getBuffer(self, false).getShort(byteOffset);
-        } catch (final IndexOutOfBoundsException ioe) {
-            throw rangeError(ioe, "dataview.offset");
+        } catch (final IllegalArgumentException iae) {
+            throw rangeError(iae, "dataview.offset");
         }
     }
 
@@ -302,8 +301,8 @@ public class NativeDataView extends ScriptObject {
     public static int getInt16(final Object self, final int byteOffset, final boolean littleEndian) {
         try {
             return getBuffer(self, littleEndian).getShort(byteOffset);
-        } catch (final IndexOutOfBoundsException ioe) {
-            throw rangeError(ioe, "dataview.offset");
+        } catch (final IllegalArgumentException iae) {
+            throw rangeError(iae, "dataview.offset");
         }
     }
 
@@ -318,9 +317,9 @@ public class NativeDataView extends ScriptObject {
     @Function(attributes = Attribute.NOT_ENUMERABLE, arity = 1)
     public static int getUint16(final Object self, final Object byteOffset, final Object littleEndian) {
         try {
-            return (int) (0xFFFF & getBuffer(self, littleEndian).getShort(JSType.toInt32(byteOffset)));
-        } catch (final IndexOutOfBoundsException ioe) {
-            throw rangeError(ioe, "dataview.offset");
+            return 0xFFFF & getBuffer(self, littleEndian).getShort(JSType.toInt32(byteOffset));
+        } catch (final IllegalArgumentException iae) {
+            throw rangeError(iae, "dataview.offset");
         }
     }
 
@@ -334,9 +333,9 @@ public class NativeDataView extends ScriptObject {
     @SpecializedFunction
     public static int getUint16(final Object self, final int byteOffset) {
         try {
-            return (int) (0xFFFF & getBuffer(self, false).getShort(byteOffset));
-        } catch (final IndexOutOfBoundsException ioe) {
-            throw rangeError(ioe, "dataview.offset");
+            return 0xFFFF & getBuffer(self, false).getShort(byteOffset);
+        } catch (final IllegalArgumentException iae) {
+            throw rangeError(iae, "dataview.offset");
         }
     }
 
@@ -351,9 +350,9 @@ public class NativeDataView extends ScriptObject {
     @SpecializedFunction
     public static int getUint16(final Object self, final int byteOffset, final boolean littleEndian) {
         try {
-            return (int) (0xFFFF & getBuffer(self, littleEndian).getShort(byteOffset));
-        } catch (final IndexOutOfBoundsException ioe) {
-            throw rangeError(ioe, "dataview.offset");
+            return 0xFFFF & getBuffer(self, littleEndian).getShort(byteOffset);
+        } catch (final IllegalArgumentException iae) {
+            throw rangeError(iae, "dataview.offset");
         }
     }
 
@@ -369,8 +368,8 @@ public class NativeDataView extends ScriptObject {
     public static int getInt32(final Object self, final Object byteOffset, final Object littleEndian) {
         try {
             return getBuffer(self, littleEndian).getInt(JSType.toInt32(byteOffset));
-        } catch (final IndexOutOfBoundsException ioe) {
-            throw rangeError(ioe, "dataview.offset");
+        } catch (final IllegalArgumentException iae) {
+            throw rangeError(iae, "dataview.offset");
         }
     }
 
@@ -385,8 +384,8 @@ public class NativeDataView extends ScriptObject {
     public static int getInt32(final Object self, final int byteOffset) {
         try {
             return getBuffer(self, false).getInt(byteOffset);
-        } catch (final IndexOutOfBoundsException ioe) {
-            throw rangeError(ioe, "dataview.offset");
+        } catch (final IllegalArgumentException iae) {
+            throw rangeError(iae, "dataview.offset");
         }
     }
 
@@ -402,8 +401,8 @@ public class NativeDataView extends ScriptObject {
     public static int getInt32(final Object self, final int byteOffset, final boolean littleEndian) {
         try {
             return getBuffer(self, littleEndian).getInt(byteOffset);
-        } catch (final IndexOutOfBoundsException ioe) {
-            throw rangeError(ioe, "dataview.offset");
+        } catch (final IllegalArgumentException iae) {
+            throw rangeError(iae, "dataview.offset");
         }
     }
 
@@ -418,9 +417,9 @@ public class NativeDataView extends ScriptObject {
     @Function(attributes = Attribute.NOT_ENUMERABLE, arity = 1)
     public static long getUint32(final Object self, final Object byteOffset, final Object littleEndian) {
         try {
-            return (long) (0xFFFFFFFFL & getBuffer(self, littleEndian).getInt(JSType.toInt32(byteOffset)));
-        } catch (final IndexOutOfBoundsException ioe) {
-            throw rangeError(ioe, "dataview.offset");
+            return 0xFFFFFFFFL & getBuffer(self, littleEndian).getInt(JSType.toInt32(byteOffset));
+        } catch (final IllegalArgumentException iae) {
+            throw rangeError(iae, "dataview.offset");
         }
     }
 
@@ -434,9 +433,9 @@ public class NativeDataView extends ScriptObject {
     @SpecializedFunction
     public static long getUint32(final Object self, final int byteOffset) {
         try {
-            return (long) (0xFFFFFFFFL & getBuffer(self, false).getInt(JSType.toInt32(byteOffset)));
-        } catch (final IndexOutOfBoundsException ioe) {
-            throw rangeError(ioe, "dataview.offset");
+            return JSType.toUint32(getBuffer(self, false).getInt(JSType.toInt32(byteOffset)));
+        } catch (final IllegalArgumentException iae) {
+            throw rangeError(iae, "dataview.offset");
         }
     }
 
@@ -451,9 +450,9 @@ public class NativeDataView extends ScriptObject {
     @SpecializedFunction
     public static long getUint32(final Object self, final int byteOffset, final boolean littleEndian) {
         try {
-            return (long) (0xFFFFFFFFL & getBuffer(self, littleEndian).getInt(JSType.toInt32(byteOffset)));
-        } catch (final IndexOutOfBoundsException ioe) {
-            throw rangeError(ioe, "dataview.offset");
+            return JSType.toUint32(getBuffer(self, littleEndian).getInt(JSType.toInt32(byteOffset)));
+        } catch (final IllegalArgumentException iae) {
+            throw rangeError(iae, "dataview.offset");
         }
     }
 
@@ -469,8 +468,8 @@ public class NativeDataView extends ScriptObject {
     public static double getFloat32(final Object self, final Object byteOffset, final Object littleEndian) {
         try {
             return getBuffer(self, littleEndian).getFloat(JSType.toInt32(byteOffset));
-        } catch (final IndexOutOfBoundsException ioe) {
-            throw rangeError(ioe, "dataview.offset");
+        } catch (final IllegalArgumentException iae) {
+            throw rangeError(iae, "dataview.offset");
         }
     }
 
@@ -485,8 +484,8 @@ public class NativeDataView extends ScriptObject {
     public static double getFloat32(final Object self, final int byteOffset) {
         try {
             return getBuffer(self, false).getFloat(byteOffset);
-        } catch (final IndexOutOfBoundsException ioe) {
-            throw rangeError(ioe, "dataview.offset");
+        } catch (final IllegalArgumentException iae) {
+            throw rangeError(iae, "dataview.offset");
         }
     }
 
@@ -502,8 +501,8 @@ public class NativeDataView extends ScriptObject {
     public static double getFloat32(final Object self, final int byteOffset, final boolean littleEndian) {
         try {
             return getBuffer(self, littleEndian).getFloat(byteOffset);
-        } catch (final IndexOutOfBoundsException ioe) {
-            throw rangeError(ioe, "dataview.offset");
+        } catch (final IllegalArgumentException iae) {
+            throw rangeError(iae, "dataview.offset");
         }
     }
 
@@ -519,8 +518,8 @@ public class NativeDataView extends ScriptObject {
     public static double getFloat64(final Object self, final Object byteOffset, final Object littleEndian) {
         try {
             return getBuffer(self, littleEndian).getDouble(JSType.toInt32(byteOffset));
-        } catch (final IndexOutOfBoundsException ioe) {
-            throw rangeError(ioe, "dataview.offset");
+        } catch (final IllegalArgumentException iae) {
+            throw rangeError(iae, "dataview.offset");
         }
     }
 
@@ -535,8 +534,8 @@ public class NativeDataView extends ScriptObject {
     public static double getFloat64(final Object self, final int byteOffset) {
         try {
             return getBuffer(self, false).getDouble(byteOffset);
-        } catch (final IndexOutOfBoundsException ioe) {
-            throw rangeError(ioe, "dataview.offset");
+        } catch (final IllegalArgumentException iae) {
+            throw rangeError(iae, "dataview.offset");
         }
     }
 
@@ -552,8 +551,8 @@ public class NativeDataView extends ScriptObject {
     public static double getFloat64(final Object self, final int byteOffset, final boolean littleEndian) {
         try {
             return getBuffer(self, littleEndian).getDouble(byteOffset);
-        } catch (final IndexOutOfBoundsException ioe) {
-            throw rangeError(ioe, "dataview.offset");
+        } catch (final IllegalArgumentException iae) {
+            throw rangeError(iae, "dataview.offset");
         }
     }
 
@@ -582,8 +581,8 @@ public class NativeDataView extends ScriptObject {
         try {
             getBuffer(self).put(JSType.toInt32(byteOffset), (byte)JSType.toInt32(value));
             return UNDEFINED;
-        } catch (final IndexOutOfBoundsException ioe) {
-            throw rangeError(ioe, "dataview.offset");
+        } catch (final IllegalArgumentException iae) {
+            throw rangeError(iae, "dataview.offset");
         }
     }
 
@@ -600,8 +599,8 @@ public class NativeDataView extends ScriptObject {
         try {
             getBuffer(self).put(byteOffset, (byte)value);
             return UNDEFINED;
-        } catch (final IndexOutOfBoundsException ioe) {
-            throw rangeError(ioe, "dataview.offset");
+        } catch (final IllegalArgumentException iae) {
+            throw rangeError(iae, "dataview.offset");
         }
     }
 
@@ -618,8 +617,8 @@ public class NativeDataView extends ScriptObject {
         try {
             getBuffer(self).put(JSType.toInt32(byteOffset), (byte)JSType.toInt32(value));
             return UNDEFINED;
-        } catch (final IndexOutOfBoundsException ioe) {
-            throw rangeError(ioe, "dataview.offset");
+        } catch (final IllegalArgumentException iae) {
+            throw rangeError(iae, "dataview.offset");
         }
     }
 
@@ -636,8 +635,8 @@ public class NativeDataView extends ScriptObject {
         try {
             getBuffer(self).put(byteOffset, (byte)value);
             return UNDEFINED;
-        } catch (final IndexOutOfBoundsException ioe) {
-            throw rangeError(ioe, "dataview.offset");
+        } catch (final IllegalArgumentException iae) {
+            throw rangeError(iae, "dataview.offset");
         }
     }
 
@@ -655,8 +654,8 @@ public class NativeDataView extends ScriptObject {
         try {
             getBuffer(self, littleEndian).putShort(JSType.toInt32(byteOffset), (short)JSType.toInt32(value));
             return UNDEFINED;
-        } catch (final IndexOutOfBoundsException ioe) {
-            throw rangeError(ioe, "dataview.offset");
+        } catch (final IllegalArgumentException iae) {
+            throw rangeError(iae, "dataview.offset");
         }
     }
 
@@ -673,8 +672,8 @@ public class NativeDataView extends ScriptObject {
         try {
             getBuffer(self, false).putShort(byteOffset, (short)value);
             return UNDEFINED;
-        } catch (final IndexOutOfBoundsException ioe) {
-            throw rangeError(ioe, "dataview.offset");
+        } catch (final IllegalArgumentException iae) {
+            throw rangeError(iae, "dataview.offset");
         }
     }
 
@@ -692,8 +691,8 @@ public class NativeDataView extends ScriptObject {
         try {
             getBuffer(self, littleEndian).putShort(byteOffset, (short)value);
             return UNDEFINED;
-        } catch (final IndexOutOfBoundsException ioe) {
-            throw rangeError(ioe, "dataview.offset");
+        } catch (final IllegalArgumentException iae) {
+            throw rangeError(iae, "dataview.offset");
         }
     }
 
@@ -711,8 +710,8 @@ public class NativeDataView extends ScriptObject {
         try {
             getBuffer(self, littleEndian).putShort(JSType.toInt32(byteOffset), (short)JSType.toInt32(value));
             return UNDEFINED;
-        } catch (final IndexOutOfBoundsException ioe) {
-            throw rangeError(ioe, "dataview.offset");
+        } catch (final IllegalArgumentException iae) {
+            throw rangeError(iae, "dataview.offset");
         }
     }
 
@@ -729,8 +728,8 @@ public class NativeDataView extends ScriptObject {
         try {
             getBuffer(self, false).putShort(byteOffset, (short)value);
             return UNDEFINED;
-        } catch (final IndexOutOfBoundsException ioe) {
-            throw rangeError(ioe, "dataview.offset");
+        } catch (final IllegalArgumentException iae) {
+            throw rangeError(iae, "dataview.offset");
         }
     }
 
@@ -748,8 +747,8 @@ public class NativeDataView extends ScriptObject {
         try {
             getBuffer(self, littleEndian).putShort(byteOffset, (short)value);
             return UNDEFINED;
-        } catch (final IndexOutOfBoundsException ioe) {
-            throw rangeError(ioe, "dataview.offset");
+        } catch (final IllegalArgumentException iae) {
+            throw rangeError(iae, "dataview.offset");
         }
     }
 
@@ -765,10 +764,10 @@ public class NativeDataView extends ScriptObject {
     @Function(attributes = Attribute.NOT_ENUMERABLE, arity = 2)
     public static Object setInt32(final Object self, final Object byteOffset, final Object value, final Object littleEndian) {
         try {
-            getBuffer(self, littleEndian).putInt(JSType.toInt32(byteOffset), (int)JSType.toInt32(value));
+            getBuffer(self, littleEndian).putInt(JSType.toInt32(byteOffset), JSType.toInt32(value));
             return UNDEFINED;
-        } catch (final IndexOutOfBoundsException ioe) {
-            throw rangeError(ioe, "dataview.offset");
+        } catch (final IllegalArgumentException iae) {
+            throw rangeError(iae, "dataview.offset");
         }
     }
 
@@ -785,8 +784,8 @@ public class NativeDataView extends ScriptObject {
         try {
             getBuffer(self, false).putInt(byteOffset, value);
             return UNDEFINED;
-        } catch (final IndexOutOfBoundsException ioe) {
-            throw rangeError(ioe, "dataview.offset");
+        } catch (final IllegalArgumentException iae) {
+            throw rangeError(iae, "dataview.offset");
         }
     }
 
@@ -804,8 +803,8 @@ public class NativeDataView extends ScriptObject {
         try {
             getBuffer(self, littleEndian).putInt(byteOffset, value);
             return UNDEFINED;
-        } catch (final IndexOutOfBoundsException ioe) {
-            throw rangeError(ioe, "dataview.offset");
+        } catch (final IllegalArgumentException iae) {
+            throw rangeError(iae, "dataview.offset");
         }
     }
 
@@ -823,8 +822,8 @@ public class NativeDataView extends ScriptObject {
         try {
             getBuffer(self, littleEndian).putInt(JSType.toInt32(byteOffset), (int)JSType.toUint32(value));
             return UNDEFINED;
-        } catch (final IndexOutOfBoundsException ioe) {
-            throw rangeError(ioe, "dataview.offset");
+        } catch (final IllegalArgumentException iae) {
+            throw rangeError(iae, "dataview.offset");
         }
     }
 
@@ -841,8 +840,8 @@ public class NativeDataView extends ScriptObject {
         try {
             getBuffer(self, false).putInt(byteOffset, (int)value);
             return UNDEFINED;
-        } catch (final IndexOutOfBoundsException ioe) {
-            throw rangeError(ioe, "dataview.offset");
+        } catch (final IllegalArgumentException iae) {
+            throw rangeError(iae, "dataview.offset");
         }
     }
 
@@ -860,8 +859,8 @@ public class NativeDataView extends ScriptObject {
         try {
             getBuffer(self, littleEndian).putInt(byteOffset, (int)value);
             return UNDEFINED;
-        } catch (final IndexOutOfBoundsException ioe) {
-            throw rangeError(ioe, "dataview.offset");
+        } catch (final IllegalArgumentException iae) {
+            throw rangeError(iae, "dataview.offset");
         }
     }
 
@@ -879,8 +878,8 @@ public class NativeDataView extends ScriptObject {
         try {
             getBuffer(self, littleEndian).putFloat((int)JSType.toUint32(byteOffset), (float)JSType.toNumber(value));
             return UNDEFINED;
-        } catch (final IndexOutOfBoundsException ioe) {
-            throw rangeError(ioe, "dataview.offset");
+        } catch (final IllegalArgumentException iae) {
+            throw rangeError(iae, "dataview.offset");
         }
     }
 
@@ -897,8 +896,8 @@ public class NativeDataView extends ScriptObject {
         try {
             getBuffer(self, false).putFloat(byteOffset, (float)value);
             return UNDEFINED;
-        } catch (final IndexOutOfBoundsException ioe) {
-            throw rangeError(ioe, "dataview.offset");
+        } catch (final IllegalArgumentException iae) {
+            throw rangeError(iae, "dataview.offset");
         }
     }
 
@@ -916,8 +915,8 @@ public class NativeDataView extends ScriptObject {
         try {
             getBuffer(self, littleEndian).putFloat(byteOffset, (float)value);
             return UNDEFINED;
-        } catch (final IndexOutOfBoundsException ioe) {
-            throw rangeError(ioe, "dataview.offset");
+        } catch (final IllegalArgumentException iae) {
+            throw rangeError(iae, "dataview.offset");
         }
     }
 
@@ -935,8 +934,8 @@ public class NativeDataView extends ScriptObject {
         try {
             getBuffer(self, littleEndian).putDouble((int)JSType.toUint32(byteOffset), JSType.toNumber(value));
             return UNDEFINED;
-        } catch (final IndexOutOfBoundsException ioe) {
-            throw rangeError(ioe, "dataview.offset");
+        } catch (final IllegalArgumentException iae) {
+            throw rangeError(iae, "dataview.offset");
         }
     }
 
@@ -953,8 +952,8 @@ public class NativeDataView extends ScriptObject {
         try {
             getBuffer(self, false).putDouble(byteOffset, value);
             return UNDEFINED;
-        } catch (final IndexOutOfBoundsException ioe) {
-            throw rangeError(ioe, "dataview.offset");
+        } catch (final IllegalArgumentException iae) {
+            throw rangeError(iae, "dataview.offset");
         }
     }
 
@@ -972,8 +971,8 @@ public class NativeDataView extends ScriptObject {
         try {
             getBuffer(self, littleEndian).putDouble(byteOffset, value);
             return UNDEFINED;
-        } catch (final IndexOutOfBoundsException ioe) {
-            throw rangeError(ioe, "dataview.offset");
+        } catch (final IllegalArgumentException iae) {
+            throw rangeError(iae, "dataview.offset");
         }
     }
 
@@ -981,22 +980,22 @@ public class NativeDataView extends ScriptObject {
     private static ByteBuffer bufferFrom(final NativeArrayBuffer nab, final int offset) {
         try {
             return nab.getBuffer(offset);
-        } catch (final IndexOutOfBoundsException ioe) {
-            throw rangeError(ioe, "dataview.constructor.offset");
+        } catch (final IllegalArgumentException iae) {
+            throw rangeError(iae, "dataview.constructor.offset");
         }
     }
 
     private static ByteBuffer bufferFrom(final NativeArrayBuffer nab, final int offset, final int length) {
         try {
             return nab.getBuffer(offset, length);
-        } catch (final IndexOutOfBoundsException ioe) {
-            throw rangeError(ioe, "dataview.constructor.offset");
+        } catch (final IllegalArgumentException iae) {
+            throw rangeError(iae, "dataview.constructor.offset");
         }
     }
 
     private static NativeDataView checkSelf(final Object self) {
         if (!(self instanceof NativeDataView)) {
-            throw typeError("not.an.arraybuffer", ScriptRuntime.safeToString(self));
+            throw typeError("not.an.arraybuffer.in.dataview", ScriptRuntime.safeToString(self));
         }
         return (NativeDataView)self;
     }

@@ -26,12 +26,9 @@
 package jdk.nashorn.api.scripting;
 
 import static org.testng.Assert.fail;
-
-import java.lang.reflect.Method;
 import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
-import java.util.Objects;
-import javax.script.Invocable;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
@@ -40,9 +37,10 @@ import org.testng.annotations.Test;
 /**
  * jsr223 tests for security access checks.
  */
+@SuppressWarnings("javadoc")
 public class ScriptEngineSecurityTest {
 
-    private void log(String msg) {
+    private static void log(final String msg) {
         org.testng.Reporter.log(msg, true);
     }
 
@@ -168,55 +166,20 @@ public class ScriptEngineSecurityTest {
         }
     }
 
-    @Test
-    /**
-     * Check that script can't implement sensitive package interfaces.
-     */
-    public void checkSensitiveInterfaceImplTest() throws ScriptException {
-        if (System.getSecurityManager() == null) {
-            // pass vacuously
-            return;
-        }
-
-        final ScriptEngineManager m = new ScriptEngineManager();
-        final ScriptEngine e = m.getEngineByName("nashorn");
-        final Object[] holder = new Object[1];
-        e.put("holder", holder);
-        // put an empty script object into array
-        e.eval("holder[0] = {}");
-        // holder[0] is an object of some subclass of ScriptObject
-        Class ScriptObjectClass = holder[0].getClass().getSuperclass();
-        Class PropertyAccessClass = ScriptObjectClass.getInterfaces()[0];
-        // implementation methods for PropertyAccess class
-        e.eval("function set() {}; function get() {}; function getInt(){} " +
-               "function getDouble(){}; function getLong() {}; " +
-               "this.delete = function () {}; function has() {}; " +
-               "function hasOwnProperty() {}");
-
-        // get implementation of a restricted package interface
-        try {
-            log(Objects.toString(((Invocable)e).getInterface((Class<?>)PropertyAccessClass)));
-            fail("should have thrown SecurityException");
-        } catch (final Exception exp) {
-            if (! (exp instanceof SecurityException)) {
-                fail("SecurityException expected, got " + exp);
-            }
-        }
-    }
-
     // @bug 8032948: Nashorn linkages awry
+    @SuppressWarnings("serial")
     public static class FakeProxy extends Proxy {
-        public FakeProxy(InvocationHandler ih) {
+        public FakeProxy(final InvocationHandler ih) {
             super(ih);
         }
 
-        public static Class<?> makeProxyClass(ClassLoader cl, Class<?>... ifaces) {
+        public static Class<?> makeProxyClass(final ClassLoader cl, final Class<?>... ifaces) {
             return Proxy.getProxyClass(cl, ifaces);
         }
     }
 
     @Test
-    public void fakeProxySubclassAccessCheckTest() throws ScriptException {
+    public void fakeProxySubclassAccessCheckTest() {
         if (System.getSecurityManager() == null) {
             // pass vacuously
             return;
@@ -229,11 +192,11 @@ public class ScriptEngineSecurityTest {
         e.put("cl", ScriptEngineSecurityTest.class.getClassLoader());
         e.put("intfs", new Class[] { Runnable.class });
 
-        String getClass = "Java.type(name + '$FakeProxy').getProxyClass(cl, intfs);";
+        final String getClass = "Java.type(name + '$FakeProxy').getProxyClass(cl, intfs);";
 
         // Should not be able to call static methods of Proxy via fake subclass
         try {
-            Class c = (Class)e.eval(getClass);
+            e.eval(getClass);
             fail("should have thrown SecurityException");
         } catch (final Exception exp) {
             if (! (exp instanceof SecurityException)) {
@@ -243,7 +206,7 @@ public class ScriptEngineSecurityTest {
     }
 
     @Test
-    public void fakeProxySubclassAccessCheckTest2() throws ScriptException {
+    public void fakeProxySubclassAccessCheckTest2() {
         if (System.getSecurityManager() == null) {
             // pass vacuously
             return;
@@ -256,11 +219,11 @@ public class ScriptEngineSecurityTest {
         e.put("cl", ScriptEngineSecurityTest.class.getClassLoader());
         e.put("intfs", new Class[] { Runnable.class });
 
-        String getClass = "Java.type(name + '$FakeProxy').makeProxyClass(cl, intfs);";
+        final String getClass = "Java.type(name + '$FakeProxy').makeProxyClass(cl, intfs);";
 
         // Should not be able to call static methods of Proxy via fake subclass
         try {
-            Class c = (Class)e.eval(getClass);
+            e.eval(getClass);
             fail("should have thrown SecurityException");
         } catch (final Exception exp) {
             if (! (exp instanceof SecurityException)) {
@@ -270,7 +233,12 @@ public class ScriptEngineSecurityTest {
     }
 
     @Test
-    public static void proxyStaticAccessCheckTest() throws ScriptException {
+    public static void proxyStaticAccessCheckTest() {
+        if (System.getSecurityManager() == null) {
+            // pass vacuously
+            return;
+        }
+
         final ScriptEngineManager m = new ScriptEngineManager();
         final ScriptEngine e = m.getEngineByName("nashorn");
         final Runnable r = (Runnable)Proxy.newProxyInstance(
@@ -278,7 +246,7 @@ public class ScriptEngineSecurityTest {
             new Class[] { Runnable.class },
             new InvocationHandler() {
                 @Override
-                public Object invoke(Object p, Method m, Object[] a) {
+                public Object invoke(final Object p, final Method mtd, final Object[] a) {
                     return null;
                 }
             });
@@ -295,6 +263,49 @@ public class ScriptEngineSecurityTest {
             if (! (exp instanceof SecurityException)) {
                 fail("SecurityException expected, got " + exp);
             }
+        }
+    }
+
+
+    @Test
+    public void nashornConfigSecurityTest() {
+        if (System.getSecurityManager() == null) {
+            // pass vacuously
+            return;
+        }
+
+        final NashornScriptEngineFactory fac = new NashornScriptEngineFactory();
+        try {
+            fac.getScriptEngine(new ClassFilter() {
+               @Override
+               public boolean exposeToScripts(final String name) {
+                   return true;
+               }
+            });
+            fail("SecurityException should have been thrown");
+        } catch (final SecurityException e) {
+            //empty
+        }
+    }
+
+    @Test
+    public void nashornConfigSecurityTest2() {
+        if (System.getSecurityManager() == null) {
+            // pass vacuously
+            return;
+        }
+
+        final NashornScriptEngineFactory fac = new NashornScriptEngineFactory();
+        try {
+            fac.getScriptEngine(new String[0], null, new ClassFilter() {
+               @Override
+               public boolean exposeToScripts(final String name) {
+                   return true;
+               }
+            });
+            fail("SecurityException should have been thrown");
+        } catch (final SecurityException e) {
+            //empty
         }
     }
 }

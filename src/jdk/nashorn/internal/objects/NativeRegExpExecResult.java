@@ -32,9 +32,9 @@ import jdk.nashorn.internal.objects.annotations.ScriptClass;
 import jdk.nashorn.internal.objects.annotations.Setter;
 import jdk.nashorn.internal.runtime.JSType;
 import jdk.nashorn.internal.runtime.PropertyMap;
-import jdk.nashorn.internal.runtime.regexp.RegExpResult;
 import jdk.nashorn.internal.runtime.ScriptObject;
 import jdk.nashorn.internal.runtime.arrays.ArrayData;
+import jdk.nashorn.internal.runtime.regexp.RegExpResult;
 
 /**
  * Objects of this class are used to represent return values from
@@ -74,7 +74,7 @@ public final class NativeRegExpExecResult extends ScriptObject {
     @Getter(attributes = Attribute.NOT_ENUMERABLE | Attribute.NOT_CONFIGURABLE)
     public static Object length(final Object self) {
         if (self instanceof ScriptObject) {
-            return ((ScriptObject)self).getArray().length() & JSType.MAX_UINT;
+            return JSType.toUint32(((ScriptObject)self).getArray().length());
         }
 
         return 0;

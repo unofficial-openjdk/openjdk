@@ -22,10 +22,11 @@ package jdk.nashorn.internal.runtime.regexp.joni;
 /**
  * @author <a href="mailto:ola.bini@gmail.com">Ola Bini</a>
  */
+@SuppressWarnings("javadoc")
 public interface WarnCallback {
     WarnCallback DEFAULT = new WarnCallback() {
         @Override
-        public void warn(String message) {
+        public void warn(final String message) {
             System.err.println(message);
         }
     };
