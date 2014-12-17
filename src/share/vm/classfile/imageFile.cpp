@@ -121,7 +121,7 @@ ImageModuleData::~ImageModuleData() {
 }
 
 void ImageModuleData::module_data_name(char* buffer, const char* image_file_name) {
-  const char* slash = strrchr(image_file_name, '/');
+  const char* slash = strrchr(image_file_name, os::file_separator()[0]);
   const char* name = slash ? slash + 1 : (char *)image_file_name;
   const char* dot = strrchr(name, '.');
 
