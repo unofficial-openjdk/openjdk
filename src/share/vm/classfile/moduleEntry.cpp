@@ -243,6 +243,7 @@ void ModuleEntryTable::free_entry(ModuleEntry* entry) {
 
   // Clean out the C heap allocated reads list first before freeing the entry
   entry->delete_reads();
+  entry->name()->decrement_refcount();
   Hashtable<oop, mtClass>::free_entry(entry);
 }
 

@@ -434,8 +434,17 @@ bool Reflection::verify_class_access(Klass* current_class, Klass* new_class, boo
       return true;
     }
 
-    ModuleEntry* module_from = current_class->module();
-    ModuleEntry* module_to = new_class->module();
+    // Find the module entry for current_class, the accessor
+    ModuleEntry* module_from = InstanceKlass::cast(current_class)->module();
+
+    // Find the module entry for new_class, the accessee
+    ModuleEntry* module_to = NULL;
+    if (new_class->oop_is_objArray()) {
+      new_class = ObjArrayKlass::cast(new_class)->bottom_klass();
+    }
+    if (current_class->oop_is_instance()) {
+      module_to = InstanceKlass::cast(new_class)->module();
+    }
 
     // both in same module or unnamed module.
     if (module_from == module_to)
@@ -456,7 +465,7 @@ bool Reflection::verify_class_access(Klass* current_class, Klass* new_class, boo
       return false;
     }
 
-    PackageEntry* package_to = new_class->package();
+    PackageEntry* package_to = InstanceKlass::cast(new_class)->package();
     assert(package_to != NULL, "cannot obtain new_class' package");
 
     // Once readability is established, if module_to exports T unqualifically,
@@ -490,7 +499,7 @@ bool Reflection::verify_class_access(Klass* current_class, Klass* new_class, boo
         ResourceMark rm;
         tty->print_cr("Type in the unnamed module (%s) cannot access type in module %s (%s), not unqualifically exported",
           current_class->external_name(), module_to->name()->as_C_string(), new_class->external_name());
-    }
+      }
       return false;
     }
   }

@@ -151,7 +151,7 @@ static PackageEntry* get_package_entry(ModuleEntry* module_entry, jstring packag
   if (package == NULL) return NULL;
   const char *package_name = java_lang_String::as_utf8_string(JNIHandles::resolve_non_null(package));
   if (package_name == NULL) return NULL;
-  Symbol *pkg_symbol = SymbolTable::new_symbol(package_name, CHECK_NULL);
+  TempNewSymbol pkg_symbol = SymbolTable::new_symbol(package_name, CHECK_NULL);
   PackageEntryTable* package_entry_table = module_entry->loader()->packages();
   assert(package_entry_table != NULL, "Unexpected null package entry table");
   return package_entry_table->lookup_only(pkg_symbol);
@@ -202,7 +202,7 @@ jobject Modules::define_module(JNIEnv *env, jstring name, jobject loader, jobjec
                      err_msg("Invalid package name: %s for module: %s",
                              package_name, module_name));
     }
-    Symbol *pkg_symbol = SymbolTable::new_symbol(package_name, CHECK_NULL);
+    Symbol* pkg_symbol = SymbolTable::new_symbol(package_name, CHECK_NULL);
     // append_if_missing() returns FALSE if entry already exists.
     if (!pkg_list->append_if_missing(pkg_symbol)) {
       THROW_MSG_NULL(vmSymbols::java_lang_IllegalArgumentException(),
@@ -226,7 +226,7 @@ jobject Modules::define_module(JNIEnv *env, jstring name, jobject loader, jobjec
   assert(module_table != NULL, "module entry table shouldn't be null");
 
   // Create symbol* entry for module name.
-  Symbol *module_symbol = SymbolTable::new_symbol(module_name, CHECK_NULL);
+  TempNewSymbol module_symbol = SymbolTable::new_symbol(module_name, CHECK_NULL);
 
   // Create the java.lang.reflect.Module object.
   Handle h_name(THREAD, JNIHandles::resolve_non_null(name));
@@ -263,9 +263,9 @@ jobject Modules::define_module(JNIEnv *env, jstring name, jobject loader, jobjec
       ModuleEntry* module_entry =
         module_table->locked_create_entry_or_null(jlrM_handle(), module_symbol,
           ClassLoaderData::class_loader_data_or_null(h_loader()));
+
       if (module_entry == NULL) {
         dupl_modules = true;
-
       } else {
         if (TraceModules) {
           tty->print_cr("[define_module(): creation of module = %s, package # = %d]",
@@ -278,10 +278,16 @@ jobject Modules::define_module(JNIEnv *env, jstring name, jobject loader, jobjec
         for (int y = 0; y < pkg_list->length(); y++) {
           pkg = package_table->locked_create_entry_or_null(pkg_list->at(y), module_entry);
           assert(pkg != NULL, "Unable to create a module's package entry");
+
           if (TraceModules || TracePackages) {
             tty->print_cr("[define_module(): creation of package %s for module %s]",
                           (pkg_list->at(y))->as_C_string(), module_name);
           }
+
+          // Unable to have a GrowableArray of TempNewSymbol.  Must decrement the refcount of
+          // the Symbol* that was created above for each package. The refcount was incremented
+          // by SymbolTable::new_symbol and as well by the PackageEntry creation.
+          pkg_list->at(y)->decrement_refcount();
         }
       }
     }
@@ -606,7 +612,7 @@ void Modules::add_module_package(JNIEnv *env, jobject module, jstring package) {
                   package_name, module_entry->name()->as_C_string());
   }
 
-  Symbol *pkg_symbol = SymbolTable::new_symbol(package_name, CHECK);
+  TempNewSymbol pkg_symbol = SymbolTable::new_symbol(package_name, CHECK);
   PackageEntryTable* package_table = module_entry->loader()->packages();
   assert(package_table != NULL, "Missing package_table");
 

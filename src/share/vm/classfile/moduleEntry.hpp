@@ -139,6 +139,7 @@ private:
     ModuleEntry* entry = (ModuleEntry*) Hashtable<oop, mtClass>::new_entry(hash, module);
     entry->init();
     entry->set_name(name);
+    name->increment_refcount();
     entry->set_loader(class_loader);
     return entry;
   }

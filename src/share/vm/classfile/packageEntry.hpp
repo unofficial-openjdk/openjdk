@@ -132,6 +132,7 @@ private:
     assert_locked_or_safepoint(Module_lock);
     PackageEntry* entry = (PackageEntry*)Hashtable<Symbol*, mtClass>::new_entry(hash, name);
     entry->init();
+    entry->name()->increment_refcount();
     if (module == NULL) {
       // Indicates the unnamed module.
       // Set the exported state to true because all packages

@@ -463,7 +463,7 @@ static void package_list(char *java_base_path, ModuleEntry* jb_module) {
               }
             }
             // Found the package name, first look it up in the symbol table.
-            Symbol* pkg_name = SymbolTable::new_symbol(package_name, CHECK);
+            TempNewSymbol pkg_name = SymbolTable::new_symbol(package_name, CHECK);
 
             // Insert into the null class loader's package entry table.
             PackageEntry* pkg = null_cld_packages->locked_create_entry_or_null(
@@ -547,7 +547,7 @@ static void process_javabase(ImageFile *image) {
 
   for (int i = 0; i < packages->length(); i++) {
     // Found the package name, first look it up in the symbol table.
-    Symbol* pkg_name = SymbolTable::new_symbol((const char*)packages->at(i), CHECK);
+    TempNewSymbol pkg_name = SymbolTable::new_symbol((const char*)packages->at(i), CHECK);
 
     // Insert into the null class loader's package entry table.
     PackageEntry* pkg = null_cld_packages->locked_create_entry_or_null(pkg_name, jb_module);

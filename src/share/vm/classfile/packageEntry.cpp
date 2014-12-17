@@ -230,6 +230,7 @@ void PackageEntryTable::free_entry(PackageEntry* entry) {
 
   // Clean out the C heap allocated qualified exports list first before freeing the entry
   entry->delete_qualified_exports();
+  entry->name()->decrement_refcount();
   Hashtable<Symbol*, mtClass>::free_entry(entry);
 }
 
