@@ -45,6 +45,7 @@ import jdk.jigsaw.module.ModuleArtifact;
 import jdk.jigsaw.module.ModuleArtifactFinder;
 import jdk.jigsaw.module.ModuleDescriptor;
 import jdk.jigsaw.module.ModuleId;
+import sun.misc.BootResourceFinder;
 import sun.misc.Launcher;
 import sun.misc.ModuleLoader;
 import sun.reflect.Reflection;
@@ -164,8 +165,7 @@ class ModuleBootstrap {
         Layer bootLayer = Layer.create(cf, clf);
 
         // define modules to class loaders
-        String overrideDirectory = System.getProperty("jdk.runtime.override");
-        defineModulesToClassLoaders(cf, clf, overrideDirectory);
+        defineModulesToClassLoaders(cf, clf);
 
         // reflection checks enabled?
         String s = System.getProperty("sun.reflect.enableModuleChecks");
@@ -246,18 +246,16 @@ class ModuleBootstrap {
      * respective ClassLoader.
      */
     private static void defineModulesToClassLoaders(Configuration cf,
-                                                    Layer.ClassLoaderFinder clf,
-                                                    String overrideDirectory)
+                                                    Layer.ClassLoaderFinder clf)
     {
         for (ModuleDescriptor md: cf.descriptors()) {
             String name = md.name();
             ModuleArtifact artifact = cf.findArtifact(name);
             ClassLoader cl = clf.loaderForModule(artifact);
             if (cl == null) {
-                // TBD: define modules to boot loader for the purposes
-                // of resource loading
+                BootResourceFinder.get().defineModule(artifact);
             } else {
-                ((ModuleLoader)cl).defineModule(artifact, overrideDirectory);
+                ((ModuleLoader)cl).defineModule(artifact);
             }
         }
     }

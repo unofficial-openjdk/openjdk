@@ -46,9 +46,7 @@ import java.security.Permission;
 import java.security.ProtectionDomain;
 import java.security.CodeSource;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import jdk.jigsaw.module.ModuleArtifact;
 import sun.net.www.ParseUtil;
@@ -59,12 +57,10 @@ import sun.security.util.SecurityConstants;
  */
 public class Launcher {
 
-    // ensure URLClassPath for boot loader is initialized first
-    static {
-        URLClassPath ucp = BootClassPathHolder.bcp;
-    }
-
     private static String JAVA_HOME = System.getProperty("java.home");
+
+    // -Xoverride
+    private static String OVERRIDE_DIR = System.getProperty("jdk.runtime.override");
 
     private static URLStreamHandlerFactory factory = new Factory();
     private static Launcher launcher = new Launcher();
@@ -171,8 +167,8 @@ public class Launcher {
         private final URLClassPath ucp = SharedSecrets.getJavaNetAccess().getURLClassPath(this);
 
         @Override
-        public void defineModule(ModuleArtifact artifact, String override) {
-            addModulesURLs(artifact, override, ucp);
+        public void defineModule(ModuleArtifact artifact) {
+            addModulesURLs(artifact, ucp);
         }
 
         /*
@@ -262,8 +258,8 @@ public class Launcher {
         }
 
         @Override
-        public void defineModule(ModuleArtifact artifact, String override) {
-            addModulesURLs(artifact, override, ucp);
+        public void defineModule(ModuleArtifact artifact) {
+            addModulesURLs(artifact, ucp);
         }
 
         /**
@@ -358,42 +354,6 @@ public class Launcher {
         }
     }
 
-    private static class BootClassPathHolder {
-        static final URLClassPath bcp;
-        static {
-            URL[] urls = AccessController.doPrivileged(
-                    new PrivilegedAction<URL[]>() {
-                        public URL[] run() {
-                            String bootClassPath = System.getProperty("sun.boot.class.path");
-                            if (bootClassPath == null)
-                                return new URL[0];
-                            // Skip empty path in boot class path i.e. not default to use CWD
-                            File[] classPath = getClassPath(bootClassPath, false);
-                            int len = classPath.length;
-                            Set<File> seenDirs = new HashSet<File>();
-                            for (int i = 0; i < len; i++) {
-                                File curEntry = classPath[i];
-                                // Negative test used to properly handle
-                                // nonexistent jars on boot class path
-                                if (!curEntry.isDirectory()) {
-                                    curEntry = curEntry.getParentFile();
-                                }
-                                if (curEntry != null && seenDirs.add(curEntry)) {
-                                    MetaIndex.registerDirectory(curEntry);
-                                }
-                            }
-                            return pathToURLs(classPath);
-                        }
-                    }
-                );
-            bcp = new URLClassPath(urls, factory);
-        }
-    }
-
-    public static URLClassPath getBootstrapClassPath() {
-        return BootClassPathHolder.bcp;
-    }
-
     private static URL[] pathToURLs(File[] path) {
         URL[] urls = new URL[path.length];
         for (int i = 0; i < path.length; i++) {
@@ -450,8 +410,6 @@ public class Launcher {
         return path;
     }
 
-    private static URLStreamHandler fileHandler;
-
     static URL getFileURL(File file) {
         try {
             file = file.getCanonicalFile();
@@ -489,7 +447,6 @@ public class Launcher {
      * a directory then prepend this directory to the URLClassPath.
      */
     private static void addModulesURLs(ModuleArtifact artifact,
-                                       String overrideDirectory,
                                        URLClassPath ucp)
     {
         // add the URL if not in the jimage
@@ -498,9 +455,9 @@ public class Launcher {
             ucp.addURL(url);
 
         // prepend the override directory if specified
-        if (overrideDirectory != null) {
+        if (OVERRIDE_DIR != null) {
             String name = artifact.descriptor().name();
-            Path dir = Paths.get(overrideDirectory, name);
+            Path dir = Paths.get(OVERRIDE_DIR, name);
             if (Files.isDirectory(dir)) {
                 try {
                     ucp.prependURL(dir.toUri().toURL());

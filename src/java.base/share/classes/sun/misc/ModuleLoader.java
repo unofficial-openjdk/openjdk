@@ -32,15 +32,9 @@ import jdk.jigsaw.module.ModuleArtifact;
  */
 
 public interface ModuleLoader {
-
     /**
      * Define the module in the given module artifact to the class loader
      * with the effect of making the types in the module visible.
-     *
-     * If {@code overrideDirectory} is non-null and overrideDirectory/$MODULE
-     * exists (where $MODULE is the module name), then overridden classes
-     * will be loaded from there rather than the module artifact.
      */
-    void defineModule(ModuleArtifact md, String overrideDirectory);
-
+    void defineModule(ModuleArtifact md);
 }
