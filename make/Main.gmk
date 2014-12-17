@@ -48,8 +48,7 @@ ALL_TARGETS :=
 $(eval $(call IncludeCustomExtension, , Main.gmk))
 
 # All modules for the current target platform.
-# Manually add jdk.hotspot.agent for now.
-ALL_MODULES := $(call FindAllModules) jdk.hotspot.agent
+ALL_MODULES := $(call FindAllModules)
 
 ################################################################################
 ################################################################################
@@ -204,19 +203,19 @@ ALL_TARGETS += demos samples
 ################################################################################
 # Jigsaw specific data and analysis targets.
 
-# This runs the class analyzer which generates module-info.java files
-analyze-classes:
-	+($(CD) $(SRC_ROOT)/make && $(MAKE) -f AnalyzeClasses.gmk)
+# This runs the GenModuleInfo tool to generate module-info.java files
+gen-module-info:
+	+($(CD) $(SRC_ROOT)/make && $(MAKE) -f GenerateModuleInfos.gmk gen-module-info)
 
-# This compiles the module-info.java files into module-info.class files in the
-# jdk/modules dir.
-module-info:
-	+($(CD) $(SRC_ROOT)/make && $(MAKE) -f CompileModuleInfos.gmk)
+# This runs the GenModuleInfo tool to generate the diffs between
+# modules.xml and module-info.class files
+diff-modules-info:
+	+($(CD) $(SRC_ROOT)/make && $(MAKE) -f GenerateModuleInfos.gmk diff-module-info)
 
 generate-summary:
 	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f GenerateModuleSummary.gmk)
 
-ALL_TARGETS += analyze-classes module-info generate-summary
+ALL_TARGETS += generate-summary gen-module-info diff-module-info 
 
 ################################################################################
 # Images targets
@@ -396,7 +395,7 @@ else
 
   # To generate modules.xml all classes and a runnable image must be 
   # present.
-  jdk.dev-gendata: java rmic module-info
+  jdk.dev-gendata: java rmic
 
   zip-security: java.base-java java.security.jgss-java java.security.jgss-libs \
       $(filter jdk.crypto%, $(JAVA_TARGETS))
@@ -421,14 +420,11 @@ else
 
   test: exploded-image
 
-  # Analyze classes needs a runnable image to be present, but can't run before
-  # jdk.dev-gendata.
-  analyze-classes: java $(filter-out jdk.dev-gendata, $(GENDATA_TARGETS)) \
-      libs launchers copy
-
   verify-modules: exploded-image
 
-  module-info: analyze-classes
+  diff-module-info: exploded-image
+
+  gen-module-info: exploded-image
 
   generate-summary: jmods
 
@@ -471,12 +467,12 @@ $(foreach m, $(COPY_MODULES), $(eval $m: $m-copy))
 ALL_MODULE_TARGETS := $(sort $(GENSRC_MODULES) $(JAVA_MODULES) \
     $(GENDATA_MODULES) $(LIBS_MODULES) $(LAUNCHER_MODULES) $(COPY_MODULES))
 
-exploded-image: $(ALL_MODULE_TARGETS) module-info
+exploded-image: $(ALL_MODULE_TARGETS)
 # The old 'jdk' target most closely matches the new exploded-image. Keep an
 # alias for ease of use.
 jdk: exploded-image
 
-images: jimages demos samples zip-security
+images: jimages demos samples zip-security verify-modules
 
 ifeq ($(OPENJDK_TARGET_OS), macosx)
   images: mac-bundles
