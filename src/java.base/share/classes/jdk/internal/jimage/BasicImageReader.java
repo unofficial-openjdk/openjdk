@@ -25,6 +25,7 @@
 package jdk.internal.jimage;
 
 import java.io.IOException;
+import java.io.File;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.IntBuffer;
@@ -81,7 +82,7 @@ public class BasicImageReader {
     }
 
     public String imagePathName() {
-        int slash = imagePath.lastIndexOf('/');
+        int slash = imagePath.lastIndexOf(File.separator);
 
         if (slash != -1) {
             return imagePath.substring(slash + 1);
