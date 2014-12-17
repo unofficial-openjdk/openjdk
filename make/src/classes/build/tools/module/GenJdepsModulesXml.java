@@ -54,77 +54,32 @@ import java.util.stream.Collectors;
  */
 public final class GenJdepsModulesXml {
     private final static String USAGE =
-        "Usage: GenJdepsModulesXml -o <output file> -mp build/modules path-to-modules-xml";
+        "Usage: GenJdepsModulesXml -o <output file> path-to-modules-xml";
 
     public static void main(String[] args) throws Exception {
         Path outfile = null;
-        Path modulepath = null;
         int i = 0;
         while (i < args.length) {
             String arg = args[i];
             if (arg.equals("-o")) {
-                outfile = Paths.get(args[i+1]);
-                i = i+2;
-            } else if (arg.equals("-mp")) {
-                modulepath = Paths.get(args[i+1]);
-                i = i+2;
-                if (!Files.isDirectory(modulepath)) {
-                    System.err.println(modulepath + " is not a directory");
-                    System.exit(1);
-                }
+                outfile = Paths.get(args[i + 1]);
+                i = i + 2;
             } else {
                 break;
             }
         }
-        if (outfile == null || modulepath == null || i >= args.length) {
+        if (outfile == null || i >= args.length) {
             System.err.println(USAGE);
             System.exit(-1);
         }
 
-        GenJdepsModulesXml gentool = new GenJdepsModulesXml(modulepath);
         Set<Module> modules = new HashSet<>();
         for (; i < args.length; i++) {
             Path p = Paths.get(args[i]);
-            modules.addAll(ModulesXmlReader.readModules(p)
-                    .stream()
-                    .map(gentool::buildIncludes)
-                    .collect(Collectors.toSet()));
+            modules.addAll(ModulesXmlReader.readModules(p));
         }
 
         Files.createDirectories(outfile.getParent());
         ModulesXmlWriter.writeModules(modules, outfile);
-    }
-
-    final Path modulepath;
-    public GenJdepsModulesXml(Path modulepath) {
-        this.modulepath = modulepath;
-    }
-
-    private static String packageName(Path p) {
-        return packageName(p.toString().replace(File.separatorChar, '/'));
-    }
-    private static String packageName(String name) {
-        int i = name.lastIndexOf('/');
-        return (i > 0) ? name.substring(0, i).replace('/', '.') : "";
-    }
-
-    private static boolean includes(String name) {
-        return name.endsWith(".class");
-    }
-
-    public Module buildIncludes(Module module) {
-        Module.Builder mb = new Module.Builder(module);
-        Path mclasses = modulepath.resolve(module.name());
-        try {
-            Files.find(mclasses, Integer.MAX_VALUE, (Path p, BasicFileAttributes attr)
-                         -> includes(p.getFileName().toString()))
-                 .map(p -> packageName(mclasses.relativize(p)))
-                 .forEach(mb::include);
-        } catch (NoSuchFileException e) {
-            // aggregate module may not have class
-        } catch (IOException ioe) {
-            throw new UncheckedIOException(ioe);
-        }
-        return mb.build();
     }
 }
