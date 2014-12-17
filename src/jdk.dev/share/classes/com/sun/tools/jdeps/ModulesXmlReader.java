@@ -117,6 +117,7 @@ final class ModulesXmlReader {
                     case MODULE:
                         ModuleClassReader cfr = helper.getModuleClassReader(modulename);
                         mb.classes(cfr);
+                        mb.packages(cfr.packages());
                         modules.add(mb.build());
                         mb = null;
                         break;
