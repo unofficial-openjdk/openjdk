@@ -374,7 +374,7 @@ private:
   // Array indices for the items that make up the sysclasspath.  All except the
   // base are allocated in the C heap and freed by this class.
   enum {
-    _scp_prefix,        // from -Xbootclasspath/p:...
+    _scp_prefix,        // was -Xbootclasspath/p:...
     _scp_base,          // the default sysclasspath
     _scp_suffix,        // from -Xbootclasspath/a:...
     _scp_nitems         // the number of items, must be last.
@@ -2756,16 +2756,18 @@ jint Arguments::parse_each_vm_init_arg(const JavaVMInitArgs* args,
       JavaAssertions::setSystemClassDefault(enable);
     // -bootclasspath:
     } else if (match_option(option, "-Xbootclasspath:", &tail)) {
-      scp_p->reset_path(tail);
-      *scp_assembly_required_p = true;
+        jio_fprintf(defaultStream::output_stream(),
+          "-Xbootclasspath is no longer a supported option.\n");
+        return JNI_EINVAL;
     // -bootclasspath/a:
     } else if (match_option(option, "-Xbootclasspath/a:", &tail)) {
       scp_p->add_suffix(tail);
       *scp_assembly_required_p = true;
     // -bootclasspath/p:
     } else if (match_option(option, "-Xbootclasspath/p:", &tail)) {
-      scp_p->add_prefix(tail);
-      *scp_assembly_required_p = true;
+        jio_fprintf(defaultStream::output_stream(),
+          "-Xbootclasspath/p is no longer a supported option.\n");
+        return JNI_EINVAL;
     // -Xrun
     } else if (match_option(option, "-Xrun", &tail)) {
       if (tail != NULL) {
