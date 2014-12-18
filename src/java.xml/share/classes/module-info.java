@@ -75,5 +75,14 @@ module java.xml {
         java.xml.crypto;
     exports com.sun.org.apache.xpath.internal.res to
         java.xml.crypto;
+    uses javax.xml.datatype.DatatypeFactory;
+    uses javax.xml.parsers.DocumentBuilderFactory;
+    uses javax.xml.parsers.SAXParserFactory;
+    uses javax.xml.stream.XMLEventFactory;
+    uses javax.xml.stream.XMLInputFactory;
+    uses javax.xml.stream.XMLOutputFactory;
+    uses javax.xml.transform.TransformerFactory;
+    uses javax.xml.validation.SchemaFactory;
+    uses javax.xml.xpath.XPathFactory;
 }
 
