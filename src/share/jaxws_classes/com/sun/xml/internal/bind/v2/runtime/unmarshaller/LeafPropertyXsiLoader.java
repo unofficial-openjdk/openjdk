@@ -55,9 +55,9 @@ public final class LeafPropertyXsiLoader extends Loader {
 
     @Override
     public void startElement(UnmarshallingContext.State state, TagName ea) throws SAXException {
-        state.loader = selectLoader(state, ea);
-
-        state.loader.startElement(state, ea);
+        final Loader loader = selectLoader(state, ea);
+        state.setLoader(loader);
+        loader.startElement(state, ea);
     }
 
     protected Loader selectLoader(UnmarshallingContext.State state, TagName ea) throws SAXException {

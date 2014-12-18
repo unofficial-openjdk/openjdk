@@ -40,6 +40,8 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
@@ -194,8 +196,15 @@ public abstract class RuntimeBuiltinLeafInfoImpl<T> extends BuiltinLeafInfoImpl<
 
     static {
 
-        QName[] qnames = (System.getProperty(MAP_ANYURI_TO_URI) == null) ? new QName[] {
-                                createXS("string"),
+        String MAP_ANYURI_TO_URI_VALUE = AccessController.doPrivileged(
+                new PrivilegedAction<String>() {
+                    @Override
+                    public String run() {
+                        return System.getProperty(MAP_ANYURI_TO_URI);
+                    }
+                }
+        );
+        QName[] qnames = (MAP_ANYURI_TO_URI_VALUE == null) ? new QName[] {                                createXS("string"),
                                 createXS("anySimpleType"),
                                 createXS("normalizedString"),
                                 createXS("anyURI"),
@@ -307,7 +316,7 @@ public abstract class RuntimeBuiltinLeafInfoImpl<T> extends BuiltinLeafInfoImpl<
                     return v.toExternalForm();
                 }
             });
-        if (System.getProperty(MAP_ANYURI_TO_URI) == null) {
+        if (MAP_ANYURI_TO_URI_VALUE == null) {
             secondaryList.add(
                 new StringImpl<URI>(URI.class, createXS("string")) {
                     public URI parse(CharSequence text) throws SAXException {
@@ -771,17 +780,18 @@ public abstract class RuntimeBuiltinLeafInfoImpl<T> extends BuiltinLeafInfoImpl<
                 }
             });
         primaryList.add(
-            new StringImpl<BigDecimal>(BigDecimal.class,
-                createXS("decimal")
+                new StringImpl<BigDecimal>(BigDecimal.class,
+                    createXS("decimal")
                 ) {
-                public BigDecimal parse(CharSequence text) {
-                    return DatatypeConverterImpl._parseDecimal(text.toString());
-                }
+                    public BigDecimal parse(CharSequence text) {
+                        return DatatypeConverterImpl._parseDecimal(text.toString());
+                    }
 
-                public String print(BigDecimal v) {
-                    return DatatypeConverterImpl._printDecimal(v);
+                    public String print(BigDecimal v) {
+                        return DatatypeConverterImpl._printDecimal(v);
+                    }
                 }
-            });
+        );
         primaryList.add(
             new StringImpl<QName>(QName.class,
                 createXS("QName")
@@ -809,7 +819,7 @@ public abstract class RuntimeBuiltinLeafInfoImpl<T> extends BuiltinLeafInfoImpl<
                     w.getNamespaceContext().declareNamespace(v.getNamespaceURI(),v.getPrefix(),false);
                 }
             });
-        if (System.getProperty(MAP_ANYURI_TO_URI) != null) {
+        if (MAP_ANYURI_TO_URI_VALUE != null) {
             primaryList.add(
                 new StringImpl<URI>(URI.class, createXS("anyURI")) {
                     public URI parse(CharSequence text) throws SAXException {
@@ -827,16 +837,17 @@ public abstract class RuntimeBuiltinLeafInfoImpl<T> extends BuiltinLeafInfoImpl<
                 });
         }
         primaryList.add(
-            new StringImpl<Duration>(Duration.class,  createXS("duration")) {
-                public String print(Duration duration) {
-                    return duration.toString();
-                }
+                new StringImpl<Duration>(Duration.class, createXS("duration")) {
+                    public String print(Duration duration) {
+                        return duration.toString();
+                    }
 
-                public Duration parse(CharSequence lexical) {
-                    TODO.checkSpec("JSR222 Issue #42");
-                    return DatatypeConverterImpl.getDatatypeFactory().newDuration(lexical.toString());
+                    public Duration parse(CharSequence lexical) {
+                        TODO.checkSpec("JSR222 Issue #42");
+                        return DatatypeConverterImpl.getDatatypeFactory().newDuration(lexical.toString());
+                    }
                 }
-            });
+        );
         primaryList.add(
             new StringImpl<Void>(Void.class) {
                 // 'void' binding isn't defined by the spec, but when the JAX-RPC processes user-defined
