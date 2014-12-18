@@ -58,6 +58,7 @@ import jdk.jigsaw.module.ModuleArtifact;
 import jdk.jigsaw.module.ModuleArtifactFinder;
 import jdk.jigsaw.module.ModuleDependence;
 import jdk.jigsaw.module.ModuleDescriptor;
+import jdk.jigsaw.module.ModuleExport;
 
 public class ModuleSummary {
     private static final String USAGE = "Usage: ModuleSummary -mp <dir> -o <outfile>";
@@ -200,13 +201,25 @@ public class ModuleSummary {
         String result = (Stream.concat(Stream.of("requires"),
                                        Stream.concat(mods, Stream.of(ref)))
                 .collect(Collectors.joining(" ")));
+        if (name.equals("java.base")) {
+            return result;
+        }
+
         // API dependency: bold
         // aggregator module's require: italic
         ModuleArtifact artifact = nameToArtifact.get(from);
-        boolean isEmpty = (artifact.packages().size() == 0);
-        return deps.containsKey(from) && deps.get(from).contains(name)
-                    ? String.format("<b>%s</b>", result)
-                    : (isEmpty ? String.format("<em>%s</em>", result) : result);
+        boolean reexport = d.modifiers().contains(ModuleDependence.Modifier.PUBLIC);
+        if (deps.containsKey(from) && deps.get(from).contains(name)) {
+            // has API dependency
+            return reexport ? String.format("<b>%s</b>", result)
+                            : String.format("<b><font color=\"red\">%s</font></b>", result);
+        } else if (artifact.packages().size() == 0) {
+            // aggregator module
+            return String.format("<em>%s</em>", result);
+        } else {
+            // "requires public" whose types are not referenced from exported APIs
+            return reexport ? String.format("<font color=\"brown\">%s</font>", result) : result;
+        }
     }
 
     private void genSummary(PrintStream out, ModuleDescriptor descriptor, JmodInfo jm,
@@ -308,7 +321,8 @@ public class ModuleSummary {
         out.format("<h1>%s</h1>%n", title);
         out.format("<h3>Number of Modules = %d<br>%n", numModules);
         out.format("Total Uncompressed Size = %,d bytes</h3>%n", size);
-        out.format("(*) <b>bold</b> indicates dependence from exported APIs; <em>italic</em> indicates dependences from empty module<p>%n");
+        out.format("(*) <b>bold</b> indicates that dependences from API signature. ");
+        out.format("<em>italic</em> indicates dependences from empty module<p>%n");
         out.format("<table>");
         out.format("<tr>%n");
         out.format("<th class=\"name\">Module</th>%n");
@@ -422,7 +436,8 @@ public class ModuleSummary {
         Dependency.Filter filter =
             (Dependency d) -> !artifact.packages().contains(d.getTarget().getPackageName());
         Set<String> exports = descriptor.exports().stream()
-                    .map(e -> e.pkg())
+                    .filter(e -> e.permit() == null)
+                    .map(ModuleExport::pkg)
                     .sorted()
                     .collect(Collectors.toSet());
         Set<String> deps = new HashSet<>();
