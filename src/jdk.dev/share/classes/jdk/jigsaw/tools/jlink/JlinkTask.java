@@ -509,7 +509,11 @@ class JlinkTask {
                             StandardOpenOption.CREATE_NEW)) {
                         writer.write(sb.toString());
                     }
-                    setExecutable(cmd);
+                    if (Files.getFileStore(bin)
+                             .supportsFileAttributeView(PosixFileAttributeView.class))
+                    {
+                        setExecutable(cmd);
+                    }
                 }
             }
         }

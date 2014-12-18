@@ -39,6 +39,19 @@ if [ ! -d "$TESTJAVA/../jmods" ]; then
    exit 0;
 fi
 
+OS=`uname -s`
+case "$OS" in
+  Windows*)
+    PS=";"
+    ;;
+  CYGWIN* )
+    PS=";"
+    ;;
+  * )
+    PS=":"
+    ;;
+esac
+
 JAVAC="$COMPILEJAVA/bin/javac"
 JAVA="$TESTJAVA/bin/java"
 JLINK="$TESTJAVA/bin/jlink"
@@ -54,12 +67,12 @@ mkdir mlib
 $JLINK --format jmod --class-path mods/test --mid test@1.0 --main-class jdk.test.Test \
     --output mlib/test@1.0.jmod
 
-# jimage
-$JLINK --modulepath $TESTJAVA/../jmods:mlib --addmods test --format jimage --output myjimage
+# uncompressed image
+$JLINK --modulepath $TESTJAVA/../jmods${PS}mlib --addmods test --format jimage --output myjimage
 myjimage/bin/test 1 2 3
 
-# jimage compressed
-$JLINK --modulepath $TESTJAVA/../jmods:mlib --addmods test --format jimage \
+# compressed image
+$JLINK --modulepath $TESTJAVA/../jmods${PS}mlib --addmods test --format jimage \
   --output mysmalljimage --compress
 mysmalljimage/bin/test 1 2 3
 
