@@ -52,7 +52,7 @@ class ExternalFilesWriter implements Consumer<Entry> {
             try (InputStream in = entry.stream()) {
                 switch (entry.type()) {
                     case NATIVE_LIB:
-                        writeEntry(in, destFile(nativeDir(), filename));
+                        writeEntry(in, destFile(nativeDir(filename), filename));
                         break;
                     case NATIVE_CMD:
                         Path path = destFile("bin", filename);
@@ -87,9 +87,12 @@ class ExternalFilesWriter implements Consumer<Entry> {
         Files.copy(in, dstFile);
     }
 
-    private String nativeDir() {
+    private static String nativeDir(String filename) {
         if (System.getProperty("os.name").startsWith("Windows")) {
-            return "bin";
+            if (filename.endsWith(".dll"))
+                return "bin";
+             else
+                return "lib";
         } else {
             return "lib";
         }
