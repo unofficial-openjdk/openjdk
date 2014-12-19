@@ -321,8 +321,8 @@ public class ModuleSummary {
         out.format("<h1>%s</h1>%n", title);
         out.format("<h3>Number of Modules = %d<br>%n", numModules);
         out.format("Total Uncompressed Size = %,d bytes</h3>%n", size);
-        out.format("(*) <b>bold</b> indicates that dependences from API signature. ");
-        out.format("<em>italic</em> indicates dependences from empty module<p>%n");
+        out.format("(*) <b>bold</b> indicates a dependence due to an exported API's signature. ");
+        out.format("<em>italic</em> indicates a dependence from an aggregator module<p>%n");
         out.format("<table>");
         out.format("<tr>%n");
         out.format("<th class=\"name\">Module</th>%n");
@@ -436,7 +436,6 @@ public class ModuleSummary {
         Dependency.Filter filter =
             (Dependency d) -> !artifact.packages().contains(d.getTarget().getPackageName());
         Set<String> exports = descriptor.exports().stream()
-                    .filter(e -> e.permit() == null)
                     .map(ModuleExport::pkg)
                     .sorted()
                     .collect(Collectors.toSet());
