@@ -3582,7 +3582,11 @@ jint Threads::create_vm(JavaVMInitArgs* args, bool* canTryAgain) {
   // (see SystemDictionary::find_method_handle_intrinsic).
   initialize_jsr292_core_classes(CHECK_JNI_ERR);
 
-  // initialize the module system
+  // Initialize the module system after the compiler initialization and jsr232
+  // classes get initialized because module initialization runs a lot of java
+  // code, that for performance reasons, should be compiled.  Also, the module
+  // system initialization uses lambda expressions and method references, hence
+  // need to run after initialize_jsr292_core_classes().
   if (UseModules) {
     call_initModuleRuntime(CHECK_JNI_ERR);
   }
