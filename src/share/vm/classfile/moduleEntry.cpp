@@ -37,84 +37,42 @@
 
 bool ModuleEntryTable::_javabase_created;
 
-ReadsModuleTable::ReadsModuleTable(int table_size)
-                  : GrowableArray<jweak>(table_size, true) {
-  assert_locked_or_safepoint(Module_lock);
-}
-
-ReadsModuleTable::~ReadsModuleTable() {
-  assert(SafepointSynchronize::is_at_safepoint(), "must be at safepoint");
-  int len = this->length();
-
-  for (int idx = 0; idx < len; idx++) {
-    jweak ref = this->at(idx);
-    JNIHandles::destroy_weak_global(ref);
-  }
-}
-
-// Add a readable module
-void ReadsModuleTable::add_read(jweak module) {
-  assert_locked_or_safepoint(Module_lock);
-  this->append_if_missing(module);
-}
-
-// Return true if this module can read module m
-bool ReadsModuleTable::can_read(oop m) {
-  int len = this->length();
-  for (int idx = 0; idx < len; idx++) {
-    oop module_idx = JNIHandles::resolve(this->at(idx));
-    if (module_idx == m) {
-      return true;
-    }
-  }
-  return false;
-}
-
-// Remove dead weak references within the reads list
-void ReadsModuleTable::purge_reads() {
-  assert(SafepointSynchronize::is_at_safepoint(), "must be at safepoint");
-  int len = this->length();
-
-  // Go backwards because this removes entries that are dead.
-  for (int idx = len - 1; idx >= 0; idx--) {
-    oop module_idx = JNIHandles::resolve(this->at(idx));
-    if (module_idx == NULL) {
-      this->remove_at(idx);
-    }
-  }
-}
-
 // Returns true if this module can read module m
 bool ModuleEntry::can_read(ModuleEntry* m) const {
   assert(m != NULL, "No module to lookup in this module's reads list");
+  MutexLocker m1(Module_lock);
   if (_reads == NULL) {
     return false;
   } else {
-    return _reads->can_read(m->module());
+    return _reads->contains(m);
   }
 }
 
 // Add a new module to this module's reads list
-void ModuleEntry::add_read(ModuleEntry* m, TRAPS) {
+void ModuleEntry::add_read(ModuleEntry* m) {
   assert(m != NULL, "No module to add to this module's reads list");
-
-  // Create a weak reference to the module's oop
-  Handle module_h(THREAD, m->module());
-  jweak module_wref = JNIHandles::make_weak_global(module_h);
-
-  MutexLocker m1(Module_lock, CHECK);
+  MutexLocker m1(Module_lock);
   if (_reads == NULL) {
     // Lazily create a module's reads list
-    _reads = new (ResourceObj::C_HEAP, mtClass) ReadsModuleTable(ReadsModuleTable::_reads_table_size);
+    // Initial size is 101.
+    _reads = new (ResourceObj::C_HEAP, mtClass) GrowableArray<ModuleEntry*>(101, true);
   }
-  _reads->add_read(module_wref);
+  _reads->append_if_missing(m);
 }
 
-// Purge dead weak references out of reads list when any given class loader is unloaded.
+// Purge dead module entries out of reads list.
 void ModuleEntry::purge_reads() {
   assert(SafepointSynchronize::is_at_safepoint(), "must be at safepoint");
   if (_reads != NULL) {
-    _reads->purge_reads();
+    // Go backwards because this removes entries that are dead.
+    int len = _reads->length();
+    for (int idx = len - 1; idx >= 0; idx--) {
+      ModuleEntry* module_idx = _reads->at(idx);
+      ClassLoaderData* cld = module_idx->loader();
+      if (cld->is_unloading()) {
+        _reads->remove_at(idx);
+      }
+    }
   }
 }
 
@@ -127,6 +85,16 @@ void ModuleEntry::delete_reads() {
 ModuleEntryTable::ModuleEntryTable(int table_size)
   : Hashtable<oop, mtClass>(table_size, sizeof(ModuleEntry))
 {
+}
+
+ModuleEntry* ModuleEntryTable::new_entry(unsigned int hash, oop module, Symbol* name, ClassLoaderData* class_loader) {
+  assert_locked_or_safepoint(Module_lock);
+  ModuleEntry* entry = (ModuleEntry*) Hashtable<oop, mtClass>::new_entry(hash, module);
+  entry->init();
+  entry->set_name(name);
+  name->increment_refcount();
+  entry->set_loader(class_loader);
+  return entry;
 }
 
 void ModuleEntryTable::add_entry(int index, ModuleEntry* new_entry) {

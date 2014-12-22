@@ -33,28 +33,12 @@
 #include "utilities/growableArray.hpp"
 #include "utilities/hashtable.hpp"
 
-// ReadsModuleTable is a growable array implemented
-// to contain a list of modules that a particular ModuleEntry
-// can read.
-class ReadsModuleTable : public GrowableArray<jweak> {
-public:
-  enum Constants {
-    _reads_table_size = 29   // number of initial entries
-  };
-  ReadsModuleTable(int table_size);
-  ~ReadsModuleTable();
-  void add_read(jweak module);
-  bool can_read(oop module);
-  void purge_reads();
-};
-
 // A ModuleEntry describes a module that has been defined by a call to JVM_DefineModule.
 // It contains:
 //   - a pointer to the java.lang.reflect.Module object for this module.
 //   - Symbol* containing the module's name.
 //   - ClassLoaderData*, class loader of this module.
-//   - a list containing weak references to j.l.r.Module objects that this
-//     module can read.
+//   - a growable array containg other module entries that this module can read.
 //   - a flag indicating if any of the packages defined within this module have qualified
 //     exports.
 //
@@ -62,7 +46,7 @@ class ModuleEntry : public HashtableEntry<oop, mtClass> {
 private:
   Symbol* _name;
   ClassLoaderData* _loader;
-  ReadsModuleTable* _reads; // list of modules that are readable by this module
+  GrowableArray<ModuleEntry*>* _reads; // list of modules that are readable by this module
   bool _pkgs_with_qexports; // this module contains 1 or more packages with qualified exports
 
 public:
@@ -83,7 +67,7 @@ public:
   void               set_loader(ClassLoaderData* l) { _loader = l; }
 
   bool               can_read(ModuleEntry* m) const;
-  void               add_read(ModuleEntry* m, TRAPS);
+  void               add_read(ModuleEntry* m);
 
   bool               pkgs_with_qexports()           { return _pkgs_with_qexports; }
   void               set_pkgs_with_qexports(bool q) { _pkgs_with_qexports = q; }
@@ -134,16 +118,7 @@ public:
 private:
   static bool _javabase_created;
 
-  ModuleEntry* new_entry(unsigned int hash, oop module, Symbol* name, ClassLoaderData* class_loader) {
-    assert_locked_or_safepoint(Module_lock);
-    ModuleEntry* entry = (ModuleEntry*) Hashtable<oop, mtClass>::new_entry(hash, module);
-    entry->init();
-    entry->set_name(name);
-    name->increment_refcount();
-    entry->set_loader(class_loader);
-    return entry;
-  }
-
+  ModuleEntry* new_entry(unsigned int hash, oop module, Symbol* name, ClassLoaderData* class_loader);
   void set_javabase_entry(oop m);
   void add_entry(int index, ModuleEntry* new_entry);
   void free_entry(ModuleEntry *entry);

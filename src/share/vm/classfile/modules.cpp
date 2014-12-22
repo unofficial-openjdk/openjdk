@@ -352,8 +352,7 @@ void Modules::add_module_exports(JNIEnv *env, jobject from_module, jstring packa
                       from_module_entry->name()->as_C_string()));
   }
 
-  PackageEntry *package_entry = get_package_entry(from_module_entry, package,
-    CHECK);
+  PackageEntry *package_entry = get_package_entry(from_module_entry, package, CHECK);
 
   if (package_entry == NULL) {
     ResourceMark rm;
@@ -390,7 +389,7 @@ void Modules::add_module_exports(JNIEnv *env, jobject from_module, jstring packa
 
   // Do nothing if modules are the same.
   if (from_module_entry != to_module_entry) {
-    package_entry->set_exported(to_module_entry, CHECK);
+    package_entry->set_exported(to_module_entry);
   }
 }
 
@@ -426,7 +425,7 @@ void Modules::add_reads_module(JNIEnv *env, jobject from_module, jobject to_modu
 
   // if modules are the same, no need to add the read.
   if (from_module_entry != to_module_entry) {
-    from_module_entry->add_read(to_module_entry, CHECK);
+    from_module_entry->add_read(to_module_entry);
   }
 }
 

@@ -32,83 +32,32 @@
 #include "utilities/growableArray.hpp"
 #include "utilities/hashtable.inline.hpp"
 
-QualifiedExportTable::QualifiedExportTable(int table_size)
-                  : GrowableArray<jweak>(table_size, true) {
-  assert_locked_or_safepoint(Module_lock);
-}
-
-QualifiedExportTable::~QualifiedExportTable() {
-  assert(SafepointSynchronize::is_at_safepoint(), "must be at safepoint");
-  int len = this->length();
-
-  for (int idx = 0; idx < len; idx++) {
-    jweak ref = this->at(idx);
-    JNIHandles::destroy_weak_global(ref);
-  }
-}
-
-// Add a module this package is exported to.
-void QualifiedExportTable::add_qexport(jweak module) {
-  assert_locked_or_safepoint(Module_lock);
-  this->append_if_missing(module);
-}
-
-// Return true if this package is exported to module.
-bool QualifiedExportTable::is_qexported_to(oop module) {
-  int len = this->length();
-
-  for (int idx = 0; idx < len; idx++) {
-    oop module_idx = JNIHandles::resolve(this->at(idx));
-    if (module_idx == module) {
-      return true;
-    }
-  }
-  return false;
-}
-
-// Remove dead weak references within the package's exported list.
-void QualifiedExportTable::purge_qualified_exports() {
-  assert(SafepointSynchronize::is_at_safepoint(), "must be at safepoint");
-  int len = this->length();
-
-  // Go backwards because this removes entries that are dead.
-  for (int idx = len - 1; idx >= 0; idx--) {
-    oop module_idx = JNIHandles::resolve(this->at(idx));
-    if (module_idx == NULL) {
-      this->remove_at(idx);
-    }
-  }
-}
-
 // Return true if this package is exported to m.
 bool PackageEntry::is_qexported_to(ModuleEntry* m) const {
   assert(m != NULL, "No module to lookup in this package's qualified exports list");
+  MutexLocker m1(Module_lock);
   if (!_is_exported || _qualified_exports == NULL) {
     return false;
   } else {
-    return _qualified_exports->is_qexported_to(m->module());
+    return _qualified_exports->contains(m);
   }
 }
 
 // Add a module to the package's qualified export list.
-void PackageEntry::add_qexport(ModuleEntry* m, TRAPS) {
+void PackageEntry::add_qexport(ModuleEntry* m) {
   assert(_is_exported == true, "Adding a qualified export to a package that is not exported");
-
-  // Create a weak reference to the module's oop
-  Handle module_h(THREAD, m->module());
-  jweak module_wref = JNIHandles::make_weak_global(module_h);
-
-  MutexLocker m1(Module_lock, THREAD);
+  MutexLocker m1(Module_lock);
   if (_qualified_exports == NULL) {
-    // Lazily create a package's qualified exports list
-    _qualified_exports = new (ResourceObj::C_HEAP, mtClass) QualifiedExportTable(QualifiedExportTable::_qexport_table_size);
+    // Lazily create a package's qualified exports list.
+    // Initial size is 43, do not anticipate export lists to be large.
+    _qualified_exports = new (ResourceObj::C_HEAP, mtClass) GrowableArray<ModuleEntry*>(43, true);
   }
-  _qualified_exports->add_qexport(module_wref);
+  _qualified_exports->append_if_missing(m);
   m->set_pkgs_with_qexports(true);
 }
 
 // Set the package's exported state based on the value of the ModuleEntry.
-void PackageEntry::set_exported(ModuleEntry* m, TRAPS) {
+void PackageEntry::set_exported(ModuleEntry* m) {
   if (_exported_pending_delete != NULL) {
     // The qualified exports lists is pending safepoint deletion, a prior
     // transition occurred from qualified to unqualified.
@@ -137,15 +86,23 @@ void PackageEntry::set_exported(ModuleEntry* m, TRAPS) {
 
     // Add the exported module
     _is_exported = true;
-    add_qexport(m, CHECK);
+    add_qexport(m);
   }
 }
 
-// Remove dead weak references within the package's exported list.
+// Remove dead module entries within the package's exported list.
 void PackageEntry::purge_qualified_exports() {
   assert(SafepointSynchronize::is_at_safepoint(), "must be at safepoint");
   if (_qualified_exports != NULL) {
-    _qualified_exports->purge_qualified_exports();
+    // Go backwards because this removes entries that are dead.
+    int len = _qualified_exports->length();
+    for (int idx = len - 1; idx >= 0; idx--) {
+      ModuleEntry* module_idx = _qualified_exports->at(idx);
+      ClassLoaderData* cld = module_idx->loader();
+      if (cld->is_unloading()) {
+        _qualified_exports->remove_at(idx);
+      }
+    }
   }
 }
 
@@ -169,6 +126,22 @@ void PackageEntry::delete_qualified_exports() {
 PackageEntryTable::PackageEntryTable(int table_size)
   : Hashtable<Symbol*, mtClass>(table_size, sizeof(PackageEntry))
 {
+}
+
+PackageEntry* PackageEntryTable::new_entry(unsigned int hash, Symbol* name, ModuleEntry* module) {
+  assert_locked_or_safepoint(Module_lock);
+  PackageEntry* entry = (PackageEntry*)Hashtable<Symbol*, mtClass>::new_entry(hash, name);
+  entry->init();
+  entry->name()->increment_refcount();
+  if (module == NULL) {
+    // Indicates the unnamed module.
+    // Set the exported state to true because all packages
+    // within the unnamed module are unqualifically exported
+    entry->set_exported(true);
+  } else {
+    entry->set_module(module);
+  }
+  return entry;
 }
 
 void PackageEntryTable::add_entry(int index, PackageEntry* new_entry) {

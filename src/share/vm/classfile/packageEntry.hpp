@@ -30,26 +30,11 @@
 #include "utilities/growableArray.hpp"
 #include "utilities/hashtable.hpp"
 
-// QualifiedExportTable is a growable array implemented
-// to contain a list of modules that a particular PackageEntry
-// is exported to.
-class QualifiedExportTable : public GrowableArray<jweak> {
-public:
-  enum Constants {
-    _qexport_table_size = 29   // number of entries in the qualified export list
-  };
-  QualifiedExportTable(int table_size);
-  ~QualifiedExportTable();
-  void add_qexport(jweak module);
-  bool is_qexported_to(oop module);
-  void purge_qualified_exports();
-};
-
 // A PackageEntry basically represents a Java package.  It contains:
 //   - Symbol* containing the package's name.
 //   - ModuleEntry* for this package's containing module.
 //     NULL if the package was defined within the unnamed module.
-//   - a list containing weak references to j.l.r.Module objects that this
+//   - a growable array containing other module entries that this
 //     package is exported to.
 //   - a flag indicating if package is exported, either qualifically or
 //     unqualifically.
@@ -63,8 +48,8 @@ class PackageEntry : public HashtableEntry<Symbol*, mtClass> {
 private:
   ModuleEntry* _module;
   bool _is_exported;
-  QualifiedExportTable* _exported_pending_delete; // transitioned from qualified to unqualified, delete at safepoint
-  QualifiedExportTable* _qualified_exports;
+  GrowableArray<ModuleEntry*>* _exported_pending_delete; // transitioned from qualified to unqualified, delete at safepoint
+  GrowableArray<ModuleEntry*>* _qualified_exports;
 
 public:
   void init() {
@@ -89,7 +74,7 @@ public:
   bool               exported_pending_delete() const     { return (_exported_pending_delete != NULL); }
 
   void               set_exported(bool e)                { _is_exported = e; }
-  void               set_exported(ModuleEntry* m, TRAPS);
+  void               set_exported(ModuleEntry* m);
 
   // returns true if the package is defined in the unnamed module
   bool               in_unnamed_module() const  { return (_module == NULL); }
@@ -98,7 +83,7 @@ public:
   bool               is_qexported_to(ModuleEntry* m) const;
 
   // add the module to the package's qualified exports
-  void               add_qexport(ModuleEntry* m, TRAPS);
+  void               add_qexport(ModuleEntry* m);
 
   PackageEntry* next() const {
     return (PackageEntry*)HashtableEntry<Symbol*, mtClass>::next();
@@ -128,22 +113,7 @@ public:
   };
 
 private:
-  PackageEntry* new_entry(unsigned int hash, Symbol* name, ModuleEntry* module) {
-    assert_locked_or_safepoint(Module_lock);
-    PackageEntry* entry = (PackageEntry*)Hashtable<Symbol*, mtClass>::new_entry(hash, name);
-    entry->init();
-    entry->name()->increment_refcount();
-    if (module == NULL) {
-      // Indicates the unnamed module.
-      // Set the exported state to true because all packages
-      // within the unnamed module are unqualifically exported
-      entry->set_exported(true);
-    } else {
-      entry->set_module(module);
-    }
-    return entry;
-  }
-
+  PackageEntry* new_entry(unsigned int hash, Symbol* name, ModuleEntry* module);
   void add_entry(int index, PackageEntry* new_entry);
   void free_entry(PackageEntry *entry);
 
