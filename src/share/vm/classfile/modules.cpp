@@ -260,16 +260,20 @@ jobject Modules::define_module(JNIEnv *env, jstring name, jobject loader, jobjec
     // Add the module and its packages.
     if (!dupl_modules && dupl_pkg_index == -1) {
       // Create the entry for this module in the class loader's module entry table.
+      ClassLoaderData* loader_data =
+        ClassLoaderData::class_loader_data_or_null(h_loader());
+      assert(loader_data != NULL, "class loader data shouldn't be null");
       ModuleEntry* module_entry =
         module_table->locked_create_entry_or_null(jlrM_handle(), module_symbol,
-          ClassLoaderData::class_loader_data_or_null(h_loader()));
+          loader_data);
 
       if (module_entry == NULL) {
         dupl_modules = true;
       } else {
         if (TraceModules) {
-          tty->print_cr("[define_module(): creation of module = %s, package # = %d]",
-                        module_name, pkg_list->length());
+          tty->print("[define_module(): creation of module: %s, ", module_name);
+          loader_data->print_value();
+          tty->print_cr(", package #: %d]", pkg_list->length());
         }
 
         // Add the packages.
