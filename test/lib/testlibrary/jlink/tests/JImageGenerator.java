@@ -339,10 +339,11 @@ public class JImageGenerator {
     }
 
     private static void addFile(String radical, File source, JarOutputStream target) throws IOException {
-        String fileName = source.getPath().replace("\\", "/");
+        String fileName = source.getPath();
         if (fileName.startsWith(radical)) {
             fileName = fileName.substring(radical.length() + 1);
         }
+        fileName = fileName.replace("\\", "/");
         if (source.isDirectory()) {
             if (!fileName.isEmpty()) {
                 if (!fileName.endsWith("/")) {
