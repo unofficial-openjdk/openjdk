@@ -26,7 +26,6 @@
 package jdk.nashorn.internal.runtime.arrays;
 
 import static jdk.nashorn.internal.runtime.ScriptRuntime.UNDEFINED;
-
 import java.lang.reflect.Array;
 import jdk.nashorn.internal.runtime.BitVector;
 
@@ -39,13 +38,12 @@ final class DeletedArrayFilter extends ArrayFilter {
 
     DeletedArrayFilter(final ArrayData underlying) {
         super(underlying);
-
         this.deleted = new BitVector(underlying.length());
     }
 
     @Override
     public ArrayData copy() {
-        DeletedArrayFilter copy = new DeletedArrayFilter(underlying.copy());
+        final DeletedArrayFilter copy = new DeletedArrayFilter(underlying.copy());
         copy.getDeleted().copy(deleted);
         return copy;
     }
@@ -87,7 +85,6 @@ final class DeletedArrayFilter extends ArrayFilter {
     public ArrayData shiftRight(final int by) {
         super.shiftRight(by);
         deleted.shiftRight(by, length());
-
         return this;
     }
 
@@ -107,35 +104,30 @@ final class DeletedArrayFilter extends ArrayFilter {
     public ArrayData shrink(final long newLength) {
         super.shrink(newLength);
         deleted.resize(length());
-
         return this;
     }
 
     @Override
     public ArrayData set(final int index, final Object value, final boolean strict) {
         deleted.clear(ArrayIndex.toLongIndex(index));
-
         return super.set(index, value, strict);
     }
 
     @Override
     public ArrayData set(final int index, final int value, final boolean strict) {
         deleted.clear(ArrayIndex.toLongIndex(index));
-
         return super.set(index, value, strict);
     }
 
     @Override
     public ArrayData set(final int index, final long value, final boolean strict) {
         deleted.clear(ArrayIndex.toLongIndex(index));
-
         return super.set(index, value, strict);
     }
 
     @Override
     public ArrayData set(final int index, final double value, final boolean strict) {
         deleted.clear(ArrayIndex.toLongIndex(index));
-
         return super.set(index, value, strict);
     }
 

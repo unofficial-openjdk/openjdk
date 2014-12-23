@@ -25,9 +25,6 @@
 
 package jdk.nashorn.internal.runtime.regexp.joni;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
-
 import org.testng.annotations.Test;
 
 /**
@@ -36,6 +33,7 @@ import org.testng.annotations.Test;
  * @test
  * @run testng jdk.nashorn.internal.runtime.regexp.joni.JoniTest
  */
+@SuppressWarnings("javadoc")
 public class JoniTest {
 
     @Test

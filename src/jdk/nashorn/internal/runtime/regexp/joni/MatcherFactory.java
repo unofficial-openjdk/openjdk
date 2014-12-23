@@ -19,12 +19,13 @@
  */
 package jdk.nashorn.internal.runtime.regexp.joni;
 
+@SuppressWarnings("javadoc")
 public abstract class MatcherFactory {
     public abstract Matcher create(Regex regex, char[] chars, int p, int end);
 
     static final MatcherFactory DEFAULT = new MatcherFactory() {
         @Override
-        public Matcher create(Regex regex, char[] chars, int p, int end) {
+        public Matcher create(final Regex regex, final char[] chars, final int p, final int end) {
             return new ByteCodeMachine(regex, chars, p, end);
         }
     };
