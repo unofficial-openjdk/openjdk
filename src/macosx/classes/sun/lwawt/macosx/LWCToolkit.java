@@ -700,6 +700,11 @@ public final class LWCToolkit extends LWToolkit {
      */
     public native boolean isApplicationActive();
 
+    /*
+     * Activates application ignoring other apps.
+     */
+    public native void activateApplicationIgnoringOtherApps();
+
     /************************
      * Native methods section
      ************************/

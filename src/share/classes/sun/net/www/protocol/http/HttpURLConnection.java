@@ -1093,7 +1093,7 @@ public class HttpURLConnection extends java.net.HttpURLConnection {
 
             boolean expectContinue = false;
             String expects = requests.findValue("Expect");
-            if ("100-Continue".equalsIgnoreCase(expects)) {
+            if ("100-Continue".equalsIgnoreCase(expects) && streaming()) {
                 http.setIgnoreContinue(false);
                 expectContinue = true;
             }

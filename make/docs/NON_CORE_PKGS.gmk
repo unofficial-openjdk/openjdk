@@ -62,6 +62,8 @@ JGSS_PKGS        = com.sun.security.jgss
 
 OLD_JSSE_PKGS    = com.sun.net.ssl
 
+JDKNET_PKGS      = jdk.net
+
 HTTPSERVER_PKGS  = com.sun.net.httpserver       \
                    com.sun.net.httpserver.spi 
 
@@ -99,6 +101,7 @@ endif
 NON_CORE_PKGS    = $(DOMAPI_PKGS) \
                    $(MGMT_PKGS) \
                    $(JAAS_PKGS) \
+                   $(JDKNET_PKGS) \
                    $(JGSS_PKGS) \
                    $(NIO_PKGS) \
                    $(OLD_JSSE_PKGS) \
