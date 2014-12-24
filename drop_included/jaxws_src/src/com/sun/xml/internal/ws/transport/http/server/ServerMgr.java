@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2006, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+
 package com.sun.xml.internal.ws.transport.http.server;
 
 import com.sun.net.httpserver.HttpContext;
@@ -79,7 +80,8 @@ final class ServerMgr {
                 state = servers.get(inetAddress);
                 if (state == null) {
                     logger.fine("Creating new HTTP Server at "+inetAddress);
-                    server = HttpServer.create(inetAddress, 5);
+                    // Creates server with default socket backlog
+                    server = HttpServer.create(inetAddress, 0);
                     server.setExecutor(Executors.newCachedThreadPool());
                     String path = url.toURI().getPath();
                     logger.fine("Creating HTTP Context at = "+path);
