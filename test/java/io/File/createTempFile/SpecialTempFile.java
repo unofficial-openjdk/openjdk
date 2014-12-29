@@ -23,9 +23,8 @@
 
 /*
  * @test
- * @bug 8013827 8011950 8025128
+ * @bug 8013827 8011950 8017212 8025128
  * @summary Check whether File.createTempFile can handle special parameters
- *          on Windows platforms
  * @author Dan Xu
  */
 
@@ -35,7 +34,7 @@ import java.io.IOException;
 public class SpecialTempFile {
 
     private static void test(String name, String[] prefix, String[] suffix,
-                             boolean expectedException) throws IOException
+                             boolean exceptionExpected) throws IOException
     {
         if (prefix == null || suffix == null
             || prefix.length != suffix.length)
@@ -44,14 +43,13 @@ public class SpecialTempFile {
         }
 
         final String exceptionMsg = "Unable to create temporary file";
+        String[] dirs = { null, "." };
 
         for (int i = 0; i < prefix.length; i++) {
             boolean exceptionThrown = false;
             File f = null;
 
-            String[] dirs = { null, "." };
-
-            for (String dir : dirs ) {
+            for (String dir: dirs) {
                 System.out.println("In test " + name +
                                    ", creating temp file with prefix, " +
                                    prefix[i] + ", suffix, " + suffix[i] +
@@ -63,7 +61,7 @@ public class SpecialTempFile {
                     else
                         f = File.createTempFile(prefix[i], suffix[i], new File(dir));
                 } catch (IOException e) {
-                    if (expectedException) {
+                    if (exceptionExpected) {
                         if (e.getMessage().startsWith(exceptionMsg))
                             exceptionThrown = true;
                         else
@@ -74,13 +72,23 @@ public class SpecialTempFile {
                     }
                 }
 
-                if (expectedException && (!exceptionThrown || f != null))
+                if (exceptionExpected && (!exceptionThrown || f != null))
                     throw new RuntimeException("IOException is expected");
             }
         }
     }
 
     public static void main(String[] args) throws Exception {
+        // Common test
+        final String name = "SpecialTempFile";
+        File f = new File(System.getProperty("java.io.tmpdir"), name);
+        if (!f.exists()) {
+            f.createNewFile();
+        }
+        String[] nulPre = { name + "\u0000" };
+        String[] nulSuf = { ".test" };
+        test("NulName", nulPre, nulSuf, true);
+
         // Test JDK-8025128
         String[] goodPre = { "///..///", "/foo" };
         String[] goodSuf = { ".temp", ".tmp" };
@@ -91,6 +99,7 @@ public class SpecialTempFile {
         String[] slashSuf = { "///..///..", "///..///..", "///..///.." };
         test("SlashedName", slashPre, slashSuf, true);
 
+        // Windows tests
         if (!System.getProperty("os.name").startsWith("Windows"))
             return;
 

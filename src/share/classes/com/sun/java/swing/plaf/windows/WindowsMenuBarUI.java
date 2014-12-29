@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2006, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -155,8 +155,8 @@ public class WindowsMenuBarUI extends BasicMenuBarUI
 
     @Override
     public void paint(Graphics g, JComponent c) {
-        if (WindowsMenuItemUI.isVistaPainting()) {
-            XPStyle xp = XPStyle.getXP();
+        XPStyle xp = XPStyle.getXP();
+        if (WindowsMenuItemUI.isVistaPainting(xp)) {
             Skin skin;
             skin = xp.getSkin(c, Part.MP_BARBACKGROUND);
             int width = c.getWidth();
