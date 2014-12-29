@@ -216,4 +216,8 @@ public class WhiteBox {
   public native boolean IsExportedToModule(Object from_module, String pkg, Object to_module);
   public native Object GetModule(Class clazz);
   public native void AddModulePackage(Object module, String pkg);
+
+  // Image File
+  public native boolean readImageFile(String imagefile);
+
 }

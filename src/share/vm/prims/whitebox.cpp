@@ -905,6 +905,12 @@ WB_ENTRY(jlong, WB_MetaspaceCapacityUntilGC(JNIEnv* env, jobject wb))
   return (jlong) MetaspaceGC::capacity_until_GC();
 WB_END
 
+WB_ENTRY(jboolean, WB_ReadImageFile(JNIEnv* env, jobject wb, jstring imagefile))
+  const char* filename = java_lang_String::as_utf8_string(JNIHandles::resolve_non_null(imagefile));
+  ImageFile* image = new ImageFile(filename);
+  return image->open();
+WB_END
+
 //Some convenience methods to deal with objects from java
 int WhiteBox::offset_for_field(const char* field_name, oop object,
     Symbol* signature_symbol) {
@@ -1100,6 +1106,7 @@ static JNINativeMethod methods[] = {
                                                       (void*)&WB_GetModule },
   {CC"AddModulePackage", CC"(Ljava/lang/Object;Ljava/lang/String;)V",
                                                       (void*)&WB_AddModulePackage },
+  {CC"readImageFile",     CC"(Ljava/lang/String;)Z",  (void*)&WB_ReadImageFile },
 };
 
 #undef CC
