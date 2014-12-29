@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -155,8 +155,9 @@ class StackMapFrame : public ResourceObj {
     const methodHandle m, VerificationType thisKlass, TRAPS);
 
   // Search local variable type array and stack type array.
-  // Return true if an uninitialized object is found.
-  bool has_new_object() const;
+  // Return true if an uninitialized object is found that is
+  // not equal to the corresponding object on the target frame.
+  bool has_nonmatching_new_object(const StackMapFrame *target_frame) const;
 
   // Search local variable type array and stack type array.
   // Set every element with type of old_object to new_object.
