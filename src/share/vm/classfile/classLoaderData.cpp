@@ -383,7 +383,6 @@ ClassLoaderData::~ClassLoaderData() {
 
   // Release C heap allocated hashtable for all the packages.
   if (_packages != NULL) {
-    _packages->delete_all_entries();
     // Destroy the table itself
     delete _packages;
     _packages = NULL;
@@ -391,7 +390,6 @@ ClassLoaderData::~ClassLoaderData() {
 
   // Release C heap allocated hashtable for all the modules.
   if (_modules != NULL) {
-    _modules->delete_all_entries();
     // Destroy the table itself
     delete _modules;
     _modules = NULL;

@@ -128,9 +128,41 @@ PackageEntryTable::PackageEntryTable(int table_size)
 {
 }
 
+PackageEntryTable::~PackageEntryTable() {
+  assert_locked_or_safepoint(Module_lock);
+
+  // Walk through all buckets and all entries in each bucket,
+  // freeing each entry.
+  for (int i = 0; i < table_size(); ++i) {
+    for (PackageEntry* p = bucket(i); p != NULL;) {
+      PackageEntry* to_remove = p;
+      // read next before freeing.
+      p = p->next();
+
+      // Clean out the C heap allocated qualified exports list first before freeing the entry
+      to_remove->delete_qualified_exports();
+      to_remove->name()->decrement_refcount();
+
+      // Unlink from the Hashtable prior to freeing
+      unlink_entry(to_remove);
+      FREE_C_HEAP_ARRAY(char, to_remove, mtClass);
+    }
+  }
+  assert(number_of_entries() == 0, "should have removed all entries");
+  assert(new_entry_free_list() == NULL, "entry present on PackageEntryTable's free list");
+  free_buckets();
+}
+
 PackageEntry* PackageEntryTable::new_entry(unsigned int hash, Symbol* name, ModuleEntry* module) {
   assert_locked_or_safepoint(Module_lock);
-  PackageEntry* entry = (PackageEntry*)Hashtable<Symbol*, mtClass>::new_entry(hash, name);
+  PackageEntry* entry = (PackageEntry*) NEW_C_HEAP_ARRAY2(char, entry_size(), mtClass, CURRENT_PC);
+
+  // Initialize everything BasicHashtable would
+  entry->set_next(NULL);
+  entry->set_hash(hash);
+  entry->set_literal(name);
+
+  // Initialize fields specific to a PackageEntry
   entry->init();
   entry->name()->increment_refcount();
   if (module == NULL) {
@@ -141,6 +173,7 @@ PackageEntry* PackageEntryTable::new_entry(unsigned int hash, Symbol* name, Modu
   } else {
     entry->set_module(module);
   }
+
   return entry;
 }
 
@@ -195,18 +228,6 @@ PackageEntry* PackageEntryTable::lookup_only(Symbol* name) {
   return NULL;
 }
 
-void PackageEntryTable::free_entry(PackageEntry* entry) {
-  // If we are at a safepoint, we don't have to establish the Module_lock.
-  Mutex* lock_or_null = SafepointSynchronize::is_at_safepoint() ? NULL : Module_lock;
-  MutexLockerEx ml(lock_or_null, Mutex::_no_safepoint_check_flag);
-  assert_locked_or_safepoint(Module_lock);
-
-  // Clean out the C heap allocated qualified exports list first before freeing the entry
-  entry->delete_qualified_exports();
-  entry->name()->decrement_refcount();
-  Hashtable<Symbol*, mtClass>::free_entry(entry);
-}
-
 // Remove dead entries from all packages' exported list
 void PackageEntryTable::purge_all_package_exports() {
   assert(SafepointSynchronize::is_at_safepoint(), "must be at safepoint");
@@ -221,18 +242,6 @@ void PackageEntryTable::purge_all_package_exports() {
       } else if (entry->is_qual_exported()) {
         entry->purge_qualified_exports();
       }
-    }
-  }
-}
-
-// Remove all entries from the table, this should only occur at class loader unloading
-void PackageEntryTable::delete_all_entries() {
-  assert(SafepointSynchronize::is_at_safepoint(), "must be at safepoint");
-  for (int i = 0; i < table_size(); i++) {
-    for (PackageEntry** p = bucket_addr(i); *p != NULL;) {
-      PackageEntry* entry = *p;
-      *p = entry->next();
-      free_entry(entry);
     }
   }
 }

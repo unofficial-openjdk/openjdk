@@ -115,10 +115,12 @@ public:
 private:
   PackageEntry* new_entry(unsigned int hash, Symbol* name, ModuleEntry* module);
   void add_entry(int index, PackageEntry* new_entry);
-  void free_entry(PackageEntry *entry);
 
 public:
   PackageEntryTable(int table_size);
+  ~PackageEntryTable();
+
+  int entry_size() const { return BasicHashtable<mtClass>::entry_size(); }
 
   // Create package in loader's package entry table and return the entry.
   // If entry already exists, return null.  Assume Module lock was taken by caller.
@@ -148,9 +150,6 @@ public:
 
   // purge dead weak references out of exported list
   void purge_all_package_exports();
-
-  // remove all package entries from a given PackageEntry table
-  void delete_all_entries();
 
   void print() PRODUCT_RETURN;
   void verify();

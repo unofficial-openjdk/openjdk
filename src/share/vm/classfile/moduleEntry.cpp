@@ -87,13 +87,54 @@ ModuleEntryTable::ModuleEntryTable(int table_size)
 {
 }
 
+ModuleEntryTable::~ModuleEntryTable() {
+  assert_locked_or_safepoint(Module_lock);
+
+  // Walk through all buckets and all entries in each bucket,
+  // freeing each entry.
+  for (int i = 0; i < table_size(); ++i) {
+    for (ModuleEntry* m = bucket(i); m != NULL;) {
+      ModuleEntry* to_remove = m;
+      // read next before freeing.
+      m = m->next();
+
+      if (TraceModules) {
+        ResourceMark rm;
+        tty->print("[deleting module: %s, ", to_remove->name()->as_C_string());
+        to_remove->loader()->print_value();
+        tty->cr();
+      }
+
+      // Clean out the C heap allocated reads list first before freeing the entry
+      to_remove->delete_reads();
+      to_remove->name()->decrement_refcount();
+
+      // Unlink from the Hashtable prior to freeing
+      unlink_entry(to_remove);
+      FREE_C_HEAP_ARRAY(char, to_remove, mtClass);
+    }
+  }
+  assert(number_of_entries() == 0, "should have removed all entries");
+  assert(new_entry_free_list() == NULL, "entry present on ModuleEntryTable's free list");
+  free_buckets();
+}
+
 ModuleEntry* ModuleEntryTable::new_entry(unsigned int hash, oop module, Symbol* name, ClassLoaderData* class_loader) {
   assert_locked_or_safepoint(Module_lock);
-  ModuleEntry* entry = (ModuleEntry*) Hashtable<oop, mtClass>::new_entry(hash, module);
+
+  ModuleEntry* entry = (ModuleEntry*) NEW_C_HEAP_ARRAY2(char, entry_size(), mtClass, CURRENT_PC);
+
+  // Initialize everything BasicHashtable would
+  entry->set_next(NULL);
+  entry->set_hash(hash);
+  entry->set_literal(module);
+
+  // Initialize fields specific to a ModuleEntry
   entry->init();
   entry->set_name(name);
   name->increment_refcount();
   entry->set_loader(class_loader);
+
   return entry;
 }
 
@@ -203,18 +244,6 @@ void ModuleEntryTable::oops_do(OopClosure* f) {
   }
 }
 
-void ModuleEntryTable::free_entry(ModuleEntry* entry) {
-  // If we are at a safepoint, we don't have to establish the Module_lock.
-  Mutex* lock_or_null = SafepointSynchronize::is_at_safepoint() ? NULL : Module_lock;
-  MutexLockerEx ml(lock_or_null, Mutex::_no_safepoint_check_flag);
-  assert_locked_or_safepoint(Module_lock);
-
-  // Clean out the C heap allocated reads list first before freeing the entry
-  entry->delete_reads();
-  entry->name()->decrement_refcount();
-  Hashtable<oop, mtClass>::free_entry(entry);
-}
-
 // Remove dead modules from all other alive modules' reads list.
 // This should only occur at class unloading.
 void ModuleEntryTable::purge_all_module_reads() {
@@ -224,18 +253,6 @@ void ModuleEntryTable::purge_all_module_reads() {
                       entry != NULL;
                       entry = entry->next()) {
       entry->purge_reads();
-    }
-  }
-}
-
-// Remove all entries from the table, this should only occur at class loader unloading.
-void ModuleEntryTable::delete_all_entries() {
-  assert(SafepointSynchronize::is_at_safepoint(), "must be at safepoint");
-  for (int i = 0; i < table_size(); i++) {
-    for (ModuleEntry** m = bucket_addr(i); *m != NULL;) {
-      ModuleEntry* entry = *m;
-      *m = entry->next();
-      free_entry(entry);
     }
   }
 }

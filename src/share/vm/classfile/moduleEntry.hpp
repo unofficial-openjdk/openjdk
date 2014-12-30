@@ -121,10 +121,12 @@ private:
   ModuleEntry* new_entry(unsigned int hash, oop module, Symbol* name, ClassLoaderData* class_loader);
   void set_javabase_entry(oop m);
   void add_entry(int index, ModuleEntry* new_entry);
-  void free_entry(ModuleEntry *entry);
 
 public:
   ModuleEntryTable(int table_size);
+  ~ModuleEntryTable();
+
+  int entry_size() const { return BasicHashtable<mtClass>::entry_size(); }
 
   // Create module in loader's module entry table, if already exists then
   // return null.  Assume Module_lock has been locked by caller.
@@ -171,9 +173,6 @@ public:
 
   // purge dead weak references out of reads list
   void purge_all_module_reads();
-
-  // remove all module entries from a given ModuleEntry table
-  void delete_all_entries();
 
   void print() PRODUCT_RETURN;
   void verify();
