@@ -5526,6 +5526,14 @@ FormatData/ro/DayNames/6=s\u00e2mb\u0103t\u0103
 FormatData/sv/AmPmMarkers/0=fm
 FormatData/sv/AmPmMarkers/1=em
 
+# JE, GG, IM (6544471)
+LocaleNames//JE=Jersey
+LocaleNames//GG=Guernsey
+LocaleNames//IM=Isle Of Man
+
+# BL, MF (6627549)
+LocaleNames//BL=Saint Barth\u00e9lemy
+LocaleNames//MF=Saint Martin
 #bug 6610748
 FormatData/fi/AmPmMarkers/0=ap.
 FormatData/fi/AmPmMarkers/1=ip.
