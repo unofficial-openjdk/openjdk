@@ -198,6 +198,7 @@ FILES_compiled_properties = \
         sun/util/resources/CurrencyNames_sr_BA.properties \
         sun/util/resources/CurrencyNames_sr_CS.properties \
         sun/util/resources/CurrencyNames_sr_ME.properties \
+        sun/util/resources/CurrencyNames_sr_RS.properties \
         sun/util/resources/CurrencyNames_sv.properties \
         sun/util/resources/CurrencyNames_sv_SE.properties \
         sun/util/resources/CurrencyNames_tr_TR.properties \
