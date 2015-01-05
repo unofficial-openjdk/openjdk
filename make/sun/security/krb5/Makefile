@@ -92,7 +92,7 @@ else
   OTHER_LDLIBS = $(LIBDL) $(JVMLIB)
 endif
 
-build:
+all:
 ifeq ($(PLATFORM),windows)
 	$(call make-launcher, kinit, sun.security.krb5.internal.tools.Kinit, , )
 	$(call make-launcher, klist, sun.security.krb5.internal.tools.Klist, , )
