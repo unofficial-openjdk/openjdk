@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -3745,6 +3745,11 @@ jint Arguments::parse_options_environment_variable(const char* name, SysClassPat
 
 void Arguments::set_shared_spaces_flags() {
   if (DumpSharedSpaces) {
+    if (Arguments::override_dir() != NULL) {
+      vm_exit_during_initialization(
+        "Cannot use -Xoverride when dumping the shared archive.", NULL);
+    }
+
     if (RequireSharedSpaces) {
       warning("cannot dump shared archive while using shared archive");
     }

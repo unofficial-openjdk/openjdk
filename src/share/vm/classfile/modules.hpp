@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+* Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
 * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 *
 * This code is free software; you can redistribute it and/or modify it
@@ -89,6 +89,10 @@ public:
   // * Package is not syntactically correct
   // * Package is already defined for module's class loader.
   static void add_module_package(JNIEnv *env, jobject module, jstring package);
+
+  // Return TRUE if package_name is syntactically valid, false otherwise.
+  static bool verify_package_name(char *package_name);
+
 };
 
 #endif // SHARE_VM_CLASSFILE_MODULES_HPP

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -126,6 +126,30 @@ public class JVMDefineModule {
         // Zero length package list, should be okay
         m = wb.DefineModule("zero.packages", cl, new String[] { });
         assertNotNull(m, "Module should not be null");
+
+        // Invalid package name, expect an IAE
+        try {
+            wb.DefineModule("module5", cl, new String[] { "your.package" });
+            throw new RuntimeException("Failed to get the expected IAE");
+        } catch(IllegalArgumentException e) {
+            // Expected
+        }
+
+        // Invalid package name, expect an IAE
+        try {
+            wb.DefineModule("module6", cl, new String[] { ";your/package" });
+            throw new RuntimeException("Failed to get the expected IAE");
+        } catch(IllegalArgumentException e) {
+            // Expected
+        }
+
+        // Invalid package name, expect an IAE
+        try {
+            wb.DefineModule("module7", cl, new String[] { "7[743" });
+            throw new RuntimeException("Failed to get the expected IAE");
+        } catch(IllegalArgumentException e) {
+            // Expected
+        }
     }
 
     static class MyClassLoader extends ClassLoader { }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,6 +31,7 @@
 #include "classfile/imageFile.hpp"
 #include "classfile/javaClasses.hpp"
 #include "classfile/moduleEntry.hpp"
+#include "classfile/modules.hpp"
 #include "classfile/packageEntry.hpp"
 #if INCLUDE_CDS
 #include "classfile/sharedPathsMiscInfo.hpp"
@@ -546,15 +547,23 @@ static void process_javabase(ImageFile *image) {
   GrowableArray<const char*>* packages = image->packages(vmSymbols::java_base()->as_C_string());
 
   for (int i = 0; i < packages->length(); i++) {
+    // Verify valid package name.
+    const char* package_name = packages->at(i);
+    if (!Modules::verify_package_name((char *)package_name)) {
+      vm_exit_during_initialization(
+        "invalid package name in bootmodules.jimage file",
+        package_name == NULL ? "NULL" : package_name);
+    }
+
     // Found the package name, first look it up in the symbol table.
-    TempNewSymbol pkg_name = SymbolTable::new_symbol((const char*)packages->at(i), CHECK);
+    TempNewSymbol pkg_name = SymbolTable::new_symbol(package_name, CHECK);
 
     // Insert into the null class loader's package entry table.
     PackageEntry* pkg = null_cld_packages->locked_create_entry_or_null(pkg_name, jb_module);
     assert(pkg != NULL, "Package should have been defined and found in package entry table");
 
     if (TraceClassLoading) {
-      tty->print_cr("  %s", packages->at(i));
+      tty->print_cr("  %s", package_name);
     }
   }
 }

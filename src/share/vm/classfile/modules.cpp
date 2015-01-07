@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+* Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
 * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 *
 * This code is free software; you can redistribute it and/or modify it
@@ -49,20 +49,13 @@ static bool verify_module_name(char *module_name) {
     ClassFileParser::LegalModule));
 }
 
-static bool verify_package_name(char *package_name) {
+bool Modules::verify_package_name(char *package_name) {
   if (package_name == NULL) return false;
   int len = (int)strlen(package_name);
   return (len > 0 && len <= Symbol::max_length() &&
     UTF8::is_legal_utf8((unsigned char *)package_name, len, false) &&
     ClassFileParser::verify_unqualified_name(package_name, len,
     ClassFileParser::LegalClass));
-}
-
-static bool verify_package_name(jstring package) {
-  ResourceMark rm;
-  char *package_name = java_lang_String::as_utf8_string(
-    JNIHandles::resolve_non_null(package));
-  return verify_package_name(package_name);
 }
 
 static ModuleEntryTable* get_module_entry_table(Handle h_loader, TRAPS) {
@@ -349,13 +342,6 @@ void Modules::add_module_exports(JNIEnv *env, jobject from_module, jstring packa
     }
   }
 
-  if (!verify_package_name(package)) {
-    ResourceMark rm;
-    THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(),
-              err_msg("Bad package for module %s",
-                      from_module_entry->name()->as_C_string()));
-  }
-
   PackageEntry *package_entry = get_package_entry(from_module_entry, package, CHECK);
 
   if (package_entry == NULL) {
@@ -498,12 +484,6 @@ jboolean Modules::is_exported_to_module(JNIEnv *env, jobject from_module, jstrin
       THROW_MSG_(vmSymbols::java_lang_IllegalArgumentException(),
                  "to_module is invalid", JNI_FALSE);
     }
-  }
-  if (!verify_package_name(package)) {
-    ResourceMark rm;
-    THROW_MSG_(vmSymbols::java_lang_IllegalArgumentException(),
-               err_msg("Bad exported package name, module %s",
-                       from_module_entry->name()->as_C_string()), JNI_FALSE);
   }
 
   PackageEntry *package_entry = get_package_entry(from_module_entry, package,
