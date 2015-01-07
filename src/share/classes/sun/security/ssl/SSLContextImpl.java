@@ -51,10 +51,6 @@ public abstract class SSLContextImpl extends SSLContextSpi {
     private X509TrustManager trustManager;
     private SecureRandom secureRandom;
 
-    // The default algrithm constraints
-    private AlgorithmConstraints defaultAlgorithmConstraints =
-                                 new SSLAlgorithmConstraints(null);
-
     // supported and default protocols
     private ProtocolList defaultServerProtocolList;
     private ProtocolList defaultClientProtocolList;
@@ -342,7 +338,7 @@ public abstract class SSLContextImpl extends SSLContextSpi {
                 if (suite.isAvailable() &&
                         suite.obsoleted > protocols.min.v &&
                         suite.supported <= protocols.max.v) {
-                    if (defaultAlgorithmConstraints.permits(
+                    if (SSLAlgorithmConstraints.DEFAULT.permits(
                             EnumSet.of(CryptoPrimitive.KEY_AGREEMENT),
                             suite.name, null)) {
                         suites.add(suite);
@@ -384,6 +380,22 @@ public abstract class SSLContextImpl extends SSLContextSpi {
         }
     }
 
+    static String[] getAvailableProtocols(
+            ProtocolVersion[] protocolCandidates) {
+
+        List<String> availableProtocols = Collections.<String>emptyList();
+        if (protocolCandidates != null && protocolCandidates.length != 0) {
+            availableProtocols = new ArrayList<>(protocolCandidates.length);
+            for (ProtocolVersion p : protocolCandidates) {
+                if (ProtocolVersion.availableProtocols.contains(p)) {
+                    availableProtocols.add(p.name);
+                }
+            }
+        }
+
+        return availableProtocols.toArray(new String[0]);
+    }
+
     /*
      * The SSLContext implementation for TLS/SSL algorithm
      *
@@ -423,28 +435,35 @@ public abstract class SSLContextImpl extends SSLContextSpi {
      */
     private static class ConservativeSSLContext extends SSLContextImpl {
         // parameters
-        private static SSLParameters defaultServerSSLParams;
-        private static SSLParameters defaultClientSSLParams;
-        private static SSLParameters supportedSSLParams;
+        private static final SSLParameters defaultServerSSLParams;
+        private static final SSLParameters defaultClientSSLParams;
+        private static final SSLParameters supportedSSLParams;
 
         static {
+            // supported SSL parameters
+            supportedSSLParams = new SSLParameters();
+
+            // candidates for available protocols
+            ProtocolVersion[] serverCandidates;
+            ProtocolVersion[] clientCandidates;
+
             if (SunJSSE.isFIPS()) {
-                supportedSSLParams = new SSLParameters();
                 supportedSSLParams.setProtocols(new String[] {
                     ProtocolVersion.TLS10.name,
                     ProtocolVersion.TLS11.name,
                     ProtocolVersion.TLS12.name
                 });
 
-                defaultServerSSLParams = supportedSSLParams;
+                serverCandidates = new ProtocolVersion[] {
+                    ProtocolVersion.TLS10,
+                    ProtocolVersion.TLS11,
+                    ProtocolVersion.TLS12
+                };
 
-                defaultClientSSLParams = new SSLParameters();
-                defaultClientSSLParams.setProtocols(new String[] {
-                    ProtocolVersion.TLS10.name
-                });
-
+                clientCandidates = new ProtocolVersion[] {
+                    ProtocolVersion.TLS10
+                };
             } else {
-                supportedSSLParams = new SSLParameters();
                 supportedSSLParams.setProtocols(new String[] {
                     ProtocolVersion.SSL20Hello.name,
                     ProtocolVersion.SSL30.name,
@@ -453,14 +472,27 @@ public abstract class SSLContextImpl extends SSLContextSpi {
                     ProtocolVersion.TLS12.name
                 });
 
-                defaultServerSSLParams = supportedSSLParams;
+                serverCandidates = new ProtocolVersion[] {
+                    ProtocolVersion.SSL20Hello,
+                    ProtocolVersion.SSL30,
+                    ProtocolVersion.TLS10,
+                    ProtocolVersion.TLS11,
+                    ProtocolVersion.TLS12
+                };
 
-                defaultClientSSLParams = new SSLParameters();
-                defaultClientSSLParams.setProtocols(new String[] {
-                    ProtocolVersion.SSL30.name,
-                    ProtocolVersion.TLS10.name
-                });
+                clientCandidates = new ProtocolVersion[] {
+                    ProtocolVersion.SSL30,
+                    ProtocolVersion.TLS10
+                };
             }
+
+            defaultClientSSLParams = new SSLParameters();
+            defaultClientSSLParams.setProtocols(
+                getAvailableProtocols(clientCandidates));
+
+            defaultServerSSLParams = new SSLParameters();
+            defaultServerSSLParams.setProtocols(
+                getAvailableProtocols(serverCandidates));
         }
 
         SSLParameters getDefaultServerSSLParams() {
@@ -651,29 +683,36 @@ public abstract class SSLContextImpl extends SSLContextSpi {
      */
     public static final class TLS11Context extends SSLContextImpl {
         // parameters
-        private static SSLParameters defaultServerSSLParams;
-        private static SSLParameters defaultClientSSLParams;
-        private static SSLParameters supportedSSLParams;
+        private static final SSLParameters defaultServerSSLParams;
+        private static final SSLParameters defaultClientSSLParams;
+        private static final SSLParameters supportedSSLParams;
 
         static {
+            // supported SSL parameters
+            supportedSSLParams = new SSLParameters();
+
+            // candidates for available protocols
+            ProtocolVersion[] serverCandidates;
+            ProtocolVersion[] clientCandidates;
+
             if (SunJSSE.isFIPS()) {
-                supportedSSLParams = new SSLParameters();
                 supportedSSLParams.setProtocols(new String[] {
                     ProtocolVersion.TLS10.name,
                     ProtocolVersion.TLS11.name,
                     ProtocolVersion.TLS12.name
                 });
 
-                defaultServerSSLParams = supportedSSLParams;
+                serverCandidates = new ProtocolVersion[] {
+                    ProtocolVersion.TLS10,
+                    ProtocolVersion.TLS11,
+                    ProtocolVersion.TLS12
+                };
 
-                defaultClientSSLParams = new SSLParameters();
-                defaultClientSSLParams.setProtocols(new String[] {
-                    ProtocolVersion.TLS10.name,
-                    ProtocolVersion.TLS11.name
-                });
-
+                clientCandidates = new ProtocolVersion[] {
+                    ProtocolVersion.TLS10,
+                    ProtocolVersion.TLS11
+                };
             } else {
-                supportedSSLParams = new SSLParameters();
                 supportedSSLParams.setProtocols(new String[] {
                     ProtocolVersion.SSL20Hello.name,
                     ProtocolVersion.SSL30.name,
@@ -682,15 +721,28 @@ public abstract class SSLContextImpl extends SSLContextSpi {
                     ProtocolVersion.TLS12.name
                 });
 
-                defaultServerSSLParams = supportedSSLParams;
+                serverCandidates = new ProtocolVersion[] {
+                    ProtocolVersion.SSL20Hello,
+                    ProtocolVersion.SSL30,
+                    ProtocolVersion.TLS10,
+                    ProtocolVersion.TLS11,
+                    ProtocolVersion.TLS12
+                };
 
-                defaultClientSSLParams = new SSLParameters();
-                defaultClientSSLParams.setProtocols(new String[] {
-                    ProtocolVersion.SSL30.name,
-                    ProtocolVersion.TLS10.name,
-                    ProtocolVersion.TLS11.name
-                });
+                clientCandidates = new ProtocolVersion[] {
+                    ProtocolVersion.SSL30,
+                    ProtocolVersion.TLS10,
+                    ProtocolVersion.TLS11
+                };
             }
+
+            defaultClientSSLParams = new SSLParameters();
+            defaultClientSSLParams.setProtocols(
+                getAvailableProtocols(clientCandidates));
+
+            defaultServerSSLParams = new SSLParameters();
+            defaultServerSSLParams.setProtocols(
+                getAvailableProtocols(serverCandidates));
         }
 
         SSLParameters getDefaultServerSSLParams() {
@@ -713,30 +765,37 @@ public abstract class SSLContextImpl extends SSLContextSpi {
      */
     public static final class TLS12Context extends SSLContextImpl {
         // parameters
-        private static SSLParameters defaultServerSSLParams;
-        private static SSLParameters defaultClientSSLParams;
-        private static SSLParameters supportedSSLParams;
+        private static final SSLParameters defaultServerSSLParams;
+        private static final SSLParameters defaultClientSSLParams;
+        private static final SSLParameters supportedSSLParams;
 
         static {
+            // supported SSL parameters
+            supportedSSLParams = new SSLParameters();
+
+            // candidates for available protocols
+            ProtocolVersion[] serverCandidates;
+            ProtocolVersion[] clientCandidates;
+
             if (SunJSSE.isFIPS()) {
-                supportedSSLParams = new SSLParameters();
                 supportedSSLParams.setProtocols(new String[] {
                     ProtocolVersion.TLS10.name,
                     ProtocolVersion.TLS11.name,
                     ProtocolVersion.TLS12.name
                 });
 
-                defaultServerSSLParams = supportedSSLParams;
+                serverCandidates = new ProtocolVersion[] {
+                    ProtocolVersion.TLS10,
+                    ProtocolVersion.TLS11,
+                    ProtocolVersion.TLS12
+                };
 
-                defaultClientSSLParams = new SSLParameters();
-                defaultClientSSLParams.setProtocols(new String[] {
-                    ProtocolVersion.TLS10.name,
-                    ProtocolVersion.TLS11.name,
-                    ProtocolVersion.TLS12.name
-                });
-
+                clientCandidates = new ProtocolVersion[] {
+                    ProtocolVersion.TLS10,
+                    ProtocolVersion.TLS11,
+                    ProtocolVersion.TLS12
+                };
             } else {
-                supportedSSLParams = new SSLParameters();
                 supportedSSLParams.setProtocols(new String[] {
                     ProtocolVersion.SSL20Hello.name,
                     ProtocolVersion.SSL30.name,
@@ -745,16 +804,29 @@ public abstract class SSLContextImpl extends SSLContextSpi {
                     ProtocolVersion.TLS12.name
                 });
 
-                defaultServerSSLParams = supportedSSLParams;
+                serverCandidates = new ProtocolVersion[] {
+                    ProtocolVersion.SSL20Hello,
+                    ProtocolVersion.SSL30,
+                    ProtocolVersion.TLS10,
+                    ProtocolVersion.TLS11,
+                    ProtocolVersion.TLS12
+                };
 
-                defaultClientSSLParams = new SSLParameters();
-                defaultClientSSLParams.setProtocols(new String[] {
-                    ProtocolVersion.SSL30.name,
-                    ProtocolVersion.TLS10.name,
-                    ProtocolVersion.TLS11.name,
-                    ProtocolVersion.TLS12.name
-                });
+                clientCandidates = new ProtocolVersion[] {
+                    ProtocolVersion.SSL30,
+                    ProtocolVersion.TLS10,
+                    ProtocolVersion.TLS11,
+                    ProtocolVersion.TLS12
+                };
             }
+
+            defaultClientSSLParams = new SSLParameters();
+            defaultClientSSLParams.setProtocols(
+                getAvailableProtocols(clientCandidates));
+
+            defaultServerSSLParams = new SSLParameters();
+            defaultServerSSLParams.setProtocols(
+                getAvailableProtocols(serverCandidates));
         }
 
         SSLParameters getDefaultServerSSLParams() {

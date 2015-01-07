@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 2005, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1996, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -49,6 +49,9 @@ import java.rmi.server.ServerNotActiveException;
 import java.rmi.server.UID;
 import java.security.AccessControlContext;
 import java.security.AccessController;
+import java.security.Permissions;
+import java.security.PrivilegedAction;
+import java.security.ProtectionDomain;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -121,6 +124,14 @@ public class TCPTransport extends Transport {
     /** client host for the current thread's connection */
     private static final ThreadLocal<ConnectionHandler>
         threadConnectionHandler = new ThreadLocal<>();
+
+    /** an AccessControlContext with no permissions */
+    private static final AccessControlContext NOPERMS_ACC;
+    static {
+        Permissions perms = new Permissions();
+        ProtectionDomain[] pd = { new ProtectionDomain(null, perms) };
+        NOPERMS_ACC = new AccessControlContext(pd);
+    }
 
     /** endpoints for this transport */
     private final LinkedList<TCPEndpoint> epList;
@@ -667,7 +678,13 @@ public class TCPTransport extends Transport {
                 t.setName("RMI TCP Connection(" +
                           connectionCount.incrementAndGet() +
                           ")-" + remoteHost);
-                run0();
+                AccessController.doPrivileged(new PrivilegedAction<Void>() {
+                    @Override
+                    public Void run() {
+                        run0();
+                        return null;
+                    }
+                }, NOPERMS_ACC);
             } finally {
                 t.setName(name);
             }

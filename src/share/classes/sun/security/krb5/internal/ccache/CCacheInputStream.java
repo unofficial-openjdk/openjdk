@@ -123,7 +123,7 @@ public class CCacheInputStream extends KrbDataInputStream implements FileCCacheC
         } else {
             type = read(4);
         }
-        length = read(4);
+        length = readLength4();
         String[] result = new String[length + 1];
         /*
          * DCE includes the principal's realm in the count; the new format
@@ -132,7 +132,7 @@ public class CCacheInputStream extends KrbDataInputStream implements FileCCacheC
         if (version == KRB5_FCC_FVNO_1)
             length--;
         for (int i = 0; i <= length; i++) {
-            namelength = read(4);
+            namelength = readLength4();
             if (namelength > MAXNAMELENGTH) {
                 throw new IOException("Invalid name length in principal name.");
             }
@@ -182,7 +182,7 @@ public class CCacheInputStream extends KrbDataInputStream implements FileCCacheC
         keyType = read(2);
         if (version == KRB5_FCC_FVNO_3)
             read(2); /* keytype recorded twice in fvno 3 */
-        keyLen = read(4);
+        keyLen = readLength4();
         byte[] bytes = new byte[keyLen];
         for (int i = 0; i < keyLen; i++) {
             bytes[i] = (byte)read();
@@ -208,12 +208,12 @@ public class CCacheInputStream extends KrbDataInputStream implements FileCCacheC
 
     HostAddress[] readAddr() throws IOException, KrbApErrException {
         int numAddrs, addrType, addrLength;
-        numAddrs = read(4);
+        numAddrs = readLength4();
         if (numAddrs > 0) {
             HostAddress[] addrs = new HostAddress[numAddrs];
             for (int i = 0; i < numAddrs; i++) {
                 addrType = read(2);
-                addrLength = read(4);
+                addrLength = readLength4();
                 if (!(addrLength == 4 || addrLength == 16)) {
                     if (DEBUG) {
                         System.out.println("Incorrect address format.");
@@ -232,13 +232,13 @@ public class CCacheInputStream extends KrbDataInputStream implements FileCCacheC
 
     AuthorizationDataEntry[] readAuth() throws IOException {
         int num, adtype, adlength;
-        num = read(4);
+        num = readLength4();
         if (num > 0) {
             AuthorizationDataEntry[] auData = new AuthorizationDataEntry[num];
             byte[] data = null;
             for (int i = 0; i < num; i++) {
                 adtype = read(2);
-                adlength = read(4);
+                adlength = readLength4();
                 data = new byte[adlength];
                 for (int j = 0; j < adlength; j++) {
                     data[j] = (byte)read();
@@ -252,7 +252,7 @@ public class CCacheInputStream extends KrbDataInputStream implements FileCCacheC
 
     byte[] readData() throws IOException {
         int length;
-        length = read(4);
+        length = readLength4();
         if (length == 0) {
             return null;
         } else {
