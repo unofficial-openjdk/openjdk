@@ -63,5 +63,7 @@ module java.corba {
     exports org.omg.stub.java.rmi;
     exports com.sun.corba.se.impl.util to
         jdk.rmic;
+    provides javax.naming.spi.InitialContextFactory
+        with com.sun.jndi.cosnaming.CNCtxFactory;
 }
 
