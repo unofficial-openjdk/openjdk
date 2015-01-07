@@ -1154,6 +1154,9 @@ class CommandLineFlags {
   product(bool, CheckJNICalls, false,                                       \
           "Verify all arguments to JNI calls")                              \
                                                                             \
+  product(bool, CheckEndorsedAndExtDirs, false,                             \
+          "Verify the endorsed and extension directories are not used")     \
+                                                                            \
   product(bool, UseFastJNIAccessors, true,                                  \
           "Use optimized versions of Get<Primitive>Field")                  \
                                                                             \

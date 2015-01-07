@@ -202,6 +202,15 @@ void objArrayKlass::copy_array(arrayOop s, int src_pos, arrayOop d,
   }
 }
 
+// Protect against _bottom_klass being null, when called from Universe::fixup_mirrors
+oop objArrayKlass::class_loader() const {
+  if (bottom_klass() != NULL) {
+    return Klass::cast(bottom_klass())->class_loader();
+  } else {
+    return NULL;
+  }
+}
+
 
 klassOop objArrayKlass::array_klass_impl(bool or_null, int n, TRAPS) {
   objArrayKlassHandle h_this(THREAD, as_klassOop());

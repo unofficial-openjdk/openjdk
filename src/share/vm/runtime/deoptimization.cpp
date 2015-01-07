@@ -1796,7 +1796,8 @@ const char* Deoptimization::_trap_reason_name[Reason_LIMIT] = {
   "div0_check",
   "age",
   "predicate",
-  "loop_limit_check"
+  "loop_limit_check",
+  "unstable_if"
 };
 const char* Deoptimization::_trap_action_name[Action_LIMIT] = {
   // Note:  Keep this in sync. with enum DeoptAction.
