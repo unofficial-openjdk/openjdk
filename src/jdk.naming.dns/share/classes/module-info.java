@@ -26,6 +26,9 @@
 module jdk.naming.dns {
     requires java.base;
     requires java.naming;
-    provides sun.net.spi.nameservice.NameServiceDescriptor with sun.net.spi.nameservice.dns.DNSNameServiceDescriptor;
+    provides javax.naming.spi.InitialContextFactory
+        with com.sun.jndi.dns.DnsContextFactory;
+    provides sun.net.spi.nameservice.NameServiceDescriptor
+        with sun.net.spi.nameservice.dns.DNSNameServiceDescriptor;
 }
 

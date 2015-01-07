@@ -38,5 +38,6 @@ module java.naming {
         jdk.naming.dns,
         jdk.naming.rmi;
     uses javax.naming.ldap.StartTlsResponse;
+    uses javax.naming.spi.InitialContextFactory;
 }
 
