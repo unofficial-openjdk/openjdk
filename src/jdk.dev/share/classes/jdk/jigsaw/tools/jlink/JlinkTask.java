@@ -38,8 +38,7 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.UncheckedIOException;
 import java.lang.reflect.InvocationTargetException;
-import java.net.URISyntaxException;
-import java.net.URL;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -405,28 +404,24 @@ class JlinkTask {
         for (ModuleDescriptor m : modules) {
             String name = m.name();
 
-            URL url = finder.find(name).location();
-            if (url == null) {
+            URI location = finder.find(name).location();
+            if (location == null) {
                 // this should not happen, module path bug?
                 fail(InternalError.class,
                      "Selected module %s not on module path",
                      name);
             }
 
-            String scheme = url.getProtocol();
+            String scheme = location.getScheme();
             if (!scheme.equalsIgnoreCase("file") ||
-                !(url.toString().endsWith(".jmod") || url.toString().endsWith(".jar"))) {
+                !(location.toString().endsWith(".jmod") || location.toString().endsWith(".jar"))) {
                 fail(RuntimeException.class,
                      "Selected module %s (%s) not in jmod or modular jar format",
                      name,
-                     url);
+                     location);
             }
 
-            try {
-                modPaths.put(name, Paths.get(url.toURI()));
-            } catch (URISyntaxException e) {
-                fail(InternalError.class, "Unable create file URI from %s: %s", url, e);
-            }
+            modPaths.put(name, Paths.get(location));
         }
         return modPaths;
     }

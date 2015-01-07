@@ -39,6 +39,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 import sun.misc.BootResourceFinder;
 import sun.misc.Resource;
+import sun.misc.ResourceFinder;
 import sun.net.www.ParseUtil;
 import sun.net.www.URLConnection;
 
@@ -47,13 +48,6 @@ import sun.net.www.URLConnection;
  * contained in the runtime image.
  */
 public class JavaRuntimeURLConnection extends URLConnection {
-
-    /**
-     * Finds resource {@code name} in module {@code module}.
-     */
-    public interface ResourceFinder {
-        Resource find(String module, String name) throws IOException;
-    }
 
     /**
      * The list of resource finders for jimages in the runtime image.
@@ -68,13 +62,13 @@ public class JavaRuntimeURLConnection extends URLConnection {
         finders.add(finder);
     }
 
-    private static Resource find(String module, String name) throws IOException {
+    private static Resource findResource(String module, String name) {
         Resource r = BootResourceFinder.get().findResourceAsResource(module, name);
         if (r != null)
             return r;
 
         for (ResourceFinder finder: finders) {
-            r = finder.find(module, name);
+            r = finder.findResource(module, name);
             if (r != null)
                 return r;
         }
@@ -118,7 +112,7 @@ public class JavaRuntimeURLConnection extends URLConnection {
                 String s = (module == null) ? "" : module;
                 throw new IOException("cannot connect to jrt:/" + s);
             }
-            resource = find(module, name);
+            resource = findResource(module, name);
             if (resource == null)
                 throw new IOException(module + "/" + name + " not found");
             connected = true;

@@ -49,6 +49,7 @@ import java.lang.reflect.Modifier;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.net.URL;
+import java.net.URI;
 import java.nio.charset.Charset;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
@@ -505,22 +506,22 @@ public enum LauncherHelper {
         }
 
         // read extended module descriptor's main class (only jmod for now)
-        URL url = artifact.location();
-        String s = url.toString();
-        if (!url.getProtocol().equalsIgnoreCase("file") || !s.endsWith(".jmod")) {
+        URI uri = artifact.location();
+        String s = uri.toString();
+        if (!uri.getScheme().equalsIgnoreCase("file") || !s.endsWith(".jmod")) {
             abort(null, "java.launcher.module.error4", query);
         }
         // convert to jmod URL for direct access
         ZipFile zf = JModCache.get(new URL("jmod" + s.substring(4)));
         ZipEntry ze = zf.getEntry(ControlFile.CONTROL_FILE);
         if (ze == null) {
-            abort(null, "java.launcher.module.error5", url);
+            abort(null, "java.launcher.module.error5", uri);
         }
         try (InputStream in = zf.getInputStream(ze)) {
             ControlFile cf = ControlFile.parse(in);
             mainClass = cf.mainClass();
             if (mainClass == null)
-                abort(null, "java.launcher.module.error5", url);
+                abort(null, "java.launcher.module.error5", uri);
             return mainClass;
         }
     }

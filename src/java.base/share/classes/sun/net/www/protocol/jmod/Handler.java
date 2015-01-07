@@ -34,6 +34,8 @@ import java.io.IOException;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+import sun.net.www.ParseUtil;
+
 /**
  * Experimental protocol handler for accessing jmods on the module path.
  *
@@ -53,12 +55,15 @@ public class Handler extends URLStreamHandler {
         final ZipFile zf = sun.misc.JModCache.get(base);
         if (zf == null)
             throw new IOException("jmod not in cache");
-        String entry = sun.net.www.ParseUtil.decode(s.substring(index+1));
+        String entry = "classes/" + ParseUtil.decode(s.substring(index+1));
         final ZipEntry ze = zf.getEntry(entry);
         if (ze == null)
             throw new IOException(entry + " not found");
         return new URLConnection(url) {
-            public void connect() { }
+            @Override
+            public void connect() {
+            }
+            @Override
             public InputStream getInputStream() throws IOException {
                 return zf.getInputStream(ze);
             }

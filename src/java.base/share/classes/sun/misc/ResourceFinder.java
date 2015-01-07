@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,19 +22,13 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-
 package sun.misc;
 
-import jdk.jigsaw.module.ModuleArtifact;
-
-/**
- * Implemented by class loaders that define modules.
- */
-
-public interface ModuleLoader {
+public interface ResourceFinder {
     /**
-     * Define the module in the given module artifact to the class loader
-     * with the effect of making the types in the module visible.
+     * Finds resource {@code name} in module {@code module}.
+     *
+     * @return the resource or {@code null} if not found.
      */
-    void defineModule(ModuleArtifact artifact);
+    Resource findResource(String module, String name);
 }

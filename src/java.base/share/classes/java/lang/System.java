@@ -1265,6 +1265,9 @@ public final class System {
             public ServicesCatalog getServicesCatalog(ClassLoader cl) {
                 return cl.getServicesCatalog();
             }
+            public Class<?> findBootstrapClassOrNull(ClassLoader cl, String name) {
+                return cl.findBootstrapClassOrNull(name);
+            }
             public void formatUnsignedLong(long val, int shift, char[] buf, int offset, int len) {
                 Long.formatUnsignedLong(val, shift, buf, offset, len);
             }

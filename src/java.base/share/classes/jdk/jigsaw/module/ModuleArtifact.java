@@ -25,7 +25,7 @@
 
 package jdk.jigsaw.module;
 
-import java.net.URL;
+import java.net.URI;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -45,11 +45,11 @@ public final class ModuleArtifact {
 
     private final ExtendedModuleDescriptor descriptor;
     private final Set<String> packages;
-    private final URL url;
+    private final URI location;
 
     ModuleArtifact(ModuleInfo mi,
                    Set<String> packages,
-                   URL url,
+                   URI location,
                    ControlFile cf)
     {
         String name = mi.name();
@@ -79,11 +79,11 @@ public final class ModuleArtifact {
                                                        mi.exports(),
                                                        mi.services());
         this.packages = Collections.unmodifiableSet(packages);
-        this.url = url;
+        this.location = location;
     }
 
-    ModuleArtifact(ModuleInfo mi, Set<String> packages, URL url) {
-        this(mi, packages, url, new ControlFile());
+    ModuleArtifact(ModuleInfo mi, Set<String> packages, URI location) {
+        this(mi, packages, location, new ControlFile());
     }
 
     /**
@@ -99,7 +99,7 @@ public final class ModuleArtifact {
      */
     public ModuleArtifact(ExtendedModuleDescriptor descriptor,
                           Set<String> packages,
-                          URL url)
+                          URI location)
     {
         packages = Collections.unmodifiableSet(packages);
         if (packages.contains("") || packages.contains(null))
@@ -114,7 +114,7 @@ public final class ModuleArtifact {
 
         this.descriptor = Objects.requireNonNull(descriptor);
         this.packages = packages;
-        this.url = Objects.requireNonNull(url);
+        this.location = Objects.requireNonNull(location);
     }
 
     /**
@@ -132,10 +132,10 @@ public final class ModuleArtifact {
     }
 
     /**
-     * Returns a URL to the artifact.
+     * Returns the URI that locates the artifact.
      */
-    public URL location() {
-        return url;
+    public URI location() {
+        return location;
     }
 
     /**
@@ -177,8 +177,15 @@ public final class ModuleArtifact {
         return result;
     }
 
+    private int hash;
+
     public int hashCode() {
-        return descriptor.hashCode() ^ packages.hashCode() ^ url.hashCode();
+        int hc = hash;
+        if (hc == 0) {
+            hc = descriptor.hashCode() ^ packages.hashCode() ^ location.hashCode();
+            hash = hc;
+        }
+        return hc;
     }
 
     public boolean equals(Object obj) {
@@ -189,7 +196,7 @@ public final class ModuleArtifact {
             return false;
         if (!this.packages.equals(that.packages))
             return false;
-        if (!this.url.equals(that.url))
+        if (!this.location.equals(that.location))
             return false;
         return true;
     }

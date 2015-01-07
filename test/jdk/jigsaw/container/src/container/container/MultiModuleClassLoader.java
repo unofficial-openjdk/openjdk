@@ -27,7 +27,9 @@ import jdk.jigsaw.module.Configuration;
 import jdk.jigsaw.module.ModuleDescriptor;
 
 import java.net.URL;
+import java.net.URI;
 import java.net.URLClassLoader;
+import java.net.MalformedURLException;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -93,7 +95,16 @@ public final class MultiModuleClassLoader extends URLClassLoader {
         return cf.descriptors()
                  .stream()
                  .map(md -> cf.findArtifact(md.name()).location())
+                 .map(MultiModuleClassLoader::toURL)
                  .toArray(URL[]::new);
+    }
+
+    private static URL toURL(URI uri) {
+        try {
+            return uri.toURL();
+        } catch (MalformedURLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     static {

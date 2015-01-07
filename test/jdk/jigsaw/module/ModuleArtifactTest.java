@@ -24,7 +24,6 @@
  */
 
 import java.net.URI;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -55,20 +54,20 @@ public class ModuleArtifactTest {
         Set<String> packages =
             Stream.of("p", "q", "p.internal").collect(Collectors.toSet());
 
-        URL url = URI.create("jrt:/m").toURL();
+        URI location = URI.create("jrt:/m");
 
-        ModuleArtifact artifact = new ModuleArtifact(descriptor, packages, url);
+        ModuleArtifact artifact = new ModuleArtifact(descriptor, packages, location);
 
         assertTrue(artifact.descriptor().equals(descriptor));
         assertTrue(artifact.packages().equals(packages));
-        assertTrue(artifact.location().equals(url));
+        assertTrue(artifact.location().equals(location));
     }
 
     @Test(expectedExceptions = { NullPointerException.class })
     public void testNullDescriptor() throws Exception {
         Set<String> packages = Stream.of("p").collect(Collectors.toSet());
-        URL url = URI.create("jrt:/m").toURL();
-        new ModuleArtifact(null, packages, url);
+        URI location = URI.create("jrt:/m");
+        new ModuleArtifact(null, packages, location);
     }
 
     @Test(expectedExceptions = { NullPointerException.class })
@@ -78,12 +77,12 @@ public class ModuleArtifactTest {
                         .export("p")
                         .export("q")
                         .build();
-        URL url = URI.create("jrt:/m").toURL();
-        new ModuleArtifact(descriptor, null, url);
+        URI location = URI.create("jrt:/m");
+        new ModuleArtifact(descriptor, null, location);
     }
 
     @Test(expectedExceptions = { NullPointerException.class })
-    public void testNullURL() throws Exception {
+    public void testNullLocation() throws Exception {
         ExtendedModuleDescriptor descriptor =
                 new ExtendedModuleDescriptor.Builder("m")
                         .export("p")
@@ -115,9 +114,9 @@ public class ModuleArtifactTest {
                 new ExtendedModuleDescriptor.Builder("m")
                         .export("p")
                         .build();
-        URL url = URI.create("jrt:/m").toURL();
+        URI location = URI.create("jrt:/m");
 
         // should throw IAE
-        new ModuleArtifact(descriptor, packages, url);
+        new ModuleArtifact(descriptor, packages, location);
     }
 }

@@ -23,9 +23,7 @@
  * questions.
  */
 
-import java.net.MalformedURLException;
 import java.net.URI;
-import java.net.URL;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -52,19 +50,14 @@ class ModuleArtifactLibrary implements ModuleArtifactFinder {
             if (!namesToArtifact.containsKey(name)) {
                 modules.add(descriptor);
 
-                URL url;
-                try {
-                     url = URI.create("jrt:/" + descriptor.id()).toURL();
-                } catch (MalformedURLException e) {
-                    throw new InternalError(e);
-                }
+                URI location = URI.create("jrt:/" + descriptor.id());
 
                 Set<String> packages = descriptor.exports().stream()
                         .map(ModuleExport::pkg)
                         .collect(Collectors.toSet());
 
                 ModuleArtifact artifact =
-                    new ModuleArtifact(descriptor, packages, url);
+                    new ModuleArtifact(descriptor, packages, location);
 
                 namesToArtifact.put(name, artifact);
             }

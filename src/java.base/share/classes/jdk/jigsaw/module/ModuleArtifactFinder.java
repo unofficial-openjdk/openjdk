@@ -29,7 +29,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.nio.file.DirectoryStream;
@@ -219,19 +218,14 @@ class InstalledModuleFinder implements ModuleArtifactFinder {
             Set<ModuleArtifact> artifacts = new HashSet<>();
             for (ExtendedModuleDescriptor descriptor: descriptors) {
                 String name = descriptor.name();
-                URL url;
-                try {
-                    url = URI.create("jrt:/" + name).toURL();
-                } catch (MalformedURLException e) {
-                    throw new InternalError(e);
-                }
+                URI location = URI.create("jrt:/" + name);
                 Set<String> packages = packageMap.get(name);
                 if (packages == null)
                     packages = Collections.emptySet();
 
                 ModuleArtifact artifact = new ModuleArtifact(descriptor,
                                                              packages,
-                                                             url);
+                                                             location);
                 artifacts.add(artifact);
             }
 
@@ -379,10 +373,10 @@ class ModulePath implements ModuleArtifactFinder {
      * file system.
      */
     private ModuleArtifact readJMod(Path file) throws IOException {
-        URL url = file.toUri().toURL();
+        URI location = file.toUri();
 
         // file -> jmod URL for direct access
-        URL jmodUrl = new URL("jmod" + url.toString().substring(4));
+        URL jmodUrl = new URL("jmod" + location.toString().substring(4));
         ZipFile zf = JModCache.get(jmodUrl);
         ZipEntry ze = zf.getEntry("classes/" + MODULE_INFO);
         if (ze == null) {
@@ -414,7 +408,7 @@ class ModulePath implements ModuleArtifactFinder {
                                  .distinct()
                                  .collect(Collectors.toSet());
 
-        return new ModuleArtifact(mi, packages, url, cf);
+        return new ModuleArtifact(mi, packages, location, cf);
     }
 
     /**
@@ -429,7 +423,7 @@ class ModulePath implements ModuleArtifactFinder {
                 return null;
             }
 
-            URL url = file.toUri().toURL();
+            URI location = file.toUri();
             ModuleInfo mi = ModuleInfo.read(jf.getInputStream(entry));
 
             Set<String> packages = jf.stream()
@@ -439,7 +433,7 @@ class ModulePath implements ModuleArtifactFinder {
                                      .distinct()
                                      .collect(Collectors.toSet());
 
-            return new ModuleArtifact(mi, packages, url);
+            return new ModuleArtifact(mi, packages, location);
         }
     }
 
@@ -454,7 +448,7 @@ class ModulePath implements ModuleArtifactFinder {
             return null;
         }
 
-        URL url = dir.toUri().toURL();
+        URI location = dir.toUri();
 
         ModuleInfo mi;
         try (InputStream in = Files.newInputStream(file)) {
@@ -470,7 +464,7 @@ class ModulePath implements ModuleArtifactFinder {
                         .distinct()
                         .collect(Collectors.toSet());
 
-        return new ModuleArtifact(mi, packages, url);
+        return new ModuleArtifact(mi, packages, location);
     }
 
     private String toPackageName(ZipEntry entry) {
