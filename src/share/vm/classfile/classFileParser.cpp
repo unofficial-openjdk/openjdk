@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -5071,9 +5071,13 @@ bool ClassFileParser::verify_unqualified_name(
   for (char* p = name; p != name + length; ) {
     ch = *p;
     if (ch < 128) {
-      p++;
-      if (ch == '.' && type != LegalModule) {
-        return false;
+      if (ch == '.') {
+        // permit '.' in module names unless it's the first char, or
+        // preceding char is also a '.', or last char is a '.'.
+        if ((type != LegalModule) || (p == name) || (*(p-1) == '.') ||
+          (p == name + length - 1)) {
+          return false;
+        }
       }
       if (ch == ';' || ch == '[' ) {
         return false;   // do not permit '.', ';', or '['
@@ -5084,6 +5088,7 @@ bool ClassFileParser::verify_unqualified_name(
       if (type == LegalMethod && (ch == '<' || ch == '>')) {
         return false;   // do not permit '<' or '>' in method names
       }
+      p++;
     } else {
       char* tmp_p = UTF8::next(p, &ch);
       p = tmp_p;

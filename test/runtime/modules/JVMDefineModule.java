@@ -48,7 +48,7 @@ public class JVMDefineModule {
         // Invalid classloader argument, expect an IAE
         try {
             wb.DefineModule("mymodule1", new Object(), new String[] { "mypackage1" });
-            throw new RuntimeException("Failed to get the expected IAE");
+            throw new RuntimeException("Failed to get expected IAE for bad loader");
         } catch(IllegalArgumentException e) {
             // Expected
         }
@@ -60,7 +60,7 @@ public class JVMDefineModule {
         // NULL module name, expect an NPE
         try {
             wb.DefineModule(null, cl, new String[] { "mypackage2" });
-            throw new RuntimeException("Failed to get the expected NPE");
+            throw new RuntimeException("Failed to get expected NPE for NULL module");
         } catch(NullPointerException e) {
             // Expected
         }
@@ -68,7 +68,7 @@ public class JVMDefineModule {
         // module name is java.base, expect an IAE
         try {
             wb.DefineModule("java.base", cl, new String[] { "mypackage3" });
-            throw new RuntimeException("Failed to get the expected IAE");
+            throw new RuntimeException("Failed to get expected IAE for java.base");
         } catch(IllegalArgumentException e) {
             // Expected
         }
@@ -76,7 +76,7 @@ public class JVMDefineModule {
         // Duplicates in package list, expect an IAE
         try {
             wb.DefineModule("java.base", cl, new String[] { "mypackage4", "mypackage5", "mypackage4" });
-            throw new RuntimeException("Failed to get the expected IAE");
+            throw new RuntimeException("Failed to get IAE for duplicate packages");
         } catch(IllegalArgumentException e) {
             // Expected
         }
@@ -84,7 +84,7 @@ public class JVMDefineModule {
         // Empty entry in package list, expect an IAE
         try {
             wb.DefineModule("java.base", cl, new String[] { "mypackageX", "", "mypackageY" });
-            throw new RuntimeException("Failed to get the expected IAE");
+            throw new RuntimeException("Failed to get IAE for empty package");
         } catch(IllegalArgumentException e) {
             // Expected
         }
@@ -94,7 +94,7 @@ public class JVMDefineModule {
         assertNotNull(m, "Module should not be null");
         try {
             wb.DefineModule("module.name", cl, new String[] { "mypackage7" });
-            throw new RuntimeException("Failed to get the expected IAE");
+            throw new RuntimeException("Failed to get IAE for duplicate module");
         } catch(IllegalArgumentException e) {
             // Expected
         }
@@ -102,7 +102,7 @@ public class JVMDefineModule {
         // Package is already defined for class loader, expect an IAE
         try {
             wb.DefineModule("dupl.pkg.module", cl, new String[] { "mypackage6" });
-            throw new RuntimeException("Failed to get the expected IAE");
+            throw new RuntimeException("Failed to get IAE for existing package");
         } catch(IllegalArgumentException e) {
             // Expected
         }
@@ -110,7 +110,7 @@ public class JVMDefineModule {
         // Empty module name, expect an IAE
         try {
             wb.DefineModule("", cl, new String[] { "mypackage8" });
-            throw new RuntimeException("Failed to get the expected IAE");
+            throw new RuntimeException("Failed to get expected IAE for empty module name");
         } catch(IllegalArgumentException e) {
             // Expected
         }
@@ -118,10 +118,38 @@ public class JVMDefineModule {
         // Bad module name, expect an IAE
         try {
             wb.DefineModule("bad;name", cl, new String[] { "mypackage9" });
-            throw new RuntimeException("Failed to get the expected IAE");
+            throw new RuntimeException("Failed to get expected IAE for bad;name");
         } catch(IllegalArgumentException e) {
             // Expected
         }
+
+        // Bad module name, expect an IAE
+        try {
+            wb.DefineModule(".leadingdot", cl, new String[] { "mypackage9a" });
+            throw new RuntimeException("Failed to get expected IAE for .leadingdot");
+        } catch(IllegalArgumentException e) {
+            // Expected
+        }
+
+        // Bad module name, expect an IAE
+        try {
+            wb.DefineModule("trailingdot.", cl, new String[] { "mypackage9b" });
+            throw new RuntimeException("Failed to get expected IAE for trailingdot.");
+        } catch(IllegalArgumentException e) {
+            // Expected
+        }
+
+        // Bad module name, expect an IAE
+        try {
+            wb.DefineModule("consecutive..dots", cl, new String[] { "mypackage9c" });
+            throw new RuntimeException("Failed to get expected IAE for consecutive..dots");
+        } catch(IllegalArgumentException e) {
+            // Expected
+        }
+
+        // module name with multiple dots, should be okay
+        m = wb.DefineModule("more.than.one.dat", cl, new String[] { "mypackage9d" });
+        assertNotNull(m, "Module should not be null");
 
         // Zero length package list, should be okay
         m = wb.DefineModule("zero.packages", cl, new String[] { });
@@ -130,7 +158,7 @@ public class JVMDefineModule {
         // Invalid package name, expect an IAE
         try {
             wb.DefineModule("module5", cl, new String[] { "your.package" });
-            throw new RuntimeException("Failed to get the expected IAE");
+            throw new RuntimeException("Failed to get expected IAE for your.package");
         } catch(IllegalArgumentException e) {
             // Expected
         }
@@ -138,7 +166,7 @@ public class JVMDefineModule {
         // Invalid package name, expect an IAE
         try {
             wb.DefineModule("module6", cl, new String[] { ";your/package" });
-            throw new RuntimeException("Failed to get the expected IAE");
+            throw new RuntimeException("Failed to get expected IAE for ;your.package");
         } catch(IllegalArgumentException e) {
             // Expected
         }
@@ -146,7 +174,7 @@ public class JVMDefineModule {
         // Invalid package name, expect an IAE
         try {
             wb.DefineModule("module7", cl, new String[] { "7[743" });
-            throw new RuntimeException("Failed to get the expected IAE");
+            throw new RuntimeException("Failed to get expected IAE for package 7[743");
         } catch(IllegalArgumentException e) {
             // Expected
         }
