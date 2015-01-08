@@ -138,9 +138,6 @@ java/lang/instrument/RetransformBigClass.sh                     generic-all
 # 8058492
 java/lang/management/ThreadMXBean/FindDeadlocks.java                                      generic-all
 
-# 8058506
-java/lang/management/ThreadMXBean/ThreadMXBeanStateTest.java                              generic-all
-
 ############################################################################
 
 # jdk_jmx
@@ -238,9 +235,6 @@ sun/security/pkcs11/sslecc/ClientJSSEServerJSSE.java            solaris-all
 # 7041639: Solaris DSA keypair generation bug
 java/security/KeyPairGenerator/SolarisShortDSA.java             solaris-all
 sun/security/tools/keytool/standard.sh                          solaris-all
-
-# 8049312
-com/sun/crypto/provider/Cipher/AES/CICO.java			generic-all
 
 # 8062758
 java/security/Security/ClassLoaderDeadlock/Deadlock2.sh         generic-all
