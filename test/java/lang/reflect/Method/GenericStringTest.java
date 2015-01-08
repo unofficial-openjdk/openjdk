@@ -47,10 +47,18 @@ public class GenericStringTest {
                 if (egs != null) {
                     String actual = method.toGenericString();
                     System.out.println(actual);
-                    if (! egs.value().equals(actual)) {
-                        failures++;
-                        System.err.printf("ERROR: Expected ''%s''; got ''%s''.\n",
-                                          egs.value(), actual);
+                    if (method.isBridge()) {
+                        if (! egs.bridgeValue().equals(actual)) {
+                            failures++;
+                            System.err.printf("ERROR: Expected ''%s''; got ''%s''.\n",
+                                              egs.value(), actual);
+                        }
+                    } else {
+                        if (! egs.value().equals(actual)) {
+                            failures++;
+                            System.err.printf("ERROR: Expected ''%s''; got ''%s''.\n",
+                                              egs.value(), actual);
+                        }
                     }
                 }
 
@@ -116,7 +124,8 @@ class TestClass2<E, F extends Exception> {
 
 class Roebling implements Comparable<Roebling> {
     @ExpectedGenericString(
-   "public int Roebling.compareTo(Roebling)")
+    value="public int Roebling.compareTo(Roebling)",
+    bridgeValue="public int Roebling.compareTo(java.lang.Object)")
     public int compareTo(Roebling r) {
         throw new IllegalArgumentException();
     }
@@ -132,9 +141,11 @@ class Roebling implements Comparable<Roebling> {
 @Retention(RetentionPolicy.RUNTIME)
 @interface ExpectedGenericString {
     String value();
+    String bridgeValue() default "";
 }
 
 @Retention(RetentionPolicy.RUNTIME)
 @interface ExpectedString {
     String value();
 }
+
