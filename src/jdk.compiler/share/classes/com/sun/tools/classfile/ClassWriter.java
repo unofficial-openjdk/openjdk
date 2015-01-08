@@ -1,6 +1,6 @@
 
 /*
- * Copyright (c) 2008, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -481,6 +481,33 @@ public class ClassWriter {
             for (MethodParameters_attribute.Entry e : attr.method_parameter_table) {
                 out.writeShort(e.name_index);
                 out.writeShort(e.flags);
+            }
+            return null;
+        }
+
+        public Void visitModule(Module_attribute attr, ClassOutputStream out) {
+            out.writeShort(attr.requires.length);
+            for (Module_attribute.RequiresEntry e: attr.requires) {
+                out.writeShort(e.requires_index);
+                out.writeShort(e.requires_flags);
+            }
+            out.writeShort(attr.permits_index.length);
+            for (int index: attr.permits_index)
+                out.writeShort(index);
+            out.writeShort(attr.exports.length);
+            for (Module_attribute.ExportsEntry e: attr.exports) {
+                out.writeShort(e.exports_index);
+                out.writeShort(e.exports_to_index.length);
+                for (int index: e.exports_to_index)
+                    out.writeShort(index);
+            }
+            out.writeShort(attr.uses_index.length);
+            for (int index: attr.uses_index)
+                out.writeShort(index);
+            out.writeShort(attr.provides.length);
+            for (Module_attribute.ProvidesEntry e: attr.provides) {
+                out.writeShort(e.provides_index);
+                out.writeShort(e.with_index);
             }
             return null;
         }
