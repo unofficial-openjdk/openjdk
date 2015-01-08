@@ -98,11 +98,11 @@ void FileMapInfo::fail_continue(const char *msg, ...) {
         tty->print_cr("UseSharedSpaces: %s", msg);
       }
     }
+    UseSharedSpaces = false;
+    assert(current_info() != NULL, "singleton must be registered");
+    current_info()->close();
   }
   va_end(ap);
-  UseSharedSpaces = false;
-  assert(current_info() != NULL, "singleton must be registered");
-  current_info()->close();
 }
 
 // Fill in the fileMapInfo structure with data about this VM instance.
@@ -334,7 +334,7 @@ bool FileMapInfo::init_from_file(int fd) {
   n = os::read(fd, _paths_misc_info, (unsigned int)info_size);
   if (n != info_size) {
     fail_continue("Unable to read the shared path info header.");
-    FREE_C_HEAP_ARRAY(char, _paths_misc_info, mtClass);
+    FREE_C_HEAP_ARRAY(char, _paths_misc_info);
     _paths_misc_info = NULL;
     return false;
   }
@@ -717,7 +717,7 @@ bool FileMapInfo::validate_header() {
   }
 
   if (_paths_misc_info != NULL) {
-    FREE_C_HEAP_ARRAY(char, _paths_misc_info, mtClass);
+    FREE_C_HEAP_ARRAY(char, _paths_misc_info);
     _paths_misc_info = NULL;
   }
   return status;

@@ -67,9 +67,8 @@
 #include "utilities/growableArray.hpp"
 #include "utilities/macros.hpp"
 #include "utilities/ostream.hpp"
-
 #if INCLUDE_TRACE
- #include "trace/tracing.hpp"
+#include "trace/tracing.hpp"
 #endif
 
 ClassLoaderData * ClassLoaderData::_the_null_class_loader_data = NULL;
@@ -518,7 +517,7 @@ void ClassLoaderData::free_deallocate_list() {
 // These anonymous class loaders are to contain classes used for JSR292
 ClassLoaderData* ClassLoaderData::anonymous_class_loader_data(oop loader, TRAPS) {
   // Add a new class loader data to the graph.
-  return ClassLoaderDataGraph::add(loader, true, CHECK_NULL);
+  return ClassLoaderDataGraph::add(loader, true, THREAD);
 }
 
 const char* ClassLoaderData::loader_name() {
@@ -1030,4 +1029,4 @@ void ClassLoaderDataGraph::class_unload_event(Klass* const k) {
   event.commit();
 }
 
-#endif /* INCLUDE_TRACE */
+#endif // INCLUDE_TRACE

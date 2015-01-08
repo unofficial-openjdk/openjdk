@@ -456,6 +456,7 @@ JRT_END
 
 address SharedRuntime::raw_exception_handler_for_return_address(JavaThread* thread, address return_address) {
   assert(frame::verify_return_pc(return_address), err_msg("must be a return address: " INTPTR_FORMAT, return_address));
+  assert(thread->frames_to_pop_failed_realloc() == 0 || Interpreter::contains(return_address), "missed frames to pop?");
 
   // Reset method handle flag.
   thread->set_is_method_handle_return(false);
@@ -986,7 +987,7 @@ Handle SharedRuntime::find_callee_info(JavaThread* thread, Bytecodes::Code& bc, 
   // last java frame on stack (which includes native call frames)
   vframeStream vfst(thread, true);  // Do not skip and javaCalls
 
-  return find_callee_info_helper(thread, vfst, bc, callinfo, CHECK_(Handle()));
+  return find_callee_info_helper(thread, vfst, bc, callinfo, THREAD);
 }
 
 
@@ -2084,7 +2085,7 @@ class AdapterFingerPrint : public CHeapObj<mtCode> {
 
   ~AdapterFingerPrint() {
     if (_length > 0) {
-      FREE_C_HEAP_ARRAY(int, _value._fingerprint, mtCode);
+      FREE_C_HEAP_ARRAY(int, _value._fingerprint);
     }
   }
 
@@ -2491,7 +2492,7 @@ void AdapterHandlerEntry::relocate(address new_base) {
 void AdapterHandlerEntry::deallocate() {
   delete _fingerprint;
 #ifdef ASSERT
-  if (_saved_code) FREE_C_HEAP_ARRAY(unsigned char, _saved_code, mtCode);
+  if (_saved_code) FREE_C_HEAP_ARRAY(unsigned char, _saved_code);
 #endif
 }
 
@@ -2902,7 +2903,7 @@ JRT_LEAF(intptr_t*, SharedRuntime::OSR_migration_begin( JavaThread *thread) )
 JRT_END
 
 JRT_LEAF(void, SharedRuntime::OSR_migration_end( intptr_t* buf) )
-  FREE_C_HEAP_ARRAY(intptr_t, buf, mtCode);
+  FREE_C_HEAP_ARRAY(intptr_t, buf);
 JRT_END
 
 bool AdapterHandlerLibrary::contains(CodeBlob* b) {

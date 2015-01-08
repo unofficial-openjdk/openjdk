@@ -93,7 +93,7 @@ static void add_to_boot_loader_list(char *module_name, TRAPS) {
     struct stat st;
     // See if Xoverride module path exists.
     if ((os::stat(prefix_path, &st) != 0)) {
-      FREE_C_HEAP_ARRAY(char, prefix_path, mtInternal);
+      FREE_C_HEAP_ARRAY(char, prefix_path);
       prefix_path = NULL;
     }
   }
@@ -109,7 +109,7 @@ static void add_to_boot_loader_list(char *module_name, TRAPS) {
     struct stat st;
     // See if exploded module path exists.
     if ((os::stat(path, &st) != 0)) {
-      FREE_C_HEAP_ARRAY(char, path, mtInternal);
+      FREE_C_HEAP_ARRAY(char, path);
       path = NULL;
     }
   }

@@ -116,7 +116,7 @@ ImageModuleData::ImageModuleData(ImageFile* image_file)
 
 ImageModuleData::~ImageModuleData() {
   if (_data) {
-    FREE_C_HEAP_ARRAY(u1, _data, mtClass);
+    FREE_C_HEAP_ARRAY(u1, _data);
   }
 }
 
@@ -193,7 +193,7 @@ ImageFile::~ImageFile() {
   close();
 
   // Free up name.
-  FREE_C_HEAP_ARRAY(char, _name, mtClass);
+  FREE_C_HEAP_ARRAY(char, _name);
 }
 
 bool ImageFile::open() {
@@ -262,7 +262,7 @@ void ImageFile::close() {
     if (_memory_mapped) {
       os::unmap_memory((char*)_index_data, _index_size);
     } else {
-      FREE_C_HEAP_ARRAY(u1, _index_data, mtClass);
+      FREE_C_HEAP_ARRAY(u1, _index_data);
     }
 
     _index_data = NULL;

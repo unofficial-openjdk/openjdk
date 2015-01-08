@@ -70,6 +70,11 @@ class MetaspaceShared : AllStatic {
   };
 
   enum {
+    min_ro_size = NOT_LP64(8*M) LP64_ONLY(9*M), // minimum ro and rw regions sizes based on dumping
+    min_rw_size = NOT_LP64(7*M) LP64_ONLY(12*M) // of a shared archive using the default classlist
+  };
+
+  enum {
     ro = 0,  // read-only shared space in the heap
     rw = 1,  // read-write shared space in the heap
     md = 2,  // miscellaneous data for initializing tables, etc.
@@ -92,7 +97,7 @@ class MetaspaceShared : AllStatic {
   static void preload_and_dump(TRAPS) NOT_CDS_RETURN;
   static int preload_and_dump(const char * class_list_path,
                               GrowableArray<Klass*>* class_promote_order,
-                              TRAPS) NOT_CDS_RETURN;
+                              TRAPS) NOT_CDS_RETURN_(0);
 
   static ReservedSpace* shared_rs() {
     CDS_ONLY(return _shared_rs);

@@ -212,9 +212,6 @@ class Thread: public ThreadShadow {
   bool is_inside_signal_handler() const { return _num_nested_signal > 0; }
 
  private:
-  // Debug tracing
-  static void trace(const char* msg, const Thread* const thread) PRODUCT_RETURN;
-
   // Active_handles points to a block of handles
   JNIHandleBlock* _active_handles;
 
@@ -752,6 +749,7 @@ typedef void (*ThreadFunction)(JavaThread*, TRAPS);
 
 class JavaThread: public Thread {
   friend class VMStructs;
+  friend class WhiteBox;
  private:
   JavaThread*    _next;                          // The next thread in the Threads list
   oop            _threadObj;                     // The Java level thread object
@@ -910,6 +908,12 @@ class JavaThread: public Thread {
   // This is set to popframe_pending to signal that top Java frame should be popped immediately
   int _popframe_condition;
 
+  // If reallocation of scalar replaced objects fails, we throw OOM
+  // and during exception propagation, pop the top
+  // _frames_to_pop_failed_realloc frames, the ones that reference
+  // failed reallocations.
+  int _frames_to_pop_failed_realloc;
+
 #ifndef PRODUCT
   int _jmp_ring_index;
   struct {
@@ -1003,7 +1007,7 @@ class JavaThread: public Thread {
   ThreadFunction entry_point() const             { return _entry_point; }
 
   // Allocates a new Java level thread object for this thread. thread_name may be NULL.
-  void allocate_threadObj(Handle thread_group, char* thread_name, bool daemon, TRAPS);
+  void allocate_threadObj(Handle thread_group, const char* thread_name, bool daemon, TRAPS);
 
   // Last frame anchor routines
 
@@ -1568,6 +1572,10 @@ class JavaThread: public Thread {
   void set_pop_frame_in_process(void)                 { _popframe_condition |= popframe_processing_bit; }
   void clr_pop_frame_in_process(void)                 { _popframe_condition &= ~popframe_processing_bit; }
 #endif
+
+  int frames_to_pop_failed_realloc() const            { return _frames_to_pop_failed_realloc; }
+  void set_frames_to_pop_failed_realloc(int nb)       { _frames_to_pop_failed_realloc = nb; }
+  void dec_frames_to_pop_failed_realloc()             { _frames_to_pop_failed_realloc--; }
 
  private:
   // Saved incoming arguments to popped frame.

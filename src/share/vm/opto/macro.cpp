@@ -971,7 +971,11 @@ void PhaseMacroExpand::process_users_of_allocation(CallNode *alloc) {
 }
 
 bool PhaseMacroExpand::eliminate_allocate_node(AllocateNode *alloc) {
-  if (!EliminateAllocations || !alloc->_is_non_escaping) {
+  // Don't do scalar replacement if the frame can be popped by JVMTI:
+  // if reallocation fails during deoptimization we'll pop all
+  // interpreter frames for this compiled frame and that won't play
+  // nice with JVMTI popframe.
+  if (!EliminateAllocations || JvmtiExport::can_pop_frame() || !alloc->_is_non_escaping) {
     return false;
   }
   Node* klass = alloc->in(AllocateNode::KlassNode);
@@ -1197,8 +1201,7 @@ void PhaseMacroExpand::expand_allocate_common(
   }
 
   if (C->env()->dtrace_alloc_probes() ||
-      !UseTLAB && (!Universe::heap()->supports_inline_contig_alloc() ||
-                   (UseConcMarkSweepGC && CMSIncrementalMode))) {
+      !UseTLAB && (!Universe::heap()->supports_inline_contig_alloc())) {
     // Force slow-path allocation
     always_slow = true;
     initial_slow_test = NULL;
@@ -2202,7 +2205,7 @@ void PhaseMacroExpand::expand_lock_node(LockNode *lock) {
     Node* klass_node = AllocateNode::Ideal_klass(obj, &_igvn);
     if (klass_node == NULL) {
       Node* k_adr = basic_plus_adr(obj, oopDesc::klass_offset_in_bytes());
-      klass_node = transform_later( LoadKlassNode::make(_igvn, mem, k_adr, _igvn.type(k_adr)->is_ptr()) );
+      klass_node = transform_later(LoadKlassNode::make(_igvn, NULL, mem, k_adr, _igvn.type(k_adr)->is_ptr()));
 #ifdef _LP64
       if (UseCompressedClassPointers && klass_node->is_DecodeNKlass()) {
         assert(klass_node->in(1)->Opcode() == Op_LoadNKlass, "sanity");

@@ -111,7 +111,7 @@ ModuleEntryTable::~ModuleEntryTable() {
 
       // Unlink from the Hashtable prior to freeing
       unlink_entry(to_remove);
-      FREE_C_HEAP_ARRAY(char, to_remove, mtClass);
+      FREE_C_HEAP_ARRAY(char, to_remove);
     }
   }
   assert(number_of_entries() == 0, "should have removed all entries");

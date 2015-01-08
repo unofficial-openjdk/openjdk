@@ -31,6 +31,7 @@
 #include "runtime/os.hpp"
 #include "trace/tracing.hpp"
 #include "trace/traceBackend.hpp"
+#include "utilities/macros.hpp"
 #if INCLUDE_ALL_GCS
 #include "gc_implementation/g1/evacuationInfo.hpp"
 #include "gc_implementation/g1/g1YCTypes.hpp"
@@ -107,6 +108,44 @@ void YoungGCTracer::send_young_gc_event() const {
     e.set_starttime(_shared_gc_info.start_timestamp());
     e.set_endtime(_shared_gc_info.end_timestamp());
     e.commit();
+  }
+}
+
+bool YoungGCTracer::should_send_promotion_in_new_plab_event() const {
+  return EventPromoteObjectInNewPLAB::is_enabled();
+}
+
+bool YoungGCTracer::should_send_promotion_outside_plab_event() const {
+  return EventPromoteObjectOutsidePLAB::is_enabled();
+}
+
+void YoungGCTracer::send_promotion_in_new_plab_event(Klass* klass, size_t obj_size,
+                                                     uint age, bool tenured,
+                                                     size_t plab_size) const {
+
+  EventPromoteObjectInNewPLAB event;
+  if (event.should_commit()) {
+    event.set_gcId(_shared_gc_info.gc_id().id());
+    event.set_class(klass);
+    event.set_objectSize(obj_size);
+    event.set_tenured(tenured);
+    event.set_tenuringAge(age);
+    event.set_plabSize(plab_size);
+    event.commit();
+  }
+}
+
+void YoungGCTracer::send_promotion_outside_plab_event(Klass* klass, size_t obj_size,
+                                                      uint age, bool tenured) const {
+
+  EventPromoteObjectOutsidePLAB event;
+  if (event.should_commit()) {
+    event.set_gcId(_shared_gc_info.gc_id().id());
+    event.set_class(klass);
+    event.set_objectSize(obj_size);
+    event.set_tenured(tenured);
+    event.set_tenuringAge(age);
+    event.commit();
   }
 }
 

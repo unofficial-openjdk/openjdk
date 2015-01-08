@@ -33,9 +33,6 @@
 #include "classfile/packageEntry.hpp"
 #include "classfile/symbolTable.hpp"
 #include "classfile/systemDictionary.hpp"
-#if INCLUDE_CDS
-#include "classfile/systemDictionaryShared.hpp"
-#endif
 #include "classfile/verificationType.hpp"
 #include "classfile/verifier.hpp"
 #include "classfile/vmSymbols.hpp"
@@ -65,7 +62,11 @@
 #include "services/threadService.hpp"
 #include "utilities/array.hpp"
 #include "utilities/globalDefinitions.hpp"
+#include "utilities/macros.hpp"
 #include "utilities/ostream.hpp"
+#if INCLUDE_CDS
+#include "classfile/systemDictionaryShared.hpp"
+#endif
 
 // We generally try to create the oops directly when parsing, rather than
 // allocating temporary data structures and copying the bytes twice. A
@@ -2061,7 +2062,7 @@ methodHandle ClassFileParser::parse_method(bool is_interface,
   u2** localvariable_table_start;
   u2* localvariable_type_table_length;
   u2** localvariable_type_table_start;
-  u2 method_parameters_length = 0;
+  int method_parameters_length = -1;
   u1* method_parameters_data = NULL;
   bool method_parameters_seen = false;
   bool parsed_code_attribute = false;
@@ -2280,7 +2281,8 @@ methodHandle ClassFileParser::parse_method(bool is_interface,
       }
       method_parameters_seen = true;
       method_parameters_length = cfs->get_u1_fast();
-      if (method_attribute_length != (method_parameters_length * 4u) + 1u) {
+      const u2 real_length = (method_parameters_length * 4u) + 1u;
+      if (method_attribute_length != real_length) {
         classfile_parse_error(
           "Invalid MethodParameters method attribute length %u in class file",
           method_attribute_length, CHECK_(nullHandle));
@@ -2290,7 +2292,7 @@ methodHandle ClassFileParser::parse_method(bool is_interface,
       cfs->skip_u2_fast(method_parameters_length);
       // ignore this attribute if it cannot be reflected
       if (!SystemDictionary::Parameter_klass_loaded())
-        method_parameters_length = 0;
+        method_parameters_length = -1;
     } else if (method_attribute_name == vmSymbols::tag_synthetic()) {
       if (method_attribute_length != 0) {
         classfile_parse_error(
@@ -3108,21 +3110,39 @@ void ClassFileParser::apply_parsed_class_attributes(instanceKlassHandle k) {
   }
 }
 
-// Transfer ownership of metadata allocated to the InstanceKlass.
-void ClassFileParser::apply_parsed_class_metadata(
-                                            instanceKlassHandle this_klass,
-                                            int java_fields_count, TRAPS) {
-  // Assign annotations if needed
-  if (_annotations != NULL || _type_annotations != NULL ||
-      _fields_annotations != NULL || _fields_type_annotations != NULL) {
+// Create the Annotations object that will
+// hold the annotations array for the Klass.
+void ClassFileParser::create_combined_annotations(TRAPS) {
+    if (_annotations == NULL &&
+        _type_annotations == NULL &&
+        _fields_annotations == NULL &&
+        _fields_type_annotations == NULL) {
+      // Don't create the Annotations object unnecessarily.
+      return;
+    }
+
     Annotations* annotations = Annotations::allocate(_loader_data, CHECK);
     annotations->set_class_annotations(_annotations);
     annotations->set_class_type_annotations(_type_annotations);
     annotations->set_fields_annotations(_fields_annotations);
     annotations->set_fields_type_annotations(_fields_type_annotations);
-    this_klass->set_annotations(annotations);
-  }
 
+    // This is the Annotations object that will be
+    // assigned to InstanceKlass being constructed.
+    _combined_annotations = annotations;
+
+    // The annotations arrays below has been transfered the
+    // _combined_annotations so these fields can now be cleared.
+    _annotations             = NULL;
+    _type_annotations        = NULL;
+    _fields_annotations      = NULL;
+    _fields_type_annotations = NULL;
+}
+
+// Transfer ownership of metadata allocated to the InstanceKlass.
+void ClassFileParser::apply_parsed_class_metadata(
+                                            instanceKlassHandle this_klass,
+                                            int java_fields_count, TRAPS) {
   _cp->set_pool_holder(this_klass());
   this_klass->set_constants(_cp);
   this_klass->set_fields(_fields, java_fields_count);
@@ -3130,6 +3150,7 @@ void ClassFileParser::apply_parsed_class_metadata(
   this_klass->set_inner_classes(_inner_classes);
   this_klass->set_local_interfaces(_local_interfaces);
   this_klass->set_transitive_interfaces(_transitive_interfaces);
+  this_klass->set_annotations(_combined_annotations);
 
   // Clear out these fields so they don't get deallocated by the destructor
   clear_class_metadata();
@@ -3493,17 +3514,18 @@ void ClassFileParser::layout_fields(Handle class_loader,
           real_offset = next_nonstatic_oop_offset;
           next_nonstatic_oop_offset += heapOopSize;
         }
-        // Update oop maps
+
+        // Record this oop in the oop maps
         if( nonstatic_oop_map_count > 0 &&
             nonstatic_oop_offsets[nonstatic_oop_map_count - 1] ==
             real_offset -
             int(nonstatic_oop_counts[nonstatic_oop_map_count - 1]) *
             heapOopSize ) {
-          // Extend current oop map
+          // This oop is adjacent to the previous one, add to current oop map
           assert(nonstatic_oop_map_count - 1 < max_nonstatic_oop_maps, "range check");
           nonstatic_oop_counts[nonstatic_oop_map_count - 1] += 1;
         } else {
-          // Create new oop map
+          // This oop is not adjacent to the previous one, create new oop map
           assert(nonstatic_oop_map_count < max_nonstatic_oop_maps, "range check");
           nonstatic_oop_offsets[nonstatic_oop_map_count] = real_offset;
           nonstatic_oop_counts [nonstatic_oop_map_count] = 1;
@@ -3625,13 +3647,24 @@ void ClassFileParser::layout_fields(Handle class_loader,
             real_offset = next_nonstatic_padded_offset;
             next_nonstatic_padded_offset += heapOopSize;
 
-            // Create new oop map
-            assert(nonstatic_oop_map_count < max_nonstatic_oop_maps, "range check");
-            nonstatic_oop_offsets[nonstatic_oop_map_count] = real_offset;
-            nonstatic_oop_counts [nonstatic_oop_map_count] = 1;
-            nonstatic_oop_map_count += 1;
-            if( first_nonstatic_oop_offset == 0 ) { // Undefined
-              first_nonstatic_oop_offset = real_offset;
+            // Record this oop in the oop maps
+            if( nonstatic_oop_map_count > 0 &&
+                nonstatic_oop_offsets[nonstatic_oop_map_count - 1] ==
+                real_offset -
+                int(nonstatic_oop_counts[nonstatic_oop_map_count - 1]) *
+                heapOopSize ) {
+              // This oop is adjacent to the previous one, add to current oop map
+              assert(nonstatic_oop_map_count - 1 < max_nonstatic_oop_maps, "range check");
+              nonstatic_oop_counts[nonstatic_oop_map_count - 1] += 1;
+            } else {
+              // This oop is not adjacent to the previous one, create new oop map
+              assert(nonstatic_oop_map_count < max_nonstatic_oop_maps, "range check");
+              nonstatic_oop_offsets[nonstatic_oop_map_count] = real_offset;
+              nonstatic_oop_counts [nonstatic_oop_map_count] = 1;
+              nonstatic_oop_map_count += 1;
+              if( first_nonstatic_oop_offset == 0 ) { // Undefined
+                first_nonstatic_oop_offset = real_offset;
+              }
             }
             break;
 
@@ -3990,6 +4023,10 @@ instanceKlassHandle ClassFileParser::parseClassFile(Symbol* name,
     ClassAnnotationCollector parsed_annotations;
     parse_classfile_attributes(&parsed_annotations, CHECK_(nullHandle));
 
+    // Finalize the Annotations metadata object,
+    // now that all annotation arrays have been created.
+    create_combined_annotations(CHECK_(nullHandle));
+
     // Make sure this is the end of class file stream
     guarantee_property(cfs->at_eos(), "Extra bytes at the end of class file %s", CHECK_(nullHandle));
 
@@ -4306,10 +4343,27 @@ ClassFileParser::~ClassFileParser() {
   InstanceKlass::deallocate_interfaces(_loader_data, _super_klass(),
                                        _local_interfaces, _transitive_interfaces);
 
-  MetadataFactory::free_array<u1>(_loader_data, _annotations);
-  MetadataFactory::free_array<u1>(_loader_data, _type_annotations);
-  Annotations::free_contents(_loader_data, _fields_annotations);
-  Annotations::free_contents(_loader_data, _fields_type_annotations);
+  if (_combined_annotations != NULL) {
+    // After all annotations arrays have been created, they are installed into the
+    // Annotations object that will be assigned to the InstanceKlass being created.
+
+    // Deallocate the Annotations object and the installed annotations arrays.
+    _combined_annotations->deallocate_contents(_loader_data);
+
+    // If the _combined_annotations pointer is non-NULL,
+    // then the other annotations fields should have been cleared.
+    assert(_annotations             == NULL, "Should have been cleared");
+    assert(_type_annotations        == NULL, "Should have been cleared");
+    assert(_fields_annotations      == NULL, "Should have been cleared");
+    assert(_fields_type_annotations == NULL, "Should have been cleared");
+  } else {
+    // If the annotations arrays were not installed into the Annotations object,
+    // then they have to be deallocated explicitly.
+    MetadataFactory::free_array<u1>(_loader_data, _annotations);
+    MetadataFactory::free_array<u1>(_loader_data, _type_annotations);
+    Annotations::free_contents(_loader_data, _fields_annotations);
+    Annotations::free_contents(_loader_data, _fields_type_annotations);
+  }
 
   clear_class_metadata();
 
