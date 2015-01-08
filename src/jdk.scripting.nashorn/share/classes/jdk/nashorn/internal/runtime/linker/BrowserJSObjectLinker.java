@@ -29,6 +29,7 @@ import static jdk.nashorn.internal.runtime.linker.BrowserJSObjectLinker.JSObject
 import static jdk.nashorn.internal.runtime.linker.BrowserJSObjectLinker.JSObjectHandles.JSOBJECT_GETSLOT;
 import static jdk.nashorn.internal.runtime.linker.BrowserJSObjectLinker.JSObjectHandles.JSOBJECT_SETMEMBER;
 import static jdk.nashorn.internal.runtime.linker.BrowserJSObjectLinker.JSObjectHandles.JSOBJECT_SETSLOT;
+import static jdk.nashorn.internal.runtime.linker.BrowserJSObjectLinker.JSObjectHandles.JSOBJECT_CALL;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import jdk.internal.dynalink.CallSiteDescriptor;
@@ -39,13 +40,22 @@ import jdk.internal.dynalink.linker.TypeBasedGuardingDynamicLinker;
 import jdk.internal.dynalink.support.CallSiteDescriptorFactory;
 import jdk.nashorn.internal.lookup.MethodHandleFactory;
 import jdk.nashorn.internal.lookup.MethodHandleFunctionality;
+import jdk.nashorn.internal.runtime.ConsString;
 import jdk.nashorn.internal.runtime.JSType;
 
 /**
  * A Dynalink linker to handle web browser built-in JS (DOM etc.) objects.
  */
 final class BrowserJSObjectLinker implements TypeBasedGuardingDynamicLinker {
-    private static final ClassLoader myLoader = BrowserJSObjectLinker.class.getClassLoader();
+    private static ClassLoader extLoader;
+    static {
+        extLoader = BrowserJSObjectLinker.class.getClassLoader();
+        // in case nashorn is loaded as bootstrap!
+        if (extLoader == null) {
+            extLoader = ClassLoader.getSystemClassLoader().getParent();
+        }
+    }
+
     private static final String JSOBJECT_CLASS = "netscape.javascript.JSObject";
     // not final because this is lazily initialized
     // when we hit a subclass for the first time.
@@ -69,7 +79,7 @@ final class BrowserJSObjectLinker implements TypeBasedGuardingDynamicLinker {
         // check if this class is a subclass of JSObject
         Class<?> clazz = type;
         while (clazz != null) {
-            if (clazz.getClassLoader() == myLoader &&
+            if (clazz.getClassLoader() == extLoader &&
                 clazz.getName().equals(JSOBJECT_CLASS)) {
                 jsObjectClass = clazz;
                 return true;
@@ -109,26 +119,32 @@ final class BrowserJSObjectLinker implements TypeBasedGuardingDynamicLinker {
     private GuardedInvocation lookup(final CallSiteDescriptor desc, final LinkRequest request, final LinkerServices linkerServices) throws Exception {
         final String operator = CallSiteDescriptorFactory.tokenizeOperators(desc).get(0);
         final int c = desc.getNameTokenCount();
+        GuardedInvocation inv;
+        try {
+            inv = nashornBeansLinker.getGuardedInvocation(request, linkerServices);
+        } catch (Throwable th) {
+            inv = null;
+        }
 
         switch (operator) {
             case "getProp":
             case "getElem":
             case "getMethod":
-                if (c > 2) {
-                    return findGetMethod(desc);
-                }
-            // For indexed get, we want GuardedInvocation from beans linker and pass it.
-            // BrowserJSObjectLinker.get uses this fallback getter for explicit signature method access.
-            return findGetIndexMethod(nashornBeansLinker.getGuardedInvocation(request, linkerServices));
+                return c > 2? findGetMethod(desc, inv) : findGetIndexMethod(inv);
             case "setProp":
             case "setElem":
-                return c > 2 ? findSetMethod(desc) : findSetIndexMethod();
+                return c > 2? findSetMethod(desc, inv) : findSetIndexMethod();
+            case "call":
+                return findCallMethod(desc);
             default:
                 return null;
         }
     }
 
-    private static GuardedInvocation findGetMethod(final CallSiteDescriptor desc) {
+    private static GuardedInvocation findGetMethod(final CallSiteDescriptor desc, final GuardedInvocation inv) {
+        if (inv != null) {
+            return inv;
+        }
         final String name = desc.getNameToken(CallSiteDescriptor.NAME_OPERAND);
         final MethodHandle getter = MH.insertArguments(JSOBJECT_GETMEMBER, 1, name);
         return new GuardedInvocation(getter, IS_JSOBJECT_GUARD);
@@ -139,13 +155,21 @@ final class BrowserJSObjectLinker implements TypeBasedGuardingDynamicLinker {
         return inv.replaceMethods(getter, inv.getGuard());
     }
 
-    private static GuardedInvocation findSetMethod(final CallSiteDescriptor desc) {
+    private static GuardedInvocation findSetMethod(final CallSiteDescriptor desc, final GuardedInvocation inv) {
+        if (inv != null) {
+            return inv;
+        }
         final MethodHandle getter = MH.insertArguments(JSOBJECT_SETMEMBER, 1, desc.getNameToken(2));
         return new GuardedInvocation(getter, IS_JSOBJECT_GUARD);
     }
 
     private static GuardedInvocation findSetIndexMethod() {
         return new GuardedInvocation(JSOBJECTLINKER_PUT, IS_JSOBJECT_GUARD);
+    }
+
+    private static GuardedInvocation findCallMethod(final CallSiteDescriptor desc) {
+        final MethodHandle call = MH.insertArguments(JSOBJECT_CALL, 1, "call");
+        return new GuardedInvocation(MH.asCollector(call, Object[].class, desc.getMethodType().parameterCount() - 1), IS_JSOBJECT_GUARD);
     }
 
     @SuppressWarnings("unused")
@@ -162,12 +186,12 @@ final class BrowserJSObjectLinker implements TypeBasedGuardingDynamicLinker {
             if (index > -1) {
                 return JSOBJECT_GETSLOT.invokeExact(jsobj, index);
             }
-        } else if (key instanceof String) {
-            final String name = (String)key;
+        } else if (key instanceof String || key instanceof ConsString) {
+            final String name = key.toString();
             if (name.indexOf('(') != -1) {
-                return fallback.invokeExact(jsobj, key);
+                return fallback.invokeExact(jsobj, (Object) name);
             }
-            return JSOBJECT_GETMEMBER.invokeExact(jsobj, (String)key);
+            return JSOBJECT_GETMEMBER.invokeExact(jsobj, name);
         }
         return null;
     }
@@ -178,8 +202,8 @@ final class BrowserJSObjectLinker implements TypeBasedGuardingDynamicLinker {
             JSOBJECT_SETSLOT.invokeExact(jsobj, (int)key, value);
         } else if (key instanceof Number) {
             JSOBJECT_SETSLOT.invokeExact(jsobj, getIndex((Number)key), value);
-        } else if (key instanceof String) {
-            JSOBJECT_SETMEMBER.invokeExact(jsobj, (String)key, value);
+        } else if (key instanceof String || key instanceof ConsString) {
+            JSOBJECT_SETMEMBER.invokeExact(jsobj, key.toString(), value);
         }
     }
 
@@ -207,6 +231,7 @@ final class BrowserJSObjectLinker implements TypeBasedGuardingDynamicLinker {
         static final MethodHandle JSOBJECT_GETSLOT       = findJSObjectMH_V("getSlot", Object.class, int.class).asType(MH.type(Object.class, Object.class, int.class));
         static final MethodHandle JSOBJECT_SETMEMBER     = findJSObjectMH_V("setMember", Void.TYPE, String.class, Object.class).asType(MH.type(Void.TYPE, Object.class, String.class, Object.class));
         static final MethodHandle JSOBJECT_SETSLOT       = findJSObjectMH_V("setSlot", Void.TYPE, int.class, Object.class).asType(MH.type(Void.TYPE, Object.class, int.class, Object.class));
+        static final MethodHandle JSOBJECT_CALL          = findJSObjectMH_V("call", Object.class, String.class, Object[].class).asType(MH.type(Object.class, Object.class, String.class, Object[].class));
 
         private static MethodHandle findJSObjectMH_V(final String name, final Class<?> rtype, final Class<?>... types) {
             checkJSObjectClass();
