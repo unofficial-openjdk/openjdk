@@ -42,6 +42,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.jar.Attributes;
+import java.util.jar.Manifest;
 
 import jdk.internal.jimage.ImageLocation;
 import jdk.internal.jimage.ImageReader;
@@ -74,7 +76,7 @@ import jdk.jigsaw.module.ModuleArtifact;
  *     <li>Security work to ensure that we have the right doPrivileged blocks
  *     and permission checks. Also need to double check that we don't need to
  *     support signers on the class path </li>
- *     <li>Need to add support for java.lang.Package and package sealing</li>
+ *     <li>Need to add support for package sealing</li>
  *     <li>Need to check the URLs and usage when using -Xoverride</li>
  *     <li>Replace BootResourceFinder to avoid duplicate code</li>
  * </ol>
@@ -492,13 +494,20 @@ class BuiltinClassLoader extends SecureClassLoader
      * @throws IOException if reading the resource fails
      */
     private Class<?> defineClass(String cn, Resource res) throws IOException {
+        URL url = res.getCodeSourceURL();
+
         int pos = cn.lastIndexOf('.');
         if (pos != -1) {
             String pkg = cn.substring(0, pos);
             Package p = getPackage(pkg);
             if (p == null) {
+                Manifest man = res.getManifest();
                 try {
-                    definePackage(pkg, null, null, null, null, null, null, null);
+                    if (man != null) {
+                        definePackage(pkg, man, url);
+                    } else {
+                        definePackage(pkg, null, null, null, null, null, null, null);
+                    }
                 } catch (IllegalArgumentException iae) {
                     // someone else beat us to it
                 }
@@ -509,16 +518,74 @@ class BuiltinClassLoader extends SecureClassLoader
         if (bb != null) {
             // Use (direct) ByteBuffer:
             CodeSigner[] signers = res.getCodeSigners();
-            CodeSource cs = new CodeSource(res.getURL(), signers);
+            CodeSource cs = new CodeSource(url, signers);
             return defineClass(cn, bb, cs);
         } else {
             byte[] b = res.getBytes();
             CodeSigner[] signers = res.getCodeSigners();
-            CodeSource cs = new CodeSource(res.getURL(), signers);
+            CodeSource cs = new CodeSource(url, signers);
             return defineClass(cn, b, 0, b.length, cs);
         }
     }
 
+    /**
+     * Defines a new package in this ClassLoader. The attributes in the specified
+     * Manifest are use to get the package version and sealing information.
+     *
+     * @throws IllegalArgumentException if the package name duplicates an existing
+     * package either in this class loader or one of its ancestors
+     */
+    private Package definePackage(String pkg, Manifest man, URL url) {
+        String specTitle = null;
+        String specVersion = null;
+        String specVendor = null;
+        String implTitle = null;
+        String implVersion = null;
+        String implVendor = null;
+        String sealed = null;
+        URL sealBase = null;
+
+        Attributes attr = man.getAttributes(pkg.replace('.', '/').concat("/"));
+        if (attr != null) {
+            specTitle   = attr.getValue(Attributes.Name.SPECIFICATION_TITLE);
+            specVersion = attr.getValue(Attributes.Name.SPECIFICATION_VERSION);
+            specVendor  = attr.getValue(Attributes.Name.SPECIFICATION_VENDOR);
+            implTitle   = attr.getValue(Attributes.Name.IMPLEMENTATION_TITLE);
+            implVersion = attr.getValue(Attributes.Name.IMPLEMENTATION_VERSION);
+            implVendor  = attr.getValue(Attributes.Name.IMPLEMENTATION_VENDOR);
+            sealed      = attr.getValue(Attributes.Name.SEALED);
+        }
+
+        attr = man.getMainAttributes();
+        if (attr != null) {
+            if (specTitle == null)
+                specTitle = attr.getValue(Attributes.Name.SPECIFICATION_TITLE);
+            if (specVersion == null)
+                specVersion = attr.getValue(Attributes.Name.SPECIFICATION_VERSION);
+            if (specVendor == null)
+                specVendor = attr.getValue(Attributes.Name.SPECIFICATION_VENDOR);
+            if (implTitle == null)
+                implTitle = attr.getValue(Attributes.Name.IMPLEMENTATION_TITLE);
+            if (implVersion == null)
+                implVersion = attr.getValue(Attributes.Name.IMPLEMENTATION_VERSION);
+            if (implVendor == null)
+                implVendor = attr.getValue(Attributes.Name.IMPLEMENTATION_VENDOR);
+            if (sealed == null)
+                sealed = attr.getValue(Attributes.Name.SEALED);
+        }
+
+        // no support for sealing yet
+        // if ("true".equalsIgnoreCase(sealed)) sealBase = url;
+
+        return definePackage(pkg,
+                             specTitle,
+                             specVersion,
+                             specVendor,
+                             implTitle,
+                             implVersion,
+                             implVendor,
+                             sealBase);
+    }
 
     // -- permissions
 
