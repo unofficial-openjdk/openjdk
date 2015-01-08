@@ -99,6 +99,7 @@ static int numOptions, maxOptions;
  */
 static void SetClassPath(const char *s);
 static void SetModulePath(const char *s);
+static void SetUpgradeModulePath(const char *s);
 static void SetMainModule(const char *s);
 static void SetAddModulesProp(const char *mods);
 static void SetLimitModulesProp(const char *mods);
@@ -533,7 +534,8 @@ CheckJvmType(int *pargc, char ***argv, jboolean speculative) {
             if (JLI_StrCmp(arg, "-classpath") == 0 ||
                 JLI_StrCmp(arg, "-cp") == 0 ||
                 JLI_StrCmp(arg, "-modulepath") == 0 ||
-                JLI_StrCmp(arg, "-mp") == 0) {
+                JLI_StrCmp(arg, "-mp") == 0 ||
+                JLI_StrCmp(arg, "-upgrademodulepath") == 0) {
                 newArgv[newArgvIdx++] = arg;
                 argi++;
                 if (argi < argc) {
@@ -829,11 +831,24 @@ SetModulePath(const char *s)
     char *def;
     const char *orig = s;
     static const char format[] = "-Djava.module.path=%s";
-    /*
-     * usually we should not get a null pointer, but there are cases where
-     * we might just get one, in which case we simply ignore it, and let the
-     * caller deal with it
-     */
+    if (s == NULL)
+        return;
+    s = JLI_WildcardExpandClasspath(s);
+    def = JLI_MemAlloc(sizeof(format)
+                       - 2 /* strlen("%s") */
+                       + JLI_StrLen(s));
+    sprintf(def, format, s);
+    AddOption(def, NULL);
+    if (s != orig)
+        JLI_MemFree((char *) s);
+}
+
+static void
+SetUpgradeModulePath(const char *s)
+{
+    char *def;
+    const char *orig = s;
+    static const char format[] = "-Djava.upgrade.module.path=%s";
     if (s == NULL)
         return;
     s = JLI_WildcardExpandClasspath(s);
@@ -1142,6 +1157,10 @@ ParseArguments(int *pargc, char ***pargv,
         } else if (JLI_StrCmp(arg, "-modulepath") == 0 || JLI_StrCmp(arg, "-mp") == 0) {
             ARG_CHECK (argc, ARG_ERROR4, arg);
             SetModulePath(*argv);
+            argv++; --argc;
+        } else if (JLI_StrCmp(arg, "-upgrademodulepath") == 0) {
+            ARG_CHECK (argc, ARG_ERROR4, arg);
+            SetUpgradeModulePath(*argv);
             argv++; --argc;
         } else if (JLI_StrCmp(arg, "-jar") == 0) {
             ARG_CHECK (argc, ARG_ERROR2, arg);

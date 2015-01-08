@@ -66,31 +66,24 @@ class ModuleBootstrap {
      */
     static void boot() {
 
+        // -upgrademodulepath option specified to launcher
+        ModuleArtifactFinder upgradeModulePath =
+            createModulePathFinder("java.upgrade.module.path");
+
         // system module path, aka the installed modules
-        ModuleArtifactFinder systemModulePath = ModuleArtifactFinder.installedModules();
+        ModuleArtifactFinder systemModulePath =
+            ModuleArtifactFinder.installedModules();
 
-        // -modulepath specified to the launcher
-        ModuleArtifactFinder appModulePath = null;
-        String propValue = System.getProperty("java.module.path");
-        if (propValue != null) {
-            String[] dirs = propValue.split(File.pathSeparator);
-            Path[] paths = new Path[dirs.length];
-            int i = 0;
-            for (String dir: dirs) {
-                paths[i++] = Paths.get(dir);
-            }
-            appModulePath = ModuleArtifactFinder.ofDirectories(paths);
-        }
+        // -modulepath option specified to the launcher
+        ModuleArtifactFinder appModulePath =
+            createModulePathFinder("java.module.path");
 
-        // The module finder. For now this is the system module path followed
-        // by the application module path (if specified). In the future then
-        // an upgrade module path may need to be prepended.
-        ModuleArtifactFinder finder;
-        if (appModulePath != null) {
-            finder = ModuleArtifactFinder.concat(systemModulePath, appModulePath);
-        } else {
-            finder = systemModulePath;
-        }
+        // The module finder: [-upgrademodulepath] system-module-path [-modulepath]
+        ModuleArtifactFinder finder = systemModulePath;
+        if (upgradeModulePath != null)
+            finder = ModuleArtifactFinder.concat(upgradeModulePath, finder);
+        if (appModulePath != null)
+            finder = ModuleArtifactFinder.concat(finder, appModulePath);
 
         // if -XX:AddModuleRequires or -XX:AddModuleExports is specified then
         // interpose on finder so that the requires/exports are updated
@@ -102,7 +95,7 @@ class ModuleBootstrap {
 
         // launcher -m option to specify the initial module
         ModuleId mainMid = null;
-        propValue = System.getProperty("java.module.main");
+        String propValue = System.getProperty("java.module.main");
         if (propValue != null) {
             int i = propValue.indexOf('/');
             String s = (i == -1) ? propValue : propValue.substring(0, i);
@@ -160,6 +153,20 @@ class ModuleBootstrap {
 
         // mapping of modules to class loaders
         Layer.ClassLoaderFinder clf = classLoaderFinder(cf);
+
+        // check that all modules to be mapped to the boot loader will be
+        // loaded from the system module path
+        for (ModuleDescriptor md: cf.descriptors()) {
+            String name = md.name();
+            ModuleArtifact artifact = cf.findArtifact(name);
+            ClassLoader cl = clf.loaderForModule(artifact);
+            if (cl == null) {
+                if (upgradeModulePath != null && upgradeModulePath.find(name) != null)
+                    fail(name + ": cannot be loaded from upgrade module path");
+                if (systemModulePath.find(name) == null)
+                    fail(name + ": cannot be loaded from application module path");
+            }
+        }
 
         // define modules to VM/runtime
         Layer bootLayer = Layer.create(cf, clf);
@@ -261,6 +268,25 @@ class ModuleBootstrap {
     }
 
     /**
+     * Creates a finder from the module path that is the value of the given
+     * system property.
+     */
+    private static ModuleArtifactFinder createModulePathFinder(String prop) {
+        String s = System.getProperty(prop);
+        if (s == null) {
+            return null;
+        } else {
+            String[] dirs = s.split(File.pathSeparator);
+            Path[] paths = new Path[dirs.length];
+            int i = 0;
+            for (String dir: dirs) {
+                paths[i++] = Paths.get(dir);
+            }
+            return ModuleArtifactFinder.ofDirectories(paths);
+        }
+    }
+
+    /**
      * Reads the contents of the given modules file in {@code ${java.home}/lib}.
      */
     private static Set<String> readModuleSet(String name) {
@@ -270,5 +296,12 @@ class ModuleBootstrap {
         } catch (IOException ioe) {
             throw new UncheckedIOException(ioe);
         }
+    }
+
+    /**
+     * Throws a RuntimeException with the givem message
+     */
+    static void fail(String m) {
+        throw new RuntimeException(m);
     }
 }
