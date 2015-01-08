@@ -134,6 +134,16 @@ public interface JavaLangAccess {
     void invokeFinalize(Object o) throws Throwable;
 
     /**
+     * Returns the ServicesCatalog for the given class loader.
+     */
+    ServicesCatalog getServicesCatalog(ClassLoader cl);
+
+    /**
+     * Returns a class loaded by the bootstrap class loader.
+     */
+    Class<?> findBootstrapClassOrNull(ClassLoader cl, String name);
+
+    /**
      * Invokes Long.formatUnsignedLong(long val, int shift, char[] buf, int offset, int len)
      */
     void formatUnsignedLong(long val, int shift, char[] buf, int offset, int len);

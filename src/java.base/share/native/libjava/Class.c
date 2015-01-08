@@ -47,6 +47,7 @@ extern jboolean VerifyFixClassname(char *utf_name);
 #define STR "Ljava/lang/String;"
 #define FLD "Ljava/lang/reflect/Field;"
 #define MHD "Ljava/lang/reflect/Method;"
+#define MOD "Ljava/lang/reflect/Module;"
 #define CTR "Ljava/lang/reflect/Constructor;"
 #define PD  "Ljava/security/ProtectionDomain;"
 #define BA  "[B"
@@ -61,6 +62,7 @@ static JNINativeMethod methods[] = {
     {"isArray",          "()Z",             (void *)&JVM_IsArrayClass},
     {"isPrimitive",      "()Z",             (void *)&JVM_IsPrimitiveClass},
     {"getModifiers",     "()I",             (void *)&JVM_GetClassModifiers},
+    {"getModule0",       "()" MOD,          (void *)&JVM_GetModule},
     {"getDeclaredFields0","(Z)[" FLD,       (void *)&JVM_GetClassDeclaredFields},
     {"getDeclaredMethods0","(Z)[" MHD,      (void *)&JVM_GetClassDeclaredMethods},
     {"getDeclaredConstructors0","(Z)[" CTR, (void *)&JVM_GetClassDeclaredConstructors},

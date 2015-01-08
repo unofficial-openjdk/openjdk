@@ -41,6 +41,8 @@ import java.util.ServiceLoader;
 import java.util.ServiceConfigurationError;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import sun.misc.ASCIICaseInsensitiveComparator;
 import sun.nio.cs.StandardCharsets;
 import sun.nio.cs.ThreadLocalCoders;
@@ -433,12 +435,16 @@ public abstract class Charset
                                 try {
                                     Class<?> epc
                                         = Class.forName("sun.nio.cs.ext.ExtendedCharsets");
-                                    return (CharsetProvider)epc.newInstance();
+                                    Constructor<?> ctor = epc.getConstructor();
+                                    ctor.setAccessible(true);
+                                    return (CharsetProvider)ctor.newInstance();
                                 } catch (ClassNotFoundException x) {
                                     // Extended charsets not available
                                     // (charsets.jar not present)
                                 } catch (InstantiationException |
-                                         IllegalAccessException x) {
+                                         InvocationTargetException |
+                                         IllegalAccessException |
+                                         NoSuchMethodException x) {
                                   throw new Error(x);
                                 }
                                 return null;

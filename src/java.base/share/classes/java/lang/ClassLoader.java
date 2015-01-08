@@ -42,6 +42,7 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
 import java.util.Stack;
 import java.util.Map;
@@ -49,9 +50,11 @@ import java.util.Vector;
 import java.util.Hashtable;
 import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
+
+import sun.misc.BootResourceFinder;
 import sun.misc.CompoundEnumeration;
-import sun.misc.Resource;
-import sun.misc.URLClassPath;
+import sun.misc.ServicesCatalog;
+import sun.misc.Unsafe;
 import sun.reflect.CallerSensitive;
 import sun.reflect.Reflection;
 import sun.reflect.misc.ReflectUtil;
@@ -1000,8 +1003,7 @@ public abstract class ClassLoader {
      * Returns a class loaded by the bootstrap class loader;
      * or return null if not found.
      */
-    private Class<?> findBootstrapClassOrNull(String name)
-    {
+    Class<?> findBootstrapClassOrNull(String name) {
         if (!checkName(name)) return null;
 
         return findBootstrapClass(name);
@@ -1252,34 +1254,23 @@ public abstract class ClassLoader {
      * Find resources from the VM's built-in classloader.
      */
     private static URL getBootstrapResource(String name) {
-        URLClassPath ucp = getBootstrapClassPath();
-        Resource res = ucp.getResource(name);
-        return res != null ? res.getURL() : null;
+        return BootResourceFinder.get().findResource(name);
     }
 
     /**
      * Find resources from the VM's built-in classloader.
      */
-    private static Enumeration<URL> getBootstrapResources(String name)
-        throws IOException
-    {
-        final Enumeration<Resource> e =
-            getBootstrapClassPath().getResources(name);
+    private static Enumeration<URL> getBootstrapResources(String name) {
+        Iterator<URL> i = BootResourceFinder.get().findResources(name);
         return new Enumeration<URL> () {
             public URL nextElement() {
-                return e.nextElement().getURL();
+                return i.next();
             }
             public boolean hasMoreElements() {
-                return e.hasMoreElements();
+                return i.hasNext();
             }
         };
     }
-
-    // Returns the URLClassPath that is used for finding system resources.
-    static URLClassPath getBootstrapClassPath() {
-        return sun.misc.Launcher.getBootstrapClassPath();
-    }
-
 
     /**
      * Returns an input stream for reading the specified resource.
@@ -1440,7 +1431,7 @@ public abstract class ClassLoader {
             sun.misc.Launcher l = sun.misc.Launcher.getLauncher();
             if (l != null) {
                 Throwable oops = null;
-                scl = l.getClassLoader();
+                scl = l.getAppClassLoader();
                 try {
                     scl = AccessController.doPrivileged(
                         new SystemClassLoaderAction(scl));
@@ -1572,18 +1563,18 @@ public abstract class ClassLoader {
                                     String implVendor, URL sealBase)
         throws IllegalArgumentException
     {
-        Package pkg = getPackage(name);
-        if (pkg != null) {
-            throw new IllegalArgumentException(name);
-        }
-        pkg = new Package(name, specTitle, specVersion, specVendor,
-                          implTitle, implVersion, implVendor,
-                          sealBase, this);
+            Package pkg = getPackage(name);
+            if (pkg != null) {
+                throw new IllegalArgumentException(name);
+            }
+            pkg = new Package(name, specTitle, specVersion, specVendor,
+                              implTitle, implVersion, implVendor,
+                              sealBase, this);
         if (packages.putIfAbsent(name, pkg) != null) {
             throw new IllegalArgumentException(name);
         }
-        return pkg;
-    }
+            return pkg;
+        }
 
     /**
      * Returns a <tt>Package</tt> that has been defined by this class loader
@@ -2153,6 +2144,35 @@ public abstract class ClassLoader {
 
     // Retrieves the assertion directives from the VM.
     private static native AssertionStatusDirectives retrieveDirectives();
+
+
+    /**
+     * Returns the ServiceCatalog for modules associated with this class loader.
+     * The ModuleCatalog is created automatically on first usage.
+     */
+    ServicesCatalog getServicesCatalog() {
+        ServicesCatalog catalog = servicesCatalog;
+        if (catalog == null) {
+            catalog = new ServicesCatalog();
+            Unsafe unsafe = Unsafe.getUnsafe();
+            Class<?> k = ClassLoader.class;
+            long offset;
+            try {
+                offset = unsafe.objectFieldOffset(k.getDeclaredField("servicesCatalog"));
+            } catch (NoSuchFieldException e) {
+                throw new InternalError(e);
+            }
+            boolean set = unsafe.compareAndSwapObject(this, offset, null, catalog);
+            if (!set) {
+                // beaten by someone else
+                catalog = servicesCatalog;
+            }
+        }
+        return catalog;
+    }
+
+    // the ServiceCatalog for modules associated with this class loader.
+    private volatile ServicesCatalog servicesCatalog;
 }
 
 

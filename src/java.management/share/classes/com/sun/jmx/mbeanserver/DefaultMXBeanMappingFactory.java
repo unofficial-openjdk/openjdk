@@ -46,6 +46,8 @@ import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Proxy;
 import java.lang.reflect.Type;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
@@ -1150,6 +1152,12 @@ public class DefaultMXBeanMappingFactory extends MXBeanMappingFactory {
                         Class.forName("java.beans.ConstructorProperties", false,
                                       DefaultMXBeanMappingFactory.class.getClassLoader());
                     valueMethod = constructorPropertiesClass.getMethod("value");
+                    AccessController.doPrivileged(new PrivilegedAction<Void>() {
+                        public Void run() {
+                            valueMethod.setAccessible(true);
+                            return null;
+                        }
+                    });
                 } catch (ClassNotFoundException cnf) {
                     // java.beans not present
                 } catch (NoSuchMethodException e) {

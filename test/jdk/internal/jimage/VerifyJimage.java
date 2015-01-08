@@ -48,7 +48,7 @@ import jdk.internal.jimage.ImageLocation;
 /*
  * @test
  * @summary Verify jimage
- * @run main/othervm VerifyJimage
+ * @run main/othervm -XX:AddModuleExports=java.base/jdk.internal.jimage VerifyJimage
  */
 
 /**
@@ -61,6 +61,7 @@ import jdk.internal.jimage.ImageLocation;
  * -Djdk.test.threads=<n> to specify the number of threads.
  */
 public class VerifyJimage {
+    private static final String MODULE_INFO = "module-info.class";
     private static final Deque<String> failed = new ConcurrentLinkedDeque<>();
 
     public static void main(String... args) throws Exception {
@@ -142,7 +143,9 @@ public class VerifyJimage {
     );
 
     private void compare(Path mdir, Path p, List<JImageReader> readers) {
-        String entry = mdir.relativize(p).toString().replace(File.separatorChar, '/');
+        String entry = p.getFileName().toString().equals(MODULE_INFO)
+                ? mdir.getFileName().toString() + "/" + MODULE_INFO
+                : mdir.relativize(p).toString().replace(File.separatorChar, '/');
 
         count.incrementAndGet();
         String file = mdir.getFileName().toString() + "/" + entry;
@@ -175,7 +178,7 @@ public class VerifyJimage {
         ClassLoader loader = ClassLoader.getSystemClassLoader();
         for (JImageReader reader : readers) {
             Arrays.stream(reader.getEntryNames())
-                    .filter(n -> n.endsWith(".class"))
+                    .filter(n -> n.endsWith(".class") && !n.endsWith(MODULE_INFO))
                     .forEach(n -> {
                         String cn = n.substring(0, n.length()-6).replace('/', '.');
                         count.incrementAndGet();

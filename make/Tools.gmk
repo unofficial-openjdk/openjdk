@@ -38,10 +38,10 @@ include SetupJavaCompilers.gmk
 ifeq (, $(BUILD_TOOLS_JDK))
   $(eval $(call SetupJavaCompilation,BUILD_TOOLS_JDK, \
       SETUP := GENERATE_OLDBYTECODE, \
-      ADD_JAVAC_FLAGS := "-Xbootclasspath/p:$(BUILDTOOLS_OUTPUTDIR)/interim_jimage_classes", \
       SRC := $(JDK_TOPDIR)/make/src/classes, \
-      BIN := $(BUILDTOOLS_OUTPUTDIR)/jdk_tools_classes, \
-      COPY := boot.modules ext.modules))
+      EXCLUDES := build/tools/deps \
+                  build/tools/jigsaw, \
+      BIN := $(BUILDTOOLS_OUTPUTDIR)/jdk_tools_classes))
 endif
 
 $(BUILDTOOLS_OUTPUTDIR)/jdk_tools_classes/build/tools/generatenimbus/resources/%.template: \
@@ -135,26 +135,8 @@ TOOL_CHECKDEPS = $(JAVA_SMALL) -Xbootclasspath/p:$(INTERIM_LANGTOOLS_JAR) \
     build.tools.deps.CheckDeps
 
 TOOL_GENMODULESXML = $(JAVA_SMALL) -Xbootclasspath/p:$(INTERIM_LANGTOOLS_JAR) \
-    -cp "$(BUILDTOOLS_OUTPUTDIR)/jdk_tools_classes$(PATH_SEP)$(JDK_OUTPUTDIR)" \
+    -cp "$(BUILDTOOLS_OUTPUTDIR)/jdk_tools_classes" \
     build.tools.module.GenJdepsModulesXml
-
-TOOL_IMAGEBUILDER = $(JAVA_SMALL) -Xbootclasspath/p:$(BUILDTOOLS_OUTPUTDIR)/interim_jimage_classes \
-    -cp "$(BUILDTOOLS_OUTPUTDIR)/jdk_tools_classes$(PATH_SEP)$(JDK_OUTPUTDIR)" \
-    build.tools.module.ImageBuilder
-
-##########################################################################################
-
-JIMAGE_PKGS := \
-    jdk/internal/jimage \
-    jdk/internal/jrtfs \
-    #
-
-$(eval $(call SetupJavaCompilation,BUILD_INTERIM_JIMAGE, \
-    SETUP := GENERATE_OLDBYTECODE, \
-    SRC := $(JDK_TOPDIR)/src/java.base/share/classes, \
-    INCLUDES := $(JIMAGE_PKGS), \
-    EXCLUDES := jdk/internal/jimage/concurrent, \
-    BIN := $(BUILDTOOLS_OUTPUTDIR)/interim_jimage_classes))
 
 ##########################################################################################
 
@@ -181,8 +163,6 @@ $(eval $(call SetupNativeCompilation,FIX_EMPTY_SEC_HDR_FLAGS, \
     OUTPUT_DIR := $(BUILDTOOLS_OUTPUTDIR)/bin, \
     PROGRAM := fix_empty_sec_hdr_flags))
 endif
-
-$(BUILD_TOOLS_JDK): $(BUILD_INTERIM_JIMAGE)
 
 java-tools: $(BUILD_TOOLS_JDK)
 

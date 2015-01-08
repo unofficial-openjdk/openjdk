@@ -38,6 +38,31 @@ Java_sun_misc_VM_latestUserDefinedLoader(JNIEnv *env, jclass cls) {
     return JVM_LatestUserDefinedLoader(env);
 }
 
+JNIEXPORT jobject JNICALL
+Java_sun_misc_VM_defineModule(JNIEnv *env, jclass cls, jstring name, jobject loader,
+                              jobjectArray packages)
+{
+    return JVM_DefineModule(env, name, loader, packages);
+}
+
+JNIEXPORT void JNICALL
+Java_sun_misc_VM_addModuleExports(JNIEnv *env, jclass cls, jobject from,
+                                  jstring pkg, jobject to)
+{
+    JVM_AddModuleExports(env, from, pkg, to);
+}
+
+JNIEXPORT void JNICALL
+Java_sun_misc_VM_addReadsModule(JNIEnv *env, jclass cls, jobject from, jobject to) {
+    JVM_AddReadsModule(env, from, to);
+}
+
+JNIEXPORT void JNICALL
+Java_sun_misc_VM_addModulePackage(JNIEnv *env, jclass cls, jobject m, jstring pkg) {
+    JVM_AddModulePackage(env, m, pkg);
+}
+
+
 typedef void (JNICALL *GetJvmVersionInfo_fp)(JNIEnv*, jvm_version_info*, size_t);
 
 JNIEXPORT void JNICALL

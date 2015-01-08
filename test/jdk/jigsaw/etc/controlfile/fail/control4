@@ -1,0 +1,4 @@
+# mismatch with requires
+Name: app
+Version: 2.0
+Depends: logging@8.0

@@ -31,6 +31,7 @@ import java.util.HashMap;
 class ImageStrings {
     private static final int NOT_FOUND = -1;
     static final int EMPTY_OFFSET = 0;
+    static final UTF8String CLASS_STRING = new UTF8String("class");
 
     private final HashMap<UTF8String, Integer> stringToOffsetMap;
     private final ImageStream stream;
@@ -43,7 +44,7 @@ class ImageStrings {
         int offset = addString(UTF8String.EMPTY_STRING);
         assert offset == 0 : "Empty string not zero offset";
         // Reserve 1 offset for frequently used ".class".
-        addString(UTF8String.CLASS_STRING);
+        addString(CLASS_STRING);
     }
 
     ImageStrings(ImageStream stream) {

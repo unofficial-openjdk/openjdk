@@ -38,15 +38,15 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import jdk.internal.jimage.BasicImageReader;
 import jdk.internal.jimage.BasicImageWriter;
 import jdk.internal.jimage.ImageHeader;
 import jdk.internal.jimage.ImageLocation;
-import jdk.internal.jimage.PackageModuleMap;
+import jdk.internal.jimage.ImageModuleData;
+import jdk.internal.jimage.ImageModuleDataBuilder;
 
 class JImageTask {
     static class BadArgs extends Exception {
@@ -237,9 +237,6 @@ class JImageTask {
         }
     }
 
-    static final String MODULES_ENTRY = PackageModuleMap.MODULES_ENTRY;
-    static final String PACKAGES_ENTRY = "/" + PackageModuleMap.PACKAGES_ENTRY;
-
     private void recreate() throws IOException, BadArgs {
         File directory = new File(options.directory);
         Path dirPath = directory.toPath();
@@ -278,11 +275,14 @@ class JImageTask {
                             log.println(name);
                         }
 
-                        if (name.endsWith(MODULES_ENTRY) || name.endsWith(PACKAGES_ENTRY)) {
+                        if (name.endsWith(ImageModuleData.META_DATA_EXTENSION)) {
                             try {
-                                try (Stream<String> lines = Files.lines(path)) {
-                                    size = lines.peek(s -> writer.addString(s)).count() * 4;
-                                }
+                                List<String> lines = Files.readAllLines(path);
+                                Map<String, List<String>> modulePackages =
+                                        ImageModuleDataBuilder.toModulePackages(lines);
+                                ImageModuleDataBuilder imageModuleDataBuilder =
+                                        new ImageModuleDataBuilder(writer, modulePackages);
+                                size = imageModuleDataBuilder.size();
                             } catch (IOException ex) {
                                 // Caught again when writing file.
                                 size = 0;
@@ -291,6 +291,7 @@ class JImageTask {
                             size = file.length();
                         }
 
+                        // NOTE: Need way of recovering loader.
                         writer.addLocation(name, offset, 0L, size);
                         files.add(file);
                     }
@@ -312,11 +313,13 @@ class JImageTask {
                         Path path = file.toPath();
                         String name = path.toString();
 
-                        if (name.endsWith(MODULES_ENTRY) || name.endsWith(PACKAGES_ENTRY)) {
-                            for (String line: Files.readAllLines(path)) {
-                                int off = writer.addString(line);
-                                out.writeInt(off);
-                            }
+                        if (name.endsWith(ImageModuleData.META_DATA_EXTENSION)) {
+                            List<String> lines = Files.readAllLines(path);
+                            Map<String, List<String>> modulePackages =
+                                    ImageModuleDataBuilder.toModulePackages(lines);
+                            ImageModuleDataBuilder imageModuleDataBuilder =
+                                    new ImageModuleDataBuilder(writer, modulePackages);
+                            imageModuleDataBuilder.writeTo(out);
                         } else {
                             Files.copy(path, out);
                         }
@@ -351,10 +354,12 @@ class JImageTask {
     }
 
     private interface ResourceAction {
-        public void apply(BasicImageReader reader, String name, ImageLocation location) throws IOException, BadArgs;
+        public void apply(BasicImageReader reader, String name,
+                ImageLocation location) throws IOException, BadArgs;
     }
 
-    private void extract(BasicImageReader reader, String name, ImageLocation location) throws IOException, BadArgs {
+    private void extract(BasicImageReader reader, String name,
+            ImageLocation location) throws IOException, BadArgs {
         File directory = new File(options.directory);
         byte[] bytes = reader.getResource(location);
         File resource =  new File(directory, name);
@@ -368,9 +373,10 @@ class JImageTask {
             throw new BadArgs("err.cannot.create.dir", parent.getAbsolutePath());
         }
 
-        if (name.endsWith(MODULES_ENTRY) || name.endsWith(PACKAGES_ENTRY)) {
-            List<String> names = reader.getNames(bytes);
-            Files.write(resource.toPath(), names);
+        if (name.endsWith(ImageModuleData.META_DATA_EXTENSION)) {
+            ImageModuleData imageModuleData = new ImageModuleData(reader, bytes);
+            List<String> lines = imageModuleData.fromModulePackages();
+            Files.write(resource.toPath(), lines);
         } else {
             Files.write(resource.toPath(), bytes);
         }
@@ -435,7 +441,8 @@ class JImageTask {
         }
     }
 
-    private void iterate(JImageAction jimageAction, ResourceAction resourceAction) throws IOException, BadArgs {
+    private void iterate(JImageAction jimageAction,
+            ResourceAction resourceAction) throws IOException, BadArgs {
         for (File file : options.jimages) {
             if (!file.exists() || !file.isFile()) {
                 throw new BadArgs("err.not.a.jimage", file.getName());
