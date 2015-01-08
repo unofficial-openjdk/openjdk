@@ -207,6 +207,9 @@
       <name>jdk.net</name>
     </export>
     <export>
+      <name>jdk.jigsaw.module</name>
+    </export>
+    <export>
       <name>com.sun.security.ntlm</name>
       <to>java.security.sasl</to>
     </export>
@@ -238,6 +241,10 @@
       <to>jdk.scripting.nashorn</to>
     </export>
     <export>
+      <name>jdk.jigsaw.module.internal</name>
+      <to>jdk.dev</to>
+    </export>
+    <export>
       <name>sun.misc</name>
       <to>java.corba</to>
       <to>java.desktop</to>
@@ -248,6 +255,7 @@
       <to>java.security.jgss</to>
       <to>java.security.sasl</to>
       <to>java.sql</to>
+      <to>java.xml</to>
       <to>jdk.charsets</to>
       <to>jdk.deploy.osx</to>
       <to>jdk.dev</to>
