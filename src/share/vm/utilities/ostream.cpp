@@ -356,7 +356,6 @@ extern Mutex* tty_lock;
 
 #define EXTRACHARLEN   32
 #define CURRENTAPPX    ".current"
-#define FILENAMEBUFLEN  1024
 // convert YYYY-MM-DD HH:MM:SS to YYYY-MM-DD_HH-MM-SS
 char* get_datetime_string(char *buf, size_t len) {
   os::local_time_string(buf, len);
@@ -390,7 +389,6 @@ static const char* make_log_name_internal(const char* log_name, const char* forc
     buffer_length = strlen(log_name) + 1;
   }
 
-  // const char* star = strchr(basename, '*');
   const char* pts = strstr(basename, "%p");
   int pid_pos = (pts == NULL) ? -1 : (pts - nametail);
 
@@ -583,9 +581,16 @@ gcLogFileStream::gcLogFileStream(const char* file_name) {
   _bytes_written = 0L;
   _file_name = make_log_name(file_name, NULL);
 
+  if (_file_name == NULL) {
+    warning("Cannot open file %s: file name is too long.\n", file_name);
+    _need_close = false;
+    UseGCLogFileRotation = false;
+    return;
+  }
+
   // gc log file rotation
   if (UseGCLogFileRotation && NumberOfGCLogFiles > 1) {
-    char tempbuf[FILENAMEBUFLEN];
+    char tempbuf[JVM_MAXPATHLEN];
     jio_snprintf(tempbuf, sizeof(tempbuf), "%s.%d" CURRENTAPPX, _file_name, _cur_file_num);
     _file = fopen(tempbuf, "w");
   } else {
@@ -617,10 +622,10 @@ void gcLogFileStream::write(const char* s, size_t len) {
 // concurrent GC threads to run parallel with VMThread at safepoint, write and rotate_log
 // must be synchronized.
 void gcLogFileStream::rotate_log(bool force, outputStream* out) {
-  char time_msg[FILENAMEBUFLEN];
+  char time_msg[O_BUFLEN];
   char time_str[EXTRACHARLEN];
-  char current_file_name[FILENAMEBUFLEN];
-  char renamed_file_name[FILENAMEBUFLEN];
+  char current_file_name[JVM_MAXPATHLEN];
+  char renamed_file_name[JVM_MAXPATHLEN];
 
   if (!should_rotate(force)) {
     return;
@@ -659,12 +664,15 @@ void gcLogFileStream::rotate_log(bool force, outputStream* out) {
   // have a form of extended_filename.<i>.current where i is the current rotation
   // file number. After it reaches max file size, the file will be saved and renamed
   // with .current removed from its tail.
-  size_t filename_len = strlen(_file_name);
   if (_file != NULL) {
-    jio_snprintf(renamed_file_name, filename_len + EXTRACHARLEN, "%s.%d",
+    jio_snprintf(renamed_file_name, JVM_MAXPATHLEN, "%s.%d",
                  _file_name, _cur_file_num);
-    jio_snprintf(current_file_name, filename_len + EXTRACHARLEN, "%s.%d" CURRENTAPPX,
-                 _file_name, _cur_file_num);
+    int result = jio_snprintf(current_file_name, JVM_MAXPATHLEN,
+                              "%s.%d" CURRENTAPPX, _file_name, _cur_file_num);
+    if (result >= JVM_MAXPATHLEN) {
+      warning("Cannot create new log file name: %s: file name is too long.\n", current_file_name);
+      return;
+    }
 
     const char* msg = force ? "GC log rotation request has been received."
                             : "GC log file has reached the maximum size.";
@@ -703,19 +711,23 @@ void gcLogFileStream::rotate_log(bool force, outputStream* out) {
 
   _cur_file_num++;
   if (_cur_file_num > NumberOfGCLogFiles - 1) _cur_file_num = 0;
-  jio_snprintf(current_file_name,  filename_len + EXTRACHARLEN, "%s.%d" CURRENTAPPX,
+  int result = jio_snprintf(current_file_name,  JVM_MAXPATHLEN, "%s.%d" CURRENTAPPX,
                _file_name, _cur_file_num);
+  if (result >= JVM_MAXPATHLEN) {
+    warning("Cannot create new log file name: %s: file name is too long.\n", current_file_name);
+    return;
+  }
+
   _file = fopen(current_file_name, "w");
 
   if (_file != NULL) {
     _bytes_written = 0L;
     _need_close = true;
     // reuse current_file_name for time_msg
-    jio_snprintf(current_file_name, filename_len + EXTRACHARLEN,
+    jio_snprintf(current_file_name, JVM_MAXPATHLEN,
                  "%s.%d", _file_name, _cur_file_num);
     jio_snprintf(time_msg, sizeof(time_msg), "%s GC log file created %s\n",
-                           os::local_time_string((char *)time_str, sizeof(time_str)),
-                           current_file_name);
+                 os::local_time_string((char *)time_str, sizeof(time_str)), current_file_name);
     write(time_msg, strlen(time_msg));
 
     if (out != NULL) {
@@ -804,7 +816,7 @@ fileStream* defaultStream::open_file(const char* log_name) {
 
 void defaultStream::init_log() {
   // %%% Need a MutexLocker?
-  const char* log_name = LogFile != NULL ? LogFile : "hotspot.log";
+  const char* log_name = LogFile != NULL ? LogFile : "hotspot_%p.log";
   fileStream* file = open_file(log_name);
 
   if (file != NULL) {
@@ -1236,14 +1248,55 @@ bufferedStream::~bufferedStream() {
 
 #ifndef PRODUCT
 void test_loggc_filename() {
+  int pid;
+  char  tms[32];
+  char  i_result[JVM_MAXPATHLEN];
   const char* o_result;
+  get_datetime_string(tms, sizeof(tms));
+  pid = os::current_process_id();
+
+  // test.log
+  jio_snprintf(i_result, JVM_MAXPATHLEN, "test.log", tms);
+  o_result = make_log_name_internal("test.log", NULL, pid, tms);
+  assert(strcmp(i_result, o_result) == 0, "failed on testing make_log_name(\"test.log\", NULL)");
+  FREE_C_HEAP_ARRAY(char, o_result, mtInternal);
+
+  // test-%t-%p.log
+  jio_snprintf(i_result, JVM_MAXPATHLEN, "test-%s-pid%u.log", tms, pid);
+  o_result = make_log_name_internal("test-%t-%p.log", NULL, pid, tms);
+  assert(strcmp(i_result, o_result) == 0, "failed on testing make_log_name(\"test-%%t-%%p.log\", NULL)");
+  FREE_C_HEAP_ARRAY(char, o_result, mtInternal);
+
+  // test-%t%p.log
+  jio_snprintf(i_result, JVM_MAXPATHLEN, "test-%spid%u.log", tms, pid);
+  o_result = make_log_name_internal("test-%t%p.log", NULL, pid, tms);
+  assert(strcmp(i_result, o_result) == 0, "failed on testing make_log_name(\"test-%%t%%p.log\", NULL)");
+  FREE_C_HEAP_ARRAY(char, o_result, mtInternal);
+
+  // %p%t.log
+  jio_snprintf(i_result, JVM_MAXPATHLEN, "pid%u%s.log", pid, tms);
+  o_result = make_log_name_internal("%p%t.log", NULL, pid, tms);
+  assert(strcmp(i_result, o_result) == 0, "failed on testing make_log_name(\"%%p%%t.log\", NULL)");
+  FREE_C_HEAP_ARRAY(char, o_result, mtInternal);
+
+  // %p-test.log
+  jio_snprintf(i_result, JVM_MAXPATHLEN, "pid%u-test.log", pid);
+  o_result = make_log_name_internal("%p-test.log", NULL, pid, tms);
+  assert(strcmp(i_result, o_result) == 0, "failed on testing make_log_name(\"%%p-test.log\", NULL)");
+  FREE_C_HEAP_ARRAY(char, o_result, mtInternal);
+
+  // %t.log
+  jio_snprintf(i_result, JVM_MAXPATHLEN, "%s.log", tms);
+  o_result = make_log_name_internal("%t.log", NULL, pid, tms);
+  assert(strcmp(i_result, o_result) == 0, "failed on testing make_log_name(\"%%t.log\", NULL)");
+  FREE_C_HEAP_ARRAY(char, o_result, mtInternal);
 
   {
     // longest filename
     char longest_name[JVM_MAXPATHLEN];
     memset(longest_name, 'a', sizeof(longest_name));
     longest_name[JVM_MAXPATHLEN - 1] = '\0';
-    o_result = make_log_name((const char*)&longest_name, NULL);
+    o_result = make_log_name_internal((const char*)&longest_name, NULL, pid, tms);
     assert(strcmp(longest_name, o_result) == 0, err_msg("longest name does not match. expected '%s' but got '%s'", longest_name, o_result));
     FREE_C_HEAP_ARRAY(char, o_result, mtInternal);
   }
@@ -1254,8 +1307,19 @@ void test_loggc_filename() {
     int too_long_length = sizeof(too_long_name);
     memset(too_long_name, 'a', too_long_length);
     too_long_name[too_long_length - 1] = '\0';
-    o_result = make_log_name((const char*)&too_long_name, NULL);
+    o_result = make_log_name_internal((const char*)&too_long_name, NULL, pid, tms);
     assert(o_result == NULL, err_msg("Too long file name should return NULL, but got '%s'", o_result));
+  }
+
+  {
+    // too long with timestamp
+    char longest_name[JVM_MAXPATHLEN];
+    memset(longest_name, 'a', JVM_MAXPATHLEN);
+    longest_name[JVM_MAXPATHLEN - 3] = '%';
+    longest_name[JVM_MAXPATHLEN - 2] = 't';
+    longest_name[JVM_MAXPATHLEN - 1] = '\0';
+    o_result = make_log_name_internal((const char*)&longest_name, NULL, pid, tms);
+    assert(o_result == NULL, err_msg("Too long file name after timestamp expansion should return NULL, but got '%s'", o_result));
   }
 
   {
@@ -1265,18 +1329,8 @@ void test_loggc_filename() {
     longest_name[JVM_MAXPATHLEN - 3] = '%';
     longest_name[JVM_MAXPATHLEN - 2] = 'p';
     longest_name[JVM_MAXPATHLEN - 1] = '\0';
-    o_result = make_log_name((const char*)&longest_name, NULL);
-    assert(o_result == NULL, err_msg("Too long file name after %%p pid expansion should return NULL, but got '%s'", o_result));
-  }
-
-  {
-    // too long with pid (star)
-    char longest_name[JVM_MAXPATHLEN];
-    memset(longest_name, 'a', JVM_MAXPATHLEN);
-    longest_name[JVM_MAXPATHLEN - 2] = '*';
-    longest_name[JVM_MAXPATHLEN - 1] = '\0';
-    o_result = make_log_name((const char*)&longest_name, NULL);
-    assert(o_result == NULL, err_msg("Too long file name after star (pid) expansion should return NULL, but got '%s'", o_result));
+    o_result = make_log_name_internal((const char*)&longest_name, NULL, pid, tms);
+    assert(o_result == NULL, err_msg("Too long file name after pid expansion should return NULL, but got '%s'", o_result));
   }
 }
 
