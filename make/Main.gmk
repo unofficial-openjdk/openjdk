@@ -48,8 +48,7 @@ ALL_TARGETS :=
 $(eval $(call IncludeCustomExtension, , Main.gmk))
 
 # All modules for the current target platform.
-# Manually add jdk.hotspot.agent for now.
-ALL_MODULES := $(call FindAllModules) jdk.hotspot.agent
+ALL_MODULES := $(call FindAllModules)
 
 ################################################################################
 ################################################################################
@@ -202,7 +201,24 @@ samples:
 ALL_TARGETS += demos samples
 
 ################################################################################
-# Image targets
+# Jigsaw specific data and analysis targets.
+
+# This runs the GenModuleInfo tool to generate module-info.java files
+gen-module-info:
+	+($(CD) $(SRC_ROOT)/make && $(MAKE) -f GenerateModuleInfos.gmk gen-module-info)
+
+# This runs the GenModuleInfo tool to generate the diffs between
+# modules.xml and module-info.class files
+diff-modules-info:
+	+($(CD) $(SRC_ROOT)/make && $(MAKE) -f GenerateModuleInfos.gmk diff-module-info)
+
+generate-summary:
+	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f GenerateModuleSummary.gmk)
+
+ALL_TARGETS += generate-summary gen-module-info diff-module-info 
+
+################################################################################
+# Images targets
 
 # Stores the tips for each repository. This file is be used when constructing the jdk image and can be
 # used to track the exact sources used to build that image.
@@ -229,6 +245,11 @@ strip-binaries:
 jrtfs-jar:
 	+($(CD) $(SRC_ROOT)/make && $(MAKE) $(MAKE_ARGS) -f JrtfsJar.gmk)
 
+# FIXME
+jmods:
+	+($(CD) $(SRC_ROOT)/make && $(MAKE) -I $(JDK_TOPDIR)/make \
+	    -f CreateJmods.gmk jmods)
+
 jimages:
 	+($(CD) $(SRC_ROOT)/make && $(MAKE) $(MAKE_ARGS) -f Images.gmk jimages)
 
@@ -239,7 +260,7 @@ mac-bundles:
 	+($(CD) $(SRC_ROOT)/make && $(MAKE) $(MAKE_ARGS) -f MacBundles.gmk)
 
 ALL_TARGETS += source-tips bootcycle-images zip-security zip-source strip-binaries \
-    jrtfs-jar jimages profiles mac-bundles
+    jrtfs-jar jmods jimages profiles mac-bundles
 
 ################################################################################
 # Docs targets
@@ -370,6 +391,10 @@ else
   # Explicitly add dependencies for special targets
   java.base-java: unpack-sec
 
+  jmods: exploded-image strip-binaries
+
+  # To generate modules.xml all classes and a runnable image must be 
+  # present.
   jdk.dev-gendata: java rmic
 
   zip-security: java.base-java java.security.jgss-java java.security.jgss-libs \
@@ -379,10 +404,9 @@ else
 
   strip-binaries: libs launchers gendata copy
 
-  jrtfs-jar: buildtools-jdk
+  jrtfs-jar: interim-langtools
 
-  jimages: exploded-image zip-source strip-binaries source-tips demos samples \
-      jrtfs-jar
+  jimages: jmods zip-source source-tips demos samples jrtfs-jar 
 
   profiles: exploded-image strip-binaries source-tips
 
@@ -390,13 +414,19 @@ else
 
   bootcycle-images: jimages
 
-  docs-javadoc: gensrc rmic
+  docs-javadoc: $(GENSRC_TARGETS) rmic
 
   docs-jvmtidoc: hotspot
 
   test: jimages
 
   verify-modules: exploded-image
+
+  diff-module-info: exploded-image
+
+  gen-module-info: exploded-image
+
+  generate-summary: jmods
 
 endif
 
@@ -442,7 +472,7 @@ exploded-image: $(ALL_MODULE_TARGETS)
 # alias for ease of use.
 jdk: exploded-image
 
-images: jimages demos samples zip-security
+images: jimages demos samples zip-security verify-modules
 
 ifeq ($(OPENJDK_TARGET_OS), macosx)
   images: mac-bundles
@@ -456,7 +486,7 @@ ALL_TARGETS += buildtools gensrc gendata copy java rmic libs launchers \
 
 ################################################################################
 
-all: images
+all: images docs generate-summary
 default: exploded-image
 
 ALL_TARGETS += default all

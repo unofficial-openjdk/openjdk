@@ -64,7 +64,6 @@ $(eval $(call SetupJavaCompilation,BUILD_GENMODULESLIST, \
     SETUP := BOOT_JAVAC, \
     SRC := $(JDK_TOPDIR)/make/src/classes, \
     INCLUDES := build/tools/module, \
-    EXCLUDE_FILES := ImageBuilder.java ModuleArchive.java, \
     BIN := $(MAKESUPPORT_OUTPUTDIR)/bt_classes_moduleslist, \
     DISABLE_SJAVAC := true))
 
@@ -72,12 +71,14 @@ TOOL_GENMODULESLIST = $(JAVA_SMALL) \
     -cp "$(MAKESUPPORT_OUTPUTDIR)/bt_classes_moduleslist" \
     build.tools.module.GenModulesList
 
-MODULES_LIST_FILE := $(MAKESUPPORT_OUTPUTDIR)/modules.list
+# Use static modules.list for now in jake
+MODULES_LIST_FILE := $(SRC_ROOT)/make/common/modules.list
+#MODULES_LIST_FILE := $(MAKESUPPORT_OUTPUTDIR)/modules.list
 MODULE_DEPS_MAKEFILE := $(MAKESUPPORT_OUTPUTDIR)/module-deps.gmk
 
-$(MODULES_LIST_FILE): $(SRC_ROOT)/modules.xml \
-    $(BUILD_GENMODULESLIST)
-	$(TOOL_GENMODULESLIST) -o $@ $(filter %.xml, $^)
+#$(MODULES_LIST_FILE): $(SRC_ROOT)/modules.xml \
+#    $(BUILD_GENMODULESLIST)
+#	$(TOOL_GENMODULESLIST) -o $@ $(filter %.xml, $^)
 
 $(MODULE_DEPS_MAKEFILE): $(MODULES_LIST_FILE)
 	$(CAT) $^ | $(SED) -e 's/^\([^:]*\):/DEPS_\1 :=/g' > $@
