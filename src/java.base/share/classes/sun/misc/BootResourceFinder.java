@@ -71,7 +71,7 @@ public class BootResourceFinder {
     private final URLClassPath BCP;
 
     // maps package name to module for the modules defined to the boot loader
-    private final Map<String, String> packageToModule = new ConcurrentHashMap<>();
+    private final Map<String, ModuleArtifact> packageToArtifact = new ConcurrentHashMap<>();
 
     /**
      * Initializes the only instance of this class.
@@ -145,20 +145,36 @@ public class BootResourceFinder {
      * Make visible the resources in the given module artifact.
      */
     public void defineModule(ModuleArtifact artifact) {
-        String module = artifact.descriptor().name();
-        artifact.packages().forEach(p -> packageToModule.put(p, module));
+        artifact.packages().forEach(p -> packageToArtifact.put(p, artifact));
     }
 
     /**
      * Returns the URL to the given resource if visible to this boot loader.
      */
     public URL findResource(String name) {
-        try {
-            URL url = findInModule(name);
-            if (url != null)
-                return url;
-        } catch (SecurityException e) {
-            // ignore as the resource may be on BCP
+        // is resource in a package of a module defined to this class loader?
+        ModuleArtifact first = findModuleForResource(name);
+        if (first != null) {
+            try {
+                URL url = findResource(first, name);
+                if (url != null)
+                    return url;
+            } catch (SecurityException e) {
+                // ignore as the resource may be on BCP
+            }
+        }
+
+        // search modules defined to the boot loader
+        for (ModuleArtifact artifact: packageToArtifact.values()) {
+            if (artifact != first) {
+                try {
+                    URL url = findResource(artifact, name);
+                    if (url != null)
+                        return url;
+                } catch (SecurityException e) {
+                    // ignore as the resource may be on BCP
+                }
+            }
         }
 
         // -Xbootclasspath/a
@@ -178,12 +194,29 @@ public class BootResourceFinder {
     public Iterator<URL> findResources(String name) {
         List<URL> result = new ArrayList<>();
 
-        try {
-            URL url = findInModule(name);
-            if (url != null)
-                result.add(url);
-        } catch (SecurityException e) {
-            // ignore as there may be resources on BCP that can be returned
+        // package name -> module
+        ModuleArtifact first = findModuleForResource(name);
+        if (first != null) {
+            try {
+                URL url = findResource(first, name);
+                if (url != null)
+                    result.add(url);
+            } catch (SecurityException e) {
+                // ignore as the resource may be on BCP
+            }
+        }
+
+        // search modules defined to the boot loader
+        for (ModuleArtifact artifact: packageToArtifact.values()) {
+            if (artifact != first) {
+                try {
+                    URL url = findResource(artifact, name);
+                    if (url != null)
+                        result.add(url);
+                } catch (SecurityException e) {
+                    // ignore as the resource may be on BCP
+                }
+            }
         }
 
         // -Xbootclasspath/a
@@ -202,18 +235,19 @@ public class BootResourceFinder {
      * boot loader.
      *
      * @implNote This method is for use by the jrt protocol handler
+     *
+     * ##FIXME should only find resources that are in defined modules
+     * ##FIXME need to check how this works with -Xoverride
+     * ##FIXME need permission checks
      */
     public Resource findResourceAsResource(String module, String name) {
-        // jrt is image build only for now
+        // FIXME Need to add support for -Xoverride
         if (JIMAGE == null)
             return null;
 
-        // check that module is defined to runtime
-        if (module == null || !module.equals(getModule(name)))
-            return null;
-
         // get location of resource
-        ImageLocation location = JIMAGE.findLocation(name);
+        String rn = "/" + module + "/" + name;
+        ImageLocation location = JIMAGE.findLocation(rn);
         if (location == null)
             return null;
 
@@ -248,20 +282,19 @@ public class BootResourceFinder {
      *
      * @throws SecurityException if denied by security manager
      */
-    private URL findInModule(String name) {
-        String module = getModule(name);
-        if (module == null)
-            return null;
+    private URL findResource(ModuleArtifact artifact, String name) {
+        String module = artifact.descriptor().name();
 
         if (OVERRIDE_DIRECTORY != null) {
-            name = name.replace('/', File.separatorChar);
-            Path file = Paths.get(OVERRIDE_DIRECTORY, module, name);
+            String fn = name.replace('/', File.separatorChar);
+            Path file = Paths.get(OVERRIDE_DIRECTORY, module, fn);
             if (Files.exists(file))
                 return toURL(file);
         }
 
         if (JIMAGE != null) {
-            ImageLocation location = JIMAGE.findLocation(name);
+            String rn = "/" + module + "/" + name;
+            ImageLocation location = JIMAGE.findLocation(rn);
             if (location != null) {
                 checkPermissionToAccessImage();
                 return toJrtURL(module, name);
@@ -279,15 +312,17 @@ public class BootResourceFinder {
     }
 
     /**
-     * Returns the name of the module for the given resource.
+     * Maps the package name of the given resource to a module, returning
+     * the ModuleArtifact if the module is defined to this class loader.
+     * Returns {@code null} if there no mapping.
      */
-    private String getModule(String name) {
+    private ModuleArtifact findModuleForResource(String name) {
         int pos = name.lastIndexOf('/');
         if (pos < 0)
             return null;
 
         String pkg = name.substring(0, pos).replace('/', '.');
-        return packageToModule.get(pkg);
+        return packageToArtifact.get(pkg);
     }
 
     /**

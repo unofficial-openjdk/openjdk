@@ -200,4 +200,8 @@ public final class ModuleArtifact {
             return false;
         return true;
     }
+
+    public String toString() {
+        return "[module " + descriptor().name() + ", location=" + location + "]";
+    }
 }

@@ -79,6 +79,7 @@ import jdk.internal.jimage.JmodArchive;
 import jdk.internal.jimage.ModularJarArchive;
 import jdk.jigsaw.module.Configuration;
 import jdk.jigsaw.module.Layer;
+import jdk.jigsaw.module.ModuleArtifact;
 import jdk.jigsaw.module.ModuleArtifactFinder;
 import jdk.jigsaw.module.ModuleDescriptor;
 import jdk.jigsaw.module.ModuleId;
@@ -404,24 +405,35 @@ class JlinkTask {
         for (ModuleDescriptor m : modules) {
             String name = m.name();
 
-            URI location = finder.find(name).location();
-            if (location == null) {
+            ModuleArtifact artifact = finder.find(name);
+            if (artifact == null) {
                 // this should not happen, module path bug?
                 fail(InternalError.class,
                      "Selected module %s not on module path",
                      name);
             }
 
+            URI location = artifact.location();
             String scheme = location.getScheme();
-            if (!scheme.equalsIgnoreCase("file") ||
-                !(location.toString().endsWith(".jmod") || location.toString().endsWith(".jar"))) {
+            if (!scheme.equalsIgnoreCase("jmod") && !scheme.equalsIgnoreCase("jar")) {
                 fail(RuntimeException.class,
                      "Selected module %s (%s) not in jmod or modular jar format",
                      name,
                      location);
             }
 
-            modPaths.put(name, Paths.get(location));
+            // convert to file URIs
+            URI fileURI;
+            if (scheme.equalsIgnoreCase("jmod")) {
+                // jmod:/home/duke/duke.jmod -> file:/home/duke/duke.jmod
+                fileURI = URI.create("file" + location.toString().substring(4));
+            } else {
+                // jar:file:/home/duke/duke.jar!/ -> file:/home/duke/duke.jar
+                String s = location.toString();
+                fileURI = URI.create(s.substring(4, s.length()-2));
+            }
+
+            modPaths.put(name, Paths.get(fileURI));
         }
         return modPaths;
     }

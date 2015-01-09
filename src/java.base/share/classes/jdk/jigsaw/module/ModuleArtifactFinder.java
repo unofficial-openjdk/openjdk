@@ -373,14 +373,13 @@ class ModulePath implements ModuleArtifactFinder {
      * file system.
      */
     private ModuleArtifact readJMod(Path file) throws IOException {
-        URI location = file.toUri();
-
         // file -> jmod URL for direct access
-        URL jmodUrl = new URL("jmod" + location.toString().substring(4));
-        ZipFile zf = JModCache.get(jmodUrl);
+        URI location = URI.create("jmod" + file.toUri().toString().substring(4));
+        ZipFile zf = JModCache.get(location.toURL());
         ZipEntry ze = zf.getEntry("classes/" + MODULE_INFO);
         if (ze == null) {
-            // jmod without classes/module-info, ignore for now
+            // jmod without classes/module-info, ignore for now or should
+            // we should an exception?
             return null;
         }
 
@@ -423,7 +422,9 @@ class ModulePath implements ModuleArtifactFinder {
                 return null;
             }
 
-            URI location = file.toUri();
+            // jar URI
+            URI location = URI.create("jar:" + file.toUri() + "!/");
+
             ModuleInfo mi = ModuleInfo.read(jf.getInputStream(entry));
 
             Set<String> packages = jf.stream()

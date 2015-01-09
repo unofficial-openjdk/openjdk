@@ -63,13 +63,13 @@ import jdk.jigsaw.module.ModuleArtifact;
  * files or via instrumentation agents). </p>
  *
  * <p> The delegation model used by this ClassLoader differs to the regular
- * delegation model. When requested to find a class or resource then this
- * ClassLoader first checks the modules defined to the ClassLoader. If not
- * found then it delegates the search to the parent class loader and if not
- * found in the parent then it searches the class path. The rational for this
- * approach is that modules defined to this ClassLoader are assumed to be in
- * the boot Layer and so should not have any overlapping packages with modules
- * defined to the parent or the boot class loader. </p>
+ * delegation model. When requested to load a class then this ClassLoader first
+ * checks the modules defined to the ClassLoader. If not found then it delegates
+ * the search to the parent class loader and if not found in the parent then it
+ * searches the class path. The rational for this approach is that modules defined
+ * to this ClassLoader are assumed to be in the boot Layer and so should not have
+ * any overlapping packages with modules defined to the parent or the boot class
+ * loader. </p>
  *
  * <p> TODO list</p>
  * <ol>
@@ -77,7 +77,6 @@ import jdk.jigsaw.module.ModuleArtifact;
  *     and permission checks. Also need to double check that we don't need to
  *     support signers on the class path </li>
  *     <li>Need to add support for package sealing</li>
- *     <li>Need to check the URLs and usage when using -Xoverride</li>
  *     <li>Replace BootResourceFinder to avoid duplicate code</li>
  * </ol>
  */
@@ -148,25 +147,44 @@ class BuiltinClassLoader extends SecureClassLoader
      */
     @Override
     public URL getResource(String name) {
-        // check if resource is in module defined to this loader
-        try {
-            URL url = findResourceInModule(name);
-            if (url != null)
-                return url;
-        } catch (SecurityException e) {
-            // ignore as the resource may be in parent
+        URL url;
+
+        // is resource in a package of a module defined to this class loader?
+        ModuleArtifact first = findModuleForResource(name);
+        if (first != null) {
+            try {
+                url = findResource(first, name);
+                if (url != null)
+                    return url;
+            } catch (SecurityException e) {
+                // ignore as the resource may be in parent
+            }
         }
 
         // check parent
-        URL url;
         if (parent == null) {
             url = BootResourceFinder.get().findResource(name);
         } else {
             url = parent.getResource(name);
         }
+        if (url != null)
+            return url;
+
+        // search all modules defined to this class loader
+        for (ModuleArtifact artifact: packageToArtifact.values()) {
+            if (artifact != first) {
+                try {
+                    url = findResource(artifact, name);
+                    if (url != null)
+                        return url;
+                } catch (SecurityException e) {
+                    // ignore as the resource may be in parent
+                }
+            }
+        }
 
         // check class path
-        if (url == null && ucp != null) {
+        if (ucp != null) {
             // FIXME: doPriv && permission check??
             url = ucp.findResource(name, true);
         }
@@ -182,12 +200,17 @@ class BuiltinClassLoader extends SecureClassLoader
     public Enumeration<URL> getResources(String name) throws IOException {
         List<URL> result = new ArrayList<>();
 
-        try {
-            URL url = findResourceInModule(name);
-            if (url != null)
-                result.add(url);
-        } catch (SecurityException e) {
-            // ignore as the resource may be in parent
+        // for consistency with getResource then we must check if the resource
+        // is in a package of a module defined to this class loader
+        ModuleArtifact first = findModuleForResource(name);
+        if (first != null) {
+            try {
+                URL url = findResource(first, name);
+                if (url != null)
+                    result.add(url);
+            } catch (SecurityException e) {
+                // ignore as the resource may be in parent
+            }
         }
 
         // check parent
@@ -197,6 +220,19 @@ class BuiltinClassLoader extends SecureClassLoader
             Enumeration<URL> e = parent.getResources(name);
             while (e.hasMoreElements()) {
                 result.add(e.nextElement());
+            }
+        }
+
+        // check modules defined to this class loader
+        for (ModuleArtifact artifact: packageToArtifact.values()) {
+            if (artifact != first) {
+                try {
+                    URL url = findResource(artifact, name);
+                    if (url != null)
+                        result.add(url);
+                } catch (SecurityException e) {
+                    // ignore as the resource may be in parent
+                }
             }
         }
 
@@ -232,55 +268,48 @@ class BuiltinClassLoader extends SecureClassLoader
     }
 
     /**
-     * Returns the URL to a resource if the resource is in a module
-     * defined to this class loader. Returns {@code null} if not
-     * found.
-     *
-     * @throws SecurityException if denied by security manager
+     * Maps the package name of the given resource to a module, returning
+     * the ModuleArtifact if the module is defined to this class loader.
+     * Returns {@code null} if there no mapping.
      */
-    private URL findResourceInModule(String name) {
-        // get package name
+    private ModuleArtifact findModuleForResource(String name) {
         int pos = name.lastIndexOf('/');
         if (pos < 0)
-            return null;  // unnamed package
+            return null;
 
         // package -> artifact
         String pkg = name.substring(0, pos).replace('/', '.');
-        ModuleArtifact artifact = packageToArtifact.get(pkg);
-        if (artifact == null)
-            return null;
+        return packageToArtifact.get(pkg);
+    }
 
-        // find resource in module
-        ModuleReader reader = moduleReaderFor(artifact);
-        return reader.findResource(artifact.descriptor().name(), name);
+    /**
+     * Returns a URL to a resource in the given module or {@code null}
+     * if not found.
+     */
+    private URL findResource(ModuleArtifact artifact, String name) {
+        return moduleReaderFor(artifact).findResource(name);
     }
 
     /**
      * Called by the jrt protocol handler to locate a resource (by name) in
      * the given module.
      *
+     * ##FIXME should only find resources that are in defined modules
      * ##FIXME need to check how this works with -Xoverride
      * ##FIXME need permission checks
      */
     @Override
-    public Resource findResource(String mn, String name) {
+    public Resource findResource(String module, String name) {
         // for now this is for resources in the image only
         if (imageReader == null)
             return null;
 
-        // check that the package is in module defined to this loader
-        int pos = name.lastIndexOf('/');
-        if (pos < 0)
-            return null;  // unnamed package
-        String pkg = name.substring(0, pos).replace('/', '.');
-        if (packageToArtifact.get(pkg) == null)
-            return null;
-
-        ImageLocation location = imageReader.findLocation(name);
+        String rn = "/" + module + "/" + name;
+        ImageLocation location = imageReader.findLocation(rn);
         if (location == null)
             return null;
 
-        URL url = toJrtURL(mn, name);
+        URL url = toJrtURL(module, name);
         return new Resource() {
             @Override
             public String getName() {
@@ -292,7 +321,7 @@ class BuiltinClassLoader extends SecureClassLoader
             }
             @Override
             public URL getCodeSourceURL() {
-                return toJrtURL(mn);
+                return toJrtURL(module);
             }
             @Override
             public InputStream getInputStream() throws IOException {
@@ -442,28 +471,24 @@ class BuiltinClassLoader extends SecureClassLoader
      * @return the resulting Class or {@code null} if an I/O error occurs
      */
     private Class<?> defineClass(String cn, ModuleArtifact artifact) {
-        String mn = artifact.descriptor().name();
-
+        ModuleReader reader = moduleReaderFor(artifact);
+        String module = artifact.descriptor().name();
         try {
             byte[] bytes = null;
-            URL url = null;
 
-            // check if overridden
+            // check for overridden class
             if (overrideDir != null) {
                 String path = cn.replace('.', File.separatorChar).concat(".class");
-                Path file = overrideDir.resolve(mn).resolve(path);
+                Path file = overrideDir.resolve(module).resolve(path);
                 if (Files.exists(file)) {
                     bytes = Files.readAllBytes(file);
-                    url = toFileURL(file);
                 }
             }
 
             // not overridden so read from module artifact
             if (bytes == null) {
-                ModuleReader reader = moduleReaderFor(artifact);
-                String name = cn.replace('.', '/').concat(".class");
-                bytes = reader.readResource(mn, name);
-                url = reader.codeSourceLocation(mn);
+                String rn = cn.replace('.', '/').concat(".class");
+                bytes = reader.readResource(rn);
             }
 
             // define class to VM
@@ -477,7 +502,7 @@ class BuiltinClassLoader extends SecureClassLoader
                     // someone else beat us to it
                 }
             }
-            CodeSource cs = new CodeSource(url, (CodeSigner[])null);
+            CodeSource cs = new CodeSource(reader.codeBase(), (CodeSigner[])null);
             return defineClass(cn, bytes, 0, bytes.length, cs);
 
         } catch (IOException ignore) {
@@ -648,49 +673,36 @@ class BuiltinClassLoader extends SecureClassLoader
         if (!s.equalsIgnoreCase("jrt"))
             return ModuleReader.create(artifact);
 
-        // special-case the runtime image here
+        // special-case the runtime image
+        String module = artifact.descriptor().name();
+        URL codeBase = toJrtURL(module);
         return new ModuleReader() {
             @Override
-            public URL findResource(String mn, String name) {
+            public URL findResource(String name) {
                 if (imageReader != null) {
-                    ImageLocation location = imageReader.findLocation(name);
+                    String rn = "/" + module + "/" + name;
+                    ImageLocation location = imageReader.findLocation(rn);
                     if (location != null)
-                        return toJrtURL(mn, name);
-                } else {
-                    // exploded build
-                    String path = name.replace('/', File.separatorChar).concat(".class");
-                    Path file = modulesDir.resolve(mn).resolve(path);
-                    if (Files.exists(file))
-                        return toFileURL(file);
+                        return toJrtURL(module, name);
                 }
                 // not found
                 return null;
             }
 
             @Override
-            public byte[] readResource(String mn, String name) throws IOException {
+            public byte[] readResource(String name) throws IOException {
                 if (imageReader != null) {
-                    ImageLocation location = imageReader.findLocation(name);
+                    String rn = "/" + module + "/" + name;
+                    ImageLocation location = imageReader.findLocation(rn);
                     if (location != null)
                         return imageReader.getResource(location);
-                } else {
-                    // exploded build
-                    String path = name.replace('/', File.separatorChar).concat(".class");
-                    Path file = modulesDir.resolve(mn).resolve(path);
-                    if (Files.exists(file))
-                        return Files.readAllBytes(file);
                 }
-                throw new IOException(mn + "/" + name + " not found");
+                throw new IOException(module + "/" + name + " not found");
             }
 
             @Override
-            public URL codeSourceLocation(String mn) {
-                if (imageReader != null) {
-                    return toJrtURL(mn);
-                } else {
-                    Path file = modulesDir.resolve(mn);
-                    return toFileURL(file);
-                }
+            public URL codeBase() {
+                return codeBase;
             }
         };
     }

@@ -63,15 +63,17 @@ import sun.net.www.ParseUtil;
 interface ModuleReader {
 
     /**
-     * Returns the URL for a resource in the given module or {@code null}
-     * if not found.
+     * Returns the URL for a resource in the module, {@code null} if not
+     * found.
      */
-    URL findResource(String mn, String name);
+    URL findResource(String name);
 
     /**
-     * Returns the bytes for a resource in a module.
+     * Reads a resource from the module.
+     *
+     * @throws IOException if an I/O error occurs
      */
-    byte[] readResource(String mn, String name) throws IOException;
+    byte[] readResource(String name) throws IOException;
 
     /**
      * Returns the URL that is CodeSource location. The URL may be
@@ -79,7 +81,7 @@ interface ModuleReader {
      *
      * @see java.security.SecureClassLoader
      */
-    URL codeSourceLocation(String mn);
+    URL codeBase();
 
     /**
      * Returns a byte array contains all bytes reads from the given input
@@ -89,26 +91,19 @@ interface ModuleReader {
      * @throws UncheckedIOException if there is an I/O error
      */
     static ModuleReader create(ModuleArtifact artifact) {
-        URI location = artifact.location();
-        String scheme = location.getScheme();
+        String scheme = artifact.location().getScheme();
         try {
-            if (scheme.equalsIgnoreCase("file")) {
-                String s = location.toString();
-                if (s.endsWith(".jmod")) {
-                    return new JModModuleReader(artifact);
-                } else {
-                    if (s.endsWith(".jar")) {
-                        return new JarModuleReader(artifact);
-                    } else {
-                        return new ExplodedModuleReader(artifact);
-                    }
-                }
-            }
+            if (scheme.equalsIgnoreCase("jmod"))
+                return new JModModuleReader(artifact);
+            if (scheme.equalsIgnoreCase("jar"))
+                return new JarModuleReader(artifact);
+            if (scheme.equalsIgnoreCase("file"))
+                return new ExplodedModuleReader(artifact);
         } catch (IOException ioe) {
             throw new UncheckedIOException(ioe);
         }
 
-        throw new InternalError("No module reader for: " + location);
+        throw new InternalError("No module reader for: " + artifact);
     }
 }
 
@@ -169,16 +164,18 @@ abstract class BaseModuleReader implements ModuleReader {
  * A ModuleReader for a jmod file.
  */
 class JModModuleReader extends BaseModuleReader {
+    private String module;
     private final URL baseURL;
     private final ZipFile zf;
 
     JModModuleReader(ModuleArtifact artifact) throws IOException {
+        module = artifact.descriptor().name();
         baseURL = new URL("jmod" + artifact.location().toString().substring(4));
         zf = JModCache.get(baseURL);
     }
 
     @Override
-    public URL findResource(String mn, String name) {
+    public URL findResource(String name) {
         ZipEntry ze = zf.getEntry("classes/" + name);
         if (ze == null)
             return null;
@@ -190,17 +187,17 @@ class JModModuleReader extends BaseModuleReader {
     }
 
     @Override
-    public byte[] readResource(String mn, String name) throws IOException {
+    public byte[] readResource(String name) throws IOException {
         ZipEntry ze = zf.getEntry("classes/" + name);
         if (ze == null)
-            throw new IOException(mn + "/" + name + " not found");
+            throw new IOException(module + "/" + name + " not found");
         try (InputStream in = zf.getInputStream(ze)) {
             return readFully(in, (int) ze.getSize());
         }
     }
 
     @Override
-    public URL codeSourceLocation(String mn) {
+    public URL codeBase() {
         return baseURL;
     }
 }
@@ -209,17 +206,19 @@ class JModModuleReader extends BaseModuleReader {
  * A ModuleReader for a modular JAR file.
  */
 class JarModuleReader extends BaseModuleReader {
+    private final String module;
     private final URL baseURL;
     private final JarFile jf;
 
     JarModuleReader(ModuleArtifact artifact) throws IOException {
+        module = artifact.descriptor().name();
         URI uri = artifact.location();
         baseURL = new URL("jar:" + uri.toString() + "!/");
         jf = new JarFile(Paths.get(uri).toString());
     }
 
     @Override
-    public URL findResource(String mn, String name) {
+    public URL findResource(String name) {
         JarEntry je = jf.getJarEntry(name);
         if (je == null)
             return null;
@@ -231,17 +230,17 @@ class JarModuleReader extends BaseModuleReader {
     }
 
     @Override
-    public byte[] readResource(String mn, String name) throws IOException {
+    public byte[] readResource(String name) throws IOException {
         JarEntry je = jf.getJarEntry(name);
         if (je == null)
-            throw new IOException(mn + "/" + name + " not found");
+            throw new IOException(module + "/" + name + " not found");
         try (InputStream in = jf.getInputStream(je)) {
             return readFully(in, (int) je.getSize());
         }
     }
 
     @Override
-    public URL codeSourceLocation(String mn) {
+    public URL codeBase() {
         return baseURL;
     }
 }
@@ -251,13 +250,15 @@ class JarModuleReader extends BaseModuleReader {
  */
 class ExplodedModuleReader extends BaseModuleReader {
     private final Path dir;
+    private final URL baseURL;
 
     ExplodedModuleReader(ModuleArtifact artifact) {
         dir = Paths.get(artifact.location());
+        baseURL = toFileURL(dir);
     }
 
     @Override
-    public URL findResource(String mn, String name) {
+    public URL findResource(String name) {
         Path path = dir.resolve(name.replace('/', File.separatorChar));
         if (Files.exists(path))
             return toFileURL(path);
@@ -265,15 +266,14 @@ class ExplodedModuleReader extends BaseModuleReader {
     }
 
     @Override
-    public byte[] readResource(String mn, String name) throws IOException {
+    public byte[] readResource(String name) throws IOException {
         Path path = dir.resolve(name.replace('/', File.separatorChar));
         return Files.readAllBytes(path);
     }
 
     @Override
-    public URL codeSourceLocation(String mn) {
-        Path path = dir.resolve(mn);
-        return toFileURL(path);
+    public URL codeBase() {
+        return baseURL;
     }
 }
 

@@ -506,12 +506,11 @@ public enum LauncherHelper {
 
         // read extended module descriptor's main class (only jmod for now)
         URI uri = artifact.location();
-        String s = uri.toString();
-        if (!uri.getScheme().equalsIgnoreCase("file") || !s.endsWith(".jmod")) {
+        if (!uri.getScheme().equalsIgnoreCase("jmod")) {
             abort(null, "java.launcher.module.error4", query);
         }
         // convert to jmod URL for direct access
-        ZipFile zf = JModCache.get(new URL("jmod" + s.substring(4)));
+        ZipFile zf = JModCache.get(uri.toURL());
         ZipEntry ze = zf.getEntry(ControlFile.CONTROL_FILE);
         if (ze == null) {
             abort(null, "java.launcher.module.error5", uri);
