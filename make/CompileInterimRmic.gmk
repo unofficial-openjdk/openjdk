@@ -47,8 +47,7 @@ $(eval $(call SetupJavaCompilation,BUILD_INTERIM_RMIC, \
     INCLUDES := $(RMIC_PKGS), \
     EXCLUDE_FILES := module-info.java, \
     BIN := $(BUILDTOOLS_OUTPUTDIR)/interim_rmic_classes, \
-    COPY := .properties, \
-    JAVAC_SOURCE_PATH_OVERRIDE := $(addprefix $(JDK_TOPDIR)/src/jdk.rmic/share/classes/, $(RMIC_PKGS))))
+    COPY := .properties))
 
 ##########################################################################################
 

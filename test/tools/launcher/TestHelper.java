@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -50,6 +50,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Arrays;
 import javax.tools.JavaCompiler;
 import javax.tools.ToolProvider;
 
@@ -66,10 +67,7 @@ public class TestHelper {
 
     static final String JAVAHOME = System.getProperty("java.home");
     static final String JAVA_BIN;
-    static final String JAVA_JRE_BIN;
     static final String JAVA_LIB;
-    static final String JAVA_JRE_LIB;
-    static final boolean isSDK = JAVAHOME.endsWith("jre");
     static final String javaCmd;
     static final String javawCmd;
     static final String javacCmd;
@@ -134,17 +132,10 @@ public class TestHelper {
         }
         compiler = ToolProvider.getSystemJavaCompiler();
 
-        File binDir = (isSDK)
-                ? new File((new File(JAVAHOME)).getParentFile(), "bin")
-                : new File(JAVAHOME, "bin");
+        File binDir = new File(JAVAHOME, "bin");
         JAVA_BIN = binDir.getAbsolutePath();
-        JAVA_JRE_BIN = new File(JAVAHOME, "bin").getAbsolutePath();
-
-        File libDir = (isSDK)
-                ? new File((new File(JAVAHOME)).getParentFile(), "lib")
-                : new File(JAVAHOME, "lib");
+        File libDir = new File(JAVAHOME, "lib");
         JAVA_LIB = libDir.getAbsolutePath();
-        JAVA_JRE_LIB = new File(JAVAHOME, "lib").getAbsolutePath();
 
         File javaCmdFile = (isWindows)
                 ? new File(binDir, "java.exe")
@@ -190,11 +181,11 @@ public class TestHelper {
     }
     private static boolean haveVmVariant(String type) {
         if (isWindows) {
-            File vmDir = new File(JAVA_JRE_BIN, type);
+            File vmDir = new File(JAVA_BIN, type);
             File jvmFile = new File(vmDir, LIBJVM);
             return jvmFile.exists();
         } else {
-            File vmDir = new File(JAVA_JRE_LIB, type);
+            File vmDir = new File(JAVA_LIB, type);
             File vmArchDir = new File(vmDir, getJreArch());
             File jvmFile = new File(vmArchDir, LIBJVM);
             return jvmFile.exists();
@@ -333,15 +324,10 @@ public class TestHelper {
     }
 
    static void createJar(String... args) {
-        sun.tools.jar.Main jarTool =
-                new sun.tools.jar.Main(System.out, System.err, "JarCreator");
-        if (!jarTool.run(args)) {
-            String message = "jar creation failed with command:";
-            for (String x : args) {
-                message = message.concat(" " + x);
-            }
-            throw new RuntimeException(message);
-        }
+        List<String> cmdList = new ArrayList<>();
+        cmdList.add(jarCmd);
+        cmdList.addAll(Arrays.asList(args));
+        doExec(cmdList.toArray(new String[cmdList.size()]));
    }
 
    static void copyStream(InputStream in, OutputStream out) throws IOException {

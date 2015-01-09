@@ -87,20 +87,14 @@ public class DriverManager {
     private static volatile java.io.PrintWriter logWriter = null;
     private static volatile java.io.PrintStream logStream = null;
     // Used in println() to synchronize logWriter
-    private final static  Object logSync = new Object();
+    private final static Object logSync = new Object();
+    // Used in ensureDriversInitialized() to synchronize driversInitialized
+    private final static Object lockForInitDrivers = new Object();
+    private static volatile boolean driversInitialized;
+    private static final String JDBC_DRIVERS_PROPERTY = "jdbc.drivers";
 
     /* Prevent the DriverManager class from being instantiated. */
     private DriverManager(){}
-
-
-    /**
-     * Load the initial JDBC drivers by checking the System property
-     * jdbc.properties and then use the {@code ServiceLoader} mechanism
-     */
-    static {
-        loadInitialDrivers();
-        println("JDBC DriverManager initialized");
-    }
 
     /**
      * The <code>SQLPermission</code> constant that allows the
@@ -287,6 +281,8 @@ public class DriverManager {
 
         println("DriverManager.getDriver(\"" + url + "\")");
 
+        ensureDriversInitialized();
+
         Class<?> callerClass = Reflection.getCallerClass();
 
         // Walk through the loaded registeredDrivers attempting to locate someone
@@ -294,9 +290,9 @@ public class DriverManager {
         for (DriverInfo aDriver : registeredDrivers) {
             // If the caller does not have permission to load the driver then
             // skip it.
-            if(isDriverAllowed(aDriver.driver, callerClass)) {
+            if (isDriverAllowed(aDriver.driver, callerClass)) {
                 try {
-                    if(aDriver.driver.acceptsURL(url)) {
+                    if (aDriver.driver.acceptsURL(url)) {
                         // Success!
                         println("getDriver returning " + aDriver.driver.getClass().getName());
                     return (aDriver.driver);
@@ -328,7 +324,7 @@ public class DriverManager {
      * @exception SQLException if a database access error occurs
      * @exception NullPointerException if {@code driver} is null
      */
-    public static synchronized void registerDriver(java.sql.Driver driver)
+    public static void registerDriver(java.sql.Driver driver)
         throws SQLException {
 
         registerDriver(driver, null);
@@ -349,12 +345,12 @@ public class DriverManager {
      * @exception NullPointerException if {@code driver} is null
      * @since 1.8
      */
-    public static synchronized void registerDriver(java.sql.Driver driver,
+    public static void registerDriver(java.sql.Driver driver,
             DriverAction da)
         throws SQLException {
 
         /* Register the driver if it has not already been added to our list */
-        if(driver != null) {
+        if (driver != null) {
             registeredDrivers.addIfAbsent(new DriverInfo(driver, da));
         } else {
             // This is for compatibility with the original DriverManager
@@ -391,8 +387,7 @@ public class DriverManager {
      * @see SecurityManager#checkPermission
      */
     @CallerSensitive
-    public static synchronized void deregisterDriver(Driver driver)
-        throws SQLException {
+    public static void deregisterDriver(Driver driver) throws SQLException {
         if (driver == null) {
             return;
         }
@@ -405,22 +400,24 @@ public class DriverManager {
         println("DriverManager.deregisterDriver: " + driver);
 
         DriverInfo aDriver = new DriverInfo(driver, null);
-        if(registeredDrivers.contains(aDriver)) {
-            if (isDriverAllowed(driver, Reflection.getCallerClass())) {
-                DriverInfo di = registeredDrivers.get(registeredDrivers.indexOf(aDriver));
-                 // If a DriverAction was specified, Call it to notify the
-                 // driver that it has been deregistered
-                 if(di.action() != null) {
-                     di.action().deregister();
-                 }
-                 registeredDrivers.remove(aDriver);
+        synchronized (lockForInitDrivers) {
+            if (registeredDrivers.contains(aDriver)) {
+                if (isDriverAllowed(driver, Reflection.getCallerClass())) {
+                    DriverInfo di = registeredDrivers.get(registeredDrivers.indexOf(aDriver));
+                     // If a DriverAction was specified, Call it to notify the
+                     // driver that it has been deregistered
+                     if (di.action() != null) {
+                         di.action().deregister();
+                     }
+                     registeredDrivers.remove(aDriver);
+                } else {
+                    // If the caller does not have permission to load the driver then
+                    // throw a SecurityException.
+                    throw new SecurityException();
+                }
             } else {
-                // If the caller does not have permission to load the driver then
-                // throw a SecurityException.
-                throw new SecurityException();
+                println("    couldn't find driver to unload");
             }
-        } else {
-            println("    couldn't find driver to unload");
         }
     }
 
@@ -437,13 +434,15 @@ public class DriverManager {
     public static java.util.Enumeration<Driver> getDrivers() {
         java.util.Vector<Driver> result = new java.util.Vector<>();
 
+        ensureDriversInitialized();
+
         Class<?> callerClass = Reflection.getCallerClass();
 
         // Walk through the loaded registeredDrivers.
-        for(DriverInfo aDriver : registeredDrivers) {
+        for (DriverInfo aDriver : registeredDrivers) {
             // If the caller does not have permission to load the driver then
             // skip it.
-            if(isDriverAllowed(aDriver.driver, callerClass)) {
+            if (isDriverAllowed(aDriver.driver, callerClass)) {
                 result.addElement(aDriver.driver);
             } else {
                 println("    skipping: " + aDriver.getClass().getName());
@@ -550,7 +549,7 @@ public class DriverManager {
 
     private static boolean isDriverAllowed(Driver driver, ClassLoader classLoader) {
         boolean result = false;
-        if(driver != null) {
+        if (driver != null) {
             Class<?> aClass = null;
             try {
                 aClass =  Class.forName(driver.getClass().getName(), true, classLoader);
@@ -564,66 +563,81 @@ public class DriverManager {
         return result;
     }
 
-    private static void loadInitialDrivers() {
-        String drivers;
-        try {
-            drivers = AccessController.doPrivileged(new PrivilegedAction<String>() {
-                public String run() {
-                    return System.getProperty("jdbc.drivers");
-                }
-            });
-        } catch (Exception ex) {
-            drivers = null;
-        }
-        // If the driver is packaged as a Service Provider, load it.
-        // Get all the drivers through the classloader
-        // exposed as a java.sql.Driver.class service.
-        // ServiceLoader.load() replaces the sun.misc.Providers()
-
-        AccessController.doPrivileged(new PrivilegedAction<Void>() {
-            public Void run() {
-
-                ServiceLoader<Driver> loadedDrivers = ServiceLoader.load(Driver.class);
-                Iterator<Driver> driversIterator = loadedDrivers.iterator();
-
-                /* Load these drivers, so that they can be instantiated.
-                 * It may be the case that the driver class may not be there
-                 * i.e. there may be a packaged driver with the service class
-                 * as implementation of java.sql.Driver but the actual class
-                 * may be missing. In that case a java.util.ServiceConfigurationError
-                 * will be thrown at runtime by the VM trying to locate
-                 * and load the service.
-                 *
-                 * Adding a try catch block to catch those runtime errors
-                 * if driver not available in classpath but it's
-                 * packaged as service and that service is there in classpath.
-                 */
-                try{
-                    while(driversIterator.hasNext()) {
-                        driversIterator.next();
-                    }
-                } catch(Throwable t) {
-                // Do nothing
-                }
-                return null;
-            }
-        });
-
-        println("DriverManager.initialize: jdbc.drivers = " + drivers);
-
-        if (drivers == null || drivers.equals("")) {
+    /*
+     * Load the initial JDBC drivers by checking the System property
+     * jdbc.drivers and then use the {@code ServiceLoader} mechanism
+     */
+    private static void ensureDriversInitialized() {
+        if (driversInitialized) {
             return;
         }
-        String[] driversList = drivers.split(":");
-        println("number of Drivers:" + driversList.length);
-        for (String aDriver : driversList) {
-            try {
-                println("DriverManager.Initialize: loading " + aDriver);
-                Class.forName(aDriver, true,
-                        ClassLoader.getSystemClassLoader());
-            } catch (Exception ex) {
-                println("DriverManager.Initialize: load failed: " + ex);
+
+        synchronized (lockForInitDrivers) {
+            if (driversInitialized) {
+                return;
             }
+            String drivers;
+            try {
+                drivers = AccessController.doPrivileged(new PrivilegedAction<String>() {
+                    public String run() {
+                        return System.getProperty(JDBC_DRIVERS_PROPERTY);
+                    }
+                });
+            } catch (Exception ex) {
+                drivers = null;
+            }
+            // If the driver is packaged as a Service Provider, load it.
+            // Get all the drivers through the classloader
+            // exposed as a java.sql.Driver.class service.
+            // ServiceLoader.load() replaces the sun.misc.Providers()
+
+            AccessController.doPrivileged(new PrivilegedAction<Void>() {
+                public Void run() {
+
+                    ServiceLoader<Driver> loadedDrivers = ServiceLoader.load(Driver.class);
+                    Iterator<Driver> driversIterator = loadedDrivers.iterator();
+
+                    /* Load these drivers, so that they can be instantiated.
+                     * It may be the case that the driver class may not be there
+                     * i.e. there may be a packaged driver with the service class
+                     * as implementation of java.sql.Driver but the actual class
+                     * may be missing. In that case a java.util.ServiceConfigurationError
+                     * will be thrown at runtime by the VM trying to locate
+                     * and load the service.
+                     *
+                     * Adding a try catch block to catch those runtime errors
+                     * if driver not available in classpath but it's
+                     * packaged as service and that service is there in classpath.
+                     */
+                    try {
+                        while (driversIterator.hasNext()) {
+                            driversIterator.next();
+                        }
+                    } catch (Throwable t) {
+                        // Do nothing
+                    }
+                    return null;
+                }
+            });
+
+            println("DriverManager.initialize: jdbc.drivers = " + drivers);
+
+            if (drivers != null && !drivers.equals("")) {
+                String[] driversList = drivers.split(":");
+                println("number of Drivers:" + driversList.length);
+                for (String aDriver : driversList) {
+                    try {
+                        println("DriverManager.Initialize: loading " + aDriver);
+                        Class.forName(aDriver, true,
+                                ClassLoader.getSystemClassLoader());
+                    } catch (Exception ex) {
+                        println("DriverManager.Initialize: load failed: " + ex);
+                    }
+                }
+            }
+
+            driversInitialized = true;
+            println("JDBC DriverManager initialized");
         }
     }
 
@@ -638,27 +652,26 @@ public class DriverManager {
          * can be loaded from here.
          */
         ClassLoader callerCL = caller != null ? caller.getClassLoader() : null;
-        synchronized(DriverManager.class) {
-            // synchronize loading of the correct classloader.
-            if (callerCL == null) {
-                callerCL = Thread.currentThread().getContextClassLoader();
-            }
+        if (callerCL == null) {
+            callerCL = Thread.currentThread().getContextClassLoader();
         }
 
-        if(url == null) {
+        if (url == null) {
             throw new SQLException("The url cannot be null", "08001");
         }
 
         println("DriverManager.getConnection(\"" + url + "\")");
 
+        ensureDriversInitialized();
+
         // Walk through the loaded registeredDrivers attempting to make a connection.
         // Remember the first exception that gets raised so we can reraise it.
         SQLException reason = null;
 
-        for(DriverInfo aDriver : registeredDrivers) {
+        for (DriverInfo aDriver : registeredDrivers) {
             // If the caller does not have permission to load the driver then
             // skip it.
-            if(isDriverAllowed(aDriver.driver, callerCL)) {
+            if (isDriverAllowed(aDriver.driver, callerCL)) {
                 try {
                     println("    trying " + aDriver.driver.getClass().getName());
                     Connection con = aDriver.driver.connect(url, info);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -364,8 +364,7 @@ public class RegistryContext implements Context, Referenceable {
             ne = new NoPermissionException();
 
         } else if (re instanceof StubNotFoundException ||
-                   re instanceof UnknownHostException ||
-                   re instanceof SocketSecurityException) {
+                   re instanceof UnknownHostException) {
             ne = new ConfigurationException();
 
         } else if (re instanceof ExportException ||
@@ -416,7 +415,7 @@ public class RegistryContext implements Context, Referenceable {
     private static void installSecurityMgr() {
 
         try {
-            System.setSecurityManager(new RMISecurityManager());
+            System.setSecurityManager(new SecurityManager());
         } catch (Exception e) {
         }
     }
