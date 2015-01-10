@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 1999, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,15 +22,30 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+/*
+ * Licensed Materials - Property of IBM
+ * RMI-IIOP v1.0
+ * Copyright IBM Corp. 1998 1999  All Rights Reserved
+ *
+ */
 
-module java.se {
-    requires public java.activation;
-    requires java.base;
-    requires public java.compact3;
-    requires public java.corba;
-    requires public java.desktop;
-    requires public java.transaction;
-    requires public java.xml.bind;
-    requires public java.xml.ws;
+package javax.transaction;
+
+/**
+ * This exception indicates that the transaction associated with processing
+ * of the request has been rolled back, or marked to roll back. Thus the
+ * requested operation either could not be performed or was not performed
+ * because further computation on behalf of the transaction would be
+ * fruitless
+ */
+@SuppressWarnings("serial")             // serialVersionUID intentionally omitted
+public class TransactionRolledbackException extends java.rmi.RemoteException {
+
+    public TransactionRolledbackException() {
+        super();
+    }
+
+    public TransactionRolledbackException(String msg) {
+        super(msg);
+    }
 }
-

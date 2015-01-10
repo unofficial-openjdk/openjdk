@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 1999, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,15 +22,28 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+/*
+ * Licensed Materials - Property of IBM
+ * RMI-IIOP v1.0
+ * Copyright IBM Corp. 1998 1999  All Rights Reserved
+ *
+ */
 
-module java.se {
-    requires public java.activation;
-    requires java.base;
-    requires public java.compact3;
-    requires public java.corba;
-    requires public java.desktop;
-    requires public java.transaction;
-    requires public java.xml.bind;
-    requires public java.xml.ws;
+package javax.transaction;
+
+/**
+ * This exception indicates that the request carried an invalid transaction
+ * context. For example, this exception could be raised if an error
+ * occured when trying to register a resource.
+ */
+@SuppressWarnings("serial")             // serialVersionUID intentionally omitted
+public class InvalidTransactionException extends java.rmi.RemoteException {
+
+    public InvalidTransactionException() {
+        super();
+    }
+
+    public InvalidTransactionException(String msg) {
+        super(msg);
+    }
 }
-

@@ -1,6 +1,5 @@
 java.base
 java.desktop
-java.activation
 java.compiler
 java.corba
 java.instrument
@@ -16,6 +15,7 @@ java.security.sasl
 java.smartcardio
 java.sql
 java.sql.rowset
+java.transaction
 java.xml
 java.xml.crypto
 jdk.charsets
