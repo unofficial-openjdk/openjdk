@@ -50,11 +50,11 @@ module java.xml {
     exports org.xml.sax.ext;
     exports org.xml.sax.helpers;
     exports com.sun.org.apache.xerces.internal.dom to
-        java.xml.soap;
+        java.xml.ws;
     exports com.sun.org.apache.xerces.internal.jaxp to
-        java.xml.soap;
+        java.xml.ws;
     exports com.sun.org.apache.xerces.internal.util to
-        java.xml.soap;
+        java.xml.ws;
     exports com.sun.org.apache.xml.internal.dtm to
         java.xml.crypto;
     exports com.sun.org.apache.xml.internal.resolver to
