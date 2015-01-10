@@ -29,10 +29,10 @@ module java.corba {
     requires java.logging;
     requires java.naming;
     requires public java.rmi;
+    requires java.transaction;
     exports javax.activity;
     exports javax.rmi;
     exports javax.rmi.CORBA;
-    exports javax.transaction;
     exports org.omg.CORBA;
     exports org.omg.CORBA.DynAnyPackage;
     exports org.omg.CORBA.ORBPackage;
