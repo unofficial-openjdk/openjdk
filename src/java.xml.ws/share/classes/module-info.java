@@ -24,7 +24,7 @@
  */
 
 module java.xml.ws {
-    requires java.activation;
+    requires public java.activation;
     requires java.annotations.common;
     requires java.base;
     requires java.desktop;
@@ -33,10 +33,10 @@ module java.xml.ws {
     requires java.rmi;
     requires public java.xml;
     requires public java.xml.bind;
-    requires public java.xml.soap;
     requires jdk.httpserver;
     exports javax.jws;
     exports javax.jws.soap;
+    exports javax.xml.soap;
     exports javax.xml.ws;
     exports javax.xml.ws.handler;
     exports javax.xml.ws.handler.soap;
