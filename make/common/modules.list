@@ -20,11 +20,11 @@ jdk.charsets: java.base
 java.desktop: java.xml java.prefs jdk.charsets java.base java.logging
 java.activation: java.base java.desktop java.logging
 java.xml.bind: java.xml java.base java.desktop java.compiler java.activation java.logging
-java.xml.soap: java.xml java.base java.desktop java.activation java.xml.bind java.logging
 jdk.httpserver: java.base java.logging
 java.annotations.common: java.base
-java.xml.ws: jdk.httpserver java.xml java.xml.soap java.annotations.common java.base java.desktop java.activation java.xml.bind java.logging java.rmi java.management
-java.corba: java.base java.desktop java.naming java.logging java.rmi
+java.xml.ws: jdk.httpserver java.xml java.annotations.common java.base java.desktop java.activation java.xml.bind java.logging java.rmi java.management
+java.corba: java.base java.desktop java.naming java.logging java.rmi java.transaction
+java.transaction: java.base java.rmi
 jdk.deploy.osx: java.scripting java.base java.desktop
 jdk.security.jgss: java.base java.security.jgss java.security.sasl java.logging
 jdk.jvmstat: java.base java.rmi
@@ -58,4 +58,4 @@ jdk.jdwp.agent: java.base
 java.compact1: java.base java.logging java.scripting
 java.compact2: java.base java.logging java.scripting java.xml java.rmi java.sql 
 java.compact3: java.base java.logging java.scripting java.xml java.rmi java.sql java.prefs java.instrument java.management java.security.acl java.security.sasl java.compiler java.sql.rowset java.naming java.security.jgss java.xml.crypto
-java.se: java.base java.logging java.scripting java.xml java.rmi java.sql java.prefs java.instrument java.management java.security.acl java.security.sasl java.compiler java.sql.rowset java.naming java.security.jgss java.xml.crypto java.activation java.corba java.xml.bind java.xml.ws java.desktop java.xml.soap jdk.security.jgss
+java.se: java.base java.logging java.scripting java.xml java.rmi java.sql java.prefs java.instrument java.management java.security.acl java.security.sasl java.compiler java.sql.rowset java.naming java.security.jgss java.xml.crypto java.activation java.corba java.transaction java.xml.bind java.xml.ws java.desktop jdk.security.jgss
