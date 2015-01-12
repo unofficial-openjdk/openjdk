@@ -214,7 +214,7 @@ class ByteCodePrinter {
             Arguments.OPTION, /*OP_SET_OPTION*/
     };
 
-    public ByteCodePrinter(Regex regex) {
+    public ByteCodePrinter(final Regex regex) {
         code = regex.code;
         codeLength = regex.codeLength;
         operands = regex.operands;
@@ -226,33 +226,35 @@ class ByteCodePrinter {
         return compiledByteCodeListToString();
     }
 
-    private void pString(StringBuilder sb, int len, int s) {
+    private void pString(final StringBuilder sb, final int len, final int s) {
         sb.append(":");
         sb.append(new String(code, s, len));
     }
 
-    private void pLenString(StringBuilder sb, int len, int s) {
+    private void pLenString(final StringBuilder sb, final int len, final int s) {
         sb.append(":").append(len).append(":");
         sb.append(new String(code, s, len));
     }
 
-    private void pLenStringFromTemplate(StringBuilder sb, int len, char[] tm, int idx) {
+    private static void pLenStringFromTemplate(final StringBuilder sb, final int len, final char[] tm, final int idx) {
         sb.append(":T:").append(len).append(":");
         sb.append(tm, idx, len);
     }
 
-    public int compiledByteCodeToString(StringBuilder sb, int bp) {
+    public int compiledByteCodeToString(final StringBuilder sb, final int bptr) {
         int len, n, mem, addr, scn, cod;
         BitSet bs;
         CClassNode cc;
         int tm, idx;
+        int bp = bptr;
 
         sb.append("[").append(OpCodeNames[code[bp]]);
-        int argType = OpCodeArgTypes[code[bp]];
-        int ip = bp;
+        final int argType = OpCodeArgTypes[code[bp]];
+        final int ip = bp;
         if (argType != Arguments.SPECIAL) {
             bp++;
             switch (argType) {
+            default:
             case Arguments.NON:
                 break;
 
@@ -410,16 +412,18 @@ class ByteCodePrinter {
                 for (int i=0; i<len; i++) {
                     mem = code[bp];
                     bp += OPSize.MEMNUM;
-                    if (i > 0) sb.append(", ");
+                    if (i > 0) {
+                        sb.append(", ");
+                    }
                     sb.append(mem);
                 }
                 break;
 
             case OPCode.BACKREF_WITH_LEVEL: {
-                int option = code[bp];
+                final int option = code[bp];
                 bp += OPSize.OPTION;
                 sb.append(":").append(option);
-                int level = code[bp];
+                final int level = code[bp];
                 bp += OPSize.LENGTH;
                 sb.append(":").append(level);
                 sb.append(" ");
@@ -428,7 +432,9 @@ class ByteCodePrinter {
                 for (int i=0; i<len; i++) {
                     mem = code[bp];
                     bp += OPSize.MEMNUM;
-                    if (i > 0) sb.append(", ");
+                    if (i > 0) {
+                        sb.append(", ");
+                    }
                     sb.append(mem);
                 }
                 break;
@@ -491,17 +497,19 @@ class ByteCodePrinter {
     }
 
     private String compiledByteCodeListToString() {
-        StringBuilder sb = new StringBuilder();
+        final StringBuilder sb = new StringBuilder();
         sb.append("code length: ").append(codeLength).append("\n");
 
         int ncode = 0;
         int bp = 0;
-        int end = codeLength;
+        final int end = codeLength;
 
         while (bp < end) {
             ncode++;
 
-            if (bp > 0) sb.append(ncode % 5 == 0 ? "\n" : " ");
+            if (bp > 0) {
+                sb.append(ncode % 5 == 0 ? "\n" : " ");
+            }
 
             bp = compiledByteCodeToString(sb, bp);
         }

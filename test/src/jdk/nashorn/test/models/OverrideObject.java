@@ -25,6 +25,7 @@
 
 package jdk.nashorn.test.models;
 
+@SuppressWarnings("javadoc")
 public class OverrideObject {
     @Override
     public int hashCode() {
@@ -37,7 +38,7 @@ public class OverrideObject {
     }
 
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(final Object o) {
         // TODO: add a FindBugs annotation to ignore EQ_ALWAYS_FALSE here. This is just a test.
         return false;
     }

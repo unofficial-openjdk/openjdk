@@ -19,6 +19,7 @@
  */
 package jdk.nashorn.internal.runtime.regexp.joni;
 
+@SuppressWarnings("javadoc")
 public final class Region {
     static final int REGION_NOTPOS = -1;
 
@@ -26,7 +27,7 @@ public final class Region {
     public final int[]beg;
     public final int[]end;
 
-    public Region(int num) {
+    public Region(final int num) {
         this.numRegs = num;
         this.beg = new int[num];
         this.end = new int[num];
@@ -34,9 +35,11 @@ public final class Region {
 
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
+        final StringBuilder sb = new StringBuilder();
         sb.append("Region: \n");
-        for (int i=0; i<beg.length; i++) sb.append(" " + i + ": (" + beg[i] + "-" + end[i] + ")");
+        for (int i=0; i<beg.length; i++) {
+            sb.append(" " + i + ": (" + beg[i] + "-" + end[i] + ")");
+        }
         return sb.toString();
     }
 

@@ -19,12 +19,13 @@
  */
 package jdk.nashorn.internal.runtime.regexp.joni.encoding;
 
+@SuppressWarnings("javadoc")
 public final class ObjPtr<T> {
     public ObjPtr() {
         this(null);
     }
 
-    public ObjPtr(T p) {
+    public ObjPtr(final T p) {
         this.p = p;
     }
 
