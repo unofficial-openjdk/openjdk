@@ -176,7 +176,7 @@ public class GenGraphs {
                 String mn = md.name();
                 Set<String> requiresPublic = md.moduleDependences().stream()
                         .filter(d -> d.modifiers().contains(PUBLIC))
-                        .map(d -> d.query().name())
+                        .map(d -> d.id().name())
                         .collect(Collectors.toSet());
 
                 graph.adjacentNodes(mn).forEach(dn -> {
@@ -225,7 +225,7 @@ public class GenGraphs {
             String mn = md.name();
             md.moduleDependences().stream()
                     .filter(d -> d.modifiers().contains(PUBLIC))
-                    .map(d -> d.query().name())
+                    .map(d -> d.id().name())
                     .forEach(d -> builder.addEdge(mn, d));
         });
 
