@@ -23,7 +23,7 @@
 
 /*
  * @test
- * @library /testlibrary /testlibrary/whitebox
+ * @library /testlibrary /../../test/lib /compiler/whitebox ..
  * @build JVMDefineModule
  * @run main ClassFileInstaller sun.hotspot.WhiteBox
  *                              sun.hotspot.WhiteBox$WhiteBoxPermission
