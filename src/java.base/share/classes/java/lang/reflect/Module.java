@@ -26,14 +26,9 @@
 package java.lang.reflect;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.WeakHashMap;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
 import jdk.jigsaw.module.ModuleDescriptor;
@@ -41,6 +36,7 @@ import jdk.jigsaw.module.ServiceDependence;
 
 import sun.misc.ServicesCatalog;
 import sun.misc.SharedSecrets;
+import sun.misc.VM;
 
 /**
  * Represents a runtime module.
@@ -71,17 +67,6 @@ public final class Module {
     private volatile ModuleDescriptor descriptor;
     private volatile Set<String> packages;
 
-    // the modules that this module reads
-    private final Map<Module, Boolean> reads = new WeakHashMap<>();
-
-    // this module's exports, cached here for access checks
-    private final Map<String, Map<Module, Boolean>> exports = new HashMap<>();
-
-    // use RW locks (changes are rare)
-    private final ReadWriteLock lock = new ReentrantReadWriteLock();
-    private final Lock readLock = lock.readLock();
-    private final Lock writeLock = lock.writeLock();
-
     // indicates whether the Module is fully defined - will be used later
     // by snapshot APIs (JVM TI for example)
     private volatile boolean defined;
@@ -109,7 +94,7 @@ public final class Module {
             for (String pkg: packages) {
                 array[i++] = pkg.replace('.', '/');
             }
-            m = sun.misc.VM.defineModule(descriptor.name(), loader, array);
+            m = VM.defineModule(descriptor.name(), loader, array);
         }
 
         // set fields as these are not set by the VM
@@ -181,44 +166,26 @@ public final class Module {
         }
     }
 
+    /**
+     * Makes the given {@code Module} readable to this module.
+     */
     void implAddReads(Module target) {
-        writeLock.lock();
-        try {
-            sun.misc.VM.addReadsModule(this, target);
-            reads.put(target, Boolean.TRUE);
-        } finally {
-            writeLock.unlock();
-        }
+        VM.addReadsModule(this, target);
     }
 
+    /**
+     * Exports the given package name to the given module.
+     */
     void implAddExports(String pkg, Module who) {
-        writeLock.lock();
-        try {
-            sun.misc.VM.addModuleExports(this, pkg.replace('.', '/'), who);
-            Map<Module, Boolean> permits =
-                exports.computeIfAbsent(pkg, k -> new WeakHashMap<>());
-            if (who != null)
-                permits.put(who, Boolean.TRUE);
-        } finally {
-            writeLock.unlock();
-        }
+        VM.addModuleExports(this, pkg.replace('.', '/'), who);
     }
 
+    /**
+     * Returns {@code true} if the given package name is exported to the
+     * given module.
+     */
     boolean isExported(String pkg, Module who) {
-        readLock.lock();
-        try {
-            Map<Module, Boolean> permits = exports.get(pkg);
-            if (permits == null)
-                return false; // not exported
-
-            if (permits.isEmpty())
-                return true;  // exported
-
-            //assert !permits.contains(null);
-            return permits.containsKey(who);
-        } finally {
-            readLock.unlock();
-        }
+        return VM.isExportedToModule(this, pkg.replace('.', '/'), who);
     }
 
     /**
@@ -233,25 +200,15 @@ public final class Module {
     public boolean canRead(Module target) {
         if (target == null || target == this)
             return true;
-
-        readLock.lock();
-        try {
-            return reads.containsKey(target);
-        } finally {
-            readLock.unlock();
-        }
+        return VM.canReadModule(this, target);
     }
 
     /**
      * Returns the set of modules that this module reads.
      */
     public Set<Module> reads() {
-        readLock.lock();
-        try {
-            return new HashSet<>(reads.keySet());
-        } finally {
-            readLock.unlock();
-        }
+        // need to decide if we need this method
+        throw new RuntimeException("not implemented");
     }
 
     Set<String> uses() {
@@ -272,8 +229,8 @@ public final class Module {
     private volatile Set<String> uses;
 
     /**
-     * Dynamically adds a package to this module. This is used for dyanmic
-     * proxies.
+     * Dynamically adds a package to this module. This is used for dynamic
+     * proxies (for example).
      */
     void addPackage(String pkg) {
         sun.misc.VM.addModulePackage(this, pkg.replace('.', '/'));

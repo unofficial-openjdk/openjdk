@@ -62,6 +62,18 @@ Java_sun_misc_VM_addModulePackage(JNIEnv *env, jclass cls, jobject m, jstring pk
     JVM_AddModulePackage(env, m, pkg);
 }
 
+JNIEXPORT jboolean JNICALL
+Java_sun_misc_VM_canReadModule(JNIEnv *env, jclass cls, jobject from, jobject to) {
+    return JVM_CanReadModule(env, from, to);
+}
+
+JNIEXPORT jboolean JNICALL
+Java_sun_misc_VM_isExportedToModule(JNIEnv *env, jclass cls, jobject from, jstring pkg,
+                                    jobject to)
+{
+    return JVM_IsExportedToModule(env, from, pkg, to);
+}
+
 
 typedef void (JNICALL *GetJvmVersionInfo_fp)(JNIEnv*, jvm_version_info*, size_t);
 

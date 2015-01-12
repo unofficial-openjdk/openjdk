@@ -32,7 +32,6 @@ import sun.misc.SharedSecrets;
 import java.lang.reflect.*;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 /** Common utility routines used by both java.lang and
     java.lang.reflect */

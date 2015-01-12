@@ -277,6 +277,8 @@ SUNWprivate_1.1 {
                 Java_sun_misc_VM_addModuleExports;
                 Java_sun_misc_VM_addReadsModule;
                 Java_sun_misc_VM_addModulePackage;
+                Java_sun_misc_VM_canReadModule;
+                Java_sun_misc_VM_isExportedToModule;
 
 		Java_sun_misc_VMSupport_initAgentProperties;
 		Java_sun_misc_VMSupport_getVMTemporaryDirectory;

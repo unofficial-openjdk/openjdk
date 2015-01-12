@@ -60,9 +60,9 @@ public class ModuleTest {
         // packages
         assertTrue(base.packages().contains("java.lang"));
 
-        // reads - can't test that is empty because it may have been
-        // augmented at runtime
-        assertTrue(!base.reads().contains("java.base"));
+        // canRead
+        assertTrue(base.canRead(null));
+        assertTrue(base.canRead(base));
     }
 
     @Test
@@ -86,7 +86,8 @@ public class ModuleTest {
         // reads
         Module base = Object.class.getModule();
         Module xml = javax.xml.XMLConstants.class.getModule();
-        assertTrue(desktop.reads().contains(base));
-        assertTrue(desktop.reads().contains(xml));
+        assertTrue(desktop.canRead(null));
+        assertTrue(desktop.canRead(base));
+        assertTrue(desktop.canRead(xml));
     }
 }

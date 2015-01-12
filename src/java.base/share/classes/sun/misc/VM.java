@@ -387,6 +387,18 @@ public class VM {
      */
     public static native void addModulePackage(Module m, String pkg);
 
+    /**
+     * Returns {@ocde true} if module {@code from} reads module {@code to}.
+     */
+    public static native boolean canReadModule(Module from, Module to);
+
+    /**
+     * Returns {@ocde true} if module {@code from} exports package {@code pkg}
+     * to module {code to}.
+     */
+    public static native boolean isExportedToModule(Module from, String pkg,
+                                                    Module to);
+
 
     /**
      * Returns {@code true} if we are in a set UID program.
