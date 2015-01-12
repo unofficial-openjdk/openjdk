@@ -109,10 +109,6 @@ public final class ModuleId
 
     public Version version() { return version; }
 
-    public ModuleIdQuery toQuery() {
-        return new ModuleIdQuery(name, version.toQuery());
-    }
-
     @Override
     public int compareTo(ModuleId that) {
         int c = name.compareTo(that.name);

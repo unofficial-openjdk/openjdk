@@ -27,9 +27,6 @@ package jdk.jigsaw.module;
 
 import java.net.URI;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
@@ -62,19 +59,8 @@ public final class ModuleArtifact {
         }
         ModuleId id = ModuleId.parse(name, cf.version());
 
-        // parse the version constraints and combine with module dependences
-        Set<ModuleIdQuery> versionConstraints = Collections.emptySet();
-        String depends = cf.depends();
-        if (depends != null) {
-            versionConstraints = new HashSet<>();
-            for (String s: depends.split(",")) {
-                versionConstraints.add(ModuleIdQuery.parse(s.trim()));
-            }
-        }
-        Set<ModuleDependence> deps = combine(mi.moduleDependences(), versionConstraints);
-
         this.descriptor = new ExtendedModuleDescriptor(id,
-                                                       deps,
+                                                       mi.moduleDependences(),
                                                        mi.serviceDependences(),
                                                        mi.exports(),
                                                        mi.services());
@@ -136,45 +122,6 @@ public final class ModuleArtifact {
      */
     public URI location() {
         return location;
-    }
-
-    /**
-     * Combine the module dependences from the module-info file with
-     * version constraints from the extended module descriptor.
-     */
-    private Set<ModuleDependence> combine(Set<ModuleDependence> moduleDependences,
-                                          Set<ModuleIdQuery> versionConstraints)
-    {
-        if (versionConstraints.isEmpty())
-            return moduleDependences;
-
-        // check that each version constraint has a corresponding module dependence
-        Map<String, ModuleIdQuery> map = new HashMap<>();
-        for (ModuleIdQuery query: versionConstraints) {
-            // check that is a module dependence
-            String name = query.name();
-            if (!moduleDependences.stream().anyMatch(d -> d.query().name().equals(name))) {
-                throw new IllegalArgumentException("Mismatch in extended module " +
-                        "descriptor, constraint " + query + " should be removed");
-            }
-            if (map.containsKey(name))
-                throw new IllegalArgumentException("More than one constraint on " + name);
-            map.put(name, query);
-        }
-
-        // create updated set of module dependences with the ModuleIdQuery
-        Set<ModuleDependence> result = new HashSet<>();
-        for (ModuleDependence md: moduleDependences) {
-            String name = md.query().name();
-            ModuleIdQuery query = map.get(name);
-            if (query == null) {
-                result.add(md);
-            } else {
-                ModuleDependence dep = new ModuleDependence(md.modifiers(), query);
-                result.add(dep);
-            }
-        }
-        return result;
     }
 
     private int hash;

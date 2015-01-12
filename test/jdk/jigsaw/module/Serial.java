@@ -54,15 +54,13 @@ public class Serial {
     public void go() throws Exception {
 
         test(Version.parse("1.3-alpha9"));
-        test(VersionQuery.parse(">=1.3"));
         test(ModuleId.parse("foo@1.1"));
-        test(ModuleIdQuery.parse("foo@=1.1"));
 
         ModuleDescriptor descriptor =
             (new ModuleDescriptor.Builder("foo")
                     .requires(new ModuleDependence(EnumSet.of(ModuleDependence.Modifier.PUBLIC),
-                                                   "bar@>=2.3.0"))
-                    .requires(new ServiceDependence(EnumSet.of(ServiceDependence.Modifier.OPTIONAL),
+                                                   "bar"))
+                    .requires(new ServiceDependence(Collections.emptySet(),
                                                     "baz.Finder"))
                     .export("p.one")
                     .export("p.two")

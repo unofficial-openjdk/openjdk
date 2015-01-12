@@ -109,20 +109,4 @@ public final class ControlFile {
         props.put("Main-Class", mainClass);
         return this;
     }
-
-    /**
-     * Returns a comma delimited string of the version constraints, {@code null} if
-     * not present.
-     */
-    public String depends() {
-        return (String) props.get("Depends");
-    }
-
-    /**
-     * Sets the version constraints without any validation.
-     */
-    public ControlFile depends(String depends) {
-        props.put("Depends", depends);
-        return this;
-    }
 }

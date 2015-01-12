@@ -32,7 +32,6 @@ import jdk.jigsaw.module.Layer;
 import jdk.jigsaw.module.ModuleArtifactFinder;
 import jdk.jigsaw.module.ModuleDependence;
 import jdk.jigsaw.module.ModuleDependence.Modifier;
-import jdk.jigsaw.module.ModuleIdQuery;
 import jdk.jigsaw.module.ServiceDependence;
 
 import org.testng.annotations.Test;
@@ -201,7 +200,7 @@ public class ConfigurationTest {
         Set<Modifier> set = new HashSet<>();
         for (Modifier mod: mods)
             set.add(mod);
-        return new ModuleDependence(set, ModuleIdQuery.parse(dn));
+        return new ModuleDependence(set, dn);
     }
 
     static ServiceDependence sd(String sn) {

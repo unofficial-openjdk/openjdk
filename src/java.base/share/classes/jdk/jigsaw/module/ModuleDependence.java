@@ -43,31 +43,36 @@ public final class ModuleDependence
     }
 
     private final Set<Modifier> mods;
-    private final ModuleIdQuery midq;
+    private final ModuleId id;
 
-    public ModuleDependence(Set<Modifier> ms, ModuleIdQuery midq) {
+    public ModuleDependence(Set<Modifier> ms, ModuleId id) {
+        if (id.version() != null)
+            throw new IllegalArgumentException("Version not allowed: " + id);
         if (ms == null)
             mods = Collections.emptySet();
         else
             mods = Collections.unmodifiableSet(ms);
-        this.midq = midq;
+        this.id = id;
     }
 
-    public ModuleDependence(Set<Modifier> mods, String midqs) {
-        this(mods, ModuleIdQuery.parse(midqs));
+    public ModuleDependence(Set<Modifier> mods, String mids) {
+        this(mods, ModuleId.parse(mids));
     }
 
     public Set<Modifier> modifiers() {
         return mods;
     }
 
-    public ModuleIdQuery query() {
-        return midq;
+    /**
+     * Return the module id.
+     */
+    public ModuleId id() {
+        return id;
     }
 
     @Override
     public int compareTo(ModuleDependence that) {
-        return this.midq.name().compareTo(that.midq.name());
+        return this.id.name().compareTo(that.id.name());
     }
 
     @Override
@@ -75,17 +80,17 @@ public final class ModuleDependence
         if (!(ob instanceof ModuleDependence))
             return false;
         ModuleDependence that = (ModuleDependence)ob;
-        return (midq.equals(that.midq) && mods.equals(that.mods));
+        return (id.equals(that.id) && mods.equals(that.mods));
     }
 
     @Override
     public int hashCode() {
-        return midq.hashCode() * 43 + mods.hashCode();
+        return id.hashCode() * 43 + mods.hashCode();
     }
 
     @Override
     public String toString() {
-        return Dependence.toString(mods, midq.toString());
+        return Dependence.toString(mods, id.toString());
     }
 
 }

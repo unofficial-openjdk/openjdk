@@ -25,9 +25,9 @@
 
 package jdk.jigsaw.module;
 
-import java.io.*;
-import java.util.*;
-
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Vaguely Debian-like version strings, for now.
@@ -196,10 +196,6 @@ public final class Version
         if (c != 0)
             return c;
         return compareTokens(this.branch, that.branch);
-    }
-
-    public VersionQuery toQuery() {
-        return VersionQuery.fromVersion(this);
     }
 
     public String toDebugString() {

@@ -199,7 +199,7 @@ class ModuleInfo {
             String dn = cpool.getUtf8(index);
             Set<Modifier> mods = ((flags & ACC_PUBLIC) != 0) ?
                     EnumSet.of(Modifier.PUBLIC) : Collections.emptySet();
-            moduleDependences.add(new ModuleDependence(mods, ModuleIdQuery.parse(dn)));
+            moduleDependences.add(new ModuleDependence(mods, ModuleId.parse(dn, null)));
         }
 
         // ignore permits, they are going away

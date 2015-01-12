@@ -353,7 +353,7 @@ public final class JigsawImageModules extends ImageModules {
             for (ModuleDependence d : md.moduleDependences()) {
                 int mods = d.modifiers().contains(ModuleDependence.Modifier.PUBLIC) ? 1 : 0;
                 out.writeShort(mods);
-                out.writeInt(indexForModule.get(d.query().name()));
+                out.writeInt(indexForModule.get(d.id().name()));
             }
 
             // exports
@@ -555,7 +555,7 @@ public final class JigsawImageModules extends ImageModules {
         ModuleDescriptor m = nameToModule.get(mn);
         out.format("module %s%n", m.name());
         m.moduleDependences().forEach(md -> out.format("  requires %s%s%n",
-                md.modifiers().contains(Modifier.PUBLIC) ? "public" : "", md.query().name()));
+                md.modifiers().contains(Modifier.PUBLIC) ? "public" : "", md.id().name()));
         m.exports().stream().filter(e -> e.permit() == null)
                 .sorted(Comparator.comparing(ModuleExport::pkg))
                 .forEach(e -> out.format("  exports %s%n", e.pkg()));

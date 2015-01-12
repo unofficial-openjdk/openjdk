@@ -94,7 +94,6 @@ class Resolver {
             // bind service and create a new readability graph
             resolver.bind(r);
             resolver.makeGraph(r);
-            resolver.checkVersionConstraints(r);
             return r;
         }
     }
@@ -131,7 +130,6 @@ class Resolver {
 
         resolve(r, q);
         makeGraph(r);
-        checkVersionConstraints(r);
 
         return r;
     }
@@ -157,7 +155,7 @@ class Resolver {
 
             // process dependencies
             for (ModuleDependence d: descriptor.moduleDependences()) {
-                String dn = d.query().name();
+                String dn = d.id().name();
 
                 // in overrides?
                 ModuleArtifact other = beforeFinder.find(dn);
@@ -306,7 +304,7 @@ class Resolver {
                     g2.put(descriptor, new HashSet<>());
                     for (ModuleDependence d: descriptor.moduleDependences()) {
                         if (d.modifiers().contains(ModuleDependence.Modifier.PUBLIC)) {
-                            String dn = d.query().name();
+                            String dn = d.id().name();
                             ModuleArtifact artifact = current.findArtifact(dn);
                             if (artifact == null)
                                 throw new InternalError();
@@ -323,7 +321,7 @@ class Resolver {
             g1.put(m, new HashSet<>());
             g2.put(m, new HashSet<>());
             for (ModuleDependence d: m.moduleDependences()) {
-                String dn = d.query().name();
+                String dn = d.id().name();
                 ModuleDescriptor other = nameToModule.get(dn);
                 if (other == null && layer != null)
                     other = layer.findArtifact(dn).descriptor();
@@ -372,47 +370,6 @@ class Resolver {
         // m1. Need to watch out for the "hollowed-out case" where m2 is an aggregator.
 
         r.graph = g1;
-    }
-
-    /**
-     * Check the selected modules to make sure that they don't violate any
-     * version constraints.
-     */
-    private void checkVersionConstraints(Resolution r) {
-        for (ModuleDescriptor descriptor: r.selected()) {
-            for (ModuleDependence md: descriptor.moduleDependences()) {
-                ModuleIdQuery query = md.query();
-                String dn = query.name();
-
-                ModuleDescriptor other;
-                ModuleArtifact artifact = r.findArtifact(dn);
-                if (artifact != null) {
-                    other = artifact.descriptor();
-                } else {
-                    Module m = layer.findModule(dn);
-                    if (m == null)
-                        throw new InternalError("Module " + dn + " not found");
-                    other = m.descriptor();
-                }
-
-                ModuleId mid;
-                if (other instanceof ExtendedModuleDescriptor) {
-                    mid = ((ExtendedModuleDescriptor)other).id();
-                } else {
-                    mid = ModuleId.parse(dn); // shouldn't happen
-                }
-
-                if (!query.matches(mid)) {
-                    String name = descriptor.name();
-                    if (mid.version() == null) {
-                        fail("%s requires %s, %s does not have a version",
-                            name, query, dn);
-                    } else {
-                        fail("%s requires %s, selected %s", name, query, mid);
-                    }
-                }
-            }
-        }
     }
 
     private static void fail(String fmt, Object ... args) {

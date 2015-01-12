@@ -37,7 +37,6 @@ import jdk.jigsaw.module.ModuleArtifactFinder;
 import jdk.jigsaw.module.ModuleDependence;
 import jdk.jigsaw.module.ModuleDependence.Modifier;
 import jdk.jigsaw.module.ModuleExport;
-import jdk.jigsaw.module.ModuleIdQuery;
 
 import org.testng.annotations.Test;
 import static org.testng.Assert.*;
@@ -206,7 +205,7 @@ public class LayerTest {
         Set<Modifier> set = new HashSet<>();
         for (Modifier mod: mods)
             set.add(mod);
-        return new ModuleDependence(set, ModuleIdQuery.parse(dn));
+        return new ModuleDependence(set, dn);
     }
 
 }

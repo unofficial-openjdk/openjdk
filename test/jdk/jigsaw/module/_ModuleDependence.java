@@ -37,28 +37,28 @@ import static org.testng.Assert.*;
 @Test
 public class _ModuleDependence {
 
-    private static ModuleDependence build(Set<Modifier> mods, String mq) {
+    private static ModuleDependence build(Set<Modifier> mods, String dn) {
         ModuleDependence md = new ModuleDependence(mods,
-                                                   ModuleIdQuery.parse(mq));
+                                                   ModuleId.parse(dn));
         out.println(md);
         return md;
     }
 
     public void none() {
-        ModuleDependence md = build(null, "foo@1.1");
+        ModuleDependence md = build(null, "foo");
         assertTrue(md.modifiers().isEmpty());
-        assertEquals(md.query(), ModuleIdQuery.parse("foo@1.1"));
+        assertEquals(md.id(), ModuleId.parse("foo"));
     }
 
     public void one() {
-        ModuleDependence md = build(EnumSet.of(OPTIONAL), "foo@1.1");
-        assertEquals(md.modifiers(), EnumSet.of(OPTIONAL));
-        assertEquals(md.query(), ModuleIdQuery.parse("foo@1.1"));
+        ModuleDependence md = build(EnumSet.of(PUBLIC), "foo");
+        assertEquals(md.modifiers(), EnumSet.of(PUBLIC));
+        assertEquals(md.id(), ModuleId.parse("foo"));
     }
 
     public void two() {
-        ModuleDependence md = build(EnumSet.of(OPTIONAL, PUBLIC), "foo@1.1");
-        assertEquals(md.modifiers(), EnumSet.of(OPTIONAL, PUBLIC));
+        ModuleDependence md = build(EnumSet.of(PUBLIC), "foo");
+        assertEquals(md.modifiers(), EnumSet.of(PUBLIC));
     }
 
 }

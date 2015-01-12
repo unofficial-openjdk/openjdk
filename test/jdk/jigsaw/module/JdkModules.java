@@ -66,15 +66,15 @@ public class JdkModules {
         });
     }
 
-    private static ModuleDependence moduleDep(Set<Modifier> mods, String mq) {
-        return new ModuleDependence(mods, ModuleIdQuery.parse(mq));
+    private static ModuleDependence moduleDep(Set<Modifier> mods, String dn) {
+        return new ModuleDependence(mods, dn);
     }
 
-    private static ModuleDependence modulePublicDep(String mq) {
-        return new ModuleDependence(EnumSet.of(Modifier.PUBLIC), ModuleIdQuery.parse(mq));
+    private static ModuleDependence modulePublicDep(String dn) {
+        return new ModuleDependence(EnumSet.of(Modifier.PUBLIC), dn);
     }
 
-    private static ModuleDependence moduleDep(String mq) {
-        return new ModuleDependence(EnumSet.noneOf(Modifier.class), ModuleIdQuery.parse(mq));
+    private static ModuleDependence moduleDep(String dn) {
+        return new ModuleDependence(EnumSet.noneOf(Modifier.class), dn);
     }
 }
