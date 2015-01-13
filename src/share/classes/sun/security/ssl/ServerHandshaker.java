@@ -416,20 +416,14 @@ final class ServerHandshaker extends Handshaker {
 
         clientRequestedVersion = mesg.protocolVersion;
 
-        // check if clientVersion is recent enough for us
-        if (clientRequestedVersion.v < enabledProtocols.min.v) {
+        // select a proper protocol version.
+        ProtocolVersion selectedVersion =
+               selectProtocolVersion(clientRequestedVersion);
+        if (selectedVersion == null ||
+                selectedVersion.v == ProtocolVersion.SSL20Hello.v) {
             fatalSE(Alerts.alert_handshake_failure,
                 "Client requested protocol " + clientRequestedVersion +
-                 " not enabled or not supported");
-        }
-
-        // now we know we have an acceptable version
-        // use the lower of our max and the client requested version
-        ProtocolVersion selectedVersion;
-        if (clientRequestedVersion.v <= enabledProtocols.max.v) {
-            selectedVersion = clientRequestedVersion;
-        } else {
-            selectedVersion = enabledProtocols.max;
+                " not enabled or not supported");
         }
         setVersion(selectedVersion);
 
@@ -821,8 +815,7 @@ final class ServerHandshaker extends Handshaker {
      * method should only be called if you really want to use the
      * CipherSuite.
      *
-     * This method is called from chooseCipherSuite() in this class
-     * and SSLServerSocketImpl.checkEnabledSuites() (as a sanity check).
+     * This method is called from chooseCipherSuite() in this class.
      */
     boolean trySetCipherSuite(CipherSuite suite) {
         /*
@@ -836,6 +829,11 @@ final class ServerHandshaker extends Handshaker {
         }
 
         if (suite.isNegotiable() == false) {
+            return false;
+        }
+
+        // TLSv1.1 must not negotiate the exportable weak cipher suites.
+        if (protocolVersion.v >= suite.obsoleted) {
             return false;
         }
 
