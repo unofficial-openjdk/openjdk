@@ -12,6 +12,8 @@ th.name {border-right: none;}th.num {border-left: none; text-align:right;}
 
 <h1>Technologies in the Modular JDK</h1>
 
+<p><em>Last updated 2015-01-09</em></p>
+
 <p><a href="module-summary.html">JDK Module Summary</a> | 
 Technologies in the <a href="https://docs.oracle.com/javase/8/docs/">Java SE Documentation</a> | 
 <a href="https://jcp.org/en/jsr/platform?listBy=2&listByType=platform">JSRs for Java SE</a> | 
@@ -21,30 +23,33 @@ Technologies in the <a href="https://docs.oracle.com/javase/8/docs/">Java SE Doc
 
 <table>
 <tr>
-<th><a href="https://jcp.org/en/procedures/jcp2#DEF">Target Platform Edition</a></th>
+<th><a href="https://jcp.org/en/procedures/jcp2#DEF">Target Platform</a></th>
 <th>Technology</th>
 <th>Original JSR</th>
 <th>Module</th>
 <th><a href="https://jcp.org/en/procedures/jcp2#2.1.2">Evolved By</a></th>
 <th>Notes</th>
+<th>Loader</th>
 </tr>
 
-<tr class="module">
+<tr>
 <td>Java SE</td>
 <td>JMX</td>
 <td><a href="https://jcp.org/en/jsr/detail?id=3">3</a></td>
 <td><a href="module-summary.html#java.management">java.management</a></td>
 <td>UJSR for Java SE</td>
 <td></td>
+<td>boot</td>
 </tr>
 
-<tr class="module">
+<tr>
 <td>Java SE</td>
 <td>Print Service</td>
 <td><a href="https://jcp.org/en/jsr/detail?id=6">6</a></td>
 <td><a href="module-summary.html#java.desktop">java.desktop</a></td>
 <td>UJSR for Java SE</td>
 <td></td>
+<td>boot</td>
 </tr>
 
 <tr>
@@ -54,6 +59,7 @@ Technologies in the <a href="https://docs.oracle.com/javase/8/docs/">Java SE Doc
 <td><a href="module-summary.html#java.prefs">java.prefs</a></td>
 <td>UJSR for Java SE</td>
 <td></td>
+<td>boot</td>
 </tr>
 
 <tr>
@@ -63,6 +69,7 @@ Technologies in the <a href="https://docs.oracle.com/javase/8/docs/">Java SE Doc
 <td><a href="module-summary.html#java.desktop">java.desktop</a></td>
 <td>UJSR for Java SE</td>
 <td></td>
+<td>boot</td>
 </tr>
 
 <tr>
@@ -72,6 +79,7 @@ Technologies in the <a href="https://docs.oracle.com/javase/8/docs/">Java SE Doc
 <td><a href="module-summary.html#java.security.sasl"/>java.security.sasl</a></td>
 <td>UJSR for Java SE</td>
 <td></td>
+<td>boot</td>
 </tr>
 
 <tr>
@@ -81,6 +89,7 @@ Technologies in the <a href="https://docs.oracle.com/javase/8/docs/">Java SE Doc
 <td><a href="module-summary.html#java.logging">java.logging</a></td>
 <td>UJSR for Java SE</td>
 <td></td>
+<td>boot</td>
 </tr>
 
 <tr>
@@ -90,6 +99,7 @@ Technologies in the <a href="https://docs.oracle.com/javase/8/docs/">Java SE Doc
 <td><a href="module-summary.html#java.desktop">java.desktop</a></td>
 <td>UJSR for Java SE</td>
 <td></td>
+<td>boot</td>
 </tr>
 
 <tr>
@@ -99,6 +109,7 @@ Technologies in the <a href="https://docs.oracle.com/javase/8/docs/">Java SE Doc
 <td><a href="module-summary.html#java.security.jgss">java.security.jgss</a></td>
 <td>UJSR for Java SE</td>
 <td></td>
+<td>boot</td>
 </tr>
 
 <tr>
@@ -108,6 +119,7 @@ Technologies in the <a href="https://docs.oracle.com/javase/8/docs/">Java SE Doc
 <td><a href="module-summary.html#java.xml.crypto">java.xml.crypto</a></td>
 <td>UJSR for Java SE</td>
 <td></td>
+<td>boot</td>
 </tr>
 
 <tr>
@@ -117,6 +129,7 @@ Technologies in the <a href="https://docs.oracle.com/javase/8/docs/">Java SE Doc
 <td><a href="module-summary.html#java.sql.rowset">java.sql.rowset</a></td>
 <td>Original JSR</td>
 <td>Co-evolved with JDBC</td>
+<td>boot</td>
 </tr>
 
 <tr>
@@ -126,6 +139,7 @@ Technologies in the <a href="https://docs.oracle.com/javase/8/docs/">Java SE Doc
 <td><a href="module-summary.html#java.management">java.management</a></td>
 <td>UJSR for Java SE</td>
 <td></td>
+<td>boot</td>
 </tr>
 
 <tr>
@@ -135,6 +149,7 @@ Technologies in the <a href="https://docs.oracle.com/javase/8/docs/">Java SE Doc
 <td><a href="module-summary.html#java.instrument">java.instrument</a> and <a href="module-summary.html#java.management">java.management</a></td>
 <td>UJSR for Java SE</td>
 <td></td>
+<td>boot</td>
 </tr>
 
 <tr>
@@ -144,6 +159,7 @@ Technologies in the <a href="https://docs.oracle.com/javase/8/docs/">Java SE Doc
 <td><a href="module-summary.html#java.compiler">java.compiler</a></td>
 <td>Original JSR</td>
 <td>Formerly a <a href="http://docs.oracle.com/javase/8/docs/technotes/guides/standards/#standalone-technologies">Standalone Technology</a></td>
+<td>boot</td>
 </tr>
 
 <tr>
@@ -153,6 +169,7 @@ Technologies in the <a href="https://docs.oracle.com/javase/8/docs/">Java SE Doc
 <td><a href="module-summary.html#java.xml">java.xml</a></td>
 <td>UJSR for Java SE</td>
 <td>Formerly a <a href="http://docs.oracle.com/javase/8/docs/technotes/guides/standards/#standalone-technologies">Standalone Technology</a></td>
+<td>boot</td>
 </tr>
 
 <tr>
@@ -162,6 +179,7 @@ Technologies in the <a href="https://docs.oracle.com/javase/8/docs/">Java SE Doc
 <td><a href="module-summary.html#java.sql">java.sql</a></td>
 <td>Original JSR</td>
 <td>Co-evolved with JDBC Rowset</td>
+<td>boot</td>
 </tr>
 
 <tr>
@@ -171,6 +189,7 @@ Technologies in the <a href="https://docs.oracle.com/javase/8/docs/">Java SE Doc
 <td><a href="module-summary.html#java.scripting">java.scripting</a></td>
 <td>Original JSR</td>
 <td>Formerly a <a href="http://docs.oracle.com/javase/8/docs/technotes/guides/standards/#standalone-technologies">Standalone Technology</a></td>
+<td>boot</td>
 </tr>
 
 <tr>
@@ -180,6 +199,7 @@ Technologies in the <a href="https://docs.oracle.com/javase/8/docs/">Java SE Doc
 <td><a href="module-summary.html#java.smartcardio">java.smartcardio</a></td>
 <td>Original JSR</td>
 <td>Not part of Java SE Platform</td>
+<td>boot</td>
 </tr>
 
 <tr>
@@ -189,6 +209,17 @@ Technologies in the <a href="https://docs.oracle.com/javase/8/docs/">Java SE Doc
 <td><a href="module-summary.html#java.compiler">java.compiler</a></td>
 <td>Original JSR</td>
 <td>Formerly a <a href="http://docs.oracle.com/javase/8/docs/technotes/guides/standards/#standalone-technologies">Standalone Technology</a></td>
+<td>boot</td>
+</tr>
+
+<tr>
+<td>Java SE</td>
+<td>JTA (XA)</td>
+<td><a href="https://jcp.org/en/jsr/detail?id=907">907</a></td>
+<td><a href="module-summary.html#java.sql"/>java.sql</a></td>
+<td>Original JSR</td>
+<td>Formerly a <a href="http://docs.oracle.com/javase/8/docs/technotes/guides/standards/#standalone-technologies">Standalone Technology</a> (unlisted)</td>
+<td>boot</td>
 </tr>
 
 <tr>
@@ -198,6 +229,7 @@ Technologies in the <a href="https://docs.oracle.com/javase/8/docs/">Java SE Doc
 <td><a href="module-summary.html#java.base"/>java.base</a></td>
 <td>UJSR for Java SE</td>
 <td></td>
+<td>boot</td>
 </tr>
 
 <tr>
@@ -207,6 +239,7 @@ Technologies in the <a href="https://docs.oracle.com/javase/8/docs/">Java SE Doc
 <td><a href="module-summary.html#java.base"/>java.base</a></td>
 <td>UJSR for Java SE</td>
 <td></td>
+<td>boot</td>
 </tr>
 
 <tr>
@@ -216,6 +249,7 @@ Technologies in the <a href="https://docs.oracle.com/javase/8/docs/">Java SE Doc
 <td><a href="module-summary.html#java.base"/>java.base</a> and <a href="module-summary.html#java.compiler"/>java.compiler</a></td>
 <td>UJSR for Java SE</td>
 <td></td>
+<td>boot</td>
 </tr>
 
 <tr>
@@ -225,6 +259,7 @@ Technologies in the <a href="https://docs.oracle.com/javase/8/docs/">Java SE Doc
 <td><a href="module-summary.html#java.base"/>java.base</a></td>
 <td>UJSR for Java SE</td>
 <td></td>
+<td>boot</td>
 </tr>
 
 <tr>
@@ -234,6 +269,7 @@ Technologies in the <a href="https://docs.oracle.com/javase/8/docs/">Java SE Doc
 <td><a href="module-summary.html#java.base"/>java.base</a></td>
 <td>UJSR for Java SE</td>
 <td></td>
+<td>boot</td>
 </tr>
 
 <tr>
@@ -243,6 +279,7 @@ Technologies in the <a href="https://docs.oracle.com/javase/8/docs/">Java SE Doc
 <td><a href="module-summary.html#java.base"/>java.base</a></td>
 <td>UJSR for Java SE</td>
 <td></td>
+<td>boot</td>
 </tr>
 
 <tr>
@@ -251,6 +288,8 @@ Technologies in the <a href="https://docs.oracle.com/javase/8/docs/">Java SE Doc
 <td><a href="https://jcp.org/en/jsr/detail?id=308">308</a></td>
 <td><a href="module-summary.html#java.base"/>java.base</a> and <a href="module-summary.html#java.compiler"/>java.compiler</a></td>
 <td>UJSR for Java SE</td>
+<td></td>
+<td>boot</td>
 </tr>
 
 <tr>
@@ -260,6 +299,7 @@ Technologies in the <a href="https://docs.oracle.com/javase/8/docs/">Java SE Doc
 <td><a href="module-summary.html#java.base"/>java.base</a></td>
 <td>UJSR for Java SE</td>
 <td></td>
+<td>boot</td>
 </tr>
 
 <tr>
@@ -269,15 +309,17 @@ Technologies in the <a href="https://docs.oracle.com/javase/8/docs/">Java SE Doc
 <td><a href="module-summary.html#java.base"/>java.base</a></td>
 <td>UJSR for Java SE</td>
 <td></td>
+<td>boot</td>
 </tr>
 
 <tr>
 <td>Java SE</td>
-<td>Collections, Math, I18N, I/O, Networking, Reflection</td>
+<td>Collections, Math, I18N, I/O, Net, Reflection</td>
 <td>---</td>
 <td><a href="module-summary.html#java.base"/>java.base</a></td>
 <td>UJSR for Java SE</td>
 <td></td>
+<td>boot</td>
 </tr>
 
 <tr>
@@ -287,6 +329,7 @@ Technologies in the <a href="https://docs.oracle.com/javase/8/docs/">Java SE Doc
 <td><a href="module-summary.html#java.base"/>java.base</a></td>
 <td>UJSR for Java SE</td>
 <td></td>
+<td>boot</td>
 </tr>
 
 <tr>
@@ -296,6 +339,7 @@ Technologies in the <a href="https://docs.oracle.com/javase/8/docs/">Java SE Doc
 <td><a href="module-summary.html#java.desktop"/>java.desktop</a></td>
 <td>UJSR for Java SE</td>
 <td></td>
+<td>boot</td>
 </tr>
 
 <tr>
@@ -305,6 +349,7 @@ Technologies in the <a href="https://docs.oracle.com/javase/8/docs/">Java SE Doc
 <td><a href="module-summary.html#java.naming"/>java.naming</a></td>
 <td>UJSR for Java SE</td>
 <td></td>
+<td>boot</td>
 </tr>
 
 <tr>
@@ -314,6 +359,7 @@ Technologies in the <a href="https://docs.oracle.com/javase/8/docs/">Java SE Doc
 <td><a href="module-summary.html#java.security.acl"/>java.security.acl</a></td>
 <td>UJSR for Java SE</td>
 <td></td>
+<td>boot</td>
 </tr>
 
 <tr>
@@ -323,6 +369,7 @@ Technologies in the <a href="https://docs.oracle.com/javase/8/docs/">Java SE Doc
 <td><a href="module-summary.html#java.rmi"/>java.rmi</a></td>
 <td>UJSR for Java SE</td>
 <td></td>
+<td>boot</td>
 </tr>
 
 <tr>
@@ -332,6 +379,7 @@ Technologies in the <a href="https://docs.oracle.com/javase/8/docs/">Java SE Doc
 <td><a href="module-summary.html#java.corba"/>java.corba</a></td>
 <td>UJSR for Java SE</td>
 <td>Formerly an <a href="http://docs.oracle.com/javase/8/docs/technotes/guides/standards/#endorsed-standards-apis">Endorsed Standard</a></td>
+<td>boot</td>
 </tr>
 
 <tr>
@@ -341,15 +389,17 @@ Technologies in the <a href="https://docs.oracle.com/javase/8/docs/">Java SE Doc
 <td><a href="module-summary.html#java.xml">java.xml</a></td>
 <td>UJSR for Java SE</td>
 <td>Formerly an <a href="http://docs.oracle.com/javase/8/docs/technotes/guides/standards/#endorsed-standards-apis">Endorsed Standard</a></td>
+<td>boot</td>
 </tr>
 
 <tr>
 <td>Java EE</td>
 <td>SAAJ</td>
 <td><a href="https://jcp.org/en/jsr/detail?id=67">67</a></td>
-<td><a href="module-summary.html#java.xml.soap">java.xml.soap</a></td>
+<td><a href="module-summary.html#java.xml.ws">java.xml.ws</a></td>
 <td>Original JSR</td>
 <td>Formerly a <a href="http://docs.oracle.com/javase/8/docs/technotes/guides/standards/#standalone-technologies">Standalone Technology</a> (f.k.a. JAXM)</td>
+<td>ext</td>
 </tr>
 
 <tr>
@@ -359,6 +409,7 @@ Technologies in the <a href="https://docs.oracle.com/javase/8/docs/">Java SE Doc
 <td><a href="module-summary.html#java.xml">java.xml</a></td>
 <td>Original JSR</td>
 <td>Formerly a <a href="http://docs.oracle.com/javase/8/docs/technotes/guides/standards/#standalone-technologies">Standalone Technology</a></td>
+<td>boot</td>
 </tr>
 
 <tr>
@@ -368,6 +419,7 @@ Technologies in the <a href="https://docs.oracle.com/javase/8/docs/">Java SE Doc
 <td><a href="module-summary.html#java.xml.ws">java.xml.ws</a></td>
 <td>Original JSR</td>
 <td>Formerly a <a href="http://docs.oracle.com/javase/8/docs/technotes/guides/standards/#standalone-technologies">Standalone Technology</a> (unlisted)</td>
+<td>ext</td>
 </tr>
 
 <tr>
@@ -377,6 +429,7 @@ Technologies in the <a href="https://docs.oracle.com/javase/8/docs/">Java SE Doc
 <td><a href="module-summary.html#java.xml.bind">java.xml.bind</a></td>
 <td>Original JSR</td>
 <td>Formerly a <a href="http://docs.oracle.com/javase/8/docs/technotes/guides/standards/#standalone-technologies">Standalone Technology</a></td>
+<td>ext</td>
 </tr>
 
 <tr>
@@ -386,6 +439,7 @@ Technologies in the <a href="https://docs.oracle.com/javase/8/docs/">Java SE Doc
 <td><a href="module-summary.html#java.xml.ws">java.xml.ws</a></td>
 <td>Original JSR</td>
 <td>Formerly a <a href="http://docs.oracle.com/javase/8/docs/technotes/guides/standards/#standalone-technologies">Standalone Technology</a></td>
+<td>ext</td>
 </tr>
 
 <tr>
@@ -395,15 +449,17 @@ Technologies in the <a href="https://docs.oracle.com/javase/8/docs/">Java SE Doc
 <td><a href="module-summary.html#java.annotations.common">java.annotations.common</a></td>
 <td>Original JSR</td>
 <td>Formerly a <a href="http://docs.oracle.com/javase/8/docs/technotes/guides/standards/#standalone-technologies">Standalone Technology</a> (unlisted)</td>
+<td>ext</td>
 </tr>
 
 <tr>
 <td>Java EE</td>
-<td>JTA</td>
+<td>JTA (non-XA)</td>
 <td><a href="https://jcp.org/en/jsr/detail?id=907">907</a></td>
-<td><a href="module-summary.html#java.corba">java.corba</a> and <a href="module-summary.html#java.sql">java.sql</a></td>
+<td><a href="module-summary.html#java.transaction">java.transaction</a></td>
 <td>Original JSR</td>
 <td>Formerly a <a href="http://docs.oracle.com/javase/8/docs/technotes/guides/standards/#standalone-technologies">Standalone Technology</a> (unlisted)</td>
+<td>boot</td>
 </tr>
 
 <tr>
@@ -413,6 +469,7 @@ Technologies in the <a href="https://docs.oracle.com/javase/8/docs/">Java SE Doc
 <td><a href="module-summary.html#java.activation">java.activation</a></a></td>
 <td>Original JSR</td>
 <td>Formerly a <a href="http://docs.oracle.com/javase/8/docs/technotes/guides/standards/#standalone-technologies">Standalone Technology</a> (unlisted)</td>
+<td>ext</td>
 </tr>
 
 </table>
