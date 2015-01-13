@@ -436,6 +436,9 @@ java/lang/Thread/ThreadStateTest.java				generic-all
 
 # jdk_management
 
+# Failing, bug was filed: 6959636
+javax/management/loading/LibraryLoader/LibraryLoaderTest.java	generic-all
+
 # Fails on windows: TEST RESULT: Error. failed to clean up files after test
 javax/management/loading/LibraryLoader/LibraryLoaderTest.java	windows-all
 
@@ -1132,65 +1135,11 @@ java/text/Bidi/Bug6665028.java				 	linux-x64
 
 # jdk_tools
 
-# Some of the tools tests kind of require "othervm" or if they don't will
-#  always be firing up another VM anyway due to the nature of tools testing.
-#  So most if not all tools tests are now being run with "othervm" mode.
-#  Some of these tools tests have a tendency to use fixed ports, bad idea.
-
-# Failed 6963102, unreliable testcase
-sun/tools/jstatd/jstatdDefaults.sh				generic-all
-
 # Native allocation errors on windows
 tools/pack200/MemoryAllocatorTest.java				generic-all
 
-# Output of jps differs from expected output.
-#   Invalid argument count on solaris-sparc and x64
-sun/tools/jstatd/jstatdPort.sh					generic-all
-
-# othervm mode, Could not synchronize with target
-sun/tools/jps/jps-l_1.sh					generic-all
-sun/tools/jps/jps-l_2.sh					generic-all
-sun/tools/jps/jps-lm.sh						generic-all
-sun/tools/jps/jps-Vvml_2.sh					generic-all
-sun/tools/jps/jps-m_2.sh					generic-all
-
 # Fails with othervm on OpenSolaris
-sun/tools/jps/jps-Defaults.sh					generic-all
-sun/tools/jps/jps-V_2.sh					generic-all
-sun/tools/jps/jps-Vm_2.sh					generic-all
-sun/tools/jps/jps-Vvml.sh					generic-all
-sun/tools/jps/jps-v_1.sh					generic-all
 sun/tools/jps/jps-vm_1.sh					generic-all
-sun/tools/jps/jps-Vvm.sh					generic-all
-sun/tools/jps/jps-m.sh						generic-all
-
-# Server name error, port 2098 problem?
-sun/tools/jstatd/jstatdServerName.sh				generic-all
-
-# Problems on windows, jmap.exe hangs?
-com/sun/tools/attach/BasicTests.sh				windows-all
-
-# Unexpected Monitor Exception, solaris sparc -client
-sun/jvmstat/monitor/MonitoredVm/MonitorVmStartTerminate.sh	generic-all
-
-# Problems on windows, jmap.exe hangs? (these run jmap)
-sun/tools/jmap/Basic.sh						windows-all
-
-# Invalid argument count on solaris-sparc and x64
-sun/tools/jstatd/jstatdDefaults.sh			 	solaris-all
-
-# Solaris sparcv9, jps output does not match, x64 different
-sun/tools/jstatd/jstatdExternalRegistry.sh		 	solaris-all
-
-# Solaris 10 sparc 32bit -client, java.lang.AssertionError: Some tests failed
-tools/jar/JarEntryTime.java					generic-all
-
-# These tests fail on solaris sparc, all the time
-tools/jar/ChangeDir.java					generic-all
-
-# Cannot write jar, on OpenSolaris and windows
-#  Also, possible problems on windows, jmap.exe hangs? 
-tools/jar/index/MetaInf.java				 	generic-all
 
 # Cannot compile on OpenSolaris?
 com/sun/tools/extcheck/TestExtcheckArgs.java			generic-all

@@ -551,7 +551,7 @@ jdk_tools1: com/sun/jdi
 JDK_ALL_TARGETS += jdk_tools2
 jdk_tools2: com/sun/tools sun/jvmstat sun/tools tools vm 
 	$(call SharedLibraryPermissions,tools/launcher)
-	$(call RunOthervmBatch)
+	$(call RunSamevmBatch)
 
 # All tools tests
 jdk_tools: jdk_tools1 jdk_tools2

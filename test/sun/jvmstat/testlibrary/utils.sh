@@ -40,7 +40,7 @@ setup() {
 
     OS=`uname -s`
     case ${OS} in
-    Windows_*)
+    Windows_* | CYGWIN*)
         PS=";"
         FS="\\"
         ;;
@@ -54,7 +54,7 @@ setup() {
 verify_os() {
     OS=`uname -s`
     case ${OS} in
-    Windows_95 | Windows_98 | Windows_ME)
+    Windows_95 | Windows_98 | Windows_ME | CYGWIN* )
         echo "Test bypassed: jvmstat feature not supported on ${OS}"
         exit 0
         ;;
@@ -189,3 +189,37 @@ kill_proc_common() {
         echo "Error sending term signal to ${kpid}!"
     fi
 }
+
+# check to see if a port is free
+checkPort() # port
+{
+    inuse=`netstat -a | egrep "\.$1"`
+    if [ "${inuse}" = "" ] ; then
+      echo "free"
+    else
+      echo "inuse"
+    fi
+}
+
+# Get a free port, where port+1 is also free, return 0 when giving up
+freePort()
+{
+  start=3000
+  while [ ${start} -lt 3030 ] ; do
+    port1=`expr ${start} '+' $$ '%' 1000`
+    port2=`expr ${port1} '+' 1`
+    if [ "`checkPort ${port1}`" = "inuse" \
+         -o "`checkPort ${port2}`" = "inuse" ] ; then
+      start=`expr ${start} '+' 1`
+    else
+      break
+    fi
+  done
+  if [ "`checkPort ${port1}`" = "inuse" \
+       -o "`checkPort ${port2}`" = "inuse" ] ; then
+    port1="0"
+  fi
+  echo "${port1}"
+}
+
+

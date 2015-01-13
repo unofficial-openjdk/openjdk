@@ -182,6 +182,11 @@ public class EventQueue {
                 {
                     EventQueue.invokeAndWait(source, r);
                 }
+
+                @Override
+                public long getMostRecentEventTime(EventQueue eventQueue) {
+                    return eventQueue.getMostRecentEventTimeImpl();
+                }
             });
     }
 

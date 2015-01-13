@@ -50,10 +50,6 @@ import sun.security.util.KeyUtil;
  */
 final class RSAClientKeyExchange extends HandshakeMessage {
 
-    int messageType() {
-        return ht_client_key_exchange;
-    }
-
     /*
      * The following field values were encrypted with the server's public
      * key (or temp key from server key exchange msg) and are presented
@@ -62,7 +58,6 @@ final class RSAClientKeyExchange extends HandshakeMessage {
     private ProtocolVersion protocolVersion; // preMaster [0,1]
     SecretKey preMaster;
     private byte[] encrypted;           // same size as public modulus
-
 
     /*
      * Client randomly creates a pre-master secret and encrypts it
@@ -106,7 +101,6 @@ final class RSAClientKeyExchange extends HandshakeMessage {
             throw new SSLKeyException("Private key not of type RSA");
         }
 
-        this.protocolVersion = currentVersion;
         if (currentVersion.v >= ProtocolVersion.TLS10.v) {
             encrypted = input.getBytes16();
         } else {
@@ -140,6 +134,12 @@ final class RSAClientKeyExchange extends HandshakeMessage {
         }
     }
 
+    @Override
+    int messageType() {
+        return ht_client_key_exchange;
+    }
+
+    @Override
     int messageLength() {
         if (protocolVersion.v >= ProtocolVersion.TLS10.v) {
             return encrypted.length + 2;
@@ -148,6 +148,7 @@ final class RSAClientKeyExchange extends HandshakeMessage {
         }
     }
 
+    @Override
     void send(HandshakeOutStream s) throws IOException {
         if (protocolVersion.v >= ProtocolVersion.TLS10.v) {
             s.putBytes16(encrypted);
@@ -156,7 +157,9 @@ final class RSAClientKeyExchange extends HandshakeMessage {
         }
     }
 
+    @Override
     void print(PrintStream s) throws IOException {
-        s.println("*** ClientKeyExchange, RSA PreMasterSecret, " + protocolVersion);
+        s.println("*** ClientKeyExchange, RSA PreMasterSecret, " +
+                                                        protocolVersion);
     }
 }
