@@ -42,7 +42,6 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 import java.util.Stack;
 import java.util.Map;
@@ -51,7 +50,7 @@ import java.util.Hashtable;
 import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
 
-import sun.misc.BootResourceFinder;
+import sun.misc.BootLoader;
 import sun.misc.CompoundEnumeration;
 import sun.misc.ServicesCatalog;
 import sun.misc.Unsafe;
@@ -1254,22 +1253,14 @@ public abstract class ClassLoader {
      * Find resources from the VM's built-in classloader.
      */
     private static URL getBootstrapResource(String name) {
-        return BootResourceFinder.get().findResource(name);
+        return BootLoader.findResource(name);
     }
 
     /**
      * Find resources from the VM's built-in classloader.
      */
     private static Enumeration<URL> getBootstrapResources(String name) {
-        Iterator<URL> i = BootResourceFinder.get().findResources(name);
-        return new Enumeration<URL> () {
-            public URL nextElement() {
-                return i.next();
-            }
-            public boolean hasMoreElements() {
-                return i.hasNext();
-            }
-        };
+        return BootLoader.findResources(name);
     }
 
     /**

@@ -260,7 +260,7 @@ class ExplodedModuleReader extends BaseModuleReader {
     @Override
     public URL findResource(String name) {
         Path path = dir.resolve(name.replace('/', File.separatorChar));
-        if (Files.exists(path))
+        if (Files.isRegularFile(path))
             return toFileURL(path);
         return null;
     }

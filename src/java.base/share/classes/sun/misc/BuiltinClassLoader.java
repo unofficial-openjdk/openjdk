@@ -35,7 +35,15 @@ import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.security.*;
+import java.security.AccessController;
+import java.security.CodeSigner;
+import java.security.CodeSource;
+import java.security.Permission;
+import java.security.PermissionCollection;
+import java.security.PrivilegedAction;
+import java.security.PrivilegedActionException;
+import java.security.PrivilegedExceptionAction;
+import java.security.SecureClassLoader;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Iterator;
@@ -77,14 +85,11 @@ import jdk.jigsaw.module.ModuleArtifact;
  *     and permission checks. Also need to double check that we don't need to
  *     support signers on the class path </li>
  *     <li>Need to add support for package sealing</li>
- *     <li>Replace BootResourceFinder to avoid duplicate code</li>
  * </ol>
  */
 class BuiltinClassLoader extends SecureClassLoader
     implements ModuleLoader, ResourceFinder
 {
-    private static final JavaLangAccess jla = SharedSecrets.getJavaLangAccess();
-
     static {
         ClassLoader.registerAsParallelCapable();
     }
@@ -119,7 +124,8 @@ class BuiltinClassLoader extends SecureClassLoader
                        Path overrideDir,
                        URLClassPath ucp)
     {
-        super(parent);
+        // ensure getParent() returns null when the parent is the boot loader
+        super(parent == null || parent == BootLoader.loader() ? null : parent);
 
         this.parent = parent;
         this.imageReader = imageReader;
@@ -147,7 +153,7 @@ class BuiltinClassLoader extends SecureClassLoader
      */
     @Override
     public URL getResource(String name) {
-        URL url;
+        URL url = null;
 
         // is resource in a package of a module defined to this class loader?
         ModuleArtifact first = findModuleForResource(name);
@@ -162,21 +168,26 @@ class BuiltinClassLoader extends SecureClassLoader
         }
 
         // check parent
-        if (parent == null) {
-            url = BootResourceFinder.get().findResource(name);
-        } else {
+        if (parent != null) {
             url = parent.getResource(name);
+            if (url != null) {
+                return url;
+            }
         }
-        if (url != null)
-            return url;
 
         // search all modules defined to this class loader
-        for (ModuleArtifact artifact: packageToArtifact.values()) {
+        Iterator<ModuleArtifact> i = packageToArtifact.values()
+                                                      .stream()
+                                                      .distinct()
+                                                      .iterator();
+        while (i.hasNext()) {
+            ModuleArtifact artifact = i.next();
             if (artifact != first) {
                 try {
                     url = findResource(artifact, name);
-                    if (url != null)
+                    if (url != null) {
                         return url;
+                    }
                 } catch (SecurityException e) {
                     // ignore as the resource may be in parent
                 }
@@ -214,9 +225,7 @@ class BuiltinClassLoader extends SecureClassLoader
         }
 
         // check parent
-        if (parent == null) {
-            BootResourceFinder.get().findResources(name).forEachRemaining(result::add);
-        } else {
+        if (parent != null) {
             Enumeration<URL> e = parent.getResources(name);
             while (e.hasMoreElements()) {
                 result.add(e.nextElement());
@@ -224,7 +233,7 @@ class BuiltinClassLoader extends SecureClassLoader
         }
 
         // check modules defined to this class loader
-        for (ModuleArtifact artifact: packageToArtifact.values()) {
+        packageToArtifact.values().stream().distinct().forEach(artifact -> {
             if (artifact != first) {
                 try {
                     URL url = findResource(artifact, name);
@@ -234,7 +243,7 @@ class BuiltinClassLoader extends SecureClassLoader
                     // ignore as the resource may be in parent
                 }
             }
-        }
+        });
 
         // class path
         if (ucp != null) {
@@ -344,12 +353,18 @@ class BuiltinClassLoader extends SecureClassLoader
      */
     @Override
     protected Class<?> findClass(String cn) throws ClassNotFoundException {
-        // check modules defined to this class loader
-        Class<?> c = findClassInModuleOrNull(cn);
 
-        // check class path
-        if (c == null && ucp != null)
-            c = findClassOnClassPathOrNull(cn);
+        // find the candidate module for this class
+        ModuleArtifact artifact = findModule(cn);
+
+        Class<?> c = null;
+        if (artifact != null) {
+            c = findClassInModuleOrNull(artifact, cn);
+        } else {
+            // check class path
+            if (ucp != null)
+                c = findClassOnClassPathOrNull(cn);
+        }
 
         // not found
         if (c == null)
@@ -370,21 +385,22 @@ class BuiltinClassLoader extends SecureClassLoader
             Class<?> c = findLoadedClass(cn);
 
             if (c == null) {
-                // check modules defined to this class loader
-                c = findClassInModuleOrNull(cn);
+                // find the candidate module for this class
+                ModuleArtifact artifact = findModule(cn);
+                if (artifact != null)
+                    c = findClassInModuleOrNull(artifact, cn);
 
                 if (c == null) {
                     // check parent
                     if (parent != null) {
                         try {
                             c = parent.loadClass(cn);
-                        } catch (ClassNotFoundException e) { }
-                    } else {
-                        c = jla.findBootstrapClassOrNull(this, cn);
+                        } catch (ClassNotFoundException e) {
+                        }
                     }
 
                     // check class path
-                    if (c == null && ucp != null) {
+                    if (c == null && artifact == null && ucp != null) {
                         c = findClassOnClassPathOrNull(cn);
                     }
 
@@ -401,34 +417,28 @@ class BuiltinClassLoader extends SecureClassLoader
     }
 
     /**
-     * Finds the class with the specified binary name if in a module
-     * defined to this ClassLoader.
-     *
-     * @return the resulting Class or {@code null} if the package name is
-     * an API package in any of the modules defined to this class loader
-     *
-     * @throws ClassNotFoundException if the package name is in an API
-     * package defined to this class loader but the class is not found.
+     * Find the candidate module artifact for the given class name.
+     * Returns {@code null} if none of the modules defined to this
+     * class loader contain the API package for the class.
      */
-    private Class<?> findClassInModuleOrNull(String cn)
-        throws ClassNotFoundException
-    {
+    private ModuleArtifact findModule(String cn) {
         int pos = cn.lastIndexOf('.');
         if (pos < 0)
             return null; // unnamed package
 
         String pkg = cn.substring(0, pos);
-        ModuleArtifact artifact = packageToArtifact.get(pkg);
-        if (artifact != null) {
-            PrivilegedAction<Class<?>> pa = () -> defineClass(cn, artifact);
-            Class<?> c = AccessController.doPrivileged(pa);
-            if (c == null)
-                throw new ClassNotFoundException(cn);
-            return c;
-        }
+        return packageToArtifact.get(pkg);
+    }
 
-        // not in a module
-        return null;
+    /**
+     * Finds the class with the specified binary name if in a module
+     * defined to this ClassLoader.
+     *
+     * @return the resulting Class or {@code null} if not found
+     */
+    private Class<?> findClassInModuleOrNull(ModuleArtifact artifact, String cn) {
+        PrivilegedAction<Class<?>> pa = () -> defineClass(cn, artifact);
+        return AccessController.doPrivileged(pa);
     }
 
     /**

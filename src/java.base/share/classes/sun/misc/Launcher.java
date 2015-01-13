@@ -148,7 +148,7 @@ public class Launcher {
      */
     private static class ExtClassLoader extends BuiltinClassLoader {
         ExtClassLoader(ImageReader imageReader, Path modulesDir, Path overrideDir) {
-            super(null, imageReader, modulesDir, overrideDir, null);
+            super(BootLoader.loader(), imageReader, modulesDir, overrideDir, null);
         }
     }
 

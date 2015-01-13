@@ -37,7 +37,7 @@ import java.security.PrivilegedAction;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import sun.misc.BootResourceFinder;
+import sun.misc.BootLoader;
 import sun.misc.Resource;
 import sun.misc.ResourceFinder;
 import sun.net.www.ParseUtil;
@@ -63,7 +63,7 @@ public class JavaRuntimeURLConnection extends URLConnection {
     }
 
     private static Resource findResource(String module, String name) {
-        Resource r = BootResourceFinder.get().findResourceAsResource(module, name);
+        Resource r = BootLoader.findResource(module, name);
         if (r != null)
             return r;
 

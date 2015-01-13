@@ -45,7 +45,7 @@ import jdk.jigsaw.module.ModuleArtifact;
 import jdk.jigsaw.module.ModuleArtifactFinder;
 import jdk.jigsaw.module.ModuleDescriptor;
 import jdk.jigsaw.module.ModuleId;
-import sun.misc.BootResourceFinder;
+import sun.misc.BootLoader;
 import sun.misc.Launcher;
 import sun.misc.ModuleLoader;
 import sun.misc.PerfCounter;
@@ -272,7 +272,7 @@ class ModuleBootstrap {
             ModuleArtifact artifact = cf.findArtifact(name);
             ClassLoader cl = clf.loaderForModule(artifact);
             if (cl == null) {
-                BootResourceFinder.get().defineModule(artifact);
+                BootLoader.defineModule(artifact);
             } else {
                 ((ModuleLoader)cl).defineModule(artifact);
             }
@@ -318,9 +318,13 @@ class ModuleBootstrap {
     }
 
     static class PerfCounters {
-        static PerfCounter bootstrapTime = PerfCounter.newPerfCounter("jdk.module.bootstrap.time");
-        static PerfCounter bootLayerTime = PerfCounter.newPerfCounter("jdk.module.bootLayer.createTime");
-        static PerfCounter mapModuleCLTime = PerfCounter.newPerfCounter("jdk.module.moduleToLoader.time");
-        static PerfCounter configTime = PerfCounter.newPerfCounter("jdk.module.configuration.time");
+        static PerfCounter bootstrapTime =
+            PerfCounter.newPerfCounter("jdk.module.bootstrap.time");
+        static PerfCounter bootLayerTime =
+            PerfCounter.newPerfCounter("jdk.module.bootLayer.createTime");
+        static PerfCounter mapModuleCLTime =
+            PerfCounter.newPerfCounter("jdk.module.moduleToLoader.time");
+        static PerfCounter configTime =
+            PerfCounter.newPerfCounter("jdk.module.configuration.time");
     }
 }
