@@ -30,8 +30,11 @@ import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+
 
 /*
  * Manage module meta data.
@@ -253,8 +256,8 @@ final public class ImageModuleData {
         return packages;
     }
 
-    public List<String> allModuleNames() {
-        List<String> modules = new ArrayList<>();
+    public Set<String> allModuleNames() {
+        Set<String> modules = new HashSet<>();
 
         for (int i = 0; i < mtpRedirectLength; i++) {
             int index = mtpDataOffset + i * mtpDataWidth;

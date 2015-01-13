@@ -38,6 +38,7 @@ import java.security.CodeSource;
 import java.security.PermissionCollection;
 
 import jdk.internal.jimage.ImageReader;
+import jdk.internal.jimage.ImageReaderFactory;
 import sun.net.www.protocol.jrt.JavaRuntimeURLConnection;
 
 /**
@@ -182,7 +183,7 @@ public class Launcher {
      */
     private static ImageReader openImageIfExists(Path path) {
         try {
-            return ImageReader.open(path.toString());
+            return ImageReaderFactory.get(path);
         } catch (NoSuchFileException ignore) {
             return null;
         } catch (IOException ioe) {

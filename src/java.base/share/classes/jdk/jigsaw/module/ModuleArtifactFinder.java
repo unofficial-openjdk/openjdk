@@ -30,7 +30,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.net.URI;
-import java.net.URL;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -49,7 +48,6 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import jdk.jigsaw.module.internal.ControlFile;
-import jdk.internal.jimage.JigsawImageModules;
 import sun.misc.JModCache;
 
 /**
@@ -186,70 +184,6 @@ public interface ModuleArtifactFinder {
     }
 }
 
-/**
- * A {@code ModuleArtifactFinder} that finds modules that are
- * linked into the modular image.
- */
-class InstalledModuleFinder implements ModuleArtifactFinder {
-    private final Set<ModuleArtifact> artifacts;
-    private final Map<String, ModuleArtifact> namesToArtifact= new HashMap<>();
-
-    InstalledModuleFinder() {
-        this.artifacts = modules();
-        for (ModuleArtifact m : artifacts) {
-            String name = m.descriptor().name();
-            namesToArtifact.putIfAbsent(name, m);
-        }
-    }
-
-    private static Path imageModulesPath() {
-        String home = System.getProperty("java.home");
-        return Paths.get(home, "lib", "modules", JigsawImageModules.FILE);
-    }
-
-    private Set<ModuleArtifact> modules() {
-        try (InputStream in = Files.newInputStream(imageModulesPath())) {
-
-            JigsawImageModules image = JigsawImageModules.load(in);
-
-            Set<ExtendedModuleDescriptor> descriptors = image.modules();
-            Map<String, Set<String>> packageMap = image.packages();
-
-            Set<ModuleArtifact> artifacts = new HashSet<>();
-            for (ExtendedModuleDescriptor descriptor: descriptors) {
-                String name = descriptor.name();
-                URI location = URI.create("jrt:/" + name);
-                Set<String> packages = packageMap.get(name);
-                if (packages == null)
-                    packages = Collections.emptySet();
-
-                ModuleArtifact artifact = new ModuleArtifact(descriptor,
-                                                             packages,
-                                                             location);
-                artifacts.add(artifact);
-            }
-
-            return artifacts;
-
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
-    }
-
-    static boolean isModularImage() {
-        return Files.isRegularFile(imageModulesPath());
-    }
-
-    @Override
-    public ModuleArtifact find(String name) {
-        return namesToArtifact.get(name);
-    }
-
-    @Override
-    public Set<ModuleArtifact> allModules() {
-        return Collections.unmodifiableSet(artifacts);
-    }
-}
 
 /**
  * Locates module artifacts on the file system by searching a sequence of
@@ -492,5 +426,3 @@ class ModulePath implements ModuleArtifactFinder {
         }
     }
 }
-
-

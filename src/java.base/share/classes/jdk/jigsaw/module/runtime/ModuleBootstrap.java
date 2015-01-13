@@ -48,6 +48,7 @@ import jdk.jigsaw.module.ModuleId;
 import sun.misc.BootResourceFinder;
 import sun.misc.Launcher;
 import sun.misc.ModuleLoader;
+import sun.misc.PerfCounter;
 import sun.reflect.Reflection;
 
 /**
@@ -65,6 +66,7 @@ class ModuleBootstrap {
      * Invoked by the VM at startup to initialize the module system.
      */
     static void boot() {
+        long t0 = System.nanoTime();
 
         // -upgrademodulepath option specified to launcher
         ModuleArtifactFinder upgradeModulePath =
@@ -145,11 +147,15 @@ class ModuleBootstrap {
                 input.addAll(additionalMods);
         }
 
+        long t1 = System.nanoTime();
+
         // run the resolver to create the configuration
         Configuration cf = Configuration.resolve(finder,
                                                  Layer.emptyLayer(),
                                                  ModuleArtifactFinder.nullFinder(),
                                                  input).bind();
+
+        PerfCounters.configTime.addElapsedTimeFrom(t1);
 
         // mapping of modules to class loaders
         Layer.ClassLoaderFinder clf = classLoaderFinder(cf);
@@ -168,11 +174,16 @@ class ModuleBootstrap {
             }
         }
 
+        long t2 = System.nanoTime();
+
         // define modules to VM/runtime
         Layer bootLayer = Layer.create(cf, clf);
+        PerfCounters.bootLayerTime.addElapsedTimeFrom(t2);
 
         // define modules to class loaders
         defineModulesToClassLoaders(cf, clf);
+
+        PerfCounters.mapModuleCLTime.addElapsedTimeFrom(t2);
 
         // reflection checks enabled?
         String s = System.getProperty("sun.reflect.enableModuleChecks");
@@ -189,6 +200,7 @@ class ModuleBootstrap {
                             .sorted()
                             .forEach(md -> System.out.println(md.name()));
         }
+        PerfCounters.bootstrapTime.addElapsedTimeFrom(t0);
     }
 
     /**
@@ -303,5 +315,12 @@ class ModuleBootstrap {
      */
     static void fail(String m) {
         throw new RuntimeException(m);
+    }
+
+    static class PerfCounters {
+        static PerfCounter bootstrapTime = PerfCounter.newPerfCounter("jdk.module.bootstrap.time");
+        static PerfCounter bootLayerTime = PerfCounter.newPerfCounter("jdk.module.bootLayer.createTime");
+        static PerfCounter mapModuleCLTime = PerfCounter.newPerfCounter("jdk.module.moduleToLoader.time");
+        static PerfCounter configTime = PerfCounter.newPerfCounter("jdk.module.configuration.time");
     }
 }
