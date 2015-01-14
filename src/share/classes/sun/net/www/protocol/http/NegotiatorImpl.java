@@ -91,7 +91,8 @@ public class NegotiatorImpl extends Negotiator {
         // RFC 4120 6.2.1 demands the host be lowercase
         String peerName = "HTTP@" + hci.host.toLowerCase();
 
-        GSSName serverName = manager.createName(peerName, null);
+        GSSName serverName = manager.createName(peerName,
+                GSSName.NT_HOSTBASED_SERVICE);
         context = manager.createContext(serverName,
                                         oid,
                                         null,
