@@ -1173,7 +1173,9 @@ public class HttpURLConnection extends java.net.HttpURLConnection {
                     // altered in similar ways.
 
                     AuthenticationHeader authhdr = new AuthenticationHeader (
-                        "Proxy-Authenticate", responses, http.getProxyHostUsed()
+                        "Proxy-Authenticate", responses,
+                            new HttpCallerInfo(url, http.getProxyHostUsed(),
+                                http.getProxyPortUsed())
                     );
 
                     if (!doingNTLMp2ndStage) {
@@ -1219,7 +1221,8 @@ public class HttpURLConnection extends java.net.HttpURLConnection {
                     }
 
                     srvHdr = new AuthenticationHeader (
-                         "WWW-Authenticate", responses, url.getHost().toLowerCase()
+                            "WWW-Authenticate", responses,
+                            new HttpCallerInfo(url)
                     );
 
                     String raw = srvHdr.raw();
@@ -1533,7 +1536,9 @@ public class HttpURLConnection extends java.net.HttpURLConnection {
                 respCode = Integer.parseInt(st.nextToken().trim());
                 if (respCode == HTTP_PROXY_AUTH) {
                     AuthenticationHeader authhdr = new AuthenticationHeader (
-                        "Proxy-Authenticate", responses, http.getProxyHostUsed()
+                        "Proxy-Authenticate", responses,
+                            new HttpCallerInfo(url, http.getProxyHostUsed(),
+                                http.getProxyPortUsed())
                     );
                     if (!doingNTLMp2ndStage) {
                         proxyAuthentication =
@@ -1729,9 +1734,9 @@ public class HttpURLConnection extends java.net.HttpURLConnection {
 
                     tryTransparentNTLMProxy = false;
                 } else if (schemeID == NegotiateAuthentication.NEGOTIATE_AUTH) {
-                    ret = new NegotiateAuthentication(true, host, port, null, "Negotiate");
+                    ret = new NegotiateAuthentication(new HttpCallerInfo(authhdr.getHttpCallerInfo(), "Negotiate"));
                 } else if (schemeID == NegotiateAuthentication.KERBEROS_AUTH) {
-                    ret = new NegotiateAuthentication(true, host, port, null, "Kerberos");
+                    ret = new NegotiateAuthentication(new HttpCallerInfo(authhdr.getHttpCallerInfo(), "Kerberos"));
                 }
             }
             // For backwards compatibility, we also try defaultAuth
@@ -1815,7 +1820,7 @@ public class HttpURLConnection extends java.net.HttpURLConnection {
                     } catch (Exception e) {
                         url1 = url;
                     }
-                    ret = new NegotiateAuthentication(false, url1, null, "Kerberos");
+                    ret = new NegotiateAuthentication(new HttpCallerInfo(authhdr.getHttpCallerInfo(), "Kerberos"));
                 }
                 if (schemeID == NegotiateAuthentication.NEGOTIATE_AUTH) {
                     URL url1;
@@ -1824,7 +1829,7 @@ public class HttpURLConnection extends java.net.HttpURLConnection {
                     } catch (Exception e) {
                         url1 = url;
                     }
-                    ret = new NegotiateAuthentication(false, url1, null, "Negotiate");
+                    ret = new NegotiateAuthentication(new HttpCallerInfo(authhdr.getHttpCallerInfo(), "Negotiate"));
                 }
                 if (schemeID == BasicAuthentication.BASIC_AUTH) {
                     PasswordAuthentication a =

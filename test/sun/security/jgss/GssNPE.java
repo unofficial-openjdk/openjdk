@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,7 +27,6 @@
  * @summary GSS throws NPE when the JAAS config file does not exist
  */
 
-import org.ietf.jgss.*;
 import sun.security.jgss.*;
 
 public class GssNPE {
@@ -40,7 +39,7 @@ public class GssNPE {
         // not exist. New caller-enabled JGSS changed this. this bug fix will
         // revert to the old behavior.
         try {
-            GSSUtil.login(GSSUtil.CALLER_INITIATE, GSSUtil.GSS_KRB5_MECH_OID);
+            GSSUtil.login(GSSCaller.CALLER_INITIATE, GSSUtil.GSS_KRB5_MECH_OID);
         } catch (SecurityException se) {
             if (se.getCause() instanceof java.io.IOException) {
                 // what had been and should be...

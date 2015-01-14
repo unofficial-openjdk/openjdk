@@ -35,7 +35,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import sun.security.krb5.*;
-import sun.security.jgss.GSSUtil;
+import sun.security.jgss.HttpCaller;
 import sun.security.krb5.internal.Krb5;
 
 abstract class InitialToken extends Krb5Token {
@@ -86,7 +86,7 @@ abstract class InitialToken extends Krb5Token {
                 CHECKSUM_FLAGS_SIZE;
 
             if (context.getCredDelegState()) {
-                if (context.getCaller() == GSSUtil.CALLER_HTTP_NEGOTIATE &&
+                if (context.getCaller() instanceof HttpCaller &&
                         !serviceTicket.getFlags()[Krb5.TKT_OPTS_DELEGATE]) {
                     // When the caller is HTTP/SPNEGO and OK-AS-DELEGATE
                     // is not present in the service ticket, delegation

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2006, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -90,7 +90,7 @@ public final class SpNegoMechFactory implements MechanismFactory {
         return result;
     }
 
-    public SpNegoMechFactory(int caller) {
+    public SpNegoMechFactory(GSSCaller caller) {
         manager = new GSSManagerImpl(caller, false);
         Oid[] mechs = manager.getMechs();
         availableMechs = new Oid[mechs.length-1];
