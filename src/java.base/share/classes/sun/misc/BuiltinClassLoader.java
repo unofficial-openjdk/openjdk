@@ -58,7 +58,9 @@ import jdk.internal.jimage.ImageReader;
 import jdk.jigsaw.module.ModuleArtifact;
 
 /**
- * The extension or application class loader.
+ * The extension or application class loader. Resources loaded from modules
+ * defined to the boot class loader are also loaded via an instance of this
+ * ClassLoader type.
  *
  * <p> This ClassLoader supports loading of classes and resources from modules.
  * Modules are defined to the ClassLoader by invoking the {@link #defineModule}
@@ -84,7 +86,7 @@ import jdk.jigsaw.module.ModuleArtifact;
  *     <li>Security work to ensure that we have the right doPrivileged blocks
  *     and permission checks. Also need to double check that we don't need to
  *     support signers on the class path </li>
- *     <li>Need to add support for package sealing</li>
+ *     <li>URLs when classes are loaded from an exploded build or -Xoverride</li>
  * </ol>
  */
 class BuiltinClassLoader extends SecureClassLoader
@@ -287,8 +289,8 @@ class BuiltinClassLoader extends SecureClassLoader
             return null;
 
         // package -> artifact
-        String pkg = name.substring(0, pos).replace('/', '.');
-        return packageToArtifact.get(pkg);
+        String pn = name.substring(0, pos).replace('/', '.');
+        return packageToArtifact.get(pn);
     }
 
     /**
@@ -426,8 +428,8 @@ class BuiltinClassLoader extends SecureClassLoader
         if (pos < 0)
             return null; // unnamed package
 
-        String pkg = cn.substring(0, pos);
-        return packageToArtifact.get(pkg);
+        String pn = cn.substring(0, pos);
+        return packageToArtifact.get(pn);
     }
 
     /**
@@ -503,11 +505,11 @@ class BuiltinClassLoader extends SecureClassLoader
 
             // define class to VM
             int pos = cn.lastIndexOf('.');
-            String pkg = cn.substring(0, pos);
-            Package p = getPackage(pkg);
+            String pn = cn.substring(0, pos);
+            Package p = getPackage(pn);
             if (p == null) {
                 try {
-                    definePackage(pkg, null, null, null, null, null, null, null);
+                    definePackage(pn, null, null, null, null, null, null, null);
                 } catch (IllegalArgumentException iae) {
                     // someone else beat us to it
                 }
@@ -527,31 +529,22 @@ class BuiltinClassLoader extends SecureClassLoader
      *
      * @return the resulting Class
      * @throws IOException if reading the resource fails
+     * @throws SecurityException if there is a sealing violation (JAR spec)
      */
     private Class<?> defineClass(String cn, Resource res) throws IOException {
         URL url = res.getCodeSourceURL();
 
+        // if class is in a named package then ensure that the package is defined
         int pos = cn.lastIndexOf('.');
         if (pos != -1) {
-            String pkg = cn.substring(0, pos);
-            Package p = getPackage(pkg);
-            if (p == null) {
-                Manifest man = res.getManifest();
-                try {
-                    if (man != null) {
-                        definePackage(pkg, man, url);
-                    } else {
-                        definePackage(pkg, null, null, null, null, null, null, null);
-                    }
-                } catch (IllegalArgumentException iae) {
-                    // someone else beat us to it
-                }
-            }
+            String pn = cn.substring(0, pos);
+            Manifest man = res.getManifest();
+            defineOrCheckPackage(pn, man, url);
         }
 
+        // defines the class to the runtime
         ByteBuffer bb = res.getByteBuffer();
         if (bb != null) {
-            // Use (direct) ByteBuffer:
             CodeSigner[] signers = res.getCodeSigners();
             CodeSource cs = new CodeSource(url, signers);
             return defineClass(cn, bb, cs);
@@ -564,13 +557,65 @@ class BuiltinClassLoader extends SecureClassLoader
     }
 
     /**
+     * Defines a package in this ClassLoader. If the package is already defined
+     * then its sealing needs to be checked if sealed by the legacy sealing
+     * mechanism.
+     *
+     * @throws SecurityException if there is a sealing violation (JAR spec)
+     */
+    private Package defineOrCheckPackage(String pn, Manifest man, URL url) {
+        Package pkg = getAndVerifyPackage(pn, man, url);
+        if (pkg == null) {
+            try {
+                if (man != null) {
+                    pkg = definePackage(pn, man, url);
+                } else {
+                    pkg = definePackage(pn, null, null, null, null, null, null, null);
+                }
+            } catch (IllegalArgumentException iae) {
+                // defined by another thread so need to re-verify
+                pkg = getAndVerifyPackage(pn, man, url);
+                if (pkg == null)
+                    throw new InternalError("Cannot find package: " + pn);
+            }
+        }
+        return pkg;
+    }
+
+    /**
+     * Get the Package with the specified package name. If defined
+     * then verify that it against the manifest and code source.
+     *
+     * @throws SecurityException if there is a sealing violation (JAR spec)
+     */
+    private Package getAndVerifyPackage(String pn, Manifest man, URL url) {
+        Package pkg = getPackage(pn);
+        if (pkg != null) {
+            if (pkg.isSealed()) {
+                if (!pkg.isSealed(url)) {
+                    throw new SecurityException(
+                        "sealing violation: package " + pn + " is sealed");
+                }
+            } else {
+                // can't seal package if already defined without sealing
+                if ((man != null) && isSealed(pn, man)) {
+                    throw new SecurityException(
+                        "sealing violation: can't seal package " + pn +
+                        ": already defined");
+                }
+            }
+        }
+        return pkg;
+    }
+
+    /**
      * Defines a new package in this ClassLoader. The attributes in the specified
      * Manifest are use to get the package version and sealing information.
      *
-     * @throws IllegalArgumentException if the package name duplicates an existing
-     * package either in this class loader or one of its ancestors
+     * @throws IllegalArgumentException if the package name duplicates an
+     * existing package either in this class loader or one of its ancestors
      */
-    private Package definePackage(String pkg, Manifest man, URL url) {
+    private Package definePackage(String pn, Manifest man, URL url) {
         String specTitle = null;
         String specVersion = null;
         String specVendor = null;
@@ -580,7 +625,7 @@ class BuiltinClassLoader extends SecureClassLoader
         String sealed = null;
         URL sealBase = null;
 
-        Attributes attr = man.getAttributes(pkg.replace('.', '/').concat("/"));
+        Attributes attr = man.getAttributes(pn.replace('.', '/').concat("/"));
         if (attr != null) {
             specTitle   = attr.getValue(Attributes.Name.SPECIFICATION_TITLE);
             specVersion = attr.getValue(Attributes.Name.SPECIFICATION_VERSION);
@@ -609,10 +654,11 @@ class BuiltinClassLoader extends SecureClassLoader
                 sealed = attr.getValue(Attributes.Name.SEALED);
         }
 
-        // no support for sealing yet
-        // if ("true".equalsIgnoreCase(sealed)) sealBase = url;
+        // package is sealed
+        if ("true".equalsIgnoreCase(sealed))
+            sealBase = url;
 
-        return definePackage(pkg,
+        return definePackage(pn,
                              specTitle,
                              specVersion,
                              specVendor,
@@ -620,6 +666,21 @@ class BuiltinClassLoader extends SecureClassLoader
                              implVersion,
                              implVendor,
                              sealBase);
+    }
+
+    /**
+     * Returns {@code true} if the specified package name is sealed according to
+     * the given manifest.
+     */
+    private boolean isSealed(String pn, Manifest man) {
+        String path = pn.replace('.', '/').concat("/");
+        Attributes attr = man.getAttributes(path);
+        String sealed = null;
+        if (attr != null)
+            sealed = attr.getValue(Attributes.Name.SEALED);
+        if (sealed == null && (attr = man.getMainAttributes()) != null)
+            sealed = attr.getValue(Attributes.Name.SEALED);
+        return "true".equalsIgnoreCase(sealed);
     }
 
     // -- permissions
