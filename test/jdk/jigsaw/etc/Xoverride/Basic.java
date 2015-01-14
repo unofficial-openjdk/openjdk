@@ -36,32 +36,34 @@ public class Basic {
 
         // boot loader, replace class
         Class<?> clazz = Class.forName("java.text.Annotation");
-        assertLoader(clazz, BOOT_LOADER);
+        testLoader(clazz, BOOT_LOADER);
         String s = clazz.newInstance().toString();
         assertTrue(s.equals("hi"));
 
         // boot loader, add class
-        assertLoader("java.text.AnnotationBuddy", BOOT_LOADER);
+        testLoader("java.text.AnnotationBuddy", BOOT_LOADER);
+        assertNotNull(ClassLoader.getSystemResource("java/text/AnnotationBuddy.class"));
 
         // ext loader, replace class
         clazz = Class.forName("com.sun.jndi.dns.DnsClient");
-        assertLoader(clazz, EXT_LOADER);
+        testLoader(clazz, EXT_LOADER);
         s = clazz.newInstance().toString();
         assertTrue(s.equals("hi"));
 
         // ext loader, add class
-        assertLoader("com.sun.jndi.dns.DnsClientBuddy", EXT_LOADER);
+        testLoader("com.sun.jndi.dns.DnsClientBuddy", EXT_LOADER);
+        assertNotNull(ClassLoader.getSystemResource("com/sun/jndi/dns/DnsClientBuddy.class"));
 
         // system class loader, replace class
         clazz = Class.forName("com.sun.tools.javac.Main");
-        assertLoader(clazz, SYS_LOADER);
+        testLoader(clazz, SYS_LOADER);
         s = clazz.newInstance().toString();
         assertTrue(s.equals("hi"));
 
         // system class loader, add class
-        assertLoader("com.sun.tools.javac.MainBuddy", SYS_LOADER);
+        testLoader("com.sun.tools.javac.MainBuddy", SYS_LOADER);
+        assertNotNull(ClassLoader.getSystemResource("com/sun/tools/javac/MainBuddy.class"));
     }
-
 
     /**
      * Locates and returns the extension class loader.
@@ -79,10 +81,10 @@ public class Basic {
      * Asserts that class with the given name has the expected defining
      * loader.
      */
-    static void assertLoader(String cn, ClassLoader expected) {
+    static void testLoader(String cn, ClassLoader expected) {
         try {
             Class<?> clazz = Class.forName(cn);
-            assertLoader(clazz, expected);
+            testLoader(clazz, expected);
         } catch (ClassNotFoundException e) {
             throw new RuntimeException(e);
         }
@@ -91,7 +93,7 @@ public class Basic {
     /**
      * Asserts that given class has the expected defining loader.
      */
-    static void assertLoader(Class<?> clazz, ClassLoader expected) {
+    static void testLoader(Class<?> clazz, ClassLoader expected) {
         ClassLoader loader = clazz.getClassLoader();
         if (loader != expected) {
             throw new RuntimeException(clazz + " loaded by " + loader +
@@ -102,5 +104,10 @@ public class Basic {
     static void assertTrue(boolean expr) {
         if (!expr)
             throw new RuntimeException("assertion failed");
+    }
+
+    static void assertNotNull(Object o) {
+        if (o == null)
+            throw new RuntimeException("unexpected null");
     }
 }

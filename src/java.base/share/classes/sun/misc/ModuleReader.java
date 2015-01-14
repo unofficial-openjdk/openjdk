@@ -84,11 +84,7 @@ interface ModuleReader {
     URL codeBase();
 
     /**
-     * Returns a byte array contains all bytes reads from the given input
-     * stream. The {@code size} parameter is the expected size although
-     * the actual size may differ.
-     *
-     * @throws UncheckedIOException if there is an I/O error
+     * Creates a ModuleReader to access the given ModuleArtifact.
      */
     static ModuleReader create(ModuleArtifact artifact) {
         String scheme = artifact.location().getScheme();
@@ -262,11 +258,13 @@ class ExplodedModuleReader extends BaseModuleReader {
         Path path = dir.resolve(name.replace('/', File.separatorChar));
         if (Files.isRegularFile(path))
             return toFileURL(path);
+
         return null;
     }
 
     @Override
     public byte[] readResource(String name) throws IOException {
+        // -Xoverride
         Path path = dir.resolve(name.replace('/', File.separatorChar));
         return Files.readAllBytes(path);
     }

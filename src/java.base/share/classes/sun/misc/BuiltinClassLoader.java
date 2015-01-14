@@ -86,7 +86,6 @@ import jdk.jigsaw.module.ModuleArtifact;
  *     <li>Security work to ensure that we have the right doPrivileged blocks
  *     and permission checks. Also need to double check that we don't need to
  *     support signers on the class path </li>
- *     <li>URLs when classes are loaded from an exploded build or -Xoverride</li>
  * </ol>
  */
 class BuiltinClassLoader extends SecureClassLoader
@@ -158,10 +157,10 @@ class BuiltinClassLoader extends SecureClassLoader
         URL url = null;
 
         // is resource in a package of a module defined to this class loader?
-        ModuleArtifact first = findModuleForResource(name);
-        if (first != null) {
+        ModuleArtifact artifact = findModuleForResource(name);
+        if (artifact != null) {
             try {
-                url = findResource(first, name);
+                url = findResource(artifact, name);
                 if (url != null)
                     return url;
             } catch (SecurityException e) {
@@ -178,15 +177,14 @@ class BuiltinClassLoader extends SecureClassLoader
         }
 
         // search all modules defined to this class loader
-        Iterator<ModuleArtifact> i = packageToArtifact.values()
-                                                      .stream()
-                                                      .distinct()
-                                                      .iterator();
-        while (i.hasNext()) {
-            ModuleArtifact artifact = i.next();
-            if (artifact != first) {
+        if (artifact == null) {
+            Iterator<ModuleArtifact> i = packageToArtifact.values()
+                                                          .stream()
+                                                          .distinct()
+                                                          .iterator();
+            while (i.hasNext()) {
                 try {
-                    url = findResource(artifact, name);
+                    url = findResource(i.next(), name);
                     if (url != null) {
                         return url;
                     }
@@ -215,10 +213,10 @@ class BuiltinClassLoader extends SecureClassLoader
 
         // for consistency with getResource then we must check if the resource
         // is in a package of a module defined to this class loader
-        ModuleArtifact first = findModuleForResource(name);
-        if (first != null) {
+        ModuleArtifact artifact = findModuleForResource(name);
+        if (artifact != null) {
             try {
-                URL url = findResource(first, name);
+                URL url = findResource(artifact, name);
                 if (url != null)
                     result.add(url);
             } catch (SecurityException e) {
@@ -234,18 +232,18 @@ class BuiltinClassLoader extends SecureClassLoader
             }
         }
 
-        // check modules defined to this class loader
-        packageToArtifact.values().stream().distinct().forEach(artifact -> {
-            if (artifact != first) {
+        // search all modules defined to this class loader
+        if (artifact == null) {
+            packageToArtifact.values().stream().distinct().forEach(a -> {
                 try {
-                    URL url = findResource(artifact, name);
+                    URL url = findResource(a, name);
                     if (url != null)
                         result.add(url);
                 } catch (SecurityException e) {
                     // ignore as the resource may be in parent
                 }
-            }
-        });
+            });
+        }
 
         // class path
         if (ucp != null) {
@@ -484,24 +482,10 @@ class BuiltinClassLoader extends SecureClassLoader
      */
     private Class<?> defineClass(String cn, ModuleArtifact artifact) {
         ModuleReader reader = moduleReaderFor(artifact);
-        String module = artifact.descriptor().name();
         try {
-            byte[] bytes = null;
-
-            // check for overridden class
-            if (overrideDir != null) {
-                String path = cn.replace('.', File.separatorChar).concat(".class");
-                Path file = overrideDir.resolve(module).resolve(path);
-                if (Files.exists(file)) {
-                    bytes = Files.readAllBytes(file);
-                }
-            }
-
-            // not overridden so read from module artifact
-            if (bytes == null) {
-                String rn = cn.replace('.', '/').concat(".class");
-                bytes = reader.readResource(rn);
-            }
+            // read class file
+            String rn = cn.replace('.', '/').concat(".class");
+            byte[] bytes = reader.readResource(rn);
 
             // define class to VM
             int pos = cn.lastIndexOf('.');
@@ -741,41 +725,101 @@ class BuiltinClassLoader extends SecureClassLoader
      */
     private ModuleReader createModuleReader(ModuleArtifact artifact) {
         String s = artifact.location().getScheme();
-        if (!s.equalsIgnoreCase("jrt"))
-            return ModuleReader.create(artifact);
 
-        // special-case the runtime image
-        String module = artifact.descriptor().name();
-        URL codeBase = toJrtURL(module);
-        return new ModuleReader() {
-            @Override
-            public URL findResource(String name) {
-                if (imageReader != null) {
-                    String rn = "/" + module + "/" + name;
-                    ImageLocation location = imageReader.findLocation(rn);
-                    if (location != null)
-                        return toJrtURL(module, name);
+        ModuleReader reader;
+        if (!s.equalsIgnoreCase("jrt")) {
+            reader = ModuleReader.create(artifact);
+        } else {
+            // special-case the runtime image
+            reader = new ModuleReader() {
+                private final String module = artifact.descriptor().name();
+                private final URL codeBase = toJrtURL(module);
+
+                /**
+                 * Returns the ImageLocation for the given resource, {@code null}
+                 * if not found.
+                 */
+                private ImageLocation findImageLocation(String name) {
+                    if (imageReader == null) {
+                        return null;
+                    } else {
+                        String rn = "/" + module + "/" + name;
+                        return imageReader.findLocation(rn);
+                    }
                 }
-                // not found
-                return null;
-            }
 
-            @Override
-            public byte[] readResource(String name) throws IOException {
-                if (imageReader != null) {
-                    String rn = "/" + module + "/" + name;
-                    ImageLocation location = imageReader.findLocation(rn);
+                @Override
+                public URL findResource(String name) {
+                    if (findImageLocation(name) != null)
+                        return toJrtURL(module, name);
+
+                    // not found
+                    return null;
+                }
+
+                @Override
+                public byte[] readResource(String name) throws IOException {
+                    ImageLocation location = findImageLocation(name);
                     if (location != null)
                         return imageReader.getResource(location);
-                }
-                throw new IOException(module + "/" + name + " not found");
-            }
 
-            @Override
-            public URL codeBase() {
-                return codeBase;
-            }
-        };
+                    throw new IOException(module + "/" + name + " not found");
+                }
+
+                @Override
+                public URL codeBase() {
+                    return codeBase;
+                }
+            };
+        }
+
+        // if -Xoverride is specified then wrap the ModuleReader
+        if (overrideDir != null) {
+            return new ModuleReader() {
+                private final String module = artifact.descriptor().name();
+
+                /**
+                 * Returns the path to a .class file if overridden with -Xoverride
+                 * or {@code null} if not found.
+                 */
+                private Path findOverriddenClass(String name) {
+                    if (overrideDir != null && name.endsWith(".class")) {
+                        String path = name.replace('/', File.separatorChar);
+                        Path file = overrideDir.resolve(module).resolve(path);
+                        if (Files.isRegularFile(file)) {
+                            return file;
+                        }
+                    }
+                    return null;
+                }
+
+                @Override
+                public URL findResource(String name) {
+                    Path path = findOverriddenClass(name);
+                    if (path != null) {
+                        return toFileURL(path);
+                    } else {
+                        return reader.findResource(name);
+                    }
+                }
+                @Override
+                public byte[] readResource(String name) throws IOException {
+                    Path path = findOverriddenClass(name);
+                    if (path != null) {
+                        return Files.readAllBytes(path);
+                    } else {
+                        return reader.readResource(name);
+                    }
+                }
+                @Override
+                public URL codeBase() {
+                    return reader.codeBase();
+                }
+            };
+        } else {
+            // no -Xoverride
+            return reader;
+        }
     }
 
     /**

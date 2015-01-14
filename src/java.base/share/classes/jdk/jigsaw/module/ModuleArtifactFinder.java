@@ -97,10 +97,6 @@ public interface ModuleArtifactFinder {
     /**
      * Returns a module finder for modules that are linked into the
      * runtime image.
-     *
-     * @implNote For now, the finder is backed by the contents of {@code
-     * modules.jdata}, or in the case a developer build then it is backed by
-     * the module descriptors and content found in the {@code lib/modules/$m/*}.
      */
     public static ModuleArtifactFinder installedModules() {
         if (InstalledModuleFinder.isModularImage()) {
@@ -313,7 +309,7 @@ class ModulePath implements ModuleArtifactFinder {
         ZipEntry ze = zf.getEntry("classes/" + MODULE_INFO);
         if (ze == null) {
             // jmod without classes/module-info, ignore for now or should
-            // we should an exception?
+            // we should throw an exception?
             return null;
         }
 
