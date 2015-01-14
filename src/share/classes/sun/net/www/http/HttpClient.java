@@ -27,10 +27,9 @@ package sun.net.www.http;
 
 import java.io.*;
 import java.net.*;
-import java.util.*;
+import java.util.Map;
 import sun.net.NetworkClient;
 import sun.net.ProgressSource;
-import sun.net.ProgressMonitor;
 import sun.net.www.MessageHeader;
 import sun.net.www.HeaderParser;
 import sun.net.www.MeteredStream;
@@ -38,7 +37,6 @@ import sun.net.www.ParseUtil;
 import sun.net.www.protocol.http.HttpURLConnection;
 import sun.misc.RegexpPool;
 
-import java.security.*;
 /**
  * @author Herb Jellinek
  * @author Dave Brown
@@ -60,16 +58,8 @@ public class HttpClient extends NetworkClient {
     // if we've had one io error
     boolean failedOnce = false;
 
-    /** regexp pool of hosts for which we should connect directly, not Proxy
-     *  these are intialized from a property.
-     */
-    private static RegexpPool nonProxyHostsPool = null;
-
-    /** The string source of nonProxyHostsPool
-     */
-    private static String nonProxyHostsSource = null;
-
     /** Response code for CONTINUE */
+    private boolean ignoreContinue = true;
     private static final int    HTTP_CONTINUE = 100;
 
     /** Default port number for http daemons. REMIND: make these private */
@@ -633,7 +623,10 @@ public class HttpClient extends NetworkClient {
             return (parseHTTPHeader(responses, pi, httpuc));
         } catch (SocketTimeoutException stex) {
             // We don't want to retry the request when the app. sets a timeout
-            closeServer();
+            // but don't close the server if timeout while waiting for 100-continue
+            if (ignoreContinue) {
+                closeServer();
+            }
             throw stex;
         } catch (IOException e) {
             closeServer();
@@ -656,12 +649,6 @@ public class HttpClient extends NetworkClient {
             throw e;
         }
 
-    }
-
-    public int setTimeout (int timeout) throws SocketException {
-        int old = serverSocket.getSoTimeout ();
-        serverSocket.setSoTimeout (timeout);
-        return old;
     }
 
     private boolean parseHTTPHeader(MessageHeader responses, ProgressSource pi, HttpURLConnection httpuc)
@@ -791,7 +778,7 @@ public class HttpClient extends NetworkClient {
             code = Integer.parseInt(resp.substring(ind, ind + 3));
         } catch (Exception e) {}
 
-        if (code == HTTP_CONTINUE) {
+        if (code == HTTP_CONTINUE && ignoreContinue) {
             responses.reset();
             return parseHTTPHeader(responses, pi, httpuc);
         }
@@ -916,6 +903,7 @@ public class HttpClient extends NetworkClient {
         return serverOutput;
     }
 
+    @Override
     public String toString() {
         return getClass().getName()+"("+url+")";
     }
@@ -932,6 +920,7 @@ public class HttpClient extends NetworkClient {
         return cacheRequest;
     }
 
+    @Override
     protected void finalize() throws Throwable {
         // This should do nothing.  The stream finalizer will
         // close the fd.
@@ -942,8 +931,12 @@ public class HttpClient extends NetworkClient {
         failedOnce = value;
     }
 
+    public void setIgnoreContinue(boolean value) {
+        ignoreContinue = value;
+    }
 
     /* Use only on connections in error. */
+    @Override
     public void closeServer() {
         try {
             keepingAlive = false;
