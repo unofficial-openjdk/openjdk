@@ -35,36 +35,38 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-
 public class ImageModules {
-    protected final Map<Loader, LoaderModuleData> loaders = new LinkedHashMap<>();
-    protected final Map<String, Set<String>> localPkgs = new HashMap<>();
-
-    protected ImageModules() {}
+    private final Map<Loader, LoaderModuleData> loaders = new LinkedHashMap<>();
+    private final Map<String, Set<String>> localPkgs = new HashMap<>();
 
     public ImageModules(Set<String> bootModules,
                         Set<String> extModules,
-                        Set<String> appModules) throws IOException {
+                        Set<String> appModules) {
         mapModulesToLoader(Loader.BOOT_LOADER, bootModules);
         mapModulesToLoader(Loader.EXT_LOADER, extModules);
         mapModulesToLoader(Loader.APP_LOADER, appModules);
     }
 
-    public Map<String, Set<String>> packages() {
+    // package-private
+
+    /**
+     * Returns the module to moduleToPackages map
+     */
+    Map<String, Set<String>> moduleToPackages() {
         return localPkgs;
     }
 
-    // ## FIXME: should be package-private
-    // When jlink legacy format support is removed, it should
-    // use the package table in the jimage.
-    public void setPackages(String mn, Set<String> pkgs) {
+    /**
+     * Sets the local packages of a module
+     */
+    void setPackages(String mn, Set<String> pkgs) {
         localPkgs.put(mn, pkgs);
     }
 
     /*
      * Returns the name of modules mapped to a given class loader in the image
      */
-    public Set<String> getModules(Loader type) {
+    Set<String> getModules(Loader type) {
         if (loaders.containsKey(type)) {
             return loaders.get(type).modules();
         } else {
@@ -79,11 +81,11 @@ public class ImageModules {
         // put java.base first
         Set<String> mods = new LinkedHashSet<>();
         modules.stream()
-               .filter(m -> m.equals("java.base"))
-               .forEach(mods::add);
+                .filter(m -> m.equals("java.base"))
+                .forEach(mods::add);
         modules.stream().sorted()
-               .filter(m -> !m.equals("java.base"))
-               .forEach(mods::add);
+                .filter(m -> !m.equals("java.base"))
+                .forEach(mods::add);
         loaders.put(loader, new LoaderModuleData(loader, mods));
     }
 
@@ -114,7 +116,7 @@ public class ImageModules {
         public int id() { return id; }
     }
 
-    public class LoaderModuleData {
+    private class LoaderModuleData {
         private final Loader loader;
         private final Set<String> modules;
         LoaderModuleData(Loader loader, Set<String> modules) {
@@ -130,11 +132,8 @@ public class ImageModules {
 
     ImageModuleDataBuilder buildModuleData(Loader loader, BasicImageWriter writer) {
         Set<String> modules = getModules(loader);
-        List<String> moduleNames = modules.stream()
-                .sorted()
-                .collect(Collectors.toList());
         Map<String, List<String>> modulePackages = new LinkedHashMap<>();
-        moduleNames.stream().forEach((moduleName) -> {
+        modules.stream().sorted().forEach((moduleName) -> {
             List<String> localPackages = localPkgs.get(moduleName).stream()
                     .map(pn -> pn.replace('.', '/'))
                     .sorted()

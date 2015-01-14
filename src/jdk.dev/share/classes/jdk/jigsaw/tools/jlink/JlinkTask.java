@@ -74,7 +74,7 @@ import java.util.zip.ZipOutputStream;
 
 import jdk.internal.jimage.Archive;
 import jdk.internal.jimage.ImageFile;
-import jdk.internal.jimage.JigsawImageModules;
+import jdk.internal.jimage.ImageModules;
 import jdk.internal.jimage.JmodArchive;
 import jdk.internal.jimage.ModularJarArchive;
 import jdk.jigsaw.module.Configuration;
@@ -466,9 +466,6 @@ class JlinkTask {
         ImageFileHelper imageHelper = new ImageFileHelper(cf, mods);
         imageHelper.createModularImage(output);
 
-        // write installed modules file
-        imageHelper.writeInstalledModules(output);
-
         // launchers in the bin directory need execute permission
         Path bin = output.resolve("bin");
         if (Files.getFileStore(bin).supportsFileAttributeView(PosixFileAttributeView.class)) {
@@ -532,7 +529,6 @@ class JlinkTask {
         final Set<ModuleDescriptor> extModules;
         final Set<ModuleDescriptor> appModules;
         final Map<String,Path> modsPaths;
-        final JigsawImageModules imf;
 
         ImageFileHelper(Configuration cf, Map<String,Path> modsPaths) throws IOException {
             this.modules = cf.descriptors();
@@ -552,14 +548,22 @@ class JlinkTask {
             this.appModules = modules.stream()
                     .filter(m -> !bootModules.contains(m) && !extModules.contains(m))
                     .collect(Collectors.toSet());
-            this.imf = new JigsawImageModules(cf, bootModules,
-                                              extModules, appModules);
         }
 
         void createModularImage(Path output) throws IOException {
             Set<Archive> archives = modsPaths.entrySet().stream()
                     .map(e -> newArchive(e.getKey(), e.getValue()))
                     .collect(Collectors.toSet());
+            Set<String> boot = bootModules.stream()
+                                          .map(ModuleDescriptor::name)
+                                          .collect(Collectors.toSet());
+            Set<String> ext = extModules.stream()
+                                        .map(ModuleDescriptor::name)
+                                        .collect(Collectors.toSet());
+            Set<String> app = appModules.stream()
+                                        .map(ModuleDescriptor::name)
+                                        .collect(Collectors.toSet());
+            ImageModules imf = new ImageModules(boot, ext, app);
             ImageFile.create(output, archives, imf, options.compress);
             writeModulesLists(output, modules);
         }
@@ -599,13 +603,6 @@ class JlinkTask {
                                        .map(ModuleDescriptor::name)
                                        .collect(Collectors.toList());
             Files.write(file, list, StandardCharsets.UTF_8);
-        }
-
-        void writeInstalledModules(Path output) throws IOException {
-            Path mfile = Paths.get("lib", "modules", JigsawImageModules.FILE);
-            try (OutputStream out = Files.newOutputStream(output.resolve(mfile))) {
-                imf.store(out);
-            }
         }
 
         private List<String> modulesFor(String name) throws IOException {
