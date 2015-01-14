@@ -42,11 +42,11 @@ public class ProgressSource
     // Content type
     private String contentType;
     // bytes read
-    private int progress = 0;
+    private long progress = 0;
     // last bytes read
-    private int lastProgress = 0;
+    private long lastProgress = 0;
     //bytes expected
-    private int expected = -1;
+    private long expected = -1;
     // the last thing to happen with this source
     private State state;
     // connect flag
@@ -66,7 +66,7 @@ public class ProgressSource
     /**
      * Construct progress source object.
      */
-    public ProgressSource(URL url, String method, int expected)  {
+    public ProgressSource(URL url, String method, long expected)  {
         this.url = url;
         this.method = method;
         this.contentType = "content/unknown";
@@ -123,14 +123,14 @@ public class ProgressSource
     /**
      * Return current progress.
      */
-    public int getProgress()  {
+    public long getProgress()  {
         return progress;
     }
 
     /**
      * Return expected maximum progress; -1 if expected is unknown.
      */
-    public int getExpected() {
+    public long getExpected() {
         return expected;
     }
 
@@ -158,7 +158,7 @@ public class ProgressSource
     /**
      * Update progress.
      */
-    public void updateProgress(int latestProgress, int expectedProgress) {
+    public void updateProgress(long latestProgress, long expectedProgress) {
         lastProgress = progress;
         progress = latestProgress;
         expected = expectedProgress;

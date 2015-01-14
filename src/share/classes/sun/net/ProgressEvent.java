@@ -40,16 +40,16 @@ public class ProgressEvent extends EventObject  {
     // method associated with URL
     private String method;
     // bytes read
-    private int progress;
+    private long progress;
     // bytes expected
-    private int expected;
+    private long expected;
     // the last thing to happen
     private ProgressSource.State state;
 
     /**
      * Construct a ProgressEvent object.
      */
-    public ProgressEvent(ProgressSource source, URL url, String method, String contentType, ProgressSource.State state, int progress, int expected) {
+    public ProgressEvent(ProgressSource source, URL url, String method, String contentType, ProgressSource.State state, long progress, long expected) {
         super(source);
         this.url = url;
         this.method = method;
@@ -86,7 +86,7 @@ public class ProgressEvent extends EventObject  {
     /**
      * Return current progress value.
      */
-    public int getProgress()
+    public long getProgress()
     {
         return progress;
     }
@@ -94,7 +94,7 @@ public class ProgressEvent extends EventObject  {
     /**
      * Return expected maximum progress value; -1 if expected is unknown.
      */
-    public int getExpected() {
+    public long getExpected() {
         return expected;
     }
 

@@ -39,13 +39,13 @@ public class MeteredStream extends FilterInputStream {
      * from subsequest read() 's
      */
     protected boolean closed = false;
-    protected int expected;
-    protected int count = 0;
-    protected int markedCount = 0;
+    protected long expected;
+    protected long count = 0;
+    protected long markedCount = 0;
     protected int markLimit = -1;
     protected ProgressSource pi;
 
-    public MeteredStream(InputStream is, ProgressSource pi, int expected)
+    public MeteredStream(InputStream is, ProgressSource pi, long expected)
     {
         super(is);
 
@@ -57,7 +57,7 @@ public class MeteredStream extends FilterInputStream {
         }
     }
 
-    private final void justRead(int n) throws IOException   {
+    private final void justRead(long n) throws IOException   {
         if (n == -1) {
 
             /*
@@ -148,10 +148,10 @@ public class MeteredStream extends FilterInputStream {
         }
         else {
             // just skip min(n, num_bytes_left)
-            int min = (n > expected - count) ? expected - count: (int)n;
+            long min = (n > expected - count) ? expected - count: n;
             n = in.skip(min);
         }
-        justRead((int)n);
+        justRead(n);
         return n;
     }
 

@@ -57,7 +57,7 @@ class KeepAliveStream extends MeteredStream implements Hurryable {
     /**
      * Constructor
      */
-    public KeepAliveStream(InputStream is, ProgressSource pi, int expected, HttpClient hc)  {
+    public KeepAliveStream(InputStream is, ProgressSource pi, long expected, HttpClient hc)  {
         super(is, pi, expected);
         this.hc = hc;
     }
@@ -141,7 +141,8 @@ class KeepAliveStream extends MeteredStream implements Hurryable {
                 /* CASE II: fill our internal buffer
                  * Remind: possibly check memory here
                  */
-                byte[] buf = new byte[expected - count];
+                int size = (int) (expected - count);
+                byte[] buf = new byte[size];
                 DataInputStream dis = new DataInputStream(in);
                 dis.readFully(buf);
                 in = new ByteArrayInputStream(buf);
@@ -193,7 +194,7 @@ class KeepAliveStream extends MeteredStream implements Hurryable {
         }
     }
 
-    protected int remainingToRead() {
+    protected long remainingToRead() {
         return expected - count;
     }
 
