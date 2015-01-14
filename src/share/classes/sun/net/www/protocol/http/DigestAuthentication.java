@@ -37,7 +37,6 @@ import sun.net.www.HeaderParser;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
-
 /**
  * DigestAuthentication: Encapsulate an http server authentication using
  * the "Digest" scheme, as described in RFC2069 and updated in RFC2617
@@ -48,8 +47,6 @@ import java.security.NoSuchAlgorithmException;
 class DigestAuthentication extends AuthenticationInfo {
 
     private static final long serialVersionUID = 100L;
-
-    static final char DIGEST_AUTH = 'D';
 
     private String authMethod;
 
@@ -175,7 +172,10 @@ class DigestAuthentication extends AuthenticationInfo {
     public DigestAuthentication(boolean isProxy, URL url, String realm,
                                 String authMethod, PasswordAuthentication pw,
                                 Parameters params) {
-        super(isProxy?PROXY_AUTHENTICATION:SERVER_AUTHENTICATION, DIGEST_AUTH,url, realm);
+        super(isProxy ? PROXY_AUTHENTICATION : SERVER_AUTHENTICATION,
+              AuthScheme.DIGEST,
+              url,
+              realm);
         this.authMethod = authMethod;
         this.pw = pw;
         this.params = params;
@@ -184,7 +184,11 @@ class DigestAuthentication extends AuthenticationInfo {
     public DigestAuthentication(boolean isProxy, String host, int port, String realm,
                                 String authMethod, PasswordAuthentication pw,
                                 Parameters params) {
-        super(isProxy?PROXY_AUTHENTICATION:SERVER_AUTHENTICATION, DIGEST_AUTH,host, port, realm);
+        super(isProxy ? PROXY_AUTHENTICATION : SERVER_AUTHENTICATION,
+              AuthScheme.DIGEST,
+              host,
+              port,
+              realm);
         this.authMethod = authMethod;
         this.pw = pw;
         this.params = params;
