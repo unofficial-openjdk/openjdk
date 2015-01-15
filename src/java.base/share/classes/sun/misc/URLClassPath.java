@@ -433,13 +433,14 @@ public class URLClassPath {
      * Return null on security check failure.
      * Called by java.net.URLClassLoader.
      */
-    public URL checkURL(URL url) {
-        try {
-            check(url);
-        } catch (Exception e) {
-            return null;
+    public static URL checkURL(URL url) {
+        if (url != null) {
+            try {
+                check(url);
+            } catch (Exception e) {
+                return null;
+            }
         }
-
         return url;
     }
 

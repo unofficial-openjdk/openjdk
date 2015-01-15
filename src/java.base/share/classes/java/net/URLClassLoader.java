@@ -570,7 +570,7 @@ public class URLClassLoader extends SecureClassLoader implements Closeable {
                 }
             }, acc);
 
-        return url != null ? ucp.checkURL(url) : null;
+        return url != null ? URLClassPath.checkURL(url) : null;
     }
 
     /**
@@ -605,7 +605,7 @@ public class URLClassLoader extends SecureClassLoader implements Closeable {
                         }, acc);
                     if (u == null)
                         break;
-                    url = ucp.checkURL(u);
+                    url = URLClassPath.checkURL(u);
                 } while (url == null);
                 return url != null;
             }

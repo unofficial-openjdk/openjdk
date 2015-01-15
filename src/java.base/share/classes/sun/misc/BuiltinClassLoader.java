@@ -81,12 +81,8 @@ import jdk.jigsaw.module.ModuleArtifact;
  * any overlapping packages with modules defined to the parent or the boot class
  * loader. </p>
  *
- * <p> TODO list</p>
- * <ol>
- *     <li>Security work to ensure that we have the right doPrivileged blocks
- *     and permission checks. Also need to double check that we don't need to
- *     support signers on the class path </li>
- * </ol>
+ * <p> ###FIXME: When using exploded builds or -Xoverride and overridden classes
+ * then the URLs are file URLs rather than jrt URLs. </p>
  */
 class BuiltinClassLoader extends SecureClassLoader
     implements ModuleLoader, ResourceFinder
@@ -159,45 +155,30 @@ class BuiltinClassLoader extends SecureClassLoader
         // is resource in a package of a module defined to this class loader?
         ModuleArtifact artifact = findModuleForResource(name);
         if (artifact != null) {
-            try {
-                url = findResource(artifact, name);
-                if (url != null)
-                    return url;
-            } catch (SecurityException e) {
-                // ignore as the resource may be in parent
-            }
+            url = checkURL(findResource(artifact, name));
         }
 
         // check parent
-        if (parent != null) {
+        if (url == null && parent != null) {
             url = parent.getResource(name);
-            if (url != null) {
-                return url;
-            }
         }
 
         // search all modules defined to this class loader
-        if (artifact == null) {
+        if (url == null && artifact == null) {
             Iterator<ModuleArtifact> i = packageToArtifact.values()
                                                           .stream()
                                                           .distinct()
                                                           .iterator();
             while (i.hasNext()) {
-                try {
-                    url = findResource(i.next(), name);
-                    if (url != null) {
-                        return url;
-                    }
-                } catch (SecurityException e) {
-                    // ignore as the resource may be in parent
-                }
+                url = checkURL(findResource(i.next(), name));
+                if (url != null) break;
             }
         }
 
         // check class path
-        if (ucp != null) {
-            // FIXME: doPriv && permission check??
-            url = ucp.findResource(name, true);
+        if (url == null && ucp != null) {
+            PrivilegedAction<URL> pa = () -> ucp.findResource(name, false);
+            url = checkURL(AccessController.doPrivileged(pa));
         }
 
         return url;
@@ -215,13 +196,9 @@ class BuiltinClassLoader extends SecureClassLoader
         // is in a package of a module defined to this class loader
         ModuleArtifact artifact = findModuleForResource(name);
         if (artifact != null) {
-            try {
-                URL url = findResource(artifact, name);
-                if (url != null)
-                    result.add(url);
-            } catch (SecurityException e) {
-                // ignore as the resource may be in parent
-            }
+            URL url = checkURL(findResource(artifact, name));
+            if (url != null)
+                result.add(url);
         }
 
         // check parent
@@ -235,26 +212,24 @@ class BuiltinClassLoader extends SecureClassLoader
         // search all modules defined to this class loader
         if (artifact == null) {
             packageToArtifact.values().stream().distinct().forEach(a -> {
-                try {
-                    URL url = findResource(a, name);
-                    if (url != null)
-                        result.add(url);
-                } catch (SecurityException e) {
-                    // ignore as the resource may be in parent
-                }
+                URL url = checkURL(findResource(a, name));
+                if (url != null)
+                    result.add(url);
             });
         }
 
         // class path
         if (ucp != null) {
-            // FIXME: doPriv && permission check??
-            Enumeration<URL> e = ucp.findResources(name, true);
+            PrivilegedAction<Enumeration<URL>> pa = () -> ucp.findResources(name, false);
+            Enumeration<URL> e = AccessController.doPrivileged(pa);
             while (e.hasMoreElements()) {
-                result.add(e.nextElement());
+                URL url = checkURL(e.nextElement());
+                if (url != null)
+                    result.add(url);
             }
         }
 
-        // return enumeration
+        // return enumeration of checked URLs
         Iterator<URL> i = result.iterator();
         return new Enumeration<URL> () {
             public URL nextElement() {
@@ -296,7 +271,8 @@ class BuiltinClassLoader extends SecureClassLoader
      * if not found.
      */
     private URL findResource(ModuleArtifact artifact, String name) {
-        return moduleReaderFor(artifact).findResource(name);
+        PrivilegedAction<URL> pa = () -> moduleReaderFor(artifact).findResource(name);
+        return AccessController.doPrivileged(pa);
     }
 
     /**
@@ -304,8 +280,6 @@ class BuiltinClassLoader extends SecureClassLoader
      * the given module.
      *
      * ##FIXME should only find resources that are in defined modules
-     * ##FIXME need to check how this works with -Xoverride
-     * ##FIXME need permission checks
      */
     @Override
     public Resource findResource(String module, String name) {
@@ -319,6 +293,11 @@ class BuiltinClassLoader extends SecureClassLoader
             return null;
 
         URL url = toJrtURL(module, name);
+
+        // check access to jrt URL
+        if (checkURL(url) == null)
+            return null;
+
         return new Resource() {
             @Override
             public String getName() {
@@ -853,5 +832,13 @@ class BuiltinClassLoader extends SecureClassLoader
         } catch (MalformedURLException e) {
             throw new InternalError(e);
         }
+    }
+
+    /**
+     * Checks access to the given URL. We use URLClassPath for consistent
+     * checking with java.net.URLClassLoader.
+     */
+    private static URL checkURL(URL url) {
+        return URLClassPath.checkURL(url);
     }
 }
