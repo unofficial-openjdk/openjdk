@@ -23,6 +23,7 @@
 
 package jdk.test;
 
+import java.net.URL;
 import java.awt.Component;
 import java.lang.reflect.Module;
 
@@ -33,6 +34,7 @@ public class UseAWT {
         if (expectFail == expectPass)
             throw new RuntimeException("Need to run with expect-* argument");
 
+        // test class loading
         try {
             Class<?> c = Component.class;
 
@@ -47,5 +49,12 @@ public class UseAWT {
             // class should not be observable
             if (expectPass) throw new RuntimeException(e);
         }
+
+        // resources
+        URL url = ClassLoader.getSystemResource("java/awt/Component.class");
+        if (url != null && expectFail)
+            throw new RuntimeException("Resource was found");
+        if (url == null && expectPass)
+            throw new RuntimeException("Resource was not found");
     }
 }

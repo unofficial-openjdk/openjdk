@@ -106,8 +106,11 @@ class BuiltinClassLoader extends SecureClassLoader
     // the URL class path or null if there is no class path
     private final URLClassPath ucp;
 
-    // maps package name to module for the modules defined to this class loader
+    // maps package name to module artifact for the modules defined to this class loader
     private final Map<String, ModuleArtifact> packageToArtifact = new ConcurrentHashMap<>();
+
+    // maps module name to module artifact for the modules defined to this class loader
+    private final Map<String, ModuleArtifact> moduleToArtifact = new ConcurrentHashMap<>();
 
     // maps module artifacts to module readers (added to lazily on first usage)
     private final Map<ModuleArtifact, ModuleReader> readers = new ConcurrentHashMap<>();
@@ -138,6 +141,7 @@ class BuiltinClassLoader extends SecureClassLoader
     @Override
     public void defineModule(ModuleArtifact artifact) {
         artifact.packages().forEach(p -> packageToArtifact.put(p, artifact));
+        moduleToArtifact.put(artifact.descriptor().name(), artifact);
     }
 
 
@@ -165,10 +169,9 @@ class BuiltinClassLoader extends SecureClassLoader
 
         // search all modules defined to this class loader
         if (url == null && artifact == null) {
-            Iterator<ModuleArtifact> i = packageToArtifact.values()
-                                                          .stream()
-                                                          .distinct()
-                                                          .iterator();
+            Iterator<ModuleArtifact> i = moduleToArtifact.values()
+                                                         .stream()
+                                                         .iterator();
             while (i.hasNext()) {
                 url = checkURL(findResource(i.next(), name));
                 if (url != null) break;
@@ -211,7 +214,7 @@ class BuiltinClassLoader extends SecureClassLoader
 
         // search all modules defined to this class loader
         if (artifact == null) {
-            packageToArtifact.values().stream().distinct().forEach(a -> {
+            moduleToArtifact.values().forEach(a -> {
                 URL url = checkURL(findResource(a, name));
                 if (url != null)
                     result.add(url);
@@ -278,11 +281,14 @@ class BuiltinClassLoader extends SecureClassLoader
     /**
      * Called by the jrt protocol handler to locate a resource (by name) in
      * the given module.
-     *
-     * ##FIXME should only find resources that are in defined modules
      */
     @Override
     public Resource findResource(String module, String name) {
+
+        // check that module is defined to this class loader
+        if (!moduleToArtifact.containsKey(module))
+            return null;
+
         // for now this is for resources in the image only
         if (imageReader == null)
             return null;
