@@ -308,6 +308,15 @@ void NET_ThrowByNameWithLastError(JNIEnv *env, const char *name,
 
 void NET_ThrowSocketException(JNIEnv *env, char* msg);
 
+int NET_Socket(int domain, int type, int protocol);
+
+void NET_ThrowByNameWithLastError(JNIEnv *env, const char *name,
+         const char *defaultDetail);
+
+void NET_ThrowSocketException(JNIEnv *env, char* msg);
+
+jboolean NET_addrtransAvailable();
+
 /*
  * differs from NET_Timeout() as follows:
  *
