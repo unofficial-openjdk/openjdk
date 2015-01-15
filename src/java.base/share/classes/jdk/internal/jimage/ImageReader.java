@@ -117,10 +117,6 @@ public class ImageReader extends BasicImageReader {
     // Node can be a directory or a resource
     public static abstract class Node {
         private static final int ROOT_DIR = 0b0000_0000_0000_0001;
-        private static final int MODULE_DIR = 0b0000_0000_0000_0010;
-        private static final int METAINF_DIR = 0b0000_0000_0000_0100;
-        private static final int TOPLEVEL_PKG_DIR = 0b0000_0000_0000_1000;
-        private static final int HIDDEN = 0b0000_0000_0001_0000;
 
         private int flags;
         private final UTF8String name;
@@ -139,42 +135,6 @@ public class ImageReader extends BasicImageReader {
 
         public final boolean isRootDir() {
             return (flags & ROOT_DIR) != 0;
-        }
-
-        public final void setIsModuleDir() {
-            flags |= MODULE_DIR;
-        }
-
-        public final boolean isModuleDir() {
-            return (flags & MODULE_DIR) != 0;
-        }
-
-        public final void setIsMetaInfDir() {
-            flags |= METAINF_DIR;
-        }
-
-        public final boolean isMetaInfDir() {
-            return (flags & METAINF_DIR) != 0;
-        }
-
-        public final void setIsTopLevelPackageDir() {
-            flags |= TOPLEVEL_PKG_DIR;
-        }
-
-        public final boolean isTopLevelPackageDir() {
-            return (flags & TOPLEVEL_PKG_DIR) != 0;
-        }
-
-        public final void setIsHidden() {
-            flags |= HIDDEN;
-        }
-
-        public final boolean isHidden() {
-            return (flags & HIDDEN) != 0;
-        }
-
-        public final boolean isVisible() {
-            return !isHidden();
         }
 
         public final UTF8String getName() {
@@ -402,31 +362,23 @@ public class ImageReader extends BasicImageReader {
             String parent = loc.getParentString();
              // directory where this location goes as child
             Directory dir;
-            if (parent.isEmpty()) {
+            if (module.isEmpty() ||
+                parent.startsWith("META-INF")) {
+                // ignore entries with no module name!
+                // ignore META-INF/*
+                continue;
+            }
+
+            if (parent.isEmpty() && module.isEmpty()) {
                 // top level entry under root
                 dir = rootDir;
-            } else if (parent.startsWith("META-INF")) {
-                dir = makeDirectories(loc.buildName(false, true, false), true);
-                dir.setIsMetaInfDir();
-            } else if (module.isEmpty()) {
-                dir = makeDirectories(loc.buildName(false, true, false), true);
-                dir.setIsTopLevelPackageDir();
             } else {
-                dir = makeDirectories(loc.buildName(true, false, false), false);
-                dir.setIsModuleDir();
-                dir = makeDirectories(loc.buildName(true, true, false), false);
+                dir = makeDirectories(loc.buildName(true, false, false));
+                dir = makeDirectories(loc.buildName(true, true, false));
             }
 
             Resource entry = new Resource(dir, loc, imageFileAttributes());
             nodes.put(entry.getName(), entry);
-
-            // NOTE: Remove when jimagefs disappears.
-            if (!module.isEmpty() && !parent.isEmpty()) {
-                dir = makeDirectories(loc.buildName(false, true, false), true);
-                dir.setIsTopLevelPackageDir();
-                entry = new Resource(dir, loc, imageFileAttributes());
-                nodes.put(loc.buildName(false, true, true), entry);
-            }
         }
 
         return rootDir;
@@ -452,7 +404,7 @@ public class ImageReader extends BasicImageReader {
         return splits;
     }
 
-    private Directory makeDirectories(UTF8String parent, boolean isHidden) {
+    private Directory makeDirectories(UTF8String parent) {
         Directory last = rootDir;
         List<UTF8String> dirs = dirs(parent);
 
@@ -460,10 +412,6 @@ public class ImageReader extends BasicImageReader {
             Directory nextDir = (Directory) nodes.get(dir);
             if (nextDir == null) {
                 nextDir = newDirectory(last, dir);
-
-                if (isHidden) {
-                    nextDir.setIsHidden();
-                }
             }
             last = nextDir;
         }

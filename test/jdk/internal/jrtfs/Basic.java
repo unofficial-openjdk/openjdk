@@ -224,7 +224,8 @@ public class Basic {
         Path base = fs.getPath(dir);
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(base)) {
             for (Path entry: stream) {
-                assertTrue( entry.getParent().equals(base) );
+                assertTrue( entry.getParent().equals(base),
+                    base.toString() + "-> " + entry.toString() );
             }
         }
     }

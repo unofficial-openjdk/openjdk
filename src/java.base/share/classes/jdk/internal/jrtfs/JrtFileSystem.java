@@ -300,7 +300,7 @@ class JrtFileSystem extends FileSystem {
             image = appImage;
             node = appImage.findNode(path);
         }
-        if (node == null || node.isHidden()) {
+        if (node == null) {
             throw new NoSuchFileException(getString(path));
         }
         return new NodeAndImage(node, image);
@@ -384,12 +384,10 @@ class JrtFileSystem extends FileSystem {
         List<Path> childPaths;
         if (childPrefix == null) {
             childPaths = childNodes.stream()
-                .filter(Node::isVisible)
                 .map(child -> toJrtPath(child.getNameString()))
                 .collect(Collectors.toCollection(ArrayList::new));
         } else {
             childPaths = childNodes.stream()
-                .filter(Node::isVisible)
                 .map(child -> toJrtPath(childPrefix + child.getNameString().substring(1)))
                 .collect(Collectors.toCollection(ArrayList::new));
         }
@@ -397,21 +395,12 @@ class JrtFileSystem extends FileSystem {
     }
 
     private List<Node> rootChildren;
-    private static void addRootDirContent(List<Node> dest, List<Node> src) {
-        for (Node n : src) {
-            // only module directories at the top level. Filter other stuff!
-            if (n.isModuleDir()) {
-                dest.add(n);
-            }
-        }
-    }
-
     private synchronized void initRootChildren(byte[] path) {
         if (rootChildren == null) {
             rootChildren = new ArrayList<>();
-            addRootDirContent(rootChildren, bootImage.findNode(path).getChildren());
-            addRootDirContent(rootChildren, extImage.findNode(path).getChildren());
-            addRootDirContent(rootChildren, appImage.findNode(path).getChildren());
+            rootChildren.addAll(bootImage.findNode(path).getChildren());
+            rootChildren.addAll(extImage.findNode(path).getChildren());
+            rootChildren.addAll(appImage.findNode(path).getChildren());
         }
     }
 
