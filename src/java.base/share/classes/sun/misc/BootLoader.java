@@ -137,7 +137,7 @@ public class BootLoader {
      * Returns an Iterator to iterate over the resources of the given name
      * that are visible to the boot loader.
      */
-    public static Enumeration<URL> findResources(String name) {
+    public static Enumeration<URL> findResources(String name) throws IOException {
         return loader().findResources(name);
     }
 

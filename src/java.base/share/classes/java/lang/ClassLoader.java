@@ -1083,7 +1083,7 @@ public abstract class ClassLoader {
         if (parent != null) {
             url = parent.getResource(name);
         } else {
-            url = getBootstrapResource(name);
+            url = BootLoader.findResource(name);
         }
         if (url == null) {
             url = findResource(name);
@@ -1130,7 +1130,7 @@ public abstract class ClassLoader {
         if (parent != null) {
             tmp[0] = parent.getResources(name);
         } else {
-            tmp[0] = getBootstrapResources(name);
+            tmp[0] = BootLoader.findResources(name);
         }
         tmp[1] = findResources(name);
 
@@ -1214,7 +1214,7 @@ public abstract class ClassLoader {
     public static URL getSystemResource(String name) {
         ClassLoader system = getSystemClassLoader();
         if (system == null) {
-            return getBootstrapResource(name);
+            return BootLoader.findResource(name);
         }
         return system.getResource(name);
     }
@@ -1244,23 +1244,9 @@ public abstract class ClassLoader {
     {
         ClassLoader system = getSystemClassLoader();
         if (system == null) {
-            return getBootstrapResources(name);
+            return BootLoader.findResources(name);
         }
         return system.getResources(name);
-    }
-
-    /**
-     * Find resources from the VM's built-in classloader.
-     */
-    private static URL getBootstrapResource(String name) {
-        return BootLoader.findResource(name);
-    }
-
-    /**
-     * Find resources from the VM's built-in classloader.
-     */
-    private static Enumeration<URL> getBootstrapResources(String name) {
-        return BootLoader.findResources(name);
     }
 
     /**

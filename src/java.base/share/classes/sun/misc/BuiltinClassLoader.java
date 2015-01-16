@@ -147,6 +147,16 @@ class BuiltinClassLoader extends SecureClassLoader
 
     // -- finding/loading resources
 
+    @Override
+    public URL findResource(String name) {
+        return findResource(name, false);
+    }
+
+    @Override
+    public Enumeration<URL> findResources(String name) throws IOException {
+        return findResources(name, false);
+    }
+
     /**
      * Finds the resource with the given name. This method is overridden so
      * that resources in modules defined by this class loader are located
@@ -154,6 +164,23 @@ class BuiltinClassLoader extends SecureClassLoader
      */
     @Override
     public URL getResource(String name) {
+        return findResource(name, true);
+    }
+
+    /**
+     * Finds all resources with the given name. This method is overridden so
+     * resources in modules defined to this class loader are located first.
+     */
+    @Override
+    public Enumeration<URL> getResources(String name) throws IOException {
+        return findResources(name, true);
+    }
+
+    /**
+     * Finds the resource with the given name, checking the parent if
+     * necessary when {@code checkParent} is true.
+     */
+    private URL findResource(String name, boolean checkParent) {
         URL url = null;
 
         // is resource in a package of a module defined to this class loader?
@@ -163,18 +190,16 @@ class BuiltinClassLoader extends SecureClassLoader
         }
 
         // check parent
-        if (url == null && parent != null) {
+        if (url == null && checkParent && parent != null) {
             url = parent.getResource(name);
         }
 
         // search all modules defined to this class loader
         if (url == null && artifact == null) {
-            Iterator<ModuleArtifact> i = moduleToArtifact.values()
-                                                         .stream()
-                                                         .iterator();
-            while (i.hasNext()) {
-                url = checkURL(findResource(i.next(), name));
-                if (url != null) break;
+            for (ModuleArtifact a: moduleToArtifact.values()) {
+                url = checkURL(findResource(a, name));
+                if (url != null)
+                    break;
             }
         }
 
@@ -188,11 +213,12 @@ class BuiltinClassLoader extends SecureClassLoader
     }
 
     /**
-     * Finds all resources with the given name. This method is overridden so
-     * resources in modules defined to this class loader are located first.
+     * Finds all resources with the given name, checking the parent if
+     * necessary when {@code checkParent} is true.
      */
-    @Override
-    public Enumeration<URL> getResources(String name) throws IOException {
+    private Enumeration<URL> findResources(String name, boolean checkParent)
+        throws IOException
+    {
         List<URL> result = new ArrayList<>();
 
         // for consistency with getResource then we must check if the resource
@@ -205,7 +231,7 @@ class BuiltinClassLoader extends SecureClassLoader
         }
 
         // check parent
-        if (parent != null) {
+        if (checkParent && parent != null) {
             Enumeration<URL> e = parent.getResources(name);
             while (e.hasMoreElements()) {
                 result.add(e.nextElement());
@@ -244,15 +270,6 @@ class BuiltinClassLoader extends SecureClassLoader
         };
     }
 
-    @Override
-    public URL findResource(String name) {
-        throw new InternalError("Should not get here");
-    }
-
-    @Override
-    public Enumeration<URL> findResources(String name) {
-        throw new InternalError("Should not get here");
-    }
 
     /**
      * Maps the package name of the given resource to a module, returning
