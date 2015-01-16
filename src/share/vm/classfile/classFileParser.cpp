@@ -4646,17 +4646,29 @@ Array<Klass*>* ClassFileParser::compute_transitive_interfaces(
 
 void ClassFileParser::check_super_class_access(instanceKlassHandle this_klass, TRAPS) {
   Klass* super = this_klass->super();
-  if ((super != NULL) &&
-      (!Reflection::verify_class_access(this_klass(), super, false))) {
-    ResourceMark rm(THREAD);
-    Exceptions::fthrow(
-      THREAD_AND_LOCATION,
-      vmSymbols::java_lang_IllegalAccessError(),
-      "class %s cannot access its superclass %s",
-      this_klass->external_name(),
-      InstanceKlass::cast(super)->external_name()
-    );
-    return;
+  if (super != NULL) {
+    Reflection::VerifyClassAccessResults vca_result =
+      Reflection::verify_class_access(this_klass(), super, false);
+    if (vca_result != Reflection::ACCESS_OK) {
+      ResourceMark rm(THREAD);
+      char* msg =  Reflection::verify_class_access_msg(this_klass(), super, vca_result);
+      if (msg == NULL) {
+        Exceptions::fthrow(
+          THREAD_AND_LOCATION,
+          vmSymbols::java_lang_IllegalAccessError(),
+          "class %s cannot access its superclass %s",
+          this_klass->external_name(),
+          InstanceKlass::cast(super)->external_name());
+      } else {
+        // Add additional message content.
+        Exceptions::fthrow(
+          THREAD_AND_LOCATION,
+          vmSymbols::java_lang_IllegalAccessError(),
+          "superclass access check failed: %s",
+          msg);
+      }
+      return;
+    }
   }
 }
 
@@ -4667,15 +4679,26 @@ void ClassFileParser::check_super_interface_access(instanceKlassHandle this_klas
   for (int i = lng - 1; i >= 0; i--) {
     Klass* k = local_interfaces->at(i);
     assert (k != NULL && k->is_interface(), "invalid interface");
-    if (!Reflection::verify_class_access(this_klass(), k, false)) {
+    Reflection::VerifyClassAccessResults vca_result =
+      Reflection::verify_class_access(this_klass(), k, false);
+    if (vca_result != Reflection::ACCESS_OK) {
       ResourceMark rm(THREAD);
-      Exceptions::fthrow(
-        THREAD_AND_LOCATION,
-        vmSymbols::java_lang_IllegalAccessError(),
-        "class %s cannot access its superinterface %s",
-        this_klass->external_name(),
-        InstanceKlass::cast(k)->external_name()
-      );
+      char* msg =  Reflection::verify_class_access_msg(this_klass(), k, vca_result);
+      if (msg == NULL) {
+        Exceptions::fthrow(
+          THREAD_AND_LOCATION,
+          vmSymbols::java_lang_IllegalAccessError(),
+          "class %s cannot access its superinterface %s",
+          this_klass->external_name(),
+          InstanceKlass::cast(k)->external_name());
+      } else {
+        // Add additional message content.
+        Exceptions::fthrow(
+          THREAD_AND_LOCATION,
+          vmSymbols::java_lang_IllegalAccessError(),
+          "superinterface check failed: %s",
+          msg);
+      }
       return;
     }
   }

@@ -369,10 +369,10 @@ void Modules::add_module_exports(JNIEnv *env, jobject from_module, jstring packa
   }
 
   // If this is a qualified export, make sure the entry has not already been exported
-  // unqualifically.
+  // unqualifiedly.
   if (to_module_entry != NULL && package_entry->is_unqual_exported()) {
     THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(),
-              err_msg("Bad qualifed export, package %s in module %s is already unqualifically exported",
+              err_msg("Bad qualifed export, package %s in module %s is already unqualifiedly exported",
                       package_entry->name()->as_C_string(),
                       from_module_entry->name()->as_C_string()));
   }

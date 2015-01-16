@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -65,22 +65,22 @@ void PackageEntry::set_exported(ModuleEntry* m) {
   }
 
   if (m == NULL) {
-    // NULL indicates the package is being unqualifically exported
+    // NULL indicates the package is being unqualifiedly exported
     if (_is_exported && _qualified_exports != NULL) {
-      // Legit to transition a package from being qualifically exported
+      // Legit to transition a package from being qualifiedly exported
       // to unqualified.  Clean up the qualified lists at the next
       // safepoint.
       _exported_pending_delete = _qualified_exports;
     }
 
-    // Mark package as unqualifically exported
+    // Mark package as unqualifiedly exported
     _is_exported = true;
     _qualified_exports = NULL;
 
   } else {
     if (_is_exported && _qualified_exports == NULL) {
       // An exception could be thrown, but choose to simply ignore.
-      // Illegal to convert an unqualified exported package to be qualifically exported
+      // Illegal to convert an unqualified exported package to be qualifiedly exported
       return;
     }
 
@@ -168,7 +168,7 @@ PackageEntry* PackageEntryTable::new_entry(unsigned int hash, Symbol* name, Modu
   if (module == NULL) {
     // Indicates the unnamed module.
     // Set the exported state to true because all packages
-    // within the unnamed module are unqualifically exported
+    // within the unnamed module are unqualifiedly exported
     entry->set_exported(true);
   } else {
     entry->set_module(module);

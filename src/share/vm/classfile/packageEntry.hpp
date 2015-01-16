@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,8 +36,8 @@
 //     NULL if the package was defined within the unnamed module.
 //   - a growable array containing other module entries that this
 //     package is exported to.
-//   - a flag indicating if package is exported, either qualifically or
-//     unqualifically.
+//   - a flag indicating if package is exported, either qualifiedly or
+//     unqualifiedly.
 //
 // Packages that are:
 //   - not exported:        _qualified_exports = NULL  && _is_exported is false
@@ -68,7 +68,7 @@ public:
   void               set_module(ModuleEntry* m) { _module = m; }
 
   // package's export state
-  bool               is_exported() const                 { return _is_exported; } // qualifically or unqualifically exported
+  bool               is_exported() const                 { return _is_exported; } // qualifiedly or unqualifiedly exported
   bool               is_qual_exported() const            { return (_is_exported && (_qualified_exports != NULL)); }
   bool               is_unqual_exported() const          { return (_is_exported && (_qualified_exports == NULL)); }
   bool               exported_pending_delete() const     { return (_exported_pending_delete != NULL); }

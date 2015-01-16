@@ -411,19 +411,21 @@ oop Reflection::array_component_type(oop mirror, TRAPS) {
   return result;
 }
 
-bool Reflection::verify_class_access(Klass* current_class, Klass* new_class, bool classloader_only) {
+Reflection::VerifyClassAccessResults Reflection::verify_class_access(
+  Klass* current_class, Klass* new_class, bool classloader_only) {
+
   // Verify that current_class can access new_class.  If the classloader_only
   // flag is set, we automatically allow any accesses in which current_class
   // doesn't have a classloader.
   if ((current_class == NULL) ||
       (current_class == new_class) ||
       is_same_class_package(current_class, new_class)) {
-    return true;
+    return ACCESS_OK;
   }
   // Allow all accesses from sun/reflect/MagicAccessorImpl subclasses to
   // succeed trivially.
   if (current_class->is_subclass_of(SystemDictionary::reflect_MagicAccessorImpl_klass())) {
-    return true;
+    return ACCESS_OK;
   }
 
   // module boundaries
@@ -431,7 +433,7 @@ bool Reflection::verify_class_access(Klass* current_class, Klass* new_class, boo
     // Ignore modules for DumpSharedSpaces because we do not have any package
     // or module information for modules other than java.base.
     if (!UseModules || DumpSharedSpaces) {
-      return true;
+      return ACCESS_OK;
     }
 
     // Find the module entry for current_class, the accessor
@@ -448,63 +450,132 @@ bool Reflection::verify_class_access(Klass* current_class, Klass* new_class, boo
 
     // both in same module or unnamed module.
     if (module_from == module_to)
-      return true;
+      return ACCESS_OK;
 
     // Acceptable access to a type in the unamed module.
     if (module_to == NULL)
-      return true;
+      return ACCESS_OK;
 
     // Establish readability, check if module_from is allowed to read module_to.
     if (module_from != NULL && !module_from->can_read(module_to)) {
       if (TraceAccessControlErrors) {
         ResourceMark rm;
-        tty->print_cr("Type in module %s (%s) cannot access type in module %s (%s), not readable",
+        tty->print_cr("Type in module %s (%s) can not access type in module %s (%s), not readable",
           module_from->name()->as_C_string(), current_class->external_name(),
           module_to->name()->as_C_string(), new_class->external_name());
       }
-      return false;
+      return MODULE_NOT_READABLE;
     }
 
     PackageEntry* package_to = InstanceKlass::cast(new_class)->package();
-    assert(package_to != NULL, "cannot obtain new_class' package");
+    assert(package_to != NULL, "can not obtain new_class' package");
 
-    // Once readability is established, if module_to exports T unqualifically,
+    // Once readability is established, if module_to exports T unqualifiedly,
     // (to all modules), than whether module_from is in the unnamed module
     // or not does not matter, access is allowed.
     if (package_to->is_unqual_exported()) {
-      return true;
+      return ACCESS_OK;
     }
 
     if (module_from != NULL) {
       // Check the case where module_from, the requester, is in a named module.
       // Access is allowed if both 1 & 2 hold:
       //   1. Readability, module_from can read module_to (established above).
-      //   2. Either module_to exports T to module_from qualifically.
+      //   2. Either module_to exports T to module_from qualifiedly.
       //      or
-      //      module_to exports T unqualifically to all modules (checked above).
+      //      module_to exports T unqualifiedly to all modules (checked above).
       bool okay = package_to->is_qexported_to(module_from);
-      if (!okay && TraceAccessControlErrors) {
-        ResourceMark rm;
-        tty->print_cr("Type in module %s (%s) cannot access type in module %s (%s), not exported",
-          module_from->name()->as_C_string(), current_class->external_name(),
-          module_to->name()->as_C_string(), new_class->external_name());
+      if (!okay) {
+        if (TraceAccessControlErrors) {
+          ResourceMark rm;
+          tty->print_cr("Type in module %s (%s) can not access type in module %s (%s), not exported",
+            module_from->name()->as_C_string(), current_class->external_name(),
+            module_to->name()->as_C_string(), new_class->external_name());
+        }
+        return TYPE_NOT_EXPORTED;
       }
-      return okay;
+      return ACCESS_OK;
     } else {
       // Check the case where module_from, the requester, is in the unnamed module.
       // Access is allowed if both 1 & 2 hold:
       //   1. Readability, unnamed module can read all modules.
-      //   2. module_to exports T unqualifically to all modules (checked above).
+      //   2. module_to exports T unqualifiedly to all modules (checked above).
       if (TraceAccessControlErrors) {
         ResourceMark rm;
-        tty->print_cr("Type in the unnamed module (%s) cannot access type in module %s (%s), not unqualifically exported",
+        tty->print_cr("Type in the unnamed module (%s) can not access type in module %s (%s), not unqualifiedly exported",
           current_class->external_name(), module_to->name()->as_C_string(), new_class->external_name());
       }
-      return false;
+      return TYPE_NOT_UNQ_EXPORTED;
     }
   }
 
-  return can_relax_access_check_for(current_class, new_class, classloader_only);
+  if (can_relax_access_check_for(current_class, new_class, classloader_only)) {
+    return ACCESS_OK;
+  }
+  return OTHER_PROBLEM;
+}
+
+// Return an error message specific to the specified Klass*'s and result.
+// This function must be called from within a block containing a ResourceMark.
+char* Reflection::verify_class_access_msg(Klass* current_class,
+                                          Klass* new_class,
+                                          VerifyClassAccessResults result) {
+  assert(result != ACCESS_OK, "must be failure result");
+  char * msg = NULL;
+  if (result != OTHER_PROBLEM && new_class != NULL && current_class != NULL) {
+    ModuleEntry* module_to = InstanceKlass::cast(new_class)->module();
+    if (module_to != NULL) {
+      const char * new_class_name = new_class->external_name();
+      const char * current_class_name = current_class->external_name();
+      char * module_to_name = module_to->name()->as_C_string();
+      size_t len = 120 + strlen(current_class_name) + strlen(new_class_name) +
+        strlen(module_to_name);
+
+      if (result == TYPE_NOT_UNQ_EXPORTED) {
+        if (InstanceKlass::cast(new_class)->package() != NULL) {
+          const char * package_name =
+            InstanceKlass::cast(new_class)->package()->name()->as_klass_external_name();
+          len = len + strlen(package_name);
+          msg = NEW_RESOURCE_ARRAY(char, len);
+          jio_snprintf(msg, len - 1,
+            "class %s (in module: unnamed), can not access class %s (in module: %s), %s is not exported to the unnamed module",
+            current_class_name, new_class_name, module_to_name, package_name);
+        }
+
+      } else {
+        ModuleEntry* module_from = InstanceKlass::cast(current_class)->module();
+        if (module_from != NULL) {
+          char * module_from_name = module_from->name()->as_C_string();
+          len = len + 2 * strlen(module_from_name);
+
+          if (result == MODULE_NOT_READABLE) {
+            len = len + strlen(module_to_name);
+            msg = NEW_RESOURCE_ARRAY(char, len);
+            jio_snprintf(msg, len - 1,
+              "class %s in module %s can not access class %s in module %s, %s can not read %s",
+              current_class_name, module_from_name, new_class_name,
+              module_to_name, module_from_name, module_to_name);
+
+          } else if (result == TYPE_NOT_EXPORTED) {
+            if (InstanceKlass::cast(new_class)->package() != NULL) {
+              const char * package_name =
+                InstanceKlass::cast(new_class)->package()->name()->as_klass_external_name();
+              len = len + strlen(package_name);
+              msg = NEW_RESOURCE_ARRAY(char, len);
+              jio_snprintf(msg, len - 1,
+                "class %s (in module: %s), can not access class %s (in module: %s), %s is not exported to %s",
+                current_class_name, module_from_name, new_class_name,
+                module_to_name, package_name, module_from_name);
+            }
+
+          } else {
+            ShouldNotReachHere();
+          }
+        }  // module_from != NULL
+      }
+    }  // module_to != NULL
+  }  // result != OTHER_PROBLEM...
+  return msg;
 }
 
 static bool under_host_klass(InstanceKlass* ik, Klass* host_klass) {
