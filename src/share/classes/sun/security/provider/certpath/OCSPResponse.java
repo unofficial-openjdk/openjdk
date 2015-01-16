@@ -31,6 +31,7 @@ import java.security.*;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateParsingException;
 import java.security.cert.CertPathValidatorException;
+import java.security.cert.TrustAnchor;
 import java.security.cert.X509Certificate;
 import java.util.Collections;
 import java.util.Date;
@@ -316,9 +317,6 @@ public final class OCSPResponse {
         // signatureAlgorithmId
         AlgorithmId sigAlgId = AlgorithmId.parse(seqTmp[1]);
 
-        // check that the signature algorithm is not disabled.
-        AlgorithmChecker.check(sigAlgId);
-
         // signature
         byte[] signature = seqTmp[2].getBitString();
         X509CertImpl[] x509Certs = null;
@@ -356,9 +354,6 @@ public final class OCSPResponse {
             } else if (cert.getIssuerX500Principal().equals(
                     responderCert.getSubjectX500Principal())) {
 
-                // check the certificate algorithm
-                AlgorithmChecker.check(cert);
-
                 // Check for the OCSPSigning key purpose
                 try {
                     List<String> keyPurposes = cert.getExtendedKeyUsage();
@@ -375,6 +370,13 @@ public final class OCSPResponse {
                         "OCSP responses", cpe);
                 }
 
+                // Check algorithm constraints specified in security property
+                // "jdk.certpath.disabledAlgorithms".
+                AlgorithmChecker algChecker = new AlgorithmChecker(
+                                    new TrustAnchor(responderCert, null));
+                algChecker.init(false);
+                algChecker.check(cert, Collections.<String>emptySet());
+
                 // verify the signature
                 try {
                     cert.verify(responderCert.getPublicKey());
@@ -390,6 +392,10 @@ public final class OCSPResponse {
         // Confirm that the signed response was generated using the public
         // key from the trusted responder cert
         if (responderCert != null) {
+            // Check algorithm constraints specified in security property
+            // "jdk.certpath.disabledAlgorithms".
+            AlgorithmChecker.check(responderCert.getPublicKey(), sigAlgId);
+
             if (!verifyResponse(responseDataDer, responderCert,
                 sigAlgId, signature)) {
                 throw new CertPathValidatorException(

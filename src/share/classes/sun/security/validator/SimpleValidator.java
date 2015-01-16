@@ -35,6 +35,7 @@ import javax.security.auth.x500.X500Principal;
 
 import sun.security.x509.X509CertImpl;
 import sun.security.x509.NetscapeCertTypeExtension;
+import sun.security.util.AlgorithmConstraints;
 import sun.security.util.DerValue;
 import sun.security.util.DerInputStream;
 import sun.security.util.DerOutputStream;
@@ -49,6 +50,10 @@ import sun.security.provider.certpath.UntrustedChecker;
  * deployed certificates and previous J2SE versions. It will never support
  * more advanced features and will be deemphasized in favor of the PKIX
  * validator going forward.
+ * <p>
+ * {@code SimpleValidator} objects are immutable once they have been created.
+ * Please DO NOT add methods that can change the state of an instance once
+ * it has been created.
  *
  * @author Andreas Sterbenz
  */
@@ -81,13 +86,14 @@ public final class SimpleValidator extends Validator {
      * The list is used because there may be multiple certificates
      * with an identical subject DN.
      */
-    private Map<X500Principal, List<X509Certificate>> trustedX500Principals;
+    private final Map<X500Principal, List<X509Certificate>>
+                                            trustedX500Principals;
 
     /**
      * Set of the trusted certificates. Present only for
      * getTrustedCertificates().
      */
-    private Collection<X509Certificate> trustedCerts;
+    private final Collection<X509Certificate> trustedCerts;
 
     SimpleValidator(String variant, Collection<X509Certificate> trustedCerts) {
         super(TYPE_SIMPLE, variant);
@@ -115,9 +121,11 @@ public final class SimpleValidator extends Validator {
      * Perform simple validation of chain. The arguments otherCerts and
      * parameter are ignored.
      */
+    @Override
     X509Certificate[] engineValidate(X509Certificate[] chain,
-            Collection<X509Certificate> otherCerts, Object parameter)
-            throws CertificateException {
+            Collection<X509Certificate> otherCerts,
+            AlgorithmConstraints constraints,
+            Object parameter) throws CertificateException {
         if ((chain == null) || (chain.length == 0)) {
             throw new CertificateException
                 ("null or zero-length certificate chain");
@@ -130,7 +138,17 @@ public final class SimpleValidator extends Validator {
         if (date == null) {
             date = new Date();
         }
-        
+
+        // create default algorithm constraints checker
+        TrustAnchor anchor = new TrustAnchor(chain[chain.length - 1], null);
+        AlgorithmChecker defaultAlgChecker = new AlgorithmChecker(anchor);
+
+        // create application level algorithm constraints checker
+        AlgorithmChecker appAlgChecker = null;
+        if (constraints != null) {
+            appAlgChecker = new AlgorithmChecker(anchor, constraints);
+        }
+
         // create distrusted certificates checker
         UntrustedChecker untrustedChecker = new UntrustedChecker();
 
@@ -154,7 +172,12 @@ public final class SimpleValidator extends Validator {
 
             // check certificate algorithm
             try {
-                AlgorithmChecker.check(cert);
+                // Algorithm checker don't care about the unresolved critical
+                // extensions.
+                defaultAlgChecker.check(cert, Collections.<String>emptySet());
+                if (appAlgChecker != null) {
+                    appAlgChecker.check(cert, Collections.<String>emptySet());
+                }
             } catch (CertPathValidatorException cpve) {
                 throw new ValidatorException
                         (ValidatorException.T_ALGORITHM_DISABLED, cert, cpve);

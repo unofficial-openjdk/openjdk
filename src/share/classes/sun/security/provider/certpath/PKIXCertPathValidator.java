@@ -279,7 +279,7 @@ public class PKIXCertPathValidator extends CertPathValidatorSpi {
         int certPathLen = certList.size();
 
         basicChecker = new BasicChecker(anchor, testDate, sigProvider, false);
-        AlgorithmChecker algorithmChecker= AlgorithmChecker.getInstance();
+        AlgorithmChecker algorithmChecker = new AlgorithmChecker(anchor);
         KeyChecker keyChecker = new KeyChecker(certPathLen,
             pkixParam.getTargetCertConstraints());
         ConstraintsChecker constraintsChecker =

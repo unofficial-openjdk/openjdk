@@ -298,27 +298,13 @@ class OCSPChecker extends PKIXCertPathChecker {
                 }
                 if (filter != null) {
                     List<CertStore> certStores = pkixParams.getCertStores();
-                    AlgorithmChecker algChecker =
-                        AlgorithmChecker.getInstance();
                     for (CertStore certStore : certStores) {
                         try {
                             for (Certificate selected :
                                 certStore.getCertificates(filter)) {
-                                try {
-                                    // don't bother to trust algorithm disabled
-                                    // certificate as responder
-                                    algChecker.check(selected);
-
                                     responderCert = (X509Certificate) selected;
                                     seekResponderCert = false; // done
                                     break;
-                                } catch (CertPathValidatorException cpve) {
-                                    if (DEBUG != null) {
-                                        DEBUG.println(
-                                            "OCSP responder certificate " +
-                                            "algorithm check failed: " + cpve);
-                                    }
-                                }
                             }
                             if (!seekResponderCert) {
                                 break;
@@ -340,6 +326,10 @@ class OCSPChecker extends PKIXCertPathChecker {
                     "Cannot find the responder's certificate " +
                     "(set using the OCSP security properties).");
             }
+
+	    // The algorithm constraints of the OCSP trusted responder certificate
+	    // does not need to be checked in this code. The constraints will be
+	    // checked when the responder's certificate is validated.
 
             CertId certId = null;
             OCSPResponse response = null;

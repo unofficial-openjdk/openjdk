@@ -350,9 +350,6 @@ class ReverseBuilder extends Builder {
         currentState.untrustedChecker.check(cert,
                                     Collections.<String>emptySet());
 
-        /* check that the signature algorithm is not disabled. */
-        AlgorithmChecker.check(cert);
-
         /*
          * check for looping - abort a loop if
          * ((we encounter the same certificate twice) AND
@@ -471,9 +468,16 @@ class ReverseBuilder extends Builder {
         if (unresolvedCritExts == null) {
             unresolvedCritExts = Collections.<String>emptySet();
         }
+
+        /*
+         * Check that the signature algorithm is not disabled.
+         */
+        currentState.algorithmChecker.check(cert, unresolvedCritExts);
+
         for (PKIXCertPathChecker checker : currentState.userCheckers) {
             checker.check(cert, unresolvedCritExts);
         }
+
         /*
          * Look at the remaining extensions and remove any ones we have
          * already checked. If there are any left, throw an exception!

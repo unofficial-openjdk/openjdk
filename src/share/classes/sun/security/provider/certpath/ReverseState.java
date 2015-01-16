@@ -99,6 +99,9 @@ class ReverseState implements State {
     /* the untrusted certificates checker */
     UntrustedChecker untrustedChecker;
 
+    /* the algorithm checker */
+    AlgorithmChecker algorithmChecker;
+
     /* the trust anchor used to validate the path */
     TrustAnchor trustAnchor;
 
@@ -242,6 +245,14 @@ class ReverseState implements State {
         } else {
             X500Principal caName = anchor.getCA();
             updateState(anchor.getCAPublicKey(), caName);
+        }
+
+        // The user specified AlgorithmChecker may not be
+        // able to set the trust anchor until now.
+        for (PKIXCertPathChecker checker : userCheckers) {
+            if (checker instanceof AlgorithmChecker) {
+                ((AlgorithmChecker)checker).trySetTrustAnchor(anchor);
+            }
         }
 
         init = false;
