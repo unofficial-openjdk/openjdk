@@ -359,6 +359,14 @@ abstract class Handshaker {
         }
     }
 
+    final boolean receivedChangeCipherSpec() {
+        if (conn != null) {
+            return conn.receivedChangeCipherSpec();
+        } else {
+            return engine.receivedChangeCipherSpec();
+        }
+    }
+
     /**
      * Set the active protocol version and propagate it to the SSLSocket
      * and our handshake streams. Called from ClientHandshaker
