@@ -159,8 +159,12 @@ public final class PKIXValidator extends Validator {
         }
         if (TRY_VALIDATOR) {
             // check if chain contains trust anchor
+            // check that chain is in correct order and check if chain contains
+            // trust anchor
+            X500Principal prevIssuer = null;
             for (int i = 0; i < chain.length; i++) {
-                X500Principal dn = chain[i].getSubjectX500Principal();
+                X509Certificate cert = chain[i];
+                X500Principal dn = cert.getSubjectX500Principal();
 
                 // Check if chain[i] is already trusted. It may be inside
                 // trustedCerts, or has the same dn and public key as a cert
@@ -168,7 +172,11 @@ public final class PKIXValidator extends Validator {
                 // updated its cert with a stronger signature algorithm in JRE
                 // but the weak one is still in circulation.
 
-                if (trustedCerts.contains(chain[i]) ||          // trusted cert
+                if (i != 0 && !dn.equals(prevIssuer)) {
+                    // chain is not ordered correctly, call builder instead
+                    return doBuild(chain, otherCerts);
+                }
+                if (trustedCerts.contains(cert) ||          // trusted cert
                         (trustedSubjects.containsKey(dn) &&     // replacing ...
                          trustedSubjects.get(dn).contains(      // ... weak cert
                                 chain[i].getPublicKey()))) {
@@ -180,6 +188,7 @@ public final class PKIXValidator extends Validator {
                     System.arraycopy(chain, 0, newChain, 0, i);
                     return doValidate(newChain);
                 }
+                prevIssuer = cert.getIssuerX500Principal();
             }
 
             // apparently issued by trust anchor?
@@ -325,5 +334,4 @@ public final class PKIXValidator extends Validator {
                 ("PKIX path building failed: " + e.toString(), e);
         }
     }
-
 }
