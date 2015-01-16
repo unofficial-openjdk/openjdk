@@ -166,7 +166,7 @@ class JModModuleReader extends BaseModuleReader {
 
     JModModuleReader(ModuleArtifact artifact) throws IOException {
         module = artifact.descriptor().name();
-        baseURL = new URL("jmod" + artifact.location().toString().substring(4));
+        baseURL = artifact.location().toURL();
         zf = JModCache.get(baseURL);
     }
 
@@ -207,10 +207,13 @@ class JarModuleReader extends BaseModuleReader {
     private final JarFile jf;
 
     JarModuleReader(ModuleArtifact artifact) throws IOException {
-        module = artifact.descriptor().name();
         URI uri = artifact.location();
-        baseURL = new URL("jar:" + uri.toString() + "!/");
-        jf = new JarFile(Paths.get(uri).toString());
+        String s = uri.toString();
+        String fileURIString = s.substring(4, s.length()-2);
+
+        module = artifact.descriptor().name();
+        baseURL = uri.toURL();
+        jf = new JarFile(Paths.get(URI.create(fileURIString)).toString());
     }
 
     @Override
