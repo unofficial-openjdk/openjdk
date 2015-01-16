@@ -116,9 +116,15 @@ final class CipherSuite implements Comparable {
     // obsoleted since protocol version
     final int obsoleted;
 
+    // supported since protocol version
+    final int supported;
+
+    /**
+     * Constructor for implemented CipherSuites.
+     */
     private CipherSuite(String name, int id, int priority,
             KeyExchange keyExchange, BulkCipher cipher,
-            boolean allowed, int obsoleted) {
+            boolean allowed, int obsoleted, int supported) {
         this.name = name;
         this.id = id;
         this.priority = priority;
@@ -142,8 +148,12 @@ final class CipherSuite implements Comparable {
         allowed &= cipher.allowed;
         this.allowed = allowed;
         this.obsoleted = obsoleted;
+        this.supported = supported;
     }
 
+    /**
+     * Constructor for unimplemented CipherSuites.
+     */
     private CipherSuite(String name, int id) {
         this.name = name;
         this.id = id;
@@ -155,6 +165,7 @@ final class CipherSuite implements Comparable {
         this.macAlg = null;
         this.exportable = false;
         this.obsoleted = ProtocolVersion.LIMIT_MAX_VALUE;
+        this.supported = ProtocolVersion.LIMIT_MIN_VALUE;
     }
 
     /**
@@ -236,12 +247,17 @@ final class CipherSuite implements Comparable {
         return nameMap.values();
     }
 
+    /*
+     * Use this method when all of the values need to be specified.
+     * This is primarily used when defining a new ciphersuite for
+     * TLS 1.2+ that doesn't use the "default" PRF.
+     */
     private static void add(String name, int id, int priority,
             KeyExchange keyExchange, BulkCipher cipher,
-            boolean allowed, int obsoleted) {
+            boolean allowed, int obsoleted, int supported) {
 
         CipherSuite c = new CipherSuite(name, id, priority, keyExchange,
-                                        cipher, allowed, obsoleted);
+            cipher, allowed, obsoleted, supported);
         if (idMap.put(id, c) != null) {
             throw new RuntimeException("Duplicate ciphersuite definition: "
                                         + id + ", " + name);
@@ -254,12 +270,31 @@ final class CipherSuite implements Comparable {
         }
     }
 
+    /*
+     * Use this method when there is no lower protocol limit where this
+     * suite can be used.
+     */
+    private static void add(String name, int id, int priority,
+            KeyExchange keyExchange, BulkCipher cipher,
+            boolean allowed, int obsoleted) {
+        add(name, id, priority, keyExchange, cipher, allowed, obsoleted,
+            ProtocolVersion.LIMIT_MIN_VALUE);
+    }
+
+    /*
+     * Use this method when there is no upper protocol limit.  That is,
+     * suites which have not been obsoleted.
+     */
     private static void add(String name, int id, int priority,
             KeyExchange keyExchange, BulkCipher cipher, boolean allowed) {
         add(name, id, priority, keyExchange,
             cipher, allowed, ProtocolVersion.LIMIT_MAX_VALUE);
     }
 
+    /*
+     * Use this method to define an unimplemented suite.  This provides
+     * a number<->name mapping that can be used for debugging.
+     */
     private static void add(String name, int id) {
         CipherSuite c = new CipherSuite(name, id);
         if (idMap.put(id, c) != null) {

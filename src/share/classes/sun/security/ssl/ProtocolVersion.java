@@ -50,6 +50,9 @@ final class ProtocolVersion implements Comparable<ProtocolVersion> {
     // The limit of maximum protocol version
     final static int LIMIT_MAX_VALUE = 0xFFFF;
 
+    // The limit of minimum protocol version
+    final static int LIMIT_MIN_VALUE = 0x0000;
+
     // Dummy protocol version value for invalid SSLSession
     final static ProtocolVersion NONE = new ProtocolVersion(-1, "NONE");
 

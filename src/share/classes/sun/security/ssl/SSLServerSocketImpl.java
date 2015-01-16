@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1996, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -144,8 +144,8 @@ class SSLServerSocketImpl extends SSLServerSocket
             throw new SSLException("No Authentication context given");
         }
         sslContext = context;
-        enabledCipherSuites = CipherSuiteList.getDefault();
-        enabledProtocols = ProtocolList.getDefault(true);
+        enabledCipherSuites = sslContext.getDefaultCipherSuiteList(true);
+        enabledProtocols = sslContext.getDefaultProtocolList(true);
     }
 
     /**
@@ -159,8 +159,7 @@ class SSLServerSocketImpl extends SSLServerSocket
      * @return an array of cipher suite names
      */
     public String[] getSupportedCipherSuites() {
-        CipherSuiteList.clearAvailableCache();
-        return CipherSuiteList.getSupported().toStringArray();
+        return sslContext.getSuportedCipherSuiteList().toStringArray();
     }
 
     /**
@@ -185,7 +184,7 @@ class SSLServerSocketImpl extends SSLServerSocket
     }
 
     public String[] getSupportedProtocols() {
-        return ProtocolList.getSupported().toStringArray();
+        return sslContext.getSuportedProtocolList().toStringArray();
     }
 
     /**
@@ -244,8 +243,8 @@ class SSLServerSocketImpl extends SSLServerSocket
          * change them to the corresponding default ones.
          */
         if (useServerMode != (!flag) &&
-                ProtocolList.isDefaultProtocolList(enabledProtocols)) {
-            enabledProtocols = ProtocolList.getDefault(!flag);
+                sslContext.isDefaultProtocolList(enabledProtocols)) {
+            enabledProtocols = sslContext.getDefaultProtocolList(!flag);
         }
 
         useServerMode = !flag;
