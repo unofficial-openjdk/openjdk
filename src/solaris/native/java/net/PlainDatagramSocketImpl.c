@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2006, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1564,10 +1564,12 @@ jobject getMulticastInterface(JNIEnv *env, jobject this, int fd, jint opt) {
         static jmethodID ni_ctrID;
         static jfieldID ni_indexID;
         static jfieldID ni_addrsID;
+        static jfieldID ni_nameID;
 
         jobjectArray addrArray;
         jobject addr;
         jobject ni;
+        jobject ni_name;
 
         struct in_addr in;
         struct in_addr *inP = &in;
@@ -1630,6 +1632,8 @@ jobject getMulticastInterface(JNIEnv *env, jobject this, int fd, jint opt) {
             ni_addrsID = (*env)->GetFieldID(env, c, "addrs",
                                             "[Ljava/net/InetAddress;");
             CHECK_NULL_RETURN(ni_addrsID, NULL);
+            ni_nameID = (*env)->GetFieldID(env, c,"name", "Ljava/lang/String;");
+            CHECK_NULL_RETURN(ni_nameID, NULL);
             ni_class = (*env)->NewGlobalRef(env, c);
             CHECK_NULL_RETURN(ni_class, NULL);
         }
@@ -1651,6 +1655,9 @@ jobject getMulticastInterface(JNIEnv *env, jobject this, int fd, jint opt) {
         CHECK_NULL_RETURN(addrArray, NULL);
         (*env)->SetObjectArrayElement(env, addrArray, 0, addr);
         (*env)->SetObjectField(env, ni, ni_addrsID, addrArray);
+        if (ni_name != NULL) {
+            (*env)->SetObjectField(env, ni, ni_nameID, ni_name);
+        }
         return ni;
     }
 
@@ -1667,14 +1674,16 @@ jobject getMulticastInterface(JNIEnv *env, jobject this, int fd, jint opt) {
         static jfieldID ni_indexID;
         static jfieldID ni_addrsID;
         static jclass ia_class;
+        static jfieldID ni_nameID;
         static jmethodID ia_anyLocalAddressID;
 
-        int index;
+        int index = 0;
         int len = sizeof(index);
 
         jobjectArray addrArray;
         jobject addr;
         jobject ni;
+        jobject ni_name;
 
 #ifdef __linux__
         /*
@@ -1714,6 +1723,8 @@ jobject getMulticastInterface(JNIEnv *env, jobject this, int fd, jint opt) {
                                                              "anyLocalAddress",
                                                              "()Ljava/net/InetAddress;");
             CHECK_NULL_RETURN(ia_anyLocalAddressID, NULL);
+            ni_nameID = (*env)->GetFieldID(env, c,"name", "Ljava/lang/String;");
+            CHECK_NULL_RETURN(ni_nameID, NULL);
             ni_class = (*env)->NewGlobalRef(env, c);
             CHECK_NULL_RETURN(ni_class, NULL);
         }
@@ -1774,6 +1785,10 @@ jobject getMulticastInterface(JNIEnv *env, jobject this, int fd, jint opt) {
         CHECK_NULL_RETURN(addrArray, NULL);
         (*env)->SetObjectArrayElement(env, addrArray, 0, addr);
         (*env)->SetObjectField(env, ni, ni_addrsID, addrArray);
+        ni_name = (*env)->NewStringUTF(env, "");
+        if (ni_name != NULL) {
+            (*env)->SetObjectField(env, ni, ni_nameID, ni_name);
+        }
         return ni;
     }
 #endif
