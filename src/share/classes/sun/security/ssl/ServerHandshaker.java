@@ -1074,9 +1074,10 @@ final class ServerHandshaker extends Handshaker {
                 new PrivilegedExceptionAction<KerberosKey[]>() {
                 public KerberosKey[] run() throws Exception {
                     // get kerberos key for the default principal
-                    return Krb5Util.getKeys(
+                    KerberosKey[] keys = Krb5Util.getKeys(
                         GSSCaller.CALLER_SSL_SERVER, null, acc);
-                        }});
+		    return keys != null ? keys : new KerberosKey[0];
+		}});
 
             // check permission to access and use the secret key of the
             // Kerberized "host" service
@@ -1104,7 +1105,7 @@ final class ServerHandshaker extends Handshaker {
                    return false;
                 }
             }
-            return (kerberosKeys != null);
+            return (kerberosKeys != null && kerberosKeys.length > 0);
         } catch (PrivilegedActionException e) {
             // Likely exception here is LoginExceptin
             if (debug != null && Debug.isOn("handshake")) {

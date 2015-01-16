@@ -30,11 +30,11 @@ import java.net.Socket;
 import java.io.*;
 import java.security.*;
 import java.security.cert.*;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeSet;
 
 import javax.net.ssl.*;
 
@@ -140,7 +140,7 @@ public abstract class SSLContextImpl extends SSLContextSpi {
             throws KeyManagementException {
         for (int i = 0; kms != null && i < kms.length; i++) {
             KeyManager km = kms[i];
-            if (km instanceof X509KeyManager == false) {
+            if (!(km instanceof X509KeyManager)) {
                 continue;
             }
             if (SunJSSE.isFIPS()) {
@@ -327,11 +327,11 @@ public abstract class SSLContextImpl extends SSLContextSpi {
         Collection<CipherSuite> allowedCipherSuites =
                                     CipherSuite.allowedCipherSuites();
 
-        ArrayList<CipherSuite> suites = new ArrayList<CipherSuite>();
+        TreeSet<CipherSuite> suites = new TreeSet<CipherSuite>();
         if (!(protocols.collection().isEmpty()) &&
                 protocols.min.v != ProtocolVersion.NONE.v) {
             for (CipherSuite suite : allowedCipherSuites) {
-                if (suite.allowed == false || suite.priority < minPriority) {
+                if (!suite.allowed || suite.priority < minPriority) {
                     continue;
                 }
 
