@@ -1938,6 +1938,7 @@ public class FilePane extends JPanel implements PropertyChangeListener {
             return false;
         }
 
+        try {
         if (f instanceof ShellFolder) {
             return ((ShellFolder) f).isFileSystem();
         } else {
@@ -1952,6 +1953,9 @@ public class FilePane extends JPanel implements PropertyChangeListener {
                 // Ordinary file
                 return true;
             }
+        }
+        } catch (SecurityException e) {
+            return false;
         }
     }
 
