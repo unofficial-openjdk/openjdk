@@ -27,6 +27,7 @@
  * @summary Verify that all ciphersuites work (incl. ECC using NSS crypto)
  * @author Andreas Sterbenz
  * @library ..
+ * @run main/othervm ClientJSSEServerJSSE
  */
 
 import java.security.*;
@@ -36,6 +37,10 @@ public class ClientJSSEServerJSSE extends PKCS11Test {
     private static String[] cmdArgs;
 
     public static void main(String[] args) throws Exception {
+        // reset the security property to make sure that the algorithms
+        // and keys used in this test are not disabled.
+        Security.setProperty("jdk.tls.disabledAlgorithms", "");
+
         cmdArgs = args;
         main(new ClientJSSEServerJSSE());
     }

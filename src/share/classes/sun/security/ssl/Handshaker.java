@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1996, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -49,6 +49,9 @@ import sun.security.internal.interfaces.TlsMasterSecret;
 import sun.security.ssl.HandshakeMessage.*;
 import sun.security.ssl.CipherSuite.*;
 
+import sun.security.util.AlgorithmConstraints;
+import sun.security.util.CryptoPrimitive;
+
 /**
  * Handshaker ... processes handshake records from an SSL V3.0
  * data stream, handling all the details of the handshake protocol.
@@ -79,6 +82,9 @@ abstract class Handshaker {
 
     // List of enabled CipherSuites
     private CipherSuiteList enabledCipherSuites;
+
+    // The cryptographic algorithm constraints
+    private AlgorithmConstraints algorithmConstraints = null;
 
     /*
      * List of active protocols
@@ -237,8 +243,10 @@ abstract class Handshaker {
 
         if (conn != null) {
             conn.getAppInputStream().r.setHandshakeHash(handshakeHash);
+            algorithmConstraints = new SSLAlgorithmConstraints(conn, true);
         } else {        // engine != null
             engine.inputRecord.setHandshakeHash(handshakeHash);
+            algorithmConstraints = new SSLAlgorithmConstraints(engine, true);
         }
 
 
@@ -403,6 +411,18 @@ abstract class Handshaker {
         this.enabledCipherSuites = enabledCipherSuites;
     }
 
+    /**
+     * Set the algorithm constraints. Called from the constructor or
+     * SSLSocketImpl/SSLEngineImpl.setAlgorithmConstraints() (if the
+     * handshake is not yet in progress).
+     */
+    void setAlgorithmConstraints(AlgorithmConstraints algorithmConstraints) {
+        activeCipherSuites = null;
+        activeProtocols = null;
+
+        this.algorithmConstraints =
+            new SSLAlgorithmConstraints(algorithmConstraints);
+    }
 
     /**
      * Prior to handshaking, activate the handshake and initialize the version,
@@ -415,7 +435,9 @@ abstract class Handshaker {
 
         if (activeProtocols.collection().isEmpty() ||
                 activeProtocols.max.v == ProtocolVersion.NONE.v) {
-            throw new SSLHandshakeException("No appropriate protocol");
+            throw new SSLHandshakeException(
+                    "No appropriate protocol (protocol is disabled or " +
+                    "cipher suites are inappropriate)");
         }
 
         if (activeCipherSuites == null) {
@@ -531,11 +553,21 @@ abstract class Handshaker {
             if (!(activeProtocols.collection().isEmpty()) &&
                     activeProtocols.min.v != ProtocolVersion.NONE.v) {
                 for (CipherSuite suite : enabledCipherSuites.collection()) {
-                    if (suite.obsoleted > activeProtocols.min.v) {
-                        suites.add(suite);
-                    } else if (debug != null && Debug.isOn("handshake")) {
-                        System.out.println(
-                            "Ignoring obsoleted cipher suite: " + suite);
+                    if (suite.obsoleted > activeProtocols.min.v &&
+                            suite.supported <= activeProtocols.max.v) {
+                        if (algorithmConstraints.permits(
+                                EnumSet.of(CryptoPrimitive.KEY_AGREEMENT),
+                                suite.name, null)) {
+                            suites.add(suite);
+                        }
+                    } else if (debug != null && Debug.isOn("verbose")) {
+                        if (suite.obsoleted <= activeProtocols.min.v) {
+                            System.out.println(
+                                "Ignoring obsoleted cipher suite: " + suite);
+                        } else {
+                            System.out.println(
+                                "Ignoring unsupported cipher suite: " + suite);
+                        }
                     }
                 }
             }
@@ -564,13 +596,36 @@ abstract class Handshaker {
         if (activeProtocols == null) {
             ArrayList<ProtocolVersion> protocols =
                                             new ArrayList<ProtocolVersion>(3);
+            EnumSet<CryptoPrimitive> cryptoPrimitives =
+                EnumSet.<CryptoPrimitive>of(CryptoPrimitive.KEY_AGREEMENT);
             for (ProtocolVersion protocol : enabledProtocols.collection()) {
+                if (!algorithmConstraints.permits(
+                        cryptoPrimitives, protocol.name, null)) {
+                    if (debug != null && Debug.isOn("verbose")) {
+                        System.out.println(
+                            "Ignoring disabled protocol: " + protocol);
+                    }
+
+                    continue;
+                }
                 boolean found = false;
                 for (CipherSuite suite : enabledCipherSuites.collection()) {
-                    if (suite.isAvailable() && suite.obsoleted > protocol.v) {
-                        protocols.add(protocol);
-                        found = true;
-                        break;
+                    if (suite.isAvailable() && suite.obsoleted > protocol.v &&
+                                               suite.supported <= protocol.v) {
+                        if (algorithmConstraints.permits(
+                                cryptoPrimitives, suite.name, null)) {
+                            protocols.add(protocol);
+                            found = true;
+                            break;
+                        } else if (debug != null && Debug.isOn("verbose")) {
+                            System.out.println(
+                                "Ignoring disabled cipher suite: " + suite +
+                                 " for " + protocol);
+                        }
+                    } else if (debug != null && Debug.isOn("verbose")) {
+                        System.out.println(
+                            "Ignoring unsupported cipher suite: " + suite +
+                                 " for " + protocol);
                     }
                 }
                 if (!found && (debug != null) && Debug.isOn("handshake")) {
