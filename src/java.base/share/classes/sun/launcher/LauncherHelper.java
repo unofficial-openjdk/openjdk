@@ -41,15 +41,12 @@ package sun.launcher;
  */
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.net.URL;
-import java.net.URI;
 import java.nio.charset.Charset;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
@@ -73,8 +70,6 @@ import java.util.TreeSet;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 
 import jdk.jigsaw.module.ExtendedModuleDescriptor;
 import jdk.jigsaw.module.Layer;
@@ -84,8 +79,6 @@ import jdk.jigsaw.module.ModuleDependence;
 import jdk.jigsaw.module.ModuleExport;
 import jdk.jigsaw.module.ModuleId;
 import jdk.jigsaw.module.ServiceDependence;
-import jdk.jigsaw.module.internal.ControlFile;
-import sun.misc.JModCache;
 
 public enum LauncherHelper {
     INSTANCE;
@@ -460,7 +453,7 @@ public enum LauncherHelper {
     /**
      * Returns the main class for a module. The query is either a module-id
      * or module-id/main-class. For the former then the module's main class
-     * is read from its extended module descriptor (jmod for now).
+     * is obtained from its extended module descriptor.
      */
     static String getMainClassForModule(String query) throws IOException {
         int i = query.indexOf('/');
@@ -504,24 +497,10 @@ public enum LauncherHelper {
             return mainClass;
         }
 
-        // read extended module descriptor's main class (only jmod for now)
-        URI uri = artifact.location();
-        if (!uri.getScheme().equalsIgnoreCase("jmod")) {
-            abort(null, "java.launcher.module.error4", query);
-        }
-        // convert to jmod URL for direct access
-        ZipFile zf = JModCache.get(uri.toURL());
-        ZipEntry ze = zf.getEntry(ControlFile.CONTROL_FILE);
-        if (ze == null) {
-            abort(null, "java.launcher.module.error5", uri);
-        }
-        try (InputStream in = zf.getInputStream(ze)) {
-            ControlFile cf = ControlFile.parse(in);
-            mainClass = cf.mainClass();
-            if (mainClass == null)
-                abort(null, "java.launcher.module.error5", uri);
-            return mainClass;
-        }
+        mainClass = artifact.descriptor().mainClass();
+        if (mainClass == null)
+            abort(null, "java.launcher.module.error4", artifact.location());
+        return mainClass;
     }
 
     // From src/share/bin/java.c:

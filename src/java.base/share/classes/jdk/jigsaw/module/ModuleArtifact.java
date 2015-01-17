@@ -60,6 +60,7 @@ public final class ModuleArtifact {
         ModuleId id = ModuleId.parse(name, cf.version());
 
         this.descriptor = new ExtendedModuleDescriptor(id,
+                                                       cf.mainClass(),
                                                        mi.moduleDependences(),
                                                        mi.serviceDependences(),
                                                        mi.exports(),

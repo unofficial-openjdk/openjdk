@@ -41,8 +41,10 @@ public class ExtendedModuleDescriptor
     extends ModuleDescriptor
 {
     private final ModuleId id;
+    private final String mainClass;
 
     ExtendedModuleDescriptor(ModuleId id,
+                             String mainClass,
                              Set<ModuleDependence> moduleDeps,
                              Set<ServiceDependence> serviceDeps,
                              Set<ModuleExport> exports,
@@ -50,6 +52,7 @@ public class ExtendedModuleDescriptor
     {
         super(id.name(), moduleDeps, serviceDeps, exports, services);
         this.id = id;
+        this.mainClass = mainClass;
     }
 
     /**
@@ -57,6 +60,14 @@ public class ExtendedModuleDescriptor
      */
     public ModuleId id() {
         return id;
+    }
+
+    /**
+     * Returns the module's main class or {@code null} if there isn't
+     * a main class.
+     */
+    public String mainClass() {
+        return mainClass;
     }
 
     @Override
@@ -84,6 +95,7 @@ public class ExtendedModuleDescriptor
      */
     public static class Builder extends ModuleDescriptor.Builder {
         private final ModuleId id;
+        private String mainClass;
 
         /**
          * Initializes a new builder.
@@ -129,11 +141,17 @@ public class ExtendedModuleDescriptor
             return this;
         }
 
+        public Builder mainClass(String mainClass) {
+            this.mainClass = mainClass;
+            return this;
+        }
+
         /**
          * Builds an {@code ExtendedModuleDescriptor} from the components.
          */
         public ExtendedModuleDescriptor build() {
             return new ExtendedModuleDescriptor(id,
+                                                mainClass,
                                                 moduleDeps,
                                                 serviceDeps,
                                                 exports,
