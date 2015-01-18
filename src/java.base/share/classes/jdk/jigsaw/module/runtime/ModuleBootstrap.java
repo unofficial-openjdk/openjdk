@@ -62,6 +62,8 @@ import sun.reflect.Reflection;
 class ModuleBootstrap {
     private ModuleBootstrap() { }
 
+    private static final String JAVA_BASE = "java.base";
+
     /**
      * Invoked by the VM at startup to initialize the module system.
      */
@@ -125,6 +127,15 @@ class ModuleBootstrap {
                 mods.add(mainMid.name());
             finder = limitFinder(finder, mods);
         }
+
+        // Once the finder is created then we find the base module and define
+        // it to the boot loader. We do this here so that resources in the
+        // base module can be located for error messages that may happen
+        // from here on.
+        ModuleArtifact base = finder.find(JAVA_BASE);
+        if (base == null)
+            throw new InternalError(JAVA_BASE + " not found");
+        BootLoader.defineModule(base);
 
         // If the class path is set then assume the unnamed module is observable.
         // We implement this here by putting the names of all observable (named)
@@ -269,12 +280,14 @@ class ModuleBootstrap {
     {
         for (ModuleDescriptor md: cf.descriptors()) {
             String name = md.name();
-            ModuleArtifact artifact = cf.findArtifact(name);
-            ClassLoader cl = clf.loaderForModule(artifact);
-            if (cl == null) {
-                BootLoader.defineModule(artifact);
-            } else {
-                ((ModuleLoader)cl).defineModule(artifact);
+            if (!name.equals(JAVA_BASE)) {
+                ModuleArtifact artifact = cf.findArtifact(name);
+                ClassLoader cl = clf.loaderForModule(artifact);
+                if (cl == null) {
+                    BootLoader.defineModule(artifact);
+                } else {
+                    ((ModuleLoader) cl).defineModule(artifact);
+                }
             }
         }
     }
