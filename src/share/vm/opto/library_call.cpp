@@ -2447,7 +2447,7 @@ bool LibraryCallKit::inline_unsafe_access(bool is_native_ptr, bool is_store, Bas
     case T_ADDRESS:
       // Cast to an int type.
       p = _gvn.transform( new (C, 2) CastP2XNode(NULL,p) );
-      p = ConvX2L(p);
+      p = ConvX2UL(p);
       push_pair(p);
       break;
     case T_DOUBLE:
