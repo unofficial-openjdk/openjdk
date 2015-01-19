@@ -379,8 +379,6 @@ void ClassVerifier::verify_method(methodHandle m, TRAPS) {
                                 // flow from current instruction to the next
                                 // instruction in sequence
 
-  set_furthest_jump(0);
-
   Bytecodes::Code opcode;
   while (!bcs.is_last_bytecode()) {
     // Check for recursive re-verification before each bytecode.
@@ -1455,7 +1453,7 @@ u2 ClassVerifier::verify_stackmap_table(u2 stackmap_index, u2 bci,
       // If matched, current_frame will be updated by this method.
       bool match = stackmap_table->match_stackmap(
         current_frame, this_offset, stackmap_index,
-        !no_control_flow, true, CHECK_VERIFY_(this, 0));
+        !no_control_flow, true, false, CHECK_VERIFY_(this, 0));
       if (!match) {
         // report type error
         verify_error(bci, "Instruction type does not match stack map");
@@ -1499,7 +1497,7 @@ void ClassVerifier::verify_exception_handler_targets(u2 bci, bool this_uninit, S
           new_frame->push_stack(throwable, CHECK_VERIFY(this));
         }
         bool match = stackmap_table->match_stackmap(
-          new_frame, handler_pc, true, false, CHECK_VERIFY(this));
+	  new_frame, handler_pc, true, false, true, CHECK_VERIFY(this));
         if (!match) {
           verify_error(bci,
             "Stack map does not match the one at exception handler %d",
@@ -1892,12 +1890,6 @@ void ClassVerifier::verify_invoke_init(
     if (ref_class_type.name() != current_class()->name() &&
         ref_class_type.name() != superk->klass_part()->name()) {
       verify_error(bci, "Bad <init> method call");
-      return;
-    }
-
-    // Make sure that this call is not jumped over.
-    if (bci < furthest_jump()) {
-      verify_error(bci, "Bad <init> method call from inside of a branch");
       return;
     }
 
