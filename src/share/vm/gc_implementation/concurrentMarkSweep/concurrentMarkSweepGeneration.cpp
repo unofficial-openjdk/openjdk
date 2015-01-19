@@ -748,7 +748,7 @@ CMSCollector::CMSCollector(ConcurrentMarkSweepGeneration* cmsGen,
   // Support for parallelizing survivor space rescan
   if (CMSParallelRemarkEnabled && CMSParallelSurvivorRemarkEnabled) {
     const size_t max_plab_samples =
-      ((DefNewGeneration*)_young_gen)->max_survivor_size()/MinTLABSize;
+      ((DefNewGeneration*)_young_gen)->max_survivor_size() / plab_sample_minimum_size();
 
     _survivor_plab_array  = NEW_C_HEAP_ARRAY(ChunkArray, ParallelGCThreads);
     _survivor_chunk_array = NEW_C_HEAP_ARRAY(HeapWord*, 2*max_plab_samples);
@@ -821,6 +821,12 @@ CMSCollector::CMSCollector(ConcurrentMarkSweepGeneration* cmsGen,
             " on sun4v; please understand that you are using at your own risk!");
   }
 #endif
+}
+
+size_t CMSCollector::plab_sample_minimum_size() {
+  // The default value of MinTLABSize is 2k, but there is
+  // no way to get the default value if the flag has been overridden.
+  return MAX2(ThreadLocalAllocBuffer::min_size() * HeapWordSize, 2 * K);
 }
 
 const char* ConcurrentMarkSweepGeneration::name() const {
