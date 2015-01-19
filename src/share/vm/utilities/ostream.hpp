@@ -226,6 +226,10 @@ class rotatingFileStream : public fileStream {
   virtual void rotate_log();
 };
 
+#ifndef PRODUCT
+void test_loggc_filename();
+#endif
+
 void ostream_init();
 void ostream_init_log();
 void ostream_exit();
