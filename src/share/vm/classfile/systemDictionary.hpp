@@ -123,6 +123,7 @@ class SymbolPropertyTable;
   template(WeakReference_klass,          java_lang_ref_WeakReference,    Pre) \
   template(FinalReference_klass,         java_lang_ref_FinalReference,   Pre) \
   template(PhantomReference_klass,       java_lang_ref_PhantomReference, Pre) \
+  template(Cleaner_klass,                sun_misc_Cleaner,               Pre) \
   template(Finalizer_klass,              java_lang_ref_Finalizer,        Pre) \
                                                                               \
   template(Thread_klass,                 java_lang_Thread,               Pre) \
