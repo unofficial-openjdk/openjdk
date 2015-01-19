@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,7 @@
 #
 
 # @test
-# @summary Basic test of jlink to create a modular image 
+# @summary Test the recording and checking of dependency hashes
 
 set -e
 
@@ -35,7 +35,7 @@ if [ -z "$TESTJAVA" ]; then
 fi
 
 if [ ! -d "$TESTJAVA/../jmods" ]; then
-   echo "Not images build: jmods not exists"
+   echo "Not images build: jmods not found"
    exit 0;
 fi
 
@@ -56,24 +56,37 @@ JAVAC="$COMPILEJAVA/bin/javac"
 JAVA="$TESTJAVA/bin/java"
 JLINK="$TESTJAVA/bin/jlink"
 
-rm -rf mods
-mkdir -p mods/test
-$JAVAC -d mods/test `find $TESTSRC/src/test -name "*.java"`
+rm -rf mods mlib
 
-rm -rf mlib myimage myjimage
+# compile and create jmods for m1 and m2
+mkdir -p mods/m2
+$JAVAC -d mods/m2 `find $TESTSRC/src/m2 -name "*.java"`
+mkdir -p mlib
+$JLINK --format jmod --class-path mods/m2 --output mlib/m2.jmod
 
-# create jmod
-mkdir mlib
-$JLINK --format jmod --class-path mods/test --mid test@1.0 --main-class jdk.test.Test \
-    --output mlib/test@1.0.jmod
+mkdir -p mods/m1
+$JAVAC -d mods/m1 -cp mods/m2 `find $TESTSRC/src/m1 -name "*.java"`
+mkdir -p mlib
+$JLINK --format jmod --class-path mods/m1 --output mlib/m1.jmod \
+    --modulepath mlib --hash-dependences m\.*
 
-# uncompressed image
-$JLINK --modulepath $TESTJAVA/../jmods${PS}mlib --addmods test --format jimage --output myjimage
-myjimage/bin/test 1 2 3
+# check that m1 runs
+$JAVA -mp mlib -m m1/org.m1.Main
 
-# compressed image
-$JLINK --modulepath $TESTJAVA/../jmods${PS}mlib --addmods test --format jimage \
-  --output mysmalljimage --compress
-mysmalljimage/bin/test 1 2 3
+# compile and create jmod for a new version of m2
+rm -rf mods/m2/* mlib/m2.jmod
+$JAVAC -d mods/m2 `find $TESTSRC/newsrc/m2 -name "*.java"`
+$JLINK --format jmod --class-path mods/m2 --output mlib/m2.jmod
+
+# java -m m1 should fail
+set +e
+$JAVA -mp mlib -m m1/org.m1.Main
+if [ $? = 0 ]; then exit 1; fi
+
+# jlink --format jimage should fail
+rm -rf myimage
+$JLINK --modulepath $TESTJAVA/../jmods${PS}mlib --addmods m1 \
+  --format jimage --output myimage
+if [ $? = 0 ]; then exit 1; fi
 
 exit 0

@@ -39,6 +39,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
+import jdk.jigsaw.module.internal.ModuleInfo;
 import jdk.internal.jimage.ImageLocation;
 import jdk.internal.jimage.ImageModuleData;
 import jdk.internal.jimage.ImageReader;
@@ -89,7 +90,8 @@ class InstalledModuleFinder implements ModuleArtifactFinder {
         try (InputStream in = new ByteArrayInputStream(image.readModuleInfo(name))) {
             ModuleInfo mi = ModuleInfo.read(in);
             URI location = URI.create("jrt:/" + name);
-            ModuleArtifact artifact = new ModuleArtifact(mi, image.packagesForModule(name), location);
+            ModuleArtifact artifact =
+                    new ModuleArtifact(mi, image.packagesForModule(name), location);
             installedModulesCount.increment();
             installedModulesTime.addElapsedTimeFrom(t0);
             return artifact;

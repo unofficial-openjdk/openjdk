@@ -25,6 +25,7 @@
 
 package jdk.jigsaw.module;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
@@ -32,8 +33,7 @@ import java.util.Set;
  * An extended module descriptor.
  *
  * @apiNote This class will eventually define methods to support OS/architecture,
- * license, maintainer email, and other meta data. It will also likely have a hash
- * of the module descriptor and its contents.
+ * license, maintainer email, and other meta data.
  */
 
 @SuppressWarnings("serial")             // serialVersionUID intentionally omitted
@@ -42,9 +42,11 @@ public class ExtendedModuleDescriptor
 {
     private final ModuleId id;
     private final String mainClass;
+    private final Map<String, String> nameToHash;
 
     ExtendedModuleDescriptor(ModuleId id,
                              String mainClass,
+                             Map<String, String> nameToHash,
                              Set<ModuleDependence> moduleDeps,
                              Set<ServiceDependence> serviceDeps,
                              Set<ModuleExport> exports,
@@ -53,6 +55,8 @@ public class ExtendedModuleDescriptor
         super(id.name(), moduleDeps, serviceDeps, exports, services);
         this.id = id;
         this.mainClass = mainClass;
+        this.nameToHash = (nameToHash != null) ?
+                nameToHash : Collections.emptyMap();
     }
 
     /**
@@ -68,6 +72,14 @@ public class ExtendedModuleDescriptor
      */
     public String mainClass() {
         return mainClass;
+    }
+
+    /**
+     * Returns the map of hashes on the module dependences. The map
+     * key is the module name, the map value is the hash.
+     */
+    Map<String, String> nameToHash() {
+        return nameToHash;
     }
 
     @Override
@@ -148,10 +160,13 @@ public class ExtendedModuleDescriptor
 
         /**
          * Builds an {@code ExtendedModuleDescriptor} from the components.
+         *
+         * @apiNote Hashes are dropped
          */
         public ExtendedModuleDescriptor build() {
             return new ExtendedModuleDescriptor(id,
                                                 mainClass,
+                                                null,
                                                 moduleDeps,
                                                 serviceDeps,
                                                 exports,

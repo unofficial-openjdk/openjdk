@@ -23,7 +23,7 @@
  * questions.
  */
 
-package jdk.jigsaw.module;
+package jdk.jigsaw.module.internal;
 
 import java.io.DataInputStream;
 import java.io.IOException;
@@ -35,12 +35,19 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import jdk.jigsaw.module.ModuleDependence;
 import jdk.jigsaw.module.ModuleDependence.Modifier;
+import jdk.jigsaw.module.ModuleExport;
+import jdk.jigsaw.module.ModuleId;
+import jdk.jigsaw.module.ServiceDependence;
 
 /**
  * Represents module information as read from a {@code module-info} class file.
+ *
+ * FIXME: Need to compare performance against ASM.
+ *
  */
-class ModuleInfo {
+public class ModuleInfo {
 
     // The name of the Module attribute
     private static final String MODULE = "Module";

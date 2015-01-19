@@ -455,7 +455,7 @@ public enum LauncherHelper {
      * or module-id/main-class. For the former then the module's main class
      * is obtained from its extended module descriptor.
      */
-    static String getMainClassForModule(String query) throws IOException {
+    static String getMainClassForModule(String query) {
         int i = query.indexOf('/');
         String mainModule;
         String mainClass;
@@ -550,7 +550,6 @@ public enum LauncherHelper {
     public static Class<?> checkAndLoadMain(boolean printToStderr,
                                             int mode,
                                             String what)
-        throws Exception
     {
         initOutput(printToStderr);
 

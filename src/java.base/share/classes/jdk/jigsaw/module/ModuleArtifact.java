@@ -27,10 +27,14 @@ package jdk.jigsaw.module;
 
 import java.net.URI;
 import java.util.Collections;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import jdk.jigsaw.module.internal.ControlFile;
+import jdk.jigsaw.module.internal.Hasher;
+import jdk.jigsaw.module.internal.ModuleInfo;
 
 /**
  * Represents a module artifact. A module artifact is typically a modular JAR
@@ -44,33 +48,35 @@ public final class ModuleArtifact {
     private final Set<String> packages;
     private final URI location;
 
+    // the function that computes the hash of this module artifact
+    private final Supplier<String> hasher;
+
     ModuleArtifact(ModuleInfo mi,
                    Set<String> packages,
                    URI location,
-                   ControlFile cf)
+                   ControlFile cf,
+                   Supplier<String> hasher)
     {
-        String name = mi.name();
+        ModuleId id = ModuleId.parse(mi.name(), cf.version());
 
-        // module name in control file must match the module name in the module-info
-        if (cf.name() != null && !cf.name().equals(name)) {
-            throw new IllegalArgumentException("Mismatch in extended module " +
-                "descriptor, name in control file (" + cf.name() + ") " +
-                "does not match module name (" + name + ")");
-        }
-        ModuleId id = ModuleId.parse(name, cf.version());
+        // decode the hashes encoded in the extended module descriptor
+        String s = cf.dependencyHashes();
+        Map<String, String> hashes = Hasher.decode(s);
 
         this.descriptor = new ExtendedModuleDescriptor(id,
                                                        cf.mainClass(),
+                                                       hashes,
                                                        mi.moduleDependences(),
                                                        mi.serviceDependences(),
                                                        mi.exports(),
                                                        mi.services());
         this.packages = Collections.unmodifiableSet(packages);
         this.location = location;
+        this.hasher = hasher;
     }
 
     ModuleArtifact(ModuleInfo mi, Set<String> packages, URI location) {
-        this(mi, packages, location, new ControlFile());
+        this(mi, packages, location, new ControlFile(), null);
     }
 
     /**
@@ -102,6 +108,7 @@ public final class ModuleArtifact {
         this.descriptor = Objects.requireNonNull(descriptor);
         this.packages = packages;
         this.location = Objects.requireNonNull(location);
+        this.hasher = null;
     }
 
     /**
@@ -123,6 +130,18 @@ public final class ModuleArtifact {
      */
     public URI location() {
         return location;
+    }
+
+    /**
+     * Computes the MD5 hash of this module, returning it as a hex string.
+     * Returns {@code null} if the hash cannot be computed.
+     *
+     * @throws java.io.UncheckedIOException if an I/O error occurs
+     */
+    String computeHash() {
+        if (hasher == null)
+            return null;
+        return hasher.get();
     }
 
     private int hash;

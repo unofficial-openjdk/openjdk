@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -68,19 +68,6 @@ public final class ControlFile {
     }
 
     /**
-     * Returns the module name or {@code null} if not present. The module name
-     * should match the module name in the module descriptor.
-     */
-    public String name() {
-        return (String) props.get("Name");
-    }
-
-    public ControlFile name(String name) {
-        props.put("Name", name);
-        return this;
-    }
-
-    /**
      * Returns the module version or {@code null} if not present.
      */
     public String version() {
@@ -107,6 +94,21 @@ public final class ControlFile {
      */
     public ControlFile mainClass(String mainClass) {
         props.put("Main-Class", mainClass);
+        return this;
+    }
+
+    /**
+     * Returns the String that encodes the hashes of the dependences.
+     */
+    public String dependencyHashes() {
+        return (String) props.get("Dependency-Hashes");
+    }
+
+    /**
+     * Sets the String that encodes the hashes of the dependences.
+     */
+    public ControlFile dependencyHashes(String hash) {
+        props.put("Dependency-Hashes", hash);
         return this;
     }
 }

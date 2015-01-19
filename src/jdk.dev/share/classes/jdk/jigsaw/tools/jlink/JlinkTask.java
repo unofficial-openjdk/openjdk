@@ -59,6 +59,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.MissingResourceException;
+import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.TreeSet;
@@ -67,6 +68,8 @@ import java.util.function.Predicate;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -81,9 +84,12 @@ import jdk.jigsaw.module.Configuration;
 import jdk.jigsaw.module.Layer;
 import jdk.jigsaw.module.ModuleArtifact;
 import jdk.jigsaw.module.ModuleArtifactFinder;
+import jdk.jigsaw.module.ModuleDependence;
 import jdk.jigsaw.module.ModuleDescriptor;
 import jdk.jigsaw.module.ModuleId;
 import jdk.jigsaw.module.internal.ControlFile;
+import jdk.jigsaw.module.internal.Hasher;
+import jdk.jigsaw.module.internal.ModuleInfo;
 
 
 /**
@@ -249,9 +255,13 @@ class JlinkTask {
                 task.options.moduleId = arg;
             }
         },
-        new Option(true, "--control-file") {
+        new Option(true, "--hash-dependences") {
             void process(JlinkTask task, String opt, String arg) throws BadArgs {
-                task.options.controlFile = arg;
+                try {
+                    task.options.dependencesToHash = Pattern.compile(arg);
+                } catch (PatternSyntaxException e) {
+                    throw new BadArgs("err.badpattern", arg);
+                }
             }
         },
         new Option(true, "--addmods") {
@@ -326,7 +336,7 @@ class JlinkTask {
         Path output;
         String moduleId;
         String mainClass;
-        String controlFile;
+        Pattern dependencesToHash;
     }
 
     int run(String[] args) {
@@ -367,6 +377,10 @@ class JlinkTask {
                     throw new BadArgs("err.output.must.be.specified").showUsage(true);
                 if (Files.exists(path))
                     throw new BadArgs("err.file.already.exists", path);
+
+                // if storing hashes of dependences then the module path is required
+                if (options.dependencesToHash != null && options.moduleFinder == null)
+                    throw new BadArgs("err.modulepath.must.be.specified").showUsage(true);
             }
 
             // additional option combination validation
@@ -398,7 +412,7 @@ class JlinkTask {
         return true;
     }
 
-    private Map<String,Path> modulesToPath(Set<ModuleDescriptor> modules) {
+    private Map<String, Path> modulesToPath(Set<ModuleDescriptor> modules) {
         ModuleArtifactFinder finder = options.moduleFinder;
 
         Map<String,Path> modPaths = new HashMap<>();
@@ -457,9 +471,9 @@ class JlinkTask {
         final Path output = options.output;
 
         Configuration cf = Configuration.resolve(options.moduleFinder,
-                                                 Layer.emptyLayer(),
-                                                 ModuleArtifactFinder.nullFinder(),
-                                                 options.jmods);
+                Layer.emptyLayer(),
+                ModuleArtifactFinder.nullFinder(),
+                options.jmods);
 
         Map<String,Path> mods = modulesToPath(cf.descriptors());
 
@@ -762,57 +776,94 @@ class JlinkTask {
     }
 
     private void createJmod() throws IOException {
-        final List<Path> cmds = options.cmds;
-        final List<Path> libs = options.libs;
-        final List<Path> configs = options.configs;
-        final List<Path> classes = options.classpath;
-        final Path output = options.output;
-        final String moduleId = options.moduleId;
-        final String mainClass = options.mainClass;
-        final String controlFile = options.controlFile;
+        JmodFileWriter jmod = new JmodFileWriter();
 
-        JmodFileWriter jmod = new JmodFileWriter(moduleId, mainClass, controlFile);
-        try (OutputStream os = Files.newOutputStream(output)) {
-            jmod.write(os, classes, libs, configs, cmds);
+        // create jmod with temporary name to avoid it being examined
+        // when scanning the module path
+        Path target = options.output;
+        Path tempTarget = target.resolveSibling(target.getFileName() + ".tmp");
+        try (OutputStream out = Files.newOutputStream(tempTarget)) {
+            jmod.write(out);
         }
+        Files.move(tempTarget, target);
     }
 
     private class JmodFileWriter {
-        final String moduleId;
-        final String mainClass;
-        final String controlFile;
+        final List<Path> cmds = options.cmds;
+        final List<Path> libs = options.libs;
+        final List<Path> configs = options.configs;
+        final List<Path> classpath = options.classpath;
+        final String moduleId = options.moduleId;
+        final String mainClass = options.mainClass;
+        final ModuleArtifactFinder moduleFinder = options.moduleFinder;
+        final Pattern dependencesToHash = options.dependencesToHash;
 
-        JmodFileWriter(String moduleId, String mainClass, String controlFile) {
-            this.moduleId = moduleId;
-            this.mainClass = mainClass;
-            this.controlFile = controlFile;
+        JmodFileWriter() { }
+
+        /**
+         * Examines the module dependences of the given module
+         * and computes the hash of any module that matches the
+         * pattern {@code dependencesToHash}. Returns a string
+         * of the hashes.
+         */
+        String hashDependences(ModuleInfo mi) throws IOException {
+            Set<ModuleDescriptor> descriptors = new HashSet<>();
+            for (ModuleDependence md: mi.moduleDependences()) {
+                String dn = md.id().name();
+                if (dependencesToHash.matcher(dn).find()) {
+                    ModuleArtifact artifact = moduleFinder.find(dn);
+                    if (artifact == null) {
+                        throw new RuntimeException(dn + " not found on modulepath");
+                    }
+                    descriptors.add(artifact.descriptor());
+                }
+            }
+
+            return Hasher.generateMD5(modulesToPath(descriptors));
         }
 
         /**
          * Writes the jmod control file with the meta-data for the extended
          * module descriptor.
          */
-        private void writeControlFile(ZipOutputStream zos) throws IOException {
-            ControlFile cf;
+        void writeControlFile(ZipOutputStream zos) throws IOException {
+            ControlFile cf = new ControlFile();
 
-            // user-supplied control file
-            if (controlFile != null) {
-                try (InputStream in = Files.newInputStream(Paths.get(controlFile))) {
-                    cf = ControlFile.parse(in);
-                }
-            } else {
-                cf = new ControlFile();
-            }
-
-            // override module id or main-class if specified as options
-            if (moduleId != null) {
-                ModuleId id = ModuleId.parse(moduleId);
-                cf.name(id.name());
-                if (id.version() != null)
-                    cf.version(id.version().toString());
-            }
+            // main-class
             if (mainClass != null)
                 cf.mainClass(mainClass);
+
+            // need module-info.class if if --mid or --hash-dependences
+            if (moduleId != null || dependencesToHash != null) {
+                Optional<Path> miClass = classpath.stream()
+                        .map(cp -> cp.resolve("module-info.class"))
+                        .filter(Files::exists)
+                        .findFirst();
+                if (!miClass.isPresent()) {
+                    throw new RuntimeException("module-info.class not found");
+                }
+                ModuleInfo mi;
+                try (InputStream in = Files.newInputStream(miClass.get())) {
+                    mi = ModuleInfo.read(in);
+                }
+
+                // if --mid is specified then check for a matching module name
+                if (moduleId != null) {
+                    ModuleId id = ModuleId.parse(moduleId);
+                    if (!id.name().equals(mi.name())) {
+                        throw new RuntimeException("module name in specified to --mid" +
+                                " does not match module name: " + mi.name());
+                    }
+                    if (id.version() != null)
+                        cf.version(id.version().toString());
+                }
+
+                // generate the string with the MD5 hashes
+                if (dependencesToHash != null) {
+                    String s = hashDependences(mi);
+                    cf.dependencyHashes(s);
+                }
+            }
 
             ZipEntry ze = new ZipEntry(ControlFile.CONTROL_FILE);
             zos.putNextEntry(ze);
@@ -820,18 +871,13 @@ class JlinkTask {
             zos.closeEntry();
         }
 
-        void write(OutputStream os, List<Path> classes,
-                   List<Path> libs, List<Path> configs, List<Path> cmds)
-            throws IOException
-        {
-            try (ZipOutputStream zos = new ZipOutputStream(os)) {
-                // if module id, main-class or an explicit control file then
-                // we need to write this into the jmod
-                if (moduleId != null || mainClass != null || controlFile != null)
-                    writeControlFile(zos);
+        void write(OutputStream out) throws IOException {
+            try (ZipOutputStream zos = new ZipOutputStream(out)) {
+                // control file
+                writeControlFile(zos);
 
                 // classes
-                processClasses(zos, classes);
+                processClasses(zos, classpath);
 
                 processSection(zos, Section.NATIVE_CMDS, cmds);
                 processSection(zos, Section.NATIVE_LIBS, libs);

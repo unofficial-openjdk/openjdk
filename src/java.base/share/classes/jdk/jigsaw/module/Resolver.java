@@ -94,6 +94,7 @@ class Resolver {
             // bind service and create a new readability graph
             resolver.bind(r);
             resolver.makeGraph(r);
+            resolver.checkHashes(r);
             return r;
         }
     }
@@ -130,6 +131,7 @@ class Resolver {
 
         resolve(r, q);
         makeGraph(r);
+        checkHashes(r);
 
         return r;
     }
@@ -370,6 +372,44 @@ class Resolver {
         // m1. Need to watch out for the "hollowed-out case" where m2 is an aggregator.
 
         r.graph = g1;
+    }
+
+    /**
+     * Checks the hashes in the extended module descriptor to ensure that they
+     * match the hash of the dependency's module artifact.
+     */
+    private void checkHashes(Resolution r) {
+        for (ModuleDescriptor descriptor: r.selected()) {
+            String mn = descriptor.name();
+
+            // get map of module names to hash
+            Map<String, String> hashes = r.findArtifact(mn).descriptor().nameToHash();
+            if (hashes.isEmpty())
+                continue;
+
+            // check dependences
+            for (ModuleDependence md: descriptor.moduleDependences()) {
+                String dn = md.id().name();
+                String recordedHash = hashes.get(dn);
+
+                if (recordedHash != null) {
+                    ModuleArtifact artifact = r.findArtifact(dn);
+                    if (artifact == null)
+                        artifact = layer.findArtifact(dn);
+                    if (artifact == null)
+                        throw new InternalError(dn + " not found");
+
+                    String actualHash = artifact.computeHash();
+                    if (actualHash == null)
+                        fail("Unable to compute the hash of module %s", dn);
+
+                    if (!recordedHash.equals(actualHash)) {
+                        fail("Hash of %s (%s) differs to expected hash (%s)",
+                                dn, actualHash, recordedHash);
+                    }
+                }
+            }
+        }
     }
 
     private static void fail(String fmt, Object ... args) {

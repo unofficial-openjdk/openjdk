@@ -40,6 +40,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Supplier;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.stream.Collectors;
@@ -48,6 +49,8 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import jdk.jigsaw.module.internal.ControlFile;
+import jdk.jigsaw.module.internal.Hasher;
+import jdk.jigsaw.module.internal.ModuleInfo;
 import sun.misc.JModCache;
 
 /**
@@ -337,7 +340,8 @@ class ModulePath implements ModuleArtifactFinder {
                                  .distinct()
                                  .collect(Collectors.toSet());
 
-        return new ModuleArtifact(mi, packages, location, cf);
+        Supplier<String> hasher = () -> Hasher.generateMD5(file);
+        return new ModuleArtifact(mi, packages, location, cf, hasher);
     }
 
     /**
@@ -364,7 +368,8 @@ class ModulePath implements ModuleArtifactFinder {
                                      .distinct()
                                      .collect(Collectors.toSet());
 
-            return new ModuleArtifact(mi, packages, location);
+            Supplier<String> hasher = () -> Hasher.generateMD5(file);
+            return new ModuleArtifact(mi, packages, location, new ControlFile(), hasher);
         }
     }
 
