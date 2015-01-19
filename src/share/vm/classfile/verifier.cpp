@@ -1228,14 +1228,14 @@ void ClassVerifier::verify_method(methodHandle m, TRAPS) {
         case Bytecodes::_invokespecial :
         case Bytecodes::_invokestatic :
           verify_invoke_instructions(
-            &bcs, code_length, &current_frame,
-            &this_uninit, return_type, cp, CHECK_VERIFY(this));
+            &bcs, code_length, &current_frame, (bci >= ex_min && bci < ex_max),
+            &this_uninit, return_type, cp, &stackmap_table, CHECK_VERIFY(this));
           no_control_flow = false; break;
         case Bytecodes::_invokeinterface :
         case Bytecodes::_invokedynamic :
           verify_invoke_instructions(
-            &bcs, code_length, &current_frame,
-            &this_uninit, return_type, cp, CHECK_VERIFY(this));
+            &bcs, code_length, &current_frame, (bci >= ex_min && bci < ex_max),
+            &this_uninit, return_type, cp, &stackmap_table, CHECK_VERIFY(this));
           no_control_flow = false; break;
         case Bytecodes::_new :
         {
@@ -2058,8 +2058,9 @@ bool ClassVerifier::ends_in_athrow(u4 start_bc_offset, TRAPS) {
 
 void ClassVerifier::verify_invoke_init(
     RawBytecodeStream* bcs, VerificationType ref_class_type,
-    StackMapFrame* current_frame, u4 code_length, bool *this_uninit,
-    constantPoolHandle cp, TRAPS) {
+    StackMapFrame* current_frame, u4 code_length, bool in_try_block,
+    bool *this_uninit, constantPoolHandle cp, StackMapTable* stackmap_table,
+    TRAPS) {
   u2 bci = bcs->bci();
   VerificationType type = current_frame->pop_stack(
     VerificationType::reference_check(), CHECK_VERIFY(this));
@@ -2072,32 +2073,43 @@ void ClassVerifier::verify_invoke_init(
       return;
     }
 
-    // Check if this call is done from inside of a TRY block.  If so, make
-    // sure that all catch clause paths end in a throw.  Otherwise, this
-    // can result in returning an incomplete object.
-    typeArrayHandle exhandlers (THREAD, _method->exception_table());
-    for(int i = 0; i < exhandlers->length(); i++) {
-      /*
-       * Skip reading catch_type_index.
-       * Looks like this if you need all of them:
-       * u2 start_pc = exhandlers->int_at(i++);
-       * u2 end_pc = exhandlers->int_at(i++);
-       * u2 handler_pc = exhandlers->int_at(i++);
-       * int catch_type_index = exhandlers->int_at(i++);
-       */
-      u2 start_pc = exhandlers->int_at(i++);
-      u2 end_pc = exhandlers->int_at(i++);
-      u2 handler_pc = exhandlers->int_at(i++);
+    // If this invokespecial call is done from inside of a TRY block then make
+    // sure that all catch clause paths end in a throw.  Otherwise, this can
+    // result in returning an incomplete object.
+    if (in_try_block) {
+      typeArrayHandle exhandlers (THREAD, _method->exception_table());
+      int exlength = exhandlers->length();
+      for(int i = 0; i < exlength; i++) {
+        /*
+         * Skip reading catch_type_index.
+         * Looks like this if you need all of them:
+         * u2 start_pc = exhandlers->int_at(i++);
+         * u2 end_pc = exhandlers->int_at(i++);
+         * u2 handler_pc = exhandlers->int_at(i++);
+         * int catch_type_index = exhandlers->int_at(i++);
+         */
+        // Reacquire the table in case a GC happened
+        typeArrayHandle exhandlers (THREAD, _method->exception_table());
+        u2 start_pc = exhandlers->int_at(i++);
+        u2 end_pc = exhandlers->int_at(i++);
+        u2 handler_pc = exhandlers->int_at(i++);
 
-      if (bci >= start_pc && bci < end_pc) {
-        bool athrow_check = ends_in_athrow(handler_pc, CHECK_VERIFY(this));
-        if (!athrow_check) {
-          verify_error(
-            "Bad <init> method call from after the start of a try block");
-          return;
+        if (bci >= start_pc && bci < end_pc) {
+          bool athrow_check = ends_in_athrow(handler_pc, CHECK_VERIFY(this));
+          if (!athrow_check) {
+            verify_error(
+              "Bad <init> method call from after the start of a try block");
+            return;
+          }
         }
       }
-    }
+
+      // Check the exception handler target stackmaps with the locals from the
+      // incoming stackmap (before initialize_object() changes them to outgoing
+      // state).
+      verify_exception_handler_targets(bci, true, current_frame,
+                                       stackmap_table, CHECK_VERIFY(this));
+    } // in_try_block
 
     current_frame->initialize_object(type, current_type());
     *this_uninit = true;
@@ -2144,6 +2156,13 @@ void ClassVerifier::verify_invoke_init(
         }
       }
     }
+    // Check the exception handler target stackmaps with the locals from the
+    // incoming stackmap (before initialize_object() changes them to outgoing
+    // state).
+    if (in_try_block) {
+      verify_exception_handler_targets(bci, *this_uninit, current_frame,
+                                       stackmap_table, CHECK_VERIFY(this));
+    }
     current_frame->initialize_object(type, new_class_type);
   } else {
     verify_error(bci, "Bad operand type when invoking <init>");
@@ -2153,8 +2172,8 @@ void ClassVerifier::verify_invoke_init(
 
 void ClassVerifier::verify_invoke_instructions(
     RawBytecodeStream* bcs, u4 code_length, StackMapFrame* current_frame,
-    bool *this_uninit, VerificationType return_type,
-    constantPoolHandle cp, TRAPS) {
+    bool in_try_block, bool *this_uninit, VerificationType return_type,
+    constantPoolHandle cp, StackMapTable* stackmap_table, TRAPS) {
   // Make sure the constant pool item is the right type
   u2 index = bcs->get_index_u2();
   Bytecodes::Code opcode = bcs->raw_code();
@@ -2285,7 +2304,8 @@ void ClassVerifier::verify_invoke_instructions(
       opcode != Bytecodes::_invokedynamic) {
     if (method_name == vmSymbols::object_initializer_name()) {  // <init> method
       verify_invoke_init(bcs, ref_class_type, current_frame,
-        code_length, this_uninit, cp, CHECK_VERIFY(this));
+        code_length, in_try_block, this_uninit, cp, stackmap_table,
+        CHECK_VERIFY(this));
     } else {   // other methods
       // Ensures that target class is assignable to method class.
       if (opcode == Bytecodes::_invokespecial) {
