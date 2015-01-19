@@ -186,9 +186,7 @@ public final class ImageFile {
                         String fn = res.name();
                         String path;
 
-                        if (fn.startsWith("META-INF/")) {
-                            path = fn;
-                        } else if (fn.endsWith("module-info.class")) {
+                        if (fn.endsWith("module-info.class")) {
                             path = "/" + fn;
                         } else {
                             path = "/" + mn + "/" + fn;

@@ -268,6 +268,10 @@ class JImageTask {
 
                     String name = pathString.substring(chop).replace('\\','/');
 
+                    if (name.indexOf('/') != -1) {
+                        name = "/" + name;
+                    }
+
                     File file = path.toFile();
 
                     if (file.isFile()) {
