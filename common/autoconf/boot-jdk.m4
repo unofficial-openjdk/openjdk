@@ -403,16 +403,91 @@ AC_DEFUN_ONCE([BOOTJDK_SETUP_BOOT_JDK_ARGUMENTS],
 #   generated in this JDK build.  This variable should only be
 #   used after the launchers are built.
 #
+
+# Execute the check given as argument, and verify the result
+# If the JDK was previously found, do nothing
+# $1 A command line (typically autoconf macro) to execute
+AC_DEFUN([BOOTJDK_CHECK_BUILD_JDK],
+[
+  if test "x$BUILD_JDK_FOUND" = xno; then
+    # Now execute the test
+    $1
+
+    # If previous step claimed to have found a JDK, check it to see if it seems to be valid.
+    if test "x$BUILD_JDK_FOUND" = xmaybe; then
+      # Do we have a bin/java?
+      if test ! -x "$BUILD_JDK/bin/java"; then
+        AC_MSG_NOTICE([Potential Build JDK found at $BUILD_JDK did not contain bin/java; ignoring])
+        BUILD_JDK_FOUND=no
+      elif test ! -x "$BUILD_JDK/bin/jlink"; then
+        AC_MSG_NOTICE([Potential Build JDK found at $BUILD_JDK did not contain bin/jlink; ignoring])
+        BUILD_JDK_FOUND=no
+      elif test ! -x "$BUILD_JDK/bin/javac"; then
+        # Do we have a bin/javac?
+        AC_MSG_NOTICE([Potential Build JDK found at $BUILD_JDK did not contain bin/javac; ignoring])
+        AC_MSG_NOTICE([(This might be a JRE instead of an JDK)])
+        BUILD_JDK_FOUND=no
+      else
+        # Oh, this is looking good! We probably have found a proper JDK. Is it the correct version?
+        BUILD_JDK_VERSION=`"$BUILD_JDK/bin/java" -version 2>&1 | head -n 1`
+
+        # Extra M4 quote needed to protect [] in grep expression.
+        [FOUND_CORRECT_VERSION=`echo $BUILD_JDK_VERSION | grep  '\"1\.[9]\.'`]
+        if test "x$FOUND_CORRECT_VERSION" = x; then
+          AC_MSG_NOTICE([Potential Boot JDK found at $BUILD_JDK is incorrect JDK version ($BUILD_JDK_VERSION); ignoring])
+          AC_MSG_NOTICE([(Your Build JDK must be version 9)])
+          BUILD_JDK_FOUND=no
+        else
+          # We're done!
+          BUILD_JDK_FOUND=yes
+          BASIC_FIXUP_PATH(BUILD_JDK)
+          AC_MSG_CHECKING([for Build JDK])
+          AC_MSG_RESULT([$BUILD_JDK])
+          AC_MSG_CHECKING([Build JDK version])
+          BUILD_JDK_VERSION=`"$BUILD_JDK/bin/java" -version 2>&1 | $TR '\n\r' '  '`
+          AC_MSG_RESULT([$BUILD_JDK_VERSION])
+        fi # end check jdk version
+      fi # end check java
+    fi # end check boot jdk found
+  fi
+])
+
 # By default, it is the JDK_OUTPUTDIR.  If the target architecture
 # is different than the host system doing the build (e.g. cross-compilation),
-# it defaults to the BOOT_JDK.
-AC_DEFUN_ONCE([BOOTJDK_SETUP_BUILD_JDK],
+# it needs to be set properly but will try to fall back on the BOOT_JDK.
+AC_DEFUN([BOOTJDK_SETUP_BUILD_JDK],
 [
-  if test "x$COMPILE_TYPE" = "xcross"; then
-    BUILD_JDK="$BOOT_JDK"
+  AC_ARG_WITH(build-jdk, [AS_HELP_STRING([--with-build-jdk],
+      [path to JDK of same version as is being built@<:@the newly built JDK@:>@])])
+
+  BUILD_JDK_FOUND="no"
+  if test "x$with_build_jdk" != "x"; then
+    BOOTJDK_CHECK_BUILD_JDK([
+       if test "x$with_build_jdk" != x; then
+         BUILD_JDK=$with_build_jdk
+         BUILD_JDK_FOUND=maybe
+         AC_MSG_NOTICE([Found potential Build JDK using configure arguments])
+       fi])
   else
-    BUILD_JDK="\$(JDK_OUTPUTDIR)"
+    if test "x$COMPILE_TYPE" = "xcross"; then
+      BOOTJDK_CHECK_BUILD_JDK([
+         BUILD_JDK=$BOOT_JDK
+         BUILD_JDK_FOUND=maybe
+         AC_MSG_NOTICE([Found potential Build JDK in the Boot JDK])])
+    else
+      BUILD_JDK="\$(JDK_OUTPUTDIR)"
+      BUILD_JDK_FOUND=yes
+      AC_MSG_CHECKING([for Build JDK])
+      AC_MSG_RESULT([yes (output dir)])
+    fi
   fi
+
+  if test "x$BUILD_JDK_FOUND" != "xyes"; then
+    AC_MSG_CHECKING([for Build JDK])
+    AC_MSG_RESULT([no])
+    AC_MSG_ERROR([Could not find a suitable Build JDK])
+  fi
+
   AC_SUBST(BUILD_JDK)
 ])
 
