@@ -53,6 +53,6 @@ final class StringLengthCall extends FunctionCall {
         }
         il.append(new INVOKESTATIC(cpg.addMethodref(BASIS_LIBRARY_CLASS,
                                                      "getStringLength",
-                                                     "(Ljava/drop_included/jaxp_src/lang/String;)I")));
+                                                     "(Ljava/lang/String;)I")));
     }
 }
