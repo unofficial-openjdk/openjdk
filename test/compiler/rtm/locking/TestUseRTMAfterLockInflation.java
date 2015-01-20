@@ -27,7 +27,7 @@
  * @bug 8031320
  * @summary Verify that rtm locking is used for stack locks before
  *          inflation and after it used for inflated locks.
- * @library /testlibrary /testlibrary/whitebox /compiler/testlibrary
+ * @library /testlibrary /../../test/lib /compiler/testlibrary
  * @build TestUseRTMAfterLockInflation
  * @run main ClassFileInstaller sun.hotspot.WhiteBox
  *                              sun.hotspot.WhiteBox$WhiteBoxPermission
@@ -52,7 +52,7 @@ import rtm.predicate.SupportedVM;
  * Compiled method invoked {@code AbortProvoker.DEFAULT_ITERATIONS} times before
  * lock inflation and the same amount of times after inflation.
  * As a result total locks count should be equal to
- * {@code 2*AbortProvoker.DEFAULT_ITERATIONS}.
+ * {@code 2 * AbortProvoker.DEFAULT_ITERATIONS}.
  * It is a pretty strict assertion which could fail if some retriable abort
  * happened: it could be {@code AbortType.RETRIABLE} or
  * {@code AbortType.MEM_CONFLICT}, but unfortunately abort can has both these
@@ -101,7 +101,6 @@ public class TestUseRTMAfterLockInflation extends CommandLineOptionTest {
     }
 
     public static class Test {
-
         /**
          * Usage:
          * Test &lt;provoker type&gt;
@@ -113,10 +112,12 @@ public class TestUseRTMAfterLockInflation extends CommandLineOptionTest {
             AbortProvoker provoker
                     = AbortType.lookup(Integer.valueOf(args[0])).provoker();
             for (int i = 0; i < AbortProvoker.DEFAULT_ITERATIONS; i++) {
+                AbortProvoker.verifyMonitorState(provoker, false /*deflated*/);
                 provoker.forceAbort();
             }
             provoker.inflateMonitor();
             for (int i = 0; i < AbortProvoker.DEFAULT_ITERATIONS; i++) {
+                AbortProvoker.verifyMonitorState(provoker, true /*inflated*/);
                 provoker.forceAbort();
             }
         }

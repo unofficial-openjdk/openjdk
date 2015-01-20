@@ -81,7 +81,8 @@ ClassLoaderData::ClassLoaderData(Handle h_class_loader, bool is_anonymous, Depen
   _metaspace(NULL), _unloading(false), _klasses(NULL),
   _claimed(0), _jmethod_ids(NULL), _handles(NULL), _deallocate_list(NULL),
   _next(NULL), _dependencies(dependencies),
-  _metaspace_lock(new Mutex(Monitor::leaf+1, "Metaspace allocation lock", true)) {
+  _metaspace_lock(new Mutex(Monitor::leaf+1, "Metaspace allocation lock", true,
+                            Monitor::_safepoint_check_never)) {
     // empty
 }
 
@@ -785,17 +786,12 @@ void ClassLoaderDataGraph::clean_metaspaces() {
   MetadataOnStackMark md_on_stack(has_redefined_a_class);
 
   if (has_redefined_a_class) {
-    // purge_previous_versions also cleans weak method links. Because
-    // one method's MDO can reference another method from another
-    // class loader, we need to first clean weak method links for all
-    // class loaders here. Below, we can then free redefined methods
-    // for all class loaders.
     for (ClassLoaderData* data = _head; data != NULL; data = data->next()) {
       data->classes_do(InstanceKlass::purge_previous_versions);
     }
   }
 
-  // Need to purge the previous version before deallocating.
+  // Should purge the previous version before deallocating.
   free_deallocate_lists();
 }
 
@@ -833,8 +829,6 @@ void ClassLoaderDataGraph::post_class_unload_events(void) {
 
 void ClassLoaderDataGraph::free_deallocate_lists() {
   for (ClassLoaderData* cld = _head; cld != NULL; cld = cld->next()) {
-    // We need to keep this data until InstanceKlass::purge_previous_version has been
-    // called on all alive classes. See the comment in ClassLoaderDataGraph::clean_metaspaces.
     cld->free_deallocate_list();
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -68,6 +68,14 @@ PRAGMA_FORMAT_MUTE_WARNINGS_FOR_GCC
 
 bool WhiteBox::_used = false;
 volatile bool WhiteBox::compilation_locked = false;
+
+class VM_WhiteBoxOperation : public VM_Operation {
+ public:
+  VM_WhiteBoxOperation()                         { }
+  VMOp_Type type()                  const        { return VMOp_WhiteBoxOperation; }
+  bool allow_nested_vm_operations() const        { return true; }
+};
+
 
 WB_ENTRY(jlong, WB_GetObjectAddress(JNIEnv* env, jobject o, jobject obj))
   return (jlong)(void*)JNIHandles::resolve(obj);
@@ -168,11 +176,11 @@ WB_END
 
 WB_ENTRY(void, WB_ReadFromNoaccessArea(JNIEnv* env, jobject o))
   size_t granularity = os::vm_allocation_granularity();
-  ReservedHeapSpace rhs(100 * granularity, granularity, false, NULL);
+  ReservedHeapSpace rhs(100 * granularity, granularity, false);
   VirtualSpace vs;
   vs.initialize(rhs, 50 * granularity);
 
-  //Check if constraints are complied
+  // Check if constraints are complied
   if (!( UseCompressedOops && rhs.base() != NULL &&
          Universe::narrow_oop_base() != NULL &&
          Universe::narrow_oop_use_implicit_null_checks() )) {
@@ -195,7 +203,7 @@ WB_END
 static jint wb_stress_virtual_space_resize(size_t reserved_space_size,
                                            size_t magnitude, size_t iterations) {
   size_t granularity = os::vm_allocation_granularity();
-  ReservedHeapSpace rhs(reserved_space_size * granularity, granularity, false, NULL);
+  ReservedHeapSpace rhs(reserved_space_size * granularity, granularity, false);
   VirtualSpace vs;
   if (!vs.initialize(rhs, 0)) {
     tty->print_cr("Failed to initialize VirtualSpace. Can't proceed.");
@@ -404,6 +412,43 @@ static jmethodID reflected_method_to_jmid(JavaThread* thread, JNIEnv* env, jobje
   return env->FromReflectedMethod(method);
 }
 
+// Deoptimizes all compiled frames and makes nmethods not entrant if it's requested
+class VM_WhiteBoxDeoptimizeFrames : public VM_WhiteBoxOperation {
+ private:
+  int _result;
+  const bool _make_not_entrant;
+ public:
+  VM_WhiteBoxDeoptimizeFrames(bool make_not_entrant) :
+        _result(0), _make_not_entrant(make_not_entrant) { }
+  int  result() const { return _result; }
+
+  void doit() {
+    for (JavaThread* t = Threads::first(); t != NULL; t = t->next()) {
+      if (t->has_last_Java_frame()) {
+        for (StackFrameStream fst(t, UseBiasedLocking); !fst.is_done(); fst.next()) {
+          frame* f = fst.current();
+          if (f->can_be_deoptimized() && !f->is_deoptimized_frame()) {
+            RegisterMap* reg_map = fst.register_map();
+            Deoptimization::deoptimize(t, *f, reg_map);
+            if (_make_not_entrant) {
+                nmethod* nm = CodeCache::find_nmethod(f->pc());
+                assert(nm != NULL, "sanity check");
+                nm->make_not_entrant();
+            }
+            ++_result;
+          }
+        }
+      }
+    }
+  }
+};
+
+WB_ENTRY(jint, WB_DeoptimizeFrames(JNIEnv* env, jobject o, jboolean make_not_entrant))
+  VM_WhiteBoxDeoptimizeFrames op(make_not_entrant == JNI_TRUE);
+  VMThread::execute(&op);
+  return op.result();
+WB_END
+
 WB_ENTRY(void, WB_DeoptimizeAll(JNIEnv* env, jobject o))
   MutexLockerEx mu(Compile_lock);
   CodeCache::mark_all_nmethods_for_deoptimization();
@@ -525,13 +570,6 @@ WB_ENTRY(jboolean, WB_EnqueueMethodForCompilation(JNIEnv* env, jobject o, jobjec
   MutexLockerEx mu(Compile_lock);
   return (mh->queued_for_compilation() || nm != NULL);
 WB_END
-
-class VM_WhiteBoxOperation : public VM_Operation {
- public:
-  VM_WhiteBoxOperation()                         { }
-  VMOp_Type type()                  const        { return VMOp_WhiteBoxOperation; }
-  bool allow_nested_vm_operations() const        { return true; }
-};
 
 class AlwaysFalseClosure : public BoolObjectClosure {
  public:
@@ -760,7 +798,6 @@ WB_ENTRY(void, WB_SetStringVMFlag(JNIEnv* env, jobject o, jstring name, jstring 
     FREE_C_HEAP_ARRAY(char, ccstrResult);
   }
 WB_END
-
 
 WB_ENTRY(void, WB_LockCompilation(JNIEnv* env, jobject o, jlong timeout))
   WhiteBox::compilation_locked = true;
@@ -1078,6 +1115,24 @@ WB_ENTRY(jlong, WB_MetaspaceCapacityUntilGC(JNIEnv* env, jobject wb))
   return (jlong) MetaspaceGC::capacity_until_GC();
 WB_END
 
+WB_ENTRY(void, WB_AssertMatchingSafepointCalls(JNIEnv* env, jobject o, jboolean mutexSafepointValue, jboolean attemptedNoSafepointValue))
+  Monitor::SafepointCheckRequired sfpt_check_required = mutexSafepointValue ?
+                                           Monitor::_safepoint_check_always :
+                                           Monitor::_safepoint_check_never;
+  MutexLockerEx ml(new Mutex(Mutex::leaf, "SFPT_Test_lock", true, sfpt_check_required),
+                   attemptedNoSafepointValue == JNI_TRUE);
+WB_END
+
+WB_ENTRY(jboolean, WB_IsMonitorInflated(JNIEnv* env, jobject wb, jobject obj))
+  oop obj_oop = JNIHandles::resolve(obj);
+  return (jboolean) obj_oop->mark()->has_monitor();
+WB_END
+
+WB_ENTRY(void, WB_ForceSafepoint(JNIEnv* env, jobject wb))
+  VM_ForceSafepoint force_safepoint_op;
+  VMThread::execute(&force_safepoint_op);
+WB_END
+
 //Some convenience methods to deal with objects from java
 int WhiteBox::offset_for_field(const char* field_name, oop object,
     Symbol* signature_symbol) {
@@ -1201,6 +1256,7 @@ static JNINativeMethod methods[] = {
   {CC"NMTChangeTrackingLevel", CC"()Z",               (void*)&WB_NMTChangeTrackingLevel},
   {CC"NMTGetHashSize",      CC"()I",                  (void*)&WB_NMTGetHashSize     },
 #endif // INCLUDE_NMT
+  {CC"deoptimizeFrames",   CC"(Z)I",                  (void*)&WB_DeoptimizeFrames  },
   {CC"deoptimizeAll",      CC"()V",                   (void*)&WB_DeoptimizeAll     },
   {CC"deoptimizeMethod",   CC"(Ljava/lang/reflect/Executable;Z)I",
                                                       (void*)&WB_DeoptimizeMethod  },
@@ -1274,6 +1330,9 @@ static JNINativeMethod methods[] = {
   {CC"getCodeBlob",        CC"(J)[Ljava/lang/Object;",(void*)&WB_GetCodeBlob        },
   {CC"getThreadStackSize", CC"()J",                   (void*)&WB_GetThreadStackSize },
   {CC"getThreadRemainingStackSize", CC"()J",          (void*)&WB_GetThreadRemainingStackSize },
+  {CC"assertMatchingSafepointCalls", CC"(ZZ)V",       (void*)&WB_AssertMatchingSafepointCalls },
+  {CC"isMonitorInflated",  CC"(Ljava/lang/Object;)Z", (void*)&WB_IsMonitorInflated  },
+  {CC"forceSafepoint",     CC"()V",                   (void*)&WB_ForceSafepoint     },
 };
 
 #undef CC

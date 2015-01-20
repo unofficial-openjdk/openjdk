@@ -24,6 +24,7 @@
 #ifndef SHARE_VM_MEMORY_METASPACE_SHARED_HPP
 #define SHARE_VM_MEMORY_METASPACE_SHARED_HPP
 
+#include "classfile/compactHashtable.hpp"
 #include "memory/allocation.hpp"
 #include "memory/memRegion.hpp"
 #include "runtime/virtualspace.hpp"
@@ -45,12 +46,21 @@
 
 class FileMapInfo;
 
+class MetaspaceSharedStats VALUE_OBJ_CLASS_SPEC {
+public:
+  MetaspaceSharedStats() {
+    memset(this, 0, sizeof(*this));
+  }
+  CompactHashtableStats symbol;
+};
+
 // Class Data Sharing Support
 class MetaspaceShared : AllStatic {
 
   // CDS support
   static ReservedSpace* _shared_rs;
   static int _max_alignment;
+  static MetaspaceSharedStats _stats;
   static bool _link_classes_made_progress;
   static bool _check_classes_made_progress;
   static bool _has_error_classes;
@@ -67,6 +77,11 @@ class MetaspaceShared : AllStatic {
     vtbl_method_size       = 16,   // conservative size of the mov1 and jmp instructions
                                    // for the x64 platform
     vtbl_common_code_size  = (1*K) // conservative size of the "common_code" for the x64 platform
+  };
+
+  enum {
+    min_ro_size = NOT_LP64(8*M) LP64_ONLY(9*M), // minimum ro and rw regions sizes based on dumping
+    min_rw_size = NOT_LP64(7*M) LP64_ONLY(12*M) // of a shared archive using the default classlist
   };
 
   enum {
@@ -117,6 +132,10 @@ class MetaspaceShared : AllStatic {
                                       char** md_top, char* md_end,
                                       char** mc_top, char* mc_end);
   static void serialize(SerializeClosure* sc);
+
+  static MetaspaceSharedStats* stats() {
+    return &_stats;
+  }
 
   // JVM/TI RedefineClasses() support:
   // Remap the shared readonly space to shared readwrite, private if

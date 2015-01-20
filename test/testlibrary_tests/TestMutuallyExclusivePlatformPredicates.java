@@ -45,9 +45,10 @@ public class TestMutuallyExclusivePlatformPredicates {
     private static enum MethodGroup {
         ARCH("isARM", "isPPC", "isSparc", "isX86", "isX64"),
         BITNESS("is32bit", "is64bit"),
-        OS("isLinux", "isSolaris", "isWindows", "isOSX"),
+        OS("isAix", "isLinux", "isOSX", "isSolaris", "isWindows"),
         VM_TYPE("isClient", "isServer", "isGraal", "isMinimal"),
-        IGNORED("isEmbedded", "isDebugBuild");
+        IGNORED("isEmbedded", "isDebugBuild", "shouldSAAttach",
+                "canPtraceAttachLinux", "canAttachOSX", "isTieredSupported");
 
         public final List<String> methodNames;
 
