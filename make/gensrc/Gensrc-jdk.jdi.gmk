@@ -69,8 +69,7 @@ endef
 
 # Filter com.sun.jdi.connect.Connector
 $(SUPPORT_OUTPUTDIR)/gensrc/jdk.jdi/META-INF/services/com.sun.jdi.connect.Connector: \
-    $(JDK_TOPDIR)/src/jdk.jdi/share/classes/META-INF/services/com.sun.jdi.connect.Connector \
-    $(SUPPORT_OUTPUTDIR)/gensrc/jdk.hotspot.agent/_the.sa.services
+    $(JDK_TOPDIR)/src/jdk.jdi/share/classes/META-INF/services/com.sun.jdi.connect.Connector
 	$(process-provider)
 
 GENSRC_JDK_JDI += $(SUPPORT_OUTPUTDIR)/gensrc/jdk.jdi/META-INF/services/com.sun.jdi.connect.Connector
