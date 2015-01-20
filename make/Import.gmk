@@ -203,8 +203,7 @@ endif
 
 ################################################################################
 
-$(JDK_OUTPUTDIR)/modules/jdk.hotspot.agent/_the.sa.jar.unpacked: $(HOTSPOT_DIST)/lib/sa-jdi.jar \
-    $(SUPPORT_OUTPUTDIR)/gensrc/jdk.hotspot.agent/_the.sa.services
+$(JDK_OUTPUTDIR)/modules/jdk.hotspot.agent/_the.sa.jar.unpacked: $(HOTSPOT_DIST)/lib/sa-jdi.jar
 	$(ECHO) $(LOG_INFO) Unzipping $(<F)
 	$(RM) -r $(@D)
 	$(MKDIR) -p $(@D)
