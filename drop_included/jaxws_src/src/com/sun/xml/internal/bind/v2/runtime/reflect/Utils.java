@@ -59,7 +59,6 @@ final class Utils {
             // requires accessClassInPackage privilege
             final Method getInstance = AccessController.doPrivileged(
                     new PrivilegedAction<Method>() {
-                        @Override
                         public Method run() {
                             try {
                                 Method getInstance = refNav.getDeclaredMethod("getInstance");

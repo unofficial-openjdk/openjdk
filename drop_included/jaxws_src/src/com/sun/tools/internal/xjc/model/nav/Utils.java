@@ -60,7 +60,6 @@ final class Utils {
             final Method getInstance = AccessController.doPrivileged(
                     new PrivilegedAction<Method>() {
 
-                        @Override
                         public Method run() {
                             try {
                                 Method getInstance = refNav.getDeclaredMethod("getInstance");
