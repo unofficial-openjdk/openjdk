@@ -83,6 +83,8 @@ TREEAPI_PKGS = com.sun.source.doctree \
     com.sun.source.util \
     jdk
 
+NASHORNAPI_PKGS = jdk.nashorn.api.scripting
+
 SMARTCARDIO_PKGS = javax.smartcardio
 
 SCTPAPI_PKGS = com.sun.nio.sctp
@@ -95,7 +97,8 @@ ifeq ($(PLATFORM), macosx)
 endif
 
 JDK_PKGS = jdk \
-     jdk.net
+     jdk.net \
+     jdk.management.cmm
 
 # non-core packages in rt.jar
 NON_CORE_PKGS = $(DOMAPI_PKGS) \
