@@ -435,6 +435,10 @@ else
   $(foreach m, $(LAUNCHER_MODULES), $(eval $m-jmod: $m-launchers))
   $(foreach m, $(COPY_MODULES), $(eval $m-jmod: $m-copy))
 
+  # Jmods cannot be created until we have the jlink tool ready to run, which requires
+  # all java modules to be compiled and jdk.dev-launchers.
+  $(JMOD_TARGETS): java java.base-libs jdk.dev-launchers
+
   # To generate modules.xml all classes and a runnable image must be 
   # present.
   jdk.dev-gendata: java rmic
