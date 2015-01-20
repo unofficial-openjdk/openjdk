@@ -51,6 +51,9 @@ public final class ModuleArtifact {
     // the function that computes the hash of this module artifact
     private final Supplier<String> hasher;
 
+    // cached hash string to avoid needing to compute it many times
+    private String cachedHash;
+
     ModuleArtifact(ModuleInfo mi,
                    Set<String> packages,
                    URI location,
@@ -139,9 +142,13 @@ public final class ModuleArtifact {
      * @throws java.io.UncheckedIOException if an I/O error occurs
      */
     String computeHash() {
+        String result = cachedHash;
+        if (result != null)
+            return result;
         if (hasher == null)
             return null;
-        return hasher.get();
+        cachedHash = result = hasher.get();
+        return result;
     }
 
     private int hash;

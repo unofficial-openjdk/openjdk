@@ -253,6 +253,10 @@ class ModulePath implements ModuleArtifactFinder {
      * Scans the given directory for jmod or exploded modules. For each module
      * found then it enumerates its contents and creates a {@code Module} and
      * adds it (and its URL) to the cache.
+     *
+     * @throws UncheckedIOException if an I/O error occurs
+     * @throws RuntimeException if direcory contains more than on version of
+     * a module (need to decide on a better exception for this case).
      */
     private void scan(Path dir) {
         // the set of module names found in this directory
@@ -262,8 +266,13 @@ class ModulePath implements ModuleArtifactFinder {
             for (Path entry: stream) {
                 ModuleArtifact artifact = null;
 
-                BasicFileAttributes attrs =
-                    Files.readAttributes(entry, BasicFileAttributes.class);
+                BasicFileAttributes attrs;
+                try {
+                    attrs = Files.readAttributes(entry, BasicFileAttributes.class);
+                } catch (IOException ioe) {
+                    // ignore for now
+                    continue;
+                }
                 if (attrs.isRegularFile()) {
                     if (entry.toString().endsWith(".jmod")) {
                         artifact = readJMod(entry);
@@ -281,7 +290,7 @@ class ModulePath implements ModuleArtifactFinder {
                     String name = artifact.descriptor().name();
                     if (namesInThisDirectory.contains(name)) {
                         throw new RuntimeException(dir +
-                                " contains more than one version of " + name);
+                            " contains more than one version of " + name);
                     }
                     namesInThisDirectory.add(name);
 
@@ -293,11 +302,9 @@ class ModulePath implements ModuleArtifactFinder {
                     // add the module to the cache
                     cachedModules.put(name, artifact);
                 }
-
             }
-        } catch (IOException | UncheckedIOException ioe) {
-            // warn for now, needs to be re-examined
-            System.err.println(ioe);
+        } catch (IOException ioe) {
+            throw new UncheckedIOException(ioe);
         }
     }
 

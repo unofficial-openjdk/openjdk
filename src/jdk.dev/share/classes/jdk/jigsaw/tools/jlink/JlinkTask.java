@@ -813,7 +813,9 @@ class JlinkTask {
                 if (dependencesToHash.matcher(dn).find()) {
                     ModuleArtifact artifact = moduleFinder.find(dn);
                     if (artifact == null) {
-                        throw new RuntimeException(dn + " not found on modulepath");
+                        throw new RuntimeException("Hashing module " + mi.name()
+                            + " dependences, unable to find module " + dn
+                            + " on module path");
                     }
                     descriptors.add(artifact.descriptor());
                 }
