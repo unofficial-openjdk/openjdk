@@ -218,6 +218,39 @@ generate-summary:
 ALL_TARGETS += generate-summary gen-module-info diff-module-info 
 
 ################################################################################
+# Strip binaries targets
+
+STRIP_MODULES := $(sort $(LIBS_MODULES) $(LAUNCHER_MODULES) $(COPY_MODULES) \
+    $(GENDATA_MODULES))
+STRIP_TARGETS := $(addsuffix -strip, $(STRIP_MODULES))
+
+define DeclareStripRecipe
+  $1-strip:
+	+($(CD) $(SRC_ROOT)/make && $(MAKE) $(MAKE_ARGS) -f StripBinaries.gmk \
+	    MODULE=$1)
+endef
+
+$(foreach m, $(STRIP_MODULES), $(eval $(call DeclareStripRecipe,$m)))
+
+ALL_TARGETS += $(STRIP_TARGETS)
+
+################################################################################
+# Jmod targets
+
+JMOD_MODULES := $(call FindJavaModules)
+JMOD_TARGETS := $(addsuffix -jmod, $(JMOD_MODULES))
+
+define DeclareJmodRecipe
+  $1-jmod:
+	+($(CD) $(SRC_ROOT)/make && $(MAKE) $(MAKE_ARGS) -f CreateJmods.gmk \
+	    MODULE=$1)
+endef
+
+$(foreach m, $(JMOD_MODULES), $(eval $(call DeclareJmodRecipe,$m)))
+
+ALL_TARGETS += $(JMOD_TARGETS)
+
+################################################################################
 # Images targets
 
 # Stores the tips for each repository. This file is be used when constructing the jdk image and can be
@@ -239,16 +272,8 @@ zip-security:
 zip-source:
 	+($(CD) $(SRC_ROOT)/make && $(MAKE) $(MAKE_ARGS) -f ZipSource.gmk)
 
-strip-binaries:
-	+($(CD) $(SRC_ROOT)/make && $(MAKE) $(MAKE_ARGS) -f StripBinaries.gmk)
-
 jrtfs-jar:
 	+($(CD) $(SRC_ROOT)/make && $(MAKE) $(MAKE_ARGS) -f JrtfsJar.gmk)
-
-# FIXME
-jmods:
-	+($(CD) $(SRC_ROOT)/make && $(MAKE) -I $(JDK_TOPDIR)/make \
-	    -f CreateJmods.gmk jmods)
 
 jimages:
 	+($(CD) $(SRC_ROOT)/make && $(MAKE) $(MAKE_ARGS) -f Images.gmk jimages)
@@ -259,8 +284,8 @@ profiles:
 mac-bundles:
 	+($(CD) $(SRC_ROOT)/make && $(MAKE) $(MAKE_ARGS) -f MacBundles.gmk)
 
-ALL_TARGETS += source-tips bootcycle-images zip-security zip-source strip-binaries \
-    jrtfs-jar jmods jimages profiles mac-bundles
+ALL_TARGETS += source-tips bootcycle-images zip-security zip-source \
+    jrtfs-jar jimages profiles mac-bundles
 
 ################################################################################
 # Docs targets
@@ -391,7 +416,24 @@ else
   # Explicitly add dependencies for special targets
   java.base-java: unpack-sec
 
-  jmods: exploded-image strip-binaries
+  # Declare dependencies from <module>-strip to libs, launchers, gendata and copy
+  $(foreach m, $(LIBS_MODULES), $(eval $m-strip: $m-libs))
+  $(foreach m, $(LAUNCHER_MODULES), $(eval $m-strip: $m-launchers))
+  $(foreach m, $(GENDATA_MODULES), $(eval $m-strip: $m-gendata))
+  $(foreach m, $(COPY_MODULES), $(eval $m-strip: $m-copy))
+
+  # Declare dependencies between jmod targets
+  $(foreach m, $(JMOD_MODULES), \
+      $(eval $m-jmod: $(addsuffix -jmod, $(call FindDepsForModule,$m))))
+
+  # Declare dependencies from <module>-jmod to all other module targets
+  $(foreach m, $(STRIP_MODULES), $(eval $m-jmod: $m-strip))
+  $(foreach m, $(JAVA_MODULES), $(eval $m-jmod: $m-java))
+  $(foreach m, $(GENDATA_MODULES), $(eval $m-jmod: $m-gendata))
+  $(foreach m, $(RMIC_MODULES), $(eval $m-jmod: $m-rmic))
+  $(foreach m, $(LIBS_MODULES), $(eval $m-jmod: $m-libs))
+  $(foreach m, $(LAUNCHER_MODULES), $(eval $m-jmod: $m-launchers))
+  $(foreach m, $(COPY_MODULES), $(eval $m-jmod: $m-copy))
 
   # To generate modules.xml all classes and a runnable image must be 
   # present.
@@ -402,13 +444,11 @@ else
 
   zip-source: gensrc rmic
 
-  strip-binaries: libs launchers gendata copy
-
   jrtfs-jar: interim-langtools
 
   jimages: jmods zip-source source-tips demos samples jrtfs-jar 
 
-  profiles: exploded-image strip-binaries source-tips
+  profiles: jmods zip-source source-tips jrtfs-jar
 
   mac-bundles: jimages
 
@@ -450,12 +490,16 @@ libs: $(LIBS_TARGETS)
 
 launchers: $(LAUNCHER_TARGETS)
 
+jmods: $(JMOD_TARGETS)
+
+strip-binaries: $(STRIP_TARGETS)
+
 # Explicitly declare dependency for virtual target jdk.jdwp.agent-gensrc which
 # is actually handled by jdk.jdi-gensrc
 jdk.jdwp.agent-gensrc: jdk.jdi-gensrc
 
 # Declare dependencies from <module> to all the individual targets specific
-# to that module <module>-*.
+# to that module <module>-*, that are needed for the exploded image.
 $(foreach m, $(GENSRC_MODULES), $(eval $m: $m-gensrc))
 $(foreach m, $(JAVA_MODULES), $(eval $m: $m-java))
 $(foreach m, $(GENDATA_MODULES), $(eval $m: $m-gendata))
@@ -480,9 +524,9 @@ endif
 
 docs: docs-javadoc docs-jvmtidoc
 
-ALL_TARGETS += buildtools gensrc gendata copy java rmic libs launchers \
-    jdk.jdwp.agent-gensrc $(ALL_MODULE_TARGETS) exploded-image jdk images \
-    docs
+ALL_TARGETS += buildtools gensrc gendata copy java rmic libs launchers jmods \
+    strip-binaries jdk.jdwp.agent-gensrc $(ALL_MODULE_TARGETS) exploded-image \
+    jdk images docs
 
 ################################################################################
 

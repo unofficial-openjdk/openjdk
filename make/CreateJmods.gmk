@@ -23,20 +23,22 @@
 # questions.
 #
 
-# Use a different default target than "default" and "all" so that we don't 
-# re-evaluate all the targets in the included makefiles.
-jmods:
+default: all
 
 include $(SPEC)
 include MakeBase.gmk
 
+ifeq ($(MODULE), )
+  $(error MODULE must be set when calling CreateJmods.gmk)
+endif
+
 ################################################################################
 
-$(eval $(call FillCacheFind, \
-    $(SUPPORT_OUTPUTDIR)/modules_libs-stripped \
-    $(SUPPORT_OUTPUTDIR)/modules_cmds-stripped \
-    $(SUPPORT_OUTPUTDIR)/modules_conf \
-))
+$(eval $(call FillCacheFind, $(wildcard \
+    $(SUPPORT_OUTPUTDIR)/modules_libs-stripped/$(MODULE) \
+    $(SUPPORT_OUTPUTDIR)/modules_cmds-stripped/$(MODULE) \
+    $(SUPPORT_OUTPUTDIR)/modules_conf/$(MODULE) \
+)))
 
 # Param 1: Name of module
 define CreateJmod
@@ -72,14 +74,10 @@ define CreateJmod
 endef
 
 ################################################################################
-# Until there is a source dir for all modules, use the output dir as the list
-# of modules to create jmods for
-#ALL_MODULES := $(call FindAllModules) jdk.hotspot.agent java.se
-ALL_MODULES := $(notdir $(patsubst %/,%, $(wildcard $(JDK_OUTPUTDIR)/modules/*)))
 
-$(foreach m, $(ALL_MODULES), $(eval $(call CreateJmod,$m)))
+$(eval $(call CreateJmod,$(MODULE)))
 
-jmods: $(JMODS)
+all: $(JMODS)
 
 ################################################################################
 
