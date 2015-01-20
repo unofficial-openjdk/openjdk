@@ -68,7 +68,7 @@ final class CardImpl extends Card {
     static {
         final String osName = AccessController.doPrivileged(
             new PrivilegedAction<String>() {
-                @Override public String run() {
+                public String run() {
                     return System.getProperty("os.name");
                 }
             });

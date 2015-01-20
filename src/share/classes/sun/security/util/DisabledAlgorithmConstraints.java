@@ -87,7 +87,6 @@ public class DisabledAlgorithmConstraints implements AlgorithmConstraints {
         }
     }
 
-    @Override
     final public boolean permits(Set<CryptoPrimitive> primitives,
             String algorithm, AlgorithmParameters parameters) {
 
@@ -127,12 +126,10 @@ public class DisabledAlgorithmConstraints implements AlgorithmConstraints {
         return true;
     }
 
-    @Override
     final public boolean permits(Set<CryptoPrimitive> primitives, Key key) {
         return checkConstraints(primitives, "", key, null);
     }
 
-    @Override
     final public boolean permits(Set<CryptoPrimitive> primitives,
             String algorithm, Key key, AlgorithmParameters parameters) {
 
