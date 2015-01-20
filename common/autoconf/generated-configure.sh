@@ -4329,7 +4329,7 @@ TOOLCHAIN_DESCRIPTION_xlc="IBM XL C/C++"
 #CUSTOM_AUTOCONF_INCLUDE
 
 # Do not change or remove the following line, it is needed for consistency checks:
-DATE_WHEN_GENERATED=1418036274
+DATE_WHEN_GENERATED=1420811523
 
 ###############################################################################
 #
@@ -13965,7 +13965,8 @@ $as_echo "$COMPILE_TYPE" >&6; }
 
   # ZERO_ARCHDEF is used to enable architecture-specific code
   case "${OPENJDK_TARGET_CPU}" in
-    ppc*)    ZERO_ARCHDEF=PPC   ;;
+    ppc)     ZERO_ARCHDEF=PPC32 ;;
+    ppc64)   ZERO_ARCHDEF=PPC64 ;;
     s390*)   ZERO_ARCHDEF=S390  ;;
     sparc*)  ZERO_ARCHDEF=SPARC ;;
     x86_64*) ZERO_ARCHDEF=AMD64 ;;
@@ -27407,8 +27408,8 @@ $as_echo "$as_me: Trying to extract Visual Studio environment variables" >&6;}
     # The trailing space for everyone except PATH is no typo, but is needed due
     # to trailing \ in the Windows paths. These will be stripped later.
     $ECHO "$WINPATH_BASH -c 'echo VS_PATH="'\"$PATH\" > set-vs-env.sh' >> $EXTRACT_VC_ENV_BAT_FILE
-    $ECHO "$WINPATH_BASH -c 'echo VS_INCLUDE="'\"$INCLUDE \" >> set-vs-env.sh' >> $EXTRACT_VC_ENV_BAT_FILE
-    $ECHO "$WINPATH_BASH -c 'echo VS_LIB="'\"$LIB \" >> set-vs-env.sh' >> $EXTRACT_VC_ENV_BAT_FILE
+    $ECHO "$WINPATH_BASH -c 'echo VS_INCLUDE="'\"$INCLUDE\;$include \" >> set-vs-env.sh' >> $EXTRACT_VC_ENV_BAT_FILE
+    $ECHO "$WINPATH_BASH -c 'echo VS_LIB="'\"$LIB\;$lib \" >> set-vs-env.sh' >> $EXTRACT_VC_ENV_BAT_FILE
     $ECHO "$WINPATH_BASH -c 'echo VCINSTALLDIR="'\"$VCINSTALLDIR \" >> set-vs-env.sh' >> $EXTRACT_VC_ENV_BAT_FILE
     $ECHO "$WINPATH_BASH -c 'echo WindowsSdkDir="'\"$WindowsSdkDir \" >> set-vs-env.sh' >> $EXTRACT_VC_ENV_BAT_FILE
     $ECHO "$WINPATH_BASH -c 'echo WINDOWSSDKDIR="'\"$WINDOWSSDKDIR \" >> set-vs-env.sh' >> $EXTRACT_VC_ENV_BAT_FILE

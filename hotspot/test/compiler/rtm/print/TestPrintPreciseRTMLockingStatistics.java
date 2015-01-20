@@ -29,7 +29,7 @@
  *          on overall aborts and locks count and count of aborts of
  *          different types. Test also verify that VM output does not
  *          contain rtm locking statistics when it should not.
- * @library /testlibrary /testlibrary/whitebox /compiler/testlibrary
+ * @library /testlibrary /../../test/lib /compiler/testlibrary
  * @build TestPrintPreciseRTMLockingStatistics
  * @run main ClassFileInstaller sun.hotspot.WhiteBox
  *                              sun.hotspot.WhiteBox$WhiteBoxPermission
@@ -124,9 +124,6 @@ public class TestPrintPreciseRTMLockingStatistics
                 + provoker.getMethodWithLockName());
 
         RTMLockingStatistics lock = statistics.get(0);
-
-        Asserts.assertGT(lock.getTotalLocks(), 0L, "RTM locking statistics "
-                + "should contain non zero total locks count");
 
         Asserts.assertGT(lock.getTotalAborts(), 0L,
                 "RTM locking statistics should contain non zero total aborts "

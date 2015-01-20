@@ -27,12 +27,12 @@ import java.lang.reflect.Method;
 /*
  * @test
  * @bug 8009761
- * @library /testlibrary /testlibrary/whitebox
+ * @library /testlibrary /../../test/lib
  * @summary Deoptimization on sparc doesn't set Llast_SP correctly in the interpreter frames it creates
  * @build Test8009761
  * @run main ClassFileInstaller sun.hotspot.WhiteBox
  *                              sun.hotspot.WhiteBox$WhiteBoxPermission
- * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -XX:CompileCommand=exclude,Test8009761::m2 -XX:-UseOnStackReplacement -XX:-BackgroundCompilation -Xss256K Test8009761
+ * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -XX:CompileCommand=exclude,Test8009761::m2 -XX:-UseOnStackReplacement -XX:-BackgroundCompilation -Xss392K Test8009761
  */
 public class Test8009761 {
 

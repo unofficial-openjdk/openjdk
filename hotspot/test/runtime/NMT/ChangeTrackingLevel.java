@@ -26,7 +26,8 @@
  * @bug 8059100
  * @summary Test that you can decrease NMT tracking level but not increase it.
  * @key nmt
- * @library /testlibrary /testlibrary/whitebox
+ * @library /testlibrary /../../test/lib
+ * @ignore 8067167
  * @build ChangeTrackingLevel
  * @run main ClassFileInstaller sun.hotspot.WhiteBox
  *                              sun.hotspot.WhiteBox$WhiteBoxPermission

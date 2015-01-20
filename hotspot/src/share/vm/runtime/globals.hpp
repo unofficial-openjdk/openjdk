@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -542,6 +542,11 @@ class CommandLineFlags {
                                                                             \
   product_pd(uintx, HeapBaseMinAddress,                                     \
           "OS specific low limit for heap base address")                    \
+                                                                            \
+  product(uintx, HeapSearchSteps, 3 PPC64_ONLY(+17),                        \
+          "Heap allocation steps through preferred address regions to find" \
+          " where it can allocate the heap. Number of steps to take per "   \
+          "region.")                                                        \
                                                                             \
   diagnostic(bool, PrintCompressedOopsMode, false,                          \
           "Print compressed oops base address and encoding mode")           \
@@ -1353,7 +1358,7 @@ class CommandLineFlags {
   develop(bool, TraceClassInitialization, false,                            \
           "Trace class initialization")                                     \
                                                                             \
-  develop(bool, TraceExceptions, false,                                     \
+  product(bool, TraceExceptions, false,                                     \
           "Trace exceptions")                                               \
                                                                             \
   develop(bool, TraceICs, false,                                            \
@@ -1484,7 +1489,8 @@ class CommandLineFlags {
           "Size of young gen promotion LAB's (in HeapWords)")               \
                                                                             \
   product(uintx, OldPLABSize, 1024,                                         \
-          "Size of old gen promotion LAB's (in HeapWords)")                 \
+          "Size of old gen promotion LAB's (in HeapWords), or Number        \
+          of blocks to attempt to claim when refilling CMS LAB's")          \
                                                                             \
   product(uintx, GCTaskTimeStampEntries, 200,                               \
           "Number of time stamp entries per gc worker thread")              \
@@ -1595,14 +1601,10 @@ class CommandLineFlags {
           "The number of cards in each chunk of the parallel chunks used "  \
           "during card table scanning")                                     \
                                                                             \
-  product(uintx, CMSParPromoteBlocksToClaim, 16,                            \
-          "Number of blocks to attempt to claim when refilling CMS LAB's "  \
-          "for parallel GC")                                                \
-                                                                            \
   product(uintx, OldPLABWeight, 50,                                         \
           "Percentage (0-100) used to weight the current sample when "      \
           "computing exponentially decaying average for resizing "          \
-          "CMSParPromoteBlocksToClaim")                                     \
+          "OldPLABSize")                                                    \
                                                                             \
   product(bool, ResizeOldPLAB, true,                                        \
           "Dynamically resize (old gen) promotion LAB's")                   \
@@ -2961,10 +2963,6 @@ class CommandLineFlags {
   develop(intx, MallocCatchPtr, -1,                                         \
           "Hit breakpoint when mallocing/freeing this pointer")             \
                                                                             \
-  notproduct(intx, AssertRepeat, 1,                                         \
-          "number of times to evaluate expression in assert "               \
-          "(to estimate overhead); only works with -DUSE_REPEATED_ASSERTS") \
-                                                                            \
   notproduct(ccstrlist, SuppressErrorAt, "",                                \
           "List of assertions (file:line) to muzzle")                       \
                                                                             \
@@ -3793,6 +3791,9 @@ class CommandLineFlags {
   product(uintx, SharedBaseAddress, LP64_ONLY(32*G)                         \
           NOT_LP64(LINUX_ONLY(2*G) NOT_LINUX(0)),                           \
           "Address to allocate shared memory region for class data")        \
+                                                                            \
+  product(uintx, SharedSymbolTableBucketSize, 4,                            \
+          "Average number of symbols per bucket in shared table")           \
                                                                             \
   diagnostic(bool, IgnoreUnverifiableClassesDuringDump, false,              \
           "Do not quit -Xshare:dump even if we encounter unverifiable "     \

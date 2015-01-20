@@ -562,9 +562,6 @@ typedef TwoOopHashtable<Symbol*, mtClass>     SymbolTwoOopHashtable;
                                                                                                                                      \
   nonstatic_field(TenuredGeneration,           _min_heap_delta_bytes,                         size_t)                                \
   nonstatic_field(TenuredGeneration,           _the_space,                                    ContiguousSpace*)                      \
-  nonstatic_field(TenuredGeneration,           _last_gc,                                      WaterMark)                             \
-                                                                                                                                     \
-                                                                                                                                     \
                                                                                                                                      \
   nonstatic_field(Space,                       _bottom,                                       HeapWord*)                             \
   nonstatic_field(Space,                       _end,                                          HeapWord*)                             \
@@ -2568,6 +2565,8 @@ typedef TwoOopHashtable<Symbol*, mtClass>     SymbolTwoOopHashtable;
   /**********************/                                                \
   /* frame              */                                                \
   /**********************/                                                \
+  NOT_ZERO(PPC64_ONLY(declare_constant(frame::abi_minframe_size)))        \
+  NOT_ZERO(PPC64_ONLY(declare_constant(frame::entry_frame_locals_size)))  \
                                                                           \
   NOT_ZERO(X86_ONLY(declare_constant(frame::entry_frame_call_wrapper_offset)))      \
   declare_constant(frame::pc_return_offset)                               \
