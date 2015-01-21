@@ -25,14 +25,12 @@
 
 package build.tools.module;
 
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.UncheckedIOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -171,12 +169,15 @@ public class Module {
         return sb.toString();
     }
 
+    /**
+     * Module Builder
+     */
     static class Builder {
         private String name;
-        private final Set<Dependence> requires = new HashSet<>();
-        private final Map<String, Set<String>> exports = new HashMap<>();
-        private final Set<String> uses = new HashSet<>();
-        private final Map<String, Set<String>> provides = new HashMap<>();
+        final Set<Dependence> requires = new HashSet<>();
+        final Map<String, Set<String>> exports = new HashMap<>();
+        final Set<String> uses = new HashSet<>();
+        final Map<String, Set<String>> provides = new HashMap<>();
 
         public Builder() {
         }
@@ -192,14 +193,31 @@ public class Module {
         }
 
         public Builder export(String p) {
+            Objects.requireNonNull(p);
+            if (exports.containsKey(p)) {
+                throw new RuntimeException(name + " already exports " + p +
+                        " " + exports.get(p));
+            }
             return exportTo(p, Collections.emptySet());
+        }
+
+        public Builder exportTo(String p, String mn) {
+            Objects.requireNonNull(p);
+            Objects.requireNonNull(mn);
+            Set<String> ms = exports.get(p);
+            if (ms != null && ms.isEmpty()) {
+                throw new RuntimeException(name + " already has unqualified exports " + p);
+            }
+            exports.computeIfAbsent(p, _k -> new HashSet<>()).add(mn);
+            return this;
         }
 
         public Builder exportTo(String p, Set<String> ms) {
             Objects.requireNonNull(p);
             Objects.requireNonNull(ms);
             if (exports.containsKey(p)) {
-                throw new RuntimeException(name + " already exports " + p);
+                throw new RuntimeException(name + " already exports " + p +
+                        " " + exports.get(p));
             }
             exports.put(p, new HashSet<>(ms));
             return this;
@@ -252,6 +270,11 @@ public class Module {
         public Module build() {
             Module m = new Module(name, requires, exports, uses, provides);
             return m;
+        }
+
+        @Override
+        public String toString() {
+            return name != null ? name : "Unknown";
         }
     }
 }

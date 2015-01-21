@@ -78,8 +78,10 @@ module java.desktop {
     exports javax.swing.text.rtf;
     exports javax.swing.tree;
     exports javax.swing.undo;
-    exports sun.awt to
-        oracle.accessbridge;
+
+    // qualified exports may be inserted at build time
+    // see make/gensrc/GenModuleInfo.gmk
+
     uses java.awt.im.spi.InputMethodDescriptor;
     uses javax.imageio.spi.IIOServiceProvider;
     uses javax.imageio.spi.ImageInputStreamSpi;

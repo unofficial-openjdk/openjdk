@@ -40,5 +40,7 @@ module jdk.jdi {
     provides com.sun.jdi.connect.Connector with com.sun.tools.jdi.SocketAttachingConnector;
     provides com.sun.jdi.connect.Connector with com.sun.tools.jdi.SocketListeningConnector;
     provides com.sun.jdi.connect.Connector with com.sun.tools.jdi.SunCommandLineLauncher;
+    provides com.sun.jdi.connect.Connector with com.sun.tools.jdi.SharedMemoryAttachingConnector;
+    provides com.sun.jdi.connect.Connector with com.sun.tools.jdi.SharedMemoryListeningConnector;
 }
 

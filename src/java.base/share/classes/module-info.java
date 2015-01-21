@@ -75,22 +75,19 @@ module java.base {
     exports jdk;
     exports jdk.jigsaw.module;
     exports jdk.net;
+    // additional qualified exports may be inserted at build time
+    // see make/gensrc/GenModuleInfo.gmk
     exports com.sun.security.ntlm to
         java.security.sasl;
     exports jdk.internal.jimage to
         jdk.dev;
     exports jdk.internal.org.objectweb.asm to
-        jdk.jfr,
         jdk.scripting.nashorn;
     exports jdk.internal.org.objectweb.asm.commons to
-        jdk.jfr,
         jdk.scripting.nashorn;
     exports jdk.internal.org.objectweb.asm.signature to
         jdk.scripting.nashorn;
-    exports jdk.internal.org.objectweb.asm.tree to
-        jdk.jfr;
     exports jdk.internal.org.objectweb.asm.util to
-        jdk.jfr,
         jdk.scripting.nashorn;
     exports jdk.jigsaw.module.internal to
         jdk.dev;
@@ -106,7 +103,6 @@ module java.base {
         java.sql,
         java.xml,
         jdk.charsets,
-        jdk.deploy.osx,
         jdk.dev,
         jdk.jconsole,
         jdk.jvmstat,
@@ -130,7 +126,6 @@ module java.base {
     exports sun.nio.ch to
         java.management,
         jdk.crypto.pkcs11,
-        jdk.crypto.ucrypto,
         jdk.sctp;
     exports sun.nio.cs to
         java.desktop,
@@ -156,14 +151,11 @@ module java.base {
         java.desktop,
         java.security.jgss,
         jdk.crypto.ec,
-        jdk.crypto.pkcs11,
-        jdk.crypto.ucrypto;
+        jdk.crypto.pkcs11;
     exports sun.security.internal.interfaces to
         jdk.crypto.pkcs11;
     exports sun.security.internal.spec to
-        jdk.crypto.mscapi,
-        jdk.crypto.pkcs11,
-        jdk.crypto.ucrypto;
+        jdk.crypto.pkcs11;
     exports sun.security.jca to
         java.smartcardio,
         java.xml.crypto,
@@ -172,7 +164,6 @@ module java.base {
         jdk.naming.dns;
     exports sun.security.pkcs to
         jdk.crypto.ec,
-        jdk.deploy.osx,
         jdk.dev;
     exports sun.security.provider to
         java.rmi,
@@ -183,7 +174,6 @@ module java.base {
     exports sun.security.provider.certpath to
         java.naming;
     exports sun.security.rsa to
-        jdk.crypto.mscapi,
         jdk.crypto.pkcs11;
     exports sun.security.ssl to
         java.security.jgss;
@@ -196,10 +186,7 @@ module java.base {
         java.security.jgss,
         java.smartcardio,
         jdk.crypto.ec,
-        jdk.crypto.mscapi,
         jdk.crypto.pkcs11,
-        jdk.crypto.ucrypto,
-        jdk.deploy.osx,
         jdk.dev,
         jdk.runtime,
         jdk.security.auth;
@@ -207,7 +194,6 @@ module java.base {
         java.naming,
         jdk.crypto.ec,
         jdk.crypto.pkcs11,
-        jdk.deploy.osx,
         jdk.dev,
         jdk.security.auth;
     exports sun.text to
