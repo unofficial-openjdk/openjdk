@@ -58,4 +58,4 @@ jdk.jdwp.agent: java.base
 java.compact1: java.base java.logging java.scripting
 java.compact2: java.base java.logging java.scripting java.xml java.rmi java.sql java.compact1
 java.compact3: java.base java.logging java.scripting java.xml java.rmi java.sql java.prefs java.instrument java.management java.security.acl java.security.sasl java.compiler java.sql.rowset java.naming java.security.jgss java.xml.crypto java.compact2
-java.se: java.base java.logging java.scripting java.xml java.rmi java.sql java.prefs java.instrument java.management java.security.acl java.security.sasl java.compiler java.sql.rowset java.naming java.security.jgss java.xml.crypto java.activation java.corba java.transaction java.xml.bind java.xml.ws java.desktop jdk.security.jgss java.compact3
+java.se: java.base java.logging java.scripting java.xml java.rmi java.sql java.prefs java.instrument java.management java.security.acl java.security.sasl java.compiler java.sql.rowset java.naming java.security.jgss java.xml.crypto java.activation java.corba java.transaction java.xml.bind java.xml.ws java.desktop jdk.security.jgss java.compact3 java.annotation.commons

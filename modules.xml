@@ -891,6 +891,7 @@
   <module>
     <name>java.se</name>
     <depend re-exports="true">java.activation</depend>
+    <depend re-exports="true">java.annotation.commons</depend>
     <depend re-exports="true">java.compact3</depend>
     <depend re-exports="true">java.corba</depend>
     <depend re-exports="true">java.desktop</depend>
