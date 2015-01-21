@@ -105,6 +105,7 @@ endif
 CFLAGS_REQUIRED_amd64   += -fno-omit-frame-pointer -D_LITTLE_ENDIAN
 CFLAGS_REQUIRED_i586    += -fno-omit-frame-pointer -D_LITTLE_ENDIAN
 CFLAGS_REQUIRED_ia64    += -fno-omit-frame-pointer -D_LITTLE_ENDIAN
+CFLAGS_REQUIRED_ppc     += -fsigned-char -D_BIG_ENDIAN
 CFLAGS_REQUIRED_sparcv9 += -m64 -mcpu=v9
 LDFLAGS_COMMON_sparcv9  += -m64 -mcpu=v9
 CFLAGS_REQUIRED_sparc   += -m32 -mcpu=v9
@@ -149,11 +150,7 @@ endif
 #
 # Misc compiler options
 #
-ifeq ($(ARCH),ppc)
-  CFLAGS_COMMON   = -fsigned-char
-else # ARCH
-  CFLAGS_COMMON   = -fno-strict-aliasing
-endif # ARCH
+CFLAGS_COMMON  = -fno-strict-aliasing
 PIC_CODE_LARGE = -fPIC
 PIC_CODE_SMALL = -fpic
 GLOBAL_KPIC = $(PIC_CODE_LARGE)
