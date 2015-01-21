@@ -206,19 +206,16 @@ if [ "${command}" = "clone" -o "${command}" = "fclone" -o "${command}" = "tclone
     fi
   done
 
-  if [ "${command_args}" != "" ]; then
-    set ${command_args}
+  pull_default_tail=`echo ${pull_default} | sed -e 's@^.*://[^/]*/\(.*\)@\1@'`
+
+  if [ $# -gt 0 ] ; then
+    # Allow jigsaw jake to override the base file path part of the url for closed repos
     pull_extra_base="$1"
     pull_extra_dir="$2"
     if [ "${pull_extra_dir}" != "" ] ; then
       pull_default_tail="${pull_extra_dir}"
     fi
-  fi
-  if [ "${pull_default_tail}" = "" ]; then
-    pull_default_tail=`echo ${pull_default} | sed -e 's@^.*://[^/]*/\(.*\)@\1@'`
-  fi
 
-  if [ $# -gt 0 ] ; then
     # if there is an "extra sources" path then reparent "extra" repos to that path
     if [ "x${pull_default}" = "x${pull_default_tail}" ] ; then
       echo "ERROR: Need initial clone from non-local source" > ${status_output}
