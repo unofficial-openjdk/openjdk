@@ -440,8 +440,10 @@ public class LocaleTest extends LocaleTestFmwk {
         String[] spotCheck2 = { "US", "CA", "GB", "FR", "DE", "IT", "JP", "KR", "CN", "TW", "TH" };
 
 
-        if (test.length != 250)
-            errln("Expected getISOCountries to return 250 countries; it returned " + test.length);
+        int expectedCountries = 251;
+        if (test.length != expectedCountries)
+            errln("Expected getISOCountries to return " + expectedCountries
+                  + " countries; it returned " + test.length);
         else {
             for (int i = 0; i < spotCheck2.length; i++) {
                 int j;

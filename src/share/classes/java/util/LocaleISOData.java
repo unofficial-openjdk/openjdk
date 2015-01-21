@@ -275,7 +275,7 @@ class LocaleISOData {
         + "CN" + "CHN"  // China, People's Republic of
         + "CO" + "COL"  // Colombia, Republic of
         + "CR" + "CRI"  // Costa Rica, Republic of
-//      + "CS" + "SCG"  // Serbia and Montenegro
+        + "CS" + "SCG"  // Serbia and Montenegro
         + "CU" + "CUB"  // Cuba, Republic of
         + "CV" + "CPV"  // Cape Verde, Republic of
         + "CW" + "CUW"  // Cura\u00e7ao
