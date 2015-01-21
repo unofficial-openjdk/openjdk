@@ -48,7 +48,8 @@
 // Mapping function names to values. New entries should be added below.
 
 #define VM_SYMBOLS_DO(template, do_alias)                                                         \
-  /* commonly used class names */                                                                 \
+  /* commonly used class, package, module names */                                                \
+  template(java_base,                                 "java.base")                                \
   template(java_lang_System,                          "java/lang/System")                         \
   template(java_lang_Object,                          "java/lang/Object")                         \
   template(java_lang_Class,                           "java/lang/Class")                          \
@@ -84,6 +85,7 @@
   template(java_lang_reflect_Method,                  "java/lang/reflect/Method")                 \
   template(java_lang_reflect_Constructor,             "java/lang/reflect/Constructor")            \
   template(java_lang_reflect_Field,                   "java/lang/reflect/Field")                  \
+  template(java_lang_reflect_Module,                  "java/lang/reflect/Module")                 \
   template(java_lang_reflect_Parameter,               "java/lang/reflect/Parameter")              \
   template(java_lang_reflect_Array,                   "java/lang/reflect/Array")                  \
   template(java_lang_StringBuffer,                    "java/lang/StringBuffer")                   \
@@ -122,6 +124,11 @@
   template(sun_misc_Version,                          "sun/misc/Version")                         \
   template(java_runtime_name_name,                    "java_runtime_name")                        \
   template(java_runtime_version_name,                 "java_runtime_version")                     \
+                                                                                                  \
+  /* Module system */                                                                             \
+  template(jdk_jigsaw_module_runtime_ModuleBootstrap, "jdk/jigsaw/module/runtime/ModuleBootstrap") \
+  template(boot_name,                                 "boot")                                     \
+  template(java_lang_reflect_module_init_signature,   "(Ljava/lang/ClassLoader;Ljava/lang/String;)V") \
                                                                                                   \
   /* class file format tags */                                                                    \
   template(tag_source_file,                           "SourceFile")                               \
@@ -402,6 +409,8 @@
   template(signers_name,                              "signers_name")                             \
   template(loader_data_name,                          "loader_data")                              \
   template(dependencies_name,                         "dependencies")                             \
+  template(loader_name,                               "loader")                                   \
+  template(module_name,                               "module")                                   \
   template(input_stream_void_signature,               "(Ljava/io/InputStream;)V")                 \
   template(getFileURL_name,                           "getFileURL")                               \
   template(getFileURL_signature,                      "(Ljava/io/File;)Ljava/net/URL;")           \

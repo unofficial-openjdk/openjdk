@@ -1229,7 +1229,6 @@ bool os::set_boot_path(char fileSep, char pathSep) {
   if (meta_index_dir == NULL) return false;
   Arguments::set_meta_index_path(meta_index, meta_index_dir);
 
-  char* sysclasspath = NULL;
   struct stat st;
 
   // modular image if bootmodules.jimage exists
@@ -1242,7 +1241,16 @@ bool os::set_boot_path(char fileSep, char pathSep) {
   }
   FREE_C_HEAP_ARRAY(char, jimage);
 
-  // images build if rt.jar exists
+  // exploded build if lib/java.base exists
+  char* base_classes = format_boot_path("%/modules/java.base", home, home_len, fileSep, pathSep);
+  if (base_classes == NULL) return false;
+  if (os::stat(base_classes, &st) == 0) {
+    Arguments::set_sysclasspath(base_classes);
+    return true;
+  }
+  FREE_C_HEAP_ARRAY(char, base_classes);
+
+  // legacy image if rt.jar exists
   char* rt_jar = format_boot_path("%/lib/rt.jar", home, home_len, fileSep, pathSep);
   if (rt_jar == NULL) return false;
   bool has_rt_jar = (os::stat(rt_jar, &st) == 0);
@@ -1260,25 +1268,55 @@ bool os::set_boot_path(char fileSep, char pathSep) {
       "%/lib/charsets.jar:"
       "%/lib/jfr.jar:"
       "%/classes";
-    sysclasspath = format_boot_path(classpath_format, home, home_len, fileSep, pathSep);
-  } else {
-    // no rt.jar, check if developer build with exploded modules
-    char* modules_dir = format_boot_path("%/modules", home, home_len, fileSep, pathSep);
-    if (os::stat(modules_dir, &st) == 0) {
-      if ((st.st_mode & S_IFDIR) == S_IFDIR) {
-        sysclasspath = expand_entries_to_path(modules_dir, fileSep, pathSep);
-      }
-    }
-
-    // fallback to classes
-    if (sysclasspath == NULL)
-      sysclasspath = format_boot_path("%/classes", home, home_len, fileSep, pathSep);
+    char* sysclasspath = format_boot_path(classpath_format, home, home_len, fileSep, pathSep);
+    if (sysclasspath == NULL) return false;
+    Arguments::set_sysclasspath(sysclasspath);
+    return true;
   }
 
+  // fallback to classes
+  char* sysclasspath = format_boot_path("%/classes", home, home_len, fileSep, pathSep);
   if (sysclasspath == NULL) return false;
   Arguments::set_sysclasspath(sysclasspath);
-
   return true;
+}
+
+// used to set the boot class path when running without modules
+bool os::set_expanded_boot_path() {
+  const char* home = Arguments::get_java_home();
+  int home_len = (int)strlen(home);
+
+  char fileSep = file_separator()[0];
+  char pathSep = path_separator()[0];
+
+  struct stat st;
+  char* sysclasspath = NULL;
+
+  // no boot class path expansion with jimage
+  char* jimage = format_boot_path("%/lib/modules/bootmodules.jimage", home, home_len, fileSep, pathSep);
+  if (jimage == NULL) return false;
+  bool has_jimage = (os::stat(jimage, &st) == 0);
+  FREE_C_HEAP_ARRAY(char, jimage);
+  if (has_jimage) {
+    return true; // nothing to do
+  }
+
+  // ${java.home}/modules/$MODULE
+  char* modules_dir = format_boot_path("%/modules", home, home_len, fileSep, pathSep);
+  if (modules_dir == NULL) return false;
+  if (os::stat(modules_dir, &st) == 0) {
+    if ((st.st_mode & S_IFDIR) == S_IFDIR) {
+      sysclasspath = expand_entries_to_path(modules_dir, fileSep, pathSep);
+      if (sysclasspath == NULL) return false;
+    }
+  }
+  FREE_C_HEAP_ARRAY(char, modules_dir);
+  if (sysclasspath != NULL) {
+    Arguments::set_sysclasspath(sysclasspath);
+    return true;
+  }
+
+  return false;
 }
 
 /*
