@@ -45,6 +45,10 @@ java.activation_SETUP := GENERATE_JDKBYTECODE_NOWARNINGS
 java.base_COPY := .icu .dat .spp content-types.properties hijrah-config-islamic-umalqura.properties
 java.base_CLEAN := intrinsic.properties
 
+# jdk build will generate gensrc/java.base/module-info.java to include
+# OS-specific qualified exports
+java.base_EXCLUDE_FILES += $(JDK_TOPDIR)/src/java.base/share/classes/module-info.java
+
 java.base_EXCLUDES += java/lang/doc-files
 
 # Exclude BreakIterator classes that are just used in compile process to generate
@@ -91,6 +95,10 @@ endif
 
 java.desktop_COPY := .gif .png .wav .txt .xml .css flavormap.properties .pf
 java.desktop_CLEAN := iio-plugin.properties
+
+# jdk build will generate gensrc/java.desktop/module-info.java to include
+# OS-specific qualified exports
+java.desktop_EXCLUDE_FILES += $(JDK_TOPDIR)/src/java.desktop/share/classes/module-info.java
 
 java.desktop_EXCLUDES += \
     java/awt/doc-files \
