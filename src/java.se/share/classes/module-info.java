@@ -25,7 +25,7 @@
 
 module java.se {
     requires public java.activation;
-    requires public java.annotation.commons;
+    requires public java.annotations.common;
     requires java.base;
     requires public java.compact3;
     requires public java.corba;
