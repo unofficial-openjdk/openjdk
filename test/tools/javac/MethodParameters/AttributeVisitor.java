@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -43,6 +43,7 @@ class AttributeVisitor<R, P> implements Attribute.Visitor<R, P> {
     public R visitLocalVariableTable(LocalVariableTable_attribute attr, P p) { return null; }
     public R visitLocalVariableTypeTable(LocalVariableTypeTable_attribute attr, P p) { return null; }
     public R visitMethodParameters(MethodParameters_attribute attr, P p) { return null; }
+    public R visitModule(Module_attribute attr, P p) { return null; }
     public R visitRuntimeVisibleAnnotations(RuntimeVisibleAnnotations_attribute attr, P p) { return null; }
     public R visitRuntimeInvisibleAnnotations(RuntimeInvisibleAnnotations_attribute attr, P p) { return null; }
     public R visitRuntimeVisibleParameterAnnotations(RuntimeVisibleParameterAnnotations_attribute attr, P p) { return null; }

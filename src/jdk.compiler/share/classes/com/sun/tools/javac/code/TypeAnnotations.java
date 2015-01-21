@@ -47,6 +47,7 @@ import com.sun.tools.javac.code.TypeAnnotationPosition.TypePathEntry;
 import com.sun.tools.javac.code.TypeAnnotationPosition.TypePathEntryKind;
 import com.sun.tools.javac.code.Symbol.VarSymbol;
 import com.sun.tools.javac.code.Symbol.MethodSymbol;
+import com.sun.tools.javac.code.Type.ModuleType;
 import com.sun.tools.javac.comp.Annotate;
 import com.sun.tools.javac.comp.Annotate.Worker;
 import com.sun.tools.javac.comp.Attr;
@@ -617,6 +618,11 @@ public class TypeAnnotations {
 
                 @Override
                 public Type visitTypeVar(TypeVar t, List<TypeCompound> s) {
+                    return t.annotatedType(s);
+                }
+
+                @Override
+                public Type visitModuleType(ModuleType t, List<TypeCompound> s) {
                     return t.annotatedType(s);
                 }
 
