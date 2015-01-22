@@ -128,13 +128,13 @@ ALL_TARGETS += $(COPY_TARGETS)
 
 ################################################################################
 # Targets for compiling all java modules. Nashorn is treated separately.
-JAVA_MODULES := $(call FindJavaModules)
+JAVA_MODULES := $(ALL_MODULES)
 JAVA_TARGETS := $(addsuffix -java, $(JAVA_MODULES))
 
 define DeclareCompileJavaRecipe
   $1-java:
-	+($(CD) $(SRC_ROOT)/make && $(MAKE) $(MAKE_ARGS) -f CompileJavaModules.gmk \
-	    $1 JAVA_MODULES=$1)
+	+($(CD) $(SRC_ROOT)/make && $(MAKE) $(MAKE_ARGS) \
+	    -f CompileJavaModules.gmk MODULE=$1)
 endef
 
 $(foreach m, $(filter-out jdk.scripting.nashorn, $(JAVA_MODULES)), \
@@ -143,7 +143,8 @@ $(foreach m, $(filter-out jdk.scripting.nashorn, $(JAVA_MODULES)), \
 # Build nashorn. Needs to be compiled separately from the rest of the modules
 # due to nasgen.
 jdk.scripting.nashorn-java:
-	+($(CD) $(NASHORN_TOPDIR)/make && $(MAKE) $(MAKE_ARGS) -f BuildNashorn.gmk compile)
+	+($(CD) $(NASHORN_TOPDIR)/make && $(MAKE) $(MAKE_ARGS) \
+	    -f BuildNashorn.gmk compile)
 
 ALL_TARGETS += $(JAVA_TARGETS)
 
@@ -237,7 +238,7 @@ ALL_TARGETS += $(STRIP_TARGETS)
 ################################################################################
 # Jmod targets
 
-JMOD_MODULES := $(call FindJavaModules)
+JMOD_MODULES := $(ALL_MODULES)
 JMOD_TARGETS := $(addsuffix -jmod, $(JMOD_MODULES))
 
 define DeclareJmodRecipe
