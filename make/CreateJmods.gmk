@@ -27,6 +27,7 @@ default: all
 
 include $(SPEC)
 include MakeBase.gmk
+include Modules.gmk
 
 ifeq ($(MODULE), )
   $(error MODULE must be set when calling CreateJmods.gmk)
@@ -38,47 +39,44 @@ $(eval $(call FillCacheFind, $(wildcard \
     $(SUPPORT_OUTPUTDIR)/modules_libs-stripped/$(MODULE) \
     $(SUPPORT_OUTPUTDIR)/modules_cmds-stripped/$(MODULE) \
     $(SUPPORT_OUTPUTDIR)/modules_conf/$(MODULE) \
+    $(JDK_OUTPUTDIR)/modules/$(MODULE) \
 )))
 
-# Param 1: Name of module
-define CreateJmod
+ifneq ($(wildcard $(SUPPORT_OUTPUTDIR)/modules_libs-stripped/$(MODULE)), )
+  JLINK_FLAGS += --libs $(SUPPORT_OUTPUTDIR)/modules_libs-stripped/$(MODULE)
+  DEPS += $(call CacheFind, $(SUPPORT_OUTPUTDIR)/modules_libs-stripped/$(MODULE))
+endif
+ifneq ($(wildcard $(SUPPORT_OUTPUTDIR)/modules_cmds-stripped/$(MODULE)), )
+  JLINK_FLAGS += --cmds $(SUPPORT_OUTPUTDIR)/modules_cmds-stripped/$(MODULE)
+  DEPS += $(call CacheFind, $(SUPPORT_OUTPUTDIR)/modules_cmds-stripped/$(MODULE))
+endif
+ifneq ($(wildcard $(SUPPORT_OUTPUTDIR)/modules_conf/$(MODULE)), )
+  JLINK_FLAGS += --config $(SUPPORT_OUTPUTDIR)/modules_conf/$(MODULE)
+  DEPS += $(call CacheFind, $(SUPPORT_OUTPUTDIR)/modules_conf/$(MODULE))
+endif
+ifneq ($(wildcard $(JDK_OUTPUTDIR)/modules/$(MODULE)), )
+  JLINK_FLAGS += --class-path $(JDK_OUTPUTDIR)/modules/$(MODULE)
+  DEPS += $(call CacheFind, $(JDK_OUTPUTDIR)/modules/$(MODULE))
+endif
 
-  ifneq ($$(wildcard $(SUPPORT_OUTPUTDIR)/modules_libs-stripped/$1), )
-    $1_JLINK_FLAGS += --libs $(SUPPORT_OUTPUTDIR)/modules_libs-stripped/$1
-    $1_DEPS += $$(call CacheFind, $(SUPPORT_OUTPUTDIR)/modules_libs-stripped/$1)
-  endif
-  ifneq ($$(wildcard $(SUPPORT_OUTPUTDIR)/modules_cmds-stripped/$1), )
-    $1_JLINK_FLAGS += --cmds $(SUPPORT_OUTPUTDIR)/modules_cmds-stripped/$1
-    $1_DEPS += $$(call CacheFind, $(SUPPORT_OUTPUTDIR)/modules_cmds-stripped/$1)
-  endif
-  ifneq ($$(wildcard $(SUPPORT_OUTPUTDIR)/modules_conf/$1), )
-    $1_JLINK_FLAGS += --config $(SUPPORT_OUTPUTDIR)/modules_conf/$1
-    $1_DEPS += $$(call CacheFind, $(SUPPORT_OUTPUTDIR)/modules_conf/$1)
-  endif
-  ifneq ($$(wildcard $(JDK_OUTPUTDIR)/modules/$1), )
-    $1_JLINK_FLAGS += --class-path $(JDK_OUTPUTDIR)/modules/$1
-    $1_DEPS += $$(wildcard $(JDK_OUTPUTDIR)/modules/$1/_*)
-  endif
+# Add dependencies on other jmod files
+DEPS += $(patsubst %, $(IMAGES_OUTPUTDIR)/jmods/%.jmod, \
+    $(call FindDepsForModule, $(MODULE)))
 
-  # TODO: What about headers?
-  $(IMAGES_OUTPUTDIR)/jmods/$1.jmod: \
-      $$($1_COPY_NATIVE_LIB) $$($1_COPY_NATIVE_BIN) $$($1_COPY_CMDS) \
-      $$($1_COPY_CONF) $$($1_DEPS)
-		$(ECHO) Creating $$(notdir $$@)
-		$(MKDIR) -p $$(@D)
-		$(RM) $$@
-		$(JLINK) --format jmod --mid $1@9.0 \
-                    --modulepath $(IMAGES_OUTPUTDIR)/jmods --hash-dependences .* \
-		    --output $$@ $$($1_JLINK_FLAGS) 
+# TODO: What about headers?
+$(IMAGES_OUTPUTDIR)/jmods/$(MODULE).jmod: $(DEPS)
+	$(ECHO) Creating $(notdir $@)
+	$(MKDIR) -p $(@D)
+	$(RM) $@
+	$(JLINK) --format jmod --mid $(MODULE)@9.0 \
+	    --modulepath $(IMAGES_OUTPUTDIR)/jmods --hash-dependences .* \
+	    --output $@ $(JLINK_FLAGS) 
 
-  JMODS += $(IMAGES_OUTPUTDIR)/jmods/$1.jmod
-endef
+TARGETS += $(IMAGES_OUTPUTDIR)/jmods/$(MODULE).jmod
 
 ################################################################################
 
-$(eval $(call CreateJmod,$(MODULE)))
-
-all: $(JMODS)
+all: $(TARGETS)
 
 ################################################################################
 
