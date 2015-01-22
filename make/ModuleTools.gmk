@@ -42,4 +42,5 @@ TOOL_GENGRAPHS := $(BUILD_JAVA) -esa -ea -cp $(TOOLS_CLASSES_DIR) \
     build.tools.jigsaw.GenGraphs
 
 TOOL_MODULESUMMARY := $(BUILD_JAVA) -esa -ea -cp $(TOOLS_CLASSES_DIR) \
-    -XX:-UseModules build.tools.jigsaw.ModuleSummary
+    -XX:AddModuleExports=jdk.compiler/com.sun.tools.classfile \
+    build.tools.jigsaw.ModuleSummary
