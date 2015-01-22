@@ -457,4 +457,83 @@ public class Basic {
             p + (expectMatch? " should match " : " should not match ") +
             pattern);
     }
+
+    @Test
+    public void testPackagesAndModules() throws Exception {
+        FileSystem fs = FileSystems.getFileSystem(URI.create("jrt:/"));
+        assertTrue(Files.isDirectory(fs.getPath("/packages")));
+        assertTrue(Files.isDirectory(fs.getPath("/modules")));
+    }
+
+    @DataProvider(name = "packagesSubDirs")
+    private Object[][] packagesSubDirs() {
+        return new Object[][] {
+            { "java.lang" },
+            { "java.util" },
+            { "java.nio"  },
+            { "jdk.nashorn.api.scripting" }
+        };
+    }
+
+    @Test(dataProvider = "packagesSubDirs")
+    public void testPackagesSubDirs(String pkg) throws Exception {
+        FileSystem fs = FileSystems.getFileSystem(URI.create("jrt:/"));
+        assertTrue(Files.isDirectory(fs.getPath("/packages/" + pkg)),
+            pkg + " missing");
+    }
+
+    @DataProvider(name = "packagesLinks")
+    private Object[][] packagesLinks() {
+        return new Object[][] {
+            { "/packages/java.lang/java.base" },
+            { "/packages/java.util/java.base" },
+            { "/packages/jdk.nashorn.api.scripting/jdk.scripting.nashorn" },
+        };
+    }
+
+    @Test(dataProvider = "packagesLinks")
+    public void testPackagesLinks(String link) throws Exception {
+        FileSystem fs = FileSystems.getFileSystem(URI.create("jrt:/"));
+        Path path = fs.getPath(link);
+        assertTrue(Files.exists(path), link + " missing");
+        assertTrue(Files.isSymbolicLink(path), path + " is not a link");
+        assertEquals(Files.readSymbolicLink(path).toString(),
+            link.substring(link.lastIndexOf("/")));
+    }
+
+    @DataProvider(name = "modulesSubDirs")
+    private Object[][] modulesSubDirs() {
+        return new Object[][] {
+            { "java.base" },
+            { "java.sql" },
+            { "jdk.scripting.nashorn" },
+        };
+    }
+
+    @Test(dataProvider = "modulesSubDirs")
+    public void testModulesSubDirs(String module) throws Exception {
+        FileSystem fs = FileSystems.getFileSystem(URI.create("jrt:/"));
+        Path path = fs.getPath("/modules/" + module);
+        assertTrue(Files.isDirectory(path), module + " missing");
+        assertTrue(Files.isSymbolicLink(path), path + " is not a link");
+        assertEquals(Files.readSymbolicLink(path).toString(), "/" + module);
+    }
+
+    @DataProvider(name="linkChases")
+    private Object[][] linkChases() {
+        return new Object[][] {
+            { "/modules/java.base/java/lang" },
+            { "/modules/java.base/java/util/Vector.class" },
+            { "/modules/jdk.scripting.nashorn/jdk/nashorn" },
+            { "/packages/java.lang/java.base/java/lang" },
+            { "/packages/java.util/java.base/java/util/Vector.class" },
+        };
+    }
+
+    @Test(dataProvider = "linkChases")
+    public void testLinkChases(String link) throws Exception {
+        FileSystem fs = FileSystems.getFileSystem(URI.create("jrt:/"));
+        Path path = fs.getPath(link);
+        assertTrue(Files.exists(path), link);
+    }
 }

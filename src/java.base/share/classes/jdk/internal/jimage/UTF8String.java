@@ -211,6 +211,10 @@ public final class UTF8String implements CharSequence {
         return true;
     }
 
+    public byte[] getBytesCopy() {
+        return Arrays.copyOfRange(bytes, offset, offset + count);
+    }
+
     byte[] getBytes() {
         if (offset != 0 || bytes.length != count) {
             return Arrays.copyOfRange(bytes, offset, offset + count);
