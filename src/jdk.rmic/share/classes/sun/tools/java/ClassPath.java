@@ -393,8 +393,8 @@ final class JrtClassPathEntry extends ClassPathEntry {
         this.jrtModules = new LinkedHashSet<>();
         this.pkgDirs = new HashMap<>();
 
-        // fill in module directories at the root dir
-        Path root = fs.getPath("/");
+        // fill in modules subdirectories at the root dir
+        Path root = fs.getPath("/modules");
         try {
             try (DirectoryStream<Path> stream = Files.newDirectoryStream(root)) {
                 for (Path entry: stream) {
