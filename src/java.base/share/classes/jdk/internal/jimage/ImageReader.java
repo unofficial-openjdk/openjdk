@@ -167,7 +167,11 @@ public class ImageReader extends BasicImageReader {
         }
 
         // resolve this Node (if this is a soft link, get underlying Node)
-        public Node resolve() {
+        public final Node resolveLink() {
+            return resolveLink(false);
+        }
+
+        public Node resolveLink(boolean recursive) {
             return this;
         }
 
@@ -348,8 +352,8 @@ public class ImageReader extends BasicImageReader {
         }
 
         @Override
-        public Node resolve() {
-            return link instanceof LinkNode? ((LinkNode)link).resolve() : link;
+        public Node resolveLink(boolean recursive) {
+            return recursive && (link instanceof LinkNode)? ((LinkNode)link).resolveLink(true) : link;
         }
 
         @Override

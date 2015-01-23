@@ -81,7 +81,7 @@ final class JrtFileAttributes implements BasicFileAttributes
 
     @Override
     public Object fileKey() {
-        return node.resolve();
+        return node.resolveLink(true);
     }
 
     ///////// jrt entry attributes ///////////

@@ -316,7 +316,7 @@ class JrtFileSystem extends FileSystem {
                 }
 
                 if (ni.node.isLink()) {
-                    Node link = ni.node.resolve();
+                    Node link = ni.node.resolveLink(true);
                     // resolved symbolic path concatenated to the rest of the path
                     UTF8String resPath = link.getName().concat(new UTF8String(path, i));
                     byte[] resPathBytes = resPath.getBytesCopy();
@@ -375,7 +375,7 @@ class JrtFileSystem extends FileSystem {
             throws IOException {
         NodeAndImage ni = checkNode(path);
         if (ni.node.isLink() && followLinks(options)) {
-            return new JrtFileAttributes(ni.node.resolve());
+            return new JrtFileAttributes(ni.node.resolveLink());
         }
         return new JrtFileAttributes(ni.node);
     }
@@ -423,7 +423,7 @@ class JrtFileSystem extends FileSystem {
     JrtPath resolveLink(JrtPath jrtPath) throws IOException {
         NodeAndImage ni = findNode(jrtPath.getName());
         if (ni.node.isLink()) {
-            Node node = ni.node.resolve();
+            Node node = ni.node.resolveLink();
             return toJrtPath(node.getName().getBytesCopy());
         }
 

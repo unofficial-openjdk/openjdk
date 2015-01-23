@@ -497,8 +497,8 @@ public class Basic {
         Path path = fs.getPath(link);
         assertTrue(Files.exists(path), link + " missing");
         assertTrue(Files.isSymbolicLink(path), path + " is not a link");
-        assertEquals(Files.readSymbolicLink(path).toString(),
-            link.substring(link.lastIndexOf("/")));
+        path = Files.readSymbolicLink(path);
+        assertEquals(path.toString(), "/modules" + link.substring(link.lastIndexOf("/")));
     }
 
     @DataProvider(name = "modulesSubDirs")
