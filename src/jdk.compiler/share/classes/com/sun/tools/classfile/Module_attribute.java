@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -46,10 +46,6 @@ public class Module_attribute extends Attribute {
         requires = new RequiresEntry[requires_count];
         for (int i = 0; i < requires_count; i++)
             requires[i] = new RequiresEntry(cr);
-        permits_count = cr.readUnsignedShort();
-        permits_index = new int[permits_count];
-        for (int i = 0; i < permits_count; i++)
-            permits_index[i] = cr.readUnsignedShort();
         exports_count = cr.readUnsignedShort();
         exports = new ExportsEntry[exports_count];
         for (int i = 0; i < exports_count; i++)
@@ -66,15 +62,12 @@ public class Module_attribute extends Attribute {
 
     public Module_attribute(int name_index,
             RequiresEntry[] requires,
-            int[] permits,
             ExportsEntry[] exports,
             int[] uses,
             ProvidesEntry[] provides) {
         super(name_index, 2);
         requires_count = requires.length;
         this.requires = requires;
-        permits_count = permits.length;
-        this.permits_index = permits;
         exports_count = exports.length;
         this.exports = exports;
         uses_count = uses.length;
@@ -82,11 +75,6 @@ public class Module_attribute extends Attribute {
         provides_count = provides.length;
         this.provides = provides;
 
-    }
-
-    public String getPermits(int index, ConstantPool constant_pool) throws ConstantPoolException {
-        int i = permits_index[index];
-        return constant_pool.getUTF8Value(i);
     }
 
     public String getUses(int index, ConstantPool constant_pool) throws ConstantPoolException {
@@ -101,8 +89,6 @@ public class Module_attribute extends Attribute {
 
     public final int requires_count;
     public final RequiresEntry[] requires;
-    public final int permits_count;
-    public final int[] permits_index;
     public final int exports_count;
     public final ExportsEntry[] exports;
     public final int uses_count;
@@ -121,7 +107,7 @@ public class Module_attribute extends Attribute {
             this.requires_flags = flags;
         }
 
-        public String getPermits(int index, ConstantPool constant_pool) throws ConstantPoolException {
+        public String getRequires(int index, ConstantPool constant_pool) throws ConstantPoolException {
             return constant_pool.getUTF8Value(requires_index);
         }
 

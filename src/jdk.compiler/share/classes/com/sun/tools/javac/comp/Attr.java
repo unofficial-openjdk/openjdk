@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -4249,12 +4249,6 @@ public class Attr extends JCTree.Visitor {
             modules = lb.toList();
         }
         msym.directives = msym.directives.prepend(new Directive.ExportsDirective(p, modules));
-    }
-
-    public void visitPermits(JCPermits tree) {
-//        System.err.println("Attr.visitPermits: " + tree);
-        ModuleSymbol msym = env.toplevel.modle;
-        msym.directives = msym.directives.prepend(tree.directive);
     }
 
     public void visitProvides(JCProvides tree) {

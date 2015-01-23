@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -3163,11 +3163,6 @@ public class JavacParser implements Parser {
                 JCExpression moduleName = qualident(false);
                 accept(SEMI);
                 defs.append(toP(F.at(pos).Requires(isPublic, moduleName)));
-            } else if (token.name() == names.permits) {
-                nextToken();
-                JCExpression moduleName = qualident(false);
-                accept(SEMI);
-                defs.append(toP(F.at(pos).Permits(moduleName)));
             } else if (token.name() == names.exports) {
                 nextToken();
                 JCExpression pkgName = qualident(false);

@@ -975,12 +975,6 @@ public class ClassWriter extends ClassFile {
             databuf.appendChar(RequiresFlag.value(r.flags));
         }
 
-        List<PermitsDirective> permits = m.getPermits();
-        databuf.appendChar(permits.size());
-        for (PermitsDirective p: permits) {
-            databuf.appendChar(pool.put(p.moduleName));
-        }
-
         List<ExportsDirective> exports = m.getExports();
         databuf.appendChar(exports.size());
         for (ExportsDirective e: exports) {

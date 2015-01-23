@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -46,7 +46,6 @@ import com.sun.tools.javac.util.Name;
 public abstract class Directive {
     public enum Kind {
         EXPORTS,
-        PERMITS,
         PROVIDES,
         REQUIRES,
         USES
@@ -114,32 +113,6 @@ public abstract class Directive {
         @Override
         public <R, P> R accept(Visitor<R, P> visitor, P data) {
             return visitor.visitExports(this, data);
-        }
-    }
-
-    /**
-     * 'permits' ModuleName ';'
-     */
-    public static class PermitsDirective extends Directive {
-        public final Name moduleName;  // may eventually be ModuleSymbol
-
-        public PermitsDirective(Name moduleName) {
-            this.moduleName = moduleName;
-        }
-
-        @Override
-        public Kind getKind() {
-            return Kind.PERMITS;
-        }
-
-        @Override
-        public String toString() {
-            return "Permits[" + moduleName + "]";
-        }
-
-        @Override
-        public <R, P> R accept(Visitor<R, P> visitor, P data) {
-            return visitor.visitPermits(this, data);
         }
     }
 
@@ -232,7 +205,6 @@ public abstract class Directive {
     public static interface Visitor<R, P> {
         R visitRequires(RequiresDirective d, P p);
         R visitExports(ExportsDirective d, P p);
-        R visitPermits(PermitsDirective d, P p);
         R visitProvides(ProvidesDirective d, P p);
         R visitUses(UsesDirective d, P p);
     }
@@ -266,11 +238,6 @@ public abstract class Directive {
 
         @Override
         public R visitExports(ExportsDirective d, P p) {
-            return defaultAction(d, p);
-        }
-
-        @Override
-        public R visitPermits(PermitsDirective d, P p) {
             return defaultAction(d, p);
         }
 
@@ -327,10 +294,6 @@ public abstract class Directive {
         }
 
         public R visitExports(ExportsDirective d, P p) {
-            return null;
-        }
-
-        public R visitPermits(PermitsDirective d, P p) {
             return null;
         }
 

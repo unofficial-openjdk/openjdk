@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -405,7 +405,6 @@ public class AttributeWriter extends BasicWriter
         println("Module:");
         indent(+1);
         printRequiresTable(attr);
-        printPermitsTable(attr);
         printExportsTable(attr);
         printUsesTable(attr);
         printProvidesTable(attr);
@@ -427,16 +426,6 @@ public class AttributeWriter extends BasicWriter
             if ((e.requires_flags & Module_attribute.ACC_MANDATED) != 0)
                 print(" mandated");
             println(" " + constantWriter.stringValue(e.requires_index));
-        }
-        indent(-1);
-    }
-
-    protected void printPermitsTable(Module_attribute attr) {
-        int[] entries = attr.permits_index;
-        println(entries.length + "\t// " + "permits");
-        indent(+1);
-        for (int e: entries) {
-            println("#" + e + "\t// permits " + constantWriter.stringValue(e));
         }
         indent(-1);
     }

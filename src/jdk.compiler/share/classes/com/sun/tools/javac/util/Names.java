@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -65,7 +65,6 @@ public class Names {
     public final Name _this;
     public final Name exports;
     public final Name module;
-    public final Name permits;
     public final Name provides;
     public final Name requires;
     public final Name to;
@@ -214,7 +213,6 @@ public class Names {
         _this = fromString("this");
         exports = fromString("exports");
         module = fromString("module");
-        permits = fromString("permits");
         provides = fromString("provides");
         requires = fromString("requires");
         to = fromString("to");

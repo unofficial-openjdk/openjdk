@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,7 +26,6 @@
 
 package com.sun.tools.javac.comp;
 
-import com.sun.tools.javac.code.Directive.PermitsDirective;
 import com.sun.tools.javac.code.Directive.RequiresDirective;
 import com.sun.tools.javac.code.Directive.RequiresFlag;
 import com.sun.tools.javac.code.Scope;
@@ -37,7 +36,6 @@ import com.sun.tools.javac.code.Symtab;
 import com.sun.tools.javac.tree.JCTree;
 import com.sun.tools.javac.tree.JCTree.JCCompilationUnit;
 import com.sun.tools.javac.tree.JCTree.JCModuleDecl;
-import com.sun.tools.javac.tree.JCTree.JCPermits;
 import com.sun.tools.javac.tree.JCTree.JCRequires;
 import com.sun.tools.javac.tree.TreeInfo;
 import com.sun.tools.javac.util.Context;
@@ -108,12 +106,6 @@ public class Modules extends JCTree.Visitor {
         } finally {
             log.useSource(prev);
         }
-    }
-
-    @Override
-    public void visitPermits(JCPermits tree) {
-        Name name = TreeInfo.fullName(tree.moduleName);
-        tree.directive = new PermitsDirective(name);
     }
 
     @Override

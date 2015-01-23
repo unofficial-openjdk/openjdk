@@ -1,6 +1,6 @@
 
 /*
- * Copyright (c) 2008, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -491,9 +491,6 @@ public class ClassWriter {
                 out.writeShort(e.requires_index);
                 out.writeShort(e.requires_flags);
             }
-            out.writeShort(attr.permits_index.length);
-            for (int index: attr.permits_index)
-                out.writeShort(index);
             out.writeShort(attr.exports.length);
             for (Module_attribute.ExportsEntry e: attr.exports) {
                 out.writeShort(e.exports_index);

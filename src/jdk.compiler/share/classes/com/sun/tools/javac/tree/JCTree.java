@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,7 +37,6 @@ import com.sun.source.tree.*;
 import com.sun.source.tree.LambdaExpressionTree.BodyKind;
 import com.sun.source.tree.MemberReferenceTree.ReferenceMode;
 import com.sun.tools.javac.code.*;
-import com.sun.tools.javac.code.Directive.PermitsDirective;
 import com.sun.tools.javac.code.Directive.RequiresDirective;
 import com.sun.tools.javac.code.Scope.*;
 import com.sun.tools.javac.code.Symbol.*;
@@ -351,7 +350,6 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
 
         MODULE,
         EXPORTS,
-        PERMITS,
         PROVIDES,
         REQUIRES,
         USES,
@@ -2698,39 +2696,6 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
         }
     }
 
-    public static class JCPermits extends JCDirective
-            implements PermitsTree {
-        public JCExpression moduleName;
-        public PermitsDirective directive;
-
-        protected JCPermits(JCExpression qualId) {
-            this.moduleName = qualId;
-        }
-
-        @Override
-        public void accept(Visitor v) { v.visitPermits(this); }
-
-        @Override
-        public Kind getKind() {
-            return Kind.PERMITS;
-        }
-
-        @Override
-        public JCExpression getModuleName() {
-            return moduleName;
-        }
-
-        @Override
-        public <R, D> R accept(TreeVisitor<R, D> v, D d) {
-            return v.visitPermits(this, d);
-        }
-
-        @Override
-        public Tag getTag() {
-            return PERMITS;
-        }
-    }
-
     public static class JCProvides extends JCDirective
             implements ProvidesTree {
         public JCExpression serviceName;
@@ -2982,7 +2947,6 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
         JCErroneous Erroneous(List<? extends JCTree> errs);
         JCModuleDecl ModuleDef(JCExpression qualId, List<JCDirective> directives);
         JCExports Exports(JCExpression qualId, List<JCExpression> moduleNames);
-        JCPermits Permits(JCExpression qualId);
         JCProvides Provides(JCExpression serviceName, JCExpression implName);
         JCRequires Requires(boolean isPublic, JCExpression qualId);
         JCUses Uses(JCExpression qualId);
@@ -3048,7 +3012,6 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
         public void visitErroneous(JCErroneous that)         { visitTree(that); }
         public void visitModuleDef(JCModuleDecl that)        { visitTree(that); }
         public void visitExports(JCExports that)             { visitTree(that); }
-        public void visitPermits(JCPermits that)             { visitTree(that); }
         public void visitProvides(JCProvides that)           { visitTree(that); }
         public void visitRequires(JCRequires that)           { visitTree(that); }
         public void visitUses(JCUses that)                   { visitTree(that); }

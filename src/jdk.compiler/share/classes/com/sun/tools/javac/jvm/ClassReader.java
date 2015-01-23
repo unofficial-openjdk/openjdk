@@ -1021,12 +1021,6 @@ public class ClassReader {
                             RequiresDirective d = new RequiresDirective(name, flags);
                             directives.add(d);
                         }
-                        int npermits = nextChar();
-                        for (int i = 0; i < npermits; i++) {
-                            Name name = readName(nextChar());
-                            PermitsDirective d = new PermitsDirective(name);
-                            directives.add(d);
-                        }
                         int nexports = nextChar();
                         for (int i = 0; i < nexports; i++) {
                             PackageSymbol p = syms.enterPackage(readName(nextChar()));
