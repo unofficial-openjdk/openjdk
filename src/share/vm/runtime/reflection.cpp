@@ -460,7 +460,7 @@ Reflection::VerifyClassAccessResults Reflection::verify_class_access(
     if (module_from != NULL && !module_from->can_read(module_to)) {
       if (TraceAccessControlErrors) {
         ResourceMark rm;
-        tty->print_cr("Type in module %s (%s) can not access type in module %s (%s), not readable",
+        tty->print_cr("Type in module %s (%s) cannot access type in module %s (%s), not readable",
           module_from->name()->as_C_string(), current_class->external_name(),
           module_to->name()->as_C_string(), new_class->external_name());
       }
@@ -488,7 +488,7 @@ Reflection::VerifyClassAccessResults Reflection::verify_class_access(
       if (!okay) {
         if (TraceAccessControlErrors) {
           ResourceMark rm;
-          tty->print_cr("Type in module %s (%s) can not access type in module %s (%s), not exported",
+          tty->print_cr("Type in module %s (%s) cannot access type in module %s (%s), not exported",
             module_from->name()->as_C_string(), current_class->external_name(),
             module_to->name()->as_C_string(), new_class->external_name());
         }
@@ -502,7 +502,7 @@ Reflection::VerifyClassAccessResults Reflection::verify_class_access(
       //   2. module_to exports T unqualifiedly to all modules (checked above).
       if (TraceAccessControlErrors) {
         ResourceMark rm;
-        tty->print_cr("Type in the unnamed module (%s) can not access type in module %s (%s), not unqualifiedly exported",
+        tty->print_cr("Type in the unnamed module (%s) cannot access type in module %s (%s), not unqualifiedly exported",
           current_class->external_name(), module_to->name()->as_C_string(), new_class->external_name());
       }
       return TYPE_NOT_UNQ_EXPORTED;
@@ -538,7 +538,7 @@ char* Reflection::verify_class_access_msg(Klass* current_class,
           len = len + strlen(package_name);
           msg = NEW_RESOURCE_ARRAY(char, len);
           jio_snprintf(msg, len - 1,
-            "class %s (in module: unnamed), can not access class %s (in module: %s), %s is not exported to the unnamed module",
+            "class %s (in module: unnamed) cannot access class %s (in module: %s), %s is not exported to the unnamed module",
             current_class_name, new_class_name, module_to_name, package_name);
         }
 
@@ -552,7 +552,7 @@ char* Reflection::verify_class_access_msg(Klass* current_class,
             len = len + strlen(module_to_name);
             msg = NEW_RESOURCE_ARRAY(char, len);
             jio_snprintf(msg, len - 1,
-              "class %s in module %s can not access class %s in module %s, %s can not read %s",
+              "class %s in module %s cannot access class %s in module %s, %s can not read %s",
               current_class_name, module_from_name, new_class_name,
               module_to_name, module_from_name, module_to_name);
 
@@ -563,7 +563,7 @@ char* Reflection::verify_class_access_msg(Klass* current_class,
               len = len + strlen(package_name);
               msg = NEW_RESOURCE_ARRAY(char, len);
               jio_snprintf(msg, len - 1,
-                "class %s (in module: %s), can not access class %s (in module: %s), %s is not exported to %s",
+                "class %s (in module: %s) cannot access class %s (in module: %s), %s is not exported to %s",
                 current_class_name, module_from_name, new_class_name,
                 module_to_name, package_name, module_from_name);
             }

@@ -401,10 +401,10 @@ JVM_ENTRY(jobject, JVM_InitProperties(JNIEnv *env, jobject properties))
   }
 
   // Additional module dependences and exports
-  if (strlen(AddModuleRequires) > 0) {
+  if (AddModuleRequires != NULL) {
     PUTPROP(props, "jdk.runtime.addModuleRequires", AddModuleRequires);
   }
-  if (strlen(AddModuleExports) > 0) {
+  if (AddModuleExports != NULL) {
     PUTPROP(props, "jdk.runtime.addModuleExports", AddModuleExports);
   }
 
