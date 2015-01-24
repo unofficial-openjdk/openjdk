@@ -150,6 +150,8 @@ static jboolean initializeInetClasses(JNIEnv *env)
         ni_preferIPv6AddressID =
             (*env)->GetStaticFieldID(env, ni_iacls, "preferIPv6Address", "Z");
         CHECK_NULL_RETURN(ni_preferIPv6AddressID, JNI_FALSE);
+        preferIPv6Address =
+            (*env)->GetStaticBooleanField(env, ia_class, ia_preferIPv6AddressID);
         initialized = 1;
     }
     return JNI_TRUE;
