@@ -27,10 +27,8 @@ package jdk.jigsaw.tools.jlink;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.Closeable;
 import java.io.DataInputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -67,7 +65,6 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
-import java.util.jar.JarOutputStream;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
@@ -302,10 +299,6 @@ class JlinkTask {
     /** Module list files, in java.base */
     private static final String BOOT_MODULES = "boot.modules";
     private static final String EXT_MODULES = "ext.modules";
-    private static final String SYSTEM_MODULES = "system.modules";
-
-    private List<String> bootModules, extModules, systemModules;
-
     /**
      * Result codes.
      */
@@ -475,7 +468,7 @@ class JlinkTask {
                 ModuleArtifactFinder.nullFinder(),
                 options.jmods);
 
-        Map<String,Path> mods = modulesToPath(cf.descriptors());
+        Map<String, Path> mods = modulesToPath(cf.descriptors());
 
         ImageFileHelper imageHelper = new ImageFileHelper(cf, mods);
         imageHelper.createModularImage(output);
@@ -495,7 +488,7 @@ class JlinkTask {
         }
 
         // generate launch scripts for the modules with a main class
-        for (Map.Entry<String, Path> entry: mods.entrySet()) {
+        for (Map.Entry<String, Path> entry : mods.entrySet()) {
             String module = entry.getKey();
             Path jmodpath = entry.getValue();
 
@@ -528,8 +521,7 @@ class JlinkTask {
                         writer.write(sb.toString());
                     }
                     if (Files.getFileStore(bin)
-                             .supportsFileAttributeView(PosixFileAttributeView.class))
-                    {
+                             .supportsFileAttributeView(PosixFileAttributeView.class)) {
                         setExecutable(cmd);
                     }
                 }
@@ -544,18 +536,27 @@ class JlinkTask {
         final Set<ModuleDescriptor> appModules;
         final Map<String,Path> modsPaths;
 
-        ImageFileHelper(Configuration cf, Map<String,Path> modsPaths) throws IOException {
+        ImageFileHelper(Configuration cf, Map<String, Path> modsPaths) throws IOException {
             this.modules = cf.descriptors();
             this.modsPaths = modsPaths;
             Map<String, ModuleDescriptor> mods = new HashMap<>();
             for (ModuleDescriptor m : modules) {
                 mods.put(m.name(), m);
             }
-            this.bootModules = modulesFor(BOOT_MODULES).stream()
+
+            Path baseJmod = modsPaths.get("java.base");
+            if (baseJmod == null)
+                fail(RuntimeException.class, "java.base not found on modulepath");
+            if (!baseJmod.toString().endsWith(".jmod"))
+                fail(RuntimeException.class, "java.base not a jmod");
+
+            this.bootModules = readConfFile(baseJmod, BOOT_MODULES)
+                    .stream()
                     .filter(mods::containsKey)
                     .map(mods::get)
                     .collect(Collectors.toSet());
-            this.extModules = modulesFor(EXT_MODULES).stream()
+            this.extModules = readConfFile(baseJmod, EXT_MODULES)
+                    .stream()
                     .filter(mods::containsKey)
                     .map(mods::get)
                     .collect(Collectors.toSet());
@@ -577,9 +578,10 @@ class JlinkTask {
             Set<String> app = appModules.stream()
                                         .map(ModuleDescriptor::name)
                                         .collect(Collectors.toSet());
+
             ImageModules imf = new ImageModules(boot, ext, app);
             ImageFile.create(output, archives, imf, options.compress);
-            writeModulesLists(output, modules);
+            writeModulesLists(output);
         }
 
         private Archive newArchive(String module, Path path) {
@@ -601,13 +603,10 @@ class JlinkTask {
         /**
          * Replace lib/*.modules with the actual list of modules linked in.
          */
-        private void writeModulesLists(Path output, Set<ModuleDescriptor> modules)
-            throws IOException
-        {
+        private void writeModulesLists(Path output) throws IOException {
             Path lib = output.resolve("lib");
             writeModuleList(lib.resolve(BOOT_MODULES), bootModules);
             writeModuleList(lib.resolve(EXT_MODULES), extModules);
-            writeModuleList(lib.resolve(SYSTEM_MODULES), appModules);
         }
 
         private void writeModuleList(Path file, Set<ModuleDescriptor> modules)
@@ -615,164 +614,33 @@ class JlinkTask {
         {
             List<String> list = modules.stream()
                                        .map(ModuleDescriptor::name)
+                                       .sorted()
                                        .collect(Collectors.toList());
             Files.write(file, list, StandardCharsets.UTF_8);
         }
 
-        private List<String> modulesFor(String name) throws IOException {
-            Path file = Paths.get(System.getProperty("java.home"), "lib", name);
-            return Files.readAllLines(file, StandardCharsets.ISO_8859_1);
-        }
-    }
-
-    private class JmodFileReader implements Closeable {
-        final ZipFile moduleFile;
-        final Path output;
-        final Path classesPath;
-        final Set<String> packages;
-        JarOutputStream classesJar;  //lazy
-
-        JmodFileReader(Path jmod, Path modulePrivatePath, Path outputDir)
-            throws IOException
-        {
-            moduleFile = new ZipFile(jmod.toFile());
-            output = outputDir;
-            classesPath = modulePrivatePath.resolve(Section.CLASSES.imageDir());
-            packages = new HashSet<>();
-        }
-
-        Set<String> packages() {
-            return packages;
-        }
-
-        void extract() throws IOException {
-            moduleFile.stream().forEach(new ZipEntryConsumer());
-        }
-
-        public void close() throws IOException {
-            if (classesJar != null)
-                classesJar.close();
-            moduleFile.close();
-        }
-
-        private class ZipEntryConsumer implements Consumer<ZipEntry> {
-            @Override
-            public void accept(ZipEntry ze) {
-                try {
-                    if (!ze.isDirectory())
-                        visitFile(ze);
-                } catch (IOException x) {
-                    throw new UncheckedIOException(x);
+        /**
+         * Read all lines from a text file in the native section of jmod.
+         */
+        private List<String> readConfFile(Path jmod, String name) throws IOException {
+            List<String> result = new ArrayList<>();
+            try (ZipFile zf = new ZipFile(jmod.toString())) {
+                String e = Section.NATIVE_LIBS.jmodDir() + "/" + name;
+                ZipEntry ze = zf.getEntry(e);
+                if (ze == null)
+                    throw new IOException(e + " not found in " + jmod);
+                try (InputStream in = zf.getInputStream(ze)) {
+                    BufferedReader reader =
+                        new BufferedReader(new InputStreamReader(in, "UTF-8"));
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        result.add(line);
+                    }
                 }
             }
+            return result;
         }
 
-        private List<String> readAllLines(ZipEntry ze) throws IOException {
-            try (BufferedReader reader = new BufferedReader(
-                    new InputStreamReader(moduleFile.getInputStream(ze),
-                                          StandardCharsets.ISO_8859_1))) {
-                List<String> result = new ArrayList<>();
-                for (;;) {
-                    String line = reader.readLine();
-                    if (line == null)
-                        break;
-                    result.add(line);
-                }
-                return result;
-            }
-        }
-
-        private final String BOOT_MODULES_CONF_FILE =
-                Section.CONFIG.jmodDir() + '/' + BOOT_MODULES;
-        private final String EXT_MODULES_CONF_FILE =
-                Section.CONFIG.jmodDir() + '/' + EXT_MODULES;
-        private final String SYSTEM_MODULES_CONF_FILE =
-                Section.CONFIG.jmodDir() + '/' + SYSTEM_MODULES;
-
-        private void visitFile(ZipEntry ze) throws IOException {
-            String fullFilename = ze.getName();
-
-            if (fullFilename.equals(BOOT_MODULES_CONF_FILE)) {
-                bootModules = readAllLines(ze);
-                return;
-            } else if (fullFilename.equals(EXT_MODULES_CONF_FILE)) {
-                extModules = readAllLines(ze);
-                return;
-            } else if (fullFilename.equals(SYSTEM_MODULES_CONF_FILE)) {
-                systemModules = readAllLines(ze);
-                return;
-            }
-
-            Section section = Section.getSectionFromName(fullFilename);
-            if (Section.UNKNOWN.equals(section))
-                return; // skip unknown data
-
-             // Remove jmod prefix, native, conf, classes, etc
-            String filename = fullFilename.substring(fullFilename.indexOf('/') + 1);
-            if (Section.CLASSES.equals(section)) {
-                writeJarEntry(moduleFile.getInputStream(ze), filename);
-            } else {
-                Path dstFile = output.resolve(section.imageDir()).resolve(filename);
-                writeFile(moduleFile.getInputStream(ze), dstFile, section);
-                setExecutable(section, dstFile);
-            }
-        }
-
-        private void writeJarEntry(InputStream is, String filename)
-            throws IOException
-        {
-            if (classesJar == null) // lazy creation of classes archive
-                classesJar = new JarOutputStream(new FileOutputStream(classesPath.toFile()));
-
-            if (filename.endsWith(".class") && !filename.equals("module-info.class")) {
-                packages.add(toPackage(filename));
-            }
-
-            classesJar.putNextEntry(new JarEntry(filename));
-            copy(is, classesJar);
-            classesJar.closeEntry();
-        }
-
-        private String toPackage(String name) {
-            int index = name.lastIndexOf('/');
-            if (index > 0) {
-                return name.substring(0, index).replace('/', '.');
-            } else {
-                // ## unnamed package
-                System.err.format("Warning: unnamed package %s%n", name);
-                return "";
-            }
-        }
-
-        private void writeFile(InputStream is, Path dstFile, Section section)
-            throws IOException
-        {
-            Files.createDirectories(dstFile.getParent());
-            Files.copy(is, dstFile);
-        }
-
-        private void append(InputStream is, Path dstFile)
-            throws IOException
-        {
-            try (OutputStream out = Files.newOutputStream(dstFile,
-                                                          StandardOpenOption.APPEND)) {
-                copy(is, out);
-            }
-        }
-
-        private void copy(InputStream is, OutputStream os)
-            throws IOException
-        {
-            byte[] buf = new byte[8192];
-            int n;
-            while ((n = is.read(buf)) > 0)
-                os.write(buf, 0, n);
-        }
-
-        private void setExecutable(Section section, Path path) {
-            if (Section.NATIVE_CMDS.equals(section))
-                path.toFile().setExecutable(true);
-        }
     }
 
     private void createJmod() throws IOException {
