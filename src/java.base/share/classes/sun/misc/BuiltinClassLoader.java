@@ -45,8 +45,8 @@ import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.security.SecureClassLoader;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Enumeration;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -144,7 +144,6 @@ class BuiltinClassLoader extends SecureClassLoader
         moduleToArtifact.put(artifact.descriptor().name(), artifact);
     }
 
-
     // -- finding/loading resources
 
     @Override
@@ -181,35 +180,37 @@ class BuiltinClassLoader extends SecureClassLoader
      * necessary when {@code checkParent} is true.
      */
     private URL findResource(String name, boolean checkParent) {
-        URL url = null;
 
         // is resource in a package of a module defined to this class loader?
         ModuleArtifact artifact = findModuleForResource(name);
         if (artifact != null) {
-            url = checkURL(findResource(artifact, name));
+            return checkURL(findResource(artifact, name));
         }
 
         // check parent
-        if (url == null && checkParent && parent != null) {
-            url = parent.getResource(name);
+        if (checkParent && parent != null) {
+            URL url = parent.getResource(name);
+            if (url != null)
+                return url;
         }
 
         // search all modules defined to this class loader
-        if (url == null && artifact == null) {
-            for (ModuleArtifact a: moduleToArtifact.values()) {
-                url = checkURL(findResource(a, name));
-                if (url != null)
-                    break;
-            }
+        for (ModuleArtifact a: moduleToArtifact.values()) {
+            URL url = checkURL(findResource(a, name));
+            if (url != null)
+                return url;
         }
 
         // check class path
-        if (url == null && ucp != null) {
+        if (ucp != null) {
             PrivilegedAction<URL> pa = () -> ucp.findResource(name, false);
-            url = checkURL(AccessController.doPrivileged(pa));
+            URL url = checkURL(AccessController.doPrivileged(pa));
+            if (url != null)
+                return url;
         }
 
-        return url;
+        // not found
+        return null;
     }
 
     /**
@@ -226,8 +227,10 @@ class BuiltinClassLoader extends SecureClassLoader
         ModuleArtifact artifact = findModuleForResource(name);
         if (artifact != null) {
             URL url = checkURL(findResource(artifact, name));
-            if (url != null)
+            if (url != null) {
                 result.add(url);
+            }
+            return Collections.enumeration(result);
         }
 
         // check parent
@@ -259,15 +262,7 @@ class BuiltinClassLoader extends SecureClassLoader
         }
 
         // return enumeration of checked URLs
-        Iterator<URL> i = result.iterator();
-        return new Enumeration<URL> () {
-            public URL nextElement() {
-                return i.next();
-            }
-            public boolean hasMoreElements() {
-                return i.hasNext();
-            }
-        };
+        return Collections.enumeration(result);
     }
 
 
@@ -389,10 +384,9 @@ class BuiltinClassLoader extends SecureClassLoader
             if (c == null) {
                 // find the candidate module for this class
                 ModuleArtifact artifact = findModule(cn);
-                if (artifact != null)
+                if (artifact != null) {
                     c = findClassInModuleOrNull(artifact, cn);
-
-                if (c == null) {
+                } else {
                     // check parent
                     if (parent != null) {
                         try {
@@ -405,11 +399,11 @@ class BuiltinClassLoader extends SecureClassLoader
                     if (c == null && artifact == null && ucp != null) {
                         c = findClassOnClassPathOrNull(cn);
                     }
-
-                    // not found
-                    if (c == null)
-                        throw new ClassNotFoundException(cn);
                 }
+
+                // not found
+                if (c == null)
+                    throw new ClassNotFoundException(cn);
             }
 
             if (resolve)

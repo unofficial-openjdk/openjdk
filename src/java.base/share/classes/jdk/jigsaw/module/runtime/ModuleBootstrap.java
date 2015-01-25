@@ -41,6 +41,7 @@ import java.util.stream.Stream;
 
 import jdk.jigsaw.module.Configuration;
 import jdk.jigsaw.module.Layer;
+import jdk.jigsaw.module.Layer.ClassLoaderFinder;
 import jdk.jigsaw.module.ModuleArtifact;
 import jdk.jigsaw.module.ModuleArtifactFinder;
 import jdk.jigsaw.module.ModuleDescriptor;
@@ -169,7 +170,10 @@ class ModuleBootstrap {
         PerfCounters.configTime.addElapsedTimeFrom(t1);
 
         // mapping of modules to class loaders
-        Layer.ClassLoaderFinder clf = classLoaderFinder(cf);
+        ClassLoaderFinder clf = classLoaderFinder(cf);
+
+        // no overlapping packages allowed in the boot Layer
+        ensureNoOverlappedPackages(cf);
 
         // check that all modules to be mapped to the boot loader will be
         // loaded from the system module path
@@ -252,7 +256,7 @@ class ModuleBootstrap {
      * Returns the ClassLoaderFinder that maps modules in the given
      * Configuration to a ClassLoader.
      */
-    private static Layer.ClassLoaderFinder classLoaderFinder(Configuration cf) {
+    private static ClassLoaderFinder classLoaderFinder(Configuration cf) {
         Set<String> bootModules = readModuleSet("boot.modules");
         Set<String> extModules = readModuleSet("ext.modules");
 
@@ -272,11 +276,30 @@ class ModuleBootstrap {
     }
 
     /**
+     * Sanity check the Configuration to ensure that no two modules have types
+     * in the same named package.
+     */
+    private static void ensureNoOverlappedPackages(Configuration cf) {
+        Map<String, String> packageToModule = new HashMap<>();
+        for (ModuleDescriptor descriptor: cf.descriptors()) {
+            String name = descriptor.name();
+            Set<String> pkgs = cf.findArtifact(name).packages();
+            for (String p: pkgs) {
+                String other = packageToModule.putIfAbsent(p, name);
+                if (other != null) {
+                    fail("Package " + p + " in both module " + name +
+                            " and module " + other);
+                }
+            }
+        }
+    }
+
+    /**
      * Defines the modules in the given Configuration to their
      * respective ClassLoader.
      */
     private static void defineModulesToClassLoaders(Configuration cf,
-                                                    Layer.ClassLoaderFinder clf)
+                                                    ClassLoaderFinder clf)
     {
         for (ModuleDescriptor md: cf.descriptors()) {
             String name = md.name();
@@ -324,7 +347,7 @@ class ModuleBootstrap {
     }
 
     /**
-     * Throws a RuntimeException with the givem message
+     * Throws a RuntimeException with the given message
      */
     static void fail(String m) {
         throw new RuntimeException(m);
