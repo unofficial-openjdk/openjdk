@@ -25,6 +25,7 @@
 #include "precompiled.hpp"
 #include "classfile/javaClasses.hpp"
 #include "classfile/dictionary.hpp"
+#include "classfile/packageEntry.hpp"
 #include "classfile/systemDictionary.hpp"
 #include "classfile/vmSymbols.hpp"
 #include "gc_implementation/shared/markSweep.inline.hpp"
@@ -350,7 +351,6 @@ GrowableArray<Klass*>* Klass::compute_secondary_supers(int num_extra_slots) {
   return NULL;
 }
 
-
 InstanceKlass* Klass::superklass() const {
   assert(super() == NULL || super()->oop_is_instance(), "must be instance klass");
   return _super == NULL ? NULL : InstanceKlass::cast(_super);
@@ -529,7 +529,15 @@ void Klass::restore_unshareable_info(ClassLoaderData* loader_data, Handle protec
   // gotten an OOM later but keep the mirror if it was created.
   if (java_mirror() == NULL) {
     Handle loader = loader_data->class_loader();
-    java_lang_Class::create_mirror(this, loader, protection_domain, CHECK);
+    ModuleEntry* module_entry = NULL;
+    // Obtain klass' module.
+    if (oop_is_instance()) {
+      InstanceKlass* ik = (InstanceKlass*) this;
+      module_entry = ik->module();
+    }
+    // Obtain j.l.r.Module if available
+    Handle class_module(THREAD, ((module_entry == NULL) ? (oop)NULL : module_entry->module()));
+    java_lang_Class::create_mirror(this, loader, class_module, protection_domain, CHECK);
   }
 }
 

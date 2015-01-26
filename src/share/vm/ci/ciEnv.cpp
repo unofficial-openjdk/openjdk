@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -370,9 +370,9 @@ bool ciEnv::check_klass_accessibility(ciKlass* accessing_klass,
     resolved_klass = ObjArrayKlass::cast(resolved_klass)->bottom_klass();
   }
   if (resolved_klass->oop_is_instance()) {
-    return Reflection::verify_class_access(accessing_klass->get_Klass(),
-                                           resolved_klass,
-                                           true);
+    return (Reflection::verify_class_access(accessing_klass->get_Klass(),
+                                            resolved_klass,
+                                            true) == Reflection::ACCESS_OK);
   }
   return true;
 }

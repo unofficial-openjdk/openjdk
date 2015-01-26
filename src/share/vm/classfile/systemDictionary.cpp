@@ -1605,7 +1605,7 @@ Klass* SystemDictionary::find_class(Symbol* class_name, ClassLoaderData* loader_
 }
 
 
-// Get the next class in the diictionary.
+// Get the next class in the dictionary.
 Klass* SystemDictionary::try_get_next_class() {
   return dictionary()->try_get_next_class();
 }
@@ -1872,6 +1872,12 @@ void SystemDictionary::initialize_wk_klasses_until(WKID limit_id, WKID &start_id
 
 void SystemDictionary::initialize_preloaded_classes(TRAPS) {
   assert(WK_KLASS(Object_klass) == NULL, "preloaded classes should only be initialized once");
+
+  // Get packages for module java.base from jimage file, if one exists.  This
+  // call needs to be done here, after vmsSymbols::initialize() is called but
+  // before any classes are pre-loaded.
+  ClassLoader::process_jimage_file();
+
   // Preload commonly used klasses
   WKID scan = FIRST_WKID;
   // first do Object, then String, Class
