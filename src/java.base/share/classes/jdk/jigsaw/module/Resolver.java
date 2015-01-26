@@ -25,7 +25,6 @@
 
 package jdk.jigsaw.module;
 
-import java.lang.reflect.Module;
 import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.Collections;
@@ -36,6 +35,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Stream;
+
+import jdk.jigsaw.module.internal.Hasher.DependencyHashes;
 
 /**
  * The resolver used by {@link Configuration#resolve} and {@link Configuration#bind}.
@@ -383,8 +384,8 @@ class Resolver {
             String mn = descriptor.name();
 
             // get map of module names to hash
-            Map<String, String> hashes = r.findArtifact(mn).descriptor().nameToHash();
-            if (hashes.isEmpty())
+            DependencyHashes hashes = r.findArtifact(mn).descriptor().hashes();
+            if (hashes == null)
                 continue;
 
             // check dependences
@@ -399,7 +400,7 @@ class Resolver {
                     if (artifact == null)
                         throw new InternalError(dn + " not found");
 
-                    String actualHash = artifact.computeHash();
+                    String actualHash = artifact.computeHash(hashes.algorithm());
                     if (actualHash == null)
                         fail("Unable to compute the hash of module %s", dn);
 

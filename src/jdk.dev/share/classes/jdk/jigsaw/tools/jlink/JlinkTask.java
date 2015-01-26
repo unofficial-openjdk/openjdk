@@ -689,7 +689,13 @@ class JlinkTask {
                 }
             }
 
-            return Hasher.generateMD5(modulesToPath(descriptors));
+            Map<String, Path> map = modulesToPath(descriptors);
+            if (map.size() == 0) {
+                return null;
+            } else {
+                // use SHA-256 for now, easy to make this configurable if needed
+                return Hasher.generate(map, "SHA-256").toString();
+            }
         }
 
         /**
@@ -728,10 +734,11 @@ class JlinkTask {
                         cf.version(id.version().toString());
                 }
 
-                // generate the string with the MD5 hashes
+                // generate the string with the hashes
                 if (dependencesToHash != null) {
                     String s = hashDependences(mi);
-                    cf.dependencyHashes(s);
+                    if (s != null)
+                        cf.dependencyHashes(s);
                 }
             }
 

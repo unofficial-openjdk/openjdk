@@ -30,10 +30,11 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.function.Supplier;
 
 import jdk.jigsaw.module.internal.ControlFile;
 import jdk.jigsaw.module.internal.Hasher;
+import jdk.jigsaw.module.internal.Hasher.HashSupplier;
+import jdk.jigsaw.module.internal.Hasher.DependencyHashes;
 import jdk.jigsaw.module.internal.ModuleInfo;
 
 /**
@@ -49,7 +50,7 @@ public final class ModuleArtifact {
     private final URI location;
 
     // the function that computes the hash of this module artifact
-    private final Supplier<String> hasher;
+    private final HashSupplier hasher;
 
     // cached hash string to avoid needing to compute it many times
     private String cachedHash;
@@ -58,13 +59,12 @@ public final class ModuleArtifact {
                    Set<String> packages,
                    URI location,
                    ControlFile cf,
-                   Supplier<String> hasher)
+                   HashSupplier hasher)
     {
         ModuleId id = ModuleId.parse(mi.name(), cf.version());
 
         // decode the hashes encoded in the extended module descriptor
-        String s = cf.dependencyHashes();
-        Map<String, String> hashes = Hasher.decode(s);
+        DependencyHashes hashes = DependencyHashes.decode(cf.dependencyHashes());
 
         this.descriptor = new ExtendedModuleDescriptor(id,
                                                        cf.mainClass(),
@@ -141,13 +141,13 @@ public final class ModuleArtifact {
      *
      * @throws java.io.UncheckedIOException if an I/O error occurs
      */
-    String computeHash() {
+    String computeHash(String algorithm) {
         String result = cachedHash;
         if (result != null)
             return result;
         if (hasher == null)
             return null;
-        cachedHash = result = hasher.get();
+        cachedHash = result = hasher.generate(algorithm);
         return result;
     }
 

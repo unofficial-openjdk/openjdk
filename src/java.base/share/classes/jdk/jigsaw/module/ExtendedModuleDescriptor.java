@@ -29,6 +29,8 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
+import jdk.jigsaw.module.internal.Hasher.DependencyHashes;
+
 /**
  * An extended module descriptor.
  *
@@ -42,11 +44,11 @@ public class ExtendedModuleDescriptor
 {
     private final ModuleId id;
     private final String mainClass;
-    private final Map<String, String> nameToHash;
+    private final DependencyHashes hashes;
 
     ExtendedModuleDescriptor(ModuleId id,
                              String mainClass,
-                             Map<String, String> nameToHash,
+                             DependencyHashes hashes,
                              Set<ModuleDependence> moduleDeps,
                              Set<ServiceDependence> serviceDeps,
                              Set<ModuleExport> exports,
@@ -55,8 +57,7 @@ public class ExtendedModuleDescriptor
         super(id.name(), moduleDeps, serviceDeps, exports, services);
         this.id = id;
         this.mainClass = mainClass;
-        this.nameToHash = (nameToHash != null) ?
-                nameToHash : Collections.emptyMap();
+        this.hashes = hashes;
     }
 
     /**
@@ -75,11 +76,11 @@ public class ExtendedModuleDescriptor
     }
 
     /**
-     * Returns the map of hashes on the module dependences. The map
-     * key is the module name, the map value is the hash.
+     * Returns the object with the hashes of the dependences or {@code null}
+     * if there are no hashes recorded.
      */
-    Map<String, String> nameToHash() {
-        return nameToHash;
+    DependencyHashes hashes() {
+        return hashes;
     }
 
     @Override
