@@ -39,8 +39,8 @@ import static com.oracle.java.testlibrary.Asserts.*;
 
 public class AccessCheckRead {
 
-    // Test that a class in a package in module1 can not access a class in
-    // a package n module2 if module1 can not read module2.
+    // Test that a class in a package in module1 cannot access a class in
+    // a package n module2 if module1 cannot read module2.
     public static void main(String args[]) throws Exception {
         WhiteBox wb = WhiteBox.getWhiteBox();
         Object m1, m2;
@@ -70,13 +70,13 @@ public class AccessCheckRead {
         Class p1_c1_class = Class.forName("p1.c1");
 
         // p1.c1's ctor tries to call a method in p2.c2, but p1's module
-        // can not read p2's module.  So should get IllegalAccessError.
+        // cannot read p2's module.  So should get IllegalAccessError.
         try {
             p1_c1_class.newInstance();
             throw new RuntimeException("Failed to get IAE (m1 can't read m2)");
         } catch (IllegalAccessError e) {
             System.out.println(e.getMessage());
-            if (!e.getMessage().contains("can not read")) {
+            if (!e.getMessage().contains("cannot read")) {
                 throw new RuntimeException("Wrong message: " + e.getMessage());
             }
         }

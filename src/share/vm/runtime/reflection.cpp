@@ -552,7 +552,7 @@ char* Reflection::verify_class_access_msg(Klass* current_class,
             len = len + strlen(module_to_name);
             msg = NEW_RESOURCE_ARRAY(char, len);
             jio_snprintf(msg, len - 1,
-              "class %s in module %s cannot access class %s in module %s, %s can not read %s",
+              "class %s (in module: %s) cannot access class %s (in module: %s), %s cannot read %s",
               current_class_name, module_from_name, new_class_name,
               module_to_name, module_from_name, module_to_name);
 
