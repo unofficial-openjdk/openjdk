@@ -24,8 +24,8 @@
  */
 
 module java.compiler {
-    requires java.base;
     requires java.logging;
+
     exports javax.annotation.processing;
     exports javax.lang.model;
     exports javax.lang.model.element;

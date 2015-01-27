@@ -24,10 +24,10 @@
  */
 
 module jdk.javadoc {
-    requires java.base;
     requires public java.compiler;
-    requires java.xml;
     requires public jdk.compiler;
+    requires java.xml;
+
     exports com.sun.javadoc;
     exports com.sun.tools.doclets;
     exports com.sun.tools.javadoc;
