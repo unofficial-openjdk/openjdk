@@ -24,7 +24,6 @@
  */
 
 module java.xml {
-    requires java.base;
     exports javax.xml;
     exports javax.xml.datatype;
     exports javax.xml.namespace;
