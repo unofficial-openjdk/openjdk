@@ -24,12 +24,12 @@
  */
 
 module java.corba {
-    requires java.base;
     requires public java.desktop;
+    requires public java.rmi;
     requires java.logging;
     requires java.naming;
-    requires public java.rmi;
     requires java.transaction;
+
     exports javax.activity;
     exports javax.rmi;
     exports javax.rmi.CORBA;
