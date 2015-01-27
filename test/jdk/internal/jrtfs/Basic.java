@@ -536,4 +536,26 @@ public class Basic {
         Path path = fs.getPath(link);
         assertTrue(Files.exists(path), link);
     }
+
+    @Test
+    public void testSymlinkDirList() throws Exception {
+        FileSystem fs = FileSystems.getFileSystem(URI.create("jrt:/"));
+        Path path = fs.getPath("/packages/java.lang/java.base");
+        assertTrue(Files.isSymbolicLink(path));
+        assertTrue(Files.isDirectory(path));
+
+        boolean javaSeen = false, javaxSeen = false;
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(path)) {
+            for (Path p : stream) {
+                String str = p.toString();
+                if (str.endsWith("/java")) {
+                    javaSeen = true;
+                } else if (str.endsWith("javax")) {
+                    javaxSeen = true;
+                }
+            }
+        }
+        assertTrue(javaSeen);
+        assertTrue(javaxSeen);
+    }
 }

@@ -375,7 +375,7 @@ class JrtFileSystem extends FileSystem {
             throws IOException {
         NodeAndImage ni = checkNode(path);
         if (ni.node.isLink() && followLinks(options)) {
-            return new JrtFileAttributes(ni.node.resolveLink());
+            return new JrtFileAttributes(ni.node.resolveLink(true));
         }
         return new JrtFileAttributes(ni.node);
     }
@@ -395,11 +395,13 @@ class JrtFileSystem extends FileSystem {
         return true;
     }
 
-    boolean isDirectory(byte[] path)
+    boolean isDirectory(byte[] path, boolean resolveLinks)
             throws IOException {
         ensureOpen();
         NodeAndImage ni = checkNode(path);
-        return ni.node.isDirectory();
+        return resolveLinks && ni.node.isLink()?
+            ni.node.resolveLink(true).isDirectory() :
+            ni.node.isDirectory();
     }
 
     JrtPath toJrtPath(String path) {
@@ -441,11 +443,12 @@ class JrtFileSystem extends FileSystem {
     Iterator<Path> iteratorOf(byte[] path, String childPrefix)
             throws IOException {
         NodeAndImage ni = checkNode(path);
-        if (!ni.node.isDirectory()) {
+        Node node = ni.node.resolveLink(true);
+
+        if (!node.isDirectory()) {
             throw new NotDirectoryException(getString(path));
         }
 
-        Node node = ni.node;
         if (node.isRootDir()) {
             return rootDirIterator(path, childPrefix);
         } else if (node.isModulesDir()) {
@@ -454,7 +457,7 @@ class JrtFileSystem extends FileSystem {
             return packagesDirIterator(path, childPrefix);
         }
 
-        return nodesToIterator(toJrtPath(path), childPrefix, ni.node.getChildren());
+        return nodesToIterator(toJrtPath(path), childPrefix, node.getChildren());
     }
 
     private Iterator<Path> nodesToIterator(Path path, String childPrefix, List<Node> childNodes) {
