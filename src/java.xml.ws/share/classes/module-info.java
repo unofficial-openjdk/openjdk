@@ -25,15 +25,15 @@
 
 module java.xml.ws {
     requires public java.activation;
+    requires public java.xml;
+    requires public java.xml.bind;
     requires java.annotations.common;
-    requires java.base;
     requires java.desktop;
     requires java.logging;
     requires java.management;
     requires java.rmi;
-    requires public java.xml;
-    requires public java.xml.bind;
     requires jdk.httpserver;
+
     exports javax.jws;
     exports javax.jws.soap;
     exports javax.xml.soap;

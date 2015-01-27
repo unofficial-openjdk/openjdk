@@ -24,7 +24,6 @@
  */
 
 module java.annotations.common {
-    requires java.base;
     exports javax.annotation;
 }
 

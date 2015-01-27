@@ -25,13 +25,13 @@
 
 module jdk.xml.bind {
     requires java.activation;
-    requires java.base;
     requires java.compiler;
     requires java.desktop;
     requires java.logging;
     requires java.xml;
     requires java.xml.bind;
     requires jdk.compiler;
+
     exports com.sun.codemodel.internal to
         jdk.xml.ws;
     exports com.sun.codemodel.internal.writer to

@@ -24,9 +24,9 @@
  */
 
 module java.activation {
-    requires java.base;
     requires public java.desktop;
     requires java.logging;
+
     exports javax.activation;
 }
 

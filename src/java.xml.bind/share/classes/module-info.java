@@ -25,11 +25,11 @@
 
 module java.xml.bind {
     requires public java.activation;
-    requires java.base;
+    requires public java.xml;
     requires java.compiler;
     requires java.desktop;
     requires java.logging;
-    requires public java.xml;
+
     exports javax.xml.bind;
     exports javax.xml.bind.annotation;
     exports javax.xml.bind.annotation.adapters;
