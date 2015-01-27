@@ -24,6 +24,5 @@
  */
 
 module jdk.crypto.mscapi {
-    requires java.base;
 }
 

@@ -24,7 +24,6 @@
  */
 
 module jdk.crypto.ec {
-    requires java.base;
     exports sun.security.ec to
         jdk.crypto.pkcs11;
 }

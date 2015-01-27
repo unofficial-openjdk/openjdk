@@ -24,10 +24,10 @@
  */
 
 module java.management {
-    requires java.base;
+    requires public java.rmi;
     requires java.logging;
     requires java.naming;
-    requires public java.rmi;
+
     exports com.sun.management;
     exports java.lang.management;
     exports javax.management;

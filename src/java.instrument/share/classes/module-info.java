@@ -24,7 +24,6 @@
  */
 
 module java.instrument {
-    requires java.base;
     exports java.lang.instrument;
 }
 

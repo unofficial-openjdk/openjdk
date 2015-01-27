@@ -24,11 +24,11 @@
  */
 
 module java.desktop {
-    requires java.base;
+    requires public java.xml;
     requires java.logging;
     requires java.prefs;
-    requires public java.xml;
     requires jdk.charsets;
+
     exports java.applet;
     exports java.awt;
     exports java.awt.color;

@@ -24,7 +24,6 @@
  */
 
 module java.security.acl {
-    requires java.base;
     exports java.security.acl;
 }
 

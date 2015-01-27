@@ -24,13 +24,13 @@
  */
 
 module jdk.dev {
-    requires java.base;
     requires java.scripting;
     requires java.xml;
     requires jdk.compiler;
     requires jdk.rmic;
     requires jdk.xml.bind;
     requires jdk.xml.ws;
+
     exports com.sun.jarsigner;
 }
 

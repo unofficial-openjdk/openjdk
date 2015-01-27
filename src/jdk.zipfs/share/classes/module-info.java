@@ -24,7 +24,6 @@
  */
 
 module jdk.zipfs {
-    requires java.base;
     provides java.nio.file.spi.FileSystemProvider with jdk.nio.zipfs.ZipFileSystemProvider;
 }
 

@@ -24,6 +24,5 @@
  */
 
 module jdk.jdwp.agent {
-    requires java.base;
 }
 

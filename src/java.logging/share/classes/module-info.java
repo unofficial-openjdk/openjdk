@@ -24,7 +24,6 @@
  */
 
 module java.logging {
-    requires java.base;
     exports java.util.logging;
 }
 

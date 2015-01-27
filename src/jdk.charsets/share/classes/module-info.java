@@ -24,7 +24,6 @@
  */
 
 module jdk.charsets {
-    requires java.base;
     exports sun.nio.cs.ext to
         java.desktop;
 }

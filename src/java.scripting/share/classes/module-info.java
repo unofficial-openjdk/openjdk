@@ -24,7 +24,6 @@
  */
 
 module java.scripting {
-    requires java.base;
     exports javax.script;
     uses javax.script.ScriptEngineFactory;
 }

@@ -24,8 +24,8 @@
  */
 
 module java.prefs {
-    requires java.base;
     requires java.xml;
+
     exports java.util.prefs;
     uses java.util.prefs.PreferencesFactory;
 }

@@ -24,7 +24,6 @@
  */
 
 module jdk.runtime {
-    requires java.base;
     requires java.desktop;
 }
 

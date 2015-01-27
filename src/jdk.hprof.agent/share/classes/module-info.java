@@ -24,6 +24,5 @@
  */
 
 module jdk.hprof.agent {
-    requires java.base;
 }
 

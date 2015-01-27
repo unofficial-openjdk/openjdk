@@ -24,10 +24,10 @@
  */
 
 module jdk.security.jgss {
-    requires java.base;
-    requires java.logging;
     requires public java.security.jgss;
+    requires java.logging;
     requires java.security.sasl;
+
     exports com.sun.security.jgss;
 }
 

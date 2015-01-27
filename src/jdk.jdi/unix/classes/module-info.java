@@ -24,8 +24,8 @@
  */
 
 module jdk.jdi {
-    requires java.base;
     requires jdk.attach;
+
     exports com.sun.jdi;
     exports com.sun.jdi.connect;
     exports com.sun.jdi.connect.spi;

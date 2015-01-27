@@ -24,7 +24,6 @@
  */
 
 module jdk.deploy.osx {
-    requires java.base;
     requires java.desktop;
     requires java.scripting;
 }

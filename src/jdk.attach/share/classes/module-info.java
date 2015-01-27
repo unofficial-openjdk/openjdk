@@ -24,8 +24,8 @@
  */
 
 module jdk.attach {
-    requires java.base;
     requires jdk.jvmstat;
+
     exports com.sun.tools.attach;
     exports com.sun.tools.attach.spi;
     exports sun.tools.attach to

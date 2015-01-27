@@ -24,8 +24,8 @@
  */
 
 module java.naming {
-    requires java.base;
     requires java.security.sasl;
+
     exports javax.naming;
     exports javax.naming.directory;
     exports javax.naming.event;

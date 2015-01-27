@@ -24,7 +24,6 @@
  */
 
 module jdk.sctp {
-    requires java.base;
     exports com.sun.nio.sctp;
 }
 

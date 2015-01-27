@@ -24,7 +24,6 @@
  */
 
 module jdk.hotspot.agent {
-    requires java.base;
     requires java.desktop;
     requires java.rmi;
     requires java.scripting;

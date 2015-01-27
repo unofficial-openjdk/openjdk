@@ -24,7 +24,6 @@
  */
 
 module jdk.crypto.pkcs11 {
-    requires java.base;
     requires jdk.crypto.ec;
 }
 

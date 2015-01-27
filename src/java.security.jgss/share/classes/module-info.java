@@ -24,7 +24,6 @@
  */
 
 module java.security.jgss {
-    requires java.base;
     requires java.naming;
     exports javax.security.auth.kerberos;
     exports org.ietf.jgss;

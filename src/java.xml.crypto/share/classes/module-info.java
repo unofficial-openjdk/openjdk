@@ -24,9 +24,9 @@
  */
 
 module java.xml.crypto {
-    requires java.base;
-    requires java.logging;
     requires public java.xml;
+    requires java.logging;
+
     exports javax.xml.crypto;
     exports javax.xml.crypto.dom;
     exports javax.xml.crypto.dsig;

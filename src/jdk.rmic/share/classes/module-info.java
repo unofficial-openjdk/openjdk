@@ -24,7 +24,6 @@
  */
 
 module jdk.rmic {
-    requires java.base;
     requires java.corba;
     requires jdk.compiler;
     requires jdk.javadoc;

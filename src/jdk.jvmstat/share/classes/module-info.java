@@ -24,8 +24,8 @@
  */
 
 module jdk.jvmstat {
-    requires java.base;
     requires java.rmi;
+
     exports sun.jvmstat.monitor to
         jdk.attach,
         jdk.jcmd,

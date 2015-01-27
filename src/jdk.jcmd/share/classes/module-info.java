@@ -24,7 +24,6 @@
  */
 
 module jdk.jcmd {
-    requires java.base;
     requires jdk.attach;
     requires jdk.jvmstat;
 }

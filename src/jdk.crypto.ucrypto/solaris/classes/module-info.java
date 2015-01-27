@@ -24,6 +24,5 @@
  */
 
 module jdk.crypto.ucrypto {
-    requires java.base;
 }
 

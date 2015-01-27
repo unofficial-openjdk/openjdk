@@ -24,7 +24,6 @@
  */
 
 module java.compact1 {
-    requires public java.base;
     requires public java.logging;
     requires public java.scripting;
 }

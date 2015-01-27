@@ -24,9 +24,9 @@
  */
 
 module jdk.security.auth {
-    requires java.base;
     requires public java.naming;
     requires java.security.jgss;
+
     exports com.sun.security.auth;
     exports com.sun.security.auth.callback;
     exports com.sun.security.auth.login;

@@ -24,7 +24,6 @@
  */
 
 module jdk.localedata {
-    requires java.base;
     provides sun.util.locale.provider.LocaleDataMetaInfo with sun.util.resources.cldr.provider.CLDRLocaleDataMetaInfo;
     provides sun.util.locale.provider.LocaleDataMetaInfo with sun.util.resources.provider.NonEnLocaleDataMetaInfo;
 }

@@ -24,8 +24,8 @@
  */
 
 module java.rmi {
-    requires java.base;
     requires java.logging;
+
     exports java.rmi;
     exports java.rmi.activation;
     exports java.rmi.dgc;

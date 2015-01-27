@@ -24,7 +24,6 @@
  */
 
 module java.smartcardio {
-    requires java.base;
     exports javax.smartcardio;
 }
 

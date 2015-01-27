@@ -24,9 +24,9 @@
  */
 
 module java.sql {
-    requires java.base;
     requires public java.logging;
     requires public java.xml;
+
     exports java.sql;
     exports javax.sql;
     exports javax.transaction.xa;
