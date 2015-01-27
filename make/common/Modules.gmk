@@ -74,7 +74,8 @@ $(MODULE_DEPS_MAKEFILE): $(MODULE_INFOS)
 	$(RM) $@
 	$(foreach m, $(MODULE_INFOS), \
 	    ( $(PRINTF) "DEPS_$(call GetModuleNameFromModuleInfo, $m) :=" && \
-	      $(NAWK) '\
+	      $(NAWK) -v MODULE=$m '\
+                  BEGIN      { if (MODULE != "java.base") printf(" java.base"); } \
 	          /requires/ { sub(/;/, ""); \
 	                       sub(/requires/, ""); \
 	                       sub(/public/, ""); \
