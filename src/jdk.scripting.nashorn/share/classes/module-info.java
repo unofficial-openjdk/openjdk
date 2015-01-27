@@ -24,9 +24,9 @@
  */
 
 module jdk.scripting.nashorn {
-    requires java.base;
     requires java.logging;
     requires java.scripting;
+
     provides javax.script.ScriptEngineFactory with jdk.nashorn.api.scripting.NashornScriptEngineFactory;
 }
 
