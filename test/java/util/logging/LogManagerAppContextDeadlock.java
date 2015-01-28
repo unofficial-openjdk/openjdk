@@ -38,7 +38,7 @@ import java.util.logging.Logger;
 
 /**
  * @test
- * @bug 8065991
+ * @bug 8065991 8071591
  * @summary check that when LogManager is initialized, a deadlock similar
  *          to that described in 8065709 will not occur.
  * @run main/othervm LogManagerAppContextDeadlock UNSECURE
@@ -107,6 +107,31 @@ public class LogManagerAppContextDeadlock {
                     return getAppContext();
                 }
 
+                @Override
+                public Object get(Object key) {
+                    return null;
+                }
+
+                @Override
+                public void put(Object key, Object value) {
+
+                }
+
+                @Override
+                public void remove(Object key) {
+
+                }
+
+                @Override
+                public boolean isDisposed() {
+                    return false;
+                }
+
+                @Override
+                public boolean isMainAppContext() {
+                    return false;
+                }
+
             });
         }
 
@@ -123,7 +148,7 @@ public class LogManagerAppContextDeadlock {
         }
     }
 
-    public static void test(TestCase test) throws Exception {
+    public static void test(final TestCase test) throws Exception {
         Thread t1 = new Thread() {
             @Override
             public void run() {
@@ -228,7 +253,12 @@ public class LogManagerAppContextDeadlock {
         @Override
         public void run() {
             sem3.release();
-            Configure.doPrivileged(this::loop);
+            Configure.doPrivileged(new Runnable() {
+                @Override
+                public void run() {
+                    DeadlockDetector.this.loop();
+                }
+            });
         }
         public void loop() {
             while(goOn) {
