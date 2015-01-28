@@ -185,7 +185,7 @@ public class JRTIndex {
     private JRTIndex() throws IOException {
         jrtfs = FileSystems.getFileSystem(URI.create("jrt:/"));
         jrtModules = new LinkedHashSet<>();
-        Path root = jrtfs.getPath("/");
+        Path root = jrtfs.getPath("/modules");
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(root)) {
             for (Path entry: stream) {
                 if (Files.isDirectory(entry))
