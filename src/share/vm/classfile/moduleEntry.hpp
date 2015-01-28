@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -47,6 +47,7 @@ private:
   Symbol* _name;
   ClassLoaderData* _loader;
   GrowableArray<ModuleEntry*>* _reads; // list of modules that are readable by this module
+  char* _version;  // module version number
   bool _pkgs_with_qexports; // this module contains 1 or more packages with qualified exports
 
 public:
@@ -54,6 +55,7 @@ public:
     _name = NULL;
     _loader = NULL;
     _reads = NULL;
+    _version = (char *)"0";
     _pkgs_with_qexports = false;
   }
 
@@ -65,6 +67,9 @@ public:
 
   ClassLoaderData*   loader() const                 { return _loader; }
   void               set_loader(ClassLoaderData* l) { _loader = l; }
+
+  char*              version()                      { return _version; }
+  void               set_version(char* version)     { _version = version; }
 
   bool               can_read(ModuleEntry* m) const;
   void               add_read(ModuleEntry* m);
