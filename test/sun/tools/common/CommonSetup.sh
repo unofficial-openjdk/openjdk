@@ -111,11 +111,6 @@ case "$OS" in
     PS=";"
     isWindows=true
     ;;
-  CYGWIN* )
-    PS=";"
-    OS="Windows"
-    isCygwin=true
-    ;;
   * )
     isUnknownOS=true
     ;;
