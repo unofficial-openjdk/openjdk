@@ -44,7 +44,6 @@ import tests.JImageValidator;
  * @author Jean-Francois Denise
  * @library /lib/testlibrary/jlink
  * @run build JLinkTest
- * @run build tests.*
  * @run main/othervm -XX:AddModuleExports=jdk.dev/jdk.jigsaw.tools.jlink,jdk.compiler/com.sun.tools.classfile,java.base/jdk.internal.jimage JLinkTest
  */
 public class JLinkTest {
@@ -76,15 +75,15 @@ public class JLinkTest {
                // take only the .class resources.
                if (Files.isRegularFile(p) && p.toString().endsWith(".class")
                        && !p.toString().endsWith("module-info.class")) {
-                   String loc = p.toString();
+                   String loc = p.toString().substring("/modules".length());
                    bootClasses.add(loc);
                    notExtClasses.add(loc);
                    notAppClasses.add(loc);
                }
            };
 
-        Path javabase = fs.getPath("/java.base");
-        Path mgtbase = fs.getPath("/java.management");
+        Path javabase = fs.getPath("/modules/java.base");
+        Path mgtbase = fs.getPath("/modules/java.management");
         try (Stream<Path> stream = Files.walk(javabase)) {
             stream.forEach(c);
         }

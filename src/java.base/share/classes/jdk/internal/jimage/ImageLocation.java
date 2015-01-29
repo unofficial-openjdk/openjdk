@@ -314,13 +314,19 @@ public final class ImageLocation {
     }
 
     UTF8String getFullName() {
+        return getFullName(false);
+    }
+
+    UTF8String getFullName(boolean modulesPrefix) {
         // Note: Consider a UTF8StringBuilder.
         UTF8String fullName = UTF8String.EMPTY_STRING;
 
         if (getModuleOffset() != 0) {
-            fullName = fullName.concat(UTF8String.SLASH_STRING,
-                                       getModule(),
-                                       UTF8String.SLASH_STRING);
+            fullName = fullName.concat(
+                modulesPrefix? UTF8String.MODULES_STRING : UTF8String.EMPTY_STRING,
+                UTF8String.SLASH_STRING,
+                getModule(),
+                UTF8String.SLASH_STRING);
         }
 
         if (getParentOffset() != 0) {
@@ -344,8 +350,9 @@ public final class ImageLocation {
         UTF8String name = UTF8String.EMPTY_STRING;
 
         if (includeModule && getModuleOffset() != 0) {
-            name = name.concat(UTF8String.SLASH_STRING,
-                                       getModule());
+            name = name.concat(UTF8String.MODULES_STRING,
+                               UTF8String.SLASH_STRING,
+                               getModule());
         }
 
         if (includeParent && getParentOffset() != 0) {

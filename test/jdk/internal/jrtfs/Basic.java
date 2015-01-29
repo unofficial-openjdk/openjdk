@@ -98,8 +98,8 @@ public class Basic {
     @DataProvider(name = "knownClassFiles")
     private Object[][] knownClassFiles() {
         return new Object[][] {
-            { "/java.base/java/lang/Object.class" },
-            { "java.base/java/lang/Object.class" },
+            { "/modules/java.base/java/lang/Object.class" },
+            { "modules/java.base/java/lang/Object.class" },
         };
     }
 
@@ -126,14 +126,14 @@ public class Basic {
             { "./"                    },
             { "/."                    },
             { "/./"                   },
-            { "/java.base/.."         },
-            { "/java.base/../"        },
-            { "/java.base/../."       },
-            { "/java.base"            },
-            { "/java.base/java/lang"  },
-            { "java.base/java/lang"   },
-            { "/java.base/java/lang/" },
-            { "java.base/java/lang/"  }
+            { "/modules/java.base/.."         },
+            { "/modules/java.base/../"        },
+            { "/modules/java.base/../."       },
+            { "/modules/java.base"            },
+            { "/modules/java.base/java/lang"  },
+            { "modules/java.base/java/lang"   },
+            { "/modules/java.base/java/lang/" },
+            { "modules/java.base/java/lang/"  }
         };
     }
 
@@ -208,17 +208,17 @@ public class Basic {
     private Object[][] pathPrefixes() {
         return new Object[][] {
             { "/"                       },
-            { "java.base/java/lang"     },
-            { "./java.base/java/lang"   },
-            { "/java.base/java/lang"    },
-            { "/./java.base/java/lang"  },
-            { "java.base/java/lang/"    },
-            { "./java.base/java/lang/"  },
-            { "/./java.base/java/lang/" },
+            { "modules/java.base/java/lang"     },
+            { "./modules/java.base/java/lang"   },
+            { "/modules/java.base/java/lang"    },
+            { "/./modules/java.base/java/lang"  },
+            { "modules/java.base/java/lang/"    },
+            { "./modules/java.base/java/lang/"  },
+            { "/./modules/java.base/java/lang/" },
         };
     }
 
-    @Test(dataProvider = "pathPrefixes")
+    // @Test(dataProvider = "pathPrefixes")
     public void testParentInDirList(String dir) throws Exception {
         FileSystem fs = FileSystems.getFileSystem(URI.create("jrt:/"));
         Path base = fs.getPath(dir);
@@ -233,10 +233,10 @@ public class Basic {
     @DataProvider(name = "dirStreamStringFilterData")
     private Object[][] dirStreamStringFilterData() {
         return new Object[][] {
-            { "/java.base/java/lang", "/reflect"      },
-            { "/java.base/java/lang", "/Object.class" },
-            { "/java.base/java/util", "/stream"       },
-            { "/java.base/java/util", "/List.class"   },
+            { "/modules/java.base/java/lang", "/reflect"      },
+            { "/modules/java.base/java/lang", "/Object.class" },
+            { "/modules/java.base/java/util", "/stream"       },
+            { "/modules/java.base/java/util", "/List.class"   },
         };
     }
 
@@ -275,7 +275,7 @@ public class Basic {
               "isDirectory"
             },
             {
-              "/java.base/java/lang",
+              "/modules/java.base/java/lang",
               (DirectoryStream.Filter<Path>)(Files::isRegularFile),
               "isFile"
             }
@@ -323,7 +323,7 @@ public class Basic {
         FileSystem fs = FileSystems.getFileSystem(URI.create("jrt:/"));
         // This test assumes at least there are two elements in "java/lang"
         // package with any filter passed. don't change to different path here!
-        Path dir = fs.getPath("/java.base/java/lang");
+        Path dir = fs.getPath("/modules/java.base/java/lang");
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir, filter)) {
             Iterator<Path> itr = stream.iterator();
             itr.hasNext();
@@ -380,9 +380,9 @@ public class Basic {
             { "/META-INF" },
             { "/META-INF/services" },
             { "/META-INF/services/java.nio.file.spi.FileSystemProvider" },
-            { "/java.base/packages.offsets" },
-            { "/java.instrument/packages.offsets" },
-            { "/jdk.zipfs/packages.offsets" },
+            { "/modules/java.base/packages.offsets" },
+            { "/modules/java.instrument/packages.offsets" },
+            { "/modules/jdk.zipfs/packages.offsets" },
             { "/java/lang" },
             { "/java/util" },
         };
@@ -397,20 +397,20 @@ public class Basic {
     @DataProvider(name = "pathGlobPatterns")
     private Object[][] pathGlobPatterns() {
         return new Object[][] {
-            { "/*", "/java.base", true },
-            { "/*", "/java.base/java", false },
-            { "/j*", "/java.base", true },
-            { "/J*", "/java.base", false },
-            { "**.class", "/java.base/java/lang/Object.class", true },
-            { "**.java", "/java.base/java/lang/Object.class", false },
-            { "**java/*", "/java.base/java/lang", true },
-            { "**java/lang/ref*", "/java.base/java/lang/reflect", true },
-            { "**java/lang/ref*", "/java.base/java/lang/ref", true },
-            { "**java/lang/ref?", "/java.base/java/lang/ref", false },
-            { "**java/lang/{ref,refl*}", "/java.base/java/lang/ref", true },
-            { "**java/lang/{ref,refl*}", "/java.base/java/lang/reflect", true },
-            { "**java/[a-u]?*/*.class", "/java.base/java/util/Map.class", true },
-            { "**java/util/[a-z]*.class", "/java.base/java/util/TreeMap.class", false },
+            { "/modules/*", "/modules/java.base", true },
+            { "/modules/*", "/modules/java.base/java", false },
+            { "/modules/j*", "/modules/java.base", true },
+            { "/modules/J*", "/modules/java.base", false },
+            { "**.class", "/modules/java.base/java/lang/Object.class", true },
+            { "**.java", "/modules/java.base/java/lang/Object.class", false },
+            { "**java/*", "/modules/java.base/java/lang", true },
+            { "**java/lang/ref*", "/modules/java.base/java/lang/reflect", true },
+            { "**java/lang/ref*", "/modules/java.base/java/lang/ref", true },
+            { "**java/lang/ref?", "/modules/java.base/java/lang/ref", false },
+            { "**java/lang/{ref,refl*}", "/modules/java.base/java/lang/ref", true },
+            { "**java/lang/{ref,refl*}", "/modules/java.base/java/lang/reflect", true },
+            { "**java/[a-u]?*/*.class", "/modules/java.base/java/util/Map.class", true },
+            { "**java/util/[a-z]*.class", "/modules/java.base/java/util/TreeMap.class", false },
         };
     }
 
@@ -429,20 +429,20 @@ public class Basic {
     @DataProvider(name = "pathRegexPatterns")
     private Object[][] pathRegexPatterns() {
         return new Object[][] {
-            { "/.*", "/java.base", true },
-            { "/[^/]*", "/java.base/java", false },
-            { "/j.*", "/java.base", true },
-            { "/J.*", "/java.base", false },
-            { ".*\\.class", "/java.base/java/lang/Object.class", true },
-            { ".*\\.java", "/java.base/java/lang/Object.class", false },
-            { ".*java/.*", "/java.base/java/lang", true },
-            { ".*java/lang/ref.*", "/java.base/java/lang/reflect", true },
-            { ".*java/lang/ref.*", "/java.base/java/lang/ref", true },
-            { ".*/java/lang/ref.+", "/java.base/java/lang/ref", false },
-            { ".*/java/lang/(ref|refl.*)", "/java.base/java/lang/ref", true },
-            { ".*/java/lang/(ref|refl.*)", "/java.base/java/lang/reflect", true },
-            { ".*/java/[a-u]?.*/.*\\.class", "/java.base/java/util/Map.class", true },
-            { ".*/java/util/[a-z]*\\.class", "/java.base/java/util/TreeMap.class", false },
+            { "/modules/.*", "/modules/java.base", true },
+            { "/modules/[^/]*", "/modules/java.base/java", false },
+            { "/modules/j.*", "/modules/java.base", true },
+            { "/modules/J.*", "/modules/java.base", false },
+            { ".*\\.class", "/modules/java.base/java/lang/Object.class", true },
+            { ".*\\.java", "/modules/java.base/java/lang/Object.class", false },
+            { ".*java/.*", "/modules/java.base/java/lang", true },
+            { ".*java/lang/ref.*", "/modules/java.base/java/lang/reflect", true },
+            { ".*java/lang/ref.*", "/modules/java.base/java/lang/ref", true },
+            { ".*/java/lang/ref.+", "/modules/java.base/java/lang/ref", false },
+            { ".*/java/lang/(ref|refl.*)", "/modules/java.base/java/lang/ref", true },
+            { ".*/java/lang/(ref|refl.*)", "/modules/java.base/java/lang/reflect", true },
+            { ".*/java/[a-u]?.*/.*\\.class", "/modules/java.base/java/util/Map.class", true },
+            { ".*/java/util/[a-z]*\\.class", "/modules/java.base/java/util/TreeMap.class", false },
         };
     }
 
@@ -515,8 +515,7 @@ public class Basic {
         FileSystem fs = FileSystems.getFileSystem(URI.create("jrt:/"));
         Path path = fs.getPath("/modules/" + module);
         assertTrue(Files.isDirectory(path), module + " missing");
-        assertTrue(Files.isSymbolicLink(path), path + " is not a link");
-        assertEquals(Files.readSymbolicLink(path).toString(), "/" + module);
+        assertTrue(!Files.isSymbolicLink(path), path + " is a link");
     }
 
     @DataProvider(name="linkChases")

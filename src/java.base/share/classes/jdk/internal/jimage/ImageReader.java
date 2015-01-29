@@ -39,12 +39,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
+import static jdk.internal.jimage.UTF8String.*;
 
 public class ImageReader extends BasicImageReader {
     // well-known strings needed for image file system.
     static final UTF8String ROOT_STRING = UTF8String.SLASH_STRING;
-    static final UTF8String PACKAGES_STRING = new UTF8String("/packages");
-    static final UTF8String MODULES_STRING = new UTF8String("/modules");
 
     // attributes of the .jimage file. jimage file does not contain
     // attributes for the individual resources (yet). We use attributes
@@ -298,7 +297,7 @@ public class ImageReader extends BasicImageReader {
 
         @SuppressWarnings("LeakingThisInConstructor")
         Resource(Directory parent, ImageLocation loc, BasicFileAttributes fileAttrs) {
-            this(parent, loc.getFullName(), loc, fileAttrs);
+            this(parent, loc.getFullName(true), loc, fileAttrs);
         }
 
         @SuppressWarnings("LeakingThisInConstructor")
@@ -450,30 +449,16 @@ public class ImageReader extends BasicImageReader {
             newResource(dir, loc);
         }
 
-        // module name to module's LinkNode
-        Map<UTF8String, LinkNode> nameToModLink = new HashMap<>();
-
-        // fill-in /modules directory
-        for (Node m : rootDir.getChildren()) {
-            if (m.isDirectory() && !m.isPackagesDir() && !m.isModulesDir()) {
-                UTF8String modName = m.getName();
-                modName = modName.substring(modName.lastIndexOf('/') + 1);
-                // /modules/<module-link>
-                LinkNode modLink = newLinkNode(modulesDir, MODULES_STRING.concat(modName), m);
-                nameToModLink.put(modName.substring(1), modLink);
-            }
-        }
-
         // fill-in /packages directory
         for (Map.Entry<String, String> entry : pkgToModule.entrySet()) {
             UTF8String pkgName = new UTF8String(entry.getKey());
             UTF8String modName = new UTF8String(entry.getValue());
             // /packages/<pkg_name> directory
             Directory pkgDir = newDirectory(packagesDir,
-                 packagesDir.getName().concat(ROOT_STRING, pkgName));
+                 packagesDir.getName().concat(SLASH_STRING, pkgName));
             // /packages/<pkg_name>/<link-to-module>
-            LinkNode modLink = nameToModLink.get(modName);
-            newLinkNode(pkgDir, pkgDir.getName().concat(ROOT_STRING, modName), modLink);
+            Node modNode = nodes.get(MODULES_STRING.concat(SLASH_STRING, modName));
+            newLinkNode(pkgDir, pkgDir.getName().concat(SLASH_STRING, modName), modNode);
         }
 
         return rootDir;
