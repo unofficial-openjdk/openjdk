@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -2630,24 +2630,32 @@ void InstanceKlass::set_package(Symbol* name, ClassLoaderData* loader, TRAPS) {
 
 // different versions of is_same_class_package
 bool InstanceKlass::is_same_class_package(Klass* class2) {
-  Klass* class1 = this;
-  PackageEntry* classpkg1 = InstanceKlass::cast(class1)->package();
+  oop classloader1 = this->class_loader();
+  PackageEntry* classpkg1 = this->package();
 
   if (class2->oop_is_objArray()) {
     class2 = ObjArrayKlass::cast(class2)->bottom_klass();
   }
 
+  oop classloader2;
   PackageEntry* classpkg2;
   if (class2->oop_is_instance()) {
+    classloader2 = InstanceKlass::cast(class2)->class_loader();
     classpkg2 = InstanceKlass::cast(class2)->package();
   } else {
     assert(class2->oop_is_typeArray(), "should be type array");
+    classloader2 = NULL;
     classpkg2 = NULL;
   }
 
-  if (classpkg1 == classpkg2) {
+  // Same package is determined by comparing class loader
+  // and package entries. Both must be the same. This rule
+  // applies even to classes that are defined in the unnamed
+  // package, they still must have the same class loader.
+  if ((classloader1 == classloader2) && (classpkg1 == classpkg2)) {
     return true;
   }
+
   return false;
 }
 
