@@ -71,4 +71,5 @@ cp -r ${TESTSRC}${FS}* src
 "${TESTJAVA}${FS}bin${FS}javac" ${TESTTOOLVMOPTS} -d . -classpath . -sourcepath src src/x/B.java src/x/C.java src/y/Main.java
 rm y/R3.class
 "${TESTJAVA}${FS}bin${FS}javac" ${TESTTOOLVMOPTS} -d . -classpath . -sourcepath src src/y/Main.java
+chmod -R u+w src
 rm -fr src
