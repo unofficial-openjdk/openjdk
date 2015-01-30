@@ -25,6 +25,7 @@
 #include "precompiled.hpp"
 #include "classfile/classLoader.hpp"
 #include "classfile/javaClasses.hpp"
+#include "classfile/moduleEntry.hpp"
 #include "classfile/systemDictionary.hpp"
 #include "classfile/vmSymbols.hpp"
 #include "code/codeCache.hpp"
@@ -3236,6 +3237,9 @@ void Threads::initialize_java_lang_classes(JavaThread* main_thread, TRAPS) {
   // The VM creates & returns objects of this class. Make sure it's initialized.
   initialize_class(vmSymbols::java_lang_Class(), CHECK);
 
+  // The VM creates objects of this class.
+  initialize_class(vmSymbols::java_lang_reflect_Module(), CHECK);
+
   // The VM preresolves methods to these classes. Make sure that they get initialized
   initialize_class(vmSymbols::java_lang_reflect_Method(), CHECK);
   initialize_class(vmSymbols::java_lang_ref_Finalizer(), CHECK);
@@ -3260,6 +3264,15 @@ void Threads::initialize_jsr292_core_classes(TRAPS) {
   initialize_class(vmSymbols::java_lang_invoke_MethodHandle(), CHECK);
   initialize_class(vmSymbols::java_lang_invoke_MemberName(), CHECK);
   initialize_class(vmSymbols::java_lang_invoke_MethodHandleNatives(), CHECK);
+}
+
+static void call_initModuleRuntime(TRAPS) {
+  Klass* k = SystemDictionary::resolve_or_fail(vmSymbols::jdk_jigsaw_module_runtime_ModuleBootstrap(), true, CHECK);
+  instanceKlassHandle klass (THREAD, k);
+
+  JavaValue result(T_VOID);
+  JavaCalls::call_static(&result, klass, vmSymbols::boot_name(),
+                                         vmSymbols::void_method_signature(), CHECK);
 }
 
 jint Threads::create_vm(JavaVMInitArgs* args, bool* canTryAgain) {
@@ -3436,6 +3449,10 @@ jint Threads::create_vm(JavaVMInitArgs* args, bool* canTryAgain) {
 
   initialize_java_lang_classes(main_thread, CHECK_JNI_ERR);
 
+  // Create and patch the java.lang.reflect.Module entry for module java.base
+  // into existing classes.
+  ModuleEntryTable::patch_javabase_entries(CHECK_JNI_ERR);
+
   // We need this for ClassDataSharing - the initial vm.info property is set
   // with the default value of CDS "sharing" which may be reset through
   // command line options.
@@ -3503,13 +3520,6 @@ jint Threads::create_vm(JavaVMInitArgs* args, bool* canTryAgain) {
     create_vm_init_libraries();
   }
 
-  // Notify JVMTI agents that VM initialization is complete - nop if no agents.
-  JvmtiExport::post_vm_initialized();
-
-  if (TRACE_START() != JNI_OK) {
-    vm_exit_during_initialization("Failed to start tracing backend.");
-  }
-
   if (CleanChunkPoolAsync) {
     Chunk::start_chunk_pool_cleaner_task();
   }
@@ -3524,6 +3534,22 @@ jint Threads::create_vm(JavaVMInitArgs* args, bool* canTryAgain) {
   // signature polymorphic MH intrinsics can be missed
   // (see SystemDictionary::find_method_handle_intrinsic).
   initialize_jsr292_core_classes(CHECK_JNI_ERR);
+
+  // Initialize the module system after the compiler initialization and jsr232
+  // classes get initialized because module initialization runs a lot of java
+  // code, that for performance reasons, should be compiled.  Also, the module
+  // system initialization uses lambda expressions and method references, hence
+  // need to run after initialize_jsr292_core_classes().
+  if (UseModules) {
+    call_initModuleRuntime(CHECK_JNI_ERR);
+  }
+
+  if (TRACE_START() != JNI_OK) {
+    vm_exit_during_initialization("Failed to start tracing backend.");
+  }
+
+  // Notify JVMTI agents that VM initialization is complete - nop if no agents.
+  JvmtiExport::post_vm_initialized();
 
 #if INCLUDE_MANAGEMENT
   Management::initialize(THREAD);

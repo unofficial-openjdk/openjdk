@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -215,18 +215,25 @@ void CallInfo::verify() {
 // Klass resolution
 
 void LinkResolver::check_klass_accessability(KlassHandle ref_klass, KlassHandle sel_klass, TRAPS) {
-  if (!Reflection::verify_class_access(ref_klass(),
-                                       sel_klass(),
-                                       true)) {
+  Reflection::VerifyClassAccessResults vca_result =
+    Reflection::verify_class_access(ref_klass(), sel_klass(), true);
+  if (vca_result != Reflection::ACCESS_OK) {
     ResourceMark rm(THREAD);
-    Exceptions::fthrow(
-      THREAD_AND_LOCATION,
-      vmSymbols::java_lang_IllegalAccessError(),
-      "tried to access class %s from class %s",
-      sel_klass->external_name(),
-      ref_klass->external_name()
-    );
-    return;
+    char* msg = Reflection::verify_class_access_msg(ref_klass(), sel_klass(), vca_result);
+    if (msg == NULL) {
+      Exceptions::fthrow(
+        THREAD_AND_LOCATION,
+        vmSymbols::java_lang_IllegalAccessError(),
+        "failed to access class %s from class %s",
+        sel_klass->external_name(),
+        ref_klass->external_name());
+    } else {
+      // Use module specific message returned by verify_class_access_msg().
+      Exceptions::fthrow(
+        THREAD_AND_LOCATION,
+        vmSymbols::java_lang_IllegalAccessError(),
+        "%s", msg);
+    }
   }
 }
 

@@ -222,7 +222,8 @@ class java_lang_String : AllStatic {
   macro(java_lang_Class, oop_size,               int_signature,     false) \
   macro(java_lang_Class, static_oop_field_count, int_signature,     false) \
   macro(java_lang_Class, protection_domain,      object_signature,  false) \
-  macro(java_lang_Class, signers,                object_signature,  false)
+  macro(java_lang_Class, signers,                object_signature,  false) \
+  macro(java_lang_Class, module,                 object_signature,  false)
 
 class java_lang_Class : AllStatic {
   friend class VMStructs;
@@ -240,26 +241,32 @@ class java_lang_Class : AllStatic {
   static int _init_lock_offset;
   static int _signers_offset;
   static int _class_loader_offset;
+  static int _module_offset;
   static int _component_mirror_offset;
 
   static bool offsets_computed;
   static int classRedefinedCount_offset;
 
   static GrowableArray<Klass*>* _fixup_mirror_list;
+  static GrowableArray<Klass*>* _fixup_jlrM_list;
 
   static void set_init_lock(oop java_class, oop init_lock);
   static void set_protection_domain(oop java_class, oop protection_domain);
   static void set_class_loader(oop java_class, oop class_loader);
+  static void set_module(oop java_class, oop module);
   static void set_component_mirror(oop java_class, oop comp_mirror);
   static void initialize_mirror_fields(KlassHandle k, Handle mirror, Handle protection_domain, TRAPS);
  public:
   static void compute_offsets();
 
   // Instance creation
-  static void create_mirror(KlassHandle k, Handle class_loader,
+  static void create_mirror(KlassHandle k, Handle class_loader, Handle module,
                             Handle protection_domain, TRAPS);
   static void fixup_mirror(KlassHandle k, TRAPS);
   static oop  create_basic_type_mirror(const char* basic_type_name, BasicType type, TRAPS);
+
+  static void fixup_jlrM(KlassHandle k, Handle module, TRAPS);
+
   // Conversion
   static Klass* as_Klass(oop java_class);
   static void set_klass(oop java_class, Klass* klass);
@@ -297,11 +304,13 @@ class java_lang_Class : AllStatic {
   static void set_signers(oop java_class, objArrayOop signers);
 
   static oop class_loader(oop java_class);
+  static oop module(oop java_class);
 
   static int oop_size(oop java_class);
   static void set_oop_size(oop java_class, int size);
   static int static_oop_field_count(oop java_class);
   static void set_static_oop_field_count(oop java_class, int size);
+
 
   static GrowableArray<Klass*>* fixup_mirror_list() {
     return _fixup_mirror_list;
@@ -309,6 +318,14 @@ class java_lang_Class : AllStatic {
   static void set_fixup_mirror_list(GrowableArray<Klass*>* v) {
     _fixup_mirror_list = v;
   }
+
+  static GrowableArray<Klass*>* fixup_jlrM_list() {
+    return _fixup_jlrM_list;
+  }
+  static void set_fixup_jlrM_list(GrowableArray<Klass*>* v) {
+    _fixup_jlrM_list = v;
+  }
+
   // Debugging
   friend class JavaClasses;
   friend class InstanceKlass;   // verification code accesses offsets
@@ -783,6 +800,26 @@ class java_lang_reflect_Parameter {
 
   static oop executable(oop constructor);
   static void set_executable(oop constructor, oop value);
+
+  friend class JavaClasses;
+};
+
+class java_lang_reflect_Module {
+  private:
+    static int loader_offset;
+    static int name_offset;
+    static void compute_offsets();
+
+  public:
+    // Allocation
+    static Handle create(Handle loader, Handle module_name, TRAPS);
+
+    // Accessors
+    static oop loader(oop module);
+    static void set_loader(oop module, oop value);
+
+    static oop name(oop module);
+    static void set_name(oop module, oop value);
 
   friend class JavaClasses;
 };
