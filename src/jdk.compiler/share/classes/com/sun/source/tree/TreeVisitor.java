@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -490,5 +490,10 @@ public interface TreeVisitor<R,P> {
      * @param p a parameter value
      * @return a result value
      */
+    R visitModule(ModuleTree node, P p);
+    R visitExports(ExportsTree node, P p);
+    R visitProvides(ProvidesTree node, P p);
+    R visitRequires(RequiresTree node, P p);
+    R visitUses(UsesTree node, P p);
     R visitOther(Tree node, P p);
 }
