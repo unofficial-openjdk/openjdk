@@ -56,30 +56,8 @@ class Net {                                             // package-private
     // set to true if exclusive binding is on for Windows
     private static final boolean exclusiveBind;
 
-    static {
-        int availLevel = isExclusiveBindAvailable();
-        if (availLevel >= 0) {
-            String exclBindProp =
-                java.security.AccessController.doPrivileged(
-                      new PrivilegedAction<String>() {
-                          @Override
-                        public String run() {
-                            return System.getProperty(
-                                    "sun.net.useExclusiveBind");
-                        }
-                    });
-            if (exclBindProp != null) {
-                exclusiveBind = exclBindProp.length() == 0 ?
-                        true : Boolean.parseBoolean(exclBindProp);
-            } else if (availLevel == 1) {
-                exclusiveBind = true;
-            } else {
-                exclusiveBind = false;
-            }
-        } else {
-            exclusiveBind = false;
-        }
-    }
+    // set to true if the fast tcp loopback should be enabled on Windows
+    private static final boolean fastLoopback;
 
     // -- Miscellaneous utilities --
 
@@ -421,6 +399,23 @@ class Net {                                             // package-private
         }
     }
 
+    public static boolean isFastTcpLoopbackRequested() {
+        String loopbackProp = java.security.AccessController.doPrivileged(
+            new PrivilegedAction<String>() {
+                @Override
+                public String run() {
+                    return System.getProperty("jdk.net.useFastTcpLoopback");
+                }
+            });
+        boolean enable;
+        if ("".equals(loopbackProp)) {
+            enable = true;
+        } else {
+            enable = Boolean.parseBoolean(loopbackProp);
+        }
+        return enable;
+    }
+
     // -- Socket operations --
 
     private static native boolean isIPv6Available0();
@@ -443,15 +438,16 @@ class Net {                                             // package-private
         throws IOException {
         boolean preferIPv6 = isIPv6Available() &&
             (family != StandardProtocolFamily.INET);
-        return IOUtil.newFD(socket0(preferIPv6, stream, false));
+        return IOUtil.newFD(socket0(preferIPv6, stream, false, fastLoopback));
     }
 
     static FileDescriptor serverSocket(boolean stream) {
-        return IOUtil.newFD(socket0(isIPv6Available(), stream, true));
+        return IOUtil.newFD(socket0(isIPv6Available(), stream, true, fastLoopback));
     }
 
     // Due to oddities SO_REUSEADDR on windows reuse is ignored
-    private static native int socket0(boolean preferIPv6, boolean stream, boolean reuse);
+    private static native int socket0(boolean preferIPv6, boolean stream, boolean reuse,
+                                      boolean fastLoopback);
 
     static void bind(FileDescriptor fd, InetAddress addr, int port)
         throws IOException
@@ -636,4 +632,30 @@ class Net {                                             // package-private
         initIDs();
     }
 
+    static {
+        int availLevel = isExclusiveBindAvailable();
+        if (availLevel >= 0) {
+            String exclBindProp =
+                java.security.AccessController.doPrivileged(
+                      new PrivilegedAction<String>() {
+                          @Override
+                        public String run() {
+                            return System.getProperty(
+                                    "sun.net.useExclusiveBind");
+                        }
+                    });
+            if (exclBindProp != null) {
+                exclusiveBind = exclBindProp.length() == 0 ?
+                        true : Boolean.parseBoolean(exclBindProp);
+            } else if (availLevel == 1) {
+                exclusiveBind = true;
+            } else {
+                exclusiveBind = false;
+            }
+        } else {
+            exclusiveBind = false;
+        }
+
+        fastLoopback = isFastTcpLoopbackRequested();
+    }
 }

@@ -189,6 +189,9 @@ NET_MapSocketOption(jint cmd, int *level, int *optname);
 JNIEXPORT int JNICALL
 NET_MapSocketOptionV6(jint cmd, int *level, int *optname);
 
+JNIEXPORT jint JNICALL
+NET_EnableFastTcpLoopback(int fd);
+
 int getScopeID (struct sockaddr *);
 
 int cmpScopeID (unsigned int, struct sockaddr *);
