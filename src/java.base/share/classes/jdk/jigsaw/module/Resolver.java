@@ -391,7 +391,7 @@ class Resolver {
             // check dependences
             for (ModuleDependence md: descriptor.moduleDependences()) {
                 String dn = md.id().name();
-                String recordedHash = hashes.get(dn);
+                String recordedHash = hashes.hashFor(dn);
 
                 if (recordedHash != null) {
                     ModuleArtifact artifact = r.findArtifact(dn);

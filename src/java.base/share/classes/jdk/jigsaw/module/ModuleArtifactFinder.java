@@ -25,6 +25,7 @@
 
 package jdk.jigsaw.module;
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -47,7 +48,6 @@ import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-import jdk.jigsaw.module.internal.ControlFile;
 import jdk.jigsaw.module.internal.Hasher;
 import jdk.jigsaw.module.internal.Hasher.HashSupplier;
 import jdk.jigsaw.module.internal.ModuleInfo;
@@ -328,17 +328,6 @@ class ModulePath implements ModuleArtifactFinder {
             mi = ModuleInfo.read(in);
         }
 
-        // extended module descriptor is a Debian-like control file for now
-        ControlFile cf;
-        ze = zf.getEntry(ControlFile.CONTROL_FILE);
-        if (ze != null) {
-            try (InputStream in = zf.getInputStream(ze)) {
-                cf = ControlFile.parse(in);
-            }
-        } else {
-            cf = new ControlFile();
-        }
-
         Set<String> packages = zf.stream()
                                  .filter(e -> e.getName().startsWith("classes/") &&
                                          e.getName().endsWith(".class"))
@@ -348,7 +337,7 @@ class ModulePath implements ModuleArtifactFinder {
                                  .collect(Collectors.toSet());
 
         HashSupplier hasher = (algorithm) -> Hasher.generate(file, algorithm);
-        return new ModuleArtifact(mi, packages, location, cf, hasher);
+        return new ModuleArtifact(mi, packages, location, hasher);
     }
 
     /**
@@ -376,7 +365,7 @@ class ModulePath implements ModuleArtifactFinder {
                                      .collect(Collectors.toSet());
 
             HashSupplier hasher = (algorithm) -> Hasher.generate(file, algorithm);
-            return new ModuleArtifact(mi, packages, location, new ControlFile(), hasher);
+            return new ModuleArtifact(mi, packages, location, hasher);
         }
     }
 
@@ -395,7 +384,7 @@ class ModulePath implements ModuleArtifactFinder {
 
         ModuleInfo mi;
         try (InputStream in = Files.newInputStream(file)) {
-            mi = ModuleInfo.read(in);
+            mi = ModuleInfo.read(new BufferedInputStream(in));
         }
 
         Set<String> packages =

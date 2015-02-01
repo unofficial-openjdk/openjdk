@@ -27,14 +27,10 @@ package jdk.jigsaw.module;
 
 import java.net.URI;
 import java.util.Collections;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-import jdk.jigsaw.module.internal.ControlFile;
-import jdk.jigsaw.module.internal.Hasher;
 import jdk.jigsaw.module.internal.Hasher.HashSupplier;
-import jdk.jigsaw.module.internal.Hasher.DependencyHashes;
 import jdk.jigsaw.module.internal.ModuleInfo;
 
 /**
@@ -58,17 +54,13 @@ public final class ModuleArtifact {
     ModuleArtifact(ModuleInfo mi,
                    Set<String> packages,
                    URI location,
-                   ControlFile cf,
                    HashSupplier hasher)
     {
-        ModuleId id = ModuleId.parse(mi.name(), cf.version());
-
-        // decode the hashes encoded in the extended module descriptor
-        DependencyHashes hashes = DependencyHashes.decode(cf.dependencyHashes());
+        ModuleId id = ModuleId.parse(mi.name(), mi.version());
 
         this.descriptor = new ExtendedModuleDescriptor(id,
-                                                       cf.mainClass(),
-                                                       hashes,
+                                                       mi.mainClass(),
+                                                       mi.hashes(),
                                                        mi.moduleDependences(),
                                                        mi.serviceDependences(),
                                                        mi.exports(),
@@ -79,7 +71,7 @@ public final class ModuleArtifact {
     }
 
     ModuleArtifact(ModuleInfo mi, Set<String> packages, URI location) {
-        this(mi, packages, location, new ControlFile(), null);
+        this(mi, packages, location, null);
     }
 
     /**

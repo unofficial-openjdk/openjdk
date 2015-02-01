@@ -84,8 +84,8 @@ import jdk.jigsaw.module.ModuleArtifactFinder;
 import jdk.jigsaw.module.ModuleDependence;
 import jdk.jigsaw.module.ModuleDescriptor;
 import jdk.jigsaw.module.ModuleId;
-import jdk.jigsaw.module.internal.ControlFile;
 import jdk.jigsaw.module.internal.Hasher;
+import jdk.jigsaw.module.internal.Hasher.DependencyHashes;
 import jdk.jigsaw.module.internal.ModuleInfo;
 
 
@@ -296,9 +296,13 @@ class JlinkTask {
         log = out;
     }
 
-    /** Module list files, in java.base */
+    // module list files in java.base
     private static final String BOOT_MODULES = "boot.modules";
     private static final String EXT_MODULES = "ext.modules";
+
+    private static final String MODULE_INFO = "module-info.class";
+
+
     /**
      * Result codes.
      */
@@ -493,11 +497,13 @@ class JlinkTask {
             Path jmodpath = entry.getValue();
 
             String mainClass = null;
+
             try (ZipFile zf = new ZipFile(jmodpath.toString())) {
-                ZipEntry ze = zf.getEntry(ControlFile.CONTROL_FILE);
+                String e = Section.CLASSES.jmodDir() + "/" + MODULE_INFO;
+                ZipEntry ze = zf.getEntry(e);
                 if (ze != null) {
                     try (InputStream in = zf.getInputStream(ze)) {
-                        mainClass = ControlFile.parse(in).mainClass();
+                        mainClass = ModuleInfo.read(in).mainClass();
                     }
                 }
             }
@@ -669,19 +675,101 @@ class JlinkTask {
         JmodFileWriter() { }
 
         /**
+         * Writes the jmod to the given output stream.
+         */
+        void write(OutputStream out) throws IOException {
+            try (ZipOutputStream zos = new ZipOutputStream(out)) {
+
+                // module-info.class
+                writeModuleInfo(zos);
+
+                // classes
+                processClasses(zos, classpath);
+
+                processSection(zos, Section.NATIVE_CMDS, cmds);
+                processSection(zos, Section.NATIVE_LIBS, libs);
+                processSection(zos, Section.CONFIG, configs);
+            }
+        }
+
+        /**
+         * Writes the module-info.class to the given ZIP output stream.
+         *
+         * If --mid, --main-class or other options were provided then the
+         * corresponding class file attribtues are added to the module-info
+         * here.
+         */
+        void writeModuleInfo(ZipOutputStream zos) throws IOException {
+            Optional<Path> miPath = classpath.stream()
+                    .map(cp -> cp.resolve(MODULE_INFO))
+                    .filter(Files::exists)
+                    .findFirst();
+            if (!miPath.isPresent()) {
+                throw new IOException(MODULE_INFO + " not found");
+            }
+
+            // if --mid is specified then we need the module name
+            // from the Module attribute.
+            String name = null;
+            Set<ModuleDependence> dependences = null;
+            if (moduleId != null || dependencesToHash != null) {
+                try (InputStream in = Files.newInputStream(miPath.get())) {
+                    ModuleInfo mi = ModuleInfo.read(in);
+                    name = mi.name();
+                    dependences = mi.moduleDependences();
+                }
+            }
+
+            // copy the module-info.class into the jmod, appender to it as
+            // needed with additional attributes for the version, main class
+            // and other meta data
+            try (InputStream in = Files.newInputStream(miPath.get())) {
+                ModuleInfo.Appender appender = ModuleInfo.newAppender(in);
+
+                // --main-class
+                if (mainClass != null)
+                    appender.mainClass(mainClass);
+
+                // --mid
+                if (moduleId != null) {
+                    ModuleId id = ModuleId.parse(moduleId);
+                    if (!id.name().equals(name)) {
+                        throw new RuntimeException("module name in specified to --mid" +
+                            " does not match module name: " + name);
+                    }
+                    if (id.version() != null) {
+                        appender.version(id.version().toString());
+                    }
+                }
+
+                // --hash-dependences
+                if (dependencesToHash != null)
+                    appender.hashes(hashDependences(name, dependences));
+
+                // write the (possibly extended or modified) module-info.class
+                String e = Section.CLASSES.jmodDir() + "/" + MODULE_INFO;
+                ZipEntry ze = new ZipEntry(e);
+                zos.putNextEntry(ze);
+                appender.write(zos);
+                zos.closeEntry();
+            }
+        }
+
+        /**
          * Examines the module dependences of the given module
          * and computes the hash of any module that matches the
-         * pattern {@code dependencesToHash}. Returns a string
-         * of the hashes.
+         * pattern {@code dependencesToHash}.
          */
-        String hashDependences(ModuleInfo mi) throws IOException {
+        DependencyHashes hashDependences(String name, Set<ModuleDependence> moduleDependences)
+            throws IOException
+        {
             Set<ModuleDescriptor> descriptors = new HashSet<>();
-            for (ModuleDependence md: mi.moduleDependences()) {
+            for (ModuleDependence md: moduleDependences) {
                 String dn = md.id().name();
                 if (dependencesToHash.matcher(dn).find()) {
                     ModuleArtifact artifact = moduleFinder.find(dn);
                     if (artifact == null) {
-                        throw new RuntimeException("Hashing module " + mi.name()
+                        throw new RuntimeException("Hashing module " + name
                             + " dependences, unable to find module " + dn
                             + " on module path");
                     }
@@ -694,71 +782,7 @@ class JlinkTask {
                 return null;
             } else {
                 // use SHA-256 for now, easy to make this configurable if needed
-                return Hasher.generate(map, "SHA-256").toString();
-            }
-        }
-
-        /**
-         * Writes the jmod control file with the meta-data for the extended
-         * module descriptor.
-         */
-        void writeControlFile(ZipOutputStream zos) throws IOException {
-            ControlFile cf = new ControlFile();
-
-            // main-class
-            if (mainClass != null)
-                cf.mainClass(mainClass);
-
-            // need module-info.class if if --mid or --hash-dependences
-            if (moduleId != null || dependencesToHash != null) {
-                Optional<Path> miClass = classpath.stream()
-                        .map(cp -> cp.resolve("module-info.class"))
-                        .filter(Files::exists)
-                        .findFirst();
-                if (!miClass.isPresent()) {
-                    throw new RuntimeException("module-info.class not found");
-                }
-                ModuleInfo mi;
-                try (InputStream in = Files.newInputStream(miClass.get())) {
-                    mi = ModuleInfo.read(in);
-                }
-
-                // if --mid is specified then check for a matching module name
-                if (moduleId != null) {
-                    ModuleId id = ModuleId.parse(moduleId);
-                    if (!id.name().equals(mi.name())) {
-                        throw new RuntimeException("module name in specified to --mid" +
-                                " does not match module name: " + mi.name());
-                    }
-                    if (id.version() != null)
-                        cf.version(id.version().toString());
-                }
-
-                // generate the string with the hashes
-                if (dependencesToHash != null) {
-                    String s = hashDependences(mi);
-                    if (s != null)
-                        cf.dependencyHashes(s);
-                }
-            }
-
-            ZipEntry ze = new ZipEntry(ControlFile.CONTROL_FILE);
-            zos.putNextEntry(ze);
-            cf.write(zos);
-            zos.closeEntry();
-        }
-
-        void write(OutputStream out) throws IOException {
-            try (ZipOutputStream zos = new ZipOutputStream(out)) {
-                // control file
-                writeControlFile(zos);
-
-                // classes
-                processClasses(zos, classpath);
-
-                processSection(zos, Section.NATIVE_CMDS, cmds);
-                processSection(zos, Section.NATIVE_LIBS, libs);
-                processSection(zos, Section.CONFIG, configs);
+                return Hasher.generate(map, "SHA-256");
             }
         }
 
@@ -771,10 +795,11 @@ class JlinkTask {
             for (Path p : classpaths) {
                 if (Files.isDirectory(p)) {
                     processSection(zos, Section.CLASSES, p);
-                } else if (Files.exists(p) && p.toString().endsWith(".jar")) {
-                    JarFile jf = new JarFile(p.toFile());
-                    JarEntryConsumer jec = new JarEntryConsumer(zos, jf);
-                    jf.stream().filter(jec).forEach(jec);
+                } else if (Files.isRegularFile(p) && p.toString().endsWith(".jar")) {
+                    try (JarFile jf = new JarFile(p.toFile())) {
+                        JarEntryConsumer jec = new JarEntryConsumer(zos, jf);
+                        jf.stream().filter(jec).forEach(jec);
+                    }
                 }
             }
         }
@@ -790,22 +815,20 @@ class JlinkTask {
             }
         }
 
-        void processSection(ZipOutputStream zos, final Section section, Path p)
+        void processSection(ZipOutputStream zos, final Section section, Path top)
             throws IOException
         {
-            final String pathPrefix = p.toString();
-            final int pathPrefixLength = pathPrefix.length();
-            Files.walkFileTree(p, new SimpleFileVisitor<Path>() {
+            Files.walkFileTree(top, new SimpleFileVisitor<Path>() {
                 @Override
                 public FileVisitResult visitFile(Path file,
                                                  BasicFileAttributes attrs)
-                        throws IOException
-                {
-                    assert file.toString().startsWith(pathPrefix);
-                    String f = file.toString().substring(pathPrefixLength + 1);
-                    String prefix = section.jmodDir();
-                    byte[] data = Files.readAllBytes(file);
-                    writeZipEntry(zos, data, prefix, f);
+                        throws IOException {
+                    if (!file.getFileName().toString().equals(MODULE_INFO)) {
+                        Path relPath = top.relativize(file);
+                        String prefix = section.jmodDir();
+                        byte[] data = Files.readAllBytes(file);
+                        writeZipEntry(zos, data, prefix, relPath.toString());
+                    }
                     return FileVisitResult.CONTINUE;
                 }
             });
@@ -844,7 +867,7 @@ class JlinkTask {
             @Override
             public boolean test(JarEntry je) {
                 String name = je.getName();
-                return !je.isDirectory();
+                return !name.endsWith(MODULE_INFO) && !je.isDirectory();
             }
         }
     }

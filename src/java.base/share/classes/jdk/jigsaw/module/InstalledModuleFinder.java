@@ -88,10 +88,10 @@ class InstalledModuleFinder implements ModuleArtifactFinder {
         long t0 = System.nanoTime();
         Image image = moduleToImage.get(name);
         try (InputStream in = new ByteArrayInputStream(image.readModuleInfo(name))) {
-            ModuleInfo mi = ModuleInfo.read(in);
+            ModuleInfo mi = ModuleInfo.readIgnoringHashes(in);
             URI location = URI.create("jrt:/" + name);
             ModuleArtifact artifact =
-                    new ModuleArtifact(mi, image.packagesForModule(name), location);
+                new ModuleArtifact(mi, image.packagesForModule(name), location);
             installedModulesCount.increment();
             installedModulesTime.addElapsedTimeFrom(t0);
             return artifact;

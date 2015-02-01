@@ -43,7 +43,7 @@ public class JdkModules {
 
     private void compact2(ModuleDescriptor m) {
         ModuleDependence[] deps = new ModuleDependence[] {
-            moduleDep("java.base"),
+            moduleMandatedDep("java.base"),
             modulePublicDep("java.compact1"),
             modulePublicDep("java.rmi"),
             modulePublicDep("java.sql"),
@@ -72,6 +72,10 @@ public class JdkModules {
 
     private static ModuleDependence modulePublicDep(String dn) {
         return new ModuleDependence(EnumSet.of(Modifier.PUBLIC), dn);
+    }
+
+    private static ModuleDependence moduleMandatedDep(String dn) {
+        return new ModuleDependence(EnumSet.of(Modifier.MANDATED), dn);
     }
 
     private static ModuleDependence moduleDep(String dn) {

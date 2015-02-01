@@ -39,7 +39,7 @@ public final class ModuleDependence
 {
 
     public static enum Modifier {
-        OPTIONAL, PUBLIC, SYNTHETIC, SYNTHESIZED;
+        PUBLIC, SYNTHETIC, MANDATED;
     }
 
     private final Set<Modifier> mods;
