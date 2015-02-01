@@ -25,7 +25,7 @@
  * @test
  *
  * @build ClassLoaderStatsTest DcmdUtil
- * @run main ClassLoaderStatsTest
+ * @run main/othervm -XX:AddModuleExports=java.management/sun.management ClassLoaderStatsTest
  */
 
 import java.io.BufferedReader;

@@ -48,21 +48,25 @@ import uncommontrap.Verifier;
  *                   -XX:+WhiteBoxAPI -XX:+LogCompilation
  *                   -XX:CompileCommand=compileonly,UnstableIfExecutable.test
  *                   -XX:LogFile=always_taken_not_fired.xml
+ *                   -XX:AddModuleExports=java.base/jdk.internal.org.objectweb.asm
  *                   TestUnstableIfTrap ALWAYS_TAKEN false
  * @run main/othervm -Xbatch -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions
  *                   -XX:+WhiteBoxAPI -XX:+LogCompilation
  *                   -XX:CompileCommand=compileonly,UnstableIfExecutable.test
  *                   -XX:LogFile=always_taken_fired.xml
+ *                   -XX:AddModuleExports=java.base/jdk.internal.org.objectweb.asm
  *                   TestUnstableIfTrap ALWAYS_TAKEN true
  * @run main/othervm -Xbatch -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions
  *                   -XX:+WhiteBoxAPI -XX:+LogCompilation
  *                   -XX:CompileCommand=compileonly,UnstableIfExecutable.test
  *                   -XX:LogFile=never_taken_not_fired.xml
+ *                   -XX:AddModuleExports=java.base/jdk.internal.org.objectweb.asm
  *                   TestUnstableIfTrap NEVER_TAKEN false
  * @run main/othervm -Xbatch -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions
  *                   -XX:+WhiteBoxAPI -XX:+LogCompilation
  *                   -XX:CompileCommand=compileonly,UnstableIfExecutable.test
  *                   -XX:LogFile=never_taken_fired.xml
+ *                   -XX:AddModuleExports=java.base/jdk.internal.org.objectweb.asm
  *                   TestUnstableIfTrap NEVER_TAKEN true
  * @run main uncommontrap.Verifier always_taken_not_fired.xml
  *                                 always_taken_fired.xml

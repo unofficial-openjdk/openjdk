@@ -26,7 +26,7 @@
  * @bug 8054889
  * @library ..
  * @build DcmdUtil MethodIdentifierParser CodelistTest
- * @run main CodelistTest
+ * @run main/othervm -XX:AddModuleExports=java.management/sun.management CodelistTest
  * @summary Test of diagnostic command Compiler.codelist
  */
 

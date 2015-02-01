@@ -29,7 +29,7 @@
  * @requires vm.gc=="G1" | vm.gc=="null"
  * @library /testlibrary /../../test/lib
  * @build TestShrinkAuxiliaryData TestShrinkAuxiliaryData05
- * @run driver/timeout=720 TestShrinkAuxiliaryData05
+ * @run main/othervm/timeout=720 -XX:AddModuleExports=java.base/sun.misc TestShrinkAuxiliaryData05
  */
 public class TestShrinkAuxiliaryData05 {
 

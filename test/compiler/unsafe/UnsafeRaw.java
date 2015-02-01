@@ -26,7 +26,7 @@
  * @bug 8058744
  * @summary Invalid pattern-matching of address computations in raw unsafe
  * @library /testlibrary
- * @run main/othervm -Xbatch UnsafeRaw
+ * @run main/othervm -Xbatch -XX:AddModuleExports=java.base/sun.misc UnsafeRaw
  */
 
 import com.oracle.java.testlibrary.Utils;

@@ -26,9 +26,9 @@
  * @bug 8054889
  * @library ..
  * @build DcmdUtil CompilerQueueTest
- * @run main CompilerQueueTest
- * @run main/othervm -XX:-TieredCompilation CompilerQueueTest
- * @run main/othervm -Xint CompilerQueueTest
+ * @run main/othervm -XX:AddModuleExports=java.management/sun.management CompilerQueueTest
+ * @run main/othervm -XX:-TieredCompilation -XX:AddModuleExports=java.management/sun.management CompilerQueueTest
+ * @run main/othervm -Xint -XX:AddModuleExports=java.management/sun.management CompilerQueueTest
  * @summary Test of diagnostic command Compiler.queue
  */
 

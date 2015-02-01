@@ -30,7 +30,7 @@ import com.oracle.java.testlibrary.Platform;
  * @summary Test of VM.dynlib diagnostic command via MBean
  * @library /testlibrary
  * @build com.oracle.java.testlibrary.* DcmdUtil
- * @run main DynLibDcmdTest
+ * @run main/othervm -XX:AddModuleExports=java.management/sun.management DynLibDcmdTest
  */
 
 public class DynLibDcmdTest {

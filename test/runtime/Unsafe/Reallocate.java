@@ -25,7 +25,7 @@
  * @test
  * @bug 8058897
  * @library /testlibrary
- * @run main/othervm -XX:+UnlockDiagnosticVMOptions -XX:MallocMaxTestWords=100m Reallocate
+ * @run main/othervm -XX:+UnlockDiagnosticVMOptions -XX:MallocMaxTestWords=100m -XX:AddModuleExports=java.base/sun.misc Reallocate
  */
 
 import com.oracle.java.testlibrary.*;

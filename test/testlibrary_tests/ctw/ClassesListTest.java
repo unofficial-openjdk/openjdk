@@ -29,7 +29,7 @@
  * @run main ClassFileInstaller sun.hotspot.WhiteBox Foo Bar
  *                              sun.hotspot.WhiteBox$WhiteBoxPermission
  * @run main ClassesListTest prepare
- * @run main/othervm/timeout=600 -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -Dsun.hotspot.tools.ctw.logfile=ctw.log sun.hotspot.tools.ctw.CompileTheWorld classes.lst
+ * @run main/othervm/timeout=600 -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -Dsun.hotspot.tools.ctw.logfile=ctw.log -XX:AddModuleExports=java.management/sun.management,java.base/sun.misc sun.hotspot.tools.ctw.CompileTheWorld classes.lst
  * @run main ClassesListTest check ctw.log
  * @summary testing of CompileTheWorld :: list of classes in file
  * @author igor.ignatyev@oracle.com
