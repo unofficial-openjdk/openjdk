@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,28 +20,27 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-import java.io.PrintWriter;
-import com.oracle.java.testlibrary.*;
 
 /*
  * @test
- * @bug 8040237
+ * @summary Verifies behaviour of Unsafe.getField
  * @library /testlibrary
- * @build Agent Test A B
- * @run main ClassFileInstaller Agent
- * @run main Launcher
- * @run main/othervm -XX:-TieredCompilation -XX:-BackgroundCompilation -XX:-UseOnStackReplacement -XX:TypeProfileLevel=222 -XX:ReservedCodeCacheSize=3M Agent
+ * @run main GetField
  */
-public class Launcher {
-    public static void main(String[] args) throws Exception  {
 
-      PrintWriter pw = new PrintWriter("MANIFEST.MF");
-      pw.println("Agent-Class: Agent");
-      pw.println("Can-Retransform-Classes: true");
-      pw.close();
+import com.oracle.java.testlibrary.*;
+import sun.misc.Unsafe;
+import java.lang.reflect.*;
+import static com.oracle.java.testlibrary.Asserts.*;
 
-      ProcessBuilder pb = new ProcessBuilder();
-      pb.command(new String[] { JDKToolFinder.getJDKTool("jar"), "cmf", "MANIFEST.MF", System.getProperty("test.classes",".") + "/agent.jar", "Agent.class"});
-      pb.start().waitFor();
+public class GetField {
+    public static void main(String args[]) throws Exception {
+        Unsafe unsafe = Utils.getUnsafe();
+        // Unsafe.INVALID_FIELD_OFFSET is a static final int field,
+        // make sure getField returns the correct field
+        Field field = Unsafe.class.getField("INVALID_FIELD_OFFSET");
+        assertNotEquals(field.getModifiers() & Modifier.FINAL, 0);
+        assertNotEquals(field.getModifiers() & Modifier.STATIC, 0);
+        assertEquals(field.getType(), int.class);
     }
 }

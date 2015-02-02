@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,28 +20,25 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-import java.io.PrintWriter;
-import com.oracle.java.testlibrary.*;
 
 /*
  * @test
- * @bug 8040237
+ * @summary Verifies that getUnsafe() actually throws SecurityException when unsafeAccess is prohibited.
  * @library /testlibrary
- * @build Agent Test A B
- * @run main ClassFileInstaller Agent
- * @run main Launcher
- * @run main/othervm -XX:-TieredCompilation -XX:-BackgroundCompilation -XX:-UseOnStackReplacement -XX:TypeProfileLevel=222 -XX:ReservedCodeCacheSize=3M Agent
+ * @run main GetUnsafe
  */
-public class Launcher {
-    public static void main(String[] args) throws Exception  {
 
-      PrintWriter pw = new PrintWriter("MANIFEST.MF");
-      pw.println("Agent-Class: Agent");
-      pw.println("Can-Retransform-Classes: true");
-      pw.close();
+import sun.misc.Unsafe;
+import static com.oracle.java.testlibrary.Asserts.*;
 
-      ProcessBuilder pb = new ProcessBuilder();
-      pb.command(new String[] { JDKToolFinder.getJDKTool("jar"), "cmf", "MANIFEST.MF", System.getProperty("test.classes",".") + "/agent.jar", "Agent.class"});
-      pb.start().waitFor();
+public class GetUnsafe {
+    public static void main(String args[]) throws Exception {
+        try {
+            Unsafe unsafe = Unsafe.getUnsafe();
+        } catch (SecurityException e) {
+            // Expected
+            return;
+        }
+        throw new RuntimeException("Did not get expected SecurityException");
     }
 }
