@@ -104,7 +104,7 @@ public final class Layer {
 
             // TBD: what if this throws an error? rollback or specify as not-atomic???
             assert !artifact.packages().contains("");
-            Module m = reflectAccess.defineModule(loader, descriptor, artifact.packages());
+            Module m = reflectAccess.defineModule(loader, artifact);
             map.put(name, m);
         }
 

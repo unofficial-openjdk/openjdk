@@ -39,10 +39,10 @@ Java_sun_misc_VM_latestUserDefinedLoader(JNIEnv *env, jclass cls) {
 }
 
 JNIEXPORT jobject JNICALL
-Java_sun_misc_VM_defineModule(JNIEnv *env, jclass cls, jstring name, jobject loader,
-                              jobjectArray packages)
+Java_sun_misc_VM_defineModule(JNIEnv *env, jclass cls, jstring name, jstring version,
+                              jstring location, jobject loader, jobjectArray packages)
 {
-    return JVM_DefineModule(env, name, loader, packages);
+    return JVM_DefineModule(env, name, version, location, loader, packages);
 }
 
 JNIEXPORT void JNICALL

@@ -360,7 +360,8 @@ JVM_DefineClassWithSource(JNIEnv *env, const char *name, jobject loader,
  */
 
 JNIEXPORT jobject JNICALL
-JVM_DefineModule(JNIEnv *env, jstring name, jobject loader, jobjectArray packages);
+JVM_DefineModule(JNIEnv *env, jstring name, jstring version, jstring location,
+                 jobject loader, jobjectArray packages);
 
 JNIEXPORT void JNICALL
 JVM_AddModuleExports(JNIEnv *env, jobject from_module, jstring package, jobject to_module);

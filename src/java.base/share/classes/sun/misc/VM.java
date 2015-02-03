@@ -369,7 +369,10 @@ public class VM {
      * Define a new module with the given name and content. The module is associated
      * with the given class loader.
      */
-    public static native Module defineModule(String name, ClassLoader loader,
+    public static native Module defineModule(String name,
+                                             String version,
+                                             String location,
+                                             ClassLoader loader,
                                              String[] pkgs);
 
     /**

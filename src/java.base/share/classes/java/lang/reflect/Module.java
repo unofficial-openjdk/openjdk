@@ -25,14 +25,17 @@
 
 package java.lang.reflect;
 
+import java.net.URI;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import jdk.jigsaw.module.ModuleArtifact;
 import jdk.jigsaw.module.ModuleDescriptor;
 import jdk.jigsaw.module.ServiceDependence;
+import jdk.jigsaw.module.Version;
 
 import sun.misc.ServicesCatalog;
 import sun.misc.SharedSecrets;
@@ -79,12 +82,16 @@ public final class Module {
 
     static Module defineModule(ClassLoader loader,
                                ModuleDescriptor descriptor,
+                               Version version,
+                               URI location,
                                Set<String> packages)
     {
-        Module m;
+
+       Module m;
 
         // define modules, except java.base as it is defined by VM
-        if (loader == null && descriptor.name().equals("java.base")) {
+        String name = descriptor.name();
+        if (loader == null && name.equals("java.base")) {
             m = Object.class.getModule();
             assert m != null;
         } else {
@@ -94,7 +101,10 @@ public final class Module {
             for (String pkg: packages) {
                 array[i++] = pkg.replace('.', '/');
             }
-            m = VM.defineModule(descriptor.name(), loader, array);
+
+            String vs = (version != null) ? version.toString() : null;
+            String uris = (location != null) ? location.toString() : null;
+            m = VM.defineModule(name, vs, uris, loader, array);
         }
 
         // set fields as these are not set by the VM
@@ -250,11 +260,20 @@ public final class Module {
         sun.misc.SharedSecrets.setJavaLangReflectAccess(
             new sun.misc.JavaLangReflectAccess() {
                 @Override
-                public Module defineModule(ClassLoader loader,
-                                           ModuleDescriptor descriptor,
-                                           Set<String> packages) {
-                    return Module.defineModule(loader, descriptor, packages);
+                public Module defineModule(ClassLoader loader, ModuleArtifact artifact) {
+                    Version version = artifact.descriptor().id().version();
+                    return Module.defineModule(loader,
+                                               artifact.descriptor(),
+                                               version,
+                                               artifact.location(),
+                                               artifact.packages());
                 }
+                @Override
+                public Module defineModule(ClassLoader loader, ModuleDescriptor descriptor,
+                                           Set<String> packages) {
+                    return Module.defineModule(loader, descriptor, null, null, packages);
+                }
+
                 @Override
                 public void setDefined(Module m) {
                     m.defined = true;

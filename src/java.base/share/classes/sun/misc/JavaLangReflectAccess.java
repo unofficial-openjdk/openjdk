@@ -26,13 +26,15 @@
 package sun.misc;
 
 import java.lang.reflect.Module;
+import java.net.URI;
 import java.util.Set;
 
+import jdk.jigsaw.module.ModuleArtifact;
 import jdk.jigsaw.module.ModuleDescriptor;
 
 public interface JavaLangReflectAccess {
-    Module defineModule(ClassLoader loader,
-                        ModuleDescriptor descriptor,
+    Module defineModule(ClassLoader loader, ModuleArtifact artifact);
+    Module defineModule(ClassLoader loader, ModuleDescriptor descriptor,
                         Set<String> packages);
     void setDefined(Module m);
 
