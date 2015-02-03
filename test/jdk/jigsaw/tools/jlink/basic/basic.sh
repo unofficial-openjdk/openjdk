@@ -22,7 +22,7 @@
 #
 
 # @test
-# @summary Basic test of jlink to create a modular image 
+# @summary Basic test of jlink to create jmods and images
 
 set -e
 
@@ -53,6 +53,7 @@ case "$OS" in
 esac
 
 JAVAC="$COMPILEJAVA/bin/javac"
+JAR="$COMPILEJAVA/bin/jar"
 JAVA="$TESTJAVA/bin/java"
 JLINK="$TESTJAVA/bin/jlink"
 
@@ -60,12 +61,18 @@ rm -rf mods
 mkdir -p mods/test
 $JAVAC -d mods/test `find $TESTSRC/src/test -name "*.java"`
 
-rm -rf mlib myimage myjimage
+rm -rf mlib mlib2 myimage myjimage
 
-# create jmod
+# create jmod from exploded classes on the class path
 mkdir mlib
 $JLINK --format jmod --class-path mods/test --mid test@1.0 --main-class jdk.test.Test \
     --output mlib/test@1.0.jmod
+
+# create jmod from JAR file on the class path
+mkdir mlib2
+$JAR cf mlib2/test.jar -C mods/test .
+$JLINK --format jmod --class-path mlib2/test.jar --mid test@1.0 --main-class jdk.test.Test \
+    --output mlib2/test@1.0.jmod
 
 # uncompressed image
 $JLINK --modulepath $TESTJAVA/../jmods${PS}mlib --addmods test --format jimage --output myjimage

@@ -27,6 +27,8 @@ package jdk.jigsaw.tools.jlink;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -57,12 +59,12 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.MissingResourceException;
-import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.regex.Pattern;
@@ -693,18 +695,47 @@ class JlinkTask {
         }
 
         /**
+         * Returns a supplier of an input stream to the module-info.class
+         * on the class path of directories and JAR files.
+         */
+        Supplier<InputStream> newModuleInfoSupplier() throws IOException {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            for (Path e: classpath) {
+                if (Files.isDirectory(e)) {
+                    Path mi = e.resolve(MODULE_INFO);
+                    if (Files.isRegularFile(mi)) {
+                        Files.copy(mi, baos);
+                        break;
+                    }
+                } else if (Files.isRegularFile(e) && e.toString().endsWith(".jar")) {
+                    try (JarFile jf = new JarFile(e.toFile())) {
+                        ZipEntry entry = jf.getEntry(MODULE_INFO);
+                        if (entry != null) {
+                            jf.getInputStream(entry).transferTo(baos);
+                            break;
+                        }
+                    }
+                }
+            }
+            if (baos.size() == 0) {
+                return null;
+            } else {
+                byte[] bytes = baos.toByteArray();
+                return () -> new ByteArrayInputStream(bytes);
+            }
+        }
+
+        /**
          * Writes the module-info.class to the given ZIP output stream.
          *
          * If --mid, --main-class or other options were provided then the
-         * corresponding class file attribtues are added to the module-info
+         * corresponding class file attributes are added to the module-info
          * here.
          */
         void writeModuleInfo(ZipOutputStream zos) throws IOException {
-            Optional<Path> miPath = classpath.stream()
-                    .map(cp -> cp.resolve(MODULE_INFO))
-                    .filter(Files::exists)
-                    .findFirst();
-            if (!miPath.isPresent()) {
+
+            Supplier<InputStream> miSupplier = newModuleInfoSupplier();
+            if (miSupplier == null) {
                 throw new IOException(MODULE_INFO + " not found");
             }
 
@@ -713,17 +744,16 @@ class JlinkTask {
             String name = null;
             Set<ModuleDependence> dependences = null;
             if (moduleId != null || dependencesToHash != null) {
-                try (InputStream in = Files.newInputStream(miPath.get())) {
+                try (InputStream in = miSupplier.get()) {
                     ModuleInfo mi = ModuleInfo.read(in);
                     name = mi.name();
                     dependences = mi.moduleDependences();
                 }
             }
 
-            // copy the module-info.class into the jmod, appender to it as
-            // needed with additional attributes for the version, main class
-            // and other meta data
-            try (InputStream in = Files.newInputStream(miPath.get())) {
+            // copy the module-info.class into the jmod with the additional
+            // attributes for the version, main class and other meta data
+            try (InputStream in = miSupplier.get()) {
                 ModuleInfo.Appender appender = ModuleInfo.newAppender(in);
 
                 // --main-class
@@ -815,14 +845,14 @@ class JlinkTask {
             }
         }
 
-        void processSection(ZipOutputStream zos, final Section section, Path top)
+        void processSection(ZipOutputStream zos, Section section, Path top)
             throws IOException
         {
             Files.walkFileTree(top, new SimpleFileVisitor<Path>() {
                 @Override
-                public FileVisitResult visitFile(Path file,
-                                                 BasicFileAttributes attrs)
-                        throws IOException {
+                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
+                    throws IOException
+                {
                     if (!file.getFileName().toString().equals(MODULE_INFO)) {
                         Path relPath = top.relativize(file);
                         String prefix = section.jmodDir();
