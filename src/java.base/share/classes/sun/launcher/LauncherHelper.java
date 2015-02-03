@@ -47,6 +47,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.net.URI;
 import java.nio.charset.Charset;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
@@ -57,6 +58,7 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -71,11 +73,12 @@ import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 
+import jdk.jigsaw.module.Configuration;
 import jdk.jigsaw.module.ExtendedModuleDescriptor;
 import jdk.jigsaw.module.Layer;
 import jdk.jigsaw.module.ModuleArtifact;
-import jdk.jigsaw.module.ModuleArtifactFinder;
 import jdk.jigsaw.module.ModuleDependence;
+import jdk.jigsaw.module.ModuleDescriptor;
 import jdk.jigsaw.module.ModuleExport;
 import jdk.jigsaw.module.ModuleId;
 import jdk.jigsaw.module.ServiceDependence;
@@ -865,7 +868,7 @@ public enum LauncherHelper {
     }
 
     /**
-     * Called by the launcher to list the installed modules.
+     * Called by the launcher to list modules in the boot Layer.
      * If called without any sub-options then the output is a simple list of
      * the modules. If called with sub-options then the sub-options are the
      * names of the modules to list (-XlistModules:java.base,java.desktop for
@@ -876,23 +879,32 @@ public enum LauncherHelper {
     {
         initOutput(printToStderr);
 
-        ModuleArtifactFinder finder = ModuleArtifactFinder.installedModules();
+        Layer layer = Layer.bootLayer();
+        if (layer == null)
+            return;
+
+        Configuration cf = layer.configuration();
         int colon = optionFlag.indexOf(':');
         if (colon == -1) {
-            finder.allModules()
-                  .stream()
-                  .map(ModuleArtifact::descriptor)
-                  .sorted()
-                  .forEach(md -> ostream.println(md.id()));
+            cf.descriptors()
+                .stream()
+                .map(ModuleDescriptor::name)
+                .map(cf::findArtifact)
+                .sorted(Comparator.comparing(ModuleArtifact::descriptor))
+                .forEach(md -> {
+                    ostream.println(midAndLocation(md.descriptor().id(), md.location()));
+                });
         } else {
             String[] names = optionFlag.substring(colon+1).split(",");
             for (String name: names) {
-                ModuleArtifact artifact = finder.find(name);
+                ModuleArtifact artifact = cf.findArtifact(name);
                 if (artifact == null) {
-                    throw new RuntimeException(name + " not installed");
+                    // skip as module is not in the boot Layer
+                    continue;
                 }
+
                 ExtendedModuleDescriptor md = artifact.descriptor();
-                ostream.println(md.id());
+                ostream.println(midAndLocation(md.id(), artifact.location()));
 
                 for (ModuleDependence d : md.moduleDependences()) {
                     ostream.format("  requires %s%n", d);
@@ -929,6 +941,14 @@ public enum LauncherHelper {
                     }
                 }
             }
+        }
+    }
+
+    static String midAndLocation(ModuleId mid, URI location ) {
+        if (location.getScheme().equalsIgnoreCase("jrt")) {
+            return mid.toString();
+        } else {
+            return mid + " (" + location + ")";
         }
     }
 }
