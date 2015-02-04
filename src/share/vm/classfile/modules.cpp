@@ -521,10 +521,9 @@ jboolean Modules::is_exported_to_module(JNIEnv *env, jobject from_module, jstrin
 
 jobject Modules::get_module(JNIEnv *env, jclass clazz) {
   oop mirror = JNIHandles::resolve_non_null(clazz);
-  if (mirror == NULL || java_lang_Class::is_primitive(mirror) ||
-    !UseModules) {
-    if (TraceModules && !UseModules) {
-      tty->print_cr("[get_module(): !UseModules, returning NULL]");
+  if (mirror == NULL || java_lang_Class::is_primitive(mirror)) {
+    if (TraceModules) {
+      tty->print_cr("[get_module(): returning NULL]");
     }
     return NULL;
   }

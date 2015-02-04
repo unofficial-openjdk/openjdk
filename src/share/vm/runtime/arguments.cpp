@@ -3747,10 +3747,6 @@ jint Arguments::parse(const JavaVMInitArgs* args) {
       CommandLineFlags::printFlags(tty, false);
       vm_exit(0);
     }
-    if (match_option(option, "-XX:-UseModules", &tail)) {
-      // boot class path needs to be expanded before other argument handling
-      os::set_expanded_boot_path();
-    }
 #if INCLUDE_NMT
     if (match_option(option, "-XX:NativeMemoryTracking", &tail)) {
       // The launcher did not setup nmt environment variable properly.

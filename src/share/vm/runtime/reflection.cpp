@@ -432,7 +432,7 @@ Reflection::VerifyClassAccessResults Reflection::verify_class_access(
   if (new_class->is_public()) {
     // Ignore modules for DumpSharedSpaces because we do not have any package
     // or module information for modules other than java.base.
-    if (!UseModules || DumpSharedSpaces) {
+    if (!UseModuleBoundaries || DumpSharedSpaces) {
       return ACCESS_OK;
     }
 

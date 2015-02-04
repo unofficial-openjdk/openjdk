@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -3540,9 +3540,7 @@ jint Threads::create_vm(JavaVMInitArgs* args, bool* canTryAgain) {
   // code, that for performance reasons, should be compiled.  Also, the module
   // system initialization uses lambda expressions and method references, hence
   // need to run after initialize_jsr292_core_classes().
-  if (UseModules) {
-    call_initModuleRuntime(CHECK_JNI_ERR);
-  }
+  call_initModuleRuntime(CHECK_JNI_ERR);
 
   if (TRACE_START() != JNI_OK) {
     vm_exit_during_initialization("Failed to start tracing backend.");

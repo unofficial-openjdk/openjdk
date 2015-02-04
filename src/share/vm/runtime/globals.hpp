@@ -1304,7 +1304,7 @@ class CommandLineFlags {
           "Decay time (in milliseconds) to re-enable bulk rebiasing of a "  \
           "type after previous bulk rebias")                                \
                                                                             \
-  product(bool, UseModules, true,                                           \
+  develop(bool, UseModuleBoundaries, true,                                  \
           "Use access control to enforce module boundaries")                \
                                                                             \
   product(ccstr, AddModuleRequires, NULL,                                   \
