@@ -69,7 +69,6 @@ public class Launcher {
 
         ImageReader extReader = null;
         ImageReader appReader = null;
-        Path modulesDir = null;
 
         // open image files if images build, otherwise detect an exploded image
         if (Files.isDirectory(libModules)) {
@@ -77,9 +76,7 @@ public class Launcher {
             appReader = openImageIfExists(libModules.resolve(APP_MODULES));
         } else {
             Path base = Paths.get(home, "modules", "java.base");
-            if (Files.isDirectory(base)) {
-                modulesDir = base.getParent();
-            } else {
+            if (!Files.isDirectory(base)) {
                 throw new InternalError("Unable to determine runtime image type");
             }
         }
@@ -97,10 +94,8 @@ public class Launcher {
         Path overrideDir = (s != null) ? Paths.get(s) : null;
 
         // create the class loaders
-        ExtClassLoader extCL =
-            new ExtClassLoader(extReader, modulesDir, overrideDir);
-        AppClassLoader appCL =
-            new AppClassLoader(extCL, appReader, modulesDir, overrideDir, ucp);
+        ExtClassLoader extCL = new ExtClassLoader(extReader, overrideDir);
+        AppClassLoader appCL = new AppClassLoader(extCL, appReader, overrideDir, ucp);
 
         // register the class loaders with the jrt protocol handler so that
         // resources can be located.
@@ -147,24 +142,42 @@ public class Launcher {
      * from the application class loader.
      */
     private static class ExtClassLoader extends BuiltinClassLoader {
-        ExtClassLoader(ImageReader imageReader, Path modulesDir, Path overrideDir) {
-            super(BootLoader.loader(), imageReader, modulesDir, overrideDir, null);
+        ExtClassLoader(ImageReader imageReader, Path overrideDir) {
+            super(BootLoader.loader(), imageReader, overrideDir, null);
         }
     }
 
     /**
-     * The application class loader, a unique type to make it easier to distinguish
-     * from the extension class loader and also to grant exitVM permission to
-     * code on the class path
+     * The application class loader that is a {@code BuiltinClassLoader} with
+     * customizations to be compatible with long standing behavior.
      */
     private static class AppClassLoader extends BuiltinClassLoader {
+        final URLClassPath ucp;
+
         AppClassLoader(ExtClassLoader parent,
                        ImageReader imageReader,
-                       Path modulesDir,
                        Path overrideDir,
                        URLClassPath ucp)
         {
-            super(parent, imageReader, modulesDir, overrideDir, ucp);
+            super(parent, imageReader, overrideDir, ucp);
+            this.ucp = ucp;
+        }
+
+        @Override
+        protected Class<?> loadClass(String cn, boolean resolve)
+            throws ClassNotFoundException
+        {
+            // for compatibility reasons, say where restricted package list has
+            // been updated to list API packages in the unnamed module.
+            SecurityManager sm = System.getSecurityManager();
+            if (sm != null) {
+                int i = cn.lastIndexOf('.');
+                if (i != -1) {
+                    sm.checkPackageAccess(cn.substring(0, i));
+                }
+            }
+
+            return super.loadClass(cn, resolve);
         }
 
         @Override
@@ -172,6 +185,15 @@ public class Launcher {
             PermissionCollection perms = super.getPermissions(cs);
             perms.add(new RuntimePermission("exitVM"));
             return perms;
+        }
+
+        /**
+         * Called by the VM to support dynamic additions to the class path
+         *
+         * @see java.lang.instrument.Instrumentation#appendToSystemClassLoaderSearch
+         */
+        void appendToClassPathForInstrumentation(String path) {
+            appendToUCP(path, ucp);
         }
     }
 
@@ -197,6 +219,15 @@ public class Launcher {
      */
     private static URLClassPath toURLClassPath(String cp) {
         URLClassPath ucp = new URLClassPath(new URL[0]);
+        appendToUCP(cp, ucp);
+        return ucp;
+    }
+
+    /**
+     * Converts the elements in the given class path to file URLs and adds
+     * them to the given URLClassPath.
+     */
+    private static void appendToUCP(String cp, URLClassPath ucp) {
         for (String s: cp.split(File.pathSeparator)) {
             try {
                 URL url = Paths.get(s).toRealPath().toUri().toURL();
@@ -205,7 +236,6 @@ public class Launcher {
                 // malformed path string or class path element does not exist
             }
         }
-        return ucp;
     }
 }
 

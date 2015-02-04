@@ -61,16 +61,13 @@ public class BootLoader {
         Path libModules = Paths.get(home, "lib", "modules");
 
         ImageReader imageReader = null;
-        Path modulesDir = null;
 
         // open image files if images build, otherwise detect an exploded image
         if (Files.isDirectory(libModules)) {
             imageReader = openImageIfExists(libModules.resolve(BOOT_MODULES));
         } else {
             Path base = Paths.get(home, "modules", "java.base");
-            if (Files.isDirectory(base)) {
-                modulesDir = base.getParent();
-            } else {
+            if (!Files.isDirectory(base)) {
                 throw new InternalError("Unable to determine runtime image type");
             }
         }
@@ -100,7 +97,7 @@ public class BootLoader {
         Path overrideDir = (s != null) ? Paths.get(s) : null;
 
         // create the boot loader
-        loader = new BuiltinClassLoader(null, imageReader, modulesDir, overrideDir, bcp) {
+        loader = new BuiltinClassLoader(null, imageReader, overrideDir, bcp) {
             @Override
             public Class<?> loadClass(String cn) {
                 return jla.findBootstrapClassOrNull(loader, cn);

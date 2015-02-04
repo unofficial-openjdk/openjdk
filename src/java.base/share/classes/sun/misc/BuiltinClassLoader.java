@@ -97,9 +97,6 @@ class BuiltinClassLoader extends SecureClassLoader
     // ImageReader or null if an exploded build
     private final ImageReader imageReader;
 
-    // The modules directory when an exploded build, otherwise null
-    private final Path modulesDir;
-
     // -Xoverride directory, can be null
     private final Path overrideDir;
 
@@ -120,7 +117,6 @@ class BuiltinClassLoader extends SecureClassLoader
      */
     BuiltinClassLoader(ClassLoader parent,
                        ImageReader imageReader,
-                       Path modulesDir,
                        Path overrideDir,
                        URLClassPath ucp)
     {
@@ -129,7 +125,6 @@ class BuiltinClassLoader extends SecureClassLoader
 
         this.parent = parent;
         this.imageReader = imageReader;
-        this.modulesDir = modulesDir;
         this.overrideDir = overrideDir;
         this.ucp = ucp;
     }
@@ -692,20 +687,6 @@ class BuiltinClassLoader extends SecureClassLoader
 
         return perms;
     }
-
-
-    // -- instrumentation
-
-    /**
-     * Called by the VM to support dynamic additions to the class path
-     *
-     * @see java.lang.instrument.Instrumentation#appendToSystemClassLoaderSearch
-     */
-    private void appendToClassPathForInstrumentation(String path) {
-        assert ucp != null;
-        ucp.addURL(toFileURL(Paths.get(path)));
-    }
-
 
     // -- miscellaneous supporting methods
 
