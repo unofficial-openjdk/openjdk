@@ -30,8 +30,11 @@ import java.net.URI;
 import java.io.IOException;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
-import java.util.*;
 import java.lang.reflect.Constructor;
+import java.util.Collections;
+import java.util.Map;
+import java.util.ServiceConfigurationError;
+import java.util.ServiceLoader;
 
 /**
  * Factory methods for file systems. This class defines the {@link #getDefault
@@ -82,7 +85,16 @@ import java.lang.reflect.Constructor;
  */
 
 public final class FileSystems {
-    private FileSystems() {
+    private FileSystems() { }
+
+    // Built-in file system provider
+    private static final FileSystemProvider builtinFileSystemProvider =
+        sun.nio.fs.DefaultFileSystemProvider.create();
+
+    // built-in file system
+    private static class BuiltinFileSystemHolder {
+        static final FileSystem builtinFileSystem =
+            builtinFileSystemProvider.getFileSystem(URI.create("file:///"));
     }
 
     // lazy initialization of default file system
@@ -105,7 +117,7 @@ public final class FileSystems {
 
         // returns default provider
         private static FileSystemProvider getDefaultProvider() {
-            FileSystemProvider provider = sun.nio.fs.DefaultFileSystemProvider.create();
+            FileSystemProvider provider = builtinFileSystemProvider;
 
             // if the property java.nio.file.spi.DefaultFileSystemProvider is
             // set then its value is the name of the default provider (or a list)
@@ -173,7 +185,11 @@ public final class FileSystems {
      * @return  the default file system
      */
     public static FileSystem getDefault() {
-        return DefaultFileSystemHolder.defaultFileSystem;
+        if (sun.misc.VM.isBooted()) {
+            return DefaultFileSystemHolder.defaultFileSystem;
+        } else {
+            return BuiltinFileSystemHolder.builtinFileSystem;
+        }
     }
 
     /**

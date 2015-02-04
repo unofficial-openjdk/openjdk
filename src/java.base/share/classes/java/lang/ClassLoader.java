@@ -52,8 +52,10 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import sun.misc.BootLoader;
 import sun.misc.CompoundEnumeration;
+import sun.misc.Launcher;
 import sun.misc.ServicesCatalog;
 import sun.misc.Unsafe;
+import sun.misc.VM;
 import sun.reflect.CallerSensitive;
 import sun.reflect.Reflection;
 import sun.reflect.misc.ReflectUtil;
@@ -1369,6 +1371,12 @@ public abstract class ClassLoader {
      * access to the system class loader.  If not, a
      * <tt>SecurityException</tt> will be thrown.  </p>
      *
+     * @implNote The system property to override the system class loader is
+     * not examined until this method is invoked after the VM is fully
+     * initialized. This means that code that executes this method during
+     * startup should not cache the return value unless sun.misc.VM.isBooted
+     * returns {@code true}.
+     *
      * @return  The system <tt>ClassLoader</tt> for delegation, or
      *          <tt>null</tt> if none
      *
@@ -1393,44 +1401,58 @@ public abstract class ClassLoader {
      */
     @CallerSensitive
     public static ClassLoader getSystemClassLoader() {
-        initSystemClassLoader();
-        if (scl == null) {
-            return null;
+
+        ClassLoader cl;
+        if (sclSet) {
+            cl = scl;
+        } else {
+            cl = tryInitSystemClassLoader();
         }
+
         SecurityManager sm = System.getSecurityManager();
         if (sm != null) {
-            checkClassLoaderPermission(scl, Reflection.getCallerClass());
+            checkClassLoaderPermission(cl, Reflection.getCallerClass());
         }
-        return scl;
+
+        return cl;
     }
 
-    private static synchronized void initSystemClassLoader() {
-        if (!sclSet) {
-            if (scl != null)
+    private static synchronized ClassLoader tryInitSystemClassLoader() {
+        if (sclSet) {
+            return scl;
+        } else {
+
+            // the system class loader is the app class loader during startup
+            ClassLoader cl = Launcher.getLauncher().getAppClassLoader();
+            if (!VM.isBooted()) {
+                return cl;
+            }
+
+            if (scl != null) {
                 throw new IllegalStateException("recursive invocation");
-            sun.misc.Launcher l = sun.misc.Launcher.getLauncher();
-            if (l != null) {
-                Throwable oops = null;
-                scl = l.getAppClassLoader();
-                try {
-                    scl = AccessController.doPrivileged(
-                        new SystemClassLoaderAction(scl));
-                } catch (PrivilegedActionException pae) {
-                    oops = pae.getCause();
-                    if (oops instanceof InvocationTargetException) {
-                        oops = oops.getCause();
-                    }
+            }
+            scl = cl;
+
+            Throwable oops = null;
+            try {
+                scl = AccessController.doPrivileged(
+                    new SystemClassLoaderAction(scl));
+            } catch (PrivilegedActionException pae) {
+                oops = pae.getCause();
+                if (oops instanceof InvocationTargetException) {
+                    oops = oops.getCause();
                 }
-                if (oops != null) {
-                    if (oops instanceof Error) {
-                        throw (Error) oops;
-                    } else {
-                        // wrap the exception
-                        throw new Error(oops);
-                    }
+            }
+            if (oops != null) {
+                if (oops instanceof Error) {
+                    throw (Error) oops;
+                } else {
+                    // wrap the exception
+                    throw new Error(oops);
                 }
             }
             sclSet = true;
+            return cl;
         }
     }
 
@@ -1490,13 +1512,13 @@ public abstract class ClassLoader {
         }
     }
 
-    // The class loader for the system
+    // The system class loader
     // @GuardedBy("ClassLoader.class")
-    private static ClassLoader scl;
+    private static volatile ClassLoader scl;
 
     // Set to true once the system class loader has been set
     // @GuardedBy("ClassLoader.class")
-    private static boolean sclSet;
+    private static volatile boolean sclSet;
 
 
     // -- Package --

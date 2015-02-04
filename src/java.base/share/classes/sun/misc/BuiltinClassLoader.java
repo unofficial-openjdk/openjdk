@@ -34,7 +34,6 @@ import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.security.AccessController;
 import java.security.CodeSigner;
 import java.security.CodeSource;
@@ -345,6 +344,9 @@ class BuiltinClassLoader extends SecureClassLoader
      */
     @Override
     protected Class<?> findClass(String cn) throws ClassNotFoundException {
+        // no class loading until VM is fully initialized
+        if (!VM.isBooted())
+            throw new ClassNotFoundException(cn);
 
         // find the candidate module for this class
         ModuleArtifact artifact = findModule(cn);
@@ -377,10 +379,13 @@ class BuiltinClassLoader extends SecureClassLoader
             Class<?> c = findLoadedClass(cn);
 
             if (c == null) {
+
                 // find the candidate module for this class
                 ModuleArtifact artifact = findModule(cn);
                 if (artifact != null) {
-                    c = findClassInModuleOrNull(artifact, cn);
+                    if (VM.isBooted()) {
+                        c = findClassInModuleOrNull(artifact, cn);
+                    }
                 } else {
                     // check parent
                     if (parent != null) {
@@ -391,7 +396,7 @@ class BuiltinClassLoader extends SecureClassLoader
                     }
 
                     // check class path
-                    if (c == null && artifact == null && ucp != null) {
+                    if (c == null && ucp != null && VM.isBooted()) {
                         c = findClassOnClassPathOrNull(cn);
                     }
                 }

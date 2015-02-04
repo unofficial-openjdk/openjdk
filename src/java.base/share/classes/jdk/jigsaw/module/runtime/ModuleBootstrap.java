@@ -209,13 +209,10 @@ class ModuleBootstrap {
         // set system module graph so that other module graphs can be composed
         Layer.setBootLayer(bootLayer);
 
-        // launcher -verbose:mods option
-        if (Boolean.parseBoolean(System.getProperty("jdk.launcher.modules.verbose"))) {
-            cf.descriptors().stream()
-                            .sorted()
-                            .forEach(md -> System.out.println(md.name()));
-        }
         PerfCounters.bootstrapTime.addElapsedTimeFrom(t0);
+
+        // module system initialized
+        sun.misc.VM.initLevel(2);
     }
 
     /**

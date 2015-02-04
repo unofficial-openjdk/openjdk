@@ -1208,9 +1208,11 @@ public final class System {
 
         // Subsystems that are invoked during initialization can invoke
         // sun.misc.VM.isBooted() in order to avoid doing things that should
-        // wait until the application class loader has been set up.
+        // wait until the VM is fully initialized. The initialization level
+        // is incremented from 0 to 1 here to indicate the first phase of
+        // initialization has completed.
         // IMPORTANT: Ensure that this remains the last initialization action!
-        sun.misc.VM.booted();
+        sun.misc.VM.initLevel(1);
     }
 
     private static void setJavaLangAccess() {
