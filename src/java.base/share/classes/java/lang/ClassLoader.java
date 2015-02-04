@@ -1401,7 +1401,6 @@ public abstract class ClassLoader {
      */
     @CallerSensitive
     public static ClassLoader getSystemClassLoader() {
-
         ClassLoader cl;
         if (sclSet) {
             cl = scl;
@@ -1428,6 +1427,7 @@ public abstract class ClassLoader {
                 return cl;
             }
 
+            // detect recursive initialization
             if (scl != null) {
                 throw new IllegalStateException("recursive invocation");
             }
@@ -1435,8 +1435,8 @@ public abstract class ClassLoader {
 
             Throwable oops = null;
             try {
-                scl = AccessController.doPrivileged(
-                    new SystemClassLoaderAction(scl));
+                scl = cl = AccessController.doPrivileged(
+                    new SystemClassLoaderAction(cl));
             } catch (PrivilegedActionException pae) {
                 oops = pae.getCause();
                 if (oops instanceof InvocationTargetException) {
