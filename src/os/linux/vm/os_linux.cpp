@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -6065,26 +6065,57 @@ extern char** environ;
 #define __NR_execve IA32_ONLY(11) IA64_ONLY(1033) AMD64_ONLY(59)
 #endif
 
+#if defined(SPARC)
+// This assembly code makes the call to "syscall(__NR_fork)" and then
+// gets the values for "pid" and "is_child" from the correct registers.
+// This was done to make sure the compiler does not change the order
+// of the instructions while optimizing.
+void sparc_fork(int nr_fork, pid_t *pid, int *ischild) {
+  asm volatile (
+    " mov %2, %%o0\n\t"
+    " call syscall, 0\n\t"
+    " nop\n\t"
+    " mov %%o0, %0\n\t"
+    " mov %%o1, %1\n\t"
+    : "=r" (*pid), "=r" (*ischild)
+    : "r" (nr_fork) :
+  );
+}
+#endif
+
 // Run the specified command in a separate process. Return its exit value,
 // or -1 on failure (e.g. can't fork a new process).
 // Unlike system(), this function can be called from signal handler. It
 // doesn't block SIGINT et al.
 int os::fork_and_exec(char* cmd) {
   const char * argv[4] = {"sh", "-c", cmd, NULL};
+  int is_child;
+  pid_t pid;
 
   // fork() in LinuxThreads/NPTL is not async-safe. It needs to run
   // pthread_atfork handlers and reset pthread library. All we need is a
   // separate process to execve. Make a direct syscall to fork process.
   // On IA64 there's no fork syscall, we have to use fork() and hope for
   // the best...
-  pid_t pid = NOT_IA64(syscall(__NR_fork);)
+#if defined(SPARC)
+  sparc_fork(__NR_fork, &pid, &is_child);
+#else
+  pid = NOT_IA64(syscall(__NR_fork);)
               IA64_ONLY(fork();)
+
+  // set the is_child flag by checking the pid
+  if (pid == 0) {
+    is_child = 1;
+  } else {
+    is_child = 0;
+  }
+#endif
 
   if (pid < 0) {
     // fork failed
     return -1;
 
-  } else if (pid == 0) {
+  } else if (is_child) {
     // child process
 
     // execve() in LinuxThreads will call pthread_kill_other_threads_np()
