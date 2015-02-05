@@ -41,6 +41,7 @@ import sun.misc.JavaLangAccess;
 import sun.misc.JavaLangReflectAccess;
 import sun.misc.ServicesCatalog;
 import sun.misc.SharedSecrets;
+import sun.misc.VM;
 import sun.reflect.CallerSensitive;
 import sun.reflect.Reflection;
 
@@ -241,22 +242,35 @@ public final class ServiceLoader<S>
      *         caller's module does not declare that it uses the service type.
      */
     private ServiceLoader(Class<?> caller, Class<S> svc, ClassLoader cl) {
-        Module m = caller.getModule();
+        if (VM.isBooted()) {
+            Module m = caller.getModule();
 
-        // Check that the service type is defined in a module that is readable
-        // to the caller and that the service type is in a package that is
-        // exported to the caller.
-        if (!Reflection.verifyModuleAccess(caller, svc)) {
-            String who = (m != null) ? m.toString() : "<unnamed module>";
-            fail(svc, "not accessible to " + who);
-        }
+            // Check that the service type is defined in a module that is readable
+            // to the caller and that the service type is in a package that is
+            // exported to the caller.
+            if (!Reflection.verifyModuleAccess(caller, svc)) {
+                String who = (m != null) ? m.toString() : "<unnamed module>";
+                fail(svc, "not accessible to " + who);
+            }
 
-        // If the caller is in a named module then it must declare that it
-        // uses the service type
-        if (m != null && Reflection.modulesInitialized()) {
-            String sn = svc.getName();
-            if (!reflectAccess.uses(m, sn)) {
-                fail(svc, "use not declared in " + m);
+            // If the caller is in a named module then it must declare that it
+            // uses the service type
+            if (m != null) {
+                String sn = svc.getName();
+                if (!reflectAccess.uses(m, sn)) {
+                    fail(svc, "use not declared in " + m);
+                }
+            }
+        } else {
+            // if we get here then it means that ServiceLoader is being used
+            // before the VM initialization has completed. At this point then
+            // only code in the java.base should be executing.
+            Module base = Object.class.getModule();
+            Module m1 = caller.getModule();
+            Module m2 = svc.getModule();
+            if (m1 != base || m2 != base) {
+                String who = (m1 != null) ? m1.toString() : "<unnamed module>";
+                fail(svc, "not accessible to " + who + " during VM init");
             }
         }
 

@@ -46,11 +46,11 @@ import jdk.jigsaw.module.ModuleArtifact;
 import jdk.jigsaw.module.ModuleArtifactFinder;
 import jdk.jigsaw.module.ModuleDescriptor;
 import jdk.jigsaw.module.ModuleId;
+
 import sun.misc.BootLoader;
 import sun.misc.Launcher;
 import sun.misc.ModuleLoader;
 import sun.misc.PerfCounter;
-import sun.reflect.Reflection;
 
 /**
  * Helper class used by the VM/runtime to initialize the module system.
@@ -167,6 +167,7 @@ class ModuleBootstrap {
                                                  ModuleArtifactFinder.nullFinder(),
                                                  input).bind();
 
+        // time to create configuration
         PerfCounters.configTime.addElapsedTimeFrom(t1);
 
         // mapping of modules to class loaders
@@ -193,22 +194,20 @@ class ModuleBootstrap {
 
         // define modules to VM/runtime
         Layer bootLayer = Layer.create(cf, clf);
+
+        // time to reify modules
         PerfCounters.bootLayerTime.addElapsedTimeFrom(t2);
 
         // define modules to class loaders
         defineModulesToClassLoaders(cf, clf);
 
+        // time to define modules to class loaders
         PerfCounters.mapModuleCLTime.addElapsedTimeFrom(t2);
-
-        // reflection checks enabled?
-        String s = System.getProperty("sun.reflect.enableModuleChecks");
-        boolean enableModuleChecks = (s == null) || !s.equals("false");
-        boolean debugging = enableModuleChecks && "debug".equals(s);
-        Reflection.enableModules(enableModuleChecks, debugging);
 
         // set system module graph so that other module graphs can be composed
         Layer.setBootLayer(bootLayer);
 
+        // total time to initialize
         PerfCounters.bootstrapTime.addElapsedTimeFrom(t0);
 
         // module system initialized

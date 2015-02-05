@@ -25,11 +25,13 @@
 
 package sun.reflect;
 
-import sun.misc.JavaLangAccess;
 import sun.misc.JavaLangReflectAccess;
 import sun.misc.SharedSecrets;
+import sun.misc.VM;
 
 import java.lang.reflect.*;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -45,9 +47,6 @@ public class Reflection {
     private static volatile Map<Class<?>,String[]> fieldFilterMap;
     private static volatile Map<Class<?>,String[]> methodFilterMap;
 
-    // access to java.lang.reflect.Module, initialized lazily
-    private static volatile JavaLangReflectAccess reflectAccess;
-
     static {
         Map<Class<?>,String[]> map = new HashMap<Class<?>,String[]>();
         map.put(Reflection.class,
@@ -57,29 +56,6 @@ public class Reflection {
         fieldFilterMap = map;
 
         methodFilterMap = new HashMap<>();
-    }
-
-    // set to true when modules initialized
-    private static volatile boolean modulesInitialized;
-
-    // set to true to enable module checks
-    private static volatile boolean moduleChecksEnabled;
-
-    // set to true to debug failing module checks
-    private static boolean moduleChecksDebugging;
-
-    public static boolean modulesInitialized() {
-        return modulesInitialized;
-    }
-
-    public static void enableModules(boolean enableModuleChecks,
-                                     boolean debugging) {
-        moduleChecksEnabled = enableModuleChecks;
-        moduleChecksDebugging = debugging;
-        modulesInitialized = true;
-
-        JavaLangAccess langAccess = SharedSecrets.getJavaLangAccess();
-        reflectAccess = SharedSecrets.getJavaLangReflectAccess();
     }
 
     /** Returns the class of the caller of the method calling this method,
@@ -111,15 +87,15 @@ public class Reflection {
     public static boolean quickCheckMemberAccess(Class<?> memberClass,
                                                  int modifiers)
     {
-      if (!Modifier.isPublic(getClassAccessFlags(memberClass) & modifiers))
-          return false;
+        if (!Modifier.isPublic(getClassAccessFlags(memberClass) & modifiers))
+            return false;
 
-      if (moduleChecksEnabled) {
-          // no quick check if member is a public type in a named module
-          return (memberClass.getModule() == null);
-      } else {
-          return true;
-      }
+        if (memberClass.getModule() == null) {
+            return true;
+        } else {
+            // no quick check if member is a public type in a named module
+            return false;
+        }
     }
 
     public static void ensureMemberAccess(Class<?> currentClass,
@@ -135,25 +111,18 @@ public class Reflection {
         if (!verifyMemberAccess(currentClass, memberClass, target, modifiers)) {
             String currentSuffix = "";
             String memberSuffix = "";
-            if (moduleChecksEnabled) {
-                Module m1 = currentClass.getModule();
-                if (m1 != null)
-                    currentSuffix = " (" + m1 + ")";
-                Module m2 = memberClass.getModule();
-                if (m2 != null)
-                    memberSuffix = " (" + m2 + ")";
-            }
-            IllegalAccessException iae =
-                new IllegalAccessException("Class " + currentClass.getName() +
-                                           currentSuffix +
-                                           " can not access a member of class " +
-                                           memberClass.getName() + memberSuffix +
-                                           " with modifiers \"" +
-                                           Modifier.toString(modifiers) +
-                                           "\"");
-            if (moduleChecksDebugging)
-                iae.printStackTrace();
-            throw iae;
+            Module m1 = currentClass.getModule();
+            if (m1 != null)
+                currentSuffix = " (" + m1 + ")";
+            Module m2 = memberClass.getModule();
+            if (m2 != null)
+                memberSuffix = " (" + m2 + ")";
+            throwIAE("Class " + currentClass.getName() +
+                     currentSuffix +
+                     " can not access a member of class " +
+                     memberClass.getName() + memberSuffix +
+                     " with modifiers \"" +
+                     Modifier.toString(modifiers) + "\"");
         }
     }
 
@@ -177,10 +146,8 @@ public class Reflection {
             return true;
         }
 
-        if (moduleChecksEnabled) {
-            if (!verifyModuleAccess(currentClass, memberClass)) {
-                return false;
-            }
+        if (!verifyModuleAccess(currentClass, memberClass)) {
+            return false;
         }
 
         if (!Modifier.isPublic(getClassAccessFlags(memberClass))) {
@@ -248,11 +215,17 @@ public class Reflection {
      */
     public static boolean verifyModuleAccess(Class<?> currentClass,
                                              Class<?> memberClass) {
+
         Module m1 = currentClass.getModule();
         Module m2 = memberClass.getModule();
 
         if (m1 == m2)
             return true;  // same module (named or unnamed)
+
+        // need module system to be fully initialized before it is possible
+        // to do module access checks
+        if (!VM.isBooted())
+            return false;
 
         if (m1 != null) {
             // named module trying to access member in unnamed module
@@ -265,7 +238,22 @@ public class Reflection {
         }
 
         // check that m2 exports the package to m1
-        return reflectAccess.isExported(m2, packageName(memberClass), m1);
+        return JLRA.isExported(m2, packageName(memberClass), m1);
+    }
+
+    /**
+     * A holder class to provide access to JavaLangReflectAccess. This is
+     * needed to avoid calls to SharedSecrets.getJavaLangReflectAccess
+     * early in the startup and before java.lang.System is initialized.
+     */
+    private static class JLRA {
+        // access to java.lang.reflect.Module, initialized lazily
+        static final JavaLangReflectAccess reflectAccess =
+            SharedSecrets.getJavaLangReflectAccess();
+
+        static boolean isExported(Module x, String pkg, Module y) {
+            return reflectAccess.isExported(x, pkg, y);
+        }
     }
 
     private static String packageName(Class<?> c) {
@@ -279,7 +267,7 @@ public class Reflection {
 
     private static boolean isSameClassPackage(Class<?> c1, Class<?> c2) {
         return isSameClassPackage(c1.getClassLoader(), c1.getName(),
-                                  c2.getClassLoader(), c2.getName());
+                c2.getClassLoader(), c2.getName());
     }
 
     /** Returns true if two classes are in the same package; classloader
@@ -443,4 +431,35 @@ public class Reflection {
         }
         return false;
     }
+
+
+    // true to print a stack trace when IAE is thrown
+    private static volatile boolean printStackWhenAccessFails;
+
+    // true if printStackWhenAccessFails has been initialized
+    private static volatile boolean printStackWhenAccessFailsSet;
+
+    /**
+     * Throws IllegalAccessException with the given exception message.
+     */
+    private static void throwIAE(String msg) throws IllegalAccessException {
+        IllegalAccessException iae = new IllegalAccessException(msg);
+        if (!printStackWhenAccessFailsSet && VM.initLevel() >= 1) {
+            // can't use method reference here, might be too early in startup
+            PrivilegedAction<String> pa = new PrivilegedAction<String>() {
+                public String run() {
+                    // legacy property name, it cannot be used to disable checks
+                    return System.getProperty("sun.reflect.enableModuleChecks");
+                }
+            };
+            String s = AccessController.doPrivileged(pa);
+            printStackWhenAccessFails = "debug".equals(s);
+            printStackWhenAccessFailsSet = true;
+        }
+        if (printStackWhenAccessFails) {
+            iae.printStackTrace();
+        }
+        throw iae;
+    }
+
 }
