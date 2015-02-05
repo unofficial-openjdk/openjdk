@@ -2228,7 +2228,6 @@ typedef CompactHashtable<Symbol*, char>       SymbolCompactHashTable;
   declare_constant(BarrierSet::CardTableExtension)                        \
   declare_constant(BarrierSet::G1SATBCT)                                  \
   declare_constant(BarrierSet::G1SATBCTLogging)                           \
-  declare_constant(BarrierSet::Other)                                     \
                                                                           \
   declare_constant(BlockOffsetSharedArray::LogN)                          \
   declare_constant(BlockOffsetSharedArray::LogN_words)                    \
