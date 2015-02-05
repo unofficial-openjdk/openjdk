@@ -712,18 +712,23 @@ public final class Class<T> implements java.io.Serializable,
     ClassLoader getClassLoader0() { return classLoader; }
 
     /**
-     * Returns the module that this class is a member of. Returns {@code null}
-     * if the class is a member of the unnamed module or a {@code Class}
-     * object for a primitive Java type. If invoked on a {@code Class} for
-     * an array type then this method returns the {@code Module} for the
-     * component type.
+     * Returns the module that this class or interface is a member of.
+     *
+     * If this object represents an array type then this method returns the
+     * {@code Module} for the element type. If this object represents a
+     * primitive type or void, then the {@code Module} object for the
+     * {@code java.base} module is returned.
+     *
+     * @apiNote If this object is in the unnamed module then {@code null} is
+     * returned. This may change to {@code Module.UNNAMED} once the topic
+     * is examined further.
+     *
+     * @return the module that this class or interface is a member of
      *
      * @since 1.9
      */
     public Module getModule() {
-        // this.module may be non-null when running with -XX:-UseModules so
-        // we have to call JVM_GetModule each time to get the right answer.
-        // This will be changed in the future to "return module".
+        // FIXME: change to "return module" when VM is ready
         return getModule0();
     }
 
