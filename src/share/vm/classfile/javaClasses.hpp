@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -222,8 +222,7 @@ class java_lang_String : AllStatic {
   macro(java_lang_Class, oop_size,               int_signature,     false) \
   macro(java_lang_Class, static_oop_field_count, int_signature,     false) \
   macro(java_lang_Class, protection_domain,      object_signature,  false) \
-  macro(java_lang_Class, signers,                object_signature,  false) \
-  macro(java_lang_Class, module,                 object_signature,  false)
+  macro(java_lang_Class, signers,                object_signature,  false)
 
 class java_lang_Class : AllStatic {
   friend class VMStructs;

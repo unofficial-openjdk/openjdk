@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -665,7 +665,12 @@ void java_lang_Class::create_mirror(KlassHandle k, Handle class_loader,
         new (ResourceObj::C_HEAP, mtClass) GrowableArray<Klass*>(40, true);
       set_fixup_jlrM_list(list);
     }
-    fixup_jlrM_list()->push(k());
+    if (k->oop_is_instance()) {
+      fixup_jlrM_list()->push(k());
+    } else if (k->oop_is_objArray()) {
+      ObjArrayKlass* obj_arr_klass = ObjArrayKlass::cast(k());
+      fixup_jlrM_list()->push(obj_arr_klass->bottom_klass());
+    }
   }
 }
 
@@ -918,6 +923,10 @@ void java_lang_Class::compute_offsets() {
   compute_offset(_component_mirror_offset,
                  k, vmSymbols::componentType_name(),
                  vmSymbols::class_signature());
+
+  compute_offset(_module_offset,
+                 k, vmSymbols::module_name(),
+                 vmSymbols::module_signature());
 
   // Init lock is a C union with component_mirror.  Only instanceKlass mirrors have
   // init_lock and only ArrayKlass mirrors have component_mirror.  Since both are oops

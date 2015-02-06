@@ -513,6 +513,7 @@
   template(string_signature,                          "Ljava/lang/String;")                                       \
   template(reference_signature,                       "Ljava/lang/ref/Reference;")                                \
   template(executable_signature,                      "Ljava/lang/reflect/Executable;")                           \
+  template(module_signature,                          "Ljava/lang/reflect/Module;")                               \
   template(concurrenthashmap_signature,               "Ljava/util/concurrent/ConcurrentHashMap;")                 \
   template(String_StringBuilder_signature,            "(Ljava/lang/String;)Ljava/lang/StringBuilder;")            \
   template(int_StringBuilder_signature,               "(I)Ljava/lang/StringBuilder;")                             \
