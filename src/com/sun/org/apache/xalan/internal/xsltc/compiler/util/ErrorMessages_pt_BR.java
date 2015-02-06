@@ -3,7 +3,7 @@
  * DO NOT REMOVE OR ALTER!
  */
 /*
- * Copyright 1999-2004 The Apache Software Foundation.
+ * Copyright 2001-2004 The Apache Software Foundation.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 /*
- * $Id: ErrorMessages_pt_BR.java 3023 2011-03-01 00:53:34Z joehw $
+ * $Id: ErrorMessages_pt_BR.java /st_wptg_1.7.0.79.0jdk/1 2015/01/23 11:50:29 gmolloy Exp $
  */
+
 package com.sun.org.apache.xalan.internal.xsltc.compiler.util;
 
 import java.util.ListResourceBundle;
@@ -214,7 +214,7 @@ public class ErrorMessages_pt_BR extends ListResourceBundle {
          * the expression.
          */
         {ErrorMsg.XPATH_PARSER_ERR,
-        "Erro durante o parse da express\u00E3o XPath ''{0}''."},
+        "Erro durante o parsing da express\u00E3o XPath ''{0}''."},
 
         /*
          * Note to translators:  An element in the stylesheet requires a
@@ -453,7 +453,7 @@ public class ErrorMessages_pt_BR extends ListResourceBundle {
          * Note to translators:  access to the stylesheet target is denied
          */
         {ErrorMsg.ACCESSING_XSLT_TARGET_ERR,
-        "Could not read stylesheet target ''{0}'', because ''{1}'' access is not allowed."},
+        "N\u00E3o foi poss\u00EDvel ler o alvo ''{0}'' da folha de estilos, porque o acesso a ''{1}'' n\u00E3o \u00E9 permitido em virtude da restri\u00E7\u00E3o definida pela propriedade accessExternalStylesheet."},
 
         /*
          * Note to translators:  This message represents an internal error in
@@ -475,7 +475,7 @@ public class ErrorMessages_pt_BR extends ListResourceBundle {
          * encountered in the stylesheet but is not recognized.
          */
         {ErrorMsg.ELEMENT_PARSE_ERR,
-        "N\u00E3o foi poss\u00EDvel fazer parse do elemento ''{0}''"},
+        "N\u00E3o foi poss\u00EDvel fazer parsing do elemento ''{0}''"},
 
         /*
          * Note to translators:  "use", "<key>", "node", "node-set", "string"
@@ -519,7 +519,7 @@ public class ErrorMessages_pt_BR extends ListResourceBundle {
          * contains the expression that was in error.
          */
         {ErrorMsg.ATTR_VAL_TEMPLATE_ERR,
-        "N\u00E3o \u00E9 poss\u00EDvel fazer parse do modelo do valor do atributo ''{0}''."},
+        "N\u00E3o \u00E9 poss\u00EDvel fazer parsing do modelo do valor do atributo ''{0}''."},
 
         /*
          * Note to translators:  ???
@@ -682,7 +682,7 @@ public class ErrorMessages_pt_BR extends ListResourceBundle {
          * documentation.
          */
         {ErrorMsg.COMPILE_USAGE_STR,
-        "SINOPSE\n   java com.sun.org.apache.xalan.internal.xsltc.cmdline.Compile [-o <sa\u00EDda>]\n      [-d <diret\u00F3rio>] [-j <jarfile>] [-p <pacote>]\n      [-n] [-x] [-u] [-v] [-h] { <folha de estilos> | -i }\n\nOP\u00C7\u00D5ES\n   -o <sa\u00EDda>    atribui o nome <sa\u00EDda> ao translet\n                  gerado.  Por default, o nome translet\n                  origina-se do nome <folha de estilos>.  Esta op\u00E7\u00E3o\n                  \u00E9 ignorada caso sejam compiladas v\u00E1rias folhas de estilos.\n   -d <diret\u00F3rio> especifica um diret\u00F3rio de destino para translet\n   -j <arquivo jar>   empacota as classes translet em um arquivo jar do\n                  nome especificado como <arquivo jar>\n   -p <pacote>   especifica um prefixo de nome do pacote para todas as classes\n                  translet geradas.\n   -n             permite a inclus\u00E3o do modelo na linha (comportamento default melhor\n                  em m\u00E9dia).\n   -x             ativa a sa\u00EDda de mensagens de depura\u00E7\u00E3o adicionais\n   -u             interpreta os argumentos <folha de estilos> como URLs\n   -i             obriga o compilador a ler a folha de estilos de stdin\n   -v             imprime a vers\u00E3o do compilador\n   -h             imprime esta instru\u00E7\u00E3o de uso\n"},
+        "SINOPSE\n   java com.sun.org.apache.xalan.internal.xsltc.cmdline.Compile [-o <sa\u00EDda>]\n      [-d <diret\u00F3rio>] [-j <jarfile>] [-p <pacote>]\n      [-n] [-x] [-u] [-v] [-h] { <folha de estilos> | -i }\n\nOP\u00C7\u00D5ES\n   -o <sa\u00EDda>    atribui o nome <sa\u00EDda> ao translet\n                  gerado.  Por padr\u00E3o, o nome translet\n                  origina-se do nome <folha de estilos>.  Esta op\u00E7\u00E3o\n                  \u00E9 ignorada caso sejam compiladas v\u00E1rias folhas de estilos.\n   -d <diret\u00F3rio> especifica um diret\u00F3rio de destino para translet\n   -j <arquivo jar>   empacota as classes translet em um arquivo jar do\n                  nome especificado como <arquivo jar>\n   -p <pacote>   especifica um prefixo de nome do pacote para todas as classes\n                  translet geradas.\n   -n             permite a inclus\u00E3o do modelo na linha (comportamento padr\u00E3o melhor\n                  em m\u00E9dia).\n   -x             ativa a sa\u00EDda de mensagens de depura\u00E7\u00E3o adicionais\n   -u             interpreta os argumentos <folha de estilos> como URLs\n   -i             obriga o compilador a ler a folha de estilos de stdin\n   -v             imprime a vers\u00E3o do compilador\n   -h             imprime esta instru\u00E7\u00E3o de uso\n"},
 
         /*
          * Note to translators:  This message contains usage information for a
@@ -777,7 +777,7 @@ public class ErrorMessages_pt_BR extends ListResourceBundle {
          * it the same amount as the first in English.
          */
         {ErrorMsg.WARNING_PLUS_WRAPPED_MSG,
-        "ADVERT\u00CANCIA:  ''{0}''\n       :{1}"},
+        "WARNING:  ''{0}''\n       :{1}"},
 
         /*
          * Note to translators:  This message is used to indicate the severity
@@ -793,7 +793,7 @@ public class ErrorMessages_pt_BR extends ListResourceBundle {
          * it the same amount as the first in English.
          */
         {ErrorMsg.FATAL_ERR_PLUS_WRAPPED_MSG,
-        "ERRO FATAL:  ''{0}''\n           :{1}"},
+        "FATAL ERROR:  ''{0}''\n           :{1}"},
 
         /*
          * Note to translators:  This message is used to indicate the severity
@@ -809,7 +809,7 @@ public class ErrorMessages_pt_BR extends ListResourceBundle {
          * it the same amount as the first in English.
          */
         {ErrorMsg.ERROR_PLUS_WRAPPED_MSG,
-        "ERRO:  ''{0}''\n     :{1}"},
+        "ERROR:  ''{0}''\n     :{1}"},
 
         /*
          * Note to translators:  This message is used to indicate the severity
@@ -916,7 +916,58 @@ public class ErrorMessages_pt_BR extends ListResourceBundle {
         "N\u00E3o \u00E9 poss\u00EDvel definir o recurso ''{0}'' nesta TransformerFactory."},
 
         {ErrorMsg.JAXP_SECUREPROCESSING_FEATURE,
-        "FEATURE_SECURE_PROCESSING: N\u00E3o \u00E9 poss\u00EDvel definir o recurso como falso quando o gerenciador de seguran\u00E7a est\u00E1 presente."}
+        "FEATURE_SECURE_PROCESSING: N\u00E3o \u00E9 poss\u00EDvel definir o recurso como falso quando o gerenciador de seguran\u00E7a est\u00E1 presente."},
+
+        /*
+         * Note to translators:  This message describes an internal error in the
+         * processor.  The term "byte code" is a Java technical term for the
+         * executable code in a Java method, and "try-catch-finally block"
+         * refers to the Java keywords with those names.  "Outlined" is a
+         * technical term internal to XSLTC and should not be translated.
+         */
+        {ErrorMsg.OUTLINE_ERR_TRY_CATCH,
+         "Erro interno de XSLTC: o byte code gerado cont\u00E9m um bloco try-catch-finally e n\u00E3o pode ser outlined."},
+
+        /*
+         * Note to translators:  This message describes an internal error in the
+         * processor.  The terms "OutlineableChunkStart" and
+         * "OutlineableChunkEnd" are the names of classes internal to XSLTC and
+         * should not be translated.  The message indicates that for every
+         * "start" there must be a corresponding "end", and vice versa, and
+         * that if one of a pair of "start" and "end" appears between another
+         * pair of corresponding "start" and "end", then the other half of the
+         * pair must also be between that same enclosing pair.
+         */
+        {ErrorMsg.OUTLINE_ERR_UNBALANCED_MARKERS,
+         "Erro interno de XSLTC: os marcadores OutlineableChunkStart e OutlineableChunkEnd devem ser balanceados e aninhados corretamente."},
+
+        /*
+         * Note to translators:  This message describes an internal error in the
+         * processor.  The term "byte code" is a Java technical term for the
+         * executable code in a Java method.  The "method" that is being
+         * referred to is a Java method in a translet that XSLTC is generating
+         * in processing a stylesheet.  The "instruction" that is being
+         * referred to is one of the instrutions in the Java byte code in that
+         * method.  "Outlined" is a technical term internal to XSLTC and
+         * should not be translated.
+         */
+        {ErrorMsg.OUTLINE_ERR_DELETED_TARGET,
+         "Erro interno de XSLTC: ainda h\u00E1 refer\u00EAncia no m\u00E9todo original a uma instru\u00E7\u00E3o que fazia parte de um bloco de byte code que foi outlined."
+        },
+
+
+        /*
+         * Note to translators:  This message describes an internal error in the
+         * processor.  The "method" that is being referred to is a Java method
+         * in a translet that XSLTC is generating.
+         *
+         */
+        {ErrorMsg.OUTLINE_ERR_METHOD_TOO_BIG,
+         "Erro interno de XSLTC: um m\u00E9todo no translet excede a limita\u00E7\u00E3o da M\u00E1quina Virtual Java quanto ao tamanho de um m\u00E9todo de de 64 kilobytes. Em geral, essa situa\u00E7\u00E3o \u00E9 causada por modelos de uma folha de estilos que s\u00E3o muito grandes. Tente reestruturar sua folha de estilos de forma a usar modelos menores."
+        },
+
+         {ErrorMsg.DESERIALIZE_TRANSLET_ERR, "Quando a seguran\u00E7a do Java est\u00E1 ativada, o suporte para desserializar TemplatesImpl fica desativado. Essa situa\u00E7\u00E3o pode ser corrigida definindo a propriedade do sistema jdk.xml.enableTemplatesImplDeserialization como true."}
+
     };
 
     }
