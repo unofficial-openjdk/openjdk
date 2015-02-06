@@ -1,6 +1,6 @@
 ###########################################################################
 #
-# Copyright (c) 2009, 2014, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2009, 2015, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -131,6 +131,9 @@ java/lang/ClassLoader/deadlock/GetResource.java                 generic-all
 java/lang/instrument/RedefineBigClass.sh                        generic-all
 java/lang/instrument/RetransformBigClass.sh                     generic-all
 
+# 8072130
+java/lang/instrument/BootClassPath/BootClassPathTest.sh         macosx-all
+
 ############################################################################
 
 # jdk_management
@@ -163,6 +166,9 @@ javax/management/remote/mandatory/notif/NotifReconnectDeadlockTest.java			generi
 
 # 6988950
 demo/jvmti/compiledMethodLoad/CompiledMethodLoadTest.java	generic-all
+
+# 8071968
+javax/xml/ws/8046817/GenerateEnumSchema.java                windows-all
 
 ############################################################################
 
@@ -321,6 +327,9 @@ java/util/spi/ResourceBundleControlProvider/UserDefaultControlTest.java generic-
 
 # 8031482
 sun/tools/jcmd/TestJcmdSanity.java				windows-all
+
+# 8072131
+sun/tools/jmap/heapconfig/JMapHeapConfigTest.java macosx-all
 
 # 8027668
 sun/tools/jstatd/TestJstatdDefaults.java                generic-all
