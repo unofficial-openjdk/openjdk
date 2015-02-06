@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1996, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -121,6 +121,31 @@ public abstract class Provider extends Properties {
 
     private transient boolean initialized;
 
+    private static Object doPrivilegedNewInstance(final Class<?> clazz,
+        final Class<?> ctrParamClz, final Object ctorParamObj)
+        throws Exception {
+        try {
+            return AccessController.doPrivileged(new PrivilegedExceptionAction<Object>() {
+                public Object run() throws Exception {
+                    if (ctrParamClz == null) {
+                        Constructor<?> con = clazz.getConstructor();
+                        // VALTBD
+                        con.setAccessible(true);
+                        return con.newInstance();
+                    } else {
+                        Constructor<?> con = clazz.getConstructor(ctrParamClz);
+                        // VALTBD
+                        con.setAccessible(true);
+                        return con.newInstance(ctorParamObj);
+                    }
+               }
+            });
+        } catch (PrivilegedActionException pae) {
+            throw (Exception) pae.getCause();
+        }
+    }
+
+
     /**
      * Constructs a provider with the specified name, version number,
      * and information.
@@ -137,6 +162,31 @@ public abstract class Provider extends Properties {
         this.info = info;
         putId();
         initialized = true;
+    }
+
+    /**
+     * Apply the supplied configuration parameter upon this provider instance and
+     * returns the configured provider.
+     *
+     * @param configArgs the configuration information for configuring this provider.
+     * @exception InvalidParameterException if the supplied information are invalid or
+     * if provider does not accept configuration info.
+     * @return a provider after the configured information has been applied.
+     */
+    public Provider configure(String... configArgs) throws InvalidParameterException {
+        if (configArgs != null && configArgs.length != 0) {
+            throw new InvalidParameterException("No configuration arguments allowed");
+        }
+        return this;
+    }
+
+    /**
+     * Return the configuration parameter used for configuring this provider instance.
+     *
+     * @return the string values passed into the Provider.configure call if any.
+     */
+    public String[] getArguments() {
+       return null;
     }
 
     /**
@@ -1593,10 +1643,7 @@ public abstract class Provider extends Properties {
                             ("constructorParameter not used with " + type
                             + " engines");
                     }
-                    Class<?> clazz = getImplClass();
-                    Class<?>[] empty = {};
-                    Constructor<?> con = clazz.getConstructor(empty);
-                    return con.newInstance();
+                    return doPrivilegedNewInstance(getImplClass(), null, null);
                 } else {
                     Class<?> paramClass = cap.getConstructorParameterClass();
                     if (constructorParameter != null) {
@@ -1608,9 +1655,8 @@ public abstract class Provider extends Properties {
                             + " for engine type " + type);
                         }
                     }
-                    Class<?> clazz = getImplClass();
-                    Constructor<?> cons = clazz.getConstructor(paramClass);
-                    return cons.newInstance(constructorParameter);
+                    return doPrivilegedNewInstance(getImplClass(), paramClass,
+                        constructorParameter);
                 }
             } catch (NoSuchAlgorithmException e) {
                 throw e;
@@ -1664,31 +1710,11 @@ public abstract class Provider extends Properties {
             Class<?> clazz = getImplClass();
             if (constructorParameter == null) {
                 // create instance with public no-arg constructor if it exists
-                try {
-                    Class<?>[] empty = {};
-                    Constructor<?> con = clazz.getConstructor(empty);
-                    return con.newInstance();
-                } catch (NoSuchMethodException e) {
-                    throw new NoSuchAlgorithmException("No public no-arg "
-                        + "constructor found in class " + className);
-                }
+                return doPrivilegedNewInstance(clazz, null, null);
             }
             Class<?> argClass = constructorParameter.getClass();
-            Constructor<?>[] cons = clazz.getConstructors();
-            // find first public constructor that can take the
-            // argument as parameter
-            for (Constructor<?> con : cons) {
-                Class<?>[] paramTypes = con.getParameterTypes();
-                if (paramTypes.length != 1) {
-                    continue;
-                }
-                if (paramTypes[0].isAssignableFrom(argClass) == false) {
-                    continue;
-                }
-                return con.newInstance(constructorParameter);
-            }
-            throw new NoSuchAlgorithmException("No public constructor matching "
-                + argClass.getName() + " found in class " + className);
+            return doPrivilegedNewInstance(clazz, argClass,
+                constructorParameter);
         }
 
         /**

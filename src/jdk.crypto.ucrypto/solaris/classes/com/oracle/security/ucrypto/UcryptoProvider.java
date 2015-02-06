@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,8 +29,6 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.StringTokenizer;
 import java.security.*;
-import sun.security.action.PutAllAction;
-import sun.security.action.GetPropertyAction;
 
 /**
  * OracleUcrypto provider main class.
@@ -41,33 +39,36 @@ public final class UcryptoProvider extends Provider {
 
     private static final long serialVersionUID = 351251234302833L;
 
-    private static boolean DEBUG;
-    private static HashMap<String, String> provProp;
+    private static boolean DEBUG = false;
+    private static HashMap<String, String> provProp = null;
+    private static String defConfigName = null;
 
     static {
         try {
-            DEBUG = Boolean.parseBoolean(AccessController.doPrivileged
-                (new GetPropertyAction("com.oracle.security.ucrypto.debug")));
-
             // cannot use LoadLibraryAction because that would make the native
             // library available to the bootclassloader, but we run in the
             // extension classloader.
-            provProp = AccessController.doPrivileged
-                (new PrivilegedAction<HashMap<String, String>>() {
-                    public HashMap<String, String> run() {
-                        try {
-                            System.loadLibrary("j2ucrypto");
-                            String osname = System.getProperty("os.name");
-                            if (osname.startsWith("SunOS")) {
+            String osname = System.getProperty("os.name");
+            if (osname.startsWith("SunOS")) {
+                provProp = AccessController.doPrivileged
+                    (new PrivilegedAction<HashMap<String, String>>() {
+                        public HashMap<String, String> run() {
+                            try {
+                                DEBUG = Boolean.parseBoolean(System.getProperty("com.oracle.security.ucrypto.debug"));
+                                String javaHome = System.getProperty("java.home");
+                                String sep = System.getProperty("file.separator");
+                                defConfigName = javaHome + sep + "conf" + sep + "security" + sep +
+                                    "ucrypto-solaris.cfg";
+                                System.loadLibrary("j2ucrypto");
                                 return new HashMap<String, String>();
-                            } else return null;
-                        } catch (Error err) {
-                            return null;
-                        } catch (SecurityException se) {
-                            return null;
+                            } catch (Error err) {
+                                return null;
+                            } catch (SecurityException se) {
+                                return null;
+                            }
                         }
-                    }
-                });
+                    });
+            }
             if (provProp != null) {
                 boolean[] result = loadLibraries();
                 if (result.length == 2) {
@@ -121,8 +122,8 @@ public final class UcryptoProvider extends Provider {
                 }
             }
         } catch (AccessControlException ace) {
+            if (DEBUG) ace.printStackTrace();
             // disable Ucrypto provider
-            DEBUG = false;
             provProp = null;
         }
     }
@@ -139,32 +140,24 @@ public final class UcryptoProvider extends Provider {
 
     public UcryptoProvider() {
         super("OracleUcrypto", 1.9d, "Provider using Oracle Ucrypto API");
-        if (provProp != null) {
-            AccessController.doPrivileged(new PutAllAction(this, provProp));
-        }
-        if (provider == null) provider = this;
-    }
 
-    public UcryptoProvider(String configName) {
-        super("OracleUcrypto", 1.9d, "Provider using Oracle Ucrypto API");
-        try {
-            if (provProp != null) {
-                HashMap<String, String> customProvProp =
-                    new HashMap<String, String>(provProp);
-                Config c = new Config(configName);
+        if (provProp != null) {
+            try {
+                Config c = new Config(defConfigName);
+                debug("Prov: configuration file " + defConfigName);
                 String[] disabledServices = c.getDisabledServices();
                 for (int i = 0; i < disabledServices.length; i++) {
-                    if (customProvProp.remove(disabledServices[i]) != null) {
+                    if (provProp.remove(disabledServices[i]) != null) {
                         debug("Prov: remove config-disabled service " + disabledServices[i]);
                     } else {
                         debug("Prov: ignore unsupported config-disabled service " +
                               disabledServices[i]);
                     }
                 }
-                AccessController.doPrivileged(new PutAllAction(this, customProvProp));
+            } catch (IOException ioe) { // thrown by Config
+                throw new UcryptoException("Error parsing Config", ioe);
             }
-        } catch (IOException ioe) { // thrown by Config
-            throw new UcryptoException("Error parsing Config", ioe);
+            putAll(provProp);
         }
         if (provider == null) provider = this;
     }

@@ -29,5 +29,6 @@ module java.security.sasl {
     exports javax.security.sasl;
     exports com.sun.security.sasl.util to
         jdk.security.jgss;
+    provides java.security.Provider with com.sun.security.sasl.Provider;
 }
 

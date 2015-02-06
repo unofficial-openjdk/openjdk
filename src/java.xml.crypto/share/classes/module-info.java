@@ -33,5 +33,6 @@ module java.xml.crypto {
     exports javax.xml.crypto.dsig.dom;
     exports javax.xml.crypto.dsig.keyinfo;
     exports javax.xml.crypto.dsig.spec;
+    provides java.security.Provider with org.jcp.xml.dsig.internal.dom.XMLDSigRI;
 }
 

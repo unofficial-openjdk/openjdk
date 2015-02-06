@@ -24,5 +24,6 @@
  */
 
 module jdk.crypto.ucrypto {
+    provides java.security.Provider with com.oracle.security.ucrypto.UcryptoProvider;
 }
 

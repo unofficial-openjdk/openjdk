@@ -161,6 +161,7 @@ module java.base {
         java.xml.crypto,
         jdk.crypto.ec,
         jdk.crypto.pkcs11,
+        jdk.crypto.ucrypto,
         jdk.naming.dns;
     exports sun.security.pkcs to
         jdk.crypto.ec,
@@ -215,6 +216,7 @@ module java.base {
     uses java.nio.charset.spi.CharsetProvider;
     uses java.nio.file.spi.FileSystemProvider;
     uses java.nio.file.spi.FileTypeDetector;
+    uses java.security.Provider;
     uses java.text.spi.BreakIteratorProvider;
     uses java.text.spi.CollatorProvider;
     uses java.text.spi.DateFormatProvider;
@@ -234,5 +236,9 @@ module java.base {
     uses sun.util.locale.provider.LocaleDataMetaInfo;
     uses sun.util.spi.CalendarProvider;
     provides java.nio.file.spi.FileSystemProvider with jdk.internal.jrtfs.JrtFileSystemProvider;
+    provides java.security.Provider with sun.security.provider.Sun;
+    provides java.security.Provider with sun.security.rsa.SunRsaSign;
+    provides java.security.Provider with com.sun.crypto.provider.SunJCE;
+    provides java.security.Provider with com.sun.net.ssl.internal.ssl.Provider;
 }
 
