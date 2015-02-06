@@ -2450,6 +2450,10 @@ public class ClassReader {
     }
 
     long adjustClassFlags(long flags) {
+        if ((flags & ACC_MODULE) != 0) {
+            flags &= ~ACC_MODULE;
+            flags |= MODULE;
+        }
         return flags & ~ACC_SUPER; // SUPER and SYNCHRONIZED bits overloaded
     }
 

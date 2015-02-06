@@ -1674,11 +1674,17 @@ public class ClassWriter extends ClassFile {
         List<Type> interfaces = types.interfaces(c.type);
         List<Type> typarams = c.type.getTypeArguments();
 
-        int flags = adjustFlags(c.flags() & ~DEFAULT);
-        if ((flags & PROTECTED) != 0) flags |= PUBLIC;
-        flags = flags & ClassFlags & ~STRICTFP;
-        if ((flags & INTERFACE) == 0) flags |= ACC_SUPER;
-        if (c.isInner() && c.name.isEmpty()) flags &= ~FINAL;
+        int flags;
+        if (c.owner.kind == MDL) {
+            flags = ACC_MODULE;
+        } else {
+            flags = adjustFlags(c.flags() & ~DEFAULT);
+            if ((flags & PROTECTED) != 0) flags |= PUBLIC;
+            flags = flags & ClassFlags & ~STRICTFP;
+            if ((flags & INTERFACE) == 0) flags |= ACC_SUPER;
+            if (c.isInner() && c.name.isEmpty()) flags &= ~FINAL;
+        }
+
         if (dumpClassModifiers) {
             PrintWriter pw = log.getWriter(Log.WriterKind.ERROR);
             pw.println();

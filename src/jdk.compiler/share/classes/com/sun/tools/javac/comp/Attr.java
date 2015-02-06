@@ -4069,7 +4069,7 @@ public class Attr extends JCTree.Visitor {
      */
     public void attrib(Env<AttrContext> env) {
         switch (env.tree.getTag()) {
-            case MODULE:
+            case MODULEDEF:
                 attribModule(env.tree.pos(), ((JCModuleDecl)env.tree).sym);
                 break;
             case TOPLEVEL:

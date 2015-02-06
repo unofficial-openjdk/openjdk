@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1203,7 +1203,7 @@ public class TreeInfo {
     public static JCModuleDecl getModule(JCCompilationUnit t) {
         if (t.defs.nonEmpty()) {
             JCTree def = t.defs.head;
-            if (def.hasTag(MODULE))
+            if (def.hasTag(MODULEDEF))
                 return (JCModuleDecl) def;
         }
         return null;

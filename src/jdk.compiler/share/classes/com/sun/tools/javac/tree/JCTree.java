@@ -348,12 +348,11 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
         DIV_ASG(DIV),                    // /=
         MOD_ASG(MOD),                    // %=
 
-        MODULE,
+        MODULEDEF,
         EXPORTS,
         PROVIDES,
         REQUIRES,
         USES,
-        VIEW,
 
         /** A synthetic let expression, of type LetExpr.
          */
@@ -2654,7 +2653,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
 
         @Override
         public Tag getTag() {
-            return MODULE;
+            return MODULEDEF;
         }
     }
 
