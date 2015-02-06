@@ -3,7 +3,7 @@
  * DO NOT REMOVE OR ALTER!
  */
 /*
- * Copyright 1999-2004 The Apache Software Foundation.
+ * Copyright 1999-2005 The Apache Software Foundation.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@
  * limitations under the License.
  */
 /*
- * $Id: XPATHErrorResources_de.java,v 1.2.4.1 2005/09/15 00:39:22 jeffsuttor Exp $
+ * $Id: XPATHErrorResources_de.java /st_wptg_1.7.0.79.0jdk/1 2015/01/23 11:23:27 gmolloy Exp $
  */
 package com.sun.org.apache.xpath.internal.res;
 
@@ -881,7 +881,7 @@ public static final String ER_IGNORABLE_WHITESPACE_NOT_HANDLED =
   { "optionIN", "   [-in inputXMLURL]"},
   { "optionSelect", "   [-select xpath expression]"},
   { "optionMatch", "   [-match match pattern (f\u00FCr Vergleichsdiagnose)]"},
-  { "optionAnyExpr", "Oder nur ein XPath-Ausdruck f\u00FChrt einen Diagnose-Dump aus"},
+  { "optionAnyExpr", "Oder nur ein XPath-Ausdruck f\u00FChrt einen Diagnosedump aus"},
   { "noParsermsg1", "XSL-Prozess war nicht erfolgreich."},
   { "noParsermsg2", "** Parser konnte nicht gefunden werden **"},
   { "noParsermsg3", "Pr\u00FCfen Sie den Classpath."},
