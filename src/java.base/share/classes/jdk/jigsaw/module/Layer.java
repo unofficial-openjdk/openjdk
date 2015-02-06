@@ -257,7 +257,7 @@ public final class Layer {
             throw new IllegalArgumentException(name + " not known to this Layer");
         }
 
-        ClassLoader loader = m.classLoader();
+        ClassLoader loader = m.getClassLoader();
         if (m != null) {
             SecurityManager sm = System.getSecurityManager();
             if (sm != null) {

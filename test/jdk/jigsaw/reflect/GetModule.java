@@ -63,7 +63,7 @@ public class GetModule {
     @Test(dataProvider = "samples")
     public void testGetModule(Class<?> type, String expected) {
         Module m = type.getModule();
-        String name = (m != null) ? m.name() : null;
+        String name = (m != null) ? m.getName() : null;
         assertEquals(name, expected);
     }
 }

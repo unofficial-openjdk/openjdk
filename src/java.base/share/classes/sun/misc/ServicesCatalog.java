@@ -69,7 +69,7 @@ public class ServicesCatalog {
      * Registers the module in this module catalog.
      */
     public void register(Module m) {
-        ModuleDescriptor descriptor = m.descriptor();
+        ModuleDescriptor descriptor = m.getDescriptor();
 
         writeLock.lock();
         try {

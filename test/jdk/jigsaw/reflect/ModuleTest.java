@@ -24,6 +24,7 @@
  */
 
 import java.lang.reflect.Module;
+import java.util.stream.Stream;
 
 import jdk.jigsaw.module.ModuleExport;
 
@@ -47,18 +48,18 @@ public class ModuleTest {
     public void testBase() {
         Module base = Object.class.getModule();
 
-        // classLoader
-        assertTrue(base.classLoader() == null);
+        // getClassLoader
+        assertTrue(base.getClassLoader() == null);
 
         // descriptor
         ModuleExport javaLang = new ModuleExport("java.lang");
-        assertTrue(base.descriptor().exports().contains(javaLang));
+        assertTrue(base.getDescriptor().exports().contains(javaLang));
 
         // name
-        assertTrue(base.name().equals("java.base"));
+        assertTrue(base.getName().equals("java.base"));
 
         // packages
-        assertTrue(base.packages().contains("java.lang"));
+        assertTrue(contains(base.getPackages(), "java.lang"));
 
         // canRead
         assertTrue(base.canRead(null));
@@ -69,19 +70,19 @@ public class ModuleTest {
     public void testDesktop() {
         Module desktop = java.awt.Component.class.getModule();
 
-        // classLoader
-        assertTrue(desktop.classLoader() == null);
+        // getClassLoader
+        assertTrue(desktop.getClassLoader() == null);
 
         // descriptor
         ModuleExport javaAWT = new ModuleExport("java.awt");
-        assertTrue(desktop.descriptor().exports().contains(javaAWT));
+        assertTrue(desktop.getDescriptor().exports().contains(javaAWT));
 
         // name
-        assertTrue(desktop.name().equals("java.desktop"));
+        assertTrue(desktop.getName().equals("java.desktop"));
 
         // packages
-        assertTrue(desktop.packages().contains("java.awt"));
-        assertTrue(desktop.packages().contains("javax.swing"));
+        assertTrue(contains(desktop.getPackages(), "java.awt"));
+        assertTrue(contains(desktop.getPackages(), "javax.swing"));
 
         // reads
         Module base = Object.class.getModule();
@@ -89,5 +90,9 @@ public class ModuleTest {
         assertTrue(desktop.canRead(null));
         assertTrue(desktop.canRead(base));
         assertTrue(desktop.canRead(xml));
+    }
+
+    private <T> boolean contains(T[] array, T obj) {
+        return Stream.of(array).anyMatch(obj::equals);
     }
 }

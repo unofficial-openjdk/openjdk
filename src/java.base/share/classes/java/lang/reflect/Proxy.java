@@ -37,6 +37,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiFunction;
+import java.util.stream.Stream;
 import java.util.stream.Collectors;
 
 import sun.misc.ProxyGenerator;
@@ -559,7 +560,7 @@ public class Proxy implements java.io.Serializable {
         private static final AtomicLong nextUniqueNumber = new AtomicLong();
 
         static Class<?> defineProxyClass(Module m, ClassLoader loader, Class<?>[] interfaces) {
-            if (m != null && m.classLoader() != loader) {
+            if (m != null && m.getClassLoader() != loader) {
                 throw new IllegalArgumentException(
                     "proxy class must be defined with same class loader as " + m +
                     " : " + toMessage(interfaces));
@@ -594,14 +595,14 @@ public class Proxy implements java.io.Serializable {
 
             if (proxyPkg == null) {
                 if (m != null) {
-                    proxyPkg = ReflectUtil.PROXY_PACKAGE + "." + m.name();
+                    proxyPkg = ReflectUtil.PROXY_PACKAGE + "." + m.getName();
                 } else {
                     proxyPkg = ReflectUtil.PROXY_PACKAGE;
                 }
             }
 
             // add the package to the runtime module if not exists
-            if (m != null && !m.packages().contains(proxyPkg)) {
+            if (m != null && !Stream.of(m.getPackages()).anyMatch(proxyPkg::equals)) {
                 if (proxyPkg.isEmpty()) {
                     throw new IllegalArgumentException(
                         "Unnamed package cannot be added to " + m);
@@ -680,7 +681,7 @@ public class Proxy implements java.io.Serializable {
                 @Override
                 public Class<?> apply(Module m, Class<?>[] interfaces) {
                     Objects.requireNonNull(m);
-                    return ProxyClassFactory.defineProxyClass(m, m.classLoader(), interfaces);
+                    return ProxyClassFactory.defineProxyClass(m, m.getClassLoader(), interfaces);
                 }
             });
 
@@ -711,7 +712,7 @@ public class Proxy implements java.io.Serializable {
 
         private Module module;  // null unknown
         ProxyBuilder(Module m, Class<?>[] interfaces) {
-            this(null, m.classLoader(), interfaces);
+            this(null, m.getClassLoader(), interfaces);
             this.module = m;
         }
 
@@ -945,7 +946,7 @@ public class Proxy implements java.io.Serializable {
          *         accessible to the module
          */
         private static void ensureAccess(Module module, ClassLoader loader, Class<?>[] interfaces) {
-            if (module != null && module.classLoader() != loader) {
+            if (module != null && module.getClassLoader() != loader) {
                 throw new IllegalArgumentException("class loader not allowed " +
                         " to define proxy class in " + module);
             }
@@ -1119,7 +1120,7 @@ public class Proxy implements java.io.Serializable {
     public static Object newProxyInstance(Module module, InvocationHandler h, Class<?>... interfaces) {
         Objects.requireNonNull(module);
         Objects.requireNonNull(h);
-        final ClassLoader loader = module.classLoader();
+        final ClassLoader loader = module.getClassLoader();
         final Class<?>[] intfs = interfaces.clone();
         final SecurityManager sm = System.getSecurityManager();
         final Class<?> caller;

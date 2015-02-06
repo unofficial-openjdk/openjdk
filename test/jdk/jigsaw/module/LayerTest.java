@@ -143,9 +143,9 @@ public class LayerTest {
         } catch (IllegalArgumentException ignore) { }
 
         // findModule
-        assertTrue(layer.findModule("m1").name().equals("m1"));
-        assertTrue(layer.findModule("m2").name().equals("m2"));
-        assertTrue(layer.findModule("m3").name().equals("m3"));
+        assertTrue(layer.findModule("m1").getName().equals("m1"));
+        assertTrue(layer.findModule("m2").getName().equals("m2"));
+        assertTrue(layer.findModule("m3").getName().equals("m3"));
         assertTrue(layer.findModule("godot") == null);
 
         // parent
@@ -189,8 +189,8 @@ public class LayerTest {
         assertTrue(layer.findLoader("java.base") == null);
 
         // findModule
-        assertTrue(layer.findModule("m1").name().equals("m1"));
-        assertTrue(layer.findModule("m2").name().equals("m2"));
+        assertTrue(layer.findModule("m1").getName().equals("m1"));
+        assertTrue(layer.findModule("m2").getName().equals("m2"));
         assertTrue(layer.findModule("java.base") == Object.class.getModule());
         // parent
 

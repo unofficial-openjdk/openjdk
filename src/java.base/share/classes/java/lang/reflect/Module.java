@@ -45,15 +45,9 @@ import sun.misc.VM;
  * Represents a runtime module.
  *
  * <p> {@code Module} does not define a public constructor. Instead {@code
- * Module} objects are constructed automatically by the Java Virtual Machine as
- * modules are defined by {@link jdk.jigsaw.module.Layer#create Layer.create}. </p>
- *
- * @apiNote Need to see if this API is consistent with other APis in
- * java.lang.reflect, in particular array vs. collection and whether to
- * use getXXX instead of XXX.
- *
- * @apiNote The types in {@code java.lang.reflect} usually return an array
- * rather than collections. Also the convention is to use getXXX for getters.
+ * Module} objects are constructed by the Java Virtual Machine when a
+ * {@link jdk.jigsaw.module.Configuration Configuration} is reified when a
+ * {@link jdk.jigsaw.module.Layer Layer} is created. </p>
  *
  * @since 1.9
  * @see java.lang.Class#getModule
@@ -129,41 +123,56 @@ public final class Module {
     /**
      * Returns the module name.
      */
-    public String name() {
+    public String getName() {
         return name;
     }
 
     /**
-     * Returns the {@code ClassLoader} that this module is associated with.
+     * Returns the {@code ClassLoader} for this module.
      */
-    public ClassLoader classLoader() {
+    public ClassLoader getClassLoader() {
         return loader;
     }
 
     /**
-     * Returns the module descriptor from which this {@code Module} was defined.
+     * Returns the module descriptor for this module.
      */
-    public ModuleDescriptor descriptor() {
-        ModuleDescriptor descriptor = this.descriptor;
-        assert descriptor != null;
+    public ModuleDescriptor getDescriptor() {
         return descriptor;
     }
 
     /**
-     * Returns the set of packages that this module includes.
+     * Returns an array of the package names of the packages in this module.
+     *
+     * <p> The package names are the fully-qualified names of the packages as
+     * defined in section 6.5.3 of <cite>The Java&trade; Language Specification
+     * </cite>, for example, {@code "java.lang"}. </p>
+     *
+     * <p> The returned array contains an element for each package in the
+     * module when it was initially created. It may contain elements
+     * corresponding to packages added tothe  module after it was created
+     * (packages added to support dynamic proxy classes for example). A package
+     * name appears at most once in the returned array. </p>
+     *
+     * @return an array of the package names of the packages in this module
      */
-    public Set<String> packages() {
-        Set<String> packages = this.packages;
-        assert packages != null;
-        return packages;
+    public String[] getPackages() {
+        return packages.toArray(new String[0]);
     }
 
     /**
      * Makes the given {@code Module} readable to this module. This method
-     * is no-op if {@code target} is {@code null} or this module (all modules
-     * can read the unnanmed module or themselves)
+     * is no-op if {@code target} is {@code null} or {@code this} (all modules
+     * can read the unnamed module or themselves).
+     *
+     * <p> If there is a security manager then its {@code checkPermission}
+     * method if first called with a {@code ReflectPermission("addReadsModule")}
+     * permission to check that the caller is allowed to change the
+     * readability graph. </p>
      *
      * @throws SecurityException if denied by the security manager
+     *
+     * @see #canRead
      */
     public void addReads(Module target) {
         if (target != null && target != this) {
@@ -175,6 +184,30 @@ public final class Module {
             implAddReads(target);
         }
     }
+
+    /**
+     * Indicates if this {@code Module} reads the given {@code Module}.
+     *
+     * <p> Returns {@code true} if {@code m} is {@code null} (the unnamed
+     * readable is readable to all modules), or {@code m} is this module (a
+     * module can read itself). </p>
+     *
+     * @see #addReads
+     */
+    public boolean canRead(Module target) {
+        if (target == null || target == this)
+            return true;
+        return VM.canReadModule(this, target);
+    }
+
+    /**
+     * Returns the string representation.
+     */
+    @Override
+    public String toString() {
+        return "module " + name;
+    }
+
 
     /**
      * Makes the given {@code Module} readable to this module.
@@ -198,39 +231,16 @@ public final class Module {
         return VM.isExportedToModule(this, pkg.replace('.', '/'), who);
     }
 
-    /**
-     * Indicates if this {@code Module} reads the given {@code Module}.
-     *
-     * <p> Returns {@code true} if {@code m} is {@code null} (the unnamed
-     * readable is readable to all modules), or {@code m} is this module (a
-     * module can read itself). </p>
-     *
-     * @see #addReads
-     */
-    public boolean canRead(Module target) {
-        if (target == null || target == this)
-            return true;
-        return VM.canReadModule(this, target);
-    }
-
-    /**
-     * Returns the set of modules that this module reads.
-     */
-    public Set<Module> reads() {
-        // need to decide if we need this method
-        throw new RuntimeException("not implemented");
-    }
-
     Set<String> uses() {
         // already cached
         Set<String> uses = this.uses;
         if (uses != null)
             return uses;
 
-        uses = descriptor().serviceDependences()
-                           .stream()
-                           .map(ServiceDependence::service)
-                           .collect(Collectors.toSet());
+        uses = descriptor.serviceDependences()
+                         .stream()
+                         .map(ServiceDependence::service)
+                         .collect(Collectors.toSet());
         uses = Collections.unmodifiableSet(uses);
         this.uses = uses;
         return uses;
@@ -246,14 +256,7 @@ public final class Module {
         sun.misc.VM.addModulePackage(this, pkg.replace('.', '/'));
         Set<String> pkgs = new HashSet<>(this.packages);
         pkgs.add(pkg);
-        this.packages = Collections.unmodifiableSet(pkgs);
-    }
-
-    /**
-     * Return the string representation of the module.
-     */
-    public String toString() {
-        return "module " + name;
+        this.packages = pkgs;
     }
 
     static {
@@ -296,7 +299,7 @@ public final class Module {
                 }
                 @Override
                 public Set<String> provides(Module m, String sn) {
-                    Set<String> provides = m.descriptor().services().get(sn);
+                    Set<String> provides = m.getDescriptor().services().get(sn);
                     if (provides == null) {
                         return Collections.emptySet();
                     } else {
