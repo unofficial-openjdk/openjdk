@@ -277,6 +277,10 @@ final class ProviderConfig {
         }
 
         public Provider load(String provName, String[] arguments) {
+            // fastpath SUN built-in provider that may be loaded at startup
+            if (provName.equals("SUN"))
+                return new sun.security.provider.Sun();
+
             Iterator<Provider> iter = loader.iterator();
             while (iter.hasNext()) {
                 try {
@@ -303,6 +307,7 @@ final class ProviderConfig {
                     }
                 }
             }
+
             return null;
         }
 
