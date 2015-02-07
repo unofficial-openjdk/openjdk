@@ -728,12 +728,14 @@ public final class Class<T> implements java.io.Serializable,
      * @since 1.9
      */
     public Module getModule() {
-        // FIXME: change to "return module" when VM is ready
-        return getModule0();
+        if (isArray()) {
+            return componentType.getModule();
+        } else {
+            return isPrimitive() ? Object.class.module : module;
+        }
     }
 
-    private transient Module module;  // no need to be volatile
-    private native Module getModule0();
+    private transient Module module;  // set by VM
 
     // Initialized in JVM not by private constructor
     // This field is filtered from reflection access, i.e. getDeclaredField

@@ -40,23 +40,25 @@ public class GetModule {
     @DataProvider(name = "samples")
     public Object[][] sampleData() {
         return new Object[][] {
-            // unnamed module
-            { GetModule.class,    null },
-            { GetModule[].class,  null },
 
-            // named modules
-            //{ int.class,            "java.base" },
-            //{ int[].class,          "java.base" },
-            //{ void.class,           "java.base" },
+            // unnamed module
+
+            { GetModule.class,      null },
+            { GetModule[].class,    null },
+            { GetModule[][].class,  null },
+
+            // should return named module
+
+            { int.class,            "java.base" },
+            { int[].class,          "java.base" },
+            { int[][].class,        "java.base" },
+            { void.class,           "java.base" },
             { Object.class,         "java.base" },
             { Object[].class,       "java.base" },
             { Object[][].class,     "java.base" },
             { Component.class,      "java.desktop" },
             { Component[].class,    "java.desktop" },
             { Component[][].class,  "java.desktop" },
-
-            // TBD - need to add test classes for exported classes that are
-            // on the extensions or application class path.
         };
     }
 
