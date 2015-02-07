@@ -484,16 +484,6 @@ class BuiltinClassLoader extends SecureClassLoader
             byte[] bytes = reader.readResource(rn);
 
             // define class to VM
-            int pos = cn.lastIndexOf('.');
-            String pn = cn.substring(0, pos);
-            Package p = getPackage(pn);
-            if (p == null) {
-                try {
-                    definePackage(pn, null, null, null, null, null, null, null);
-                } catch (IllegalArgumentException iae) {
-                    // someone else beat us to it
-                }
-            }
             CodeSource cs = new CodeSource(reader.codeBase(), (CodeSigner[])null);
             return defineClass(cn, bytes, 0, bytes.length, cs);
 
