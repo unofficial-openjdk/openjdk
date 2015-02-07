@@ -298,9 +298,8 @@ public final class ModuleInfo {
         ConstantPool cpool = new ConstantPool(in);
 
         int access_flags = in.readUnsignedShort();
-        if (access_flags != ACC_MODULE) {
-            // classFormatError("access_flags should be ACC_MODULE");
-        }
+        if (access_flags != ACC_MODULE)
+            classFormatError("access_flags should be ACC_MODULE");
 
         int this_class = in.readUnsignedShort();
         String mn = cpool.getClassName(this_class);
