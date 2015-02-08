@@ -99,8 +99,6 @@ JDK_PKGS = jdk \
       jdk.net \
       jdk.management.cmm
 
-MODULE_PKGS = jdk.jigsaw.module
-
 # non-core packages in rt.jar
 NON_CORE_PKGS = $(DOMAPI_PKGS) \
     $(MGMT_PKGS) \
@@ -112,5 +110,4 @@ NON_CORE_PKGS = $(DOMAPI_PKGS) \
     $(SMARTCARDIO_PKGS) \
     $(SCTPAPI_PKGS) \
     $(APPLE_EXT_PKGS) \
-    $(JDK_PKGS) \
-    $(MODULE_PKGS)
+    $(JDK_PKGS)
