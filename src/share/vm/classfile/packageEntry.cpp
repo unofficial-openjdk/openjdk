@@ -28,6 +28,7 @@
 #include "memory/resourceArea.hpp"
 #include "oops/symbol.hpp"
 #include "runtime/handles.inline.hpp"
+#include "trace/traceMacros.hpp"
 #include "utilities/events.hpp"
 #include "utilities/growableArray.hpp"
 #include "utilities/hashtable.inline.hpp"
@@ -162,6 +163,8 @@ PackageEntry* PackageEntryTable::new_entry(unsigned int hash, Symbol* name, Modu
   entry->set_hash(hash);
   entry->set_literal(name);
 
+  TRACE_INIT_PACKAGE_ID(entry);
+
   // Initialize fields specific to a PackageEntry
   entry->init();
   entry->name()->increment_refcount();
@@ -285,4 +288,18 @@ void PackageEntryTable::verify() {
 
 void PackageEntry::verify() {
   guarantee(name() != NULL, "A package entry must have a corresponding symbol name.");
+}
+
+// iteration of qualified exports
+void PackageEntry::package_exports_do(ModuleClosure* const f) {
+  assert_locked_or_safepoint(Module_lock);
+  assert(f != NULL, "invariant");
+
+  if (is_qual_exported()) {
+    int qe_len = _qualified_exports->length();
+
+    for (int i = 0; i < qe_len; ++i) {
+      f->do_module(_qualified_exports->at(i));
+    }
+  }
 }

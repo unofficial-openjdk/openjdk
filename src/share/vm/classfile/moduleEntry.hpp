@@ -30,8 +30,11 @@
 #include "oops/symbol.hpp"
 #include "prims/jni.h"
 #include "runtime/mutexLocker.hpp"
+#include "trace/traceMacros.hpp"
 #include "utilities/growableArray.hpp"
 #include "utilities/hashtable.hpp"
+
+class ModuleClosure;
 
 // A ModuleEntry describes a module that has been defined by a call to JVM_DefineModule.
 // It contains:
@@ -49,6 +52,7 @@ private:
   GrowableArray<ModuleEntry*>* _reads; // list of modules that are readable by this module
   char* _version;  // module version number
   bool _pkgs_with_qexports; // this module contains 1 or more packages with qualified exports
+  TRACE_DEFINE_TRACE_ID_FIELD;
 
 public:
   void init() {
@@ -72,6 +76,7 @@ public:
   void               set_version(char* version)     { _version = version; }
 
   bool               can_read(ModuleEntry* m) const;
+  bool               has_reads() const;
   void               add_read(ModuleEntry* m);
 
   bool               pkgs_with_qexports()           { return _pkgs_with_qexports; }
@@ -89,6 +94,11 @@ public:
     f->do_oop(literal_addr());
   }
 
+  // iteration support for readability
+  void module_reads_do(ModuleClosure* const f);
+
+  TRACE_DEFINE_TRACE_ID_METHODS;
+
   // Purge dead weak references out of reads list when any given class loader is unloaded.
   void purge_reads();
   void delete_reads();
@@ -96,6 +106,13 @@ public:
   void print() PRODUCT_RETURN;
   void verify();
 };
+
+// Iterator interface
+class ModuleClosure: public StackObj {
+ public:
+  virtual void do_module(ModuleEntry* const module) = 0;
+};
+
 
 // The ModuleEntryTable is a Hashtable containing a list of all modules defined
 // by a particular class loader.  Each module is represented as a ModuleEntry node.

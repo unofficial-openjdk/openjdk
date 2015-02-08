@@ -31,6 +31,7 @@
 #include "classfile/modules.hpp"
 #include "classfile/packageEntry.hpp"
 #include "classfile/stringTable.hpp"
+#include "classfile/symbolTable.hpp"
 #include "classfile/vmSymbols.hpp"
 #include "oops/instanceKlass.hpp"
 #include "oops/objArrayKlass.hpp"
@@ -72,6 +73,30 @@ static PackageEntryTable* get_package_entry_table(Handle h_loader, TRAPS) {
   // created.  So, call register_loader() to make sure the classLoader data gets created.
   ClassLoaderData *loader_cld = SystemDictionary::register_loader(h_loader, CHECK_NULL);
   return loader_cld->packages();
+}
+
+static PackageEntry* get_package_entry_by_name(Symbol* package,
+                                               Handle h_loader,
+                                               TRAPS) {
+  if (package != NULL) {
+    ResourceMark rm;
+    if (Modules::verify_package_name(package->as_C_string())) {
+      PackageEntryTable* const package_entry_table =
+        get_package_entry_table(h_loader, THREAD);
+      assert(package_entry_table != NULL, "Unexpected null package entry table");
+      return package_entry_table->lookup_only(package);
+    }
+  }
+  return NULL;
+}
+
+static ModuleEntry* get_module_entry_by_package_name(Symbol* package,
+                                                     Handle h_loader,
+                                                     TRAPS) {
+  const PackageEntry* const pkg_entry =
+    get_package_entry_by_name(package, h_loader, THREAD);
+
+  return pkg_entry != NULL ? pkg_entry->module() : NULL;
 }
 
 // Check if -Xoverride:<path> was specified.  If so, prepend <path>/module_name,
@@ -149,7 +174,6 @@ static PackageEntry* get_package_entry(ModuleEntry* module_entry, jstring packag
   assert(package_entry_table != NULL, "Unexpected null package entry table");
   return package_entry_table->lookup_only(pkg_symbol);
 }
-
 
 jobject Modules::define_module(JNIEnv *env, jstring name, jobject loader, jobjectArray packages) {
   JavaThread *THREAD = JavaThread::thread_from_jni_environment(env);
@@ -508,7 +532,7 @@ jboolean Modules::is_exported_to_module(JNIEnv *env, jobject from_module, jstrin
     tty->print_cr("[is_exported_to_module: package %s from module %s checking if exported to module %s, exported? = %s",
                   package_entry->name()->as_C_string(),
                   from_module_entry->name()->as_C_string(),
-                  to_module_entry->name()->as_C_string(),
+                  to_module_entry != NULL ? to_module_entry->name()->as_C_string() : "unnamed",
                   BOOL_TO_STR(package_entry->is_unqual_exported() ||
                     (to_module != NULL && package_entry->is_qexported_to(to_module_entry)) ||
                     (from_module_entry == to_module_entry)));
@@ -559,6 +583,19 @@ jobject Modules::get_module(JNIEnv *env, jclass clazz) {
   }
 
   return JNIHandles::make_local(env, module);
+}
+
+jobject Modules::get_module(Symbol* package_name,
+                           Handle h_loader,
+                           TRAPS) {
+
+  const ModuleEntry* const module =
+    get_module_entry_by_package_name(package_name,
+                                     h_loader,
+                                     THREAD);
+
+  return module != NULL ?
+    JNIHandles::make_local(THREAD, module->literal()) : NULL;
 }
 
 void Modules::add_module_package(JNIEnv *env, jobject module, jstring package) {
@@ -614,4 +651,8 @@ void Modules::add_module_package(JNIEnv *env, jobject module, jstring package) {
     THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(),
               err_msg("Package %s already exists for class loader", package_name));
   }
+}
+
+bool Modules::is_package_defined(Symbol* package, Handle h_loader, TRAPS) {
+  return get_package_entry_by_name(package, h_loader, THREAD) != NULL;
 }

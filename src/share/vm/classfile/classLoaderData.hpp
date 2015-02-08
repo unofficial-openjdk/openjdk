@@ -53,6 +53,8 @@ class ClassLoaderData;
 class JNIMethodBlock;
 class JNIHandleBlock;
 class Metadebug;
+class ModuleEntry;
+class PackageEntry;
 class ModuleEntryTable;
 class PackageEntryTable;
 
@@ -95,6 +97,10 @@ class ClassLoaderDataGraph : public AllStatic {
   static void classes_do(KlassClosure* klass_closure);
   static void classes_do(void f(Klass* const));
   static void methods_do(void f(Method*));
+  static void modules_do(void f(ModuleEntry*));
+  static void modules_unloading_do(void f(ModuleEntry*));
+  static void packages_do(void f(PackageEntry*));
+  static void packages_unloading_do(void f(PackageEntry*));
   static void loaded_classes_do(KlassClosure* klass_closure);
   static void classes_unloading_do(void f(Klass* const));
   static bool do_unloading(BoolObjectClosure* is_alive, bool clean_alive);
@@ -221,6 +227,8 @@ class ClassLoaderData : public CHeapObj<mtClass> {
   void loaded_classes_do(KlassClosure* klass_closure);
   void classes_do(void f(InstanceKlass*));
   void methods_do(void f(Method*));
+  void modules_do(void f(ModuleEntry*));
+  void packages_do(void f(PackageEntry*));
 
   // Deallocate free list during class unloading.
   void free_deallocate_list();

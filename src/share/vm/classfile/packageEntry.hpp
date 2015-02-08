@@ -50,6 +50,7 @@ private:
   bool _is_exported;
   GrowableArray<ModuleEntry*>* _exported_pending_delete; // transitioned from qualified to unqualified, delete at safepoint
   GrowableArray<ModuleEntry*>* _qualified_exports;
+  TRACE_DEFINE_TRACE_ID_FIELD;
 
 public:
   void init() {
@@ -92,6 +93,11 @@ public:
   PackageEntry** next_addr() {
     return (PackageEntry**)HashtableEntry<Symbol*, mtClass>::next_addr();
   }
+
+  // iteration of qualified exports
+  void package_exports_do(ModuleClosure* const f);
+
+  TRACE_DEFINE_TRACE_ID_METHODS;
 
   // Purge dead weak references out of exported list when any given class loader is unloaded.
   void purge_qualified_exports();
@@ -144,7 +150,7 @@ public:
     return (unsigned int)(name->identity_hash());
   }
 
-  int index_for(Symbol* name) {
+  int index_for(Symbol* name) const {
     return hash_to_index(compute_hash(name));
   }
 

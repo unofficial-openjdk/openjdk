@@ -25,6 +25,11 @@
 #ifndef SHARE_VM_CLASSFILE_MODULES_HPP
 #define SHARE_VM_CLASSFILE_MODULES_HPP
 
+#include "memory/allocation.hpp"
+#include "runtime/handles.hpp"
+
+class Symbol;
+
 class Modules : AllStatic {
 
 public:
@@ -83,6 +88,11 @@ public:
   // Return the java.lang.reflect.Module object for this class object.
   static jobject get_module(JNIEnv *env, jclass clazz);
 
+  // If package is defined by loader, return the
+  // java.lang.reflect.Module object for the module in which the package is defined.
+  // Returns NULL if package is invalid or not defined by loader.
+  static jobject get_module(Symbol* package_name, Handle h_loader, TRAPS);
+
   // This adds package to module.
   // It throws IllegalArgumentException if:
   // * Module is bad
@@ -92,6 +102,9 @@ public:
 
   // Return TRUE if package_name is syntactically valid, false otherwise.
   static bool verify_package_name(char *package_name);
+
+  // Return TRUE iff package is defined by loader
+  static bool is_package_defined(Symbol* package_name, Handle h_loader, TRAPS);
 
 };
 

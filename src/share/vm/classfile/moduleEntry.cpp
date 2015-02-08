@@ -31,6 +31,7 @@
 #include "prims/jni.h"
 #include "runtime/handles.inline.hpp"
 #include "runtime/safepoint.hpp"
+#include "trace/traceMacros.hpp"
 #include "utilities/events.hpp"
 #include "utilities/growableArray.hpp"
 #include "utilities/hashtable.inline.hpp"
@@ -58,6 +59,10 @@ void ModuleEntry::add_read(ModuleEntry* m) {
     _reads = new (ResourceObj::C_HEAP, mtClass) GrowableArray<ModuleEntry*>(101, true);
   }
   _reads->append_if_missing(m);
+}
+
+bool ModuleEntry::has_reads() const {
+  return _reads != NULL && !_reads->is_empty();
 }
 
 // Purge dead module entries out of reads list.
@@ -134,6 +139,7 @@ ModuleEntry* ModuleEntryTable::new_entry(unsigned int hash, oop module, Symbol* 
   entry->set_name(name);
   name->increment_refcount();
   entry->set_loader(class_loader);
+  TRACE_INIT_MODULE_ID(entry);
 
   return entry;
 }
@@ -295,4 +301,16 @@ void ModuleEntryTable::verify() {
 
 void ModuleEntry::verify() {
   guarantee(literal()->is_oop(), "must be an oop");
+}
+
+void ModuleEntry::module_reads_do(ModuleClosure* const f) {
+  assert_locked_or_safepoint(Module_lock);
+  assert(f != NULL, "invariant");
+
+  if (_reads != NULL) {
+    int reads_len = _reads->length();
+    for (int i = 0; i < reads_len; ++i) {
+      f->do_module(_reads->at(i));
+    }
+  }
 }

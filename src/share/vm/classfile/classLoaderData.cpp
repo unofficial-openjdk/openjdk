@@ -170,6 +170,30 @@ void ClassLoaderData::classes_do(void f(InstanceKlass*)) {
   }
 }
 
+void ClassLoaderData::modules_do(void f(ModuleEntry*)) {
+  if (_modules != NULL) {
+    for (int i = 0; i < _modules->table_size(); i++) {
+      for (ModuleEntry* entry = _modules->bucket(i);
+                              entry != NULL;
+                              entry = entry->next()) {
+        f(entry);
+      }
+    }
+  }
+}
+
+void ClassLoaderData::packages_do(void f(PackageEntry*)) {
+  if (_packages != NULL) {
+    for (int i = 0; i < _packages->table_size(); i++) {
+      for (PackageEntry* entry = _packages->bucket(i);
+                              entry != NULL;
+                              entry = entry->next()) {
+        f(entry);
+      }
+    }
+  }
+}
+
 void ClassLoaderData::record_dependency(Klass* k, TRAPS) {
   ClassLoaderData * const from_cld = this;
   ClassLoaderData * const to_cld = k->class_loader_data();
@@ -717,6 +741,40 @@ void ClassLoaderDataGraph::methods_do(void f(Method*)) {
   }
 }
 
+void ClassLoaderDataGraph::modules_do(void f(ModuleEntry*)) {
+  assert_locked_or_safepoint(Module_lock);
+  for (ClassLoaderData* cld = _head; cld != NULL; cld = cld->next()) {
+    cld->modules_do(f);
+  }
+}
+
+void ClassLoaderDataGraph::modules_unloading_do(void f(ModuleEntry*)) {
+  assert(SafepointSynchronize::is_at_safepoint(), "must be at safepoint!");
+  // Only walk the head until any clds not purged from prior unloading
+  // (CMS doesn't purge right away).
+  for (ClassLoaderData* cld = _unloading; cld != _saved_unloading; cld = cld->next()) {
+    assert(cld->is_unloading(), "invariant");
+    cld->modules_do(f);
+  }
+}
+
+void ClassLoaderDataGraph::packages_do(void f(PackageEntry*)) {
+  assert_locked_or_safepoint(Module_lock);
+  for (ClassLoaderData* cld = _head; cld != NULL; cld = cld->next()) {
+    cld->packages_do(f);
+  }
+}
+
+void ClassLoaderDataGraph::packages_unloading_do(void f(PackageEntry*)) {
+  assert(SafepointSynchronize::is_at_safepoint(), "must be at safepoint!");
+  // Only walk the head until any clds not purged from prior unloading
+  // (CMS doesn't purge right away).
+  for (ClassLoaderData* cld = _unloading; cld != _saved_unloading; cld = cld->next()) {
+    assert(cld->is_unloading(), "invariant");
+    cld->packages_do(f);
+  }
+}
+
 void ClassLoaderDataGraph::loaded_classes_do(KlassClosure* klass_closure) {
   for (ClassLoaderData* cld = _head; cld != NULL; cld = cld->next()) {
     cld->loaded_classes_do(klass_closure);
@@ -728,6 +786,7 @@ void ClassLoaderDataGraph::classes_unloading_do(void f(Klass* const)) {
   // Only walk the head until any clds not purged from prior unloading
   // (CMS doesn't purge right away).
   for (ClassLoaderData* cld = _unloading; cld != _saved_unloading; cld = cld->next()) {
+    assert(cld->is_unloading(), "invariant");
     cld->classes_do(f);
   }
 }
@@ -1012,6 +1071,7 @@ void ClassLoaderData::print_value_on(outputStream* out) const {
 Ticks ClassLoaderDataGraph::_class_unload_time;
 
 void ClassLoaderDataGraph::class_unload_event(Klass* const k) {
+  assert(k != NULL, "invariant");
 
   // post class unload event
   EventClassUnload event(UNTIMED);
