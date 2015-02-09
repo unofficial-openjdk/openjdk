@@ -1023,7 +1023,8 @@ public class ClassReader {
                         }
                         int nexports = nextChar();
                         for (int i = 0; i < nexports; i++) {
-                            PackageSymbol p = syms.enterPackage(readName(nextChar()));
+                            Name n = readName(nextChar());
+                            PackageSymbol p = syms.enterPackage(names.fromUtf(internalize(n)));
                             int nto = nextChar();
                             List<Name> to;
                             if (nto == 0) {
