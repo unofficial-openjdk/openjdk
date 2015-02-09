@@ -119,7 +119,15 @@ inline void Assembler::ldf(FloatRegisterImpl::Width w, Register s1, RegisterOrCo
 inline void Assembler::ldf(FloatRegisterImpl::Width w, Register s1, Register s2, FloatRegister d) { emit_long( op(ldst_op) | fd(d, w) | alt_op3(ldf_op3, w) | rs1(s1) | rs2(s2) ); }
 inline void Assembler::ldf(FloatRegisterImpl::Width w, Register s1, int simm13a, FloatRegister d, RelocationHolder const& rspec) { emit_data( op(ldst_op) | fd(d, w) | alt_op3(ldf_op3, w) | rs1(s1) | immed(true) | simm(simm13a, 13), rspec); }
 
-inline void Assembler::ldf(FloatRegisterImpl::Width w, const Address& a, FloatRegister d, int offset) { relocate(a.rspec(offset)); ldf( w, a.base(), a.disp() + offset, d); }
+inline void Assembler::ldf(FloatRegisterImpl::Width w, const Address& a, FloatRegister d, int offset) {
+  relocate(a.rspec(offset));
+  if (a.has_index()) {
+    assert(offset == 0, "");
+    ldf(w, a.base(), a.index(), d);
+  } else {
+    ldf(w, a.base(), a.disp() + offset, d);
+  }
+}
 
 inline void Assembler::ldfsr(  Register s1, Register s2) { v9_dep();   emit_long( op(ldst_op) |             op3(ldfsr_op3) | rs1(s1) | rs2(s2) ); }
 inline void Assembler::ldfsr(  Register s1, int simm13a) { v9_dep();   emit_data( op(ldst_op) |             op3(ldfsr_op3) | rs1(s1) | immed(true) | simm(simm13a, 13)); }
