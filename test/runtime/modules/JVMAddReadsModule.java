@@ -23,33 +23,27 @@
 
 /*
  * @test
- * @library /testlibrary /../../test/lib /compiler/whitebox ..
- * @build JVMAddReadsModule
- * @run main ClassFileInstaller sun.hotspot.WhiteBox
- *                              sun.hotspot.WhiteBox$WhiteBoxPermission
- * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI JVMAddReadsModule
+ * @library /testlibrary
+ * @run main/othervm -XX:AddModuleExports=java.base/sun.misc JVMAddReadsModule
  */
 
-import com.oracle.java.testlibrary.*;
-import sun.hotspot.WhiteBox;
 import static com.oracle.java.testlibrary.Asserts.*;
 
 public class JVMAddReadsModule {
 
-    public static void main(String args[]) throws Exception {
-        WhiteBox wb = WhiteBox.getWhiteBox();
+    public static void main(String args[]) throws Throwable {
         MyClassLoader from_cl = new MyClassLoader();
         MyClassLoader to_cl = new MyClassLoader();
         Object from_module, to_module;
 
-        from_module = wb.DefineModule("from_module", from_cl, new String[] { "mypackage" });
+        from_module = ModuleHelper.DefineModule("from_module", from_cl, new String[] { "mypackage" });
         assertNotNull(from_module, "Module should not be null");
-        to_module = wb.DefineModule("to_module", to_cl, new String[] { "yourpackage" });
+        to_module = ModuleHelper.DefineModule("to_module", to_cl, new String[] { "yourpackage" });
         assertNotNull(to_module, "Module should not be null");
 
         // Null from_module argument, expect an NPE
         try {
-            wb.AddReadsModule(null, to_module);
+            ModuleHelper.AddReadsModule(null, to_module);
             throw new RuntimeException("Failed to get the expected NPE");
         } catch(NullPointerException e) {
             // Expected
@@ -57,7 +51,7 @@ public class JVMAddReadsModule {
 
         // Null to_module argument, expect an NPE
         try {
-            wb.AddReadsModule(from_module, null);
+            ModuleHelper.AddReadsModule(from_module, null);
             throw new RuntimeException("Failed to get the expected NPE");
         } catch(NullPointerException e) {
             // Expected
@@ -65,18 +59,18 @@ public class JVMAddReadsModule {
 
         // Null from_module and to_module arguments, expect an NPE
         try {
-            wb.AddReadsModule(null, null);
+            ModuleHelper.AddReadsModule(null, null);
             throw new RuntimeException("Failed to get the expected NPE");
         } catch(NullPointerException e) {
             // Expected
         }
 
         // Both modules are the same, should not throw an exception
-        wb.AddReadsModule(from_module, from_module);
+        ModuleHelper.AddReadsModule(from_module, from_module);
 
         // Duplicate calls, should not throw an exception
-        wb.AddReadsModule(from_module, to_module);
-        wb.AddReadsModule(from_module, to_module);
+        ModuleHelper.AddReadsModule(from_module, to_module);
+        ModuleHelper.AddReadsModule(from_module, to_module);
     }
 
     static class MyClassLoader extends ClassLoader { }

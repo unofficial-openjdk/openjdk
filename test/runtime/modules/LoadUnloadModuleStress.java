@@ -24,16 +24,11 @@
 /*
  * @test
  * @summary Ensure module information is cleaned when owning class loader unloads
- * @library /testlibrary /../../test/lib /compiler/whitebox ..
- * @build LoadUnloadModuleStress
- * @run main ClassFileInstaller sun.hotspot.WhiteBox
- *                              sun.hotspot.WhiteBox$WhiteBoxPermission
- * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -Xmx64m LoadUnloadModuleStress 15000
+ * @library /testlibrary
+ * @run main/othervm -XX:AddModuleExports=java.base/sun.misc -Xmx64m LoadUnloadModuleStress 15000
  */
 
 import java.lang.ref.WeakReference;
-import com.oracle.java.testlibrary.*;
-import sun.hotspot.WhiteBox;
 import static com.oracle.java.testlibrary.Asserts.*;
 
 public class LoadUnloadModuleStress {
@@ -43,16 +38,15 @@ public class LoadUnloadModuleStress {
     public static byte[] garbage;
     public static volatile WeakReference<MyClassLoader> clweak;
 
-    public static Object createModule() {
-        WhiteBox wb = WhiteBox.getWhiteBox();
+    public static Object createModule() throws Throwable {
         MyClassLoader cl = new MyClassLoader();
-        Object module = wb.DefineModule("mymodule", cl, new String [] {"PackageA"});
+        Object module = ModuleHelper.DefineModule("mymodule", cl, new String [] {"PackageA"});
         assertNotNull(module);
         clweak = new WeakReference<>(cl);
         return module;
     }
 
-    public static void main(String args[]) throws Exception {
+    public static void main(String args[]) throws Throwable {
         timeout = Long.valueOf(args[0]);
         timeStamp = System.currentTimeMillis();
 

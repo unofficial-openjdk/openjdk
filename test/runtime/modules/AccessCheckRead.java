@@ -23,26 +23,22 @@
 
 /*
  * @test
- * @library /testlibrary /../../test/lib /compiler/whitebox ..
+ * @library /testlibrary
  * @compile p2/c2.java
  * @compile p1/c1.java
  * @build AccessCheckRead
- * @run main ClassFileInstaller sun.hotspot.WhiteBox
- *                              sun.hotspot.WhiteBox$WhiteBoxPermission
- * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI AccessCheckRead
+ * @run main/othervm -XX:AddModuleExports=java.base/sun.misc AccessCheckRead AccessCheckRead
  */
 
 import com.oracle.java.testlibrary.*;
 import java.lang.reflect.Module;
-import sun.hotspot.WhiteBox;
 import static com.oracle.java.testlibrary.Asserts.*;
 
 public class AccessCheckRead {
 
     // Test that a class in a package in module1 cannot access a class in
     // a package n module2 if module1 cannot read module2.
-    public static void main(String args[]) throws Exception {
-        WhiteBox wb = WhiteBox.getWhiteBox();
+    public static void main(String args[]) throws Throwable {
         Object m1, m2;
 
         // Get the java.lang.reflect.Module object for module java.base.
@@ -55,17 +51,17 @@ public class AccessCheckRead {
         ClassLoader this_cldr = AccessCheckRead.class.getClassLoader();
 
         // Define a module for p1.
-        m1 = wb.DefineModule("module1", this_cldr, new String[] { "p1" });
+        m1 = ModuleHelper.DefineModule("module1", this_cldr, new String[] { "p1" });
         assertNotNull(m1, "Module should not be null");
-        wb.AddReadsModule(m1, jlObject_jlrM);
+        ModuleHelper.AddReadsModule(m1, jlObject_jlrM);
 
         // Define a module for p2.
-        m2 = wb.DefineModule("module2", this_cldr, new String[] { "p2" });
+        m2 = ModuleHelper.DefineModule("module2", this_cldr, new String[] { "p2" });
         assertNotNull(m2, "Module should not be null");
-        wb.AddReadsModule(m2, jlObject_jlrM);
+        ModuleHelper.AddReadsModule(m2, jlObject_jlrM);
 
         // Make package p1 in m1 visible to everyone.
-        wb.AddModuleExports(m1, "p1", null);
+        ModuleHelper.AddModuleExports(m1, "p1", null);
 
         Class p1_c1_class = Class.forName("p1.c1");
 

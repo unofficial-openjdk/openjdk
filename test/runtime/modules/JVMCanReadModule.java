@@ -23,37 +23,31 @@
 
 /*
  * @test
- * @library /testlibrary /../../test/lib /compiler/whitebox ..
- * @build JVMCanReadModule
- * @run main ClassFileInstaller sun.hotspot.WhiteBox
- *                              sun.hotspot.WhiteBox$WhiteBoxPermission
- * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI JVMCanReadModule
+ * @library /testlibrary
+ * @run main/othervm -XX:AddModuleExports=java.base/sun.misc JVMCanReadModule
  */
 
-import com.oracle.java.testlibrary.*;
-import sun.hotspot.WhiteBox;
 import static com.oracle.java.testlibrary.Asserts.*;
 
 public class JVMCanReadModule {
 
-    public static void main(String args[]) throws Exception {
-        WhiteBox wb = WhiteBox.getWhiteBox();
+    public static void main(String args[]) throws Throwable {
         MyClassLoader asking_cl = new MyClassLoader();
         MyClassLoader target_cl = new MyClassLoader();
         Object asking_module, target_module;
         boolean result;
 
-        asking_module = wb.DefineModule("asking_module", asking_cl, new String[] { "mypackage" });
+        asking_module = ModuleHelper.DefineModule("asking_module", asking_cl, new String[] { "mypackage" });
         assertNotNull(asking_module, "Module should not be null");
-        target_module = wb.DefineModule("target_module", target_cl, new String[] { "yourpackage" });
+        target_module = ModuleHelper.DefineModule("target_module", target_cl, new String[] { "yourpackage" });
         assertNotNull(target_module, "Module should not be null");
 
         // Set up relationship
-        wb.AddReadsModule(asking_module, target_module);
+        ModuleHelper.AddReadsModule(asking_module, target_module);
 
         // Null asking_module argument, expect an NPE
         try {
-            result = wb.CanReadModule(null, target_module);
+            result = ModuleHelper.CanReadModule(null, target_module);
             throw new RuntimeException("Failed to get the expected NPE");
         } catch(NullPointerException e) {
             // Expected
@@ -61,7 +55,7 @@ public class JVMCanReadModule {
 
         // Bad asking_module argument, expect an IAE
         try {
-            result = wb.CanReadModule(asking_cl, target_module);
+            result = ModuleHelper.CanReadModule(asking_cl, target_module);
             throw new RuntimeException("Failed to get the expected IAE");
         } catch(IllegalArgumentException e) {
             // Expected
@@ -69,26 +63,26 @@ public class JVMCanReadModule {
 
         // Bad target_module argument, expect an IAE
         try {
-            result = wb.CanReadModule(asking_module, asking_cl);
+            result = ModuleHelper.CanReadModule(asking_module, asking_cl);
             throw new RuntimeException("Failed to get the expected IAE");
         } catch(IllegalArgumentException e) {
             // Expected
         }
 
         // Verify modules can always read the unnamed module
-        result = wb.CanReadModule(target_module, null);
+        result = ModuleHelper.CanReadModule(target_module, null);
         assertTrue(result, "target_module can read unnamed module");
 
         // Verify asking_module can read itself
-        result = wb.CanReadModule(asking_module, asking_module);
+        result = ModuleHelper.CanReadModule(asking_module, asking_module);
         assertTrue(result, "asking_module can read itself");
 
         // Verify asking_module can read target_module
-        result = wb.CanReadModule(asking_module, target_module);
+        result = ModuleHelper.CanReadModule(asking_module, target_module);
         assertTrue(result, "asking_module can read target_module");
 
         // Verify target_module cannot read asking_module
-        result = wb.CanReadModule(target_module, asking_module);
+        result = ModuleHelper.CanReadModule(target_module, asking_module);
         assertTrue(!result, "target_module cannot read asking_module");
     }
 

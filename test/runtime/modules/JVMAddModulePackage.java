@@ -23,43 +23,37 @@
 
 /*
  * @test
- * @library /testlibrary /../../test/lib /compiler/whitebox ..
- * @build JVMAddModulePackage
- * @run main ClassFileInstaller sun.hotspot.WhiteBox
- *                              sun.hotspot.WhiteBox$WhiteBoxPermission
- * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI JVMAddModulePackage
+ * @library /testlibrary
+ * @run main/othervm -XX:AddModuleExports=java.base/sun.misc JVMAddModulePackage
  */
 
-import com.oracle.java.testlibrary.*;
-import sun.hotspot.WhiteBox;
 import static com.oracle.java.testlibrary.Asserts.*;
 
 public class JVMAddModulePackage {
 
-    public static void main(String args[]) throws Exception {
-        WhiteBox wb = WhiteBox.getWhiteBox();
+    public static void main(String args[]) throws Throwable {
         MyClassLoader cl1 = new MyClassLoader();
         MyClassLoader cl3 = new MyClassLoader();
         Object module1, module2, module3;
         boolean result;
 
-        module1 = wb.DefineModule("module1", cl1, new String[] { "mypackage" });
+        module1 = ModuleHelper.DefineModule("module1", cl1, new String[] { "mypackage" });
         assertNotNull(module1, "Module should not be null");
-        module2 = wb.DefineModule("module2", cl1, new String[] { "yourpackage" });
+        module2 = ModuleHelper.DefineModule("module2", cl1, new String[] { "yourpackage" });
         assertNotNull(module2, "Module should not be null");
-        module3 = wb.DefineModule("module3", cl3, new String[] { "package/num3" });
+        module3 = ModuleHelper.DefineModule("module3", cl3, new String[] { "package/num3" });
         assertNotNull(module3, "Module should not be null");
 
         // Simple call
-        wb.AddModulePackage(module1, "new_package");
+        ModuleHelper.AddModulePackage(module1, "new_package");
 
         // Add a package and export it
-        wb.AddModulePackage(module1, "package/num3");
-        wb.AddModuleExports(module1, "package/num3", null);
+        ModuleHelper.AddModulePackage(module1, "package/num3");
+        ModuleHelper.AddModuleExports(module1, "package/num3", null);
 
         // Null module argument, expect an NPE
         try {
-            wb.AddModulePackage(null, "new_package");
+            ModuleHelper.AddModulePackage(null, "new_package");
             throw new RuntimeException("Failed to get the expected NPE");
         } catch(NullPointerException e) {
             // Expected
@@ -67,7 +61,7 @@ public class JVMAddModulePackage {
 
         // Bad module argument, expect an IAE
         try {
-            wb.AddModulePackage(cl1, "new_package");
+            ModuleHelper.AddModulePackage(cl1, "new_package");
             throw new RuntimeException("Failed to get the expected IAE");
         } catch(IllegalArgumentException e) {
             // Expected
@@ -75,7 +69,7 @@ public class JVMAddModulePackage {
 
         // Null package argument, expect an NPE
         try {
-            wb.AddModulePackage(module1, null);
+            ModuleHelper.AddModulePackage(module1, null);
             throw new RuntimeException("Failed to get the expected NPE");
         } catch(NullPointerException e) {
             // Expected
@@ -83,7 +77,7 @@ public class JVMAddModulePackage {
 
         // Existing package, expect an IAE
         try {
-            wb.AddModulePackage(module1, "yourpackage");
+            ModuleHelper.AddModulePackage(module1, "yourpackage");
             throw new RuntimeException("Failed to get the expected IAE");
         } catch(IllegalArgumentException e) {
             // Expected
@@ -91,7 +85,7 @@ public class JVMAddModulePackage {
 
         // Invalid package name, expect an IAE
         try {
-            wb.AddModulePackage(module1, "your.package");
+            ModuleHelper.AddModulePackage(module1, "your.package");
             throw new RuntimeException("Failed to get the expected IAE");
         } catch(IllegalArgumentException e) {
             // Expected
@@ -99,7 +93,7 @@ public class JVMAddModulePackage {
 
         // Invalid package name, expect an IAE
         try {
-            wb.AddModulePackage(module1, ";your/package");
+            ModuleHelper.AddModulePackage(module1, ";your/package");
             throw new RuntimeException("Failed to get the expected IAE");
         } catch(IllegalArgumentException e) {
             // Expected
@@ -107,7 +101,7 @@ public class JVMAddModulePackage {
 
         // Invalid package name, expect an IAE
         try {
-            wb.AddModulePackage(module1, "7[743");
+            ModuleHelper.AddModulePackage(module1, "7[743");
             throw new RuntimeException("Failed to get the expected IAE");
         } catch(IllegalArgumentException e) {
             // Expected
@@ -115,7 +109,7 @@ public class JVMAddModulePackage {
 
         // Empty package name, expect an IAE
         try {
-            wb.AddModulePackage(module1, "");
+            ModuleHelper.AddModulePackage(module1, "");
             throw new RuntimeException("Failed to get the expected IAE");
         } catch(IllegalArgumentException e) {
             // Expected

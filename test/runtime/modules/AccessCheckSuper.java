@@ -23,25 +23,19 @@
 
 /*
  * @test
- * @library /testlibrary /../../test/lib /compiler/whitebox ..
+ * @library /testlibrary
  * @compile p2/c2.java
- * @build AccessCheckSuper
- * @run main ClassFileInstaller sun.hotspot.WhiteBox
- *                              sun.hotspot.WhiteBox$WhiteBoxPermission
- * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI AccessCheckSuper
+ * @run main/othervm -XX:AddModuleExports=java.base/sun.misc AccessCheckSuper
  */
 
-import com.oracle.java.testlibrary.*;
 import java.lang.reflect.Module;
-import sun.hotspot.WhiteBox;
 import static com.oracle.java.testlibrary.Asserts.*;
 
 public class AccessCheckSuper {
 
     // Test that when a class cannot access its super class the message
     // contains  both "superclass" text and module text.
-    public static void main(String args[]) throws Exception {
-        WhiteBox wb = WhiteBox.getWhiteBox();
+    public static void main(String args[]) throws Throwable {
         Object m2;
 
         // Get the class loader for AccessCheckSuper and assume it's also used to
@@ -49,7 +43,7 @@ public class AccessCheckSuper {
         ClassLoader this_cldr = AccessCheckSuper.class.getClassLoader();
 
         // Define a module for p2.
-        m2 = wb.DefineModule("module2", this_cldr, new String[] { "p2" });
+        m2 = ModuleHelper.DefineModule("module2", this_cldr, new String[] { "p2" });
         assertNotNull(m2, "Module should not be null");
 
         // p2.c2 cannot read its superclass java.lang.Object

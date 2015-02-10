@@ -23,44 +23,39 @@
 
 /*
  * @test
- * @library /testlibrary /../../test/lib /compiler/whitebox ..
- * @build JVMAddModuleExports
- * @run main ClassFileInstaller sun.hotspot.WhiteBox
- *                              sun.hotspot.WhiteBox$WhiteBoxPermission
- * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI JVMAddModuleExports
+ * @library /testlibrary
+ * @run main/othervm -XX:AddModuleExports=java.base/sun.misc JVMAddModuleExports
  */
 
-import com.oracle.java.testlibrary.*;
-import sun.hotspot.WhiteBox;
+import java.lang.reflect.Module;
 import static com.oracle.java.testlibrary.Asserts.*;
 
 public class JVMAddModuleExports {
 
-    public static void main(String args[]) throws Exception {
-        WhiteBox wb = WhiteBox.getWhiteBox();
+    public static void main(String args[]) throws Throwable {
         MyClassLoader from_cl = new MyClassLoader();
         MyClassLoader to_cl = new MyClassLoader();
-        Object from_module, to_module;
+        Module from_module, to_module;
 
-        from_module = wb.DefineModule("from_module", from_cl, new String[] { "mypackage", "this/package" });
+        from_module = ModuleHelper.DefineModule("from_module", from_cl, new String[] { "mypackage", "this/package" });
         assertNotNull(from_module, "Module should not be null");
-        to_module = wb.DefineModule("to_module", to_cl, new String[] { "yourpackage", "that/package" });
+        to_module = ModuleHelper.DefineModule("to_module", to_cl, new String[] { "yourpackage", "that/package" });
         assertNotNull(to_module, "Module should not be null");
 
         // Null from_module argument, expect an NPE
         try {
-            wb.AddModuleExports(null, "mypackage", to_module);
+            ModuleHelper.AddModuleExports((Module)null, "mypackage", to_module);
             throw new RuntimeException("Failed to get the expected NPE");
         } catch(NullPointerException e) {
             // Expected
         }
 
         // Normal export to null module
-        wb.AddModuleExports(to_module, "that/package", null);
+        ModuleHelper.AddModuleExports(to_module, "that/package", (Module)null);
 
         // Bad from_module argument, expect an IAE
         try {
-            wb.AddModuleExports(to_cl, "mypackage", to_module);
+            ModuleHelper.AddModuleExports(to_cl, "mypackage", to_module);
             throw new RuntimeException("Failed to get the expected IAE");
         } catch(IllegalArgumentException e) {
             // Expected
@@ -68,7 +63,7 @@ public class JVMAddModuleExports {
 
         // Null package argument, expect an NPE
         try {
-            wb.AddModuleExports(from_module, null, to_module);
+            ModuleHelper.AddModuleExports(from_module, null, to_module);
             throw new RuntimeException("Failed to get the expected NPE");
         } catch(NullPointerException e) {
             // Expected
@@ -76,18 +71,18 @@ public class JVMAddModuleExports {
 
         // Bad to_module argument, expect an IAE
         try {
-            wb.AddModuleExports(from_module, "mypackage", from_cl);
+            ModuleHelper.AddModuleExports(from_module, "mypackage", from_cl);
             throw new RuntimeException("Failed to get the expected IAE");
         } catch(IllegalArgumentException e) {
             // Expected
         }
 
         // Exporting a package to the same module
-        wb.AddModuleExports(from_module, "mypackage", from_module);
+        ModuleHelper.AddModuleExports(from_module, "mypackage", from_module);
 
         // Export a package that does not exist to to_module
         try {
-            wb.AddModuleExports(from_module, "notmypackage", to_module);
+            ModuleHelper.AddModuleExports(from_module, "notmypackage", to_module);
             throw new RuntimeException("Failed to get the expected IAE");
         } catch(IllegalArgumentException e) {
             // Expected
@@ -95,7 +90,7 @@ public class JVMAddModuleExports {
 
         // Export a package, that is not in from_module, to to_module
         try {
-            wb.AddModuleExports(from_module, "yourpackage", to_module);
+            ModuleHelper.AddModuleExports(from_module, "yourpackage", to_module);
             throw new RuntimeException("Failed to get the expected IAE");
         } catch(IllegalArgumentException e) {
             // Expected
@@ -103,7 +98,7 @@ public class JVMAddModuleExports {
 
         // Export a package, that does not exist, to from_module
         try {
-            wb.AddModuleExports(from_module, "notmypackage", from_module);
+            ModuleHelper.AddModuleExports(from_module, "notmypackage", from_module);
             throw new RuntimeException("Failed to get the expected IAE");
         } catch(IllegalArgumentException e) {
             // Expected
@@ -111,28 +106,28 @@ public class JVMAddModuleExports {
 
         // Export a package, that is not in from_module, to from_module
         try {
-            wb.AddModuleExports(from_module, "that/package", from_module);
+            ModuleHelper.AddModuleExports(from_module, "that/package", from_module);
             throw new RuntimeException("Failed to get the expected IAE");
         } catch(IllegalArgumentException e) {
             // Expected
         }
 
         // Export the same package twice to the same module
-        wb.AddModuleExports(from_module, "this/package", to_module);
-        wb.AddModuleExports(from_module, "this/package", to_module);
+        ModuleHelper.AddModuleExports(from_module, "this/package", to_module);
+        ModuleHelper.AddModuleExports(from_module, "this/package", to_module);
 
         // Export a package, using '.' instead of '/'
         try {
-            wb.AddModuleExports(from_module, "this.package", to_module);
+            ModuleHelper.AddModuleExports(from_module, "this.package", to_module);
             throw new RuntimeException("Failed to get the expected IAE");
         } catch(IllegalArgumentException e) {
             // Expected
         }
 
         // Export a package to the unnamed module and then to a specific module.
-        wb.AddModuleExports(to_module, "that/package", null);
+        ModuleHelper.AddModuleExports(to_module, "that/package", (Module)null);
         try {
-            wb.AddModuleExports(to_module, "that/package", from_module);
+            ModuleHelper.AddModuleExports(to_module, "that/package", from_module);
             throw new RuntimeException("Failed to get the expected IAE");
         } catch(IllegalArgumentException e) {
             // Expected

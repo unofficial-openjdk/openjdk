@@ -21,28 +21,22 @@
  * questions.
  */
 
-import com.oracle.java.testlibrary.*;
 import java.lang.reflect.Module;
-import sun.hotspot.WhiteBox;
 import static com.oracle.java.testlibrary.Asserts.*;
 
 /*
  * @test
- * @library /testlibrary /../../test/lib /compiler/whitebox ..
+ * @library /testlibrary
  * @compile p2/c2.java
  * @compile p1/c1.java
- * @build AccessCheckUnnamed
- * @run main ClassFileInstaller sun.hotspot.WhiteBox
- *                              sun.hotspot.WhiteBox$WhiteBoxPermission
- * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI AccessCheckUnnamed
+ * @run main/othervm -XX:AddModuleExports=java.base/sun.misc AccessCheckUnnamed
  */
 
 public class AccessCheckUnnamed {
 
     // Test that a class in the unnamed module can not access a package in a
     // named module that has not been unqualifiedly exported.
-    public static void main(String args[]) throws Exception {
-        WhiteBox wb = WhiteBox.getWhiteBox();
+    public static void main(String args[]) throws Throwable {
         Object m1, m2;
 
         // Get the java.lang.reflect.Module object for module java.base.
@@ -55,9 +49,9 @@ public class AccessCheckUnnamed {
         ClassLoader this_cldr = AccessCheckUnnamed.class.getClassLoader();
 
         // Define a module for p2.
-        m2 = wb.DefineModule("module2", this_cldr, new String[] { "p2" });
+        m2 = ModuleHelper.DefineModule("module2", this_cldr, new String[] { "p2" });
         assertNotNull(m2, "Module should not be null");
-        wb.AddReadsModule(m2, jlObject_jlrM);
+        ModuleHelper.AddReadsModule(m2, jlObject_jlrM);
 
         // p1.c1's ctor tries to call a method in p2.c2.  This should fail because
         // p1 is in the unnamed module and p2.c2 is not unqualifiedly exported.
