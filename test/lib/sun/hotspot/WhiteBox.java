@@ -243,14 +243,6 @@ public class WhiteBox {
                        .orElse(null);
   }
 
-  // Jigsaw
-  public native Object DefineModule(String name, Object loader, Object[] packages);
-  public native void AddModuleExports(Object from_module, String pkg, Object to_module);
-  public native void AddReadsModule(Object from_module, Object to_module);
-  public native boolean CanReadModule(Object asking_module, Object target_module);
-  public native boolean IsExportedToModule(Object from_module, String pkg, Object to_module);
-  public native void AddModulePackage(Object module, String pkg);
-
   // Image File
   public native boolean readImageFile(String imagefile);
 
