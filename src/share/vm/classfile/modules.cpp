@@ -566,7 +566,8 @@ jobject Modules::get_module(JNIEnv *env, jclass clazz) {
     module = java_lang_Class::module(bottom_klass->java_mirror());
   }
   else if (klass->oop_is_typeArray()) {
-    return NULL;  // Primitive type
+    Klass* obj_k = SystemDictionary::Object_klass();
+    module = java_lang_Class::module(obj_k->java_mirror());
   }
 
   if (TraceModules) {

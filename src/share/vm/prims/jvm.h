@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -405,9 +405,6 @@ JVM_CanReadModule(JNIEnv *env, jobject asking_module, jobject target_module);
 
 JNIEXPORT jboolean JNICALL
 JVM_IsExportedToModule(JNIEnv *env, jobject from_module, jstring package, jobject to_module);
-
-JNIEXPORT jobject JNICALL
-JVM_GetModule(JNIEnv* env, jclass clazz);
 
 JNIEXPORT void JNICALL
 JVM_AddModulePackage(JNIEnv* env,  jobject module, jstring package);

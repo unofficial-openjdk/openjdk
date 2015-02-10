@@ -1110,10 +1110,6 @@ WB_ENTRY(jboolean, WB_IsExportedToModule(JNIEnv* env, jobject o, jobject from_mo
   return Modules::is_exported_to_module(env, from_module, package, to_module);
 WB_END
 
-WB_ENTRY(jobject, WB_GetModule(JNIEnv* env, jobject o, jclass clazz))
-  return Modules::get_module(env, clazz);
-WB_END
-
 WB_ENTRY(void, WB_AddModulePackage(JNIEnv* env, jobject o, jclass module, jstring package))
   Modules::add_module_package(env, module, package);
 WB_END
@@ -1376,8 +1372,6 @@ static JNINativeMethod methods[] = {
                                                       (void*)&WB_CanReadModule },
   {CC"IsExportedToModule", CC"(Ljava/lang/Object;Ljava/lang/String;Ljava/lang/Object;)Z",
                                                       (void*)&WB_IsExportedToModule },
-  {CC"GetModule", CC"(Ljava/lang/Class;)Ljava/lang/Object;",
-                                                      (void*)&WB_GetModule },
   {CC"AddModulePackage", CC"(Ljava/lang/Object;Ljava/lang/String;)V",
                                                       (void*)&WB_AddModulePackage },
   {CC"readImageFile",     CC"(Ljava/lang/String;)Z",  (void*)&WB_ReadImageFile },

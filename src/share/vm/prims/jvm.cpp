@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -982,11 +982,6 @@ JVM_END
 JVM_ENTRY(jboolean, JVM_IsExportedToModule(JNIEnv *env, jobject from_module, jstring package, jobject to_module))
   JVMWrapper("JVM_IsExportedToModule");
   return Modules::is_exported_to_module(env, from_module, package, to_module);
-JVM_END
-
-JVM_ENTRY(jobject, JVM_GetModule(JNIEnv* env, jclass clazz))
-  JVMWrapper("GetModule");
-  return Modules::get_module(env, clazz);
 JVM_END
 
 JVM_ENTRY (void, JVM_AddModulePackage(JNIEnv *env, jobject module, jstring package))
