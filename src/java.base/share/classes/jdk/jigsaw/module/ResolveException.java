@@ -35,10 +35,10 @@ public class ResolveException extends RuntimeException {
     private static final long serialVersionUID = 0L;
 
     /**
-     * Constructs an instance of this exception.
+     * Constructs an instance of this exception with the given cause.
      */
-    public ResolveException(String m) {
-        super(m);
+    public ResolveException(Throwable cause) {
+        super(cause);
     }
 
     /**

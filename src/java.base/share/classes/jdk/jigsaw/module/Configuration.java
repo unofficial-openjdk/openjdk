@@ -25,6 +25,7 @@
 
 package jdk.jigsaw.module;
 
+import java.io.UncheckedIOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -74,9 +75,14 @@ public class Configuration {
                                         ModuleArtifactFinder afterFinder,
                                         Collection<String> input)
     {
-        Resolver resolver = new Resolver(beforeFinder, layer, afterFinder);
-        Resolver.Resolution resolution = resolver.resolve(input);
-        return new Configuration(resolution);
+        try {
+            Resolver resolver = new Resolver(beforeFinder, layer, afterFinder);
+            Resolver.Resolution resolution = resolver.resolve(input);
+            return new Configuration(resolution);
+        } catch (ClassFormatError | UncheckedIOException e) {
+            // TBD need to specify how CFE and I/O errors are handled
+            throw new ResolveException(e);
+        }
     }
 
     /**
@@ -98,7 +104,7 @@ public class Configuration {
     /**
      * Returns the {@code Layer} used when creating this configuration.
      */
-    Layer layer() {
+    public Layer layer() {
         return resolution.resolver().layer();
     }
 
@@ -111,8 +117,13 @@ public class Configuration {
      * module cannot be resolved
      */
     public Configuration bind() {
-        Resolver.Resolution r = resolution.bind();
-        return new Configuration(r);
+        try {
+            Resolver.Resolution r = resolution.bind();
+            return new Configuration(r);
+        } catch (ClassFormatError | UncheckedIOException e) {
+            // TBD need to specify how CFE and I/O errors are handled
+            throw new ResolveException(e);
+        }
     }
 
     /**
@@ -135,8 +146,10 @@ public class Configuration {
      * Returns the {@code ModuleDescriptor} for the given named module
      * or {@code null} if a module of the given name is not in this
      * configuration.
+     *
+     * @apiNote It's not clear that this method is useful, we might remove it.
      */
-    public ModuleDescriptor find(String name) {
+    public ModuleDescriptor findDescriptor(String name) {
         ModuleArtifact artifact = findArtifact(name);
         if (artifact == null) {
             return null;

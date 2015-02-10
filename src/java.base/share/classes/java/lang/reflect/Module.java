@@ -34,7 +34,6 @@ import java.util.stream.Collectors;
 
 import jdk.jigsaw.module.ModuleArtifact;
 import jdk.jigsaw.module.ModuleDescriptor;
-import jdk.jigsaw.module.ServiceDependence;
 import jdk.jigsaw.module.Version;
 
 import sun.misc.ServicesCatalog;
@@ -46,8 +45,8 @@ import sun.misc.VM;
  *
  * <p> {@code Module} does not define a public constructor. Instead {@code
  * Module} objects are constructed by the Java Virtual Machine when a
- * {@link jdk.jigsaw.module.Configuration Configuration} is reified when a
- * {@link jdk.jigsaw.module.Layer Layer} is created. </p>
+ * {@link jdk.jigsaw.module.Configuration Configuration} is reified by means
+ * of creating a {@link jdk.jigsaw.module.Layer Layer}. </p>
  *
  * @since 1.9
  * @see java.lang.Class#getModule
@@ -231,23 +230,6 @@ public final class Module {
         return VM.isExportedToModule(this, pkg.replace('.', '/'), who);
     }
 
-    Set<String> uses() {
-        // already cached
-        Set<String> uses = this.uses;
-        if (uses != null)
-            return uses;
-
-        uses = descriptor.serviceDependences()
-                         .stream()
-                         .map(ServiceDependence::service)
-                         .collect(Collectors.toSet());
-        uses = Collections.unmodifiableSet(uses);
-        this.uses = uses;
-        return uses;
-
-    }
-    private volatile Set<String> uses;
-
     /**
      * Dynamically adds a package to this module. This is used for dynamic
      * proxies (for example).
@@ -295,7 +277,7 @@ public final class Module {
                 }
                 @Override
                 public boolean uses(Module m, String sn) {
-                    return m.uses().contains(sn);
+                    return m.getDescriptor().serviceDependences().contains(sn);
                 }
                 @Override
                 public Set<String> provides(Module m, String sn) {

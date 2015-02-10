@@ -81,7 +81,6 @@ import jdk.jigsaw.module.ModuleDependence;
 import jdk.jigsaw.module.ModuleDescriptor;
 import jdk.jigsaw.module.ModuleExport;
 import jdk.jigsaw.module.ModuleId;
-import jdk.jigsaw.module.ServiceDependence;
 
 public enum LauncherHelper {
     INSTANCE;
@@ -906,11 +905,11 @@ public enum LauncherHelper {
                 ExtendedModuleDescriptor md = artifact.descriptor();
                 ostream.println(midAndLocation(md.id(), artifact.location()));
 
-                for (ModuleDependence d : md.moduleDependences()) {
+                for (ModuleDependence d: md.moduleDependences()) {
                     ostream.format("  requires %s%n", d);
                 }
-                for (ServiceDependence d : md.serviceDependences()) {
-                    ostream.format("  uses %s%n", d);
+                for (String s: md.serviceDependences()) {
+                    ostream.format("  uses %s%n", s);
                 }
 
                 // sorted exports

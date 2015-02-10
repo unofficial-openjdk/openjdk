@@ -32,7 +32,6 @@ import jdk.jigsaw.module.Layer;
 import jdk.jigsaw.module.ModuleArtifactFinder;
 import jdk.jigsaw.module.ModuleDependence;
 import jdk.jigsaw.module.ModuleDependence.Modifier;
-import jdk.jigsaw.module.ServiceDependence;
 
 import org.testng.annotations.Test;
 import static org.testng.Assert.*;
@@ -71,10 +70,6 @@ public class ConfigurationTest {
         assertTrue(cf.descriptors().contains(descriptor1));
         assertTrue(cf.descriptors().contains(descriptor2));
         assertTrue(cf.descriptors().contains(descriptor3));
-
-        assertTrue(cf.find("m1") == descriptor1);
-        assertTrue(cf.find("m2") == descriptor2);
-        assertTrue(cf.find("m3") == descriptor3);
 
         // m1 reads m2
         assertTrue(cf.readDependences(descriptor1).size() == 1);
@@ -120,10 +115,6 @@ public class ConfigurationTest {
         assertTrue(cf.descriptors().contains(descriptor2));
         assertTrue(cf.descriptors().contains(descriptor3));
 
-        assertTrue(cf.find("m1") == descriptor1);
-        assertTrue(cf.find("m2") == descriptor2);
-        assertTrue(cf.find("m3") == descriptor3);
-
         // m1 reads m2 and m3
         assertTrue(cf.readDependences(descriptor1).size() == 2);
         assertTrue(cf.readDependences(descriptor1).contains(descriptor2));
@@ -145,7 +136,7 @@ public class ConfigurationTest {
         ExtendedModuleDescriptor descriptor1 =
                 new ExtendedModuleDescriptor.Builder("m1")
                 .requires(md("m2"))
-                .requires(sd("S"))
+                .uses("S")
                 .build();
 
         ExtendedModuleDescriptor descriptor2 =
@@ -201,9 +192,5 @@ public class ConfigurationTest {
         for (Modifier mod: mods)
             set.add(mod);
         return new ModuleDependence(set, dn);
-    }
-
-    static ServiceDependence sd(String sn) {
-        return new ServiceDependence(null, sn);
     }
 }

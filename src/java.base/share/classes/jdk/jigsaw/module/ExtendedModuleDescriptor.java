@@ -50,7 +50,7 @@ public class ExtendedModuleDescriptor
                              String mainClass,
                              DependencyHashes hashes,
                              Set<ModuleDependence> moduleDeps,
-                             Set<ServiceDependence> serviceDeps,
+                             Set<String> serviceDeps,
                              Set<ModuleExport> exports,
                              Map<String, Set<String>> services)
     {
@@ -129,8 +129,8 @@ public class ExtendedModuleDescriptor
             return this;
         }
 
-        public Builder requires(ServiceDependence sd) {
-            super.requires(sd);
+        public Builder uses(String s) {
+            super.uses(s);
             return this;
         }
 

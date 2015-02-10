@@ -60,8 +60,7 @@ public class Serial {
             (new ModuleDescriptor.Builder("foo")
                     .requires(new ModuleDependence(EnumSet.of(ModuleDependence.Modifier.PUBLIC),
                                                    "bar"))
-                    .requires(new ServiceDependence(Collections.emptySet(),
-                                                    "baz.Finder"))
+                    .uses("baz.Finder")
                     .export("p.one")
                     .export("p.two")
                     .service("alpha.Beta", "gamma.Delta")

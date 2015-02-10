@@ -281,12 +281,12 @@ public class ModuleSummary {
             .collect(Collectors.joining("<br>\n"));
         out.format("<td>%s</td>%n", exports);
         Stream<String> uses = descriptor.serviceDependences().stream()
-            .map(d -> "uses " + d.service())
+            .map(s -> "uses " + s)
             .sorted();
         Stream<String> providers = descriptor.services().entrySet().stream()
             .sorted(Map.Entry.comparingByKey())
             .flatMap(e -> e.getValue().stream().map(p ->
-                String.format("prov %s<br>&nbsp; <em>w/ %s</em>", e.getKey(), p)));
+                String.format("provides %s<br>&nbsp; <em>with %s</em>", e.getKey(), p)));
         out.format("<td>%s</td>%n", Stream.concat(uses, providers)
                                           .collect(Collectors.joining("<br>\n")));
         if (jm.nativeLibs.size() > 0) {

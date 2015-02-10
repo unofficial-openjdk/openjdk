@@ -232,7 +232,7 @@ class ArtifactInterposer implements ModuleArtifactFinder {
         ExtendedModuleDescriptor.Builder builder =
             new ExtendedModuleDescriptor.Builder(descriptor.id());
         newDependences.forEach(builder::requires);
-        descriptor.serviceDependences().forEach(builder::requires);
+        descriptor.serviceDependences().forEach(builder::uses);
         newExports.forEach(builder::export);
         for (Map.Entry<String, Set<String>> entry : descriptor.services().entrySet()) {
             String s = entry.getKey();

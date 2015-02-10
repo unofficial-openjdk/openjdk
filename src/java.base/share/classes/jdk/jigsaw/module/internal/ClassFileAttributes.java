@@ -39,7 +39,6 @@ import jdk.jigsaw.module.ModuleDependence;
 import jdk.jigsaw.module.ModuleDependence.Modifier;
 import jdk.jigsaw.module.ModuleExport;
 import jdk.jigsaw.module.ModuleId;
-import jdk.jigsaw.module.ServiceDependence;
 import jdk.jigsaw.module.internal.Hasher.DependencyHashes;
 
 /**
@@ -60,7 +59,7 @@ class ClassFileAttributes {
         private Set<ModuleDependence> moduleDependences = new HashSet<>();
 
         // optional and created lazily
-        private Set<ServiceDependence> serviceDependences;
+        private Set<String> serviceDependences;
         private Set<ModuleExport> exports;
         private Map<String, Set<String>> services;
 
@@ -130,7 +129,7 @@ class ClassFileAttributes {
                 attr.serviceDependences = new HashSet<>();
                 for (int i=0; i<uses_count; i++) {
                     String sn = cr.readClass(off, buf).replace('/', '.');
-                    attr.serviceDependences.add(new ServiceDependence(null, sn));
+                    attr.serviceDependences.add(sn);
                     off += 2;
                 }
             }
@@ -213,8 +212,8 @@ class ClassFileAttributes {
                 attr.putShort(0);
             } else {
                 attr.putShort(serviceDependences.size());
-                for (ServiceDependence sd : serviceDependences) {
-                    String service = sd.service().replace('.', '/');
+                for (String s : serviceDependences) {
+                    String service = s.replace('.', '/');
                     int index = cw.newClass(service);
                     attr.putShort(index);
                 }

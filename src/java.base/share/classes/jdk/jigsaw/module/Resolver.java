@@ -229,8 +229,7 @@ class Resolver {
 
             // process the service dependences of service consumers
             for (ModuleDescriptor m: serviceConsumersToVisit) {
-                for (ServiceDependence d: m.serviceDependences()) {
-                    String service = d.service();
+                for (String service: m.serviceDependences()) {
                     if (!servicesSearched.contains(service)) {
 
                         // find all modules that provide "service", the order

@@ -43,13 +43,13 @@ public class ModuleDescriptor
 {
     private final String name;
     private final Set<ModuleDependence> moduleDependences;
-    private final Set<ServiceDependence> serviceDependences;
+    private final Set<String> serviceDependences;
     private final Set<ModuleExport> exports;
     private final Map<String, Set<String>> services;
 
     ModuleDescriptor(String name,
                      Set<ModuleDependence> moduleDeps,
-                     Set<ServiceDependence> serviceDeps,
+                     Set<String> serviceDeps,
                      Set<ModuleExport> exports,
                      Map<String, Set<String>> services)
     {
@@ -80,10 +80,9 @@ public class ModuleDescriptor
     /**
      * <p> The service dependences of this module </p>
      *
-     * @return  A possibly-empty unmodifiable set of
-     *          {@link ServiceDependence}s
+     * @return  A possibly-empty unmodifiable set of the service types used
      */
-    public Set<ServiceDependence> serviceDependences() {
+    public Set<String> serviceDependences() {
         return serviceDependences;
     }
 
@@ -115,7 +114,7 @@ public class ModuleDescriptor
 
         String name;
         final Set<ModuleDependence> moduleDeps = new HashSet<>();
-        final Set<ServiceDependence> serviceDeps = new HashSet<>();
+        final Set<String> serviceDeps = new HashSet<>();
         final Set<ModuleExport> exports = new HashSet<>();
         final Map<String, Set<String>> services = new HashMap<>();
 
@@ -143,8 +142,8 @@ public class ModuleDescriptor
         /**
          * Adds a service dependence.
          */
-        public Builder requires(ServiceDependence sd) {
-            serviceDeps.add(requireNonNull(sd));
+        public Builder uses(String s) {
+            serviceDeps.add(requireNonNull(s));
             return this;
         }
 

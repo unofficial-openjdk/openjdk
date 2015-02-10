@@ -57,7 +57,7 @@ public class LayerTest {
         // configuration
         Configuration cf = bootLayer.configuration();
         ModuleExport javaLang = new ModuleExport("java.lang");
-        assertTrue(cf.find("java.base").exports().contains(javaLang));
+        assertTrue(cf.findDescriptor("java.base").exports().contains(javaLang));
 
         // findLoader
         assertTrue(bootLayer.findLoader("java.base") == null);
@@ -132,6 +132,7 @@ public class LayerTest {
 
         // configuration
         assertTrue(layer.configuration() == cf);
+        assertTrue(layer.configuration().descriptors().size() == 3);
 
         // findLoader
         assertTrue(layer.findLoader("m1") == loader1);
@@ -182,6 +183,7 @@ public class LayerTest {
 
         // configuration
         assertTrue(layer.configuration() == cf);
+        assertTrue(layer.configuration().descriptors().size() == 2);
 
         // findLoader
         assertTrue(layer.findLoader("m1") == loader);

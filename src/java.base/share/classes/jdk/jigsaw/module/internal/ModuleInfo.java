@@ -47,7 +47,6 @@ import jdk.jigsaw.module.ModuleDependence;
 import jdk.jigsaw.module.ModuleDependence.Modifier;
 import jdk.jigsaw.module.ModuleExport;
 import jdk.jigsaw.module.ModuleId;
-import jdk.jigsaw.module.ServiceDependence;
 import jdk.jigsaw.module.internal.Hasher.DependencyHashes;
 
 /**
@@ -80,7 +79,7 @@ public final class ModuleInfo {
     private Set<ModuleExport> exports;
 
     // service dependences (uses) read from the Module attribute
-    private Set<ServiceDependence> serviceDependences;
+    private Set<String> serviceDependences;
 
     // service providers (provides) read from the Module attribute
     private Map<String, Set<String>> services;
@@ -120,7 +119,7 @@ public final class ModuleInfo {
      * Returns the service dependences (<em>uses</em>) as read from the
      * {@code Module} attribute.
      */
-    public Set<ServiceDependence> serviceDependences() {
+    public Set<String> serviceDependences() {
         if (serviceDependences == null) {
             return Collections.emptySet();
         } else {
@@ -424,7 +423,7 @@ public final class ModuleInfo {
             for (int i=0; i<uses_count; i++) {
                 int index = in.readUnsignedShort();
                 String sn = cpool.getClassName(index).replace('/', '.');
-                serviceDependences.add(new ServiceDependence(null, sn));
+                serviceDependences.add(sn);
             }
         }
 
