@@ -265,6 +265,7 @@ endif
 
 ################################################################################
 
+java.rmi_EXCLUDE_FILES += $(JDK_TOPDIR)/src/java.rmi/share/classes/module-info.java
 java.rmi_CLEAN_FILES := $(wildcard \
     $(JDK_TOPDIR)/src/java.rmi/share/classes/sun/rmi/registry/resources/*.properties \
     $(JDK_TOPDIR)/src/java.rmi/share/classes/sun/rmi/server/resources/*.properties)
