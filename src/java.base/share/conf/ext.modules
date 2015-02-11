@@ -11,3 +11,6 @@ jdk.naming.dns
 jdk.scripting.nashorn
 jdk.zipfs
 jdk.accessbridge
+jdk.deploy
+jdk.plugin
+jdk.javaws
