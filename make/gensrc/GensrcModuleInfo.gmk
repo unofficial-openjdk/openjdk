@@ -67,3 +67,11 @@ GENSRC_JAVA_DESKTOP += $(SUPPORT_OUTPUTDIR)/gensrc/java.desktop/module-info.java
 
 ################################################################################
 
+$(SUPPORT_OUTPUTDIR)/gensrc/java.rmi/module-info.java: $(BUILD_TOOLS_JDK) \
+    $(JDK_TOPDIR)/src/java.rmi/share/classes/module-info.java
+	$(MKDIR) -p $(@D)
+	$(RM) $@ $@.tmp
+	$(TOOL_GENMODULEINFOSOURCE) $(JAVA_RMI_MODULEINFO_EXTRAS) -o $@.tmp $(filter %.java, $^)
+	$(MV) $@.tmp $@
+
+GENSRC_JAVA_RMI += $(SUPPORT_OUTPUTDIR)/gensrc/java.rmi/module-info.java
