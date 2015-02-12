@@ -172,6 +172,22 @@ public class JVMDefineModule {
         } catch(IllegalArgumentException e) {
             // Expected
         }
+
+        // module version that is null, should be okay
+        m = ModuleHelper.DefineModule("module8", null, "/not/here", cl, new String[] { "a_package_8" });
+        assertNotNull(m, "Module should not be null");
+
+        // module version that is "", should be okay
+        m = ModuleHelper.DefineModule("module9", "", "/not/here", cl, new String[] { "a_package_9" });
+        assertNotNull(m, "Module should not be null");
+
+        // module location that is null, should be okay
+        m = ModuleHelper.DefineModule("module10", "9.5", null, cl, new String[] { "a_package_10" });
+        assertNotNull(m, "Module should not be null");
+
+        // module location that is "", should be okay
+        m = ModuleHelper.DefineModule("module11", "9.5", "", cl, new String[] { "a_package_11" });
+        assertNotNull(m, "Module should not be null");
     }
 
     static class MyClassLoader extends ClassLoader { }
