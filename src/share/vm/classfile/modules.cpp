@@ -175,7 +175,8 @@ static PackageEntry* get_package_entry(ModuleEntry* module_entry, jstring packag
   return package_entry_table->lookup_only(pkg_symbol);
 }
 
-jobject Modules::define_module(JNIEnv *env, jstring name, jobject loader, jobjectArray packages) {
+jobject Modules::define_module(JNIEnv *env, jstring name, jstring version, jstring location,
+                               jobject loader, jobjectArray packages) {
   JavaThread *THREAD = JavaThread::thread_from_jni_environment(env);
   ResourceMark rm(THREAD);
 
@@ -186,8 +187,17 @@ jobject Modules::define_module(JNIEnv *env, jstring name, jobject loader, jobjec
   char *module_name =
     java_lang_String::as_utf8_string(JNIHandles::resolve_non_null(name));
 
+  const char *module_version;
+  if (version == NULL) {
+    module_version = default_version();
+  } else {
+    module_version = java_lang_String::as_utf8_string(JNIHandles::resolve_non_null(version));
+    if (module_version == NULL) module_version = default_version();
+  }
+
   if (TraceModules) {
-    tty->print_cr("[define_module(): Start of definition processing for module %s]", module_name);
+    tty->print_cr("[define_module(): Start of definition processing for module %s, version: %s]",
+      module_name != NULL ? module_name : "NULL", module_version);
   }
 
   if (!verify_module_name(module_name)) {
@@ -277,18 +287,34 @@ jobject Modules::define_module(JNIEnv *env, jstring name, jobject loader, jobjec
     // Add the module and its packages.
     if (!dupl_modules && dupl_pkg_index == -1) {
       // Create the entry for this module in the class loader's module entry table.
+
+      // Create symbol* entry for module version.
+      TempNewSymbol version_symbol = SymbolTable::new_symbol(module_version, CHECK_NULL);
+
+      // Create symbol* entry for module location.
+      const char* module_location = NULL;
+      TempNewSymbol location_symbol = NULL;
+      if (location != NULL) {
+        module_location =
+          java_lang_String::as_utf8_string(JNIHandles::resolve_non_null(location));
+        if (module_location != NULL) {
+          location_symbol = SymbolTable::new_symbol(module_location, CHECK_NULL);
+        }
+      }
+
       ClassLoaderData* loader_data =
         ClassLoaderData::class_loader_data_or_null(h_loader());
       assert(loader_data != NULL, "class loader data shouldn't be null");
       ModuleEntry* module_entry =
         module_table->locked_create_entry_or_null(jlrM_handle(), module_symbol,
-          loader_data);
+          version_symbol, location_symbol, loader_data);
 
       if (module_entry == NULL) {
         dupl_modules = true;
       } else {
         if (TraceModules) {
-          tty->print("[define_module(): creation of module: %s, ", module_name);
+          tty->print("[define_module(): creation of module: %s, version: %s, location: %s, ",
+            module_name, module_version, module_location != NULL ? module_location : "NULL");
           loader_data->print_value();
           tty->print_cr(", package #: %d]", pkg_list->length());
         }

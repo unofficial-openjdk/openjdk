@@ -37,7 +37,7 @@ public:
   // module to its class loader by creating the ModuleEntry record in the
   // ClassLoader's ModuleEntry table, creates PackageEntry records in the class
   // loader's PackageEntry table, and, if successful, creates and returns a
-  // java.lang.reflect.Module object.As in JVM_DefineClass the jstring format
+  // java.lang.reflect.Module object.  As in JVM_DefineClass the jstring format
   // for all package names must use "/" and not "."
   //
   //  IllegalArgumentExceptions are thrown for the following :
@@ -49,7 +49,8 @@ public:
   // * Packages contains a duplicate package name
   // * A package already exists in another module for this class loader
   // * Class loader is not a subclass of java.lang.ClassLoader
-  static jobject define_module(JNIEnv *env, jstring name, jobject loader, jobjectArray packages);
+  static jobject define_module(JNIEnv *env, jstring name, jstring version,
+                               jstring location, jobject loader, jobjectArray packages);
 
   // This either does a qualified export of package in module from_module to module
   // to_module or, if to_module is null, does an unqualified export of package.
@@ -105,6 +106,8 @@ public:
 
   // Return TRUE iff package is defined by loader
   static bool is_package_defined(Symbol* package_name, Handle h_loader, TRAPS);
+
+  static const char* default_version() { return "9.0"; }
 
 };
 

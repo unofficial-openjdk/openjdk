@@ -50,7 +50,8 @@ private:
   Symbol* _name;
   ClassLoaderData* _loader;
   GrowableArray<ModuleEntry*>* _reads; // list of modules that are readable by this module
-  char* _version;  // module version number
+  Symbol* _version;   // module version number
+  Symbol* _location;  // module location
   bool _pkgs_with_qexports; // this module contains 1 or more packages with qualified exports
   TRACE_DEFINE_TRACE_ID_FIELD;
 
@@ -59,7 +60,8 @@ public:
     _name = NULL;
     _loader = NULL;
     _reads = NULL;
-    _version = (char *)"0";
+    _version = NULL;
+    _location = NULL;
     _pkgs_with_qexports = false;
   }
 
@@ -72,8 +74,11 @@ public:
   ClassLoaderData*   loader() const                 { return _loader; }
   void               set_loader(ClassLoaderData* l) { _loader = l; }
 
-  char*              version()                      { return _version; }
-  void               set_version(char* version)     { _version = version; }
+  Symbol*            version() const                { return _version; }
+  void               set_version(Symbol* version)   { _version = version; }
+
+  Symbol*            location() const               { return _location; }
+  void               set_location(Symbol* location) { _location = location; }
 
   bool               can_read(ModuleEntry* m) const;
   bool               has_reads() const;
@@ -140,7 +145,8 @@ public:
 private:
   static bool _javabase_created;
 
-  ModuleEntry* new_entry(unsigned int hash, oop module, Symbol* name, ClassLoaderData* class_loader);
+  ModuleEntry* new_entry(unsigned int hash, oop module, Symbol* name, Symbol* version,
+                         Symbol* location, ClassLoaderData* class_loader);
   void set_javabase_entry(oop m);
   void add_entry(int index, ModuleEntry* new_entry);
 
@@ -153,6 +159,8 @@ public:
   // Create module in loader's module entry table, if already exists then
   // return null.  Assume Module_lock has been locked by caller.
   ModuleEntry* locked_create_entry_or_null(oop module, Symbol* module_name,
+                                           Symbol* module_version,
+                                           Symbol* module_location,
                                            ClassLoaderData* loader);
 
   // only lookup module within loader's module entry table

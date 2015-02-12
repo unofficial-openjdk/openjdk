@@ -113,6 +113,10 @@ ModuleEntryTable::~ModuleEntryTable() {
       // Clean out the C heap allocated reads list first before freeing the entry
       to_remove->delete_reads();
       to_remove->name()->decrement_refcount();
+      to_remove->version()->decrement_refcount();
+      if (to_remove->location() != NULL) {
+        to_remove->location()->decrement_refcount();
+      }
 
       // Unlink from the Hashtable prior to freeing
       unlink_entry(to_remove);
@@ -124,7 +128,9 @@ ModuleEntryTable::~ModuleEntryTable() {
   free_buckets();
 }
 
-ModuleEntry* ModuleEntryTable::new_entry(unsigned int hash, oop module, Symbol* name, ClassLoaderData* class_loader) {
+ModuleEntry* ModuleEntryTable::new_entry(unsigned int hash, oop module, Symbol* name,
+                                         Symbol* version, Symbol* location,
+                                         ClassLoaderData* class_loader) {
   assert_locked_or_safepoint(Module_lock);
 
   ModuleEntry* entry = (ModuleEntry*) NEW_C_HEAP_ARRAY2(char, entry_size(), mtClass, CURRENT_PC);
@@ -139,6 +145,13 @@ ModuleEntry* ModuleEntryTable::new_entry(unsigned int hash, oop module, Symbol* 
   entry->set_name(name);
   name->increment_refcount();
   entry->set_loader(class_loader);
+  entry->set_version(version);
+  version->increment_refcount();
+  vmassert(entry->location() == NULL, "Unexpected value");
+  if (location != NULL) {
+    entry->set_location(location);
+    location->increment_refcount();
+  }
   TRACE_INIT_MODULE_ID(entry);
 
   return entry;
@@ -150,13 +163,16 @@ void ModuleEntryTable::add_entry(int index, ModuleEntry* new_entry) {
 }
 
 ModuleEntry* ModuleEntryTable::locked_create_entry_or_null(oop module, Symbol* module_name,
+                                                           Symbol *module_version,
+                                                           Symbol *module_location,
                                                            ClassLoaderData* loader) {
   assert_locked_or_safepoint(Module_lock);
   // Check if module already exists.
   if (lookup_only(module_name) != NULL) {
     return NULL;
   } else {
-    ModuleEntry* entry = new_entry(compute_hash(module), module, module_name, loader);
+    ModuleEntry* entry = new_entry(compute_hash(module), module, module_name,
+                                   module_version, module_location, loader);
     add_entry(index_for(module), entry);
     return entry;
   }
@@ -278,9 +294,10 @@ void ModuleEntryTable::print() {
 
 void ModuleEntry::print() {
   ResourceMark rm;
-  tty->print_cr("entry "PTR_FORMAT" oop "PTR_FORMAT" name %s loader %s version %s pkgs_with_qexports %d next "PTR_FORMAT,
+  tty->print_cr("entry "PTR_FORMAT" oop "PTR_FORMAT" name %s loader %s version %s location %s pkgs_with_qexports %d next "PTR_FORMAT,
                 p2i(this), p2i(literal()), name()->as_C_string(), loader()->loader_name(),
-                version(), _pkgs_with_qexports, p2i(next()));
+                version()->as_C_string(), location() != NULL ? location()->as_C_string() : "NULL",
+                _pkgs_with_qexports, p2i(next()));
 }
 #endif
 

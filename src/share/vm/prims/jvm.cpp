@@ -961,7 +961,7 @@ JVM_END
 JVM_ENTRY(jobject, JVM_DefineModule(JNIEnv *env, jstring name, jstring version, jstring location,
                                     jobject loader, jobjectArray packages))
   JVMWrapper("JVM_DefineModule");
-  return Modules::define_module(env, name, loader, packages);
+  return Modules::define_module(env, name, version, location, loader, packages);
 JVM_END
 
 JVM_ENTRY(void, JVM_AddModuleExports(JNIEnv *env, jobject from_module, jstring package, jobject to_module))

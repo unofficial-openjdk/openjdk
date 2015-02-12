@@ -502,10 +502,12 @@ static void process_javabase(const char* path) {
   // Add entry, without a java.lang.reflect.Module object yet.
   // The j.l.r.m will be added later.
   ModuleEntry* jb_module = NULL;
+  TempNewSymbol version_symbol = SymbolTable::new_symbol(Modules::default_version(), THREAD);
+  assert(version_symbol != NULL, "Symbol creation failed");
   {
     MutexLocker ml(Module_lock, THREAD);
     jb_module = null_cld_modules->locked_create_entry_or_null(
-                  NULL, vmSymbols::java_base(), null_cld);
+                  NULL, vmSymbols::java_base(), version_symbol, NULL, null_cld);
     assert(jb_module != NULL, "no entry created for java.base");
   }
 
@@ -536,9 +538,11 @@ static void process_javabase(ImageFile *image) {
 
   // Add entry, without a java.lang.reflect.Module object yet.
   // The j.l.r.m will be added later.
+  TempNewSymbol version_symbol = SymbolTable::new_symbol(Modules::default_version(), THREAD);
+  assert(version_symbol != NULL, "Symbol creation failed");
   MutexLocker ml(Module_lock, THREAD);
   ModuleEntry* jb_module = null_cld_modules->locked_create_entry_or_null(
-                             NULL, vmSymbols::java_base(), null_cld);
+    NULL, vmSymbols::java_base(), version_symbol, NULL, null_cld);
   assert(jb_module != NULL, "no entry created for java.base");
 
   if (TraceClassLoading) {
