@@ -64,7 +64,7 @@ public final class Module {
 
     // set to true to do access checks in the VM (this is temporary to allow
     // for experimenting with performance)
-    private static final boolean USE_VM_ACCESS_CHECK = false;
+    private static final boolean USE_VM_ACCESS_CHECK = true;
 
     // module name and loader
     private final String name;
