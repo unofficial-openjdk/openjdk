@@ -3478,12 +3478,9 @@ jint Threads::create_vm(JavaVMInitArgs* args, bool* canTryAgain) {
   Management::record_vm_init_completed();
 #endif // INCLUDE_MANAGEMENT
 
-  // Compute system loader. Note that this has to occur after set_init_completed, since
-  // valid exceptions may be thrown in the process.
   // Note that we do not use CHECK_0 here since we are inside an EXCEPTION_MARK and
   // set_init_completed has just been called, causing exceptions not to be shortcut
   // anymore. We call vm_exit_during_initialization directly instead.
-  SystemDictionary::compute_java_system_loader(CHECK_JNI_ERR);
 
 #if INCLUDE_ALL_GCS
   // Support for ConcurrentMarkSweep. This should be cleaned up
@@ -3541,6 +3538,10 @@ jint Threads::create_vm(JavaVMInitArgs* args, bool* canTryAgain) {
   // system initialization uses lambda expressions and method references, hence
   // need to run after initialize_jsr292_core_classes().
   call_initModuleRuntime(CHECK_JNI_ERR);
+
+  // Compute system loader. Note that this has to occur after set_init_completed, since
+  // valid exceptions may be thrown in the process.
+  SystemDictionary::compute_java_system_loader(CHECK_JNI_ERR);
 
   if (TRACE_START() != JNI_OK) {
     vm_exit_during_initialization("Failed to start tracing backend.");
