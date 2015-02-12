@@ -27,15 +27,22 @@ package java.lang.reflect;
 
 import java.net.URI;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.WeakHashMap;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import jdk.jigsaw.module.Configuration;
+import jdk.jigsaw.module.Layer;
+import jdk.jigsaw.module.Layer.ClassLoaderFinder;
 import jdk.jigsaw.module.ModuleArtifact;
 import jdk.jigsaw.module.ModuleDescriptor;
+import jdk.jigsaw.module.ModuleExport;
 import jdk.jigsaw.module.Version;
-
 import sun.misc.ServicesCatalog;
 import sun.misc.SharedSecrets;
 import sun.misc.VM;
@@ -55,68 +62,42 @@ public final class Module {
 
     // no <clinit> as this class is initialized very early in the startup
 
+    // set to true to do access checks in the VM (this is temporary to allow
+    // for experimenting with performance)
+    private static final boolean USE_VM_ACCESS_CHECK = false;
+
     // module name and loader
     private final String name;
     private final ClassLoader loader;
 
-    // initialized lazily for modules defined by VM during bootstrapping
+    // module descriptor (need to make this final)
     private volatile ModuleDescriptor descriptor;
+
+    // all packages in the module
     private volatile Set<String> packages;
+
+    // the modules that this module permanently reads
+    // (need to make this final)
+    private volatile Set<Module> reads;
+
+    // created lazily, additional modules that this module temporarily reads
+    private volatile WeakSet<Module> transientReads;
+
+    // module exports. The key is the package name; the value is an empty map
+    // for unqualified exports; the value is a WeakHashMap when there are
+    // qualified exports
+    private volatile Map<String, Map<Module, Boolean>> exports;
 
     // indicates whether the Module is fully defined - will be used later
     // by snapshot APIs (JVM TI for example)
     private volatile boolean defined;
 
-    // called by VM during startup for at least java.base
-    Module(ClassLoader loader, String name) {
+    /**
+     * Invoked by the VM when creating a Module.
+     */
+    private Module(ClassLoader loader, String name) {
         this.loader = loader;
         this.name = name;
-    }
-
-    static Module defineModule(ClassLoader loader,
-                               ModuleDescriptor descriptor,
-                               Version version,
-                               URI location,
-                               Set<String> packages)
-    {
-
-       Module m;
-
-        // define modules, except java.base as it is defined by VM
-        String name = descriptor.name();
-        if (loader == null && name.equals("java.base")) {
-            m = Object.class.getModule();
-            assert m != null;
-        } else {
-            int n = packages.size();
-            String[] array = new String[n];
-            int i = 0;
-            for (String pkg: packages) {
-                array[i++] = pkg.replace('.', '/');
-            }
-
-            String vs = (version != null) ? version.toString() : null;
-            String uris = (location != null) ? location.toString() : null;
-            m = VM.defineModule(name, vs, uris, loader, array);
-        }
-
-        // set fields as these are not set by the VM
-        m.descriptor = descriptor;
-        m.packages = packages;
-
-        // register this Module in the service catalog if it provides services
-        Map<String, Set<String>> services = descriptor.services();
-        if (!services.isEmpty()) {
-            ServicesCatalog catalog;
-            if (loader == null) {
-                catalog = ServicesCatalog.getSystemServicesCatalog();
-            } else {
-                catalog = SharedSecrets.getJavaLangAccess().getServicesCatalog(loader);
-            }
-            catalog.register(m);
-        }
-
-        return m;
     }
 
     /**
@@ -152,6 +133,9 @@ public final class Module {
      * corresponding to packages added tothe  module after it was created
      * (packages added to support dynamic proxy classes for example). A package
      * name appears at most once in the returned array. </p>
+     *
+     * @apiNote This method returns an array rather than a {@code Set} for
+     * consistency with other {@code java.lang.reflect} types.
      *
      * @return an array of the package names of the packages in this module
      */
@@ -196,7 +180,21 @@ public final class Module {
     public boolean canRead(Module target) {
         if (target == null || target == this)
             return true;
-        return VM.canReadModule(this, target);
+
+        if (USE_VM_ACCESS_CHECK)
+            return VM.canReadModule(this, target);
+
+        // check if module reads target
+        Set<Module> reads = this.reads; // volatile read
+        if (reads.contains(target))
+            return true;
+
+        // check if module reads the target temporarily
+        WeakSet<Module> tr = this.transientReads; // volatile read
+        if (tr != null && tr.contains(target))
+            return true;
+
+        return false;
     }
 
     /**
@@ -207,19 +205,234 @@ public final class Module {
         return "module " + name;
     }
 
+    /**
+     * Define a new Module to the runtime. The resulting Module will be
+     * defined to the VM but will not read any other modules or have any
+     * exports. It will also not be registered in the service catalog.
+     */
+    static Module defineModule(ClassLoader loader,
+                               ModuleDescriptor descriptor,
+                               Version version,
+                               URI location,
+                               Set<String> packages)
+    {
+        Module m;
+
+        // define module to VM, except java.base as it is defined by VM
+        String name = descriptor.name();
+        if (loader == null && name.equals("java.base")) {
+            m = Object.class.getModule();
+        } else {
+            int n = packages.size();
+            String[] array = new String[n];
+            int i = 0;
+            for (String pkg: packages) {
+                array[i++] = pkg.replace('.', '/');
+            }
+
+            String vs = (version != null) ? version.toString() : null;
+            String uris = (location != null) ? location.toString() : null;
+
+            m = VM.defineModule(name, vs, uris, loader, array);
+        }
+
+        // set fields as these are not set by the VM
+        m.descriptor = descriptor;
+        m.packages = packages;
+        m.reads = Collections.emptySet();
+        m.exports = Collections.emptyMap();
+
+        return m;
+    }
+
+    /**
+     * Defines each of the module in the given configuration to the runtime.
+     *
+     * @return a map of module name to runtime {@code Module}
+     */
+    static Map<String, Module> defineModules(Configuration cf,
+                                             Layer.ClassLoaderFinder clf)
+    {
+        Map<String, Module> modules = new HashMap<>();
+        Map<String, ClassLoader> loaders = new HashMap<>();
+
+        // define each of the modules in the configuration to the VM
+        for (ModuleDescriptor descriptor: cf.descriptors()) {
+            String name = descriptor.name();
+
+            ModuleArtifact artifact = cf.findArtifact(name);
+            ClassLoader loader = clf.loaderForModule(artifact);
+
+            Version version = artifact.descriptor().id().version();
+            Module m =  defineModule(loader,
+                                     artifact.descriptor(),
+                                     version,
+                                     artifact.location(),
+                                     artifact.packages());
+            modules.put(name, m);
+            loaders.put(name, loader);
+        }
+
+        // setup readability and exports
+        for (ModuleDescriptor descriptor: cf.descriptors()) {
+            Module m = modules.get(descriptor.name());
+            assert m != null;
+
+            // reads
+            Set<Module> reads = new HashSet<>();
+            for (ModuleDescriptor other: cf.readDependences(descriptor)) {
+                String dn = other.name();
+                Module m2 = modules.get(dn);
+                Layer parent = cf.layer();
+                if (m2 == null && parent != null)
+                    m2 = parent.findModule(other.name());
+                if (m2 == null) {
+                    throw new InternalError(descriptor.name() +
+                            " reads unknown module: " + other.name());
+                }
+                VM.addReadsModule(m, m2);
+                reads.add(m2);
+            }
+            m.reads = reads;
+
+            // exports
+            Map<String, Map<Module, Boolean>> exports = new HashMap<>();
+            for (ModuleExport export: descriptor.exports()) {
+                String pkg = export.pkg();
+                String permit = export.permit();
+                if (permit == null) {
+                    exports.computeIfAbsent(pkg, k -> Collections.emptyMap());
+                    VM.addModuleExports(m, pkg.replace('.', '/'), null);
+                } else {
+                    // only export to modules that are in this configuration
+                    Module m2 = modules.get(permit);
+                    if (m2 != null) {
+                        exports.computeIfAbsent(pkg, k -> new HashMap<>())
+                               .put(m2, Boolean.TRUE);
+                        VM.addModuleExports(m, pkg.replace('.', '/'), m2);
+                    }
+                }
+            }
+            m.exports = exports;
+        }
+
+        // register the modules in the service catalog if they provide services
+        // and set the "defined" field to mark as fully defined.
+        for (ModuleDescriptor descriptor: cf.descriptors()) {
+            String name = descriptor.name();
+            Module m = modules.get(name);
+            ClassLoader loader = loaders.get(name);
+
+            Map<String, Set<String>> services = descriptor.services();
+            if (!services.isEmpty()) {
+                ServicesCatalog catalog;
+                if (loader == null) {
+                    catalog = ServicesCatalog.getSystemServicesCatalog();
+                } else {
+                    catalog = SharedSecrets.getJavaLangAccess().getServicesCatalog(loader);
+                }
+                catalog.register(m);
+            }
+
+            m.defined = true;
+        }
+
+        return modules;
+    }
+
+    /**
+     * Add a package to this module.
+     *
+     * @apiNote This is an expensive operation, not expected to be used often
+     */
+    void addPackage(String pkg) {
+        synchronized (this) {
+            // copy set
+            Set<String> pkgs = new HashSet<>(this.packages);
+            pkgs.add(pkg);
+
+            // replace with new set
+            this.packages = pkgs; // volatile write
+
+            // update VM view
+            sun.misc.VM.addModulePackage(this, pkg.replace('.', '/'));
+        }
+    }
 
     /**
      * Makes the given {@code Module} readable to this module.
      */
     void implAddReads(Module target) {
+
+        // check if we already read this module
+        Set<Module> reads = this.reads;
+        if (reads.contains(target))
+            return;
+
+        // add temporary read.
+        WeakSet<Module> tr = this.transientReads;
+        if (tr == null) {
+            synchronized (this) {
+                tr = this.transientReads;
+                if (tr == null) {
+                    tr = new WeakSet<>();
+                    this.transientReads = tr;
+                }
+            }
+        }
+        tr.add(target);
+
+        // update VM view
         VM.addReadsModule(this, target);
     }
 
     /**
-     * Exports the given package name to the given module.
+     * Updates the exports so that package {@code pkg} is exported to module
+     * {@code who}. If {@code who} is {@code null} then the package is exported
+     * to all modules that read this module.
+     *
+     * @apiNote This is an expensive operation, not expected to be used often
      */
     void implAddExports(String pkg, Module who) {
-        VM.addModuleExports(this, pkg.replace('.', '/'), who);
+        synchronized (this) {
+
+            // copy existing map
+            Map<String, Map<Module, Boolean>> exports = new HashMap<>(this.exports);
+
+            // the package may be exported already, need to handle all cases
+            Map<Module, Boolean> permits = exports.get(pkg);
+            if (permits == null) {
+                // pkg not already exported
+                if (who == null) {
+                    // unqualified export
+                    exports.put(pkg, Collections.emptyMap());
+                } else {
+                    // qualified export
+                    permits = new WeakHashMap<>();
+                    permits.put(who, Boolean.TRUE);
+                    exports.put(pkg, permits);
+                }
+            } else {
+                // pkg already exported
+                if (!permits.isEmpty()) {
+                    if (who == null) {
+                        // change from qualified to unqualified
+                        exports.put(pkg, Collections.emptyMap());
+                    } else {
+                        // copy the existing qualified exports
+                        permits = new WeakHashMap<>(permits);
+                        permits.put(who, Boolean.TRUE);
+                        exports.put(pkg, permits);
+                    }
+                }
+            }
+
+            // volatile write
+            this.exports = exports;
+
+            // update VM view
+            VM.addModuleExports(this, pkg.replace('.', '/'), who);
+        }
     }
 
     /**
@@ -227,41 +440,80 @@ public final class Module {
      * given module.
      */
     boolean isExported(String pkg, Module who) {
-        return VM.isExportedToModule(this, pkg.replace('.', '/'), who);
+        if (USE_VM_ACCESS_CHECK)
+            return VM.isExportedToModule(this, pkg.replace('.', '/'), who);
+
+        Map<String, Map<Module, Boolean>>  exports = this.exports; // volatile read
+        Map<Module, Boolean> permits = exports.get(pkg);
+        if (permits != null) {
+            // unqualified export or exported to 'who'
+            if (permits.isEmpty() || permits.containsKey(who)) return true;
+        }
+
+        // not exported
+        return false;
     }
 
     /**
-     * Dynamically adds a package to this module. This is used for dynamic
-     * proxies (for example).
+     * A "not-a-Set" set of weakly referenced objects that supports concurrent
+     * access.
      */
-    void addPackage(String pkg) {
-        sun.misc.VM.addModulePackage(this, pkg.replace('.', '/'));
-        Set<String> pkgs = new HashSet<>(this.packages);
-        pkgs.add(pkg);
-        this.packages = pkgs;
+    private static class WeakSet<E> {
+        private final ReadWriteLock lock = new ReentrantReadWriteLock();
+        private final Lock readLock = lock.readLock();
+        private final Lock writeLock = lock.writeLock();
+
+        private final WeakHashMap<E, Boolean> map = new WeakHashMap<>();
+
+        /**
+         * Adds the specified element to the set.
+         */
+        void add(E e) {
+            writeLock.lock();
+            try {
+                map.put(e, Boolean.TRUE);
+            } finally {
+                writeLock.unlock();
+            }
+        }
+
+        /**
+         * Returns {@code true} if this set contains the specified element.
+         */
+        boolean contains(E e) {
+            readLock.lock();
+            try {
+                return map.containsKey(e);
+            } finally {
+                readLock.unlock();
+            }
+        }
     }
 
+    /**
+     * Register shared secret to provide access to package-private methods
+     */
     static {
         sun.misc.SharedSecrets.setJavaLangReflectAccess(
             new sun.misc.JavaLangReflectAccess() {
                 @Override
-                public Module defineModule(ClassLoader loader, ModuleArtifact artifact) {
-                    Version version = artifact.descriptor().id().version();
-                    return Module.defineModule(loader,
-                                               artifact.descriptor(),
-                                               version,
-                                               artifact.location(),
-                                               artifact.packages());
+                public Map<String, Module> defineModules(Configuration cf,
+                                                         ClassLoaderFinder clf) {
+                    return Module.defineModules(cf, clf);
                 }
                 @Override
-                public Module defineModule(ClassLoader loader, ModuleDescriptor descriptor,
+                public boolean isExported(Module m, String pkg, Module who) {
+                    return m.isExported(pkg, who);
+                }
+                @Override
+                public Module defineModule(ClassLoader loader,
+                                           ModuleDescriptor descriptor,
                                            Set<String> packages) {
                     return Module.defineModule(loader, descriptor, null, null, packages);
                 }
-
                 @Override
-                public void setDefined(Module m) {
-                    m.defined = true;
+                public void addPackage(Module m, String pkg) {
+                    m.addPackage(pkg);
                 }
                 @Override
                 public void addReadsModule(Module m1, Module m2) {
@@ -270,27 +522,6 @@ public final class Module {
                 @Override
                 public void addExports(Module m, String pkg, Module who) {
                     m.implAddExports(pkg, who);
-                }
-                @Override
-                public boolean isExported(Module m, String pkg, Module who) {
-                    return m.isExported(pkg, who);
-                }
-                @Override
-                public boolean uses(Module m, String sn) {
-                    return m.getDescriptor().serviceDependences().contains(sn);
-                }
-                @Override
-                public Set<String> provides(Module m, String sn) {
-                    Set<String> provides = m.getDescriptor().services().get(sn);
-                    if (provides == null) {
-                        return Collections.emptySet();
-                    } else {
-                        return provides;
-                    }
-                }
-                @Override
-                public void addPackage(Module m, String pkg) {
-                    m.addPackage(pkg);
                 }
             });
     }

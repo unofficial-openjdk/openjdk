@@ -222,11 +222,6 @@ public class Reflection {
         if (m1 == m2)
             return true;  // same module (named or unnamed)
 
-        // need module system to be fully initialized before it is possible
-        // to do module access checks
-        if (!VM.isBooted())
-            return false;
-
         if (m1 != null) {
             // named module trying to access member in unnamed module
             if (m2 == null)

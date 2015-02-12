@@ -26,24 +26,55 @@
 package sun.misc;
 
 import java.lang.reflect.Module;
-import java.net.URI;
+import java.util.Map;
 import java.util.Set;
 
-import jdk.jigsaw.module.ModuleArtifact;
+import jdk.jigsaw.module.Configuration;
+import jdk.jigsaw.module.Layer.ClassLoaderFinder;
 import jdk.jigsaw.module.ModuleDescriptor;
 
+/**
+ * Provides access to package-private modules in java.lang.reflect.
+ */
+
 public interface JavaLangReflectAccess {
-    Module defineModule(ClassLoader loader, ModuleArtifact artifact);
-    Module defineModule(ClassLoader loader, ModuleDescriptor descriptor,
+
+    /**
+     * Defines the modules in the given {@code Configuration} to the Java
+     * virtual machine. The modules are mapped to class loaders using the
+     * given {@code ClassLoaderFinder}.
+     */
+    Map<String, Module> defineModules(Configuration cf, ClassLoaderFinder clf);
+
+    /**
+     * Returns {@code true} if module m1 exports a package to module m2.
+     * This method is used by sun.misc.Reflection.verifyModuleAccess.
+     */
+    boolean isExported(Module m1, String pkg, Module m2);
+
+    /**
+     * Defines a new module in the Java virtual machine. The module is
+     * associated with the given class loader.
+     */
+    Module defineModule(ClassLoader loader,
+                        ModuleDescriptor descriptor,
                         Set<String> packages);
-    void setDefined(Module m);
 
-    void addReadsModule(Module m1, Module m2);
-    void addExports(Module m, String pkg, Module who);
-    boolean isExported(Module m, String pkg, Module who);
-
-    boolean uses(Module m, String service);
-    Set<String> provides(Module m, String service);
-
+    /**
+     * Add a package to the given module.
+     */
     void addPackage(Module m, String pkg);
+
+    /**
+     * Updates the readability so that module m1 reads m2. The new read edge
+     * does not result in a strong reference to m2 (m2 can be GC'ed).
+     */
+    void addReadsModule(Module m1, Module m2);
+
+    /**
+     * Causes module m1 to export a package to module m2. If m2 is {@code null}
+     * then the package is exported to all module that read m1. The export does
+     * not result in a strong reference to m2 (m2 can be GC'ed).
+     */
+    void addExports(Module m1, String pkg, Module m2);
 }

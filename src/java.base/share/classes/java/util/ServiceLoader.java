@@ -38,7 +38,6 @@ import java.security.AccessControlContext;
 import java.security.PrivilegedAction;
 
 import sun.misc.JavaLangAccess;
-import sun.misc.JavaLangReflectAccess;
 import sun.misc.ServicesCatalog;
 import sun.misc.SharedSecrets;
 import sun.misc.VM;
@@ -193,11 +192,6 @@ import sun.reflect.Reflection;
 public final class ServiceLoader<S>
     implements Iterable<S>
 {
-    // access to java.lang.reflect.Module
-    private static JavaLangAccess langAccess = SharedSecrets.getJavaLangAccess();
-    private static JavaLangReflectAccess reflectAccess =
-        SharedSecrets.getJavaLangReflectAccess();
-
     private static final String PREFIX = "META-INF/services/";
 
     // The class or interface representing the service being loaded
@@ -257,7 +251,7 @@ public final class ServiceLoader<S>
             // uses the service type
             if (m != null) {
                 String sn = svc.getName();
-                if (!reflectAccess.uses(m, sn)) {
+                if (!m.getDescriptor().serviceDependences().contains(sn)) {
                     fail(svc, "use not declared in " + m);
                 }
             }
@@ -445,7 +439,7 @@ public final class ServiceLoader<S>
             Module m = c.getModule();
             if (m != null) {
                 String sn = service.getName();
-                Set<String> provides = reflectAccess.provides(m, sn);
+                Set<String> provides = m.getDescriptor().services().get(sn);
                 if (provides == null || !provides.contains(cn)) {
                     fail(service,
                          m + " does not declare that it provides " + sn + " with " + cn);
@@ -527,7 +521,13 @@ public final class ServiceLoader<S>
 
             while (true) {
                 if (iterator.hasNext()) {
-                    nextName = iterator.next();
+
+                    String name = iterator.next();
+                    // skip duplicates
+                    if (providers.containsKey(name))
+                        continue;
+
+                    nextName = name;
                     return true;
                 }
 

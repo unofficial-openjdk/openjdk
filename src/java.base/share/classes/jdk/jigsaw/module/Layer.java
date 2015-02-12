@@ -27,7 +27,6 @@ package jdk.jigsaw.module;
 
 import java.lang.reflect.Module;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
@@ -86,74 +85,6 @@ public final class Layer {
     }
 
     /**
-     * Defines each of the module in the given configuration to the runtime.
-     *
-     * @return a map of module name to runtime {@code Module}
-     */
-    private static Map<String, Module> defineModules(Configuration cf,
-                                                     ClassLoaderFinder clf)
-    {
-        Map<String, Module> map = new HashMap<>();
-
-        // define each of the modules in the configuration to the VM
-        for (ModuleDescriptor descriptor: cf.descriptors()) {
-            String name = descriptor.name();
-
-            ModuleArtifact artifact = cf.findArtifact(name);
-            ClassLoader loader = clf.loaderForModule(artifact);
-
-            // TBD: what if this throws an error? rollback or specify as not-atomic???
-            assert !artifact.packages().contains("");
-            Module m = reflectAccess.defineModule(loader, artifact);
-            map.put(name, m);
-        }
-
-        // setup readability and exports
-        for (ModuleDescriptor descriptor: cf.descriptors()) {
-            Module m = map.get(descriptor.name());
-            assert m != null;
-
-            // reads
-            for (ModuleDescriptor other: cf.readDependences(descriptor)) {
-                String dn = other.name();
-                Module m2 = map.get(dn);
-                Layer parent = cf.layer();
-                if (m2 == null && parent != null)
-                    m2 = parent.findModule(other.name());
-                if (m2 == null) {
-                    throw new InternalError(descriptor.name() +
-                            " reads unknown module: " + other.name());
-                }
-                reflectAccess.addReadsModule(m, m2);
-            }
-
-            // exports
-            for (ModuleExport export: descriptor.exports()) {
-                String pkg = export.pkg();
-                String permit = export.permit();
-                if (permit == null) {
-                    reflectAccess.addExports(m, pkg, null);
-                } else {
-                    // only export to modules that are in this layer
-                    // (no forward references)
-                    Module m2 = map.get(permit);
-                    if (m2 != null)
-                        reflectAccess.addExports(m, pkg, m2);
-                }
-            }
-
-
-        }
-
-        // modules are now defined
-        for (Module m: map.values()) {
-            reflectAccess.setDefined(m);
-        }
-
-        return map;
-    }
-
-    /**
      * Creates a new {@code Layer} object.
      */
     private Layer(Configuration cf, Map<String, Module> map) {
@@ -179,8 +110,7 @@ public final class Layer {
     public static Layer create(Configuration cf, ClassLoaderFinder clf) {
         Objects.requireNonNull(cf);
         Objects.requireNonNull(clf);
-        Map<String, Module> map = defineModules(cf, clf);
-        return new Layer(cf, map);
+        return new Layer(cf, reflectAccess.defineModules(cf, clf));
     }
 
     /**
