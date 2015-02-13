@@ -37,16 +37,8 @@ public class UseAWT {
         // test class loading
         try {
             Class<?> c = Component.class;
-
-            // workaround until VM throws NCFE for types in modules that
-            // aren't defined to the VM
-            if (c.getModule() == null)
-                throw new NoClassDefFoundError();
-
             if (expectFail) throw new RuntimeException("No Error thrown");
         } catch (NoClassDefFoundError e) {
-            // exact Error is TBD, will likely be NoClassDefFoundError as
-            // class should not be observable
             if (expectPass) throw new RuntimeException(e);
         }
 
