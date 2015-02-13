@@ -981,6 +981,7 @@ class InstanceKlass: public Klass {
 
   // Naming
   const char* signature_name() const;
+  static const jbyte* package_from_name(Symbol* name, int& length);
 
   // Iterators
   int oop_oop_iterate(oop obj, ExtendedOopClosure* blk) {

@@ -105,6 +105,9 @@
 #include "runtime/rtmLocking.hpp"
 #endif
 
+// Initialization after module runtime initialization
+void universe_post_module_init();  // must happen after call_initModuleRuntime
+
 PRAGMA_FORMAT_MUTE_WARNINGS_FOR_GCC
 
 #ifdef DTRACE_ENABLED
@@ -3273,6 +3276,7 @@ static void call_initModuleRuntime(TRAPS) {
   JavaValue result(T_VOID);
   JavaCalls::call_static(&result, klass, vmSymbols::boot_name(),
                                          vmSymbols::void_method_signature(), CHECK);
+  universe_post_module_init();
 }
 
 jint Threads::create_vm(JavaVMInitArgs* args, bool* canTryAgain) {

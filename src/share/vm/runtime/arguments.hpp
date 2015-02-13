@@ -316,6 +316,11 @@ class Arguments : AllStatic {
   static void set_java_compiler(bool arg) { _java_compiler = arg; }
   static bool java_compiler()   { return _java_compiler; }
 
+  // Capture the index location of -Xbootclasspath\a within sysclasspath.
+  // Used when setting up the bootstrap search path in order to
+  // mark the boot loader's append path observability boundary.
+  static int _bootclasspath_a_index;
+
   // -Xoverride flag
   static const char* _override_dir;
   static void set_override_dir(const char* dir) { _override_dir = dir; }
@@ -532,6 +537,10 @@ class Arguments : AllStatic {
   // -Xms
   static uintx min_heap_size()              { return _min_heap_size; }
   static void  set_min_heap_size(uintx v)   { _min_heap_size = v;  }
+
+  // -Xbootclasspath/a
+  static int  bootclasspath_a_index()              { return _bootclasspath_a_index; }
+  static void set_bootclasspath_a_index(int value) { _bootclasspath_a_index = value; }
 
   // -Xoverride
   static const char* override_dir()         { return _override_dir; }

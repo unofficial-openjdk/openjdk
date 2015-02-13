@@ -27,6 +27,7 @@
 #include "classfile/dictionary.hpp"
 #include "classfile/javaClasses.hpp"
 #include "classfile/loaderConstraints.hpp"
+#include "classfile/packageEntry.hpp"
 #include "classfile/placeholders.hpp"
 #include "classfile/resolutionErrors.hpp"
 #include "classfile/stringTable.hpp"
@@ -1263,22 +1264,49 @@ instanceKlassHandle SystemDictionary::load_shared_class(instanceKlassHandle ik,
 
 instanceKlassHandle SystemDictionary::load_instance_class(Symbol* class_name, Handle class_loader, TRAPS) {
   instanceKlassHandle nh = instanceKlassHandle(); // null Handle
+
   if (class_loader.is_null()) {
+    bool search_only_bootloader_append = false;
+
+    // Check observability boundaries for the boot class loader.
+    if (Universe::is_module_initialized()) {
+      // Check if the class' package is in a module defined to the boot loader.
+      // Check must occur after the module system has been initialized.
+      int length;
+      const jbyte* pkg_string = InstanceKlass::package_from_name(class_name, length);
+
+      if (pkg_string != NULL) {
+        TempNewSymbol pkg_name = SymbolTable::new_symbol((const char*)pkg_string, length, CHECK_(nh));
+        // Find in boot class loader's package entry table.
+        ClassLoaderData* loader_data = class_loader_data(class_loader);
+        PackageEntry* package_entry = loader_data->packages()->lookup_only(pkg_name);
+        if (package_entry == NULL || package_entry->in_unnamed_module()) {
+          // Limit the scope of the observability to locate the class only
+          // in the boot loader's append path, -Xbootclasspath\a + jvmti
+          search_only_bootloader_append = true;
+        }
+      } else {
+        // unnamed package, search only the boot loader's append path
+        search_only_bootloader_append = true;
+      }
+    }
 
     // Search the shared system dictionary for classes preloaded into the
     // shared spaces.
     instanceKlassHandle k;
     {
 #if INCLUDE_CDS
-      PerfTraceTime vmtimer(ClassLoader::perf_shared_classload_time());
-      k = load_shared_class(class_name, class_loader, THREAD);
+      if (!search_only_bootloader_append) {
+        PerfTraceTime vmtimer(ClassLoader::perf_shared_classload_time());
+        k = load_shared_class(class_name, class_loader, THREAD);
+      }
 #endif
     }
 
     if (k.is_null()) {
       // Use VM class loader
       PerfTraceTime vmtimer(ClassLoader::perf_sys_classload_time());
-      k = ClassLoader::load_classfile(class_name, CHECK_(nh));
+      k = ClassLoader::load_classfile(class_name, search_only_bootloader_append, CHECK_(nh));
     }
 
     // find_or_define_instance_class may return a different InstanceKlass

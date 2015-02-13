@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -214,11 +214,23 @@ class ClassLoader: AllStatic {
   static PerfCounter* _isUnsyncloadClass;
   static PerfCounter* _load_instance_class_failCounter;
 
-  // First entry in linked list of ClassPathEntry instances
+  // First entry in linked list of ClassPathEntry instances.
+  // Marks the start of the boot loader's overall observability
+  // set.  This consists of entries made up by:
+  //   - boot loader modules
+  //     [-Xoverride]; exploded build | bootmodules.jimage;
+  //   - boot loader append path
+  //     [-Xbootclasspath/a]; [jvmti appended entries]
   static ClassPathEntry* _first_entry;
   // Last entry in linked list of ClassPathEntry instances
   static ClassPathEntry* _last_entry;
   static int _num_entries;
+
+  // Pointer into the linked list of ClassPathEntry instances.
+  // Marks the start of:
+  //   - the boot loader's append path
+  //     [-Xbootclasspath/a]; [jvmti appended entries]
+  static ClassPathEntry* _first_append_entry;
 
   // Hash table used to keep track of loaded packages
   static PackageHashtable* _package_hash_table;
@@ -244,7 +256,7 @@ class ClassLoader: AllStatic {
   static void setup_meta_index(const char* meta_index_path, const char* meta_index_dir,
                                int start_index);
   static void setup_bootstrap_search_path();
-  static void setup_search_path(const char *class_path);
+  static void setup_search_path(const char *class_path, bool setting_bootstrap);
 
   static void load_zip_library();
   static ClassPathEntry* create_class_path_entry(const char *path, const struct stat* st,
@@ -259,6 +271,7 @@ class ClassLoader: AllStatic {
   static int crc32(int crc, const char* buf, int len);
   static bool update_class_path_entry_list(const char *path,
                                            bool check_for_duplicates,
+                                           bool mark_append_entry,
                                            bool throw_exception=true);
   static void print_bootclasspath();
 
@@ -335,7 +348,7 @@ class ClassLoader: AllStatic {
   static void process_jimage_file();
 
   // Load individual .class file
-  static instanceKlassHandle load_classfile(Symbol* h_name, TRAPS);
+  static instanceKlassHandle load_classfile(Symbol* h_name, bool search_append_only, TRAPS);
 
   // If the specified package has been loaded by the system, then returns
   // the name of the directory or ZIP file that the package was loaded from.
@@ -391,6 +404,8 @@ class ClassLoader: AllStatic {
   static jlong class_verify_time_ms();
   static jlong class_link_count();
   static jlong class_link_time_ms();
+
+  static void set_first_append_entry(ClassPathEntry* entry);
 
   // indicates if class path already contains a entry (exact match by name)
   static bool contains_entry(ClassPathEntry* entry);

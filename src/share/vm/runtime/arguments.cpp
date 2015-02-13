@@ -99,6 +99,7 @@ const char*  Arguments::_sun_java_launcher      = DEFAULT_JAVA_LAUNCHER;
 int    Arguments::_sun_java_launcher_pid        = -1;
 bool   Arguments::_sun_java_launcher_is_altjvm  = false;
 const char*  Arguments::_override_dir           = NULL;
+int    Arguments::_bootclasspath_a_index        = -1;
 
 // These parameters are reset in method parse_vm_init_args(JavaVMInitArgs*)
 bool   Arguments::_AlwaysCompileLoopMethods     = AlwaysCompileLoopMethods;
@@ -473,6 +474,11 @@ char* SysClassPath::combined_path() {
   int i;
   for (i = 0; i < _scp_nitems; ++i) {
     if (_items[i] != NULL) {
+      // Record index of -Xbootclasspath/a, used to set the
+      // boot loader's append path observability boundary.
+      if (i == _scp_suffix) {
+        Arguments::set_bootclasspath_a_index((int)total_len);
+      }
       lengths[i] = strlen(_items[i]);
       // Include space for the separator char (or a NULL for the last item).
       total_len += lengths[i] + 1;

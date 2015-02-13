@@ -127,9 +127,10 @@ PerfCounter*    ClassLoader::_unsafe_defineClassCallCounter = NULL;
 PerfCounter*    ClassLoader::_isUnsyncloadClass = NULL;
 PerfCounter*    ClassLoader::_load_instance_class_failCounter = NULL;
 
-ClassPathEntry* ClassLoader::_first_entry         = NULL;
-ClassPathEntry* ClassLoader::_last_entry          = NULL;
-int             ClassLoader::_num_entries         = 0;
+ClassPathEntry* ClassLoader::_first_entry = NULL;
+ClassPathEntry* ClassLoader::_last_entry  = NULL;
+int             ClassLoader::_num_entries = 0;
+ClassPathEntry* ClassLoader::_first_append_entry = NULL;
 PackageHashtable* ClassLoader::_package_hash_table = NULL;
 bool            ClassLoader::_has_bootmodules_jimage = false;
 
@@ -204,7 +205,6 @@ ClassPathDirEntry::ClassPathDirEntry(const char* dir) : ClassPathEntry() {
   strcpy(copy, dir);
   _dir = copy;
 }
-
 
 ClassFileStream* ClassPathDirEntry::open_stream(const char* name, TRAPS) {
   // construct full path name
@@ -850,7 +850,7 @@ void ClassLoader::setup_bootstrap_search_path() {
     _shared_paths_misc_info->add_boot_classpath(sys_class_path);
   }
 #endif
-  setup_search_path(sys_class_path);
+  setup_search_path(sys_class_path, true);
 }
 
 #if INCLUDE_CDS
@@ -870,7 +870,7 @@ bool ClassLoader::check_shared_paths_misc_info(void *buf, int size) {
 }
 #endif
 
-void ClassLoader::setup_search_path(const char *class_path) {
+void ClassLoader::setup_search_path(const char *class_path, bool bootstrap_search) {
   int offset = 0;
   int len = (int)strlen(class_path);
   int end = 0;
@@ -882,10 +882,12 @@ void ClassLoader::setup_search_path(const char *class_path) {
     }
     EXCEPTION_MARK;
     ResourceMark rm(THREAD);
+    bool mark_append_entry = (bootstrap_search &&
+                              (start == Arguments::bootclasspath_a_index()));
     char* path = NEW_RESOURCE_ARRAY(char, end - start + 1);
     strncpy(path, &class_path[start], end - start);
     path[end - start] = '\0';
-    update_class_path_entry_list(path, false);
+    update_class_path_entry_list(path, false, mark_append_entry);
 #if INCLUDE_CDS
     if (DumpSharedSpaces) {
       check_shared_classpath(path);
@@ -1014,6 +1016,16 @@ ClassPathZipEntry* ClassLoader::create_class_path_zip_entry(const char *path) {
   return NULL;
 }
 
+// The boot class loader must adhere to specfic observability rules.
+// Prior to loading a class in a named package, the package is checked
+// to see if it is in a module defined to the boot loader. If the
+// package is not in a module defined to the boot loader, the class
+// must be loaded only in the boot loader's append path, which
+// consists of [-Xbootclasspath/a]; [jvmti appended entries]
+void ClassLoader::set_first_append_entry(ClassPathEntry *new_entry) {
+  _first_append_entry = new_entry;
+}
+
 // returns true if entry already on class path
 bool ClassLoader::contains_entry(ClassPathEntry *entry) {
   ClassPathEntry* e = _first_entry;
@@ -1040,12 +1052,13 @@ void ClassLoader::add_to_list(ClassPathEntry *new_entry) {
 }
 
 void ClassLoader::add_to_list(const char *apath) {
-  update_class_path_entry_list((char*)apath, false);
+  update_class_path_entry_list((char*)apath, false, false);
 }
 
 // Returns true IFF the file/dir exists and the entry was successfully created.
 bool ClassLoader::update_class_path_entry_list(const char *path,
                                                bool check_for_duplicates,
+                                               bool mark_append_entry,
                                                bool throw_exception) {
   struct stat st;
   if (os::stat(path, &st) == 0) {
@@ -1061,12 +1074,21 @@ bool ClassLoader::update_class_path_entry_list(const char *path,
     if (new_entry == NULL) {
       return false;
     }
+
+    // Ensure that the first boot loader append entry will always be set correctly.
+    assert((!mark_append_entry ||
+            (mark_append_entry && (!check_for_duplicates || !contains_entry(new_entry)))),
+           "failed to mark boot loader's first append boundary");
+
     // The kernel VM adds dynamically to the end of the classloader path and
     // doesn't reorder the bootclasspath which would break java.lang.Package
     // (see PackageInfo).
     // Add new entry to linked list
     if (!check_for_duplicates || !contains_entry(new_entry)) {
       ClassLoaderExt::add_class_path_entry(path, check_for_duplicates, new_entry);
+      if (mark_append_entry) {
+        set_first_append_entry(new_entry);
+      }
     }
     return true;
   } else {
@@ -1379,7 +1401,7 @@ objArrayOop ClassLoader::get_system_packages(TRAPS) {
 }
 
 
-instanceKlassHandle ClassLoader::load_classfile(Symbol* h_name, TRAPS) {
+instanceKlassHandle ClassLoader::load_classfile(Symbol* h_name, bool search_append_only, TRAPS) {
   ResourceMark rm(THREAD);
   const char* class_name = h_name->as_C_string();
   EventMark m("loading class %s", class_name);
@@ -1396,14 +1418,30 @@ instanceKlassHandle ClassLoader::load_classfile(Symbol* h_name, TRAPS) {
   // Lookup stream for parsing .class file
   ClassFileStream* stream = NULL;
   int classpath_index = 0;
-  ClassPathEntry* e = NULL;
+  ClassPathEntry* e = (!search_append_only ? _first_entry : _first_append_entry);
+  ClassPathEntry* last_e = (!search_append_only ? _first_append_entry : NULL);
   instanceKlassHandle h;
   {
     PerfClassTraceTime vmtimer(perf_sys_class_lookup_time(),
                                ((JavaThread*) THREAD)->get_thread_stat()->perf_timers_addr(),
                                PerfClassTraceTime::CLASS_LOAD);
-    e = _first_entry;
-    while (e != NULL) {
+
+    if (search_append_only) {
+      // For the boot loader append path search, must calculate
+      // the starting classpath_index prior to attempting to
+      // load the classfile.
+      ClassPathEntry *tmp_e = _first_entry;
+      while ((tmp_e != NULL) && (tmp_e != _first_append_entry)) {
+        tmp_e = tmp_e->next();
+        ++classpath_index;
+      }
+    }
+
+    // Attempt to load the classfile from either:
+    //   - [-Xoverride:dir]; exploded build | bootmodules.jimage
+    //     or
+    //   - [-Xbootclasspath/a]; [jvmti appended entries]
+    while ((e != NULL) && (e != last_e)) {
       stream = e->open_stream(file_name, CHECK_NULL);
       if (!context.check(stream, classpath_index)) {
         return h; // NULL

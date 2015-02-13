@@ -351,7 +351,7 @@ jobject Modules::define_module(JNIEnv *env, jstring name, jstring version, jstri
                             pkg_list->at(dupl_pkg_index)->as_C_string(), module_name));
   }
 
-  if (loader == NULL) {
+  if (loader == NULL && !Universe::is_module_initialized()) {
     // Now that the module is defined, if it is in the bootloader, make sure that
     // its classes can be found.  Check if -Xoverride:<path> was specified.  If
     // so prepend <path>/module_name, if it exists, to bootpath.  Also, if using

@@ -2560,7 +2560,7 @@ const char* InstanceKlass::signature_name() const {
   return dest;
 }
 
-static const jbyte* strip_package_from_name(Symbol* name, int& length) {
+const jbyte* InstanceKlass::package_from_name(Symbol* name, int& length) {
   ResourceMark rm;
   length = 0;
   if (name == NULL) {
@@ -2598,7 +2598,7 @@ static const jbyte* strip_package_from_name(Symbol* name, int& length) {
 
 void InstanceKlass::set_package(Symbol* name, ClassLoaderData* loader, TRAPS) {
   int length;
-  const jbyte* base_name = strip_package_from_name(name, length);
+  const jbyte* base_name = package_from_name(name, length);
 
   if (base_name != NULL && loader != NULL) {
     TempNewSymbol pkg_name = SymbolTable::new_symbol((const char*)base_name, length, CHECK);
@@ -2684,8 +2684,8 @@ bool InstanceKlass::is_same_class_package(oop class_loader1, Symbol* class_name1
     // Otherwise, we just compare jbyte values between the strings.
     int length1;
     int length2;
-    const jbyte *name1 = strip_package_from_name(class_name1, length1);
-    const jbyte *name2 = strip_package_from_name(class_name2, length2);
+    const jbyte *name1 = package_from_name(class_name1, length1);
+    const jbyte *name2 = package_from_name(class_name2, length2);
 
     if ((length1 < 0) || (length2 < 0)) {
       // error occurred parsing package name.
