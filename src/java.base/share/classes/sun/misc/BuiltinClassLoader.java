@@ -40,8 +40,6 @@ import java.security.CodeSource;
 import java.security.Permission;
 import java.security.PermissionCollection;
 import java.security.PrivilegedAction;
-import java.security.PrivilegedActionException;
-import java.security.PrivilegedExceptionAction;
 import java.security.SecureClassLoader;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -91,7 +89,7 @@ class BuiltinClassLoader extends SecureClassLoader
     }
 
     // parent ClassLoader
-    private final ClassLoader parent;
+    private final BuiltinClassLoader parent;
 
     // ImageReader or null if an exploded build
     private final ImageReader imageReader;
@@ -114,7 +112,7 @@ class BuiltinClassLoader extends SecureClassLoader
     /**
      * Create a new instance.
      */
-    BuiltinClassLoader(ClassLoader parent,
+    BuiltinClassLoader(BuiltinClassLoader parent,
                        ImageReader imageReader,
                        Path overrideDir,
                        URLClassPath ucp)
@@ -374,6 +372,18 @@ class BuiltinClassLoader extends SecureClassLoader
     protected Class<?> loadClass(String cn, boolean resolve)
         throws ClassNotFoundException
     {
+        Class<?> c = loadClassOrNull(cn, resolve);
+        if (c == null)
+            throw new ClassNotFoundException(cn);
+        return c;
+    }
+
+    /**
+     * A variation of {@code loadCass} to load a class with the specified
+     * binary name. This method returns {@code null} when the class is not
+     * found.
+     */
+    protected Class<?> loadClassOrNull(String cn, boolean resolve) {
         synchronized (getClassLoadingLock(cn)) {
             // check if already loaded
             Class<?> c = findLoadedClass(cn);
@@ -389,10 +399,7 @@ class BuiltinClassLoader extends SecureClassLoader
                 } else {
                     // check parent
                     if (parent != null) {
-                        try {
-                            c = parent.loadClass(cn);
-                        } catch (ClassNotFoundException e) {
-                        }
+                        c = parent.loadClassOrNull(cn);
                     }
 
                     // check class path
@@ -401,15 +408,22 @@ class BuiltinClassLoader extends SecureClassLoader
                     }
                 }
 
-                // not found
-                if (c == null)
-                    throw new ClassNotFoundException(cn);
             }
 
-            if (resolve)
+            if (resolve && c != null)
                 resolveClass(c);
+
             return c;
         }
+    }
+
+    /**
+     * A variation of {@code loadCass} to load a class with the specified
+     * binary name. This method returns {@code null} when the class is not
+     * found.
+     */
+    protected  Class<?> loadClassOrNull(String cn) {
+        return loadClassOrNull(cn, false);
     }
 
     /**
@@ -441,33 +455,23 @@ class BuiltinClassLoader extends SecureClassLoader
      * Finds the class with the specified binary name on the class path.
      *
      * @return the resulting Class or {@code null} if not found
-     *
-     * @throws ClassNotFoundException with an appropriate cause if
-     * an there is an error reading the class file
      */
-    private Class<?> findClassOnClassPathOrNull(String cn)
-        throws ClassNotFoundException
-    {
-        try {
-            return AccessController.doPrivileged(
-                new PrivilegedExceptionAction<Class<?>>() {
-                    public Class<?> run() throws ClassNotFoundException {
-                        String path = cn.replace('.', '/').concat(".class");
-                        Resource res = ucp.getResource(path, false);
-                        if (res != null) {
-                            try {
-                                return defineClass(cn, res);
-                            } catch (IOException ioe) {
-                                throw new ClassNotFoundException(cn, ioe);
-                            }
-                        } else {
-                            return null;
+    private Class<?> findClassOnClassPathOrNull(String cn) {
+        return AccessController.doPrivileged(
+            new PrivilegedAction<Class<?>>() {
+                public Class<?> run() {
+                    String path = cn.replace('.', '/').concat(".class");
+                    Resource res = ucp.getResource(path, false);
+                    if (res != null) {
+                        try {
+                            return defineClass(cn, res);
+                        } catch (IOException ioe) {
+                            // TBD on how I/O errors should be propagated
                         }
                     }
-                });
-        } catch (PrivilegedActionException pae) {
-            throw (ClassNotFoundException) pae.getCause();
-        }
+                    return null;
+                }
+            });
     }
 
     /**
@@ -483,12 +487,17 @@ class BuiltinClassLoader extends SecureClassLoader
             String rn = cn.replace('.', '/').concat(".class");
             byte[] bytes = reader.readResource(rn);
 
+            URL url = reader.codeBase();
+            if (url.getProtocol().equalsIgnoreCase("jrt")) {
+                // call special defineClassWithSourceCond
+            }
+
             // define class to VM
-            CodeSource cs = new CodeSource(reader.codeBase(), (CodeSigner[])null);
+            CodeSource cs = new CodeSource(url, (CodeSigner[])null);
             return defineClass(cn, bytes, 0, bytes.length, cs);
 
-        } catch (IOException ignore) {
-            // CNFE will be thrown by caller
+        } catch (IOException ioe) {
+            // TBD on how I/O errors should be propagated
             return null;
         }
     }
@@ -696,101 +705,130 @@ class BuiltinClassLoader extends SecureClassLoader
      * Creates a ModuleReader for the given artifact.
      */
     private ModuleReader createModuleReader(ModuleArtifact artifact) {
-        String s = artifact.location().getScheme();
-
         ModuleReader reader;
-        if (!s.equalsIgnoreCase("jrt")) {
-            reader = ModuleReader.create(artifact);
-        } else {
+
+        String s = artifact.location().getScheme();
+        if (s.equalsIgnoreCase("jrt")) {
             // special-case the runtime image
-            reader = new ModuleReader() {
-                private final String module = artifact.descriptor().name();
-                private final URL codeBase = toJrtURL(module);
-
-                /**
-                 * Returns the ImageLocation for the given resource, {@code null}
-                 * if not found.
-                 */
-                private ImageLocation findImageLocation(String name) {
-                    if (imageReader == null) {
-                        return null;
-                    } else {
-                        String rn = "/" + module + "/" + name;
-                        return imageReader.findLocation(rn);
-                    }
-                }
-
-                @Override
-                public URL findResource(String name) {
-                    if (findImageLocation(name) != null)
-                        return toJrtURL(module, name);
-
-                    // not found
-                    return null;
-                }
-
-                @Override
-                public byte[] readResource(String name) throws IOException {
-                    ImageLocation location = findImageLocation(name);
-                    if (location != null)
-                        return imageReader.getResource(location);
-
-                    throw new IOException(module + "/" + name + " not found");
-                }
-
-                @Override
-                public URL codeBase() {
-                    return codeBase;
-                }
-            };
+            String mn = artifact.descriptor().name();
+            reader = new ImageModuleReader(mn, imageReader);
+        } else {
+            reader = ModuleReader.create(artifact);
         }
 
-        // if -Xoverride is specified then wrap the ModuleReader
+        // if -Xoverride is specified then wrap the ModuleReader so
+        // that the override directory is checked first
         if (overrideDir != null) {
-            return new ModuleReader() {
-                private final String module = artifact.descriptor().name();
+            String mn = artifact.descriptor().name();
+            reader = new OverrideModuleReader(mn, overrideDir, reader);
+        }
 
-                /**
-                 * Returns the path to a .class file if overridden with -Xoverride
-                 * or {@code null} if not found.
-                 */
-                private Path findOverriddenClass(String name) {
-                    if (overrideDir != null && name.endsWith(".class")) {
-                        String path = name.replace('/', File.separatorChar);
-                        Path file = overrideDir.resolve(module).resolve(path);
-                        if (Files.isRegularFile(file)) {
-                            return file;
-                        }
-                    }
-                    return null;
-                }
+        return reader;
+    }
 
-                @Override
-                public URL findResource(String name) {
-                    Path path = findOverriddenClass(name);
-                    if (path != null) {
-                        return toFileURL(path);
-                    } else {
-                        return reader.findResource(name);
-                    }
+    /**
+     * A ModuleReader for reading resources from a module in the jimage
+     */
+    private static class ImageModuleReader implements ModuleReader {
+        private final String module;
+        private final ImageReader imageReader;
+        private final URL codeBase;
+
+        ImageModuleReader(String module, ImageReader imageReader) {
+            this.imageReader = imageReader;
+            this.module = module;
+            this.codeBase = toJrtURL(module);
+        }
+
+        /**
+         * Returns the ImageLocation for the given resource, {@code null}
+         * if not found.
+         */
+        private ImageLocation findImageLocation(String name) {
+            if (imageReader == null) {
+                return null;
+            } else {
+                String rn = "/" + module + "/" + name;
+                return imageReader.findLocation(rn);
+            }
+        }
+
+        @Override
+        public URL findResource(String name) {
+            if (findImageLocation(name) != null)
+                return toJrtURL(module, name);
+
+            // not found
+            return null;
+        }
+
+        @Override
+        public byte[] readResource(String name) throws IOException {
+            ImageLocation location = findImageLocation(name);
+            if (location != null)
+                return imageReader.getResource(location);
+
+            throw new IOException(module + "/" + name + " not found");
+        }
+
+        @Override
+        public URL codeBase() {
+            return codeBase;
+        }
+    }
+
+    /**
+     * A ModuleReader to prepend an override directory to another ModuleReader.
+     */
+    private static class OverrideModuleReader implements ModuleReader {
+        private final String module;
+        private final Path overrideDir;
+        private final ModuleReader reader;
+
+        OverrideModuleReader(String module, Path overrideDir, ModuleReader reader) {
+            this.module = module;
+            this.overrideDir = overrideDir;
+            this.reader = reader;
+        }
+
+        /**
+         * Returns the path to a .class file if overridden with -Xoverride
+         * or {@code null} if not found.
+         */
+        private Path findOverriddenClass(String name) {
+            if (overrideDir != null && name.endsWith(".class")) {
+                String path = name.replace('/', File.separatorChar);
+                Path file = overrideDir.resolve(module).resolve(path);
+                if (Files.isRegularFile(file)) {
+                    return file;
                 }
-                @Override
-                public byte[] readResource(String name) throws IOException {
-                    Path path = findOverriddenClass(name);
-                    if (path != null) {
-                        return Files.readAllBytes(path);
-                    } else {
-                        return reader.readResource(name);
-                    }
-                }
-                @Override
-                public URL codeBase() {
-                    return reader.codeBase();
-                }
-            };
-        } else {
-            // no -Xoverride
-            return reader;
+            }
+            return null;
+        }
+
+        @Override
+        public URL findResource(String name) {
+            Path path = findOverriddenClass(name);
+            if (path != null) {
+                return toFileURL(path);
+            } else {
+                return reader.findResource(name);
+            }
+        }
+
+        @Override
+        public byte[] readResource(String name) throws IOException {
+            Path path = findOverriddenClass(name);
+            if (path != null) {
+                return Files.readAllBytes(path);
+            } else {
+                return reader.readResource(name);
+            }
+        }
+
+        @Override
+        public URL codeBase() {
+            return reader.codeBase();
         }
     }
 

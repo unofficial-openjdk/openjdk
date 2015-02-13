@@ -99,7 +99,7 @@ public class BootLoader {
         // create the boot loader
         loader = new BuiltinClassLoader(null, imageReader, overrideDir, bcp) {
             @Override
-            public Class<?> loadClass(String cn) {
+            protected Class<?> loadClassOrNull(String cn) {
                 return jla.findBootstrapClassOrNull(loader, cn);
             }
         };
