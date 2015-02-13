@@ -487,6 +487,17 @@ class BuiltinClassLoader extends SecureClassLoader
             String rn = cn.replace('.', '/').concat(".class");
             byte[] bytes = reader.readResource(rn);
 
+            int pos = cn.lastIndexOf('.');
+            String pn = cn.substring(0, pos);
+            Package p = getPackage(pn);
+            if (p == null) {
+                try {
+                    definePackage(pn, null, null, null, null, null, null, null);
+                } catch (IllegalArgumentException iae) {
+                    // someone else beat us to it
+                }
+            }
+
             URL url = reader.codeBase();
             if (url.getProtocol().equalsIgnoreCase("jrt")) {
                 // call special defineClassWithSourceCond
