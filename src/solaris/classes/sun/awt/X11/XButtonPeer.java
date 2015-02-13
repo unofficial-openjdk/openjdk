@@ -82,9 +82,15 @@ public class XButtonPeer extends XComponentPeer implements ButtonPeer {
         return true;
     }
 
-    public void  setLabel(java.lang.String label) {
-        this.label = label;
-        repaint();
+    @Override
+    public void setLabel(String label) {
+        if (label == null) {
+            label = "";
+        }
+        if (!label.equals(this.label)) {
+            this.label = label;
+            repaint();
+        }
     }
 
     public void paint(Graphics g) {
@@ -277,10 +283,6 @@ public class XButtonPeer extends XComponentPeer implements ButtonPeer {
         drawMotif3DRect(g, x, y, w-1, h-1, pressed);
     }
 
-    public void setFont(Font f) {
-        super.setFont(f);
-        target.repaint();
-    }
     protected void paintFocus(Graphics g, int x, int y, int w, int h){
         g.setColor(focusColor);
         g.drawRect(x,y,w,h);
