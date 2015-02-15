@@ -705,7 +705,7 @@ public class Proxy implements java.io.Serializable {
             String proxyName = proxyPkg.isEmpty() ? proxyClassNamePrefix + num
                                                   : proxyPkg + "." + proxyClassNamePrefix + num;
 
-            if (isDebug()) {
+            if (ProxyBuilder.isDebug()) {
                 System.out.println("define proxy class in \"" + proxyName + "\" " +
                         (m != null ? m.toString() : "unnamed module") +
                         " " + toMessage(interfaces));
@@ -1191,6 +1191,19 @@ public class Proxy implements java.io.Serializable {
             return String.format("class %s in %s %s loader %s",
                                  c.getName(), c.getModule(), bucket, ld);
         }
+
+        static final String DEBUG =
+            AccessController.doPrivileged(new PrivilegedAction<String>() {
+                public String run() {
+                    return System.getProperty("jdk.proxy.debug", "");
+                }
+            });
+        static final boolean isDebug() {
+            return !DEBUG.isEmpty();
+        }
+        static final boolean isDebug(String flag) {
+            return DEBUG.equals(flag);
+        }
     }
 
     /**
@@ -1440,17 +1453,5 @@ public class Proxy implements java.io.Serializable {
                                                 byte[] b, int off, int len);
 
     private static Class<?>[] EMPTY_CLASS_ARRAY = new Class<?>[0];
-    private static final String DEBUG =
-        AccessController.doPrivileged(new PrivilegedAction<String>() {
-            public String run() {
-                return System.getProperty("jdk.proxy.debug", "");
-            }
-        });
 
-    private static final boolean isDebug() {
-        return !DEBUG.isEmpty();
-    }
-    private static final boolean isDebug(String flag) {
-        return DEBUG.equals(flag);
-    }
 }
