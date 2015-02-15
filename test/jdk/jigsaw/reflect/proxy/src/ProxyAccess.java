@@ -21,12 +21,6 @@
  * questions.
  */
 
-/*
- * @test
- * @summary Basic test of access checks in Core Reflection
- * @run testng ProxyAccess
- */
-
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandleProxies;
 import java.lang.invoke.MethodHandles;
