@@ -20,6 +20,10 @@
 #  questions.
 #
 
+# jigsaw related tests
+jdk_jigsaw = \
+    jdk/jigsaw
+
 # java.lang package and VM runtime support
 jdk_lang = \
     java/lang \
