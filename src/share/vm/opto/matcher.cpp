@@ -885,8 +885,6 @@ static void match_alias_type(Compile* C, Node* n, Node* m) {
   // %%% Kludgery.  Instead, fix ideal adr_type methods for all these cases:
   if (nidx == Compile::AliasIdxTop && midx == Compile::AliasIdxRaw) {
     switch (n->Opcode()) {
-    case Op_PrefetchRead:
-    case Op_PrefetchWrite:
     case Op_PrefetchAllocation:
       nidx = Compile::AliasIdxRaw;
       nat = TypeRawPtr::BOTTOM;
