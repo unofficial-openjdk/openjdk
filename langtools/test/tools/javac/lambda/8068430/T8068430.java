@@ -1,10 +1,12 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.
+ * published by the Free Software Foundation.  Oracle designates this
+ * particular file as subject to the "Classpath" exception as provided
+ * by Oracle in the LICENSE file that accompanied this code.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -19,29 +21,26 @@
  * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  * or visit www.oracle.com if you need additional information or have any
  * questions.
- *
  */
 
-#include "precompiled.hpp"
-#include "classfile/javaClasses.hpp"
-#include "code/codeBlob.hpp"
-#include "memory/allocation.hpp"
-#include "prims/jvm.h"
-#include "runtime/dtraceJSDT.hpp"
-#include "runtime/jniHandles.hpp"
-#include "runtime/os.hpp"
-#include "runtime/signature.hpp"
-#include "utilities/globalDefinitions.hpp"
+/*
+ * @test
+ * @bug 8068430
+ * @summary structural most specific and stuckness
+ */
 
-int DTraceJSDT::pd_activate(
-    void* baseAddress, jstring module,
-    jint providers_count, JVM_DTraceProvider* providers) {
-  return -1;
-}
+import java.util.HashMap;
+import java.util.Map;
 
-void DTraceJSDT::pd_dispose(int handle) {
-}
-
-jboolean DTraceJSDT::pd_is_supported() {
-  return false;
+public class T8068430 {
+    public static void main(String[] args) {
+        Map<Integer, String> mp = new HashMap<>();
+        mp.put(1, "a");
+        mp.put(2, "b");
+        mp.put(3, "c");
+        mp.put(4, "d");
+        System.out.println(mp.entrySet().stream().reduce(0,
+                (i, e) -> i + e.getKey(),
+                (i1, i2) -> i1 + i2));
+    }
 }

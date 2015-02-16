@@ -2386,35 +2386,6 @@ void LIRGenerator::do_UnsafePutObject(UnsafePutObject* x) {
 }
 
 
-void LIRGenerator::do_UnsafePrefetch(UnsafePrefetch* x, bool is_store) {
-  LIRItem src(x->object(), this);
-  LIRItem off(x->offset(), this);
-
-  src.load_item();
-  if (off.is_constant() && can_inline_as_constant(x->offset())) {
-    // let it be a constant
-    off.dont_load_item();
-  } else {
-    off.load_item();
-  }
-
-  set_no_result(x);
-
-  LIR_Address* addr = generate_address(src.result(), off.result(), 0, 0, T_BYTE);
-  __ prefetch(addr, is_store);
-}
-
-
-void LIRGenerator::do_UnsafePrefetchRead(UnsafePrefetchRead* x) {
-  do_UnsafePrefetch(x, false);
-}
-
-
-void LIRGenerator::do_UnsafePrefetchWrite(UnsafePrefetchWrite* x) {
-  do_UnsafePrefetch(x, true);
-}
-
-
 void LIRGenerator::do_SwitchRanges(SwitchRangeArray* x, LIR_Opr value, BlockBegin* default_sux) {
   int lng = x->length();
 
