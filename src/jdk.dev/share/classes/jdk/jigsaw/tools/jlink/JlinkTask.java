@@ -487,10 +487,11 @@ class JlinkTask {
                  .filter(f -> Files.isRegularFile(f))
                  .forEach(this::setExecutable);
 
-            // jspawnhelper
-            Path jspawnhelper = output.resolve("lib").resolve("jspawnhelper");
-            if (Files.exists(jspawnhelper))
-                setExecutable(jspawnhelper);
+            // jspawnhelper is in lib or lib/<arch>
+            Path lib = output.resolve("lib");
+            Files.find(lib, 2, (path, attrs) -> {
+                return path.getFileName().toString().equals("jspawnhelper");
+            }).forEach(this::setExecutable);
         }
 
         // generate launch scripts for the modules with a main class
