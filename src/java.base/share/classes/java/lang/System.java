@@ -30,19 +30,20 @@ import java.lang.annotation.Annotation;
 import java.security.AccessControlContext;
 import java.util.Properties;
 import java.util.PropertyPermission;
-import java.util.StringTokenizer;
 import java.util.Map;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
-import java.security.AllPermission;
 import java.nio.channels.Channel;
 import java.nio.channels.spi.SelectorProvider;
+
 import sun.nio.ch.Interruptible;
 import sun.misc.ServicesCatalog;
 import sun.reflect.CallerSensitive;
 import sun.reflect.Reflection;
 import sun.security.util.SecurityConstants;
 import sun.reflect.annotation.AnnotationType;
+
+import jdk.jigsaw.module.runtime.ModuleBootstrap;
 
 /**
  * The <code>System</code> class contains several useful class fields
@@ -58,7 +59,6 @@ import sun.reflect.annotation.AnnotationType;
  * @since   1.0
  */
 public final class System {
-
     /* register the natives via the static initializer.
      *
      * VM will invoke the initializeSystemClass method to complete
@@ -1141,11 +1141,10 @@ public final class System {
         return new PrintStream(new BufferedOutputStream(fos, 128), true);
     }
 
-
     /**
      * Initialize the system class.  Called after thread initialization.
      */
-    private static void initializeSystemClass() {
+    private static void initPhase1() {
 
         // VM might invoke JNU_NewStringPlatform() to set those encoding
         // sensitive properties (user.home, user.name, boot.class.path, etc.)
@@ -1173,7 +1172,6 @@ public final class System {
         // can only be accessed by the internal implementation.  Remove
         // certain system properties that are not intended for public access.
         sun.misc.VM.saveAndRemoveProperties(props);
-
 
         lineSeparator = props.getProperty("line.separator");
         sun.misc.Version.init();
@@ -1213,6 +1211,56 @@ public final class System {
         // initialization has completed.
         // IMPORTANT: Ensure that this remains the last initialization action!
         sun.misc.VM.initLevel(1);
+    }
+
+    /*
+     * Invoked by VM.  Phase 2 module system initialization.
+     * Only classes in java.base can be loaded in this phase.
+     */
+    private static void initPhase2() {
+        // initialize the module system
+        ModuleBootstrap.boot();
+
+        // module system initialized
+        sun.misc.VM.initLevel(2);
+    }
+
+    /*
+     * Invoked by VM.  Phase 3 is the final system initialization:
+     * 1. set security manager
+     * 2. set system class loader
+     * 3. set TCCL
+     *
+     * This method must be called after the module system initialization.
+     * The security manager and system class loader may be custom class from
+     * the application's classpath.
+     */
+    private static void initPhase3() {
+        // set security manager
+        String cn = System.getProperty("java.security.manager");
+        if (cn != null) {
+            if (cn.isEmpty() || "default".equals(cn)) {
+                System.setSecurityManager(new SecurityManager());
+            } else {
+                try {
+                    SecurityManager sm = (SecurityManager)
+                        Class.forName(cn, false, ClassLoader.getBuiltinAppClassLoader())
+                             .newInstance();
+                    System.setSecurityManager(sm);
+                } catch (Exception e) {
+                    throw new Error("Could not create SecurityManager", e);
+                }
+            }
+        }
+
+        // system class loader initialized
+        ClassLoader scl = ClassLoader.initSystemClassLoader();
+
+        // set TCCL
+        Thread.currentThread().setContextClassLoader(scl);
+
+        // system is full initialized
+        sun.misc.VM.initLevel(3);
     }
 
     private static void setJavaLangAccess() {

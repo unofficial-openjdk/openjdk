@@ -112,7 +112,6 @@ public enum LauncherHelper {
                 ResourceBundle.getBundle(defaultBundleName);
     }
     private static PrintStream ostream;
-    private static final ClassLoader scloader = ClassLoader.getSystemClassLoader();
     private static Class<?> appClass; // application class, for GUI/reporting purposes
 
     /*
@@ -573,6 +572,7 @@ public enum LauncherHelper {
         }
         cn = cn.replace('/', '.');
         Class<?> mainClass = null;
+        ClassLoader scloader = ClassLoader.getSystemClassLoader();
         try {
             mainClass = scloader.loadClass(cn);
         } catch (NoClassDefFoundError | ClassNotFoundException cnfe) {
@@ -800,7 +800,8 @@ public enum LauncherHelper {
         private static void setFXLaunchParameters(String what, int mode) {
             // Check for the FX launcher classes
             try {
-                fxLauncherClass = scloader.loadClass(JAVAFX_LAUNCHER_CLASS_NAME);
+                fxLauncherClass = ClassLoader.getSystemClassLoader()
+                        .loadClass(JAVAFX_LAUNCHER_CLASS_NAME);
                 /*
                  * signature must be:
                  * public static void launchApplication(String launchName,

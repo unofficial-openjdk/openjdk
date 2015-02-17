@@ -511,23 +511,24 @@ public abstract class ResourceBundle {
                             return new RBClassLoader();
                         }
                     });
-        private static final ClassLoader loader = ClassLoader.getSystemClassLoader();
-
         private RBClassLoader() {
         }
         public Class<?> loadClass(String name) throws ClassNotFoundException {
+            ClassLoader loader = ClassLoader.getSystemClassLoader();
             if (loader != null) {
                 return loader.loadClass(name);
             }
             return Class.forName(name);
         }
         public URL getResource(String name) {
+            ClassLoader loader = ClassLoader.getSystemClassLoader();
             if (loader != null) {
                 return loader.getResource(name);
             }
             return ClassLoader.getSystemResource(name);
         }
         public InputStream getResourceAsStream(String name) {
+            ClassLoader loader = ClassLoader.getSystemClassLoader();
             if (loader != null) {
                 return loader.getResourceAsStream(name);
             }

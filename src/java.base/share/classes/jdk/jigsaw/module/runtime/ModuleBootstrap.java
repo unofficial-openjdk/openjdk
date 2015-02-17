@@ -60,15 +60,17 @@ import sun.misc.PerfCounter;
  * Configuration is then used to define the selected modules to runtime
  * to create the boot Layer.
  */
-class ModuleBootstrap {
+public final class ModuleBootstrap {
     private ModuleBootstrap() { }
 
     private static final String JAVA_BASE = "java.base";
 
     /**
-     * Invoked by the VM at startup to initialize the module system.
+     * Initialize the module system.
+     *
+     * @see java.lang.System#initPhase2
      */
-    static void boot() {
+    public static void boot() {
         long t0 = System.nanoTime();
 
         // -upgrademodulepath option specified to launcher
@@ -209,9 +211,6 @@ class ModuleBootstrap {
 
         // total time to initialize
         PerfCounters.bootstrapTime.addElapsedTimeFrom(t0);
-
-        // module system initialized
-        sun.misc.VM.initLevel(2);
     }
 
     /**

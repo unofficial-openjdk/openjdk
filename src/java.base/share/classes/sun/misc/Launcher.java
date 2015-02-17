@@ -42,8 +42,8 @@ import jdk.internal.jimage.ImageReaderFactory;
 import sun.net.www.protocol.jrt.JavaRuntimeURLConnection;
 
 /**
- * This class is used to create the extension and application class loaders
- * and do other setup in preparation for launching the main application.
+ * This class is used to create the builtin extension and application
+ * class loaders.
  */
 public class Launcher {
 
@@ -103,25 +103,6 @@ public class Launcher {
             JavaRuntimeURLConnection.register(extCL);
         if (appReader != null)
             JavaRuntimeURLConnection.register(appCL);
-
-        // Set the context class loader for the primordial thread.
-        Thread.currentThread().setContextClassLoader(appCL);
-
-        // Finally, set the security manager if requested
-        s = System.getProperty("java.security.manager");
-        if (s != null) {
-            SecurityManager sm = null;
-            if ("".equals(s) || "default".equals(s)) {
-                sm = new SecurityManager();
-            } else {
-                try {
-                    sm = (SecurityManager) appCL.loadClass(s).newInstance();
-                } catch (Exception e) {
-                    throw new InternalError("Could not create SecurityManager", e);
-                }
-            }
-            System.setSecurityManager(sm);
-        }
 
         this.extClassLoader = extCL;
         this.appClassLoader = appCL;

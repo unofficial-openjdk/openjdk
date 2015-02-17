@@ -145,7 +145,9 @@ public class VM {
 
 
     // the init level when the VM is fully initialized
-    private static final int BOOTED_INIT_LEVEL = 2;
+    private static final int JAVA_LANG_SYSTEM_INIT_LEVEL = 1;
+    private static final int MODULE_SYSTEM_INIT_LEVEL    = 2;
+    private static final int BOOTED_INIT_LEVEL           = 3;
 
     // 0, 1, 2, ...
     private static volatile int initLevel;
@@ -154,8 +156,9 @@ public class VM {
     /**
      * Sets the init level.
      *
-     * @see java.lang.System#initializeSystemClass
-     * @see jdk.jigsaw.module.runtime.ModuleBootstrap#boot
+     * @see java.lang.System#initPhase1
+     * @see java.lang.System#initPhase2
+     * @see java.lang.System#initPhase3
      */
     public static void initLevel(int value) {
         synchronized (lock) {
@@ -187,12 +190,19 @@ public class VM {
     }
 
     /**
+     * Returns {@code true} if the module system has been initialized.
+     * @see java.lang.System#initPhase2
+     */
+    public static boolean isModuleSystemInited() {
+        return VM.initLevel() >= MODULE_SYSTEM_INIT_LEVEL;
+    }
+
+    /**
      * Returns {@code true} if the VM is fully initialized.
      */
     public static boolean isBooted() {
         return initLevel >= BOOTED_INIT_LEVEL;
     }
-
 
     // A user-settable upper limit on the maximum amount of allocatable direct
     // buffer memory.  This value may be changed during VM initialization if

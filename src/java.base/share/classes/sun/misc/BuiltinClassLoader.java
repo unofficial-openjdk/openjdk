@@ -343,7 +343,7 @@ class BuiltinClassLoader extends SecureClassLoader
     @Override
     protected Class<?> findClass(String cn) throws ClassNotFoundException {
         // no class loading until VM is fully initialized
-        if (!VM.isBooted())
+        if (!VM.isModuleSystemInited())
             throw new ClassNotFoundException(cn);
 
         // find the candidate module for this class
@@ -393,7 +393,7 @@ class BuiltinClassLoader extends SecureClassLoader
                 // find the candidate module for this class
                 ModuleArtifact artifact = findModule(cn);
                 if (artifact != null) {
-                    if (VM.isBooted()) {
+                    if (VM.isModuleSystemInited()) {
                         c = findClassInModuleOrNull(artifact, cn);
                     }
                 } else {
@@ -403,7 +403,7 @@ class BuiltinClassLoader extends SecureClassLoader
                     }
 
                     // check class path
-                    if (c == null && ucp != null && VM.isBooted()) {
+                    if (c == null && ucp != null && VM.isModuleSystemInited()) {
                         c = findClassOnClassPathOrNull(cn);
                     }
                 }

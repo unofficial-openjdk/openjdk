@@ -1401,59 +1401,63 @@ public abstract class ClassLoader {
      */
     @CallerSensitive
     public static ClassLoader getSystemClassLoader() {
-        ClassLoader cl;
-        if (sclSet) {
-            cl = scl;
-        } else {
-            cl = tryInitSystemClassLoader();
+        switch (VM.initLevel()) {
+            case 0:
+            case 1:
+                // the system class loader is the built-in app class loader during startup
+                return getBuiltinAppClassLoader();
+            case 2:
+                throw new InternalError("getSystemClassLoader should only be called after VM booted");
+            case 3:
+                // system fully initialized
+                assert VM.isBooted() && scl != null;
+                SecurityManager sm = System.getSecurityManager();
+                if (sm != null) {
+                    checkClassLoaderPermission(scl, Reflection.getCallerClass());
+                }
+                return scl;
+            default:
+                throw new InternalError("should not reach here");
         }
-
-        SecurityManager sm = System.getSecurityManager();
-        if (sm != null) {
-            checkClassLoaderPermission(cl, Reflection.getCallerClass());
-        }
-
-        return cl;
     }
 
-    private static synchronized ClassLoader tryInitSystemClassLoader() {
-        if (sclSet) {
-            return scl;
-        } else {
+    static ClassLoader getBuiltinAppClassLoader() {
+        return Launcher.getLauncher().getAppClassLoader();
+    }
 
-            // the system class loader is the app class loader during startup
-            ClassLoader cl = Launcher.getLauncher().getAppClassLoader();
-            if (!VM.isBooted()) {
-                return cl;
-            }
-
-            // detect recursive initialization
-            if (scl != null) {
-                throw new IllegalStateException("recursive invocation");
-            }
-            scl = cl;
-
-            Throwable oops = null;
-            try {
-                scl = cl = AccessController.doPrivileged(
-                    new SystemClassLoaderAction(cl));
-            } catch (PrivilegedActionException pae) {
-                oops = pae.getCause();
-                if (oops instanceof InvocationTargetException) {
-                    oops = oops.getCause();
-                }
-            }
-            if (oops != null) {
-                if (oops instanceof Error) {
-                    throw (Error) oops;
-                } else {
-                    // wrap the exception
-                    throw new Error(oops);
-                }
-            }
-            sclSet = true;
-            return cl;
+    /*
+     * Initialize the system class loader that may be a custom class on the
+     * application class path.
+     *
+     * @see java.lang.System#initPhase3
+     */
+    static synchronized ClassLoader initSystemClassLoader() {
+        if (VM.initLevel() != 2) {
+            throw new InternalError("system class loader cannot be set at initLevel " +
+                                    VM.initLevel());
         }
+
+        // detect recursive initialization
+        if (scl != null) {
+            throw new IllegalStateException("recursive invocation");
+        }
+
+        ClassLoader builtinLoader = getBuiltinAppClassLoader();
+
+        // All are privileged frames.  No need to call doPrivileged.
+        String cn = System.getProperty("java.system.class.loader");
+        if (cn != null) {
+            try {
+                Constructor<?> ctor = Class.forName(cn, false, builtinLoader)
+                                           .getDeclaredConstructor(ClassLoader.class);
+                scl = (ClassLoader) ctor.newInstance(builtinLoader);
+            } catch (Exception e) {
+                throw new Error(e);
+            }
+        } else {
+            scl = builtinLoader;
+        }
+        return scl;
     }
 
     // Returns true if the specified class loader can be found in this class
@@ -1516,11 +1520,6 @@ public abstract class ClassLoader {
     // @GuardedBy("ClassLoader.class")
     private static volatile ClassLoader scl;
 
-    // Set to true once the system class loader has been set
-    // @GuardedBy("ClassLoader.class")
-    private static volatile boolean sclSet;
-
-
     // -- Package --
 
     /**
@@ -1570,18 +1569,18 @@ public abstract class ClassLoader {
                                     String implVendor, URL sealBase)
         throws IllegalArgumentException
     {
-            Package pkg = getPackage(name);
-            if (pkg != null) {
-                throw new IllegalArgumentException(name);
-            }
-            pkg = new Package(name, specTitle, specVersion, specVendor,
-                              implTitle, implVersion, implVendor,
-                              sealBase, this);
+        Package pkg = getPackage(name);
+        if (pkg != null) {
+            throw new IllegalArgumentException(name);
+        }
+        pkg = new Package(name, specTitle, specVersion, specVendor,
+                          implTitle, implVersion, implVendor,
+                          sealBase, this);
         if (packages.putIfAbsent(name, pkg) != null) {
             throw new IllegalArgumentException(name);
         }
-            return pkg;
-        }
+        return pkg;
+    }
 
     /**
      * Returns a <tt>Package</tt> that has been defined by this class loader
@@ -1633,7 +1632,6 @@ public abstract class ClassLoader {
         }
         return map.values().toArray(new Package[map.size()]);
     }
-
 
     // -- Native library access --
 
@@ -2199,28 +2197,4 @@ public abstract class ClassLoader {
 
     // the ServiceCatalog for modules associated with this class loader.
     private volatile ServicesCatalog servicesCatalog;
-}
-
-
-class SystemClassLoaderAction
-    implements PrivilegedExceptionAction<ClassLoader> {
-    private ClassLoader parent;
-
-    SystemClassLoaderAction(ClassLoader parent) {
-        this.parent = parent;
-    }
-
-    public ClassLoader run() throws Exception {
-        String cls = System.getProperty("java.system.class.loader");
-        if (cls == null) {
-            return parent;
-        }
-
-        Constructor<?> ctor = Class.forName(cls, true, parent)
-            .getDeclaredConstructor(new Class<?>[] { ClassLoader.class });
-        ClassLoader sys = (ClassLoader) ctor.newInstance(
-            new Object[] { parent });
-        Thread.currentThread().setContextClassLoader(sys);
-        return sys;
-    }
 }
