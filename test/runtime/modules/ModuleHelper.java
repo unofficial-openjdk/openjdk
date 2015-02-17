@@ -66,12 +66,12 @@ public class ModuleHelper {
     }
 
     private static Method findMethod(String name) {
-        for (Method m : sun.misc.VM.class.getDeclaredMethods()) {
+        for (Method m : sun.misc.ModuleHelper.class.getDeclaredMethods()) {
             if (m.getName().equals(name)) {
                 m.setAccessible(true);
                 return m;
             }
         }
-        throw new RuntimeException("Failed to find method " + name + "in sun.misc.VM");
+        throw new RuntimeException("Failed to find method " + name + "in sun.misc.ModuleHelper");
     }
 }
