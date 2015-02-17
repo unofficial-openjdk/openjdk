@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -246,6 +246,15 @@ implements java.io.Serializable
         }
         try {
             Class<?> pc = p.getClass();
+
+            // Allow the base module to read the permission's module
+            Module pm = pc.getModule();
+            Module base = Object.class.getModule();
+            PrivilegedAction<Void> pa = () -> {
+                base.addReads(pm);
+                return null;
+            };
+            AccessController.doPrivileged(pa);
 
             if (name == null && actions == null) {
                 try {
