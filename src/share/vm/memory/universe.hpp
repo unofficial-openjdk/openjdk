@@ -203,7 +203,7 @@ class Universe: AllStatic {
 
   // Initialization
   static bool _bootstrapping;                         // true during genesis
-  static bool _module_initialized;                    // true after call_initModuleRuntime called
+  static bool _module_initialized;                    // true after call_initPhase2 called
   static bool _fully_initialized;                     // true after universe_init and initialize_vtables called
 
   // the array of preallocated errors with backtraces

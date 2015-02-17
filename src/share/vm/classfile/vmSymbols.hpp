@@ -126,9 +126,10 @@
   template(java_runtime_name_name,                    "java_runtime_name")                        \
   template(java_runtime_version_name,                 "java_runtime_version")                     \
                                                                                                   \
-  /* Module system */                                                                             \
-  template(jdk_jigsaw_module_runtime_ModuleBootstrap, "jdk/jigsaw/module/runtime/ModuleBootstrap") \
-  template(boot_name,                                 "boot")                                     \
+  /* system initialization */                                                                     \
+  template(initPhase1_name,                           "initPhase1")                               \
+  template(initPhase2_name,                           "initPhase2")                               \
+  template(initPhase3_name,                           "initPhase3")                               \
   template(java_lang_reflect_module_init_signature,   "(Ljava/lang/ClassLoader;Ljava/lang/String;)V") \
                                                                                                   \
   /* class file format tags */                                                                    \
@@ -336,7 +337,6 @@
   template(run_finalization_name,                     "runFinalization")                          \
   template(run_finalizers_on_exit_name,               "runFinalizersOnExit")                      \
   template(dispatchUncaughtException_name,            "dispatchUncaughtException")                \
-  template(initializeSystemClass_name,                "initializeSystemClass")                    \
   template(loadClass_name,                            "loadClass")                                \
   template(loadClassInternal_name,                    "loadClassInternal")                        \
   template(get_name,                                  "get")                                      \

@@ -106,7 +106,7 @@
 #endif
 
 // Initialization after module runtime initialization
-void universe_post_module_init();  // must happen after call_initModuleRuntime
+void universe_post_module_init();  // must happen after call_initPhase2
 
 PRAGMA_FORMAT_MUTE_WARNINGS_FOR_GCC
 
@@ -983,15 +983,6 @@ static oop create_initial_thread(Handle thread_group, JavaThread* thread,
                           string,
                           CHECK_NULL);
   return thread_oop();
-}
-
-static void call_initializeSystemClass(TRAPS) {
-  Klass* k =  SystemDictionary::resolve_or_fail(vmSymbols::java_lang_System(), true, CHECK);
-  instanceKlassHandle klass (THREAD, k);
-
-  JavaValue result(T_VOID);
-  JavaCalls::call_static(&result, klass, vmSymbols::initializeSystemClass_name(),
-                         vmSymbols::void_method_signature(), CHECK);
 }
 
 char java_runtime_name[128] = "";
@@ -3214,6 +3205,33 @@ void Threads::threads_do(ThreadClosure* tc) {
   // If CompilerThreads ever become non-JavaThreads, add them here
 }
 
+static void call_initPhase1(TRAPS) {
+  Klass* k =  SystemDictionary::resolve_or_fail(vmSymbols::java_lang_System(), true, CHECK);
+  instanceKlassHandle klass (THREAD, k);
+
+  JavaValue result(T_VOID);
+  JavaCalls::call_static(&result, klass, vmSymbols::initPhase1_name(),
+                                         vmSymbols::void_method_signature(), CHECK);
+}
+
+static void call_initPhase2(TRAPS) {
+  Klass* k = SystemDictionary::resolve_or_fail(vmSymbols::java_lang_System(), true, CHECK);
+  instanceKlassHandle klass (THREAD, k);
+
+  JavaValue result(T_VOID);
+  JavaCalls::call_static(&result, klass, vmSymbols::initPhase2_name(),
+                                         vmSymbols::void_method_signature(), CHECK);
+  universe_post_module_init();
+}
+
+static void call_initPhase3(TRAPS) {
+  Klass* k = SystemDictionary::resolve_or_fail(vmSymbols::java_lang_System(), true, CHECK);
+  instanceKlassHandle klass (THREAD, k);
+
+  JavaValue result(T_VOID);
+  JavaCalls::call_static(&result, klass, vmSymbols::initPhase3_name(),
+                                         vmSymbols::void_method_signature(), CHECK);
+}
 
 void Threads::initialize_java_lang_classes(JavaThread* main_thread, TRAPS) {
   TraceTime timer("Initialize java.lang classes", TraceStartupTime);
@@ -3246,7 +3264,7 @@ void Threads::initialize_java_lang_classes(JavaThread* main_thread, TRAPS) {
   // The VM preresolves methods to these classes. Make sure that they get initialized
   initialize_class(vmSymbols::java_lang_reflect_Method(), CHECK);
   initialize_class(vmSymbols::java_lang_ref_Finalizer(), CHECK);
-  call_initializeSystemClass(CHECK);
+  call_initPhase1(CHECK);
 
   // get the Java runtime name after java.lang.System is initialized
   JDK_Version::set_runtime_name(get_java_runtime_name(THREAD));
@@ -3267,16 +3285,6 @@ void Threads::initialize_jsr292_core_classes(TRAPS) {
   initialize_class(vmSymbols::java_lang_invoke_MethodHandle(), CHECK);
   initialize_class(vmSymbols::java_lang_invoke_MemberName(), CHECK);
   initialize_class(vmSymbols::java_lang_invoke_MethodHandleNatives(), CHECK);
-}
-
-static void call_initModuleRuntime(TRAPS) {
-  Klass* k = SystemDictionary::resolve_or_fail(vmSymbols::jdk_jigsaw_module_runtime_ModuleBootstrap(), true, CHECK);
-  instanceKlassHandle klass (THREAD, k);
-
-  JavaValue result(T_VOID);
-  JavaCalls::call_static(&result, klass, vmSymbols::boot_name(),
-                                         vmSymbols::void_method_signature(), CHECK);
-  universe_post_module_init();
 }
 
 jint Threads::create_vm(JavaVMInitArgs* args, bool* canTryAgain) {
@@ -3536,15 +3544,44 @@ jint Threads::create_vm(JavaVMInitArgs* args, bool* canTryAgain) {
   // (see SystemDictionary::find_method_handle_intrinsic).
   initialize_jsr292_core_classes(CHECK_JNI_ERR);
 
-  // Initialize the module system after the compiler initialization and jsr232
-  // classes get initialized because module initialization runs a lot of java
-  // code, that for performance reasons, should be compiled.  Also, the module
-  // system initialization uses lambda expressions and method references, hence
-  // need to run after initialize_jsr292_core_classes().
-  call_initModuleRuntime(CHECK_JNI_ERR);
+  // The system initialization in the library has three phases
+  // Phase 1: java.lang.System class initialization
+  //     java.lang.System is a primordial class loaded and initialized
+  //     by the VM early during startup.  java.lang.System.<clinit>
+  //     only does registerNatives and keep the rest of the class
+  //     initialization work later until thread initialization completes.
+  //
+  //     System.initPhase1 initializes the system properties, the static
+  //     fields in, out, and err. Setup java signal handlers, OS-specific
+  //     system settings, and set thread group of the main thread.
+  //
+  //     see initialize_java_lang_classes
+  //
+  // Phase 2. Module system initialization
+  //     This will initialize the module system.  Only java.base classes
+  //     can be loaded until phase 2 completes.
+  //
+  //     Call System.initPhase2 after the compiler initialization and jsr292
+  //     classes get initialized because module initialization runs a lot of java
+  //     code, that for performance reasons, should be compiled.  Also, this will
+  //     enable the startup code to use lambda and other language features in this
+  //     phase and onward.
+  //
+  //     After phase 2, The VM will begin search classes from -Xbootclasspath/a.
+  //
+  // Phase 3. final setup - set security manager, system class loader and TCCL
+  //
+  //     This will instantiate and set the security manager, set the system class
+  //     loader as well as the thread context class loader.  The security manager
+  //     and system class loader may be a custom class loaded from -Xbootclasspath/a,
+  //     other modules or the application's classpath.
 
-  // Compute system loader. Note that this has to occur after set_init_completed, since
-  // valid exceptions may be thrown in the process.
+  call_initPhase2(CHECK_JNI_ERR);
+
+  // Final system initialization including security manager and system class loader.
+  call_initPhase3(CHECK_JNI_ERR);
+
+  // cache the system class loader
   SystemDictionary::compute_java_system_loader(CHECK_JNI_ERR);
 
   if (TRACE_START() != JNI_OK) {
