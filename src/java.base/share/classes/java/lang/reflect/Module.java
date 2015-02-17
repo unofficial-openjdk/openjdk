@@ -30,6 +30,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.WeakHashMap;
 import java.util.concurrent.locks.Lock;
@@ -43,9 +44,9 @@ import jdk.jigsaw.module.ModuleArtifact;
 import jdk.jigsaw.module.ModuleDescriptor;
 import jdk.jigsaw.module.ModuleExport;
 import jdk.jigsaw.module.Version;
+import sun.misc.JavaLangReflectAccess;
 import sun.misc.ServicesCatalog;
 import sun.misc.SharedSecrets;
-import sun.misc.VM;
 
 /**
  * Represents a runtime module.
@@ -61,10 +62,6 @@ import sun.misc.VM;
 public final class Module {
 
     // no <clinit> as this class is initialized very early in the startup
-
-    // set to true to do access checks in the VM (this is temporary to allow
-    // for experimenting with performance)
-    private static final boolean USE_VM_ACCESS_CHECK = true;
 
     // module name and loader
     private final String name;
@@ -164,8 +161,31 @@ public final class Module {
                 ReflectPermission perm = new ReflectPermission("addReadsModule");
                 sm.checkPermission(perm);
             }
-            implAddReads(target);
+            addReadInternal(target);
         }
+    }
+
+    private void addReadInternal(Module target) {
+        // check if we already read this module
+        Set<Module> reads = this.reads;
+        if (reads.contains(target))
+            return;
+
+        // add temporary read.
+        WeakSet<Module> tr = this.transientReads;
+        if (tr == null) {
+            synchronized (this) {
+                tr = this.transientReads;
+                if (tr == null) {
+                    tr = new WeakSet<>();
+                    this.transientReads = tr;
+                }
+            }
+        }
+        tr.add(target);
+
+        // update VM view
+        addReadsModule(this, target);
     }
 
     /**
@@ -180,9 +200,6 @@ public final class Module {
     public boolean canRead(Module target) {
         if (target == null || target == this)
             return true;
-
-        if (USE_VM_ACCESS_CHECK)
-            return VM.canReadModule(this, target);
 
         // check if module reads target
         Set<Module> reads = this.reads; // volatile read
@@ -233,7 +250,8 @@ public final class Module {
             String vs = (version != null) ? version.toString() : null;
             String uris = (location != null) ? location.toString() : null;
 
-            m = VM.defineModule(name, vs, uris, loader, array);
+            // define module in the VM
+            m = defineModule(name, vs, uris, loader, array);
         }
 
         // set fields as these are not set by the VM
@@ -290,8 +308,10 @@ public final class Module {
                     throw new InternalError(descriptor.name() +
                             " reads unknown module: " + other.name());
                 }
-                VM.addReadsModule(m, m2);
                 reads.add(m2);
+
+                // update VM view
+                addReadsModule(m, m2);
             }
             m.reads = reads;
 
@@ -302,14 +322,18 @@ public final class Module {
                 String permit = export.permit();
                 if (permit == null) {
                     exports.computeIfAbsent(pkg, k -> Collections.emptyMap());
-                    VM.addModuleExports(m, pkg.replace('.', '/'), null);
+
+                    // update VM view
+                    addModuleExports(m, pkg.replace('.', '/'), null);
                 } else {
                     // only export to modules that are in this configuration
                     Module m2 = modules.get(permit);
                     if (m2 != null) {
                         exports.computeIfAbsent(pkg, k -> new HashMap<>())
                                .put(m2, Boolean.TRUE);
-                        VM.addModuleExports(m, pkg.replace('.', '/'), m2);
+
+                        // update VM view
+                        addModuleExports(m, pkg.replace('.', '/'), m2);
                     }
                 }
             }
@@ -346,44 +370,22 @@ public final class Module {
      * @apiNote This is an expensive operation, not expected to be used often
      */
     void addPackage(String pkg) {
+        Objects.nonNull(pkg);
+
         synchronized (this) {
             // copy set
             Set<String> pkgs = new HashSet<>(this.packages);
-            pkgs.add(pkg);
+            if (!pkgs.add(pkg)) {
+                // already has this package
+                return;
+            }
 
             // replace with new set
             this.packages = pkgs; // volatile write
 
             // update VM view
-            sun.misc.VM.addModulePackage(this, pkg.replace('.', '/'));
+            addModulePackage(this, pkg.replace('.', '/'));
         }
-    }
-
-    /**
-     * Makes the given {@code Module} readable to this module.
-     */
-    void implAddReads(Module target) {
-
-        // check if we already read this module
-        Set<Module> reads = this.reads;
-        if (reads.contains(target))
-            return;
-
-        // add temporary read.
-        WeakSet<Module> tr = this.transientReads;
-        if (tr == null) {
-            synchronized (this) {
-                tr = this.transientReads;
-                if (tr == null) {
-                    tr = new WeakSet<>();
-                    this.transientReads = tr;
-                }
-            }
-        }
-        tr.add(target);
-
-        // update VM view
-        VM.addReadsModule(this, target);
     }
 
     /**
@@ -393,7 +395,9 @@ public final class Module {
      *
      * @apiNote This is an expensive operation, not expected to be used often
      */
-    void implAddExports(String pkg, Module who) {
+    void addExports(String pkg, Module who) {
+        Objects.nonNull(pkg);
+
         synchronized (this) {
 
             // copy existing map
@@ -431,7 +435,7 @@ public final class Module {
             this.exports = exports;
 
             // update VM view
-            VM.addModuleExports(this, pkg.replace('.', '/'), who);
+            addModuleExports(this, pkg.replace('.', '/'), who);
         }
     }
 
@@ -440,8 +444,7 @@ public final class Module {
      * given module.
      */
     boolean isExported(String pkg, Module who) {
-        if (USE_VM_ACCESS_CHECK)
-            return VM.isExportedToModule(this, pkg.replace('.', '/'), who);
+        Objects.nonNull(pkg);
 
         Map<String, Map<Module, Boolean>>  exports = this.exports; // volatile read
         Map<Module, Boolean> permits = exports.get(pkg);
@@ -490,12 +493,31 @@ public final class Module {
         }
     }
 
+
+    // -- native methods --
+
+    // JVM_DefineModule
+    private static native Module defineModule(String name,
+                                              String version,
+                                              String location,
+                                              ClassLoader loader,
+                                              String[] pkgs);
+
+    // JVM_AddReadsModule
+    private static native void addReadsModule(Module from, Module to);
+
+    // JVM_AddModuleExports
+    private static native void addModuleExports(Module from, String pkg, Module to);
+
+    // JVM_AddModulePackage
+    private static native void addModulePackage(Module m, String pkg);
+
     /**
      * Register shared secret to provide access to package-private methods
      */
     static {
-        sun.misc.SharedSecrets.setJavaLangReflectAccess(
-            new sun.misc.JavaLangReflectAccess() {
+        SharedSecrets.setJavaLangReflectAccess(
+            new JavaLangReflectAccess() {
                 @Override
                 public Map<String, Module> defineModules(Configuration cf,
                                                          ClassLoaderFinder clf) {
@@ -517,11 +539,11 @@ public final class Module {
                 }
                 @Override
                 public void addReadsModule(Module m1, Module m2) {
-                   m1.implAddReads(m2);
+                   m1.addReadInternal(m2);
                 }
                 @Override
                 public void addExports(Module m, String pkg, Module who) {
-                    m.implAddExports(pkg, who);
+                    m.addExports(pkg, who);
                 }
             });
     }

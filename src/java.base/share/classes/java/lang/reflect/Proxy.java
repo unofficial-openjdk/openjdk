@@ -980,7 +980,7 @@ public class Proxy implements java.io.Serializable {
                     System.out.format("exports caller's module-private %s in %s to %s%n",
                                       pn, callerModule, m));
             }
-            pkgs.stream().forEach(pn -> callerModule.implAddExports(pn, m));
+            pkgs.stream().forEach(pn -> callerModule.addExports(pn, m));
         }
 
         /**
