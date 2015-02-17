@@ -167,6 +167,12 @@ final class ProviderConfig {
         if (shouldLoad() == false) {
             return null;
         }
+
+        // fastpath SUN built-in provider that may be loaded at startup
+        if (provName.equals("SUN")) {
+            return new sun.security.provider.Sun();
+        }
+
         if (isLoading) {
             // because this method is synchronized, this can only
             // happen if there is recursion.
@@ -273,14 +279,11 @@ final class ProviderConfig {
         ServiceLoader<Provider> loader;
 
         ServiceProviderLoader() {
-            loader = ServiceLoader.load(java.security.Provider.class);
+            loader = ServiceLoader.load(java.security.Provider.class,
+                                        ClassLoader.getSystemClassLoader());
         }
 
         public Provider load(String provName, String[] arguments) {
-            // fastpath SUN built-in provider that may be loaded at startup
-            if (provName.equals("SUN"))
-                return new sun.security.provider.Sun();
-
             Iterator<Provider> iter = loader.iterator();
             while (iter.hasNext()) {
                 try {
