@@ -23,8 +23,11 @@
 
 /*
  * @test
- * @library /testlibrary
- * @run main/othervm -XX:AddModuleExports=java.base/sun.misc JVMCanReadModule
+ * @library /testlibrary /../../test/lib /compiler/whitebox ..
+ * @build JVMCanReadModule
+ * @run main ClassFileInstaller sun.hotspot.WhiteBox
+ *                              sun.hotspot.WhiteBox$WhiteBoxPermission
+ * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -XX:AddModuleExports=java.base/sun.misc JVMCanReadModule
  */
 
 import static com.oracle.java.testlibrary.Asserts.*;

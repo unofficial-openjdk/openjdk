@@ -21,57 +21,47 @@
  * questions.
  */
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.lang.reflect.Module;
+import com.oracle.java.testlibrary.*;
+import sun.hotspot.WhiteBox;
 
 public class ModuleHelper {
 
     public static Module DefineModule(String name, Object loader, String[] pkgs) throws Throwable {
-        return DefineModule(name, "1.0", "location", loader, pkgs);
+        WhiteBox wb = WhiteBox.getWhiteBox();
+        return (Module)wb.DefineModule(name, "1.0", "/location", loader, pkgs);
     }
 
     public static Module DefineModule(String name, String version, String location,
                                       Object loader, String[] pkgs) throws Throwable {
-        return (Module)invoke(findMethod("defineModule"), name, version, location, loader, pkgs);
+        WhiteBox wb = WhiteBox.getWhiteBox();
+        return (Module)wb.DefineModule(name, version, location, loader, pkgs);
     }
 
     public static void AddModuleExports(Object from, String pkg, Object to) throws Throwable {
-        invoke(findMethod("addModuleExports"), from, pkg, to);
+        WhiteBox wb = WhiteBox.getWhiteBox();
+        wb.AddModuleExports(from, pkg, to);
     }
 
     public static void AddReadsModule(Object from, Object to) throws Throwable {
-        invoke(findMethod("addReadsModule"), from, to);
+        WhiteBox wb = WhiteBox.getWhiteBox();
+        wb.AddReadsModule(from, to);
     }
 
     public static void AddModulePackage(Object m, String pkg) throws Throwable {
-        invoke(findMethod("addModulePackage"), m, pkg);
+        WhiteBox wb = WhiteBox.getWhiteBox();
+        wb.AddModulePackage(m, pkg);
     }
 
     public static boolean CanReadModule(Object from, Object to) throws Throwable {
-        return (boolean)invoke(findMethod("canReadModule"), from, to);
+        WhiteBox wb = WhiteBox.getWhiteBox();
+        return wb.CanReadModule(from, to);
     }
 
     public static boolean IsExportedToModule(Object from, String pkg,
                                              Object to) throws Throwable {
-        return (boolean)invoke(findMethod("isExportedToModule"), from, pkg, to);
+        WhiteBox wb = WhiteBox.getWhiteBox();
+        return wb.IsExportedToModule(from, pkg, to);
     }
 
-    private static Object invoke(Method m, Object... args) throws Throwable {
-        try {
-            return m.invoke(null, args);
-        } catch (InvocationTargetException e) {
-            throw e.getCause();
-        }
-    }
-
-    private static Method findMethod(String name) {
-        for (Method m : sun.misc.ModuleHelper.class.getDeclaredMethods()) {
-            if (m.getName().equals(name)) {
-                m.setAccessible(true);
-                return m;
-            }
-        }
-        throw new RuntimeException("Failed to find method " + name + "in sun.misc.ModuleHelper");
-    }
 }

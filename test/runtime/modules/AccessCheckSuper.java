@@ -23,9 +23,12 @@
 
 /*
  * @test
- * @library /testlibrary
+ * @library /testlibrary /../../test/lib /compiler/whitebox ..
  * @compile p2/c2.java
- * @run main/othervm -XX:AddModuleExports=java.base/sun.misc AccessCheckSuper
+@build AccessCheckSuper
+ * @run main ClassFileInstaller sun.hotspot.WhiteBox
+ *                              sun.hotspot.WhiteBox$WhiteBoxPermission
+ * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -XX:AddModuleExports=java.base/sun.misc -Dsun.reflect.useHotSpotAccessCheck=true AccessCheckSuper
  */
 
 import java.lang.reflect.Module;

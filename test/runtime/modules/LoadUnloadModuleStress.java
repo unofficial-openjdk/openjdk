@@ -24,8 +24,11 @@
 /*
  * @test
  * @summary Ensure module information is cleaned when owning class loader unloads
- * @library /testlibrary
- * @run main/othervm -XX:AddModuleExports=java.base/sun.misc -Xmx64m LoadUnloadModuleStress 15000
+ * @library /testlibrary /../../test/lib /compiler/whitebox ..
+ * @build LoadUnloadModuleStress
+ * @run main ClassFileInstaller sun.hotspot.WhiteBox
+ *                              sun.hotspot.WhiteBox$WhiteBoxPermission
+ * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -Xmx64m -XX:AddModuleExports=java.base/sun.misc -Xmx64m LoadUnloadModuleStress 15000
  */
 
 import java.lang.ref.WeakReference;
