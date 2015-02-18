@@ -24,13 +24,9 @@
  */
 
 module jdk.dev {
-    requires java.scripting;
+    requires java.desktop;
     requires java.xml;
     requires jdk.compiler;
-    requires jdk.rmic;
-    requires jdk.xml.bind;
-    requires jdk.xml.ws;
-
     exports com.sun.jarsigner;
 }
 
