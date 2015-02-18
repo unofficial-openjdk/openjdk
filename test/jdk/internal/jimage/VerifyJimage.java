@@ -48,7 +48,7 @@ import jdk.internal.jimage.ImageLocation;
 /*
  * @test
  * @summary Verify jimage
- * @run main/othervm -XX:AddModuleExports=java.base/jdk.internal.jimage VerifyJimage
+ * @modules java.base/jdk.internal.jimage
  */
 
 /**

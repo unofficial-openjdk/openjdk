@@ -32,6 +32,8 @@
  * - Verify that if user code is compiled without ct.sym, it can't access asm classes
  *   at runtime when a security manager is in use.
  *
+ * @modules java.base/jdk.internal.org.objectweb.asm
+ *
  * @compile/fail AsmSanity.java
  *
  * @compile -XDignore.symbol.file=true AsmSanity.java

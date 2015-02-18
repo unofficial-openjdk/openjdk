@@ -43,8 +43,7 @@ import tests.JImageValidator;
  * @summary Test jimage creation
  * @author Jean-Francois Denise
  * @library /lib/testlibrary/jlink
- * @run build JLinkTest
- * @run main/othervm -XX:AddModuleExports=jdk.dev/jdk.jigsaw.tools.jlink,jdk.compiler/com.sun.tools.classfile,java.base/jdk.internal.jimage JLinkTest
+ * @modules jdk.dev/jdk.jigsaw.tools.jlink jdk.compiler/com.sun.tools.classfile java.base/jdk.internal.jimage
  */
 public class JLinkTest {
 
