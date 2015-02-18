@@ -65,4 +65,4 @@ ${COMPILEJAVA}/bin/javac ${TESTTOOLVMOPTS} \
      -d ${TESTCLASSES} ${TESTSRC}/GetCallerClassTest.java  || exit 2
 
 ${TESTJAVA}/bin/java ${TESTVMOPTS} -Xbootclasspath/a:${BCP} \
-     -cp ${TESTCLASSES} GetCallerClassTest || exit 3
+     -cp ${TESTCLASSES} -XX:AddModuleExports=java.base/sun.reflect GetCallerClassTest || exit 3
