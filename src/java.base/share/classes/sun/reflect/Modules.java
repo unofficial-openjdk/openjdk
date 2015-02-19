@@ -22,26 +22,25 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package sun.misc;
+package sun.reflect;
 
 import java.lang.reflect.Module;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Set;
 
+import sun.misc.SharedSecrets;
 import jdk.jigsaw.module.ModuleDescriptor;
 
 /**
- * A helper class to allow JDK classes (and tests) to easily create modules,
- * update modules, and update the readability graph.
+ * A helper class to allow JDK classes (and internal tests) to easily create
+ * modules, update modules, and update the readability graph.
  *
  * The parameters that are package names in this API are the fully-qualified
  * names of the packages as defined in section 6.5.3 of <cite>The Java&trade;
  * Language Specification </cite>, for example, {@code "java.lang"}.
  */
 
-public class ModuleHelper {
-    private ModuleHelper() { }
+public class Modules {
+    private Modules() { }
 
     /**
      * Creates a new module.
@@ -52,33 +51,25 @@ public class ModuleHelper {
      */
     public static Module newModule(ClassLoader loader,
                                    ModuleDescriptor descriptor,
-                                   Set<String> packages)
-    {
+                                   Set<String> packages) {
         return SharedSecrets.getJavaLangReflectAccess()
                 .defineModule(loader, descriptor, packages);
     }
 
     /**
-     * Create a new module.
+     * Adds a package to a module's content.
      *
-     * @param name the module name
-     * @param version ignored
-     * @param location ignored
-     * @param loader the class loader to define the module to
-     * @param packages the array of packages (contents)
-     *
-     * @deprecated Use {@link #newModule} instead.
+     * This method is a no-op if the module already contains the package.
      */
-    @Deprecated
-    public static Module defineModule(String name,
-                                      String version,
-                                      String location,
-                                      ClassLoader loader,
-                                      String[] packages)
-    {
-        ModuleDescriptor descriptor = new ModuleDescriptor.Builder(name).build();
-        Set<String> pkgs = new HashSet<>(Arrays.asList(packages));
-        return newModule(loader, descriptor, pkgs);
+    public static void addPackage(Module m, String pkg) {
+        SharedSecrets.getJavaLangReflectAccess().addPackage(m, pkg);
+    }
+
+    /**
+     * Adds a read-edge so that module {@code m1} reads module {@code m1}.
+     */
+    public static void addReads(Module m1, Module m2) {
+        SharedSecrets.getJavaLangReflectAccess().addReadsModule(m1, m2);
     }
 
     /**
@@ -88,35 +79,11 @@ public class ModuleHelper {
      * @param pkg the package to export
      * @param m2 the module to export the package, when {@code null} then
      *           the package is exported all modules that read m1.
+     *
+     * @throws IllegalArgumentException if pkg is not a package in m1
      */
-    public static void addModuleExports(Module m1, String pkg, Module m2) {
+    public static void addExports(Module m1, String pkg, Module m2) {
         SharedSecrets.getJavaLangReflectAccess().addExports(m1, pkg, m2);
-    }
-
-    /**
-     * Adds a read-edge so that module {@code m1} reads module {@code m1}.
-     */
-    public static void addReadsModule(Module m1, Module m2) {
-        SharedSecrets.getJavaLangReflectAccess().addReadsModule(m1, m2);
-    }
-
-    /**
-     * Adds a package to a module's content.
-     *
-     * This method is a no-op if the module already contains the package.
-     */
-    public static void addModulePackage(Module m, String pkg) {
-        SharedSecrets.getJavaLangReflectAccess().addPackage(m, pkg);
-    }
-
-    /**
-     * Returns {@ocde true} if module {@code m1} reads module {@code m2}.
-     *
-     * @deprecated Use Module.canRead instead.
-     */
-    @Deprecated
-    public static boolean canReadModule(Module m1, Module m2) {
-        return m1.canRead(m2);
     }
 
     /**
@@ -124,7 +91,7 @@ public class ModuleHelper {
      * to module {@code m1}. If {@code m2} is {@code null} then returns
      * {@code true} if pkg is exported to all modules that read m1.
      */
-    public static boolean isExportedToModule(Module m1, String pkg, Module m2) {
+    public static boolean isExported(Module m1, String pkg, Module m2) {
         return SharedSecrets.getJavaLangReflectAccess().isExported(m1, pkg, m2);
     }
 }

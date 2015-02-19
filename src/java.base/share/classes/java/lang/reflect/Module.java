@@ -127,7 +127,7 @@ public final class Module {
      *
      * <p> The returned array contains an element for each package in the
      * module when it was initially created. It may contain elements
-     * corresponding to packages added tothe  module after it was created
+     * corresponding to packages added to the module after it was created
      * (packages added to support dynamic proxy classes for example). A package
      * name appears at most once in the returned array. </p>
      *
@@ -367,10 +367,13 @@ public final class Module {
     /**
      * Add a package to this module.
      *
-     * @apiNote This is an expensive operation, not expected to be used often
+     * @apiNote This is an expensive operation, not expected to be used often.
+     * At this time then it does not validate that the package name is a
+     * valid java identifier.
      */
     void addPackage(String pkg) {
-        Objects.nonNull(pkg);
+        if (pkg.length() == 0)
+            throw new IllegalArgumentException("<unnamed> package not allowed");
 
         synchronized (this) {
             // copy set
@@ -393,10 +396,17 @@ public final class Module {
      * {@code who}. If {@code who} is {@code null} then the package is exported
      * to all modules that read this module.
      *
+     * @throws IllegalArgumentException if {@code pkg} is not a module package
+     *
      * @apiNote This is an expensive operation, not expected to be used often
      */
     void addExports(String pkg, Module who) {
         Objects.nonNull(pkg);
+
+        if (!packages.contains(pkg)) {
+            throw new IllegalArgumentException("exported package " + pkg +
+                " not in contents");
+        }
 
         synchronized (this) {
 
