@@ -37,7 +37,6 @@ import java.security.PrivilegedAction;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import sun.misc.BootLoader;
 import sun.misc.Resource;
 import sun.misc.ResourceFinder;
 import sun.net.www.ParseUtil;
@@ -63,12 +62,8 @@ public class JavaRuntimeURLConnection extends URLConnection {
     }
 
     private static Resource findResource(String module, String name) {
-        Resource r = BootLoader.findResource(module, name);
-        if (r != null)
-            return r;
-
         for (ResourceFinder finder: finders) {
-            r = finder.findResource(module, name);
+            Resource r = finder.findResource(module, name);
             if (r != null)
                 return r;
         }

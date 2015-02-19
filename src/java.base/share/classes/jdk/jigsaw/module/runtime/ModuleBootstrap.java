@@ -48,7 +48,7 @@ import jdk.jigsaw.module.ModuleDescriptor;
 import jdk.jigsaw.module.ModuleId;
 
 import sun.misc.BootLoader;
-import sun.misc.Launcher;
+import sun.misc.ClassLoaders;
 import sun.misc.ModuleLoader;
 import sun.misc.PerfCounter;
 
@@ -255,8 +255,8 @@ public final class ModuleBootstrap {
         Set<String> bootModules = readModuleSet("boot.modules");
         Set<String> extModules = readModuleSet("ext.modules");
 
-        ClassLoader extClassLoader = Launcher.getLauncher().getExtClassLoader();
-        ClassLoader appClassLoader = Launcher.getLauncher().getAppClassLoader();
+        ClassLoader extClassLoader = ClassLoaders.extClassLoader();
+        ClassLoader appClassLoader = ClassLoaders.appClassLoader();
 
         Map<ModuleArtifact, ClassLoader> map = new HashMap<>();
         cf.descriptors()

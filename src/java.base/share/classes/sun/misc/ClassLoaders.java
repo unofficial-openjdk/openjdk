@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,6 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-
 package sun.misc;
 
 import java.io.File;
@@ -42,36 +41,38 @@ import jdk.internal.jimage.ImageReaderFactory;
 import sun.net.www.protocol.jrt.JavaRuntimeURLConnection;
 
 /**
- * This class is used to create the builtin extension and application
- * class loaders.
+ * Creates and provides access to the built-in extension and application class
+ * loaders. It also creates the class loader that is used to locate resources
+ * in modules defined to the boot class loader.
  */
-public class Launcher {
 
-    // the names of the jimage files in the runtime image that are accessed
-    // by the extension and application class loaders
+public class ClassLoaders {
+    private ClassLoaders() { }
+
+    // the names of the jimage files in the runtime image
+    private static final String BOOT_MODULES = "bootmodules.jimage";
     private static final String EXT_MODULES = "extmodules.jimage";
     private static final String APP_MODULES = "appmodules.jimage";
 
-    // the system-wide Launcher object
-    private static final Launcher LAUNCHER = new Launcher();
+    // the built-in class loaders
+    private static final BootClassLoader BOOT_LOADER;
+    private static final ExtClassLoader EXT_LOADER;
+    private static final AppClassLoader APP_LOADER;
 
-    public static Launcher getLauncher() { return LAUNCHER; }
-
-    // extension class loader
-    private final ClassLoader extClassLoader;
-
-    // application class loader
-    private final ClassLoader appClassLoader;
-
-    private Launcher() {
+    /**
+     * Creates the built-in class loaders
+     */
+    static {
         String home = System.getProperty("java.home");
         Path libModules = Paths.get(home, "lib", "modules");
 
+        ImageReader bootReader = null;
         ImageReader extReader = null;
         ImageReader appReader = null;
 
         // open image files if images build, otherwise detect an exploded image
         if (Files.isDirectory(libModules)) {
+            bootReader = openImageIfExists(libModules.resolve(BOOT_MODULES));
             extReader = openImageIfExists(libModules.resolve(EXT_MODULES));
             appReader = openImageIfExists(libModules.resolve(APP_MODULES));
         } else {
@@ -79,6 +80,26 @@ public class Launcher {
             if (!Files.isDirectory(base)) {
                 throw new InternalError("Unable to determine runtime image type");
             }
+        }
+
+        // -Xbootclasspth/a or -javaagent Boot-Class-Path
+        URLClassPath bcp = null;
+        String s = System.getProperty("sun.boot.class.path");
+        if (s != null) {
+            // HotSpot currently includes $JAVA_HOME/lib/modules/bootmodules.jimages
+            // in the value of sun.boot.class.path. The BCP is the path elements
+            // that follow it. At some point this system property will be replaced.
+            int index = s.indexOf(BOOT_MODULES);
+            if (index >= 0) {
+                index += BOOT_MODULES.length() + 1;
+                if (index >= s.length()) {
+                    s = null;
+                } else {
+                    s = s.substring(index);
+                }
+            }
+            if (s != null && s.length() > 0)
+                bcp = toURLClassPath(s);
         }
 
         // we have a class path if -cp is specified or -m is not specified
@@ -90,41 +111,78 @@ public class Launcher {
             ucp = toURLClassPath(cp);
 
         // is -Xoverride specified?
-        String s = System.getProperty("jdk.runtime.override");
+        s = System.getProperty("jdk.runtime.override");
         Path overrideDir = (s != null) ? Paths.get(s) : null;
 
         // create the class loaders
-        ExtClassLoader extCL = new ExtClassLoader(extReader, overrideDir);
-        AppClassLoader appCL = new AppClassLoader(extCL, appReader, overrideDir, ucp);
+        BOOT_LOADER = new BootClassLoader(bootReader, overrideDir, bcp);
+        EXT_LOADER = new ExtClassLoader(BOOT_LOADER, extReader, overrideDir);
+        APP_LOADER = new AppClassLoader(EXT_LOADER, appReader, overrideDir, ucp);
 
         // register the class loaders with the jrt protocol handler so that
         // resources can be located.
+        if (bootReader != null)
+            JavaRuntimeURLConnection.register(BOOT_LOADER);
         if (extReader != null)
-            JavaRuntimeURLConnection.register(extCL);
+            JavaRuntimeURLConnection.register(EXT_LOADER);
         if (appReader != null)
-            JavaRuntimeURLConnection.register(appCL);
+            JavaRuntimeURLConnection.register(APP_LOADER);
+    }
 
-        this.extClassLoader = extCL;
-        this.appClassLoader = appCL;
+    /**
+     * Returns the class loader that is used to find resources in modules
+     * defined to the boot class loader.
+     *
+     * @apiNote This method is not public, it should instead be used
+     * via sun.misc.BootLoader that provides a restricted API to this
+     * class loader.
+     */
+    static BuiltinClassLoader bootLoader() {
+        return BOOT_LOADER;
     }
 
     /**
      * Returns the extension class loader.
      */
-    public ClassLoader getExtClassLoader() { return extClassLoader; }
+    public static ClassLoader extClassLoader() {
+        return EXT_LOADER;
+    }
 
     /**
      * Returns the application class loader.
      */
-    public ClassLoader getAppClassLoader() { return appClassLoader; }
+    public static ClassLoader appClassLoader() {
+        return APP_LOADER;
+    }
+
+    /**
+     * The class loader that is used to find resources in modules defined to
+     * the boot class loader. It is not used for class loading.
+     */
+    private static class BootClassLoader extends BuiltinClassLoader {
+        private static final JavaLangAccess jla = SharedSecrets.getJavaLangAccess();
+
+        BootClassLoader(ImageReader imageReader,
+                        Path overrideDir,
+                        URLClassPath bcp) {
+            super(null, imageReader, overrideDir, bcp);
+        }
+
+        @Override
+        protected Class<?> loadClassOrNull(String cn) {
+            return jla.findBootstrapClassOrNull(this, cn);
+        }
+    };
 
     /**
      * The extension class loader, a unique type to make it easier to distinguish
      * from the application class loader.
      */
     private static class ExtClassLoader extends BuiltinClassLoader {
-        ExtClassLoader(ImageReader imageReader, Path overrideDir) {
-            super(BootLoader.loader(), imageReader, overrideDir, null);
+        ExtClassLoader(BootClassLoader parent,
+                       ImageReader imageReader,
+                       Path overrideDir) {
+            super(parent, imageReader, overrideDir, null);
         }
     }
 
@@ -138,8 +196,7 @@ public class Launcher {
         AppClassLoader(ExtClassLoader parent,
                        ImageReader imageReader,
                        Path overrideDir,
-                       URLClassPath ucp)
-        {
+                       URLClassPath ucp) {
             super(parent, imageReader, overrideDir, ucp);
             this.ucp = ucp;
         }
@@ -219,4 +276,3 @@ public class Launcher {
         }
     }
 }
-

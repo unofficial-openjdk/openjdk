@@ -118,7 +118,7 @@ class BuiltinClassLoader extends SecureClassLoader
                        URLClassPath ucp)
     {
         // ensure getParent() returns null when the parent is the boot loader
-        super(parent == null || parent == BootLoader.loader() ? null : parent);
+        super(parent == null || parent == ClassLoaders.bootLoader() ? null : parent);
 
         this.parent = parent;
         this.imageReader = imageReader;

@@ -51,8 +51,8 @@ import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
 
 import sun.misc.BootLoader;
+import sun.misc.ClassLoaders;
 import sun.misc.CompoundEnumeration;
-import sun.misc.Launcher;
 import sun.misc.ServicesCatalog;
 import sun.misc.Unsafe;
 import sun.misc.VM;
@@ -1422,7 +1422,7 @@ public abstract class ClassLoader {
     }
 
     static ClassLoader getBuiltinAppClassLoader() {
-        return Launcher.getLauncher().getAppClassLoader();
+        return ClassLoaders.appClassLoader();
     }
 
     /*
