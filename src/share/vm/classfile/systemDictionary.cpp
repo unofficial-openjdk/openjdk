@@ -170,7 +170,7 @@ bool SystemDictionary::is_ext_class_loader(Handle class_loader) {
   if (class_loader.is_null()) {
     return false;
   }
-  return (class_loader->klass()->name() == vmSymbols::sun_misc_Launcher_ExtClassLoader());
+  return (class_loader->klass()->name() == vmSymbols::sun_misc_ClassLoaders_ExtClassLoader());
 }
 
 // ----------------------------------------------------------------------------

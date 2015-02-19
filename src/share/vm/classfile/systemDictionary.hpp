@@ -175,7 +175,7 @@ class Ticks;
   do_klass(URLClassLoader_klass,                        java_net_URLClassLoader,                   Pre                 ) \
   do_klass(URL_klass,                                   java_net_URL,                              Pre                 ) \
   do_klass(Jar_Manifest_klass,                          java_util_jar_Manifest,                    Pre                 ) \
-  do_klass(sun_misc_Launcher_klass,                     sun_misc_Launcher,                         Pre                 ) \
+  do_klass(sun_misc_ClassLoaders_klass,                 sun_misc_ClassLoaders,                     Pre                 ) \
   do_klass(CodeSource_klass,                            java_security_CodeSource,                  Pre                 ) \
                                                                                                                          \
   /* It's NULL in non-1.4 JDKs. */                                                                                       \
