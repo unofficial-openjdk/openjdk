@@ -36,7 +36,7 @@
 #include "utilities/growableArray.hpp"
 #include "utilities/hashtable.inline.hpp"
 
-bool ModuleEntryTable::_javabase_created;
+bool ModuleEntryTable::_javabase_created = false;
 
 // Returns true if this module can read module m
 bool ModuleEntry::can_read(ModuleEntry* m) const {

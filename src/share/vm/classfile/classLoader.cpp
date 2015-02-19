@@ -874,6 +874,7 @@ void ClassLoader::setup_search_path(const char *class_path, bool bootstrap_searc
   int offset = 0;
   int len = (int)strlen(class_path);
   int end = 0;
+  bool mark_append_entry = false;
 
   // Iterate over class path entries
   for (int start = 0; start < len; start = end) {
@@ -882,12 +883,24 @@ void ClassLoader::setup_search_path(const char *class_path, bool bootstrap_searc
     }
     EXCEPTION_MARK;
     ResourceMark rm(THREAD);
-    bool mark_append_entry = (bootstrap_search &&
-                              (start == Arguments::bootclasspath_a_index()));
+    mark_append_entry = (mark_append_entry ||
+                         (bootstrap_search && (start == Arguments::bootclasspath_a_index())));
+
     char* path = NEW_RESOURCE_ARRAY(char, end - start + 1);
     strncpy(path, &class_path[start], end - start);
     path[end - start] = '\0';
     update_class_path_entry_list(path, false, mark_append_entry);
+
+    // Check on the state of the boot loader's append path
+    if (mark_append_entry && (_first_append_entry == NULL)) {
+      // Failure to mark the first append entry, most likely
+      // due to a non-existent path. Record the next entry
+      // as the first boot loader append entry.
+      mark_append_entry = true;
+    } else {
+      mark_append_entry = false;
+    }
+
 #if INCLUDE_CDS
     if (DumpSharedSpaces) {
       check_shared_classpath(path);
@@ -974,12 +987,6 @@ ClassPathEntry* ClassLoader::create_class_path_entry(const char *path, const str
   } else {
     // Directory
     new_entry = new ClassPathDirEntry(path);
-
-    if (!ModuleEntryTable::javabase_created() &&
-        !ClassLoader::has_bootmodules_jimage() &&
-        string_ends_with(path, "java.base") && !is_override_dir(path)) {
-      process_javabase(path);
-    }
     if (TraceClassLoading) {
       tty->print_cr("[Path %s]", path);
     }
@@ -1016,14 +1023,16 @@ ClassPathZipEntry* ClassLoader::create_class_path_zip_entry(const char *path) {
   return NULL;
 }
 
-// The boot class loader must adhere to specfic observability rules.
+// The boot class loader must adhere to specfic visibility rules.
 // Prior to loading a class in a named package, the package is checked
 // to see if it is in a module defined to the boot loader. If the
 // package is not in a module defined to the boot loader, the class
 // must be loaded only in the boot loader's append path, which
 // consists of [-Xbootclasspath/a]; [jvmti appended entries]
 void ClassLoader::set_first_append_entry(ClassPathEntry *new_entry) {
-  _first_append_entry = new_entry;
+  if (_first_append_entry == NULL) {
+    _first_append_entry = new_entry;
+  }
 }
 
 // returns true if entry already on class path
@@ -1425,7 +1434,6 @@ instanceKlassHandle ClassLoader::load_classfile(Symbol* h_name, bool search_appe
     PerfClassTraceTime vmtimer(perf_sys_class_lookup_time(),
                                ((JavaThread*) THREAD)->get_thread_stat()->perf_timers_addr(),
                                PerfClassTraceTime::CLASS_LOAD);
-
     if (search_append_only) {
       // For the boot loader append path search, must calculate
       // the starting classpath_index prior to attempting to
@@ -1657,18 +1665,42 @@ bool ClassLoader::get_canonical_path(const char* orig, char* out, int len) {
 }
 
 
-void ClassLoader::process_jimage_file() {
-  ClassPathEntry* entry = _first_entry;
-  while (entry != NULL) {
-    ImageFile *image = entry->image();
-    if (image != NULL && string_ends_with(entry->name(), "bootmodules.jimage")) {
-      set_has_bootmodules_jimage(true);
+void ClassLoader::define_javabase() {
+  ClassPathEntry* e = _first_entry;
+  ClassPathEntry* last_e = _first_append_entry;
+
+  assert(!ModuleEntryTable::javabase_created() && !ClassLoader::has_bootmodules_jimage(),
+         "java.base has already been processed");
+
+  // When looking for the jimage file, only
+  // search the boot loader's module path which
+  // can consist of [-Xoverride]; exploded build | bootmodules.jimage
+  // Do not search the boot loader's append path.
+  while ((e != NULL) && (e != last_e)) {
+    ImageFile *image = e->image();
+    if (image != NULL && string_ends_with(e->name(), "bootmodules.jimage")) {
       process_javabase(image);
+      set_has_bootmodules_jimage(true);
       return;
     }
-    entry = entry->next();
+    e = e->next();
   }
-  set_has_bootmodules_jimage(false);
+
+  // If bootmodules.jimage has not been located,
+  // assume an exploded build.
+  e = _first_entry;
+  while ((e != NULL) && (e != last_e)) {
+    const char *path = e->name();
+    if (string_ends_with(path, "java.base") &&
+        !is_override_dir(path) &&
+        !e->is_jar_file()) {
+      process_javabase(path);
+      return;
+    }
+    e = e->next();
+  }
+
+  vm_exit_during_initialization("Unable to correctly define java.base from either the exploded build or bootmodules.jimage");
 }
 
 #ifndef PRODUCT

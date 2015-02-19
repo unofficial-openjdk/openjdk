@@ -215,8 +215,7 @@ class ClassLoader: AllStatic {
   static PerfCounter* _load_instance_class_failCounter;
 
   // First entry in linked list of ClassPathEntry instances.
-  // Marks the start of the boot loader's overall observability
-  // set.  This consists of entries made up by:
+  // This consists of entries made up by:
   //   - boot loader modules
   //     [-Xoverride]; exploded build | bootmodules.jimage;
   //   - boot loader append path
@@ -236,7 +235,7 @@ class ClassLoader: AllStatic {
   static PackageHashtable* _package_hash_table;
   static const char* _shared_archive;
 
-  // True if classpath has a bootmodules.jimage
+  // True if the boot path has a bootmodules.jimage
   static bool _has_bootmodules_jimage;
 
   // Info used by CDS
@@ -344,8 +343,8 @@ class ClassLoader: AllStatic {
   static bool has_bootmodules_jimage() { return _has_bootmodules_jimage; }
 
   // Read the packages for module java.base from the bootmodules.jimage
-  // file, if it exists.
-  static void process_jimage_file();
+  // file, if it exists. If it does not, assume exploded build.
+  static void define_javabase();
 
   // Load individual .class file
   static instanceKlassHandle load_classfile(Symbol* h_name, bool search_append_only, TRAPS);

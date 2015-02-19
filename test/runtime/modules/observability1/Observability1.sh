@@ -45,5 +45,5 @@ ${JAVAC} -d mods1 $TESTSRC/p2/Observability1_B.java
 ${JAVAC} -d mods1 $TESTSRC/p2/Observability1_C.java
 ${JAVAC} -cp mods1 -d $TESTCLASSES $TESTSRC/Observability1_A.java
 
-${JAVA} -Xbootclasspath/a:mods1 -cp $TESTCLASSES Observability1_A
+${JAVA} -Xbootclasspath/a:nonexistent.jar -Xbootclasspath/a:mods1 -cp $TESTCLASSES Observability1_A
 exit $?

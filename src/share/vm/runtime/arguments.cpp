@@ -473,12 +473,11 @@ char* SysClassPath::combined_path() {
   // Get the lengths.
   int i;
   for (i = 0; i < _scp_nitems; ++i) {
+    if (i == _scp_suffix) {
+      // Record index of boot loader's append path.
+      Arguments::set_bootclasspath_a_index((int)total_len);
+    }
     if (_items[i] != NULL) {
-      // Record index of -Xbootclasspath/a, used to set the
-      // boot loader's append path observability boundary.
-      if (i == _scp_suffix) {
-        Arguments::set_bootclasspath_a_index((int)total_len);
-      }
       lengths[i] = strlen(_items[i]);
       // Include space for the separator char (or a NULL for the last item).
       total_len += lengths[i] + 1;
@@ -3462,6 +3461,11 @@ jint Arguments::finalize_vm_init_args(SysClassPath* scp_p, bool scp_assembly_req
   if (scp_assembly_required) {
     // Assemble the bootclasspath elements into the final path.
     Arguments::set_sysclasspath(scp_p->combined_path());
+  } else {
+    // At this point in sysclasspath processing anything
+    // added would be considered in the boot loader's append path.
+    // Record this index, including +1 for the file separator character.
+    Arguments::set_bootclasspath_a_index(((int)strlen(Arguments::get_sysclasspath()))+1);
   }
 
   // This must be done after all arguments have been processed.
