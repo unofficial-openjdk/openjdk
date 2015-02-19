@@ -32,6 +32,7 @@ import java.io.UncheckedIOException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
+import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -54,10 +55,6 @@ import sun.net.www.ParseUtil;
  *
  * @apiNote We need to consider having jdk.jigsaw.module.ModuleArtifact
  * define these methods instead.
- *
- * @apiNote For now then reading returns a byte array, an more efficient
- * read that returns a ByteBuffer could help with some module artifact
- * types.
  */
 
 interface ModuleReader {
@@ -69,11 +66,26 @@ interface ModuleReader {
     URL findResource(String name);
 
     /**
-     * Reads a resource from the module.
+     * Reads a resource from the module. The element at the buffer's position
+     * is the first byte of the resource, the element at the buffer's limit
+     * is the last byte of the resource.
+     *
+     * <p> The {@code releaseBuffer} should be invoked after consuming the
+     * contents of the buffer. This will ensure, for example, that direct
+     * buffers are returned to a buffer pool. </p>
      *
      * @throws IOException if an I/O error occurs
      */
-    byte[] readResource(String name) throws IOException;
+    ByteBuffer readResource(String name) throws IOException;
+
+    /**
+     * Returns a byte buffer to the buffer pool. This method should be
+     * invoked after consuming the contents of the buffer returned by
+     * the {@code readResource} method.
+     *
+     * @implSpec The default implementation does nothing.
+     */
+    default void releaseBuffer(ByteBuffer bb) { }
 
     /**
      * Returns the URL that is CodeSource location. The URL may be
@@ -111,11 +123,11 @@ abstract class BaseModuleReader implements ModuleReader {
     private static final int MAX_BUFFER_SIZE = Integer.MAX_VALUE - 8;
 
     /**
-     * Returns a byte array with all bytes read from the given InputStream.
+     * Returns a ByteBuffer with all bytes read from the given InputStream.
      * The given size parameter is the expected size, the actual size may
      * differ.
      */
-    protected byte[] readFully(InputStream source, int size) throws IOException {
+    protected ByteBuffer readFully(InputStream source, int size) throws IOException {
         int capacity = size;
         byte[] buf = new byte[capacity];
         int nread = 0;
@@ -141,7 +153,8 @@ abstract class BaseModuleReader implements ModuleReader {
             buf = Arrays.copyOf(buf, capacity);
             buf[nread++] = (byte) n;
         }
-        return (capacity == nread) ? buf : Arrays.copyOf(buf, nread);
+
+        return ByteBuffer.wrap(buf, 0, nread);
     }
 
     /**
@@ -183,7 +196,7 @@ class JModModuleReader extends BaseModuleReader {
     }
 
     @Override
-    public byte[] readResource(String name) throws IOException {
+    public ByteBuffer readResource(String name) throws IOException {
         ZipEntry ze = zf.getEntry("classes/" + name);
         if (ze == null)
             throw new IOException(module + "/" + name + " not found");
@@ -229,7 +242,7 @@ class JarModuleReader extends BaseModuleReader {
     }
 
     @Override
-    public byte[] readResource(String name) throws IOException {
+    public ByteBuffer readResource(String name) throws IOException {
         JarEntry je = jf.getJarEntry(name);
         if (je == null)
             throw new IOException(module + "/" + name + " not found");
@@ -266,10 +279,9 @@ class ExplodedModuleReader extends BaseModuleReader {
     }
 
     @Override
-    public byte[] readResource(String name) throws IOException {
-        // -Xoverride
+    public ByteBuffer readResource(String name) throws IOException {
         Path path = dir.resolve(name.replace('/', File.separatorChar));
-        return Files.readAllBytes(path);
+        return ByteBuffer.wrap(Files.readAllBytes(path));
     }
 
     @Override

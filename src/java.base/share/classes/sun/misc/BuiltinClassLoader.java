@@ -485,27 +485,29 @@ class BuiltinClassLoader extends SecureClassLoader
         try {
             // read class file
             String rn = cn.replace('.', '/').concat(".class");
-            byte[] bytes = reader.readResource(rn);
+            ByteBuffer bb = reader.readResource(rn);
+            try {
 
-            int pos = cn.lastIndexOf('.');
-            String pn = cn.substring(0, pos);
-            Package p = getPackage(pn);
-            if (p == null) {
-                try {
-                    definePackage(pn, null, null, null, null, null, null, null);
-                } catch (IllegalArgumentException iae) {
-                    // someone else beat us to it
+                // define package if not already defined
+                int pos = cn.lastIndexOf('.');
+                String pn = cn.substring(0, pos);
+                Package p = getPackage(pn);
+                if (p == null) {
+                    try {
+                        definePackage(pn, null, null, null, null, null, null, null);
+                    } catch (IllegalArgumentException iae) {
+                        // someone else beat us to it
+                    }
                 }
-            }
 
-            URL url = reader.codeBase();
-            if (url.getProtocol().equalsIgnoreCase("jrt")) {
-                // call special defineClassWithSourceCond
-            }
+                // define class to VM
+                URL url = reader.codeBase();
+                CodeSource cs = new CodeSource(url, (CodeSigner[]) null);
+                return defineClass(cn, bb, cs);
 
-            // define class to VM
-            CodeSource cs = new CodeSource(url, (CodeSigner[])null);
-            return defineClass(cn, bytes, 0, bytes.length, cs);
+            } finally {
+                reader.releaseBuffer(bb);
+            }
 
         } catch (IOException ioe) {
             // TBD on how I/O errors should be propagated
@@ -774,12 +776,18 @@ class BuiltinClassLoader extends SecureClassLoader
         }
 
         @Override
-        public byte[] readResource(String name) throws IOException {
+        public ByteBuffer readResource(String name) throws IOException {
             ImageLocation location = findImageLocation(name);
-            if (location != null)
-                return imageReader.getResource(location);
-
+            if (location != null) {
+                byte[] bytes = imageReader.getResource(location);
+                return ByteBuffer.wrap(bytes);
+            }
             throw new IOException(module + "/" + name + " not found");
+        }
+
+        @Override
+        public void releaseBuffer(ByteBuffer bb) {
+            // nothing to do.
         }
 
         @Override
@@ -828,13 +836,19 @@ class BuiltinClassLoader extends SecureClassLoader
         }
 
         @Override
-        public byte[] readResource(String name) throws IOException {
+        public ByteBuffer readResource(String name) throws IOException {
             Path path = findOverriddenClass(name);
             if (path != null) {
-                return Files.readAllBytes(path);
+                return ByteBuffer.wrap(Files.readAllBytes(path));
             } else {
                 return reader.readResource(name);
             }
+        }
+
+        @Override
+        public void releaseBuffer(ByteBuffer bb) {
+            if (bb.isDirect())
+                reader.releaseBuffer(bb);
         }
 
         @Override
