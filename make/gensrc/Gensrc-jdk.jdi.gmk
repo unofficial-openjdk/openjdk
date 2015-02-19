@@ -24,6 +24,24 @@
 #
 
 include GensrcCommon.gmk
+include GensrcModuleInfo.gmk
+
+################################################################################
+ifeq ($(OPENJDK_TARGET_OS), windows)
+  # Add shared memory connector provider
+  JDK_JDI_MODULEINFO_EXTRAS = \
+    -provide com.sun.jdi.connect.Connector/com.sun.tools.jdi.SharedMemoryAttachingConnector \
+    -provide com.sun.jdi.connect.Connector/com.sun.tools.jdi.SharedMemoryListeningConnector
+endif
+
+$(SUPPORT_OUTPUTDIR)/gensrc/jdk.jdi/module-info.java: $(BUILD_TOOLS_JDK) \
+    $(JDK_TOPDIR)/src/jdk.jdi/share/classes/module-info.java
+	$(MKDIR) -p $(@D)
+	$(RM) $@ $@.tmp
+	$(TOOL_GENMODULEINFOSOURCE) $(JDK_JDI_MODULEINFO_EXTRAS) -o $@.tmp $(filter %.java, $^)
+	$(MV) $@.tmp $@
+
+GENSRC_JDK_JDI += $(SUPPORT_OUTPUTDIR)/gensrc/jdk.jdi/module-info.java
 
 ################################################################################
 # Translate the Java debugger wire protocol (jdwp.spec) file into a JDWP.java file

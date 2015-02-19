@@ -73,6 +73,9 @@ public class GenModuleInfoSource {
                     builder.use(arg);
                 } else if (option.equals("-provide")) {
                     int index = arg.indexOf('/');
+                    if (index <= 0) {
+                        throw new IllegalArgumentException("invalid -provide argument: " + arg);
+                    }
                     String service = arg.substring(0, index);
                     String impl = arg.substring(index+1, arg.length());
                     builder.provide(service, impl);

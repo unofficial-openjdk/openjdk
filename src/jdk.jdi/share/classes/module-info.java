@@ -31,16 +31,16 @@ module jdk.jdi {
     exports com.sun.jdi.connect.spi;
     exports com.sun.jdi.event;
     exports com.sun.jdi.request;
-    exports com.sun.tools.jdi to
-        jdk.hotspot.agent;
+    exports com.sun.tools.jdi to jdk.hotspot.agent;
+
     uses com.sun.jdi.connect.Connector;
     uses com.sun.jdi.connect.spi.TransportService;
+
+    // windows shared memory connector providers are added at build time
     provides com.sun.jdi.connect.Connector with com.sun.tools.jdi.ProcessAttachingConnector;
     provides com.sun.jdi.connect.Connector with com.sun.tools.jdi.RawCommandLineLauncher;
     provides com.sun.jdi.connect.Connector with com.sun.tools.jdi.SocketAttachingConnector;
     provides com.sun.jdi.connect.Connector with com.sun.tools.jdi.SocketListeningConnector;
     provides com.sun.jdi.connect.Connector with com.sun.tools.jdi.SunCommandLineLauncher;
-    provides com.sun.jdi.connect.Connector with com.sun.tools.jdi.SharedMemoryAttachingConnector;
-    provides com.sun.jdi.connect.Connector with com.sun.tools.jdi.SharedMemoryListeningConnector;
 }
 
