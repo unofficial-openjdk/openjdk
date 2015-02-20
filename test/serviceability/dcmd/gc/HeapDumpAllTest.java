@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -19,29 +19,23 @@
  * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  * or visit www.oracle.com if you need additional information or have any
  * questions.
- *
  */
 
-#include "precompiled.hpp"
-#include "classfile/javaClasses.hpp"
-#include "code/codeBlob.hpp"
-#include "memory/allocation.hpp"
-#include "prims/jvm.h"
-#include "runtime/dtraceJSDT.hpp"
-#include "runtime/jniHandles.hpp"
-#include "runtime/os.hpp"
-#include "runtime/signature.hpp"
-#include "utilities/globalDefinitions.hpp"
+/*
+ * @test
+ * @summary Test of diagnostic command GC.heap_dump -all=true
+ * @library /testlibrary
+ * @build com.oracle.java.testlibrary.*
+ * @build com.oracle.java.testlibrary.dcmd.*
+ * @build HeapDumpTest
+ * @run testng HeapDumpAllTest
+ */
+public class HeapDumpAllTest extends HeapDumpTest {
+    public HeapDumpAllTest() {
+        super();
+        heapDumpArgs = "-all=true";
+    }
 
-int DTraceJSDT::pd_activate(
-    void* baseAddress, jstring module,
-    jint providers_count, JVM_DTraceProvider* providers) {
-  return -1;
+    /* See HeapDumpTest for test cases */
 }
 
-void DTraceJSDT::pd_dispose(int handle) {
-}
-
-jboolean DTraceJSDT::pd_is_supported() {
-  return false;
-}
