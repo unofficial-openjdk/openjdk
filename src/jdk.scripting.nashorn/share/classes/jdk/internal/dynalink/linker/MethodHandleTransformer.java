@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,7 +31,7 @@
  * license:
  */
 /*
-   Copyright 2009-2013 Attila Szegedi
+   Copyright 2009-2015 Attila Szegedi
 
    Licensed under both the Apache License, Version 2.0 (the "Apache License")
    and the BSD License (the "BSD License"), with licensee being free to
@@ -81,58 +81,18 @@
        ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-package jdk.internal.dynalink.beans;
+package jdk.internal.dynalink.linker;
 
-import java.io.Serializable;
-import java.util.Objects;
+import java.lang.invoke.MethodHandle;
 
 /**
- * Object that represents the static facet of a class (its static methods, properties, and fields, as well as
- * construction of instances using "dyn:new"). Objects of this class are recognized by the {@link BeansLinker} as being
- * special, and operations on them will be linked against the represented class' static facet. The "class" synthetic
- * property is additionally recognized and returns the Java {@link Class} object, as per {@link #getRepresentedClass()}
- * method. Conversely, {@link Class} objects exposed through {@link BeansLinker} expose the "static" synthetic property
- * which returns an instance of this class.
+ * A generic interface describing operations that transform method handles.
  */
-public class StaticClass implements Serializable {
-    private static final ClassValue<StaticClass> staticClasses = new ClassValue<StaticClass>() {
-        @Override
-        protected StaticClass computeValue(final Class<?> type) {
-            return new StaticClass(type);
-        }
-    };
-
-    private static final long serialVersionUID = 1L;
-
-    private final Class<?> clazz;
-
-    /*private*/ StaticClass(final Class<?> clazz) {
-        this.clazz = Objects.requireNonNull(clazz);
-    }
-
+public interface MethodHandleTransformer {
     /**
-     * Retrieves the {@link StaticClass} instance for the specified class.
-     * @param clazz the class for which the static facet is requested.
-     * @return the {@link StaticClass} instance representing the specified class.
+     * Transforms a method handle.
+     * @param target the method handle being transformed.
+     * @return transformed method handle.
      */
-    public static StaticClass forClass(final Class<?> clazz) {
-        return staticClasses.get(clazz);
-    }
-
-    /**
-     * Returns the represented Java class.
-     * @return the represented Java class.
-     */
-    public Class<?> getRepresentedClass() {
-        return clazz;
-    }
-
-    @Override
-    public String toString() {
-        return "JavaClassStatics[" + clazz.getName() + "]";
-    }
-
-    private Object readResolve() {
-        return forClass(clazz);
-    }
+    public MethodHandle transform(final MethodHandle target);
 }
