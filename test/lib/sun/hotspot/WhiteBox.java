@@ -246,6 +246,8 @@ public class WhiteBox {
   // Jigsaw
   public native Object DefineModule(String name, String version, String location,
                                     Object loader, Object[] packages);
+  public native void DefineModule2(Object module, String version, String location,
+                                   Object[] packages);
   public native void AddModuleExports(Object from_module, String pkg, Object to_module);
   public native void AddReadsModule(Object from_module, Object to_module);
   public native boolean CanReadModule(Object asking_module, Object target_module);
