@@ -693,6 +693,12 @@ public final class SunPKCS11 extends AuthProvider {
                 s("SHA1withDSA", "1.3.14.3.2.13", "1.3.14.3.2.27",
                   "1.2.840.10040.4.3", "OID.1.2.840.10040.4.3"),
                 m(CKM_DSA_SHA1, CKM_DSA));
+        d(SIG, "RawDSAinP1363Format",   P11Signature,
+                s("NONEwithDSAinP1363Format"),
+                m(CKM_DSA));
+        d(SIG, "DSAinP1363Format",      P11Signature,
+                s("SHA1withDSAinP1363Format"),
+                m(CKM_DSA_SHA1, CKM_DSA));
         d(SIG, "NONEwithECDSA", P11Signature,
                 m(CKM_ECDSA));
         d(SIG, "SHA1withECDSA", P11Signature,
@@ -709,6 +715,18 @@ public final class SunPKCS11 extends AuthProvider {
                 m(CKM_ECDSA));
         d(SIG, "SHA512withECDSA",       P11Signature,
                 s("1.2.840.10045.4.3.4", "OID.1.2.840.10045.4.3.4"),
+                m(CKM_ECDSA));
+        d(SIG, "NONEwithECDSAinP1363Format",   P11Signature,
+                m(CKM_ECDSA));
+        d(SIG, "SHA1withECDSAinP1363Format",   P11Signature,
+                m(CKM_ECDSA_SHA1, CKM_ECDSA));
+        d(SIG, "SHA224withECDSAinP1363Format", P11Signature,
+                m(CKM_ECDSA));
+        d(SIG, "SHA256withECDSAinP1363Format", P11Signature,
+                m(CKM_ECDSA));
+        d(SIG, "SHA384withECDSAinP1363Format", P11Signature,
+                m(CKM_ECDSA));
+        d(SIG, "SHA512withECDSAinP1363Format", P11Signature,
                 m(CKM_ECDSA));
         d(SIG, "MD2withRSA",    P11Signature,
                 s("1.2.840.113549.1.1.2", "OID.1.2.840.113549.1.1.2"),
@@ -1074,7 +1092,7 @@ public final class SunPKCS11 extends AuthProvider {
             }
             // EC
             if (((type == KA) && algorithm.equals("ECDH"))
-                    || ((type == SIG) && algorithm.endsWith("ECDSA"))) {
+                    || ((type == SIG) && algorithm.contains("ECDSA"))) {
                 if (keyAlgorithm.equals("EC") == false) {
                     return false;
                 }
@@ -1083,7 +1101,8 @@ public final class SunPKCS11 extends AuthProvider {
                         || (key instanceof ECPublicKey);
             }
             // DSA signatures
-            if ((type == SIG) && algorithm.endsWith("DSA")) {
+            if ((type == SIG) && algorithm.contains("DSA") &&
+                    !algorithm.contains("ECDSA")) {
                 if (keyAlgorithm.equals("DSA") == false) {
                     return false;
                 }

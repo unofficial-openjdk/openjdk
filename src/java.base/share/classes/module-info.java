@@ -41,6 +41,7 @@ module java.base {
     exports java.nio.file.attribute;
     exports java.nio.file.spi;
     exports java.security;
+    exports java.security.acl;
     exports java.security.cert;
     exports java.security.interfaces;
     exports java.security.spec;
@@ -106,7 +107,6 @@ module java.base {
         jdk.dev,
         jdk.jconsole,
         jdk.jvmstat,
-        jdk.runtime,
         jdk.security.auth,
         jdk.security.jgss;
     exports sun.net.dns to
@@ -143,6 +143,7 @@ module java.base {
     exports sun.reflect.misc to
         java.corba,
         java.desktop,
+        java.datatransfer,
         java.management,
         java.rmi,
         java.sql.rowset,
@@ -170,7 +171,7 @@ module java.base {
         java.rmi,
         java.security.jgss,
         jdk.crypto.pkcs11,
-        jdk.runtime,
+        jdk.dev,
         jdk.security.auth;
     exports sun.security.provider.certpath to
         java.naming;
@@ -189,7 +190,6 @@ module java.base {
         jdk.crypto.ec,
         jdk.crypto.pkcs11,
         jdk.dev,
-        jdk.runtime,
         jdk.security.auth;
     exports sun.security.x509 to
         java.naming,

@@ -26,6 +26,7 @@
 module java.se {
     requires public java.compact3;
     requires public java.corba;
+    requires public java.datatransfer;
     requires public java.desktop;
 
     // Upgradeable modules for Java EE technologies

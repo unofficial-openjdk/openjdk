@@ -24,6 +24,7 @@
  */
 
 module java.desktop {
+    requires public java.datatransfer;
     requires public java.xml;
     requires java.logging;
     requires java.prefs;
@@ -32,7 +33,6 @@ module java.desktop {
     exports java.applet;
     exports java.awt;
     exports java.awt.color;
-    exports java.awt.datatransfer;
     exports java.awt.dnd;
     exports java.awt.event;
     exports java.awt.font;
@@ -100,7 +100,7 @@ module java.desktop {
     uses javax.sound.sampled.spi.AudioFileWriter;
     uses javax.sound.sampled.spi.FormatConversionProvider;
     uses javax.sound.sampled.spi.MixerProvider;
-    uses sun.datatransfer.DesktopDatatransferService;
+
     provides sun.datatransfer.DesktopDatatransferService with sun.awt.datatransfer.DesktopDatatransferServiceImpl;
     provides javax.print.PrintServiceLookup with sun.print.PrintServiceLookupProvider;
     provides javax.print.StreamPrintServiceFactory with sun.print.PSStreamPrinterFactory;

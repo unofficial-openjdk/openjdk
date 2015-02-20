@@ -39,9 +39,12 @@ module java.management {
     exports javax.management.remote;
     exports javax.management.remote.rmi;
     exports javax.management.timer;
-    exports sun.management to
-        jdk.jconsole;
+    exports sun.management to jdk.jconsole;
+
     uses javax.management.remote.JMXConnectorProvider;
     uses javax.management.remote.JMXConnectorServerProvider;
+    uses sun.management.spi.PlatformMBeanProvider;
+    provides sun.management.spi.PlatformMBeanProvider with
+        com.sun.management.internal.PlatformMBeanProviderImpl;
 }
 

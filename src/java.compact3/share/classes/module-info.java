@@ -30,7 +30,6 @@ module java.compact3 {
     requires public java.management;
     requires public java.naming;
     requires public java.prefs;
-    requires public java.security.acl;
     requires public java.security.jgss;
     requires public java.security.sasl;
     requires public java.sql.rowset;
