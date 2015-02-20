@@ -296,11 +296,11 @@ void LinkResolver::lookup_method_in_klasses(methodHandle& result, KlassHandle kl
 // returns first instance method
 // Looks up method in classes, then looks up local default methods
 void LinkResolver::lookup_instance_method_in_klasses(methodHandle& result, KlassHandle klass, Symbol* name, Symbol* signature, TRAPS) {
-  Method* result_oop = klass->uncached_lookup_method(name, signature, Klass::normal);
+  Method* result_oop = klass->uncached_lookup_method(name, signature, Klass::find_overpass);
   result = methodHandle(THREAD, result_oop);
   while (!result.is_null() && result->is_static() && result->method_holder()->super() != NULL) {
     KlassHandle super_klass = KlassHandle(THREAD, result->method_holder()->super());
-    result = methodHandle(THREAD, super_klass->uncached_lookup_method(name, signature, Klass::normal));
+    result = methodHandle(THREAD, super_klass->uncached_lookup_method(name, signature, Klass::find_overpass));
   }
 
   if (klass->oop_is_array()) {
@@ -327,7 +327,8 @@ int LinkResolver::vtable_index_of_interface_method(KlassHandle klass,
   // First check in default method array
   if (!resolved_method->is_abstract() &&
     (InstanceKlass::cast(klass())->default_methods() != NULL)) {
-    int index = InstanceKlass::find_method_index(InstanceKlass::cast(klass())->default_methods(), name, signature, false, false);
+    int index = InstanceKlass::find_method_index(InstanceKlass::cast(klass())->default_methods(),
+                                                 name, signature, Klass::find_overpass, Klass::find_static);
     if (index >= 0 ) {
       vtable_index = InstanceKlass::cast(klass())->default_vtable_indices()->at(index);
     }

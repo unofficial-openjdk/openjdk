@@ -60,11 +60,6 @@
                 _JVM_DefineClassWithSourceCond
                 _JVM_DesiredAssertionStatus
                 _JVM_DoPrivileged
-                _JVM_DTraceGetVersion
-                _JVM_DTraceActivate
-                _JVM_DTraceIsProbeEnabled
-                _JVM_DTraceIsSupported
-                _JVM_DTraceDispose
                 _JVM_DumpAllStacks
                 _JVM_DumpThreads
                 _JVM_FillInStackTrace
@@ -130,6 +125,7 @@
                 _JVM_GetMethodIxSignatureUTF
                 _JVM_GetMethodParameters
                 _JVM_GetMethodTypeAnnotations
+                _JVM_GetNanoTimeAdjustment
                 _JVM_GetPrimitiveArrayElement
                 _JVM_GetProtectionDomain
                 _JVM_GetStackAccessControlContext

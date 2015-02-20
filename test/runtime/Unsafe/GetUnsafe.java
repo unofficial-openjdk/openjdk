@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -19,29 +19,26 @@
  * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  * or visit www.oracle.com if you need additional information or have any
  * questions.
- *
  */
 
-#include "precompiled.hpp"
-#include "classfile/javaClasses.hpp"
-#include "code/codeBlob.hpp"
-#include "memory/allocation.hpp"
-#include "prims/jvm.h"
-#include "runtime/dtraceJSDT.hpp"
-#include "runtime/jniHandles.hpp"
-#include "runtime/os.hpp"
-#include "runtime/signature.hpp"
-#include "utilities/globalDefinitions.hpp"
+/*
+ * @test
+ * @summary Verifies that getUnsafe() actually throws SecurityException when unsafeAccess is prohibited.
+ * @library /testlibrary
+ * @run main GetUnsafe
+ */
 
-int DTraceJSDT::pd_activate(
-    void* baseAddress, jstring module,
-    jint providers_count, JVM_DTraceProvider* providers) {
-  return -1;
-}
+import sun.misc.Unsafe;
+import static com.oracle.java.testlibrary.Asserts.*;
 
-void DTraceJSDT::pd_dispose(int handle) {
-}
-
-jboolean DTraceJSDT::pd_is_supported() {
-  return false;
+public class GetUnsafe {
+    public static void main(String args[]) throws Exception {
+        try {
+            Unsafe unsafe = Unsafe.getUnsafe();
+        } catch (SecurityException e) {
+            // Expected
+            return;
+        }
+        throw new RuntimeException("Did not get expected SecurityException");
+    }
 }
