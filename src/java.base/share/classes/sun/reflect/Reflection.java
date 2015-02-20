@@ -25,8 +25,6 @@
 
 package sun.reflect;
 
-import sun.misc.JavaLangReflectAccess;
-import sun.misc.SharedSecrets;
 import sun.misc.VM;
 
 import java.lang.reflect.*;
@@ -117,12 +115,29 @@ public class Reflection {
             Module m2 = memberClass.getModule();
             if (m2 != null)
                 memberSuffix = " (" + m2 + ")";
-            throwIAE("Class " + currentClass.getName() +
-                     currentSuffix +
-                     " can not access a member of class " +
-                     memberClass.getName() + memberSuffix +
-                     " with modifiers \"" +
-                     Modifier.toString(modifiers) + "\"");
+
+            String msg = "Class " + currentClass.getName() +
+                    currentSuffix +
+                    " can not access a member of class " +
+                    memberClass.getName() + memberSuffix +
+                    " with modifiers \"" +
+                    Modifier.toString(modifiers) + "\"";
+
+            // if m1 or m2 are named modules then expand the message to help
+            // troubleshooting
+            if (m1 != null && !m1.canRead(m2)) {
+                msg += ", " + m1 + " does not read " + m2;
+            }
+            if (m2 != null) {
+                String pkg = packageName(memberClass);
+                if (!Modules.isExported(m2, pkg, m1)) {
+                    msg += ", " + m2 + " does not export " + pkg;
+                    if (m1 != null)
+                        msg += " to " + m1;
+                }
+            }
+
+            throwIAE(msg);
         }
     }
 
@@ -239,22 +254,7 @@ public class Reflection {
         }
 
         // check that m2 exports the package to m1
-        return JLRA.isExported(m2, packageName(memberClass), m1);
-    }
-
-    /**
-     * A holder class to provide access to JavaLangReflectAccess. This is
-     * needed to avoid calls to SharedSecrets.getJavaLangReflectAccess
-     * early in the startup and before java.lang.System is initialized.
-     */
-    private static class JLRA {
-        // access to java.lang.reflect.Module, initialized lazily
-        static final JavaLangReflectAccess reflectAccess =
-            SharedSecrets.getJavaLangReflectAccess();
-
-        static boolean isExported(Module x, String pkg, Module y) {
-            return reflectAccess.isExported(x, pkg, y);
-        }
+        return Modules.isExported(m2, packageName(memberClass), m1);
     }
 
     private static String packageName(Class<?> c) {
