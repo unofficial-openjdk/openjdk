@@ -161,7 +161,6 @@ ifneq ($(OPENJDK_TARGET_OS), windows)
       keytool.1 \
       orbd.1 \
       pack200.1 \
-      policytool.1 \
       rmid.1 \
       rmiregistry.1 \
       servertool.1 \
@@ -198,6 +197,7 @@ ifneq ($(OPENJDK_TARGET_OS), windows)
       jstat.1 \
       jstatd.1 \
       native2ascii.1 \
+      policytool.1 \
       rmic.1 \
       schemagen.1 \
       serialver.1 \
@@ -351,45 +351,59 @@ JRE_COMPACT3_INFO_FILE := $(JRE_COMPACT3_IMAGE_DIR)/release
 
 # Common way to emit a line into the release or info file
 define info-file-item # name value
-	$(PRINTF) '%s="%s"\n' $1 $2 >> $@
+  $(PRINTF) '%s="%s"\n' $1 $2 >> $@
 endef
 
 # Param 1 - The file containing the MODULES list
 define create-info-file
-	$(ECHO) $(LOG_INFO) Generating $(patsubst $(OUTPUT_ROOT)/%,%,$@)
-	$(MKDIR) -p $(@D)
-	$(RM) $@
-	$(call info-file-item, "JAVA_VERSION", "$(JDK_VERSION)")
-	$(call info-file-item, "OS_NAME", "$(REQUIRED_OS_NAME)")
-	$(call info-file-item, "OS_VERSION", "$(REQUIRED_OS_VERSION)")
-	$(call info-file-item, "OS_ARCH", "$(OPENJDK_TARGET_CPU_LEGACY)")
-	$(if $(JDK_ARCH_ABI_PROP_NAME), \
-	  $(call info-file-item, "SUN_ARCH_ABI", "$(JDK_ARCH_ABI_PROP_NAME)"))
-	$(call info-file-item, "SOURCE", "$(ALL_SOURCE_TIPS)")
-	$(call info-file-item, "MODULES", "`$(CAT) $1`")
+  $(call info-file-item, "JAVA_VERSION", "$(JDK_VERSION)")
+  $(call info-file-item, "OS_NAME", "$(REQUIRED_OS_NAME)")
+  $(call info-file-item, "OS_VERSION", "$(REQUIRED_OS_VERSION)")
+  $(call info-file-item, "OS_ARCH", "$(OPENJDK_TARGET_CPU_LEGACY)")
+  $(if $(JDK_ARCH_ABI_PROP_NAME), \
+    $(call info-file-item, "SUN_ARCH_ABI", "$(JDK_ARCH_ABI_PROP_NAME)"))
+  $(call info-file-item, "SOURCE", "$(ALL_SOURCE_TIPS)")
+  $(call info-file-item, "MODULES", "`$(CAT) $1`")
 endef
+
+# Param 1 - The file containing the MODULES list
+define prepare-info-file
+  $(ECHO) $(LOG_INFO) Generating $(patsubst $(OUTPUT_ROOT)/%,%,$@)
+  $(MKDIR) -p $(@D)
+  $(RM) $@
+endef
+
+define info-file
+  $(call prepare-info-file, $1)
+  $(call create-info-file, $1)
+endef
+
+# Create a variable dependency file common for all release info files. The
+# sorted module list will only change if the image is regenerated, which will
+# trigger a rebuild of these files anyway.
+INFO_FILE_VARDEPS := $(call DependOnVariable, create-info-file)
 
 ALL_SOURCE_TIPS = $(shell \
     if [ -f $(SUPPORT_OUTPUTDIR)/source_tips ] ; then \
       $(CAT) $(SUPPORT_OUTPUTDIR)/source_tips ; \
     fi)
 
-$(JRE_INFO_FILE): $(OUTPUT_ROOT)/spec.gmk $(SUPPORT_OUTPUTDIR)/source_tips
-	$(call create-info-file, $(JRE_SORTED_MODULES))
+$(JRE_INFO_FILE): $(INFO_FILE_VARDEPS) $(SUPPORT_OUTPUTDIR)/source_tips
+	$(call info-file, $(JRE_SORTED_MODULES))
 
-$(JDK_INFO_FILE): $(OUTPUT_ROOT)/spec.gmk $(SUPPORT_OUTPUTDIR)/source_tips
-	$(call create-info-file, $(JDK_SORTED_MODULES))
+$(JDK_INFO_FILE): $(INFO_FILE_VARDEPS) $(SUPPORT_OUTPUTDIR)/source_tips
+	$(call info-file, $(JDK_SORTED_MODULES))
 
-$(JRE_COMPACT1_INFO_FILE): $(OUTPUT_ROOT)/spec.gmk $(SUPPORT_OUTPUTDIR)/source_tips
-	$(call create-info-file, $(JRE_COMPACT1_SORTED_MODULES))
+$(JRE_COMPACT1_INFO_FILE): $(INFO_FILE_VARDEPS) $(SUPPORT_OUTPUTDIR)/source_tips
+	$(call info-file, $(JRE_COMPACT1_SORTED_MODULES))
 	$(call info-file-item, "JAVA_PROFILE", "compact1")
 
-$(JRE_COMPACT2_INFO_FILE): $(OUTPUT_ROOT)/spec.gmk $(SUPPORT_OUTPUTDIR)/source_tips
-	$(call create-info-file, $(JRE_COMPACT2_SORTED_MODULES))
+$(JRE_COMPACT2_INFO_FILE): $(INFO_FILE_VARDEPS) $(SUPPORT_OUTPUTDIR)/source_tips
+	$(call info-file, $(JRE_COMPACT2_SORTED_MODULES))
 	$(call info-file-item, "JAVA_PROFILE", "compact2")
 
-$(JRE_COMPACT3_INFO_FILE): $(OUTPUT_ROOT)/spec.gmk $(SUPPORT_OUTPUTDIR)/source_tips
-	$(call create-info-file, $(JRE_COMPACT3_SORTED_MODULES))
+$(JRE_COMPACT3_INFO_FILE): $(INFO_FILE_VARDEPS) $(SUPPORT_OUTPUTDIR)/source_tips
+	$(call info-file, $(JRE_COMPACT3_SORTED_MODULES))
 	$(call info-file-item, "JAVA_PROFILE", "compact3")
 
 JRE_TARGETS += $(JRE_INFO_FILE)
