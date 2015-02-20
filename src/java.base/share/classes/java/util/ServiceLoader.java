@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Module;
 import java.net.URL;
@@ -452,6 +453,8 @@ public final class ServiceLoader<S>
                 providers.put(cn, p);
                 return p;
             } catch (Throwable x) {
+                if (x instanceof InvocationTargetException)
+                    x = x.getCause();
                 fail(service,
                      "Provider " + cn + " could not be instantiated",
                      x);
