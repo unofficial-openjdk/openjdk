@@ -1,3 +1,0 @@
-grant {
-    permission java.io.FilePermission "${java.home}/lib/modules/bootmodules.jimage", "read";
-};

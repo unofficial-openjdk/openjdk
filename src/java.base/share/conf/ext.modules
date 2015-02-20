@@ -1,5 +1,7 @@
 java.activation
 java.annotations.common
+java.corba
+java.transaction
 java.xml.bind
 java.xml.ws
 jdk.crypto.ec
