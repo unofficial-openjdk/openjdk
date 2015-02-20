@@ -530,7 +530,7 @@ exploded-image: $(ALL_MODULE_TARGETS)
 
 # This target builds the product images, e.g. the JRE and JDK image
 # (and possibly other, more specific versions)
-product-images: jimages demos samples zip-security verify-modules
+product-images: jimages demos samples zip-security verify-modules generate-summary
 
 ifeq ($(OPENJDK_TARGET_OS), macosx)
   product-images: mac-bundles
@@ -560,7 +560,7 @@ images: product-images
 docs: docs-image
 all: all-images
 
-ALL_TARGETS += default jdk images docs generate-summary all
+ALL_TARGETS += default jdk images docs all
 
 ################################################################################
 ################################################################################
