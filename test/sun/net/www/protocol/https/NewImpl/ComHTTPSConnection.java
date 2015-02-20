@@ -25,6 +25,7 @@
  * @test
  * @bug 4474255
  * @summary Can no longer obtain a com.sun.net.ssl.HttpsURLConnection
+ * @modules java.base/com.sun.net.ssl
  * @run main/othervm ComHTTPSConnection
  *
  *     SunJSSE does not support dynamic system properties, no way to re-use

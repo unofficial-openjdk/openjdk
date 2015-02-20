@@ -54,5 +54,6 @@ ${COMPILEJAVA}${FS}bin${FS}javac ${TESTJAVACOPTS} ${TESTTOOLVMOPTS} -d . \
     ${TESTSRC}${FS}OriginServer.java \
     ${TESTSRC}${FS}ProxyTunnelServer.java \
     ${TESTSRC}${FS}PostThruProxy.java
-${TESTJAVA}${FS}bin${FS}java ${TESTVMOPTS} PostThruProxy ${HOSTNAME} ${TESTSRC}
+${TESTJAVA}${FS}bin${FS}java ${TESTVMOPTS} -XX:AddModuleExports=java.base/sun.net.www \
+    PostThruProxy ${HOSTNAME} ${TESTSRC}
 exit
