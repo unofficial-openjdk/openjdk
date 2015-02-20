@@ -698,16 +698,18 @@ public class Locations {
         //ensure bootclasspath prepends/appends are reflected in the systemClasses
         private Collection<Path> addAdditionalBootEntries(Collection<Path> modules) throws IOException {
             String files = System.getProperty("sun.boot.class.path");
-
             if (files == null)
                 return modules;
 
             Set<Path> paths = new LinkedHashSet<>();
 
+            // The JVM no longer supports -Xbootclasspath/p:, so any interesting
+            // entries should be appended to the set of modules.
+
+            paths.addAll(modules);
+
             for (String s : files.split(Pattern.quote(File.pathSeparator))) {
-                if (s.endsWith(".jimage")) {
-                    paths.addAll(modules);
-                } else if (!s.isEmpty()) {
+                if (!s.isEmpty() && !s.endsWith(".jimage")) {
                     paths.add(Paths.get(s));
                 }
             }
