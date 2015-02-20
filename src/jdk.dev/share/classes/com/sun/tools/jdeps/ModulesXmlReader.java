@@ -34,8 +34,8 @@ import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.events.Attribute;
 import javax.xml.stream.events.XMLEvent;
-import com.sun.tools.jdeps.ClassFileReader.ModuleClassReader;
 import com.sun.tools.jdeps.PlatformClassPath.ImageHelper;
+import com.sun.tools.jdeps.ClassFileReader.ModuleClassReader;
 
 final class ModulesXmlReader {
     public static Set<Module> load(ImageHelper helper,InputStream in)
