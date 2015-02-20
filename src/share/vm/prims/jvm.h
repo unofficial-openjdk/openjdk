@@ -398,6 +398,10 @@ JVM_DefineModule(JNIEnv *env, jstring name, jstring version, jstring location,
                  jobject loader, jobjectArray packages);
 
 JNIEXPORT void JNICALL
+JVM_DefineModule2(JNIEnv *env, jobject module, jstring version, jstring location,
+                  jobjectArray packages);
+
+JNIEXPORT void JNICALL
 JVM_AddModuleExports(JNIEnv *env, jobject from_module, jstring package, jobject to_module);
 
 JNIEXPORT void JNICALL

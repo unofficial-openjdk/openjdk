@@ -683,3 +683,202 @@ void Modules::add_module_package(JNIEnv *env, jobject module, jstring package) {
 bool Modules::is_package_defined(Symbol* package, Handle h_loader, TRAPS) {
   return get_package_entry_by_name(package, h_loader, THREAD) != NULL;
 }
+
+static const char* get_module_version(jstring version) {
+  char* module_version;
+  if (version == NULL) {
+    module_version = (char *)Modules::default_version();
+  } else {
+    module_version = java_lang_String::as_utf8_string(JNIHandles::resolve_non_null(version));
+    if (module_version == NULL) module_version = (char *)Modules::default_version();
+  }
+  return module_version;
+}
+
+static char* get_module_name(oop module, TRAPS) {
+  oop name_oop = java_lang_reflect_Module::name(module);
+  if (name_oop == NULL) {
+    THROW_MSG_NULL(vmSymbols::java_lang_NullPointerException(), "Null module name");
+  }
+  char* module_name = java_lang_String::as_utf8_string(name_oop);
+  if (!verify_module_name(module_name)) {
+    THROW_MSG_NULL(vmSymbols::java_lang_IllegalArgumentException(),
+                   err_msg("Invalid module name: %s",
+                           module_name != NULL ? module_name : "NULL"));
+  }
+  if (strcmp(module_name, vmSymbols::java_base()->as_C_string()) == 0) {
+    THROW_MSG_NULL(vmSymbols::java_lang_IllegalArgumentException(),
+                   "Module java.base is already defined");
+  }
+  return module_name;
+}
+
+
+void Modules::define_module(JNIEnv *env, jobject module, jstring version,
+                            jstring location, jobjectArray packages) {
+  JavaThread *THREAD = JavaThread::thread_from_jni_environment(env);
+  ResourceMark rm(THREAD);
+
+  if (module == NULL) {
+    THROW_MSG(vmSymbols::java_lang_NullPointerException(), "Null module object");
+  }
+  Handle jlrM_handle(THREAD, JNIHandles::resolve(module));
+
+  char* module_name = get_module_name(jlrM_handle(), CHECK);
+  const char* module_version = get_module_version(version);
+
+  if (TraceModules) {
+    tty->print_cr("In define_module(): Start defining module %s, version: %s]",
+                  module_name, module_version);
+  }
+
+  objArrayOop packages_oop = objArrayOop(JNIHandles::resolve(packages));
+  objArrayHandle packages_h(THREAD, packages_oop);
+  int num_packages = (packages_h == NULL ? 0 : packages_h->length());
+
+  // Check that the list of packages has no duplicates and that the
+  // packages are syntactically ok.
+  GrowableArray<Symbol*>* pkg_list = new GrowableArray<Symbol*>(num_packages);
+  for (int x = 0; x < num_packages; x++) {
+    oop string_obj = packages_h->obj_at(x);
+
+    if (string_obj == NULL || !string_obj->is_a(SystemDictionary::String_klass())) {
+      THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(),
+                err_msg("Bad package name for module: %s", module_name));
+    }
+    char *package_name = java_lang_String::as_utf8_string(string_obj);
+    if (!verify_package_name(package_name)) {
+      THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(),
+                 err_msg("Invalid package name: %s for module: %s",
+                         package_name, module_name));
+    }
+    Symbol* pkg_symbol = SymbolTable::new_symbol(package_name, CHECK);
+    // append_if_missing() returns FALSE if entry already exists.
+    if (!pkg_list->append_if_missing(pkg_symbol)) {
+      THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(),
+                err_msg("Duplicate package name: %s for module %s",
+                        package_name, module_name));
+    }
+  }
+
+  oop loader = java_lang_reflect_Module::loader(jlrM_handle());
+
+  // Make sure loader is not the delegating class loader.
+  assert(loader == java_lang_ClassLoader::non_reflection_class_loader(loader),
+    "Defining a module with delegating class loader");
+
+  Handle h_loader = Handle(loader);
+
+  // Check that loader is a subclass of java.lang.ClassLoader.
+  if (loader != NULL && !java_lang_ClassLoader::is_subclass(h_loader->klass())) {
+    THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(),
+              "Class loader is not a subclass of java.lang.ClassLoader");
+  }
+
+  ModuleEntryTable* module_table = get_module_entry_table(h_loader, CHECK);
+  assert(module_table != NULL, "module entry table shouldn't be null");
+
+  // Create symbol* entry for module name.
+  TempNewSymbol module_symbol = SymbolTable::new_symbol(module_name, CHECK);
+
+  int dupl_pkg_index = -1;
+  bool dupl_modules = false;
+  {
+    MutexLocker ml(Module_lock, THREAD);
+
+    PackageEntryTable* package_table = NULL;
+    if (num_packages > 0) {
+      package_table = get_package_entry_table(h_loader, CHECK);
+      assert(package_table != NULL, "Missing package_table");
+
+      // Check that none of the packages exist in the class loader's package table.
+      for (int x = 0; x < pkg_list->length(); x++) {
+        if (package_table->lookup_only(pkg_list->at(x))) {
+          // This could be because the module was already defined.  If so,
+          // report that error instead of the package error.
+          if (module_table->lookup_only(module_symbol) != NULL) {
+            dupl_modules = true;
+          } else {
+            dupl_pkg_index = x;
+          }
+          break;
+        }
+      }
+    }  // if (num_packages > 0)...
+
+    // Add the module and its packages.
+    if (!dupl_modules && dupl_pkg_index == -1) {
+      // Create the entry for this module in the class loader's module entry table.
+
+      // Create symbol* entry for module version.
+      TempNewSymbol version_symbol = SymbolTable::new_symbol(module_version, CHECK);
+
+      // Create symbol* entry for module location.
+      const char* module_location = NULL;
+      TempNewSymbol location_symbol = NULL;
+      if (location != NULL) {
+        module_location =
+          java_lang_String::as_utf8_string(JNIHandles::resolve_non_null(location));
+        if (module_location != NULL) {
+          location_symbol = SymbolTable::new_symbol(module_location, CHECK);
+        }
+      }
+
+      ClassLoaderData* loader_data =
+        ClassLoaderData::class_loader_data_or_null(h_loader());
+      assert(loader_data != NULL, "class loader data shouldn't be null");
+      ModuleEntry* module_entry =
+        module_table->locked_create_entry_or_null(jlrM_handle(), module_symbol,
+          version_symbol, location_symbol, loader_data);
+
+      if (module_entry == NULL) {
+        dupl_modules = true;
+      } else {
+        if (TraceModules) {
+          tty->print("In define_module(): creation of module: %s, version: %s, location: %s, ",
+            module_name, module_version, module_location != NULL ? module_location : "NULL");
+          loader_data->print_value();
+          tty->print_cr(", package #: %d]", pkg_list->length());
+        }
+
+        // Add the packages.
+        assert(pkg_list->length() == 0 || package_table != NULL, "Bad package table");
+        PackageEntry* pkg;
+        for (int y = 0; y < pkg_list->length(); y++) {
+          pkg = package_table->locked_create_entry_or_null(pkg_list->at(y), module_entry);
+          assert(pkg != NULL, "Unable to create a module's package entry");
+
+          if (TraceModules || TracePackages) {
+            tty->print_cr("[In define_module(): creation of package %s for module %s]",
+                          (pkg_list->at(y))->as_C_string(), module_name);
+          }
+
+          // Unable to have a GrowableArray of TempNewSymbol.  Must decrement the refcount of
+          // the Symbol* that was created above for each package. The refcount was incremented
+          // by SymbolTable::new_symbol and as well by the PackageEntry creation.
+          pkg_list->at(y)->decrement_refcount();
+        }
+      }
+    }
+  }  // Release the lock
+
+  // any errors ?
+  if (dupl_modules) {
+     THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(),
+               err_msg("Module %s is already defined", module_name));
+  }
+  if (dupl_pkg_index != -1) {
+    THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(),
+              err_msg("Package %s for module %s already exists for class loader",
+                       pkg_list->at(dupl_pkg_index)->as_C_string(), module_name));
+  }
+
+  if (loader == NULL && !Universe::is_module_initialized()) {
+    // Now that the module is defined, if it is in the bootloader, make sure that
+    // its classes can be found.  Check if -Xoverride:<path> was specified.  If
+    // so prepend <path>/module_name, if it exists, to bootpath.  Also, if using
+    // exploded modules, prepend <java.home>/modules/module_name, if it exists,
+    // to bootpath.
+    add_to_boot_loader_list(module_name, CHECK);
+  }
+}

@@ -51,6 +51,8 @@ public:
   // * Class loader is not a subclass of java.lang.ClassLoader
   static jobject define_module(JNIEnv *env, jstring name, jstring version,
                                jstring location, jobject loader, jobjectArray packages);
+  static void define_module(JNIEnv *env, jobject module, jstring version,
+                             jstring location, jobjectArray packages);
 
   // This either does a qualified export of package in module from_module to module
   // to_module or, if to_module is null, does an unqualified export of package.

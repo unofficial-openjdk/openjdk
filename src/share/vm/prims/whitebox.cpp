@@ -1095,6 +1095,11 @@ WB_ENTRY(jobject, WB_DefineModule(JNIEnv* env, jobject o, jstring name, jstring 
   return Modules::define_module(env, name, version, location, loader, packages);
 WB_END
 
+WB_ENTRY(void, WB_DefineModule2(JNIEnv* env, jobject o, jobject module, jstring version, jstring location,
+                                jobjectArray packages))
+  Modules::define_module(env, module, version, location, packages);
+WB_END
+
 WB_ENTRY(void, WB_AddModuleExports(JNIEnv* env, jobject o, jobject from_module, jstring package, jobject to_module))
   Modules::add_module_exports(env, from_module, package, to_module);
 WB_END
@@ -1366,6 +1371,8 @@ static JNINativeMethod methods[] = {
   {CC"getThreadRemainingStackSize", CC"()J",          (void*)&WB_GetThreadRemainingStackSize },
   {CC"DefineModule",       CC"(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object;",
                                                       (void*)&WB_DefineModule },
+  {CC"DefineModule2",      CC"(Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;[Ljava/lang/Object;)V",
+                                                      (void*)&WB_DefineModule2 },
   {CC"AddModuleExports",   CC"(Ljava/lang/Object;Ljava/lang/String;Ljava/lang/Object;)V",
                                                       (void*)&WB_AddModuleExports },
   {CC"AddReadsModule",     CC"(Ljava/lang/Object;Ljava/lang/Object;)V",
