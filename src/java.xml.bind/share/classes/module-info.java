@@ -27,7 +27,7 @@ module java.xml.bind {
     requires public java.activation;
     requires public java.xml;
     requires java.compiler;
-    requires java.datatransfer;
+    requires java.desktop;
     requires java.logging;
 
     exports javax.xml.bind;
