@@ -147,7 +147,8 @@ module java.base {
         java.management,
         java.rmi,
         java.sql.rowset,
-        java.xml;
+        java.xml,
+        java.xml.ws;
     exports sun.security.action to
         java.desktop,
         java.security.jgss,
