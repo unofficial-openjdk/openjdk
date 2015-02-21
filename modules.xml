@@ -1133,7 +1133,6 @@
     <depend re-exports="true">java.activation</depend>
     <depend>java.base</depend>
     <depend>java.compiler</depend>
-    <depend>java.datatransfer</depend>
     <depend>java.desktop</depend>
     <depend>java.logging</depend>
     <depend re-exports="true">java.xml</depend>
