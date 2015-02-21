@@ -162,7 +162,6 @@ module java.base {
         java.xml.crypto,
         jdk.crypto.ec,
         jdk.crypto.pkcs11,
-        jdk.crypto.ucrypto,
         jdk.naming.dns;
     exports sun.security.pkcs to
         jdk.crypto.ec,
