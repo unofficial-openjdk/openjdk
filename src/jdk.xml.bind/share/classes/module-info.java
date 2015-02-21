@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -56,6 +56,9 @@ module jdk.xml.bind {
         jdk.xml.ws;
     exports com.sun.xml.internal.xsom.parser to
         jdk.xml.ws;
+    // XML document content needs to be exported
+    exports com.sun.tools.internal.xjc.reader.xmlschema.bindinfo to
+        java.xml.bind;
     uses com.sun.tools.internal.xjc.Plugin;
     provides com.sun.tools.internal.xjc.Plugin with com.sun.tools.internal.xjc.addon.accessors.PluginImpl;
     provides com.sun.tools.internal.xjc.Plugin with com.sun.tools.internal.xjc.addon.at_generated.PluginImpl;

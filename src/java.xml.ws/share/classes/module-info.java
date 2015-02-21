@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -89,6 +89,9 @@ module java.xml.ws {
         jdk.xml.ws;
     exports com.sun.xml.internal.ws.wsdl.writer to
         jdk.xml.ws;
+    // XML document content needs to be exported
+    exports com.sun.xml.internal.ws.runtime.config to
+        java.xml.bind;
     uses javax.xml.ws.spi.Provider;
 }
 
