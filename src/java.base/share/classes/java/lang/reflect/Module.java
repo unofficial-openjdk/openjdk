@@ -47,6 +47,7 @@ import jdk.jigsaw.module.Version;
 import sun.misc.JavaLangReflectAccess;
 import sun.misc.ServicesCatalog;
 import sun.misc.SharedSecrets;
+import sun.misc.Unsafe;
 
 /**
  * Represents a runtime module.
@@ -63,19 +64,19 @@ public final class Module {
 
     // no <clinit> as this class is initialized very early in the startup
 
-    // module name and loader
+    // module name and loader, these fields are read by VM
     private final String name;
     private final ClassLoader loader;
 
-    // module descriptor (need to make this final)
-    private volatile ModuleDescriptor descriptor;
+    // module descriptor
+    private final ModuleDescriptor descriptor;
 
     // all packages in the module
     private volatile Set<String> packages;
 
     // the modules that this module permanently reads
-    // (need to make this final)
-    private volatile Set<Module> reads;
+    // FIXME: This should be final
+    private volatile Set<Module> reads = Collections.emptySet();
 
     // created lazily, additional modules that this module temporarily reads
     private volatile WeakSet<Module> transientReads;
@@ -83,18 +84,28 @@ public final class Module {
     // module exports. The key is the package name; the value is an empty map
     // for unqualified exports; the value is a WeakHashMap when there are
     // qualified exports
-    private volatile Map<String, Map<Module, Boolean>> exports;
-
-    // indicates whether the Module is fully defined - will be used later
-    // by snapshot APIs (JVM TI for example)
-    private volatile boolean defined;
+    private volatile Map<String, Map<Module, Boolean>> exports = Collections.emptyMap();
 
     /**
-     * Invoked by the VM when creating a Module.
+     * Invoked by the VM when creating java.base early in the startup.
      */
     private Module(ClassLoader loader, String name) {
         this.loader = loader;
         this.name = name;
+        this.descriptor = null;
+    }
+
+    /**
+     * Used to create a Module, except for java.base.
+     */
+    private Module(ClassLoader loader,
+                   ModuleDescriptor descriptor,
+                   Set<String> packages)
+    {
+        this.loader = loader;
+        this.name = descriptor.name();
+        this.descriptor = descriptor;
+        this.packages = packages;
     }
 
     /**
@@ -255,7 +266,23 @@ public final class Module {
         String name = descriptor.name();
         if (loader == null && name.equals("java.base")) {
             m = Object.class.getModule();
+
+            // set descriptor and packages fields
+            try {
+                final Unsafe U = Unsafe.getUnsafe();
+                Class<?> c = Module.class;
+                long address = U.objectFieldOffset(c.getDeclaredField("descriptor"));
+                U.putObject(m, address, descriptor);
+            } catch (Exception e) {
+                throw new Error(e);
+            }
+            m.packages = packages;
+
         } else {
+            m = new Module(loader, descriptor, packages);
+
+            // define module to VM
+
             int n = packages.size();
             String[] array = new String[n];
             int i = 0;
@@ -266,15 +293,8 @@ public final class Module {
             String vs = (version != null) ? version.toString() : null;
             String uris = (location != null) ? location.toString() : null;
 
-            // define module in the VM
-            m = jvmDefineModule(name, vs, uris, loader, array);
+            jvmDefineModule(m, vs, uris, array);
         }
-
-        // set fields as these are not set by the VM
-        m.descriptor = descriptor;
-        m.packages = packages;
-        m.reads = Collections.emptySet();
-        m.exports = Collections.emptyMap();
 
         return m;
     }
@@ -373,8 +393,6 @@ public final class Module {
                 }
                 catalog.register(m);
             }
-
-            m.defined = true;
         }
 
         return modules;
@@ -564,11 +582,10 @@ public final class Module {
     // -- native methods --
 
     // JVM_DefineModule
-    private static native Module jvmDefineModule(String name,
-                                                 String version,
-                                                 String location,
-                                                 ClassLoader loader,
-                                                 String[] pkgs);
+    private static native void jvmDefineModule(Module module,
+                                               String version,
+                                               String location,
+                                               String[] pkgs);
 
     // JVM_AddReadsModule
     private static native void jvmAddReadsModule(Module from, Module to);

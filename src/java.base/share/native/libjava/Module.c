@@ -28,11 +28,11 @@
 
 #include "java_lang_reflect_Module.h"
 
-JNIEXPORT jobject JNICALL
-Java_java_lang_reflect_Module_jvmDefineModule(JNIEnv *env, jclass cls, jstring name, jstring version,
-                                              jstring location, jobject loader, jobjectArray packages)
+JNIEXPORT void JNICALL
+Java_java_lang_reflect_Module_jvmDefineModule(JNIEnv *env, jclass cls, jclass module, jstring version,
+                                              jstring location, jobjectArray packages)
 {
-    return JVM_DefineModule(env, name, version, location, loader, packages);
+    JVM_DefineModule(env, module, version, location, packages);
 }
 
 JNIEXPORT void JNICALL
