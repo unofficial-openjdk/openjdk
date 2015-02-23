@@ -211,6 +211,7 @@ module java.base {
         java.prefs;
     exports sun.util.resources to
         jdk.localedata;
+    uses java.net.spi.URLStreamHandlerProvider;
     uses java.nio.channels.spi.AsynchronousChannelProvider;
     uses java.nio.channels.spi.SelectorProvider;
     uses java.nio.charset.spi.CharsetProvider;
