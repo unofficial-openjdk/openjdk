@@ -44,7 +44,7 @@ ifdef MILESTONE
   endif
 endif
 
-# Need to use source and target 7 for nasgen to work.
+# Need to use source and target 8 for nasgen to work.
 # ## source/target updated to 9 to support compilation of module-info
 $(eval $(call SetupJavaCompiler,GENERATE_NEWBYTECODE_DEBUG, \
     JVM := $(JAVA), \
