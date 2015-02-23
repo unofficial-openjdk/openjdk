@@ -43,7 +43,7 @@ import sun.misc.Contended;
  * @bug     8012939
  * @summary \@Contended doesn't work correctly with inheritance
  *
- * @run main/othervm -XX:-RestrictContended Inheritance1
+ * @run main/othervm -XX:-RestrictContended -XX:AddModuleExports=java.base/sun.misc Inheritance1
  */
 public class Inheritance1 {
 

@@ -26,7 +26,7 @@
  * @test
  * @bug 6932496
  * @summary incorrect deopt of jsr subroutine on 64 bit c1
- * @run main/othervm -Xcomp -XX:CompileOnly=Test.test Test6932496
+ * @run main/othervm -Xcomp -XX:CompileOnly=Test.test -XX:AddModuleExports=java.base/jdk.internal.org.objectweb.asm Test6932496
  */
 import java.lang.reflect.Method;
 import java.nio.file.Files;

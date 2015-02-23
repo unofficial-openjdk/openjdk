@@ -27,7 +27,7 @@
  * @key nmt jcmd regression
  * @summary Regression test for invoking a jcmd with baseline=false, result was that the target VM crashed
  * @library /testlibrary
- * @run main/othervm -XX:NativeMemoryTracking=detail BaselineWithParameter
+ * @run main/othervm -XX:NativeMemoryTracking=detail -XX:AddModuleExports=java.management/sun.management BaselineWithParameter
  */
 
 import com.oracle.java.testlibrary.*;

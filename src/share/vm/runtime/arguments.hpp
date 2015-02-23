@@ -287,7 +287,7 @@ class Arguments : AllStatic {
   // Value of the conservative maximum heap alignment needed
   static size_t  _conservative_max_heap_alignment;
 
-  static uintx _min_heap_size;
+  static uintx  _min_heap_size;
 
   // Used to store original flag values
   static uintx _min_heap_free_ratio;
@@ -315,6 +315,15 @@ class Arguments : AllStatic {
   static bool _java_compiler;
   static void set_java_compiler(bool arg) { _java_compiler = arg; }
   static bool java_compiler()   { return _java_compiler; }
+
+  // Capture the index location of -Xbootclasspath\a within sysclasspath.
+  // Used when setting up the bootstrap search path in order to
+  // mark the boot loader's append path observability boundary.
+  static int _bootclasspath_a_index;
+
+  // -Xoverride flag
+  static const char* _override_dir;
+  static void set_override_dir(const char* dir) { _override_dir = dir; }
 
   // -Xdebug flag
   static bool _xdebug_mode;
@@ -538,6 +547,13 @@ class Arguments : AllStatic {
   static uintx min_heap_size()              { return _min_heap_size; }
   static void  set_min_heap_size(uintx v)   { _min_heap_size = v;  }
 
+  // -Xbootclasspath/a
+  static int  bootclasspath_a_index()              { return _bootclasspath_a_index; }
+  static void set_bootclasspath_a_index(int value) { _bootclasspath_a_index = value; }
+
+  // -Xoverride
+  static const char* override_dir()         { return _override_dir; }
+
   // Returns the original values of -XX:MinHeapFreeRatio and -XX:MaxHeapFreeRatio
   static uintx min_heap_free_ratio()        { return _min_heap_free_ratio; }
   static uintx max_heap_free_ratio()        { return _max_heap_free_ratio; }
@@ -616,7 +632,7 @@ class Arguments : AllStatic {
 
 
   // Operation modi
-  static Mode mode()                { return _mode; }
+  static Mode mode()                        { return _mode; }
   static bool is_interpreter_only() { return mode() == _int; }
 
 

@@ -27,7 +27,7 @@
  * @summary Tests the setFlag and printFlag attach command
  * @library /testlibrary
  * @build com.oracle.java.testlibrary.* AttachSetGetFlag
- * @run driver AttachSetGetFlag
+ * @run main/othervm -XX:AddModuleExports=jdk.attach/sun.tools.attach AttachSetGetFlag
  */
 
 import java.io.BufferedReader;

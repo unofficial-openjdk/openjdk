@@ -28,7 +28,7 @@
  * @build ThreadedVirtualAllocTestType
  * @run main ClassFileInstaller sun.hotspot.WhiteBox
  *                              sun.hotspot.WhiteBox$WhiteBoxPermission
- * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -XX:NativeMemoryTracking=detail ThreadedVirtualAllocTestType
+ * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -XX:NativeMemoryTracking=detail -XX:AddModuleExports=java.management/sun.management ThreadedVirtualAllocTestType
  */
 
 import com.oracle.java.testlibrary.*;

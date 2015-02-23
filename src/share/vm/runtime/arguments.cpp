@@ -86,6 +86,8 @@ const char*  Arguments::_java_vendor_url_bug    = DEFAULT_VENDOR_URL_BUG;
 const char*  Arguments::_sun_java_launcher      = DEFAULT_JAVA_LAUNCHER;
 int    Arguments::_sun_java_launcher_pid        = -1;
 bool   Arguments::_sun_java_launcher_is_altjvm  = false;
+const char*  Arguments::_override_dir           = NULL;
+int    Arguments::_bootclasspath_a_index        = -1;
 
 // These parameters are reset in method parse_vm_init_args(JavaVMInitArgs*)
 bool   Arguments::_AlwaysCompileLoopMethods     = AlwaysCompileLoopMethods;
@@ -391,7 +393,7 @@ private:
   // Array indices for the items that make up the sysclasspath.  All except the
   // base are allocated in the C heap and freed by this class.
   enum {
-    _scp_prefix,        // from -Xbootclasspath/p:...
+    _scp_prefix,        // was -Xbootclasspath/p:...
     _scp_base,          // the default sysclasspath
     _scp_suffix,        // from -Xbootclasspath/a:...
     _scp_nitems         // the number of items, must be last.
@@ -459,6 +461,10 @@ char* SysClassPath::combined_path() {
   // Get the lengths.
   int i;
   for (i = 0; i < _scp_nitems; ++i) {
+    if (i == _scp_suffix) {
+      // Record index of boot loader's append path.
+      Arguments::set_bootclasspath_a_index((int)total_len);
+    }
     if (_items[i] != NULL) {
       lengths[i] = strlen(_items[i]);
       // Include space for the separator char (or a NULL for the last item).
@@ -2720,16 +2726,18 @@ jint Arguments::parse_each_vm_init_arg(const JavaVMInitArgs* args,
       JavaAssertions::setSystemClassDefault(enable);
     // -bootclasspath:
     } else if (match_option(option, "-Xbootclasspath:", &tail)) {
-      scp_p->reset_path(tail);
-      *scp_assembly_required_p = true;
+        jio_fprintf(defaultStream::output_stream(),
+          "-Xbootclasspath is no longer a supported option.\n");
+        return JNI_EINVAL;
     // -bootclasspath/a:
     } else if (match_option(option, "-Xbootclasspath/a:", &tail)) {
       scp_p->add_suffix(tail);
       *scp_assembly_required_p = true;
     // -bootclasspath/p:
     } else if (match_option(option, "-Xbootclasspath/p:", &tail)) {
-      scp_p->add_prefix(tail);
-      *scp_assembly_required_p = true;
+        jio_fprintf(defaultStream::output_stream(),
+          "-Xbootclasspath/p is no longer a supported option.\n");
+        return JNI_EINVAL;
     // -Xrun
     } else if (match_option(option, "-Xrun", &tail)) {
       if (tail != NULL) {
@@ -3061,6 +3069,15 @@ jint Arguments::parse_each_vm_init_arg(const JavaVMInitArgs* args,
       } else if (is_bad_option(option, args->ignoreUnrecognized, "verification")) {
         return JNI_EINVAL;
       }
+    // -Xoverride
+    } else if (match_option(option, "-Xoverride:", &tail)) {
+      size_t len = strlen(tail);
+      char* dir = NEW_C_HEAP_ARRAY(char, len+16, mtInternal);
+      sprintf(dir, "%s%sjava.base", tail, os::file_separator());
+      scp_p->add_prefix(dir);
+      *scp_assembly_required_p = true;
+      dir[len] = '\0';
+      set_override_dir(dir);
     // -Xdebug
     } else if (match_option(option, "-Xdebug")) {
       // note this flag has been used, then ignore
@@ -3463,6 +3480,11 @@ jint Arguments::finalize_vm_init_args(SysClassPath* scp_p, bool scp_assembly_req
   if (scp_assembly_required) {
     // Assemble the bootclasspath elements into the final path.
     Arguments::set_sysclasspath(scp_p->combined_path());
+  } else {
+    // At this point in sysclasspath processing anything
+    // added would be considered in the boot loader's append path.
+    // Record this index, including +1 for the file separator character.
+    Arguments::set_bootclasspath_a_index(((int)strlen(Arguments::get_sysclasspath()))+1);
   }
 
   // This must be done after all arguments have been processed.
@@ -3625,6 +3647,11 @@ jint Arguments::parse_options_environment_variable(const char* name, SysClassPat
 
 void Arguments::set_shared_spaces_flags() {
   if (DumpSharedSpaces) {
+    if (Arguments::override_dir() != NULL) {
+      vm_exit_during_initialization(
+        "Cannot use -Xoverride when dumping the shared archive.", NULL);
+    }
+
     if (RequireSharedSpaces) {
       warning("cannot dump shared archive while using shared archive");
     }

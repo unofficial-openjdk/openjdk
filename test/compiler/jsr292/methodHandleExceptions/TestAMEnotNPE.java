@@ -37,9 +37,9 @@ import p.Dok;
  *
  * @compile -XDignore.symbol.file TestAMEnotNPE.java ByteClassLoader.java p/C.java p/Dok.java p/E.java p/F.java p/I.java p/Tdirect.java p/Treflect.java
  *
- * @run main/othervm TestAMEnotNPE
- * @run main/othervm -Xint TestAMEnotNPE
- * @run main/othervm -Xcomp TestAMEnotNPE
+ * @run main/othervm -XX:AddModuleExports=java.base/jdk.internal.org.objectweb.asm TestAMEnotNPE
+ * @run main/othervm -Xint -XX:AddModuleExports=java.base/jdk.internal.org.objectweb.asm TestAMEnotNPE
+ * @run main/othervm -Xcomp -XX:AddModuleExports=java.base/jdk.internal.org.objectweb.asm TestAMEnotNPE
  */
 public class TestAMEnotNPE implements Opcodes {
 

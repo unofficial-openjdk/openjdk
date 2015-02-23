@@ -30,7 +30,7 @@
  * @library /testlibrary
  * @run main/othervm -XX:-ExplicitGCInvokesConcurrent -XX:MinHeapFreeRatio=10
  * -XX:MaxHeapFreeRatio=12 -XX:+UseG1GC -XX:G1HeapRegionSize=1M -verbose:gc
- * TestHumongousShrinkHeap
+ * -XX:AddModuleExports=java.management/sun.management TestHumongousShrinkHeap
  */
 
 import java.lang.management.ManagementFactory;

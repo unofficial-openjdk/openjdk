@@ -974,7 +974,6 @@ class os: AllStatic {
                                 char pathSep);
   static bool set_boot_path(char fileSep, char pathSep);
   static char** split_path(const char* path, int* n);
-
 };
 
 // Note that "PAUSE" is almost always used with synchronization
