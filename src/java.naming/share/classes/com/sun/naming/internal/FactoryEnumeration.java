@@ -92,7 +92,7 @@ public final class FactoryEnumeration {
                     me.addReads(((Class) answer).getModule());
                 }
                 // Instantiate Class to get factory
-                answer = ((Class) answer).newInstance();
+                answer = ((Class<?>) answer).newInstance();
                 ref = new NamedWeakReference<>(answer, className);
                 factories.set(posn-1, ref);  // replace Class object or null
                 return answer;
