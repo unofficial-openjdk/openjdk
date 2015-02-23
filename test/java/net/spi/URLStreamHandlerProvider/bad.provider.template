@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -19,31 +19,23 @@
  * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  * or visit www.oracle.com if you need additional information or have any
  * questions.
- *
  */
 
-/**
- * @test
- * @bug 8009222
- * @summary java.lang.IllegalArgumentException: not invocable, no method type
- * when attempting to get getter method handle for a static field
- *
- * @run main/othervm Test8009222
- */
+package $package;
 
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
-import java.util.Objects;
+import java.net.URL;
+import java.net.URLConnection;
+import java.net.URLStreamHandler;
+import java.net.spi.URLStreamHandlerProvider;
 
-interface Intf {
-    static int i = 0;
-}
+public class Provider extends URLStreamHandlerProvider {
 
-public class Test8009222 {
-    public static void main(String[] args) throws Exception {
-        Objects.requireNonNull(MethodHandles.lookup()
-                .findStaticGetter(Intf.class, "i", int.class));
+    public Provider(String someRandomArg) {  // No no-args constructor
+        super();
+    }
 
-        System.out.println("TEST PASSED");
+    @Override
+    public URLStreamHandler createURLStreamHandler(String protocol) {
+        return null;
     }
 }
