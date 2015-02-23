@@ -394,12 +394,12 @@ JVM_DefineClassWithSourceCond(JNIEnv *env, const char *name,
  */
 
 JNIEXPORT jobject JNICALL
-JVM_DefineModule(JNIEnv *env, jstring name, jstring version, jstring location,
+JVM_DefineModule1(JNIEnv *env, jstring name, jstring version, jstring location,
                  jobject loader, jobjectArray packages);
 
 JNIEXPORT void JNICALL
-JVM_DefineModule2(JNIEnv *env, jobject module, jstring version, jstring location,
-                  jobjectArray packages);
+JVM_DefineModule(JNIEnv *env, jobject module, jstring version, jstring location,
+                 jobjectArray packages);
 
 JNIEXPORT void JNICALL
 JVM_AddModuleExports(JNIEnv *env, jobject from_module, jstring package, jobject to_module);
