@@ -273,14 +273,14 @@ SUNWprivate_1.1 {
                 Java_sun_misc_VM_getegid;
                 Java_sun_misc_VM_initialize;
 
-                Java_java_lang_reflect_Module_defineModule;
-                Java_java_lang_reflect_Module_addReadsModule;
-                Java_java_lang_reflect_Module_addModuleExports;
-                Java_java_lang_reflect_Module_addModulePackage;
+                Java_java_lang_reflect_Module_jvmDefineModule;
+                Java_java_lang_reflect_Module_jvmAddReadsModule;
+                Java_java_lang_reflect_Module_jvmAddModuleExports;
+                Java_java_lang_reflect_Module_jvmAddModulePackage;
 
                 # for testing performance of access checks in VM
-                Java_sun_reflect_Reflection_canReadModule;
-                Java_sun_reflect_Reflection_isExportedToModule;
+                Java_sun_reflect_Reflection_jvmCanReadModule;
+                Java_sun_reflect_Reflection_jvmIsExportedToModule;
 
 		Java_sun_misc_VMSupport_initAgentProperties;
 		Java_sun_misc_VMSupport_getVMTemporaryDirectory;

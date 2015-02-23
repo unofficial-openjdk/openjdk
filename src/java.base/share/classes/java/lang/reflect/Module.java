@@ -161,15 +161,34 @@ public final class Module {
                 ReflectPermission perm = new ReflectPermission("addReadsModule");
                 sm.checkPermission(perm);
             }
-            addReadInternal(target);
+            addReads(target, true);
         }
     }
 
-    private void addReadInternal(Module target) {
+    /**
+     * Makes the given {@code Module} readable to this module without
+     * notifying the VM.
+     *
+     * This method is for use by VM whitebox tests only.
+     */
+    void addReadsNoSync(Module target) {
+        addReads(target, false);
+    }
+
+    /**
+     * Makes the given {@code Module} readable to this module.
+     *
+     * If {@code syncVM} is {@code true} then the VM is notified.
+     */
+    private void addReads(Module target, boolean syncVM) {
         // check if we already read this module
         Set<Module> reads = this.reads;
         if (reads.contains(target))
             return;
+
+        // update VM first, just in case it fails
+        if (syncVM)
+            jvmAddReadsModule(this, target);
 
         // add temporary read.
         WeakSet<Module> tr = this.transientReads;
@@ -183,9 +202,6 @@ public final class Module {
             }
         }
         tr.add(target);
-
-        // update VM view
-        addReadsModule(this, target);
     }
 
     /**
@@ -251,7 +267,7 @@ public final class Module {
             String uris = (location != null) ? location.toString() : null;
 
             // define module in the VM
-            m = defineModule(name, vs, uris, loader, array);
+            m = jvmDefineModule(name, vs, uris, loader, array);
         }
 
         // set fields as these are not set by the VM
@@ -311,7 +327,7 @@ public final class Module {
                 reads.add(m2);
 
                 // update VM view
-                addReadsModule(m, m2);
+                jvmAddReadsModule(m, m2);
             }
             m.reads = reads;
 
@@ -324,7 +340,7 @@ public final class Module {
                     exports.computeIfAbsent(pkg, k -> Collections.emptyMap());
 
                     // update VM view
-                    addModuleExports(m, pkg.replace('.', '/'), null);
+                    jvmAddModuleExports(m, pkg.replace('.', '/'), null);
                 } else {
                     // only export to modules that are in this configuration
                     Module m2 = modules.get(permit);
@@ -333,7 +349,7 @@ public final class Module {
                                .put(m2, Boolean.TRUE);
 
                         // update VM view
-                        addModuleExports(m, pkg.replace('.', '/'), m2);
+                        jvmAddModuleExports(m, pkg.replace('.', '/'), m2);
                     }
                 }
             }
@@ -372,6 +388,24 @@ public final class Module {
      * valid java identifier.
      */
     void addPackage(String pkg) {
+        addPackage(pkg, true);
+    }
+
+    /**
+     * Add a package to this module without notifying the VM.
+     *
+     * This method is for use by VM whitebox tests only.
+     */
+    void addPackageNoSync(String pkg) {
+        addPackage(pkg.replace('/', '.'), false);
+    }
+
+    /**
+     * Add a package to this module.
+     *
+     * If {@code syncVM} is {@code true} then the VM is notified.
+     */
+    private void addPackage(String pkg, boolean syncVM) {
         if (pkg.length() == 0)
             throw new IllegalArgumentException("<unnamed> package not allowed");
 
@@ -383,11 +417,12 @@ public final class Module {
                 return;
             }
 
+            // update VM first, just in case it fails
+            if (syncVM)
+                jvmAddModulePackage(this, pkg.replace('.', '/'));
+
             // replace with new set
             this.packages = pkgs; // volatile write
-
-            // update VM view
-            addModulePackage(this, pkg.replace('.', '/'));
         }
     }
 
@@ -401,6 +436,26 @@ public final class Module {
      * @apiNote This is an expensive operation, not expected to be used often
      */
     void addExports(String pkg, Module who) {
+        addExports(pkg, who, true);
+    }
+
+    /**
+     * Updates the exports so that package {@code pkg} is exported to module
+     * {@code who} but without notifying the VM.
+     *
+     * This method is for use by VM whitebox tests only.
+     */
+    void addExportsNoSync(String pkg, Module who) {
+        addExports(pkg.replace('/', '.'), who, false);
+    }
+
+    /**
+     * Updates the exports so that package {@code pkg} is exported to module
+     * {@code who}.
+     *
+     * If {@code syncVM} is {@code true} then the VM is notified.
+     */
+    private void addExports(String pkg, Module who, boolean syncVM) {
         Objects.nonNull(pkg);
 
         if (!packages.contains(pkg)) {
@@ -409,6 +464,10 @@ public final class Module {
         }
 
         synchronized (this) {
+
+            // update VM first, just in case it fails
+            if (syncVM)
+                jvmAddModuleExports(this, pkg.replace('.', '/'), who);
 
             // copy existing map
             Map<String, Map<Module, Boolean>> exports = new HashMap<>(this.exports);
@@ -444,8 +503,6 @@ public final class Module {
             // volatile write
             this.exports = exports;
 
-            // update VM view
-            addModuleExports(this, pkg.replace('.', '/'), who);
         }
     }
 
@@ -507,20 +564,20 @@ public final class Module {
     // -- native methods --
 
     // JVM_DefineModule
-    private static native Module defineModule(String name,
-                                              String version,
-                                              String location,
-                                              ClassLoader loader,
-                                              String[] pkgs);
+    private static native Module jvmDefineModule(String name,
+                                                 String version,
+                                                 String location,
+                                                 ClassLoader loader,
+                                                 String[] pkgs);
 
     // JVM_AddReadsModule
-    private static native void addReadsModule(Module from, Module to);
+    private static native void jvmAddReadsModule(Module from, Module to);
 
     // JVM_AddModuleExports
-    private static native void addModuleExports(Module from, String pkg, Module to);
+    private static native void jvmAddModuleExports(Module from, String pkg, Module to);
 
     // JVM_AddModulePackage
-    private static native void addModulePackage(Module m, String pkg);
+    private static native void jvmAddModulePackage(Module m, String pkg);
 
     /**
      * Register shared secret to provide access to package-private methods
@@ -549,7 +606,7 @@ public final class Module {
                 }
                 @Override
                 public void addReadsModule(Module m1, Module m2) {
-                   m1.addReadInternal(m2);
+                    m1.addReads(m2, true);
                 }
                 @Override
                 public void addExports(Module m, String pkg, Module who) {

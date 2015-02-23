@@ -46,14 +46,14 @@ Java_sun_reflect_Reflection_getClassAccessFlags(JNIEnv *env, jclass unused, jcla
 }
 
 JNIEXPORT jboolean JNICALL
-Java_sun_reflect_Reflection_canReadModule(JNIEnv *env, jclass cls, jobject from, jobject to)
+Java_sun_reflect_Reflection_jvmCanReadModule(JNIEnv *env, jclass cls, jobject from, jobject to)
 {
     return JVM_CanReadModule(env, from, to);
 }
 
 JNIEXPORT jboolean JNICALL
-Java_sun_reflect_Reflection_isExportedToModule(JNIEnv *env, jclass cls, jobject from,
-                                               jstring pkg, jobject to)
+Java_sun_reflect_Reflection_jvmIsExportedToModule(JNIEnv *env, jclass cls, jobject from,
+                                                  jstring pkg, jobject to)
 {
     return JVM_IsExportedToModule(env, from, pkg, to);
 }

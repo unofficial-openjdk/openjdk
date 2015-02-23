@@ -29,27 +29,27 @@
 #include "java_lang_reflect_Module.h"
 
 JNIEXPORT jobject JNICALL
-Java_java_lang_reflect_Module_defineModule(JNIEnv *env, jclass cls, jstring name, jstring version,
-                                           jstring location, jobject loader, jobjectArray packages)
+Java_java_lang_reflect_Module_jvmDefineModule(JNIEnv *env, jclass cls, jstring name, jstring version,
+                                              jstring location, jobject loader, jobjectArray packages)
 {
     return JVM_DefineModule(env, name, version, location, loader, packages);
 }
 
 JNIEXPORT void JNICALL
-Java_java_lang_reflect_Module_addModuleExports(JNIEnv *env, jclass cls, jobject from,
-                                               jstring pkg, jobject to)
+Java_java_lang_reflect_Module_jvmAddModuleExports(JNIEnv *env, jclass cls, jobject from,
+                                                  jstring pkg, jobject to)
 {
     JVM_AddModuleExports(env, from, pkg, to);
 }
 
 JNIEXPORT void JNICALL
-Java_java_lang_reflect_Module_addReadsModule(JNIEnv *env, jclass cls, jobject from, jobject to)
+Java_java_lang_reflect_Module_jvmAddReadsModule(JNIEnv *env, jclass cls, jobject from, jobject to)
 {
     JVM_AddReadsModule(env, from, to);
 }
 
 JNIEXPORT void JNICALL
-Java_java_lang_reflect_Module_addModulePackage(JNIEnv *env, jclass cls, jobject m, jstring pkg)
+Java_java_lang_reflect_Module_jvmAddModulePackage(JNIEnv *env, jclass cls, jobject m, jstring pkg)
 {
     JVM_AddModulePackage(env, m, pkg);
 }
