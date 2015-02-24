@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 1997, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,28 +23,13 @@
  * questions.
  */
 
-package sun.security.acl;
-
-import java.security.Principal;
-import java.security.acl.*;
-
 /**
- * This class implements the principal interface for the set of all permissions.
- * @author Satish Dharmaraj
+ * Service-provider classes for the <tt>{@link java.net}</tt> package.
+ *
+ * <p> Only developers who are defining new URL stream handler providers
+ * should need to make direct use of this package.
+ *
+ * @since 1.9
  */
-public class AllPermissionsImpl extends PermissionImpl {
 
-    public AllPermissionsImpl(String s) {
-        super(s);
-    }
-
-    /**
-     * This function returns true if the permission passed matches the permission represented in
-     * this interface.
-     * @param another The Permission object to compare with.
-     * @returns true always
-     */
-    public boolean equals(Permission another) {
-        return true;
-    }
-}
+package java.net.spi;
