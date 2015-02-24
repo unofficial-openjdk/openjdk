@@ -111,11 +111,8 @@ import sun.security.util.SecurityConstants;
  * <tt>loadClass</tt>} methods).
  *
  * <p> Normally, the Java virtual machine loads classes from the local file
- * system in a platform-dependent manner.  For example, on UNIX systems, the
- * virtual machine loads classes from the directory defined by the
- * <tt>CLASSPATH</tt> environment variable.
- *
- * <p> However, some classes may not originate from a file; they may originate
+ * system in a platform-dependent manner.
+ * However, some classes may not originate from a file; they may originate
  * from other sources, such as the network, or they could be constructed by an
  * application.  The method {@link #defineClass(String, byte[], int, int)
  * <tt>defineClass</tt>} converts an array of bytes into an instance of class
@@ -1344,8 +1341,10 @@ public abstract class ClassLoader {
      * typically the class loader used to start the application.
      *
      * <p> This method is first invoked early in the runtime's startup
-     * sequence, at which point it creates the system class loader and sets it
-     * as the context class loader of the invoking <tt>Thread</tt>.
+     * sequence, at which point it creates the system class loader. This
+     * class loader will be the context class loader for the main application
+     * thread, the thread that invokes the {@code main} method of the main
+     * class for example.
      *
      * <p> The default system class loader is an implementation-dependent
      * instance of this class.
@@ -1427,7 +1426,7 @@ public abstract class ClassLoader {
 
     /*
      * Initialize the system class loader that may be a custom class on the
-     * application class path.
+     * application class path or application module path.
      *
      * @see java.lang.System#initPhase3
      */
