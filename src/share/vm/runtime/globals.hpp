@@ -1154,6 +1154,9 @@ class CommandLineFlags {
   product(bool, CheckJNICalls, false,                                       \
           "Verify all arguments to JNI calls")                              \
                                                                             \
+  product(bool, CheckEndorsedAndExtDirs, false,                             \
+          "Verify the endorsed and extension directories are not used")     \
+                                                                            \
   product(bool, UseFastJNIAccessors, true,                                  \
           "Use optimized versions of Get<Primitive>Field")                  \
                                                                             \
@@ -2865,6 +2868,9 @@ class CommandLineFlags {
                                                                             \
   product(intx, MaxRecursiveInlineLevel, 1,                                 \
           "maximum number of nested recursive calls that are inlined")      \
+                                                                            \
+  develop(intx, MaxForceInlineLevel, 100,                                   \
+          "maximum number of nested @ForceInline calls that are inlined")   \
                                                                             \
   product_pd(intx, InlineSmallCode,                                         \
           "Only inline already compiled methods if their code size is "     \

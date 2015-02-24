@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -133,6 +133,10 @@ WB_ENTRY(jboolean, WB_NMTWaitForDataMerge(JNIEnv* env))
   return MemTracker::wbtest_wait_for_data_merge();
 WB_END
 
+WB_ENTRY(jboolean, WB_NMTIsDetailSupported(JNIEnv* env))
+  return MemTracker::tracking_level() == MemTracker::NMT_detail;
+WB_END
+
 WB_ENTRY(void, WB_DeoptimizeAll(JNIEnv* env, jobject o))
   MutexLockerEx mu(Compile_lock);
   CodeCache::mark_all_nmethods_for_deoptimization();
@@ -213,6 +217,7 @@ static JNINativeMethod methods[] = {
   {CC"NMTUncommitMemory",   CC"(JJ)V",                (void*)&WB_NMTUncommitMemory  },
   {CC"NMTReleaseMemory",    CC"(JJ)V",                (void*)&WB_NMTReleaseMemory   },
   {CC"NMTWaitForDataMerge", CC"()Z",                  (void*)&WB_NMTWaitForDataMerge},
+  {CC"NMTIsDetailSupported",CC"()Z",                  (void*)&WB_NMTIsDetailSupported},
   {CC"deoptimizeAll",       CC"()V",                  (void*)&WB_DeoptimizeAll     },
 };
 

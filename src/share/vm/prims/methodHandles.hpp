@@ -238,8 +238,7 @@ class MemberNameTable : public GrowableArray<jweak> {
   MemberNameTable(int methods_cnt);
   ~MemberNameTable();
 
-  void add_member_name(int index, jweak mem_name_ref);
-  oop  get_member_name(int index);
+  void add_member_name(jweak mem_name_ref);
 
  public:
   // RedefineClasses() API support:
@@ -247,8 +246,6 @@ class MemberNameTable : public GrowableArray<jweak> {
   // to refer to new_method.
   void adjust_method_entries(methodOop* old_methods, methodOop* new_methods,
                              int methods_length, bool *trace_name_printed);
- private:
-  oop find_member_name_by_method(methodOop old_method);
 };
 
 #endif // SHARE_VM_PRIMS_METHODHANDLES_HPP

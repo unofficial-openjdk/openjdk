@@ -42,6 +42,7 @@
 #include "oops/methodOop.hpp"
 #include "oops/symbol.hpp"
 #include "oops/typeArrayOop.hpp"
+#include "prims/jvmtiRedefineClassesTrace.hpp"
 #include "runtime/fieldDescriptor.hpp"
 #include "runtime/handles.inline.hpp"
 #include "runtime/interfaceSupport.hpp"
@@ -530,10 +531,10 @@ void java_lang_Class::fixup_mirror(KlassHandle k, TRAPS) {
       }
     }
   }
-  create_mirror(k, CHECK);
+  create_mirror(k, Handle(NULL), CHECK);
 }
 
-oop java_lang_Class::create_mirror(KlassHandle k, TRAPS) {
+oop java_lang_Class::create_mirror(KlassHandle k, Handle class_loader, TRAPS) {
   assert(k->java_mirror() == NULL, "should only assign mirror once");
   // Use this moment of initialization to cache modifier_flags also,
   // to support Class.getModifiers().  Instance classes recalculate
@@ -574,6 +575,9 @@ oop java_lang_Class::create_mirror(KlassHandle k, TRAPS) {
       // Initialize static fields
       instanceKlass::cast(k())->do_local_static_fields(&initialize_static_field, CHECK_NULL);
     }
+    // set the classLoader field in the java_lang_Class instance
+    assert(class_loader() == k->class_loader(), "should be same");
+    set_class_loader(mirror(), class_loader());
     return mirror();
   } else {
     return NULL;
@@ -597,6 +601,18 @@ int  java_lang_Class::static_oop_field_count(oop java_class) {
 void java_lang_Class::set_static_oop_field_count(oop java_class, int size) {
   assert(_static_oop_field_count_offset != 0, "must be set");
   java_class->int_field_put(_static_oop_field_count_offset, size);
+}
+
+void java_lang_Class::set_class_loader(oop java_class, oop loader) {
+  // jdk7 runs Queens in bootstrapping and jdk8-9 has no coordinated pushes yet.
+  if (_class_loader_offset != 0) {
+    java_class->obj_field_put(_class_loader_offset, loader);
+  }
+}
+
+oop java_lang_Class::class_loader(oop java_class) {
+  assert(_class_loader_offset != 0, "must be set");
+  return java_class->obj_field(_class_loader_offset);
 }
 
 oop java_lang_Class::create_basic_type_mirror(const char* basic_type_name, BasicType type, TRAPS) {
@@ -761,6 +777,12 @@ void java_lang_Class::compute_offsets() {
   // so don't go fatal.
   compute_optional_offset(classRedefinedCount_offset,
                           klass_oop, vmSymbols::classRedefinedCount_name(), vmSymbols::int_signature());
+
+  // Needs to be optional because the old build runs Queens during bootstrapping
+  // and jdk8-9 doesn't have coordinated pushes yet.
+  compute_optional_offset(_class_loader_offset,
+                 klass_oop, vmSymbols::classClassLoader_name(),
+                 vmSymbols::classloader_signature());
 
   CLASS_INJECTED_FIELDS(INJECTED_FIELD_COMPUTE_OFFSET);
 }
@@ -2517,11 +2539,35 @@ oop java_lang_invoke_MemberName::vmtarget(oop mname) {
   return mname->obj_field(_vmtarget_offset);
 }
 
+bool java_lang_invoke_MemberName::is_method(oop mname) {
+  assert(is_instance(mname), "must be MemberName");
+  return (flags(mname) & (MN_IS_METHOD | MN_IS_CONSTRUCTOR)) > 0;
+}
+
 // Can be executed on VM thread only
-void java_lang_invoke_MemberName::adjust_vmtarget(oop mname, oop ref) {
-  assert((is_instance(mname) && (flags(mname) & (MN_IS_METHOD | MN_IS_CONSTRUCTOR)) > 0), "wrong type");
+void java_lang_invoke_MemberName::adjust_vmtarget(oop mname, methodOop old_method,
+                                                  methodOop new_method, bool* trace_name_printed) {
+  assert(is_method(mname), "wrong type");
   assert(Thread::current()->is_VM_thread(), "not VM thread");
-  mname->address_field_put(_vmtarget_offset, (address)ref);
+
+  methodOop target = (methodOop) mname->obj_field(_vmtarget_offset);
+
+  if (target == old_method) {
+    mname->obj_field_put(_vmtarget_offset, new_method);
+
+    if (RC_TRACE_IN_RANGE(0x00100000, 0x00400000)) {
+      if (!(*trace_name_printed)) {
+        // RC_TRACE_MESG macro has an embedded ResourceMark
+        RC_TRACE_MESG(("adjust: name=%s",
+                       instanceKlass::cast(old_method->method_holder())->external_name()));
+        *trace_name_printed = true;
+      }
+      // RC_TRACE macro has an embedded ResourceMark
+      RC_TRACE(0x00400000, ("MemberName method update: %s(%s)",
+                            new_method->name()->as_C_string(),
+                            new_method->signature()->as_C_string()));
+    }
+  }
 }
 
 void java_lang_invoke_MemberName::set_vmtarget(oop mname, oop ref) {
@@ -2830,6 +2876,7 @@ int java_lang_Class::_array_klass_offset;
 int java_lang_Class::_resolved_constructor_offset;
 int java_lang_Class::_oop_size_offset;
 int java_lang_Class::_static_oop_field_count_offset;
+int java_lang_Class::_class_loader_offset;
 int java_lang_Throwable::backtrace_offset;
 int java_lang_Throwable::detailMessage_offset;
 int java_lang_Throwable::cause_offset;
@@ -3277,3 +3324,4 @@ void javaClasses_init() {
   JavaClasses::check_offsets();
   FilteredFieldsMap::initialize();  // must be done after computing offsets.
 }
+
