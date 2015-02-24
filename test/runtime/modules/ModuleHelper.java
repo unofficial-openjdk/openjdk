@@ -21,36 +21,39 @@
  * questions.
  */
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.lang.reflect.Module;
+import java.util.*;
+import jdk.jigsaw.module.ModuleDescriptor;
 import com.oracle.java.testlibrary.*;
 import sun.hotspot.WhiteBox;
 
 public class ModuleHelper {
 
-    public static Module DefineModule(String name, Object loader, String[] pkgs) throws Throwable {
+    public static void DefineModule(Object module, String version, String location,
+                                      String[] pkgs) throws Throwable {
         WhiteBox wb = WhiteBox.getWhiteBox();
-        return (Module)wb.DefineModule(name, "1.0", "/location", loader, pkgs);
-    }
-
-    public static Module DefineModule(String name, String version, String location,
-                                      Object loader, String[] pkgs) throws Throwable {
-        WhiteBox wb = WhiteBox.getWhiteBox();
-        return (Module)wb.DefineModule(name, version, location, loader, pkgs);
+        wb.DefineModule(module, version, location, pkgs);
     }
 
     public static void AddModuleExports(Object from, String pkg, Object to) throws Throwable {
         WhiteBox wb = WhiteBox.getWhiteBox();
         wb.AddModuleExports(from, pkg, to);
+        invoke(findMethod("addExportsNoSync"), from, pkg, to);
     }
 
     public static void AddReadsModule(Object from, Object to) throws Throwable {
         WhiteBox wb = WhiteBox.getWhiteBox();
         wb.AddReadsModule(from, to);
+        invoke(findMethod("addReadsNoSync"), from, to);
     }
 
     public static void AddModulePackage(Object m, String pkg) throws Throwable {
         WhiteBox wb = WhiteBox.getWhiteBox();
         wb.AddModulePackage(m, pkg);
+        invoke(findMethod("addPackageNoSync"), m, pkg);
     }
 
     public static boolean CanReadModule(Object from, Object to) throws Throwable {
@@ -64,4 +67,55 @@ public class ModuleHelper {
         return wb.IsExportedToModule(from, pkg, to);
     }
 
+    public static Module ModuleObject(String name, Object loader, String[] pkgs) throws Throwable {
+        ModuleDescriptor descriptor = new ModuleDescriptor.Builder(name).build();
+        Class[] cArg = new Class[3];
+        cArg[0] = java.lang.ClassLoader.class;
+        cArg[1] = jdk.jigsaw.module.ModuleDescriptor.class;
+        cArg[2] = java.util.Set.class;
+        Constructor ctor = findCtor(cArg);
+
+        java.util.Set<java.lang.String> pkg_set;
+        if (pkgs != null) {
+            pkg_set = new HashSet<java.lang.String>(Arrays.asList(pkgs));
+        } else {
+            pkg_set = null;
+        }
+        return (Module)invokeCtor(ctor, loader, descriptor, pkg_set);
+    }
+
+    private static Object invokeCtor(Constructor c, Object... args) throws Throwable {
+        try {
+            return c.newInstance(args);
+        } catch (InvocationTargetException e) {
+            throw e.getCause();
+        }
+    }
+
+    private static Constructor findCtor(Class[] cArg) throws Throwable {
+        Constructor ctor = java.lang.reflect.Module.class.getDeclaredConstructor(cArg);
+        if (ctor != null) {
+            ctor.setAccessible(true);
+            return ctor;
+        }
+        throw new RuntimeException("Failed to find constructor in java.lang.reflect.Module");
+    }
+
+    private static Object invoke(Method m, Object obj, Object... args) throws Throwable {
+        try {
+            return m.invoke(obj, args);
+        } catch (InvocationTargetException e) {
+            throw e.getCause();
+        }
+    }
+
+    private static Method findMethod(String name) {
+        for (Method m : java.lang.reflect.Module.class.getDeclaredMethods()) {
+            if (m.getName().equals(name)) {
+                m.setAccessible(true);
+                return m;
+            }
+        }
+        throw new RuntimeException("Failed to find method " + name + " in java.lang.reflect.Module");
+    }
 }

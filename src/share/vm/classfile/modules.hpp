@@ -49,8 +49,7 @@ public:
   // * Packages contains a duplicate package name
   // * A package already exists in another module for this class loader
   // * Class loader is not a subclass of java.lang.ClassLoader
-  static jobject define_module(JNIEnv *env, jstring name, jstring version,
-                               jstring location, jobject loader, jobjectArray packages);
+  //  NullPointerExceptions are thrown if module is null.
   static void define_module(JNIEnv *env, jobject module, jstring version,
                              jstring location, jobjectArray packages);
 
