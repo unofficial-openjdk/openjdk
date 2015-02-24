@@ -590,7 +590,6 @@ class JlinkTask {
 
             ImageModules imf = new ImageModules(boot, ext, app);
             ImageFile.create(output, archives, imf, options.compress);
-            writeModulesLists(output);
         }
 
         private Archive newArchive(String module, Path path) {
@@ -607,25 +606,6 @@ class JlinkTask {
                 }
             }
             return null;
-        }
-
-        /**
-         * Replace lib/*.modules with the actual list of modules linked in.
-         */
-        private void writeModulesLists(Path output) throws IOException {
-            Path lib = output.resolve("lib");
-            writeModuleList(lib.resolve(BOOT_MODULES), bootModules);
-            writeModuleList(lib.resolve(EXT_MODULES), extModules);
-        }
-
-        private void writeModuleList(Path file, Set<ModuleDescriptor> modules)
-            throws IOException
-        {
-            List<String> list = modules.stream()
-                                       .map(ModuleDescriptor::name)
-                                       .sorted()
-                                       .collect(Collectors.toList());
-            Files.write(file, list, StandardCharsets.UTF_8);
         }
 
         /**
