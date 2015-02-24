@@ -63,7 +63,7 @@ JDK_TEST_LIST = \
 	jdk_other  \
 	jdk_net  \
 	jdk_nio \
-	jdk_security1 jdk_security2 jdk_security3  \
+	jdk_security1 jdk_security2 jdk_security3 jdk_security4  \
 	jdk_sound  \
 	jdk_text  \
 	jdk_tools \
