@@ -40,10 +40,8 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-
 import jdk.nashorn.tools.Shell;
 import org.testng.Assert;
 import org.testng.ITest;
@@ -54,6 +52,7 @@ import org.testng.annotations.Test;
  * class. Optionally, output from running the script is compared against the
  * corresponding .EXPECTED file.
  */
+@SuppressWarnings("javadoc")
 public final class ScriptRunnable extends AbstractScriptRunnable implements ITest {
     public ScriptRunnable(final String framework, final File testFile, final List<String> engineOptions, final Map<String, String> testOptions,  final List<String> scriptArguments) {
         super(framework, testFile, engineOptions, testOptions, scriptArguments);
@@ -72,7 +71,11 @@ public final class ScriptRunnable extends AbstractScriptRunnable implements ITes
     @Test
     @Override
     public void runTest() throws IOException {
-        super.runTest();
+        try {
+            super.runTest();
+        } catch(final AssertionError e) {
+            throw new AssertionError("Failed executing test " + testFile, e);
+        }
     }
 
     @Override
@@ -86,7 +89,7 @@ public final class ScriptRunnable extends AbstractScriptRunnable implements ITes
 
     // avoid direct System.out.println - use reporter to capture
     @Override
-    protected void log(String msg) {
+    protected void log(final String msg) {
         org.testng.Reporter.log(msg, true);
     }
 
@@ -174,8 +177,10 @@ public final class ScriptRunnable extends AbstractScriptRunnable implements ITes
 
         cmd.add(System.getProperty("java.home") + separator + "bin" + separator + "java");
         cmd.add("-Djava.ext.dirs=dist");
-        for (String str : forkJVMOptions) {
-            cmd.add(str);
+        for (final String str : forkJVMOptions) {
+            if(!str.isEmpty()) {
+                cmd.add(str);
+        }
         }
         cmd.add(Shell.class.getName());
         // now add the rest of the "in process" runtime arguments

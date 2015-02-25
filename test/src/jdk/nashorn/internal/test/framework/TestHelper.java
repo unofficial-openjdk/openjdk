@@ -36,10 +36,12 @@ import java.io.Reader;
 /**
  * Simple utilities to deal with build-dir, read/dump files etc.
  */
+@SuppressWarnings("javadoc")
 public abstract class TestHelper {
 
     public static final String TEST_ROOT   = "test";
-    public static final String BUILD_ROOT  = "build/test";
+    public static final String BUILD_ROOT =
+        System.getProperty("build.dir", "build") + File.separator + "test";
     public static final String TEST_PREFIX = TEST_ROOT + File.separator;
 
     private TestHelper() {
