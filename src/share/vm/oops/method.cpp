@@ -49,6 +49,7 @@
 #include "runtime/compilationPolicy.hpp"
 #include "runtime/frame.inline.hpp"
 #include "runtime/handles.inline.hpp"
+#include "runtime/orderAccess.inline.hpp"
 #include "runtime/relocator.hpp"
 #include "runtime/sharedRuntime.hpp"
 #include "runtime/signature.hpp"
@@ -92,7 +93,7 @@ Method::Method(ConstMethod* xconst, AccessFlags access_flags, int size) {
   set_hidden(false);
   set_dont_inline(false);
   set_method_data(NULL);
-  set_method_counters(NULL);
+  clear_method_counters();
   set_vtable_index(Method::garbage_vtable_index);
 
   // Fix and bury in Method*
@@ -116,7 +117,7 @@ void Method::deallocate_contents(ClassLoaderData* loader_data) {
   MetadataFactory::free_metadata(loader_data, method_data());
   set_method_data(NULL);
   MetadataFactory::free_metadata(loader_data, method_counters());
-  set_method_counters(NULL);
+  clear_method_counters();
   // The nmethod will be gone when we get here.
   if (code() != NULL) _code = NULL;
 }
@@ -387,9 +388,7 @@ MethodCounters* Method::build_method_counters(Method* m, TRAPS) {
   methodHandle mh(m);
   ClassLoaderData* loader_data = mh->method_holder()->class_loader_data();
   MethodCounters* counters = MethodCounters::allocate(loader_data, CHECK_NULL);
-  if (mh->method_counters() == NULL) {
-    mh->set_method_counters(counters);
-  } else {
+  if (!mh->init_method_counters(counters)) {
     MetadataFactory::free_metadata(loader_data, counters);
   }
   return mh->method_counters();
@@ -559,6 +558,15 @@ bool Method::is_accessor() const {
   return true;
 }
 
+bool Method::is_constant_getter() const {
+  int last_index = code_size() - 1;
+  // Check if the first 1-3 bytecodes are a constant push
+  // and the last bytecode is a return.
+  return (2 <= code_size() && code_size() <= 4 &&
+          Bytecodes::is_const(java_code_at(0)) &&
+          Bytecodes::length_for(java_code_at(0)) == last_index &&
+          Bytecodes::is_return(java_code_at(last_index)));
+}
 
 bool Method::is_initializer() const {
   return name() == vmSymbols::object_initializer_name() || is_static_initializer();
@@ -730,8 +738,8 @@ void Method::print_made_not_compilable(int comp_level, bool is_osr, bool report,
   }
   if ((TraceDeoptimization || LogCompilation) && (xtty != NULL)) {
     ttyLocker ttyl;
-    xtty->begin_elem("make_not_%scompilable thread='" UINTX_FORMAT "'",
-                     is_osr ? "osr_" : "", os::current_thread_id());
+    xtty->begin_elem("make_not_compilable thread='" UINTX_FORMAT "' osr='%d' level='%d'",
+                     os::current_thread_id(), is_osr, comp_level);
     if (reason != NULL) {
       xtty->print(" reason=\'%s\'", reason);
     }
@@ -851,7 +859,7 @@ void Method::unlink_method() {
   assert(!DumpSharedSpaces || _method_data == NULL, "unexpected method data?");
 
   set_method_data(NULL);
-  set_method_counters(NULL);
+  clear_method_counters();
 }
 
 // Called when the method_holder is getting linked. Setup entrypoints so the method
@@ -1635,34 +1643,34 @@ int Method::backedge_count() {
 }
 
 int Method::highest_comp_level() const {
-  const MethodData* mdo = method_data();
-  if (mdo != NULL) {
-    return mdo->highest_comp_level();
+  const MethodCounters* mcs = method_counters();
+  if (mcs != NULL) {
+    return mcs->highest_comp_level();
   } else {
     return CompLevel_none;
   }
 }
 
 int Method::highest_osr_comp_level() const {
-  const MethodData* mdo = method_data();
-  if (mdo != NULL) {
-    return mdo->highest_osr_comp_level();
+  const MethodCounters* mcs = method_counters();
+  if (mcs != NULL) {
+    return mcs->highest_osr_comp_level();
   } else {
     return CompLevel_none;
   }
 }
 
 void Method::set_highest_comp_level(int level) {
-  MethodData* mdo = method_data();
-  if (mdo != NULL) {
-    mdo->set_highest_comp_level(level);
+  MethodCounters* mcs = method_counters();
+  if (mcs != NULL) {
+    mcs->set_highest_comp_level(level);
   }
 }
 
 void Method::set_highest_osr_comp_level(int level) {
-  MethodData* mdo = method_data();
-  if (mdo != NULL) {
-    mdo->set_highest_osr_comp_level(level);
+  MethodCounters* mcs = method_counters();
+  if (mcs != NULL) {
+    mcs->set_highest_osr_comp_level(level);
   }
 }
 
@@ -1864,9 +1872,12 @@ Method* Method::checked_resolve_jmethod_id(jmethodID mid) {
 void Method::set_on_stack(const bool value) {
   // Set both the method itself and its constant pool.  The constant pool
   // on stack means some method referring to it is also on the stack.
-  _access_flags.set_on_stack(value);
   constants()->set_on_stack(value);
-  if (value) MetadataOnStackMark::record(this);
+
+  bool succeeded = _access_flags.set_on_stack(value);
+  if (value && succeeded) {
+    MetadataOnStackMark::record(this, Thread::current());
+  }
 }
 
 // Called when the class loader is unloaded to make all methods weak.

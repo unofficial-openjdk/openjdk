@@ -139,13 +139,44 @@ void VM_Version::initialize() {
   }
 
   assert(AllocatePrefetchLines > 0, "invalid value");
-  if (AllocatePrefetchLines < 1) // Set valid value in product VM.
+  if (AllocatePrefetchLines < 1) { // Set valid value in product VM.
     AllocatePrefetchLines = 1; // Conservative value.
+  }
 
-  if (AllocatePrefetchStyle == 3 && AllocatePrefetchDistance < cache_line_size)
+  if (AllocatePrefetchStyle == 3 && AllocatePrefetchDistance < cache_line_size) {
     AllocatePrefetchStyle = 1; // Fall back if inappropriate.
+  }
 
   assert(AllocatePrefetchStyle >= 0, "AllocatePrefetchStyle should be positive");
+
+  if (UseCRC32Intrinsics) {
+    if (!FLAG_IS_DEFAULT(UseCRC32Intrinsics))
+      warning("CRC32 intrinsics  are not available on this CPU");
+    FLAG_SET_DEFAULT(UseCRC32Intrinsics, false);
+  }
+
+  // The AES intrinsic stubs require AES instruction support.
+  if (UseAES) {
+    warning("AES instructions are not available on this CPU");
+    FLAG_SET_DEFAULT(UseAES, false);
+  }
+  if (UseAESIntrinsics) {
+    if (!FLAG_IS_DEFAULT(UseAESIntrinsics))
+      warning("AES intrinsics are not available on this CPU");
+    FLAG_SET_DEFAULT(UseAESIntrinsics, false);
+  }
+
+  if (UseSHA) {
+    warning("SHA instructions are not available on this CPU");
+    FLAG_SET_DEFAULT(UseSHA, false);
+  }
+  if (UseSHA1Intrinsics || UseSHA256Intrinsics || UseSHA512Intrinsics) {
+    warning("SHA intrinsics are not available on this CPU");
+    FLAG_SET_DEFAULT(UseSHA1Intrinsics, false);
+    FLAG_SET_DEFAULT(UseSHA256Intrinsics, false);
+    FLAG_SET_DEFAULT(UseSHA512Intrinsics, false);
+  }
+
 }
 
 void VM_Version::print_features() {
@@ -352,7 +383,7 @@ void VM_Version::determine_section_size() {
 
   if (PrintAssembly) {
     ttyLocker ttyl;
-    tty->print_cr("Decoding section size detection stub at " INTPTR_FORMAT " before execution:", code);
+    tty->print_cr("Decoding section size detection stub at " INTPTR_FORMAT " before execution:", p2i(code));
     Disassembler::decode((u_char*)code, (u_char*)code_end, tty);
     tty->print_cr("Time loop1 :%f", loop1_seconds);
     tty->print_cr("Time loop2 :%f", loop2_seconds);
@@ -435,7 +466,7 @@ void VM_Version::determine_features() {
   // Print the detection code.
   if (PrintAssembly) {
     ttyLocker ttyl;
-    tty->print_cr("Decoding cpu-feature detection stub at " INTPTR_FORMAT " before execution:", code);
+    tty->print_cr("Decoding cpu-feature detection stub at " INTPTR_FORMAT " before execution:", p2i(code));
     Disassembler::decode((u_char*)code, (u_char*)code_end, tty);
   }
 
@@ -468,7 +499,7 @@ void VM_Version::determine_features() {
   // Print the detection code.
   if (PrintAssembly) {
     ttyLocker ttyl;
-    tty->print_cr("Decoding cpu-feature detection stub at " INTPTR_FORMAT " after execution:", code);
+    tty->print_cr("Decoding cpu-feature detection stub at " INTPTR_FORMAT " after execution:", p2i(code));
     Disassembler::decode((u_char*)code, (u_char*)code_end, tty);
   }
 

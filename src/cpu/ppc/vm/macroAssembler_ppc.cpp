@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
  * Copyright 2012, 2014 SAP AG. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -806,6 +806,7 @@ void MacroAssembler::restore_nonvolatile_gprs(Register src, int offset) {
 
 // For verify_oops.
 void MacroAssembler::save_volatile_gprs(Register dst, int offset) {
+  std(R2,  offset, dst);   offset += 8;
   std(R3,  offset, dst);   offset += 8;
   std(R4,  offset, dst);   offset += 8;
   std(R5,  offset, dst);   offset += 8;
@@ -820,6 +821,7 @@ void MacroAssembler::save_volatile_gprs(Register dst, int offset) {
 
 // For verify_oops.
 void MacroAssembler::restore_volatile_gprs(Register src, int offset) {
+  ld(R2,  offset, src);   offset += 8;
   ld(R3,  offset, src);   offset += 8;
   ld(R4,  offset, src);   offset += 8;
   ld(R5,  offset, src);   offset += 8;
@@ -1183,6 +1185,16 @@ void MacroAssembler::call_VM(Register oop_result, address entry_point, Register 
   mr_if_needed(R4_ARG2, arg_1);
   assert(arg_2 != R4_ARG2, "smashed argument");
   mr_if_needed(R5_ARG3, arg_2);
+  call_VM(oop_result, entry_point, check_exceptions);
+}
+
+void MacroAssembler::call_VM(Register oop_result, address entry_point, Register arg_1, Register arg_2, Register arg_3,
+                             bool check_exceptions) {
+  // R3_ARG1 is reserved for the thread
+  mr_if_needed(R4_ARG2, arg_1);
+  assert(arg_2 != R4_ARG2, "smashed argument");
+  mr_if_needed(R5_ARG3, arg_2);
+  mr_if_needed(R6_ARG4, arg_3);
   call_VM(oop_result, entry_point, check_exceptions);
 }
 
@@ -2365,7 +2377,7 @@ void MacroAssembler::g1_write_barrier_post(Register Rstore_addr, Register Rnew_v
 #endif // INCLUDE_ALL_GCS
 
 // Values for last_Java_pc, and last_Java_sp must comply to the rules
-// in frame_ppc64.hpp.
+// in frame_ppc.hpp.
 void MacroAssembler::set_last_Java_frame(Register last_Java_sp, Register last_Java_pc) {
   // Always set last_Java_pc and flags first because once last_Java_sp
   // is visible has_last_Java_frame is true and users will look at the
@@ -2492,6 +2504,7 @@ int MacroAssembler::instr_size_for_decode_klass_not_null() {
 }
 
 void MacroAssembler::decode_klass_not_null(Register dst, Register src) {
+  assert(dst != R0, "Dst reg may not be R0, as R0 is used here.");
   if (src == noreg) src = dst;
   Register shifted_src = src;
   if (Universe::narrow_klass_shift() != 0 ||
@@ -2526,14 +2539,11 @@ void MacroAssembler::load_klass_with_trap_null_check(Register dst, Register src)
 
 void MacroAssembler::reinit_heapbase(Register d, Register tmp) {
   if (Universe::heap() != NULL) {
-    if (Universe::narrow_oop_base() == NULL) {
-      Assembler::xorr(R30, R30, R30);
-    } else {
-      load_const(R30, Universe::narrow_ptrs_base(), tmp);
-    }
+    load_const_optimized(R30, Universe::narrow_ptrs_base(), tmp);
   } else {
-    load_const(R30, Universe::narrow_ptrs_base_addr(), tmp);
-    ld(R30, 0, R30);
+    // Heap not yet allocated. Load indirectly.
+    int simm16_offset = load_const_optimized(R30, Universe::narrow_ptrs_base_addr(), tmp, true);
+    ld(R30, simm16_offset, R30);
   }
 }
 
@@ -3060,35 +3070,27 @@ void MacroAssembler::verify_oop(Register oop, const char* msg) {
   if (!VerifyOops) {
     return;
   }
-  // Will be preserved.
-  Register tmp = R11;
-  assert(oop != tmp, "precondition");
-  unsigned int nbytes_save = 10*8; // 10 volatile gprs
+
   address/* FunctionDescriptor** */fd = StubRoutines::verify_oop_subroutine_entry_address();
-  // save tmp
-  mr(R0, tmp);
-  // kill tmp
-  save_LR_CR(tmp);
+  const Register tmp = R11; // Will be preserved.
+  const int nbytes_save = 11*8; // Volatile gprs except R0.
+  save_volatile_gprs(R1_SP, -nbytes_save); // except R0
+
+  if (oop == tmp) mr(R4_ARG2, oop);
+  save_LR_CR(tmp); // save in old frame
   push_frame_reg_args(nbytes_save, tmp);
-  // restore tmp
-  mr(tmp, R0);
-  save_volatile_gprs(R1_SP, 112); // except R0
   // load FunctionDescriptor** / entry_address *
-  load_const(tmp, fd);
+  load_const_optimized(tmp, fd, R0);
   // load FunctionDescriptor* / entry_address
   ld(tmp, 0, tmp);
-  mr(R4_ARG2, oop);
-  load_const(R3_ARG1, (address)msg);
-  // call destination for its side effect
+  if (oop != tmp) mr_if_needed(R4_ARG2, oop);
+  load_const_optimized(R3_ARG1, (address)msg, R0);
+  // Call destination for its side effect.
   call_c(tmp);
-  restore_volatile_gprs(R1_SP, 112); // except R0
+
   pop_frame();
-  // save tmp
-  mr(R0, tmp);
-  // kill tmp
   restore_LR_CR(tmp);
-  // restore tmp
-  mr(tmp, R0);
+  restore_volatile_gprs(R1_SP, -nbytes_save); // except R0
 }
 
 const char* stop_types[] = {
@@ -3099,7 +3101,7 @@ const char* stop_types[] = {
 };
 
 static void stop_on_request(int tp, const char* msg) {
-  tty->print("PPC assembly code requires stop: (%s) %s\n", (void *)stop_types[tp%/*stop_end*/4], msg);
+  tty->print("PPC assembly code requires stop: (%s) %s\n", stop_types[tp%/*stop_end*/4], msg);
   guarantee(false, err_msg("PPC assembly code requires stop: %s", msg));
 }
 

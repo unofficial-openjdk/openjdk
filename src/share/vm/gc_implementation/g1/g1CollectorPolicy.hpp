@@ -26,6 +26,7 @@
 #define SHARE_VM_GC_IMPLEMENTATION_G1_G1COLLECTORPOLICY_HPP
 
 #include "gc_implementation/g1/collectionSetChooser.hpp"
+#include "gc_implementation/g1/g1Allocator.hpp"
 #include "gc_implementation/g1/g1MMUTracker.hpp"
 #include "memory/collectorPolicy.hpp"
 
@@ -299,13 +300,13 @@ public:
   // Accessors
 
   void set_region_eden(HeapRegion* hr, int young_index_in_cset) {
-    hr->set_young();
+    hr->set_eden();
     hr->install_surv_rate_group(_short_lived_surv_rate_group);
     hr->set_young_index_in_cset(young_index_in_cset);
   }
 
   void set_region_survivor(HeapRegion* hr, int young_index_in_cset) {
-    assert(hr->is_young() && hr->is_survivor(), "pre-condition");
+    assert(hr->is_survivor(), "pre-condition");
     hr->install_surv_rate_group(_survivor_surv_rate_group);
     hr->set_young_index_in_cset(young_index_in_cset);
   }
@@ -803,7 +804,7 @@ public:
 
   // If an expansion would be appropriate, because recent GC overhead had
   // exceeded the desired limit, return an amount to expand by.
-  size_t expansion_amount();
+  virtual size_t expansion_amount();
 
   // Print tracing information.
   void print_tracing_info() const;
@@ -822,17 +823,9 @@ public:
 
   size_t young_list_target_length() const { return _young_list_target_length; }
 
-  bool is_young_list_full() {
-    uint young_list_length = _g1->young_list()->length();
-    uint young_list_target_length = _young_list_target_length;
-    return young_list_length >= young_list_target_length;
-  }
+  bool is_young_list_full();
 
-  bool can_expand_young_list() {
-    uint young_list_length = _g1->young_list()->length();
-    uint young_list_max_length = _young_list_max_length;
-    return young_list_length < young_list_max_length;
-  }
+  bool can_expand_young_list();
 
   uint young_list_max_length() {
     return _young_list_max_length;

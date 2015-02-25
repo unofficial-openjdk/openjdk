@@ -30,6 +30,7 @@
 #include "memory/resourceArea.hpp"
 #include "runtime/init.hpp"
 #include "runtime/interfaceSupport.hpp"
+#include "runtime/orderAccess.inline.hpp"
 #include "runtime/threadLocalStorage.hpp"
 #include "runtime/vframe.hpp"
 #include "utilities/preserveException.hpp"
@@ -84,7 +85,7 @@ void InterfaceSupport::gc_alot() {
   // Short-circuit any possible re-entrant gc-a-lot attempt
   if (thread->skip_gcalot()) return;
 
-  if (is_init_completed()) {
+  if (Threads::is_vm_complete()) {
 
     if (++_fullgc_alot_invocation < FullGCALotStart) {
       return;

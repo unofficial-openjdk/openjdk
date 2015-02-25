@@ -31,6 +31,9 @@
 #include "classfile/javaClasses.hpp"
 #include "classfile/symbolTable.hpp"
 #include "classfile/systemDictionary.hpp"
+#if INCLUDE_CDS
+#include "classfile/systemDictionaryShared.hpp"
+#endif
 #include "classfile/verificationType.hpp"
 #include "classfile/verifier.hpp"
 #include "classfile/vmSymbols.hpp"
@@ -60,6 +63,7 @@
 #include "services/threadService.hpp"
 #include "utilities/array.hpp"
 #include "utilities/globalDefinitions.hpp"
+#include "utilities/ostream.hpp"
 
 // We generally try to create the oops directly when parsing, rather than
 // allocating temporary data structures and copying the bytes twice. A
@@ -2525,7 +2529,7 @@ methodHandle ClassFileParser::parse_method(bool is_interface,
 Array<Method*>* ClassFileParser::parse_methods(bool is_interface,
                                                AccessFlags* promoted_flags,
                                                bool* has_final_method,
-                                               bool* has_default_methods,
+                                               bool* declares_default_methods,
                                                TRAPS) {
   ClassFileStream* cfs = stream();
   cfs->guarantee_more(2, CHECK_NULL);  // length
@@ -2544,11 +2548,11 @@ Array<Method*>* ClassFileParser::parse_methods(bool is_interface,
       if (method->is_final()) {
         *has_final_method = true;
       }
-      if (is_interface && !(*has_default_methods)
-        && !method->is_abstract() && !method->is_static()
-        && !method->is_private()) {
-        // default method
-        *has_default_methods = true;
+      // declares_default_methods: declares concrete instance methods, any access flags
+      // used for interface initialization, and default method inheritance analysis
+      if (is_interface && !(*declares_default_methods)
+        && !method->is_abstract() && !method->is_static()) {
+        *declares_default_methods = true;
       }
       _methods->at_put(index, method());
     }
@@ -2780,17 +2784,17 @@ void ClassFileParser::parse_classfile_bootstrap_methods_attribute(u4 attribute_b
   ClassFileStream* cfs = stream();
   u1* current_start = cfs->current();
 
+  guarantee_property(attribute_byte_length >= sizeof(u2),
+                     "Invalid BootstrapMethods attribute length %u in class file %s",
+                     attribute_byte_length,
+                     CHECK);
+
   cfs->guarantee_more(attribute_byte_length, CHECK);
 
   int attribute_array_length = cfs->get_u2_fast();
 
   guarantee_property(_max_bootstrap_specifier_index < attribute_array_length,
                      "Short length on BootstrapMethods in class file %s",
-                     CHECK);
-
-  guarantee_property(attribute_byte_length >= sizeof(u2),
-                     "Invalid BootstrapMethods attribute length %u in class file %s",
-                     attribute_byte_length,
                      CHECK);
 
   // The attribute contains a counted array of counted tuples of shorts,
@@ -3054,21 +3058,39 @@ void ClassFileParser::apply_parsed_class_attributes(instanceKlassHandle k) {
   }
 }
 
-// Transfer ownership of metadata allocated to the InstanceKlass.
-void ClassFileParser::apply_parsed_class_metadata(
-                                            instanceKlassHandle this_klass,
-                                            int java_fields_count, TRAPS) {
-  // Assign annotations if needed
-  if (_annotations != NULL || _type_annotations != NULL ||
-      _fields_annotations != NULL || _fields_type_annotations != NULL) {
+// Create the Annotations object that will
+// hold the annotations array for the Klass.
+void ClassFileParser::create_combined_annotations(TRAPS) {
+    if (_annotations == NULL &&
+        _type_annotations == NULL &&
+        _fields_annotations == NULL &&
+        _fields_type_annotations == NULL) {
+      // Don't create the Annotations object unnecessarily.
+      return;
+    }
+
     Annotations* annotations = Annotations::allocate(_loader_data, CHECK);
     annotations->set_class_annotations(_annotations);
     annotations->set_class_type_annotations(_type_annotations);
     annotations->set_fields_annotations(_fields_annotations);
     annotations->set_fields_type_annotations(_fields_type_annotations);
-    this_klass->set_annotations(annotations);
-  }
 
+    // This is the Annotations object that will be
+    // assigned to InstanceKlass being constructed.
+    _combined_annotations = annotations;
+
+    // The annotations arrays below has been transfered the
+    // _combined_annotations so these fields can now be cleared.
+    _annotations             = NULL;
+    _type_annotations        = NULL;
+    _fields_annotations      = NULL;
+    _fields_type_annotations = NULL;
+}
+
+// Transfer ownership of metadata allocated to the InstanceKlass.
+void ClassFileParser::apply_parsed_class_metadata(
+                                            instanceKlassHandle this_klass,
+                                            int java_fields_count, TRAPS) {
   _cp->set_pool_holder(this_klass());
   this_klass->set_constants(_cp);
   this_klass->set_fields(_fields, java_fields_count);
@@ -3076,6 +3098,7 @@ void ClassFileParser::apply_parsed_class_metadata(
   this_klass->set_inner_classes(_inner_classes);
   this_klass->set_local_interfaces(_local_interfaces);
   this_klass->set_transitive_interfaces(_transitive_interfaces);
+  this_klass->set_annotations(_combined_annotations);
 
   // Clear out these fields so they don't get deallocated by the destructor
   clear_class_metadata();
@@ -3687,6 +3710,7 @@ instanceKlassHandle ClassFileParser::parseClassFile(Symbol* name,
   JvmtiCachedClassFileData *cached_class_file = NULL;
   Handle class_loader(THREAD, loader_data->class_loader());
   bool has_default_methods = false;
+  bool declares_default_methods = false;
   ResourceMark rm(THREAD);
 
   ClassFileStream* cfs = stream();
@@ -3741,7 +3765,15 @@ instanceKlassHandle ClassFileParser::parseClassFile(Symbol* name,
   instanceKlassHandle nullHandle;
 
   // Figure out whether we can skip format checking (matching classic VM behavior)
-  _need_verify = Verifier::should_verify_for(class_loader(), verify);
+  if (DumpSharedSpaces) {
+    // verify == true means it's a 'remote' class (i.e., non-boot class)
+    // Verification decision is based on BytecodeVerificationRemote flag
+    // for those classes.
+    _need_verify = (verify) ? BytecodeVerificationRemote :
+                              BytecodeVerificationLocal;
+  } else {
+    _need_verify = Verifier::should_verify_for(class_loader(), verify);
+  }
 
   // Set the verify flag in stream
   cfs->set_verify(_need_verify);
@@ -3759,6 +3791,18 @@ instanceKlassHandle ClassFileParser::parseClassFile(Symbol* name,
   // Version numbers
   u2 minor_version = cfs->get_u2_fast();
   u2 major_version = cfs->get_u2_fast();
+
+  if (DumpSharedSpaces && major_version < JAVA_1_5_VERSION) {
+    ResourceMark rm;
+    warning("Pre JDK 1.5 class not supported by CDS: %u.%u %s",
+            major_version,  minor_version, name->as_C_string());
+    Exceptions::fthrow(
+      THREAD_AND_LOCATION,
+      vmSymbols::java_lang_UnsupportedClassVersionError(),
+      "Unsupported major.minor version for dump time %u.%u",
+      major_version,
+      minor_version);
+  }
 
   // Check version numbers - we check this even with verifier off
   if (!is_supported_version(major_version, minor_version)) {
@@ -3867,6 +3911,18 @@ instanceKlassHandle ClassFileParser::parseClassFile(Symbol* name,
       if (cfs->source() != NULL) tty->print(" from %s", cfs->source());
       tty->print_cr("]");
     }
+#if INCLUDE_CDS
+    if (DumpLoadedClassList != NULL && cfs->source() != NULL && classlist_file->is_open()) {
+      // Only dump the classes that can be stored into CDS archive
+      if (SystemDictionaryShared::is_sharing_possible(loader_data)) {
+        if (name != NULL) {
+          ResourceMark rm(THREAD);
+          classlist_file->print_cr("%s", name->as_C_string());
+          classlist_file->flush();
+        }
+      }
+    }
+#endif
 
     u2 super_class_index = cfs->get_u2_fast();
     instanceKlassHandle super_klass = parse_super_class(super_class_index,
@@ -3892,12 +3948,19 @@ instanceKlassHandle ClassFileParser::parseClassFile(Symbol* name,
     Array<Method*>* methods = parse_methods(access_flags.is_interface(),
                                             &promoted_flags,
                                             &has_final_method,
-                                            &has_default_methods,
+                                            &declares_default_methods,
                                             CHECK_(nullHandle));
+    if (declares_default_methods) {
+      has_default_methods = true;
+    }
 
     // Additional attributes
     ClassAnnotationCollector parsed_annotations;
     parse_classfile_attributes(&parsed_annotations, CHECK_(nullHandle));
+
+    // Finalize the Annotations metadata object,
+    // now that all annotation arrays have been created.
+    create_combined_annotations(CHECK_(nullHandle));
 
     // Make sure this is the end of class file stream
     guarantee_property(cfs->at_eos(), "Extra bytes at the end of class file %s", CHECK_(nullHandle));
@@ -4036,6 +4099,7 @@ instanceKlassHandle ClassFileParser::parseClassFile(Symbol* name,
     this_klass->set_minor_version(minor_version);
     this_klass->set_major_version(major_version);
     this_klass->set_has_default_methods(has_default_methods);
+    this_klass->set_declares_default_methods(declares_default_methods);
 
     if (!host_klass.is_null()) {
       assert (this_klass->is_anonymous(), "should be the same");
@@ -4106,8 +4170,8 @@ instanceKlassHandle ClassFileParser::parseClassFile(Symbol* name,
     }
 
     // Allocate mirror and initialize static fields
-    java_lang_Class::create_mirror(this_klass, protection_domain, CHECK_(nullHandle));
-
+    java_lang_Class::create_mirror(this_klass, class_loader, protection_domain,
+                                   CHECK_(nullHandle));
 
     // Generate any default methods - default methods are interface methods
     // that have a default implementation.  This is new with Lambda project.
@@ -4129,8 +4193,12 @@ instanceKlassHandle ClassFileParser::parseClassFile(Symbol* name,
         tty->print("[Loaded %s from %s]\n", this_klass->external_name(),
                    cfs->source());
       } else if (class_loader.is_null()) {
-        if (THREAD->is_Java_thread()) {
-          Klass* caller = ((JavaThread*)THREAD)->security_get_caller_class(1);
+        Klass* caller =
+            THREAD->is_Java_thread()
+                ? ((JavaThread*)THREAD)->security_get_caller_class(1)
+                : NULL;
+        // caller can be NULL, for example, during a JVMTI VM_Init hook
+        if (caller != NULL) {
           tty->print("[Loaded %s by instance of %s]\n",
                      this_klass->external_name(),
                      InstanceKlass::cast(caller)->external_name());
@@ -4194,10 +4262,27 @@ ClassFileParser::~ClassFileParser() {
   InstanceKlass::deallocate_interfaces(_loader_data, _super_klass(),
                                        _local_interfaces, _transitive_interfaces);
 
-  MetadataFactory::free_array<u1>(_loader_data, _annotations);
-  MetadataFactory::free_array<u1>(_loader_data, _type_annotations);
-  Annotations::free_contents(_loader_data, _fields_annotations);
-  Annotations::free_contents(_loader_data, _fields_type_annotations);
+  if (_combined_annotations != NULL) {
+    // After all annotations arrays have been created, they are installed into the
+    // Annotations object that will be assigned to the InstanceKlass being created.
+
+    // Deallocate the Annotations object and the installed annotations arrays.
+    _combined_annotations->deallocate_contents(_loader_data);
+
+    // If the _combined_annotations pointer is non-NULL,
+    // then the other annotations fields should have been cleared.
+    assert(_annotations             == NULL, "Should have been cleared");
+    assert(_type_annotations        == NULL, "Should have been cleared");
+    assert(_fields_annotations      == NULL, "Should have been cleared");
+    assert(_fields_type_annotations == NULL, "Should have been cleared");
+  } else {
+    // If the annotations arrays were not installed into the Annotations object,
+    // then they have to be deallocated explicitly.
+    MetadataFactory::free_array<u1>(_loader_data, _annotations);
+    MetadataFactory::free_array<u1>(_loader_data, _type_annotations);
+    Annotations::free_contents(_loader_data, _fields_annotations);
+    Annotations::free_contents(_loader_data, _fields_type_annotations);
+  }
 
   clear_class_metadata();
 

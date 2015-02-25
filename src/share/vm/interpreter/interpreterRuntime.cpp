@@ -398,6 +398,18 @@ IRT_ENTRY(address, InterpreterRuntime::exception_handler_for_exception(JavaThrea
   int                handler_bci;
   int                current_bci = bci(thread);
 
+  if (thread->frames_to_pop_failed_realloc() > 0) {
+    // Allocation of scalar replaced object used in this frame
+    // failed. Unconditionally pop the frame.
+    thread->dec_frames_to_pop_failed_realloc();
+    thread->set_vm_result(h_exception());
+    // If the method is synchronized we already unlocked the monitor
+    // during deoptimization so the interpreter needs to skip it when
+    // the frame is popped.
+    thread->set_do_not_unlock_if_synchronized(true);
+    return Interpreter::remove_activation_entry();
+  }
+
   // Need to do this check first since when _do_not_unlock_if_synchronized
   // is set, we don't want to trigger any classloading which may make calls
   // into java, or surprisingly find a matching exception handler for bci 0
@@ -1269,8 +1281,10 @@ IRT_END
 // This is a support of the JVMTI PopFrame interface.
 // Make sure it is an invokestatic of a polymorphic intrinsic that has a member_name argument
 // and return it as a vm_result so that it can be reloaded in the list of invokestatic parameters.
-// The dmh argument is a reference to a DirectMethoHandle that has a member name field.
-IRT_ENTRY(void, InterpreterRuntime::member_name_arg_or_null(JavaThread* thread, address dmh,
+// The member_name argument is a saved reference (in local#0) to the member_name.
+// For backward compatibility with some JDK versions (7, 8) it can also be a direct method handle.
+// FIXME: remove DMH case after j.l.i.InvokerBytecodeGenerator code shape is updated.
+IRT_ENTRY(void, InterpreterRuntime::member_name_arg_or_null(JavaThread* thread, address member_name,
                                                             Method* method, address bcp))
   Bytecodes::Code code = Bytecodes::code_at(method, bcp);
   if (code != Bytecodes::_invokestatic) {
@@ -1282,8 +1296,12 @@ IRT_ENTRY(void, InterpreterRuntime::member_name_arg_or_null(JavaThread* thread, 
   Symbol* mname = cpool->name_ref_at(cp_index);
 
   if (MethodHandles::has_member_arg(cname, mname)) {
-    oop member_name = java_lang_invoke_DirectMethodHandle::member((oop)dmh);
-    thread->set_vm_result(member_name);
+    oop member_name_oop = (oop) member_name;
+    if (java_lang_invoke_DirectMethodHandle::is_instance(member_name_oop)) {
+      // FIXME: remove after j.l.i.InvokerBytecodeGenerator code shape is updated.
+      member_name_oop = java_lang_invoke_DirectMethodHandle::member(member_name_oop);
+    }
+    thread->set_vm_result(member_name_oop);
   }
 IRT_END
 #endif // INCLUDE_JVMTI
