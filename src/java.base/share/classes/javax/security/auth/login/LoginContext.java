@@ -28,7 +28,8 @@ package javax.security.auth.login;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.InvocationTargetException;
-import java.util.LinkedList;
+import java.lang.reflect.Module;
+import java.security.PrivilegedAction;
 import java.util.Map;
 import java.util.HashMap;
 import java.text.MessageFormat;
@@ -291,6 +292,13 @@ public class LoginContext {
         });
     }
 
+    private static void addReadsToBase(Class<?> c) {
+        Module base = Object.class.getModule();
+        Module target = c.getModule();
+        AccessController.doPrivileged((PrivilegedAction<Void>)
+                () -> { base.addReads(target); return null; });
+    }
+
     private void loadDefaultCallbackHandler() throws LoginException {
 
         // get the default handler class
@@ -308,6 +316,7 @@ public class LoginContext {
                     Class<? extends CallbackHandler> c = Class.forName(
                             defaultHandler, true,
                             finalLoader).asSubclass(CallbackHandler.class);
+                    addReadsToBase(c);
                     return c.newInstance();
                 }
             });
@@ -712,6 +721,7 @@ public class LoginContext {
                                 true,
                                 contextClassLoader);
 
+                    addReadsToBase(c);
                     Constructor<?> constructor = c.getConstructor(PARAMS);
                     Object[] args = { };
                     moduleStack[i].module = constructor.newInstance(args);
