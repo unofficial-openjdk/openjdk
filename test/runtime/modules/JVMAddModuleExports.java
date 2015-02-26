@@ -27,7 +27,8 @@
  * @build JVMAddModuleExports
  * @run main ClassFileInstaller sun.hotspot.WhiteBox
  *                              sun.hotspot.WhiteBox$WhiteBoxPermission
- * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -XX:AddModuleExports=java.base/sun.misc JVMAddModuleExports
+ * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -XX:AddModuleExports=java.base/sun.misc -Dsun.reflect.useHotSpotAccessCheck=true JVMAddModuleExports
+ * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -XX:AddModuleExports=java.base/sun.misc -Dsun.reflect.useHotSpotAccessCheck=false JVMAddModuleExports
  */
 
 import java.lang.reflect.Module;
@@ -40,10 +41,12 @@ public class JVMAddModuleExports {
         MyClassLoader to_cl = new MyClassLoader();
         Module from_module, to_module;
 
-        from_module = ModuleHelper.DefineModule("from_module", from_cl, new String[] { "mypackage", "this/package" });
+        from_module = ModuleHelper.ModuleObject("from_module", from_cl, new String[] { "mypackage", "this/package" });
         assertNotNull(from_module, "Module should not be null");
-        to_module = ModuleHelper.DefineModule("to_module", to_cl, new String[] { "yourpackage", "that/package" });
+        ModuleHelper.DefineModule(from_module, "9.0", "from_module/here", new String[] { "mypackage", "this/package" });
+        to_module = ModuleHelper.ModuleObject("to_module", to_cl, new String[] { "yourpackage", "that/package" });
         assertNotNull(to_module, "Module should not be null");
+        ModuleHelper.DefineModule(to_module, "9.0", "to_module/here", new String[] { "yourpackage", "that/package" });
 
         // Null from_module argument, expect an NPE
         try {
@@ -54,7 +57,7 @@ public class JVMAddModuleExports {
         }
 
         // Normal export to null module
-        ModuleHelper.AddModuleExports(to_module, "that/package", (Module)null);
+        ModuleHelper.AddModuleExports(to_module, "yourpackage", (Module)null);
 
         // Bad from_module argument, expect an IAE
         try {

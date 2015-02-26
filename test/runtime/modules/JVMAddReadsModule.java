@@ -27,7 +27,8 @@
  * @build JVMAddReadsModule
  * @run main ClassFileInstaller sun.hotspot.WhiteBox
  *                              sun.hotspot.WhiteBox$WhiteBoxPermission
- * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -XX:AddModuleExports=java.base/sun.misc JVMAddReadsModule
+ * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -XX:AddModuleExports=java.base/sun.misc -Dsun.reflect.useHotSpotAccessCheck=true JVMAddReadsModule
+ * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -XX:AddModuleExports=java.base/sun.misc -Dsun.reflect.useHotSpotAccessCheck=false JVMAddReadsModule
  */
 
 import static com.oracle.java.testlibrary.Asserts.*;
@@ -39,10 +40,13 @@ public class JVMAddReadsModule {
         MyClassLoader to_cl = new MyClassLoader();
         Object from_module, to_module;
 
-        from_module = ModuleHelper.DefineModule("from_module", from_cl, new String[] { "mypackage" });
+        from_module = ModuleHelper.ModuleObject("from_module", from_cl, new String[] { "mypackage" });
         assertNotNull(from_module, "Module should not be null");
-        to_module = ModuleHelper.DefineModule("to_module", to_cl, new String[] { "yourpackage" });
+        ModuleHelper.DefineModule(from_module, "9.0", "from_module/here", new String[] { "mypackage" });
+
+        to_module = ModuleHelper.ModuleObject("to_module", to_cl, new String[] { "yourpackage" });
         assertNotNull(to_module, "Module should not be null");
+        ModuleHelper.DefineModule(to_module, "9.0", "to_module/here", new String[] { "yourpackage" });
 
         // Null from_module argument, expect an NPE
         try {

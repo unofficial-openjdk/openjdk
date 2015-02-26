@@ -30,6 +30,7 @@
  * @run main ClassFileInstaller sun.hotspot.WhiteBox
  *                              sun.hotspot.WhiteBox$WhiteBoxPermission
  * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -XX:AddModuleExports=java.base/sun.misc  -Dsun.reflect.useHotSpotAccessCheck=true AccessCheckToUnnamed
+ * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -XX:AddModuleExports=java.base/sun.misc  -Dsun.reflect.useHotSpotAccessCheck=false AccessCheckToUnnamed
  */
 
 import java.lang.reflect.Module;
@@ -53,8 +54,9 @@ public class AccessCheckToUnnamed {
         ClassLoader this_cldr = AccessCheckToUnnamed.class.getClassLoader();
 
         // Define a module for p1.
-        m1 = ModuleHelper.DefineModule("module1", this_cldr, new String[] { "p1" });
+        m1 = ModuleHelper.ModuleObject("module1", this_cldr, new String[] { "p1" });
         assertNotNull(m1, "Module should not be null");
+        ModuleHelper.DefineModule(m1, "9.0", "m1/here", new String[] { "p1" });
         ModuleHelper.AddReadsModule(m1, jlObject_jlrM);
 
         // Make package p1 in m1 visible to everyone.

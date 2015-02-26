@@ -28,10 +28,12 @@
  * @build LoadUnloadModuleStress
  * @run main ClassFileInstaller sun.hotspot.WhiteBox
  *                              sun.hotspot.WhiteBox$WhiteBoxPermission
- * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -Xmx64m -XX:AddModuleExports=java.base/sun.misc -Xmx64m LoadUnloadModuleStress 15000
+ * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -Xmx64m -XX:AddModuleExports=java.base/sun.misc -Dsun.reflect.useHotSpotAccessCheck=true -Xmx64m LoadUnloadModuleStress 15000
+ * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -Xmx64m -XX:AddModuleExports=java.base/sun.misc -Dsun.reflect.useHotSpotAccessCheck=false -Xmx64m LoadUnloadModuleStress 15000
  */
 
 import java.lang.ref.WeakReference;
+
 import static com.oracle.java.testlibrary.Asserts.*;
 
 public class LoadUnloadModuleStress {
@@ -43,8 +45,9 @@ public class LoadUnloadModuleStress {
 
     public static Object createModule() throws Throwable {
         MyClassLoader cl = new MyClassLoader();
-        Object module = ModuleHelper.DefineModule("mymodule", cl, new String [] {"PackageA"});
+        Object module = ModuleHelper.ModuleObject("mymodule", cl, new String [] {"PackageA"});
         assertNotNull(module);
+        ModuleHelper.DefineModule(module, "9.0", "mymodule", new String[] { "PackageA" });
         clweak = new WeakReference<>(cl);
         return module;
     }

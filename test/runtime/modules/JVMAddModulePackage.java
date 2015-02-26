@@ -27,7 +27,8 @@
  * @build JVMAddModulePackage
  * @run main ClassFileInstaller sun.hotspot.WhiteBox
  *                              sun.hotspot.WhiteBox$WhiteBoxPermission
- * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -XX:AddModuleExports=java.base/sun.misc JVMAddModulePackage
+ * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -XX:AddModuleExports=java.base/sun.misc -Dsun.reflect.useHotSpotAccessCheck=true JVMAddModulePackage
+ * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -XX:AddModuleExports=java.base/sun.misc -Dsun.reflect.useHotSpotAccessCheck=false JVMAddModulePackage
  */
 
 import static com.oracle.java.testlibrary.Asserts.*;
@@ -40,12 +41,15 @@ public class JVMAddModulePackage {
         Object module1, module2, module3;
         boolean result;
 
-        module1 = ModuleHelper.DefineModule("module1", cl1, new String[] { "mypackage" });
+        module1 = ModuleHelper.ModuleObject("module1", cl1, new String[] { "mypackage" });
         assertNotNull(module1, "Module should not be null");
-        module2 = ModuleHelper.DefineModule("module2", cl1, new String[] { "yourpackage" });
+        ModuleHelper.DefineModule(module1, "9.0", "module1/here", new String[] { "mypackage" });
+        module2 = ModuleHelper.ModuleObject("module2", cl1, new String[] { "yourpackage" });
         assertNotNull(module2, "Module should not be null");
-        module3 = ModuleHelper.DefineModule("module3", cl3, new String[] { "package/num3" });
+        ModuleHelper.DefineModule(module2, "9.0", "module2/here", new String[] { "yourpackage" });
+        module3 = ModuleHelper.ModuleObject("module3", cl3, new String[] { "package/num3" });
         assertNotNull(module3, "Module should not be null");
+        ModuleHelper.DefineModule(module3, "9.0", "module3/here", new String[] { "package/num3" });
 
         // Simple call
         ModuleHelper.AddModulePackage(module1, "new_package");
@@ -122,3 +126,4 @@ public class JVMAddModulePackage {
 
     static class MyClassLoader extends ClassLoader { }
 }
+

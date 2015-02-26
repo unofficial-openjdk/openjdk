@@ -30,6 +30,7 @@
  * @run main ClassFileInstaller sun.hotspot.WhiteBox
  *                              sun.hotspot.WhiteBox$WhiteBoxPermission
  * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -XX:AddModuleExports=java.base/sun.misc -Dsun.reflect.useHotSpotAccessCheck=true ExportTwice
+ * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -XX:AddModuleExports=java.base/sun.misc -Dsun.reflect.useHotSpotAccessCheck=false ExportTwice
  */
 
 import java.lang.reflect.Module;
@@ -54,18 +55,21 @@ public class ExportTwice {
         ClassLoader this_cldr = ExportTwice.class.getClassLoader();
 
         // Define a module for p1.
-        m1 = ModuleHelper.DefineModule("module1", this_cldr, new String[] { "p1" });
+        m1 = ModuleHelper.ModuleObject("module1", this_cldr, new String[] { "p1" });
         assertNotNull(m1, "Module should not be null");
+        ModuleHelper.DefineModule(m1, "9.0", "m1/here", new String[] { "p1" });
         ModuleHelper.AddReadsModule(m1, jlObject_jlrM);
 
         // Define a module for p2.
-        m2 = ModuleHelper.DefineModule("module2", this_cldr, new String[] { "p2" });
+        m2 = ModuleHelper.ModuleObject("module2", this_cldr, new String[] { "p2" });
         assertNotNull(m2, "Module should not be null");
+        ModuleHelper.DefineModule(m2, "9.0", "m2/there", new String[] { "p2" });
         ModuleHelper.AddReadsModule(m2, jlObject_jlrM);
 
         // Define a module for p3.
-        m3 = ModuleHelper.DefineModule("module3", this_cldr, new String[] { "p3" });
+        m3 = ModuleHelper.ModuleObject("module3", this_cldr, new String[] { "p3" });
         assertNotNull(m3, "Module should not be null");
+        ModuleHelper.DefineModule(m3, "9.0", "m3/there", new String[] { "p3" });
         ModuleHelper.AddReadsModule(m3, jlObject_jlrM);
 
         // Make package p1 in m1 visible to everyone.

@@ -75,9 +75,11 @@ public class ModuleHelper {
         cArg[2] = java.util.Set.class;
         Constructor ctor = findCtor(cArg);
 
-        java.util.Set<java.lang.String> pkg_set;
+        java.util.Set<java.lang.String> pkg_set = new HashSet<java.lang.String>();
         if (pkgs != null) {
-            pkg_set = new HashSet<java.lang.String>(Arrays.asList(pkgs));
+            for (String pkg: pkgs) {
+                pkg_set.add(pkg.replace('/', '.'));
+           }
         } else {
             pkg_set = null;
         }

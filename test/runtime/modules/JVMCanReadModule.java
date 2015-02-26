@@ -27,7 +27,8 @@
  * @build JVMCanReadModule
  * @run main ClassFileInstaller sun.hotspot.WhiteBox
  *                              sun.hotspot.WhiteBox$WhiteBoxPermission
- * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -XX:AddModuleExports=java.base/sun.misc JVMCanReadModule
+ * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -XX:AddModuleExports=java.base/sun.misc -Dsun.reflect.useHotSpotAccessCheck=true JVMCanReadModule
+ * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -XX:AddModuleExports=java.base/sun.misc -Dsun.reflect.useHotSpotAccessCheck=false JVMCanReadModule
  */
 
 import static com.oracle.java.testlibrary.Asserts.*;
@@ -40,10 +41,12 @@ public class JVMCanReadModule {
         Object asking_module, target_module;
         boolean result;
 
-        asking_module = ModuleHelper.DefineModule("asking_module", asking_cl, new String[] { "mypackage" });
+        asking_module = ModuleHelper.ModuleObject("asking_module", asking_cl, new String[] { "mypackage" });
         assertNotNull(asking_module, "Module should not be null");
-        target_module = ModuleHelper.DefineModule("target_module", target_cl, new String[] { "yourpackage" });
+        ModuleHelper.DefineModule(asking_module, "9.0", "asking_module/here", new String[] { "mypackage" });
+        target_module = ModuleHelper.ModuleObject("target_module", target_cl, new String[] { "yourpackage" });
         assertNotNull(target_module, "Module should not be null");
+        ModuleHelper.DefineModule(target_module, "9.0", "target_module/here", new String[] { "yourpackage" });
 
         // Set up relationship
         ModuleHelper.AddReadsModule(asking_module, target_module);

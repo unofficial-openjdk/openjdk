@@ -33,6 +33,7 @@ import static com.oracle.java.testlibrary.Asserts.*;
  * @run main ClassFileInstaller sun.hotspot.WhiteBox
  *                              sun.hotspot.WhiteBox$WhiteBoxPermission
  * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -XX:AddModuleExports=java.base/sun.misc -Dsun.reflect.useHotSpotAccessCheck=true AccessCheckUnnamed
+ * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -XX:AddModuleExports=java.base/sun.misc -Dsun.reflect.useHotSpotAccessCheck=false AccessCheckUnnamed
  */
 
 public class AccessCheckUnnamed {
@@ -52,8 +53,9 @@ public class AccessCheckUnnamed {
         ClassLoader this_cldr = AccessCheckUnnamed.class.getClassLoader();
 
         // Define a module for p2.
-        m2 = ModuleHelper.DefineModule("module2", this_cldr, new String[] { "p2" });
+        m2 = ModuleHelper.ModuleObject("module2", this_cldr, new String[] { "p2" });
         assertNotNull(m2, "Module should not be null");
+        ModuleHelper.DefineModule(m2, "9.0", "m2/there", new String[] { "p2" });
         ModuleHelper.AddReadsModule(m2, jlObject_jlrM);
 
         // p1.c1's ctor tries to call a method in p2.c2.  This should fail because
