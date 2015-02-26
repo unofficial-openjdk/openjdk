@@ -77,6 +77,12 @@ final class Config {
         }
     }
 
+    private static final Config DUMMY = new Config();
+
+    static Config getDummyConfig() {
+        return DUMMY;
+    }
+
     // file name containing this configuration
     private String filename;
 
@@ -179,6 +185,11 @@ final class Config {
     // Flag to indicate whether NSS should favour performance (false) or
     // memory footprint (true).
     private boolean nssOptimizeSpace = false;
+
+    private Config() {
+        name = "Dummy";
+        description = "Unconfigured and unusable PKCS11 provider";
+    }
 
     Config(String fn) throws IOException {
         this.filename = fn;

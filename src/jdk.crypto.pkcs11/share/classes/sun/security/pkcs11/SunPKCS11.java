@@ -121,28 +121,42 @@ public final class SunPKCS11 extends AuthProvider {
     private static final Config defConfig;
     static {
         Config c = null;
-        try {
-            c = new Config(AccessController.doPrivileged(new PrivilegedAction<String>() {
-                public String run() {
-                    if (System.getProperty("os.name").startsWith("SunOS")) {
+        if (System.getProperty("os.name").startsWith("SunOS")) {
+            try {
+                c = new Config(AccessController.doPrivileged(new PrivilegedAction<String>() {
+                    public String run() {
                         String sep = System.getProperty("file.separator");
                         String javaHome = System.getProperty("java.home");
                         return javaHome + sep + "conf" + sep + "security" + sep +
                             "sunpkcs11-solaris.cfg";
-                    } else {
-                        return "--name=Dummy";
                     }
+                }));
+            } catch (IOException ioe) {
+                if (debug != null) {
+                    System.out.println("Error parsing default config: " + ioe);
+                    ioe.printStackTrace();
                 }
-            }));
-        } catch (IOException ioe) {
-            c = null;
+            }
         }
-        defConfig = c;
+        defConfig = (c == null? Config.getDummyConfig() : c);
     }
 
     SunPKCS11(Config c) {
         super("SunPKCS11-" + c.getName(), 1.9d, c.getDescription());
         this.config = c;
+
+        // stop here with minimum initialization when Config.DUMMY is used
+        if (c == Config.getDummyConfig()) {
+            p11 = null;
+            slotID = -1;
+            removable = false;
+            nssModule = null;
+            nssUseSecmodTrust = false;
+            if (debug != null) {
+                System.out.println("SunPKCS11 loading Config.DUMMY");
+            }
+            return;
+        }
 
         if (debug != null) {
             System.out.println("SunPKCS11 loading " + config.getFileName());
