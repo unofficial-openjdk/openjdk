@@ -35,9 +35,6 @@ JIMAGE_PKGS := \
     jdk/internal/jrtfs \
     #
 
-# Need to set sourcepath since there are classes in jdk/internal/jimage that
-# imports classes in jdk/jigsaw/module even though jdk/jigsaw/module is not
-# included in jrtfs.jar
 $(eval $(call SetupJavaCompilation,BUILD_JRTFS, \
     SETUP := GENERATE_OLDBYTECODE, \
     SRC := $(JDK_TOPDIR)/src/java.base/share/classes, \
@@ -45,7 +42,6 @@ $(eval $(call SetupJavaCompilation,BUILD_JRTFS, \
     EXCLUDES := jdk/internal/jimage/concurrent, \
     BIN := $(SUPPORT_OUTPUTDIR)/jrtfs_classes, \
     JAR := $(SUPPORT_OUTPUTDIR)/jrt-fs.jar, \
-    MANIFEST := $(JDK_TOPDIR)/make/data/mainmanifest/manifest.mf, \
-    ADD_JAVAC_FLAGS := -sourcepath $(JDK_TOPDIR)/src/java.base/share/classes))
+    MANIFEST := $(JDK_TOPDIR)/make/data/mainmanifest/manifest.mf))
 
 all: $(BUILD_JRTFS)
