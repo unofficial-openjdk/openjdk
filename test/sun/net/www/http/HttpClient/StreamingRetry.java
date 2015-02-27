@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,23 +36,24 @@ import java.io.OutputStream;
 
 public class StreamingRetry implements Runnable {
     static final int ACCEPT_TIMEOUT = 20 * 1000; // 20 seconds
-    ServerSocket ss;
+    volatile ServerSocket ss;
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws Exception {
         (new StreamingRetry()).instanceMain();
     }
 
-    void instanceMain() throws IOException {
+    void instanceMain() throws Exception {
         test();
         if (failed > 0) throw new RuntimeException("Some tests failed");
     }
 
-    void test() throws IOException {
+    void test(String method) throws Exception {
         ss = new ServerSocket(0);
         ss.setSoTimeout(ACCEPT_TIMEOUT);
         int port = ss.getLocalPort();
 
-        (new Thread(this)).start();
+        Thread otherThread = new Thread(this);
+        otherThread.start();
 
         try {
             URL url = new URL("http://localhost:" + port + "/");
@@ -68,6 +69,7 @@ public class StreamingRetry implements Runnable {
             //expected.printStackTrace();
         } finally {
             ss.close();
+            otherThread.join();
         }
     }
 
