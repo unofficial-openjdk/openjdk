@@ -101,7 +101,7 @@ void PackageEntry::purge_qualified_exports() {
       ModuleEntry* module_idx = _qualified_exports->at(idx);
       ClassLoaderData* cld = module_idx->loader();
       if (cld->is_unloading()) {
-        _qualified_exports->remove_at(idx);
+        _qualified_exports->delete_at(idx);
       }
     }
   }

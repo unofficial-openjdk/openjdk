@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -411,6 +411,28 @@ oop Reflection::array_component_type(oop mirror, TRAPS) {
   return result;
 }
 
+
+
+/*
+    Type Accessibility check for public types: Callee Type T is accessible to Caller Type S if:
+
+                        Callee T in             Callee T in package PT,
+                        unnamed module          runtime module MT
+ ------------------------------------------------------------------------------------------------
+
+ Caller S in package         YES                  If same classloader/package (PS == PT): YES
+ PS, runtime module MS                            If same runtime module: (MS == MT): YES
+
+                                                  Else if (MS can read MT (Establish readability) &&
+                                                    MT exports PT to MS or to all modules): YES
+
+ ------------------------------------------------------------------------------------------------
+ Caller S in unnamed         YES                   Readability exists because unnamed module
+ module                                                "reads" all modules
+                                                   if (MT exports PT to all modules): YES
+
+ ------------------------------------------------------------------------------------------------
+*/
 Reflection::VerifyClassAccessResults Reflection::verify_class_access(
   Klass* current_class, Klass* new_class, bool classloader_only) {
 

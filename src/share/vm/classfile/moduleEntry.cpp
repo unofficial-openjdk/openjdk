@@ -75,7 +75,7 @@ void ModuleEntry::purge_reads() {
       ModuleEntry* module_idx = _reads->at(idx);
       ClassLoaderData* cld = module_idx->loader();
       if (cld->is_unloading()) {
-        _reads->remove_at(idx);
+        _reads->delete_at(idx);
       }
     }
   }
