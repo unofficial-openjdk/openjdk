@@ -1098,10 +1098,17 @@ public class Resolve {
                     DeferredType.SpeculativeCache.Entry e =
                             dt.speculativeCache.get(deferredAttrContext.msym, deferredAttrContext.phase);
                     if (e != null && e.speculativeTree != deferredAttr.stuckTree) {
-                        return functionalInterfaceMostSpecific(found, req, e.speculativeTree, warn);
+                        return functionalInterfaceMostSpecific(found, req, e.speculativeTree);
                     }
                 }
-                return super.compatible(found, req, warn);
+                return compatibleBySubtyping(found, req);
+            }
+
+            private boolean compatibleBySubtyping(Type found, Type req) {
+                if (!strict && found.isPrimitive() != req.isPrimitive()) {
+                    found = found.isPrimitive() ? types.boxedClass(found).type : types.unboxedType(found);
+                }
+                return types.isSubtypeNoCapture(found, deferredAttrContext.inferenceContext.asUndetVar(req));
             }
 
             /** Whether {@code t} and {@code s} are unrelated functional interface types. */
@@ -1113,8 +1120,8 @@ public class Resolve {
             }
 
             /** Parameters {@code t} and {@code s} are unrelated functional interface types. */
-            private boolean functionalInterfaceMostSpecific(Type t, Type s, JCTree tree, Warner warn) {
-                FunctionalInterfaceMostSpecificChecker msc = new FunctionalInterfaceMostSpecificChecker(t, s, warn);
+            private boolean functionalInterfaceMostSpecific(Type t, Type s, JCTree tree) {
+                FunctionalInterfaceMostSpecificChecker msc = new FunctionalInterfaceMostSpecificChecker(t, s);
                 msc.scan(tree);
                 return msc.result;
             }
@@ -1127,14 +1134,12 @@ public class Resolve {
 
                 final Type t;
                 final Type s;
-                final Warner warn;
                 boolean result;
 
                 /** Parameters {@code t} and {@code s} are unrelated functional interface types. */
-                FunctionalInterfaceMostSpecificChecker(Type t, Type s, Warner warn) {
+                FunctionalInterfaceMostSpecificChecker(Type t, Type s) {
                     this.t = t;
                     this.s = s;
-                    this.warn = warn;
                     result = true;
                 }
 
@@ -1172,7 +1177,7 @@ public class Resolve {
                             result &= (retValIsPrimitive == ret_t.isPrimitive()) &&
                                       (retValIsPrimitive != ret_s.isPrimitive());
                         } else {
-                            result &= MostSpecificCheckContext.super.compatible(ret_t, ret_s, warn);
+                            result &= compatibleBySubtyping(ret_t, ret_s);
                         }
                     }
                 }
@@ -1195,7 +1200,7 @@ public class Resolve {
                             result &= false;
                         } else if (unrelatedFunctionalInterfaces(ret_t, ret_s)) {
                             for (JCExpression expr : lambdaResults(tree)) {
-                                result &= functionalInterfaceMostSpecific(ret_t, ret_s, expr, warn);
+                                result &= functionalInterfaceMostSpecific(ret_t, ret_s, expr);
                             }
                         } else if (ret_t.isPrimitive() != ret_s.isPrimitive()) {
                             for (JCExpression expr : lambdaResults(tree)) {
@@ -1204,7 +1209,7 @@ public class Resolve {
                                           (retValIsPrimitive != ret_s.isPrimitive());
                             }
                         } else {
-                            result &= MostSpecificCheckContext.super.compatible(ret_t, ret_s, warn);
+                            result &= compatibleBySubtyping(ret_t, ret_s);
                         }
                     }
                 }
@@ -1786,8 +1791,7 @@ public class Resolve {
                                 !t.hasTag(TYPEVAR)) {
                             return null;
                         }
-                        while (t.hasTag(TYPEVAR))
-                            t = t.getUpperBound();
+                        t = types.skipTypeVars(t, false);
                         if (seen.contains(t.tsym)) {
                             //degenerate case in which we have a circular
                             //class hierarchy - because of ill-formed classfiles
@@ -2651,11 +2655,9 @@ public class Resolve {
                                   InferenceContext inferenceContext,
                                   ReferenceChooser referenceChooser) {
 
-        site = types.capture(site);
+        //step 1 - bound lookup
         ReferenceLookupHelper boundLookupHelper = makeReferenceLookupHelper(
                 referenceTree, site, name, argtypes, typeargtypes, VARARITY);
-
-        //step 1 - bound lookup
         Env<AttrContext> boundEnv = env.dup(env.tree, env.info.dup());
         MethodResolutionContext boundSearchResolveContext = new MethodResolutionContext();
         boundSearchResolveContext.methodCheck = methodCheck;
@@ -3039,9 +3041,13 @@ public class Resolve {
      */
     class MethodReferenceLookupHelper extends ReferenceLookupHelper {
 
+        /** The original method reference lookup site. */
+        Type originalSite;
+
         MethodReferenceLookupHelper(JCMemberReference referenceTree, Name name, Type site,
                 List<Type> argtypes, List<Type> typeargtypes, MethodResolutionPhase maxPhase) {
-            super(referenceTree, name, site, argtypes, typeargtypes, maxPhase);
+            super(referenceTree, name, types.skipTypeVars(site, true), argtypes, typeargtypes, maxPhase);
+            this.originalSite = site;
         }
 
         @Override
@@ -3057,7 +3063,7 @@ public class Resolve {
                         (argtypes.head.hasTag(NONE) ||
                         types.isSubtypeUnchecked(inferenceContext.asUndetVar(argtypes.head), site))) {
                     return new UnboundMethodReferenceLookupHelper(referenceTree, name,
-                            site, argtypes, typeargtypes, maxPhase);
+                            originalSite, argtypes, typeargtypes, maxPhase);
                 } else {
                     return new ReferenceLookupHelper(referenceTree, name, site, argtypes, typeargtypes, maxPhase) {
                         @Override
@@ -3109,7 +3115,7 @@ public class Resolve {
             super(referenceTree, name, site, argtypes.tail, typeargtypes, maxPhase);
             if (site.isRaw() && !argtypes.head.hasTag(NONE)) {
                 Type asSuperSite = types.asSuper(argtypes.head, site.tsym);
-                this.site = types.capture(asSuperSite);
+                this.site = types.skipTypeVars(asSuperSite, true);
             }
         }
 

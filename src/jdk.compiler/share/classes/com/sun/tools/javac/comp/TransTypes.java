@@ -764,7 +764,7 @@ public class TransTypes extends TreeTranslator {
                 ? typeCast.expr
                 : newExpression;
         }
-        if (originalTarget.isCompound()) {
+        if (originalTarget.isIntersection()) {
             Type.IntersectionClassType ict = (Type.IntersectionClassType)originalTarget;
             for (Type c : ict.getExplicitComponents()) {
                 Type ec = erasure(c);
@@ -818,9 +818,7 @@ public class TransTypes extends TreeTranslator {
     }
 
     public void visitSelect(JCFieldAccess tree) {
-        Type t = tree.selected.type;
-        while (t.hasTag(TYPEVAR))
-            t = t.getUpperBound();
+        Type t = types.skipTypeVars(tree.selected.type, false);
         if (t.isCompound()) {
             if ((tree.sym.flags() & IPROXY) != 0) {
                 tree.sym = ((MethodSymbol)tree.sym).

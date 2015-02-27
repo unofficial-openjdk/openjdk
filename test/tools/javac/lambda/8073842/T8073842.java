@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,37 +23,22 @@
  * questions.
  */
 
-package javax.tools;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
-
-/**
- * Provides an easy way to collect diagnostics in a list.
- *
- * @param <S> the type of source objects used by diagnostics received
- * by this object
- *
- * @author Peter von der Ah&eacute;
- * @since 1.6
+/*
+ * @test
+ * @bug 8073842
+ * @summary Invalid method reference when referencing a method on a wildcard type
+ * @compile T8073842.java
  */
-public final class DiagnosticCollector<S> implements DiagnosticListener<S> {
-    private List<Diagnostic<? extends S>> diagnostics =
-            Collections.synchronizedList(new ArrayList<Diagnostic<? extends S>>());
 
-    public void report(Diagnostic<? extends S> diagnostic) {
-        Objects.requireNonNull(diagnostic);
-        diagnostics.add(diagnostic);
+import java.util.stream.Stream;
+
+class T8073842 {
+
+    static class Chunck {
+        public void work() { }
     }
 
-    /**
-     * Returns a list view of diagnostics collected by this object.
-     *
-     * @return a list view of diagnostics
-     */
-    public List<Diagnostic<? extends S>> getDiagnostics() {
-        return Collections.unmodifiableList(diagnostics);
+    void test(Stream<? extends Chunck> s) {
+        Stream<Runnable> r = s.map(o -> o::work);
     }
 }
