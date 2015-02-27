@@ -33,7 +33,7 @@ import com.oracle.java.testlibrary.*;
  * @bug 8026894
  * @library /testlibrary
  * @compile -XDignore.symbol.file OverriderMsg.java
- * @run main/othervm OverriderMsg
+ * @run main/othervm -XX:AddModuleExports=java.base/jdk.internal.org.objectweb.asm OverriderMsg
  */
 
 // This test checks that the super class name is included in the message when

@@ -26,7 +26,7 @@
  * @bug 8004924
  * @summary Checks that jmap -heap contains the flag CompressedClassSpaceSize
  * @library /testlibrary
- * @run main/othervm -XX:+IgnoreUnrecognizedVMOptions -XX:CompressedClassSpaceSize=50m CompressedClassSpaceSizeInJmapHeap
+ * @run main/othervm -XX:+IgnoreUnrecognizedVMOptions -XX:CompressedClassSpaceSize=50m -XX:AddModuleExports=java.management/sun.management CompressedClassSpaceSizeInJmapHeap
  */
 
 import com.oracle.java.testlibrary.*;

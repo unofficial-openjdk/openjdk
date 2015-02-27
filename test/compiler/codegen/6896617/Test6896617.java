@@ -26,7 +26,7 @@
  * @bug 6896617
  * @summary Optimize sun.nio.cs.ISO_8859_1$Encode.encodeArrayLoop() with SSE instructions on x86
  * @library /testlibrary
- * @run main/othervm/timeout=1200 -Xbatch -Xmx256m Test6896617
+ * @run main/othervm/timeout=1200 -Xbatch -Xmx256m -XX:AddModuleExports=java.base/sun.nio.cs Test6896617
  *
  */
 

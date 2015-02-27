@@ -26,6 +26,7 @@
  * @bug 8014138
  * @summary Testing new -XX:SharedArchiveFile=<file-name> option
  * @library /testlibrary
+ * @run main/othervm -XX:AddModuleExports=java.management/sun.management SharedArchiveFile
  */
 
 import com.oracle.java.testlibrary.*;

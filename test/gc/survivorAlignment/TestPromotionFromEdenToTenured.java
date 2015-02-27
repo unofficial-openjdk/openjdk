@@ -37,6 +37,7 @@
  *                   -XX:-ExplicitGCInvokesConcurrent
  *                   -XX:+UnlockExperimentalVMOptions
  *                   -XX:SurvivorAlignmentInBytes=32
+ *                   -XX:AddModuleExports=java.base/sun.misc
  *                   TestPromotionFromEdenToTenured 10m 9 TENURED
  * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions
  *                   -XX:+WhiteBoxAPI -XX:NewSize=64m -XX:MaxNewSize=64m
@@ -44,6 +45,7 @@
  *                   -XX:-ExplicitGCInvokesConcurrent
  *                   -XX:+UnlockExperimentalVMOptions
  *                   -XX:SurvivorAlignmentInBytes=32
+ *                   -XX:AddModuleExports=java.base/sun.misc
  *                   TestPromotionFromEdenToTenured 10m 47 TENURED
  * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions
  *                   -XX:+WhiteBoxAPI -XX:NewSize=64m -XX:MaxNewSize=64m
@@ -51,6 +53,7 @@
  *                   -XX:SurvivorRatio=1 -XX:-ExplicitGCInvokesConcurrent
  *                   -XX:+UnlockExperimentalVMOptions
  *                   -XX:SurvivorAlignmentInBytes=64
+ *                   -XX:AddModuleExports=java.base/sun.misc
  *                   TestPromotionFromEdenToTenured 10m 9 TENURED
  * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions
  *                   -XX:+WhiteBoxAPI -XX:NewSize=64m -XX:MaxNewSize=64m
@@ -58,6 +61,7 @@
  *                   -XX:SurvivorRatio=1 -XX:-ExplicitGCInvokesConcurrent
  *                   -XX:+UnlockExperimentalVMOptions
  *                   -XX:SurvivorAlignmentInBytes=64
+ *                   -XX:AddModuleExports=java.base/sun.misc
  *                   TestPromotionFromEdenToTenured 10m 87 TENURED
  * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions
  *                   -XX:+WhiteBoxAPI -XX:NewSize=64m -XX:MaxNewSize=64m
@@ -65,6 +69,7 @@
  *                   -XX:-ExplicitGCInvokesConcurrent
  *                   -XX:+UnlockExperimentalVMOptions
  *                   -XX:SurvivorAlignmentInBytes=128
+ *                   -XX:AddModuleExports=java.base/sun.misc
  *                   TestPromotionFromEdenToTenured 10m 9 TENURED
  * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions
  *                   -XX:+WhiteBoxAPI -XX:NewSize=64m -XX:MaxNewSize=64m
@@ -72,6 +77,7 @@
  *                   -XX:-ExplicitGCInvokesConcurrent
  *                   -XX:+UnlockExperimentalVMOptions
  *                   -XX:SurvivorAlignmentInBytes=128
+ *                   -XX:AddModuleExports=java.base/sun.misc
  *                   TestPromotionFromEdenToTenured 10m 147 TENURED
  */
 public class TestPromotionFromEdenToTenured {

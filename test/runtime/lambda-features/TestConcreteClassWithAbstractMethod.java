@@ -26,7 +26,7 @@
  * @test
  * @bug 8032010
  * @summary method lookup on an abstract method in a concrete class should be successful
- * @run main TestConcreteClassWithAbstractMethod
+ * @run main/othervm -XX:AddModuleExports=java.base/jdk.internal.org.objectweb.asm TestConcreteClassWithAbstractMethod
  */
 
 import jdk.internal.org.objectweb.asm.ClassWriter;

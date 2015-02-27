@@ -25,7 +25,7 @@
  * @test
  * @library /testlibrary
  * @compile -XDignore.symbol.file UnsupportedClassFileVersion.java
- * @run main UnsupportedClassFileVersion
+ * @run main/othervm -XX:AddModuleExports=java.base/jdk.internal.org.objectweb.asm UnsupportedClassFileVersion
  */
 
 import java.io.File;
@@ -38,7 +38,7 @@ import com.oracle.java.testlibrary.*;
 public class UnsupportedClassFileVersion implements Opcodes {
     public static void main(String... args) throws Exception {
         writeClassFile();
-        ProcessBuilder pb = ProcessTools.createJavaProcessBuilder(true, "-cp", ".",  "ClassFile");
+        ProcessBuilder pb = ProcessTools.createJavaProcessBuilder(true, "-cp", ".", "ClassFile");
         OutputAnalyzer output = new OutputAnalyzer(pb.start());
         output.shouldContain("ClassFile has been compiled by a more recent version of the " +
                             "Java Runtime (class file version 99.0), this version of " +

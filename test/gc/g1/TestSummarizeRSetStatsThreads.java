@@ -28,6 +28,7 @@
  * refinement threads do not crash the VM.
  * @key gc
  * @library /testlibrary
+ * @run main/othervm -XX:AddModuleExports=java.management/sun.management TestSummarizeRSetStatsThreads
  */
 
 import java.util.regex.Matcher;

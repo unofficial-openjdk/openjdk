@@ -29,7 +29,7 @@
  * @run main ClassFileInstaller sun.hotspot.WhiteBox Foo Bar
  *                              sun.hotspot.WhiteBox$WhiteBoxPermission
  * @run main JarDirTest prepare
- * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -Dsun.hotspot.tools.ctw.logfile=ctw.log sun.hotspot.tools.ctw.CompileTheWorld jars/*
+ * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -Dsun.hotspot.tools.ctw.logfile=ctw.log -XX:AddModuleExports=java.management/sun.management,java.base/sun.misc sun.hotspot.tools.ctw.CompileTheWorld jars/*
  * @run main JarDirTest check ctw.log
  * @summary testing of CompileTheWorld :: jars in directory
  * @author igor.ignatyev@oracle.com

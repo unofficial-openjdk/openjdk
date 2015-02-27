@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -65,6 +65,9 @@ class UTF8 : AllStatic {
   static bool   equal(const jbyte* base1, int length1, const jbyte* base2,int length2);
   static bool   is_supplementary_character(const unsigned char* str);
   static jint   get_supplementary_character(const unsigned char* str);
+
+  static bool   is_legal_utf8(const unsigned char* buffer, int length,
+                              bool version_leq_47);
 };
 
 

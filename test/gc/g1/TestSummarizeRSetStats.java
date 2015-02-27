@@ -27,7 +27,7 @@
  * @library /testlibrary
  * @build TestSummarizeRSetStatsTools TestSummarizeRSetStats
  * @summary Verify output of -XX:+G1SummarizeRSetStats
- * @run main TestSummarizeRSetStats
+ * @run main/othervm -XX:AddModuleExports=java.management/sun.management TestSummarizeRSetStats
  *
  * Test the output of G1SummarizeRSetStats in conjunction with G1SummarizeRSetStatsPeriod.
  */

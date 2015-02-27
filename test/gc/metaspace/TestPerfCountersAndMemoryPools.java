@@ -33,8 +33,8 @@ import static com.oracle.java.testlibrary.Asserts.*;
  * @requires vm.gc=="Serial" | vm.gc=="null"
  * @summary Tests that a MemoryPoolMXBeans and PerfCounters for metaspace
  *          report the same data.
- * @run main/othervm -XX:+IgnoreUnrecognizedVMOptions -XX:-UseCompressedOops -XX:-UseCompressedKlassPointers -XX:+UseSerialGC -XX:+UsePerfData -Xint TestPerfCountersAndMemoryPools
- * @run main/othervm -XX:+IgnoreUnrecognizedVMOptions -XX:+UseCompressedOops -XX:+UseCompressedKlassPointers -XX:+UseSerialGC -XX:+UsePerfData -Xint TestPerfCountersAndMemoryPools
+ * @run main/othervm -XX:+IgnoreUnrecognizedVMOptions -XX:-UseCompressedOops -XX:-UseCompressedKlassPointers -XX:+UseSerialGC -XX:+UsePerfData -Xint -XX:AddModuleExports=java.management/sun.management,jdk.jvmstat/sun.jvmstat.monitor TestPerfCountersAndMemoryPools
+ * @run main/othervm -XX:+IgnoreUnrecognizedVMOptions -XX:+UseCompressedOops -XX:+UseCompressedKlassPointers -XX:+UseSerialGC -XX:+UsePerfData -Xint -XX:AddModuleExports=java.management/sun.management,jdk.jvmstat/sun.jvmstat.monitor TestPerfCountersAndMemoryPools
  */
 public class TestPerfCountersAndMemoryPools {
     public static void main(String[] args) throws Exception {

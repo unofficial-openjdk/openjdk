@@ -26,7 +26,7 @@
  * @key nmt jcmd
  * @summary Run shutdown twice
  * @library /testlibrary
- * @run main/othervm -XX:NativeMemoryTracking=detail ShutdownTwice
+ * @run main/othervm -XX:NativeMemoryTracking=detail -XX:AddModuleExports=java.management/sun.management ShutdownTwice
  */
 
 import com.oracle.java.testlibrary.*;
