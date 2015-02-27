@@ -987,76 +987,6 @@ public class ClassReader {
                 }
             },
 
-            new AttributeReader(names.MethodParameters, V52, MEMBER_ATTRIBUTE) {
-                protected void read(Symbol sym, int attrlen) {
-                    int newbp = bp + attrlen;
-                    if (saveParameterNames) {
-                        sawMethodParameters = true;
-                        int numEntries = nextByte();
-                        parameterNameIndices = new int[numEntries];
-                        haveParameterNameIndices = true;
-                        for (int i = 0; i < numEntries; i++) {
-                            int nameIndex = nextChar();
-                            int flags = nextChar();
-                            parameterNameIndices[i] = nameIndex;
-                        }
-                    }
-                    bp = newbp;
-                }
-            },
-
-            new AttributeReader(names.Module, V53, CLASS_ATTRIBUTE) {
-                @Override
-                protected boolean accepts(AttributeKind kind) {
-                    return super.accepts(kind) && allowModules;
-                }
-                protected void read(Symbol sym, int attrLen) {
-                    if (sym.kind == TYP && sym.owner.kind == MDL) {
-                        ModuleSymbol msym = (ModuleSymbol) sym.owner;
-                        ListBuffer<Directive> directives = new ListBuffer<>();
-                        int nrequires = nextChar();
-                        for (int i = 0; i < nrequires; i++) {
-                            Name name = readName(nextChar());
-                            Set<RequiresFlag> flags = readRequiresFlags(nextChar());
-                            RequiresDirective d = new RequiresDirective(name, flags);
-                            directives.add(d);
-                        }
-                        int nexports = nextChar();
-                        for (int i = 0; i < nexports; i++) {
-                            Name n = readName(nextChar());
-                            PackageSymbol p = syms.enterPackage(names.fromUtf(internalize(n)));
-                            int nto = nextChar();
-                            List<Name> to;
-                            if (nto == 0) {
-                                to = List.nil();
-                            } else {
-                                ListBuffer<Name> lb = new ListBuffer<>();
-                                for (int t = 0; t < nto; t++)
-                                    lb.append(readName(nextChar()));
-                                to = lb.toList();
-                            }
-                            ExportsDirective d = new ExportsDirective(p, to);
-                            directives.add(d);
-                        }
-                        int nuses = nextChar();
-                        for (int i = 0; i < nuses; i++) {
-                            ClassSymbol srvc = readClassSymbol(nextChar());
-                            UsesDirective d = new UsesDirective(srvc);
-                            directives.add(d);
-                        }
-                        int nprovides = nextChar();
-                        for (int i = 0; i < nprovides; i++) {
-                            ClassSymbol srvc = readClassSymbol(nextChar());
-                            ClassSymbol impl = readClassSymbol(nextChar());
-                            ProvidesDirective d = new ProvidesDirective(srvc, impl);
-                            directives.add(d);
-                        }
-                        msym.directives = directives.toList();
-                    }
-                }
-            },
-
-
             new AttributeReader(names.SourceFile, V45_3, CLASS_ATTRIBUTE) {
                 protected void read(Symbol sym, int attrLen) {
                     ClassSymbol c = (ClassSymbol) sym;
@@ -1187,12 +1117,97 @@ public class ClassReader {
                 }
             },
 
-
             // The following attributes for a Code attribute are not currently handled
             // StackMapTable
             // SourceDebugExtension
             // LineNumberTable
             // LocalVariableTypeTable
+
+            // standard v52 attributes
+
+            new AttributeReader(names.MethodParameters, V52, MEMBER_ATTRIBUTE) {
+                protected void read(Symbol sym, int attrlen) {
+                    int newbp = bp + attrlen;
+                    if (saveParameterNames) {
+                        sawMethodParameters = true;
+                        int numEntries = nextByte();
+                        parameterNameIndices = new int[numEntries];
+                        haveParameterNameIndices = true;
+                        for (int i = 0; i < numEntries; i++) {
+                            int nameIndex = nextChar();
+                            int flags = nextChar();
+                            parameterNameIndices[i] = nameIndex;
+                        }
+                    }
+                    bp = newbp;
+                }
+            },
+
+            // standard v53 attributes
+
+            new AttributeReader(names.Module, V53, CLASS_ATTRIBUTE) {
+                @Override
+                protected boolean accepts(AttributeKind kind) {
+                    return super.accepts(kind) && allowModules;
+                }
+                protected void read(Symbol sym, int attrLen) {
+                    if (sym.kind == TYP && sym.owner.kind == MDL) {
+                        ModuleSymbol msym = (ModuleSymbol) sym.owner;
+                        ListBuffer<Directive> directives = new ListBuffer<>();
+                        int nrequires = nextChar();
+                        for (int i = 0; i < nrequires; i++) {
+                            Name name = readName(nextChar());
+                            Set<RequiresFlag> flags = readRequiresFlags(nextChar());
+                            RequiresDirective d = new RequiresDirective(name, flags);
+                            directives.add(d);
+                        }
+                        int nexports = nextChar();
+                        for (int i = 0; i < nexports; i++) {
+                            Name n = readName(nextChar());
+                            PackageSymbol p = syms.enterPackage(names.fromUtf(internalize(n)));
+                            int nto = nextChar();
+                            List<Name> to;
+                            if (nto == 0) {
+                                to = List.nil();
+                            } else {
+                                ListBuffer<Name> lb = new ListBuffer<>();
+                                for (int t = 0; t < nto; t++)
+                                    lb.append(readName(nextChar()));
+                                to = lb.toList();
+                            }
+                            ExportsDirective d = new ExportsDirective(p, to);
+                            directives.add(d);
+                        }
+                        int nuses = nextChar();
+                        for (int i = 0; i < nuses; i++) {
+                            ClassSymbol srvc = readClassSymbol(nextChar());
+                            UsesDirective d = new UsesDirective(srvc);
+                            directives.add(d);
+                        }
+                        int nprovides = nextChar();
+                        for (int i = 0; i < nprovides; i++) {
+                            ClassSymbol srvc = readClassSymbol(nextChar());
+                            ClassSymbol impl = readClassSymbol(nextChar());
+                            ProvidesDirective d = new ProvidesDirective(srvc, impl);
+                            directives.add(d);
+                        }
+                        msym.directives = directives.toList();
+                    }
+                }
+            },
+
+            new AttributeReader(names.Version, V53, CLASS_ATTRIBUTE) {
+                @Override
+                protected boolean accepts(AttributeKind kind) {
+                    return super.accepts(kind) && allowModules;
+                }
+                protected void read(Symbol sym, int attrLen) {
+                    if (sym.kind == TYP && sym.owner.kind == MDL) {
+                        ModuleSymbol msym = (ModuleSymbol) sym.owner;
+                        msym.version = readName(nextChar());
+                    }
+                }
+            },
         };
 
         for (AttributeReader r: readers)

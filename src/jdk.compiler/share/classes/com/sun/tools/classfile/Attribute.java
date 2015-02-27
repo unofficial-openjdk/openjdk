@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -47,10 +47,12 @@ public abstract class Attribute {
     public static final String Deprecated               = "Deprecated";
     public static final String EnclosingMethod          = "EnclosingMethod";
     public static final String Exceptions               = "Exceptions";
+    public static final String Hashes                   = "Hashes";
     public static final String InnerClasses             = "InnerClasses";
     public static final String LineNumberTable          = "LineNumberTable";
     public static final String LocalVariableTable       = "LocalVariableTable";
     public static final String LocalVariableTypeTable   = "LocalVariableTypeTable";
+    public static final String MainClass                = "MainClass";
     public static final String MethodParameters         = "MethodParameters";
     public static final String Module                   = "Module";
     public static final String RuntimeVisibleAnnotations = "RuntimeVisibleAnnotations";
@@ -66,6 +68,7 @@ public abstract class Attribute {
     public static final String StackMap                 = "StackMap";
     public static final String StackMapTable            = "StackMapTable";
     public static final String Synthetic                = "Synthetic";
+    public static final String Version                  = "Version";
 
     public static class Factory {
         public Factory() {
@@ -114,12 +117,14 @@ public abstract class Attribute {
             standardAttributes.put(Deprecated,        Deprecated_attribute.class);
             standardAttributes.put(EnclosingMethod,   EnclosingMethod_attribute.class);
             standardAttributes.put(Exceptions,        Exceptions_attribute.class);
+            standardAttributes.put(Hashes,            Hashes_attribute.class);
             standardAttributes.put(InnerClasses,      InnerClasses_attribute.class);
             standardAttributes.put(LineNumberTable,   LineNumberTable_attribute.class);
             standardAttributes.put(LocalVariableTable, LocalVariableTable_attribute.class);
             standardAttributes.put(LocalVariableTypeTable, LocalVariableTypeTable_attribute.class);
-            standardAttributes.put(Module,            Module_attribute.class);
+            standardAttributes.put(MainClass,         MainClass_attribute.class);
             standardAttributes.put(MethodParameters, MethodParameters_attribute.class);
+            standardAttributes.put(Module,            Module_attribute.class);
             standardAttributes.put(RuntimeInvisibleAnnotations, RuntimeInvisibleAnnotations_attribute.class);
             standardAttributes.put(RuntimeInvisibleParameterAnnotations, RuntimeInvisibleParameterAnnotations_attribute.class);
             standardAttributes.put(RuntimeVisibleAnnotations, RuntimeVisibleAnnotations_attribute.class);
@@ -133,6 +138,7 @@ public abstract class Attribute {
             standardAttributes.put(StackMap,          StackMap_attribute.class);
             standardAttributes.put(StackMapTable,     StackMapTable_attribute.class);
             standardAttributes.put(Synthetic,         Synthetic_attribute.class);
+            standardAttributes.put(Version,           Version_attribute.class);
         }
 
         private Map<String,Class<? extends Attribute>> standardAttributes;
@@ -172,10 +178,12 @@ public abstract class Attribute {
         R visitDeprecated(Deprecated_attribute attr, P p);
         R visitEnclosingMethod(EnclosingMethod_attribute attr, P p);
         R visitExceptions(Exceptions_attribute attr, P p);
+        R visitHashes(Hashes_attribute attr, P p);
         R visitInnerClasses(InnerClasses_attribute attr, P p);
         R visitLineNumberTable(LineNumberTable_attribute attr, P p);
         R visitLocalVariableTable(LocalVariableTable_attribute attr, P p);
         R visitLocalVariableTypeTable(LocalVariableTypeTable_attribute attr, P p);
+        R visitMainClass(MainClass_attribute attr, P p);
         R visitMethodParameters(MethodParameters_attribute attr, P p);
         R visitModule(Module_attribute attr, P p);
         R visitRuntimeVisibleAnnotations(RuntimeVisibleAnnotations_attribute attr, P p);
@@ -191,5 +199,6 @@ public abstract class Attribute {
         R visitStackMap(StackMap_attribute attr, P p);
         R visitStackMapTable(StackMapTable_attribute attr, P p);
         R visitSynthetic(Synthetic_attribute attr, P p);
+        R visitVersion(Version_attribute attr, P p);
     }
 }

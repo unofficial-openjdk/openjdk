@@ -159,6 +159,7 @@ public class Names {
     public final Name Synthetic;
     public final Name Value;
     public final Name Varargs;
+    public final Name Version;
 
     // members of java.lang.annotation.ElementType
     public final Name ANNOTATION_TYPE;
@@ -307,6 +308,7 @@ public class Names {
         Synthetic = fromString("Synthetic");
         Value = fromString("Value");
         Varargs = fromString("Varargs");
+        Version = fromString("Version");
 
         // members of java.lang.annotation.ElementType
         ANNOTATION_TYPE = fromString("ANNOTATION_TYPE");

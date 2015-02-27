@@ -834,6 +834,7 @@ public abstract class Symbol extends AnnoConstruct implements Element {
             /*implements ModuleElement*/ {
 
         public Name fullname;
+        public Name version;
 
         /** All directives, in natural order. */
         public List<Directive> directives;
