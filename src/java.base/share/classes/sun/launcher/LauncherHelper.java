@@ -52,9 +52,11 @@ import java.nio.charset.Charset;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.text.Normalizer;
-import java.util.ResourceBundle;
 import java.text.MessageFormat;
+import java.util.ResourceBundle;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -842,6 +844,10 @@ public enum LauncherHelper {
                     || fxLaunchName == null) {
                 throw new RuntimeException("Invalid JavaFX launch parameters");
             }
+            AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
+                fxLauncherMethod.setAccessible(true);
+                return null;
+            });
             // launch appClass via fxLauncherMethod
             fxLauncherMethod.invoke(null,
                     new Object[] {fxLaunchName, fxLaunchMode, args});
