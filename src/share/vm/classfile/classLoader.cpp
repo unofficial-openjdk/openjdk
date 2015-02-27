@@ -415,7 +415,7 @@ static void package_list(char *java_base_path, ModuleEntry* jb_module) {
   size_t start_len = strlen(java_base_path);
   char *current_path = java_base_path;
   GrowableArray<char *>* dir_stack = new GrowableArray<char *>(15);
-  if (TraceClassLoading) {
+  if (TraceModules) {
     tty->print_cr("module path:  %s", java_base_path);
   }
 
@@ -473,7 +473,7 @@ static void package_list(char *java_base_path, ModuleEntry* jb_module) {
             assert(pkg != NULL,
                    err_msg("Package %s not found in package entry table", package_name));
             dir_already_listed = true;
-            if (TraceClassLoading) {
+            if (TraceModules) {
               tty->print_cr("package:  %s", package_name);
             }
           }
@@ -513,7 +513,7 @@ static void process_javabase(const char* path) {
     assert(jb_module != NULL, "no entry created for java.base");
   }
 
-  if (TraceClassLoading) {
+  if (TraceModules) {
     tty->print_cr("[Local packages for java.base:]");
   }
 
@@ -549,7 +549,7 @@ static void process_javabase(ImageFile *image) {
     NULL, vmSymbols::java_base(), version_symbol, location_symbol, null_cld);
   assert(jb_module != NULL, "no entry created for java.base");
 
-  if (TraceClassLoading) {
+  if (TraceModules) {
     tty->print_cr("[Local packages for java.base:]");
   }
 
@@ -571,7 +571,7 @@ static void process_javabase(ImageFile *image) {
     PackageEntry* pkg = null_cld_packages->locked_create_entry_or_null(pkg_name, jb_module);
     assert(pkg != NULL, "Package should have been defined and found in package entry table");
 
-    if (TraceClassLoading) {
+    if (TraceModules) {
       tty->print_cr("  %s", package_name);
     }
   }
