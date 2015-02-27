@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2007, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,29 +23,28 @@
 
 /*
  * @test
- * @author Gary Ellison
- * @bug 4170635
- * @summary Verify equals()/hashCode() contract honored
+ * @bug 8014678
+ * @run main EnclosingConstructorWithSecurityManager
+ * @run main/othervm EnclosingConstructorWithSecurityManager "WithSecurityManager"
  */
 
-import java.io.*;
+public class EnclosingConstructorWithSecurityManager {
+    public static void main(String[] args) {
+        if (args.length == 1) {
+            System.setSecurityManager(new SecurityManager());
+        }
 
-import sun.security.acl.*;
+        new Inner();
+        Inner.theInner.getEnclosingConstructor();
+    }
 
+    public static class Inner {
+        public static Class<?> theInner;
 
-public class PermissionEqualsHashCode {
-
-    public static void main(String[] args) throws Exception {
-
-        PermissionImpl p1 = new PermissionImpl("permissionPermission");
-        PermissionImpl p2 = new PermissionImpl("permissionPermission");
-
-
-        // the test
-        if ( (p1.equals(p2)) == (p1.hashCode()==p2.hashCode()) )
-            System.out.println("PASSED");
-        else
-            throw new Exception("Failed equals()/hashCode() contract");
-
+        public Inner() {
+            Object o = new Object() {
+            };
+            Inner.theInner = o.getClass();
+        }
     }
 }

@@ -1,12 +1,10 @@
 /*
- * Copyright (c) 1996, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Oracle designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Oracle in the LICENSE file that accompanied this code.
+ * published by the Free Software Foundation.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -23,26 +21,25 @@
  * questions.
  */
 
-package sun.security.acl;
+package java.lang.invoke;
 
-import java.security.*;
-
-/**
- * This class implements a group of principals.
- * @author Satish Dharmaraj
+/* @test
+ * @summary Assertion in LambdaFormEditor.bindArgumentType is too strong
+ *
+ * @run main/bootclasspath -esa java.lang.invoke.CustomizedLambdaFormTest
  */
-public class WorldGroupImpl extends GroupImpl {
+public class CustomizedLambdaFormTest {
 
-    public WorldGroupImpl(String s) {
-        super(s);
+    static void testExtendCustomizedBMH() throws Exception {
+        // Construct BMH
+        MethodHandle mh = MethodHandles.Lookup.IMPL_LOOKUP.findVirtual(String.class, "concat",
+                MethodType.methodType(String.class, String.class))
+                .bindTo("a");
+        mh.customize();
+        mh.bindTo("b"); // Try to extend customized BMH
     }
 
-    /**
-     * returns true for all passed principals
-     * @param member The principal whose membership must be checked in this Group.
-     * @return true always since this is the "world" group.
-     */
-    public boolean isMember(Principal member) {
-        return true;
+    public static void main(String[] args) throws Throwable {
+        testExtendCustomizedBMH();
     }
 }
