@@ -43,19 +43,19 @@ $(eval $(call FillCacheFind, $(wildcard \
 )))
 
 ifneq ($(wildcard $(SUPPORT_OUTPUTDIR)/modules_libs-stripped/$(MODULE)), )
-  JLINK_FLAGS += --libs $(SUPPORT_OUTPUTDIR)/modules_libs-stripped/$(MODULE)
+  JMOD_FLAGS += --libs $(SUPPORT_OUTPUTDIR)/modules_libs-stripped/$(MODULE)
   DEPS += $(call CacheFind, $(SUPPORT_OUTPUTDIR)/modules_libs-stripped/$(MODULE))
 endif
 ifneq ($(wildcard $(SUPPORT_OUTPUTDIR)/modules_cmds-stripped/$(MODULE)), )
-  JLINK_FLAGS += --cmds $(SUPPORT_OUTPUTDIR)/modules_cmds-stripped/$(MODULE)
+  JMOD_FLAGS += --cmds $(SUPPORT_OUTPUTDIR)/modules_cmds-stripped/$(MODULE)
   DEPS += $(call CacheFind, $(SUPPORT_OUTPUTDIR)/modules_cmds-stripped/$(MODULE))
 endif
 ifneq ($(wildcard $(SUPPORT_OUTPUTDIR)/modules_conf/$(MODULE)), )
-  JLINK_FLAGS += --config $(SUPPORT_OUTPUTDIR)/modules_conf/$(MODULE)
+  JMOD_FLAGS += --config $(SUPPORT_OUTPUTDIR)/modules_conf/$(MODULE)
   DEPS += $(call CacheFind, $(SUPPORT_OUTPUTDIR)/modules_conf/$(MODULE))
 endif
 ifneq ($(wildcard $(JDK_OUTPUTDIR)/modules/$(MODULE)), )
-  JLINK_FLAGS += --class-path $(JDK_OUTPUTDIR)/modules/$(MODULE)
+  JMOD_FLAGS += --class-path $(JDK_OUTPUTDIR)/modules/$(MODULE)
   DEPS += $(call CacheFind, $(JDK_OUTPUTDIR)/modules/$(MODULE))
 endif
 
@@ -68,9 +68,9 @@ $(IMAGES_OUTPUTDIR)/jmods/$(MODULE).jmod: $(DEPS)
 	$(ECHO) Creating $(notdir $@)
 	$(MKDIR) -p $(@D)
 	$(RM) $@
-	$(JLINK) --format jmod --mid $(MODULE)@9.0 \
+	$(JMOD) --mid $(MODULE)@9.0 \
 	    --modulepath $(IMAGES_OUTPUTDIR)/jmods --hash-dependences .* \
-	    --output $@ $(JLINK_FLAGS) 
+	    --output $@ $(JMOD_FLAGS) 
 
 TARGETS += $(IMAGES_OUTPUTDIR)/jmods/$(MODULE).jmod
 

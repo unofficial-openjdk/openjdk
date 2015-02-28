@@ -95,7 +95,7 @@ JIMAGE_TARGET_FILE := bin/java$(EXE_SUFFIX)
 $(JDK_IMAGE_DIR)/$(JIMAGE_TARGET_FILE): $(JMODS)
 	$(ECHO) Creating jdk jimage
 	$(RM) -r $(JDK_IMAGE_DIR) $(JDK_SORTED_MODULES)
-	$(JLINK) --format jimage --output $(JDK_IMAGE_DIR) \
+	$(JLINK) --output $(JDK_IMAGE_DIR) \
 	    --modulepath $(IMAGES_OUTPUTDIR)/jmods --addmods $(JDK_MODULES_LIST) \
 	    > $(JDK_SORTED_MODULES)
 	$(TOUCH) $@
@@ -103,7 +103,7 @@ $(JDK_IMAGE_DIR)/$(JIMAGE_TARGET_FILE): $(JMODS)
 $(JRE_IMAGE_DIR)/$(JIMAGE_TARGET_FILE): $(JMODS)
 	$(ECHO) Creating jre jimage
 	$(RM) -r $(JRE_IMAGE_DIR) $(JRE_SORTED_MODULES)
-	$(JLINK) --format jimage --output $(JRE_IMAGE_DIR) \
+	$(JLINK) --output $(JRE_IMAGE_DIR) \
 	    --modulepath $(IMAGES_OUTPUTDIR)/jmods --addmods $(JRE_MODULES_LIST) \
 	    > $(JRE_SORTED_MODULES)
 	$(TOUCH) $@
@@ -117,7 +117,7 @@ COMPACT_EXTRA_MODULES := jdk.localedata jdk.crypto.pkcs11 jdk.crypto.ec
 $(JRE_COMPACT1_IMAGE_DIR)/$(JIMAGE_TARGET_FILE): $(JMODS)
 	$(ECHO) Creating jre compact1 jimage
 	$(RM) -r $(JRE_COMPACT1_IMAGE_DIR) $(JRE_COMPACT1_SORTED_MODULES)
-	$(JLINK) --format jimage --modulepath $(IMAGES_OUTPUTDIR)/jmods \
+	$(JLINK) --modulepath $(IMAGES_OUTPUTDIR)/jmods \
 	    --addmods $(call SubstComma, java.compact1 $(COMPACT_EXTRA_MODULES)) \
 	    --output $(JRE_COMPACT1_IMAGE_DIR) \
 	    > $(JRE_COMPACT1_SORTED_MODULES)
@@ -126,7 +126,7 @@ $(JRE_COMPACT1_IMAGE_DIR)/$(JIMAGE_TARGET_FILE): $(JMODS)
 $(JRE_COMPACT2_IMAGE_DIR)/$(JIMAGE_TARGET_FILE): $(JMODS)
 	$(ECHO) Creating jre compact2 jimage
 	$(RM) -r $(JRE_COMPACT2_IMAGE_DIR) $(JRE_COMPACT1_SORTED_MODULES)
-	$(JLINK) --format jimage --modulepath $(IMAGES_OUTPUTDIR)/jmods \
+	$(JLINK) --modulepath $(IMAGES_OUTPUTDIR)/jmods \
 	    --addmods $(call SubstComma, java.compact2 $(COMPACT_EXTRA_MODULES)) \
 	    --output $(JRE_COMPACT2_IMAGE_DIR) \
 	    > $(JRE_COMPACT2_SORTED_MODULES)
@@ -135,7 +135,7 @@ $(JRE_COMPACT2_IMAGE_DIR)/$(JIMAGE_TARGET_FILE): $(JMODS)
 $(JRE_COMPACT3_IMAGE_DIR)/$(JIMAGE_TARGET_FILE): $(JMODS)
 	$(ECHO) Creating jre compact3 jimage
 	$(RM) -r $(JRE_COMPACT3_IMAGE_DIR) $(JRE_COMPACT3_SORTED_MODULES)
-	$(JLINK) --format jimage --modulepath $(IMAGES_OUTPUTDIR)/jmods \
+	$(JLINK) --modulepath $(IMAGES_OUTPUTDIR)/jmods \
 	    --addmods $(call SubstComma, $(JDK_COMPACT3_MODULES) $(COMPACT_EXTRA_MODULES)) \
 	    --output $(JRE_COMPACT3_IMAGE_DIR) \
 	    > $(JRE_COMPACT3_SORTED_MODULES)
