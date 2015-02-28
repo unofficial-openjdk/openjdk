@@ -38,14 +38,14 @@ fi
 JAVAC="$COMPILEJAVA/bin/javac"
 JAVA="$TESTJAVA/bin/java"
 JAR="$TESTJAVA/bin/jar"
-JLINK="$TESTJAVA/bin/jlink"
+JMOD="$TESTJAVA/bin/jmod"
 
 rm -rf mlib
 mkdir -p mlib
 
 mkdir -p mods/container
 $JAVAC -d mods/container `find $TESTSRC/src/container -name "*.java"`
-$JLINK --class-path mods/container --format jmod \
+$JMOD --class-path mods/container \
    --mid container@1.0 --main-class container.Main --output mlib/wls@1.0.jmod
 
 rm -rf applib

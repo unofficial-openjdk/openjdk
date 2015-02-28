@@ -27,34 +27,26 @@ package jdk.jigsaw.tools.jlink;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.UncheckedIOException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardOpenOption;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.PosixFileAttributeView;
 import java.nio.file.attribute.PosixFilePermission;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Formatter;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -62,17 +54,9 @@ import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.function.Consumer;
-import java.util.function.Predicate;
-import java.util.function.Supplier;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
-import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
-import java.util.zip.ZipOutputStream;
 
 import jdk.internal.jimage.Archive;
 import jdk.internal.jimage.ImageFile;
@@ -83,11 +67,7 @@ import jdk.jigsaw.module.Configuration;
 import jdk.jigsaw.module.Layer;
 import jdk.jigsaw.module.ModuleArtifact;
 import jdk.jigsaw.module.ModuleArtifactFinder;
-import jdk.jigsaw.module.ModuleDependence;
 import jdk.jigsaw.module.ModuleDescriptor;
-import jdk.jigsaw.module.ModuleId;
-import jdk.jigsaw.module.internal.Hasher;
-import jdk.jigsaw.module.internal.Hasher.DependencyHashes;
 import jdk.jigsaw.module.internal.ModuleInfo;
 
 
@@ -156,28 +136,6 @@ class JlinkTask {
         }
     }
 
-    private static Path CWD = Paths.get("");
-
-    private static List<Path> splitPath(String arg, String separator)
-        throws BadArgs
-    {
-        List<Path> paths = new ArrayList<>();
-        for (String p: arg.split(separator)) {
-            if (p.length() > 0) {
-                try {
-                    Path path = CWD.resolve(p);
-                    if (Files.notExists(path)) {
-                        throw new BadArgs("err.path.not.found", path);
-                    }
-                    paths.add(path);
-                } catch (InvalidPathException x) {
-                    throw new BadArgs("err.path.not.valid", p);
-                }
-            }
-        }
-        return paths;
-    }
-
     static <T extends Throwable> void fail(Class<T> type,
                                            String format,
                                            Object... args) throws T {
@@ -194,30 +152,6 @@ class JlinkTask {
     }
 
     static Option[] recognizedOptions = {
-        new Option(true, "--class-path") {
-            void process(JlinkTask task, String opt, String arg) throws BadArgs {
-                task.options.classpath = splitPath(arg, File.pathSeparator);
-            }
-        },
-        new Option(true, "--cmds") {
-            void process(JlinkTask task, String opt, String arg) throws BadArgs {
-                task.options.cmds = splitPath(arg, File.pathSeparator);
-            }
-        },
-        new Option(true, "--config") {
-            void process(JlinkTask task, String opt, String arg) throws BadArgs {
-                task.options.configs = splitPath(arg, File.pathSeparator);
-            }
-        },
-        new Option(true, "--format") {
-            void process(JlinkTask task, String opt, String arg) throws BadArgs {
-                try {
-                    task.options.format = Enum.valueOf(Format.class, arg.toUpperCase());
-                } catch (IllegalArgumentException e) {
-                    throw new BadArgs("err.invalid.arg.for.option", opt).showUsage(true);
-                }
-            }
-        },
         new Option(false, "--compress") {
             void process(JlinkTask task, String opt, String arg) throws BadArgs {
                 task.options.compress = true;
@@ -237,30 +171,6 @@ class JlinkTask {
                     paths[i++] = Paths.get(dir);
                 }
                 task.options.moduleFinder = ModuleArtifactFinder.ofDirectories(paths);
-            }
-        },
-        new Option(true, "--libs") {
-            void process(JlinkTask task, String opt, String arg) throws BadArgs {
-                task.options.libs = splitPath(arg, File.pathSeparator);
-            }
-        },
-        new Option(true, "--main-class") {
-            void process(JlinkTask task, String opt, String arg) throws BadArgs {
-                task.options.mainClass = arg;
-            }
-        },
-        new Option(true, "--mid") {
-            void process(JlinkTask task, String opt, String arg) throws BadArgs {
-                task.options.moduleId = arg;
-            }
-        },
-        new Option(true, "--hash-dependences") {
-            void process(JlinkTask task, String opt, String arg) throws BadArgs {
-                try {
-                    task.options.dependencesToHash = Pattern.compile(arg);
-                } catch (PatternSyntaxException e) {
-                    throw new BadArgs("err.badpattern", arg);
-                }
             }
         },
         new Option(true, "--addmods") {
@@ -314,28 +224,14 @@ class JlinkTask {
                      EXIT_SYSERR = 3, // System error or resource exhaustion.
                      EXIT_ABNORMAL = 4;// terminated abnormally
 
-
-    enum Format {
-        JMOD,
-        JIMAGE;
-    }
-
     static class Options {
         boolean help;
         boolean version;
         boolean fullVersion;
-        List<Path> classpath;
-        List<Path> cmds;
-        List<Path> configs;
-        List<Path> libs;
         ModuleArtifactFinder moduleFinder;
         Set<String> jmods = new TreeSet<>();
-        Format format = null;
         boolean compress = false;
         Path output;
-        String moduleId;
-        String mainClass;
-        Pattern dependencesToHash;
     }
 
     int run(String[] args) {
@@ -346,41 +242,25 @@ class JlinkTask {
             handleOptions(args);
             if (options.help) {
                 showHelp();
+                return EXIT_OK;
             }
             if (options.version || options.fullVersion) {
                 showVersion(options.fullVersion);
+                return EXIT_OK;
             }
-            if (options.format == null) {
-                if (options.help || options.version || options.fullVersion) {
-                    return EXIT_OK;
-                } else {
-                    throw new BadArgs("err.format.must.be.specified").showUsage(true);
-                }
-            } else if (options.format == Format.JIMAGE) {
-                if (options.moduleFinder == null)
-                    throw new BadArgs("err.modulepath.must.be.specified").showUsage(true);
 
-                Path output = options.output;
-                if (output == null)
-                    throw new BadArgs("err.output.must.be.specified").showUsage(true);
-                Files.createDirectories(output);
-                if (Files.list(output).findFirst().isPresent())
-                    throw new BadArgs("err.dir.not.empty", output);
+            if (options.moduleFinder == null)
+                throw new BadArgs("err.modulepath.must.be.specified").showUsage(true);
 
-                if (options.jmods.isEmpty())  // ## default to jdk.base ??
-                    throw new BadArgs("err.mods.must.be.specified").showUsage(true);
+            Path output = options.output;
+            if (output == null)
+                throw new BadArgs("err.output.must.be.specified").showUsage(true);
+            Files.createDirectories(output);
+            if (Files.list(output).findFirst().isPresent())
+                throw new BadArgs("err.dir.not.empty", output);
 
-            } else if (options.format.equals(Format.JMOD)) {
-                Path path = options.output;
-                if (path == null)
-                    throw new BadArgs("err.output.must.be.specified").showUsage(true);
-                if (Files.exists(path))
-                    throw new BadArgs("err.file.already.exists", path);
-
-                // if storing hashes of dependences then the module path is required
-                if (options.dependencesToHash != null && options.moduleFinder == null)
-                    throw new BadArgs("err.modulepath.must.be.specified").showUsage(true);
-            }
+            if (options.jmods.isEmpty())  // ## default to jdk.base ??
+                throw new BadArgs("err.mods.must.be.specified").showUsage(true);
 
             // additional option combination validation
 
@@ -401,13 +281,7 @@ class JlinkTask {
     }
 
     private boolean run() throws IOException {
-        if (options.format == Format.JIMAGE)
-            createImage();
-        else if (Format.JMOD.equals(options.format))
-            createJmod();
-        else
-            throw new InternalError("should never reach here");
-
+        createImage();
         return true;
     }
 
@@ -630,257 +504,6 @@ class JlinkTask {
             return result;
         }
 
-    }
-
-    private void createJmod() throws IOException {
-        JmodFileWriter jmod = new JmodFileWriter();
-
-        // create jmod with temporary name to avoid it being examined
-        // when scanning the module path
-        Path target = options.output;
-        Path tempTarget = target.resolveSibling(target.getFileName() + ".tmp");
-        try (OutputStream out = Files.newOutputStream(tempTarget)) {
-            jmod.write(out);
-        }
-        Files.move(tempTarget, target);
-    }
-
-    private class JmodFileWriter {
-        final List<Path> cmds = options.cmds;
-        final List<Path> libs = options.libs;
-        final List<Path> configs = options.configs;
-        final List<Path> classpath = options.classpath;
-        final String moduleId = options.moduleId;
-        final String mainClass = options.mainClass;
-        final ModuleArtifactFinder moduleFinder = options.moduleFinder;
-        final Pattern dependencesToHash = options.dependencesToHash;
-
-        JmodFileWriter() { }
-
-        /**
-         * Writes the jmod to the given output stream.
-         */
-        void write(OutputStream out) throws IOException {
-            try (ZipOutputStream zos = new ZipOutputStream(out)) {
-
-                // module-info.class
-                writeModuleInfo(zos);
-
-                // classes
-                processClasses(zos, classpath);
-
-                processSection(zos, Section.NATIVE_CMDS, cmds);
-                processSection(zos, Section.NATIVE_LIBS, libs);
-                processSection(zos, Section.CONFIG, configs);
-            }
-        }
-
-        /**
-         * Returns a supplier of an input stream to the module-info.class
-         * on the class path of directories and JAR files.
-         */
-        Supplier<InputStream> newModuleInfoSupplier() throws IOException {
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            for (Path e: classpath) {
-                if (Files.isDirectory(e)) {
-                    Path mi = e.resolve(MODULE_INFO);
-                    if (Files.isRegularFile(mi)) {
-                        Files.copy(mi, baos);
-                        break;
-                    }
-                } else if (Files.isRegularFile(e) && e.toString().endsWith(".jar")) {
-                    try (JarFile jf = new JarFile(e.toFile())) {
-                        ZipEntry entry = jf.getEntry(MODULE_INFO);
-                        if (entry != null) {
-                            jf.getInputStream(entry).transferTo(baos);
-                            break;
-                        }
-                    }
-                }
-            }
-            if (baos.size() == 0) {
-                return null;
-            } else {
-                byte[] bytes = baos.toByteArray();
-                return () -> new ByteArrayInputStream(bytes);
-            }
-        }
-
-        /**
-         * Writes the module-info.class to the given ZIP output stream.
-         *
-         * If --mid, --main-class or other options were provided then the
-         * corresponding class file attributes are added to the module-info
-         * here.
-         */
-        void writeModuleInfo(ZipOutputStream zos) throws IOException {
-
-            Supplier<InputStream> miSupplier = newModuleInfoSupplier();
-            if (miSupplier == null) {
-                throw new IOException(MODULE_INFO + " not found");
-            }
-
-            // if --mid is specified then we need the module name
-            // from the Module attribute.
-            String name = null;
-            Set<ModuleDependence> dependences = null;
-            if (moduleId != null || dependencesToHash != null) {
-                try (InputStream in = miSupplier.get()) {
-                    ModuleInfo mi = ModuleInfo.read(in);
-                    name = mi.name();
-                    dependences = mi.moduleDependences();
-                }
-            }
-
-            // copy the module-info.class into the jmod with the additional
-            // attributes for the version, main class and other meta data
-            try (InputStream in = miSupplier.get()) {
-                ModuleInfo.Appender appender = ModuleInfo.newAppender(in);
-
-                // --main-class
-                if (mainClass != null)
-                    appender.mainClass(mainClass);
-
-                // --mid
-                if (moduleId != null) {
-                    ModuleId id = ModuleId.parse(moduleId);
-                    if (!id.name().equals(name)) {
-                        throw new RuntimeException("module name in specified to --mid" +
-                            " does not match module name: " + name);
-                    }
-                    if (id.version() != null) {
-                        appender.version(id.version().toString());
-                    }
-                }
-
-                // --hash-dependences
-                if (dependencesToHash != null)
-                    appender.hashes(hashDependences(name, dependences));
-
-                // write the (possibly extended or modified) module-info.class
-                String e = Section.CLASSES.jmodDir() + "/" + MODULE_INFO;
-                ZipEntry ze = new ZipEntry(e);
-                zos.putNextEntry(ze);
-                appender.write(zos);
-                zos.closeEntry();
-            }
-        }
-
-        /**
-         * Examines the module dependences of the given module
-         * and computes the hash of any module that matches the
-         * pattern {@code dependencesToHash}.
-         */
-        DependencyHashes hashDependences(String name, Set<ModuleDependence> moduleDependences)
-            throws IOException
-        {
-            Set<ModuleDescriptor> descriptors = new HashSet<>();
-            for (ModuleDependence md: moduleDependences) {
-                String dn = md.id().name();
-                if (dependencesToHash.matcher(dn).find()) {
-                    ModuleArtifact artifact = moduleFinder.find(dn);
-                    if (artifact == null) {
-                        throw new RuntimeException("Hashing module " + name
-                            + " dependences, unable to find module " + dn
-                            + " on module path");
-                    }
-                    descriptors.add(artifact.descriptor());
-                }
-            }
-
-            Map<String, Path> map = modulesToPath(descriptors);
-            if (map.size() == 0) {
-                return null;
-            } else {
-                // use SHA-256 for now, easy to make this configurable if needed
-                return Hasher.generate(map, "SHA-256");
-            }
-        }
-
-        void processClasses(ZipOutputStream zos, List<Path> classpaths)
-            throws IOException
-        {
-            if (classpaths == null) {
-                return;
-            }
-            for (Path p : classpaths) {
-                if (Files.isDirectory(p)) {
-                    processSection(zos, Section.CLASSES, p);
-                } else if (Files.isRegularFile(p) && p.toString().endsWith(".jar")) {
-                    try (JarFile jf = new JarFile(p.toFile())) {
-                        JarEntryConsumer jec = new JarEntryConsumer(zos, jf);
-                        jf.stream().filter(jec).forEach(jec);
-                    }
-                }
-            }
-        }
-
-        void processSection(ZipOutputStream zos, Section section, List<Path> paths)
-            throws IOException
-        {
-            if (paths == null) {
-                return;
-            }
-            for (Path p : paths) {
-                processSection(zos, section, p);
-            }
-        }
-
-        void processSection(ZipOutputStream zos, Section section, Path top)
-            throws IOException
-        {
-            Files.walkFileTree(top, new SimpleFileVisitor<Path>() {
-                @Override
-                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
-                    throws IOException
-                {
-                    if (!file.getFileName().toString().equals(MODULE_INFO)) {
-                        Path relPath = top.relativize(file);
-                        String prefix = section.jmodDir();
-                        byte[] data = Files.readAllBytes(file);
-                        writeZipEntry(zos, data, prefix, relPath.toString());
-                    }
-                    return FileVisitResult.CONTINUE;
-                }
-            });
-        }
-
-        void writeZipEntry(ZipOutputStream zos, byte[] data, String prefix, String other)
-            throws IOException
-        {
-            String name = Paths.get(prefix, other).toString()
-                               .replace(File.separatorChar, '/');
-            ZipEntry ze = new ZipEntry(name);
-            zos.putNextEntry(ze);
-            zos.write(data, 0, data.length);
-            zos.closeEntry();
-        }
-
-        class JarEntryConsumer implements Consumer<JarEntry>, Predicate<JarEntry> {
-            final ZipOutputStream zos;
-            final JarFile jarfile;
-            JarEntryConsumer(ZipOutputStream zos, JarFile jarfile) {
-                this.zos = zos;
-                this.jarfile = jarfile;
-            }
-            @Override
-            public void accept(JarEntry je) {
-                try (InputStream in = jarfile.getInputStream(je);
-                     DataInputStream din = new DataInputStream(in)) {
-                    int size = (int)je.getSize();
-                    byte[] data = new byte[size];
-                    din.readFully(data);
-                    writeZipEntry(zos, data, Section.CLASSES.jmodDir(), je.getName());
-                } catch (IOException e) {
-                    throw new UncheckedIOException(e);
-                }
-            }
-            @Override
-            public boolean test(JarEntry je) {
-                String name = je.getName();
-                return !name.endsWith(MODULE_INFO) && !je.isDirectory();
-            }
-        }
     }
 
     private static enum Section {

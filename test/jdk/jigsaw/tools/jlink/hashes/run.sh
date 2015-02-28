@@ -55,6 +55,7 @@ esac
 JAVAC="$COMPILEJAVA/bin/javac"
 JAVA="$TESTJAVA/bin/java"
 JLINK="$TESTJAVA/bin/jlink"
+JMOD="$TESTJAVA/bin/jmod"
 
 rm -rf mods mlib
 
@@ -62,12 +63,12 @@ rm -rf mods mlib
 mkdir -p mods/m2
 $JAVAC -d mods/m2 `find $TESTSRC/src/m2 -name "*.java"`
 mkdir -p mlib
-$JLINK --format jmod --class-path mods/m2 --output mlib/m2.jmod
+$JMOD --class-path mods/m2 --output mlib/m2.jmod
 
 mkdir -p mods/m1
 $JAVAC -d mods/m1 -cp mods/m2 `find $TESTSRC/src/m1 -name "*.java"`
 mkdir -p mlib
-$JLINK --format jmod --class-path mods/m1 --output mlib/m1.jmod \
+$JMOD --class-path mods/m1 --output mlib/m1.jmod \
     --modulepath mlib --hash-dependences m\.*
 
 # check that m1 runs
@@ -76,17 +77,17 @@ $JAVA -mp mlib -m m1/org.m1.Main
 # compile and create jmod for a new version of m2
 rm -rf mods/m2/* mlib/m2.jmod
 $JAVAC -d mods/m2 `find $TESTSRC/newsrc/m2 -name "*.java"`
-$JLINK --format jmod --class-path mods/m2 --output mlib/m2.jmod
+$JMOD --class-path mods/m2 --output mlib/m2.jmod
 
 # java -m m1 should fail
 set +e
 $JAVA -mp mlib -m m1/org.m1.Main
 if [ $? = 0 ]; then exit 1; fi
 
-# jlink --format jimage should fail
+# jlink jimage creation should fail
 rm -rf myimage
 $JLINK --modulepath $TESTJAVA/../jmods${PS}mlib --addmods m1 \
-  --format jimage --output myimage
+  --output myimage
 if [ $? = 0 ]; then exit 1; fi
 
 exit 0

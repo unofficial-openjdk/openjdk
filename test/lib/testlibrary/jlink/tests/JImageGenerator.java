@@ -56,10 +56,7 @@ public class JImageGenerator {
     private static final String MAIN_CLASS_OPTION = "--main-class";
     private static final String CLASS_PATH_OPTION = "--class-path";
     private static final String MODULE_PATH_OPTION = "--modulepath";
-    private static final String FORMAT_OPTION = "--format";
     private static final String ADD_MODS_OPTION = "--addmods";
-    private static final String JIMAGE_FORMAT_OPTION = "jimage";
-    private static final String JMOD_FORMAT_OPTION = "jmod";
 
     private static final String COMPILER_SRC_PATH_OPTION = "-sourcepath";
     private static final String COMPILER_DIRECTORY_OPTION = "-d";
@@ -176,8 +173,6 @@ public class JImageGenerator {
         opt.add(output.toString());
         opt.add(ADD_MODS_OPTION);
         opt.add(module);
-        opt.add(FORMAT_OPTION);
-        opt.add(JIMAGE_FORMAT_OPTION);
         opt.add(MODULE_PATH_OPTION);
         // This is expect FIRST jmods THEN jars, if you change this, some tests could fail
         opt.add(stdjmods.getAbsolutePath() + File.pathSeparator + jmods.getAbsolutePath()
@@ -199,8 +194,6 @@ public class JImageGenerator {
         opt.add(id);
         opt.add(CLASS_PATH_OPTION);
         opt.add(cp.getAbsolutePath());
-        opt.add(FORMAT_OPTION);
-        opt.add(JMOD_FORMAT_OPTION);
         System.out.println("jmod options " + opt);
         String[] options = new String[opt.size()];
         return opt.toArray(options);
@@ -300,7 +293,7 @@ public class JImageGenerator {
 
     private File buildJModule(String id, String main, File moduleDirectory) {
         File outFile = new File(jmods, id + ".jmod");
-        jdk.jigsaw.tools.jlink.Main.run(optionsJmods(moduleDirectory, main, id, outFile), new PrintWriter(System.out));
+        jdk.jigsaw.tools.jmod.Main.run(optionsJmods(moduleDirectory, main, id, outFile), new PrintWriter(System.out));
         return outFile;
     }
 

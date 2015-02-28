@@ -56,6 +56,7 @@ JAVAC="$COMPILEJAVA/bin/javac"
 JAR="$COMPILEJAVA/bin/jar"
 JAVA="$TESTJAVA/bin/java"
 JLINK="$TESTJAVA/bin/jlink"
+JMOD="$TESTJAVA/bin/jmod"
 
 rm -rf mods
 mkdir -p mods/test
@@ -65,21 +66,21 @@ rm -rf mlib mlib2 myimage myjimage
 
 # create jmod from exploded classes on the class path
 mkdir mlib
-$JLINK --format jmod --class-path mods/test --mid test@1.0 --main-class jdk.test.Test \
+$JMOD --class-path mods/test --mid test@1.0 --main-class jdk.test.Test \
     --output mlib/test@1.0.jmod
 
 # create jmod from JAR file on the class path
 mkdir mlib2
 $JAR cf mlib2/test.jar -C mods/test .
-$JLINK --format jmod --class-path mlib2/test.jar --mid test@1.0 --main-class jdk.test.Test \
+$JMOD --class-path mlib2/test.jar --mid test@1.0 --main-class jdk.test.Test \
     --output mlib2/test@1.0.jmod
 
 # uncompressed image
-$JLINK --modulepath $TESTJAVA/../jmods${PS}mlib --addmods test --format jimage --output myjimage
+$JLINK --modulepath $TESTJAVA/../jmods${PS}mlib --addmods test --output myjimage
 myjimage/bin/test 1 2 3
 
 # compressed image
-$JLINK --modulepath $TESTJAVA/../jmods${PS}mlib --addmods test --format jimage \
+$JLINK --modulepath $TESTJAVA/../jmods${PS}mlib --addmods test \
   --output mysmalljimage --compress
 mysmalljimage/bin/test 1 2 3
 

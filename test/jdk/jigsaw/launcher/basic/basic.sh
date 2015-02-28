@@ -36,7 +36,7 @@ fi
 
 JAVAC="$COMPILEJAVA/bin/javac"
 JAVA="$TESTJAVA/bin/java"
-JLINK="$TESTJAVA/bin/jlink"
+JMOD="$TESTJAVA/bin/jmod"
 
 rm -rf mods
 mkdir -p mods/test
@@ -44,7 +44,7 @@ $JAVAC -d mods/test `find $TESTSRC/src/test -name "*.java"`
 
 rm -rf mlib
 mkdir -p mlib
-$JLINK --format jmod --class-path mods/test --mid test@1.0 --main-class jdk.test.Main \
+$JMOD --class-path mods/test --mid test@1.0 --main-class jdk.test.Main \
     --output mlib/test@1.0.jmod 
 
 # specify initial module / main class

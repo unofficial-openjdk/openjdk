@@ -34,6 +34,7 @@ $(eval $(call SetupCompileProperties,COMPILE_PROPERTIES, \
         $(call CacheFind, \
             $(JDK_TOPDIR)/src/jdk.dev/share/classes/sun/tools/jar/resources \
             $(JDK_TOPDIR)/src/jdk.dev/share/classes/jdk/jigsaw/tools/jlink/resources \
+            $(JDK_TOPDIR)/src/jdk.dev/share/classes/jdk/jigsaw/tools/jmod/resources \
             $(JDK_TOPDIR)/src/jdk.dev/share/classes/jdk/tools/jimage/resources)), \
     ListResourceBundle))
 
