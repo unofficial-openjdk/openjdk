@@ -32,6 +32,7 @@ module java.base {
     exports java.lang.reflect;
     exports java.math;
     exports java.net;
+    exports java.net.spi;
     exports java.nio;
     exports java.nio.channels;
     exports java.nio.channels.spi;
