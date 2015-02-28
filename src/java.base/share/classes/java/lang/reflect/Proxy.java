@@ -69,7 +69,7 @@ import sun.security.util.SecurityConstants;
  * </pre>
  *
  * <p>To create a proxy in a named module, use the
- * {@link Proxy#getProxyClass(Module, Class[])} method.
+ * {@link Proxy#getModuleProxyClass(Module, Class[])} method.
  *
  * <p>A <i>dynamic proxy class</i> (simply referred to as a <i>proxy
  * class</i> below) is a class that implements a list of interfaces
@@ -452,8 +452,8 @@ public class Proxy implements java.io.Serializable {
      * @since 1.9
      */
     @CallerSensitive
-    public static Class<?> getProxyClass(Module module,
-                                         Class<?>... interfaces)
+    public static Class<?> getModuleProxyClass(Module module,
+                                               Class<?>... interfaces)
         throws IllegalArgumentException
     {
         final List<Class<?>> intfs = Arrays.asList(interfaces.clone());
@@ -1317,7 +1317,9 @@ public class Proxy implements java.io.Serializable {
      * @since 1.9
      */
     @CallerSensitive
-    public static Object newProxyInstance(Module module, InvocationHandler h, Class<?>... interfaces) {
+    public static Object newModuleProxyInstance(Module module, InvocationHandler h,
+                                                Class<?>... interfaces)
+    {
         Objects.requireNonNull(module);
         Objects.requireNonNull(h);
         final ClassLoader loader = module.getClassLoader();

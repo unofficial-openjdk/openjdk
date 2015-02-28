@@ -46,22 +46,22 @@ public class ProxyAccess {
         assertTrue(proxyClass.getModule() == module);
 
         if (module != null) {
-            proxyClass = Proxy.getProxyClass(module, interfaces);
+            proxyClass = Proxy.getModuleProxyClass(module, interfaces);
             assertTrue(proxyClass.getModule() == module);
         }
     }
 
     static void testModuleProxyClass(Module module, Class<?>... interfaces) {
-        Class<?> proxyClass = Proxy.getProxyClass(module, interfaces);
+        Class<?> proxyClass = Proxy.getModuleProxyClass(module, interfaces);
         assertTrue(proxyClass.getModule() == module);
 
-        Object proxy = Proxy.newProxyInstance(module, handler, interfaces);
+        Object proxy = Proxy.newModuleProxyInstance(module, handler, interfaces);
         assertTrue(proxy.getClass().getModule() == module);
     }
 
     static void testInaccessible(Module module, Class<?>... interfaces) {
         try {
-            Class<?> proxyClass = Proxy.getProxyClass(module, interfaces);
+            Class<?> proxyClass = Proxy.getModuleProxyClass(module, interfaces);
             expectedIllegalArgumentException();
         } catch (IllegalArgumentException e) {};
     }
