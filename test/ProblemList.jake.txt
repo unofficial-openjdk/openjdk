@@ -3,6 +3,10 @@
 # A temporary problem list for issues found in jake 
 #
 ############################################################################
+# jdk_lang use of bootclasspath
+java/lang/invoke/CustomizedLambdaFormTest.java			 generic-all
+java/lang/invoke/ExplicitCastArgumentsTest.java			 generic-all
+java/lang/invoke/VarargsArrayTest.java				 generic-all
 
 # jdk_instrument
 
