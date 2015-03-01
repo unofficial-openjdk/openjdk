@@ -26,7 +26,8 @@ package jdk.jigsaw.module.internal;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.nio.file.Files;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -98,7 +99,20 @@ public class Hasher {
     public static String generate(Path file, String algorithm) {
         try {
             MessageDigest md = MessageDigest.getInstance(algorithm);
-            md.update(Files.readAllBytes(file));
+
+            // Ideally we would just mmap the file but this consumes too much
+            // memory when jlink is running concurrently on very large jmods
+            try (FileChannel fc = FileChannel.open(file)) {
+                ByteBuffer bb = ByteBuffer.allocate(32*1024);
+                int nread;
+                while ((nread = fc.read(bb)) > 0) {
+                    bb.flip();
+                    md.update(bb);
+                    assert bb.remaining() == 0;
+                    bb.clear();
+                }
+            }
+
             byte[] bytes = md.digest();
             return Base64.getEncoder().encodeToString(bytes);
         } catch (NoSuchAlgorithmException e) {
