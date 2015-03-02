@@ -40,8 +40,21 @@ $(eval $(call SetupJavaCompilation,BUILD_JRTFS, \
     SRC := $(JDK_TOPDIR)/src/java.base/share/classes, \
     INCLUDES := $(JIMAGE_PKGS), \
     EXCLUDES := jdk/internal/jimage/concurrent, \
-    BIN := $(SUPPORT_OUTPUTDIR)/jrtfs_classes, \
+    BIN := $(SUPPORT_OUTPUTDIR)/jrtfs_classes))
+
+# Because of the explicit INCLUDES in the compilation setup above, the service provider
+# file will not be copied unless META-INF/services would also be added to the INCLUDES.
+# Adding META-INF/services would include all files in that directory when only the one
+# is needed, which is why this explicit copy is defined instead.
+$(eval $(call SetupCopyFiles,COPY_JIMAGE_SERVICE_PROVIDER, \
+    SRC := $(JDK_TOPDIR)/src/java.base/share/classes, \
+    DEST := $(SUPPORT_OUTPUTDIR)/jrtfs_classes, \
+    FILES := META-INF/services/java.nio.file.spi.FileSystemProvider))
+
+$(eval $(call SetupArchive,BUILD_JRTFS_JAR, \
+    $(BUILD_JRTFS) $(COPY_JIMAGE_SERVICE_PROVIDER), \
+    SRCS := $(SUPPORT_OUTPUTDIR)/jrtfs_classes, \
     JAR := $(SUPPORT_OUTPUTDIR)/jrt-fs.jar, \
     MANIFEST := $(JDK_TOPDIR)/make/data/mainmanifest/manifest.mf))
 
-all: $(BUILD_JRTFS)
+all: $(BUILD_JRTFS_JAR)
