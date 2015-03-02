@@ -2703,8 +2703,14 @@ public abstract class ResourceBundle {
                         } else {
                             // check that the bundle class is accessible to the caller
                             Constructor<?> ctor = bundleClass.getConstructor();
-                            int modifiers = ctor.getModifiers();
-                            Reflection.ensureMemberAccess(caller, bundleClass, null, modifiers);
+
+                            // Temporary hack to skip access check when caller is the base
+                            // module. This will go away when ResourceBundle is updated to
+                            // support resources in named modules.
+                            if (caller.getModule() != Object.class.getModule()) {
+                                int modifiers = ctor.getModifiers();
+                                Reflection.ensureMemberAccess(caller, bundleClass, null, modifiers);
+                            }
 
                             // caller has access so create the bundle
                             AccessController.doPrivileged(new PrivilegedAction<Void>() {
