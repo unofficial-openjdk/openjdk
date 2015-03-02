@@ -45,16 +45,21 @@ import sun.misc.Unsafe;
     static final boolean DUMP_CLASS_FILES;
     static final boolean TRACE_INTERPRETER;
     static final boolean TRACE_METHOD_LINKAGE;
-    static final Integer COMPILE_THRESHOLD;
+    static final int COMPILE_THRESHOLD;
+    static final int DONT_INLINE_THRESHOLD;
+    static final int PROFILE_LEVEL;
+
     static {
-        final Object[] values = { false, false, false, false, null };
+        final Object[] values = new Object[7];
         AccessController.doPrivileged(new PrivilegedAction<Void>() {
                 public Void run() {
                     values[0] = Boolean.getBoolean("java.lang.invoke.MethodHandle.DEBUG_NAMES");
                     values[1] = Boolean.getBoolean("java.lang.invoke.MethodHandle.DUMP_CLASS_FILES");
                     values[2] = Boolean.getBoolean("java.lang.invoke.MethodHandle.TRACE_INTERPRETER");
                     values[3] = Boolean.getBoolean("java.lang.invoke.MethodHandle.TRACE_METHOD_LINKAGE");
-                    values[4] = Integer.getInteger("java.lang.invoke.MethodHandle.COMPILE_THRESHOLD");
+                    values[4] = Integer.getInteger("java.lang.invoke.MethodHandle.COMPILE_THRESHOLD", 0);
+                    values[5] = Integer.getInteger("java.lang.invoke.MethodHandle.DONT_INLINE_THRESHOLD", 30);
+                    values[6] = Integer.getInteger("java.lang.invoke.MethodHandle.PROFILE_LEVEL", 0);
                     return null;
                 }
             });
@@ -63,6 +68,18 @@ import sun.misc.Unsafe;
         TRACE_INTERPRETER         = (Boolean) values[2];
         TRACE_METHOD_LINKAGE      = (Boolean) values[3];
         COMPILE_THRESHOLD         = (Integer) values[4];
+        DONT_INLINE_THRESHOLD     = (Integer) values[5];
+        PROFILE_LEVEL             = (Integer) values[6];
+    }
+
+    /** Tell if any of the debugging switches are turned on.
+     *  If this is the case, it is reasonable to perform extra checks or save extra information.
+     */
+    /*non-public*/ static boolean debugEnabled() {
+        return (DEBUG_METHOD_HANDLE_NAMES |
+                DUMP_CLASS_FILES |
+                TRACE_INTERPRETER |
+                TRACE_METHOD_LINKAGE);
     }
 
     /*non-public*/ static String getNameString(MethodHandle target, MethodType type) {
@@ -93,6 +110,9 @@ import sun.misc.Unsafe;
     }
 
     // handy shared exception makers (they simplify the common case code)
+    /*non-public*/ static InternalError newInternalError(String message) {
+        return new InternalError(message);
+    }
     /*non-public*/ static InternalError newInternalError(String message, Throwable cause) {
         return new InternalError(message, cause);
     }
@@ -114,7 +134,10 @@ import sun.misc.Unsafe;
     /*non-public*/ static RuntimeException newIllegalArgumentException(String message, Object obj, Object obj2) {
         return new IllegalArgumentException(message(message, obj, obj2));
     }
+    /** Propagate unchecked exceptions and errors, but wrap anything checked and throw that instead. */
     /*non-public*/ static Error uncaughtException(Throwable ex) {
+        if (ex instanceof Error)  throw (Error) ex;
+        if (ex instanceof RuntimeException)  throw (RuntimeException) ex;
         throw newInternalError("uncaught exception", ex);
     }
     static Error NYI() {

@@ -678,6 +678,7 @@ abstract class Handshaker {
      */
     ProtocolList getActiveProtocols() {
         if (activeProtocols == null) {
+            boolean enabledSSL20Hello = false;
             ArrayList<ProtocolVersion> protocols = new ArrayList<>(4);
             for (ProtocolVersion protocol : enabledProtocols.collection()) {
                 if (!algorithmConstraints.permits(
@@ -690,6 +691,12 @@ abstract class Handshaker {
 
                     continue;
                 }
+                // Need not to check the SSL20Hello protocol.
+                if (protocol.v == ProtocolVersion.SSL20Hello.v) {
+                    enabledSSL20Hello = true;
+                    continue;
+                }
+
                 boolean found = false;
                 for (CipherSuite suite : enabledCipherSuites.collection()) {
                     if (suite.isAvailable() && suite.obsoleted > protocol.v &&
@@ -716,6 +723,11 @@ abstract class Handshaker {
                         "No available cipher suite for " + protocol);
                 }
             }
+
+            if (!protocols.isEmpty() && enabledSSL20Hello) {
+                protocols.add(ProtocolVersion.SSL20Hello);
+            }
+
             activeProtocols = new ProtocolList(protocols);
         }
 

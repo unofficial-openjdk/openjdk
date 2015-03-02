@@ -62,8 +62,8 @@ import javax.accessibility.*;
  * Please see {@link java.beans.XMLEncoder}.
  *
  * <p>
- * See <a href="http://docs.oracle.com/javase/tutorial/uiswing/components/combobox.html">How to Use Combo Boxes</a>
- * in <a href="http://docs.oracle.com/javase/tutorial/"><em>The Java Tutorial</em></a>
+ * See <a href="https://docs.oracle.com/javase/tutorial/uiswing/components/combobox.html">How to Use Combo Boxes</a>
+ * in <a href="https://docs.oracle.com/javase/tutorial/"><em>The Java Tutorial</em></a>
  * for further information.
  * <p>
  * @see ComboBoxModel
@@ -1308,7 +1308,8 @@ implements ItemSelectable,ListDataListener,ActionListener, Accessible {
      */
     public void actionPerformed(ActionEvent e) {
         ComboBoxEditor editor = getEditor();
-        if ((editor != null) && (e != null) && (editor == e.getSource())) {
+        if ((editor != null) && (e != null) && (editor == e.getSource()
+                || editor.getEditorComponent() == e.getSource())) {
             setPopupVisible(false);
             getModel().setSelectedItem(editor.getItem());
             String oldCommand = getActionCommand();

@@ -360,7 +360,7 @@ public class FileCredentialsCache extends CredentialsCache
         String name;
 
         // The env var can start with TYPE:, we only support FILE: here.
-        // http://docs.oracle.com/cd/E19082-01/819-2252/6n4i8rtr3/index.html
+        // https://docs.oracle.com/cd/E19082-01/819-2252/6n4i8rtr3/index.html
         name = java.security.AccessController.doPrivileged(
                 new java.security.PrivilegedAction<String>() {
             @Override
@@ -402,8 +402,7 @@ public class FileCredentialsCache extends CredentialsCache
             String uidStr = null;
             long uid = 0;
 
-            if (osname.startsWith("SunOS") ||
-                (osname.startsWith("Linux"))) {
+            if (!osname.startsWith("Windows")) {
                 try {
                     Class<?> c = Class.forName
                         ("com.sun.security.auth.module.UnixSystem");

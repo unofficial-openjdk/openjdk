@@ -1,5 +1,5 @@
 '\" t
-.\" Copyright (c) 1994, 2014, Oracle and/or its affiliates. All rights reserved.
+.\" Copyright (c) 1994, 2015, Oracle and/or its affiliates. All rights reserved.
 .\"
 .\" DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 .\"
@@ -23,14 +23,15 @@
 .\"
 .\" Title: java
 .\" Language: English
-.\" Date: 08 August 2014
+.\" Date: 03 March 2015
 .\" SectDesc: Basic Tools
 .\" Software: JDK 8
 .\" Arch: generic
-.\" Part Number: E38207-03
+.\" Part Number: E38207-04
+.\" Doc ID: JSSON
 .\"
 .if n .pl 99999
-.TH "java" "1" "08 August 2014" "JDK 8" "Basic Tools"
+.TH "java" "1" "03 March 2015" "JDK 8" "Basic Tools"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -333,7 +334,6 @@ but uses the full path and file name of the library\&.
 Selects the Java HotSpot Client VM\&. The 64\-bit version of the Java SE Development Kit (JDK) currently ignores this option and instead uses the Server JVM\&.
 .sp
 For default JVM selection, see Server\-Class Machine Detection at
-
 http://docs\&.oracle\&.com/javase/8/docs/technotes/guides/vm/server\-class\&.html
 .RE
 .PP
@@ -550,7 +550,6 @@ Excludes user\-private JREs from the version search\&.
 Selects the Java HotSpot Server VM\&. The 64\-bit version of the JDK supports only the Server VM, so in that case the option is implicit\&.
 .sp
 For default JVM selection, see Server\-Class Machine Detection at
-
 http://docs\&.oracle\&.com/javase/8/docs/technotes/guides/vm/server\-class\&.html
 .RE
 .PP
@@ -772,13 +771,14 @@ to indicate megabytes,
 \fBg\fR
 or
 \fBG\fR
-to indicate gigabytes\&. By default, the value is set to 48 MB:
+to indicate gigabytes\&. The default maximum code cache size is 240 MB; if you disable tiered compilation with the option
+\fB\-XX:\-TieredCompilation\fR, then the default size is 48 MB:
 .sp
 .if n \{\
 .RS 4
 .\}
 .nf
-\fB\-Xmaxjitcodesize=48m\fR
+\fB\-Xmaxjitcodesize=240m\fR
  
 .fi
 .if n \{\
@@ -889,7 +889,9 @@ to indicate gigabytes\&. The default value is chosen at runtime based on system 
 \fB\-Xms\fR
 and
 \fB\-Xmx\fR
-are often set to the same value\&. For more information, see Garbage Collector Ergonomics at http://docs\&.oracle\&.com/javase/8/docs/technotes/guides/vm/gc\-ergonomics\&.html
+are often set to the same value\&. See the section "Ergonomics" in
+\fIJava SE HotSpot Virtual Machine Garbage Collection Tuning Guide\fR
+at http://docs\&.oracle\&.com/javase/8/docs/technotes/guides/vm/gctuning/index\&.html\&.
 .sp
 The following examples show how to set the maximum allowed size of allocated memory to 80 MB using various units:
 .sp
@@ -986,28 +988,30 @@ when the JVM is to be terminated\&.
 .PP
 \-Xshare:\fImode\fR
 .RS 4
-Sets the class data sharing mode\&. Possible
+Sets the class data sharing (CDS) mode\&. Possible
 \fImode\fR
 arguments for this option include the following:
 .PP
 auto
 .RS 4
-Use shared class data if possible\&. This is the default value for Java HotSpot 32\-Bit Client VM\&.
+Use CDS if possible\&. This is the default value for Java HotSpot 32\-Bit Client VM\&.
 .RE
 .PP
 on
 .RS 4
-Require the use of class data sharing\&. Print an error message and exit if class data sharing cannot be used\&.
+Require the use of CDS\&. Print an error message and exit if class data sharing cannot be used\&.
 .RE
 .PP
 off
 .RS 4
-Do not use shared class data\&. This is the default value for Java HotSpot 32\-Bit Server VM, Java HotSpot 64\-Bit Client VM, and Java HotSpot 64\-Bit Server VM\&.
+Do not use CDS\&. This is the default value for Java HotSpot 32\-Bit Server VM, Java HotSpot 64\-Bit Client VM, and Java HotSpot 64\-Bit Server VM\&.
 .RE
 .PP
 dump
 .RS 4
-Manually generate the class data sharing archive\&.
+Manually generate the CDS archive\&. Specify the application class path as described in "Setting the Class Path "\&.
+.sp
+You should regenerate the CDS archive with each new JDK release\&.
 .RE
 .RE
 .PP
@@ -1120,17 +1124,6 @@ Oracle Solaris/i386 (32\-bit): 320 KB
 Oracle Solaris/x64 (64\-bit): 1024 KB
 .RE
 .sp
-.RS 4
-.ie n \{\
-\h'-04'\(bu\h'+03'\c
-.\}
-.el \{\
-.sp -1
-.IP \(bu 2.3
-.\}
-Windows: depends on virtual memory
-.RE
-.sp
 The following examples set the thread stack size to 1024 KB in different units:
 .sp
 .if n \{\
@@ -1172,7 +1165,7 @@ Do not verify the bytecode\&. This reduces startup time and also reduces the pro
 .PP
 remote
 .RS 4
-Verify only those classes that are loaded remotely over the network\&. This is the default behavior if you do not specify the
+Verify those classes that are not loaded by the bootstrap class loader\&. This is the default behavior if you do not specify the
 \fB\-Xverify\fR
 option\&.
 .RE
@@ -1185,6 +1178,65 @@ Verify all classes\&.
 .SS "Advanced Runtime Options"
 .PP
 These options control the runtime behavior of the Java HotSpot VM\&.
+.PP
+\-XX:+CheckEndorsedAndExtDirs
+.RS 4
+Enables the option to prevent the
+\fBjava\fR
+command from running a Java application if it uses the endorsed\-standards override mechanism or the extension mechanism\&. This option checks if an application is using one of these mechanisms by checking the following:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+The
+\fBjava\&.ext\&.dirs\fR
+or
+\fBjava\&.endorsed\&.dirs\fR
+system property is set\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+The
+\fBlib/endorsed\fR
+directory exists and is not empty\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+The
+\fBlib/ext\fR
+directory contains any JAR files other than those of the JDK\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+The system\-wide platform\-specific extension directory contains any JAR files\&.
+.RE
+.RE
 .PP
 \-XX:+DisableAttachMechanism
 .RS 4
@@ -1238,7 +1290,7 @@ Enables automatic failover to the old verifier when the new type checker fails\&
 .PP
 \-XX:LargePageSizeInBytes=\fIsize\fR
 .RS 4
-Sets the maximum size (in bytes) for large pages used for Java heap\&. The
+On Solaris, sets the maximum size (in bytes) for large pages used for Java heap\&. The
 \fIsize\fR
 argument must be a power of 2 (2, 4, 8, 16, \&.\&.\&.)\&. Append the letter
 \fBk\fR
@@ -1327,6 +1379,17 @@ In addition to tracking memory usage by JVM subsystems, track memory usage by in
 .RE
 .RE
 .PP
+\-XX:ObjectAlignmentInBytes=\fIalignment\fR
+.RS 4
+Sets the memory alignment of Java objects (in bytes)\&. By default, the value is set to 8 bytes\&. The specified value should be a power of two, and must be within the range of 8 and 256 (inclusive)\&. This option makes it possible to use compressed pointers with large Java heap sizes\&.
+.sp
+The heap size limit in bytes is calculated as:
+.sp
+\fB4GB * ObjectAlignmentInBytes\fR
+.sp
+Note: As the alignment value increases, the unused space between objects will also increase\&. As a result, you may not realize any benefits from using compressed pointers with large Java heap sizes\&.
+.RE
+.PP
 \-XX:OnError=\fIstring\fR
 .RS 4
 Sets a custom command or a series of semicolon\-separated commands to run when an irrecoverable error occurs\&. If the string contains spaces, then it must be enclosed in quotation marks\&.
@@ -1358,6 +1421,28 @@ Sets a custom command or a series of semicolon\-separated commands to run when a
 exception is first thrown\&. If the string contains spaces, then it must be enclosed in quotation marks\&. For an example of a command string, see the description of the
 \fB\-XX:OnError\fR
 option\&.
+.RE
+.PP
+\-XX:+PerfDataSaveToFile
+.RS 4
+If enabled, saves
+jstat(1) binary data when the Java application exits\&. This binary data is saved in a file named
+\fBhsperfdata_\fR\fI<pid>\fR, where
+\fI<pid>\fR
+is the process identifier of the Java application you ran\&. Use
+\fBjstat\fR
+to display the performance data contained in this file as follows:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+\fBjstat \-class file:///\fR\fB\fI<path>\fR\fR\fB/hsperfdata_\fR\fB\fI<pid>\fR\fR
+\fBjstat \-gc file:///\fR\fB\fI<path>\fR\fR\fB/hsperfdata_\fR\fB\fI<pid>\fR\fR
+.fi
+.if n \{\
+.RE
+.\}
 .RE
 .PP
 \-XX:+PrintCommandLineFlags
@@ -1463,17 +1548,6 @@ Oracle Solaris/i386 (32\-bit): 320 KB
 Oracle Solaris/x64 (64\-bit): 1024 KB
 .RE
 .sp
-.RS 4
-.ie n \{\
-\h'-04'\(bu\h'+03'\c
-.\}
-.el \{\
-.sp -1
-.IP \(bu 2.3
-.\}
-Windows: depends on virtual memory
-.RE
-.sp
 The following examples show how to set the thread stack size to 1024 KB in different units:
 .sp
 .if n \{\
@@ -1537,13 +1611,27 @@ By default, this option is enabled\&.
 \-XX:\-UseCompressedOops
 .RS 4
 Disables the use of compressed pointers\&. By default, this option is enabled, and compressed pointers are used when Java heap sizes are less than 32 GB\&. When this option is enabled, object references are represented as 32\-bit offsets instead of 64\-bit pointers, which typically increases performance when running the application with Java heap sizes less than 32 GB\&. This option works only for 64\-bit JVMs\&.
+.sp
+It is also possible to use compressed pointers when Java heap sizes are greater than 32GB\&. See the
+\fB\-XX:ObjectAlignmentInBytes\fR
+option\&.
 .RE
 .PP
-\-XX:\-UseLargePages
+\-XX:+UseHugeTLBFS
 .RS 4
-Disables the use of large page memory\&. This option is enabled by default\&.
+This option for Linux is the equivalent of specifying
+\fB\-XX:+UseLargePages\fR\&. This option is disabled by default\&. This option pre\-allocates all large pages up\-front, when memory is reserved; consequently the JVM cannot dynamically grow or shrink large pages memory areas; see
+\fB\-XX:UseTransparentHugePages\fR
+if you want this behavior\&.
 .sp
-For more information, see Java Support for Large Memory Pages at http://www\&.oracle\&.com/technetwork/java/javase/tech/largememory\-jsp\-137182\&.html
+For more information, see "Large Pages"\&.
+.RE
+.PP
+\-XX:+UseLargePages
+.RS 4
+Enables the use of large page memory\&. By default, this option is disabled and large page memory is not used\&.
+.sp
+For more information, see "Large Pages"\&.
 .RE
 .PP
 \-XX:+UseMembar
@@ -1561,6 +1649,13 @@ directories\&. To disable the
 \fBperfdata\fR
 feature, specify
 \fB\-XX:\-UsePerfData\fR\&.
+.RE
+.PP
+\-XX:+UseTransparentHugePages
+.RS 4
+On Linux, enables the use of large pages that can dynamically grow or shrink\&. This option is disabled by default\&. You may encounter performance problems with transparent huge pages as the OS moves other pages around to create huge pages; this option is made available for experimentation\&.
+.sp
+For more information, see "Large Pages"\&.
 .RE
 .PP
 \-XX:+AllowUserSignalHandlers
@@ -2041,7 +2136,8 @@ Although wildcards are not supported, you can specify only the class or package 
 .PP
 \-XX:CompileThreshold=\fIinvocations\fR
 .RS 4
-Sets the number of interpreted method invocations before compilation\&. By default, in the server JVM, the JIT compiler performs 10,000 interpreted method invocations to gather information for efficient compilation\&. For the client JVM, the default setting is 1,500 invocations\&. The following example shows how to set the number of interpreted method invocations to 5,000:
+Sets the number of interpreted method invocations before compilation\&. By default, in the server JVM, the JIT compiler performs 10,000 interpreted method invocations to gather information for efficient compilation\&. For the client JVM, the default setting is 1,500 invocations\&. This option is ignored when tiered compilation is enabled; see the option
+\fB\-XX:+TieredCompilation\fR\&. The following example shows how to set the number of interpreted method invocations to 5,000:
 .sp
 .if n \{\
 .RS 4
@@ -2078,7 +2174,7 @@ to indicate megabytes,
 \fBg\fR
 or
 \fBG\fR
-to indicate gigabytes\&. The default value is set to 500 KB\&. The following example shows how to set the initial code cache size to 32 KB:
+to indicate gigabytes\&. The default value is set to 500 KB\&. The initial code cache size should be not less than the system\*(Aqs minimal memory page size\&. The following example shows how to set the initial code cache size to 32 KB:
 .sp
 .if n \{\
 .RS 4
@@ -2274,13 +2370,29 @@ to indicate megabytes,
 \fBg\fR
 or
 \fBG\fR
-to indicate gigabytes\&. This option is equivalent to
+to indicate gigabytes\&. The default maximum code cache size is 240 MB; if you disable tiered compilation with the option
+\fB\-XX:\-TieredCompilation\fR, then the default size is 48 MB\&. This option has a limit of 2 GB; otherwise, an error is generated\&. The maximum code cache size should not be less than the initial code cache size; see the option
+\fB\-XX:InitialCodeCacheSize\fR\&. This option is equivalent to
 \fB\-Xmaxjitcodesize\fR\&.
 .RE
 .PP
-\-XX:+TieredCompilation
+\-XX:RTMAbortRatio=\fIabort_ratio\fR
 .RS 4
-Enables the use of tiered compilation\&. By default, this option is enabled\&. Only the Java HotSpot Server VM supports this option\&.
+The RTM abort ratio is specified as a percentage (%) of all executed RTM transactions\&. If a number of aborted transactions becomes greater than this ratio, then the compiled code will be deoptimized\&. This ratio is used when the
+\fB\-XX:+UseRTMDeopt\fR
+option is enabled\&. The default value of this option is 50\&. This means that the compiled code will be deoptimized if 50% of all transactions are aborted\&.
+.RE
+.PP
+\-XX:RTMRetryCount=\fInumber_of_retries\fR
+.RS 4
+RTM locking code will be retried, when it is aborted or busy, the number of times specified by this option before falling back to the normal locking mechanism\&. The default value for this option is 5\&. The
+\fB\-XX:UseRTMLocking\fR
+option must be enabled\&.
+.RE
+.PP
+\-XX:\-TieredCompilation
+.RS 4
+Disables the use of tiered compilation\&. By default, this option is enabled\&. Only the Java HotSpot Server VM supports this option\&.
 .RE
 .PP
 \-XX:+UseAES
@@ -2319,45 +2431,20 @@ Enables flushing of the code cache before shutting down the compiler\&. This opt
 Enables checking of whether the card is already marked before updating the card table\&. This option is disabled by default and should only be used on machines with multiple sockets, where it will increase performance of Java applications that rely heavily on concurrent operations\&. Only the Java HotSpot Server VM supports this option\&.
 .RE
 .PP
-\-XX:+UseSuperWord
-.RS 4
-Enables the transformation of scalar operations into superword operations\&. This option is enabled by default\&. To disable the transformation of scalar operations into superword operations, specify
-\fB\-XX:\-UseSuperWord\fR\&. Only the Java HotSpot Server VM supports this option\&.
-.RE
-.SS "Experimental JIT Compiler Options"
-.PP
-The options related to the Restricted Transactional Memory (RTM) locking feature in this section are experimental and are not officially supported in Java SE 8u20; you must enable the
-\fB\-XX:+UnlockExperimentalVMOptions\fR
-option to use them\&. These options are only available for the Java HotSpot Server VM on x86 CPUs that support Transactional Synchronization Extensions (TSX)\&.
-.PP
-\-XX:RTMAbortRatio=\fIabort_ratio\fR
-.RS 4
-The RTM abort ratio is specified as a percentage (%) of all executed RTM transactions\&. If a number of aborted transactions becomes greater than this ratio, then the compiled code will be deoptimized\&. This ratio is used when the
-\fB\-XX:+UseRTMDeopt\fR
-option is enabled\&. The default value of this option is 50\&. This means that the compiled code will be deoptimized if 50% of all transactions are aborted\&.
-.RE
-.PP
-\-XX:RTMRetryCount=\fInumber_of_retries\fR
-.RS 4
-RTM locking code will be retried, when it is aborted or busy, the number of times specified by this option before falling back to the normal locking mechanism\&. The default value for this option is 5\&. The
-\fB\-XX:UseRTMLocking\fR
-option must be enabled\&.
-.RE
-.PP
 \-XX:+UseRTMDeopt
 .RS 4
 Auto\-tunes RTM locking depending on the abort ratio\&. This ratio is specified by
 \fB\-XX:RTMAbortRatio\fR
 option\&. If the number of aborted transactions exceeds the abort ratio, then the method containing the lock will be deoptimized and recompiled with all locks as normal locks\&. This option is disabled by default\&. The
-\fB\-XX:UseRTMLocking\fR
+\fB\-XX:+UseRTMLocking\fR
 option must be enabled\&.
 .RE
 .PP
 \-XX:+UseRTMLocking
 .RS 4
-Generate Restricted Transactional Memory (RTM) locking code for all inflated locks, with the normal locking mechanism as the fallback handler\&. This option is disabled by default\&.
+Generate Restricted Transactional Memory (RTM) locking code for all inflated locks, with the normal locking mechanism as the fallback handler\&. This option is disabled by default\&. Options related to RTM are only available for the Java HotSpot Server VM on x86 CPUs that support Transactional Synchronization Extensions (TSX)\&.
 .sp
-RTM is part of Intel\*(Aqs Transactional Synchronization Extensions (TSX), which is an x86 instruction set extension and facilitates the creation of multithreaded applications\&. RTM introduces the new instructions
+RTM is part of Intel\*(Aqs TSX, which is an x86 instruction set extension and facilitates the creation of multithreaded applications\&. RTM introduces the new instructions
 \fBXBEGIN\fR,
 \fBXABORT\fR,
 \fBXEND\fR, and
@@ -2376,6 +2463,52 @@ instruction to check if a set of instructions are being run in a transaction\&.
 A lock on a transaction is inflated when another thread tries to access the same transaction, thereby blocking the thread that did not originally request access to the transaction\&. RTM requires that a fallback set of operations be specified in case a transaction aborts or fails\&. An RTM lock is a lock that has been delegated to the TSX\*(Aqs system\&.
 .sp
 RTM improves performance for highly contended locks with low conflict in a critical region (which is code that must not be accessed by more than one thread concurrently)\&. RTM also improves the performance of coarse\-grain locking, which typically does not perform well in multithreaded applications\&. (Coarse\-grain locking is the strategy of holding locks for long periods to minimize the overhead of taking and releasing locks, while fine\-grained locking is the strategy of trying to achieve maximum parallelism by locking only when necessary and unlocking as soon as possible\&.) Also, for lightly contended locks that are used by different threads, RTM can reduce false cache line sharing, also known as cache line ping\-pong\&. This occurs when multiple threads from different processors are accessing different resources, but the resources share the same cache line\&. As a result, the processors repeatedly invalidate the cache lines of other processors, which forces them to read from main memory instead of their cache\&.
+.RE
+.PP
+\-XX:+UseSHA
+.RS 4
+Enables hardware\-based intrinsics for SHA crypto hash functions for SPARC hardware\&.
+\fBUseSHA\fR
+is used in conjunction with the
+\fBUseSHA1Intrinsics\fR,
+\fBUseSHA256Intrinsics\fR, and
+\fBUseSHA512Intrinsics\fR
+options\&.
+.sp
+The
+\fBUseSHA\fR
+and
+\fBUseSHA*Intrinsics\fR
+flags are enabled by default, and are supported only for Java HotSpot Server VM 64\-bit on SPARC T4 and newer\&.
+.sp
+This feature is only applicable when using the
+\fBsun\&.security\&.provider\&.Sun\fR
+provider for SHA operations\&.
+.sp
+To disable all hardware\-based SHA intrinsics, specify
+\fB\-XX:\-UseSHA\fR\&. To disable only a particular SHA intrinsic, use the appropriate corresponding option\&. For example:
+\fB\-XX:\-UseSHA256Intrinsics\fR\&.
+.RE
+.PP
+\-XX:+UseSHA1Intrinsics
+.RS 4
+Enables intrinsics for SHA\-1 crypto hash function\&.
+.RE
+.PP
+\-XX:+UseSHA256Intrinsics
+.RS 4
+Enables intrinsics for SHA\-224 and SHA\-256 crypto hash functions\&.
+.RE
+.PP
+\-XX:+UseSHA512Intrinsics
+.RS 4
+Enables intrinsics for SHA\-384 and SHA\-512 crypto hash functions\&.
+.RE
+.PP
+\-XX:+UseSuperWord
+.RS 4
+Enables the transformation of scalar operations into superword operations\&. This option is enabled by default\&. To disable the transformation of scalar operations into superword operations, specify
+\fB\-XX:\-UseSuperWord\fR\&. Only the Java HotSpot Server VM supports this option\&.
 .RE
 .SS "Advanced Serviceability Options"
 .PP
@@ -2474,9 +2607,10 @@ is the current Java process identifier\&.
 .PP
 \-XX:+PrintConcurrentLocks
 .RS 4
-Enables printing of j locks after a event\&. By default, this option is disabled\&.
+Enables printing of locks after a event\&. By default, this option is disabled\&.
 .sp
-Enables printing of j\fBava\&.util\&.concurrent\fR
+Enables printing of
+\fBjava\&.util\&.concurrent\fR
 locks after a
 \fBControl+C\fR
 event (\fBSIGTERM\fR)\&. By default, this option is disabled\&.
@@ -2678,7 +2812,9 @@ to indicate megabytes,
 \fBg\fR
 or
 \fBG\fR
-to indicate gigabytes\&. The default value is chosen at runtime based on system configuration\&. For more information, see Garbage Collector Ergonomics at http://docs\&.oracle\&.com/javase/8/docs/technotes/guides/vm/gc\-ergonomics\&.html
+to indicate gigabytes\&. The default value is chosen at runtime based on system configuration\&. See the section "Ergonomics" in
+\fIJava SE HotSpot Virtual Machine Garbage Collection Tuning Guide\fR
+at http://docs\&.oracle\&.com/javase/8/docs/technotes/guides/vm/gctuning/index\&.html\&.
 .sp
 The following examples show how to set the size of allocated memory to 6 MB using various units:
 .sp
@@ -2798,7 +2934,9 @@ to indicate gigabytes\&. The default value is chosen at runtime based on system 
 \fB\-XX:InitialHeapSize\fR
 and
 \fB\-XX:MaxHeapSize\fR
-are often set to the same value\&. For more information, see Garbage Collector Ergonomics at http://docs\&.oracle\&.com/javase/8/docs/technotes/guides/vm/gc\-ergonomics\&.html
+are often set to the same value\&. See the section "Ergonomics" in
+\fIJava SE HotSpot Virtual Machine Garbage Collection Tuning Guide\fR
+at http://docs\&.oracle\&.com/javase/8/docs/technotes/guides/vm/gctuning/index\&.html\&.
 .sp
 The following examples show how to set the maximum allowed size of allocated memory to 80 MB using various units:
 .sp
@@ -3238,6 +3376,13 @@ option was deprecated in JDK 8\&.
 Enables the use of the serial garbage collector\&. This is generally the best choice for small and simple applications that do not require any special functionality from garbage collection\&. By default, this option is disabled and the collector is chosen automatically based on the configuration of the machine and type of the JVM\&.
 .RE
 .PP
+\-XX:+UseSHM
+.RS 4
+On Linux, enables the JVM to use shared memory to setup large pages\&.
+.sp
+For more information, see "Large Pages"\&.
+.RE
+.PP
 \-XX:+UseStringDeduplication
 .RS 4
 Enables string deduplication\&. By default, this option is disabled\&. To use this option, you must enable the garbage\-first (G1) garbage collector\&. See the
@@ -3352,9 +3497,7 @@ Enables caching of commonly allocated strings\&. This option was removed from JD
 .PP
 The following examples show how to use experimental tuning flags to either optimize throughput or to provide lower response time\&.
 .PP
-\fBExample 1\fR
-.br
-Tuning for Higher Throughput
+\fBExample 1 \fRTuning for Higher Throughput
 .RS 4
 .sp
 .if n \{\
@@ -3369,9 +3512,7 @@ Tuning for Higher Throughput
 .\}
 .RE
 .PP
-\fBExample 2\fR
-.br
-Tuning for Lower Response Time
+\fBExample 2 \fRTuning for Lower Response Time
 .RS 4
 .sp
 .if n \{\
@@ -3384,6 +3525,195 @@ Tuning for Lower Response Time
 .if n \{\
 .RE
 .\}
+.RE
+.SH "LARGE PAGES"
+.PP
+Also known as huge pages, large pages are memory pages that are significantly larger than the standard memory page size (which varies depending on the processor and operating system)\&. Large pages optimize processor Translation\-Lookaside Buffers\&.
+.PP
+A Translation\-Lookaside Buffer (TLB) is a page translation cache that holds the most\-recently used virtual\-to\-physical address translations\&. TLB is a scarce system resource\&. A TLB miss can be costly as the processor must then read from the hierarchical page table, which may require multiple memory accesses\&. By using a larger memory page size, a single TLB entry can represent a larger memory range\&. There will be less pressure on TLB, and memory\-intensive applications may have better performance\&.
+.PP
+However, large pages page memory can negatively affect system performance\&. For example, when a large mount of memory is pinned by an application, it may create a shortage of regular memory and cause excessive paging in other applications and slow down the entire system\&. Also, a system that has been up for a long time could produce excessive fragmentation, which could make it impossible to reserve enough large page memory\&. When this happens, either the OS or JVM reverts to using regular pages\&.
+.SS "Large Pages Support"
+.PP
+Solaris and Linux support large pages\&.
+.sp
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+\fBSolaris\fR
+.RS 4
+.PP
+Solaris 9 and later include Multiple Page Size Support (MPSS); no additional configuration is necessary\&. See http://www\&.oracle\&.com/technetwork/server\-storage/solaris10/overview/solaris9\-features\-scalability\-135663\&.html\&.
+.RE
+.sp
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+\fBLinux\fR
+.RS 4
+.PP
+The 2\&.6 kernel supports large pages\&. Some vendors have backported the code to their 2\&.4\-based releases\&. To check if your system can support large page memory, try the following:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+\fB# cat /proc/meminfo | grep Huge\fR
+\fBHugePages_Total: 0\fR
+\fBHugePages_Free: 0\fR
+\fBHugepagesize: 2048 kB\fR
+ 
+.fi
+.if n \{\
+.RE
+.\}
+.PP
+If the output shows the three "Huge" variables, then your system can support large page memory but it needs to be configured\&. If the command prints nothing, then your system does not support large pages\&. To configure the system to use large page memory, login as
+\fBroot\fR, and then follow these steps:
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 1.\h'+01'\c
+.\}
+.el \{\
+.sp -1
+.IP "  1." 4.2
+.\}
+If you are using the option
+\fB\-XX:+UseSHM\fR
+(instead of
+\fB\-XX:+UseHugeTLBFS\fR), then increase the
+\fBSHMMAX\fR
+value\&. It must be larger than the Java heap size\&. On a system with 4 GB of physical RAM (or less), the following will make all the memory sharable:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+\fB# echo 4294967295 > /proc/sys/kernel/shmmax\fR
+ 
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 2.\h'+01'\c
+.\}
+.el \{\
+.sp -1
+.IP "  2." 4.2
+.\}
+If you are using the option
+\fB\-XX:+UseSHM\fR
+or
+\fB\-XX:+UseHugeTLBFS\fR, then specify the number of large pages\&. In the following example, 3 GB of a 4 GB system are reserved for large pages (assuming a large page size of 2048kB, then 3 GB = 3 * 1024 MB = 3072 MB = 3072 * 1024 kB = 3145728 kB and 3145728 kB / 2048 kB = 1536):
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+\fB# echo 1536 > /proc/sys/vm/nr_hugepages\fR
+ 
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.if n \{\
+.sp
+.\}
+.RS 4
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+\fBNote\fR
+.ps -1
+.br
+.TS
+allbox tab(:);
+l.
+T{
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Note that the values contained in
+\fB/proc\fR
+will reset after you reboot your system, so may want to set them in an initialization script (for example,
+\fBrc\&.local\fR
+or
+\fBsysctl\&.conf\fR)\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+If you configure (or resize) the OS kernel parameters
+\fB/proc/sys/kernel/shmmax\fR
+or
+\fB/proc/sys/vm/nr_hugepages\fR, Java processes may allocate large pages for areas in addition to the Java heap\&. These steps can allocate large pages for the following areas:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Java heap
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Code cache
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+The marking bitmap data structure for the parallel GC
+.RE
+.sp
+Consequently, if you configure the
+\fBnr_hugepages\fR
+parameter to the size of the Java heap, then the JVM can fail in allocating the code cache areas on large pages because these areas are quite large in size\&.
+.RE
+T}
+.TE
+.sp 1
+.sp .5v
+.RE
 .RE
 .SH "EXIT STATUS"
 .PP
@@ -3455,6 +3785,17 @@ javah(1)
 .IP \(bu 2.3
 .\}
 jar(1)
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+jstat(1)
 .RE
 .br
 'pl 8.5i
