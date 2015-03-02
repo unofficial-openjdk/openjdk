@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -19,27 +19,23 @@
  * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  * or visit www.oracle.com if you need additional information or have any
  * questions.
- *
  */
 
-#ifndef SHARE_VM_OOPS_OOP_PSGC_INLINE_HPP
-#define SHARE_VM_OOPS_OOP_PSGC_INLINE_HPP
+ /*
+ * @test
+ * @run main/native JniVersion
+ */
+public class JniVersion {
 
-#include "utilities/macros.hpp"
-#if INCLUDE_ALL_GCS
-#include "gc_implementation/parallelScavenge/parallelScavengeHeap.hpp"
-#include "gc_implementation/parallelScavenge/psScavenge.hpp"
-#endif // INCLUDE_ALL_GCS
+    public static final int JNI_VERSION_1_8 = 0x00010008;
 
-// ParallelScavengeHeap methods
+    public static void main(String... args) throws Exception {
+        System.loadLibrary("JniVersion");
+        int res = getJniVersion();
+        if (res < JNI_VERSION_1_8) {
+            throw new Exception("Unexpected value returned from getJniVersion(): 0x" + Integer.toHexString(res));
+        }
+    }
 
-inline void oopDesc::push_contents(PSPromotionManager* pm) {
-  Klass* k = klass();
-  if (!k->oop_is_typeArray()) {
-    // It might contain oops beyond the header, so take the virtual call.
-    k->oop_push_contents(pm, this);
-  }
-  // Else skip it.  The TypeArrayKlass in the header never needs scavenging.
+    static native int getJniVersion();
 }
-
-#endif // SHARE_VM_OOPS_OOP_PSGC_INLINE_HPP
