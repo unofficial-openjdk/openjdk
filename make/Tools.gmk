@@ -134,15 +134,6 @@ TOOL_GENMODULEINFOSOURCE = $(JAVA_SMALL) -Xbootclasspath/p:$(INTERIM_LANGTOOLS_J
     -cp "$(BUILDTOOLS_OUTPUTDIR)/jdk_tools_classes" \
     build.tools.module.GenModuleInfoSource
 
-# Because of the explicit INCLUDES in the compilation setup above, the service provider
-# file will not be copied unless META-INF/services would also be added to the INCLUDES.
-# Adding META-INF/services would include all files in that directory when only the one
-# is needed, which is why this explicit copy is defined instead.
-$(eval $(call SetupCopyFiles,COPY_JIMAGE_SERVICE_PROVIDER, \
-    SRC := $(JDK_TOPDIR)/src/java.base/share/classes, \
-    DEST := $(BUILDTOOLS_OUTPUTDIR)/interim_jimage_classes, \
-    FILES := META-INF/services/java.nio.file.spi.FileSystemProvider))
-
 ##########################################################################################
 
 # Tools needed on solaris because OBJCOPY is broken.
@@ -174,4 +165,3 @@ java-tools: $(BUILD_TOOLS_JDK)
 all: java-tools
 
 endif # _TOOLS_GMK
-
