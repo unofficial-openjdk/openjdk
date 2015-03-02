@@ -31,7 +31,6 @@ import static jdk.nashorn.internal.test.framework.TestConfig.TEST_JS_EXCLUDES_FI
 import static jdk.nashorn.internal.test.framework.TestConfig.TEST_JS_EXCLUDE_LIST;
 import static jdk.nashorn.internal.test.framework.TestConfig.TEST_JS_FRAMEWORK;
 import static jdk.nashorn.internal.test.framework.TestConfig.TEST_JS_ROOTS;
-
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -73,12 +72,14 @@ import jdk.nashorn.internal.test.framework.TestFinder.TestFactory;
  * Parallel test runner runs tests in multiple threads - but avoids any dependency
  * on third-party test framework library such as TestNG.
  */
+@SuppressWarnings("javadoc")
 public class ParallelTestRunner {
 
     // ParallelTestRunner-specific
     private static final String    TEST_JS_THREADS     = "test.js.threads";
     private static final String    TEST_JS_REPORT_FILE = "test.js.report.file";
-    private static final int       THREADS             = Integer.getInteger(TEST_JS_THREADS, Runtime.getRuntime().availableProcessors());
+    // test262 does a lot of eval's and the JVM hates multithreaded class definition, so lower thread count is usually faster.
+    private static final int       THREADS = Integer.getInteger(TEST_JS_THREADS, Runtime.getRuntime().availableProcessors() > 4 ? 4 : 2);
 
     private final List<ScriptRunnable> tests    = new ArrayList<>();
     private final Set<String>      orphans  = new TreeSet<>();
@@ -149,7 +150,7 @@ public class ParallelTestRunner {
         }
 
         @Override
-        protected void log(String msg) {
+        protected void log(final String msg) {
             System.err.println(msg);
         }
 
@@ -235,6 +236,7 @@ public class ParallelTestRunner {
                             outputFile.write(out.toByteArray());
                             errorFile.write(err.toByteArray());
                         }
+                        ex.printStackTrace();
                         throw ex;
                     }
                 }
@@ -245,7 +247,7 @@ public class ParallelTestRunner {
             }
         }
 
-        private void compare(final String outputFileName, final String expected, final boolean compareCompilerMsg) throws IOException {
+        private void compare(final String fileName, final String expected, final boolean compareCompilerMsg) throws IOException {
             final File expectedFile = new File(expected);
 
             BufferedReader expectedReader;
@@ -255,7 +257,7 @@ public class ParallelTestRunner {
                 expectedReader = new BufferedReader(new StringReader(""));
             }
 
-            final BufferedReader actual = new BufferedReader(new InputStreamReader(new FileInputStream(outputFileName)));
+            final BufferedReader actual = new BufferedReader(new InputStreamReader(new FileInputStream(fileName)));
 
             compare(actual, expectedReader, compareCompilerMsg);
         }
@@ -280,6 +282,7 @@ public class ParallelTestRunner {
             } catch (final Throwable ex) {
                 result.exception = ex;
                 result.passed = false;
+                ex.printStackTrace();
             }
             return result;
         }
@@ -306,12 +309,12 @@ public class ParallelTestRunner {
 
         final TestFactory<ScriptRunnable> testFactory = new TestFactory<ScriptRunnable>() {
             @Override
-            public ScriptRunnable createTest(String framework, File testFile, List<String> engineOptions, Map<String, String> testOptions, List<String> arguments) {
+            public ScriptRunnable createTest(final String framework, final File testFile, final List<String> engineOptions, final Map<String, String> testOptions, final List<String> arguments) {
                 return new ScriptRunnable(framework, testFile, engineOptions, testOptions, arguments);
             }
 
             @Override
-            public void log(String msg) {
+            public void log(final String msg) {
                 System.err.println(msg);
             }
         };
@@ -431,7 +434,9 @@ public class ParallelTestRunner {
     public static void main(final String[] args) throws Exception {
         parseArgs(args);
 
-        while(new ParallelTestRunner().run());
+        while (new ParallelTestRunner().run()) {
+            //empty
+        }
     }
 
     private static void parseArgs(final String[] args) {

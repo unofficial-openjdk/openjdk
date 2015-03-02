@@ -28,7 +28,7 @@ package jdk.nashorn.internal.runtime;
 import static jdk.nashorn.internal.runtime.Source.sourceFor;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
-
+import static org.testng.Assert.fail;
 import java.util.Map;
 import jdk.nashorn.internal.objects.Global;
 import jdk.nashorn.internal.runtime.options.Options;
@@ -40,6 +40,7 @@ import org.testng.annotations.Test;
  * @test
  * @run testng jdk.nashorn.internal.runtime.ContextTest
  */
+@SuppressWarnings("javadoc")
 public class ContextTest {
     // basic context eval test
     @Test
@@ -60,6 +61,27 @@ public class ContextTest {
         }
     }
 
+    // Make sure trying to compile an invalid script returns null - see JDK-8046215.
+    @Test
+    public void compileErrorTest() {
+        final Options options = new Options("");
+        final ErrorManager errors = new ErrorManager();
+        final Context cx = new Context(options, errors, Thread.currentThread().getContextClassLoader());
+        final Global oldGlobal = Context.getGlobal();
+        Context.setGlobal(cx.createGlobal());
+        try {
+            final ScriptFunction script = cx.compileScript(sourceFor("<evalCompileErrorTest>", "*/"), Context.getGlobal());
+            if (script != null) {
+                fail("Invalid script compiled without errors");
+            }
+            if (errors.getNumberOfErrors() != 1) {
+                fail("Wrong number of errors: " + errors.getNumberOfErrors());
+            }
+        } finally {
+            Context.setGlobal(oldGlobal);
+        }
+    }
+
     // basic check for JS reflection access - java.util.Map-like access on ScriptObject
     @Test
     public void reflectionTest() {
@@ -74,7 +96,7 @@ public class ContextTest {
             final String code = "var obj = { x: 344, y: 42 }";
             eval(cx, "<reflectionTest>", code);
 
-            final Object obj = cx.getGlobal().get("obj");
+            final Object obj = Context.getGlobal().get("obj");
 
             assertTrue(obj instanceof ScriptObject);
 
@@ -107,7 +129,7 @@ public class ContextTest {
         }
     }
 
-    private Object eval(final Context cx, final String name, final String code) {
+    private static Object eval(final Context cx, final String name, final String code) {
         final Source source = sourceFor(name, code);
         final ScriptObject global = Context.getGlobal();
         final ScriptFunction func = cx.compileScript(source, global);

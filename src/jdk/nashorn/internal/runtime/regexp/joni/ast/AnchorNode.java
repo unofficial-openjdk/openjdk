@@ -21,12 +21,13 @@ package jdk.nashorn.internal.runtime.regexp.joni.ast;
 
 import jdk.nashorn.internal.runtime.regexp.joni.constants.AnchorType;
 
+@SuppressWarnings("javadoc")
 public final class AnchorNode extends Node implements AnchorType {
     public int type;
     public Node target;
     public int charLength;
 
-    public AnchorNode(int type) {
+    public AnchorNode(final int type) {
         this.type = type;
         charLength = -1;
     }
@@ -37,7 +38,7 @@ public final class AnchorNode extends Node implements AnchorType {
     }
 
     @Override
-    protected void setChild(Node newChild) {
+    protected void setChild(final Node newChild) {
         target = newChild;
     }
 
@@ -46,7 +47,7 @@ public final class AnchorNode extends Node implements AnchorType {
         return target;
     }
 
-    public void setTarget(Node tgt) {
+    public void setTarget(final Node tgt) {
         target = tgt;
         tgt.parent = this;
     }
@@ -57,36 +58,68 @@ public final class AnchorNode extends Node implements AnchorType {
     }
 
     @Override
-    public String toString(int level) {
-        StringBuilder value = new StringBuilder();
+    public String toString(final int level) {
+        final StringBuilder value = new StringBuilder();
         value.append("\n  type: " + typeToString());
         value.append("\n  target: " + pad(target, level + 1));
         return value.toString();
     }
 
     public String typeToString() {
-        StringBuilder type = new StringBuilder();
-        if (isType(BEGIN_BUF)) type.append("BEGIN_BUF ");
-        if (isType(BEGIN_LINE)) type.append("BEGIN_LINE ");
-        if (isType(BEGIN_POSITION)) type.append("BEGIN_POSITION ");
-        if (isType(END_BUF)) type.append("END_BUF ");
-        if (isType(SEMI_END_BUF)) type.append("SEMI_END_BUF ");
-        if (isType(END_LINE)) type.append("END_LINE ");
-        if (isType(WORD_BOUND)) type.append("WORD_BOUND ");
-        if (isType(NOT_WORD_BOUND)) type.append("NOT_WORD_BOUND ");
-        if (isType(WORD_BEGIN)) type.append("WORD_BEGIN ");
-        if (isType(WORD_END)) type.append("WORD_END ");
-        if (isType(PREC_READ)) type.append("PREC_READ ");
-        if (isType(PREC_READ_NOT)) type.append("PREC_READ_NOT ");
-        if (isType(LOOK_BEHIND)) type.append("LOOK_BEHIND ");
-        if (isType(LOOK_BEHIND_NOT)) type.append("LOOK_BEHIND_NOT ");
-        if (isType(ANYCHAR_STAR)) type.append("ANYCHAR_STAR ");
-        if (isType(ANYCHAR_STAR_ML)) type.append("ANYCHAR_STAR_ML ");
-        return type.toString();
+        final StringBuilder sb = new StringBuilder();
+        if (isType(BEGIN_BUF)) {
+            sb.append("BEGIN_BUF ");
+        }
+        if (isType(BEGIN_LINE)) {
+            sb.append("BEGIN_LINE ");
+        }
+        if (isType(BEGIN_POSITION)) {
+            sb.append("BEGIN_POSITION ");
+        }
+        if (isType(END_BUF)) {
+            sb.append("END_BUF ");
+        }
+        if (isType(SEMI_END_BUF)) {
+            sb.append("SEMI_END_BUF ");
+        }
+        if (isType(END_LINE)) {
+            sb.append("END_LINE ");
+        }
+        if (isType(WORD_BOUND)) {
+            sb.append("WORD_BOUND ");
+        }
+        if (isType(NOT_WORD_BOUND)) {
+            sb.append("NOT_WORD_BOUND ");
+        }
+        if (isType(WORD_BEGIN)) {
+            sb.append("WORD_BEGIN ");
+        }
+        if (isType(WORD_END)) {
+            sb.append("WORD_END ");
+        }
+        if (isType(PREC_READ)) {
+            sb.append("PREC_READ ");
+        }
+        if (isType(PREC_READ_NOT)) {
+            sb.append("PREC_READ_NOT ");
+        }
+        if (isType(LOOK_BEHIND)) {
+            sb.append("LOOK_BEHIND ");
+        }
+        if (isType(LOOK_BEHIND_NOT)) {
+            sb.append("LOOK_BEHIND_NOT ");
+        }
+        if (isType(ANYCHAR_STAR)) {
+            sb.append("ANYCHAR_STAR ");
+        }
+        if (isType(ANYCHAR_STAR_ML)) {
+            sb.append("ANYCHAR_STAR_ML ");
+        }
+        return sb.toString();
     }
 
-    private boolean isType(int type) {
-        return (this.type & type) != 0;
+    private boolean isType(final int t) {
+        return (this.type & t) != 0;
     }
 
 }

@@ -21,7 +21,6 @@ package jdk.nashorn.internal.runtime.regexp.joni;
 
 import static jdk.nashorn.internal.runtime.regexp.joni.Option.isSingleline;
 import static jdk.nashorn.internal.runtime.regexp.joni.ast.QuantifierNode.isRepeatInfinite;
-
 import jdk.nashorn.internal.runtime.regexp.joni.ast.QuantifierNode;
 import jdk.nashorn.internal.runtime.regexp.joni.constants.AnchorType;
 import jdk.nashorn.internal.runtime.regexp.joni.constants.MetaChar;
@@ -36,7 +35,7 @@ class Lexer extends ScannerSupport {
     protected final Syntax syntax;              // fast access to syntax
     protected final Token token = new Token();  // current token
 
-    protected Lexer(ScanEnvironment env, char[] chars, int p, int end) {
+    protected Lexer(final ScanEnvironment env, final char[] chars, final int p, final int end) {
         super(chars, p, end);
         this.env = env;
         this.syntax = env.syntax;
@@ -48,14 +47,13 @@ class Lexer extends ScannerSupport {
      */
     private int fetchRangeQuantifier() {
         mark();
-        boolean synAllow = syntax.allowInvalidInterval();
+        final boolean synAllow = syntax.allowInvalidInterval();
 
         if (!left()) {
             if (synAllow) {
                 return 1; /* "....{" : OK! */
-            } else {
-                throw new SyntaxException(ERR_END_PATTERN_AT_LEFT_BRACE);
             }
+            throw new SyntaxException(ERR_END_PATTERN_AT_LEFT_BRACE);
         }
 
         if (!synAllow) {
@@ -83,13 +81,15 @@ class Lexer extends ScannerSupport {
             }
         }
 
-        if (!left()) return invalidRangeQuantifier(synAllow);
+        if (!left()) {
+            return invalidRangeQuantifier(synAllow);
+        }
 
         fetch();
         int up;
         int ret = 0;
         if (c == ',') {
-            int prev = p; // ??? last
+            final int prev = p; // ??? last
             up = scanUnsignedNumber();
             if (up < 0) {
                 throw new ValueException(ERR_TOO_BIG_NUMBER_FOR_REPEAT_RANGE);
@@ -99,25 +99,35 @@ class Lexer extends ScannerSupport {
             }
 
             if (p == prev) {
-                if (nonLow) return invalidRangeQuantifier(synAllow);
+                if (nonLow) {
+                    return invalidRangeQuantifier(synAllow);
+                }
                 up = QuantifierNode.REPEAT_INFINITE; /* {n,} : {n,infinite} */
             }
         } else {
-            if (nonLow) return invalidRangeQuantifier(synAllow);
+            if (nonLow) {
+                return invalidRangeQuantifier(synAllow);
+            }
             unfetch();
             up = low; /* {n} : exact n times */
             ret = 2; /* fixed */
         }
 
-        if (!left()) return invalidRangeQuantifier(synAllow);
+        if (!left()) {
+            return invalidRangeQuantifier(synAllow);
+        }
         fetch();
 
         if (syntax.opEscBraceInterval()) {
-            if (c != syntax.metaCharTable.esc) return invalidRangeQuantifier(synAllow);
+            if (c != syntax.metaCharTable.esc) {
+                return invalidRangeQuantifier(synAllow);
+            }
             fetch();
         }
 
-        if (c != '}') return invalidRangeQuantifier(synAllow);
+        if (c != '}') {
+            return invalidRangeQuantifier(synAllow);
+        }
 
         if (!isRepeatInfinite(up) && low > up) {
             throw new ValueException(ERR_UPPER_SMALLER_THAN_LOWER_IN_REPEAT_RANGE);
@@ -130,13 +140,12 @@ class Lexer extends ScannerSupport {
         return ret; /* 0: normal {n,m}, 2: fixed {n} */
     }
 
-    private int invalidRangeQuantifier(boolean synAllow) {
+    private int invalidRangeQuantifier(final boolean synAllow) {
         if (synAllow) {
             restore();
             return 1;
-        } else {
-            throw new SyntaxException(ERR_INVALID_REPEAT_RANGE_PATTERN);
         }
+        throw new SyntaxException(ERR_INVALID_REPEAT_RANGE_PATTERN);
     }
 
     @SuppressWarnings("fallthrough")
@@ -218,35 +227,26 @@ class Lexer extends ScannerSupport {
         }
     }
 
-    private int nameEndCodePoint(int start) {
-        switch(start) {
-        case '<':
-            return '>';
-        case '\'':
-            return '\'';
-        default:
-            return 0;
-        }
-    }
-
-    private void fetchTokenInCCFor_charType(boolean flag, int type) {
+    private void fetchTokenInCCFor_charType(final boolean flag, final int type) {
         token.type = TokenType.CHAR_TYPE;
         token.setPropCType(type);
         token.setPropNot(flag);
     }
 
     private void fetchTokenInCCFor_x() {
-        if (!left()) return;
-        int last = p;
+        if (!left()) {
+            return;
+        }
+        final int last = p;
 
         if (peekIs('{') && syntax.opEscXBraceHex8()) {
             inc();
-            int num = scanUnsignedHexadecimalNumber(8);
+            final int num = scanUnsignedHexadecimalNumber(8);
             if (num < 0) {
                 throw new ValueException(ERR_TOO_BIG_WIDE_CHAR_VALUE);
             }
             if (left()) {
-                int c2 = peek();
+                final int c2 = peek();
                 if (EncodingHelper.isXDigit(c2)) {
                     throw new ValueException(ERR_TOO_LONG_WIDE_CHAR_VALUE);
                 }
@@ -274,8 +274,10 @@ class Lexer extends ScannerSupport {
     }
 
     private void fetchTokenInCCFor_u() {
-        if (!left()) return;
-        int last = p;
+        if (!left()) {
+            return;
+        }
+        final int last = p;
 
         if (syntax.op2EscUHex4()) {
             int num = scanUnsignedHexadecimalNumber(4);
@@ -293,7 +295,7 @@ class Lexer extends ScannerSupport {
     private void fetchTokenInCCFor_digit() {
         if (syntax.opEscOctal3()) {
             unfetch();
-            int last = p;
+            final int last = p;
             int num = scanUnsignedOctalNumber(3);
             if (num < 0) {
                 throw new ValueException(ERR_TOO_BIG_NUMBER);
@@ -329,7 +331,9 @@ class Lexer extends ScannerSupport {
         } else if (c == '-') {
             token.type = TokenType.CC_RANGE;
         } else if (c == syntax.metaCharTable.esc) {
-            if (!syntax.backSlashEscapeInCC()) return token.type;
+            if (!syntax.backSlashEscapeInCC()) {
+                return token.type;
+            }
             if (!left()) {
                 throw new SyntaxException(ERR_END_PATTERN_AT_ESCAPE);
             }
@@ -357,10 +361,14 @@ class Lexer extends ScannerSupport {
                 fetchTokenInCCFor_charType(true, Config.NON_UNICODE_SDW ? CharacterType.S : CharacterType.SPACE);
                 break;
             case 'h':
-                if (syntax.op2EscHXDigit()) fetchTokenInCCFor_charType(false, CharacterType.XDIGIT);
+                if (syntax.op2EscHXDigit()) {
+                    fetchTokenInCCFor_charType(false, CharacterType.XDIGIT);
+                }
                 break;
             case 'H':
-                if (syntax.op2EscHXDigit()) fetchTokenInCCFor_charType(true, CharacterType.XDIGIT);
+                if (syntax.op2EscHXDigit()) {
+                    fetchTokenInCCFor_charType(true, CharacterType.XDIGIT);
+                }
                 break;
             case 'x':
                 fetchTokenInCCFor_x();
@@ -381,7 +389,7 @@ class Lexer extends ScannerSupport {
 
             default:
                 unfetch();
-                int num = fetchEscapedValue();
+                final int num = fetchEscapedValue();
                 if (token.getC() != num) {
                     token.setCode(num);
                     token.type = TokenType.CODE_POINT;
@@ -395,7 +403,7 @@ class Lexer extends ScannerSupport {
         return token.type;
     }
 
-    private void fetchTokenFor_repeat(int lower, int upper) {
+    private void fetchTokenFor_repeat(final int lower, final int upper) {
         token.type = TokenType.OP_REPEAT;
         token.setRepeatLower(lower);
         token.setRepeatUpper(upper);
@@ -418,18 +426,20 @@ class Lexer extends ScannerSupport {
         } // inner switch
     }
 
-    private void fetchTokenFor_anchor(int subType) {
+    private void fetchTokenFor_anchor(final int subType) {
         token.type = TokenType.ANCHOR;
         token.setAnchor(subType);
     }
 
     private void fetchTokenFor_xBrace() {
-        if (!left()) return;
+        if (!left()) {
+            return;
+        }
 
-        int last = p;
+        final int last = p;
         if (peekIs('{') && syntax.opEscXBraceHex8()) {
             inc();
-            int num = scanUnsignedHexadecimalNumber(8);
+            final int num = scanUnsignedHexadecimalNumber(8);
             if (num < 0) {
                 throw new ValueException(ERR_TOO_BIG_WIDE_CHAR_VALUE);
             }
@@ -461,8 +471,10 @@ class Lexer extends ScannerSupport {
     }
 
     private void fetchTokenFor_uHex() {
-        if (!left()) return;
-        int last = p;
+        if (!left()) {
+            return;
+        }
+        final int last = p;
 
         if (syntax.op2EscUHex4()) {
             int num = scanUnsignedHexadecimalNumber(4);
@@ -479,8 +491,8 @@ class Lexer extends ScannerSupport {
 
     private void fetchTokenFor_digit() {
         unfetch();
-        int last = p;
-        int num = scanUnsignedNumber();
+        final int last = p;
+        final int num = scanUnsignedNumber();
         if (num < 0 || num > Config.MAX_BACKREF_NUM) { // goto skip_backref
         } else if (syntax.opDecimalBackref() && (num <= env.numMem || num <= 9)) { /* This spec. from GNU regex */
             if (syntax.strictCheckBackref()) {
@@ -505,7 +517,7 @@ class Lexer extends ScannerSupport {
 
     private void fetchTokenFor_zero() {
         if (syntax.opEscOctal3()) {
-            int last = p;
+            final int last = p;
             int num = scanUnsignedOctalNumber(c == '0' ? 2 : 3);
             if (num < 0) {
                 throw new ValueException(ERR_TOO_BIG_NUMBER);
@@ -562,79 +574,129 @@ class Lexer extends ScannerSupport {
                 switch(c) {
 
                 case '*':
-                    if (syntax.opEscAsteriskZeroInf()) fetchTokenFor_repeat(0, QuantifierNode.REPEAT_INFINITE);
+                    if (syntax.opEscAsteriskZeroInf()) {
+                        fetchTokenFor_repeat(0, QuantifierNode.REPEAT_INFINITE);
+                    }
                     break;
                 case '+':
-                    if (syntax.opEscPlusOneInf()) fetchTokenFor_repeat(1, QuantifierNode.REPEAT_INFINITE);
+                    if (syntax.opEscPlusOneInf()) {
+                        fetchTokenFor_repeat(1, QuantifierNode.REPEAT_INFINITE);
+                    }
                     break;
                 case '?':
-                    if (syntax.opEscQMarkZeroOne()) fetchTokenFor_repeat(0, 1);
+                    if (syntax.opEscQMarkZeroOne()) {
+                        fetchTokenFor_repeat(0, 1);
+                    }
                     break;
                 case '{':
-                    if (syntax.opEscBraceInterval()) fetchTokenFor_openBrace();
+                    if (syntax.opEscBraceInterval()) {
+                        fetchTokenFor_openBrace();
+                    }
                     break;
                 case '|':
-                    if (syntax.opEscVBarAlt()) token.type = TokenType.ALT;
+                    if (syntax.opEscVBarAlt()) {
+                        token.type = TokenType.ALT;
+                    }
                     break;
                 case '(':
-                    if (syntax.opEscLParenSubexp()) token.type = TokenType.SUBEXP_OPEN;
+                    if (syntax.opEscLParenSubexp()) {
+                        token.type = TokenType.SUBEXP_OPEN;
+                    }
                     break;
                 case ')':
-                    if (syntax.opEscLParenSubexp()) token.type = TokenType.SUBEXP_CLOSE;
+                    if (syntax.opEscLParenSubexp()) {
+                        token.type = TokenType.SUBEXP_CLOSE;
+                    }
                     break;
                 case 'w':
-                    if (syntax.opEscWWord()) fetchTokenInCCFor_charType(false, Config.NON_UNICODE_SDW ? CharacterType.W : CharacterType.WORD);
+                    if (syntax.opEscWWord()) {
+                        fetchTokenInCCFor_charType(false, Config.NON_UNICODE_SDW ? CharacterType.W : CharacterType.WORD);
+                    }
                     break;
                 case 'W':
-                    if (syntax.opEscWWord()) fetchTokenInCCFor_charType(true, Config.NON_UNICODE_SDW ? CharacterType.W : CharacterType.WORD);
+                    if (syntax.opEscWWord()) {
+                        fetchTokenInCCFor_charType(true, Config.NON_UNICODE_SDW ? CharacterType.W : CharacterType.WORD);
+                    }
                     break;
                 case 'b':
-                    if (syntax.opEscBWordBound()) fetchTokenFor_anchor(AnchorType.WORD_BOUND);
+                    if (syntax.opEscBWordBound()) {
+                        fetchTokenFor_anchor(AnchorType.WORD_BOUND);
+                    }
                     break;
                 case 'B':
-                    if (syntax.opEscBWordBound()) fetchTokenFor_anchor(AnchorType.NOT_WORD_BOUND);
+                    if (syntax.opEscBWordBound()) {
+                        fetchTokenFor_anchor(AnchorType.NOT_WORD_BOUND);
+                    }
                     break;
                 case '<':
-                    if (Config.USE_WORD_BEGIN_END && syntax.opEscLtGtWordBeginEnd()) fetchTokenFor_anchor(AnchorType.WORD_BEGIN);
+                    if (Config.USE_WORD_BEGIN_END && syntax.opEscLtGtWordBeginEnd()) {
+                        fetchTokenFor_anchor(AnchorType.WORD_BEGIN);
+                    }
                     break;
                 case '>':
-                    if (Config.USE_WORD_BEGIN_END && syntax.opEscLtGtWordBeginEnd()) fetchTokenFor_anchor(AnchorType.WORD_END);
+                    if (Config.USE_WORD_BEGIN_END && syntax.opEscLtGtWordBeginEnd()) {
+                        fetchTokenFor_anchor(AnchorType.WORD_END);
+                    }
                     break;
                 case 's':
-                    if (syntax.opEscSWhiteSpace()) fetchTokenInCCFor_charType(false, Config.NON_UNICODE_SDW ? CharacterType.S : CharacterType.SPACE);
+                    if (syntax.opEscSWhiteSpace()) {
+                        fetchTokenInCCFor_charType(false, Config.NON_UNICODE_SDW ? CharacterType.S : CharacterType.SPACE);
+                    }
                     break;
                 case 'S':
-                    if (syntax.opEscSWhiteSpace()) fetchTokenInCCFor_charType(true, Config.NON_UNICODE_SDW ? CharacterType.S : CharacterType.SPACE);
+                    if (syntax.opEscSWhiteSpace()) {
+                        fetchTokenInCCFor_charType(true, Config.NON_UNICODE_SDW ? CharacterType.S : CharacterType.SPACE);
+                    }
                     break;
                 case 'd':
-                    if (syntax.opEscDDigit()) fetchTokenInCCFor_charType(false, Config.NON_UNICODE_SDW ? CharacterType.D : CharacterType.DIGIT);
+                    if (syntax.opEscDDigit()) {
+                        fetchTokenInCCFor_charType(false, Config.NON_UNICODE_SDW ? CharacterType.D : CharacterType.DIGIT);
+                    }
                     break;
                 case 'D':
-                    if (syntax.opEscDDigit()) fetchTokenInCCFor_charType(true, Config.NON_UNICODE_SDW ? CharacterType.D : CharacterType.DIGIT);
+                    if (syntax.opEscDDigit()) {
+                        fetchTokenInCCFor_charType(true, Config.NON_UNICODE_SDW ? CharacterType.D : CharacterType.DIGIT);
+                    }
                     break;
                 case 'h':
-                    if (syntax.op2EscHXDigit()) fetchTokenInCCFor_charType(false, CharacterType.XDIGIT);
+                    if (syntax.op2EscHXDigit()) {
+                        fetchTokenInCCFor_charType(false, CharacterType.XDIGIT);
+                    }
                     break;
                 case 'H':
-                    if (syntax.op2EscHXDigit()) fetchTokenInCCFor_charType(true, CharacterType.XDIGIT);
+                    if (syntax.op2EscHXDigit()) {
+                        fetchTokenInCCFor_charType(true, CharacterType.XDIGIT);
+                    }
                     break;
                 case 'A':
-                    if (syntax.opEscAZBufAnchor()) fetchTokenFor_anchor(AnchorType.BEGIN_BUF);
+                    if (syntax.opEscAZBufAnchor()) {
+                        fetchTokenFor_anchor(AnchorType.BEGIN_BUF);
+                    }
                     break;
                 case 'Z':
-                    if (syntax.opEscAZBufAnchor()) fetchTokenFor_anchor(AnchorType.SEMI_END_BUF);
+                    if (syntax.opEscAZBufAnchor()) {
+                        fetchTokenFor_anchor(AnchorType.SEMI_END_BUF);
+                    }
                     break;
                 case 'z':
-                    if (syntax.opEscAZBufAnchor()) fetchTokenFor_anchor(AnchorType.END_BUF);
+                    if (syntax.opEscAZBufAnchor()) {
+                        fetchTokenFor_anchor(AnchorType.END_BUF);
+                    }
                     break;
                 case 'G':
-                    if (syntax.opEscCapitalGBeginAnchor()) fetchTokenFor_anchor(AnchorType.BEGIN_POSITION);
+                    if (syntax.opEscCapitalGBeginAnchor()) {
+                        fetchTokenFor_anchor(AnchorType.BEGIN_POSITION);
+                    }
                     break;
                 case '`':
-                    if (syntax.op2EscGnuBufAnchor()) fetchTokenFor_anchor(AnchorType.BEGIN_BUF);
+                    if (syntax.op2EscGnuBufAnchor()) {
+                        fetchTokenFor_anchor(AnchorType.BEGIN_BUF);
+                    }
                     break;
                 case '\'':
-                    if (syntax.op2EscGnuBufAnchor()) fetchTokenFor_anchor(AnchorType.END_BUF);
+                    if (syntax.op2EscGnuBufAnchor()) {
+                        fetchTokenFor_anchor(AnchorType.END_BUF);
+                    }
                     break;
                 case 'x':
                     fetchTokenFor_xBrace();
@@ -659,7 +721,7 @@ class Lexer extends ScannerSupport {
 
                 default:
                     unfetch();
-                    int num = fetchEscapedValue();
+                    final int num = fetchEscapedValue();
 
                     /* set_raw: */
                     if (token.getC() != num) {
@@ -684,22 +746,34 @@ class Lexer extends ScannerSupport {
                 {
                     switch(c) {
                     case '.':
-                        if (syntax.opDotAnyChar()) token.type = TokenType.ANYCHAR;
+                        if (syntax.opDotAnyChar()) {
+                            token.type = TokenType.ANYCHAR;
+                        }
                         break;
                     case '*':
-                        if (syntax.opAsteriskZeroInf()) fetchTokenFor_repeat(0, QuantifierNode.REPEAT_INFINITE);
+                        if (syntax.opAsteriskZeroInf()) {
+                            fetchTokenFor_repeat(0, QuantifierNode.REPEAT_INFINITE);
+                        }
                         break;
                     case '+':
-                        if (syntax.opPlusOneInf()) fetchTokenFor_repeat(1, QuantifierNode.REPEAT_INFINITE);
+                        if (syntax.opPlusOneInf()) {
+                            fetchTokenFor_repeat(1, QuantifierNode.REPEAT_INFINITE);
+                        }
                         break;
                     case '?':
-                        if (syntax.opQMarkZeroOne()) fetchTokenFor_repeat(0, 1);
+                        if (syntax.opQMarkZeroOne()) {
+                            fetchTokenFor_repeat(0, 1);
+                        }
                         break;
                     case '{':
-                        if (syntax.opBraceInterval()) fetchTokenFor_openBrace();
+                        if (syntax.opBraceInterval()) {
+                            fetchTokenFor_openBrace();
+                        }
                         break;
                     case '|':
-                        if (syntax.opVBarAlt()) token.type = TokenType.ALT;
+                        if (syntax.opVBarAlt()) {
+                            token.type = TokenType.ALT;
+                        }
                         break;
 
                     case '(':
@@ -713,9 +787,13 @@ class Lexer extends ScannerSupport {
                                     }
                                     fetch();
                                     if (c == syntax.metaCharTable.esc) {
-                                        if (left()) fetch();
+                                        if (left()) {
+                                            fetch();
+                                        }
                                     } else {
-                                        if (c == ')') break;
+                                        if (c == ')') {
+                                            break;
+                                        }
                                     }
                                 }
                                 continue start; // goto start
@@ -723,19 +801,29 @@ class Lexer extends ScannerSupport {
                             unfetch();
                         }
 
-                        if (syntax.opLParenSubexp()) token.type = TokenType.SUBEXP_OPEN;
+                        if (syntax.opLParenSubexp()) {
+                            token.type = TokenType.SUBEXP_OPEN;
+                        }
                         break;
                     case ')':
-                        if (syntax.opLParenSubexp()) token.type = TokenType.SUBEXP_CLOSE;
+                        if (syntax.opLParenSubexp()) {
+                            token.type = TokenType.SUBEXP_CLOSE;
+                        }
                         break;
                     case '^':
-                        if (syntax.opLineAnchor()) fetchTokenFor_anchor(isSingleline(env.option) ? AnchorType.BEGIN_BUF : AnchorType.BEGIN_LINE);
+                        if (syntax.opLineAnchor()) {
+                            fetchTokenFor_anchor(isSingleline(env.option) ? AnchorType.BEGIN_BUF : AnchorType.BEGIN_LINE);
+                        }
                         break;
                     case '$':
-                        if (syntax.opLineAnchor()) fetchTokenFor_anchor(isSingleline(env.option) ? AnchorType.END_BUF : AnchorType.END_LINE);
+                        if (syntax.opLineAnchor()) {
+                            fetchTokenFor_anchor(isSingleline(env.option) ? AnchorType.END_BUF : AnchorType.END_LINE);
+                        }
                         break;
                     case '[':
-                        if (syntax.opBracketCC()) token.type = TokenType.CC_CC_OPEN;
+                        if (syntax.opBracketCC()) {
+                            token.type = TokenType.CC_CC_OPEN;
+                        }
                         break;
                     case ']':
                         //if (*src > env->pattern)   /* /].../ is allowed. */
@@ -745,7 +833,9 @@ class Lexer extends ScannerSupport {
                         if (Option.isExtend(env.option)) {
                             while (left()) {
                                 fetch();
-                                if (EncodingHelper.isNewLine(c)) break;
+                                if (EncodingHelper.isNewLine(c)) {
+                                    break;
+                                }
                             }
                             continue start; // goto start
                         }
@@ -756,7 +846,10 @@ class Lexer extends ScannerSupport {
                     case '\n':
                     case '\r':
                     case '\f':
-                        if (Option.isExtend(env.option)) continue start; // goto start
+                        if (Option.isExtend(env.option))
+                         {
+                            continue start; // goto start
+                        }
                         break;
 
                     default: // string
@@ -798,11 +891,11 @@ class Lexer extends ScannerSupport {
         }
     }
 
-    protected final void syntaxWarn(String message, char c) {
-        syntaxWarn(message.replace("<%n>", Character.toString(c)));
+    protected final void syntaxWarn(final String message, final char ch) {
+        syntaxWarn(message.replace("<%n>", Character.toString(ch)));
     }
 
-    protected final void syntaxWarn(String message) {
+    protected final void syntaxWarn(final String message) {
         if (Config.USE_WARN) {
             env.reg.warnings.warn(message + ": /" + new String(chars, getBegin(), getEnd()) + "/");
         }

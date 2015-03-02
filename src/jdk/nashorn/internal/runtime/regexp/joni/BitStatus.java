@@ -30,11 +30,12 @@ final class BitStatus {
         return -1;
     }
 
-    public static boolean bsAt(int stats, int n) {
+    public static boolean bsAt(final int stats, final int n) {
         return (n < BIT_STATUS_BITS_NUM ? stats & (1 << n) : (stats & 1)) != 0;
     }
 
-    public static int bsOnAt(int stats, int n) {
+    public static int bsOnAt(final int statsp, final int n) {
+        int stats = statsp;
         if (n < BIT_STATUS_BITS_NUM) {
             stats |= (1 << n);
         } else {
@@ -43,12 +44,7 @@ final class BitStatus {
         return stats;
     }
 
-    public static int bsOnOff(int v, int f, boolean negative) {
-        if (negative) {
-            v &= ~f;
-        } else {
-            v |= f;
-        }
-        return v;
+    public static int bsOnOff(final int v, final int f, final boolean negative) {
+        return negative ? (v & ~f) : (v | f);
     }
 }
