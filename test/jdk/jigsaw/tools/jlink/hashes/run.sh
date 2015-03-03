@@ -63,13 +63,13 @@ rm -rf mods mlib
 mkdir -p mods/m2
 $JAVAC -d mods/m2 `find $TESTSRC/src/m2 -name "*.java"`
 mkdir -p mlib
-$JMOD --class-path mods/m2 --output mlib/m2.jmod
+$JMOD create --class-path mods/m2 mlib/m2.jmod
 
 mkdir -p mods/m1
 $JAVAC -d mods/m1 -cp mods/m2 `find $TESTSRC/src/m1 -name "*.java"`
 mkdir -p mlib
-$JMOD --class-path mods/m1 --output mlib/m1.jmod \
-    --modulepath mlib --hash-dependences m\.*
+$JMOD create --class-path mods/m1 --modulepath mlib --hash-dependences m\.* \
+    mlib/m1.jmod
 
 # check that m1 runs
 $JAVA -mp mlib -m m1/org.m1.Main
@@ -77,7 +77,7 @@ $JAVA -mp mlib -m m1/org.m1.Main
 # compile and create jmod for a new version of m2
 rm -rf mods/m2/* mlib/m2.jmod
 $JAVAC -d mods/m2 `find $TESTSRC/newsrc/m2 -name "*.java"`
-$JMOD --class-path mods/m2 --output mlib/m2.jmod
+$JMOD create --class-path mods/m2 mlib/m2.jmod
 
 # java -m m1 should fail
 set +e

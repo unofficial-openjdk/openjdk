@@ -24,7 +24,6 @@ package tests;
 
 import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -50,6 +49,8 @@ import java.util.stream.Collectors;
  * A generator for jmods, jars and images.
  */
 public class JImageGenerator {
+
+    private static final String CREATE_CMD = "create";
 
     private static final String OUTPUT_OPTION = "--output";
     private static final String MID_OPTION = "--mid";
@@ -155,14 +156,14 @@ public class JImageGenerator {
             throw new Exception("No module for " + module);
         }
         File outDir = createNewFile(images, module, ".image");
-        jdk.jigsaw.tools.jlink.Main.run(optionsJImage(outDir, options, module), new PrintWriter(System.out));
+        jdk.jigsaw.tools.jlink.Main.run(jimageCreateOptions(outDir, options, module), new PrintWriter(System.out));
         if (!outDir.exists() || outDir.list() == null || outDir.list().length == 0) {
             throw new Exception("Error generating jimage, check log file");
         }
         return outDir;
     }
 
-    private String[] optionsJImage(File output, String[] userOptions, String module) {
+    private String[] jimageCreateOptions(File output, String[] userOptions, String module) {
         List<String> opt = new ArrayList<>();
 
         if (userOptions != null) {
@@ -182,10 +183,9 @@ public class JImageGenerator {
         return opt.toArray(options);
     }
 
-    private static String[] optionsJmods(File cp, String main, String id, File outFile) {
+    private static String[] jmodCreateOptions(File cp, String main, String id, File outFile) {
         List<String> opt = new ArrayList<>();
-        opt.add(OUTPUT_OPTION);
-        opt.add(outFile.getAbsolutePath());
+        opt.add(CREATE_CMD);
         if (main != null) {
             opt.add(MAIN_CLASS_OPTION);
             opt.add(main);
@@ -194,6 +194,7 @@ public class JImageGenerator {
         opt.add(id);
         opt.add(CLASS_PATH_OPTION);
         opt.add(cp.getAbsolutePath());
+        opt.add(outFile.getAbsolutePath());
         System.out.println("jmod options " + opt);
         String[] options = new String[opt.size()];
         return opt.toArray(options);
@@ -293,7 +294,8 @@ public class JImageGenerator {
 
     private File buildJModule(String id, String main, File moduleDirectory) {
         File outFile = new File(jmods, id + ".jmod");
-        jdk.jigsaw.tools.jmod.Main.run(optionsJmods(moduleDirectory, main, id, outFile), new PrintWriter(System.out));
+        jdk.jigsaw.tools.jmod.Main.run(jmodCreateOptions(moduleDirectory, main, id, outFile),
+                                       new PrintWriter(System.out));
         return outFile;
     }
 
@@ -351,21 +353,8 @@ public class JImageGenerator {
             JarEntry entry = new JarEntry(fileName);
             entry.setTime(source.lastModified());
             target.putNextEntry(entry);
-            writeFileContent(target, source);
+            Files.copy(source.toPath(), target);
             target.closeEntry();
-        }
-    }
-
-    private static void writeFileContent(JarOutputStream target, File source) throws IOException {
-        try (BufferedInputStream in = new BufferedInputStream(new FileInputStream(source))) {
-            byte[] buffer = new byte[1024];
-            while (true) {
-                int count = in.read(buffer);
-                if (count == -1) {
-                    break;
-                }
-                target.write(buffer, 0, count);
-            }
         }
     }
 
