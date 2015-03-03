@@ -63,6 +63,8 @@ import java.util.jar.JarFile;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
+import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 import jdk.jigsaw.module.ModuleArtifact;
@@ -231,12 +233,6 @@ class JmodTask {
                 }
             }
         },
-        new Option(true, "--output") {
-            void process(JmodTask task, String opt, String arg) throws BadArgs {
-                Path path = Paths.get(arg);
-                task.options.output = path;
-            }
-        },
         new Option(false, "--version") {
             void process(JmodTask task, String opt, String arg) {
                 task.options.version = true;
@@ -270,6 +266,8 @@ class JmodTask {
                      EXIT_ABNORMAL = 4;// terminated abnormally
 
     static class Options {
+        Task task;
+        Path jmodFile;
         boolean help;
         boolean version;
         boolean fullVersion;
@@ -278,11 +276,15 @@ class JmodTask {
         List<Path> configs;
         List<Path> libs;
         ModuleArtifactFinder moduleFinder;
-        Path output;
         String moduleId;
         String mainClass;
         Pattern dependencesToHash;
     }
+
+    enum Task {
+        CREATE,
+        LIST
+    };
 
     int run(String[] args) {
         if (log == null) {
@@ -299,19 +301,18 @@ class JmodTask {
                 return EXIT_OK;
             }
 
-            Path path = options.output;
-            if (path == null)
-                throw new BadArgs("err.output.must.be.specified").showUsage(true);
-            if (Files.exists(path))
-                throw new BadArgs("err.file.already.exists", path);
+            boolean ok;
+            switch (options.task) {
+                case CREATE:
+                    ok = create(options);
+                    break;
+                case LIST:
+                    ok = list(options);
+                    break;
+                default:
+                    throw new BadArgs("err.invalid.task", options.task.name()).showUsage(true);
+            }
 
-            // if storing hashes of dependences then the module path is required
-            if (options.dependencesToHash != null && options.moduleFinder == null)
-                throw new BadArgs("err.modulepath.must.be.specified").showUsage(true);
-
-            // additional option combination validation
-
-            boolean ok = run();
             return ok ? EXIT_OK : EXIT_ERROR;
         } catch (BadArgs e) {
             reportError(e.key, e.args);
@@ -327,9 +328,37 @@ class JmodTask {
         }
     }
 
-    private boolean run() throws IOException {
+    private boolean create(Options options) throws IOException, BadArgs {
+        Path path = options.jmodFile;
+        if (path == null)
+            throw new BadArgs("err.jmod.must.be.specified").showUsage(true);
+        if (Files.exists(path))
+            throw new BadArgs("err.file.already.exists", path);
+
+        // if storing hashes of dependences then the module path is required
+        if (options.dependencesToHash != null && options.moduleFinder == null)
+            throw new BadArgs("err.modulepath.must.be.specified").showUsage(true);
+
         createJmod();
         return true;
+    }
+
+    private boolean list(Options options) throws IOException, BadArgs {
+        Path path = options.jmodFile;
+        if (path == null)
+            throw new BadArgs("err.output.must.be.specified").showUsage(true);
+        if (Files.notExists(path))
+            throw new BadArgs("err.jmod.not.found", path);
+
+        listJmod(path);
+        return true;
+    }
+
+    private void listJmod(Path path) throws IOException {
+        ZipFile zip = new ZipFile(path.toFile());
+
+        // Trivially print the archive entries for now, pending a more complete implementation
+        zip.stream().forEach(e -> log.println(e.getName()));
     }
 
     private Map<String, Path> modulesToPath(Set<ModuleDescriptor> modules) {
@@ -377,7 +406,7 @@ class JmodTask {
 
         // create jmod with temporary name to avoid it being examined
         // when scanning the module path
-        Path target = options.output;
+        Path target = options.jmodFile;
         Path tempTarget = target.resolveSibling(target.getFileName() + ".tmp");
         try (OutputStream out = Files.newOutputStream(tempTarget)) {
             jmod.write(out);
@@ -668,30 +697,56 @@ class JmodTask {
     }
 
     public void handleOptions(String[] args) throws BadArgs {
+        int count = 0;
+        if (args.length == 0) {
+            showHelp();
+            return;
+        }
+
+        String arg = args[count];
+        if (arg.startsWith("-")) {
+            showHelp();
+            return;
+        }
+
+        try {
+            options.task = Enum.valueOf(Task.class, arg.toUpperCase());
+            count++;
+        } catch (IllegalArgumentException e) {
+            throw new BadArgs("err.invalid.task", arg).showUsage(true);
+        }
+
         // process options
-        for (int i=0; i < args.length; i++) {
-            if (args[i].charAt(0) == '-') {
-                String name = args[i];
-                Option option = getOption(name);
-                String param = null;
-                if (option.hasArg) {
-                    if (name.startsWith("--") && name.indexOf('=') > 0) {
-                        param = name.substring(name.indexOf('=') + 1, name.length());
-                    } else if (i + 1 < args.length) {
-                        param = args[++i];
-                    }
-                    if (param == null || param.isEmpty() || param.charAt(0) == '-') {
-                        throw new BadArgs("err.missing.arg", name).showUsage(true);
-                    }
+        for (; count < args.length; count++) {
+            if (args[count].charAt(0) != '-')
+                break;
+
+            String name = args[count];
+            Option option = getOption(name);
+            String param = null;
+            if (option.hasArg) {
+                if (name.startsWith("--") && name.indexOf('=') > 0) {
+                    param = name.substring(name.indexOf('=') + 1, name.length());
+                } else if (count + 1 < args.length) {
+                    param = args[++count];
                 }
-                option.process(this, name, param);
-                if (option.ignoreRest()) {
-                    i = args.length;
+                if (param == null || param.isEmpty() || param.charAt(0) == '-') {
+                    throw new BadArgs("err.missing.arg", name).showUsage(true);
                 }
-            } else {
-                // process rest of the input arguments
-                // ## for now no additional args
             }
+            option.process(this, name, param);
+            if (option.ignoreRest()) {
+                count = args.length;
+            }
+        }
+        try {
+            options.jmodFile = Paths.get(args[count]);
+            count++;
+        } catch (IndexOutOfBoundsException e) {
+            throw new BadArgs("err.jmod.must.be.specified", arg).showUsage(true);
+        }
+        if (args.length > count) {
+            throw new BadArgs("err.unknown.option", args[count+1]).showUsage(true);
         }
     }
 
