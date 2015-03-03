@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,11 +25,12 @@
  * @test
  * @bug 8012447
  * @library /testlibrary /../../test/lib /testlibrary/ctw/src
+ * @modules java.base/sun.misc
  * @build ClassFileInstaller sun.hotspot.tools.ctw.CompileTheWorld sun.hotspot.WhiteBox Foo Bar
  * @run main ClassFileInstaller sun.hotspot.WhiteBox Foo Bar
  *                              sun.hotspot.WhiteBox$WhiteBoxPermission
  * @run main ClassesListTest prepare
- * @run main/othervm/timeout=600 -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -Dsun.hotspot.tools.ctw.logfile=ctw.log -XX:AddModuleExports=java.management/sun.management,java.base/sun.misc sun.hotspot.tools.ctw.CompileTheWorld classes.lst
+ * @run main/othervm/timeout=600 -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -Dsun.hotspot.tools.ctw.logfile=ctw.log sun.hotspot.tools.ctw.CompileTheWorld classes.lst
  * @run main ClassesListTest check ctw.log
  * @summary testing of CompileTheWorld :: list of classes in file
  * @author igor.ignatyev@oracle.com
