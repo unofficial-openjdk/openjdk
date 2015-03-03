@@ -83,7 +83,6 @@ module java.desktop {
     // see make/gensrc/GenModuleInfo.gmk
 
     uses java.awt.im.spi.InputMethodDescriptor;
-    uses javax.imageio.spi.IIOServiceProvider;
     uses javax.imageio.spi.ImageInputStreamSpi;
     uses javax.imageio.spi.ImageOutputStreamSpi;
     uses javax.imageio.spi.ImageReaderSpi;
