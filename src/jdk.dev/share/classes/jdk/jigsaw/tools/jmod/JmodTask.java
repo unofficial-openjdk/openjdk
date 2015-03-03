@@ -699,13 +699,13 @@ class JmodTask {
     public void handleOptions(String[] args) throws BadArgs {
         int count = 0;
         if (args.length == 0) {
-            showHelp();
+            options.help = true;
             return;
         }
 
         String arg = args[count];
         if (arg.startsWith("-")) {
-            showHelp();
+            options.help = true;
             return;
         }
 
