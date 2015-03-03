@@ -25,7 +25,7 @@
  * @test
  * @summary Verify behaviour of Unsafe.get/putDouble
  * @library /testlibrary
- * @run main GetPutDouble
+ * @run main/othervm -XX:AddModuleExports=java.base/sun.misc GetPutDouble
  */
 
 import java.lang.reflect.Field;

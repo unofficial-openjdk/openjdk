@@ -25,7 +25,7 @@
  * @test
  * @summary Verify behaviour of Unsafe.get/putByte
  * @library /testlibrary
- * @run main GetPutByte
+ * @run main/othervm -XX:AddModuleExports=java.base/sun.misc GetPutByte
  */
 
 import java.lang.reflect.Field;

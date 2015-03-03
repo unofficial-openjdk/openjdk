@@ -25,7 +25,7 @@
  * @test
  * @summary Verify behaviour of Unsafe.get/putFloat
  * @library /testlibrary
- * @run main GetPutFloat
+ * @run main/othervm -XX:AddModuleExports=java.base/sun.misc GetPutFloat
  */
 
 import java.lang.reflect.Field;

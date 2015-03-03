@@ -25,7 +25,7 @@
  * @test
  * @summary Verify behaviour of Unsafe.get/putObject
  * @library /testlibrary
- * @run main GetPutObject
+ * @run main/othervm -XX:AddModuleExports=java.base/sun.misc GetPutObject
  */
 
 import java.lang.reflect.Field;
