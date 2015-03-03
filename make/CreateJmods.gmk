@@ -68,9 +68,9 @@ $(IMAGES_OUTPUTDIR)/jmods/$(MODULE).jmod: $(DEPS)
 	$(ECHO) Creating $(notdir $@)
 	$(MKDIR) -p $(@D)
 	$(RM) $@
-	$(JMOD) --mid $(MODULE)@9.0 \
-	    --modulepath $(IMAGES_OUTPUTDIR)/jmods --hash-dependences .* \
-	    --output $@ $(JMOD_FLAGS) 
+	$(JMOD) create --mid $(MODULE)@9.0 \
+	    --modulepath $(IMAGES_OUTPUTDIR)/jmods --hash-dependences '.*' \
+	    $(JMOD_FLAGS) $@
 
 TARGETS += $(IMAGES_OUTPUTDIR)/jmods/$(MODULE).jmod
 
