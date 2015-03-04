@@ -582,7 +582,7 @@ ClassFileStream* ClassPathImageEntry::open_stream(const char* name, TRAPS) {
     if (UsePerfData) {
       ClassLoader::perf_sys_classfile_bytes_read()->inc(size);
     }
-    return new ClassFileStream(buffer, (int)size, (char*)name);  // Resource allocated
+    return new ClassFileStream(buffer, (int)size, _image->name());  // Resource allocated
   }
 
   return NULL;

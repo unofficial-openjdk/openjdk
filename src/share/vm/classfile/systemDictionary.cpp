@@ -1288,27 +1288,30 @@ instanceKlassHandle SystemDictionary::load_instance_class(Symbol* class_name, Ha
       // java.base packages in the boot loader's PackageEntryTable.
       // No class outside of java.base is allowed to be loaded during
       // this bootstrapping window.
-      if (pkg_entry == NULL || pkg_entry->in_unnamed_module()) {
-        // Class is either in the unnamed package or in
-        // a named package within the unnamed module.  Either
-        // case is outside of java.base, do not attempt to
-        // load the class.
-        return nh;
-      } else {
-        // Check that the class' package is defined within java.base.
-        ModuleEntry* mod_entry = pkg_entry->module();
-        Symbol* mod_entry_name = mod_entry->name();
-        if (mod_entry_name->fast_compare(vmSymbols::java_base()) != 0) {
+      if (!DumpSharedSpaces) {
+        if (pkg_entry == NULL || pkg_entry->in_unnamed_module()) {
+          // Class is either in the unnamed package or in
+          // a named package within the unnamed module.  Either
+          // case is outside of java.base, do not attempt to
+          // load the class.
           return nh;
+        } else {
+          // Check that the class' package is defined within java.base.
+          ModuleEntry* mod_entry = pkg_entry->module();
+          Symbol* mod_entry_name = mod_entry->name();
+          if (mod_entry_name->fast_compare(vmSymbols::java_base()) != 0) {
+            return nh;
+          }
         }
       }
     } else {
+      assert(!DumpSharedSpaces, "Archive dumped after module system initialization");
       // After the module system has been initialized, check if the class'
       // package is in a module defined to the boot loader.
       if (pkg_string == NULL || pkg_entry == NULL || pkg_entry->in_unnamed_module()) {
         // Class is either in the unnamed package, in a named package
         // within a module not defined to the boot loader or in a
-        // a named package within the unnamed module.  In all cases
+        // a named package within the unnamed module.  In all cases,
         // limit visibility to search for the class only in the boot
         // loader's append path.
         search_only_bootloader_append = true;
@@ -1317,8 +1320,8 @@ instanceKlassHandle SystemDictionary::load_instance_class(Symbol* class_name, Ha
 
     // Prior to bootstrapping's module initialization, never load a class outside
     // of the boot loader's module path
-    assert(Universe::is_module_initialized() ||
-           (!Universe::is_module_initialized() && !search_only_bootloader_append),
+    assert(Universe::is_module_initialized() || DumpSharedSpaces ||
+           !search_only_bootloader_append,
            "Attempt to load a class outside of boot loader's module path");
 
     // Search the shared system dictionary for classes preloaded into the
