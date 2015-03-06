@@ -291,7 +291,8 @@ final class ProviderConfig {
                     if (debug != null) {
                         debug.println("Found SL Provider named " + p.getName());
                     }
-                    if (p.getName().equals(provName)) {
+                    // ## FIXME: Workaround sign jar verification issue
+                    if (p.getName().equals(provName) || p.getClass().getName().equals(provName)) {
                         if (arguments != null) {
                             if (debug != null) {
                                 debug.println("configure using " + Arrays.deepToString(arguments));
