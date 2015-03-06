@@ -25,6 +25,7 @@
  * @test
  * @bug 6313661
  * @summary Basic known-answer-test for TlsPrf 12
+ * @modules java.base/sun.security.internal.spec
  *
  * Vector obtained from the IETF TLS working group mailing list:
  *

@@ -61,6 +61,7 @@ import sun.security.util.DerInputStream;
  *
  * @author      Steve Hanna
  * @author      Sean Mullan
+ * @modules java.base/sun.security.util
  */
 public final class ValidateNC {
 

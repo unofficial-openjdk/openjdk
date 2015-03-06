@@ -57,6 +57,8 @@ case "$OS" in
     ;;
 esac
 
+${TESTVMOPTS}="${TESTVMOPTS} -XX:AddModuleExports=java.base/sun.security.tools.keytool,java.base/sun.security.util,java.base/sun.security.x509"
+
 ${COMPILEJAVA}${FS}bin${FS}javac ${TESTJAVACOPTS} ${TESTTOOLVMOPTS} -d . -XDignore.symbol.file ${TESTSRC}${FS}KeyToolTest.java || exit 10
 
 echo | ${TESTJAVA}${FS}bin${FS}java ${TESTVMOPTS} -Dfile KeyToolTest

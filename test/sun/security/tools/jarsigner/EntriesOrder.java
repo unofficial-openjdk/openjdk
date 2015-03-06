@@ -26,6 +26,9 @@
  * @bug 8031572
  * @summary jarsigner -verify exits with 0 when a jar file is not properly signed
  * @library /lib/testlibrary
+ * @modules java.base/sun.security.tools.keytool
+ *          jdk.dev/sun.security.tools.jarsigner
+ *          jdk.dev/sun.tools.jar
  * @build jdk.testlibrary.IOUtils
  * @run main EntriesOrder
  */
