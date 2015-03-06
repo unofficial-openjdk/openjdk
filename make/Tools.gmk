@@ -158,6 +158,8 @@ ifeq ($(OPENJDK_TARGET_OS), solaris)
       OBJECT_DIR := $(BUILDTOOLS_OUTPUTDIR)/objs/fix_empty_sec_hdr_flags, \
       OUTPUT_DIR := $(BUILDTOOLS_OUTPUTDIR)/bin, \
       PROGRAM := fix_empty_sec_hdr_flags))
+
+  BUILD_TOOLS_JDK += $(ADD_GNU_DEBUGLINK) $(FIX_EMPTY_SEC_HDR_FLAGS)
 endif
 
 java-tools: $(BUILD_TOOLS_JDK)

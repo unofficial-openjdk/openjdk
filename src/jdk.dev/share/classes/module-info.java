@@ -24,9 +24,7 @@
  */
 
 module jdk.dev {
-    requires java.desktop;
     requires java.xml;
     requires jdk.compiler;
-    exports com.sun.jarsigner;
 }
 

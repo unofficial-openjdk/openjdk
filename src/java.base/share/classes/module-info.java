@@ -105,7 +105,7 @@ module java.base {
         java.sql,
         java.xml,
         jdk.charsets,
-        jdk.dev,
+        jdk.jartool,
         jdk.jconsole,
         jdk.jvmstat,
         jdk.security.auth,
@@ -121,7 +121,7 @@ module java.base {
     exports sun.net.www to
         java.desktop,
         jdk.compiler,
-        jdk.dev;
+        jdk.jartool;
     exports sun.net.www.protocol.http to
         java.security.jgss;
     exports sun.nio.ch to
@@ -167,12 +167,13 @@ module java.base {
         jdk.naming.dns;
     exports sun.security.pkcs to
         jdk.crypto.ec,
-        jdk.dev;
+        jdk.jartool;
     exports sun.security.provider to
         java.rmi,
         java.security.jgss,
         jdk.crypto.pkcs11,
-        jdk.dev,
+        jdk.jartool,
+        jdk.policytool,
         jdk.security.auth;
     exports sun.security.provider.certpath to
         java.naming;
@@ -181,7 +182,7 @@ module java.base {
     exports sun.security.ssl to
         java.security.jgss;
     exports sun.security.tools to
-        jdk.dev;
+        jdk.jartool;
     exports sun.security.util to
         java.desktop,
         java.naming,
@@ -190,13 +191,14 @@ module java.base {
         java.smartcardio,
         jdk.crypto.ec,
         jdk.crypto.pkcs11,
-        jdk.dev,
+        jdk.jartool,
+        jdk.policytool,
         jdk.security.auth;
     exports sun.security.x509 to
         java.naming,
         jdk.crypto.ec,
         jdk.crypto.pkcs11,
-        jdk.dev,
+        jdk.jartool,
         jdk.security.auth;
     exports sun.text to
         java.desktop;
