@@ -260,6 +260,7 @@ CORE_PKGS = \
     javax.xml.stream \
     javax.xml.stream.events \
     javax.xml.stream.util \
+    jdk.jigsaw.module \
     org.ietf.jgss \
     org.omg.CORBA \
     org.omg.CORBA.DynAnyPackage \

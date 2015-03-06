@@ -53,18 +53,22 @@ else
 endif
 
 # Don't include debug info for executables.
-ALL_CMDS_SRC := $(filter-out %.bc %.debuginfo %.diz %.map %.pdb, \
-    $(shell $(FIND) $(SUPPORT_OUTPUTDIR)/modules_cmds -type f -o -type l))
-COPY_CMDS_SRC := $(filter %.cgi, $(ALL_CMDS_SRC))
-STRIP_CMDS_SRC := $(filter-out $(COPY_CMDS_SRC), $(ALL_CMDS_SRC))
+ifneq ($(wildcard $(SUPPORT_OUTPUTDIR)/modules_cmds/$(MODULE)), )
+  ALL_CMDS_SRC := $(filter-out %.bc %.debuginfo %.diz %.map %.pdb, \
+      $(shell $(FIND) $(SUPPORT_OUTPUTDIR)/modules_cmds/$(MODULE) -type f -o -type l))
+  COPY_CMDS_SRC := $(filter %.cgi, $(ALL_CMDS_SRC))
+  STRIP_CMDS_SRC := $(filter-out $(COPY_CMDS_SRC), $(ALL_CMDS_SRC))
+endif
 
 # Make sure symbolic links are copied and not stripped
-COPY_LIBS_SRC := \
-    $(shell $(FIND) $(SUPPORT_OUTPUTDIR)/modules_libs \
-        \( ! -name '*$(SHARED_LIBRARY_SUFFIX)' -type f \) -o -type l)
-STRIP_LIBS_SRC := \
-    $(shell $(FIND) $(SUPPORT_OUTPUTDIR)/modules_libs \
-        -name '*$(SHARED_LIBRARY_SUFFIX)' -type f)
+ifneq ($(wildcard $(SUPPORT_OUTPUTDIR)/modules_libs/$(MODULE)), )
+  COPY_LIBS_SRC := \
+      $(shell $(FIND) $(SUPPORT_OUTPUTDIR)/modules_libs/$(MODULE) \
+          \( ! -name '*$(SHARED_LIBRARY_SUFFIX)' -type f \) -o -type l)
+  STRIP_LIBS_SRC := \
+      $(shell $(FIND) $(SUPPORT_OUTPUTDIR)/modules_libs/$(MODULE) \
+          -name '*$(SHARED_LIBRARY_SUFFIX)' -type f)
+endif
 
 $(eval $(call SetupCopyFiles,STRIP_MODULES_CMDS, \
     SRC := $(SUPPORT_OUTPUTDIR)/modules_cmds, \
