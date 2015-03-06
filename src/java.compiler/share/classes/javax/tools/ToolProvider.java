@@ -27,6 +27,7 @@ package javax.tools;
 
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
+import java.lang.reflect.Constructor;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -151,8 +152,12 @@ public class ToolProvider {
     private <T> T getSystemTool(Class<T> clazz, String name) {
         Class<? extends T> c = getSystemToolClass(clazz, name);
         try {
-            return c.asSubclass(clazz).newInstance();
-        } catch (InstantiationException | IllegalAccessException | RuntimeException | Error e) {
+            Constructor<? extends T> con = c.getConstructor();
+            /* temporary workaround; awaiting tools providing qualified exports to java.compiler */
+            con.setAccessible(true);
+            /* end workaround */
+            return con.newInstance();
+        } catch (ReflectiveOperationException | RuntimeException | Error e) {
             return trace(WARNING, e);
         }
     }
