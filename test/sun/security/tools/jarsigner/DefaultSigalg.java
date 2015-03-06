@@ -29,8 +29,8 @@
  *          java.base/sun.security.tools.keytool
  *          java.base/sun.security.util
  *          java.base/sun.security.x509
- *          jdk.dev/sun.security.tools.jarsigner
- *          jdk.dev/sun.tools.jar
+ *          jdk.jartool/sun.security.tools.jarsigner
+ *          jdk.jartool/sun.tools.jar
  */
 
 import sun.security.pkcs.PKCS7;

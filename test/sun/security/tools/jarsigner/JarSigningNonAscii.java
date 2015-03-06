@@ -25,7 +25,7 @@
  * @test
  * @bug 4924188
  * @summary sign a JAR file that has entry names with non-ASCII characters.
- * @modules jdk.dev/sun.security.tools.jarsigner
+ * @modules jdk.jartool/sun.security.tools.jarsigner
  */
 
 import sun.security.tools.*;
