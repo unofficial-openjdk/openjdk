@@ -28,16 +28,18 @@
 #define EVENT_THREAD_EXIT(thread)
 #define EVENT_THREAD_DESTRUCT(thread)
 
-#define TRACE_INIT_ID(k)
+#define TRACE_INIT_KLASS_ID(k)
+#define TRACE_INIT_MODULE_ID(m)
+#define TRACE_INIT_PACKAGE_ID(p)
 #define TRACE_DATA TraceThreadData
 
 #define TRACE_START() JNI_OK
 #define TRACE_INITIALIZE() JNI_OK
 
-#define TRACE_DEFINE_KLASS_METHODS typedef int ___IGNORED_hs_trace_type1
-#define TRACE_DEFINE_KLASS_TRACE_ID typedef int ___IGNORED_hs_trace_type2
-#define TRACE_DEFINE_OFFSET typedef int ___IGNORED_hs_trace_type3
-#define TRACE_ID_OFFSET in_ByteSize(0); ShouldNotReachHere()
+#define TRACE_DEFINE_TRACE_ID_METHODS typedef int ___IGNORED_hs_trace_type1
+#define TRACE_DEFINE_TRACE_ID_FIELD typedef int ___IGNORED_hs_trace_type2
+#define TRACE_DEFINE_KLASS_TRACE_ID_OFFSET typedef int ___IGNORED_hs_trace_type3
+#define TRACE_KLASS_TRACE_ID_OFFSET in_ByteSize(0); ShouldNotReachHere()
 #define TRACE_TEMPLATES(template)
 #define TRACE_INTRINSICS(do_intrinsic, do_class, do_name, do_signature, do_alias)
 

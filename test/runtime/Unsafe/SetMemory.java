@@ -25,7 +25,7 @@
  * @test
  * @summary Verifies that setMemory works correctly
  * @library /testlibrary
- * @run main SetMemory
+ * @run main/othervm -XX:AddModuleExports=java.base/sun.misc SetMemory
  */
 
 import com.oracle.java.testlibrary.*;

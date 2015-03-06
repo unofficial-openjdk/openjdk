@@ -26,7 +26,7 @@
  * @test
  * @bug 7190310
  * @summary Inlining WeakReference.get(), and hoisting $referent may lead to non-terminating loops
- * @run main/othervm -Xbatch Test7190310_unsafe
+ * @run main/othervm -Xbatch -XX:AddModuleExports=java.base/sun.misc Test7190310_unsafe
  */
 
 import java.lang.ref.*;

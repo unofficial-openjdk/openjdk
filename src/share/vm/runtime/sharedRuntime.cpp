@@ -37,6 +37,8 @@
 #include "interpreter/interpreterRuntime.hpp"
 #include "memory/gcLocker.inline.hpp"
 #include "memory/universe.inline.hpp"
+#include "oops/klass.hpp"
+#include "oops/objArrayKlass.hpp"
 #include "oops/oop.inline.hpp"
 #include "prims/forte.hpp"
 #include "prims/jvmtiExport.hpp"
@@ -1760,28 +1762,57 @@ JRT_ENTRY(void, SharedRuntime::slow_arraycopy_C(oopDesc* src,  jint src_pos,
 }
 JRT_END
 
+// The caller of generate_class_cast_message() (or one of its callers)
+// must use a ResourceMark in order to correctly free the result.
 char* SharedRuntime::generate_class_cast_message(
-    JavaThread* thread, const char* objName) {
+    JavaThread* thread, Klass* caster_klass) {
 
   // Get target class name from the checkcast instruction
   vframeStream vfst(thread, true);
   assert(!vfst.at_end(), "Java frame must exist");
   Bytecode_checkcast cc(vfst.method(), vfst.method()->bcp_from(vfst.bci()));
-  Klass* targetKlass = vfst.method()->constants()->klass_at(
+  Klass* target_klass = vfst.method()->constants()->klass_at(
     cc.index(), thread);
-  return generate_class_cast_message(objName, targetKlass->external_name());
+  return generate_class_cast_message(caster_klass, target_klass);
 }
 
 char* SharedRuntime::generate_class_cast_message(
-    const char* objName, const char* targetKlassName, const char* desc) {
-  size_t msglen = strlen(objName) + strlen(desc) + strlen(targetKlassName) + 1;
+    Klass* caster_klass, Klass* target_klass) {
+
+  const char* caster_klass_name = caster_klass->external_name();
+  Klass* c_klass = caster_klass->oop_is_objArray() ?
+    ObjArrayKlass::cast(caster_klass)->bottom_klass() : caster_klass;
+  ModuleEntry* caster_module;
+  if (c_klass->oop_is_instance()) {
+    caster_module = InstanceKlass::cast(c_klass)->module();
+  } else {
+    caster_module = NULL;
+  }
+  const char* caster_module_name = caster_module == NULL ? "unnamed" :
+    caster_module->name()->as_C_string();
+
+  const char* target_klass_name = target_klass->external_name();
+  Klass* t_klass = target_klass->oop_is_objArray() ?
+    ObjArrayKlass::cast(target_klass)->bottom_klass() : target_klass;
+  ModuleEntry* target_module;
+  if (t_klass->oop_is_instance()) {
+    target_module = InstanceKlass::cast(t_klass)->module();
+  } else {
+    target_module = NULL;
+  }
+  const char* target_module_name = target_module == NULL ? "unnamed" :
+    target_module->name()->as_C_string();
+
+  size_t msglen = strlen(caster_klass_name) + strlen(caster_module_name) +
+     strlen(target_klass_name) + strlen(target_module_name) + 50;
 
   char* message = NEW_RESOURCE_ARRAY(char, msglen);
   if (NULL == message) {
     // Shouldn't happen, but don't cause even more problems if it does
-    message = const_cast<char*>(objName);
+    message = const_cast<char*>(caster_klass_name);
   } else {
-    jio_snprintf(message, msglen, "%s%s%s", objName, desc, targetKlassName);
+    jio_snprintf(message, msglen, "%s (in module: %s) cannot be cast to %s (in module: %s)",
+      caster_klass_name, caster_module_name, target_klass_name, target_module_name);
   }
   return message;
 }

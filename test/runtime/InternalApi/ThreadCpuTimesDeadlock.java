@@ -27,7 +27,7 @@
  * @bug 7196045
  * @bug 8014294
  * @summary Possible JVM deadlock in ThreadTimesClosure when using HotspotInternal non-public API.
- * @run main/othervm -XX:+UsePerfData -Xmx32m ThreadCpuTimesDeadlock
+ * @run main/othervm -XX:+UsePerfData -Xmx32m -XX:AddModuleExports=java.management/sun.management ThreadCpuTimesDeadlock
  */
 
 import java.lang.management.ManagementFactory;

@@ -25,7 +25,7 @@
  * @test
  * @summary Verifies the behaviour of Unsafe.defineClass
  * @library /testlibrary
- * @run main DefineClass
+ * @run main/othervm -XX:AddModuleExports=java.base/sun.misc DefineClass
  */
 
 import java.security.ProtectionDomain;

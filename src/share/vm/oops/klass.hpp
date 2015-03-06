@@ -142,7 +142,7 @@ class Klass : public Metadata {
   markOop  _prototype_header;   // Used when biased locking is both enabled and disabled for this type
   jint     _biased_lock_revocation_count;
 
-  TRACE_DEFINE_KLASS_TRACE_ID;
+  TRACE_DEFINE_TRACE_ID_FIELD;
 
   // Remembered sets support for the oops in the klasses.
   jbyte _modified_oops;             // Card Table Equivalent (YC/CMS support)
@@ -566,7 +566,7 @@ protected:
   jlong last_biased_lock_bulk_revocation_time() { return _last_biased_lock_bulk_revocation_time; }
   void  set_last_biased_lock_bulk_revocation_time(jlong cur_time) { _last_biased_lock_bulk_revocation_time = cur_time; }
 
-  TRACE_DEFINE_KLASS_METHODS;
+  TRACE_DEFINE_TRACE_ID_METHODS;
 
   // garbage collection support
   void oops_do(OopClosure* cl);

@@ -25,7 +25,7 @@
  * @test
  * @summary Make sure pageSize() returns a value that is a power of two
  * @library /testlibrary
- * @run main PageSize
+ * @run main/othervm -XX:AddModuleExports=java.base/sun.misc PageSize
  */
 
 import java.lang.reflect.Field;

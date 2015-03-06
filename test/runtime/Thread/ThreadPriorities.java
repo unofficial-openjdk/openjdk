@@ -28,7 +28,7 @@
  *      whether jstack reports correct priorities for them.
  *
  * @library /testlibrary
- * @run main ThreadPriorities
+ * @run main/othervm -XX:AddModuleExports=java.management/sun.management ThreadPriorities
  */
 
 import java.util.ArrayList;

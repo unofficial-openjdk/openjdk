@@ -25,7 +25,7 @@
  * @test
  * @summary Verify that throwException() can throw an exception
  * @library /testlibrary
- * @run main ThrowException
+ * @run main/othervm -XX:AddModuleExports=java.base/sun.misc ThrowException
  */
 
 import com.oracle.java.testlibrary.*;

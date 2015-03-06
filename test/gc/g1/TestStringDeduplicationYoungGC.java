@@ -27,6 +27,7 @@
  * @bug 8029075
  * @key gc
  * @library /testlibrary
+ * @run main/othervm -XX:AddModuleExports=java.base/sun.misc TestStringDeduplicationYoungGC
  */
 
 public class TestStringDeduplicationYoungGC {

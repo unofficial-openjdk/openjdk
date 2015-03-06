@@ -43,7 +43,7 @@ import sun.misc.Contended;
  * @bug     8003985
  * @summary Support Contended Annotation - JEP 142
  *
- * @run main/othervm -XX:-RestrictContended Basic
+ * @run main/othervm -XX:-RestrictContended -XX:AddModuleExports=java.base/sun.misc Basic
  */
 public class Basic {
 

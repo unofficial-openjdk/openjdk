@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -67,6 +67,13 @@ public:
   }
   static void append_boot_classpath(ClassPathEntry* new_entry) {
     ClassLoader::add_to_list(new_entry);
+    // During jvmti live phase an entry can be appended to the boot
+    // loader's ClassPathEntry instances.  Need to mark the start
+    // of the boot loader's append path in case there was no reason
+    // to mark it initially in setup_bootstrap_search_path.
+    if (ClassLoader::_first_append_entry == NULL) {
+      ClassLoader::set_first_append_entry(new_entry);
+    }
   }
   static void setup_search_paths() {}
 };
