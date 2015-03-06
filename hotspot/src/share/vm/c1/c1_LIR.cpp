@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -67,7 +67,7 @@ FloatRegister LIR_OprDesc::as_double_reg() const {
 
 #endif
 
-#ifdef ARM
+#if defined(ARM) || defined (AARCH64)
 
 FloatRegister LIR_OprDesc::as_float_reg() const {
   return as_FloatRegister(fpu_regnr());
@@ -154,7 +154,11 @@ void LIR_Address::verify() const {
 #endif
 #ifdef _LP64
   assert(base()->is_cpu_register(), "wrong base operand");
+#ifndef AARCH64
   assert(index()->is_illegal() || index()->is_double_cpu(), "wrong index operand");
+#else
+  assert(index()->is_illegal() || index()->is_double_cpu() || index()->is_single_cpu(), "wrong index operand");
+#endif
   assert(base()->type() == T_OBJECT || base()->type() == T_LONG || base()->type() == T_METADATA,
          "wrong type for addresses");
 #else
@@ -1567,6 +1571,11 @@ void LIR_OprDesc::print(outputStream* out) const {
     out->print("fpu%d", fpu_regnr());
   } else if (is_double_fpu()) {
     out->print("fpu%d", fpu_regnrLo());
+#elif defined(AARCH64)
+  } else if (is_single_fpu()) {
+    out->print("fpu%d", fpu_regnr());
+  } else if (is_double_fpu()) {
+    out->print("fpu%d", fpu_regnrLo());
 #elif defined(ARM)
   } else if (is_single_fpu()) {
     out->print("s%d", fpu_regnr());
@@ -2096,8 +2105,14 @@ void LIR_OpProfileCall::print_instr(outputStream* out) const {
 
 // LIR_OpProfileType
 void LIR_OpProfileType::print_instr(outputStream* out) const {
-  out->print("exact = "); exact_klass()->print_name_on(out);
-  out->print("current = "); ciTypeEntries::print_ciklass(out, current_klass());
+  out->print("exact = ");
+  if  (exact_klass() == NULL) {
+    out->print("unknown");
+  } else {
+    exact_klass()->print_name_on(out);
+  }
+  out->print(" current = "); ciTypeEntries::print_ciklass(out, current_klass());
+  out->print(" ");
   mdp()->print(out);          out->print(" ");
   obj()->print(out);          out->print(" ");
   tmp()->print(out);          out->print(" ");

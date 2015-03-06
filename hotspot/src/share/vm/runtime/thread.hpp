@@ -667,6 +667,7 @@ class NamedThread: public Thread {
   ~NamedThread();
   // May only be called once per thread.
   void set_name(const char* format, ...)  ATTRIBUTE_PRINTF(2, 3);
+  void initialize_named_thread();
   virtual bool is_Named_thread() const { return true; }
   virtual char* name() const { return _name == NULL ? (char*)"Unknown Thread" : _name; }
   JavaThread *processed_thread() { return _processed_thread; }
@@ -1023,7 +1024,7 @@ class JavaThread: public Thread {
   address last_Java_pc(void)                     { return _anchor.last_Java_pc(); }
 
   // Safepoint support
-#ifndef PPC64
+#if !(defined(PPC64) || defined(AARCH64))
   JavaThreadState thread_state() const           { return _thread_state; }
   void set_thread_state(JavaThreadState s)       { _thread_state = s;    }
 #else
@@ -1702,6 +1703,9 @@ class JavaThread: public Thread {
 #endif
 #ifdef TARGET_OS_ARCH_linux_ppc
 # include "thread_linux_ppc.hpp"
+#endif
+#ifdef TARGET_OS_ARCH_linux_aarch64
+# include "thread_linux_aarch64.hpp"
 #endif
 #ifdef TARGET_OS_ARCH_aix_ppc
 # include "thread_aix_ppc.hpp"

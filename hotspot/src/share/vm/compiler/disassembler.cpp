@@ -49,6 +49,9 @@
 #ifdef TARGET_ARCH_ppc
 # include "depChecker_ppc.hpp"
 #endif
+#ifdef TARGET_ARCH_aarch64
+# include "depChecker_aarch64.hpp"
+#endif
 #ifdef SHARK
 #include "shark/sharkEntry.hpp"
 #endif
@@ -340,8 +343,8 @@ void decode_env::print_address(address adr) {
     }
 
     BarrierSet* bs = Universe::heap()->barrier_set();
-    if (bs->kind() == BarrierSet::CardTableModRef &&
-        adr == (address)((CardTableModRefBS*)(bs))->byte_map_base) {
+    if (bs->is_a(BarrierSet::CardTableModRef) &&
+        adr == (address)(barrier_set_cast<CardTableModRefBS>(bs)->byte_map_base)) {
       st->print("word_map_base");
       if (WizardMode) st->print(" " INTPTR_FORMAT, (intptr_t)adr);
       return;
