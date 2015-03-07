@@ -112,13 +112,10 @@ module java.xml.bind {
     exports com.sun.xml.internal.org.jvnet.fastinfoset to
         java.xml.ws;
     exports com.sun.xml.internal.org.jvnet.mimepull to
-        java.xml.soap,
         java.xml.ws;
     exports com.sun.xml.internal.org.jvnet.staxex to
-        java.xml.soap,
         java.xml.ws;
     exports com.sun.xml.internal.org.jvnet.staxex.util to
-        java.xml.soap,
         java.xml.ws;
     exports com.sun.xml.internal.txw2 to
         java.xml.ws,
