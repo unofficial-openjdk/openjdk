@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2006, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -456,6 +456,16 @@ public enum Option {
             String key = (eq < 0) ? option : option.substring(0, eq);
             String value = (eq < 0) ? option : option.substring(eq+1);
             helper.put(key, value);
+            return false;
+        }
+    },
+
+    XXADDMODULEEXPORTS("-XX:AddModuleExports=", null, HIDDEN, BASIC) {
+        @Override
+        public boolean process(OptionHelper helper, String option) {
+            String p = option.substring(option.indexOf('=') + 1);
+            String prev = helper.get(XXADDMODULEEXPORTS);
+            helper.put(XXADDMODULEEXPORTS.text, (prev == null) ? p : prev + ' ' + p.trim());
             return false;
         }
     },
