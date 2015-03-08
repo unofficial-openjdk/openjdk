@@ -24,18 +24,8 @@ sun/management/jmxremote/bootstrap/RmiSslBootstrapTest.sh	generic-all
  
 # jdk_jmx
  
-# 8047771
-javax/management/Introspector/AnnotationSecurityTest.java			generic-all
-javax/management/loading/MLetCLR/MLetCommand.java				generic-all
-javax/management/modelmbean/ModelMBeanInfoSupport/GetAllDescriptorsTest.java	generic-all
-javax/management/modelmbean/SimpleModelMBean/SimpleModelMBeanCommand.java	generic-all
-javax/management/remote/mandatory/notif/NotificationEmissionTest.java		generic-all
-
 # 8047789
 javax/management/remote/mandatory/passwordAccessFile/PasswordAccessFileTest.java	generic-all
-javax/management/remote/mandatory/passwordAuthenticator/RMIAltAuthTest.java		generic-all
-javax/management/remote/mandatory/passwordAuthenticator/RMIPasswdAuthTest.java		generic-all
-javax/management/remote/mandatory/subjectDelegation/SubjectDelegation1Test.java		generic-all
 
 ############################################################################
 

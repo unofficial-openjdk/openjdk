@@ -25,6 +25,7 @@
  * @test
  * @bug 6957378
  * @summary Test that a listener can be removed remotely from an MBean that no longer exists.
+ * @modules java.management/com.sun.jmx.remote.internal
  * @author Eamonn McManus
  */
 
