@@ -261,6 +261,11 @@ java.sql.rowset_CLEAN_FILES := $(wildcard \
     $(JDK_TOPDIR)/src/java.sql.rowset/share/classes/javax/sql/rowset/*.properties)
 
 ################################################################################
+# jdk build will generate gensrc/java.management/module-info.java to include
+# custom qualified exports
+
+java.management_EXCLUDE_FILES += $(JDK_TOPDIR)/src/java.management/share/classes/module-info.java
+
 # Exclude building of IIOP transport for RMI Connector
 
 ifeq ($(RMICONNECTOR_IIOP), false)
