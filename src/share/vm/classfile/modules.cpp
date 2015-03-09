@@ -61,7 +61,6 @@ bool Modules::verify_package_name(char *package_name) {
 }
 
 static ModuleEntryTable* get_module_entry_table(Handle h_loader, TRAPS) {
-  h_loader = Handle(THREAD, java_lang_ClassLoader::non_reflection_class_loader(h_loader()));
   // This code can be called during start-up, before the classLoader's classLoader data got
   // created.  So, call register_loader() to make sure the classLoader data gets created.
   ClassLoaderData *loader_cld = SystemDictionary::register_loader(h_loader, CHECK_NULL);
@@ -69,7 +68,6 @@ static ModuleEntryTable* get_module_entry_table(Handle h_loader, TRAPS) {
 }
 
 static PackageEntryTable* get_package_entry_table(Handle h_loader, TRAPS) {
-  h_loader = Handle(THREAD, java_lang_ClassLoader::non_reflection_class_loader(h_loader()));
   // This code can be called during start-up, before the classLoader's classLoader data got
   // created.  So, call register_loader() to make sure the classLoader data gets created.
   ClassLoaderData *loader_cld = SystemDictionary::register_loader(h_loader, CHECK_NULL);
@@ -255,12 +253,12 @@ void Modules::define_module(JNIEnv *env, jobject module, jstring version,
   }
 
   oop loader = java_lang_reflect_Module::loader(jlrM_handle());
-
-  // Make sure loader is not the delegating class loader.
-  assert(loader == java_lang_ClassLoader::non_reflection_class_loader(loader),
-    "Defining a module with delegating class loader");
-
-  Handle h_loader = Handle(loader);
+  // Make sure loader is not the sun.reflect.DelegatingClassLoader.
+  if (loader != java_lang_ClassLoader::non_reflection_class_loader(loader)) {
+    THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(),
+              "Class loader is an invalid delegating class loader");
+  }
+  Handle h_loader = Handle(THREAD, loader);
 
   // Check that loader is a subclass of java.lang.ClassLoader.
   if (loader != NULL && !java_lang_ClassLoader::is_subclass(h_loader->klass())) {
