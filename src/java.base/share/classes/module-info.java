@@ -82,7 +82,7 @@ module java.base {
     exports com.sun.security.ntlm to
         java.security.sasl;
     exports jdk.internal.jimage to
-        jdk.dev;
+        jdk.jlink;
     exports jdk.internal.org.objectweb.asm to
         jdk.scripting.nashorn;
     exports jdk.internal.org.objectweb.asm.commons to
@@ -92,7 +92,7 @@ module java.base {
     exports jdk.internal.org.objectweb.asm.util to
         jdk.scripting.nashorn;
     exports jdk.jigsaw.module.internal to
-        jdk.dev;
+        jdk.jlink;
     exports sun.misc to
         java.corba,
         java.desktop,
