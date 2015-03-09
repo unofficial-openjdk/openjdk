@@ -219,7 +219,7 @@
     </export>
     <export>
       <name>jdk.internal.jimage</name>
-      <to>jdk.dev</to> 
+      <to>jdk.jlink</to> 
     </export>
     <export>
       <name>jdk.internal.org.objectweb.asm</name>
@@ -246,7 +246,7 @@
     </export>
     <export>
       <name>jdk.jigsaw.module.internal</name>
-      <to>jdk.dev</to>
+      <to>jdk.jlink</to>
     </export>
     <export>
       <name>sun.misc</name>
