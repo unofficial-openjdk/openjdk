@@ -25,7 +25,7 @@
  * @test
  * @bug 6887710
  * @summary Verify the impact of sun.misc.JarIndex.metaInfFilenames on ServiceLoader
- * @modules jdk.dev/sun.tools.jar
+ * @modules jdk.jartool/sun.tools.jar
  * @run main/othervm Basic
  */
 
