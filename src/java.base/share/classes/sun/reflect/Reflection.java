@@ -258,12 +258,14 @@ public class Reflection {
     }
 
     private static String packageName(Class<?> c) {
-        String name = c.getName();
-        int i = name.lastIndexOf('.');
-        if (i == -1)
-            return "";
-        int start = name.startsWith("[L") ? 2 : 0;
-        return name.substring(start, i);
+        if (c.isArray()) {
+            return packageName(c.getComponentType());
+        } else {
+            String name = c.getName();
+            int dot = name.lastIndexOf('.');
+            if (dot == -1) return "";
+            return name.substring(0, dot);
+        }
     }
 
     /**

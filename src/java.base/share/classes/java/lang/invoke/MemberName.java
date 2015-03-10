@@ -476,8 +476,9 @@ import java.util.Objects;
 
     /** Utility method to query whether this member is accessible from a given lookup class. */
     public boolean isAccessibleFrom(Class<?> lookupClass) {
+        int mode = (ALL_ACCESS|MethodHandles.Lookup.PACKAGE|MethodHandles.Lookup.MODULE);
         return VerifyAccess.isMemberAccessible(this.getDeclaringClass(), this.getDeclaringClass(), flags,
-                                               lookupClass, ALL_ACCESS|MethodHandles.Lookup.PACKAGE);
+                                               lookupClass, mode);
     }
 
     /** Initialize a query.   It is not resolved. */
