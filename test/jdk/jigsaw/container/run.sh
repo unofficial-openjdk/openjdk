@@ -36,9 +36,9 @@ if [ -z "$TESTJAVA" ]; then
 fi
 
 JAVAC="$COMPILEJAVA/bin/javac"
-JAVA="$TESTJAVA/bin/java"
+JAVA="$TESTJAVA/bin/java ${TESTVMOPTS}"
 JAR="$TESTJAVA/bin/jar"
-JMOD="$TESTJAVA/bin/jmod"
+JMOD="$TESTJAVA/bin/jmod ${TESTTOOLVMOPTS}"
 
 rm -rf mlib
 mkdir -p mlib

@@ -36,8 +36,8 @@ if [ -z "$TESTJAVA" ]; then
 fi
 
 JAVAC="$COMPILEJAVA/bin/javac"
-JAVA="$TESTJAVA/bin/java"
-JLINK="$TESTJAVA/bin/jlink"
+JAVA="$TESTJAVA/bin/java ${TESTVMOPTS}"
+JLINK="$TESTJAVA/bin/jlink ${TESTTOOLVMOPTS}"
 
 rm -rf mods
 

@@ -35,8 +35,8 @@ if [ -z "$TESTJAVA" ]; then
 fi
 
 JAVAC="$COMPILEJAVA/bin/javac"
-JAVA="$TESTJAVA/bin/java"
-JMOD="$TESTJAVA/bin/jmod"
+JAVA="$TESTJAVA/bin/java ${TESTVMOPTS}"
+JMOD="$TESTJAVA/bin/jmod ${TESTTOOLVMOPTS}"
 
 rm -rf mods
 mkdir -p mods/test

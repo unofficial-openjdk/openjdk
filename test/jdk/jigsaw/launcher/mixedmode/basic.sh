@@ -34,9 +34,9 @@ if [ -z "$TESTJAVA" ]; then
   TESTCLASSES="`pwd`"
 fi
 
-JAVAC="$COMPILEJAVA/bin/javac"
-JAVA="$TESTJAVA/bin/java"
-JLINK="$TESTJAVA/bin/jlink"
+JAVAC="$COMPILEJAVA/bin/javac ${TESTTOOLVMOPTS}"
+JAVA="$TESTJAVA/bin/java ${TESTVMOPTS}"
+JLINK="$TESTJAVA/bin/jlink ${TESTTOOLVMOPTS}"
 
 rm -rf mods
 mkdir -p mods/lib

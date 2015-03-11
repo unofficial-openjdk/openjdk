@@ -36,7 +36,7 @@ if [ -z "$TESTJAVA" ]; then
 fi
 
 JAVAC="$COMPILEJAVA/bin/javac"
-JAVA="$TESTJAVA/bin/java"
+JAVA="$TESTJAVA/bin/java ${TESTVMOPTS}"
 
 mkdir -p mods/test
 $JAVAC -d mods/test `find $TESTSRC/src/test -name "*.java"`

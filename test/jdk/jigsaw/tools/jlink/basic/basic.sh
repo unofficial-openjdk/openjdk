@@ -54,9 +54,9 @@ esac
 
 JAVAC="$COMPILEJAVA/bin/javac"
 JAR="$COMPILEJAVA/bin/jar"
-JAVA="$TESTJAVA/bin/java"
-JLINK="$TESTJAVA/bin/jlink"
-JMOD="$TESTJAVA/bin/jmod"
+JAVA="$TESTJAVA/bin/java ${TESTVMOPTS}"
+JLINK="$TESTJAVA/bin/jlink ${TESTTOOLVMOPTS}"
+JMOD="$TESTJAVA/bin/jmod ${TESTTOOLVMOPTS}"
 
 rm -rf mods
 mkdir -p mods/test

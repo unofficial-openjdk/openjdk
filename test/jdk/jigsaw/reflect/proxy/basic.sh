@@ -48,7 +48,7 @@ case "$OS" in
 esac
 
 JAVAC="$COMPILEJAVA/bin/javac"
-JAVA="$TESTJAVA/bin/java"
+JAVA="$TESTJAVA/bin/java ${TESTVMOPTS}"
 
 mkdir -p mods/m1
 $JAVAC -d mods/m1 `find $TESTSRC/src/m1 -name "*.java"`
