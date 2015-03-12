@@ -259,6 +259,7 @@ class Arguments : AllStatic {
   static SystemProperty *_java_home;
   static SystemProperty *_java_class_path;
   static SystemProperty *_sun_boot_class_path;
+  static SystemProperty *_jdk_boot_class_path_append;
 
   // temporary: to emit warning if the default ext dirs are not empty.
   // remove this variable when the warning is no longer needed.
@@ -315,7 +316,7 @@ class Arguments : AllStatic {
   // Capture the index location of -Xbootclasspath\a within sysclasspath.
   // Used when setting up the bootstrap search path in order to
   // mark the boot loader's append path observability boundary.
-  static int _bootclasspath_a_index;
+  static int _bootclassloader_append_index;
 
   // -Xoverride flag
   static const char* _override_dir;
@@ -544,8 +545,12 @@ class Arguments : AllStatic {
   static void  set_min_heap_size(uintx v)   { _min_heap_size = v;  }
 
   // -Xbootclasspath/a
-  static int  bootclasspath_a_index()              { return _bootclasspath_a_index; }
-  static void set_bootclasspath_a_index(int value) { _bootclasspath_a_index = value; }
+  static int  bootclassloader_append_index() {
+    return _bootclassloader_append_index;
+  }
+  static void set_bootclassloader_append_index(int value) {
+    _bootclassloader_append_index = value;
+  }
 
   // -Xoverride
   static const char* override_dir()         { return _override_dir; }
@@ -610,8 +615,15 @@ class Arguments : AllStatic {
   static void set_java_home(char *value) { _java_home->set_value(value); }
   static void set_library_path(char *value) { _java_library_path->set_value(value); }
   static void set_ext_dirs(char *value)     { _ext_dirs = os::strdup_check_oom(value); }
-  static void set_sysclasspath(char *value) { _sun_boot_class_path->set_value(value); }
-  static void append_sysclasspath(const char *value) { _sun_boot_class_path->append_value(value); }
+  static void set_jdkbootclasspath_append();
+  static void set_sysclasspath(char *value) {
+    _sun_boot_class_path->set_value(value);
+    set_jdkbootclasspath_append();
+  }
+  static void append_sysclasspath(const char *value) {
+    _sun_boot_class_path->append_value(value);
+    set_jdkbootclasspath_append();
+  }
 
   static char* get_java_home() { return _java_home->value(); }
   static char* get_dll_dir() { return _sun_boot_library_path->value(); }

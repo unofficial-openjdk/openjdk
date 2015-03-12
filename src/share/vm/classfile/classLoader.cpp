@@ -722,7 +722,7 @@ void ClassLoader::setup_search_path(const char *class_path, bool bootstrap_searc
     EXCEPTION_MARK;
     ResourceMark rm(THREAD);
     mark_append_entry = (mark_append_entry ||
-                         (bootstrap_search && (start == Arguments::bootclasspath_a_index())));
+      (bootstrap_search && (start == Arguments::bootclassloader_append_index())));
 
     char* path = NEW_RESOURCE_ARRAY(char, end - start + 1);
     strncpy(path, &class_path[start], end - start);
