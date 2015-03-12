@@ -24,6 +24,7 @@
 /**
  * @test
  * @bug 7177216
+ * @modules jdk.dev/sun.tools.native2ascii
  * @summary resulting file of native2ascii should have normal permission
  */
 
