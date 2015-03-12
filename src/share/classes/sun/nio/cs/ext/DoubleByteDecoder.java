@@ -201,7 +201,6 @@ abstract class DoubleByteDecoder
      * Should be changed by sublasses needing to enforce this
      */
     protected boolean isLegalLeadingByte(int b) {
-        System.out.println("isLegalLeadingByte for :" + b);
         return b <= index1.length &&
           ((index1[b] >> 4) != 0 || (index1[b] & 0xff)  != 0);
 }
