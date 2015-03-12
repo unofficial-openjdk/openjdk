@@ -26,8 +26,8 @@
  * @author Valerie Peng
  * @bug 4716213
  * @bug 4797850
- * @summary Verify that expand(String, boolean) does not encode if
  * @modules java.base/sun.security.util
+ * @summary Verify that expand(String, boolean) does not encode if
  * the value is a valid URI with a scheme (it is already encoded),
  * i.e. avoid double encoding.
  */
