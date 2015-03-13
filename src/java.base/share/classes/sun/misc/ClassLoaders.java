@@ -84,23 +84,9 @@ public class ClassLoaders {
 
         // -Xbootclasspth/a or -javaagent Boot-Class-Path
         URLClassPath bcp = null;
-        String s = System.getProperty("sun.boot.class.path");
-        if (s != null) {
-            // HotSpot currently includes $JAVA_HOME/lib/modules/bootmodules.jimages
-            // in the value of sun.boot.class.path. The BCP is the path elements
-            // that follow it. At some point this system property will be replaced.
-            int index = s.indexOf(BOOT_MODULES);
-            if (index >= 0) {
-                index += BOOT_MODULES.length() + 1;
-                if (index >= s.length()) {
-                    s = null;
-                } else {
-                    s = s.substring(index);
-                }
-            }
-            if (s != null && s.length() > 0)
-                bcp = toURLClassPath(s);
-        }
+        String s = System.getProperty("jdk.boot.class.path.append");
+        if (s != null && s.length() > 0)
+            bcp = toURLClassPath(s);
 
         // we have a class path if -cp is specified or -m is not specified
         URLClassPath ucp = null;
