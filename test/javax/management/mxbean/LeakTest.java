@@ -38,12 +38,14 @@
  * This test can be applied to any jtreg test, not just the MXBean tests.
  */
 
+import java.io.File;
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.file.Paths;
 
 public class LeakTest {
     /* Ideally we would include MXBeanTest in the list of tests, since it
@@ -95,11 +97,15 @@ public class LeakTest {
 
     private static WeakReference<ClassLoader>
             testShadow(Class<?> originalTestClass) throws Exception {
-        URLClassLoader originalLoader =
-                (URLClassLoader) originalTestClass.getClassLoader();
-        URL[] urls = originalLoader.getURLs();
+        String[] cpaths = System.getProperty("test.classes", ".")
+                                .split(File.pathSeparator);
+        URL[] urls = new URL[cpaths.length];
+        for (int i=0; i < cpaths.length; i++) {
+            urls[i] = Paths.get(cpaths[i]).toUri().toURL();
+        }
+
         URLClassLoader shadowLoader =
-                new ShadowClassLoader(urls, originalLoader.getParent());
+                new ShadowClassLoader(urls, originalTestClass.getClassLoader().getParent());
         System.out.println("Shadow loader is " + shadowLoader);
         String className = originalTestClass.getName();
         Class<?> testClass = Class.forName(className, false, shadowLoader);
