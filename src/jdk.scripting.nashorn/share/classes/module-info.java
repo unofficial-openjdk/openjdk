@@ -27,6 +27,8 @@ module jdk.scripting.nashorn {
     requires java.logging;
     requires java.scripting;
 
+    uses jdk.internal.dynalink.linker.GuardingDynamicLinker;
+    uses jdk.nashorn.internal.runtime.CodeStore;
     provides javax.script.ScriptEngineFactory with jdk.nashorn.api.scripting.NashornScriptEngineFactory;
 }
 
