@@ -37,6 +37,7 @@ ifeq ($(OPENJDK_TARGET_OS), solaris)
   JAVA_BASE_MODULEINFO_EXTRAS += -export sun.security.action/jdk.crypto.ucrypto
   JAVA_BASE_MODULEINFO_EXTRAS += -export sun.security.internal.spec/jdk.crypto.ucrypto
   JAVA_BASE_MODULEINFO_EXTRAS += -export sun.security.jca/jdk.crypto.ucrypto
+  JAVA_BASE_MODULEINFO_EXTRAS += -export sun.security.rsa/jdk.crypto.ucrypto 
   JAVA_BASE_MODULEINFO_EXTRAS += -export sun.security.util/jdk.crypto.ucrypto
 endif
 ifeq ($(OPENJDK_TARGET_OS), macosx)
