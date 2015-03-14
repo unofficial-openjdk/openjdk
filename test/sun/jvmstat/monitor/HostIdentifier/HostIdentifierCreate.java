@@ -24,6 +24,7 @@
 /*
  * @test
  * @bug 4990825
+ * @modules jdk.jvmstat/sun.jvmstat.monitor
  * @summary test that HostIdentifier objects get created as expected
  */
 

@@ -26,6 +26,7 @@
  *  @test
  *  @bug        6287579
  *  @summary    SubClasses of ListResourceBundle should fix getContents()
+ *  @modules jdk.dev/sun.tools.native2ascii.resources
  *  @run main ImmutableResourceTest
  *
  *  @author Tim Bell
