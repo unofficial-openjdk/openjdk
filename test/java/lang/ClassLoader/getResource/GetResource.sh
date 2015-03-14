@@ -96,12 +96,7 @@ setup "b"
 cd ${TESTCLASSES}
 DIR=`pwd`
 
-#    Expected    -Xbootclasspath
-#    Location    or -classpath
-runTest "a"      "-Xbootclasspath/p:a"
-runTest "a"      "-Xbootclasspath/p:a${PS}b"
-runTest "b"      "-Xbootclasspath/p:b" 
-runTest "b"      "-Xbootclasspath/p:b${PS}a"
+#    Expected    -classpath
 runTest "a"      -cp a
 runTest "a"      -cp "a${PS}b"
 runTest "b"      -cp b
@@ -109,15 +104,10 @@ runTest "b"      -cp "b${PS}a"
 
 cd ${DIR}/a
 
-runTest "a"      "-Xbootclasspath/p:."
-runTest "b"      "-Xbootclasspath/p:../b" 
-
 # no -classpath
+### FIXME: this looks like a regression in jake
 runTest "a"      -cp "${PS}"                            
 runTest "b"      -cp "../b"                   
-
-# Test empty path in bootclasspath not default to current working directory
-runTest "b"      "-Xbootclasspath/p:${PS}../b" 
 
 # Test empty path in classpath default to current working directory
 runTest "a"      -cp "${PS}../b"
