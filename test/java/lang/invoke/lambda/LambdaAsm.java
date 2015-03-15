@@ -26,6 +26,8 @@
  * @bug 8027232
  * @summary ensures that j.l.i.InvokerByteCodeGenerator and ASM visitMethodInsn
  * generate  bytecodes with correct constant pool references
+ * @modules java.base/jdk.internal.org.objectweb.asm
+ *          jdk.compiler/com.sun.tools.classfile
  * @compile -XDignore.symbol.file LambdaAsm.java LUtils.java
  * @run main/othervm LambdaAsm
  */
