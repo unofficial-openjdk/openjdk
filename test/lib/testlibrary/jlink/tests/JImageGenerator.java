@@ -60,6 +60,7 @@ public class JImageGenerator {
     private static final String ADD_MODS_OPTION = "--addmods";
 
     private static final String COMPILER_SRC_PATH_OPTION = "-sourcepath";
+    private static final String COMPILER_MODULE_PATH_OPTION = "-modulepath";
     private static final String COMPILER_DIRECTORY_OPTION = "-d";
 
     private static class SourceFilesVisitor implements FileVisitor<Path> {
@@ -141,13 +142,15 @@ public class JImageGenerator {
     }
 
     public File generateJModule(String moduleName, String[] classNames, String... dependencies) throws Exception {
-        File compiled = generateModule(jmodsclasses, jmodssrc, moduleName, classNames, dependencies);
+        String modulePath = jmods.getAbsolutePath() + File.pathSeparator + jars.getAbsolutePath();
+        File compiled = generateModule(jmodsclasses, jmodssrc, moduleName, classNames, modulePath, dependencies);
         String mainClass = classNames == null || classNames.length == 0 ? null : classNames[0];
         return buildJModule(moduleName, mainClass, compiled);
     }
 
     public File generateJarModule(String moduleName, String[] classNames, String... dependencies) throws Exception {
-        File compiled = generateModule(jarsclasses, jarssrc, moduleName, classNames, dependencies);
+        String modulePath = jmods.getAbsolutePath() + File.pathSeparator + jars.getAbsolutePath();
+        File compiled = generateModule(jarsclasses, jarssrc, moduleName, classNames, modulePath, dependencies);
         return buildJarModule(moduleName, compiled);
     }
 
@@ -211,7 +214,7 @@ public class JImageGenerator {
     }
 
     private static File generateModule(File classes, File src, String name,
-            String[] classNames, String... dependencies) throws Exception {
+            String[] classNames, String modulePath, String... dependencies) throws Exception {
         if (classNames == null || classNames.length == 0) {
             classNames = new String[1];
             classNames[0] = name + ".Main";
@@ -250,7 +253,7 @@ public class JImageGenerator {
         moduleMetaBuilder.append("}");
         writeFile(moduleInfo, moduleMetaBuilder.toString());
 
-        File compiled = compileModule(classes, moduleDirectory);
+        File compiled = compileModule(classes, moduleDirectory, modulePath);
         return compiled;
     }
 
@@ -263,19 +266,21 @@ public class JImageGenerator {
         }
     }
 
-    private static File compileModule(File classes, File moduleDirectory) throws Exception {
+    private static File compileModule(File classes, File moduleDirectory, String modulePath) throws Exception {
         File outDir = new File(classes, moduleDirectory.getName());
         outDir.mkdirs();
         SourceFilesVisitor visitor = new SourceFilesVisitor();
         Files.walkFileTree(moduleDirectory.toPath(), visitor);
         List<Path> files = visitor.files;
 
-        String[] args = new String[files.size() + 4];
+        String[] args = new String[files.size() + 6];
         args[0] = COMPILER_SRC_PATH_OPTION;
         args[1] = moduleDirectory.getAbsolutePath();
         args[2] = COMPILER_DIRECTORY_OPTION;
         args[3] = outDir.getPath();
-        int i = 4;
+        args[4] = COMPILER_MODULE_PATH_OPTION;
+        args[5] = modulePath;
+        int i = 6;
         for (Path f : visitor.files) {
             args[i++] = f.toString();
         }

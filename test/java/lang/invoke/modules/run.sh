@@ -43,7 +43,7 @@ mkdir -p mods/m2
 $JAVAC -d mods/m2 `find $TESTSRC/src/m2 -name "*.java"`
 
 mkdir -p mods/m1
-$JAVAC -d mods/m1 -cp mods/m2 `find $TESTSRC/src/m1 -name "*.java"`
+$JAVAC -d mods/m1 -mp mods `find $TESTSRC/src/m1 -name "*.java"`
 
 $JAVA -mp mods -m m1/p1.Main
 

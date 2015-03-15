@@ -66,7 +66,7 @@ mkdir -p mlib
 $JMOD create --class-path mods/m2 mlib/m2.jmod
 
 mkdir -p mods/m1
-$JAVAC -d mods/m1 -cp mods/m2 `find $TESTSRC/src/m1 -name "*.java"`
+$JAVAC -d mods/m1 -mp mods `find $TESTSRC/src/m1 -name "*.java"`
 mkdir -p mlib
 $JMOD create --class-path mods/m1 --modulepath mlib --hash-dependences m\.* \
     mlib/m1.jmod

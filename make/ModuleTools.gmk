@@ -35,7 +35,8 @@ $(eval $(call SetupJavaCompilation,BUILD_JIGSAW_TOOLS, \
     SRC := $(JDK_TOPDIR)/make/src/classes, \
     INCLUDES := build/tools/deps \
                 build/tools/jigsaw, \
-    BIN := $(TOOLS_CLASSES_DIR)))
+    BIN := $(TOOLS_CLASSES_DIR), \
+    ADD_JAVAC_FLAGS := -XX:AddModuleExports=jdk.compiler/com.sun.tools.classfile ))
 
 
 TOOL_GENGRAPHS := $(BUILD_JAVA) -esa -ea -cp $(TOOLS_CLASSES_DIR) \

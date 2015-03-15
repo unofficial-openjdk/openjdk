@@ -58,7 +58,7 @@ $JAR cf applib/jaxws.jar -C mods/java.xml.ws .
 
 # app1 uses JAX-WS
 mkdir -p mods/app1
-$JAVAC -cp applib/jaxws.jar -d mods/app1 `find $TESTSRC/src/app1 -name "*.java"`
+$JAVAC -upgrademodulepath applib -d mods/app1 `find $TESTSRC/src/app1 -name "*.java"`
 $JAR cf applib/app1.jar -C mods/app1 .
 
 # app2 ships with its own copy of JAX-RS
@@ -67,7 +67,7 @@ $JAVAC -d mods/java.ws.rs `find $TESTSRC/src/java.ws.rs -name "*.java"`
 $JAR cf applib/jaxrs.jar -C mods/java.ws.rs .
 
 mkdir -p mods/app2
-$JAVAC -cp applib/jaxrs.jar -d mods/app2 `find $TESTSRC/src/app2 -name "*.java"`
+$JAVAC -upgrademodulepath applib -d mods/app2 `find $TESTSRC/src/app2 -name "*.java"`
 $JAR cf applib/app2.jar -C mods/app2 .
 
 # launch the container

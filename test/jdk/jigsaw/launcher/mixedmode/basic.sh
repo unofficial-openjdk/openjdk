@@ -44,7 +44,7 @@ $JAVAC -d mods/lib `find $TESTSRC/src/lib -name "*.java"`
 
 rm -rf classes
 mkdir -p classes
-$JAVAC -d classes -cp mods/lib `find $TESTSRC/src/app -name "*.java"`
+$JAVAC -d classes -mp mods `find $TESTSRC/src/app -name "*.java"`
 
 # Run with both a module and class path
 $JAVA -mp mods -cp classes app.Main

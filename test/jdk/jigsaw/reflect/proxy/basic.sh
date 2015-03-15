@@ -50,25 +50,19 @@ esac
 JAVAC="$COMPILEJAVA/bin/javac"
 JAVA="$TESTJAVA/bin/java ${TESTVMOPTS}"
 
-mkdir -p mods/m1
-$JAVAC -d mods/m1 `find $TESTSRC/src/m1 -name "*.java"`
-
-mkdir -p mods/m2
-$JAVAC -d mods/m2 `find $TESTSRC/src/m2 -name "*.java"`
-
-mkdir -p mods/m3
-$JAVAC -d mods/m3 `find $TESTSRC/src/m3 -name "*.java"`
+mkdir -p mods
+$JAVAC -d mods -modulesourcepath $TESTSRC/src `find $TESTSRC/src/m1 -name "*.java"`
+$JAVAC -d mods -modulesourcepath $TESTSRC/src `find $TESTSRC/src/m2 -name "*.java"`
+$JAVAC -d mods -modulesourcepath $TESTSRC/src `find $TESTSRC/src/m3 -name "*.java"`
 
 mkdir -p classes
 $JAVAC -d classes `find $TESTSRC/src/q -name "*.java"`
 
-$JAVAC -d classes -cp "mods/m1${PS}mods/m2${PS}mods/m3${PS}classes" \
-          $TESTSRC/src/ProxyAccess.java
+$JAVAC -d classes -mp mods -cp classes $TESTSRC/src/ProxyAccess.java
 
 mkdir -p mods/test
 
-## FIXME: javac -modulepath support
-$JAVAC -d mods/test -cp "mods/m1${PS}mods/m2${PS}mods/m3${PS}classes" \
+$JAVAC -d mods/test -mp mods -cp classes \
        `find $TESTSRC/src/test -name "*.java"`
 
 $JAVA -cp classes -mp mods -m test/jdk.test.Main
