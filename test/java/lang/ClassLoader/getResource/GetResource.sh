@@ -29,21 +29,12 @@
 #
 # @run shell GetResource.sh
 
-if [ "${TESTSRC}" = "" ] ; then
-    TESTSRC=`pwd`
-fi
-if [ "${TESTCLASSES}" = "" ] ; then
-    TESTCLASSES=`pwd`
-fi
-
-if [ "${TESTJAVA}" = "" ] ; then
-    echo "TESTJAVA not set.  Test cannot execute."
-    echo "FAILED!!!"
-    exit 1
-fi
-
-if [ "${COMPILEJAVA}" = "" ] ; then
-    COMPILEJAVA="${TESTJAVA}"
+if [ -z "$TESTJAVA" ]; then
+  if [ $# -lt 1 ]; then exit 1; fi
+  TESTJAVA="$1"; shift
+  COMPILEJAVA="${TESTJAVA}"
+  TESTSRC="`pwd`"
+  TESTCLASSES="`pwd`"
 fi
 
 # set platform-specific variables
@@ -105,7 +96,6 @@ runTest "b"      -cp "b${PS}a"
 cd ${DIR}/a
 
 # no -classpath
-### FIXME: this looks like a regression in jake
 runTest "a"      -cp "${PS}"                            
 runTest "b"      -cp "../b"                   
 

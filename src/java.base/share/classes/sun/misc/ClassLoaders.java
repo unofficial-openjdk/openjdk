@@ -252,7 +252,13 @@ public class ClassLoaders {
      * them to the given URLClassPath.
      */
     private static void appendToUCP(String cp, URLClassPath ucp) {
-        for (String s: cp.split(File.pathSeparator)) {
+        String[] elements = cp.split(File.pathSeparator);
+        if (elements.length == 0) {
+            // contains path separator(s) only, default to current directory
+            // to be compatible with long standing behavior
+            elements = new String[] { "" };
+        }
+        for (String s: elements) {
             try {
                 URL url = Paths.get(s).toRealPath().toUri().toURL();
                 ucp.addURL(url);
