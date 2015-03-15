@@ -71,7 +71,6 @@ import com.sun.tools.javac.tree.TreeInfo;
 import com.sun.tools.javac.util.Assert;
 import com.sun.tools.javac.util.Context;
 import com.sun.tools.javac.util.List;
-import com.sun.tools.javac.util.ListBuffer;
 import com.sun.tools.javac.util.Log;
 import com.sun.tools.javac.util.Name;
 import com.sun.tools.javac.util.Names;
@@ -486,12 +485,12 @@ public class Modules extends JCTree.Visitor {
         for (RequiresDirective d: msym.requires) {
             d.module.complete();
             readable.add(d.module);
+            Set<ModuleSymbol> s = requiresPublicCache.get(d.module);
+            if (s == null) {
+                System.err.println("no entry in cache for " + d.module);
+            }
+            readable.addAll(s);
             if (d.flags.contains(RequiresFlag.PUBLIC)) {
-                Set<ModuleSymbol> s = requiresPublicCache.get(d.module);
-                if (s == null) {
-                    System.err.println("no entry in cache for " + d.module);
-                }
-                readable.addAll(s);
                 requiresPublic.add(d.module);
                 requiresPublic.addAll(s);
             }
