@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -443,31 +443,29 @@ jdk.localedata_EXCLUDE_FILES += sun/text/resources/th/BreakIteratorRules_th.java
 # Order src dirs in order of override with the most important first. Generated
 # source before static source and platform specific source before shared.
 #
-# To use this variable, use $(call ALL_SRC_DIRS,module) with no space.
 GENERATED_SRC_DIRS += \
-    $(SUPPORT_OUTPUTDIR)/gensrc/$1 \
-    $(SUPPORT_OUTPUTDIR)/gensrc_no_docs/$1 \
+    $(SUPPORT_OUTPUTDIR)/gensrc \
+    $(SUPPORT_OUTPUTDIR)/gensrc_no_docs \
     #
 
-OS_SRC_DIRS += $(JDK_TOPDIR)/src/$1/$(OPENJDK_TARGET_OS)/classes
+TOP_SRC_DIRS += \
+    $(CORBA_TOPDIR)/src \
+    $(JDK_TOPDIR)/src \
+    $(LANGTOOLS_TOPDIR)/src \
+    $(JAXP_TOPDIR)/src \
+    $(JAXWS_TOPDIR)/src \
+    $(NASHORN_TOPDIR)/src \
+    #
+
+SRC_SUBDIRS += $(OPENJDK_TARGET_OS)/classes
 ifneq ($(OPENJDK_TARGET_OS), $(OPENJDK_TARGET_OS_TYPE))
-  OS_TYPE_SRC_DIRS += $(JDK_TOPDIR)/src/$1/$(OPENJDK_TARGET_OS_TYPE)/classes
+  SRC_SUBDIRS += $(OPENJDK_TARGET_OS_TYPE)/classes
 endif
+SRC_SUBDIRS += share/classes
 
-SHARE_SRC_DIRS += \
-    $(JDK_TOPDIR)/src/$1/share/classes \
-    $(LANGTOOLS_TOPDIR)/src/$1/share/classes \
-    $(CORBA_TOPDIR)/src/$1/share/classes \
-    $(JAXP_TOPDIR)/src/$1/share/classes \
-    $(JAXWS_TOPDIR)/src/$1/share/classes \
-    #
-
-ALL_SRC_DIRS = \
-    $(GENERATED_SRC_DIRS) \
-    $(OS_SRC_DIRS) \
-    $(OS_TYPE_SRC_DIRS) \
-    $(SHARE_SRC_DIRS) \
-    #
+MODULE_SRC_DIRS := $(strip \
+    $(addsuffix /$(MODULE), $(GENERATED_SRC_DIRS)) \
+    $(foreach sub, $(SRC_SUBDIRS), $(addsuffix /$(MODULE)/$(sub), $(TOP_SRC_DIRS))))
 
 # The JDK_USER_DEFINED_FILTER is a poor man's incremental build: by specifying
 # JDK_FILTER at the make command line, only a subset of the JDK java files will
@@ -475,29 +473,34 @@ ALL_SRC_DIRS = \
 # space separated list.
 JDK_USER_DEFINED_FILTER := $(strip $(subst $(COMMA),$(SPACE), $(JDK_FILTER)))
 
-# Use transitive deps for setting the classpath 
+# Use transitive deps for setting the classpath
 DEPS := $(call FindTransitiveDepsForModule, $(MODULE))
 
-CLASSPATH := $(addprefix $(JDK_OUTPUTDIR)/modules/, $(DEPS) $(MODULE))
-CLASSPATH := $(subst $(SPACE),$(PATH_SEP),$(CLASSPATH))
+# Rewrite the MODULE_SRC_DIRS with a wildcard for the module so that all module
+# source dirs are available on the path.
+MODULESOURCEPATH := $(subst $(SPACE),$(PATH_SEP),$(subst $(MODULE),*,$(MODULE_SRC_DIRS)))
 
 $(eval $(call SetupJavaCompilation,$(MODULE), \
     SETUP := $(if $($(MODULE)_SETUP), $($(MODULE)_SETUP), GENERATE_JDKBYTECODE), \
-    SRC := $(wildcard $(call ALL_SRC_DIRS,$(MODULE))), \
+    MODULE := $(MODULE), \
+    SRC := $(wildcard $(MODULE_SRC_DIRS)), \
     INCLUDES := $(JDK_USER_DEFINED_FILTER),\
-    BIN := $(JDK_OUTPUTDIR)/modules/$(MODULE), \
-    HEADERS := $(SUPPORT_OUTPUTDIR)/headers/$(MODULE), \
-    ADD_JAVAC_FLAGS := -bootclasspath "$(CLASSPATH)"))
+    BIN := $(JDK_OUTPUTDIR)/modules, \
+    HEADERS := $(SUPPORT_OUTPUTDIR)/headers, \
+    ADD_JAVAC_FLAGS := \
+        -modulesourcepath "$(MODULESOURCEPATH)" \
+        -systemmodulepath none, \
+))
 
 TARGETS += $($(MODULE)) $(COPY_EXTRA)
 
 # Declare dependencies between java compilations of different modules.
-# Since the other modules are declared in different invocations of this file, 
+# Since the other modules are declared in different invocations of this file,
 # use the macro to find the correct target file to depend on.
 # Only the javac compilation actually depends on other modules so limit
 # dependency declaration to that by using the *_COMPILE_TARGET variable.
 $($(MODULE)_COMPILE_TARGETS): $(foreach d, $(call FindDepsForModule, $(MODULE)), \
-    $(call SetupJavaCompilationCompileTarget, $d, $(JDK_OUTPUTDIR)/modules/$d))
+    $(call SetupJavaCompilationCompileTarget, $d, $(JDK_OUTPUTDIR)/modules))
 
 ################################################################################
 # Copy zh_HK properties files from zh_TW
@@ -506,7 +509,7 @@ $(JDK_OUTPUTDIR)/modules/%_zh_HK.properties: $(JDK_OUTPUTDIR)/modules/%_zh_TW.pr
 	$(install-file)
 
 CreateHkTargets = \
-    $(patsubst $(JDK_TOPDIR)/src/%, $(JDK_OUTPUTDIR)/modules/%, \
+    $(patsubst $(JDK_TOPDIR)/src/%, $(JDK_OUTPUTDIR)/modules, \
       $(subst /share/classes,, \
         $(subst _zh_TW,_zh_HK, $(filter %_zh_TW.properties, $1))))
 
