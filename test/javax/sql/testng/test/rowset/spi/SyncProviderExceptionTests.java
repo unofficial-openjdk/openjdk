@@ -20,6 +20,12 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+
+/**
+ * @test
+ * @modules java.sql.rowset/com.sun.rowset.internal
+ */
+
 package test.rowset.spi;
 
 import com.sun.rowset.internal.SyncResolverImpl;
