@@ -44,8 +44,12 @@ import com.sun.tools.javac.util.*;
 import com.sun.tools.javac.util.DefinedBy.Api;
 import com.sun.tools.javac.util.JCDiagnostic.DiagnosticPosition;
 import com.sun.tools.javac.util.List;
+
 import static com.sun.tools.javac.tree.JCTree.Tag.*;
+
 import javax.tools.JavaFileManager.Location;
+
+import com.sun.tools.javac.code.Directive.ExportsDirective;
 
 /**
  * Root class for abstract syntax tree nodes. It provides definitions
@@ -2660,6 +2664,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
             implements ExportsTree {
         public JCExpression qualid;
         public List<JCExpression> moduleNames;
+        public ExportsDirective directive;
 
         protected JCExports(JCExpression qualId, List<JCExpression> moduleNames) {
             this.qualid = qualId;

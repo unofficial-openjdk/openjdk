@@ -482,6 +482,12 @@ public interface TreeVisitor<R,P> {
      */
     R visitWildcard(WildcardTree node, P p);
 
+    R visitModule(ModuleTree node, P p);
+    R visitExports(ExportsTree node, P p);
+    R visitProvides(ProvidesTree node, P p);
+    R visitRequires(RequiresTree node, P p);
+    R visitUses(UsesTree node, P p);
+
     /**
      * Visits an unknown type of Tree node.
      * This can occur if the language evolves and new kinds
@@ -490,10 +496,5 @@ public interface TreeVisitor<R,P> {
      * @param p a parameter value
      * @return a result value
      */
-    R visitModule(ModuleTree node, P p);
-    R visitExports(ExportsTree node, P p);
-    R visitProvides(ProvidesTree node, P p);
-    R visitRequires(RequiresTree node, P p);
-    R visitUses(UsesTree node, P p);
     R visitOther(Tree node, P p);
 }

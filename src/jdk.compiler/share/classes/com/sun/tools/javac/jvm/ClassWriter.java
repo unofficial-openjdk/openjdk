@@ -33,6 +33,7 @@ import java.util.HashSet;
 
 import javax.tools.JavaFileManager;
 import javax.tools.FileObject;
+import javax.tools.JavaFileManager.Location;
 import javax.tools.JavaFileObject;
 
 import com.sun.tools.javac.code.*;
@@ -53,6 +54,7 @@ import static com.sun.tools.javac.code.Kinds.Kind.*;
 import static com.sun.tools.javac.code.Scope.LookupKind.NON_RECURSIVE;
 import static com.sun.tools.javac.code.TypeTag.*;
 import static com.sun.tools.javac.main.Option.*;
+
 import static javax.tools.StandardLocation.CLASS_OUTPUT;
 
 /** This class provides operations to map an internal symbol table graph
@@ -108,6 +110,12 @@ public class ClassWriter extends ClassFile {
 
     /** Type utilities. */
     private Types types;
+
+    /**
+     * If true, class files will be written in module-specific subdirectories
+     * of the CLASS_OUTPUT location.
+     */
+    public boolean multiModuleMode;
 
     /** The initial sizes of the data and constant pool buffers.
      *  Sizes are increased when buffers get full.
@@ -970,20 +978,20 @@ public class ClassWriter extends ClassFile {
         List<RequiresDirective> requires = m.getRequires();
         databuf.appendChar(requires.size());
         for (RequiresDirective r: requires) {
-            databuf.appendChar(pool.put(r.moduleName));
+            databuf.appendChar(pool.put(r.module.name));
             databuf.appendChar(RequiresFlag.value(r.flags));
         }
 
         List<ExportsDirective> exports = m.getExports();
         databuf.appendChar(exports.size());
         for (ExportsDirective e: exports) {
-            databuf.appendChar(pool.put(names.fromUtf(externalize(e.sym.flatName()))));
-            if (e.moduleNames == null) {
+            databuf.appendChar(pool.put(names.fromUtf(externalize(e.packge.flatName()))));
+            if (e.modules == null) {
                 databuf.appendChar(0);
             } else {
-                databuf.appendChar(e.moduleNames.size());
-                for (Name n: e.moduleNames)
-                    databuf.appendChar(pool.put(n));
+                databuf.appendChar(e.modules.size());
+                for (ModuleSymbol msym: e.modules)
+                    databuf.appendChar(pool.put(msym.name));
             }
         }
 
@@ -1633,8 +1641,15 @@ public class ClassWriter extends ClassFile {
         throws IOException, PoolOverflow, StringOverflow
     {
         String name = (c.owner.kind == MDL ? c.name : c.flatname).toString();
+        Location outLocn;
+        if (multiModuleMode) {
+            ModuleSymbol msym = (c.modle != null) ? c.modle : c.packge().modle;
+            outLocn = fileManager.getModuleLocation(CLASS_OUTPUT, msym.name.toString());
+        } else {
+            outLocn = CLASS_OUTPUT;
+        }
         JavaFileObject outFile
-            = fileManager.getJavaFileForOutput(CLASS_OUTPUT,
+            = fileManager.getJavaFileForOutput(outLocn,
                                                name,
                                                JavaFileObject.Kind.CLASS,
                                                c.sourcefile);

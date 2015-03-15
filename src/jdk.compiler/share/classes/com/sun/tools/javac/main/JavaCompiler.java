@@ -766,7 +766,12 @@ public class JavaCompiler {
             boolean isPkgInfo =
                 tree.sourcefile.isNameCompatible("package-info",
                                                  JavaFileObject.Kind.SOURCE);
-            if (isPkgInfo) {
+            boolean isModuleInfo =
+                tree.sourcefile.isNameCompatible("module-info",
+                                                 JavaFileObject.Kind.SOURCE);
+            if (isModuleInfo) {
+                // TODO: INSERT CHECK HERE
+            } else if (isPkgInfo) {
                 if (enter.getEnv(tree.packge) == null) {
                     JCDiagnostic diag =
                         diagFactory.fragment("file.does.not.contain.package",

@@ -27,12 +27,12 @@ package com.sun.tools.javac.code;
 
 import java.util.EnumSet;
 import java.util.Set;
+
 import com.sun.tools.javac.code.Symbol.ClassSymbol;
 import com.sun.tools.javac.code.Symbol.ModuleSymbol;
 import com.sun.tools.javac.code.Symbol.PackageSymbol;
 import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.util.ListBuffer;
-import com.sun.tools.javac.util.Name;
 
 
 /**
@@ -51,7 +51,7 @@ public abstract class Directive {
         USES
     }
 
-    /** Flags for RequiresModuleDirective and RequiresServiceDirective. */
+    /** Flags for RequiresDirective. */
     public enum RequiresFlag {
         PUBLIC(0x0020),
         SYNTHETIC(0x1000),
@@ -76,6 +76,7 @@ public abstract class Directive {
 
     abstract <R, P> R accept(Visitor<R, P> visitor, P data);
 
+    // TODO: should not be required
     static <T extends Directive> List<T> filter(List<Directive> directives, Kind kind, Class<T> clazz) {
         ListBuffer<T> list = new ListBuffer<>();
         for (Directive d: directives) {
@@ -89,12 +90,12 @@ public abstract class Directive {
      * 'exports' Package ';'
      */
     public static class ExportsDirective extends Directive {
-        public final PackageSymbol sym;
-        public final List<Name> moduleNames; // maybe ModuleSymbol
+        public final PackageSymbol packge;
+        public final List<ModuleSymbol> modules;
 
-        public ExportsDirective(PackageSymbol sym, List<Name> moduleNames) {
-            this.sym = sym;
-            this.moduleNames = moduleNames;
+        public ExportsDirective(PackageSymbol packge, List<ModuleSymbol> modules) {
+            this.packge = packge;
+            this.modules = modules;
         }
 
         @Override
@@ -104,10 +105,10 @@ public abstract class Directive {
 
         @Override
         public String toString() {
-            if (moduleNames == null)
-                return "Exports[" + sym + "]";
+            if (modules == null)
+                return "Exports[" + packge + "]";
             else
-                return "Exports[" + sym + ":" + moduleNames + "]";
+                return "Exports[" + packge + ":" + modules + "]";
         }
 
         @Override
@@ -145,18 +146,18 @@ public abstract class Directive {
     }
 
     /**
-     * 'requires' ['public'] ViewName ';'
+     * 'requires' ['public'] ModuleName ';'
      */
     public static class RequiresDirective extends Directive {
-        public final Name moduleName;  // may eventually be ModuleSymbol
+        public final ModuleSymbol module;
         public final Set<RequiresFlag> flags;
 
-        public RequiresDirective(Name moduleName) {
-            this(moduleName, EnumSet.noneOf(RequiresFlag.class));
+        public RequiresDirective(ModuleSymbol module) {
+            this(module, EnumSet.noneOf(RequiresFlag.class));
         }
 
-        public RequiresDirective(Name moduleName, Set<RequiresFlag> flags) {
-            this.moduleName = moduleName;
+        public RequiresDirective(ModuleSymbol module, Set<RequiresFlag> flags) {
+            this.module = module;
             this.flags = flags;
         }
 
@@ -167,7 +168,7 @@ public abstract class Directive {
 
         @Override
         public String toString() {
-            return "Requires[" + flags + "," + moduleName + "]";
+            return "Requires[" + flags + "," + module + "]";
         }
 
         @Override
@@ -293,18 +294,22 @@ public abstract class Directive {
             return r1;
         }
 
+        @Override
         public R visitExports(ExportsDirective d, P p) {
             return null;
         }
 
+        @Override
         public R visitProvides(ProvidesDirective d, P p) {
             return null;
         }
 
+        @Override
         public R visitRequires(RequiresDirective d, P p) {
             return null;
         }
 
+        @Override
         public R visitUses(UsesDirective d, P p) {
             return null;
         }

@@ -2377,7 +2377,7 @@ public class Lower extends TreeTranslator {
     public void visitModuleDef(JCModuleDecl tree) {
         ModuleSymbol msym = tree.sym;
         ClassSymbol c = msym.module_info;
-        c.flags_field |= SYNTHETIC;
+        c.flags_field |= Flags.MODULE;
         createInfoClass(List.<JCAnnotation>nil(), tree.sym.module_info);
     }
 

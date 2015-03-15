@@ -36,6 +36,7 @@ import com.sun.source.tree.MemberSelectTree;
 import com.sun.source.tree.TreeVisitor;
 import com.sun.source.util.SimpleTreeVisitor;
 import com.sun.tools.javac.code.*;
+import com.sun.tools.javac.code.Directive.RequiresFlag;
 import com.sun.tools.javac.code.Lint.LintCategory;
 import com.sun.tools.javac.code.Scope.WriteableScope;
 import com.sun.tools.javac.code.Symbol.*;
@@ -53,6 +54,7 @@ import com.sun.tools.javac.util.DefinedBy.Api;
 import com.sun.tools.javac.util.Dependencies.AttributionKind;
 import com.sun.tools.javac.util.JCDiagnostic.DiagnosticPosition;
 import com.sun.tools.javac.util.List;
+
 import static com.sun.tools.javac.code.Flags.*;
 import static com.sun.tools.javac.code.Flags.ANNOTATION;
 import static com.sun.tools.javac.code.Flags.BLOCK;
@@ -4188,68 +4190,45 @@ public class Attr extends JCTree.Visitor {
     }
 
     public void visitModuleDef(JCModuleDecl tree) {
-//        System.err.println("Attr.visitModuleDecl: " + Pretty.toSimpleString(tree, 80));
-        tree.sym.directives = List.nil();
+        ModuleSymbol msym = env.toplevel.modle;
+        msym.directives = List.nil();
         attribStats(tree.directives, env);
-        tree.sym.directives = tree.sym.directives.reverse();
+        msym.directives = msym.directives.reverse();
 
-        boolean requireJavaBase = true;
-        if (tree.sym.fullname == names.java_base)
-            requireJavaBase = false;
-        else {
-            for (Directive d: tree.sym.directives) {
-                if (d.getKind() == Directive.Kind.REQUIRES) {
-                    Directive.RequiresDirective rd = (Directive.RequiresDirective) d;
-                    if (rd.moduleName == names.java_base) {
-                        requireJavaBase = false;
-                        break;
-                    }
-
-                }
-            }
-        }
-
-        if (requireJavaBase) {
-            Directive.RequiresDirective java_base =
-                    new Directive.RequiresDirective(names.java_base,
-                            EnumSet.of(Directive.RequiresFlag.MANDATED));
-            tree.sym.directives = tree.sym.directives.prepend(java_base);
-        }
+        if (msym.requires.nonEmpty() && msym.requires.head.flags.contains(RequiresFlag.MANDATED))
+            msym.directives = msym.directives.prepend(msym.requires.head);
     }
 
     public void visitExports(JCExports tree) {
-//        System.err.println("Attr.visitExport: " + tree);
         ModuleSymbol msym = env.toplevel.modle;
-        PackageSymbol p = syms.enterPackage(TreeInfo.fullName(tree.qualid));
-        List<Name> modules = null;
-        if (tree.moduleNames != null) {
-            ListBuffer<Name> lb = new ListBuffer<>();
-            for (JCExpression n: tree.moduleNames)
-                lb.add(TreeInfo.fullName(n));
-            modules = lb.toList();
-        }
-        msym.directives = msym.directives.prepend(new Directive.ExportsDirective(p, modules));
+        msym.directives = msym.directives.prepend(tree.directive);
     }
 
     public void visitProvides(JCProvides tree) {
-//        System.err.println("Attr.visitProvides: " + tree);
         ModuleSymbol msym = env.toplevel.modle;
-        ClassSymbol service = syms.enterClass(TreeInfo.fullName(tree.serviceName));
-        ClassSymbol impl = syms.enterClass(TreeInfo.fullName(tree.implName));
-        msym.directives = msym.directives.prepend(new Directive.ProvidesDirective(service, impl));
+        Type st = attribType(tree.serviceName, env, syms.objectType);
+        Type it = attribType(tree.implName, env, st);
+        if (st.hasTag(CLASS) && it.hasTag(CLASS)) {
+            ClassSymbol service = (ClassSymbol) st.tsym;
+            ClassSymbol impl = (ClassSymbol) it.tsym;
+            Directive.ProvidesDirective d = new Directive.ProvidesDirective(service, impl);
+            msym.directives = msym.directives.prepend(d);
+        }
     }
 
     public void visitRequires(JCRequires tree) {
-//        System.err.println("Attr.visitRequires: " + tree);
         ModuleSymbol msym = env.toplevel.modle;
         msym.directives = msym.directives.prepend(tree.directive);
     }
 
     public void visitUses(JCUses tree) {
-//        System.err.println("Attr.visitUses: " + tree);
         ModuleSymbol msym = env.toplevel.modle;
-        ClassSymbol service = syms.enterClass(TreeInfo.fullName(tree.qualid));
-        msym.directives = msym.directives.prepend(new Directive.UsesDirective(service));
+        Type st = attribType(tree.qualid, env, syms.objectType);
+        if (st.hasTag(CLASS)) {
+            ClassSymbol service = (ClassSymbol) st.tsym;
+            Directive.UsesDirective d = new Directive.UsesDirective(service);
+            msym.directives = msym.directives.prepend(d);
+        }
     }
 
     /** Finish the attribution of a class. */

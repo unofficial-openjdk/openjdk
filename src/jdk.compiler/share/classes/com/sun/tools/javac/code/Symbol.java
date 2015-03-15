@@ -27,6 +27,8 @@ package com.sun.tools.javac.code;
 
 import java.lang.annotation.Annotation;
 import java.lang.annotation.Inherited;
+import java.util.EnumMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
@@ -835,13 +837,19 @@ public abstract class Symbol extends AnnoConstruct implements Element {
 
         public Name fullname;
         public Name version;
+        public JavaFileManager.Location sourceLocation;
+        public JavaFileManager.Location classLocation;
 
         /** All directives, in natural order. */
         public List<Directive> directives;
+        public List<RequiresDirective> requires;
+        public List<ExportsDirective> exports;
+        public List<ProvidesDirective> provides;
+        public List<UsesDirective> uses;
 
         public ClassSymbol module_info;
 
-        public JavaFileManager.Location location;
+        public Set<PackageSymbol> visiblePackages;
 
         public ModuleSymbol() {
             super(MDL, 0, null, null, null);
@@ -854,21 +862,25 @@ public abstract class Symbol extends AnnoConstruct implements Element {
             this.fullname = formFullName(name, owner);
         }
 
+        // TODO: use exports field
         public List<ExportsDirective> getExports() {
             return Directive.filter(directives, Directive.Kind.EXPORTS,
                     ExportsDirective.class);
         }
 
+        // TODO: use provides field
         public List<ProvidesDirective> getProvides() {
             return Directive.filter(directives, Directive.Kind.PROVIDES,
                     ProvidesDirective.class);
         }
 
+        // TODO: use requires field
         public List<RequiresDirective> getRequires() {
             return Directive.filter(directives, Directive.Kind.REQUIRES,
                     RequiresDirective.class);
         }
 
+        // TODO: use uses field
         public List<UsesDirective> getUses() {
             return Directive.filter(directives, Directive.Kind.USES,
                     UsesDirective.class);
@@ -898,6 +910,7 @@ public abstract class Symbol extends AnnoConstruct implements Element {
         public WriteableScope members_field;
         public Name fullname;
         public ClassSymbol package_info; // see bug 6443073
+        public ModuleSymbol modle;
 
         public PackageSymbol(Name name, Type type, Symbol owner) {
             super(PCK, 0, name, type, owner);
@@ -991,6 +1004,8 @@ public abstract class Symbol extends AnnoConstruct implements Element {
         /**
          * The module for the class.
          */
+        // TODO: is this required? the value can be obtained from the enclosing package
+        // Only read access is currently for module-info.class in ClassWriter
         public ModuleSymbol modle;
 
         /** a scope for all class members; variables, methods and inner classes

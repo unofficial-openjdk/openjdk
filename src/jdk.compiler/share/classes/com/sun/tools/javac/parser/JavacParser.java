@@ -3063,57 +3063,57 @@ public class JavacParser implements Parser {
             defs.append(moduleDecl(token.comment(CommentStyle.JAVADOC)));
             consumedToplevelDoc = true;
         } else {
-        boolean seenImport = false;
-        boolean seenPackage = false;
-        if (token.kind == MONKEYS_AT)
-            mods = modifiersOpt();
+            boolean seenImport = false;
+            boolean seenPackage = false;
+            if (token.kind == MONKEYS_AT)
+                mods = modifiersOpt();
 
-        if (token.kind == PACKAGE) {
-            int packagePos = token.pos;
-            List<JCAnnotation> annotations = List.nil();
-            seenPackage = true;
-            if (mods != null) {
-                checkNoMods(mods.flags);
-                annotations = mods.annotations;
-                mods = null;
-            }
-            nextToken();
-            JCExpression pid = qualident(false);
-            accept(SEMI);
-            JCPackageDecl pd = F.at(packagePos).PackageDecl(annotations, pid);
-            attach(pd, firstToken.comment(CommentStyle.JAVADOC));
-            consumedToplevelDoc = true;
-            storeEnd(pd, token.pos);
-            defs.append(pd);
-        }
-        boolean checkForImports = true;
-        boolean firstTypeDecl = true;
-        while (token.kind != EOF) {
-            if (token.pos <= endPosTable.errorEndPos) {
-                // error recovery
-                skip(checkForImports, false, false, false);
-                if (token.kind == EOF)
-                    break;
-            }
-            if (checkForImports && mods == null && token.kind == IMPORT) {
-                seenImport = true;
-                defs.append(importDeclaration());
-            } else {
-                Comment docComment = token.comment(CommentStyle.JAVADOC);
-                if (firstTypeDecl && !seenImport && !seenPackage) {
-                    docComment = firstToken.comment(CommentStyle.JAVADOC);
-                    consumedToplevelDoc = true;
+            if (token.kind == PACKAGE) {
+                int packagePos = token.pos;
+                List<JCAnnotation> annotations = List.nil();
+                seenPackage = true;
+                if (mods != null) {
+                    checkNoMods(mods.flags);
+                    annotations = mods.annotations;
+                    mods = null;
                 }
-                JCTree def = typeDeclaration(mods, docComment);
-                if (def instanceof JCExpressionStatement)
-                    def = ((JCExpressionStatement)def).expr;
-                defs.append(def);
-                if (def instanceof JCClassDecl)
-                    checkForImports = false;
-                mods = null;
-                firstTypeDecl = false;
+                nextToken();
+                JCExpression pid = qualident(false);
+                accept(SEMI);
+                JCPackageDecl pd = F.at(packagePos).PackageDecl(annotations, pid);
+                attach(pd, firstToken.comment(CommentStyle.JAVADOC));
+                consumedToplevelDoc = true;
+                storeEnd(pd, token.pos);
+                defs.append(pd);
             }
-        }
+            boolean checkForImports = true;
+            boolean firstTypeDecl = true;
+            while (token.kind != EOF) {
+                if (token.pos <= endPosTable.errorEndPos) {
+                    // error recovery
+                    skip(checkForImports, false, false, false);
+                    if (token.kind == EOF)
+                        break;
+                }
+                if (checkForImports && mods == null && token.kind == IMPORT) {
+                    seenImport = true;
+                    defs.append(importDeclaration());
+                } else {
+                    Comment docComment = token.comment(CommentStyle.JAVADOC);
+                    if (firstTypeDecl && !seenImport && !seenPackage) {
+                        docComment = firstToken.comment(CommentStyle.JAVADOC);
+                        consumedToplevelDoc = true;
+                    }
+                    JCTree def = typeDeclaration(mods, docComment);
+                    if (def instanceof JCExpressionStatement)
+                        def = ((JCExpressionStatement)def).expr;
+                    defs.append(def);
+                    if (def instanceof JCClassDecl)
+                        checkForImports = false;
+                    mods = null;
+                    firstTypeDecl = false;
+                }
+            }
         }
 
         JCTree.JCCompilationUnit toplevel = F.at(firstToken.pos).TopLevel(defs.toList());
@@ -3143,10 +3143,8 @@ public class JavacParser implements Parser {
 
         accept(LBRACE);
         directives = moduleDirectiveList();
-        if (token.kind != RBRACE) {
-            setErrorEndPos(token.pos);
-            reportSyntaxError(S.prevToken().endPos, "expected", RBRACE);
-        }
+        accept(RBRACE);
+        accept(EOF);
 
         JCModuleDecl result = toP(F.at(pos).ModuleDef(name, directives));
         attach(result, dc);

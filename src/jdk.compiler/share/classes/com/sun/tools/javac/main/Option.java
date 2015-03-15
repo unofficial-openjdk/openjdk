@@ -160,6 +160,21 @@ public enum Option {
 
     SOURCEPATH("-sourcepath", "opt.arg.path", "opt.sourcepath", STANDARD, FILEMANAGER),
 
+    MODULESOURCEPATH("-modulesourcepath", "opt.arg.mspath", "opt.modulesourcepath", STANDARD, FILEMANAGER),
+
+    MODULEPATH("-modulepath", "opt.arg.path", "opt.modulepath", STANDARD, FILEMANAGER),
+
+    MP("-mp", "opt.arg.path", "opt.modulepath", STANDARD, FILEMANAGER) {
+        @Override
+        public boolean process(OptionHelper helper, String option, String arg) {
+            return super.process(helper, "-modulepath", arg);
+        }
+    },
+
+    UPGRADEMODULEPATH("-upgrademodulepath", "opt.arg.path", "opt.upgrademodulepath", STANDARD, FILEMANAGER),
+
+    SYSTEMMODULEPATH("-systemmodulepath", "opt.arg.jdk", "opt.systemmodulepath", STANDARD, FILEMANAGER),
+
     BOOTCLASSPATH("-bootclasspath", "opt.arg.path", "opt.bootclasspath", STANDARD, FILEMANAGER) {
         @Override
         public boolean process(OptionHelper helper, String option, String arg) {

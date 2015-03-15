@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -160,6 +160,8 @@ public class TypeEnter implements Completer {
         // if there remain any unimported toplevels (these must have
         // no classes at all), process their import statements as well.
         for (JCCompilationUnit tree : trees) {
+            if (tree.defs.nonEmpty() && tree.defs.head.hasTag(MODULEDEF))
+                continue;
             if (!tree.starImportScope.isFilled()) {
                 Env<AttrContext> topEnv = enter.topLevelEnv(tree);
                 finishImports(tree, () -> { completeClass.resolveImports(tree, topEnv); });

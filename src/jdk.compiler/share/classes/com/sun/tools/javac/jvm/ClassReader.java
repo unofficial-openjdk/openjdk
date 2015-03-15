@@ -1154,43 +1154,57 @@ public class ClassReader {
                     if (sym.kind == TYP && sym.owner.kind == MDL) {
                         ModuleSymbol msym = (ModuleSymbol) sym.owner;
                         ListBuffer<Directive> directives = new ListBuffer<>();
+
+                        ListBuffer<RequiresDirective> requires = new ListBuffer<>();
                         int nrequires = nextChar();
                         for (int i = 0; i < nrequires; i++) {
                             Name name = readName(nextChar());
+                            ModuleSymbol rsym = syms.enterModule(name);
                             Set<RequiresFlag> flags = readRequiresFlags(nextChar());
-                            RequiresDirective d = new RequiresDirective(name, flags);
-                            directives.add(d);
+                            requires.add(new RequiresDirective(rsym, flags));
                         }
+                        msym.requires = requires.toList();
+                        directives.addAll(msym.requires);
+
+                        ListBuffer<ExportsDirective> exports = new ListBuffer<>();
                         int nexports = nextChar();
                         for (int i = 0; i < nexports; i++) {
                             Name n = readName(nextChar());
                             PackageSymbol p = syms.enterPackage(names.fromUtf(internalize(n)));
                             int nto = nextChar();
-                            List<Name> to;
+                            List<ModuleSymbol> to;
                             if (nto == 0) {
-                                to = List.nil();
+                                to = null;
                             } else {
-                                ListBuffer<Name> lb = new ListBuffer<>();
+                                ListBuffer<ModuleSymbol> lb = new ListBuffer<>();
                                 for (int t = 0; t < nto; t++)
-                                    lb.append(readName(nextChar()));
+                                    lb.append(syms.enterModule(readName(nextChar())));
                                 to = lb.toList();
                             }
-                            ExportsDirective d = new ExportsDirective(p, to);
-                            directives.add(d);
+                            exports.add(new ExportsDirective(p, to));
                         }
+                        msym.exports = exports.toList();
+                        directives.addAll(msym.exports);
+
+                        ListBuffer<UsesDirective> uses = new ListBuffer<>();
                         int nuses = nextChar();
                         for (int i = 0; i < nuses; i++) {
                             ClassSymbol srvc = readClassSymbol(nextChar());
-                            UsesDirective d = new UsesDirective(srvc);
-                            directives.add(d);
+                            uses.add(new UsesDirective(srvc));
                         }
+                        msym.uses = uses.toList();
+                        directives.addAll(msym.uses);
+
+                        ListBuffer<ProvidesDirective> provides = new ListBuffer<>();
                         int nprovides = nextChar();
                         for (int i = 0; i < nprovides; i++) {
                             ClassSymbol srvc = readClassSymbol(nextChar());
                             ClassSymbol impl = readClassSymbol(nextChar());
-                            ProvidesDirective d = new ProvidesDirective(srvc, impl);
-                            directives.add(d);
+                            provides.add(new ProvidesDirective(srvc, impl));
                         }
+                        msym.provides = provides.toList();
+                        directives.addAll(msym.provides);
+
                         msym.directives = directives.toList();
                     }
                 }
@@ -1220,8 +1234,6 @@ public class ClassReader {
         if (checkClassFile)
             printCCF("ccf.unrecognized.attribute", attrName);
     }
-
-
 
     protected void readEnclosingMethodAttr(Symbol sym) {
         // sym is a nested class with an "Enclosing Method" attribute
@@ -2246,14 +2258,24 @@ public class ClassReader {
             enterTypevars(ct.getEnclosingType());
 
         // read flags, or skip if this is an inner class
-        long flags = adjustClassFlags(nextChar());
-        if (c.owner.kind == PCK) c.flags_field = flags;
-
-        // read own class name and check that it matches
-        ClassSymbol self = readClassSymbol(nextChar());
-        if (c != self)
-            throw badClassFile("class.file.wrong.class",
-                               self.flatname);
+        long f = nextChar();
+        long flags = adjustClassFlags(f);
+        if ((flags & MODULE) == 0) {
+            if (c.owner.kind == PCK) c.flags_field = flags;
+            // read own class name and check that it matches
+            ClassSymbol self = readClassSymbol(nextChar());
+            if (c != self) {
+                System.err.println("CR: " + c);
+                System.err.println("CR: flags (orig) " + Flags.toString(f));
+                System.err.println("CR: flags  (adj) " + Flags.toString(flags));
+                throw badClassFile("class.file.wrong.class",
+                                   self.flatname);
+            }
+        } else {
+            c.flags_field = flags;
+            // TODO: validate name
+            nextChar();
+        }
 
         // class attributes must be read before class
         // skip ahead to read class attributes

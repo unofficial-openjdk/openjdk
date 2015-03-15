@@ -286,6 +286,7 @@ public class Flags {
     /**
      * Flag to indicate class symbol is for module-info
      */
+    // TODO: do we need this; can we not infer it from the class name?
     public static final long MODULE = 1L<<51;
 
     /** Modifier masks.
