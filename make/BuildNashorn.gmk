@@ -49,7 +49,7 @@ endif
 $(eval $(call SetupJavaCompiler,GENERATE_NEWBYTECODE_DEBUG, \
     JVM := $(JAVA), \
     JAVAC := $(NEW_JAVAC), \
-    FLAGS := -g -source 9 -target 9 -bootclasspath "$(JDK_CLASSES)", \
+    FLAGS := -g -source 9 -target 9 -upgrademodulepath "$(JDK_OUTPUTDIR)/modules/" -systemmodulepath none, \
     SERVER_DIR := $(SJAVAC_SERVER_DIR), \
     SERVER_JVM := $(SJAVAC_SERVER_JAVA)))
 
