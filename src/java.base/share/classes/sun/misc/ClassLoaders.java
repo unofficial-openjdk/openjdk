@@ -105,14 +105,15 @@ public class ClassLoaders {
         EXT_LOADER = new ExtClassLoader(BOOT_LOADER, extReader, overrideDir);
         APP_LOADER = new AppClassLoader(EXT_LOADER, appReader, overrideDir, ucp);
 
-        // register the class loaders with the jrt protocol handler so that
-        // resources can be located.
+        // Register the image readers with the jrt protocol handler so that
+        // resources can be located. This can go away once we move to one
+        // image file.
         if (bootReader != null)
-            JavaRuntimeURLConnection.register(BOOT_LOADER);
+            JavaRuntimeURLConnection.register(bootReader);
         if (extReader != null)
-            JavaRuntimeURLConnection.register(EXT_LOADER);
+            JavaRuntimeURLConnection.register(extReader);
         if (appReader != null)
-            JavaRuntimeURLConnection.register(APP_LOADER);
+            JavaRuntimeURLConnection.register(appReader);
     }
 
     /**

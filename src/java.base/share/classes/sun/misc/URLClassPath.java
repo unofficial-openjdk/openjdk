@@ -449,7 +449,7 @@ public class URLClassPath {
      * Throw exception on failure.
      * Called internally within this file.
      */
-    static void check(URL url) throws IOException {
+    public static void check(URL url) throws IOException {
         SecurityManager security = System.getSecurityManager();
         if (security != null) {
             URLConnection urlConnection = url.openConnection();

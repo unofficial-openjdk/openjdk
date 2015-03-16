@@ -4,9 +4,7 @@
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Oracle designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Oracle in the LICENSE file that accompanied this code.
+ * published by the Free Software Foundation.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -22,13 +20,27 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package sun.misc;
 
-public interface ResourceFinder {
-    /**
-     * Finds resource {@code name} in module {@code module}.
-     *
-     * @return the resource or {@code null} if not found.
-     */
-    Resource findResource(String module, String name);
+import java.io.IOException;
+import java.net.URL;
+import java.net.URLConnection;
+
+/**
+ * Access a jrt:/ resource in an observable module that is not in the boot
+ * layer and hence not known to the built-in class loaders.
+ */
+
+public class OtherResources {
+    public static void main(String[] args) throws IOException {
+
+        // check that java.desktop is not in the set of readable modules
+        if (ClassLoader.getSystemResource("java/awt/Component.class") != null) {
+            throw new RuntimeException("Need to run with -limitmods java.base");
+        }
+
+        // access resource in the java.desktop module
+        URL url = new URL("jrt:/java.desktop/java/awt/Component.class");
+        URLConnection uc = url.openConnection();
+        System.out.println(uc.getInputStream());
+    }
 }

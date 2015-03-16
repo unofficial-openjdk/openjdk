@@ -24,7 +24,6 @@
  */
 package sun.misc;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FilePermission;
 import java.io.IOException;
@@ -81,12 +80,15 @@ import jdk.jigsaw.module.ModuleArtifact;
  * <p> ###FIXME: When using exploded builds or -Xoverride and overridden classes
  * then the URLs are file URLs rather than jrt URLs. </p>
  */
-class BuiltinClassLoader extends SecureClassLoader
-    implements ModuleLoader, ResourceFinder
+class BuiltinClassLoader
+    extends SecureClassLoader implements ModuleLoader
 {
     static {
         ClassLoader.registerAsParallelCapable();
     }
+
+    // the initial module reader for modules defined to this class loader
+    private static final ModuleReader NULL_MODULE_READER = new NullModuleReader();
 
     // parent ClassLoader
     private final BuiltinClassLoader parent;
@@ -103,11 +105,8 @@ class BuiltinClassLoader extends SecureClassLoader
     // maps package name to module artifact for the modules defined to this class loader
     private final Map<String, ModuleArtifact> packageToArtifact = new ConcurrentHashMap<>();
 
-    // maps module name to module artifact for the modules defined to this class loader
-    private final Map<String, ModuleArtifact> moduleToArtifact = new ConcurrentHashMap<>();
-
-    // maps module artifacts to module readers (added to lazily on first usage)
-    private final Map<ModuleArtifact, ModuleReader> readers = new ConcurrentHashMap<>();
+    // maps a module artifact to a module reader
+    private final Map<ModuleArtifact, ModuleReader> artifacts = new ConcurrentHashMap<>();
 
     /**
      * Create a new instance.
@@ -133,7 +132,9 @@ class BuiltinClassLoader extends SecureClassLoader
     @Override
     public void defineModule(ModuleArtifact artifact) {
         artifact.packages().forEach(p -> packageToArtifact.put(p, artifact));
-        moduleToArtifact.put(artifact.descriptor().name(), artifact);
+
+        // Use NULL_MODULE_READER initially to avoid opening eagerly
+        artifacts.put(artifact, NULL_MODULE_READER);
     }
 
     // -- finding/loading resources
@@ -187,7 +188,7 @@ class BuiltinClassLoader extends SecureClassLoader
         }
 
         // search all modules defined to this class loader
-        for (ModuleArtifact a: moduleToArtifact.values()) {
+        for (ModuleArtifact a: artifacts.keySet()) {
             URL url = checkURL(findResource(a, name));
             if (url != null)
                 return url;
@@ -235,7 +236,7 @@ class BuiltinClassLoader extends SecureClassLoader
 
         // search all modules defined to this class loader
         if (artifact == null) {
-            moduleToArtifact.values().forEach(a -> {
+            artifacts.keySet().forEach(a -> {
                 URL url = checkURL(findResource(a, name));
                 if (url != null)
                     result.add(url);
@@ -281,59 +282,6 @@ class BuiltinClassLoader extends SecureClassLoader
         PrivilegedAction<URL> pa = () -> moduleReaderFor(artifact).findResource(name);
         return AccessController.doPrivileged(pa);
     }
-
-    /**
-     * Called by the jrt protocol handler to locate a resource (by name) in
-     * the given module.
-     */
-    @Override
-    public Resource findResource(String module, String name) {
-
-        // check that module is defined to this class loader
-        if (!moduleToArtifact.containsKey(module))
-            return null;
-
-        // for now this is for resources in the image only
-        if (imageReader == null)
-            return null;
-
-        String rn = "/" + module + "/" + name;
-        ImageLocation location = imageReader.findLocation(rn);
-        if (location == null)
-            return null;
-
-        URL url = toJrtURL(module, name);
-
-        // check access to jrt URL
-        if (checkURL(url) == null)
-            return null;
-
-        return new Resource() {
-            @Override
-            public String getName() {
-                return name;
-            }
-            @Override
-            public URL getURL() {
-                return url;
-            }
-            @Override
-            public URL getCodeSourceURL() {
-                return toJrtURL(module);
-            }
-            @Override
-            public InputStream getInputStream() throws IOException {
-                byte[] resource = imageReader.getResource(location);
-                return new ByteArrayInputStream(resource);
-            }
-            @Override
-            public int getContentLength() {
-                long size = location.getUncompressedSize();
-                return (size > Integer.MAX_VALUE) ? -1 : (int) size;
-            }
-        };
-    }
-
 
     // -- finding/loading classes
 
@@ -708,10 +656,23 @@ class BuiltinClassLoader extends SecureClassLoader
     // -- miscellaneous supporting methods
 
     /**
-     * Returns the ModuleReader for the given artifact, creating it if needed.
+     * Returns the ModuleReader for the given artifact, creating it
+     * and replacing the NULL_MODULE_READER if needed.
      */
     private ModuleReader moduleReaderFor(ModuleArtifact artifact) {
-        return readers.computeIfAbsent(artifact, k -> createModuleReader(artifact));
+        ModuleReader reader = artifacts.get(artifact);
+        assert reader != null;
+        if (reader == NULL_MODULE_READER) {
+            // repalce NULL_MODULE_READER with an actual module reader
+            reader = artifacts.computeIfPresent(artifact, (k, v) -> {
+                if (v == NULL_MODULE_READER) {
+                    return createModuleReader(artifact);
+                } else {
+                    return v;
+                }
+            });
+        }
+        return reader;
     }
 
     /**
@@ -738,6 +699,24 @@ class BuiltinClassLoader extends SecureClassLoader
 
         return reader;
     }
+
+    /**
+     * A ModuleReader that doesn't read any resources.
+     */
+    private static class NullModuleReader implements ModuleReader {
+        @Override
+        public URL findResource(String name) {
+            throw new InternalError("Should not get here");
+        }
+        @Override
+        public ByteBuffer readResource(String name) {
+            throw new InternalError("Should not get here");
+        }
+        @Override
+        public URL codeBase() {
+            throw new InternalError("Should not get here");
+        }
+    };
 
     /**
      * A ModuleReader for reading resources from a module in the jimage
