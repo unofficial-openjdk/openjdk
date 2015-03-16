@@ -43,7 +43,7 @@ public class StreamingRetry implements Runnable {
     }
 
     void instanceMain() throws Exception {
-        test();
+        test(null);
         if (failed > 0) throw new RuntimeException("Some tests failed");
     }
 
