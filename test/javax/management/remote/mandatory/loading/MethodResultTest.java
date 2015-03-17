@@ -32,6 +32,7 @@
  */
 
 import java.io.*;
+import java.nio.file.Paths;
 import java.net.*;
 import java.util.*;
 import javax.management.*;
@@ -56,24 +57,23 @@ import javax.management.remote.*;
  */
 public class MethodResultTest {
     public static void main(String[] args) throws Exception {
-        Class thisClass = MethodResultTest.class;
-        Class exoticClass = Exotic.class;
+        Class<?> thisClass = MethodResultTest.class;
+        Class<?> exoticClass = Exotic.class;
         String exoticClassName = Exotic.class.getName();
-        ClassLoader testClassLoader = thisClass.getClassLoader();
-        if (!(testClassLoader instanceof URLClassLoader)) {
-            System.out.println("TEST INVALID: Not loaded by a " +
-                               "URLClassLoader: " + testClassLoader);
-            System.exit(1);
+
+        String[] cpaths = System.getProperty("test.classes", ".")
+                                .split(File.pathSeparator);
+        URL[] urls = new URL[cpaths.length];
+        for (int i=0; i < cpaths.length; i++) {
+            urls[i] = Paths.get(cpaths[i]).toUri().toURL();
         }
 
-        URLClassLoader tcl = (URLClassLoader) testClassLoader;
-        URL[] urls = tcl.getURLs();
         ClassLoader shadowLoader =
-            new ShadowLoader(urls, testClassLoader,
+            new ShadowLoader(urls, thisClass.getClassLoader(),
                              new String[] {exoticClassName,
                                            ExoticMBeanInfo.class.getName(),
                                            ExoticException.class.getName()});
-        Class cl = shadowLoader.loadClass(exoticClassName);
+        Class<?> cl = shadowLoader.loadClass(exoticClassName);
         if (cl == exoticClass) {
             System.out.println("TEST INVALID: Shadow class loader loaded " +
                                "same class as test class loader");
@@ -197,12 +197,12 @@ public class MethodResultTest {
     }
 
     private static boolean checkType(String what, Object object,
-                                     Class wrongClass) {
+                                     Class<?> wrongClass) {
         return checkType(what, object, wrongClass, false);
     }
 
     private static boolean checkType(String what, Object object,
-                                     Class wrongClass, boolean isException) {
+                                     Class<?> wrongClass, boolean isException) {
         final String type = isException ? "exception" : "object";
         final String rendered = isException ? "thrown" : "returned";
         System.out.println("For " + type + " " + rendered + " by " + what +
@@ -224,7 +224,7 @@ public class MethodResultTest {
     }
 
     private static boolean checkExceptionType(String what, Exception exception,
-                                              Class wrongClass) {
+                                              Class<?> wrongClass) {
         if (!(exception instanceof MBeanException)) {
             System.out.println("Exception thrown by " + what + " is not an " +
                                MBeanException.class.getName() +
@@ -320,7 +320,7 @@ public class MethodResultTest {
             this.shadowClassNames = Arrays.asList(shadowClassNames);
         }
 
-        protected Class findClass(String name) throws ClassNotFoundException {
+        protected Class<?> findClass(String name) throws ClassNotFoundException {
             if (shadowClassNames.contains(name))
                 return super.findClass(name);
             else

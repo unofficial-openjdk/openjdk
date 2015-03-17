@@ -32,6 +32,8 @@
  */
 
 import java.lang.ref.WeakReference;
+import java.io.File;
+import java.nio.file.Paths;
 import java.net.*;
 import java.util.*;
 
@@ -44,17 +46,16 @@ public class ClassLeakTest {
                            "Standard MBean does not retain a reference to " +
                            "the MBean's class");
 
-        ClassLoader myClassLoader = ClassLeakTest.class.getClassLoader();
-        if (!(myClassLoader instanceof URLClassLoader)) {
-            System.out.println("TEST INVALID: test's class loader is not " +
-                               "a URLClassLoader");
-            System.exit(1);
+
+        String[] cpaths = System.getProperty("test.classes", ".")
+                                .split(File.pathSeparator);
+        URL[] urls = new URL[cpaths.length];
+        for (int i=0; i < cpaths.length; i++) {
+            urls[i] = Paths.get(cpaths[i]).toUri().toURL();
         }
 
-        URLClassLoader myURLClassLoader = (URLClassLoader) myClassLoader;
-        URL[] urls = myURLClassLoader.getURLs();
         PrivateMLet mlet = new PrivateMLet(urls, null, false);
-        Class shadowClass = mlet.loadClass(TestMBean.class.getName());
+        Class<?> shadowClass = mlet.loadClass(TestMBean.class.getName());
         if (shadowClass == TestMBean.class) {
             System.out.println("TEST INVALID: MLet got original " +
                                "TestMBean not shadow");
