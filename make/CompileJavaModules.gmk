@@ -49,6 +49,9 @@ java.base_CLEAN := intrinsic.properties
 # OS-specific qualified exports
 java.base_EXCLUDE_FILES += $(JDK_TOPDIR)/src/java.base/share/classes/module-info.java
 
+java.base_EXCLUDE_FILES += \
+  $(JDK_TOPDIR)/src/java.base/share/classes/jdk/jigsaw/module/runtime/ModuleLoaderMap.java
+
 java.base_EXCLUDES += java/lang/doc-files
 
 # Exclude BreakIterator classes that are just used in compile process to generate
