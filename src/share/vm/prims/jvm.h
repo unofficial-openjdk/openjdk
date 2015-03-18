@@ -591,6 +591,43 @@ JVM_AssertionStatusDirectives(JNIEnv *env, jclass unused);
 JNIEXPORT jboolean JNICALL
 JVM_SupportsCX8(void);
 
+/*
+ * jdk.internal.jimage
+ */
+
+JNIEXPORT jlong JNICALL
+JVM_ImageOpen(JNIEnv *env, jstring path, jboolean big_endian);
+
+JNIEXPORT void JNICALL
+JVM_ImageClose(JNIEnv *env, jlong id);
+
+JNIEXPORT jlong JNICALL
+JVM_ImageGetIndexAddress(JNIEnv *env, jlong id);
+
+JNIEXPORT jlong JNICALL
+JVM_ImageGetDataAddress(JNIEnv *env,jlong id);
+
+JNIEXPORT jboolean JNICALL
+JVM_ImageRead(JNIEnv *env, jlong id, jlong offset,
+          jobject uncompressedBuffer, jlong uncompressed_size);
+
+JNIEXPORT jboolean JNICALL
+JVM_ImageReadCompressed(JNIEnv *env, jlong id, jlong offset,
+                    jobject compressedBuffer, jlong compressed_size,
+                    jobject uncompressedBuffer, jlong uncompressed_size);
+
+JNIEXPORT jbyteArray JNICALL
+JVM_ImageGetStringBytes(JNIEnv *env, jlong id, jint offset);
+
+JNIEXPORT jlongArray JNICALL
+JVM_ImageGetAttributes(JNIEnv *env, jlong id, jint offset);
+
+JNIEXPORT jlongArray JNICALL
+JVM_ImageFindAttributes(JNIEnv *env, jlong id, jbyteArray utf8);
+
+JNIEXPORT jintArray JNICALL
+JVM_ImageAttributeOffsets(JNIEnv *env, jlong id);
+
 /*************************************************************************
  PART 2: Support for the Verifier and Class File Format Checker
  ************************************************************************/

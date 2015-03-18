@@ -240,6 +240,7 @@
 # include "utilities/constantTag.hpp"
 # include "utilities/copy.hpp"
 # include "utilities/debug.hpp"
+# include "utilities/endian.hpp"
 # include "utilities/exceptions.hpp"
 # include "utilities/globalDefinitions.hpp"
 # include "utilities/growableArray.hpp"

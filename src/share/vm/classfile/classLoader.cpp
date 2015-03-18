@@ -71,7 +71,6 @@
 #include "classfile/sharedClassUtil.hpp"
 #endif
 
-
 // Entry points in zip.dll for loading zip/jar file entries and image file entries
 
 typedef void * * (JNICALL *ZipOpen_t)(const char *name, char **pmsg);
@@ -483,9 +482,12 @@ static void process_javabase(const char* path) {
   package_list(modules_path, jb_module);
 }
 
-static void process_javabase(ImageFile *image) {
+static void process_javabase(ClassPathImageEntry *entry) {
   Thread* THREAD = Thread::current();
   ResourceMark rm(THREAD);
+
+  ImageFileReader* image = entry->image();
+  ImageModuleData* module_data = entry->module_data();
 
   // bootmodules.jimage being opened due to processing
   // the first well known class java/lang/Object.  Must create
@@ -514,14 +516,15 @@ static void process_javabase(ImageFile *image) {
     tty->print_cr("[Local packages for java.base:]");
   }
 
-  GrowableArray<const char*>* packages = image->packages(vmSymbols::java_base()->as_C_string());
+  GrowableArray<const char*>* packages =
+      module_data->module_to_packages(vmSymbols::java_base()->as_C_string());
 
   for (int i = 0; i < packages->length(); i++) {
     // Verify valid package name.
     const char* package_name = packages->at(i);
     if (!Modules::verify_package_name((char *)package_name)) {
       vm_exit_during_initialization(
-        "invalid package name in bootmodules.jimage file",
+        "invalid package name in " BOOT_IMAGE_NAME " file",
         package_name == NULL ? "NULL" : package_name);
     }
 
@@ -538,16 +541,26 @@ static void process_javabase(ImageFile *image) {
   }
 }
 
-ClassPathImageEntry::ClassPathImageEntry(char* name) : ClassPathEntry(), _image(new ImageFile(name)) {
-  bool opened = _image->open();
-  if (!opened) {
-    _image = NULL;
+ClassPathImageEntry::ClassPathImageEntry(ImageFileReader* image) :
+  ClassPathEntry(),
+  _image(image),
+  _module_data(NULL) {
+
+  if (is_open()) {
+    char module_data_name[JVM_MAXPATHLEN];
+    ImageModuleData::module_data_name(module_data_name, _image->name());
+    _module_data = new ImageModuleData(_image, module_data_name);
   }
 }
 
 ClassPathImageEntry::~ClassPathImageEntry() {
+  if (_module_data) {
+    delete _module_data;
+    _module_data = NULL;
+  }
+
   if (_image) {
-    _image->close();
+    ImageFileReader::close(_image);
     _image = NULL;
   }
 }
@@ -555,6 +568,11 @@ ClassPathImageEntry::~ClassPathImageEntry() {
 const char* ClassPathImageEntry::name() {
   return _image ? _image->name() : "";
 }
+
+bool ClassPathImageEntry::is_verified() {
+  return _image && _image->is_verified();
+}
+
 
 ClassFileStream* ClassPathImageEntry::open_stream(const char* name, TRAPS) {
   u1* buffer;
@@ -569,7 +587,7 @@ ClassFileStream* ClassPathImageEntry::open_stream(const char* name, TRAPS) {
       int len = pslash - name;
       strncpy(path, name, len);
       path[len] = '\0';
-      const char* moduleName = _image->module(path);
+      const char* moduleName = _module_data->package_to_module(path);
 
       if (moduleName) {
         jio_snprintf(path, JVM_MAXPATHLEN - 1, "/%s/%s", moduleName, name);
@@ -594,8 +612,8 @@ void ClassPathImageEntry::compile_the_world(Handle loader, TRAPS) {
   tty->cr();
   const ImageStrings strings = _image->get_strings();
   // Retrieve each path component string.
-  u4 count = _image->get_location_count();
-  for (u4 i = 0; i < count; i++) {
+  u4 length = _image->table_length();
+  for (u4 i = 0; i < length; i++) {
     u1* location_data = _image->get_location_data(i);
 
     if (location_data) {
@@ -617,7 +635,7 @@ void ClassPathImageEntry::compile_the_world(Handle loader, TRAPS) {
 }
 
 bool ClassPathImageEntry::is_jrt() {
-  return string_ends_with(name(), "bootmodules.jimage");
+  return string_ends_with(name(), BOOT_IMAGE_NAME);
 }
 #endif
 
@@ -787,9 +805,9 @@ ClassPathEntry* ClassLoader::create_class_path_entry(const char *path, const str
       }
     }
     // TODO - add proper criteria for selecting image file
-    ClassPathImageEntry* entry = new ClassPathImageEntry(canonical_path);
-    if (entry->is_open()) {
-      new_entry = entry;
+    ImageFileReader* image = ImageFileReader::open(canonical_path);
+    if (image) {
+      new_entry = new ClassPathImageEntry(image);
     } else {
     char* error_msg = NULL;
     jzfile* zip;
@@ -915,7 +933,7 @@ bool ClassLoader::update_class_path_entry_list(const char *path,
 
     // If entry is the bootmodules.jimage then pass FALSE for 'lazy' to ensure
     // that the jimage is opened.  This will enable process_javabase() to read it.
-    bool lazy = string_ends_with(path, "bootmodules.jimage") ? false : LazyBootClassLoader;
+    bool lazy = string_ends_with(path, BOOT_IMAGE_NAME) ? false : LazyBootClassLoader;
 
     new_entry = create_class_path_entry(path, &st, lazy, throw_exception, CHECK_(false));
     if (new_entry == NULL) {
@@ -1511,9 +1529,9 @@ void ClassLoader::define_javabase() {
   // can consist of [-Xoverride]; exploded build | bootmodules.jimage
   // Do not search the boot loader's append path.
   while ((e != NULL) && (e != last_e)) {
-    ImageFile *image = e->image();
-    if (image != NULL && string_ends_with(e->name(), "bootmodules.jimage")) {
-      process_javabase(image);
+    ImageFileReader *image = e->image();
+    if (image != NULL && string_ends_with(e->name(), BOOT_IMAGE_NAME)) {
+      process_javabase((ClassPathImageEntry *)e);
       set_has_bootmodules_jimage(true);
       return;
     }

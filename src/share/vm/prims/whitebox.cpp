@@ -1145,8 +1145,7 @@ WB_END
 
 WB_ENTRY(jboolean, WB_ReadImageFile(JNIEnv* env, jobject wb, jstring imagefile))
   const char* filename = java_lang_String::as_utf8_string(JNIHandles::resolve_non_null(imagefile));
-  ImageFile* image = new ImageFile(filename);
-  return image->open();
+  return ImageFileReader::open(filename) != NULL;
 WB_END
 
 WB_ENTRY(void, WB_AssertMatchingSafepointCalls(JNIEnv* env, jobject o, jboolean mutexSafepointValue, jboolean attemptedNoSafepointValue))

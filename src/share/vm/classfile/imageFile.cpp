@@ -24,8 +24,10 @@
 
 #include "precompiled.hpp"
 #include "classfile/imageFile.hpp"
+#include "runtime/mutex.hpp"
+#include "runtime/mutexLocker.hpp"
 #include "runtime/os.inline.hpp"
-#include "utilities/bytes.hpp"
+#include "utilities/endian.hpp"
 
 // Used to advance a pointer, unstructured.
 #undef NEXTPTR
@@ -44,14 +46,14 @@ s4 ImageStrings::hash_code(const char* string, s4 seed) {
   return seed & 0x7FFFFFFF;
 }
 
-s4 ImageStrings::find(const char* name, s4* redirect, s4 length) {
-  if (!length) {
+s4 ImageStrings::find(Endian* endian, const char* name, s4* redirect, u4 length) {
+  if (!redirect || !length) {
     return NOT_FOUND;
   }
 
   s4 hash_code = ImageStrings::hash_code(name);
   s4 index = hash_code % length;
-  s4 value = redirect[index];
+  s4 value = endian->get(redirect[index]);
 
   if (value > 0 ) {
     // Collision value, need to rehash.
@@ -91,22 +93,24 @@ ImageLocation::ImageLocation(u1* data) {
   while ((byte = *data) != ATTRIBUTE_END) {
     u1 kind = attribute_kind(byte);
     u1 n = attribute_length(byte);
-    assert(kind < ATTRIBUTE_COUNT, "invalid image location attribute");
+    guarantee(kind < ATTRIBUTE_COUNT, "invalid image location attribute");
     _attributes[kind] = attribute_value(data + 1, n);
     data += n + 1;
   }
 }
 
-ImageModuleData::ImageModuleData(ImageFile* image_file)
-      : _image_file(image_file), _strings(image_file->get_strings()) {
-  char name[JVM_MAXPATHLEN];
-  module_data_name(name, image_file->name());
-  _image_file->get_resource(name, _data, _data_size, true);
+ImageModuleData::ImageModuleData(const ImageFileReader* image_file,
+        const char* module_data_name) :
+    _image_file(image_file),
+    _endian(image_file->endian()),
+    _strings(image_file->get_strings()) {
+  _image_file->get_resource(module_data_name, _data, _data_size, true);
   guarantee(_data, "missing module data");
 
   _header = NEXTPTR(_data, u1, 0, Header);
-  int ptm_count = _header->_ptm_count;
-  int mtp_count = _header->_mtp_count;
+  u4 ptm_count = _header->ptm_count(_endian);
+  u4 mtp_count = _header->mtp_count(_endian);
+
   _ptm_redirect = NEXTPTR(_header, Header, 1, s4);
   _ptm_data = NEXTPTR(_ptm_redirect, s4, ptm_count, PTMData);
   _mtp_redirect = NEXTPTR(_ptm_data, PTMData, ptm_count, s4);
@@ -124,47 +128,46 @@ void ImageModuleData::module_data_name(char* buffer, const char* image_file_name
   const char* slash = strrchr(image_file_name, os::file_separator()[0]);
   const char* name = slash ? slash + 1 : (char *)image_file_name;
   const char* dot = strrchr(name, '.');
-
-  if (dot) {
-    int length = dot - name;
-    strncpy(buffer, name, length);
-    buffer[length] = '\0';
-  } else {
-    strcpy(buffer, name);
-  }
+  guarantee(dot, "missing extension on jimage name");
+  int length = dot - name;
+  strncpy(buffer, name, length);
+  buffer[length] = '\0';
 
   strcat(buffer, ".jdata");
 }
 
 const char* ImageModuleData::package_to_module(const char* package_name) {
-  s4 index = ImageStrings::find(package_name, _ptm_redirect, _header->_ptm_count);
+  s4 index = ImageStrings::find(_endian, package_name, _ptm_redirect,
+                                  _header->ptm_count(_endian));
 
   if (index != ImageStrings::NOT_FOUND) {
     PTMData* data = _ptm_data + index;
 
-    if (strcmp(package_name, get_string(data->_name_offset)) != 0) {
+    if (strcmp(package_name, get_string(data->name_offset(_endian))) != 0) {
       return NULL;
     }
 
-    return get_string(data->_module_name_offset);
+    return get_string(data->module_name_offset(_endian));
   }
 
   return NULL;
 }
 
 GrowableArray<const char*>* ImageModuleData::module_to_packages(const char* module_name) {
-  s4 index = ImageStrings::find(module_name, _mtp_redirect, _header->_mtp_count);
+  s4 index = ImageStrings::find(_endian, module_name, _mtp_redirect,
+                                  _header->mtp_count(_endian));
 
   if (index != ImageStrings::NOT_FOUND) {
     MTPData* data = _mtp_data + index;
 
-    if (strcmp(module_name, get_string(data->_name_offset)) != 0) {
+    if (strcmp(module_name, get_string(data->name_offset(_endian))) != 0) {
       return NULL;
     }
 
     GrowableArray<const char*>* packages = new GrowableArray<const char*>();
-    for (int i = 0; i < data->_package_count; i++) {
-      u4 package_name_offset = _mtp_packages[data->_package_offset + i];
+    s4 package_offset = data->package_offset(_endian);
+    for (u4 i = 0; i < data->package_count(_endian); i++) {
+      u4 package_name_offset = mtp_package(package_offset + i);
       const char* package_name = get_string(package_name_offset);
       packages->append(package_name);
     }
@@ -175,28 +178,160 @@ GrowableArray<const char*>* ImageModuleData::module_to_packages(const char* modu
   return NULL;
 }
 
+//
+// Manage a number of image files such that an image can be shared across
+// multiple uses (ex. loader.)  (GrowableArray would have been used except for
+// timing at start up.)
+class ImageFileReaderTable {
+private:
+  const static s4 INITIAL = 4;
 
-ImageFile::ImageFile(const char* name) {
+  s4 _count; // Number of images open
+  s4 _max; // Size of allocated table
+  ImageFileReader** _table; // Table of open images
+
+  // Make sure a table slot is available
+  void needs_slot() {
+    if (_count >= _max) {
+      int old_max = _max;
+      ImageFileReader** old_table = _table;
+      _max <<= 1;
+      _table = NEW_C_HEAP_ARRAY(ImageFileReader*, _max, mtClass);
+      memcpy(_table, old_table, old_max * sizeof(ImageFileReader*));
+      FREE_C_HEAP_ARRAY(ImageFileReader*, old_table);
+    }
+  }
+
+public:
+  ImageFileReaderTable() :
+    _count(0),
+    _max(INITIAL),
+    _table(NEW_C_HEAP_ARRAY(ImageFileReader*, INITIAL, mtClass)) {
+  }
+
+  ~ImageFileReaderTable() {
+    if (_table) {
+      FREE_C_HEAP_ARRAY(ImageFileReader*, _table);
+      _table = NULL;
+    }
+  }
+
+  // Get the number of open images.
+  inline s4 count() const { return _count; }
+
+  // Add a new image to the table.
+  inline void add(ImageFileReader* reader) {
+    needs_slot();
+    _table[_count++] = reader;
+  }
+
+  // Retrieve the image at the specified index.
+  inline ImageFileReader* at(s4 i) const {
+    assert(i <= 0 && i < _count, "image file reader table index out of range");
+    return _table[i];
+  }
+
+  // Find an image in the table.
+  inline s4 find(ImageFileReader* reader) const {
+    for (int i = 0; i < _count; i++) {
+      if (reader == at(i)) {
+        return i;
+      }
+    }
+
+    return -1;
+  }
+
+  // Check for an image in the table.
+  inline bool contains(ImageFileReader* reader) const {
+    return find(reader) != -1;
+  }
+
+  // Remove an image from the table.
+  inline void remove(ImageFileReader* reader) {
+    s4 i = find(reader);
+    guarantee(i != -1, "image file reader not in table");
+
+    if (--_count) {
+      _table[i] = _table[_count];
+    }
+  }
+};
+
+static ImageFileReaderTable _reader_table;
+
+ImageFileReader* ImageFileReader::open(const char* name, bool big_endian) {
+  MutexLockerEx il(ImageFileReaderTable_lock,  Mutex::_no_safepoint_check_flag);
+  ImageFileReader* reader;
+
+  for (int i = 0; i < _reader_table.count(); i++) {
+    reader = _reader_table.at(i);
+
+    if (strcmp(reader->name(), name) == 0) {
+      reader->inc_use();
+      return reader;
+    }
+  }
+
+  reader = new ImageFileReader(name, big_endian);
+  bool opened = reader->open();
+
+  if (!opened) {
+    delete reader;
+    return NULL;
+  }
+
+  reader->inc_use();
+  _reader_table.add(reader);
+  return reader;
+}
+
+void ImageFileReader::close(ImageFileReader *reader) {
+  MutexLockerEx il(ImageFileReaderTable_lock,  Mutex::_no_safepoint_check_flag);
+
+  if (reader->dec_use()) {
+    _reader_table.remove(reader);
+    delete reader;
+  }
+}
+
+// Return an id for the specifed ImageFileReader.
+u8 ImageFileReader::readerToID(ImageFileReader *reader) {
+  return (u8)reader;
+}
+
+// Return an id for the specifed ImageFileReader.
+ImageFileReader* ImageFileReader::idToReader(u8 id) {
+  ImageFileReader* reader = (ImageFileReader*)id;
+#ifndef PRODUCT
+  MutexLockerEx il(ImageFileReaderTable_lock,  Mutex::_no_safepoint_check_flag);
+  guarantee(_reader_table.contains(reader), "bad image id");
+#endif
+  return reader;
+}
+
+ImageFileReader::ImageFileReader(const char* name, bool big_endian) {
   // Copy the image file name.
   _name = NEW_C_HEAP_ARRAY(char, strlen(name)+1, mtClass);
   strcpy(_name, name);
-
   // Initialize for a closed file.
   _fd = -1;
-  _memory_mapped = true;
+  _endian = Endian::get_handler(big_endian);
   _index_data = NULL;
-  _module_data = NULL;
 }
 
-ImageFile::~ImageFile() {
+ImageFileReader::~ImageFileReader() {
   // Ensure file is closed.
   close();
 
   // Free up name.
-  FREE_C_HEAP_ARRAY(char, _name);
+  if (_name) {
+    FREE_C_HEAP_ARRAY(char, _name);
+    _name = NULL;
+  }
 }
 
-bool ImageFile::open() {
+bool ImageFileReader::open() {
   // If file exists open for reading.
   struct stat st;
   if (os::stat(_name, &st) != 0 ||
@@ -206,65 +341,37 @@ bool ImageFile::open() {
   }
 
   // Read image file header and verify.
-  u8 header_size = sizeof(ImageHeader);
-  if (os::read(_fd, &_header, header_size) != header_size ||
-    _header._magic != IMAGE_MAGIC ||
-    _header._major_version != MAJOR_VERSION ||
-    _header._minor_version != MINOR_VERSION) {
+  size_t header_size = sizeof(ImageHeader);
+  if (!read_at((u1*)&_header, header_size, 0) ||
+    _header.magic(_endian) != IMAGE_MAGIC ||
+    _header.major_version(_endian) != MAJOR_VERSION ||
+    _header.minor_version(_endian) != MINOR_VERSION) {
     close();
+
     return false;
   }
 
   // Memory map index.
   _index_size = index_size();
-  _index_data = (u1*)os::map_memory(_fd, _name, 0, NULL, _index_size, true, false);
-
-  // Failing that, read index into C memory.
-  if (_index_data == NULL) {
-    _memory_mapped = false;
-    _index_data = NEW_C_HEAP_ARRAY(u1, _index_size, mtClass);
-
-    if (os::seek_to_file_offset(_fd, 0) == -1) {
-      close();
-      return false;
-    }
-
-    if (os::read(_fd, _index_data, _index_size) != _index_size) {
-      close();
-      return false;
-    }
-
-    return true;
-  }
+  off_t map_size = (off_t)(MemoryMapImage ? st.st_size : _index_size);
+  _index_data = (u1*)os::map_memory(_fd, _name, 0, NULL, map_size, true, false);
+  guarantee(_index_data, "image file not memory mapped");
 
   // Pull tables out from the index.
+  u4 length = table_length();
   _redirect_table = NEXTPTR(_index_data, u1, header_size, s4);
-  _offsets_table = NEXTPTR(_redirect_table, s4, _header._location_count, u4);
-  _location_bytes = NEXTPTR(_offsets_table, u4, _header._location_count, u1);
-  _string_bytes = NEXTPTR(_location_bytes, u1, _header._locations_size, u1);
-
-  // Load module meta data.
-  _module_data = new ImageModuleData(this);
+  _offsets_table = NEXTPTR(_redirect_table, s4, length, u4);
+  _location_bytes = NEXTPTR(_offsets_table, u4, length, u1);
+  _string_bytes = NEXTPTR(_location_bytes, u1, locations_size(), u1);
 
   // Successful open.
   return true;
 }
 
-void ImageFile::close() {
-  // Deallocate module meta data.
-  if (_module_data) {
-    delete _module_data;
-    _module_data = NULL;
-  }
-
+void ImageFileReader::close() {
   // Dealllocate the index.
   if (_index_data) {
-    if (_memory_mapped) {
-      os::unmap_memory((char*)_index_data, _index_size);
-    } else {
-      FREE_C_HEAP_ARRAY(u1, _index_data);
-    }
-
+    os::unmap_memory((char*)_index_data, _index_size);
     _index_data = NULL;
   }
 
@@ -273,30 +380,28 @@ void ImageFile::close() {
     os::close(_fd);
     _fd = -1;
   }
-
 }
 
-// Return the attribute stream for a named resourced.
-u1* ImageFile::find_location_data(const char* path) const {
-  s4 index = ImageStrings::find(path, _redirect_table, _header._location_count);
+// Read directly from the file.
+bool ImageFileReader::read_at(u1* data, u8 size, u8 offset) const {
+  u8 read = os::read_at(_fd, data, size, offset);
+
+  return read == size;
+}
+
+// Return the attribute stream for a named resource.
+u1* ImageFileReader::find_location_data(const char* path) const {
+  s4 index = ImageStrings::find(_endian, path, _redirect_table, table_length());
 
   if (index == ImageStrings::NOT_FOUND) {
     return NULL;
   }
 
-  guarantee((u4)index < _header._location_count, "index exceeds location count");
-  u4 offset = _offsets_table[index];
-  guarantee((u4)offset < _header._locations_size, "offset exceeds location attributes size");
-
-  if (offset == 0) {
-    return NULL;
-  }
-
-  return _location_bytes + offset;
+  return get_location_data(index);
 }
 
-void ImageFile::location_path(ImageLocation& location, char* path, size_t max) const {
-  ImageStrings strings(_string_bytes, _header._strings_size);
+void ImageFileReader::location_path(ImageLocation& location, char* path, size_t max) const {
+  ImageStrings strings(_string_bytes, _header.strings_size(_endian));
   char* next = path;
   size_t length;
 
@@ -335,8 +440,8 @@ void ImageFile::location_path(ImageLocation& location, char* path, size_t max) c
 }
 
 // Verify that a found location matches the supplied path.
-bool ImageFile::verify_location(ImageLocation& location, const char* path) const {
-  ImageStrings strings(_string_bytes, _header._strings_size);
+bool ImageFileReader::verify_location(ImageLocation& location, const char* path) const {
+  ImageStrings strings(_string_bytes, _header.strings_size(_endian));
   const char* next = path;
 
   const char* module = location.get_attribute(ImageLocation::ATTRIBUTE_MODULE, strings);
@@ -366,41 +471,50 @@ bool ImageFile::verify_location(ImageLocation& location, const char* path) const
 }
 
 // Return the resource for the supplied location.
-u1* ImageFile::get_resource(ImageLocation& location, bool is_C_heap) const {
+u1* ImageFileReader::get_resource(ImageLocation& location, bool is_C_heap) const {
   // Retrieve the byte offset and size of the resource.
-  u8 offset = _index_size + location.get_attribute(ImageLocation::ATTRIBUTE_OFFSET);
-  u8 size = location.get_attribute(ImageLocation::ATTRIBUTE_UNCOMPRESSED);
+  u8 offset = location.get_attribute(ImageLocation::ATTRIBUTE_OFFSET);
+  u8 uncompressed_size = location.get_attribute(ImageLocation::ATTRIBUTE_UNCOMPRESSED);
   u8 compressed_size = location.get_attribute(ImageLocation::ATTRIBUTE_COMPRESSED);
-  u8 read_size = compressed_size ? compressed_size : size;
 
-  // Allocate space for the resource.
-  u1* data = is_C_heap && !compressed_size ? NEW_C_HEAP_ARRAY(u1, read_size, mtClass)
-                                           : NEW_RESOURCE_ARRAY(u1, read_size);
+  if (compressed_size) {
+    u1* compressed_data = MemoryMapImage ? get_data_address() + offset
+                                         : NEW_RESOURCE_ARRAY(u1, compressed_size);
+    if (!MemoryMapImage) {
+      bool is_read = read_at(compressed_data, compressed_size, _index_size + offset);
+      guarantee(is_read, "error reading from image or short read");
+    }
 
-  bool is_read = os::read_at(_fd, data, read_size, offset) == read_size;
-  guarantee(is_read, "error reading from image or short read");
+    u1* uncompressed_data = is_C_heap ? NEW_C_HEAP_ARRAY(u1, uncompressed_size, mtClass)
+                                      : NEW_RESOURCE_ARRAY(u1, uncompressed_size);
+    char* msg = NULL;
+    jboolean res = ClassLoader::decompress(compressed_data, compressed_size,
+                                           uncompressed_data, uncompressed_size, &msg);
+    if (!res) warning("decompression failed due to %s\n", msg);
+    guarantee(res, "decompression failed");
 
-  // If not compressed, just return the data.
-  if (!compressed_size) {
-    return data;
+    return uncompressed_data;
+  } else {
+    if (MemoryMapImage && !is_C_heap) {
+      return get_data_address() + offset;
+    }
+
+    u1* uncompressed_data = is_C_heap ? NEW_C_HEAP_ARRAY(u1, uncompressed_size, mtClass)
+                                      : NEW_RESOURCE_ARRAY(u1, uncompressed_size);
+    bool is_read = read_at(uncompressed_data, uncompressed_size, _index_size + offset);
+    guarantee(is_read, "error reading from image or short read");
+
+    return uncompressed_data;
   }
-
-  u1* uncompressed = is_C_heap ? NEW_C_HEAP_ARRAY(u1, size, mtClass)
-                               : NEW_RESOURCE_ARRAY(u1, size);
-  char* msg = NULL;
-  jboolean res = ClassLoader::decompress(data, compressed_size, uncompressed, size, &msg);
-  if (!res) warning("decompression failed due to %s\n", msg);
-  guarantee(res, "decompression failed");
-
-  return uncompressed;
 }
 
-void ImageFile::get_resource(const char* path, u1*& buffer, u8& size, bool is_C_heap) const {
+void ImageFileReader::get_resource(const char* path, u1*& buffer, u8& size, bool is_C_heap) const {
   buffer = NULL;
   size = 0;
   u1* data = find_location_data(path);
   if (data) {
     ImageLocation location(data);
+
     if (verify_location(location, path)) {
       size = location.get_attribute(ImageLocation::ATTRIBUTE_UNCOMPRESSED);
       buffer = get_resource(location, is_C_heap);
@@ -408,7 +522,5 @@ void ImageFile::get_resource(const char* path, u1*& buffer, u8& size, bool is_C_
   }
 }
 
-GrowableArray<const char*>* ImageFile::packages(const char* module_name) {
-  guarantee(_module_data, "image file not opened");
-  return _module_data->module_to_packages(module_name);
-}
+
+
