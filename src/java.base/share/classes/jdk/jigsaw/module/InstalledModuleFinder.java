@@ -51,7 +51,6 @@ import sun.misc.PerfCounter;
  * linked into the modular image.
  */
 class InstalledModuleFinder implements ModuleArtifactFinder {
-    private static final String BOOT_IMAGE_NAME = "bootmodules.jimage";
 
     // the module name to artifact map of modules already located
     private final Map<String, ModuleArtifact> cachedModules = new ConcurrentHashMap<>();
@@ -59,17 +58,7 @@ class InstalledModuleFinder implements ModuleArtifactFinder {
 
     InstalledModuleFinder() {
         long t0 = System.nanoTime();
-        String home = System.getProperty("java.home");
-        Path libModules = Paths.get(home, "lib", "modules");
-
-        try {
-            long t1 = System.nanoTime();
-            bootImage = new Image(libModules.resolve(BOOT_IMAGE_NAME));
-            readModuleDataTime.addElapsedTimeFrom(t1);
-        } catch (IOException ioe) {
-            throw new UncheckedIOException(ioe);
-        }
-
+        bootImage = new Image();
         initTime.addElapsedTimeFrom(t0);
     }
 
@@ -90,8 +79,8 @@ class InstalledModuleFinder implements ModuleArtifactFinder {
 
     static boolean isModularImage() {
         String home = System.getProperty("java.home");
-        Path jimage = Paths.get(home, "lib", "modules", BOOT_IMAGE_NAME);
-        return Files.isRegularFile(jimage);
+        Path libModules = Paths.get(home, "lib", "modules");
+        return Files.isDirectory(libModules);
     }
 
     @Override
@@ -128,8 +117,9 @@ class InstalledModuleFinder implements ModuleArtifactFinder {
         final ImageReader imageReader;
         final ImageModuleData mdata;
         final Set<String> modules;
-        Image(Path image) throws IOException {
-            this.imageReader = ImageReaderFactory.get(image);
+
+        Image() {
+            this.imageReader = ImageReaderFactory.getImageReader();
             this.mdata = new ImageModuleData(imageReader);
             this.modules = mdata.allModuleNames();
         }
@@ -159,6 +149,4 @@ class InstalledModuleFinder implements ModuleArtifactFinder {
             PerfCounter.newPerfCounter("jdk.module.installedModules.initArtifactTime");
     private static final PerfCounter installedModulesCount =
             PerfCounter.newPerfCounter("jdk.module.installedModules.artifacts");
-    private static final PerfCounter readModuleDataTime =
-            PerfCounter.newPerfCounter("jdk.module.imageModuleData.readTime");
 }

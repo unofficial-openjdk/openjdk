@@ -26,11 +26,9 @@ package sun.misc;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.CodeSource;
@@ -38,7 +36,6 @@ import java.security.PermissionCollection;
 
 import jdk.internal.jimage.ImageReader;
 import jdk.internal.jimage.ImageReaderFactory;
-import sun.net.www.protocol.jrt.JavaRuntimeURLConnection;
 
 /**
  * Creates and provides access to the built-in extension and application class
@@ -49,9 +46,6 @@ import sun.net.www.protocol.jrt.JavaRuntimeURLConnection;
 public class ClassLoaders {
     private ClassLoaders() { }
 
-    // the names of the jimage files in the runtime image
-    private static final String BOOT_IMAGE_NAME = "bootmodules.jimage";
-
     // the built-in class loaders
     private static final BootClassLoader BOOT_LOADER;
     private static final ExtClassLoader EXT_LOADER;
@@ -61,14 +55,13 @@ public class ClassLoaders {
      * Creates the built-in class loaders
      */
     static {
-        String home = System.getProperty("java.home");
-        Path libModules = Paths.get(home, "lib", "modules");
-
         ImageReader reader = null;
 
-        // open image files if images build, otherwise detect an exploded image
+        // detect image or exploded build
+        String home = System.getProperty("java.home");
+        Path libModules = Paths.get(home, "lib", "modules");
         if (Files.isDirectory(libModules)) {
-            reader = getImageReader(libModules.resolve(BOOT_IMAGE_NAME));
+            reader = ImageReaderFactory.getImageReader();
         } else {
             Path base = Paths.get(home, "modules", "java.base");
             if (!Files.isDirectory(base)) {
@@ -98,13 +91,6 @@ public class ClassLoaders {
         BOOT_LOADER = new BootClassLoader(reader, overrideDir, bcp);
         EXT_LOADER = new ExtClassLoader(BOOT_LOADER, reader, overrideDir);
         APP_LOADER = new AppClassLoader(EXT_LOADER, reader, overrideDir, ucp);
-
-        // Register the image readers with the jrt protocol handler so that
-        // resources can be located. This can go away once we move to one
-        // image file.
-        if (reader != null) {
-            JavaRuntimeURLConnection.register(reader);
-        }
     }
 
     /**
@@ -210,22 +196,6 @@ public class ClassLoaders {
          */
         void appendToClassPathForInstrumentation(String path) {
             appendToUCP(path, ucp);
-        }
-    }
-
-    /**
-     * Returns an {@code ImageReader} to read from the given image file or
-     * {@code null} if the image file does not exist.
-     *
-     * @throws UncheckedIOException if an I/O error occurs
-     */
-    private static ImageReader getImageReader(Path path) {
-        try {
-            return ImageReaderFactory.get(path);
-        } catch (NoSuchFileException ignore) {
-            return null;
-        } catch (IOException ioe) {
-            throw new UncheckedIOException(ioe);
         }
     }
 

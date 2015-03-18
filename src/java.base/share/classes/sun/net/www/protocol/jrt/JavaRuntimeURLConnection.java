@@ -36,10 +36,10 @@ import java.security.AccessController;
 import java.security.Permission;
 import java.security.PrivilegedAction;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 import jdk.internal.jimage.ImageLocation;
 import jdk.internal.jimage.ImageReader;
+import jdk.internal.jimage.ImageReaderFactory;
 
 import sun.misc.URLClassPath;
 import sun.misc.Resource;
@@ -52,10 +52,8 @@ import sun.net.www.URLConnection;
  */
 public class JavaRuntimeURLConnection extends URLConnection {
 
-    /**
-     * The list of image readers for the run-time image.
-     */
-    private static final List<ImageReader> readers = new CopyOnWriteArrayList<>();
+    // ImageReader to access resources in jimage
+    private static final ImageReader reader = ImageReaderFactory.getImageReader();
 
     // the module and resource name in the URL
     private final String module;
@@ -88,20 +86,13 @@ public class JavaRuntimeURLConnection extends URLConnection {
     }
 
     /**
-     * Registers an {@code ImageReader} which can locate resources.
-     */
-    public static void register(ImageReader reader) {
-        readers.add(reader);
-    }
-
-    /**
      * Uses the register image readers to find resource. Returns {@code null}
      * if the resource is not found.
      */
     private static Resource findResource(String module, String name) {
-        String rn = "/" + module + "/" + name;
-        URL url = toJrtURL(module, name);
-        for (ImageReader reader: readers) {
+        if (reader != null) {
+            String rn = "/" + module + "/" + name;
+            URL url = toJrtURL(module, name);
             ImageLocation location = reader.findLocation(rn);
             if (location != null && URLClassPath.checkURL(url) != null) {
                 return new Resource() {

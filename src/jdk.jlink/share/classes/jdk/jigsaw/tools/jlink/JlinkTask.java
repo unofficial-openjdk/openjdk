@@ -207,10 +207,6 @@ class JlinkTask {
         log = out;
     }
 
-    // module list files in java.base
-    private static final String BOOT_MODULES = "boot.modules";
-    private static final String EXT_MODULES = "ext.modules";
-
     private static final String MODULE_INFO = "module-info.class";
 
 

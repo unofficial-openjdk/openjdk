@@ -26,7 +26,9 @@
 package jdk.internal.jimage;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.Map;
 
@@ -35,6 +37,10 @@ import java.util.Map;
  */
 public class ImageReaderFactory {
     private ImageReaderFactory() {}
+
+    private static final String JAVA_HOME = System.getProperty("java.home");
+    private static final Path BOOT_MODULES_JIMAGE =
+        Paths.get(JAVA_HOME, "lib", "modules", "bootmodules.jimage");
 
     private static final Map<Path, ImageReader> readers = new ConcurrentHashMap<>();
 
@@ -54,6 +60,20 @@ public class ImageReaderFactory {
         } else {
             reader.close();
             return r;
+        }
+    }
+
+    /**
+     * Returns the {@code ImageReader} to read the image file in this
+     * run-time image.
+     *
+     * @throws UncheckedIOException if an I/O error occurs
+     */
+    public static ImageReader getImageReader() {
+        try {
+            return get(BOOT_MODULES_JIMAGE);
+        } catch (IOException ioe) {
+            throw new UncheckedIOException(ioe);
         }
     }
 }

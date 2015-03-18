@@ -100,6 +100,8 @@ public interface ModuleArtifactFinder {
     /**
      * Returns a module finder for modules that are linked into the
      * runtime image.
+     *
+     * @apiNote Do we need a permission check?
      */
     public static ModuleArtifactFinder installedModules() {
         if (InstalledModuleFinder.isModularImage()) {
