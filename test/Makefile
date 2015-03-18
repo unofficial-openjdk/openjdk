@@ -616,8 +616,8 @@ PHONY_LIST += $(JDK_ALL_TARGETS)
 
 # ------------------------------------------------------------------
 
-# Default JTREG to run (win32 script works for everybody)
-JTREG = $(JT_HOME)/win32/bin/jtreg
+# Default JTREG to run
+JTREG = $(JT_HOME)/bin/jtreg
 # Add any extra options (agentvm etc.)
 JTREG_BASIC_OPTIONS += $(EXTRA_JTREG_OPTIONS)
 # Only run automatic tests
