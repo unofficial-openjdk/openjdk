@@ -51,47 +51,35 @@ import sun.misc.PerfCounter;
  * linked into the modular image.
  */
 class InstalledModuleFinder implements ModuleArtifactFinder {
-    private static final String BOOT_JIMAGE = "bootmodules.jimage";
-    private static final String EXT_JIMAGE = "extmodules.jimage";
-    private static final String APP_JIMAGE = "appmodules.jimage";
+    private static final String BOOT_IMAGE_NAME = "bootmodules.jimage";
 
     // the module name to artifact map of modules already located
     private final Map<String, ModuleArtifact> cachedModules = new ConcurrentHashMap<>();
-    private final Map<String, Image> moduleToImage = new HashMap<>();
+    private final Image bootImage;
 
     InstalledModuleFinder() {
         long t0 = System.nanoTime();
         String home = System.getProperty("java.home");
         Path libModules = Paths.get(home, "lib", "modules");
-        openImageIfExists(libModules.resolve(BOOT_JIMAGE));
-        openImageIfExists(libModules.resolve(EXT_JIMAGE));
-        openImageIfExists(libModules.resolve(APP_JIMAGE));
-        initTime.addElapsedTimeFrom(t0);
-    }
-
-    private void openImageIfExists(Path path) {
-        if (Files.notExists(path)) {
-            return;
-        }
 
         try {
-            long t0 = System.nanoTime();
-            Image image = new Image(path);
-            image.modules.stream().forEach(mn -> moduleToImage.put(mn, image));
-            readModuleDataTime.addElapsedTimeFrom(t0);
+            long t1 = System.nanoTime();
+            bootImage = new Image(libModules.resolve(BOOT_IMAGE_NAME));
+            readModuleDataTime.addElapsedTimeFrom(t1);
         } catch (IOException ioe) {
             throw new UncheckedIOException(ioe);
         }
+
+        initTime.addElapsedTimeFrom(t0);
     }
 
     private ModuleArtifact toModuleArtifact(String name) {
         long t0 = System.nanoTime();
-        Image image = moduleToImage.get(name);
-        try (InputStream in = new ByteArrayInputStream(image.readModuleInfo(name))) {
+        try (InputStream in = new ByteArrayInputStream(bootImage.readModuleInfo(name))) {
             ModuleInfo mi = ModuleInfo.readIgnoringHashes(in);
             URI location = URI.create("jrt:/" + name);
             ModuleArtifact artifact =
-                new ModuleArtifact(mi, image.packagesForModule(name), location);
+                new ModuleArtifact(mi, bootImage.packagesForModule(name), location);
             installedModulesCount.increment();
             installedModulesTime.addElapsedTimeFrom(t0);
             return artifact;
@@ -102,13 +90,13 @@ class InstalledModuleFinder implements ModuleArtifactFinder {
 
     static boolean isModularImage() {
         String home = System.getProperty("java.home");
-        Path jimage = Paths.get(home, "lib", "modules", BOOT_JIMAGE);
+        Path jimage = Paths.get(home, "lib", "modules", BOOT_IMAGE_NAME);
         return Files.isRegularFile(jimage);
     }
 
     @Override
     public ModuleArtifact find(String name) {
-        if (!moduleToImage.containsKey(name)) {
+        if (!bootImage.modules.contains(name)) {
             return null;
         }
 
@@ -130,7 +118,7 @@ class InstalledModuleFinder implements ModuleArtifactFinder {
     @Override
     public Set<ModuleArtifact> allModules() {
         // ensure ModuleArtifact for all modules are created
-        return moduleToImage.keySet().stream()
+        return bootImage.modules.stream()
                 .map(this::find).collect(Collectors.toSet());
     }
 

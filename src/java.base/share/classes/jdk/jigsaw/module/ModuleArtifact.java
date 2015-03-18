@@ -51,6 +51,21 @@ public final class ModuleArtifact {
     // cached hash string to avoid needing to compute it many times
     private String cachedHash;
 
+    /**
+     * Checks that all exports are in the module packages.
+     * @throws IllegalArgumentException
+     */
+    private void checkExports() {
+        for (ModuleExport export: descriptor.exports()) {
+            String pkg = export.pkg();
+            if (!packages.contains(pkg)) {
+                String name = descriptor.name();
+                throw new IllegalArgumentException(name + " cannot export " +
+                    pkg + ": not in module");
+            }
+        }
+    }
+
     ModuleArtifact(ModuleInfo mi,
                    Set<String> packages,
                    URI location,
@@ -68,6 +83,9 @@ public final class ModuleArtifact {
         this.packages = Collections.unmodifiableSet(packages);
         this.location = location;
         this.hasher = hasher;
+
+        // all exported packages must be in contents
+        checkExports();
     }
 
     ModuleArtifact(ModuleInfo mi, Set<String> packages, URI location) {
@@ -92,18 +110,14 @@ public final class ModuleArtifact {
         packages = Collections.unmodifiableSet(packages);
         if (packages.contains("") || packages.contains(null))
             throw new IllegalArgumentException("<unnamed> package or null not allowed");
-        for (ModuleExport export: descriptor.exports()) {
-            String pkg = export.pkg();
-            if (!packages.contains(pkg)) {
-                throw new IllegalArgumentException("exported package " + pkg +
-                    " not in contents");
-            }
-        }
 
         this.descriptor = Objects.requireNonNull(descriptor);
         this.packages = packages;
         this.location = Objects.requireNonNull(location);
         this.hasher = null;
+
+        // all exported packages must be in contents
+        checkExports();
     }
 
     /**

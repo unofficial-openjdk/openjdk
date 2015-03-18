@@ -26,7 +26,9 @@ package jdk.internal.jimage;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.IntBuffer;
 import java.nio.file.Files;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
@@ -34,7 +36,6 @@ import java.nio.file.Paths;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Map;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -56,6 +57,9 @@ public class ImageReader extends BasicImageReader {
     // directory management implementation
     private final Map<UTF8String, Node> nodes;
     private volatile Directory rootDir;
+
+    private Directory packagesDir;
+    private Directory modulesDir;
 
     ImageReader(String imagePath, ByteOrder byteOrder) throws IOException {
         super(imagePath, byteOrder);
@@ -125,12 +129,26 @@ public class ImageReader extends BasicImageReader {
         private int flags;
         private final UTF8String name;
         private final BasicFileAttributes fileAttrs;
+        private boolean completed;
 
         Node(UTF8String name, BasicFileAttributes fileAttrs) {
             assert name != null;
             assert fileAttrs != null;
             this.name = name;
             this.fileAttrs = fileAttrs;
+        }
+
+        /**
+         * A node is completed when all its direct children have been built.
+         *
+         * @return
+         */
+        public boolean isCompleted() {
+            return completed;
+        }
+
+        public void setCompleted(boolean completed) {
+            this.completed = completed;
         }
 
         public final void setIsRootDir() {
@@ -309,6 +327,11 @@ public class ImageReader extends BasicImageReader {
         }
 
         @Override
+        public boolean isCompleted() {
+            return true;
+        }
+
+        @Override
         public boolean isResource() {
             return true;
         }
@@ -351,6 +374,11 @@ public class ImageReader extends BasicImageReader {
         }
 
         @Override
+        public boolean isCompleted() {
+            return true;
+        }
+
+        @Override
         public Node resolveLink(boolean recursive) {
             return recursive && (link instanceof LinkNode)? ((LinkNode)link).resolveLink(true) : link;
         }
@@ -374,9 +402,154 @@ public class ImageReader extends BasicImageReader {
         return findNode(new UTF8String(name));
     }
 
+    /**
+     * To visit sub tree resources.
+     */
+    interface LocationVisitor {
+
+        void visit(ImageLocation loc);
+    }
+
+    /**
+     * Lazily build a node from a name.
+     */
+    private final class NodeBuilder {
+
+        private static final int SIZE_OF_OFFSET = 4;
+
+        private final UTF8String name;
+
+        private NodeBuilder(UTF8String name) {
+            this.name = name;
+        }
+
+        private Node buildNode() {
+            Node n = null;
+            boolean isPackages = false;
+            boolean isModules = false;
+            String strName = name.toString();
+            if (strName.startsWith("" + PACKAGES_STRING)) {
+                isPackages = true;
+            } else {
+                if (strName.startsWith("" + MODULES_STRING)) {
+                    isModules = true;
+                }
+            }
+            if (!isModules && !isPackages) {
+                return null;
+            }
+
+            ImageLocation loc = findLocation(name);
+
+            if (loc != null) { // A sub tree node
+                if (isPackages) {
+                    n = handlePackages(strName, loc);
+                } else { // modules sub tree
+                    n = handleModulesSubTree(strName, loc);
+                }
+            } else { // Asking for a resource? /modules/java.base/java/lang/Object.class
+                if (isModules) {
+                    n = handleResource(strName, loc);
+                }
+            }
+            return n;
+        }
+
+        private void visitLocation(ImageLocation loc, LocationVisitor visitor) {
+            byte[] offsets = getResource(loc);
+            ByteBuffer buffer = ByteBuffer.wrap(offsets);
+            buffer.order(getByteOrder());
+            IntBuffer intBuffer = buffer.asIntBuffer();
+            for (int i = 0; i < offsets.length / SIZE_OF_OFFSET; i++) {
+                int offset = intBuffer.get(i);
+                ImageLocation pkgLoc = getLocation(offset);
+                visitor.visit(pkgLoc);
+            }
+        }
+
+        private Node handlePackages(String name, ImageLocation loc) {
+            long size = loc.getUncompressedSize();
+            Node n = null;
+            // Only possiblities are /packages, /packages/package and /packages/package/module
+            if (name.equals("" + PACKAGES_STRING)) {
+                visitLocation(loc, (childloc) -> {
+                    findNode(childloc.getFullName());
+                });
+                packagesDir.setCompleted(true);
+                n = packagesDir;
+            } else {
+                if (size == SIZE_OF_OFFSET) { // Single child
+                    String pkgName = getBaseExt(loc);
+                    Directory pkgDir = newDirectory(packagesDir,
+                            packagesDir.getName().concat(SLASH_STRING, new UTF8String(pkgName)));
+                    visitLocation(loc, (childloc) -> {
+                        findNode(childloc.getFullName());
+                    });
+                    n = pkgDir;
+                } else { // Link to module
+                    String pkgName = loc.getParentString();
+                    String modName = getBaseExt(loc);
+                    Node targetNode = findNode(MODULES_STRING + "/" + modName);
+                    if (targetNode != null) {
+                        Directory pkgDir = newDirectory(packagesDir,
+                                packagesDir.getName().concat(SLASH_STRING, new UTF8String(pkgName)));
+                        pkgDir.setCompleted(true);
+                        Node linkNode = newLinkNode(pkgDir,
+                                pkgDir.getName().concat(SLASH_STRING, new UTF8String(modName)), targetNode);
+                        n = linkNode;
+                    }
+                }
+            }
+            return n;
+        }
+
+        private Node handleModulesSubTree(String name, ImageLocation loc) {
+            Node n;
+            Directory dir = makeDirectories(loc.getFullName());
+            visitLocation(loc, (childloc) -> {
+                String path = childloc.getFullNameString();
+                if (path.startsWith(MODULES_STRING.toString())) { // a package
+                    makeDirectories(childloc.getFullName());
+                } else { // a resource
+                    makeDirectories(childloc.buildName(true, true, false));
+                    newResource(dir, childloc);
+                }
+            });
+            dir.setCompleted(true);
+            n = dir;
+            return n;
+        }
+
+        private Node handleResource(String name, ImageLocation loc) {
+            Node n = null;
+            String locationPath = name.substring((MODULES_STRING).length());
+            ImageLocation resourceLoc = findLocation(locationPath);
+            if (resourceLoc != null) {
+                Directory dir = makeDirectories(resourceLoc.buildName(true, true, false));
+                Resource res = newResource(dir, resourceLoc);
+                n = res;
+            }
+            return n;
+        }
+
+        private String getBaseExt(ImageLocation loc) {
+            String base = loc.getBaseString();
+            String ext = loc.getExtensionString();
+            if (ext != null && !ext.isEmpty()) {
+                base = base + "." + ext;
+            }
+            return base;
+        }
+    }
+
     public synchronized Node findNode(UTF8String name) {
         buildRootDirectory();
-        return nodes.get(name);
+        Node n = nodes.get(name);
+        if (n == null || !n.isCompleted()) {
+            NodeBuilder builder = new NodeBuilder(name);
+            n = builder.buildNode();
+        }
+        return n;
     }
 
     private synchronized void clearNodes() {
@@ -413,54 +586,14 @@ public class ImageReader extends BasicImageReader {
         rootDir.setIsRootDir();
 
         // /packages dir
-        Directory packagesDir = newDirectory(rootDir, PACKAGES_STRING);
+        packagesDir = newDirectory(rootDir, PACKAGES_STRING);
         packagesDir.setIsPackagesDir();
 
         // /modules dir
-        Directory modulesDir = newDirectory(rootDir, MODULES_STRING);
+        modulesDir = newDirectory(rootDir, MODULES_STRING);
         modulesDir.setIsModulesDir();
 
-        // package name to module name map
-        Map<String, String> pkgToModule = new HashMap<>();
-        ImageLocation[] locs = getAllLocations(true);
-        for (ImageLocation loc : locs) {
-            String module = loc.getModuleString();
-            String parent = loc.getParentString();
-             // directory where this location goes as child
-            Directory dir;
-            if (module.isEmpty() ||
-                parent.startsWith("META-INF")) {
-                // ignore entries with no module name!
-                // ignore META-INF/*
-                continue;
-            }
-
-            if (!parent.isEmpty()) {
-                pkgToModule.put(parent.replace("/", "."), module);
-            }
-
-            if (parent.isEmpty() && module.isEmpty()) {
-                // top level entry under root
-                dir = rootDir;
-            } else {
-                dir = makeDirectories(loc.buildName(true, true, false));
-            }
-
-            newResource(dir, loc);
-        }
-
-        // fill-in /packages directory
-        for (Map.Entry<String, String> entry : pkgToModule.entrySet()) {
-            UTF8String pkgName = new UTF8String(entry.getKey());
-            UTF8String modName = new UTF8String(entry.getValue());
-            // /packages/<pkg_name> directory
-            Directory pkgDir = newDirectory(packagesDir,
-                 packagesDir.getName().concat(SLASH_STRING, pkgName));
-            // /packages/<pkg_name>/<link-to-module>
-            Node modNode = nodes.get(MODULES_STRING.concat(SLASH_STRING, modName));
-            newLinkNode(pkgDir, pkgDir.getName().concat(SLASH_STRING, modName), modNode);
-        }
-
+        rootDir.setCompleted(true);
         return rootDir;
     }
 

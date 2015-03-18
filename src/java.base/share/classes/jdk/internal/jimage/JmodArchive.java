@@ -52,7 +52,7 @@ public class JmodArchive extends JarArchive {
         String section = getSection(entryName);
         switch (section) {
             case CLASSES:
-                return EntryType.CLASS_RESOURCE;
+                return EntryType.CLASS_OR_RESOURCE;
             case NATIVE_LIBS:
                 return EntryType.NATIVE_LIB;
             case NATIVE_CMDS:

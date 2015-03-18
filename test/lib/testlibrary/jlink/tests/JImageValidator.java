@@ -28,8 +28,8 @@ import java.io.File;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import jdk.internal.jimage.BasicImageReader;
+import jdk.internal.jimage.ImageFile;
 import jdk.internal.jimage.ImageLocation;
 
 /**
@@ -40,31 +40,23 @@ public class JImageValidator {
 
     private static final String[] dirs = {"bin", "lib"};
 
-    public static final String APP_MODULES = "appmodules.jimage";
-    public static final String EXT_MODULES = "extmodules.jimage";
-    public static final String BOOT_MODULES = "bootmodules.jimage";
-
     private static final List<String> EXPECTED_JIMAGES = new ArrayList<>();
 
     static {
-        EXPECTED_JIMAGES.add(BOOT_MODULES);
-        EXPECTED_JIMAGES.add(EXT_MODULES);
-        EXPECTED_JIMAGES.add(APP_MODULES);
+        EXPECTED_JIMAGES.add(ImageFile.BOOT_IMAGE_NAME);
     }
 
     private final File rootDir;
-    private final Map<String, List<String>> expectedLocations;
-    private final Map<String, List<String>> notExpectedLocations;
+    private final List<String> expectedLocations;
     private int numResources;
     private long resourceExtractionTime;
     private long totalTime;
 
-    public JImageValidator(Map<String, List<String>> expectedLocations, Map<String, List<String>> notExpectedLocations, File rootDir) throws Exception {
+    public JImageValidator(List<String> expectedLocations, File rootDir) throws Exception {
         if (!rootDir.exists()) {
             throw new Exception("Image root dir not found " + rootDir.getAbsolutePath());
         }
         this.expectedLocations = expectedLocations;
-        this.notExpectedLocations = notExpectedLocations;
         this.rootDir = rootDir;
     }
 
@@ -101,18 +93,14 @@ public class JImageValidator {
     private void validate(File jimage) throws Exception {
         BasicImageReader reader = BasicImageReader.open(jimage.getAbsolutePath());
         // Validate expected locations
-        List<String> locations = expectedLocations.get(jimage.getName());
-        List<String> notlocations = notExpectedLocations.get(jimage.getName());
         List<String> seenLocations = new ArrayList<>();
-        if (locations != null) {
-            for (String loc : locations) {
-                ImageLocation il = reader.findLocation(loc);
-                if (il == null) {
-                    throw new Exception("Location " + loc + " not present in " + jimage);
-                }
+        for (String loc : expectedLocations) {
+            ImageLocation il = reader.findLocation(loc);
+            if (il == null) {
+                throw new Exception("Location " + loc + " not present in " + jimage);
             }
-            seenLocations.addAll(locations);
         }
+        seenLocations.addAll(expectedLocations);
 
         for (String s : reader.getEntryNames()) {
             if (s.endsWith(".class") && !s.endsWith("module-info.class")) {
@@ -130,9 +118,6 @@ public class JImageValidator {
                     System.err.println(s + " ERROR " + ex);
                     throw ex;
                 }
-            }
-            if (notlocations != null && notlocations.contains(s)) {
-                throw new Exception(jimage.getName() + " contains unexpected " + s);
             }
             if (seenLocations.contains(s)) {
                 seenLocations.remove(s);

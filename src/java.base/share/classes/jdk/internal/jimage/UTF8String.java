@@ -37,6 +37,8 @@ public final class UTF8String implements CharSequence {
     static final UTF8String EMPTY_STRING = new UTF8String("");
     static final UTF8String SLASH_STRING = new UTF8String("/");
     static final UTF8String DOT_STRING = new UTF8String(".");
+
+    // TODO This strings are implementation specific and should be defined elsewhere.
     static final UTF8String MODULES_STRING = new UTF8String("/modules");
     static final UTF8String PACKAGES_STRING = new UTF8String("/packages");
 

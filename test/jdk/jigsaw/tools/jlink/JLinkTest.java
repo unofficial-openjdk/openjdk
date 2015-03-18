@@ -21,7 +21,6 @@
  * questions.
  */
 import java.io.File;
-import java.io.IOException;
 import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
@@ -30,9 +29,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.ProviderNotFoundException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 import tests.JImageGenerator;
@@ -49,14 +46,8 @@ import tests.JImageValidator;
  */
 public class JLinkTest {
 
-    private static final Map<String, List<String>> expectedLocations = new HashMap<>();
-    private static final Map<String, List<String>> notExpectedLocations = new HashMap<>();
-    private static final List<String> appClasses = new ArrayList<>();
     private static final List<String> bootClasses = new ArrayList<>();
-
-    private static final List<String> notBootClasses = new ArrayList<>();
-    private static final List<String> notExtClasses = new ArrayList<>();
-    private static final List<String> notAppClasses = new ArrayList<>();
+    private static final List<String> appClasses = new ArrayList<>();
 
     public static void main(String[] args) throws Exception {
 
@@ -68,18 +59,12 @@ public class JLinkTest {
             return;
         }
 
-        // Build the set of locations expected in the Image
-        expectedLocations.put(JImageValidator.APP_MODULES, appClasses);
-        expectedLocations.put(JImageValidator.BOOT_MODULES, bootClasses);
-
         Consumer<Path> c = (p) -> {
                // take only the .class resources.
                if (Files.isRegularFile(p) && p.toString().endsWith(".class")
                        && !p.toString().endsWith("module-info.class")) {
                    String loc = p.toString().substring("/modules".length());
                    bootClasses.add(loc);
-                   notExtClasses.add(loc);
-                   notAppClasses.add(loc);
                }
            };
 
@@ -96,11 +81,6 @@ public class JLinkTest {
         if (bootClasses.isEmpty()) {
             throw new RuntimeException("No boot class to check against");
         }
-
-        // Not expected
-        notExpectedLocations.put(JImageValidator.BOOT_MODULES, notBootClasses);
-        notExpectedLocations.put(JImageValidator.EXT_MODULES, notExtClasses);
-        notExpectedLocations.put(JImageValidator.APP_MODULES, notAppClasses);
 
         File jdkHome = new File(System.getProperty("test.jdk"));
         // JPRT not yet ready for jmods
@@ -164,23 +144,11 @@ public class JLinkTest {
         String[] jmodsClasses = {"amodule.jmods.Main"};
         helper.generateJarModule("amodule", jarClasses);
         helper.generateJModule("amodule", jmodsClasses);
-        Map<String, List<String>> okLocations = new HashMap<>();
-        Map<String, List<String>> koLocations = new HashMap<>();
-        okLocations.put(JImageValidator.APP_MODULES, toLocation("amodule", jmodsClasses));
-        koLocations.put(JImageValidator.APP_MODULES, toLocation("amodule", jarClasses));
+        List<String> okLocations = new ArrayList<>();
+        okLocations.addAll(toLocation("amodule", jmodsClasses));
         File image = helper.generateImage(null, "amodule");
-        JImageValidator validator = new JImageValidator(okLocations, koLocations, image);
+        JImageValidator validator = new JImageValidator(okLocations, image);
         validator.validate();
-        try {
-            JImageValidator validator2 = new JImageValidator(koLocations, okLocations, image);
-            validator2.validate();
-            failed = true;
-        } catch (Exception ex) {
-            // XXX OK expected
-        }
-        if (failed) {
-            throw new Exception("Expected locations mismatch");
-        }
     }
 
     private static void generateJModule(JImageGenerator helper,
@@ -203,13 +171,9 @@ public class JLinkTest {
         String[] classes = {module + ".Main", module + ".com.foo.bar.X"};
         for (String clazz : toLocation(module, classes)) {
             appClasses.add(clazz);
-            notBootClasses.add(clazz);
-            notExtClasses.add(clazz);
         }
         String moduleClazz = toLocation(module, "module-info");
         appClasses.add(moduleClazz);
-        notBootClasses.add(moduleClazz);
-        notExtClasses.add(moduleClazz);
 
         return classes;
     }
@@ -232,10 +196,13 @@ public class JLinkTest {
         throws Exception
     {
         File image = helper.generateImage(userOptions, module);
+        List<String> expectedLocations = new ArrayList<>();
+        expectedLocations.addAll(bootClasses);
+        expectedLocations.addAll(appClasses);
         JImageValidator validator = new JImageValidator(expectedLocations,
-                                                        notExpectedLocations,
                                                         image);
         validator.validate();
+        appClasses.clear();
         System.out.println("*** Image " + module);
         System.out.println(validator.getResourceExtractionTime() +
             "ms, Average time to extract " + validator.getNumberOfResources() +

@@ -37,7 +37,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
@@ -60,7 +59,6 @@ import java.util.zip.ZipFile;
 
 import jdk.internal.jimage.Archive;
 import jdk.internal.jimage.ImageFile;
-import jdk.internal.jimage.ImageModules;
 import jdk.internal.jimage.JmodArchive;
 import jdk.internal.jimage.ModularJarArchive;
 import jdk.jigsaw.module.Configuration;
@@ -69,6 +67,7 @@ import jdk.jigsaw.module.ModuleArtifact;
 import jdk.jigsaw.module.ModuleArtifactFinder;
 import jdk.jigsaw.module.ModuleDescriptor;
 import jdk.jigsaw.module.internal.ModuleInfo;
+
 
 
 /**
@@ -414,56 +413,18 @@ class JlinkTask {
 
     private class ImageFileHelper {
         final Set<ModuleDescriptor> modules;
-        final Set<ModuleDescriptor> bootModules;
-        final Set<ModuleDescriptor> extModules;
-        final Set<ModuleDescriptor> appModules;
-        final Map<String,Path> modsPaths;
+        final Map<String, Path> modsPaths;
 
         ImageFileHelper(Configuration cf, Map<String, Path> modsPaths) throws IOException {
             this.modules = cf.descriptors();
             this.modsPaths = modsPaths;
-            Map<String, ModuleDescriptor> mods = new HashMap<>();
-            for (ModuleDescriptor m : modules) {
-                mods.put(m.name(), m);
-            }
-
-            Path baseJmod = modsPaths.get("java.base");
-            if (baseJmod == null)
-                fail(RuntimeException.class, "java.base not found on modulepath");
-            if (!baseJmod.toString().endsWith(".jmod"))
-                fail(RuntimeException.class, "java.base not a jmod");
-
-            this.bootModules = readConfFile(baseJmod, BOOT_MODULES)
-                    .stream()
-                    .filter(mods::containsKey)
-                    .map(mods::get)
-                    .collect(Collectors.toSet());
-            this.extModules = readConfFile(baseJmod, EXT_MODULES)
-                    .stream()
-                    .filter(mods::containsKey)
-                    .map(mods::get)
-                    .collect(Collectors.toSet());
-            this.appModules = modules.stream()
-                    .filter(m -> !bootModules.contains(m) && !extModules.contains(m))
-                    .collect(Collectors.toSet());
         }
 
         void createModularImage(Path output) throws IOException {
             Set<Archive> archives = modsPaths.entrySet().stream()
                     .map(e -> newArchive(e.getKey(), e.getValue()))
                     .collect(Collectors.toSet());
-            Set<String> boot = bootModules.stream()
-                                          .map(ModuleDescriptor::name)
-                                          .collect(Collectors.toSet());
-            Set<String> ext = extModules.stream()
-                                        .map(ModuleDescriptor::name)
-                                        .collect(Collectors.toSet());
-            Set<String> app = appModules.stream()
-                                        .map(ModuleDescriptor::name)
-                                        .collect(Collectors.toSet());
-
-            ImageModules imf = new ImageModules(boot, ext, app);
-            ImageFile.create(output, archives, imf, options.compress);
+            ImageFile.create(output, archives, options.compress);
         }
 
         private Archive newArchive(String module, Path path) {

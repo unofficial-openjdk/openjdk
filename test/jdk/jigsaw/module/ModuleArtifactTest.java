@@ -95,8 +95,13 @@ public class ModuleArtifactTest {
     public Object[][] badPackages() {
         List<Set<String>> badContents = new ArrayList<>();
 
+        // null
         badContents.add( Stream.of("p", null).collect(Collectors.toSet()) );
+
+        // unnamed package
         badContents.add( Stream.of("p", "").collect(Collectors.toSet()) );
+
+        // exports p, not in contents
         badContents.add( Stream.of("q").collect(Collectors.toSet()) );
 
         Object[][] params = new Object[badContents.size()][];
