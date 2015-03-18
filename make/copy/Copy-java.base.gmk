@@ -212,15 +212,3 @@ ifeq ($(OPENJDK_TARGET_OS), solaris)
 endif
 
 ##########################################################################################
-
-$(LIB_DST_DIR)/%.modules: $(JDK_TOPDIR)/src/java.base/share/conf/%.modules
-	$(call install-file)
-
-MODULES_CONF_FILES := \
-    $(LIB_DST_DIR)/boot.modules \
-    $(LIB_DST_DIR)/ext.modules \
-    #
-
-TARGETS += $(MODULES_CONF_FILES)
-
-################################################################################

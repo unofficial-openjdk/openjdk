@@ -134,6 +134,10 @@ TOOL_GENMODULEINFOSOURCE = $(JAVA_SMALL) -Xbootclasspath/p:$(INTERIM_LANGTOOLS_J
     -cp "$(BUILDTOOLS_OUTPUTDIR)/jdk_tools_classes" \
     build.tools.module.GenModuleInfoSource
 
+TOOL_GENCLASSLOADERMAP = $(JAVA_SMALL) -Xbootclasspath/p:$(INTERIM_LANGTOOLS_JAR) \
+    -cp "$(BUILDTOOLS_OUTPUTDIR)/jdk_tools_classes" \
+    build.tools.module.GenModuleLoaderMap
+
 ##########################################################################################
 
 # Tools needed on solaris because OBJCOPY is broken.

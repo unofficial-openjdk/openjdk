@@ -173,7 +173,7 @@ public final class ModuleBootstrap {
         PerfCounters.configTime.addElapsedTimeFrom(t1);
 
         // mapping of modules to class loaders
-        ClassLoaderFinder clf = classLoaderFinder(cf);
+        ClassLoaderFinder clf = ModuleLoaderMap.classLoaderFinder(cf);
 
         // no overlapping packages allowed in the boot Layer
         ensureNoOverlappedPackages(cf);
@@ -245,29 +245,6 @@ public final class ModuleBootstrap {
                 return artifacts;
             }
         };
-    }
-
-    /**
-     * Returns the ClassLoaderFinder that maps modules in the given
-     * Configuration to a ClassLoader.
-     */
-    private static ClassLoaderFinder classLoaderFinder(Configuration cf) {
-        Set<String> bootModules = readModuleSet("boot.modules");
-        Set<String> extModules = readModuleSet("ext.modules");
-
-        ClassLoader extClassLoader = ClassLoaders.extClassLoader();
-        ClassLoader appClassLoader = ClassLoaders.appClassLoader();
-
-        Map<ModuleArtifact, ClassLoader> map = new HashMap<>();
-        cf.descriptors()
-          .stream()
-          .map(ModuleDescriptor::name)
-          .filter(name -> !bootModules.contains(name))
-          .forEach(name -> {
-              ClassLoader cl = extModules.contains(name) ? extClassLoader : appClassLoader;
-              map.put(cf.findArtifact(name), cl);
-          });
-        return map::get;
     }
 
     /**
