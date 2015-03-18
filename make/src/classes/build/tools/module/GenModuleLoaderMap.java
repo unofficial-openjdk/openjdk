@@ -92,7 +92,7 @@ public class GenModuleLoaderMap {
 
     private static String patch(String s, String tag, Stream<String> stream) {
         String mns = stream.sorted()
-            .collect(Collectors.joining("\",\n\t\t\""));
+            .collect(Collectors.joining("\",\n            \""));
         return s.replace(tag, mns);
     }
 

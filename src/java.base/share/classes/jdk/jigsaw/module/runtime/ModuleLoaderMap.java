@@ -32,9 +32,10 @@ import jdk.jigsaw.module.ModuleDescriptor;
 import sun.misc.ClassLoaders;
 
 import java.util.Arrays;
-import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * The module to class loader map.  The list of boot modules and ext modules
@@ -44,10 +45,14 @@ final class ModuleLoaderMap {
     /*
      * The list of boot modules and ext modules are generated at build time.
      */
-    private static final List<String> BOOT_MODULES =
-        Arrays.asList("@@BOOT_MODULE_NAMES@@");
-    private static final List<String> EXT_MODULES =
-        Arrays.asList("@@EXT_MODULE_NAMES@@");
+    private static final Set<String> BOOT_MODULES =
+        Arrays.stream(new String[] {
+            "@@BOOT_MODULE_NAMES@@"
+        }).collect(Collectors.toSet());
+    private static final Set<String> EXT_MODULES =
+        Arrays.stream(new String[] {
+            "@@EXT_MODULE_NAMES@@"
+        }).collect(Collectors.toSet());
 
     /**
      * Returns the ClassLoaderFinder that maps modules in the given
