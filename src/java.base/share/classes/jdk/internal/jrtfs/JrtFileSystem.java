@@ -79,8 +79,6 @@ class JrtFileSystem extends FileSystem {
     private final JrtFileSystemProvider provider;
     // System image readers
     private ImageReader bootImage;
-    private ImageReader extImage;
-    private ImageReader appImage;
     // root path
     private final JrtPath rootPath;
     private volatile boolean isOpen;
@@ -103,13 +101,9 @@ class JrtFileSystem extends FileSystem {
             throws IOException {
         this.provider = provider;
         checkExists(SystemImages.bootImagePath);
-        checkExists(SystemImages.extImagePath);
-        checkExists(SystemImages.appImagePath);
 
-        // open image files
+        // open image file
         this.bootImage = openImage(SystemImages.bootImagePath);
-        this.extImage = openImage(SystemImages.extImagePath);
-        this.appImage = openImage(SystemImages.appImagePath);
 
         byte[] root = new byte[] { '/' };
         rootPath = new JrtPath(this, root);
@@ -152,13 +146,9 @@ class JrtFileSystem extends FileSystem {
         synchronized(this) {
             isOpen = false;
 
-            // close all image readers and null out
+            // close all image reader and null out
             bootImage.close();
-            extImage.close();
-            appImage.close();
             bootImage = null;
-            extImage = null;
-            appImage = null;
         }
     }
 
@@ -295,14 +285,7 @@ class JrtFileSystem extends FileSystem {
     private NodeAndImage lookup(byte[] path) {
         ImageReader image = bootImage;
         Node node = bootImage.findNode(path);
-        if (node == null) {
-            image = extImage;
-            node = extImage.findNode(path);
-        }
-        if (node == null) {
-            image = appImage;
-            node = appImage.findNode(path);
-        }
+
         return node != null? new NodeAndImage(node, image) : null;
     }
 
@@ -487,9 +470,6 @@ class JrtFileSystem extends FileSystem {
         if (rootChildren == null) {
             rootChildren = new ArrayList<>();
             rootChildren.addAll(bootImage.findNode(path).getChildren());
-            // filter out redundant children from other jimage files
-            addRootDirContent(extImage.findNode(path).getChildren());
-            addRootDirContent(appImage.findNode(path).getChildren());
         }
     }
 
@@ -503,8 +483,6 @@ class JrtFileSystem extends FileSystem {
         if (modulesChildren == null) {
             modulesChildren = new ArrayList<>();
             modulesChildren.addAll(bootImage.findNode(path).getChildren());
-            modulesChildren.addAll(extImage.findNode(path).getChildren());
-            modulesChildren.addAll(appImage.findNode(path).getChildren());
         }
     }
 
@@ -518,8 +496,6 @@ class JrtFileSystem extends FileSystem {
         if (packagesChildren == null) {
             packagesChildren = new ArrayList<>();
             packagesChildren.addAll(bootImage.findNode(path).getChildren());
-            packagesChildren.addAll(extImage.findNode(path).getChildren());
-            packagesChildren.addAll(appImage.findNode(path).getChildren());
         }
     }
     private Iterator<Path> packagesDirIterator(byte[] path, String childPrefix) throws IOException {

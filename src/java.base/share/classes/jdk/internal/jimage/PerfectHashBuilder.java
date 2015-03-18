@@ -146,7 +146,7 @@ public class PerfectHashBuilder<E> {
 
     @SuppressWarnings("unchecked")
     public void generate() {
-        boolean redo = true;
+        boolean redo = count != 0;
         while (redo) {
             redo = false;
             redirect = new int[count];

@@ -50,9 +50,7 @@ public class ClassLoaders {
     private ClassLoaders() { }
 
     // the names of the jimage files in the runtime image
-    private static final String BOOT_MODULES = "bootmodules.jimage";
-    private static final String EXT_MODULES = "extmodules.jimage";
-    private static final String APP_MODULES = "appmodules.jimage";
+    private static final String BOOT_IMAGE_NAME = "bootmodules.jimage";
 
     // the built-in class loaders
     private static final BootClassLoader BOOT_LOADER;
@@ -66,15 +64,11 @@ public class ClassLoaders {
         String home = System.getProperty("java.home");
         Path libModules = Paths.get(home, "lib", "modules");
 
-        ImageReader bootReader = null;
-        ImageReader extReader = null;
-        ImageReader appReader = null;
+        ImageReader reader = null;
 
         // open image files if images build, otherwise detect an exploded image
         if (Files.isDirectory(libModules)) {
-            bootReader = openImageIfExists(libModules.resolve(BOOT_MODULES));
-            extReader = openImageIfExists(libModules.resolve(EXT_MODULES));
-            appReader = openImageIfExists(libModules.resolve(APP_MODULES));
+            reader = getImageReader(libModules.resolve(BOOT_IMAGE_NAME));
         } else {
             Path base = Paths.get(home, "modules", "java.base");
             if (!Files.isDirectory(base)) {
@@ -101,19 +95,16 @@ public class ClassLoaders {
         Path overrideDir = (s != null) ? Paths.get(s) : null;
 
         // create the class loaders
-        BOOT_LOADER = new BootClassLoader(bootReader, overrideDir, bcp);
-        EXT_LOADER = new ExtClassLoader(BOOT_LOADER, extReader, overrideDir);
-        APP_LOADER = new AppClassLoader(EXT_LOADER, appReader, overrideDir, ucp);
+        BOOT_LOADER = new BootClassLoader(reader, overrideDir, bcp);
+        EXT_LOADER = new ExtClassLoader(BOOT_LOADER, reader, overrideDir);
+        APP_LOADER = new AppClassLoader(EXT_LOADER, reader, overrideDir, ucp);
 
         // Register the image readers with the jrt protocol handler so that
         // resources can be located. This can go away once we move to one
         // image file.
-        if (bootReader != null)
-            JavaRuntimeURLConnection.register(bootReader);
-        if (extReader != null)
-            JavaRuntimeURLConnection.register(extReader);
-        if (appReader != null)
-            JavaRuntimeURLConnection.register(appReader);
+        if (reader != null) {
+            JavaRuntimeURLConnection.register(reader);
+        }
     }
 
     /**
@@ -228,7 +219,7 @@ public class ClassLoaders {
      *
      * @throws UncheckedIOException if an I/O error occurs
      */
-    private static ImageReader openImageIfExists(Path path) {
+    private static ImageReader getImageReader(Path path) {
         try {
             return ImageReaderFactory.get(path);
         } catch (NoSuchFileException ignore) {

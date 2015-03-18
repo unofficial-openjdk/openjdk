@@ -42,7 +42,7 @@ public interface Archive {
         public static enum EntryType {
 
             MODULE_NAME,
-            CLASS_RESOURCE,
+            CLASS_OR_RESOURCE,
             NATIVE_LIB,
             NATIVE_CMD,
             CONFIG,

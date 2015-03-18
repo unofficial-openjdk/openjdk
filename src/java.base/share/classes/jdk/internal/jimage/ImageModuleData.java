@@ -25,7 +25,6 @@
 
 package jdk.internal.jimage;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
@@ -107,20 +106,14 @@ final public class ImageModuleData {
     }
 
     private static byte[] getBytes(BasicImageReader reader) {
-        byte[] bytes = null;
+        String loaderName = reader.imagePathName();
 
-        try {
-            String loaderName = reader.imagePathName();
-
-            if (loaderName.endsWith(ImageFile.IMAGE_EXT)) {
-                loaderName = loaderName.substring(0, loaderName.length() -
-                        ImageFile.IMAGE_EXT.length());
-            }
-
-            bytes = reader.getResource(getModuleDataName(loaderName));
-        } catch (IOException ex) {
-            // drop thru check
+        if (loaderName.endsWith(ImageFile.IMAGE_EXT)) {
+            loaderName = loaderName.substring(0, loaderName.length() -
+                    ImageFile.IMAGE_EXT.length());
         }
+
+        byte[] bytes = reader.getResource(getModuleDataName(loaderName));
 
         if (bytes == null) {
             throw new InternalError("module data missing");

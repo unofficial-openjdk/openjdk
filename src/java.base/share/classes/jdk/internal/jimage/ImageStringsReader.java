@@ -23,42 +23,22 @@
  * questions.
  */
 
-#include <windows.h>
+package jdk.internal.jimage;
 
-#include "jni_util.h"
-#include "jlong.h"
-#include "jdk_internal_jimage_concurrent_ConcurrentPReader.h"
+class ImageStringsReader implements ImageStrings {
+    private final BasicImageReader reader;
 
-static jfieldID handle_fdID;
-
-JNIEXPORT void JNICALL
-Java_jdk_internal_jimage_concurrent_ConcurrentPReader_initIDs(JNIEnv *env, jclass clazz)
-{
-    CHECK_NULL(clazz = (*env)->FindClass(env, "java/io/FileDescriptor"));
-    CHECK_NULL(handle_fdID = (*env)->GetFieldID(env, clazz, "handle", "J"));
-}
-
-JNIEXPORT jint JNICALL
-Java_jdk_internal_jimage_concurrent_ConcurrentPReader_pread(JNIEnv *env, jclass clazz,
-                                                            jobject fdo, jlong address,
-                                                            jint len, jlong offset)
-{
-    OVERLAPPED ov;
-    DWORD nread;
-    BOOL result;
-
-    jlong handle = (*env)->GetLongField(env, fdo, handle_fdID);
-    void *buf = (void *)jlong_to_ptr(address);
-
-    ZeroMemory(&ov, sizeof(ov));
-    ov.Offset = (DWORD)offset;
-    ov.OffsetHigh = (DWORD)(offset >> 32);
-
-    result = ReadFile(handle, (LPVOID)buf, len, &nread, &ov);
-    if (result == 0) {
-        JNU_ThrowIOExceptionWithLastError(env, "ReadFile failed");
+    ImageStringsReader(BasicImageReader reader) {
+        this.reader = reader;
     }
 
-    return nread;
-}
+    @Override
+    public UTF8String get(int offset) {
+        return reader.getUTF8String(offset);
+    }
 
+    @Override
+    public int add(final UTF8String string) {
+        throw new InternalError("Can not add strings at runtime");
+    }
+}

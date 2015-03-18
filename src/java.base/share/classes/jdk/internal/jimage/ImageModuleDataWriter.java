@@ -31,11 +31,13 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
-public class ImageModuleDataBuilder {
+public class ImageModuleDataWriter {
     final byte[] bytes;
 
-    public ImageModuleDataBuilder(BasicImageWriter writer,
+    public ImageModuleDataWriter(BasicImageWriter writer,
             Map<String, List<String>> modulePackages) {
         PerfectHashBuilder<String> packageToModule = new PerfectHashBuilder<>(
                 new PerfectHashBuilder.Entry<String>().getClass(),
@@ -60,6 +62,22 @@ public class ImageModuleDataBuilder {
         bytes = getBytes(writer, packageToModule, moduleToPackages);
     }
 
+    static ImageModuleDataWriter buildModuleData(BasicImageWriter writer,
+            Map<String, Set<String>> modulePackagesMap) {
+        Set<String> modules = modulePackagesMap.keySet();
+
+        Map<String, List<String>> modulePackages = new LinkedHashMap<>();
+        modules.stream().sorted().forEach((moduleName) -> {
+            List<String> localPackages = modulePackagesMap.get(moduleName).stream()
+                    .map(pn -> pn.replace('.', '/'))
+                    .sorted()
+                    .collect(Collectors.toList());
+            modulePackages.put(moduleName, localPackages);
+        });
+
+        return new ImageModuleDataWriter(writer, modulePackages);
+    }
+
     public static Map<String, List<String>> toModulePackages(List<String> lines) {
         Map<String, List<String>> modulePackages = new LinkedHashMap<>();
 
@@ -73,9 +91,8 @@ public class ImageModuleDataBuilder {
         return modulePackages;
     }
 
-    public void addLocation(String loaderName, BasicImageWriter writer) {
-         // NOTE: this should eventually be per loader.
-        writer.addLocation(ImageModuleData.getModuleDataName(loaderName), 0, 0, bytes.length);
+    public void addLocation(String name, BasicImageWriter writer) {
+        writer.addLocation(ImageModuleData.getModuleDataName(name), 0, 0, bytes.length);
     }
 
     private byte[] getBytes(BasicImageWriter writer,
@@ -144,6 +161,4 @@ public class ImageModuleDataBuilder {
     public int size() {
         return bytes.length;
     }
-
-
 }

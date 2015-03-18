@@ -44,7 +44,7 @@ public class ModularJarArchive extends JarArchive {
 
     @Override
     EntryType toEntryType(String section) {
-        return EntryType.CLASS_RESOURCE;
+        return EntryType.CLASS_OR_RESOURCE;
     }
 
     @Override

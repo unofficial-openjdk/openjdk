@@ -758,15 +758,14 @@ class BuiltinClassLoader
         public ByteBuffer readResource(String name) throws IOException {
             ImageLocation location = findImageLocation(name);
             if (location != null) {
-                byte[] bytes = imageReader.getResource(location);
-                return ByteBuffer.wrap(bytes);
+                return imageReader.getResourceBuffer(location);
             }
             throw new IOException(module + "/" + name + " not found");
         }
 
         @Override
         public void releaseBuffer(ByteBuffer bb) {
-            // nothing to do.
+            ImageReader.releaseByteBuffer(bb);
         }
 
         @Override

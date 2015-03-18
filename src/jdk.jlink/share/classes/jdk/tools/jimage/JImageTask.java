@@ -31,8 +31,13 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import static java.nio.file.StandardOpenOption.READ;
+import static java.nio.file.StandardOpenOption.WRITE;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -44,9 +49,13 @@ import java.util.ResourceBundle;
 import jdk.internal.jimage.BasicImageReader;
 import jdk.internal.jimage.BasicImageWriter;
 import jdk.internal.jimage.ImageHeader;
+import static jdk.internal.jimage.ImageHeader.MAGIC;
+import static jdk.internal.jimage.ImageHeader.MAJOR_VERSION;
+import static jdk.internal.jimage.ImageHeader.MINOR_VERSION;
 import jdk.internal.jimage.ImageLocation;
 import jdk.internal.jimage.ImageModuleData;
-import jdk.internal.jimage.ImageModuleDataBuilder;
+import jdk.internal.jimage.ImageModuleDataWriter;
+import jdk.internal.jimage.ImageResourcesTree;
 
 class JImageTask {
     static class BadArgs extends Exception {
@@ -128,6 +137,14 @@ class JImageTask {
                 task.options.help = true;
             }
         },
+
+        new Option(true, "--flags") {
+            @Override
+            void process(JImageTask task, String opt, String arg) {
+                task.options.flags = arg;
+            }
+        },
+
         new Option(false, "--verbose") {
             @Override
             void process(JImageTask task, String opt, String arg) throws BadArgs {
@@ -147,6 +164,7 @@ class JImageTask {
         String directory = ".";
         boolean fullVersion;
         boolean help;
+        String flags;
         boolean verbose;
         boolean version;
         List<File> jimages = new LinkedList<>();
@@ -156,10 +174,11 @@ class JImageTask {
     private final Options options = new Options();
 
     enum Task {
-        RECREATE,
         EXTRACT,
         INFO,
         LIST,
+        RECREATE,
+        SET,
         VERIFY
     };
 
@@ -256,7 +275,7 @@ class JImageTask {
         final List<File> files = new ArrayList<>();
         final BasicImageWriter writer = new BasicImageWriter();
         final Long longZero = 0L;
-
+        final List<String> paths = new ArrayList<>();
         // Note: code sensitive to Netbeans parser crashing.
         long total = Files.walk(dirPath).reduce(longZero, (Long offset, Path path) -> {
                     long size = 0;
@@ -274,7 +293,7 @@ class JImageTask {
 
                     File file = path.toFile();
 
-                    if (file.isFile()) {
+                    if (file.isFile() && !ImageResourcesTree.isTreeInfoResource(file.getName())) {
                         if (options.verbose) {
                             log.println(name);
                         }
@@ -283,9 +302,9 @@ class JImageTask {
                             try {
                                 List<String> lines = Files.readAllLines(path);
                                 Map<String, List<String>> modulePackages =
-                                        ImageModuleDataBuilder.toModulePackages(lines);
-                                ImageModuleDataBuilder imageModuleDataBuilder =
-                                        new ImageModuleDataBuilder(writer, modulePackages);
+                                        ImageModuleDataWriter.toModulePackages(lines);
+                                ImageModuleDataWriter imageModuleDataBuilder =
+                                        new ImageModuleDataWriter(writer, modulePackages);
                                 size = imageModuleDataBuilder.size();
                             } catch (IOException ex) {
                                 // Caught again when writing file.
@@ -297,6 +316,7 @@ class JImageTask {
 
                         // NOTE: Need way of recovering loader.
                         writer.addLocation(name, offset, 0L, size);
+                        paths.add(name);
                         files.add(file);
                     }
 
@@ -309,6 +329,8 @@ class JImageTask {
                     BufferedOutputStream bos = new BufferedOutputStream(os);
                     DataOutputStream out = new DataOutputStream(bos)) {
 
+                ImageResourcesTree tree = new ImageResourcesTree(total, writer, paths);
+
                 byte[] index = writer.getBytes();
                 out.write(index, 0, index.length);
 
@@ -320,9 +342,9 @@ class JImageTask {
                         if (name.endsWith(ImageModuleData.META_DATA_EXTENSION)) {
                             List<String> lines = Files.readAllLines(path);
                             Map<String, List<String>> modulePackages =
-                                    ImageModuleDataBuilder.toModulePackages(lines);
-                            ImageModuleDataBuilder imageModuleDataBuilder =
-                                    new ImageModuleDataBuilder(writer, modulePackages);
+                                    ImageModuleDataWriter.toModulePackages(lines);
+                            ImageModuleDataWriter imageModuleDataBuilder =
+                                    new ImageModuleDataWriter(writer, modulePackages);
                             imageModuleDataBuilder.writeTo(out);
                         } else {
                             Files.copy(path, out);
@@ -331,6 +353,9 @@ class JImageTask {
                         throw new BadArgs("err.cannot.read.file", file.getName());
                     }
                 }
+
+                tree.addContent(out);
+
             }
         } else {
             throw new BadArgs("err.jimage.already.exists", jimage.getName());
@@ -382,7 +407,9 @@ class JImageTask {
             List<String> lines = imageModuleData.fromModulePackages();
             Files.write(resource.toPath(), lines);
         } else {
-            Files.write(resource.toPath(), bytes);
+            if (!ImageResourcesTree.isTreeInfoResource(name)) {
+                Files.write(resource.toPath(), bytes);
+            }
         }
     }
 
@@ -407,12 +434,14 @@ class JImageTask {
         }
     }
 
-    private void info(File file, BasicImageReader reader) {
+    private void info(File file, BasicImageReader reader) throws IOException {
         ImageHeader header = reader.getHeader();
 
         log.println(" Major Version:  " + header.getMajorVersion());
         log.println(" Minor Version:  " + header.getMinorVersion());
-        log.println(" Location Count: " + header.getLocationCount());
+        log.println(" Flags:          " + Integer.toHexString(header.getMinorVersion()));
+        log.println(" Resource Count: " + header.getResourceCount());
+        log.println(" Table Length:   " + header.getTableLength());
         log.println(" Offsets Size:   " + header.getOffsetsSize());
         log.println(" Redirects Size: " + header.getRedirectSize());
         log.println(" Locations Size: " + header.getLocationsSize());
@@ -424,15 +453,38 @@ class JImageTask {
         print(reader, name);
     }
 
-    void verify(BasicImageReader reader, String name, ImageLocation location) {
-        if (name.endsWith(".class")) {
-            byte[] bytes;
+    void set(File file, BasicImageReader reader) throws BadArgs {
+        try {
+            ImageHeader oldHeader = reader.getHeader();
+
+            int value = 0;
             try {
-                bytes = reader.getResource(location);
-            } catch (IOException ex) {
-                log.println(ex);
-                bytes = null;
+                value = Integer.valueOf(options.flags);
+            } catch (NumberFormatException ex) {
+                throw new BadArgs("err.flags.not.int", options.flags);
             }
+
+            ImageHeader newHeader = new ImageHeader(MAGIC, MAJOR_VERSION, MINOR_VERSION,
+                    value,
+                    oldHeader.getResourceCount(), oldHeader.getTableLength(),
+                    oldHeader.getLocationsSize(), oldHeader.getStringsSize());
+
+            ByteBuffer buffer = ByteBuffer.allocate(ImageHeader.getHeaderSize());
+            buffer.order(ByteOrder.nativeOrder());
+            newHeader.writeTo(buffer);
+            buffer.rewind();
+
+            try (FileChannel channel = FileChannel.open(file.toPath(), READ, WRITE)) {
+                channel.write(buffer, 0);
+            }
+        } catch (IOException ex) {
+            throw new BadArgs("err.cannot.update.file", file.getName());
+        }
+    }
+
+     void verify(BasicImageReader reader, String name, ImageLocation location) {
+        if (name.endsWith(".class")) {
+            byte[] bytes = reader.getResource(location);
 
             if (bytes == null || bytes.length <= 4 ||
                 (bytes[0] & 0xFF) != 0xCA ||
@@ -460,11 +512,13 @@ class JImageTask {
             }
 
             if (resourceAction != null) {
-                String[] entryNames = reader.getEntryNames(true);
+                String[] entryNames = reader.getEntryNames();
 
                 for (String name : entryNames) {
-                    ImageLocation location = reader.findLocation(name);
-                    resourceAction.apply(reader, name, location);
+                    if (!ImageResourcesTree.isTreeInfoResource(name)) {
+                        ImageLocation location = reader.findLocation(name);
+                        resourceAction.apply(reader, name, location);
+                    }
                 }
             }
        }
@@ -472,9 +526,6 @@ class JImageTask {
 
     private boolean run() throws IOException, BadArgs {
         switch (options.task) {
-            case RECREATE:
-                recreate();
-                break;
             case EXTRACT:
                 iterate(null, this::extract);
                 break;
@@ -483,6 +534,12 @@ class JImageTask {
                 break;
             case LIST:
                 iterate(this::listTitle, this::list);
+                break;
+            case RECREATE:
+                recreate();
+                break;
+            case SET:
+                iterate(this::set, null);
                 break;
             case VERIFY:
                 iterate(this::title, this::verify);

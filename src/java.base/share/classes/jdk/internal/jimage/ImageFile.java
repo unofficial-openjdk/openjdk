@@ -46,7 +46,6 @@ import java.util.zip.Deflater;
 import java.util.zip.Inflater;
 import jdk.internal.jimage.Archive.Entry;
 import jdk.internal.jimage.Archive.Entry.EntryType;
-import jdk.internal.jimage.ImageModules.Loader;
 
 /**
  * An image (native endian.)
@@ -55,11 +54,12 @@ import jdk.internal.jimage.ImageModules.Loader;
  *   u4 magic;
  *   u2 major_version;
  *   u2 minor_version;
- *   u4 location_count;
+ *   u4 resource_count;
+ *   u4 table_length;
  *   u4 location_attributes_size;
  *   u4 strings_size;
- *   u4 redirect[location_count];
- *   u4 offsets[location_count];
+ *   u4 redirect[table_length];
+ *   u4 offsets[table_length];
  *   u1 location_attributes[location_attributes_size];
  *   u1 strings[strings_size];
  *   u1 content[if !EOF];
@@ -69,70 +69,44 @@ import jdk.internal.jimage.ImageModules.Loader;
 public final class ImageFile {
     private static final String JAVA_BASE = "java.base";
     public static final String IMAGE_EXT = ".jimage";
+    public static final String BOOT_NAME = "bootmodules";
+    public static final String BOOT_IMAGE_NAME = BOOT_NAME + IMAGE_EXT;
     private static final String JAR_EXT = ".jar";
     private final Path root;
     private final Path mdir;
     private final Map<String, List<Entry>> entriesForModule = new HashMap<>();
     private final boolean compress;
+
     private ImageFile(Path path, boolean compress) {
         this.root = path;
         this.mdir = root.resolve(path.getFileSystem().getPath("lib", "modules"));
         this.compress = compress;
     }
 
-    public static ImageFile open(Path path) throws IOException {
-        ImageFile lib = new ImageFile(path, false);
-        return lib.open();
-    }
-
-    private ImageFile open() throws IOException {
-        Path path = mdir.resolve("bootmodules" + IMAGE_EXT);
-
-        ImageReader reader = new ImageReader(path.toString());
-        ImageHeader header = reader.getHeader();
-
-        if (header.getMagic() != ImageHeader.MAGIC) {
-            if (header.getMagic() == ImageHeader.BADMAGIC) {
-                throw new IOException(path + ": Image may be not be native endian");
-            } else {
-                throw new IOException(path + ": Invalid magic number");
-            }
-        }
-
-        if (header.getMajorVersion() > ImageHeader.MAJOR_VERSION ||
-            (header.getMajorVersion() == ImageHeader.MAJOR_VERSION &&
-             header.getMinorVersion() > ImageHeader.MINOR_VERSION)) {
-            throw new IOException("invalid version number");
-        }
-
-        return this;
-    }
-
     public static ImageFile create(Path output,
                                    Set<Archive> archives,
-                                   ImageModules modules,
                                    boolean compress)
         throws IOException
     {
-        return ImageFile.create(output, archives, modules, ByteOrder.nativeOrder(), compress);
+        return ImageFile.create(output, archives, ByteOrder.nativeOrder(), compress);
     }
 
     public static ImageFile create(Path output,
                                    Set<Archive> archives,
-                                   ImageModules modules,
                                    ByteOrder byteOrder,
                                    boolean compress)
         throws IOException
     {
-        ImageFile lib = new ImageFile(output, compress);
+        ImageFile image = new ImageFile(output, compress);
         // get all entries
-        lib.readAllEntries(modules, archives);
+        Map<String, Set<String>> modulePackagesMap = new HashMap<>();
+        image.readAllEntries(modulePackagesMap, archives);
         // write to modular image
-        lib.writeImage(modules, archives, byteOrder);
-        return lib;
+        image.writeImage(modulePackagesMap, archives, byteOrder);
+        return image;
     }
 
-    private void readAllEntries(ImageModules modules,
+    private void readAllEntries(Map<String, Set<String>> modulePackagesMap,
                                   Set<Archive> archives) {
         archives.stream().forEach((archive) -> {
             List<Entry> archiveResources = new ArrayList<>();
@@ -141,17 +115,17 @@ public final class ImageFile {
             entriesForModule.put(mn, archiveResources);
             // Extract package names
             List<Entry> classes = archiveResources.stream()
-                    .filter(n -> n.type() == EntryType.CLASS_RESOURCE)
+                    .filter(n -> n.type() == EntryType.CLASS_OR_RESOURCE)
                     .collect(Collectors.toList());
             Set<String> pkgs = classes.stream().map(Entry::name)
                     .filter(n -> n.endsWith(".class") && !n.endsWith("module-info.class"))
                     .map(this::toPackage)
                     .collect(Collectors.toSet());
-            modules.setPackages(mn, pkgs);
+            modulePackagesMap.put(mn, pkgs);
         });
     }
 
-    private void writeImage(ImageModules modules,
+    private void writeImage(Map<String, Set<String>> modulePackagesMap,
                             Set<Archive> archives,
                             ByteOrder byteOrder)
         throws IOException
@@ -162,82 +136,86 @@ public final class ImageFile {
                   .collect(Collectors.toMap(Archive::moduleName, Function.identity()));
 
         Files.createDirectories(mdir);
-        for (Loader loader : Loader.values()) {
-            Set<String> mods = modules.getModules(loader);
 
-            try (OutputStream fos = Files.newOutputStream(mdir.resolve(loader.getName() + IMAGE_EXT));
-                    BufferedOutputStream bos = new BufferedOutputStream(fos);
-                    DataOutputStream out = new DataOutputStream(bos)) {
-                // store index in addition of the class loader map for boot loader
-                BasicImageWriter writer = new BasicImageWriter(byteOrder);
-                Set<String> duplicates = new HashSet<>();
+         try (OutputStream fos = Files.newOutputStream(mdir.resolve(BOOT_IMAGE_NAME));
+                 BufferedOutputStream bos = new BufferedOutputStream(fos);
+                 DataOutputStream out = new DataOutputStream(bos)) {
+            // store index in addition of the class loader map for boot loader
+            BasicImageWriter writer = new BasicImageWriter(byteOrder);
+            Set<String> duplicates = new HashSet<>();
 
-                // build module and package map and add as resource
-                ImageModuleDataBuilder moduleData = modules.buildModuleData(loader, writer);
-                moduleData.addLocation(loader.getName(), writer);
-                long offset = moduleData.size();
+            ImageModuleDataWriter moduleData =
+                    ImageModuleDataWriter.buildModuleData(writer, modulePackagesMap);
+            moduleData.addLocation(BOOT_NAME, writer);
+            long offset = moduleData.size();
 
-                List<byte[]> content = new ArrayList<>();
-                ExternalFilesWriter filesWriter = new ExternalFilesWriter(root);
-                // the order of traversing the resources and the order of
-                // the module content being written must be the same
-                for (String mn : mods) {
-                    for (Entry res : entriesForModule.get(mn)) {
-                        String fn = res.name();
-                        String path;
+            List<byte[]> content = new ArrayList<>();
+            ExternalFilesWriter filesWriter = new ExternalFilesWriter(root);
+            List<String> paths = new ArrayList<>();
+            Set<String> mods = modulePackagesMap.keySet();
+            // the order of traversing the resources and the order of
+            // the module content being written must be the same
+            for (String mn : mods) {
+                for (Entry res : entriesForModule.get(mn)) {
+                    String fn = res.name();
+                    String path;
 
-                        if (fn.endsWith("module-info.class")) {
-                            path = "/" + fn;
-                        } else {
-                            path = "/" + mn + "/" + fn;
-                        }
-                        if (res.type() == EntryType.CLASS_RESOURCE) {
-                            long uncompressedSize = res.size();
-                            long compressedSize = 0;
-                            try (InputStream stream = res.stream()) {
-                                byte[] bytes = readAllBytes(stream);
-                                if (bytes.length != uncompressedSize) {
-                                    throw new IOException("Size differ for " + path + "@" + res.archive().moduleName());
-                                }
-                                if (compress) {
-                                    bytes = ImageFile.Compressor.compress(bytes);
-                                    compressedSize = bytes.length;
-                                }
-                                content.add(bytes);
-                            }
-                            long onFileSize = compressedSize != 0 ? compressedSize : uncompressedSize;
-
-                            if (duplicates.contains(path)) {
-                                System.err.format("duplicate resource \"%s\", skipping%n", path);
-                                // TODO Need to hang bytes on resource and write from resource not zip.
-                                // Skipping resource throws off writing from zip.
-                                offset += onFileSize;
-                                continue;
-                            }
-                            duplicates.add(path);
-                            writer.addLocation(path, offset, compressedSize, uncompressedSize);
-                            offset += onFileSize;
-                        } else {
-                            filesWriter.accept(res);
-                        }
+                    if (fn.endsWith("module-info.class")) {
+                        path = "/" + fn;
+                    } else {
+                        path = "/" + mn + "/" + fn;
                     }
-                    // Done with this archive, close it.
-                    Archive archive = nameToArchive.get(mn);
-                    archive.close();
+                    if (res.type() == EntryType.CLASS_OR_RESOURCE) {
+                        long uncompressedSize = res.size();
+                        long compressedSize = 0;
+                        try (InputStream stream = res.stream()) {
+                            byte[] bytes = readAllBytes(stream);
+                            if (bytes.length != uncompressedSize) {
+                                throw new IOException("Size differ for " + path + "@" + res.archive().moduleName());
+                            }
+                            if (compress) {
+                                bytes = ImageFile.Compressor.compress(bytes);
+                                compressedSize = bytes.length;
+                            }
+                            content.add(bytes);
+                        }
+                        long onFileSize = compressedSize != 0 ? compressedSize : uncompressedSize;
+
+                        if (duplicates.contains(path)) {
+                            System.err.format("duplicate resource \"%s\", skipping%n", path);
+                            // TODO Need to hang bytes on resource and write from resource not zip.
+                            // Skipping resource throws off writing from zip.
+                            offset += onFileSize;
+                            continue;
+                        }
+                        duplicates.add(path);
+                        writer.addLocation(path, offset, compressedSize, uncompressedSize);
+                        paths.add(path);
+                        offset += onFileSize;
+                    } else {
+                        filesWriter.accept(res);
+                    }
                 }
-
-                // write header and indices
-                byte[] bytes = writer.getBytes();
-                out.write(bytes, 0, bytes.length);
-
-                // write module meta data
-                moduleData.writeTo(out);
-
-                // write module content
-                for (byte[] buf : content) {
-                    out.write(buf, 0, buf.length);
-                }
+                // Done with this archive, close it.
+                Archive archive = nameToArchive.get(mn);
+                archive.close();
             }
+
+            ImageResourcesTree tree = new ImageResourcesTree(offset, writer, paths);
+
+            // write header and indices
+            byte[] bytes = writer.getBytes();
+            out.write(bytes, 0, bytes.length);
+
+            // write module meta data
+            moduleData.writeTo(out);
+
+            // write module content
+            for (byte[] buf : content) {
+                out.write(buf, 0, buf.length);
+            }
+
+            tree.addContent(out);
         }
     }
 

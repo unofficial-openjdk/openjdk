@@ -25,7 +25,6 @@
 
 package jdk.internal.jimage;
 
-import java.io.PrintStream;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.List;
@@ -34,11 +33,11 @@ public final class BasicImageWriter {
     private final static int RETRY_LIMIT = 1000;
 
     private ByteOrder byteOrder;
-    private ImageStrings strings;
-    private int count;
+    private ImageStringsWriter strings;
+    private int length;
     private int[] redirect;
-    private ImageLocation[] locations;
-    private List<ImageLocation> input;
+    private ImageLocationWriter[] locations;
+    private List<ImageLocationWriter> input;
     private ImageStream headerStream;
     private ImageStream redirectStream;
     private ImageStream locationOffsetStream;
@@ -52,7 +51,7 @@ public final class BasicImageWriter {
     public BasicImageWriter(ByteOrder byteOrder) {
         this.byteOrder = byteOrder;
         this.input = new ArrayList<>();
-        this.strings = new ImageStrings();
+        this.strings = new ImageStringsWriter();
         this.headerStream = new ImageStream(byteOrder);
         this.redirectStream = new ImageStream(byteOrder);
         this.locationOffsetStream = new ImageStream(byteOrder);
@@ -74,17 +73,26 @@ public final class BasicImageWriter {
 
     public void addLocation(String fullname, long contentOffset,
             long compressedSize, long uncompressedSize) {
-        ImageLocation location =
-                ImageLocation.newLocation(new UTF8String(fullname), strings,
+        ImageLocationWriter location =
+                ImageLocationWriter.newLocation(new UTF8String(fullname), strings,
                         contentOffset, compressedSize, uncompressedSize);
         input.add(location);
-        count++;
+        length++;
+    }
+
+    ImageLocationWriter[] getLocations() {
+        return locations;
+    }
+
+    int getLocationsCount() {
+        return input.size();
     }
 
     private void generatePerfectHash() {
-        PerfectHashBuilder<ImageLocation> builder =
-                new PerfectHashBuilder<>(new PerfectHashBuilder.Entry<ImageLocation>().getClass(),
-                                         new PerfectHashBuilder.Bucket<ImageLocation>().getClass());
+        PerfectHashBuilder<ImageLocationWriter> builder =
+            new PerfectHashBuilder<>(
+                new PerfectHashBuilder.Entry<ImageLocationWriter>().getClass(),
+                new PerfectHashBuilder.Bucket<ImageLocationWriter>().getClass());
 
         input.stream().forEach((location) -> {
             builder.put(location.getFullName(), location);
@@ -92,11 +100,12 @@ public final class BasicImageWriter {
 
         builder.generate();
 
+        length = builder.getCount();
         redirect = builder.getRedirect();
-        PerfectHashBuilder.Entry<ImageLocation>[] order = builder.getOrder();
-        locations = new ImageLocation[order.length];
+        PerfectHashBuilder.Entry<ImageLocationWriter>[] order = builder.getOrder();
+        locations = new ImageLocationWriter[length];
 
-        for (int i = 0; i < order.length; i++) {
+        for (int i = 0; i < length; i++) {
             locations[i] = order[i].getValue();
         }
     }
@@ -106,17 +115,17 @@ public final class BasicImageWriter {
     }
 
     private void prepareRedirectBytes() {
-        for (int i = 0; i < count; i++) {
+        for (int i = 0; i < length; i++) {
             redirectStream.putInt(redirect[i]);
         }
     }
 
     private void prepareLocationBytes() {
         // Reserve location offset zero for empty locations
-        locationStream.put(ImageLocation.ATTRIBUTE_END << 3);
+        locationStream.put(ImageLocationWriter.ATTRIBUTE_END << 3);
 
-        for (int i = 0; i < count; i++) {
-            ImageLocation location = locations[i];
+        for (int i = 0; i < length; i++) {
+            ImageLocationWriter location = locations[i];
 
             if (location != null) {
                 location.writeTo(locationStream);
@@ -127,14 +136,16 @@ public final class BasicImageWriter {
     }
 
     private void prepareOffsetBytes() {
-        for (int i = 0; i < count; i++) {
-            ImageLocation location = locations[i];
-            locationOffsetStream.putInt(location != null ? location.getLocationOffset() : 0);
+        for (int i = 0; i < length; i++) {
+            ImageLocationWriter location = locations[i];
+            int offset = location != null ? location.getLocationOffset() : 0;
+            locationOffsetStream.putInt(offset);
         }
     }
 
     private void prepareHeaderBytes() {
-        ImageHeader header = new ImageHeader(count, locationStream.getSize(), strings.getSize());
+        ImageHeader header = new ImageHeader(input.size(), length,
+                locationStream.getSize(), strings.getSize());
         header.writeTo(headerStream);
     }
 
@@ -160,33 +171,15 @@ public final class BasicImageWriter {
         return allIndexStream.toArray();
     }
 
-    ImageLocation find(UTF8String key) {
-        int index = key.hashCode() % count;
-        index = redirect[index];
+    ImageLocationWriter find(UTF8String key) {
+        int index = redirect[key.hashCode() % length];
 
         if (index < 0) {
             index = -index - 1;
-            ImageLocation location = locations[index];
-
-            return location;
         } else {
-            index = key.hashCode(index) % count;
-            ImageLocation location = locations[index];
-
-            return location;
+            index = key.hashCode(index) % length;
         }
-    }
 
-    public void statistics() {
-        getBytes();
-        PrintStream out = System.out;
-        out.println("Count: " + count);
-        out.println("Header bytes size: " + headerStream.getSize());
-        out.println("Redirect bytes size: " + redirectStream.getSize());
-        out.println("Offset bytes size: " + locationOffsetStream.getSize());
-        out.println("Location bytes size: " + locationStream.getSize());
-        out.println("String count: " + strings.getCount());
-        out.println("String bytes size: " + strings.getSize());
-        out.println("Total bytes size: " + allIndexStream.getSize());
+        return locations[index];
     }
 }
