@@ -37,7 +37,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import jdk.jigsaw.module.Configuration;
 import jdk.jigsaw.module.Layer;
@@ -303,18 +302,6 @@ public final class ModuleBootstrap {
                 paths[i++] = Paths.get(dir);
             }
             return ModuleArtifactFinder.ofDirectories(paths);
-        }
-    }
-
-    /**
-     * Reads the contents of the given modules file in {@code ${java.home}/lib}.
-     */
-    private static Set<String> readModuleSet(String name) {
-        Path file = Paths.get(System.getProperty("java.home"), "lib", name);
-        try (Stream<String> stream = Files.lines(file)) {
-            return stream.collect(Collectors.toSet());
-        } catch (IOException ioe) {
-            throw new UncheckedIOException(ioe);
         }
     }
 
