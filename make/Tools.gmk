@@ -38,7 +38,6 @@ include SetupJavaCompilers.gmk
 
 $(eval $(call SetupJavaCompilation,BUILD_TOOLS_JDK, \
     SETUP := GENERATE_OLDBYTECODE, \
-    ADD_JAVAC_FLAGS := "-Xbootclasspath/p:$(BUILDTOOLS_OUTPUTDIR)/interim_jimage_classes", \
     SRC := $(JDK_TOPDIR)/make/src/classes, \
     EXCLUDES := build/tools/deps \
                 build/tools/jigsaw, \
