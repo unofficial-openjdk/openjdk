@@ -44,6 +44,7 @@ module java.management {
     uses javax.management.remote.JMXConnectorProvider;
     uses javax.management.remote.JMXConnectorServerProvider;
     uses sun.management.spi.PlatformMBeanProvider;
-    provides sun.management.spi.PlatformMBeanProvider with com.sun.management.internal.PlatformMBeanProviderImpl;
+    provides sun.management.spi.PlatformMBeanProvider with
+        com.sun.management.internal.PlatformMBeanProviderImpl;
 }
 

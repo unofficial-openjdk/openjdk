@@ -81,7 +81,7 @@ public class ModuleInfoReader {
                 continue;
             }
             String values;
-            if (inRequires || inExports | inUses) {
+            if (inRequires || inExports | inUses | inProvides) {
                 values = line;
             } else {
                 String[] s = line.split("\\s+");
@@ -111,20 +111,21 @@ public class ModuleInfoReader {
                         qualifiedExports = null;
                         if (s.length >= 3) {
                             qualifiedExports = s[1].trim();
-                            nextIndex = line.indexOf(qualifiedExports, nextIndex) + qualifiedExports.length();
+                            nextIndex = line.indexOf(qualifiedExports, nextIndex)
+                                            + qualifiedExports.length();
                             if (s[2].trim().equals("to")) {
                                 inExportsTo = true;
                                 nextIndex = line.indexOf("to", nextIndex) + "to".length();
                             } else {
-                                throw new RuntimeException(sourcefile + ", line "
-                                        + lineNumber + ", is malformed");
+                                throw new RuntimeException(sourcefile + ", line " +
+                                        lineNumber + ", is malformed: " + s[2]);
                             }
                         }
                         break;
                     case "to":
                         if (!inExports || qualifiedExports == null) {
-                            throw new RuntimeException(sourcefile + ", line "
-                                    + lineNumber + ", is malformed");
+                            throw new RuntimeException(sourcefile + ", line " +
+                                    lineNumber + ", is malformed");
                         }
                         inExportsTo = true;
                         break;
@@ -144,15 +145,15 @@ public class ModuleInfoReader {
                                 inWith = true;
                                 nextIndex = line.indexOf("with") + "with".length();
                             } else {
-                                throw new RuntimeException(sourcefile + ", line "
-                                        + lineNumber + ", is malformed");
+                                throw new RuntimeException(sourcefile + ", line " +
+                                        lineNumber + ", is malformed: " + s[2]);
                             }
                         }
                         break;
                     case "with":
                         if (!inProvides || serviceIntf == null) {
-                            throw new RuntimeException(sourcefile + ", line "
-                                    + lineNumber + ", is malformed");
+                            throw new RuntimeException(sourcefile + ", line " +
+                                    lineNumber + ", is malformed");
                         }
                         inWith = true;
                         break;
@@ -160,7 +161,8 @@ public class ModuleInfoReader {
                         module = builder.build();
                         continue;  // next line
                     default:
-                        throw new RuntimeException(sourcefile + ", \"" + keyword + "\" on line " +
+                        throw new RuntimeException(sourcefile + ", \"" +
+                                keyword + "\" on line " +
                                 lineNumber + ", is not recognized");
                 }
                 values = line.substring(nextIndex, line.length()).trim();
