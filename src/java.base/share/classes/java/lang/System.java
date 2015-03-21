@@ -1312,6 +1312,9 @@ public final class System {
             public ServicesCatalog getServicesCatalog(ClassLoader cl) {
                 return cl.getServicesCatalog();
             }
+            public ServicesCatalog createOrGetServicesCatalog(ClassLoader cl) {
+                return cl.createOrGetServicesCatalog();
+            }
             public Class<?> findBootstrapClassOrNull(ClassLoader cl, String name) {
                 return cl.findBootstrapClassOrNull(name);
             }

@@ -139,6 +139,12 @@ public interface JavaLangAccess {
     ServicesCatalog getServicesCatalog(ClassLoader cl);
 
     /**
+     * Returns the ServicesCatalog for the given class loader, creating it
+     * if doesn't already exist.
+     */
+    ServicesCatalog createOrGetServicesCatalog(ClassLoader cl);
+
+    /**
      * Returns a class loaded by the bootstrap class loader.
      */
     Class<?> findBootstrapClassOrNull(ClassLoader cl, String name);

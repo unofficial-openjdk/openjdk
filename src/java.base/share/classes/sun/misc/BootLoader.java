@@ -37,6 +37,9 @@ import jdk.jigsaw.module.ModuleArtifact;
 public class BootLoader {
     private BootLoader() { }
 
+    // ServiceCatalog for the boot class loader
+    private static final ServicesCatalog SERVICES_CATALOG = new ServicesCatalog();
+
     /**
      * Make visible the resources in the given module artifact.
      */
@@ -57,5 +60,12 @@ public class BootLoader {
      */
     public static Enumeration<URL> findResources(String name) throws IOException {
         return ClassLoaders.bootLoader().findResources(name);
+    }
+
+    /**
+     * Returns the ServiceCatalog for modules defined to the boot class loader.
+     */
+    public static ServicesCatalog getServicesCatalog() {
+        return SERVICES_CATALOG;
     }
 }

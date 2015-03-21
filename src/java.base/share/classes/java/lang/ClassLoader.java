@@ -2170,10 +2170,18 @@ public abstract class ClassLoader {
 
 
     /**
-     * Returns the ServiceCatalog for modules associated with this class loader.
-     * The ModuleCatalog is created automatically on first usage.
+     * Returns the ServiceCatalog for modules defined to this class loader
+     * or {@code null} if this class loader does not have a services catalog.
      */
     ServicesCatalog getServicesCatalog() {
+        return servicesCatalog;
+    }
+
+    /**
+     * Returns the ServiceCatalog for modules defined to this class loader,
+     * creating it if it doesn't already exist.
+     */
+    ServicesCatalog createOrGetServicesCatalog() {
         ServicesCatalog catalog = servicesCatalog;
         if (catalog == null) {
             catalog = new ServicesCatalog();

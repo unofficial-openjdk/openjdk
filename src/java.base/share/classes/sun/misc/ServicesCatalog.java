@@ -28,7 +28,11 @@ package sun.misc;
 import jdk.jigsaw.module.ModuleDescriptor;
 
 import java.lang.reflect.Module;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -36,29 +40,34 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 /**
  * A services catalog. Each {@code ClassLoader} has an optional {@code
  * ServicesCatalog} for modules that provide services.
- *
- * @implNote The ServicesCatalog for the null class loader is defined here
- * rather than java.lang.ClassLoader to avoid early initialization.
  */
 public class ServicesCatalog {
-
-    // ServiceCatalog for the null class loader
-    private static final ServicesCatalog SYSTEM_SERVICES_CATALOG = new ServicesCatalog();
 
     // use RW locks as register is rare
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
     private final Lock readLock = lock.readLock();
     private final Lock writeLock = lock.writeLock();
 
-    // service providers
-    private final Map<String, Set<String>> loaderServices = new HashMap<>();
-
     /**
-     * Returns the ServiceCatalog for modules associated with the boot class loader.
+     * Represents a service provider in the services catalog.
      */
-    public static ServicesCatalog getSystemServicesCatalog() {
-        return SYSTEM_SERVICES_CATALOG;
+    public class ServiceProvider {
+        private final Module module;
+        private final String providerName;
+        ServiceProvider(Module module, String providerName) {
+            this.module = module;
+            this.providerName = providerName;
+        }
+        public Module module() {
+            return module;
+        }
+        public String providerName() {
+            return providerName;
+        }
     }
+
+    // service providers
+    private final Map<String, Set<ServiceProvider>> loaderServices = new HashMap<>();
 
     /**
      * Creates a new module catalog.
@@ -76,18 +85,16 @@ public class ServicesCatalog {
             // extend the services map
             for (Map.Entry<String, Set<String>> entry: descriptor.services().entrySet()) {
                 String service = entry.getKey();
-                Set<String> providers = entry.getValue();
+                Set<String> names = entry.getValue();
 
-                // if there are already service providers for this service
-                // then just create a new set that has the existing plus new
-                Set<String> existing = loaderServices.get(service);
-                if (existing != null) {
-                    Set<String> set = new HashSet<>();
-                    set.addAll(existing);
-                    set.addAll(providers);
-                    providers = set;
+                // create a new set to replace the existing
+                Set<ServiceProvider> providers = loaderServices.get(service);
+                Set<ServiceProvider> result = new HashSet<>();
+                if (providers != null) {
+                    result.addAll(providers);
                 }
-                loaderServices.put(service, Collections.unmodifiableSet(providers));
+                names.forEach(pn -> result.add(new ServiceProvider(m, pn)));
+                loaderServices.put(service, Collections.unmodifiableSet(result));
             }
 
         } finally {
@@ -101,7 +108,7 @@ public class ServicesCatalog {
      *
      * @see java.util.ServiceLoader
      */
-    public Set<String> findServices(String service) {
+    public Set<ServiceProvider> findServices(String service) {
         readLock.lock();
         try {
             return loaderServices.getOrDefault(service, Collections.emptySet());

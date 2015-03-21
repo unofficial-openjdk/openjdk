@@ -44,6 +44,7 @@ import jdk.jigsaw.module.ModuleArtifact;
 import jdk.jigsaw.module.ModuleDescriptor;
 import jdk.jigsaw.module.ModuleExport;
 import jdk.jigsaw.module.Version;
+import sun.misc.BootLoader;
 import sun.misc.JavaLangReflectAccess;
 import sun.misc.ServicesCatalog;
 import sun.misc.SharedSecrets;
@@ -387,9 +388,10 @@ public final class Module {
             if (!services.isEmpty()) {
                 ServicesCatalog catalog;
                 if (loader == null) {
-                    catalog = ServicesCatalog.getSystemServicesCatalog();
+                    catalog = BootLoader.getServicesCatalog();
                 } else {
-                    catalog = SharedSecrets.getJavaLangAccess().getServicesCatalog(loader);
+                    catalog = SharedSecrets.getJavaLangAccess()
+                                           .createOrGetServicesCatalog(loader);
                 }
                 catalog.register(m);
             }
