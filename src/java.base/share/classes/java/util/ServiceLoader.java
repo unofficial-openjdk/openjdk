@@ -207,7 +207,7 @@ public final class ServiceLoader<S>
     private final AccessControlContext acc;
 
     // Cached providers, in instantiation order
-    private Set<S> providers = new LinkedHashSet<>();
+    private List<S> providers = new ArrayList<>();
 
     // The class names of the cached providers
     private Set<String> providerNames = new HashSet<>();
@@ -506,12 +506,7 @@ public final class ServiceLoader<S>
                 if (currentLoader == null) {
                     return false;
                 } else {
-                    // can't use method reference here (recursive initialization)
-                    PrivilegedAction<ClassLoader> action = new PrivilegedAction<ClassLoader>() {
-                        @Override
-                        public ClassLoader run() { return currentLoader.getParent(); }
-                    };
-                    currentLoader = AccessController.doPrivileged(action, acc);
+                    currentLoader = currentLoader.getParent();
                     iterator = iteratorFor(currentLoader);
                 }
             }
@@ -551,7 +546,6 @@ public final class ServiceLoader<S>
             try {
                 Constructor<?> ctor = getConstructor(c);
                 p = service.cast(ctor.newInstance());
-                providers.add(p);
             } catch (Throwable x) {
                 if (x instanceof InvocationTargetException)
                     x = x.getCause();
@@ -559,7 +553,7 @@ public final class ServiceLoader<S>
                     "Provider " + cn + " could not be instantiated", x);
             }
 
-            // known provider
+            // add to provider list
             providers.add(p);
 
             // record the class name of the service provider, this is
@@ -696,23 +690,27 @@ public final class ServiceLoader<S>
     public Iterator<S> iterator() {
         return new Iterator<S>() {
 
-            final Iterator<S> knownProviders = providers.iterator();
+            // index into the cached providers list
+            int index;
 
             public boolean hasNext() {
-                if (knownProviders.hasNext())
+                if (index < providers.size())
                     return true;
-                 return moduleServicesIterator.hasNext() ||
+                return moduleServicesIterator.hasNext() ||
                         lazyLookupIterator.hasNext();
             }
 
             public S next() {
-                if (knownProviders.hasNext())
-                    return knownProviders.next();
-                if (moduleServicesIterator.hasNext()) {
-                    return moduleServicesIterator.next();
+                S next;
+                if (index < providers.size()) {
+                    next = providers.get(index);
+                } else if (moduleServicesIterator.hasNext()) {
+                    next = moduleServicesIterator.next();
                 } else {
-                    return lazyLookupIterator.next();
+                    next = lazyLookupIterator.next();
                 }
+                index++;
+                return next;
             }
 
         };
