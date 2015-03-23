@@ -55,8 +55,11 @@ import sun.reflect.Reflection;
  * abstract) classes.  A <i>service provider</i> is a specific implementation
  * of a service.  The classes in a provider typically implement the interfaces
  * and subclass the classes defined in the service itself.
- * Providers can be made available by adding them to the
- * application's class path or by some other platform-specific means.
+ * Providers may be developed and deployed as modules and made available using
+ * the application module path. A big advantage of developing a provider as a
+ * module is that the provider implementation can be fully encapsulated to hide
+ * all details its implementation. Providers may alternatively be packaged as
+ * JAR files and made available by adding them to the application class path.
  *
  * <p> For the purpose of loading, a service is represented by a single type,
  * that is, a single interface or abstract class.  (A concrete class can be
@@ -68,27 +71,38 @@ import sun.reflect.Reflection;
  * request together with code that can create the actual provider on demand.
  * The details of provider classes tend to be highly service-specific; no
  * single class or interface could possibly unify them, so no such type is
- * defined here.  The only requirement enforced by this facility is that
- * provider classes must have a zero-argument constructor so that they can be
- * instantiated during loading.
+ * defined here. A requirement enforced by this facility is that each provider
+ * class must have a {@code public} zero-argument constructor.
  *
- * <p><a name="format"> A service provider is identified by placing a
- * <i>provider-configuration file</i> in the resource directory
- * <tt>META-INF/services</tt>.</a>  The file's name is the fully-qualified <a
- * href="../lang/ClassLoader.html#name">binary name</a> of the service's type.
- * The file contains a list of fully-qualified binary names of concrete
+ * <p> An application or library using this loading facility and developed
+ * and deployed as a named module must have an appropriate <i>uses</i> clause
+ * in its <i>module descriptor</i> to declare that the module uses
+ * implementations of the service. A corresponding requirement is that a
+ * provider deployed as a named modules must have an appropriate
+ * <i>provides</i> clause in its module descriptor to declare that the module
+ * provides an implementation of the service. The <i>uses</i> and
+ * <i>provides</i> allow consumers of a service to be <i>linked</i> to
+ * providers of the service. In the case of {@code load} methods that locate
+ * service providers using a class loader, then provider modules defined to
+ * that class loader, or a class loader <i>reachable</i> using {@link
+ * ClassLoader#getParent() parent} delegation, will be located.
+ *
+ * <p> A service provider that is packaged as a JAR file for the class path is
+ * identified by placing a <i>provider-configuration file</i> in the resource
+ * directory <tt>META-INF/services</tt>. The file's name is the fully-qualified
+ * <a href="../lang/ClassLoader.html#name">binary name</a> of the service's
+ * type. The file contains a list of fully-qualified binary names of concrete
  * provider classes, one per line.  Space and tab characters surrounding each
  * name, as well as blank lines, are ignored.  The comment character is
  * <tt>'#'</tt> (<tt>'&#92;u0023'</tt>,
  * <font style="font-size:smaller;">NUMBER SIGN</font>); on
  * each line all characters following the first comment character are ignored.
  * The file must be encoded in UTF-8.
- *
- * <p> If a particular concrete provider class is named in more than one
+ * If a particular concrete provider class is named in more than one
  * configuration file, or is named in the same configuration file more than
  * once, then the duplicates are ignored.  The configuration file naming a
- * particular provider need not be in the same jar file or other distribution
- * unit as the provider itself.  The provider must be accessible from the same
+ * particular provider need not be in the same JAR file or other distribution
+ * unit as the provider itself. The provider must be visible from the same
  * class loader that was initially queried to locate the configuration file;
  * note that this is not necessarily the class loader from which the file was
  * actually loaded.
@@ -101,7 +115,9 @@ import sun.reflect.Reflection;
  * providers, adding each one to the cache in turn.  The cache can be cleared
  * via the {@link #reload reload} method.
  *
- * <p> Service loaders always execute in the security context of the caller.
+ * <p> Service loaders always execute in the security context of the caller
+ * of the iterator methods and may also be restricted by the security
+ * context of the caller that created the service loader.
  * Trusted system code should typically invoke the methods in this class, and
  * the methods of the iterators which they return, from within a privileged
  * security context.
@@ -111,7 +127,6 @@ import sun.reflect.Reflection;
  *
  * <p> Unless otherwise specified, passing a <tt>null</tt> argument to any
  * method in this class will cause a {@link NullPointerException} to be thrown.
- *
  *
  * <p><span style="font-weight: bold; padding-right: 1em">Example</span>
  * Suppose we have a service type <tt>com.example.CodecSet</tt> which is
@@ -126,30 +141,20 @@ import sun.reflect.Reflection;
  * does not support the given encoding.  Typical providers support more than
  * one encoding.
  *
- * <p> If <tt>com.example.impl.StandardCodecs</tt> is an implementation of the
- * <tt>CodecSet</tt> service then its jar file also contains a file named
- *
- * <blockquote><pre>
- * META-INF/services/com.example.CodecSet</pre></blockquote>
- *
- * <p> This file contains the single line:
- *
- * <blockquote><pre>
- * com.example.impl.StandardCodecs    # Standard codecs</pre></blockquote>
- *
  * <p> The <tt>CodecSet</tt> class creates and saves a single service instance
  * at initialization:
  *
- * <blockquote><pre>
- * private static ServiceLoader&lt;CodecSet&gt; codecSetLoader
- *     = ServiceLoader.load(CodecSet.class);</pre></blockquote>
+ * <pre>{@code
+ * private static ServiceLoader<CodecSet> codecSetLoader
+ *     = ServiceLoader.load(CodecSet.class);
+ * }</pre>
  *
  * <p> To locate an encoder for a given encoding name it defines a static
  * factory method which iterates through the known and available providers,
  * returning only when it has located a suitable encoder or has run out of
  * providers.
  *
- * <blockquote><pre>
+ * <pre>{@code
  * public static Encoder getEncoder(String encodingName) {
  *     for (CodecSet cp : codecSetLoader) {
  *         Encoder enc = cp.getEncoder(encodingName);
@@ -157,10 +162,27 @@ import sun.reflect.Reflection;
  *             return enc;
  *     }
  *     return null;
- * }</pre></blockquote>
+ * }}</pre>
  *
- * <p> A <tt>getDecoder</tt> method is defined similarly.
+ * <p> A {@code getDecoder} method is defined similarly.
  *
+ * <p> If the code creating and using the service loader is developed as
+ * a module then its module descriptor will declare the usage with:
+ * <pre>{@code uses com.example.CodecSet;}</pre>
+ *
+ * <p> Now suppose that {@code com.example.impl.StandardCodecs} is an
+ * implementation of the {@code CodecSet} service and developed as a module.
+ * In that case then the module with the service provider module will declare
+ * this in its module descriptor:
+ * <pre>{@code provides com.example.CodecSet with com.example.impl.StandardCodecs;
+ * }</pre>
+ *
+ * <p> On the other hand, suppose {@code com.example.impl.StandardCodecs} is
+ * packaged in a JAR file for the class path then the JAR file will contain a
+ * file named:
+ * <pre>{@code META-INF/services/com.example.CodecSet}</pre>
+ * that contains the single line:
+ * <pre>{@code com.example.impl.StandardCodecs    # Standard codecs}</pre>
  *
  * <p><span style="font-weight: bold; padding-right: 1em">Usage Note</span> If
  * the class path of a class loader that is used for provider loading includes
@@ -180,10 +202,6 @@ import sun.reflect.Reflection;
  * the HTML page as a provider-configuration file.  The best solution to this
  * problem is to fix the misconfigured web server to return the correct
  * response code (HTTP 404) along with the HTML error page.
- *
- * @apiNote
- * The ServiceLoader API docs need to be updated to specify how ServiceLoader
- * works with modules.
  *
  * @param  <S>
  *         The type of the service to be loaded by this loader
@@ -212,6 +230,9 @@ public final class ServiceLoader<S>
     // The class names of the cached providers
     private Set<String> providerNames = new HashSet<>();
 
+    // Incremented when reload is called
+    private int reloadCount;
+
     // The module services iterator
     private ModuleServicesIterator moduleServicesIterator;
 
@@ -234,6 +255,7 @@ public final class ServiceLoader<S>
         providerNames.clear();
         moduleServicesIterator = new ModuleServicesIterator(service, loader);
         lazyLookupIterator = new LazyIterator(service, loader);
+        reloadCount++;
     }
 
     /**
@@ -340,23 +362,25 @@ public final class ServiceLoader<S>
         return lc + 1;
     }
 
-    // Parse the content of the given URL as a provider-configuration file.
-    //
-    // @param  service
-    //         The service type for which providers are being sought;
-    //         used to construct error detail strings
-    //
-    // @param  u
-    //         The URL naming the configuration file to be parsed
-    //
-    // @return A (possibly empty) iterator that will yield the provider-class
-    //         names in the given configuration file that are not yet members
-    //         of the returned set
-    //
-    // @throws ServiceConfigurationError
-    //         If an I/O error occurs while reading from the given URL, or
-    //         if a configuration-file format error is detected
-    //
+    /**
+     * Parse the content of the given URL as a provider-configuration file.
+     *
+     * @param  service
+     *         The service type for which providers are being sought;
+     *         used to construct error detail strings
+     *
+     * @param  u
+     *         The URL naming the configuration file to be parsed
+     *
+     * @return A (possibly empty) iterator that will yield the provider-class
+     *         names in the given configuration file that are not yet members
+     *         of the returned set
+     *
+     * @throws ServiceConfigurationError
+     *         If an I/O error occurs while reading from the given URL, or
+     *         if a configuration-file format error is detected
+     *
+     */
     private Iterator<String> parse(Class<?> service, URL u)
         throws ServiceConfigurationError
     {
@@ -649,16 +673,14 @@ public final class ServiceLoader<S>
      * loads and instantiates any remaining providers, adding each one to the
      * cache in turn.
      *
-     * <p> To achieve laziness the actual work of parsing the available
-     * provider-configuration files and instantiating providers must be done by
-     * the iterator itself.  Its {@link java.util.Iterator#hasNext hasNext} and
-     * {@link java.util.Iterator#next next} methods can therefore throw a
-     * {@link ServiceConfigurationError} if a provider-configuration file
-     * violates the specified format, or if it names a provider class that
-     * cannot be found and instantiated, or if the result of instantiating the
-     * class is not assignable to the service type, or if any other kind of
-     * exception or error is thrown as the next provider is located and
-     * instantiated.  To write robust code it is only necessary to catch {@link
+     * <p> To achieve laziness the actual work of locating and instantiating
+     * providers must be done by the iterator itself. Its {@link
+     * java.util.Iterator#hasNext hasNext} and {@link java.util.Iterator#next
+     * next} methods can therefore throw a {@link ServiceConfigurationError}
+     * if a provider class cannot be loaded, doesn't have the appropriate
+     * constructor, can't be assigned to the service type or if any other kind
+     * of exception or error is thrown as the next provider is located and
+     * instantiated. To write robust code it is only necessary to catch {@link
      * ServiceConfigurationError} when using a service iterator.
      *
      * <p> If such an error is thrown then subsequent invocations of the
@@ -673,6 +695,14 @@ public final class ServiceLoader<S>
      * virtual machine is configured or is being used.  As such it is
      * preferable to throw an error rather than try to recover or, even worse,
      * fail silently.</blockquote>
+     *
+     * <p> If this loader's provider cache is cleared by invoking the {@link
+     * #reload() reload} method then existing iterators for this service
+     * loader should be discarded.
+     * The {@link java.util.Iterator#hasNext() hasNext} and {@link
+     * java.util.Iterator#next() next} methods of the iterator throw {@link
+     * java.util.ConcurrentModificationException ConcurrentModificationException}
+     * if used after the provider cache has been cleared.
      *
      * <p> The iterator returned by this method does not support removal.
      * Invoking its {@link java.util.Iterator#remove() remove} method will
@@ -690,10 +720,23 @@ public final class ServiceLoader<S>
     public Iterator<S> iterator() {
         return new Iterator<S>() {
 
+            // record reload count
+            final int expectedReloadCount = ServiceLoader.this.reloadCount;
+
             // index into the cached providers list
             int index;
 
+            /**
+             * Throws ConcurrentModificationException if the list of cached
+             * providers has been cleared by reload.
+             */
+            private void checkReloadCount() {
+                if (ServiceLoader.this.reloadCount != expectedReloadCount)
+                    throw new ConcurrentModificationException();
+            }
+
             public boolean hasNext() {
+                checkReloadCount();
                 if (index < providers.size())
                     return true;
                 return moduleServicesIterator.hasNext() ||
@@ -701,6 +744,7 @@ public final class ServiceLoader<S>
             }
 
             public S next() {
+                checkReloadCount();
                 S next;
                 if (index < providers.size()) {
                     next = providers.get(index);
@@ -727,11 +771,16 @@ public final class ServiceLoader<S>
      *
      * @param  loader
      *         The class loader to be used to load provider-configuration files
-     *         and provider classes, or <tt>null</tt> if the system class
+     *         and provider classes, or {@code null} if the system class
      *         loader (or, failing that, the bootstrap class loader) is to be
      *         used
      *
      * @return A new service loader
+     *
+     * @throws ServiceConfigurationError
+     *         if the service type is not accessible to the caller or the
+     *         caller is in a named module and its module descriptor does
+     *         not declare that it uses {@code service}
      */
     @CallerSensitive
     public static <S> ServiceLoader<S> load(Class<S> service,
@@ -762,6 +811,11 @@ public final class ServiceLoader<S>
      *         The interface or abstract class representing the service
      *
      * @return A new service loader
+     *
+     * @throws ServiceConfigurationError
+     *         if the service type is not accessible to the caller or the
+     *         caller is in a named module and its module descriptor does
+     *         not declare that it uses {@code service}
      */
     @CallerSensitive
     public static <S> ServiceLoader<S> load(Class<S> service) {
@@ -786,7 +840,7 @@ public final class ServiceLoader<S>
      * <p> This method is intended for use when only installed providers are
      * desired.  The resulting service will only find and load providers that
      * have been installed into the current Java virtual machine; providers on
-     * the application's class path will be ignored.
+     * the application's module path or class path will be ignored.
      *
      * @param  <S> the class of the service type
      *
@@ -794,6 +848,11 @@ public final class ServiceLoader<S>
      *         The interface or abstract class representing the service
      *
      * @return A new service loader
+     *
+     * @throws ServiceConfigurationError
+     *         if the service type is not accessible to the caller or the
+     *         caller is in a named module and its module descriptor does
+     *         not declare that it uses {@code service}
      */
     @CallerSensitive
     public static <S> ServiceLoader<S> loadInstalled(Class<S> service) {
