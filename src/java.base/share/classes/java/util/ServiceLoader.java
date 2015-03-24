@@ -56,10 +56,10 @@ import sun.reflect.Reflection;
  * of a service.  The classes in a provider typically implement the interfaces
  * and subclass the classes defined in the service itself.
  * Providers may be developed and deployed as modules and made available using
- * the application module path. A big advantage of developing a provider as a
- * module is that the provider implementation can be fully encapsulated to hide
- * all details its implementation. Providers may alternatively be packaged as
- * JAR files and made available by adding them to the application class path.
+ * the application module path. Providers may alternatively be packaged as JAR
+ * files and made available by adding them to the application class path. The
+ * advantage of developing a provider as a module is that the provider can be
+ * fully encapsulated to hide all details of its implementation.
  *
  * <p> For the purpose of loading, a service is represented by a single type,
  * that is, a single interface or abstract class.  (A concrete class can be
