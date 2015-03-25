@@ -28,6 +28,7 @@
 #include "runtime/mutexLocker.hpp"
 #include "runtime/os.inline.hpp"
 #include "utilities/endian.hpp"
+#include "utilities/growableArray.hpp"
 
 // Used to advance a pointer, unstructured.
 #undef NEXTPTR
@@ -178,94 +179,15 @@ GrowableArray<const char*>* ImageModuleData::module_to_packages(const char* modu
   return NULL;
 }
 
-//
-// Manage a number of image files such that an image can be shared across
-// multiple uses (ex. loader.)  (GrowableArray would have been used except for
-// timing at start up.)
-class ImageFileReaderTable {
-private:
-  const static s4 INITIAL = 4;
-
-  s4 _count; // Number of images open
-  s4 _max; // Size of allocated table
-  ImageFileReader** _table; // Table of open images
-
-  // Make sure a table slot is available
-  void needs_slot() {
-    if (_count >= _max) {
-      int old_max = _max;
-      ImageFileReader** old_table = _table;
-      _max <<= 1;
-      _table = NEW_C_HEAP_ARRAY(ImageFileReader*, _max, mtClass);
-      memcpy(_table, old_table, old_max * sizeof(ImageFileReader*));
-      FREE_C_HEAP_ARRAY(ImageFileReader*, old_table);
-    }
-  }
-
-public:
-  ImageFileReaderTable() :
-    _count(0),
-    _max(INITIAL),
-    _table(NEW_C_HEAP_ARRAY(ImageFileReader*, INITIAL, mtClass)) {
-  }
-
-  ~ImageFileReaderTable() {
-    if (_table) {
-      FREE_C_HEAP_ARRAY(ImageFileReader*, _table);
-      _table = NULL;
-    }
-  }
-
-  // Get the number of open images.
-  inline s4 count() const { return _count; }
-
-  // Add a new image to the table.
-  inline void add(ImageFileReader* reader) {
-    needs_slot();
-    _table[_count++] = reader;
-  }
-
-  // Retrieve the image at the specified index.
-  inline ImageFileReader* at(s4 i) const {
-    assert(i <= 0 && i < _count, "image file reader table index out of range");
-    return _table[i];
-  }
-
-  // Find an image in the table.
-  inline s4 find(ImageFileReader* reader) const {
-    for (int i = 0; i < _count; i++) {
-      if (reader == at(i)) {
-        return i;
-      }
-    }
-
-    return -1;
-  }
-
-  // Check for an image in the table.
-  inline bool contains(ImageFileReader* reader) const {
-    return find(reader) != -1;
-  }
-
-  // Remove an image from the table.
-  inline void remove(ImageFileReader* reader) {
-    s4 i = find(reader);
-    guarantee(i != -1, "image file reader not in table");
-
-    if (--_count) {
-      _table[i] = _table[_count];
-    }
-  }
-};
-
-static ImageFileReaderTable _reader_table;
+GrowableArray<ImageFileReader*>* ImageFileReader::_reader_table =
+  new(ResourceObj::C_HEAP, mtInternal) GrowableArray<ImageFileReader*>(2, true);
 
 ImageFileReader* ImageFileReader::open(const char* name, bool big_endian) {
   MutexLockerEx il(ImageFileReaderTable_lock,  Mutex::_no_safepoint_check_flag);
   ImageFileReader* reader;
 
-  for (int i = 0; i < _reader_table.count(); i++) {
-    reader = _reader_table.at(i);
+  for (int i = 0; i < _reader_table->length(); i++) {
+    reader = _reader_table->at(i);
 
     if (strcmp(reader->name(), name) == 0) {
       reader->inc_use();
@@ -282,7 +204,7 @@ ImageFileReader* ImageFileReader::open(const char* name, bool big_endian) {
   }
 
   reader->inc_use();
-  _reader_table.add(reader);
+  _reader_table->append(reader);
   return reader;
 }
 
@@ -290,7 +212,7 @@ void ImageFileReader::close(ImageFileReader *reader) {
   MutexLockerEx il(ImageFileReaderTable_lock,  Mutex::_no_safepoint_check_flag);
 
   if (reader->dec_use()) {
-    _reader_table.remove(reader);
+    _reader_table->remove(reader);
     delete reader;
   }
 }
@@ -305,7 +227,7 @@ ImageFileReader* ImageFileReader::idToReader(u8 id) {
   ImageFileReader* reader = (ImageFileReader*)id;
 #ifndef PRODUCT
   MutexLockerEx il(ImageFileReaderTable_lock,  Mutex::_no_safepoint_check_flag);
-  guarantee(_reader_table.contains(reader), "bad image id");
+  guarantee(_reader_table->contains(reader), "bad image id");
 #endif
   return reader;
 }

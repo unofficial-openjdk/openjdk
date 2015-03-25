@@ -28,8 +28,9 @@
 #include "classfile/classLoader.hpp"
 #include "memory/allocation.hpp"
 #include "memory/allocation.inline.hpp"
-#include "utilities/globalDefinitions.hpp"
 #include "utilities/endian.hpp"
+#include "utilities/globalDefinitions.hpp"
+#include "utilities/growableArray.hpp"
 
 // Image files are an alternate file format for storing classes and resources. The
 // goal is to supply file access which is faster and smaller that the jar format.
@@ -441,6 +442,10 @@ public:
 // leads the ImageFileReader to be actually closed and discarded.
 class ImageFileReader : public CHeapObj<mtClass> {
 private:
+  // Manage a number of image files such that an image can be shared across
+  // multiple uses (ex. loader.)
+  static GrowableArray<ImageFileReader*>* _reader_table;
+
   char* _name;         // Name of image
   s4 _use;             // Use count
   int _fd;             // File descriptor
