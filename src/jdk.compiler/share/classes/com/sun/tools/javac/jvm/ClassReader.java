@@ -2275,16 +2275,29 @@ public class ClassReader {
             // read own class name and check that it matches
             ClassSymbol self = readClassSymbol(nextChar());
             if (c != self) {
-                System.err.println("CR: " + c);
-                System.err.println("CR: flags (orig) " + Flags.toString(f));
-                System.err.println("CR: flags  (adj) " + Flags.toString(flags));
                 throw badClassFile("class.file.wrong.class",
                                    self.flatname);
             }
         } else {
             c.flags_field = flags;
             // TODO: validate name
-            nextChar();
+            int i = nextChar();
+            // TODO: refactor some of this to a new method readModuleName
+            int classIndex = poolIdx[i];
+            if (buf[classIndex] == CONSTANT_Class) {
+                int utf8Index = poolIdx[getChar(classIndex + 1)];
+                if (buf[utf8Index] == CONSTANT_Utf8) {
+                    int len = getChar(utf8Index + 1);
+                    int start = utf8Index + 3;
+                    Name modInfoName = names.fromUtf(internalize(buf, start, len));
+                    if (c.owner.name == null) {
+                        Name moduleName = Convert.packagePart(modInfoName);
+                        ((ModuleSymbol) c.owner).fullname = c.owner.name = moduleName;
+                        c.fullname = c.flatname = modInfoName;
+                    }
+                }
+            }
+
         }
 
         // class attributes must be read before class

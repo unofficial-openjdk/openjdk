@@ -31,8 +31,8 @@
  * @run main SingleModuleModeTest
  */
 
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 public class SingleModuleModeTest extends ModuleTestBase{
 
@@ -40,19 +40,18 @@ public class SingleModuleModeTest extends ModuleTestBase{
         new SingleModuleModeTest().run();
     }
 
-    Path src;
-
     void run() throws Exception {
         tb = new ToolBox();
-        src = Paths.get("src");
-        tb.writeJavaFiles(src.resolve("m1"), "module m1 { }");
-        tb.writeJavaFiles(src.resolve("m2"), "module m2 { }");
 
         runTests();
     }
 
     @Test
     void testTooManyModules(Path base) throws Exception {
+        Path src = base.resolve("src");
+        tb.writeJavaFiles(src.resolve("m1"), "module m1 { }");
+        tb.writeJavaFiles(src.resolve("m2"), "module m2 { }");
+
         String log = tb.new JavacTask()
                 .options("-XDrawDiagnostics")
                 .files(findJavaFiles(src))
@@ -62,5 +61,41 @@ public class SingleModuleModeTest extends ModuleTestBase{
 
         if (!log.contains("module-info.java:1:1: compiler.err.too.many.modules"))
             throw new Exception("expected output not found");
+    }
+
+    @Test
+    void testImplicitModuleSource(Path base) throws Exception {
+        Path src = base.resolve("src");
+        tb.writeJavaFiles(src,
+                "module m { }",
+                "class C { }");
+
+        tb.new JavacTask()
+                .classpath(src.toString()) // should allow Path here
+                .files(src.resolve("C.java"))
+                .run()
+                .writeAll();
+    }
+
+    @Test
+    void testImplicitModuleClass(Path base) throws Exception {
+        Path src = base.resolve("src");
+        tb.writeJavaFiles(src,
+                "module m { }",
+                "class C { }");
+        Path classes = base.resolve("classes");
+        Files.createDirectories(classes);
+
+        tb.new JavacTask()
+                .outdir(classes.toString()) // should allow Path here
+                .files(src.resolve("module-info.java"))
+                .run()
+                .writeAll();
+
+        tb.new JavacTask()
+                .classpath(classes.toString()) // should allow Path here
+                .files(src.resolve("C.java"))
+                .run()
+                .writeAll();
     }
 }

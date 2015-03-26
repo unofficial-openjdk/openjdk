@@ -341,7 +341,7 @@ public class ClassFinder {
                 }
                 currentClassFile = classfile;
                 if (verbose) {
-                    log.printVerbose("loading", currentClassFile.toString());
+                    log.printVerbose("loading", currentClassFile.getName());
                 }
                 if (classfile.getKind() == JavaFileObject.Kind.CLASS) {
                     reader.readClassFile(c);

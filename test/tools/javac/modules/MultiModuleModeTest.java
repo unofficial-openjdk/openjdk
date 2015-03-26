@@ -31,6 +31,7 @@
  * @run main MultiModuleModeTest
  */
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -86,6 +87,50 @@ public class MultiModuleModeTest extends ModuleTestBase {
 
         if (!log.contains("C.java:1:1: compiler.err.cant.determine.module"))
             throw new Exception("expected output not found");
+    }
+
+    @Test
+    void testImplicitModuleSource(Path base) throws Exception {
+        Path src = base.resolve("src");
+        tb.writeJavaFiles(src.resolve("m1"), "module m1 { }");
+        tb.writeJavaFiles(src.resolve("m2"), "module m2 { requires m1; }");
+        Path modules = base.resolve("modules");
+        Files.createDirectories(modules);
+
+        tb.new JavacTask()
+                .options("-modulesourcepath", src.toString())
+                .outdir(modules.toString()) // should allow Path here
+                .files(src.resolve("m2/module-info.java"))
+                .run()
+                .writeAll();
+    }
+
+    @Test
+    void testImplicitModuleClass(Path base) throws Exception {
+        Path src1 = base.resolve("src1");
+        tb.writeJavaFiles(src1.resolve("m1"), "module m1 { }");
+        Path modules1 = base.resolve("modules1");
+        Files.createDirectories(modules1);
+
+        tb.new JavacTask()
+                .options("-modulesourcepath", src1.toString())
+                .outdir(modules1.toString()) // should allow Path here
+                .files(src1.resolve("m1/module-info.java"))
+                .run()
+                .writeAll();
+
+        Path src2= base.resolve("src2");
+        tb.writeJavaFiles(src2.resolve("m2"), "module m2 { requires m1; }");
+        Path modules2 = base.resolve("modules2");
+        Files.createDirectories(modules2);
+
+        tb.new JavacTask()
+                .options("-modulepath", modules1.toString(),
+                        "-modulesourcepath", src2.toString())
+                .outdir(modules2.toString()) // should allow Path here
+                .files(src2.resolve("m2/module-info.java"))
+                .run()
+                .writeAll();
     }
 
     Path[] join(Path[] a, Path[] b) {

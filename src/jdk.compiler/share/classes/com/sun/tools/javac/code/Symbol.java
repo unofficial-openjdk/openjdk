@@ -835,7 +835,7 @@ public abstract class Symbol extends AnnoConstruct implements Element {
     public static class ModuleSymbol extends TypeSymbol // JIGSAW need TypeSymbol?
             /*implements ModuleElement*/ {
 
-        public Name fullname;
+        public Name fullname; // TODO: do we need this?
         public Name version;
         public JavaFileManager.Location sourceLocation;
         public JavaFileManager.Location classLocation;
@@ -888,7 +888,8 @@ public abstract class Symbol extends AnnoConstruct implements Element {
 
         @Override
         public String toString() {
-            // the following strings should be localized
+            // TODO: the following strings should be localized
+            // Do this with custom anon subtypes in Symtab
             String n = (fullname == null) ? "<unknown>"
                     : (fullname.isEmpty()) ? "<unnamed>"
                     : String.valueOf(fullname);
