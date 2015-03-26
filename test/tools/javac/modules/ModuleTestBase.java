@@ -68,7 +68,8 @@ class ModuleTestBase {
                     m.invoke(this, new Object[] { baseDir });
                 } catch (InvocationTargetException e) {
                     Throwable cause = e.getCause();
-                    throw (cause instanceof Exception) ? ((Exception) cause) : e;
+                    error("Exception: " + e.getCause());
+                    cause.printStackTrace(out);
                 }
                 out.println();
             }
@@ -93,5 +94,10 @@ class ModuleTestBase {
 
         });
         return list.toArray(new Path[list.size()]);
+    }
+
+    void error(String message) {
+        out.println("Error: " + message);
+        errors++;
     }
 }

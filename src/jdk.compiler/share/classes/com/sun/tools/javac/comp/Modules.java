@@ -193,14 +193,24 @@ public class Modules extends JCTree.Visitor {
         if (isModuleInfo && isModuleDecl) {
             JCModuleDecl decl = (JCModuleDecl) toplevel.defs.head;
             Name name = TreeInfo.fullName(decl.qualId);
-            // TODO, This is the point to determine if the tree should satisfy ClassSymbol c
-            ModuleSymbol sym = syms.enterModule(name);
-            if (sym.module_info.sourcefile != null) {
-                log.error(decl.pos(), "duplicate.module", name);
-                return;
+            ModuleSymbol sym;
+            if (c != null) {
+               sym = (ModuleSymbol) c.owner;
+               if (sym.name == null) {
+                   sym.fullname = sym.name = name;
+                   c.fullname = c.flatname = name.append('.', names.module_info);
+               } else {
+                   // TODO: validate name
+               }
+            } else {
+                sym = syms.enterModule(name);
+                if (sym.module_info.sourcefile != null) {
+                    log.error(decl.pos(), "duplicate.module", name);
+                    return;
+                }
             }
-            sym.module_info.sourcefile = toplevel.sourcefile;
             sym.completer = getSourceCompleter(toplevel);
+            sym.module_info.sourcefile = toplevel.sourcefile;
             decl.sym = sym;
 
             if (multiModuleMode || modules.isEmpty()) {
@@ -258,7 +268,17 @@ public class Modules extends JCTree.Visitor {
                     case 0:
                         defaultModule = moduleFinder.findSingleModule();
                         if (defaultModule == syms.unnamedModule) {
+                            // Question: why not do findAllModules and initVisiblePackages here?
+                            // i.e. body of unnamedModuleCompleter
                             defaultModule.completer = getUnnamedModuleCompleter();
+                        } else {
+                            // Question: why not do completeModule here?
+                            defaultModule.completer = new Completer() {
+                                @Override
+                                public void complete(Symbol sym) throws CompletionFailure {
+                                    completeModule((ModuleSymbol) sym);
+                                }
+                            };
                         }
                         rootModules.add(defaultModule);
                         break;
