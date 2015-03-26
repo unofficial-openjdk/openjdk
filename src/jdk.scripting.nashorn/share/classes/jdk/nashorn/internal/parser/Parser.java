@@ -77,7 +77,9 @@ import jdk.nashorn.internal.ir.CallNode;
 import jdk.nashorn.internal.ir.CaseNode;
 import jdk.nashorn.internal.ir.CatchNode;
 import jdk.nashorn.internal.ir.ContinueNode;
+import jdk.nashorn.internal.ir.DebuggerNode;
 import jdk.nashorn.internal.ir.EmptyNode;
+import jdk.nashorn.internal.ir.ErrorNode;
 import jdk.nashorn.internal.ir.Expression;
 import jdk.nashorn.internal.ir.ExpressionStatement;
 import jdk.nashorn.internal.ir.ForNode;
@@ -356,7 +358,8 @@ public class Parser extends AbstractParser implements Loggable {
             restoreBlock(body);
             body.setFlag(Block.NEEDS_SCOPE);
 
-            final Block functionBody = new Block(functionToken, source.getLength() - 1, body.getFlags(), body.getStatements());
+            final Block functionBody = new Block(functionToken, source.getLength() - 1,
+                body.getFlags() | Block.IS_SYNTHETIC, body.getStatements());
             lc.pop(function);
 
             expect(EOF);
@@ -540,7 +543,8 @@ loop:
             expect(RBRACE);
         }
 
-        return new Block(blockToken, finish, newBlock.getFlags(), newBlock.getStatements());
+        final int flags = newBlock.getFlags() | (needsBraces? 0 : Block.IS_SYNTHETIC);
+        return new Block(blockToken, finish, flags, newBlock.getStatements());
     }
 
 
@@ -559,7 +563,7 @@ loop:
         } finally {
             restoreBlock(newBlock);
         }
-        return new Block(newBlock.getToken(), finish, newBlock.getFlags(), newBlock.getStatements());
+        return new Block(newBlock.getToken(), finish, newBlock.getFlags() | Block.IS_SYNTHETIC, newBlock.getStatements());
     }
 
     /**
@@ -712,7 +716,7 @@ loop:
 
         restoreBlock(body);
         body.setFlag(Block.NEEDS_SCOPE);
-        final Block programBody = new Block(functionToken, functionLine, body.getFlags(), body.getStatements());
+        final Block programBody = new Block(functionToken, functionLine, body.getFlags() | Block.IS_SYNTHETIC, body.getStatements());
         lc.pop(script);
         script.setLastToken(token);
 
@@ -826,8 +830,13 @@ loop:
                         }
                     }
                 } catch (final Exception e) {
+                    final int errorLine = line;
+                    final long errorToken = token;
                     //recover parsing
                     recover(e);
+                    final ErrorNode errorExpr = new ErrorNode(errorToken, finish);
+                    final ExpressionStatement expressionStatement = new ExpressionStatement(errorLine, errorToken, finish, errorExpr);
+                    appendStatement(expressionStatement);
                 }
 
                 // No backtracking from here on.
@@ -1057,6 +1066,10 @@ loop:
      * @param isStatement True if a statement (not used in a FOR.)
      */
     private List<VarNode> variableStatement(final TokenType varType, final boolean isStatement) {
+        return variableStatement(varType, isStatement, -1);
+    }
+
+    private List<VarNode> variableStatement(final TokenType varType, final boolean isStatement, final int sourceOrder) {
         // VAR tested in caller.
         next();
 
@@ -1095,7 +1108,7 @@ loop:
             }
 
             // Allocate var node.
-            final VarNode var = new VarNode(varLine, varToken, finish, name.setIsDeclaredHere(), init, varFlags);
+            final VarNode var = new VarNode(varLine, varToken, sourceOrder, finish, name.setIsDeclaredHere(), init, varFlags);
             vars.add(var);
             appendStatement(var);
 
@@ -1202,6 +1215,10 @@ loop:
     private void forStatement() {
         final long forToken = token;
         final int forLine = line;
+        // start position of this for statement. This is used
+        // for sort order for variables declared in the initialzer
+        // part of this 'for' statement (if any).
+        final int forStart = Token.descPosition(forToken);
         // When ES6 for-let is enabled we create a container block to capture the LET.
         final int startLine = start;
         final ParserContextBlockNode outer = useBlockScope() ? newBlock() : null;
@@ -1234,7 +1251,7 @@ loop:
             switch (type) {
             case VAR:
                 // Var declaration captured in for outer block.
-                vars = variableStatement(type, false);
+                vars = variableStatement(type, false, forStart);
                 break;
             case SEMICOLON:
                 break;
@@ -1244,12 +1261,12 @@ loop:
                         flags |= ForNode.PER_ITERATION_SCOPE;
                     }
                     // LET/CONST declaration captured in container block created above.
-                    vars = variableStatement(type, false);
+                    vars = variableStatement(type, false, forStart);
                     break;
                 }
                 if (env._const_as_var && type == CONST) {
                     // Var declaration captured in for outer block.
-                    vars = variableStatement(TokenType.VAR, false);
+                    vars = variableStatement(TokenType.VAR, false, forStart);
                     break;
                 }
 
@@ -1853,7 +1870,7 @@ loop:
                     appendStatement(catchNode);
                 } finally {
                     restoreBlock(catchBlock);
-                    catchBlocks.add(new Block(catchBlock.getToken(), finish, catchBlock.getFlags(), catchBlock.getStatements()));
+                    catchBlocks.add(new Block(catchBlock.getToken(), finish, catchBlock.getFlags() | Block.IS_SYNTHETIC, catchBlock.getStatements()));
                 }
 
                 // If unconditional catch then should to be the end.
@@ -1883,7 +1900,7 @@ loop:
             restoreBlock(outer);
         }
 
-        appendStatement(new BlockStatement(startLine, new Block(tryToken, finish, outer.getFlags(), outer.getStatements())));
+        appendStatement(new BlockStatement(startLine, new Block(tryToken, finish, outer.getFlags() | Block.IS_SYNTHETIC, outer.getStatements())));
     }
 
     /**
@@ -1901,7 +1918,7 @@ loop:
         // DEBUGGER tested in caller.
         next();
         endOfLine();
-        appendStatement(new ExpressionStatement(debuggerLine, debuggerToken, finish, new RuntimeNode(debuggerToken, finish, RuntimeNode.Request.DEBUGGER, Collections.<Expression>emptyList())));
+        appendStatement(new DebuggerNode(debuggerLine, debuggerToken, finish));
     }
 
     /**
@@ -2881,7 +2898,6 @@ loop:
         final long bodyToken = token;
         Block functionBody;
         int bodyFinish = 0;
-
 
         final boolean parseBody;
         Object endParserState = null;
