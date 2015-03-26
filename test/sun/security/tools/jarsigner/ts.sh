@@ -86,6 +86,7 @@ $KT -alias tsbad3 -certreq | \
         $KT -alias ca -gencert -ext eku:critical=cs | \
         $KT -alias tsbad3 -importcert
 
+TESTVMOPTS="${TESTVMOPTS} -XX:AddModuleExports=java.base/sun.misc,java.base/sun.security.pkcs,java.base/sun.security.timestamp,java.base/sun.security.timestamp,java.base/sun.security.x509,java.base/sun.security.util"
 $JAVAC -d . ${TESTSRC}/TimestampCheck.java
-$JAVA ${TESTVMOPTS} "-Dtest.tool.vm.opts=${TESTTOOLVMOPTS}" TimestampCheck
+$JAVA ${TESTVMOPTS}   "-Dtest.tool.vm.opts=${TESTTOOLVMOPTS}" TimestampCheck
 

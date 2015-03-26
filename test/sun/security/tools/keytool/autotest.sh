@@ -113,6 +113,7 @@ cp ${NSS}${FS}db${FS}secmod.db .
 chmod u+w key3.db
 chmod u+w cert8.db
 
+${TESTVMOPTS}="${TESTVMOPTS} -XX:AddModuleExports=java.base/sun.security.tools.keytool,java.base/sun.security.util,java.base/sun.security.x509"
 echo | ${TESTJAVA}${FS}bin${FS}java ${TESTVMOPTS} -Dnss \
    -Dnss.lib=${LIBNAME} \
    KeyToolTest

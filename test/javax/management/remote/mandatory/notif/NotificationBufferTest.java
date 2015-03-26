@@ -26,6 +26,7 @@
  * @bug 7654321
  * @summary Tests the NotificationBuffer class.
  * @author Eamonn McManus
+ * @modules java.management/com.sun.jmx.remote.internal
  * @run clean NotificationBufferTest
  * @run build NotificationBufferTest NotificationSender NotificationSenderMBean
  * @run main NotificationBufferTest

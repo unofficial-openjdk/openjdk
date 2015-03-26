@@ -33,6 +33,7 @@ import java.lang.reflect.Member;
 import java.lang.reflect.Field;
 import java.lang.reflect.Executable;
 import java.lang.reflect.Method;
+import java.lang.reflect.Module;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
@@ -709,6 +710,32 @@ public final class Class<T> implements java.io.Serializable,
 
     // Package-private to allow ClassLoader access
     ClassLoader getClassLoader0() { return classLoader; }
+
+    /**
+     * Returns the module that this class or interface is a member of.
+     *
+     * If this object represents an array type then this method returns the
+     * {@code Module} for the element type. If this object represents a
+     * primitive type or void, then the {@code Module} object for the
+     * {@code java.base} module is returned.
+     *
+     * @apiNote If this object is in the unnamed module then {@code null} is
+     * returned. This may change to {@code Module.UNNAMED} once the topic
+     * is examined further.
+     *
+     * @return the module that this class or interface is a member of
+     *
+     * @since 1.9
+     */
+    public Module getModule() {
+        if (isArray()) {
+            return componentType.getModule();
+        } else {
+            return isPrimitive() ? Object.class.module : module;
+        }
+    }
+
+    private transient Module module;  // set by VM
 
     // Initialized in JVM not by private constructor
     // This field is filtered from reflection access, i.e. getDeclaredField
@@ -2857,15 +2884,15 @@ public final class Class<T> implements java.io.Serializable,
         private void remove(int i) {
             if (methods[i] != null && methods[i].isDefault())
                 defaults--;
-            methods[i] = null;
-        }
+                    methods[i] = null;
+                }
 
         private boolean matchesNameAndDescriptor(Method m1, Method m2) {
             return m1.getReturnType() == m2.getReturnType() &&
                    m1.getName() == m2.getName() && // name is guaranteed to be interned
                    arrayContentsEq(m1.getParameterTypes(),
                            m2.getParameterTypes());
-        }
+            }
 
         void compactAndTrim() {
             int newPos = 0;

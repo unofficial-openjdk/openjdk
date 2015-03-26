@@ -20,6 +20,12 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+
+/**
+ * @test
+ * @modules java.sql.rowset/com.sun.rowset.providers
+ */
+
 package test.rowset.filteredrowset;
 
 import java.sql.SQLException;

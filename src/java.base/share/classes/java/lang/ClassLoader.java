@@ -49,9 +49,13 @@ import java.util.Vector;
 import java.util.Hashtable;
 import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
+
+import sun.misc.BootLoader;
+import sun.misc.ClassLoaders;
 import sun.misc.CompoundEnumeration;
-import sun.misc.Resource;
-import sun.misc.URLClassPath;
+import sun.misc.ServicesCatalog;
+import sun.misc.Unsafe;
+import sun.misc.VM;
 import sun.reflect.CallerSensitive;
 import sun.reflect.Reflection;
 import sun.reflect.misc.ReflectUtil;
@@ -107,11 +111,8 @@ import sun.security.util.SecurityConstants;
  * <tt>loadClass</tt>} methods).
  *
  * <p> Normally, the Java virtual machine loads classes from the local file
- * system in a platform-dependent manner.  For example, on UNIX systems, the
- * virtual machine loads classes from the directory defined by the
- * <tt>CLASSPATH</tt> environment variable.
- *
- * <p> However, some classes may not originate from a file; they may originate
+ * system in a platform-dependent manner.
+ * However, some classes may not originate from a file; they may originate
  * from other sources, such as the network, or they could be constructed by an
  * application.  The method {@link #defineClass(String, byte[], int, int)
  * <tt>defineClass</tt>} converts an array of bytes into an instance of class
@@ -1000,8 +1001,7 @@ public abstract class ClassLoader {
      * Returns a class loaded by the bootstrap class loader;
      * or return null if not found.
      */
-    private Class<?> findBootstrapClassOrNull(String name)
-    {
+    Class<?> findBootstrapClassOrNull(String name) {
         if (!checkName(name)) return null;
 
         return findBootstrapClass(name);
@@ -1082,7 +1082,7 @@ public abstract class ClassLoader {
         if (parent != null) {
             url = parent.getResource(name);
         } else {
-            url = getBootstrapResource(name);
+            url = BootLoader.findResource(name);
         }
         if (url == null) {
             url = findResource(name);
@@ -1129,7 +1129,7 @@ public abstract class ClassLoader {
         if (parent != null) {
             tmp[0] = parent.getResources(name);
         } else {
-            tmp[0] = getBootstrapResources(name);
+            tmp[0] = BootLoader.findResources(name);
         }
         tmp[1] = findResources(name);
 
@@ -1213,7 +1213,7 @@ public abstract class ClassLoader {
     public static URL getSystemResource(String name) {
         ClassLoader system = getSystemClassLoader();
         if (system == null) {
-            return getBootstrapResource(name);
+            return BootLoader.findResource(name);
         }
         return system.getResource(name);
     }
@@ -1243,43 +1243,10 @@ public abstract class ClassLoader {
     {
         ClassLoader system = getSystemClassLoader();
         if (system == null) {
-            return getBootstrapResources(name);
+            return BootLoader.findResources(name);
         }
         return system.getResources(name);
     }
-
-    /**
-     * Find resources from the VM's built-in classloader.
-     */
-    private static URL getBootstrapResource(String name) {
-        URLClassPath ucp = getBootstrapClassPath();
-        Resource res = ucp.getResource(name);
-        return res != null ? res.getURL() : null;
-    }
-
-    /**
-     * Find resources from the VM's built-in classloader.
-     */
-    private static Enumeration<URL> getBootstrapResources(String name)
-        throws IOException
-    {
-        final Enumeration<Resource> e =
-            getBootstrapClassPath().getResources(name);
-        return new Enumeration<URL> () {
-            public URL nextElement() {
-                return e.nextElement().getURL();
-            }
-            public boolean hasMoreElements() {
-                return e.hasMoreElements();
-            }
-        };
-    }
-
-    // Returns the URLClassPath that is used for finding system resources.
-    static URLClassPath getBootstrapClassPath() {
-        return sun.misc.Launcher.getBootstrapClassPath();
-    }
-
 
     /**
      * Returns an input stream for reading the specified resource.
@@ -1374,8 +1341,10 @@ public abstract class ClassLoader {
      * typically the class loader used to start the application.
      *
      * <p> This method is first invoked early in the runtime's startup
-     * sequence, at which point it creates the system class loader and sets it
-     * as the context class loader of the invoking <tt>Thread</tt>.
+     * sequence, at which point it creates the system class loader. This
+     * class loader will be the context class loader for the main application
+     * thread, the thread that invokes the {@code main} method of the main
+     * class for example.
      *
      * <p> The default system class loader is an implementation-dependent
      * instance of this class.
@@ -1401,6 +1370,12 @@ public abstract class ClassLoader {
      * access to the system class loader.  If not, a
      * <tt>SecurityException</tt> will be thrown.  </p>
      *
+     * @implNote The system property to override the system class loader is
+     * not examined until this method is invoked after the VM is fully
+     * initialized. This means that code that executes this method during
+     * startup should not cache the return value unless sun.misc.VM.isBooted
+     * returns {@code true}.
+     *
      * @return  The system <tt>ClassLoader</tt> for delegation, or
      *          <tt>null</tt> if none
      *
@@ -1425,45 +1400,63 @@ public abstract class ClassLoader {
      */
     @CallerSensitive
     public static ClassLoader getSystemClassLoader() {
-        initSystemClassLoader();
-        if (scl == null) {
-            return null;
+        switch (VM.initLevel()) {
+            case 0:
+            case 1:
+                // the system class loader is the built-in app class loader during startup
+                return getBuiltinAppClassLoader();
+            case 2:
+                throw new InternalError("getSystemClassLoader should only be called after VM booted");
+            case 3:
+                // system fully initialized
+                assert VM.isBooted() && scl != null;
+                SecurityManager sm = System.getSecurityManager();
+                if (sm != null) {
+                    checkClassLoaderPermission(scl, Reflection.getCallerClass());
+                }
+                return scl;
+            default:
+                throw new InternalError("should not reach here");
         }
-        SecurityManager sm = System.getSecurityManager();
-        if (sm != null) {
-            checkClassLoaderPermission(scl, Reflection.getCallerClass());
-        }
-        return scl;
     }
 
-    private static synchronized void initSystemClassLoader() {
-        if (!sclSet) {
-            if (scl != null)
-                throw new IllegalStateException("recursive invocation");
-            sun.misc.Launcher l = sun.misc.Launcher.getLauncher();
-            if (l != null) {
-                Throwable oops = null;
-                scl = l.getClassLoader();
-                try {
-                    scl = AccessController.doPrivileged(
-                        new SystemClassLoaderAction(scl));
-                } catch (PrivilegedActionException pae) {
-                    oops = pae.getCause();
-                    if (oops instanceof InvocationTargetException) {
-                        oops = oops.getCause();
-                    }
-                }
-                if (oops != null) {
-                    if (oops instanceof Error) {
-                        throw (Error) oops;
-                    } else {
-                        // wrap the exception
-                        throw new Error(oops);
-                    }
-                }
-            }
-            sclSet = true;
+    static ClassLoader getBuiltinAppClassLoader() {
+        return ClassLoaders.appClassLoader();
+    }
+
+    /*
+     * Initialize the system class loader that may be a custom class on the
+     * application class path or application module path.
+     *
+     * @see java.lang.System#initPhase3
+     */
+    static synchronized ClassLoader initSystemClassLoader() {
+        if (VM.initLevel() != 2) {
+            throw new InternalError("system class loader cannot be set at initLevel " +
+                                    VM.initLevel());
         }
+
+        // detect recursive initialization
+        if (scl != null) {
+            throw new IllegalStateException("recursive invocation");
+        }
+
+        ClassLoader builtinLoader = getBuiltinAppClassLoader();
+
+        // All are privileged frames.  No need to call doPrivileged.
+        String cn = System.getProperty("java.system.class.loader");
+        if (cn != null) {
+            try {
+                Constructor<?> ctor = Class.forName(cn, false, builtinLoader)
+                                           .getDeclaredConstructor(ClassLoader.class);
+                scl = (ClassLoader) ctor.newInstance(builtinLoader);
+            } catch (Exception e) {
+                throw new Error(e);
+            }
+        } else {
+            scl = builtinLoader;
+        }
+        return scl;
     }
 
     // Returns true if the specified class loader can be found in this class
@@ -1522,14 +1515,9 @@ public abstract class ClassLoader {
         }
     }
 
-    // The class loader for the system
+    // The system class loader
     // @GuardedBy("ClassLoader.class")
-    private static ClassLoader scl;
-
-    // Set to true once the system class loader has been set
-    // @GuardedBy("ClassLoader.class")
-    private static boolean sclSet;
-
+    private static volatile ClassLoader scl;
 
     // -- Package --
 
@@ -1643,7 +1631,6 @@ public abstract class ClassLoader {
         }
         return map.values().toArray(new Package[map.size()]);
     }
-
 
     // -- Native library access --
 
@@ -2180,28 +2167,41 @@ public abstract class ClassLoader {
 
     // Retrieves the assertion directives from the VM.
     private static native AssertionStatusDirectives retrieveDirectives();
-}
 
 
-class SystemClassLoaderAction
-    implements PrivilegedExceptionAction<ClassLoader> {
-    private ClassLoader parent;
-
-    SystemClassLoaderAction(ClassLoader parent) {
-        this.parent = parent;
+    /**
+     * Returns the ServiceCatalog for modules defined to this class loader
+     * or {@code null} if this class loader does not have a services catalog.
+     */
+    ServicesCatalog getServicesCatalog() {
+        return servicesCatalog;
     }
 
-    public ClassLoader run() throws Exception {
-        String cls = System.getProperty("java.system.class.loader");
-        if (cls == null) {
-            return parent;
+    /**
+     * Returns the ServiceCatalog for modules defined to this class loader,
+     * creating it if it doesn't already exist.
+     */
+    ServicesCatalog createOrGetServicesCatalog() {
+        ServicesCatalog catalog = servicesCatalog;
+        if (catalog == null) {
+            catalog = new ServicesCatalog();
+            Unsafe unsafe = Unsafe.getUnsafe();
+            Class<?> k = ClassLoader.class;
+            long offset;
+            try {
+                offset = unsafe.objectFieldOffset(k.getDeclaredField("servicesCatalog"));
+            } catch (NoSuchFieldException e) {
+                throw new InternalError(e);
+            }
+            boolean set = unsafe.compareAndSwapObject(this, offset, null, catalog);
+            if (!set) {
+                // beaten by someone else
+                catalog = servicesCatalog;
+            }
         }
-
-        Constructor<?> ctor = Class.forName(cls, true, parent)
-            .getDeclaredConstructor(new Class<?>[] { ClassLoader.class });
-        ClassLoader sys = (ClassLoader) ctor.newInstance(
-            new Object[] { parent });
-        Thread.currentThread().setContextClassLoader(sys);
-        return sys;
+        return catalog;
     }
+
+    // the ServiceCatalog for modules associated with this class loader.
+    private volatile ServicesCatalog servicesCatalog;
 }

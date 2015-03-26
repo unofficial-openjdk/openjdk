@@ -23,6 +23,7 @@
 
 /**
  * @test
+ * @modules java.base/sun.net.www
  * @summary Tests for HeaderParser and MessageHeader
  *
  * Test of HeaderParser, MessageHeader changes

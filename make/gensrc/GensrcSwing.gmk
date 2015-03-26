@@ -85,6 +85,7 @@ $(BEANINFO_OUTPUTDIR)/_the.generated_beaninfo: $(BEANS_SRC) \
 	    -t $(DOCLET_DATA_DIR)/SwingBeanInfo.template \
 	    -docletpath $(BUILDTOOLS_OUTPUTDIR)/jdk_tools_classes \
 	    -XDignore.symbol.file=true \
+	    -XDnoModules=true \
 	    -classpath $(BUILDTOOLS_OUTPUTDIR)/jdk_tools_classes $(BEANS_SRC) $(LOG_INFO)
         # Move the JTextComponent into its proper package directory.
 	$(MKDIR) -p $(BEANINFO_OUTPUTDIR)/javax/swing/text

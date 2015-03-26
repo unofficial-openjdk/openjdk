@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,7 +36,6 @@ import java.util.*;
 import javax.crypto.*;
 import javax.crypto.spec.*;
 import java.security.Provider;
-import com.sun.crypto.provider.*;
 
 public class Test4517355 {
 
@@ -92,8 +91,6 @@ public class Test4517355 {
     }
 
     public static void main (String[] args) throws Exception {
-        Security.addProvider(new com.sun.crypto.provider.SunJCE());
-
         Test4517355 test = new Test4517355();
         Random rdm = new Random();
         rdm.nextBytes(test.plainText);

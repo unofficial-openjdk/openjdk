@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,7 @@
  */
 /**
  * @test
+ * @library ..
  * @bug 6581254 6986789 7196009 8062170
  * @summary Allow '~', '+', and quoted paths in config file
  * @author Valerie Peng
@@ -29,7 +30,6 @@
 
 import java.security.*;
 import java.io.*;
-import java.lang.reflect.*;
 
 public class ConfigShortPath {
 
@@ -38,11 +38,8 @@ public class ConfigShortPath {
     };
 
     public static void main(String[] args) throws Exception {
-        Constructor cons = null;
-        try {
-            Class clazz = Class.forName("sun.security.pkcs11.SunPKCS11");
-            cons = clazz.getConstructor(String.class);
-        } catch (Exception ex) {
+        Provider p = PKCS11Test.getSunPKCS11();
+        if (p == null) {
             System.out.println("Skipping test - no PKCS11 provider available");
             return;
         }
@@ -52,26 +49,20 @@ public class ConfigShortPath {
 
             System.out.println("Testing against " + configFile);
             try {
-                Object obj = cons.newInstance(configFile);
-            } catch (InvocationTargetException ite) {
-                Throwable cause = ite.getCause();
-                System.out.println(cause);
-                if (cause instanceof ProviderException) {
-                    while ((cause = cause.getCause()) != null) {
-                        System.out.println(cause);
-                        String causeMsg = cause.getMessage();
-                        // Indicate failure if due to parsing config
-                        if (causeMsg.indexOf("Unexpected") != -1) {
-                            throw (ProviderException) cause;
-                        }
-                    }
-                    // Consider the test passes if the exception is
-                    // thrown after parsing, i.e. due to the absolute
-                    // path requirement or the non-existent path.
-                } else {
-                    // unexpected exception
-                    throw new RuntimeException("Unexpected Exception", cause);
+                Provider pkcs11 = p.configure(configFile);
+            } catch (ProviderException pe) {
+                System.out.println(pe);
+                String causeMsg = pe.getMessage();
+                // Indicate failure if due to parsing config
+                if (causeMsg.indexOf("Unexpected") != -1) {
+                    throw pe;
                 }
+                // Consider the test passes if the exception is
+                // thrown after parsing, i.e. due to the absolute
+                // path requirement or the non-existent path.
+            } catch (Exception ex) {
+                // unexpected exception
+                throw new RuntimeException("Unexpected Exception", ex);
             }
         }
     }

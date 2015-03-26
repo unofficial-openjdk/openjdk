@@ -26,6 +26,7 @@
  * @bug 4886838 4886830 8025204
  * @summary Tests that idle timeouts happen at appropriate times
  * @author Eamonn McManus
+ * @modules java.management/com.sun.jmx.remote.util
  * @run clean IdleTimeoutTest
  * @run build IdleTimeoutTest
  * @run main IdleTimeoutTest

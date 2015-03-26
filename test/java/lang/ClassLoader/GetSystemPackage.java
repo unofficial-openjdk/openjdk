@@ -85,15 +85,15 @@ public class GetSystemPackage {
         buildJar("no-manifest.jar", null);
 
         runSubProcess("System package with manifest improperly resolved.",
-                "-Xbootclasspath/p:" + testClassesDir + "/manifest.jar",
+                "-Xbootclasspath/a:" + testClassesDir + "/manifest.jar",
                 "GetSystemPackage", "system-manifest");
 
         runSubProcess("System package from directory improperly resolved.",
-                "-Xbootclasspath/p:" + testClassesDir, "GetSystemPackage",
+                "-Xbootclasspath/a:" + testClassesDir, "GetSystemPackage",
                 "system-no-manifest");
 
         runSubProcess("System package with no manifest improperly resolved",
-                "-Xbootclasspath/p:" + testClassesDir + "/no-manifest.jar",
+                "-Xbootclasspath/a:" + testClassesDir + "/no-manifest.jar",
                 "GetSystemPackage", "system-no-manifest");
 
         runSubProcess("Classpath package with manifest improperly resolved",

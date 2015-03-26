@@ -67,6 +67,9 @@ import sun.jvmstat.monitor.event.VmStatusChangeEvent;
  * @bug 4990825
  * @summary attach to external but local JVM processes
  * @library /lib/testlibrary
+ * @modules java.management
+ *          jdk.jvmstat/sun.jvmstat.monitor
+ *          jdk.jvmstat/sun.jvmstat.monitor.event
  * @build jdk.testlibrary.*
  * @run main/othervm MonitorVmStartTerminate
  */

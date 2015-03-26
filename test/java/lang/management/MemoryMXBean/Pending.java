@@ -33,6 +33,8 @@
  *             be garbage collected.
  * @author  Alexei Guibadoulline and Mandy Chung
  *
+ *@modules java.base/sun.misc
+ *         java.management
  */
 
 import java.lang.management.*;

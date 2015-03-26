@@ -1,0 +1,52 @@
+############################################################################
+# 
+# A temporary problem list for issues found in jake 
+#
+############################################################################
+# jdk_lang use of bootclasspath
+java/lang/invoke/CustomizedLambdaFormTest.java			 generic-all
+java/lang/invoke/ExplicitCastArgumentsTest.java			 generic-all
+java/lang/invoke/VarargsArrayTest.java				 generic-all
+
+# jdk_instrument
+
+# 8047771
+java/lang/instrument/appendToClassLoaderSearch/run_tests.sh	generic-all
+
+############################################################################
+ 
+# jdk_management
+ 
+# 8047789
+sun/management/jmxremote/bootstrap/RmiSslBootstrapTest.sh	generic-all
+
+############################################################################
+ 
+# jdk_jmx
+ 
+# 8047789
+javax/management/remote/mandatory/passwordAccessFile/PasswordAccessFileTest.java	generic-all
+
+############################################################################
+
+# svc_tools
+ 
+# 8071308
+demo/jvmti/heapTracker/HeapTrackerTest.java			generic-all
+demo/jvmti/hprof/HeapAllTest.java				generic-all
+demo/jvmti/hprof/HeapBinaryFormatTest.java			generic-all
+demo/jvmti/hprof/HeapDumpTest.java				generic-all
+demo/jvmti/hprof/HeapSitesTest.java				generic-all
+sun/tools/jhat/HatHeapDump1Test.java				generic-all
+
+# 8071309
+demo/jvmti/hprof/CpuOldTest.java				generic-all
+demo/jvmti/hprof/CpuTimesDefineClassTest.java			generic-all
+demo/jvmti/hprof/CpuTimesTest.java				generic-all
+demo/jvmti/hprof/OptionsTest.java				generic-all
+demo/jvmti/hprof/StackMapTableTest.java				generic-all
+
+# 8059035
+sun/tools/jinfo/JInfoSanityTest.java				generic-all
+
+############################################################################
