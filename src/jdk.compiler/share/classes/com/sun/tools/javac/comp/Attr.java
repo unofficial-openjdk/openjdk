@@ -41,11 +41,13 @@ import com.sun.tools.javac.code.Lint.LintCategory;
 import com.sun.tools.javac.code.Scope.WriteableScope;
 import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.code.Type.*;
+import com.sun.tools.javac.code.Types.FunctionDescriptorLookupError;
 import com.sun.tools.javac.comp.Check.CheckContext;
 import com.sun.tools.javac.comp.DeferredAttr.AttrMode;
 import com.sun.tools.javac.comp.Infer.InferenceContext;
 import com.sun.tools.javac.comp.Infer.FreeTypeListener;
 import com.sun.tools.javac.jvm.*;
+import com.sun.tools.javac.resources.CompilerProperties.Fragments;
 import com.sun.tools.javac.tree.*;
 import com.sun.tools.javac.tree.JCTree.*;
 import com.sun.tools.javac.tree.JCTree.JCPolyExpression.*;
@@ -1213,10 +1215,8 @@ public class Attr extends JCTree.Visitor {
                             if (pattype.constValue() == null) {
                                 log.error(c.pat.pos(),
                                           (stringSwitch ? "string.const.req" : "const.expr.req"));
-                            } else if (labels.contains(pattype.constValue())) {
+                            } else if (!labels.add(pattype.constValue())) {
                                 log.error(c.pos(), "duplicate.case.label");
-                            } else {
-                                labels.add(pattype.constValue());
                             }
                         }
                     }
@@ -1253,19 +1253,17 @@ public class Attr extends JCTree.Visitor {
     // where
     /** Return the selected enumeration constant symbol, or null. */
     private Symbol enumConstant(JCTree tree, Type enumType) {
-        if (!tree.hasTag(IDENT)) {
-            log.error(tree.pos(), "enum.label.must.be.unqualified.enum");
-            return syms.errSymbol;
-        }
-        JCIdent ident = (JCIdent)tree;
-        Name name = ident.name;
-        for (Symbol sym : enumType.tsym.members().getSymbolsByName(name)) {
-            if (sym.kind == VAR) {
-                Symbol s = ident.sym = sym;
-                ((VarSymbol)s).getConstValue(); // ensure initializer is evaluated
-                ident.type = s.type;
-                return ((s.flags_field & Flags.ENUM) == 0)
-                    ? null : s;
+        if (tree.hasTag(IDENT)) {
+            JCIdent ident = (JCIdent)tree;
+            Name name = ident.name;
+            for (Symbol sym : enumType.tsym.members().getSymbolsByName(name)) {
+                if (sym.kind == VAR) {
+                    Symbol s = ident.sym = sym;
+                    ((VarSymbol)s).getConstValue(); // ensure initializer is evaluated
+                    ident.type = s.type;
+                    return ((s.flags_field & Flags.ENUM) == 0)
+                        ? null : s;
+                }
             }
         }
         return null;
@@ -2877,6 +2875,16 @@ public class Attr extends JCTree.Visitor {
                             names.empty, List.of(fExpr.targets.head), ABSTRACT);
                     if (csym != null) {
                         chk.checkImplementations(env.tree, csym, csym);
+                        try {
+                            //perform an additional functional interface check on the synthetic class,
+                            //as there may be spurious errors for raw targets - because of existing issues
+                            //with membership and inheritance (see JDK-8074570).
+                            csym.flags_field |= INTERFACE;
+                            types.findDescriptorType(csym.type);
+                        } catch (FunctionDescriptorLookupError err) {
+                            resultInfo.checkContext.report(fExpr,
+                                    diags.fragment(Fragments.NoSuitableFunctionalIntfInst(fExpr.targets.head)));
+                        }
                     }
                 } catch (Types.FunctionDescriptorLookupError ex) {
                     JCDiagnostic cause = ex.getDiagnostic();
@@ -2948,7 +2956,7 @@ public class Attr extends JCTree.Visitor {
     public void visitBinary(JCBinary tree) {
         // Attribute arguments.
         Type left = chk.checkNonVoid(tree.lhs.pos(), attribExpr(tree.lhs, env));
-        Type right = chk.checkNonVoid(tree.lhs.pos(), attribExpr(tree.rhs, env));
+        Type right = chk.checkNonVoid(tree.rhs.pos(), attribExpr(tree.rhs, env));
         // Find operator.
         Symbol operator = tree.operator = operators.resolveBinary(tree, tree.getTag(), left, right);
         Type owntype = types.createErrorType(tree.type);
@@ -3728,7 +3736,7 @@ public class Attr extends JCTree.Visitor {
             DeferredAttr.DeferredTypeMap checkDeferredMap =
                 deferredAttr.new DeferredTypeMap(DeferredAttr.AttrMode.CHECK, sym, env.info.pendingResolutionPhase);
 
-            argtypes = Type.map(argtypes, checkDeferredMap);
+            argtypes = argtypes.map(checkDeferredMap);
 
             if (noteWarner.hasNonSilentLint(LintCategory.UNCHECKED)) {
                 chk.warnUnchecked(env.tree.pos(),
@@ -3736,7 +3744,7 @@ public class Attr extends JCTree.Visitor {
                         kindName(sym),
                         sym.name,
                         rs.methodArguments(sym.type.getParameterTypes()),
-                        rs.methodArguments(Type.map(argtypes, checkDeferredMap)),
+                        rs.methodArguments(argtypes.map(checkDeferredMap)),
                         kindName(sym.location()),
                         sym.location());
                owntype = new MethodType(owntype.getParameterTypes(),
@@ -3760,7 +3768,7 @@ public class Attr extends JCTree.Visitor {
                     return new Pair<>(sym, diag);
                 }
             };
-            List<Type> argtypes2 = Type.map(argtypes,
+            List<Type> argtypes2 = argtypes.map(
                     rs.new ResolveDeferredRecoveryMap(AttrMode.CHECK, sym, env.info.pendingResolutionPhase));
             JCDiagnostic errDiag = errSym.getDiagnostic(JCDiagnostic.DiagnosticType.ERROR,
                     env.tree, sym, site, sym.name, argtypes2, typeargtypes);
