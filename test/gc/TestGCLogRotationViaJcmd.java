@@ -26,7 +26,7 @@
  * @bug 7090324
  * @summary test for gc log rotation via jcmd
  * @library /testlibrary
- * @run main/othervm -Xloggc:test.log -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=3 TestGCLogRotationViaJcmd
+ * @run main/othervm -Xloggc:test.log -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=3 -XX:AddModuleExports=java.management/sun.management TestGCLogRotationViaJcmd
  *
  */
 import com.oracle.java.testlibrary.*;

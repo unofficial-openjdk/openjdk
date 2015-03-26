@@ -25,7 +25,7 @@
  * @test
  * @summary Verifies behaviour of Unsafe.getField
  * @library /testlibrary
- * @run main GetField
+ * @run main/othervm -XX:AddModuleExports=java.base/sun.misc GetField
  */
 
 import com.oracle.java.testlibrary.*;

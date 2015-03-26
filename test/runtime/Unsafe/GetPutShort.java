@@ -25,7 +25,7 @@
  * @test
  * @summary Verify behaviour of Unsafe.get/putShort
  * @library /testlibrary
- * @run main GetPutShort
+ * @run main/othervm -XX:AddModuleExports=java.base/sun.misc GetPutShort
  */
 
 import java.lang.reflect.Field;

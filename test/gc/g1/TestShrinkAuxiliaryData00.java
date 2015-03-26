@@ -28,7 +28,7 @@
  * G1ConcRSLogCacheSize and ObjectAlignmentInBytes options values
  * @library /testlibrary /../../test/lib
  * @build TestShrinkAuxiliaryData TestShrinkAuxiliaryData00
- * @run driver/timeout=720 TestShrinkAuxiliaryData00
+ * @run main/othervm/timeout=720 -XX:AddModuleExports=java.base/sun.misc TestShrinkAuxiliaryData00
  */
 public class TestShrinkAuxiliaryData00 {
 

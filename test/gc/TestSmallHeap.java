@@ -31,10 +31,10 @@
  * @library /testlibrary /../../test/lib
  * @build TestSmallHeap
  * @run main ClassFileInstaller sun.hotspot.WhiteBox
- * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -Xmx2m -XX:+UseParallelGC TestSmallHeap
- * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -Xmx2m -XX:+UseSerialGC TestSmallHeap
- * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -Xmx2m -XX:+UseG1GC TestSmallHeap
- * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -Xmx2m -XX:+UseConcMarkSweepGC TestSmallHeap
+ * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -Xmx2m -XX:+UseParallelGC -XX:AddModuleExports=java.management/sun.management TestSmallHeap
+ * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -Xmx2m -XX:+UseSerialGC -XX:AddModuleExports=java.management/sun.management TestSmallHeap
+ * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -Xmx2m -XX:+UseG1GC -XX:AddModuleExports=java.management/sun.management TestSmallHeap
+ * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -Xmx2m -XX:+UseConcMarkSweepGC -XX:AddModuleExports=java.management/sun.management TestSmallHeap
  */
 
 /* Note: It would be nice to verify the minimal supported heap size (2m) here,

@@ -26,6 +26,7 @@
  * @bug 8001071
  * @summary Add simple range check into VM implemenation of Unsafe access methods
  * @library /testlibrary
+ * @run main RangeCheck
  */
 
 import com.oracle.java.testlibrary.*;
@@ -44,6 +45,7 @@ public class RangeCheck {
                 "-Xmx32m",
                 "-XX:-TransmitErrorReport",
                 "-XX:-InlineUnsafeOps", // The compiler intrinsics doesn't have the assert
+                "-XX:AddModuleExports=java.base/sun.misc",
                 DummyClassWithMainRangeCheck.class.getName());
 
         OutputAnalyzer output = new OutputAnalyzer(pb.start());

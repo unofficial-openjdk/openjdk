@@ -27,7 +27,7 @@
  * @bug 6852078
  * @summary Disable SuperWord optimization for unsafe read/write
  *
- * @run main Test6852078
+ * @run main/othervm -XX:AddModuleExports=java.corba/com.sun.corba.se.impl.encoding,java.corba/com.sun.jndi.toolkit.corba Test6852078
  */
 
 import java.util.*;

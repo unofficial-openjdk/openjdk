@@ -27,9 +27,9 @@
  * @library /testlibrary
  * @build com.oracle.java.testlibrary.*
  * @build com.oracle.java.testlibrary.dcmd.*
- * @run testng/othervm -XX:+SegmentedCodeCache CodeCacheTest
- * @run testng/othervm -XX:-SegmentedCodeCache CodeCacheTest
- * @run testng/othervm -Xint -XX:+SegmentedCodeCache CodeCacheTest
+ * @run main/othervm -XX:+SegmentedCodeCache -XX:AddModuleExports=java.management/sun.management CodeCacheTest
+ * @run main/othervm -XX:-SegmentedCodeCache -XX:AddModuleExports=java.management/sun.management CodeCacheTest
+ * @run main/othervm -Xint -XX:+SegmentedCodeCache -XX:AddModuleExports=java.management/sun.management CodeCacheTest
  * @summary Test of diagnostic command Compiler.codecache
  */
 

@@ -26,7 +26,6 @@
  * @bug 6583051
  * @summary Give error if java.lang.Object has been incompatibly overridden on the bootpath
  * @library /testlibrary
- * @compile Object.java
  * @run main BootstrapRedefine
  */
 
@@ -35,8 +34,18 @@ import com.oracle.java.testlibrary.*;
 public class BootstrapRedefine {
 
     public static void main(String[] args) throws Exception {
-        String testClasses = System.getProperty("test.classes", ".");
-        ProcessBuilder pb = ProcessTools.createJavaProcessBuilder("-Xbootclasspath/p:" + testClasses, "-version");
+        String source = "package java.lang;" +
+                        "public class Object {" +
+                        "    void dummy1() { return; }" +
+                        "    void dummy2() { return; }" +
+                        "    void dummy3() { return; }" +
+                        "}";
+
+        ClassFileInstaller.writeClassToDisk("java/lang/Object",
+                                        InMemoryJavaCompiler.compile("java.lang.Object", source),
+                                        "mods/java.base");
+
+        ProcessBuilder pb = ProcessTools.createJavaProcessBuilder("-Xoverride:mods", "-version");
         new OutputAnalyzer(pb.start())
             .shouldContain("Incompatible definition of java.lang.Object")
             .shouldHaveExitValue(1);

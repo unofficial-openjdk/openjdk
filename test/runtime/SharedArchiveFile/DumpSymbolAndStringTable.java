@@ -26,7 +26,7 @@
  * @bug 8059510
  * @summary Test jcmd VM.symboltable and VM.stringtable options
  * @library /testlibrary
- * @run main/othervm -XX:+UnlockDiagnosticVMOptions DumpSymbolAndStringTable
+ * @run main/othervm -XX:+UnlockDiagnosticVMOptions -XX:AddModuleExports=java.management/sun.management DumpSymbolAndStringTable
  */
 
 import com.oracle.java.testlibrary.*;

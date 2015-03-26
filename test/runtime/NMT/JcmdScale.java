@@ -26,7 +26,7 @@
  * @key nmt jcmd
  * @summary Test the NMT scale parameter
  * @library /testlibrary
- * @run main/othervm -XX:NativeMemoryTracking=summary JcmdScale
+ * @run main/othervm -XX:NativeMemoryTracking=summary -XX:AddModuleExports=java.management/sun.management JcmdScale
  */
 
 import com.oracle.java.testlibrary.*;

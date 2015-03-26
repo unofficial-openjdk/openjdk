@@ -27,7 +27,7 @@
  * @bug 8035150
  * @library /testlibrary
  * @build com.oracle.java.testlibrary.* UnresolvedClassAgent
- * @run main TestRedefineWithUnresolvedClass
+ * @run main/othervm -XX:AddModuleExports=jdk.jartool/sun.tools.jar TestRedefineWithUnresolvedClass
  */
 
 import java.io.File;

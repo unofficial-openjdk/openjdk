@@ -26,10 +26,10 @@
  * @key gc
  * @bug 8021879
  * @summary Verify that the flag G1HeapRegionSize is updated properly
- * @run main/othervm -Xmx64m TestG1HeapRegionSize 1048576
- * @run main/othervm -XX:G1HeapRegionSize=2m -Xmx64m TestG1HeapRegionSize 2097152
- * @run main/othervm -XX:G1HeapRegionSize=3m -Xmx64m TestG1HeapRegionSize 2097152
- * @run main/othervm -XX:G1HeapRegionSize=64m -Xmx256m TestG1HeapRegionSize 33554432
+ * @run main/othervm -Xmx64m -XX:AddModuleExports=java.management/sun.management TestG1HeapRegionSize 1048576
+ * @run main/othervm -XX:G1HeapRegionSize=2m -Xmx64m -XX:AddModuleExports=java.management/sun.management TestG1HeapRegionSize 2097152
+ * @run main/othervm -XX:G1HeapRegionSize=3m -Xmx64m -XX:AddModuleExports=java.management/sun.management TestG1HeapRegionSize 2097152
+ * @run main/othervm -XX:G1HeapRegionSize=64m -Xmx256m -XX:AddModuleExports=java.management/sun.management TestG1HeapRegionSize 33554432
  */
 
 import sun.management.ManagementFactoryHelper;

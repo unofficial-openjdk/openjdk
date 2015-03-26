@@ -43,7 +43,7 @@ import sun.misc.Contended;
  * @bug     8014509
  * @summary \@Contended: explicit default value behaves differently from the implicit value
  *
- * @run main/othervm -XX:-RestrictContended DefaultValue
+ * @run main/othervm -XX:-RestrictContended -XX:AddModuleExports=java.base/sun.misc DefaultValue
  */
 public class DefaultValue {
 

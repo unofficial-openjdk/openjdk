@@ -28,7 +28,7 @@
  * @library /testlibrary /../../test/lib
  * @build MallocRoundingReportTest
  * @run main ClassFileInstaller sun.hotspot.WhiteBox
- * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -XX:NativeMemoryTracking=detail MallocRoundingReportTest
+ * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -XX:NativeMemoryTracking=detail -XX:AddModuleExports=java.management/sun.management MallocRoundingReportTest
  *
  */
 

@@ -26,7 +26,7 @@
  * @library /testlibrary
  * @summary Proof of concept test for RedefineClassHelper
  * @build RedefineClassHelper
- * @run main RedefineClassHelper
+ * @run main/othervm -XX:AddModuleExports=jdk.jartool/sun.tools.jar RedefineClassHelper
  * @run main/othervm -javaagent:redefineagent.jar RedefineClassTest
  */
 

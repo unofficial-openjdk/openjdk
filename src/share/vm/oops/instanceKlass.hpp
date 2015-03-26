@@ -26,6 +26,8 @@
 #define SHARE_VM_OOPS_INSTANCEKLASS_HPP
 
 #include "classfile/classLoaderData.hpp"
+#include "classfile/packageEntry.hpp"
+#include "classfile/moduleEntry.hpp"
 #include "memory/referenceType.hpp"
 #include "oops/annotations.hpp"
 #include "oops/constMethod.hpp"
@@ -154,6 +156,8 @@ class InstanceKlass: public Klass {
  protected:
   // Annotations for this class
   Annotations*    _annotations;
+  // Package this class is defined in
+  PackageEntry*   _package_entry;
   // Array classes holding elements of this class.
   Klass*          _array_klasses;
   // Constant pool for this class.
@@ -398,6 +402,11 @@ class InstanceKlass: public Klass {
   bool is_override(methodHandle super_method, Handle targetclassloader, Symbol* targetclassname, TRAPS);
 
   // package
+  PackageEntry* package() const     { return _package_entry; }
+  ModuleEntry* module() const       { return (in_unnamed_package() ? NULL : _package_entry->module()); }
+  bool in_unnamed_package() const   { return (_package_entry == NULL); }
+  void set_package(PackageEntry* p) { _package_entry = p; }
+  void set_package(Symbol* name, ClassLoaderData* loader, TRAPS);
   bool is_same_class_package(Klass* class2);
   bool is_same_class_package(oop classloader2, Symbol* classname2);
   static bool is_same_class_package(oop class_loader1, Symbol* class_name1, oop class_loader2, Symbol* class_name2);
@@ -771,7 +780,7 @@ class InstanceKlass: public Klass {
 
   // support for stub routines
   static ByteSize init_state_offset()  { return in_ByteSize(offset_of(InstanceKlass, _init_state)); }
-  TRACE_DEFINE_OFFSET;
+  TRACE_DEFINE_KLASS_TRACE_ID_OFFSET;
   static ByteSize init_thread_offset() { return in_ByteSize(offset_of(InstanceKlass, _init_thread)); }
 
   // subclass/subinterface checks
@@ -972,6 +981,7 @@ class InstanceKlass: public Klass {
 
   // Naming
   const char* signature_name() const;
+  static const jbyte* package_from_name(Symbol* name, int& length);
 
   // Iterators
   int oop_oop_iterate(oop obj, ExtendedOopClosure* blk) {

@@ -27,7 +27,7 @@
  * @bug 6968348
  * @summary Byteswapped memory access can point to wrong location after JIT
  *
- * @run main Test6968348
+ * @run main/othervm -XX:AddModuleExports=java.base/sun.misc Test6968348
  */
 
 import sun.misc.Unsafe;

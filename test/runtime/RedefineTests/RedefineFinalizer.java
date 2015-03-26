@@ -27,7 +27,7 @@
  * @summary Don't assert if we redefine finalize method
  * @library /testlibrary
  * @build RedefineClassHelper
- * @run main RedefineClassHelper
+ * @run main/othervm -XX:AddModuleExports=jdk.jartool/sun.tools.jar RedefineClassHelper
  * @run main/othervm -javaagent:redefineagent.jar RedefineFinalizer
  */
 

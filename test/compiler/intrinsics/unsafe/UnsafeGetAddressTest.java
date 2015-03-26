@@ -25,7 +25,7 @@
  * @test
  * @bug 6653795
  * @summary C2 intrinsic for Unsafe.getAddress performs pointer sign extension on 32-bit systems
- * @run main UnsafeGetAddressTest
+ * @run main/othervm -XX:AddModuleExports=java.base/sun.misc UnsafeGetAddressTest
  *
  */
 

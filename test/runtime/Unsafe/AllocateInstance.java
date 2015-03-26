@@ -25,7 +25,7 @@
  * @test
  * @summary Verifies the behaviour of Unsafe.allocateInstance
  * @library /testlibrary
- * @run main AllocateInstance
+ * @run main/othervm -XX:AddModuleExports=java.base/sun.misc AllocateInstance
  */
 
 import com.oracle.java.testlibrary.*;

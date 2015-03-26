@@ -25,7 +25,7 @@
  * @test
  * @summary Verify behaviour of Unsafe.get/putChar
  * @library /testlibrary
- * @run main GetPutChar
+ * @run main/othervm -XX:AddModuleExports=java.base/sun.misc GetPutChar
  */
 
 import java.lang.reflect.Field;

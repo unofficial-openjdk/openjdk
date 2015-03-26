@@ -25,7 +25,7 @@
  * @test
  * @summary Verify behaviour of Unsafe.get/putBoolean
  * @library /testlibrary
- * @run main GetPutBoolean
+ * @run main/othervm -XX:AddModuleExports=java.base/sun.misc GetPutBoolean
  */
 
 import java.lang.reflect.Field;

@@ -25,7 +25,7 @@
  * @test
  * @summary Verifies the behaviour of Unsafe.fieldOffset
  * @library /testlibrary
- * @run main FieldOffset
+ * @run main/othervm -XX:AddModuleExports=java.base/sun.misc FieldOffset
  */
 
 import java.lang.reflect.Field;

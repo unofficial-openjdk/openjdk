@@ -24,7 +24,7 @@
 /*
  * @test
  * @library /testlibrary
- * @run main GetPutInt
+ * @run main/othervm -XX:AddModuleExports=java.base/sun.misc GetPutInt
  */
 
 import java.lang.reflect.Field;

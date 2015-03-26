@@ -26,8 +26,8 @@
  * @test
  * @bug 8026124
  * @summary Javascript file provoked assertion failure in linkResolver.cpp
- *
- * @run main/othervm CreatesInterfaceDotEqualsCallInfo
+ * @ignore 8072479
+ * @run main/othervm -XX:AddModuleExports=jdk.scripting.nashorn/jdk.nashorn.tools CreatesInterfaceDotEqualsCallInfo
  */
 
 public class CreatesInterfaceDotEqualsCallInfo {

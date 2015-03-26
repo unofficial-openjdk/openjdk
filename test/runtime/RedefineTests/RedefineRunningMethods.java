@@ -27,7 +27,7 @@
  * @summary Redefine EMCP and non-EMCP methods that are running in an infinite loop
  * @library /testlibrary
  * @build RedefineClassHelper
- * @run main RedefineClassHelper
+ * @run main/othervm -XX:AddModuleExports=jdk.jartool/sun.tools.jar RedefineClassHelper
  * @run main/othervm -javaagent:redefineagent.jar -XX:TraceRedefineClasses=0x600 RedefineRunningMethods
  */
 public class RedefineRunningMethods {

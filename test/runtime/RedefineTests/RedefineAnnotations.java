@@ -25,8 +25,8 @@
  * @test
  * @library /testlibrary
  * @summary Test that type annotations are retained after a retransform
- * @run main RedefineAnnotations buildagent
- * @run main/othervm -javaagent:redefineagent.jar RedefineAnnotations
+ * @run main/othervm -XX:AddModuleExports=jdk.jartool/sun.tools.jar RedefineAnnotations buildagent
+ * @run main/othervm -javaagent:redefineagent.jar -XX:AddModuleExports=java.base/jdk.internal.org.objectweb.asm RedefineAnnotations
  */
 
 import static com.oracle.java.testlibrary.Asserts.assertTrue;

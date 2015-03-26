@@ -25,7 +25,7 @@
  * @test
  * Verify behaviour of Unsafe.get/putAddress and Unsafe.addressSize
  * @library /testlibrary
- * @run main GetPutAddress
+ * @run main/othervm -XX:AddModuleExports=java.base/sun.misc GetPutAddress
  */
 
 import com.oracle.java.testlibrary.*;

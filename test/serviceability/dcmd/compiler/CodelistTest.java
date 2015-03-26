@@ -28,7 +28,7 @@
  * @build com.oracle.java.testlibrary.*
  * @build com.oracle.java.testlibrary.dcmd.*
  * @build MethodIdentifierParser
- * @run testng CodelistTest
+ * @run testng/othervm -XX:AddModuleExports=java.management/sun.management CodelistTest
  * @summary Test of diagnostic command Compiler.codelist
  */
 

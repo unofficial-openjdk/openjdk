@@ -25,7 +25,7 @@
  * @test
  * @summary Verifies behaviour of Unsafe.allocateMemory
  * @library /testlibrary
- * @run main/othervm -XX:+UnlockDiagnosticVMOptions -XX:MallocMaxTestWords=100m AllocateMemory
+ * @run main/othervm -XX:+UnlockDiagnosticVMOptions -XX:MallocMaxTestWords=100m -XX:AddModuleExports=java.base/sun.misc AllocateMemory
  */
 
 import com.oracle.java.testlibrary.*;

@@ -24,7 +24,7 @@
 /**
  * @test
  * @bug 8058828
- * @run main/bootclasspath -Xbatch VMAnonymousClasses
+ * @run main/bootclasspath -Xbatch -XX:AddModuleExports=java.base/sun.misc,java.base/jdk.internal.org.objectweb.asm VMAnonymousClasses
  */
 
 import jdk.internal.org.objectweb.asm.ClassWriter;

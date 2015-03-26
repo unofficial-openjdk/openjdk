@@ -25,7 +25,7 @@
  * @test
  * @summary Verifies behaviour of Unsafe.copyMemory
  * @library /testlibrary
- * @run main CopyMemory
+ * @run main/othervm -XX:AddModuleExports=java.base/sun.misc CopyMemory
  */
 
 import com.oracle.java.testlibrary.*;

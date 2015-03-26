@@ -25,7 +25,7 @@
  * @test
  * @summary Verify behaviour of Unsafe.get/putLong
  * @library /testlibrary
- * @run main GetPutLong
+ * @run main/othervm -XX:AddModuleExports=java.base/sun.misc GetPutLong
  */
 
 import java.lang.reflect.Field;

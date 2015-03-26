@@ -29,7 +29,7 @@
  * @library /testlibrary
  * @compile -XDignore.symbol.file InvokeSpecialAnonTest.java
  * @run main ClassFileInstaller InvokeSpecialAnonTest AnonTester
- * @run main/othervm -Xbootclasspath/a:. -Xverify:all InvokeSpecialAnonTest
+ * @run main/othervm -Xbootclasspath/a:. -Xverify:all -XX:AddModuleExports=java.base/jdk.internal.org.objectweb.asm,java.base/sun.misc InvokeSpecialAnonTest
  */
 import jdk.internal.org.objectweb.asm.*;
 import java.lang.reflect.Constructor;
