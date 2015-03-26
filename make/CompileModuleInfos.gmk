@@ -23,6 +23,7 @@
 # questions.
 #
 
+# This must be the first rule
 default: all
 
 include $(SPEC)
@@ -30,30 +31,30 @@ include MakeBase.gmk
 include JavaCompilation.gmk
 include SetupJavaCompilers.gmk
 
-JIMAGE_PKGS := \
-    jdk/internal/jimage \
-    jdk/internal/jrtfs \
-    #
+################################################################################
 
-$(eval $(call SetupJavaCompilation,BUILD_JRTFS, \
-    SETUP := GENERATE_OLDBYTECODE, \
-    SRC := $(JDK_TOPDIR)/src/java.base/share/classes, \
-    INCLUDES := $(JIMAGE_PKGS), \
-    BIN := $(SUPPORT_OUTPUTDIR)/jrtfs_classes))
+GENMODULES_DIR := $(SUPPORT_OUTPUTDIR)/genmodules
+MODULEINFO_DIR := $(GENMODULES_DIR)/src
 
-# Because of the explicit INCLUDES in the compilation setup above, the service provider
-# file will not be copied unless META-INF/services would also be added to the INCLUDES.
-# Adding META-INF/services would include all files in that directory when only the one
-# is needed, which is why this explicit copy is defined instead.
-$(eval $(call SetupCopyFiles,COPY_JIMAGE_SERVICE_PROVIDER, \
-    SRC := $(JDK_TOPDIR)/src/java.base/share/classes, \
-    DEST := $(SUPPORT_OUTPUTDIR)/jrtfs_classes, \
-    FILES := META-INF/services/java.nio.file.spi.FileSystemProvider))
+ALL_MODULES := $(filter-out modules.config, $(notdir $(wildcard $(MODULEINFO_DIR)/*)))
 
-$(eval $(call SetupArchive,BUILD_JRTFS_JAR, \
-    DEPENDENCIES := $(BUILD_JRTFS) $(COPY_JIMAGE_SERVICE_PROVIDER), \
-    SRCS := $(SUPPORT_OUTPUTDIR)/jrtfs_classes, \
-    JAR := $(SUPPORT_OUTPUTDIR)/jrt-fs.jar, \
-    MANIFEST := $(JDK_TOPDIR)/make/data/mainmanifest/manifest.mf))
+# This macro sets up compilation of a module
+# Param 1 - module name
+define SetupModuleCompilation
 
-all: $(BUILD_JRTFS_JAR)
+  $$(eval $$(call SetupJavaCompilation,$1-module-info, \
+      SETUP := GENERATE_USINGJDKBYTECODE, \
+      SRC := $(MODULEINFO_DIR)/$1, \
+      BIN := $(JDK_OUTPUTDIR)/modules/$1, \
+      DISABLE_SJAVAC := true))
+
+  $1: $$($1-module-info)
+
+endef
+
+# Setup compilation for each module
+$(foreach m,$(ALL_MODULES),$(eval $(call SetupModuleCompilation,$m)))
+
+################################################################################
+
+all: $(ALL_MODULES)
