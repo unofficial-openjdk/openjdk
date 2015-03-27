@@ -33,10 +33,12 @@ import java.util.HashSet;
 
 import javax.tools.JavaFileManager;
 import javax.tools.FileObject;
+import javax.tools.JavaFileManager.Location;
 import javax.tools.JavaFileObject;
 
 import com.sun.tools.javac.code.*;
 import com.sun.tools.javac.code.Attribute.RetentionPolicy;
+import com.sun.tools.javac.code.Directive.*;
 import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.code.Type.*;
 import com.sun.tools.javac.code.Types.UniqueType;
@@ -52,6 +54,7 @@ import static com.sun.tools.javac.code.Kinds.Kind.*;
 import static com.sun.tools.javac.code.Scope.LookupKind.NON_RECURSIVE;
 import static com.sun.tools.javac.code.TypeTag.*;
 import static com.sun.tools.javac.main.Option.*;
+
 import static javax.tools.StandardLocation.CLASS_OUTPUT;
 
 /** This class provides operations to map an internal symbol table graph
@@ -107,6 +110,12 @@ public class ClassWriter extends ClassFile {
 
     /** Type utilities. */
     private Types types;
+
+    /**
+     * If true, class files will be written in module-specific subdirectories
+     * of the CLASS_OUTPUT location.
+     */
+    public boolean multiModuleMode;
 
     /** The initial sizes of the data and constant pool buffers.
      *  Sizes are increased when buffers get full.
@@ -956,6 +965,54 @@ public class ClassWriter extends ClassFile {
     }
 
 /**********************************************************************
+ * Writing module attributes
+ **********************************************************************/
+
+    /** Write the Module attribute if needed.
+     *  Returns the number of attributes written (0 or 1).
+     */
+    int writeModuleAttribute(ClassSymbol c) {
+        ModuleSymbol m = c.modle;
+
+        int alenIdx = writeAttr(names.Module);
+        List<RequiresDirective> requires = m.getRequires();
+        databuf.appendChar(requires.size());
+        for (RequiresDirective r: requires) {
+            databuf.appendChar(pool.put(r.module.name));
+            databuf.appendChar(RequiresFlag.value(r.flags));
+        }
+
+        List<ExportsDirective> exports = m.getExports();
+        databuf.appendChar(exports.size());
+        for (ExportsDirective e: exports) {
+            databuf.appendChar(pool.put(names.fromUtf(externalize(e.packge.flatName()))));
+            if (e.modules == null) {
+                databuf.appendChar(0);
+            } else {
+                databuf.appendChar(e.modules.size());
+                for (ModuleSymbol msym: e.modules)
+                    databuf.appendChar(pool.put(msym.name));
+            }
+        }
+
+        List<UsesDirective> uses = m.getUses();
+        databuf.appendChar(uses.size());
+        for (UsesDirective s: uses) {
+            databuf.appendChar(pool.put(s.service));
+        }
+
+        List<ProvidesDirective> services = m.getProvides();
+        databuf.appendChar(services.size());
+        for (ProvidesDirective s: services) {
+            databuf.appendChar(pool.put(s.service));
+            databuf.appendChar(pool.put(s.impl));
+        }
+
+        endAttr(alenIdx);
+        return 1;
+    }
+
+/**********************************************************************
  * Writing Objects
  **********************************************************************/
 
@@ -1583,9 +1640,17 @@ public class ClassWriter extends ClassFile {
     public JavaFileObject writeClass(ClassSymbol c)
         throws IOException, PoolOverflow, StringOverflow
     {
+        String name = (c.owner.kind == MDL ? c.name : c.flatname).toString();
+        Location outLocn;
+        if (multiModuleMode) {
+            ModuleSymbol msym = (c.modle != null) ? c.modle : c.packge().modle;
+            outLocn = fileManager.getModuleLocation(CLASS_OUTPUT, msym.name.toString());
+        } else {
+            outLocn = CLASS_OUTPUT;
+        }
         JavaFileObject outFile
-            = fileManager.getJavaFileForOutput(CLASS_OUTPUT,
-                                               c.flatname.toString(),
+            = fileManager.getJavaFileForOutput(outLocn,
+                                               name,
                                                JavaFileObject.Kind.CLASS,
                                                c.sourcefile);
         OutputStream out = outFile.openOutputStream();
@@ -1623,11 +1688,17 @@ public class ClassWriter extends ClassFile {
         List<Type> interfaces = types.interfaces(c.type);
         List<Type> typarams = c.type.getTypeArguments();
 
-        int flags = adjustFlags(c.flags() & ~DEFAULT);
-        if ((flags & PROTECTED) != 0) flags |= PUBLIC;
-        flags = flags & ClassFlags & ~STRICTFP;
-        if ((flags & INTERFACE) == 0) flags |= ACC_SUPER;
-        if (c.isInner() && c.name.isEmpty()) flags &= ~FINAL;
+        int flags;
+        if (c.owner.kind == MDL) {
+            flags = ACC_MODULE;
+        } else {
+            flags = adjustFlags(c.flags() & ~DEFAULT);
+            if ((flags & PROTECTED) != 0) flags |= PUBLIC;
+            flags = flags & ClassFlags & ~STRICTFP;
+            if ((flags & INTERFACE) == 0) flags |= ACC_SUPER;
+            if (c.isInner() && c.name.isEmpty()) flags &= ~FINAL;
+        }
+
         if (dumpClassModifiers) {
             PrintWriter pw = log.getWriter(Log.WriterKind.ERROR);
             pw.println();
@@ -1712,6 +1783,9 @@ public class ClassWriter extends ClassFile {
         acount += writeJavaAnnotations(c.getRawAttributes());
         acount += writeTypeAnnotations(c.getRawTypeAttributes(), false);
         acount += writeEnclosingMethodAttribute(c);
+        if (c.owner.kind == MDL) {
+            acount += writeModuleAttribute(c);
+        }
         acount += writeExtraClassAttributes(c);
 
         poolbuf.appendInt(JAVA_MAGIC);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,6 +34,7 @@ import java.util.Set;
 
 import javax.tools.JavaFileManager;
 import javax.tools.JavaFileObject;
+import javax.tools.StandardLocation;
 
 import com.sun.tools.doclint.DocLint;
 import com.sun.tools.javac.code.Lint.LintCategory;
@@ -429,6 +430,26 @@ public class Arguments {
             obsoleteOptionFound = true;
         }
 
+        final Target t = target;
+        checkOptionAllowed(t.compareTo(Target.JDK1_8) <= 0,
+                option -> error("err.option.not.allowed.with.target", option.getText(), t.name),
+                Option.BOOTCLASSPATH,
+                Option.XBOOTCLASSPATH_PREPEND, Option.XBOOTCLASSPATH, Option.XBOOTCLASSPATH_APPEND,
+                Option.EXTDIRS, Option.ENDORSEDDIRS);
+
+        checkOptionAllowed(t.compareTo(Target.JDK1_9) >= 0,
+                option -> error("err.option.not.allowed.with.target", option.getText(), t.name),
+                Option.MODULESOURCEPATH, Option.UPGRADEMODULEPATH,
+                Option.SYSTEMMODULEPATH, Option.MODULEPATH);
+
+        if (!options.isSet(Option.PROC, "only")) {
+            JavaFileManager fm = getFileManager();
+            if (fm.hasLocation(StandardLocation.MODULE_SOURCE_PATH)
+                    && !fm.hasLocation(StandardLocation.CLASS_OUTPUT)) {
+                log.error("no.output.dir");
+            }
+        }
+
         if (obsoleteOptionFound)
             log.warning(LintCategory.OPTIONS, "option.obsolete.suppression");
 
@@ -526,6 +547,19 @@ public class Arguments {
             return false;
         }
         return true;
+    }
+
+    private interface ErrorReporter {
+        void report(Option o);
+    }
+
+    void checkOptionAllowed(boolean allowed, ErrorReporter r, Option... opts) {
+        if (!allowed) {
+            for (Option o: opts) {
+                if (options.isSet(o))
+                    r.report(o);
+            }
+        }
     }
 
     void error(String key, Object... args) {

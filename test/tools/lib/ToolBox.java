@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1594,15 +1594,20 @@ public class ToolBox {
         }
 
         /*
-         * A jar: URL is of the form  jar:URL!/entry  where URL is a URL for the .jar file itself.
+         * A jar: URL is of the form  jar:URL!/<entry>  where URL is a URL for the .jar file itself.
          * In Symbol files (i.e. ct.sym) the underlying entry is prefixed META-INF/sym/<base>.
          */
         private final Pattern jarEntry = Pattern.compile(".*!/(?:META-INF/sym/[^/]+/)?(.*)");
 
         /*
-         * A jrt: URL is of the form  jrt:/module/package/file
+         * A jrt: URL is of the form  jrt:/modules/<module>/<package>/<file>
          */
-        private final Pattern jrtEntry = Pattern.compile("/([^/]+)/(.*)");
+        private final Pattern jrtEntry = Pattern.compile("/modules/([^/]+)/(.*)");
+
+        /*
+         * A file: URL is of the form  file:/path/to/modules/<module>/<package>/<file>
+         */
+        private final Pattern fileEntry = Pattern.compile(".*/modules/([^/]+)/(.*)");
 
         private String guessPath(FileObject fo) {
             URI u = fo.toUri();
@@ -1616,6 +1621,13 @@ public class ToolBox {
                 }
                 case "jrt": {
                     Matcher m = jrtEntry.matcher(u.getSchemeSpecificPart());
+                    if (m.matches()) {
+                        return m.group(2);
+                    }
+                    break;
+                }
+                case "file": {
+                    Matcher m = fileEntry.matcher(u.getSchemeSpecificPart());
                     if (m.matches()) {
                         return m.group(2);
                     }
@@ -1868,6 +1880,8 @@ public class ToolBox {
             return source;
         }
 
+        private static Pattern modulePattern =
+                Pattern.compile("module\\s+((?:\\w+\\.)*)");
         private static Pattern packagePattern =
                 Pattern.compile("package\\s+(((?:\\w+\\.)*)(?:\\w+))");
         private static Pattern classPattern =
@@ -1881,7 +1895,11 @@ public class ToolBox {
         static String getJavaFileNameFromSource(String source) {
             String packageName = null;
 
-            Matcher matcher = packagePattern.matcher(source);
+            Matcher matcher = modulePattern.matcher(source);
+            if (matcher.find())
+                return "module-info.java";
+
+            matcher = packagePattern.matcher(source);
             if (matcher.find())
                 packageName = matcher.group(1).replace(".", "/");
 

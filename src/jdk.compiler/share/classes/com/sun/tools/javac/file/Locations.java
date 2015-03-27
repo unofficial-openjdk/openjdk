@@ -28,11 +28,16 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.net.URI;
+import java.nio.file.DirectoryIteratorException;
+import java.nio.file.DirectoryStream;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystemNotFoundException;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.ProviderNotFoundException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -42,24 +47,30 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Objects;
+import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.ZipFile;
 
+import javax.lang.model.SourceVersion;
 import javax.tools.JavaFileManager;
 import javax.tools.JavaFileManager.Location;
 import javax.tools.StandardJavaFileManager;
 import javax.tools.StandardLocation;
 
+import com.sun.tools.classfile.ClassFile;
+import com.sun.tools.classfile.ConstantPoolException;
 import com.sun.tools.javac.code.Lint;
 import com.sun.tools.javac.main.Option;
 import com.sun.tools.javac.util.ListBuffer;
 import com.sun.tools.javac.util.Log;
+import com.sun.tools.javac.util.Pair;
 import com.sun.tools.javac.util.StringUtils;
 
 import static javax.tools.StandardLocation.CLASS_PATH;
@@ -108,8 +119,27 @@ public class Locations {
     // Locations can use Paths.get(URI.create("jrt:"))
     static final Path JRT_MARKER_FILE = Paths.get("JRT_MARKER_FILE");
 
+    Map<Path, FileSystem> fileSystems = new LinkedHashMap<>();
+
     public Locations() {
         initHandlers();
+    }
+
+    public void close() throws IOException {
+        ListBuffer<IOException> list = new ListBuffer<>();
+        fileSystems.forEach((p, fs) -> {
+            try {
+                fs.close();
+            } catch (IOException ex) {
+                list.add(ex);
+            }
+        });
+        if (list.nonEmpty()) {
+            IOException ex = new IOException();
+            for (IOException e: list)
+                ex.addSuppressed(e);
+            throw ex;
+        }
     }
 
     // could replace Lint by "boolean warn"
@@ -329,14 +359,73 @@ public class Locations {
     }
 
     /**
-     * Base class for handling support for the representation of Locations. Implementations are
-     * responsible for handling the interactions between the command line options for a location,
-     * and API access via setLocation.
+     * Base class for handling support for the representation of Locations.
+     *
+     * Locations are (by design) opaque handles that can easily be implemented
+     * by enums like StandardLocation. Within JavacFileManager, each Location
+     * has an associated LocationHandler, which provides much of the appropriate
+     * functionality for the corresponding Location.
      *
      * @see #initHandlers
      * @see #getHandler
      */
     protected abstract class LocationHandler {
+
+        /**
+         * @see JavaFileManager#handleOption
+         */
+        abstract boolean handleOption(Option option, String value);
+
+        /**
+         * @see StandardJavaFileManager#hasLocation
+         */
+        boolean isSet() {
+            return (getPaths() != null);
+        }
+
+        /**
+         * @see StandardJavaFileManager#getLocation
+         */
+        abstract Collection<Path> getPaths();
+
+        /**
+         * @see StandardJavaFileManager#setLocation
+         */
+        abstract void setPaths(Iterable<? extends Path> files) throws IOException;
+
+        /**
+         * @see JavaFileManager#getModuleLocation(Location, String)
+         */
+        Location getModuleLocation(String moduleName) {
+            return null;
+        }
+
+        /**
+         * @see JavaFileManager#getModuleLocation(Location, JavaFileObject, String)
+         */
+        Location getModuleLocation(Path dir) {
+            return null;
+        }
+
+        /**
+         * @see JavaFileManager#inferModuleName
+         */
+        String inferModuleName() {
+            return null;
+        }
+
+        /**
+         * @see JavaFileManager#listModuleLocations
+         */
+        Iterable<Set<Location>> listModuleLocations() throws IOException {
+            return null;
+        }
+    }
+
+    /**
+     * A LocationHandler for a given Location, and associated set of options.
+     */
+    private abstract class BasicLocationHandler extends LocationHandler {
 
         final Location location;
         final Set<Option> options;
@@ -349,37 +438,23 @@ public class Locations {
          * @param options the options affecting this location
          * @see #initHandlers
          */
-        protected LocationHandler(Location location, Option... options) {
+        protected BasicLocationHandler(Location location, Option... options) {
             this.location = location;
             this.options = options.length == 0
                     ? EnumSet.noneOf(Option.class)
                     : EnumSet.copyOf(Arrays.asList(options));
         }
-
-        /**
-         * @see JavaFileManager#handleOption
-         */
-        abstract boolean handleOption(Option option, String value);
-
-        /**
-         * @see StandardJavaFileManager#getLocation
-         */
-        abstract Collection<Path> getLocation();
-
-        /**
-         * @see StandardJavaFileManager#setLocation
-         */
-        abstract void setLocation(Iterable<? extends Path> files) throws IOException;
     }
 
     /**
      * General purpose implementation for output locations, such as -d/CLASS_OUTPUT and
-     * -s/SOURCE_OUTPUT. All options are treated as equivalent (i.e. aliases.) The value is a single
-     * file, possibly null.
+     * -s/SOURCE_OUTPUT. All options are treated as equivalent (i.e. aliases.)
+     * The value is a single file, possibly null.
      */
-    private class OutputLocationHandler extends LocationHandler {
+    private class OutputLocationHandler extends BasicLocationHandler {
 
         private Path outputDir;
+        private Map<String, Location> moduleLocations;
 
         OutputLocationHandler(Location location, Option... options) {
             super(location, options);
@@ -400,12 +475,12 @@ public class Locations {
         }
 
         @Override
-        Collection<Path> getLocation() {
+        Collection<Path> getPaths() {
             return (outputDir == null) ? null : Collections.singleton(outputDir);
         }
 
         @Override
-        void setLocation(Iterable<? extends Path> files) throws IOException {
+        void setPaths(Iterable<? extends Path> files) throws IOException {
             if (files == null) {
                 outputDir = null;
             } else {
@@ -424,15 +499,32 @@ public class Locations {
                 }
                 outputDir = dir;
             }
+            moduleLocations = null;
+        }
+
+        @Override
+        Location getModuleLocation(String name) {
+            if (moduleLocations == null)
+                moduleLocations = new HashMap<>();
+            Location l = moduleLocations.get(name);
+            if (l == null) {
+                l = new ModuleLocationHandler(location.getName() + "[" + name + "]",
+                        name,
+                        Collections.singleton(outputDir.resolve(name)),
+                        true);
+                moduleLocations.put(name, l);
+            }
+            return l;
         }
     }
 
     /**
-     * General purpose implementation for search path locations, such as -sourcepath/SOURCE_PATH and
-     * -processorPath/ANNOTATION_PROCESSOR_PATH. All options are treated as equivalent (i.e. aliases.)
+     * General purpose implementation for search path locations,
+     * such as -sourcepath/SOURCE_PATH and -processorPath/ANNOTATION_PROCESSOR_PATH.
+     * All options are treated as equivalent (i.e. aliases.)
      * The value is an ordered set of files and/or directories.
      */
-    private class SimpleLocationHandler extends LocationHandler {
+    private class SimpleLocationHandler extends BasicLocationHandler {
 
         protected Collection<Path> searchPath;
 
@@ -451,12 +543,12 @@ public class Locations {
         }
 
         @Override
-        Collection<Path> getLocation() {
+        Collection<Path> getPaths() {
             return searchPath;
         }
 
         @Override
-        void setLocation(Iterable<? extends Path> files) {
+        void setPaths(Iterable<? extends Path> files) {
             SearchPath p;
             if (files == null) {
                 p = computePath(null);
@@ -476,8 +568,8 @@ public class Locations {
     }
 
     /**
-     * Subtype of SimpleLocationHandler for -classpath/CLASS_PATH. If no value is given, a default
-     * is provided, based on system properties and other values.
+     * Subtype of SimpleLocationHandler for -classpath/CLASS_PATH.
+     * If no value is given, a default is provided, based on system properties and other values.
      */
     private class ClassPathLocationHandler extends SimpleLocationHandler {
 
@@ -487,7 +579,7 @@ public class Locations {
         }
 
         @Override
-        Collection<Path> getLocation() {
+        Collection<Path> getPaths() {
             lazy();
             return searchPath;
         }
@@ -524,19 +616,22 @@ public class Locations {
 
         private void lazy() {
             if (searchPath == null) {
-                setLocation(null);
+                setPaths(null);
             }
         }
     }
 
     /**
-     * Custom subtype of LocationHandler for PLATFORM_CLASS_PATH. Various options are supported for
-     * different components of the platform class path. Setting a value with setLocation overrides
-     * all existing option values. Setting any option overrides any value set with setLocation, and
-     * reverts to using default values for options that have not been set. Setting -bootclasspath or
-     * -Xbootclasspath overrides any existing value for -Xbootclasspath/p: and -Xbootclasspath/a:.
+     * Custom subtype of LocationHandler for PLATFORM_CLASS_PATH.
+     * Various options are supported for different components of the
+     * platform class path.
+     * Setting a value with setLocation overrides all existing option values.
+     * Setting any option overrides any value set with setLocation, and
+     * reverts to using default values for options that have not been set.
+     * Setting -bootclasspath or -Xbootclasspath overrides any existing
+     * value for -Xbootclasspath/p: and -Xbootclasspath/a:.
      */
-    private class BootClassPathLocationHandler extends LocationHandler {
+    private class BootClassPathLocationHandler extends BasicLocationHandler {
 
         private Collection<Path> searchPath;
         final Map<Option, String> optionValues = new EnumMap<>(Option.class);
@@ -592,13 +687,13 @@ public class Locations {
         }
 
         @Override
-        Collection<Path> getLocation() {
+        Collection<Path> getPaths() {
             lazy();
             return searchPath;
         }
 
         @Override
-        void setLocation(Iterable<? extends Path> files) {
+        void setPaths(Iterable<? extends Path> files) {
             if (files == null) {
                 searchPath = null;  // reset to "uninitialized"
             } else {
@@ -699,16 +794,18 @@ public class Locations {
         //ensure bootclasspath prepends/appends are reflected in the systemClasses
         private Collection<Path> addAdditionalBootEntries(Collection<Path> modules) throws IOException {
             String files = System.getProperty("sun.boot.class.path");
-
             if (files == null)
                 return modules;
 
             Set<Path> paths = new LinkedHashSet<>();
 
+            // The JVM no longer supports -Xbootclasspath/p:, so any interesting
+            // entries should be appended to the set of modules.
+
+            paths.addAll(modules);
+
             for (String s : files.split(Pattern.quote(File.pathSeparator))) {
-                if (s.endsWith(".jimage")) {
-                    paths.addAll(modules);
-                } else if (!s.isEmpty()) {
+                if (!s.isEmpty() && !s.endsWith(".jimage")) {
                     paths.add(Paths.get(s));
                 }
             }
@@ -728,6 +825,490 @@ public class Locations {
         }
     }
 
+    /**
+     * A LocationHander to represent modules found from a module-oriented
+     * location such as MODULE_SOURCE_PATH, UPGRADE_MODULE_PATH,
+     * SYSTEM_MODULE_PATH and MODULE_PATH.
+     */
+    private class ModuleLocationHandler extends LocationHandler implements Location {
+        protected final String name;
+        protected final String moduleName;
+        protected final Collection<Path> searchPath;
+        protected final boolean output;
+
+        ModuleLocationHandler(String name, String moduleName, Collection<Path> searchPath, boolean output) {
+            this.name = name;
+            this.moduleName = moduleName;
+            this.searchPath = searchPath;
+            this.output = output;
+        }
+
+        @Override // defined by Location
+        public String getName() {
+            return name;
+        }
+
+        @Override // defined by Location
+        public boolean isOutputLocation() {
+            return output;
+        }
+
+        @Override // defined by LocationHandler
+        boolean handleOption(Option option, String value) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override // defined by LocationHandler
+        Collection<Path> getPaths() {
+            return searchPath;
+        }
+
+        @Override // defined by LocationHandler
+        void setPaths(Iterable<? extends Path> files) throws IOException {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override // defined by LocationHandler
+        String inferModuleName() {
+            return moduleName;
+        }
+    }
+
+    /**
+     * A LocationHandler for simple module-oriented search paths,
+     * like UPGRADE_MODULE_PATH and MODULE_PATH.
+     */
+    private class ModulePathLocationHandler extends SimpleLocationHandler {
+        ModulePathLocationHandler(Location location, Option... options) {
+            super(location, options);
+        }
+
+        @Override
+        public boolean handleOption(Option option, String value) {
+            if (!options.contains(option)) {
+                return false;
+            }
+            setPaths(value == null ? null : getPathEntries(value));
+            return true;
+        }
+
+        @Override
+        Iterable<Set<Location>> listModuleLocations() {
+            if (searchPath == null)
+                return Collections.emptyList();
+
+            return new Iterable<Set<Location>>() {
+                @Override
+                public Iterator<Set<Location>> iterator() {
+                    return new ModulePathIterator();
+                }
+            };
+        }
+
+        @Override
+        void setPaths(Iterable<? extends Path> paths) {
+            if (paths != null) {
+                for (Path p: paths) {
+                    if (!Files.isDirectory(p))
+                        throw new IllegalArgumentException(p.toString());
+                }
+            }
+            super.setPaths(paths);
+        }
+
+        class ModulePathIterator implements Iterator<Set<Location>> {
+            Iterator<Path> pathIter = searchPath.iterator();
+            int pathIndex = 0;
+            Set<Location> next = null;
+
+            @Override
+            public boolean hasNext() {
+                if (next != null)
+                    return true;
+
+                while (next == null) {
+                    if (pathIter.hasNext()) {
+                        Path path = pathIter.next();
+                        if (Files.isDirectory(path)) {
+                            Set<Location> result = new LinkedHashSet<>();
+                            try (DirectoryStream<Path> stream = Files.newDirectoryStream(path)) {
+                                int index = 0;
+                                for (Path entry : stream) {
+                                    Pair<String,Path> module = inferModuleName(entry);
+                                    if (module == null) {
+                                        // could add diagnostic here about bad item in directory
+                                        continue;
+                                    }
+                                    String moduleName = module.fst;
+                                    Path modulePath = module.snd;
+                                    String name = location.getName()
+                                            + "[" + pathIndex + "." + (index++) + ":" + moduleName + "]";
+                                    ModuleLocationHandler l = new ModuleLocationHandler(name, moduleName,
+                                            Collections.singleton(modulePath), false);
+                                    result.add(l);
+                                }
+                            } catch (DirectoryIteratorException | IOException ignore) {
+                                // report diagnostic?
+                            }
+                            next = result;
+                            pathIndex++;
+                        } else {
+                            // could add diagnostic here about bad item on path
+                        }
+                    } else
+                        return false;
+                }
+                return true;
+            }
+
+            @Override
+            public Set<Location> next() {
+                hasNext();
+                if (next != null) {
+                    Set<Location> result = next;
+                    next = null;
+                    return result;
+                }
+                throw new NoSuchElementException();
+            }
+
+            private Pair<String,Path> inferModuleName(Path p) {
+                if (Files.isDirectory(p)) {
+                    if (Files.exists(p.resolve("module-info.class"))) {
+                        String name = p.getFileName().toString();
+                        if (SourceVersion.isName(name))
+                            return new Pair<>(name, p);
+                    }
+                    return null;
+                }
+
+                if (p.getFileName().toString().endsWith(".jar")) {
+                    try (FileSystem fs = FileSystems.newFileSystem(p, null)) {
+                        ClassFile cf = ClassFile.read(fs.getPath("module-info.class"));
+                        String className = cf.getName();
+                        String MODULE_INFO = "/module-info";
+                        if (className.endsWith(MODULE_INFO)) {
+                            String moduleName = className
+                                    .substring(0, className.length() - MODULE_INFO.length())
+                                    .replace('/', '.');
+                            return new Pair<>(moduleName, p);
+                        }
+                    } catch (IOException ignore) {
+                    } catch (ConstantPoolException ignore) {
+                    }
+                    return null;
+                }
+
+                if (p.getFileName().toString().endsWith(".jmod")) {
+                    try {
+                        FileSystem fs = fileSystems.get(p);
+                        if (fs == null) {
+                            URI uri = URI.create("jar:" + p.toUri());
+                            fs = FileSystems.newFileSystem(uri, Collections.emptyMap(), null);
+                            try {
+                                ClassFile cf = ClassFile.read(fs.getPath("classes/module-info.class"));
+                                String className = cf.getName();
+                                String MODULE_INFO = "/module-info";
+                                if (className.endsWith(MODULE_INFO)) {
+                                    String moduleName = className
+                                            .substring(0, className.length() - MODULE_INFO.length())
+                                            .replace('/', '.');
+                                    fileSystems.put(p, fs);
+                                    Path modulePath = fs.getPath("classes");
+                                    fs = null; // prevent fs being closed in the finally clause
+                                    return new Pair<>(moduleName, modulePath);
+                                }
+                            } finally {
+                                if (fs != null)
+                                    fs.close();
+                            }
+                        }
+                    } catch (IOException ignore) {
+                    } catch (ConstantPoolException ignore) {
+                    }
+                }
+
+                return null;
+            }
+        }
+    }
+
+    private class ModuleSourcePathLocationHandler extends BasicLocationHandler {
+
+        private final Map<String, Location> moduleLocations;
+        private final Map<Path, Location> pathLocations;
+
+
+        ModuleSourcePathLocationHandler() {
+            super(StandardLocation.MODULE_SOURCE_PATH,
+                    Option.MODULESOURCEPATH);
+            moduleLocations = new LinkedHashMap<>();
+            pathLocations = new LinkedHashMap<>();
+        }
+
+        @Override
+        boolean handleOption(Option option, String value) {
+            init(value);
+            return true;
+        }
+
+        void init(String value) {
+            Collection<String> segments = new ArrayList<>();
+            for (String s: value.split(File.pathSeparator)) {
+                expandBraces(s, segments);
+            }
+
+            Map<String, Collection<Path>> map = new LinkedHashMap<>();
+            final String MARKER = "*";
+            for (String seg: segments) {
+                int markStart = seg.indexOf(MARKER);
+                if (markStart == -1) {
+                    add(map, Paths.get(seg), null);
+                } else {
+                    if (markStart == 0 || !isSeparator(seg.charAt(markStart - 1)))
+                        throw new IllegalArgumentException("illegal use of " + MARKER);
+                    Path prefix = Paths.get(seg.substring(0, markStart - 1));
+                    Path suffix;
+                    int markEnd = markStart + MARKER.length();
+                    if (markEnd == seg.length()) {
+                        suffix = null;
+                    } else if (!isSeparator(seg.charAt(markEnd))
+                            || seg.indexOf(MARKER, markEnd) != -1) {
+                        throw new IllegalArgumentException("illegal use of " + MARKER);
+                    } else {
+                        suffix = Paths.get(seg.substring(markEnd + 1));
+                    }
+                    add(map, prefix, suffix);
+                }
+            }
+
+            moduleLocations.clear();
+            pathLocations.clear();
+            map.forEach((k, v) -> {
+                String name = location.getName() + "[" + k + "]";
+                ModuleLocationHandler h = new ModuleLocationHandler(name, k, v, false);
+                moduleLocations.put(k, h);
+                v.forEach(p -> pathLocations.put(p, h));
+            });
+        }
+
+        private boolean isSeparator(char ch) {
+            // allow both separators on Windows
+            return (ch == File.separatorChar) || (ch == '/');
+        }
+
+        void add(Map<String, Collection<Path>> map, Path prefix, Path suffix) {
+
+            try (DirectoryStream<Path> stream = Files.newDirectoryStream(prefix, path -> Files.isDirectory(path))) {
+                for (Path entry: stream) {
+                    Path path = (suffix == null) ? entry : entry.resolve(suffix);
+                    if (Files.isDirectory(path)) {
+                        String name = entry.getFileName().toString();
+                        Collection<Path> paths = map.get(name);
+                        if (paths == null)
+                            map.put(name, paths = new ArrayList<>());
+                        paths.add(path);
+                    }
+                }
+            } catch (IOException e) {
+                // TODO? What to do?
+            }
+        }
+
+        private void expandBraces(String value, Collection<String> results) {
+            int depth = 0;
+            int start = -1;
+            String prefix = null;
+            String suffix = null;
+            for (int i = 0; i < value.length(); i++) {
+                switch (value.charAt(i)) {
+                    case '{':
+                        depth++;
+                        if (depth == 1) {
+                            prefix = value.substring(0, i);
+                            suffix = value.substring(getMatchingBrace(value, i) + 1);
+                            start = i + 1;
+                        }
+                        break;
+
+                    case ',':
+                        if (depth == 1) {
+                            String elem = value.substring(start, i);
+                            expandBraces(prefix + elem + suffix, results);
+                            start = i + 1;
+                        }
+                        break;
+
+                    case '}':
+                        switch (depth) {
+                            case 0:
+                                throw new IllegalArgumentException("mismatched braces");
+
+                            case 1:
+                                String elem = value.substring(start, i);
+                                expandBraces(prefix + elem + suffix, results);
+                                return;
+
+                            default:
+                                depth--;
+                        }
+                        break;
+                }
+            }
+            if (depth > 0)
+                throw new IllegalArgumentException("mismatched braces");
+            results.add(value);
+        }
+
+        int getMatchingBrace(String value, int offset) {
+            int depth = 1;
+            for (int i = offset + 1; i < value.length(); i++) {
+                switch (value.charAt(i)) {
+                    case '{':
+                        depth++;
+                        break;
+
+                    case '}':
+                        if (--depth == 0)
+                            return i;
+                        break;
+                }
+            }
+            throw new IllegalArgumentException("mismatched braces");
+        }
+
+        @Override
+        boolean isSet() {
+            return !moduleLocations.isEmpty();
+        }
+
+        @Override
+        Collection<Path> getPaths() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        void setPaths(Iterable<? extends Path> files) throws IOException {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        Location getModuleLocation(String name) {
+            return moduleLocations.get(name);
+        }
+
+        @Override
+        Location getModuleLocation(Path dir) {
+            return pathLocations.get(dir);
+        }
+
+        @Override
+        Iterable<Set<Location>> listModuleLocations() {
+            Set<Location> locns = new LinkedHashSet<>();
+            moduleLocations.forEach((k, v) -> locns.add(v));
+            return Collections.singleton(locns);
+        }
+
+    }
+
+    private class SystemModulePathLocationHandler extends BasicLocationHandler {
+        private Path javaHome;
+        private Path modules;
+
+        SystemModulePathLocationHandler() {
+            super(StandardLocation.SYSTEM_MODULE_PATH, Option.SYSTEMMODULEPATH);
+            javaHome = Paths.get(System.getProperty("java.home"));
+        }
+
+        @Override
+        boolean handleOption(Option option, String value) {
+            if (!options.contains(option)) {
+                return false;
+            }
+
+            if (value == null) {
+                javaHome = Paths.get(System.getProperty("java.home"));
+            } else if (value.equals("none")) {
+                javaHome = null;
+            } else {
+                update(Paths.get(value));
+            }
+
+            modules = null;
+            return true;
+        }
+
+        @Override
+        Collection<Path> getPaths() {
+            return (javaHome == null) ? null : Collections.singleton(javaHome);
+        }
+
+        @Override
+        void setPaths(Iterable<? extends Path> files) throws IOException {
+            if (files == null) {
+                javaHome = null;
+            } else {
+                Iterator<? extends Path> pathIter = files.iterator();
+                if (!pathIter.hasNext()) {
+                    throw new IllegalArgumentException("empty path for directory"); // TODO: FIXME
+                }
+                Path dir = pathIter.next();
+                if (pathIter.hasNext()) {
+                    throw new IllegalArgumentException("path too long for directory"); // TODO: FIXME
+                }
+                if (!Files.exists(dir)) {
+                    throw new FileNotFoundException(dir + ": does not exist");
+                } else if (!Files.isDirectory(dir)) {
+                    throw new IOException(dir + ": not a directory");
+                }
+                update(dir);
+            }
+        }
+
+        private void update(Path p) {
+            // for now, the only valid value is currently active JDK.
+            Path jh = Paths.get(System.getProperty("java.home"));
+            try {
+                if (!Files.isSameFile(p, jh))
+                    throw new IllegalArgumentException(p.toString());
+                javaHome = jh;
+                modules = null;
+            } catch (IOException ex) {
+                throw new IllegalArgumentException(p.toString(), ex);
+            }
+        }
+
+        @Override
+        Iterable<Set<Location>> listModuleLocations() throws IOException {
+            if (javaHome == null)
+                return Collections.emptyList();
+
+            if (modules == null) {
+                try {
+                    FileSystem jrtfs = FileSystems.getFileSystem(URI.create("jrt:/"));
+                    modules = jrtfs.getPath("/modules");
+                } catch (FileSystemNotFoundException | ProviderNotFoundException e) {
+                    modules = javaHome.resolve("modules");
+                    if (!Files.exists(modules))
+                        throw new IOException("can't find system classes", e);
+                }
+            }
+
+            Set<Location> systemModules = new LinkedHashSet<>();
+            try (DirectoryStream<Path> stream = Files.newDirectoryStream(modules, Files::isDirectory)) {
+                for (Path entry : stream) {
+                    String moduleName = entry.getFileName().toString();
+                    String name = location.getName() + "[" + moduleName + "]";
+                    ModuleLocationHandler h = new ModuleLocationHandler(name, moduleName,
+                            Collections.singleton(entry), false);
+                    systemModules.add(h);
+                }
+            }
+
+            return Collections.singleton(systemModules);
+        }
+    }
+
     Map<Location, LocationHandler> handlersForLocation;
     Map<Option, LocationHandler> handlersForOption;
 
@@ -735,17 +1316,21 @@ public class Locations {
         handlersForLocation = new HashMap<>();
         handlersForOption = new EnumMap<>(Option.class);
 
-        LocationHandler[] handlers = {
+        BasicLocationHandler[] handlers = {
             new BootClassPathLocationHandler(),
             new ClassPathLocationHandler(),
             new SimpleLocationHandler(StandardLocation.SOURCE_PATH, Option.SOURCEPATH),
             new SimpleLocationHandler(StandardLocation.ANNOTATION_PROCESSOR_PATH, Option.PROCESSORPATH),
-            new OutputLocationHandler((StandardLocation.CLASS_OUTPUT), Option.D),
-            new OutputLocationHandler((StandardLocation.SOURCE_OUTPUT), Option.S),
-            new OutputLocationHandler((StandardLocation.NATIVE_HEADER_OUTPUT), Option.H)
+            new OutputLocationHandler(StandardLocation.CLASS_OUTPUT, Option.D),
+            new OutputLocationHandler(StandardLocation.SOURCE_OUTPUT, Option.S),
+            new OutputLocationHandler(StandardLocation.NATIVE_HEADER_OUTPUT, Option.H),
+            new ModuleSourcePathLocationHandler(),
+            new ModulePathLocationHandler(StandardLocation.UPGRADE_MODULE_PATH, Option.UPGRADEMODULEPATH),
+            new ModulePathLocationHandler(StandardLocation.MODULE_PATH, Option.MODULEPATH, Option.MP),
+            new SystemModulePathLocationHandler(),
         };
 
-        for (LocationHandler h : handlers) {
+        for (BasicLocationHandler h : handlers) {
             handlersForLocation.put(h.location, h);
             for (Option o : h.options) {
                 handlersForOption.put(o, h);
@@ -758,9 +1343,14 @@ public class Locations {
         return (h == null ? false : h.handleOption(option, value));
     }
 
+    boolean hasLocation(Location location) {
+        LocationHandler h = getHandler(location);
+        return (h == null ? null : h.isSet());
+    }
+
     Collection<Path> getLocation(Location location) {
         LocationHandler h = getHandler(location);
-        return (h == null ? null : h.getLocation());
+        return (h == null ? null : h.getPaths());
     }
 
     Path getOutputLocation(Location location) {
@@ -781,12 +1371,34 @@ public class Locations {
             }
             handlersForLocation.put(location, h);
         }
-        h.setLocation(files);
+        h.setPaths(files);
+    }
+
+    Location getModuleLocation(Location location, String name) {
+        LocationHandler h = getHandler(location);
+        return (h == null ? null : h.getModuleLocation(name));
+    }
+
+    Location getModuleLocation(Location location, Path dir) {
+        LocationHandler h = getHandler(location);
+        return (h == null ? null : h.getModuleLocation(dir));
+    }
+
+    String inferModuleName(Location location) {
+        LocationHandler h = getHandler(location);
+        return (h == null ? null : h.inferModuleName());
+    }
+
+    Iterable<Set<Location>> listModuleLocations(Location location) throws IOException {
+        LocationHandler h = getHandler(location);
+        return (h == null ? null : h.listModuleLocations());
     }
 
     protected LocationHandler getHandler(Location location) {
         Objects.requireNonNull(location);
-        return handlersForLocation.get(location);
+        return (location instanceof LocationHandler)
+                ? (LocationHandler) location
+                : handlersForLocation.get(location);
     }
 
     /**

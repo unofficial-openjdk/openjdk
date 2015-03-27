@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,18 +36,18 @@ import javax.tools.JavaFileManager;
 import javax.tools.JavaFileManager.Location;
 import javax.tools.JavaFileObject;
 import javax.tools.StandardJavaFileManager;
+import javax.tools.StandardLocation;
 
 import com.sun.tools.javac.code.Scope.WriteableScope;
-import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.code.Symbol.ClassSymbol;
 import com.sun.tools.javac.code.Symbol.Completer;
 import com.sun.tools.javac.code.Symbol.CompletionFailure;
+import com.sun.tools.javac.code.Symbol.ModuleSymbol;
 import com.sun.tools.javac.code.Symbol.PackageSymbol;
 import com.sun.tools.javac.code.Symbol.TypeSymbol;
 import com.sun.tools.javac.comp.Annotate;
 import com.sun.tools.javac.file.JRTIndex;
 import com.sun.tools.javac.file.JavacFileManager;
-import com.sun.tools.javac.file.RelativePath.RelativeDirectory;
 import com.sun.tools.javac.jvm.ClassReader;
 import com.sun.tools.javac.jvm.Profile;
 import com.sun.tools.javac.util.*;
@@ -58,6 +58,7 @@ import static com.sun.tools.javac.code.Flags.*;
 import static com.sun.tools.javac.code.Kinds.Kind.*;
 
 import static com.sun.tools.javac.main.Option.*;
+
 import com.sun.tools.javac.util.Dependencies.CompletionCause;
 
 /**
@@ -172,7 +173,7 @@ public class ClassFinder {
         return instance;
     }
 
-    /** Construct a new class reader. */
+    /** Construct a new class finder. */
     protected ClassFinder(Context context) {
         context.put(classFinderKey, this);
         reader = ClassReader.instance(context);
@@ -326,7 +327,7 @@ public class ClassFinder {
     /** Fill in definition of class `c' from corresponding class or
      *  source file.
      */
-    private void fillIn(ClassSymbol c) {
+    void fillIn(ClassSymbol c) {
         if (completionFailureName == c.fullname) {
             throw new CompletionFailure(c, "user-selected completion failure by class name");
         }
@@ -340,7 +341,7 @@ public class ClassFinder {
                 }
                 currentClassFile = classfile;
                 if (verbose) {
-                    log.printVerbose("loading", currentClassFile.toString());
+                    log.printVerbose("loading", currentClassFile.getName());
                 }
                 if (classfile.getKind() == JavaFileObject.Kind.CLASS) {
                     reader.readClassFile(c);
@@ -476,6 +477,7 @@ public class ClassFinder {
     /**
      * specifies types of files to be read when filling in a package symbol
      */
+    // Note: overridden by JavadocClassFinder
     protected EnumSet<JavaFileObject.Kind> getPackageFileKinds() {
         return EnumSet.of(JavaFileObject.Kind.CLASS, JavaFileObject.Kind.SOURCE);
     }
@@ -499,16 +501,79 @@ public class ClassFinder {
         if (p.members_field == null)
             p.members_field = WriteableScope.create(p);
 
-        preferCurrent = false;
-        if (userPathsFirst) {
-            scanUserPaths(p);
-            preferCurrent = true;
-            scanPlatformPath(p);
+        if (p.modle != null) { // TODO: This needs to become an assert
+            // new code
+            if (p.modle == syms.noModule) {
+                preferCurrent = false;
+                if (userPathsFirst) {
+                    scanUserPaths(p);
+                    preferCurrent = true;
+                    scanPlatformPath(p);
+                } else {
+                    scanPlatformPath(p);
+                    scanUserPaths(p);
+                }
+            } else if (p.modle.classLocation == StandardLocation.CLASS_PATH) {
+                // assert p.modle.sourceLocation == StandardLocation.SOURCE_PATH);
+                scanUserPaths(p);
+            } else {
+                scanModulePaths(p);
+            }
+            return;
+        }
+
+        // old code, to go away
+        if (p.modle != null && p.modle.classLocation != null) {
+            scanModulePaths(p);
         } else {
-            scanPlatformPath(p);
-            scanUserPaths(p);
+            preferCurrent = false;
+            if (userPathsFirst) {
+                scanUserPaths(p);
+                preferCurrent = true;
+                scanPlatformPath(p);
+            } else {
+                scanPlatformPath(p);
+                scanUserPaths(p);
+            }
         }
         verbosePath = false;
+    }
+
+    // TODO: for now, this is a much simplified form of scanUserPaths
+    // and (deliberately) does not default sourcepath to classpath.
+    // But, we need to think about retaining existing behavior for
+    // -classpath and -sourcepath for single module mode.
+    // One plausible solution is to detect if the module's sourceLocation
+    // is the same as the module's classLocation.
+    private void scanModulePaths(PackageSymbol p) throws IOException {
+        Set<JavaFileObject.Kind> kinds = getPackageFileKinds();
+
+        Set<JavaFileObject.Kind> classKinds = EnumSet.copyOf(kinds);
+        classKinds.remove(JavaFileObject.Kind.SOURCE);
+        boolean wantClassFiles = !classKinds.isEmpty();
+
+        Set<JavaFileObject.Kind> sourceKinds = EnumSet.copyOf(kinds);
+        sourceKinds.remove(JavaFileObject.Kind.CLASS);
+        boolean wantSourceFiles = !sourceKinds.isEmpty();
+
+        Location classLocn = p.modle.classLocation;
+        Location sourceLocn = p.modle.sourceLocation;
+
+        String packageName = p.fullname.toString();
+        if (wantClassFiles && (classLocn != null)) {
+            fillIn(p, classLocn,
+                   fileManager.list(classLocn,
+                                    packageName,
+                                    classKinds,
+                                    false));
+        }
+        if (wantSourceFiles && (sourceLocn != null)) {
+            fillIn(p, sourceLocn,
+                   fileManager.list(sourceLocn,
+                                    packageName,
+                                    sourceKinds,
+                                    false));
+        }
     }
 
     /**

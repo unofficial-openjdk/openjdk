@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,12 +27,16 @@ package com.sun.tools.javac.code;
 
 import java.lang.annotation.Annotation;
 import java.lang.annotation.Inherited;
+import java.util.EnumMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
 import javax.lang.model.element.*;
+import javax.tools.JavaFileManager;
 import javax.tools.JavaFileObject;
 
+import com.sun.tools.javac.code.Kinds.Kind;
 import com.sun.tools.javac.code.Scope.WriteableScope;
 import com.sun.tools.javac.code.Type.*;
 import com.sun.tools.javac.comp.Attr;
@@ -43,6 +47,8 @@ import com.sun.tools.javac.tree.JCTree.JCVariableDecl;
 import com.sun.tools.javac.util.*;
 import com.sun.tools.javac.util.DefinedBy.Api;
 import com.sun.tools.javac.util.Name;
+
+import static com.sun.tools.javac.code.Directive.*;
 import static com.sun.tools.javac.code.Flags.*;
 import static com.sun.tools.javac.code.Kinds.*;
 import static com.sun.tools.javac.code.Kinds.Kind.*;
@@ -824,6 +830,78 @@ public abstract class Symbol extends AnnoConstruct implements Element {
             return v.visitTypeParameter(this, p);
         }
     }
+    /** A class for module symbols.
+     */
+    public static class ModuleSymbol extends TypeSymbol // JIGSAW need TypeSymbol?
+            /*implements ModuleElement*/ {
+
+        public Name fullname; // TODO: do we need this?
+        public Name version;
+        public JavaFileManager.Location sourceLocation;
+        public JavaFileManager.Location classLocation;
+
+        /** All directives, in natural order. */
+        public List<Directive> directives;
+        public List<RequiresDirective> requires;
+        public List<ExportsDirective> exports;
+        public List<ProvidesDirective> provides;
+        public List<UsesDirective> uses;
+
+        public ClassSymbol module_info;
+
+        public Set<PackageSymbol> visiblePackages;
+
+        public ModuleSymbol() {
+            super(MDL, 0, null, null, null);
+            this.type = new ModuleType(this);
+        }
+
+        public ModuleSymbol(Name name, Symbol owner) {
+            super(MDL, 0, name, null, owner);
+            this.type = new ModuleType(this);
+            this.fullname = formFullName(name, owner);
+        }
+
+        // TODO: use exports field
+        public List<ExportsDirective> getExports() {
+            return Directive.filter(directives, Directive.Kind.EXPORTS,
+                    ExportsDirective.class);
+        }
+
+        // TODO: use provides field
+        public List<ProvidesDirective> getProvides() {
+            return Directive.filter(directives, Directive.Kind.PROVIDES,
+                    ProvidesDirective.class);
+        }
+
+        // TODO: use requires field
+        public List<RequiresDirective> getRequires() {
+            return Directive.filter(directives, Directive.Kind.REQUIRES,
+                    RequiresDirective.class);
+        }
+
+        // TODO: use uses field
+        public List<UsesDirective> getUses() {
+            return Directive.filter(directives, Directive.Kind.USES,
+                    UsesDirective.class);
+        }
+
+        @Override
+        public String toString() {
+            // TODO: the following strings should be localized
+            // Do this with custom anon subtypes in Symtab
+            String n = (fullname == null) ? "<unknown>"
+                    : (fullname.isEmpty()) ? "<unnamed>"
+                    : String.valueOf(fullname);
+            return n;
+        }
+
+        @Override
+        public <R, P> R accept(ElementVisitor<R, P> v, P p) {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+    }
 
     /** A class for package symbols
      */
@@ -833,6 +911,7 @@ public abstract class Symbol extends AnnoConstruct implements Element {
         public WriteableScope members_field;
         public Name fullname;
         public ClassSymbol package_info; // see bug 6443073
+        public ModuleSymbol modle;
 
         public PackageSymbol(Name name, Type type, Symbol owner) {
             super(PCK, 0, name, type, owner);
@@ -923,6 +1002,12 @@ public abstract class Symbol extends AnnoConstruct implements Element {
     /** A class for class symbols
      */
     public static class ClassSymbol extends TypeSymbol implements TypeElement {
+        /**
+         * The module for the class.
+         */
+        // TODO: is this required? the value can be obtained from the enclosing package
+        // Only read access is currently for module-info.class in ClassWriter
+        public ModuleSymbol modle;
 
         /** a scope for all class members; variables, methods and inner classes
          *  type parameters are not part of this scope
