@@ -30,7 +30,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import javax.lang.model.element.ElementVisitor;
-import javax.tools.JavaFileManager.Location;
 import javax.tools.JavaFileObject;
 
 import com.sun.tools.javac.code.Scope.WriteableScope;
@@ -107,7 +106,7 @@ public class Symtab {
 
     /** A symbol for the root module.
      */
-    public final ModuleSymbol rootModule;
+//    public final ModuleSymbol rootModule;
 
     /** A symbol for the unnamed module.
      */
@@ -353,15 +352,15 @@ public class Symtab {
         final JavacMessages messages = JavacMessages.instance(context);
 
         // create the basic builtin symbols
-        rootModule = new ModuleSymbol(names.empty, null);
-        unnamedModule = new ModuleSymbol(names.empty, rootModule) {
+//        rootModule = new ModuleSymbol(names.empty, null);
+        unnamedModule = new ModuleSymbol(names.empty, null) {
                 @Override
                 public String toString() {
                     return messages.getLocalizedString("compiler.misc.unnamed.module");
                 }
             };
-        errModule = new ModuleSymbol(names.empty, rootModule) { };
-        noModule = new ModuleSymbol(names.empty, rootModule) { };
+        errModule = new ModuleSymbol(names.empty, null) { };
+        noModule = new ModuleSymbol(names.empty, null) { };
         rootPackage = new PackageSymbol(names.empty, null);
         packages.put(names.empty, rootPackage);
         unnamedPackage = new PackageSymbol(names.empty, rootPackage) {
@@ -644,16 +643,21 @@ public class Symtab {
     public ModuleSymbol enterModule(Name name) {
         ModuleSymbol msym = modules.get(name);
         if (msym == null) {
-            msym = new ModuleSymbol(name, rootModule);
-            ClassSymbol info = new ClassSymbol(Flags.MODULE, names.module_info, msym);
-            info.modle = msym;
-            info.fullname = ClassSymbol.formFullName(info.name, msym);
-            info.flatname = ClassSymbol.formFlatName(info.name, msym);
-            info.members_field = WriteableScope.create(info);
-            msym.module_info = info;
+            msym = ModuleSymbol.create(name, names.module_info);
             msym.completer = moduleCompleter;
             modules.put(name, msym);
         }
         return msym;
     }
+
+    public void enterModule(ModuleSymbol msym, Name name) {
+        Assert.checkNull(modules.get(name));
+        Assert.checkNull(msym.name);
+        msym.name = name;
+        ClassSymbol info = msym.module_info;
+        info.fullname = msym.name.append('.', names.module_info);
+        info.flatname = info.fullname;
+        modules.put(name, msym);
+    }
+
 }

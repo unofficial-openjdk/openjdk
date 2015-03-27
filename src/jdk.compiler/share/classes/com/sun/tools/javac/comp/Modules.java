@@ -197,8 +197,7 @@ public class Modules extends JCTree.Visitor {
             if (c != null) {
                sym = (ModuleSymbol) c.owner;
                if (sym.name == null) {
-                   sym.fullname = sym.name = name;
-                   c.fullname = c.flatname = name.append('.', names.module_info);
+                   syms.enterModule(sym, name);
                } else {
                    // TODO: validate name
                }
@@ -451,7 +450,7 @@ public class Modules extends JCTree.Visitor {
         public void visitUses(JCUses tree) { }
 
         private void ensureJavaBase() {
-            if (sym.fullname == names.java_base)
+            if (sym.name == names.java_base)
                 return;
 
             for (RequiresDirective d: sym.requires) {

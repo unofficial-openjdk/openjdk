@@ -832,10 +832,9 @@ public abstract class Symbol extends AnnoConstruct implements Element {
     }
     /** A class for module symbols.
      */
-    public static class ModuleSymbol extends TypeSymbol // JIGSAW need TypeSymbol?
+    public static class ModuleSymbol extends TypeSymbol
             /*implements ModuleElement*/ {
 
-        public Name fullname; // TODO: do we need this?
         public Name version;
         public JavaFileManager.Location sourceLocation;
         public JavaFileManager.Location classLocation;
@@ -851,6 +850,21 @@ public abstract class Symbol extends AnnoConstruct implements Element {
 
         public Set<PackageSymbol> visiblePackages;
 
+        /**
+         * Create a ModuleSymbol with an associated module-info ClassSymbol.
+         * The name of the module may be null, if it is not known yet.
+         */
+        public static ModuleSymbol create(Name name, Name module_info) {
+            ModuleSymbol msym = new ModuleSymbol(name, null);
+            ClassSymbol info = new ClassSymbol(Flags.MODULE, module_info, msym);
+            info.modle = msym;
+            info.fullname = formFullName(module_info, msym);
+            info.flatname = info.fullname;
+            info.members_field = WriteableScope.create(info);
+            msym.module_info = info;
+            return msym;
+        }
+
         public ModuleSymbol() {
             super(MDL, 0, null, null, null);
             this.type = new ModuleType(this);
@@ -859,40 +873,15 @@ public abstract class Symbol extends AnnoConstruct implements Element {
         public ModuleSymbol(Name name, Symbol owner) {
             super(MDL, 0, name, null, owner);
             this.type = new ModuleType(this);
-            this.fullname = formFullName(name, owner);
-        }
-
-        // TODO: use exports field
-        public List<ExportsDirective> getExports() {
-            return Directive.filter(directives, Directive.Kind.EXPORTS,
-                    ExportsDirective.class);
-        }
-
-        // TODO: use provides field
-        public List<ProvidesDirective> getProvides() {
-            return Directive.filter(directives, Directive.Kind.PROVIDES,
-                    ProvidesDirective.class);
-        }
-
-        // TODO: use requires field
-        public List<RequiresDirective> getRequires() {
-            return Directive.filter(directives, Directive.Kind.REQUIRES,
-                    RequiresDirective.class);
-        }
-
-        // TODO: use uses field
-        public List<UsesDirective> getUses() {
-            return Directive.filter(directives, Directive.Kind.USES,
-                    UsesDirective.class);
         }
 
         @Override
         public String toString() {
             // TODO: the following strings should be localized
             // Do this with custom anon subtypes in Symtab
-            String n = (fullname == null) ? "<unknown>"
-                    : (fullname.isEmpty()) ? "<unnamed>"
-                    : String.valueOf(fullname);
+            String n = (name == null) ? "<unknown>"
+                    : (name.isEmpty()) ? "<unnamed>"
+                    : String.valueOf(name);
             return n;
         }
 

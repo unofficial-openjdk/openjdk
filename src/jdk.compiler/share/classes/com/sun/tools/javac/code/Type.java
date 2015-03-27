@@ -1406,7 +1406,7 @@ public abstract class Type extends AnnoConstruct implements TypeMirror {
 
     public static class PackageType extends Type implements NoType {
 
-        PackageType(TypeSymbol tsym) {
+        PackageType(PackageSymbol tsym) {
             // Package types cannot be annotated
             super(tsym, TypeMetadata.empty);
         }
@@ -1444,7 +1444,7 @@ public abstract class Type extends AnnoConstruct implements TypeMirror {
 
     public static class ModuleType extends Type implements NoType {
 
-        ModuleType(TypeSymbol tsym) {
+        ModuleType(ModuleSymbol tsym) {
             // Module types cannot be annotated
             super(tsym, TypeMetadata.empty);
         }

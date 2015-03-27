@@ -2291,9 +2291,12 @@ public class ClassReader {
                     int start = utf8Index + 3;
                     Name modInfoName = names.fromUtf(internalize(buf, start, len));
                     if (c.owner.name == null) {
-                        Name moduleName = Convert.packagePart(modInfoName);
-                        ((ModuleSymbol) c.owner).fullname = c.owner.name = moduleName;
-                        c.fullname = c.flatname = modInfoName;
+//                        Name moduleName = Convert.packagePart(modInfoName);
+//                        c.owner.name = moduleName;
+//                        c.fullname = c.flatname = modInfoName;
+                        syms.enterModule((ModuleSymbol) c.owner, Convert.packagePart(modInfoName));
+                    } else {
+                        // TODO: validate name
                     }
                 }
             }

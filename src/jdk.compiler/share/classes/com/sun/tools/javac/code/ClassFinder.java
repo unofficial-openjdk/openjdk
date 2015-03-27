@@ -42,7 +42,6 @@ import com.sun.tools.javac.code.Scope.WriteableScope;
 import com.sun.tools.javac.code.Symbol.ClassSymbol;
 import com.sun.tools.javac.code.Symbol.Completer;
 import com.sun.tools.javac.code.Symbol.CompletionFailure;
-import com.sun.tools.javac.code.Symbol.ModuleSymbol;
 import com.sun.tools.javac.code.Symbol.PackageSymbol;
 import com.sun.tools.javac.code.Symbol.TypeSymbol;
 import com.sun.tools.javac.comp.Annotate;

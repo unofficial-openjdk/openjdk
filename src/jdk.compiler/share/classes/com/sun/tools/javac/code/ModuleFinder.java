@@ -201,24 +201,26 @@ public class ModuleFinder {
                 msym = syms.unnamedModule;
             } else {
                 // Note: the following may trigger a re-entrant call to Modules.enter
-                msym = new ModuleSymbol();
-                ClassSymbol info = new ClassSymbol(Flags.MODULE, names.module_info, msym);
-                info.modle = msym;
-                info.classfile = fo;
-                info.members_field = WriteableScope.create(info);
-                msym.module_info = info;
+//                msym = new ModuleSymbol();
+//                ClassSymbol info = new ClassSymbol(Flags.MODULE, names.module_info, msym);
+//                info.modle = msym;
+//                info.classfile = fo;
+//                info.members_field = WriteableScope.create(info);
+//                msym.module_info = info;
+                msym = ModuleSymbol.create(null, names.module_info);
+                msym.module_info.classfile = fo;
                 // TODO: defer with completer?
-                classFinder.fillIn(info);
-                // TODO: should we do the following here, or as soon as we find the name in
-                // the source or class file?
-                // Consider the case when the class/source path module shadows one on the
-                // module source path
-                if (syms.modules.get(msym.name) != null) {
-                    // error: module already defined
-                    System.err.println("ERROR: module already defined: " + msym);
-                } else {
-                    syms.modules.put(msym.name, msym);
-                }
+                classFinder.fillIn(msym.module_info);
+//                // TODO: should we do the following here, or as soon as we find the name in
+//                // the source or class file?
+//                // Consider the case when the class/source path module shadows one on the
+//                // module source path
+//                if (syms.modules.get(msym.name) != null) {
+//                    // error: module already defined
+//                    System.err.println("ERROR: module already defined: " + msym);
+//                } else {
+//                    syms.modules.put(msym.name, msym);
+//                }
             }
 
             msym.sourceLocation = StandardLocation.SOURCE_PATH;
