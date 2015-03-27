@@ -2,7 +2,7 @@
 
 <!--
 
-   Copyright (c) 2014 Oracle and/or its affiliates. All rights reserved.
+   Copyright (c) 2015 Oracle and/or its affiliates. All rights reserved.
    DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 
    This code is free software; you can redistribute it and/or modify it
@@ -222,7 +222,12 @@
       <to>jdk.jlink</to> 
     </export>
     <export>
+      <name>jdk.internal.jimage.decompressor</name>
+      <to>jdk.jlink</to>
+    </export>
+    <export>
       <name>jdk.internal.org.objectweb.asm</name>
+      <to>jdk.jlink</to>
       <to>jdk.jfr</to>
       <to>jdk.scripting.nashorn</to>
     </export>
