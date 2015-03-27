@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,26 +23,30 @@
  * questions.
  */
 
-package sun.reflect.misc;
+package sun.security.util;
 
-import java.lang.reflect.Field;
+import java.io.IOException;
+import java.util.Base64;
 
-/*
- * Create a trampoline class.
+/**
+ * The Length interface defines the length of an object
  */
-public final class FieldUtil {
+public class Pem {
 
-    private FieldUtil() {
-    }
-
-    public static Field getField(Class<?> cls, String name)
-        throws NoSuchFieldException {
-        ReflectUtil.checkPackageAccess(cls);
-        return cls.getField(name);
-    }
-
-    public static Field[] getFields(Class<?> cls) {
-        ReflectUtil.checkPackageAccess(cls);
-        return cls.getFields();
+    /**
+     * Decodes a PEM-encoded block.
+     *
+     * @param input the input string, according to RFC 1421, can only contain
+     *              characters in the base-64 alphabet and whitespaces.
+     * @return the decoded bytes
+     * @throws java.io.IOException if input is invalid
+     */
+    public static byte[] decode(String input) throws IOException {
+        byte[] src = input.replaceAll("\\s+", "").getBytes();
+        try {
+            return Base64.getDecoder().decode(src);
+        } catch (IllegalArgumentException e) {
+            throw new IOException(e);
+        }
     }
 }
