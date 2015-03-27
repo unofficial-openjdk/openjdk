@@ -975,14 +975,14 @@ public class ClassWriter extends ClassFile {
         ModuleSymbol m = c.modle;
 
         int alenIdx = writeAttr(names.Module);
-        List<RequiresDirective> requires = m.getRequires();
+        List<RequiresDirective> requires = m.requires;
         databuf.appendChar(requires.size());
         for (RequiresDirective r: requires) {
             databuf.appendChar(pool.put(r.module.name));
             databuf.appendChar(RequiresFlag.value(r.flags));
         }
 
-        List<ExportsDirective> exports = m.getExports();
+        List<ExportsDirective> exports = m.exports;
         databuf.appendChar(exports.size());
         for (ExportsDirective e: exports) {
             databuf.appendChar(pool.put(names.fromUtf(externalize(e.packge.flatName()))));
@@ -995,13 +995,13 @@ public class ClassWriter extends ClassFile {
             }
         }
 
-        List<UsesDirective> uses = m.getUses();
+        List<UsesDirective> uses = m.uses;
         databuf.appendChar(uses.size());
         for (UsesDirective s: uses) {
             databuf.appendChar(pool.put(s.service));
         }
 
-        List<ProvidesDirective> services = m.getProvides();
+        List<ProvidesDirective> services = m.provides;
         databuf.appendChar(services.size());
         for (ProvidesDirective s: services) {
             databuf.appendChar(pool.put(s.service));

@@ -4200,8 +4200,12 @@ public class Attr extends JCTree.Visitor {
     public void visitModuleDef(JCModuleDecl tree) {
         ModuleSymbol msym = env.toplevel.modle;
         msym.directives = List.nil();
+        msym.provides = List.nil();
+        msym.uses = List.nil();
         attribStats(tree.directives, env);
         msym.directives = msym.directives.reverse();
+        msym.provides = msym.provides.reverse();
+        msym.uses = msym.uses.reverse();
 
         if (msym.requires.nonEmpty() && msym.requires.head.flags.contains(RequiresFlag.MANDATED))
             msym.directives = msym.directives.prepend(msym.requires.head);
@@ -4220,6 +4224,7 @@ public class Attr extends JCTree.Visitor {
             ClassSymbol service = (ClassSymbol) st.tsym;
             ClassSymbol impl = (ClassSymbol) it.tsym;
             Directive.ProvidesDirective d = new Directive.ProvidesDirective(service, impl);
+            msym.provides = msym.provides.prepend(d);
             msym.directives = msym.directives.prepend(d);
         }
     }
@@ -4235,6 +4240,7 @@ public class Attr extends JCTree.Visitor {
         if (st.hasTag(CLASS)) {
             ClassSymbol service = (ClassSymbol) st.tsym;
             Directive.UsesDirective d = new Directive.UsesDirective(service);
+            msym.uses = msym.uses.prepend(d);
             msym.directives = msym.directives.prepend(d);
         }
     }

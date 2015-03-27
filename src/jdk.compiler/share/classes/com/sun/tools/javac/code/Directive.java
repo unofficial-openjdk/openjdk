@@ -76,16 +76,6 @@ public abstract class Directive {
 
     abstract <R, P> R accept(Visitor<R, P> visitor, P data);
 
-    // TODO: should not be required
-    static <T extends Directive> List<T> filter(List<Directive> directives, Kind kind, Class<T> clazz) {
-        ListBuffer<T> list = new ListBuffer<>();
-        for (Directive d: directives) {
-            if (d.getKind() == kind)
-                list.add(clazz.cast(d));
-        }
-        return list.toList();
-    }
-
     /**
      * 'exports' Package ';'
      */

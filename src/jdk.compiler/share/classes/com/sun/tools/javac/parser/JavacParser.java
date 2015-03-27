@@ -3184,7 +3184,7 @@ public class JavacParser implements Parser {
                     accept(SEMI);
                     defs.append(toP(F.at(pos).Provides(serviceName, implName)));
                 } else {
-                    log.error("with.expected");
+                    error(token.pos, "expected", "'" + names.with + "'");
                     skip(false, false, false, false);
                 }
             } else if (token.name() == names.uses) {
