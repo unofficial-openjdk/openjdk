@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 2005, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,31 +23,30 @@
  * questions.
  */
 
-package java.io;
+package sun.security.util;
+
+import java.io.IOException;
+import java.util.Base64;
 
 /**
- * Superclass of all exceptions specific to Object Stream classes.
- *
- * @author  unascribed
- * @since   1.1
+ * The Length interface defines the length of an object
  */
-public abstract class ObjectStreamException extends IOException {
-
-    private static final long serialVersionUID = 7260898174833392607L;
+public class Pem {
 
     /**
-     * Create an ObjectStreamException with the specified argument.
+     * Decodes a PEM-encoded block.
      *
-     * @param message the detailed message for the exception
+     * @param input the input string, according to RFC 1421, can only contain
+     *              characters in the base-64 alphabet and whitespaces.
+     * @return the decoded bytes
+     * @throws java.io.IOException if input is invalid
      */
-    protected ObjectStreamException(String message) {
-        super(message);
-    }
-
-    /**
-     * Create an ObjectStreamException.
-     */
-    protected ObjectStreamException() {
-        super();
+    public static byte[] decode(String input) throws IOException {
+        byte[] src = input.replaceAll("\\s+", "").getBytes();
+        try {
+            return Base64.getDecoder().decode(src);
+        } catch (IllegalArgumentException e) {
+            throw new IOException(e);
+        }
     }
 }
