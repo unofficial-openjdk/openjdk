@@ -25,6 +25,7 @@
 #include "precompiled.hpp"
 #include "classfile/classLoader.hpp"
 #include "classfile/classLoaderData.inline.hpp"
+#include "classfile/imageDecompressor.hpp"
 #include "classfile/imageFile.hpp"
 #include "classfile/javaAssertions.hpp"
 #include "classfile/javaClasses.inline.hpp"
@@ -3803,11 +3804,9 @@ JVM_ImageReadCompressed(JNIEnv *env,
   bool is_read = reader->read_at(compressedAddress, compressed_size,
                                  reader->get_index_size() + offset);
   if (is_read) {
-    char* msg = NULL;
-    is_read = ClassLoader::decompress(compressedAddress, compressed_size,
-                                      uncompressedAddress, uncompressed_size, &msg) ?
-                                      true : false;
-    if (!is_read) warning("decompression failed due to %s\n", msg);
+    const ImageStrings strings = reader->get_strings();
+    ImageDecompressor::decompress_resource(compressedAddress, uncompressedAddress,
+    uncompressed_size, &strings, true);
   }
   return (jboolean)is_read;
 }

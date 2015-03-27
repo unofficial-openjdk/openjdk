@@ -57,6 +57,7 @@
 # include "classfile/classFileParser.hpp"
 # include "classfile/classFileStream.hpp"
 # include "classfile/classLoader.hpp"
+# include "classfile/imageDecompressor.hpp"
 # include "classfile/imageFile.hpp"
 # include "classfile/javaClasses.hpp"
 # include "classfile/moduleEntry.hpp"

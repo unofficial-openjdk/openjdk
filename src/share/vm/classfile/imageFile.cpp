@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,6 +23,7 @@
  */
 
 #include "precompiled.hpp"
+#include "classfile/imageDecompressor.hpp"
 #include "classfile/imageFile.hpp"
 #include "runtime/mutex.hpp"
 #include "runtime/mutexLocker.hpp"
@@ -409,12 +410,12 @@ u1* ImageFileReader::get_resource(ImageLocation& location, bool is_C_heap) const
 
     u1* uncompressed_data = is_C_heap ? NEW_C_HEAP_ARRAY(u1, uncompressed_size, mtClass)
                                       : NEW_RESOURCE_ARRAY(u1, uncompressed_size);
-    char* msg = NULL;
-    jboolean res = ClassLoader::decompress(compressed_data, compressed_size,
-                                           uncompressed_data, uncompressed_size, &msg);
-    if (!res) warning("decompression failed due to %s\n", msg);
-    guarantee(res, "decompression failed");
-
+    const ImageStrings strings = get_strings();
+    ImageDecompressor::decompress_resource(compressed_data, uncompressed_data, uncompressed_size,
+            &strings, is_C_heap);
+    if (!MemoryMapImage) {
+        FREE_RESOURCE_ARRAY(u1, compressed_data, compressed_size);
+    }
     return uncompressed_data;
   } else {
     if (MemoryMapImage && !is_C_heap) {
