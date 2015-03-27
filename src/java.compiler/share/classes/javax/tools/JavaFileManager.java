@@ -405,7 +405,7 @@ public interface JavaFileManager extends Closeable, Flushable, OptionChecker {
     /**
      * Gets a location for a named module within a module-oriented location.
      */
-    default Location getModuleLocation(Location location, String mdlName) throws IOException {
+    default Location getModuleLocation(Location location, String moduleName) throws IOException {
         throw new UnsupportedOperationException();
     }
 
