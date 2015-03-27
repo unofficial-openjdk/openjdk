@@ -53,15 +53,18 @@ import jdk.jigsaw.tools.jlink.internal.plugins.StripDebugProvider;
 import tests.JImageGenerator;
 
 /*
- * jlink plugins testing.
  * @test
- * @summary Test plugins
+ * @summary Test jlink plugins
  * @author Jean-Francois Denise
  * @library /lib/testlibrary/jlink
- * @modules java.base/jdk.internal.jimage.decompressor
- * jdk.jlink/jdk.jigsaw.tools.jlink.internal jdk.jlink/jdk.jigsaw.tools.jlink
- * java.base/jdk.internal.jimage jdk.jlink/jdk.jigsaw.tools.jlink.internal.plugins
- * jdk.jlink/jdk.jigsaw.tools.jlink.internal
+ * @modules java.base/jdk.internal.jimage
+ *          java.base/jdk.internal.jimage.decompressor
+ *          jdk.compiler/com.sun.tools.classfile
+ *          jdk.jlink/jdk.jigsaw.tools.jlink
+ *          jdk.jlink/jdk.jigsaw.tools.jlink.internal
+ *          jdk.jlink/jdk.jigsaw.tools.jlink.internal.plugins
+ *          jdk.jlink/jdk.jigsaw.tools.jmod
+ *          jdk.jlink/jdk.tools.jimage
  * @run build PluginsTest
  * @run build tests.*
  * @run main PluginsTest
