@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,18 +21,14 @@
  * questions.
  */
 
-// key: compiler.misc.cant.access.inner.cls.constr
-// key: compiler.err.invalid.mref
+import java.lang.annotation.Repeatable;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 
-class CantAccessInnerClsConstructor {
-
-    interface SAM {
-        Outer m();
-    }
-
-    class Outer { }
-
-    static void test() {
-        SAM s = Outer::new;
-    }
+@Repeatable(ExpectedSignatureContainer.class)
+@Retention(RetentionPolicy.RUNTIME)
+public @interface ExpectedSignature {
+    boolean isAnonymous() default false;
+    String descriptor();
+    String signature();
 }

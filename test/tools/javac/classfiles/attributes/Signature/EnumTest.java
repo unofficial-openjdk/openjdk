@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,18 +21,19 @@
  * questions.
  */
 
-// key: compiler.misc.cant.access.inner.cls.constr
-// key: compiler.err.invalid.mref
+/*
+ * @test
+ * @bug 8049238
+ * @summary Checks Signature attribute for enum.
+ * @library /tools/lib /tools/javac/lib ../lib
+ * @build TestBase TestResult InMemoryFileManager ToolBox
+ * @build EnumTest Driver ExpectedSignature ExpectedSignatureContainer
+ * @run main Driver EnumTest
+ */
 
-class CantAccessInnerClsConstructor {
-
-    interface SAM {
-        Outer m();
-    }
-
-    class Outer { }
-
-    static void test() {
-        SAM s = Outer::new;
-    }
+@ExpectedSignature(descriptor = "EnumTest", signature = "Ljava/lang/Enum<LEnumTest;>;")
+public enum EnumTest {;
+    // see 8026480
+    @ExpectedSignature(descriptor = "<init>(java.lang.String, int)", signature = "()V")
+    private EnumTest() {}
 }
