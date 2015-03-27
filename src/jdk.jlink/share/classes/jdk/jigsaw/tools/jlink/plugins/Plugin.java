@@ -22,12 +22,27 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+package jdk.jigsaw.tools.jlink.plugins;
 
-module jdk.jlink {
-    exports jdk.jigsaw.tools.jlink.plugins;
-    uses jdk.jigsaw.tools.jlink.plugins.PluginProvider;
-    provides jdk.jigsaw.tools.jlink.plugins.PluginProvider with jdk.jigsaw.tools.jlink.internal.plugins.StripDebugProvider;
-    provides jdk.jigsaw.tools.jlink.plugins.PluginProvider with jdk.jigsaw.tools.jlink.internal.plugins.ExcludeProvider;
-    provides jdk.jigsaw.tools.jlink.plugins.PluginProvider with jdk.jigsaw.tools.jlink.internal.plugins.ZipCompressProvider;
+/**
+ * Implement this interface to develop your own plugin.
+ * Plugin can modify the Resources located in jimage file.
+ */
+public interface Plugin {
+
+    /**
+     * Plugin unique name.
+     * @return The plugin name.
+     */
+    public String getName();
+
+    /**
+     * Visit the collection of resources.
+     * @param inResources Read only resources.
+     * @param outResources The pool to fill with resources. Will contain the result of the visit
+     * @param strings Bridge to the jimage strings table.
+     * @throws Exception
+     */
+    public void visit(ResourcePool inResources, ResourcePool outResources, StringTable strings)
+            throws Exception;
 }
-

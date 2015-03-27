@@ -22,12 +22,22 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+package jdk.jigsaw.tools.jlink.internal.plugins.asm;
 
-module jdk.jlink {
-    exports jdk.jigsaw.tools.jlink.plugins;
-    uses jdk.jigsaw.tools.jlink.plugins.PluginProvider;
-    provides jdk.jigsaw.tools.jlink.plugins.PluginProvider with jdk.jigsaw.tools.jlink.internal.plugins.StripDebugProvider;
-    provides jdk.jigsaw.tools.jlink.plugins.PluginProvider with jdk.jigsaw.tools.jlink.internal.plugins.ExcludeProvider;
-    provides jdk.jigsaw.tools.jlink.plugins.PluginProvider with jdk.jigsaw.tools.jlink.internal.plugins.ZipCompressProvider;
+/**
+ * A pool containing all class and resource files.
+ */
+public interface AsmGlobalPool extends AsmPool {
+
+    /**
+     * Associate a package to a module, useful when adding new classes in new
+     * packages. WARNING: In order to properly handle new package and/or new
+     * module, module-info class must be added and/or updated.
+     *
+     * @param pkg The new package, following java binary syntax (/-separated
+     * path name).
+     * @param module An existing or new module.
+     * @throws java.lang.Exception If a mapping already exist for this package.
+     */
+    public void addPackageModuleMapping(String pkg, String module) throws Exception;
 }
-

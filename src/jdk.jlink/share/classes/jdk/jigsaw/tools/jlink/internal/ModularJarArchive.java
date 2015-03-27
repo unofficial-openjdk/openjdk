@@ -23,57 +23,33 @@
  * questions.
  */
 
-package jdk.internal.jimage;
+package jdk.jigsaw.tools.jlink.internal;
 
+import jdk.jigsaw.tools.jlink.internal.JarArchive;
 import java.nio.file.Path;
 import jdk.internal.jimage.Archive.Entry.EntryType;
 
 /**
- * An Archive backed by a jmod file.
+ * An Archive backed by a jar file.
  */
-public class JmodArchive extends JarArchive {
+public class ModularJarArchive extends JarArchive {
 
-    private static final String JMOD_EXT = ".jmod";
-    private static final String MODULE_NAME = "module";
-    private static final String MODULE_INFO = "module-info.class";
-    private static final String CLASSES     = "classes";
-    private static final String NATIVE_LIBS = "native";
-    private static final String NATIVE_CMDS = "bin";
-    private static final String CONFIG      = "conf";
+    private static final String JAR_EXT = ".jar";
 
-    public JmodArchive(String mn, Path jmod) {
+    public ModularJarArchive(String mn, Path jmod) {
         super(mn, jmod);
         String filename = jmod.getFileName().toString();
-        if (!filename.endsWith(JMOD_EXT))
+        if (!filename.endsWith(JAR_EXT))
             throw new UnsupportedOperationException("Unsupported format: " + filename);
     }
 
-    EntryType toEntryType(String entryName) {
-        String section = getSection(entryName);
-        switch (section) {
-            case CLASSES:
-                return EntryType.CLASS_OR_RESOURCE;
-            case NATIVE_LIBS:
-                return EntryType.NATIVE_LIB;
-            case NATIVE_CMDS:
-                return EntryType.NATIVE_CMD;
-            case CONFIG:
-                return EntryType.CONFIG;
-            case MODULE_NAME:
-                return EntryType.MODULE_NAME;
-            default:
-                //throw new InternalError("unexpected entry: " + name + " " + zipfile.toString()); //TODO
-                throw new InternalError("unexpected entry: " + section);
-        }
-    }
-
-    private static String getSection(String entryName) {
-        return entryName.substring(0, entryName.indexOf('/'));
+    @Override
+    EntryType toEntryType(String section) {
+        return EntryType.CLASS_OR_RESOURCE;
     }
 
     @Override
     String getFileName(String entryName) {
-        return entryName.substring(entryName.indexOf('/') + 1);
+        return entryName;
     }
 }
-

@@ -108,9 +108,9 @@ final public class ImageModuleData {
     private static byte[] getBytes(BasicImageReader reader) {
         String loaderName = reader.imagePathName();
 
-        if (loaderName.endsWith(ImageFile.IMAGE_EXT)) {
+        if (loaderName.endsWith(BasicImageWriter.IMAGE_EXT)) {
             loaderName = loaderName.substring(0, loaderName.length() -
-                    ImageFile.IMAGE_EXT.length());
+                    BasicImageWriter.IMAGE_EXT.length());
         }
 
         byte[] bytes = reader.getResource(getModuleDataName(loaderName));

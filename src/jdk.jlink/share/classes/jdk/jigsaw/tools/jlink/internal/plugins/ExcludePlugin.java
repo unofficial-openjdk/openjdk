@@ -22,12 +22,44 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+package jdk.jigsaw.tools.jlink.internal.plugins;
 
-module jdk.jlink {
-    exports jdk.jigsaw.tools.jlink.plugins;
-    uses jdk.jigsaw.tools.jlink.plugins.PluginProvider;
-    provides jdk.jigsaw.tools.jlink.plugins.PluginProvider with jdk.jigsaw.tools.jlink.internal.plugins.StripDebugProvider;
-    provides jdk.jigsaw.tools.jlink.plugins.PluginProvider with jdk.jigsaw.tools.jlink.internal.plugins.ExcludeProvider;
-    provides jdk.jigsaw.tools.jlink.plugins.PluginProvider with jdk.jigsaw.tools.jlink.internal.plugins.ZipCompressProvider;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import jdk.jigsaw.tools.jlink.plugins.Plugin;
+import jdk.jigsaw.tools.jlink.plugins.ResourcePool;
+import jdk.jigsaw.tools.jlink.plugins.StringTable;
+
+/**
+ *
+ * Exclude resources plugin
+ */
+final class ExcludePlugin implements Plugin {
+
+    private final List<Pattern> patterns;
+
+    ExcludePlugin(List<Pattern> patterns) {
+        this.patterns = patterns;
+    }
+
+    @Override
+    public String getName() {
+        return ExcludeProvider.NAME;
+    }
+
+    @Override
+    public void visit(ResourcePool inResources, ResourcePool outResources, StringTable strings)
+            throws Exception {
+        inResources.visit((resource, order,  str) -> {
+            for (Pattern p : patterns) {
+                Matcher m = p.matcher(resource.getPath());
+                if (m.matches()) {
+                    System.out.println("Excluding file " + resource.getPath());
+                    return null;
+                }
+            }
+            return resource;
+        }, outResources, strings);
+    }
 }
-

@@ -23,7 +23,7 @@
  * questions.
  */
 
-package jdk.internal.jimage;
+package jdk.jigsaw.tools.jlink.internal;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -32,6 +32,7 @@ import java.nio.file.Path;
 import java.util.function.Consumer;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
+import jdk.internal.jimage.Archive;
 import jdk.internal.jimage.Archive.Entry.EntryType;
 
 /**

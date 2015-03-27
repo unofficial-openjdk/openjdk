@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,46 +22,23 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package jdk.internal.jimage;
+package jdk.jigsaw.tools.jlink.plugins;
 
 /**
- * Resource is a class or resource file.
- */
-public class Resource {
-    private final String name;
-    private final long size;
-    private final long csize;
-
-    public Resource(String name, long size, long csize) {
-        this.name = name;
-        this.size = size;
-        this.csize = csize;
-    }
+* Added strings are stored in the jimage strings table.
+*/
+public interface StringTable {
+    /**
+     * Add a string to the jimage strings table.
+     * @param str The string to add.
+     * @return a String identifier.
+     */
+    public int addString(String str);
 
     /**
-     * Returns the name of this entry.
+     * Retrieve a string from the passed id.
+     * @param id The string id.
+     * @return The string referenced by the passed id.
      */
-    public String name() {
-        return name;
-    }
-
-    /**
-     * Returns the number of uncompressed bytes for this entry.
-     */
-    public long size() {
-        return size;
-    }
-
-    /**
-     * Returns the number of compressed bytes for this entry; 0 if
-     * uncompressed.
-     */
-    public long csize() {
-        return csize;
-    }
-
-    @Override
-    public String toString() {
-        return String.format("%s uncompressed size %d compressed size %d", name, size, csize);
-    }
+    public String getString(int id);
 }

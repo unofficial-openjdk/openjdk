@@ -23,7 +23,7 @@
  * questions.
  */
 
-package jdk.internal.jimage;
+package jdk.jigsaw.tools.jlink.internal;
 
 import java.io.IOException;
 import java.io.InputStream;

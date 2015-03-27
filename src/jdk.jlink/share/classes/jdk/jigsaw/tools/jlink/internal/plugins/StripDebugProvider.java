@@ -22,12 +22,41 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+package jdk.jigsaw.tools.jlink.internal.plugins;
 
-module jdk.jlink {
-    exports jdk.jigsaw.tools.jlink.plugins;
-    uses jdk.jigsaw.tools.jlink.plugins.PluginProvider;
-    provides jdk.jigsaw.tools.jlink.plugins.PluginProvider with jdk.jigsaw.tools.jlink.internal.plugins.StripDebugProvider;
-    provides jdk.jigsaw.tools.jlink.plugins.PluginProvider with jdk.jigsaw.tools.jlink.internal.plugins.ExcludeProvider;
-    provides jdk.jigsaw.tools.jlink.plugins.PluginProvider with jdk.jigsaw.tools.jlink.internal.plugins.ZipCompressProvider;
+import java.io.IOException;
+import java.util.Properties;
+import jdk.jigsaw.tools.jlink.plugins.Plugin;
+import jdk.jigsaw.tools.jlink.plugins.PluginProvider;
+import jdk.jigsaw.tools.jlink.internal.ImagePluginConfiguration;
+
+/**
+ *
+ * Strip Debug attributes plugin
+ */
+public final class StripDebugProvider extends PluginProvider {
+    public static final String NAME = "strip-debug";
+    public StripDebugProvider() {
+        super(NAME, "Strip debug information");
+    }
+
+    @Override
+    public Plugin newPlugin(Properties properties) throws IOException {
+        return new StripDebugPlugin();
+    }
+
+        @Override
+    public String getCategory() {
+        return ImagePluginConfiguration.TRANSFORMER;
+    }
+
+    @Override
+    public String getConfiguration() {
+        return null;
+    }
+
+    @Override
+    public String getToolOption() {
+        return NAME;
+    }
 }
-

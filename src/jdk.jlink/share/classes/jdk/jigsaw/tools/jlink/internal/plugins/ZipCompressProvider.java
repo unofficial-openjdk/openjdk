@@ -22,12 +22,41 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+package jdk.jigsaw.tools.jlink.internal.plugins;
 
-module jdk.jlink {
-    exports jdk.jigsaw.tools.jlink.plugins;
-    uses jdk.jigsaw.tools.jlink.plugins.PluginProvider;
-    provides jdk.jigsaw.tools.jlink.plugins.PluginProvider with jdk.jigsaw.tools.jlink.internal.plugins.StripDebugProvider;
-    provides jdk.jigsaw.tools.jlink.plugins.PluginProvider with jdk.jigsaw.tools.jlink.internal.plugins.ExcludeProvider;
-    provides jdk.jigsaw.tools.jlink.plugins.PluginProvider with jdk.jigsaw.tools.jlink.internal.plugins.ZipCompressProvider;
+import java.io.IOException;
+import java.util.Properties;
+import jdk.jigsaw.tools.jlink.plugins.Plugin;
+import jdk.jigsaw.tools.jlink.plugins.PluginProvider;
+import jdk.jigsaw.tools.jlink.internal.ImagePluginConfiguration;
+
+/**
+ *
+ * ZIP compression plugin provider
+ */
+public class ZipCompressProvider extends PluginProvider {
+    public static final String NAME = "zip";
+    public ZipCompressProvider() {
+        super(NAME,"ZIP Compression");
+    }
+
+    @Override
+    public Plugin newPlugin(Properties properties) throws IOException {
+        return new ZipPlugin();
+    }
+
+        @Override
+    public String getCategory() {
+        return ImagePluginConfiguration.COMPRESSOR;
+    }
+
+    @Override
+    public String getConfiguration() {
+        return null;
+    }
+
+    @Override
+    public String getToolOption() {
+        return "compress";
+    }
 }
-

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,6 +21,8 @@
  * questions.
  */
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.PrintWriter;
 import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
@@ -29,9 +31,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.ProviderNotFoundException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
+import jdk.jigsaw.tools.jlink.plugins.PluginProvider;
+import jdk.jigsaw.tools.jlink.internal.ImagePluginProviderRepository;
 import tests.JImageGenerator;
 import tests.JImageValidator;
 
@@ -40,11 +47,16 @@ import tests.JImageValidator;
  * @summary Test jimage creation
  * @author Jean-Francois Denise
  * @library /lib/testlibrary/jlink
- * @modules jdk.jlink/jdk.jigsaw.tools.jlink jdk.jlink/jdk.jigsaw.tools.jmod jdk.compiler/com.sun.tools.classfile java.base/jdk.internal.jimage
+ * @modules jdk.jlink/jdk.tools.jimage jdk.jlink/jdk.jigsaw.tools.jlink.internal
+ * jdk.jlink/jdk.jigsaw.tools.jlink jdk.jlink/jdk.jigsaw.tools.jmod jdk.compiler/com.sun.tools.classfile
+ * java.base/jdk.internal.jimage
  * @build tests.JImageGenerator tests.JImageValidator
  * @run main JLinkTest
  */
 public class JLinkTest {
+
+    private static final Map<String, List<String>> moduleDependencies =
+            new HashMap<>();
 
     private static final List<String> bootClasses = new ArrayList<>();
     private static final List<String> appClasses = new ArrayList<>();
@@ -77,7 +89,6 @@ public class JLinkTest {
             stream.forEach(c);
         }
 
-        System.out.println("Num of boot classes to check against " + bootClasses.size());
         if (bootClasses.isEmpty()) {
             throw new RuntimeException("No boot class to check against");
         }
@@ -99,20 +110,94 @@ public class JLinkTest {
         generateJarModule(helper, "leaf5");
 
         generateJarModule(helper, "composite1", "leaf1", "leaf2", "leaf4");
-        generateJModule(helper, "composite2", "composite1", "leaf3", "leaf5", "java.management");
+        generateJModule(helper, "composite2", "composite1", "leaf3", "leaf5",
+                "java.management");
 
         // Images with app modules
         checkImage(helper, "composite2", null);
-        String[] userOptions = {"--compress"};
-        checkImage(helper, "composite2", userOptions);
 
-        // Generate a new module and associated image.
-        generateJModule(helper, "composite3", "composite2");
-        checkImage(helper, "composite3", null);
+        int num = 0;
+        for (PluginProvider pf : ImagePluginProviderRepository.getImageWriterProviders(null)) {
+            num += 1;
+        }
+        if (num != 3) {
+            throw new Exception("Plugins not found. " + num);
+        }
+
+        //List plugins
+        String[] opts = {"--list-plugins"};
+        jdk.jigsaw.tools.jlink.Main.run(opts, new PrintWriter(System.out));
+
+        // ZIP
+        File f = new File("plugins.properties");
+        f.createNewFile();
+        try (FileOutputStream stream = new FileOutputStream(f);) {
+            String content = "jdk.jlink.plugins.compressor=zip\n";
+            stream.write(content.getBytes());
+            String[] userOptions = {"--plugins-configuration", f.getAbsolutePath()};
+            generateJModule(helper, "zipcomposite", "composite2");
+            checkImage(helper, "zipcomposite", userOptions);
+        }
+
+        // Skip debug
+        File f4 = new File("plugins.properties");
+        f4.createNewFile();
+        try (FileOutputStream stream = new FileOutputStream(f4);) {
+            String content = "jdk.jlink.plugins.transformer=strip-debug\n";
+            stream.write(content.getBytes());
+            String[] userOptions = {"--plugins-configuration", f4.getAbsolutePath()};
+            generateJModule(helper, "skipdebugcomposite", "composite2");
+            checkImage(helper, "skipdebugcomposite", userOptions);
+        }
+
+        // Skip debug + zip
+        File f5 = new File("plugins.properties");
+        f5.createNewFile();
+        try (FileOutputStream stream = new FileOutputStream(f5);) {
+            String content = "jdk.jlink.plugins.transformer=strip-debug\n" +
+                    "jdk.jlink.plugins.compressor=zip\n";
+            stream.write(content.getBytes());
+            String[] userOptions = {"--plugins-configuration", f5.getAbsolutePath()};
+            generateJModule(helper, "zipskipdebugcomposite", "composite2");
+            checkImage(helper, "zipskipdebugcomposite", userOptions);
+        }
+
+        // Filter out files
+        File f6 = new File("plugins.properties");
+        f6.createNewFile();
+        try (FileOutputStream stream = new FileOutputStream(f6);) {
+            String content = "jdk.jlink.plugins.filter=exclude\n" +
+                    "jdk.jlink.plugins.transformer=strip-debug\n" +
+                    "jdk.jlink.plugins.compressor=zip\n" +
+                    "exclude.configuration=*.jcov, */META-INF/*\n";
+            stream.write(content.getBytes());
+            String[] userOptions = {"--plugins-configuration", f6.getAbsolutePath()};
+            generateJModule(helper, "excludezipskipdebugcomposite", "composite2");
+            checkImage(helper, "excludezipskipdebugcomposite", userOptions, ".jcov",
+                    "/META-INF/");
+        }
+
+        // Filter out files
+        File f7 = new File("plugins.properties");
+        f7.createNewFile();
+        try (FileOutputStream stream = new FileOutputStream(f7);) {
+            String content = "jdk.jlink.plugins.filter=exclude\n" +
+                    "exclude.configuration=*.jcov, */META-INF/*\n";
+            stream.write(content.getBytes());
+            String[] userOptions = {"--plugins-configuration", f7.getAbsolutePath()};
+            generateJModule(helper, "excludecomposite", "composite2");
+            checkImage(helper, "excludecomposite", userOptions, ".jcov", "/META-INF/");
+        }
+
+        // filter out + Skip debug + zip
+        String[] userOptions = {"--compress", "--strip-debug", "--exclude",
+            "*.jcov, */META-INF/*"};
+        generateJModule(helper, "excludezipskipdebugcomposite2", "composite2");
+        checkImage(helper, "excludezipskipdebugcomposite2", userOptions,
+                ".jcov", "/META-INF/");
 
         // Standard images
-        appClasses.clear();
-        checkImage(helper, "java.se", null);
+        checkImage(helper, "java.management", null);
 
         // failing tests
         boolean failed = false;
@@ -147,7 +232,8 @@ public class JLinkTest {
         List<String> okLocations = new ArrayList<>();
         okLocations.addAll(toLocation("amodule", jmodsClasses));
         File image = helper.generateImage(null, "amodule");
-        JImageValidator validator = new JImageValidator(okLocations, image);
+        JImageValidator validator = new JImageValidator("amodule", okLocations,
+                 image, Collections.<String>emptyList());
         validator.validate();
     }
 
@@ -169,12 +255,13 @@ public class JLinkTest {
 
     private static String[] getClasses(String module) {
         String[] classes = {module + ".Main", module + ".com.foo.bar.X"};
+        List<String> appClasses = new ArrayList<>();
         for (String clazz : toLocation(module, classes)) {
             appClasses.add(clazz);
         }
         String moduleClazz = toLocation(module, "module-info");
         appClasses.add(moduleClazz);
-
+        moduleDependencies.put(module, appClasses);
         return classes;
     }
 
@@ -192,24 +279,30 @@ public class JLinkTest {
 
     private static void checkImage(JImageGenerator helper,
                                    String module,
-                                   String[] userOptions)
+                                   String[] userOptions, String... unexpectedFiles)
         throws Exception
     {
+        List<String> unexpectedPaths = new ArrayList<>();
+        for (String un : unexpectedFiles) {
+            unexpectedPaths.add(un);
+        }
         File image = helper.generateImage(userOptions, module);
         List<String> expectedLocations = new ArrayList<>();
         expectedLocations.addAll(bootClasses);
-        expectedLocations.addAll(appClasses);
-        JImageValidator validator = new JImageValidator(expectedLocations,
-                                                        image);
+        List<String> appClasses = moduleDependencies.get(module);
+        if (appClasses != null) {
+            expectedLocations.addAll(appClasses);
+        }
+        JImageValidator validator = new JImageValidator(module, expectedLocations,
+                                                        image, unexpectedPaths);
+        System.out.println("*** Validate Image " + module);
         validator.validate();
-        appClasses.clear();
-        System.out.println("*** Image " + module);
-        System.out.println(validator.getResourceExtractionTime() +
-            "ms, Average time to extract " + validator.getNumberOfResources() +
-            " compressed resources " + validator.getAverageResourceExtractionTime() * 1000 +
-            "microsecs");
-        System.out.println(validator.getResourceTime() + "ms total time, Average time " +
-            validator.getNumberOfResources() + " compressed resources " +
-            validator.getAverageResourceTime() * 1000 + "microsecs");
+        long moduleExecutionTime = validator.getModuleLauncherExecutionTime();
+        if(moduleExecutionTime != 0) {
+            System.out.println("Module launcher execution time " + moduleExecutionTime);
+        }
+        System.out.println("Java launcher execution time " +
+                validator.getJavaLauncherExecutionTime());
+        System.out.println("***");
     }
 }

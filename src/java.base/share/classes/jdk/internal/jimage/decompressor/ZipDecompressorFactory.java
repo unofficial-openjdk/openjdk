@@ -22,12 +22,24 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+package jdk.internal.jimage.decompressor;
 
-module jdk.jlink {
-    exports jdk.jigsaw.tools.jlink.plugins;
-    uses jdk.jigsaw.tools.jlink.plugins.PluginProvider;
-    provides jdk.jigsaw.tools.jlink.plugins.PluginProvider with jdk.jigsaw.tools.jlink.internal.plugins.StripDebugProvider;
-    provides jdk.jigsaw.tools.jlink.plugins.PluginProvider with jdk.jigsaw.tools.jlink.internal.plugins.ExcludeProvider;
-    provides jdk.jigsaw.tools.jlink.plugins.PluginProvider with jdk.jigsaw.tools.jlink.internal.plugins.ZipCompressProvider;
+import java.io.IOException;
+import java.util.Properties;
+
+/**
+ *
+ * ZIP decompressor factory
+ */
+public final class ZipDecompressorFactory extends ResourceDecompressorFactory {
+    public static final String NAME = "zip";
+    public ZipDecompressorFactory() {
+        super(NAME, "ZIP Decompression", null);
+    }
+
+    @Override
+    public ResourceDecompressor newDecompressor(Properties properties)
+            throws IOException {
+        return new ZipDecompressor();
+    }
 }
-

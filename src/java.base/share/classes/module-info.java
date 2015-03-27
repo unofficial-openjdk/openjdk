@@ -83,6 +83,8 @@ module java.base {
         java.security.sasl;
     exports jdk.internal.jimage to
         jdk.jlink;
+    exports jdk.internal.jimage.decompressor to
+        jdk.jlink;
     exports jdk.internal.org.objectweb.asm to
         jdk.scripting.nashorn;
     exports jdk.internal.org.objectweb.asm.commons to
@@ -92,6 +94,8 @@ module java.base {
     exports jdk.internal.org.objectweb.asm.util to
         jdk.scripting.nashorn;
     exports jdk.jigsaw.module.internal to
+        jdk.jlink;
+    exports jdk.internal.org.objectweb.asm to
         jdk.jlink;
     exports sun.misc to
         java.corba,

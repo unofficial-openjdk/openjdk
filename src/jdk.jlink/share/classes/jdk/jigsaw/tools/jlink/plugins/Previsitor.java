@@ -22,12 +22,26 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+package jdk.jigsaw.tools.jlink.plugins;
 
-module jdk.jlink {
-    exports jdk.jigsaw.tools.jlink.plugins;
-    uses jdk.jigsaw.tools.jlink.plugins.PluginProvider;
-    provides jdk.jigsaw.tools.jlink.plugins.PluginProvider with jdk.jigsaw.tools.jlink.internal.plugins.StripDebugProvider;
-    provides jdk.jigsaw.tools.jlink.plugins.PluginProvider with jdk.jigsaw.tools.jlink.internal.plugins.ExcludeProvider;
-    provides jdk.jigsaw.tools.jlink.plugins.PluginProvider with jdk.jigsaw.tools.jlink.internal.plugins.ZipCompressProvider;
+/**
+ * Plugin wishing to pre-visit the resources must implement this interface.
+ * Pre-visit can be useful when some activities are required prior to the actual
+ * Resource visit.
+ * The StringTable plays a special role during previsit. The passed Strings are NOT
+ * added to the jimage file. The string usage is tracked in order to build an efficient
+ * string storage.
+ */
+public interface Previsitor {
+
+    /**
+     * Previsit the collection of resources.
+     *
+     * @param resources Read only resources.
+     * @param strings StringTable instance. Add string to the StringTable to track string
+     * usage.
+     * @throws Exception
+     */
+    public void previsit(ResourcePool resources, StringTable strings)
+            throws Exception;
 }
-

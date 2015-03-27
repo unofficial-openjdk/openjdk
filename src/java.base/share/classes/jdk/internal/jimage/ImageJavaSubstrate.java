@@ -31,8 +31,10 @@ import java.nio.IntBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Paths;
 import static java.nio.file.StandardOpenOption.READ;
+import jdk.internal.jimage.decompressor.Decompressor;
 
 final class ImageJavaSubstrate implements ImageSubstrate {
+
     private final String imagePath;
     private final ByteOrder byteOrder;
     private final FileChannel channel;
@@ -43,6 +45,7 @@ final class ImageJavaSubstrate implements ImageSubstrate {
     private final byte[] locations;
     private final byte[] strings;
 
+    private final Decompressor decompressor = new Decompressor();
 
   private ImageJavaSubstrate(String imagePath, ByteOrder byteOrder)
           throws IOException {
@@ -156,11 +159,17 @@ final class ImageJavaSubstrate implements ImageSubstrate {
         assert uncompressedSize < Integer.MAX_VALUE;
         boolean isRead = readBuffer(compressedBuffer,
                                     indexSize + offset, compressedSize);
-
         if (isRead) {
             byte[] bytesIn = new byte[(int)compressedSize];
             compressedBuffer.get(bytesIn);
-            byte[] bytesOut = ImageFile.Compressor.decompress(bytesIn);
+            byte[] bytesOut;
+            try {
+                bytesOut = decompressor.decompressResource(byteOrder, (int strOffset) -> {
+                    return new UTF8String(getStringBytes(strOffset)).toString();
+                }, bytesIn);
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
             uncompressedBuffer.put(bytesOut);
             uncompressedBuffer.rewind();
         }

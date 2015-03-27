@@ -22,12 +22,37 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+package jdk.jigsaw.tools.jlink.internal.plugins;
 
-module jdk.jlink {
-    exports jdk.jigsaw.tools.jlink.plugins;
-    uses jdk.jigsaw.tools.jlink.plugins.PluginProvider;
-    provides jdk.jigsaw.tools.jlink.plugins.PluginProvider with jdk.jigsaw.tools.jlink.internal.plugins.StripDebugProvider;
-    provides jdk.jigsaw.tools.jlink.plugins.PluginProvider with jdk.jigsaw.tools.jlink.internal.plugins.ExcludeProvider;
-    provides jdk.jigsaw.tools.jlink.plugins.PluginProvider with jdk.jigsaw.tools.jlink.internal.plugins.ZipCompressProvider;
+import java.io.IOException;
+import jdk.jigsaw.tools.jlink.internal.plugins.asm.AsmPools;
+import jdk.jigsaw.tools.jlink.plugins.StringTable;
+import jdk.jigsaw.tools.jlink.internal.plugins.asm.AsmPlugin;
+import jdk.internal.org.objectweb.asm.ClassReader;
+import jdk.internal.org.objectweb.asm.ClassWriter;
+
+/**
+ *
+ * Strip debug attributes plugin
+ */
+final class StripDebugPlugin extends AsmPlugin {
+
+    @Override
+    public String getName() {
+        return StripDebugProvider.NAME;
+    }
+
+    @Override
+    public void visit(AsmPools pools, StringTable strings) throws IOException {
+        pools.getGlobalPool().visitClassReaders((reader) -> {
+            ClassWriter writer = null;
+            if (reader.getClassName().contains("module-info")) {//eg: java.base/module-info
+                // XXX. Do we have debug info? Is Asm ready for module-info?
+            } else {
+                writer = new ClassWriter(ClassWriter.COMPUTE_MAXS);
+                reader.accept(writer, ClassReader.SKIP_DEBUG);
+            }
+            return writer;
+        });
+    }
 }
-

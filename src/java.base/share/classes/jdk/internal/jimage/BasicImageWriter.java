@@ -30,6 +30,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class BasicImageWriter {
+
+    public static final String IMAGE_EXT = ".jimage";
+    public static final String BOOT_NAME = "bootmodules";
+    public static final String BOOT_IMAGE_NAME = BOOT_NAME + IMAGE_EXT;
+
     private final static int RETRY_LIMIT = 1000;
 
     private ByteOrder byteOrder;
@@ -69,6 +74,15 @@ public final class BasicImageWriter {
 
     public int addString(UTF8String string) {
         return strings.add(string);
+    }
+
+    public String getString(int offset) {
+        String str = null;
+        UTF8String utf8 = strings.get(offset);
+        if(utf8 != null) {
+            str = utf8.toString();
+        }
+        return str;
     }
 
     public void addLocation(String fullname, long contentOffset,

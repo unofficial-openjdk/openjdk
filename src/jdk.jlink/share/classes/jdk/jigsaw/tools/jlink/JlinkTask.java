@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,6 +25,11 @@
 
 package jdk.jigsaw.tools.jlink;
 
+import jdk.jigsaw.tools.jlink.internal.ModularJarArchive;
+import jdk.jigsaw.tools.jlink.internal.JmodArchive;
+import jdk.jigsaw.tools.jlink.internal.ImageFileCreator;
+import jdk.jigsaw.tools.jlink.internal.ImagePluginConfiguration;
+import jdk.jigsaw.tools.jlink.internal.ImagePluginStack;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -42,15 +47,11 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.PosixFileAttributeView;
 import java.nio.file.attribute.PosixFilePermission;
-import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Formatter;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
-import java.util.MissingResourceException;
-import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
@@ -58,16 +59,16 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import jdk.internal.jimage.Archive;
-import jdk.internal.jimage.ImageFile;
-import jdk.internal.jimage.JmodArchive;
-import jdk.internal.jimage.ModularJarArchive;
 import jdk.jigsaw.module.Configuration;
 import jdk.jigsaw.module.Layer;
 import jdk.jigsaw.module.ModuleArtifact;
 import jdk.jigsaw.module.ModuleArtifactFinder;
 import jdk.jigsaw.module.ModuleDescriptor;
 import jdk.jigsaw.module.internal.ModuleInfo;
-
+import jdk.jigsaw.tools.jlink.TaskHelper.BadArgs;
+import jdk.jigsaw.tools.jlink.TaskHelper.HiddenOption;
+import jdk.jigsaw.tools.jlink.TaskHelper.Option;
+import jdk.jigsaw.tools.jlink.TaskHelper.OptionsHelper;
 
 
 /**
@@ -76,64 +77,6 @@ import jdk.jigsaw.module.internal.ModuleInfo;
  * ## Should use jdk.joptsimple some day.
  */
 class JlinkTask {
-    static class BadArgs extends Exception {
-        static final long serialVersionUID = 8765093759964640721L;  // ## re-generate
-        BadArgs(String key, Object... args) {
-            super(JlinkTask.getMessage(key, args));
-            this.key = key;
-            this.args = args;
-        }
-
-        BadArgs showUsage(boolean b) {
-            showUsage = b;
-            return this;
-        }
-        final String key;
-        final Object[] args;
-        boolean showUsage;
-    }
-
-    static abstract class Option {
-        final boolean hasArg;
-        final String[] aliases;
-
-        Option(boolean hasArg, String... aliases) {
-            this.hasArg = hasArg;
-            this.aliases = aliases;
-        }
-
-        boolean isHidden() {
-            return false;
-        }
-
-        boolean matches(String opt) {
-            for (String a : aliases) {
-                if (a.equals(opt)) {
-                    return true;
-                } else if (opt.startsWith("--") && hasArg && opt.startsWith(a + "=")) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        boolean ignoreRest() {
-            return false;
-        }
-
-        abstract void process(JlinkTask task, String opt, String arg) throws BadArgs;
-    }
-
-    static abstract class HiddenOption extends Option {
-        HiddenOption(boolean hasArg, String... aliases) {
-            super(hasArg, aliases);
-        }
-
-        @Override
-        boolean isHidden() {
-            return true;
-        }
-    }
 
     static <T extends Throwable> void fail(Class<T> type,
                                            String format,
@@ -150,19 +93,16 @@ class JlinkTask {
         }
     }
 
-    static Option[] recognizedOptions = {
-        new Option(false, "--compress") {
-            void process(JlinkTask task, String opt, String arg) throws BadArgs {
-                task.options.compress = true;
-            }
-        },
-        new Option(false, "--help") {
-            void process(JlinkTask task, String opt, String arg) {
+    static Option<?>[] recognizedOptions = {
+        new Option<JlinkTask>(false, "--help") {
+            @Override
+            protected void process(JlinkTask task, String opt, String arg) {
                 task.options.help = true;
             }
         },
-        new Option(true, "--modulepath", "--mp") {
-            void process(JlinkTask task, String opt, String arg) {
+        new Option<JlinkTask>(true, "--modulepath", "--mp") {
+            @Override
+            protected void process(JlinkTask task, String opt, String arg) {
                 String[] dirs = arg.split(File.pathSeparator);
                 Path[] paths = new Path[dirs.length];
                 int i = 0;
@@ -172,39 +112,49 @@ class JlinkTask {
                 task.options.moduleFinder = ModuleArtifactFinder.ofDirectories(paths);
             }
         },
-        new Option(true, "--addmods") {
-            void process(JlinkTask task, String opt, String arg) throws BadArgs {
+        new Option<JlinkTask>(true, "--addmods") {
+            @Override
+            protected void process(JlinkTask task, String opt, String arg)
+                    throws BadArgs {
                 for (String mn : arg.split(",")) {
                     if (mn.isEmpty())
-                        throw new BadArgs("err.jmod.not.found", mn);
+                        throw taskHelper.newBadArgs("err.jmod.not.found", mn);
                     task.options.jmods.add(mn);
                 }
             }
         },
-        new Option(true, "--output") {
-            void process(JlinkTask task, String opt, String arg) throws BadArgs {
+        new Option<JlinkTask>(true, "--output") {
+            @Override
+            protected void process(JlinkTask task, String opt, String arg)
+                    throws BadArgs {
                 Path path = Paths.get(arg);
                 task.options.output = path;
             }
         },
-        new Option(false, "--version") {
-            void process(JlinkTask task, String opt, String arg) {
+        new Option<JlinkTask>(false, "--version") {
+            @Override
+            protected void process(JlinkTask task, String opt, String arg) {
                 task.options.version = true;
             }
         },
-        new HiddenOption(false, "--fullversion") {
-            void process(JlinkTask task, String opt, String arg) {
+        new HiddenOption<JlinkTask>(false, "--fullversion") {
+            @Override
+            protected void process(JlinkTask task, String opt, String arg) {
                 task.options.fullVersion = true;
             }
         },
     };
 
     private static final String PROGNAME = "jlink";
-    private final Options options = new Options();
-
+    private final OptionsValues options = new OptionsValues();
+    private static final TaskHelper taskHelper =
+            new TaskHelper("jdk.jigsaw.tools.jlink.resources.jlink");
+    private static final OptionsHelper<JlinkTask> optionsHelper =
+            taskHelper.newOptionsHelper(JlinkTask.class, recognizedOptions);
     private PrintWriter log;
     void setLog(PrintWriter out) {
         log = out;
+        taskHelper.setLog(log);
     }
 
     private static final String MODULE_INFO = "module-info.class";
@@ -219,7 +169,7 @@ class JlinkTask {
                      EXIT_SYSERR = 3, // System error or resource exhaustion.
                      EXIT_ABNORMAL = 4;// terminated abnormally
 
-    static class Options {
+    static class OptionsValues {
         boolean help;
         boolean version;
         boolean fullVersion;
@@ -231,40 +181,43 @@ class JlinkTask {
 
     int run(String[] args) {
         if (log == null) {
-            log = new PrintWriter(System.out);
+            setLog(new PrintWriter(System.out));
         }
         try {
-            handleOptions(args);
+            optionsHelper.handleOptions(this, args);
             if (options.help) {
-                showHelp();
+                optionsHelper.showHelp(PROGNAME, "jimage creation only options:");
                 return EXIT_OK;
             }
             if (options.version || options.fullVersion) {
-                showVersion(options.fullVersion);
+                taskHelper.showVersion(options.fullVersion);
                 return EXIT_OK;
             }
-
+            if(optionsHelper.listPlugins()) {
+                 optionsHelper.showPlugins(log);
+                 return EXIT_OK;
+            }
             if (options.moduleFinder == null)
-                throw new BadArgs("err.modulepath.must.be.specified").showUsage(true);
+                throw taskHelper.newBadArgs("err.modulepath.must.be.specified").showUsage(true);
 
             Path output = options.output;
             if (output == null)
-                throw new BadArgs("err.output.must.be.specified").showUsage(true);
+                throw taskHelper.newBadArgs("err.output.must.be.specified").showUsage(true);
             Files.createDirectories(output);
             if (Files.list(output).findFirst().isPresent())
-                throw new BadArgs("err.dir.not.empty", output);
+                throw taskHelper.newBadArgs("err.dir.not.empty", output);
 
             if (options.jmods.isEmpty())  // ## default to jdk.base ??
-                throw new BadArgs("err.mods.must.be.specified").showUsage(true);
+                throw taskHelper.newBadArgs("err.mods.must.be.specified").showUsage(true);
 
             // additional option combination validation
 
             boolean ok = run();
             return ok ? EXIT_OK : EXIT_ERROR;
         } catch (BadArgs e) {
-            reportError(e.key, e.args);
+            taskHelper.reportError(e.key, e.args);
             if (e.showUsage) {
-                log.println(getMessage("main.usage.summary", PROGNAME));
+                log.println(taskHelper.getMessage("main.usage.summary", PROGNAME));
             }
             return EXIT_CMDERR;
         } catch (Exception x) {
@@ -420,7 +373,9 @@ class JlinkTask {
             Set<Archive> archives = modsPaths.entrySet().stream()
                     .map(e -> newArchive(e.getKey(), e.getValue()))
                     .collect(Collectors.toSet());
-            ImageFile.create(output, archives, options.compress);
+            ImagePluginStack pc = ImagePluginConfiguration.
+                    parseConfiguration(taskHelper.getPluginsProperties());
+            ImageFileCreator.create(output, archives, pc);
         }
 
         private Archive newArchive(String module, Path path) {
@@ -504,93 +459,6 @@ class JlinkTask {
                 return Section.CONFIG;
             else
                 return Section.UNKNOWN;
-        }
-    }
-
-    public void handleOptions(String[] args) throws BadArgs {
-        // process options
-        for (int i=0; i < args.length; i++) {
-            if (args[i].charAt(0) == '-') {
-                String name = args[i];
-                Option option = getOption(name);
-                String param = null;
-                if (option.hasArg) {
-                    if (name.startsWith("--") && name.indexOf('=') > 0) {
-                        param = name.substring(name.indexOf('=') + 1, name.length());
-                    } else if (i + 1 < args.length) {
-                        param = args[++i];
-                    }
-                    if (param == null || param.isEmpty() || param.charAt(0) == '-') {
-                        throw new BadArgs("err.missing.arg", name).showUsage(true);
-                    }
-                }
-                option.process(this, name, param);
-                if (option.ignoreRest()) {
-                    i = args.length;
-                }
-            } else {
-                // process rest of the input arguments
-                // ## for now no additional args
-            }
-        }
-    }
-
-    private Option getOption(String name) throws BadArgs {
-        for (Option o : recognizedOptions) {
-            if (o.matches(name)) {
-                return o;
-            }
-        }
-        throw new BadArgs("err.unknown.option", name).showUsage(true);
-    }
-
-    private void reportError(String key, Object... args) {
-        log.println(getMessage("error.prefix") + " " + getMessage(key, args));
-    }
-
-    private void warning(String key, Object... args) {
-        log.println(getMessage("warn.prefix") + " " + getMessage(key, args));
-    }
-
-    private void showHelp() {
-        log.println(getMessage("main.usage", PROGNAME));
-        for (Option o : recognizedOptions) {
-            String name = o.aliases[0].substring(1); // there must always be at least one name
-            name = name.charAt(0) == '-' ? name.substring(1) : name;
-            if (o.isHidden() || name.equals("h")) {
-                continue;
-            }
-            log.println(getMessage("main.opt." + name));
-        }
-    }
-
-    private void showVersion(boolean full) {
-        log.println(version(full ? "full" : "release"));
-    }
-
-    private String version(String key) {
-        // ## removed version.properties-template as jlink now moved to jdk repo
-        return System.getProperty("java.version");
-    }
-
-    static String getMessage(String key, Object... args) {
-        try {
-            return MessageFormat.format(ResourceBundleHelper.bundle.getString(key), args);
-        } catch (MissingResourceException e) {
-            throw new InternalError("Missing message: " + key);
-        }
-    }
-
-    private static class ResourceBundleHelper {
-        static final ResourceBundle bundle;
-
-        static {
-            Locale locale = Locale.getDefault();
-            try {
-                bundle = ResourceBundle.getBundle("jdk.jigsaw.tools.jlink.resources.jlink", locale);
-            } catch (MissingResourceException e) {
-                throw new InternalError("Cannot find jlink resource bundle for locale " + locale);
-            }
         }
     }
 }

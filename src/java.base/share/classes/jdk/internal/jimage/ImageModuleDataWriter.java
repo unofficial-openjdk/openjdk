@@ -62,7 +62,7 @@ public class ImageModuleDataWriter {
         bytes = getBytes(writer, packageToModule, moduleToPackages);
     }
 
-    static ImageModuleDataWriter buildModuleData(BasicImageWriter writer,
+    public static ImageModuleDataWriter buildModuleData(BasicImageWriter writer,
             Map<String, Set<String>> modulePackagesMap) {
         Set<String> modules = modulePackagesMap.keySet();
 

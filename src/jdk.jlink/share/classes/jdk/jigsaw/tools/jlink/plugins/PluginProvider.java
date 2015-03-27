@@ -22,12 +22,44 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+package jdk.jigsaw.tools.jlink.plugins;
 
-module jdk.jlink {
-    exports jdk.jigsaw.tools.jlink.plugins;
-    uses jdk.jigsaw.tools.jlink.plugins.PluginProvider;
-    provides jdk.jigsaw.tools.jlink.plugins.PluginProvider with jdk.jigsaw.tools.jlink.internal.plugins.StripDebugProvider;
-    provides jdk.jigsaw.tools.jlink.plugins.PluginProvider with jdk.jigsaw.tools.jlink.internal.plugins.ExcludeProvider;
-    provides jdk.jigsaw.tools.jlink.plugins.PluginProvider with jdk.jigsaw.tools.jlink.internal.plugins.ZipCompressProvider;
+import java.io.IOException;
+import java.util.Objects;
+import java.util.Properties;
+
+/**
+ * Extend this class and make your class available to the ServiceLoader in order
+ * to expose your Plugin. A provider has a name, a description, an optional
+ * category, configuration and command line option.
+ */
+public abstract class PluginProvider {
+
+    public static final String CONFIGURATION_PROPERTY = "configuration";
+
+    private final String name;
+    private final String description;
+
+    protected PluginProvider(String name, String description) {
+        Objects.requireNonNull(name);
+        Objects.requireNonNull(description);
+        this.name = name;
+        this.description = description;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public abstract String getCategory();
+
+    public String getDescription() {
+        return description;
+    }
+
+    public abstract String getConfiguration();
+
+    public abstract String getToolOption();
+
+    public abstract Plugin newPlugin(Properties properties) throws IOException;
 }
-

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,16 +22,15 @@
  */
 package tests;
 
-import com.sun.tools.classfile.ClassFile;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import jdk.internal.jimage.BasicImageReader;
-import jdk.internal.jimage.ImageFile;
 import jdk.internal.jimage.ImageLocation;
-
+import com.sun.tools.classfile.ClassFile;
+import jdk.internal.jimage.BasicImageWriter;
 /**
  *
  * JDK Modular image validator
@@ -43,21 +42,26 @@ public class JImageValidator {
     private static final List<String> EXPECTED_JIMAGES = new ArrayList<>();
 
     static {
-        EXPECTED_JIMAGES.add(ImageFile.BOOT_IMAGE_NAME);
+        EXPECTED_JIMAGES.add(BasicImageWriter.BOOT_IMAGE_NAME);
     }
 
     private final File rootDir;
     private final List<String> expectedLocations;
-    private int numResources;
-    private long resourceExtractionTime;
-    private long totalTime;
+    private final String module;
+    private long moduleExecutionTime;
+    private long javaExecutionTime;
+    private final List<String> unexpectedPaths;
 
-    public JImageValidator(List<String> expectedLocations, File rootDir) throws Exception {
+    public JImageValidator(String module, List<String> expectedLocations,
+            File rootDir, List<String> unexpectedPaths) throws Exception {
         if (!rootDir.exists()) {
-            throw new Exception("Image root dir not found " + rootDir.getAbsolutePath());
+            throw new Exception("Image root dir not found " +
+                    rootDir.getAbsolutePath());
         }
         this.expectedLocations = expectedLocations;
         this.rootDir = rootDir;
+        this.module = module;
+        this.unexpectedPaths = unexpectedPaths;
     }
 
     public void validate() throws Exception {
@@ -77,20 +81,54 @@ public class JImageValidator {
         seenImages.addAll(EXPECTED_JIMAGES);
         for (File f : modules.listFiles()) {
             if (f.getName().endsWith(".jimage")) {
-                System.out.println("Validating " + f.getName());
                 if (!EXPECTED_JIMAGES.contains(f.getName())) {
                     throw new Exception("Unexpected image " + f.getName());
                 }
                 seenImages.remove(f.getName());
-                validate(f);
+                validate(f, expectedLocations, unexpectedPaths);
             }
         }
         if (!seenImages.isEmpty()) {
             throw new Exception("Some images not seen " + seenImages);
         }
+        // Check binary file
+        File launcher = new File(rootDir, "bin" + File.separator + module);
+        if (launcher.exists()) {
+            ProcessBuilder builder = new ProcessBuilder("sh", launcher.getAbsolutePath());
+            long t = System.currentTimeMillis();
+            Process process = builder.inheritIO().start();
+            int ret = process.waitFor();
+            moduleExecutionTime += System.currentTimeMillis() - t;
+            if (ret != 0) {
+                throw new Exception("Image " + module +
+                        " execution failed, check logs.");
+            }
+        }
+
+        File javalauncher = new File(rootDir, "bin" + File.separator +
+                (isWindows() ? "java.exe" : "java"));
+        if (javalauncher.exists()) {
+            ProcessBuilder builder = new ProcessBuilder(javalauncher.getAbsolutePath(),
+                    "-version");
+            long t = System.currentTimeMillis();
+            Process process = builder.inheritIO().start();
+            int ret = process.waitFor();
+            javaExecutionTime += System.currentTimeMillis() - t;
+            if (ret != 0) {
+                throw new Exception("java launcher execution failed, check logs.");
+            }
+        } else {
+            throw new Exception("java launcher not found.");
+        }
+
     }
 
-    private void validate(File jimage) throws Exception {
+    private static boolean isWindows() {
+        return System.getProperty("os.name").startsWith("Windows");
+    }
+
+    public static void validate(File jimage, List<String> expectedLocations,
+            List<String> unexpectedPaths) throws Exception {
         BasicImageReader reader = BasicImageReader.open(jimage.getAbsolutePath());
         // Validate expected locations
         List<String> seenLocations = new ArrayList<>();
@@ -104,15 +142,15 @@ public class JImageValidator {
 
         for (String s : reader.getEntryNames()) {
             if (s.endsWith(".class") && !s.endsWith("module-info.class")) {
-                long t0 = System.currentTimeMillis();
-                numResources++;
                 ImageLocation il = reader.findLocation(s);
-                long t = System.currentTimeMillis();
-                byte[] r = reader.getResource(il);
-                long end = System.currentTimeMillis();
-                resourceExtractionTime += end - t;
-                totalTime += end - t0;
                 try {
+                    byte[] r = reader.getResource(il);
+                    if(r == null) {
+                        System.out.println("IL, compressed " +
+                                il.getCompressedSize() + " uncompressed " +
+                                il.getUncompressedSize());
+                        throw new Exception("NULL RESOURCE " + s);
+                    }
                     readClass(r);
                 } catch (Exception ex) {
                     System.err.println(s + " ERROR " + ex);
@@ -122,33 +160,26 @@ public class JImageValidator {
             if (seenLocations.contains(s)) {
                 seenLocations.remove(s);
             }
+            for(String p : unexpectedPaths) {
+                if(s.contains(p)) {
+                    throw new Exception("Seen unexpected path " + s);
+                }
+            }
         }
         if (!seenLocations.isEmpty()) {
             throw new Exception("ImageReader did not return " + seenLocations);
         }
     }
 
-    public int getNumberOfResources() {
-        return numResources;
+    public long getJavaLauncherExecutionTime() {
+        return javaExecutionTime;
     }
 
-    public long getResourceExtractionTime() {
-        return resourceExtractionTime;
+    public long getModuleLauncherExecutionTime() {
+        return moduleExecutionTime;
     }
 
-    public double getAverageResourceExtractionTime() {
-        return (double) resourceExtractionTime / numResources;
-    }
-
-    public long getResourceTime() {
-        return totalTime;
-    }
-
-    public double getAverageResourceTime() {
-        return (double) totalTime / numResources;
-    }
-
-    private void readClass(byte[] clazz) throws Exception {
+    private static void readClass(byte[] clazz) throws Exception {
         try (InputStream stream = new ByteArrayInputStream(clazz);) {
             ClassFile.read(stream);
         }

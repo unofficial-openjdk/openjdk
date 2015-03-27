@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,33 +22,32 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-
-package jdk.internal.jimage;
-
-import java.nio.file.Path;
-import jdk.internal.jimage.Archive.Entry.EntryType;
+package jdk.internal.jimage.decompressor;
 
 /**
- * An Archive backed by a jar file.
+ *
+ * JLink Image Decompressor.
  */
-public class ModularJarArchive extends JarArchive {
+public interface ResourceDecompressor {
 
-    private static final String JAR_EXT = ".jar";
-
-    public ModularJarArchive(String mn, Path jmod) {
-        super(mn, jmod);
-        String filename = jmod.getFileName().toString();
-        if (!filename.endsWith(JAR_EXT))
-            throw new UnsupportedOperationException("Unsupported format: " + filename);
+    public interface StringsProvider {
+        public String getString(int offset);
     }
+    /**
+     * Decompressor unique name.
+     * @return The decompressor name.
+     */
+    public String getName();
 
-    @Override
-    EntryType toEntryType(String section) {
-        return EntryType.CLASS_OR_RESOURCE;
-    }
-
-    @Override
-    String getFileName(String entryName) {
-        return entryName;
-    }
+    /**
+     * Decompress a resource.
+     * @param strings The String provider
+     * @param content The resource content
+     * @param offset Resource content offset
+     * @param originalSize Uncompressed size
+     * @return Uncompressed resource
+     * @throws Exception
+     */
+    public byte[] decompress(StringsProvider strings, byte[] content, int offset,
+            int originalSize) throws Exception;
 }
