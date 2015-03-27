@@ -46,6 +46,13 @@ java.base_ADD_JAVAC_FLAGS := -Xdoclint:all/protected,-reference '-Xdoclint/packa
 java.base_COPY := .icu .dat .spp content-types.properties hijrah-config-islamic-umalqura.properties
 java.base_CLEAN := intrinsic.properties
 
+# jdk build will generate gensrc/java.base/module-info.java to include
+# OS-specific qualified exports
+java.base_EXCLUDE_FILES += $(JDK_TOPDIR)/src/java.base/share/classes/module-info.java
+
+java.base_EXCLUDE_FILES += \
+  $(JDK_TOPDIR)/src/java.base/share/classes/jdk/jigsaw/module/runtime/ModuleLoaderMap.java
+
 java.base_EXCLUDES += java/lang/doc-files
 
 # Exclude BreakIterator classes that are just used in compile process to generate
@@ -102,6 +109,10 @@ java.datatransfer_COPY := flavormap.properties
 java.desktop_ADD_JAVAC_FLAGS := -Xdoclint:all/protected,-missing,-reference '-Xdoclint/package:java.*,javax.*'
 java.desktop_COPY := .gif .png .wav .txt .xml .css .pf
 java.desktop_CLEAN := iio-plugin.properties cursors.properties
+
+# jdk build will generate gensrc/java.desktop/module-info.java to include
+# OS-specific qualified exports
+java.desktop_EXCLUDE_FILES += $(JDK_TOPDIR)/src/java.desktop/share/classes/module-info.java
 
 java.desktop_EXCLUDES += \
     java/awt/doc-files \
@@ -263,6 +274,11 @@ java.sql.rowset_CLEAN_FILES := $(wildcard \
     $(JDK_TOPDIR)/src/java.sql.rowset/share/classes/javax/sql/rowset/*.properties)
 
 ################################################################################
+# jdk build will generate gensrc/java.management/module-info.java to include
+# custom qualified exports
+
+java.management_EXCLUDE_FILES += $(JDK_TOPDIR)/src/java.management/share/classes/module-info.java
+
 # Exclude building of IIOP transport for RMI Connector
 
 ifeq ($(RMICONNECTOR_IIOP), false)
@@ -272,6 +288,7 @@ endif
 ################################################################################
 
 java.rmi_ADD_JAVAC_FLAGS := -Xdoclint:all/protected '-Xdoclint/package:java.*,javax.*'
+java.rmi_EXCLUDE_FILES += $(JDK_TOPDIR)/src/java.rmi/share/classes/module-info.java
 java.rmi_CLEAN_FILES := $(wildcard \
     $(JDK_TOPDIR)/src/java.rmi/share/classes/sun/rmi/registry/resources/*.properties \
     $(JDK_TOPDIR)/src/java.rmi/share/classes/sun/rmi/server/resources/*.properties)
@@ -393,6 +410,8 @@ jdk.jconsole_CLEAN_FILES := $(wildcard \
 
 ################################################################################
 
+jdk.jdi_EXCLUDE_FILES += $(JDK_TOPDIR)/src/jdk.jdi/share/classes/module-info.java
+
 jdk.jdi_EXCLUDES += \
     com/sun/tools/example/debug/bdi \
     com/sun/tools/example/debug/event \
@@ -437,44 +456,34 @@ jdk.localedata_COPY := _dict _th
 jdk.localedata_EXCLUDE_FILES += sun/text/resources/th/BreakIteratorRules_th.java
 
 ################################################################################
-# Setup the compilation of each module
-#
-# Do not include nashorn src here since it needs to be compiled separately due
-# to nasgen.
+# Setup the compilation for the module
 #
 # Order src dirs in order of override with the most important first. Generated
 # source before static source and platform specific source before shared.
 #
-# To use this variable, use $(call ALL_SRC_DIRS,module) with no space.
 GENERATED_SRC_DIRS += \
-    $(SUPPORT_OUTPUTDIR)/gensrc/$1 \
-    $(SUPPORT_OUTPUTDIR)/gensrc_no_docs/$1 \
+    $(SUPPORT_OUTPUTDIR)/gensrc \
+    $(SUPPORT_OUTPUTDIR)/gensrc_no_docs \
     #
 
-OS_SRC_DIRS += $(JDK_TOPDIR)/src/$1/$(OPENJDK_TARGET_OS)/classes
+TOP_SRC_DIRS += \
+    $(CORBA_TOPDIR)/src \
+    $(JDK_TOPDIR)/src \
+    $(LANGTOOLS_TOPDIR)/src \
+    $(JAXP_TOPDIR)/src \
+    $(JAXWS_TOPDIR)/src \
+    $(NASHORN_TOPDIR)/src \
+    #
+
+SRC_SUBDIRS += $(OPENJDK_TARGET_OS)/classes
 ifneq ($(OPENJDK_TARGET_OS), $(OPENJDK_TARGET_OS_TYPE))
-  OS_TYPE_SRC_DIRS += $(JDK_TOPDIR)/src/$1/$(OPENJDK_TARGET_OS_TYPE)/classes
+  SRC_SUBDIRS += $(OPENJDK_TARGET_OS_TYPE)/classes
 endif
+SRC_SUBDIRS += share/classes
 
-SHARE_SRC_DIRS += \
-    $(JDK_TOPDIR)/src/$1/share/classes \
-    $(LANGTOOLS_TOPDIR)/src/$1/share/classes \
-    $(CORBA_TOPDIR)/src/$1/share/classes \
-    $(JAXP_TOPDIR)/src/$1/share/classes \
-    $(JAXWS_TOPDIR)/src/$1/share/classes \
-    #
-
-ALL_SRC_DIRS = \
-    $(GENERATED_SRC_DIRS) \
-    $(OS_SRC_DIRS) \
-    $(OS_TYPE_SRC_DIRS) \
-    $(SHARE_SRC_DIRS) \
-    #
-
-# Find all modules with java sources. Filter out nashorn since it needs to be
-# compiled separately.
-ALL_JAVA_MODULES := $(filter-out jdk.scripting.nashorn, $(call FindJavaModules))
-JAVA_MODULES := $(ALL_JAVA_MODULES)
+MODULE_SRC_DIRS := $(strip \
+    $(addsuffix /$(MODULE), $(GENERATED_SRC_DIRS)) \
+    $(foreach sub, $(SRC_SUBDIRS), $(addsuffix /$(MODULE)/$(sub), $(TOP_SRC_DIRS))))
 
 # The JDK_USER_DEFINED_FILTER is a poor man's incremental build: by specifying
 # JDK_FILTER at the make command line, only a subset of the JDK java files will
@@ -482,48 +491,35 @@ JAVA_MODULES := $(ALL_JAVA_MODULES)
 # space separated list.
 JDK_USER_DEFINED_FILTER := $(strip $(subst $(COMMA),$(SPACE), $(JDK_FILTER)))
 
-# This macro sets up compilation of a module and declares dependencies for it.
-# Param 1 - module name
-define SetupModuleCompilation
-  # Find the module dependencies by parsing modules.list file
-  $1_DEPS := $$(call FindDepsForModule, $1)
+# Use transitive deps for setting the classpath
+DEPS := $(call FindTransitiveDepsForModule, $(MODULE))
 
-  $1_CLASSPATH := $$(addprefix $(JDK_OUTPUTDIR)/modules/,$$($1_DEPS))
-  # When crypto classes are prebuilt, need to look for classes already in
-  # output dir.
-  ifneq ($(BUILD_CRYPTO), true)
-    $1_CLASSPATH += $(JDK_OUTPUTDIR)/modules/$1
-  endif
-  ifeq ($1, jdk.hotspot.agent)
-    ## The source of this module is compiled elsewhere, hotspot, and imported.
-    ## Service types are required in the classpath when compiing module-info
-    $1_CLASSPATH := $$($1_CLASSPATH) $$(addprefix $(JDK_OUTPUTDIR)/modules/,jdk.hotspot.agent)
-  endif
-  $1_CLASSPATH := $$(subst $$(SPACE),$$(PATH_SEP),$$($1_CLASSPATH))
-  $1_JAVAC_FLAGS := -bootclasspath "$$($1_CLASSPATH)" $$($1_ADD_JAVAC_FLAGS)
+# Rewrite the MODULE_SRC_DIRS with a wildcard for the module so that all module
+# source dirs are available on the path.
+MODULESOURCEPATH := $(subst $(SPACE),$(PATH_SEP),$(subst $(MODULE),*,$(MODULE_SRC_DIRS)))
 
-  $$(eval $$(call SetupJavaCompilation,$1, \
-      SETUP := $$(if $$($1_SETUP), $$($1_SETUP), GENERATE_JDKBYTECODE), \
-      SRC := $$(wildcard $$(call ALL_SRC_DIRS,$1)), \
-      INCLUDES:=$(JDK_USER_DEFINED_FILTER),\
-      BIN := $(JDK_OUTPUTDIR)/modules/$1, \
-      HEADERS := $(SUPPORT_OUTPUTDIR)/headers/$1, \
-      ADD_JAVAC_FLAGS := $$($1_JAVAC_FLAGS)))
+$(eval $(call SetupJavaCompilation,$(MODULE), \
+    SETUP := $(if $($(MODULE)_SETUP), $($(MODULE)_SETUP), GENERATE_JDKBYTECODE), \
+    MODULE := $(MODULE), \
+    SRC := $(wildcard $(MODULE_SRC_DIRS)), \
+    INCLUDES := $(JDK_USER_DEFINED_FILTER),\
+    BIN := $(JDK_OUTPUTDIR)/modules, \
+    HEADERS := $(SUPPORT_OUTPUTDIR)/headers, \
+    ADD_JAVAC_FLAGS := \
+        $$($1_ADD_JAVAC_FLAGS) \
+        -modulesourcepath "$(MODULESOURCEPATH)" \
+        -systemmodulepath none, \
+))
 
-  $1: $$($1) $$($1_COPY_EXTRA)
+TARGETS += $($(MODULE)) $(COPY_EXTRA)
 
-  # Declare dependencies between java compilation of different modules.
-  # Since not all modules have been declared yet, or might be declared
-  # in different invocations of this file, use the macro to find the
-  # correct target file to depend on.
-  # Only the javac compilation actually depends on other modules so limit
-  # dependency declaration to that by using the *_COMPILE_TARGET variable.
-  $$($1_COMPILE_TARGETS): $$(foreach d,$$($1_DEPS), \
-      $$(call SetupJavaCompilationCompileTarget, $$d, $(JDK_OUTPUTDIR)/modules/$$d))
-endef
-
-# Setup compilation for each module
-$(foreach m,$(JAVA_MODULES),$(eval $(call SetupModuleCompilation,$m)))
+# Declare dependencies between java compilations of different modules.
+# Since the other modules are declared in different invocations of this file,
+# use the macro to find the correct target file to depend on.
+# Only the javac compilation actually depends on other modules so limit
+# dependency declaration to that by using the *_COMPILE_TARGET variable.
+$($(MODULE)_COMPILE_TARGETS): $(foreach d, $(call FindDepsForModule, $(MODULE)), \
+    $(call SetupJavaCompilationCompileTarget, $d, $(JDK_OUTPUTDIR)/modules))
 
 ################################################################################
 # Copy zh_HK properties files from zh_TW
@@ -531,15 +527,21 @@ $(foreach m,$(JAVA_MODULES),$(eval $(call SetupModuleCompilation,$m)))
 $(JDK_OUTPUTDIR)/modules/%_zh_HK.properties: $(JDK_OUTPUTDIR)/modules/%_zh_TW.properties
 	$(install-file)
 
-define CreateHkTargets
-  $(patsubst $(JDK_TOPDIR)/src/%, $(JDK_OUTPUTDIR)/modules/%, \
-    $(subst /share/classes,, \
-      $(subst _zh_TW,_zh_HK, $(filter %_zh_TW.properties, $1))))
-endef
+CreateHkTargets = \
+    $(patsubst $(JDK_TOPDIR)/src/%, $(JDK_OUTPUTDIR)/modules, \
+      $(subst /share/classes,, \
+        $(subst _zh_TW,_zh_HK, $(filter %_zh_TW.properties, $1))))
 
-java.sql.rowset: $(call CreateHkTargets, $(java.sql.rowset_CLEAN_FILES))
-java.rmi: $(call CreateHkTargets, $(java.rmi_CLEAN_FILES))
+ifeq ($(MODULE), java.sql.rowset)
+  TARGETS += $(call CreateHkTargets, $(java.sql.rowset_CLEAN_FILES))
+endif
 
-all: $(JAVA_MODULES)
+ifeq ($(MODULE), java.rmi)
+  TARGETS += $(call CreateHkTargets, $(java.rmi_CLEAN_FILES))
+endif
 
-.PHONY: all $(JAVA_MODULES)
+################################################################################
+
+all: $(TARGETS)
+
+.PHONY: all

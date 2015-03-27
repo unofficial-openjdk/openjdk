@@ -2,7 +2,7 @@
 
 <!--
 
-   Copyright (c) 2014 Oracle and/or its affiliates. All rights reserved.
+   Copyright (c) 2015 Oracle and/or its affiliates. All rights reserved.
    DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 
    This code is free software; you can redistribute it and/or modify it
@@ -211,15 +211,23 @@
       <name>jdk.net</name>
     </export>
     <export>
+      <name>jdk.jigsaw.module</name>
+    </export>
+    <export>
       <name>com.sun.security.ntlm</name>
       <to>java.security.sasl</to>
     </export>
     <export>
       <name>jdk.internal.jimage</name>
-      <to>jdk.dev</to> 
+      <to>jdk.jlink</to> 
+    </export>
+    <export>
+      <name>jdk.internal.jimage.decompressor</name>
+      <to>jdk.jlink</to>
     </export>
     <export>
       <name>jdk.internal.org.objectweb.asm</name>
+      <to>jdk.jlink</to>
       <to>jdk.jfr</to>
       <to>jdk.scripting.nashorn</to>
     </export>
@@ -242,6 +250,10 @@
       <to>jdk.scripting.nashorn</to>
     </export>
     <export>
+      <name>jdk.jigsaw.module.internal</name>
+      <to>jdk.jlink</to>
+    </export>
+    <export>
       <name>sun.misc</name>
       <to>java.corba</to>
       <to>java.desktop</to>
@@ -252,6 +264,7 @@
       <to>java.security.jgss</to>
       <to>java.security.sasl</to>
       <to>java.sql</to>
+      <to>java.xml</to>
       <to>jdk.charsets</to>
       <to>jdk.deploy.osx</to>
       <to>jdk.jartool</to>
@@ -901,6 +914,7 @@
   <module>
     <name>java.se</name>
     <depend re-exports="true">java.activation</depend>
+    <depend re-exports="true">java.annotations.common</depend>
     <depend re-exports="true">java.compact3</depend>
     <depend re-exports="true">java.corba</depend>
     <depend re-exports="true">java.datatransfer</depend>
@@ -1130,7 +1144,6 @@
     <depend re-exports="true">java.activation</depend>
     <depend>java.base</depend>
     <depend>java.compiler</depend>
-    <depend>java.datatransfer</depend>
     <depend>java.desktop</depend>
     <depend>java.logging</depend>
     <depend re-exports="true">java.xml</depend>
