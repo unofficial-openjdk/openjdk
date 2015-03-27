@@ -39,6 +39,7 @@
  *                   -XX:SurvivorRatio=1 -XX:-ExplicitGCInvokesConcurrent
  *                   -XX:+UnlockExperimentalVMOptions
  *                   -XX:SurvivorAlignmentInBytes=32
+ *                   -XX:AddModuleExports=java.base/sun.misc
  *                   TestPromotionFromSurvivorToTenuredAfterFullGC 10m 9 TENURED
  * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions
  *                   -XX:+WhiteBoxAPI -XX:NewSize=128m -XX:MaxNewSize=128m
@@ -46,6 +47,7 @@
  *                   -XX:SurvivorRatio=1 -XX:-ExplicitGCInvokesConcurrent
  *                   -XX:+UnlockExperimentalVMOptions
  *                   -XX:SurvivorAlignmentInBytes=32
+ *                   -XX:AddModuleExports=java.base/sun.misc
  *                   TestPromotionFromSurvivorToTenuredAfterFullGC 20m 47
  *                   TENURED
  * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions
@@ -54,6 +56,7 @@
  *                   -XX:SurvivorRatio=1 -XX:-ExplicitGCInvokesConcurrent
  *                   -XX:+UnlockExperimentalVMOptions
  *                   -XX:SurvivorAlignmentInBytes=64
+ *                   -XX:AddModuleExports=java.base/sun.misc
  *                   TestPromotionFromSurvivorToTenuredAfterFullGC 10m 9 TENURED
  * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions
  *                   -XX:+WhiteBoxAPI -XX:NewSize=128m -XX:MaxNewSize=128m
@@ -61,6 +64,7 @@
  *                   -XX:SurvivorRatio=1 -XX:-ExplicitGCInvokesConcurrent
  *                   -XX:+UnlockExperimentalVMOptions
  *                   -XX:SurvivorAlignmentInBytes=64
+ *                   -XX:AddModuleExports=java.base/sun.misc
  *                   TestPromotionFromSurvivorToTenuredAfterFullGC 20m 87
  *                   TENURED
  * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions
@@ -69,6 +73,7 @@
  *                   -XX:SurvivorRatio=1 -XX:-ExplicitGCInvokesConcurrent
  *                   -XX:+UnlockExperimentalVMOptions
  *                   -XX:SurvivorAlignmentInBytes=128
+ *                   -XX:AddModuleExports=java.base/sun.misc
  *                    TestPromotionFromSurvivorToTenuredAfterFullGC 10m 9
  *                    TENURED
  * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions
@@ -77,6 +82,7 @@
  *                   -XX:SurvivorRatio=1 -XX:-ExplicitGCInvokesConcurrent
  *                   -XX:+UnlockExperimentalVMOptions
  *                   -XX:SurvivorAlignmentInBytes=128
+ *                   -XX:AddModuleExports=java.base/sun.misc
  *                   TestPromotionFromSurvivorToTenuredAfterFullGC 20m 147
  *                   TENURED
  */

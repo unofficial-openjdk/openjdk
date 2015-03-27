@@ -31,7 +31,7 @@
  * @modules java.base/sun.misc
  *          java.management
  * @build TestShrinkAuxiliaryData TestShrinkAuxiliaryData15
- * @run driver/timeout=720 TestShrinkAuxiliaryData15
+ * @run main/othervm/timeout=720 -XX:AddModuleExports=java.base/sun.misc TestShrinkAuxiliaryData15
  */
 public class TestShrinkAuxiliaryData15 {
 

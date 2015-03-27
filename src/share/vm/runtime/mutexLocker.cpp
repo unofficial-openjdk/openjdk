@@ -41,6 +41,7 @@
 Mutex*   Patching_lock                = NULL;
 Monitor* SystemDictionary_lock        = NULL;
 Mutex*   PackageTable_lock            = NULL;
+Mutex*   Module_lock                  = NULL;
 Mutex*   CompiledIC_lock              = NULL;
 Mutex*   InlineCacheBuffer_lock       = NULL;
 Mutex*   VMStatistic_lock             = NULL;
@@ -100,6 +101,8 @@ Mutex*   ProfilePrint_lock            = NULL;
 Mutex*   ExceptionCache_lock          = NULL;
 Monitor* ObjAllocPost_lock            = NULL;
 Mutex*   OsrList_lock                 = NULL;
+Mutex*   ImageFileReaderTable_lock    = NULL;
+
 #ifndef PRODUCT
 Mutex*   FullGCALot_lock              = NULL;
 #endif
@@ -217,6 +220,7 @@ void mutex_init() {
 
   def(SystemDictionary_lock        , Monitor, leaf,        true,  Monitor::_safepoint_check_always);     // lookups done by VM thread
   def(PackageTable_lock            , Mutex  , leaf,        false, Monitor::_safepoint_check_always);
+  def(Module_lock                  , Mutex  , nonleaf  ,   true,  Monitor::_safepoint_check_always);
   def(InlineCacheBuffer_lock       , Mutex  , leaf,        true,  Monitor::_safepoint_check_always);
   def(VMStatistic_lock             , Mutex  , leaf,        false, Monitor::_safepoint_check_always);
   def(ExpandHeap_lock              , Mutex  , leaf,        true,  Monitor::_safepoint_check_always);     // Used during compilation by VM thread
@@ -227,6 +231,7 @@ void mutex_init() {
   def(ProfilePrint_lock            , Mutex  , leaf,        false, Monitor::_safepoint_check_always);     // serial profile printing
   def(ExceptionCache_lock          , Mutex  , leaf,        false, Monitor::_safepoint_check_always);     // serial profile printing
   def(OsrList_lock                 , Mutex  , leaf,        true,  Monitor::_safepoint_check_never);
+  def(ImageFileReaderTable_lock    , Mutex  , leaf,        true,  Monitor::_safepoint_check_never);      // synchronize image readers open/close
   def(Debug1_lock                  , Mutex  , leaf,        true,  Monitor::_safepoint_check_never);
 #ifndef PRODUCT
   def(FullGCALot_lock              , Mutex  , leaf,        false, Monitor::_safepoint_check_always);     // a lock to make FullGCALot MT safe

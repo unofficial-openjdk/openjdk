@@ -38,10 +38,10 @@ import com.oracle.java.testlibrary.*;
  *          java.base/sun.misc
  *          java.management
  * @compile -XDignore.symbol.file TestANewArray.java
- * @run main/othervm TestANewArray 49
- * @run main/othervm TestANewArray 50
- * @run main/othervm TestANewArray 51
- * @run main/othervm TestANewArray 52
+ * @run main/othervm -XX:AddModuleExports=java.base/jdk.internal.org.objectweb.asm TestANewArray 49
+ * @run main/othervm -XX:AddModuleExports=java.base/jdk.internal.org.objectweb.asm TestANewArray 50
+ * @run main/othervm -XX:AddModuleExports=java.base/jdk.internal.org.objectweb.asm TestANewArray 51
+ * @run main/othervm -XX:AddModuleExports=java.base/jdk.internal.org.objectweb.asm TestANewArray 52
  */
 
 /*

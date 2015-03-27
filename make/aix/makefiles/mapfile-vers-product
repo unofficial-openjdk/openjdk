@@ -19,7 +19,7 @@
 # Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
 # or visit www.oracle.com if you need additional information or have any
 # questions.
-#  
+#
 #
 
 # Define public interface.
@@ -187,6 +187,26 @@ SUNWprivate_1.1 {
                 JVM_UnloadLibrary;
                 JVM_Yield;
                 JVM_handle_linux_signal;
+
+                # Modules
+                JVM_DefineModule;
+                JVM_AddReadsModule;
+                JVM_AddModuleExports;
+                JVM_CanReadModule;
+                JVM_IsExportedToModule;
+                JVM_AddModulePackage;
+
+                # Images
+                JVM_ImageOpen;
+                JVM_ImageClose;
+                JVM_ImageGetIndexAddress;
+                JVM_ImageGetDataAddress;
+                JVM_ImageRead;
+                JVM_ImageReadCompressed;
+                JVM_ImageGetStringBytes;
+                JVM_ImageGetAttributes;
+                JVM_ImageFindAttributes;
+                JVM_ImageAttributeOffsets;
 
                 # miscellaneous functions
                 jio_fprintf;

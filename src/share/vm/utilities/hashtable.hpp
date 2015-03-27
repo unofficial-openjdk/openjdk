@@ -151,7 +151,7 @@ public:
   void copy_table(char** top, char* end);
 
   // Bucket handling
-  int hash_to_index(unsigned int full_hash) {
+  int hash_to_index(unsigned int full_hash) const {
     int h = full_hash % _table_size;
     assert(h >= 0 && h < _table_size, "Illegal hash value");
     return h;
