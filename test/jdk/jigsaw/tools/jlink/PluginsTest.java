@@ -29,8 +29,10 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
+import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.ProviderNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -195,6 +197,15 @@ public class PluginsTest {
             return;
         }
 
+        FileSystem fs;
+        try {
+            fs = FileSystems.getFileSystem(URI.create("jrt:/"));
+        } catch (ProviderNotFoundException | FileSystemNotFoundException e) {
+            System.out.println("Not an image build, test skipped.");
+            return;
+        }
+        Path javabase = fs.getPath("/modules/java.base");
+
         //Order of plugins
         checkOrder();
 
@@ -222,9 +233,6 @@ public class PluginsTest {
                 true);
         check("/*$*.class", "/java.base/tutu/Toto$Titi.class", true);
         check("*$*.class", "/java.base/tutu/Toto$Titi.class", true);
-
-        FileSystem fs = FileSystems.getFileSystem(URI.create("jrt:/"));
-        Path javabase = fs.getPath("/modules/java.base");
 
         // ZIP
         List<Path> covered = new ArrayList<>();

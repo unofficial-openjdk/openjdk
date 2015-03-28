@@ -29,8 +29,10 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
+import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.ProviderNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
 import jdk.jigsaw.tools.jlink.internal.plugins.asm.AsmModulePool;
@@ -52,11 +54,15 @@ import jdk.jigsaw.tools.jlink.internal.ResourcePoolImpl;
  * @summary Test plugins
  * @author Jean-Francois Denise
  * @library /lib/testlibrary/jlink
- * @modules java.base/jdk.internal.org.objectweb.asm
- * java.base/jdk.internal.jimage.decompressor jdk.jlink/jdk.jigsaw.tools.jmod jdk.jlink/jdk.tools.jimage
- * jdk.jlink/jdk.jigsaw.tools.jlink java.base/jdk.internal.jimage  jdk.compiler/com.sun.tools.classfile
- * jdk.jlink/jdk.jigsaw.tools.jlink.internal.plugins.asm
- * jdk.jlink/jdk.jigsaw.tools.jlink.internal
+ * @modules java.base/jdk.internal.jimage
+ *          java.base/jdk.internal.jimage.decompressor
+ *          java.base/jdk.internal.org.objectweb.asm
+ *          jdk.compiler/com.sun.tools.classfile
+ *          jdk.jlink/jdk.jigsaw.tools.jlink
+ *          jdk.jlink/jdk.jigsaw.tools.jlink.internal
+ *          jdk.jlink/jdk.jigsaw.tools.jlink.internal.plugins.asm
+ *          jdk.jlink/jdk.jigsaw.tools.jmod
+ *          jdk.jlink/jdk.tools.jimage
  * @run build AsmPluginTest
  * @run build tests.*
  * @run main AsmPluginTest
@@ -281,10 +287,16 @@ public class AsmPluginTest {
     }
 
     public static void main(String[] args) throws Exception {
-        checkNull();
-
-        FileSystem fs = FileSystems.getFileSystem(URI.create("jrt:/"));
+        FileSystem fs;
+        try {
+            fs = FileSystems.getFileSystem(URI.create("jrt:/"));
+        } catch (ProviderNotFoundException | FileSystemNotFoundException e) {
+            System.out.println("Not an image build, test skipped.");
+            return;
+        }
         Path root = fs.getPath("/modules");
+
+        checkNull();
 
         List<String> expected = new ArrayList<>();
         List<String> allResources = new ArrayList<>();
