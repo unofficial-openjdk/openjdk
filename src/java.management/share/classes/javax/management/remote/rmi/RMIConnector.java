@@ -108,10 +108,7 @@ import javax.security.auth.Subject;
 import sun.reflect.misc.ReflectUtil;
 import sun.rmi.server.UnicastRef2;
 import sun.rmi.transport.LiveRef;
-
-import jdk.jigsaw.module.ModuleDescriptor;
-import sun.misc.JavaLangReflectAccess;
-import sun.misc.SharedSecrets;
+import sun.misc.Modules;
 
 /**
  * <p>A connection to a remote RMI connector.  Usually, such
@@ -2164,24 +2161,22 @@ public class RMIConnector implements JMXConnector, Serializable, JMXAddressable 
 
                 Module jmxModule = ProxyRef.class.getModule();
                 Module rmiModule = RemoteRef.class.getModule();
-                ModuleDescriptor md = new ModuleDescriptor.Builder("jdk.remoteref").build();
-                JavaLangReflectAccess jlra = SharedSecrets.getJavaLangReflectAccess();
 
                 String pkg = packageOf(pRefClassName);
                 assert pkg != null && pkg.length() > 0 && !pkg.equals(packageOf(proxyRefCName));
-                Module m = jlra.defineModule(cl, md, Collections.singleton(pkg));
+                Module m = Modules.defineModule(cl, "jdk.remoteref", Collections.singleton(pkg));
 
                 // jdk.remoteref needs to read to java.base and jmxModule
-                jlra.addReadsModule(m, Object.class.getModule());
-                jlra.addReadsModule(m, jmxModule);
-                jlra.addReadsModule(m, rmiModule);
+                Modules.addReads(m, Object.class.getModule());
+                Modules.addReads(m, jmxModule);
+                Modules.addReads(m, rmiModule);
 
                 // jdk.remoteref needs access to ProxyRef class
-                jlra.addExports(jmxModule, packageOf(proxyRefCName), m);
+                Modules.addExports(jmxModule, packageOf(proxyRefCName), m);
 
                 // java.management needs to instantiate the fabricated RemoteRef class
-                jlra.addReadsModule(jmxModule, m);
-                jlra.addExports(m, pkg, jmxModule);
+                Modules.addReads(jmxModule, m);
+                Modules.addExports(m, pkg, jmxModule);
 
                 Class<?> c = cl.loadClass(pRefClassName);
                 return c.getConstructor(RemoteRef.class);

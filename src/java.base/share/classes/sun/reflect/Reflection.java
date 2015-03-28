@@ -25,6 +25,7 @@
 
 package sun.reflect;
 
+import sun.misc.Modules;
 import sun.misc.VM;
 
 import java.lang.reflect.*;

@@ -69,8 +69,8 @@ public final class Module {
     private final String name;
     private final ClassLoader loader;
 
-    // module descriptor
-    private final ModuleDescriptor descriptor;
+    // the artifact from where this module was loaded
+    private final ModuleArtifact artifact;
 
     // all packages in the module
     private volatile Set<String> packages;
@@ -93,20 +93,17 @@ public final class Module {
     private Module(ClassLoader loader, String name) {
         this.loader = loader;
         this.name = name;
-        this.descriptor = null;
+        this.artifact = null;
     }
 
     /**
      * Used to create a Module, except for java.base.
      */
-    private Module(ClassLoader loader,
-                   ModuleDescriptor descriptor,
-                   Set<String> packages)
-    {
+    private Module(ClassLoader loader, ModuleArtifact artifact) {
         this.loader = loader;
-        this.name = descriptor.name();
-        this.descriptor = descriptor;
-        this.packages = packages;
+        this.name = artifact.descriptor().name();
+        this.artifact = artifact;
+        this.packages = artifact.packages();
     }
 
     /**
@@ -127,7 +124,7 @@ public final class Module {
      * Returns the module descriptor for this module.
      */
     public ModuleDescriptor getDescriptor() {
-        return descriptor;
+        return artifact.descriptor();
     }
 
     /**
@@ -255,32 +252,29 @@ public final class Module {
      * defined to the VM but will not read any other modules or have any
      * exports. It will also not be registered in the service catalog.
      */
-    static Module defineModule(ClassLoader loader,
-                               ModuleDescriptor descriptor,
-                               Version version,
-                               URI location,
-                               Set<String> packages)
-    {
+    static Module defineModule(ClassLoader loader, ModuleArtifact artifact) {
         Module m;
 
+        Set<String> packages = artifact.packages();
+
         // define module to VM, except java.base as it is defined by VM
-        String name = descriptor.name();
+        String name = artifact.descriptor().name();
         if (loader == null && name.equals("java.base")) {
             m = Object.class.getModule();
 
-            // set descriptor and packages fields
+            // set artifact and packages fields
             try {
                 final Unsafe U = Unsafe.getUnsafe();
                 Class<?> c = Module.class;
-                long address = U.objectFieldOffset(c.getDeclaredField("descriptor"));
-                U.putObject(m, address, descriptor);
+                long address = U.objectFieldOffset(c.getDeclaredField("artifact"));
+                U.putObject(m, address, artifact);
             } catch (Exception e) {
                 throw new Error(e);
             }
             m.packages = packages;
 
         } else {
-            m = new Module(loader, descriptor, packages);
+            m = new Module(loader, artifact);
 
             // define module to VM
 
@@ -291,7 +285,9 @@ public final class Module {
                 array[i++] = pkg.replace('.', '/');
             }
 
+            Version version = artifact.descriptor().id().version();
             String vs = (version != null) ? version.toString() : null;
+            URI location = artifact.location();
             String uris = (location != null) ? location.toString() : null;
 
             jvmDefineModule(m, vs, uris, array);
@@ -318,12 +314,7 @@ public final class Module {
             ModuleArtifact artifact = cf.findArtifact(name);
             ClassLoader loader = clf.loaderForModule(artifact);
 
-            Version version = artifact.descriptor().id().version();
-            Module m =  defineModule(loader,
-                                     artifact.descriptor(),
-                                     version,
-                                     artifact.location(),
-                                     artifact.packages());
+            Module m = defineModule(loader, artifact);
             modules.put(name, m);
             loaders.put(name, loader);
         }
@@ -605,19 +596,16 @@ public final class Module {
         SharedSecrets.setJavaLangReflectAccess(
             new JavaLangReflectAccess() {
                 @Override
-                public Map<String, Module> defineModules(Configuration cf,
-                                                         ClassLoaderFinder clf) {
+                public Module defineModule(ClassLoader loader, ModuleArtifact artifact) {
+                   return Module.defineModule(loader, artifact);
+                }
+                @Override
+                public Map<String, Module> defineModules(Configuration cf, ClassLoaderFinder clf) {
                     return Module.defineModules(cf, clf);
                 }
                 @Override
                 public boolean isExported(Module m, String pkg, Module who) {
                     return m.isExported(pkg, who);
-                }
-                @Override
-                public Module defineModule(ClassLoader loader,
-                                           ModuleDescriptor descriptor,
-                                           Set<String> packages) {
-                    return Module.defineModule(loader, descriptor, null, null, packages);
                 }
                 @Override
                 public void addPackage(Module m, String pkg) {

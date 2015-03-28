@@ -22,13 +22,15 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package sun.reflect;
+package sun.misc;
 
 import java.lang.reflect.Module;
+import java.net.URI;
 import java.util.Set;
 
+import jdk.jigsaw.module.ExtendedModuleDescriptor;
+import jdk.jigsaw.module.ModuleArtifact;
 import sun.misc.SharedSecrets;
-import jdk.jigsaw.module.ModuleDescriptor;
 
 /**
  * A helper class to allow JDK classes (and internal tests) to easily create
@@ -43,17 +45,16 @@ public class Modules {
     private Modules() { }
 
     /**
-     * Creates a new module.
-     *
-     * @param loader the class loader to define the module to
-     * @param descriptor the module descriptor
-     * @param packages the set of packages (contents)
+     * Define a new module of the given name to be associated with the
+     * given class loader.
      */
-    public static Module newModule(ClassLoader loader,
-                                   ModuleDescriptor descriptor,
-                                   Set<String> packages) {
-        return SharedSecrets.getJavaLangReflectAccess()
-                .defineModule(loader, descriptor, packages);
+    public static Module defineModule(ClassLoader loader, String name,
+                                      Set<String> packages) {
+        ExtendedModuleDescriptor descriptor =
+            new ExtendedModuleDescriptor.Builder(name).build();
+        URI uri = URI.create("module:/" + name);
+        ModuleArtifact artifact = new ModuleArtifact(descriptor, packages, uri);
+        return SharedSecrets.getJavaLangReflectAccess().defineModule(loader, artifact);
     }
 
     /**

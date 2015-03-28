@@ -27,17 +27,22 @@ package sun.misc;
 
 import java.lang.reflect.Module;
 import java.util.Map;
-import java.util.Set;
 
 import jdk.jigsaw.module.Configuration;
 import jdk.jigsaw.module.Layer.ClassLoaderFinder;
-import jdk.jigsaw.module.ModuleDescriptor;
+import jdk.jigsaw.module.ModuleArtifact;
 
 /**
  * Provides access to package-private modules in java.lang.reflect.
  */
 
 public interface JavaLangReflectAccess {
+
+    /**
+     * Defines a new module to the Java virtual machine. The module
+     * is defined to the given class loader.
+     */
+    Module defineModule(ClassLoader loader, ModuleArtifact artifact);
 
     /**
      * Defines the modules in the given {@code Configuration} to the Java
@@ -51,14 +56,6 @@ public interface JavaLangReflectAccess {
      * This method is used by sun.misc.Reflection.verifyModuleAccess.
      */
     boolean isExported(Module m1, String pkg, Module m2);
-
-    /**
-     * Defines a new module in the Java virtual machine. The module is
-     * associated with the given class loader.
-     */
-    Module defineModule(ClassLoader loader,
-                        ModuleDescriptor descriptor,
-                        Set<String> packages);
 
     /**
      * Add a package to the given module.
