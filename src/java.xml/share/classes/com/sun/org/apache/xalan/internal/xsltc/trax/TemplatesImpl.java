@@ -50,9 +50,7 @@ import com.sun.org.apache.xalan.internal.xsltc.runtime.Hashtable;
 import com.sun.org.apache.xalan.internal.utils.ObjectFactory;
 import com.sun.org.apache.xalan.internal.utils.SecuritySupport;
 
-import jdk.jigsaw.module.ModuleDescriptor;
-import sun.misc.JavaLangReflectAccess;
-import sun.misc.SharedSecrets;
+import sun.misc.Modules;
 
 /**
  * @author Morten Jorgensen
@@ -353,26 +351,24 @@ public final class TemplatesImpl implements Templates, Serializable {
             // create a module for the translet
             Module xmlModule = TemplatesImpl.class.getModule();
             if (xmlModule != null) {
-                JavaLangReflectAccess jlra = SharedSecrets.getJavaLangReflectAccess();
-
-                ModuleDescriptor md = new ModuleDescriptor.Builder("jdk.translet").build();
-
                 String pkg = _tfactory.getPackageName();
                 assert pkg != null && pkg.length() > 0;
-                Module m = jlra.defineModule(loader, md, Collections.singleton(pkg));
+
+                Module m = Modules.defineModule(loader, "jdk.translet",
+                                                Collections.singleton(pkg));
 
                 // jdk.translate reads java.base && java.xml
-                jlra.addReadsModule(m, Object.class.getModule());
-                jlra.addReadsModule(m, xmlModule);
+                Modules.addReads(m, Object.class.getModule());
+                Modules.addReads(m, xmlModule);
 
                 // jdk.translet needs access to runtime classes
                 Arrays.asList(Constants.PKGS_USED_BY_TRANSLET_CLASSES).forEach(p -> {
-                    jlra.addExports(xmlModule, p, m);
+                    Modules.addExports(xmlModule, p, m);
                 });
 
                 // java.xml needs to instanitate the translate class
-                jlra.addReadsModule(xmlModule, m);
-                jlra.addExports(m, pkg, xmlModule);
+                Modules.addReads(xmlModule, m);
+                Modules.addExports(m, pkg, xmlModule);
             }
 
             for (int i = 0; i < classCount; i++) {
