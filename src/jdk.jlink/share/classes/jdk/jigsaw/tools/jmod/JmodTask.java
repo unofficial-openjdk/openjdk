@@ -606,22 +606,23 @@ class JmodTask {
                     if (!file.getFileName().toString().equals(MODULE_INFO)) {
                         Path relPath = top.relativize(file);
                         String prefix = section.jmodDir();
-                        byte[] data = Files.readAllBytes(file);
-                        writeZipEntry(zos, data, prefix, relPath.toString());
+                        try (InputStream in = Files.newInputStream(file)) {
+                            writeZipEntry(zos, in, prefix, relPath.toString());
+                        }
                     }
                     return FileVisitResult.CONTINUE;
                 }
             });
         }
 
-        void writeZipEntry(ZipOutputStream zos, byte[] data, String prefix, String other)
+        void writeZipEntry(ZipOutputStream zos, InputStream in, String prefix, String other)
             throws IOException
         {
             String name = Paths.get(prefix, other).toString()
                                .replace(File.separatorChar, '/');
             ZipEntry ze = new ZipEntry(name);
             zos.putNextEntry(ze);
-            zos.write(data, 0, data.length);
+            in.transferTo(zos);
             zos.closeEntry();
         }
 
@@ -634,12 +635,8 @@ class JmodTask {
             }
             @Override
             public void accept(JarEntry je) {
-                try (InputStream in = jarfile.getInputStream(je);
-                     DataInputStream din = new DataInputStream(in)) {
-                    int size = (int)je.getSize();
-                    byte[] data = new byte[size];
-                    din.readFully(data);
-                    writeZipEntry(zos, data, Section.CLASSES.jmodDir(), je.getName());
+                try (InputStream in = jarfile.getInputStream(je)) {
+                    writeZipEntry(zos, in, Section.CLASSES.jmodDir(), je.getName());
                 } catch (IOException e) {
                     throw new UncheckedIOException(e);
                 }
