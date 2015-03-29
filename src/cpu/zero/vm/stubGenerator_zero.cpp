@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2003, 2013, Oracle and/or its affiliates. All rights reserved.
- * Copyright 2007, 2008, 2010 Red Hat, Inc.
+ * Copyright (c) 2003, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright 2007, 2008, 2010, 2015 Red Hat, Inc.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -176,6 +176,7 @@ class StubGenerator: public StubCodeGenerator {
       StubRoutines::_oop_arraycopy;
   }
 
+  // NYI: SafeFetch for Zero isn't actually safe.
   static int SafeFetch32(int *adr, int errValue) {
     int value = errValue;
     value = *adr;
@@ -187,7 +188,6 @@ class StubGenerator: public StubCodeGenerator {
     value = *adr;
     return value;
   }
-
 
   void generate_initial() {
     // Generates all stubs and initializes the entry points
