@@ -685,7 +685,7 @@ public abstract class ClassLoader {
     Package ensureDefinePackage(String pn) {
         Package pkg = packages.get(pn);
         if (pkg == null) {
-            packages.put(pn, pkg = definePackage(pn, null, null, null, null, null, null, null));
+            packages.put(pn, pkg = definePackage0(pn, null, null, null, null, null, null, null));
         }
         return pkg;
     }
@@ -1601,6 +1601,16 @@ public abstract class ClassLoader {
                                     String specVersion, String specVendor,
                                     String implTitle, String implVersion,
                                     String implVendor, URL sealBase)
+    {
+        return definePackage0(name, specTitle, specVersion, specVendor,
+                              implTitle, implVersion, implVendor, sealBase);
+    }
+
+    // definePackage is not final and may be overridden by custom class loader
+    private final Package definePackage0(String name, String specTitle,
+                                         String specVersion, String specVendor,
+                                         String implTitle, String implVersion,
+                                         String implVendor, URL sealBase)
     {
         Package pkg = packages.get(name);
         if (pkg != null) {
