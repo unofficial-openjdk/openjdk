@@ -24,6 +24,7 @@
 /*
  * @test
  * @library /testlibrary
+ * @modules java.base/sun.misc
  * @run main XoverrideCDS
  */
 

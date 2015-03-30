@@ -24,6 +24,7 @@
 /*
  * @test
  * @library /testlibrary  /../../test/lib /compiler/whitebox ..
+ * @modules java.base/sun.misc
  * @build JVMDefineModule
  * @run main ClassFileInstaller sun.hotspot.WhiteBox
  *                              sun.hotspot.WhiteBox$WhiteBoxPermission
@@ -57,7 +58,7 @@ Invalid test case: ModuleObject() throws IAE
 */
 
         // NULL package argument, should not throw an exception
-        m = ModuleHelper.ModuleObject("mymodule2", cl, null);
+        m = ModuleHelper.ModuleObject("mymodule2", cl, new String[] { "nullpkg" });
         assertNotNull(m, "Module should not be null");
         ModuleHelper.DefineModule(m, "9.0", "mymodule2/here", null);
 
@@ -139,8 +140,8 @@ Invalid test case: ModuleObject() throws NPE
         }
 
         // Empty module name, expect an IAE
-        m = ModuleHelper.ModuleObject("", cl, new String[] { "mypackage8" });
         try {
+            m = ModuleHelper.ModuleObject("", cl, new String[] { "mypackage8" });
             ModuleHelper.DefineModule(m, "9.0", "module.name/here", new String[] { "mypackage8" });
             throw new RuntimeException("Failed to get expected IAE for empty module name");
         } catch(IllegalArgumentException e) {
@@ -148,8 +149,8 @@ Invalid test case: ModuleObject() throws NPE
         }
 
         // Bad module name, expect an IAE
-        m = ModuleHelper.ModuleObject("bad;name", cl, new String[] { "mypackage9" });
         try {
+            m = ModuleHelper.ModuleObject("bad;name", cl, new String[] { "mypackage9" });
             ModuleHelper.DefineModule(m, "9.0", "module.name/here", new String[] { "mypackage9" });
             throw new RuntimeException("Failed to get expected IAE for bad;name");
         } catch(IllegalArgumentException e) {
@@ -157,8 +158,8 @@ Invalid test case: ModuleObject() throws NPE
         }
 
         // Bad module name, expect an IAE
-        m = ModuleHelper.ModuleObject(".leadingdot", cl, new String[] { "mypackage9a" });
         try {
+            m = ModuleHelper.ModuleObject(".leadingdot", cl, new String[] { "mypackage9a" });
             ModuleHelper.DefineModule(m, "9.0", "module.name/here", new String[] { "mypackage9a" });
             throw new RuntimeException("Failed to get expected IAE for .leadingdot");
         } catch(IllegalArgumentException e) {

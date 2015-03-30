@@ -25,6 +25,7 @@
  * @test
  * @summary Ensure module information is cleaned when owning class loader unloads
  * @library /testlibrary /../../test/lib /compiler/whitebox ..
+ * @modules java.base/sun.misc
  * @build LoadUnloadModuleStress
  * @run main ClassFileInstaller sun.hotspot.WhiteBox
  *                              sun.hotspot.WhiteBox$WhiteBoxPermission

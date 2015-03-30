@@ -22,18 +22,21 @@
  */
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Module;
+import java.net.URI;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Module;
 import java.util.*;
-import jdk.jigsaw.module.ModuleDescriptor;
+import jdk.jigsaw.module.ExtendedModuleDescriptor;
+import jdk.jigsaw.module.ModuleArtifact;
 import com.oracle.java.testlibrary.*;
 import sun.hotspot.WhiteBox;
 
 public class ModuleHelper {
 
     public static void DefineModule(Object module, String version, String location,
-                                      String[] pkgs) throws Throwable {
+                                    String[] pkgs) throws Throwable {
         WhiteBox wb = WhiteBox.getWhiteBox();
         wb.DefineModule(module, version, location, pkgs);
     }
@@ -67,14 +70,7 @@ public class ModuleHelper {
         return wb.IsExportedToModule(from, pkg, to);
     }
 
-    public static Module ModuleObject(String name, Object loader, String[] pkgs) throws Throwable {
-        ModuleDescriptor descriptor = new ModuleDescriptor.Builder(name).build();
-        Class[] cArg = new Class[3];
-        cArg[0] = java.lang.ClassLoader.class;
-        cArg[1] = jdk.jigsaw.module.ModuleDescriptor.class;
-        cArg[2] = java.util.Set.class;
-        Constructor ctor = findCtor(cArg);
-
+    public static Module ModuleObject(String name, ClassLoader loader, String[] pkgs) throws Throwable {
         java.util.Set<java.lang.String> pkg_set = new HashSet<java.lang.String>();
         if (pkgs != null) {
             for (String pkg: pkgs) {
@@ -83,7 +79,16 @@ public class ModuleHelper {
         } else {
             pkg_set = null;
         }
-        return (Module)invokeCtor(ctor, loader, descriptor, pkg_set);
+        ExtendedModuleDescriptor descriptor =
+            new ExtendedModuleDescriptor.Builder(name).build();
+        URI uri = URI.create("module:/" + name);
+        ModuleArtifact artifact = new ModuleArtifact(descriptor, pkg_set, uri);
+
+        Class[] cArg = new Class[2];
+        cArg[0] = java.lang.ClassLoader.class;
+        cArg[1] = jdk.jigsaw.module.ModuleArtifact.class;
+        Constructor ctor = findCtor(cArg);
+        return (Module)invokeCtor(ctor, loader, artifact);
     }
 
     private static Object invokeCtor(Constructor c, Object... args) throws Throwable {
