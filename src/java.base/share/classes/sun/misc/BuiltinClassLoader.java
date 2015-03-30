@@ -27,7 +27,6 @@ package sun.misc;
 import java.io.File;
 import java.io.FilePermission;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.ByteBuffer;
@@ -435,24 +434,16 @@ class BuiltinClassLoader
             String rn = cn.replace('.', '/').concat(".class");
             ByteBuffer bb = reader.readResource(rn);
             try {
-
-                // define package if not already defined
+                // define a package in the named module
                 int pos = cn.lastIndexOf('.');
                 String pn = cn.substring(0, pos);
-                Package p = getPackage(pn);
-                if (p == null) {
-                    try {
-                        definePackage(pn, null, null, null, null, null, null, null);
-                    } catch (IllegalArgumentException iae) {
-                        // someone else beat us to it
-                    }
+                if (getPackage(pn) == null) {
+                    definePackage(pn, artifact);
                 }
-
                 // define class to VM
                 URL url = artifact.location().toURL();
                 CodeSource cs = new CodeSource(url, (CodeSigner[]) null);
                 return defineClass(cn, bb, cs);
-
             } finally {
                 reader.releaseBuffer(bb);
             }
@@ -461,6 +452,32 @@ class BuiltinClassLoader
             // TBD on how I/O errors should be propagated
             return null;
         }
+    }
+
+    private Package definePackage(String pn, ModuleArtifact artifact) {
+        URL url = null;
+        try {
+            if (artifact != null) {
+                url = artifact.location().toURL();
+            }
+        } catch (MalformedURLException e) {
+            throw new InternalError(e);
+        }
+        return definePackage(pn, null, null, null, null, null, null, url);
+    }
+
+    // package-private
+
+    /**
+     * Define a Package object that may be in a named module or unnamed module
+     * @param pn package name
+     */
+    Package definePackageIfAbsent(String pn) {
+        Package pkg = getPackage(pn);
+        if (pkg != null) {
+            return pkg;
+        }
+        return definePackage(pn, packageToArtifact.get(pn));
     }
 
     /**
@@ -565,39 +582,40 @@ class BuiltinClassLoader
         String sealed = null;
         URL sealBase = null;
 
-        Attributes attr = man.getAttributes(pn.replace('.', '/').concat("/"));
-        if (attr != null) {
-            specTitle   = attr.getValue(Attributes.Name.SPECIFICATION_TITLE);
-            specVersion = attr.getValue(Attributes.Name.SPECIFICATION_VERSION);
-            specVendor  = attr.getValue(Attributes.Name.SPECIFICATION_VENDOR);
-            implTitle   = attr.getValue(Attributes.Name.IMPLEMENTATION_TITLE);
-            implVersion = attr.getValue(Attributes.Name.IMPLEMENTATION_VERSION);
-            implVendor  = attr.getValue(Attributes.Name.IMPLEMENTATION_VENDOR);
-            sealed      = attr.getValue(Attributes.Name.SEALED);
-        }
-
-        attr = man.getMainAttributes();
-        if (attr != null) {
-            if (specTitle == null)
+        if (man != null) {
+            Attributes attr = man.getAttributes(pn.replace('.', '/').concat("/"));
+            if (attr != null) {
                 specTitle = attr.getValue(Attributes.Name.SPECIFICATION_TITLE);
-            if (specVersion == null)
                 specVersion = attr.getValue(Attributes.Name.SPECIFICATION_VERSION);
-            if (specVendor == null)
                 specVendor = attr.getValue(Attributes.Name.SPECIFICATION_VENDOR);
-            if (implTitle == null)
                 implTitle = attr.getValue(Attributes.Name.IMPLEMENTATION_TITLE);
-            if (implVersion == null)
                 implVersion = attr.getValue(Attributes.Name.IMPLEMENTATION_VERSION);
-            if (implVendor == null)
                 implVendor = attr.getValue(Attributes.Name.IMPLEMENTATION_VENDOR);
-            if (sealed == null)
                 sealed = attr.getValue(Attributes.Name.SEALED);
+            }
+
+            attr = man.getMainAttributes();
+            if (attr != null) {
+                if (specTitle == null)
+                    specTitle = attr.getValue(Attributes.Name.SPECIFICATION_TITLE);
+                if (specVersion == null)
+                    specVersion = attr.getValue(Attributes.Name.SPECIFICATION_VERSION);
+                if (specVendor == null)
+                    specVendor = attr.getValue(Attributes.Name.SPECIFICATION_VENDOR);
+                if (implTitle == null)
+                    implTitle = attr.getValue(Attributes.Name.IMPLEMENTATION_TITLE);
+                if (implVersion == null)
+                    implVersion = attr.getValue(Attributes.Name.IMPLEMENTATION_VERSION);
+                if (implVendor == null)
+                    implVendor = attr.getValue(Attributes.Name.IMPLEMENTATION_VENDOR);
+                if (sealed == null)
+                    sealed = attr.getValue(Attributes.Name.SEALED);
+            }
+
+            // package is sealed
+            if ("true".equalsIgnoreCase(sealed))
+                sealBase = url;
         }
-
-        // package is sealed
-        if ("true".equalsIgnoreCase(sealed))
-            sealBase = url;
-
         return definePackage(pn,
                              specTitle,
                              specVersion,

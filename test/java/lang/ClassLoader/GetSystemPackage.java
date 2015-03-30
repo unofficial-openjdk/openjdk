@@ -130,7 +130,7 @@ public class GetSystemPackage {
     private static void verifyPackage(boolean hasManifest,
             boolean isSystemPackage) throws Exception
     {
-        Class c = Class.forName("package2.Class2");
+        Class<?> c = Class.forName("package2.Class2");
         Package pkg = c.getPackage();
         if (pkg == null || pkg != Package.getPackage("package2") ||
                 !"package2".equals(pkg.getName())) {
@@ -144,18 +144,19 @@ public class GetSystemPackage {
 
         if (hasManifest && (specificationTitle == null
                 || !manifestTitle.equals(specificationTitle))) {
-            fail("Invalid manifest for package " + pkg.getName());
+            if (!isSystemPackage) {
+                fail("Invalid manifest for package " + pkg.getName());
+            }
         }
         if (!hasManifest && specificationTitle != null) {
-            fail("Invalid manifest for package " + pkg.getName() + ": was " +
-                 specificationTitle + " expected: null");
+            if (!isSystemPackage) {
+                fail("Invalid manifest for package " + pkg.getName() + ": was " +
+                     specificationTitle + " expected: null");
+            }
         }
 
-        // force the use of a classloader with no parent, then retrieve the
-        // package in a way that bypasses the classloader pkg maps
-        GetSystemPackageClassLoader classLoader =
-                new GetSystemPackageClassLoader();
-        Package systemPkg = classLoader.getSystemPackage("package2");
+        ClassLoader ld = c.getClassLoader();
+        Package systemPkg = ld != null ? null : Package.getPackage("package2");
 
         if (findPackage("java.lang") == null) {
             fail("java.lang not found via Package.getPackages()");
@@ -191,21 +192,6 @@ public class GetSystemPackage {
 
     private static void fail(String message) {
         throw new RuntimeException(message);
-    }
-}
-
-/*
- * This classloader bypasses the system classloader to give as direct access
- * to Package.getSystemPackage() as possible
- */
-class GetSystemPackageClassLoader extends ClassLoader {
-
-    public GetSystemPackageClassLoader() {
-        super(null);
-    }
-
-    public Package getSystemPackage(String name) {
-        return super.getPackage(name);
     }
 }
 

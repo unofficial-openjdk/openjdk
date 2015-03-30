@@ -26,16 +26,19 @@ package sun.misc;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.Enumeration;
+import java.util.stream.Stream;
 
 import jdk.jigsaw.module.ModuleArtifact;
 
 /**
- * Find resources in modules defined to the boot class loader or resources
- * on the "boot class path" specified via -Xbootclasspath/a.
+ * Find resources and packages in modules defined to the boot class loader
+ * or resources and packages on the "boot class path" specified via -Xbootclasspath/a.
  */
 public class BootLoader {
-    private BootLoader() { }
+    private BootLoader() {
+    }
 
     // ServiceCatalog for the boot class loader
     private static final ServicesCatalog SERVICES_CATALOG = new ServicesCatalog();
@@ -68,4 +71,30 @@ public class BootLoader {
     public static ServicesCatalog getServicesCatalog() {
         return SERVICES_CATALOG;
     }
+
+    /**
+     * Returns the Package of the given name defined by the boot loader;
+     * or null if not exists.
+     */
+    public static Package getPackage(String pn) {
+        String location = getSystemPackageLocation(pn.replace('.', '/').concat("/"));
+        if (location == null) {
+            return null;
+        }
+        return ClassLoaders.bootLoader().definePackageIfAbsent(pn);
+    }
+
+    /**
+     * Returns all Packages defined by the boot loader.
+     */
+    public static Stream<Package> getPackageStream() {
+        return Arrays.stream(getSystemPackageNames())
+            .map(name -> {
+                String pn = name.substring(0, name.length() - 1).replace('/', '.');
+                return ClassLoaders.bootLoader().definePackageIfAbsent(pn);
+            });
+    }
+
+    private static native String getSystemPackageLocation(String name);
+    private static native String[] getSystemPackageNames();
 }

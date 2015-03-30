@@ -163,8 +163,6 @@ SUNWprivate_1.1 {
 		Java_java_lang_StrictMath_expm1;
 		Java_java_lang_Object_getClass;
 		Java_java_lang_Object_registerNatives;
-		Java_java_lang_Package_getSystemPackage0;
-		Java_java_lang_Package_getSystemPackages0;
 		Java_java_lang_ProcessEnvironment_environ;
 		Java_java_lang_reflect_Array_get;
 		Java_java_lang_reflect_Array_getBoolean;
@@ -292,6 +290,9 @@ SUNWprivate_1.1 {
                 # for testing performance of access checks in VM
                 Java_sun_reflect_Reflection_jvmCanReadModule;
                 Java_sun_reflect_Reflection_jvmIsExportedToModule;
+
+		Java_sun_misc_BootLoader_getSystemPackageLocation;
+		Java_sun_misc_BootLoader_getSystemPackageNames;
 
 		Java_sun_misc_VMSupport_initAgentProperties;
 		Java_sun_misc_VMSupport_getVMTemporaryDirectory;

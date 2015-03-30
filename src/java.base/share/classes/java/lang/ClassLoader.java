@@ -28,27 +28,26 @@ import java.io.InputStream;
 import java.io.IOException;
 import java.io.File;
 import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.security.AccessController;
 import java.security.AccessControlContext;
 import java.security.CodeSource;
 import java.security.PrivilegedAction;
-import java.security.PrivilegedActionException;
-import java.security.PrivilegedExceptionAction;
 import java.security.ProtectionDomain;
 import java.security.cert.Certificate;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Hashtable;
+import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
-import java.util.Map;
 import java.util.Vector;
-import java.util.Hashtable;
 import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Stream;
 
 import sun.misc.BootLoader;
 import sun.misc.ClassLoaders;
@@ -597,6 +596,11 @@ public abstract class ClassLoader {
      * java.security.ProtectionDomain) <tt>defineClass</tt>} method that takes a
      * <tt>ProtectionDomain</tt> as one of its arguments.  </p>
      *
+     * <p>
+     * If a {@code Package} object for the {@code Class} is not defined,
+     * this class loader will first define a {@code Package} object with the
+     * package name and with no other information about this package.
+     *
      * @param  name
      *         The expected <a href="#name">binary name</a> of the class, or
      *         <tt>null</tt> if not known
@@ -646,6 +650,7 @@ public abstract class ClassLoader {
         - not define java.* class,
         - signer of this class matches signers for the rest of the classes in
           package.
+        - define a package if not present
     */
     private ProtectionDomain preDefineClass(String name,
                                             ProtectionDomain pd)
@@ -664,7 +669,25 @@ public abstract class ClassLoader {
 
         if (name != null) checkCerts(name, pd.getCodeSource());
 
+        ensureDefinePackage(packageName(name));
+
         return pd;
+    }
+
+    private String packageName(String cn) {
+        int i = cn.lastIndexOf('.');
+        return i > 0 ? cn.substring(0, i) : "";
+    }
+
+    /*
+     * Define a Package of the given name if not present.
+     */
+    Package ensureDefinePackage(String pn) {
+        Package pkg = packages.get(pn);
+        if (pkg == null) {
+            packages.put(pn, pkg = definePackage(pn, null, null, null, null, null, null, null));
+        }
+        return pkg;
     }
 
     private String defineClassSourceLocation(ProtectionDomain pd)
@@ -711,6 +734,11 @@ public abstract class ClassLoader {
      * must be equal to the <a href="#name">binary name</a> of the class
      * specified by the byte array "<tt>b</tt>", otherwise a {@link
      * NoClassDefFoundError <tt>NoClassDefFoundError</tt>} will be thrown. </p>
+     *
+     * <p>
+     * If a {@code Package} object for the {@code Class} is not defined,
+     * this class loader will first define a {@code Package} object with the
+     * package name and with no other information about this package.
      *
      * @param  name
      *         The expected <a href="#name">binary name</a> of the class, or
@@ -790,6 +818,11 @@ public abstract class ClassLoader {
      * cl.defineClass}(name, temp, 0,
      * temp.length, pd);<br>
      * </tt></p>
+     *
+     * <p>
+     * If a {@code Package} object for the {@code Class} is not defined,
+     * this class loader will first define a {@code Package} object with the
+     * package name and with no other information about this package.
      *
      * @param  name
      *         The expected <a href="#name">binary name</a>. of the class, or
@@ -1522,11 +1555,13 @@ public abstract class ClassLoader {
     // -- Package --
 
     /**
-     * Defines a package by name in this <tt>ClassLoader</tt>.  This allows
-     * class loaders to define the packages for their classes. Packages must
-     * be created before the class is defined, and package names must be
-     * unique within a class loader and cannot be redefined or changed once
-     * created.
+     * Defines a package by name in this {@code ClassLoader}.
+     * Packages must be created before the class is defined for a {@code Package}
+     * to contain the version information about its specification and
+     * implementation and sealBase; otherwise the {@code defineClass}
+     * method will call this method with the name but no other information.
+     * Package names must be unique within a class loader and cannot be redefined
+     * or changed once created.
      *
      * @param  name
      *         The package name
@@ -1557,8 +1592,8 @@ public abstract class ClassLoader {
      * @return  The newly defined <tt>Package</tt> object
      *
      * @throws  IllegalArgumentException
-     *          If package name duplicates an existing package either in this
-     *          class loader or one of its ancestors
+     *          if package name duplicates an existing package defined by
+     *          this class loader
      *
      * @since  1.2
      */
@@ -1566,9 +1601,8 @@ public abstract class ClassLoader {
                                     String specVersion, String specVendor,
                                     String implTitle, String implVersion,
                                     String implVendor, URL sealBase)
-        throws IllegalArgumentException
     {
-        Package pkg = getPackage(name);
+        Package pkg = packages.get(name);
         if (pkg != null) {
             throw new IllegalArgumentException(name);
         }
@@ -1582,54 +1616,58 @@ public abstract class ClassLoader {
     }
 
     /**
-     * Returns a <tt>Package</tt> that has been defined by this class loader
-     * or any of its ancestors.
+     * Returns a {@code Package} that has been defined by this class loader.
      *
      * @param  name
      *         The package name
      *
-     * @return  The <tt>Package</tt> corresponding to the given name, or
-     *          <tt>null</tt> if not found
+     * @return  The {@code Package} corresponding to the given name, or
+     *          {@code null} if not found
      *
      * @since  1.2
      */
     protected Package getPackage(String name) {
-        Package pkg = packages.get(name);
-        if (pkg == null) {
-            if (parent != null) {
-                pkg = parent.getPackage(name);
-            } else {
-                pkg = Package.getSystemPackage(name);
-            }
-        }
-        return pkg;
+        return packages.get(name);
     }
 
     /**
-     * Returns all of the <tt>Packages</tt> defined by this class loader and
-     * its ancestors.
+     * Returns all of the {@code Package}s defined by this class loader.
      *
-     * @return  The array of <tt>Package</tt> objects defined by this
-     *          <tt>ClassLoader</tt>
+     * @return  The array of {@code Package} objects defined by this
+     *          {@code ClassLoader}
      *
      * @since  1.2
      */
     protected Package[] getPackages() {
-        Package[] pkgs;
-        if (parent != null) {
-            pkgs = parent.getPackages();
-        } else {
-            pkgs = Package.getSystemPackages();
+        if (packages.values().isEmpty()) {
+            return new Package[0];
         }
+        return packages.values().stream()
+                       .toArray(Package[]::new);
+    }
 
-        Map<String, Package> map = packages;
-        if (pkgs != null) {
-            map = new HashMap<>(packages);
-            for (Package pkg : pkgs) {
-                map.putIfAbsent(pkg.getName(), pkg);
+    // package-private
+
+    Stream<Package> packagesFromAncestors() {
+        Stream<Package> pkgs = packages.values().stream();
+        ClassLoader ld = parent;
+        while (ld != null) {
+            pkgs = Stream.concat(packages.values().stream(), pkgs);
+            ld = ld.parent;
+        }
+        return Stream.concat(BootLoader.getPackageStream(), pkgs);
+    }
+
+    Package findPackageFromAncestors(String name) {
+        Package pkg = getPackage(name);
+        if (pkg == null) {
+            if (parent != null) {
+                pkg = parent.findPackageFromAncestors(name);
+            } else {
+                pkg = BootLoader.getPackage(name);
             }
         }
-        return map.values().toArray(new Package[map.size()]);
+        return pkg;
     }
 
     // -- Native library access --

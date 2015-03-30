@@ -827,22 +827,32 @@ public final class Class<T> implements java.io.Serializable,
     }
 
     /**
-     * Gets the package for this class.  The class loader of this class is used
-     * to find the package.  If the class was loaded by the bootstrap class
-     * loader the set of packages loaded from CLASSPATH is searched to find the
-     * package of the class. Null is returned if no package object was created
-     * by the class loader of this class.
+     * Gets the package for this class.  If this class is in unnamed package,
+     * {@code null} will be returned.
      *
-     * <p> Packages have attributes for versions and specifications only if the
+     * <p>Packages have attributes for versions and specifications only if the
      * information was defined in the manifests that accompany the classes, and
      * if the class loader created the package instance with the attributes
      * from the manifest.
      *
-     * @return the package of the class, or null if no package
-     *         information is available from the archive or codebase.
+     * @return the package of this class, or {@code null} if this class is in
+     *         unnamed package
      */
     public Package getPackage() {
-        return Package.getPackage(this);
+        String n = getName();
+        int i = n.lastIndexOf('.');
+        if (i == -1) {
+            // unnamed package
+            return null;
+        }
+        ClassLoader cl = getClassLoader0();
+        String pn = n.substring(0, i);
+        if (cl != null) {
+            return cl.ensureDefinePackage(pn);
+        } else {
+            // BootLoader.getPackage defines the system package, if exists
+            return sun.misc.BootLoader.getPackage(pn);
+        }
     }
 
 
