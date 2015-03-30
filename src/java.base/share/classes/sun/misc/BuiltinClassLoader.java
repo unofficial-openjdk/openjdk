@@ -449,7 +449,7 @@ class BuiltinClassLoader
                 }
 
                 // define class to VM
-                URL url = reader.codeBase();
+                URL url = artifact.location().toURL();
                 CodeSource cs = new CodeSource(url, (CodeSigner[]) null);
                 return defineClass(cn, bb, cs);
 
@@ -712,10 +712,6 @@ class BuiltinClassLoader
         public ByteBuffer readResource(String name) {
             throw new InternalError("Should not get here");
         }
-        @Override
-        public URL codeBase() {
-            throw new InternalError("Should not get here");
-        }
     };
 
     /**
@@ -724,12 +720,10 @@ class BuiltinClassLoader
     private static class ImageModuleReader implements ModuleReader {
         private final String module;
         private final ImageReader imageReader;
-        private final URL codeBase;
 
         ImageModuleReader(String module, ImageReader imageReader) {
             this.imageReader = imageReader;
             this.module = module;
-            this.codeBase = toJrtURL(module);
         }
 
         /**
@@ -766,11 +760,6 @@ class BuiltinClassLoader
         @Override
         public void releaseBuffer(ByteBuffer bb) {
             ImageReader.releaseByteBuffer(bb);
-        }
-
-        @Override
-        public URL codeBase() {
-            return codeBase;
         }
     }
 
@@ -828,11 +817,6 @@ class BuiltinClassLoader
             if (bb.isDirect())
                 reader.releaseBuffer(bb);
         }
-
-        @Override
-        public URL codeBase() {
-            return reader.codeBase();
-        }
     }
 
     /**
@@ -841,17 +825,6 @@ class BuiltinClassLoader
     private static URL toJrtURL(String module, String name) {
         try {
             return new URL("jrt:/" + module + "/" + name);
-        } catch (MalformedURLException e) {
-            throw new InternalError(e);
-        }
-    }
-
-    /**
-     * Returns a jrt URL for the given module.
-     */
-    private static URL toJrtURL(String module) {
-        try {
-            return new URL("jrt:/" + module);
         } catch (MalformedURLException e) {
             throw new InternalError(e);
         }

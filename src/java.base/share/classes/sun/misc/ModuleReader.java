@@ -88,14 +88,6 @@ interface ModuleReader {
     default void releaseBuffer(ByteBuffer bb) { }
 
     /**
-     * Returns the URL that is CodeSource location. The URL may be
-     * used to construct a {@code CodeSource}.
-     *
-     * @see java.security.SecureClassLoader
-     */
-    URL codeBase();
-
-    /**
      * Creates a ModuleReader to access the given ModuleArtifact.
      */
     static ModuleReader create(ModuleArtifact artifact) {
@@ -204,11 +196,6 @@ class JModModuleReader extends BaseModuleReader {
             return readFully(in, (int) ze.getSize());
         }
     }
-
-    @Override
-    public URL codeBase() {
-        return baseURL;
-    }
 }
 
 /**
@@ -250,11 +237,6 @@ class JarModuleReader extends BaseModuleReader {
             return readFully(in, (int) je.getSize());
         }
     }
-
-    @Override
-    public URL codeBase() {
-        return baseURL;
-    }
 }
 
 /**
@@ -262,11 +244,9 @@ class JarModuleReader extends BaseModuleReader {
  */
 class ExplodedModuleReader extends BaseModuleReader {
     private final Path dir;
-    private final URL baseURL;
 
     ExplodedModuleReader(ModuleArtifact artifact) {
         dir = Paths.get(artifact.location());
-        baseURL = toFileURL(dir);
     }
 
     @Override
@@ -288,11 +268,6 @@ class ExplodedModuleReader extends BaseModuleReader {
     public ByteBuffer readResource(String name) throws IOException {
         Path path = dir.resolve(name.replace('/', File.separatorChar));
         return ByteBuffer.wrap(Files.readAllBytes(path));
-    }
-
-    @Override
-    public URL codeBase() {
-        return baseURL;
     }
 }
 
