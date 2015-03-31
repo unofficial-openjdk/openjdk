@@ -522,6 +522,23 @@ public class ClassReader {
         return (NameAndType)obj;
     }
 
+    /** Read the class name of a module-info.class file.
+     * The name is stored in a CONSTANT_Class entry, where the
+     * class name is of the form module-name.module-info.
+     */
+    Name readModuleInfoName(int i) {
+        int classIndex = poolIdx[i];
+        if (buf[classIndex] == CONSTANT_Class) {
+            int utf8Index = poolIdx[getChar(classIndex + 1)];
+            if (buf[utf8Index] == CONSTANT_Utf8) {
+                int len = getChar(utf8Index + 1);
+                int start = utf8Index + 3;
+                return names.fromUtf(internalize(buf, start, len));
+            }
+        }
+        throw badClassFile("bad.module-info.name");
+    }
+
     /** Read requires_flags.
      */
     Set<RequiresFlag> readRequiresFlags(int flags) {
@@ -2293,22 +2310,11 @@ public class ClassReader {
             currentModule = c.packge().modle;
         } else {
             c.flags_field = flags;
-            // TODO: validate name
-            int i = nextChar();
-            // TODO: refactor some of this to a new method readModuleName
-            int classIndex = poolIdx[i];
-            if (buf[classIndex] == CONSTANT_Class) {
-                int utf8Index = poolIdx[getChar(classIndex + 1)];
-                if (buf[utf8Index] == CONSTANT_Utf8) {
-                    int len = getChar(utf8Index + 1);
-                    int start = utf8Index + 3;
-                    Name modInfoName = names.fromUtf(internalize(buf, start, len));
-                    if (c.owner.name == null) {
-                        syms.enterModule((ModuleSymbol) c.owner, Convert.packagePart(modInfoName));
-                    } else {
-                        // TODO: validate name
-                    }
-                }
+            Name modInfoName = readModuleInfoName(nextChar());
+            if (c.owner.name == null) {
+                syms.enterModule((ModuleSymbol) c.owner, Convert.packagePart(modInfoName));
+            } else {
+                // TODO: validate name
             }
             currentModule = (ModuleSymbol) c.owner;
         }
