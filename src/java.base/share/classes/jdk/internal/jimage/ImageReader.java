@@ -470,7 +470,7 @@ public class ImageReader extends BasicImageReader {
         private Node handlePackages(String name, ImageLocation loc) {
             long size = loc.getUncompressedSize();
             Node n = null;
-            // Only possiblities are /packages, /packages/package and /packages/package/module
+            // Only possiblities are /packages, /packages/package/module
             if (name.equals("" + PACKAGES_STRING)) {
                 visitLocation(loc, (childloc) -> {
                     findNode(childloc.getFullName());
@@ -478,22 +478,22 @@ public class ImageReader extends BasicImageReader {
                 packagesDir.setCompleted(true);
                 n = packagesDir;
             } else {
-                if (size == SIZE_OF_OFFSET) { // Single child
+                if (size != 0) { // children are links to module
                     String pkgName = getBaseExt(loc);
                     Directory pkgDir = newDirectory(packagesDir,
                             packagesDir.getName().concat(SLASH_STRING, new UTF8String(pkgName)));
                     visitLocation(loc, (childloc) -> {
                         findNode(childloc.getFullName());
                     });
+                    pkgDir.setCompleted(true);
                     n = pkgDir;
                 } else { // Link to module
                     String pkgName = loc.getParentString();
                     String modName = getBaseExt(loc);
                     Node targetNode = findNode(MODULES_STRING + "/" + modName);
                     if (targetNode != null) {
-                        Directory pkgDir = newDirectory(packagesDir,
-                                packagesDir.getName().concat(SLASH_STRING, new UTF8String(pkgName)));
-                        pkgDir.setCompleted(true);
+                        UTF8String pkgDirName = packagesDir.getName().concat(SLASH_STRING, new UTF8String(pkgName));
+                        Directory pkgDir = (Directory) nodes.get(pkgDirName);
                         Node linkNode = newLinkNode(pkgDir,
                                 pkgDir.getName().concat(SLASH_STRING, new UTF8String(modName)), targetNode);
                         n = linkNode;

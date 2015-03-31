@@ -121,7 +121,8 @@ public final class ImageResourcesTree {
             modules = new Node(MODULES, root);
             directAccess.put(modules.getPath(), modules);
 
-            Map<String, Set<String>> pkgToModule = new TreeMap<>();
+            Map<String, Set<String>> moduleToPackage = new TreeMap<>();
+            Map<String, Set<String>> packageToModule = new TreeMap<>();
 
             for (String p : paths) {
                 if (!p.startsWith("/")) {
@@ -142,15 +143,25 @@ public final class ImageResourcesTree {
                             if (i == split.length - 1) { // Leaf
                                 String pkg = toPackageName(n.parent);
                                 if (pkg != null && !pkg.startsWith("META-INF")) {
-                                    Set<String> pkgs = pkgToModule.get(module);
+                                    Set<String> pkgs = moduleToPackage.get(module);
                                     if (pkgs == null) {
                                         pkgs = new TreeSet<>();
-                                        pkgToModule.put(module, pkgs);
+                                        moduleToPackage.put(module, pkgs);
                                     }
                                     pkgs.add(pkg);
                                 }
                             } else { // put only sub trees, no leaf
                                 directAccess.put(n.getPath(), n);
+                                String pkg = toPackageName(n);
+                                if (pkg != null && !pkg.startsWith("META-INF")) {
+                                    Set<String> mods = packageToModule.get(pkg);
+                                    if (mods == null) {
+                                        mods = new TreeSet<>();
+                                        packageToModule.put(pkg, mods);
+                                    }
+                                    mods.add(module);
+
+                                }
                             }
                         }
                         current = n;
@@ -159,12 +170,20 @@ public final class ImageResourcesTree {
             }
             packages = new Node(PACKAGES, root);
             directAccess.put(packages.getPath(), packages);
-            for (Map.Entry<String, Set<String>> entry : pkgToModule.entrySet()) {
+            for (Map.Entry<String, Set<String>> entry : moduleToPackage.entrySet()) {
                 for (String pkg : entry.getValue()) {
                     Node pkgNode = new Node(pkg, packages);
                     directAccess.put(pkgNode.getPath(), pkgNode);
 
                     Node modNode = new Node(entry.getKey(), pkgNode);
+                    directAccess.put(modNode.getPath(), modNode);
+                }
+            }
+            for (Map.Entry<String, Set<String>> entry : packageToModule.entrySet()) {
+                Node pkgNode = new Node(entry.getKey(), packages);
+                directAccess.put(pkgNode.getPath(), pkgNode);
+                for (String module : entry.getValue()) {
+                    Node modNode = new Node(module, pkgNode);
                     directAccess.put(modNode.getPath(), modNode);
                 }
             }

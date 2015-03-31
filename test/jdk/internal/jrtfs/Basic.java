@@ -486,6 +486,15 @@ public class Basic {
     private Object[][] packagesLinks() {
         return new Object[][] {
             { "/packages/java.lang/java.base" },
+            { "/packages/java.lang/java.instrument" },
+            { "/packages/java/java.base" },
+            { "/packages/java/java.instrument" },
+            { "/packages/java/java.rmi"  },
+            { "/packages/java/java.sql"  },
+            { "/packages/javax/java.base"  },
+            { "/packages/javax/java.sql"  },
+            { "/packages/javax/java.xml"  },
+            { "/packages/javax/java.management"  },
             { "/packages/java.util/java.base" },
             { "/packages/jdk.nashorn.api.scripting/jdk.scripting.nashorn" },
         };
