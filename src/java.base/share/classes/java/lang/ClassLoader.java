@@ -667,9 +667,10 @@ public abstract class ClassLoader {
             pd = defaultDomain;
         }
 
-        if (name != null) checkCerts(name, pd.getCodeSource());
-
-        ensureDefinePackage(packageName(name));
+        if (name != null) {
+            checkCerts(name, pd.getCodeSource());
+            ensureDefinePackage(packageName(name));
+        }
 
         return pd;
     }
