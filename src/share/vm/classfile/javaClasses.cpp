@@ -1519,28 +1519,42 @@ char* java_lang_Throwable::print_stack_element_to_buffer(Handle mirror,
     }
   }
 
+  char *module_name = NULL, *module_version = NULL;
+  ModuleEntry* module = holder->module();
+  if (module != NULL) {
+    module_name = module->name()->as_C_string();
+    buf_len += (int)strlen(module_name);
+    module_version = module->version()->as_C_string();
+    buf_len += (int)strlen(module_version);
+  }
+
   // Allocate temporary buffer with extra space for formatting and line number
   char* buf = NEW_RESOURCE_ARRAY(char, buf_len + 64);
 
   // Print stack trace line in buffer
-  sprintf(buf, "\tat %s.%s", klass_name, method_name);
+  sprintf(buf, "\tat %s.%s(", klass_name, method_name);
+
+  // Print module information
+  if (module_name != NULL) {
+    sprintf(buf + (int)strlen(buf), "%s@%s/", module_name, module_version);
+  }
 
   if (!version_matches(method, version)) {
-    strcat(buf, "(Redefined)");
+    strcat(buf, "Redefined)");
   } else {
     int line_number = get_line_number(method, bci);
     if (line_number == -2) {
-      strcat(buf, "(Native Method)");
+      strcat(buf, "Native Method)");
     } else {
       if (source_file_name != NULL && (line_number != -1)) {
         // Sourcename and linenumber
-        sprintf(buf + (int)strlen(buf), "(%s:%d)", source_file_name, line_number);
+        sprintf(buf + (int)strlen(buf), "%s:%d)", source_file_name, line_number);
       } else if (source_file_name != NULL) {
         // Just sourcename
-        sprintf(buf + (int)strlen(buf), "(%s)", source_file_name);
+        sprintf(buf + (int)strlen(buf), "%s)", source_file_name);
       } else {
         // Neither sourcename nor linenumber
-        sprintf(buf + (int)strlen(buf), "(Unknown Source)");
+        sprintf(buf + (int)strlen(buf), "Unknown Source)");
       }
       nmethod* nm = method->code();
       if (WizardMode && nm != NULL) {
@@ -1925,6 +1939,16 @@ oop java_lang_StackTraceElement::create(Handle mirror, int method_id,
   // Fill in method name
   oop methodname = StringTable::intern(method->name(), CHECK_0);
   java_lang_StackTraceElement::set_methodName(element(), methodname);
+
+  // Fill in module name
+  ModuleEntry* module = holder->module();
+  if (module != NULL) {
+    int len = module->name()->utf8_length() + module->version()->utf8_length() + 1 + 1;
+    char* buf = NEW_RESOURCE_ARRAY(char, len);
+    jio_snprintf(buf, len, "%s@%s", module->name()->as_utf8(), module->version()->as_utf8());
+    oop module_id = StringTable::intern(buf, CHECK_0);
+    java_lang_StackTraceElement::set_moduleId(element(), module_id);
+  }
 
   if (!version_matches(method, version)) {
     // The method was redefined, accurate line number information isn't available
@@ -3313,6 +3337,7 @@ int java_lang_StackTraceElement::declaringClass_offset;
 int java_lang_StackTraceElement::methodName_offset;
 int java_lang_StackTraceElement::fileName_offset;
 int java_lang_StackTraceElement::lineNumber_offset;
+int java_lang_StackTraceElement::moduleId_offset;
 int java_lang_AssertionStatusDirectives::classes_offset;
 int java_lang_AssertionStatusDirectives::classEnabled_offset;
 int java_lang_AssertionStatusDirectives::packages_offset;
@@ -3340,6 +3365,10 @@ void java_lang_StackTraceElement::set_methodName(oop element, oop value) {
 
 void java_lang_StackTraceElement::set_lineNumber(oop element, int value) {
   element->int_field_put(lineNumber_offset, value);
+}
+
+void java_lang_StackTraceElement::set_moduleId(oop element, oop value) {
+  element->obj_field_put(moduleId_offset, value);
 }
 
 
@@ -3436,6 +3465,7 @@ void JavaClasses::compute_hard_coded_offsets() {
   java_lang_System::static_security_offset = java_lang_System::hc_static_security_offset * x;
 
   // java_lang_StackTraceElement
+  java_lang_StackTraceElement::moduleId_offset = java_lang_StackTraceElement::hc_moduleId_offset * x + header;
   java_lang_StackTraceElement::declaringClass_offset = java_lang_StackTraceElement::hc_declaringClass_offset  * x + header;
   java_lang_StackTraceElement::methodName_offset = java_lang_StackTraceElement::hc_methodName_offset * x + header;
   java_lang_StackTraceElement::fileName_offset   = java_lang_StackTraceElement::hc_fileName_offset   * x + header;

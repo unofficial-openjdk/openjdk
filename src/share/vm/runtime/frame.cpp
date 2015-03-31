@@ -644,6 +644,13 @@ void frame::print_on_error(outputStream* st, char* buf, int buflen, bool verbose
         m->name_and_sig_as_C_string(buf, buflen);
         st->print("j  %s", buf);
         st->print("+%d", this->interpreter_frame_bci());
+        ModuleEntry* module = m->method_holder()->module();
+        if (module != NULL) {
+          module->name()->as_C_string(buf, buflen);
+          st->print(" %s", buf);
+          module->version()->as_C_string(buf, buflen);
+          st->print("@%s", buf);
+        }
       } else {
         st->print("j  " PTR_FORMAT, pc());
       }
@@ -661,10 +668,19 @@ void frame::print_on_error(outputStream* st, char* buf, int buflen, bool verbose
       Method* m = nm->method();
       if (m != NULL) {
         m->name_and_sig_as_C_string(buf, buflen);
-        st->print("J %d%s %s %s (%d bytes) @ " PTR_FORMAT " [" PTR_FORMAT "+0x%x]",
+        st->print("J %d%s %s %s",
                   nm->compile_id(), (nm->is_osr_method() ? "%" : ""),
                   ((nm->compiler() != NULL) ? nm->compiler()->name() : ""),
-                  buf, m->code_size(), _pc, _cb->code_begin(), _pc - _cb->code_begin());
+                  buf);
+        ModuleEntry* module = m->method_holder()->module();
+        if (module != NULL) {
+          module->name()->as_C_string(buf, buflen);
+          st->print(" %s", buf);
+          module->version()->as_C_string(buf, buflen);
+          st->print("@%s", buf);
+        }
+        st->print(" (%d bytes) @ " PTR_FORMAT " [" PTR_FORMAT "+0x%x]",
+                  m->code_size(), _pc, _cb->code_begin(), _pc - _cb->code_begin());
       } else {
         st->print("J  " PTR_FORMAT, pc());
       }
