@@ -60,6 +60,13 @@ import util.StubClob;
 import util.StubNClob;
 import util.StubSQLXML;
 
+/**
+ * @test
+ * @modules java.sql.rowset/com.sun.rowset
+ *          java.sql.rowset/com.sun.rowset.internal
+ *          java.sql.rowset/com.sun.rowset.providers
+ */
+
 public abstract class CommonRowSetTests extends BaseTest {
 
     protected final String stubProvider = "util.StubSyncProvider";

@@ -23,7 +23,9 @@
 
 /**
  * @test
- * @modules java.sql.rowset/com.sun.rowset.providers
+ * @modules java.sql.rowset/com.sun.rowset
+ *          java.sql.rowset/com.sun.rowset.internal
+ *          java.sql.rowset/com.sun.rowset.providers
  */
 
 package test.rowset.webrowset;
