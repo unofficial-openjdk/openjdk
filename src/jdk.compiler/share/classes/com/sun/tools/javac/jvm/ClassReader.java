@@ -151,6 +151,10 @@ public class ClassReader {
      */
     protected Symbol currentOwner = null;
 
+    /** The module containing the class currently being read.
+     */
+    protected ModuleSymbol currentModule = null;
+
     /** The buffer containing the currently read class file.
      */
     byte[] buf = new byte[INITIAL_BUFFER_SIZE];
@@ -474,7 +478,7 @@ public class ClassReader {
         // simplified to (buf[start] == '[')
         return (buf[start] == '[' || buf[start + len - 1] == ';')
             ? (Object)sigToType(buf, start, len)
-            : (Object)syms.enterClass(names.fromUtf(internalize(buf, start,
+            : (Object)enterClass(names.fromUtf(internalize(buf, start,
                                                            len)));
     }
 
@@ -667,7 +671,7 @@ public class ClassReader {
             switch (c) {
 
             case ';': {         // end
-                ClassSymbol t = syms.enterClass(names.fromUtf(signatureBuffer,
+                ClassSymbol t = enterClass(names.fromUtf(signatureBuffer,
                                                          startSbp,
                                                          sbp - startSbp));
 
@@ -681,7 +685,7 @@ public class ClassReader {
             }
 
             case '<':           // generic arguments
-                ClassSymbol t = syms.enterClass(names.fromUtf(signatureBuffer,
+                ClassSymbol t = enterClass(names.fromUtf(signatureBuffer,
                                                          startSbp,
                                                          sbp - startSbp));
                 outer = new ClassType(outer, sigToTypes('>'), t) {
@@ -744,7 +748,7 @@ public class ClassReader {
             case '.':
                 //we have seen an enclosing non-generic class
                 if (outer != Type.noType) {
-                    t = syms.enterClass(names.fromUtf(signatureBuffer,
+                    t = enterClass(names.fromUtf(signatureBuffer,
                                                  startSbp,
                                                  sbp - startSbp));
                     outer = new ClassType(outer, List.<Type>nil(), t);
@@ -1461,7 +1465,7 @@ public class ClassReader {
         int index = poolIdx[i];
         int length = getChar(index + 1);
         if (buf[index + length + 2] != ';')
-            return syms.enterClass(readName(i)).type;
+            return enterClass(readName(i)).type;
         return readType(i);
     }
 
@@ -2253,6 +2257,14 @@ public class ClassReader {
         enterTypevars(sym.type);
     }
 
+    protected ClassSymbol enterClass(Name name) {
+        return syms.enterClass(currentModule, name);
+    }
+
+    protected ClassSymbol enterClass(Name name, TypeSymbol owner) {
+        return syms.enterClass(currentModule, name, owner);
+    }
+
     /** Read contents of a given class symbol `c'. Both external and internal
      *  versions of an inner class are read.
      */
@@ -2278,6 +2290,7 @@ public class ClassReader {
                 throw badClassFile("class.file.wrong.class",
                                    self.flatname);
             }
+            currentModule = c.packge().modle;
         } else {
             c.flags_field = flags;
             // TODO: validate name
@@ -2291,16 +2304,13 @@ public class ClassReader {
                     int start = utf8Index + 3;
                     Name modInfoName = names.fromUtf(internalize(buf, start, len));
                     if (c.owner.name == null) {
-//                        Name moduleName = Convert.packagePart(modInfoName);
-//                        c.owner.name = moduleName;
-//                        c.fullname = c.flatname = modInfoName;
                         syms.enterModule((ModuleSymbol) c.owner, Convert.packagePart(modInfoName));
                     } else {
                         // TODO: validate name
                     }
                 }
             }
-
+            currentModule = (ModuleSymbol) c.owner;
         }
 
         // class attributes must be read before class
@@ -2358,7 +2368,7 @@ public class ClassReader {
             if (outer != null) { // we have a member class
                 if (name == names.empty)
                     name = names.one;
-                ClassSymbol member = syms.enterClass(name, outer);
+                ClassSymbol member = enterClass(name, outer);
                 if ((flags & STATIC) == 0) {
                     ((ClassType)member.type).setEnclosingType(outer.type);
                     if (member.erasure_field != null)

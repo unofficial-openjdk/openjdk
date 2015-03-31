@@ -556,6 +556,10 @@ public class Symtab {
      *  and owner and enter in `classes' unless already there.
      */
     public ClassSymbol enterClass(Name name, TypeSymbol owner) {
+        return enterClass(null, name, owner);
+    }
+
+    public ClassSymbol enterClass(ModuleSymbol msym, Name name, TypeSymbol owner) {
         Name flatname = TypeSymbol.formFlatName(name, owner);
         ClassSymbol c = classes.get(flatname);
         if (c == null) {
@@ -582,7 +586,11 @@ public class Symtab {
      * @return a newly created class symbol
      * @throws AssertionError if the class symbol already exists
      */
-    public ClassSymbol enterClass(Name flatName, JavaFileObject classFile) {
+//    public ClassSymbol enterClass(Name flatName, JavaFileObject classFile) {
+//        return enterClass(null, flatName, classFile);
+//    }
+
+    public ClassSymbol enterClass(ModuleSymbol msym, Name flatName, JavaFileObject classFile) {
         ClassSymbol cs = classes.get(flatName);
         if (cs != null) {
             String msg = Log.format("%s: completer = %s; class file = %s; source file = %s",
@@ -595,7 +603,9 @@ public class Symtab {
         Name packageName = Convert.packagePart(flatName);
         PackageSymbol owner = packageName.isEmpty()
                                 ? unnamedPackage
-                                : enterPackage(packageName);
+                                : enterPackage(msym, packageName);
+        if (owner != unnamedPackage && owner.modle == null && msym != null)
+            owner.modle = msym;
         cs = defineClass(Convert.shortName(flatName), owner);
         cs.classfile = classFile;
         classes.put(flatName, cs);
@@ -606,17 +616,21 @@ public class Symtab {
      *  and enter in `classes' unless already there.
      */
     public ClassSymbol enterClass(Name flatname) {
+        return enterClass(null, flatname);
+    }
+
+    public ClassSymbol enterClass(ModuleSymbol msym, Name flatname) {
         ClassSymbol c = classes.get(flatname);
         if (c == null)
-            return enterClass(flatname, (JavaFileObject)null);
+            return enterClass(msym, flatname, (JavaFileObject)null);
         else
             return c;
     }
 
     /** Check to see if a package exists, given its fully qualified name.
      */
-    public boolean packageExists(Name fullname) {
-        return enterPackage(fullname).exists();
+    public boolean packageExists(ModuleSymbol msym, Name fullname) {
+        return enterPackage(null, fullname).exists();
     }
 
     /** Make a package, given its fully qualified name.
@@ -627,10 +641,31 @@ public class Symtab {
             Assert.check(!fullname.isEmpty(), "rootPackage missing!");
             p = new PackageSymbol(
                     Convert.shortName(fullname),
-                    enterPackage(currModule, Convert.packagePart(fullname)));
-            p.modle = currModule;
+                    enterPackage(null, Convert.packagePart(fullname)));
             p.completer = initialCompleter;
             packages.put(fullname, p);
+        }
+//        if (currModule != null) {
+//            if (p.modle == null) {
+//                p.modle = currModule;
+//            } else if (p.modle != currModule) {
+//                // TODO: changing module?
+//                System.err.println("Package: " + fullname
+//                        + " old:" + p.modle
+//                        + " new:" + currModule
+//                        + " types: " + (p.members_field == null ? "null" : p.getEnclosedElements().size()));
+//            }
+//        }
+        if (p.modle == null && currModule != null) {
+//            if (p.modleHint != currModule) {
+//                System.err.println("Package: " + fullname
+//                        + " old:" + p.modleHint
+//                        + " new: " + currModule
+//                        + " comp:" + p.completer);
+//            }
+            p.modleHint = currModule;
+            if (p.completer == null)
+                p.completer = initialCompleter;
         }
         return p;
     }

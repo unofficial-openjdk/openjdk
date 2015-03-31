@@ -307,7 +307,7 @@ public class Enter extends JCTree.Visitor {
         } else {
             JCPackageDecl pd = tree.getPackage();
             if (pd != null) {
-                tree.packge = pd.packge = syms.enterPackage(TreeInfo.fullName(pd.pid));
+                tree.packge = pd.packge = syms.enterPackage(tree.modle, TreeInfo.fullName(pd.pid));
                 if (   pd.annotations.nonEmpty()
                     || pkginfoOpt == PkgInfo.ALWAYS
                     || tree.docComments != null) {

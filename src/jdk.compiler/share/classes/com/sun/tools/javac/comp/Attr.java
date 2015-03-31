@@ -4221,6 +4221,9 @@ public class Attr extends JCTree.Visitor {
 
     public void visitProvides(JCProvides tree) {
         ModuleSymbol msym = env.toplevel.modle;
+
+//        syms.enterPackage(msym, Convert.packagePart(TreeInfo.fullName(tree.implName))).complete();
+
         Type st = attribType(tree.serviceName, env, syms.objectType);
         Type it = attribType(tree.implName, env, st);
         if (st.hasTag(CLASS) && it.hasTag(CLASS)) {

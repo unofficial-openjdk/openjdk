@@ -42,6 +42,7 @@ import com.sun.tools.javac.code.Scope.WriteableScope;
 import com.sun.tools.javac.code.Symbol.ClassSymbol;
 import com.sun.tools.javac.code.Symbol.Completer;
 import com.sun.tools.javac.code.Symbol.CompletionFailure;
+import com.sun.tools.javac.code.Symbol.ModuleSymbol;
 import com.sun.tools.javac.code.Symbol.PackageSymbol;
 import com.sun.tools.javac.code.Symbol.TypeSymbol;
 import com.sun.tools.javac.comp.Annotate;
@@ -418,6 +419,9 @@ public class ClassFinder {
      *             is older.
      */
     protected void includeClassFile(PackageSymbol p, JavaFileObject file) {
+        if (p.modle == null && p.modleHint != null)
+            p.modle = p.modleHint;
+
         if ((p.flags_field & EXISTS) == 0)
             for (Symbol q = p; q != null && q.kind == PCK; q = q.owner)
                 q.flags_field |= EXISTS;
@@ -435,7 +439,7 @@ public class ClassFinder {
             ? p.package_info
             : (ClassSymbol) p.members_field.findFirst(classname);
         if (c == null) {
-            c = syms.enterClass(classname, p);
+            c = syms.enterClass(p.modle, classname, p);
             if (c.classfile == null) // only update the file if's it's newly created
                 c.classfile = file;
             if (isPkgInfo) {
@@ -500,9 +504,10 @@ public class ClassFinder {
         if (p.members_field == null)
             p.members_field = WriteableScope.create(p);
 
-        if (p.modle != null) { // TODO: This needs to become an assert
+        ModuleSymbol msym = (p.modle != null) ? p.modle : p.modleHint;
+        if (msym != null) { // TODO: This needs to become an assert
             // new code
-            if (p.modle == syms.noModule) {
+            if (msym == syms.noModule) {
                 preferCurrent = false;
                 if (userPathsFirst) {
                     scanUserPaths(p);
@@ -512,18 +517,18 @@ public class ClassFinder {
                     scanPlatformPath(p);
                     scanUserPaths(p);
                 }
-            } else if (p.modle.classLocation == StandardLocation.CLASS_PATH) {
+            } else if (msym.classLocation == StandardLocation.CLASS_PATH) {
                 // assert p.modle.sourceLocation == StandardLocation.SOURCE_PATH);
                 scanUserPaths(p);
             } else {
-                scanModulePaths(p);
+                scanModulePaths(p, msym);
             }
             return;
         }
 
         // old code, to go away
         if (p.modle != null && p.modle.classLocation != null) {
-            scanModulePaths(p);
+            scanModulePaths(p, p.modle);
         } else {
             preferCurrent = false;
             if (userPathsFirst) {
@@ -544,7 +549,7 @@ public class ClassFinder {
     // -classpath and -sourcepath for single module mode.
     // One plausible solution is to detect if the module's sourceLocation
     // is the same as the module's classLocation.
-    private void scanModulePaths(PackageSymbol p) throws IOException {
+    private void scanModulePaths(PackageSymbol p, ModuleSymbol msym) throws IOException {
         Set<JavaFileObject.Kind> kinds = getPackageFileKinds();
 
         Set<JavaFileObject.Kind> classKinds = EnumSet.copyOf(kinds);
@@ -555,8 +560,8 @@ public class ClassFinder {
         sourceKinds.remove(JavaFileObject.Kind.CLASS);
         boolean wantSourceFiles = !sourceKinds.isEmpty();
 
-        Location classLocn = p.modle.classLocation;
-        Location sourceLocn = p.modle.sourceLocation;
+        Location classLocn = msym.classLocation;
+        Location sourceLocn = msym.sourceLocation;
 
         String packageName = p.fullname.toString();
         if (wantClassFiles && (classLocn != null)) {
