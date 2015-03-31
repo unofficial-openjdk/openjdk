@@ -29,6 +29,28 @@ javax/management/remote/mandatory/passwordAccessFile/PasswordAccessFileTest.java
 
 ############################################################################
 
+# jdk_other
+
+# 8047822
+javax/script/CauseExceptionTest.java
+javax/script/ExceptionTest.java
+javax/script/GetInterfaceTest.java
+javax/script/JavaScriptScopeTest.java
+javax/script/NullUndefinedVarTest.java
+javax/script/PluggableContextTest.java
+javax/script/StringWriterPrintTest.java
+javax/script/Test1.java
+javax/script/Test2.java
+javax/script/Test3.java
+javax/script/Test4.java
+javax/script/Test5.java
+javax/script/Test6.java
+javax/script/Test7.java
+javax/script/Test8.java
+javax/script/UnescapedBracketRegExTest.java
+
+############################################################################
+
 # svc_tools
  
 # 8071308
