@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -223,6 +223,12 @@ public class TransTypes extends TreeTranslator {
                                                meth.name,
                                                bridgeType,
                                                origin);
+        /* once JDK-6996415 is solved it should be checked if this approach can
+         * be applied to method addOverrideBridgesIfNeeded
+         */
+        bridge.params = createBridgeParams(impl, bridge, bridgeType);
+        bridge.attributes_field = impl.attributes_field;
+
         if (!hypothetical) {
             JCMethodDecl md = make.MethodDef(bridge, null);
 
@@ -255,6 +261,26 @@ public class TransTypes extends TreeTranslator {
         // Add bridge to scope of enclosing class and `overridden' table.
         origin.members().enter(bridge);
         overridden.put(bridge, meth);
+    }
+
+    private List<VarSymbol> createBridgeParams(MethodSymbol impl, MethodSymbol bridge,
+            Type bridgeType) {
+        List<VarSymbol> bridgeParams = null;
+        if (impl.params != null) {
+            bridgeParams = List.nil();
+            List<VarSymbol> implParams = impl.params;
+            Type.MethodType mType = (Type.MethodType)bridgeType;
+            List<Type> argTypes = mType.argtypes;
+            while (implParams.nonEmpty() && argTypes.nonEmpty()) {
+                VarSymbol param = new VarSymbol(implParams.head.flags() | SYNTHETIC | PARAMETER,
+                        implParams.head.name, argTypes.head, bridge);
+                param.attributes_field = implParams.head.attributes_field;
+                bridgeParams = bridgeParams.append(param);
+                implParams = implParams.tail;
+                argTypes = argTypes.tail;
+            }
+        }
+        return bridgeParams;
     }
 
     /** Add bridge if given symbol is a non-private, non-static member

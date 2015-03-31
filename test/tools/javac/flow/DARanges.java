@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,13 +20,14 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+import java.lang.annotation.*;
 
-/**
- * @test
- * @bug     6214965 6365854 8068639
- * @summary Compiler crash on redefing nested annotation types
- * @compile CompilerAnnotationTest.java CompilerAnnotationTest2.java
- * @compile CompilerAnnotationTest2bad.java
- * @compile/ref=T6214965.out -XDrawDiagnostics -Xlint:classfile CompilerAnnotationTest2bad.java
- * @compile -Werror CompilerAnnotationTest2bad.java
- */
+@Target({ElementType.METHOD})
+@interface DARange {
+    String varName();
+    int bytecodeStart();
+    int bytecodeLength();
+}
+
+@Target({ElementType.METHOD})
+@interface DARanges {DARange[] value();}

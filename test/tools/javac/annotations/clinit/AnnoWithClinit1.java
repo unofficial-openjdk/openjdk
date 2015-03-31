@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,12 +21,32 @@
  * questions.
  */
 
-/**
+/*
  * @test
- * @bug     6214965 6365854 8068639
- * @summary Compiler crash on redefing nested annotation types
- * @compile CompilerAnnotationTest.java CompilerAnnotationTest2.java
- * @compile CompilerAnnotationTest2bad.java
- * @compile/ref=T6214965.out -XDrawDiagnostics -Xlint:classfile CompilerAnnotationTest2bad.java
- * @compile -Werror CompilerAnnotationTest2bad.java
+ * @bug 8013485
+ * @summary Annotations that gets a clinit can't be verified for correct elements in a second compilation unit
+ * @compile AnnoWithClinit1.java
  */
+
+public @interface AnnoWithClinit1 {
+    Foo f = new Foo();
+
+    @AnnoWithClinit1
+    static class C {} // this is in the same CU so there wont be a
+                      // <clinit> when the this anno instance is checked
+
+    class Foo {}
+}
+
+
+@AnnoWithClinit1
+class BarAnnoClinit1 {}
+
+@interface AAnnoClinit1 {
+    Runnable r2 = new Runnable() { public void run() { }};
+    String str1();
+    String str2withdefault() default "bar";
+}
+
+@AAnnoClinit1(str1="value")
+class TestAnnoClinit1 { }
