@@ -282,20 +282,4 @@ public class BasicImageReader {
 
         return location != null ? getResourceStream(location) : null;
     }
-
-    public List<String> getNames(String name) {
-        return getNames(getResource(name));
-    }
-
-    public List<String> getNames(byte[] bytes) {
-        IntBuffer buffer = ByteBuffer.wrap(bytes).asIntBuffer();
-        List<String> names = new ArrayList<>();
-
-        while (buffer.hasRemaining()) {
-            int offset = buffer.get();
-            names.add(getString(offset));
-        }
-
-        return names;
-    }
 }
