@@ -28,7 +28,7 @@
  *          java.base/sun.misc
  *          java.management
  * @compile -XDignore.symbol.file UnsupportedClassFileVersion.java
- * @run main/othervm -XX:AddModuleExports=java.base/jdk.internal.org.objectweb.asm UnsupportedClassFileVersion
+ * @run main/othervm UnsupportedClassFileVersion
  */
 
 import java.io.File;

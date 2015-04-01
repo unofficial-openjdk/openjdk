@@ -32,7 +32,7 @@
  *          jdk.attach/sun.tools.attach
  *          jdk.jvmstat/sun.jvmstat.monitor
  * @build com.oracle.java.testlibrary.* AttachSetGetFlag
- * @run main/othervm -XX:AddModuleExports=jdk.attach/sun.tools.attach AttachSetGetFlag
+ * @run main/othervm AttachSetGetFlag
  */
 
 import java.io.BufferedReader;

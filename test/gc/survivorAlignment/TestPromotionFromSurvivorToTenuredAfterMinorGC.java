@@ -40,7 +40,6 @@
  *                   -XX:-ExplicitGCInvokesConcurrent
  *                   -XX:+UnlockExperimentalVMOptions
  *                   -XX:SurvivorAlignmentInBytes=32
- *                   -XX:AddModuleExports=java.base/sun.misc
  *                   TestPromotionFromSurvivorToTenuredAfterMinorGC 10m 9
  *                   TENURED
  * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions
@@ -49,7 +48,6 @@
  *                   -XX:-ExplicitGCInvokesConcurrent
  *                   -XX:+UnlockExperimentalVMOptions
  *                   -XX:SurvivorAlignmentInBytes=32
- *                   -XX:AddModuleExports=java.base/sun.misc
  *                   TestPromotionFromSurvivorToTenuredAfterMinorGC 20m 47
  *                   TENURED
  * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions
@@ -58,7 +56,6 @@
  *                   -XX:-ExplicitGCInvokesConcurrent
  *                   -XX:+UnlockExperimentalVMOptions
  *                   -XX:SurvivorAlignmentInBytes=64
- *                   -XX:AddModuleExports=java.base/sun.misc
  *                   TestPromotionFromSurvivorToTenuredAfterMinorGC 10m 9
  *                   TENURED
  * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions
@@ -67,7 +64,6 @@
  *                   -XX:-ExplicitGCInvokesConcurrent
  *                   -XX:+UnlockExperimentalVMOptions
  *                   -XX:SurvivorAlignmentInBytes=64
- *                   -XX:AddModuleExports=java.base/sun.misc
  *                   TestPromotionFromSurvivorToTenuredAfterMinorGC 20m 87
  *                   TENURED
  * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions
@@ -76,7 +72,6 @@
  *                   -XX:-ExplicitGCInvokesConcurrent
  *                   -XX:+UnlockExperimentalVMOptions
  *                   -XX:SurvivorAlignmentInBytes=128
- *                   -XX:AddModuleExports=java.base/sun.misc
  *                    TestPromotionFromSurvivorToTenuredAfterMinorGC 10m 9
  *                    TENURED
  * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions
@@ -85,7 +80,6 @@
  *                   -XX:-ExplicitGCInvokesConcurrent
  *                   -XX:+UnlockExperimentalVMOptions
  *                   -XX:SurvivorAlignmentInBytes=128
- *                   -XX:AddModuleExports=java.base/sun.misc
  *                   TestPromotionFromSurvivorToTenuredAfterMinorGC 20m 147
  *                   TENURED
  */

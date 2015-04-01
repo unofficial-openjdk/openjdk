@@ -29,7 +29,7 @@
  * @build DoubleTest
  * @run main ClassFileInstaller sun.hotspot.WhiteBox
  *                              sun.hotspot.WhiteBox$WhiteBoxPermission
- * @run main/othervm/timeout=600 -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -XX:AddModuleExports=java.management/sun.management DoubleTest
+ * @run main/othervm/timeout=600 -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI DoubleTest
  * @summary testing of WB::set/getDoubleVMFlag()
  * @author igor.ignatyev@oracle.com
  */

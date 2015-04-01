@@ -41,9 +41,9 @@ import static com.oracle.java.testlibrary.Asserts.*;
  * @run main/othervm -XX:+IgnoreUnrecognizedVMOptions -XX:-UseCompressedOops -XX:-UseCompressedClassPointers -XX:+UsePerfData -XX:+UseParallelGC -XX:+UseParallelOldGC TestMetaspacePerfCounters
  * @run main/othervm -XX:+IgnoreUnrecognizedVMOptions -XX:-UseCompressedOops -XX:-UseCompressedClassPointers -XX:+UsePerfData -XX:+UseG1GC TestMetaspacePerfCounters
  *
- * @run main/othervm -XX:+IgnoreUnrecognizedVMOptions -XX:+UseCompressedOops -XX:+UseCompressedClassPointers -XX:+UsePerfData -XX:+UseSerialGC -XX:AddModuleExports=java.management/sun.management,jdk.jvmstat/sun.jvmstat.monitor TestMetaspacePerfCounters
- * @run main/othervm -XX:+IgnoreUnrecognizedVMOptions -XX:+UseCompressedOops -XX:+UseCompressedClassPointers -XX:+UsePerfData -XX:+UseParallelGC -XX:+UseParallelOldGC -XX:AddModuleExports=java.management/sun.management,jdk.jvmstat/sun.jvmstat.monitor TestMetaspacePerfCounters
- * @run main/othervm -XX:+IgnoreUnrecognizedVMOptions -XX:+UseCompressedOops -XX:+UseCompressedClassPointers -XX:+UsePerfData -XX:+UseG1GC -XX:AddModuleExports=java.management/sun.management,jdk.jvmstat/sun.jvmstat.monitor TestMetaspacePerfCounters
+ * @run main/othervm -XX:+IgnoreUnrecognizedVMOptions -XX:+UseCompressedOops -XX:+UseCompressedClassPointers -XX:+UsePerfData -XX:+UseSerialGC TestMetaspacePerfCounters
+ * @run main/othervm -XX:+IgnoreUnrecognizedVMOptions -XX:+UseCompressedOops -XX:+UseCompressedClassPointers -XX:+UsePerfData -XX:+UseParallelGC -XX:+UseParallelOldGC TestMetaspacePerfCounters
+ * @run main/othervm -XX:+IgnoreUnrecognizedVMOptions -XX:+UseCompressedOops -XX:+UseCompressedClassPointers -XX:+UsePerfData -XX:+UseG1GC TestMetaspacePerfCounters
  */
 public class TestMetaspacePerfCounters {
     public static Class fooClass = null;

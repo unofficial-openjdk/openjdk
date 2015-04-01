@@ -30,7 +30,7 @@
  * @build ThreadedMallocTestType
  * @run main ClassFileInstaller sun.hotspot.WhiteBox
  *                              sun.hotspot.WhiteBox$WhiteBoxPermission
- * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -XX:NativeMemoryTracking=detail -XX:AddModuleExports=java.management/sun.management ThreadedMallocTestType
+ * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -XX:NativeMemoryTracking=detail ThreadedMallocTestType
  */
 
 import com.oracle.java.testlibrary.*;

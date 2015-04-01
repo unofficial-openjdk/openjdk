@@ -30,7 +30,7 @@
  *          java.management
  * @build VirtualAllocCommitUncommitRecommit
  * @run main ClassFileInstaller sun.hotspot.WhiteBox
- * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -XX:NativeMemoryTracking=detail -XX:AddModuleExports=java.management/sun.management VirtualAllocCommitUncommitRecommit
+ * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -XX:NativeMemoryTracking=detail VirtualAllocCommitUncommitRecommit
  *
  */
 

@@ -31,7 +31,7 @@
  *          java.base/sun.misc
  * @compile -XDignore.symbol.file InvokeSpecialAnonTest.java
  * @run main ClassFileInstaller InvokeSpecialAnonTest AnonTester
- * @run main/othervm -Xbootclasspath/a:. -Xverify:all -XX:AddModuleExports=java.base/jdk.internal.org.objectweb.asm,java.base/sun.misc InvokeSpecialAnonTest
+ * @run main/othervm -Xbootclasspath/a:. -Xverify:all InvokeSpecialAnonTest
  */
 import jdk.internal.org.objectweb.asm.*;
 import java.lang.reflect.Constructor;

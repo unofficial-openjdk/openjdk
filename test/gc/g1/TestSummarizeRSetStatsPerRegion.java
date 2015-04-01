@@ -29,7 +29,7 @@
  *          java.management/sun.management
  * @build TestSummarizeRSetStatsTools TestSummarizeRSetStatsPerRegion
  * @summary Verify output of -XX:+G1SummarizeRSetStats in regards to per-region type output
- * @run main/othervm -XX:AddModuleExports=java.management/sun.management TestSummarizeRSetStatsPerRegion
+ * @run main/othervm TestSummarizeRSetStatsPerRegion
  */
 
 import com.oracle.java.testlibrary.*;

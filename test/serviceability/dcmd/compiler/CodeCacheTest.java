@@ -31,9 +31,9 @@
  *          jdk.jvmstat/sun.jvmstat.monitor
  * @build com.oracle.java.testlibrary.*
  * @build com.oracle.java.testlibrary.dcmd.*
- * @run main/othervm -XX:+SegmentedCodeCache -XX:AddModuleExports=java.management/sun.management CodeCacheTest
- * @run main/othervm -XX:-SegmentedCodeCache -XX:AddModuleExports=java.management/sun.management CodeCacheTest
- * @run main/othervm -Xint -XX:+SegmentedCodeCache -XX:AddModuleExports=java.management/sun.management CodeCacheTest
+ * @run main/othervm -XX:+SegmentedCodeCache CodeCacheTest
+ * @run main/othervm -XX:-SegmentedCodeCache CodeCacheTest
+ * @run main/othervm -Xint -XX:+SegmentedCodeCache CodeCacheTest
  * @summary Test of diagnostic command Compiler.codecache
  */
 

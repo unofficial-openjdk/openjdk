@@ -29,7 +29,7 @@
  * @modules java.base/jdk.internal.org.objectweb.asm
  *          java.base/sun.misc
  * @compile -XDignore.symbol.file Victim.java
- * @run main/othervm -Xverify:all -Xint -XX:AddModuleExports=java.base/sun.misc,java.base/jdk.internal.org.objectweb.asm Test8003720
+ * @run main/othervm -Xverify:all -Xint Test8003720
  */
 
 // Attempts to make the JVM unload a class while still executing one of its methods.

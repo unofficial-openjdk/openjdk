@@ -32,11 +32,11 @@
  * @build TestUseCompressedOopsErgo TestUseCompressedOopsErgoTools
  * @run main ClassFileInstaller sun.hotspot.WhiteBox
  *                              sun.hotspot.WhiteBox$WhiteBoxPermission
- * @run main/othervm -XX:AddModuleExports=java.management/sun.management TestUseCompressedOopsErgo -XX:+UseG1GC
- * @run main/othervm -XX:AddModuleExports=java.management/sun.management TestUseCompressedOopsErgo -XX:+UseParallelGC
- * @run main/othervm -XX:AddModuleExports=java.management/sun.management TestUseCompressedOopsErgo -XX:+UseParallelGC -XX:-UseParallelOldGC
- * @run main/othervm -XX:AddModuleExports=java.management/sun.management TestUseCompressedOopsErgo -XX:+UseConcMarkSweepGC
- * @run main/othervm -XX:AddModuleExports=java.management/sun.management TestUseCompressedOopsErgo -XX:+UseSerialGC
+ * @run main/othervm TestUseCompressedOopsErgo -XX:+UseG1GC
+ * @run main/othervm TestUseCompressedOopsErgo -XX:+UseParallelGC
+ * @run main/othervm TestUseCompressedOopsErgo -XX:+UseParallelGC -XX:-UseParallelOldGC
+ * @run main/othervm TestUseCompressedOopsErgo -XX:+UseConcMarkSweepGC
+ * @run main/othervm TestUseCompressedOopsErgo -XX:+UseSerialGC
  */
 
 public class TestUseCompressedOopsErgo {

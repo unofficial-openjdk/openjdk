@@ -32,9 +32,9 @@
  * @ignore 8069160
  * @build com.oracle.java.testlibrary.*
  * @build com.oracle.java.testlibrary.dcmd.*
- * @run testng/othervm -XX:AddModuleExports=java.management/sun.management CompilerQueueTest
- * @run testng/othervm -XX:-TieredCompilation -XX:AddModuleExports=java.management/sun.management CompilerQueueTest
- * @run testng/othervm -Xint -XX:AddModuleExports=java.management/sun.management CompilerQueueTest
+ * @run testng/othervm CompilerQueueTest
+ * @run testng/othervm -XX:-TieredCompilation CompilerQueueTest
+ * @run testng/othervm -Xint CompilerQueueTest
  * @summary Test of diagnostic command Compiler.queue
  */
 

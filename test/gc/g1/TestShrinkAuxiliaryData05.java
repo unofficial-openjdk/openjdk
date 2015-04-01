@@ -31,7 +31,7 @@
  * @modules java.base/sun.misc
  *          java.management
  * @build TestShrinkAuxiliaryData TestShrinkAuxiliaryData05
- * @run main/othervm/timeout=720 -XX:AddModuleExports=java.base/sun.misc TestShrinkAuxiliaryData05
+ * @run main/othervm/timeout=720 TestShrinkAuxiliaryData05
  */
 public class TestShrinkAuxiliaryData05 {
 

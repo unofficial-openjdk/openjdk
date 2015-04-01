@@ -30,7 +30,7 @@
  *          java.management
  * @build JcmdSummaryDiff
  * @run main ClassFileInstaller sun.hotspot.WhiteBox
- * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -XX:NativeMemoryTracking=summary -XX:AddModuleExports=java.management/sun.management JcmdSummaryDiff
+ * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -XX:NativeMemoryTracking=summary JcmdSummaryDiff
  */
 
 import com.oracle.java.testlibrary.*;

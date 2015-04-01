@@ -30,7 +30,7 @@
  * @build SizeTTest
  * @run main ClassFileInstaller sun.hotspot.WhiteBox
  *                              sun.hotspot.WhiteBox$WhiteBoxPermission
- * @run main/othervm/timeout=600 -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -XX:+UnlockExperimentalVMOptions -XX:AddModuleExports=java.management/sun.management SizeTTest
+ * @run main/othervm/timeout=600 -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -XX:+UnlockExperimentalVMOptions SizeTTest
  * @summary testing of WB::set/getSizeTVMFlag()
  */
 import com.oracle.java.testlibrary.Platform;

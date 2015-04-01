@@ -36,7 +36,7 @@ import com.oracle.java.testlibrary.*;
  *          java.base/sun.misc
  *          java.management
  * @compile -XDignore.symbol.file OverriderMsg.java
- * @run main/othervm -XX:AddModuleExports=java.base/jdk.internal.org.objectweb.asm OverriderMsg
+ * @run main/othervm OverriderMsg
  */
 
 // This test checks that the super class name is included in the message when

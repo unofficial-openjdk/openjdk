@@ -35,7 +35,7 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
  * @summary Force OSR compilation with non-empty stack at the OSR entry point.
  * @modules java.base/jdk.internal.org.objectweb.asm
  * @compile -XDignore.symbol.file TestOSRWithNonEmptyStack.java
- * @run main/othervm -XX:CompileOnly=TestCase.test -XX:AddModuleExports=java.base/jdk.internal.org.objectweb.asm TestOSRWithNonEmptyStack
+ * @run main/othervm -XX:CompileOnly=TestCase.test TestOSRWithNonEmptyStack
  */
 public class TestOSRWithNonEmptyStack extends ClassLoader {
     private static final int CLASS_FILE_VERSION = 52;

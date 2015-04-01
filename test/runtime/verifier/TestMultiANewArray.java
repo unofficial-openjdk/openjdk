@@ -36,10 +36,10 @@ import com.oracle.java.testlibrary.*;
  *          java.base/sun.misc
  *          java.management
  * @compile -XDignore.symbol.file TestMultiANewArray.java
- * @run main/othervm -XX:AddModuleExports=java.base/jdk.internal.org.objectweb.asm TestMultiANewArray 49
- * @run main/othervm -XX:AddModuleExports=java.base/jdk.internal.org.objectweb.asm TestMultiANewArray 50
- * @run main/othervm -XX:AddModuleExports=java.base/jdk.internal.org.objectweb.asm TestMultiANewArray 51
- * @run main/othervm -XX:AddModuleExports=java.base/jdk.internal.org.objectweb.asm TestMultiANewArray 52
+ * @run main/othervm TestMultiANewArray 49
+ * @run main/othervm TestMultiANewArray 50
+ * @run main/othervm TestMultiANewArray 51
+ * @run main/othervm TestMultiANewArray 52
  */
 
 public class TestMultiANewArray {

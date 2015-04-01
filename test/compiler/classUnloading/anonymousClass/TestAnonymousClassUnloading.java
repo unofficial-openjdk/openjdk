@@ -39,7 +39,7 @@ import java.net.URLConnection;
  * @run main ClassFileInstaller TestAnonymousClassUnloading
  *                              sun.hotspot.WhiteBox
  *                              sun.hotspot.WhiteBox$WhiteBoxPermission
- * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -XX:-BackgroundCompilation -XX:AddModuleExports=java.base/sun.misc TestAnonymousClassUnloading
+ * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -XX:-BackgroundCompilation TestAnonymousClassUnloading
  */
 public class TestAnonymousClassUnloading {
     private static final WhiteBox WHITE_BOX = WhiteBox.getWhiteBox();

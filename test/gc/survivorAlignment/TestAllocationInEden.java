@@ -38,7 +38,6 @@
  *                   -XX:SurvivorAlignmentInBytes=32 -XX:-UseTLAB
  *                   -XX:OldSize=128m -XX:MaxHeapSize=192m
  *                   -XX:-ExplicitGCInvokesConcurrent
- *                   -XX:AddModuleExports=java.base/sun.misc
  *                   TestAllocationInEden 10m 9 EDEN
  * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions
  *                   -XX:+WhiteBoxAPI -XX:NewSize=64m -XX:MaxNewSize=64m
@@ -46,7 +45,6 @@
  *                   -XX:SurvivorAlignmentInBytes=32 -XX:-UseTLAB
  *                   -XX:OldSize=128m -XX:MaxHeapSize=192m
  *                   -XX:-ExplicitGCInvokesConcurrent
- *                   -XX:AddModuleExports=java.base/sun.misc
  *                   TestAllocationInEden 10m 47 EDEN
  * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions
  *                   -XX:+WhiteBoxAPI -XX:NewSize=64m -XX:MaxNewSize=64m
@@ -54,7 +52,6 @@
  *                   -XX:SurvivorAlignmentInBytes=64 -XX:-UseTLAB
  *                   -XX:OldSize=128m  -XX:MaxHeapSize=192m
  *                   -XX:-ExplicitGCInvokesConcurrent
- *                   -XX:AddModuleExports=java.base/sun.misc
  *                   TestAllocationInEden 10m 9 EDEN
  * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions
  *                   -XX:+WhiteBoxAPI -XX:NewSize=64m -XX:MaxNewSize=64m
@@ -62,7 +59,6 @@
  *                   -XX:SurvivorAlignmentInBytes=64 -XX:-UseTLAB
  *                   -XX:OldSize=128m  -XX:MaxHeapSize=192m
  *                   -XX:-ExplicitGCInvokesConcurrent
- *                   -XX:AddModuleExports=java.base/sun.misc
  *                   TestAllocationInEden 10m 87 EDEN
  * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions
  *                   -XX:+WhiteBoxAPI -XX:NewSize=64m -XX:MaxNewSize=64m
@@ -70,7 +66,6 @@
  *                   -XX:SurvivorAlignmentInBytes=128 -XX:-UseTLAB
  *                   -XX:OldSize=128m -XX:MaxHeapSize=192m
  *                   -XX:-ExplicitGCInvokesConcurrent
- *                   -XX:AddModuleExports=java.base/sun.misc
  *                   TestAllocationInEden 10m 9 EDEN
  * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions
  *                   -XX:+WhiteBoxAPI -XX:NewSize=64m -XX:MaxNewSize=64m
@@ -78,7 +73,6 @@
  *                   -XX:SurvivorAlignmentInBytes=128 -XX:-UseTLAB
  *                   -XX:OldSize=128m -XX:MaxHeapSize=192m
  *                   -XX:-ExplicitGCInvokesConcurrent
- *                   -XX:AddModuleExports=java.base/sun.misc
  *                   TestAllocationInEden 10m 147 EDEN
  */
 public class TestAllocationInEden {
