@@ -28,6 +28,7 @@
  * @modules java.base/sun.misc
  *          java.compiler
  *          java.management
+ * @ignore 8076490
  * @run main DefineClass
  */
 
