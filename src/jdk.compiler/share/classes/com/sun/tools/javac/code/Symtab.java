@@ -59,6 +59,7 @@ import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.util.Log;
 import com.sun.tools.javac.util.Name;
 import com.sun.tools.javac.util.Names;
+import com.sun.tools.javac.util.Options;
 
 import static com.sun.tools.javac.code.Flags.*;
 import static com.sun.tools.javac.code.Kinds.Kind.*;
@@ -103,10 +104,6 @@ public class Symtab {
     private final Names names;
     private final Completer initialCompleter;
     private final Completer moduleCompleter;
-
-    /** A symbol for the root module.
-     */
-//    public final ModuleSymbol rootModule;
 
     /** A symbol for the unnamed module.
      */
@@ -155,6 +152,10 @@ public class Symtab {
 
     /** The builtin type of all methods. */
     public final ClassSymbol methodClass;
+
+    /** A symbol for the java.base module.
+     */
+    public final ModuleSymbol javaBase;
 
     /** Predefined types.
      */
@@ -224,7 +225,7 @@ public class Symtab {
      */
     public final Type[] typeOfTag = new Type[TypeTag.getTypeTagCount()];
 
-    /** The name of the class that belongs to a basix type tag.
+    /** The name of the class that belongs to a basic type tag.
      */
     public final Name[] boxedName = new Name[TypeTag.getTypeTagCount()];
 
@@ -259,7 +260,7 @@ public class Symtab {
 
     public void initType(Type type, String name, String bname) {
         initType(type, name);
-            boxedName[type.getTag().ordinal()] = names.fromString("java.lang." + bname);
+        boxedName[type.getTag().ordinal()] = names.fromString("java.lang." + bname);
     }
 
     /** The class symbol that owns all predefined symbols.
@@ -270,7 +271,7 @@ public class Symtab {
      *  @param s The name of the class.
      */
     private Type enterClass(String s) {
-        return enterClass(names.fromString(s)).type;
+        return enterClass(javaBase, names.fromString(s)).type;
     }
 
     public void synthesizeEmptyInterfaceIfMissing(final Type type) {
@@ -291,7 +292,7 @@ public class Symtab {
     }
 
     public void synthesizeBoxTypeIfMissing(final Type type) {
-        ClassSymbol sym = enterClass(boxedName[type.getTag().ordinal()]);
+        ClassSymbol sym = enterClass(javaBase, boxedName[type.getTag().ordinal()]);
         final Completer completer = sym.completer;
         if (completer != null) {
             sym.completer = new Completer() {
@@ -352,7 +353,6 @@ public class Symtab {
         final JavacMessages messages = JavacMessages.instance(context);
 
         // create the basic builtin symbols
-//        rootModule = new ModuleSymbol(names.empty, null);
         unnamedModule = new ModuleSymbol(names.empty, null) {
                 @Override
                 public String toString() {
@@ -438,7 +438,14 @@ public class Symtab {
 
         classes.put(predefClass.fullname, predefClass);
 
-        // Enter predefined classes.
+        Source source = Source.instance(context);
+        Options options = Options.instance(context);
+        boolean noModules = options.isSet("noModules");
+        javaBase = source.allowModules() && !noModules
+                ? enterModule(names.java_base)
+                : noModule;
+
+        // Enter predefined classes. All are assumed to be in the java.base module.
         objectType = enterClass("java.lang.Object");
         objectsType = enterClass("java.util.Objects");
         classType = enterClass("java.lang.Class");
@@ -464,7 +471,7 @@ public class Symtab {
         cloneNotSupportedExceptionType = enterClass("java.lang.CloneNotSupportedException");
         annotationType = enterClass("java.lang.annotation.Annotation");
         classLoaderType = enterClass("java.lang.ClassLoader");
-        enumSym = enterClass(names.java_lang_Enum);
+        enumSym = enterClass(javaBase, names.java_lang_Enum);
         enumFinalFinalize =
             new MethodSymbol(PROTECTED|FINAL|HYPOTHETICAL,
                              names.finalize,
@@ -645,24 +652,7 @@ public class Symtab {
             p.completer = initialCompleter;
             packages.put(fullname, p);
         }
-//        if (currModule != null) {
-//            if (p.modle == null) {
-//                p.modle = currModule;
-//            } else if (p.modle != currModule) {
-//                // TODO: changing module?
-//                System.err.println("Package: " + fullname
-//                        + " old:" + p.modle
-//                        + " new:" + currModule
-//                        + " types: " + (p.members_field == null ? "null" : p.getEnclosedElements().size()));
-//            }
-//        }
         if (p.modle == null && currModule != null) {
-//            if (p.modleHint != currModule) {
-//                System.err.println("Package: " + fullname
-//                        + " old:" + p.modleHint
-//                        + " new: " + currModule
-//                        + " comp:" + p.completer);
-//            }
             p.modleHint = currModule;
             if (p.completer == null)
                 p.completer = initialCompleter;

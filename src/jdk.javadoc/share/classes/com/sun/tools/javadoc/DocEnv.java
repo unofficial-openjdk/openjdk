@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -150,7 +150,7 @@ public class DocEnv {
         finder = JavadocClassFinder.instance(context);
         enter = JavadocEnter.instance(context);
         names = Names.instance(context);
-        externalizableSym = syms.enterClass(names.fromString("java.io.Externalizable"));
+        externalizableSym = syms.enterClass(syms.javaBase, names.fromString("java.io.Externalizable"));
         chk = Check.instance(context);
         types = Types.instance(context);
         fileManager = context.get(JavaFileManager.class);
