@@ -28,7 +28,6 @@
  * @library /testlibrary
  * @modules java.base/sun.misc
  *          java.management
- * @compile Object.java
  * @run main BootstrapRedefine
  */
 
