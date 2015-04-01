@@ -563,11 +563,13 @@ public class Modules extends JCTree.Visitor {
             if (equals == -1) {
                 String packageName = s.substring(slash + 1);
                 PackageSymbol p = syms.enterPackage(msym, names.fromString(packageName));
+                p.modle = msym;
                 d = new ExportsDirective(p, null);
             } else {
                 String packageName = s.substring(slash + 1, equals);
                 String toModule = s.substring(equals + 1);
                 PackageSymbol p = syms.enterPackage(msym, names.fromString(packageName));
+                p.modle = msym;
                 ModuleSymbol m = syms.enterModule(names.fromString(toModule));
                 d = new ExportsDirective(p, List.of(m));
             }
