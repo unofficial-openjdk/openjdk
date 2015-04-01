@@ -25,7 +25,6 @@
 import shapegen.*;
 
 import com.sun.source.util.JavacTask;
-import com.sun.tools.javac.util.Pair;
 
 import java.net.URI;
 import java.util.Arrays;
