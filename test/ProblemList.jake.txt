@@ -8,6 +8,8 @@ java/lang/invoke/CustomizedLambdaFormTest.java			 generic-all
 java/lang/invoke/ExplicitCastArgumentsTest.java			 generic-all
 java/lang/invoke/VarargsArrayTest.java				 generic-all
 
+java/net/DatagramSocket/SetDatagramSocketImplFactory/ADatagramSocket.java  generic-all
+
 # jdk_instrument
 
 # 8047771
@@ -32,22 +34,22 @@ javax/management/remote/mandatory/passwordAccessFile/PasswordAccessFileTest.java
 # jdk_other
 
 # 8047822
-javax/script/CauseExceptionTest.java
-javax/script/ExceptionTest.java
-javax/script/GetInterfaceTest.java
-javax/script/JavaScriptScopeTest.java
-javax/script/NullUndefinedVarTest.java
-javax/script/PluggableContextTest.java
-javax/script/StringWriterPrintTest.java
-javax/script/Test1.java
-javax/script/Test2.java
-javax/script/Test3.java
-javax/script/Test4.java
-javax/script/Test5.java
-javax/script/Test6.java
-javax/script/Test7.java
-javax/script/Test8.java
-javax/script/UnescapedBracketRegExTest.java
+javax/script/CauseExceptionTest.java		generic-all
+javax/script/ExceptionTest.java	 		generic-all
+javax/script/GetInterfaceTest.java		generic-all
+javax/script/JavaScriptScopeTest.java		generic-all
+javax/script/NullUndefinedVarTest.java		generic-all
+javax/script/PluggableContextTest.java		generic-all
+javax/script/StringWriterPrintTest.java		generic-all
+javax/script/Test1.java				generic-all
+javax/script/Test2.java				generic-all
+javax/script/Test3.java				generic-all
+javax/script/Test4.java				generic-all
+javax/script/Test5.java				generic-all
+javax/script/Test6.java				generic-all
+javax/script/Test7.java				generic-all
+javax/script/Test8.java				generic-all
+javax/script/UnescapedBracketRegExTest.java	generic-all
 
 ############################################################################
 
@@ -76,63 +78,65 @@ sun/tools/jinfo/JInfoSanityTest.java				generic-all
 # Exclude tests depending on package-private API or testlibrary
 # until jtreg support is implemented
 
-java/util/stream/boottest/java/util/stream/DoubleNodeTest.java
-java/util/stream/boottest/java/util/stream/FlagOpTest.java
-java/util/stream/boottest/java/util/stream/IntNodeTest.java
-java/util/stream/boottest/java/util/stream/LongNodeTest.java
-java/util/stream/boottest/java/util/stream/NodeBuilderTest.java
-java/util/stream/boottest/java/util/stream/NodeTest.java
-java/util/stream/boottest/java/util/stream/SliceSpliteratorTest.java
-java/util/stream/boottest/java/util/stream/SpinedBufferTest.java
-java/util/stream/boottest/java/util/stream/StreamFlagsTest.java
-java/util/stream/boottest/java/util/stream/StreamOpFlagsTest.java
-java/util/stream/boottest/java/util/stream/StreamReuseTest.java
-java/util/stream/boottest/java/util/stream/UnorderedTest.java
-java/util/stream/test/org/openjdk/tests/java/lang/invoke/DeserializeMethodTest.java
-java/util/stream/test/org/openjdk/tests/java/lang/invoke/MHProxiesTest.java
-java/util/stream/test/org/openjdk/tests/java/lang/invoke/SerializedLambdaTest.java
-java/util/stream/test/org/openjdk/tests/java/util/FillableStringTest.java
-java/util/stream/test/org/openjdk/tests/java/util/MapTest.java
-java/util/stream/test/org/openjdk/tests/java/util/NullArgsTestCase.java
-java/util/stream/test/org/openjdk/tests/java/util/SplittableRandomTest.java
-java/util/stream/test/org/openjdk/tests/java/util/stream/CollectAndSummaryStatisticsTest.java
-java/util/stream/test/org/openjdk/tests/java/util/stream/CollectionAndMapModifyStreamTest.java
-java/util/stream/test/org/openjdk/tests/java/util/stream/CollectorsTest.java
-java/util/stream/test/org/openjdk/tests/java/util/stream/ConcatOpTest.java
-java/util/stream/test/org/openjdk/tests/java/util/stream/ConcatTest.java
-java/util/stream/test/org/openjdk/tests/java/util/stream/CountLargeTest.java
-java/util/stream/test/org/openjdk/tests/java/util/stream/CountTest.java
-java/util/stream/test/org/openjdk/tests/java/util/stream/DistinctOpTest.java
-java/util/stream/test/org/openjdk/tests/java/util/stream/DoublePrimitiveOpsTests.java
-java/util/stream/test/org/openjdk/tests/java/util/stream/FilterOpTest.java
-java/util/stream/test/org/openjdk/tests/java/util/stream/FindAnyOpTest.java
-java/util/stream/test/org/openjdk/tests/java/util/stream/FindFirstOpTest.java
-java/util/stream/test/org/openjdk/tests/java/util/stream/FlatMapOpTest.java
-java/util/stream/test/org/openjdk/tests/java/util/stream/ForEachOpTest.java
-java/util/stream/test/org/openjdk/tests/java/util/stream/GroupByOpTest.java
-java/util/stream/test/org/openjdk/tests/java/util/stream/InfiniteStreamWithLimitOpTest.java
-java/util/stream/test/org/openjdk/tests/java/util/stream/IntPrimitiveOpsTests.java
-java/util/stream/test/org/openjdk/tests/java/util/stream/IntReduceTest.java
-java/util/stream/test/org/openjdk/tests/java/util/stream/IntSliceOpTest.java
-java/util/stream/test/org/openjdk/tests/java/util/stream/IntUniqOpTest.java
-java/util/stream/test/org/openjdk/tests/java/util/stream/LongPrimitiveOpsTests.java
-java/util/stream/test/org/openjdk/tests/java/util/stream/MapOpTest.java
-java/util/stream/test/org/openjdk/tests/java/util/stream/MatchOpTest.java
-java/util/stream/test/org/openjdk/tests/java/util/stream/MinMaxTest.java
-java/util/stream/test/org/openjdk/tests/java/util/stream/PrimitiveAverageOpTest.java
-java/util/stream/test/org/openjdk/tests/java/util/stream/PrimitiveSumTest.java
-java/util/stream/test/org/openjdk/tests/java/util/stream/RangeTest.java
-java/util/stream/test/org/openjdk/tests/java/util/stream/ReduceByOpTest.java
-java/util/stream/test/org/openjdk/tests/java/util/stream/ReduceTest.java
-java/util/stream/test/org/openjdk/tests/java/util/stream/SequentialOpTest.java
-java/util/stream/test/org/openjdk/tests/java/util/stream/SliceOpTest.java
-java/util/stream/test/org/openjdk/tests/java/util/stream/SortedOpTest.java
-java/util/stream/test/org/openjdk/tests/java/util/stream/SpliteratorTest.java
-java/util/stream/test/org/openjdk/tests/java/util/stream/StreamBuilderTest.java
-java/util/stream/test/org/openjdk/tests/java/util/stream/StreamCloseTest.java
-java/util/stream/test/org/openjdk/tests/java/util/stream/StreamLinkTest.java
-java/util/stream/test/org/openjdk/tests/java/util/stream/StreamParSeqTest.java
-java/util/stream/test/org/openjdk/tests/java/util/stream/StreamSpliteratorTest.java
-java/util/stream/test/org/openjdk/tests/java/util/stream/TeeOpTest.java
-java/util/stream/test/org/openjdk/tests/java/util/stream/ToArrayOpTest.java
+java/util/stream/boottest/java/util/stream/DoubleNodeTest.java		generic-all
+java/util/stream/boottest/java/util/stream/FlagOpTest.java		generic-all
+java/util/stream/boottest/java/util/stream/IntNodeTest.java		generic-all
+java/util/stream/boottest/java/util/stream/LongNodeTest.java		generic-all
+java/util/stream/boottest/java/util/stream/NodeBuilderTest.java		generic-all
+java/util/stream/boottest/java/util/stream/NodeTest.java		generic-all
+java/util/stream/boottest/java/util/stream/SliceSpliteratorTest.java	generic-all
+java/util/stream/boottest/java/util/stream/SpinedBufferTest.java	generic-all
+java/util/stream/boottest/java/util/stream/StreamFlagsTest.java		generic-all
+java/util/stream/boottest/java/util/stream/StreamOpFlagsTest.java	generic-all
+java/util/stream/boottest/java/util/stream/StreamReuseTest.java		generic-all
+java/util/stream/boottest/java/util/stream/UnorderedTest.java		generic-all
+java/util/stream/test/org/openjdk/tests/java/lang/invoke/DeserializeMethodTest.java	generic-all
+java/util/stream/test/org/openjdk/tests/java/lang/invoke/MHProxiesTest.java		generic-all
+java/util/stream/test/org/openjdk/tests/java/lang/invoke/SerializedLambdaTest.java	generic-all
+java/util/stream/test/org/openjdk/tests/java/util/FillableStringTest.java		generic-all
+java/util/stream/test/org/openjdk/tests/java/util/MapTest.java				generic-all
+java/util/stream/test/org/openjdk/tests/java/util/NullArgsTestCase.java			generic-all
+java/util/stream/test/org/openjdk/tests/java/util/SplittableRandomTest.java		generic-all
+java/util/stream/test/org/openjdk/tests/java/util/stream/CollectAndSummaryStatisticsTest.java generic-all
+java/util/stream/test/org/openjdk/tests/java/util/stream/CollectionAndMapModifyStreamTest.java generic-all
+java/util/stream/test/org/openjdk/tests/java/util/stream/CollectorsTest.java	generic-all
+java/util/stream/test/org/openjdk/tests/java/util/stream/ConcatOpTest.java	generic-all
+java/util/stream/test/org/openjdk/tests/java/util/stream/ConcatTest.java	generic-all
+java/util/stream/test/org/openjdk/tests/java/util/stream/CountLargeTest.java	generic-all
+java/util/stream/test/org/openjdk/tests/java/util/stream/CountTest.java		generic-all
+java/util/stream/test/org/openjdk/tests/java/util/stream/DistinctOpTest.java	generic-all
+java/util/stream/test/org/openjdk/tests/java/util/stream/DoublePrimitiveOpsTests.java	generic-all
+java/util/stream/test/org/openjdk/tests/java/util/stream/FilterOpTest.java	generic-all
+java/util/stream/test/org/openjdk/tests/java/util/stream/FindAnyOpTest.java	generic-all
+java/util/stream/test/org/openjdk/tests/java/util/stream/FindFirstOpTest.java	generic-all
+java/util/stream/test/org/openjdk/tests/java/util/stream/FlatMapOpTest.java	generic-all
+java/util/stream/test/org/openjdk/tests/java/util/stream/ForEachOpTest.java	generic-all
+java/util/stream/test/org/openjdk/tests/java/util/stream/GroupByOpTest.java	generic-all
+java/util/stream/test/org/openjdk/tests/java/util/stream/InfiniteStreamWithLimitOpTest.java	generic-all
+java/util/stream/test/org/openjdk/tests/java/util/stream/IntPrimitiveOpsTests.java	generic-all
+java/util/stream/test/org/openjdk/tests/java/util/stream/IntReduceTest.java		generic-all
+java/util/stream/test/org/openjdk/tests/java/util/stream/IntSliceOpTest.java		generic-all
+java/util/stream/test/org/openjdk/tests/java/util/stream/IntUniqOpTest.java		generic-all
+java/util/stream/test/org/openjdk/tests/java/util/stream/LongPrimitiveOpsTests.java	generic-all
+java/util/stream/test/org/openjdk/tests/java/util/stream/MapOpTest.java		generic-all
+java/util/stream/test/org/openjdk/tests/java/util/stream/MatchOpTest.java	generic-all
+java/util/stream/test/org/openjdk/tests/java/util/stream/MinMaxTest.java	generic-all
+java/util/stream/test/org/openjdk/tests/java/util/stream/PrimitiveAverageOpTest.java	generic-all
+java/util/stream/test/org/openjdk/tests/java/util/stream/PrimitiveSumTest.java		generic-all
+java/util/stream/test/org/openjdk/tests/java/util/stream/RangeTest.java		generic-all
+java/util/stream/test/org/openjdk/tests/java/util/stream/ReduceByOpTest.java	generic-all
+java/util/stream/test/org/openjdk/tests/java/util/stream/ReduceTest.java	generic-all
+java/util/stream/test/org/openjdk/tests/java/util/stream/SequentialOpTest.java	generic-all
+java/util/stream/test/org/openjdk/tests/java/util/stream/SliceOpTest.java	generic-all
+java/util/stream/test/org/openjdk/tests/java/util/stream/SortedOpTest.java	generic-all
+java/util/stream/test/org/openjdk/tests/java/util/stream/SpliteratorTest.java	generic-all
+java/util/stream/test/org/openjdk/tests/java/util/stream/StreamBuilderTest.java	generic-all
+java/util/stream/test/org/openjdk/tests/java/util/stream/StreamCloseTest.java	generic-all
+java/util/stream/test/org/openjdk/tests/java/util/stream/StreamLinkTest.java	generic-all
+java/util/stream/test/org/openjdk/tests/java/util/stream/StreamParSeqTest.java	generic-all
+java/util/stream/test/org/openjdk/tests/java/util/stream/StreamSpliteratorTest.java	generic-all
+java/util/stream/test/org/openjdk/tests/java/util/stream/TeeOpTest.java		generic-all
+java/util/stream/test/org/openjdk/tests/java/util/stream/ToArrayOpTest.java	generic-all
+
+java/util/regex/PatternStreamTest.java						generic-all
 
