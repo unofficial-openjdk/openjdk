@@ -273,6 +273,7 @@
       <to>jdk.pack200</to>
       <to>jdk.security.auth</to>
       <to>jdk.security.jgss</to>
+      <to>jdk.scripting.nashorn</to>
     </export>
     <export>
       <name>sun.net.dns</name>
