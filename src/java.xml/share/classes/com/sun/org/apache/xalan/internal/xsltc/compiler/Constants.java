@@ -508,6 +508,7 @@ public interface Constants extends InstructionConstants {
 
     // the API packages used by generated translate classes
     public static String[] PKGS_USED_BY_TRANSLET_CLASSES = {
+        "com.sun.org.apache.xalan.internal.lib",
         "com.sun.org.apache.xalan.internal.xsltc",
         "com.sun.org.apache.xalan.internal.xsltc.runtime",
         "com.sun.org.apache.xalan.internal.xsltc.dom",
