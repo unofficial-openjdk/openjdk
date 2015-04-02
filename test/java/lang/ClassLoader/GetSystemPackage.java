@@ -112,8 +112,6 @@ public class GetSystemPackage {
                 testClassesDir + "/package2/Class2.class");
         jar.addClassFile("GetSystemPackage.class",
                 testClassesDir + "/GetSystemPackage.class");
-        jar.addClassFile("GetSystemPackageClassLoader.class",
-                testClassesDir + "/GetSystemPackageClassLoader.class");
         jar.build();
     }
 
