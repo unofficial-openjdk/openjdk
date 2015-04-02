@@ -51,6 +51,13 @@ javax/script/Test7.java				generic-all
 javax/script/Test8.java				generic-all
 javax/script/UnescapedBracketRegExTest.java	generic-all
 
+sun/tools/jrunscript/jrunscript-DTest.sh        generic-all
+sun/tools/jrunscript/jrunscript-argsTest.sh     generic-all
+sun/tools/jrunscript/jrunscript-cpTest.sh       generic-all
+sun/tools/jrunscript/jrunscript-eTest.sh        generic-all
+sun/tools/jrunscript/jrunscript-fTest.sh        generic-all
+sun/tools/jrunscript/jrunscriptTest.sh          generic-all
+
 ############################################################################
 
 # svc_tools
