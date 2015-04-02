@@ -27,9 +27,11 @@ package sun.misc;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Executable;
+import java.net.URL;
 import java.security.AccessControlContext;
 import java.util.Map;
 
+import jdk.jigsaw.module.ModuleArtifact;
 import sun.reflect.ConstantPool;
 import sun.reflect.annotation.AnnotationType;
 import sun.nio.ch.Interruptible;
@@ -148,6 +150,12 @@ public interface JavaLangAccess {
      * Returns a class loaded by the bootstrap class loader.
      */
     Class<?> findBootstrapClassOrNull(ClassLoader cl, String name);
+
+    /**
+     * Finds a resource with the given name in a module that is defined to
+     * the given class loader.
+     */
+    URL findResource(ClassLoader cl, ModuleArtifact artifact, String name);
 
     /**
      * Invokes Long.formatUnsignedLong(long val, int shift, char[] buf, int offset, int len)

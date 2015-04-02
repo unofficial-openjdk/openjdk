@@ -33,12 +33,12 @@ import java.util.stream.Stream;
 import jdk.jigsaw.module.ModuleArtifact;
 
 /**
- * Find resources and packages in modules defined to the boot class loader
- * or resources and packages on the "boot class path" specified via -Xbootclasspath/a.
+ * Find resources and packages in modules defined to the boot class loader or
+ * resources and packages on the "boot class path" specified via -Xbootclasspath/a.
  */
+
 public class BootLoader {
-    private BootLoader() {
-    }
+    private BootLoader() { }
 
     // ServiceCatalog for the boot class loader
     private static final ServicesCatalog SERVICES_CATALOG = new ServicesCatalog();
@@ -51,7 +51,17 @@ public class BootLoader {
     }
 
     /**
-     * Returns the URL to the given resource if visible to this boot loader.
+     * Finds the resource with the given name in the given module artifact if
+     * the module is defined to the boot loader.
+     */
+    public static URL findResource(ModuleArtifact artifact, String name) {
+        return ClassLoaders.bootLoader().findResource(artifact, name);
+    }
+
+    /**
+     * Returns the URL to the given resource if the resource can be located
+     * on the boot class path. This method does not locate a resource in any
+     * of the named modules defined to the boot loader.
      */
     public static URL findResource(String name) {
         return ClassLoaders.bootLoader().findResource(name);
@@ -59,7 +69,8 @@ public class BootLoader {
 
     /**
      * Returns an Iterator to iterate over the resources of the given name
-     * that are visible to the boot loader.
+     * on the boot class path. This method does not locate resources in any
+     * of the named modules defined to the boot loader.
      */
     public static Enumeration<URL> findResources(String name) throws IOException {
         return ClassLoaders.bootLoader().findResources(name);
@@ -73,8 +84,8 @@ public class BootLoader {
     }
 
     /**
-     * Returns the Package of the given name defined by the boot loader;
-     * or null if not exists.
+     * Returns the Package of the given name defined to the boot loader or null
+     * if the package has not been defined.
      */
     public static Package getPackage(String pn) {
         String location = getSystemPackageLocation(pn.replace('.', '/').concat("/"));
@@ -85,9 +96,9 @@ public class BootLoader {
     }
 
     /**
-     * Returns all Packages defined by the boot loader.
+     * Returns a stream of the packages defined to the boot loader.
      */
-    public static Stream<Package> getPackageStream() {
+    public static Stream<Package> packages() {
         return Arrays.stream(getSystemPackageNames())
             .map(name -> {
                 String pn = name.substring(0, name.length() - 1).replace('/', '.');

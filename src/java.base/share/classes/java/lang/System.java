@@ -27,6 +27,7 @@ package java.lang;
 import java.io.*;
 import java.lang.reflect.Executable;
 import java.lang.annotation.Annotation;
+import java.net.URL;
 import java.security.AccessControlContext;
 import java.util.Properties;
 import java.util.PropertyPermission;
@@ -36,6 +37,7 @@ import java.security.PrivilegedAction;
 import java.nio.channels.Channel;
 import java.nio.channels.spi.SelectorProvider;
 
+import jdk.jigsaw.module.ModuleArtifact;
 import sun.nio.ch.Interruptible;
 import sun.misc.ServicesCatalog;
 import sun.reflect.CallerSensitive;
@@ -1317,6 +1319,9 @@ public final class System {
             }
             public Class<?> findBootstrapClassOrNull(ClassLoader cl, String name) {
                 return cl.findBootstrapClassOrNull(name);
+            }
+            public URL findResource(ClassLoader cl, ModuleArtifact artifact, String name) {
+                return cl.findResource(artifact, name);
             }
             public void formatUnsignedLong(long val, int shift, char[] buf, int offset, int len) {
                 Long.formatUnsignedLong(val, shift, buf, offset, len);

@@ -82,7 +82,7 @@ public class NotificationInfoTest {
         System.out.println("Checking platform MBeans...");
         checkPlatformMBeans();
 
-        URL codeBase = ClassLoader.getSystemResource("javax/management/MBeanServer.class");
+        URL codeBase = MBeanServer.class.getModule().getResource("javax/management/MBeanServer.class");
         if (codeBase == null) {
             throw new Exception("Could not determine codeBase for " + MBeanServer.class);
         }

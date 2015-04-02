@@ -35,7 +35,6 @@ import java.security.CodeSource;
 import java.security.PrivilegedAction;
 import java.security.ProtectionDomain;
 import java.security.cert.Certificate;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -48,7 +47,7 @@ import java.util.Vector;
 import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
-
+import jdk.jigsaw.module.ModuleArtifact;
 import sun.misc.BootLoader;
 import sun.misc.ClassLoaders;
 import sun.misc.CompoundEnumeration;
@@ -1090,6 +1089,9 @@ public abstract class ClassLoader {
      * (images, audio, text, etc) that can be accessed by class code in a way
      * that is independent of the location of the code.
      *
+     * Resources in a named module are private to that module. This method does
+     * not find resource in named modules.
+     *
      * <p> The name of a resource is a '<tt>/</tt>'-separated path name that
      * identifies the resource.
      *
@@ -1128,6 +1130,9 @@ public abstract class ClassLoader {
      * Finds all the resources with the given name. A resource is some data
      * (images, audio, text, etc) that can be accessed by class code in a way
      * that is independent of the location of the code.
+     *
+     * Resources in a named module are private to that module. This method does
+     * not find resource in named modules.
      *
      * <p>The name of a resource is a <tt>/</tt>-separated path name that
      * identifies the resource.
@@ -1171,8 +1176,30 @@ public abstract class ClassLoader {
     }
 
     /**
+     * Finds the resource of the given name in a module defined to this class
+     * loader. Class loader implementations that support the loading from
+     * modules should override this method.
+     *
+     * @apiNote This method returns a URL for now to make it consistent with
+     * the other findResource methods defined here. This may change.
+     *
+     * @return A URL object for reading the resource; {@code null} if the
+     * resource could not be found or there isn't a module defined to this
+     * class loader that loads from the given {@code ModuleArtifact}.
+     *
+     * @since 1.9
+     * @see java.lang.reflect.Module#getResource(String)
+     */
+    protected URL findResource(ModuleArtifact module, String name) {
+        return null;
+    }
+
+    /**
      * Finds the resource with the given name. Class loader implementations
      * should override this method to specify where to find resources.
+     *
+     * Resources in a named module are private to that module. This method does
+     * not find resource in named modules defined to this class loader.
      *
      * @param  name
      *         The resource name
@@ -1191,6 +1218,9 @@ public abstract class ClassLoader {
      * representing all the resources with the given name. Class loader
      * implementations should override this method to specify where to load
      * resources from.
+     *
+     * Resources in a named module are private to that module. This method does
+     * not find resource in named modules defined to this class loader.
      *
      * @param  name
      *         The resource name
@@ -1236,6 +1266,9 @@ public abstract class ClassLoader {
      * classes.  This method locates the resource through the system class
      * loader (see {@link #getSystemClassLoader()}).
      *
+     * Resources in a named module are private to that module. This method does
+     * not find resource in named modules.
+     *
      * @param  name
      *         The resource name
      *
@@ -1257,6 +1290,9 @@ public abstract class ClassLoader {
      * load classes.  The resources thus found are returned as an
      * {@link java.util.Enumeration <tt>Enumeration</tt>} of {@link
      * java.net.URL <tt>URL</tt>} objects.
+     *
+     * Resources in a named module are private to that module. This method does
+     * not find resource in named modules.
      *
      * <p> The search order is described in the documentation for {@link
      * #getSystemResource(String)}.  </p>
@@ -1285,6 +1321,9 @@ public abstract class ClassLoader {
     /**
      * Returns an input stream for reading the specified resource.
      *
+     * Resources in a named module are private to that module. This method does
+     * not find resource in named modules.
+     *
      * <p> The search order is described in the documentation for {@link
      * #getResource(String)}.  </p>
      *
@@ -1309,6 +1348,9 @@ public abstract class ClassLoader {
      * Open for reading, a resource of the specified name from the search path
      * used to load classes.  This method locates the resource through the
      * system class loader (see {@link #getSystemClassLoader()}).
+     *
+     * Resources in a named module are private to that module. This method does
+     * not find resource in named modules.
      *
      * @param  name
      *         The resource name
@@ -1666,7 +1708,7 @@ public abstract class ClassLoader {
             pkgs = Stream.concat(packages.values().stream(), pkgs);
             ld = ld.parent;
         }
-        return Stream.concat(BootLoader.getPackageStream(), pkgs);
+        return Stream.concat(BootLoader.packages(), pkgs);
     }
 
     Package findPackageFromAncestors(String name) {

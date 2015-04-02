@@ -38,7 +38,6 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.lang.reflect.Method;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -329,7 +328,7 @@ public final class MethodUtil extends SecureClassLoader {
             throw new ClassNotFoundException(name);
         }
         String path = name.replace('.', '/').concat(".class");
-        URL res = getResource(path);
+        URL res = Object.class.getModule().getResource(path);
         if (res != null) {
             try {
                 return defineClass(name, res);

@@ -2740,22 +2740,26 @@ public abstract class ResourceBundle {
                     stream = AccessController.doPrivileged(
                         new PrivilegedExceptionAction<InputStream>() {
                             public InputStream run() throws IOException {
-                                InputStream is = null;
-                                if (reloadFlag) {
-                                    URL url = classLoader.getResource(resourceName);
-                                    if (url != null) {
-                                        URLConnection connection = url.openConnection();
-                                        if (connection != null) {
-                                            // Disable caches to get fresh data for
-                                            // reloading.
-                                            connection.setUseCaches(false);
-                                            is = connection.getInputStream();
-                                        }
+                                URL url = classLoader.getResource(resourceName);
+                                if (url == null) {
+                                    // if the caller is in a named module then the
+                                    // resource may be in the module
+                                    Module m = getModule(caller);
+                                    if (m != null) {
+                                        url = m.getResource(resourceName);
                                     }
-                                } else {
-                                    is = classLoader.getResourceAsStream(resourceName);
                                 }
-                                return is;
+                                if (url == null) {
+                                    return null;
+                                } else {
+                                    URLConnection connection = url.openConnection();
+                                    if (reloadFlag) {
+                                        // Disable caches to get fresh data for
+                                        // reloading.
+                                        connection.setUseCaches(false);
+                                    }
+                                    return connection.getInputStream();
+                                }
                             }
                         });
                 } catch (PrivilegedActionException e) {

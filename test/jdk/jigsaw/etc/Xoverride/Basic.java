@@ -42,7 +42,7 @@ public class Basic {
 
         // boot loader, add class
         testLoader("java.text.AnnotationBuddy", BOOT_LOADER);
-        assertNotNull(ClassLoader.getSystemResource("java/text/AnnotationBuddy.class"));
+        assertNotNull(clazz.getModule().getResource("java/text/AnnotationBuddy.class"));
 
         // ext loader, replace class
         clazz = Class.forName("com.sun.jndi.dns.DnsClient");
@@ -52,7 +52,7 @@ public class Basic {
 
         // ext loader, add class
         testLoader("com.sun.jndi.dns.DnsClientBuddy", EXT_LOADER);
-        assertNotNull(ClassLoader.getSystemResource("com/sun/jndi/dns/DnsClientBuddy.class"));
+        assertNotNull(clazz.getModule().getResource("com/sun/jndi/dns/DnsClientBuddy.class"));
 
         // system class loader, replace class
         clazz = Class.forName("com.sun.tools.javac.Main");
@@ -62,7 +62,7 @@ public class Basic {
 
         // system class loader, add class
         testLoader("com.sun.tools.javac.MainBuddy", SYS_LOADER);
-        assertNotNull(ClassLoader.getSystemResource("com/sun/tools/javac/MainBuddy.class"));
+        assertNotNull(clazz.getModule().getResource("com/sun/tools/javac/MainBuddy.class"));
     }
 
     /**

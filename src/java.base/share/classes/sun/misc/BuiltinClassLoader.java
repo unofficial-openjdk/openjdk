@@ -75,9 +75,6 @@ import jdk.jigsaw.module.ModuleArtifact;
  * to this ClassLoader are assumed to be in the boot Layer and so should not have
  * any overlapping packages with modules defined to the parent or the boot class
  * loader. </p>
- *
- * <p> ###FIXME: When using exploded builds or -Xoverride and overridden classes
- * then the URLs are file URLs rather than jrt URLs. </p>
  */
 class BuiltinClassLoader
     extends SecureClassLoader implements ModuleLoader
@@ -139,147 +136,44 @@ class BuiltinClassLoader
     // -- finding/loading resources
 
     @Override
+    public URL findResource(ModuleArtifact artifact, String name) {
+        if (artifacts.containsKey(artifact)) {
+            PrivilegedAction<URL> pa = () -> moduleReaderFor(artifact).findResource(name);
+            URL url = AccessController.doPrivileged(pa);
+            return checkURL(url);
+        } else {
+            // module not defined to this class loader
+            return null;
+        }
+    }
+
+    @Override
     public URL findResource(String name) {
-        return findResource(name, false);
+        if (ucp != null) {
+            PrivilegedAction<URL> pa = () -> ucp.findResource(name, false);
+            URL url = AccessController.doPrivileged(pa);
+            return checkURL(url);
+        } else {
+            return null;
+        }
     }
 
     @Override
     public Enumeration<URL> findResources(String name) throws IOException {
-        return findResources(name, false);
-    }
-
-    /**
-     * Finds the resource with the given name. This method is overridden so
-     * that resources in modules defined by this class loader are located
-     * first.
-     */
-    @Override
-    public URL getResource(String name) {
-        return findResource(name, true);
-    }
-
-    /**
-     * Finds all resources with the given name. This method is overridden so
-     * resources in modules defined to this class loader are located first.
-     */
-    @Override
-    public Enumeration<URL> getResources(String name) throws IOException {
-        return findResources(name, true);
-    }
-
-    /**
-     * Finds the resource with the given name, checking the parent if
-     * necessary when {@code checkParent} is true.
-     */
-    private URL findResource(String name, boolean checkParent) {
-
-        // is resource in a package of a module defined to this class loader?
-        ModuleArtifact artifact = findModuleForResource(name);
-        if (artifact != null) {
-            return checkURL(findResource(artifact, name));
-        }
-
-        // check parent
-        if (checkParent && parent != null) {
-            URL url = parent.getResource(name);
-            if (url != null)
-                return url;
-        }
-
-        // search all modules defined to this class loader
-        for (ModuleArtifact a: artifacts.keySet()) {
-            URL url = checkURL(findResource(a, name));
-            if (url != null)
-                return url;
-        }
-
-        // check class path
         if (ucp != null) {
-            PrivilegedAction<URL> pa = () -> ucp.findResource(name, false);
-            URL url = checkURL(AccessController.doPrivileged(pa));
-            if (url != null)
-                return url;
-        }
-
-        // not found
-        return null;
-    }
-
-    /**
-     * Finds all resources with the given name, checking the parent if
-     * necessary when {@code checkParent} is true.
-     */
-    private Enumeration<URL> findResources(String name, boolean checkParent)
-        throws IOException
-    {
-        List<URL> result = new ArrayList<>();
-
-        // for consistency with getResource then we must check if the resource
-        // is in a package of a module defined to this class loader
-        ModuleArtifact artifact = findModuleForResource(name);
-        if (artifact != null) {
-            URL url = checkURL(findResource(artifact, name));
-            if (url != null) {
-                result.add(url);
-            }
-            return Collections.enumeration(result);
-        }
-
-        // check parent
-        if (checkParent && parent != null) {
-            Enumeration<URL> e = parent.getResources(name);
-            while (e.hasMoreElements()) {
-                result.add(e.nextElement());
-            }
-        }
-
-        // search all modules defined to this class loader
-        if (artifact == null) {
-            artifacts.keySet().forEach(a -> {
-                URL url = checkURL(findResource(a, name));
-                if (url != null)
-                    result.add(url);
-            });
-        }
-
-        // class path
-        if (ucp != null) {
+            List<URL> result = new ArrayList<>();
             PrivilegedAction<Enumeration<URL>> pa = () -> ucp.findResources(name, false);
             Enumeration<URL> e = AccessController.doPrivileged(pa);
             while (e.hasMoreElements()) {
                 URL url = checkURL(e.nextElement());
-                if (url != null)
+                if (url != null) {
                     result.add(url);
+                }
             }
+            return Collections.enumeration(result); // checked URLs
+        } else {
+            return Collections.emptyEnumeration();
         }
-
-        // return enumeration of checked URLs
-        return Collections.enumeration(result);
-    }
-
-
-    /**
-     * Maps the package name of the given resource to a module, returning
-     * the ModuleArtifact if the module is defined to this class loader.
-     * Returns {@code null} if there no mapping.
-     */
-    private ModuleArtifact findModuleForResource(String name) {
-        int pos = name.lastIndexOf('/');
-        if (pos < 0)
-            return null;
-
-        // package -> artifact
-        String pn = name.substring(0, pos).replace('/', '.');
-        return packageToArtifact.get(pn);
-    }
-
-    /**
-     * Returns a URL to a resource in the given module or {@code null}
-     * if not found.
-     */
-    private URL findResource(ModuleArtifact artifact, String name) {
-        PrivilegedAction<URL> pa = () -> moduleReaderFor(artifact).findResource(name);
-        return AccessController.doPrivileged(pa);
     }
 
     // -- finding/loading classes
@@ -454,32 +348,6 @@ class BuiltinClassLoader
         }
     }
 
-    private Package definePackage(String pn, ModuleArtifact artifact) {
-        URL url = null;
-        try {
-            if (artifact != null) {
-                url = artifact.location().toURL();
-            }
-        } catch (MalformedURLException e) {
-            throw new InternalError(e);
-        }
-        return definePackage(pn, null, null, null, null, null, null, url);
-    }
-
-    // package-private
-
-    /**
-     * Define a Package object that may be in a named module or unnamed module
-     * @param pn package name
-     */
-    Package definePackageIfAbsent(String pn) {
-        Package pkg = getPackage(pn);
-        if (pkg != null) {
-            return pkg;
-        }
-        return definePackage(pn, packageToArtifact.get(pn));
-    }
-
     /**
      * Defines the given binary class name to the VM, loading the class
      * bytes via the given Resource object.
@@ -511,6 +379,43 @@ class BuiltinClassLoader
             CodeSource cs = new CodeSource(url, signers);
             return defineClass(cn, b, 0, b.length, cs);
         }
+    }
+
+    // -- packages
+
+    /**
+     * Define a Package this to this class loader if not already defined.
+     * If the package name is in a module defined to this class loader then
+     * the resulting Package is sealed with the code source that is the
+     * module location.
+     *
+     * @param pn package name
+     */
+    Package definePackageIfAbsent(String pn) {
+        Package pkg = getPackage(pn);
+        if (pkg == null) {
+            ModuleArtifact artifact = packageToArtifact.get(pn);
+            if (artifact == null) {
+                pkg = definePackage(pn, null, null, null, null, null, null, null);
+            } else {
+                pkg = definePackage(pn, artifact);
+            }
+        }
+        return pkg;
+    }
+
+    /**
+     * Define a Package this to this class loader. The resulting Package
+     * is sealed with the code source that is the module location.
+     */
+    private Package definePackage(String pn, ModuleArtifact artifact) {
+        URL url;
+        try {
+            url = artifact.location().toURL();
+        } catch (MalformedURLException e) {
+            throw new InternalError(e);
+        }
+        return definePackage(pn, null, null, null, null, null, null, url);
     }
 
     /**
@@ -681,7 +586,7 @@ class BuiltinClassLoader
         ModuleReader reader = artifacts.get(artifact);
         assert reader != null;
         if (reader == NULL_MODULE_READER) {
-            // repalce NULL_MODULE_READER with an actual module reader
+            // replace NULL_MODULE_READER with an actual module reader
             reader = artifacts.computeIfPresent(artifact, (k, v) -> {
                 if (v == NULL_MODULE_READER) {
                     return createModuleReader(artifact);

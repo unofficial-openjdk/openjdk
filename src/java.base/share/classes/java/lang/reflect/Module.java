@@ -26,6 +26,7 @@
 package java.lang.reflect;
 
 import java.net.URI;
+import java.net.URL;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -237,6 +238,32 @@ public final class Module {
             return true;
 
         return false;
+    }
+
+    /**
+     * Finds the resource of the given name in the {@link ModuleArtifact
+     * ModuleArtifact} from where this module was loaded. The name of a
+     * resource is a {@code '/'}-separated path name that identifies the
+     * resource.
+     *
+     * @return A URL object for reading the resource or {@code null} if the
+     * resource could not be found
+     *
+     * @apiNote This method returns a URL for now to make it consistent with
+     * the methods defined by java.lang.ClassLoader. This is temporary and
+     * will change.
+     *
+     * @see ClassLoader#getResource(String)
+     */
+    public URL getResource(String name) {
+        Objects.requireNonNull(name);
+        if (loader == null) {
+            return BootLoader.findResource(artifact, name);
+        } else {
+            // use SharedSecretes to invoke protected method
+            return SharedSecrets.getJavaLangAccess()
+                                .findResource(loader, artifact, name);
+        }
     }
 
     /**

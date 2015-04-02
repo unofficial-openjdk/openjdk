@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,25 +21,19 @@
  * questions.
  */
 
-package jdk.test;
+package p1;
 
+import java.io.InputStream;
 import java.net.URL;
-import java.awt.Component;
-import java.lang.reflect.Module;
 
-public class UseAWT {
-    public static void main(String[] args) {
-        boolean expectFail = args[0].equals("expect-fail");
-        boolean expectPass = args[0].equals("expect-pass");
-        if (expectFail == expectPass)
-            throw new RuntimeException("Need to run with expect-* argument");
+public class Main {
+    private Main() { }
 
-        // test class loading
-        try {
-            Class<?> c = Component.class;
-            if (expectFail) throw new RuntimeException("No Error thrown");
-        } catch (NoClassDefFoundError e) {
-            if (expectPass) throw new RuntimeException(e);
-        }
+    public static URL getResource(String name) {
+        return Main.class.getResource(name);
+    }
+
+    public static InputStream getResourceAsStream(String name) {
+        return Main.class.getResourceAsStream(name);
     }
 }
