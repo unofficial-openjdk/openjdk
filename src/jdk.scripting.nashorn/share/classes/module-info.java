@@ -30,5 +30,7 @@ module jdk.scripting.nashorn {
     uses jdk.internal.dynalink.linker.GuardingDynamicLinker;
     uses jdk.nashorn.internal.runtime.CodeStore;
     provides javax.script.ScriptEngineFactory with jdk.nashorn.api.scripting.NashornScriptEngineFactory;
+
+    exports jdk.nashorn.api.scripting;
 }
 
