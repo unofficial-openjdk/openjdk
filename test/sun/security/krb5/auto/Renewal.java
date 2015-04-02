@@ -38,7 +38,6 @@
  * @run main/othervm Renewal
  */
 
-import sun.security.jgss.GSSUtil;
 import sun.security.krb5.Config;
 import sun.security.krb5.internal.ccache.Credentials;
 import sun.security.krb5.internal.ccache.FileCredentialsCache;

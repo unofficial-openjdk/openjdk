@@ -32,7 +32,6 @@
 
 import sun.net.www.HeaderParser;
 import sun.net.www.MessageHeader;
-import sun.net.www.protocol.http.AuthenticationHeader;
 import java.io.*;
 import java.util.Iterator;
 

@@ -38,7 +38,6 @@
 
 import java.io.File;
 import java.io.FileOutputStream;
-import sun.security.jgss.GSSUtil;
 
 // The basic krb5 test skeleton you can copy from
 public class FileKeyTab {
