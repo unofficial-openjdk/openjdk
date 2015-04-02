@@ -28,6 +28,7 @@
  *      CertPathValidator.validate() and CertPathBuilder.build() throw an
  *      InvalidAlgorithmParameterException if any of the TrustAnchors specified
  *      contain nameConstraints
+ * @modules java.base/sun.security.util
  */
 import java.io.File;
 import java.io.FileInputStream;
@@ -61,7 +62,6 @@ import sun.security.util.DerInputStream;
  *
  * @author      Steve Hanna
  * @author      Sean Mullan
- * @modules java.base/sun.security.util
  */
 public final class ValidateNC {
 

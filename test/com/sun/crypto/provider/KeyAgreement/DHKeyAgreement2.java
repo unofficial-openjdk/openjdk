@@ -25,6 +25,7 @@
  * @test
  * @bug 7146728
  * @summary DHKeyAgreement2
+ * @modules java.base/sun.misc
  * @author Jan Luehe
  */
 
