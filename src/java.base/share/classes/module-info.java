@@ -112,6 +112,7 @@ module java.base {
         jdk.jartool,
         jdk.jconsole,
         jdk.jvmstat,
+        jdk.scripting.nashorn,
         jdk.security.auth,
         jdk.security.jgss;
     exports sun.net.dns to
