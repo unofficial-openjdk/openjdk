@@ -98,11 +98,39 @@ class BuiltinClassLoader
     // the URL class path or null if there is no class path
     private final URLClassPath ucp;
 
-    // maps package name to module artifact for the modules defined to this class loader
-    private final Map<String, ModuleArtifact> packageToArtifact = new ConcurrentHashMap<>();
+    /**
+     * A module defined/loaded by a built-in class loader.
+     *
+     * A LoadedModule encapsulates a reference to ModuleArtifact from where the
+     * module was loaded. It also keeps a reference to the module location. This
+     * it needed to avoid calls to {@link java.net.URI#toURL() toURL} and loading
+     * protocols handlers when defining classes or packages.
+     */
+    private static class LoadedModule {
+        private final ModuleArtifact artifact;
+        private final URL url;
+
+        LoadedModule(ModuleArtifact artifact) {
+            URL url;
+            try {
+                url = artifact.location().toURL();
+            } catch (MalformedURLException e) {
+                throw new InternalError(e);
+            }
+            this.artifact = artifact;
+            this.url = url;
+        }
+
+        ModuleArtifact artifact() { return artifact; }
+        URL location() { return url; }
+    }
+
+
+    // maps package name to a loaded module for the modules defined to this class loader
+    private final Map<String, LoadedModule> packageToModule = new ConcurrentHashMap<>();
 
     // maps a module artifact to a module reader
-    private final Map<ModuleArtifact, ModuleReader> artifacts = new ConcurrentHashMap<>();
+    private final Map<ModuleArtifact, ModuleReader> artifactToReader = new ConcurrentHashMap<>();
 
     /**
      * Create a new instance.
@@ -127,17 +155,18 @@ class BuiltinClassLoader
      */
     @Override
     public void defineModule(ModuleArtifact artifact) {
-        artifact.packages().forEach(p -> packageToArtifact.put(p, artifact));
+        LoadedModule loadedModule = new LoadedModule(artifact);
+        artifact.packages().forEach(p -> packageToModule.put(p, loadedModule));
 
         // Use NULL_MODULE_READER initially to avoid opening eagerly
-        artifacts.put(artifact, NULL_MODULE_READER);
+        artifactToReader.put(artifact, NULL_MODULE_READER);
     }
 
     // -- finding/loading resources
 
     @Override
     public URL findResource(ModuleArtifact artifact, String name) {
-        if (artifacts.containsKey(artifact)) {
+        if (artifactToReader.containsKey(artifact)) {
             PrivilegedAction<URL> pa = () -> moduleReaderFor(artifact).findResource(name);
             URL url = AccessController.doPrivileged(pa);
             return checkURL(url);
@@ -188,11 +217,11 @@ class BuiltinClassLoader
             throw new ClassNotFoundException(cn);
 
         // find the candidate module for this class
-        ModuleArtifact artifact = findModule(cn);
+        LoadedModule loadedModule = findModule(cn);
 
         Class<?> c = null;
-        if (artifact != null) {
-            c = findClassInModuleOrNull(artifact, cn);
+        if (loadedModule != null) {
+            c = findClassInModuleOrNull(loadedModule, cn);
         } else {
             // check class path
             if (ucp != null)
@@ -232,10 +261,10 @@ class BuiltinClassLoader
             if (c == null) {
 
                 // find the candidate module for this class
-                ModuleArtifact artifact = findModule(cn);
-                if (artifact != null) {
+                LoadedModule loadedModule = findModule(cn);
+                if (loadedModule != null) {
                     if (VM.isModuleSystemInited()) {
-                        c = findClassInModuleOrNull(artifact, cn);
+                        c = findClassInModuleOrNull(loadedModule, cn);
                     }
                 } else {
                     // check parent
@@ -268,17 +297,17 @@ class BuiltinClassLoader
     }
 
     /**
-     * Find the candidate module artifact for the given class name.
+     * Find the candidate loaded module for the given class name.
      * Returns {@code null} if none of the modules defined to this
      * class loader contain the API package for the class.
      */
-    private ModuleArtifact findModule(String cn) {
+    private LoadedModule findModule(String cn) {
         int pos = cn.lastIndexOf('.');
         if (pos < 0)
             return null; // unnamed package
 
         String pn = cn.substring(0, pos);
-        return packageToArtifact.get(pn);
+        return packageToModule.get(pn);
     }
 
     /**
@@ -287,8 +316,8 @@ class BuiltinClassLoader
      *
      * @return the resulting Class or {@code null} if not found
      */
-    private Class<?> findClassInModuleOrNull(ModuleArtifact artifact, String cn) {
-        PrivilegedAction<Class<?>> pa = () -> defineClass(cn, artifact);
+    private Class<?> findClassInModuleOrNull(LoadedModule loadedModule, String cn) {
+        PrivilegedAction<Class<?>> pa = () -> defineClass(cn, loadedModule);
         return AccessController.doPrivileged(pa);
     }
 
@@ -321,7 +350,8 @@ class BuiltinClassLoader
      *
      * @return the resulting Class or {@code null} if an I/O error occurs
      */
-    private Class<?> defineClass(String cn, ModuleArtifact artifact) {
+    private Class<?> defineClass(String cn, LoadedModule loadedModule) {
+        ModuleArtifact artifact = loadedModule.artifact();
         ModuleReader reader = moduleReaderFor(artifact);
         try {
             // read class file
@@ -332,10 +362,10 @@ class BuiltinClassLoader
                 int pos = cn.lastIndexOf('.');
                 String pn = cn.substring(0, pos);
                 if (getPackage(pn) == null) {
-                    definePackage(pn, artifact);
+                    definePackage(pn, loadedModule);
                 }
                 // define class to VM
-                URL url = artifact.location().toURL();
+                URL url = loadedModule.location();
                 CodeSource cs = new CodeSource(url, (CodeSigner[]) null);
                 return defineClass(cn, bb, cs);
             } finally {
@@ -394,11 +424,11 @@ class BuiltinClassLoader
     Package definePackageIfAbsent(String pn) {
         Package pkg = getPackage(pn);
         if (pkg == null) {
-            ModuleArtifact artifact = packageToArtifact.get(pn);
-            if (artifact == null) {
+            LoadedModule loadedModule = packageToModule.get(pn);
+            if (loadedModule == null) {
                 pkg = definePackage(pn, null, null, null, null, null, null, null);
             } else {
-                pkg = definePackage(pn, artifact);
+                pkg = definePackage(pn, loadedModule);
             }
         }
         return pkg;
@@ -408,13 +438,8 @@ class BuiltinClassLoader
      * Define a Package this to this class loader. The resulting Package
      * is sealed with the code source that is the module location.
      */
-    private Package definePackage(String pn, ModuleArtifact artifact) {
-        URL url;
-        try {
-            url = artifact.location().toURL();
-        } catch (MalformedURLException e) {
-            throw new InternalError(e);
-        }
+    private Package definePackage(String pn, LoadedModule loadedModule) {
+        URL url = loadedModule.location();
         return definePackage(pn, null, null, null, null, null, null, url);
     }
 
@@ -583,11 +608,11 @@ class BuiltinClassLoader
      * and replacing the NULL_MODULE_READER if needed.
      */
     private ModuleReader moduleReaderFor(ModuleArtifact artifact) {
-        ModuleReader reader = artifacts.get(artifact);
+        ModuleReader reader = artifactToReader.get(artifact);
         assert reader != null;
         if (reader == NULL_MODULE_READER) {
             // replace NULL_MODULE_READER with an actual module reader
-            reader = artifacts.computeIfPresent(artifact, (k, v) -> {
+            reader = artifactToReader.computeIfPresent(artifact, (k, v) -> {
                 if (v == NULL_MODULE_READER) {
                     return createModuleReader(artifact);
                 } else {
