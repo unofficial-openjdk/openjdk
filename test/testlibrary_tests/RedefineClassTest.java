@@ -28,7 +28,6 @@
  * @modules java.compiler
  *          java.instrument
  *          jdk.jartool/sun.tools.jar
- * @ignore 8076490
  * @build RedefineClassHelper
  * @run main/othervm RedefineClassHelper
  * @run main/othervm -javaagent:redefineagent.jar RedefineClassTest

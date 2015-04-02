@@ -28,7 +28,6 @@
  * @library /testlibrary
  * @modules java.base/sun.misc
  *          java.management
- * @ignore 8076490
  * @run main BootstrapRedefine
  */
 
