@@ -241,7 +241,7 @@ class ClassLoader: AllStatic {
   static unsigned int hash(const char *s, int n);
   // Returns the package file name corresponding to the specified package
   // or class name, or null if not found.
-  static PackageInfo* lookup_package(const char *pkgname);
+  static PackageInfo* lookup_package(const char *pkgname, int len);
   // Adds a new package entry for the specified class or package name and
   // corresponding directory or jar file name.
   static bool add_package(const char *pkgname, int classpath_index, TRAPS);

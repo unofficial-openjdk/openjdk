@@ -219,7 +219,7 @@ void mutex_init() {
   def(JmethodIdCreation_lock       , Mutex  , leaf,        true,  Monitor::_safepoint_check_always);     // used for creating jmethodIDs.
 
   def(SystemDictionary_lock        , Monitor, leaf,        true,  Monitor::_safepoint_check_always);     // lookups done by VM thread
-  def(PackageTable_lock            , Mutex  , leaf,        false, Monitor::_safepoint_check_always);
+  def(PackageTable_lock            , Mutex  , nonleaf,     false, Monitor::_safepoint_check_always);
   def(Module_lock                  , Mutex  , nonleaf  ,   true,  Monitor::_safepoint_check_always);
   def(InlineCacheBuffer_lock       , Mutex  , leaf,        true,  Monitor::_safepoint_check_always);
   def(VMStatistic_lock             , Mutex  , leaf,        false, Monitor::_safepoint_check_always);

@@ -1051,6 +1051,7 @@ class PackageInfo: public BasicHashtableEntry<mtClass> {
 public:
   const char* _pkgname;       // Package name
   int _classpath_index;       // Index of directory or JAR file loaded from
+  Symbol* _module_location;   // Location of module containing the package
 
   PackageInfo* next() {
     return (PackageInfo*)BasicHashtableEntry<mtClass>::next();
@@ -1063,9 +1064,14 @@ public:
     return ClassLoader::classpath_entry(_classpath_index)->name();
   }
 
-  void set_index(int index) {
+  void set_location_and_index(Symbol* mod_loc, int index) {
+    _module_location = mod_loc;
+    if (_module_location != NULL)
+        _module_location->increment_refcount();
     _classpath_index = index;
   }
+
+  Symbol* module_location() { return _module_location; }
 };
 
 
@@ -1177,12 +1183,20 @@ void ClassLoader::copy_package_info_table(char** top, char* end) {
 }
 #endif
 
-PackageInfo* ClassLoader::lookup_package(const char *pkgname) {
-  const char *cp = strrchr(pkgname, '/');
-  if (cp != NULL) {
-    // Package prefix found
-    int n = cp - pkgname + 1;
-    return _package_hash_table->get_entry(pkgname, n);
+PackageInfo* ClassLoader::lookup_package(const char *pkgname, int len) {
+  return _package_hash_table->get_entry(pkgname, len);
+}
+
+// If a class's package is in a module defined by the boot loader then
+// return the module location, else return NULL.
+static Symbol* boot_module_location(const char* pkg_name, int len, TRAPS) {
+  PackageEntryTable* pkg_entry_tbl =
+    ClassLoaderData::the_null_class_loader_data()->packages();
+  TempNewSymbol pkg_symbol = SymbolTable::new_symbol(pkg_name, len, CHECK_NULL);
+  PackageEntry* pkg_entry = pkg_entry_tbl->lookup_only(pkg_symbol);
+
+  if (pkg_entry != NULL && !pkg_entry->in_unnamed_module()) {
+    return pkg_entry->module()->location();
   }
   return NULL;
 }
@@ -1195,47 +1209,61 @@ bool ClassLoader::add_package(const char *pkgname, int classpath_index, TRAPS) {
   {
     MutexLocker ml(PackageTable_lock, THREAD);
     // First check for previously loaded entry
-    PackageInfo* pp = lookup_package(pkgname);
-    if (pp != NULL) {
-      // Existing entry found, check source of package
-      pp->set_index(classpath_index);
-      return true;
-    }
-
     const char *cp = strrchr(pkgname, '/');
     if (cp != NULL) {
       // Package prefix found
-      int n = cp - pkgname + 1;
+      int len = cp - pkgname + 1;
+      PackageInfo* pp = lookup_package(pkgname, len);
+      if (pp != NULL) {
+        // Existing entry found, check source of package (remove trailing '/')
+        Symbol* module_location = boot_module_location(pkgname, len - 1, CHECK_false);
+        pp->set_location_and_index(module_location, classpath_index);
+        return true;
+      }
 
-      char* new_pkgname = NEW_C_HEAP_ARRAY(char, n + 1, mtClass);
+      char* new_pkgname = NEW_C_HEAP_ARRAY(char, len + 1, mtClass);
       if (new_pkgname == NULL) {
         return false;
       }
 
-      memcpy(new_pkgname, pkgname, n);
-      new_pkgname[n] = '\0';
-      pp = _package_hash_table->new_entry(new_pkgname, n);
-      pp->set_index(classpath_index);
+      memcpy(new_pkgname, pkgname, len);
+      new_pkgname[len] = '\0';
+      pp = _package_hash_table->new_entry(new_pkgname, len);
+      Symbol* module_location = boot_module_location(new_pkgname, len - 1, CHECK_false);
+      pp->set_location_and_index(module_location, classpath_index);
 
       // Insert into hash table
       _package_hash_table->add_entry(pp);
     }
-    return true;
   }
+  return true;
 }
 
 
 oop ClassLoader::get_system_package(const char* name, TRAPS) {
-  PackageInfo* pp;
+  PackageInfo* pp = NULL;
   {
     MutexLocker ml(PackageTable_lock, THREAD);
-    pp = lookup_package(name);
+    const char *cp = strrchr(name, '/');
+    if (cp != NULL) {
+      pp = lookup_package(name, cp - name + 1);
+    }
   }
   if (pp == NULL) {
     return NULL;
   } else {
-    Handle p = java_lang_String::create_from_str(pp->filename(), THREAD);
-    return p();
+    // If the module_location field of the PackageInfo record is not null then
+    // return the module location.  Otherwise, use boot class path index.
+    Symbol* module_location = pp->module_location();
+    if (module_location != NULL) {
+      ResourceMark rm(THREAD);
+      Handle ml = java_lang_String::create_from_str(
+        module_location->as_C_string(), THREAD);
+      return ml();
+    } else {
+      Handle p = java_lang_String::create_from_str(pp->filename(), THREAD);
+      return p();
+    }
   }
 }
 
