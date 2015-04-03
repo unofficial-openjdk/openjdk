@@ -28,9 +28,12 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Properties;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+import java.lang.reflect.Module;
 
 import javax.xml.XMLConstants;
 import javax.xml.transform.Templates;
@@ -40,11 +43,14 @@ import javax.xml.transform.URIResolver;
 
 import com.sun.org.apache.xalan.internal.xsltc.DOM;
 import com.sun.org.apache.xalan.internal.xsltc.Translet;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.Constants;
 import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ErrorMsg;
 import com.sun.org.apache.xalan.internal.xsltc.runtime.AbstractTranslet;
 import com.sun.org.apache.xalan.internal.xsltc.runtime.Hashtable;
 import com.sun.org.apache.xalan.internal.utils.ObjectFactory;
 import com.sun.org.apache.xalan.internal.utils.SecuritySupport;
+
+import sun.misc.Modules;
 
 /**
  * @author Morten Jorgensen
@@ -342,6 +348,29 @@ public final class TemplatesImpl implements Templates, Serializable {
                 _auxClasses = new Hashtable();
             }
 
+            // create a module for the translet
+            Module xmlModule = TemplatesImpl.class.getModule();
+            if (xmlModule != null) {
+                String pkg = _tfactory.getPackageName();
+                assert pkg != null && pkg.length() > 0;
+
+                Module m = Modules.defineModule(loader, "jdk.translet",
+                                                Collections.singleton(pkg));
+
+                // jdk.translate reads java.base && java.xml
+                Modules.addReads(m, Object.class.getModule());
+                Modules.addReads(m, xmlModule);
+
+                // jdk.translet needs access to runtime classes
+                Arrays.asList(Constants.PKGS_USED_BY_TRANSLET_CLASSES).forEach(p -> {
+                    Modules.addExports(xmlModule, p, m);
+                });
+
+                // java.xml needs to instanitate the translate class
+                Modules.addReads(xmlModule, m);
+                Modules.addExports(m, pkg, xmlModule);
+            }
+
             for (int i = 0; i < classCount; i++) {
                 _class[i] = loader.defineClass(_bytecodes[i]);
                 final Class superClass = _class[i].getSuperclass();
@@ -366,7 +395,7 @@ public final class TemplatesImpl implements Templates, Serializable {
         }
         catch (LinkageError e) {
             ErrorMsg err = new ErrorMsg(ErrorMsg.TRANSLET_OBJECT_ERR, _name);
-            throw new TransformerConfigurationException(err.toString());
+            throw new TransformerConfigurationException(err.toString(), e);
         }
     }
 
