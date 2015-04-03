@@ -425,6 +425,10 @@
       <to>java.desktop</to>
     </export>
     <export>
+      <name>sun.text.resources</name>
+      <to>jdk.localedata</to>
+    </export>
+    <export>
       <name>sun.util</name>
       <to>java.desktop</to>
     </export>
