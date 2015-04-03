@@ -323,10 +323,15 @@ public class Enter extends JCTree.Visitor {
                 tree.packge = syms.unnamedPackage;
             }
 
-            // TODO: add proper checks
-            // should always be safe to install tree.modle if compatible
-            if (tree.modle != null && tree.modle.name != null)
-                tree.packge.modle = tree.modle;
+            // TODO: when javac supports multiple private packages in different
+            // modules, this will need to be updated.
+            if (tree.modle != null && tree.modle.name != null) {
+                if (tree.packge.modle == null) {
+                    tree.packge.modle = tree.modle;
+                } else if (tree.packge.modle != tree.modle) {
+                    log.error(pd, "package.in.other.module", tree.packge.modle);
+                }
+            }
 
             tree.packge.complete(); // Find all classes in package.
 

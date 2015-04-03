@@ -611,8 +611,9 @@ public class Symtab {
         PackageSymbol owner = packageName.isEmpty()
                                 ? unnamedPackage
                                 : enterPackage(msym, packageName);
-        if (owner != unnamedPackage && owner.modle == null && msym != null)
+        if (owner != unnamedPackage && owner.modle == null && msym != null) {
             owner.modle = msym;
+        }
         cs = defineClass(Convert.shortName(flatName), owner);
         cs.classfile = classFile;
         classes.put(flatName, cs);

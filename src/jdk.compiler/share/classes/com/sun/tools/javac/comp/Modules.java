@@ -161,11 +161,11 @@ public class Modules extends JCTree.Visitor {
             for (ModuleSymbol msym: rootModules) {
                 msym.complete();
             }
-
-            return (log.nerrors == startErrors);
         } finally {
             depth--;
         }
+
+        return (log.nerrors == startErrors);
     }
 
     public Completer getCompleter() {

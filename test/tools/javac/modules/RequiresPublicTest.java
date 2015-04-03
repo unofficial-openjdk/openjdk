@@ -33,7 +33,6 @@
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 public class RequiresPublicTest extends ModuleTestBase {
 
@@ -186,7 +185,7 @@ public class RequiresPublicTest extends ModuleTestBase {
 
         Path src_m6 = src.resolve("m6");
         tb.writeJavaFiles(src_m6,
-                "module m6 { requires public m7; exports p7; }",
+                "module m6 { requires public m7; exports p6; }",
                 "package p6;\n"
                 + "public class C6 { }\n");
 
