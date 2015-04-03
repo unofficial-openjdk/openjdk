@@ -172,8 +172,10 @@ COOKED_BUILD_NUMBER:=@COOKED_BUILD_NUMBER@
 # JDK_BUILD_NUMBER can be overridden on the make command line.
 ifeq ($(MILESTONE), fcs)
   RELEASE=$(JDK_VERSION)$(BUILD_VARIANT_RELEASE)
+  MODULE_VERSION = ${JDK_MINOR_VERSION}
 else
   RELEASE=$(JDK_VERSION)-$(MILESTONE)$(BUILD_VARIANT_RELEASE)
+  MODULE_VERSION = ${JDK_MINOR_VERSION}-ea
 endif
 
 ifneq ($(USER_RELEASE_SUFFIX), )
@@ -246,6 +248,8 @@ BUILD_HOTSPOT=@BUILD_HOTSPOT@
 # The boot jdk to use. This is overridden in bootcycle-spec.gmk. Make sure to keep
 # it in sync.
 BOOT_JDK:=@BOOT_JDK@
+
+BUILD_JDK:=@BUILD_JDK@
 
 # When compiling Java source to be run by the boot jdk
 # use these extra flags, eg -source 6 -target 6
@@ -480,6 +484,10 @@ SJAVAC_SERVER_JAVA=@FIXPATH@ $(SJAVAC_SERVER_JAVA_CMD) $(SJAVAC_SERVER_JAVA_FLAG
 # overriding that value by using ?=.
 JAVAC_FLAGS?=@JAVAC_FLAGS@
 
+
+BUILD_JAVA_FLAGS:=-Xms64M -Xmx1100M
+BUILD_JAVA=@FIXPATH@ $(BUILD_JDK)/bin/java $(BUILD_JAVA_FLAGS)
+
 # You run the new javac using the boot jdk with $(BOOT_JDK)/bin/java $(NEW_JAVAC) ...
 # Use = assignment to be able to override in bootcycle-spec.gmk
 INTERIM_LANGTOOLS_JAR = $(BUILDTOOLS_OUTPUTDIR)/interim_langtools.jar
@@ -489,6 +497,10 @@ NEW_JAVADOC = $(INTERIM_LANGTOOLS_ARGS) com.sun.tools.javadoc.Main
 
 # The interim corba jar is needed for running rmic
 INTERIM_CORBA_JAR = $(BUILDTOOLS_OUTPUTDIR)/interim_corba.jar
+
+# JLink/Jmod are run using the BUILD_JDK, which is normally the jdk output dir.
+JLINK = @FIXPATH@ $(BUILD_JDK)/bin/jlink $(JAVA_TOOL_FLAGS_SMALL)
+JMOD = @FIXPATH@ $(BUILD_JDK)/bin/jmod $(JAVA_TOOL_FLAGS_SMALL)
 
 # Base flags for RC
 # Guarding this against resetting value. Legacy make files include spec multiple

@@ -1,0 +1,82 @@
+#
+# Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+#
+# This code is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License version 2 only, as
+# published by the Free Software Foundation.  Oracle designates this
+# particular file as subject to the "Classpath" exception as provided
+# by Oracle in the LICENSE file that accompanied this code.
+#
+# This code is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# version 2 for more details (a copy is included in the LICENSE file that
+# accompanied this code).
+#
+# You should have received a copy of the GNU General Public License version
+# 2 along with this work; if not, write to the Free Software Foundation,
+# Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+#
+# Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+# or visit www.oracle.com if you need additional information or have any
+# questions.
+#
+
+default: all
+
+include $(SPEC)
+include MakeBase.gmk
+include Modules.gmk
+
+ifeq ($(MODULE), )
+  $(error MODULE must be set when calling CreateJmods.gmk)
+endif
+
+################################################################################
+
+$(eval $(call FillCacheFind, $(wildcard \
+    $(SUPPORT_OUTPUTDIR)/modules_libs-stripped/$(MODULE) \
+    $(SUPPORT_OUTPUTDIR)/modules_cmds-stripped/$(MODULE) \
+    $(SUPPORT_OUTPUTDIR)/modules_conf/$(MODULE) \
+    $(JDK_OUTPUTDIR)/modules/$(MODULE) \
+)))
+
+ifneq ($(wildcard $(SUPPORT_OUTPUTDIR)/modules_libs-stripped/$(MODULE)), )
+  JMOD_FLAGS += --libs $(SUPPORT_OUTPUTDIR)/modules_libs-stripped/$(MODULE)
+  DEPS += $(call CacheFind, $(SUPPORT_OUTPUTDIR)/modules_libs-stripped/$(MODULE))
+endif
+ifneq ($(wildcard $(SUPPORT_OUTPUTDIR)/modules_cmds-stripped/$(MODULE)), )
+  JMOD_FLAGS += --cmds $(SUPPORT_OUTPUTDIR)/modules_cmds-stripped/$(MODULE)
+  DEPS += $(call CacheFind, $(SUPPORT_OUTPUTDIR)/modules_cmds-stripped/$(MODULE))
+endif
+ifneq ($(wildcard $(SUPPORT_OUTPUTDIR)/modules_conf/$(MODULE)), )
+  JMOD_FLAGS += --config $(SUPPORT_OUTPUTDIR)/modules_conf/$(MODULE)
+  DEPS += $(call CacheFind, $(SUPPORT_OUTPUTDIR)/modules_conf/$(MODULE))
+endif
+ifneq ($(wildcard $(JDK_OUTPUTDIR)/modules/$(MODULE)), )
+  JMOD_FLAGS += --class-path $(JDK_OUTPUTDIR)/modules/$(MODULE)
+  DEPS += $(call CacheFind, $(JDK_OUTPUTDIR)/modules/$(MODULE))
+endif
+
+# Add dependencies on other jmod files
+DEPS += $(patsubst %, $(IMAGES_OUTPUTDIR)/jmods/%.jmod, \
+    $(call FindDepsForModule, $(MODULE)))
+
+# TODO: What about headers?
+$(IMAGES_OUTPUTDIR)/jmods/$(MODULE).jmod: $(DEPS)
+	$(ECHO) Creating $(notdir $@)
+	$(MKDIR) -p $(@D)
+	$(RM) $@
+	$(JMOD) create --mid $(MODULE)@9.0 \
+	    --modulepath $(IMAGES_OUTPUTDIR)/jmods --hash-dependences '.*' \
+	    $(JMOD_FLAGS) $@
+
+TARGETS += $(IMAGES_OUTPUTDIR)/jmods/$(MODULE).jmod
+
+################################################################################
+
+all: $(TARGETS)
+
+################################################################################
+
