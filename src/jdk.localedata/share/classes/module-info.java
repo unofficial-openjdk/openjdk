@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,7 +24,15 @@
  */
 
 module jdk.localedata {
+    provides sun.text.resources.BreakIteratorInfoProvider with sun.util.resources.provider.LocaleDataProvider;
+    provides sun.text.resources.BreakIteratorRulesProvider with sun.util.resources.provider.LocaleDataProvider;
+    provides sun.text.resources.FormatDataProvider with sun.util.resources.provider.LocaleDataProvider;
+    provides sun.text.resources.CollationDataProvider with sun.util.resources.provider.LocaleDataProvider;
+    provides sun.text.resources.JavaTimeSupplementaryProvider with sun.util.resources.provider.SupplementaryLocaleDataProvider;
+    provides sun.util.resources.LocaleNamesProvider with sun.util.resources.provider.LocaleDataProvider;
+    provides sun.util.resources.TimeZoneNamesProvider with sun.util.resources.provider.LocaleDataProvider;
+    provides sun.util.resources.CalendarDataProvider with sun.util.resources.provider.LocaleDataProvider;
+    provides sun.util.resources.CurrencyNamesProvider with sun.util.resources.provider.LocaleDataProvider;
     provides sun.util.locale.provider.LocaleDataMetaInfo with sun.util.resources.cldr.provider.CLDRLocaleDataMetaInfo;
     provides sun.util.locale.provider.LocaleDataMetaInfo with sun.util.resources.provider.NonEnLocaleDataMetaInfo;
 }
-

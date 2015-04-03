@@ -225,37 +225,38 @@ public class Reflection {
     }
 
     /**
-     * Returns {@ocde true} if memberClass's module is readable by currentClass's
+     * Returns {@code true} if memberClass's module is readable by currentClass's
      * module and memberClass's's module exports memberClass's package to
      * currentClass's module.
      */
     public static boolean verifyModuleAccess(Class<?> currentClass,
                                              Class<?> memberClass) {
+        return verifyModuleAccess(currentClass.getModule(), memberClass);
+    }
 
-        Module m1 = currentClass.getModule();
-        Module m2 = memberClass.getModule();
-
-        if (m1 == m2)
+    public static boolean verifyModuleAccess(Module currentModule, Class<?> memberClass) {
+        Module memberModule = memberClass.getModule();
+        if (currentModule == memberModule)
             return true;  // same module (named or unnamed)
 
         // do module access check in the VM?
         // (experimental/performance testing)
         if (VMAccessCheck.USE_VM_ACCESS_CHECK) {
-            return VMAccessCheck.canAccess(m1, m2, memberClass);
+            return VMAccessCheck.canAccess(currentModule, memberModule, memberClass);
         }
 
-        if (m1 != null) {
+        if (currentModule != null) {
             // named module trying to access member in unnamed module
-            if (m2 == null)
+            if (memberModule == null)
                 return true;
 
             // named module trying to access member in another named module
-            if (!m1.canRead(m2))
+            if (!currentModule.canRead(memberModule))
                 return false;
         }
 
         // check that m2 exports the package to m1
-        return Modules.isExported(m2, packageName(memberClass), m1);
+        return Modules.isExported(memberModule, packageName(memberClass), currentModule);
     }
 
     private static String packageName(Class<?> c) {

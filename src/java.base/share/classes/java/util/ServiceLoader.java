@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -266,23 +266,26 @@ public final class ServiceLoader<S>
      *         caller's module does not declare that it uses the service type.
      */
     ServiceLoader(Class<?> caller, Class<S> svc, ClassLoader cl) {
+        this(caller.getModule(), svc, cl);
+    }
+
+    ServiceLoader(Module callerModule, Class<S> svc, ClassLoader cl) {
         if (VM.isBooted()) {
-            Module m = caller.getModule();
 
             // Check that the service type is defined in a module that is readable
             // to the caller and that the service type is in a package that is
             // exported to the caller.
-            if (!Reflection.verifyModuleAccess(caller, svc)) {
-                String who = (m != null) ? m.toString() : "<unnamed module>";
+            if (!Reflection.verifyModuleAccess(callerModule, svc)) {
+                String who = (callerModule != null) ? callerModule.toString() : "<unnamed module>";
                 fail(svc, "not accessible to " + who);
             }
 
             // If the caller is in a named module then it must declare that it
             // uses the service type
-            if (m != null) {
+            if (callerModule != null) {
                 String sn = svc.getName();
-                if (!m.getDescriptor().serviceDependences().contains(sn)) {
-                    fail(svc, "use not declared in " + m);
+                if (!callerModule.getDescriptor().serviceDependences().contains(sn)) {
+                    fail(svc, "use not declared in " + callerModule);
                 }
             }
 
@@ -294,10 +297,9 @@ public final class ServiceLoader<S>
             // before the VM initialization has completed. At this point then
             // only code in the java.base should be executing.
             Module base = Object.class.getModule();
-            Module m1 = caller.getModule();
-            Module m2 = svc.getModule();
-            if (m1 != base || m2 != base) {
-                String who = (m1 != null) ? m1.toString() : "<unnamed module>";
+            Module svcModule = svc.getModule();
+            if (callerModule != base || svcModule != base) {
+                String who = (callerModule != null) ? callerModule.toString() : "<unnamed module>";
                 fail(svc, "not accessible to " + who + " during VM init");
             }
 
@@ -821,6 +823,33 @@ public final class ServiceLoader<S>
     public static <S> ServiceLoader<S> load(Class<S> service) {
         ClassLoader cl = Thread.currentThread().getContextClassLoader();
         return new ServiceLoader<>(Reflection.getCallerClass(), service, cl);
+    }
+
+    /**
+     * Creates a new service loader for the given service type, class
+     * loader, and caller.
+     *
+     * @param  <S> the class of the service type
+     *
+     * @param  service
+     *         The interface or abstract class representing the service
+     *
+     * @param  loader
+     *         The class loader to be used to load provider-configuration files
+     *         and provider classes, or <tt>null</tt> if the system class
+     *         loader (or, failing that, the bootstrap class loader) is to be
+     *         used
+     *
+     * @param  callerModule
+     *         The caller's module for which a new service loader is created
+     *
+     * @return A new service loader
+     */
+    static <S> ServiceLoader<S> load(Class<S> service,
+                                     ClassLoader loader,
+                                     Module callerModule)
+    {
+        return new ServiceLoader<>(callerModule, service, loader);
     }
 
     /**

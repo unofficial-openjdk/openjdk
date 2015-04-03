@@ -207,6 +207,8 @@ module java.base {
         jdk.security.auth;
     exports sun.text to
         java.desktop;
+    exports sun.text.resources to
+        jdk.localedata;
     exports sun.util to
         java.desktop;
     exports sun.util.locale.provider to
@@ -240,8 +242,18 @@ module java.base {
     uses java.util.spi.CurrencyNameProvider;
     uses java.util.spi.LocaleNameProvider;
     uses java.util.spi.ResourceBundleControlProvider;
+    uses java.util.spi.ResourceBundleProvider;
     uses java.util.spi.TimeZoneNameProvider;
     uses sun.net.spi.nameservice.NameServiceDescriptor;
+    uses sun.text.resources.BreakIteratorInfoProvider;
+    uses sun.text.resources.BreakIteratorRulesProvider;
+    uses sun.text.resources.FormatDataProvider;
+    uses sun.text.resources.CollationDataProvider;
+    uses sun.text.resources.JavaTimeSupplementaryProvider;
+    uses sun.util.resources.LocaleNamesProvider;
+    uses sun.util.resources.TimeZoneNamesProvider;
+    uses sun.util.resources.CalendarDataProvider;
+    uses sun.util.resources.CurrencyNamesProvider;
     uses sun.util.locale.provider.LocaleDataMetaInfo;
     uses sun.util.spi.CalendarProvider;
     provides java.nio.file.spi.FileSystemProvider with jdk.internal.jrtfs.JrtFileSystemProvider;
