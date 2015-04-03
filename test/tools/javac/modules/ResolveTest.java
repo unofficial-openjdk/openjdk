@@ -23,7 +23,7 @@
 
 /**
  * @test
- * @summary simple tests of javac compilation modes
+ * @summary tests for module resolution
  * @library /tools/lib
  * @modules
  *      jdk.compiler/com.sun.tools.javac.api

@@ -23,6 +23,7 @@
 
 /*
  * @test
+ * @summary tests for "requires public"
  * @library /tools/lib
  * @modules
  *      jdk.compiler/com.sun.tools.javac.api
