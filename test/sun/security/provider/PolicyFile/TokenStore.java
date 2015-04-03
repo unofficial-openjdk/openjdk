@@ -26,8 +26,6 @@
  * @bug 4919147
  * @summary Support for token-based KeyStores
  * @modules java.base/sun.security.provider
- *
- * TokenStore.keystore password is "TokenStore"
  */
 
 import java.io.*;
