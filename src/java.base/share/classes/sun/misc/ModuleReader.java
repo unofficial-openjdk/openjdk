@@ -25,40 +25,26 @@
 
 package sun.misc;
 
-import java.io.File;
+import java.io.Closeable;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.UncheckedIOException;
-import java.net.MalformedURLException;
-import java.net.URI;
 import java.net.URL;
 import java.nio.ByteBuffer;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
-
-import jdk.jigsaw.module.ModuleArtifact;
-import sun.net.www.ParseUtil;
 
 /**
  * A reader of resources in a module artifact.
  *
- * <p> A {@code ModuleReader} is used to locate or access resources in a
- * module artifact. The {@link #create} method is a factory method to create
- * a {@code ModuleReader} for modules packaged as a jmod, modular JAR, or
- * exploded on the file system. </p>
+ * <p> A {@code ModuleReader} is used to locate or read resources in a
+ * module artifact. The {@link ModuleReaders} class defines a factory
+ * method to create a {@code ModuleReader} for modules packaged as a jmod,
+ * modular JAR, or exploded on the file system. </p>
  *
- * @apiNote We need to consider having jdk.jigsaw.module.ModuleArtifact
- * define these methods instead.
+ * @apiNote This API is currently a low level API suited for class loading.
+ * The eventual API will likely define a method to locate a resource and
+ * return a {@code Supplier<InputStream>}, leaving the low level API for
+ * use by the JDK built-in class loaders.
  */
 
-interface ModuleReader {
-
+interface ModuleReader extends Closeable {
     /**
      * Returns the URL for a resource in the module, {@code null} if not
      * found.
@@ -86,188 +72,4 @@ interface ModuleReader {
      * @implSpec The default implementation does nothing.
      */
     default void releaseBuffer(ByteBuffer bb) { }
-
-    /**
-     * Creates a ModuleReader to access the given ModuleArtifact.
-     */
-    static ModuleReader create(ModuleArtifact artifact) {
-        String scheme = artifact.location().getScheme();
-        try {
-            if (scheme.equalsIgnoreCase("jmod"))
-                return new JModModuleReader(artifact);
-            if (scheme.equalsIgnoreCase("jar"))
-                return new JarModuleReader(artifact);
-            if (scheme.equalsIgnoreCase("file"))
-                return new ExplodedModuleReader(artifact);
-        } catch (IOException ioe) {
-            throw new UncheckedIOException(ioe);
-        }
-
-        throw new InternalError("No module reader for: " + artifact);
-    }
 }
-
-/**
- * A base ModuleReader implementation
- */
-abstract class BaseModuleReader implements ModuleReader {
-    private static final int BUFFER_SIZE = 8192;
-    private static final int MAX_BUFFER_SIZE = Integer.MAX_VALUE - 8;
-
-    /**
-     * Returns a ByteBuffer with all bytes read from the given InputStream.
-     * The given size parameter is the expected size, the actual size may
-     * differ.
-     */
-    protected ByteBuffer readFully(InputStream source, int size) throws IOException {
-        int capacity = size;
-        byte[] buf = new byte[capacity];
-        int nread = 0;
-        int n;
-        for (; ; ) {
-            // read to EOF which may read more or less than size
-            while ((n = source.read(buf, nread, capacity - nread)) > 0)
-                nread += n;
-
-            // if last call to source.read() returned -1, we are done
-            // otherwise, try to read one more byte; if that failed we're done too
-            if (n < 0 || (n = source.read()) < 0)
-                break;
-
-            // one more byte was read; need to allocate a larger buffer
-            if (capacity <= MAX_BUFFER_SIZE - capacity) {
-                capacity = Math.max(capacity << 1, BUFFER_SIZE);
-            } else {
-                if (capacity == MAX_BUFFER_SIZE)
-                    throw new OutOfMemoryError("Required array size too large");
-                capacity = MAX_BUFFER_SIZE;
-            }
-            buf = Arrays.copyOf(buf, capacity);
-            buf[nread++] = (byte) n;
-        }
-
-        return ByteBuffer.wrap(buf, 0, nread);
-    }
-
-    /**
-     * Returns a file URL to the given file Path
-     */
-    protected URL toFileURL(Path path) {
-        try {
-            return path.toUri().toURL();
-        } catch (MalformedURLException e) {
-            throw new InternalError(e);
-        }
-    }
-}
-
-/**
- * A ModuleReader for a jmod file.
- */
-class JModModuleReader extends BaseModuleReader {
-    private String module;
-    private final URL baseURL;
-    private final ZipFile zf;
-
-    JModModuleReader(ModuleArtifact artifact) throws IOException {
-        module = artifact.descriptor().name();
-        baseURL = artifact.location().toURL();
-        zf = JModCache.get(baseURL);
-    }
-
-    @Override
-    public URL findResource(String name) {
-        ZipEntry ze = zf.getEntry("classes/" + name);
-        if (ze == null)
-            return null;
-        try {
-            return new URL(baseURL + "!/" + ParseUtil.encodePath(name, false));
-        } catch (MalformedURLException e) {
-            throw new InternalError(e);
-        }
-    }
-
-    @Override
-    public ByteBuffer readResource(String name) throws IOException {
-        ZipEntry ze = zf.getEntry("classes/" + name);
-        if (ze == null)
-            throw new IOException(module + "/" + name + " not found");
-        try (InputStream in = zf.getInputStream(ze)) {
-            return readFully(in, (int) ze.getSize());
-        }
-    }
-}
-
-/**
- * A ModuleReader for a modular JAR file.
- */
-class JarModuleReader extends BaseModuleReader {
-    private final String module;
-    private final URL baseURL;
-    private final JarFile jf;
-
-    JarModuleReader(ModuleArtifact artifact) throws IOException {
-        URI uri = artifact.location();
-        String s = uri.toString();
-        String fileURIString = s.substring(4, s.length()-2);
-
-        module = artifact.descriptor().name();
-        baseURL = uri.toURL();
-        jf = new JarFile(Paths.get(URI.create(fileURIString)).toString());
-    }
-
-    @Override
-    public URL findResource(String name) {
-        JarEntry je = jf.getJarEntry(name);
-        if (je == null)
-            return null;
-        try {
-            return new URL(baseURL + ParseUtil.encodePath(name, false));
-        } catch (MalformedURLException e) {
-            throw new InternalError(e);
-        }
-    }
-
-    @Override
-    public ByteBuffer readResource(String name) throws IOException {
-        JarEntry je = jf.getJarEntry(name);
-        if (je == null)
-            throw new IOException(module + "/" + name + " not found");
-        try (InputStream in = jf.getInputStream(je)) {
-            return readFully(in, (int) je.getSize());
-        }
-    }
-}
-
-/**
- * A ModuleReader for an exploded module.
- */
-class ExplodedModuleReader extends BaseModuleReader {
-    private final Path dir;
-
-    ExplodedModuleReader(ModuleArtifact artifact) {
-        dir = Paths.get(artifact.location());
-    }
-
-    @Override
-    public URL findResource(String name) {
-        Path path = Paths.get(name.replace('/', File.separatorChar));
-        int n = path.getNameCount();
-        if (n == 0)
-            return null;  // root component only
-
-        // drop root component and resolve against module directory
-        path = dir.resolve(path.subpath(0, n));
-        if (Files.isRegularFile(path))
-            return toFileURL(path);
-
-        return null;
-    }
-
-    @Override
-    public ByteBuffer readResource(String name) throws IOException {
-        Path path = dir.resolve(name.replace('/', File.separatorChar));
-        return ByteBuffer.wrap(Files.readAllBytes(path));
-    }
-}
-

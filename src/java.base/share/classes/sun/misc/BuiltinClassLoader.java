@@ -76,9 +76,8 @@ import jdk.jigsaw.module.ModuleArtifact;
  * any overlapping packages with modules defined to the parent or the boot class
  * loader. </p>
  */
-class BuiltinClassLoader
-    extends SecureClassLoader implements ModuleLoader
-{
+class BuiltinClassLoader extends ModuleClassLoader {
+
     static {
         ClassLoader.registerAsParallelCapable();
     }
@@ -125,7 +124,6 @@ class BuiltinClassLoader
         URL location() { return url; }
     }
 
-
     // maps package name to a loaded module for the modules defined to this class loader
     private final Map<String, LoadedModule> packageToModule = new ConcurrentHashMap<>();
 
@@ -162,8 +160,12 @@ class BuiltinClassLoader
         artifactToReader.put(artifact, NULL_MODULE_READER);
     }
 
-    // -- finding/loading resources
+    // -- finding resources
 
+    /**
+     * Finds the resource of the given name in a module defined to this class
+     * loader.
+     */
     @Override
     public URL findResource(ModuleArtifact artifact, String name) {
         if (artifactToReader.containsKey(artifact)) {
@@ -176,6 +178,10 @@ class BuiltinClassLoader
         }
     }
 
+    /**
+     * Finds the resource with the given name on the class path of this class
+     * loader.
+     */
     @Override
     public URL findResource(String name) {
         if (ucp != null) {
@@ -187,6 +193,10 @@ class BuiltinClassLoader
         }
     }
 
+    /**
+     * Returns an enumeration of URL objects to all the resources with the
+     * given name on the class path of this class loader.
+     */
     @Override
     public Enumeration<URL> findResources(String name) throws IOException {
         if (ucp != null) {
@@ -635,7 +645,13 @@ class BuiltinClassLoader
             String mn = artifact.descriptor().name();
             reader = new ImageModuleReader(mn, imageReader);
         } else {
-            reader = ModuleReader.create(artifact);
+            try {
+                reader = ModuleReaders.open(artifact);
+            } catch (IOException e) {
+                // We can't return NULL_MODULE_READER here as that would cause
+                // a future class load to attempt to open the module again.
+                return new NullModuleReader();
+            }
         }
 
         // if -Xoverride is specified then wrap the ModuleReader so
@@ -654,10 +670,14 @@ class BuiltinClassLoader
     private static class NullModuleReader implements ModuleReader {
         @Override
         public URL findResource(String name) {
-            throw new InternalError("Should not get here");
+            return null;
         }
         @Override
-        public ByteBuffer readResource(String name) {
+        public ByteBuffer readResource(String name) throws IOException {
+            throw new IOException(name + " not found");
+        }
+        @Override
+        public void close() {
             throw new InternalError("Should not get here");
         }
     };
@@ -708,6 +728,11 @@ class BuiltinClassLoader
         @Override
         public void releaseBuffer(ByteBuffer bb) {
             ImageReader.releaseByteBuffer(bb);
+        }
+
+        @Override
+        public void close() {
+            throw new InternalError("Should not get here");
         }
     }
 
@@ -764,6 +789,11 @@ class BuiltinClassLoader
         public void releaseBuffer(ByteBuffer bb) {
             if (bb.isDirect())
                 reader.releaseBuffer(bb);
+        }
+
+        @Override
+        public void close() throws IOException {
+            reader.close();
         }
     }
 

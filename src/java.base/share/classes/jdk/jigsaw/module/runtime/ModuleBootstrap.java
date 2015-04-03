@@ -26,9 +26,6 @@
 package jdk.jigsaw.module.runtime;
 
 import java.io.File;
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
@@ -47,8 +44,7 @@ import jdk.jigsaw.module.ModuleDescriptor;
 import jdk.jigsaw.module.ModuleId;
 
 import sun.misc.BootLoader;
-import sun.misc.ClassLoaders;
-import sun.misc.ModuleLoader;
+import sun.misc.ModuleClassLoader;
 import sun.misc.PerfCounter;
 
 /**
@@ -280,7 +276,7 @@ public final class ModuleBootstrap {
                 if (cl == null) {
                     BootLoader.defineModule(artifact);
                 } else {
-                    ((ModuleLoader) cl).defineModule(artifact);
+                    ((ModuleClassLoader) cl).defineModule(artifact);
                 }
             }
         }

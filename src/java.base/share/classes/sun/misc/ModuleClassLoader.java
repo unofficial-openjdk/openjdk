@@ -25,16 +25,35 @@
 
 package sun.misc;
 
+import java.security.SecureClassLoader;
+
 import jdk.jigsaw.module.ModuleArtifact;
 
 /**
- * Implemented by class loaders that define modules.
+ * A ClassLoader that has support for loading classes and resources from modules.
  */
 
-public interface ModuleLoader {
+public abstract class ModuleClassLoader extends SecureClassLoader {
+
+    /**
+     * Creates a new ModuleClassLoader using the specified parent class loader
+     * for delegation.
+     */
+    protected ModuleClassLoader(ClassLoader parent) {
+        super(parent);
+    }
+
+    /**
+     * Creates a new ModuleClassLoader using the default parent class loader
+     * for delegation.
+     */
+    protected ModuleClassLoader() {
+        super();
+    }
+
     /**
      * Define the module in the given module artifact to the class loader
      * with the effect of making the types in the module visible.
      */
-    void defineModule(ModuleArtifact artifact);
+    public abstract void defineModule(ModuleArtifact artifact);
 }
