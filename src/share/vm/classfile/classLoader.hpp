@@ -32,8 +32,13 @@
 // The VM class loader.
 #include <sys/stat.h>
 
+// Name of boot module image
+#define  BOOT_IMAGE_NAME "bootmodules.jimage"
 
 // Class path entry (directory or zip file)
+
+class ImageFileReader;
+class ImageModuleData;
 
 class ClassPathEntry: public CHeapObj<mtClass> {
  private:
@@ -47,6 +52,8 @@ class ClassPathEntry: public CHeapObj<mtClass> {
   }
   virtual bool is_jar_file() = 0;
   virtual const char* name() = 0;
+  virtual ImageFileReader* image() = 0;
+  virtual bool is_verified() = 0;
   virtual bool is_lazy();
   // Constructor
   ClassPathEntry();
@@ -63,8 +70,10 @@ class ClassPathDirEntry: public ClassPathEntry {
  private:
   const char* _dir;           // Name of directory
  public:
-  bool is_jar_file()  { return false;  }
-  const char* name()  { return _dir; }
+  bool is_jar_file()       { return false;  }
+  const char* name()       { return _dir; }
+  ImageFileReader* image() { return NULL; }
+  bool is_verified()       { return false; }
   ClassPathDirEntry(const char* dir);
   ClassFileStream* open_stream(const char* name, TRAPS);
   // Debugging
@@ -92,8 +101,10 @@ class ClassPathZipEntry: public ClassPathEntry {
   jzfile* _zip;              // The zip archive
   const char*   _zip_name;   // Name of zip archive
  public:
-  bool is_jar_file()  { return true;  }
-  const char* name()  { return _zip_name; }
+  bool is_jar_file()       { return true;  }
+  const char* name()       { return _zip_name; }
+  ImageFileReader* image() { return NULL; }
+  bool is_verified()       { return false; }
   ClassPathZipEntry(jzfile* zip, const char* zip_name);
   ~ClassPathZipEntry();
   u1* open_entry(const char* name, jint* filesize, bool nul_terminate, TRAPS);
@@ -116,7 +127,9 @@ class LazyClassPathEntry: public ClassPathEntry {
   ClassPathEntry* resolve_entry(TRAPS);
  public:
   bool is_jar_file();
-  const char* name()  { return _path; }
+  const char* name()       { return _path; }
+  ImageFileReader* image() { return NULL; }
+  bool is_verified()       { return false; }
   LazyClassPathEntry(const char* path, const struct stat* st, bool throw_exception);
   virtual ~LazyClassPathEntry();
   u1* open_entry(const char* name, jint* filesize, bool nul_terminate, TRAPS);
@@ -129,15 +142,18 @@ class LazyClassPathEntry: public ClassPathEntry {
 };
 
 // For java image files
-class ImageFile;
 class ClassPathImageEntry: public ClassPathEntry {
 private:
-  ImageFile *_image;
+  ImageFileReader* _image;
+  ImageModuleData* _module_data;
 public:
   bool is_jar_file()  { return false;  }
   bool is_open()  { return _image != NULL; }
   const char* name();
-  ClassPathImageEntry(char* name);
+  ImageFileReader* image() { return _image; }
+  bool is_verified();
+  ImageModuleData* module_data() { return _module_data; }
+  ClassPathImageEntry(ImageFileReader* image);
   ~ClassPathImageEntry();
   ClassFileStream* open_stream(const char* name, TRAPS);
 
@@ -194,15 +210,29 @@ class ClassLoader: AllStatic {
   static PerfCounter* _isUnsyncloadClass;
   static PerfCounter* _load_instance_class_failCounter;
 
-  // First entry in linked list of ClassPathEntry instances
+  // First entry in linked list of ClassPathEntry instances.
+  // This consists of entries made up by:
+  //   - boot loader modules
+  //     [-Xoverride]; exploded build | bootmodules.jimage;
+  //   - boot loader append path
+  //     [-Xbootclasspath/a]; [jvmti appended entries]
   static ClassPathEntry* _first_entry;
   // Last entry in linked list of ClassPathEntry instances
   static ClassPathEntry* _last_entry;
   static int _num_entries;
 
+  // Pointer into the linked list of ClassPathEntry instances.
+  // Marks the start of:
+  //   - the boot loader's append path
+  //     [-Xbootclasspath/a]; [jvmti appended entries]
+  static ClassPathEntry* _first_append_entry;
+
   // Hash table used to keep track of loaded packages
   static PackageHashtable* _package_hash_table;
   static const char* _shared_archive;
+
+  // True if the boot path has a bootmodules.jimage
+  static bool _has_bootmodules_jimage;
 
   // Info used by CDS
   CDS_ONLY(static SharedPathsMiscInfo * _shared_paths_misc_info;)
@@ -211,14 +241,14 @@ class ClassLoader: AllStatic {
   static unsigned int hash(const char *s, int n);
   // Returns the package file name corresponding to the specified package
   // or class name, or null if not found.
-  static PackageInfo* lookup_package(const char *pkgname);
+  static PackageInfo* lookup_package(const char *pkgname, int len);
   // Adds a new package entry for the specified class or package name and
   // corresponding directory or jar file name.
   static bool add_package(const char *pkgname, int classpath_index, TRAPS);
 
   // Initialization
   static void setup_bootstrap_search_path();
-  static void setup_search_path(const char *class_path);
+  static void setup_search_path(const char *class_path, bool setting_bootstrap);
 
   static void load_zip_library();
   static ClassPathEntry* create_class_path_entry(const char *path, const struct stat* st,
@@ -227,11 +257,13 @@ class ClassLoader: AllStatic {
   // Canonicalizes path names, so strcmp will work properly. This is mainly
   // to avoid confusing the zip library
   static bool get_canonical_path(const char* orig, char* out, int len);
+
  public:
   static jboolean decompress(void *in, u8 inSize, void *out, u8 outSize, char **pmsg);
   static int crc32(int crc, const char* buf, int len);
   static bool update_class_path_entry_list(const char *path,
                                            bool check_for_duplicates,
+                                           bool mark_append_entry,
                                            bool throw_exception=true);
   static void print_bootclasspath();
 
@@ -296,8 +328,19 @@ class ClassLoader: AllStatic {
     return _load_instance_class_failCounter;
   }
 
+  // Sets _has_bootmodules_jimage to TRUE if bootmodules.jimage file exists.
+  static void set_has_bootmodules_jimage(bool val) {
+    _has_bootmodules_jimage = val;
+  }
+
+  static bool has_bootmodules_jimage() { return _has_bootmodules_jimage; }
+
+  // Read the packages for module java.base from the bootmodules.jimage
+  // file, if it exists. If it does not, assume exploded build.
+  static void define_javabase();
+
   // Load individual .class file
-  static instanceKlassHandle load_classfile(Symbol* h_name, TRAPS);
+  static instanceKlassHandle load_classfile(Symbol* h_name, bool search_append_only, TRAPS);
 
   // If the specified package has been loaded by the system, then returns
   // the name of the directory or ZIP file that the package was loaded from.
@@ -354,6 +397,8 @@ class ClassLoader: AllStatic {
   static jlong class_link_count();
   static jlong class_link_time_ms();
 
+  static void set_first_append_entry(ClassPathEntry* entry);
+
   // indicates if class path already contains a entry (exact match by name)
   static bool contains_entry(ClassPathEntry* entry);
 
@@ -362,6 +407,9 @@ class ClassLoader: AllStatic {
 
   // creates a class path zip entry (returns NULL if JAR file cannot be opened)
   static ClassPathZipEntry* create_class_path_zip_entry(const char *apath);
+
+  // add a path to class path list
+  static void add_to_list(const char* apath);
 
   // Debugging
   static void verify()              PRODUCT_RETURN;
