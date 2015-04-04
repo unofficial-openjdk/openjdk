@@ -56,7 +56,7 @@ public class PackageConflictTest extends ModuleTestBase {
                 .writeAll()
                 .getOutput(ToolBox.OutputKind.DIRECT);
 
-        if (!log.contains("MyList.java:1:13: compiler.err.package.in.other.module: java.base"))
+        if (!log.contains("MyList.java:1:1: compiler.err.package.in.other.module: java.base"))
             throw new Exception("expected output not found");
     }
 }
