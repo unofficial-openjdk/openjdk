@@ -52,11 +52,11 @@ public class PackageConflictTest extends ModuleTestBase {
                 .options("-XDrawDiagnostics")
                 .outdir(classes.toString())
                 .files(findJavaFiles(src))
-                .run(ToolBox.Expect.FAIL)
+                .run(ToolBox.Expect.SUCCESS)
                 .writeAll()
                 .getOutput(ToolBox.OutputKind.DIRECT);
 
-        if (!log.contains("MyList.java:1:1: compiler.err.package.in.other.module: java.base"))
+        if (!log.contains("MyList.java:1:1: compiler.warn.package.in.other.module: java.base"))
             throw new Exception("expected output not found");
     }
 }

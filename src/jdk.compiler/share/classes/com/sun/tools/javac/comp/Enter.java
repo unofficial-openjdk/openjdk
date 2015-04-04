@@ -329,7 +329,7 @@ public class Enter extends JCTree.Visitor {
                 if (tree.packge.modle == null) {
                     tree.packge.modle = tree.modle;
                 } else if (tree.packge.modle != tree.modle) {
-                    log.error(pd, "package.in.other.module", tree.packge.modle);
+                    log.warning(pd, "package.in.other.module", tree.packge.modle);
                 }
             }
 
