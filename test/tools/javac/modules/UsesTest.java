@@ -50,7 +50,7 @@ public class UsesTest extends ModuleTestBase {
         Files.createDirectories(classes);
 
         tb.new JavacTask()
-                .outdir(classes.toString())
+                .outdir(classes)
                 .files(findJavaFiles(src))
                 .run(ToolBox.Expect.SUCCESS)
                 .writeAll();
@@ -69,7 +69,7 @@ public class UsesTest extends ModuleTestBase {
 
         tb.new JavacTask()
                 .options("-modulesourcepath", src.toString())
-                .outdir(modules.toString())
+                .outdir(modules)
                 .files(findJavaFiles(src))
                 .run(ToolBox.Expect.SUCCESS)
                 .writeAll();

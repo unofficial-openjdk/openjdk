@@ -90,7 +90,7 @@ public class ResolveTest extends ModuleTestBase {
 
         String log = tb.new JavacTask()
                 .options("-XDrawDiagnostics", "-modulesourcepath", src.toString())
-                .outdir(modules.toString()) // should accept Path here
+                .outdir(modules)
                 .files(findJavaFiles(src))
                 .run(ToolBox.Expect.FAIL)
                 .writeAll()
@@ -114,7 +114,7 @@ public class ResolveTest extends ModuleTestBase {
 
         String log = tb.new JavacTask()
                 .options("-XDrawDiagnostics", "-modulesourcepath", src.toString())
-                .outdir(modules.toString()) // should accept Path here
+                .outdir(modules)
                 .files(findJavaFiles(src))
                 .run(ToolBox.Expect.FAIL)
                 .writeAll()
@@ -140,7 +140,7 @@ public class ResolveTest extends ModuleTestBase {
 
         String log = tb.new JavacTask()
                 .options("-XDrawDiagnostics", "-modulesourcepath", src.toString())
-                .outdir(modules.toString()) // should accept Path here
+                .outdir(modules)
                 .files(findJavaFiles(src))
                 .run(ToolBox.Expect.FAIL)
                 .writeAll()
@@ -164,7 +164,7 @@ public class ResolveTest extends ModuleTestBase {
 
         String log = tb.new JavacTask()
                 .options("-XDrawDiagnostics", "-modulesourcepath", src.toString())
-                .outdir(modules.toString()) // should accept Path here
+                .outdir(modules)
                 .files(findJavaFiles(src))
                 .run(ToolBox.Expect.FAIL)
                 .writeAll()
@@ -188,7 +188,7 @@ public class ResolveTest extends ModuleTestBase {
 
         tb.new JavacTask()
                 .options("-XDrawDiagnostics", "-modulesourcepath", src.toString())
-                .outdir(modules.toString()) // should accept Path here
+                .outdir(modules)
                 .files(findJavaFiles(src))
                 .run()
                 .writeAll();
@@ -208,7 +208,7 @@ public class ResolveTest extends ModuleTestBase {
 
         tb.new JavacTask()
                 .options("-XDrawDiagnostics", "-modulesourcepath", src.toString())
-                .outdir(modules.toString()) // should accept Path here
+                .outdir(modules)
                 .files(findJavaFiles(src))
                 .run()
                 .writeAll();

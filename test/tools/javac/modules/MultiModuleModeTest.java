@@ -57,7 +57,7 @@ public class MultiModuleModeTest extends ModuleTestBase {
         String log = tb.new JavacTask()
                 .options("-XDrawDiagnostics",
                         "-modulesourcepath", src.toString())
-                .outdir(classes.toString()) // should allow Path here
+                .outdir(classes)
                 .files(findJavaFiles(src))
                 .run(ToolBox.Expect.FAIL)
                 .writeAll()
@@ -80,7 +80,7 @@ public class MultiModuleModeTest extends ModuleTestBase {
         String log = tb.new JavacTask()
                 .options("-XDrawDiagnostics",
                         "-modulesourcepath", src.toString())
-                .outdir(classes.toString()) // should allow Path here
+                .outdir(classes)
                 .files(join(findJavaFiles(src), findJavaFiles(misc)))
                 .run(ToolBox.Expect.FAIL)
                 .writeAll()
@@ -100,7 +100,7 @@ public class MultiModuleModeTest extends ModuleTestBase {
 
         tb.new JavacTask()
                 .options("-modulesourcepath", src.toString())
-                .outdir(modules.toString()) // should allow Path here
+                .outdir(modules)
                 .files(src.resolve("m2/module-info.java"))
                 .run()
                 .writeAll();
@@ -115,7 +115,7 @@ public class MultiModuleModeTest extends ModuleTestBase {
 
         tb.new JavacTask()
                 .options("-modulesourcepath", src1.toString())
-                .outdir(modules1.toString()) // should allow Path here
+                .outdir(modules1)
                 .files(src1.resolve("m1/module-info.java"))
                 .run()
                 .writeAll();
@@ -128,7 +128,7 @@ public class MultiModuleModeTest extends ModuleTestBase {
         tb.new JavacTask()
                 .options("-modulepath", modules1.toString(),
                         "-modulesourcepath", src2.toString())
-                .outdir(modules2.toString()) // should allow Path here
+                .outdir(modules2)
                 .files(src2.resolve("m2/module-info.java"))
                 .run()
                 .writeAll();

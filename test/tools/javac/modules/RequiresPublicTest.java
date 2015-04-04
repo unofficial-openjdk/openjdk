@@ -56,7 +56,7 @@ public class RequiresPublicTest extends ModuleTestBase {
 
         tb.new JavacTask(ToolBox.Mode.CMDLINE)
                 .files(findJavaFiles(src))
-                .outdir(classes.toString()) // should allow Path here
+                .outdir(classes)
                 .run()
                 .writeAll();
     }
@@ -94,7 +94,7 @@ public class RequiresPublicTest extends ModuleTestBase {
         tb.new JavacTask(ToolBox.Mode.CMDLINE)
                 .options("-modulesourcepath", src.toString())
                 .files(findJavaFiles(src))
-                .outdir(classes.toString()) // should allow Path here
+                .outdir(classes)
                 .run()
                 .writeAll();
     }
@@ -111,7 +111,7 @@ public class RequiresPublicTest extends ModuleTestBase {
                 .options("-XDrawDiagnostics",
                         "-modulesourcepath", src.toString())
                 .files(findJavaFiles(src))
-                .outdir(classes.toString()) // should allow Path here
+                .outdir(classes)
                 .run(ToolBox.Expect.FAIL)
                 .writeAll()
                 .getOutput(ToolBox.OutputKind.DIRECT);

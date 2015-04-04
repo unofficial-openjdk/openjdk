@@ -55,7 +55,7 @@ public class SubpackageTest extends ModuleTestBase {
         Path libclasses = base.resolve("lib/classes");
         Files.createDirectories(libclasses);
         tb.new JavacTask()
-                .outdir(libclasses.toString())
+                .outdir(libclasses)
                 .files(findJavaFiles(libsrc))
                 .run()
                 .writeAll();
@@ -71,8 +71,8 @@ public class SubpackageTest extends ModuleTestBase {
         Files.createDirectories(classes);
 
         tb.new JavacTask()
-                .classpath(libclasses.toString())
-                .outdir(classes.toString())
+                .classpath(libclasses)
+                .outdir(classes)
                 .files(findJavaFiles(src))
                 .run()
                 .writeAll();
@@ -107,7 +107,7 @@ public class SubpackageTest extends ModuleTestBase {
 
         tb.new JavacTask()
                 .options("-modulesourcepath", src.toString())
-                .outdir(modules.toString())
+                .outdir(modules)
                 .files(findJavaFiles(src))
                 .run()
                 .writeAll();

@@ -62,7 +62,7 @@ public class HelloWorldTest extends ModuleTestBase {
 
         Path smallRtJar = base.resolve("small-rt.jar");
         try (JavaFileManager fm = ToolProvider.getSystemJavaCompiler().getStandardFileManager(null, null, null)) {
-            tb.new JarTask(smallRtJar.toString())
+            tb.new JarTask(smallRtJar)
                 .files(fm, StandardLocation.PLATFORM_CLASS_PATH,
                     "java.lang.**", "java.io.*", "java.util.*")
                 .run();
@@ -72,7 +72,7 @@ public class HelloWorldTest extends ModuleTestBase {
             .options("-source", "8",
                 "-target", "8",
                 "-bootclasspath", smallRtJar.toString())
-            .outdir(classes.toString())
+            .outdir(classes)
             .files(src.resolve("HelloWorld.java"))
             .run();
 
@@ -88,7 +88,7 @@ public class HelloWorldTest extends ModuleTestBase {
         Files.createDirectories(classes);
 
         tb.new JavacTask()
-            .outdir(classes.toString())
+            .outdir(classes)
             .files(src.resolve("HelloWorld.java"))
             .run();
 
@@ -105,7 +105,7 @@ public class HelloWorldTest extends ModuleTestBase {
         Files.createDirectories(classes);
 
         tb.new JavacTask(ToolBox.Mode.CMDLINE)
-            .outdir(classes.toString())
+            .outdir(classes)
             .files(src.resolve("module-info.java"), src.resolve("p/HelloWorld.java"))
             .run()
             .writeAll();
@@ -127,7 +127,7 @@ public class HelloWorldTest extends ModuleTestBase {
 
         tb.new JavacTask()
             .options("-modulesourcepath", src.toString())
-            .outdir(classes.toString())
+            .outdir(classes)
             .files(src_m1.resolve("p/HelloWorld.java"))
             .run()
             .writeAll();

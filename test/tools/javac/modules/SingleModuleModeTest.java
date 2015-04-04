@@ -72,7 +72,7 @@ public class SingleModuleModeTest extends ModuleTestBase{
                 "class C { }");
 
         tb.new JavacTask()
-                .classpath(src.toString()) // should allow Path here
+                .classpath(src)
                 .files(src.resolve("C.java"))
                 .run()
                 .writeAll();
@@ -88,13 +88,13 @@ public class SingleModuleModeTest extends ModuleTestBase{
         Files.createDirectories(classes);
 
         tb.new JavacTask()
-                .outdir(classes.toString()) // should allow Path here
+                .outdir(classes)
                 .files(src.resolve("module-info.java"))
                 .run()
                 .writeAll();
 
         tb.new JavacTask()
-                .classpath(classes.toString()) // should allow Path here
+                .classpath(classes)
                 .files(src.resolve("C.java"))
                 .run()
                 .writeAll();

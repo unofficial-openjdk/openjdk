@@ -53,18 +53,18 @@ public class ModuleFinderTest extends ModuleTestBase {
         Files.createDirectories(modules);
 
         tb.new JavacTask(ToolBox.Mode.CMDLINE)
-                .outdir(classes.toString())
+                .outdir(classes)
                 .files(findJavaFiles(src))
                 .run()
                 .writeAll();
 
-        tb.new JarTask(modules.resolve("m1-1.jar").toString()) // should allow Path here
-                .baseDir(classes.toString()) // should allow Path here
+        tb.new JarTask(modules.resolve("m1-1.jar"))
+                .baseDir(classes)
                 .files(".")
                 .run();
 
-        tb.new JarTask(modules.resolve("m1-2.jar").toString()) // should allow Path here
-                .baseDir(classes.toString()) // should allow Path here
+        tb.new JarTask(modules.resolve("m1-2.jar"))
+                .baseDir(classes)
                 .files(".")
                 .run();
 
@@ -74,7 +74,7 @@ public class ModuleFinderTest extends ModuleTestBase {
 
         String log = tb.new JavacTask(ToolBox.Mode.CMDLINE)
                 .options("-XDrawDiagnostics", "-modulepath", modules.toString())
-                .outdir(classes.toString())
+                .outdir(classes)
                 .files(findJavaFiles(src2))
                 .run(ToolBox.Expect.FAIL)
                 .writeAll()
