@@ -683,11 +683,14 @@ public abstract class ClassLoader {
      * Define a Package of the given name if not present.
      */
     Package ensureDefinePackage(String pn) {
-        Package pkg = packages.get(pn);
-        if (pkg == null) {
-            packages.put(pn, pkg = definePackage0(pn, null, null, null, null, null, null, null));
+        if (packages.get(pn) == null) {
+            try {
+                definePackage0(pn, null, null, null, null, null, null, null);
+            } catch (IllegalArgumentException e) {
+                // another thread already defines the package
+            }
         }
-        return pkg;
+        return packages.get(pn);
     }
 
     private String defineClassSourceLocation(ProtectionDomain pd)
@@ -1645,23 +1648,23 @@ public abstract class ClassLoader {
                                     String implTitle, String implVersion,
                                     String implVendor, URL sealBase)
     {
+        Package pkg = packages.get(name);
+        if (pkg != null) {
+            throw new IllegalArgumentException(name);
+        }
+        // definePackage is not final and may be overridden by custom class loader
         return definePackage0(name, specTitle, specVersion, specVendor,
                               implTitle, implVersion, implVendor, sealBase);
     }
 
-    // definePackage is not final and may be overridden by custom class loader
     private final Package definePackage0(String name, String specTitle,
                                          String specVersion, String specVendor,
                                          String implTitle, String implVersion,
                                          String implVendor, URL sealBase)
     {
-        Package pkg = packages.get(name);
-        if (pkg != null) {
-            throw new IllegalArgumentException(name);
-        }
-        pkg = new Package(name, specTitle, specVersion, specVendor,
-                          implTitle, implVersion, implVendor,
-                          sealBase, this);
+        Package pkg = new Package(name, specTitle, specVersion, specVendor,
+                                  implTitle, implVersion, implVendor,
+                                  sealBase, this);
         if (packages.putIfAbsent(name, pkg) != null) {
             throw new IllegalArgumentException(name);
         }
