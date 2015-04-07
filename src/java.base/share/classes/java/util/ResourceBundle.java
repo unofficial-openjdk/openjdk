@@ -972,6 +972,16 @@ public abstract class ResourceBundle {
      * <p><a name="default_behavior">The following describes the default
      * behavior</a>.
      *
+     * <p>
+     * Resource bundles in a named module are private to that module.  If
+     * the caller is in a named module, this method will find resource bundles
+     * from the service providers of {@link java.util.spi.ResourceBundleProvider}
+     * and also find resource bundles private to the caller's module.
+     * If the caller is in a named module and the given {@code loader} is
+     * different than the caller's class loader, or if the caller is not in
+     * a named module, this method will not find resource bundles from named
+     * modules.
+     *
      * <p><code>getBundle</code> uses the base name, the specified locale, and
      * the default locale (obtained from {@link java.util.Locale#getDefault()
      * Locale.getDefault}) to generate a sequence of <a
@@ -1157,6 +1167,16 @@ public abstract class ResourceBundle {
      * <code>control</code> specifies how to locate and instantiate resource
      * bundles. Conceptually, the bundle loading process with the given
      * <code>control</code> is performed in the following steps.
+     *
+     * <p>
+     * Resource bundles in a named module are private to that module.  If
+     * the caller is in a named module, this method will find resource bundles
+     * from the service providers of {@link java.util.spi.ResourceBundleProvider}
+     * and also find resource bundles private to the caller's module.
+     * If the caller is in a named module and the given {@code loader} is
+     * different than the caller's class loader, or if the caller is not in
+     * a named module, this method will not find resource bundles from named
+     * modules.
      *
      * <ol>
      * <li>This factory method looks up the resource bundle in the cache for
@@ -1594,7 +1614,8 @@ public abstract class ResourceBundle {
                                              List<String> formats,
                                              Control control,
                                              boolean reload) {
-        if (caller != null && getModule(caller) != null) {
+        if (caller != null && getModule(caller) != null &&
+                caller.getClassLoader() == caller.getModule().getClassLoader()) {
             return loadBundle(cacheKey, caller, control, reload);
         }
 
@@ -2759,13 +2780,13 @@ public abstract class ResourceBundle {
             ResourceBundle bundle = null;
             if (format.equals("java.class")) {
                 try {
-                    @SuppressWarnings("unchecked")
-                    Class<? extends ResourceBundle> bundleClass
-                        = (Class<? extends ResourceBundle>)Class.forName(bundleName, false, loader);
+                    Class<?> c = Class.forName(bundleName, false, loader);
 
                     // If the class isn't a ResourceBundle subclass, throw a
                     // ClassCastException.
-                    if (ResourceBundle.class.isAssignableFrom(bundleClass)) {
+                    if (ResourceBundle.class.isAssignableFrom(c)) {
+                        @SuppressWarnings("unchecked")
+                        Class<? extends ResourceBundle> bundleClass = (Class<? extends ResourceBundle>)c;
                         if (callerModule != null) {
                             // caller is a named module
                             Module m = getModule(bundleClass);
@@ -2796,9 +2817,6 @@ public abstract class ResourceBundle {
                                     bundleClass.getName() + " (" + m.getName() + ")");
                             }
                         }
-                    } else {
-                        throw new ClassCastException(bundleClass.getName()
-                                     + " cannot be cast to ResourceBundle");
                     }
                 } catch (ClassNotFoundException | NoSuchMethodException e) {
                 }
