@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,11 +23,48 @@
  * questions.
  */
 
-module jdk.security.jgss {
-    requires public java.security.jgss;
-    requires java.logging;
-    requires java.security.sasl;
-    exports com.sun.security.jgss;
-    provides java.security.Provider with com.sun.security.sasl.gsskerb.JdkSASL;
-}
+package com.oracle.security.ucrypto;
 
+import java.util.*;
+
+/**
+ * Class for encapsulating the type, algorithm, and class name of
+ * a Provider.Service object.
+ */
+final class ServiceDesc {
+
+    private final String type;
+    private final String algo;
+    private final String cn;
+    private final List<String> aliases;
+
+    ServiceDesc(String type, String algo, String cn) {
+        this(type, algo, cn, null);
+    }
+
+    ServiceDesc(String type, String algo, String cn, String[] aliases) {
+        this.type = type;
+        this.algo = algo;
+        this.cn = cn;
+        if (aliases != null) {
+            this.aliases = Arrays.asList(aliases);
+        } else {
+            this.aliases = null;
+        }
+    }
+    String getType() {
+        return type;
+    }
+    String getAlgorithm() {
+        return algo;
+    }
+    String getClassName() {
+        return cn;
+    }
+    List<String> getAliases() {
+        return aliases;
+    }
+    public String toString() {
+        return type + "." + algo + ": " + cn + ", aliases =" + aliases;
+    }
+}

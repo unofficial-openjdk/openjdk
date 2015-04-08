@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,25 +22,24 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-
-package sun.security.smartcardio;
+package com.sun.security.sasl.gsskerb;
 
 import java.security.Provider;
 import java.security.NoSuchAlgorithmException;
 import java.security.InvalidParameterException;
 import java.security.ProviderException;
 
-import javax.smartcardio.*;
-
 /**
- * Provider object for PC/SC.
- *
- * @since   1.6
- * @author  Andreas Sterbenz
+ * The JdkSASL provider class -
+ * provides client and server support for GSSAPI/Kerberos v5
  */
-public final class SunPCSC extends Provider {
 
-    private static final long serialVersionUID = 6168388284028876579L;
+public final class JdkSASL extends Provider {
+
+    private static final long serialVersionUID = 8622590901641830849L;
+
+    private static final String info = "JDK SASL provider" +
+        "(implements client and server mechanisms for GSSAPI)";
 
     private static final class ProviderService extends Provider.Service {
 
@@ -52,44 +51,31 @@ public final class SunPCSC extends Provider {
         public Object newInstance(Object ctrParamObj)
             throws NoSuchAlgorithmException {
             String type = getType();
+            if (ctrParamObj != null) {
+                throw new InvalidParameterException
+                    ("constructorParameter not used with " + type + " engines");
+            }
             String algo = getAlgorithm();
+            // GSSAPI uses same impl class for client and server
             try {
-                if (type.equals("TerminalFactory") &&
-                    algo.equals("PC/SC")) {
-                    return new SunPCSC.Factory(ctrParamObj);
+                if (algo.equals("GSSAPI")) {
+                    return new com.sun.security.sasl.gsskerb.FactoryImpl();
                 }
             } catch (Exception ex) {
                 throw new NoSuchAlgorithmException("Error constructing " +
-                    type + " for " + algo + " using SunPCSC", ex);
+                     type + " for " + algo + " using JdkSASL", ex);
             }
             throw new ProviderException("No impl for " + algo +
                 " " + type);
         }
     }
 
-    public SunPCSC() {
-        super("SunPCSC", 1.9d, "Sun PC/SC provider");
-        putService(new ProviderService(this, "TerminalFactory",
-            "PC/SC", "sun.security.smartcardio.SunPCSC$Factory"));
-    }
+    public JdkSASL() {
+        super("JdkSASL", 1.9d, info);
 
-    public static final class Factory extends TerminalFactorySpi {
-        public Factory(Object obj) throws PCSCException {
-            if (obj != null) {
-                throw new IllegalArgumentException
-                    ("SunPCSC factory does not use parameters");
-            }
-            // make sure PCSC is available and that we can obtain a context
-            PCSC.checkAvailable();
-            PCSCTerminals.initContext();
-        }
-        /**
-         * Returns the available readers.
-         * This must be a new object for each call.
-         */
-        protected CardTerminals engineTerminals() {
-            return new PCSCTerminals();
-        }
+        putService(new ProviderService(this, "SaslClientFactory",
+                    "GSSAPI", "com.sun.security.sasl.gsskerb.FactoryImpl"));
+        putService(new ProviderService(this, "SaslServerFactory",
+                    "GSSAPI", "com.sun.security.sasl.gsskerb.FactoryImpl"));
     }
-
 }

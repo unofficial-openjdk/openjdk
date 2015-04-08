@@ -76,6 +76,7 @@ security.provider.tbd=SunJSSE
 security.provider.tbd=SunJCE
 security.provider.tbd=SunJGSS
 security.provider.tbd=SunSASL
+security.provider.tbd=JdkSASL
 security.provider.tbd=XMLDSig
 security.provider.tbd=SunPCSC
 #ifdef windows

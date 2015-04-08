@@ -121,30 +121,17 @@ public abstract class Provider extends Properties {
 
     private transient boolean initialized;
 
-    private static Object doPrivilegedNewInstance(final Class<?> clazz,
+    private static Object newInstanceUtil(final Class<?> clazz,
         final Class<?> ctrParamClz, final Object ctorParamObj)
         throws Exception {
-        try {
-            return AccessController.doPrivileged(new PrivilegedExceptionAction<Object>() {
-                public Object run() throws Exception {
-                    if (ctrParamClz == null) {
-                        Constructor<?> con = clazz.getConstructor();
-                        // VALTBD
-                        con.setAccessible(true);
-                        return con.newInstance();
-                    } else {
-                        Constructor<?> con = clazz.getConstructor(ctrParamClz);
-                        // VALTBD
-                        con.setAccessible(true);
-                        return con.newInstance(ctorParamObj);
-                    }
-               }
-            });
-        } catch (PrivilegedActionException pae) {
-            throw (Exception) pae.getCause();
+        if (ctrParamClz == null) {
+            Constructor<?> con = clazz.getConstructor();
+            return con.newInstance();
+        } else {
+            Constructor<?> con = clazz.getConstructor(ctrParamClz);
+            return con.newInstance(ctorParamObj);
         }
     }
-
 
     /**
      * Constructs a provider with the specified name, version number,
@@ -165,19 +152,27 @@ public abstract class Provider extends Properties {
     }
 
     /**
-     * Apply the supplied configuration parameter upon this provider instance and
-     * returns the configured provider.
+     * Apply the supplied configuration arguments to this provider
+     * instance and return the configured provider.
      *
-     * @param configArgs the configuration information for configuring this provider.
-     * @exception InvalidParameterException if the supplied information are invalid or
-     * if provider does not accept configuration info.
-     * @return a provider after the configured information has been applied.
+     * <p>By default, this method throws UnsupportedOperationException.
+     * Subclasses should override this method only if configuration arguments
+     * are supported.
+     *
+     * @param configArgs the configuration information for configuring this
+     *         provider.
+     *
+     * @throws UnsupportedOperationException if no configuration argument is
+     *         supported.
+     * @throws NullPointerException if configArgs is null
+     * @throws InvalidParameterException if the supplied configuration arguments
+     *         are invalid.
+     * @return a provider configured with the supplied configuration arguments.
+     *
+     * @since 1.9
      */
-    public Provider configure(String... configArgs) throws InvalidParameterException {
-        if (configArgs != null && configArgs.length != 0) {
-            throw new InvalidParameterException("No configuration arguments allowed");
-        }
-        return this;
+    public Provider configure(String... configArgs) {
+        throw new UnsupportedOperationException("configure is not supported");
     }
 
     /**
@@ -262,8 +257,8 @@ public abstract class Provider extends Properties {
     /**
      * Reads a property list (key and element pairs) from the input stream.
      *
-     * @param inStream   the input stream.
-     * @exception  IOException  if an error occurred when reading from the
+     * @param inStream the input stream.
+     * @exception IOException if an error occurred when reading from the
      *               input stream.
      * @see java.util.Properties#load
      */
@@ -1629,35 +1624,35 @@ public abstract class Provider extends Properties {
                 }
                 registered = true;
             }
+            Class<?> ctrParamClz;
             try {
                 EngineDescription cap = knownEngines.get(type);
                 if (cap == null) {
                     // unknown engine type, use generic code
                     // this is the code path future for non-core
                     // optional packages
-                    return newInstanceGeneric(constructorParameter);
-                }
-                if (cap.constructorParameterClassName == null) {
-                    if (constructorParameter != null) {
-                        throw new InvalidParameterException
-                            ("constructorParameter not used with " + type
-                            + " engines");
-                    }
-                    return doPrivilegedNewInstance(getImplClass(), null, null);
+                    ctrParamClz = constructorParameter == null?
+                        null : constructorParameter.getClass();
                 } else {
-                    Class<?> paramClass = cap.getConstructorParameterClass();
+                    ctrParamClz = cap.constructorParameterClassName == null?
+                        null : Class.forName(cap.constructorParameterClassName);
                     if (constructorParameter != null) {
-                        Class<?> argClass = constructorParameter.getClass();
-                        if (paramClass.isAssignableFrom(argClass) == false) {
+                        if (ctrParamClz == null) {
                             throw new InvalidParameterException
-                            ("constructorParameter must be instanceof "
-                            + cap.constructorParameterClassName.replace('$', '.')
-                            + " for engine type " + type);
+                                ("constructorParameter not used with " + type
+                                + " engines");
+                        } else {
+                            Class<?> argClass = constructorParameter.getClass();
+                            if (ctrParamClz.isAssignableFrom(argClass) == false) {
+                                throw new InvalidParameterException
+                                    ("constructorParameter must be instanceof "
+                                    + cap.constructorParameterClassName.replace('$', '.')
+                                    + " for engine type " + type);
+                            }
                         }
                     }
-                    return doPrivilegedNewInstance(getImplClass(), paramClass,
-                        constructorParameter);
                 }
+                return newInstanceUtil(getImplClass(), ctrParamClz, constructorParameter);
             } catch (NoSuchAlgorithmException e) {
                 throw e;
             } catch (InvocationTargetException e) {
@@ -1698,23 +1693,6 @@ public abstract class Provider extends Properties {
                     ("class configured for " + type + " (provider: " +
                     provider.getName() + ") cannot be found.", e);
             }
-        }
-
-        /**
-         * Generic code path for unknown engine types. Call the
-         * no-args constructor if constructorParameter is null, otherwise
-         * use the first matching constructor.
-         */
-        private Object newInstanceGeneric(Object constructorParameter)
-                throws Exception {
-            Class<?> clazz = getImplClass();
-            if (constructorParameter == null) {
-                // create instance with public no-arg constructor if it exists
-                return doPrivilegedNewInstance(clazz, null, null);
-            }
-            Class<?> argClass = constructorParameter.getClass();
-            return doPrivilegedNewInstance(clazz, argClass,
-                constructorParameter);
         }
 
         /**

@@ -168,26 +168,32 @@ final class ProviderConfig {
             return null;
         }
 
-        // fastpath SUN built-in provider that may be loaded at startup
+        // Create providers which are in java.base directly
         if (provName.equals("SUN")) {
-            return new sun.security.provider.Sun();
-        }
-
-        if (isLoading) {
-            // because this method is synchronized, this can only
-            // happen if there is recursion.
-            if (debug != null) {
-                debug.println("Recursion loading provider: " + this);
-                new Exception("Call trace").printStackTrace();
+            p = new sun.security.provider.Sun();
+        } else if (provName.equals("SunRsaSign")) {
+            p = new sun.security.rsa.SunRsaSign();
+        } else if (provName.equals("SunJCE")) {
+            p = new com.sun.crypto.provider.SunJCE();
+        } else if (provName.equals("SunJSSE")) {
+            p = new com.sun.net.ssl.internal.ssl.Provider();
+        } else {
+            if (isLoading) {
+                // because this method is synchronized, this can only
+                // happen if there is recursion.
+                if (debug != null) {
+                    debug.println("Recursion loading provider: " + this);
+                    new Exception("Call trace").printStackTrace();
+                }
+                return null;
             }
-            return null;
-        }
-        try {
-            isLoading = true;
-            tries++;
-            p = doLoadProvider();
-        } finally {
-            isLoading = false;
+            try {
+                isLoading = true;
+                tries++;
+                p = doLoadProvider();
+            } finally {
+                isLoading = false;
+            }
         }
         provider = p;
         return p;
@@ -209,10 +215,9 @@ final class ProviderConfig {
                 if (debug != null) {
                     debug.println("Loading provider: " + ProviderConfig.this);
                 }
-                ProviderLoader pl = new ServiceProviderLoader();
+                ProviderLoader pl = new ProviderLoader();
                 try {
-                    Provider p = ((arguments != null)?
-                        pl.load(provName, arguments) : pl.load(provName));
+                    Provider p = pl.load(provName, arguments);
                     if (p != null) {
                         if (debug != null) {
                             debug.println("Loaded provider " + p);
@@ -253,70 +258,124 @@ final class ProviderConfig {
         });
     }
 
-    /**
-     * A provider loading interface.
-     */
-    static interface ProviderLoader {
-        /**
-         * Loads the provider with the specified classname.
-         *
-         * @param  className the classname of the provider
-         * @return the Provider, or null if it cannot be found or loaded
-         */
-        Provider load(String className);
+    // Inner class for loading security providers listed in java.security file
+    private static final class ProviderLoader {
+        ServiceLoader<Provider> services;
 
-        /**
-         * Loads the provider with the specified classname and argument.
-         *
-         * @param  className the classname of the provider
-         * @param  arguments arguments for configuring the provider
-         * @return the Provider, or null if it cannot be found or loaded
-         */
-        Provider load(String className, String[] arguments);
-    }
-
-    private static class ServiceProviderLoader implements ProviderLoader {
-        ServiceLoader<Provider> loader;
-
-        ServiceProviderLoader() {
-            loader = ServiceLoader.load(java.security.Provider.class,
-                                        ClassLoader.getSystemClassLoader());
+        ProviderLoader() {
+            // VM should already been booted at this point, if not
+            // - Only providers in java.base should be loaded, don't use
+            //   ServiceLoader
+            // - ClassLoader.getSystemClassLoader() will throw InternalError
+            services = ServiceLoader.load(java.security.Provider.class,
+                                          ClassLoader.getSystemClassLoader());
         }
 
-        public Provider load(String provName, String[] arguments) {
-            Iterator<Provider> iter = loader.iterator();
+        /**
+         * Loads the provider with the specified name and arguments.
+         *
+         * @param name the name of the provider
+         * @param arguments arguments for configuring the provider
+         * @return the Provider, or null if it cannot be found or loaded
+         */
+        public Provider load(String name, String[] arguments) {
+            Iterator<Provider> iter = services.iterator();
             while (iter.hasNext()) {
                 try {
                     Provider p = iter.next();
                     if (debug != null) {
                         debug.println("Found SL Provider named " + p.getName());
                     }
-                    // ## FIXME: Workaround sign jar verification issue
-                    if (p.getName().equals(provName) || p.getClass().getName().equals(provName)) {
+                    if (p.getName().equals(name)) {
                         if (arguments != null) {
                             if (debug != null) {
-                                debug.println("configure using " + Arrays.deepToString(arguments));
+                                debug.println("configure using " +
+                                    Arrays.deepToString(arguments));
                             }
                             return p.configure(arguments);
                         } else {
                             return p;
                         }
                     }
-                } catch (SecurityException | ServiceConfigurationError | InvalidParameterException ex) {
+                } catch (SecurityException | ServiceConfigurationError |
+                         InvalidParameterException ex) {
                     // if provider loading fail due to security permission,
                     // log it and move on to next provider
                     if (debug != null) {
-                        debug.println("Encountered " + ex + " during provider instantiation, move on to next");
-                        ex.printStackTrace();
+                        debug.println("Encountered " + ex +
+                            " during provider instantiation, move on to next");
+                            ex.printStackTrace();
                     }
                 }
             }
-
-            return null;
+            // No success with ServiceLoader. Try loading provider the legacy,
+            // i.e. pre-module, way via reflection
+            try {
+                return legacyLoad(name, arguments);
+            } catch (ProviderException ex) {
+                return null;
+            }
         }
 
-        public Provider load(String provName) {
-            return load(provName, null);
+        private Provider legacyLoad(String cn, String[] arguments) {
+
+            if (debug != null) {
+                debug.println("Loading provider: " + cn);
+            }
+
+            try {
+                Class<?> provClass =
+                    ClassLoader.getSystemClassLoader().loadClass(cn);
+
+                // only continue if the specified class extends Provider
+                if (!Provider.class.isAssignableFrom(provClass)) {
+                    if (debug != null) {
+                        debug.println(cn + " is not a provider");
+                    }
+                    return null;
+                }
+
+                Provider p = AccessController.doPrivileged
+                    (new PrivilegedExceptionAction<Provider>() {
+                    public Provider run() throws Exception {
+                        Provider obj;
+                        if (arguments != null && arguments.length == 1) {
+                            Constructor<?> cons = provClass.getConstructor(String.class);
+                            obj = (Provider) cons.newInstance(arguments[0]);
+                        } else {
+                            obj = (Provider) provClass.newInstance();
+                            if (arguments != null) {
+                                obj = obj.configure(arguments);
+                            }
+                        }
+                        return obj;
+                    }
+                });
+                return p;
+            } catch (Exception e) {
+                Throwable t;
+                if (e instanceof InvocationTargetException) {
+                    t = ((InvocationTargetException)e).getCause();
+                } else {
+                    t = e;
+                }
+                if (debug != null) {
+                    debug.println("Error loading provider " + cn);
+                    t.printStackTrace();
+                }
+                // provider indicates fatal error, pass through exception
+                if (t instanceof ProviderException) {
+                    throw (ProviderException) t;
+                }
+                return null;
+            } catch (ExceptionInInitializerError err) {
+                // no sufficient permission to initialize provider class
+                if (debug != null) {
+                    debug.println("Error loading provider " + cn);
+                    err.printStackTrace();
+                }
+                return null;
+            }
         }
     }
 }
