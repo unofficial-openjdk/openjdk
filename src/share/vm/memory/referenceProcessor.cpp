@@ -233,7 +233,7 @@ void ReferenceProcessor::process_discovered_references(
     // Process cleaners, but include them in phantom statistics.  We expect
     // Cleaner references to be temporary, and don't want to deal with
     // possible incompatibilities arising from making it more visible.
-    process_discovered_reflist(_discoveredCleanerRefs, NULL, false,
+    process_discovered_reflist(_discoveredCleanerRefs, NULL, true,
                                is_alive, keep_alive, complete_gc, task_executor);
   }
 
