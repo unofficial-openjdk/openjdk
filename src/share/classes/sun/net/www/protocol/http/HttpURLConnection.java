@@ -575,7 +575,7 @@ public class HttpURLConnection extends java.net.HttpURLConnection {
         if (HttpCapture.isLoggable("FINE")) {
             HttpCapture.fine(requests.toString());
         }
-        http.writeRequests(requests, poster);
+        http.writeRequests(requests, poster, streaming());
         if (ps.checkError()) {
             String proxyHost = http.getProxyHostUsed();
             int proxyPort = http.getProxyPortUsed();
