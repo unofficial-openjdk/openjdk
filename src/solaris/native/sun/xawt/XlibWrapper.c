@@ -1188,12 +1188,14 @@ JNIEXPORT void JNICALL Java_sun_awt_X11_XlibWrapper_PrintXErrorEvent
 JNIEXPORT jint JNICALL Java_sun_awt_X11_XlibWrapper_XInternAtoms
 (JNIEnv *env, jclass clazz, jlong display, jobjectArray names_arr, jboolean only_if_exists, jlong atoms)
 {
-
     int length = (*env)->GetArrayLength(env, names_arr);
     char ** names = (char**)malloc(length*sizeof(char*));
     jboolean copy;
     int index, name_index = 0;
     int status;
+
+    AWT_CHECK_HAVE_LOCK();
+
     for (index = 0; index < length; index++) {
         jstring str = (*env)->GetObjectArrayElement(env, names_arr, index);
         if (!JNU_IsNull(env, str)) {
@@ -1203,7 +1205,6 @@ JNIEXPORT jint JNICALL Java_sun_awt_X11_XlibWrapper_XInternAtoms
             (*env)->DeleteLocalRef(env, str);
         }
     }
-    AWT_CHECK_HAVE_LOCK();
     status = XInternAtoms((Display*)jlong_to_ptr(display), names, name_index, only_if_exists, (Atom*) jlong_to_ptr(atoms));
     for (index = 0; index < length; index++) {
         free(names[index]);
@@ -1991,6 +1992,7 @@ Java_sun_awt_X11_XlibWrapper_SetBitmapShape
     jboolean isCopy = JNI_FALSE;
     size_t worstBufferSize = (size_t)((width / 2 + 1) * height);
     RECT_T * pRect;
+    int numrects;
 
     if (!IS_SAFE_SIZE_MUL(width / 2 + 1, height)) {
         return;
@@ -2016,7 +2018,7 @@ Java_sun_awt_X11_XlibWrapper_SetBitmapShape
     /* Note: the values[0] and values[1] are supposed to contain the width
      * and height (see XIconInfo.getIntData() for details). So, we do +2.
      */
-    int numrects = BitmapToYXBandedRectangles(32, (int)width, (int)height,
+    numrects = BitmapToYXBandedRectangles(32, (int)width, (int)height,
             (unsigned char *)(values + 2), pRect);
 
     XShapeCombineRectangles((Display *)jlong_to_ptr(display), (Window)jlong_to_ptr(window),
