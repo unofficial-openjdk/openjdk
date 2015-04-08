@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -145,14 +145,6 @@ G1CollectorPolicy::G1CollectorPolicy() :
 
   _cur_ref_proc_time_ms(0.0),
   _cur_ref_enq_time_ms(0.0),
-
-#ifndef PRODUCT
-  _min_clear_cc_time_ms(-1.0),
-  _max_clear_cc_time_ms(-1.0),
-  _cur_clear_cc_time_ms(0.0),
-  _cum_clear_cc_time_ms(0.0),
-  _num_cc_clears(0L),
-#endif
 
   _aux_num(10),
   _all_aux_times_ms(new NumberSeq[_aux_num]),
@@ -1431,15 +1423,6 @@ void G1CollectorPolicy::record_collection_pause_end(int no_of_gc_threads) {
       print_stats(1, "Complete CSet Marking", _mark_closure_time_ms);
     }
     print_stats(1, "Clear CT", _cur_clear_ct_time_ms);
-#ifndef PRODUCT
-    print_stats(1, "Cur Clear CC", _cur_clear_cc_time_ms);
-    print_stats(1, "Cum Clear CC", _cum_clear_cc_time_ms);
-    print_stats(1, "Min Clear CC", _min_clear_cc_time_ms);
-    print_stats(1, "Max Clear CC", _max_clear_cc_time_ms);
-    if (_num_cc_clears > 0) {
-      print_stats(1, "Avg Clear CC", _cum_clear_cc_time_ms / ((double)_num_cc_clears));
-    }
-#endif
     print_stats(1, "Other", other_time_ms);
     print_stats(2, "Choose CSet",
                    (_recorded_young_cset_choice_time_ms +

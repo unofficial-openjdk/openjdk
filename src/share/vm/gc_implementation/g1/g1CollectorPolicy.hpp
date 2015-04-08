@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -183,15 +183,6 @@ private:
   double _cur_clear_ct_time_ms;
   double _cur_ref_proc_time_ms;
   double _cur_ref_enq_time_ms;
-
-#ifndef PRODUCT
-  // Card Table Count Cache stats
-  double _min_clear_cc_time_ms;         // min
-  double _max_clear_cc_time_ms;         // max
-  double _cur_clear_cc_time_ms;         // clearing time during current pause
-  double _cum_clear_cc_time_ms;         // cummulative clearing time
-  jlong  _num_cc_clears;                // number of times the card count cache has been cleared
-#endif
 
   // These exclude marking times.
   TruncatedSeq* _recent_gc_times_ms;
@@ -916,18 +907,6 @@ public:
   void record_ref_enq_time(double ms) {
     _cur_ref_enq_time_ms = ms;
   }
-
-#ifndef PRODUCT
-  void record_cc_clear_time(double ms) {
-    if (_min_clear_cc_time_ms < 0.0 || ms <= _min_clear_cc_time_ms)
-      _min_clear_cc_time_ms = ms;
-    if (_max_clear_cc_time_ms < 0.0 || ms >= _max_clear_cc_time_ms)
-      _max_clear_cc_time_ms = ms;
-    _cur_clear_cc_time_ms = ms;
-    _cum_clear_cc_time_ms += ms;
-    _num_cc_clears++;
-  }
-#endif
 
   // Record how much space we copied during a GC. This is typically
   // called when a GC alloc region is being retired.
