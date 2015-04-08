@@ -1001,7 +1001,7 @@ included with JDK 7 and OpenJDK 7 source distributions.
 
 -------------------------------------------------------------------------------
 
-%% This notice is provided with respect to libpng 1.5.4, which is 
+%% This notice is provided with respect to libpng 1.6.16, which is 
 included with JRE 7, JDK 7, and OpenJDK 7.
 
 --- begin of LICENSE ---
@@ -1017,7 +1017,7 @@ this sentence.
 
 This code is released under the libpng license.
 
-libpng versions 1.2.6, August 15, 2004, through 1.5.4, July 7, 2011, are
+libpng versions 1.2.6, August 15, 2004, through 1.6.16, December 22, 2014, are
 Copyright (c) 2004, 2006-2011 Glenn Randers-Pehrson, and are
 distributed according to the same disclaimer and license as libpng-1.2.5
 with the following individual added to the list of Contributing Authors
@@ -1115,7 +1115,7 @@ certification mark of the Open Source Initiative.
 
 Glenn Randers-Pehrson
 glennrp at users.sourceforge.net
-July 7, 2011
+December 22, 2014
 
 --- end of LICENSE ---
 
