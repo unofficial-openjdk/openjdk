@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,6 +30,8 @@
  *          should fail when loading.
  * @library /testlibrary
  * @bug 8025642
+ * @modules java.base/sun.misc
+ *          java.management
  */
 
 import com.oracle.java.testlibrary.*;
@@ -57,10 +59,11 @@ public class CdsDifferentObjectAlignment {
             createAlignment;
         String loadAlignmentArgument = "-XX:ObjectAlignmentInBytes=" +
             loadAlignment;
+        String filename = "./CdsDifferentObjectAlignment" + createAlignment + ".jsa";
 
         ProcessBuilder pb = ProcessTools.createJavaProcessBuilder(
             "-XX:+UnlockDiagnosticVMOptions",
-            "-XX:SharedArchiveFile=./sample.jsa",
+            "-XX:SharedArchiveFile=" + filename,
             "-Xshare:dump",
             createAlignmentArgument);
 
@@ -70,7 +73,7 @@ public class CdsDifferentObjectAlignment {
 
         pb = ProcessTools.createJavaProcessBuilder(
             "-XX:+UnlockDiagnosticVMOptions",
-            "-XX:SharedArchiveFile=./sample.jsa",
+            "-XX:SharedArchiveFile=" + filename,
             "-Xshare:on",
             loadAlignmentArgument,
             "-version");

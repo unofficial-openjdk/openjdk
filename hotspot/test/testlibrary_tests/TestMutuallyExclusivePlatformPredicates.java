@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,6 +39,8 @@ import java.util.Set;
  *          in com.oracle.java.testlibrary.Platform one and only one predicate
  *          evaluates to true.
  * @library /testlibrary
+ * @modules java.base/sun.misc
+ *          java.management
  * @run main TestMutuallyExclusivePlatformPredicates
  */
 public class TestMutuallyExclusivePlatformPredicates {
@@ -46,7 +48,7 @@ public class TestMutuallyExclusivePlatformPredicates {
         ARCH("isARM", "isPPC", "isSparc", "isX86", "isX64"),
         BITNESS("is32bit", "is64bit"),
         OS("isAix", "isLinux", "isOSX", "isSolaris", "isWindows"),
-        VM_TYPE("isClient", "isServer", "isGraal", "isMinimal"),
+        VM_TYPE("isClient", "isServer", "isGraal", "isMinimal", "isZero"),
         IGNORED("isEmbedded", "isDebugBuild", "shouldSAAttach",
                 "canPtraceAttachLinux", "canAttachOSX", "isTieredSupported");
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,6 +28,8 @@
  *          when sharing mode is ON, and continue w/o sharing if sharing
  *          mode is AUTO.
  * @library /testlibrary
+ * @modules java.base/sun.misc
+ *          java.management
  * @run main ArchiveDoesNotExist
  */
 
@@ -36,7 +38,7 @@ import java.io.File;
 
 public class ArchiveDoesNotExist {
     public static void main(String[] args) throws Exception {
-        String fileName = "test.jsa";
+        String fileName = "ArchiveDoesNotExist.jsa";
 
         File cdsFile = new File(fileName);
         if (cdsFile.exists())

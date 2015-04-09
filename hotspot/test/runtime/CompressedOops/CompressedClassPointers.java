@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,6 +26,8 @@
  * @bug 8024927
  * @summary Testing address of compressed class pointer space as best as possible.
  * @library /testlibrary
+ * @modules java.base/sun.misc
+ *          java.management
  */
 
 import com.oracle.java.testlibrary.*;
@@ -95,7 +97,7 @@ public class CompressedClassPointers {
         // Test small heaps
         ProcessBuilder pb = ProcessTools.createJavaProcessBuilder(
             "-XX:+UnlockDiagnosticVMOptions",
-            "-XX:SharedArchiveFile=./sample.jsa",
+            "-XX:SharedArchiveFile=./CompressedClassPointers.jsa",
             "-Xmx128m",
             "-XX:SharedBaseAddress=8g",
             "-XX:+PrintCompressedOopsMode",
@@ -108,7 +110,7 @@ public class CompressedClassPointers {
 
           pb = ProcessTools.createJavaProcessBuilder(
             "-XX:+UnlockDiagnosticVMOptions",
-            "-XX:SharedArchiveFile=./sample.jsa",
+            "-XX:SharedArchiveFile=./CompressedClassPointers.jsa",
             "-Xmx128m",
             "-XX:SharedBaseAddress=8g",
             "-XX:+PrintCompressedOopsMode",
