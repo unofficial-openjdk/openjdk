@@ -28,8 +28,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Module;
 import java.util.*;
-import jdk.jigsaw.module.ExtendedModuleDescriptor;
-import jdk.jigsaw.module.ModuleArtifact;
+import java.lang.module.ExtendedModuleDescriptor;
+import java.lang.module.ModuleArtifact;
 import com.oracle.java.testlibrary.*;
 import sun.hotspot.WhiteBox;
 
@@ -86,7 +86,7 @@ public class ModuleHelper {
 
         Class[] cArg = new Class[2];
         cArg[0] = java.lang.ClassLoader.class;
-        cArg[1] = jdk.jigsaw.module.ModuleArtifact.class;
+        cArg[1] = java.lang.module.ModuleArtifact.class;
         Constructor ctor = findCtor(cArg);
         return (Module)invokeCtor(ctor, loader, artifact);
     }
