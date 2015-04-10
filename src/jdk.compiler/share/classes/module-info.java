@@ -48,8 +48,6 @@ module jdk.compiler {
         jdk.javadoc;
     exports com.sun.tools.javac.main to
         jdk.javadoc;
-    exports com.sun.tools.javac.nio to
-        jdk.javadoc;
     exports com.sun.tools.javac.sym to
         jdk.javadoc;
     exports com.sun.tools.javac.tree to

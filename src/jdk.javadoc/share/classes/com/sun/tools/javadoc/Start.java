@@ -41,7 +41,7 @@ import javax.tools.JavaFileObject;
 import com.sun.javadoc.*;
 import com.sun.tools.javac.file.JavacFileManager;
 import com.sun.tools.javac.main.CommandLine;
-import com.sun.tools.javac.util.BaseFileManager;
+import com.sun.tools.javac.file.BaseFileManager;
 import com.sun.tools.javac.util.ClientCodeException;
 import com.sun.tools.javac.util.Context;
 import com.sun.tools.javac.util.List;
