@@ -387,9 +387,6 @@ java/text/Bidi/Bug6665028.java                                  linux-x64
 # Filed 6986875
 sun/tools/jps/jps-Vvml.sh                                       generic-all
 
-# Filed 6979016
-sun/tools/jconsole/ResourceCheckTest.sh                         generic-all
-
 # 7132203
 sun/jvmstat/monitor/MonitoredVm/CR6672135.java                  generic-all
 

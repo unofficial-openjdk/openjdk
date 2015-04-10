@@ -142,10 +142,15 @@ Java_java_net_Inet4AddressImpl_lookupAllHostAddr(JNIEnv *env, jobject this,
 
     if (!initialized) {
       ni_iacls = (*env)->FindClass(env, "java/net/InetAddress");
+      CHECK_NULL_RETURN(ni_iacls, NULL);
       ni_iacls = (*env)->NewGlobalRef(env, ni_iacls);
+      CHECK_NULL_RETURN(ni_iacls, NULL);
       ni_ia4cls = (*env)->FindClass(env, "java/net/Inet4Address");
+      CHECK_NULL_RETURN(ni_ia4cls, NULL);
       ni_ia4cls = (*env)->NewGlobalRef(env, ni_ia4cls);
+      CHECK_NULL_RETURN(ni_ia4cls, NULL);
       ni_ia4ctrID = (*env)->GetMethodID(env, ni_ia4cls, "<init>", "()V");
+      CHECK_NULL_RETURN(ni_ia4ctrID, NULL);
       initialized = 1;
     }
 
@@ -241,6 +246,10 @@ Java_java_net_Inet4AddressImpl_lookupAllHostAddr(JNIEnv *env, jobject this,
           addrp++;
           i++;
         }
+    } else if (WSAGetLastError() == WSATRY_AGAIN) {
+        NET_ThrowByNameWithLastError(env,
+                                     JNU_JAVANETPKG "UnknownHostException",
+                                     hostname);
     } else {
         JNU_ThrowByName(env, JNU_JAVANETPKG "UnknownHostException", hostname);
     }

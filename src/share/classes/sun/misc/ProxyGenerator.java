@@ -27,11 +27,15 @@ package sun.misc;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.reflect.Array;
 import java.lang.reflect.Method;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -327,10 +331,16 @@ public class ProxyGenerator {
             new java.security.PrivilegedAction<Void>() {
                 public Void run() {
                     try {
-                        FileOutputStream file =
-                            new FileOutputStream(dotToSlash(name) + ".class");
-                        file.write(classFile);
-                        file.close();
+                        int i = name.lastIndexOf('.');
+                        Path path;
+                        if (i > 0) {
+                            Path dir = Paths.get(name.substring(0, i).replace('.', File.separatorChar));
+                            Files.createDirectories(dir);
+                            path = dir.resolve(name.substring(i+1, name.length()) + ".class");
+                        } else {
+                            path = Paths.get(name + ".class");
+                        }
+                        Files.write(path, classFile);
                         return null;
                     } catch (IOException e) {
                         throw new InternalError(

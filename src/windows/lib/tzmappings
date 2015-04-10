@@ -137,8 +137,8 @@ Central:36,37::America/Chicago:
 Central Standard Time:36,37::America/Chicago:
 Eastern:38,39::America/New_York:
 Eastern Standard Time:38,39::America/New_York:
-E. Europe:4,5:BY:Europe/Minsk:
-E. Europe Standard Time:4,5:BY:Europe/Minsk:
+E. Europe:4,5::EET:
+E. Europe Standard Time:4,5::EET:
 Egypt:4,68::Africa/Cairo:
 Egypt Standard Time:4,68::Africa/Cairo:
 South Africa:4,69::Africa/Harare:
@@ -192,5 +192,11 @@ Magadan Standard Time:924,924::Asia/Magadan:
 Kaliningrad Standard Time:925,925:RU:Europe/Kaliningrad:
 Turkey Standard Time:926,926::Asia/Istanbul:
 Bahia Standard Time:927,927::America/Bahia:
-Western Brazilian Standard Time:928,928:BR:America/Rio_Branco:
-Armenian Standard Time:929,929:AM:Asia/Yerevan:
+Libya Standard Time:928,928:LY:Africa/Tripoli:
+Belarus Standard Time:929,929:BY:Europe/Minsk:
+Line Islands Standard Time:930,930::Pacific/Kiritimati:
+Russia Time Zone 10:931,931::Asia/Srednekolymsk:
+Russia Time Zone 11:932,932::Asia/Anadyr:
+Russia Time Zone 3:933,933::Europe/Samara:
+Western Brazilian Standard Time:934,934:BR:America/Rio_Branco:
+Armenian Standard Time:935,935:AM:Asia/Yerevan:
