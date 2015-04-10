@@ -52,13 +52,13 @@ import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-import jdk.jigsaw.module.Configuration;
-import jdk.jigsaw.module.Layer;
-import jdk.jigsaw.module.ModuleArtifact;
-import jdk.jigsaw.module.ModuleArtifactFinder;
-import jdk.jigsaw.module.ModuleDependence;
-import jdk.jigsaw.module.ModuleDescriptor;
-import jdk.jigsaw.module.ModuleExport;
+import java.lang.module.Configuration;
+import java.lang.module.Layer;
+import java.lang.module.ModuleArtifact;
+import java.lang.module.ModuleArtifactFinder;
+import java.lang.module.ModuleDependence;
+import java.lang.module.ModuleDescriptor;
+import java.lang.module.ModuleExport;
 
 public class ModuleSummary {
     private static final String USAGE = "Usage: ModuleSummary -mp <dir> -o <outfile>";

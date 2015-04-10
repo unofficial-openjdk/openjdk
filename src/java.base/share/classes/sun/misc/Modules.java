@@ -28,8 +28,8 @@ import java.lang.reflect.Module;
 import java.net.URI;
 import java.util.Set;
 
-import jdk.jigsaw.module.ExtendedModuleDescriptor;
-import jdk.jigsaw.module.ModuleArtifact;
+import java.lang.module.ExtendedModuleDescriptor;
+import java.lang.module.ModuleArtifact;
 import sun.misc.SharedSecrets;
 
 /**

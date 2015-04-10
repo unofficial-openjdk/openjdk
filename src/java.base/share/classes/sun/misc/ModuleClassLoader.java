@@ -27,7 +27,7 @@ package sun.misc;
 
 import java.security.SecureClassLoader;
 
-import jdk.jigsaw.module.ModuleArtifact;
+import java.lang.module.ModuleArtifact;
 
 /**
  * A ClassLoader that has support for loading classes and resources from modules.

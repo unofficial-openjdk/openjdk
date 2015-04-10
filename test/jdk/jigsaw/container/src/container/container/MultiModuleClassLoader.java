@@ -23,8 +23,8 @@
 
 package container;
 
-import jdk.jigsaw.module.Configuration;
-import jdk.jigsaw.module.ModuleDescriptor;
+import java.lang.module.Configuration;
+import java.lang.module.ModuleDescriptor;
 
 import java.net.URL;
 import java.net.URI;

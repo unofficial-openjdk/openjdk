@@ -35,10 +35,10 @@ import jdk.internal.org.objectweb.asm.ByteVector;
 import jdk.internal.org.objectweb.asm.ClassReader;
 import jdk.internal.org.objectweb.asm.ClassWriter;
 import jdk.internal.org.objectweb.asm.Label;
-import jdk.jigsaw.module.ModuleDependence;
-import jdk.jigsaw.module.ModuleDependence.Modifier;
-import jdk.jigsaw.module.ModuleExport;
-import jdk.jigsaw.module.ModuleId;
+import java.lang.module.ModuleDependence;
+import java.lang.module.ModuleDependence.Modifier;
+import java.lang.module.ModuleExport;
+import java.lang.module.ModuleId;
 import jdk.jigsaw.module.internal.Hasher.DependencyHashes;
 
 /**

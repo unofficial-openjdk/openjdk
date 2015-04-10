@@ -28,9 +28,9 @@ package sun.misc;
 import java.lang.reflect.Module;
 import java.util.Map;
 
-import jdk.jigsaw.module.Configuration;
-import jdk.jigsaw.module.Layer.ClassLoaderFinder;
-import jdk.jigsaw.module.ModuleArtifact;
+import java.lang.module.Configuration;
+import java.lang.module.Layer.ClassLoaderFinder;
+import java.lang.module.ModuleArtifact;
 
 /**
  * Provides access to package-private modules in java.lang.reflect.

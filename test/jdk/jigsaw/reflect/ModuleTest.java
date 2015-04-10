@@ -26,7 +26,7 @@
 import java.lang.reflect.Module;
 import java.util.stream.Stream;
 
-import jdk.jigsaw.module.ModuleExport;
+import java.lang.module.ModuleExport;
 
 import org.testng.annotations.Test;
 import static org.testng.Assert.*;

@@ -39,12 +39,12 @@ import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import jdk.jigsaw.module.Configuration;
-import jdk.jigsaw.module.Layer;
-import jdk.jigsaw.module.ModuleArtifact;
-import jdk.jigsaw.module.ModuleArtifactFinder;
-import jdk.jigsaw.module.ModuleDescriptor;
-import static jdk.jigsaw.module.ModuleDependence.Modifier.PUBLIC;
+import java.lang.module.Configuration;
+import java.lang.module.Layer;
+import java.lang.module.ModuleArtifact;
+import java.lang.module.ModuleArtifactFinder;
+import java.lang.module.ModuleDescriptor;
+import static java.lang.module.ModuleDependence.Modifier.PUBLIC;
 
 /**
  * Generate the DOT file for a module graph for each module in the JDK

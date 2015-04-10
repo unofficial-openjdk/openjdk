@@ -23,7 +23,7 @@
  * questions.
  */
 
-package jdk.jigsaw.module;
+package java.lang.module;
 
 import java.lang.reflect.Module;
 import java.util.Collections;

@@ -27,8 +27,8 @@ import java.lang.reflect.Module;
 import javax.annotation.Resource;
 import javax.annotation.more.BigResource;
 
-import jdk.jigsaw.module.Configuration;
-import jdk.jigsaw.module.Layer;
+import java.lang.module.Configuration;
+import java.lang.module.Layer;
 
 public class Main {
     public static void main(String[] args) {

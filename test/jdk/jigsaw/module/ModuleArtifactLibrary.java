@@ -30,10 +30,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import jdk.jigsaw.module.ExtendedModuleDescriptor;
-import jdk.jigsaw.module.ModuleArtifact;
-import jdk.jigsaw.module.ModuleArtifactFinder;
-import jdk.jigsaw.module.ModuleExport;
+import java.lang.module.ExtendedModuleDescriptor;
+import java.lang.module.ModuleArtifact;
+import java.lang.module.ModuleArtifactFinder;
+import java.lang.module.ModuleExport;
 
 /**
  * A container of modules that acts as a ModuleArtifactFinder for testing

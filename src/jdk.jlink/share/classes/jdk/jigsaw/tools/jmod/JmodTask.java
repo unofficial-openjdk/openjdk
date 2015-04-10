@@ -67,11 +67,11 @@ import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
-import jdk.jigsaw.module.ModuleArtifact;
-import jdk.jigsaw.module.ModuleArtifactFinder;
-import jdk.jigsaw.module.ModuleDependence;
-import jdk.jigsaw.module.ModuleDescriptor;
-import jdk.jigsaw.module.ModuleId;
+import java.lang.module.ModuleArtifact;
+import java.lang.module.ModuleArtifactFinder;
+import java.lang.module.ModuleDependence;
+import java.lang.module.ModuleDescriptor;
+import java.lang.module.ModuleId;
 import jdk.jigsaw.module.internal.Hasher;
 import jdk.jigsaw.module.internal.Hasher.DependencyHashes;
 import jdk.jigsaw.module.internal.ModuleInfo;

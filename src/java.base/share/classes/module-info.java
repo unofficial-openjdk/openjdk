@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,6 +28,7 @@ module java.base {
     exports java.lang;
     exports java.lang.annotation;
     exports java.lang.invoke;
+    exports java.lang.module;
     exports java.lang.ref;
     exports java.lang.reflect;
     exports java.math;
@@ -75,7 +76,6 @@ module java.base {
     exports javax.security.auth.x500;
     exports javax.security.cert;
     exports jdk;
-    exports jdk.jigsaw.module;
     exports jdk.net;
     // additional qualified exports may be inserted at build time
     // see make/gensrc/GenModuleInfo.gmk

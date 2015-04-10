@@ -50,7 +50,7 @@ import java.util.jar.Manifest;
 
 import jdk.internal.jimage.ImageLocation;
 import jdk.internal.jimage.ImageReader;
-import jdk.jigsaw.module.ModuleArtifact;
+import java.lang.module.ModuleArtifact;
 
 /**
  * The extension or application class loader. Resources loaded from modules

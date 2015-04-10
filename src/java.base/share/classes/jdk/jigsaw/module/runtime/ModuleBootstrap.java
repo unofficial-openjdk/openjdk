@@ -35,13 +35,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import jdk.jigsaw.module.Configuration;
-import jdk.jigsaw.module.Layer;
-import jdk.jigsaw.module.Layer.ClassLoaderFinder;
-import jdk.jigsaw.module.ModuleArtifact;
-import jdk.jigsaw.module.ModuleArtifactFinder;
-import jdk.jigsaw.module.ModuleDescriptor;
-import jdk.jigsaw.module.ModuleId;
+import java.lang.module.Configuration;
+import java.lang.module.Layer;
+import java.lang.module.Layer.ClassLoaderFinder;
+import java.lang.module.ModuleArtifact;
+import java.lang.module.ModuleArtifactFinder;
+import java.lang.module.ModuleDescriptor;
+import java.lang.module.ModuleId;
 
 import sun.misc.BootLoader;
 import sun.misc.ModuleClassLoader;

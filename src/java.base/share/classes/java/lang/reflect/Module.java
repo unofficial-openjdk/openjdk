@@ -38,13 +38,13 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import jdk.jigsaw.module.Configuration;
-import jdk.jigsaw.module.Layer;
-import jdk.jigsaw.module.Layer.ClassLoaderFinder;
-import jdk.jigsaw.module.ModuleArtifact;
-import jdk.jigsaw.module.ModuleDescriptor;
-import jdk.jigsaw.module.ModuleExport;
-import jdk.jigsaw.module.Version;
+import java.lang.module.Configuration;
+import java.lang.module.Layer;
+import java.lang.module.Layer.ClassLoaderFinder;
+import java.lang.module.ModuleArtifact;
+import java.lang.module.ModuleDescriptor;
+import java.lang.module.ModuleExport;
+import java.lang.module.Version;
 import sun.misc.BootLoader;
 import sun.misc.JavaLangReflectAccess;
 import sun.misc.ServicesCatalog;
@@ -56,8 +56,8 @@ import sun.misc.Unsafe;
  *
  * <p> {@code Module} does not define a public constructor. Instead {@code
  * Module} objects are constructed by the Java Virtual Machine when a
- * {@link jdk.jigsaw.module.Configuration Configuration} is reified by means
- * of creating a {@link jdk.jigsaw.module.Layer Layer}. </p>
+ * {@link java.lang.module.Configuration Configuration} is reified by means
+ * of creating a {@link java.lang.module.Layer Layer}. </p>
  *
  * @since 1.9
  * @see java.lang.Class#getModule

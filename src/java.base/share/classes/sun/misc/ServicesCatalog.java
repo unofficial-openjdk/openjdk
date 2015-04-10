@@ -25,7 +25,7 @@
 
 package sun.misc;
 
-import jdk.jigsaw.module.ModuleDescriptor;
+import java.lang.module.ModuleDescriptor;
 
 import java.lang.reflect.Module;
 import java.util.Collections;

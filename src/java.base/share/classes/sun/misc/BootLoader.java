@@ -30,7 +30,7 @@ import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.stream.Stream;
 
-import jdk.jigsaw.module.ModuleArtifact;
+import java.lang.module.ModuleArtifact;
 
 /**
  * Find resources and packages in modules defined to the boot class loader or

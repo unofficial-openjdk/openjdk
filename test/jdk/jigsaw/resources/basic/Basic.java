@@ -21,9 +21,9 @@
  * questions.
  */
 
-import jdk.jigsaw.module.Configuration;
-import jdk.jigsaw.module.Layer;
-import jdk.jigsaw.module.ModuleArtifact;
+import java.lang.module.Configuration;
+import java.lang.module.Layer;
+import java.lang.module.ModuleArtifact;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

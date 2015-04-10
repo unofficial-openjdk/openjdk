@@ -75,14 +75,14 @@ import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 
-import jdk.jigsaw.module.Configuration;
-import jdk.jigsaw.module.ExtendedModuleDescriptor;
-import jdk.jigsaw.module.Layer;
-import jdk.jigsaw.module.ModuleArtifact;
-import jdk.jigsaw.module.ModuleDependence;
-import jdk.jigsaw.module.ModuleDescriptor;
-import jdk.jigsaw.module.ModuleExport;
-import jdk.jigsaw.module.ModuleId;
+import java.lang.module.Configuration;
+import java.lang.module.ExtendedModuleDescriptor;
+import java.lang.module.Layer;
+import java.lang.module.ModuleArtifact;
+import java.lang.module.ModuleDependence;
+import java.lang.module.ModuleDescriptor;
+import java.lang.module.ModuleExport;
+import java.lang.module.ModuleId;
 
 public enum LauncherHelper {
     INSTANCE;

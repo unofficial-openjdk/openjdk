@@ -27,7 +27,7 @@ import java.io.*;
 import java.util.*;
 import static java.lang.System.out;
 
-import jdk.jigsaw.module.*;
+import java.lang.module.*;
 
 import org.testng.annotations.*;
 import static org.testng.Assert.*;

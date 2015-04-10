@@ -30,15 +30,15 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import jdk.jigsaw.module.ExtendedModuleDescriptor;
-import jdk.jigsaw.module.ModuleArtifact;
+import java.lang.module.ExtendedModuleDescriptor;
+import java.lang.module.ModuleArtifact;
 
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import static org.testng.Assert.*;
 
 /**
- * Basic tests for jdk.jigsaw.module.ModuleArtifact
+ * Basic tests for java.lang.module.ModuleArtifact
  */
 
 @Test

@@ -31,7 +31,7 @@ import java.net.URL;
 import java.security.AccessControlContext;
 import java.util.Map;
 
-import jdk.jigsaw.module.ModuleArtifact;
+import java.lang.module.ModuleArtifact;
 import sun.reflect.ConstantPool;
 import sun.reflect.annotation.AnnotationType;
 import sun.nio.ch.Interruptible;

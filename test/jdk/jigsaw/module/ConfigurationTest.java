@@ -26,12 +26,12 @@
 import java.util.HashSet;
 import java.util.Set;
 
-import jdk.jigsaw.module.Configuration;
-import jdk.jigsaw.module.ExtendedModuleDescriptor;
-import jdk.jigsaw.module.Layer;
-import jdk.jigsaw.module.ModuleArtifactFinder;
-import jdk.jigsaw.module.ModuleDependence;
-import jdk.jigsaw.module.ModuleDependence.Modifier;
+import java.lang.module.Configuration;
+import java.lang.module.ExtendedModuleDescriptor;
+import java.lang.module.Layer;
+import java.lang.module.ModuleArtifactFinder;
+import java.lang.module.ModuleDependence;
+import java.lang.module.ModuleDependence.Modifier;
 
 import org.testng.annotations.Test;
 import static org.testng.Assert.*;

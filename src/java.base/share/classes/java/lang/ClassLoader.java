@@ -47,7 +47,7 @@ import java.util.Vector;
 import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
-import jdk.jigsaw.module.ModuleArtifact;
+import java.lang.module.ModuleArtifact;
 import sun.misc.BootLoader;
 import sun.misc.ClassLoaders;
 import sun.misc.CompoundEnumeration;

@@ -28,10 +28,10 @@ import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import jdk.jigsaw.module.Configuration;
-import jdk.jigsaw.module.Layer;
-import jdk.jigsaw.module.ModuleArtifactFinder;
-import jdk.jigsaw.module.ModuleDescriptor;
+import java.lang.module.Configuration;
+import java.lang.module.Layer;
+import java.lang.module.ModuleArtifactFinder;
+import java.lang.module.ModuleDescriptor;
 
 /**
  * A simple console application that accepts commands to start applications. It's

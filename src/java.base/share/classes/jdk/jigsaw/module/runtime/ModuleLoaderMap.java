@@ -25,10 +25,10 @@
 
 package jdk.jigsaw.module.runtime;
 
-import jdk.jigsaw.module.Configuration;
-import jdk.jigsaw.module.Layer;
-import jdk.jigsaw.module.ModuleArtifact;
-import jdk.jigsaw.module.ModuleDescriptor;
+import java.lang.module.Configuration;
+import java.lang.module.Layer;
+import java.lang.module.ModuleArtifact;
+import java.lang.module.ModuleDescriptor;
 import sun.misc.ClassLoaders;
 
 import java.util.Arrays;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015 Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,29 +23,9 @@
  * questions.
  */
 
-package jdk.jigsaw.module;
+package java.lang.module;
+
 
 /**
- * Thrown when an error occurs during resolution or binding.
- *
- * @see Configuration#resolve
- * @see Configuration#bind
+ * @since 1.9
  */
-public class ResolveException extends RuntimeException {
-    private static final long serialVersionUID = 0L;
-
-    /**
-     * Constructs an instance of this exception with the given cause.
-     */
-    public ResolveException(Throwable cause) {
-        super(cause);
-    }
-
-    /**
-     * Constructs an instance of this exception.
-     */
-    public ResolveException(String fmt, Object... args) {
-        super(String.format(fmt, args));
-    }
-
-}

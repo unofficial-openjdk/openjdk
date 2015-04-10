@@ -26,9 +26,9 @@
 import java.util.*;
 import static java.lang.System.out;
 
-import jdk.jigsaw.module.*;
-import jdk.jigsaw.module.ModuleDependence.Modifier;
-import static jdk.jigsaw.module.ModuleDependence.Modifier.*;
+import java.lang.module.*;
+import java.lang.module.ModuleDependence.Modifier;
+import static java.lang.module.ModuleDependence.Modifier.*;
 
 import org.testng.annotations.*;
 import static org.testng.Assert.*;

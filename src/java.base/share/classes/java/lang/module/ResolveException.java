@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,23 +23,29 @@
  * questions.
  */
 
-package jdk.jigsaw.module;
+package java.lang.module;
 
-import java.util.*;
-import java.util.stream.*;
+/**
+ * Thrown when an error occurs during resolution or binding.
+ *
+ * @see Configuration#resolve
+ * @see Configuration#bind
+ */
+public class ResolveException extends RuntimeException {
+    private static final long serialVersionUID = 0L;
 
-
-class Dependence {
-
-    private Dependence() { }
-
-    static <T> Stream<String> toStringStream(Set<T> s) {
-        return s.stream().map(e -> e.toString().toLowerCase());
+    /**
+     * Constructs an instance of this exception with the given cause.
+     */
+    public ResolveException(Throwable cause) {
+        super(cause);
     }
 
-    static <M> String toString(Set<M> mods, String what) {
-        return (Stream.concat(toStringStream(mods), Stream.of(what)))
-                      .collect(Collectors.joining(" "));
+    /**
+     * Constructs an instance of this exception.
+     */
+    public ResolveException(String fmt, Object... args) {
+        super(String.format(fmt, args));
     }
 
 }

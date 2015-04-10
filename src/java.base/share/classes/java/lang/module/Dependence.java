@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,12 +23,23 @@
  * questions.
  */
 
-package jdk.jigsaw.module;
+package java.lang.module;
+
+import java.util.*;
+import java.util.stream.*;
 
 
-/**
- * <p> Some portions of these classes will eventually wind up in {@code
- * java.lang.module}. For the purpose of early prototyping they live here. </p>
- *
- * @since 1.9
- */
+class Dependence {
+
+    private Dependence() { }
+
+    static <T> Stream<String> toStringStream(Set<T> s) {
+        return s.stream().map(e -> e.toString().toLowerCase());
+    }
+
+    static <M> String toString(Set<M> mods, String what) {
+        return (Stream.concat(toStringStream(mods), Stream.of(what)))
+                      .collect(Collectors.joining(" "));
+    }
+
+}

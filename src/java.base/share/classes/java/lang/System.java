@@ -37,7 +37,7 @@ import java.security.PrivilegedAction;
 import java.nio.channels.Channel;
 import java.nio.channels.spi.SelectorProvider;
 
-import jdk.jigsaw.module.ModuleArtifact;
+import java.lang.module.ModuleArtifact;
 import sun.nio.ch.Interruptible;
 import sun.misc.ServicesCatalog;
 import sun.reflect.CallerSensitive;
