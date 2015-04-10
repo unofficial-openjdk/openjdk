@@ -29,6 +29,7 @@ import static jdk.nashorn.internal.codegen.Compiler.SCRIPTS_PACKAGE;
 import static jdk.nashorn.internal.codegen.Compiler.binaryName;
 import static jdk.nashorn.internal.codegen.CompilerConstants.JS_OBJECT_PREFIX;
 
+import java.lang.reflect.Module;
 import java.security.ProtectionDomain;
 import jdk.nashorn.internal.codegen.ObjectClassGenerator;
 
@@ -38,15 +39,28 @@ import jdk.nashorn.internal.codegen.ObjectClassGenerator;
 final class StructureLoader extends NashornLoader {
     private static final String JS_OBJECT_PREFIX_EXTERNAL = binaryName(SCRIPTS_PACKAGE) + '.' + JS_OBJECT_PREFIX.symbolName();
 
+    private final Module structuresModule;
+
     /**
      * Constructor.
      */
     StructureLoader(final ClassLoader parent) {
         super(parent);
+        structuresModule = defineModule("nashorn.structures", this);
+        addModuleExports(nashornModule, SCRIPTS_PKG, structuresModule);
+        addModuleExports(nashornModule, RUNTIME_PKG, structuresModule);
+        addModuleExports(structuresModule, SCRIPTS_PKG, nashornModule);
+        addReadsModule(structuresModule, nashornModule);
+        addReadsModule(nashornModule, structuresModule);
+        addReadsModule(structuresModule, Object.class.getModule());
     }
 
     static boolean isStructureClass(final String name) {
         return name.startsWith(JS_OBJECT_PREFIX_EXTERNAL);
+    }
+
+    protected Module getModule() {
+        return structuresModule;
     }
 
     @Override
