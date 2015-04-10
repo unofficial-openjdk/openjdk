@@ -27,11 +27,13 @@ package sun.nio.ch;
 
 import java.io.*;
 import java.net.*;
+import jdk.net.*;
 import java.nio.channels.*;
 import java.util.*;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.security.PrivilegedExceptionAction;
+import sun.net.ExtendedOptionsImpl;
 
 
 class Net {                                             // package-private
@@ -54,30 +56,8 @@ class Net {                                             // package-private
     // set to true if exclusive binding is on for Windows
     private static final boolean exclusiveBind;
 
-    static {
-        int availLevel = isExclusiveBindAvailable();
-        if (availLevel >= 0) {
-            String exclBindProp =
-                java.security.AccessController.doPrivileged(
-                      new PrivilegedAction<String>() {
-                          @Override
-                        public String run() {
-                            return System.getProperty(
-                                    "sun.net.useExclusiveBind");
-                        }
-                    });
-            if (exclBindProp != null) {
-                exclusiveBind = exclBindProp.length() == 0 ?
-                        true : Boolean.parseBoolean(exclBindProp);
-            } else if (availLevel == 1) {
-                exclusiveBind = true;
-            } else {
-                exclusiveBind = false;
-            }
-        } else {
-            exclusiveBind = false;
-        }
-    }
+    // set to true if the fast tcp loopback should be enabled on Windows
+    private static final boolean fastLoopback;
 
     // -- Miscellaneous utilities --
 
@@ -327,6 +307,16 @@ class Net {                                             // package-private
 
         // only simple values supported by this method
         Class<?> type = name.type();
+
+        if (type == SocketFlow.class) {
+            SecurityManager sm = System.getSecurityManager();
+            if (sm != null) {
+                sm.checkPermission(new NetworkPermission("setOption.SO_FLOW_SLA"));
+            }
+            ExtendedOptionsImpl.setFlowOption(fd, (SocketFlow)value);
+            return;
+        }
+
         if (type != Integer.class && type != Boolean.class)
             throw new AssertionError("Should not reach here");
 
@@ -370,7 +360,8 @@ class Net {                                             // package-private
         }
 
         boolean mayNeedConversion = (family == UNSPEC);
-        setIntOption0(fd, mayNeedConversion, key.level(), key.name(), arg);
+        boolean isIPv6 = (family == StandardProtocolFamily.INET6);
+        setIntOption0(fd, mayNeedConversion, key.level(), key.name(), arg, isIPv6);
     }
 
     static Object getSocketOption(FileDescriptor fd, ProtocolFamily family,
@@ -378,6 +369,16 @@ class Net {                                             // package-private
         throws IOException
     {
         Class<?> type = name.type();
+
+        if (type == SocketFlow.class) {
+            SecurityManager sm = System.getSecurityManager();
+            if (sm != null) {
+                sm.checkPermission(new NetworkPermission("getOption.SO_FLOW_SLA"));
+            }
+            SocketFlow flow = SocketFlow.create();
+            ExtendedOptionsImpl.getFlowOption(fd, flow);
+            return flow;
+        }
 
         // only simple values supported by this method
         if (type != Integer.class && type != Boolean.class)
@@ -396,6 +397,23 @@ class Net {                                             // package-private
         } else {
             return (value == 0) ? Boolean.FALSE : Boolean.TRUE;
         }
+    }
+
+    public static boolean isFastTcpLoopbackRequested() {
+        String loopbackProp = java.security.AccessController.doPrivileged(
+            new PrivilegedAction<String>() {
+                @Override
+                public String run() {
+                    return System.getProperty("jdk.net.useFastTcpLoopback");
+                }
+            });
+        boolean enable;
+        if ("".equals(loopbackProp)) {
+            enable = true;
+        } else {
+            enable = Boolean.parseBoolean(loopbackProp);
+        }
+        return enable;
     }
 
     // -- Socket operations --
@@ -420,15 +438,16 @@ class Net {                                             // package-private
         throws IOException {
         boolean preferIPv6 = isIPv6Available() &&
             (family != StandardProtocolFamily.INET);
-        return IOUtil.newFD(socket0(preferIPv6, stream, false));
+        return IOUtil.newFD(socket0(preferIPv6, stream, false, fastLoopback));
     }
 
     static FileDescriptor serverSocket(boolean stream) {
-        return IOUtil.newFD(socket0(isIPv6Available(), stream, true));
+        return IOUtil.newFD(socket0(isIPv6Available(), stream, true, fastLoopback));
     }
 
     // Due to oddities SO_REUSEADDR on windows reuse is ignored
-    private static native int socket0(boolean preferIPv6, boolean stream, boolean reuse);
+    private static native int socket0(boolean preferIPv6, boolean stream, boolean reuse,
+                                      boolean fastLoopback);
 
     static void bind(FileDescriptor fd, InetAddress addr, int port)
         throws IOException
@@ -507,7 +526,7 @@ class Net {                                             // package-private
         throws IOException;
 
     private static native void setIntOption0(FileDescriptor fd, boolean mayNeedConversion,
-                                             int level, int opt, int arg)
+                                             int level, int opt, int arg, boolean isIPv6)
         throws IOException;
 
     // -- Multicast support --
@@ -613,4 +632,30 @@ class Net {                                             // package-private
         initIDs();
     }
 
+    static {
+        int availLevel = isExclusiveBindAvailable();
+        if (availLevel >= 0) {
+            String exclBindProp =
+                java.security.AccessController.doPrivileged(
+                      new PrivilegedAction<String>() {
+                          @Override
+                        public String run() {
+                            return System.getProperty(
+                                    "sun.net.useExclusiveBind");
+                        }
+                    });
+            if (exclBindProp != null) {
+                exclusiveBind = exclBindProp.length() == 0 ?
+                        true : Boolean.parseBoolean(exclBindProp);
+            } else if (availLevel == 1) {
+                exclusiveBind = true;
+            } else {
+                exclusiveBind = false;
+            }
+        } else {
+            exclusiveBind = false;
+        }
+
+        fastLoopback = isFastTcpLoopbackRequested();
+    }
 }

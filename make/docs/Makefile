@@ -1,4 +1,4 @@
-# Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -833,6 +833,56 @@ $(SMARTCARDIO_OPTIONS_FILE):
 $(SMARTCARDIO_PACKAGES_FILE): $(DIRECTORY_CACHE) $(call PackageDependencies,$(SMARTCARDIO_PKGS))
 	$(prep-target)
 	$(call PackageFilter,$(SMARTCARDIO_PKGS))
+
+#############################################################
+#
+# jdk.net docs
+#
+
+ALL_OTHER_TARGETS += jdknetdocs
+
+JDKNET_DOCDIR      := $(JRE_API_DOCSDIR)/net/socketoptions/spec
+JDKNET2COREAPI     := ../../../$(JDKJRE2COREAPI)
+JDKNET_DOCTITLE    := jdk.net API
+JDKNET_WINDOWTITLE := jdk.net API
+JDKNET_HEADER      := <strong>jdk.net API</strong>
+JDKNET_BOTTOM      := $(call CommonBottom,$(JDKNET_FIRST_COPYRIGHT_YEAR))
+# JDKNET_PKGS is located in NON_CORE_PKGS.gmk
+
+JDKNET_INDEX_HTML    = $(JDKNET_DOCDIR)/index.html
+JDKNET_OPTIONS_FILE  = $(DOCSTMPDIR)/jdknet.options
+JDKNET_PACKAGES_FILE = $(DOCSTMPDIR)/jdknet.packages
+
+jdknetdocs: $(JDKNET_INDEX_HTML)
+
+# Set relative location to core api document root
+$(JDKNET_INDEX_HTML): GET2DOCSDIR=$(JDKNET2COREAPI)/..
+
+# Run javadoc if the index file is out of date or missing
+$(JDKNET_INDEX_HTML): $(JDKNET_OPTIONS_FILE) $(JDKNET_PACKAGES_FILE)
+	$(prep-javadoc)
+	$(call JavadocSummary,$(JDKNET_OPTIONS_FILE),$(JDKNET_PACKAGES_FILE))
+	$(JAVADOC_CMD) $(JAVADOC_VM_MEMORY_FLAGS) -d $(@D) \
+	@$(JDKNET_OPTIONS_FILE) @$(JDKNET_PACKAGES_FILE)
+
+# Create file with javadoc options in it
+$(JDKNET_OPTIONS_FILE):
+	$(prep-target)
+	@($(call OptionOnly,$(COMMON_JAVADOCFLAGS))                     ; \
+	$(call OptionPair,-sourcepath,$(RELEASEDOCS_SOURCEPATH))      ; \
+	$(call OptionPair,-encoding,ascii)                            ; \
+	$(call OptionOnly,-nodeprecatedlist)                          ; \
+	$(call OptionPair,-doctitle,$(JDKNET_DOCTITLE))           ; \
+	$(call OptionPair,-windowtitle,$(JDKNET_WINDOWTITLE) $(DRAFT_WINTITLE));\
+	$(call OptionPair,-header,$(JDKNET_HEADER)$(DRAFT_HEADER)); \
+	$(call OptionPair,-bottom,$(JDKNET_BOTTOM)$(DRAFT_BOTTOM)); \
+	$(call OptionTrip,-linkoffline,$(JDKNET2COREAPI),$(COREAPI_DOCSDIR)/); \
+	) >> $@
+
+# Create a file with the package names in it
+$(JDKNET_PACKAGES_FILE): $(DIRECTORY_CACHE) $(call PackageDependencies,$(JDKNET_PKGS))
+	$(prep-target)
+	$(call PackageFilter,$(JDKNET_PKGS))
 
 #############################################################
 #

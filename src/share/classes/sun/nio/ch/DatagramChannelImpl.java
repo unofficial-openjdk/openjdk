@@ -33,6 +33,7 @@ import java.nio.channels.*;
 import java.nio.channels.spi.*;
 import java.util.*;
 import sun.net.ResourceManager;
+import sun.net.ExtendedOptionsImpl;
 
 
 /**
@@ -194,15 +195,8 @@ class DatagramChannelImpl
         synchronized (stateLock) {
             ensureOpen();
 
-            if (name == StandardSocketOptions.IP_TOS) {
-                // IPv4 only; no-op for IPv6
-                if (family == StandardProtocolFamily.INET) {
-                    Net.setSocketOption(fd, family, name, value);
-                }
-                return this;
-            }
-
-            if (name == StandardSocketOptions.IP_MULTICAST_TTL ||
+            if (name == StandardSocketOptions.IP_TOS ||
+                name == StandardSocketOptions.IP_MULTICAST_TTL ||
                 name == StandardSocketOptions.IP_MULTICAST_LOOP)
             {
                 // options are protocol dependent
@@ -255,16 +249,8 @@ class DatagramChannelImpl
         synchronized (stateLock) {
             ensureOpen();
 
-            if (name == StandardSocketOptions.IP_TOS) {
-                // IPv4 only; always return 0 on IPv6
-                if (family == StandardProtocolFamily.INET) {
-                    return (T) Net.getSocketOption(fd, family, name);
-                } else {
-                    return (T) Integer.valueOf(0);
-                }
-            }
-
-            if (name == StandardSocketOptions.IP_MULTICAST_TTL ||
+            if (name == StandardSocketOptions.IP_TOS ||
+                name == StandardSocketOptions.IP_MULTICAST_TTL ||
                 name == StandardSocketOptions.IP_MULTICAST_LOOP)
             {
                 return (T) Net.getSocketOption(fd, family, name);
@@ -317,6 +303,9 @@ class DatagramChannelImpl
             set.add(StandardSocketOptions.IP_MULTICAST_IF);
             set.add(StandardSocketOptions.IP_MULTICAST_TTL);
             set.add(StandardSocketOptions.IP_MULTICAST_LOOP);
+            if (ExtendedOptionsImpl.flowSupported()) {
+                set.add(jdk.net.ExtendedSocketOptions.SO_FLOW_SLA);
+            }
             return Collections.unmodifiableSet(set);
         }
     }

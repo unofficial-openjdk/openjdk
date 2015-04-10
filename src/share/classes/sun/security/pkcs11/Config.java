@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -583,16 +583,24 @@ final class Config {
     }
 
     private String parseLine() throws IOException {
-        String s = parseWord();
+        // allow quoted string as part of line
+        String s = null;
         while (true) {
             int token = nextToken();
             if ((token == TT_EOL) || (token == TT_EOF)) {
                 break;
             }
-            if (token != TT_WORD) {
+            if (token != TT_WORD && token != '\"') {
                 throw excToken("Unexpected value");
             }
-            s = s + " " + st.sval;
+            if (s == null) {
+                s = st.sval;
+            } else {
+                s = s + " " + st.sval;
+            }
+        }
+        if (s == null) {
+            throw excToken("Unexpected empty line");
         }
         return s;
     }

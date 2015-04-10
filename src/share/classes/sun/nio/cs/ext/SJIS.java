@@ -108,6 +108,10 @@ public class SJIS
         public CoderResult implFlush(CharBuffer out) {
             return super.implFlush(out);
         }
+        protected boolean isLegalLeadingByte(int b) {
+            return ((b >= 0x81 && b <= 0x9F) ||
+                (b >= 0xE0 && b <= 0XEF));
+        }
     }
 
     static class Encoder extends JIS_X_0208_Encoder {
