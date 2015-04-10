@@ -70,6 +70,9 @@
       <name>java.lang.invoke</name>
     </export>
     <export>
+      <name>java.lang.module</name>
+    </export>
+    <export>
       <name>java.lang.ref</name>
     </export>
     <export>
@@ -209,9 +212,6 @@
     </export>
     <export>
       <name>jdk.net</name>
-    </export>
-    <export>
-      <name>jdk.jigsaw.module</name>
     </export>
     <export>
       <name>com.sun.security.ntlm</name>
