@@ -93,6 +93,14 @@ final class JavaAdapterClassLoader {
         }, CREATE_LOADER_ACC_CTXT);
     }
 
+    private static void addExports(final Module from, final String pkg, final Module to) {
+        // FIXME: jtreg tests need to add @module which results in blanket export
+        // and this specific export fails because of such blanket export!
+        try {
+            Modules.addExports(from, pkg, to);
+        } catch (final IllegalArgumentException ignore) {}
+    }
+
     // Note that the adapter class is created in the protection domain of the class/interface being
     // extended/implemented, and only the privileged global setter action class is generated in the protection domain
     // of Nashorn itself. Also note that the creation and loading of the global setter is deferred until it is
@@ -109,9 +117,9 @@ final class JavaAdapterClassLoader {
                 Modules.addReads(adapterModule, nashornModule);
                 Modules.addReads(adapterModule, Object.class.getModule());
                 Modules.addReads(nashornModule, adapterModule);
-                Modules.addExports(nashornModule, "jdk.nashorn.internal.runtime", adapterModule);
-                Modules.addExports(nashornModule, "jdk.nashorn.internal.runtime.linker", adapterModule);
-                Modules.addExports(adapterModule, JavaAdapterBytecodeGenerator.ADAPTER_PACKAGE, null);
+                addExports(nashornModule, "jdk.nashorn.internal.runtime", adapterModule);
+                addExports(nashornModule, "jdk.nashorn.internal.runtime.linker", adapterModule);
+                addExports(adapterModule, JavaAdapterBytecodeGenerator.ADAPTER_PACKAGE, null);
                 for (Module mod : accessedModules) {
                     Modules.addReads(adapterModule, mod);
                 }

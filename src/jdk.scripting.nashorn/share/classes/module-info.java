@@ -32,5 +32,6 @@ module jdk.scripting.nashorn {
     provides javax.script.ScriptEngineFactory with jdk.nashorn.api.scripting.NashornScriptEngineFactory;
 
     exports jdk.nashorn.api.scripting;
+    exports jdk.nashorn.api.tree;
 }
 
