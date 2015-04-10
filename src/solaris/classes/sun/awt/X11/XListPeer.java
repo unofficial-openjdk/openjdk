@@ -30,9 +30,9 @@ package sun.awt.X11;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.geom.Area;
 import java.awt.peer.*;
 import java.util.Vector;
-import java.awt.geom.*;
 import java.awt.image.*;
 import java.util.logging.*;
 
@@ -419,6 +419,7 @@ class XListPeer extends XComponentPeer implements ListPeer, XScrollbarClient {
         Graphics g = getGraphics();
         try {
             painter.paint(g, firstItem, lastItem, options);
+            postPaintEvent(target, 0, 0, getWidth(), getHeight());
         } finally {
             g.dispose();
         }
@@ -1662,11 +1663,17 @@ class XListPeer extends XComponentPeer implements ListPeer, XScrollbarClient {
      * The bug is due to incorrent caching of the list item size
      * So we should recalculate font metrics on setFont
      */
-    public void setFont(Font f){
-        super.setFont(f);
-        initFontMetrics();
-        layout();
-        repaint();
+    public void setFont(Font f) {
+	Font currentFont = getFont();
+	if (currentFont == null) {
+	    if (f == null) return;
+	} else if (currentFont.equals(f)) {
+	    return;
+	}
+	super.setFont(f);
+	initFontMetrics();
+	layout();
+	repaint();
     }
 
     /**

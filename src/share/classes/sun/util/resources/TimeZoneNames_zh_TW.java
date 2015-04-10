@@ -1,5 +1,5 @@
-/* 
- * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
+/*
+ * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -331,7 +331,7 @@ public final class TimeZoneNames_zh_TW extends TimeZoneNamesBundle {
             {"America/Buenos_Aires", AGT},
             {"America/Cambridge_Bay", MST},
             {"America/Campo_Grande", AMT},
-            {"America/Cancun", CST},
+            {"America/Cancun", EST},
             {"America/Caracas", new String[] {"\u59d4\u5167\u745e\u62c9\u6642\u9593", "VET",
                                               "\u59d4\u5167\u745e\u62c9\u590f\u4ee4\u6642\u9593", "VEST"}},
             {"America/Catamarca", AGT},
@@ -373,10 +373,10 @@ public final class TimeZoneNames_zh_TW extends TimeZoneNamesBundle {
             {"America/Indiana/Indianapolis", EST},
             {"America/Indiana/Knox", CST},
             {"America/Indiana/Marengo", EST},
-           {"America/Indiana/Petersburg", EST},
-           {"America/Indiana/Tell_City", CST},
+            {"America/Indiana/Petersburg", EST},
+            {"America/Indiana/Tell_City", CST},
             {"America/Indiana/Vevay", EST},
-           {"America/Indiana/Vincennes", EST},
+            {"America/Indiana/Vincennes", EST},
             {"America/Indiana/Winamac", EST},
             {"America/Inuvik", MST},
             {"America/Iqaluit", EST},
@@ -396,7 +396,7 @@ public final class TimeZoneNames_zh_TW extends TimeZoneNamesBundle {
             {"America/Maceio", BRT},
             {"America/Managua", CST},
             {"America/Manaus", AMT},
-           {"America/Marigot", AST},
+            {"America/Marigot", AST},
             {"America/Martinique", AST},
             {"America/Matamoros", CST},
             {"America/Mazatlan", MST},
@@ -444,7 +444,7 @@ public final class TimeZoneNames_zh_TW extends TimeZoneNamesBundle {
             {"America/Sao_Paulo", BRT},
             {"America/Scoresbysund", EGT},
             {"America/Shiprock", MST},
-           {"America/St_Barthelemy", AST},
+            {"America/St_Barthelemy", AST},
             {"America/St_Kitts", AST},
             {"America/St_Lucia", AST},
             {"America/St_Thomas", AST},

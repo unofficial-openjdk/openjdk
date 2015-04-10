@@ -153,6 +153,9 @@ public final class AppContext {
     */
     private static AppContext mainAppContext = null;
 
+    private static class GetAppContextLock {};
+    private final static Object getAppContextLock = new GetAppContextLock();
+
     /*
      * The hash map associated with this AppContext.  A private delegate
      * is used instead of subclassing HashMap so as to avoid all of
@@ -293,12 +296,12 @@ public final class AppContext {
                     // if no contexts have been created yet. This covers standalone apps
                     // and excludes applets because by the time applet starts
                     // a number of contexts have already been created by the plugin.
-                    if (numAppContexts.get() == 0) {
-                        // This check is not necessary, its purpose is to help
-                        // Plugin devs to catch all the cases of main AC creation.
-                        if (System.getProperty("javaplugin.version") == null &&
-                                System.getProperty("javawebstart.version") == null) {
-                            initMainAppContext();
+                    synchronized (getAppContextLock) {
+                        if (numAppContexts.get() == 0) {
+                            if (System.getProperty("javaplugin.version") == null &&
+                                    System.getProperty("javawebstart.version") == null) {
+                                initMainAppContext();
+                            }
                         }
                     }
 

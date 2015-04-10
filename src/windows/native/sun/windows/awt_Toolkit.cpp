@@ -29,6 +29,8 @@
  * available on the same license terms set forth above. 
  */
 
+#define _JNI_IMPLEMENTATION_
+
 #include <signal.h>
 #include <windowsx.h>
 #include <process.h>
@@ -37,7 +39,6 @@
 #include <crtdbg.h>
 #endif
 
-#define _JNI_IMPLEMENTATION_
 #include "stdhdrs.h"
 #include "awt_DrawingSurface.h"
 #include "awt_AWTEvent.h"
@@ -2564,35 +2565,35 @@ Java_sun_awt_windows_WToolkit_getWindowsVersion(JNIEnv *env, jclass cls)
     WCHAR szVer[128];
 
     DWORD version = ::GetVersion();
-    swprintf(szVer, L"0x%x = %ld", version, version);
+    swprintf(szVer, 128, L"0x%x = %ld", version, version);
     int l = lstrlen(szVer);
 
     if (IS_WIN95) {
         if (IS_WIN98) {
             if (IS_WINME) {
-                swprintf(szVer + l, L" (Windows ME)");
+                swprintf(szVer + l, 128, L" (Windows ME)");
             } else {
-                swprintf(szVer + l, L" (Windows 98)");
+                swprintf(szVer + l, 128, L" (Windows 98)");
             }
         } else {
-            swprintf(szVer + l, L" (Windows 95)");
+            swprintf(szVer + l, 128, L" (Windows 95)");
         }
     } else if (IS_NT) {
         if (IS_WIN2000) {
             if (IS_WINXP) {
                 if (IS_WINVISTA) {
-                    swprintf(szVer + l, L" (Windows Vista)");
+		    swprintf(szVer + l, 128, L" (Windows Vista)");
                 } else {
-                    swprintf(szVer + l, L" (Windows XP)");
+                    swprintf(szVer + l, 128, L" (Windows XP)");
                 }
             } else {
-                swprintf(szVer + l, L" (Windows 2000)");
+                swprintf(szVer + l, 128, L" (Windows 2000)");
             }
         } else {
-            swprintf(szVer + l, L" (Windows NT)");
+            swprintf(szVer + l, 128, L" (Windows NT)");
         }
     } else {
-        swprintf(szVer + l, L" (Unknown)");
+        swprintf(szVer + l, 128, L" (Unknown)");
     }
 
     return JNU_NewStringPlatform(env, szVer);

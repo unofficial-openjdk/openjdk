@@ -32,8 +32,6 @@ import java.awt.image.ColorModel;
 
 import java.lang.ref.WeakReference;
 
-import java.lang.reflect.Field;
-
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -477,14 +475,14 @@ public class XWindow extends XBaseWindow implements X11ComponentPeer {
         return embedded;
     }
 
-    public  void repaint(int x,int y, int width, int height) {
+    public final void repaint(int x,int y, int width, int height) {
         if (!isVisible()) {
             return;
         }
         Graphics g = getGraphics();
         if (g != null) {
             try {
-                g.setClip(x,y,width,height);
+                g.setClip(x, y, width, height);
                 paint(g);
             } finally {
                 g.dispose();
@@ -493,17 +491,7 @@ public class XWindow extends XBaseWindow implements X11ComponentPeer {
     }
 
     public  void repaint() {
-        if (!isVisible()) {
-            return;
-        }
-        Graphics g = getGraphics();
-        if (g != null) {
-            try {
-                paint(g);
-            } finally {
-                g.dispose();
-            }
-        }
+        repaint(0, 0, getWidth(), getHeight());
     }
 
     void paint(Graphics g) {
@@ -541,11 +529,11 @@ public class XWindow extends XBaseWindow implements X11ComponentPeer {
             && ComponentAccessor.getWidth(target) != 0
             && ComponentAccessor.getHeight(target) != 0)
         {
-            handleExposeEvent(target, x, y, w, h);
+            postPaintEvent(target, x, y, w, h);
         }
     }
 
-    public void handleExposeEvent(Component target, int x, int y, int w, int h) {
+    public void postPaintEvent(Component target, int x, int y, int w, int h) {
         PaintEvent event = PaintEventDispatcher.getPaintEventDispatcher().
             createPaintEvent(target, x, y, w, h);
         if (event != null) {

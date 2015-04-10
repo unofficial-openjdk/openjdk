@@ -135,14 +135,15 @@ class XCheckboxPeer extends XComponentPeer implements CheckboxPeer {
 
     public void keyReleased(KeyEvent e) {}
 
-    public void  setLabel(java.lang.String label) {
-        if ( label == null ) {
-            this.label = "";
-        } else {
-            this.label = label;
+    public void setLabel(String label) {
+        if (label == null) {
+            label = "";
         }
-        layout();
-        repaint();
+        if (!label.equals(this.label)) {
+            this.label = label;
+            layout();
+            repaint();
+        }
     }
 
     void handleJavaMouseEvent(MouseEvent e) {
@@ -384,10 +385,6 @@ class XCheckboxPeer extends XComponentPeer implements CheckboxPeer {
             g.drawImage(buffer, x, y, null);
         }
     }
-    public void setFont(Font f) {
-        super.setFont(f);
-        target.repaint();
-    }
 
     public void paintRadioButton(Graphics g, int x, int y, int w, int h) {
 
@@ -437,10 +434,15 @@ class XCheckboxPeer extends XComponentPeer implements CheckboxPeer {
             repaint();
         }
     }
-    public void setCheckboxGroup(CheckboxGroup g) {
-        // If changed from grouped/ungrouped, need to repaint()
-        checkBoxGroup = g;
-        repaint();
+    public void setCheckboxGroup(final CheckboxGroup g) {
+	if (checkBoxGroup == null) {
+	    if (g == null) return;
+	} else if (checkBoxGroup.equals(g)) {
+	    return;
+	}
+	// If changed from grouped/ungrouped, need to repaint()
+	checkBoxGroup = g;
+	repaint();
     }
 
     // NOTE: This method is called by privileged threads.

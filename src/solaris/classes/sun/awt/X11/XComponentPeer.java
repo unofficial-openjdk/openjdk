@@ -780,6 +780,11 @@ public class XComponentPeer extends XWindow implements ComponentPeer, DropTarget
     public void setBackground(Color c) {
         if (log.isLoggable(Level.FINE)) log.fine("Set background to " + c);
         synchronized (getStateLock()) {
+	    if (background == null) {
+		if (c == null) return;
+	    } else if (background.equals(c)) {
+		return;
+	    }
             background = c;
         }
         super.setBackground(c);
@@ -789,6 +794,11 @@ public class XComponentPeer extends XWindow implements ComponentPeer, DropTarget
     public void setForeground(Color c) {
         if (log.isLoggable(Level.FINE)) log.fine("Set foreground to " + c);
         synchronized (getStateLock()) {
+	    if (foreground == null) {
+		if (c == null) return;
+	    } else if (foreground.equals(c)) {
+		return;
+	    }
             foreground = c;
         }
         repaint();
@@ -811,17 +821,19 @@ public class XComponentPeer extends XWindow implements ComponentPeer, DropTarget
     }
 
     public void setFont(Font f) {
+        if (f == null) {
+            f = defaultFont;
+        }
         synchronized (getStateLock()) {
-            if (f == null) {
-                f = defaultFont;
+            if (f.equals(font)) {
+                return;
             }
             font = f;
         }
-        // as it stands currently we dont need to do layout or repaint since
+        // as it stands currently we dont need to do layout since
         // layout is done in the Component upon setFont.
         //layout();
-        // target.repaint();
-        //repaint()?
+        repaint();
     }
 
     public Font getFont() {

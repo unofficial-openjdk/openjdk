@@ -119,15 +119,4 @@ class XCanvasPeer extends XComponentPeer implements CanvasPeer {
     protected boolean doEraseBackground() {
         return !eraseBackgroundDisabled;
     }
-    public void setBackground(Color c) {
-        boolean doRepaint = false;
-        if( getPeerBackground() == null ||
-           !getPeerBackground().equals( c ) ) {
-            doRepaint = true;
-        }
-        super.setBackground(c);
-        if( doRepaint ) {
-            target.repaint();
-        }
-    }
 }
