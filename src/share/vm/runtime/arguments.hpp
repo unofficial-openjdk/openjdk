@@ -543,6 +543,7 @@ class Arguments : AllStatic {
   static char *get_sysclasspath() { return _sun_boot_class_path->value(); }
   static char* get_meta_index_path() { return _meta_index_path; }
   static char* get_meta_index_dir()  { return _meta_index_dir;  }
+  static char* get_ext_dirs() { return _java_ext_dirs->value(); }
 
   // Operation modi
   static Mode mode()                        { return _mode; }

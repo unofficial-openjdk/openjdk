@@ -602,6 +602,8 @@ class PhaseIdealLoop : public PhaseTransform {
     return ctrl;
   }
 
+  bool cast_incr_before_loop(Node* incr, Node* ctrl, Node* loop);
+
 public:
   bool has_node( Node* n ) const { return _nodes[n->_idx] != NULL; }
   // check if transform created new nodes that need _ctrl recorded

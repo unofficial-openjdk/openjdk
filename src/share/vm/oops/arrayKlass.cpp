@@ -124,7 +124,7 @@ void arrayKlass::complete_create_array_klass(arrayKlassHandle k, KlassHandle sup
   ResourceMark rm(THREAD);
   k->initialize_supers(super_klass(), CHECK);
   k->vtable()->initialize_vtable(false, CHECK);
-  java_lang_Class::create_mirror(k, CHECK);
+  java_lang_Class::create_mirror(k, Handle(THREAD, k->class_loader()), CHECK);
 }
 
 objArrayOop arrayKlass::compute_secondary_supers(int num_extra_slots, TRAPS) {

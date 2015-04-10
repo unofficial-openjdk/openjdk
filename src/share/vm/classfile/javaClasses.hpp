@@ -28,6 +28,7 @@
 #include "classfile/systemDictionary.hpp"
 #include "jvmtifiles/jvmti.h"
 #include "oops/oop.hpp"
+#include "oops/methodOop.hpp"
 #include "runtime/os.hpp"
 #include "utilities/utf8.hpp"
 
@@ -224,14 +225,21 @@ class java_lang_Class : AllStatic {
   static int _oop_size_offset;
   static int _static_oop_field_count_offset;
 
+  static int _class_loader_offset;
+
   static bool offsets_computed;
   static int classRedefinedCount_offset;
 
+  static void set_class_loader(oop java_class, oop class_loader);
  public:
   static void compute_offsets();
 
   // Instance creation
-  static oop  create_mirror(KlassHandle k, TRAPS);
+  static oop  create_mirror(KlassHandle k, Handle class_loader, TRAPS);
+  static oop  create_mirror(KlassHandle k, TRAPS) {
+    return create_mirror(k, Handle(), THREAD);
+  }
+
   static void fixup_mirror(KlassHandle k, TRAPS);
   static oop  create_basic_type_mirror(const char* basic_type_name, BasicType type, TRAPS);
   // Conversion
@@ -266,6 +274,8 @@ class java_lang_Class : AllStatic {
   // Support for classRedefinedCount field
   static int classRedefinedCount(oop the_class_mirror);
   static void set_classRedefinedCount(oop the_class_mirror, int value);
+
+  static oop class_loader(oop java_class);
 
   static int oop_size(oop java_class);
   static void set_oop_size(oop java_class, int size);
@@ -1014,7 +1024,8 @@ class java_lang_invoke_MemberName: AllStatic {
 
   static oop            vmtarget(oop mname);
   static void       set_vmtarget(oop mname, oop target);
-  static void       adjust_vmtarget(oop mname, oop target);
+  static void       adjust_vmtarget(oop mname, methodOop old_method, methodOop new_method,
+                                    bool* trace_name_printed);
 
   static intptr_t       vmindex(oop mname);
   static void       set_vmindex(oop mname, intptr_t index);
@@ -1026,6 +1037,8 @@ class java_lang_invoke_MemberName: AllStatic {
   static bool is_instance(oop obj) {
     return obj != NULL && is_subclass(obj->klass());
   }
+
+  static bool is_method(oop obj);
 
   // Relevant integer codes (keep these in synch. with MethodHandleNatives.Constants):
   enum {

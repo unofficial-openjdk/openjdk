@@ -615,7 +615,9 @@ bool ConstantPoolCacheEntry::is_interesting_method_entry(klassOop k) {
     m = f1_as_method();
   }
 
-  assert(m != NULL && m->is_method(), "sanity check");
+  // Secondary entry can have vfinal flag and a NULL _f2, giving m==NULL here:
+  assert(is_secondary_entry() || (m != NULL && m->is_method()), "sanity check");
+
   if (m == NULL || !m->is_method() || (k != NULL && m->method_holder() != k)) {
     // robustness for above sanity checks or method is not in
     // the interesting class

@@ -421,6 +421,15 @@ void ATTR ObjectMonitor::enter(TRAPS) {
       jt->java_suspend_self();
     }
     Self->set_current_pending_monitor(NULL);
+
+    // We cleared the pending monitor info since we've just gotten past
+    // the enter-check-for-suspend dance and we now own the monitor free
+    // and clear, i.e., it is no longer pending. The ThreadBlockInVM
+    // destructor can go to a safepoint at the end of this block. If we
+    // do a thread dump during that safepoint, then this thread will show
+    // as having "-locked" the monitor, but the OS and java.lang.Thread
+    // states will still report that the thread is blocked trying to
+    // acquire it.
   }
 
   Atomic::dec_ptr(&_count);
@@ -1603,6 +1612,25 @@ void ObjectMonitor::wait(jlong millis, bool interruptible, TRAPS) {
      // post monitor waited event. Note that this is past-tense, we are done waiting.
      if (JvmtiExport::should_post_monitor_waited()) {
        JvmtiExport::post_monitor_waited(jt, this, ret == OS_TIMEOUT);
+
+       if (node._notified != 0 && _succ == Self) {
+         // In this part of the monitor wait-notify-reenter protocol it
+         // is possible (and normal) for another thread to do a fastpath
+         // monitor enter-exit while this thread is still trying to get
+         // to the reenter portion of the protocol.
+         //
+         // The ObjectMonitor was notified and the current thread is
+         // the successor which also means that an unpark() has already
+         // been done. The JVMTI_EVENT_MONITOR_WAITED event handler can
+         // consume the unpark() that was done when the successor was
+         // set because the same ParkEvent is shared between Java
+         // monitors and JVM/TI RawMonitors (for now).
+         //
+         // We redo the unpark() to ensure forward progress, i.e., we
+         // don't want all pending threads hanging (parked) with none
+         // entering the unlocked monitor.
+         node._event->unpark();
+       }
      }
 
      // Without the fix for 8028280, it is possible for the above call:

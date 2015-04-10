@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -46,13 +46,23 @@ public class VirtualAllocTestType {
     String pid = Integer.toString(ProcessTools.getProcessId());
     ProcessBuilder pb = new ProcessBuilder();
 
+    boolean has_nmt_detail = wb.NMTIsDetailSupported();
+    if (has_nmt_detail) {
+      System.out.println("NMT detail support detected.");
+    } else {
+      System.out.println("NMT detail support not detected.");
+    }
+
     addr = wb.NMTReserveMemory(reserveSize);
     mergeData();
-
     pb.command(new String[] { JDKToolFinder.getJDKTool("jcmd"), pid, "VM.native_memory", "detail"});
+
     output = new OutputAnalyzer(pb.start());
     output.shouldContain("Test (reserved=256KB, committed=0KB)");
-    output.shouldMatch("\\[0x[0]*" + Long.toHexString(addr) + " - 0x[0]*" + Long.toHexString(addr + reserveSize) + "\\] reserved 256KB for Test");
+    if (has_nmt_detail) {
+      output.shouldMatch("\\[0x[0]*" + Long.toHexString(addr) + " - 0x[0]*" + Long.toHexString(addr + reserveSize) + "\\] reserved 256KB for Test");
+    }
+
 
     wb.NMTCommitMemory(addr, commitSize);
 
@@ -60,7 +70,9 @@ public class VirtualAllocTestType {
 
     output = new OutputAnalyzer(pb.start());
     output.shouldContain("Test (reserved=256KB, committed=128KB)");
-    output.shouldMatch("\\[0x[0]*" + Long.toHexString(addr) + " - 0x[0]*" + Long.toHexString(addr + commitSize) + "\\] committed 128KB");
+    if (has_nmt_detail) {
+      output.shouldMatch("\\[0x[0]*" + Long.toHexString(addr) + " - 0x[0]*" + Long.toHexString(addr + commitSize) + "\\] committed 128KB");
+    }
 
     wb.NMTUncommitMemory(addr, commitSize);
 
