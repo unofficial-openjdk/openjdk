@@ -49,7 +49,8 @@ public final class StackTraceElement implements java.io.Serializable {
 
     /**
      * Creates a stack trace element representing the specified execution
-     * point. The module id is initialized to null.
+     * point. The {@link #getModuleId module id} of the stack trace element
+     * is {@code null}.
      *
      * @param declaringClass the fully qualified name of the class containing
      *        the execution point represented by the stack trace element
@@ -76,8 +77,10 @@ public final class StackTraceElement implements java.io.Serializable {
      * Creates a stack trace element representing the specified execution
      * point.
      *
-     * @param moduleId the name and version of the module containing
-     *        the execution point represented by the stack trace element
+     * @param moduleId the module id (consisting of a module name and
+     *        optionally a version) for the module with the class containing
+     *        the execution point represented by the stack trace element;
+     *        can be {@code null}
      * @param declaringClass the fully qualified name of the class containing
      *        the execution point represented by the stack trace element
      * @param methodName the name of the method containing the execution point
@@ -149,8 +152,10 @@ public final class StackTraceElement implements java.io.Serializable {
      * Returns the module id of the module containing the
      * execution point represented by this stack trace element.
      *
-     * @return the module id of the {@code Module} containing
-     *         the execution point represented by this stack trace element
+     * @return the module id of the {@code Module} containing the execution
+     *         point represented by this stack trace element; {@code null}
+     *         if the module id is not available.
+     * @since 1.9
      */
     public String getModuleId() {
         return moduleId;
