@@ -214,13 +214,17 @@ void
 throwFileNotFoundException(JNIEnv *env, jstring path)
 {
     char buf[256];
-    jint n;
+    size_t n;
     jobject x;
     jstring why = NULL;
 
-    n = JVM_GetLastErrorString(buf, sizeof(buf));
+    n = getLastErrorString(buf, sizeof(buf));
     if (n > 0) {
+#ifdef WIN32
+        why = (*env)->NewStringUTF(env, buf);
+#else
         why = JNU_NewStringPlatform(env, buf);
+#endif
     }
     x = JNU_NewObjectByName(env,
                             "java/io/FileNotFoundException",

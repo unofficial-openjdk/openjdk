@@ -115,6 +115,8 @@ extern unsigned char xerror_code;
 
 extern int xerror_ignore_bad_window(Display *dpy, XErrorEvent *err);
 
+Window get_xawt_root_shell(JNIEnv *env);
+
 #endif /* !HEADLESS */
 
 #ifndef INTERSECTS

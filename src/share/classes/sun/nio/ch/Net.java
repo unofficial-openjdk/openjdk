@@ -27,11 +27,13 @@ package sun.nio.ch;
 
 import java.io.*;
 import java.net.*;
+import jdk.net.*;
 import java.nio.channels.*;
 import java.util.*;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.security.PrivilegedExceptionAction;
+import sun.net.ExtendedOptionsImpl;
 
 
 class Net {                                             // package-private
@@ -327,6 +329,16 @@ class Net {                                             // package-private
 
         // only simple values supported by this method
         Class<?> type = name.type();
+
+        if (type == SocketFlow.class) {
+            SecurityManager sm = System.getSecurityManager();
+            if (sm != null) {
+                sm.checkPermission(new NetworkPermission("setOption.SO_FLOW_SLA"));
+            }
+            ExtendedOptionsImpl.setFlowOption(fd, (SocketFlow)value);
+            return;
+        }
+
         if (type != Integer.class && type != Boolean.class)
             throw new AssertionError("Should not reach here");
 
@@ -370,7 +382,8 @@ class Net {                                             // package-private
         }
 
         boolean mayNeedConversion = (family == UNSPEC);
-        setIntOption0(fd, mayNeedConversion, key.level(), key.name(), arg);
+        boolean isIPv6 = (family == StandardProtocolFamily.INET6);
+        setIntOption0(fd, mayNeedConversion, key.level(), key.name(), arg, isIPv6);
     }
 
     static Object getSocketOption(FileDescriptor fd, ProtocolFamily family,
@@ -378,6 +391,16 @@ class Net {                                             // package-private
         throws IOException
     {
         Class<?> type = name.type();
+
+        if (type == SocketFlow.class) {
+            SecurityManager sm = System.getSecurityManager();
+            if (sm != null) {
+                sm.checkPermission(new NetworkPermission("getOption.SO_FLOW_SLA"));
+            }
+            SocketFlow flow = SocketFlow.create();
+            ExtendedOptionsImpl.getFlowOption(fd, flow);
+            return flow;
+        }
 
         // only simple values supported by this method
         if (type != Integer.class && type != Boolean.class)
@@ -507,7 +530,7 @@ class Net {                                             // package-private
         throws IOException;
 
     private static native void setIntOption0(FileDescriptor fd, boolean mayNeedConversion,
-                                             int level, int opt, int arg)
+                                             int level, int opt, int arg, boolean isIPv6)
         throws IOException;
 
     // -- Multicast support --
