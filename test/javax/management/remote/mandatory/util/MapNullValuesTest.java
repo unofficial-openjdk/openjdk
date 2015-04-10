@@ -31,6 +31,7 @@
  *          Check also that null values for keys are not allowed in
  *          the maps passed to the JMXConnector[Server] factories.
  * @author Luis-Miguel Alventosa
+ * @modules java.management/com.sun.jmx.remote.util
  * @run clean MapNullValuesTest
  * @run build MapNullValuesTest
  * @run main MapNullValuesTest

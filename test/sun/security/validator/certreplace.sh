@@ -82,5 +82,6 @@ $KT -delete -alias user
 
 # 5. Build and run test
 
+${TESTVMOPTS}="${TESTVMOPTS} -XX:AddModuleExports=java.base/sun.security.validator"
 $JAVAC ${TESTJAVACOPTS} ${TESTTOOLVMOPTS} -d . ${TESTSRC}${FS}CertReplace.java
 $JAVA ${TESTVMOPTS} CertReplace certreplace.jks certreplace.certs

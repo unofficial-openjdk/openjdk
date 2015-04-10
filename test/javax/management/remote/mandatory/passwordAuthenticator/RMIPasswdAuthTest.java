@@ -26,6 +26,7 @@
  * @bug 5016508
  * @summary Tests the default JAAS configuration for authenticating RMI clients
  * @author Luis-Miguel Alventosa
+ * @modules java.management/com.sun.jmx.remote.security
  * @run clean RMIPasswdAuthTest
  * @run build RMIPasswdAuthTest SimpleStandard SimpleStandardMBean
  * @run main RMIPasswdAuthTest

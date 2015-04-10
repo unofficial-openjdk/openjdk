@@ -247,6 +247,15 @@ implements java.io.Serializable
         try {
             Class<?> pc = p.getClass();
 
+            // Allow the base module to read the permission's module
+            Module pm = pc.getModule();
+            Module base = Object.class.getModule();
+            PrivilegedAction<Void> pa = () -> {
+                base.addReads(pm);
+                return null;
+            };
+            AccessController.doPrivileged(pa);
+
             if (name == null && actions == null) {
                 try {
                     Constructor<?> c = pc.getConstructor(PARAMS0);

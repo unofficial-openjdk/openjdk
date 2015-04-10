@@ -35,6 +35,7 @@
 import java.io.*;
 import java.lang.reflect.*;
 import java.net.*;
+import java.nio.file.Paths;
 import javax.management.*;
 import javax.management.loading.*;
 
@@ -42,15 +43,16 @@ public class ArrayClassTest {
     public static void main(String[] args) throws Exception {
         MBeanServer mbs = MBeanServerFactory.createMBeanServer();
 
-        /* If this test isn't loaded by a URLClassLoader we will get
-           a ClassCastException here, which is good because it means
-           this test isn't valid.  */
-        URLClassLoader testLoader =
-            (URLClassLoader) ArrayClassTest.class.getClassLoader();
+        String[] cpaths = System.getProperty("test.classes", ".")
+                                .split(File.pathSeparator);
+        URL[] urls = new URL[cpaths.length];
+        for (int i=0; i < cpaths.length; i++) {
+            urls[i] = Paths.get(cpaths[i]).toUri().toURL();
+        }
 
         // Create an MLet that can load the same class names but
         // will produce different results.
-        ClassLoader loader = new SpyLoader(testLoader.getURLs());
+        ClassLoader loader = new SpyLoader(urls);
         ObjectName loaderName = new ObjectName("test:type=SpyLoader");
         mbs.registerMBean(loader, loaderName);
 

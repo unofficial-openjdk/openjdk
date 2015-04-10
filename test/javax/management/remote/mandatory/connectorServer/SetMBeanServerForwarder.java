@@ -27,6 +27,7 @@
  * @summary Tests that IllegalArgumentException is thrown when
  *          MBeanServerForwrder is null.
  * @author Daniel Fuchs
+ * @modules java.management/com.sun.jmx.remote.security
  * @run clean SetMBeanServerForwarder
  * @run build SetMBeanServerForwarder
  * @run main SetMBeanServerForwarder
