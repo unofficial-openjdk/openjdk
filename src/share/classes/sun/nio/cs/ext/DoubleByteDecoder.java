@@ -33,6 +33,8 @@ import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CoderResult;
+import java.security.AccessController;
+import sun.security.action.GetPropertyAction;
 
 abstract class DoubleByteDecoder
     extends CharsetDecoder
@@ -52,6 +54,7 @@ abstract class DoubleByteDecoder
     protected static final char REPLACE_CHAR = '\uFFFD';
     protected char highSurrogate;
     protected char lowSurrogate;
+    private static volatile String bugLevel = null;
 
     protected DoubleByteDecoder(Charset cs, short[] index1, String[] index2,
                                 int start, int end ) {
@@ -89,8 +92,16 @@ abstract class DoubleByteDecoder
                     b2 = sa[sp + 1] & 0xff;
                     c = decodeDouble(b1, b2);
                     inputSize = 2;
-                    if (c == REPLACE_CHAR)
-                        return CoderResult.unmappableForLength(inputSize);
+                    if (c == REPLACE_CHAR) {
+                        if (!isLegalLeadingByte(b1) ||
+                         isLegalLeadingByte(b2) ||
+                         decodeSingle((byte)b2) != REPLACE_CHAR ||
+                         atBugLevel("1.5")) {
+                            return CoderResult.unmappableForLength(1);
+                        } else {
+                            return CoderResult.unmappableForLength(inputSize);
+                        }
+                    }
                     outputSize = (highSurrogate > 0) ? 2: 1;
                 }
 
@@ -132,10 +143,16 @@ abstract class DoubleByteDecoder
                     inputSize = 2;
 
                     c = decodeDouble(b1, b2);
-
-                    if (c == REPLACE_CHAR)
-                        return CoderResult.unmappableForLength(2);
-
+                    if (c == REPLACE_CHAR) {
+                        if (!isLegalLeadingByte(b1) ||
+                        isLegalLeadingByte(b2) ||
+                        decodeSingle((byte)b2) != REPLACE_CHAR ||
+                        atBugLevel("1.5")) {
+                            return CoderResult.unmappableForLength(1);
+                        } else {
+                            return CoderResult.unmappableForLength(inputSize);
+                        }
+                    }
                     outputSize =  (highSurrogate > 0) ? 2: 1;
                 }
                 if (dst.remaining() < outputSize)
@@ -178,5 +195,25 @@ abstract class DoubleByteDecoder
 
         int n = (index1[byte1] & 0xf) * (end - start + 1) + (byte2 - start);
         return index2[index1[byte1] >> 4].charAt(n);
+    }
+
+    /*
+     * Should be changed by sublasses needing to enforce this
+     */
+    protected boolean isLegalLeadingByte(int b) {
+        return b <= index1.length &&
+          ((index1[b] >> 4) != 0 || (index1[b] & 0xff)  != 0);
+}
+
+    static boolean atBugLevel(String bl) {
+        if (bugLevel == null) {
+            if (!sun.misc.VM.isBooted())
+                return false;
+            java.security.PrivilegedAction pa =
+                new GetPropertyAction("sun.nio.cs.bugLevel");
+            String value = (String)AccessController.doPrivileged(pa);
+            bugLevel = (value != null) ? value : "";
+        }
+        return bugLevel.equals(bl);
     }
 }

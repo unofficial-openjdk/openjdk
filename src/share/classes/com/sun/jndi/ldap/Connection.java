@@ -460,14 +460,16 @@ public final class Connection implements Runnable {
                     rber = ldr.getReplyBer();
                     if (rber == null) {
                         if (readTimeout > 0) {  // Socket read timeout is specified
-
                             // will be woken up before readTimeout only if reply is
                             // available
                             ldr.wait(readTimeout);
+                            waited = true;
                         } else {
-                            ldr.wait(15 * 1000); // 15 second timeout
+                            // no timeout is set so we wait infinitely until
+                            // a response is received
+                            // http://docs.oracle.com/javase/8/docs/technotes/guides/jndi/jndi-ldap.html#PROP
+                            ldr.wait();
                         }
-                        waited = true;
                     } else {
                         break;
                     }

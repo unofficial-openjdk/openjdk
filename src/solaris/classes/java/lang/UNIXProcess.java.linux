@@ -35,6 +35,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Arrays;
+import java.util.Locale;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ThreadFactory;
@@ -100,7 +101,7 @@ final class UNIXProcess extends Process {
                     "jdk.lang.Process.launchMechanism", "vfork");
 
                 try {
-                    return LaunchMechanism.valueOf(s.toUpperCase());
+                    return LaunchMechanism.valueOf(s.toUpperCase(Locale.ENGLISH));
                 } catch (IllegalArgumentException e) {
                     throw new Error(s + " is not a supported " +
                         "process launch mechanism on this platform.");

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,7 @@
  */
 
 /* @test
-   @bug 4032066 4039597 4046914 4054511 4065189 4109131 4875229 6983520
+   @bug 4032066 4039597 4046914 4054511 4065189 4109131 4875229 6983520 8009258
    @summary General exhaustive test of win32 pathname handling
    @author Mark Reinhold
 
@@ -31,8 +31,6 @@
  */
 
 import java.io.*;
-import java.util.*;
-
 
 public class GeneralWin32 extends General {
 
@@ -50,10 +48,9 @@ public class GeneralWin32 extends General {
     private static final String NONEXISTENT_UNC_HOST = "non-existent-unc-host";
     private static final String NONEXISTENT_UNC_SHARE = "bogus-share";
 
-
     /* Pathnames relative to working directory */
 
-    private static void checkCaseLookup(String ud) throws IOException {
+    private static void checkCaseLookup() throws IOException {
         /* Use long names here to avoid 8.3 format, which Samba servers often
            force to lowercase */
         File d = new File("XyZzY0123", "FOO_bar_BAZ");
@@ -75,7 +72,7 @@ public class GeneralWin32 extends General {
 
         /* Computing the canonical path of a Win32 file should expose the true
            case of filenames, rather than just using the input case */
-        File y = new File(ud, f.getPath());
+        File y = new File(userDir, f.getPath());
         String ans = y.getPath();
         check(ans, "XyZzY0123\\FOO_bar_BAZ\\GLORPified");
         check(ans, "xyzzy0123\\foo_bar_baz\\glorpified");
@@ -91,18 +88,20 @@ public class GeneralWin32 extends General {
         throw new Exception("Wildcard path not rejected: " + f);
     }
 
-    private static void checkWildCards(String ud) throws Exception {
-        File d = new File(ud).getCanonicalFile();
+    private static void checkWildCards() throws Exception {
+        File d = new File(userDir).getCanonicalFile();
         checkWild(new File(d, "*.*"));
         checkWild(new File(d, "*.???"));
         checkWild(new File(new File(d, "*.*"), "foo"));
     }
 
-    private static void checkRelativePaths() throws Exception {
-        String ud = System.getProperty("user.dir").replace('/', '\\');
-        checkCaseLookup(ud);
-        checkWildCards(ud);
-        checkNames(3, true, ud + "\\", "");
+    private static void checkRelativePaths(int depth) throws Exception {
+        checkCaseLookup();
+        checkWildCards();
+        // Make sure that an empty relative path is tested
+        checkNames(1, true, userDir + File.separator, "");
+        checkNames(depth, true, baseDir + File.separator,
+                   relative + File.separator);
     }
 
 
@@ -137,19 +136,19 @@ public class GeneralWin32 extends General {
         checkNames(depth, false, ans, d);
     }
 
-    private static void checkDrivePaths() throws Exception {
-        checkDrive(2, findActiveDrive(), true);
-        checkDrive(2, findInactiveDrive(), false);
+    private static void checkDrivePaths(int depth) throws Exception {
+        checkDrive(depth, findActiveDrive(), true);
+        checkDrive(depth, findInactiveDrive(), false);
     }
 
 
     /* UNC pathnames */
 
-    private static void checkUncPaths() throws Exception {
+    private static void checkUncPaths(int depth) throws Exception {
         String s = ("\\\\" + NONEXISTENT_UNC_HOST
                     + "\\" + NONEXISTENT_UNC_SHARE);
         ensureNon(s);
-        checkSlashes(2, false, s, s);
+        checkSlashes(depth, false, s, s);
 
         s = "\\\\" + EXISTENT_UNC_HOST + "\\" + EXISTENT_UNC_SHARE;
         if (!(new File(s)).exists()) {
@@ -158,7 +157,7 @@ public class GeneralWin32 extends General {
             return;
         }
 
-        checkSlashes(2, false, s, s);
+        checkSlashes(depth, false, s, s);
     }
 
 
@@ -168,9 +167,11 @@ public class GeneralWin32 extends General {
             return;
         }
         if (args.length > 0) debug = true;
-        checkRelativePaths();
-        checkDrivePaths();
-        checkUncPaths();
-    }
 
+        initTestData(3);
+
+        checkRelativePaths(3);
+        checkDrivePaths(2);
+        checkUncPaths(2);
+    }
 }
