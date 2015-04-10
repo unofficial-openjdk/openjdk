@@ -22,7 +22,7 @@
  */
 /*
  * @test
- * @bug 6319046
+ * @bug 6319046 8055045
  * @run main/othervm ParseConfig
  * @summary Problem with parsing krb5.conf
  */
@@ -31,7 +31,8 @@ import sun.security.krb5.Config;
 
 public class ParseConfig {
     public static void main(String[] args) throws Exception {
-        System.setProperty("java.security.krb5.conf", System.getProperty("test.src", ".") +"/krb5.conf");
+        System.setProperty("java.security.krb5.conf",
+                System.getProperty("test.src", ".") + "/krb5.conf");
         Config config = Config.getInstance();
         config.listTable();
 
@@ -43,5 +44,11 @@ public class ParseConfig {
                         expected + "\"");
             }
         }
+
+        // JDK-8055045: IOOBE when reading an empty value
+        config.getDefault("empty1", "NOVAL.COM");
+        config.getDefault("empty2", "NOVAL.COM");
+        config.getDefault("quote1", "NOVAL.COM");
+        config.getDefault("quote2", "NOVAL.COM");
     }
 }

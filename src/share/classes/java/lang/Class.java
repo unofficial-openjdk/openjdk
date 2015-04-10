@@ -130,11 +130,15 @@ public final
     }
 
     /*
-     * Constructor. Only the Java Virtual Machine creates Class
-     * objects.
+     * Private constructor. Only the Java Virtual Machine creates Class objects.
+     * This constructor is not used and prevents the default constructor being
+     * generated.
      */
-    private Class() {}
-
+    private Class(ClassLoader loader) {
+        // Initialize final field for classLoader.  The initialization value of non-null
+        // prevents future JIT optimizations from assuming this final field is null.
+        classLoader = loader;
+    }
 
     /**
      * Converts the object to a string. The string representation is the
@@ -622,8 +626,12 @@ public final
     }
 
     // Package-private to allow ClassLoader access
-    native ClassLoader getClassLoader0();
+    ClassLoader getClassLoader0() { return classLoader; }
 
+    // Initialized in JVM not by private constructor
+    // This field is filtered from reflection access, i.e. getDeclaredField
+    // will throw NoSuchFieldException
+    private final ClassLoader classLoader;
 
     /**
      * Returns an array of {@code TypeVariable} objects that represent the
@@ -2454,7 +2462,7 @@ public final
     private native String getGenericSignature();
 
     // Generic info repository; lazily initialized
-    private transient ClassRepository genericInfo;
+    private volatile transient ClassRepository genericInfo;
 
     // accessor for factory
     private GenericsFactory getFactory() {
@@ -2464,11 +2472,13 @@ public final
 
     // accessor for generic info repository
     private ClassRepository getGenericInfo() {
+        ClassRepository genericInfo = this.genericInfo;
         // lazily initialize repository if necessary
         if (genericInfo == null) {
             // create and cache generic info repository
             genericInfo = ClassRepository.make(getGenericSignature(),
                                                getFactory());
+            this.genericInfo = genericInfo;
         }
         return genericInfo; //return cached repository
     }

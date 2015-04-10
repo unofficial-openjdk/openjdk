@@ -26,6 +26,7 @@
 package java.lang;
 
 import java.io.*;
+import java.util.Locale;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 
@@ -89,7 +90,7 @@ final class UNIXProcess extends Process {
                     "jdk.lang.Process.launchMechanism", "fork");
 
                 try {
-                    return LaunchMechanism.valueOf(s.toUpperCase());
+                    return LaunchMechanism.valueOf(s.toUpperCase(Locale.ENGLISH));
                 } catch (IllegalArgumentException e) {
                     throw new Error(s + " is not a supported " +
                         "process launch mechanism on this platform.");

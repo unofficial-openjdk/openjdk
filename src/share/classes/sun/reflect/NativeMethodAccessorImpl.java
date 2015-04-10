@@ -31,7 +31,7 @@ import java.lang.reflect.*;
     switches to bytecode-based implementation */
 
 class NativeMethodAccessorImpl extends MethodAccessorImpl {
-    private Method method;
+    private final Method method;
     private DelegatingMethodAccessorImpl parent;
     private int numInvocations;
 
