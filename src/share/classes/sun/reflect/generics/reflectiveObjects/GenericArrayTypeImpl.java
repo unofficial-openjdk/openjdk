@@ -34,7 +34,7 @@ import java.lang.reflect.Type;
  */
 public class GenericArrayTypeImpl
     implements GenericArrayType {
-    private Type genericComponentType;
+    private final Type genericComponentType;
 
     // private constructor enforces use of static factory
     private GenericArrayTypeImpl(Type ct) {

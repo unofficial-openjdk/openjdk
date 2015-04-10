@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -155,6 +155,11 @@ public class Cipher {
 
     private static final Debug debug =
                         Debug.getInstance("jca", "Cipher");
+
+    private static final Debug pdebug =
+                        Debug.getInstance("provider", "Provider");
+    private static final boolean skipDebug =
+        Debug.isOn("engine=") && !Debug.isOn("cipher");
 
     /**
      * Constant used to initialize cipher to encryption mode.
@@ -1100,6 +1105,21 @@ public class Cipher {
         }
     }
 
+    private static String getOpmodeString(int opmode) {
+        switch (opmode) {
+            case ENCRYPT_MODE:
+                return "encryption";
+            case DECRYPT_MODE:
+                return "decryption";
+            case WRAP_MODE:
+                return "key wrapping";
+            case UNWRAP_MODE:
+                return "key unwrapping";
+            default:
+                return "";
+        }
+    }
+
     /**
      * Initializes this cipher with a key.
      *
@@ -1219,6 +1239,12 @@ public class Cipher {
 
         initialized = true;
         this.opmode = opmode;
+
+        if (!skipDebug && pdebug != null) {
+            pdebug.println("Cipher." + transformation + " " +
+                getOpmodeString(opmode) + " algorithm from: " +
+                this.provider.getName());
+        }
     }
 
     /**
@@ -1350,6 +1376,12 @@ public class Cipher {
 
         initialized = true;
         this.opmode = opmode;
+
+        if (!skipDebug && pdebug != null) {
+            pdebug.println("Cipher." + transformation + " " +
+                getOpmodeString(opmode) + " algorithm from: " +
+                this.provider.getName());
+        }
     }
 
     /**
@@ -1481,6 +1513,12 @@ public class Cipher {
 
         initialized = true;
         this.opmode = opmode;
+
+        if (!skipDebug && pdebug != null) {
+            pdebug.println("Cipher." + transformation + " " +
+                getOpmodeString(opmode) + " algorithm from: " +
+                this.provider.getName());
+        }
     }
 
     /**
@@ -1659,6 +1697,12 @@ public class Cipher {
 
         initialized = true;
         this.opmode = opmode;
+
+        if (!skipDebug && pdebug != null) {
+            pdebug.println("Cipher." + transformation + " " +
+                getOpmodeString(opmode) + " algorithm from: " +
+                this.provider.getName());
+        }
     }
 
     /**

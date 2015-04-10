@@ -26,6 +26,7 @@
 FILES_c = \
         AbstractPlainDatagramSocketImpl.c \
         DatagramPacket.c \
+        ExtendedOptionsImpl.c \
         InetAddress.c \
         Inet4Address.c \
         Inet6Address.c \

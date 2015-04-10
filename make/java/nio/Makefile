@@ -380,6 +380,8 @@ ifeq ($(PLATFORM),windows)
      -libpath:$(LIBDIR) java.lib \
      $(OBJDIR)/../../../../sun/java.net/net/$(OBJDIRNAME)/net.lib \
      $(OBJDIR)/../../../java.lang/java/$(OBJDIRNAME)/io_util.obj \
+     $(OBJDIR)/../../../java.lang/java/$(OBJDIRNAME)/io_util_md.obj \
+     $(OBJDIR)/../../../java.lang/java/$(OBJDIRNAME)/canonicalize_md.obj \
      $(OBJDIR)/../../../java.lang/java/$(OBJDIRNAME)/FileDescriptor_md.obj
 endif
 ifeq ($(PLATFORM), linux)
