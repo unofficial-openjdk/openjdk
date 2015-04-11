@@ -3,19 +3,18 @@
 # A temporary problem list for issues found in jake 
 #
 ############################################################################
+
 # jdk_lang
+
 java/lang/invoke/CustomizedLambdaFormTest.java			 generic-all
 java/lang/invoke/ExplicitCastArgumentsTest.java			 generic-all
 java/lang/invoke/VarargsArrayTest.java				 generic-all
 java/lang/invoke/lambda/LambdaAsm.java                           generic-all
 java/lang/invoke/lambda/LogGeneratedClassesTest.java             generic-all
 
+# jdk_net
+
 java/net/DatagramSocket/SetDatagramSocketImplFactory/ADatagramSocket.java  generic-all
-
-# jdk_instrument
-
-# 8047771
-java/lang/instrument/appendToClassLoaderSearch/run_tests.sh	generic-all
 
 ############################################################################
  
@@ -34,31 +33,6 @@ javax/management/remote/mandatory/passwordAccessFile/PasswordAccessFileTest.java
 ############################################################################
 
 # jdk_other
-
-# 8047822
-javax/script/CauseExceptionTest.java		generic-all
-javax/script/ExceptionTest.java	 		generic-all
-javax/script/GetInterfaceTest.java		generic-all
-javax/script/JavaScriptScopeTest.java		generic-all
-javax/script/NullUndefinedVarTest.java		generic-all
-javax/script/PluggableContextTest.java		generic-all
-javax/script/StringWriterPrintTest.java		generic-all
-javax/script/Test1.java				generic-all
-javax/script/Test2.java				generic-all
-javax/script/Test3.java				generic-all
-javax/script/Test4.java				generic-all
-javax/script/Test5.java				generic-all
-javax/script/Test6.java				generic-all
-javax/script/Test7.java				generic-all
-javax/script/Test8.java				generic-all
-javax/script/UnescapedBracketRegExTest.java	generic-all
-
-sun/tools/jrunscript/jrunscript-DTest.sh        generic-all
-sun/tools/jrunscript/jrunscript-argsTest.sh     generic-all
-sun/tools/jrunscript/jrunscript-cpTest.sh       generic-all
-sun/tools/jrunscript/jrunscript-eTest.sh        generic-all
-sun/tools/jrunscript/jrunscript-fTest.sh        generic-all
-sun/tools/jrunscript/jrunscriptTest.sh          generic-all
 
 ############################################################################
 
