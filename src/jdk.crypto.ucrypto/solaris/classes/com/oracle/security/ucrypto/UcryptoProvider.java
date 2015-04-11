@@ -150,21 +150,48 @@ public final class UcryptoProvider extends Provider {
                 if (type.equals("Cipher")) {
                     int keySize = 0;
                     if (algo.charAt(3) == '_') {
-                        keySize = Integer.parseInt(algo.substring(4, 7))/8;
+                        keySize = Integer.parseInt(algo.substring(4, 7));
                         algo = algo.substring(0, 3) + algo.substring(7);
                     }
                     if (algo.equals("AES/ECB/NoPadding")) {
-                        return new NativeCipher.AesEcbNoPadding(keySize);
+                        switch (keySize) {
+                            case 128:
+                                return new NativeCipher.Aes128EcbNoPadding();
+                            case 192:
+                                return new NativeCipher.Aes192EcbNoPadding();
+                            case 256:
+                                return new NativeCipher.Aes256EcbNoPadding();
+                            default:
+                                return new NativeCipher.AesEcbNoPadding();
+                        }
                     } else if (algo.equals("AES/ECB/PKCS5Padding")) {
                         return new NativeCipherWithJavaPadding.AesEcbPKCS5();
                     } else if (algo.equals("AES/CBC/NoPadding")) {
-                        return new NativeCipher.AesCbcNoPadding(keySize);
+                        switch (keySize) {
+                            case 128:
+                                return new NativeCipher.Aes128CbcNoPadding();
+                            case 192:
+                                return new NativeCipher.Aes192CbcNoPadding();
+                            case 256:
+                                return new NativeCipher.Aes256CbcNoPadding();
+                            default:
+                                return new NativeCipher.AesCbcNoPadding();
+                        }
                     } else if (algo.equals("AES/CBC/PKCS5Padding")) {
                         return new NativeCipherWithJavaPadding.AesCbcPKCS5();
                     } else if (algo.equals("AES/CTR/NoPadding")) {
                         return new NativeCipher.AesCtrNoPadding();
                     } else if (algo.equals("AES/GCM/NoPadding")) {
-                        return new NativeGCMCipher.AesGcmNoPadding(keySize);
+                        switch (keySize) {
+                            case 128:
+                                return new NativeGCMCipher.Aes128GcmNoPadding();
+                            case 192:
+                                return new NativeGCMCipher.Aes192GcmNoPadding();
+                            case 256:
+                                return new NativeGCMCipher.Aes256GcmNoPadding();
+                            default:
+                                return new NativeGCMCipher.AesGcmNoPadding();
+                        }
                     } else if (algo.equals("AES/CFB128/NoPadding")) {
                         return new NativeCipher.AesCfb128NoPadding();
                     } else if (algo.equals("AES/CFB128/PKCS5Padding")) {
