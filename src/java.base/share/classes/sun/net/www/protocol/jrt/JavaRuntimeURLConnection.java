@@ -86,8 +86,8 @@ public class JavaRuntimeURLConnection extends URLConnection {
     }
 
     /**
-     * Uses the register image readers to find resource. Returns {@code null}
-     * if the resource is not found.
+     * Finds a resource in a module, returning {@code null} if the resource
+     * is not found.
      */
     private static Resource findResource(String module, String name) {
         if (reader != null) {
