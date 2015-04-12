@@ -1232,7 +1232,7 @@ public final class System {
      *
      * This method must be called after the module system initialization.
      * The security manager and system class loader may be custom class from
-     * the application's classpath.
+     * the application classpath or modulepath.
      */
     private static void initPhase3() {
         // set security manager
@@ -1242,9 +1242,10 @@ public final class System {
                 System.setSecurityManager(new SecurityManager());
             } else {
                 try {
-                    SecurityManager sm = (SecurityManager)
-                        Class.forName(cn, false, ClassLoader.getBuiltinAppClassLoader())
-                             .newInstance();
+                    ClassLoader cl = ClassLoader.getBuiltinAppClassLoader();
+                    Class<?> c = Class.forName(cn, false, cl);
+                    System.class.getModule().addReads(c.getModule());
+                    SecurityManager sm = (SecurityManager) c.newInstance();
                     System.setSecurityManager(sm);
                 } catch (Exception e) {
                     throw new Error("Could not create SecurityManager", e);
