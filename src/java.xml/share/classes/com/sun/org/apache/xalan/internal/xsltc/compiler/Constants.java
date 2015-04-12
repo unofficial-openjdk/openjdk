@@ -506,7 +506,7 @@ public interface Constants extends InstructionConstants {
 
     public static final int RTF_INITIAL_SIZE = 32;
 
-    // the API packages used by generated translate classes
+    // the API packages used by generated translet classes
     public static String[] PKGS_USED_BY_TRANSLET_CLASSES = {
         "com.sun.org.apache.xalan.internal.lib",
         "com.sun.org.apache.xalan.internal.xsltc",
