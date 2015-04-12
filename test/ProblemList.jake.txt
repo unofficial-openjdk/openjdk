@@ -21,6 +21,7 @@ java/net/DatagramSocket/SetDatagramSocketImplFactory/ADatagramSocket.java  gener
 # jdk_management
  
 # 8047789
+sun/management/jmxremote/bootstrap/RmiBootstrapTest.sh          generic-all
 sun/management/jmxremote/bootstrap/RmiSslBootstrapTest.sh	generic-all
 
 ############################################################################
@@ -37,24 +38,25 @@ javax/management/remote/mandatory/passwordAccessFile/PasswordAccessFileTest.java
 ############################################################################
 
 # svc_tools
+
+# 8073141
+sun/tools/jstat/jstatClassloadOutput1.sh                        generic-all
+
+# 8059035
+sun/tools/jinfo/JInfoSanityTest.java                           generic-all
  
-# 8071308
+# 8072745
 demo/jvmti/heapTracker/HeapTrackerTest.java			generic-all
 demo/jvmti/hprof/HeapAllTest.java				generic-all
 demo/jvmti/hprof/HeapBinaryFormatTest.java			generic-all
 demo/jvmti/hprof/HeapDumpTest.java				generic-all
 demo/jvmti/hprof/HeapSitesTest.java				generic-all
-sun/tools/jhat/HatHeapDump1Test.java				generic-all
-
-# 8071309
 demo/jvmti/hprof/CpuOldTest.java				generic-all
 demo/jvmti/hprof/CpuTimesDefineClassTest.java			generic-all
 demo/jvmti/hprof/CpuTimesTest.java				generic-all
 demo/jvmti/hprof/OptionsTest.java				generic-all
 demo/jvmti/hprof/StackMapTableTest.java				generic-all
-
-# 8059035
-sun/tools/jinfo/JInfoSanityTest.java				generic-all
+sun/tools/jhat/HatHeapDump1Test.java                            generic-all
 
 ############################################################################
 

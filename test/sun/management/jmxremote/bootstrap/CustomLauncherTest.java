@@ -40,6 +40,7 @@ import jdk.testlibrary.ProcessTools;
 /**
  * @test
  * @bug 6434402 8004926
+ * @modules java.management/sun.management
  * @library /lib/testlibrary
  * @build jdk.testlibrary.*
  * @build TestManager TestApplication CustomLauncherTest
@@ -146,6 +147,7 @@ public class CustomLauncherTest {
             ProcessBuilder client = ProcessTools.createJavaProcessBuilder(
                 "-cp",
                 TEST_CLASSPATH,
+                "-XX:AddModuleExports=java.management/sun.management",
                 "TestManager",
                 String.valueOf(serverPrc.getPid()),
                 port.get(),

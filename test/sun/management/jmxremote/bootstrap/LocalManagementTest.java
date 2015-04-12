@@ -37,6 +37,7 @@ import java.util.concurrent.atomic.AtomicReference;
  *          without connection or username/password details.
  *          TestManager will attempt a connection to the address obtained from
  *          both agent properties and jvmstat buffer.
+ * @modules java.management/sun.management
  * @build jdk.testlibrary.* TestManager TestApplication
  * @run main/othervm/timeout=300 -XX:+UsePerfData LocalManagementTest
  */
@@ -133,6 +134,7 @@ public class LocalManagementTest {
             ProcessBuilder client = ProcessTools.createJavaProcessBuilder(
                 "-cp",
                 TEST_CLASSPATH,
+                "-XX:AddModuleExports=java.management/sun.management",
                 "TestManager",
                 String.valueOf(serverPrc.getPid()),
                 port.get(),

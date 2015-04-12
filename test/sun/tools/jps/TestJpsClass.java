@@ -34,6 +34,7 @@ import jdk.testlibrary.ProcessTools;
  *          For all possible combinations of jps arguments a jps process
  *          will be started from within the test application.
  *          The output should contain proper values.
+ * @modules jdk.jartool/sun.tools.jar
  * @library /lib/testlibrary
  * @build jdk.testlibrary.* JpsHelper JpsBase
  * @run driver TestJpsClass

@@ -28,6 +28,7 @@ import jdk.testlibrary.OutputAnalyzer;
  * @test
  * @summary This test verifies jps usage and checks that appropriate error message is shown
  *          when running jps with illegal arguments.
+ * @modules jdk.jartool/sun.tools.jar
  * @library /lib/testlibrary
  * @build jdk.testlibrary.* JpsHelper
  * @run driver TestJpsSanity
