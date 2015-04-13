@@ -140,6 +140,7 @@
       <compilerarg value="-XDignore.symbol.file"/>
       <compilerarg value="-Xdiags:verbose"/>
       <compilerarg value="-parameters"/>
+      <compilerarg value="-XX:AddModuleExports=${nashorn.module.imports}"/>
     </javac>
     <copy todir="${build.classes.dir}/META-INF/services">
        <fileset dir="${meta.inf.dir}/services/"/>

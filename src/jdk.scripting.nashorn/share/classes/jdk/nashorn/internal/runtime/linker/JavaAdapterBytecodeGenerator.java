@@ -1126,7 +1126,7 @@ final class JavaAdapterBytecodeGenerator {
                         continue;
                     }
 
-                    for (final Class pt : typeMethod.getParameterTypes()) {
+                    for (final Class<?> pt : typeMethod.getParameterTypes()) {
                         if (pt.isPrimitive()) continue;
                         final Module ptMod = pt.getModule();
                         if (ptMod != null) {
@@ -1134,7 +1134,7 @@ final class JavaAdapterBytecodeGenerator {
                         }
                     }
 
-                    final Class rt = typeMethod.getReturnType();
+                    final Class<?> rt = typeMethod.getReturnType();
                     if (!rt.isPrimitive()) {
                         final Module rtMod = rt.getModule();
                         if (rtMod != null) accessedModules.add(rtMod);

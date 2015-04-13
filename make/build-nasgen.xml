@@ -38,7 +38,8 @@
                 <pathelement location="${dist.dir}/nasgen.jar"/>
                 <pathelement path="${build.dir}/classes"/>
             </classpath>
-            <jvmarg value="-Xbootclasspath/p:${basedir}/build/classes"/>
+            <jvmarg value="-XX:AddModuleExports=${nasgen.module.imports}"/>
+            <jvmarg value="-Xoverride:${basedir}/build/classes"/>
             <arg value="${build.dir}/classes"/>
             <arg value="jdk.nashorn.internal.objects"/>
             <arg value="${build.dir}/classes"/>
