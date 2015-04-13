@@ -45,7 +45,7 @@ import java.util.*;
 // the debuggee, waits a bit, and enables the bkpt again.
 
 class BreakpointTarg {
-    public final static int BKPT_LINE = 54;
+    public final static int BKPT_LINE = 55;
             // LINE NUMBER SENSITIVE
 
     public static long count;

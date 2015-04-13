@@ -36,9 +36,10 @@ import jdk.testlibrary.ProcessTools;
  *          will be started from within the test application.
  *          The output should contain proper values.
  * @library /lib/testlibrary
- * @modules java.management
+ * @modules jdk.jartool/sun.tools.jar
+ *          java.management
  * @build jdk.testlibrary.* JpsHelper JpsBase
- * @run main/othervm -XX:AddModuleExports=jdk.jartool/sun.tools.jar TestJpsJarRelative
+ * @run main/othervm TestJpsJarRelative
  */
 public class TestJpsJarRelative {
 

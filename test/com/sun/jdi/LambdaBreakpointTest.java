@@ -52,7 +52,7 @@ import com.sun.jdi.event.StepEvent;
 class LambdaBreakpointTestTarg {
 
     static int[] breakpointLines = {
-            62, 66, 63, 64, 65, 67
+            63, 67, 64, 65, 66, 68
     };
 
     public static void main(String[] args) {

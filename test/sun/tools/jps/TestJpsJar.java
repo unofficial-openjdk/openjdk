@@ -39,7 +39,7 @@ import jdk.testlibrary.ProcessTools;
  * @modules jdk.jartool/sun.tools.jar
  *          java.management
  * @build jdk.testlibrary.* JpsHelper JpsBase
- * @run main/othervm -XX:AddModuleExports=jdk.jartool/sun.tools.jar TestJpsJar
+ * @run main/othervm TestJpsJar
  */
 public class TestJpsJar {
 
