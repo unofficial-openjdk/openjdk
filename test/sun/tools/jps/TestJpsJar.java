@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,10 +35,11 @@ import jdk.testlibrary.ProcessTools;
  *          For all possible combinations of jps arguments a jps process
  *          will be started from within the test application.
  *          The output should contain proper values.
- * @modules jdk.jartool/sun.tools.jar
  * @library /lib/testlibrary
+ * @modules jdk.jartool/sun.tools.jar
+ *          java.management
  * @build jdk.testlibrary.* JpsHelper JpsBase
- * @run driver TestJpsJar
+ * @run main/othervm -XX:AddModuleExports=jdk.jartool/sun.tools.jar TestJpsJar
  */
 public class TestJpsJar {
 

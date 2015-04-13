@@ -5,6 +5,7 @@
  *
  *  @author jjh
  *
+ *  @modules jdk.jdi
  *  @run build TestScaffold VMConnection TargetListener TargetAdapter
  *  @run compile -g InterruptHangTest.java
  *  @run driver InterruptHangTest

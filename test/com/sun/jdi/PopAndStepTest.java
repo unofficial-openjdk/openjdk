@@ -8,6 +8,7 @@
  *  @author jjh
  *
  *  @library ..
+ *  @modules jdk.jdi
  *  @run build TestScaffold VMConnection TargetListener TargetAdapter
  *  @run compile -g PopAndStepTest.java
  *  @run driver PopAndStepTest

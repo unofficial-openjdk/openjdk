@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2013 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2015 Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,6 +34,8 @@ import com.sun.tools.attach.spi.AttachProvider;
  * @summary Basic unit tests for the VM attach mechanism.
  * @modules jdk.jartool/sun.tools.jar
  * @library /lib/testlibrary
+ * @modules java.management
+ *          jdk.attach
  * @run build jdk.testlibrary.* SimpleProvider
  * @run main ProviderTest
  *

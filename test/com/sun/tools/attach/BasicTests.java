@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2011, 2013 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2015, 2013 Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,6 +39,8 @@ import jdk.testlibrary.ProcessThread;
  * @summary Basic unit tests for the VM attach mechanism.
  * @modules jdk.jartool/sun.tools.jar
  * @library /lib/testlibrary
+ * @modules java.instrument
+ *          java.management
  * @run build jdk.testlibrary.* Agent BadAgent RedefineAgent Application RedefineDummy RunnerUtil
  * @run main BasicTests
  *
