@@ -25,6 +25,7 @@ import java.lang.instrument.*;
 import java.net.*;
 import java.util.*;
 import java.io.*;
+import java.lang.reflect.Module;
 
 public class RedefineClassWithNativeMethodAgent {
     static Class clz;
@@ -33,9 +34,15 @@ public class RedefineClassWithNativeMethodAgent {
     public static void premain(String agentArgs, final Instrumentation inst) throws Exception {
         String s = agentArgs.substring(0, agentArgs.indexOf(".class"));
         clz = Class.forName(s.replace('/', '.'));
-        ClassLoader loader =
-            RedefineClassWithNativeMethodAgent.class.getClassLoader();
-        URL classURL = loader.getResource(agentArgs);
+        URL classURL;
+        Module m = clz.getModule();
+        if (m != null) {
+            classURL = m.getResource(agentArgs);
+        } else {
+            ClassLoader loader =
+                RedefineClassWithNativeMethodAgent.class.getClassLoader();
+            classURL = loader.getResource(agentArgs);
+        }
         if (classURL == null) {
             throw new Exception("Cannot find class: " + agentArgs);
         }
