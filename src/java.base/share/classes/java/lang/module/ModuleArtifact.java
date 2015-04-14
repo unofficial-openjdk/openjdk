@@ -25,21 +25,25 @@
 
 package java.lang.module;
 
+import java.io.IOException;
 import java.net.URI;
 import java.util.Collections;
 import java.util.Objects;
 import java.util.Set;
 
 import jdk.jigsaw.module.internal.Hasher.HashSupplier;
-import jdk.jigsaw.module.internal.ModuleInfo;
 
 /**
- * Represents a module artifact. A module artifact is typically a modular JAR
- * or jmod but it can be anything.
+ * Represents a module artifact. A module artifact contains the contents of a
+ * module along with its module descriptor that defines the module name,
+ * dependences and exports. Examples of module artifacts are modular JAR files
+ * or jmod files.
  *
- * @apiNote In the API sketch then this is ModuleDefinition
+ * A {@code ModuleArtifact} is a concrete subclass of this class that implements
+ * the abstract {@link #open open} method defined below.
  */
-public final class ModuleArtifact {
+
+public abstract class ModuleArtifact {
 
     private final ExtendedModuleDescriptor descriptor;
     private final Set<String> packages;
@@ -52,44 +56,32 @@ public final class ModuleArtifact {
     private String cachedHash;
 
     /**
-     * Checks that all exports are in the module packages.
-     * @throws IllegalArgumentException
+     * Constructs a new instance of this class.
      */
-    private void checkExports() {
+    ModuleArtifact(ExtendedModuleDescriptor descriptor,
+                   Set<String> packages,
+                   URI location,
+                   HashSupplier hasher)
+    {
+
+        packages = Collections.unmodifiableSet(packages);
+        if (packages.contains("") || packages.contains(null))
+            throw new IllegalArgumentException("<unnamed> package or null not allowed");
+
+        this.descriptor = Objects.requireNonNull(descriptor);
+        this.packages = packages;
+        this.location = Objects.requireNonNull(location);
+        this.hasher = hasher;
+
+        // all exported packages must be in contents
         for (ModuleExport export: descriptor.exports()) {
             String pkg = export.pkg();
             if (!packages.contains(pkg)) {
                 String name = descriptor.name();
                 throw new IllegalArgumentException(name + " cannot export " +
-                    pkg + ": not in module");
+                        pkg + ": not in module");
             }
         }
-    }
-
-    ModuleArtifact(ModuleInfo mi,
-                   Set<String> packages,
-                   URI location,
-                   HashSupplier hasher)
-    {
-        ModuleId id = ModuleId.parse(mi.name(), mi.version());
-
-        this.descriptor = new ExtendedModuleDescriptor(id,
-                                                       mi.mainClass(),
-                                                       mi.hashes(),
-                                                       mi.moduleDependences(),
-                                                       mi.serviceDependences(),
-                                                       mi.exports(),
-                                                       mi.services());
-        this.packages = Collections.unmodifiableSet(packages);
-        this.location = location;
-        this.hasher = hasher;
-
-        // all exported packages must be in contents
-        checkExports();
-    }
-
-    ModuleArtifact(ModuleInfo mi, Set<String> packages, URI location) {
-        this(mi, packages, location, null);
     }
 
     /**
@@ -103,21 +95,11 @@ public final class ModuleArtifact {
      * example, should this method check the package names to ensure that they
      * are composed of valid Java identifiers for a package name?
      */
-    public ModuleArtifact(ExtendedModuleDescriptor descriptor,
-                          Set<String> packages,
-                          URI location)
+    protected ModuleArtifact(ExtendedModuleDescriptor descriptor,
+                             Set<String> packages,
+                             URI location)
     {
-        packages = Collections.unmodifiableSet(packages);
-        if (packages.contains("") || packages.contains(null))
-            throw new IllegalArgumentException("<unnamed> package or null not allowed");
-
-        this.descriptor = Objects.requireNonNull(descriptor);
-        this.packages = packages;
-        this.location = Objects.requireNonNull(location);
-        this.hasher = null;
-
-        // all exported packages must be in contents
-        checkExports();
+        this(descriptor, packages, location, null);
     }
 
     /**
@@ -128,7 +110,7 @@ public final class ModuleArtifact {
     }
 
     /**
-     * Return the set of packages for the module.
+     * Return the set of packages for the module. The set is immutable.
      */
     public Set<String> packages() {
         return packages;
@@ -140,6 +122,15 @@ public final class ModuleArtifact {
     public URI location() {
         return location;
     }
+
+    /**
+     * Opens the modules artifact for reading, returning a {@code ModuleReader}
+     * that may be used to locate or read classes and resources.
+     *
+     * @throws IOException if an I/O error occurs
+     * @throws SecurityException if denied by the security manager
+     */
+    public abstract ModuleReader open() throws IOException;
 
     /**
      * Computes the MD5 hash of this module, returning it as a hex string.

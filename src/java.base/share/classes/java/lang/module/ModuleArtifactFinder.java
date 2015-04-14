@@ -188,8 +188,7 @@ public interface ModuleArtifactFinder {
 
 /**
  * Locates module artifacts on the file system by searching a sequence of
- * directories for jmod, modular JAR or exploded
- * modules.
+ * directories for jmod, modular JAR or exploded modules.
  *
  * @apiNote This class is currently not safe for use by multiple threads.
  */
@@ -257,7 +256,7 @@ class ModulePath implements ModuleArtifactFinder {
      * adds it (and its URL) to the cache.
      *
      * @throws UncheckedIOException if an I/O error occurs
-     * @throws RuntimeException if direcory contains more than on version of
+     * @throws RuntimeException if directory contains more than one version of
      * a module (need to decide on a better exception for this case).
      */
     private void scan(Path dir) {
@@ -339,7 +338,7 @@ class ModulePath implements ModuleArtifactFinder {
                                  .collect(Collectors.toSet());
 
         HashSupplier hasher = (algorithm) -> Hasher.generate(file, algorithm);
-        return new ModuleArtifact(mi, packages, location, hasher);
+        return ModuleArtifacts.newModuleArtifact(mi, packages, location, hasher);
     }
 
     /**
@@ -367,7 +366,7 @@ class ModulePath implements ModuleArtifactFinder {
                                      .collect(Collectors.toSet());
 
             HashSupplier hasher = (algorithm) -> Hasher.generate(file, algorithm);
-            return new ModuleArtifact(mi, packages, location, hasher);
+            return ModuleArtifacts.newModuleArtifact(mi, packages, location, hasher);
         }
     }
 
@@ -398,7 +397,7 @@ class ModulePath implements ModuleArtifactFinder {
                         .distinct()
                         .collect(Collectors.toSet());
 
-        return new ModuleArtifact(mi, packages, location);
+        return ModuleArtifacts.newModuleArtifact(mi, packages, location, null);
     }
 
     private String toPackageName(ZipEntry entry) {

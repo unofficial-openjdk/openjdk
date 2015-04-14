@@ -23,12 +23,6 @@
  * questions.
  */
 
-import java.lang.reflect.Module;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
 import java.lang.module.Configuration;
 import java.lang.module.ExtendedModuleDescriptor;
 import java.lang.module.Layer;
@@ -37,6 +31,11 @@ import java.lang.module.ModuleArtifactFinder;
 import java.lang.module.ModuleDependence;
 import java.lang.module.ModuleDependence.Modifier;
 import java.lang.module.ModuleExport;
+import java.lang.reflect.Module;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 import org.testng.annotations.Test;
 import static org.testng.Assert.*;

@@ -24,13 +24,13 @@
  */
 package sun.misc;
 
+import java.io.IOException;
+import java.lang.module.ExtendedModuleDescriptor;
+import java.lang.module.ModuleArtifact;
+import java.lang.module.ModuleReader;
 import java.lang.reflect.Module;
 import java.net.URI;
 import java.util.Set;
-
-import java.lang.module.ExtendedModuleDescriptor;
-import java.lang.module.ModuleArtifact;
-import sun.misc.SharedSecrets;
 
 /**
  * A helper class to allow JDK classes (and internal tests) to easily create
@@ -53,7 +53,13 @@ public class Modules {
         ExtendedModuleDescriptor descriptor =
             new ExtendedModuleDescriptor.Builder(name).build();
         URI uri = URI.create("module:/" + name);
-        ModuleArtifact artifact = new ModuleArtifact(descriptor, packages, uri);
+        ModuleArtifact artifact = new ModuleArtifact(descriptor, packages, uri) {
+            @Override
+            public ModuleReader open() throws IOException {
+                throw new IOException("No module reader for: " + uri);
+            }
+        };
+
         return SharedSecrets.getJavaLangReflectAccess().defineModule(loader, artifact);
     }
 

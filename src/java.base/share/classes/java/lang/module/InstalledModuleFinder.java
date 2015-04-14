@@ -33,7 +33,6 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -67,8 +66,9 @@ class InstalledModuleFinder implements ModuleArtifactFinder {
         try (InputStream in = new ByteArrayInputStream(bootImage.readModuleInfo(name))) {
             ModuleInfo mi = ModuleInfo.readIgnoringHashes(in);
             URI location = URI.create("jrt:/" + name);
+            Set<String> packages = bootImage.packagesForModule(name);
             ModuleArtifact artifact =
-                new ModuleArtifact(mi, bootImage.packagesForModule(name), location);
+                ModuleArtifacts.newModuleArtifact(mi, packages, location, null);
             installedModulesCount.increment();
             installedModulesTime.addElapsedTimeFrom(t0);
             return artifact;

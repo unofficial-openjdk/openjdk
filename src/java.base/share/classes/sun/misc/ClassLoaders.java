@@ -27,15 +27,11 @@ package sun.misc;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.CodeSource;
 import java.security.PermissionCollection;
-
-import jdk.internal.jimage.ImageReader;
-import jdk.internal.jimage.ImageReaderFactory;
 
 /**
  * Creates and provides access to the built-in extension and application class
@@ -55,19 +51,6 @@ public class ClassLoaders {
      * Creates the built-in class loaders
      */
     static {
-        ImageReader reader = null;
-
-        // detect image or exploded build
-        String home = System.getProperty("java.home");
-        Path libModules = Paths.get(home, "lib", "modules");
-        if (Files.isDirectory(libModules)) {
-            reader = ImageReaderFactory.getImageReader();
-        } else {
-            Path base = Paths.get(home, "modules", "java.base");
-            if (!Files.isDirectory(base)) {
-                throw new InternalError("Unable to determine runtime image type");
-            }
-        }
 
         // -Xbootclasspth/a or -javaagent Boot-Class-Path
         URLClassPath bcp = null;
@@ -88,9 +71,9 @@ public class ClassLoaders {
         Path overrideDir = (s != null) ? Paths.get(s) : null;
 
         // create the class loaders
-        BOOT_LOADER = new BootClassLoader(reader, overrideDir, bcp);
-        EXT_LOADER = new ExtClassLoader(BOOT_LOADER, reader, overrideDir);
-        APP_LOADER = new AppClassLoader(EXT_LOADER, reader, overrideDir, ucp);
+        BOOT_LOADER = new BootClassLoader(overrideDir, bcp);
+        EXT_LOADER = new ExtClassLoader(BOOT_LOADER, overrideDir);
+        APP_LOADER = new AppClassLoader(EXT_LOADER, overrideDir, ucp);
     }
 
     /**
@@ -126,10 +109,8 @@ public class ClassLoaders {
     private static class BootClassLoader extends BuiltinClassLoader {
         private static final JavaLangAccess jla = SharedSecrets.getJavaLangAccess();
 
-        BootClassLoader(ImageReader imageReader,
-                        Path overrideDir,
-                        URLClassPath bcp) {
-            super(null, imageReader, overrideDir, bcp);
+        BootClassLoader(Path overrideDir, URLClassPath bcp) {
+            super(null, overrideDir, bcp);
         }
 
         @Override
@@ -143,10 +124,8 @@ public class ClassLoaders {
      * from the application class loader.
      */
     private static class ExtClassLoader extends BuiltinClassLoader {
-        ExtClassLoader(BootClassLoader parent,
-                       ImageReader imageReader,
-                       Path overrideDir) {
-            super(parent, imageReader, overrideDir, null);
+        ExtClassLoader(BootClassLoader parent, Path overrideDir) {
+            super(parent, overrideDir, null);
         }
     }
 
@@ -157,11 +136,8 @@ public class ClassLoaders {
     private static class AppClassLoader extends BuiltinClassLoader {
         final URLClassPath ucp;
 
-        AppClassLoader(ExtClassLoader parent,
-                       ImageReader imageReader,
-                       Path overrideDir,
-                       URLClassPath ucp) {
-            super(parent, imageReader, overrideDir, ucp);
+        AppClassLoader(ExtClassLoader parent, Path overrideDir, URLClassPath ucp) {
+            super(parent, overrideDir, ucp);
             this.ucp = ucp;
         }
 

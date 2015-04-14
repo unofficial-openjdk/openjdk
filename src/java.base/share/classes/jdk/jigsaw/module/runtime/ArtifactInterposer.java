@@ -25,16 +25,18 @@
 
 package jdk.jigsaw.module.runtime;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
+import java.io.IOException;
 import java.lang.module.ExtendedModuleDescriptor;
 import java.lang.module.ModuleArtifact;
 import java.lang.module.ModuleArtifactFinder;
 import java.lang.module.ModuleDependence;
 import java.lang.module.ModuleExport;
+import java.lang.module.ModuleReader;
+import java.net.URI;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Interposes on a {@code ModuleArtifactFinder} to augment module descriptors
@@ -240,7 +242,15 @@ class ArtifactInterposer implements ModuleArtifactFinder {
         }
         ExtendedModuleDescriptor newDescriptor = builder.build();
 
-        return new ModuleArtifact(newDescriptor, artifact.packages(), artifact.location());
+        // Return a new ModuleArtifact with the new module descriptor
+        Set<String> packages = artifact.packages();
+        URI location = artifact.location();
+        return new ModuleArtifact(newDescriptor, packages, location) {
+            @Override
+            public ModuleReader open() throws IOException {
+                return artifact.open();
+            }
+        };
     }
 
     private static void parseFail(String expr) {

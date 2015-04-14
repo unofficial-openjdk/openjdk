@@ -23,7 +23,7 @@
  * questions.
  */
 
-package sun.misc;
+package java.lang.module;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -31,12 +31,9 @@ import java.net.URL;
 import java.nio.ByteBuffer;
 
 /**
- * A reader of resources in a module artifact.
- *
- * <p> A {@code ModuleReader} is used to locate or read resources in a
- * module artifact. The {@link ModuleReaders} class defines a factory
- * method to create a {@code ModuleReader} for modules packaged as a jmod,
- * modular JAR, or exploded on the file system. </p>
+ * Locates or reads resources in a module artifact. A {@code ModuleReader} is
+ * typically obtained by invoking the {@link ModuleArtifact#open() open} method
+ * on a {@link ModuleArtifact ModuleArtifact}.
  *
  * @apiNote This API is currently a low level API suited for class loading.
  * The eventual API will likely define a method to locate a resource and
@@ -44,10 +41,13 @@ import java.nio.ByteBuffer;
  * use by the JDK built-in class loaders.
  */
 
-interface ModuleReader extends Closeable {
+public interface ModuleReader extends Closeable {
+
     /**
-     * Returns the URL for a resource in the module, {@code null} if not
-     * found.
+     * Returns the URL for a resource in the module; {@code null} if not
+     * found or the {@code ModuleReader} is closed.
+     *
+     * @see ClassLoader#findResource(String)
      */
     URL findResource(String name);
 
@@ -60,16 +60,34 @@ interface ModuleReader extends Closeable {
      * contents of the buffer. This will ensure, for example, that direct
      * buffers are returned to a buffer pool. </p>
      *
-     * @throws IOException if an I/O error occurs
+     * @throws IOException if an I/O error occurs or the {@code ModuleReader} is
+     * closed.
      */
     ByteBuffer readResource(String name) throws IOException;
 
     /**
      * Returns a byte buffer to the buffer pool. This method should be
      * invoked after consuming the contents of the buffer returned by
-     * the {@code readResource} method.
+     * the {@code readResource} method. The behavior of this method when
+     * invoked to release a buffer that has already been released, or
+     * the behavior when invoked to release a buffer after a {@code
+     * ModuleReader} is closed is implementation specific and therefore
+     * not specified.
      *
      * @implSpec The default implementation does nothing.
      */
     default void releaseBuffer(ByteBuffer bb) { }
+
+    /**
+     * Closes the module reader. Once closed then subsequent calls to locate or
+     * read a resource will fail by returning {@code null} or throwing {@code
+     * IOException}.
+     *
+     * A module reader is not required to be asynchronously closeable. If a thread
+     * is reading a resource and another thread invokes the close method, then the
+     * second thread may block until the read operation is complete.
+     */
+    @Override
+    void close() throws IOException;
+
 }

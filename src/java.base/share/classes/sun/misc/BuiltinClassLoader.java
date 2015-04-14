@@ -27,6 +27,8 @@ package sun.misc;
 import java.io.File;
 import java.io.FilePermission;
 import java.io.IOException;
+import java.lang.module.ModuleArtifact;
+import java.lang.module.ModuleReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.ByteBuffer;
@@ -38,7 +40,6 @@ import java.security.CodeSource;
 import java.security.Permission;
 import java.security.PermissionCollection;
 import java.security.PrivilegedAction;
-import java.security.SecureClassLoader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
@@ -47,10 +48,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
-
-import jdk.internal.jimage.ImageLocation;
-import jdk.internal.jimage.ImageReader;
-import java.lang.module.ModuleArtifact;
 
 /**
  * The extension or application class loader. Resources loaded from modules
@@ -87,9 +84,6 @@ class BuiltinClassLoader extends ModuleClassLoader {
 
     // parent ClassLoader
     private final BuiltinClassLoader parent;
-
-    // ImageReader or null if an exploded build
-    private final ImageReader imageReader;
 
     // -Xoverride directory, can be null
     private final Path overrideDir;
@@ -134,7 +128,6 @@ class BuiltinClassLoader extends ModuleClassLoader {
      * Create a new instance.
      */
     BuiltinClassLoader(BuiltinClassLoader parent,
-                       ImageReader imageReader,
                        Path overrideDir,
                        URLClassPath ucp)
     {
@@ -142,7 +135,6 @@ class BuiltinClassLoader extends ModuleClassLoader {
         super(parent == null || parent == ClassLoaders.bootLoader() ? null : parent);
 
         this.parent = parent;
-        this.imageReader = imageReader;
         this.overrideDir = overrideDir;
         this.ucp = ucp;
     }
@@ -639,19 +631,12 @@ class BuiltinClassLoader extends ModuleClassLoader {
     private ModuleReader createModuleReader(ModuleArtifact artifact) {
         ModuleReader reader;
 
-        String s = artifact.location().getScheme();
-        if (s.equalsIgnoreCase("jrt")) {
-            // special-case the runtime image
-            String mn = artifact.descriptor().name();
-            reader = new ImageModuleReader(mn, imageReader);
-        } else {
-            try {
-                reader = ModuleReaders.open(artifact);
-            } catch (IOException e) {
-                // We can't return NULL_MODULE_READER here as that would cause
-                // a future class load to attempt to open the module again.
-                return new NullModuleReader();
-            }
+        try {
+            reader = artifact.open();
+        } catch (IOException e) {
+            // We can't return NULL_MODULE_READER here as that would cause
+            // a future class load to attempt to open the module again.
+            return new NullModuleReader();
         }
 
         // if -Xoverride is specified then wrap the ModuleReader so
@@ -683,60 +668,6 @@ class BuiltinClassLoader extends ModuleClassLoader {
     };
 
     /**
-     * A ModuleReader for reading resources from a module in the jimage
-     */
-    private static class ImageModuleReader implements ModuleReader {
-        private final String module;
-        private final ImageReader imageReader;
-
-        ImageModuleReader(String module, ImageReader imageReader) {
-            this.imageReader = imageReader;
-            this.module = module;
-        }
-
-        /**
-         * Returns the ImageLocation for the given resource, {@code null}
-         * if not found.
-         */
-        private ImageLocation findImageLocation(String name) {
-            if (imageReader == null) {
-                return null;
-            } else {
-                String rn = "/" + module + "/" + name;
-                return imageReader.findLocation(rn);
-            }
-        }
-
-        @Override
-        public URL findResource(String name) {
-            if (findImageLocation(name) != null)
-                return toJrtURL(module, name);
-
-            // not found
-            return null;
-        }
-
-        @Override
-        public ByteBuffer readResource(String name) throws IOException {
-            ImageLocation location = findImageLocation(name);
-            if (location != null) {
-                return imageReader.getResourceBuffer(location);
-            }
-            throw new IOException(module + "/" + name + " not found");
-        }
-
-        @Override
-        public void releaseBuffer(ByteBuffer bb) {
-            ImageReader.releaseByteBuffer(bb);
-        }
-
-        @Override
-        public void close() {
-            throw new InternalError("Should not get here");
-        }
-    }
-
-    /**
      * A ModuleReader to prepend an override directory to another ModuleReader.
      */
     private static class OverrideModuleReader implements ModuleReader {
@@ -763,6 +694,17 @@ class BuiltinClassLoader extends ModuleClassLoader {
                 }
             }
             return null;
+        }
+
+        /**
+         * Returns a file URL for the given file Path.
+         */
+        private static URL toFileURL(Path path) {
+            try {
+                return path.toUri().toURL();
+            } catch (MalformedURLException e) {
+                throw new InternalError(e);
+            }
         }
 
         @Override
@@ -794,28 +736,6 @@ class BuiltinClassLoader extends ModuleClassLoader {
         @Override
         public void close() throws IOException {
             reader.close();
-        }
-    }
-
-    /**
-     * Returns a jrt URL for the given module and resource name.
-     */
-    private static URL toJrtURL(String module, String name) {
-        try {
-            return new URL("jrt:/" + module + "/" + name);
-        } catch (MalformedURLException e) {
-            throw new InternalError(e);
-        }
-    }
-
-    /**
-     * Returns a file URL for the given file Path.
-     */
-    private static URL toFileURL(Path path) {
-        try {
-            return path.toUri().toURL();
-        } catch (MalformedURLException e) {
-            throw new InternalError(e);
         }
     }
 

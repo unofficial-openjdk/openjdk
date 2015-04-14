@@ -23,6 +23,8 @@
  * questions.
  */
 
+import java.io.IOException;
+import java.lang.module.ModuleReader;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
@@ -44,6 +46,19 @@ import static org.testng.Assert.*;
 @Test
 public class ModuleArtifactTest {
 
+    private ModuleArtifact newModuleArtifact(ExtendedModuleDescriptor descriptor,
+                                             Set<String> packages,
+                                             URI location)
+    {
+        return new ModuleArtifact(descriptor, packages, location) {
+            @Override
+            public ModuleReader open() throws IOException {
+                throw new IOException("No module reader for: " + location);
+            }
+        };
+    }
+
+
     public void testBasic() throws Exception {
         ExtendedModuleDescriptor descriptor =
                 new ExtendedModuleDescriptor.Builder("m")
@@ -54,9 +69,9 @@ public class ModuleArtifactTest {
         Set<String> packages =
             Stream.of("p", "q", "p.internal").collect(Collectors.toSet());
 
-        URI location = URI.create("jrt:/m");
+        URI location = URI.create("module:/m");
 
-        ModuleArtifact artifact = new ModuleArtifact(descriptor, packages, location);
+        ModuleArtifact artifact = newModuleArtifact(descriptor, packages, location);
 
         assertTrue(artifact.descriptor().equals(descriptor));
         assertTrue(artifact.packages().equals(packages));
@@ -66,8 +81,8 @@ public class ModuleArtifactTest {
     @Test(expectedExceptions = { NullPointerException.class })
     public void testNullDescriptor() throws Exception {
         Set<String> packages = Stream.of("p").collect(Collectors.toSet());
-        URI location = URI.create("jrt:/m");
-        new ModuleArtifact(null, packages, location);
+        URI location = URI.create("module:/m");
+        newModuleArtifact(null, packages, location);
     }
 
     @Test(expectedExceptions = { NullPointerException.class })
@@ -77,8 +92,8 @@ public class ModuleArtifactTest {
                         .export("p")
                         .export("q")
                         .build();
-        URI location = URI.create("jrt:/m");
-        new ModuleArtifact(descriptor, null, location);
+        URI location = URI.create("module:/m");
+        newModuleArtifact(descriptor, null, location);
     }
 
     @Test(expectedExceptions = { NullPointerException.class })
@@ -88,7 +103,7 @@ public class ModuleArtifactTest {
                         .export("p")
                         .build();
         Set<String> packages = Stream.of("p").collect(Collectors.toSet());
-        new ModuleArtifact(descriptor, packages, null);
+        newModuleArtifact(descriptor, packages, null);
     }
 
     @DataProvider(name = "badpackages")
@@ -119,9 +134,9 @@ public class ModuleArtifactTest {
                 new ExtendedModuleDescriptor.Builder("m")
                         .export("p")
                         .build();
-        URI location = URI.create("jrt:/m");
+        URI location = URI.create("module:/m");
 
         // should throw IAE
-        new ModuleArtifact(descriptor, packages, location);
+        newModuleArtifact(descriptor, packages, location);
     }
 }

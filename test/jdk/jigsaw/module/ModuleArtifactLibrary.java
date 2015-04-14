@@ -23,17 +23,18 @@
  * questions.
  */
 
+import java.io.IOException;
+import java.lang.module.ExtendedModuleDescriptor;
+import java.lang.module.ModuleArtifact;
+import java.lang.module.ModuleArtifactFinder;
+import java.lang.module.ModuleExport;
+import java.lang.module.ModuleReader;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-
-import java.lang.module.ExtendedModuleDescriptor;
-import java.lang.module.ModuleArtifact;
-import java.lang.module.ModuleArtifactFinder;
-import java.lang.module.ModuleExport;
 
 /**
  * A container of modules that acts as a ModuleArtifactFinder for testing
@@ -50,14 +51,18 @@ class ModuleArtifactLibrary implements ModuleArtifactFinder {
             if (!namesToArtifact.containsKey(name)) {
                 modules.add(descriptor);
 
-                URI location = URI.create("jrt:/" + descriptor.id());
+                URI uri = URI.create("module:/" + descriptor.id());
 
                 Set<String> packages = descriptor.exports().stream()
                         .map(ModuleExport::pkg)
                         .collect(Collectors.toSet());
 
-                ModuleArtifact artifact =
-                    new ModuleArtifact(descriptor, packages, location);
+                ModuleArtifact artifact = new ModuleArtifact(descriptor, packages, uri) {
+                    @Override
+                    public ModuleReader open() throws IOException {
+                        throw new IOException("No module reader for: " + uri);
+                    }
+                };
 
                 namesToArtifact.put(name, artifact);
             }
