@@ -24,12 +24,14 @@
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Module;
 import java.net.URI;
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Module;
 import java.util.*;
 import java.lang.module.ExtendedModuleDescriptor;
 import java.lang.module.ModuleArtifact;
+import java.lang.module.ModuleReader;
 import com.oracle.java.testlibrary.*;
 import sun.hotspot.WhiteBox;
 
@@ -77,12 +79,17 @@ public class ModuleHelper {
                 pkg_set.add(pkg.replace('/', '.'));
            }
         } else {
-            pkg_set = null;
+            pkg_set = Collections.emptySet();
         }
         ExtendedModuleDescriptor descriptor =
             new ExtendedModuleDescriptor.Builder(name).build();
         URI uri = URI.create("module:/" + name);
-        ModuleArtifact artifact = new ModuleArtifact(descriptor, pkg_set, uri);
+        ModuleArtifact artifact = new ModuleArtifact(descriptor, pkg_set, uri) {
+            @Override
+            public ModuleReader open() throws IOException {
+                throw new IOException("No module reader for: " + uri);
+            }
+        };
 
         Class[] cArg = new Class[2];
         cArg[0] = java.lang.ClassLoader.class;

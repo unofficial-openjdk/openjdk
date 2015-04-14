@@ -22,6 +22,7 @@
 # 
 
 # @test
+# @ignore
 # @summary Test attempt to load class within a package in a module defined to the boot loader via -Xbootclasspath/a. 
 
 set -e
