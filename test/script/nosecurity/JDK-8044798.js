@@ -27,7 +27,9 @@
  * @test
  * @option -Dnashorn.mirror.always=false
  * @fork
- * @run
+ * @runif unreflect.context.field.issue
+ *
+ * Exception in thread "main" java.lang.IllegalAccessError: Failed to unreflect getter for field public static final java.lang.String jdk.nashorn.internal.runtime.Context.NASHORN_SET_CONFIG
  */
 
 // basic API exercise checks

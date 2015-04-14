@@ -26,7 +26,7 @@
  * should not be too eager in creation of scopes.
  *
  * @test
- * @run
+ * @runif jdk.nashorn.internal.codegen.Compiler.accessissue
  */
 
 /*

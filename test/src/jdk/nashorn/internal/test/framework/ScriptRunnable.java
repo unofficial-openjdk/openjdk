@@ -177,7 +177,7 @@ public final class ScriptRunnable extends AbstractScriptRunnable implements ITes
 
         cmd.add(System.getProperty("java.home") + separator + "bin" + separator + "java");
         // cmd.add("-Djava.ext.dirs=dist");
-        cmd.add("-Xbootclasspath/a:dist/nashorn.jar");
+        cmd.add("-Xoverride:dist/nashorn.jar");
         for (final String str : forkJVMOptions) {
             if(!str.isEmpty()) {
                 cmd.add(str);

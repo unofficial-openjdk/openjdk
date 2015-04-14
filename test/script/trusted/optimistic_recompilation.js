@@ -29,6 +29,7 @@
  * @option -Dnashorn.debug=true
  * @option --log=recompile:quiet
  * @option --optimistic-types=true
+ * @runif illegalaccessexception.reflection.issue
  */
 
 var forName       = java.lang.Class["forName(String)"];
