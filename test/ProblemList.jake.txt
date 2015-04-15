@@ -60,6 +60,13 @@ sun/tools/jhat/HatHeapDump1Test.java                            generic-all
 
 ############################################################################
 
+# jdk_jdi
+
+# 8076544
+com/sun/jdi/RedefineCrossEvent.java				generic-all
+
+############################################################################
+
 # Exclude tests depending on package-private API or testlibrary
 # until jtreg support is implemented
 
