@@ -25,7 +25,7 @@
  * JDK-8024619: JDBC java.sql.DriverManager is not usable from JS script
  *
  * @test
- * @runif callersensitive.illegalaccess.issue
+ * @run
  */
 
 var DriverManager = Java.type("java.sql.DriverManager");
