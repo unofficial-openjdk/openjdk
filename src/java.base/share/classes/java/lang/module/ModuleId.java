@@ -45,8 +45,6 @@ public final class ModuleId
     // Module names must be legal Java identifiers
     //
     static final String checkModuleName(String nm) {
-        if (nm == null)
-            throw new IllegalArgumentException();
         int n = nm.length();
         if (n == 0 || !Character.isJavaIdentifierStart(nm.codePointAt(0)))
             throw new IllegalArgumentException();

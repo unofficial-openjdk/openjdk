@@ -158,7 +158,7 @@ class Resolver {
 
             // process dependencies
             for (ModuleDependence d: descriptor.moduleDependences()) {
-                String dn = d.id().name();
+                String dn = d.name();
 
                 // in overrides?
                 ModuleArtifact other = beforeFinder.find(dn);
@@ -306,7 +306,7 @@ class Resolver {
                     g2.put(descriptor, new HashSet<>());
                     for (ModuleDependence d: descriptor.moduleDependences()) {
                         if (d.modifiers().contains(ModuleDependence.Modifier.PUBLIC)) {
-                            String dn = d.id().name();
+                            String dn = d.name();
                             ModuleArtifact artifact = current.findArtifact(dn);
                             if (artifact == null)
                                 throw new InternalError();
@@ -323,7 +323,7 @@ class Resolver {
             g1.put(m, new HashSet<>());
             g2.put(m, new HashSet<>());
             for (ModuleDependence d: m.moduleDependences()) {
-                String dn = d.id().name();
+                String dn = d.name();
                 ModuleDescriptor other = nameToModule.get(dn);
                 if (other == null && layer != null)
                     other = layer.findArtifact(dn).descriptor();
@@ -389,7 +389,7 @@ class Resolver {
 
             // check dependences
             for (ModuleDependence md: descriptor.moduleDependences()) {
-                String dn = md.id().name();
+                String dn = md.name();
                 String recordedHash = hashes.hashFor(dn);
 
                 if (recordedHash != null) {

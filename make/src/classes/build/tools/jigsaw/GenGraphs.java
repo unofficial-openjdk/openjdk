@@ -66,8 +66,8 @@ public class GenGraphs {
         Set<ModuleDescriptor> javaSEModules
             = new TreeSet<>(finder.allModules().stream()
                                   .map(ModuleArtifact::descriptor)
-                                  .filter(m -> (m.id().name().startsWith("java.") &&
-                                               !m.id().name().equals("java.smartcardio")))
+                                  .filter(m -> (m.name().startsWith("java.") &&
+                                               !m.name().equals("java.smartcardio")))
                                   .collect(Collectors.toSet()));
         Set<ModuleDescriptor> jdkModules
             = new TreeSet<>(finder.allModules().stream()
@@ -176,7 +176,7 @@ public class GenGraphs {
                 String mn = md.name();
                 Set<String> requiresPublic = md.moduleDependences().stream()
                         .filter(d -> d.modifiers().contains(PUBLIC))
-                        .map(d -> d.id().name())
+                        .map(d -> d.name())
                         .collect(Collectors.toSet());
 
                 graph.adjacentNodes(mn).forEach(dn -> {
@@ -225,7 +225,7 @@ public class GenGraphs {
             String mn = md.name();
             md.moduleDependences().stream()
                     .filter(d -> d.modifiers().contains(PUBLIC))
-                    .map(d -> d.id().name())
+                    .map(d -> d.name())
                     .forEach(d -> builder.addEdge(mn, d));
         });
 

@@ -25,12 +25,15 @@
 
 package java.lang.module;
 
-import java.io.*;
-import java.util.*;
+import java.io.Serializable;
+import java.util.Collections;
+import java.util.Set;
 
 
 /**
  * <p> A dependence upon a module </p>
+ *
+ * @since 1.9
  */
 
 @SuppressWarnings("serial")             // serialVersionUID intentionally omitted
@@ -38,59 +41,114 @@ public final class ModuleDependence
     implements Comparable<ModuleDependence>, Serializable
 {
 
+    /**
+     * A modifier on a module dependence.
+     *
+     * @since 1.9
+     */
     public static enum Modifier {
-        PUBLIC, SYNTHETIC, MANDATED;
+        /**
+         * The dependence causes any module which depends on the <i>current
+         * module</i> to have an implicitly declared dependence on the module
+         * named by the {@code ModuleDependence}.
+         */
+        PUBLIC,
+        /**
+         * The dependence was not explicitly or implicitly declared in the
+         * source of the module declaration.
+         */
+        SYNTHETIC,
+        /**
+         * The dependence was implicitly declared in the source of the module
+         * declaration.
+         */
+        MANDATED;
     }
 
     private final Set<Modifier> mods;
-    private final ModuleId id;
+    private final String name;
 
-    public ModuleDependence(Set<Modifier> ms, ModuleId id) {
-        if (id.version() != null)
-            throw new IllegalArgumentException("Version not allowed: " + id);
-        if (ms == null)
+    /**
+     * Constructs a new instance of this class.
+     *
+     * @param ms the set of modifiers; {@code null} for no modifiers
+     * @param mn the module name
+     *
+     * @throws IllegalArgumentException
+     *         If the module name is not a legal Java identifier
+     */
+    public ModuleDependence(Set<Modifier> ms, String mn) {
+        if (ms == null) {
             mods = Collections.emptySet();
-        else
+        } else {
             mods = Collections.unmodifiableSet(ms);
-        this.id = id;
+        }
+        this.name = ModuleId.checkModuleName(mn);
     }
 
-    public ModuleDependence(Set<Modifier> mods, String mids) {
-        this(mods, ModuleId.parse(mids));
-    }
-
+    /**
+     * Returns the possibly empty set of modifiers. The set is immutable.
+     */
     public Set<Modifier> modifiers() {
         return mods;
     }
 
     /**
-     * Return the module id.
+     * Return the module name.
      */
-    public ModuleId id() {
-        return id;
+    public String name() {
+        return name;
     }
 
+    /**
+     * Compares this module dependence to another.
+     *
+     * <p> Two {@code ModuleDependence} objects are compared by comparing their
+     * module name lexicographically. Where the module names are equal then
+     * the set of modifiers are compared.
+     *
+     * @return A negative integer, zero, or a positive integer if this module
+     *         dependence is less than, equal to, or greater than the given
+     *         module dependence
+     */
     @Override
     public int compareTo(ModuleDependence that) {
-        return this.id.name().compareTo(that.id.name());
+        int n = this.name().compareTo(that.name());
+        if (n != 0)
+            return n;
+
+        // same name, compare by modifiers
+        return Long.compare(this.modsValue(), that.modsValue());
     }
+
+    /**
+     * Return a value for the modifiers to allow sets of modifiers to be
+     * compared.
+     */
+    private long modsValue() {
+        return mods.stream()
+                   .map(Modifier::ordinal)
+                   .map(n -> 1 << n)
+                   .reduce(0, (a, b) -> a + b);
+    }
+
 
     @Override
     public boolean equals(Object ob) {
         if (!(ob instanceof ModuleDependence))
             return false;
         ModuleDependence that = (ModuleDependence)ob;
-        return (id.equals(that.id) && mods.equals(that.mods));
+        return (name.equals(that.name) && mods.equals(that.mods));
     }
 
     @Override
     public int hashCode() {
-        return id.hashCode() * 43 + mods.hashCode();
+        return name.hashCode() * 43 + mods.hashCode();
     }
 
     @Override
     public String toString() {
-        return Dependence.toString(mods, id.toString());
+        return Dependence.toString(mods, name);
     }
 
 }

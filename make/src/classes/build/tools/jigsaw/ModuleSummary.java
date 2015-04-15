@@ -137,7 +137,7 @@ public class ModuleSummary {
                         long otherBytes = 0;
                         long otherJmodSize = 0;
                         Set<String> reqs = m.moduleDependences().stream()
-                                                .map(d -> d.id().name())
+                                                .map(d -> d.name())
                                                 .collect(Collectors.toSet());
                         reqBytes = deps.stream()
                                         .filter(d -> reqs.contains(d.name()))
@@ -194,7 +194,7 @@ public class ModuleSummary {
     }
 
     private String toRequires(String from, ModuleDependence d) {
-        String name = d.id().name();
+        String name = d.name();
         String ref = String.format("<a href=\"#%s\">%s</a>",
                                    name, name);
         Stream<String> mods = d.modifiers().stream().map(e -> e.toString().toLowerCase());

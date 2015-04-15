@@ -95,8 +95,7 @@ class ClassFileAttributes {
                     if ((flags & ModuleInfo.ACC_MANDATED) != 0)
                         mods.add(Modifier.MANDATED);
                 }
-                ModuleId mid = ModuleId.parse(dn, null);
-                attr.moduleDependences.add(new ModuleDependence(mods, mid));
+                attr.moduleDependences.add(new ModuleDependence(mods, dn));
                 off += 4;
             }
 
@@ -164,7 +163,7 @@ class ClassFileAttributes {
 
             // requires[requires_count]
             for (ModuleDependence md: moduleDependences) {
-                String dn = md.id().name();
+                String dn = md.name();
                 int flags = 0;
                 if (md.modifiers().contains(Modifier.PUBLIC))
                     flags |= ModuleInfo.ACC_PUBLIC;

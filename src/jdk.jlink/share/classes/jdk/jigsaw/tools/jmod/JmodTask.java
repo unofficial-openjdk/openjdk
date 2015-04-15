@@ -545,7 +545,7 @@ class JmodTask {
         {
             Set<ModuleDescriptor> descriptors = new HashSet<>();
             for (ModuleDependence md: moduleDependences) {
-                String dn = md.id().name();
+                String dn = md.name();
                 if (dependencesToHash.matcher(dn).find()) {
                     ModuleArtifact artifact = moduleFinder.find(dn);
                     if (artifact == null) {

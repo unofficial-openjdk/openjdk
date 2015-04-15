@@ -395,7 +395,7 @@ public final class ModuleInfo {
                 if ((flags & ModuleInfo.ACC_MANDATED) != 0)
                     mods.add(Modifier.MANDATED);
             }
-            moduleDependences.add(new ModuleDependence(mods, ModuleId.parse(dn, null)));
+            moduleDependences.add(new ModuleDependence(mods, dn));
         }
 
         int exports_count = in.readUnsignedShort();

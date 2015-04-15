@@ -23,10 +23,8 @@
  * questions.
  */
 
-import java.util.*;
-import static java.lang.System.out;
-
-import java.lang.module.*;
+import java.util.EnumSet;
+import java.lang.module.ModuleDependence;
 import java.lang.module.ModuleDependence.Modifier;
 import static java.lang.module.ModuleDependence.Modifier.*;
 
@@ -37,28 +35,59 @@ import static org.testng.Assert.*;
 @Test
 public class _ModuleDependence {
 
-    private static ModuleDependence build(Set<Modifier> mods, String dn) {
-        ModuleDependence md = new ModuleDependence(mods,
-                                                   ModuleId.parse(dn));
-        out.println(md);
-        return md;
-    }
-
-    public void none() {
-        ModuleDependence md = build(null, "foo");
+    public void nullModifiers() {
+        ModuleDependence md = new ModuleDependence(null, "foo");
+        assertEquals(md, md);
+        assertTrue(md.compareTo(md) == 0);
         assertTrue(md.modifiers().isEmpty());
-        assertEquals(md.id(), ModuleId.parse("foo"));
+        assertEquals(md.name(), "foo");
     }
 
-    public void one() {
-        ModuleDependence md = build(EnumSet.of(PUBLIC), "foo");
-        assertEquals(md.modifiers(), EnumSet.of(PUBLIC));
-        assertEquals(md.id(), ModuleId.parse("foo"));
+    public void noModifiers() {
+        ModuleDependence md = new ModuleDependence(EnumSet.noneOf(Modifier.class), "foo");
+        assertEquals(md, md);
+        assertTrue(md.compareTo(md) == 0);
+        assertTrue(md.modifiers().isEmpty());
+        assertEquals(md.name(), "foo");
     }
 
-    public void two() {
-        ModuleDependence md = build(EnumSet.of(PUBLIC), "foo");
+    public void oneModifier() {
+        ModuleDependence md = new ModuleDependence(EnumSet.of(PUBLIC), "foo");
+        assertEquals(md, md);
+        assertTrue(md.compareTo(md) == 0);
         assertEquals(md.modifiers(), EnumSet.of(PUBLIC));
+        assertEquals(md.name(), "foo");
     }
+
+    public void twoModifiers() {
+        ModuleDependence md = new ModuleDependence(EnumSet.of(PUBLIC, SYNTHETIC), "foo");
+        assertEquals(md, md);
+        assertTrue(md.compareTo(md) == 0);
+        assertEquals(md.modifiers(), EnumSet.of(PUBLIC, SYNTHETIC));
+        assertEquals(md.name(), "foo");
+    }
+
+    public void allModifiers() {
+        ModuleDependence md = new ModuleDependence(EnumSet.allOf(Modifier.class), "foo");
+        assertEquals(md, md);
+        assertTrue(md.compareTo(md) == 0);
+        assertEquals(md.modifiers(), EnumSet.allOf(Modifier.class));
+        assertEquals(md.name(), "foo");
+    }
+
+    public void compare() {
+        ModuleDependence md1 = new ModuleDependence(EnumSet.noneOf(Modifier.class), "foo");
+        ModuleDependence md2 = new ModuleDependence(EnumSet.noneOf(Modifier.class), "bar");
+        int n = "foo".compareTo("bar");
+        assertTrue(md1.compareTo(md2) == n);
+        assertTrue(md2.compareTo(md1) == -n);
+    }
+
+    @Test(expectedExceptions = { NullPointerException.class })
+    public void nullName() {
+        new ModuleDependence(EnumSet.noneOf(Modifier.class), null);
+    }
+
+    // TODO: ModuleDependence throwing IllegalArgumentException
 
 }
