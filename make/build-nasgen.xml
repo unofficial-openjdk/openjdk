@@ -36,13 +36,13 @@
                 <pathelement location="${basedir}/jcov2/lib/jcov_j2se_rt.jar"/>
                 <pathelement location="${basedir}/buildtools/nasgen/dist/nasgen.jar"/>
                 <pathelement location="${dist.dir}/nasgen.jar"/>
-                <pathelement path="${build.dir}/classes"/>
+                <pathelement path="${build.classes.dir}"/>
             </classpath>
             <jvmarg value="-XX:AddModuleExports=${nasgen.module.imports}"/>
-            <jvmarg value="-Xoverride:${basedir}/build/classes"/>
-            <arg value="${build.dir}/classes"/>
+            <jvmarg value="${nashorn.override.option}"/>
+            <arg value="${build.classes.dir}"/>
             <arg value="jdk.nashorn.internal.objects"/>
-            <arg value="${build.dir}/classes"/>
+            <arg value="${build.classes.dir}"/>
         </java>
     </target>
 

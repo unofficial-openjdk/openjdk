@@ -35,7 +35,7 @@
     <path id="nashorn.jar.path">
          <pathelement location="${dist.jar}"/>
     </path>
-    <property name="nashorn.override.option" value="-Xoverride:${toString:nashorn.jar.path}"/>
+    <property name="nashorn.override.option" value="-Xoverride:${build.classes.dir}"/>
     <condition property="svn.executable" value="/usr/local/bin/svn" else="svn">
       <available file="/usr/local/bin/svn"/>
     </condition>
