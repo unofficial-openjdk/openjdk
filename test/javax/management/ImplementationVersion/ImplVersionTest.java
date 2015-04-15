@@ -77,7 +77,6 @@ public class ImplVersionTest {
                 checkVersion = false;
             String command =
                 javaHome + File.separator + "bin" + File.separator + "java " +
-                " -Xbootclasspath/p:" + bootClassPath +
                 " -classpath " + testClasses +
                 " -Djava.security.manager -Djava.security.policy==" + testSrc +
                 File.separator + "policy -Dtest.classes=" + testClasses +

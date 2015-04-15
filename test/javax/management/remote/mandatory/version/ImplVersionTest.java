@@ -67,13 +67,9 @@ public class ImplVersionTest {
             // Get test classes
             String testClasses = System.getProperty("test.classes");
 
-            // Get boot class path
-            String bootClassPath = System.getProperty("sun.boot.class.path");
-
             // Build command string
             String command =
                 javaHome + File.separator + "bin" + File.separator + "java " +
-                " -Xbootclasspath/p:" + bootClassPath +
                 " -classpath " + testClasses +
                 " -Djava.security.manager -Djava.security.policy==" + testSrc +
                 File.separator + "policy -Dtest.classes=" + testClasses +
