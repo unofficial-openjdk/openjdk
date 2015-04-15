@@ -30,7 +30,7 @@
  * @option -Dnashorn.debug=true
  * @option --log=recompile:quiet
  * @option --optimistic-types=true
- * @runif jdk.nashorn.internal.runtime.event.access.issue
+ * @run
  */
 
 print(Debug);
