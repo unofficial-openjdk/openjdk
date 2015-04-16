@@ -27,6 +27,7 @@
  * @summary Make sure that building a path to a CRL issuer works in the
  *          reverse direction
  * @library ../../../../../java/security/testlibrary
+ * @modules java.base/sun.security.provider.certpath
  * @build CertUtils
  * @run main BuildPath
  */
