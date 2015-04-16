@@ -92,6 +92,9 @@ module java.xml.ws {
     // XML document content needs to be exported
     exports com.sun.xml.internal.ws.runtime.config to
         java.xml.bind;
+    // JAF data handlers
+    exports com.sun.xml.internal.messaging.saaj.soap to
+        java.activation;
     uses javax.xml.ws.spi.Provider;
 }
 
