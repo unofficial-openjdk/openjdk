@@ -1,5 +1,5 @@
 /*
- * Copyright (c)  2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,14 +24,13 @@
 package container;
 
 import java.io.File;
-import java.lang.reflect.Method;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-
 import java.lang.module.Configuration;
 import java.lang.module.Layer;
 import java.lang.module.ModuleArtifactFinder;
 import java.lang.module.ModuleDescriptor;
+import java.lang.reflect.Method;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 /**
  * A simple console application that accepts commands to start applications. It's
@@ -83,10 +82,15 @@ public class Main {
           .forEach(md -> System.out.format("  %s%n", md.name()));
 
         // choose a class loader
-        ClassLoader cl = new MultiModuleClassLoader(cf);
+        ModuleClassLoader loader = new ModuleClassLoader();
+        cf.descriptors()
+          .stream()
+          .map(ModuleDescriptor::name)
+          .map(cf::findArtifact)
+          .forEach(loader::defineModule);
 
-        // define modules
-        Layer layer = Layer.create(cf, k -> cl);
+        // reify the configuration as a Layer
+        Layer layer = Layer.create(cf, k -> loader);
 
         // invoke application main method
         Class<?> c = layer.findLoader(appModuleName).loadClass(appMainClass);
@@ -96,7 +100,7 @@ public class Main {
         // set TCCL as that is the EE thing to do
         ClassLoader tccl = Thread.currentThread().getContextClassLoader();
         try {
-            Thread.currentThread().setContextClassLoader(cl);
+            Thread.currentThread().setContextClassLoader(loader);
             mainMethod.invoke(null, (Object)new String[0]);
         } finally {
             Thread.currentThread().setContextClassLoader(tccl);
