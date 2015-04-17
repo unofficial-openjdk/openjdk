@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,20 +26,18 @@
 package com.sun.tools.javac.code;
 
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Set;
 
 import javax.lang.model.element.ElementVisitor;
 import javax.tools.JavaFileObject;
-
 
 import com.sun.tools.javac.code.Scope.WriteableScope;
 import com.sun.tools.javac.code.Symbol.ClassSymbol;
 import com.sun.tools.javac.code.Symbol.Completer;
 import com.sun.tools.javac.code.Symbol.CompletionFailure;
 import com.sun.tools.javac.code.Symbol.MethodSymbol;
-import com.sun.tools.javac.code.Symbol.OperatorSymbol;
+import com.sun.tools.javac.code.Symbol.ModuleSymbol;
 import com.sun.tools.javac.code.Symbol.PackageSymbol;
 import com.sun.tools.javac.code.Symbol.TypeSymbol;
 import com.sun.tools.javac.code.Symbol.VarSymbol;
@@ -50,8 +48,7 @@ import com.sun.tools.javac.code.Type.JCPrimitiveType;
 import com.sun.tools.javac.code.Type.JCVoidType;
 import com.sun.tools.javac.code.Type.MethodType;
 import com.sun.tools.javac.code.Type.UnknownType;
-import com.sun.tools.javac.jvm.ByteCodes;
-import com.sun.tools.javac.jvm.Target;
+import com.sun.tools.javac.comp.Modules;
 import com.sun.tools.javac.util.Assert;
 import com.sun.tools.javac.util.Context;
 import com.sun.tools.javac.util.Convert;
@@ -62,10 +59,10 @@ import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.util.Log;
 import com.sun.tools.javac.util.Name;
 import com.sun.tools.javac.util.Names;
+import com.sun.tools.javac.util.Options;
 
 import static com.sun.tools.javac.code.Flags.*;
 import static com.sun.tools.javac.code.Kinds.Kind.*;
-import static com.sun.tools.javac.jvm.ByteCodes.*;
 import static com.sun.tools.javac.code.TypeTag.*;
 
 /** A class that defines all predefined constants and operators
@@ -106,7 +103,19 @@ public class Symtab {
 
     private final Names names;
     private final Completer initialCompleter;
-    private final Target target;
+    private final Completer moduleCompleter;
+
+    /** A symbol for the unnamed module.
+     */
+    public final ModuleSymbol unnamedModule;
+
+    /** The error module.
+     */
+    public final ModuleSymbol errModule;
+
+    /** A symbol for no module, for use with -source 8 or less
+     */
+    public final ModuleSymbol noModule;
 
     /** A symbol for the root package.
      */
@@ -143,6 +152,10 @@ public class Symtab {
 
     /** The builtin type of all methods. */
     public final ClassSymbol methodClass;
+
+    /** A symbol for the java.base module.
+     */
+    public final ModuleSymbol javaBase;
 
     /** Predefined types.
      */
@@ -212,7 +225,7 @@ public class Symtab {
      */
     public final Type[] typeOfTag = new Type[TypeTag.getTypeTagCount()];
 
-    /** The name of the class that belongs to a basix type tag.
+    /** The name of the class that belongs to a basic type tag.
      */
     public final Name[] boxedName = new Name[TypeTag.getTypeTagCount()];
 
@@ -229,6 +242,10 @@ public class Symtab {
      */
     public final Map<Name, PackageSymbol> packages = new HashMap<>();
 
+    /** A hashtable giving the encountered modules.
+     */
+    public final Map<Name, ModuleSymbol> modules = new LinkedHashMap<>();
+
     public void initType(Type type, ClassSymbol c) {
         type.tsym = c;
         typeOfTag[type.getTag().ordinal()] = type;
@@ -243,7 +260,7 @@ public class Symtab {
 
     public void initType(Type type, String name, String bname) {
         initType(type, name);
-            boxedName[type.getTag().ordinal()] = names.fromString("java.lang." + bname);
+        boxedName[type.getTag().ordinal()] = names.fromString("java.lang." + bname);
     }
 
     /** The class symbol that owns all predefined symbols.
@@ -254,13 +271,14 @@ public class Symtab {
      *  @param s The name of the class.
      */
     private Type enterClass(String s) {
-        return enterClass(names.fromString(s)).type;
+        return enterClass(javaBase, names.fromString(s)).type;
     }
 
     public void synthesizeEmptyInterfaceIfMissing(final Type type) {
         final Completer completer = type.tsym.completer;
         if (completer != null) {
             type.tsym.completer = new Completer() {
+                @Override
                 public void complete(Symbol sym) throws CompletionFailure {
                     try {
                         completer.complete(sym);
@@ -274,10 +292,11 @@ public class Symtab {
     }
 
     public void synthesizeBoxTypeIfMissing(final Type type) {
-        ClassSymbol sym = enterClass(boxedName[type.getTag().ordinal()]);
+        ClassSymbol sym = enterClass(javaBase, boxedName[type.getTag().ordinal()]);
         final Completer completer = sym.completer;
         if (completer != null) {
             sym.completer = new Completer() {
+                @Override
                 public void complete(Symbol sym) throws CompletionFailure {
                     try {
                         completer.complete(sym);
@@ -327,22 +346,31 @@ public class Symtab {
         context.put(symtabKey, this);
 
         names = Names.instance(context);
-        target = Target.instance(context);
 
         // Create the unknown type
         unknownType = new UnknownType();
 
+        final JavacMessages messages = JavacMessages.instance(context);
+
         // create the basic builtin symbols
+        unnamedModule = new ModuleSymbol(names.empty, null) {
+                @Override
+                public String toString() {
+                    return messages.getLocalizedString("compiler.misc.unnamed.module");
+                }
+            };
+        errModule = new ModuleSymbol(names.empty, null) { };
+        noModule = new ModuleSymbol(names.empty, null) { };
         rootPackage = new PackageSymbol(names.empty, null);
         packages.put(names.empty, rootPackage);
-        final JavacMessages messages = JavacMessages.instance(context);
         unnamedPackage = new PackageSymbol(names.empty, rootPackage) {
+                @Override
                 public String toString() {
                     return messages.getLocalizedString("compiler.misc.unnamed.package");
                 }
             };
         noSymbol = new TypeSymbol(NIL, 0, names.empty, Type.noType, rootPackage) {
-            @DefinedBy(Api.LANGUAGE_MODEL)
+            @Override @DefinedBy(Api.LANGUAGE_MODEL)
             public <R, P> R accept(ElementVisitor<R, P> v, P p) {
                 return v.visitUnknown(this, p);
             }
@@ -391,6 +419,9 @@ public class Symtab {
         rootPackage.completer = initialCompleter;
         unnamedPackage.completer = initialCompleter;
 
+        // Get the initial completer for ModuleSymbols from Modules
+        moduleCompleter = Modules.instance(context).getCompleter();
+
         // Enter symbols for basic types.
         scope.enter(byteType.tsym);
         scope.enter(shortType.tsym);
@@ -407,7 +438,14 @@ public class Symtab {
 
         classes.put(predefClass.fullname, predefClass);
 
-        // Enter predefined classes.
+        Source source = Source.instance(context);
+        Options options = Options.instance(context);
+        boolean noModules = options.isSet("noModules");
+        javaBase = source.allowModules() && !noModules
+                ? enterModule(names.java_base)
+                : noModule;
+
+        // Enter predefined classes. All are assumed to be in the java.base module.
         objectType = enterClass("java.lang.Object");
         objectsType = enterClass("java.util.Objects");
         classType = enterClass("java.lang.Class");
@@ -433,7 +471,7 @@ public class Symtab {
         cloneNotSupportedExceptionType = enterClass("java.lang.CloneNotSupportedException");
         annotationType = enterClass("java.lang.annotation.Annotation");
         classLoaderType = enterClass("java.lang.ClassLoader");
-        enumSym = enterClass(names.java_lang_Enum);
+        enumSym = enterClass(javaBase, names.java_lang_Enum);
         enumFinalFinalize =
             new MethodSymbol(PROTECTED|FINAL|HYPOTHETICAL,
                              names.finalize,
@@ -525,6 +563,10 @@ public class Symtab {
      *  and owner and enter in `classes' unless already there.
      */
     public ClassSymbol enterClass(Name name, TypeSymbol owner) {
+        return enterClass(null, name, owner);
+    }
+
+    public ClassSymbol enterClass(ModuleSymbol msym, Name name, TypeSymbol owner) {
         Name flatname = TypeSymbol.formFlatName(name, owner);
         ClassSymbol c = classes.get(flatname);
         if (c == null) {
@@ -551,7 +593,11 @@ public class Symtab {
      * @return a newly created class symbol
      * @throws AssertionError if the class symbol already exists
      */
-    public ClassSymbol enterClass(Name flatName, JavaFileObject classFile) {
+//    public ClassSymbol enterClass(Name flatName, JavaFileObject classFile) {
+//        return enterClass(null, flatName, classFile);
+//    }
+
+    public ClassSymbol enterClass(ModuleSymbol msym, Name flatName, JavaFileObject classFile) {
         ClassSymbol cs = classes.get(flatName);
         if (cs != null) {
             String msg = Log.format("%s: completer = %s; class file = %s; source file = %s",
@@ -564,7 +610,10 @@ public class Symtab {
         Name packageName = Convert.packagePart(flatName);
         PackageSymbol owner = packageName.isEmpty()
                                 ? unnamedPackage
-                                : enterPackage(packageName);
+                                : enterPackage(msym, packageName);
+        if (owner != unnamedPackage && owner.modle == null && msym != null) {
+            owner.modle = msym;
+        }
         cs = defineClass(Convert.shortName(flatName), owner);
         cs.classfile = classFile;
         classes.put(flatName, cs);
@@ -575,37 +624,66 @@ public class Symtab {
      *  and enter in `classes' unless already there.
      */
     public ClassSymbol enterClass(Name flatname) {
+        return enterClass(null, flatname);
+    }
+
+    public ClassSymbol enterClass(ModuleSymbol msym, Name flatname) {
         ClassSymbol c = classes.get(flatname);
         if (c == null)
-            return enterClass(flatname, (JavaFileObject)null);
+            return enterClass(msym, flatname, (JavaFileObject)null);
         else
             return c;
     }
 
     /** Check to see if a package exists, given its fully qualified name.
      */
-    public boolean packageExists(Name fullname) {
-        return enterPackage(fullname).exists();
+    public boolean packageExists(ModuleSymbol msym, Name fullname) {
+        return enterPackage(null, fullname).exists();
     }
 
     /** Make a package, given its fully qualified name.
      */
-    public PackageSymbol enterPackage(Name fullname) {
+    public PackageSymbol enterPackage(ModuleSymbol currModule, Name fullname) {
         PackageSymbol p = packages.get(fullname);
         if (p == null) {
             Assert.check(!fullname.isEmpty(), "rootPackage missing!");
             p = new PackageSymbol(
-                Convert.shortName(fullname),
-                enterPackage(Convert.packagePart(fullname)));
+                    Convert.shortName(fullname),
+                    enterPackage(null, Convert.packagePart(fullname)));
             p.completer = initialCompleter;
             packages.put(fullname, p);
+        }
+        if (p.modle == null && currModule != null) {
+            p.modleHint = currModule;
+            if (p.completer == null)
+                p.completer = initialCompleter;
         }
         return p;
     }
 
-    /** Make a package, given its unqualified name and enclosing package.
-     */
-    public PackageSymbol enterPackage(Name name, PackageSymbol owner) {
-        return enterPackage(TypeSymbol.formFullName(name, owner));
+    // temporary, for compatibility
+    public PackageSymbol enterPackage(Name fullname) {
+        return enterPackage(null, fullname);
     }
+
+    public ModuleSymbol enterModule(Name name) {
+        ModuleSymbol msym = modules.get(name);
+        if (msym == null) {
+            msym = ModuleSymbol.create(name, names.module_info);
+            msym.completer = moduleCompleter;
+            modules.put(name, msym);
+        }
+        return msym;
+    }
+
+    public void enterModule(ModuleSymbol msym, Name name) {
+        Assert.checkNull(modules.get(name));
+        Assert.checkNull(msym.name);
+        msym.name = name;
+        ClassSymbol info = msym.module_info;
+        info.fullname = msym.name.append('.', names.module_info);
+        info.flatname = info.fullname;
+        modules.put(name, msym);
+    }
+
 }

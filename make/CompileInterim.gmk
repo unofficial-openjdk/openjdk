@@ -47,6 +47,9 @@ $(eval $(call SetupJavaCompilation,BUILD_INTERIM_LANGTOOLS, \
       $(SUPPORT_OUTPUTDIR)/gensrc/jdk.dev \
       $(SUPPORT_OUTPUTDIR)/gensrc/jdk.javadoc, \
     EXCLUDES := sun jdk, \
+    EXCLUDE_FILES := $(LANGTOOLS_TOPDIR)/src/java.compiler/share/classes/module-info.java \
+      $(LANGTOOLS_TOPDIR)/src/jdk.compiler/share/classes/module-info.java \
+      $(LANGTOOLS_TOPDIR)/src/jdk.javadoc/share/classes/module-info.java, \
     COPY := .gif .xml .css .js javax.tools.JavaCompilerTool, \
     BIN := $(BUILDTOOLS_OUTPUTDIR)/langtools_interim_classes, \
     JAR := $(INTERIM_LANGTOOLS_JAR)))

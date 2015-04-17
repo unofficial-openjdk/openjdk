@@ -1280,6 +1280,10 @@ public class DPrinter {
             return visitType(type, null);
         }
 
+        public Void visitModuleType(ModuleType type, Void ignore) {
+            return visitType(type, null);
+        }
+
         public Void visitPackageType(PackageType type, Void ignore) {
             return visitType(type, null);
         }

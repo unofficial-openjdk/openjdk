@@ -27,12 +27,16 @@ package com.sun.tools.javac.code;
 
 import java.lang.annotation.Annotation;
 import java.lang.annotation.Inherited;
+import java.util.EnumMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
 import javax.lang.model.element.*;
+import javax.tools.JavaFileManager;
 import javax.tools.JavaFileObject;
 
+import com.sun.tools.javac.code.Kinds.Kind;
 import com.sun.tools.javac.code.Attribute.Compound;
 import com.sun.tools.javac.code.TypeAnnotations.AnnotationType;
 import com.sun.tools.javac.code.TypeMetadata.Entry;
@@ -48,6 +52,8 @@ import com.sun.tools.javac.tree.JCTree.JCVariableDecl;
 import com.sun.tools.javac.util.*;
 import com.sun.tools.javac.util.DefinedBy.Api;
 import com.sun.tools.javac.util.Name;
+
+import static com.sun.tools.javac.code.Directive.*;
 import static com.sun.tools.javac.code.Flags.*;
 import static com.sun.tools.javac.code.Kinds.*;
 import static com.sun.tools.javac.code.Kinds.Kind.*;
@@ -836,6 +842,67 @@ public abstract class Symbol extends AnnoConstruct implements Element {
             return v.visitTypeParameter(this, p);
         }
     }
+    /** A class for module symbols.
+     */
+    public static class ModuleSymbol extends TypeSymbol
+            /*implements ModuleElement*/ {
+
+        public Name version;
+        public JavaFileManager.Location sourceLocation;
+        public JavaFileManager.Location classLocation;
+
+        /** All directives, in natural order. */
+        public List<Directive> directives;
+        public List<RequiresDirective> requires;
+        public List<ExportsDirective> exports;
+        public List<ProvidesDirective> provides;
+        public List<UsesDirective> uses;
+
+        public ClassSymbol module_info;
+
+        public Set<PackageSymbol> visiblePackages;
+
+        /**
+         * Create a ModuleSymbol with an associated module-info ClassSymbol.
+         * The name of the module may be null, if it is not known yet.
+         */
+        public static ModuleSymbol create(Name name, Name module_info) {
+            ModuleSymbol msym = new ModuleSymbol(name, null);
+            ClassSymbol info = new ClassSymbol(Flags.MODULE, module_info, msym);
+            info.modle = msym;
+            info.fullname = formFullName(module_info, msym);
+            info.flatname = info.fullname;
+            info.members_field = WriteableScope.create(info);
+            msym.module_info = info;
+            return msym;
+        }
+
+        public ModuleSymbol() {
+            super(MDL, 0, null, null, null);
+            this.type = new ModuleType(this);
+        }
+
+        public ModuleSymbol(Name name, Symbol owner) {
+            super(MDL, 0, name, null, owner);
+            this.type = new ModuleType(this);
+        }
+
+        @Override
+        public String toString() {
+            // TODO: the following strings should be localized
+            // Do this with custom anon subtypes in Symtab
+            String n = (name == null) ? "<unknown>"
+                    : (name.isEmpty()) ? "<unnamed>"
+                    : String.valueOf(name);
+            return n;
+        }
+
+        @Override
+        public <R, P> R accept(ElementVisitor<R, P> v, P p) {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+    }
 
     /** A class for package symbols
      */
@@ -845,6 +912,8 @@ public abstract class Symbol extends AnnoConstruct implements Element {
         public WriteableScope members_field;
         public Name fullname;
         public ClassSymbol package_info; // see bug 6443073
+        public ModuleSymbol modle;
+        public ModuleSymbol modleHint;
 
         public PackageSymbol(Name name, Type type, Symbol owner) {
             super(PCK, 0, name, type, owner);
@@ -935,6 +1004,12 @@ public abstract class Symbol extends AnnoConstruct implements Element {
     /** A class for class symbols
      */
     public static class ClassSymbol extends TypeSymbol implements TypeElement {
+        /**
+         * The module for the class.
+         */
+        // TODO: is this required? the value can be obtained from the enclosing package
+        // Only read access is currently for module-info.class in ClassWriter
+        public ModuleSymbol modle;
 
         /** a scope for all class members; variables, methods and inner classes
          *  type parameters are not part of this scope
