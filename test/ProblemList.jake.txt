@@ -12,31 +12,14 @@ java/lang/invoke/VarargsArrayTest.java				 generic-all
 java/lang/invoke/lambda/LambdaAsm.java                           generic-all
 java/lang/invoke/lambda/LogGeneratedClassesTest.java             generic-all
 
+############################################################################
+
 # jdk_net
 
 java/net/DatagramSocket/SetDatagramSocketImplFactory/ADatagramSocket.java  generic-all
 
 ############################################################################
  
-# jdk_management
- 
-# 8047789
-sun/management/jmxremote/bootstrap/RmiBootstrapTest.sh          generic-all
-sun/management/jmxremote/bootstrap/RmiSslBootstrapTest.sh	generic-all
-
-############################################################################
- 
-# jdk_jmx
- 
-# 8047789
-javax/management/remote/mandatory/passwordAccessFile/PasswordAccessFileTest.java	generic-all
-
-############################################################################
-
-# jdk_other
-
-############################################################################
-
 # svc_tools
 
 # 8073141
