@@ -91,6 +91,27 @@ public class MultiModuleModeTest extends ModuleTestBase {
     }
 
     @Test
+    void testModuleNameMismatch(Path base) throws Exception {
+        Path src = base.resolve("src");
+        Path src_m1 = src.resolve("m1");
+        tb.writeJavaFiles(src_m1, "module m2 { }");
+        Path classes = base.resolve("classes");
+        tb.createDirectories(classes);
+
+        String log = tb.new JavacTask()
+                .options("-XDrawDiagnostics",
+                        "-modulesourcepath", src.toString())
+                .outdir(classes)
+                .files(findJavaFiles(src))
+                .run(ToolBox.Expect.FAIL)
+                .writeAll()
+                .getOutput(ToolBox.OutputKind.DIRECT);
+
+        if (!log.contains("module-info.java:1:8: compiler.err.module.name.mismatch: m2, m1"))
+            throw new Exception("expected output not found");
+    }
+
+    @Test
     void testImplicitModuleSource(Path base) throws Exception {
         Path src = base.resolve("src");
         tb.writeJavaFiles(src.resolve("m1"), "module m1 { }");

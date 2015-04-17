@@ -241,7 +241,16 @@ public class Modules extends JCTree.Visitor {
                     Location locn = getModuleLocation(tree);
                     if (locn != null) {
                         Name name = names.fromString(fileManager.inferModuleName(locn));
-                        ModuleSymbol msym = syms.enterModule(name);
+                        ModuleSymbol msym;
+                        if (tree.defs.head.hasTag(MODULEDEF)) {
+                            JCModuleDecl decl = (JCModuleDecl) tree.defs.head;
+                            msym = decl.sym;
+                            if (msym.name != name) {
+                                log.error(decl.qualId, "module.name.mismatch", msym.name, name);
+                            }
+                        } else {
+                            msym = syms.enterModule(name);
+                        }
                         if (msym.sourceLocation == null) {
                             msym.sourceLocation = locn;
                             if (fileManager.hasLocation(StandardLocation.CLASS_OUTPUT)) {
