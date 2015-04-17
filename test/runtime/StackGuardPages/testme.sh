@@ -3,6 +3,7 @@
 #
 # @test testme.sh
 # @summary Stack guard pages should be installed correctly and removed when thread is detached
+# @ignore 8072481
 # @run shell testme.sh
 #
 

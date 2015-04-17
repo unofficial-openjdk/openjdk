@@ -259,6 +259,7 @@ class Arguments : AllStatic {
   static SystemProperty *_java_home;
   static SystemProperty *_java_class_path;
   static SystemProperty *_sun_boot_class_path;
+  static SystemProperty *_jdk_boot_class_path_append;
 
   // temporary: to emit warning if the default ext dirs are not empty.
   // remove this variable when the warning is no longer needed.
@@ -283,7 +284,7 @@ class Arguments : AllStatic {
   // Value of the conservative maximum heap alignment needed
   static size_t  _conservative_max_heap_alignment;
 
-  static uintx _min_heap_size;
+  static uintx  _min_heap_size;
 
   // Used to store original flag values
   static uintx _min_heap_free_ratio;
@@ -311,6 +312,15 @@ class Arguments : AllStatic {
   static bool _java_compiler;
   static void set_java_compiler(bool arg) { _java_compiler = arg; }
   static bool java_compiler()   { return _java_compiler; }
+
+  // Capture the index location of -Xbootclasspath\a within sysclasspath.
+  // Used when setting up the bootstrap search path in order to
+  // mark the boot loader's append path observability boundary.
+  static int _bootclassloader_append_index;
+
+  // -Xoverride flag
+  static const char* _override_dir;
+  static void set_override_dir(const char* dir) { _override_dir = dir; }
 
   // -Xdebug flag
   static bool _xdebug_mode;
@@ -533,6 +543,17 @@ class Arguments : AllStatic {
   static size_t min_heap_size()             { return _min_heap_size; }
   static void  set_min_heap_size(size_t v)  { _min_heap_size = v;  }
 
+  // -Xbootclasspath/a
+  static int  bootclassloader_append_index() {
+    return _bootclassloader_append_index;
+  }
+  static void set_bootclassloader_append_index(int value) {
+    _bootclassloader_append_index = value;
+  }
+
+  // -Xoverride
+  static const char* override_dir()         { return _override_dir; }
+
   // Returns the original values of -XX:MinHeapFreeRatio and -XX:MaxHeapFreeRatio
   static uintx min_heap_free_ratio()        { return _min_heap_free_ratio; }
   static uintx max_heap_free_ratio()        { return _max_heap_free_ratio; }
@@ -593,8 +614,15 @@ class Arguments : AllStatic {
   static void set_java_home(char *value) { _java_home->set_value(value); }
   static void set_library_path(char *value) { _java_library_path->set_value(value); }
   static void set_ext_dirs(char *value)     { _ext_dirs = os::strdup_check_oom(value); }
-  static void set_sysclasspath(char *value) { _sun_boot_class_path->set_value(value); }
-  static void append_sysclasspath(const char *value) { _sun_boot_class_path->append_value(value); }
+  static void set_jdkbootclasspath_append();
+  static void set_sysclasspath(char *value) {
+    _sun_boot_class_path->set_value(value);
+    set_jdkbootclasspath_append();
+  }
+  static void append_sysclasspath(const char *value) {
+    _sun_boot_class_path->append_value(value);
+    set_jdkbootclasspath_append();
+  }
 
   static char* get_java_home() { return _java_home->value(); }
   static char* get_dll_dir() { return _sun_boot_library_path->value(); }
@@ -605,7 +633,7 @@ class Arguments : AllStatic {
 
 
   // Operation modi
-  static Mode mode()                { return _mode; }
+  static Mode mode()                        { return _mode; }
   static bool is_interpreter_only() { return mode() == _int; }
 
 

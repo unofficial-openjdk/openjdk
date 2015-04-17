@@ -24,8 +24,14 @@
 
 #include "precompiled.hpp"
 #include "classfile/classLoader.hpp"
+#include "classfile/classLoaderData.inline.hpp"
+#include "classfile/imageDecompressor.hpp"
+#include "classfile/imageFile.hpp"
 #include "classfile/javaAssertions.hpp"
 #include "classfile/javaClasses.inline.hpp"
+#include "classfile/moduleEntry.hpp"
+#include "classfile/modules.hpp"
+#include "classfile/packageEntry.hpp"
 #include "classfile/stringTable.hpp"
 #include "classfile/systemDictionary.hpp"
 #include "classfile/vmSymbols.hpp"
@@ -69,6 +75,7 @@
 #include "utilities/copy.hpp"
 #include "utilities/defaultStream.hpp"
 #include "utilities/dtrace.hpp"
+#include "utilities/endian.hpp"
 #include "utilities/events.hpp"
 #include "utilities/histogram.hpp"
 #include "utilities/macros.hpp"
@@ -433,6 +440,19 @@ JVM_ENTRY(jobject, JVM_InitProperties(JNIEnv *env, jobject properties))
         (Arguments::mode() != Arguments::_int)) {
       PUTPROP(props, "sun.management.compiler", compiler_name);
     }
+  }
+
+  // -Xoverride
+  if (Arguments::override_dir() != NULL) {
+    PUTPROP(props, "jdk.runtime.override", Arguments::override_dir());
+  }
+
+  // Additional module dependences and exports
+  if (AddModuleRequires != NULL) {
+    PUTPROP(props, "jdk.runtime.addModuleRequires", AddModuleRequires);
+  }
+  if (AddModuleExports != NULL) {
+    PUTPROP(props, "jdk.runtime.addModuleExports", AddModuleExports);
   }
 
   return properties;
@@ -981,6 +1001,39 @@ JVM_ENTRY(jclass, JVM_FindLoadedClass(JNIEnv *env, jobject loader, jstring name)
 #endif
   return (k == NULL) ? NULL :
             (jclass) JNIHandles::make_local(env, k->java_mirror());
+JVM_END
+
+// Module support //////////////////////////////////////////////////////////////////////////////
+
+JVM_ENTRY(void, JVM_DefineModule(JNIEnv *env, jobject module, jstring version, jstring location,
+                                 jobjectArray packages))
+  JVMWrapper("JVM_DefineModule");
+  Modules::define_module(env, module, version, location, packages);
+JVM_END
+
+JVM_ENTRY(void, JVM_AddModuleExports(JNIEnv *env, jobject from_module, jstring package, jobject to_module))
+  JVMWrapper("JVM_AddModuleExports");
+  Modules::add_module_exports(env, from_module, package, to_module);
+JVM_END
+
+JVM_ENTRY (void, JVM_AddReadsModule(JNIEnv *env, jobject from_module, jobject to_module))
+  JVMWrapper("JVM_AddReadsModule");
+  Modules::add_reads_module(env, from_module, to_module);
+JVM_END
+
+JVM_ENTRY(jboolean, JVM_CanReadModule(JNIEnv *env, jobject asking_module, jobject target_module))
+  JVMWrapper("JVM_CanReadModule");
+  return Modules::can_read_module(env, asking_module, target_module);
+JVM_END
+
+JVM_ENTRY(jboolean, JVM_IsExportedToModule(JNIEnv *env, jobject from_module, jstring package, jobject to_module))
+  JVMWrapper("JVM_IsExportedToModule");
+  return Modules::is_exported_to_module(env, from_module, package, to_module);
+JVM_END
+
+JVM_ENTRY (void, JVM_AddModulePackage(JNIEnv *env, jobject module, jstring package))
+  JVMWrapper("JVM_AddModulePackage");
+  Modules::add_module_package(env, module, package);
 JVM_END
 
 
@@ -3702,3 +3755,125 @@ JVM_ENTRY(void, JVM_GetVersionInfo(JNIEnv* env, jvm_version_info* info, size_t i
   info->is_attachable = AttachListener::is_attach_supported();
 }
 JVM_END
+
+// jdk.internal.jimage /////////////////////////////////////////////////////////
+
+JNIEXPORT jlong JNICALL
+JVM_ImageOpen(JNIEnv *env, jstring path, jboolean big_endian) {
+  const char *nativePath = env->GetStringUTFChars(path, NULL);
+  ImageFileReader* reader = ImageFileReader::open(nativePath, big_endian != JNI_FALSE);
+  env->ReleaseStringUTFChars(path, nativePath);
+  return ImageFileReader::readerToID(reader);
+}
+
+JNIEXPORT void JNICALL
+JVM_ImageClose(JNIEnv *env, jlong id) {
+  ImageFileReader* reader = ImageFileReader::idToReader(id);
+  ImageFileReader::close(reader);
+}
+
+JNIEXPORT jlong JNICALL
+JVM_ImageGetIndexAddress(JNIEnv *env, jlong id) {
+  ImageFileReader* reader = ImageFileReader::idToReader(id);
+  return (jlong)reader->get_index_address();
+}
+
+JNIEXPORT jlong JNICALL
+JVM_ImageGetDataAddress(JNIEnv *env, jlong id) {
+  ImageFileReader* reader = ImageFileReader::idToReader(id);
+  return MemoryMapImage ? (jlong)reader->get_data_address() : 0L;
+}
+
+JNIEXPORT jboolean JNICALL
+JVM_ImageRead(JNIEnv *env, jlong id, jlong offset,
+              jobject uncompressedBuffer, jlong uncompressed_size) {
+  ImageFileReader* reader = ImageFileReader::idToReader(id);
+  u1* uncompressedAddress = (u1*)env->GetDirectBufferAddress(uncompressedBuffer);
+  return (jboolean)reader->read_at(uncompressedAddress, uncompressed_size,
+                                   reader->get_index_size() + offset);
+}
+
+JNIEXPORT jboolean JNICALL
+JVM_ImageReadCompressed(JNIEnv *env,
+                    jlong id, jlong offset,
+                    jobject compressedBuffer, jlong compressed_size,
+                    jobject uncompressedBuffer, jlong uncompressed_size) {
+  ImageFileReader* reader = ImageFileReader::idToReader(id);
+  u1* compressedAddress = (u1*)env->GetDirectBufferAddress(compressedBuffer);
+  u1* uncompressedAddress = (u1*)env->GetDirectBufferAddress(uncompressedBuffer);
+  bool is_read = reader->read_at(compressedAddress, compressed_size,
+                                 reader->get_index_size() + offset);
+  if (is_read) {
+    const ImageStrings strings = reader->get_strings();
+    ImageDecompressor::decompress_resource(compressedAddress, uncompressedAddress,
+    uncompressed_size, &strings, true);
+  }
+  return (jboolean)is_read;
+}
+
+JNIEXPORT jbyteArray JNICALL
+JVM_ImageGetStringBytes(JNIEnv *env, jlong id, jint offset) {
+  ImageFileReader* reader = ImageFileReader::idToReader(id);
+  ImageStrings strings = reader->get_strings();
+  const char* data = strings.get(offset);
+  size_t size = strlen(data);
+  jbyteArray byteArray = env->NewByteArray((jsize)size);
+  jbyte* rawBytes = env->GetByteArrayElements(byteArray, NULL);
+  memcpy(rawBytes, data, size);
+  env->ReleaseByteArrayElements(byteArray, rawBytes, 0);
+  return byteArray;
+}
+
+static jlongArray image_expand_location(JNIEnv *env, ImageLocation& location) {
+  jlongArray attributes = env->NewLongArray(ImageLocation::ATTRIBUTE_COUNT);
+  jlong* rawAttributes = env->GetLongArrayElements(attributes, NULL);
+  for (int kind = ImageLocation::ATTRIBUTE_END + 1;
+           kind < ImageLocation::ATTRIBUTE_COUNT;
+           kind++) {
+    rawAttributes[kind] = location.get_attribute(kind);
+  }
+  env->ReleaseLongArrayElements(attributes, rawAttributes, 0);
+  return attributes;
+}
+
+JNIEXPORT jlongArray JNICALL
+JVM_ImageGetAttributes(JNIEnv *env, jlong id, jint offset) {
+  ImageFileReader* reader = ImageFileReader::idToReader(id);
+  u1* data = reader->get_location_offset_data(offset);
+  if (!data) return NULL;
+  ImageLocation location(data);
+  return image_expand_location(env, location);
+}
+
+JNIEXPORT jlongArray JNICALL
+JVM_ImageFindAttributes(JNIEnv *env, jlong id, jbyteArray utf8) {
+  ResourceMark rm;
+  ImageFileReader* reader = ImageFileReader::idToReader(id);
+  jsize size = env->GetArrayLength(utf8);
+  char* path = NEW_RESOURCE_ARRAY(char, size + 1);
+  jbyte* rawBytes = env->GetByteArrayElements(utf8, NULL);
+  memcpy(path, rawBytes, size);
+  env->ReleaseByteArrayElements(utf8, rawBytes, 0);
+  path[size] = '\0';
+  u1* data = reader->find_location_data(path);
+  if (!data) return NULL;
+  ImageLocation location(data);
+  if (!reader->verify_location(location, path)) return NULL;
+  return image_expand_location(env, location);
+}
+
+JNIEXPORT jintArray JNICALL
+JVM_ImageAttributeOffsets(JNIEnv *env, jlong id) {
+  ImageFileReader* reader = ImageFileReader::idToReader(id);
+  Endian* endian = reader->endian();
+  u4 length = reader->table_length();
+  u4* offsets_table = reader->offsets_table();
+  jintArray offsets = env->NewIntArray(length);
+  jint* rawOffsets = env->GetIntArrayElements(offsets, NULL);
+  for (u4 i = 0; i < length; i++) {
+    rawOffsets[i] = endian->get(offsets_table[i]);
+  }
+  env->ReleaseIntArrayElements(offsets, rawOffsets, 0);
+  return offsets;
+}
+
