@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,7 +25,9 @@
  * @test
  * @bug 8028994
  * @author Staffan Larsen
+ * @modules jdk.attach/sun.tools.attach
  * @library /lib/testlibrary
+ * @modules java.management
  * @build jdk.testlibrary.*
  * @run main CheckOrigin
  */
@@ -59,6 +61,7 @@ public class CheckOrigin {
 
             ProcessBuilder pb = ProcessTools.
                 createJavaProcessBuilder(
+                    "-XX:AddModuleExports=jdk.attach/sun.tools.attach",
                     "-XX:+UseConcMarkSweepGC",  // this will cause UseParNewGC to be FLAG_SET_ERGO
                     "-XX:+PrintGCDetails",
                     "-XX:Flags=" + flagsFile.getAbsolutePath(),

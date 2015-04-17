@@ -286,7 +286,7 @@ public final class ReflectUtil {
         String name = cls.getName();
         int i = name.lastIndexOf('.');
         String pkg = (i != -1) ? name.substring(0, i) : "";
-        return Proxy.isProxyClass(cls) && !pkg.equals(PROXY_PACKAGE);
+        return Proxy.isProxyClass(cls) && !pkg.startsWith(PROXY_PACKAGE);
     }
 
     /**

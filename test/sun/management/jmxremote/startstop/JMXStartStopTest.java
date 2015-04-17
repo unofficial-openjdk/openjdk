@@ -56,6 +56,7 @@ import sun.management.AgentConfigurationError;
  * @test
  * @bug 7110104
  * @library /lib/testlibrary
+ * @modules java.management/sun.management
  * @build jdk.testlibrary.* JMXStartStopTest JMXStartStopDoSomething
  * @run main/othervm/timeout=600 -XX:+UsePerfData JMXStartStopTest
  * @summary Makes sure that enabling/disabling the management agent through JCMD

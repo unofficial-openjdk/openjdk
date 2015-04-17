@@ -32,6 +32,7 @@
  * @bug 7167988
  * @summary PKIX CertPathBuilder in reverse mode doesn't work if more than
  *          one trust anchor is specified
+ * @modules java.base/sun.security.provider.certpath
  * @run main/othervm ReverseBuild
  */
 import java.io.*;

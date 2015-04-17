@@ -380,6 +380,7 @@ public class Agent {
             final Method initializeMethod =
                     adaptorClass.getMethod("initialize",
                     String.class, Properties.class);
+            Agent.class.getModule().addReads(adaptorClass.getModule());
             initializeMethod.invoke(null, snmpPort, props);
         } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException x) {
             // snmp runtime doesn't exist - initialization fails

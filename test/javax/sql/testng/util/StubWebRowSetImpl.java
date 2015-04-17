@@ -20,6 +20,15 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+
+
+/*
+ * @test
+ * @modules java.sql.rowset/com.sun.rowset
+ *          java.sql.rowset/com.sun.rowset.internal
+ *          java.sql.rowset/com.sun.rowset.providers
+ */
+
 package util;
 
 import java.io.IOException;

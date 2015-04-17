@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004, 2008, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2004, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,6 +27,7 @@
  * @summary Test that JMX classes use fully-qualified class names
  * in MBeanNotificationInfo
  * @author Eamonn McManus
+ * @modules java.management
  * @run clean NotificationInfoTest
  * @run build NotificationInfoTest
  * @run main NotificationInfoTest
@@ -82,7 +83,7 @@ public class NotificationInfoTest {
         System.out.println("Checking platform MBeans...");
         checkPlatformMBeans();
 
-        URL codeBase = ClassLoader.getSystemResource("javax/management/MBeanServer.class");
+        URL codeBase = MBeanServer.class.getModule().getResource("javax/management/MBeanServer.class");
         if (codeBase == null) {
             throw new Exception("Could not determine codeBase for " + MBeanServer.class);
         }

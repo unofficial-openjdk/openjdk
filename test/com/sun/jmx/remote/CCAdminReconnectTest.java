@@ -26,6 +26,7 @@
  * @bug 7009998
  * @summary Tests the correct processing of concurrent ClientComunicatorAdmin reconnect requests.
  * @author Jaroslav Bachorik
+ * @modules java.management/com.sun.jmx.remote.internal
  * @run clean CCAdminReconnectTest
  * @run build CCAdminReconnectTest
  * @run main CCAdminReconnectTest

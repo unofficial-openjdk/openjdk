@@ -27,6 +27,7 @@
  * @summary Checks that MBeanServerNotification.toString contains the
  *          MBean name.
  * @author Daniel Fuchs
+ * @modules java.management/com.sun.jmx.mbeanserver
  * @compile MBeanServerNotificationTest.java
  * @run main MBeanServerNotificationTest
  */

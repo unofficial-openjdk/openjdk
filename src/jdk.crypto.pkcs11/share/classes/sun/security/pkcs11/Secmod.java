@@ -514,8 +514,7 @@ public final class Secmod {
 
         private SunPKCS11 newProvider() {
             try {
-                InputStream in = new ByteArrayInputStream(config.getBytes("UTF8"));
-                return new SunPKCS11(in);
+                return new SunPKCS11(new Config("--" + config));
             } catch (Exception e) {
                 // XXX
                 throw new ProviderException(e);

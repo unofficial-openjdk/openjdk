@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,8 +24,9 @@
  */
 package com.sun.security.sasl;
 
-import java.security.AccessController;
-import java.security.PrivilegedAction;
+import java.security.NoSuchAlgorithmException;
+import java.security.InvalidParameterException;
+import java.security.ProviderException;
 
 /**
  * The SASL provider.
@@ -34,12 +35,10 @@ import java.security.PrivilegedAction;
  * - PLAIN
  * - CRAM-MD5
  * - DIGEST-MD5
- * - GSSAPI/Kerberos v5
  * - NTLM
  * And server support for
  * - CRAM-MD5
  * - DIGEST-MD5
- * - GSSAPI/Kerberos v5
  * - NTLM
  */
 
@@ -49,40 +48,74 @@ public final class Provider extends java.security.Provider {
 
     private static final String info = "Sun SASL provider" +
         "(implements client mechanisms for: " +
-        "DIGEST-MD5, GSSAPI, EXTERNAL, PLAIN, CRAM-MD5, NTLM;" +
-        " server mechanisms for: DIGEST-MD5, GSSAPI, CRAM-MD5, NTLM)";
+        "DIGEST-MD5, EXTERNAL, PLAIN, CRAM-MD5, NTLM;" +
+        " server mechanisms for: DIGEST-MD5, CRAM-MD5, NTLM)";
+
+    private static final class ProviderService
+        extends java.security.Provider.Service {
+        ProviderService(java.security.Provider p, String type, String algo,
+            String cn) {
+            super(p, type, algo, cn, null, null);
+        }
+
+        @Override
+        public Object newInstance(Object ctrParamObj)
+            throws NoSuchAlgorithmException {
+            String type = getType();
+            if (ctrParamObj != null) {
+                throw new InvalidParameterException
+                    ("constructorParameter not used with " + type + " engines");
+            }
+
+            String algo = getAlgorithm();
+            try {
+                // DIGEST-MD5, NTLM uses same impl class for client and server
+                if (algo.equals("DIGEST-MD5")) {
+                    return new com.sun.security.sasl.digest.FactoryImpl();
+                }
+                if (algo.equals("NTLM")) {
+                    return new com.sun.security.sasl.ntlm.FactoryImpl();
+                }
+                if (type.equals("SaslClientFactory")) {
+                    if (algo.equals("EXTERNAL") || algo.equals("PLAIN") ||
+                        algo.equals("CRAM-MD5")) {
+                        return new com.sun.security.sasl.ClientFactoryImpl();
+                    }
+                } else if (type.equals("SaslServerFactory")) {
+                    if (algo.equals("CRAM-MD5")) {
+                        return new com.sun.security.sasl.ServerFactoryImpl();
+                    }
+                }
+            } catch (Exception ex) {
+                throw new NoSuchAlgorithmException("Error constructing " +
+                    type + " for " + algo + " using SunSASL", ex);
+            }
+            throw new ProviderException("No impl for " + algo +
+                " " + type);
+        }
+    }
 
     public Provider() {
         super("SunSASL", 1.9d, info);
 
-        AccessController.doPrivileged(new PrivilegedAction<Void>() {
-            public Void run() {
-                // Client mechanisms
-                put("SaslClientFactory.DIGEST-MD5",
-                    "com.sun.security.sasl.digest.FactoryImpl");
-                put("SaslClientFactory.NTLM",
-                    "com.sun.security.sasl.ntlm.FactoryImpl");
-                put("SaslClientFactory.GSSAPI",
-                    "com.sun.security.sasl.gsskerb.FactoryImpl");
+        // Client mechanisms
+        putService(new ProviderService(this, "SaslClientFactory",
+                    "DIGEST-MD5", "com.sun.security.sasl.digest.FactoryImpl"));
+        putService(new ProviderService(this, "SaslClientFactory",
+                    "NTLM", "com.sun.security.sasl.ntlm.FactoryImpl"));
+        putService(new ProviderService(this, "SaslClientFactory",
+                    "EXTERNAL", "com.sun.security.sasl.ClientFactoryImpl"));
+        putService(new ProviderService(this, "SaslClientFactory",
+                    "PLAIN", "com.sun.security.sasl.ClientFactoryImpl"));
+        putService(new ProviderService(this, "SaslClientFactory",
+                    "CRAM-MD5", "com.sun.security.sasl.ClientFactoryImpl"));
 
-                put("SaslClientFactory.EXTERNAL",
-                    "com.sun.security.sasl.ClientFactoryImpl");
-                put("SaslClientFactory.PLAIN",
-                    "com.sun.security.sasl.ClientFactoryImpl");
-                put("SaslClientFactory.CRAM-MD5",
-                    "com.sun.security.sasl.ClientFactoryImpl");
-
-                // Server mechanisms
-                put("SaslServerFactory.CRAM-MD5",
-                    "com.sun.security.sasl.ServerFactoryImpl");
-                put("SaslServerFactory.GSSAPI",
-                    "com.sun.security.sasl.gsskerb.FactoryImpl");
-                put("SaslServerFactory.DIGEST-MD5",
-                    "com.sun.security.sasl.digest.FactoryImpl");
-                put("SaslServerFactory.NTLM",
-                    "com.sun.security.sasl.ntlm.FactoryImpl");
-                return null;
-            }
-        });
+        // Server mechanisms
+        putService(new ProviderService(this, "SaslServerFactory",
+                    "CRAM-MD5", "com.sun.security.sasl.ServerFactoryImpl"));
+        putService(new ProviderService(this, "SaslServerFactory",
+                    "DIGEST-MD5", "com.sun.security.sasl.digest.FactoryImpl"));
+        putService(new ProviderService(this, "SaslServerFactory",
+                    "NTLM", "com.sun.security.sasl.ntlm.FactoryImpl"));
     }
 }

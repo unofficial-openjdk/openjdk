@@ -93,7 +93,7 @@ public class SimpleLaunchingConnector implements LaunchingConnector {
 
     public SimpleLaunchingConnector() {
         try {
-            Class c = Class.forName("com.sun.tools.jdi.SocketTransportService");
+            Class<?> c = Class.forName("com.sun.tools.jdi.SocketTransportService");
             ts = (TransportService)c.newInstance();
         } catch (Exception x) {
             throw new Error(x);

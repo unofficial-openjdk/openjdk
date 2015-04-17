@@ -25,6 +25,7 @@
  * @test
  * @summary Unit test for sun.net.idn.Punycode
  * @bug 4737170
+ * @modules java.base/sun.net.idn java.base/sun.text.normalizer
  * @library .
  * @compile -XDignore.symbol.file TestStringPrep.java NFS4StringPrep.java
  *     TestData.java
@@ -230,7 +231,9 @@ public class TestStringPrep {
     }
 
     public static void TestNamePrepConformance() throws Exception {
-        InputStream stream = StringPrep.class.getResourceAsStream("uidna.spp");
+        InputStream stream = StringPrep.class.getModule()
+                                             .getResource("sun/net/idn/uidna.spp")
+                                             .openStream();
         StringPrep namePrep = new StringPrep(stream);
         stream.close();
         int i;

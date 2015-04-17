@@ -38,7 +38,7 @@ public class MinstTest {
         DemoRun demo;
 
         /* Run demo that uses JVMTI minst agent (no options) */
-        demo = new DemoRun("minst", "exclude=java/*,exclude=javax/*,exclude=com/*,exclude=sun/*" /* options to minst */ );
+        demo = new DemoRun("minst", "exclude=java/*,exclude=javax/*,exclude=com/*,exclude=jdk/*,exclude=sun/*" /* options to minst */ );
         demo.runit(args[0]);
 
         /* Make sure patterns in output look ok */

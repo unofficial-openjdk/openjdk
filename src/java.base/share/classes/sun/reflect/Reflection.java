@@ -25,7 +25,12 @@
 
 package sun.reflect;
 
+import sun.misc.Modules;
+import sun.misc.VM;
+
 import java.lang.reflect.*;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -81,7 +86,15 @@ public class Reflection {
     public static boolean quickCheckMemberAccess(Class<?> memberClass,
                                                  int modifiers)
     {
-        return Modifier.isPublic(getClassAccessFlags(memberClass) & modifiers);
+        if (!Modifier.isPublic(getClassAccessFlags(memberClass) & modifiers))
+            return false;
+
+        if (memberClass.getModule() == null) {
+            return true;
+        } else {
+            // no quick check if member is a public type in a named module
+            return false;
+        }
     }
 
     public static void ensureMemberAccess(Class<?> currentClass,
@@ -95,12 +108,37 @@ public class Reflection {
         }
 
         if (!verifyMemberAccess(currentClass, memberClass, target, modifiers)) {
-            throw new IllegalAccessException("Class " + currentClass.getName() +
-                                             " can not access a member of class " +
-                                             memberClass.getName() +
-                                             " with modifiers \"" +
-                                             Modifier.toString(modifiers) +
-                                             "\"");
+            String currentSuffix = "";
+            String memberSuffix = "";
+            Module m1 = currentClass.getModule();
+            if (m1 != null)
+                currentSuffix = " (" + m1 + ")";
+            Module m2 = memberClass.getModule();
+            if (m2 != null)
+                memberSuffix = " (" + m2 + ")";
+
+            String msg = "Class " + currentClass.getName() +
+                    currentSuffix +
+                    " can not access a member of class " +
+                    memberClass.getName() + memberSuffix +
+                    " with modifiers \"" +
+                    Modifier.toString(modifiers) + "\"";
+
+            // if m1 or m2 are named modules then expand the message to help
+            // troubleshooting
+            if (m1 != null && !m1.canRead(m2)) {
+                msg += ", " + m1 + " does not read " + m2;
+            }
+            if (m2 != null) {
+                String pkg = packageName(memberClass);
+                if (!Modules.isExported(m2, pkg, m1)) {
+                    msg += ", " + m2 + " does not export " + pkg;
+                    if (m1 != null)
+                        msg += " to " + m1;
+                }
+            }
+
+            throwIAE(msg);
         }
     }
 
@@ -122,6 +160,10 @@ public class Reflection {
         if (currentClass == memberClass) {
             // Always succeeds
             return true;
+        }
+
+        if (!verifyModuleAccess(currentClass, memberClass)) {
+            return false;
         }
 
         if (!Modifier.isPublic(getClassAccessFlags(memberClass))) {
@@ -182,9 +224,99 @@ public class Reflection {
         return true;
     }
 
+    /**
+     * Returns {@code true} if memberClass's module is readable by currentClass's
+     * module and memberClass's's module exports memberClass's package to
+     * currentClass's module.
+     */
+    public static boolean verifyModuleAccess(Class<?> currentClass,
+                                             Class<?> memberClass) {
+        return verifyModuleAccess(currentClass.getModule(), memberClass);
+    }
+
+    public static boolean verifyModuleAccess(Module currentModule, Class<?> memberClass) {
+        Module memberModule = memberClass.getModule();
+        if (currentModule == memberModule)
+            return true;  // same module (named or unnamed)
+
+        // do module access check in the VM?
+        // (experimental/performance testing)
+        if (VMAccessCheck.USE_VM_ACCESS_CHECK) {
+            return VMAccessCheck.canAccess(currentModule, memberModule, memberClass);
+        }
+
+        if (currentModule != null) {
+            // named module trying to access member in unnamed module
+            if (memberModule == null)
+                return true;
+
+            // named module trying to access member in another named module
+            if (!currentModule.canRead(memberModule))
+                return false;
+        }
+
+        // check that m2 exports the package to m1
+        return Modules.isExported(memberModule, packageName(memberClass), currentModule);
+    }
+
+    private static String packageName(Class<?> c) {
+        if (c.isArray()) {
+            return packageName(c.getComponentType());
+        } else {
+            String name = c.getName();
+            int dot = name.lastIndexOf('.');
+            if (dot == -1) return "";
+            return name.substring(0, dot);
+        }
+    }
+
+    /**
+     * A holder class for a property value to avoid System.getProperty
+     * early in the startup before java.lang.System is initialized.
+     * Also defines the {@code canAccess} method to use the VM to test
+     * module access.
+     */
+    private static class VMAccessCheck {
+        static final boolean USE_VM_ACCESS_CHECK;
+        static {
+            PrivilegedAction<Boolean> pa =
+                () -> Boolean.getBoolean("sun.reflect.useHotSpotAccessCheck");
+            USE_VM_ACCESS_CHECK = AccessController.doPrivileged(pa);
+        }
+
+        /**
+         * Returns true if m1 reads m2 and memberClass is in a package in m2
+         * that is exported to m1.
+         */
+        static boolean canAccess(Module m1, Module m2, Class<?> memberClass) {
+            if (m1 != null) {
+                // named module trying to access member in unnamed module
+                if (m2 == null)
+                    return true;
+
+                // named module trying to access member in another named module
+                if (!jvmCanReadModule(m1, m2))
+                    return false;
+            }
+
+            // check that m2 exports the package to m1
+            String pkg = packageName(memberClass).replace('.', '/');
+            return jvmIsExportedToModule(m2, pkg, m1);
+        }
+
+    }
+
+    // JVM_CanReadModule
+    private static native boolean jvmCanReadModule(Module from, Module to);
+
+    // JVM_IsExportedToModule
+    private static native boolean jvmIsExportedToModule(Module from, String pkg,
+                                                        Module to);
+
+
     private static boolean isSameClassPackage(Class<?> c1, Class<?> c2) {
         return isSameClassPackage(c1.getClassLoader(), c1.getName(),
-                                  c2.getClassLoader(), c2.getName());
+                c2.getClassLoader(), c2.getName());
     }
 
     /** Returns true if two classes are in the same package; classloader
@@ -348,4 +480,35 @@ public class Reflection {
         }
         return false;
     }
+
+
+    // true to print a stack trace when IAE is thrown
+    private static volatile boolean printStackWhenAccessFails;
+
+    // true if printStackWhenAccessFails has been initialized
+    private static volatile boolean printStackWhenAccessFailsSet;
+
+    /**
+     * Throws IllegalAccessException with the given exception message.
+     */
+    private static void throwIAE(String msg) throws IllegalAccessException {
+        IllegalAccessException iae = new IllegalAccessException(msg);
+        if (!printStackWhenAccessFailsSet && VM.initLevel() >= 1) {
+            // can't use method reference here, might be too early in startup
+            PrivilegedAction<String> pa = new PrivilegedAction<String>() {
+                public String run() {
+                    // legacy property name, it cannot be used to disable checks
+                    return System.getProperty("sun.reflect.enableModuleChecks");
+                }
+            };
+            String s = AccessController.doPrivileged(pa);
+            printStackWhenAccessFails = "debug".equals(s);
+            printStackWhenAccessFailsSet = true;
+        }
+        if (printStackWhenAccessFails) {
+            iae.printStackTrace();
+        }
+        throw iae;
+    }
+
 }
