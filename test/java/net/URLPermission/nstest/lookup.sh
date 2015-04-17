@@ -24,6 +24,7 @@
 
 # @test
 # @library /lib/testlibrary
+# @modules java.base/sun.net.spi.nameservice
 # @build jdk.testlibrary.*
 # @compile -XDignore.symbol.file=true SimpleNameService.java
 #            LookupTest.java SimpleNameServiceDescriptor.java
