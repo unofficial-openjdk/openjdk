@@ -27,7 +27,7 @@
  * @test
  * @option -Dnashorn.mirror.always=false
  * @fork
- * @run
+ * @runif source.reflection.access.issue
  */
 
 // basic API exercise checks

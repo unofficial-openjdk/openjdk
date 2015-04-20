@@ -460,6 +460,14 @@ final class JavaAdapterBytecodeGenerator {
     }
 
     private void generateConstructors(final Constructor<?> ctor) {
+        for (final Class<?> pt : ctor.getParameterTypes()) {
+            if (pt.isPrimitive()) continue;
+            final Module ptMod = pt.getModule();
+            if (ptMod != null) {
+                accessedModules.add(ptMod);
+            }
+        }
+
         if(classOverride) {
             // Generate a constructor that just delegates to ctor. This is used with class-level overrides, when we want
             // to create instances without further per-instance overrides.
