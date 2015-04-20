@@ -24,6 +24,7 @@
  */
 package jdk.tools.jimage;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
@@ -64,7 +65,7 @@ public final class ExtractedImage {
             private final Path path;
 
             FileEntry(Path path, String name) {
-                super(DirArchive.this, path.toString(), name,
+                super(DirArchive.this, getPathName(path), name,
                         Archive.Entry.EntryType.CLASS_OR_RESOURCE);
                 this.path = path;
                 try {
@@ -126,7 +127,7 @@ public final class ExtractedImage {
             if (Files.isDirectory(p)) {
                 return null;
             }
-            String name = p.toString().substring(chop).replace('\\', '/');
+            String name = getPathName(p).substring(chop);
             if (name.startsWith("_")) {
                 return null;
             }
@@ -168,7 +169,8 @@ public final class ExtractedImage {
         Files.walk(dirPath, 1).forEach((p) -> {
             try {
                 if (!dirPath.equals(p)) {
-                    if (p.toString().endsWith(ImageModuleData.META_DATA_EXTENSION)) {
+                    String name = getPathName(p);
+                    if (name.endsWith(ImageModuleData.META_DATA_EXTENSION)) {
                         List<String> lines = Files.readAllLines(p);
                         for (Entry<String, List<String>> entry
                                 : ImageModuleDataWriter.toModulePackages(lines).entrySet()) {
@@ -196,5 +198,9 @@ public final class ExtractedImage {
     void recreateJImage(Path path) throws IOException {
 
         ImageFileCreator.recreateJimage(path, archives, modulePackages, plugins);
+    }
+
+    private static String getPathName(Path path) {
+        return path.toString().replace(File.separatorChar, '/');
     }
 }

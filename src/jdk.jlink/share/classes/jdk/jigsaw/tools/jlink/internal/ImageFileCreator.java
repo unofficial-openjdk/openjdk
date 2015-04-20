@@ -92,6 +92,14 @@ public final class ImageFileCreator {
     }
 
     public static ImageFileCreator create(Path output,
+            Set<Archive> archives,
+            ByteOrder byteOrder)
+            throws IOException {
+        return ImageFileCreator.create(output, archives, byteOrder,
+                new ImagePluginStack());
+    }
+
+    public static ImageFileCreator create(Path output,
                                    Set<Archive> archives,
                                    ByteOrder byteOrder,
                                    ImagePluginStack plugins)
@@ -204,13 +212,13 @@ public final class ImageFileCreator {
             moduleData.addLocation(BasicImageWriter.BOOT_NAME, writer);
             long offset = moduleData.size();
 
-            List<byte[]> content = new ArrayList<>();
+            List<ResourcePool.Resource> content = new ArrayList<>();
             List<String> paths = new ArrayList<>();
                  // the order of traversing the resources and the order of
             // the module content being written must be the same
             for (ResourcePool.Resource res : resultResources.getResources()) {
                 String path = res.getPath();
-                content.add(res.getByteArray());
+                content.add(res);
                 long uncompressedSize = res.getLength();
                 long compressedSize = 0;
                 if (res instanceof ResourcePool.CompressedResource) {
@@ -246,7 +254,8 @@ public final class ImageFileCreator {
             moduleData.writeTo(out);
 
             // write module content
-            for (byte[] buf : content) {
+            for(ResourcePool.Resource res : content) {
+                byte[] buf = res.getByteArray();
                 out.write(buf, 0, buf.length);
             }
 
