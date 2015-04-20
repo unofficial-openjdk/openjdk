@@ -29,6 +29,7 @@
  *          the input CompositeData is invalid.
  * @author  Mandy Chung
  *
+ * @modules java.management/sun.management
  * @compile OpenTypeConverter.java
  * @build MemoryNotifInfoCompositeData
  * @run main MemoryNotifInfoCompositeData

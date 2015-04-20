@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2003, 2004, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2003, 2015, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -26,7 +26,10 @@
 # @bug     6528083
 # @summary Test RMI Bootstrap
 #
+# @modules java.management/sun.management
+#          java.management/sun.management.jmxremote
 # @library /lib/testlibrary
+# @modules java.management
 # @build jdk.testlibrary.* TestLogger Utils RmiBootstrapTest
 # @run shell/timeout=300  RmiBootstrapTest.sh
 
@@ -47,6 +50,9 @@ chmod -R 777 ${TESTCLASSES}/ssl
 DEBUGOPTIONS=""
 export DEBUGOPTIONS
 
+EXTRAOPTIONS="-XX:AddModuleExports=java.management/sun.management,java.management/sun.management.jmxremote"
+export EXTRAOPTIONS
+
 # Call the common generic test
 #
 # No need to since bug 4267864 is now fixed. 
@@ -54,7 +60,7 @@ export DEBUGOPTIONS
 echo -------------------------------------------------------------
 echo Launching test for `basename $0 .sh`
 echo -------------------------------------------------------------
-sh ${TESTSRC}/../RunTest.sh ${DEBUGOPTIONS} ${TESTCLASS}
+sh ${TESTSRC}/../RunTest.sh ${DEBUGOPTIONS} ${EXTRAOPTIONS} ${TESTCLASS}
 result=$?
 restoreFilePermissions `ls ${TESTSRC}/*_test*.in`
 exit $result

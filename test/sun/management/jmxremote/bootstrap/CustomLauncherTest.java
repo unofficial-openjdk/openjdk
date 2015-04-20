@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -40,7 +40,9 @@ import jdk.testlibrary.ProcessTools;
 /**
  * @test
  * @bug 6434402 8004926
+ * @modules java.management/sun.management
  * @library /lib/testlibrary
+ * @modules java.management
  * @build jdk.testlibrary.*
  * @build TestManager TestApplication CustomLauncherTest
  * @run main/othervm CustomLauncherTest
@@ -146,6 +148,7 @@ public class CustomLauncherTest {
             ProcessBuilder client = ProcessTools.createJavaProcessBuilder(
                 "-cp",
                 TEST_CLASSPATH,
+                "-XX:AddModuleExports=java.management/sun.management",
                 "TestManager",
                 String.valueOf(serverPrc.getPid()),
                 port.get(),

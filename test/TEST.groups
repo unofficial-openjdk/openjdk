@@ -20,6 +20,10 @@
 #  questions.
 #
 
+# jigsaw related tests
+jdk_jigsaw = \
+    jdk/jigsaw
+
 ###############################################################################
 #
 # Tiered testing definitions
@@ -56,6 +60,7 @@ jdk_lang = \
     sun/misc \
     sun/reflect \
     jdk/lambda \
+    jdk/jigsaw \
     vm
 
 # All of the java.util package

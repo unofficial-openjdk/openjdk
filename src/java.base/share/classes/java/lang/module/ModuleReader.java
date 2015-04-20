@@ -1,0 +1,194 @@
+/*
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ *
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation.  Oracle designates this
+ * particular file as subject to the "Classpath" exception as provided
+ * by Oracle in the LICENSE file that accompanied this code.
+ *
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
+ *
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ *
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
+ */
+
+package java.lang.module;
+
+import java.io.Closeable;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+import java.nio.ByteBuffer;
+import java.util.Arrays;
+
+/**
+ * Locates or reads resources in a module artifact.
+ *
+ * <p> A module reader is intended for cases where access to the resources in
+ * a module artifact are required, regardless of whether the module has been
+ * reified. A framework that scans a collection of module artifacts on the file
+ * system, for example, may use the {@link #getResourceAsStream
+ * getResourceAsStream} method to access a specific resource in each module for
+ * example.
+ *
+ * <p> A module reader is also intended to be used by {@code ClassLoader}
+ * implementations that load classes and resources from modules. The {@link
+ * #findResource findResource} method may be used to locate a resource, and the
+ * {@link #getResourceAsBuffer getResourceAsBuffer} method may be used get a buffer
+ * with the contents of the resource.
+ *
+ * <p> A {@code ModuleReader} is {@link ModuleArtifact#open open} upon creation and
+ * is closed by invoking the {@link #close close} method. Failure to close a module
+ * reader may result in a resource leak. The {@code try-with-resources} statement
+ * provides a useful construct to ensure that the module reader is closed.
+ *
+ * @see ModuleArtifact
+ * @since 1.9
+ */
+
+public interface ModuleReader extends Closeable {
+
+    /**
+     * Returns the URI for a resource in the module; {@code null} if not
+     * found or the module reader is closed.
+     *
+     * @see ModuleArtifact#location()
+     * @see Class#getResource(String)
+     * @see ClassLoader#findResource(ModuleArtifact, String)
+     */
+    URI findResource(String name);
+
+    /**
+     * Returns an input stream for reading the resource. Returns {@code null}
+     * if the resource could not be found.
+     *
+     * @implSpec The default implementation uses {@link #findResource} to
+     * locate the resource, and if found, opens a connection to the resource.
+     *
+     * @throws IOException
+     *         If an I/O error occurs or the module reader is closed
+     * @throws SecurityException
+     *         If denied by the security manager
+     *
+     * @see java.lang.reflect.Module#getResourceAsStream(String)
+     */
+    default InputStream getResourceAsStream(String name) throws IOException {
+        URI uri = findResource(name);
+        if (uri != null) {
+            return uri.toURL().openStream();
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * Returns a byte buffer with the contents of a resource or {@code null}
+     * if the resource is not found. The element at the returned buffer's
+     * position is the first byte of the resource, the element at the buffer's
+     * limit is the last byte of the resource.
+     *
+     * <p> The {@code releaseBuffer} should be invoked after consuming the
+     * contents of the buffer. This will ensure, for example, that direct
+     * buffers are returned to a buffer pool in implementations that use a
+     * pool of direct buffers.
+     *
+     * @apiNote This method is intended for high-performance class loading. It
+     * is not capable (or intended) to read arbitrary large resources that
+     * could potentially be 2GB or larger.
+     *
+     * @implSpec The default implementation uses {@link #getResourceAsStream}
+     * to reads all bytes from the input stream into a byte buffer.
+     *
+     * @throws IOException
+     *         If an I/O error occurs or the module reader is closed
+     * @throws SecurityException
+     *         If denied by the security manager
+     *
+     * @see ClassLoader#defineClass(String, ByteBuffer, java.security.ProtectionDomain)
+     */
+    default ByteBuffer getResourceAsBuffer(String name) throws IOException {
+        final int BUFFER_SIZE = 8192;
+        final int MAX_BUFFER_SIZE = Integer.MAX_VALUE - 8;
+
+        InputStream in = getResourceAsStream(name);
+        if (in == null) {
+            // not found
+            return null;
+        }
+
+        try (in) {
+            int capacity = in.available();
+            if (capacity == 0)
+                capacity = BUFFER_SIZE;
+
+            byte[] buf = new byte[capacity];
+            int nread = 0;
+            int n;
+            for (;;) {
+                // read to EOF
+                while ((n = in.read(buf, nread, capacity - nread)) > 0)
+                    nread += n;
+
+                // if last call to source.read() returned -1, we are done
+                // otherwise, try to read one more byte; if that failed we're done too
+                if (n < 0 || (n = in.read()) < 0)
+                    break;
+
+                // one more byte was read; need to allocate a larger buffer
+                if (capacity <= MAX_BUFFER_SIZE - capacity) {
+                    capacity = Math.max(capacity << 1, BUFFER_SIZE);
+                } else {
+                    if (capacity == MAX_BUFFER_SIZE)
+                        throw new OutOfMemoryError("Required array size too large");
+                    capacity = MAX_BUFFER_SIZE;
+                }
+                buf = Arrays.copyOf(buf, capacity);
+                buf[nread++] = (byte) n;
+            }
+
+            return ByteBuffer.wrap(buf, 0, nread);
+        }
+    }
+
+    /**
+     * Returns a byte buffer to the buffer pool. This method should be
+     * invoked after consuming the contents of the buffer returned by
+     * the {@code readResource} method. The behavior of this method when
+     * invoked to release a buffer that has already been released, or
+     * the behavior when invoked to release a buffer after a {@code
+     * ModuleReader} is closed is implementation specific and therefore
+     * not specified.
+     *
+     * @implSpec The default implementation does nothing.
+     */
+    default void releaseBuffer(ByteBuffer bb) { }
+
+    /**
+     * Closes the module reader. Once closed then subsequent calls to locate or
+     * read a resource will fail by returning {@code null} or throwing {@code
+     * IOException}.
+     *
+     * <p> A module reader is not required to be asynchronously closeable. If a
+     * thread is reading a resource and another thread invokes the close method,
+     * then the second thread may block until the read operation is complete.
+     *
+     * <p> The behavior of {@code InputStream}s obtained using the {@link
+     * #getResourceAsStream getResourceAsStream} method and used after the
+     * module reader is closed is implementation specific and therefore not
+     * specified.
+     */
+    @Override
+    void close() throws IOException;
+
+}

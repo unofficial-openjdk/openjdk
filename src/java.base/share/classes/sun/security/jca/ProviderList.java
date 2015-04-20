@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,8 +33,11 @@ import java.security.Provider.Service;
 /**
  * List of Providers. Used to represent the provider preferences.
  *
- * The system starts out with a ProviderList that only has the classNames
- * of the Providers. Providers are loaded on demand only when needed.
+ * The system starts out with a ProviderList that only has the names
+ * of the Providers.
+ * When using ServiceLoader to load the providers, Providers are created
+ * semi-eagerly as we iterate through them looking for a match.
+ * VALTBD: support the legacy signed jars for maximum backward compatibility.
  *
  * For compatibility reasons, Providers that could not be loaded are ignored
  * and internally presented as the instance EMPTY_PROVIDER. However, those
@@ -178,9 +181,9 @@ public final class ProviderList {
             if (k == -1) {
                 config = new ProviderConfig(entry);
             } else {
-                String className = entry.substring(0, k);
-                String argument = entry.substring(k + 1).trim();
-                config = new ProviderConfig(className, argument);
+                String provName = entry.substring(0, k);
+                String arguments = entry.substring(k + 1).trim();
+                config = new ProviderConfig(provName, arguments);
             }
 
             // Get rid of duplicate providers.

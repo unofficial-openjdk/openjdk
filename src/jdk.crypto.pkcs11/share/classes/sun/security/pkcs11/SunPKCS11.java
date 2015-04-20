@@ -62,13 +62,8 @@ public final class SunPKCS11 extends AuthProvider {
 
     static final Debug debug = Debug.getInstance("sunpkcs11");
 
-    private static int dummyConfigId;
-
     // the PKCS11 object through which we make the native calls
     final PKCS11 p11;
-
-    // name of the configuration file
-    private final String configName;
 
     // configuration information
     final Config config;
@@ -94,17 +89,26 @@ public final class SunPKCS11 extends AuthProvider {
     }
 
     public SunPKCS11() {
-        super("SunPKCS11-Dummy", 1.9d, "SunPKCS11-Dummy");
-        throw new ProviderException
-            ("SunPKCS11 requires configuration file argument");
+        this(defConfig);
     }
 
-    public SunPKCS11(String configName) {
-        this(checkNull(configName), null);
-    }
-
-    public SunPKCS11(InputStream configStream) {
-        this(getDummyConfigName(), checkNull(configStream));
+    @Override
+    public Provider configure(String... configArgs) throws InvalidParameterException {
+        if (configArgs == null || (configArgs.length != 1)) {
+            throw new InvalidParameterException("SunPKCS11 requires a configuration file");
+        }
+        try {
+            return AccessController.doPrivileged(new PrivilegedExceptionAction<Provider>() {
+                @Override
+                public Provider run() throws Exception {
+                    String newConfigName = configArgs[0];
+                    return new SunPKCS11(new Config(checkNull(newConfigName)));
+                }
+            });
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return null;
+        }
     }
 
     private static <T> T checkNull(T obj) {
@@ -114,25 +118,48 @@ public final class SunPKCS11 extends AuthProvider {
         return obj;
     }
 
-    private static synchronized String getDummyConfigName() {
-        int id = ++dummyConfigId;
-        return "---DummyConfig-" + id + "---";
+    private static final Config defConfig;
+    static {
+        Config c = null;
+        if (System.getProperty("os.name").startsWith("SunOS")) {
+            try {
+                c = new Config(AccessController.doPrivileged(new PrivilegedAction<String>() {
+                    public String run() {
+                        String sep = System.getProperty("file.separator");
+                        String javaHome = System.getProperty("java.home");
+                        return javaHome + sep + "conf" + sep + "security" + sep +
+                            "sunpkcs11-solaris.cfg";
+                    }
+                }));
+            } catch (IOException ioe) {
+                if (debug != null) {
+                    System.out.println("Error parsing default config: " + ioe);
+                    ioe.printStackTrace();
+                }
+            }
+        }
+        defConfig = (c == null? Config.getDummyConfig() : c);
     }
 
-    /**
-     * @deprecated use new SunPKCS11(String) or new SunPKCS11(InputStream)
-     *         instead
-     */
-    @Deprecated
-    public SunPKCS11(String configName, InputStream configStream) {
-        super("SunPKCS11-" +
-            Config.getConfig(configName, configStream).getName(),
-            1.9d, Config.getConfig(configName, configStream).getDescription());
-        this.configName = configName;
-        this.config = Config.removeConfig(configName);
+    SunPKCS11(Config c) {
+        super("SunPKCS11-" + c.getName(), 1.9d, c.getDescription());
+        this.config = c;
+
+        // stop here with minimum initialization when Config.DUMMY is used
+        if (c == Config.getDummyConfig()) {
+            p11 = null;
+            slotID = -1;
+            removable = false;
+            nssModule = null;
+            nssUseSecmodTrust = false;
+            if (debug != null) {
+                System.out.println("SunPKCS11 loading Config.DUMMY");
+            }
+            return;
+        }
 
         if (debug != null) {
-            System.out.println("SunPKCS11 loading " + configName);
+            System.out.println("SunPKCS11 loading " + config.getFileName());
         }
 
         String library = config.getLibrary();
@@ -1455,7 +1482,7 @@ public final class SunPKCS11 extends AuthProvider {
 
         SunPKCS11Rep(SunPKCS11 provider) throws NotSerializableException {
             providerName = provider.getName();
-            configName = provider.configName;
+            configName = provider.config.getFileName();
             if (Security.getProvider(providerName) != provider) {
                 throw new NotSerializableException("Only SunPKCS11 providers "
                     + "installed in java.security.Security can be serialized");
@@ -1464,7 +1491,7 @@ public final class SunPKCS11 extends AuthProvider {
 
         private Object readResolve() throws ObjectStreamException {
             SunPKCS11 p = (SunPKCS11)Security.getProvider(providerName);
-            if ((p == null) || (p.configName.equals(configName) == false)) {
+            if ((p == null) || (p.config.getFileName().equals(configName) == false)) {
                 throw new NotSerializableException("Could not find "
                         + providerName + " in installed providers");
             }

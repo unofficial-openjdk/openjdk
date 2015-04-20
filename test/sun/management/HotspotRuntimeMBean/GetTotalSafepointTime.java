@@ -24,6 +24,7 @@
 /*
  * @test
  * @bug     4858522
+ * @modules java.management/sun.management
  * @summary Basic unit test of HotspotRuntimeMBean.getTotalSafepointTime()
  * @author  Steve Bohne
  */

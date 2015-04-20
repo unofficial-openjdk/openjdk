@@ -383,17 +383,14 @@ public class SyncFactory {
                         strFileSep + "rowset" + strFileSep +
                         "rowset.properties";
 
-                ClassLoader cl = Thread.currentThread().getContextClassLoader();
-
                 try {
                     AccessController.doPrivileged((PrivilegedExceptionAction<Void>) () -> {
-                        try (InputStream stream = (cl == null) ?
-                                ClassLoader.getSystemResourceAsStream(ROWSET_PROPERTIES)
-                                : cl.getResourceAsStream(ROWSET_PROPERTIES)) {
-                            if (stream == null) {
-                                throw new SyncFactoryException("Resource " + ROWSET_PROPERTIES + " not found");
-                            }
-                            properties.load(stream);
+                        InputStream in = SyncFactory.class.getModule().getResourceAsStream(ROWSET_PROPERTIES);
+                        if (in == null) {
+                            throw new SyncFactoryException("Resource " + ROWSET_PROPERTIES + " not found");
+                        }
+                        try (in) {
+                            properties.load(in);
                         }
                         return null;
                     });

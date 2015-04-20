@@ -34,6 +34,7 @@ import java.nio.charset.Charset;
 import java.nio.file.AccessMode;
 import java.nio.file.ClosedFileSystemException;
 import java.nio.file.CopyOption;
+import java.nio.file.LinkOption;
 import java.nio.file.FileStore;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystemException;
@@ -74,11 +75,10 @@ import jdk.internal.jimage.UTF8String;
  */
 class JrtFileSystem extends FileSystem {
     private static final Charset UTF_8 = Charset.forName("UTF-8");
+
     private final JrtFileSystemProvider provider;
     // System image readers
     private ImageReader bootImage;
-    private ImageReader extImage;
-    private ImageReader appImage;
     // root path
     private final JrtPath rootPath;
     private volatile boolean isOpen;
@@ -101,15 +101,12 @@ class JrtFileSystem extends FileSystem {
             throws IOException {
         this.provider = provider;
         checkExists(SystemImages.bootImagePath);
-        checkExists(SystemImages.extImagePath);
-        checkExists(SystemImages.appImagePath);
 
-        // open image files
+        // open image file
         this.bootImage = openImage(SystemImages.bootImagePath);
-        this.extImage = openImage(SystemImages.extImagePath);
-        this.appImage = openImage(SystemImages.appImagePath);
 
-        rootPath = new JrtPath(this, new byte[]{'/'});
+        byte[] root = new byte[] { '/' };
+        rootPath = new JrtPath(this, root);
         isOpen = true;
     }
 
@@ -149,13 +146,9 @@ class JrtFileSystem extends FileSystem {
         synchronized(this) {
             isOpen = false;
 
-            // close all image readers and null out
+            // close all image reader and null out
             bootImage.close();
-            extImage.close();
-            appImage.close();
             bootImage = null;
-            extImage = null;
-            appImage = null;
         }
     }
 
@@ -289,21 +282,45 @@ class JrtFileSystem extends FileSystem {
         }
     }
 
-    private NodeAndImage findNode(byte[] path) throws IOException {
+    private NodeAndImage lookup(byte[] path) {
         ImageReader image = bootImage;
         Node node = bootImage.findNode(path);
-        if (node == null) {
-            image = extImage;
-            node = extImage.findNode(path);
+
+        return node != null? new NodeAndImage(node, image) : null;
+    }
+
+    private NodeAndImage lookupSymbolic(byte[] path) {
+        for (int i = 1; i < path.length; i++) {
+            if (path[i] == (byte)'/') {
+                byte[] prefix = Arrays.copyOfRange(path, 0, i);
+                NodeAndImage ni = lookup(prefix);
+                if (ni == null) {
+                    break;
+                }
+
+                if (ni.node.isLink()) {
+                    Node link = ni.node.resolveLink(true);
+                    // resolved symbolic path concatenated to the rest of the path
+                    UTF8String resPath = link.getName().concat(new UTF8String(path, i));
+                    byte[] resPathBytes = resPath.getBytesCopy();
+                    ni = lookup(resPathBytes);
+                    return ni != null? ni : lookupSymbolic(resPathBytes);
+                }
+            }
         }
-        if (node == null) {
-            image = appImage;
-            node = appImage.findNode(path);
+
+        return null;
+    }
+
+    private NodeAndImage findNode(byte[] path) throws IOException {
+        NodeAndImage ni = lookup(path);
+        if (ni == null) {
+            ni = lookupSymbolic(path);
+            if (ni == null) {
+                throw new NoSuchFileException(getString(path));
+            }
         }
-        if (node == null || node.isHidden()) {
-            throw new NoSuchFileException(getString(path));
-        }
-        return new NodeAndImage(node, image);
+        return ni;
     }
 
     private NodeAndImage checkNode(byte[] path) throws IOException {
@@ -321,10 +338,28 @@ class JrtFileSystem extends FileSystem {
         return ni;
     }
 
+    static boolean followLinks(LinkOption... options) {
+        if (options != null) {
+            for (LinkOption lo : options) {
+                if (lo == LinkOption.NOFOLLOW_LINKS) {
+                    return false;
+                } else if (lo == null) {
+                    throw new NullPointerException();
+                } else {
+                    throw new AssertionError("should not reach here");
+                }
+            }
+        }
+        return true;
+    }
+
     // package private helpers
-    JrtFileAttributes getFileAttributes(byte[] path)
+    JrtFileAttributes getFileAttributes(byte[] path, LinkOption... options)
             throws IOException {
         NodeAndImage ni = checkNode(path);
+        if (ni.node.isLink() && followLinks(options)) {
+            return new JrtFileAttributes(ni.node.resolveLink(true));
+        }
         return new JrtFileAttributes(ni.node);
     }
 
@@ -343,11 +378,13 @@ class JrtFileSystem extends FileSystem {
         return true;
     }
 
-    boolean isDirectory(byte[] path)
+    boolean isDirectory(byte[] path, boolean resolveLinks)
             throws IOException {
         ensureOpen();
         NodeAndImage ni = checkNode(path);
-        return ni.node.isDirectory();
+        return resolveLinks && ni.node.isLink()?
+            ni.node.resolveLink(true).isDirectory() :
+            ni.node.isDirectory();
     }
 
     JrtPath toJrtPath(String path) {
@@ -356,6 +393,26 @@ class JrtFileSystem extends FileSystem {
 
     JrtPath toJrtPath(byte[] path) {
         return new JrtPath(this, path);
+    }
+
+    boolean isSameFile(JrtPath p1, JrtPath p2) throws IOException {
+        NodeAndImage n1 = findNode(p1.getName());
+        NodeAndImage n2 = findNode(p2.getName());
+        return n1.node.equals(n2.node);
+    }
+
+    boolean isLink(JrtPath jrtPath) throws IOException {
+        return findNode(jrtPath.getName()).node.isLink();
+    }
+
+    JrtPath resolveLink(JrtPath jrtPath) throws IOException {
+        NodeAndImage ni = findNode(jrtPath.getName());
+        if (ni.node.isLink()) {
+            Node node = ni.node.resolveLink();
+            return toJrtPath(node.getName().getBytesCopy());
+        }
+
+        return jrtPath;
     }
 
     /**
@@ -369,55 +426,81 @@ class JrtFileSystem extends FileSystem {
     Iterator<Path> iteratorOf(byte[] path, String childPrefix)
             throws IOException {
         NodeAndImage ni = checkNode(path);
-        if (!ni.node.isDirectory()) {
+        Node node = ni.node.resolveLink(true);
+
+        if (!node.isDirectory()) {
             throw new NotDirectoryException(getString(path));
         }
 
-        if (ni.node.isRootDir()) {
+        if (node.isRootDir()) {
             return rootDirIterator(path, childPrefix);
+        } else if (node.isModulesDir()) {
+            return modulesDirIterator(path, childPrefix);
+        } else if (node.isPackagesDir()) {
+            return packagesDirIterator(path, childPrefix);
         }
 
-        return nodesToIterator(toJrtPath(path), childPrefix, ni.node.getChildren());
+        return nodesToIterator(toJrtPath(path), childPrefix, node.getChildren());
     }
 
     private Iterator<Path> nodesToIterator(Path path, String childPrefix, List<Node> childNodes) {
         List<Path> childPaths;
         if (childPrefix == null) {
             childPaths = childNodes.stream()
-                .filter(Node::isVisible)
                 .map(child -> toJrtPath(child.getNameString()))
                 .collect(Collectors.toCollection(ArrayList::new));
         } else {
             childPaths = childNodes.stream()
-                .filter(Node::isVisible)
                 .map(child -> toJrtPath(childPrefix + child.getNameString().substring(1)))
                 .collect(Collectors.toCollection(ArrayList::new));
         }
         return childPaths.iterator();
     }
 
-    private List<Node> rootChildren;
-    private static void addRootDirContent(List<Node> dest, List<Node> src) {
-        for (Node n : src) {
-            // only module directories at the top level. Filter other stuff!
-            if (n.isModuleDir()) {
-                dest.add(n);
+    private void addRootDirContent(List<Node> children) {
+        for (Node child : children) {
+            if (!(child.isModulesDir() || child.isPackagesDir())) {
+                rootChildren.add(child);
             }
         }
     }
 
+    private List<Node> rootChildren;
     private synchronized void initRootChildren(byte[] path) {
         if (rootChildren == null) {
             rootChildren = new ArrayList<>();
-            addRootDirContent(rootChildren, bootImage.findNode(path).getChildren());
-            addRootDirContent(rootChildren, extImage.findNode(path).getChildren());
-            addRootDirContent(rootChildren, appImage.findNode(path).getChildren());
+            rootChildren.addAll(bootImage.findNode(path).getChildren());
         }
     }
 
     private Iterator<Path> rootDirIterator(byte[] path, String childPrefix) throws IOException {
         initRootChildren(path);
         return nodesToIterator(rootPath, childPrefix, rootChildren);
+    }
+
+    private List<Node> modulesChildren;
+    private synchronized void initModulesChildren(byte[] path) {
+        if (modulesChildren == null) {
+            modulesChildren = new ArrayList<>();
+            modulesChildren.addAll(bootImage.findNode(path).getChildren());
+        }
+    }
+
+    private Iterator<Path> modulesDirIterator(byte[] path, String childPrefix) throws IOException {
+        initModulesChildren(path);
+        return nodesToIterator(new JrtPath(this, path), childPrefix, modulesChildren);
+    }
+
+    private List<Node> packagesChildren;
+    private synchronized void initPackagesChildren(byte[] path) {
+        if (packagesChildren == null) {
+            packagesChildren = new ArrayList<>();
+            packagesChildren.addAll(bootImage.findNode(path).getChildren());
+        }
+    }
+    private Iterator<Path> packagesDirIterator(byte[] path, String childPrefix) throws IOException {
+        initPackagesChildren(path);
+        return nodesToIterator(new JrtPath(this, path), childPrefix, packagesChildren);
     }
 
     void createDirectory(byte[] dir, FileAttribute<?>... attrs)
