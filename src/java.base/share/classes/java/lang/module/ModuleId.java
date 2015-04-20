@@ -33,9 +33,8 @@ import java.io.*;
  * version. </p>
  */
 
-@SuppressWarnings("serial")             // serialVersionUID intentionally omitted
 public final class ModuleId
-    implements Comparable<ModuleId>, Serializable
+    implements Comparable<ModuleId>
 {
 
     private final String name;

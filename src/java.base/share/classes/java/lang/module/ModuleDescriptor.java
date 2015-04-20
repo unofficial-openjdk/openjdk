@@ -25,7 +25,6 @@
 
 package java.lang.module;
 
-import java.io.Serializable;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -37,9 +36,8 @@ import static java.util.Objects.*;
  * A module descriptor.
  */
 
-@SuppressWarnings("serial")             // serialVersionUID intentionally omitted
 public class ModuleDescriptor
-    implements Serializable, Comparable<ModuleDescriptor>
+    implements Comparable<ModuleDescriptor>
 {
     private final String name;
     private final Set<ModuleDependence> moduleDependences;

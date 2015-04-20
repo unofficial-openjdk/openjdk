@@ -32,6 +32,7 @@ package java.lang.module;
  * @see Configuration#bind
  */
 public class ResolveException extends RuntimeException {
+
     private static final long serialVersionUID = 0L;
 
     /**

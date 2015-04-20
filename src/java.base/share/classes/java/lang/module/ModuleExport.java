@@ -25,17 +25,14 @@
 
 package java.lang.module;
 
-import java.io.Serializable;
 import java.util.Objects;
 
 /**
  * <p> A module export, may be qualified or unqualified. </p>
  */
 
-@SuppressWarnings("serial")             // serialVersionUID intentionally omitted
-public class ModuleExport
-    implements Serializable
-{
+public class ModuleExport {
+
     private final String pkg;
     private final String permit;
 

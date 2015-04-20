@@ -38,7 +38,6 @@ import jdk.jigsaw.module.internal.Hasher.DependencyHashes;
  * license, maintainer email, and other meta data.
  */
 
-@SuppressWarnings("serial")             // serialVersionUID intentionally omitted
 public class ExtendedModuleDescriptor
     extends ModuleDescriptor
 {

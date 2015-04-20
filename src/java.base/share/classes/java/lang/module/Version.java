@@ -25,7 +25,6 @@
 
 package java.lang.module;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -37,9 +36,8 @@ import java.util.List;
  * Policy Manual, Chapter 5: Control files and their fields<a>
  */
 
-@SuppressWarnings("serial")             // serialVersionUID intentionally omitted
 public final class Version
-    implements Comparable<Version>, Serializable
+    implements Comparable<Version>
 {
 
     private String version;

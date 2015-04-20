@@ -36,9 +36,8 @@ import java.util.Set;
  * @since 1.9
  */
 
-@SuppressWarnings("serial")             // serialVersionUID intentionally omitted
 public final class ModuleDependence
-    implements Comparable<ModuleDependence>, Serializable
+    implements Comparable<ModuleDependence>
 {
 
     /**
