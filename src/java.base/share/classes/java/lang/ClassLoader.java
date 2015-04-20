@@ -1184,14 +1184,14 @@ public abstract class ClassLoader {
      * modules should override this method.
      *
      * @apiNote This method returns a URL for now to make it consistent with
-     * the other findResource methods defined here. This may change.
+     * the other findResource methods defined here and also Class.getResource.
      *
      * @return A URL object for reading the resource; {@code null} if the
      * resource could not be found or there isn't a module defined to this
      * class loader that loads from the given {@code ModuleArtifact}.
      *
      * @since 1.9
-     * @see java.lang.reflect.Module#getResource(String)
+     * @see java.lang.reflect.Module#getResourceAsStream(String)
      */
     protected URL findResource(ModuleArtifact module, String name) {
         return null;

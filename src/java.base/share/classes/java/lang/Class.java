@@ -26,6 +26,7 @@
 package java.lang;
 
 import java.io.IOException;
+import java.lang.module.ModuleArtifact;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Array;
 import java.lang.reflect.GenericArrayType;
@@ -58,6 +59,9 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.Objects;
 import java.util.StringJoiner;
+
+import sun.misc.BootLoader;
+import sun.misc.SharedSecrets;
 import sun.misc.Unsafe;
 import sun.reflect.CallerSensitive;
 import sun.reflect.ConstantPool;
@@ -2372,7 +2376,14 @@ public final class Class<T> implements java.io.Serializable,
                 caller = Object.class;
             }
             if (caller.getModule() == me) {
-                return me.getResource(name);
+                ModuleArtifact artifact =
+                    SharedSecrets.getJavaLangReflectAccess().getArtifact(me);
+                ClassLoader cl = getClassLoader0();
+                if (cl == null) {
+                    return BootLoader.findResource(artifact, name);
+                } else {
+                    return cl.findResource(artifact, name);
+                }
             }
         }
 

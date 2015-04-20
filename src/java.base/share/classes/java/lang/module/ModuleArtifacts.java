@@ -25,10 +25,10 @@
 
 package java.lang.module;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
@@ -36,8 +36,10 @@ import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.Set;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
@@ -109,6 +111,22 @@ class ModuleArtifacts {
     }
 
     /**
+     * A ModuleArtifact for a module that is exploded on the file system.
+     */
+    static class ExplodedModuleArtifact extends ModuleArtifact {
+        ExplodedModuleArtifact(ExtendedModuleDescriptor descriptor,
+                               Set<String> packages,
+                               URI location,
+                               Hasher.HashSupplier hasher) {
+            super(descriptor, packages, location, hasher);
+        }
+
+        public ModuleReader open() throws IOException {
+            return new ExplodedModuleReader(this);
+        }
+    }
+
+    /**
      * A ModuleArtifact for a module that is packaged as jmod file.
      */
     static class JModModuleArtifact extends ModuleArtifact {
@@ -142,85 +160,11 @@ class ModuleArtifacts {
     }
 
     /**
-     * A ModuleArtifact for a module that is exploded on the file system.
-     */
-    static class ExplodedModuleArtifact extends ModuleArtifact {
-        ExplodedModuleArtifact(ExtendedModuleDescriptor descriptor,
-                               Set<String> packages,
-                               URI location,
-                               Hasher.HashSupplier hasher) {
-            super(descriptor, packages, location, hasher);
-        }
-
-        public ModuleReader open() throws IOException {
-            return new ExplodedModuleReader(this);
-        }
-    }
-
-    /**
-     * A base ModuleReader implementation
-     */
-    static abstract class BaseModuleReader implements ModuleReader {
-        private static final int BUFFER_SIZE = 8192;
-        private static final int MAX_BUFFER_SIZE = Integer.MAX_VALUE - 8;
-
-        /**
-         * Returns a ByteBuffer with all bytes read from the given InputStream.
-         * The given size parameter is the expected size, the actual size may
-         * differ.
-         */
-        protected ByteBuffer readFully(InputStream source, int size) throws IOException {
-            int capacity = size;
-            byte[] buf = new byte[capacity];
-            int nread = 0;
-            int n;
-            for (; ; ) {
-                // read to EOF which may read more or less than size
-                while ((n = source.read(buf, nread, capacity - nread)) > 0)
-                    nread += n;
-
-                // if last call to source.read() returned -1, we are done
-                // otherwise, try to read one more byte; if that failed we're done too
-                if (n < 0 || (n = source.read()) < 0)
-                    break;
-
-                // one more byte was read; need to allocate a larger buffer
-                if (capacity <= MAX_BUFFER_SIZE - capacity) {
-                    capacity = Math.max(capacity << 1, BUFFER_SIZE);
-                } else {
-                    if (capacity == MAX_BUFFER_SIZE)
-                        throw new OutOfMemoryError("Required array size too large");
-                    capacity = MAX_BUFFER_SIZE;
-                }
-                buf = Arrays.copyOf(buf, capacity);
-                buf[nread++] = (byte) n;
-            }
-
-            return ByteBuffer.wrap(buf, 0, nread);
-        }
-
-        /**
-         * Returns a file URL to the given file Path
-         */
-        protected URL toFileURL(Path path) {
-            try {
-                return path.toUri().toURL();
-            } catch (MalformedURLException e) {
-                throw new InternalError(e);
-            }
-        }
-
-        @Override
-        public void close() {
-            throw new RuntimeException("not implemented");
-        }
-    }
-
-    /**
      * A ModuleReader for reading resources from a module linked into the
      * run-time image.
      */
-    static class JrtModuleReader extends BaseModuleReader {
+    static class JrtModuleReader implements ModuleReader {
+        // ImageReader, shared between instances of this module reader
         private static ImageReader imageReader;
         static {
             // detect image or exploded build
@@ -235,6 +179,7 @@ class ModuleArtifacts {
         }
 
         private final String module;
+        private volatile boolean closed;
 
         JrtModuleReader(ModuleArtifact artifact) throws IOException {
             // when running with a security manager then check that the caller
@@ -252,160 +197,310 @@ class ModuleArtifacts {
          * if not found.
          */
         private ImageLocation findImageLocation(String name) {
-            if (imageReader == null) {
-                return null;
-            } else {
+            if (imageReader != null) {
                 String rn = "/" + module + "/" + name;
                 return imageReader.findLocation(rn);
-            }
-        }
-
-        /**
-         * Returns a jrt URL for the given module and resource name.
-         */
-        private URL toJrtURL(String name) {
-            try {
-                return new URL("jrt:/" + module + "/" + name);
-            } catch (MalformedURLException e) {
-                throw new InternalError(e);
+            } else {
+                // not an images build
+                return null;
             }
         }
 
         @Override
-        public URL findResource(String name) {
-            if (findImageLocation(name) != null)
-                return toJrtURL(name);
-
-            // not found
-            return null;
+        public URI findResource(String name) {
+            if (!closed && findImageLocation(name) != null) {
+                return URI.create("jrt:/" + module + "/" + name);
+            } else {
+                return null;
+            }
         }
 
         @Override
-        public ByteBuffer readResource(String name) throws IOException {
-            ImageLocation location = findImageLocation(name);
-            if (location != null) {
-                return imageReader.getResourceBuffer(location);
+        public InputStream getResourceAsStream(String name) throws IOException {
+            ByteBuffer bb = getResourceAsBuffer(name);
+            if (bb != null) {
+                try {
+                    int rem = bb.remaining();
+                    byte[] bytes = new byte[rem];
+                    bb.get(bytes);
+                    return new ByteArrayInputStream(bytes);
+                } finally {
+                    releaseBuffer(bb);
+                }
+            } else {
+                return null;
             }
-            throw new IOException(module + "/" + name + " not found");
+        }
+
+        @Override
+        public ByteBuffer getResourceAsBuffer(String name) throws IOException {
+            if (closed) {
+                throw new IOException("ModuleReader is closed");
+            } else {
+                ImageLocation location = findImageLocation(name);
+                if (location != null) {
+                    return imageReader.getResourceBuffer(location);
+                } else {
+                    return null;
+                }
+            }
         }
 
         @Override
         public void releaseBuffer(ByteBuffer bb) {
             ImageReader.releaseByteBuffer(bb);
         }
-    }
-
-    /**
-     * A ModuleReader for a jmod file.
-     */
-    static class JModModuleReader extends BaseModuleReader {
-        private String module;
-        private final URL baseURL;
-        private final ZipFile zf;
-
-        JModModuleReader(ModuleArtifact artifact) throws IOException {
-            module = artifact.descriptor().name();
-            baseURL = artifact.location().toURL();
-
-            // FIXME - need permission check here as the jmod may already
-            // be open and in the cache
-
-            zf = JModCache.get(baseURL);
-        }
 
         @Override
-        public URL findResource(String name) {
-            ZipEntry ze = zf.getEntry("classes/" + name);
-            if (ze == null)
-                return null;
-            try {
-                return new URL(baseURL + "!/" + ParseUtil.encodePath(name, false));
-            } catch (MalformedURLException e) {
-                throw new InternalError(e);
-            }
-        }
-
-        @Override
-        public ByteBuffer readResource(String name) throws IOException {
-            ZipEntry ze = zf.getEntry("classes/" + name);
-            if (ze == null)
-                throw new IOException(module + "/" + name + " not found");
-            try (InputStream in = zf.getInputStream(ze)) {
-                return readFully(in, (int) ze.getSize());
-            }
-        }
-    }
-
-    /**
-     * A ModuleReader for a modular JAR file.
-     */
-    static class JarModuleReader extends BaseModuleReader {
-        private final String module;
-        private final URL baseURL;
-        private final JarFile jf;
-
-        JarModuleReader(ModuleArtifact artifact) throws IOException {
-            URI uri = artifact.location();
-            String s = uri.toString();
-            String fileURIString = s.substring(4, s.length()-2);
-
-            module = artifact.descriptor().name();
-            baseURL = uri.toURL();
-            jf = new JarFile(Paths.get(URI.create(fileURIString)).toString());
-        }
-
-        @Override
-        public URL findResource(String name) {
-            JarEntry je = jf.getJarEntry(name);
-            if (je == null)
-                return null;
-            try {
-                return new URL(baseURL + ParseUtil.encodePath(name, false));
-            } catch (MalformedURLException e) {
-                throw new InternalError(e);
-            }
-        }
-
-        @Override
-        public ByteBuffer readResource(String name) throws IOException {
-            JarEntry je = jf.getJarEntry(name);
-            if (je == null)
-                throw new IOException(module + "/" + name + " not found");
-            try (InputStream in = jf.getInputStream(je)) {
-                return readFully(in, (int) je.getSize());
-            }
+        public void close() {
+            closed = true;
         }
     }
 
     /**
      * A ModuleReader for an exploded module.
      */
-    static class ExplodedModuleReader extends BaseModuleReader {
+    static class ExplodedModuleReader implements ModuleReader {
         private final Path dir;
+        private volatile boolean closed;
 
         ExplodedModuleReader(ModuleArtifact artifact) {
             dir = Paths.get(artifact.location());
         }
 
-        @Override
-        public URL findResource(String name) {
+        /**
+         * Returns a Path to access to the given resource.
+         */
+        private Path toPath(String name) {
             Path path = Paths.get(name.replace('/', File.separatorChar));
-            int n = path.getNameCount();
-            if (n == 0)
-                return null;  // root component only
+            if (path.getRoot() == null) {
+                return dir.resolve(path);
+            } else {
+                // drop the root component so that the resource is
+                // locate relative to the module directory
+                int n = path.getNameCount();
+                return (n > 0) ? dir.resolve(path.subpath(0, n)) : null;
+            }
+        }
 
-            // drop root component and resolve against module directory
-            path = dir.resolve(path.subpath(0, n));
-            if (Files.isRegularFile(path))
-                return toFileURL(path);
-
-            return null;
+        /**
+         * Throws IOException if the module reader is closed;
+         */
+        private void ensureOpen() throws IOException {
+            if (closed) throw new IOException("ModuleReader is closed");
         }
 
         @Override
-        public ByteBuffer readResource(String name) throws IOException {
-            Path path = dir.resolve(name.replace('/', File.separatorChar));
-            return ByteBuffer.wrap(Files.readAllBytes(path));
+        public URI findResource(String name) {
+            if (closed) {
+                return null;
+            } else {
+                Path path = toPath(name);
+                if (path != null) {
+                    try {
+                        if (Files.isRegularFile(path)) {
+                            return path.toUri();
+                        }
+                    } catch (SecurityException e) { }
+                }
+                return null;
+            }
+        }
+
+        @Override
+        public InputStream getResourceAsStream(String name) throws IOException {
+            ensureOpen();
+            Path path = toPath(name);
+            if (path != null && Files.isRegularFile(path)) {
+                return Files.newInputStream(path);
+            } else {
+                return null;
+            }
+        }
+
+        @Override
+        public ByteBuffer getResourceAsBuffer(String name) throws IOException {
+            ensureOpen();
+            Path path = toPath(name);
+            if (path != null && Files.isRegularFile(path)) {
+                return ByteBuffer.wrap(Files.readAllBytes(path));
+            } else {
+                return null;
+            }
+        }
+
+        @Override
+        public void close() {
+            closed = true;
         }
     }
+
+    /**
+     * A base module reader that encapsulates machinery required to close the
+     * module reader safely.
+     */
+    static abstract class SafeCloseModuleReader implements ModuleReader {
+
+        // RW lock to support safe close
+        private final ReadWriteLock lock = new ReentrantReadWriteLock();
+        private final Lock readLock = lock.readLock();
+        private final Lock writeLock = lock.writeLock();
+        private volatile boolean closed;
+
+        SafeCloseModuleReader() { }
+
+        /**
+         * Returns the URI for a resource. This method is invoked by
+         * findResource to do the actual work of locating the resource.
+         */
+        abstract URI implFindResource(String name);
+
+        /**
+         * Returns an input stream for reading a resource. This method is
+         * invoked by getResourceAsStream to do the actual work of opening
+         * an input stream to the resource.
+         */
+        abstract InputStream implGetResourceAsStream(String name) throws IOException;
+
+        /**
+         * Closes the module reader. This method is invoked by close to do the
+         * actual work of closing the module reader.
+         */
+        abstract void implClose() throws IOException;
+
+        @Override
+        public final URI findResource(String name) {
+            readLock.lock();
+            try {
+                if (!closed) {
+                    return implFindResource(name);
+                } else {
+                    return null;
+                }
+            } finally {
+                readLock.unlock();
+            }
+        }
+
+        @Override
+        public final InputStream getResourceAsStream(String name) throws IOException {
+            readLock.lock();
+            try {
+                if (!closed) {
+                    return implGetResourceAsStream(name);
+                } else {
+                    throw new IOException("ModuleReader is closed");
+                }
+            } finally {
+                readLock.unlock();
+            }
+        }
+
+        @Override
+        public void close() throws IOException {
+            writeLock.lock();
+            try {
+                if (!closed) {
+                    closed = true;
+                    implClose();
+                }
+            } finally {
+                writeLock.unlock();
+            }
+        }
+    }
+
+    /**
+     * A ModuleReader for a jmod file.
+     */
+    static class JModModuleReader extends SafeCloseModuleReader {
+        private final URI location;
+        private final URL baseURL;
+        private final ZipFile zf;
+
+        JModModuleReader(ModuleArtifact artifact) throws IOException {
+            this.location = artifact.location();
+            this.baseURL = location.toURL();
+
+            // FIXME - need permission check here as the jmod may already
+            // be open and in the cache
+
+            this.zf = JModCache.get(baseURL);
+        }
+
+        private ZipEntry find(String name) {
+            return zf.getEntry("classes/" + name);
+        }
+
+        @Override
+        URI implFindResource(String name) {
+            ZipEntry ze = find(name);
+            if (ze != null) {
+                return URI.create(location + "!/" + ParseUtil.encodePath(name, false));
+            } else {
+                return null;
+            }
+        }
+
+        @Override
+        InputStream implGetResourceAsStream(String name) throws IOException {
+            ZipEntry ze = find(name);
+            if (ze != null) {
+                return zf.getInputStream(ze);
+            } else {
+                return null;
+            }
+        }
+
+        @Override
+        void implClose() {
+            JModCache.remove(baseURL);
+        }
+    }
+
+    /**
+     * A ModuleReader for a modular JAR file.
+     */
+    static class JarModuleReader extends SafeCloseModuleReader {
+        private URI location;
+        private final JarFile jf;
+
+        JarModuleReader(ModuleArtifact artifact) throws IOException {
+            URI uri = artifact.location();
+            String s = uri.toString();
+            String fileURIString = s.substring(4, s.length()-2);
+            this.location = uri;
+            this.jf = new JarFile(Paths.get(URI.create(fileURIString)).toString());
+        }
+
+        private JarEntry find(String name) {
+            return jf.getJarEntry(name);
+        }
+
+        @Override
+        URI implFindResource(String name) {
+            JarEntry je = find(name);
+            if (je != null) {
+                return URI.create(location + ParseUtil.encodePath(name, false));
+            } else {
+                return null;
+            }
+        }
+
+        @Override
+        InputStream implGetResourceAsStream(String name) throws IOException {
+            JarEntry je = find(name);
+            if (je != null) {
+                return jf.getInputStream(je);
+            } else {
+                return null;
+            }
+        }
+
+        @Override
+        void implClose() throws IOException {
+            jf.close();
+        }
+    }
+
 }

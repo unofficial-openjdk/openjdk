@@ -641,7 +641,8 @@ public abstract class ResourceBundle {
             // Look up <baseName> + "Provider"
             String providerName = name + "Provider";
             try {
-                ClassLoader loader = module.getClassLoader();
+                PrivilegedAction<ClassLoader> pa = module::getClassLoader;
+                ClassLoader loader = AccessController.doPrivileged(pa);
                 // Use the class loader of the getBundle caller so that the caller's
                 // visibility of the provider type is checked.
 
@@ -1614,9 +1615,13 @@ public abstract class ResourceBundle {
                                              List<String> formats,
                                              Control control,
                                              boolean reload) {
-        if (caller != null && getModule(caller) != null &&
-                caller.getClassLoader() == caller.getModule().getClassLoader()) {
-            return loadBundle(cacheKey, caller, control, reload);
+
+        if (caller != null && getModule(caller) != null) {
+            PrivilegedAction<ClassLoader> pa = () -> getModule(caller).getClassLoader();
+            ClassLoader ml = AccessController.doPrivileged(pa);
+            if (caller.getClassLoader() == ml) {
+                return loadBundle(cacheKey, caller, control, reload);
+            }
         }
 
         // Here we actually load the bundle in the order of formats
@@ -2773,9 +2778,13 @@ public abstract class ResourceBundle {
             String bundleName = toBundleName(baseName, locale);
             // if called by ResourceBundle, set module to null
             Module callerModule = (caller == ResourceBundle.class) ? null : getModule(caller);
-            if (callerModule != null && callerModule.getClassLoader() != loader) {
-                // TODO: a named module calling RB.getBundle(..., otherLoader)
-                throw new UnsupportedOperationException(caller.getName() + " " + loader);
+            if (callerModule != null) {
+                PrivilegedAction<ClassLoader> pa = callerModule::getClassLoader;
+                ClassLoader ml = AccessController.doPrivileged(pa);
+                if (ml != loader) {
+                    // TODO: a named module calling RB.getBundle(..., otherLoader)
+                    throw new UnsupportedOperationException(caller.getName() + " " + loader);
+                }
             }
             ResourceBundle bundle = null;
             if (format.equals("java.class")) {
@@ -2833,12 +2842,9 @@ public abstract class ResourceBundle {
                             public InputStream run() throws IOException {
                                 // if the caller is in a named module then the
                                 // resource may be in the module
-                                URL url =  caller == null || callerModule == null
-                                                ? loader.getResource(resourceName)
-                                                : callerModule.getResource(resourceName);
-                                if (url == null) {
-                                    return null;
-                                } else {
+                                if (caller == null || callerModule == null) {
+                                    URL url = loader.getResource(resourceName);
+                                    if (url == null) return null;
                                     URLConnection connection = url.openConnection();
                                     if (reloadFlag) {
                                         // Disable caches to get fresh data for
@@ -2846,6 +2852,8 @@ public abstract class ResourceBundle {
                                         connection.setUseCaches(false);
                                     }
                                     return connection.getInputStream();
+                                } else {
+                                    return callerModule.getResourceAsStream(resourceName);
                                 }
                             }
                         });

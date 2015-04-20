@@ -253,10 +253,6 @@ final class JceSecurity {
         File exportJar = new File(pathToPolicyJar, "US_export_policy.jar");
         File importJar = new File(pathToPolicyJar, "local_policy.jar");
 
-        // FIXME - why is this needed?
-        URL jceCipherURL = JceSecurity.class.getModule().getResource
-                ("javax/crypto/Cipher.class");
-
         if (!exportJar.exists() || !importJar.exists()) {
             throw new SecurityException
                                 ("Cannot locate policy or framework files!");

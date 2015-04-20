@@ -460,7 +460,7 @@ public class Proxy implements java.io.Serializable {
         final SecurityManager sm = System.getSecurityManager();
         final Class<?> caller = Reflection.getCallerClass();
         if (sm != null) {
-            checkProxyAccess(caller, module.getClassLoader(), intfs);
+            checkProxyAccess(caller, classLoaderFor(module), intfs);
         }
 
         ProxyBuilder builder = new ProxyBuilder(module, intfs);
@@ -648,7 +648,7 @@ public class Proxy implements java.io.Serializable {
         private static final AtomicLong nextUniqueNumber = new AtomicLong();
 
         static Class<?> defineProxyClass(Module m, ClassLoader loader, List<Class<?>> interfaces) {
-            if (m != null && m.getClassLoader() != loader) {
+            if (m != null && classLoaderFor(m) != loader) {
                 throw new IllegalArgumentException(
                     "proxy class must be defined with same class loader as " + m +
                     " : " + toMessage(interfaces));
@@ -772,7 +772,7 @@ public class Proxy implements java.io.Serializable {
                 @Override
                 public Class<?> apply(Module m, List<Class<?>> interfaces) {
                     Objects.requireNonNull(m);
-                    return ProxyClassFactory.defineProxyClass(m, m.getClassLoader(), interfaces);
+                    return ProxyClassFactory.defineProxyClass(m, classLoaderFor(m), interfaces);
                 }
             });
 
@@ -802,7 +802,7 @@ public class Proxy implements java.io.Serializable {
 
         private Module module;  // null unknown
         ProxyBuilder(Module m, List<Class<?>> interfaces) {
-            this(null, m.getClassLoader(), interfaces);
+            this(null, classLoaderFor(m), interfaces);
             this.module = m;
         }
 
@@ -1104,7 +1104,7 @@ public class Proxy implements java.io.Serializable {
          *         accessible to the module
          */
         private static void ensureAccess(Module module, ClassLoader loader, List<Class<?>> interfaces) {
-            if (module != null && module.getClassLoader() != loader) {
+            if (module != null && classLoaderFor(module) != loader) {
                 throw new IllegalArgumentException("class loader not allowed " +
                         " to define proxy class in " + module);
             }
@@ -1322,7 +1322,7 @@ public class Proxy implements java.io.Serializable {
     {
         Objects.requireNonNull(module);
         Objects.requireNonNull(h);
-        final ClassLoader loader = module.getClassLoader();
+        final ClassLoader loader = classLoaderFor(module);
         final List<Class<?>> intfs = Arrays.asList(interfaces.clone());
         final SecurityManager sm = System.getSecurityManager();
         final Class<?> caller;
@@ -1391,6 +1391,14 @@ public class Proxy implements java.io.Serializable {
                 }
             }
         }
+    }
+
+    /**
+     * Returns the class laoder for the given module.
+     */
+    private static ClassLoader classLoaderFor(Module m) {
+        PrivilegedAction<ClassLoader> pa = m::getClassLoader;
+        return AccessController.doPrivileged(pa);
     }
 
     /**

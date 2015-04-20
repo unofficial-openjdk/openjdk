@@ -21,11 +21,13 @@
  * questions.
  */
 
-import java.lang.instrument.*;
-import java.net.*;
-import java.util.*;
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.lang.instrument.ClassDefinition;
+import java.lang.instrument.Instrumentation;
 import java.lang.reflect.Module;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class RedefineClassWithNativeMethodAgent {
     static Class clz;
@@ -34,35 +36,23 @@ public class RedefineClassWithNativeMethodAgent {
     public static void premain(String agentArgs, final Instrumentation inst) throws Exception {
         String s = agentArgs.substring(0, agentArgs.indexOf(".class"));
         clz = Class.forName(s.replace('/', '.'));
-        URL classURL;
+        InputStream in;
         Module m = clz.getModule();
         if (m != null) {
-            classURL = m.getResource(agentArgs);
+            in = m.getResourceAsStream(agentArgs);
         } else {
             ClassLoader loader =
                 RedefineClassWithNativeMethodAgent.class.getClassLoader();
-            classURL = loader.getResource(agentArgs);
+            in = loader.getResourceAsStream(agentArgs);
         }
-        if (classURL == null) {
+        if (in == null) {
             throw new Exception("Cannot find class: " + agentArgs);
         }
 
-        int         redefineLength;
-        InputStream redefineStream;
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        in.transferTo(baos);
+        byte[] buffer = baos.toByteArray();
 
-        System.out.println("Reading test class from " + classURL);
-        if (classURL.getProtocol().equals("file")) {
-            File f = new File(classURL.getFile());
-            redefineStream = new FileInputStream(f);
-            redefineLength = (int) f.length();
-        } else {
-            URLConnection conn = classURL.openConnection();
-            redefineStream = conn.getInputStream();
-            redefineLength = conn.getContentLength();
-        }
-
-        final byte[] buffer = new byte[redefineLength];
-        new BufferedInputStream(redefineStream).read(buffer);
         new Timer(true).schedule(new TimerTask() {
             public void run() {
                 try {

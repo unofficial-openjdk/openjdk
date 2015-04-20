@@ -91,17 +91,16 @@ public class Basic {
         assertNull(in3);
 
         // invoke Module getResources on modules m1-m3
-        url1 = p1.Main.class.getModule().getResource("/" + NAME);
-        url2 = p2.Main.class.getModule().getResource("/" + NAME);
-        url3 = p3.Main.class.getModule().getResource("/" + NAME);
-        assertNotNull(url1);
-        assertNotNull(url2);
-        assertNotEquals(url1, url2);
-        assertNull(url3);
+        InputStream in1 = p1.Main.class.getModule().getResourceAsStream("/" + NAME);
+        InputStream in2 = p2.Main.class.getModule().getResourceAsStream("/" + NAME);
+        in3 = p3.Main.class.getModule().getResourceAsStream("/" + NAME);
+        assertNotNull(in1);
+        assertNotNull(in2);
+        assertNull(in3);
 
-        // check the content of url1 and url2
-        s1 = new String(readAll(url1), "UTF-8");
-        s2 = new String(readAll(url2), "UTF-8");
+        // check the content of in1 and in2
+        s1 = new String(readAll(in1), "UTF-8");
+        s2 = new String(readAll(in2), "UTF-8");
         assertEquals(s1, "m1");
         assertEquals(s2, "m2");
     }

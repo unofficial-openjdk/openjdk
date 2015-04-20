@@ -27,9 +27,11 @@ package sun.misc;
 import java.io.File;
 import java.io.FilePermission;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.module.ModuleArtifact;
 import java.lang.module.ModuleReader;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
@@ -161,13 +163,17 @@ class BuiltinClassLoader extends ModuleClassLoader {
     @Override
     public URL findResource(ModuleArtifact artifact, String name) {
         if (artifactToReader.containsKey(artifact)) {
-            PrivilegedAction<URL> pa = () -> moduleReaderFor(artifact).findResource(name);
-            URL url = AccessController.doPrivileged(pa);
-            return checkURL(url);
-        } else {
-            // module not defined to this class loader
-            return null;
+            PrivilegedAction<URI> pa = () -> moduleReaderFor(artifact).findResource(name);
+            URI uri = AccessController.doPrivileged(pa);
+            if (uri != null) {
+                try {
+                    return checkURL(uri.toURL());
+                } catch (MalformedURLException e) { }
+            }
         }
+
+        // module not defined to this class loader or not found
+        return null;
     }
 
     /**
@@ -355,21 +361,30 @@ class BuiltinClassLoader extends ModuleClassLoader {
     private Class<?> defineClass(String cn, LoadedModule loadedModule) {
         ModuleArtifact artifact = loadedModule.artifact();
         ModuleReader reader = moduleReaderFor(artifact);
+
         try {
             // read class file
             String rn = cn.replace('.', '/').concat(".class");
-            ByteBuffer bb = reader.readResource(rn);
+            ByteBuffer bb = reader.getResourceAsBuffer(rn);
+            if (bb == null) {
+                // class not found
+                return null;
+            }
+
             try {
+
                 // define a package in the named module
                 int pos = cn.lastIndexOf('.');
                 String pn = cn.substring(0, pos);
                 if (getPackage(pn) == null) {
                     definePackage(pn, loadedModule);
                 }
+
                 // define class to VM
                 URL url = loadedModule.location();
                 CodeSource cs = new CodeSource(url, (CodeSigner[]) null);
                 return defineClass(cn, bb, cs);
+
             } finally {
                 reader.releaseBuffer(bb);
             }
@@ -654,12 +669,8 @@ class BuiltinClassLoader extends ModuleClassLoader {
      */
     private static class NullModuleReader implements ModuleReader {
         @Override
-        public URL findResource(String name) {
+        public URI findResource(String name) {
             return null;
-        }
-        @Override
-        public ByteBuffer readResource(String name) throws IOException {
-            throw new IOException(name + " not found");
         }
         @Override
         public void close() {
@@ -696,34 +707,33 @@ class BuiltinClassLoader extends ModuleClassLoader {
             return null;
         }
 
-        /**
-         * Returns a file URL for the given file Path.
-         */
-        private static URL toFileURL(Path path) {
-            try {
-                return path.toUri().toURL();
-            } catch (MalformedURLException e) {
-                throw new InternalError(e);
-            }
-        }
-
         @Override
-        public URL findResource(String name) {
+        public URI findResource(String name) {
             Path path = findOverriddenClass(name);
             if (path != null) {
-                return toFileURL(path);
+                return path.toUri();
             } else {
                 return reader.findResource(name);
             }
         }
 
         @Override
-        public ByteBuffer readResource(String name) throws IOException {
+        public InputStream getResourceAsStream(String name) throws IOException {
+            Path path = findOverriddenClass(name);
+            if (path != null) {
+                return Files.newInputStream(path);
+            } else {
+                return reader.getResourceAsStream(name);
+            }
+        }
+
+        @Override
+        public ByteBuffer getResourceAsBuffer(String name) throws IOException {
             Path path = findOverriddenClass(name);
             if (path != null) {
                 return ByteBuffer.wrap(Files.readAllBytes(path));
             } else {
-                return reader.readResource(name);
+                return reader.getResourceAsBuffer(name);
             }
         }
 
@@ -735,7 +745,7 @@ class BuiltinClassLoader extends ModuleClassLoader {
 
         @Override
         public void close() throws IOException {
-            reader.close();
+            throw new InternalError("Should not get here");
         }
     }
 

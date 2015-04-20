@@ -41,6 +41,16 @@ import jdk.jigsaw.module.internal.Hasher.HashSupplier;
  *
  * A {@code ModuleArtifact} is a concrete subclass of this class that implements
  * the abstract {@link #open open} method defined below.
+ *
+ * @apiNote Methods such as {@link Class#getResource} may be used to obtain a
+ * URL to a resource located in the caller's module. Consequentially there needs
+ * to be a corresponding {@link java.net.URLStreamHandler URLStreamHandler} for
+ * each module artifact <em>type</em> (typically the URI scheme). A simple {@code
+ * ModuleReader} may be implemented using a URL protocol handler but would not
+ * be suitable for high-performance class loading.
+ *
+ * @see ModuleArtifactFinder
+ * @since 1.9
  */
 
 public abstract class ModuleArtifact {
@@ -118,6 +128,11 @@ public abstract class ModuleArtifact {
 
     /**
      * Returns the URI that locates the artifact.
+     *
+     * <p> When loading classes from a module artifact with a {@link
+     * java.security.SecureClassLoader SecureClassLoader}, then this URI is
+     * typically the location associated with {@link java.security.CodeSource
+     * CodeSource}.
      */
     public URI location() {
         return location;
@@ -127,8 +142,10 @@ public abstract class ModuleArtifact {
      * Opens the modules artifact for reading, returning a {@code ModuleReader}
      * that may be used to locate or read classes and resources.
      *
-     * @throws IOException if an I/O error occurs
-     * @throws SecurityException if denied by the security manager
+     * @throws IOException
+     *         If an I/O error occurs
+     * @throws SecurityException
+     *         If denied by the security manager
      */
     public abstract ModuleReader open() throws IOException;
 

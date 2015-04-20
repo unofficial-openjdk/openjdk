@@ -35,7 +35,6 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.IOException;
 import java.io.FileNotFoundException;
-import java.net.URL;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.security.PrivilegedActionException;
@@ -386,12 +385,12 @@ public class SyncFactory {
 
                 try {
                     AccessController.doPrivileged((PrivilegedExceptionAction<Void>) () -> {
-                        URL url = SyncFactory.class.getModule().getResource(ROWSET_PROPERTIES);
-                        if (url == null) {
+                        InputStream in = SyncFactory.class.getModule().getResourceAsStream(ROWSET_PROPERTIES);
+                        if (in == null) {
                             throw new SyncFactoryException("Resource " + ROWSET_PROPERTIES + " not found");
                         }
-                        try (InputStream stream = url.openStream()) {
-                            properties.load(stream);
+                        try (in) {
+                            properties.load(in);
                         }
                         return null;
                     });

@@ -434,9 +434,9 @@ public class Main {
         ClassLoader cl = Thread.currentThread().getContextClassLoader();
         for (String ext : exts) {
             try {
-                sysIn = Main.class.getModule().getResource("com/sun/tools/script/shell/init." + ext).openStream();
-            } catch (IOException exp) {
-                throw  new RuntimeException(exp);
+                sysIn = Main.class.getModule().getResourceAsStream("com/sun/tools/script/shell/init." + ext);
+            } catch (IOException ioe) {
+                throw new RuntimeException(ioe);
             }
             if (sysIn != null) break;
         }

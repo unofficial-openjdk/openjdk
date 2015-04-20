@@ -328,24 +328,26 @@ public final class MethodUtil extends SecureClassLoader {
             throw new ClassNotFoundException(name);
         }
         String path = name.replace('.', '/').concat(".class");
-        URL res = Object.class.getModule().getResource(path);
-        if (res != null) {
-            try {
-                return defineClass(name, res);
-            } catch (IOException e) {
-                throw new ClassNotFoundException(name, e);
+        try {
+            InputStream in = Object.class.getModule().getResourceAsStream(path);
+            if (in != null) {
+                try (in) {
+                    byte[] b = IOUtils.readFully(in, -1, true);
+                    return defineClass(name, b);
+                }
             }
-        } else {
-            throw new ClassNotFoundException(name);
+        } catch (IOException e) {
+            throw new ClassNotFoundException(name, e);
         }
+
+        throw new ClassNotFoundException(name);
     }
 
 
     /*
      * Define the proxy classes
      */
-    private Class<?> defineClass(String name, URL url) throws IOException {
-        byte[] b = getBytes(url);
+    private Class<?> defineClass(String name, byte[] b) throws IOException {
         CodeSource cs = new CodeSource(null, (java.security.cert.Certificate[])null);
         if (!name.equals(TRAMPOLINE)) {
             throw new IOException("MethodUtil: bad name " + name);

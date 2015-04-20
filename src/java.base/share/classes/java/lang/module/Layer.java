@@ -171,6 +171,11 @@ public final class Layer {
      * name. If a module of the given name is not in this layer then the {@link
      * #parent} layer is checked.
      *
+     * <p> If there is a security manager then its {@code checkPermission}
+     * method is called with a {@code RuntimePermission("getClassLoader")}
+     * permission to check that the caller is allowed to get access to the
+     * class loader. </p>
+     *
      * @throws IllegalArgumentException if a module of the given name is not
      * defined in this layer or any parent of this layer.
      *
@@ -186,17 +191,7 @@ public final class Layer {
                 return parent.findLoader(name);
             throw new IllegalArgumentException(name + " not known to this Layer");
         }
-
-        ClassLoader loader = m.getClassLoader();
-        if (m != null) {
-            SecurityManager sm = System.getSecurityManager();
-            if (sm != null) {
-                // TBD: Will likely need a permission check equivalent to
-                // that done in Class#getClassLoader. This will make this
-                // method @CallerSensitive
-            }
-        }
-        return loader;
+        return m.getClassLoader();
     }
 
     /**

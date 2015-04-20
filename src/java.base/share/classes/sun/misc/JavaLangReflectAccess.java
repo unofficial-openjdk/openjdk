@@ -52,6 +52,11 @@ public interface JavaLangReflectAccess {
     Map<String, Module> defineModules(Configuration cf, ClassLoaderFinder clf);
 
     /**
+     * Returns the module artifact from where the given module is loaded.
+     */
+    ModuleArtifact getArtifact(Module m);
+
+    /**
      * Returns {@code true} if module m1 exports a package to module m2.
      * This method is used by sun.misc.Reflection.verifyModuleAccess.
      */

@@ -25,6 +25,8 @@
 
 package java.lang.reflect;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.URL;
 import java.util.Collections;
@@ -62,6 +64,7 @@ import sun.misc.Unsafe;
  * @since 1.9
  * @see java.lang.Class#getModule
  */
+
 public final class Module {
 
     // no <clinit> as this class is initialized very early in the startup
@@ -116,13 +119,30 @@ public final class Module {
 
     /**
      * Returns the {@code ClassLoader} for this module.
+     *
+     * <p> If there is a security manager then its {@code checkPermission}
+     * method if first called with a {@code RuntimePermission("getClassLoader")}
+     * permission to check that the caller is allowed to get access to the
+     * class loader. </p>
+     *
+     * @throws SecurityException
+     *         If denied by the security manager
      */
     public ClassLoader getClassLoader() {
+        SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            RuntimePermission perm = new RuntimePermission("getClassLoader");
+            sm.checkPermission(perm);
+        }
         return loader;
     }
 
     /**
      * Returns the module descriptor for this module.
+     *
+     * @apiNote An alternative is a getArtifcat method to return the
+     * ModuleArtifact from where the module is loaded. The module descriptor
+     * would be trivially available via getArtifact().descriptor().
      */
     public ModuleDescriptor getDescriptor() {
         return artifact.descriptor();
@@ -241,29 +261,38 @@ public final class Module {
     }
 
     /**
-     * Finds the resource of the given name in the {@link ModuleArtifact
-     * ModuleArtifact} from where this module was loaded. The name of a
-     * resource is a {@code '/'}-separated path name that identifies the
-     * resource.
+     * Returns an input stream for reading a resource in this module. Returns
+     * {@code null} if the resource is not in this module or access to the
+     * resource is denied by the security manager.
      *
-     * @return A URL object for reading the resource or {@code null} if the
-     * resource could not be found
+     * The {@code name} is a {@code '/'}-separated path name that identifies
+     * the resource.
      *
-     * @apiNote This method returns a URL for now to make it consistent with
-     * the methods defined by java.lang.ClassLoader. This is temporary and
-     * will change.
+     * @apiNote The rational for returning null when access is denied by the
+     * security manager is that a security exception could be used to test
+     * the existence of a resource.
      *
-     * @see ClassLoader#getResource(String)
+     * @throws IOException
+     *         If an I/O error occurs
      */
-    public URL getResource(String name) {
+    public InputStream getResourceAsStream(String name) throws IOException {
         Objects.requireNonNull(name);
-        if (loader == null) {
-            return BootLoader.findResource(artifact, name);
-        } else {
-            // use SharedSecretes to invoke protected method
-            return SharedSecrets.getJavaLangAccess()
-                                .findResource(loader, artifact, name);
-        }
+
+        try {
+            URL url;
+            if (loader == null) {
+                url = BootLoader.findResource(artifact, name);
+            } else {
+                // use SharedSecretes to invoke protected method
+                url = SharedSecrets.getJavaLangAccess()
+                                   .findResource(loader, artifact, name);
+            }
+            if (url != null) {
+                return url.openStream();
+            }
+        } catch (SecurityException e) { }
+
+        return null;
     }
 
     /**
@@ -629,6 +658,10 @@ public final class Module {
                 @Override
                 public Map<String, Module> defineModules(Configuration cf, ClassLoaderFinder clf) {
                     return Module.defineModules(cf, clf);
+                }
+                @Override
+                public ModuleArtifact getArtifact(Module m) {
+                    return m.artifact;
                 }
                 @Override
                 public boolean isExported(Module m, String pkg, Module who) {

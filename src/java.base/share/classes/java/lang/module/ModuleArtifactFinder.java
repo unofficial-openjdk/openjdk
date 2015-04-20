@@ -25,33 +25,13 @@
 
 package java.lang.module;
 
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UncheckedIOException;
-import java.net.URI;
-import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
-
-import jdk.jigsaw.module.internal.Hasher;
-import jdk.jigsaw.module.internal.Hasher.HashSupplier;
-import jdk.jigsaw.module.internal.ModuleInfo;
-import sun.misc.JModCache;
 
 /**
  * A finder of module artifacts.
@@ -77,19 +57,33 @@ import sun.misc.JModCache;
  * for example find lazily searching the module path and finding two modules of
  * the same name in the same directory.
  *
- * @apiNote Rename to {@code ModuleDefinition} as per Mark's sketch?
+ * @since 1.9
  */
+
 public interface ModuleArtifactFinder {
 
     /**
      * Finds a module artifact where the module has the given name.
      * Returns {@code null} if not found.
+     *
+     * <p> A {@code ModuleArtifactFinder} provides a consistent view of the
+     * modules that it locates. If {@code find} is invoked several times to
+     * locate the same module (by name) then it will return the same result
+     * each time. If a module is located then it is guaranteed to be a member
+     * of the set of modules returned by the {@link #allModules allModules}
+     * method.
      */
     public ModuleArtifact find(String name);
 
     /**
-     * Returns the set of all module artifacts that this finder can
-     * locate.
+     * Returns the set of all module artifacts that this finder can locate.
+     *
+     * <p> A {@code ModuleArtifactFinder} provides a consistent view of the
+     * modules that it locates. If {@link #allModules allModules} is invoked
+     * several times then it will return the same (equals) result each time.
+     * For each {@code ModuleArtifact} element of the returned set then it is
+     * guaranteed that that {@link #find find} will locate that {@code
+     * ModuleArtifact} if invoked with the module name.
      *
      * @apiNote This is important to have for methods such as {@link
      * Configuration#bind} that need to scan the module path to find
@@ -98,10 +92,15 @@ public interface ModuleArtifactFinder {
     public Set<ModuleArtifact> allModules();
 
     /**
-     * Returns a module finder for modules that are linked into the
-     * runtime image.
+     * Returns a module finder for modules that are linked into the run-time
+     * image.
      *
-     * @apiNote Do we need a permission check?
+     * @apiNote What about non-JDK modules that are linked into the run-time
+     * image but are intended to be loaded by custom loaders. They are observable
+     * but there should be way to restrict this so that they don't end up in the
+     * boot layer. In that context, should this method be renamed to systemModules?
+     *
+     * @apiNote Need to decide if this method needs a permission check.
      */
     public static ModuleArtifactFinder installedModules() {
         if (InstalledModuleFinder.isModularImage()) {
@@ -120,9 +119,11 @@ public interface ModuleArtifactFinder {
     }
 
     /**
-     * Creates a finder that locates modules on the file system by
-     * searching a sequence of directories containing module artifacts
-     * ({@code jmod}, modular JAR, exploded modules).
+     * Creates a finder that locates modules on the file system by searching a
+     * sequence of directories for module artifacts. This method will locate
+     * modules that are packaged as modular JAR files or modules that are
+     * exploded on the file system. It may also locate modules that are
+     * packaged in other implementation specific formats.
      *
      * @apiNote This method needs to define how the returned finder handles
      * I/O and other errors (a ClassFormatError when parsing a module-info.class
@@ -171,7 +172,7 @@ public interface ModuleArtifactFinder {
      * modules.
      *
      * @apiNote This is useful when using methods such as {@link
-     * Configuration#resolve} where two finders are specified.
+     * Configuration#resolve resolve} where two finders are specified.
      */
     public static ModuleArtifactFinder nullFinder() {
         return new ModuleArtifactFinder() {
@@ -182,245 +183,5 @@ public interface ModuleArtifactFinder {
                 return Collections.emptySet();
             }
         };
-    }
-}
-
-
-/**
- * Locates module artifacts on the file system by searching a sequence of
- * directories for jmod, modular JAR or exploded modules.
- *
- * @apiNote This class is currently not safe for use by multiple threads.
- */
-class ModulePath implements ModuleArtifactFinder {
-    private static final String MODULE_INFO = "module-info.class";
-
-    // the directories on this module path
-    private final Path[] dirs;
-    private int next;
-
-    // the module name to artifact map of modules already located
-    private final Map<String, ModuleArtifact> cachedModules = new HashMap<>();
-
-    public ModulePath(Path... dirs) {
-        this.dirs = dirs; // no need to clone
-    }
-
-    @Override
-    public ModuleArtifact find(String name) {
-        // try cached modules
-        ModuleArtifact m = cachedModules.get(name);
-        if (m != null)
-            return m;
-
-        // the module may be in directories that we haven't scanned yet
-        while (hasNextDirectory()) {
-            scanNextDirectory();
-            m = cachedModules.get(name);
-            if (m != null)
-                return m;
-        }
-        return null;
-    }
-
-    @Override
-    public Set<ModuleArtifact> allModules() {
-        // need to ensure that all directories have been scanned
-        while (hasNextDirectory()) {
-            scanNextDirectory();
-        }
-        return cachedModules.values().stream().collect(Collectors.toSet());
-    }
-
-    /**
-     * Returns {@code true} if there are additional directories to scan
-     */
-    private boolean hasNextDirectory() {
-        return next < dirs.length;
-    }
-
-    /**
-     * Scans the next directory on the module path. A no-op if all
-     * directories have already been scanned.
-     */
-    private void scanNextDirectory() {
-        if (hasNextDirectory()) {
-            Path dir = dirs[next++];
-            scan(dir);
-        }
-    }
-
-    /**
-     * Scans the given directory for jmod or exploded modules. For each module
-     * found then it enumerates its contents and creates a {@code Module} and
-     * adds it (and its URL) to the cache.
-     *
-     * @throws UncheckedIOException if an I/O error occurs
-     * @throws RuntimeException if directory contains more than one version of
-     * a module (need to decide on a better exception for this case).
-     */
-    private void scan(Path dir) {
-        // the set of module names found in this directory
-        Set<String> namesInThisDirectory = new HashSet<>();
-
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir)) {
-            for (Path entry: stream) {
-                ModuleArtifact artifact = null;
-
-                BasicFileAttributes attrs;
-                try {
-                    attrs = Files.readAttributes(entry, BasicFileAttributes.class);
-                } catch (IOException ioe) {
-                    // ignore for now
-                    continue;
-                }
-                if (attrs.isRegularFile()) {
-                    if (entry.toString().endsWith(".jmod")) {
-                        artifact = readJMod(entry);
-                    } else if (entry.toString().endsWith(".jar")) {
-                        artifact = readJar(entry);
-                    }
-                } else if (attrs.isDirectory()) {
-                    artifact = readExploded(entry);
-                }
-
-                // module artifact found
-                if (artifact != null) {
-                    // check that there is only one version of the module
-                    // in this directory
-                    String name = artifact.descriptor().name();
-                    if (namesInThisDirectory.contains(name)) {
-                        throw new RuntimeException(dir +
-                            " contains more than one version of " + name);
-                    }
-                    namesInThisDirectory.add(name);
-
-                    // a module of this name found in a previous location
-                    // on the module path so ignore it
-                    if (cachedModules.containsKey(name))
-                        continue;
-
-                    // add the module to the cache
-                    cachedModules.put(name, artifact);
-                }
-            }
-        } catch (IOException ioe) {
-            throw new UncheckedIOException(ioe);
-        }
-    }
-
-    /**
-     * Returns a {@code ModuleArtifact} to represent a jmod file on the
-     * file system.
-     */
-    private ModuleArtifact readJMod(Path file) throws IOException {
-        // file -> jmod URL for direct access
-        URI location = URI.create("jmod" + file.toUri().toString().substring(4));
-        ZipFile zf = JModCache.get(location.toURL());
-        ZipEntry ze = zf.getEntry("classes/" + MODULE_INFO);
-        if (ze == null) {
-            // jmod without classes/module-info, ignore for now or should
-            // we should throw an exception?
-            return null;
-        }
-
-        ModuleInfo mi;
-        try (InputStream in = zf.getInputStream(ze)) {
-            mi = ModuleInfo.read(in);
-        }
-
-        Set<String> packages = zf.stream()
-                                 .filter(e -> e.getName().startsWith("classes/") &&
-                                         e.getName().endsWith(".class"))
-                                 .map(e -> toPackageName(e))
-                                 .filter(pkg -> pkg.length() > 0)   // module-info
-                                 .distinct()
-                                 .collect(Collectors.toSet());
-
-        HashSupplier hasher = (algorithm) -> Hasher.generate(file, algorithm);
-        return ModuleArtifacts.newModuleArtifact(mi, packages, location, hasher);
-    }
-
-    /**
-     * Returns a {@code ModuleArtifact} to represent a module jar on the
-     * file system.
-     */
-    private ModuleArtifact readJar(Path file) throws IOException {
-        try (JarFile jf = new JarFile(file.toString())) {
-            JarEntry entry = jf.getJarEntry(MODULE_INFO);
-            if (entry == null) {
-                // not a modular jar
-                return null;
-            }
-
-            // jar URI
-            URI location = URI.create("jar:" + file.toUri() + "!/");
-
-            ModuleInfo mi = ModuleInfo.read(jf.getInputStream(entry));
-
-            Set<String> packages = jf.stream()
-                                     .filter(e -> e.getName().endsWith(".class"))
-                                     .map(e -> toPackageName(e))
-                                     .filter(pkg -> pkg.length() > 0)   // module-info
-                                     .distinct()
-                                     .collect(Collectors.toSet());
-
-            HashSupplier hasher = (algorithm) -> Hasher.generate(file, algorithm);
-            return ModuleArtifacts.newModuleArtifact(mi, packages, location, hasher);
-        }
-    }
-
-    /**
-     * Returns a {@code ModuleArtifact} to represent an exploded module
-     * on the file system.
-     */
-    private ModuleArtifact readExploded(Path dir) throws IOException {
-        Path file = dir.resolve(MODULE_INFO);
-        if (Files.notExists((file))) {
-            // no module-info in directory
-            return null;
-        }
-
-        URI location = dir.toUri();
-
-        ModuleInfo mi;
-        try (InputStream in = Files.newInputStream(file)) {
-            mi = ModuleInfo.read(new BufferedInputStream(in));
-        }
-
-        Set<String> packages =
-                Files.find(dir, Integer.MAX_VALUE,
-                        ((path, attrs) -> attrs.isRegularFile() &&
-                                path.toString().endsWith(".class")))
-                        .map(path -> toPackageName(dir.relativize(path)))
-                        .filter(pkg -> pkg.length() > 0)   // module-info
-                        .distinct()
-                        .collect(Collectors.toSet());
-
-        return ModuleArtifacts.newModuleArtifact(mi, packages, location, null);
-    }
-
-    private String toPackageName(ZipEntry entry) {
-        String name = entry.getName();
-        assert name.endsWith(".class");
-        // jmod classes in classes/, jar in /
-        int start = name.startsWith("classes/") ? 8 : 0;
-        int index = name.lastIndexOf("/");
-        if (index > start) {
-            return name.substring(start, index).replace('/', '.');
-        } else {
-            return "";
-        }
-    }
-
-    private String toPackageName(Path path) {
-        String name = path.toString();
-        assert name.endsWith(".class");
-        int index = name.lastIndexOf(File.separatorChar);
-        if (index != -1) {
-            return name.substring(0, index).replace(File.separatorChar, '.');
-        } else {
-            return "";
-        }
     }
 }

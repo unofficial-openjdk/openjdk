@@ -25,10 +25,13 @@ package container;
 
 import java.io.File;
 import java.io.FilePermission;
+import java.io.InputStream;
 import java.io.IOException;
 import java.lang.module.ModuleArtifact;
 import java.lang.module.ModuleReader;
+import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URI;
 import java.nio.ByteBuffer;
 import java.security.CodeSigner;
 import java.security.CodeSource;
@@ -97,11 +100,14 @@ class ModuleClassLoader extends SecureClassLoader {
     @Override
     public URL findResource(ModuleArtifact artifact, String name) {
         if (artifactToReader.containsKey(artifact)) {
-            return moduleReaderFor(artifact).findResource(name);
-        } else {
-            // module not defined to this class loader
-            return null;
+            URI uri = moduleReaderFor(artifact).findResource(name);
+            if (uri != null) {
+                try {
+                    return uri.toURL();
+                } catch (MalformedURLException e) { }
+            }
         }
+        return null;
     }
 
     /**
@@ -188,7 +194,9 @@ class ModuleClassLoader extends SecureClassLoader {
 
             // read class file
             String rn = cn.replace('.', '/').concat(".class");
-            ByteBuffer bb = reader.readResource(rn);
+            ByteBuffer bb = reader.getResourceAsBuffer(rn);
+            if (bb == null)
+                return null;
             try {
                 // define a package in the named module
                 int pos = cn.lastIndexOf('.');
@@ -274,12 +282,8 @@ class ModuleClassLoader extends SecureClassLoader {
      */
     private static class NullModuleReader implements ModuleReader {
         @Override
-        public URL findResource(String name) {
+        public URI findResource(String name) {
             return null;
-        }
-        @Override
-        public ByteBuffer readResource(String name) throws IOException {
-            throw new IOException(name + " not found");
         }
         @Override
         public void close() {
