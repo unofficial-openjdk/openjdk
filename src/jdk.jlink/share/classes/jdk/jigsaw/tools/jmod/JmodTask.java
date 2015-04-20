@@ -512,7 +512,7 @@ class JmodTask {
 
                 // --module-version
                 if (moduleVersion != null)
-                    appender.version(moduleVersion.toString());
+                    appender.version(moduleVersion);
 
                 // --hash-dependences
                 if (dependencesToHash != null)

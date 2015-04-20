@@ -73,7 +73,7 @@ class ModuleArtifacts {
     {
         ExtendedModuleDescriptor descriptor =
             new ExtendedModuleDescriptor(mi.name(),
-                                         null,
+                                         mi.version(),
                                          mi.mainClass(),
                                          mi.hashes(),
                                          mi.moduleDependences(),

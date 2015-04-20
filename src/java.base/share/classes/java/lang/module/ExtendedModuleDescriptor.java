@@ -104,6 +104,16 @@ public class ExtendedModuleDescriptor
         return version.compareTo(that.version);
     }
 
+    /**
+     * Returns a string containing this module's name and, if present, its
+     * version.
+     */
+    public String toNameAndVersion() {
+        if (version == null)
+            return name();
+        return name() + "@" + version.toString();
+    }
+
     @Override
     public boolean equals(Object ob) {
         if (!(ob instanceof ExtendedModuleDescriptor))
@@ -140,9 +150,13 @@ public class ExtendedModuleDescriptor
             this.version = null;
         }
 
-        public Builder(String name, String version) {
+        public Builder(String name, Version version) {
             this.name = ModuleName.check(name);
-            this.version = Version.parse(version);
+            this.version = version;
+        }
+
+        public Builder(String name, String version) {
+            this(name, Version.parse(version));
         }
 
         public Builder requires(ModuleDependence md) {

@@ -889,7 +889,7 @@ public enum LauncherHelper {
                 .map(cf::findArtifact)
                 .sorted(Comparator.comparing(ModuleArtifact::descriptor))
                 .forEach(md -> {
-                    ostream.println(nameAndLocation(md.descriptor().name(), md.location()));
+                    ostream.println(midAndLocation(md.descriptor(), md.location()));
                 });
         } else {
             String[] names = optionFlag.substring(colon+1).split(",");
@@ -901,7 +901,7 @@ public enum LauncherHelper {
                 }
 
                 ExtendedModuleDescriptor md = artifact.descriptor();
-                ostream.println(nameAndLocation(md.name(), artifact.location()));
+                ostream.println(midAndLocation(md, artifact.location()));
 
                 for (ModuleDependence d: md.moduleDependences()) {
                     ostream.format("  requires %s%n", d);
@@ -941,11 +941,11 @@ public enum LauncherHelper {
         }
     }
 
-    static String nameAndLocation(String name, URI location ) {
+    static String midAndLocation(ExtendedModuleDescriptor md, URI location ) {
         if (location.getScheme().equalsIgnoreCase("jrt")) {
-            return name;
+            return md.toNameAndVersion();
         } else {
-            return name + " (" + location + ")";
+            return md.toNameAndVersion() + " (" + location + ")";
         }
     }
 

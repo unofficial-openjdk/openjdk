@@ -38,6 +38,7 @@ import jdk.internal.org.objectweb.asm.Label;
 import java.lang.module.ModuleDependence;
 import java.lang.module.ModuleDependence.Modifier;
 import java.lang.module.ModuleExport;
+import java.lang.module.Version;
 import jdk.jigsaw.module.internal.Hasher.DependencyHashes;
 
 /**
@@ -249,9 +250,9 @@ class ClassFileAttributes {
      * }
      */
     static class VersionAttribute extends Attribute {
-        private final String version;
+        private final Version version;
 
-        VersionAttribute(String version) {
+        VersionAttribute(Version version) {
             super(ModuleInfo.VERSION);
             this.version = version;
         }
@@ -269,7 +270,7 @@ class ClassFileAttributes {
                                  Label[] labels)
         {
             String value = cr.readUTF8(off, buf);
-            return new VersionAttribute(value);
+            return new VersionAttribute(Version.parse(value));
         }
 
         @Override
@@ -280,7 +281,7 @@ class ClassFileAttributes {
                                    int maxLocals)
         {
             ByteVector attr = new ByteVector();
-            int index = cw.newUTF8(version);
+            int index = cw.newUTF8(version.toString());
             attr.putShort(index);
             return attr;
         }

@@ -46,6 +46,7 @@ import jdk.internal.org.objectweb.asm.Opcodes;
 import java.lang.module.ModuleDependence;
 import java.lang.module.ModuleDependence.Modifier;
 import java.lang.module.ModuleExport;
+import java.lang.module.Version;
 import jdk.jigsaw.module.internal.Hasher.DependencyHashes;
 
 /**
@@ -84,7 +85,7 @@ public final class ModuleInfo {
     private Map<String, Set<String>> services;
 
     // extended meta data read from other attributes
-    private String version;
+    private Version version;
     private String mainClass;
     private DependencyHashes hashes;
 
@@ -142,7 +143,7 @@ public final class ModuleInfo {
      * Returns the value of version string in the {@code Version} attribute
      * or {@code null} if the attribute does not exist.
      */
-    public String version() {
+    public Version version() {
         return version;
     }
 
@@ -193,7 +194,7 @@ public final class ModuleInfo {
         private final InputStream in;
 
         // the value of the Version attribute
-        private String version;
+        private Version version;
 
         // the value of the MainClass attribute
         private String mainClass;
@@ -208,7 +209,7 @@ public final class ModuleInfo {
         /**
          * Sets the value of the Version attribute.
          */
-        public Appender version(String version) {
+        public Appender version(Version version) {
             this.version = version;
             return this;
         }
@@ -446,7 +447,7 @@ public final class ModuleInfo {
         throws IOException
     {
         int index = in.readUnsignedShort();
-        this.version = cpool.getUtf8(index);
+        this.version = Version.parse(cpool.getUtf8(index));
     }
 
     /**
