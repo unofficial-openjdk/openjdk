@@ -46,6 +46,7 @@ public class RangeCheck {
                 "-Xmx32m",
                 "-XX:-TransmitErrorReport",
                 "-XX:-InlineUnsafeOps", // The compiler intrinsics doesn't have the assert
+                "-XX:AddModuleExports=java.base/sun.misc",
                 DummyClassWithMainRangeCheck.class.getName());
 
         OutputAnalyzer output = new OutputAnalyzer(pb.start());
