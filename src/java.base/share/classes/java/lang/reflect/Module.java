@@ -341,7 +341,7 @@ public final class Module {
                 array[i++] = pkg.replace('.', '/');
             }
 
-            Version version = artifact.descriptor().id().version();
+            Version version = artifact.descriptor().version();
             String vs = (version != null) ? version.toString() : null;
             URI location = artifact.location();
             String uris = (location != null) ? location.toString() : null;

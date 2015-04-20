@@ -94,7 +94,6 @@ public class JImageGenerator {
             + "}\n";
 
     private static final String OUTPUT_OPTION = "--output";
-    private static final String MID_OPTION = "--mid";
     private static final String MAIN_CLASS_OPTION = "--main-class";
     private static final String CLASS_PATH_OPTION = "--class-path";
     private static final String MODULE_PATH_OPTION = "--modulepath";
@@ -296,7 +295,7 @@ public class JImageGenerator {
         return opt.toArray(options);
     }
 
-    private static String[] jmodCreateOptions(File cp, String main, String id,
+    private static String[] jmodCreateOptions(File cp, String main, String name,
             File outFile) {
         List<String> opt = new ArrayList<>();
         opt.add(CREATE_CMD);
@@ -304,8 +303,6 @@ public class JImageGenerator {
             opt.add(MAIN_CLASS_OPTION);
             opt.add(main);
         }
-        opt.add(MID_OPTION);
-        opt.add(id);
         opt.add(CLASS_PATH_OPTION);
         opt.add(cp.getAbsolutePath());
         opt.add(outFile.getAbsolutePath());
@@ -416,17 +413,17 @@ public class JImageGenerator {
         return outDir;
     }
 
-    private File buildJModule(String id, String main, File moduleDirectory) {
-        File outFile = new File(jmods, id + ".jmod");
+    private File buildJModule(String name, String main, File moduleDirectory) {
+        File outFile = new File(jmods, name + ".jmod");
         jdk.jigsaw.tools.jmod.Main.run(jmodCreateOptions(moduleDirectory, main,
-                id, outFile),
+                name, outFile),
                                        new PrintWriter(System.out));
         return outFile;
     }
 
-    private File buildJarModule(String id, File moduleDirectory)
+    private File buildJarModule(String name, File moduleDirectory)
             throws IOException {
-        File outFile = new File(jars, id + ".jar");
+        File outFile = new File(jars, name + ".jar");
         try (JarOutputStream classesJar = new JarOutputStream(new FileOutputStream(outFile))) {
             String classDir = moduleDirectory.getPath();
             Files.walkFileTree(moduleDirectory.toPath(), new FileVisitor<Path>() {

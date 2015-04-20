@@ -83,7 +83,7 @@ public class _ModuleDependence {
         assertTrue(md2.compareTo(md1) == -n);
     }
 
-    @Test(expectedExceptions = { NullPointerException.class })
+    @Test(expectedExceptions = { IllegalArgumentException.class })
     public void nullName() {
         new ModuleDependence(EnumSet.noneOf(Modifier.class), null);
     }

@@ -71,7 +71,7 @@ import java.lang.module.ModuleArtifact;
 import java.lang.module.ModuleArtifactFinder;
 import java.lang.module.ModuleDependence;
 import java.lang.module.ModuleDescriptor;
-import java.lang.module.ModuleId;
+import java.lang.module.Version;
 import jdk.jigsaw.module.internal.Hasher;
 import jdk.jigsaw.module.internal.Hasher.DependencyHashes;
 import jdk.jigsaw.module.internal.ModuleInfo;
@@ -219,9 +219,9 @@ class JmodTask {
                 task.options.mainClass = arg;
             }
         },
-        new Option(true, "--mid") {
+        new Option(true, "--module-version") {
             void process(JmodTask task, String opt, String arg) throws BadArgs {
-                task.options.moduleId = arg;
+                task.options.moduleVersion = Version.parse(arg);
             }
         },
         new Option(true, "--hash-dependences") {
@@ -276,7 +276,7 @@ class JmodTask {
         List<Path> configs;
         List<Path> libs;
         ModuleArtifactFinder moduleFinder;
-        String moduleId;
+        Version moduleVersion;
         String mainClass;
         Pattern dependencesToHash;
     }
@@ -419,7 +419,7 @@ class JmodTask {
         final List<Path> libs = options.libs;
         final List<Path> configs = options.configs;
         final List<Path> classpath = options.classpath;
-        final String moduleId = options.moduleId;
+        final Version moduleVersion = options.moduleVersion;
         final String mainClass = options.mainClass;
         final ModuleArtifactFinder moduleFinder = options.moduleFinder;
         final Pattern dependencesToHash = options.dependencesToHash;
@@ -478,9 +478,9 @@ class JmodTask {
         /**
          * Writes the module-info.class to the given ZIP output stream.
          *
-         * If --mid, --main-class or other options were provided then the
-         * corresponding class file attributes are added to the module-info
-         * here.
+         * If --module-version, --main-class, or other options were provided
+         * then the corresponding class file attributes are added to the
+         * module-info here.
          */
         void writeModuleInfo(ZipOutputStream zos) throws IOException {
 
@@ -489,11 +489,11 @@ class JmodTask {
                 throw new IOException(MODULE_INFO + " not found");
             }
 
-            // if --mid is specified then we need the module name
-            // from the Module attribute.
+            // if --hash-dependences  is specified then we need the module name
+            // and dependences from the Module attribute
             String name = null;
             Set<ModuleDependence> dependences = null;
-            if (moduleId != null || dependencesToHash != null) {
+            if (dependencesToHash != null) {
                 try (InputStream in = miSupplier.get()) {
                     ModuleInfo mi = ModuleInfo.read(in);
                     name = mi.name();
@@ -510,17 +510,9 @@ class JmodTask {
                 if (mainClass != null)
                     appender.mainClass(mainClass);
 
-                // --mid
-                if (moduleId != null) {
-                    ModuleId id = ModuleId.parse(moduleId);
-                    if (!id.name().equals(name)) {
-                        throw new RuntimeException("module name in specified to --mid" +
-                            " does not match module name: " + name);
-                    }
-                    if (id.version() != null) {
-                        appender.version(id.version().toString());
-                    }
-                }
+                // --module-version
+                if (moduleVersion != null)
+                    appender.version(moduleVersion.toString());
 
                 // --hash-dependences
                 if (dependencesToHash != null)

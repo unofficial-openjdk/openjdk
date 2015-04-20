@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,9 +27,11 @@ package java.lang.module;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import jdk.jigsaw.module.internal.Hasher.DependencyHashes;
+
 
 /**
  * An extended module descriptor.
@@ -41,11 +43,13 @@ import jdk.jigsaw.module.internal.Hasher.DependencyHashes;
 public class ExtendedModuleDescriptor
     extends ModuleDescriptor
 {
-    private final ModuleId id;
+
+    private final Version version;
     private final String mainClass;
     private final DependencyHashes hashes;
 
-    ExtendedModuleDescriptor(ModuleId id,
+    ExtendedModuleDescriptor(String name,
+                             Version version,
                              String mainClass,
                              DependencyHashes hashes,
                              Set<ModuleDependence> moduleDeps,
@@ -53,17 +57,18 @@ public class ExtendedModuleDescriptor
                              Set<ModuleExport> exports,
                              Map<String, Set<String>> services)
     {
-        super(id.name(), moduleDeps, serviceDeps, exports, services);
-        this.id = id;
+        super(name, moduleDeps, serviceDeps, exports, services);
+        this.version = version;
         this.mainClass = mainClass;
         this.hashes = hashes;
     }
 
     /**
-     * Returns the module identifier.
+     * Returns this module's version, or {@code null} if it does not have a
+     * version.
      */
-    public ModuleId id() {
-        return id;
+    public Version version() {
+        return version;
     }
 
     /**
@@ -83,10 +88,20 @@ public class ExtendedModuleDescriptor
     }
 
     @Override
-    public int compareTo(ModuleDescriptor that) {
-        if (that instanceof ExtendedModuleDescriptor)
-            return this.id.compareTo(((ExtendedModuleDescriptor)that).id);
-        return -1;
+    public int compareTo(ModuleDescriptor md) {
+        if (!(md instanceof ExtendedModuleDescriptor))
+            return -1;
+        ExtendedModuleDescriptor that = (ExtendedModuleDescriptor)md;
+        int c = name().compareTo(that.name());
+        if (c != 0) return c;
+        if (version == null) {
+            if (that.version == null)
+                return 0;
+            return -1;
+        }
+        if (that.version == null)
+            return +1;
+        return version.compareTo(that.version);
     }
 
     @Override
@@ -94,33 +109,40 @@ public class ExtendedModuleDescriptor
         if (!(ob instanceof ExtendedModuleDescriptor))
             return false;
         ExtendedModuleDescriptor that = (ExtendedModuleDescriptor)ob;
-        return (id.equals(that.id) && super.equals(that));
+        return (super.equals(that)
+                && Objects.equals(version, that.version)
+                && Objects.equals(mainClass, that.mainClass)
+                && Objects.equals(hashes, that.hashes));
     }
 
     @Override
     public int hashCode() {
-        return id.hashCode() + 43 * super.hashCode();
+        return (super.hashCode() * 43
+                + Objects.hashCode(version) * 43
+                + Objects.hashCode(mainClass) * 43
+                + Objects.hashCode(hashes));
     }
 
     /**
      * A builder used for building {@code ExtendedModuleDescriptor} objects.
      */
     public static class Builder extends ModuleDescriptor.Builder {
-        private final ModuleId id;
+
+        private final String name;
+        private final Version version;
         private String mainClass;
 
         /**
          * Initializes a new builder.
          */
-        public Builder(String id) {
-            this.id = ModuleId.parse(id);
+        public Builder(String name) {
+            this.name = ModuleName.check(name);
+            this.version = null;
         }
 
-        /**
-         * Initializes a new builder.
-         */
-        public Builder(ModuleId id) {
-            this.id = id;
+        public Builder(String name, String version) {
+            this.name = ModuleName.check(name);
+            this.version = Version.parse(version);
         }
 
         public Builder requires(ModuleDependence md) {
@@ -164,7 +186,8 @@ public class ExtendedModuleDescriptor
          * @apiNote Hashes are dropped
          */
         public ExtendedModuleDescriptor build() {
-            return new ExtendedModuleDescriptor(id,
+            return new ExtendedModuleDescriptor(name,
+                                                version,
                                                 mainClass,
                                                 null,
                                                 moduleDeps,
@@ -173,4 +196,5 @@ public class ExtendedModuleDescriptor
                                                 services);
         }
     }
+
 }

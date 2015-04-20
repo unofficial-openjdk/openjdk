@@ -66,13 +66,13 @@ rm -rf mlib mlib2 myimage myjimage
 
 # create jmod from exploded classes on the class path
 mkdir mlib
-$JMOD create --class-path mods/test --mid test@1.0 --main-class jdk.test.Test \
+$JMOD create --class-path mods/test --module-version 1.0 --main-class jdk.test.Test \
     mlib/test@1.0.jmod
 
 # create jmod from JAR file on the class path
 mkdir mlib2
 $JAR cf mlib2/test.jar -C mods/test .
-$JMOD create --class-path mlib2/test.jar --mid test@1.0 --main-class jdk.test.Test \
+$JMOD create --class-path mlib2/test.jar --module-version 1.0 --main-class jdk.test.Test \
     mlib2/test@1.0.jmod
 
 # uncompressed image

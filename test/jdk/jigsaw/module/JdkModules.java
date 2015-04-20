@@ -57,7 +57,7 @@ public class JdkModules {
 
         // do sanity test for the base module for now
         artifacts.stream().map(ModuleArtifact::descriptor).forEach(md -> {
-            switch (md.id().name()) {
+            switch (md.name()) {
                 case "java.base":
                     base(md); break;
                 case "java.compact2":

@@ -71,9 +71,9 @@ class ModuleArtifacts {
                                             URI location,
                                             Hasher.HashSupplier hasher)
     {
-        ModuleId id = ModuleId.parse(mi.name(), mi.version());
         ExtendedModuleDescriptor descriptor =
-            new ExtendedModuleDescriptor(id,
+            new ExtendedModuleDescriptor(mi.name(),
+                                         null,
                                          mi.mainClass(),
                                          mi.hashes(),
                                          mi.moduleDependences(),

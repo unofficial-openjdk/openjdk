@@ -46,7 +46,6 @@ import jdk.internal.org.objectweb.asm.Opcodes;
 import java.lang.module.ModuleDependence;
 import java.lang.module.ModuleDependence.Modifier;
 import java.lang.module.ModuleExport;
-import java.lang.module.ModuleId;
 import jdk.jigsaw.module.internal.Hasher.DependencyHashes;
 
 /**

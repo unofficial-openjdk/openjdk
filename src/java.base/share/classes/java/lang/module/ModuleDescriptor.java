@@ -32,6 +32,7 @@ import java.util.Map;
 import java.util.Set;
 import static java.util.Objects.*;
 
+
 /**
  * A module descriptor.
  */
@@ -39,6 +40,7 @@ import static java.util.Objects.*;
 public class ModuleDescriptor
     implements Comparable<ModuleDescriptor>
 {
+
     private final String name;
     private final Set<ModuleDependence> moduleDependences;
     private final Set<String> serviceDependences;
@@ -51,7 +53,7 @@ public class ModuleDescriptor
                      Set<ModuleExport> exports,
                      Map<String, Set<String>> services)
     {
-        this.name = requireNonNull(name);
+        this.name = ModuleName.check(name);
         this.moduleDependences = Collections.unmodifiableSet(moduleDeps);
         this.serviceDependences = Collections.unmodifiableSet(serviceDeps);
         this.exports = Collections.unmodifiableSet(exports);

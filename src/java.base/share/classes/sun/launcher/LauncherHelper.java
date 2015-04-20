@@ -82,7 +82,6 @@ import java.lang.module.ModuleArtifact;
 import java.lang.module.ModuleDependence;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleExport;
-import java.lang.module.ModuleId;
 
 public enum LauncherHelper {
     INSTANCE;
@@ -454,8 +453,8 @@ public enum LauncherHelper {
     }
 
     /**
-     * Returns the main class for a module. The query is either a module-id
-     * or module-id/main-class. For the former then the module's main class
+     * Returns the main class for a module. The query is either a module name
+     * or module-name/main-class. For the former then the module's main class
      * is obtained from its extended module descriptor.
      */
     static String getMainClassForModule(String query) {
@@ -471,18 +470,10 @@ public enum LauncherHelper {
         }
 
         // main module should be in the boot layer
-        ModuleId mid = ModuleId.parse(mainModule);
         Layer layer = Layer.bootLayer();
-        ModuleArtifact artifact = layer.configuration().findArtifact(mid.name());
+        ModuleArtifact artifact = layer.configuration().findArtifact(mainModule);
         if (artifact == null)
             abort(null, "java.launcher.module.error1", mainModule);
-
-        // if a version is specified to -m then it needs to be checked
-        if (mid.version() != null) {
-            ModuleId actual = artifact.descriptor().id();
-            if (!actual.equals(mid))
-                abort(null, "java.launcher.module.error2", actual, mid);
-        }
 
         // if query included the main-class then we return that
         if (mainClass != null) {
@@ -491,18 +482,18 @@ public enum LauncherHelper {
                 String pkg = mainClass.substring(0, i);
                 if (!artifact.packages().contains(pkg)) {
                     // main class not in a package that the module defines
-                    abort(null, "java.launcher.module.error3", mainModule, mainClass);
+                    abort(null, "java.launcher.module.error2", mainModule, mainClass);
                 }
             } else {
                 // main-class cannot be in the unnamed package
-                abort(null, "java.launcher.module.error3", mainModule, "<unnamed>");
+                abort(null, "java.launcher.module.error2", mainModule, "<unnamed>");
             }
             return mainClass;
         }
 
         mainClass = artifact.descriptor().mainClass();
         if (mainClass == null)
-            abort(null, "java.launcher.module.error4", artifact.location());
+            abort(null, "java.launcher.module.error3", artifact.location());
         return mainClass;
     }
 
@@ -898,7 +889,7 @@ public enum LauncherHelper {
                 .map(cf::findArtifact)
                 .sorted(Comparator.comparing(ModuleArtifact::descriptor))
                 .forEach(md -> {
-                    ostream.println(midAndLocation(md.descriptor().id(), md.location()));
+                    ostream.println(nameAndLocation(md.descriptor().name(), md.location()));
                 });
         } else {
             String[] names = optionFlag.substring(colon+1).split(",");
@@ -910,7 +901,7 @@ public enum LauncherHelper {
                 }
 
                 ExtendedModuleDescriptor md = artifact.descriptor();
-                ostream.println(midAndLocation(md.id(), artifact.location()));
+                ostream.println(nameAndLocation(md.name(), artifact.location()));
 
                 for (ModuleDependence d: md.moduleDependences()) {
                     ostream.format("  requires %s%n", d);
@@ -950,11 +941,12 @@ public enum LauncherHelper {
         }
     }
 
-    static String midAndLocation(ModuleId mid, URI location ) {
+    static String nameAndLocation(String name, URI location ) {
         if (location.getScheme().equalsIgnoreCase("jrt")) {
-            return mid.toString();
+            return name;
         } else {
-            return mid + " (" + location + ")";
+            return name + " (" + location + ")";
         }
     }
+
 }

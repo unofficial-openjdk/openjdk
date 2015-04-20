@@ -38,7 +38,6 @@ import jdk.internal.org.objectweb.asm.Label;
 import java.lang.module.ModuleDependence;
 import java.lang.module.ModuleDependence.Modifier;
 import java.lang.module.ModuleExport;
-import java.lang.module.ModuleId;
 import jdk.jigsaw.module.internal.Hasher.DependencyHashes;
 
 /**
@@ -162,7 +161,7 @@ class ClassFileAttributes {
             attr.putShort(moduleDependences.size());
 
             // requires[requires_count]
-            for (ModuleDependence md: moduleDependences) {
+            for (ModuleDependence md : moduleDependences) {
                 String dn = md.name();
                 int flags = 0;
                 if (md.modifiers().contains(Modifier.PUBLIC))
@@ -409,7 +408,7 @@ class ClassFileAttributes {
             Set<String> names = hashes.names();
             attr.putShort(names.size());
 
-            for (String dn: names) {
+            for (String dn : names) {
                 String hash = hashes.hashFor(dn);
                 assert hash != null;
                 attr.putShort(cw.newUTF8(dn));

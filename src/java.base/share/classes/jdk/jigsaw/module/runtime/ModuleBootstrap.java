@@ -41,7 +41,6 @@ import java.lang.module.Layer.ClassLoaderFinder;
 import java.lang.module.ModuleArtifact;
 import java.lang.module.ModuleArtifactFinder;
 import java.lang.module.ModuleDescriptor;
-import java.lang.module.ModuleId;
 
 import sun.misc.BootLoader;
 import sun.misc.ModuleClassLoader;
@@ -96,12 +95,12 @@ public final class ModuleBootstrap {
         }
 
         // launcher -m option to specify the initial module
-        ModuleId mainMid = null;
+        String mainModule = null;
         String propValue = System.getProperty("java.module.main");
         if (propValue != null) {
             int i = propValue.indexOf('/');
             String s = (i == -1) ? propValue : propValue.substring(0, i);
-            mainMid = ModuleId.parse(s);
+            mainModule = s;
         }
 
         // additional module(s) specified by -addmods
@@ -121,8 +120,8 @@ public final class ModuleBootstrap {
             for (String mod: propValue.split(",")) {
                 mods.add(mod);
             }
-            if (mainMid != null)
-                mods.add(mainMid.name());
+            if (mainModule != null)
+                mods.add(mainModule);
             finder = limitFinder(finder, mods);
         }
 
@@ -140,7 +139,7 @@ public final class ModuleBootstrap {
         // modules into the set of modules to resolve.
         Set<String> input = Collections.emptySet();
         String cp = System.getProperty("java.class.path");
-        if (mainMid == null || (cp != null && cp.length() > 0)) {
+        if (mainModule == null || (cp != null && cp.length() > 0)) {
             input = finder.allModules()
                           .stream()
                           .map(md -> md.descriptor().name())
@@ -148,10 +147,10 @@ public final class ModuleBootstrap {
         }
 
         // If -m or -addmods is specified then these module names must be resolved
-        if (mainMid != null || additionalMods != null) {
+        if (mainModule != null || additionalMods != null) {
             input = new HashSet<>(input);
-            if (mainMid != null)
-                input.add(mainMid.name());
+            if (mainModule != null)
+                input.add(mainModule);
             if (additionalMods != null)
                 input.addAll(additionalMods);
         }

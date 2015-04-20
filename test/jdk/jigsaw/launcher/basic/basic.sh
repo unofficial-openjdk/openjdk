@@ -44,7 +44,7 @@ $JAVAC -d mods/test `find $TESTSRC/src/test -name "*.java"`
 
 rm -rf mlib
 mkdir -p mlib
-$JMOD create --class-path mods/test --mid test@1.0 --main-class jdk.test.Main \
+$JMOD create --class-path mods/test --module-version 1.0 --main-class jdk.test.Main \
     mlib/test@1.0.jmod 
 
 # specify initial module / main class
@@ -52,8 +52,5 @@ $JAVA -mp mods -m test/jdk.test.Main
 
 # specify initial module by name
 $JAVA -mp mlib -m test
-
-# specify initial module by module id
-$JAVA -mp mlib -m test@1.0
 
 exit 0

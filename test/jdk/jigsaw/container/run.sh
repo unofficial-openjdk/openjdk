@@ -46,7 +46,7 @@ mkdir -p mlib
 mkdir -p mods/container
 $JAVAC -d mods/container `find $TESTSRC/src/container -name "*.java"`
 $JMOD create --class-path mods/container \
-   --mid container@1.0 --main-class container.Main mlib/wls@1.0.jmod
+   --module-version 1.0 --main-class container.Main mlib/wls@1.0.jmod
 
 rm -rf applib
 mkdir -p applib

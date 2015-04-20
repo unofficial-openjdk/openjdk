@@ -232,7 +232,7 @@ class ArtifactInterposer implements ModuleArtifactFinder {
         // create a new ExtendedModuleDescriptor with the updated module
         // definition
         ExtendedModuleDescriptor.Builder builder =
-            new ExtendedModuleDescriptor.Builder(descriptor.id());
+            new ExtendedModuleDescriptor.Builder(descriptor.name());
         newDependences.forEach(builder::requires);
         descriptor.serviceDependences().forEach(builder::uses);
         newExports.forEach(builder::export);

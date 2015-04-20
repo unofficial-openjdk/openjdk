@@ -82,7 +82,7 @@ public final class ModuleDependence
         } else {
             mods = Collections.unmodifiableSet(ms);
         }
-        this.name = ModuleId.checkModuleName(mn);
+        this.name = ModuleName.check(mn);
     }
 
     /**
@@ -103,8 +103,8 @@ public final class ModuleDependence
      * Compares this module dependence to another.
      *
      * <p> Two {@code ModuleDependence} objects are compared by comparing their
-     * module name lexicographically. Where the module names are equal then
-     * the set of modifiers are compared.
+     * module name lexicographically.  Where the module names are equal then
+     * the sets of modifiers are compared.
      *
      * @return A negative integer, zero, or a positive integer if this module
      *         dependence is less than, equal to, or greater than the given
@@ -112,10 +112,9 @@ public final class ModuleDependence
      */
     @Override
     public int compareTo(ModuleDependence that) {
-        int n = this.name().compareTo(that.name());
-        if (n != 0)
-            return n;
-
+        int c = this.name().compareTo(that.name());
+        if (c != 0)
+            return c;
         // same name, compare by modifiers
         return Long.compare(this.modsValue(), that.modsValue());
     }
