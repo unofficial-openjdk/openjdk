@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,11 +23,33 @@
  * questions.
  */
 
-module jdk.jlink {
-    exports jdk.tools.jlink.plugins;
-    uses jdk.tools.jlink.plugins.PluginProvider;
-    provides jdk.tools.jlink.plugins.PluginProvider with jdk.tools.jlink.internal.plugins.StripDebugProvider;
-    provides jdk.tools.jlink.plugins.PluginProvider with jdk.tools.jlink.internal.plugins.ExcludeProvider;
-    provides jdk.tools.jlink.plugins.PluginProvider with jdk.tools.jlink.internal.plugins.ZipCompressProvider;
-}
+package jdk.tools.jlink.internal;
 
+import jdk.tools.jlink.internal.JarArchive;
+import java.nio.file.Path;
+import jdk.internal.jimage.Archive.Entry.EntryType;
+
+/**
+ * An Archive backed by a jar file.
+ */
+public class ModularJarArchive extends JarArchive {
+
+    private static final String JAR_EXT = ".jar";
+
+    public ModularJarArchive(String mn, Path jmod) {
+        super(mn, jmod);
+        String filename = jmod.getFileName().toString();
+        if (!filename.endsWith(JAR_EXT))
+            throw new UnsupportedOperationException("Unsupported format: " + filename);
+    }
+
+    @Override
+    EntryType toEntryType(String section) {
+        return EntryType.CLASS_OR_RESOURCE;
+    }
+
+    @Override
+    String getFileName(String entryName) {
+        return entryName;
+    }
+}

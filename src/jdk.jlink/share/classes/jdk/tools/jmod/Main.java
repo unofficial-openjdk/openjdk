@@ -23,11 +23,28 @@
  * questions.
  */
 
-module jdk.jlink {
-    exports jdk.tools.jlink.plugins;
-    uses jdk.tools.jlink.plugins.PluginProvider;
-    provides jdk.tools.jlink.plugins.PluginProvider with jdk.tools.jlink.internal.plugins.StripDebugProvider;
-    provides jdk.tools.jlink.plugins.PluginProvider with jdk.tools.jlink.internal.plugins.ExcludeProvider;
-    provides jdk.tools.jlink.plugins.PluginProvider with jdk.tools.jlink.internal.plugins.ZipCompressProvider;
-}
+package jdk.tools.jmod;
 
+import java.io.*;
+
+public class Main {
+    public static void main(String... args) throws Exception {
+        JmodTask t = new JmodTask();
+        int rc = t.run(args);
+        System.exit(rc);
+    }
+
+
+    /**
+     * Entry point that does <i>not</i> call System.exit.
+     *
+     * @param args command line arguments
+     * @param out output stream
+     * @return an exit code. 0 means success, non-zero means an error occurred.
+     */
+    public static int run(String[] args, PrintWriter out) {
+        JmodTask t = new JmodTask();
+        t.setLog(out);
+        return t.run(args);
+    }
+}

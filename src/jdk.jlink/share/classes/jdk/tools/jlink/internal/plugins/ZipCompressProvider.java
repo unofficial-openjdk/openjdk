@@ -22,12 +22,41 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+package jdk.tools.jlink.internal.plugins;
 
-module jdk.jlink {
-    exports jdk.tools.jlink.plugins;
-    uses jdk.tools.jlink.plugins.PluginProvider;
-    provides jdk.tools.jlink.plugins.PluginProvider with jdk.tools.jlink.internal.plugins.StripDebugProvider;
-    provides jdk.tools.jlink.plugins.PluginProvider with jdk.tools.jlink.internal.plugins.ExcludeProvider;
-    provides jdk.tools.jlink.plugins.PluginProvider with jdk.tools.jlink.internal.plugins.ZipCompressProvider;
+import java.io.IOException;
+import java.util.Properties;
+import jdk.tools.jlink.plugins.Plugin;
+import jdk.tools.jlink.plugins.PluginProvider;
+import jdk.tools.jlink.internal.ImagePluginConfiguration;
+
+/**
+ *
+ * ZIP compression plugin provider
+ */
+public class ZipCompressProvider extends PluginProvider {
+    public static final String NAME = "zip";
+    public ZipCompressProvider() {
+        super(NAME,"ZIP Compression");
+    }
+
+    @Override
+    public Plugin newPlugin(Properties properties) throws IOException {
+        return new ZipPlugin();
+    }
+
+        @Override
+    public String getCategory() {
+        return ImagePluginConfiguration.COMPRESSOR;
+    }
+
+    @Override
+    public String getConfiguration() {
+        return null;
+    }
+
+    @Override
+    public String getToolOption() {
+        return "compress";
+    }
 }
-

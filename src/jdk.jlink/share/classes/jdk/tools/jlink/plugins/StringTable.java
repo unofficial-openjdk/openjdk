@@ -22,12 +22,23 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+package jdk.tools.jlink.plugins;
 
-module jdk.jlink {
-    exports jdk.tools.jlink.plugins;
-    uses jdk.tools.jlink.plugins.PluginProvider;
-    provides jdk.tools.jlink.plugins.PluginProvider with jdk.tools.jlink.internal.plugins.StripDebugProvider;
-    provides jdk.tools.jlink.plugins.PluginProvider with jdk.tools.jlink.internal.plugins.ExcludeProvider;
-    provides jdk.tools.jlink.plugins.PluginProvider with jdk.tools.jlink.internal.plugins.ZipCompressProvider;
+/**
+* Added strings are stored in the jimage strings table.
+*/
+public interface StringTable {
+    /**
+     * Add a string to the jimage strings table.
+     * @param str The string to add.
+     * @return a String identifier.
+     */
+    public int addString(String str);
+
+    /**
+     * Retrieve a string from the passed id.
+     * @param id The string id.
+     * @return The string referenced by the passed id.
+     */
+    public String getString(int id);
 }
-

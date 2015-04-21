@@ -31,9 +31,9 @@ $(eval $(call SetupLauncher,jimage,\
 $(eval $(call SetupLauncher,jlink,\
     -DEXPAND_CLASSPATH_WILDCARDS \
     -DNEVER_ACT_AS_SERVER_CLASS_MACHINE \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "jdk.jigsaw.tools.jlink.Main"$(COMMA) }'))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "jdk.tools.jlink.Main"$(COMMA) }'))
 
 $(eval $(call SetupLauncher,jmod,\
     -DEXPAND_CLASSPATH_WILDCARDS \
     -DNEVER_ACT_AS_SERVER_CLASS_MACHINE \
-    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "jdk.jigsaw.tools.jmod.Main"$(COMMA) }'))
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "jdk.tools.jmod.Main"$(COMMA) }'))

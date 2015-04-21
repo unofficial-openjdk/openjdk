@@ -38,7 +38,7 @@ import static java.nio.file.StandardOpenOption.WRITE;
 import java.util.LinkedList;
 import java.util.List;
 import jdk.internal.jimage.BasicImageReader;
-import jdk.jigsaw.tools.jlink.internal.ImageFileCreator;
+import jdk.tools.jlink.internal.ImageFileCreator;
 import jdk.internal.jimage.ImageHeader;
 import static jdk.internal.jimage.ImageHeader.MAGIC;
 import static jdk.internal.jimage.ImageHeader.MAJOR_VERSION;
@@ -46,13 +46,13 @@ import static jdk.internal.jimage.ImageHeader.MINOR_VERSION;
 import jdk.internal.jimage.ImageLocation;
 import jdk.internal.jimage.ImageModuleData;
 import jdk.internal.jimage.ImageResourcesTree;
-import jdk.jigsaw.tools.jlink.internal.ImagePluginConfiguration;
-import jdk.jigsaw.tools.jlink.internal.ImagePluginStack;
-import jdk.jigsaw.tools.jlink.TaskHelper;
-import jdk.jigsaw.tools.jlink.TaskHelper.BadArgs;
-import jdk.jigsaw.tools.jlink.TaskHelper.HiddenOption;
-import jdk.jigsaw.tools.jlink.TaskHelper.Option;
-import jdk.jigsaw.tools.jlink.TaskHelper.OptionsHelper;
+import jdk.tools.jlink.internal.ImagePluginConfiguration;
+import jdk.tools.jlink.internal.ImagePluginStack;
+import jdk.tools.jlink.TaskHelper;
+import jdk.tools.jlink.TaskHelper.BadArgs;
+import jdk.tools.jlink.TaskHelper.HiddenOption;
+import jdk.tools.jlink.TaskHelper.Option;
+import jdk.tools.jlink.TaskHelper.OptionsHelper;
 
 class JImageTask {
 
