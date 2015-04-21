@@ -40,10 +40,10 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Consumer;
 import jdk.internal.jimage.Archive;
-import jdk.jigsaw.tools.jlink.internal.ImageFileCreator;
+import jdk.tools.jlink.internal.ImageFileCreator;
 import jdk.internal.jimage.ImageModuleData;
 import jdk.internal.jimage.ImageModuleDataWriter;
-import jdk.jigsaw.tools.jlink.internal.ImagePluginStack;
+import jdk.tools.jlink.internal.ImagePluginStack;
 
 /**
  *

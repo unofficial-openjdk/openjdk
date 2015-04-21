@@ -38,20 +38,20 @@ import java.util.List;
 import java.util.Properties;
 import jdk.internal.jimage.decompressor.ResourceDecompressor;
 import jdk.internal.jimage.decompressor.ZipDecompressorFactory;
-import jdk.jigsaw.tools.jlink.plugins.ResourcePool;
-import jdk.jigsaw.tools.jlink.plugins.ResourcePool.Resource;
-import jdk.jigsaw.tools.jlink.internal.ImagePluginConfiguration;
+import jdk.tools.jlink.plugins.ResourcePool;
+import jdk.tools.jlink.plugins.ResourcePool.Resource;
+import jdk.tools.jlink.internal.ImagePluginConfiguration;
 import jdk.internal.jimage.decompressor.CompressedResourceHeader;
-import jdk.jigsaw.tools.jlink.plugins.Plugin;
-import jdk.jigsaw.tools.jlink.plugins.PluginProvider;
-import jdk.jigsaw.tools.jlink.internal.ImagePluginProviderRepository;
-import jdk.jigsaw.tools.jlink.internal.ImagePluginStack;
-import jdk.jigsaw.tools.jlink.internal.ResourcePoolImpl;
-import jdk.jigsaw.tools.jlink.plugins.ResourcePool.CompressedResource;
-import jdk.jigsaw.tools.jlink.plugins.StringTable;
-import jdk.jigsaw.tools.jlink.internal.plugins.ZipCompressProvider;
-import jdk.jigsaw.tools.jlink.internal.plugins.ExcludeProvider;
-import jdk.jigsaw.tools.jlink.internal.plugins.StripDebugProvider;
+import jdk.tools.jlink.plugins.Plugin;
+import jdk.tools.jlink.plugins.PluginProvider;
+import jdk.tools.jlink.internal.ImagePluginProviderRepository;
+import jdk.tools.jlink.internal.ImagePluginStack;
+import jdk.tools.jlink.internal.ResourcePoolImpl;
+import jdk.tools.jlink.plugins.ResourcePool.CompressedResource;
+import jdk.tools.jlink.plugins.StringTable;
+import jdk.tools.jlink.internal.plugins.ZipCompressProvider;
+import jdk.tools.jlink.internal.plugins.ExcludeProvider;
+import jdk.tools.jlink.internal.plugins.StripDebugProvider;
 import tests.JImageGenerator;
 
 /*
@@ -62,10 +62,10 @@ import tests.JImageGenerator;
  * @modules java.base/jdk.internal.jimage
  *          java.base/jdk.internal.jimage.decompressor
  *          jdk.compiler/com.sun.tools.classfile
- *          jdk.jlink/jdk.jigsaw.tools.jlink
- *          jdk.jlink/jdk.jigsaw.tools.jlink.internal
- *          jdk.jlink/jdk.jigsaw.tools.jlink.internal.plugins
- *          jdk.jlink/jdk.jigsaw.tools.jmod
+ *          jdk.jlink/jdk.tools.jlink
+ *          jdk.jlink/jdk.tools.jlink.internal
+ *          jdk.jlink/jdk.tools.jlink.internal.plugins
+ *          jdk.jlink/jdk.tools.jmod
  *          jdk.jlink/jdk.tools.jimage
  * @run build PluginsTest
  * @run build tests.*

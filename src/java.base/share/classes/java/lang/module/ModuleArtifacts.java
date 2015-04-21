@@ -36,6 +36,7 @@ import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -429,7 +430,7 @@ class ModuleArtifacts {
         }
 
         private ZipEntry find(String name) {
-            return zf.getEntry("classes/" + name);
+            return zf.getEntry("classes/" + Objects.requireNonNull(name));
         }
 
         @Override

@@ -26,17 +26,17 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import jdk.jigsaw.tools.jlink.internal.ResourcePoolImpl;
-import jdk.jigsaw.tools.jlink.plugins.ResourcePool.Resource;
-import jdk.jigsaw.tools.jlink.plugins.ResourcePool;
-import jdk.jigsaw.tools.jlink.plugins.ResourcePool.CompressedResource;
-import jdk.jigsaw.tools.jlink.plugins.StringTable;
+import jdk.tools.jlink.internal.ResourcePoolImpl;
+import jdk.tools.jlink.plugins.ResourcePool.Resource;
+import jdk.tools.jlink.plugins.ResourcePool;
+import jdk.tools.jlink.plugins.ResourcePool.CompressedResource;
+import jdk.tools.jlink.plugins.StringTable;
 /*
  * ResourcePool class unit testing.
  * @test
  * @summary Test ResourcePool class
  * @author Jean-Francois Denise
- * @modules jdk.jlink/jdk.jigsaw.tools.jlink.internal
+ * @modules jdk.jlink/jdk.tools.jlink.internal
  * @run build ResourcePoolTest
  * @run main ResourcePoolTest
  */

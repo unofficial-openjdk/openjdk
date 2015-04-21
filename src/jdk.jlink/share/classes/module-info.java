@@ -24,10 +24,10 @@
  */
 
 module jdk.jlink {
-    exports jdk.jigsaw.tools.jlink.plugins;
-    uses jdk.jigsaw.tools.jlink.plugins.PluginProvider;
-    provides jdk.jigsaw.tools.jlink.plugins.PluginProvider with jdk.jigsaw.tools.jlink.internal.plugins.StripDebugProvider;
-    provides jdk.jigsaw.tools.jlink.plugins.PluginProvider with jdk.jigsaw.tools.jlink.internal.plugins.ExcludeProvider;
-    provides jdk.jigsaw.tools.jlink.plugins.PluginProvider with jdk.jigsaw.tools.jlink.internal.plugins.ZipCompressProvider;
+    exports jdk.tools.jlink.plugins;
+    uses jdk.tools.jlink.plugins.PluginProvider;
+    provides jdk.tools.jlink.plugins.PluginProvider with jdk.tools.jlink.internal.plugins.StripDebugProvider;
+    provides jdk.tools.jlink.plugins.PluginProvider with jdk.tools.jlink.internal.plugins.ExcludeProvider;
+    provides jdk.tools.jlink.plugins.PluginProvider with jdk.tools.jlink.internal.plugins.ZipCompressProvider;
 }
 

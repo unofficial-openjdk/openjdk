@@ -31,7 +31,7 @@ import java.util.Objects;
  * <p> A module export, may be qualified or unqualified. </p>
  */
 
-public class ModuleExport {
+public final class ModuleExport {
 
     private final String pkg;
     private final String permit;

@@ -37,8 +37,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
-import jdk.jigsaw.tools.jlink.plugins.PluginProvider;
-import jdk.jigsaw.tools.jlink.internal.ImagePluginProviderRepository;
+import jdk.tools.jlink.plugins.PluginProvider;
+import jdk.tools.jlink.internal.ImagePluginProviderRepository;
 import tests.JImageGenerator;
 import tests.JImageValidator;
 
@@ -49,9 +49,9 @@ import tests.JImageValidator;
  * @library /lib/testlibrary/jlink
  * @modules java.base/jdk.internal.jimage
  *          jdk.compiler/com.sun.tools.classfile
- *          jdk.jlink/jdk.jigsaw.tools.jlink
- *          jdk.jlink/jdk.jigsaw.tools.jlink.internal
- *          jdk.jlink/jdk.jigsaw.tools.jmod
+ *          jdk.jlink/jdk.tools.jlink
+ *          jdk.jlink/jdk.tools.jlink.internal
+ *          jdk.jlink/jdk.tools.jmod
  *          jdk.jlink/jdk.tools.jimage
  * @build tests.JImageGenerator tests.JImageValidator
  * @run main JLinkTest
@@ -129,7 +129,7 @@ public class JLinkTest {
 
         //List plugins
         String[] opts = {"--list-plugins"};
-        jdk.jigsaw.tools.jlink.Main.run(opts, new PrintWriter(System.out));
+        jdk.tools.jlink.Main.run(opts, new PrintWriter(System.out));
 
         // ZIP
         File f = new File("plugins.properties");

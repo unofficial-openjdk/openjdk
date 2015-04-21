@@ -229,7 +229,7 @@ public class JImageGenerator {
             throw new Exception("No module for " + module);
         }
         File outDir = createNewFile(images, module, ".image");
-        jdk.jigsaw.tools.jlink.Main.run(optionsJLink(outDir, options, module),
+        jdk.tools.jlink.Main.run(optionsJLink(outDir, options, module),
                 new PrintWriter(System.out));
         if (!outDir.exists() || outDir.list() == null || outDir.list().length == 0) {
             throw new Exception("Error generating jimage, check log file");
@@ -415,7 +415,7 @@ public class JImageGenerator {
 
     private File buildJModule(String name, String main, File moduleDirectory) {
         File outFile = new File(jmods, name + ".jmod");
-        jdk.jigsaw.tools.jmod.Main.run(jmodCreateOptions(moduleDirectory, main,
+        jdk.tools.jmod.Main.run(jmodCreateOptions(moduleDirectory, main,
                 name, outFile),
                                        new PrintWriter(System.out));
         return outFile;

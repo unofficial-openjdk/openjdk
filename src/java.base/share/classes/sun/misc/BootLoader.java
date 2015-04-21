@@ -51,6 +51,14 @@ public class BootLoader {
     }
 
     /**
+     * Finds the Class object with the given name in the given module artifact if
+     * the module is defined to the boot loader.
+     */
+    public static Class<?> findClass(ModuleArtifact artifact, String name) {
+        return ClassLoaders.bootLoader().findClass(artifact, name);
+    }
+
+    /**
      * Finds the resource with the given name in the given module artifact if
      * the module is defined to the boot loader.
      */

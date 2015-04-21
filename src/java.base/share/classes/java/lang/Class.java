@@ -61,6 +61,8 @@ import java.util.Objects;
 import java.util.StringJoiner;
 
 import sun.misc.BootLoader;
+import sun.misc.JavaLangReflectAccess;
+import sun.misc.ModuleClassLoader;
 import sun.misc.SharedSecrets;
 import sun.misc.Unsafe;
 import sun.reflect.CallerSensitive;
@@ -382,6 +384,60 @@ public final class Class<T> implements java.io.Serializable,
                                             ClassLoader loader,
                                             Class<?> caller)
         throws ClassNotFoundException;
+
+
+    /**
+     * Returns the {@code Class} object associated with the class or
+     * interface with the given name defined in the given module.
+     * Given the fully qualified name for a class or interface (in the same
+     * format returned by {@code getName}) this method attempts to
+     * locate, load, and link the class or interface and it does not invoke
+     * the class initializer.
+     *
+     * <p> Note that this method does not check whether the requested class
+     * is accessible to its caller.
+     *
+     * @apiNote This is an experimental API.  The security permission check
+     * does not follow the the caller-sensitive security check as the
+     * 3-arg Class.forName method.  The security check should be examined
+     * together with Class.getModule, Module.getClassLoader and other
+     * relevant methods.
+     *
+     * @param  module   Named module
+     * @param  name     Fully-qualified class name
+     * @return {@code Class} object of the given name defined in the given module;
+     *         {@code null} if not found.
+     *
+     * @throws LinkageError if the linkage fails
+     * @throws SecurityException if there is a security manager
+     * and it denies the {@code RuntimePermission("getClassLoader")}
+     * permission.
+     *
+     * @since 1.9
+     */
+    public static Class<?> forName(Module module, String name) {
+        Objects.requireNonNull(module);
+        Objects.requireNonNull(name);
+
+        SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            sm.checkPermission(SecurityConstants.GET_CLASSLOADER_PERMISSION);
+        }
+
+        JavaLangReflectAccess reflectAccess = SharedSecrets.getJavaLangReflectAccess();
+        ModuleArtifact artifact = reflectAccess.getArtifact(module);
+        PrivilegedAction<ClassLoader> pa = module::getClassLoader;
+        ClassLoader cl = AccessController.doPrivileged(pa);
+
+        Class<?> c = null;
+        if (cl == null) {
+            c = BootLoader.findClass(artifact, name);
+        } else if (cl instanceof ModuleClassLoader) {
+            // TODO: custom module-aware class loader
+            c = ((ModuleClassLoader) cl).findClass(artifact, name);
+        }
+        return c;
+    }
 
     /**
      * Creates a new instance of the class represented by this {@code Class}

@@ -54,7 +54,7 @@ import java.util.stream.Collectors;
  * }</pre>
  */
 
-public class Configuration {
+public final class Configuration {
 
     private final Resolver.Resolution resolution;
 

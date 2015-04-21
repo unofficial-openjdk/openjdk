@@ -35,18 +35,18 @@ import java.nio.file.Path;
 import java.nio.file.ProviderNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
-import jdk.jigsaw.tools.jlink.internal.plugins.asm.AsmModulePool;
-import jdk.jigsaw.tools.jlink.internal.plugins.asm.AsmPool.Sorter;
-import jdk.jigsaw.tools.jlink.internal.plugins.asm.AsmPools;
-import jdk.jigsaw.tools.jlink.internal.plugins.asm.AsmPlugin;
-import jdk.jigsaw.tools.jlink.plugins.ResourcePool;
-import jdk.jigsaw.tools.jlink.plugins.ResourcePool.Resource;
-import jdk.jigsaw.tools.jlink.plugins.StringTable;
+import jdk.tools.jlink.internal.plugins.asm.AsmModulePool;
+import jdk.tools.jlink.internal.plugins.asm.AsmPool.Sorter;
+import jdk.tools.jlink.internal.plugins.asm.AsmPools;
+import jdk.tools.jlink.internal.plugins.asm.AsmPlugin;
+import jdk.tools.jlink.internal.ResourcePoolImpl;
+import jdk.tools.jlink.plugins.ResourcePool;
+import jdk.tools.jlink.plugins.ResourcePool.Resource;
+import jdk.tools.jlink.plugins.StringTable;
 import jdk.internal.org.objectweb.asm.ClassReader;
 import jdk.internal.org.objectweb.asm.ClassVisitor;
 import jdk.internal.org.objectweb.asm.ClassWriter;
 import jdk.internal.org.objectweb.asm.Opcodes;
-import jdk.jigsaw.tools.jlink.internal.ResourcePoolImpl;
 
 /*
  * Asm plugin testing.
@@ -58,10 +58,10 @@ import jdk.jigsaw.tools.jlink.internal.ResourcePoolImpl;
  *          java.base/jdk.internal.jimage.decompressor
  *          java.base/jdk.internal.org.objectweb.asm
  *          jdk.compiler/com.sun.tools.classfile
- *          jdk.jlink/jdk.jigsaw.tools.jlink
- *          jdk.jlink/jdk.jigsaw.tools.jlink.internal
- *          jdk.jlink/jdk.jigsaw.tools.jlink.internal.plugins.asm
- *          jdk.jlink/jdk.jigsaw.tools.jmod
+ *          jdk.jlink/jdk.tools.jlink
+ *          jdk.jlink/jdk.tools.jlink.internal
+ *          jdk.jlink/jdk.tools.jlink.internal.plugins.asm
+ *          jdk.jlink/jdk.tools.jmod
  *          jdk.jlink/jdk.tools.jimage
  * @run build AsmPluginTest
  * @run build tests.*

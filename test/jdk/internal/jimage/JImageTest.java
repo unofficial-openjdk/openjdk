@@ -43,8 +43,8 @@ import tests.JImageValidator;
  * @library /lib/testlibrary/jlink
  * @modules java.base/jdk.internal.jimage
  *          jdk.compiler/com.sun.tools.classfile
- *          jdk.jlink/jdk.jigsaw.tools.jmod
- *          jdk.jlink/jdk.jigsaw.tools.jlink
+ *          jdk.jlink/jdk.tools.jmod
+ *          jdk.jlink/jdk.tools.jlink
  *          jdk.jlink/jdk.tools.jimage
  * @run build JImageTest
  * @run build tests.*

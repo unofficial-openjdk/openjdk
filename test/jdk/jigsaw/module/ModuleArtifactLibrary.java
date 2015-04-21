@@ -4,9 +4,7 @@
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Oracle designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Oracle in the LICENSE file that accompanied this code.
+ * published by the Free Software Foundation.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -42,14 +40,17 @@ import java.util.stream.Collectors;
  */
 
 class ModuleArtifactLibrary implements ModuleArtifactFinder {
-    private final Set<ExtendedModuleDescriptor> modules = new HashSet<>();
     private final Map<String, ModuleArtifact> namesToArtifact = new HashMap<>();
 
     ModuleArtifactLibrary(ExtendedModuleDescriptor... descriptors) {
+        addAll(descriptors);
+    }
+
+    void addAll(ExtendedModuleDescriptor... descriptors) {
         for (ExtendedModuleDescriptor descriptor: descriptors) {
             String name = descriptor.name();
             if (!namesToArtifact.containsKey(name)) {
-                modules.add(descriptor);
+                //modules.add(descriptor);
 
                 URI uri = URI.create("module:/" + descriptor.name());
 
