@@ -401,7 +401,7 @@ public final class Context {
     private static final StructureLoader sharedLoader;
 
     /*package-private*/ @SuppressWarnings("static-method")
-    ClassLoader getSharedLoader() {
+    StructureLoader getSharedLoader() {
         return sharedLoader;
     }
 

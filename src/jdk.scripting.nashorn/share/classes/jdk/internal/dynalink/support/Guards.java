@@ -98,7 +98,10 @@ import jdk.internal.dynalink.linker.LinkerServices;
  */
 public class Guards {
     private static final Logger LOG = Logger
-            .getLogger(Guards.class.getName(), "jdk.internal.dynalink.support.messages");
+            .getLogger(Guards.class.getName());
+
+    // FIXME: Logger + ResourceBundle module internal resource access issue!
+    //        .getLogger(Guards.class.getName(), "jdk.internal.dynalink.support.messages");
 
     private Guards() {
     }
