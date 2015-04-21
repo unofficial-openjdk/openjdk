@@ -47,6 +47,7 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
@@ -241,6 +242,33 @@ class BuiltinClassLoader extends ModuleClassLoader {
             throw new ClassNotFoundException(cn);
 
         return c;
+    }
+
+    /**
+     * Finds the class with the specified binary name in a module defined
+     * to this class loader.
+     */
+    @Override
+    public Class<?> findClass(ModuleArtifact artifact, String cn) {
+        Objects.requireNonNull(artifact);
+
+        LoadedModule loadedModule = findModule(cn);
+        if (loadedModule == null || loadedModule.artifact() != artifact) {
+            // should also check if the artifact of the given module and
+            // this loaded module matches
+            return null;
+        }
+
+        synchronized (getClassLoadingLock(cn)) {
+            // check if already loaded
+            Class<?> c = findLoadedClass(cn);
+
+            if (c == null) {
+                // find the candidate module for this class
+                c = findClassInModuleOrNull(loadedModule, cn);
+            }
+            return c;
+        }
     }
 
     /**

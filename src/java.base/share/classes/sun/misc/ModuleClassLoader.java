@@ -56,4 +56,16 @@ public abstract class ModuleClassLoader extends SecureClassLoader {
      * with the effect of making the types in the module visible.
      */
     public abstract void defineModule(ModuleArtifact artifact);
+
+    /**
+     * Finds the class with the specified <a href="#name">binary name</a>
+     * in a module defined to this class loader.
+     *
+     * @param  artifact A module artifact
+     * @param  name     The <a href="#name">binary name</a> of the class
+     *
+     * @return The resulting {@code Class} object; {@code null} if the
+     * class could not be found from the given module
+     */
+    public abstract Class<?> findClass(ModuleArtifact artifact, String name);
 }

@@ -24,6 +24,7 @@
  */
 package sun.misc;
 
+import java.lang.module.ModuleArtifact;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
@@ -111,6 +112,14 @@ public class ClassLoaders {
 
         BootClassLoader(Path overrideDir, URLClassPath bcp) {
             super(null, overrideDir, bcp);
+        }
+
+        @Override
+        public Class<?> findClass(ModuleArtifact artifact, String cn) {
+            Class<?> c = jla.findBootstrapClassOrNull(this, cn);
+            // findBootstrapClassOrNull may load class from -Xbootclasspath/a path.
+            // Return null if the class is in unnamed module.
+            return c != null && c.getModule() != null ? c : null;
         }
 
         @Override
