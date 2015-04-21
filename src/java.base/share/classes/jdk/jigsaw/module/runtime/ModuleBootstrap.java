@@ -26,6 +26,12 @@
 package jdk.jigsaw.module.runtime;
 
 import java.io.File;
+import java.lang.module.Configuration;
+import java.lang.module.Layer;
+import java.lang.module.Layer.ClassLoaderFinder;
+import java.lang.module.ModuleArtifact;
+import java.lang.module.ModuleArtifactFinder;
+import java.lang.module.ModuleDescriptor;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
@@ -35,24 +41,21 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import java.lang.module.Configuration;
-import java.lang.module.Layer;
-import java.lang.module.Layer.ClassLoaderFinder;
-import java.lang.module.ModuleArtifact;
-import java.lang.module.ModuleArtifactFinder;
-import java.lang.module.ModuleDescriptor;
-
 import sun.misc.BootLoader;
 import sun.misc.ModuleClassLoader;
 import sun.misc.PerfCounter;
 
 /**
- * Helper class used by the VM/runtime to initialize the module system.
+ * Initializes/boots the module system.
  *
- * In summary, creates a Configuration by resolving a set of module names
- * specified via the launcher (or equivalent) -m and -addmods options. The
- * Configuration is then used to define the selected modules to runtime
- * to create the boot Layer.
+ * The {@link #boot() boot} method is called early in the startup to initialize
+ * the module system. In summary, the boot method creates a Configuration by
+ * resolving a set of module names specified via the launcher (or equivalent)
+ * -m and -addmods options. The modules are located on a module path that is
+ * constructed from the upgrade, system and application module paths. The
+ * Configuration is reified by creating the boot Layer with each module in the
+ * the configuration defined to one of the built-in class loaders. The mapping
+ * of modules to class loaders is statically mapped in a helper class.
  */
 public final class ModuleBootstrap {
     private ModuleBootstrap() { }
