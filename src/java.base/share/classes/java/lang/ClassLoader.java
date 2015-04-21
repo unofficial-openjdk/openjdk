@@ -1135,7 +1135,7 @@ public abstract class ClassLoader {
      * that is independent of the location of the code.
      *
      * Resources in a named module are private to that module. This method does
-     * not find resource in named modules.
+     * not find resources in named modules.
      *
      * <p>The name of a resource is a <tt>/</tt>-separated path name that
      * identifies the resource.
@@ -1202,7 +1202,7 @@ public abstract class ClassLoader {
      * should override this method to specify where to find resources.
      *
      * Resources in a named module are private to that module. This method does
-     * not find resource in named modules defined to this class loader.
+     * not find resources in named modules defined to this class loader.
      *
      * @param  name
      *         The resource name
@@ -1223,7 +1223,7 @@ public abstract class ClassLoader {
      * resources from.
      *
      * Resources in a named module are private to that module. This method does
-     * not find resource in named modules defined to this class loader.
+     * not find resources in named modules defined to this class loader.
      *
      * @param  name
      *         The resource name
@@ -1270,7 +1270,7 @@ public abstract class ClassLoader {
      * loader (see {@link #getSystemClassLoader()}).
      *
      * Resources in a named module are private to that module. This method does
-     * not find resource in named modules.
+     * not find resources in named modules.
      *
      * @param  name
      *         The resource name
@@ -1295,7 +1295,7 @@ public abstract class ClassLoader {
      * java.net.URL <tt>URL</tt>} objects.
      *
      * Resources in a named module are private to that module. This method does
-     * not find resource in named modules.
+     * not find resources in named modules.
      *
      * <p> The search order is described in the documentation for {@link
      * #getSystemResource(String)}.  </p>
@@ -1325,7 +1325,7 @@ public abstract class ClassLoader {
      * Returns an input stream for reading the specified resource.
      *
      * Resources in a named module are private to that module. This method does
-     * not find resource in named modules.
+     * not find resources in named modules.
      *
      * <p> The search order is described in the documentation for {@link
      * #getResource(String)}.  </p>
@@ -1353,7 +1353,7 @@ public abstract class ClassLoader {
      * system class loader (see {@link #getSystemClassLoader()}).
      *
      * Resources in a named module are private to that module. This method does
-     * not find resource in named modules.
+     * not find resources in named modules.
      *
      * @param  name
      *         The resource name
