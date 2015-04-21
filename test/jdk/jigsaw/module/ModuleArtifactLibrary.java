@@ -40,7 +40,6 @@ import java.util.stream.Collectors;
  */
 
 class ModuleArtifactLibrary implements ModuleArtifactFinder {
-    //private final Set<ExtendedModuleDescriptor> modules = new HashSet<>();
     private final Map<String, ModuleArtifact> namesToArtifact = new HashMap<>();
 
     ModuleArtifactLibrary(ExtendedModuleDescriptor... descriptors) {
@@ -69,10 +68,6 @@ class ModuleArtifactLibrary implements ModuleArtifactFinder {
                 namesToArtifact.put(name, artifact);
             }
         }
-    }
-
-    void remove(String name) {
-        namesToArtifact.remove(name);
     }
 
     @Override
