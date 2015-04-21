@@ -40,14 +40,18 @@ import java.util.stream.Collectors;
  */
 
 class ModuleArtifactLibrary implements ModuleArtifactFinder {
-    private final Set<ExtendedModuleDescriptor> modules = new HashSet<>();
+    //private final Set<ExtendedModuleDescriptor> modules = new HashSet<>();
     private final Map<String, ModuleArtifact> namesToArtifact = new HashMap<>();
 
     ModuleArtifactLibrary(ExtendedModuleDescriptor... descriptors) {
+        addAll(descriptors);
+    }
+
+    void addAll(ExtendedModuleDescriptor... descriptors) {
         for (ExtendedModuleDescriptor descriptor: descriptors) {
             String name = descriptor.name();
             if (!namesToArtifact.containsKey(name)) {
-                modules.add(descriptor);
+                //modules.add(descriptor);
 
                 URI uri = URI.create("module:/" + descriptor.name());
 
@@ -65,6 +69,10 @@ class ModuleArtifactLibrary implements ModuleArtifactFinder {
                 namesToArtifact.put(name, artifact);
             }
         }
+    }
+
+    void remove(String name) {
+        namesToArtifact.remove(name);
     }
 
     @Override
