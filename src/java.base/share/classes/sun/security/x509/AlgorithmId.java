@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1996, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -557,7 +557,7 @@ public class AlgorithmId implements Serializable, DerEncoder {
         String oidString;
         if (!initOidTable) {
             Provider[] provs = Security.getProviders();
-            for (int i=0; i<provs.length; i++) {
+            for (int i=provs.length-1; i>=0; i--) {
                 for (Enumeration<Object> enum_ = provs[i].keys();
                      enum_.hasMoreElements(); ) {
                     String alias = (String)enum_.nextElement();

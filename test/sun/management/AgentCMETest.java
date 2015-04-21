@@ -29,6 +29,7 @@
  * @test
  * @bug 7164191
  * @summary properties.putAll API may fail with ConcurrentModifcationException on multi-thread scenario
+ * @modules java.management/sun.management
  * @author Deven You
  */
 

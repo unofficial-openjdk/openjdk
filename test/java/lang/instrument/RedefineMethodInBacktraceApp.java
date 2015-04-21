@@ -31,7 +31,8 @@ import java.lang.management.ThreadInfo;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.concurrent.CountDownLatch;
-import sun.management.ManagementFactoryHelper;
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
 
 /**
  * When an exception is thrown, the JVM collects just enough information
@@ -92,11 +93,13 @@ public class RedefineMethodInBacktraceApp {
             System.out.println(ti);
         }
 
+        MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
+        ObjectName name = new ObjectName("com.sun.management:type=DiagnosticCommand");
         String[] threadPrintArgs = {};
         Object[] dcmdArgs = {threadPrintArgs};
         String[] signature = {String[].class.getName()};
-        DiagnosticCommandMBean dcmd = ManagementFactoryHelper.getDiagnosticCommandMBean();
-        System.out.println(dcmd.invoke("threadPrint", dcmdArgs, signature));
+        Object result = mbs.invoke(name, "threadPrint", dcmdArgs, signature);
+        System.out.println(result);
 
         // release the thread
         stop.countDown();

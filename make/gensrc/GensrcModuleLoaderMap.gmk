@@ -1,0 +1,113 @@
+#
+# Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+#
+# This code is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License version 2 only, as
+# published by the Free Software Foundation.  Oracle designates this
+# particular file as subject to the "Classpath" exception as provided
+# by Oracle in the LICENSE file that accompanied this code.
+#
+# This code is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# version 2 for more details (a copy is included in the LICENSE file that
+# accompanied this code).
+#
+# You should have received a copy of the GNU General Public License version
+# 2 along with this work; if not, write to the Free Software Foundation,
+# Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+#
+# Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+# or visit www.oracle.com if you need additional information or have any
+# questions.
+#
+
+BOOT_MODULES :=
+UPGRADEABLE_MDOULES :=
+EXT_MODULES :=
+
+# Hook to include the corresponding custom file, if present.
+$(eval $(call IncludeCustomExtension, jdk, gensrc/GensrcModuleLoaderMap.gmk))
+
+BOOT_MODULES += \
+    java.base \
+    java.datatransfer \
+    java.desktop \
+    java.instrument \
+    java.logging \
+    java.management \
+    java.naming \
+    java.prefs \
+    java.rmi \
+    java.security.jgss \
+    java.security.sasl \
+    java.sql \
+    java.xml \
+    java.xml.crypto \
+    jdk.hprof.agent \
+    jdk.httpserver \
+    jdk.sctp \
+    jdk.security.auth \
+    jdk.security.jgss \
+    #
+
+# to be deprivileged
+BOOT_MODULES += \
+    java.compiler \
+    java.scripting \
+    java.sql.rowset \
+    java.smartcardio \
+    jdk.charsets \
+    jdk.naming.rmi \
+    #
+
+UPGRADEABLE_MODULES += \
+    java.activation \
+    java.annotations.common \
+    java.corba \
+    java.transaction \
+    java.xml.bind \
+    java.xml.ws \
+    #
+
+EXT_MODULES += \
+    jdk.crypto.ec \
+    jdk.crypto.pkcs11 \
+    jdk.localedata \
+    jdk.naming.dns \
+    jdk.scripting.nashorn \
+    jdk.zipfs \
+    #
+
+ifeq ($(OPENJDK_TARGET_OS), macsox)
+  BOOT_MODULES += jdk.deploy.osx 
+endif
+ifeq ($(OPENJDK_TARGET_OS), windows)
+  EXT_MODULES += jdk.accessibility jdk.crypto.mscapi
+endif
+ifeq ($(OPENJDK_TARGET_OS), solaris)
+  EXT_MODULES += jdk.crypto.ucrypto
+endif
+
+# Replacing double-comma with a single comma is to workaround the issue
+# with some version of make on windows that doesn't substitute spaces
+# with one comma properly as with make 4.0
+define SubstComma
+$(strip \
+  $(subst $(COMMA)$(COMMA),$(COMMA),$(subst $(SPACE),$(COMMA),$(strip $1))) \
+)
+endef
+BOOT_MODULES_LIST := $(call SubstComma, $(BOOT_MODULES))
+EXT_MODULES_LIST := $(call SubstComma, $(UPGRADEABLE_MODULES) $(EXT_MODULES))
+
+############################################################################
+
+$(SUPPORT_OUTPUTDIR)/gensrc/java.base/jdk/jigsaw/module/runtime/ModuleLoaderMap.java: $(BUILD_TOOLS_JDK) \
+    $(JDK_TOPDIR)/src/java.base/share/classes/jdk/jigsaw/module/runtime/ModuleLoaderMap.java
+	$(MKDIR) -p $(@D)
+	$(RM) $@ $@.tmp
+	$(TOOL_GENCLASSLOADERMAP) -boot $(BOOT_MODULES_LIST) -ext $(EXT_MODULES_LIST) -o $@.tmp $(filter %.java, $^)
+	$(MV) $@.tmp $@
+
+GENSRC_JAVA_BASE += $(SUPPORT_OUTPUTDIR)/gensrc/java.base/jdk/jigsaw/module/runtime/ModuleLoaderMap.java

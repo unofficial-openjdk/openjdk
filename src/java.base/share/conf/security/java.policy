@@ -74,6 +74,7 @@ grant codeBase "jrt:/java.xml.bind" {
         permission java.lang.RuntimePermission "accessClassInPackage.com.sun.istack.internal";
         permission java.lang.RuntimePermission "accessClassInPackage.com.sun.istack.internal.*";
         permission java.lang.RuntimePermission "accessDeclaredMembers";
+        permission java.lang.reflect.ReflectPermission "addReadsModule";
         permission java.lang.reflect.ReflectPermission "suppressAccessChecks";
         permission java.util.PropertyPermission "*", "read";
 };

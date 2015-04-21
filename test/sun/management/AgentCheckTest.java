@@ -25,6 +25,7 @@
  *  @test
  *  @bug 5013605
  *  @summary Localize log messages from the management agents
+ *  @modules java.management/sun.management
  *
  *  @author Tim Bell
  */
