@@ -28,7 +28,6 @@
 
 import java.io.*;
 import java.lang.reflect.*;
-import java.net.URL;
 import java.security.*;
 import java.util.Currency;
 
@@ -65,9 +64,9 @@ class CheckDataVersion {
             AccessController.doPrivileged(new PrivilegedAction<Object>() {
                 public Object run() {
                     try {
-                        URL url = Currency.class.getModule().getResource("/java/util/currency.data");
+                        InputStream in = Currency.class.getModule().getResourceAsStream("java/util/currency.data");
                         String sep = File.separator;
-                        DataInputStream dis = new DataInputStream(url.openStream());
+                        DataInputStream dis = new DataInputStream(in);
                         int magic = dis.readInt();
                         if (magic != 0x43757244) {
                             throw new RuntimeException("The magic number in the JRE's currency data is incorrect.  Expected: 0x43757244, Got: 0x"+magic);
