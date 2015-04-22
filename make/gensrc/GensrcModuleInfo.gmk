@@ -33,7 +33,7 @@ ifeq ($(OPENJDK_TARGET_OS), windows)
     -export sun.security.internal.spec/jdk.crypto.mscapi \
     -export sun.security.util/jdk.crypto.mscapi
 
-#  JAVA_DESKTOP_MODULEINFO_EXTRAS += -export sun.awt/jdk.accessibility
+  JAVA_DESKTOP_MODULEINFO_EXTRAS += -export sun.awt/jdk.accessibility
 endif
 
 ifeq ($(OPENJDK_TARGET_OS), solaris)

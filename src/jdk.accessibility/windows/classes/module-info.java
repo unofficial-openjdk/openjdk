@@ -23,7 +23,7 @@
  * questions.
  */
 
-module jdk.accessbility {
+module jdk.accessibility {
     requires public java.desktop;
     exports com.sun.java.accessibility.util;
 }
