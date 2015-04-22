@@ -2365,7 +2365,44 @@ public final class Class<T> implements java.io.Serializable,
      */
     @CallerSensitive
     public InputStream getResourceAsStream(String name) {
-        URL url = getResource(name, Reflection.getCallerClass());
+        name = resolveName(name);
+
+        // if this Class and the caller are in the same named module
+        // then attempt to get an input stream to the resource in the
+        // module
+        Module me = getModule();
+        if (me != null) {
+            Class<?> caller = Reflection.getCallerClass();
+            if (caller == null) {
+                // call from JNI method with no frames on the stack
+                caller = Object.class;
+            }
+            if (caller.getModule() == me) {
+                ModuleArtifact artifact =
+                    SharedSecrets.getJavaLangReflectAccess().getArtifact(me);
+                ClassLoader cl = getClassLoader0();
+                try {
+                    InputStream in;
+                    if (cl == null) {
+                        in = BootLoader.getResourceAsStream(artifact, name);
+                    } else {
+                        in = cl.getResourceAsStream(artifact, name);
+                    }
+                    return in;
+                } catch (IOException ioe) {
+                    return null;
+                }
+            }
+        }
+
+        // this Caller and caller not in the same named module
+        ClassLoader cl = getClassLoader0();
+        URL url;
+        if (cl == null) {
+            url = ClassLoader.getSystemResource(name);
+        } else {
+            url = cl.getResource(name);
+        }
         try {
             return url != null ? url.openStream() : null;
         } catch (IOException e) {
@@ -2374,20 +2411,16 @@ public final class Class<T> implements java.io.Serializable,
     }
 
     /**
-     * Finds a resource with a given name.
-     * If this class is in a named {@link Module Module}, and the caller of
-     * this method is in the same module, then this method will attempt to find
-     * the resource in that module.
-     * Otherwise, the rules for searching resources
+     * Finds a resource with a given name.  The rules for searching resources
      * associated with a given class are implemented by the defining
      * {@linkplain ClassLoader class loader} of the class.  This method
      * delegates to this object's class loader.  If this object was loaded by
      * the bootstrap class loader, the method delegates to {@link
-     * ClassLoader#getSystemResource}.
+     * ClassLoader#getSystemResource}. This method does not find resources in
+     * named modules.
      *
-     * <p> Before finding a resource in the caller's module or delegation to a
-     * class loader, an absolute resource name is constructed from the given
-     * resource name using this algorithm:
+     * <p> Before delegation, an absolute resource name is constructed from the
+     * given resource name using this algorithm:
      *
      * <ul>
      *
@@ -2412,37 +2445,8 @@ public final class Class<T> implements java.io.Serializable,
      *              resource with this name is found
      * @since  1.1
      */
-    @CallerSensitive
     public URL getResource(String name) {
-        return getResource(name, Reflection.getCallerClass());
-    }
-
-    /**
-     * Finds a resource with a given name. This method locates the resource for
-     * the {@link #getResourceAsStream(String)} and {@link #getResource(String)}
-     * methods.
-     */
-    private URL getResource(String name, Class<?> caller) {
         name = resolveName(name);
-
-        Module me = getModule();
-        if (me != null) {
-            if (caller == null) {
-                // call from JNI method with no frames on the stack
-                caller = Object.class;
-            }
-            if (caller.getModule() == me) {
-                ModuleArtifact artifact =
-                    SharedSecrets.getJavaLangReflectAccess().getArtifact(me);
-                ClassLoader cl = getClassLoader0();
-                if (cl == null) {
-                    return BootLoader.findResource(artifact, name);
-                } else {
-                    return cl.findResource(artifact, name);
-                }
-            }
-        }
-
         ClassLoader cl = getClassLoader0();
         if (cl == null) {
             return ClassLoader.getSystemResource(name);

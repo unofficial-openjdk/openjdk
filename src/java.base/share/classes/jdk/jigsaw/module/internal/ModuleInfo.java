@@ -442,6 +442,8 @@ public final class ModuleInfo {
 
     /**
      * Reads the Version attribute
+     *
+     * @throws IllegalAccessException if the version attribute cannot be parsed
      */
     private void readVersionAttribute(DataInputStream in, ConstantPool cpool)
         throws IOException

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,12 +25,12 @@
 package sun.misc;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.lang.module.ModuleArtifact;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.stream.Stream;
-
-import java.lang.module.ModuleArtifact;
 
 /**
  * Find resources and packages in modules defined to the boot class loader or
@@ -59,11 +59,13 @@ public class BootLoader {
     }
 
     /**
-     * Finds the resource with the given name in the given module artifact if
+     * Returns an input stream to a resource in the given module artifact if
      * the module is defined to the boot loader.
      */
-    public static URL findResource(ModuleArtifact artifact, String name) {
-        return ClassLoaders.bootLoader().findResource(artifact, name);
+    public static InputStream getResourceAsStream(ModuleArtifact artifact, String name)
+        throws IOException
+    {
+        return ClassLoaders.bootLoader().getResourceAsStream(artifact, name);
     }
 
     /**

@@ -39,9 +39,9 @@ public class OptionFinder {
 
     private static final boolean debug = false;
 
-    List<URL> optionsSources;
+    List<InputStream> optionsSources;
 
-    public OptionFinder(List<URL> optionsSources) {
+    public OptionFinder(List<InputStream> optionsSources) {
         this.optionsSources = optionsSources;
     }
 
@@ -59,25 +59,21 @@ public class OptionFinder {
         return of;
     }
 
-    protected OptionFormat getOptionFormat(String option, List<URL> sources) {
+    protected OptionFormat getOptionFormat(String option, List<InputStream> sources) {
         OptionFormat of = null;
-        for (URL u : sources) {
+        for (InputStream in : sources) {
             try {
-                Reader r = new BufferedReader(
-                        new InputStreamReader(u.openStream()));
+                Reader r = new BufferedReader(new InputStreamReader(in));
                 of = new Parser(r).parse(option);
                 if (of != null)
                     break;
             } catch (IOException e) {
                 if (debug) {
-                    System.err.println("Error processing " + u
-                                       + " : " + e.getMessage());
                     e.printStackTrace();
                 }
             } catch (ParserException e) {
                 // Exception in parsing the options file.
-                System.err.println(u + ": " + e.getMessage());
-                System.err.println("Parsing of " + u + " aborted");
+                e.printStackTrace();
             }
         }
         return of;

@@ -33,8 +33,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 /**
- * A simple console application that accepts commands to start applications. It's
- * primary use is to help tease out issues for dynamic configurations.
+ * Exercises dynamic configuration.
  */
 
 public class Main {

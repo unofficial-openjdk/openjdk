@@ -43,10 +43,7 @@ import java.util.Arrays;
  * example.
  *
  * <p> A module reader is also intended to be used by {@code ClassLoader}
- * implementations that load classes and resources from modules. The {@link
- * #findResource findResource} method may be used to locate a resource, and the
- * {@link #getResourceAsBuffer getResourceAsBuffer} method may be used get a buffer
- * with the contents of the resource.
+ * implementations that load classes and resources from modules.
  *
  * <p> A {@code ModuleReader} is {@link ModuleArtifact#open open} upon creation and
  * is closed by invoking the {@link #close close} method. Failure to close a module
@@ -60,21 +57,8 @@ import java.util.Arrays;
 public interface ModuleReader extends Closeable {
 
     /**
-     * Returns the URI for a resource in the module; {@code null} if not
-     * found or the module reader is closed.
-     *
-     * @see ModuleArtifact#location()
-     * @see Class#getResource(String)
-     * @see ClassLoader#findResource(ModuleArtifact, String)
-     */
-    URI findResource(String name);
-
-    /**
      * Returns an input stream for reading the resource. Returns {@code null}
      * if the resource could not be found.
-     *
-     * @implSpec The default implementation uses {@link #findResource} to
-     * locate the resource, and if found, opens a connection to the resource.
      *
      * @throws IOException
      *         If an I/O error occurs or the module reader is closed
@@ -83,14 +67,7 @@ public interface ModuleReader extends Closeable {
      *
      * @see java.lang.reflect.Module#getResourceAsStream(String)
      */
-    default InputStream getResourceAsStream(String name) throws IOException {
-        URI uri = findResource(name);
-        if (uri != null) {
-            return uri.toURL().openStream();
-        } else {
-            return null;
-        }
-    }
+    InputStream getResourceAsStream(String name) throws IOException;
 
     /**
      * Returns a byte buffer with the contents of a resource or {@code null}

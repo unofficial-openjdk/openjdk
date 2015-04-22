@@ -42,13 +42,6 @@ import jdk.jigsaw.module.internal.Hasher.HashSupplier;
  * A {@code ModuleArtifact} is a concrete subclass of this class that implements
  * the abstract {@link #open open} method defined below.
  *
- * @apiNote Methods such as {@link Class#getResource} may be used to obtain a
- * URL to a resource located in the caller's module. Consequentially there needs
- * to be a corresponding {@link java.net.URLStreamHandler URLStreamHandler} for
- * each module artifact <em>type</em> (typically the URI scheme). A simple {@code
- * ModuleReader} may be implemented using a URL protocol handler but would not
- * be suitable for high-performance class loading.
- *
  * @see ModuleArtifactFinder
  * @since 1.9
  */

@@ -37,9 +37,9 @@ import java.io.*;
  */
 public class OptionLister {
     private static final boolean debug = false;
-    private List<URL> sources;
+    private List<InputStream> sources;
 
-    public OptionLister(List<URL> sources) {
+    public OptionLister(List<InputStream> sources) {
         this.sources = sources;
     }
 
@@ -54,10 +54,10 @@ public class OptionLister {
 
         Set<OptionFormat> options = new TreeSet<OptionFormat>(c);
 
-        for (URL u : sources) {
+        for (InputStream in : sources) {
             try {
                 Reader r = new BufferedReader(
-                        new InputStreamReader(u.openStream()));
+                        new InputStreamReader(in));
                 Set<OptionFormat> s = new Parser(r).parseOptions();
                 options.addAll(s);
             } catch (IOException e) {
@@ -67,8 +67,7 @@ public class OptionLister {
                 }
             } catch (ParserException e) {
                 // Exception in parsing the options file.
-                System.err.println(u + ": " + e.getMessage());
-                System.err.println("Parsing of " + u + " aborted");
+                e.printStackTrace();
             }
         }
 

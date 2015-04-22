@@ -31,7 +31,6 @@ import java.io.InputStream;
 import java.lang.module.ModuleArtifact;
 import java.lang.module.ModuleReader;
 import java.net.MalformedURLException;
-import java.net.URI;
 import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
@@ -42,6 +41,8 @@ import java.security.CodeSource;
 import java.security.Permission;
 import java.security.PermissionCollection;
 import java.security.PrivilegedAction;
+import java.security.PrivilegedActionException;
+import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
@@ -110,8 +111,13 @@ class BuiltinClassLoader extends ModuleClassLoader {
             URL url;
             try {
                 url = artifact.location().toURL();
-            } catch (MalformedURLException e) {
-                throw new InternalError(e);
+            } catch (MalformedURLException e1) {
+                // no protocol handler so use built-in "module" protocol
+                try {
+                    url = new URL("module:/" + artifact.descriptor().name());
+                } catch (MalformedURLException e2) {
+                    throw new InternalError(e2);
+                }
             }
             this.artifact = artifact;
             this.url = url;
@@ -158,18 +164,24 @@ class BuiltinClassLoader extends ModuleClassLoader {
     // -- finding resources
 
     /**
-     * Finds the resource of the given name in a module defined to this class
-     * loader.
+     * Returns an input stream to a resource of the given name in a module
+     * defined to this class loader.
      */
     @Override
-    public URL findResource(ModuleArtifact artifact, String name) {
+    public InputStream getResourceAsStream(ModuleArtifact artifact, String name)
+        throws IOException
+    {
         if (artifactToReader.containsKey(artifact)) {
-            PrivilegedAction<URI> pa = () -> moduleReaderFor(artifact).findResource(name);
-            URI uri = AccessController.doPrivileged(pa);
-            if (uri != null) {
-                try {
-                    return checkURL(uri.toURL());
-                } catch (MalformedURLException e) { }
+            try {
+                return AccessController.doPrivileged(
+                    new PrivilegedExceptionAction<InputStream>() {
+                        @Override
+                        public InputStream run() throws IOException {
+                            return moduleReaderFor(artifact).getResourceAsStream(name);
+                        }
+                    });
+            } catch (PrivilegedActionException pae) {
+                throw (IOException) pae.getCause();
             }
         }
 
@@ -697,7 +709,7 @@ class BuiltinClassLoader extends ModuleClassLoader {
      */
     private static class NullModuleReader implements ModuleReader {
         @Override
-        public URI findResource(String name) {
+        public InputStream getResourceAsStream(String name) {
             return null;
         }
         @Override
@@ -733,16 +745,6 @@ class BuiltinClassLoader extends ModuleClassLoader {
                 }
             }
             return null;
-        }
-
-        @Override
-        public URI findResource(String name) {
-            Path path = findOverriddenClass(name);
-            if (path != null) {
-                return path.toUri();
-            } else {
-                return reader.findResource(name);
-            }
         }
 
         @Override

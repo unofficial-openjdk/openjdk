@@ -98,16 +98,14 @@ class ModuleClassLoader extends SecureClassLoader {
      * loader.
      */
     @Override
-    public URL findResource(ModuleArtifact artifact, String name) {
+    public InputStream getResourceAsStream(ModuleArtifact artifact, String name)
+        throws IOException
+    {
         if (artifactToReader.containsKey(artifact)) {
-            URI uri = moduleReaderFor(artifact).findResource(name);
-            if (uri != null) {
-                try {
-                    return uri.toURL();
-                } catch (MalformedURLException e) { }
-            }
+            return moduleReaderFor(artifact).getResourceAsStream(name);
+        } else {
+            return null;
         }
-        return null;
     }
 
     /**
@@ -282,7 +280,7 @@ class ModuleClassLoader extends SecureClassLoader {
      */
     private static class NullModuleReader implements ModuleReader {
         @Override
-        public URI findResource(String name) {
+        public InputStream getResourceAsStream(String name) {
             return null;
         }
         @Override

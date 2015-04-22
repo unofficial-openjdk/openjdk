@@ -27,7 +27,6 @@ import java.io.InputStream;
 import java.lang.module.ModuleArtifact;
 import java.lang.module.ModuleArtifactFinder;
 import java.lang.module.ModuleReader;
-import java.net.URI;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -81,14 +80,6 @@ public class Basic {
         ModuleReader reader = artifact.open();
         try (reader) {
 
-            // test findResource
-            URI uri = reader.findResource(name);
-            assertEquals(uri.getScheme(), artifact.location().getScheme());
-            try (InputStream in = uri.toURL().openStream()) {
-                byte[] b = readAll(in);
-                assertTrue(Arrays.equals(b, bytes));
-            }
-
             // test getResourceAsStream
             try (InputStream in = reader.getResourceAsStream(name)) {
                 byte[] b = readAll(in);
@@ -108,15 +99,10 @@ public class Basic {
             }
 
             // test "not found"
-            assertTrue(reader.findResource(NOT_A_RESOURCE) == null);
             assertTrue(reader.getResourceAsStream(NOT_A_RESOURCE) == null);
             assertTrue(reader.getResourceAsBuffer(NOT_A_RESOURCE) == null);
 
             // test "null"
-            try {
-                reader.findResource(null);
-                assertTrue(false);
-            } catch (NullPointerException expected) { }
             try {
                 reader.getResourceAsStream(null);
                 assertTrue(false);
@@ -128,7 +114,6 @@ public class Basic {
         }
 
         // test closed reader
-        assertTrue(reader.findResource(name) == null);
         try {
             InputStream in = reader.getResourceAsStream(name);
             assertTrue(false);

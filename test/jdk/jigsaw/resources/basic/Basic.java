@@ -63,20 +63,13 @@ public class Basic {
         URL url1 = p1.Main.getResource("/" + NAME);
         URL url2 = p2.Main.getResource("/" + NAME);
         URL url3 = p3.Main.getResource("/" + NAME);
-        assertNotNull(url1);
-        assertNotNull(url2);
-        assertNotEquals(url1, url2);
+        assertNull(url1);
+        assertNull(url2);
         assertNull(url3);
-
-        // check the content of url1 and url2
-        String s1 = new String(readAll(url1), "UTF-8");
-        String s2 = new String(readAll(url2), "UTF-8");
-        assertEquals(s1, "m1");
-        assertEquals(s2, "m2");
 
         // invoke Class getResourceAsStream from the unnamed module
         InputStream in0 = Basic.class.getResourceAsStream("/" + NAME);
-        assertNull(url0);
+        assertNull(in0);
 
         // invoke Class getResourceAsStream from modules m1-m3
         try (InputStream in = p1.Main.getResourceAsStream("/" + NAME)) {
@@ -99,8 +92,8 @@ public class Basic {
         assertNull(in3);
 
         // check the content of in1 and in2
-        s1 = new String(readAll(in1), "UTF-8");
-        s2 = new String(readAll(in2), "UTF-8");
+        String s1 = new String(readAll(in1), "UTF-8");
+        String s2 = new String(readAll(in2), "UTF-8");
         assertEquals(s1, "m1");
         assertEquals(s2, "m2");
     }

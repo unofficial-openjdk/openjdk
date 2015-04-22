@@ -52,7 +52,6 @@ import jdk.internal.jimage.ImageReaderFactory;
 import jdk.jigsaw.module.internal.Hasher;
 import jdk.jigsaw.module.internal.ModuleInfo;
 import sun.misc.JModCache;
-import sun.net.www.ParseUtil;
 
 /**
  * A factory for creating ModuleArtifact implementations where the modules are
@@ -208,15 +207,6 @@ class ModuleArtifacts {
         }
 
         @Override
-        public URI findResource(String name) {
-            if (!closed && findImageLocation(name) != null) {
-                return URI.create("jrt:/" + module + "/" + name);
-            } else {
-                return null;
-            }
-        }
-
-        @Override
         public InputStream getResourceAsStream(String name) throws IOException {
             ByteBuffer bb = getResourceAsBuffer(name);
             if (bb != null) {
@@ -292,23 +282,6 @@ class ModuleArtifacts {
         }
 
         @Override
-        public URI findResource(String name) {
-            if (closed) {
-                return null;
-            } else {
-                Path path = toPath(name);
-                if (path != null) {
-                    try {
-                        if (Files.isRegularFile(path)) {
-                            return path.toUri();
-                        }
-                    } catch (SecurityException e) { }
-                }
-                return null;
-            }
-        }
-
-        @Override
         public InputStream getResourceAsStream(String name) throws IOException {
             ensureOpen();
             Path path = toPath(name);
@@ -351,12 +324,6 @@ class ModuleArtifacts {
         SafeCloseModuleReader() { }
 
         /**
-         * Returns the URI for a resource. This method is invoked by
-         * findResource to do the actual work of locating the resource.
-         */
-        abstract URI implFindResource(String name);
-
-        /**
          * Returns an input stream for reading a resource. This method is
          * invoked by getResourceAsStream to do the actual work of opening
          * an input stream to the resource.
@@ -368,20 +335,6 @@ class ModuleArtifacts {
          * actual work of closing the module reader.
          */
         abstract void implClose() throws IOException;
-
-        @Override
-        public final URI findResource(String name) {
-            readLock.lock();
-            try {
-                if (!closed) {
-                    return implFindResource(name);
-                } else {
-                    return null;
-                }
-            } finally {
-                readLock.unlock();
-            }
-        }
 
         @Override
         public final InputStream getResourceAsStream(String name) throws IOException {
@@ -434,16 +387,6 @@ class ModuleArtifacts {
         }
 
         @Override
-        URI implFindResource(String name) {
-            ZipEntry ze = find(name);
-            if (ze != null) {
-                return URI.create(location + "!/" + ParseUtil.encodePath(name, false));
-            } else {
-                return null;
-            }
-        }
-
-        @Override
         InputStream implGetResourceAsStream(String name) throws IOException {
             ZipEntry ze = find(name);
             if (ze != null) {
@@ -476,16 +419,6 @@ class ModuleArtifacts {
 
         private JarEntry find(String name) {
             return jf.getJarEntry(name);
-        }
-
-        @Override
-        URI implFindResource(String name) {
-            JarEntry je = find(name);
-            if (je != null) {
-                return URI.create(location + ParseUtil.encodePath(name, false));
-            } else {
-                return null;
-            }
         }
 
         @Override

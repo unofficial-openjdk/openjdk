@@ -25,13 +25,14 @@
 
 package sun.misc;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.annotation.Annotation;
+import java.lang.module.ModuleArtifact;
 import java.lang.reflect.Executable;
-import java.net.URL;
 import java.security.AccessControlContext;
 import java.util.Map;
 
-import java.lang.module.ModuleArtifact;
 import sun.reflect.ConstantPool;
 import sun.reflect.annotation.AnnotationType;
 import sun.nio.ch.Interruptible;
@@ -152,10 +153,11 @@ public interface JavaLangAccess {
     Class<?> findBootstrapClassOrNull(ClassLoader cl, String name);
 
     /**
-     * Finds a resource with the given name in a module that is defined to
-     * the given class loader.
+     * Returns an input stream to a resource with the given name in a module
+     * that is defined to the given class loader.
      */
-    URL findResource(ClassLoader cl, ModuleArtifact artifact, String name);
+    InputStream getResourceAsStream(ClassLoader cl, ModuleArtifact artifact, String name)
+        throws IOException;
 
     /**
      * Invokes Long.formatUnsignedLong(long val, int shift, char[] buf, int offset, int len)

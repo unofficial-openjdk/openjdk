@@ -1088,6 +1088,26 @@ public abstract class ClassLoader {
     // -- Resource --
 
     /**
+     * Returns an input stream to a resource in a module defined to this class
+     * loader. Class loader implementations that support the loading from
+     * modules should override this method.
+     *
+     * @return An input stream to the resource; {@code null} if the
+     * resource could not be found or there isn't a module defined to this
+     * class loader that loads from the given {@code ModuleArtifact}.
+     *
+     * @implSpec The default implementation returns {@code null}.
+     *
+     * @since 1.9
+     * @see java.lang.reflect.Module#getResourceAsStream(String)
+     */
+    protected InputStream getResourceAsStream(ModuleArtifact module, String name)
+        throws IOException
+    {
+        return null;
+    }
+
+    /**
      * Finds the resource with the given name.  A resource is some data
      * (images, audio, text, etc) that can be accessed by class code in a way
      * that is independent of the location of the code.
@@ -1176,25 +1196,6 @@ public abstract class ClassLoader {
         tmp[1] = findResources(name);
 
         return new CompoundEnumeration<>(tmp);
-    }
-
-    /**
-     * Finds the resource of the given name in a module defined to this class
-     * loader. Class loader implementations that support the loading from
-     * modules should override this method.
-     *
-     * @apiNote This method returns a URL for now to make it consistent with
-     * the other findResource methods defined here and also Class.getResource.
-     *
-     * @return A URL object for reading the resource; {@code null} if the
-     * resource could not be found or there isn't a module defined to this
-     * class loader that loads from the given {@code ModuleArtifact}.
-     *
-     * @since 1.9
-     * @see java.lang.reflect.Module#getResourceAsStream(String)
-     */
-    protected URL findResource(ModuleArtifact module, String name) {
-        return null;
     }
 
     /**

@@ -28,7 +28,6 @@ package java.lang.reflect;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.net.URL;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -268,31 +267,19 @@ public final class Module {
      * The {@code name} is a {@code '/'}-separated path name that identifies
      * the resource.
      *
-     * @apiNote The rational for returning null when access is denied by the
-     * security manager is that a security exception could be used to test
-     * the existence of a resource.
-     *
      * @throws IOException
      *         If an I/O error occurs
      */
     public InputStream getResourceAsStream(String name) throws IOException {
         Objects.requireNonNull(name);
 
-        try {
-            URL url;
-            if (loader == null) {
-                url = BootLoader.findResource(artifact, name);
-            } else {
-                // use SharedSecretes to invoke protected method
-                url = SharedSecrets.getJavaLangAccess()
-                                   .findResource(loader, artifact, name);
-            }
-            if (url != null) {
-                return url.openStream();
-            }
-        } catch (SecurityException e) { }
-
-        return null;
+        if (loader == null) {
+            return BootLoader.getResourceAsStream(artifact, name);
+        } else {
+            // use SharedSecretes to invoke protected method
+            return SharedSecrets.getJavaLangAccess()
+                                .getResourceAsStream(loader, artifact, name);
+        }
     }
 
     /**
