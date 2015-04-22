@@ -69,7 +69,7 @@ import java.util.zip.ZipOutputStream;
 
 import java.lang.module.ModuleArtifact;
 import java.lang.module.ModuleArtifactFinder;
-import java.lang.module.ModuleDependence;
+import java.lang.module.ModuleDescriptor.Requires;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.Version;
 import jdk.jigsaw.module.internal.Hasher;
@@ -492,12 +492,12 @@ class JmodTask {
             // if --hash-dependences  is specified then we need the module name
             // and dependences from the Module attribute
             String name = null;
-            Set<ModuleDependence> dependences = null;
+            Set<Requires> dependences = null;
             if (dependencesToHash != null) {
                 try (InputStream in = miSupplier.get()) {
                     ModuleInfo mi = ModuleInfo.read(in);
                     name = mi.name();
-                    dependences = mi.moduleDependences();
+                    dependences = mi.requires();
                 }
             }
 
@@ -532,11 +532,11 @@ class JmodTask {
          * and computes the hash of any module that matches the
          * pattern {@code dependencesToHash}.
          */
-        DependencyHashes hashDependences(String name, Set<ModuleDependence> moduleDependences)
+        DependencyHashes hashDependences(String name, Set<Requires> moduleDependences)
             throws IOException
         {
             Set<ModuleDescriptor> descriptors = new HashSet<>();
-            for (ModuleDependence md: moduleDependences) {
+            for (Requires md: moduleDependences) {
                 String dn = md.name();
                 if (dependencesToHash.matcher(dn).find()) {
                     ModuleArtifact artifact = moduleFinder.find(dn);

@@ -56,9 +56,9 @@ import java.lang.module.Configuration;
 import java.lang.module.Layer;
 import java.lang.module.ModuleArtifact;
 import java.lang.module.ModuleArtifactFinder;
-import java.lang.module.ModuleDependence;
+import java.lang.module.ModuleDescriptor.Requires;
 import java.lang.module.ModuleDescriptor;
-import java.lang.module.ModuleExport;
+import java.lang.module.ModuleDescriptor.Exports;
 
 public class ModuleSummary {
     private static final String USAGE = "Usage: ModuleSummary -mp <dir> -o <outfile>";
@@ -136,7 +136,7 @@ public class ModuleSummary {
                         long reqJmodSize = 0;
                         long otherBytes = 0;
                         long otherJmodSize = 0;
-                        Set<String> reqs = m.moduleDependences().stream()
+                        Set<String> reqs = m.requires().stream()
                                                 .map(d -> d.name())
                                                 .collect(Collectors.toSet());
                         reqBytes = deps.stream()
@@ -193,7 +193,7 @@ public class ModuleSummary {
         }
     }
 
-    private String toRequires(String from, ModuleDependence d) {
+    private String toRequires(String from, Requires d) {
         String name = d.name();
         String ref = String.format("<a href=\"#%s\">%s</a>",
                                    name, name);
@@ -208,7 +208,7 @@ public class ModuleSummary {
         // API dependency: bold
         // aggregator module's require: italic
         ModuleArtifact artifact = nameToArtifact.get(from);
-        boolean reexport = d.modifiers().contains(ModuleDependence.Modifier.PUBLIC);
+        boolean reexport = d.modifiers().contains(Requires.Modifier.PUBLIC);
         if (deps.containsKey(from) && deps.get(from).contains(name)) {
             // has API dependency
             return reexport ? String.format("<b>%s</b>", result)
@@ -269,7 +269,7 @@ public class ModuleSummary {
                 .sorted(Map.Entry.comparingByKey())
                 .forEach(e -> out.format("%s <br>%n", e.getKey()));
         out.format("</td>%n");
-        String requires = descriptor.moduleDependences().stream()
+        String requires = descriptor.requires().stream()
             .map(md -> toRequires(name, md))
             .sorted()
             .collect(Collectors.joining("<br>\n"));
@@ -436,7 +436,7 @@ public class ModuleSummary {
         Dependency.Filter filter =
             (Dependency d) -> !artifact.packages().contains(d.getTarget().getPackageName());
         Set<String> exports = descriptor.exports().stream()
-                    .map(ModuleExport::pkg)
+                    .map(Exports::pkg)
                     .sorted()
                     .collect(Collectors.toSet());
         Set<String> deps = new HashSet<>();

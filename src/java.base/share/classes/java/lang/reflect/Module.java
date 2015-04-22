@@ -44,7 +44,7 @@ import java.lang.module.Layer;
 import java.lang.module.Layer.ClassLoaderFinder;
 import java.lang.module.ModuleArtifact;
 import java.lang.module.ModuleDescriptor;
-import java.lang.module.ModuleExport;
+import java.lang.module.ModuleDescriptor.Exports;
 import java.lang.module.Version;
 import sun.misc.BootLoader;
 import sun.misc.JavaLangReflectAccess;
@@ -388,7 +388,7 @@ public final class Module {
 
             // exports
             Map<String, Map<Module, Boolean>> exports = new HashMap<>();
-            for (ModuleExport export: descriptor.exports()) {
+            for (Exports export: descriptor.exports()) {
                 String pkg = export.pkg();
                 String permit = export.permit();
                 if (permit == null) {
@@ -626,7 +626,7 @@ public final class Module {
     // JVM_AddReadsModule
     private static native void jvmAddReadsModule(Module from, Module to);
 
-    // JVM_AddModuleExports
+    // JVM_AddExports
     private static native void jvmAddModuleExports(Module from, String pkg, Module to);
 
     // JVM_AddModulePackage

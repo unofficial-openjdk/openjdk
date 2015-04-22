@@ -44,7 +44,7 @@ import java.lang.module.Layer;
 import java.lang.module.ModuleArtifact;
 import java.lang.module.ModuleArtifactFinder;
 import java.lang.module.ModuleDescriptor;
-import static java.lang.module.ModuleDependence.Modifier.PUBLIC;
+import static java.lang.module.ModuleDescriptor.Requires.Modifier.PUBLIC;
 
 /**
  * Generate the DOT file for a module graph for each module in the JDK
@@ -174,7 +174,7 @@ public class GenGraphs {
             Graph<String> graph = gengraph(cf);
             cf.descriptors().forEach(md -> {
                 String mn = md.name();
-                Set<String> requiresPublic = md.moduleDependences().stream()
+                Set<String> requiresPublic = md.requires().stream()
                         .filter(d -> d.modifiers().contains(PUBLIC))
                         .map(d -> d.name())
                         .collect(Collectors.toSet());
@@ -223,7 +223,7 @@ public class GenGraphs {
         Graph.Builder<String> builder = new Graph.Builder<>();
         cf.descriptors().forEach(md -> {
             String mn = md.name();
-            md.moduleDependences().stream()
+            md.requires().stream()
                     .filter(d -> d.modifiers().contains(PUBLIC))
                     .map(d -> d.name())
                     .forEach(d -> builder.addEdge(mn, d));

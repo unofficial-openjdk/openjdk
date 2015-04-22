@@ -29,8 +29,8 @@ import java.io.IOException;
 import java.lang.module.ExtendedModuleDescriptor;
 import java.lang.module.ModuleArtifact;
 import java.lang.module.ModuleArtifactFinder;
-import java.lang.module.ModuleDependence;
-import java.lang.module.ModuleExport;
+import java.lang.module.ModuleDescriptor.Requires;
+import java.lang.module.ModuleDescriptor.Exports;
 import java.lang.module.ModuleReader;
 import java.net.URI;
 import java.util.HashMap;
@@ -62,7 +62,7 @@ class ArtifactInterposer implements ModuleArtifactFinder {
     private final Map<String, Set<String>> extraRequires;
 
     // module name -> exports
-    private final Map<String, Set<ModuleExport>> extraExports;
+    private final Map<String, Set<Exports>> extraExports;
 
     // module name -> artifact
     private final Map<String, ModuleArtifact> artifacts = new HashMap<>();
@@ -72,7 +72,7 @@ class ArtifactInterposer implements ModuleArtifactFinder {
 
     private ArtifactInterposer(ModuleArtifactFinder finder,
                                Map<String, Set<String>> extraRequires,
-                               Map<String, Set<ModuleExport>> extraExports)
+                               Map<String, Set<Exports>> extraExports)
     {
         this.finder = finder;
         this.extraRequires = extraRequires;
@@ -103,7 +103,7 @@ class ArtifactInterposer implements ModuleArtifactFinder {
             }
         }
 
-        Map<String, Set<ModuleExport>> extraExports = new HashMap<>();
+        Map<String, Set<Exports>> extraExports = new HashMap<>();
         if (addModuleExportsValue != null) {
             // parse value of AddModuleExports
             for (String expr: addModuleExportsValue.split(",")) {
@@ -111,12 +111,12 @@ class ArtifactInterposer implements ModuleArtifactFinder {
                 if (s.length != 2)
                     parseFail(expr);
                 String module = s[0];
-                ModuleExport export = null;
+                Exports export = null;
                 s = s[1].split("=");
                 if (s.length == 1) {
-                    export = new ModuleExport(s[0]);
+                    export = new Exports(s[0]);
                 } else if (s.length == 2) {
-                    export = new ModuleExport(s[0], s[1]);
+                    export = new Exports(s[0], s[1]);
                 } else {
                     parseFail(expr);
                 }
@@ -163,20 +163,20 @@ class ArtifactInterposer implements ModuleArtifactFinder {
         String name = descriptor.name();
 
         Set<String> requires = extraRequires.get(name);
-        Set<ModuleExport> exports = extraExports.get(name);
+        Set<Exports> exports = extraExports.get(name);
 
         if (requires == null && exports == null)
             return artifact;  // no changes requested
 
         // create a new set of module dependences if needed.
-        Set<ModuleDependence> newDependences;
+        Set<Requires> newRequires;
         if (requires == null) {
-            newDependences = descriptor.moduleDependences();
+            newRequires = descriptor.requires();
         } else {
             // updated module dependences
-            newDependences = new HashSet<>(descriptor.moduleDependences());
+            newRequires = new HashSet<>(descriptor.requires());
             for (String dn: requires) {
-                newDependences.add(new ModuleDependence(null, dn));
+                newRequires.add(new Requires(null, dn));
             }
         }
 
@@ -185,27 +185,27 @@ class ArtifactInterposer implements ModuleArtifactFinder {
         // that package are dropped. If a package is already has an
         // unqualified export and AddModuleExports specifies a qualified
         // export then the qualified export is ignored.
-        Set<ModuleExport> newExports;
+        Set<Exports> newExports;
         if (exports == null) {
             newExports = descriptor.exports();
         } else {
             // package -> exports
-            Map<String, Set<ModuleExport>> pkgToExports = new HashMap<>();
-            for (ModuleExport export: exports) {
+            Map<String, Set<Exports>> pkgToExports = new HashMap<>();
+            for (Exports export: exports) {
                 String pkg = export.pkg();
                 pkgToExports.computeIfAbsent(pkg, k -> new HashSet<>()).add(export);
             }
 
             // exports to add to descriptor
-            Set<ModuleExport> needToAdd = new HashSet<>(exports);
+            Set<Exports> needToAdd = new HashSet<>(exports);
 
             // exports to remove from descriptor
-            Set<ModuleExport> needToRemove = new HashSet<>();
+            Set<Exports> needToRemove = new HashSet<>();
 
-            for (ModuleExport export: descriptor.exports()) {
+            for (Exports export: descriptor.exports()) {
                 String pkg = export.pkg();
 
-                Set<ModuleExport> additions = pkgToExports.get(pkg);
+                Set<Exports> additions = pkgToExports.get(pkg);
                 if (additions != null) {
                     String who = export.permit();
                     if (who == null) {
@@ -215,7 +215,7 @@ class ArtifactInterposer implements ModuleArtifactFinder {
                     } else {
                         // already has a qualified export, this needs to be dropped when
                         // the requested changes include making it an unqualified export
-                        ModuleExport e = new ModuleExport(pkg);
+                        Exports e = new Exports(pkg);
                         if (needToAdd.contains(e))
                             needToRemove.add(export);
                     }
@@ -234,7 +234,7 @@ class ArtifactInterposer implements ModuleArtifactFinder {
         ExtendedModuleDescriptor.Builder builder =
             new ExtendedModuleDescriptor.Builder(descriptor.name(),
                                                  descriptor.version());
-        newDependences.forEach(builder::requires);
+        newRequires.forEach(builder::requires);
         descriptor.serviceDependences().forEach(builder::uses);
         newExports.forEach(builder::export);
         for (Map.Entry<String, Set<String>> entry : descriptor.services().entrySet()) {

@@ -25,7 +25,7 @@ import java.io.IOException;
 import java.lang.module.ExtendedModuleDescriptor;
 import java.lang.module.ModuleArtifact;
 import java.lang.module.ModuleArtifactFinder;
-import java.lang.module.ModuleExport;
+import java.lang.module.ModuleDescriptor.Exports;
 import java.lang.module.ModuleReader;
 import java.net.URI;
 import java.util.HashMap;
@@ -55,7 +55,7 @@ class ModuleArtifactLibrary implements ModuleArtifactFinder {
                 URI uri = URI.create("module:/" + descriptor.name());
 
                 Set<String> packages = descriptor.exports().stream()
-                        .map(ModuleExport::pkg)
+                        .map(Exports::pkg)
                         .collect(Collectors.toSet());
 
                 ModuleArtifact artifact = new ModuleArtifact(descriptor, packages, uri) {

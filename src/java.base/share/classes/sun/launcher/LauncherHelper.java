@@ -79,9 +79,9 @@ import java.lang.module.Configuration;
 import java.lang.module.ExtendedModuleDescriptor;
 import java.lang.module.Layer;
 import java.lang.module.ModuleArtifact;
-import java.lang.module.ModuleDependence;
+import java.lang.module.ModuleDescriptor.Requires;
 import java.lang.module.ModuleDescriptor;
-import java.lang.module.ModuleExport;
+import java.lang.module.ModuleDescriptor.Exports;
 
 public enum LauncherHelper {
     INSTANCE;
@@ -903,7 +903,7 @@ public enum LauncherHelper {
                 ExtendedModuleDescriptor md = artifact.descriptor();
                 ostream.println(midAndLocation(md, artifact.location()));
 
-                for (ModuleDependence d: md.moduleDependences()) {
+                for (Requires d: md.requires()) {
                     ostream.format("  requires %s%n", d);
                 }
                 for (String s: md.serviceDependences()) {
@@ -912,7 +912,7 @@ public enum LauncherHelper {
 
                 // sorted exports
                 Map<String, Set<String>> exports = new TreeMap<>();
-                for (ModuleExport export : md.exports()) {
+                for (Exports export : md.exports()) {
                     String pkg = export.pkg();
                     String who = export.permit();
                     Set<String> permits = exports.computeIfAbsent(pkg, k -> new HashSet<>());

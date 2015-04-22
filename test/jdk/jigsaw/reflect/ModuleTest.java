@@ -22,7 +22,7 @@
  */
 
 import java.lang.reflect.Module;
-import java.lang.module.ModuleExport;
+import java.lang.module.ModuleDescriptor.Exports;
 import java.util.stream.Stream;
 
 import org.testng.annotations.Test;
@@ -49,7 +49,7 @@ public class ModuleTest {
         assertTrue(base.getClassLoader() == null);
 
         // descriptor
-        ModuleExport javaLang = new ModuleExport("java.lang");
+        Exports javaLang = new Exports("java.lang");
         assertTrue(base.getDescriptor().exports().contains(javaLang));
 
         // name
@@ -71,7 +71,7 @@ public class ModuleTest {
         assertTrue(desktop.getClassLoader() == null);
 
         // descriptor
-        ModuleExport javaAWT = new ModuleExport("java.awt");
+        Exports javaAWT = new Exports("java.awt");
         assertTrue(desktop.getDescriptor().exports().contains(javaAWT));
 
         // name

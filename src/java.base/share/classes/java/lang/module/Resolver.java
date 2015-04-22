@@ -36,6 +36,8 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Stream;
 
+import java.lang.module.ModuleDescriptor.Requires;
+
 import jdk.jigsaw.module.internal.Hasher.DependencyHashes;
 
 /**
@@ -157,7 +159,7 @@ class Resolver {
             r.nameToArtifact.put(descriptor.name(), artifact);
 
             // process dependencies
-            for (ModuleDependence d: descriptor.moduleDependences()) {
+            for (Requires d: descriptor.requires()) {
                 String dn = d.name();
 
                 // in overrides?
@@ -304,8 +306,8 @@ class Resolver {
 
                     // requires public
                     g2.put(descriptor, new HashSet<>());
-                    for (ModuleDependence d: descriptor.moduleDependences()) {
-                        if (d.modifiers().contains(ModuleDependence.Modifier.PUBLIC)) {
+                    for (Requires d: descriptor.requires()) {
+                        if (d.modifiers().contains(Requires.Modifier.PUBLIC)) {
                             String dn = d.name();
                             ModuleArtifact artifact = current.findArtifact(dn);
                             if (artifact == null)
@@ -322,7 +324,7 @@ class Resolver {
         for (ModuleDescriptor m: r.selected) {
             g1.put(m, new HashSet<>());
             g2.put(m, new HashSet<>());
-            for (ModuleDependence d: m.moduleDependences()) {
+            for (Requires d: m.requires()) {
                 String dn = d.name();
                 ModuleDescriptor other = nameToModule.get(dn);
                 if (other == null && layer != null)
@@ -334,7 +336,7 @@ class Resolver {
                 g1.get(m).add(other);
 
                 // requires public only
-                if (d.modifiers().contains(ModuleDependence.Modifier.PUBLIC)) {
+                if (d.modifiers().contains(Requires.Modifier.PUBLIC)) {
                     g2.get(m).add(other);
                 }
             }
@@ -388,7 +390,7 @@ class Resolver {
                 continue;
 
             // check dependences
-            for (ModuleDependence md: descriptor.moduleDependences()) {
+            for (Requires md: descriptor.requires()) {
                 String dn = md.name();
                 String recordedHash = hashes.hashFor(dn);
 

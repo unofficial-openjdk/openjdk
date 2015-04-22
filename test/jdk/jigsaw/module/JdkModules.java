@@ -26,8 +26,9 @@ import java.util.*;
 import static java.lang.System.out;
 
 import java.lang.module.*;
-import java.lang.module.ModuleDependence.Modifier;
-import static java.lang.module.ModuleDependence.Modifier.*;
+import java.lang.module.ModuleDescriptor.Requires;
+import java.lang.module.ModuleDescriptor.Requires.Modifier;
+import static java.lang.module.ModuleDescriptor.Requires.Modifier.*;
 
 import org.testng.annotations.*;
 import static org.testng.Assert.*;
@@ -35,19 +36,19 @@ import static org.testng.Assert.*;
 @Test
 public class JdkModules {
     private void base(ModuleDescriptor m) {
-        ModuleDependence[] deps = new ModuleDependence[] {};
-        assertEqualsNoOrder(m.moduleDependences().toArray(new ModuleDependence[0]), deps);
+        Requires[] deps = new Requires[] {};
+        assertEqualsNoOrder(m.requires().toArray(new Requires[0]), deps);
     }
 
     private void compact2(ModuleDescriptor m) {
-        ModuleDependence[] deps = new ModuleDependence[] {
+        Requires[] deps = new Requires[] {
             moduleMandatedDep("java.base"),
             modulePublicDep("java.compact1"),
             modulePublicDep("java.rmi"),
             modulePublicDep("java.sql"),
             modulePublicDep("java.xml")
         };
-        assertEqualsNoOrder(m.moduleDependences().toArray(new ModuleDependence[0]), deps);
+        assertEqualsNoOrder(m.requires().toArray(new Requires[0]), deps);
     }
 
     public void go() {
@@ -64,19 +65,19 @@ public class JdkModules {
         });
     }
 
-    private static ModuleDependence moduleDep(Set<Modifier> mods, String dn) {
-        return new ModuleDependence(mods, dn);
+    private static Requires moduleDep(Set<Modifier> mods, String dn) {
+        return new Requires(mods, dn);
     }
 
-    private static ModuleDependence modulePublicDep(String dn) {
-        return new ModuleDependence(EnumSet.of(Modifier.PUBLIC), dn);
+    private static Requires modulePublicDep(String dn) {
+        return new Requires(EnumSet.of(Modifier.PUBLIC), dn);
     }
 
-    private static ModuleDependence moduleMandatedDep(String dn) {
-        return new ModuleDependence(EnumSet.of(Modifier.MANDATED), dn);
+    private static Requires moduleMandatedDep(String dn) {
+        return new Requires(EnumSet.of(Modifier.MANDATED), dn);
     }
 
-    private static ModuleDependence moduleDep(String dn) {
-        return new ModuleDependence(EnumSet.noneOf(Modifier.class), dn);
+    private static Requires moduleDep(String dn) {
+        return new Requires(EnumSet.noneOf(Modifier.class), dn);
     }
 }

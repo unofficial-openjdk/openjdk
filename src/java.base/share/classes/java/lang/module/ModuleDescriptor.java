@@ -30,6 +30,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.Objects;
 import static java.util.Objects.*;
 
 
@@ -41,20 +42,206 @@ public class ModuleDescriptor
     implements Comparable<ModuleDescriptor>
 {
 
+    /**
+     * <p> A dependence upon a module </p>
+     *
+     * @since 1.9
+     */
+
+    public final static class Requires
+        implements Comparable<Requires>
+    {
+
+        /**
+         * A modifier on a module dependence.
+         *
+         * @since 1.9
+         */
+        public static enum Modifier {
+            /**
+             * The dependence causes any module which depends on the <i>current
+             * module</i> to have an implicitly declared dependence on the module
+             * named by the {@code Requires}.
+             */
+            PUBLIC,
+            /**
+             * The dependence was not explicitly or implicitly declared in the
+             * source of the module declaration.
+             */
+            SYNTHETIC,
+            /**
+             * The dependence was implicitly declared in the source of the module
+             * declaration.
+             */
+            MANDATED;
+        }
+
+        private final Set<Modifier> mods;
+        private final String name;
+
+        /**
+         * Constructs a new instance of this class.
+         *
+         * @param ms the set of modifiers; {@code null} for no modifiers
+         * @param mn the module name
+         *
+         * @throws IllegalArgumentException
+         *         If the module name is not a legal Java identifier
+         */
+        public Requires(Set<Modifier> ms, String mn) {
+            if (ms == null) {
+                mods = Collections.emptySet();
+            } else {
+                mods = Collections.unmodifiableSet(ms);
+            }
+            this.name = ModuleName.check(mn);
+        }
+
+        /**
+         * Returns the possibly empty set of modifiers. The set is immutable.
+         */
+        public Set<Modifier> modifiers() {
+            return mods;
+        }
+
+        /**
+         * Return the module name.
+         */
+        public String name() {
+            return name;
+        }
+
+        /**
+         * Compares this module dependence to another.
+         *
+         * <p> Two {@code Requires} objects are compared by comparing their
+         * module name lexicographically.  Where the module names are equal then
+         * the sets of modifiers are compared.
+         *
+         * @return A negative integer, zero, or a positive integer if this module
+         *         dependence is less than, equal to, or greater than the given
+         *         module dependence
+         */
+        @Override
+        public int compareTo(Requires that) {
+            int c = this.name().compareTo(that.name());
+            if (c != 0)
+                return c;
+            // same name, compare by modifiers
+            return Long.compare(this.modsValue(), that.modsValue());
+        }
+
+        /**
+         * Return a value for the modifiers to allow sets of modifiers to be
+         * compared.
+         */
+        private long modsValue() {
+            return mods.stream()
+                       .map(Modifier::ordinal)
+                       .map(n -> 1 << n)
+                       .reduce(0, (a, b) -> a + b);
+        }
+
+
+        @Override
+        public boolean equals(Object ob) {
+            if (!(ob instanceof Requires))
+                return false;
+            Requires that = (Requires)ob;
+            return (name.equals(that.name) && mods.equals(that.mods));
+        }
+
+        @Override
+        public int hashCode() {
+            return name.hashCode() * 43 + mods.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return Dependence.toString(mods, name);
+        }
+
+    }
+
+
+
+    /**
+     * <p> A module export, may be qualified or unqualified. </p>
+     */
+
+    public final static class Exports {
+
+        private final String pkg;
+        private final String permit;
+
+        /**
+         * Constructs a {@code Exports} to represent the exporting of package
+         * {@code pkg} to module {@code who}.
+         */
+        public Exports(String pkg, String who) {
+            this.pkg = requireNonNull(pkg);
+            this.permit = who;
+        }
+
+        /**
+         * Constructs a {@code Exports} to represent the exporting of package
+         * {@code pkg}.
+         */
+        public Exports(String pkg) {
+            this(pkg, null);
+        }
+
+        /**
+         * Returns the package name.
+         */
+        public String pkg() {
+            return pkg;
+        }
+
+        /**
+         * Returns the name of the module that the package is exported to,
+         * or {@code null} if this is an unqualified export.
+         */
+        public String permit() {
+            return permit;
+        }
+
+        public int hashCode() {
+            return hash(pkg, permit);
+        }
+
+        public boolean equals(Object obj) {
+            if (!(obj instanceof Exports))
+                return false;
+            Exports other = (Exports)obj;
+            return Objects.equals(this.pkg, other.pkg) &&
+                Objects.equals(this.permit, other.permit);
+        }
+
+        public String toString() {
+            if (permit == null)
+                return pkg;
+            return pkg + " to " + permit;
+        }
+
+    }
+
+
+
     private final String name;
-    private final Set<ModuleDependence> moduleDependences;
+    private final Set<Requires> requires;
     private final Set<String> serviceDependences;
-    private final Set<ModuleExport> exports;
+    private final Set<Exports> exports;
     private final Map<String, Set<String>> services;
 
     ModuleDescriptor(String name,
-                     Set<ModuleDependence> moduleDeps,
+                     Set<Requires> requires,
                      Set<String> serviceDeps,
-                     Set<ModuleExport> exports,
+                     Set<Exports> exports,
                      Map<String, Set<String>> services)
     {
         this.name = ModuleName.check(name);
-        this.moduleDependences = Collections.unmodifiableSet(moduleDeps);
+        this.requires = Collections.unmodifiableSet(requires);
         this.serviceDependences = Collections.unmodifiableSet(serviceDeps);
         this.exports = Collections.unmodifiableSet(exports);
         // ## FIXME values are mutable
@@ -71,10 +258,10 @@ public class ModuleDescriptor
     /**
      * <p> The view dependences of this module </p>
      *
-     * @return  A possibly-empty unmodifiable set of {@link ModuleDependence}s
+     * @return  A possibly-empty unmodifiable set of {@link Requires}s
      */
-    public Set<ModuleDependence> moduleDependences() {
-        return moduleDependences;
+    public Set<Requires> requires() {
+        return requires;
     }
 
     /**
@@ -103,7 +290,7 @@ public class ModuleDescriptor
      *
      * @return  A possibly-empty unmodifiable set of exported packages
      */
-    public Set<ModuleExport> exports() {
+    public Set<Exports> exports() {
         return exports;
     }
 
@@ -113,9 +300,9 @@ public class ModuleDescriptor
     public static class Builder {
 
         String name;
-        final Set<ModuleDependence> moduleDeps = new HashSet<>();
+        final Set<Requires> requires = new HashSet<>();
         final Set<String> serviceDeps = new HashSet<>();
-        final Set<ModuleExport> exports = new HashSet<>();
+        final Set<Exports> exports = new HashSet<>();
         final Map<String, Set<String>> services = new HashMap<>();
 
         /**
@@ -134,8 +321,8 @@ public class ModuleDescriptor
         /**
          * Adds a module dependence.
          */
-        public Builder requires(ModuleDependence md) {
-            moduleDeps.add(requireNonNull(md));
+        public Builder requires(Requires md) {
+            requires.add(requireNonNull(md));
             return this;
         }
 
@@ -152,7 +339,7 @@ public class ModuleDescriptor
          *
          * ## FIXME need to check for conflicting exports
          */
-        public Builder export(ModuleExport e) {
+        public Builder export(Exports e) {
             exports.add(requireNonNull(e));
             return this;
         }
@@ -163,7 +350,7 @@ public class ModuleDescriptor
          * ## FIXME need to check for conflicting exports
          */
         public Builder export(String p) {
-            return export(new ModuleExport(p));
+            return export(new Exports(p));
         }
 
         /**
@@ -172,7 +359,7 @@ public class ModuleDescriptor
          * ## FIXME need to check for conflicting exports
          */
         public Builder export(String p, String m) {
-            return export(new ModuleExport(p, m));
+            return export(new Exports(p, m));
         }
 
         /**
@@ -190,7 +377,7 @@ public class ModuleDescriptor
         public ModuleDescriptor build() {
             assert name != null;
             return new ModuleDescriptor(name,
-                                        moduleDeps,
+                                        requires,
                                         serviceDeps,
                                         exports,
                                         services);
@@ -208,7 +395,7 @@ public class ModuleDescriptor
             return false;
         ModuleDescriptor that = (ModuleDescriptor)ob;
         return (name.equals(that.name)
-                && moduleDependences.equals(that.moduleDependences)
+                && requires.equals(that.requires)
                 && serviceDependences.equals(that.serviceDependences)
                 && exports.equals(that.exports)
                 && services.equals(that.services));
@@ -221,7 +408,7 @@ public class ModuleDescriptor
         int hc = hash;
         if (hc == 0) {
             hc = name.hashCode();
-            hc = hc * 43 + moduleDependences.hashCode();
+            hc = hc * 43 + requires.hashCode();
             hc = hc * 43 + serviceDependences.hashCode();
             hc = hc * 43 + exports.hashCode();
             hc = hc * 43 + services.hashCode();
@@ -234,8 +421,8 @@ public class ModuleDescriptor
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append("Module { name: ").append(name());
-        if (!moduleDependences.isEmpty())
-            sb.append(", ").append(moduleDependences);
+        if (!requires.isEmpty())
+            sb.append(", ").append(requires);
         if (!serviceDependences.isEmpty())
             sb.append(", ").append(serviceDependences);
         if (!exports.isEmpty())

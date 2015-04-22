@@ -76,7 +76,7 @@ class ModuleArtifacts {
                                          mi.version(),
                                          mi.mainClass(),
                                          mi.hashes(),
-                                         mi.moduleDependences(),
+                                         mi.requires(),
                                          mi.serviceDependences(),
                                          mi.exports(),
                                          mi.services());

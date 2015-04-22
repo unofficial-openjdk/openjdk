@@ -77,7 +77,7 @@ public abstract class ModuleArtifact {
         this.hasher = hasher;
 
         // all exported packages must be in contents
-        for (ModuleExport export: descriptor.exports()) {
+        for (ModuleDescriptor.Exports export: descriptor.exports()) {
             String pkg = export.pkg();
             if (!packages.contains(pkg)) {
                 String name = descriptor.name();

@@ -43,9 +43,9 @@ import jdk.internal.org.objectweb.asm.ClassVisitor;
 import jdk.internal.org.objectweb.asm.ClassWriter;
 import jdk.internal.org.objectweb.asm.Opcodes;
 
-import java.lang.module.ModuleDependence;
-import java.lang.module.ModuleDependence.Modifier;
-import java.lang.module.ModuleExport;
+import java.lang.module.ModuleDescriptor.Requires;
+import java.lang.module.ModuleDescriptor.Requires.Modifier;
+import java.lang.module.ModuleDescriptor.Exports;
 import java.lang.module.Version;
 import jdk.jigsaw.module.internal.Hasher.DependencyHashes;
 
@@ -73,10 +73,10 @@ public final class ModuleInfo {
     private final String name;
 
     // module dependences read from the Module attribute
-    private final Set<ModuleDependence> moduleDependences = new HashSet<>();
+    private final Set<Requires> requires = new HashSet<>();
 
     // module exports read from the Module attribute (created lazily)
-    private Set<ModuleExport> exports;
+    private Set<Exports> exports;
 
     // service dependences (uses) read from the Module attribute
     private Set<String> serviceDependences;
@@ -100,14 +100,14 @@ public final class ModuleInfo {
     /**
      * Returns the module dependences as read from the {@code Module} attribute.
      */
-    public Set<ModuleDependence> moduleDependences() {
-        return moduleDependences;
+    public Set<Requires> requires() {
+        return requires;
     }
 
     /**
      * Returns the exports as read from the {@code Module} attribute.
      */
-    public Set<ModuleExport> exports() {
+    public Set<Exports> exports() {
         if (exports == null) {
             return Collections.emptySet();
         } else {
@@ -395,7 +395,7 @@ public final class ModuleInfo {
                 if ((flags & ModuleInfo.ACC_MANDATED) != 0)
                     mods.add(Modifier.MANDATED);
             }
-            moduleDependences.add(new ModuleDependence(mods, dn));
+            requires.add(new Requires(mods, dn));
         }
 
         int exports_count = in.readUnsignedShort();
@@ -409,10 +409,10 @@ public final class ModuleInfo {
                     for (int j=0; j<exports_to_count; j++) {
                         int exports_to_index = in.readUnsignedShort();
                         String permit = cpool.getUtf8(exports_to_index);
-                        exports.add(new ModuleExport(pkg, permit));
+                        exports.add(new Exports(pkg, permit));
                     }
                 } else {
-                    exports.add(new ModuleExport(pkg));
+                    exports.add(new Exports(pkg));
                 }
             }
         }

@@ -52,9 +52,9 @@ public class ExtendedModuleDescriptor
                              Version version,
                              String mainClass,
                              DependencyHashes hashes,
-                             Set<ModuleDependence> moduleDeps,
+                             Set<Requires> moduleDeps,
                              Set<String> serviceDeps,
-                             Set<ModuleExport> exports,
+                             Set<Exports> exports,
                              Map<String, Set<String>> services)
     {
         super(name, moduleDeps, serviceDeps, exports, services);
@@ -159,7 +159,7 @@ public class ExtendedModuleDescriptor
             this(name, Version.parse(version));
         }
 
-        public Builder requires(ModuleDependence md) {
+        public Builder requires(Requires md) {
             super.requires(md);
             return this;
         }
@@ -169,7 +169,7 @@ public class ExtendedModuleDescriptor
             return this;
         }
 
-        public Builder export(ModuleExport e) {
+        public Builder export(Exports e) {
             super.export(e);
             return this;
         }
@@ -204,7 +204,7 @@ public class ExtendedModuleDescriptor
                                                 version,
                                                 mainClass,
                                                 null,
-                                                moduleDeps,
+                                                requires,
                                                 serviceDeps,
                                                 exports,
                                                 services);

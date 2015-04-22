@@ -25,8 +25,8 @@ import java.lang.module.Configuration;
 import java.lang.module.ExtendedModuleDescriptor;
 import java.lang.module.Layer;
 import java.lang.module.ModuleArtifactFinder;
-import java.lang.module.ModuleDependence;
-import java.lang.module.ModuleDependence.Modifier;
+import java.lang.module.ModuleDescriptor.Requires;
+import java.lang.module.ModuleDescriptor.Requires.Modifier;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -184,10 +184,10 @@ public class ConfigurationTest {
         assertTrue(cf.readDependences(descriptor3).contains(descriptor1));
     }
 
-    static ModuleDependence md(String dn, Modifier... mods) {
+    static Requires md(String dn, Modifier... mods) {
         Set<Modifier> set = new HashSet<>();
         for (Modifier mod: mods)
             set.add(mod);
-        return new ModuleDependence(set, dn);
+        return new Requires(set, dn);
     }
 }

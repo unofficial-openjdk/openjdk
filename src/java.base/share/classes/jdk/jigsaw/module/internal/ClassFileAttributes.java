@@ -35,9 +35,9 @@ import jdk.internal.org.objectweb.asm.ByteVector;
 import jdk.internal.org.objectweb.asm.ClassReader;
 import jdk.internal.org.objectweb.asm.ClassWriter;
 import jdk.internal.org.objectweb.asm.Label;
-import java.lang.module.ModuleDependence;
-import java.lang.module.ModuleDependence.Modifier;
-import java.lang.module.ModuleExport;
+import java.lang.module.ModuleDescriptor.Requires;
+import java.lang.module.ModuleDescriptor.Requires.Modifier;
+import java.lang.module.ModuleDescriptor.Exports;
 import java.lang.module.Version;
 import jdk.jigsaw.module.internal.Hasher.DependencyHashes;
 
@@ -56,11 +56,11 @@ class ClassFileAttributes {
      */
     static class ModuleAttribute extends Attribute {
         private String name;
-        private Set<ModuleDependence> moduleDependences = new HashSet<>();
+        private Set<Requires> moduleDependences = new HashSet<>();
 
         // optional and created lazily
         private Set<String> serviceDependences;
-        private Set<ModuleExport> exports;
+        private Set<Exports> exports;
         private Map<String, Set<String>> services;
 
         protected ModuleAttribute() {
@@ -95,7 +95,7 @@ class ClassFileAttributes {
                     if ((flags & ModuleInfo.ACC_MANDATED) != 0)
                         mods.add(Modifier.MANDATED);
                 }
-                attr.moduleDependences.add(new ModuleDependence(mods, dn));
+                attr.moduleDependences.add(new Requires(mods, dn));
                 off += 4;
             }
 
@@ -113,10 +113,10 @@ class ClassFileAttributes {
                         for (int j=0; j<exports_to_count; j++) {
                             String who = cr.readUTF8(off, buf);
                             off += 2;
-                            attr.exports.add(new ModuleExport(pkg, who));
+                            attr.exports.add(new Exports(pkg, who));
                         }
                     } else {
-                        attr.exports.add(new ModuleExport(pkg));
+                        attr.exports.add(new Exports(pkg));
                     }
                 }
             }
@@ -162,7 +162,7 @@ class ClassFileAttributes {
             attr.putShort(moduleDependences.size());
 
             // requires[requires_count]
-            for (ModuleDependence md : moduleDependences) {
+            for (Requires md : moduleDependences) {
                 String dn = md.name();
                 int flags = 0;
                 if (md.modifiers().contains(Modifier.PUBLIC))
@@ -182,7 +182,7 @@ class ClassFileAttributes {
             } else {
                 // group by exported package
                 Map<String, Set<String>> map = new HashMap<>();
-                for (ModuleExport export : exports) {
+                for (Exports export : exports) {
                     String pkg = export.pkg();
                     String permit = export.permit();
                     if (permit == null) {
