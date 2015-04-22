@@ -57,9 +57,9 @@ ifeq ($(OPENJDK_TARGET_OS), solaris)
   PROVIDER_MODULES += jdk.crypto.ucrypto
 endif
 
-ifeq ($(OPENJDK_TARGET_OS), windows)
-  MAIN_MODULES += jdk.accessibility
-endif
+# ifeq ($(OPENJDK_TARGET_OS), windows)
+#   MAIN_MODULES += jdk.accessibility
+# endif
 
 ifeq ($(OPENJDK_TARGET_OS), macosx)
   MAIN_MODULES += jdk.deploy.osx
