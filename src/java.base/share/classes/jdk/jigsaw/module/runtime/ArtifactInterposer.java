@@ -192,7 +192,7 @@ class ArtifactInterposer implements ModuleArtifactFinder {
             // package -> exports
             Map<String, Set<Exports>> pkgToExports = new HashMap<>();
             for (Exports export: exports) {
-                String pkg = export.pkg();
+                String pkg = export.source();
                 pkgToExports.computeIfAbsent(pkg, k -> new HashSet<>()).add(export);
             }
 
@@ -203,7 +203,7 @@ class ArtifactInterposer implements ModuleArtifactFinder {
             Set<Exports> needToRemove = new HashSet<>();
 
             for (Exports export: descriptor.exports()) {
-                String pkg = export.pkg();
+                String pkg = export.source();
 
                 Set<Exports> additions = pkgToExports.get(pkg);
                 if (additions != null) {

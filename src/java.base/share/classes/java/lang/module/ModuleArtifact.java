@@ -78,7 +78,7 @@ public abstract class ModuleArtifact {
 
         // all exported packages must be in contents
         for (ModuleDescriptor.Exports export: descriptor.exports()) {
-            String pkg = export.pkg();
+            String pkg = export.source();
             if (!packages.contains(pkg)) {
                 String name = descriptor.name();
                 throw new IllegalArgumentException(name + " cannot export " +

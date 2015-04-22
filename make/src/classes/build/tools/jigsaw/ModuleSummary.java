@@ -276,7 +276,7 @@ public class ModuleSummary {
         out.format("<td>%s</td>%n", requires);
         String exports = descriptor.exports().stream()
             .filter(e -> e.permit() == null)
-            .map(e -> e.pkg())
+            .map(e -> e.source())
             .sorted()
             .collect(Collectors.joining("<br>\n"));
         out.format("<td>%s</td>%n", exports);
@@ -436,7 +436,7 @@ public class ModuleSummary {
         Dependency.Filter filter =
             (Dependency d) -> !artifact.packages().contains(d.getTarget().getPackageName());
         Set<String> exports = descriptor.exports().stream()
-                    .map(Exports::pkg)
+                    .map(Exports::source)
                     .sorted()
                     .collect(Collectors.toSet());
         Set<String> deps = new HashSet<>();

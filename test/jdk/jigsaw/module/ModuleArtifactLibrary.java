@@ -55,7 +55,7 @@ class ModuleArtifactLibrary implements ModuleArtifactFinder {
                 URI uri = URI.create("module:/" + descriptor.name());
 
                 Set<String> packages = descriptor.exports().stream()
-                        .map(Exports::pkg)
+                        .map(Exports::source)
                         .collect(Collectors.toSet());
 
                 ModuleArtifact artifact = new ModuleArtifact(descriptor, packages, uri) {

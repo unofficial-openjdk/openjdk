@@ -389,7 +389,7 @@ public final class Module {
             // exports
             Map<String, Map<Module, Boolean>> exports = new HashMap<>();
             for (Exports export: descriptor.exports()) {
-                String pkg = export.pkg();
+                String pkg = export.source();
                 String permit = export.permit();
                 if (permit == null) {
                     exports.computeIfAbsent(pkg, k -> Collections.emptyMap());

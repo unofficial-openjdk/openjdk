@@ -913,7 +913,7 @@ public enum LauncherHelper {
                 // sorted exports
                 Map<String, Set<String>> exports = new TreeMap<>();
                 for (Exports export : md.exports()) {
-                    String pkg = export.pkg();
+                    String pkg = export.source();
                     String who = export.permit();
                     Set<String> permits = exports.computeIfAbsent(pkg, k -> new HashSet<>());
                     if (who != null) {

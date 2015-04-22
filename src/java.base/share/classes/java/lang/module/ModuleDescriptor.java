@@ -58,22 +58,26 @@ public class ModuleDescriptor
          * @since 1.9
          */
         public static enum Modifier {
+
             /**
              * The dependence causes any module which depends on the <i>current
              * module</i> to have an implicitly declared dependence on the module
              * named by the {@code Requires}.
              */
             PUBLIC,
+
             /**
              * The dependence was not explicitly or implicitly declared in the
              * source of the module declaration.
              */
             SYNTHETIC,
+
             /**
              * The dependence was implicitly declared in the source of the module
              * declaration.
              */
             MANDATED;
+
         }
 
         private final Set<Modifier> mods;
@@ -194,7 +198,7 @@ public class ModuleDescriptor
         /**
          * Returns the package name.
          */
-        public String pkg() {
+        public String source() {
             return pkg;
         }
 

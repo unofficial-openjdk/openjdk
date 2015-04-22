@@ -183,7 +183,7 @@ class ClassFileAttributes {
                 // group by exported package
                 Map<String, Set<String>> map = new HashMap<>();
                 for (Exports export : exports) {
-                    String pkg = export.pkg();
+                    String pkg = export.source();
                     String permit = export.permit();
                     if (permit == null) {
                         map.computeIfAbsent(pkg, k -> new HashSet<>());
