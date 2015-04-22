@@ -84,7 +84,7 @@ ifeq ($(OPENJDK_TARGET_OS), macsox)
   BOOT_MODULES += jdk.deploy.osx 
 endif
 ifeq ($(OPENJDK_TARGET_OS), windows)
-  EXT_MODULES += jdk.crypto.mscapi
+  EXT_MODULES += jdk.accessibility jdk.crypto.mscapi
 endif
 ifeq ($(OPENJDK_TARGET_OS), solaris)
   EXT_MODULES += jdk.crypto.ucrypto

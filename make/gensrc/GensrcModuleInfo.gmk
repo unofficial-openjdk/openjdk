@@ -28,10 +28,14 @@ $(eval $(call IncludeCustomExtension, jdk, gensrc/GensrcModuleInfo.gmk))
 ##########################################################################################
 
 ifeq ($(OPENJDK_TARGET_OS), windows)
-  JAVA_BASE_MODULEINFO_EXTRAS += -export sun.security.rsa/jdk.crypto.mscapi
-  JAVA_BASE_MODULEINFO_EXTRAS += -export sun.security.internal.spec/jdk.crypto.mscapi
-  JAVA_BASE_MODULEINFO_EXTRAS += -export sun.security.util/jdk.crypto.mscapi
+  JAVA_BASE_MODULEINFO_EXTRAS += \
+    -export sun.security.rsa/jdk.crypto.mscapi \
+    -export sun.security.internal.spec/jdk.crypto.mscapi \
+    -export sun.security.util/jdk.crypto.mscapi
+
+#  JAVA_DESKTOP_MODULEINFO_EXTRAS += -export sun.awt/jdk.accessibility
 endif
+
 ifeq ($(OPENJDK_TARGET_OS), solaris)
   JAVA_BASE_MODULEINFO_EXTRAS += -export sun.nio.ch/jdk.crypto.ucrypto
   JAVA_BASE_MODULEINFO_EXTRAS += -export sun.security.action/jdk.crypto.ucrypto
@@ -40,6 +44,7 @@ ifeq ($(OPENJDK_TARGET_OS), solaris)
   JAVA_BASE_MODULEINFO_EXTRAS += -export sun.security.rsa/jdk.crypto.ucrypto 
   JAVA_BASE_MODULEINFO_EXTRAS += -export sun.security.util/jdk.crypto.ucrypto
 endif
+
 ifeq ($(OPENJDK_TARGET_OS), macosx)
   JAVA_BASE_MODULEINFO_EXTRAS += -export sun.misc/jdk.deploy.osx
   JAVA_BASE_MODULEINFO_EXTRAS += -export sun.security.pkcs/jdk.deploy.osx

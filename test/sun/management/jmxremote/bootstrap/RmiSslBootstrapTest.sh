@@ -31,6 +31,7 @@
 #          java.management/sun.management.jmxremote
 # @build jdk.testlibrary.* TestLogger Utils RmiBootstrapTest
 # @run shell/timeout=300  RmiSslBootstrapTest.sh
+# @ignore 8077924
 
 # Define the Java class test name
 TESTCLASS="RmiBootstrapTest"
