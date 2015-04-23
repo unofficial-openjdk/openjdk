@@ -250,7 +250,7 @@
       <to>jdk.scripting.nashorn</to>
     </export>
     <export>
-      <name>jdk.jigsaw.module.internal</name>
+      <name>jdk.internal.module</name>
       <to>jdk.jlink</to>
     </export>
     <export>

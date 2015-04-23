@@ -51,7 +51,7 @@ java.base_CLEAN := intrinsic.properties
 java.base_EXCLUDE_FILES += $(JDK_TOPDIR)/src/java.base/share/classes/module-info.java
 
 java.base_EXCLUDE_FILES += \
-  $(JDK_TOPDIR)/src/java.base/share/classes/jdk/jigsaw/module/runtime/ModuleLoaderMap.java
+  $(JDK_TOPDIR)/src/java.base/share/classes/jdk/internal/module/ModuleLoaderMap.java
 
 java.base_EXCLUDES += java/lang/doc-files
 
