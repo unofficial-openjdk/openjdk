@@ -626,7 +626,7 @@ public final class Module {
     // JVM_AddReadsModule
     private static native void jvmAddReadsModule(Module from, Module to);
 
-    // JVM_AddExports
+    // JVM_AddModuleExports
     private static native void jvmAddModuleExports(Module from, String pkg, Module to);
 
     // JVM_AddModulePackage
