@@ -467,7 +467,7 @@ Reflection::VerifyClassAccessResults Reflection::verify_class_access(
     if (new_class->oop_is_objArray()) {
       new_class = ObjArrayKlass::cast(new_class)->bottom_klass();
     }
-    if (current_class->oop_is_instance()) {
+    if (new_class->oop_is_instance()) {
       module_to = InstanceKlass::cast(new_class)->module();
     }
 

@@ -593,17 +593,18 @@ jobject Modules::get_module(JNIEnv *env, jclass clazz) {
     klass->oop_is_typeArray(), "Bad Klass");
 
   oop module;
+  if (klass->oop_is_objArray()) {
+    ObjArrayKlass* obj_arr_klass = ObjArrayKlass::cast(klass);
+    klass = obj_arr_klass->bottom_klass();
+    mirror = java_lang_Class::module(klass->java_mirror());
+  }
   if (klass->oop_is_instance()) {
     module = java_lang_Class::module(mirror);
-  }
-  else if (klass->oop_is_objArray()) {
-    ObjArrayKlass* obj_arr_klass = ObjArrayKlass::cast(klass);
-    Klass* bottom_klass = obj_arr_klass->bottom_klass();
-    module = java_lang_Class::module(bottom_klass->java_mirror());
-  }
-  else if (klass->oop_is_typeArray()) {
+  } else if (klass->oop_is_typeArray()) {
     Klass* obj_k = SystemDictionary::Object_klass();
     module = java_lang_Class::module(obj_k->java_mirror());
+  } else {
+    ShouldNotReachHere();
   }
 
   if (TraceModules) {
