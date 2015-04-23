@@ -22,8 +22,12 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package jdk.jigsaw.module.internal;
+package jdk.internal.module;
 
+import java.lang.module.ModuleDescriptor.Requires;
+import java.lang.module.ModuleDescriptor.Requires.Modifier;
+import java.lang.module.ModuleDescriptor.Exports;
+import java.lang.module.Version;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -35,11 +39,7 @@ import jdk.internal.org.objectweb.asm.ByteVector;
 import jdk.internal.org.objectweb.asm.ClassReader;
 import jdk.internal.org.objectweb.asm.ClassWriter;
 import jdk.internal.org.objectweb.asm.Label;
-import java.lang.module.ModuleDescriptor.Requires;
-import java.lang.module.ModuleDescriptor.Requires.Modifier;
-import java.lang.module.ModuleDescriptor.Exports;
-import java.lang.module.Version;
-import jdk.jigsaw.module.internal.Hasher.DependencyHashes;
+import jdk.internal.module.Hasher.DependencyHashes;
 
 /**
  * Provides ASM implementations of {@code Attribute} to read and write the

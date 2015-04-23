@@ -35,6 +35,11 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.UncheckedIOException;
+import java.lang.module.ModuleArtifact;
+import java.lang.module.ModuleArtifactFinder;
+import java.lang.module.ModuleDescriptor.Requires;
+import java.lang.module.ModuleDescriptor;
+import java.lang.module.Version;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.nio.file.FileVisitResult;
@@ -67,14 +72,9 @@ import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
-import java.lang.module.ModuleArtifact;
-import java.lang.module.ModuleArtifactFinder;
-import java.lang.module.ModuleDescriptor.Requires;
-import java.lang.module.ModuleDescriptor;
-import java.lang.module.Version;
-import jdk.jigsaw.module.internal.Hasher;
-import jdk.jigsaw.module.internal.Hasher.DependencyHashes;
-import jdk.jigsaw.module.internal.ModuleInfo;
+import jdk.internal.module.Hasher;
+import jdk.internal.module.Hasher.DependencyHashes;
+import jdk.internal.module.ModuleInfo;
 
 
 /**

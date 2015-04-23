@@ -23,7 +23,7 @@
  * questions.
  */
 
-package jdk.jigsaw.module.runtime;
+package jdk.internal.module;
 
 import java.io.File;
 import java.lang.module.Configuration;

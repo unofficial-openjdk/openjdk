@@ -23,7 +23,7 @@
  * questions.
  */
 
-package jdk.jigsaw.module.runtime;
+package jdk.internal.module;
 
 import java.io.IOException;
 import java.lang.module.ExtendedModuleDescriptor;

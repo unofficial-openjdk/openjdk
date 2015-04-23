@@ -31,7 +31,7 @@ import java.util.Collections;
 import java.util.Objects;
 import java.util.Set;
 
-import jdk.jigsaw.module.internal.Hasher.HashSupplier;
+import jdk.internal.module.Hasher.HashSupplier;
 
 /**
  * Represents a module artifact. A module artifact contains the contents of a

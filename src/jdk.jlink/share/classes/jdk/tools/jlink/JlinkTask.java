@@ -25,11 +25,6 @@
 
 package jdk.tools.jlink;
 
-import jdk.tools.jlink.internal.ModularJarArchive;
-import jdk.tools.jlink.internal.JmodArchive;
-import jdk.tools.jlink.internal.ImageFileCreator;
-import jdk.tools.jlink.internal.ImagePluginConfiguration;
-import jdk.tools.jlink.internal.ImagePluginStack;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -38,6 +33,11 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.UncheckedIOException;
+import java.lang.module.Configuration;
+import java.lang.module.Layer;
+import java.lang.module.ModuleArtifact;
+import java.lang.module.ModuleArtifactFinder;
+import java.lang.module.ModuleDescriptor;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
@@ -59,16 +59,16 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import jdk.internal.jimage.Archive;
-import java.lang.module.Configuration;
-import java.lang.module.Layer;
-import java.lang.module.ModuleArtifact;
-import java.lang.module.ModuleArtifactFinder;
-import java.lang.module.ModuleDescriptor;
-import jdk.jigsaw.module.internal.ModuleInfo;
+import jdk.internal.module.ModuleInfo;
 import jdk.tools.jlink.TaskHelper.BadArgs;
 import jdk.tools.jlink.TaskHelper.HiddenOption;
 import jdk.tools.jlink.TaskHelper.Option;
 import jdk.tools.jlink.TaskHelper.OptionsHelper;
+import jdk.tools.jlink.internal.ModularJarArchive;
+import jdk.tools.jlink.internal.JmodArchive;
+import jdk.tools.jlink.internal.ImageFileCreator;
+import jdk.tools.jlink.internal.ImagePluginConfiguration;
+import jdk.tools.jlink.internal.ImagePluginStack;
 
 
 /**

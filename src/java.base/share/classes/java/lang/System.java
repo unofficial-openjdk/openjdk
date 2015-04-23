@@ -44,7 +44,7 @@ import sun.reflect.Reflection;
 import sun.security.util.SecurityConstants;
 import sun.reflect.annotation.AnnotationType;
 
-import jdk.jigsaw.module.runtime.ModuleBootstrap;
+import jdk.internal.module.ModuleBootstrap;
 
 /**
  * The <code>System</code> class contains several useful class fields

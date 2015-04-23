@@ -38,7 +38,7 @@ import java.util.stream.Stream;
 
 import java.lang.module.ModuleDescriptor.Requires;
 
-import jdk.jigsaw.module.internal.Hasher.DependencyHashes;
+import jdk.internal.module.Hasher.DependencyHashes;
 
 /**
  * The resolver used by {@link Configuration#resolve} and {@link Configuration#bind}.

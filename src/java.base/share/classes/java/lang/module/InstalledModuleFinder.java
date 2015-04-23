@@ -38,7 +38,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-import jdk.jigsaw.module.internal.ModuleInfo;
+import jdk.internal.module.ModuleInfo;
 import jdk.internal.jimage.ImageLocation;
 import jdk.internal.jimage.ImageModuleData;
 import jdk.internal.jimage.ImageReader;

@@ -49,8 +49,8 @@ import java.util.zip.ZipFile;
 import jdk.internal.jimage.ImageLocation;
 import jdk.internal.jimage.ImageReader;
 import jdk.internal.jimage.ImageReaderFactory;
-import jdk.jigsaw.module.internal.Hasher;
-import jdk.jigsaw.module.internal.ModuleInfo;
+import jdk.internal.module.Hasher;
+import jdk.internal.module.ModuleInfo;
 import sun.misc.JModCache;
 
 /**

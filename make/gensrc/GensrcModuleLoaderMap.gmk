@@ -103,11 +103,11 @@ EXT_MODULES_LIST := $(call SubstComma, $(UPGRADEABLE_MODULES) $(EXT_MODULES))
 
 ############################################################################
 
-$(SUPPORT_OUTPUTDIR)/gensrc/java.base/jdk/jigsaw/module/runtime/ModuleLoaderMap.java: $(BUILD_TOOLS_JDK) \
-    $(JDK_TOPDIR)/src/java.base/share/classes/jdk/jigsaw/module/runtime/ModuleLoaderMap.java
+$(SUPPORT_OUTPUTDIR)/gensrc/java.base/jdk/internal/module/ModuleLoaderMap.java: $(BUILD_TOOLS_JDK) \
+    $(JDK_TOPDIR)/src/java.base/share/classes/jdk/internal/module/ModuleLoaderMap.java
 	$(MKDIR) -p $(@D)
 	$(RM) $@ $@.tmp
 	$(TOOL_GENCLASSLOADERMAP) -boot $(BOOT_MODULES_LIST) -ext $(EXT_MODULES_LIST) -o $@.tmp $(filter %.java, $^)
 	$(MV) $@.tmp $@
 
-GENSRC_JAVA_BASE += $(SUPPORT_OUTPUTDIR)/gensrc/java.base/jdk/jigsaw/module/runtime/ModuleLoaderMap.java
+GENSRC_JAVA_BASE += $(SUPPORT_OUTPUTDIR)/gensrc/java.base/jdk/internal/module/ModuleLoaderMap.java

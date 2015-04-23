@@ -45,9 +45,9 @@ import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-import jdk.jigsaw.module.internal.Hasher;
-import jdk.jigsaw.module.internal.Hasher.HashSupplier;
-import jdk.jigsaw.module.internal.ModuleInfo;
+import jdk.internal.module.Hasher;
+import jdk.internal.module.Hasher.HashSupplier;
+import jdk.internal.module.ModuleInfo;
 import sun.misc.JModCache;
 
 /**

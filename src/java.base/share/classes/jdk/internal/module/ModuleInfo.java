@@ -23,12 +23,16 @@
  * questions.
  */
 
-package jdk.jigsaw.module.internal;
+package jdk.internal.module;
 
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.module.ModuleDescriptor.Requires;
+import java.lang.module.ModuleDescriptor.Requires.Modifier;
+import java.lang.module.ModuleDescriptor.Exports;
+import java.lang.module.Version;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -42,12 +46,7 @@ import jdk.internal.org.objectweb.asm.ClassReader;
 import jdk.internal.org.objectweb.asm.ClassVisitor;
 import jdk.internal.org.objectweb.asm.ClassWriter;
 import jdk.internal.org.objectweb.asm.Opcodes;
-
-import java.lang.module.ModuleDescriptor.Requires;
-import java.lang.module.ModuleDescriptor.Requires.Modifier;
-import java.lang.module.ModuleDescriptor.Exports;
-import java.lang.module.Version;
-import jdk.jigsaw.module.internal.Hasher.DependencyHashes;
+import jdk.internal.module.Hasher.DependencyHashes;
 
 /**
  * Represents module information as read from a {@code module-info} class file.

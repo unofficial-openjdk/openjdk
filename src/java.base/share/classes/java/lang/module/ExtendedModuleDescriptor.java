@@ -30,7 +30,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-import jdk.jigsaw.module.internal.Hasher.DependencyHashes;
+import jdk.internal.module.Hasher.DependencyHashes;
 
 
 /**

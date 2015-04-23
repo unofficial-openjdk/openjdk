@@ -93,7 +93,7 @@ module java.base {
         jdk.scripting.nashorn;
     exports jdk.internal.org.objectweb.asm.util to
         jdk.scripting.nashorn;
-    exports jdk.jigsaw.module.internal to
+    exports jdk.internal.module to
         jdk.jlink;
     exports jdk.internal.org.objectweb.asm to
         jdk.jlink;
