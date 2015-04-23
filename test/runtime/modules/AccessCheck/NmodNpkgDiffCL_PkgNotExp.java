@@ -47,9 +47,9 @@ import java.lang.module.ExtendedModuleDescriptor;
 import java.lang.module.Layer;
 import java.lang.module.ModuleArtifact;
 import java.lang.module.ModuleArtifactFinder;
-import java.lang.module.ModuleDependence;
-import java.lang.module.ModuleDependence.Modifier;
-import java.lang.module.ModuleExport;
+import java.lang.module.ModuleDescriptor.Requires;
+import java.lang.module.ModuleDescriptor.Requires.Modifier;
+import java.lang.module.ModuleDescriptor.Exports;
 import java.lang.module.ModuleReader;
 //
 // ClassLoader1 --> defines m1 --> packages p1, m1_pinternal
@@ -139,11 +139,11 @@ public class NmodNpkgDiffCL_PkgNotExp {
         }
     }
 
-    static ModuleDependence md(String dn, Modifier... mods) {
+    static Requires md(String dn, Modifier... mods) {
         Set<Modifier> set = new HashSet<>();
         for (Modifier mod: mods)
             set.add(mod);
-        return new ModuleDependence(set, dn);
+        return new Requires(set, dn);
     }
 
     public static void main(String args[]) throws Throwable {

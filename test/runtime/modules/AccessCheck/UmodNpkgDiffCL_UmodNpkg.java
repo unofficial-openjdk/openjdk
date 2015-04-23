@@ -51,9 +51,9 @@ import java.lang.module.ExtendedModuleDescriptor;
 import java.lang.module.Layer;
 import java.lang.module.ModuleArtifact;
 import java.lang.module.ModuleArtifactFinder;
-import java.lang.module.ModuleDependence;
-import java.lang.module.ModuleDependence.Modifier;
-import java.lang.module.ModuleExport;
+import java.lang.module.ModuleDescriptor.Requires;
+import java.lang.module.ModuleDescriptor.Requires.Modifier;
+import java.lang.module.ModuleDescriptor.Exports;
 
 
 // class p1.c1 defined in the unnamed module tries to access p2.c2 defined in
