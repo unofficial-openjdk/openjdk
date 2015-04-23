@@ -1289,7 +1289,7 @@ public final class URL implements java.io.Serializable {
         URLStreamHandlerFactory fac;
         boolean checkedWithFactory = false;
 
-        if (isOverrideable(protocol)) {
+        if (isOverrideable(protocol) && sun.misc.VM.isBooted()) {
             // Use the factory (if any). Volatile read makes
             // URLStreamHandlerFactory appear fully initialized to current thread.
             fac = factory;
