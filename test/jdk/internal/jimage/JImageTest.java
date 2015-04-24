@@ -39,7 +39,6 @@ import tests.JImageValidator;
  * jimage testing.
  * @test
  * @summary Test jimage tool
- * @author Jean-Francois Denise
  * @library /lib/testlibrary/jlink
  * @modules java.base/jdk.internal.jimage
  *          jdk.compiler/com.sun.tools.classfile
