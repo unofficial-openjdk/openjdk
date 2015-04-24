@@ -95,7 +95,7 @@ public class Modules {
 
     /**
      * Returns {@code true} if module {@code m1} exports package {@code pkg}
-     * to module {@code m1}. If {@code m2} is {@code null} then returns
+     * to module {@code m2}. If {@code m2} is {@code null} then returns
      * {@code true} if pkg is exported to all modules that read m1.
      */
     public static boolean isExported(Module m1, String pkg, Module m2) {

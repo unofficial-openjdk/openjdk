@@ -255,7 +255,7 @@ public class Reflection {
                 return false;
         }
 
-        // check that m2 exports the package to m1
+        // check that memberModule exports the package to currentModule
         return Modules.isExported(memberModule, packageName(memberClass), currentModule);
     }
 
