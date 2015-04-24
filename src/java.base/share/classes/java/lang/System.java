@@ -38,13 +38,13 @@ import java.nio.channels.Channel;
 import java.nio.channels.spi.SelectorProvider;
 
 import sun.nio.ch.Interruptible;
-import sun.misc.ServicesCatalog;
 import sun.reflect.CallerSensitive;
 import sun.reflect.Reflection;
 import sun.security.util.SecurityConstants;
 import sun.reflect.annotation.AnnotationType;
 
 import jdk.internal.module.ModuleBootstrap;
+import jdk.internal.module.ServicesCatalog;
 
 /**
  * The <code>System</code> class contains several useful class fields

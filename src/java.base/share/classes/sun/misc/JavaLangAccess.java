@@ -33,6 +33,7 @@ import java.lang.reflect.Executable;
 import java.security.AccessControlContext;
 import java.util.Map;
 
+import jdk.internal.module.ServicesCatalog;
 import sun.reflect.ConstantPool;
 import sun.reflect.annotation.AnnotationType;
 import sun.nio.ch.Interruptible;

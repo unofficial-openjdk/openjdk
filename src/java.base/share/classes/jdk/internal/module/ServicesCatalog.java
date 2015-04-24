@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,11 +23,10 @@
  * questions.
  */
 
-package sun.misc;
-
-import java.lang.module.ModuleDescriptor;
+package jdk.internal.module;
 
 import java.lang.reflect.Module;
+import java.lang.module.ModuleDescriptor;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -39,7 +38,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * A services catalog. Each {@code ClassLoader} has an optional {@code
- * ServicesCatalog} for modules that provide services.
+ * ServicesCatalog} for modules that provide services. This is to support
+ * ClassLoader centric ServiceLoader.load methods.
  */
 public class ServicesCatalog {
 

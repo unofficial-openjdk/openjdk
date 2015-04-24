@@ -38,10 +38,10 @@ import java.security.AccessController;
 import java.security.AccessControlContext;
 import java.security.PrivilegedAction;
 
+import jdk.internal.module.ServicesCatalog;
+import jdk.internal.module.ServicesCatalog.ServiceProvider;
 import sun.misc.BootLoader;
 import sun.misc.JavaLangAccess;
-import sun.misc.ServicesCatalog;
-import sun.misc.ServicesCatalog.ServiceProvider;
 import sun.misc.SharedSecrets;
 import sun.misc.VM;
 import sun.reflect.CallerSensitive;

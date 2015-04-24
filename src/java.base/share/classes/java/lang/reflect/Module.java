@@ -27,6 +27,13 @@ package java.lang.reflect;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.module.Configuration;
+import java.lang.module.Layer;
+import java.lang.module.Layer.ClassLoaderFinder;
+import java.lang.module.ModuleArtifact;
+import java.lang.module.ModuleDescriptor;
+import java.lang.module.ModuleDescriptor.Exports;
+import java.lang.module.Version;
 import java.net.URI;
 import java.util.Collections;
 import java.util.HashMap;
@@ -39,16 +46,9 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import java.lang.module.Configuration;
-import java.lang.module.Layer;
-import java.lang.module.Layer.ClassLoaderFinder;
-import java.lang.module.ModuleArtifact;
-import java.lang.module.ModuleDescriptor;
-import java.lang.module.ModuleDescriptor.Exports;
-import java.lang.module.Version;
+import jdk.internal.module.ServicesCatalog;
 import sun.misc.BootLoader;
 import sun.misc.JavaLangReflectAccess;
-import sun.misc.ServicesCatalog;
 import sun.misc.SharedSecrets;
 import sun.misc.Unsafe;
 

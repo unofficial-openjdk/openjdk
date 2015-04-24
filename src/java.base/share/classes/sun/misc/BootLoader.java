@@ -32,6 +32,8 @@ import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.stream.Stream;
 
+import jdk.internal.module.ServicesCatalog;
+
 /**
  * Find resources and packages in modules defined to the boot class loader or
  * resources and packages on the "boot class path" specified via -Xbootclasspath/a.
