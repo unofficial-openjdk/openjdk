@@ -504,25 +504,25 @@ class JmodTask {
             // copy the module-info.class into the jmod with the additional
             // attributes for the version, main class and other meta data
             try (InputStream in = miSupplier.get()) {
-                ModuleInfo.Appender appender = ModuleInfo.newAppender(in);
+                ModuleInfo.Extender extender = ModuleInfo.newExtender(in);
 
                 // --main-class
                 if (mainClass != null)
-                    appender.mainClass(mainClass);
+                    extender.mainClass(mainClass);
 
                 // --module-version
                 if (moduleVersion != null)
-                    appender.version(moduleVersion);
+                    extender.version(moduleVersion);
 
                 // --hash-dependences
                 if (dependencesToHash != null)
-                    appender.hashes(hashDependences(name, dependences));
+                    extender.hashes(hashDependences(name, dependences));
 
                 // write the (possibly extended or modified) module-info.class
                 String e = Section.CLASSES.jmodDir() + "/" + MODULE_INFO;
                 ZipEntry ze = new ZipEntry(e);
                 zos.putNextEntry(ze);
-                appender.write(zos);
+                extender.write(zos);
                 zos.closeEntry();
             }
         }

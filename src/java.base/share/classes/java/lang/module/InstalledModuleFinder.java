@@ -25,11 +25,10 @@
 
 package java.lang.module;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.net.URI;
+import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -63,8 +62,8 @@ class InstalledModuleFinder implements ModuleArtifactFinder {
 
     private ModuleArtifact toModuleArtifact(String name) {
         long t0 = System.nanoTime();
-        try (InputStream in = new ByteArrayInputStream(bootImage.readModuleInfo(name))) {
-            ModuleInfo mi = ModuleInfo.readIgnoringHashes(in);
+        try {
+            ModuleInfo mi = bootImage.readModuleInfo(name);
             URI location = URI.create("jrt:/" + name);
             Set<String> packages = bootImage.packagesForModule(name);
             ModuleArtifact artifact =
@@ -136,10 +135,15 @@ class InstalledModuleFinder implements ModuleArtifactFinder {
         /**
          * Return the bytes of the module-info.class of the given module
          */
-        byte[] readModuleInfo(String name) throws IOException {
+        ModuleInfo readModuleInfo(String name) throws IOException {
             String rn = "/" + name + "/" + MODULE_INFO;
             ImageLocation loc = imageReader.findLocation(rn);
-            return imageReader.getResource(loc);
+            ByteBuffer bb = imageReader.getResourceBuffer(loc);
+            try {
+                return ModuleInfo.readIgnoringHashes(bb);
+            } finally {
+                ImageReader.releaseByteBuffer(bb);
+            }
         }
     }
 

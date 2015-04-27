@@ -25,7 +25,9 @@
 
 package jdk.internal.module;
 
+import java.io.DataInput;
 import java.io.DataInputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -33,6 +35,8 @@ import java.lang.module.ModuleDescriptor.Requires;
 import java.lang.module.ModuleDescriptor.Requires.Modifier;
 import java.lang.module.ModuleDescriptor.Exports;
 import java.lang.module.Version;
+import java.nio.BufferUnderflowException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -173,21 +177,31 @@ public final class ModuleInfo {
     }
 
     /**
-     * Reads a {@code module-info.class} from the given input stream
+     * Reads a {@code module-info.class} from the given byte buffer.
+     *
+     * @throws ClassFormatError if the class file is malformed
+     * @throws IOException if an I/O errors occurs
+     */
+    public static ModuleInfo read(ByteBuffer bb) throws IOException {
+        return new ModuleInfo(new DataInputWrapper(bb), true);
+    }
+
+    /**
+     * Reads a {@code module-info.class} from the given byte buffer
      * but ignore the {@code Hashes} attribute.
      *
      * @throws ClassFormatError if the class file is malformed
      * @throws IOException if an I/O errors occurs
      */
-    public static ModuleInfo readIgnoringHashes(InputStream in) throws IOException {
-        return new ModuleInfo(new DataInputStream(in), false);
+    public static ModuleInfo readIgnoringHashes(ByteBuffer bb) throws IOException {
+        return new ModuleInfo(new DataInputWrapper(bb), false);
     }
 
     /**
      * An object that may be used to add additional attributes to a module-info
      * class file.
      */
-    public static class Appender {
+    public static class Extender {
 
         // the input stream to read the original module-info.class
         private final InputStream in;
@@ -201,14 +215,14 @@ public final class ModuleInfo {
         // the hashes for the Hashes attribute
         private DependencyHashes hashes;
 
-        Appender(InputStream in) {
+        Extender(InputStream in) {
             this.in = in;
         }
 
         /**
          * Sets the value of the Version attribute.
          */
-        public Appender version(Version version) {
+        public Extender version(Version version) {
             this.version = version;
             return this;
         }
@@ -216,7 +230,7 @@ public final class ModuleInfo {
         /**
          * Sets the value of the MainClass attribute.
          */
-        public Appender mainClass(String mainClass) {
+        public Extender mainClass(String mainClass) {
             this.mainClass = mainClass;
             return this;
         }
@@ -226,14 +240,14 @@ public final class ModuleInfo {
          * the hashes encapsulated in the given {@code DependencyHashes}
          * object.
          */
-        public Appender hashes(DependencyHashes hashes) {
+        public Extender hashes(DependencyHashes hashes) {
             this.hashes = hashes;
             return this;
         }
 
         /**
          * Outputs the modified module-info.class to the given output stream.
-         * Once this method has been called then the Appender object should
+         * Once this method has been called then the Extender object should
          * be discarded.
          */
         public void write(OutputStream out) throws IOException {
@@ -270,19 +284,19 @@ public final class ModuleInfo {
     }
 
     /**
-     * Returns an {@code Appender} that may be used to add additional
+     * Returns an {@code Extender} that may be used to add additional
      * attributes to the module-info.class read from the given input
      * stream.
      */
-    public static Appender newAppender(InputStream in) {
-        return new Appender(in);
+    public static Extender newExtender(InputStream in) {
+        return new Extender(in);
     }
 
     /**
      * Reads the input as a module-info class file.
      */
     @SuppressWarnings("fallthrough")
-    private ModuleInfo(DataInputStream in, boolean parseHashes) throws IOException {
+    private ModuleInfo(DataInput in, boolean parseHashes) throws IOException {
         int magic = in.readInt();
         if (magic != 0xCAFEBABE)
             classFormatError("Bad magic number");
@@ -362,7 +376,7 @@ public final class ModuleInfo {
                 default:
                     // Should check that it's one of: Synthetic, SourceFile,
                     // SourceDebugExtension, Deprecated.
-                    in.skip(length);
+                    in.skipBytes(length);
             }
         }
         if (!foundModule)
@@ -372,7 +386,7 @@ public final class ModuleInfo {
     /**
      * Reads the Module attribute.
      */
-    private void readModuleAttribute(DataInputStream in, ConstantPool cpool)
+    private void readModuleAttribute(DataInput in, ConstantPool cpool)
         throws IOException
     {
         int requires_count = in.readUnsignedShort();
@@ -444,7 +458,7 @@ public final class ModuleInfo {
      *
      * @throws IllegalAccessException if the version attribute cannot be parsed
      */
-    private void readVersionAttribute(DataInputStream in, ConstantPool cpool)
+    private void readVersionAttribute(DataInput in, ConstantPool cpool)
         throws IOException
     {
         int index = in.readUnsignedShort();
@@ -454,7 +468,7 @@ public final class ModuleInfo {
     /**
      * Reads the MainClass attribute
      */
-    private void readMainClassAttribute(DataInputStream in, ConstantPool cpool)
+    private void readMainClassAttribute(DataInput in, ConstantPool cpool)
         throws IOException
     {
         int index = in.readUnsignedShort();
@@ -467,7 +481,7 @@ public final class ModuleInfo {
      * @apiNote For now the hash is stored in base64 as a UTF-8 string, this
      * should be changed to be an array of u1.
      */
-    private void readHashesAttribute(DataInputStream in, ConstantPool cpool)
+    private void readHashesAttribute(DataInput in, ConstantPool cpool)
         throws IOException
     {
         int index = in.readUnsignedShort();
@@ -547,7 +561,7 @@ public final class ModuleInfo {
 
         final Entry[] pool;
 
-        ConstantPool(DataInputStream in) throws IOException {
+        ConstantPool(DataInput in) throws IOException {
             int count = in.readUnsignedShort();
             pool = new Entry[count];
 
@@ -631,6 +645,141 @@ public final class ModuleInfo {
         void checkIndex(int index) {
             if (index >= pool.length)
                 classFormatError("Index into constant pool out of range");
+        }
+    }
+
+    /**
+     * A DataInput implementation that reads from a ByteBuffer.
+     */
+    private static class DataInputWrapper implements DataInput {
+        private final ByteBuffer bb;
+
+        DataInputWrapper(ByteBuffer bb) {
+            this.bb = bb;
+        }
+
+        @Override
+        public void readFully(byte b[]) throws IOException {
+            readFully(b, 0, b.length);
+        }
+
+        @Override
+        public void readFully(byte b[], int off, int len) throws IOException {
+            try {
+                bb.get(b, off, len);
+            } catch (BufferUnderflowException e) {
+                throw new EOFException();
+            }
+        }
+
+        @Override
+        public int skipBytes(int n) {
+            int skip = Math.min(n, bb.remaining());
+            bb.position(bb.position() + skip);
+            return skip;
+        }
+
+        @Override
+        public boolean readBoolean() throws IOException {
+            try {
+                int ch = bb.get();
+                return (ch != 0);
+            } catch (BufferUnderflowException e) {
+                throw new EOFException();
+            }
+        }
+
+        @Override
+        public byte readByte() throws IOException {
+            try {
+                return bb.get();
+            } catch (BufferUnderflowException e) {
+                throw new EOFException();
+            }
+        }
+
+        @Override
+        public int readUnsignedByte() throws IOException {
+            try {
+                return ((int) bb.get()) & 0xff;
+            } catch (BufferUnderflowException e) {
+                throw new EOFException();
+            }
+        }
+
+        @Override
+        public short readShort() throws IOException {
+            try {
+                return bb.getShort();
+            } catch (BufferUnderflowException e) {
+                throw new EOFException();
+            }
+        }
+
+        @Override
+        public int readUnsignedShort() throws IOException {
+            try {
+                return ((int) bb.getShort()) & 0xffff;
+            } catch (BufferUnderflowException e) {
+                throw new EOFException();
+            }
+        }
+
+        @Override
+        public char readChar() throws IOException {
+            try {
+                return bb.getChar();
+            } catch (BufferUnderflowException e) {
+                throw new EOFException();
+            }
+        }
+
+        @Override
+        public int readInt() throws IOException {
+            try {
+                return bb.getInt();
+            } catch (BufferUnderflowException e) {
+                throw new EOFException();
+            }
+        }
+
+        @Override
+        public long readLong() throws IOException {
+            try {
+                return bb.getLong();
+            } catch (BufferUnderflowException e) {
+                throw new EOFException();
+            }
+        }
+
+        @Override
+        public float readFloat() throws IOException {
+            try {
+                return bb.getFloat();
+            } catch (BufferUnderflowException e) {
+                throw new EOFException();
+            }
+        }
+
+        @Override
+        public double readDouble() throws IOException {
+            try {
+                return bb.getDouble();
+            } catch (BufferUnderflowException e) {
+                throw new EOFException();
+            }
+        }
+
+        @Override
+        public String readLine() {
+            throw new RuntimeException("not implemented");
+        }
+
+        @Override
+        public String readUTF() throws IOException {
+            // ### Need to measure the performance and feasibility of using
+            // the UTF-8 decoder instead.
+            return DataInputStream.readUTF(this);
         }
     }
 }
