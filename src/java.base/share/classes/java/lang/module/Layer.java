@@ -32,6 +32,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
+import sun.misc.JavaLangModuleAccess;
 import sun.misc.JavaLangReflectAccess;
 import sun.misc.SharedSecrets;
 
@@ -216,17 +217,17 @@ public final class Layer {
         return EMPTY_LAYER;
     }
 
-    // TBD how this is set
-    private static Layer bootLayer;
 
     /**
      * Returns the boot layer. Returns {@code null} if the boot layer has not
      * been set.
      *
-     * @throws SecurityException if denied by the security manager
+     * <p> If there is a security manager then its {@code checkPermission}
+     * method if first called with a {@code RuntimePermission("getBootLayer")}
+     * permission to check that the caller is allowed access to the boot
+     * {@code Layer}. </p>
      *
-     * @apiNote This will probably need a permission check as the boot layer
-     * reveals interesting things to a potential attacker.
+     * @throws SecurityException if denied by the security manager
      */
     public static Layer bootLayer() {
         SecurityManager sm = System.getSecurityManager();
@@ -235,24 +236,16 @@ public final class Layer {
         return bootLayer;
     }
 
-    /**
-     * Sets the boot layer. The boot layer typically includes the modules installed
-     * in the runtime image and any modules on the launcher module path.
-     *
-     * @throws IllegalArgumentException if the parent layer is not the empty layer
-     * @throws IllegalStateException if the boot layer is already set
-     * @throws SecurityException if denied by the security manager
-     *
-     * @apiNote Need to decide if we need this.
-     */
-    public static void setBootLayer(Layer layer) {
-        if (layer.parent() != Layer.emptyLayer())
-            throw new IllegalArgumentException("boot layer must have emptyLayer as parent");
-        SecurityManager sm = System.getSecurityManager();
-        if (sm != null)
-            sm.checkPermission(new RuntimePermission("setBootLayer"));
-        if (bootLayer != null)
-            throw new IllegalStateException("boot layer already set");
-        bootLayer = layer;
+    // the boot Layer
+    private static Layer bootLayer;
+
+    static {
+        SharedSecrets.setJavaLangModuleAccess(new JavaLangModuleAccess() {
+            @Override
+            public void setBootLayer(Layer layer) {
+                bootLayer = layer;
+            }
+        });
     }
+
 }

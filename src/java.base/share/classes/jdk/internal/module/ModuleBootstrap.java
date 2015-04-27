@@ -44,6 +44,7 @@ import java.util.stream.Collectors;
 import sun.misc.BootLoader;
 import sun.misc.ModuleClassLoader;
 import sun.misc.PerfCounter;
+import sun.misc.SharedSecrets;
 
 /**
  * Initializes/boots the module system.
@@ -203,8 +204,8 @@ public final class ModuleBootstrap {
         // time to define modules to class loaders
         PerfCounters.mapModuleCLTime.addElapsedTimeFrom(t2);
 
-        // set system module graph so that other module graphs can be composed
-        Layer.setBootLayer(bootLayer);
+        // set the boot Layer
+        SharedSecrets.getJavaLangModuleAccess().setBootLayer(bootLayer);
 
         // total time to initialize
         PerfCounters.bootstrapTime.addElapsedTimeFrom(t0);

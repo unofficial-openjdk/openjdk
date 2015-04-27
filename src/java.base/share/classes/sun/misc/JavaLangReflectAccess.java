@@ -33,7 +33,7 @@ import java.lang.module.Layer.ClassLoaderFinder;
 import java.lang.module.ModuleArtifact;
 
 /**
- * Provides access to package-private modules in java.lang.reflect.
+ * Provides access to package-private methods in java.lang.reflect.
  */
 
 public interface JavaLangReflectAccess {
