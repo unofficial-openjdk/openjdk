@@ -28,6 +28,7 @@ package sun.tools.jstat;
 import java.util.*;
 import java.net.*;
 import java.io.*;
+import java.util.stream.Collectors;
 
 /**
  * A class for listing the available options in the jstat_options file.
@@ -37,10 +38,16 @@ import java.io.*;
  */
 public class OptionLister {
     private static final boolean debug = false;
-    private List<InputStream> sources;
+    private final List<Parser> optionParsers;
+
+    private Parser newParser(InputStream in) {
+        Reader r = new BufferedReader(new InputStreamReader(in));
+        return new Parser(r);
+    }
 
     public OptionLister(List<InputStream> sources) {
-        this.sources = sources;
+        this.optionParsers = sources.stream()
+            .map(in -> newParser(in)).collect(Collectors.toList());
     }
 
     public void print(PrintStream ps) {
@@ -54,27 +61,19 @@ public class OptionLister {
 
         Set<OptionFormat> options = new TreeSet<OptionFormat>(c);
 
-        for (InputStream in : sources) {
+        for (Parser parser : optionParsers) {
             try {
-                Reader r = new BufferedReader(
-                        new InputStreamReader(in));
-                Set<OptionFormat> s = new Parser(r).parseOptions();
+                Set<OptionFormat> s = parser.parseOptions();
                 options.addAll(s);
-            } catch (IOException e) {
-                if (debug) {
-                    System.err.println(e.getMessage());
-                    e.printStackTrace();
-                }
-            } catch (ParserException e) {
-                // Exception in parsing the options file.
-                e.printStackTrace();
+            } catch (IOException | ParserException e) {
+                if (debug) e.printStackTrace();
             }
         }
 
-        for ( OptionFormat of : options) {
+        for (OptionFormat of : options) {
             if (of.getName().compareTo("timestamp") == 0) {
-              // ignore the special timestamp OptionFormat.
-              continue;
+                // ignore the special timestamp OptionFormat.
+                continue;
             }
             ps.println("-" + of.getName());
         }

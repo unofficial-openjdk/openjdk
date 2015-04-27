@@ -22,8 +22,14 @@ java/net/DatagramSocket/SetDatagramSocketImplFactory/ADatagramSocket.java  gener
  
 # svc_tools
 
+# 8077708
+sun/tools/jconsole/ResourceCheckTest.java			generic-all
+
 # 8073141
 sun/tools/jstat/jstatClassloadOutput1.sh                        generic-all
+
+# 8078656
+sun/tools/jstat/jstatTimeStamp1.sh				generic-all
 
 # 8059035
 sun/tools/jinfo/JInfoSanityTest.java                           generic-all
