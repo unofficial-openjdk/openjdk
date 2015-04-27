@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1995, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -70,10 +70,9 @@ public class Canvas extends Component implements Accessible {
     }
 
     @Override
-    @SuppressWarnings("deprecation")
     void setGraphicsConfiguration(GraphicsConfiguration gc) {
         synchronized(getTreeLock()) {
-            CanvasPeer peer = (CanvasPeer)getPeer();
+            CanvasPeer peer = (CanvasPeer) this.peer;
             if (peer != null) {
                 gc = peer.getAppropriateGraphicsConfiguration(gc);
             }
@@ -94,13 +93,12 @@ public class Canvas extends Component implements Accessible {
     /**
      * Creates the peer of the canvas.  This peer allows you to change the
      * user interface of the canvas without changing its functionality.
-     * @see     java.awt.Toolkit#createCanvas(java.awt.Canvas)
      * @see     java.awt.Component#getToolkit()
      */
     public void addNotify() {
         synchronized (getTreeLock()) {
             if (peer == null)
-                peer = getToolkit().createCanvas(this);
+                peer = getComponentFactory().createCanvas(this);
             super.addNotify();
         }
     }
