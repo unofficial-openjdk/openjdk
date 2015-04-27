@@ -122,7 +122,6 @@ class LazyClassPathEntry: public ClassPathEntry {
   const char* _path; // dir or file
   struct stat _st;
   bool _has_error;
-  bool _throw_exception;
   volatile ClassPathEntry* _resolved_entry;
   ClassPathEntry* resolve_entry(TRAPS);
  public:
@@ -130,7 +129,7 @@ class LazyClassPathEntry: public ClassPathEntry {
   const char* name()       { return _path; }
   ImageFileReader* image() { return NULL; }
   bool is_verified()       { return false; }
-  LazyClassPathEntry(const char* path, const struct stat* st, bool throw_exception);
+  LazyClassPathEntry(const char* path, const struct stat* st);
   virtual ~LazyClassPathEntry();
   u1* open_entry(const char* name, jint* filesize, bool nul_terminate, TRAPS);
 

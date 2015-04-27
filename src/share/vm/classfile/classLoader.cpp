@@ -281,12 +281,11 @@ void ClassPathZipEntry::contents_do(void f(const char* name, void* context), voi
   }
 }
 
-LazyClassPathEntry::LazyClassPathEntry(const char* path, const struct stat* st, bool throw_exception) : ClassPathEntry() {
+LazyClassPathEntry::LazyClassPathEntry(const char* path, const struct stat* st) : ClassPathEntry() {
   _path = os::strdup_check_oom(path);
   _st = *st;
   _resolved_entry = NULL;
   _has_error = false;
-  _throw_exception = throw_exception;
 }
 
 LazyClassPathEntry::~LazyClassPathEntry() {
@@ -304,8 +303,8 @@ ClassPathEntry* LazyClassPathEntry::resolve_entry(TRAPS) {
     return (ClassPathEntry*) _resolved_entry;
   }
   ClassPathEntry* new_entry = NULL;
-  new_entry = ClassLoader::create_class_path_entry(_path, &_st, false, _throw_exception, CHECK_NULL);
-  if (!_throw_exception && new_entry == NULL) {
+  new_entry = ClassLoader::create_class_path_entry(_path, &_st, false, false, CHECK_NULL);
+  if (new_entry == NULL) {
     assert(!HAS_PENDING_EXCEPTION, "must be");
     return NULL;
   }
@@ -789,7 +788,7 @@ ClassPathEntry* ClassLoader::create_class_path_entry(const char *path, const str
                                                      bool lazy, bool throw_exception, TRAPS) {
   JavaThread* thread = JavaThread::current();
   if (lazy) {
-    return new LazyClassPathEntry(path, st, throw_exception);
+    return new LazyClassPathEntry(path, st);
   }
   ClassPathEntry* new_entry = NULL;
   if ((st->st_mode & S_IFREG) == S_IFREG) {
