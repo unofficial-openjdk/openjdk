@@ -1,13 +1,13 @@
 /*
- * reserved comment block
- * DO NOT REMOVE OR ALTER!
+ * Copyright (c) 2007, 2015, Oracle and/or its affiliates. All rights reserved.
  */
 /*
- * Copyright 2001-2004 The Apache Software Foundation.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -35,6 +35,8 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.net.UnknownServiceException;
 import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 import java.util.StringTokenizer;
 import java.util.Vector;
@@ -79,7 +81,6 @@ import com.sun.org.apache.xalan.internal.xsltc.dom.DOMWSFilter;
 import com.sun.org.apache.xalan.internal.xsltc.dom.SAXImpl;
 import com.sun.org.apache.xalan.internal.xsltc.dom.XSLTCDTMManager;
 import com.sun.org.apache.xalan.internal.xsltc.runtime.AbstractTranslet;
-import com.sun.org.apache.xalan.internal.xsltc.runtime.Hashtable;
 import com.sun.org.apache.xalan.internal.xsltc.runtime.output.TransletOutputHandlerFactory;
 
 import com.sun.org.apache.xml.internal.dtm.DTMWSFilter;
@@ -204,11 +205,11 @@ public final class TransformerImpl extends Transformer
     private boolean _isSecureProcessing = false;
 
     /**
-     * A hashtable to store parameters for the identity transform. These
+     * A map to store parameters for the identity transform. These
      * are not needed during the transformation, but we must keep track of 
      * them to be fully complaint with the JAXP API.
      */
-    private Hashtable _parameters = null;
+    private Map<String, Object> _parameters = null;
 
     private XMLSecurityManager _securityManager;
     /**
@@ -801,31 +802,6 @@ public final class TransformerImpl extends Transformer
     }
 
     /**
-     * The translet stores all CDATA sections set in the <xsl:output> element
-     * in a Hashtable. This method will re-construct the whitespace separated
-     * list of elements given in the <xsl:output> element.
-     */
-    private String makeCDATAString(Hashtable cdata) {
-	// Return a 'null' string if no CDATA section elements were specified
-	if (cdata == null) return null;
-
-	StringBuffer result = new StringBuffer();
-
-	// Get an enumeration of all the elements in the hashtable
-	Enumeration elements = cdata.keys();
-	if (elements.hasMoreElements()) {
-	    result.append((String)elements.nextElement());
-	    while (elements.hasMoreElements()) {
-		String element = (String)elements.nextElement();
-		result.append(' ');
-		result.append(element);
-	    }
-	}
-	
-	return(result.toString());
-    }
-
-    /**
      * Implements JAXP's Transformer.getOutputProperties().
      * Returns a copy of the output properties for the transformation. This is
      * a set of layered properties. The first layer contains properties set by
@@ -1182,7 +1158,7 @@ public final class TransformerImpl extends Transformer
              
 	if (_isIdentity) {
 	    if (_parameters == null) {
-		_parameters = new Hashtable();
+                _parameters = new HashMap<String, Object>();
 	    }
 	    _parameters.put(name, value);
 	}

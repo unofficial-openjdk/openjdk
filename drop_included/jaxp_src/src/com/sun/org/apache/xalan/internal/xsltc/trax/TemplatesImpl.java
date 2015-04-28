@@ -1,15 +1,15 @@
 /*
- * reserved comment block
- * DO NOT REMOVE OR ALTER!
+ * Copyright (c) 2007, 2015, Oracle and/or its affiliates. All rights reserved.
  */
 /*
- * Copyright 2001-2004 The Apache Software Foundation.
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -26,10 +26,14 @@ package com.sun.org.apache.xalan.internal.xsltc.trax;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.ObjectStreamField;
 import java.io.Serializable;
-import java.util.Properties;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+import java.util.HashMap;
+import java.util.Hashtable;
+import java.util.Map;
+import java.util.Properties;
 
 import javax.xml.XMLConstants;
 import javax.xml.transform.Templates;
@@ -41,7 +45,6 @@ import com.sun.org.apache.xalan.internal.xsltc.DOM;
 import com.sun.org.apache.xalan.internal.xsltc.Translet;
 import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ErrorMsg;
 import com.sun.org.apache.xalan.internal.xsltc.runtime.AbstractTranslet;
-import com.sun.org.apache.xalan.internal.xsltc.runtime.Hashtable;
 import com.sun.org.apache.xalan.internal.utils.SecuritySupport;
 
 /**
@@ -88,7 +91,7 @@ public final class TemplatesImpl implements Templates, Serializable {
     /**
      * Contains the list of auxiliary class definitions.
      */
-    private Hashtable _auxClasses = null;
+    private Map<String, Class<?>> _auxClasses = null;
 
     /**
      * Output properties of this translet.
@@ -134,6 +137,25 @@ public final class TemplatesImpl implements Templates, Serializable {
         }
     }
 
+    /**
+     * @serialField _name String The Name of the main class
+     * @serialField _bytecodes byte[][] Class definition
+     * @serialField _class Class[] The translet class definition(s).
+     * @serialField _transletIndex int The index of the main translet class
+     * @serialField _auxClasses Hashtable The list of auxiliary class definitions.
+     * @serialField _outputProperties Properties Output properties of this translet.
+     * @serialField _indentNumber int Number of spaces to add for output indentation.
+     */
+    private static final ObjectStreamField[] serialPersistentFields =
+        new ObjectStreamField[] {
+            new ObjectStreamField("_name", String.class),
+            new ObjectStreamField("_bytecodes", byte[][].class),
+            new ObjectStreamField("_class", Class[].class),
+            new ObjectStreamField("_transletIndex", int.class),
+            new ObjectStreamField("_auxClasses", Hashtable.class),
+            new ObjectStreamField("_outputProperties", Properties.class),
+            new ObjectStreamField("_indentNumber", int.class),
+        };
 
     /**
      * Create an XSLTC template object from the bytecodes.
@@ -193,7 +215,20 @@ public final class TemplatesImpl implements Templates, Serializable {
             }
         }
 
-        is.defaultReadObject();
+        // We have to read serialized fields first.
+        ObjectInputStream.GetField gf = is.readFields();
+        _name = (String)gf.get("_name", null);
+        _bytecodes = (byte[][])gf.get("_bytecodes", null);
+        _class = (Class[])gf.get("_class", null);
+        _transletIndex = gf.get("_transletIndex", -1);
+
+        Hashtable<String, Class<?>> aux = (Hashtable<String, Class<?>>)gf.get("_auxClasses", null);
+        _outputProperties = (Properties)gf.get("_outputProperties", null);
+        _indentNumber = gf.get("_indentNumber", 0);
+
+        //convert Hashtable back to HashMap
+        if (aux != null) _auxClasses = new HashMap<String, Class<?>>(aux);
+
         if (is.readBoolean()) {
             _uriResolver = (URIResolver) is.readObject();
         }
@@ -209,7 +244,20 @@ public final class TemplatesImpl implements Templates, Serializable {
      */
     private void writeObject(ObjectOutputStream os)
         throws IOException, ClassNotFoundException {
-        os.defaultWriteObject();
+        // Convert Maps to Hashtables
+        Hashtable<String, Class<?>> aux = (_auxClasses == null)? null : new Hashtable<String, Class<?>>(_auxClasses);
+
+        // Write serialized fields
+        ObjectOutputStream.PutField pf = os.putFields();
+        pf.put("_name", _name);
+        pf.put("_bytecodes", _bytecodes);
+        pf.put("_class", _class);
+        pf.put("_transletIndex", _transletIndex);
+        pf.put("_auxClasses", aux);
+        pf.put("_outputProperties", _outputProperties);
+        pf.put("_indentNumber", _indentNumber);
+        os.writeFields();
+
         if (_uriResolver instanceof Serializable) {
             os.writeBoolean(true);
             os.writeObject((Serializable) _uriResolver);
@@ -321,7 +369,7 @@ public final class TemplatesImpl implements Templates, Serializable {
             _class = new Class[classCount];
 
             if (classCount > 1) {
-                _auxClasses = new Hashtable();
+                _auxClasses = new HashMap<String, Class<?>>();
             }
 
             for (int i = 0; i < classCount; i++) {

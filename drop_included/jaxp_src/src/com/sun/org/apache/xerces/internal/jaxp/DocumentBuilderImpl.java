@@ -1,13 +1,13 @@
 /*
- * reserved comment block
- * DO NOT REMOVE OR ALTER!
+ * Copyright (c) 2007, 2015, Oracle and/or its affiliates. All rights reserved.
  */
 /*
- * Copyright 2000-2005 The Apache Software Foundation.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -19,13 +19,6 @@
  */
 
 package com.sun.org.apache.xerces.internal.jaxp;
-
-import java.io.IOException;
-import java.util.Enumeration;
-import java.util.Hashtable;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.validation.Schema;
 
 import com.sun.org.apache.xerces.internal.dom.DOMImplementationImpl;
 import com.sun.org.apache.xerces.internal.dom.DOMMessageFormatter;
@@ -42,6 +35,13 @@ import com.sun.org.apache.xerces.internal.xni.parser.XMLConfigurationException;
 import com.sun.org.apache.xerces.internal.xni.parser.XMLDTDFilter;
 import com.sun.org.apache.xerces.internal.xni.parser.XMLDocumentSource;
 import com.sun.org.apache.xerces.internal.xni.parser.XMLParserConfiguration;
+
+import java.io.IOException;
+import java.util.Enumeration;
+import java.util.Hashtable;
+import java.util.Map;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.validation.Schema;
 import org.w3c.dom.DOMImplementation;
 import org.w3c.dom.Document;
 import org.xml.sax.EntityResolver;
@@ -110,12 +110,14 @@ public class DocumentBuilderImpl extends DocumentBuilder
     
     private XMLSecurityManager fSecurityManager;
 
-    DocumentBuilderImpl(DocumentBuilderFactoryImpl dbf, Hashtable dbfAttrs, Hashtable features)
+    DocumentBuilderImpl(DocumentBuilderFactoryImpl dbf, Map<String, Object> dbfAttrs,
+            Map<String, Boolean> features)
         throws SAXNotRecognizedException, SAXNotSupportedException {
         this(dbf, dbfAttrs, features, false);
     }
 
-    DocumentBuilderImpl(DocumentBuilderFactoryImpl dbf, Hashtable dbfAttrs, Hashtable features, boolean secureProcessing)
+    DocumentBuilderImpl(DocumentBuilderFactoryImpl dbf, Map<String, Object> dbfAttrs,
+            Map<String, Boolean> features, boolean secureProcessing)
         throws SAXNotRecognizedException, SAXNotSupportedException
     {
         domParser = new DOMParser();
@@ -195,13 +197,11 @@ public class DocumentBuilderImpl extends DocumentBuilder
         fInitEntityResolver = domParser.getEntityResolver();
     }
     
-    private void setFeatures(Hashtable features)
+    private void setFeatures( Map<String, Boolean> features)
         throws SAXNotSupportedException, SAXNotRecognizedException {
         if (features != null) {
-            for (Enumeration e = features.keys(); e.hasMoreElements();) {
-                String feature = (String)e.nextElement();
-                boolean value = ((Boolean)features.get(feature)).booleanValue();
-                domParser.setFeature(feature, value);
+            for (Map.Entry<String, Boolean> entry : features.entrySet()) {
+                domParser.setFeature(entry.getKey(), entry.getValue());
         }
     }
     }
@@ -213,7 +213,7 @@ public class DocumentBuilderImpl extends DocumentBuilder
      * attribute names and JAXP specific attribute names,
      * eg. DocumentBuilderFactory.setValidating()
      */
-    private void setDocumentBuilderFactoryAttributes(Hashtable dbfAttrs)
+    private void setDocumentBuilderFactoryAttributes( Map<String, Object> dbfAttrs)
         throws SAXNotSupportedException, SAXNotRecognizedException
     {
         if (dbfAttrs == null) {
@@ -221,12 +221,12 @@ public class DocumentBuilderImpl extends DocumentBuilder
             return;
         }
 
-        for (Enumeration e = dbfAttrs.keys(); e.hasMoreElements();) {
-            String name = (String)e.nextElement();
-            Object val = dbfAttrs.get(name);
+        for (Map.Entry<String, Object> entry : dbfAttrs.entrySet()) {
+            String name = entry.getKey();
+            Object val = entry.getValue();
             if (val instanceof Boolean) {
                 // Assume feature
-                domParser.setFeature(name, ((Boolean)val).booleanValue());
+                domParser.setFeature(name, (Boolean)val);
             } else {
                 // Assume property
                 if (JAXP_SCHEMA_LANGUAGE.equals(name)) {

@@ -1,13 +1,13 @@
 /*
- * reserved comment block
- * DO NOT REMOVE OR ALTER!
+ * Copyright (c) 2005, 2015, Oracle and/or its affiliates. All rights reserved.
  */
 /*
- * Copyright 2001-2004 The Apache Software Foundation.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -23,17 +23,17 @@
 package com.sun.org.apache.xalan.internal.xslt;
 
 import com.sun.org.apache.xalan.internal.utils.SecuritySupport;
-
 import java.io.File;
 import java.io.FileWriter;
 import java.io.PrintWriter;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.Enumeration;
-import java.util.Hashtable;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.StringTokenizer;
-import java.util.Vector;
-
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -169,7 +169,7 @@ public class EnvironmentCheck
       outWriter = pw;
 
     // Setup a hash to store various environment information in
-    Hashtable hash = getEnvironmentHash();
+    Map<String, Object> hash = getEnvironmentHash();
 
     // Check for ERROR keys in the hashtable, and print report
     boolean environmentHasErrors = writeEnvironmentReport(hash);
@@ -212,13 +212,13 @@ public class EnvironmentCheck
    * point out the most common classpath and system property
    * problems that we've seen.</p>
    *
-   * @return Hashtable full of useful environment info about Xalan
-   * and related system properties, etc.
+   * @return Map full of useful environment info about Xalan and related
+   * system properties, etc.
    */
-  public Hashtable getEnvironmentHash()
+  public Map<String, Object> getEnvironmentHash()
   {
     // Setup a hash to store various environment information in
-    Hashtable hash = new Hashtable();
+    Map<String, Object> hash = new HashMap<String, Object>();
 
     // Call various worker methods to fill in the hash
     //  These are explicitly separate for maintenance and so
@@ -238,22 +238,22 @@ public class EnvironmentCheck
    * Dump a basic Xalan environment report to outWriter.
    *
    * <p>This dumps a simple header and then each of the entries in
-   * the Hashtable to our PrintWriter; it does special processing
+   * the Map to our PrintWriter; it does special processing
    * for entries that are .jars found in the classpath.</p>
    *
-   * @param h Hashtable of items to report on; presumably
+   * @param h Map of items to report on; presumably
    * filled in by our various check*() methods
    * @return true if your environment appears to have no major
    * problems; false if potential environment problems found
-   * @see #appendEnvironmentReport(Node, Document, Hashtable)
+   * @see #appendEnvironmentReport(Node, Document, Map)
    * for an equivalent that appends to a Node instead
    */
-  protected boolean writeEnvironmentReport(Hashtable h)
+  protected boolean writeEnvironmentReport(Map<String, Object> h)
   {
 
     if (null == h)
     {
-      logMsg("# ERROR: writeEnvironmentReport called with null Hashtable");
+      logMsg("# ERROR: writeEnvironmentReport called with null Map");
       return false;
     }
 
@@ -263,39 +263,28 @@ public class EnvironmentCheck
       "#---- BEGIN writeEnvironmentReport($Revision: 1.7 $): Useful stuff found: ----");
 
     // Fake the Properties-like output
-    for (Enumeration keys = h.keys();
-         keys.hasMoreElements();
-        /* no increment portion */
-        )
-    {
-      Object key = keys.nextElement();
-      String keyStr = (String) key;
-      try
-      {
-        // Special processing for classes found..
-        if (keyStr.startsWith(FOUNDCLASSES))
-        {
-          Vector v = (Vector) h.get(keyStr);
-          errors |= logFoundJars(v, keyStr);
+    for (Map.Entry<String, Object> entry : h.entrySet()) {
+        String keyStr = entry.getKey();
+        try {
+            // Special processing for classes found..
+            if (keyStr.startsWith(FOUNDCLASSES)) {
+                List<Map> v = (ArrayList<Map>)entry.getValue();
+                errors |= logFoundJars(v, keyStr);
+            }
+            // ..normal processing for all other entries
+            else {
+                // Note: we could just check for the ERROR key by itself,
+                //    since we now set that, but since we have to go
+                //    through the whole hash anyway, do it this way,
+                //    which is safer for maintenance
+                if (keyStr.startsWith(ERROR)) {
+                    errors = true;
+                }
+                logMsg(keyStr + "=" + h.get(keyStr));
+            }
+        } catch (Exception e) {
+            logMsg("Reading-" + keyStr + "= threw: " + e.toString());
         }
-        // ..normal processing for all other entries
-        else
-        {
-          // Note: we could just check for the ERROR key by itself,
-          //    since we now set that, but since we have to go
-          //    through the whole hash anyway, do it this way,
-          //    which is safer for maintenance
-          if (keyStr.startsWith(ERROR))
-          {
-            errors = true;
-          }
-          logMsg(keyStr + "=" + h.get(keyStr));
-        }
-      }
-      catch (Exception e)
-      {
-        logMsg("Reading-" + key + "= threw: " + e.toString());
-      }
     }
 
     logMsg(
@@ -346,14 +335,14 @@ public class EnvironmentCheck
    * Takes the information encoded from a checkPathForJars()
    * call and dumps it out to our PrintWriter.
    *
-   * @param v Vector of Hashtables of .jar file info
+   * @param v List of Maps of .jar file info
    * @param desc description to print out in header
    *
    * @return false if OK, true if any .jars were reported
    * as having errors
    * @see #checkPathForJars(String, String[])
    */
-  protected boolean logFoundJars(Vector v, String desc)
+  protected boolean logFoundJars(List<Map> v, String desc)
   {
 
     if ((null == v) || (v.size() < 1))
@@ -363,32 +352,20 @@ public class EnvironmentCheck
 
     logMsg("#---- BEGIN Listing XML-related jars in: " + desc + " ----");
 
-    for (int i = 0; i < v.size(); i++)
-    {
-      Hashtable subhash = (Hashtable) v.elementAt(i);
+    for (Map<String, String> v1 : v) {
+        for (Map.Entry<String, String> entry : v1.entrySet()) {
+            String keyStr = entry.getKey();
+            try {
+                if (keyStr.startsWith(ERROR)) {
+                    errors = true;
+                }
+                logMsg(keyStr + "=" + entry.getValue());
 
-      for (Enumeration keys = subhash.keys();
-           keys.hasMoreElements();
-           /* no increment portion */
-          )
-      {
-        Object key = keys.nextElement();
-        String keyStr = (String) key;
-        try
-        {
-          if (keyStr.startsWith(ERROR))
-          {
-            errors = true;
-          }
-          logMsg(keyStr + "=" + subhash.get(keyStr));
-
+            } catch (Exception e) {
+                errors = true;
+                logMsg("Reading-" + keyStr + "= threw: " + e.toString());
+            }
         }
-        catch (Exception e)
-        {
-          errors = true;
-          logMsg("Reading-" + key + "= threw: " + e.toString());
-        }
-      }
     }
 
     logMsg("#----- END Listing XML-related jars in: " + desc + " -----");
@@ -406,10 +383,10 @@ public class EnvironmentCheck
    * @param container Node to append our report to
    * @param factory Document providing createElement, etc. services
    * @param h Hash presumably from {@link #getEnvironmentHash()}
-   * @see #writeEnvironmentReport(Hashtable)
+   * @see #writeEnvironmentReport(Map)
    * for an equivalent that writes to a PrintWriter instead
    */
-  public void appendEnvironmentReport(Node container, Document factory, Hashtable h)
+  public void appendEnvironmentReport(Node container, Document factory, Map<String, Object> h)
   {
     if ((null == container) || (null == factory))
     {
@@ -426,7 +403,7 @@ public class EnvironmentCheck
       {
         Element statusNode = factory.createElement("status");
         statusNode.setAttribute("result", "ERROR");
-        statusNode.appendChild(factory.createTextNode("appendEnvironmentReport called with null Hashtable!"));
+        statusNode.appendChild(factory.createTextNode("appendEnvironmentReport called with null Map!"));
         envCheckNode.appendChild(statusNode);
         return;
       }
@@ -436,47 +413,35 @@ public class EnvironmentCheck
       Element hashNode = factory.createElement("environment");
       envCheckNode.appendChild(hashNode);
 
-      for (Enumeration keys = h.keys();
-           keys.hasMoreElements();
-          /* no increment portion */
-          )
-      {
-        Object key = keys.nextElement();
-        String keyStr = (String) key;
-        try
-        {
-          // Special processing for classes found..
-          if (keyStr.startsWith(FOUNDCLASSES))
-          {
-            Vector v = (Vector) h.get(keyStr);
-            // errors |= logFoundJars(v, keyStr);
-            errors |= appendFoundJars(hashNode, factory, v, keyStr);
-          }
-          // ..normal processing for all other entries
-          else
-          {
-            // Note: we could just check for the ERROR key by itself,
-            //    since we now set that, but since we have to go
-            //    through the whole hash anyway, do it this way,
-            //    which is safer for maintenance
-            if (keyStr.startsWith(ERROR))
-            {
+      for (Map.Entry<String, Object> entry : h.entrySet()) {
+          String keyStr = entry.getKey();
+          try {
+              // Special processing for classes found..
+              if (keyStr.startsWith(FOUNDCLASSES)) {
+                  List<Map> v = (List<Map>)entry.getValue();
+                  // errors |= logFoundJars(v, keyStr);
+                  errors |= appendFoundJars(hashNode, factory, v, keyStr);
+              } // ..normal processing for all other entries
+              else {
+                  // Note: we could just check for the ERROR key by itself,
+                  //    since we now set that, but since we have to go
+                  //    through the whole hash anyway, do it this way,
+                  //    which is safer for maintenance
+                  if (keyStr.startsWith(ERROR)) {
+                      errors = true;
+                  }
+                  Element node = factory.createElement("item");
+                  node.setAttribute("key", keyStr);
+                  node.appendChild(factory.createTextNode((String) h.get(keyStr)));
+                  hashNode.appendChild(node);
+              }
+          } catch (Exception e) {
               errors = true;
-            }
-            Element node = factory.createElement("item");
-            node.setAttribute("key", keyStr);
-            node.appendChild(factory.createTextNode((String)h.get(keyStr)));
-            hashNode.appendChild(node);
+              Element node = factory.createElement("item");
+              node.setAttribute("key", keyStr);
+              node.appendChild(factory.createTextNode(ERROR + " Reading " + keyStr + " threw: " + e.toString()));
+              hashNode.appendChild(node);
           }
-        }
-        catch (Exception e)
-        {
-          errors = true;
-          Element node = factory.createElement("item");
-          node.setAttribute("key", keyStr);
-          node.appendChild(factory.createTextNode(ERROR + " Reading " + key + " threw: " + e.toString()));
-          hashNode.appendChild(node);
-        }
       } // end of for...
 
       Element statusNode = factory.createElement("status");
@@ -498,7 +463,7 @@ public class EnvironmentCheck
    *
    * @param container Node to append our report to
    * @param factory Document providing createElement, etc. services
-   * @param v Vector of Hashtables of .jar file info
+   * @param v Map of Maps of .jar file info
    * @param desc description to print out in header
    *
    * @return false if OK, true if any .jars were reported
@@ -506,7 +471,7 @@ public class EnvironmentCheck
    * @see #checkPathForJars(String, String[])
    */
   protected boolean appendFoundJars(Node container, Document factory,
-        Vector v, String desc)
+        List<Map> v, String desc)
   {
 
     if ((null == v) || (v.size() < 1))
@@ -514,37 +479,25 @@ public class EnvironmentCheck
 
     boolean errors = false;
 
-    for (int i = 0; i < v.size(); i++)
-    {
-      Hashtable subhash = (Hashtable) v.elementAt(i);
-
-      for (Enumeration keys = subhash.keys();
-           keys.hasMoreElements();
-           /* no increment portion */
-          )
-      {
-        Object key = keys.nextElement();
-        try
-        {
-          String keyStr = (String) key;
-          if (keyStr.startsWith(ERROR))
-          {
-            errors = true;
-          }
-          Element node = factory.createElement("foundJar");
-          node.setAttribute("name", keyStr.substring(0, keyStr.indexOf("-")));
-          node.setAttribute("desc", keyStr.substring(keyStr.indexOf("-") + 1));
-          node.appendChild(factory.createTextNode((String)subhash.get(keyStr)));
-          container.appendChild(node);
+    for (Map<String, String> v1 : v) {
+        for (Map.Entry<String, String> entry : v1.entrySet()) {
+            String keyStr = entry.getKey();
+            try {
+                if (keyStr.startsWith(ERROR)) {
+                    errors = true;
+                }
+                Element node = factory.createElement("foundJar");
+                node.setAttribute("name", keyStr.substring(0, keyStr.indexOf("-")));
+                node.setAttribute("desc", keyStr.substring(keyStr.indexOf("-") + 1));
+                node.appendChild(factory.createTextNode(entry.getValue()));
+                container.appendChild(node);
+            } catch (Exception e) {
+                errors = true;
+                Element node = factory.createElement("foundJar");
+                node.appendChild(factory.createTextNode(ERROR + " Reading " + keyStr + " threw: " + e.toString()));
+                container.appendChild(node);
+            }
         }
-        catch (Exception e)
-        {
-          errors = true;
-          Element node = factory.createElement("foundJar");
-          node.appendChild(factory.createTextNode(ERROR + " Reading " + key + " threw: " + e.toString()));
-          container.appendChild(node);
-        }
-      }
     }
     return errors;
   }
@@ -558,15 +511,15 @@ public class EnvironmentCheck
    * //@todo NOTE: We don't actually search java.ext.dirs for
    * //  *.jar files therein! This should be updated
    *
-   * @param h Hashtable to put information in
+   * @param h Map to put information in
    * @see #jarNames
    * @see #checkPathForJars(String, String[])
    */
-  protected void checkSystemProperties(Hashtable h)
+  protected void checkSystemProperties(Map<String, Object> h)
   {
 
     if (null == h)
-      h = new Hashtable();
+      h = new HashMap<String, Object>();
 
     // Grab java version for later use
     try
@@ -594,22 +547,22 @@ public class EnvironmentCheck
 
       h.put("java.class.path", cp);
 
-      Vector classpathJars = checkPathForJars(cp, jarNames);
+      List<Map> classpathJars = checkPathForJars(cp, jarNames);
 
-      if (null != classpathJars)
-        h.put(FOUNDCLASSES + "java.class.path", classpathJars);
+      if (null != classpathJars) {
+          h.put(FOUNDCLASSES + "java.class.path", classpathJars);
+      }
 
       // Also check for JDK 1.2+ type classpaths
       String othercp = SecuritySupport.getSystemProperty("sun.boot.class.path");
 
-      if (null != othercp)
-      {
-        h.put("sun.boot.class.path", othercp);
+      if (null != othercp) {
+          h.put("sun.boot.class.path", othercp);
+          classpathJars = checkPathForJars(othercp, jarNames);
 
-        classpathJars = checkPathForJars(othercp, jarNames);
-
-        if (null != classpathJars)
-          h.put(FOUNDCLASSES + "sun.boot.class.path", classpathJars);
+          if (null != classpathJars) {
+              h.put(FOUNDCLASSES + "sun.boot.class.path", classpathJars);
+          }
       }
 
       //@todo NOTE: We don't actually search java.ext.dirs for
@@ -650,20 +603,20 @@ public class EnvironmentCheck
    * @param cp classpath to search
    * @param jars array of .jar base filenames to look for
    *
-   * @return Vector of Hashtables filled with info about found .jars
+   * @return List of Maps filled with info about found .jars
    * @see #jarNames
-   * @see #logFoundJars(Vector, String)
-   * @see #appendFoundJars(Node, Document, Vector, String )
+   * @see #logFoundJars(Map, String)
+   * @see #appendFoundJars(Node, Document, Map, String )
    * @see #getApparentVersion(String, long)
    */
-  protected Vector checkPathForJars(String cp, String[] jars)
+  protected List<Map> checkPathForJars(String cp, String[] jars)
   {
 
     if ((null == cp) || (null == jars) || (0 == cp.length())
             || (0 == jars.length))
       return null;
 
-    Vector v = new Vector();
+    List<Map> v = new ArrayList<Map>();
     StringTokenizer st = new StringTokenizer(cp, File.pathSeparator);
 
     while (st.hasMoreTokens())
@@ -683,37 +636,32 @@ public class EnvironmentCheck
 
             // If any requested jarName exists, report on
             //  the details of that .jar file
-            try
-            {
-              Hashtable h = new Hashtable(2);
-              // Note "-" char is looked for in appendFoundJars
-              h.put(jars[i] + "-path", f.getAbsolutePath());
+            try {
+                Map<String, String> h = new HashMap<String, String>(2);
+                // Note "-" char is looked for in appendFoundJars
+                h.put(jars[i] + "-path", f.getAbsolutePath());
 
-              // We won't bother reporting on the xalan.jar apparent version
-              // since this requires knowing the jar size of the xalan.jar
-              // before we build it.
-              // For other jars, eg. xml-apis.jar and xercesImpl.jar, we
-              // report the apparent version of the file we've found
-              if (!("xalan.jar".equalsIgnoreCase(jars[i]))) {
-                h.put(jars[i] + "-apparent.version",
-                    getApparentVersion(jars[i], f.length()));
-              }
-              v.addElement(h);
-            }
-            catch (Exception e)
-            {
+                // We won't bother reporting on the xalan.jar apparent version
+                // since this requires knowing the jar size of the xalan.jar
+                // before we build it.
+                // For other jars, eg. xml-apis.jar and xercesImpl.jar, we
+                // report the apparent version of the file we've found
+                if (!("xalan.jar".equalsIgnoreCase(jars[i]))) {
+                    h.put(jars[i] + "-apparent.version",
+                            getApparentVersion(jars[i], f.length()));
+                }
+                v.add(h);
+            } catch (Exception e) {
 
-              /* no-op, don't add it  */
+                /* no-op, don't add it  */
             }
-          }
-          else
-          {
-            Hashtable h = new Hashtable(2);
+          } else {
+            Map<String, String> h = new HashMap<String, String>(2);
             // Note "-" char is looked for in appendFoundJars
             h.put(jars[i] + "-path", WARNING + " Classpath entry: "
-                  + filename + " does not exist");
+                    + filename + " does not exist");
             h.put(jars[i] + "-apparent.version", CLASS_NOTPRESENT);
-            v.addElement(h);
+            v.add(h);
           }
         }
       }
@@ -744,8 +692,8 @@ public class EnvironmentCheck
   {
     // If we found a matching size and it's for our
     //  jar, then return it's description
-    // Lookup in static jarVersions Hashtable
-    String foundSize = (String) jarVersions.get(new Long(jarSize));
+    // Lookup in static JARVERSIONS Map
+    String foundSize = JARVERSIONS.get(new Long(jarSize));
 
     if ((null != foundSize) && (foundSize.startsWith(jarName)))
     {
@@ -779,13 +727,13 @@ public class EnvironmentCheck
    * and not found; only tests the interfaces, and does not
    * check for reference implementation versions.
    *
-   * @param h Hashtable to put information in
+   * @param h Map to put information in
    */
-  protected void checkJAXPVersion(Hashtable h)
+  protected void checkJAXPVersion(Map<String, Object> h)
   {
 
     if (null == h)
-      h = new Hashtable();
+      h = new HashMap<String, Object>();
 
     final Class noArgs[] = new Class[0];
     Class clazz = null;
@@ -829,13 +777,13 @@ public class EnvironmentCheck
    *
    * Looks for version info in xalan.jar from Xalan-J products.
    *
-   * @param h Hashtable to put information in
+   * @param h Map to put information in
    */
-  protected void checkProcessorVersion(Hashtable h)
+  protected void checkProcessorVersion(Map<String, Object> h)
   {
 
     if (null == h)
-      h = new Hashtable();
+      h = new HashMap<String, Object>();
 
     try
     {
@@ -918,13 +866,13 @@ public class EnvironmentCheck
    *
    * //@todo actually look up version info in crimson manifest
    *
-   * @param h Hashtable to put information in
+   * @param h Map to put information in
    */
-  protected void checkParserVersion(Hashtable h)
+  protected void checkParserVersion(Map<String, Object> h)
   {
 
     if (null == h)
-      h = new Hashtable();
+      h = new HashMap<String, Object>();
 
     try
     {
@@ -982,13 +930,13 @@ public class EnvironmentCheck
   /**
    * Report product version information from Ant.
    *
-   * @param h Hashtable to put information in
+   * @param h Map to put information in
    */
-  protected void checkAntVersion(Hashtable h)
+  protected void checkAntVersion(Map<String, Object> h)
   {
 
     if (null == h)
-      h = new Hashtable();
+      h = new HashMap<String, Object>();
 
     try
     {
@@ -1017,13 +965,13 @@ public class EnvironmentCheck
    * level 2 working draft, the DOM level 2 final draft,
    * and not found.
    *
-   * @param h Hashtable to put information in
+   * @param h Map to put information in
    */
-  protected void checkDOMVersion(Hashtable h)
+  protected void checkDOMVersion(Map<String, Object> h)
   {
 
     if (null == h)
-      h = new Hashtable();
+      h = new HashMap<String, Object>();
 
     final String DOM_LEVEL2_CLASS = "org.w3c.dom.Document";
     final String DOM_LEVEL2_METHOD = "createElementNS";  // String, String
@@ -1095,13 +1043,13 @@ public class EnvironmentCheck
    * Currently distinguishes between SAX 2, SAX 2.0beta2,
    * SAX1, and not found.
    *
-   * @param h Hashtable to put information in
+   * @param h Map to put information in
    */
-  protected void checkSAXVersion(Hashtable h)
+  protected void checkSAXVersion(Map<String, Object> h)
   {
 
     if (null == h)
-      h = new Hashtable();
+      h = new HashMap<String, Object>();
 
     final String SAX_VERSION1_CLASS = "org.xml.sax.Parser";
     final String SAX_VERSION1_METHOD = "parse";  // String
@@ -1184,17 +1132,17 @@ public class EnvironmentCheck
    *
    * @see #getApparentVersion(String, long)
    */
-  private static Hashtable jarVersions = new Hashtable();
+  private static final Map<Long, String> JARVERSIONS;
 
   /**
-   * Static initializer for jarVersions table.
+   * Static initializer for JARVERSIONS table.
    * Doing this just once saves time and space.
    *
    * @see #getApparentVersion(String, long)
    */
   static
   {
-    // Note: hackish Hashtable, this could use improvement
+    Map<Long, String> jarVersions = new HashMap<Long, String>();
     jarVersions.put(new Long(857192), "xalan.jar from xalan-j_1_1");
     jarVersions.put(new Long(440237), "xalan.jar from xalan-j_1_2");
     jarVersions.put(new Long(436094), "xalan.jar from xalan-j_1_2_1");
@@ -1283,6 +1231,8 @@ public class EnvironmentCheck
     // jakarta-ant: since many people use ant these days
     jarVersions.put(new Long(136198), "parser.jar from jakarta-ant-1.3 or 1.2");
     jarVersions.put(new Long(5537), "jaxp.jar from jakarta-ant-1.3 or 1.2");
+
+    JARVERSIONS = Collections.unmodifiableMap(jarVersions);
   }
 
   /** Simple PrintWriter we send output to; defaults to System.out.  */

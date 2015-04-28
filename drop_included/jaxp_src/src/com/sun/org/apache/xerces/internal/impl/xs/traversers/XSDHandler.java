@@ -1,13 +1,13 @@
 /*
- * reserved comment block
- * DO NOT REMOVE OR ALTER!
+ * Copyright (c) 2007, 2015, Oracle and/or its affiliates. All rights reserved.
  */
 /*
- * Copyright 1999-2005 The Apache Software Foundation.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -19,14 +19,6 @@
  */
 
 package com.sun.org.apache.xerces.internal.impl.xs.traversers;
-
-import java.io.IOException;
-import java.io.StringReader;
-import java.util.ArrayList;
-import java.util.Hashtable;
-import java.util.Locale;
-import java.util.Stack;
-import java.util.Vector;
 
 import com.sun.org.apache.xerces.internal.impl.Constants;
 import com.sun.org.apache.xerces.internal.impl.XMLEntityManager;
@@ -57,8 +49,8 @@ import com.sun.org.apache.xerces.internal.util.DOMInputSource;
 import com.sun.org.apache.xerces.internal.util.DefaultErrorHandler;
 import com.sun.org.apache.xerces.internal.util.SAXInputSource;
 import com.sun.org.apache.xerces.internal.util.SymbolTable;
-import com.sun.org.apache.xerces.internal.util.XMLSymbols;
 import com.sun.org.apache.xerces.internal.util.URI.MalformedURIException;
+import com.sun.org.apache.xerces.internal.util.XMLSymbols;
 import com.sun.org.apache.xerces.internal.utils.XMLSecurityManager;
 import com.sun.org.apache.xerces.internal.xni.QName;
 import com.sun.org.apache.xerces.internal.xni.grammars.Grammar;
@@ -72,6 +64,19 @@ import com.sun.org.apache.xerces.internal.xni.parser.XMLErrorHandler;
 import com.sun.org.apache.xerces.internal.xni.parser.XMLInputSource;
 import com.sun.org.apache.xerces.internal.xs.XSObject;
 import com.sun.org.apache.xerces.internal.xs.XSParticle;
+import java.io.IOException;
+import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Stack;
+import java.util.Vector;
+import javax.xml.XMLConstants;
+import javax.xml.stream.XMLEventReader;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamReader;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -249,14 +254,14 @@ public class XSDHandler {
     private Map<String, Vector> fImportMap = new HashMap();
     // all namespaces that imports other namespaces
     // if the importing schema has absent namespace, empty string is stored.
-    // (because the key of a hashtable can't be null.)
+    // (because the key of a map can't be null.)
     private Vector fAllTNSs = new Vector();
     // stores instance document mappings between namespaces and schema hints
     private Map fLocationPairs = null;
     
-    //this hashtable is keyded on by DOM node objects. 
+    //this map is keyded on by DOM node objects. 
     //The table stores the hidden nodes
-    private Hashtable fHiddenNodes = null;
+    private Map<Node, String> fHiddenNodes = null;
     
     // convenience methods
     private String null2EmptyString(String ns) {
@@ -390,7 +395,7 @@ public class XSDHandler {
     
     // Constructors
     public XSDHandler(){
-        fHiddenNodes = new Hashtable();       
+        fHiddenNodes = new HashMap<Node, String>();
         fSchemaParser = new SchemaDOMParser(new SchemaParsingConfig());
     }
     

@@ -1,15 +1,15 @@
 /*
- * Copyright (c) 2003, 2006, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2015, Oracle and/or its affiliates. All rights reserved.
  */
-
 /*
- * Copyright 2005 The Apache Software Foundation.
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -38,7 +38,7 @@ import java.lang.reflect.Method;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Locale;
 import java.util.Map;
@@ -362,7 +362,7 @@ protected static final String PARSER_SETTINGS =
     // entities
     
     /** Entities. */
-    protected Hashtable fEntities = new Hashtable();
+    protected Map<String, Entity> fEntities = new HashMap<String, Entity>();
     
     /** Entity stack. */
     protected Stack fEntityStack = new Stack();
@@ -375,7 +375,7 @@ protected static final String PARSER_SETTINGS =
     /** Shared declared entities.
      * XXX understand it more deeply, why are we doing this ?? Is it really required ?
      */
-    protected Hashtable fDeclaredEntities;
+    protected Map<String, Entity> fDeclaredEntities;
     
     protected XMLEntityStorage fEntityStorage ;
     
@@ -869,7 +869,7 @@ protected static final String PARSER_SETTINGS =
      */               
     public boolean isExternalEntity(String entityName) {
         
-        Entity entity = (Entity)fEntities.get(entityName);
+        Entity entity = fEntities.get(entityName);
         if (entity == null) {
             return false;
         }
@@ -886,7 +886,7 @@ protected static final String PARSER_SETTINGS =
      */
     public boolean isEntityDeclInExternalSubset(String entityName) {
         
-        Entity entity = (Entity)fEntities.get(entityName);
+        Entity entity = fEntities.get(entityName);
         if (entity == null) {
             return false;
         }
@@ -916,13 +916,13 @@ protected static final String PARSER_SETTINGS =
     
     public boolean isDeclaredEntity(String entityName) {
         
-        Entity entity = (Entity)fEntities.get(entityName);
+        Entity entity = fEntities.get(entityName);
         return entity != null;
     }
     
     public boolean isUnparsedEntity(String entityName) {
         
-        Entity entity = (Entity)fEntities.get(entityName);
+        Entity entity = fEntities.get(entityName);
         if (entity == null) {
             return false;
         }
@@ -1121,7 +1121,7 @@ protected static final String PARSER_SETTINGS =
     throws IOException, XNIException {
         
         // was entity declared?
-        Entity entity = (Entity)fEntityStorage.getDeclaredEntities().get(entityName);
+        Entity entity = fEntityStorage.getDeclaredEntities().get(entityName);
         if (entity == null) {
             if (fEntityHandler != null) {
                 String encoding = null;
@@ -1619,11 +1619,8 @@ protected static final String PARSER_SETTINGS =
 
         // copy declared entities
         if (fDeclaredEntities != null) {
-            java.util.Enumeration keys = fDeclaredEntities.keys();
-            while (keys.hasMoreElements()) {
-                Object key = keys.nextElement();
-                Object value = fDeclaredEntities.get(key);
-                fEntities.put(key, value);
+            for (Map.Entry<String, Entity> entry : fDeclaredEntities.entrySet()) {
+                fEntities.put(entry.getKey(), entry.getValue());
             }
         }
         fEntityHandler = null;
