@@ -23,30 +23,27 @@
  * questions.
  */
 
-/*
- * @test
- * @summary class p1.c1 defined in the unnamed module tries to access p2.c2
- *          defined in the unnamed module. Access allowed since unnamed module
- *          can read unnamed module even when class p1.c1 is loaded by
- *          a different loader than p2.c2.
- * @compile p2/c2.java
- * @compile p1/c1.java
- * @build UmodNpkgDiffCL_UmodNpkg
- * @run main/othervm -Xbootclasspath/a:. UmodNpkgDiffCL_UmodNpkg
- */
+import java.io.*;
+import java.net.URI;
+import java.util.Set;
+import java.lang.module.ExtendedModuleDescriptor;
+import java.lang.module.ModuleArtifact;
+import java.lang.module.ModuleReader;
 
-// class p1.c1 defined in the unnamed module tries to access p2.c2 defined in
-// in the unnamed module.
-// Access allowed since unnamed module can read unnamed module even when
-//                class p1.c1 is loaded by a different loader than p2.c2.
-public class UmodNpkgDiffCL_UmodNpkg {
+// Utility class to set up a ModuleArtifact with a standard location
+// based on the descriptor and a list of packages.
+//
+public class MyModuleArtifact {
 
-    public static void main(String args[]) throws Throwable {
-        Class p1_c1_class = MyDiffClassLoader.loader1.loadClass("p1.c1");
-        try {
-            p1_c1_class.newInstance();
-        } catch (IllegalAccessError e) {
-            throw new RuntimeException("Test Failed, unnamed module can access unnamed module");
-        }
+    public static ModuleArtifact newModuleArtifact(ExtendedModuleDescriptor descriptor,
+                                                   Set<String> packages)
+    {
+        URI location = URI.create("module:/" + descriptor.name());
+        return new ModuleArtifact(descriptor, packages, location) {
+            @Override
+            public ModuleReader open() throws IOException {
+                throw new IOException("No module reader for: " + location);
+            }
+        };
     }
 }

@@ -29,23 +29,10 @@
  *          exported, then class p1.c1 in module1 can not read p2.c2 in module2.
  * @compile p2/c2.java
  * @compile p1/c1.java
- * @modules java.base/sun.misc
  * @build NmodNpkgDiffCL_PkgExpQualNotM1
  * @run main/othervm -Xbootclasspath/a:. NmodNpkgDiffCL_PkgExpQualNotM1
  */
 
-/*
- * STDOUT: class p1.c1 (in module: m1) cannot access class p2.c2 (in module: m2), p2 is not exported to m1
- */
-
-import java.io.*;
-import java.net.URI;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import java.lang.module.Configuration;
 import java.lang.module.ExtendedModuleDescriptor;
 import java.lang.module.Layer;
@@ -54,12 +41,21 @@ import java.lang.module.ModuleArtifactFinder;
 import java.lang.module.ModuleDescriptor.Requires;
 import java.lang.module.ModuleDescriptor.Requires.Modifier;
 import java.lang.module.ModuleDescriptor.Exports;
-import java.lang.module.ModuleReader;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+/*
+ * STDOUT: class p1.c1 (in module: m1) cannot access class p2.c2 (in module: m2), p2 is not exported to m1
+ */
 
 //
 // ClassLoader1 --> defines m1 --> packages p1, m1_pinternal
 // ClassLoader2 --> defines m2 --> packages p2, m2_pinternal
-//               defines m3 --> packages p3, m3_pinternal
+//                  defines m3 --> packages p3, m3_pinternal
 //
 // m1 can read m2
 // package p2 in m2 is exported to m3
@@ -67,7 +63,6 @@ import java.lang.module.ModuleReader;
 // class p1.c1 defined in m1 tries to access p2.c2 defined in m2
 // Access denied since although m1 can read m2, p2 is exported only to m3.
 //
-
 public class NmodNpkgDiffCL_PkgExpQualNotM1 {
 
     // Create a Layer over the boot layer.
@@ -85,15 +80,8 @@ public class NmodNpkgDiffCL_PkgExpQualNotM1 {
                         .requires(md("java.base"))
                         .export("p1")
                         .build();
-        URI location_m1 = URI.create("module:/" + descriptor_m1.name());
         Set<String> packages_m1 = Stream.of("p1", "m1_pinternal").collect(Collectors.toSet());
-        ModuleArtifact artifact_m1 =
-            new ModuleArtifact(descriptor_m1, packages_m1, location_m1) {
-            @Override
-            public ModuleReader open() throws IOException {
-                throw new IOException("No module reader for: " + location_m1);
-            }
-        };
+        ModuleArtifact artifact_m1 = MyModuleArtifact.newModuleArtifact(descriptor_m1, packages_m1);
 
         // Define module:     m2
         // Can read:          java.base
@@ -104,15 +92,8 @@ public class NmodNpkgDiffCL_PkgExpQualNotM1 {
                         .requires(md("java.base"))
                         .export("p2", "m3")
                         .build();
-        URI location_m2 = URI.create("module:/" + descriptor_m2.name());
         Set<String> packages_m2 = Stream.of("p2", "m2_pinternal").collect(Collectors.toSet());
-        ModuleArtifact artifact_m2 =
-            new ModuleArtifact(descriptor_m2, packages_m2, location_m2) {
-            @Override
-            public ModuleReader open() throws IOException {
-                throw new IOException("No module reader for: " + location_m2);
-            }
-        };
+        ModuleArtifact artifact_m2 = MyModuleArtifact.newModuleArtifact(descriptor_m2, packages_m2);
 
         // Define module:     m3
         // Can read:          java.base
@@ -122,15 +103,8 @@ public class NmodNpkgDiffCL_PkgExpQualNotM1 {
                 new ExtendedModuleDescriptor.Builder("m3")
                         .requires(md("java.base"))
                         .build();
-        URI location_m3 = URI.create("module:/" + descriptor_m3.name());
         Set<String> packages_m3 = Stream.of("p3", "m3_pinternal").collect(Collectors.toSet());
-        ModuleArtifact artifact_m3 =
-            new ModuleArtifact(descriptor_m3, packages_m3, location_m3) {
-            @Override
-            public ModuleReader open() throws IOException {
-                throw new IOException("No module reader for: " + location_m3);
-            }
-        };
+        ModuleArtifact artifact_m3 = MyModuleArtifact.newModuleArtifact(descriptor_m3, packages_m3);
 
         // Set up a ModuleArtifactFinder containing all modules for this layer.
         ModuleArtifactFinder finder =

@@ -29,19 +29,10 @@
  *          Access allowed since any module can read the unnamed module. p2's exportability not relevant.
  * @compile p2/c2.java
  * @compile p1/c1.java
- * @modules java.base/sun.misc
  * @build NmodNpkgDiffCL_NamedMToUnnamedM
  * @run main/othervm -Xbootclasspath/a:. NmodNpkgDiffCL_NamedMToUnnamedM
  */
 
-import java.io.*;
-import java.net.URI;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import java.lang.module.Configuration;
 import java.lang.module.ExtendedModuleDescriptor;
 import java.lang.module.Layer;
@@ -50,7 +41,12 @@ import java.lang.module.ModuleArtifactFinder;
 import java.lang.module.ModuleDescriptor.Requires;
 import java.lang.module.ModuleDescriptor.Requires.Modifier;
 import java.lang.module.ModuleDescriptor.Exports;
-import java.lang.module.ModuleReader;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 //
 // ClassLoader1 --> defines m1 --> packages p1, m1_pinternal
@@ -77,15 +73,8 @@ public class NmodNpkgDiffCL_NamedMToUnnamedM {
                      .requires(md("java.base"))
                      .export("p1")
                      .build();
-     URI location_m1 = URI.create("module:/" + descriptor_m1.name());
      Set<String> packages_m1 = Stream.of("p1", "m1_pinternal").collect(Collectors.toSet());
-     ModuleArtifact artifact_m1 =
-         new ModuleArtifact(descriptor_m1, packages_m1, location_m1) {
-         @Override
-         public ModuleReader open() throws IOException {
-             throw new IOException("No module reader for: " + location_m1);
-         }
-     };
+     ModuleArtifact artifact_m1 = MyModuleArtifact.newModuleArtifact(descriptor_m1, packages_m1);
 
      // Set up a ModuleArtifactFinder containing all modules for this layer.
      ModuleArtifactFinder finder =

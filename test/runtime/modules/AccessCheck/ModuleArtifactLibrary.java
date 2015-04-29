@@ -21,14 +21,13 @@
  * questions.
  */
 
+import java.lang.module.ExtendedModuleDescriptor;
+import java.lang.module.ModuleArtifact;
+import java.lang.module.ModuleArtifactFinder;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-
-import java.lang.module.ExtendedModuleDescriptor;
-import java.lang.module.ModuleArtifact;
-import java.lang.module.ModuleArtifactFinder;
 
 // Utility class to set up a ModuleArtifactFinder containing all the modules
 // for a given Layer. This utility class is helpful because a ModuleArtifactFinder
