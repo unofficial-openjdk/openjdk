@@ -21,7 +21,7 @@
  * questions.
  */
 
-import java.lang.module.ExtendedModuleDescriptor;
+import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleArtifact;
 import java.lang.module.ModuleArtifactFinder;
 import java.util.HashMap;
@@ -40,7 +40,7 @@ public class ModuleArtifactLibrary implements ModuleArtifactFinder {
 
  ModuleArtifactLibrary(ModuleArtifact... artifacts) {
      for (ModuleArtifact artifact: artifacts) {
-         ExtendedModuleDescriptor emd = artifact.descriptor();
+         ModuleDescriptor emd = artifact.descriptor();
          String name = emd.name();
          namesToArtifact.put(name, artifact);
      }

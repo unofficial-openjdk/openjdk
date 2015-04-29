@@ -29,7 +29,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Module;
 import java.util.*;
-import java.lang.module.ExtendedModuleDescriptor;
+import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleArtifact;
 import java.lang.module.ModuleReader;
 import com.oracle.java.testlibrary.*;
@@ -81,8 +81,8 @@ public class ModuleHelper {
         } else {
             pkg_set = Collections.emptySet();
         }
-        ExtendedModuleDescriptor descriptor =
-            new ExtendedModuleDescriptor.Builder(name).build();
+        ModuleDescriptor descriptor =
+            new ModuleDescriptor.Builder(name).build();
         URI uri = URI.create("module:/" + name);
         ModuleArtifact artifact = new ModuleArtifact(descriptor, pkg_set, uri) {
             @Override

@@ -34,7 +34,7 @@
  */
 
 import java.lang.module.Configuration;
-import java.lang.module.ExtendedModuleDescriptor;
+import java.lang.module.ModuleDescriptor;
 import java.lang.module.Layer;
 import java.lang.module.ModuleArtifact;
 import java.lang.module.ModuleArtifactFinder;
@@ -69,8 +69,8 @@ public class NmodNpkgDiffCL_PkgNotExp {
         // Can read:          module m2 and java.base
         // Packages:          p1, m1_pinternal
         // Packages exported: p1 is exported unqualifiedly
-        ExtendedModuleDescriptor descriptor_m1 =
-                new ExtendedModuleDescriptor.Builder("m1")
+        ModuleDescriptor descriptor_m1 =
+                new ModuleDescriptor.Builder("m1")
                         .requires(md("m2"))
                         .requires(md("java.base"))
                         .export("p1")
@@ -82,8 +82,8 @@ public class NmodNpkgDiffCL_PkgNotExp {
         // Can read:          java.base
         // Packages:          p2, m2_pinternal
         // Packages exported: none
-        ExtendedModuleDescriptor descriptor_m2 =
-                new ExtendedModuleDescriptor.Builder("m2")
+        ModuleDescriptor descriptor_m2 =
+                new ModuleDescriptor.Builder("m2")
                         .requires(md("java.base"))
                         .build();
         Set<String> packages_m2 = Stream.of("p2", "m2_pinternal").collect(Collectors.toSet());

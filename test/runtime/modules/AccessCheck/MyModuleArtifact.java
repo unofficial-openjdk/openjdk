@@ -26,7 +26,7 @@
 import java.io.*;
 import java.net.URI;
 import java.util.Set;
-import java.lang.module.ExtendedModuleDescriptor;
+import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleArtifact;
 import java.lang.module.ModuleReader;
 
@@ -35,7 +35,7 @@ import java.lang.module.ModuleReader;
 //
 public class MyModuleArtifact {
 
-    public static ModuleArtifact newModuleArtifact(ExtendedModuleDescriptor descriptor,
+    public static ModuleArtifact newModuleArtifact(ModuleDescriptor descriptor,
                                                    Set<String> packages)
     {
         URI location = URI.create("module:/" + descriptor.name());
