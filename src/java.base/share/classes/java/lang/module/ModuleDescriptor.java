@@ -34,6 +34,8 @@ import java.util.Set;
 import java.util.Objects;
 import static java.util.Objects.*;
 
+import jdk.internal.module.Hasher.DependencyHashes;
+
 import static java.lang.module.Checks.*;
 
 
@@ -240,7 +242,7 @@ public class ModuleDescriptor
 
 
     /**
-     * Service provider
+     * Service providers
      */
 
     public final static class Provides {
@@ -262,17 +264,26 @@ public class ModuleDescriptor
 
 
 
+    // From module declarations
     private final String name;
     private final Set<Requires> requires;
     private final Set<Exports> exports;
     private final Set<String> uses;
     private final Map<String, Provides> provides;
 
+    // "Extended" information, added post-compilation
+    private final Optional<Version> version;
+    private final Optional<String> mainClass;
+    private final Optional<DependencyHashes> hashes;
+
     ModuleDescriptor(String name,
                      Set<Requires> requires,
                      Set<String> uses,
                      Set<Exports> exports,
-                     Map<String, Provides> provides)
+                     Map<String, Provides> provides,
+                     Version version,
+                     String mainClass,
+                     DependencyHashes hashes)
     {
         this.name = requireJavaIdentifier("module name", name);
 
@@ -289,6 +300,15 @@ public class ModuleDescriptor
         this.uses = Collections.unmodifiableSet(uses);
         // ## FIXME values are mutable
         this.provides = Collections.unmodifiableMap(provides);
+
+        this.version = Optional.ofNullable(version);
+        if (mainClass != null)
+            this.mainClass = Optional.of(requireJavaIdentifier("main class name",
+                                                               mainClass));
+        else
+            this.mainClass = Optional.empty();
+        this.hashes = Optional.ofNullable(hashes);
+
     }
 
     /**
@@ -333,6 +353,35 @@ public class ModuleDescriptor
     }
 
     /**
+     * Returns this module's version.
+     */
+    public Optional<Version> version() {
+        return version;
+    }
+
+    /**
+     * Returns a string containing this module's name and, if present, its
+     * version.
+     */
+    public String toNameAndVersion() {
+        return version.map(v -> name() + "@" + v.toString()).orElse(name());
+    }
+
+    /**
+     * Returns the module's main class.
+     */
+    public Optional<String> mainClass() {
+        return mainClass;
+    }
+
+    /**
+     * Returns the object with the hashes of the dependences.
+     */
+    Optional<DependencyHashes> hashes() {
+        return hashes;
+    }
+
+    /**
      * A builder used for building {@link ModuleDescriptor} objects.
      */
     public static class Builder {
@@ -342,12 +391,8 @@ public class ModuleDescriptor
         final Set<String> uses = new HashSet<>();
         final Set<Exports> exports = new HashSet<>();
         final Map<String, Provides> provides = new HashMap<>();
-
-        /**
-         * For sub-class usage.
-         */
-        Builder() {
-        }
+        Version version;
+        String mainClass;
 
         /**
          * Initializes a new builder.
@@ -416,6 +461,16 @@ public class ModuleDescriptor
             return this;
         }
 
+        public Builder version(String v) {
+            version = Version.parse(v);
+            return this;
+        }
+
+        public Builder mainClass(String mainClass) {
+            this.mainClass = mainClass;
+            return this;
+        }
+
         /**
          * Builds a {@code ModuleDescriptor} from the components.
          */
@@ -425,13 +480,26 @@ public class ModuleDescriptor
                                         requires,
                                         uses,
                                         exports,
-                                        provides);
+                                        provides,
+                                        version,
+                                        mainClass,
+                                        null);
         }
+
     }
 
     @Override
     public int compareTo(ModuleDescriptor that) {
-        return this.name().compareTo(that.name());
+        int c = this.name().compareTo(that.name());
+        if (c != 0) return c;
+        if (!version.isPresent()) {
+            if (!that.version.isPresent())
+                return 0;
+            return -1;
+        }
+        if (!that.version.isPresent())
+            return +1;
+        return version.get().compareTo(that.version.get());
     }
 
     @Override
@@ -443,7 +511,10 @@ public class ModuleDescriptor
                 && requires.equals(that.requires)
                 && uses.equals(that.uses)
                 && exports.equals(that.exports)
-                && provides.equals(that.provides));
+                && provides.equals(that.provides)
+                && Objects.equals(version, that.version)
+                && Objects.equals(mainClass, that.mainClass)
+                && Objects.equals(hashes, that.hashes));
     }
 
     private transient int hash;  // cached hash code
@@ -457,6 +528,9 @@ public class ModuleDescriptor
             hc = hc * 43 + uses.hashCode();
             hc = hc * 43 + exports.hashCode();
             hc = hc * 43 + provides.hashCode();
+            hc = hc * 43 + Objects.hashCode(version);
+            hc = hc * 43 + Objects.hashCode(mainClass);
+            hc = hc * 43 + Objects.hashCode(hashes);
             hash = hc;
         }
         return hc;
@@ -465,7 +539,7 @@ public class ModuleDescriptor
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append("Module { name: ").append(name());
+        sb.append("Module { name: ").append(toNameAndVersion());
         if (!requires.isEmpty())
             sb.append(", ").append(requires);
         if (!uses.isEmpty())

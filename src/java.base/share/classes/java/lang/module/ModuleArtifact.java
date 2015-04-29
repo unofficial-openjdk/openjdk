@@ -48,7 +48,7 @@ import jdk.internal.module.Hasher.HashSupplier;
 
 public abstract class ModuleArtifact {
 
-    private final ExtendedModuleDescriptor descriptor;
+    private final ModuleDescriptor descriptor;
     private final Set<String> packages;
     private final URI location;
 
@@ -61,7 +61,7 @@ public abstract class ModuleArtifact {
     /**
      * Constructs a new instance of this class.
      */
-    ModuleArtifact(ExtendedModuleDescriptor descriptor,
+    ModuleArtifact(ModuleDescriptor descriptor,
                    Set<String> packages,
                    URI location,
                    HashSupplier hasher)
@@ -98,7 +98,7 @@ public abstract class ModuleArtifact {
      * example, should this method check the package names to ensure that they
      * are composed of valid Java identifiers for a package name?
      */
-    protected ModuleArtifact(ExtendedModuleDescriptor descriptor,
+    protected ModuleArtifact(ModuleDescriptor descriptor,
                              Set<String> packages,
                              URI location)
     {
@@ -108,7 +108,7 @@ public abstract class ModuleArtifact {
     /**
      * Return the artifact's extended module descriptor.
      */
-    public ExtendedModuleDescriptor descriptor() {
+    public ModuleDescriptor descriptor() {
         return descriptor;
     }
 

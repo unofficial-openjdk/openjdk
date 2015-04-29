@@ -22,6 +22,7 @@
  */
 
 import java.io.IOException;
+import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleReader;
 import java.net.URI;
 import java.util.ArrayList;
@@ -30,7 +31,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import java.lang.module.ExtendedModuleDescriptor;
 import java.lang.module.ModuleArtifact;
 
 import org.testng.annotations.DataProvider;
@@ -44,7 +44,7 @@ import static org.testng.Assert.*;
 @Test
 public class ModuleArtifactTest {
 
-    private ModuleArtifact newModuleArtifact(ExtendedModuleDescriptor descriptor,
+    private ModuleArtifact newModuleArtifact(ModuleDescriptor descriptor,
                                              Set<String> packages,
                                              URI location)
     {
@@ -58,8 +58,8 @@ public class ModuleArtifactTest {
 
 
     public void testBasic() throws Exception {
-        ExtendedModuleDescriptor descriptor =
-                new ExtendedModuleDescriptor.Builder("m")
+        ModuleDescriptor descriptor =
+                new ModuleDescriptor.Builder("m")
                         .export("p")
                         .export("q")
                         .build();
@@ -85,8 +85,8 @@ public class ModuleArtifactTest {
 
     @Test(expectedExceptions = { NullPointerException.class })
     public void testNullPackages() throws Exception {
-        ExtendedModuleDescriptor descriptor =
-                new ExtendedModuleDescriptor.Builder("m")
+        ModuleDescriptor descriptor =
+                new ModuleDescriptor.Builder("m")
                         .export("p")
                         .export("q")
                         .build();
@@ -96,8 +96,8 @@ public class ModuleArtifactTest {
 
     @Test(expectedExceptions = { NullPointerException.class })
     public void testNullLocation() throws Exception {
-        ExtendedModuleDescriptor descriptor =
-                new ExtendedModuleDescriptor.Builder("m")
+        ModuleDescriptor descriptor =
+                new ModuleDescriptor.Builder("m")
                         .export("p")
                         .build();
         Set<String> packages = Stream.of("p").collect(Collectors.toSet());
@@ -128,8 +128,8 @@ public class ModuleArtifactTest {
     @Test(dataProvider = "badpackages",
           expectedExceptions = { IllegalArgumentException.class })
     public void testBadContents(Set<String> packages) throws Exception {
-        ExtendedModuleDescriptor descriptor =
-                new ExtendedModuleDescriptor.Builder("m")
+        ModuleDescriptor descriptor =
+                new ModuleDescriptor.Builder("m")
                         .export("p")
                         .build();
         URI location = URI.create("module:/m");

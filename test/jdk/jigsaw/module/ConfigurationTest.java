@@ -22,9 +22,9 @@
  */
 
 import java.lang.module.Configuration;
-import java.lang.module.ExtendedModuleDescriptor;
 import java.lang.module.Layer;
 import java.lang.module.ModuleArtifactFinder;
+import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Requires;
 import java.lang.module.ModuleDescriptor.Requires.Modifier;
 import java.util.HashSet;
@@ -41,18 +41,18 @@ public class ConfigurationTest {
      * Basic test of resolver
      */
     public void testBasic() {
-        ExtendedModuleDescriptor descriptor1 =
-                new ExtendedModuleDescriptor.Builder("m1")
+        ModuleDescriptor descriptor1 =
+                new ModuleDescriptor.Builder("m1")
                         .requires(md("m2"))
                         .build();
 
-        ExtendedModuleDescriptor descriptor2 =
-                new ExtendedModuleDescriptor.Builder("m2")
+        ModuleDescriptor descriptor2 =
+                new ModuleDescriptor.Builder("m2")
                         .requires(md("m3"))
                         .build();
 
-        ExtendedModuleDescriptor descriptor3 =
-                new ExtendedModuleDescriptor.Builder("m3")
+        ModuleDescriptor descriptor3 =
+                new ModuleDescriptor.Builder("m3")
                         .build();
 
         ModuleArtifactFinder finder =
@@ -85,18 +85,18 @@ public class ConfigurationTest {
      */
     public void testRequiresPublic() {
         // m1 requires m2, m2 requires public m3
-        ExtendedModuleDescriptor descriptor1 =
-                new ExtendedModuleDescriptor.Builder("m1")
+        ModuleDescriptor descriptor1 =
+                new ModuleDescriptor.Builder("m1")
                         .requires(md("m2"))
                         .build();
 
-        ExtendedModuleDescriptor descriptor2 =
-                new ExtendedModuleDescriptor.Builder("m2")
+        ModuleDescriptor descriptor2 =
+                new ModuleDescriptor.Builder("m2")
                         .requires(md("m3", Modifier.PUBLIC))
                         .build();
 
-        ExtendedModuleDescriptor descriptor3 =
-                new ExtendedModuleDescriptor.Builder("m3")
+        ModuleDescriptor descriptor3 =
+                new ModuleDescriptor.Builder("m3")
                         .build();
 
         ModuleArtifactFinder finder =
@@ -130,24 +130,24 @@ public class ConfigurationTest {
      */
     public void testBasicBinding() {
 
-        ExtendedModuleDescriptor descriptor1 =
-                new ExtendedModuleDescriptor.Builder("m1")
+        ModuleDescriptor descriptor1 =
+                new ModuleDescriptor.Builder("m1")
                 .requires(md("m2"))
                 .uses("S")
                 .build();
 
-        ExtendedModuleDescriptor descriptor2 =
-                new ExtendedModuleDescriptor.Builder("m2").build();
+        ModuleDescriptor descriptor2 =
+                new ModuleDescriptor.Builder("m2").build();
 
         // service provider
-        ExtendedModuleDescriptor descriptor3 =
-                new ExtendedModuleDescriptor.Builder("m3")
+        ModuleDescriptor descriptor3 =
+                new ModuleDescriptor.Builder("m3")
                 .requires(md("m1"))
                 .provides("S", "p.S1").build();
 
         // unused module
-        ExtendedModuleDescriptor descriptor4 =
-                new ExtendedModuleDescriptor.Builder("m4").build();
+        ModuleDescriptor descriptor4 =
+                new ModuleDescriptor.Builder("m4").build();
 
         ModuleArtifactFinder finder =
                 new ModuleArtifactLibrary(descriptor1, descriptor2, descriptor3, descriptor4);

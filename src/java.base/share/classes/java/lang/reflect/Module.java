@@ -41,6 +41,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.WeakHashMap;
 import java.util.concurrent.locks.Lock;
@@ -329,8 +330,8 @@ public final class Module {
                 array[i++] = pkg.replace('.', '/');
             }
 
-            Version version = artifact.descriptor().version();
-            String vs = (version != null) ? version.toString() : null;
+            String vs = artifact.descriptor().version()
+                .map(Version::toString).orElse("");
             URI location = artifact.location();
             String uris = (location != null) ? location.toString() : null;
 

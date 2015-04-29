@@ -56,6 +56,7 @@ import java.lang.module.Configuration;
 import java.lang.module.Layer;
 import java.lang.module.ModuleArtifact;
 import java.lang.module.ModuleArtifactFinder;
+import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Requires;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Exports;

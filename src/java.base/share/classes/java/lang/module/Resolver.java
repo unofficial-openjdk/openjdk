@@ -33,6 +33,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 
@@ -385,9 +386,11 @@ class Resolver {
             String mn = descriptor.name();
 
             // get map of module names to hash
-            DependencyHashes hashes = r.findArtifact(mn).descriptor().hashes();
-            if (hashes == null)
+            Optional<DependencyHashes> ohashes
+                = r.findArtifact(mn).descriptor().hashes();
+            if (!ohashes.isPresent())
                 continue;
+            DependencyHashes hashes = ohashes.get();
 
             // check dependences
             for (Requires md: descriptor.requires()) {

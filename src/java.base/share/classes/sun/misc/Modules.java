@@ -25,8 +25,8 @@
 package sun.misc;
 
 import java.io.IOException;
-import java.lang.module.ExtendedModuleDescriptor;
 import java.lang.module.ModuleArtifact;
+import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleReader;
 import java.lang.reflect.Module;
 import java.net.URI;
@@ -50,8 +50,8 @@ public class Modules {
      */
     public static Module defineModule(ClassLoader loader, String name,
                                       Set<String> packages) {
-        ExtendedModuleDescriptor descriptor =
-            new ExtendedModuleDescriptor.Builder(name).build();
+        ModuleDescriptor descriptor =
+            new ModuleDescriptor.Builder(name).build();
         URI uri = URI.create("module:/" + name);
         ModuleArtifact artifact = new ModuleArtifact(descriptor, packages, uri) {
             @Override

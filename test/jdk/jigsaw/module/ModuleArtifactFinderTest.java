@@ -21,9 +21,9 @@
  * questions.
  */
 
-import java.lang.module.ExtendedModuleDescriptor;
 import java.lang.module.ModuleArtifact;
 import java.lang.module.ModuleArtifactFinder;
+import java.lang.module.ModuleDescriptor;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -51,8 +51,8 @@ public class ModuleArtifactFinderTest {
     /*
      * Create a descriptor for testing with a given name.
      */
-    private static ExtendedModuleDescriptor build(String name) {
-        return new ExtendedModuleDescriptor.Builder(name).build();
+    private static ModuleDescriptor build(String name) {
+        return new ModuleDescriptor.Builder(name).build();
     }
 
     /**
@@ -69,7 +69,7 @@ public class ModuleArtifactFinderTest {
      * inner finders.
      */
     public void testDuplicateDifferent() {
-        ExtendedModuleDescriptor descriptor1 = build("m1");
+        ModuleDescriptor descriptor1 = build("m1");
         ModuleArtifactFinder finder1 = new ModuleArtifactLibrary(descriptor1);
         ModuleArtifactFinder finder2 = new ModuleArtifactLibrary(build("m1"));
         ModuleArtifactFinder concat = ModuleArtifactFinder.concat(finder1, finder2);
@@ -82,16 +82,16 @@ public class ModuleArtifactFinderTest {
      */
     public void testReasonablyBig() {
         final int BIG_NUMBER_OF_MODULES = 0x400;
-        List<ExtendedModuleDescriptor> leftFinders = new ArrayList<>(BIG_NUMBER_OF_MODULES);
-        List<ExtendedModuleDescriptor> rightFinders = new ArrayList<>(BIG_NUMBER_OF_MODULES);
+        List<ModuleDescriptor> leftFinders = new ArrayList<>(BIG_NUMBER_OF_MODULES);
+        List<ModuleDescriptor> rightFinders = new ArrayList<>(BIG_NUMBER_OF_MODULES);
         for (int i = 0; i < BIG_NUMBER_OF_MODULES; i++) {
             leftFinders.add(build("m" + i*2));
             rightFinders.add(build("m" + (i*2 + 1)));
         }
         ModuleArtifactLibrary left = new ModuleArtifactLibrary(
-            leftFinders.toArray(new ExtendedModuleDescriptor[BIG_NUMBER_OF_MODULES]));
+            leftFinders.toArray(new ModuleDescriptor[BIG_NUMBER_OF_MODULES]));
         ModuleArtifactLibrary right = new ModuleArtifactLibrary(
-            rightFinders.toArray(new ExtendedModuleDescriptor[BIG_NUMBER_OF_MODULES]));
+            rightFinders.toArray(new ModuleDescriptor[BIG_NUMBER_OF_MODULES]));
         ModuleArtifactFinder concat = ModuleArtifactFinder.concat(left, right);
         assertEquals(concat.allModules().size(), BIG_NUMBER_OF_MODULES*2);
         for (int i = 0; i < BIG_NUMBER_OF_MODULES*2; i++) {

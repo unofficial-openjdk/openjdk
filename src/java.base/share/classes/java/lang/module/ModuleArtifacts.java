@@ -71,15 +71,15 @@ class ModuleArtifacts {
                                             URI location,
                                             Hasher.HashSupplier hasher)
     {
-        ExtendedModuleDescriptor descriptor =
-            new ExtendedModuleDescriptor(mi.name(),
-                                         mi.version(),
-                                         mi.mainClass(),
-                                         mi.hashes(),
-                                         mi.requires(),
-                                         mi.uses(),
-                                         mi.exports(),
-                                         mi.provides());
+        ModuleDescriptor descriptor =
+            new ModuleDescriptor(mi.name(),
+                                 mi.requires(),
+                                 mi.uses(),
+                                 mi.exports(),
+                                 mi.provides(),
+                                 mi.version(),
+                                 mi.mainClass(),
+                                 mi.hashes());
 
         String scheme = location.getScheme();
         if (scheme.equalsIgnoreCase("jrt"))
@@ -98,7 +98,7 @@ class ModuleArtifacts {
      * A ModuleArtifact for a module that is linked into the run-time image.
      */
     static class JrtModuleArtifact extends ModuleArtifact {
-        JrtModuleArtifact(ExtendedModuleDescriptor descriptor,
+        JrtModuleArtifact(ModuleDescriptor descriptor,
                           Set<String> packages,
                           URI location,
                           Hasher.HashSupplier hasher) {
@@ -114,7 +114,7 @@ class ModuleArtifacts {
      * A ModuleArtifact for a module that is exploded on the file system.
      */
     static class ExplodedModuleArtifact extends ModuleArtifact {
-        ExplodedModuleArtifact(ExtendedModuleDescriptor descriptor,
+        ExplodedModuleArtifact(ModuleDescriptor descriptor,
                                Set<String> packages,
                                URI location,
                                Hasher.HashSupplier hasher) {
@@ -130,7 +130,7 @@ class ModuleArtifacts {
      * A ModuleArtifact for a module that is packaged as jmod file.
      */
     static class JModModuleArtifact extends ModuleArtifact {
-        JModModuleArtifact(ExtendedModuleDescriptor descriptor,
+        JModModuleArtifact(ModuleDescriptor descriptor,
                            Set<String> packages,
                            URI location,
                            Hasher.HashSupplier hasher) {
@@ -146,7 +146,7 @@ class ModuleArtifacts {
      * A ModuleArtifact for a module that is packaged as a modular JAR file.
      */
     static class JarModuleArtifact extends ModuleArtifact {
-        JarModuleArtifact(ExtendedModuleDescriptor descriptor,
+        JarModuleArtifact(ModuleDescriptor descriptor,
                           Set<String> packages,
                           URI location,
                           Hasher.HashSupplier hasher) {

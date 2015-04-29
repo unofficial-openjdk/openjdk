@@ -22,9 +22,9 @@
  */
 
 import java.io.IOException;
-import java.lang.module.ExtendedModuleDescriptor;
 import java.lang.module.ModuleArtifact;
 import java.lang.module.ModuleArtifactFinder;
+import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Exports;
 import java.lang.module.ModuleReader;
 import java.net.URI;
@@ -42,12 +42,12 @@ import java.util.stream.Collectors;
 class ModuleArtifactLibrary implements ModuleArtifactFinder {
     private final Map<String, ModuleArtifact> namesToArtifact = new HashMap<>();
 
-    ModuleArtifactLibrary(ExtendedModuleDescriptor... descriptors) {
+    ModuleArtifactLibrary(ModuleDescriptor... descriptors) {
         addAll(descriptors);
     }
 
-    void addAll(ExtendedModuleDescriptor... descriptors) {
-        for (ExtendedModuleDescriptor descriptor: descriptors) {
+    void addAll(ModuleDescriptor... descriptors) {
+        for (ModuleDescriptor descriptor: descriptors) {
             String name = descriptor.name();
             if (!namesToArtifact.containsKey(name)) {
                 //modules.add(descriptor);

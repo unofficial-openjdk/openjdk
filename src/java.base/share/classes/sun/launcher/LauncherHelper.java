@@ -66,6 +66,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Locale.Category;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.Map;
 import java.util.Set;
@@ -76,7 +77,6 @@ import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 
 import java.lang.module.Configuration;
-import java.lang.module.ExtendedModuleDescriptor;
 import java.lang.module.Layer;
 import java.lang.module.ModuleArtifact;
 import java.lang.module.ModuleDescriptor;
@@ -492,10 +492,10 @@ public enum LauncherHelper {
             return mainClass;
         }
 
-        mainClass = artifact.descriptor().mainClass();
-        if (mainClass == null)
+        Optional<String> omc = artifact.descriptor().mainClass();
+        if (!omc.isPresent())
             abort(null, "java.launcher.module.error3", artifact.location());
-        return mainClass;
+        return omc.get();
     }
 
     // From src/share/bin/java.c:
@@ -901,7 +901,7 @@ public enum LauncherHelper {
                     continue;
                 }
 
-                ExtendedModuleDescriptor md = artifact.descriptor();
+                ModuleDescriptor md = artifact.descriptor();
                 ostream.println(midAndLocation(md, artifact.location()));
 
                 for (Requires d: md.requires()) {
@@ -929,7 +929,7 @@ public enum LauncherHelper {
         }
     }
 
-    static String midAndLocation(ExtendedModuleDescriptor md, URI location ) {
+    static String midAndLocation(ModuleDescriptor md, URI location ) {
         if (location.getScheme().equalsIgnoreCase("jrt")) {
             return md.toNameAndVersion();
         } else {

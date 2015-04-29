@@ -22,6 +22,7 @@
  */
 
 import java.util.EnumSet;
+import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Requires;
 import java.lang.module.ModuleDescriptor.Requires.Modifier;
 import static java.lang.module.ModuleDescriptor.Requires.Modifier.*;

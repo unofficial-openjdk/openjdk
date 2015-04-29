@@ -26,9 +26,9 @@
 package jdk.internal.module;
 
 import java.io.IOException;
-import java.lang.module.ExtendedModuleDescriptor;
 import java.lang.module.ModuleArtifact;
 import java.lang.module.ModuleArtifactFinder;
+import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Requires;
 import java.lang.module.ModuleDescriptor.Exports;
 import java.lang.module.ModuleReader;
@@ -170,7 +170,7 @@ class ArtifactInterposer implements ModuleArtifactFinder {
      * module descriptor with additional requires or widened exports.
      */
     private ModuleArtifact replaceIfNeeded(ModuleArtifact artifact) {
-        ExtendedModuleDescriptor descriptor = artifact.descriptor();
+        ModuleDescriptor descriptor = artifact.descriptor();
         String name = descriptor.name();
 
         Set<String> requires = requiresAdditions.get(name);
@@ -244,18 +244,18 @@ class ArtifactInterposer implements ModuleArtifactFinder {
 
         }
 
-
-        // create a new ExtendedModuleDescriptor with the updated module
+        // create a new ModuleDescriptor with the updated module
         // definition
-        ExtendedModuleDescriptor.Builder builder =
-            new ExtendedModuleDescriptor.Builder(descriptor.name(),
-                                                 descriptor.version());
+        // ## Need a better way to edit an existing descriptor
+        ModuleDescriptor.Builder builder =
+            new ModuleDescriptor.Builder(descriptor.name());
+        descriptor.version().ifPresent(v -> builder.version(v.toString())); // ##
         newRequires.forEach(builder::requires);
         descriptor.uses().forEach(builder::uses);
         newExports.forEach(builder::export);
         descriptor.provides().values()
             .forEach(p -> builder.provides(p.service(), p.providers()));
-        ExtendedModuleDescriptor newDescriptor = builder.build();
+        ModuleDescriptor newDescriptor = builder.build();
 
         // Return a new ModuleArtifact with the new module descriptor
         Set<String> packages = artifact.packages();
