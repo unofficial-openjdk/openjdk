@@ -275,7 +275,7 @@ public class ModuleSummary {
             .collect(Collectors.joining("<br>\n"));
         out.format("<td>%s</td>%n", requires);
         String exports = descriptor.exports().stream()
-            .filter(e -> e.permit() == null)
+            .filter(e -> !e.targets().isPresent())
             .map(e -> e.source())
             .sorted()
             .collect(Collectors.joining("<br>\n"));

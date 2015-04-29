@@ -419,11 +419,12 @@ public final class ModuleInfo {
                 String pkg = cpool.getUtf8(index).replace('/', '.');
                 int exports_to_count = in.readUnsignedShort();
                 if (exports_to_count > 0) {
+                    Set<String> targets = new HashSet<>();
                     for (int j=0; j<exports_to_count; j++) {
                         int exports_to_index = in.readUnsignedShort();
-                        String permit = cpool.getUtf8(exports_to_index);
-                        exports.add(new Exports(pkg, permit));
+                        targets.add(cpool.getUtf8(exports_to_index));
                     }
+                    exports.add(new Exports(pkg, targets));
                 } else {
                     exports.add(new Exports(pkg));
                 }

@@ -110,11 +110,13 @@ class ClassFileAttributes {
                     off += 4;
 
                     if (exports_to_count > 0) {
+                        Set<String> targets = new HashSet<>();
                         for (int j=0; j<exports_to_count; j++) {
-                            String who = cr.readUTF8(off, buf);
+                            String t = cr.readUTF8(off, buf);
                             off += 2;
-                            attr.exports.add(new Exports(pkg, who));
+                            targets.add(t);
                         }
+                        attr.exports.add(new Exports(pkg, targets));
                     } else {
                         attr.exports.add(new Exports(pkg));
                     }
@@ -180,29 +182,15 @@ class ClassFileAttributes {
             if (exports == null) {
                 attr.putShort(0);
             } else {
-                // group by exported package
-                Map<String, Set<String>> map = new HashMap<>();
-                for (Exports export : exports) {
-                    String pkg = export.source();
-                    String permit = export.permit();
-                    if (permit == null) {
-                        map.computeIfAbsent(pkg, k -> new HashSet<>());
-                    } else {
-                        map.computeIfAbsent(pkg, k -> new HashSet<>()).add(permit);
-                    }
-                }
-                attr.putShort(map.size());
-                for (Map.Entry<String, Set<String>> entry : map.entrySet()) {
-                    String pkg = entry.getKey().replace('.', '/');
-                    int index = cw.newUTF8(pkg);
-                    attr.putShort(index);
-
-                    Set<String> permits = entry.getValue();
-                    attr.putShort(permits.size());
-                    for (String permit : permits) {
-                        index = cw.newUTF8(permit);
-                        attr.putShort(index);
-                    }
+                attr.putShort(exports.size());
+                for (Exports e : exports) {
+                    String pkg = e.source().replace('.', '/');
+                    attr.putShort(cw.newUTF8(pkg));
+                    e.targets().ifPresentOrElse(ts -> {
+                            attr.putShort(ts.size());
+                            ts.forEach(t -> attr.putShort(cw.newUTF8(t)));
+                        },
+                        () -> attr.putShort(0));
                 }
             }
 

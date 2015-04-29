@@ -29,6 +29,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.Objects;
 import static java.util.Objects.*;
@@ -175,57 +176,61 @@ public class ModuleDescriptor
 
     public final static class Exports {
 
-        private final String pkg;
-        private final String permit;
+        private final String source;
+        private final Optional<Set<String>> targets;
 
         /**
-         * Constructs a {@code Exports} to represent the exporting of package
-         * {@code pkg} to module {@code who}.
+         * Constructs an {@code Exports} to represent the exporting of package
+         * {@code source} to the modules named in {@code targets}.
          */
-        public Exports(String pkg, String who) {
-            this.pkg = requireNonNull(pkg);
-            this.permit = who;
+        public Exports(String source, Set<String> targets) {
+            this.source = requireNonNull(source);
+            requireNonNull(targets);
+            if (targets.isEmpty())
+                throw new IllegalArgumentException("Empty target set");
+            this.targets = Optional.of(Collections.unmodifiableSet(targets));
         }
 
         /**
-         * Constructs a {@code Exports} to represent the exporting of package
-         * {@code pkg}.
+         * Constructs an {@code Exports} to represent the exporting of package
+         * {@code source}.
          */
-        public Exports(String pkg) {
-            this(pkg, null);
+        public Exports(String source) {
+            this.source = requireNonNull(source);
+            this.targets = Optional.empty();
         }
 
         /**
          * Returns the package name.
          */
         public String source() {
-            return pkg;
+            return source;
         }
 
         /**
          * Returns the name of the module that the package is exported to,
          * or {@code null} if this is an unqualified export.
          */
-        public String permit() {
-            return permit;
+        public Optional<Set<String>> targets() {
+            return targets;
         }
 
         public int hashCode() {
-            return hash(pkg, permit);
+            return hash(source, targets);
         }
 
         public boolean equals(Object obj) {
             if (!(obj instanceof Exports))
                 return false;
             Exports other = (Exports)obj;
-            return Objects.equals(this.pkg, other.pkg) &&
-                Objects.equals(this.permit, other.permit);
+            return Objects.equals(this.source, other.source) &&
+                Objects.equals(this.targets, other.targets);
         }
 
         public String toString() {
-            if (permit == null)
-                return pkg;
-            return pkg + " to " + permit;
+            if (targets.isPresent())
+                return source + " to " + targets.get().toString();
+            return source;
         }
 
     }
@@ -234,8 +239,8 @@ public class ModuleDescriptor
 
     private final String name;
     private final Set<Requires> requires;
-    private final Set<String> serviceDependences;
     private final Set<Exports> exports;
+    private final Set<String> serviceDependences;
     private final Map<String, Set<String>> services;
 
     ModuleDescriptor(String name,
@@ -245,9 +250,18 @@ public class ModuleDescriptor
                      Map<String, Set<String>> services)
     {
         this.name = ModuleName.check(name);
+
+        assert (requires.stream().map(Requires::name).sorted().distinct().count()
+                == requires.size())
+            : String.format("Module %s has duplicate requires", name);
         this.requires = Collections.unmodifiableSet(requires);
-        this.serviceDependences = Collections.unmodifiableSet(serviceDeps);
+
+        assert (exports.stream().map(Exports::source).sorted().distinct().count()
+                == exports.size())
+            : String.format("Module %s has duplicate exports", name);
         this.exports = Collections.unmodifiableSet(exports);
+
+        this.serviceDependences = Collections.unmodifiableSet(serviceDeps);
         // ## FIXME values are mutable
         this.services = Collections.unmodifiableMap(services);
     }
@@ -359,11 +373,9 @@ public class ModuleDescriptor
 
         /**
          * Exports the given package name to the given named module.
-         *
-         * ## FIXME need to check for conflicting exports
          */
         public Builder export(String p, String m) {
-            return export(new Exports(p, m));
+            return export(new Exports(p, Collections.singleton(m)));
         }
 
         /**

@@ -911,23 +911,12 @@ public enum LauncherHelper {
                 }
 
                 // sorted exports
-                Map<String, Set<String>> exports = new TreeMap<>();
-                for (Exports export : md.exports()) {
-                    String pkg = export.source();
-                    String who = export.permit();
-                    Set<String> permits = exports.computeIfAbsent(pkg, k -> new HashSet<>());
-                    if (who != null) {
-                        permits.add(who);
-                    }
-                }
-                for (Map.Entry<String, Set<String>> entry : exports.entrySet()) {
-                    ostream.format("  exports %s", entry.getKey());
-                    Set<String> who = entry.getValue();
-                    if (who.isEmpty()) {
-                        ostream.println();
-                    } else {
-                        formatCommaList(ostream, " to", who);
-                    }
+                Set<Exports> exports = new TreeSet<>(Comparator.comparing(Exports::source));
+                exports.addAll(md.exports());
+                for (Exports e : exports) {
+                    ostream.format("  exports %s", e.source());
+                    e.targets().ifPresentOrElse(ts -> formatCommaList(ostream, " to", ts),
+                                                () -> ostream.println());
                 }
 
                 Map<String, Set<String>> services = md.services();

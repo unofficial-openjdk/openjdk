@@ -389,23 +389,23 @@ public final class Module {
             // exports
             Map<String, Map<Module, Boolean>> exports = new HashMap<>();
             for (Exports export: descriptor.exports()) {
-                String pkg = export.source();
-                String permit = export.permit();
-                if (permit == null) {
-                    exports.computeIfAbsent(pkg, k -> Collections.emptyMap());
-
+                String source = export.source();
+                if (!export.targets().isPresent()) {
+                    exports.computeIfAbsent(source, k -> Collections.emptyMap());
                     // update VM view
-                    jvmAddModuleExports(m, pkg.replace('.', '/'), null);
+                    jvmAddModuleExports(m, source.replace('.', '/'), null);
                 } else {
-                    // only export to modules that are in this configuration
-                    Module m2 = modules.get(permit);
-                    if (m2 != null) {
-                        exports.computeIfAbsent(pkg, k -> new HashMap<>())
-                               .put(m2, Boolean.TRUE);
-
-                        // update VM view
-                        jvmAddModuleExports(m, pkg.replace('.', '/'), m2);
-                    }
+                    export.targets().get()
+                        .forEach(mn -> {
+                                // only export to modules that are in this configuration
+                                Module m2 = modules.get(mn);
+                                if (m2 != null) {
+                                    exports.computeIfAbsent(source, k -> new HashMap<>())
+                                        .put(m2, Boolean.TRUE);
+                                    // update VM view
+                                    jvmAddModuleExports(m, source.replace('.', '/'), m2);
+                                }
+                            });
                 }
             }
             m.exports = exports;
