@@ -280,12 +280,12 @@ public class ModuleSummary {
             .sorted()
             .collect(Collectors.joining("<br>\n"));
         out.format("<td>%s</td>%n", exports);
-        Stream<String> uses = descriptor.serviceDependences().stream()
+        Stream<String> uses = descriptor.uses().stream()
             .map(s -> "uses " + s)
             .sorted();
-        Stream<String> providers = descriptor.services().entrySet().stream()
+        Stream<String> providers = descriptor.provides().entrySet().stream()
             .sorted(Map.Entry.comparingByKey())
-            .flatMap(e -> e.getValue().stream().map(p ->
+            .flatMap(e -> e.getValue().providers().stream().map(p ->
                 String.format("provides %s<br>&nbsp; <em>with %s</em>", e.getKey(), p)));
         out.format("<td>%s</td>%n", Stream.concat(uses, providers)
                                           .collect(Collectors.joining("<br>\n")));

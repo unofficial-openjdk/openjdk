@@ -223,7 +223,7 @@ class Resolver {
 
         // seed with all consumers resolved so far
         resolved.stream()
-                .filter(m -> !m.serviceDependences().isEmpty())
+                .filter(m -> !m.uses().isEmpty())
                 .forEach(serviceConsumersToVisit::add);
 
         // iterate until there are no new service consumers to visit
@@ -231,7 +231,7 @@ class Resolver {
 
             // process the service dependences of service consumers
             for (ModuleDescriptor m: serviceConsumersToVisit) {
-                for (String service: m.serviceDependences()) {
+                for (String service: m.uses()) {
                     if (!servicesSearched.contains(service)) {
 
                         // find all modules that provide "service", the order
@@ -240,7 +240,7 @@ class Resolver {
                                 afterFinder.allModules().stream())
                                 .forEach(artifact -> {
                                     ModuleDescriptor descriptor = artifact.descriptor();
-                                    if (descriptor.services().containsKey(service)) {
+                                    if (descriptor.provides().containsKey(service)) {
                                         if (!resolved.contains(descriptor)) {
                                             q.offer(artifact);
                                         }
@@ -259,7 +259,7 @@ class Resolver {
 
                 // newly selected modules may have service dependences
                 for (ModuleDescriptor descriptor: newlySelected) {
-                    if (!descriptor.serviceDependences().isEmpty()) {
+                    if (!descriptor.uses().isEmpty()) {
                         serviceConsumersToVisit.add(descriptor);
                     }
                 }

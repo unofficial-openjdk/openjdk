@@ -31,6 +31,7 @@ import java.util.Objects;
 import java.util.Set;
 
 import jdk.internal.module.Hasher.DependencyHashes;
+import static java.lang.module.Checks.*;
 
 
 /**
@@ -53,11 +54,11 @@ public class ExtendedModuleDescriptor
                              String mainClass,
                              DependencyHashes hashes,
                              Set<Requires> moduleDeps,
-                             Set<String> serviceDeps,
+                             Set<String> uses,
                              Set<Exports> exports,
-                             Map<String, Set<String>> services)
+                             Map<String, Provides> provides)
     {
-        super(name, moduleDeps, serviceDeps, exports, services);
+        super(name, moduleDeps, uses, exports, provides);
         this.version = version;
         this.mainClass = mainClass;
         this.hashes = hashes;
@@ -146,12 +147,12 @@ public class ExtendedModuleDescriptor
          * Initializes a new builder.
          */
         public Builder(String name) {
-            this.name = ModuleName.check(name);
+            this.name = requireJavaIdentifier("module name", name);
             this.version = null;
         }
 
         public Builder(String name, Version version) {
-            this.name = ModuleName.check(name);
+            this.name = requireJavaIdentifier("module name", name);
             this.version = version;
         }
 
@@ -184,8 +185,13 @@ public class ExtendedModuleDescriptor
             return this;
         }
 
-        public Builder service(String s, String p) {
-            super.service(s, p);
+        public Builder provides(String s, String p) {
+            super.provides(s, p);
+            return this;
+        }
+
+        public Builder provides(String s, Set<String> ps) {
+            super.provides(s, ps);
             return this;
         }
 
@@ -205,9 +211,9 @@ public class ExtendedModuleDescriptor
                                                 mainClass,
                                                 null,
                                                 requires,
-                                                serviceDeps,
+                                                uses,
                                                 exports,
-                                                services);
+                                                provides);
         }
     }
 

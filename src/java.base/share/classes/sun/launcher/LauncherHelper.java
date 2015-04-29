@@ -79,9 +79,10 @@ import java.lang.module.Configuration;
 import java.lang.module.ExtendedModuleDescriptor;
 import java.lang.module.Layer;
 import java.lang.module.ModuleArtifact;
-import java.lang.module.ModuleDescriptor.Requires;
 import java.lang.module.ModuleDescriptor;
+import java.lang.module.ModuleDescriptor.Requires;
 import java.lang.module.ModuleDescriptor.Exports;
+import java.lang.module.ModuleDescriptor.Provides;
 
 public enum LauncherHelper {
     INSTANCE;
@@ -906,7 +907,7 @@ public enum LauncherHelper {
                 for (Requires d: md.requires()) {
                     ostream.format("  requires %s%n", d);
                 }
-                for (String s: md.serviceDependences()) {
+                for (String s: md.uses()) {
                     ostream.format("  uses %s%n", s);
                 }
 
@@ -919,12 +920,10 @@ public enum LauncherHelper {
                                                 () -> ostream.println());
                 }
 
-                Map<String, Set<String>> services = md.services();
-                for (Map.Entry<String, Set<String>> entry : services.entrySet()) {
-                    String sn = entry.getKey();
-                    for (String impl : entry.getValue()) {
-                        ostream.format("  provides %s with %s%n", sn, impl);
-                    }
+                Map<String, Provides> provides = md.provides();
+                for (Provides ps : provides.values()) {
+                    for (String impl : ps.providers())
+                        ostream.format("  provides %s with %s%n", ps.service(), impl);
                 }
             }
         }

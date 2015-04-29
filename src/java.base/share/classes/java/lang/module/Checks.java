@@ -26,36 +26,36 @@
 package java.lang.module;
 
 
-final class ModuleName {
+final class Checks {
 
-    private ModuleName() { }
+    private Checks() { }
 
-    private static void fail(String nm, int i) {
-        throw new IllegalArgumentException(nm
-                                           + ": Invalid module name: "
+    private static void fail(String what, String id, int i) {
+        throw new IllegalArgumentException(id
+                                           + ": Invalid " + what + ": "
                                            + " Illegal character"
                                            + " at index " + i);
     }
 
-    // Module names must be legal Java identifiers
+    // Legal Java identifiers
     //
-    static String check(String nm) {
-        if (nm == null)
-            throw new IllegalArgumentException("Null module name");
-        int n = nm.length();
+    static String requireJavaIdentifier(String what, String id) {
+        if (id == null)
+            throw new IllegalArgumentException("Null " + what);
+        int n = id.length();
         if (n == 0)
-            throw new IllegalArgumentException("Empty module name");
-        if (!Character.isJavaIdentifierStart(nm.codePointAt(0)))
-            fail(nm, 0);
-        int cp = nm.codePointAt(0);
+            throw new IllegalArgumentException("Empty " + what);
+        if (!Character.isJavaIdentifierStart(id.codePointAt(0)))
+            fail(what, id, 0);
+        int cp = id.codePointAt(0);
         for (int i = Character.charCount(cp);
                 i < n;
                 i += Character.charCount(cp)) {
-            cp = nm.codePointAt(i);
-            if (!Character.isJavaIdentifierPart(cp) && nm.charAt(i) != '.')
-                fail(nm, i);
+            cp = id.codePointAt(i);
+            if (!Character.isJavaIdentifierPart(cp) && id.charAt(i) != '.')
+                fail(what, id, i);
         }
-        return nm;
+        return id;
     }
 
 }

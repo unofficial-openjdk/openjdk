@@ -77,9 +77,9 @@ class ModuleArtifacts {
                                          mi.mainClass(),
                                          mi.hashes(),
                                          mi.requires(),
-                                         mi.serviceDependences(),
+                                         mi.uses(),
                                          mi.exports(),
-                                         mi.services());
+                                         mi.provides());
 
         String scheme = location.getScheme();
         if (scheme.equalsIgnoreCase("jrt"))

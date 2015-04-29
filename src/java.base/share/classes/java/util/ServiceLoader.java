@@ -284,7 +284,7 @@ public final class ServiceLoader<S>
             // uses the service type
             if (callerModule != null) {
                 String sn = svc.getName();
-                if (!callerModule.getDescriptor().serviceDependences().contains(sn)) {
+                if (!callerModule.getDescriptor().uses().contains(sn)) {
                     fail(svc, "use not declared in " + callerModule);
                 }
             }

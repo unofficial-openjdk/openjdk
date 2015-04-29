@@ -27,6 +27,7 @@ package jdk.internal.module;
 
 import java.lang.reflect.Module;
 import java.lang.module.ModuleDescriptor;
+import java.lang.module.ModuleDescriptor.Provides;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -83,9 +84,9 @@ public class ServicesCatalog {
         writeLock.lock();
         try {
             // extend the services map
-            for (Map.Entry<String, Set<String>> entry: descriptor.services().entrySet()) {
-                String service = entry.getKey();
-                Set<String> names = entry.getValue();
+            for (Provides ps : descriptor.provides().values()) {
+                String service = ps.service();
+                Set<String> names = ps.providers();
 
                 // create a new set to replace the existing
                 Set<ServiceProvider> providers = loaderServices.get(service);

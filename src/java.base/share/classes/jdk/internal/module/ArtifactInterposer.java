@@ -63,12 +63,12 @@ class ArtifactInterposer implements ModuleArtifactFinder {
     private final ModuleArtifactFinder finder;
 
     // module name -> module dependence
-    private final Map<String, Set<String>> extraRequires;
+    private final Map<String, Set<String>> requiresAdditions;
 
     // module name -> package name -> set of export additions
     private final Map<String, Map<String, Set<String>>> exportAdditions;
 
-    // Unique list to represent unqualified exports
+    // Unique set to represent unqualified exports
     private static final Set<String> ALL
         = Collections.unmodifiableSet(new HashSet<>());
 
@@ -79,11 +79,11 @@ class ArtifactInterposer implements ModuleArtifactFinder {
     private boolean haveAllModules;
 
     private ArtifactInterposer(ModuleArtifactFinder finder,
-                               Map<String, Set<String>> extraRequires,
+                               Map<String, Set<String>> requiresAdditions,
                                Map<String, Map<String, Set<String>>> exportAdditions)
     {
         this.finder = finder;
-        this.extraRequires = extraRequires;
+        this.requiresAdditions = requiresAdditions;
         this.exportAdditions = exportAdditions;
     }
 
@@ -98,7 +98,7 @@ class ArtifactInterposer implements ModuleArtifactFinder {
                                           String addModuleRequiresValue,
                                           String addModuleExportsValue)
     {
-        Map<String, Set<String>> extraRequires = new HashMap<>();
+        Map<String, Set<String>> requiresAdditions = new HashMap<>();
         if (addModuleRequiresValue != null) {
             // parse value of AddModuleRequires
             for (String expr: addModuleRequiresValue.split(",")) {
@@ -107,7 +107,7 @@ class ArtifactInterposer implements ModuleArtifactFinder {
                     throw parseFailure(expr);
                 String m1 = s[0];
                 String m2 = s[1];
-                extraRequires.computeIfAbsent(m1, k -> new HashSet<>()).add(m2);
+                requiresAdditions.computeIfAbsent(m1, k -> new HashSet<>()).add(m2);
             }
         }
 
@@ -127,16 +127,15 @@ class ArtifactInterposer implements ModuleArtifactFinder {
                 if (s.length == 1) {
                     pkgToAdds.put(pkg, ALL);
                 } else if (s.length == 2) {
-                    if (pkgToAdds.get(pkg) == null)
-                        pkgToAdds.computeIfAbsent(pkg, k -> new HashSet<>())
-                            .add(s[1]);
+                    pkgToAdds.computeIfAbsent(pkg, k -> new HashSet<>())
+                        .add(s[1]);
                 } else {
                     throw parseFailure(expr);
                 }
             }
         }
 
-        return new ArtifactInterposer(finder, extraRequires, exportAdditions);
+        return new ArtifactInterposer(finder, requiresAdditions, exportAdditions);
     }
 
     @Override
@@ -174,7 +173,7 @@ class ArtifactInterposer implements ModuleArtifactFinder {
         ExtendedModuleDescriptor descriptor = artifact.descriptor();
         String name = descriptor.name();
 
-        Set<String> requires = extraRequires.get(name);
+        Set<String> requires = requiresAdditions.get(name);
         Map<String, Set<String>> exportAdds = exportAdditions.get(name);
 
         if (requires == null && exportAdds == null)
@@ -252,12 +251,10 @@ class ArtifactInterposer implements ModuleArtifactFinder {
             new ExtendedModuleDescriptor.Builder(descriptor.name(),
                                                  descriptor.version());
         newRequires.forEach(builder::requires);
-        descriptor.serviceDependences().forEach(builder::uses);
+        descriptor.uses().forEach(builder::uses);
         newExports.forEach(builder::export);
-        for (Map.Entry<String, Set<String>> entry : descriptor.services().entrySet()) {
-            String s = entry.getKey();
-            entry.getValue().forEach(p -> builder.service(s, p));
-        }
+        descriptor.provides().values()
+            .forEach(p -> builder.provides(p.service(), p.providers()));
         ExtendedModuleDescriptor newDescriptor = builder.build();
 
         // Return a new ModuleArtifact with the new module descriptor

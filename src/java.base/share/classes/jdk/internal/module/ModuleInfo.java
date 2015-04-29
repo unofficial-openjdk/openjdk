@@ -34,6 +34,7 @@ import java.io.OutputStream;
 import java.lang.module.ModuleDescriptor.Requires;
 import java.lang.module.ModuleDescriptor.Requires.Modifier;
 import java.lang.module.ModuleDescriptor.Exports;
+import java.lang.module.ModuleDescriptor.Provides;
 import java.lang.module.Version;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
@@ -55,8 +56,8 @@ import jdk.internal.module.Hasher.DependencyHashes;
 /**
  * Represents module information as read from a {@code module-info} class file.
  *
- * @implNote The rational for the hand coded reader is performance and fine
- * control on the throwing of ClassFormatError.
+ * @implNote The rationale for the hand-coded reader is performance and fine
+ * control over the throwing of ClassFormatError.
  */
 public final class ModuleInfo {
 
@@ -82,10 +83,10 @@ public final class ModuleInfo {
     private Set<Exports> exports;
 
     // service dependences (uses) read from the Module attribute
-    private Set<String> serviceDependences;
+    private Set<String> uses;
 
     // service providers (provides) read from the Module attribute
-    private Map<String, Set<String>> services;
+    private Map<String, Provides> provides;
 
     // extended meta data read from other attributes
     private Version version;
@@ -122,23 +123,23 @@ public final class ModuleInfo {
      * Returns the service dependences (<em>uses</em>) as read from the
      * {@code Module} attribute.
      */
-    public Set<String> serviceDependences() {
-        if (serviceDependences == null) {
+    public Set<String> uses() {
+        if (uses == null) {
             return Collections.emptySet();
         } else {
-            return serviceDependences;
+            return uses;
         }
     }
 
     /**
-     * Returns the map of service implementation provided, as read from the
+     * Returns the map of service implementations provided, as read from the
      * {@code Module} attribute.
      */
-    public Map<String, Set<String>> services() {
-        if (services == null) {
+    public Map<String, Provides> provides() {
+        if (provides == null) {
             return Collections.emptyMap();
         } else {
-            return services;
+            return provides;
         }
     }
 
@@ -433,24 +434,28 @@ public final class ModuleInfo {
 
         int uses_count = in.readUnsignedShort();
         if (uses_count > 0) {
-            serviceDependences = new HashSet<>();
+            uses = new HashSet<>();
             for (int i=0; i<uses_count; i++) {
                 int index = in.readUnsignedShort();
                 String sn = cpool.getClassName(index).replace('/', '.');
-                serviceDependences.add(sn);
+                uses.add(sn);
             }
         }
 
         int provides_count = in.readUnsignedShort();
         if (provides_count > 0) {
-            services = new HashMap<>();
+            Map<String, Set<String>> pm = new HashMap<>();
             for (int i=0; i<provides_count; i++) {
                 int index = in.readUnsignedShort();
                 int with_index = in.readUnsignedShort();
                 String sn = cpool.getClassName(index).replace('/', '.');
                 String cn = cpool.getClassName(with_index).replace('/', '.');
-                services.computeIfAbsent(sn, k -> new HashSet<>()).add(cn);
+                pm.computeIfAbsent(sn, k -> new HashSet<>()).add(cn);
             }
+            provides = new HashMap<>();
+            pm.entrySet().forEach(e -> provides.put(e.getKey(),
+                                                    new Provides(e.getKey(),
+                                                                 e.getValue())));
         }
     }
 

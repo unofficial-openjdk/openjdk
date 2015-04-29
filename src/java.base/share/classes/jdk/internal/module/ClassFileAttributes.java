@@ -59,9 +59,9 @@ class ClassFileAttributes {
         private Set<Requires> moduleDependences = new HashSet<>();
 
         // optional and created lazily
-        private Set<String> serviceDependences;
+        private Set<String> uses;
         private Set<Exports> exports;
-        private Map<String, Set<String>> services;
+        private Map<String, Set<String>> provides;
 
         protected ModuleAttribute() {
             super(ModuleInfo.MODULE);
@@ -127,10 +127,10 @@ class ClassFileAttributes {
             int uses_count = cr.readUnsignedShort(off);
             off += 2;
             if (uses_count > 0) {
-                attr.serviceDependences = new HashSet<>();
+                attr.uses = new HashSet<>();
                 for (int i=0; i<uses_count; i++) {
                     String sn = cr.readClass(off, buf).replace('/', '.');
-                    attr.serviceDependences.add(sn);
+                    attr.uses.add(sn);
                     off += 2;
                 }
             }
@@ -139,11 +139,11 @@ class ClassFileAttributes {
             int provides_count = cr.readUnsignedShort(off);
             off += 2;
             if (provides_count > 0) {
-                attr.services = new HashMap<>();
+                attr.provides = new HashMap<>();
                 for (int i=0; i<provides_count; i++) {
                     String sn = cr.readClass(off, buf).replace('/', '.');
                     String cn = cr.readClass(off + 2, buf).replace('/', '.');
-                    attr.services.computeIfAbsent(sn, k -> new HashSet<>()).add(cn);
+                    attr.provides.computeIfAbsent(sn, k -> new HashSet<>()).add(cn);
                     off += 4;
                 }
             }
@@ -186,20 +186,22 @@ class ClassFileAttributes {
                 for (Exports e : exports) {
                     String pkg = e.source().replace('.', '/');
                     attr.putShort(cw.newUTF8(pkg));
-                    e.targets().ifPresentOrElse(ts -> {
-                            attr.putShort(ts.size());
-                            ts.forEach(t -> attr.putShort(cw.newUTF8(t)));
-                        },
-                        () -> attr.putShort(0));
+                    if (e.targets().isPresent()) {
+                        Set<String> ts = e.targets().get();
+                        attr.putShort(ts.size());
+                        ts.forEach(t -> attr.putShort(cw.newUTF8(t)));
+                    } else {
+                        attr.putShort(0);
+                    }
                 }
             }
 
             // uses_count and uses_index[uses_count]
-            if (serviceDependences == null) {
+            if (uses == null) {
                 attr.putShort(0);
             } else {
-                attr.putShort(serviceDependences.size());
-                for (String s : serviceDependences) {
+                attr.putShort(uses.size());
+                for (String s : uses) {
                     String service = s.replace('.', '/');
                     int index = cw.newClass(service);
                     attr.putShort(index);
@@ -207,12 +209,12 @@ class ClassFileAttributes {
             }
 
             // provides_count and provides[provides_count]
-            if (services == null) {
+            if (provides == null) {
                 attr.putShort(0);
             } else {
-                int count = services.values().stream().mapToInt(c -> c.size()).sum();
+                int count = provides.values().stream().mapToInt(ps -> ps.size()).sum();
                 attr.putShort(count);
-                for (Map.Entry<String, Set<String>> entry : services.entrySet()) {
+                for (Map.Entry<String, Set<String>> entry : provides.entrySet()) {
                     String service = entry.getKey().replace('.', '/');
                     int index = cw.newClass(service);
                     for (String provider : entry.getValue()) {

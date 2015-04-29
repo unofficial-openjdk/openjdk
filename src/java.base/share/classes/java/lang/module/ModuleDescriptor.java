@@ -34,6 +34,8 @@ import java.util.Set;
 import java.util.Objects;
 import static java.util.Objects.*;
 
+import static java.lang.module.Checks.*;
+
 
 /**
  * A module descriptor.
@@ -99,7 +101,7 @@ public class ModuleDescriptor
             } else {
                 mods = Collections.unmodifiableSet(ms);
             }
-            this.name = ModuleName.check(mn);
+            this.name = requireJavaIdentifier("module name", mn);
         }
 
         /**
@@ -237,19 +239,42 @@ public class ModuleDescriptor
 
 
 
+    /**
+     * Service provider
+     */
+
+    public final static class Provides {
+
+        private final String service;
+        private final Set<String> providers;
+
+        public Provides(String service, Set<String> providers) {
+            this.service = requireJavaIdentifier("service type name", service);
+            providers.forEach(s -> requireJavaIdentifier("service provider name",
+                                                         service));
+            this.providers = Collections.unmodifiableSet(providers);
+        }
+
+        public String service() { return service; }
+        public Set<String> providers() { return providers; }
+
+    }
+
+
+
     private final String name;
     private final Set<Requires> requires;
     private final Set<Exports> exports;
-    private final Set<String> serviceDependences;
-    private final Map<String, Set<String>> services;
+    private final Set<String> uses;
+    private final Map<String, Provides> provides;
 
     ModuleDescriptor(String name,
                      Set<Requires> requires,
-                     Set<String> serviceDeps,
+                     Set<String> uses,
                      Set<Exports> exports,
-                     Map<String, Set<String>> services)
+                     Map<String, Provides> provides)
     {
-        this.name = ModuleName.check(name);
+        this.name = requireJavaIdentifier("module name", name);
 
         assert (requires.stream().map(Requires::name).sorted().distinct().count()
                 == requires.size())
@@ -261,9 +286,9 @@ public class ModuleDescriptor
             : String.format("Module %s has duplicate exports", name);
         this.exports = Collections.unmodifiableSet(exports);
 
-        this.serviceDependences = Collections.unmodifiableSet(serviceDeps);
+        this.uses = Collections.unmodifiableSet(uses);
         // ## FIXME values are mutable
-        this.services = Collections.unmodifiableMap(services);
+        this.provides = Collections.unmodifiableMap(provides);
     }
 
     /**
@@ -274,9 +299,9 @@ public class ModuleDescriptor
     }
 
     /**
-     * <p> The view dependences of this module </p>
+     * <p> The dependences of this module </p>
      *
-     * @return  A possibly-empty unmodifiable set of {@link Requires}s
+     * @return  A possibly-empty unmodifiable set of {@link Requires} objects
      */
     public Set<Requires> requires() {
         return requires;
@@ -287,20 +312,15 @@ public class ModuleDescriptor
      *
      * @return  A possibly-empty unmodifiable set of the service types used
      */
-    public Set<String> serviceDependences() {
-        return serviceDependences;
+    public Set<String> uses() {
+        return uses;
     }
 
     /**
      * <p> The services that this module provides </p>
-     *
-     * @return  A possibly-empty unmodifiable map with a key that is the
-     *          fully-qualified name of a service type and value that is
-     *          the set of class names of the service providers that are
-     *          provided by this module.
      */
-    public Map<String, Set<String>> services() {
-        return services;
+    public Map<String, Provides> provides() {
+        return provides;
     }
 
     /**
@@ -319,9 +339,9 @@ public class ModuleDescriptor
 
         String name;
         final Set<Requires> requires = new HashSet<>();
-        final Set<String> serviceDeps = new HashSet<>();
+        final Set<String> uses = new HashSet<>();
         final Set<Exports> exports = new HashSet<>();
-        final Map<String, Set<String>> services = new HashMap<>();
+        final Map<String, Provides> provides = new HashMap<>();
 
         /**
          * For sub-class usage.
@@ -348,7 +368,7 @@ public class ModuleDescriptor
          * Adds a service dependence.
          */
         public Builder uses(String s) {
-            serviceDeps.add(requireNonNull(s));
+            uses.add(requireNonNull(s));
             return this;
         }
 
@@ -381,9 +401,18 @@ public class ModuleDescriptor
         /**
          * Provides service {@code s} with implementation {@code p}.
          */
-        public Builder service(String s, String p) {
-            services.computeIfAbsent(requireNonNull(s), k -> new HashSet<>())
-                    .add(requireNonNull(p));
+        public Builder provides(String s, String p) {
+            assert provides.get(s) == null;
+            provides.put(s, new Provides(s, Collections.singleton(p)));
+            return this;
+        }
+
+        /**
+         * Provides service {@code s} with implementations {@code ps}.
+         */
+        public Builder provides(String s, Set<String> ps) {
+            assert provides.get(s) == null;
+            provides.put(s, new Provides(s, ps));
             return this;
         }
 
@@ -394,9 +423,9 @@ public class ModuleDescriptor
             assert name != null;
             return new ModuleDescriptor(name,
                                         requires,
-                                        serviceDeps,
+                                        uses,
                                         exports,
-                                        services);
+                                        provides);
         }
     }
 
@@ -412,9 +441,9 @@ public class ModuleDescriptor
         ModuleDescriptor that = (ModuleDescriptor)ob;
         return (name.equals(that.name)
                 && requires.equals(that.requires)
-                && serviceDependences.equals(that.serviceDependences)
+                && uses.equals(that.uses)
                 && exports.equals(that.exports)
-                && services.equals(that.services));
+                && provides.equals(that.provides));
     }
 
     private transient int hash;  // cached hash code
@@ -425,9 +454,9 @@ public class ModuleDescriptor
         if (hc == 0) {
             hc = name.hashCode();
             hc = hc * 43 + requires.hashCode();
-            hc = hc * 43 + serviceDependences.hashCode();
+            hc = hc * 43 + uses.hashCode();
             hc = hc * 43 + exports.hashCode();
-            hc = hc * 43 + services.hashCode();
+            hc = hc * 43 + provides.hashCode();
             hash = hc;
         }
         return hc;
@@ -439,13 +468,13 @@ public class ModuleDescriptor
         sb.append("Module { name: ").append(name());
         if (!requires.isEmpty())
             sb.append(", ").append(requires);
-        if (!serviceDependences.isEmpty())
-            sb.append(", ").append(serviceDependences);
+        if (!uses.isEmpty())
+            sb.append(", ").append(uses);
         if (!exports.isEmpty())
             sb.append(", exports: ").append(exports);
-        if (!services.isEmpty()) {
+        if (!provides.isEmpty()) {
             sb.append(", provides: [");
-            for (Map.Entry<String, Set<String>> entry: services.entrySet()) {
+            for (Map.Entry<String, Provides> entry : provides.entrySet()) {
                 sb.append(entry.getKey())
                    .append(" with ")
                    .append(entry.getValue());

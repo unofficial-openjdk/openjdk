@@ -33,6 +33,7 @@ import java.lang.module.Layer.ClassLoaderFinder;
 import java.lang.module.ModuleArtifact;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Exports;
+import java.lang.module.ModuleDescriptor.Provides;
 import java.lang.module.Version;
 import java.net.URI;
 import java.util.Collections;
@@ -418,7 +419,7 @@ public final class Module {
             Module m = modules.get(name);
             ClassLoader loader = loaders.get(name);
 
-            Map<String, Set<String>> services = descriptor.services();
+            Map<String, Provides> services = descriptor.provides();
             if (!services.isEmpty()) {
                 ServicesCatalog catalog;
                 if (loader == null) {

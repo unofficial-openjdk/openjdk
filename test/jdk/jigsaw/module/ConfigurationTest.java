@@ -143,7 +143,7 @@ public class ConfigurationTest {
         ExtendedModuleDescriptor descriptor3 =
                 new ExtendedModuleDescriptor.Builder("m3")
                 .requires(md("m1"))
-                .service("S", "p.S1").build();
+                .provides("S", "p.S1").build();
 
         // unused module
         ExtendedModuleDescriptor descriptor4 =
