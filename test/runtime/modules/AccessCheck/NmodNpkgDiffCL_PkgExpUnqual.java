@@ -25,13 +25,12 @@
 
 /*
  * @test
- * @summary class p1.c1 defined in the unnamed module tries to access p2.c2 defined in m2.
- *          Access is denied, since the unnamed module can read all modules but p2 in module
- *          m2 is exported specifically to module m1, not to all modules.
+ * @summary Test that if module1 can read module2, and package p2 in module2 is
+ *          exported unqualifiedly, then class p1.c1 in module1 can read p2.c2 in module2.
  * @compile p2/c2.java
  * @compile p1/c1.java
- * @build UmodNpkgDiffCL_ExpQualToM1
- * @run main/othervm -Xbootclasspath/a:. UmodNpkgDiffCL_ExpQualToM1
+ * @build NmodNpkgDiffCL_PkgExpUnqual
+ * @run main/othervm -Xbootclasspath/a:. NmodNpkgDiffCL_PkgExpUnqual
  */
 
 import java.lang.module.Configuration;
@@ -50,17 +49,16 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 //
-// ClassLoader1 --> defines m1 --> packages m1_pinternal
+// ClassLoader1 --> defines m1 --> packages p1, m1_pinternal
 // ClassLoader2 --> defines m2 --> packages p2, m2_pinternal
 //
 // m1 can read m2
-// package p2 in m2 is not exported
+// package p2 in m2 is exported to m1
 //
-// class p1.c1 defined in the unnamed module tries to access p2.c2 defined in m2
-// Access denied, the unnamed module can read all modules but p2 in module
-//             m2 is exported specifically to module m1 not to all modules.
+// class p1.c1 defined in m1 tries to access p2.c2 defined in m2
+// Access allowed since m1 can read m2 and package p2 is exported to m1.
 //
-public class UmodNpkgDiffCL_ExpQualToM1 {
+public class NmodNpkgDiffCL_PkgExpUnqual {
 
     // Create a Layer over the boot layer.
     // Define modules within this layer to test access between
@@ -69,20 +67,21 @@ public class UmodNpkgDiffCL_ExpQualToM1 {
 
         // Define module:     m1
         // Can read:          module m2 and java.base
-        // Packages:          m1_pinternal
-        // Packages exported: none
+        // Packages:          p1, m1_pinternal
+        // Packages exported: p1 is exported unqualifiedly
         ModuleDescriptor descriptor_m1 =
                 new ModuleDescriptor.Builder("m1")
                         .requires(md("m2"))
                         .requires(md("java.base"))
+                        .export("p1")
                         .build();
-        Set<String> packages_m1 = Stream.of("m1_pinternal").collect(Collectors.toSet());
+        Set<String> packages_m1 = Stream.of("p1", "m1_pinternal").collect(Collectors.toSet());
         ModuleArtifact artifact_m1 = MyModuleArtifact.newModuleArtifact(descriptor_m1, packages_m1);
 
         // Define module:     m2
         // Can read:          java.base
         // Packages:          p2, m2_pinternal
-        // Packages exported: none
+        // Packages exported: package p2 is exported to m1
         ModuleDescriptor descriptor_m2 =
                 new ModuleDescriptor.Builder("m2")
                         .requires(md("java.base"))
@@ -112,17 +111,11 @@ public class UmodNpkgDiffCL_ExpQualToM1 {
         Layer layer = Layer.create(cf, map::get);
 
         // now use the same loader to load class p1.c1
-        // NOTE: module m1 does not define a package named p1.
-        //       p1 will be loaded in the unnamed module.
         Class p1_c1_class = MyDiffClassLoader.loader1.loadClass("p1.c1");
         try {
             p1_c1_class.newInstance();
-            throw new RuntimeException("Failed to get IAE (p2 in m2 is exported to m1, not unqualifiedly");
         } catch (IllegalAccessError e) {
-            System.out.println(e.getMessage());
-            if (!e.getMessage().contains("not exported")) {
-                throw new RuntimeException("Wrong message: " + e.getMessage());
-            }
+            throw new RuntimeException("Test Failed, an IAE should not be thrown since p2 is exported qualifiedly to m1");
         }
     }
 
@@ -134,7 +127,7 @@ public class UmodNpkgDiffCL_ExpQualToM1 {
     }
 
     public static void main(String args[]) throws Throwable {
-      UmodNpkgDiffCL_ExpQualToM1 test = new UmodNpkgDiffCL_ExpQualToM1();
+      NmodNpkgDiffCL_PkgExpUnqual test = new NmodNpkgDiffCL_PkgExpUnqual();
       test.createLayerOnBoot();
     }
 }

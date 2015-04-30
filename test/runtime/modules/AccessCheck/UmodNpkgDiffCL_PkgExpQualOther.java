@@ -25,12 +25,13 @@
 
 /*
  * @test
- * @summary Test that if module1 can read module2, but package p2 in module2 is not
- *          exported, then class p1.c1 in module1 can not read p2.c2 in module2.
+ * @summary class p1.c1 defined in the unnamed module tries to access p2.c2 defined in m2.
+ *          Access is denied, since the unnamed module can read all modules but p2 in module
+ *          m2 is exported specifically to module m1, not to all modules.
  * @compile p2/c2.java
  * @compile p1/c1.java
- * @build NmodNpkgDiffCL_PkgExpQualNotM1
- * @run main/othervm -Xbootclasspath/a:. NmodNpkgDiffCL_PkgExpQualNotM1
+ * @build UmodNpkgDiffCL_PkgExpQualOther
+ * @run main/othervm -Xbootclasspath/a:. UmodNpkgDiffCL_PkgExpQualOther
  */
 
 import java.lang.module.Configuration;
@@ -48,22 +49,18 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-/*
- * STDOUT: class p1.c1 (in module: m1) cannot access class p2.c2 (in module: m2), p2 is not exported to m1
- */
-
 //
-// ClassLoader1 --> defines m1 --> packages p1, m1_pinternal
+// ClassLoader1 --> defines m1 --> packages m1_pinternal
 // ClassLoader2 --> defines m2 --> packages p2, m2_pinternal
-//                  defines m3 --> packages p3, m3_pinternal
 //
 // m1 can read m2
-// package p2 in m2 is exported to m3
+// package p2 in m2 is not exported
 //
-// class p1.c1 defined in m1 tries to access p2.c2 defined in m2
-// Access denied since although m1 can read m2, p2 is exported only to m3.
+// class p1.c1 defined in the unnamed module tries to access p2.c2 defined in m2
+// Access denied, the unnamed module can read all modules but p2 in module
+//             m2 is exported specifically to module m1 not to all modules.
 //
-public class NmodNpkgDiffCL_PkgExpQualNotM1 {
+public class UmodNpkgDiffCL_PkgExpQualOther {
 
     // Create a Layer over the boot layer.
     // Define modules within this layer to test access between
@@ -72,43 +69,31 @@ public class NmodNpkgDiffCL_PkgExpQualNotM1 {
 
         // Define module:     m1
         // Can read:          module m2 and java.base
-        // Packages:          p1, m1_pinternal
-        // Packages exported: p1 is exported unqualifiedly
+        // Packages:          m1_pinternal
+        // Packages exported: none
         ModuleDescriptor descriptor_m1 =
                 new ModuleDescriptor.Builder("m1")
                         .requires(md("m2"))
                         .requires(md("java.base"))
-                        .export("p1")
                         .build();
-        Set<String> packages_m1 = Stream.of("p1", "m1_pinternal").collect(Collectors.toSet());
+        Set<String> packages_m1 = Stream.of("m1_pinternal").collect(Collectors.toSet());
         ModuleArtifact artifact_m1 = MyModuleArtifact.newModuleArtifact(descriptor_m1, packages_m1);
 
         // Define module:     m2
         // Can read:          java.base
         // Packages:          p2, m2_pinternal
-        // Packages exported: p2 is exported to m3
+        // Packages exported: none
         ModuleDescriptor descriptor_m2 =
                 new ModuleDescriptor.Builder("m2")
                         .requires(md("java.base"))
-                        .export("p2", "m3")
+                        .export("p2", "m1")
                         .build();
         Set<String> packages_m2 = Stream.of("p2", "m2_pinternal").collect(Collectors.toSet());
         ModuleArtifact artifact_m2 = MyModuleArtifact.newModuleArtifact(descriptor_m2, packages_m2);
 
-        // Define module:     m3
-        // Can read:          java.base
-        // Packages:          p3, m3_pinternal
-        // Packages exported: none
-        ModuleDescriptor descriptor_m3 =
-                new ModuleDescriptor.Builder("m3")
-                        .requires(md("java.base"))
-                        .build();
-        Set<String> packages_m3 = Stream.of("p3", "m3_pinternal").collect(Collectors.toSet());
-        ModuleArtifact artifact_m3 = MyModuleArtifact.newModuleArtifact(descriptor_m3, packages_m3);
-
         // Set up a ModuleArtifactFinder containing all modules for this layer.
         ModuleArtifactFinder finder =
-                new ModuleArtifactLibrary(artifact_m1, artifact_m2, artifact_m3);
+                new ModuleArtifactLibrary(artifact_m1, artifact_m2);
 
         // Resolves a module named "m1" that results in a configuration.  It
         // then augments that configuration with additional modules (and edges) induced
@@ -122,16 +107,17 @@ public class NmodNpkgDiffCL_PkgExpQualNotM1 {
         Map<ModuleArtifact, ClassLoader> map = new HashMap<>();
         map.put(artifact_m1, MyDiffClassLoader.loader1);
         map.put(artifact_m2, MyDiffClassLoader.loader2);
-        map.put(artifact_m3, MyDiffClassLoader.loader2);
 
         // Create Layer that contains m1 & m2
         Layer layer = Layer.create(cf, map::get);
 
         // now use the same loader to load class p1.c1
+        // NOTE: module m1 does not define a package named p1.
+        //       p1 will be loaded in the unnamed module.
         Class p1_c1_class = MyDiffClassLoader.loader1.loadClass("p1.c1");
         try {
             p1_c1_class.newInstance();
-            throw new RuntimeException("Failed to get IAE (p2 in m2 is exported to m3 not to m1)");
+            throw new RuntimeException("Failed to get IAE (p2 in m2 is exported to m1, not unqualifiedly");
         } catch (IllegalAccessError e) {
             System.out.println(e.getMessage());
             if (!e.getMessage().contains("not exported")) {
@@ -148,7 +134,7 @@ public class NmodNpkgDiffCL_PkgExpQualNotM1 {
     }
 
     public static void main(String args[]) throws Throwable {
-      NmodNpkgDiffCL_PkgExpQualNotM1 test = new NmodNpkgDiffCL_PkgExpQualNotM1();
+      UmodNpkgDiffCL_PkgExpQualOther test = new UmodNpkgDiffCL_PkgExpQualOther();
       test.createLayerOnBoot();
     }
 }

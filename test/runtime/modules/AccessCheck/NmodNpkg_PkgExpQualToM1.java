@@ -29,8 +29,8 @@
  *          exported qualifiedly to m1, then class p1.c1 in module1 can read p2.c2 in module2.
  * @compile p2/c2.java
  * @compile p1/c1.java
- * @build NmodNpkg_PkgExpQual
- * @run main/othervm -Xbootclasspath/a:. NmodNpkg_PkgExpQual
+ * @build NmodNpkg_PkgExpQualToM1
+ * @run main/othervm -Xbootclasspath/a:. NmodNpkg_PkgExpQualToM1
  */
 
 import java.lang.module.Configuration;
@@ -48,7 +48,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class NmodNpkg_PkgExpQual {
+public class NmodNpkg_PkgExpQualToM1 {
 
     // Create a Layer over the boot layer.
     // Define modules within this layer to test access between
@@ -114,7 +114,7 @@ public class NmodNpkg_PkgExpQual {
     }
 
     public static void main(String args[]) throws Throwable {
-      NmodNpkg_PkgExpQual test = new NmodNpkg_PkgExpQual();
+      NmodNpkg_PkgExpQualToM1 test = new NmodNpkg_PkgExpQualToM1();
       test.createLayerOnBoot();
     }
 

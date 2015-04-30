@@ -30,8 +30,8 @@
  *          which is exported unqualifiedly.
  * @compile p2/c2.java
  * @compile p1/c1.java
- * @build UmodNpkgDiffCL_ExpUnqual
- * @run main/othervm -Xbootclasspath/a:. UmodNpkgDiffCL_ExpUnqual
+ * @build UmodNpkgDiffCL_PkgExpUnqual
+ * @run main/othervm -Xbootclasspath/a:. UmodNpkgDiffCL_PkgExpUnqual
  */
 
 import java.lang.module.Configuration;
@@ -60,7 +60,7 @@ import java.util.stream.Stream;
 // Access allowed, the unnamed module can read all modules and p2 in module
 //              m2 which is exported unqualifiedly.
 //
-public class UmodNpkgDiffCL_ExpUnqual {
+public class UmodNpkgDiffCL_PkgExpUnqual {
 
     // Create a Layer over the boot layer.
     // Define modules within this layer to test access between
@@ -130,7 +130,7 @@ public class UmodNpkgDiffCL_ExpUnqual {
     }
 
     public static void main(String args[]) throws Throwable {
-      UmodNpkgDiffCL_ExpUnqual test = new UmodNpkgDiffCL_ExpUnqual();
+      UmodNpkgDiffCL_PkgExpUnqual test = new UmodNpkgDiffCL_PkgExpUnqual();
       test.createLayerOnBoot();
     }
 }

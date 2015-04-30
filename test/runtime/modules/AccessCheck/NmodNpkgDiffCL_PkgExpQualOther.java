@@ -25,12 +25,12 @@
 
 /*
  * @test
- * @summary Test that if module1 can read module2, and package p2 in module2 is
- *          exported unqualifiedly, then class p1.c1 in module1 can read p2.c2 in module2.
+ * @summary Test that if module1 can read module2, but package p2 in module2 is not
+ *          exported, then class p1.c1 in module1 can not read p2.c2 in module2.
  * @compile p2/c2.java
  * @compile p1/c1.java
- * @build NmodNpkgDiffCL_PkgUnqual
- * @run main/othervm -Xbootclasspath/a:. NmodNpkgDiffCL_PkgUnqual
+ * @build NmodNpkgDiffCL_PkgExpQualOther
+ * @run main/othervm -Xbootclasspath/a:. NmodNpkgDiffCL_PkgExpQualOther
  */
 
 import java.lang.module.Configuration;
@@ -48,17 +48,22 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+/*
+ * STDOUT: class p1.c1 (in module: m1) cannot access class p2.c2 (in module: m2), p2 is not exported to m1
+ */
+
 //
 // ClassLoader1 --> defines m1 --> packages p1, m1_pinternal
 // ClassLoader2 --> defines m2 --> packages p2, m2_pinternal
+//                  defines m3 --> packages p3, m3_pinternal
 //
 // m1 can read m2
-// package p2 in m2 is exported to m1
+// package p2 in m2 is exported to m3
 //
 // class p1.c1 defined in m1 tries to access p2.c2 defined in m2
-// Access allowed since m1 can read m2 and package p2 is exported to m1.
+// Access denied since although m1 can read m2, p2 is exported only to m3.
 //
-public class NmodNpkgDiffCL_PkgUnqual {
+public class NmodNpkgDiffCL_PkgExpQualOther {
 
     // Create a Layer over the boot layer.
     // Define modules within this layer to test access between
@@ -81,18 +86,29 @@ public class NmodNpkgDiffCL_PkgUnqual {
         // Define module:     m2
         // Can read:          java.base
         // Packages:          p2, m2_pinternal
-        // Packages exported: package p2 is exported to m1
+        // Packages exported: p2 is exported to m3
         ModuleDescriptor descriptor_m2 =
                 new ModuleDescriptor.Builder("m2")
                         .requires(md("java.base"))
-                        .export("p2", "m1")
+                        .export("p2", "m3")
                         .build();
         Set<String> packages_m2 = Stream.of("p2", "m2_pinternal").collect(Collectors.toSet());
         ModuleArtifact artifact_m2 = MyModuleArtifact.newModuleArtifact(descriptor_m2, packages_m2);
 
+        // Define module:     m3
+        // Can read:          java.base
+        // Packages:          p3, m3_pinternal
+        // Packages exported: none
+        ModuleDescriptor descriptor_m3 =
+                new ModuleDescriptor.Builder("m3")
+                        .requires(md("java.base"))
+                        .build();
+        Set<String> packages_m3 = Stream.of("p3", "m3_pinternal").collect(Collectors.toSet());
+        ModuleArtifact artifact_m3 = MyModuleArtifact.newModuleArtifact(descriptor_m3, packages_m3);
+
         // Set up a ModuleArtifactFinder containing all modules for this layer.
         ModuleArtifactFinder finder =
-                new ModuleArtifactLibrary(artifact_m1, artifact_m2);
+                new ModuleArtifactLibrary(artifact_m1, artifact_m2, artifact_m3);
 
         // Resolves a module named "m1" that results in a configuration.  It
         // then augments that configuration with additional modules (and edges) induced
@@ -106,6 +122,7 @@ public class NmodNpkgDiffCL_PkgUnqual {
         Map<ModuleArtifact, ClassLoader> map = new HashMap<>();
         map.put(artifact_m1, MyDiffClassLoader.loader1);
         map.put(artifact_m2, MyDiffClassLoader.loader2);
+        map.put(artifact_m3, MyDiffClassLoader.loader2);
 
         // Create Layer that contains m1 & m2
         Layer layer = Layer.create(cf, map::get);
@@ -114,8 +131,12 @@ public class NmodNpkgDiffCL_PkgUnqual {
         Class p1_c1_class = MyDiffClassLoader.loader1.loadClass("p1.c1");
         try {
             p1_c1_class.newInstance();
+            throw new RuntimeException("Failed to get IAE (p2 in m2 is exported to m3 not to m1)");
         } catch (IllegalAccessError e) {
-            throw new RuntimeException("Test Failed, an IAE should not be thrown since p2 is exported qualifiedly to m1");
+            System.out.println(e.getMessage());
+            if (!e.getMessage().contains("not exported")) {
+                throw new RuntimeException("Wrong message: " + e.getMessage());
+            }
         }
     }
 
@@ -127,7 +148,7 @@ public class NmodNpkgDiffCL_PkgUnqual {
     }
 
     public static void main(String args[]) throws Throwable {
-      NmodNpkgDiffCL_PkgUnqual test = new NmodNpkgDiffCL_PkgUnqual();
+      NmodNpkgDiffCL_PkgExpQualOther test = new NmodNpkgDiffCL_PkgExpQualOther();
       test.createLayerOnBoot();
     }
 }

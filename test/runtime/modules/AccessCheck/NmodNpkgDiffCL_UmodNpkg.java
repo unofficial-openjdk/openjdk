@@ -29,8 +29,8 @@
  *          Access allowed since any module can read the unnamed module. p2's exportability not relevant.
  * @compile p2/c2.java
  * @compile p1/c1.java
- * @build NmodNpkgDiffCL_NamedMToUnnamedM
- * @run main/othervm -Xbootclasspath/a:. NmodNpkgDiffCL_NamedMToUnnamedM
+ * @build NmodNpkgDiffCL_UmodNpkg
+ * @run main/othervm -Xbootclasspath/a:. NmodNpkgDiffCL_UmodNpkg
  */
 
 import java.lang.module.Configuration;
@@ -57,7 +57,7 @@ import java.util.stream.Stream;
 // in the unnamed module.
 // Access allowed since any module can read the unnamed module..
 //
-public class NmodNpkgDiffCL_NamedMToUnnamedM {
+public class NmodNpkgDiffCL_UmodNpkg {
 
  // Create a Layer over the boot layer.
  // Define modules within this layer to test access between
@@ -114,7 +114,7 @@ public class NmodNpkgDiffCL_NamedMToUnnamedM {
  }
 
  public static void main(String args[]) throws Throwable {
-   NmodNpkgDiffCL_NamedMToUnnamedM test = new NmodNpkgDiffCL_NamedMToUnnamedM();
+   NmodNpkgDiffCL_UmodNpkg test = new NmodNpkgDiffCL_UmodNpkg();
    test.createLayerOnBoot();
  }
 }
