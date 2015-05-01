@@ -98,6 +98,15 @@ public final class ModuleBootstrap {
             finder = ArtifactInterposer.interpose(finder, moreRequires, moreExports);
         }
 
+        // Once the finder is created then we find the base module and define
+        // it to the boot loader. We do this here so that resources in the
+        // base module can be located for error messages that may happen
+        // from here on.
+        ModuleArtifact base = finder.find(JAVA_BASE);
+        if (base == null)
+            throw new InternalError(JAVA_BASE + " not found");
+        BootLoader.defineBaseModule(base);
+
         // launcher -m option to specify the initial module
         String mainModule = null;
         String propValue = System.getProperty("java.module.main");
@@ -128,15 +137,6 @@ public final class ModuleBootstrap {
                 mods.add(mainModule);
             finder = limitFinder(finder, mods);
         }
-
-        // Once the finder is created then we find the base module and define
-        // it to the boot loader. We do this here so that resources in the
-        // base module can be located for error messages that may happen
-        // from here on.
-        ModuleArtifact base = finder.find(JAVA_BASE);
-        if (base == null)
-            throw new InternalError(JAVA_BASE + " not found");
-        BootLoader.defineModule(base);
 
         // If the class path is set then assume the unnamed module is observable.
         // We implement this here by putting the names of all observable (named)

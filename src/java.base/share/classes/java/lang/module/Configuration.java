@@ -28,7 +28,7 @@ package java.lang.module;
 import java.io.UncheckedIOException;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -52,13 +52,17 @@ import java.util.stream.Collectors;
  *                      .bind();
  *
  * }</pre>
+ *
+ * @since 1.9
  */
 
 public final class Configuration {
 
+    private final Layer parent;
     private final Resolver.Resolution resolution;
 
-    private Configuration(Resolver.Resolution resolution) {
+    private Configuration(Layer parent, Resolver.Resolution resolution) {
+        this.parent = parent;
         this.resolution = resolution;
     }
 
@@ -67,21 +71,27 @@ public final class Configuration {
      * locating them (in order) using the given {@code beforeFinder}, {@code
      * layer}, and {@code afterFinder}.
      *
-     * @throws ResolveException if a named module (or any its transitive
-     * dependencies) cannot be resolved.
+     * @throws ResolutionException If a named module (or any its transitive
+     *                             dependencies) cannot be resolved
      */
     public static Configuration resolve(ModuleArtifactFinder beforeFinder,
-                                        Layer layer,
+                                        Layer parent,
                                         ModuleArtifactFinder afterFinder,
-                                        Collection<String> input)
+                                        Collection<String> roots)
     {
+        Objects.requireNonNull(beforeFinder);
+        Objects.requireNonNull(parent);
+        Objects.requireNonNull(afterFinder);
+
         try {
-            Resolver resolver = new Resolver(beforeFinder, layer, afterFinder);
-            Resolver.Resolution resolution = resolver.resolve(input);
-            return new Configuration(resolution);
+
+            Resolver.Resolution resolution =
+                Resolver.resolve(beforeFinder, parent, afterFinder, roots);
+            return new Configuration(parent, resolution);
+
         } catch (ClassFormatError | UncheckedIOException e) {
             // TBD need to specify how CFE and I/O errors are handled
-            throw new ResolveException(e);
+            throw new ResolutionException(e);
         }
     }
 
@@ -90,22 +100,22 @@ public final class Configuration {
      * locating them (in order) using the given {@code beforeFinder}, {@code
      * layer}, and {@code afterFinder}.
      *
-     * @throws ResolveException if a named module (or any its transitive
-     * dependencies) cannot be resolved.
+     * @throws ResolutionException If a named module (or any its transitive
+     *                             dependencies) cannot be resolved
      */
     public static Configuration resolve(ModuleArtifactFinder beforeFinder,
                                         Layer layer,
                                         ModuleArtifactFinder afterFinder,
-                                        String... input)
+                                        String... roots)
     {
-        return resolve(beforeFinder, layer, afterFinder, Arrays.asList(input));
+        return resolve(beforeFinder, layer, afterFinder, Arrays.asList(roots));
     }
 
     /**
      * Returns the {@code Layer} used when creating this configuration.
      */
     public Layer layer() {
-        return resolution.resolver().layer();
+        return parent;
     }
 
     /**
@@ -113,21 +123,26 @@ public final class Configuration {
      * (located via the module artifact finders) that are induced by service-use
      * relationships.
      *
-     * @throws ResolveException if the module dependences of a service provider
-     * module cannot be resolved
+     * @throws ResolutionException If a named module (or any its transitive
+     *                             dependencies) cannot be resolved
+     *
+     * @apiNote This method is not thread safe
      */
     public Configuration bind() {
         try {
+
             Resolver.Resolution r = resolution.bind();
-            return new Configuration(r);
+            return new Configuration(parent, r);
+
         } catch (ClassFormatError | UncheckedIOException e) {
             // TBD need to specify how CFE and I/O errors are handled
-            throw new ResolveException(e);
+            throw new ResolutionException(e);
         }
     }
 
     /**
-     * Returns the set of module descriptors in this configuration.
+     * Returns an immutable set of the module descriptors in this
+     * configuration.
      */
     public Set<ModuleDescriptor> descriptors() {
         return resolution.selected();
@@ -147,7 +162,7 @@ public final class Configuration {
      * or {@code null} if a module of the given name is not in this
      * configuration.
      *
-     * @apiNote It's not clear that this method is useful, we might remove it.
+     * @apiNote It's not clear that this method is useful,
      */
     public ModuleDescriptor findDescriptor(String name) {
         ModuleArtifact artifact = findArtifact(name);
@@ -159,7 +174,8 @@ public final class Configuration {
     }
 
     /**
-     * Returns the set of read dependences for the given module descriptor.
+     * Returns an immutable set of the read dependences for the given module
+     * descriptor.
      *
      * @throws IllegalArgumentException if the module descriptor is not in
      * this configuration.
@@ -170,7 +186,7 @@ public final class Configuration {
             throw new IllegalArgumentException(descriptor.name() +
                 " not in this configuration");
         }
-        return Collections.unmodifiableSet(reads);
+        return reads;
     }
 
     @Override

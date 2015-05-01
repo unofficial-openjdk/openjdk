@@ -59,6 +59,8 @@ import sun.misc.SharedSecrets;
  *
  *     Class<?> c = layer.findLoader("myapp").loadClass("app.Main");
  * }</pre>
+ *
+ * @since 1.9
  */
 
 public final class Layer {
@@ -76,6 +78,7 @@ public final class Layer {
      * Finds the class loader for module artifacts.
      *
      * @see Layer#create
+     * @since 1.9
      */
     @FunctionalInterface
     public static interface ClassLoaderFinder {

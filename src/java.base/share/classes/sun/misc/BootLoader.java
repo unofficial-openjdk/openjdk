@@ -45,6 +45,18 @@ public class BootLoader {
     // ServiceCatalog for the boot class loader
     private static final ServicesCatalog SERVICES_CATALOG = new ServicesCatalog();
 
+    // The ModuleArtiact for java.base
+    private static ModuleArtifact baseArtifact;
+
+    /**
+     * Make visible the resources in java.base. This module is special cased
+     * to allow for resources to be loaded in the base module early in the startup.
+     */
+    public static void defineBaseModule(ModuleArtifact artifact) {
+        ClassLoaders.bootLoader().defineModule(artifact);
+        baseArtifact = artifact;
+    }
+
     /**
      * Make visible the resources in the given module artifact.
      */
@@ -67,6 +79,12 @@ public class BootLoader {
     public static InputStream getResourceAsStream(ModuleArtifact artifact, String name)
         throws IOException
     {
+        // special-case resources in java.base that are used early in the startup
+        if (artifact == null) {
+            if (baseArtifact == null || VM.isBooted())
+                throw new InternalError();
+            artifact = baseArtifact;
+        }
         return ClassLoaders.bootLoader().getResourceAsStream(artifact, name);
     }
 
