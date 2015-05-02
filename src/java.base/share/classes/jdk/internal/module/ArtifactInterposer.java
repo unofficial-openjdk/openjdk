@@ -29,7 +29,6 @@ import java.io.IOException;
 import java.lang.module.ModuleArtifact;
 import java.lang.module.ModuleArtifactFinder;
 import java.lang.module.ModuleDescriptor;
-import java.lang.module.ModuleDescriptor.Requires;
 import java.lang.module.ModuleDescriptor.Exports;
 import java.lang.module.ModuleReader;
 import java.net.URI;
@@ -173,62 +172,61 @@ class ArtifactInterposer implements ModuleArtifactFinder {
         ModuleDescriptor descriptor = artifact.descriptor();
         String name = descriptor.name();
 
-        Set<String> requires = requiresAdditions.get(name);
+        Set<String> requiresAdds = requiresAdditions.get(name);
         Map<String, Set<String>> exportAdds = exportAdditions.get(name);
 
-        if (requires == null && exportAdds == null)
+        if (requiresAdds == null && exportAdds == null)
             return artifact;  // no changes requested
 
-        // create a new set of module dependences if needed
-        Set<Requires> newRequires;
-        if (requires == null) {
-            newRequires = descriptor.requires();
-        } else {
-            // updated module dependences
-            newRequires = new HashSet<>(descriptor.requires());
-            for (String dn: requires) {
-                newRequires.add(new Requires(null, dn));
-            }
-        }
+        ModuleDescriptor.Builder mdb = new ModuleDescriptor.Builder(name);
 
-        // Create a new set of module exports if needed.  If AddModuleExports
-        // specifies an unqualified export then any qualified exports of that
-        // package are dropped.  If a package already has an unqualified export
-        // and AddModuleExports specifies a qualified export then the qualified
-        // export is ignored.
+        // Requires
+        descriptor.requires().forEach(rq -> mdb.requires(rq.modifiers(),
+                                                         rq.name()));
+        if (requiresAdds != null)
+            requiresAdds.forEach(mn -> mdb.requires(mn));
 
-        Set<Exports> newExports;
+        // Exports
+        //
+        // If AddModuleExports specifies an unqualified export then any
+        // qualified exports of that package are dropped.  If a package already
+        // has an unqualified export and AddModuleExports specifies a qualified
+        // export then the qualified export is ignored.
+
         if (exportAdds == null) {
-            newExports = descriptor.exports();
+            // Nothing to add, so just copy all existing exports
+            for (Exports e : descriptor.exports()) {
+                e.targets().ifPresentOrElse(ts -> mdb.exports(e.source(), ts),
+                                            () -> mdb.exports(e.source()));
+            }
         } else {
-
-            newExports = new HashSet<>();
 
             // Process existing exports
-            for (Exports export : descriptor.exports()) {
-                String pkg = export.source();
+            for (Exports e : descriptor.exports()) {
+                String pkg = e.source();
                 Set<String> adds = exportAdds.get(pkg);
                 if (adds != null) {
-                    if (!export.targets().isPresent()) {
+                    if (!e.targets().isPresent()) {
                         // Already exported to all, so any requested changes to
                         // the exporting of the package should be ignored
-                        newExports.add(export);
+                        mdb.exports(e.source());
                     } else {
                         // Already has a qualified export
                         if (adds == ALL) {
                             // Convert this to an unqualified export
-                            newExports.add(new Exports(pkg));
+                            mdb.exports(pkg);
                         } else {
                             // Append to this qualified export
                             HashSet<String> ts
-                                = new HashSet<>(export.targets().get());
+                                = new HashSet<>(e.targets().get());
                             ts.addAll(adds);
-                            newExports.add(new Exports(pkg, ts));
+                            mdb.exports(pkg, ts);
                         }
                     }
                     exportAdds.remove(pkg);
                 } else {
-                    newExports.add(export);
+                    e.targets().ifPresentOrElse(ts -> mdb.exports(e.source(), ts),
+                                                () -> mdb.exports(e.source()));
                 }
             }
 
@@ -237,30 +235,23 @@ class ArtifactInterposer implements ModuleArtifactFinder {
                 String pkg = add.getKey();
                 Set<String> adds = add.getValue();
                 if (adds == ALL)
-                    newExports.add(new Exports(pkg));
+                    mdb.exports(pkg);
                 else
-                    newExports.add(new Exports(pkg, new HashSet<>(adds)));
+                    mdb.exports(pkg, new HashSet<>(adds));
             }
 
         }
 
-        // create a new ModuleDescriptor with the updated module
-        // definition
-        // ## Need a better way to edit an existing descriptor
-        ModuleDescriptor.Builder builder =
-            new ModuleDescriptor.Builder(descriptor.name());
-        descriptor.version().ifPresent(v -> builder.version(v.toString())); // ##
-        newRequires.forEach(builder::requires);
-        descriptor.uses().forEach(builder::uses);
-        newExports.forEach(builder::exports);
+        // Copy over uses, provides, and version
+        descriptor.uses().forEach(mdb::uses);
         descriptor.provides().values()
-            .forEach(p -> builder.provides(p.service(), p.providers()));
-        ModuleDescriptor newDescriptor = builder.build();
+            .forEach(p -> mdb.provides(p.service(), p.providers()));
+        descriptor.version().ifPresent(v -> mdb.version(v.toString())); // ##
 
         // Return a new ModuleArtifact with the new module descriptor
         Set<String> packages = artifact.packages();
         URI location = artifact.location();
-        return new ModuleArtifact(newDescriptor, packages, location) {
+        return new ModuleArtifact(mdb.build(), packages, location) {
             @Override
             public ModuleReader open() throws IOException {
                 return artifact.open();
