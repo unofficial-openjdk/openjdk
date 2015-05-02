@@ -38,9 +38,6 @@ import java.lang.module.ModuleDescriptor;
 import java.lang.module.Layer;
 import java.lang.module.ModuleArtifact;
 import java.lang.module.ModuleArtifactFinder;
-import java.lang.module.ModuleDescriptor.Requires;
-import java.lang.module.ModuleDescriptor.Requires.Modifier;
-import java.lang.module.ModuleDescriptor.Exports;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -76,8 +73,8 @@ public class NmodNpkgDiffCL_PkgExpQualOther {
         // Packages exported: p1 is exported unqualifiedly
         ModuleDescriptor descriptor_m1 =
                 new ModuleDescriptor.Builder("m1")
-                        .requires(md("m2"))
-                        .requires(md("java.base"))
+                        .requires("m2")
+                        .requires("java.base")
                         .exports("p1")
                         .build();
         Set<String> packages_m1 = Stream.of("p1", "m1_pinternal").collect(Collectors.toSet());
@@ -89,7 +86,7 @@ public class NmodNpkgDiffCL_PkgExpQualOther {
         // Packages exported: p2 is exported to m3
         ModuleDescriptor descriptor_m2 =
                 new ModuleDescriptor.Builder("m2")
-                        .requires(md("java.base"))
+                        .requires("java.base")
                         .exports("p2", "m3")
                         .build();
         Set<String> packages_m2 = Stream.of("p2", "m2_pinternal").collect(Collectors.toSet());
@@ -101,7 +98,7 @@ public class NmodNpkgDiffCL_PkgExpQualOther {
         // Packages exported: none
         ModuleDescriptor descriptor_m3 =
                 new ModuleDescriptor.Builder("m3")
-                        .requires(md("java.base"))
+                        .requires("java.base")
                         .build();
         Set<String> packages_m3 = Stream.of("p3", "m3_pinternal").collect(Collectors.toSet());
         ModuleArtifact artifact_m3 = MyModuleArtifact.newModuleArtifact(descriptor_m3, packages_m3);
@@ -138,13 +135,6 @@ public class NmodNpkgDiffCL_PkgExpQualOther {
                 throw new RuntimeException("Wrong message: " + e.getMessage());
             }
         }
-    }
-
-    static Requires md(String dn, Modifier... mods) {
-        Set<Modifier> set = new HashSet<>();
-        for (Modifier mod: mods)
-            set.add(mod);
-        return new Requires(set, dn);
     }
 
     public static void main(String args[]) throws Throwable {

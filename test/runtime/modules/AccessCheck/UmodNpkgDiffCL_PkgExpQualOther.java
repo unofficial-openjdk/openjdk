@@ -39,9 +39,6 @@ import java.lang.module.ModuleDescriptor;
 import java.lang.module.Layer;
 import java.lang.module.ModuleArtifact;
 import java.lang.module.ModuleArtifactFinder;
-import java.lang.module.ModuleDescriptor.Requires;
-import java.lang.module.ModuleDescriptor.Requires.Modifier;
-import java.lang.module.ModuleDescriptor.Exports;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -73,8 +70,8 @@ public class UmodNpkgDiffCL_PkgExpQualOther {
         // Packages exported: none
         ModuleDescriptor descriptor_m1 =
                 new ModuleDescriptor.Builder("m1")
-                        .requires(md("m2"))
-                        .requires(md("java.base"))
+                        .requires("m2")
+                        .requires("java.base")
                         .build();
         Set<String> packages_m1 = Stream.of("m1_pinternal").collect(Collectors.toSet());
         ModuleArtifact artifact_m1 = MyModuleArtifact.newModuleArtifact(descriptor_m1, packages_m1);
@@ -85,7 +82,7 @@ public class UmodNpkgDiffCL_PkgExpQualOther {
         // Packages exported: none
         ModuleDescriptor descriptor_m2 =
                 new ModuleDescriptor.Builder("m2")
-                        .requires(md("java.base"))
+                        .requires("java.base")
                         .exports("p2", "m1")
                         .build();
         Set<String> packages_m2 = Stream.of("p2", "m2_pinternal").collect(Collectors.toSet());
@@ -124,13 +121,6 @@ public class UmodNpkgDiffCL_PkgExpQualOther {
                 throw new RuntimeException("Wrong message: " + e.getMessage());
             }
         }
-    }
-
-    static Requires md(String dn, Modifier... mods) {
-        Set<Modifier> set = new HashSet<>();
-        for (Modifier mod: mods)
-            set.add(mod);
-        return new Requires(set, dn);
     }
 
     public static void main(String args[]) throws Throwable {

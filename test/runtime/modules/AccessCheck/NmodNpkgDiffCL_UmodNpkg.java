@@ -38,9 +38,6 @@ import java.lang.module.ModuleDescriptor;
 import java.lang.module.Layer;
 import java.lang.module.ModuleArtifact;
 import java.lang.module.ModuleArtifactFinder;
-import java.lang.module.ModuleDescriptor.Requires;
-import java.lang.module.ModuleDescriptor.Requires.Modifier;
-import java.lang.module.ModuleDescriptor.Exports;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -70,7 +67,7 @@ public class NmodNpkgDiffCL_UmodNpkg {
      // Packages exported: p1 is exported to unqualifiedly
      ModuleDescriptor descriptor_m1 =
              new ModuleDescriptor.Builder("m1")
-                     .requires(md("java.base"))
+                     .requires("java.base")
                      .exports("p1")
                      .build();
      Set<String> packages_m1 = Stream.of("p1", "m1_pinternal").collect(Collectors.toSet());
@@ -104,13 +101,6 @@ public class NmodNpkgDiffCL_UmodNpkg {
      } catch (IllegalAccessError e) {
        throw new RuntimeException("Test Failed, module m1 should be able to access public type p2.c2 defined in the unnamed module");
      }
- }
-
- static Requires md(String dn, Modifier... mods) {
-     Set<Modifier> set = new HashSet<>();
-     for (Modifier mod: mods)
-         set.add(mod);
-     return new Requires(set, dn);
  }
 
  public static void main(String args[]) throws Throwable {

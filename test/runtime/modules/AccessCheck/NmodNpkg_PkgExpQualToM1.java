@@ -38,9 +38,6 @@ import java.lang.module.ModuleDescriptor;
 import java.lang.module.Layer;
 import java.lang.module.ModuleArtifact;
 import java.lang.module.ModuleArtifactFinder;
-import java.lang.module.ModuleDescriptor.Requires;
-import java.lang.module.ModuleDescriptor.Requires.Modifier;
-import java.lang.module.ModuleDescriptor.Exports;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -61,8 +58,8 @@ public class NmodNpkg_PkgExpQualToM1 {
         // Packages exported: p1 is exported unqualifiedly
         ModuleDescriptor descriptor_m1 =
                 new ModuleDescriptor.Builder("m1")
-                        .requires(md("m2"))
-                        .requires(md("java.base"))
+                        .requires("m2")
+                        .requires("java.base")
                         .exports("p1")
                         .build();
         Set<String> packages_m1 = Stream.of("p1", "m1_pinternal").collect(Collectors.toSet());
@@ -74,7 +71,7 @@ public class NmodNpkg_PkgExpQualToM1 {
         // Packages exported: p2 is exported qualifiedly to m1
         ModuleDescriptor descriptor_m2 =
                 new ModuleDescriptor.Builder("m2")
-                        .requires(md("java.base"))
+                        .requires("java.base")
                         .exports("p2", "m1")
                         .build();
         Set<String> packages_m2 = Stream.of("p2", "m2_pinternal").collect(Collectors.toSet());
@@ -104,13 +101,6 @@ public class NmodNpkg_PkgExpQualToM1 {
         // now use the same loader to load class p1.c1
         Class p1_c1_class = loader.loadClass("p1.c1");
         p1_c1_class.newInstance();
-    }
-
-    static Requires md(String dn, Modifier... mods) {
-        Set<Modifier> set = new HashSet<>();
-        for (Modifier mod: mods)
-            set.add(mod);
-        return new Requires(set, dn);
     }
 
     public static void main(String args[]) throws Throwable {
