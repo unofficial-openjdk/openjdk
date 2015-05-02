@@ -81,7 +81,7 @@ final class ModuleInfo {
      * Reads a {@code module-info.class} from the given input stream.
      *
      * @throws ClassFormatError if the class file is malformed
-     * @throws IOException if an I/O errors occurs
+     * @throws IOException if an I/O error occurs
      */
     public static ModuleDescriptor read(InputStream in) throws IOException {
         return new ModuleInfo().doRead(new DataInputStream(in));
@@ -91,11 +91,15 @@ final class ModuleInfo {
      * Reads a {@code module-info.class} from the given byte buffer.
      *
      * @throws ClassFormatError if the class file is malformed
-     * @throws IOException if an I/O errors occurs
      */
-    public static ModuleDescriptor read(ByteBuffer bb) throws IOException {
-        // ## Reading from a ByteBuffer should never throw an IOException!
-        return new ModuleInfo().doRead(new DataInputWrapper(bb));
+    public static ModuleDescriptor read(ByteBuffer bb) {
+        try {
+            return new ModuleInfo().doRead(new DataInputWrapper(bb));
+        } catch (EOFException x) {
+            throw new ClassFormatError("Incomplete class file");
+        } catch (IOException x) {
+            throw new InternalError(x);
+        }
     }
 
     /**
