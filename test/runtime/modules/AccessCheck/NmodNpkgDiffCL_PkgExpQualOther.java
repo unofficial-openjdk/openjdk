@@ -78,7 +78,7 @@ public class NmodNpkgDiffCL_PkgExpQualOther {
                 new ModuleDescriptor.Builder("m1")
                         .requires(md("m2"))
                         .requires(md("java.base"))
-                        .export("p1")
+                        .exports("p1")
                         .build();
         Set<String> packages_m1 = Stream.of("p1", "m1_pinternal").collect(Collectors.toSet());
         ModuleArtifact artifact_m1 = MyModuleArtifact.newModuleArtifact(descriptor_m1, packages_m1);
@@ -90,7 +90,7 @@ public class NmodNpkgDiffCL_PkgExpQualOther {
         ModuleDescriptor descriptor_m2 =
                 new ModuleDescriptor.Builder("m2")
                         .requires(md("java.base"))
-                        .export("p2", "m3")
+                        .exports("p2", "m3")
                         .build();
         Set<String> packages_m2 = Stream.of("p2", "m2_pinternal").collect(Collectors.toSet());
         ModuleArtifact artifact_m2 = MyModuleArtifact.newModuleArtifact(descriptor_m2, packages_m2);

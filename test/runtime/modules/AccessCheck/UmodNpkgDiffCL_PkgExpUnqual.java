@@ -86,7 +86,7 @@ public class UmodNpkgDiffCL_PkgExpUnqual {
         ModuleDescriptor descriptor_m2 =
                 new ModuleDescriptor.Builder("m2")
                         .requires(md("java.base"))
-                        .export("p2")
+                        .exports("p2")
                         .build();
         Set<String> packages_m2 = Stream.of("p2", "m2_pinternal").collect(Collectors.toSet());
         ModuleArtifact artifact_m2 = MyModuleArtifact.newModuleArtifact(descriptor_m2, packages_m2);

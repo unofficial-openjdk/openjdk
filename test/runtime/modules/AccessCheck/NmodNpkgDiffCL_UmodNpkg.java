@@ -71,7 +71,7 @@ public class NmodNpkgDiffCL_UmodNpkg {
      ModuleDescriptor descriptor_m1 =
              new ModuleDescriptor.Builder("m1")
                      .requires(md("java.base"))
-                     .export("p1")
+                     .exports("p1")
                      .build();
      Set<String> packages_m1 = Stream.of("p1", "m1_pinternal").collect(Collectors.toSet());
      ModuleArtifact artifact_m1 = MyModuleArtifact.newModuleArtifact(descriptor_m1, packages_m1);
