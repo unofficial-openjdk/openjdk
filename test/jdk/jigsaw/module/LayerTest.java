@@ -96,7 +96,7 @@ public class LayerTest {
         ModuleDescriptor descriptor1 =
                 new ModuleDescriptor.Builder("m1")
                         .requires(md("m2"))
-                        .export("p1")
+                        .exports("p1")
                         .build();
 
         ModuleDescriptor descriptor2 =
@@ -158,7 +158,7 @@ public class LayerTest {
                 new ModuleDescriptor.Builder("m1")
                         .requires(md("m2"))
                         .requires(md("java.base"))
-                        .export("p1")
+                        .exports("p1")
                         .build();
 
         ModuleDescriptor descriptor2 =

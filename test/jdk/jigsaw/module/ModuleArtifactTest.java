@@ -60,8 +60,8 @@ public class ModuleArtifactTest {
     public void testBasic() throws Exception {
         ModuleDescriptor descriptor =
                 new ModuleDescriptor.Builder("m")
-                        .export("p")
-                        .export("q")
+                        .exports("p")
+                        .exports("q")
                         .build();
 
         Set<String> packages =
@@ -87,8 +87,8 @@ public class ModuleArtifactTest {
     public void testNullPackages() throws Exception {
         ModuleDescriptor descriptor =
                 new ModuleDescriptor.Builder("m")
-                        .export("p")
-                        .export("q")
+                        .exports("p")
+                        .exports("q")
                         .build();
         URI location = URI.create("module:/m");
         newModuleArtifact(descriptor, null, location);
@@ -98,7 +98,7 @@ public class ModuleArtifactTest {
     public void testNullLocation() throws Exception {
         ModuleDescriptor descriptor =
                 new ModuleDescriptor.Builder("m")
-                        .export("p")
+                        .exports("p")
                         .build();
         Set<String> packages = Stream.of("p").collect(Collectors.toSet());
         newModuleArtifact(descriptor, packages, null);
@@ -130,7 +130,7 @@ public class ModuleArtifactTest {
     public void testBadContents(Set<String> packages) throws Exception {
         ModuleDescriptor descriptor =
                 new ModuleDescriptor.Builder("m")
-                        .export("p")
+                        .exports("p")
                         .build();
         URI location = URI.create("module:/m");
 

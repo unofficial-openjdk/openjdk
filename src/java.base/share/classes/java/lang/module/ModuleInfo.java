@@ -53,25 +53,17 @@ import jdk.internal.org.objectweb.asm.ClassWriter;
 import jdk.internal.org.objectweb.asm.Opcodes;
 import jdk.internal.module.Hasher.DependencyHashes;
 
+import static jdk.internal.module.ClassFileAttributes.Constants.*;
+
+
 /**
  * Represents module information as read from a {@code module-info} class file.
  *
  * @implNote The rationale for the hand-coded reader is performance and fine
  * control over the throwing of ClassFormatError.
  */
+
 final class ModuleInfo {
-
-    // Attribute names
-    static final String MODULE        = "Module";
-    static final String MAIN_CLASS    = "MainClass";
-    static final String VERSION       = "Version";
-    static final String HASHES        = "Hashes";
-
-    // access and requires flags
-    static final int ACC_MODULE       = 0x8000;
-    static final int ACC_PUBLIC       = 0x0020;
-    static final int ACC_SYNTHETIC    = 0x1000;
-    static final int ACC_MANDATED     = 0x8000;
 
     // module name read from the Module attribute
     private final String name;
@@ -319,11 +311,11 @@ final class ModuleInfo {
                 mods = Collections.emptySet();
             } else {
                 mods = new HashSet<>();
-                if ((flags & ModuleInfo.ACC_PUBLIC) != 0)
+                if ((flags & ACC_PUBLIC) != 0)
                     mods.add(Modifier.PUBLIC);
-                if ((flags & ModuleInfo.ACC_SYNTHETIC) != 0)
+                if ((flags & ACC_SYNTHETIC) != 0)
                     mods.add(Modifier.SYNTHETIC);
-                if ((flags & ModuleInfo.ACC_MANDATED) != 0)
+                if ((flags & ACC_MANDATED) != 0)
                     mods.add(Modifier.MANDATED);
             }
             requires.add(new Requires(mods, dn));

@@ -41,12 +41,30 @@ import jdk.internal.org.objectweb.asm.ClassWriter;
 import jdk.internal.org.objectweb.asm.Label;
 import jdk.internal.module.Hasher.DependencyHashes;
 
+
 /**
  * Provides ASM implementations of {@code Attribute} to read and write the
  * class file attributes in a module-info class file.
  */
 
-class ClassFileAttributes {
+public class ClassFileAttributes {
+
+    public static interface Constants {
+
+        // Attribute names
+        static final String MODULE        = "Module";
+        static final String MAIN_CLASS    = "MainClass";
+        static final String VERSION       = "Version";
+        static final String HASHES        = "Hashes";
+
+        // access and requires flags
+        static final int ACC_MODULE       = 0x8000;
+        static final int ACC_PUBLIC       = 0x0020;
+        static final int ACC_SYNTHETIC    = 0x1000;
+        static final int ACC_MANDATED     = 0x8000;
+
+    }
+
     private ClassFileAttributes() { }
 
     /**
@@ -64,7 +82,7 @@ class ClassFileAttributes {
         private Map<String, Set<String>> provides;
 
         protected ModuleAttribute() {
-            super(ModuleInfo.MODULE);
+            super(Constants.MODULE);
         }
 
         @Override
@@ -88,11 +106,11 @@ class ClassFileAttributes {
                     mods = Collections.emptySet();
                 } else {
                     mods = new HashSet<>();
-                    if ((flags & ModuleInfo.ACC_PUBLIC) != 0)
+                    if ((flags & Constants.ACC_PUBLIC) != 0)
                         mods.add(Modifier.PUBLIC);
-                    if ((flags & ModuleInfo.ACC_SYNTHETIC) != 0)
+                    if ((flags & Constants.ACC_SYNTHETIC) != 0)
                         mods.add(Modifier.SYNTHETIC);
-                    if ((flags & ModuleInfo.ACC_MANDATED) != 0)
+                    if ((flags & Constants.ACC_MANDATED) != 0)
                         mods.add(Modifier.MANDATED);
                 }
                 attr.moduleDependences.add(new Requires(mods, dn));
@@ -168,11 +186,11 @@ class ClassFileAttributes {
                 String dn = md.name();
                 int flags = 0;
                 if (md.modifiers().contains(Modifier.PUBLIC))
-                    flags |= ModuleInfo.ACC_PUBLIC;
+                    flags |= Constants.ACC_PUBLIC;
                 if (md.modifiers().contains(Modifier.SYNTHETIC))
-                    flags |= ModuleInfo.ACC_SYNTHETIC;
+                    flags |= Constants.ACC_SYNTHETIC;
                 if (md.modifiers().contains(Modifier.MANDATED))
-                    flags |= ModuleInfo.ACC_MANDATED;
+                    flags |= Constants.ACC_MANDATED;
                 int index = cw.newUTF8(dn);
                 attr.putShort(index);
                 attr.putShort(flags);
@@ -243,7 +261,7 @@ class ClassFileAttributes {
         private final Version version;
 
         VersionAttribute(Version version) {
-            super(ModuleInfo.VERSION);
+            super(Constants.VERSION);
             this.version = version;
         }
 
@@ -292,7 +310,7 @@ class ClassFileAttributes {
         private final String mainClass;
 
         MainClassAttribute(String mainClass) {
-            super(ModuleInfo.MAIN_CLASS);
+            super(Constants.MAIN_CLASS);
             this.mainClass = mainClass;
         }
 
@@ -349,7 +367,7 @@ class ClassFileAttributes {
         private final DependencyHashes hashes;
 
         HashesAttribute(DependencyHashes hashes) {
-            super(ModuleInfo.HASHES);
+            super(Constants.HASHES);
             this.hashes = hashes;
         }
 
@@ -409,4 +427,5 @@ class ClassFileAttributes {
             return attr;
         }
     }
+
 }

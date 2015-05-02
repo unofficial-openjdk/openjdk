@@ -252,7 +252,7 @@ class ArtifactInterposer implements ModuleArtifactFinder {
         descriptor.version().ifPresent(v -> builder.version(v.toString())); // ##
         newRequires.forEach(builder::requires);
         descriptor.uses().forEach(builder::uses);
-        newExports.forEach(builder::export);
+        newExports.forEach(builder::exports);
         descriptor.provides().values()
             .forEach(p -> builder.provides(p.service(), p.providers()));
         ModuleDescriptor newDescriptor = builder.build();

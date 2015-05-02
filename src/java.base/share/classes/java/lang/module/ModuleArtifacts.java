@@ -49,7 +49,7 @@ import jdk.internal.jimage.ImageLocation;
 import jdk.internal.jimage.ImageReader;
 import jdk.internal.jimage.ImageReaderFactory;
 import jdk.internal.module.Hasher;
-import jdk.internal.module.ModuleInfo;
+
 
 /**
  * A factory for creating ModuleArtifact implementations where the modules are

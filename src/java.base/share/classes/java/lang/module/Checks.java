@@ -58,4 +58,20 @@ final class Checks {
         return id;
     }
 
+    static String requireModuleName(String id) {
+        return requireJavaIdentifier("module name", id);
+    }
+
+    static String requirePackageName(String id) {
+        return requireJavaIdentifier("package name", id);
+    }
+
+    static String requireServiceTypeName(String id) {
+        return requireJavaIdentifier("service type name", id);
+    }
+
+    static String requireServiceProviderName(String id) {
+        return requireJavaIdentifier("service provider name", id);
+    }
+
 }

@@ -29,6 +29,7 @@ import java.io.InputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -106,7 +107,7 @@ public class ModuleDescriptor
             } else {
                 mods = Collections.unmodifiableSet(ms);
             }
-            this.name = requireJavaIdentifier("module name", mn);
+            this.name = requireModuleName(mn);
         }
 
         /**
@@ -254,9 +255,8 @@ public class ModuleDescriptor
         private final Set<String> providers;
 
         public Provides(String service, Set<String> providers) {
-            this.service = requireJavaIdentifier("service type name", service);
-            providers.forEach(s -> requireJavaIdentifier("service provider name",
-                                                         service));
+            this.service = requireServiceTypeName(service);
+            providers.forEach(Checks::requireServiceProviderName);
             this.providers = Collections.unmodifiableSet(providers);
         }
 
@@ -288,7 +288,7 @@ public class ModuleDescriptor
                      String mainClass,
                      DependencyHashes hashes)
     {
-        this.name = requireJavaIdentifier("module name", name);
+        this.name = requireModuleName(name);
 
         assert (requires.stream().map(Requires::name).sorted().distinct().count()
                 == requires.size())
@@ -390,9 +390,9 @@ public class ModuleDescriptor
     public static class Builder {
 
         String name;
-        final Set<Requires> requires = new HashSet<>();
+        final Map<String, Requires> requires = new HashMap<>();
         final Set<String> uses = new HashSet<>();
-        final Set<Exports> exports = new HashSet<>();
+        final Map<String, Exports> exports = new HashMap<>();
         final Map<String, Provides> provides = new HashMap<>();
         Version version;
         String mainClass;
@@ -407,61 +407,84 @@ public class ModuleDescriptor
         /**
          * Adds a module dependence.
          */
-        public Builder requires(Requires md) {
-            requires.add(requireNonNull(md));
+        public Builder requires(Set<Requires.Modifier> mods, String mn) {
+            if (requires.get(requireModuleName(mn)) != null)
+                throw new IllegalArgumentException("Dependence upon " + mn
+                                                   + " already declared");
+            requires.put(mn, new Requires(mods, mn));
+            return this;
+        }
+
+        public Builder requires(String mn) {
+            return requires(EnumSet.noneOf(Requires.Modifier.class), mn);
+        }
+
+        public Builder requires(Requires.Modifier mod, String mn) {
+            return requires(EnumSet.of(mod), mn);
+        }
+
+        public Builder requires(Requires rq) { // ## REMOVE (ArtifactInterposer)
+            requires.put(rq.name(), rq);
             return this;
         }
 
         /**
          * Adds a service dependence.
          */
-        public Builder uses(String s) {
-            uses.add(requireNonNull(s));
+        public Builder uses(String st) {
+            if (uses.contains(requireServiceTypeName(st)))
+                throw new IllegalArgumentException("Dependence upon service "
+                                                   + st + " already declared");
+            uses.add(st);
             return this;
         }
 
         /**
          * Adds a module export.
-         *
-         * ## FIXME need to check for conflicting exports
          */
-        public Builder export(Exports e) {
-            exports.add(requireNonNull(e));
+        public Builder exports(String pn, Set<String> targets) {
+            if (exports.get(requirePackageName(pn)) != null)
+                throw new IllegalArgumentException("Export of package "
+                                                   + pn + " already declared");
+            targets.stream().forEach(Checks::requireModuleName);
+            exports.put(pn, new Exports(pn, targets));
             return this;
         }
 
         /**
-         * Exports the given package name.
-         *
-         * ## FIXME need to check for conflicting exports
+         * Exports the given package to the given named module.
          */
-        public Builder export(String p) {
-            return export(new Exports(p));
+        public Builder exports(String pn, String target) {
+            return exports(new Exports(pn, Collections.singleton(target)));
         }
 
-        /**
-         * Exports the given package name to the given named module.
-         */
-        public Builder export(String p, String m) {
-            return export(new Exports(p, Collections.singleton(m)));
+        public Builder exports(String pn) {
+            if (exports.get(requirePackageName(pn)) != null)
+                throw new IllegalArgumentException("Export of package "
+                                                   + pn + " already declared");
+            exports.put(pn, new Exports(pn));
+            return this;
         }
 
-        /**
-         * Provides service {@code s} with implementation {@code p}.
-         */
-        public Builder provides(String s, String p) {
-            assert provides.get(s) == null;
-            provides.put(s, new Provides(s, Collections.singleton(p)));
+        public Builder exports(Exports e) { // ## REMOVE (ArtifactInterposer)
+            exports.put(e.source(), e);
             return this;
         }
 
         /**
-         * Provides service {@code s} with implementations {@code ps}.
+         * Provides service {@code st} with implementations {@code pcs}.
          */
-        public Builder provides(String s, Set<String> ps) {
-            assert provides.get(s) == null;
-            provides.put(s, new Provides(s, ps));
+        public Builder provides(String st, Set<String> pcs) {
+            if (provides.get(requireServiceTypeName(st)) != null)
+                throw new IllegalArgumentException("Providers of service "
+                                                   + st + " already declared");
+            pcs.stream().forEach(Checks::requireServiceProviderName);
+            provides.put(st, new Provides(st, pcs));
             return this;
+        }
+
+        public Builder provides(String st, String pc) {
+            return provides(st, Collections.singleton(pc));
         }
 
         public Builder version(String v) {
@@ -480,9 +503,9 @@ public class ModuleDescriptor
         public ModuleDescriptor build() {
             assert name != null;
             return new ModuleDescriptor(name,
-                                        requires,
+                                        new HashSet<>(requires.values()),
                                         uses,
-                                        exports,
+                                        new HashSet<>(exports.values()),
                                         provides,
                                         version,
                                         mainClass,
