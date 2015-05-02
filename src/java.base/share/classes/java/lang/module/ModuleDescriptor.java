@@ -25,6 +25,9 @@
 
 package java.lang.module;
 
+import java.io.InputStream;
+import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -556,6 +559,14 @@ public class ModuleDescriptor
         }
         sb.append(" }");
         return sb.toString();
+    }
+
+    public static ModuleDescriptor read(InputStream in) throws IOException {
+        return ModuleInfo.read(in);
+    }
+
+    public static ModuleDescriptor read(ByteBuffer bb) throws IOException {
+        return ModuleInfo.read(bb);
     }
 
 }

@@ -52,6 +52,7 @@ import java.util.Formatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
@@ -59,7 +60,6 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import jdk.internal.jimage.Archive;
-import jdk.internal.module.ModuleInfo;
 import jdk.tools.jlink.TaskHelper.BadArgs;
 import jdk.tools.jlink.TaskHelper.HiddenOption;
 import jdk.tools.jlink.TaskHelper.Option;
@@ -322,19 +322,19 @@ class JlinkTask {
             String module = entry.getKey();
             Path jmodpath = entry.getValue();
 
-            String mainClass = null;
+            Optional<String> mainClass = null;
 
             try (ZipFile zf = new ZipFile(jmodpath.toString())) {
                 String e = Section.CLASSES.jmodDir() + "/" + MODULE_INFO;
                 ZipEntry ze = zf.getEntry(e);
                 if (ze != null) {
                     try (InputStream in = zf.getInputStream(ze)) {
-                        mainClass = ModuleInfo.read(in).mainClass();
+                        mainClass = ModuleDescriptor.read(in).mainClass();
                     }
                 }
             }
 
-            if (mainClass != null) {
+            if (mainClass.isPresent()) {
                 Path cmd = output.resolve("bin").resolve(module);
                 if (!Files.exists(cmd)) {
                     StringBuilder sb = new StringBuilder();
@@ -344,7 +344,7 @@ class JlinkTask {
                       .append("\n");
                     sb.append("$DIR/java -m ")
                       .append(module).append('/')
-                      .append(mainClass)
+                      .append(mainClass.get())
                       .append(" $@\n");
 
                     try (BufferedWriter writer = Files.newBufferedWriter(cmd,

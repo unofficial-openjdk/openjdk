@@ -47,7 +47,7 @@ import java.util.zip.ZipFile;
 
 import jdk.internal.module.Hasher;
 import jdk.internal.module.Hasher.HashSupplier;
-import jdk.internal.module.ModuleInfo;
+
 
 /**
  * A {@code ModuleArtifactFinder} that locates module artifacts on the file
@@ -188,9 +188,9 @@ class ModulePath implements ModuleArtifactFinder {
             // jmod URI - syntax not defined yet
             URI location = URI.create("jmod:" + file.toUri() + "!/");
 
-            ModuleInfo mi;
+            ModuleDescriptor md;
             try (InputStream in = zf.getInputStream(ze)) {
-                mi = ModuleInfo.read(in);
+                md = ModuleDescriptor.read(in);
             }
 
             Set<String> packages = zf.stream()
@@ -202,7 +202,7 @@ class ModulePath implements ModuleArtifactFinder {
                                      .collect(Collectors.toSet());
 
             HashSupplier hasher = (algorithm) -> Hasher.generate(file, algorithm);
-            return ModuleArtifacts.newModuleArtifact(mi, packages, location, hasher);
+            return ModuleArtifacts.newModuleArtifact(md, packages, location, hasher);
         }
     }
 
@@ -221,7 +221,7 @@ class ModulePath implements ModuleArtifactFinder {
             // jar URI
             URI location = URI.create("jar:" + file.toUri() + "!/");
 
-            ModuleInfo mi = ModuleInfo.read(jf.getInputStream(entry));
+            ModuleDescriptor md = ModuleDescriptor.read(jf.getInputStream(entry));
 
             Set<String> packages = jf.stream()
                                      .filter(e -> e.getName().endsWith(".class"))
@@ -231,7 +231,7 @@ class ModulePath implements ModuleArtifactFinder {
                                      .collect(Collectors.toSet());
 
             HashSupplier hasher = (algorithm) -> Hasher.generate(file, algorithm);
-            return ModuleArtifacts.newModuleArtifact(mi, packages, location, hasher);
+            return ModuleArtifacts.newModuleArtifact(md, packages, location, hasher);
         }
     }
 
@@ -248,9 +248,9 @@ class ModulePath implements ModuleArtifactFinder {
 
         URI location = dir.toUri();
 
-        ModuleInfo mi;
+        ModuleDescriptor md;
         try (InputStream in = Files.newInputStream(file)) {
-            mi = ModuleInfo.read(new BufferedInputStream(in));
+            md = ModuleDescriptor.read(new BufferedInputStream(in));
         }
 
         Set<String> packages =
@@ -262,7 +262,7 @@ class ModulePath implements ModuleArtifactFinder {
                         .distinct()
                         .collect(Collectors.toSet());
 
-        return ModuleArtifacts.newModuleArtifact(mi, packages, location, null);
+        return ModuleArtifacts.newModuleArtifact(md, packages, location, null);
     }
 
     private String toPackageName(ZipEntry entry) {

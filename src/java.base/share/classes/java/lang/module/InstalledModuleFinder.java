@@ -37,7 +37,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-import jdk.internal.module.ModuleInfo;
 import jdk.internal.jimage.ImageLocation;
 import jdk.internal.jimage.ImageModuleData;
 import jdk.internal.jimage.ImageReader;
@@ -63,11 +62,11 @@ class InstalledModuleFinder implements ModuleArtifactFinder {
     private ModuleArtifact toModuleArtifact(String name) {
         long t0 = System.nanoTime();
         try {
-            ModuleInfo mi = bootImage.readModuleInfo(name);
+            ModuleDescriptor md = bootImage.readDescriptor(name);
             URI location = URI.create("jrt:/" + name);
             Set<String> packages = bootImage.packagesForModule(name);
             ModuleArtifact artifact =
-                ModuleArtifacts.newModuleArtifact(mi, packages, location, null);
+                ModuleArtifacts.newModuleArtifact(md, packages, location, null);
             installedModulesCount.increment();
             installedModulesTime.addElapsedTimeFrom(t0);
             return artifact;
@@ -135,7 +134,7 @@ class InstalledModuleFinder implements ModuleArtifactFinder {
         /**
          * Return the bytes of the module-info.class of the given module
          */
-        ModuleInfo readModuleInfo(String name) throws IOException {
+        ModuleDescriptor readDescriptor(String name) throws IOException {
             String rn = "/" + name + "/" + MODULE_INFO;
             ImageLocation loc = imageReader.findLocation(rn);
             ByteBuffer bb = imageReader.getResourceBuffer(loc);

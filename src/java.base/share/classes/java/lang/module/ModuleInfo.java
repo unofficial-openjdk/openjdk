@@ -23,7 +23,7 @@
  * questions.
  */
 
-package jdk.internal.module;
+package java.lang.module;
 
 import java.io.DataInput;
 import java.io.DataInputStream;
@@ -59,7 +59,7 @@ import jdk.internal.module.Hasher.DependencyHashes;
  * @implNote The rationale for the hand-coded reader is performance and fine
  * control over the throwing of ClassFormatError.
  */
-public final class ModuleInfo {
+final class ModuleInfo {
 
     // Attribute names
     static final String MODULE        = "Module";
@@ -97,21 +97,21 @@ public final class ModuleInfo {
      * Returns the module name in the {@code Module} attribute. This is the
      * binary name rather than the internal name in the {@code this_class} item.
      */
-    public String name() {
+    private String name() {
         return name;
     }
 
     /**
      * Returns the module dependences as read from the {@code Module} attribute.
      */
-    public Set<Requires> requires() {
+    private Set<Requires> requires() {
         return requires;
     }
 
     /**
      * Returns the exports as read from the {@code Module} attribute.
      */
-    public Set<Exports> exports() {
+    private Set<Exports> exports() {
         if (exports == null) {
             return Collections.emptySet();
         } else {
@@ -123,7 +123,7 @@ public final class ModuleInfo {
      * Returns the service dependences (<em>uses</em>) as read from the
      * {@code Module} attribute.
      */
-    public Set<String> uses() {
+    private Set<String> uses() {
         if (uses == null) {
             return Collections.emptySet();
         } else {
@@ -135,7 +135,7 @@ public final class ModuleInfo {
      * Returns the map of service implementations provided, as read from the
      * {@code Module} attribute.
      */
-    public Map<String, Provides> provides() {
+    private Map<String, Provides> provides() {
         if (provides == null) {
             return Collections.emptyMap();
         } else {
@@ -147,7 +147,7 @@ public final class ModuleInfo {
      * Returns the value of version string in the {@code Version} attribute
      * or {@code null} if the attribute does not exist.
      */
-    public Version version() {
+    private Version version() {
         return version;
     }
 
@@ -155,7 +155,7 @@ public final class ModuleInfo {
      * Returns the value of main class string in the {@code MainClass}
      * attribute or {@code null} if the attribute does not exist.
      */
-    public String mainClass() {
+    private String mainClass() {
         return mainClass;
     }
 
@@ -163,7 +163,7 @@ public final class ModuleInfo {
      * Returns a {@code DependencyHashes} object encapsulating the result of
      * hashing the contents of some or all of the module dependences.
      */
-    public DependencyHashes hashes() {
+    private DependencyHashes hashes() {
         return hashes;
     }
 
@@ -173,8 +173,8 @@ public final class ModuleInfo {
      * @throws ClassFormatError if the class file is malformed
      * @throws IOException if an I/O errors occurs
      */
-    public static ModuleInfo read(InputStream in) throws IOException {
-        return new ModuleInfo(new DataInputStream(in), true);
+    public static ModuleDescriptor read(InputStream in) throws IOException {
+        return new ModuleInfo(new DataInputStream(in), true).toDescriptor();
     }
 
     /**
@@ -183,8 +183,8 @@ public final class ModuleInfo {
      * @throws ClassFormatError if the class file is malformed
      * @throws IOException if an I/O errors occurs
      */
-    public static ModuleInfo read(ByteBuffer bb) throws IOException {
-        return new ModuleInfo(new DataInputWrapper(bb), true);
+    public static ModuleDescriptor read(ByteBuffer bb) throws IOException {
+        return new ModuleInfo(new DataInputWrapper(bb), true).toDescriptor();
     }
 
     /**
@@ -194,103 +194,20 @@ public final class ModuleInfo {
      * @throws ClassFormatError if the class file is malformed
      * @throws IOException if an I/O errors occurs
      */
-    public static ModuleInfo readIgnoringHashes(ByteBuffer bb) throws IOException {
-        return new ModuleInfo(new DataInputWrapper(bb), false);
+    static ModuleDescriptor readIgnoringHashes(ByteBuffer bb) throws IOException {
+        return new ModuleInfo(new DataInputWrapper(bb), false).toDescriptor();
     }
 
-    /**
-     * An object that may be used to add additional attributes to a module-info
-     * class file.
-     */
-    public static class Extender {
-
-        // the input stream to read the original module-info.class
-        private final InputStream in;
-
-        // the value of the Version attribute
-        private Version version;
-
-        // the value of the MainClass attribute
-        private String mainClass;
-
-        // the hashes for the Hashes attribute
-        private DependencyHashes hashes;
-
-        Extender(InputStream in) {
-            this.in = in;
-        }
-
-        /**
-         * Sets the value of the Version attribute.
-         */
-        public Extender version(Version version) {
-            this.version = version;
-            return this;
-        }
-
-        /**
-         * Sets the value of the MainClass attribute.
-         */
-        public Extender mainClass(String mainClass) {
-            this.mainClass = mainClass;
-            return this;
-        }
-
-        /**
-         * The Hashes attribute will be emitted to the module-info with
-         * the hashes encapsulated in the given {@code DependencyHashes}
-         * object.
-         */
-        public Extender hashes(DependencyHashes hashes) {
-            this.hashes = hashes;
-            return this;
-        }
-
-        /**
-         * Outputs the modified module-info.class to the given output stream.
-         * Once this method has been called then the Extender object should
-         * be discarded.
-         */
-        public void write(OutputStream out) throws IOException {
-            ClassWriter cw =
-                new ClassWriter(ClassWriter.COMPUTE_MAXS + ClassWriter.COMPUTE_FRAMES);
-            ClassVisitor cv = new ClassVisitor(Opcodes.ASM5, cw) { };
-
-            ClassReader cr = new ClassReader(in);
-
-            List<Attribute> attrs = new ArrayList<>();
-            attrs.add(new ClassFileAttributes.ModuleAttribute());
-
-            // pass through existing attributes if we aren't changing them
-            if (version == null)
-                attrs.add(new ClassFileAttributes.VersionAttribute());
-            if (mainClass == null)
-                attrs.add(new ClassFileAttributes.MainClassAttribute());
-            if (hashes == null)
-                attrs.add(new ClassFileAttributes.HashesAttribute());
-
-            cr.accept(cv, attrs.toArray(new Attribute[0]), 0);
-
-            // add new attributes
-            if (version != null)
-                cv.visitAttribute(new ClassFileAttributes.VersionAttribute(version));
-            if (mainClass != null)
-                cv.visitAttribute(new ClassFileAttributes.MainClassAttribute(mainClass));
-            if (hashes != null)
-                cv.visitAttribute(new ClassFileAttributes.HashesAttribute(hashes));
-
-            // emit to the output stream
-            out.write(cw.toByteArray());
-        }
-    }
-
-    /**
-     * Returns an {@code Extender} that may be used to add additional
-     * attributes to the module-info.class read from the given input
-     * stream.
-     */
-    public static Extender newExtender(InputStream in) {
-        return new Extender(in);
+    private ModuleDescriptor toDescriptor() {
+        // ## Should really use the builder!
+        return new ModuleDescriptor(name(),
+                                    requires(),
+                                    uses(),
+                                    exports(),
+                                    provides(),
+                                    version(),
+                                    mainClass(),
+                                    hashes());
     }
 
     /**

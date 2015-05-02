@@ -61,33 +61,22 @@ class ModuleArtifacts {
     private ModuleArtifacts() { }
 
     /**
-     * Creates a ModuleArtifact. An extended module descriptor is created from the
-     * module information read from a {@code module-info} class file.
+     * Creates a ModuleArtifact.
      */
-    static ModuleArtifact newModuleArtifact(ModuleInfo mi,
+    static ModuleArtifact newModuleArtifact(ModuleDescriptor md,
                                             Set<String> packages,
                                             URI location,
                                             Hasher.HashSupplier hasher)
     {
-        ModuleDescriptor descriptor =
-            new ModuleDescriptor(mi.name(),
-                                 mi.requires(),
-                                 mi.uses(),
-                                 mi.exports(),
-                                 mi.provides(),
-                                 mi.version(),
-                                 mi.mainClass(),
-                                 mi.hashes());
-
         String scheme = location.getScheme();
         if (scheme.equalsIgnoreCase("jrt"))
-            return new JrtModuleArtifact(descriptor, packages, location, hasher);
+            return new JrtModuleArtifact(md, packages, location, hasher);
         if (scheme.equalsIgnoreCase("jmod"))
-            return new JModModuleArtifact(descriptor, packages, location, hasher);
+            return new JModModuleArtifact(md, packages, location, hasher);
         if (scheme.equalsIgnoreCase("jar"))
-            return new JarModuleArtifact(descriptor, packages, location, hasher);
+            return new JarModuleArtifact(md, packages, location, hasher);
         if (scheme.equalsIgnoreCase("file"))
-            return new ExplodedModuleArtifact(descriptor, packages, location, hasher);
+            return new ExplodedModuleArtifact(md, packages, location, hasher);
 
         throw new InternalError("Should not get here");
     }

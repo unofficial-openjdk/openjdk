@@ -59,7 +59,7 @@ public class Hasher {
         private final String algorithm;
         private final Map<String, String> nameToHash;
 
-        DependencyHashes(String algorithm, Map<String, String> nameToHash) {
+        public DependencyHashes(String algorithm, Map<String, String> nameToHash) {
             this.algorithm = algorithm;
             this.nameToHash = nameToHash;
         }

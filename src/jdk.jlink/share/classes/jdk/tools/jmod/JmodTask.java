@@ -74,7 +74,7 @@ import java.util.zip.ZipOutputStream;
 
 import jdk.internal.module.Hasher;
 import jdk.internal.module.Hasher.DependencyHashes;
-import jdk.internal.module.ModuleInfo;
+import jdk.internal.module.ModuleInfoExtender;
 
 
 /**
@@ -496,16 +496,16 @@ class JmodTask {
             Set<Requires> dependences = null;
             if (dependencesToHash != null) {
                 try (InputStream in = miSupplier.get()) {
-                    ModuleInfo mi = ModuleInfo.read(in);
-                    name = mi.name();
-                    dependences = mi.requires();
+                    ModuleDescriptor md = ModuleDescriptor.read(in);
+                    name = md.name();
+                    dependences = md.requires();
                 }
             }
 
             // copy the module-info.class into the jmod with the additional
             // attributes for the version, main class and other meta data
             try (InputStream in = miSupplier.get()) {
-                ModuleInfo.Extender extender = ModuleInfo.newExtender(in);
+                ModuleInfoExtender extender = ModuleInfoExtender.newExtender(in);
 
                 // --main-class
                 if (mainClass != null)
