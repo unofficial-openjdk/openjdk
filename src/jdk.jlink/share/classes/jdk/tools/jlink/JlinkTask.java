@@ -260,8 +260,9 @@ class JlinkTask {
             // convert to file URIs
             URI fileURI;
             if (scheme.equalsIgnoreCase("jmod")) {
-                // jmod:/home/duke/duke.jmod -> file:/home/duke/duke.jmod
-                fileURI = URI.create("file" + location.toString().substring(4));
+                // jmod:file:/home/duke/duke.jmod!/ -> file:/home/duke/duke.jmod
+                String s = location.toString();
+                fileURI = URI.create(s.substring(5, s.length()-2));
             } else {
                 // jar:file:/home/duke/duke.jar!/ -> file:/home/duke/duke.jar
                 String s = location.toString();

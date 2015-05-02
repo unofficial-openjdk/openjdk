@@ -48,7 +48,6 @@ import java.util.zip.ZipFile;
 import jdk.internal.module.Hasher;
 import jdk.internal.module.Hasher.HashSupplier;
 import jdk.internal.module.ModuleInfo;
-import sun.misc.JModCache;
 
 /**
  * A {@code ModuleArtifactFinder} that locates module artifacts on the file
@@ -180,31 +179,31 @@ class ModulePath implements ModuleArtifactFinder {
      * file system.
      */
     private ModuleArtifact readJMod(Path file) throws IOException {
-        // file -> jmod URL for direct access
-        URI location = URI.create("jmod" + file.toUri().toString().substring(4));
-        ZipFile zf = JModCache.get(location.toURL());
-        ZipEntry ze = zf.getEntry("classes/" + MODULE_INFO);
-        if (ze == null) {
-            // jmod without classes/module-info, ignore for now or should
-            // we should throw an exception?
-            return null;
+        try (ZipFile zf = new ZipFile(file.toString())) {
+            ZipEntry ze = zf.getEntry("classes/" + MODULE_INFO);
+            if (ze == null) {
+                throw new IOException(MODULE_INFO + " is missing: " + file);
+            }
+
+            // jmod URI - syntax not defined yet
+            URI location = URI.create("jmod:" + file.toUri() + "!/");
+
+            ModuleInfo mi;
+            try (InputStream in = zf.getInputStream(ze)) {
+                mi = ModuleInfo.read(in);
+            }
+
+            Set<String> packages = zf.stream()
+                                     .filter(e -> e.getName().startsWith("classes/") &&
+                                             e.getName().endsWith(".class"))
+                                     .map(e -> toPackageName(e))
+                                     .filter(pkg -> pkg.length() > 0)   // module-info
+                                     .distinct()
+                                     .collect(Collectors.toSet());
+
+            HashSupplier hasher = (algorithm) -> Hasher.generate(file, algorithm);
+            return ModuleArtifacts.newModuleArtifact(mi, packages, location, hasher);
         }
-
-        ModuleInfo mi;
-        try (InputStream in = zf.getInputStream(ze)) {
-            mi = ModuleInfo.read(in);
-        }
-
-        Set<String> packages = zf.stream()
-                                 .filter(e -> e.getName().startsWith("classes/") &&
-                                         e.getName().endsWith(".class"))
-                                 .map(e -> toPackageName(e))
-                                 .filter(pkg -> pkg.length() > 0)   // module-info
-                                 .distinct()
-                                 .collect(Collectors.toSet());
-
-        HashSupplier hasher = (algorithm) -> Hasher.generate(file, algorithm);
-        return ModuleArtifacts.newModuleArtifact(mi, packages, location, hasher);
     }
 
     /**

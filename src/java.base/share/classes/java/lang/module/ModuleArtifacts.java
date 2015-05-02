@@ -30,7 +30,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.net.URL;
 import java.net.URLConnection;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
@@ -51,7 +50,6 @@ import jdk.internal.jimage.ImageReader;
 import jdk.internal.jimage.ImageReaderFactory;
 import jdk.internal.module.Hasher;
 import jdk.internal.module.ModuleInfo;
-import sun.misc.JModCache;
 
 /**
  * A factory for creating ModuleArtifact implementations where the modules are
@@ -368,18 +366,13 @@ class ModuleArtifacts {
      * A ModuleReader for a jmod file.
      */
     static class JModModuleReader extends SafeCloseModuleReader {
-        private final URI location;
-        private final URL baseURL;
         private final ZipFile zf;
 
         JModModuleReader(ModuleArtifact artifact) throws IOException {
-            this.location = artifact.location();
-            this.baseURL = location.toURL();
-
-            // FIXME - need permission check here as the jmod may already
-            // be open and in the cache
-
-            this.zf = JModCache.get(baseURL);
+            URI uri = artifact.location();
+            String s = uri.toString();
+            String fileURIString = s.substring(5, s.length()-2);
+            this.zf = new JarFile(Paths.get(URI.create(fileURIString)).toString());
         }
 
         private ZipEntry find(String name) {
@@ -397,8 +390,8 @@ class ModuleArtifacts {
         }
 
         @Override
-        void implClose() {
-            JModCache.remove(baseURL);
+        void implClose() throws IOException {
+            zf.close();
         }
     }
 
@@ -406,14 +399,12 @@ class ModuleArtifacts {
      * A ModuleReader for a modular JAR file.
      */
     static class JarModuleReader extends SafeCloseModuleReader {
-        private URI location;
         private final JarFile jf;
 
         JarModuleReader(ModuleArtifact artifact) throws IOException {
             URI uri = artifact.location();
             String s = uri.toString();
             String fileURIString = s.substring(4, s.length()-2);
-            this.location = uri;
             this.jf = new JarFile(Paths.get(URI.create(fileURIString)).toString());
         }
 

@@ -29,17 +29,10 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLStreamHandler;
 import java.net.MalformedURLException;
-import java.io.InputStream;
 import java.io.IOException;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
-
-import sun.net.www.ParseUtil;
 
 /**
- * Experimental protocol handler for accessing jmods on the module path.
- *
- * ##FIXME: No permission checking or support for jmods not on the module path.
+ * Placeholder protocol handler for the jmod protocol.
  */
 
 public class Handler extends URLStreamHandler {
@@ -51,22 +44,7 @@ public class Handler extends URLStreamHandler {
         int index = s.indexOf("!/");
         if (index == -1)
             throw new MalformedURLException("no !/ found in url spec:" + s);
-        URL base = new URL(s.substring(0, index++));
-        final ZipFile zf = sun.misc.JModCache.get(base);
-        if (zf == null)
-            throw new IOException("jmod not in cache");
-        String entry = "classes/" + ParseUtil.decode(s.substring(index+1));
-        final ZipEntry ze = zf.getEntry(entry);
-        if (ze == null)
-            throw new IOException(entry + " not found");
-        return new URLConnection(url) {
-            @Override
-            public void connect() {
-            }
-            @Override
-            public InputStream getInputStream() throws IOException {
-                return zf.getInputStream(ze);
-            }
-        };
+
+        throw new IOException("Can't connect to jmod URL");
     }
 }
