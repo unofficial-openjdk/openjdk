@@ -28,9 +28,9 @@ package java.lang.module;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+
 
 /**
  * Locates or reads resources in a module artifact.
