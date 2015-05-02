@@ -92,20 +92,11 @@ public class ModuleDescriptor
         private final Set<Modifier> mods;
         private final String name;
 
-        /**
-         * Constructs a new instance of this class.
-         *
-         * @param ms the set of modifiers; {@code null} for no modifiers
-         * @param mn the module name
-         *
-         * @throws IllegalArgumentException
-         *         If the module name is not a legal Java identifier
-         */
-        public Requires(Set<Modifier> ms, String mn) {
-            if (ms == null) {
+        private Requires(Set<Modifier> ms, String mn) {
+            if (ms == null || ms.isEmpty()) {
                 mods = Collections.emptySet();
             } else {
-                mods = Collections.unmodifiableSet(ms);
+                mods = Collections.unmodifiableSet(EnumSet.copyOf(ms));
             }
             this.name = requireModuleName(mn);
         }
@@ -187,23 +178,20 @@ public class ModuleDescriptor
         private final String source;
         private final Optional<Set<String>> targets;
 
-        /**
-         * Constructs an {@code Exports} to represent the exporting of package
-         * {@code source} to the modules named in {@code targets}.
-         */
-        public Exports(String source, Set<String> targets) {
+        private Exports(String source, Set<String> targets) {
             this.source = requireNonNull(source);
             requireNonNull(targets);
             if (targets.isEmpty())
                 throw new IllegalArgumentException("Empty target set");
-            this.targets = Optional.of(Collections.unmodifiableSet(targets));
+            this.targets
+                = Optional.of(Collections.unmodifiableSet(new HashSet<>(targets)));
         }
 
         /**
          * Constructs an {@code Exports} to represent the exporting of package
          * {@code source}.
          */
-        public Exports(String source) {
+        private Exports(String source) {
             this.source = requireNonNull(source);
             this.targets = Optional.empty();
         }
@@ -254,10 +242,10 @@ public class ModuleDescriptor
         private final String service;
         private final Set<String> providers;
 
-        public Provides(String service, Set<String> providers) {
+        private Provides(String service, Set<String> providers) {
             this.service = requireServiceTypeName(service);
             providers.forEach(Checks::requireServiceProviderName);
-            this.providers = Collections.unmodifiableSet(providers);
+            this.providers = Collections.unmodifiableSet(new HashSet<>(providers));
         }
 
         public String service() { return service; }
@@ -279,29 +267,29 @@ public class ModuleDescriptor
     private final Optional<String> mainClass;
     private final Optional<DependencyHashes> hashes;
 
-    ModuleDescriptor(String name,
-                     Set<Requires> requires,
-                     Set<String> uses,
-                     Set<Exports> exports,
-                     Map<String, Provides> provides,
-                     Version version,
-                     String mainClass,
-                     DependencyHashes hashes)
+    private ModuleDescriptor(String name,
+                             Set<Requires> requires,
+                             Set<String> uses,
+                             Set<Exports> exports,
+                             Map<String, Provides> provides,
+                             Version version,
+                             String mainClass,
+                             DependencyHashes hashes)
     {
+
         this.name = requireModuleName(name);
 
         assert (requires.stream().map(Requires::name).sorted().distinct().count()
                 == requires.size())
-            : String.format("Module %s has duplicate requires", name);
+            : "Module " + name + " has duplicate requires";
         this.requires = Collections.unmodifiableSet(requires);
 
         assert (exports.stream().map(Exports::source).sorted().distinct().count()
                 == exports.size())
-            : String.format("Module %s has duplicate exports", name);
+            : "Module " + name + " has duplicate exports";
         this.exports = Collections.unmodifiableSet(exports);
 
         this.uses = Collections.unmodifiableSet(uses);
-        // ## FIXME values are mutable
         this.provides = Collections.unmodifiableMap(provides);
 
         this.version = Optional.ofNullable(version);
@@ -424,11 +412,6 @@ public class ModuleDescriptor
             return requires(EnumSet.of(mod), mn);
         }
 
-        public Builder requires(Requires rq) { // ## REMOVE (ArtifactInterposer)
-            requires.put(rq.name(), rq);
-            return this;
-        }
-
         /**
          * Adds a service dependence.
          */
@@ -456,7 +439,7 @@ public class ModuleDescriptor
          * Exports the given package to the given named module.
          */
         public Builder exports(String pn, String target) {
-            return exports(new Exports(pn, Collections.singleton(target)));
+            return exports(pn, Collections.singleton(target));
         }
 
         public Builder exports(String pn) {
@@ -464,11 +447,6 @@ public class ModuleDescriptor
                 throw new IllegalArgumentException("Export of package "
                                                    + pn + " already declared");
             exports.put(pn, new Exports(pn));
-            return this;
-        }
-
-        public Builder exports(Exports e) { // ## REMOVE (ArtifactInterposer)
-            exports.put(e.source(), e);
             return this;
         }
 
