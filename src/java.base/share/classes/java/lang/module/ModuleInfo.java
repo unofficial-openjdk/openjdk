@@ -53,7 +53,7 @@ import jdk.internal.org.objectweb.asm.ClassWriter;
 import jdk.internal.org.objectweb.asm.Opcodes;
 import jdk.internal.module.Hasher.DependencyHashes;
 
-import static jdk.internal.module.ClassFileAttributes.Constants.*;
+import static jdk.internal.module.ClassFileConstants.*;
 
 
 /**

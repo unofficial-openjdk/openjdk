@@ -43,6 +43,7 @@ import jdk.internal.org.objectweb.asm.ClassReader;
 import jdk.internal.org.objectweb.asm.ClassWriter;
 import jdk.internal.org.objectweb.asm.Label;
 import jdk.internal.module.Hasher.DependencyHashes;
+import static jdk.internal.module.ClassFileConstants.*;
 
 
 /**
@@ -50,23 +51,7 @@ import jdk.internal.module.Hasher.DependencyHashes;
  * class file attributes in a module-info class file.
  */
 
-public class ClassFileAttributes {
-
-    public static interface Constants {
-
-        // Attribute names
-        static final String MODULE        = "Module";
-        static final String MAIN_CLASS    = "MainClass";
-        static final String VERSION       = "Version";
-        static final String HASHES        = "Hashes";
-
-        // access and requires flags
-        static final int ACC_MODULE       = 0x8000;
-        static final int ACC_PUBLIC       = 0x0020;
-        static final int ACC_SYNTHETIC    = 0x1000;
-        static final int ACC_MANDATED     = 0x8000;
-
-    }
+class ClassFileAttributes {
 
     private ClassFileAttributes() { }
 
@@ -80,7 +65,7 @@ public class ClassFileAttributes {
         private ModuleDescriptor descriptor;
 
         protected ModuleAttribute() {
-            super(Constants.MODULE);
+            super(MODULE);
         }
 
         @Override
@@ -106,11 +91,11 @@ public class ClassFileAttributes {
                     mods = Collections.emptySet();
                 } else {
                     mods = new HashSet<>();
-                    if ((flags & Constants.ACC_PUBLIC) != 0)
+                    if ((flags & ACC_PUBLIC) != 0)
                         mods.add(Modifier.PUBLIC);
-                    if ((flags & Constants.ACC_SYNTHETIC) != 0)
+                    if ((flags & ACC_SYNTHETIC) != 0)
                         mods.add(Modifier.SYNTHETIC);
-                    if ((flags & Constants.ACC_MANDATED) != 0)
+                    if ((flags & ACC_MANDATED) != 0)
                         mods.add(Modifier.MANDATED);
                 }
                 builder.requires(mods, dn);
@@ -187,11 +172,11 @@ public class ClassFileAttributes {
                 String dn = md.name();
                 int flags = 0;
                 if (md.modifiers().contains(Modifier.PUBLIC))
-                    flags |= Constants.ACC_PUBLIC;
+                    flags |= ACC_PUBLIC;
                 if (md.modifiers().contains(Modifier.SYNTHETIC))
-                    flags |= Constants.ACC_SYNTHETIC;
+                    flags |= ACC_SYNTHETIC;
                 if (md.modifiers().contains(Modifier.MANDATED))
-                    flags |= Constants.ACC_MANDATED;
+                    flags |= ACC_MANDATED;
                 int index = cw.newUTF8(dn);
                 attr.putShort(index);
                 attr.putShort(flags);
@@ -263,7 +248,7 @@ public class ClassFileAttributes {
         private final Version version;
 
         VersionAttribute(Version version) {
-            super(Constants.VERSION);
+            super(VERSION);
             this.version = version;
         }
 
@@ -312,7 +297,7 @@ public class ClassFileAttributes {
         private final String mainClass;
 
         MainClassAttribute(String mainClass) {
-            super(Constants.MAIN_CLASS);
+            super(MAIN_CLASS);
             this.mainClass = mainClass;
         }
 
@@ -369,7 +354,7 @@ public class ClassFileAttributes {
         private final DependencyHashes hashes;
 
         HashesAttribute(DependencyHashes hashes) {
-            super(Constants.HASHES);
+            super(HASHES);
             this.hashes = hashes;
         }
 
