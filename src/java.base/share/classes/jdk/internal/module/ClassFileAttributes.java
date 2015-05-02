@@ -22,11 +22,14 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+
 package jdk.internal.module;
 
+import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Requires;
 import java.lang.module.ModuleDescriptor.Requires.Modifier;
 import java.lang.module.ModuleDescriptor.Exports;
+import java.lang.module.ModuleDescriptor.Provides;
 import java.lang.module.Version;
 import java.util.Collections;
 import java.util.HashMap;
@@ -73,13 +76,8 @@ public class ClassFileAttributes {
      * }
      */
     static class ModuleAttribute extends Attribute {
-        private String name;
-        private Set<Requires> moduleDependences = new HashSet<>();
 
-        // optional and created lazily
-        private Set<String> uses;
-        private Set<Exports> exports;
-        private Map<String, Set<String>> provides;
+        private ModuleDescriptor descriptor;
 
         protected ModuleAttribute() {
             super(Constants.MODULE);
@@ -93,6 +91,8 @@ public class ClassFileAttributes {
                                  int codeOff,
                                  Label[] labels)
         {
+            ModuleDescriptor.Builder builder
+                = new ModuleDescriptor.Builder("xyzzy"); // Name never used
             ModuleAttribute attr = new ModuleAttribute();
 
             // requires_count and requires[requires_count]
@@ -113,7 +113,7 @@ public class ClassFileAttributes {
                     if ((flags & Constants.ACC_MANDATED) != 0)
                         mods.add(Modifier.MANDATED);
                 }
-                attr.moduleDependences.add(new Requires(mods, dn));
+                builder.requires(mods, dn);
                 off += 4;
             }
 
@@ -121,12 +121,10 @@ public class ClassFileAttributes {
             int exports_count = cr.readUnsignedShort(off);
             off += 2;
             if (exports_count > 0) {
-                attr.exports = new HashSet<>();
                 for (int i=0; i<exports_count; i++) {
                     String pkg = cr.readUTF8(off, buf).replace('/', '.');
                     int exports_to_count = cr.readUnsignedShort(off+2);
                     off += 4;
-
                     if (exports_to_count > 0) {
                         Set<String> targets = new HashSet<>();
                         for (int j=0; j<exports_to_count; j++) {
@@ -134,9 +132,9 @@ public class ClassFileAttributes {
                             off += 2;
                             targets.add(t);
                         }
-                        attr.exports.add(new Exports(pkg, targets));
+                        builder.exports(pkg, targets);
                     } else {
-                        attr.exports.add(new Exports(pkg));
+                        builder.exports(pkg);
                     }
                 }
             }
@@ -145,10 +143,9 @@ public class ClassFileAttributes {
             int uses_count = cr.readUnsignedShort(off);
             off += 2;
             if (uses_count > 0) {
-                attr.uses = new HashSet<>();
                 for (int i=0; i<uses_count; i++) {
                     String sn = cr.readClass(off, buf).replace('/', '.');
-                    attr.uses.add(sn);
+                    builder.uses(sn);
                     off += 2;
                 }
             }
@@ -157,15 +154,18 @@ public class ClassFileAttributes {
             int provides_count = cr.readUnsignedShort(off);
             off += 2;
             if (provides_count > 0) {
-                attr.provides = new HashMap<>();
+                Map<String, Set<String>> provides = new HashMap<>();
                 for (int i=0; i<provides_count; i++) {
                     String sn = cr.readClass(off, buf).replace('/', '.');
                     String cn = cr.readClass(off + 2, buf).replace('/', '.');
-                    attr.provides.computeIfAbsent(sn, k -> new HashSet<>()).add(cn);
+                    provides.computeIfAbsent(sn, k -> new HashSet<>()).add(cn);
                     off += 4;
                 }
+                provides.entrySet().forEach(e -> builder.provides(e.getKey(),
+                                                                  e.getValue()));
             }
 
+            attr.descriptor = builder.build();
             return attr;
         }
 
@@ -176,13 +176,14 @@ public class ClassFileAttributes {
                                    int maxStack,
                                    int maxLocals)
         {
+            assert descriptor != null;
             ByteVector attr = new ByteVector();
 
             // requires_count
-            attr.putShort(moduleDependences.size());
+            attr.putShort(descriptor.requires().size());
 
             // requires[requires_count]
-            for (Requires md : moduleDependences) {
+            for (Requires md : descriptor.requires()) {
                 String dn = md.name();
                 int flags = 0;
                 if (md.modifiers().contains(Modifier.PUBLIC))
@@ -197,11 +198,11 @@ public class ClassFileAttributes {
             }
 
             // exports_count and exports[exports_count];
-            if (exports == null) {
+            if (descriptor.exports().isEmpty()) {
                 attr.putShort(0);
             } else {
-                attr.putShort(exports.size());
-                for (Exports e : exports) {
+                attr.putShort(descriptor.exports().size());
+                for (Exports e : descriptor.exports()) {
                     String pkg = e.source().replace('.', '/');
                     attr.putShort(cw.newUTF8(pkg));
                     if (e.targets().isPresent()) {
@@ -215,11 +216,11 @@ public class ClassFileAttributes {
             }
 
             // uses_count and uses_index[uses_count]
-            if (uses == null) {
+            if (descriptor.uses().isEmpty()) {
                 attr.putShort(0);
             } else {
-                attr.putShort(uses.size());
-                for (String s : uses) {
+                attr.putShort(descriptor.uses().size());
+                for (String s : descriptor.uses()) {
                     String service = s.replace('.', '/');
                     int index = cw.newClass(service);
                     attr.putShort(index);
@@ -227,15 +228,16 @@ public class ClassFileAttributes {
             }
 
             // provides_count and provides[provides_count]
-            if (provides == null) {
+            if (descriptor.provides().isEmpty()) {
                 attr.putShort(0);
             } else {
-                int count = provides.values().stream().mapToInt(ps -> ps.size()).sum();
+                int count = descriptor.provides().values()
+                    .stream().mapToInt(ps -> ps.providers().size()).sum();
                 attr.putShort(count);
-                for (Map.Entry<String, Set<String>> entry : provides.entrySet()) {
-                    String service = entry.getKey().replace('.', '/');
+                for (Provides p : descriptor.provides().values()) {
+                    String service = p.service().replace('.', '/');
                     int index = cw.newClass(service);
-                    for (String provider : entry.getValue()) {
+                    for (String provider : p.providers()) {
                         attr.putShort(index);
                         attr.putShort(cw.newClass(provider.replace('.', '/')));
                     }
