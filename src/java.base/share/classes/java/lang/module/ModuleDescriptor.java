@@ -396,6 +396,7 @@ public class ModuleDescriptor
         final Map<String, Provides> provides = new HashMap<>();
         Version version;
         String mainClass;
+        DependencyHashes hashes;
 
         /**
          * Initializes a new builder.
@@ -497,6 +498,11 @@ public class ModuleDescriptor
             return this;
         }
 
+        /* package */ Builder hashes(DependencyHashes hashes) {
+            this.hashes = hashes;
+            return this;
+        }
+
         /**
          * Builds a {@code ModuleDescriptor} from the components.
          */
@@ -509,7 +515,7 @@ public class ModuleDescriptor
                                         provides,
                                         version,
                                         mainClass,
-                                        null);
+                                        hashes);
         }
 
     }

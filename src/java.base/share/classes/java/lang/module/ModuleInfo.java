@@ -57,7 +57,7 @@ import static jdk.internal.module.ClassFileAttributes.Constants.*;
 
 
 /**
- * Represents module information as read from a {@code module-info} class file.
+ * Read module information from a {@code module-info} class file.
  *
  * @implNote The rationale for the hand-coded reader is performance and fine
  * control over the throwing of ClassFormatError.
@@ -65,98 +65,16 @@ import static jdk.internal.module.ClassFileAttributes.Constants.*;
 
 final class ModuleInfo {
 
-    // module name read from the Module attribute
-    private final String name;
+    private final boolean parseHashes;
+    private String name;
+    private ModuleDescriptor.Builder builder;
 
-    // module dependences read from the Module attribute
-    private final Set<Requires> requires = new HashSet<>();
-
-    // module exports read from the Module attribute (created lazily)
-    private Set<Exports> exports;
-
-    // service dependences (uses) read from the Module attribute
-    private Set<String> uses;
-
-    // service providers (provides) read from the Module attribute
-    private Map<String, Provides> provides;
-
-    // extended meta data read from other attributes
-    private Version version;
-    private String mainClass;
-    private DependencyHashes hashes;
-
-    /**
-     * Returns the module name in the {@code Module} attribute. This is the
-     * binary name rather than the internal name in the {@code this_class} item.
-     */
-    private String name() {
-        return name;
+    private ModuleInfo(boolean ph) {
+        parseHashes = ph;
     }
 
-    /**
-     * Returns the module dependences as read from the {@code Module} attribute.
-     */
-    private Set<Requires> requires() {
-        return requires;
-    }
-
-    /**
-     * Returns the exports as read from the {@code Module} attribute.
-     */
-    private Set<Exports> exports() {
-        if (exports == null) {
-            return Collections.emptySet();
-        } else {
-            return exports;
-        }
-    }
-
-    /**
-     * Returns the service dependences (<em>uses</em>) as read from the
-     * {@code Module} attribute.
-     */
-    private Set<String> uses() {
-        if (uses == null) {
-            return Collections.emptySet();
-        } else {
-            return uses;
-        }
-    }
-
-    /**
-     * Returns the map of service implementations provided, as read from the
-     * {@code Module} attribute.
-     */
-    private Map<String, Provides> provides() {
-        if (provides == null) {
-            return Collections.emptyMap();
-        } else {
-            return provides;
-        }
-    }
-
-    /**
-     * Returns the value of version string in the {@code Version} attribute
-     * or {@code null} if the attribute does not exist.
-     */
-    private Version version() {
-        return version;
-    }
-
-    /**
-     * Returns the value of main class string in the {@code MainClass}
-     * attribute or {@code null} if the attribute does not exist.
-     */
-    private String mainClass() {
-        return mainClass;
-    }
-
-    /**
-     * Returns a {@code DependencyHashes} object encapsulating the result of
-     * hashing the contents of some or all of the module dependences.
-     */
-    private DependencyHashes hashes() {
-        return hashes;
+    private ModuleInfo() {
+        this(true);
     }
 
     /**
@@ -166,7 +84,7 @@ final class ModuleInfo {
      * @throws IOException if an I/O errors occurs
      */
     public static ModuleDescriptor read(InputStream in) throws IOException {
-        return new ModuleInfo(new DataInputStream(in), true).toDescriptor();
+        return new ModuleInfo().doRead(new DataInputStream(in));
     }
 
     /**
@@ -176,7 +94,8 @@ final class ModuleInfo {
      * @throws IOException if an I/O errors occurs
      */
     public static ModuleDescriptor read(ByteBuffer bb) throws IOException {
-        return new ModuleInfo(new DataInputWrapper(bb), true).toDescriptor();
+        // ## Reading from a ByteBuffer should never throw an IOException!
+        return new ModuleInfo().doRead(new DataInputWrapper(bb));
     }
 
     /**
@@ -187,26 +106,16 @@ final class ModuleInfo {
      * @throws IOException if an I/O errors occurs
      */
     static ModuleDescriptor readIgnoringHashes(ByteBuffer bb) throws IOException {
-        return new ModuleInfo(new DataInputWrapper(bb), false).toDescriptor();
-    }
-
-    private ModuleDescriptor toDescriptor() {
-        // ## Should really use the builder!
-        return new ModuleDescriptor(name(),
-                                    requires(),
-                                    uses(),
-                                    exports(),
-                                    provides(),
-                                    version(),
-                                    mainClass(),
-                                    hashes());
+        return new ModuleInfo(false).doRead(new DataInputWrapper(bb));
     }
 
     /**
      * Reads the input as a module-info class file.
      */
     @SuppressWarnings("fallthrough")
-    private ModuleInfo(DataInput in, boolean parseHashes) throws IOException {
+    private ModuleDescriptor doRead(DataInput in)
+        throws IOException
+    {
         int magic = in.readInt();
         if (magic != 0xCAFEBABE)
             classFormatError("Bad magic number");
@@ -228,7 +137,8 @@ final class ModuleInfo {
         int suffix = mn.indexOf("/module-info");
         if (suffix < 1)
             classFormatError("this_class not of form name/module-info");
-        this.name = mn.substring(0, suffix).replace('/', '.');
+        name = mn.substring(0, suffix).replace('/', '.');
+        builder = new ModuleDescriptor.Builder(name);
 
         int super_class = in.readUnsignedShort();
         if (super_class > 0)
@@ -291,6 +201,7 @@ final class ModuleInfo {
         }
         if (!foundModule)
             classFormatError("Missing Module attribute");
+        return builder.build();
     }
 
     /**
@@ -318,12 +229,11 @@ final class ModuleInfo {
                 if ((flags & ACC_MANDATED) != 0)
                     mods.add(Modifier.MANDATED);
             }
-            requires.add(new Requires(mods, dn));
+            builder.requires(mods, dn);
         }
 
         int exports_count = in.readUnsignedShort();
         if (exports_count > 0) {
-            exports = new HashSet<>();
             for (int i=0; i<exports_count; i++) {
                 int index = in.readUnsignedShort();
                 String pkg = cpool.getUtf8(index).replace('/', '.');
@@ -334,20 +244,19 @@ final class ModuleInfo {
                         int exports_to_index = in.readUnsignedShort();
                         targets.add(cpool.getUtf8(exports_to_index));
                     }
-                    exports.add(new Exports(pkg, targets));
+                    builder.exports(pkg, targets);
                 } else {
-                    exports.add(new Exports(pkg));
+                    builder.exports(pkg);
                 }
             }
         }
 
         int uses_count = in.readUnsignedShort();
         if (uses_count > 0) {
-            uses = new HashSet<>();
             for (int i=0; i<uses_count; i++) {
                 int index = in.readUnsignedShort();
                 String sn = cpool.getClassName(index).replace('/', '.');
-                uses.add(sn);
+                builder.uses(sn);
             }
         }
 
@@ -361,10 +270,7 @@ final class ModuleInfo {
                 String cn = cpool.getClassName(with_index).replace('/', '.');
                 pm.computeIfAbsent(sn, k -> new HashSet<>()).add(cn);
             }
-            provides = new HashMap<>();
-            pm.entrySet().forEach(e -> provides.put(e.getKey(),
-                                                    new Provides(e.getKey(),
-                                                                 e.getValue())));
+            pm.entrySet().forEach(e -> builder.provides(e.getKey(),e.getValue()));
         }
     }
 
@@ -377,7 +283,7 @@ final class ModuleInfo {
         throws IOException
     {
         int index = in.readUnsignedShort();
-        this.version = Version.parse(cpool.getUtf8(index));
+        builder.version(cpool.getUtf8(index));
     }
 
     /**
@@ -387,7 +293,7 @@ final class ModuleInfo {
         throws IOException
     {
         int index = in.readUnsignedShort();
-        this.mainClass = cpool.getClassName(index).replace('/', '.');
+        builder.mainClass(cpool.getClassName(index).replace('/', '.'));
     }
 
     /**
@@ -413,7 +319,7 @@ final class ModuleInfo {
             map.put(dn, hash);
         }
 
-        this.hashes = new DependencyHashes(algorithm, map);
+        builder.hashes(new DependencyHashes(algorithm, map));
     }
 
     /**
@@ -697,4 +603,5 @@ final class ModuleInfo {
             return DataInputStream.readUTF(this);
         }
     }
+
 }
