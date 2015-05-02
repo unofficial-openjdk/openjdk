@@ -23,6 +23,7 @@
 
 import java.lang.reflect.Module;
 import java.lang.module.ModuleDescriptor.Exports;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import org.testng.annotations.Test;
@@ -41,6 +42,11 @@ public class ModuleTest {
         assertTrue(ModuleTest.class.getModule() == null);
     }
 
+    private Predicate<Exports> doesExport(String pn) {
+        return e -> (e.source().equals(pn)
+                     && !e.targets().isPresent());
+    }
+
     @Test
     public void testBase() {
         Module base = Object.class.getModule();
@@ -49,8 +55,8 @@ public class ModuleTest {
         assertTrue(base.getClassLoader() == null);
 
         // descriptor
-        Exports javaLang = new Exports("java.lang");
-        assertTrue(base.getDescriptor().exports().contains(javaLang));
+        assertTrue(base.getDescriptor().exports().stream()
+                   .anyMatch(doesExport("java.lang")));
 
         // name
         assertTrue(base.getName().equals("java.base"));
@@ -71,8 +77,8 @@ public class ModuleTest {
         assertTrue(desktop.getClassLoader() == null);
 
         // descriptor
-        Exports javaAWT = new Exports("java.awt");
-        assertTrue(desktop.getDescriptor().exports().contains(javaAWT));
+        assertTrue(desktop.getDescriptor().exports().stream()
+                   .anyMatch(doesExport("java.awt")));
 
         // name
         assertTrue(desktop.getName().equals("java.desktop"));
@@ -92,4 +98,5 @@ public class ModuleTest {
     private <T> boolean contains(T[] array, T obj) {
         return Stream.of(array).anyMatch(obj::equals);
     }
+
 }

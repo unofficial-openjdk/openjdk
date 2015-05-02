@@ -25,7 +25,6 @@ import java.lang.module.Configuration;
 import java.lang.module.Layer;
 import java.lang.module.ModuleArtifactFinder;
 import java.lang.module.ModuleDescriptor;
-import java.lang.module.ModuleDescriptor.Requires;
 import java.lang.module.ModuleDescriptor.Requires.Modifier;
 import java.util.HashSet;
 import java.util.Set;
@@ -43,12 +42,12 @@ public class ConfigurationTest {
     public void testBasic() {
         ModuleDescriptor descriptor1 =
                 new ModuleDescriptor.Builder("m1")
-                        .requires(md("m2"))
+                        .requires("m2")
                         .build();
 
         ModuleDescriptor descriptor2 =
                 new ModuleDescriptor.Builder("m2")
-                        .requires(md("m3"))
+                        .requires("m3")
                         .build();
 
         ModuleDescriptor descriptor3 =
@@ -87,12 +86,12 @@ public class ConfigurationTest {
         // m1 requires m2, m2 requires public m3
         ModuleDescriptor descriptor1 =
                 new ModuleDescriptor.Builder("m1")
-                        .requires(md("m2"))
+                        .requires("m2")
                         .build();
 
         ModuleDescriptor descriptor2 =
                 new ModuleDescriptor.Builder("m2")
-                        .requires(md("m3", Modifier.PUBLIC))
+                        .requires(Modifier.PUBLIC, "m3")
                         .build();
 
         ModuleDescriptor descriptor3 =
@@ -132,7 +131,7 @@ public class ConfigurationTest {
 
         ModuleDescriptor descriptor1 =
                 new ModuleDescriptor.Builder("m1")
-                .requires(md("m2"))
+                .requires("m2")
                 .uses("S")
                 .build();
 
@@ -142,7 +141,7 @@ public class ConfigurationTest {
         // service provider
         ModuleDescriptor descriptor3 =
                 new ModuleDescriptor.Builder("m3")
-                .requires(md("m1"))
+                .requires("m1")
                 .provides("S", "p.S1").build();
 
         // unused module
@@ -184,10 +183,4 @@ public class ConfigurationTest {
         assertTrue(cf.readDependences(descriptor3).contains(descriptor1));
     }
 
-    static Requires md(String dn, Modifier... mods) {
-        Set<Modifier> set = new HashSet<>();
-        for (Modifier mod: mods)
-            set.add(mod);
-        return new Requires(set, dn);
-    }
 }

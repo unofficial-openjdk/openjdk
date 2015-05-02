@@ -26,9 +26,6 @@ import java.lang.module.Layer;
 import java.lang.module.ModuleArtifact;
 import java.lang.module.ModuleArtifactFinder;
 import java.lang.module.ModuleDescriptor;
-import java.lang.module.ModuleDescriptor.Requires;
-import java.lang.module.ModuleDescriptor.Requires.Modifier;
-import java.lang.module.ModuleDescriptor.Exports;
 import java.lang.reflect.Module;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -53,8 +50,9 @@ public class LayerTest {
 
         // configuration
         Configuration cf = bootLayer.configuration();
-        Exports javaLang = new Exports("java.lang");
-        assertTrue(cf.findDescriptor("java.base").exports().contains(javaLang));
+        assertTrue(cf.findDescriptor("java.base").exports()
+                   .stream().anyMatch(e -> (e.source().equals("java.lang")
+                                            && !e.targets().isPresent())));
 
         // findLoader
         assertTrue(bootLayer.findLoader("java.base") == null);
@@ -95,13 +93,13 @@ public class LayerTest {
     public void testLayerOnEmpty() {
         ModuleDescriptor descriptor1 =
                 new ModuleDescriptor.Builder("m1")
-                        .requires(md("m2"))
+                        .requires("m2")
                         .exports("p1")
                         .build();
 
         ModuleDescriptor descriptor2 =
                 new ModuleDescriptor.Builder("m2")
-                        .requires(md("m3"))
+                        .requires("m3")
                         .build();
 
         ModuleDescriptor descriptor3 =
@@ -156,14 +154,14 @@ public class LayerTest {
     public void testLayerOnBoot() {
         ModuleDescriptor descriptor1 =
                 new ModuleDescriptor.Builder("m1")
-                        .requires(md("m2"))
-                        .requires(md("java.base"))
+                        .requires("m2")
+                        .requires("java.base")
                         .exports("p1")
                         .build();
 
         ModuleDescriptor descriptor2 =
                 new ModuleDescriptor.Builder("m2")
-                        .requires(md("java.base"))
+                        .requires("java.base")
                         .build();
 
         ModuleArtifactFinder finder =
@@ -200,12 +198,4 @@ public class LayerTest {
         // TBD
     }
 
-    static Requires md(String dn, Modifier... mods) {
-        Set<Modifier> set = new HashSet<>();
-        for (Modifier mod: mods)
-            set.add(mod);
-        return new Requires(set, dn);
-    }
-
 }
-

@@ -22,6 +22,7 @@
  */
 
 import java.util.EnumSet;
+import java.util.Set;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Requires;
 import java.lang.module.ModuleDescriptor.Requires.Modifier;
@@ -34,8 +35,13 @@ import static org.testng.Assert.*;
 @Test
 public class _Requires {
 
+    private Requires requires(Set<Modifier> mods, String mn) {
+        return new ModuleDescriptor.Builder(mn).requires(mods, mn).build()
+            .requires().iterator().next();
+    }
+
     public void nullModifiers() {
-        Requires md = new Requires(null, "foo");
+        Requires md = requires(null, "foo");
         assertEquals(md, md);
         assertTrue(md.compareTo(md) == 0);
         assertTrue(md.modifiers().isEmpty());
@@ -43,7 +49,7 @@ public class _Requires {
     }
 
     public void noModifiers() {
-        Requires md = new Requires(EnumSet.noneOf(Modifier.class), "foo");
+        Requires md = requires(EnumSet.noneOf(Modifier.class), "foo");
         assertEquals(md, md);
         assertTrue(md.compareTo(md) == 0);
         assertTrue(md.modifiers().isEmpty());
@@ -51,7 +57,7 @@ public class _Requires {
     }
 
     public void oneModifier() {
-        Requires md = new Requires(EnumSet.of(PUBLIC), "foo");
+        Requires md = requires(EnumSet.of(PUBLIC), "foo");
         assertEquals(md, md);
         assertTrue(md.compareTo(md) == 0);
         assertEquals(md.modifiers(), EnumSet.of(PUBLIC));
@@ -59,7 +65,7 @@ public class _Requires {
     }
 
     public void twoModifiers() {
-        Requires md = new Requires(EnumSet.of(PUBLIC, SYNTHETIC), "foo");
+        Requires md = requires(EnumSet.of(PUBLIC, SYNTHETIC), "foo");
         assertEquals(md, md);
         assertTrue(md.compareTo(md) == 0);
         assertEquals(md.modifiers(), EnumSet.of(PUBLIC, SYNTHETIC));
@@ -67,7 +73,7 @@ public class _Requires {
     }
 
     public void allModifiers() {
-        Requires md = new Requires(EnumSet.allOf(Modifier.class), "foo");
+        Requires md = requires(EnumSet.allOf(Modifier.class), "foo");
         assertEquals(md, md);
         assertTrue(md.compareTo(md) == 0);
         assertEquals(md.modifiers(), EnumSet.allOf(Modifier.class));
@@ -75,8 +81,8 @@ public class _Requires {
     }
 
     public void compare() {
-        Requires md1 = new Requires(EnumSet.noneOf(Modifier.class), "foo");
-        Requires md2 = new Requires(EnumSet.noneOf(Modifier.class), "bar");
+        Requires md1 = requires(EnumSet.noneOf(Modifier.class), "foo");
+        Requires md2 = requires(EnumSet.noneOf(Modifier.class), "bar");
         int n = "foo".compareTo("bar");
         assertTrue(md1.compareTo(md2) == n);
         assertTrue(md2.compareTo(md1) == -n);
@@ -84,7 +90,7 @@ public class _Requires {
 
     @Test(expectedExceptions = { IllegalArgumentException.class })
     public void nullName() {
-        new Requires(EnumSet.noneOf(Modifier.class), null);
+        requires(EnumSet.noneOf(Modifier.class), null);
     }
 
     // TODO: Requires throwing IllegalArgumentException

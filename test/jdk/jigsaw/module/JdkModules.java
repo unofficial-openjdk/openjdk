@@ -26,8 +26,6 @@ import java.util.*;
 import static java.lang.System.out;
 
 import java.lang.module.*;
-import java.lang.module.ModuleDescriptor.Requires;
-import java.lang.module.ModuleDescriptor.Requires.Modifier;
 import static java.lang.module.ModuleDescriptor.Requires.Modifier.*;
 
 import org.testng.annotations.*;
@@ -35,49 +33,35 @@ import static org.testng.Assert.*;
 
 @Test
 public class JdkModules {
-    private void base(ModuleDescriptor m) {
-        Requires[] deps = new Requires[] {};
-        assertEqualsNoOrder(m.requires().toArray(new Requires[0]), deps);
-    }
 
-    private void compact2(ModuleDescriptor m) {
-        Requires[] deps = new Requires[] {
-            moduleMandatedDep("java.base"),
-            modulePublicDep("java.compact1"),
-            modulePublicDep("java.rmi"),
-            modulePublicDep("java.sql"),
-            modulePublicDep("java.xml")
-        };
-        assertEqualsNoOrder(m.requires().toArray(new Requires[0]), deps);
+    private static ModuleDescriptor base
+        = new ModuleDescriptor.Builder("java.base").build();
+
+    private static ModuleDescriptor compact2
+        = new ModuleDescriptor.Builder("java.compact1")
+            .requires(MANDATED, "java.base")
+            .requires(PUBLIC, "java.compact1")
+            .requires(PUBLIC, "java.rmi")
+            .requires(PUBLIC, "java.sql")
+            .requires(PUBLIC, "java.xml")
+            .build();
+
+    private void check(ModuleDescriptor md, ModuleDescriptor ref) {
+        assertTrue(md.requires().size() == ref.requires().size());
+        assertTrue(md.requires().containsAll(ref.requires()));
     }
 
     public void go() {
-        Set<ModuleArtifact> artifacts = ModuleArtifactFinder.installedModules().allModules();
-
-        // do sanity test for the base module for now
+        Set<ModuleArtifact> artifacts
+            = ModuleArtifactFinder.installedModules().allModules();
         artifacts.stream().map(ModuleArtifact::descriptor).forEach(md -> {
             switch (md.name()) {
                 case "java.base":
-                    base(md); break;
+                    check(md, base); break;
                 case "java.compact2":
-                    compact2(md); break;
+                    check(md, compact2); break;
             }
         });
     }
 
-    private static Requires moduleDep(Set<Modifier> mods, String dn) {
-        return new Requires(mods, dn);
-    }
-
-    private static Requires modulePublicDep(String dn) {
-        return new Requires(EnumSet.of(Modifier.PUBLIC), dn);
-    }
-
-    private static Requires moduleMandatedDep(String dn) {
-        return new Requires(EnumSet.of(Modifier.MANDATED), dn);
-    }
-
-    private static Requires moduleDep(String dn) {
-        return new Requires(EnumSet.noneOf(Modifier.class), dn);
-    }
 }
