@@ -28,7 +28,7 @@
 #include "classfile/compactHashtable.hpp"
 #include "memory/allocation.hpp"
 #include "memory/memRegion.hpp"
-#include "runtime/virtualspace.hpp"
+#include "memory/virtualspace.hpp"
 #include "utilities/exceptions.hpp"
 #include "utilities/macros.hpp"
 

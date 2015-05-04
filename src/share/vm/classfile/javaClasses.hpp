@@ -962,7 +962,6 @@ class java_lang_ref_SoftReference: public java_lang_ref_Reference {
   static void set_clock(jlong value);
 };
 
-
 // Interface to java.lang.invoke.MethodHandle objects
 
 class MethodHandleEntry;
@@ -1092,10 +1091,6 @@ class java_lang_invoke_MemberName: AllStatic {
 
   static Metadata*      vmtarget(oop mname);
   static void       set_vmtarget(oop mname, Metadata* target);
-#if INCLUDE_JVMTI
-  static void       adjust_vmtarget(oop mname, Method* old_method, Method* new_method,
-                                    bool* trace_name_printed);
-#endif // INCLUDE_JVMTI
 
   static intptr_t       vmindex(oop mname);
   static void       set_vmindex(oop mname, intptr_t index);
@@ -1174,14 +1169,23 @@ class java_lang_invoke_CallSite: AllStatic {
 
 private:
   static int _target_offset;
+  static int _context_offset;
+  static int _default_context_offset;
+
 
   static void compute_offsets();
 
 public:
   // Accessors
-  static oop              target(         oop site);
-  static void         set_target(         oop site, oop target);
-  static void         set_target_volatile(oop site, oop target);
+  static oop              target(          oop site);
+  static void         set_target(          oop site, oop target);
+  static void         set_target_volatile( oop site, oop target);
+
+  static oop              context_volatile(oop site);
+  static void         set_context_volatile(oop site, oop context);
+  static bool         set_context_cas     (oop site, oop context, oop expected);
+
+  static oop default_context();
 
   // Testers
   static bool is_subclass(Klass* klass) {
@@ -1192,7 +1196,6 @@ public:
   // Accessors for code generation:
   static int target_offset_in_bytes()           { return _target_offset; }
 };
-
 
 // Interface to java.security.AccessControlContext objects
 

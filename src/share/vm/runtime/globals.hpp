@@ -677,9 +677,6 @@ class CommandLineFlags {
   product(bool, PrintVMQWaitTime, false,                                    \
           "Print out the waiting time in VM operation queue")               \
                                                                             \
-  develop(bool, NoYieldsInMicrolock, false,                                 \
-          "Disable yields in microlock")                                    \
-                                                                            \
   develop(bool, TraceOopMapGeneration, false,                               \
           "Show OopMapGeneration")                                          \
                                                                             \
@@ -936,8 +933,8 @@ class CommandLineFlags {
   product(bool, ShowMessageBoxOnError, false,                               \
           "Keep process alive on VM fatal error")                           \
                                                                             \
-  product(bool, CreateMinidumpOnCrash, false,                               \
-          "Create minidump on VM fatal error")                              \
+  product(bool, CreateCoredumpOnCrash, true,                                \
+          "Create core/mini dump on VM fatal error")                        \
                                                                             \
   product_pd(bool, UseOSErrorReporting,                                     \
           "Let VM fatal error propagate to the OS (ie. WER on Windows)")    \
@@ -1156,9 +1153,6 @@ class CommandLineFlags {
   product(bool, ConvertYieldToSleep, false,                                 \
           "Convert yield to a sleep of MinSleepInterval to simulate Win32 " \
           "behavior")                                                       \
-                                                                            \
-  product(bool, UseBoundThreads, true,                                      \
-          "Bind user level threads to kernel threads (for Solaris only)")   \
                                                                             \
   develop(bool, UseDetachedThreads, true,                                   \
           "Use detached threads that are recycled upon termination "        \
@@ -2231,6 +2225,9 @@ class CommandLineFlags {
   diagnostic(bool, DeferInitialCardMark, false,                             \
           "When +ReduceInitialCardMarks, explicitly defer any that "        \
           "may arise from new_pre_store_barrier")                           \
+                                                                            \
+  product(bool, UseCondCardMark, false,                                     \
+          "Check for already marked card before updating card table")       \
                                                                             \
   diagnostic(bool, VerifyRememberedSets, false,                             \
           "Verify GC remembered sets")                                      \
@@ -3441,10 +3438,6 @@ class CommandLineFlags {
   product(bool, ThreadPriorityVerbose, false,                               \
           "Print priority changes")                                         \
                                                                             \
-  product(intx, DefaultThreadPriority, -1,                                  \
-          "The native priority at which threads run if not elsewhere "      \
-          "specified (-1 means no change)")                                 \
-                                                                            \
   product(intx, CompilerThreadPriority, -1,                                 \
           "The native priority at which compiler threads should run "       \
           "(-1 means no change)")                                           \
@@ -3909,7 +3902,11 @@ class CommandLineFlags {
           "Use locked-tracing when doing event-based tracing")              \
                                                                             \
   diagnostic(bool, UseUnalignedAccesses, false,                             \
-          "Use unaligned memory accesses in sun.misc.Unsafe")
+          "Use unaligned memory accesses in sun.misc.Unsafe")               \
+                                                                            \
+  product_pd(bool, PreserveFramePointer,                                    \
+             "Use the FP register for holding the frame pointer "           \
+             "and not as a general purpose register.")
 
 /*
  *  Macros for factoring of globals
