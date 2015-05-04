@@ -2,7 +2,7 @@
 
 <!--
 
-   Copyright (c) 2014 Oracle and/or its affiliates. All rights reserved.
+   Copyright (c) 2014, 2015 Oracle and/or its affiliates. All rights reserved.
    DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 
    This code is free software; you can redistribute it and/or modify it
@@ -222,11 +222,13 @@
       <name>jdk.internal.org.objectweb.asm</name>
       <to>jdk.jfr</to>
       <to>jdk.scripting.nashorn</to>
+      <to>java.instrument</to>
     </export>
     <export>
       <name>jdk.internal.org.objectweb.asm.commons</name>
       <to>jdk.jfr</to>
       <to>jdk.scripting.nashorn</to>
+      <to>java.instrument</to>
     </export>
     <export>
       <name>jdk.internal.org.objectweb.asm.signature</name>
@@ -235,11 +237,13 @@
     <export>
       <name>jdk.internal.org.objectweb.asm.tree</name>
       <to>jdk.jfr</to>
+      <to>java.instrument</to>
     </export>
     <export>
       <name>jdk.internal.org.objectweb.asm.util</name>
       <to>jdk.jfr</to>
       <to>jdk.scripting.nashorn</to>
+      <to>java.instrument</to>
     </export>
     <export>
       <name>sun.misc</name>
@@ -248,18 +252,25 @@
       <to>java.logging</to>
       <to>java.management</to>
       <to>java.naming</to>
+      <to>java.prefs</to>
       <to>java.rmi</to>
       <to>java.security.jgss</to>
       <to>java.security.sasl</to>
       <to>java.sql</to>
+      <to>java.xml</to>
+      <to>java.xml.ws</to>
       <to>jdk.charsets</to>
+      <to>jdk.crypto.pkcs11</to>
       <to>jdk.deploy.osx</to>
+      <to>jdk.httpserver</to>
       <to>jdk.jartool</to>
       <to>jdk.jconsole</to>
       <to>jdk.jvmstat</to>
       <to>jdk.pack200</to>
       <to>jdk.security.auth</to>
       <to>jdk.security.jgss</to>
+      <to>jdk.snmp</to>
+      <to>java.instrument</to>
     </export>
     <export>
       <name>sun.net.dns</name>
@@ -304,6 +315,7 @@
       <to>java.sql</to>
       <to>java.sql.rowset</to>
       <to>jdk.scripting.nashorn</to>
+      <to>java.instrument</to>
     </export>
     <export>
       <name>sun.reflect.annotation</name>
@@ -751,7 +763,7 @@
     </export>
     <export>
       <name>sun.awt</name>
-      <to>jdk.accessbridge</to>
+      <to>jdk.accessibility</to>
     </export>
   </module>
   <module>
@@ -759,6 +771,10 @@
     <depend>java.base</depend>
     <export>
       <name>java.lang.instrument</name>
+    </export>
+    <export>
+      <name>jdk.internal.instrumentation</name>
+      <to>jdk.jfr</to>
     </export>
   </module>
   <module>
@@ -774,9 +790,6 @@
     <depend>java.logging</depend>
     <depend>java.naming</depend>
     <depend re-exports="true">java.rmi</depend>
-    <export>
-      <name>com.sun.management</name>
-    </export>
     <export>
       <name>java.lang.management</name>
     </export>
@@ -810,9 +823,11 @@
     <export>
       <name>sun.management</name>
       <to>jdk.jconsole</to>
+      <to>jdk.management</to>
     </export>
     <export>
       <name>sun.management.spi</name>
+      <to>jdk.management</to>
       <to>jdk.management.cmm</to>
     </export>
   </module>
@@ -1658,6 +1673,7 @@
     <depend>java.rmi</depend>
     <depend>jdk.attach</depend>
     <depend>jdk.jvmstat</depend>
+    <depend>jdk.management</depend>
     <export>
       <name>com.sun.tools.jconsole</name>
     </export>
@@ -1708,6 +1724,14 @@
   <module>
     <name>jdk.localedata</name>
     <depend>java.base</depend>
+  </module>
+  <module>
+    <name>jdk.management</name>
+    <depend>java.base</depend>
+    <depend re-exports="true">java.management</depend>
+    <export>
+      <name>com.sun.management</name>
+    </export>
   </module>
   <module>
     <name>jdk.naming.dns</name>
@@ -1838,6 +1862,23 @@
     </export>
   </module>
   <module>
+    <name>jdk.xml.dom</name>
+    <depend>java.base</depend>
+    <depend re-exports="true">java.xml</depend>
+    <export>
+      <name>org.w3c.dom.css</name>
+    </export>
+    <export>
+      <name>org.w3c.dom.html</name>
+    </export>
+    <export>
+      <name>org.w3c.dom.stylesheets</name>
+    </export>
+    <export>
+      <name>org.w3c.dom.xpath</name>
+    </export>
+  </module>
+  <module>
     <name>jdk.xml.ws</name>
     <depend>java.base</depend>
     <depend>java.compiler</depend>
@@ -1851,5 +1892,10 @@
   <module>
     <name>jdk.zipfs</name>
     <depend>java.base</depend>
+  </module>
+  <module>
+    <name>jdk.accessibility</name>
+    <depend>java.base</depend>
+    <depend>java.desktop</depend>
   </module>
 </modules>
