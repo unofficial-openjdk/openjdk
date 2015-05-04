@@ -322,7 +322,7 @@ class JlinkTask {
             String module = entry.getKey();
             Path jmodpath = entry.getValue();
 
-            Optional<String> mainClass = null;
+            Optional<String> mainClass = Optional.empty();
 
             try (ZipFile zf = new ZipFile(jmodpath.toString())) {
                 String e = Section.CLASSES.jmodDir() + "/" + MODULE_INFO;
