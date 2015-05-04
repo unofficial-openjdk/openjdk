@@ -292,6 +292,7 @@
   template(setTargetNormal_name,                      "setTargetNormal")                          \
   template(setTargetVolatile_name,                    "setTargetVolatile")                        \
   template(setTarget_signature,                       "(Ljava/lang/invoke/MethodHandle;)V")       \
+  template(DEFAULT_CONTEXT_name,                      "DEFAULT_CONTEXT")                          \
   NOT_LP64(  do_alias(intptr_signature,               int_signature)  )                           \
   LP64_ONLY( do_alias(intptr_signature,               long_signature) )                           \
                                                                                                   \
@@ -501,6 +502,7 @@
   template(class_signature,                           "Ljava/lang/Class;")                                        \
   template(string_signature,                          "Ljava/lang/String;")                                       \
   template(reference_signature,                       "Ljava/lang/ref/Reference;")                                \
+  template(sun_misc_Cleaner_signature,                "Lsun/misc/Cleaner;")                                       \
   template(executable_signature,                      "Ljava/lang/reflect/Executable;")                           \
   template(concurrenthashmap_signature,               "Ljava/util/concurrent/ConcurrentHashMap;")                 \
   template(String_StringBuilder_signature,            "(Ljava/lang/String;)Ljava/lang/StringBuilder;")            \
@@ -531,18 +533,17 @@
   template(java_lang_management_ThreadState,           "java/lang/management/ThreadState")                        \
   template(java_lang_management_MemoryUsage,           "java/lang/management/MemoryUsage")                        \
   template(java_lang_management_ThreadInfo,            "java/lang/management/ThreadInfo")                         \
-  template(sun_management_ManagementFactory,           "sun/management/ManagementFactory")                        \
   template(sun_management_Sensor,                      "sun/management/Sensor")                                   \
   template(sun_management_Agent,                       "sun/management/Agent")                                    \
-  template(sun_management_DiagnosticCommandImpl,       "sun/management/DiagnosticCommandImpl")                    \
-  template(sun_management_GarbageCollectorImpl,        "sun/management/GarbageCollectorImpl")                     \
+  template(com_sun_management_internal_DiagnosticCommandImpl,  "com/sun/management/internal/DiagnosticCommandImpl")     \
+  template(com_sun_management_internal_GarbageCollectorExtImpl,"com/sun/management/internal/GarbageCollectorExtImpl")   \
   template(sun_management_ManagementFactoryHelper,     "sun/management/ManagementFactoryHelper")                  \
   template(getDiagnosticCommandMBean_name,             "getDiagnosticCommandMBean")                               \
   template(getDiagnosticCommandMBean_signature,        "()Lcom/sun/management/DiagnosticCommandMBean;")           \
   template(getGcInfoBuilder_name,                      "getGcInfoBuilder")                                        \
-  template(getGcInfoBuilder_signature,                 "()Lsun/management/GcInfoBuilder;")                        \
+  template(getGcInfoBuilder_signature,                 "()Lcom/sun/management/internal/GcInfoBuilder;")           \
   template(com_sun_management_GcInfo,                  "com/sun/management/GcInfo")                               \
-  template(com_sun_management_GcInfo_constructor_signature, "(Lsun/management/GcInfoBuilder;JJJ[Ljava/lang/management/MemoryUsage;[Ljava/lang/management/MemoryUsage;[Ljava/lang/Object;)V") \
+  template(com_sun_management_GcInfo_constructor_signature, "(Lcom/sun/management/internal/GcInfoBuilder;JJJ[Ljava/lang/management/MemoryUsage;[Ljava/lang/management/MemoryUsage;[Ljava/lang/Object;)V") \
   template(createGCNotification_name,                  "createGCNotification")                                    \
   template(createGCNotification_signature,             "(JLjava/lang/String;Ljava/lang/String;Ljava/lang/String;Lcom/sun/management/GcInfo;)V") \
   template(createDiagnosticFrameworkNotification_name, "createDiagnosticFrameworkNotification")                   \
@@ -554,7 +555,7 @@
   template(createGarbageCollectorMBean_signature,      "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/management/GarbageCollectorMBean;") \
   template(trigger_name,                               "trigger")                                                 \
   template(clear_name,                                 "clear")                                                   \
-  template(trigger_method_signature,                   "(ILjava/lang/management/MemoryUsage;)V")                                                 \
+  template(trigger_method_signature,                   "(ILjava/lang/management/MemoryUsage;)V")                  \
   template(startAgent_name,                            "startAgent")                                              \
   template(startRemoteAgent_name,                      "startRemoteManagementAgent")                              \
   template(startLocalAgent_name,                       "startLocalManagementAgent")                               \

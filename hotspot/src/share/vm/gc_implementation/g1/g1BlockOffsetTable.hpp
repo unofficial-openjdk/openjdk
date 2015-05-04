@@ -27,7 +27,7 @@
 
 #include "gc_implementation/g1/g1RegionToSpaceMapper.hpp"
 #include "memory/memRegion.hpp"
-#include "runtime/virtualspace.hpp"
+#include "memory/virtualspace.hpp"
 #include "utilities/globalDefinitions.hpp"
 
 // The CollectedHeap type requires subtypes to implement a method
