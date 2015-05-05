@@ -25,6 +25,10 @@
 package jdk.tools.jlink.plugins;
 
 import java.io.IOException;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
 
@@ -35,7 +39,7 @@ import java.util.Properties;
  */
 public abstract class PluginProvider {
 
-    public static final String CONFIGURATION_PROPERTY = "configuration";
+    public static final String TOOL_ARGUMENT_PROPERTY = "argument";
 
     private final String name;
     private final String description;
@@ -57,9 +61,35 @@ public abstract class PluginProvider {
         return description;
     }
 
-    public abstract String getConfiguration();
+    public abstract String getToolArgument();
 
     public abstract String getToolOption();
 
-    public abstract Plugin newPlugin(Properties properties) throws IOException;
+    public abstract Map<String, String> getAdditionalOptions();
+
+    public final Plugin[] newPlugins(Properties properties) throws IOException {
+        String[] arguments = null;
+        Collection<String> options = Collections.emptyList();
+        if(getAdditionalOptions() != null) {
+            options = getAdditionalOptions().keySet();
+        }
+        Map<String, String> otherOptions = new HashMap<>();
+        for (String a : properties.stringPropertyNames()) {
+            if (options.contains(a)) {
+                otherOptions.put(a, properties.getProperty(a));
+                continue;
+            }
+            switch (a) {
+                case TOOL_ARGUMENT_PROPERTY: {
+                    arguments = properties.getProperty(a).
+                            split(",");
+                    break;
+                }
+            }
+        }
+        return newPlugins(arguments, otherOptions);
+    }
+
+    public abstract Plugin[] newPlugins(String[] arguments,
+            Map<String, String> otherOptions) throws IOException;
 }

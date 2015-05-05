@@ -38,7 +38,6 @@ import static java.nio.file.StandardOpenOption.WRITE;
 import java.util.LinkedList;
 import java.util.List;
 import jdk.internal.jimage.BasicImageReader;
-import jdk.tools.jlink.internal.ImageFileCreator;
 import jdk.internal.jimage.ImageHeader;
 import static jdk.internal.jimage.ImageHeader.MAGIC;
 import static jdk.internal.jimage.ImageHeader.MAJOR_VERSION;

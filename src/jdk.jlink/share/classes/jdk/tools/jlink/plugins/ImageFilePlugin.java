@@ -26,13 +26,16 @@ package jdk.tools.jlink.plugins;
 
 /**
  * Implement this interface to develop your own plugin.
- * Plugin can modify the Resources located in jimage file.
+ * FilePlugin can modify the Files located in an image.
  */
-public interface Plugin {
+public interface ImageFilePlugin extends Plugin {
 
     /**
-     * Plugin unique name.
-     * @return The plugin name.
+     * Visit the collection of files.
+     * @param inFiles Read only files.
+     * @param outFiles The pool to fill with files. Will contain the result of the visit
+     * @throws Exception
      */
-    public String getName();
+    public void visit(ImageFilePool inFiles, ImageFilePool outFiles)
+            throws Exception;
 }

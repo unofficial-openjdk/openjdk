@@ -26,16 +26,16 @@ package jdk.tools.jlink.internal.plugins.asm;
 
 import java.io.IOException;
 import java.util.Objects;
+import jdk.tools.jlink.plugins.ResourcePlugin;
 import jdk.tools.jlink.plugins.ResourcePool;
 import jdk.tools.jlink.plugins.StringTable;
-import jdk.tools.jlink.plugins.Plugin;
 
 /**
  * Extend this class to develop your own plugin in order to transform jimage
  * resources.
  *
  */
-public abstract class AsmPlugin implements Plugin {
+public abstract class AsmPlugin implements ResourcePlugin {
 
     public AsmPlugin() {
     }

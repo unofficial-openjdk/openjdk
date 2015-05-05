@@ -24,15 +24,25 @@
  */
 package jdk.tools.jlink.plugins;
 
-/**
- * Implement this interface to develop your own plugin.
- * Plugin can modify the Resources located in jimage file.
- */
-public interface Plugin {
+import java.nio.file.Path;
+import java.util.Properties;
 
+/**
+ * Implement this interface and make your class available to the ServiceLoader in order
+ * to expose your ImageBuilder.
+ */
+public interface ImageBuilderProvider {
     /**
-     * Plugin unique name.
-     * @return The plugin name.
+     * The name that identifies this builder.
+     * @return Builder name.
      */
     public String getName();
+
+    /**
+     * Create the builder that will build the image.
+     * @param properties Configuration properties
+     * @param imageOutDir The directory where to store the image.
+     * @return The builder.
+     */
+    public ImageBuilder newBuilder(Properties properties, Path imageOutDir);
 }

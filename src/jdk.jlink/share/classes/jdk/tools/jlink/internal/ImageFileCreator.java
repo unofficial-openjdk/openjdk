@@ -41,8 +41,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import jdk.internal.jimage.Archive;
 import jdk.internal.jimage.Archive.Entry;
@@ -50,6 +48,8 @@ import jdk.internal.jimage.Archive.Entry.EntryType;
 import jdk.internal.jimage.BasicImageWriter;
 import jdk.internal.jimage.ImageModuleDataWriter;
 import jdk.internal.jimage.ImageResourcesTree;
+import jdk.tools.jlink.plugins.ImageFilePool.ImageFile;
+import jdk.tools.jlink.plugins.ImageFilePool.ImageFile.ImageFileType;
 import jdk.tools.jlink.plugins.ResourcePool;
 import jdk.tools.jlink.plugins.StringTable;
 
@@ -73,39 +73,32 @@ import jdk.tools.jlink.plugins.StringTable;
  * }</pre>
  */
 public final class ImageFileCreator {
-    private final Path root;
-    private final Path mdir;
     private final Map<String, List<Entry>> entriesForModule = new HashMap<>();
     private final ImagePluginStack plugins;
-    private ImageFileCreator(Path path, ImagePluginStack plugins) {
-        this.root = path;
+    private ImageFileCreator(ImagePluginStack plugins) {
         this.plugins = plugins;
-        this.mdir = root.resolve(path.getFileSystem().getPath("lib", "modules"));
     }
 
-    public static ImageFileCreator create(Path output,
-            Set<Archive> archives,
+    public static ImageFileCreator create(Set<Archive> archives,
             ImagePluginStack plugins)
             throws IOException {
-        return ImageFileCreator.create(output, archives, ByteOrder.nativeOrder(),
+        return ImageFileCreator.create(archives, ByteOrder.nativeOrder(),
                 plugins);
     }
 
-    public static ImageFileCreator create(Path output,
-            Set<Archive> archives,
+    public static ImageFileCreator create(Set<Archive> archives,
             ByteOrder byteOrder)
             throws IOException {
-        return ImageFileCreator.create(output, archives, byteOrder,
+        return ImageFileCreator.create(archives, byteOrder,
                 new ImagePluginStack());
     }
 
-    public static ImageFileCreator create(Path output,
-                                   Set<Archive> archives,
+    public static ImageFileCreator create(Set<Archive> archives,
                                    ByteOrder byteOrder,
                                    ImagePluginStack plugins)
         throws IOException
     {
-        ImageFileCreator image = new ImageFileCreator(output, plugins);
+        ImageFileCreator image = new ImageFileCreator(plugins);
         // get all entries
         Map<String, Set<String>> modulePackagesMap = new HashMap<>();
         image.readAllEntries(modulePackagesMap, archives);
@@ -149,44 +142,50 @@ public final class ImageFileCreator {
             String mn = archive.moduleName();
             entriesForModule.put(mn, archiveResources);
         });
-        Map<String, Archive> nameToArchive
-                = archives.stream()
-                .collect(Collectors.toMap(Archive::moduleName, Function.identity()));
         ByteOrder order = ByteOrder.nativeOrder();
-        ResourcePoolImpl resources = createResources(modulePackages, nameToArchive,
-                (Entry t) -> {
-            throw new UnsupportedOperationException("Not supported, no external file "
-                    + "in a jimage file");
-        }, entriesForModule, order);
-        generateJImage(jimageFile, resources, order, pluginSupport);
+        Pools pools = createPools(modulePackages, entriesForModule, order);
+        try (OutputStream fos = Files.newOutputStream(jimageFile);
+                BufferedOutputStream bos = new BufferedOutputStream(fos);
+                DataOutputStream out = new DataOutputStream(bos)) {
+            generateJImage(pools.resources, order, pluginSupport, out);
+        }
+        //Close all archives
+        for(Archive a : archives) {
+            a.close();
+        }
     }
 
     private void writeImage(Map<String, Set<String>> modulePackagesMap,
             Set<Archive> archives,
             ByteOrder byteOrder)
             throws IOException {
-        Files.createDirectories(mdir);
-        ExternalFilesWriter filesWriter = new ExternalFilesWriter(root);
-        // name to Archive file
-        Map<String, Archive> nameToArchive
-                = archives.stream()
-                .collect(Collectors.toMap(Archive::moduleName, Function.identity()));
-        ResourcePoolImpl resources = createResources(modulePackagesMap,
-                nameToArchive, filesWriter,
+        Pools pools = createPools(modulePackagesMap,
                 entriesForModule, byteOrder);
-        generateJImage(mdir.resolve(BasicImageWriter.BOOT_IMAGE_NAME), resources,
-                byteOrder, plugins);
+        generateJImage(pools.resources,
+                byteOrder, plugins, plugins.getJImageFileOutputStream());
+
+        //Handle files.
+        try {
+            plugins.storeFiles(pools.files,
+                    pools.resources.getModulePackages().keySet());
+        } catch (Exception ex) {
+            throw new IOException(ex);
+        }
+        //Close all archives
+        for(Archive a : archives) {
+            a.close();
+        }
     }
 
-    private static void generateJImage(Path img,
-            ResourcePoolImpl resources,
+    private static void generateJImage(ResourcePoolImpl resources,
             ByteOrder byteOrder,
-            ImagePluginStack pluginSupport
+            ImagePluginStack pluginSupport,
+            DataOutputStream out
     ) throws IOException {
         BasicImageWriter writer = new BasicImageWriter(byteOrder);
         ResourcePool resultResources;
         try {
-            resultResources = pluginSupport.visit(resources, new StringTable() {
+            resultResources = pluginSupport.visitResources(resources, new StringTable() {
 
                 @Override
                 public int addString(String str) {
@@ -203,9 +202,6 @@ public final class ImageFileCreator {
         }
         Map<String, Set<String>> modulePackagesMap = resultResources.getModulePackages();
 
-        try (OutputStream fos = Files.newOutputStream(img);
-                BufferedOutputStream bos = new BufferedOutputStream(fos);
-                DataOutputStream out = new DataOutputStream(bos)) {
             Set<String> duplicates = new HashSet<>();
             ImageModuleDataWriter moduleData =
             ImageModuleDataWriter.buildModuleData(writer, modulePackagesMap);
@@ -260,15 +256,56 @@ public final class ImageFileCreator {
             }
 
             tree.addContent(out);
-        }
+
+            out.close();
     }
 
-    private static ResourcePoolImpl createResources(Map<String, Set<String>> modulePackagesMap,
-            Map<String, Archive> nameToArchive,
-            Consumer<Entry> externalFileHandler,
+    private static class Pools {
+        private ResourcePoolImpl resources;
+        private ImageFilePoolImpl files;
+    }
+
+    private static class EntryFile extends ImageFile {
+        private final Entry entry;
+        private EntryFile(Entry entry) {
+            super(entry.archive().moduleName(),
+                    entry.path(), entry.name(),
+                    mapImageFileType(entry.type()));
+            this.entry = entry;
+        }
+
+        @Override
+        public long size() {
+            return entry.size();
+        }
+
+        @Override
+        public InputStream stream() throws IOException {
+            return entry.stream();
+        }
+
+    }
+
+    private static ImageFileType mapImageFileType(EntryType type) {
+        switch(type) {
+            case CONFIG: {
+                return ImageFileType.CONFIG;
+            }
+            case NATIVE_CMD: {
+                return ImageFileType.NATIVE_CMD;
+            }
+            case NATIVE_LIB: {
+                return ImageFileType.NATIVE_LIB;
+            }
+        }
+        return null;
+    }
+
+    private static Pools createPools(Map<String, Set<String>> modulePackagesMap,
             Map<String, List<Entry>> entriesForModule,
             ByteOrder byteOrder) throws IOException {
         ResourcePoolImpl resources = new ResourcePoolImpl(byteOrder);
+        ImageFilePoolImpl files = new ImageFilePoolImpl();
         Set<String> mods = modulePackagesMap.keySet();
         for (String mn : mods) {
             for (Entry entry : entriesForModule.get(mn)) {
@@ -291,14 +328,18 @@ public final class ImageFileCreator {
                         }
                     }
                 } else {
-                    externalFileHandler.accept(entry);
+                    try {
+                        files.addFile(new EntryFile(entry));
+                    } catch (Exception ex) {
+                        throw new IOException(ex);
+                    }
                 }
             }
-            // Done with this archive, close it.
-            Archive archive = nameToArchive.get(mn);
-            archive.close();
         }
-        return resources;
+        Pools pools = new Pools();
+        pools.resources = resources;
+        pools.files = files;
+        return pools;
     }
 
     private static final int BUF_SIZE = 8192;

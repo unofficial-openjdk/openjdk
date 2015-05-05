@@ -81,7 +81,7 @@ myjimage/bin/test 1 2 3
 
 # compressed image
 $JLINK --modulepath $TESTJAVA/../jmods${PS}mlib --addmods test \
-  --output mysmalljimage --compress
+  --output mysmalljimage --compress-resources on
 mysmalljimage/bin/test 1 2 3
 
 exit 0

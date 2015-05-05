@@ -25,38 +25,41 @@
 package jdk.tools.jlink.internal.plugins;
 
 import java.io.IOException;
-import java.util.Properties;
-import jdk.tools.jlink.plugins.Plugin;
-import jdk.tools.jlink.plugins.PluginProvider;
+import java.util.Map;
+import jdk.tools.jlink.plugins.ResourcePlugin;
 import jdk.tools.jlink.internal.ImagePluginConfiguration;
 
 /**
  *
  * Strip Debug attributes plugin
  */
-public final class StripDebugProvider extends PluginProvider {
-    public static final String NAME = "strip-debug";
+public final class StripDebugProvider extends OnOffProvider {
+
+    public static final String NAME = "strip-java-debug";
+
     public StripDebugProvider() {
-        super(NAME, "Strip debug information");
+        super(NAME, PluginsResourceBundle.getDescription(NAME));
     }
 
     @Override
-    public Plugin newPlugin(Properties properties) throws IOException {
-        return new StripDebugPlugin();
+    public ResourcePlugin[] newPlugins(Map<String, String> otherOptions)
+            throws IOException {
+        return new ResourcePlugin[]{new StripDebugPlugin()};
     }
 
-        @Override
+    @Override
     public String getCategory() {
         return ImagePluginConfiguration.TRANSFORMER;
-    }
-
-    @Override
-    public String getConfiguration() {
-        return null;
     }
 
     @Override
     public String getToolOption() {
         return NAME;
     }
+
+    @Override
+    public Map<String, String> getAdditionalOptions() {
+        return null;
+    }
+
 }

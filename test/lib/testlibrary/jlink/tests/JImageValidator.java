@@ -30,6 +30,10 @@ import java.util.List;
 import jdk.internal.jimage.BasicImageReader;
 import jdk.internal.jimage.ImageLocation;
 import com.sun.tools.classfile.ClassFile;
+import java.io.FileInputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Properties;
 import jdk.internal.jimage.BasicImageWriter;
 /**
  *
@@ -51,9 +55,12 @@ public class JImageValidator {
     private long moduleExecutionTime;
     private long javaExecutionTime;
     private final List<String> unexpectedPaths;
+    private final List<String> unexpectedFiles;
 
     public JImageValidator(String module, List<String> expectedLocations,
-            File rootDir, List<String> unexpectedPaths) throws Exception {
+            File rootDir,
+            List<String> unexpectedPaths,
+            List<String> unexpectedFiles) throws Exception {
         if (!rootDir.exists()) {
             throw new Exception("Image root dir not found " +
                     rootDir.getAbsolutePath());
@@ -62,6 +69,7 @@ public class JImageValidator {
         this.rootDir = rootDir;
         this.module = module;
         this.unexpectedPaths = unexpectedPaths;
+        this.unexpectedFiles = unexpectedFiles;
     }
 
     public void validate() throws Exception {
@@ -105,6 +113,17 @@ public class JImageValidator {
             }
         }
 
+        //Walk and check that unexpected files are not there
+        try (java.util.stream.Stream<Path> stream = Files.walk(rootDir.toPath())) {
+            stream.forEach((p) -> {
+                for (String u : unexpectedFiles) {
+                    if (p.toString().contains(u)) {
+                        throw new RuntimeException("Seen unexpected path " + p);
+                    }
+                }
+            });
+        }
+
         File javalauncher = new File(rootDir, "bin" + File.separator +
                 (isWindows() ? "java.exe" : "java"));
         if (javalauncher.exists()) {
@@ -119,6 +138,24 @@ public class JImageValidator {
             }
         } else {
             throw new Exception("java launcher not found.");
+        }
+
+        //Check release file
+        File release = new File(rootDir, "release");
+        if (!release.exists()) {
+            throw new Exception("Release file not generated");
+        } else {
+            Properties props = new Properties();
+            try (FileInputStream fs = new FileInputStream(release)) {
+                props.load(fs);
+                String s = props.getProperty("MODULES");
+                if (s == null) {
+                    throw new Exception("No MODULES property in release");
+                }
+                if (!s.contains(module)) {
+                    throw new Exception("Module not found in release file " + s);
+                }
+            }
         }
 
     }
@@ -179,7 +216,7 @@ public class JImageValidator {
         return moduleExecutionTime;
     }
 
-    private static void readClass(byte[] clazz) throws Exception {
+    public static void readClass(byte[] clazz) throws Exception {
         try (InputStream stream = new ByteArrayInputStream(clazz);) {
             ClassFile.read(stream);
         }

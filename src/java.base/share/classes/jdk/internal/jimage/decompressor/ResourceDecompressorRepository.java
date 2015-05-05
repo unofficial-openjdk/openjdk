@@ -43,6 +43,7 @@ public final class ResourceDecompressorRepository {
 
     static {
         registerReaderProvider(new ZipDecompressorFactory());
+        registerReaderProvider(new StringSharingDecompressorFactory());
     }
 
     /**

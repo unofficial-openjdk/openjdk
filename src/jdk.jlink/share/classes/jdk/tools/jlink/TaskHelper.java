@@ -48,6 +48,9 @@ import jdk.tools.jlink.plugins.PluginProvider;
  */
 public final class TaskHelper {
 
+    private static final String DEFAULTS_PROPERTY = "jdk.jlink.defaults";
+    private static final String CONFIGURATION = "configuration";
+
     public class BadArgs extends Exception {
 
         static final long serialVersionUID = 8765093759964640721L;  // ## re-generate
@@ -85,7 +88,8 @@ public final class TaskHelper {
             for (String a : aliases) {
                 if (a.equals(opt)) {
                     return true;
-                } else if (opt.startsWith("--") && hasArg && opt.startsWith(a + "=")) {
+                } else if (opt.startsWith("--") &&
+                        (hasArg && opt.startsWith(a + "="))) {
                     return true;
                 }
             }
@@ -96,7 +100,8 @@ public final class TaskHelper {
             return false;
         }
 
-        protected abstract void process(T task, String opt, String arg) throws BadArgs;
+        protected abstract void process(T task, String opt, String arg)
+                throws BadArgs;
     }
 
     private abstract class PluginOption extends Option<PluginsOptions> {
@@ -122,26 +127,55 @@ public final class TaskHelper {
 
         private String pluginsProperties;
         private boolean listPlugins;
-        private final Map<PluginProvider, String> plugins = new HashMap<>();
+        private final Map<PluginProvider, Map<String, String>> plugins = new HashMap<>();
         private final List<PluginOption> pluginsOptions = new ArrayList<>();
 
         private PluginsOptions() {
 
             for (PluginProvider provider : ImagePluginProviderRepository.getImageWriterProviders(null)) {
                 if (provider.getToolOption() != null) {
-                    boolean requireOptions = provider.getConfiguration() != null;
-                    PluginOption option = new PluginOption(requireOptions, "--" + provider.getToolOption()) {
-                        @Override
-                        protected void process(PluginsOptions task, String opt, String arg) throws BadArgs {
-                            plugins.put(provider, arg);
-                        }
-                    };
+                    PluginOption option
+                            = new PluginOption(provider.getToolArgument() != null,
+                                    "--" + provider.getToolOption()) {
+                                @Override
+                                protected void process(PluginsOptions task,
+                                        String opt,
+                                        String arg) throws BadArgs {
+                                    Map<String, String> m = plugins.get(provider);
+                                    if (m == null) {
+                                        m = new HashMap<>();
+                                        plugins.put(provider, m);
+                                    }
+                                    m.put(PluginProvider.TOOL_ARGUMENT_PROPERTY, arg);
+                                }
+                            };
                     pluginsOptions.add(option);
+                    if (provider.getAdditionalOptions() != null) {
+                        for (String other : provider.getAdditionalOptions().keySet()) {
+                            PluginOption otherOption = new PluginOption(true,
+                                    "--" + other) {
+                                        @Override
+                                        protected void process(PluginsOptions task,
+                                                String opt,
+                                                String arg) throws BadArgs {
+                                            Map<String, String> m = plugins.get(provider);
+                                            if (m == null) {
+                                                m = new HashMap<>();
+                                                plugins.put(provider, m);
+                                            }
+                                            m.put(other, arg);
+                                        }
+                                    };
+                            pluginsOptions.add(otherOption);
+                        }
+                    }
                 }
             }
-            pluginsOptions.add(new HiddenPluginOption(true, "--plugins-configuration") {
+            pluginsOptions.add(new HiddenPluginOption(true,
+                    "--plugins-configuration") {
                 @Override
-                protected void process(PluginsOptions task, String opt, String arg) throws BadArgs {
+                protected void process(PluginsOptions task, String opt,
+                        String arg) throws BadArgs {
                     pluginsProperties = arg;
                 }
             });
@@ -165,19 +199,25 @@ public final class TaskHelper {
         private Properties getPluginsProperties() throws IOException {
             Properties props = new Properties();
             if (pluginsProperties != null) {
-                try (FileInputStream stream = new FileInputStream(pluginsProperties);) {
+                try (FileInputStream stream =
+                        new FileInputStream(pluginsProperties);) {
                     props.load(stream);
                 } catch (FileNotFoundException ex) {
-                    throw new IOException(bundleHelper.getMessage("err.path.not.valid") + " " + pluginsProperties);
+                    throw new IOException(bundleHelper.
+                            getMessage("err.path.not.valid") +
+                            " " + pluginsProperties);
                 }
             }
-            for (Entry<PluginProvider, String> entry : plugins.entrySet()) {
+            for (Entry<PluginProvider, Map<String, String>> entry : plugins.entrySet()) {
                 PluginProvider provider = entry.getKey();
-                int index = ImagePluginConfiguration.getNextIndex(props, provider.getCategory());
-                props.setProperty(ImagePluginConfiguration.RADICAL_PROPERTY + provider.getCategory() + "." + index, provider.getName());
+                ImagePluginConfiguration.addPluginProperty(props, provider);
                 if (entry.getValue() != null) {
-                    props.setProperty(provider.getName() + "." + PluginProvider.CONFIGURATION_PROPERTY,
-                            entry.getValue());
+                    for(Entry<String, String> opts : entry.getValue().entrySet()) {
+                        if (opts.getValue() != null) {
+                            props.setProperty(provider.getName() + "." +
+                                opts.getKey(), opts.getValue());
+                        }
+                    }
                 }
             }
             return props;
@@ -232,9 +272,95 @@ public final class TaskHelper {
             this.options = options;
         }
 
+        private boolean hasArgument(String optionName) throws BadArgs {
+            Option<?> opt = getOption(optionName);
+            if (opt == null) {
+                opt = pluginOptions.getOption(optionName);
+                if (opt == null) {
+                    throw new BadArgs("err.unknown.option", optionName).
+                        showUsage(true);
+                }
+            }
+            return opt.hasArg;
+        }
+
+        private String[] handleDefaults(String[] args) throws BadArgs {
+            String[] ret = args;
+            List<String> defArgs = null;
+
+            List<String> override = new ArrayList<>();
+            for (int i = 0; i < args.length; i++) {
+                if (args[i].equals("--" + CONFIGURATION)) {
+                    i++;
+                    String path = args[i];
+                    Properties p = new Properties();
+                    try (FileInputStream fs = new FileInputStream(path)) {
+                        p.load(fs);
+                    } catch (IOException ex) {
+                        throw new RuntimeException(ex);
+                    }
+                    String defaults = p.getProperty(DEFAULTS_PROPERTY);
+                    if (defaults == null) {
+                        throw new BadArgs("err.config.defaults",
+                            DEFAULTS_PROPERTY);
+                    }
+
+                    String[] array = defaults.split(" ");
+                    defArgs = new ArrayList<>();
+                    for (String s : array) {
+                        defArgs.add(s);
+                    }
+                } else {
+                    override.add(args[i]);
+                }
+            }
+            if (defArgs != null) {
+                List<String> output = new ArrayList<>();
+                for (int i = 0; i < defArgs.size(); i++) {
+                    String arg = defArgs.get(i);
+                    if (arg.charAt(0) == '-') {
+                        output.add(arg);
+                        boolean hasArgument = hasArgument(arg);
+                        String a = null;
+                        if (hasArgument) {
+                            i++;
+                            a = defArgs.get(i);
+                        }
+                        int overIndex = override.indexOf(arg);
+                        if (overIndex >= 0) {
+                            if (hasArgument) {
+                                a = override.get(overIndex + 1);
+                                override.remove(a);
+                            }
+                            override.remove(arg);
+                        }
+                        if (hasArgument) {
+                            if (a == null) {
+                                throw newBadArgs("err.unknown.option", arg).
+                                showUsage(true);
+                            }
+                            output.add(a);
+                        }
+                    } else {
+                        throw newBadArgs("err.unknown.option", arg).
+                                showUsage(true);
+                    }
+                }
+                //Add remaining
+                output.addAll(override);
+                ret = new String[output.size()];
+                output.toArray(ret);
+            }
+
+            return ret;
+        }
+
         public List<String> handleOptions(T task, String[] args) throws BadArgs {
             // Unit tests can call Task multiple time in same JVM.
             pluginOptions = new PluginsOptions();
+
+            // Handle defaults.
+            args = handleDefaults(args);
 
             List<String> rest = new ArrayList<>();
             // process options
@@ -246,19 +372,24 @@ public final class TaskHelper {
                     if (option == null) {
                         pluginOption = pluginOptions.getOption(name);
                         if (pluginOption == null) {
-                            throw new BadArgs("err.unknown.option", name).showUsage(true);
+
+                            throw new BadArgs("err.unknown.option", name).
+                                    showUsage(true);
                         }
                     }
                     Option<?> opt = pluginOption == null ? option : pluginOption;
                     String param = null;
                     if (opt.hasArg) {
                         if (name.startsWith("--") && name.indexOf('=') > 0) {
-                            param = name.substring(name.indexOf('=') + 1, name.length());
+                            param = name.substring(name.indexOf('=') + 1,
+                                    name.length());
                         } else if (i + 1 < args.length) {
                             param = args[++i];
                         }
-                        if (param == null || param.isEmpty() || param.charAt(0) == '-') {
-                            throw new BadArgs("err.missing.arg", name).showUsage(true);
+                        if (param == null || param.isEmpty() ||
+                                param.charAt(0) == '-') {
+                            throw new BadArgs("err.missing.arg", name).
+                                    showUsage(true);
                         }
                     }
                     if (pluginOption != null) {
@@ -276,7 +407,7 @@ public final class TaskHelper {
             return rest;
         }
 
-        private Option<T> getOption(String name) throws BadArgs {
+        private Option<T> getOption(String name) {
             for (Option<T> o : options) {
                 if (o.matches(name)) {
                     return o;
@@ -287,6 +418,8 @@ public final class TaskHelper {
 
         public void showHelp(String progName, String pluginsHeader) {
             log.println(bundleHelper.getMessage("main.usage", progName));
+            // First configuration
+            log.println(bundleHelper.getMessage("main.opt." + CONFIGURATION));
             for (Option<?> o : options) {
                 String name = o.aliases[0].substring(1); // there must always be at least one name
                 name = name.charAt(0) == '-' ? name.substring(1) : name;
@@ -296,14 +429,26 @@ public final class TaskHelper {
                 log.println(bundleHelper.getMessage("main.opt." + name));
             }
 
-            log.println(pluginsHeader);
-            for (Option<?> o : pluginOptions.pluginsOptions) {
-                String name = o.aliases[0].substring(1); // there must always be at least one name
-                name = name.charAt(0) == '-' ? name.substring(1) : name;
-                if (o.isHidden() || name.equals("h")) {
-                    continue;
+            log.println("\n" + pluginsHeader);
+            for (PluginProvider provider : ImagePluginProviderRepository.getImageWriterProviders(null)) {
+                if (provider.getToolOption() != null) {
+                    StringBuilder line = new StringBuilder();
+                    line.append(" --").append(provider.getToolOption());
+                    if (provider.getToolArgument() != null) {
+                        line.append(" ").append(provider.getToolArgument());
+                    }
+                    line.append("\n ").append(provider.getDescription());
+                    if (provider.getAdditionalOptions() != null) {
+                        line.append("\n").append(bundleHelper.
+                                getMessage("main.plugin.additional.options")).
+                                append(": ");
+                        for (Entry<String, String> entry : provider.getAdditionalOptions().entrySet()) {
+                            line.append(" --").append(entry.getKey()).append(" ").
+                                    append(entry.getValue());
+                        }
+                    }
+                    log.println(line.toString() + "\n");
                 }
-                log.println(bundleHelper.getMessage("main.opt." + name));
             }
         }
 
@@ -311,21 +456,35 @@ public final class TaskHelper {
             for (PluginProvider fact : ImagePluginProviderRepository.getImageWriterProviders(null)) {
                 log.println("\n" + bundleHelper.getMessage("main.plugin.name")
                         + ": " + fact.getName());
-                Integer[] range = ImagePluginConfiguration.getRange(fact.getCategory());
-                String cat = range == null ? fact.getCategory() : fact.getCategory() + ". " +
-                        bundleHelper.getMessage("main.plugin.range.from") + " " + range[0] + " " +
-                        bundleHelper.getMessage("main.plugin.range.to") + " " + range[1] + ".";
+                Integer[] range = ImagePluginConfiguration.getRange(fact);
+                String cat = range == null ? fact.getCategory() : fact.getCategory() +
+                        ". " + bundleHelper.getMessage("main.plugin.range.from") +
+                        " " + range[0] + " " + bundleHelper.
+                                getMessage("main.plugin.range.to") + " " +
+                        range[1] + ".";
                 log.println(bundleHelper.getMessage("main.plugin.category")
                         + ": " + cat);
                 log.println(bundleHelper.getMessage("main.plugin.description")
                         + ": " + fact.getDescription());
-                log.println(bundleHelper.getMessage("main.plugin.configuration")
-                        + ": " + (fact.getConfiguration() == null
-                                ? bundleHelper.getMessage("main.plugin.no.configuration") : fact.getConfiguration()));
+                log.println(bundleHelper.getMessage("main.plugin.argument")
+                            + ": " + (fact.getToolArgument() == null
+                                    ? bundleHelper.getMessage("main.plugin.no.value")
+                                    : fact.getToolArgument()));
+                String additionalOptions = bundleHelper.getMessage("main.plugin.no.value");
+                if(fact.getAdditionalOptions() != null) {
+                    StringBuilder builder = new StringBuilder();
+                    for(Entry<String, String> entry : fact.getAdditionalOptions().entrySet()) {
+                        builder.append(entry.getKey()).append(" ").
+                                append(entry.getValue());
+                    }
+                    additionalOptions = builder.toString();
+                }
+                log.println(bundleHelper.getMessage("main.plugin.additional.options")
+                        + ": " + additionalOptions);
                 String option = fact.getToolOption();
                 if (option != null) {
                     log.println(bundleHelper.getMessage("main.plugin.option")
-                        + ": --" + option);
+                            + ": --" + option);
                 }
             }
         }
@@ -343,7 +502,8 @@ public final class TaskHelper {
         this.bundleHelper = new ResourceBundleHelper(path);
     }
 
-    public <T> OptionsHelper<T> newOptionsHelper(Class<T> clazz, Option<?>[] options) {
+    public <T> OptionsHelper<T> newOptionsHelper(Class<T> clazz,
+            Option<?>[] options) {
         List<Option<T>> optionsList = new ArrayList<>();
         for (Option<?> o : options) {
             @SuppressWarnings("unchecked")
@@ -366,11 +526,13 @@ public final class TaskHelper {
     }
 
     public void reportError(String key, Object... args) {
-        log.println(bundleHelper.getMessage("error.prefix") + " " + bundleHelper.getMessage(key, args));
+        log.println(bundleHelper.getMessage("error.prefix") + " " +
+                bundleHelper.getMessage(key, args));
     }
 
     public void warning(String key, Object... args) {
-        log.println(bundleHelper.getMessage("warn.prefix") + " " + bundleHelper.getMessage(key, args));
+        log.println(bundleHelper.getMessage("warn.prefix") + " " +
+                bundleHelper.getMessage(key, args));
     }
 
     public Properties getPluginsProperties() throws IOException {

@@ -24,10 +24,7 @@
  */
 package jdk.tools.jlink.internal.plugins;
 
-import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import jdk.tools.jlink.plugins.Plugin;
+import jdk.tools.jlink.plugins.ResourcePlugin;
 import jdk.tools.jlink.plugins.ResourcePool;
 import jdk.tools.jlink.plugins.StringTable;
 
@@ -35,12 +32,12 @@ import jdk.tools.jlink.plugins.StringTable;
  *
  * Exclude resources plugin
  */
-final class ExcludePlugin implements Plugin {
+final class ExcludePlugin implements ResourcePlugin {
 
-    private final List<Pattern> patterns;
+    private final ResourceFilter filter;
 
-    ExcludePlugin(List<Pattern> patterns) {
-        this.patterns = patterns;
+    ExcludePlugin(String[] patterns) {
+        this.filter = new ResourceFilter(patterns, true);
     }
 
     @Override
@@ -49,17 +46,11 @@ final class ExcludePlugin implements Plugin {
     }
 
     @Override
-    public void visit(ResourcePool inResources, ResourcePool outResources, StringTable strings)
+    public void visit(ResourcePool inResources, ResourcePool outResources,
+            StringTable strings)
             throws Exception {
         inResources.visit((resource, order,  str) -> {
-            for (Pattern p : patterns) {
-                Matcher m = p.matcher(resource.getPath());
-                if (m.matches()) {
-                    System.out.println("Excluding file " + resource.getPath());
-                    return null;
-                }
-            }
-            return resource;
+            return filter.accept(resource.getPath()) ? resource : null;
         }, outResources, strings);
     }
 }

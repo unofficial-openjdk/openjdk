@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,17 +22,25 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package jdk.tools.jlink.plugins;
+package jdk.internal.jimage.decompressor;
+
+import java.io.IOException;
+import java.util.Properties;
 
 /**
- * Implement this interface to develop your own plugin.
- * Plugin can modify the Resources located in jimage file.
+ *
+ * Constant Pool strings sharing Decompressor factory.
  */
-public interface Plugin {
+public class StringSharingDecompressorFactory extends ResourceDecompressorFactory {
 
-    /**
-     * Plugin unique name.
-     * @return The plugin name.
-     */
-    public String getName();
+    public static final String NAME = "compact-cp";
+    public StringSharingDecompressorFactory() {
+        super(NAME);
+    }
+
+    @Override
+    public ResourceDecompressor newDecompressor(Properties properties)
+            throws IOException {
+        return new StringSharingDecompressor(properties);
+    }
 }

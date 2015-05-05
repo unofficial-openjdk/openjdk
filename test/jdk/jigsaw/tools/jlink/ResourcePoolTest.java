@@ -100,12 +100,10 @@ public class ResourcePoolTest {
             throw new Exception("No sample to test");
         }
         ResourcePool resources = new ResourcePoolImpl(ByteOrder.nativeOrder());
-        Set<String> modules = new HashSet<>();
         for (int i = 0; i < samples.size(); i++) {
             String module = samples.get(i);
             i++;
             String clazz = samples.get(i);
-            modules.add(module);
             String path = "/" + module + "/" + clazz + ".class";
             adder.add(resources, path);
         }
@@ -124,9 +122,6 @@ public class ResourcePoolTest {
             }
         }
         if (resources.getResources().size() != samples.size() / 2) {
-            throw new Exception("Invalid number of resources");
-        }
-        if (resources.getResources().size() != resources.getResources().size()) {
             throw new Exception("Invalid number of resources");
         }
     }

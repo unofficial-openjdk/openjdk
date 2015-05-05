@@ -24,47 +24,45 @@
  */
 package jdk.tools.jlink.internal.plugins;
 
-import java.io.IOException;
-import java.util.Map;
-import jdk.tools.jlink.plugins.ResourcePlugin;
-import jdk.tools.jlink.plugins.ResourcePluginProvider;
-import jdk.tools.jlink.internal.ImagePluginConfiguration;
+import java.text.MessageFormat;
+import java.util.Locale;
+import java.util.MissingResourceException;
+import java.util.ResourceBundle;
 
-/**
- *
- * Exclude resources plugin provider
- */
-public final class ExcludeProvider extends ResourcePluginProvider {
-    public static final String NAME = "exclude-resources";
-    public ExcludeProvider() {
-        super(NAME, PluginsResourceBundle.getDescription(NAME));
+final class PluginsResourceBundle {
+
+    static final String DESCRIPTION = "description";
+    static final String ARGUMENT = "argument";
+    private static final ResourceBundle pluginsBundle;
+
+    static {
+        Locale locale = Locale.getDefault();
+        try {
+            pluginsBundle = ResourceBundle.getBundle("jdk.tools.jlink."
+                    + "resources.plugins", locale);
+        } catch (MissingResourceException e) {
+            throw new InternalError("Cannot find jlink resource bundle for "
+                    + "locale " + locale);
+        }
     }
 
-    @Override
-     public ResourcePlugin[] newPlugins(String[] argument, Map<String, String> otherOptions)
-            throws IOException {
-        return new ResourcePlugin[]{new ExcludePlugin(argument)};
+    private PluginsResourceBundle() {
     }
 
-
-
-    @Override
-    public String getCategory() {
-        return ImagePluginConfiguration.FILTER;
+    static String getArgument(String name) {
+        return getMessage(name + "." + ARGUMENT);
     }
 
-    @Override
-    public String getToolArgument() {
-        return PluginsResourceBundle.getArgument(NAME);
+    static String getDescription(String name) {
+        return getMessage(name + "." + DESCRIPTION);
     }
 
-    @Override
-    public String getToolOption() {
-        return NAME;
+    static String getOption(String name, String option) {
+        return getMessage(name + "." + option);
     }
 
-    @Override
-    public Map<String, String> getAdditionalOptions() {
-        return null;
+    static String getMessage(String key, Object... args) throws MissingResourceException {
+        String val = pluginsBundle.getString(key);
+        return MessageFormat.format(val, args);
     }
 }

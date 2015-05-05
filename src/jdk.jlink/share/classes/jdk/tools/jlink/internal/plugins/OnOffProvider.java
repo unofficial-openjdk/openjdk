@@ -26,45 +26,49 @@ package jdk.tools.jlink.internal.plugins;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.Objects;
+import jdk.tools.jlink.internal.ImagePluginConfiguration;
 import jdk.tools.jlink.plugins.ResourcePlugin;
 import jdk.tools.jlink.plugins.ResourcePluginProvider;
-import jdk.tools.jlink.internal.ImagePluginConfiguration;
 
 /**
  *
- * Exclude resources plugin provider
+ * Abstract class for provider that requires ON/OFF support
  */
-public final class ExcludeProvider extends ResourcePluginProvider {
-    public static final String NAME = "exclude-resources";
-    public ExcludeProvider() {
-        super(NAME, PluginsResourceBundle.getDescription(NAME));
+public abstract class OnOffProvider extends ResourcePluginProvider {
+
+    public OnOffProvider(String name, String description) {
+        super(name, description);
     }
 
     @Override
-     public ResourcePlugin[] newPlugins(String[] argument, Map<String, String> otherOptions)
+    public ResourcePlugin[] newPlugins(String[] arguments,
+            Map<String, String> otherOptions)
             throws IOException {
-        return new ResourcePlugin[]{new ExcludePlugin(argument)};
+        Objects.requireNonNull(arguments);
+        if(arguments.length != 1) {
+            throw new IOException("Invalid number of arguments expecting " +
+                    getToolArgument());
+        }
+        if(!ImagePluginConfiguration.OFF_ARGUMENT.equals(arguments[0]) &&
+           !ImagePluginConfiguration.ON_ARGUMENT.equals(arguments[0])     ) {
+            throw new IOException("Invalid argument " + arguments[0] +
+                    ", expecting " + ImagePluginConfiguration.ON_ARGUMENT + " or " +
+                    ImagePluginConfiguration.OFF_ARGUMENT);
+        }
+        if(ImagePluginConfiguration.OFF_ARGUMENT.equals(arguments[0])) {
+            return new ResourcePlugin[0];
+        }
+        return newPlugins(otherOptions);
     }
 
-
-
-    @Override
-    public String getCategory() {
-        return ImagePluginConfiguration.FILTER;
-    }
+    public abstract ResourcePlugin[] newPlugins(Map<String, String> otherOptions)
+            throws IOException;
 
     @Override
     public String getToolArgument() {
-        return PluginsResourceBundle.getArgument(NAME);
+        return ImagePluginConfiguration.ON_ARGUMENT + "|"
+                + ImagePluginConfiguration.OFF_ARGUMENT;
     }
 
-    @Override
-    public String getToolOption() {
-        return NAME;
-    }
-
-    @Override
-    public Map<String, String> getAdditionalOptions() {
-        return null;
-    }
 }

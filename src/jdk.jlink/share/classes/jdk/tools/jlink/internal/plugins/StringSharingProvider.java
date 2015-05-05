@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,25 +32,26 @@ import jdk.tools.jlink.internal.ImagePluginConfiguration;
 
 /**
  *
- * Exclude resources plugin provider
+ * Compact CP provider.
  */
-public final class ExcludeProvider extends ResourcePluginProvider {
-    public static final String NAME = "exclude-resources";
-    public ExcludeProvider() {
+public class StringSharingProvider extends ResourcePluginProvider {
+
+    public static final String NAME = "compact-cp";
+
+    public StringSharingProvider() {
         super(NAME, PluginsResourceBundle.getDescription(NAME));
     }
 
     @Override
-     public ResourcePlugin[] newPlugins(String[] argument, Map<String, String> otherOptions)
-            throws IOException {
-        return new ResourcePlugin[]{new ExcludePlugin(argument)};
+    public ResourcePlugin[] newPlugins(String[] arguments,
+            Map<String, String> otherOptions) throws IOException {
+
+        return new ResourcePlugin[]{new StringSharingPlugin(arguments)};
     }
-
-
 
     @Override
     public String getCategory() {
-        return ImagePluginConfiguration.FILTER;
+        return ImagePluginConfiguration.COMPRESSOR;
     }
 
     @Override
@@ -60,11 +61,12 @@ public final class ExcludeProvider extends ResourcePluginProvider {
 
     @Override
     public String getToolOption() {
-        return NAME;
+        return null;
     }
 
     @Override
     public Map<String, String> getAdditionalOptions() {
         return null;
     }
+
 }

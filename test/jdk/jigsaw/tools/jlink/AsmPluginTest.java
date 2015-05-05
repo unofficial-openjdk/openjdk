@@ -34,7 +34,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.ProviderNotFoundException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import jdk.tools.jlink.internal.plugins.asm.AsmModulePool;
 import jdk.tools.jlink.internal.plugins.asm.AsmPool.Sorter;
 import jdk.tools.jlink.internal.plugins.asm.AsmPools;
@@ -47,6 +50,7 @@ import jdk.internal.org.objectweb.asm.ClassReader;
 import jdk.internal.org.objectweb.asm.ClassVisitor;
 import jdk.internal.org.objectweb.asm.ClassWriter;
 import jdk.internal.org.objectweb.asm.Opcodes;
+import jdk.tools.jlink.internal.plugins.asm.AsmPool.ResourceFile;
 
 /*
  * Asm plugin testing.
@@ -77,7 +81,7 @@ public class AsmPluginTest {
         @Override
         public void visit(AsmPools pools, StringTable strings) throws IOException {
             visitCalled = true;
-            for (String m : MODULES) {
+            for (String m : MODULES.keySet()) {
                 AsmModulePool pool = pools.getModulePool(m);
                 if (pool == null) {
                     throw new IOException(m + " pool not found");
@@ -86,12 +90,18 @@ public class AsmPluginTest {
                     throw new IOException("Invalid module name " +
                             pool.getModuleName() + " should be "+ m);
                 }
-                if(pool.getClassReaders().length == 0) {
+                if(pool.getClassReaders().length == 0 && !m.equals(TEST_MODULE)) {
                     throw new IOException("Empty pool " + m);
                 }
                 pool.addPackage("toto");
                 if(pool.getTransformedClasses().getClassReaders().length != 0) {
                     throw new IOException("Should be empty");
+                }
+                for(String res : MODULES.get(m)) {
+                    ResourceFile resFile = pool.getResourceFile(res);
+                    if(resFile == null) {
+                        throw new IOException("No resource file for " + res);
+                    }
                 }
             }
             boolean failed = true;
@@ -245,7 +255,21 @@ public class AsmPluginTest {
                 }
                 pools.getGlobalPool().getTransformedClasses().addClass(writer);
             }
-
+            // Rename the resource Files
+            for (Entry<String, List<String>> mod : MODULES.entrySet()) {
+                for (ResourceFile resFile : pools.getModulePool(mod.getKey()).getResourceFiles()) {
+                    if (resFile.getPath().startsWith("META-INF/services/")) {
+                        ByteBuffer content = resFile.getContent();
+                        content.rewind();
+                        byte[] array = new byte[content.remaining()];
+                        content.get(array);
+                        String className = new String(array);
+                        pools.getModulePool(mod.getKey()).getTransformedResourceFiles().
+                                addResourceFile(new ResourceFile(resFile.getPath(),
+                                                ByteBuffer.wrap((className + END).getBytes())));
+                    }
+                }
+            }
         }
 
         @Override
@@ -279,11 +303,12 @@ public class AsmPluginTest {
         }
     }
 
-    static final List<String> MODULES = new ArrayList<>();
-
+    private static final Map<String, List<String>> MODULES = new HashMap<>();
+    private static final String TEST_MODULE = "jlink.test";
     static {
-        MODULES.add("java.management");
-        MODULES.add("java.base");
+        MODULES.put("java.management", new ArrayList<>());
+        MODULES.put("java.base", new ArrayList<>());
+        MODULES.put(TEST_MODULE, new ArrayList<>());
     }
 
     public static void main(String[] args) throws Exception {
@@ -306,7 +331,7 @@ public class AsmPluginTest {
                 if (Files.isRegularFile(p)) {
                     String module = p.toString().substring("/modules/".length());
                     module = module.substring(0, module.indexOf("/"));
-                    if (MODULES.contains(module)) {
+                    if (MODULES.keySet().contains(module)) {
                         try {
                             boolean isModuleInfo = p.endsWith("module-info.class");
                             // Module info is not properly handled by Asm,
@@ -317,6 +342,8 @@ public class AsmPluginTest {
                             byte[] content = readAllBytes(Files.newInputStream(p));
                             if (p.toString().endsWith(".class") && !isModuleInfo) {
                                 expected.add(toClassName(p));
+                            } else {
+                                MODULES.get(module).add(toResourceFile(p));
                             }
                             allResources.add(toPath(p.toString()));
                             Resource res = new Resource(toPath(p.toString()),
@@ -333,6 +360,20 @@ public class AsmPluginTest {
         if (expected.size() < 10 || pool.getResources().size() < 10) {
             throw new Exception("Not expected resource or class number");
         }
+
+        //Add a fake resource file
+        String content = "java.lang.Object";
+        String path = "META-INF/services/com.foo.BarProvider";
+        Resource resFile = new Resource("/" + TEST_MODULE + "/" +
+                path, ByteBuffer.wrap(content.getBytes()));
+        pool.addResource(resFile);
+        MODULES.get(TEST_MODULE).add(path);
+        for(Entry<String, List<String>> entry : MODULES.entrySet()) {
+            if(entry.getValue().isEmpty()) {
+                throw new Exception("No resource file for " + entry.getKey());
+            }
+        }
+
         Test1 testAsm = new Test1();
         testAsm.expected = expected;
         ResourcePool res = new ResourcePoolImpl(ByteOrder.nativeOrder());
@@ -345,7 +386,7 @@ public class AsmPluginTest {
 
             @Override
             public String getString(int id) {
-                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+                throw new UnsupportedOperationException("Not supported yet.");
             }
         });
         if (!testAsm.visitCalled) {
@@ -375,7 +416,7 @@ public class AsmPluginTest {
 
             @Override
             public String getString(int id) {
-                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+                throw new UnsupportedOperationException("Not supported yet.");
             }
         });
         if (res2.isEmpty()) {
@@ -415,7 +456,7 @@ public class AsmPluginTest {
 
             @Override
             public String getString(int id) {
-                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+                throw new UnsupportedOperationException("Not supported yet.");
             }
         });
         if (testAsm3.pools == null) {
@@ -425,15 +466,23 @@ public class AsmPluginTest {
                 getClassReaders().length != expected.size()) {
             throw new Exception("Number of transformed classes not equal to expected");
         }
-        // Check that only renamed classes are in the result.
+        // Check that only renamed classes and resource files are in the result.
         for (Resource r : res3.getResources()) {
             if (r.getPath().endsWith(".class") && !r.getPath().
                     endsWith("module-info.class")) {
                 if (!r.getPath().endsWith(Test3.END + ".class")) {
                     throw new Exception("Class not renamed " + r.getPath());
                 }
+            } else {
+                if(r.getPath().contains("META-INF/services/") && MODULES.containsKey(r.getModule())) {
+                    String newClassName = new String(r.getByteArray());
+                    if(!newClassName.endsWith(Test3.END)) {
+                        throw new Exception("Resource file not renamed " + r.getPath());
+                    }
+                }
             }
         }
+
 
         // Classes sorting
         List<String> sorted = new ArrayList<>();
@@ -452,7 +501,7 @@ public class AsmPluginTest {
 
             @Override
             public String getString(int id) {
-                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+                throw new UnsupportedOperationException("Not supported yet.");
             }
         });
         if (testAsm4.pools == null) {
@@ -472,12 +521,6 @@ public class AsmPluginTest {
         }
     }
 
-    private static ClassReader newClassReader(byte[] bytes) throws IOException {
-        ByteArrayInputStream stream = new ByteArrayInputStream(bytes);
-        ClassReader reader = new ClassReader(stream);
-        return reader;
-    }
-
     private static void checkNull() throws Exception {
         Test1 t = new Test1();
         boolean failed = false;
@@ -490,7 +533,8 @@ public class AsmPluginTest {
             throw new Exception("Should have failed");
         }
         try {
-            t.visit(new ResourcePoolImpl(ByteOrder.BIG_ENDIAN), (ResourcePool) null, null);
+            t.visit(new ResourcePoolImpl(ByteOrder.BIG_ENDIAN),
+                    (ResourcePool) null, null);
         } catch (Exception ex) {
             failed = true;
         }
@@ -498,7 +542,8 @@ public class AsmPluginTest {
             throw new Exception("Should have failed");
         }
         try {
-            t.visit(new ResourcePoolImpl(ByteOrder.BIG_ENDIAN), (ResourcePool) null, new StringTable() {
+            t.visit(new ResourcePoolImpl(ByteOrder.BIG_ENDIAN),
+                    (ResourcePool) null, new StringTable() {
 
             @Override
             public int addString(String str) {
@@ -507,7 +552,7 @@ public class AsmPluginTest {
 
             @Override
             public String getString(int id) {
-                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+                throw new UnsupportedOperationException("Not supported yet.");
             }
         });
         } catch (Exception ex) {
@@ -530,6 +575,15 @@ public class AsmPluginTest {
             path = path.substring(path.indexOf("/") + 1);
         }
         path = path.substring(0, path.length() - ".class".length());
+
+        return path;
+    }
+
+    private static String toResourceFile(Path p) {
+        String path = p.toString();
+        path = path.substring("/modules/".length());
+        // remove module
+        path = path.substring(path.indexOf("/") + 1);
 
         return path;
     }

@@ -25,14 +25,23 @@
 package jdk.tools.jlink.plugins;
 
 /**
- * Implement this interface to develop your own plugin.
- * Plugin can modify the Resources located in jimage file.
+ * Plugin wishing to pre-visit the resources must implement this interface.
+ * Pre-visit can be useful when some activities are required prior to the actual
+ * Resource visit.
+ * The StringTable plays a special role during previsit. The passed Strings are NOT
+ * added to the jimage file. The string usage is tracked in order to build an efficient
+ * string storage.
  */
-public interface Plugin {
+public interface ResourcePrevisitor {
 
     /**
-     * Plugin unique name.
-     * @return The plugin name.
+     * Previsit the collection of resources.
+     *
+     * @param resources Read only resources.
+     * @param strings StringTable instance. Add string to the StringTable to track string
+     * usage.
+     * @throws Exception
      */
-    public String getName();
+    public void previsit(ResourcePool resources, StringTable strings)
+            throws Exception;
 }

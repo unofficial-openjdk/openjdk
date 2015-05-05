@@ -24,15 +24,28 @@
  */
 package jdk.tools.jlink.plugins;
 
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.util.Set;
+
 /**
- * Implement this interface to develop your own plugin.
- * Plugin can modify the Resources located in jimage file.
+ * Implement this interface to develop your own image layout.
+ * First the jimage is written onto the output stream returned by getOutputStream
+ * then storeFiles is called.
  */
-public interface Plugin {
+public interface ImageBuilder {
 
     /**
-     * Plugin unique name.
-     * @return The plugin name.
+     * Store the external files.
+     * @param files Set of module names that are composing this image.
+     * @throws java.io.IOException
      */
-    public String getName();
+    public void storeFiles(ImageFilePool files, Set<String> modules) throws IOException;
+
+    /**
+     * The OutputStream to store the jimage file
+     * @return The output stream
+     * @throws java.io.IOException
+     */
+    public DataOutputStream getJImageOutputStream() throws IOException;
 }

@@ -22,26 +22,33 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package jdk.tools.jlink.plugins;
+package jdk.tools.jlink.internal.plugins;
+
+import jdk.tools.jlink.plugins.ImageFilePlugin;
+import jdk.tools.jlink.plugins.ImageFilePool;
 
 /**
- * Plugin wishing to pre-visit the resources must implement this interface.
- * Pre-visit can be useful when some activities are required prior to the actual
- * Resource visit.
- * The StringTable plays a special role during previsit. The passed Strings are NOT
- * added to the jimage file. The string usage is tracked in order to build an efficient
- * string storage.
+ *
+ * Exclude files plugin
  */
-public interface Previsitor {
+final class ExcludeFilesPlugin implements ImageFilePlugin {
 
-    /**
-     * Previsit the collection of resources.
-     *
-     * @param resources Read only resources.
-     * @param strings StringTable instance. Add string to the StringTable to track string
-     * usage.
-     * @throws Exception
-     */
-    public void previsit(ResourcePool resources, StringTable strings)
-            throws Exception;
+    private final ResourceFilter filter;
+
+    ExcludeFilesPlugin(String[] patterns) {
+        this.filter = new ResourceFilter(patterns, true);
+    }
+
+    @Override
+    public String getName() {
+        return ExcludeFilesProvider.NAME;
+    }
+
+    @Override
+    public void visit(ImageFilePool inFiles, ImageFilePool outFiles)
+            throws Exception {
+        inFiles.visit((file) -> {
+            return filter.accept("/" + file.getModule() + "/" + file.getPath()) ? file : null;
+        }, outFiles);
+    }
 }

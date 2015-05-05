@@ -37,6 +37,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
+import jdk.tools.jlink.internal.DefaultImageBuilderProvider;
+import jdk.tools.jlink.internal.ImagePluginConfiguration;
 import jdk.tools.jlink.plugins.PluginProvider;
 import jdk.tools.jlink.internal.ImagePluginProviderRepository;
 import tests.JImageGenerator;
@@ -117,19 +119,53 @@ public class JLinkTest {
                 "java.management");
 
         // Images with app modules
-        checkImage(helper, "composite2", null);
+        checkImage(helper, "composite2", null, null, null);
 
         int num = 0;
         for (PluginProvider pf : ImagePluginProviderRepository.getImageWriterProviders(null)) {
             num += 1;
         }
-        if (num != 3) {
+        if (num != 6) {
             throw new Exception("Plugins not found. " + num);
         }
+
+        //Help
+        String[] opts2 = {"--help"};
+        jdk.tools.jlink.Main.run(opts2, new PrintWriter(System.out));
 
         //List plugins
         String[] opts = {"--list-plugins"};
         jdk.tools.jlink.Main.run(opts, new PrintWriter(System.out));
+
+        // configuration
+        {
+            File f = new File("embedded.properties");
+            f.createNewFile();
+            try (FileOutputStream stream = new FileOutputStream(f);) {
+            String content = "jdk.jlink.defaults=--strip-java-debug on --addmods toto.unknown "
+                    + "--compress-resources on\n";
+            stream.write(content.getBytes());
+            String[] userOptions = {"--configuration", f.getAbsolutePath()};
+            generateJModule(helper, "configembeddedcomposite2", "composite2");
+            checkImage(helper, "configembeddedcomposite2",
+                    userOptions, null, null);
+            }
+        }
+
+        {
+            File f = new File("embedded.properties");
+            f.createNewFile();
+            try (FileOutputStream stream = new FileOutputStream(f);) {
+            String content = "jdk.jlink.defaults=--strip-java-debug on --addmods toto.unknown "
+                    + "--compress-resources UNKNOWN\n";
+            stream.write(content.getBytes());
+            String[] userOptions = {"--configuration", f.getAbsolutePath(),
+                "--compress-resources", "off"};
+            generateJModule(helper, "configembeddednocompresscomposite2", "composite2");
+            checkImage(helper, "configembeddednocompresscomposite2",
+                    userOptions, null, null);
+            }
+        }
 
         // ZIP
         File f = new File("plugins.properties");
@@ -139,74 +175,169 @@ public class JLinkTest {
             stream.write(content.getBytes());
             String[] userOptions = {"--plugins-configuration", f.getAbsolutePath()};
             generateJModule(helper, "zipcomposite", "composite2");
-            checkImage(helper, "zipcomposite", userOptions);
+            checkImage(helper, "zipcomposite", userOptions, null, null);
+        }
+
+        File f1 = new File("plugins.properties");
+        f1.createNewFile();
+        try (FileOutputStream stream = new FileOutputStream(f1);) {
+            String content = ImagePluginConfiguration.RESOURCES_COMPRESSOR_PROPERTY+"=zip\n" +
+                    "zip."+ PluginProvider.TOOL_ARGUMENT_PROPERTY +
+                    "=*Error.class,*Exception.class, ^/java.base/java/lang/*\n";
+            stream.write(content.getBytes());
+            String[] userOptions = {"--plugins-configuration", f.getAbsolutePath()};
+            generateJModule(helper, "zipfiltercomposite", "composite2");
+            checkImage(helper, "zipfiltercomposite", userOptions, null, null);
         }
 
         // Skip debug
         File f4 = new File("plugins.properties");
         f4.createNewFile();
         try (FileOutputStream stream = new FileOutputStream(f4);) {
-            String content = "jdk.jlink.plugins.transformer=strip-debug\n";
+            String content = ImagePluginConfiguration.RESOURCES_TRANSFORMER_PROPERTY+"=strip-java-debug\n" +
+                    "strip-java-debug." + PluginProvider.TOOL_ARGUMENT_PROPERTY + "=" +
+                    "on";
             stream.write(content.getBytes());
             String[] userOptions = {"--plugins-configuration", f4.getAbsolutePath()};
             generateJModule(helper, "skipdebugcomposite", "composite2");
-            checkImage(helper, "skipdebugcomposite", userOptions);
+            checkImage(helper, "skipdebugcomposite", userOptions, null, null);
         }
 
         // Skip debug + zip
         File f5 = new File("plugins.properties");
         f5.createNewFile();
         try (FileOutputStream stream = new FileOutputStream(f5);) {
-            String content = "jdk.jlink.plugins.transformer=strip-debug\n" +
-                    "jdk.jlink.plugins.compressor=zip\n";
+            String content = ImagePluginConfiguration.RESOURCES_TRANSFORMER_PROPERTY+"=strip-java-debug\n" +
+                    "strip-java-debug." + PluginProvider.TOOL_ARGUMENT_PROPERTY + "=" +
+                    "on\n" +
+                    ImagePluginConfiguration.RESOURCES_COMPRESSOR_PROPERTY+"=zip\n";
             stream.write(content.getBytes());
             String[] userOptions = {"--plugins-configuration", f5.getAbsolutePath()};
             generateJModule(helper, "zipskipdebugcomposite", "composite2");
-            checkImage(helper, "zipskipdebugcomposite", userOptions);
+            checkImage(helper, "zipskipdebugcomposite", userOptions, null, null);
         }
 
         // Filter out files
         File f6 = new File("plugins.properties");
         f6.createNewFile();
         try (FileOutputStream stream = new FileOutputStream(f6);) {
-            String content = "jdk.jlink.plugins.filter=exclude\n" +
-                    "jdk.jlink.plugins.transformer=strip-debug\n" +
-                    "jdk.jlink.plugins.compressor=zip\n" +
-                    "exclude.configuration=*.jcov, */META-INF/*\n";
+            String content = ImagePluginConfiguration.RESOURCES_FILTER_PROPERTY+"=exclude-resources\n" +
+                    ImagePluginConfiguration.RESOURCES_TRANSFORMER_PROPERTY+"=strip-java-debug\n" +
+                    "strip-java-debug." + PluginProvider.TOOL_ARGUMENT_PROPERTY + "=" +
+                    "on\n"+
+                    ImagePluginConfiguration.RESOURCES_COMPRESSOR_PROPERTY+"=zip\n" +
+                    "exclude-resources."+ PluginProvider.TOOL_ARGUMENT_PROPERTY +
+                    "=*.jcov, */META-INF/*\n";
             stream.write(content.getBytes());
             String[] userOptions = {"--plugins-configuration", f6.getAbsolutePath()};
             generateJModule(helper, "excludezipskipdebugcomposite", "composite2");
-            checkImage(helper, "excludezipskipdebugcomposite", userOptions, ".jcov",
-                    "/META-INF/");
+            String[] res = {".jcov", "/META-INF/"};
+            checkImage(helper, "excludezipskipdebugcomposite", userOptions, res, null);
         }
 
         // Filter out files
         File f7 = new File("plugins.properties");
         f7.createNewFile();
         try (FileOutputStream stream = new FileOutputStream(f7);) {
-            String content = "jdk.jlink.plugins.filter=exclude\n" +
-                    "exclude.configuration=*.jcov, */META-INF/*\n";
+            String content = ImagePluginConfiguration.RESOURCES_FILTER_PROPERTY+"=exclude-resources\n" +
+                    "exclude-resources."+ PluginProvider.TOOL_ARGUMENT_PROPERTY +
+                    "=*.jcov, */META-INF/*\n";
             stream.write(content.getBytes());
             String[] userOptions = {"--plugins-configuration", f7.getAbsolutePath()};
             generateJModule(helper, "excludecomposite", "composite2");
-            checkImage(helper, "excludecomposite", userOptions, ".jcov", "/META-INF/");
+            String[] res = {".jcov", "/META-INF/"};
+            checkImage(helper, "excludecomposite", userOptions, res, null);
         }
 
-        // filter out + Skip debug + zip
-        String[] userOptions = {"--compress", "--strip-debug", "--exclude",
-            "*.jcov, */META-INF/*"};
-        generateJModule(helper, "excludezipskipdebugcomposite2", "composite2");
-        checkImage(helper, "excludezipskipdebugcomposite2", userOptions,
-                ".jcov", "/META-INF/");
+        // Shared UTF_8 Constant Pool entries
+        String fact = "compact-cp";
+        File f8 = new File("plugins.properties");
+        f8.createNewFile();
+        try (FileOutputStream stream = new FileOutputStream(f8);) {
+            String content = ImagePluginConfiguration.RESOURCES_COMPRESSOR_PROPERTY+"=" + fact + "\n";
+            stream.write(content.getBytes());
+            String[] userOptions = {"--plugins-configuration", f8.getAbsolutePath()};
+            generateJModule(helper, "cpccomposite", "composite2");
+            checkImage(helper, "cpccomposite", userOptions, null, null);
+        }
+
+        File f9 = new File("plugins.properties");
+        f9.createNewFile();
+        try (FileOutputStream stream = new FileOutputStream(f9);) {
+            String content = ImagePluginConfiguration.RESOURCES_COMPRESSOR_PROPERTY+".0=" + fact + "\n"
+                    + ImagePluginConfiguration.RESOURCES_COMPRESSOR_PROPERTY+".1=zip\n";
+            stream.write(content.getBytes());
+            String[] userOptions = {"--plugins-configuration", f9.getAbsolutePath()};
+            generateJModule(helper, "zipcpccomposite", "composite2");
+            checkImage(helper, "zipcpccomposite", userOptions, null, null);
+        }
+
+        // command line options
+        {
+            String[] userOptions = {"--exclude-files", "*"+getDebugSymbolsExtension()};
+            generateJModule(helper, "excludenativedebugcomposite2", "composite2");
+            String[] files = {getDebugSymbolsExtension()};
+            checkImage(helper, "excludenativedebugcomposite2", userOptions, null, files);
+        }
+        // filter out files and resources + Skip debug + compress
+        {
+            String[] userOptions = {"--compress-resources", "on", "--strip-java-debug", "on",
+                "--exclude-resources", "*.jcov, */META-INF/*", "--exclude-files",
+                "*"+getDebugSymbolsExtension()};
+            generateJModule(helper, "excludezipskipdebugcomposite2", "composite2");
+            String[] res = {".jcov", "/META-INF/"};
+            String[] files = {getDebugSymbolsExtension()};
+            checkImage(helper, "excludezipskipdebugcomposite2", userOptions, res, files);
+        }
+        // filter out + Skip debug + compress with filter
+        {
+            String[] userOptions2 = {"--compress-resources", "on", "--compress-resources-filter",
+                "^/java.base/*", "--strip-java-debug", "on", "--exclude-resources",
+                "*.jcov, */META-INF/*"};
+            generateJModule(helper, "excludezipfilterskipdebugcomposite2", "composite2");
+            String[] res = {".jcov", "/META-INF/"};
+            checkImage(helper, "excludezipfilterskipdebugcomposite2", userOptions2,
+                    res, null);
+        }
+
+        // default compress
+        {
+            String[] userOptions = {"--compress-resources", "on"};
+            generateJModule(helper, "compresscmdcomposite2", "composite2");
+            checkImage(helper, "compresscmdcomposite2", userOptions, null, null);
+        }
+
+        {
+            String[] userOptions = {"--compress-resources", "on", "--compress-resources-filter",
+                "^/java.base/java/lang/*"};
+            generateJModule(helper, "compressfiltercmdcomposite2", "composite2");
+            checkImage(helper, "compressfiltercmdcomposite2", userOptions, null, null);
+        }
+
+        // compress 0
+        {
+            String[] userOptions = {"--compress-resources", "on", "--compress-resources-level", "0",
+                "--compress-resources-filter", "^/java.base/java/lang/*"};
+            generateJModule(helper, "compress0filtercmdcomposite2", "composite2");
+            checkImage(helper, "compress0filtercmdcomposite2", userOptions, null, null);
+        }
+
+        // compress 1
+        {
+            String[] userOptions = {"--compress-resources", "on", "--compress-resources-level", "1",
+                "--compress-resources-filter", "^/java.base/java/lang/*"};
+            generateJModule(helper, "compress1filtercmdcomposite2", "composite2");
+            checkImage(helper, "compress1filtercmdcomposite2", userOptions, null, null);
+        }
 
         // Standard images
-        checkImage(helper, "java.management", null);
+        checkImage(helper, "java.management", null, null, null);
 
         // failing tests
         boolean failed = false;
         try {
             generateJModule(helper, "failure", "leaf5", "java.COCO");
-            checkImage(helper, "failure", null);
+            checkImage(helper, "failure", null, null, null);
             failed = true;
         } catch (Exception ex) {
             System.err.println("OK, Got expected exception " + ex);
@@ -217,7 +348,7 @@ public class JLinkTest {
         }
 
         try {
-            checkImage(helper, "failure2", null);
+            checkImage(helper, "failure2", null, null, null);
             failed = true;
         } catch (Exception ex) {
             // XXX OK expected
@@ -236,8 +367,28 @@ public class JLinkTest {
         okLocations.addAll(toLocation("amodule", jmodsClasses));
         File image = helper.generateImage(null, "amodule");
         JImageValidator validator = new JImageValidator("amodule", okLocations,
-                 image, Collections.<String>emptyList());
+                 image, Collections.<String>emptyList(),
+                Collections.<String>emptyList());
         validator.validate();
+
+
+        // Customize generated image
+        File f11 = new File("plugins.properties");
+        f11.createNewFile();
+        try (FileOutputStream stream = new FileOutputStream(f11);) {
+            String fileName = "toto.jimage";
+            String content = DefaultImageBuilderProvider.NAME+"." +
+                    DefaultImageBuilderProvider.JIMAGE_NAME_PROPERTY + "=" + fileName;
+            stream.write(content.getBytes());
+            String[] userOptions = {"--plugins-configuration", f9.getAbsolutePath()};
+            generateJModule(helper, "totoimagemodule", "composite2");
+            File img = helper.generateImage(userOptions, "totoimagemodule");
+            File imgFile = new File(img, "lib" + File.separator + "modules" +
+                    File.separator + fileName);
+            if (!imgFile.exists()) {
+                throw new Exception("Expected file doesn't exist " + imgFile);
+            }
+        }
     }
 
     private static void generateJModule(JImageGenerator helper,
@@ -282,12 +433,21 @@ public class JLinkTest {
 
     private static void checkImage(JImageGenerator helper,
                                    String module,
-                                   String[] userOptions, String... unexpectedFiles)
+                                   String[] userOptions, String[] paths,
+                                   String[] files)
         throws Exception
     {
         List<String> unexpectedPaths = new ArrayList<>();
-        for (String un : unexpectedFiles) {
-            unexpectedPaths.add(un);
+        if (paths != null) {
+            for (String un : paths) {
+                unexpectedPaths.add(un);
+            }
+        }
+        List<String> unexpectedFiles = new ArrayList<>();
+        if (files != null) {
+            for (String un : files) {
+                unexpectedFiles.add(un);
+            }
         }
         File image = helper.generateImage(userOptions, module);
         List<String> expectedLocations = new ArrayList<>();
@@ -297,7 +457,9 @@ public class JLinkTest {
             expectedLocations.addAll(appClasses);
         }
         JImageValidator validator = new JImageValidator(module, expectedLocations,
-                                                        image, unexpectedPaths);
+                image,
+                unexpectedPaths,
+                unexpectedFiles);
         System.out.println("*** Validate Image " + module);
         validator.validate();
         long moduleExecutionTime = validator.getModuleLauncherExecutionTime();
@@ -307,5 +469,15 @@ public class JLinkTest {
         System.out.println("Java launcher execution time " +
                 validator.getJavaLauncherExecutionTime());
         System.out.println("***");
+    }
+
+    private static String getDebugSymbolsExtension() {
+        String s = System.getProperty("os.name");
+        if(s.startsWith("Mac OS")) {
+            return ".diz";
+        } else {
+            System.out.println("WARNING no debug extension for OS, update test");
+            return ".unknown";
+        }
     }
 }

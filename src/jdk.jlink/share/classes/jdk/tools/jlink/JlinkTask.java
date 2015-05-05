@@ -26,13 +26,11 @@
 package jdk.tools.jlink;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
-import java.io.UncheckedIOException;
 import java.lang.module.Configuration;
 import java.lang.module.Layer;
 import java.lang.module.ModuleArtifact;
@@ -40,19 +38,14 @@ import java.lang.module.ModuleArtifactFinder;
 import java.lang.module.ModuleDescriptor;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
-import java.nio.file.attribute.PosixFileAttributeView;
-import java.nio.file.attribute.PosixFilePermission;
 import java.util.ArrayList;
 import java.util.Formatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
@@ -156,9 +149,6 @@ class JlinkTask {
         log = out;
         taskHelper.setLog(log);
     }
-
-    private static final String MODULE_INFO = "module-info.class";
-
 
     /**
      * Result codes.
@@ -274,21 +264,6 @@ class JlinkTask {
         return modPaths;
     }
 
-    /**
-     * chmod ugo+x file
-     */
-    private void setExecutable(Path file) {
-        try {
-            Set<PosixFilePermission> perms = Files.getPosixFilePermissions(file);
-            perms.add(PosixFilePermission.OWNER_EXECUTE);
-            perms.add(PosixFilePermission.GROUP_EXECUTE);
-            perms.add(PosixFilePermission.OTHERS_EXECUTE);
-            Files.setPosixFilePermissions(file, perms);
-        } catch (IOException ioe) {
-            throw new UncheckedIOException(ioe);
-        }
-    }
-
     private void createImage() throws IOException {
         final Path output = options.output;
 
@@ -300,65 +275,7 @@ class JlinkTask {
         Map<String, Path> mods = modulesToPath(cf.descriptors());
 
         ImageFileHelper imageHelper = new ImageFileHelper(cf, mods);
-        imageHelper.createModularImage(output);
-
-        // launchers in the bin directory need execute permission
-        Path bin = output.resolve("bin");
-        if (Files.getFileStore(bin).supportsFileAttributeView(PosixFileAttributeView.class)) {
-            Files.list(bin)
-                 .filter(f -> !f.toString().endsWith(".diz"))
-                 .filter(f -> Files.isRegularFile(f))
-                 .forEach(this::setExecutable);
-
-            // jspawnhelper is in lib or lib/<arch>
-            Path lib = output.resolve("lib");
-            Files.find(lib, 2, (path, attrs) -> {
-                return path.getFileName().toString().equals("jspawnhelper");
-            }).forEach(this::setExecutable);
-        }
-
-        // generate launch scripts for the modules with a main class
-        for (Map.Entry<String, Path> entry : mods.entrySet()) {
-            String module = entry.getKey();
-            Path jmodpath = entry.getValue();
-
-            Optional<String> mainClass = Optional.empty();
-
-            try (ZipFile zf = new ZipFile(jmodpath.toString())) {
-                String e = Section.CLASSES.jmodDir() + "/" + MODULE_INFO;
-                ZipEntry ze = zf.getEntry(e);
-                if (ze != null) {
-                    try (InputStream in = zf.getInputStream(ze)) {
-                        mainClass = ModuleDescriptor.read(in).mainClass();
-                    }
-                }
-            }
-
-            if (mainClass.isPresent()) {
-                Path cmd = output.resolve("bin").resolve(module);
-                if (!Files.exists(cmd)) {
-                    StringBuilder sb = new StringBuilder();
-                    sb.append("#!/bin/sh")
-                      .append("\n");
-                    sb.append("DIR=`dirname $0`")
-                      .append("\n");
-                    sb.append("$DIR/java -m ")
-                      .append(module).append('/')
-                      .append(mainClass.get())
-                      .append(" $@\n");
-
-                    try (BufferedWriter writer = Files.newBufferedWriter(cmd,
-                            StandardCharsets.ISO_8859_1,
-                            StandardOpenOption.CREATE_NEW)) {
-                        writer.write(sb.toString());
-                    }
-                    if (Files.getFileStore(bin)
-                             .supportsFileAttributeView(PosixFileAttributeView.class)) {
-                        setExecutable(cmd);
-                    }
-                }
-            }
-        }
+        imageHelper.createModularImage(output, mods);
     }
 
     private class ImageFileHelper {
@@ -370,13 +287,14 @@ class JlinkTask {
             this.modsPaths = modsPaths;
         }
 
-        void createModularImage(Path output) throws IOException {
+        void createModularImage(Path output, Map<String, Path> mods) throws IOException {
             Set<Archive> archives = modsPaths.entrySet().stream()
                     .map(e -> newArchive(e.getKey(), e.getValue()))
                     .collect(Collectors.toSet());
             ImagePluginStack pc = ImagePluginConfiguration.
-                    parseConfiguration(taskHelper.getPluginsProperties());
-            ImageFileCreator.create(output, archives, pc);
+                    parseConfiguration(output, mods,
+                            taskHelper.getPluginsProperties());
+            ImageFileCreator.create(archives, pc);
         }
 
         private Archive newArchive(String module, Path path) {

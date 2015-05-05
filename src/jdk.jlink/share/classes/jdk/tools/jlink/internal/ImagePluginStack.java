@@ -24,6 +24,7 @@
  */
 package jdk.tools.jlink.internal;
 
+import java.io.DataOutputStream;
 import jdk.tools.jlink.plugins.Plugin;
 import java.io.IOException;
 import java.nio.ByteOrder;
@@ -34,15 +35,19 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import jdk.tools.jlink.plugins.Previsitor;
+import jdk.tools.jlink.plugins.ImageBuilder;
+import jdk.tools.jlink.plugins.ImageFilePlugin;
+import jdk.tools.jlink.plugins.ResourcePlugin;
 import jdk.tools.jlink.plugins.ResourcePool;
 import jdk.tools.jlink.plugins.ResourcePool.Resource;
+import jdk.tools.jlink.plugins.ResourcePrevisitor;
 import jdk.tools.jlink.plugins.StringTable;
 
 /**
- * Plugins Stack. Plugins entry point to apply transformations onto resources.
+ * Plugins Stack. Plugins entry point to apply transformations onto resources and files.
  */
 public final class ImagePluginStack {
 
@@ -145,27 +150,43 @@ public final class ImagePluginStack {
     }
 
     private final Plugin lastSorter;
-    private final List<Plugin> plugins;
-    private final List<Previsitor> previsitors = new ArrayList<>();
+    private final List<ResourcePlugin> resourcePlugins = new ArrayList<>();
+    private final List<ImageFilePlugin> filePlugins = new ArrayList<>();
+    private final List<ResourcePrevisitor> resourcePrevisitors = new ArrayList<>();
+
+    private final ImageBuilder imageBuilder;
 
     public ImagePluginStack() {
-        this(Collections.emptyList(), null);
+        this(null, Collections.emptyList(), null, Collections.emptyList());
     }
 
-    ImagePluginStack(List<Plugin> plugins, Plugin lastSorter) {
-        Objects.requireNonNull(plugins);
-        this.plugins = plugins;
+    ImagePluginStack(ImageBuilder imageBuilder,
+            List<ResourcePlugin> resourcePlugins,
+            Plugin lastSorter,
+            List<ImageFilePlugin> filePlugins) {
+        Objects.requireNonNull(resourcePlugins);
+        Objects.requireNonNull(filePlugins);
         this.lastSorter = lastSorter;
-        for (Plugin p : plugins) {
+        for (ResourcePlugin p : resourcePlugins) {
             Objects.requireNonNull(p);
-            if (p instanceof Previsitor) {
-                previsitors.add((Previsitor) p);
+            if (p instanceof ResourcePrevisitor) {
+                resourcePrevisitors.add((ResourcePrevisitor) p);
             }
+            this.resourcePlugins.add(p);
         }
+        for (ImageFilePlugin p : filePlugins) {
+            Objects.requireNonNull(p);
+            this.filePlugins.add(p);
+        }
+        this.imageBuilder = imageBuilder;
+    }
+
+    public DataOutputStream getJImageFileOutputStream() throws IOException {
+        return imageBuilder.getJImageOutputStream();
     }
 
     /**
-     * Plugins stack entry point. All resources are going through all the
+     * Resource Plugins stack entry point. All resources are going through all the
      * plugins.
      *
      * @param resources The set of resources to visit
@@ -173,7 +194,7 @@ public final class ImagePluginStack {
      * @return The result of the visit.
      * @throws IOException
      */
-    public ResourcePool visit(ResourcePoolImpl resources, StringTable strings)
+    public ResourcePool visitResources(ResourcePoolImpl resources, StringTable strings)
             throws Exception {
         Objects.requireNonNull(resources);
         Objects.requireNonNull(strings);
@@ -182,7 +203,7 @@ public final class ImagePluginStack {
             return new ResourcePoolImpl(resources.getByteOrder());
         }
         PreVisitStrings previsit = new PreVisitStrings();
-        for (Previsitor p : previsitors) {
+        for (ResourcePrevisitor p : resourcePrevisitors) {
             p.previsit(resources, previsit);
         }
 
@@ -194,7 +215,7 @@ public final class ImagePluginStack {
 
         ResourcePoolImpl current = resources;
         List<Resource> frozenOrder = null;
-        for (Plugin p : plugins) {
+        for (ResourcePlugin p : resourcePlugins) {
             current.setReadOnly();
             ResourcePoolImpl output = null;
             if (p == lastSorter) {
@@ -224,5 +245,28 @@ public final class ImagePluginStack {
             current = output;
         }
         return current;
+    }
+
+    /**
+     * ImageFile Plugins stack entry point. All files are going through all the
+     * plugins.
+     *
+     * @param modules
+     * @throws IOException
+     */
+    public void storeFiles(ImageFilePoolImpl files, Set<String> modules)
+            throws Exception {
+        Objects.requireNonNull(files);
+        ImageFilePoolImpl current = files;
+        for (ImageFilePlugin p : filePlugins) {
+            current.setReadOnly();
+            ImageFilePoolImpl output = new ImageFilePoolImpl();
+            p.visit(current, output);
+             if (output.getFiles().isEmpty()) {
+                throw new Exception("Invalid files pool for plugin " + p);
+            }
+            current = output;
+        }
+        imageBuilder.storeFiles(current, modules);
     }
 }

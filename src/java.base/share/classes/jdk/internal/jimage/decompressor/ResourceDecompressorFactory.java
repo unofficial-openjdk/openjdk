@@ -33,14 +33,9 @@ import java.util.Properties;
  */
 public abstract class ResourceDecompressorFactory {
     private final String name;
-    private final String description;
-    private final String arguments;
 
-    protected ResourceDecompressorFactory(String name, String description,
-            String arguments) {
+    protected ResourceDecompressorFactory(String name) {
         this.name = name;
-        this.description = description;
-        this.arguments = arguments;
     }
 
     /**
@@ -49,22 +44,6 @@ public abstract class ResourceDecompressorFactory {
      */
     public String getName() {
         return name;
-    }
-
-    /**
-     * The Factory description.
-     * @return The description.
-     */
-    public String getDescription() {
-        return description;
-    }
-
-    /**
-     * The Factory arguments description.
-     * @return The arguments description.
-     */
-    public String getArgumentsDescription() {
-        return arguments;
     }
 
     /**

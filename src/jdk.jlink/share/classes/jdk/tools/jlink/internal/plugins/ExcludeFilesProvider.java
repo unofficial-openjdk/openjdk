@@ -22,17 +22,49 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package jdk.tools.jlink.plugins;
+package jdk.tools.jlink.internal.plugins;
+
+import java.io.IOException;
+import java.util.Map;
+import jdk.tools.jlink.internal.ImagePluginConfiguration;
+import jdk.tools.jlink.plugins.ImageFilePlugin;
+import jdk.tools.jlink.plugins.ImageFilePluginProvider;
 
 /**
- * Implement this interface to develop your own plugin.
- * Plugin can modify the Resources located in jimage file.
+ *
+ * Exclude image files plugin provider
  */
-public interface Plugin {
+public final class ExcludeFilesProvider extends ImageFilePluginProvider {
+    public static final String NAME = "exclude-files";
+    public ExcludeFilesProvider() {
+        super(NAME, PluginsResourceBundle.getDescription(NAME));
+    }
 
-    /**
-     * Plugin unique name.
-     * @return The plugin name.
-     */
-    public String getName();
+    @Override
+    public ImageFilePlugin[] newPlugins(String[] argument, Map<String, String> otherOptions)
+            throws IOException {
+        return new ImageFilePlugin[]{new ExcludeFilesPlugin(argument)};
+    }
+
+
+
+    @Override
+    public String getCategory() {
+        return ImagePluginConfiguration.FILTER;
+    }
+
+    @Override
+    public String getToolArgument() {
+        return PluginsResourceBundle.getArgument(NAME);
+    }
+
+    @Override
+    public String getToolOption() {
+        return NAME;
+    }
+
+    @Override
+    public Map<String, String> getAdditionalOptions() {
+        return null;
+    }
 }

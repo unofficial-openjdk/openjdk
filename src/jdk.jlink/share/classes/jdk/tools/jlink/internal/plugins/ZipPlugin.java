@@ -28,15 +28,22 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.zip.Deflater;
-import jdk.tools.jlink.plugins.Plugin;
+import jdk.tools.jlink.plugins.ResourcePlugin;
 import jdk.tools.jlink.plugins.ResourcePool;
+import jdk.tools.jlink.plugins.ResourcePool.Resource;
 import jdk.tools.jlink.plugins.StringTable;
 
 /**
  *
  * ZIP Compression plugin
  */
-final class ZipPlugin implements Plugin {
+final class ZipPlugin implements ResourcePlugin {
+
+    private final ResourceFilter filter;
+
+    ZipPlugin(String[] patterns) {
+         this.filter = new ResourceFilter(patterns);
+    }
 
     @Override
     public String getName() {
@@ -71,9 +78,13 @@ final class ZipPlugin implements Plugin {
     public void visit(ResourcePool resources, ResourcePool output, StringTable strings)
             throws Exception {
         resources.visit((resource, order, str) -> {
-            byte[] compressed = compress(resource.getByteArray());
-            return ResourcePool.CompressedResource.newCompressedResource(resource,
-                    ByteBuffer.wrap(compressed), getName(), null, str, order);
+            Resource res = resource;
+            if (filter.accept(resource.getPath())) {
+                byte[] compressed = compress(resource.getByteArray());
+                res = ResourcePool.CompressedResource.newCompressedResource(resource,
+                        ByteBuffer.wrap(compressed), getName(), null, str, order);
+            }
+            return res;
         }, output, strings);
     }
 }

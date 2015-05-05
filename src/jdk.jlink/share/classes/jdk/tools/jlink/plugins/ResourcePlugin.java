@@ -26,13 +26,16 @@ package jdk.tools.jlink.plugins;
 
 /**
  * Implement this interface to develop your own plugin.
- * Plugin can modify the Resources located in jimage file.
+ * ResourcePlugin can modify the Resources located in jimage file.
  */
-public interface Plugin {
-
+public interface ResourcePlugin extends Plugin {
     /**
-     * Plugin unique name.
-     * @return The plugin name.
+     * Visit the collection of resources.
+     * @param inResources Read only resources.
+     * @param outResources The pool to fill with resources. Will contain the result of the visit
+     * @param strings Bridge to the jimage strings table.
+     * @throws Exception
      */
-    public String getName();
+    public void visit(ResourcePool inResources, ResourcePool outResources, StringTable strings)
+            throws Exception;
 }

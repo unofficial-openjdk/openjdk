@@ -106,15 +106,15 @@ public class JImageTest {
         File extractedDir = helper.extractImageFile(image, "bootmodules.jimage");
         File recreatedImage = helper.recreateImageFile(extractedDir);
         JImageValidator.validate(recreatedImage, bootClasses, Collections.emptyList());
-        File recreatedImage2 = helper.recreateImageFile(extractedDir, "--compress");
+        File recreatedImage2 = helper.recreateImageFile(extractedDir, "--compress-resources", "on");
         JImageValidator.validate(recreatedImage2, bootClasses, Collections.emptyList());
-        File recreatedImage3 = helper.recreateImageFile(extractedDir, "--strip-debug");
+        File recreatedImage3 = helper.recreateImageFile(extractedDir, "--strip-java-debug", "on");
         JImageValidator.validate(recreatedImage3, bootClasses, Collections.emptyList());
-        File recreatedImage4 = helper.recreateImageFile(extractedDir, "--exclude",
+        File recreatedImage4 = helper.recreateImageFile(extractedDir, "--exclude-resources",
                 "*.jcov, */META-INF/*");
         JImageValidator.validate(recreatedImage4, bootClasses, unexpectedPaths);
-        File recreatedImage5 = helper.recreateImageFile(extractedDir, "--compress",
-                "--strip-debug", "--exclude", "*.jcov, */META-INF/*");
+        File recreatedImage5 = helper.recreateImageFile(extractedDir, "--compress-resources", "on",
+                "--strip-java-debug", "on", "--exclude-resources", "*.jcov, */META-INF/*");
         JImageValidator.validate(recreatedImage5, bootClasses, unexpectedPaths);
 
     }

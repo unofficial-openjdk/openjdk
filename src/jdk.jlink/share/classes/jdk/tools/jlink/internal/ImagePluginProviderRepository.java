@@ -27,6 +27,7 @@ package jdk.tools.jlink.internal;
 import jdk.tools.jlink.plugins.PluginProvider;
 import jdk.tools.jlink.plugins.Plugin;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -36,6 +37,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.ServiceLoader;
+import jdk.tools.jlink.plugins.ImageBuilder;
+import jdk.tools.jlink.plugins.ImageBuilderProvider;
 
 /**
  *
@@ -55,14 +58,14 @@ public final class ImagePluginProviderRepository {
      * @param properties Optional properties.
      * @param name Non null name.
      * @param loader A classloader or null for default loader.
-     * @return A plugin.
+     * @return An array of plugins.
      * @throws IOException
      */
-    public static Plugin newImageWriterPlugin(Properties properties, String name,
+    public static Plugin[] newPlugins(Properties properties, String name,
             ClassLoader loader) throws IOException {
         Objects.requireNonNull(name);
         PluginProvider fact = getImageWriterProvider(name, loader);
-        return fact.newPlugin(properties);
+        return fact.newPlugins(properties);
     }
 
     /**
@@ -118,6 +121,25 @@ public final class ImagePluginProviderRepository {
     public synchronized static void registerPluginProvider(PluginProvider provider) {
         Objects.requireNonNull(provider);
         registeredProviders.put(provider.getName(), provider);
+    }
+
+
+    public static ImageBuilder newImageBuilder(Properties properties, Path outputDir,
+            String name, ClassLoader loader) throws IOException {
+        Iterator<ImageBuilderProvider> providers =
+                ServiceLoader.load(ImageBuilderProvider.class, loader).iterator();
+        ImageBuilder builder = null;
+        while (providers.hasNext()) {
+            ImageBuilderProvider fact = providers.next();
+            if (fact.getName().equals(name)) {
+                if(builder != null) {
+                     throw new IOException("Mutliple ImageBuilderProvider "
+                            + "for the name " + name);
+                }
+                builder = fact.newBuilder(properties, outputDir);
+            }
+        }
+        return builder;
     }
 
     private static Iterator<PluginProvider> getJavaPluginProviders(ClassLoader loader) {

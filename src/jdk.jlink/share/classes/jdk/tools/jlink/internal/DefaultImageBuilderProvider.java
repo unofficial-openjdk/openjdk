@@ -22,17 +22,25 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package jdk.tools.jlink.plugins;
+package jdk.tools.jlink.internal;
+
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.Map;
+import java.util.Properties;
+import jdk.tools.jlink.plugins.ImageBuilder;
 
 /**
- * Implement this interface to develop your own plugin.
- * Plugin can modify the Resources located in jimage file.
+ *
  */
-public interface Plugin {
+public class DefaultImageBuilderProvider {
 
-    /**
-     * Plugin unique name.
-     * @return The plugin name.
-     */
-    public String getName();
+    public static final String JIMAGE_NAME_PROPERTY = "jimage.name";
+    public static final String NAME = "jlink-default-image-builder";
+    public ImageBuilder newBuilder(Properties properties,
+            Path imageOutDir,
+            Map<String, Path> mods) throws IOException {
+        return new DefaultImageBuilder(properties, imageOutDir, mods);
+    }
+
 }

@@ -25,38 +25,45 @@
 package jdk.tools.jlink.internal.plugins;
 
 import java.io.IOException;
-import java.util.Properties;
-import jdk.tools.jlink.plugins.Plugin;
-import jdk.tools.jlink.plugins.PluginProvider;
+import java.util.Map;
+import jdk.tools.jlink.plugins.ResourcePlugin;
+import jdk.tools.jlink.plugins.ResourcePluginProvider;
 import jdk.tools.jlink.internal.ImagePluginConfiguration;
 
 /**
  *
  * ZIP compression plugin provider
  */
-public class ZipCompressProvider extends PluginProvider {
+public class ZipCompressProvider extends ResourcePluginProvider {
     public static final String NAME = "zip";
     public ZipCompressProvider() {
-        super(NAME,"ZIP Compression");
+        super(NAME, PluginsResourceBundle.getDescription(NAME));
     }
 
     @Override
-    public Plugin newPlugin(Properties properties) throws IOException {
-        return new ZipPlugin();
+    public ResourcePlugin[] newPlugins(String[] arguments, Map<String, String> otherOptions)
+            throws IOException {
+        return new ResourcePlugin[]{new ZipPlugin(arguments)};
     }
 
-        @Override
+    @Override
     public String getCategory() {
         return ImagePluginConfiguration.COMPRESSOR;
     }
 
     @Override
-    public String getConfiguration() {
-        return null;
+    public String getToolArgument() {
+        return PluginsResourceBundle.getArgument(NAME);
     }
 
     @Override
     public String getToolOption() {
-        return "compress";
+        return null;
     }
+
+    @Override
+    public Map<String, String> getAdditionalOptions() {
+        return null;
+    }
+
 }
