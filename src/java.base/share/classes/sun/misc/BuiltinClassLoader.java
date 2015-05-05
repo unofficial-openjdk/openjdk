@@ -261,15 +261,11 @@ class BuiltinClassLoader extends ModuleClassLoader {
      * to this class loader.
      */
     @Override
-    public Class<?> findClass(ModuleArtifact artifact, String cn) {
-        Objects.requireNonNull(artifact);
+    public Class<?> findClassInModule(String cn) {
 
         LoadedModule loadedModule = findModule(cn);
-        if (loadedModule == null || loadedModule.artifact() != artifact) {
-            // should also check if the artifact of the given module and
-            // this loaded module matches
+        if (loadedModule == null)
             return null;
-        }
 
         synchronized (getClassLoadingLock(cn)) {
             // check if already loaded
@@ -281,6 +277,7 @@ class BuiltinClassLoader extends ModuleClassLoader {
             }
             return c;
         }
+
     }
 
     /**

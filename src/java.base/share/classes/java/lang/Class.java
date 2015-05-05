@@ -401,7 +401,9 @@ public final class Class<T> implements java.io.Serializable,
      * does not follow the the caller-sensitive security check as the
      * 3-arg Class.forName method.  The security check should be examined
      * together with Class.getModule, Module.getClassLoader and other
-     * relevant methods.
+     * relevant methods.  This method returns {@code null} on failure rather
+     * than throw a {@link ClassNotFoundException}, as is done by the existing
+     * {@link #forName(String)} method.
      *
      * @param  module   Named module
      * @param  name     Fully-qualified class name
@@ -425,16 +427,15 @@ public final class Class<T> implements java.io.Serializable,
         }
 
         JavaLangReflectAccess reflectAccess = SharedSecrets.getJavaLangReflectAccess();
-        ModuleArtifact artifact = reflectAccess.getArtifact(module);
         PrivilegedAction<ClassLoader> pa = module::getClassLoader;
         ClassLoader cl = AccessController.doPrivileged(pa);
 
         Class<?> c = null;
         if (cl == null) {
-            c = BootLoader.findClass(artifact, name);
+            c = BootLoader.findClassInModule(name);
         } else if (cl instanceof ModuleClassLoader) {
             // TODO: custom module-aware class loader
-            c = ((ModuleClassLoader) cl).findClass(artifact, name);
+            c = ((ModuleClassLoader) cl).findClassInModule(name);
         }
         return c;
     }
