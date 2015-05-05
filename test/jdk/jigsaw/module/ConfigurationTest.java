@@ -22,12 +22,12 @@
  */
 
 import java.lang.module.Configuration;
-import java.lang.module.Layer;
+import static java.lang.module.Layer.*;
+import java.lang.module.ResolutionException;
 import java.lang.module.ModuleArtifactFinder;
+import static java.lang.module.ModuleArtifactFinder.*;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Requires.Modifier;
-import java.util.HashSet;
-import java.util.Set;
 
 import org.testng.annotations.Test;
 import static org.testng.Assert.*;
@@ -57,10 +57,7 @@ public class ConfigurationTest {
         ModuleArtifactFinder finder =
                 new ModuleArtifactLibrary(descriptor1, descriptor2, descriptor3);
 
-        Configuration cf = Configuration.resolve(finder,
-                Layer.bootLayer(),
-                ModuleArtifactFinder.nullFinder(),
-                "m1");
+        Configuration cf = Configuration.resolve(finder, bootLayer(), nullFinder(), "m1");
 
         assertTrue(cf.descriptors().size() == 3);
         assertTrue(cf.descriptors().contains(descriptor1));
@@ -77,6 +74,68 @@ public class ConfigurationTest {
 
         // m3 reads nothing
         assertTrue(cf.readDependences(descriptor3).size() == 0);
+    }
+
+    /**
+     * Root module not found
+     */
+    @Test(expectedExceptions = { ResolutionException.class })
+    public void testRootNotFound() {
+        Configuration.resolve(nullFinder(), bootLayer(), nullFinder(), "m1");
+    }
+
+    /**
+     * Direct dependency not found
+     */
+    @Test(expectedExceptions = { ResolutionException.class })
+    public void testDirectDependencyNotFound() {
+        ModuleDescriptor descriptor1 =
+                new ModuleDescriptor.Builder("m1").requires("m2").build();
+        ModuleArtifactFinder finder = new ModuleArtifactLibrary(descriptor1);
+
+        Configuration.resolve(finder, bootLayer(), nullFinder(), "m1");
+    }
+
+    /**
+     * Transitive dependency not found
+     */
+    @Test(expectedExceptions = { ResolutionException.class })
+    public void testTransitiveDependencyNotFound() {
+        ModuleDescriptor descriptor1 =
+                new ModuleDescriptor.Builder("m1").requires("m2").build();
+        ModuleDescriptor descriptor2 =
+                new ModuleDescriptor.Builder("m2").requires("m3").build();
+        ModuleArtifactFinder finder = new ModuleArtifactLibrary(descriptor1, descriptor2);
+
+        Configuration.resolve(finder, bootLayer(), nullFinder(), "m1");
+    }
+
+    /**
+     * Service provider dependency not found
+     */
+    @Test(expectedExceptions = { ResolutionException.class })
+    public void testServiceProviderDependencyNotFound() {
+
+        // service provider dependency (on m3) not found
+        ModuleDescriptor descriptor1  = new ModuleDescriptor.Builder("m1").build();
+        ModuleDescriptor descriptor2 =
+                new ModuleDescriptor.Builder("m2")
+                    .requires("m3")
+                    .provides("java.security.Provider", "p.CryptoProvder")
+                    .build();
+        ModuleArtifactFinder finder = new ModuleArtifactLibrary(descriptor1, descriptor2);
+
+
+        Configuration cf;
+        try {
+            cf = Configuration.resolve(finder, bootLayer(), nullFinder(), "m1");
+            assertTrue(cf.descriptors().size() == 1);
+        } catch (ResolutionException e) {
+            throw new RuntimeException(e);
+        }
+
+        // should throw ResolutionException because m3 is not found
+        cf.bind();
     }
 
     /**
@@ -101,10 +160,7 @@ public class ConfigurationTest {
         ModuleArtifactFinder finder =
                 new ModuleArtifactLibrary(descriptor1, descriptor2, descriptor3);
 
-        Configuration cf = Configuration.resolve(finder,
-                Layer.bootLayer(),
-                ModuleArtifactFinder.nullFinder(),
-                "m1");
+        Configuration cf = Configuration.resolve(finder, bootLayer(), nullFinder(), "m1");
 
         assertTrue(cf.descriptors().size() == 3);
         assertTrue(cf.descriptors().contains(descriptor1));
@@ -130,31 +186,28 @@ public class ConfigurationTest {
     public void testBasicBinding() {
 
         ModuleDescriptor descriptor1 =
-                new ModuleDescriptor.Builder("m1")
-                .requires("m2")
-                .uses("S")
-                .build();
+            new ModuleDescriptor.Builder("m1")
+                    .requires("m2")
+                    .uses("S")
+                    .build();
 
         ModuleDescriptor descriptor2 =
-                new ModuleDescriptor.Builder("m2").build();
+            new ModuleDescriptor.Builder("m2").build();
 
         // service provider
         ModuleDescriptor descriptor3 =
-                new ModuleDescriptor.Builder("m3")
+            new ModuleDescriptor.Builder("m3")
                 .requires("m1")
                 .provides("S", "p.S1").build();
 
         // unused module
         ModuleDescriptor descriptor4 =
-                new ModuleDescriptor.Builder("m4").build();
+            new ModuleDescriptor.Builder("m4").build();
 
         ModuleArtifactFinder finder =
-                new ModuleArtifactLibrary(descriptor1, descriptor2, descriptor3, descriptor4);
+            new ModuleArtifactLibrary(descriptor1, descriptor2, descriptor3, descriptor4);
 
-        Configuration cf = Configuration.resolve(finder,
-                Layer.bootLayer(),
-                ModuleArtifactFinder.nullFinder(),
-                "m1");
+        Configuration cf = Configuration.resolve(finder, bootLayer(), nullFinder(), "m1");
 
         // only m1 and m2 in the configuration
         assertTrue(cf.descriptors().size() == 2);
@@ -181,6 +234,52 @@ public class ConfigurationTest {
 
         assertTrue(cf.readDependences(descriptor3).size() == 1);
         assertTrue(cf.readDependences(descriptor3).contains(descriptor1));
+    }
+
+    /**
+     * Simple cycle.
+     */
+    @Test(expectedExceptions = { ResolutionException.class })
+    public void testSimpleCycle() {
+        ModuleDescriptor descriptor1 =
+                new ModuleDescriptor.Builder("m1").requires("m2").build();
+        ModuleDescriptor descriptor2 =
+                new ModuleDescriptor.Builder("m2").requires("m3").build();
+        ModuleDescriptor descriptor3 =
+                new ModuleDescriptor.Builder("m3").requires("m1").build();
+        ModuleArtifactFinder finder =
+                new ModuleArtifactLibrary(descriptor1, descriptor2, descriptor3);
+
+        Configuration.resolve(finder, bootLayer(), nullFinder(), "m1");
+    }
+
+    /**
+     * Basic test for detecting cycles involving a service provider module
+     */
+    @Test(expectedExceptions = { ResolutionException.class })
+    public void testCycleInProvider() {
+        ModuleDescriptor descriptor1 =
+                new ModuleDescriptor.Builder("m1").uses("p.Service").build();
+        ModuleDescriptor descriptor2 =
+                new ModuleDescriptor.Builder("m2")
+                        .requires("m3")
+                        .provides("p.Service", "q.ServiceImpl").build();
+        ModuleDescriptor descriptor3 =
+                new ModuleDescriptor.Builder("m3").requires("m2").build();
+        ModuleArtifactFinder finder =
+                new ModuleArtifactLibrary(descriptor1, descriptor2, descriptor3);
+
+        Configuration cf;
+        try {
+            cf = Configuration.resolve(finder, bootLayer(), nullFinder(), "m1");
+            assertTrue(cf.findDescriptor("m1") == descriptor1);
+            assertTrue(cf.descriptors().size() == 1);
+        } catch (ResolutionException e) {
+            throw new RuntimeException(e);
+        }
+
+        // should throw ResolutionException because of the m2 <--> m3 cycle
+        cf.bind();
     }
 
 }

@@ -25,21 +25,37 @@
 
 package java.lang.module;
 
+import java.io.UncheckedIOException;
 import java.lang.module.ModuleDescriptor.Requires;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import jdk.internal.module.Hasher.DependencyHashes;
 
 /**
  * The resolver used by {@link Configuration#resolve} and {@link Configuration#bind}.
+ *
+ * TODO:
+ * - decide on representation of service-use graph, if any. A method that takes a
+ *   service type (by class name) and returns a sequence of Module and provider
+ *   class is sufficient for ServiceLoader.
+ * - avoid most of the cost of bind for the cases where augmenting the module
+ *   graph does not add any modules
+ * - replace makeGraph with efficient implementation for multiple layers
+ * - replace cycle detection. The current DFS is fast at startup for the boot
+ *   layer but isn't generally scalable
+ * - sort out relationship to Configuration
  */
 
 final class Resolver {
@@ -55,7 +71,7 @@ final class Resolver {
         // maps name to module artifact for modules in this resolution
         private final Map<String, ModuleArtifact> nameToArtifact;
 
-        // the readbility graph
+        // the readability graph
         private final Map<ModuleDescriptor, Set<ModuleDescriptor>> graph;
 
         Resolution(Set<ModuleDescriptor> selected,
@@ -141,11 +157,11 @@ final class Resolver {
         Deque<ModuleDescriptor> q = new ArrayDeque<>();
         for (String root : roots) {
 
-            ModuleArtifact artifact = beforeFinder.find(root);
+            ModuleArtifact artifact = find(beforeFinder, root);
             if (artifact == null) {
                 // ## Does it make sense to attempt to locate root modules with
                 //    a finder other than the beforeFinder?
-                artifact = afterFinder.find(root);
+                artifact = find(afterFinder, root);
                 if (artifact == null) {
                     fail("Module %s does not exist", root);
                 }
@@ -158,6 +174,8 @@ final class Resolver {
         }
 
         resolve(q);
+
+        detectCycles();
 
         checkHashes();
 
@@ -187,7 +205,7 @@ final class Resolver {
                 String dn = requires.name();
 
                 // before finder
-                ModuleArtifact artifact = beforeFinder.find(dn);
+                ModuleArtifact artifact = find(beforeFinder, dn);
 
                 // already defined to the runtime
                 if (artifact == null && layer.findModule(dn) != null) {
@@ -196,7 +214,7 @@ final class Resolver {
 
                 // after finder
                 if (artifact == null) {
-                    artifact = afterFinder.find(dn);
+                    artifact = find(afterFinder, dn);
                 }
 
                 // not found
@@ -230,14 +248,14 @@ final class Resolver {
         // Scan the finders for all available service provider modules. As java.base
         // uses services then all finders will need to be scanned anyway.
         Map<String, Set<ModuleArtifact>> availableProviders = new HashMap<>();
-        for (ModuleArtifact artifact : beforeFinder.allModules()) {
+        for (ModuleArtifact artifact : findAll(beforeFinder)) {
             ModuleDescriptor descriptor = artifact.descriptor();
             if (!descriptor.provides().isEmpty()) {
                 descriptor.provides().keySet().forEach(s ->
                     availableProviders.computeIfAbsent(s, k -> new HashSet<>()).add(artifact));
             }
         }
-        for (ModuleArtifact artifact : afterFinder.allModules()) {
+        for (ModuleArtifact artifact : findAll(afterFinder)) {
             ModuleDescriptor descriptor = artifact.descriptor();
             // the parent layer may hide service providers from afterFinder
             if (!descriptor.provides().isEmpty() && layer.findModule(descriptor.name()) == null) {
@@ -289,6 +307,7 @@ final class Resolver {
 
         } while (!candidateConsumers.isEmpty());
 
+        detectCycles();
 
         checkHashes();
 
@@ -447,8 +466,88 @@ final class Resolver {
 
     }
 
+    /**
+     * Checks the given module graph for cycles.
+     *
+     * For now the implementation is a simple depth first search on the
+     * dependency graph. We'll replace this later, maybe with Tarjan if we
+     * are also checking connectedness.
+     */
+    private void detectCycles() {
+        visited = new HashSet<>();
+        visitPath = new LinkedHashSet<>(); // preserve insertion order
+        selected.forEach(d -> visit(d));
+    }
 
-    static final boolean debug = false;
+    // the modules that were visited
+    private Set<ModuleDescriptor> visited;
+
+    // the modules in the current visit path
+    private Set<ModuleDescriptor> visitPath;
+
+    private void visit(ModuleDescriptor descriptor) {
+        if (!visited.contains(descriptor)) {
+            boolean added = visitPath.add(descriptor);
+            if (!added) {
+                throw new ResolutionException("Cycle detected: " +
+                                              cycleAsString(descriptor));
+            }
+            for (Requires requires : descriptor.requires()) {
+                ModuleArtifact artifact = nameToArtifact.get(requires.name());
+                if (artifact != null) {
+                    // dependency is in this configuration
+                    ModuleDescriptor other = artifact.descriptor();
+                    // ignore self reference
+                    if (other != descriptor)
+                        visit(other);
+                }
+            }
+            visitPath.remove(descriptor);
+            visited.add(descriptor);
+        }
+    }
+
+    /**
+     * Returns a String with a list of the modules in a detected cycle.
+     */
+    private String cycleAsString(ModuleDescriptor descriptor) {
+        List<ModuleDescriptor> list = new ArrayList<>(visitPath);
+        list.add(descriptor);
+        int index = list.indexOf(descriptor);
+        return list.stream()
+                   .skip(index)
+                   .map(ModuleDescriptor::name)
+                   .collect(Collectors.joining(" -> "));
+    }
+
+
+    /**
+     * Invokes the finder's find method to find the given module.
+     */
+    private static ModuleArtifact find(ModuleArtifactFinder finder, String mn) {
+        try {
+            return finder.find(mn);
+        } catch (UncheckedIOException e) {
+            throw new ResolutionException(e.getCause());
+        } catch (RuntimeException | Error e) {
+            throw new ResolutionException(e);
+        }
+    }
+
+    /**
+     * Invokes the finder's allModules to find all modules.
+     */
+    private static Set<ModuleArtifact> findAll(ModuleArtifactFinder finder) {
+        try {
+            return finder.allModules();
+        } catch (UncheckedIOException e) {
+            throw new ResolutionException(e.getCause());
+        } catch (RuntimeException | Error e) {
+            throw new ResolutionException(e);
+        }
+    }
+
+    private static final boolean debug = false;
 
     private static void trace(String fmt, Object ... args) {
         if (debug) {

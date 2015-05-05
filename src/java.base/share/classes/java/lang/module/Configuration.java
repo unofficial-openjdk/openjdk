@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,7 +25,6 @@
 
 package java.lang.module;
 
-import java.io.UncheckedIOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Objects;
@@ -67,12 +66,32 @@ public final class Configuration {
     }
 
     /**
-     * Resolves the given named modules. Module dependences are resolved by
-     * locating them (in order) using the given {@code beforeFinder}, {@code
-     * layer}, and {@code afterFinder}.
+     * Resolves the given named modules. The given root modules are located
+     * using {@code beforeFinder} or if not found then using {@code afterFinder}.
+     * Module dependences are resolved by locating them (in order) using the
+     * given {@code beforeFinder}, {@code layer}, and {@code afterFinder}.
      *
-     * @throws ResolutionException If a named module (or any its transitive
-     *                             dependencies) cannot be resolved
+     * <p> Resolution can fail for several reasons including: </p>
+     *
+     * <ul>
+     *     <li> A root module, or a direct or transitive dependency, is not
+     *          found. </li>
+     *
+     *     <li> Some other error occurs when attempting to find a module.
+     *          Possible errors include I/O errors, errors detected parsing a
+     *          module descriptor ({@code module-info.class}), or an exception
+     *          where access to some resource is denied by the security manager.
+     *          </li>
+     *
+     *     <li> A cycle is detected, say where module {@code m1} requires module
+     *          {@code m2} and {@code m2} requires {@code m1}. </li>
+     *
+     *     <li> Implementation specific checks, for example referential integrity
+     *          checks that fail where incompatible versions of modules may not
+     *          be combined in the same configuration. </li>
+     * </ul>
+     *
+     * @throws ResolutionException  If resolution fails
      */
     public static Configuration resolve(ModuleArtifactFinder beforeFinder,
                                         Layer parent,
@@ -83,16 +102,10 @@ public final class Configuration {
         Objects.requireNonNull(parent);
         Objects.requireNonNull(afterFinder);
 
-        try {
+        Resolver.Resolution resolution =
+            Resolver.resolve(beforeFinder, parent, afterFinder, roots);
 
-            Resolver.Resolution resolution =
-                Resolver.resolve(beforeFinder, parent, afterFinder, roots);
-            return new Configuration(parent, resolution);
-
-        } catch (ClassFormatError | UncheckedIOException e) {
-            // TBD need to specify how CFE and I/O errors are handled
-            throw new ResolutionException(e);
-        }
+        return new Configuration(parent, resolution);
     }
 
     /**
@@ -100,8 +113,7 @@ public final class Configuration {
      * locating them (in order) using the given {@code beforeFinder}, {@code
      * layer}, and {@code afterFinder}.
      *
-     * @throws ResolutionException If a named module (or any its transitive
-     *                             dependencies) cannot be resolved
+     * @throws ResolutionException   If resolution fails
      */
     public static Configuration resolve(ModuleArtifactFinder beforeFinder,
                                         Layer layer,
@@ -123,21 +135,17 @@ public final class Configuration {
      * (located via the module artifact finders) that are induced by service-use
      * relationships.
      *
-     * @throws ResolutionException If a named module (or any its transitive
-     *                             dependencies) cannot be resolved
+     * <p> Binding involves resolution to resolve the dependences of service
+     * provider modules. It may therefore fail with {@code ResolutionException}
+     * for exactly the same reasons as the {@link #resolve resolve} methods.
+     *
+     * @throws ResolutionException  If resolution fails
      *
      * @apiNote This method is not thread safe
      */
     public Configuration bind() {
-        try {
-
-            Resolver.Resolution r = resolution.bind();
-            return new Configuration(parent, r);
-
-        } catch (ClassFormatError | UncheckedIOException e) {
-            // TBD need to specify how CFE and I/O errors are handled
-            throw new ResolutionException(e);
-        }
+        Resolver.Resolution r = resolution.bind();
+        return new Configuration(parent, r);
     }
 
     /**
@@ -192,8 +200,8 @@ public final class Configuration {
     @Override
     public String toString() {
         return descriptors().stream()
-                            .map(ModuleDescriptor::name)
-                            .collect(Collectors.joining(", "));
+                .map(ModuleDescriptor::name)
+                .collect(Collectors.joining(", "));
     }
 }
 
