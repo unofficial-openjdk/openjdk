@@ -82,4 +82,41 @@ public:
     const ImageStrings* strings);
 };
 
+class CPCDecompressor : public ImageDecompressor {
+private:
+  static CPCDecompressor* CPC;
+  static const int EXTERNALIZED_STRING = 23;
+  static const int EXTERNALIZED_STRING_DESCRIPTOR = 25;
+  static const int CONSTANT_Utf8 = 1;
+  static const int CONSTANT_Long = 5;
+  static const int CONSTANT_Double = 6;
+private:
+    static const u1* SIZES;
+    inline static int get_compressed_length(char c) { return ((char) (c & 0x60) >> 5); }
+    inline static bool is_compressed(char b1) { return b1 < 0; }
+    static int decompress_int(unsigned char*& value);
+    // Each ConstantPool Entry has a fixed length, except UTF-8
+    inline static const u1* get_cp_entry_sizes() {
+        u1* array = NEW_C_HEAP_ARRAY(u1, 20, mtOther);
+        //array[1] = XXX;
+        array[3]  = 4;
+        array[4]  = 4;
+        array[5]  = 8;
+        array[6]  = 8;
+        array[7]  = 2;
+        array[8]  = 2;
+        array[9]  = 4;
+        array[10] = 4;
+        array[11] = 4;
+        array[12] = 4;
+        array[15] = 3;
+        array[16] = 2;
+        array[18] = 4;
+        return array;
+    }
+public:
+    CPCDecompressor() :ImageDecompressor("compact-cp"){}
+    void decompress_resource(u1* data, u1* uncompressed, ResourceHeader* header,
+    const ImageStrings* strings);
+};
 #endif // SHARE_VM_CLASSFILE_IMAGEDECOMPRESSOR_HPP
