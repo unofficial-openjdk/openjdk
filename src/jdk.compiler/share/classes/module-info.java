@@ -33,7 +33,8 @@ module jdk.compiler {
     exports com.sun.tools.javah;
     exports com.sun.tools.javap;
     exports com.sun.tools.classfile to
-        jdk.dev;
+        jdk.dev,
+        jdk.jlink;
     exports com.sun.tools.doclint to
         jdk.javadoc;
     exports com.sun.tools.javac.api to
