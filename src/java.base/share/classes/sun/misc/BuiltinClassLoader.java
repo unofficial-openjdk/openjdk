@@ -130,6 +130,9 @@ class BuiltinClassLoader extends ModuleClassLoader {
     // maps package name to a loaded module for the modules defined to this class loader
     private final Map<String, LoadedModule> packageToModule = new ConcurrentHashMap<>();
 
+    // maps a module name to a loaded module
+    private final Map<String, LoadedModule> nameToModule = new ConcurrentHashMap<>();
+
     // maps a module artifact to a module reader
     private final Map<ModuleArtifact, ModuleReader> artifactToReader = new ConcurrentHashMap<>();
 
@@ -154,7 +157,12 @@ class BuiltinClassLoader extends ModuleClassLoader {
      */
     @Override
     public void defineModule(ModuleArtifact artifact) {
+        String mn = artifact.descriptor().name();
+        if (nameToModule.containsKey(mn))
+            throw new IllegalStateException("Module " + mn
+                                            + " already defined in this class loader");
         LoadedModule loadedModule = new LoadedModule(artifact);
+        nameToModule.put(mn, loadedModule);
         artifact.packages().forEach(p -> packageToModule.put(p, loadedModule));
 
         // Use NULL_MODULE_READER initially to avoid opening eagerly
@@ -168,23 +176,24 @@ class BuiltinClassLoader extends ModuleClassLoader {
      * defined to this class loader.
      */
     @Override
-    public InputStream getResourceAsStream(ModuleArtifact artifact, String name)
+    public InputStream getResourceAsStream(String moduleName, String name)
         throws IOException
     {
-        if (artifactToReader.containsKey(artifact)) {
+        LoadedModule lm = nameToModule.get(moduleName);
+        if (lm != null) {
             try {
                 return AccessController.doPrivileged(
                     new PrivilegedExceptionAction<InputStream>() {
                         @Override
                         public InputStream run() throws IOException {
-                            return moduleReaderFor(artifact).getResourceAsStream(name);
+                            return moduleReaderFor(lm.artifact())
+                                .getResourceAsStream(name);
                         }
                     });
             } catch (PrivilegedActionException pae) {
                 throw (IOException) pae.getCause();
             }
         }
-
         // module not defined to this class loader or not found
         return null;
     }

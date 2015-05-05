@@ -76,16 +76,16 @@ public class BootLoader {
      * Returns an input stream to a resource in the given module artifact if
      * the module is defined to the boot loader.
      */
-    public static InputStream getResourceAsStream(ModuleArtifact artifact, String name)
+    public static InputStream getResourceAsStream(String moduleName, String name)
         throws IOException
     {
         // special-case resources in java.base that are used early in the startup
-        if (artifact == null) {
+        if (moduleName == null) {
             if (baseArtifact == null || VM.isBooted())
                 throw new InternalError();
-            artifact = baseArtifact;
+            moduleName = baseArtifact.descriptor().name();
         }
-        return ClassLoaders.bootLoader().getResourceAsStream(artifact, name);
+        return ClassLoaders.bootLoader().getResourceAsStream(moduleName, name);
     }
 
     /**

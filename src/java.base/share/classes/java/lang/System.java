@@ -25,7 +25,6 @@
 package java.lang;
 
 import java.io.*;
-import java.lang.module.ModuleArtifact;
 import java.lang.reflect.Executable;
 import java.lang.annotation.Annotation;
 import java.security.AccessControlContext;
@@ -1320,10 +1319,10 @@ public final class System {
             public Class<?> findBootstrapClassOrNull(ClassLoader cl, String name) {
                 return cl.findBootstrapClassOrNull(name);
             }
-            public InputStream getResourceAsStream(ClassLoader cl, ModuleArtifact artifact, String name)
+            public InputStream getResourceAsStream(ClassLoader cl, String moduleName, String name)
                 throws IOException
             {
-                return cl.getResourceAsStream(artifact, name);
+                return cl.getResourceAsStream(moduleName, name);
             }
             public void formatUnsignedLong(long val, int shift, char[] buf, int offset, int len) {
                 Long.formatUnsignedLong(val, shift, buf, offset, len);

@@ -26,7 +26,6 @@
 package java.lang;
 
 import java.io.IOException;
-import java.lang.module.ModuleArtifact;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Array;
 import java.lang.reflect.GenericArrayType;
@@ -2379,15 +2378,13 @@ public final class Class<T> implements java.io.Serializable,
                 caller = Object.class;
             }
             if (caller.getModule() == me) {
-                ModuleArtifact artifact =
-                    SharedSecrets.getJavaLangReflectAccess().getArtifact(me);
                 ClassLoader cl = getClassLoader0();
                 try {
                     InputStream in;
                     if (cl == null) {
-                        in = BootLoader.getResourceAsStream(artifact, name);
+                        in = BootLoader.getResourceAsStream(me.getName(), name);
                     } else {
-                        in = cl.getResourceAsStream(artifact, name);
+                        in = cl.getResourceAsStream(me.getName(), name);
                     }
                     return in;
                 } catch (IOException ioe) {

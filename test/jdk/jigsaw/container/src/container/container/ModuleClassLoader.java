@@ -67,6 +67,9 @@ class ModuleClassLoader extends SecureClassLoader {
     // maps package name to a loaded module for the modules defined to this class loader
     private final Map<String, ModuleArtifact> packageToArtifact = new ConcurrentHashMap<>();
 
+    // maps a module name to a module artifact
+    private final Map<String, ModuleArtifact> nameToArtifact = new ConcurrentHashMap<>();
+
     // maps a module artifact to a module reader
     private final Map<ModuleArtifact, ModuleReader> artifactToReader = new ConcurrentHashMap<>();
 
@@ -87,6 +90,7 @@ class ModuleClassLoader extends SecureClassLoader {
      * This has the effect of making the types in the module visible.
      */
     public void defineModule(ModuleArtifact artifact) {
+        nameToArtifact.put(artifact.descriptor().name(), artifact);
         artifact.packages().forEach(p -> packageToArtifact.put(p, artifact));
 
         // Use NULL_MODULE_READER initially to avoid opening eagerly
@@ -98,14 +102,14 @@ class ModuleClassLoader extends SecureClassLoader {
      * loader.
      */
     @Override
-    public InputStream getResourceAsStream(ModuleArtifact artifact, String name)
+    public InputStream getResourceAsStream(String moduleName, String name)
         throws IOException
     {
-        if (artifactToReader.containsKey(artifact)) {
+        ModuleArtifact artifact = nameToArtifact.get(moduleName);
+        if (artifact != null)
             return moduleReaderFor(artifact).getResourceAsStream(name);
-        } else {
+        else
             return null;
-        }
     }
 
     /**
@@ -288,4 +292,5 @@ class ModuleClassLoader extends SecureClassLoader {
             throw new InternalError("Should not get here");
         }
     };
+
 }

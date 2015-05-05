@@ -27,7 +27,6 @@ package java.lang;
 import java.io.InputStream;
 import java.io.IOException;
 import java.io.File;
-import java.lang.module.ModuleArtifact;
 import java.lang.reflect.Constructor;
 import java.net.URL;
 import java.security.AccessController;
@@ -1093,16 +1092,16 @@ public abstract class ClassLoader {
      * loader. Class loader implementations that support the loading from
      * modules should override this method.
      *
-     * @return An input stream to the resource; {@code null} if the
-     * resource could not be found or there isn't a module defined to this
-     * class loader that loads from the given {@code ModuleArtifact}.
+     * @return An input stream to the resource; {@code null} if the resource
+     * could not be found or there isn't a module of the given name defined to
+     * this class loader.
      *
      * @implSpec The default implementation returns {@code null}.
      *
      * @since 1.9
      * @see java.lang.reflect.Module#getResourceAsStream(String)
      */
-    protected InputStream getResourceAsStream(ModuleArtifact module, String name)
+    protected InputStream getResourceAsStream(String moduleName, String name)
         throws IOException
     {
         return null;

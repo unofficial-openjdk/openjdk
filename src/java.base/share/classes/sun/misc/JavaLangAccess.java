@@ -28,7 +28,6 @@ package sun.misc;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.annotation.Annotation;
-import java.lang.module.ModuleArtifact;
 import java.lang.reflect.Executable;
 import java.security.AccessControlContext;
 import java.util.Map;
@@ -157,7 +156,7 @@ public interface JavaLangAccess {
      * Returns an input stream to a resource with the given name in a module
      * that is defined to the given class loader.
      */
-    InputStream getResourceAsStream(ClassLoader cl, ModuleArtifact artifact, String name)
+    InputStream getResourceAsStream(ClassLoader cl, String moduleName, String name)
         throws IOException;
 
     /**

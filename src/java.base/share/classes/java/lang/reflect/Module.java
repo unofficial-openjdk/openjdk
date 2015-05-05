@@ -276,11 +276,11 @@ public final class Module {
         Objects.requireNonNull(name);
 
         if (loader == null) {
-            return BootLoader.getResourceAsStream(artifact, name);
+            return BootLoader.getResourceAsStream(this.name, name);
         } else {
-            // use SharedSecretes to invoke protected method
+            // use SharedSecrets to invoke protected method
             return SharedSecrets.getJavaLangAccess()
-                                .getResourceAsStream(loader, artifact, name);
+                                .getResourceAsStream(loader, this.name, name);
         }
     }
 
@@ -647,10 +647,6 @@ public final class Module {
                 @Override
                 public Map<String, Module> defineModules(Configuration cf, ClassLoaderFinder clf) {
                     return Module.defineModules(cf, clf);
-                }
-                @Override
-                public ModuleArtifact getArtifact(Module m) {
-                    return m.artifact;
                 }
                 @Override
                 public boolean isExported(Module m, String pkg, Module who) {
