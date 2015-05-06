@@ -60,7 +60,8 @@ GetModuleNameFromModuleInfo = \
 # Find all modules by looking for module-info.java files and looking at parent
 # directories.
 FindAllModules = \
-    $(sort $(call GetModuleNameFromModuleInfo, $(call FindAllModuleInfos)))
+    $(sort $(filter-out $(MODULES_FILTER), \
+    $(call GetModuleNameFromModuleInfo, $(call FindAllModuleInfos))))
 
 ################################################################################
 # Extract module dependencies from module-info.java files.

@@ -46,10 +46,6 @@ java.base_ADD_JAVAC_FLAGS := -Xdoclint:all/protected,-reference '-Xdoclint/packa
 java.base_COPY := .icu .dat .spp content-types.properties hijrah-config-islamic-umalqura.properties
 java.base_CLEAN := intrinsic.properties
 
-# jdk build will generate gensrc/java.base/module-info.java to include
-# OS-specific qualified exports
-java.base_EXCLUDE_FILES += $(JDK_TOPDIR)/src/java.base/share/classes/module-info.java
-
 java.base_EXCLUDE_FILES += \
   $(JDK_TOPDIR)/src/java.base/share/classes/jdk/internal/module/ModuleLoaderMap.java
 
@@ -60,17 +56,7 @@ java.base_EXCLUDES += java/lang/doc-files
 java.base_EXCLUDE_FILES += sun/text/resources/BreakIteratorRules.java
 
 ifeq ($(OPENJDK_TARGET_OS), macosx)
-  JAVA_BASE_UNIX_DIR := $(JDK_TOPDIR)/src/java.base/unix/classes
-  # TODO: make JavaCompilation handle overrides automatically instead of excluding here
-  # These files are overridden in macosx
-  java.base_EXCLUDE_FILES += \
-      $(JAVA_BASE_UNIX_DIR)/sun/util/locale/provider/HostLocaleProviderAdapterImpl.java \
-      $(JAVA_BASE_UNIX_DIR)/java/net/DefaultInterface.java \
-      $(JAVA_BASE_UNIX_DIR)/java/lang/ClassLoaderHelper.java \
-      $(JAVA_BASE_UNIX_DIR)/sun/nio/ch/DefaultSelectorProvider.java \
-      #
-  # This is just skipped on macosx
-  java.base_EXCLUDE_FILES += $(JAVA_BASE_UNIX_DIR)/sun/nio/fs/GnomeFileTypeDetector.java
+  java.base_EXCLUDE_FILES += sun/nio/fs/GnomeFileTypeDetector.java
 endif
 
 ifneq ($(OPENJDK_TARGET_OS), solaris)
@@ -109,10 +95,6 @@ java.datatransfer_COPY := flavormap.properties
 java.desktop_ADD_JAVAC_FLAGS := -Xdoclint:all/protected,-missing,-reference '-Xdoclint/package:java.*,javax.*'
 java.desktop_COPY := .gif .png .wav .txt .xml .css .pf
 java.desktop_CLEAN := iio-plugin.properties cursors.properties
-
-# jdk build will generate gensrc/java.desktop/module-info.java to include
-# OS-specific qualified exports
-java.desktop_EXCLUDE_FILES += $(JDK_TOPDIR)/src/java.desktop/share/classes/module-info.java
 
 java.desktop_EXCLUDES += \
     java/awt/doc-files \
@@ -258,13 +240,6 @@ java.desktop_EXCLUDE_FILES += \
     javax/swing/plaf/nimbus/TabbedPanePainter.java \
     #
 
-ifeq ($(OPENJDK_TARGET_OS), macosx)
-  # These files are duplicated in MACOSX_SRC_DIRS
-  java.desktop_EXCLUDE_FILES += \
-      $(JDK_TOPDIR)/src/java.desktop/unix/classes/sun/java2d/BackBufferCapsProvider.java \
-      #
-endif
-
 ################################################################################
 
 java.scripting_ADD_JAVAC_FLAGS := -Xdoclint:all/protected '-Xdoclint/package:java.*,javax.*'
@@ -304,10 +279,6 @@ java.sql.rowset_CLEAN_FILES := $(wildcard \
     $(JDK_TOPDIR)/src/java.sql.rowset/share/classes/javax/sql/rowset/*.properties)
 
 ################################################################################
-# jdk build will generate gensrc/java.management/module-info.java to include
-# custom qualified exports
-
-java.management_EXCLUDE_FILES += $(JDK_TOPDIR)/src/java.management/share/classes/module-info.java
 
 # Exclude building of IIOP transport for RMI Connector
 
@@ -318,7 +289,6 @@ endif
 ################################################################################
 
 java.rmi_ADD_JAVAC_FLAGS := -Xdoclint:all/protected '-Xdoclint/package:java.*,javax.*'
-java.rmi_EXCLUDE_FILES += $(JDK_TOPDIR)/src/java.rmi/share/classes/module-info.java
 java.rmi_CLEAN_FILES := $(wildcard \
     $(JDK_TOPDIR)/src/java.rmi/share/classes/sun/rmi/registry/resources/*.properties \
     $(JDK_TOPDIR)/src/java.rmi/share/classes/sun/rmi/server/resources/*.properties)
@@ -435,7 +405,6 @@ ifeq ($(OPENJDK_TARGET_OS), macosx)
 endif
 
 ifeq ($(OPENJDK_TARGET_OS),aix)
-  # These files are duplicated in AIX_SRC_DIRS
   jdk.sctp_EXCLUDE_FILES += $(SCTP_IMPL_CLASSES)
 endif
 
@@ -447,8 +416,6 @@ jdk.jconsole_CLEAN_FILES := $(wildcard \
     $(JDK_TOPDIR)/src/jdk.jconsole/share/classes/sun/tools/jconsole/resources/*.properties)
 
 ################################################################################
-
-jdk.jdi_EXCLUDE_FILES += $(JDK_TOPDIR)/src/jdk.jdi/share/classes/module-info.java
 
 jdk.jdi_EXCLUDES += \
     com/sun/tools/example/debug/bdi \
