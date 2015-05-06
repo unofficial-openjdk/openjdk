@@ -53,6 +53,7 @@
   template(java_lang_System,                          "java/lang/System")                         \
   template(java_lang_Object,                          "java/lang/Object")                         \
   template(java_lang_Class,                           "java/lang/Class")                          \
+  template(java_lang_Package,                         "java/lang/Package")                        \
   template(java_lang_String,                          "java/lang/String")                         \
   template(java_lang_Thread,                          "java/lang/Thread")                         \
   template(java_lang_ThreadGroup,                     "java/lang/ThreadGroup")                    \
@@ -97,7 +98,6 @@
   template(java_security_CodeSource,                  "java/security/CodeSource")                 \
   template(java_security_ProtectionDomain,            "java/security/ProtectionDomain")           \
   template(java_security_SecureClassLoader,           "java/security/SecureClassLoader")          \
-  template(java_net_URLClassLoader,                   "java/net/URLClassLoader")                  \
   template(java_net_URL,                              "java/net/URL")                             \
   template(java_util_jar_Manifest,                    "java/util/jar/Manifest")                   \
   template(impliesCreateAccessControlContext_name,    "impliesCreateAccessControlContext")        \
@@ -115,11 +115,12 @@
   template(java_util_Hashtable,                       "java/util/Hashtable")                      \
   template(java_lang_Compiler,                        "java/lang/Compiler")                       \
   template(sun_misc_Signal,                           "sun/misc/Signal")                          \
-  template(sun_misc_ClassLoaders,                     "sun/misc/ClassLoaders")                    \
+  template(sun_misc_ClassLoaders_AppClassLoader,      "sun/misc/ClassLoaders$AppClassLoader")     \
   template(java_lang_AssertionStatusDirectives,       "java/lang/AssertionStatusDirectives")      \
   template(getBootClassPathEntryForClass_name,        "getBootClassPathEntryForClass")            \
   template(sun_misc_PostVMInitHook,                   "sun/misc/PostVMInitHook")                  \
   template(sun_misc_ClassLoaders_ExtClassLoader,      "sun/misc/ClassLoaders$ExtClassLoader")     \
+  template(sun_net_www_ParseUtil,                     "sun/net/www/ParseUtil")                    \
                                                                                                   \
   /* Java runtime version access */                                                               \
   template(sun_misc_Version,                          "sun/misc/Version")                         \
@@ -411,10 +412,10 @@
   template(loader_name,                               "loader")                                   \
   template(module_name,                               "module")                                   \
   template(input_stream_void_signature,               "(Ljava/io/InputStream;)V")                 \
-  template(getFileURL_name,                           "getFileURL")                               \
-  template(getFileURL_signature,                      "(Ljava/io/File;)Ljava/net/URL;")           \
-  template(definePackageInternal_name,                "definePackageInternal")                    \
-  template(definePackageInternal_signature,           "(Ljava/lang/String;Ljava/util/jar/Manifest;Ljava/net/URL;)V") \
+  template(defineOrCheckPackage_name,                 "defineOrCheckPackage")                     \
+  template(defineOrCheckPackage_signature,            "(Ljava/lang/String;Ljava/util/jar/Manifest;Ljava/net/URL;)Ljava/lang/Package;") \
+  template(fileToEncodedURL_name,                     "fileToEncodedURL")                         \
+  template(fileToEncodedURL_signature,                "(Ljava/io/File;)Ljava/net/URL;")           \
   template(getProtectionDomain_name,                  "getProtectionDomain")                      \
   template(getProtectionDomain_signature,             "(Ljava/security/CodeSource;)Ljava/security/ProtectionDomain;") \
   template(url_code_signer_array_void_signature,      "(Ljava/net/URL;[Ljava/security/CodeSigner;)V") \

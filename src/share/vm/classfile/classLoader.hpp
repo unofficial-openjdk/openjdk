@@ -253,11 +253,11 @@ class ClassLoader: AllStatic {
   static ClassPathEntry* create_class_path_entry(const char *path, const struct stat* st,
                                                  bool lazy, bool throw_exception, TRAPS);
 
+ public:
   // Canonicalizes path names, so strcmp will work properly. This is mainly
   // to avoid confusing the zip library
   static bool get_canonical_path(const char* orig, char* out, int len);
 
- public:
   static jboolean decompress(void *in, u8 inSize, void *out, u8 outSize, char **pmsg);
   static int crc32(int crc, const char* buf, int len);
   static bool update_class_path_entry_list(const char *path,
