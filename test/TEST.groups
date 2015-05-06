@@ -20,10 +20,6 @@
 #  questions.
 #
 
-# jigsaw related tests
-jdk_jigsaw = \
-    jdk/jigsaw
-
 ###############################################################################
 #
 # Tiered testing definitions
