@@ -513,7 +513,7 @@ class BuiltinClassLoader extends ModuleClassLoader {
      *
      * @throws SecurityException if there is a sealing violation (JAR spec)
      */
-    private Package defineOrCheckPackage(String pn, Manifest man, URL url) {
+    protected Package defineOrCheckPackage(String pn, Manifest man, URL url) {
         Package pkg = getAndVerifyPackage(pn, man, url);
         if (pkg == null) {
             try {

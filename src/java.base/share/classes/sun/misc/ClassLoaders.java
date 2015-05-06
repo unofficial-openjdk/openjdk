@@ -33,6 +33,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.CodeSource;
 import java.security.PermissionCollection;
+import java.util.jar.Manifest;
 
 /**
  * Creates and provides access to the built-in extension and application class
@@ -181,6 +182,13 @@ public class ClassLoaders {
          */
         void appendToClassPathForInstrumentation(String path) {
             appendToUCP(path, ucp);
+        }
+
+        /**
+         * Called by the VM to support define package.
+         */
+        protected Package defineOrCheckPackage(String pn, Manifest man, URL url) {
+            return super.defineOrCheckPackage(pn, man, url);
         }
     }
 
