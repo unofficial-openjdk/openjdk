@@ -30,6 +30,7 @@ module jdk.jconsole {
     requires java.rmi;
     requires jdk.attach;
     requires jdk.jvmstat;
+    requires jdk.management;
     exports com.sun.tools.jconsole;
     uses com.sun.tools.jconsole.JConsolePlugin;
 }

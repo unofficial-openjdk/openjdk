@@ -86,6 +86,7 @@ module java.base {
     exports jdk.internal.jimage.decompressor to
         jdk.jlink;
     exports jdk.internal.org.objectweb.asm to
+        jdk.jlink,
         jdk.scripting.nashorn;
     exports jdk.internal.org.objectweb.asm.commons to
         jdk.scripting.nashorn;
@@ -94,8 +95,6 @@ module java.base {
     exports jdk.internal.org.objectweb.asm.util to
         jdk.scripting.nashorn;
     exports jdk.internal.module to
-        jdk.jlink;
-    exports jdk.internal.org.objectweb.asm to
         jdk.jlink;
     exports sun.misc to
         java.corba,

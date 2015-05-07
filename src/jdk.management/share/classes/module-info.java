@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,29 +23,12 @@
  * questions.
  */
 
-module java.management {
-    requires public java.rmi;
-    requires java.logging;
-    requires java.naming;
+module jdk.management {
+    requires public java.management;
 
-    exports java.lang.management;
-    exports javax.management;
-    exports javax.management.loading;
-    exports javax.management.modelmbean;
-    exports javax.management.monitor;
-    exports javax.management.openmbean;
-    exports javax.management.relation;
-    exports javax.management.remote;
-    exports javax.management.remote.rmi;
-    exports javax.management.timer;
-    exports sun.management to jdk.jconsole, jdk.management;
-    exports sun.management.spi to jdk.management;
+    exports com.sun.management;
 
-    uses javax.management.remote.JMXConnectorProvider;
-    uses javax.management.remote.JMXConnectorServerProvider;
-    uses sun.management.spi.PlatformMBeanProvider;
-
-    provides javax.security.auth.spi.LoginModule with
-        com.sun.jmx.remote.security.FileLoginModule;
+    provides sun.management.spi.PlatformMBeanProvider with
+        com.sun.management.internal.PlatformMBeanProviderImpl;
 }
 
