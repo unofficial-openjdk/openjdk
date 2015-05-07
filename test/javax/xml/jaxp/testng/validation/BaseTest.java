@@ -1,11 +1,3 @@
-/*
- * @test
- * @modules java.xml/com.sun.org.apache.xerces.internal.dom
- *          java.xml/com.sun.org.apache.xerces.internal.impl
- *          java.xml/com.sun.org.apache.xerces.internal.impl.xs
- *          java.xml/com.sun.org.apache.xerces.internal.xs
- */
-
 package validation;
 
 import java.io.File;

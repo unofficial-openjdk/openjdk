@@ -14,15 +14,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * @test
- * @modules java.xml/com.sun.org.apache.xerces.internal.dom
- *          java.xml/com.sun.org.apache.xerces.internal.impl
- *          java.xml/com.sun.org.apache.xerces.internal.impl.xs
- *          java.xml/com.sun.org.apache.xerces.internal.xs
- */
-
 package validation.jdk8037819;
 
 import javax.xml.namespace.QName;
