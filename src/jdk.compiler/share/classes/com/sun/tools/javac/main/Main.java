@@ -228,12 +228,20 @@ public class Main {
         if (args.isEmpty())
             return Result.OK;
 
+        // init Depeendencies
+        if (options.isSet("completionDeps")) {
+            Dependencies.GraphDependencies.preRegister(context);
+        }
+
         // init plugins
         Set<List<String>> pluginOpts = args.getPluginOpts();
         if (!pluginOpts.isEmpty()) {
             BasicJavacTask t = (BasicJavacTask) BasicJavacTask.instance(context);
             t.initPlugins(pluginOpts);
         }
+
+        // init JavaCompiler
+        JavaCompiler comp = JavaCompiler.instance(context);
 
         // init doclint
         List<String> docLintOpts = args.getDocLintOpts();
@@ -242,13 +250,6 @@ public class Main {
             t.initDocLint(docLintOpts);
         }
 
-        // init Depeendencies
-        if (options.isSet("completionDeps")) {
-            Dependencies.GraphDependencies.preRegister(context);
-        }
-
-        // init JavaCompiler
-        JavaCompiler comp = JavaCompiler.instance(context);
         if (options.get(Option.XSTDOUT) != null) {
             // Stdout reassigned - ask compiler to close it when it is done
             comp.closeables = comp.closeables.prepend(log.getWriter(WriterKind.NOTICE));

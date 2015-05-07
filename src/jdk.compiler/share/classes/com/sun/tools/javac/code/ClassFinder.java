@@ -131,7 +131,7 @@ public class ClassFinder {
      *  the completer to be used for ".java" files. If this remains unassigned
      *  ".java" files will not be loaded.
      */
-    public Completer sourceCompleter = null;
+    public Completer sourceCompleter = Completer.NULL_COMPLETER;
 
     /** The path name of the class file currently being read.
      */
@@ -344,7 +344,7 @@ public class ClassFinder {
                     reader.readClassFile(c);
                     c.flags_field |= getSupplementaryFlags(c);
                 } else {
-                    if (sourceCompleter != null) {
+                    if (!sourceCompleter.isTerminal()) {
                         sourceCompleter.complete(c);
                     } else {
                         throw new IllegalStateException("Source completer required to read "
@@ -395,7 +395,7 @@ public class ClassFinder {
     public ClassSymbol loadClass(Name flatname) throws CompletionFailure {
         boolean absent = syms.classes.get(flatname) == null;
         ClassSymbol c = syms.enterClass(flatname);
-        if (c.members_field == null && c.completer != null) {
+        if (c.members_field == null) {
             try {
                 c.complete();
             } catch (CompletionFailure ex) {

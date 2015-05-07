@@ -726,7 +726,7 @@ public class TreeMaker implements JCTree.Factory {
             break;
         case WILDCARD: {
             WildcardType a = ((WildcardType) t);
-            tp = Wildcard(TypeBoundKind(a.kind), Type(a.type));
+            tp = Wildcard(TypeBoundKind(a.kind), a.kind == BoundKind.UNBOUND ? null : Type(a.type));
             break;
         }
         case CLASS:

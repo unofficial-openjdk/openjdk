@@ -841,6 +841,15 @@ public class Check {
                 }
                 return true;
             }
+
+            @Override
+            public Boolean visitTypeVar(TypeVar t, Void s) {
+                /* Any type variable mentioned in the inferred type must have been declared as a type parameter
+                  (i.e cannot have been produced by capture conversion (5.1.10) or by inference (18.4)
+                */
+                return t.tsym.owner.type.getTypeArguments().contains(t);
+            }
+
             @Override
             public Boolean visitCapturedType(CapturedType t, Void s) {
                 return false;
@@ -2268,7 +2277,7 @@ public class Check {
             }
         }
         if (complete)
-            complete = ((c.flags_field & UNATTRIBUTED) == 0) && c.completer == null;
+            complete = ((c.flags_field & UNATTRIBUTED) == 0) && c.isCompleted();
         if (complete) c.flags_field |= ACYCLIC;
         return complete;
     }
@@ -2999,7 +3008,7 @@ public class Check {
 
     /** Is the annotation applicable to types? */
     protected boolean isTypeAnnotation(JCAnnotation a, boolean isTypeParameter) {
-        List<Attribute> targets = typeAnnotations.annotationTargets(a.attribute);
+        List<Attribute> targets = typeAnnotations.annotationTargets(a.annotationType.type.tsym);
         return (targets == null) ?
                 false :
                 targets.stream()
