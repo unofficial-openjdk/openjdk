@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,6 +39,8 @@ import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -82,7 +84,10 @@ public class ParserContext {
         this.parser = parser;
 
         try {
-            parse(new InputSource(ParserContext.class.getResource("datatypes.xsd").toExternalForm()));
+            InputStream is = ResourceLoaderUtil.getInputStream(ParserContext.class, "com/sun/xml/internal/xsom/impl/parser/datatypes.xsd");
+            InputSource source = new InputSource(is);
+            source.setSystemId("datatypes.xsd");
+            parse(source);
 
             SchemaImpl xs = (SchemaImpl)
                 schemaSet.getSchema("http://www.w3.org/2001/XMLSchema");
@@ -94,6 +99,9 @@ public class ParserContext {
                 e.getException().printStackTrace();
             else
                 e.printStackTrace();
+            throw new InternalError();
+        } catch (IOException e) {
+            e.printStackTrace();
             throw new InternalError();
         }
     }
