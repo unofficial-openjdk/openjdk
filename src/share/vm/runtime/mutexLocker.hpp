@@ -33,6 +33,7 @@
 extern Mutex*   Patching_lock;                   // a lock used to guard code patching of compiled code
 extern Monitor* SystemDictionary_lock;           // a lock on the system dictionary
 extern Mutex*   PackageTable_lock;               // a lock on the class loader package table
+extern Mutex*   Module_lock;                     // a lock on module related data structures
 extern Mutex*   CompiledIC_lock;                 // a lock used to guard compiled IC patching and access
 extern Mutex*   InlineCacheBuffer_lock;          // a lock used to guard the InlineCacheBuffer
 extern Mutex*   VMStatistic_lock;                // a lock used to guard statistics count increment
@@ -102,6 +103,7 @@ extern Monitor* ProfileVM_lock;                  // a lock used for profiling th
 extern Mutex*   ProfilePrint_lock;               // a lock used to serialize the printing of profiles
 extern Mutex*   ExceptionCache_lock;             // a lock used to synchronize exception cache updates
 extern Mutex*   OsrList_lock;                    // a lock used to serialize access to OSR queues
+extern Mutex*   ImageFileReaderTable_lock;       // a long used to synchronize image readers open/close
 
 #ifndef PRODUCT
 extern Mutex*   FullGCALot_lock;                 // a lock to make FullGCALot MT safe

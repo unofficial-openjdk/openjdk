@@ -188,6 +188,26 @@
                 _JVM_Yield
                 _JVM_handle_bsd_signal
 
+                # Modules
+                _JVM_DefineModule
+                _JVM_AddReadsModule
+                _JVM_AddModuleExports
+                _JVM_CanReadModule
+                _JVM_IsExportedToModule
+                _JVM_AddModulePackage
+
+                # Images
+                _JVM_ImageOpen
+                _JVM_ImageClose
+                _JVM_ImageGetIndexAddress
+                _JVM_ImageGetDataAddress
+                _JVM_ImageRead
+                _JVM_ImageReadCompressed
+                _JVM_ImageGetStringBytes
+                _JVM_ImageGetAttributes
+                _JVM_ImageFindAttributes
+                _JVM_ImageAttributeOffsets
+
                 # miscellaneous functions
                 _jio_fprintf
                 _jio_printf

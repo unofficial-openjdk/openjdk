@@ -144,6 +144,7 @@ int             Universe::_verify_count = 0;
 
 int             Universe::_base_vtable_size = 0;
 bool            Universe::_bootstrapping = false;
+bool            Universe::_module_initialized = false;
 bool            Universe::_fully_initialized = false;
 
 size_t          Universe::_heap_capacity_at_last_gc;
@@ -894,6 +895,10 @@ void universe2_init() {
   Universe::genesis(CATCH);
 }
 
+// Set after initialization of the module runtime, call_initModuleRuntime
+void universe_post_module_init() {
+  Universe::_module_initialized = true;
+}
 
 bool universe_post_init() {
   assert(!is_init_completed(), "Error: initialization not yet completed!");

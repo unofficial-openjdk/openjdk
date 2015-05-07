@@ -33,7 +33,7 @@
  *          jdk.jartool/sun.tools.jar
  *          jdk.jvmstat/sun.jvmstat.monitor
  * @build com.oracle.java.testlibrary.* UnresolvedClassAgent
- * @run main TestRedefineWithUnresolvedClass
+ * @run main/othervm TestRedefineWithUnresolvedClass
  */
 
 import java.io.File;

@@ -190,12 +190,33 @@ SUNWprivate_1.1 {
                 JVM_Yield;
                 JVM_handle_solaris_signal;
 
+                # Modules
+                JVM_DefineModule;
+                JVM_AddReadsModule;
+                JVM_AddModuleExports;
+                JVM_CanReadModule;
+                JVM_IsExportedToModule;
+                JVM_AddModulePackage;
+
+                # Images
+                JVM_ImageOpen;
+                JVM_ImageClose;
+                JVM_ImageGetIndexAddress;
+                JVM_ImageGetDataAddress;
+                JVM_ImageRead;
+                JVM_ImageReadCompressed;
+                JVM_ImageGetStringBytes;
+                JVM_ImageGetAttributes;
+                JVM_ImageFindAttributes;
+                JVM_ImageAttributeOffsets;
+
                 # miscellaneous functions
                 jio_fprintf;
                 jio_printf;
                 jio_snprintf;
                 jio_vfprintf;
                 jio_vsnprintf;
+
 
                 # Needed because there is no JVM interface for this.
                 sysThreadAvailableStackWithSlack;

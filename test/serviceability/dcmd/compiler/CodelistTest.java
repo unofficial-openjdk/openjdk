@@ -32,7 +32,7 @@
  * @build com.oracle.java.testlibrary.*
  * @build com.oracle.java.testlibrary.dcmd.*
  * @build MethodIdentifierParser
- * @run testng CodelistTest
+ * @run testng/othervm CodelistTest
  * @summary Test of diagnostic command Compiler.codelist
  */
 
