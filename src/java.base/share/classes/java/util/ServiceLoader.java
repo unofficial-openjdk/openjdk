@@ -29,6 +29,9 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.lang.module.Configuration;
+import java.lang.module.Layer;
+import java.lang.module.ModuleDescriptor;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
@@ -218,7 +221,12 @@ public final class ServiceLoader<S>
     // The class or interface representing the service being loaded
     private final Class<S> service;
 
-    // The class loader used to locate, load, and instantiate providers
+    // The module Layer used to locate providers; null when locating
+    // providers using a class loader
+    private final Layer layer;
+
+    // The class loader used to locate, load, and instantiate providers;
+    // null when locating provider using a module Layer
     private final ClassLoader loader;
 
     // The access control context taken when the ServiceLoader is created
@@ -227,17 +235,24 @@ public final class ServiceLoader<S>
     // Cached providers, in instantiation order
     private List<S> providers = new ArrayList<>();
 
-    // The class names of the cached providers
+    // The class names of the cached providers, only used when locating
+    // service providers via a class loader
     private Set<String> providerNames = new HashSet<>();
 
     // Incremented when reload is called
     private int reloadCount;
 
-    // The module services iterator
+    // the service iterator when locating services via a module layer
+    private LayerLookupIterator layerLookupIterator;
+
+    // The module services iterator when locating services in modules
+    // defined to a class loader
     private ModuleServicesIterator moduleServicesIterator;
 
-    // The current lazy-lookup iterator
-    private LazyIterator lazyLookupIterator;
+    // The current lazy-lookup iterator for locating legacy provider on the
+    // class path via a class loader
+    private LazyClassPathIterator lazyClassPathIterator;
+
 
     /**
      * Clear this loader's provider cache so that all providers will be
@@ -252,65 +267,118 @@ public final class ServiceLoader<S>
      */
     public void reload() {
         providers.clear();
-        providerNames.clear();
-        moduleServicesIterator = new ModuleServicesIterator(service, loader);
-        lazyLookupIterator = new LazyIterator(service, loader);
+
+        assert layer == null || loader == null;
+        if (layer != null) {
+            layerLookupIterator = new LayerLookupIterator();
+        } else {
+            providerNames.clear();
+            moduleServicesIterator = new ModuleServicesIterator();
+            lazyClassPathIterator = new LazyClassPathIterator();
+        }
+
         reloadCount++;
     }
 
+
     /**
-     * Initializes a new instance of this class.
+     * Initializes a new instance of this class for locating service providers
+     * in a module Layer.
      *
      * @throws ServiceConfigurationError
      *         If {@code svc} is not accessible to {@code caller} or that the
      *         caller's module does not declare that it uses the service type.
      */
-    ServiceLoader(Class<?> caller, Class<S> svc, ClassLoader cl) {
-        this(caller.getModule(), svc, cl);
+    private ServiceLoader(Class<?> caller, Layer layer, Class<S> svc) {
+
+        checkModule(caller.getModule(), svc);
+
+        this.service = svc;
+        this.layer = layer;
+        this.loader = null;
+        this.acc = (System.getSecurityManager() != null)
+                ? AccessController.getContext()
+                : null;
+
+        reload();
     }
 
-    ServiceLoader(Module callerModule, Class<S> svc, ClassLoader cl) {
+    /**
+     * Initializes a new instance of this class for locating service providers
+     * via a class loader.
+     *
+     * @throws ServiceConfigurationError
+     *         If {@code svc} is not accessible to {@code caller} or that the
+     *         caller's module does not declare that it uses the service type.
+     */
+    private ServiceLoader(Module callerModule, Class<S> svc, ClassLoader cl) {
         if (VM.isBooted()) {
 
-            // Check that the service type is defined in a module that is readable
-            // to the caller and that the service type is in a package that is
-            // exported to the caller.
-            if (!Reflection.verifyModuleAccess(callerModule, svc)) {
-                String who = (callerModule != null) ? callerModule.toString() : "<unnamed module>";
-                fail(svc, "not accessible to " + who);
-            }
+            checkModule(callerModule, svc);
 
-            // If the caller is in a named module then it must declare that it
-            // uses the service type
-            if (callerModule != null) {
-                String sn = svc.getName();
-                if (!callerModule.getDescriptor().uses().contains(sn)) {
-                    fail(svc, "use not declared in " + callerModule);
-                }
-            }
-
-            if (cl == null)
+            if (cl == null) {
                 cl = ClassLoader.getSystemClassLoader();
+            }
 
         } else {
+
             // if we get here then it means that ServiceLoader is being used
             // before the VM initialization has completed. At this point then
             // only code in the java.base should be executing.
             Module base = Object.class.getModule();
             Module svcModule = svc.getModule();
             if (callerModule != base || svcModule != base) {
-                String who = (callerModule != null) ? callerModule.toString() : "<unnamed module>";
-                fail(svc, "not accessible to " + who + " during VM init");
+                String target = (callerModule != null)
+                        ? callerModule.toString()
+                        : "<unnamed module>";
+                fail(svc, "not accessible to " + target + " during VM init");
             }
 
             // restricted to boot loader during startup
             cl = null;
         }
 
-        service = svc;
-        loader = cl;
-        acc = (System.getSecurityManager() != null) ? AccessController.getContext() : null;
+        this.service = svc;
+        this.layer = null;
+        this.loader = cl;
+        this.acc = (System.getSecurityManager() != null)
+                ? AccessController.getContext()
+                : null;
+
         reload();
+    }
+
+    private ServiceLoader(Class<?> caller, Class<S> svc, ClassLoader cl) {
+        this(caller.getModule(), svc, cl);
+    }
+
+
+
+    /**
+     * Checks that the given service type is accessible to types in the given
+     * module, and check that the module declare that it uses the service type.
+     */
+    private static void checkModule(Module module, Class<?> svc) {
+
+        // Check that the service type is defined in a module that is readable
+        // to the caller and that the service type is in a package that is
+        // exported to the caller.
+        if (!Reflection.verifyModuleAccess(module, svc)) {
+            String target = (module != null)
+                    ? module.toString()
+                    : "<unnamed module>";
+            fail(svc, "not accessible to " + target);
+        }
+
+        // If the caller is in a named module then it must declare that it
+        // uses the service type
+        if (module != null) {
+            String sn = svc.getName();
+            if (!module.getDescriptor().uses().contains(sn)) {
+                fail(svc, "use not declared in " + module);
+            }
+        }
+
     }
 
     private static void fail(Class<?> service, String msg, Throwable cause)
@@ -408,6 +476,34 @@ public final class ServiceLoader<S>
     }
 
     /**
+     * Returns the {@code Constructor} to instantiate the service provider.
+     * The constructor has its accessible flag set so that the access check
+     * is suppressed when instantiating the provider. This is necessary
+     * because newInstance is a caller sensitive method and ServiceLoader
+     * is instantiating the service provider on behalf of the service
+     * consumer.
+     */
+    private static Constructor<?> checkAndGetConstructor(Class<?> c)
+        throws NoSuchMethodException, IllegalAccessException
+    {
+        Constructor<?> ctor = c.getConstructor();
+
+        // check class and no-arg constructor are public
+        int modifiers = ctor.getModifiers();
+        if (!Modifier.isPublic(Reflection.getClassAccessFlags(c) & modifiers)) {
+            String cn = c.getName();
+            throw new IllegalAccessException(cn + " is not public");
+        }
+
+        // return Constructor to create the service implementation
+        PrivilegedAction<Void> action = new PrivilegedAction<Void>() {
+            public Void run() { ctor.setAccessible(true); return null; }
+        };
+        AccessController.doPrivileged(action);
+        return ctor;
+    }
+
+    /**
      * An Iterator that runs the next and hasNext methods with permissions
      * restricted by the {@code AccessControlContext} obtained when the
      * ServiceLoader was created.
@@ -450,22 +546,125 @@ public final class ServiceLoader<S>
 
     /**
      * Implements lazy service provider lookup of service providers that
-     * are provided by modules.
+     * are provided by modules in a module Layer.
+     *
+     * For now, this iterator examines all modules in each Layer. This will
+     * be replaced once we decide on how the service-use graph is exposed
+     * in the module API.
+     */
+    private class LayerLookupIterator
+        extends RestrictedIterator<S>
+    {
+        Layer currentLayer;
+        Iterator<ModuleDescriptor> descriptorIterator;
+        Iterator<String> providersIterator;
+
+        Module nextModule;
+        String nextProvider;
+
+        LayerLookupIterator() {
+            currentLayer = layer;
+
+            // need to get us started
+            Configuration cf = layer.configuration();
+            if (cf != null) {
+                descriptorIterator = cf.descriptors().iterator();
+            }
+        }
+
+        @Override
+        boolean hasNextService() {
+
+            // already have the next provider cached
+            if (nextProvider != null)
+                return true;
+
+            while (true) {
+
+                // next provider
+                if (providersIterator != null && providersIterator.hasNext()) {
+                    nextProvider = providersIterator.next();
+                    return true;
+                }
+
+                // next descriptor
+                if (descriptorIterator != null && descriptorIterator.hasNext()) {
+                    ModuleDescriptor descriptor = descriptorIterator.next();
+                    nextModule = currentLayer.findModule(descriptor.name());
+                    ModuleDescriptor.Provides provides
+                        = descriptor.provides().get(service.getName());
+                    if (provides != null)
+                        providersIterator = provides.providers().iterator();
+
+                    continue;
+                }
+
+                // next layer)
+                Layer parent = currentLayer.parent();
+                if (parent == null)
+                    return false;
+
+                // if the current layer doesn't have a configuration then it means
+                // we've hit the empty layer
+                currentLayer = parent;
+                Configuration cf = currentLayer.configuration();
+                if (cf == null)
+                    return false;
+
+                descriptorIterator = cf.descriptors().iterator();
+            }
+        }
+
+        @Override
+        S nextService() {
+            if (!hasNextService())
+                throw new NoSuchElementException();
+
+            assert nextModule != null && nextProvider != null;
+
+            String cn = nextProvider;
+            nextProvider = null;
+
+            // attempt to load the provider
+            Class<?> c = Class.forName(nextModule, cn);
+            if (c == null)
+                fail(service, "Provider " + cn  + " not found");
+            if (!service.isAssignableFrom(c))
+                fail(service, "Provider " + cn  + " not a subtype");
+
+            // instantiate the provider
+            S p = null;
+            try {
+                Constructor<?> ctor = checkAndGetConstructor(c);
+                p = service.cast(ctor.newInstance());
+            } catch (Throwable x) {
+                if (x instanceof InvocationTargetException)
+                    x = x.getCause();
+                fail(service,
+                        "Provider " + cn + " could not be instantiated", x);
+            }
+
+            // add to cached provider list
+            providers.add(p);
+
+            return p;
+        }
+    }
+
+    /**
+     * Implements lazy service provider lookup of service providers that
+     * are provided by modules defined to a class loader.
      */
     private class ModuleServicesIterator
         extends RestrictedIterator<S>
     {
         final JavaLangAccess langAccess = SharedSecrets.getJavaLangAccess();
 
-        // service type
-        final Class<S> service;
-
         ClassLoader currentLoader;
         Iterator<ServiceProvider> iterator;
         ServiceProvider nextProvider;
 
-        ModuleServicesIterator(Class<S> service, ClassLoader loader) {
-            this.service = service;
+        ModuleServicesIterator() {
             this.currentLoader = loader;
             this.iterator = iteratorFor(loader);
         }
@@ -486,34 +685,6 @@ public final class ServiceLoader<S>
             } else {
                 return catalog.findServices(service.getName()).iterator();
             }
-        }
-
-        /**
-         * Returns the {@code Constructor} to instantiate the service provider.
-         * The constructor has its accessible flag set so that the access check
-         * is suppressed when instantiating the provider. This is necessary
-         * because newInstance is a caller sensitive method and ServiceLoader
-         * is instantiating the service provider on behalf of the service
-         * consumer.
-         */
-        private Constructor<?> getConstructor(Class<?> c)
-            throws NoSuchMethodException, IllegalAccessException
-        {
-            Constructor<?> ctor = c.getConstructor();
-
-            // check class and no-arg constructor are public
-            int modifiers = ctor.getModifiers();
-            if (!Modifier.isPublic(Reflection.getClassAccessFlags(c) & modifiers)) {
-                String cn = c.getName();
-                throw new IllegalAccessException(cn + " is not public");
-            }
-
-            // return Constructor to create the service implementation
-            PrivilegedAction<Void> action = new PrivilegedAction<Void>() {
-                public Void run() { ctor.setAccessible(true); return null; }
-            };
-            AccessController.doPrivileged(action);
-            return ctor;
         }
 
         @Override
@@ -570,7 +741,7 @@ public final class ServiceLoader<S>
             // instantiate the provider
             S p = null;
             try {
-                Constructor<?> ctor = getConstructor(c);
+                Constructor<?> ctor = checkAndGetConstructor(c);
                 p = service.cast(ctor.newInstance());
             } catch (Throwable x) {
                 if (x instanceof InvocationTargetException)
@@ -596,19 +767,12 @@ public final class ServiceLoader<S>
      * Implements lazy service provider lookup where the service providers
      * are configured via service configuration files.
      */
-    private class LazyIterator
+    private class LazyClassPathIterator
         extends RestrictedIterator<S>
     {
-        final Class<S> service;
-        final ClassLoader loader;
-        Enumeration<URL> configs = null;
-        Iterator<String> pending = null;
-        String nextName = null;
-
-        private LazyIterator(Class<S> service, ClassLoader loader) {
-            this.service = service;
-            this.loader = loader;
-        }
+        Enumeration<URL> configs;
+        Iterator<String> pending;
+        String nextName;
 
         @Override
         boolean hasNextService() {
@@ -741,8 +905,13 @@ public final class ServiceLoader<S>
                 checkReloadCount();
                 if (index < providers.size())
                     return true;
-                return moduleServicesIterator.hasNext() ||
-                        lazyLookupIterator.hasNext();
+
+                if (layerLookupIterator != null) {
+                    return layerLookupIterator.hasNext();
+                } else {
+                    return moduleServicesIterator.hasNext() ||
+                            lazyClassPathIterator.hasNext();
+                }
             }
 
             public S next() {
@@ -750,16 +919,49 @@ public final class ServiceLoader<S>
                 S next;
                 if (index < providers.size()) {
                     next = providers.get(index);
-                } else if (moduleServicesIterator.hasNext()) {
-                    next = moduleServicesIterator.next();
                 } else {
-                    next = lazyLookupIterator.next();
+                    if (layerLookupIterator != null) {
+                        next = layerLookupIterator.next();
+                    } else {
+                        if (moduleServicesIterator.hasNext()) {
+                            next = moduleServicesIterator.next();
+                        } else {
+                            next = lazyClassPathIterator.next();
+                        }
+                    }
                 }
                 index++;
                 return next;
             }
 
         };
+    }
+
+    /**
+     * Creates a new service loader for the given service type, class
+     * loader, and caller.
+     *
+     * @param  <S> the class of the service type
+     *
+     * @param  service
+     *         The interface or abstract class representing the service
+     *
+     * @param  loader
+     *         The class loader to be used to load provider-configuration files
+     *         and provider classes, or <tt>null</tt> if the system class
+     *         loader (or, failing that, the bootstrap class loader) is to be
+     *         used
+     *
+     * @param  callerModule
+     *         The caller's module for which a new service loader is created
+     *
+     * @return A new service loader
+     */
+    static <S> ServiceLoader<S> load(Class<S> service,
+                                     ClassLoader loader,
+                                     Module callerModule)
+    {
+        return new ServiceLoader<>(callerModule, service, loader);
     }
 
     /**
@@ -826,33 +1028,6 @@ public final class ServiceLoader<S>
     }
 
     /**
-     * Creates a new service loader for the given service type, class
-     * loader, and caller.
-     *
-     * @param  <S> the class of the service type
-     *
-     * @param  service
-     *         The interface or abstract class representing the service
-     *
-     * @param  loader
-     *         The class loader to be used to load provider-configuration files
-     *         and provider classes, or <tt>null</tt> if the system class
-     *         loader (or, failing that, the bootstrap class loader) is to be
-     *         used
-     *
-     * @param  callerModule
-     *         The caller's module for which a new service loader is created
-     *
-     * @return A new service loader
-     */
-    static <S> ServiceLoader<S> load(Class<S> service,
-                                     ClassLoader loader,
-                                     Module callerModule)
-    {
-        return new ServiceLoader<>(callerModule, service, loader);
-    }
-
-    /**
      * Creates a new service loader for the given service type, using the
      * extension class loader.
      *
@@ -892,6 +1067,39 @@ public final class ServiceLoader<S>
             cl = cl.getParent();
         }
         return new ServiceLoader<>(Reflection.getCallerClass(), service, prev);
+    }
+
+    /**
+     * Creates a new service loader for the given service type that loads
+     * service providers from modules in the given {@code Layer} and its
+     * ancestors.
+     *
+     * @apiNote Unlike the other load methods defined here, the service type
+     * is the second parameter. The reason for this is to avoid source
+     * compatibility issues for code that uses {@code load(S, null)}.
+     *
+     * @param  <S> the class of the service type
+     *
+     * @param  layer
+     *         The module Layer
+     *
+     * @param  service
+     *         The interface or abstract class representing the service
+     *
+     * @return A new service loader
+     *
+     * @throws ServiceConfigurationError
+     *         if the service type is not accessible to the caller or the
+     *         caller is in a named module and its module descriptor does
+     *         not declare that it uses {@code service}
+     *
+     * @since 1.9
+     */
+    @CallerSensitive
+    public static <S> ServiceLoader<S> load(Layer layer, Class<S> service) {
+        return new ServiceLoader<>(Reflection.getCallerClass(),
+                                   Objects.requireNonNull(layer),
+                                   Objects.requireNonNull(service));
     }
 
     /**
