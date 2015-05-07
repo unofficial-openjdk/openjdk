@@ -80,7 +80,9 @@ module java.desktop {
     exports javax.swing.undo;
 
     // qualified exports may be inserted at build time
-    // see make/gensrc/GenModuleInfo.gmk
+    // see make/GensrcModuleInfo.gmk
+    exports sun.awt to
+        jdk.accessibility;
 
     uses java.awt.im.spi.InputMethodDescriptor;
     uses javax.imageio.spi.ImageInputStreamSpi;

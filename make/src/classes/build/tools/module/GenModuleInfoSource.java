@@ -45,10 +45,10 @@ public class GenModuleInfoSource {
     private final static String USAGE =
         "Usage: GenModuleInfoSource [option] -o <output file> <module-info-java>\n" +
         "Options are:\n" +
-        "  -export  <package-name>\n" +
-        "  -export  <package-name>/<module-name>\n" +
-        "  -use     <service>\n" +
-        "  -provide <service>/<provider-impl-classname>\n";
+        "  -exports  <package-name>\n" +
+        "  -exports  <package-name>/<module-name>\n" +
+        "  -uses     <service>\n" +
+        "  -provides <service>/<provider-impl-classname>\n";
 
     public static void main(String... args) throws Exception {
         Path outfile = null;
@@ -60,7 +60,7 @@ public class GenModuleInfoSource {
             String option = args[i];
             if (option.startsWith("-")) {
                 String arg = args[++i];
-                if (option.equals("-export")) {
+                if (option.equals("-exports")) {
                     int index = arg.indexOf('/');
                     if (index > 0) {
                         String pn = arg.substring(0, index);
@@ -69,9 +69,9 @@ public class GenModuleInfoSource {
                     } else {
                         builder.export(arg);
                     }
-                } else if (option.equals("-use")) {
+                } else if (option.equals("-uses")) {
                     builder.use(arg);
-                } else if (option.equals("-provide")) {
+                } else if (option.equals("-provides")) {
                     int index = arg.indexOf('/');
                     if (index <= 0) {
                         throw new IllegalArgumentException("invalid -provide argument: " + arg);
