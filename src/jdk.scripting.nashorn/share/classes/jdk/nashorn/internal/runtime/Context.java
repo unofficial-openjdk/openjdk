@@ -1228,10 +1228,11 @@ public final class Context {
 
         StoredScript storedScript = null;
         FunctionNode functionNode = null;
-        // We only use the code store here if optimistic types are disabled. With optimistic types, initial compilation
-        // just creates a thin wrapper, and actual code is stored per function in RecompilableScriptFunctionData.
-        final boolean useCodeStore = codeStore != null && !env._parse_only && !env._optimistic_types;
-        final String cacheKey = useCodeStore ? CodeStore.getCacheKey(0, null) : null;
+        // Don't use code store if optimistic types is enabled but lazy compilation is not.
+        // This would store a full script compilation with many wrong optimistic assumptions that would
+        // do more harm than good on later runs with both optimistic types and lazy compilation enabled.
+        final boolean useCodeStore = codeStore != null && !env._parse_only && (!env._optimistic_types || env._lazy_compilation);
+        final String cacheKey = useCodeStore ? CodeStore.getCacheKey("script", null) : null;
 
         if (useCodeStore) {
             storedScript = codeStore.load(source, cacheKey);
@@ -1281,7 +1282,7 @@ public final class Context {
             compiler.persistClassInfo(cacheKey, compiledFunction);
         } else {
             Compiler.updateCompilationId(storedScript.getCompilationId());
-            script = install(storedScript, source, installer);
+            script = storedScript.installScript(source, installer);
         }
 
         cacheClass(source, script);
@@ -1300,51 +1301,6 @@ public final class Context {
 
     private long getUniqueScriptId() {
         return uniqueScriptId.getAndIncrement();
-    }
-
-    /**
-     * Install a previously compiled class from the code cache.
-     *
-     * @param storedScript cached script containing class bytes and constants
-     * @return main script class
-     */
-    private static Class<?> install(final StoredScript storedScript, final Source source, final CodeInstaller<ScriptEnvironment> installer) {
-
-        final Map<String, Class<?>> installedClasses = new HashMap<>();
-        final Map<String, byte[]>   classBytes       = storedScript.getClassBytes();
-        final Object[] constants       = storedScript.getConstants();
-        final String   mainClassName   = storedScript.getMainClassName();
-        final byte[]   mainClassBytes  = classBytes.get(mainClassName);
-        final Class<?> mainClass       = installer.install(mainClassName, mainClassBytes);
-        final Map<Integer, FunctionInitializer> initializers = storedScript.getInitializers();
-
-        installedClasses.put(mainClassName, mainClass);
-
-        for (final Map.Entry<String, byte[]> entry : classBytes.entrySet()) {
-            final String className = entry.getKey();
-            if (className.equals(mainClassName)) {
-                continue;
-            }
-            final byte[] code = entry.getValue();
-
-            installedClasses.put(className, installer.install(className, code));
-        }
-
-        installer.initialize(installedClasses.values(), source, constants);
-
-        for (final Object constant : constants) {
-            if (constant instanceof RecompilableScriptFunctionData) {
-                final RecompilableScriptFunctionData data = (RecompilableScriptFunctionData) constant;
-                data.initTransients(source, installer);
-                final FunctionInitializer initializer = initializers.get(data.getFunctionNodeId());
-                if (initializer != null) {
-                    initializer.setCode(installedClasses.get(initializer.getClassName()));
-                    data.initializeCode(initializer);
-                }
-            }
-        }
-
-        return mainClass;
     }
 
     /**
