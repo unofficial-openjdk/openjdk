@@ -30,6 +30,7 @@
  * @run clean MissingClassTest SingleClassLoader
  * @run build MissingClassTest SingleClassLoader
  * @run main MissingClassTest
+ * @key randomness
  */
 
 /*

@@ -23,10 +23,8 @@
  * questions.
  */
 
-import sun.management.ManagementFactoryHelper;
-
+import java.lang.management.ManagementFactory;
 import com.sun.management.HotSpotDiagnosticMXBean;
-
 import jdk.testlibrary.OutputAnalyzer;
 import static jdk.testlibrary.Platform.isSolaris;
 import static jdk.testlibrary.Asserts.assertEquals;
@@ -115,13 +113,15 @@ public class JInfoRunningProcessFlagTest {
     }
 
     private static void verifyIsEnabled(String flag) {
-        HotSpotDiagnosticMXBean hotspotDiagnostic = ManagementFactoryHelper.getDiagnosticMXBean();
+        HotSpotDiagnosticMXBean hotspotDiagnostic =
+                ManagementFactory.getPlatformMXBean(HotSpotDiagnosticMXBean.class);
         String flagValue = hotspotDiagnostic.getVMOption(flag).getValue();
         assertEquals(flagValue, "true", "Expected '" + flag + "' flag be enabled");
     }
 
     private static void verifyIsDisabled(String flag) {
-        HotSpotDiagnosticMXBean hotspotDiagnostic = ManagementFactoryHelper.getDiagnosticMXBean();
+        HotSpotDiagnosticMXBean hotspotDiagnostic =
+                ManagementFactory.getPlatformMXBean(HotSpotDiagnosticMXBean.class);
         String flagValue = hotspotDiagnostic.getVMOption(flag).getValue();
         assertEquals(flagValue, "false", "Expected '" + flag + "' flag be disabled");
     }

@@ -29,6 +29,7 @@
  * @author  Mandy Chung
  *
  * @modules java.management
+ *          jdk.management
  * @compile ProxyTypeMapping.java
  * @run main/othervm -verbose:gc ProxyTypeMapping
  */

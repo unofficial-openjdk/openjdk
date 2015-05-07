@@ -27,7 +27,7 @@
  * @summary Basic Test for the DiagnosticCommandMBean
  * @author  Frederic Parain, Shanliang JIANG
  *
- * @modules java.management
+ * @modules jdk.management
  * @run main/othervm DcmdMBeanDoubleInvocationTest
  */
 

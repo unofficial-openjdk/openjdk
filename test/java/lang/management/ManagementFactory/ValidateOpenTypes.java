@@ -29,6 +29,7 @@
  * @author  Mandy Chung
  *
  * @modules java.management
+ *          jdk.management
  * @compile ValidateOpenTypes.java
  * @run main/othervm -verbose:gc ValidateOpenTypes
  */

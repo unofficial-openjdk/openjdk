@@ -28,6 +28,7 @@
  *          to proxy for LoggingMXBean
  *
  * @modules java.management
+ *          jdk.management
  * @build LoggingMXBeanTest
  * @run main LoggingMXBeanTest
  */

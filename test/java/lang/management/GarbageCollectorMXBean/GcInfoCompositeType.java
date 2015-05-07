@@ -27,6 +27,7 @@
  * @summary Check that LastGcInfo contents are reasonable
  * @author  Eamonn McManus
  * @modules java.management
+ *          jdk.management
  * @run     main/othervm -XX:-ExplicitGCInvokesConcurrent GcInfoCompositeType
  */
 // Passing "-XX:-ExplicitGCInvokesConcurrent" to force System.gc()

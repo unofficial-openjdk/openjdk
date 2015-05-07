@@ -500,7 +500,7 @@ public final class Class<T> implements java.io.Serializable,
                 // (the stack depth is wrong for the Constructor's
                 // security check to work)
                 java.security.AccessController.doPrivileged(
-                    new java.security.PrivilegedAction<Void>() {
+                    new java.security.PrivilegedAction<>() {
                         public Void run() {
                                 c.setAccessible(true);
                                 return null;
@@ -1167,7 +1167,7 @@ public final class Class<T> implements java.io.Serializable,
                                                  Reflection.getCallerClass(), true);
             // Client is ok to access declared methods but j.l.Class might not be.
             Method[] candidates = AccessController.doPrivileged(
-                    new PrivilegedAction<Method[]>() {
+                    new PrivilegedAction<>() {
                         @Override
                         public Method[] run() {
                             return enclosingCandidate.getDeclaredMethods();
@@ -1327,7 +1327,7 @@ public final class Class<T> implements java.io.Serializable,
                                                  Reflection.getCallerClass(), true);
             // Client is ok to access declared methods but j.l.Class might not be.
             Constructor<?>[] candidates = AccessController.doPrivileged(
-                    new PrivilegedAction<Constructor<?>[]>() {
+                    new PrivilegedAction<>() {
                         @Override
                         public Constructor<?>[] run() {
                             return enclosingCandidate.getDeclaredConstructors();
@@ -1411,7 +1411,7 @@ public final class Class<T> implements java.io.Serializable,
         // e) Anonymous classes
 
 
-        // JVM Spec 4.8.6: A class must have an EnclosingMethod
+        // JVM Spec 4.7.7: A class must have an EnclosingMethod
         // attribute if and only if it is a local class or an
         // anonymous class.
         EnclosingMethodInfo enclosingInfo = getEnclosingMethodInfo();
@@ -1456,28 +1456,7 @@ public final class Class<T> implements java.io.Serializable,
             simpleName = getName();
             return simpleName.substring(simpleName.lastIndexOf('.')+1); // strip the package name
         }
-        // According to JLS3 "Binary Compatibility" (13.1) the binary
-        // name of non-package classes (not top level) is the binary
-        // name of the immediately enclosing class followed by a '$' followed by:
-        // (for nested and inner classes): the simple name.
-        // (for local classes): 1 or more digits followed by the simple name.
-        // (for anonymous classes): 1 or more digits.
-
-        // Since getSimpleBinaryName() will strip the binary name of
-        // the immediately enclosing class, we are now looking at a
-        // string that matches the regular expression "\$[0-9]*"
-        // followed by a simple name (considering the simple of an
-        // anonymous class to be the empty string).
-
-        // Remove leading "\$[0-9]*" from the name
-        int length = simpleName.length();
-        if (length < 1 || simpleName.charAt(0) != '$')
-            throw new InternalError("Malformed class name");
-        int index = 1;
-        while (index < length && isAsciiDigit(simpleName.charAt(index)))
-            index++;
-        // Eventually, this is the empty string iff this is an anonymous class
-        return simpleName.substring(index);
+        return simpleName;
     }
 
     /**
@@ -1588,20 +1567,20 @@ public final class Class<T> implements java.io.Serializable,
         Class<?> enclosingClass = getEnclosingClass();
         if (enclosingClass == null) // top level class
             return null;
-        // Otherwise, strip the enclosing class' name
-        try {
-            return getName().substring(enclosingClass.getName().length());
-        } catch (IndexOutOfBoundsException ex) {
-            throw new InternalError("Malformed class name", ex);
-        }
+        String name = getSimpleBinaryName0();
+        if (name == null) // anonymous class
+            return "";
+        return name;
     }
+
+    private native String getSimpleBinaryName0();
 
     /**
      * Returns {@code true} if this is a local class or an anonymous
      * class.  Returns {@code false} otherwise.
      */
     private boolean isLocalOrAnonymousClass() {
-        // JVM Spec 4.8.6: A class must have an EnclosingMethod
+        // JVM Spec 4.7.7: A class must have an EnclosingMethod
         // attribute if and only if it is a local class or an
         // anonymous class.
         return getEnclosingMethodInfo() != null;
@@ -1641,7 +1620,7 @@ public final class Class<T> implements java.io.Serializable,
         // has already been ok'd by the SecurityManager.
 
         return java.security.AccessController.doPrivileged(
-            new java.security.PrivilegedAction<Class<?>[]>() {
+            new java.security.PrivilegedAction<>() {
                 public Class<?>[] run() {
                     List<Class<?>> list = new ArrayList<>();
                     Class<?> currentClass = Class.this;
@@ -3432,7 +3411,7 @@ public final class Class<T> implements java.io.Serializable,
     private static boolean initted = false;
     private static void checkInitted() {
         if (initted) return;
-        AccessController.doPrivileged(new PrivilegedAction<Void>() {
+        AccessController.doPrivileged(new PrivilegedAction<>() {
                 public Void run() {
                     // Tests to ensure the system properties table is fully
                     // initialized. This is needed because reflection code is
@@ -3488,7 +3467,7 @@ public final class Class<T> implements java.io.Serializable,
             try {
                 final Method values = getMethod("values");
                 java.security.AccessController.doPrivileged(
-                    new java.security.PrivilegedAction<Void>() {
+                    new java.security.PrivilegedAction<>() {
                         public Void run() {
                                 values.setAccessible(true);
                                 return null;

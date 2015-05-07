@@ -25,6 +25,7 @@
  * @bug 6565543
  * @summary Minimal test for unsafe.copyMemory() and unsafe.setMemory()
  * @modules java.base/sun.nio.ch java.base/sun.misc
+ * @key randomness
  */
 
 import java.util.*;

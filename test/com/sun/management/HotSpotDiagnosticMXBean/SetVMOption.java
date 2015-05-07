@@ -29,7 +29,7 @@
  * @author  Mandy Chung
  * @author  Jaroslav Bachorik
  *
- * @modules java.management
+ * @modules jdk.management
  * @run main/othervm -XX:+PrintGCDetails SetVMOption
  */
 

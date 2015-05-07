@@ -27,7 +27,7 @@
  * @summary Permissions Tests for the DiagnosticCommandMBean
  * @author  Frederic Parain
  *
- * @modules java.management
+ * @modules jdk.management
  * @run main/othervm DcmdMBeanPermissionsTest
  */
 

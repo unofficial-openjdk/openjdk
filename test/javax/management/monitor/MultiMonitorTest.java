@@ -30,6 +30,7 @@
  * @run clean MultiMonitorTest
  * @run build MultiMonitorTest
  * @run main MultiMonitorTest
+ * @key randomness
  */
 
 import java.util.*;

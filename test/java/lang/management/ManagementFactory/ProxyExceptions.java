@@ -28,6 +28,7 @@
  *          returned from Management.newPlatformMXBeanProxy().
  * @author  Mandy Chung
  * @modules java.management
+ *          jdk.management
  */
 import java.lang.management.*;
 import javax.management.*;

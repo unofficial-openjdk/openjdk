@@ -25,6 +25,7 @@
 /*
  * @test
  * @bug     5086470
+ * @key intermittent
  * @summary Basic Test for the following methods:
  *          - ThreadMXBean.findDeadlockedThreads()
  *          - ThreadMXBean.findMonitorDeadlockedThreads()

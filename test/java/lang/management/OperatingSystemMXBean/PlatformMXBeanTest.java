@@ -29,6 +29,7 @@
  * @author  Mandy Chung
  *
  * @modules java.management
+ *          jdk.management
  * @run main PlatformMXBeanTest
  */
 

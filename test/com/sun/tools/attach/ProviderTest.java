@@ -36,6 +36,7 @@ import com.sun.tools.attach.spi.AttachProvider;
  * @library /lib/testlibrary
  * @modules java.management
  *          jdk.attach
+ *          jdk.jartool/sun.tools.jar
  * @run build jdk.testlibrary.* SimpleProvider
  * @run main ProviderTest
  *

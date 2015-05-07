@@ -30,6 +30,7 @@
  *          java/util/logging/LoggingMXBeanTest.
  *
  * @modules java.management
+ *          jdk.management
  * @build PlatformLoggingMXBeanTest
  * @run main PlatformLoggingMXBeanTest
  */

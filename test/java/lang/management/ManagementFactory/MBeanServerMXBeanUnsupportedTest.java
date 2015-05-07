@@ -28,6 +28,7 @@
  *          an MBeanServer which does not have support for MXBeans can be used.
  * @author Luis-Miguel Alventosa
  * @modules java.management
+ *          jdk.management
  * @run clean MBeanServerMXBeanUnsupportedTest
  * @run build MBeanServerMXBeanUnsupportedTest
  * @run main/othervm MBeanServerMXBeanUnsupportedTest

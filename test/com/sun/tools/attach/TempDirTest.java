@@ -40,6 +40,7 @@ import jdk.testlibrary.ProcessThread;
  * @modules jdk.jartool/sun.tools.jar
  * @library /lib/testlibrary
  * @modules java.management
+ *          jdk.jartool/sun.tools.jar
  * @run build jdk.testlibrary.* Application RunnerUtil
  * @run main/timeout=200 TempDirTest
  */

@@ -27,7 +27,7 @@
  * @summary Basic Test for HotSpotDiagnosticMXBean.setVMOption()
  * @author  Tomas Hurka, Daniel Fuchs
  *
- * @modules java.management
+ * @modules jdk.management
  * @run main SetAllVMOptions
  */
 

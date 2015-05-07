@@ -36,6 +36,7 @@ import jdk.testlibrary.ProcessThread;
  * @library /lib/testlibrary
  * @modules java.management
  *          jdk.attach
+ *          jdk.jartool/sun.tools.jar
  * @run build jdk.testlibrary.* Application
  * @run main PermissionTest
  *

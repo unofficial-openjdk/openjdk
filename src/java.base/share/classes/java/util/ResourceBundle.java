@@ -2902,7 +2902,7 @@ public abstract class ResourceBundle {
                 InputStream stream = null;
                 try {
                     stream = AccessController.doPrivileged(
-                        new PrivilegedExceptionAction<InputStream>() {
+                        new PrivilegedExceptionAction<>() {
                             public InputStream run() throws IOException {
                                 URL url = loader.getResource(resourceName);
                                 if (url == null) return null;

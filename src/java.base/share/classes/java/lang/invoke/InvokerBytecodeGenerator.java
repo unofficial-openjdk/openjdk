@@ -167,7 +167,7 @@ class InvokerBytecodeGenerator {
     static void maybeDump(final String className, final byte[] classFile) {
         if (DUMP_CLASS_FILES) {
             java.security.AccessController.doPrivileged(
-            new java.security.PrivilegedAction<Void>() {
+            new java.security.PrivilegedAction<>() {
                 public Void run() {
                     try {
                         String dumpName = className;
@@ -847,11 +847,7 @@ class InvokerBytecodeGenerator {
             refKind = REF_invokeVirtual;
         }
 
-        if (member.getDeclaringClass().isInterface() && refKind == REF_invokeVirtual) {
-            // Methods from Object declared in an interface can be resolved by JVM to invokevirtual kind.
-            // Need to convert it back to invokeinterface to pass verification and make the invocation works as expected.
-            refKind = REF_invokeInterface;
-        }
+        assert(!(member.getDeclaringClass().isInterface() && refKind == REF_invokeVirtual));
 
         // push arguments
         emitPushArguments(name);

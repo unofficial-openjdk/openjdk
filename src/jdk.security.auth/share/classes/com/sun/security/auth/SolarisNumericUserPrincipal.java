@@ -28,15 +28,15 @@ package com.sun.security.auth;
 import java.security.Principal;
 
 /**
- * <p> This class implements the <code>Principal</code> interface
+ * This class implements the {@code Principal} interface
  * and represents a user's Solaris identification number (UID).
  *
- * <p> Principals such as this <code>SolarisNumericUserPrincipal</code>
- * may be associated with a particular <code>Subject</code>
- * to augment that <code>Subject</code> with an additional
- * identity.  Refer to the <code>Subject</code> class for more information
+ * <p> Principals such as this {@code SolarisNumericUserPrincipal}
+ * may be associated with a particular {@code Subject}
+ * to augment that {@code Subject} with an additional
+ * identity.  Refer to the {@code Subject} class for more information
  * on how to achieve this.  Authorization decisions can then be based upon
- * the Principals associated with a <code>Subject</code>.
+ * the Principals associated with a {@code Subject}.
  * @deprecated As of JDK&nbsp;1.4, replaced by
  *             {@link UnixNumericUserPrincipal}.
  *             This class is entirely deprecated.
@@ -69,16 +69,14 @@ public class SolarisNumericUserPrincipal implements
     private String name;
 
     /**
-     * Create a <code>SolarisNumericUserPrincipal</code> using a
-     * <code>String</code> representation of the
+     * Create a {@code SolarisNumericUserPrincipal} using a
+     * {@code String} representation of the
      * user's identification number (UID).
-     *
-     * <p>
      *
      * @param name the user identification number (UID) for this user.
      *
-     * @exception NullPointerException if the <code>name</code>
-     *                  is <code>null</code>.
+     * @exception NullPointerException if the {@code name}
+     *                  is {@code null}.
      */
     public SolarisNumericUserPrincipal(String name) {
         if (name == null)
@@ -88,10 +86,8 @@ public class SolarisNumericUserPrincipal implements
     }
 
     /**
-     * Create a <code>SolarisNumericUserPrincipal</code> using a
+     * Create a {@code SolarisNumericUserPrincipal} using a
      * long representation of the user's identification number (UID).
-     *
-     * <p>
      *
      * @param name the user identification number (UID) for this user
      *                  represented as a long.
@@ -102,12 +98,10 @@ public class SolarisNumericUserPrincipal implements
 
     /**
      * Return the user identification number (UID) for this
-     * <code>SolarisNumericUserPrincipal</code>.
-     *
-     * <p>
+     * {@code SolarisNumericUserPrincipal}.
      *
      * @return the user identification number (UID) for this
-     *          <code>SolarisNumericUserPrincipal</code>
+     *          {@code SolarisNumericUserPrincipal}
      */
     public String getName() {
         return name;
@@ -115,12 +109,10 @@ public class SolarisNumericUserPrincipal implements
 
     /**
      * Return the user identification number (UID) for this
-     * <code>SolarisNumericUserPrincipal</code> as a long.
-     *
-     * <p>
+     * {@code SolarisNumericUserPrincipal} as a long.
      *
      * @return the user identification number (UID) for this
-     *          <code>SolarisNumericUserPrincipal</code> as a long.
+     *          {@code SolarisNumericUserPrincipal} as a long.
      */
     public long longValue() {
         return Long.parseLong(name);
@@ -128,12 +120,10 @@ public class SolarisNumericUserPrincipal implements
 
     /**
      * Return a string representation of this
-     * <code>SolarisNumericUserPrincipal</code>.
-     *
-     * <p>
+     * {@code SolarisNumericUserPrincipal}.
      *
      * @return a string representation of this
-     *          <code>SolarisNumericUserPrincipal</code>.
+     *          {@code SolarisNumericUserPrincipal}.
      */
     public String toString() {
         return(rb.getString("SolarisNumericUserPrincipal.") + name);
@@ -141,19 +131,17 @@ public class SolarisNumericUserPrincipal implements
 
     /**
      * Compares the specified Object with this
-     * <code>SolarisNumericUserPrincipal</code>
+     * {@code SolarisNumericUserPrincipal}
      * for equality.  Returns true if the given object is also a
-     * <code>SolarisNumericUserPrincipal</code> and the two
+     * {@code SolarisNumericUserPrincipal} and the two
      * SolarisNumericUserPrincipals
      * have the same user identification number (UID).
      *
-     * <p>
-     *
      * @param o Object to be compared for equality with this
-     *          <code>SolarisNumericUserPrincipal</code>.
+     *          {@code SolarisNumericUserPrincipal}.
      *
      * @return true if the specified Object is equal to this
-     *          <code>SolarisNumericUserPrincipal</code>.
+     *          {@code SolarisNumericUserPrincipal}.
      */
     public boolean equals(Object o) {
         if (o == null)
@@ -168,15 +156,14 @@ public class SolarisNumericUserPrincipal implements
 
         if (this.getName().equals(that.getName()))
             return true;
-        return false;
+
+       return false;
     }
 
     /**
-     * Return a hash code for this <code>SolarisNumericUserPrincipal</code>.
+     * Return a hash code for this {@code SolarisNumericUserPrincipal}.
      *
-     * <p>
-     *
-     * @return a hash code for this <code>SolarisNumericUserPrincipal</code>.
+     * @return a hash code for this {@code SolarisNumericUserPrincipal}.
      */
     public int hashCode() {
         return name.hashCode();

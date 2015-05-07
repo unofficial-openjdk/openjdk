@@ -27,7 +27,8 @@
  * @author Staffan Larsen
  * @modules jdk.attach/sun.tools.attach
  * @library /lib/testlibrary
- * @modules java.management
+ * @modules jdk.attach/sun.tools.attach
+ *          jdk.management
  * @build jdk.testlibrary.*
  * @run main CheckOrigin
  */

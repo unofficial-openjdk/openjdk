@@ -26,7 +26,7 @@
  * @bug     6173675
  * @summary Basic test of ThreadMXBean.getThreadAllocatedBytes
  * @author  Paul Hohensee
- * @modules java.management
+ * @modules jdk.management
  */
 
 import java.lang.management.*;

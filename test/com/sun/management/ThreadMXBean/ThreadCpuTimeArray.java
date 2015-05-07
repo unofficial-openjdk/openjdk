@@ -27,7 +27,8 @@
  * @summary Basic test of ThreadMXBean.getThreadCpuTime(long[]) and
  *          getThreadUserTime(long[]).
  * @author  Paul Hohensee
- * @modules java.management
+ * @key randomness
+ * @modules jdk.management
  */
 
 import java.lang.management.*;

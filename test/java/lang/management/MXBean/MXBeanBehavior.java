@@ -28,6 +28,7 @@
  *          as user MXBeans
  * @author  Eamonn McManus
  * @modules java.management
+ *          jdk.management
  * @run     main/othervm MXBeanBehavior
  */
 

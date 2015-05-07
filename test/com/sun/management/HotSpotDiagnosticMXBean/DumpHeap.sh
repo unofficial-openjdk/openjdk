@@ -29,7 +29,7 @@
 # @summary Sanity test for com.sun.management.HotSpotDiagnosticMXBean.dumpHeap 
 #          method 
 #
-# @modules java.management
+# @modules jdk.management
 # @build DumpHeap
 # @run shell DumpHeap.sh
 

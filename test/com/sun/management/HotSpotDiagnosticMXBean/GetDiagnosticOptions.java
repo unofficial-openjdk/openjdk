@@ -27,7 +27,7 @@
  * @summary Basic Test for HotSpotDiagnosticMXBean.getDiagnosticOptions()
  * @author  Daniel Fuchs
  *
- * @modules java.management
+ * @modules jdk.management
  * @run main GetDiagnosticOptions
  */
 

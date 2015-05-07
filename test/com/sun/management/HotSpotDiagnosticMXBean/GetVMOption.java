@@ -27,7 +27,7 @@
  * @summary Basic Test for HotSpotDiagnosticMXBean.getVMOption()
  * @author  Mandy Chung
  *
- * @modules java.management
+ * @modules jdk.management
  * @run main/othervm -XX:+PrintGCDetails GetVMOption
  */
 

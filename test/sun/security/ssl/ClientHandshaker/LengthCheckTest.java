@@ -28,6 +28,7 @@
  *          for allowed sizes.
  * @modules java.base/sun.security.ssl
  * @run main/othervm LengthCheckTest
+ * @key randomness
  */
 
 /**

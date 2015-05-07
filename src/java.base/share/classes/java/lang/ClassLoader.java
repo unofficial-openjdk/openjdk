@@ -495,7 +495,7 @@ public abstract class ClassLoader {
             final String name = cls.getName();
             final int i = name.lastIndexOf('.');
             if (i != -1) {
-                AccessController.doPrivileged(new PrivilegedAction<Void>() {
+                AccessController.doPrivileged(new PrivilegedAction<>() {
                     public Void run() {
                         sm.checkPackageAccess(name.substring(0, i));
                         return null;
@@ -1949,7 +1949,7 @@ public abstract class ClassLoader {
         boolean isBuiltin = (name != null);
         if (!isBuiltin) {
             name = AccessController.doPrivileged(
-                new PrivilegedAction<String>() {
+                new PrivilegedAction<>() {
                     public String run() {
                         try {
                             return file.exists() ? file.getCanonicalPath() : null;

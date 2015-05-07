@@ -27,6 +27,7 @@
  * @modules java.base/com.sun.nio.file
  * @library ..
  * @run main/timeout=240 SensitivityModifier
+ * @key randomness
  */
 
 import java.nio.file.*;

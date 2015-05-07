@@ -27,7 +27,7 @@
 # @summary 
 # @author  Steve Bohne
 #
-# @modules java.management
+# @modules jdk.management
 # @run shell GetMaxFileDescriptorCount.sh
 #
 

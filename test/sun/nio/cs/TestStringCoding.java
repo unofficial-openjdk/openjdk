@@ -26,6 +26,7 @@
  * @summary Test if StringCoding and NIO result have the same de/encoding result
  * @modules java.base/sun.nio.cs
  * @run main/othervm/timeout=2000 TestStringCoding
+ * @key randomness
  */
 
 import java.util.*;

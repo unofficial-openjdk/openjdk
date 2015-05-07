@@ -30,6 +30,7 @@
  * @modules jdk.crypto.pkcs11/sun.security.pkcs11.wrapper
  * @compile -XDignore.symbol.file TestCurves.java
  * @run main TestCurves
+ * @key randomness
  */
 
 import java.util.*;
