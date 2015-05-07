@@ -107,6 +107,24 @@ JDK_GENSRC_TARGETS := $(filter %-gensrc-jdk, $(GENSRC_TARGETS))
 LANGTOOLS_GENSRC_TARGETS := $(filter %-gensrc-langtools, $(GENSRC_TARGETS))
 CORBA_GENSRC_TARGETS := $(filter %-gensrc-corba, $(GENSRC_TARGETS))
 
+GENSRC_MODULEINFO_MODULES := $(ALL_MODULES)
+GENSRC_MODULEINFO_TARGETS := $(addsuffix -gensrc-moduleinfo, \
+    $(GENSRC_MODULEINFO_MODULES))
+
+GENSRC_MODULES := $(GENSRC_MODULEINFO_MODULES)
+GENSRC_TARGETS += $(sort $(GENSRC_MODULEINFO_TARGETS) \
+    $(addsuffix -gensrc, $(GENSRC_MODULES)))
+
+define DeclareModuleInfoRecipe
+  $1-gensrc-moduleinfo:
+	+($(CD) $(SRC_ROOT)/make && $(MAKE) $(MAKE_ARGS) \
+	    -f GensrcModuleInfo.gmk MODULE=$1)
+
+  $1-gensrc: $1-gensrc-moduleinfo
+endef
+
+$(foreach m, $(GENSRC_MODULEINFO_MODULES), $(eval $(call DeclareModuleInfoRecipe,$m)))
+
 ALL_TARGETS += $(GENSRC_TARGETS)
 
 ################################################################################
@@ -209,19 +227,10 @@ ALL_TARGETS += demos samples
 ################################################################################
 # Jigsaw specific data and analysis targets.
 
-# This runs the GenModuleInfo tool to generate module-info.java files
-gen-module-info:
-	+($(CD) $(SRC_ROOT)/make && $(MAKE) -f GenerateModuleInfos.gmk gen-module-info)
-
-# This runs the GenModuleInfo tool to generate the diffs between
-# modules.xml and module-info.class files
-diff-modules-info:
-	+($(CD) $(SRC_ROOT)/make && $(MAKE) -f GenerateModuleInfos.gmk diff-module-info)
-
 generate-summary:
 	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f GenerateModuleSummary.gmk)
 
-ALL_TARGETS += generate-summary gen-module-info diff-module-info 
+ALL_TARGETS += generate-summary
 
 ################################################################################
 # Strip binaries targets
@@ -398,6 +407,8 @@ else
 
   $(JDK_GENSRC_TARGETS): interim-langtools buildtools-jdk
 
+  $(GENSRC_MODULEINFO_TARGETS): buildtools-jdk
+
   interim-corba: $(CORBA_GENSRC_TARGETS)
 
   $(GENDATA_TARGETS): interim-langtools buildtools-jdk
@@ -482,7 +493,7 @@ else
   # all java modules to be compiled and jdk.jlink-launchers.
   $(JMOD_TARGETS): java java.base-libs jdk.jlink-launchers
 
-  # To generate modules.xml all classes and a runnable image must be 
+  # To generate modules.xml all classes and a runnable image must be
   # present.
   jdk.dev-gendata: java rmic
 
@@ -493,7 +504,7 @@ else
 
   jrtfs-jar: interim-langtools
 
-  jimages: jmods zip-source source-tips demos samples jrtfs-jar 
+  jimages: jmods zip-source source-tips demos samples jrtfs-jar
 
   profiles: jmods zip-source source-tips jrtfs-jar
 
@@ -518,10 +529,6 @@ else
   test-image-hotspot-jtreg-native: build-test-hotspot-jtreg-native
 
   test-image-jdk-jtreg-native: build-test-jdk-jtreg-native
-
-  diff-module-info: exploded-image
-
-  gen-module-info: exploded-image
 
   generate-summary: jmods
 

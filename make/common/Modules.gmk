@@ -47,11 +47,12 @@ ALL_TOP_SRC_DIRS += \
 
 # Find all module-info.java files for the current build target platform and
 # configuration.
+# Param 1 - Module to find for, set to * for finding all
 FindAllModuleInfos = \
     $(wildcard \
-        $(patsubst %,%/*/share/classes/module-info.java, $(ALL_TOP_SRC_DIRS)) \
-        $(patsubst %,%/*/$(OPENJDK_TARGET_OS)/classes/module-info.java, $(ALL_TOP_SRC_DIRS)) \
-        $(patsubst %,%/*/$(OPENJDK_TARGET_OS_TYPE)/classes/module-info.java, $(ALL_TOP_SRC_DIRS)))
+        $(patsubst %,%/$(strip $1)/$(OPENJDK_TARGET_OS)/classes/module-info.java, $(ALL_TOP_SRC_DIRS)) \
+        $(patsubst %,%/$(strip $1)/$(OPENJDK_TARGET_OS_TYPE)/classes/module-info.java, $(ALL_TOP_SRC_DIRS)) \
+        $(patsubst %,%/$(strip $1)/share/classes/module-info.java, $(ALL_TOP_SRC_DIRS))) \
 
 # Extract the module names from the paths of module-info.java files
 GetModuleNameFromModuleInfo = \
@@ -61,14 +62,14 @@ GetModuleNameFromModuleInfo = \
 # directories.
 FindAllModules = \
     $(sort $(filter-out $(MODULES_FILTER), \
-    $(call GetModuleNameFromModuleInfo, $(call FindAllModuleInfos))))
+    $(call GetModuleNameFromModuleInfo, $(call FindAllModuleInfos, *))))
 
 ################################################################################
 # Extract module dependencies from module-info.java files.
 
 MODULE_DEPS_MAKEFILE := $(MAKESUPPORT_OUTPUTDIR)/module-deps.gmk
 
-MODULE_INFOS := $(call FindAllModuleInfos)
+MODULE_INFOS := $(call FindAllModuleInfos, *)
 
 $(MODULE_DEPS_MAKEFILE): $(MODULE_INFOS)
 	$(MKDIR) -p $(@D)
