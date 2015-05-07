@@ -49,6 +49,5 @@ module java.management {
 
     provides javax.security.auth.spi.LoginModule with
         com.sun.jmx.remote.security.FileLoginModule;
- }
 }
 
