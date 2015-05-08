@@ -25,7 +25,8 @@
  * @test
  * @bug 4251209
  * @summary Make sure that implicit filenames will be returned as "/"
- * @modules java.base/sun.net.www.http
+ * @modules java.base/sun.net
+ *          java.base/sun.net.www.http
  */
 
 import java.net.URL;

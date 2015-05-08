@@ -306,7 +306,7 @@ public class AsmPluginTest {
     private static final Map<String, List<String>> MODULES = new HashMap<>();
     private static final String TEST_MODULE = "jlink.test";
     static {
-        MODULES.put("java.management", new ArrayList<>());
+        MODULES.put("jdk.localedata", new ArrayList<>());
         MODULES.put("java.base", new ArrayList<>());
         MODULES.put(TEST_MODULE, new ArrayList<>());
     }
