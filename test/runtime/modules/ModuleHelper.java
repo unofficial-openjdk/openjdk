@@ -73,7 +73,7 @@ public class ModuleHelper {
     }
 
     public static Module ModuleObject(String name, ClassLoader loader, String[] pkgs) throws Throwable {
-        java.util.Set<java.lang.String> pkg_set = new HashSet<java.lang.String>();
+        Set<String> pkg_set = new HashSet<>();
         if (pkgs != null) {
             for (String pkg: pkgs) {
                 pkg_set.add(pkg.replace('/', '.'));
@@ -82,9 +82,9 @@ public class ModuleHelper {
             pkg_set = Collections.emptySet();
         }
         ModuleDescriptor descriptor =
-            new ModuleDescriptor.Builder(name).build();
+            new ModuleDescriptor.Builder(name).conceals(pkg_set).build();
         URI uri = URI.create("module:/" + name);
-        ModuleArtifact artifact = new ModuleArtifact(descriptor, pkg_set, uri) {
+        ModuleArtifact artifact = new ModuleArtifact(descriptor, uri) {
             @Override
             public ModuleReader open() throws IOException {
                 throw new IOException("No module reader for: " + uri);
@@ -92,7 +92,7 @@ public class ModuleHelper {
         };
 
         Class[] cArg = new Class[2];
-        cArg[0] = java.lang.ClassLoader.class;
+        cArg[0] = ClassLoader.class;
         cArg[1] = java.lang.module.ModuleArtifact.class;
         Constructor ctor = findCtor(cArg);
         return (Module)invokeCtor(ctor, loader, artifact);

@@ -69,9 +69,9 @@ public class NmodNpkg_UmodNpkg {
              new ModuleDescriptor.Builder("m1")
                      .requires("java.base")
                      .exports("p1")
+                     .conceals("m1_pinternal")
                      .build();
-     Set<String> packages_m1 = Stream.of("p1", "m1_pinternal").collect(Collectors.toSet());
-     ModuleArtifact artifact_m1 = MyModuleArtifact.newModuleArtifact(descriptor_m1, packages_m1);
+     ModuleArtifact artifact_m1 = MyModuleArtifact.newModuleArtifact(descriptor_m1);
 
      // Set up a ModuleArtifactFinder containing all modules for this layer.
      ModuleArtifactFinder finder =

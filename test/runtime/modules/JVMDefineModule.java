@@ -204,7 +204,7 @@ Invalid test case: ModuleObject() throws NPE
         }
 
         // Invalid package name, expect an IAE
-        m = ModuleHelper.ModuleObject("module6", cl, new String[] { ";your/package" });
+        m = ModuleHelper.ModuleObject("module6", cl, new String[] { "foo" }); // Name irrelevant
         try {
             ModuleHelper.DefineModule(m, "9.0", "module.name/here", new String[] { ";your/package" });
             throw new RuntimeException("Failed to get expected IAE for ;your.package");
@@ -213,7 +213,7 @@ Invalid test case: ModuleObject() throws NPE
         }
 
         // Invalid package name, expect an IAE
-        m = ModuleHelper.ModuleObject("module7", cl, new String[] { "7[743" });
+        m = ModuleHelper.ModuleObject("module7", cl, new String[] { "foo" }); // Name irrelevant
         try {
             ModuleHelper.DefineModule(m, "9.0", "module.name/here", new String[] { "7[743" });
             throw new RuntimeException("Failed to get expected IAE for package 7[743");

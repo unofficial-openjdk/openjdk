@@ -69,9 +69,9 @@ public class UmodNpkg_PkgNotExp {
                 new ModuleDescriptor.Builder("m1")
                         .requires("m2")
                         .requires("java.base")
+                        .conceals("m1_pinternal")
                         .build();
-        Set<String> packages_m1 = Stream.of("m1_pinternal").collect(Collectors.toSet());
-        ModuleArtifact artifact_m1 = MyModuleArtifact.newModuleArtifact(descriptor_m1, packages_m1);
+        ModuleArtifact artifact_m1 = MyModuleArtifact.newModuleArtifact(descriptor_m1);
 
         // Define module:     m2
         // Can read:          java.base
@@ -80,9 +80,10 @@ public class UmodNpkg_PkgNotExp {
         ModuleDescriptor descriptor_m2 =
                 new ModuleDescriptor.Builder("m2")
                         .requires("java.base")
+                        .conceals("p2")
+                        .conceals("m2_pinternal")
                         .build();
-        Set<String> packages_m2 = Stream.of("p2", "m2_pinternal").collect(Collectors.toSet());
-        ModuleArtifact artifact_m2 = MyModuleArtifact.newModuleArtifact(descriptor_m2, packages_m2);
+        ModuleArtifact artifact_m2 = MyModuleArtifact.newModuleArtifact(descriptor_m2);
 
         // Set up a ModuleArtifactFinder containing all modules for this layer.
         ModuleArtifactFinder finder =

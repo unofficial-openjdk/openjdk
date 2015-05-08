@@ -30,20 +30,21 @@ import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleArtifact;
 import java.lang.module.ModuleReader;
 
+
 // Utility class to set up a ModuleArtifact with a standard location
 // based on the descriptor and a list of packages.
 //
+
 public class MyModuleArtifact {
 
-    public static ModuleArtifact newModuleArtifact(ModuleDescriptor descriptor,
-                                                   Set<String> packages)
-    {
+    public static ModuleArtifact newModuleArtifact(ModuleDescriptor descriptor) {
         URI location = URI.create("module:/" + descriptor.name());
-        return new ModuleArtifact(descriptor, packages, location) {
+        return new ModuleArtifact(descriptor, location) {
             @Override
             public ModuleReader open() throws IOException {
                 throw new IOException("No module reader for: " + location);
             }
         };
     }
+
 }
