@@ -803,6 +803,11 @@ STATIC_LIBRARY_SUFFIX
 SHARED_LIBRARY_SUFFIX
 LIBRARY_PREFIX
 TOOLCHAIN_TYPE
+IMPORT_MODULES_SRC
+IMPORT_MODULES_CONF
+IMPORT_MODULES_LIBS
+IMPORT_MODULES_CMDS
+IMPORT_MODULES_CLASSES
 BUILD_HOTSPOT
 HOTSPOT_DIST
 BUILD_OUTPUT
@@ -1082,6 +1087,7 @@ with_override_hotspot
 with_override_nashorn
 with_override_jdk
 with_import_hotspot
+with_import_modules
 with_toolchain_type
 with_toolchain_version
 with_jtreg
@@ -1940,6 +1946,8 @@ Optional Packages:
   --with-import-hotspot   import hotspot binaries from this jdk image or
                           hotspot build dist dir instead of building from
                           source
+  --with-import-modules   import a set of prebuilt modules either as a zip
+                          file or an exploded directory
   --with-toolchain-type   the toolchain type (or family) to use, use '--help'
                           to show possible values [platform dependent]
   --with-toolchain-version
@@ -4168,6 +4176,12 @@ pkgadd_help() {
 
 
 
+################################################################################
+# Define a mechanism for importing extra prebuilt modules
+#
+
+
+
 #
 # Copyright (c) 2011, 2015, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -4380,7 +4394,7 @@ VS_SDK_PLATFORM_NAME_2013=
 #CUSTOM_AUTOCONF_INCLUDE
 
 # Do not change or remove the following line, it is needed for consistency checks:
-DATE_WHEN_GENERATED=1431016032
+DATE_WHEN_GENERATED=1431077574
 
 ###############################################################################
 #
@@ -26913,6 +26927,178 @@ $as_echo "yes from $HOTSPOT_DIST" >&6; }
   fi
 
   JDK_OUTPUTDIR="$OUTPUT_ROOT/jdk"
+
+
+
+
+# Check whether --with-import-modules was given.
+if test "${with_import_modules+set}" = set; then :
+  withval=$with_import_modules;
+fi
+
+
+  if test "x$with_import_modules" != x; then
+    if test -d "$with_import_modules"; then
+      IMPORT_MODULES_TOPDIR="$with_import_modules"
+
+  # Only process if variable expands to non-empty
+
+  if test "x$IMPORT_MODULES_TOPDIR" != x; then
+    if test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.cygwin"; then
+
+  # Input might be given as Windows format, start by converting to
+  # unix format.
+  path="$IMPORT_MODULES_TOPDIR"
+  new_path=`$CYGPATH -u "$path"`
+
+  # Cygwin tries to hide some aspects of the Windows file system, such that binaries are
+  # named .exe but called without that suffix. Therefore, "foo" and "foo.exe" are considered
+  # the same file, most of the time (as in "test -f"). But not when running cygpath -s, then
+  # "foo.exe" is OK but "foo" is an error.
+  #
+  # This test is therefore slightly more accurate than "test -f" to check for file precense.
+  # It is also a way to make sure we got the proper file name for the real test later on.
+  test_shortpath=`$CYGPATH -s -m "$new_path" 2> /dev/null`
+  if test "x$test_shortpath" = x; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: The path of IMPORT_MODULES_TOPDIR, which resolves as \"$path\", is invalid." >&5
+$as_echo "$as_me: The path of IMPORT_MODULES_TOPDIR, which resolves as \"$path\", is invalid." >&6;}
+    as_fn_error $? "Cannot locate the the path of IMPORT_MODULES_TOPDIR" "$LINENO" 5
+  fi
+
+  # Call helper function which possibly converts this using DOS-style short mode.
+  # If so, the updated path is stored in $new_path.
+
+  input_path="$new_path"
+  # Check if we need to convert this using DOS-style short mode. If the path
+  # contains just simple characters, use it. Otherwise (spaces, weird characters),
+  # take no chances and rewrite it.
+  # Note: m4 eats our [], so we need to use [ and ] instead.
+  has_forbidden_chars=`$ECHO "$input_path" | $GREP [^-._/a-zA-Z0-9]`
+  if test "x$has_forbidden_chars" != x; then
+    # Now convert it to mixed DOS-style, short mode (no spaces, and / instead of \)
+    shortmode_path=`$CYGPATH -s -m -a "$input_path"`
+    path_after_shortmode=`$CYGPATH -u "$shortmode_path"`
+    if test "x$path_after_shortmode" != "x$input_to_shortpath"; then
+      # Going to short mode and back again did indeed matter. Since short mode is
+      # case insensitive, let's make it lowercase to improve readability.
+      shortmode_path=`$ECHO "$shortmode_path" | $TR 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' 'abcdefghijklmnopqrstuvwxyz'`
+      # Now convert it back to Unix-style (cygpath)
+      input_path=`$CYGPATH -u "$shortmode_path"`
+      new_path="$input_path"
+    fi
+  fi
+
+  test_cygdrive_prefix=`$ECHO $input_path | $GREP ^/cygdrive/`
+  if test "x$test_cygdrive_prefix" = x; then
+    # As a simple fix, exclude /usr/bin since it's not a real path.
+    if test "x`$ECHO $new_path | $GREP ^/usr/bin/`" = x; then
+      # The path is in a Cygwin special directory (e.g. /home). We need this converted to
+      # a path prefixed by /cygdrive for fixpath to work.
+      new_path="$CYGWIN_ROOT_PATH$input_path"
+    fi
+  fi
+
+
+  if test "x$path" != "x$new_path"; then
+    IMPORT_MODULES_TOPDIR="$new_path"
+    { $as_echo "$as_me:${as_lineno-$LINENO}: Rewriting IMPORT_MODULES_TOPDIR to \"$new_path\"" >&5
+$as_echo "$as_me: Rewriting IMPORT_MODULES_TOPDIR to \"$new_path\"" >&6;}
+  fi
+
+    elif test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.msys"; then
+
+  path="$IMPORT_MODULES_TOPDIR"
+  has_colon=`$ECHO $path | $GREP ^.:`
+  new_path="$path"
+  if test "x$has_colon" = x; then
+    # Not in mixed or Windows style, start by that.
+    new_path=`cmd //c echo $path`
+  fi
+
+
+  input_path="$new_path"
+  # Check if we need to convert this using DOS-style short mode. If the path
+  # contains just simple characters, use it. Otherwise (spaces, weird characters),
+  # take no chances and rewrite it.
+  # Note: m4 eats our [], so we need to use [ and ] instead.
+  has_forbidden_chars=`$ECHO "$input_path" | $GREP [^-_/:a-zA-Z0-9]`
+  if test "x$has_forbidden_chars" != x; then
+    # Now convert it to mixed DOS-style, short mode (no spaces, and / instead of \)
+    new_path=`cmd /c "for %A in (\"$input_path\") do @echo %~sA"|$TR \\\\\\\\ / | $TR 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' 'abcdefghijklmnopqrstuvwxyz'`
+  fi
+
+
+  windows_path="$new_path"
+  if test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.cygwin"; then
+    unix_path=`$CYGPATH -u "$windows_path"`
+    new_path="$unix_path"
+  elif test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.msys"; then
+    unix_path=`$ECHO "$windows_path" | $SED -e 's,^\\(.\\):,/\\1,g' -e 's,\\\\,/,g'`
+    new_path="$unix_path"
+  fi
+
+  if test "x$path" != "x$new_path"; then
+    IMPORT_MODULES_TOPDIR="$new_path"
+    { $as_echo "$as_me:${as_lineno-$LINENO}: Rewriting IMPORT_MODULES_TOPDIR to \"$new_path\"" >&5
+$as_echo "$as_me: Rewriting IMPORT_MODULES_TOPDIR to \"$new_path\"" >&6;}
+  fi
+
+  # Save the first 10 bytes of this path to the storage, so fixpath can work.
+  all_fixpath_prefixes=("${all_fixpath_prefixes[@]}" "${new_path:0:10}")
+
+    else
+      # We're on a unix platform. Hooray! :)
+      path="$IMPORT_MODULES_TOPDIR"
+      has_space=`$ECHO "$path" | $GREP " "`
+      if test "x$has_space" != x; then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: The path of IMPORT_MODULES_TOPDIR, which resolves as \"$path\", is invalid." >&5
+$as_echo "$as_me: The path of IMPORT_MODULES_TOPDIR, which resolves as \"$path\", is invalid." >&6;}
+        as_fn_error $? "Spaces are not allowed in this path." "$LINENO" 5
+      fi
+
+      # Use eval to expand a potential ~
+      eval path="$path"
+      if test ! -f "$path" && test ! -d "$path"; then
+        as_fn_error $? "The path of IMPORT_MODULES_TOPDIR, which resolves as \"$path\", is not found." "$LINENO" 5
+      fi
+
+      IMPORT_MODULES_TOPDIR="`cd "$path"; $THEPWDCMD -L`"
+    fi
+  fi
+
+    elif test -e "$with_import_modules"; then
+      IMPORT_MODULES_TOPDIR="$CONFIGURESUPPORT_OUTPUTDIR/import-modules"
+      $RM -rf "$IMPORT_MODULES_TOPDIR"
+      $MKDIR -p "$IMPORT_MODULES_TOPDIR"
+      if ! $UNZIP -q "$with_import_modules" -d "$IMPORT_MODULES_TOPDIR"; then
+        as_fn_error $? "--with-import-modules must point to a dir or a zip file" "$LINENO" 5
+      fi
+    else
+      as_fn_error $? "--with-import-modules must point to a dir or a zip file" "$LINENO" 5
+    fi
+  fi
+
+  if test -d "$IMPORT_MODULES_TOPDIR/modules"; then
+    IMPORT_MODULES_CLASSES="$IMPORT_MODULES_TOPDIR/modules"
+  fi
+  if test -d "$IMPORT_MODULES_TOPDIR/modules_cmds"; then
+    IMPORT_MODULES_CMDS="$IMPORT_MODULES_TOPDIR/modules_cmds"
+  fi
+  if test -d "$IMPORT_MODULES_TOPDIR/modules_libs"; then
+    IMPORT_MODULES_LIBS="$IMPORT_MODULES_TOPDIR/modules_libs"
+  fi
+  if test -d "$IMPORT_MODULES_TOPDIR/modules_conf"; then
+    IMPORT_MODULES_CONF="$IMPORT_MODULES_TOPDIR/modules_conf"
+  fi
+  if test -d "$IMPORT_MODULES_TOPDIR/modules_src"; then
+    IMPORT_MODULES_SRC="$IMPORT_MODULES_TOPDIR/modules_src"
+  fi
+
+
+
+
+
+
 
 
 ###############################################################################

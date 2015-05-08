@@ -52,17 +52,23 @@ FindAllModuleInfos = \
     $(wildcard \
         $(patsubst %,%/$(strip $1)/$(OPENJDK_TARGET_OS)/classes/module-info.java, $(ALL_TOP_SRC_DIRS)) \
         $(patsubst %,%/$(strip $1)/$(OPENJDK_TARGET_OS_TYPE)/classes/module-info.java, $(ALL_TOP_SRC_DIRS)) \
-        $(patsubst %,%/$(strip $1)/share/classes/module-info.java, $(ALL_TOP_SRC_DIRS))) \
+        $(patsubst %,%/$(strip $1)/share/classes/module-info.java, $(ALL_TOP_SRC_DIRS)) \
+        $(patsubst %,%/$(strip $1)/module-info.java, $(IMPORT_MODULES_SRC)))
 
-# Extract the module names from the paths of module-info.java files
+# Extract the module names from the paths of module-info.java files. The
+# position of the module directory differs depending on if this is an imported
+# src dir or not.
 GetModuleNameFromModuleInfo = \
-    $(notdir $(patsubst %/,%, $(dir $(patsubst %/,%, $(dir $(patsubst %/,%, $(dir $1)))))))
+    $(strip $(foreach mi, $1, \
+      $(if $(filter $(addsuffix %, $(IMPORT_MODULES_SRC)), $(mi)), \
+        $(notdir $(patsubst %/,%, $(dir $(mi)))), \
+        $(notdir $(patsubst %/,%, $(dir $(patsubst %/,%, $(dir $(patsubst %/,%, $(dir $(mi)))))))))))
 
 # Find all modules by looking for module-info.java files and looking at parent
 # directories.
 FindAllModules = \
     $(sort $(filter-out $(MODULES_FILTER), \
-    $(call GetModuleNameFromModuleInfo, $(call FindAllModuleInfos, *))))
+    $(call GetModuleNameFromModuleInfo, $(MODULE_INFOS))))
 
 ################################################################################
 # Extract module dependencies from module-info.java files.
@@ -71,13 +77,14 @@ MODULE_DEPS_MAKEFILE := $(MAKESUPPORT_OUTPUTDIR)/module-deps.gmk
 
 MODULE_INFOS := $(call FindAllModuleInfos, *)
 
-$(MODULE_DEPS_MAKEFILE): $(MODULE_INFOS)
+$(MODULE_DEPS_MAKEFILE): $(MODULE_INFOS) \
+    $(call DependOnVariable, MODULE_INFOS, $(MAKESUPPORT_OUTPUTDIR)/MODULE_INFOS.vardeps)
 	$(MKDIR) -p $(@D)
 	$(RM) $@
 	$(foreach m, $(MODULE_INFOS), \
 	    ( $(PRINTF) "DEPS_$(call GetModuleNameFromModuleInfo, $m) :=" && \
 	      $(NAWK) -v MODULE=$(call GetModuleNameFromModuleInfo, $m) '\
-                  BEGIN      { if (MODULE != "java.base") printf(" java.base"); } \
+	          BEGIN      { if (MODULE != "java.base") printf(" java.base"); } \
 	          /requires/ { sub(/;/, ""); \
 	                       sub(/requires/, ""); \
 	                       sub(/public/, ""); \

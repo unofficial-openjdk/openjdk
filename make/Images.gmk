@@ -65,8 +65,13 @@ ifeq ($(OPENJDK_TARGET_OS), macosx)
   MAIN_MODULES += jdk.deploy.osx
 endif
 
+# Hack for now
+ifneq ($(IMPORT_MODULES_CLASSES), )
+  IMPORT_MODULES := $(notdir $(wildcard $(IMPORT_MODULES_CLASSES)/*))
+endif
+
 JRE_MODULES := $(MAIN_MODULES) $(PROVIDER_MODULES)
-JDK_MODULES := $(JRE_MODULES) $(TOOLS_MODULES)
+JDK_MODULES := $(JRE_MODULES) $(TOOLS_MODULES) $(IMPORT_MODULES)
 
 # compact3 builds have additional modules
 JDK_COMPACT3_MODULES := java.compact3 java.smartcardio jdk.httpserver jdk.management \
@@ -96,7 +101,8 @@ JRE_COMPACT3_SORTED_MODULES := $(SUPPORT_OUTPUTDIR)/compact3-sorted-modules
 # Use this file inside the image as target for make rule
 JIMAGE_TARGET_FILE := bin/java$(EXE_SUFFIX)
 
-$(JDK_IMAGE_DIR)/$(JIMAGE_TARGET_FILE): $(JMODS)
+$(JDK_IMAGE_DIR)/$(JIMAGE_TARGET_FILE): $(JMODS) \
+    $(call DependOnVariable, JDK_MODULES_LIST)
 	$(ECHO) Creating jdk jimage
 	$(RM) -r $(JDK_IMAGE_DIR) $(JDK_SORTED_MODULES)
 	$(JLINK) --output $(JDK_IMAGE_DIR) \
@@ -104,7 +110,8 @@ $(JDK_IMAGE_DIR)/$(JIMAGE_TARGET_FILE): $(JMODS)
 	    > $(JDK_SORTED_MODULES)
 	$(TOUCH) $@
 
-$(JRE_IMAGE_DIR)/$(JIMAGE_TARGET_FILE): $(JMODS)
+$(JRE_IMAGE_DIR)/$(JIMAGE_TARGET_FILE): $(JMODS) \
+    $(call DependOnVariable, JRE_MODULES_LIST)
 	$(ECHO) Creating jre jimage
 	$(RM) -r $(JRE_IMAGE_DIR) $(JRE_SORTED_MODULES)
 	$(JLINK) --output $(JRE_IMAGE_DIR) \

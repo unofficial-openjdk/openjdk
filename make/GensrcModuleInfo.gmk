@@ -81,7 +81,8 @@ endif
 # Construct all possible src directories for the module.
 MODULE_CLASSES_DIRS := $(strip \
     $(foreach sub, $(CLASSES_SUBDIRS), \
-        $(addsuffix /$(MODULE)/$(sub), $(ALL_TOP_SRC_DIRS))))
+        $(addsuffix /$(MODULE)/$(sub), $(ALL_TOP_SRC_DIRS))) \
+    $(addsuffix /$(MODULE), $(IMPORT_MODULES_SRC)))
 
 # Find all the .ext files in the src dirs.
 MOD_FILES := $(wildcard $(addsuffix /$(MOD_FILENAME), \

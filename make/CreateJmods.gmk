@@ -40,6 +40,9 @@ $(eval $(call FillCacheFind, $(wildcard \
     $(SUPPORT_OUTPUTDIR)/modules_cmds-stripped/$(MODULE) \
     $(SUPPORT_OUTPUTDIR)/modules_conf/$(MODULE) \
     $(JDK_OUTPUTDIR)/modules/$(MODULE) \
+    $(IMPORT_MODULES_LIBS)/$(MODULE) \
+    $(IMPORT_MODULES_CMDS)/$(MODULE) \
+    $(IMPORT_MODULES_CONF)/$(MODULE) \
 )))
 
 ifneq ($(wildcard $(SUPPORT_OUTPUTDIR)/modules_libs-stripped/$(MODULE)), )
@@ -57,6 +60,18 @@ endif
 ifneq ($(wildcard $(JDK_OUTPUTDIR)/modules/$(MODULE)), )
   JMOD_FLAGS += --class-path $(JDK_OUTPUTDIR)/modules/$(MODULE)
   DEPS += $(call CacheFind, $(JDK_OUTPUTDIR)/modules/$(MODULE))
+endif
+ifneq ($(wildcard $(IMPORT_MODULES_LIBS)/$(MODULE)), )
+  JMOD_FLAGS += --libs $(IMPORT_MODULES_LIBS)/$(MODULE)
+  DEPS += $(call CacheFind, $(IMPORT_MODULES_LIBS)/$(MODULE))
+endif
+ifneq ($(wildcard $(IMPORT_MODULES_CMDS)/$(MODULE)), )
+  JMOD_FLAGS += --cmds $(IMPORT_MODULES_CMDS)/$(MODULE)
+  DEPS += $(call CacheFind, $(IMPORT_MODULES_CMDS)/$(MODULE))
+endif
+ifneq ($(wildcard $(IMPORT_MODULES_CONF)/$(MODULE)), )
+  JMOD_FLAGS += --config $(IMPORT_MODULES_CONF)/$(MODULE)
+  DEPS += $(call CacheFind, $(IMPORT_MODULES_CONF)/$(MODULE))
 endif
 
 # Add dependencies on other jmod files
@@ -79,4 +94,3 @@ TARGETS += $(IMAGES_OUTPUTDIR)/jmods/$(MODULE).jmod
 all: $(TARGETS)
 
 ################################################################################
-

@@ -156,6 +156,8 @@ SRCDIRS_SETUP_TOPDIRS
 SRCDIRS_SETUP_ALTERNATIVE_TOPDIRS
 SRCDIRS_SETUP_OUTPUT_DIRS
 
+SRCDIRS_SETUP_IMPORT_MODULES
+
 ###############################################################################
 #
 # Setup the toolchain (compilers etc), i.e. tools used to compile and process

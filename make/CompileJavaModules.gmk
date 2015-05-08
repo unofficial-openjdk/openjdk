@@ -487,7 +487,7 @@ endif
 SRC_SUBDIRS += share/classes
 
 MODULE_SRC_DIRS := $(strip \
-    $(addsuffix /$(MODULE), $(GENERATED_SRC_DIRS)) \
+    $(addsuffix /$(MODULE), $(GENERATED_SRC_DIRS) $(IMPORT_MODULES_SRC)) \
     $(foreach sub, $(SRC_SUBDIRS), $(addsuffix /$(MODULE)/$(sub), $(TOP_SRC_DIRS))))
 
 # The JDK_USER_DEFINED_FILTER is a poor man's incremental build: by specifying
@@ -503,6 +503,9 @@ DEPS := $(call FindTransitiveDepsForModule, $(MODULE))
 # source dirs are available on the path.
 MODULESOURCEPATH := $(subst $(SPACE),$(PATH_SEP),$(subst $(MODULE),*,$(MODULE_SRC_DIRS)))
 
+# Add imported modules to the moduleclasspath
+MODULECLASSPATH := $(subst $(SPACE),$(PATH_SEP), $(IMPORT_MODULES_CLASSES))
+
 $(eval $(call SetupJavaCompilation,$(MODULE), \
     SETUP := $(if $($(MODULE)_SETUP), $($(MODULE)_SETUP), GENERATE_JDKBYTECODE), \
     MODULE := $(MODULE), \
@@ -511,8 +514,9 @@ $(eval $(call SetupJavaCompilation,$(MODULE), \
     BIN := $(JDK_OUTPUTDIR)/modules, \
     HEADERS := $(SUPPORT_OUTPUTDIR)/headers, \
     ADD_JAVAC_FLAGS := \
-        $$($1_ADD_JAVAC_FLAGS) \
+        $($1_ADD_JAVAC_FLAGS) \
         -modulesourcepath "$(MODULESOURCEPATH)" \
+        $(if $(MODULECLASSPATH), -modulepath "$(MODULECLASSPATH)") \
         -systemmodulepath none, \
 ))
 
@@ -543,6 +547,25 @@ endif
 
 ifeq ($(MODULE), java.rmi)
   TARGETS += $(call CreateHkTargets, $(java.rmi_CLEAN_FILES))
+endif
+
+################################################################################
+# If this is an imported module, copy the pre built classes and resources into
+# the modules output dir
+
+ifneq ($(wildcard $(IMPORT_MODULES_CLASSES)/$(MODULE)), )
+  $(JDK_OUTPUTDIR)/modules/$(MODULE)/_imported.marker: \
+      $(call CacheFind, $(IMPORT_MODULES_CLASSES)/$(MODULE))
+	$(RM) -r $(@D)
+	$(MKDIR) -p $(@D)
+	$(CP) -R $(IMPORT_MODULES_CLASSES)/$(MODULE)/* $(@D)/
+	$(TOUCH) $@
+
+  TARGETS += $(JDK_OUTPUTDIR)/modules/$(MODULE)/_imported.marker
+
+  # Add this dependency to avoid a race between compiling module-info.java and
+  # importing the classes.
+  $($(MODULE)_COMPILE_TARGETS): $(JDK_OUTPUTDIR)/modules/$(MODULE)/_imported.marker
 endif
 
 ################################################################################
