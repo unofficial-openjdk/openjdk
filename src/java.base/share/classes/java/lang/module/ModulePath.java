@@ -174,6 +174,16 @@ class ModulePath implements ModuleArtifactFinder {
         }
     }
 
+    private Set<String> jmodPackages(ZipFile zf) {
+        return zf.stream()
+            .filter(e -> e.getName().startsWith("classes/") &&
+                    e.getName().endsWith(".class"))
+            .map(e -> toPackageName(e))
+            .filter(pkg -> pkg.length() > 0) // module-info
+            .distinct()
+            .collect(Collectors.toSet());
+    }
+
     /**
      * Returns a {@code ModuleArtifact} to represent a jmod file on the
      * file system.
@@ -184,26 +194,24 @@ class ModulePath implements ModuleArtifactFinder {
             if (ze == null) {
                 throw new IOException(MODULE_INFO + " is missing: " + file);
             }
-
             // jmod URI - syntax not defined yet
             URI location = URI.create("jmod:" + file.toUri() + "!/");
-
             ModuleDescriptor md;
             try (InputStream in = zf.getInputStream(ze)) {
-                md = ModuleDescriptor.read(in);
+                md = ModuleDescriptor.read(in, () -> jmodPackages(zf));
             }
-
-            Set<String> packages = zf.stream()
-                                     .filter(e -> e.getName().startsWith("classes/") &&
-                                             e.getName().endsWith(".class"))
-                                     .map(e -> toPackageName(e))
-                                     .filter(pkg -> pkg.length() > 0)   // module-info
-                                     .distinct()
-                                     .collect(Collectors.toSet());
-
             HashSupplier hasher = (algorithm) -> Hasher.generate(file, algorithm);
-            return ModuleArtifacts.newModuleArtifact(md, packages, location, hasher);
+            return ModuleArtifacts.newModuleArtifact(md, location, hasher);
         }
+    }
+
+    private Set<String> jarPackages(JarFile jf) {
+        return jf.stream()
+            .filter(e -> e.getName().endsWith(".class"))
+            .map(e -> toPackageName(e))
+            .filter(pkg -> pkg.length() > 0)   // module-info
+            .distinct()
+            .collect(Collectors.toSet());
     }
 
     /**
@@ -217,21 +225,26 @@ class ModulePath implements ModuleArtifactFinder {
                 // not a modular jar
                 return null;
             }
-
             // jar URI
             URI location = URI.create("jar:" + file.toUri() + "!/");
-
-            ModuleDescriptor md = ModuleDescriptor.read(jf.getInputStream(entry));
-
-            Set<String> packages = jf.stream()
-                                     .filter(e -> e.getName().endsWith(".class"))
-                                     .map(e -> toPackageName(e))
-                                     .filter(pkg -> pkg.length() > 0)   // module-info
-                                     .distinct()
-                                     .collect(Collectors.toSet());
-
+            ModuleDescriptor md = ModuleDescriptor.read(jf.getInputStream(entry),
+                                                        () -> jarPackages(jf));
             HashSupplier hasher = (algorithm) -> Hasher.generate(file, algorithm);
-            return ModuleArtifacts.newModuleArtifact(md, packages, location, hasher);
+            return ModuleArtifacts.newModuleArtifact(md, location, hasher);
+        }
+    }
+
+    private Set<String> explodedPackages(Path dir) {
+        try {
+            return Files.find(dir, Integer.MAX_VALUE,
+                              ((path, attrs) -> attrs.isRegularFile() &&
+                               path.toString().endsWith(".class")))
+                .map(path -> toPackageName(dir.relativize(path)))
+                .filter(pkg -> pkg.length() > 0)   // module-info
+                .distinct()
+                .collect(Collectors.toSet());
+        } catch (IOException x) {
+            throw new UncheckedIOException(x);
         }
     }
 
@@ -245,24 +258,13 @@ class ModulePath implements ModuleArtifactFinder {
             // no module-info in directory
             return null;
         }
-
         URI location = dir.toUri();
-
         ModuleDescriptor md;
         try (InputStream in = Files.newInputStream(file)) {
-            md = ModuleDescriptor.read(new BufferedInputStream(in));
+            md = ModuleDescriptor.read(new BufferedInputStream(in),
+                                       () -> explodedPackages(dir));
         }
-
-        Set<String> packages =
-                Files.find(dir, Integer.MAX_VALUE,
-                        ((path, attrs) -> attrs.isRegularFile() &&
-                                path.toString().endsWith(".class")))
-                        .map(path -> toPackageName(dir.relativize(path)))
-                        .filter(pkg -> pkg.length() > 0)   // module-info
-                        .distinct()
-                        .collect(Collectors.toSet());
-
-        return ModuleArtifacts.newModuleArtifact(md, packages, location, null);
+        return ModuleArtifacts.newModuleArtifact(md, location, null);
     }
 
     private String toPackageName(ZipEntry entry) {

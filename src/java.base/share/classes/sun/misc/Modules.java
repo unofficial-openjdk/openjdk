@@ -22,6 +22,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+
 package sun.misc;
 
 import java.io.IOException;
@@ -30,7 +31,9 @@ import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleReader;
 import java.lang.reflect.Module;
 import java.net.URI;
+import java.util.Collections;
 import java.util.Set;
+
 
 /**
  * A helper class to allow JDK classes (and internal tests) to easily create
@@ -49,11 +52,12 @@ public class Modules {
      * given class loader.
      */
     public static Module defineModule(ClassLoader loader, String name,
-                                      Set<String> packages) {
+                                      Set<String> packages)
+    {
         ModuleDescriptor descriptor =
-            new ModuleDescriptor.Builder(name).build();
+            new ModuleDescriptor.Builder(name).conceals(packages).build();
         URI uri = URI.create("module:/" + name);
-        ModuleArtifact artifact = new ModuleArtifact(descriptor, packages, uri) {
+        ModuleArtifact artifact = new ModuleArtifact(descriptor, uri) {
             @Override
             public ModuleReader open() throws IOException {
                 throw new IOException("No module reader for: " + uri);

@@ -253,7 +253,7 @@ public final class ModuleBootstrap {
         Map<String, String> packageToModule = new HashMap<>();
         for (ModuleDescriptor descriptor: cf.descriptors()) {
             String name = descriptor.name();
-            Set<String> pkgs = cf.findArtifact(name).packages();
+            Set<String> pkgs = cf.findArtifact(name).descriptor().packages();
             for (String p: pkgs) {
                 String other = packageToModule.putIfAbsent(p, name);
                 if (other != null) {

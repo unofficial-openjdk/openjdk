@@ -36,7 +36,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Objects;
-import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -64,19 +63,18 @@ class ModuleArtifacts {
      * Creates a ModuleArtifact.
      */
     static ModuleArtifact newModuleArtifact(ModuleDescriptor md,
-                                            Set<String> packages,
                                             URI location,
                                             Hasher.HashSupplier hasher)
     {
         String scheme = location.getScheme();
         if (scheme.equalsIgnoreCase("jrt"))
-            return new JrtModuleArtifact(md, packages, location, hasher);
+            return new JrtModuleArtifact(md, location, hasher);
         if (scheme.equalsIgnoreCase("jmod"))
-            return new JModModuleArtifact(md, packages, location, hasher);
+            return new JModModuleArtifact(md, location, hasher);
         if (scheme.equalsIgnoreCase("jar"))
-            return new JarModuleArtifact(md, packages, location, hasher);
+            return new JarModuleArtifact(md, location, hasher);
         if (scheme.equalsIgnoreCase("file"))
-            return new ExplodedModuleArtifact(md, packages, location, hasher);
+            return new ExplodedModuleArtifact(md, location, hasher);
 
         throw new InternalError("Should not get here");
     }
@@ -86,10 +84,9 @@ class ModuleArtifacts {
      */
     static class JrtModuleArtifact extends ModuleArtifact {
         JrtModuleArtifact(ModuleDescriptor descriptor,
-                          Set<String> packages,
                           URI location,
                           Hasher.HashSupplier hasher) {
-            super(descriptor, packages, location, hasher);
+            super(descriptor, location, hasher);
         }
 
         public ModuleReader open() throws IOException {
@@ -102,10 +99,9 @@ class ModuleArtifacts {
      */
     static class ExplodedModuleArtifact extends ModuleArtifact {
         ExplodedModuleArtifact(ModuleDescriptor descriptor,
-                               Set<String> packages,
                                URI location,
                                Hasher.HashSupplier hasher) {
-            super(descriptor, packages, location, hasher);
+            super(descriptor, location, hasher);
         }
 
         public ModuleReader open() throws IOException {
@@ -118,10 +114,9 @@ class ModuleArtifacts {
      */
     static class JModModuleArtifact extends ModuleArtifact {
         JModModuleArtifact(ModuleDescriptor descriptor,
-                           Set<String> packages,
                            URI location,
                            Hasher.HashSupplier hasher) {
-            super(descriptor, packages, location, hasher);
+            super(descriptor, location, hasher);
         }
 
         public ModuleReader open() throws IOException {
@@ -134,10 +129,9 @@ class ModuleArtifacts {
      */
     static class JarModuleArtifact extends ModuleArtifact {
         JarModuleArtifact(ModuleDescriptor descriptor,
-                          Set<String> packages,
                           URI location,
                           Hasher.HashSupplier hasher) {
-            super(descriptor, packages, location, hasher);
+            super(descriptor, location, hasher);
         }
 
         @Override

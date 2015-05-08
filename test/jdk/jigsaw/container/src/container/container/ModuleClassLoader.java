@@ -91,7 +91,7 @@ class ModuleClassLoader extends SecureClassLoader {
      */
     public void defineModule(ModuleArtifact artifact) {
         nameToArtifact.put(artifact.descriptor().name(), artifact);
-        artifact.packages().forEach(p -> packageToArtifact.put(p, artifact));
+        artifact.descriptor().packages().forEach(p -> packageToArtifact.put(p, artifact));
 
         // Use NULL_MODULE_READER initially to avoid opening eagerly
         artifactToReader.put(artifact, NULL_MODULE_READER);

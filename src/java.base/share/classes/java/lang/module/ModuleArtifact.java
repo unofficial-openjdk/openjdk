@@ -27,11 +27,10 @@ package java.lang.module;
 
 import java.io.IOException;
 import java.net.URI;
-import java.util.Collections;
 import java.util.Objects;
-import java.util.Set;
 
 import jdk.internal.module.Hasher.HashSupplier;
+
 
 /**
  * Represents a module artifact. A module artifact contains the contents of a
@@ -49,7 +48,6 @@ import jdk.internal.module.Hasher.HashSupplier;
 public abstract class ModuleArtifact {
 
     private final ModuleDescriptor descriptor;
-    private final Set<String> packages;
     private final URI location;
 
     // the function that computes the hash of this module artifact
@@ -62,47 +60,21 @@ public abstract class ModuleArtifact {
      * Constructs a new instance of this class.
      */
     ModuleArtifact(ModuleDescriptor descriptor,
-                   Set<String> packages,
                    URI location,
                    HashSupplier hasher)
     {
-
-        packages = Collections.unmodifiableSet(packages);
-        if (packages.contains("") || packages.contains(null))
-            throw new IllegalArgumentException("<unnamed> package or null not allowed");
-
         this.descriptor = Objects.requireNonNull(descriptor);
-        this.packages = packages;
         this.location = Objects.requireNonNull(location);
         this.hasher = hasher;
-
-        // all exported packages must be in contents
-        for (ModuleDescriptor.Exports export: descriptor.exports()) {
-            String pkg = export.source();
-            if (!packages.contains(pkg)) {
-                String name = descriptor.name();
-                throw new IllegalArgumentException(name + " cannot export " +
-                        pkg + ": not in module");
-            }
-        }
     }
 
     /**
      * Constructs a new instance of this class.
-     *
-     * @throws IllegalArgumentException if {@code packages} does not include
-     * an element for each of the exported packages in the module descriptor,
-     * or {@code packages} contains the empty string or {@code null}.
-     *
-     * @apiNote Need to discuss what other validation should be done here. For
-     * example, should this method check the package names to ensure that they
-     * are composed of valid Java identifiers for a package name?
      */
     protected ModuleArtifact(ModuleDescriptor descriptor,
-                             Set<String> packages,
                              URI location)
     {
-        this(descriptor, packages, location, null);
+        this(descriptor, location, null);
     }
 
     /**
@@ -110,13 +82,6 @@ public abstract class ModuleArtifact {
      */
     public ModuleDescriptor descriptor() {
         return descriptor;
-    }
-
-    /**
-     * Return the set of packages for the module. The set is immutable.
-     */
-    public Set<String> packages() {
-        return packages;
     }
 
     /**
@@ -163,7 +128,7 @@ public abstract class ModuleArtifact {
     public int hashCode() {
         int hc = hash;
         if (hc == 0) {
-            hc = descriptor.hashCode() ^ packages.hashCode() ^ location.hashCode();
+            hc = descriptor.hashCode() ^ location.hashCode();
             hash = hc;
         }
         return hc;
@@ -175,8 +140,6 @@ public abstract class ModuleArtifact {
         ModuleArtifact that = (ModuleArtifact)obj;
         if (!this.descriptor.equals(that.descriptor))
             return false;
-        if (!this.packages.equals(that.packages))
-            return false;
         if (!this.location.equals(that.location))
             return false;
         return true;
@@ -185,4 +148,5 @@ public abstract class ModuleArtifact {
     public String toString() {
         return "[module " + descriptor().name() + ", location=" + location + "]";
     }
+
 }

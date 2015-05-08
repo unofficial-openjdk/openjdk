@@ -45,10 +45,9 @@ import static org.testng.Assert.*;
 public class ModuleArtifactTest {
 
     private ModuleArtifact newModuleArtifact(ModuleDescriptor descriptor,
-                                             Set<String> packages,
                                              URI location)
     {
-        return new ModuleArtifact(descriptor, packages, location) {
+        return new ModuleArtifact(descriptor, location) {
             @Override
             public ModuleReader open() throws IOException {
                 throw new IOException("No module reader for: " + location);
@@ -62,36 +61,21 @@ public class ModuleArtifactTest {
                 new ModuleDescriptor.Builder("m")
                         .exports("p")
                         .exports("q")
+                        .conceals("p.internal")
                         .build();
-
-        Set<String> packages =
-            Stream.of("p", "q", "p.internal").collect(Collectors.toSet());
 
         URI location = URI.create("module:/m");
 
-        ModuleArtifact artifact = newModuleArtifact(descriptor, packages, location);
+        ModuleArtifact artifact = newModuleArtifact(descriptor, location);
 
         assertTrue(artifact.descriptor().equals(descriptor));
-        assertTrue(artifact.packages().equals(packages));
         assertTrue(artifact.location().equals(location));
     }
 
     @Test(expectedExceptions = { NullPointerException.class })
     public void testNullDescriptor() throws Exception {
-        Set<String> packages = Stream.of("p").collect(Collectors.toSet());
         URI location = URI.create("module:/m");
-        newModuleArtifact(null, packages, location);
-    }
-
-    @Test(expectedExceptions = { NullPointerException.class })
-    public void testNullPackages() throws Exception {
-        ModuleDescriptor descriptor =
-                new ModuleDescriptor.Builder("m")
-                        .exports("p")
-                        .exports("q")
-                        .build();
-        URI location = URI.create("module:/m");
-        newModuleArtifact(descriptor, null, location);
+        newModuleArtifact(null, location);
     }
 
     @Test(expectedExceptions = { NullPointerException.class })
@@ -100,41 +84,7 @@ public class ModuleArtifactTest {
                 new ModuleDescriptor.Builder("m")
                         .exports("p")
                         .build();
-        Set<String> packages = Stream.of("p").collect(Collectors.toSet());
-        newModuleArtifact(descriptor, packages, null);
+        newModuleArtifact(descriptor, null);
     }
 
-    @DataProvider(name = "badpackages")
-    public Object[][] badPackages() {
-        List<Set<String>> badContents = new ArrayList<>();
-
-        // null
-        badContents.add( Stream.of("p", null).collect(Collectors.toSet()) );
-
-        // unnamed package
-        badContents.add( Stream.of("p", "").collect(Collectors.toSet()) );
-
-        // exports p, not in contents
-        badContents.add( Stream.of("q").collect(Collectors.toSet()) );
-
-        Object[][] params = new Object[badContents.size()][];
-        for (int i = 0; i < badContents.size(); i++) {
-            Set<String> packages = badContents.get(i);
-            params[i] = new Object[] { packages };
-        }
-        return params;
-    }
-
-    @Test(dataProvider = "badpackages",
-          expectedExceptions = { IllegalArgumentException.class })
-    public void testBadContents(Set<String> packages) throws Exception {
-        ModuleDescriptor descriptor =
-                new ModuleDescriptor.Builder("m")
-                        .exports("p")
-                        .build();
-        URI location = URI.create("module:/m");
-
-        // should throw IAE
-        newModuleArtifact(descriptor, packages, location);
-    }
 }

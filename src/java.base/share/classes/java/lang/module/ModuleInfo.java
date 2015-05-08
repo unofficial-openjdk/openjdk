@@ -30,6 +30,7 @@ import java.io.DataInputStream;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.lang.module.ModuleDescriptor.Requires.Modifier;
 import java.nio.ByteBuffer;
 import java.nio.BufferUnderflowException;
@@ -38,6 +39,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import jdk.internal.module.Hasher.DependencyHashes;
 
@@ -56,13 +58,15 @@ final class ModuleInfo {
     private final boolean parseHashes;
     private String name;
     private ModuleDescriptor.Builder builder;
+    private Supplier<Set<String>> packageFinder;
 
-    private ModuleInfo(boolean ph) {
+    private ModuleInfo(Supplier<Set<String>> pf, boolean ph) {
+        packageFinder = pf;
         parseHashes = ph;
     }
 
-    private ModuleInfo() {
-        this(true);
+    private ModuleInfo(Supplier<Set<String>> pf) {
+        this(pf, true);
     }
 
     /**
@@ -71,8 +75,11 @@ final class ModuleInfo {
      * @throws ClassFormatError if the class file is malformed
      * @throws IOException if an I/O error occurs
      */
-    public static ModuleDescriptor read(InputStream in) throws IOException {
-        return new ModuleInfo().doRead(new DataInputStream(in));
+    public static ModuleDescriptor read(InputStream in,
+                                        Supplier<Set<String>> pf)
+        throws IOException
+    {
+        return new ModuleInfo(pf).doRead(new DataInputStream(in));
     }
 
     /**
@@ -80,9 +87,11 @@ final class ModuleInfo {
      *
      * @throws ClassFormatError if the class file is malformed
      */
-    public static ModuleDescriptor read(ByteBuffer bb) {
+    public static ModuleDescriptor read(ByteBuffer bb,
+                                        Supplier<Set<String>> pf)
+    {
         try {
-            return new ModuleInfo().doRead(new DataInputWrapper(bb));
+            return new ModuleInfo(pf).doRead(new DataInputWrapper(bb));
         } catch (EOFException x) {
             throw new ClassFormatError("Incomplete class file");
         } catch (IOException x) {
@@ -97,8 +106,11 @@ final class ModuleInfo {
      * @throws ClassFormatError if the class file is malformed
      * @throws IOException if an I/O errors occurs
      */
-    static ModuleDescriptor readIgnoringHashes(ByteBuffer bb) throws IOException {
-        return new ModuleInfo(false).doRead(new DataInputWrapper(bb));
+    static ModuleDescriptor readIgnoringHashes(ByteBuffer bb,
+                                               Supplier<Set<String>> pf)
+        throws IOException
+    {
+        return new ModuleInfo(pf, false).doRead(new DataInputWrapper(bb));
     }
 
     /**
@@ -193,6 +205,21 @@ final class ModuleInfo {
         }
         if (!foundModule)
             classFormatError("Missing Module attribute");
+        // ## We'll eventually define a CONCEALED_PACKAGES attribute.  If that
+        //    attribute is present but has a length of zero then the module has
+        //    no concealed packages.  If that attribute is not present then the
+        //    module might have concealed packages so the packageFinder, if
+        //    provided, should be invoked in order to discover them.
+        if (packageFinder != null) {    // ## AND no CONCEALED_PACKAGES attr
+            Set<String> pkgs;
+            try {
+                pkgs = new HashSet<>(packageFinder.get());
+            } catch (UncheckedIOException x) {
+                throw x.getCause();
+            }
+            pkgs.removeAll(builder.exportedPackages());
+            builder.conceals(pkgs);
+        }
         return builder.build();
     }
 

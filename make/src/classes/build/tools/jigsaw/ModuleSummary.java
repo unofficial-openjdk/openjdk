@@ -108,7 +108,7 @@ public class ModuleSummary {
         artifacts.forEach(m -> nameToArtifact.put(m.descriptor().name(), m));
 
         // build package map for all modules for API dependency analysis
-        artifacts.forEach(m -> m.packages().stream()
+        artifacts.forEach(m -> m.descriptor().packages().stream()
                  .forEach(p -> packageMap.put(p, m.descriptor())));
 
         for (ModuleArtifact artifact : artifacts) {
@@ -214,7 +214,7 @@ public class ModuleSummary {
             // has API dependency
             return reexport ? String.format("<b>%s</b>", result)
                             : String.format("<b><font color=\"red\">%s</font></b>", result);
-        } else if (artifact.packages().size() == 0) {
+        } else if (artifact.descriptor().packages().size() == 0) {
             // aggregator module
             return String.format("<em>%s</em>", result);
         } else {
@@ -435,7 +435,8 @@ public class ModuleSummary {
         ModuleDescriptor descriptor = artifact.descriptor();
         Dependency.Finder finder = Dependencies.getAPIFinder(ACC_PROTECTED);
         Dependency.Filter filter =
-            (Dependency d) -> !artifact.packages().contains(d.getTarget().getPackageName());
+            (Dependency d) -> !artifact.descriptor().packages()
+                                   .contains(d.getTarget().getPackageName());
         Set<String> exports = descriptor.exports().stream()
                     .map(Exports::source)
                     .sorted()

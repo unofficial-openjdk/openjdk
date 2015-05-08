@@ -27,6 +27,7 @@ package java.lang.module;
 
 import java.io.InputStream;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -36,6 +37,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.Objects;
+import java.util.function.Supplier;
 import static java.util.Objects.*;
 
 import jdk.internal.module.Hasher.DependencyHashes;
@@ -265,29 +267,34 @@ public class ModuleDescriptor
     // "Extended" information, added post-compilation
     private final Optional<Version> version;
     private final Optional<String> mainClass;
+    private final Set<String> conceals;
+    private final Set<String> packages;
     private final Optional<DependencyHashes> hashes;
 
     private ModuleDescriptor(String name,
-                             Set<Requires> requires,
+                             Map<String, Requires> requires,
                              Set<String> uses,
-                             Set<Exports> exports,
+                             Map<String, Exports> exports,
                              Map<String, Provides> provides,
                              Version version,
                              String mainClass,
+                             Set<String> conceals,
                              DependencyHashes hashes)
     {
 
         this.name = requireModuleName(name);
 
-        assert (requires.stream().map(Requires::name).sorted().distinct().count()
-                == requires.size())
+        Set<Requires> rqs = new HashSet<>(requires.values());
+        assert (rqs.stream().map(Requires::name).sorted().distinct().count()
+                == rqs.size())
             : "Module " + name + " has duplicate requires";
-        this.requires = Collections.unmodifiableSet(requires);
+        this.requires = Collections.unmodifiableSet(rqs);
 
-        assert (exports.stream().map(Exports::source).sorted().distinct().count()
-                == exports.size())
+        Set<Exports> exs = new HashSet<>(exports.values());
+        assert (exs.stream().map(Exports::source).sorted().distinct().count()
+                == exs.size())
             : "Module " + name + " has duplicate exports";
-        this.exports = Collections.unmodifiableSet(exports);
+        this.exports = Collections.unmodifiableSet(exs);
 
         this.uses = Collections.unmodifiableSet(uses);
         this.provides = Collections.unmodifiableMap(provides);
@@ -299,6 +306,13 @@ public class ModuleDescriptor
         else
             this.mainClass = Optional.empty();
         this.hashes = Optional.ofNullable(hashes);
+
+        assert !exports.keySet().stream().anyMatch(conceals::contains)
+            : "Module " + name + ": Package sets overlap";
+        this.conceals = Collections.unmodifiableSet(conceals);
+        Set<String> pkgs = new HashSet<>(conceals);
+        pkgs.addAll(exports.keySet());
+        this.packages = Collections.unmodifiableSet(pkgs);
 
     }
 
@@ -366,6 +380,22 @@ public class ModuleDescriptor
     }
 
     /**
+     * Returns the names of the packages defined in, but not exported by, this
+     * module.
+     */
+    public Set<String> conceals() {
+        return conceals;
+    }
+
+    /**
+     * Returns the names of all the packages defined in this module, whether
+     * exported or concealed.
+     */
+    public Set<String> packages() {
+        return packages;
+    }
+
+    /**
      * Returns the object with the hashes of the dependences.
      */
     Optional<DependencyHashes> hashes() {
@@ -384,6 +414,7 @@ public class ModuleDescriptor
         final Map<String, Provides> provides = new HashMap<>();
         Version version;
         String mainClass;
+        Set<String> conceals = Collections.emptySet();
         DependencyHashes hashes;
 
         /**
@@ -450,6 +481,11 @@ public class ModuleDescriptor
             return this;
         }
 
+        // Used by ModuleInfo, after a packageFinder is invoked
+        /* package */ Set<String> exportedPackages() {
+            return exports.keySet();
+        }
+
         /**
          * Provides service {@code st} with implementations {@code pcs}.
          */
@@ -476,6 +512,22 @@ public class ModuleDescriptor
             return this;
         }
 
+        public Builder conceals(Set<String> packages) {
+            packages.forEach(Checks::requirePackageName);
+            if (this.conceals.isEmpty())
+                this.conceals = new HashSet<>();
+            this.conceals.addAll(packages);
+            return this;
+        }
+
+        public Builder conceals(String pkg) {
+            Checks.requirePackageName(pkg);
+            if (this.conceals.isEmpty())
+                this.conceals = new HashSet<>();
+            this.conceals.add(pkg);
+            return this;
+        }
+
         /* package */ Builder hashes(DependencyHashes hashes) {
             this.hashes = hashes;
             return this;
@@ -487,12 +539,13 @@ public class ModuleDescriptor
         public ModuleDescriptor build() {
             assert name != null;
             return new ModuleDescriptor(name,
-                                        new HashSet<>(requires.values()),
+                                        requires,
                                         uses,
-                                        new HashSet<>(exports.values()),
+                                        exports,
                                         provides,
                                         version,
                                         mainClass,
+                                        conceals,
                                         hashes);
         }
 
@@ -524,6 +577,7 @@ public class ModuleDescriptor
                 && provides.equals(that.provides)
                 && Objects.equals(version, that.version)
                 && Objects.equals(mainClass, that.mainClass)
+                && Objects.equals(conceals, that.conceals)
                 && Objects.equals(hashes, that.hashes));
     }
 
@@ -540,6 +594,7 @@ public class ModuleDescriptor
             hc = hc * 43 + provides.hashCode();
             hc = hc * 43 + Objects.hashCode(version);
             hc = hc * 43 + Objects.hashCode(mainClass);
+            hc = hc * 43 + Objects.hashCode(conceals);
             hc = hc * 43 + Objects.hashCode(hashes);
             hash = hc;
         }
@@ -568,12 +623,62 @@ public class ModuleDescriptor
         return sb.toString();
     }
 
-    public static ModuleDescriptor read(InputStream in) throws IOException {
-        return ModuleInfo.read(in);
+    /**
+     * Reads a module descriptor from an input stream.
+     *
+     * <p> If the descriptor encoded in the input stream does not indicate a
+     * set of concealed packages then the {@code packageFinder} will be
+     * invoked.  The packages it returns, except for those indicated as
+     * exported in the encoded descriptor, will be considered to be concealed.
+     * If the {@code packageFinder} throws an {@link UncheckedIOException} then
+     * the original {@link IOException} will be re-thrown.
+     *
+     * @apiNote The {@code packageFinder} parameter is for use when reading
+     * module descriptors from legacy module-artifact formats that do not
+     * record the set of concealed packages in the descriptor itself.
+     *
+     * @param  packageFinder  A supplier that can produce a set of package
+     *         names
+     */
+    public static ModuleDescriptor read(InputStream in,
+                                        Supplier<Set<String>> packageFinder)
+        throws IOException
+    {
+        return ModuleInfo.read(in, requireNonNull(packageFinder));
     }
 
-    public static ModuleDescriptor read(ByteBuffer bb) throws IOException {
-        return ModuleInfo.read(bb);
+    /**
+     * Reads a module descriptor from an input stream.
+     */
+    public static ModuleDescriptor read(InputStream in)
+        throws IOException
+    {
+        return ModuleInfo.read(in, null);
+    }
+
+    /**
+     * Reads a module descriptor from a byte buffer.
+     *
+     * <p> If the descriptor encoded in the byte buffer does not indicate a
+     * set of concealed packages then the {@code packageFinder} will be
+     * invoked.  The packages it returns, except for those indicated as
+     * exported in the encoded descriptor, will be considered to be concealed.
+     *
+     * @apiNote The {@code packageFinder} parameter is for use when reading
+     * module descriptors from legacy module-artifact formats that do not
+     * record the set of concealed packages in the descriptor itself.
+     */
+    public static ModuleDescriptor read(ByteBuffer bb,
+                                        Supplier<Set<String>> packageFinder)
+    {
+        return ModuleInfo.read(bb, requireNonNull(packageFinder));
+    }
+
+    /**
+     * Reads a module descriptor from a byte buffer.
+     */
+    public static ModuleDescriptor read(ByteBuffer bb) {
+        return ModuleInfo.read(bb, null);
     }
 
 }

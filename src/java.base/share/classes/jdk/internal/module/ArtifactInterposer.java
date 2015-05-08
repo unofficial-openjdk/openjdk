@@ -191,13 +191,19 @@ class ArtifactInterposer implements ModuleArtifactFinder {
         // has an unqualified export and AddModuleExports specifies a qualified
         // export then the qualified export is ignored.
 
+        Set<String> conceals;
         if (exportAdds == null) {
             // Nothing to add, so just copy all existing exports
             for (Exports e : descriptor.exports()) {
                 e.targets().ifPresentOrElse(ts -> mdb.exports(e.source(), ts),
                                             () -> mdb.exports(e.source()));
             }
+            conceals = descriptor.conceals();
         } else {
+
+            // Reduce conceals-package set
+            conceals = new HashSet<>(descriptor.conceals());
+            conceals.removeAll(exportAdds.keySet());
 
             // Process existing exports
             for (Exports e : descriptor.exports()) {
@@ -240,21 +246,22 @@ class ArtifactInterposer implements ModuleArtifactFinder {
 
         }
 
-        // Copy over uses, provides, and version
+        // Copy over uses, provides, version, and concealed packages
         descriptor.uses().forEach(mdb::uses);
         descriptor.provides().values()
             .forEach(p -> mdb.provides(p.service(), p.providers()));
         descriptor.version().ifPresent(v -> mdb.version(v.toString())); // ##
+        mdb.conceals(conceals);
 
         // Return a new ModuleArtifact with the new module descriptor
-        Set<String> packages = artifact.packages();
         URI location = artifact.location();
-        return new ModuleArtifact(mdb.build(), packages, location) {
+        return new ModuleArtifact(mdb.build(), location) {
             @Override
             public ModuleReader open() throws IOException {
                 return artifact.open();
             }
         };
+
     }
 
     private static IllegalArgumentException parseFailure(String expr) {

@@ -481,7 +481,7 @@ public enum LauncherHelper {
             i = mainClass.lastIndexOf('.');
             if (i > 0) {
                 String pkg = mainClass.substring(0, i);
-                if (!artifact.packages().contains(pkg)) {
+                if (!artifact.descriptor().packages().contains(pkg)) {
                     // main class not in a package that the module defines
                     abort(null, "java.launcher.module.error2", mainModule, mainClass);
                 }
@@ -920,11 +920,16 @@ public enum LauncherHelper {
                                                 () -> ostream.println());
                 }
 
+                // concealed packages
+                new TreeSet<>(md.conceals())
+                    .forEach(p -> ostream.format("  conceals %s%n", p));
+
                 Map<String, Provides> provides = md.provides();
                 for (Provides ps : provides.values()) {
                     for (String impl : ps.providers())
                         ostream.format("  provides %s with %s%n", ps.service(), impl);
                 }
+
             }
         }
     }

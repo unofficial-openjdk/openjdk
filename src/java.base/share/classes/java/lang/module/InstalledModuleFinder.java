@@ -64,9 +64,8 @@ class InstalledModuleFinder implements ModuleArtifactFinder {
         try {
             ModuleDescriptor md = bootImage.readDescriptor(name);
             URI location = URI.create("jrt:/" + name);
-            Set<String> packages = bootImage.packagesForModule(name);
             ModuleArtifact artifact =
-                ModuleArtifacts.newModuleArtifact(md, packages, location, null);
+                ModuleArtifacts.newModuleArtifact(md, location, null);
             installedModulesCount.increment();
             installedModulesTime.addElapsedTimeFrom(t0);
             return artifact;
@@ -122,13 +121,10 @@ class InstalledModuleFinder implements ModuleArtifactFinder {
             this.modules = mdata.allModuleNames();
         }
 
-        /**
-         * Returns the packages of the given module.
-         */
-        Set<String> packagesForModule(String name) {
+        private Set<String> packages(String name) {
             return mdata.moduleToPackages(name).stream()
-                    .map(pn -> pn.replace('/', '.'))
-                    .collect(Collectors.toSet());
+                .map(pn -> pn.replace('/', '.'))
+                .collect(Collectors.toSet());
         }
 
         /**
@@ -140,7 +136,7 @@ class InstalledModuleFinder implements ModuleArtifactFinder {
             ImageLocation loc = imageReader.findLocation(rn);
             ByteBuffer bb = imageReader.getResourceBuffer(loc);
             try {
-                return ModuleInfo.readIgnoringHashes(bb);
+                return ModuleInfo.readIgnoringHashes(bb, () -> packages(name));
             } finally {
                 ImageReader.releaseByteBuffer(bb);
             }
@@ -153,4 +149,5 @@ class InstalledModuleFinder implements ModuleArtifactFinder {
             PerfCounter.newPerfCounter("jdk.module.installedModules.initArtifactTime");
     private static final PerfCounter installedModulesCount =
             PerfCounter.newPerfCounter("jdk.module.installedModules.artifacts");
+
 }

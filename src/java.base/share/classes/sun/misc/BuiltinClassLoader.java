@@ -163,7 +163,8 @@ class BuiltinClassLoader extends ModuleClassLoader {
                                             + " already defined in this class loader");
         LoadedModule loadedModule = new LoadedModule(artifact);
         nameToModule.put(mn, loadedModule);
-        artifact.packages().forEach(p -> packageToModule.put(p, loadedModule));
+        artifact.descriptor().packages()
+            .forEach(p -> packageToModule.put(p, loadedModule));
 
         // Use NULL_MODULE_READER initially to avoid opening eagerly
         artifactToReader.put(artifact, NULL_MODULE_READER);

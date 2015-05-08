@@ -108,7 +108,7 @@ public final class Module {
         this.loader = loader;
         this.name = artifact.descriptor().name();
         this.artifact = artifact;
-        this.packages = artifact.packages();
+        this.packages = artifact.descriptor().packages();
     }
 
     /**
@@ -300,7 +300,7 @@ public final class Module {
     static Module defineModule(ClassLoader loader, ModuleArtifact artifact) {
         Module m;
 
-        Set<String> packages = artifact.packages();
+        Set<String> packages = artifact.descriptor().packages();
 
         // define module to VM, except java.base as it is defined by VM
         String name = artifact.descriptor().name();
