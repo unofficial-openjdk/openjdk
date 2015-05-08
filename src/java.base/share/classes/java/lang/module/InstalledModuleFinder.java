@@ -132,7 +132,8 @@ class InstalledModuleFinder implements ModuleArtifactFinder {
         }
 
         /**
-         * Return the bytes of the module-info.class of the given module
+         * Returns the module descriptor for the given module in the
+         * image.
          */
         ModuleDescriptor readDescriptor(String name) throws IOException {
             String rn = "/" + name + "/" + MODULE_INFO;

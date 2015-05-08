@@ -28,18 +28,20 @@ package jdk.internal.module;
 
 // Constants in module-info.class files
 
-public interface ClassFileConstants {
+public class ClassFileConstants {
+
+    private ClassFileConstants() { }
 
     // Attribute names
-    static final String MODULE        = "Module";
-    static final String MAIN_CLASS    = "MainClass";
-    static final String VERSION       = "Version";
-    static final String HASHES        = "Hashes";
+    public static final String MODULE        = "Module";
+    public static final String MAIN_CLASS    = "MainClass";
+    public static final String VERSION       = "Version";
+    public static final String HASHES        = "Hashes";
 
     // access and requires flags
-    static final int ACC_MODULE       = 0x8000;
-    static final int ACC_PUBLIC       = 0x0020;
-    static final int ACC_SYNTHETIC    = 0x1000;
-    static final int ACC_MANDATED     = 0x8000;
+    public static final int ACC_MODULE       = 0x8000;
+    public static final int ACC_PUBLIC       = 0x0020;
+    public static final int ACC_SYNTHETIC    = 0x1000;
+    public static final int ACC_MANDATED     = 0x8000;
 
 }
