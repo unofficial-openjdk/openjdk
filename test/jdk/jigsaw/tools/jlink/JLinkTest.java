@@ -46,6 +46,7 @@ import tests.JImageValidator;
 
 /*
  * @test
+ * @ignore
  * @summary Test jimage creation
  * @author Jean-Francois Denise
  * @library /lib/testlibrary/jlink
