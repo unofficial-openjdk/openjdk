@@ -105,6 +105,8 @@ module java.xml.bind {
     exports com.sun.xml.internal.bind.v2.util to
         jdk.xml.bind,
         jdk.xml.ws;
+    exports com.sun.xml.internal.fastinfoset to
+        java.xml.ws;
     exports com.sun.xml.internal.fastinfoset.stax to
         java.xml.ws;
     exports com.sun.xml.internal.fastinfoset.vocab to
