@@ -26,7 +26,8 @@
 # @bug 6336885 7196799 7197573 7198834 8000245 8000615 8001440 8010666
 #      8013086 8013233 8013903 8015960 8028771
 # @summary tests for "java.locale.providers" system property
-# @modules java.base/sun.util.locale.provider
+# @modules java.base/sun.util.locale
+#          java.base/sun.util.locale.provider
 # @compile LocaleProviders.java
 # @run shell/timeout=600 LocaleProviders.sh
 
@@ -120,7 +121,7 @@ tznp
 tznp8013086
 EOF
 
-EXTRAOPTS="-XX:AddModuleExports=java.base/sun.util.locale.provider"
+EXTRAOPTS="-XX:AddModuleExports=java.base/sun.util.locale,java.base/sun.util.locale.provider"
 
 ${COMPILEJAVA}${FS}bin${FS}javac ${TESTJAVACOPTS} ${TESTTOOLVMOPTS} -d ${SPIDIR}${FS}dest \
     ${SPIDIR}${FS}src${FS}tznp.java \
