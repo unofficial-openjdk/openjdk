@@ -106,7 +106,7 @@ public class Basic {
         ModuleReference mref = cf.findReference(name);
         if (mref == null)
             throw new RuntimeException("not found: " + name);
-        Path dir = Paths.get(mref.location());
+        Path dir = Paths.get(mref.location().get());
         if (!Files.isDirectory(dir))
             throw new RuntimeException("not a directory: " + dir);
         return dir;

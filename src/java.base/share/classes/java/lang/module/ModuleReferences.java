@@ -164,11 +164,12 @@ class ModuleReferences {
         private volatile boolean closed;
 
         JrtModuleReader(ModuleReference mref) throws IOException {
+            assert mref.location().isPresent();
             // when running with a security manager then check that the caller
             // has access to the run-time image
             SecurityManager sm = System.getSecurityManager();
             if (sm != null) {
-                URLConnection uc = mref.location().toURL().openConnection();
+                URLConnection uc = mref.location().get().toURL().openConnection();
                 sm.checkPermission(uc.getPermission());
             }
             this.module = mref.descriptor().name();
@@ -238,7 +239,7 @@ class ModuleReferences {
         private volatile boolean closed;
 
         ExplodedModuleReader(ModuleReference mref) {
-            dir = Paths.get(mref.location());
+            dir = Paths.get(mref.location().get());
         }
 
         /**
@@ -353,7 +354,7 @@ class ModuleReferences {
         private final ZipFile zf;
 
         JModModuleReader(ModuleReference mref) throws IOException {
-            URI uri = mref.location();
+            URI uri = mref.location().get();
             String s = uri.toString();
             String fileURIString = s.substring(5, s.length()-2);
             this.zf = new JarFile(Paths.get(URI.create(fileURIString)).toString());
@@ -386,7 +387,7 @@ class ModuleReferences {
         private final JarFile jf;
 
         JarModuleReader(ModuleReference mref) throws IOException {
-            URI uri = mref.location();
+            URI uri = mref.location().get();
             String s = uri.toString();
             String fileURIString = s.substring(4, s.length()-2);
             this.jf = new JarFile(Paths.get(URI.create(fileURIString)).toString());

@@ -238,7 +238,7 @@ class JlinkTask {
                      name);
             }
 
-            URI location = mref.location();
+            URI location = mref.location().get();
             String scheme = location.getScheme();
             if (!scheme.equalsIgnoreCase("jmod") && !scheme.equalsIgnoreCase("jar")) {
                 fail(RuntimeException.class,

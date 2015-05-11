@@ -100,23 +100,19 @@ class BuiltinClassLoader extends ModuleClassLoader {
      *
      * A LoadedModule encapsulates a ModuleReference along with its location in
      * URL form, which is needed to avoid invocations of {@link
-     * java.net.URI#toURL() toURL} and the loading of protocol handlers when
+     * java.net.URI#toURL() toURL()} and the loading of protocol handlers when
      * defining classes or packages.
      */
     private static class LoadedModule {
         private final ModuleReference mref;
-        private final URL url;
+        private final URL url;          // May be null
 
         LoadedModule(ModuleReference mref) {
-            URL url;
-            try {
-                url = mref.location().toURL();
-            } catch (MalformedURLException e1) {
-                // no protocol handler so use built-in "module" protocol
+            URL url = null;
+            if (mref.location().isPresent()) {
                 try {
-                    url = new URL("module:/" + mref.descriptor().name());
-                } catch (MalformedURLException e2) {
-                    throw new InternalError(e2);
+                    url = mref.location().get().toURL();
+                } catch (MalformedURLException e1) {
                 }
             }
             this.mref = mref;
@@ -130,11 +126,11 @@ class BuiltinClassLoader extends ModuleClassLoader {
     // maps package name to a loaded module for the modules defined to this class loader
     private final Map<String, LoadedModule> packageToModule = new ConcurrentHashMap<>();
 
-    // maps a module name to a loaded module
-    private final Map<String, LoadedModule> nameToModule = new ConcurrentHashMap<>();
+    // maps a module name to a module reference
+    private final Map<String, ModuleReference> nameToModule = new ConcurrentHashMap<>();
 
     // maps a module reference to a module reader
-    private final Map<ModuleReference, ModuleReader> mrefToReader = new ConcurrentHashMap<>();
+    private final Map<ModuleReference, ModuleReader> moduleToReader = new ConcurrentHashMap<>();
 
     /**
      * Create a new instance.
@@ -161,13 +157,13 @@ class BuiltinClassLoader extends ModuleClassLoader {
         if (nameToModule.containsKey(mn))
             throw new IllegalStateException("Module " + mn
                                             + " already defined in this class loader");
+        nameToModule.put(mn, mref);
         LoadedModule loadedModule = new LoadedModule(mref);
-        nameToModule.put(mn, loadedModule);
         mref.descriptor().packages()
             .forEach(p -> packageToModule.put(p, loadedModule));
 
         // Use NULL_MODULE_READER initially to avoid opening eagerly
-        mrefToReader.put(mref, NULL_MODULE_READER);
+        moduleToReader.put(mref, NULL_MODULE_READER);
     }
 
     // -- finding resources
@@ -180,14 +176,14 @@ class BuiltinClassLoader extends ModuleClassLoader {
     public InputStream getResourceAsStream(String moduleName, String name)
         throws IOException
     {
-        LoadedModule lm = nameToModule.get(moduleName);
-        if (lm != null) {
+        ModuleReference mref = nameToModule.get(moduleName);
+        if (mref != null) {
             try {
                 return AccessController.doPrivileged(
                     new PrivilegedExceptionAction<InputStream>() {
                         @Override
                         public InputStream run() throws IOException {
-                            return moduleReaderFor(lm.mref())
+                            return moduleReaderFor(mref)
                                 .getResourceAsStream(name);
                         }
                     });
@@ -646,6 +642,8 @@ class BuiltinClassLoader extends ModuleClassLoader {
 
         // add the permission to access the resource
         URL url = cs.getLocation();
+        if (url == null)
+            return perms;
         Permission p = null;
         try {
             p = url.openConnection().getPermission();
@@ -668,15 +666,15 @@ class BuiltinClassLoader extends ModuleClassLoader {
     // -- miscellaneous supporting methods
 
     /**
-     * Returns the ModuleReader for the given reference, creating it
+     * Returns the ModuleReader for the given module, creating it
      * and replacing the NULL_MODULE_READER if needed.
      */
     private ModuleReader moduleReaderFor(ModuleReference mref) {
-        ModuleReader reader = mrefToReader.get(mref);
+        ModuleReader reader = moduleToReader.get(mref);
         assert reader != null;
         if (reader == NULL_MODULE_READER) {
             // replace NULL_MODULE_READER with an actual module reader
-            reader = mrefToReader.computeIfPresent(mref, (k, v) -> {
+            reader = moduleToReader.computeIfPresent(mref, (k, v) -> {
                 if (v == NULL_MODULE_READER) {
                     return createModuleReader(mref);
                 } else {
@@ -688,7 +686,7 @@ class BuiltinClassLoader extends ModuleClassLoader {
     }
 
     /**
-     * Creates a ModuleReader for the given reference.
+     * Creates a ModuleReader for the given module.
      */
     private ModuleReader createModuleReader(ModuleReference mref) {
         ModuleReader reader;

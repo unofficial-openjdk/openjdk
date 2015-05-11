@@ -36,6 +36,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 
@@ -254,8 +255,8 @@ class ReferenceInterposer implements ModuleFinder {
         mdb.conceals(conceals);
 
         // Return a new ModuleReference with the new module descriptor
-        URI location = mref.location();
-        return new ModuleReference(mdb.build(), location) {
+        Optional<URI> location = mref.location();
+        return new ModuleReference(mdb.build(), location.orElse(null)) {
             @Override
             public ModuleReader open() throws IOException {
                 return mref.open();

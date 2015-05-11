@@ -45,16 +45,16 @@ import static org.testng.Assert.*;
 public class ModuleReferenceTest {
 
     private ModuleReference newModuleReference(ModuleDescriptor descriptor,
-                                             URI location)
+                                               URI location)
     {
         return new ModuleReference(descriptor, location) {
             @Override
             public ModuleReader open() throws IOException {
-                throw new IOException("No module reader for: " + location);
+                throw new IOException("No reader for module "
+                                      + descriptor().toNameAndVersion());
             }
         };
     }
-
 
     public void testBasic() throws Exception {
         ModuleDescriptor descriptor =
@@ -69,7 +69,7 @@ public class ModuleReferenceTest {
         ModuleReference mref = newModuleReference(descriptor, location);
 
         assertTrue(mref.descriptor().equals(descriptor));
-        assertTrue(mref.location().equals(location));
+        assertTrue(mref.location().get().equals(location));
     }
 
     @Test(expectedExceptions = { NullPointerException.class })
@@ -78,13 +78,13 @@ public class ModuleReferenceTest {
         newModuleReference(null, location);
     }
 
-    @Test(expectedExceptions = { NullPointerException.class })
-    public void testNullLocation() throws Exception {
+    public void testNullLocation() {
         ModuleDescriptor descriptor =
                 new ModuleDescriptor.Builder("m")
                         .exports("p")
                         .build();
-        newModuleReference(descriptor, null);
+        ModuleReference mref = newModuleReference(descriptor, null);
+        assertTrue(!mref.location().isPresent());
     }
 
 }

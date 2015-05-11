@@ -30,7 +30,6 @@ import java.lang.module.ModuleReference;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleReader;
 import java.lang.reflect.Module;
-import java.net.URI;
 import java.util.Set;
 
 
@@ -55,14 +54,13 @@ public class Modules {
     {
         ModuleDescriptor descriptor =
             new ModuleDescriptor.Builder(name).conceals(packages).build();
-        URI uri = URI.create("module:/" + name);
-        ModuleReference mref = new ModuleReference(descriptor, uri) {
+        ModuleReference mref = new ModuleReference(descriptor, null) {
             @Override
             public ModuleReader open() throws IOException {
-                throw new IOException("No module reader for: " + uri);
+                throw new IOException("No reader for module " +
+                                      descriptor().toNameAndVersion());
             }
         };
-
         return SharedSecrets.getJavaLangReflectAccess().defineModule(loader, mref);
     }
 

@@ -192,7 +192,7 @@ class ModuleClassLoader extends SecureClassLoader {
     private Class<?> defineClass(String cn, ModuleReference mref) {
         ModuleReader reader = moduleReaderFor(mref);
         try {
-            URL url = mref.location().toURL();
+            URL url = mref.location().get().toURL();
 
             // read class file
             String rn = cn.replace('.', '/').concat(".class");

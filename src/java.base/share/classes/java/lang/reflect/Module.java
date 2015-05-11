@@ -418,12 +418,10 @@ public final class Module {
                 array[i++] = pkg.replace('.', '/');
             }
 
-            String vs = descriptor.version()
-                .map(Version::toString).orElse("");
-            URI location = mref.location();
-            String uris = (location != null) ? location.toString() : null;
+            String vs = descriptor.version().map(Version::toString).orElse("");
+            String loc = mref.location().map(URI::toString).orElse(null);
 
-            jvmDefineModule(m, vs, uris, array);
+            jvmDefineModule(m, vs, loc, array);
         }
 
         return m;

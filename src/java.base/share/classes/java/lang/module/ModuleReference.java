@@ -28,16 +28,18 @@ package java.lang.module;
 import java.io.IOException;
 import java.net.URI;
 import java.util.Objects;
+import java.util.Optional;
 
 import jdk.internal.module.Hasher.HashSupplier;
 
 
 /**
- * A reference to a module's content.  A module reference contains the module's
- * descriptor and its identifying {@link URI}.  It also has the ability to open
- * a {@link ModuleReader} with which to access the module's content, which may
- * be inside the Java run-time system itself or in an artifact such as a
- * modular JAR file or a JMOD file.
+ * A reference to a module's content.
+ *
+ * <p> A module reference contains the module's descriptor and its location, if
+ * known.  It also has the ability to open a {@link ModuleReader} in order to
+ * access the module's content, which may be inside the Java run-time system
+ * itself or in an artifact such as a modular JAR file or a JMOD file.
  *
  * @see ModuleFinder
  * @see ModuleReader
@@ -47,7 +49,7 @@ import jdk.internal.module.Hasher.HashSupplier;
 public abstract class ModuleReference {
 
     private final ModuleDescriptor descriptor;
-    private final URI location;
+    private final Optional<URI> location;
 
     // the function that computes the hash of this module reference
     private final HashSupplier hasher;
@@ -63,7 +65,7 @@ public abstract class ModuleReference {
                     HashSupplier hasher)
     {
         this.descriptor = Objects.requireNonNull(descriptor);
-        this.location = Objects.requireNonNull(location);
+        this.location = Optional.ofNullable(location);
         this.hasher = hasher;
     }
 
@@ -84,14 +86,15 @@ public abstract class ModuleReference {
     }
 
     /**
-     * Returns the URI that locates the reference.
+     * Returns the location of this module's content, if known.
      *
-     * <p> When loading classes from a module reference with a {@link
-     * java.security.SecureClassLoader SecureClassLoader}, then this URI is
-     * typically the location associated with {@link java.security.CodeSource
-     * CodeSource}.
+     * <p> This URI, when present, is used as the {@linkplain
+     * java.security.CodeSource#getLocation location} value of a {@link
+     * java.security.CodeSource CodeSource} so that a module's classes can be
+     * granted specific permissions when loaded by a {@link
+     * java.security.SecureClassLoader SecureClassLoader}.
      */
-    public URI location() {
+    public Optional<URI> location() {
         return location;
     }
 
@@ -145,7 +148,8 @@ public abstract class ModuleReference {
     }
 
     public String toString() {
-        return "[module " + descriptor().name() + ", location=" + location + "]";
+        return ("[module " + descriptor().name()
+                + ", location=" + location.get() + "]");
     }
 
 }

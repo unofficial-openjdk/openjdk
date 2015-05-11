@@ -890,7 +890,8 @@ public enum LauncherHelper {
                 .map(cf::findReference)
                 .sorted(Comparator.comparing(ModuleReference::descriptor))
                 .forEach(md -> {
-                    ostream.println(midAndLocation(md.descriptor(), md.location()));
+                    ostream.println(midAndLocation(md.descriptor(),
+                                                   md.location()));
                 });
         } else {
             String[] names = optionFlag.substring(colon+1).split(",");
@@ -934,12 +935,12 @@ public enum LauncherHelper {
         }
     }
 
-    static String midAndLocation(ModuleDescriptor md, URI location ) {
-        if (location.getScheme().equalsIgnoreCase("jrt")) {
+    static String midAndLocation(ModuleDescriptor md, Optional<URI> location ) {
+        URI loc = location.orElse(null);
+        if (loc == null || loc.getScheme().equalsIgnoreCase("jrt"))
             return md.toNameAndVersion();
-        } else {
-            return md.toNameAndVersion() + " (" + location + ")";
-        }
+        else
+            return md.toNameAndVersion() + " (" + loc + ")";
     }
 
 }
