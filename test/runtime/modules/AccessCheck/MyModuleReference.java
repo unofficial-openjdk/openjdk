@@ -27,19 +27,19 @@ import java.io.*;
 import java.net.URI;
 import java.util.Set;
 import java.lang.module.ModuleDescriptor;
-import java.lang.module.ModuleArtifact;
+import java.lang.module.ModuleReference;
 import java.lang.module.ModuleReader;
 
 
-// Utility class to set up a ModuleArtifact with a standard location
+// Utility class to set up a ModuleReference with a standard location
 // based on the descriptor and a list of packages.
 //
 
-public class MyModuleArtifact {
+public class MyModuleReference {
 
-    public static ModuleArtifact newModuleArtifact(ModuleDescriptor descriptor) {
+    public static ModuleReference newModuleReference(ModuleDescriptor descriptor) {
         URI location = URI.create("module:/" + descriptor.name());
-        return new ModuleArtifact(descriptor, location) {
+        return new ModuleReference(descriptor, location) {
             @Override
             public ModuleReader open() throws IOException {
                 throw new IOException("No module reader for: " + location);

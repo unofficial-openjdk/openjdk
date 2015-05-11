@@ -22,37 +22,37 @@
  */
 
 import java.lang.module.ModuleDescriptor;
-import java.lang.module.ModuleArtifact;
-import java.lang.module.ModuleArtifactFinder;
+import java.lang.module.ModuleReference;
+import java.lang.module.ModuleFinder;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-// Utility class to set up a ModuleArtifactFinder containing all the modules
-// for a given Layer. This utility class is helpful because a ModuleArtifactFinder
+// Utility class to set up a ModuleFinder containing all the modules
+// for a given Layer. This utility class is helpful because a ModuleFinder
 // usually locates modules on the file system by searching a sequence of
-// directories containing module artifacts.  We want to set up our own modules
-// and have a ModuleArtifactLibrary find those module artifacts within a test.
+// directories containing module mrefs.  We want to set up our own modules
+// and have a ModuleLibrary find those module mrefs within a test.
 
-public class ModuleArtifactLibrary implements ModuleArtifactFinder {
- private final Map<String, ModuleArtifact> namesToArtifact = new HashMap<>();
+public class ModuleLibrary implements ModuleFinder {
+ private final Map<String, ModuleReference> namesToReference = new HashMap<>();
 
- ModuleArtifactLibrary(ModuleArtifact... artifacts) {
-     for (ModuleArtifact artifact: artifacts) {
-         ModuleDescriptor emd = artifact.descriptor();
+ ModuleLibrary(ModuleReference... mrefs) {
+     for (ModuleReference mref: mrefs) {
+         ModuleDescriptor emd = mref.descriptor();
          String name = emd.name();
-         namesToArtifact.put(name, artifact);
+         namesToReference.put(name, mref);
      }
  }
 
  @Override
- public ModuleArtifact find(String name) {
-     return namesToArtifact.get(name);
+ public ModuleReference find(String name) {
+     return namesToReference.get(name);
  }
 
  @Override
- public Set<ModuleArtifact> allModules() {
-     return new HashSet<>(namesToArtifact.values());
+ public Set<ModuleReference> allModules() {
+     return new HashSet<>(namesToReference.values());
  }
 }

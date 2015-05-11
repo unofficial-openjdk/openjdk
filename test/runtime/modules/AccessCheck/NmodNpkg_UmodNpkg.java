@@ -36,8 +36,8 @@
 import java.lang.module.Configuration;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.Layer;
-import java.lang.module.ModuleArtifact;
-import java.lang.module.ModuleArtifactFinder;
+import java.lang.module.ModuleReference;
+import java.lang.module.ModuleFinder;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -71,23 +71,23 @@ public class NmodNpkg_UmodNpkg {
                      .exports("p1")
                      .conceals("m1_pinternal")
                      .build();
-     ModuleArtifact artifact_m1 = MyModuleArtifact.newModuleArtifact(descriptor_m1);
+     ModuleReference mref_m1 = MyModuleReference.newModuleReference(descriptor_m1);
 
-     // Set up a ModuleArtifactFinder containing all modules for this layer.
-     ModuleArtifactFinder finder =
-             new ModuleArtifactLibrary(artifact_m1);
+     // Set up a ModuleFinder containing all modules for this layer.
+     ModuleFinder finder =
+             new ModuleLibrary(mref_m1);
 
      // Resolves a module named "m1" that results in a configuration.  It
      // then augments that configuration with additional modules (and edges) induced
      // by service-use relationships.
      Configuration cf = Configuration.resolve(finder,
                                               Layer.bootLayer(),
-                                              ModuleArtifactFinder.nullFinder(),
+                                              ModuleFinder.nullFinder(),
                                               "m1");
 
      // map each module to the same class loader for this test
-     Map<ModuleArtifact, ClassLoader> map = new HashMap<>();
-     map.put(artifact_m1, MySameClassLoader.loader1);
+     Map<ModuleReference, ClassLoader> map = new HashMap<>();
+     map.put(mref_m1, MySameClassLoader.loader1);
 
      // Create Layer that contains m1 & m2
      Layer layer = Layer.create(cf, map::get);
