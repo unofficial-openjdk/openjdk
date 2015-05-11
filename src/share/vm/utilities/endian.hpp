@@ -42,7 +42,8 @@
 //      s4 corrected = endian->get(value);
 //      endian->set(value, 1);
 //
-struct Endian {
+class Endian {
+public:
   virtual u2 get(u2 x) = 0;
   virtual u4 get(u4 x) = 0;
   virtual u8 get(u8 x) = 0;
@@ -71,7 +72,11 @@ struct Endian {
 };
 
 // Normal endian handling.
-struct NativeEndian : public Endian {
+class NativeEndian : public Endian {
+private:
+  static NativeEndian _native;
+
+public:
   u2 get(u2 x);
   u4 get(u4 x);
   u8 get(u8 x);
@@ -86,11 +91,15 @@ struct NativeEndian : public Endian {
   void set(s4& x, s4 y);
   void set(s8& x, s8 y);
 
-  static NativeEndian native;
+  static Endian* get_native() { return &_native; }
 };
 
 // Swapping endian handling.
-struct SwappingEndian : public Endian {
+class SwappingEndian : public Endian {
+private:
+  static SwappingEndian _swapping;
+
+public:
   u2 get(u2 x);
   u4 get(u4 x);
   u8 get(u8 x);
@@ -105,6 +114,6 @@ struct SwappingEndian : public Endian {
   void set(s4& x, s4 y);
   void set(s8& x, s8 y);
 
-  static SwappingEndian swapping;
+  static Endian* get_swapping() { return &_swapping; }
 };
 #endif // SHARE_VM_UTILITIES_ENDIAN_HPP

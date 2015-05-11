@@ -53,7 +53,6 @@ class ClassPathEntry: public CHeapObj<mtClass> {
   virtual bool is_jar_file() = 0;
   virtual const char* name() = 0;
   virtual ImageFileReader* image() = 0;
-  virtual bool is_verified() = 0;
   virtual bool is_lazy();
   // Constructor
   ClassPathEntry();
@@ -73,7 +72,6 @@ class ClassPathDirEntry: public ClassPathEntry {
   bool is_jar_file()       { return false;  }
   const char* name()       { return _dir; }
   ImageFileReader* image() { return NULL; }
-  bool is_verified()       { return false; }
   ClassPathDirEntry(const char* dir);
   ClassFileStream* open_stream(const char* name, TRAPS);
   // Debugging
@@ -104,7 +102,6 @@ class ClassPathZipEntry: public ClassPathEntry {
   bool is_jar_file()       { return true;  }
   const char* name()       { return _zip_name; }
   ImageFileReader* image() { return NULL; }
-  bool is_verified()       { return false; }
   ClassPathZipEntry(jzfile* zip, const char* zip_name);
   ~ClassPathZipEntry();
   u1* open_entry(const char* name, jint* filesize, bool nul_terminate, TRAPS);
@@ -128,7 +125,6 @@ class LazyClassPathEntry: public ClassPathEntry {
   bool is_jar_file();
   const char* name()       { return _path; }
   ImageFileReader* image() { return NULL; }
-  bool is_verified()       { return false; }
   LazyClassPathEntry(const char* path, const struct stat* st);
   virtual ~LazyClassPathEntry();
   u1* open_entry(const char* name, jint* filesize, bool nul_terminate, TRAPS);
@@ -150,7 +146,6 @@ public:
   bool is_open()  { return _image != NULL; }
   const char* name();
   ImageFileReader* image() { return _image; }
-  bool is_verified();
   ImageModuleData* module_data() { return _module_data; }
   ClassPathImageEntry(ImageFileReader* image);
   ~ClassPathImageEntry();

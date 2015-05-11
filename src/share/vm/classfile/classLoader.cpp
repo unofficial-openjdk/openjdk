@@ -568,11 +568,6 @@ const char* ClassPathImageEntry::name() {
   return _image ? _image->name() : "";
 }
 
-bool ClassPathImageEntry::is_verified() {
-  return _image && _image->is_verified();
-}
-
-
 ClassFileStream* ClassPathImageEntry::open_stream(const char* name, TRAPS) {
   u1* buffer;
   u8 size;
@@ -803,7 +798,6 @@ ClassPathEntry* ClassLoader::create_class_path_entry(const char *path, const str
         return NULL;
       }
     }
-    // TODO - add proper criteria for selecting image file
     ImageFileReader* image = ImageFileReader::open(canonical_path);
     if (image) {
       new_entry = new ClassPathImageEntry(image);

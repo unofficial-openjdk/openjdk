@@ -63,7 +63,7 @@ void NativeEndian::set(s2& x, s2 y) { x = y; }
 void NativeEndian::set(s4& x, s4 y) { x = y; }
 void NativeEndian::set(s8& x, s8 y) { x = y; }
 
-NativeEndian NativeEndian::native;
+NativeEndian NativeEndian::_native;
 
 u2 SwappingEndian::get(u2 x) { return bswap_16(x); }
 u4 SwappingEndian::get(u4 x) { return bswap_32(x); }
@@ -79,19 +79,19 @@ void SwappingEndian::set(s2& x, s2 y) { x = bswap_16(y); }
 void SwappingEndian::set(s4& x, s4 y) { x = bswap_32(y); }
 void SwappingEndian::set(s8& x, s8 y) { x = bswap_64(y); }
 
-SwappingEndian SwappingEndian::swapping;
+SwappingEndian SwappingEndian::_swapping;
 
 Endian* Endian::get_handler(bool big_endian) {
   // If requesting little endian on a little endian machine or
   // big endian on a big endian machine use native handler
   if (big_endian == is_big_endian()) {
-    return &NativeEndian::native;
+    return NativeEndian::get_native();
   } else {
     // Use swapping handler.
-    return &SwappingEndian:: swapping;
+    return SwappingEndian::get_swapping();
   }
 }
 
 Endian* Endian::get_native_handler() {
-  return &NativeEndian::native;
+  return NativeEndian::get_native();
 }

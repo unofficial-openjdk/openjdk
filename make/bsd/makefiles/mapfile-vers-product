@@ -141,6 +141,16 @@ SUNWprivate_1.1 {
                 JVM_Halt;
                 JVM_HoldsLock;
                 JVM_IHashCode;
+                JVM_ImageAttributeOffsets;
+                JVM_ImageClose;
+                JVM_ImageFindAttributes;
+                JVM_ImageGetAttributes;
+                JVM_ImageGetDataAddress;
+                JVM_ImageGetIndexAddress;
+                JVM_ImageGetStringBytes;
+                JVM_ImageOpen;
+                JVM_ImageRead;
+                JVM_ImageReadCompressed;
                 JVM_InitAgentProperties;
                 JVM_InitProperties;
                 JVM_InternString;
@@ -197,18 +207,6 @@ SUNWprivate_1.1 {
                 JVM_CanReadModule;
                 JVM_IsExportedToModule;
                 JVM_AddModulePackage;
-
-                # Images
-                JVM_ImageOpen;
-                JVM_ImageClose;
-                JVM_ImageGetIndexAddress;
-                JVM_ImageGetDataAddress;
-                JVM_ImageRead;
-                JVM_ImageReadCompressed;
-                JVM_ImageGetStringBytes;
-                JVM_ImageGetAttributes;
-                JVM_ImageFindAttributes;
-                JVM_ImageAttributeOffsets;
 
                 # miscellaneous functions
                 jio_fprintf;

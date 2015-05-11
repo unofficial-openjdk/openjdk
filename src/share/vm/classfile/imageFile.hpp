@@ -33,7 +33,7 @@
 #include "utilities/growableArray.hpp"
 
 // Image files are an alternate file format for storing classes and resources. The
-// goal is to supply file access which is faster and smaller that the jar format.
+// goal is to supply file access which is faster and smaller than the jar format.
 // It should be noted that unlike jars, information stored in an image is in native
 // endian format. This allows the image to be mapped into memory without endian
 // translation.  This also means that images are platform dependent.
@@ -77,7 +77,7 @@
 //         special file extension.
 // Major vers, minor vers - differences in version numbers indicate structural
 //                          changes in the image.
-// Flags - various image wide flags.
+// Flags - various image wide flags (future).
 // Resource count - number of resources in the file.
 // Table length - the length of lookup tables used in the index.
 // Attributes size - number of bytes in the region used to store location attribute
@@ -142,20 +142,20 @@
 // to access classes for crossing compilation.
 //
 
-// Prime used to generate hash for Perfect Hashing.
-static const u4 HASH_MULTIPLIER = 0x01000193;
-
 class ImageFileReader; // forward declaration
 
 // Manage image file string table.
-class ImageStrings {
+class ImageStrings VALUE_OBJ_CLASS_SPEC {
 private:
   u1* _data; // Data bytes for strings.
   u4 _size; // Number of bytes in the string table.
-
 public:
-  // Not found result from find routine.
-  static const s4 NOT_FOUND = -1;
+  enum {
+    // Not found result from find routine.
+    NOT_FOUND = -1,
+    // Prime used to generate hash for Perfect Hashing.
+    HASH_MULTIPLIER = 0x01000193
+  };
 
   ImageStrings(u1* data, u4 size) : _data(data), _size(size) {}
 
@@ -165,7 +165,7 @@ public:
     return (const char*)(_data + offset);
   }
 
-  // Compute the Perfect Hashing hash code for the supplied string.
+  // Compute the Perfect Hashing hash code for the supplied UTF-8 string.
   inline static u4 hash_code(const char* string) {
     return hash_code(string, HASH_MULTIPLIER);
   }
@@ -173,18 +173,19 @@ public:
   // Compute the Perfect Hashing hash code for the supplied string, starting at seed.
   static s4 hash_code(const char* string, s4 seed);
 
-  // Match up a string in the perfect hash table.  Still needs validation
-  // for exact match.
+  // Match up a string in a perfect hash table.  Result still needs validation
+  // for precise match.
   static s4 find(Endian* endian, const char* name, s4* redirect, u4 length);
 
-  // Test to see if string begins with start.  If so returns remaining portion
-  // of string.  Otherwise, NULL.  Used to test sections of a path without
-  // copying.
+  // Test to see if UTF-8 string begins with the start UTF-8 string.  If so,
+  // return non-NULL address of remaining portion of string.  Otherwise, return
+  // NULL.  Used to test sections of a path without copying from image string
+  // table.
   static const char* starts_with(const char* string, const char* start);
 
-  // Test to see if string begins with start char.  If so returns remaining portion
-  // of string.  Otherwise, NULL.  Used to test sections of a path without
-  // copying.
+  // Test to see if UTF-8 string begins with start char.  If so, return non-NULL
+  // address of remaining portion of string.  Otherwise, return NULL.  Used
+  // to test a character of a path without copying.
   inline static const char* starts_with(const char* string, const char ch) {
     return *string == ch ? string + 1 : NULL;
   }
@@ -224,7 +225,7 @@ public:
 //    represented differently.
 //  - Package strings include trailing slash and extensions include prefix period.
 //
-class ImageLocation {
+class ImageLocation VALUE_OBJ_CLASS_SPEC {
 public:
   enum {
     ATTRIBUTE_END,          // End of attribute stream marker
@@ -258,13 +259,11 @@ private:
   inline static u8 attribute_value(u1* data, u1 n) {
     guarantee(0 < n && n <= 8, "invalid attribute value length");
     u8 value = 0;
-
     // Most significant bytes first.
     for (u1 i = 0; i < n; i++) {
       value <<= 8;
       value |= data[i];
     }
-
     return value;
   }
 
@@ -310,18 +309,17 @@ public:
 //
 // Manage the image module meta data.
 class ImageModuleData : public CHeapObj<mtClass> {
-  class Header {
+  class Header VALUE_OBJ_CLASS_SPEC {
   private:
     u4 _ptm_count;      // Count of package to module entries
     u4 _mtp_count;      // Count of module to package entries
-
   public:
     inline u4 ptm_count(Endian* endian) const { return endian->get(_ptm_count); }
     inline u4 mtp_count(Endian* endian) const { return endian->get(_mtp_count); }
   };
 
   // Hashtable entry
-  class HashData {
+  class HashData VALUE_OBJ_CLASS_SPEC {
   private:
     u4 _name_offset;    // Name offset in string table
   public:
@@ -371,27 +369,18 @@ public:
   ImageModuleData(const ImageFileReader* image_file, const char* module_data_name);
   ~ImageModuleData();
 
-  // Return the name of tthe module data resource.
+  // Return the name of the module data resource.
   static void module_data_name(char* buffer, const char* image_file_name);
 
-  // Return the module name a package resides.  Returns NULL if not found.
+  // Return the module in which a package resides.  Returns NULL if not found.
   const char* package_to_module(const char* package_name);
 
-  // Returns all the package names in a module.  Returns NULL if not found.
+  // Returns all the package names in a module.  Returns NULL if module not found.
   GrowableArray<const char*>* module_to_packages(const char* module_name);
 };
 
-// Image file marker.
-static const u4 IMAGE_MAGIC = 0xCAFEDADA;
-// Endian inverted Image file marker.
-static const u4 IMAGE_MAGIC_INVERT = 0xDADAFECA;
-// Image file major version number.
-static const u4 MAJOR_VERSION = 1;
-// Image file minor version number.
-static const u4 MINOR_VERSION = 0;
-
 // Image file header, starting at offset 0.
-class ImageHeader {
+class ImageHeader VALUE_OBJ_CLASS_SPEC {
 private:
   u4 _magic;           // Image file marker
   u4 _version;         // Image file major version number
@@ -450,6 +439,7 @@ private:
   s4 _use;             // Use count
   int _fd;             // File descriptor
   Endian* _endian;     // Endian handler
+  u8 _file_size;       // File size in bytes
   ImageHeader _header; // Image header
   size_t _index_size;  // Total size of index
   u1* _index_data;     // Raw index data
@@ -469,7 +459,14 @@ private:
 
 public:
   enum {
-    IMAGE_VERIFIED = 1 // Indicates that the image file has been verified
+    // Image file marker.
+    IMAGE_MAGIC = 0xCAFEDADA,
+    // Endian inverted Image file marker.
+    IMAGE_MAGIC_INVERT = 0xDADAFECA,
+    // Image file major version number.
+    MAJOR_VERSION = 1,
+    // Image file minor version number.
+    MINOR_VERSION = 0
   };
 
   // Open an image file, reuse structure if file already open.
@@ -481,18 +478,17 @@ public:
   // Return an id for the specifed ImageFileReader.
   static u8 readerToID(ImageFileReader *reader);
 
+  // Validate the image id.
+  static bool idCheck(u8 id);
+
   // Return an id for the specifed ImageFileReader.
   static ImageFileReader* idToReader(u8 id);
 
-  // Open image file for access.
+  // Open image file for read access.
   bool open();
 
   // Close image file.
   void close();
-
-  inline bool is_verified() const {
-    return (_header.flags(_endian) & IMAGE_VERIFIED) != 0;
-  }
 
   // Read directly from the file.
   bool read_at(u1* data, u8 size, u8 offset) const;
@@ -502,6 +498,11 @@ public:
   // Retrieve name of image file.
   inline const char* name() const {
     return _name;
+  }
+
+  // Retrieve size of image file.
+  inline u8 file_size() const {
+    return _file_size;
   }
 
   // Return first address of index data.
@@ -552,13 +553,15 @@ public:
 
   // Return location attribute stream at offset.
   inline u1* get_location_offset_data(u4 offset) const {
-    guarantee((u4)offset < _header.locations_size(_endian), "offset exceeds location attributes size");
+    guarantee((u4)offset < _header.locations_size(_endian),
+              "offset exceeds location attributes size");
     return offset != 0 ? _location_bytes + offset : NULL;
   }
 
   // Return location attribute stream for location i.
   inline u1* get_location_data(u4 index) const {
-    guarantee((u4)index < _header.table_length(_endian), "index exceeds location count");
+    guarantee((u4)index < _header.table_length(_endian),
+              "index exceeds location count");
     u4 offset = _endian->get(_offsets_table[index]);
 
     return get_location_offset_data(offset);
@@ -573,7 +576,7 @@ public:
   // Verify that a found location matches the supplied path.
   bool verify_location(ImageLocation& location, const char* path) const;
 
-  // Return the resource for the supplied location info.
+  // Return the resource for the supplied path.
   u1* get_resource(ImageLocation& location, bool is_C_heap) const;
 
   // Return the resource associated with the path else NULL if not found.
