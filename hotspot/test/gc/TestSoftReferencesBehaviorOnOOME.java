@@ -33,8 +33,8 @@
  * @run main/othervm -Xmx128m TestSoftReferencesBehaviorOnOOME 128k 256k
  * @run main/othervm -Xmx128m TestSoftReferencesBehaviorOnOOME 2k 32k
  */
-import com.oracle.java.testlibrary.Utils;
-import com.oracle.java.testlibrary.Asserts;
+import jdk.test.lib.Utils;
+import jdk.test.lib.Asserts;
 import java.lang.ref.SoftReference;
 import java.util.LinkedList;
 import java.util.Random;
