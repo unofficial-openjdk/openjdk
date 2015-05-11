@@ -51,39 +51,40 @@ import jdk.internal.module.Hasher;
 
 
 /**
- * A factory for creating ModuleArtifact implementations where the modules are
+ * A factory for creating ModuleReference implementations where the modules are
  * located in the run-time image, packaged as jmod or modular JAR files, or
  * where the modules are exploded on the file system.
  */
 
-class ModuleArtifacts {
-    private ModuleArtifacts() { }
+class ModuleReferences {
+
+    private ModuleReferences() { }
 
     /**
-     * Creates a ModuleArtifact.
+     * Creates a ModuleReference.
      */
-    static ModuleArtifact newModuleArtifact(ModuleDescriptor md,
-                                            URI location,
-                                            Hasher.HashSupplier hasher)
+    static ModuleReference newModuleReference(ModuleDescriptor md,
+                                              URI location,
+                                              Hasher.HashSupplier hasher)
     {
         String scheme = location.getScheme();
         if (scheme.equalsIgnoreCase("jrt"))
-            return new JrtModuleArtifact(md, location, hasher);
+            return new JrtModuleReference(md, location, hasher);
         if (scheme.equalsIgnoreCase("jmod"))
-            return new JModModuleArtifact(md, location, hasher);
+            return new JModModuleReference(md, location, hasher);
         if (scheme.equalsIgnoreCase("jar"))
-            return new JarModuleArtifact(md, location, hasher);
+            return new JarModuleReference(md, location, hasher);
         if (scheme.equalsIgnoreCase("file"))
-            return new ExplodedModuleArtifact(md, location, hasher);
+            return new ExplodedModuleReference(md, location, hasher);
 
         throw new InternalError("Should not get here");
     }
 
     /**
-     * A ModuleArtifact for a module that is linked into the run-time image.
+     * A ModuleReference for a module that is linked into the run-time image.
      */
-    static class JrtModuleArtifact extends ModuleArtifact {
-        JrtModuleArtifact(ModuleDescriptor descriptor,
+    static class JrtModuleReference extends ModuleReference {
+        JrtModuleReference(ModuleDescriptor descriptor,
                           URI location,
                           Hasher.HashSupplier hasher) {
             super(descriptor, location, hasher);
@@ -95,10 +96,10 @@ class ModuleArtifacts {
     }
 
     /**
-     * A ModuleArtifact for a module that is exploded on the file system.
+     * A ModuleReference for a module that is exploded on the file system.
      */
-    static class ExplodedModuleArtifact extends ModuleArtifact {
-        ExplodedModuleArtifact(ModuleDescriptor descriptor,
+    static class ExplodedModuleReference extends ModuleReference {
+        ExplodedModuleReference(ModuleDescriptor descriptor,
                                URI location,
                                Hasher.HashSupplier hasher) {
             super(descriptor, location, hasher);
@@ -110,12 +111,12 @@ class ModuleArtifacts {
     }
 
     /**
-     * A ModuleArtifact for a module that is packaged as jmod file.
+     * A ModuleReference for a module that is packaged as jmod file.
      */
-    static class JModModuleArtifact extends ModuleArtifact {
-        JModModuleArtifact(ModuleDescriptor descriptor,
-                           URI location,
-                           Hasher.HashSupplier hasher) {
+    static class JModModuleReference extends ModuleReference {
+        JModModuleReference(ModuleDescriptor descriptor,
+                            URI location,
+                            Hasher.HashSupplier hasher) {
             super(descriptor, location, hasher);
         }
 
@@ -125,10 +126,10 @@ class ModuleArtifacts {
     }
 
     /**
-     * A ModuleArtifact for a module that is packaged as a modular JAR file.
+     * A ModuleReference for a module that is packaged as a modular JAR file.
      */
-    static class JarModuleArtifact extends ModuleArtifact {
-        JarModuleArtifact(ModuleDescriptor descriptor,
+    static class JarModuleReference extends ModuleReference {
+        JarModuleReference(ModuleDescriptor descriptor,
                           URI location,
                           Hasher.HashSupplier hasher) {
             super(descriptor, location, hasher);
@@ -162,15 +163,15 @@ class ModuleArtifacts {
         private final String module;
         private volatile boolean closed;
 
-        JrtModuleReader(ModuleArtifact artifact) throws IOException {
+        JrtModuleReader(ModuleReference mref) throws IOException {
             // when running with a security manager then check that the caller
             // has access to the run-time image
             SecurityManager sm = System.getSecurityManager();
             if (sm != null) {
-                URLConnection uc = artifact.location().toURL().openConnection();
+                URLConnection uc = mref.location().toURL().openConnection();
                 sm.checkPermission(uc.getPermission());
             }
-            this.module = artifact.descriptor().name();
+            this.module = mref.descriptor().name();
         }
 
         /**
@@ -236,8 +237,8 @@ class ModuleArtifacts {
         private final Path dir;
         private volatile boolean closed;
 
-        ExplodedModuleReader(ModuleArtifact artifact) {
-            dir = Paths.get(artifact.location());
+        ExplodedModuleReader(ModuleReference mref) {
+            dir = Paths.get(mref.location());
         }
 
         /**
@@ -351,8 +352,8 @@ class ModuleArtifacts {
     static class JModModuleReader extends SafeCloseModuleReader {
         private final ZipFile zf;
 
-        JModModuleReader(ModuleArtifact artifact) throws IOException {
-            URI uri = artifact.location();
+        JModModuleReader(ModuleReference mref) throws IOException {
+            URI uri = mref.location();
             String s = uri.toString();
             String fileURIString = s.substring(5, s.length()-2);
             this.zf = new JarFile(Paths.get(URI.create(fileURIString)).toString());
@@ -384,8 +385,8 @@ class ModuleArtifacts {
     static class JarModuleReader extends SafeCloseModuleReader {
         private final JarFile jf;
 
-        JarModuleReader(ModuleArtifact artifact) throws IOException {
-            URI uri = artifact.location();
+        JarModuleReader(ModuleReference mref) throws IOException {
+            URI uri = mref.location();
             String s = uri.toString();
             String fileURIString = s.substring(4, s.length()-2);
             this.jf = new JarFile(Paths.get(URI.create(fileURIString)).toString());

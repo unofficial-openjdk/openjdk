@@ -31,23 +31,23 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import java.lang.module.ModuleArtifact;
+import java.lang.module.ModuleReference;
 
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import static org.testng.Assert.*;
 
 /**
- * Basic tests for java.lang.module.ModuleArtifact
+ * Basic tests for java.lang.module.ModuleReference
  */
 
 @Test
-public class ModuleArtifactTest {
+public class ModuleReferenceTest {
 
-    private ModuleArtifact newModuleArtifact(ModuleDescriptor descriptor,
+    private ModuleReference newModuleReference(ModuleDescriptor descriptor,
                                              URI location)
     {
-        return new ModuleArtifact(descriptor, location) {
+        return new ModuleReference(descriptor, location) {
             @Override
             public ModuleReader open() throws IOException {
                 throw new IOException("No module reader for: " + location);
@@ -66,16 +66,16 @@ public class ModuleArtifactTest {
 
         URI location = URI.create("module:/m");
 
-        ModuleArtifact artifact = newModuleArtifact(descriptor, location);
+        ModuleReference mref = newModuleReference(descriptor, location);
 
-        assertTrue(artifact.descriptor().equals(descriptor));
-        assertTrue(artifact.location().equals(location));
+        assertTrue(mref.descriptor().equals(descriptor));
+        assertTrue(mref.location().equals(location));
     }
 
     @Test(expectedExceptions = { NullPointerException.class })
     public void testNullDescriptor() throws Exception {
         URI location = URI.create("module:/m");
-        newModuleArtifact(null, location);
+        newModuleReference(null, location);
     }
 
     @Test(expectedExceptions = { NullPointerException.class })
@@ -84,7 +84,7 @@ public class ModuleArtifactTest {
                 new ModuleDescriptor.Builder("m")
                         .exports("p")
                         .build();
-        newModuleArtifact(descriptor, null);
+        newModuleReference(descriptor, null);
     }
 
 }

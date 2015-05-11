@@ -26,8 +26,8 @@
 package jdk.internal.module;
 
 import java.io.IOException;
-import java.lang.module.ModuleArtifact;
-import java.lang.module.ModuleArtifactFinder;
+import java.lang.module.ModuleReference;
+import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Exports;
 import java.lang.module.ModuleReader;
@@ -40,7 +40,7 @@ import java.util.Set;
 
 
 /**
- * Interposes on a {@code ModuleArtifactFinder} to augment module descriptors
+ * Interposes on a {@code ModuleFinder} to augment module descriptors
  * with additional requires or exports.
  *
  * This class is intended for use with the VM options AddModuleRequires and
@@ -54,10 +54,10 @@ import java.util.Set;
  * }</pre>
  */
 
-class ArtifactInterposer implements ModuleArtifactFinder {
+class ReferenceInterposer implements ModuleFinder {
 
     // the underlying finder
-    private final ModuleArtifactFinder finder;
+    private final ModuleFinder finder;
 
     // module name -> module dependence
     private final Map<String, Set<String>> requiresAdditions;
@@ -69,13 +69,13 @@ class ArtifactInterposer implements ModuleArtifactFinder {
     private static final Set<String> ALL
         = Collections.unmodifiableSet(new HashSet<>());
 
-    // module name -> artifact
-    private final Map<String, ModuleArtifact> artifacts = new HashMap<>();
+    // module name -> reference
+    private final Map<String, ModuleReference> mrefs = new HashMap<>();
 
     // true if all modules have been cached
     private boolean haveAllModules;
 
-    private ArtifactInterposer(ModuleArtifactFinder finder,
+    private ReferenceInterposer(ModuleFinder finder,
                                Map<String, Set<String>> requiresAdditions,
                                Map<String, Map<String, Set<String>>> exportAdditions)
     {
@@ -91,7 +91,7 @@ class ArtifactInterposer implements ModuleArtifactFinder {
      *     {@code addModuleRequiresValue} or {@code addModuleExportsValue}
      *     cannot be parsed
      */
-    static ModuleArtifactFinder interpose(ModuleArtifactFinder finder,
+    static ModuleFinder interpose(ModuleFinder finder,
                                           String addModuleRequiresValue,
                                           String addModuleExportsValue)
     {
@@ -132,49 +132,49 @@ class ArtifactInterposer implements ModuleArtifactFinder {
             }
         }
 
-        return new ArtifactInterposer(finder, requiresAdditions, exportAdditions);
+        return new ReferenceInterposer(finder, requiresAdditions, exportAdditions);
     }
 
     @Override
-    public ModuleArtifact find(String name) {
-        ModuleArtifact artifact = artifacts.get(name);
-        if (artifact != null)
-            return artifact;
+    public ModuleReference find(String name) {
+        ModuleReference mref = mrefs.get(name);
+        if (mref != null)
+            return mref;
 
-        artifact = finder.find(name);
-        if (artifact == null)
+        mref = finder.find(name);
+        if (mref == null)
             return null;
 
-        artifact = replaceIfNeeded(artifact);
-        artifacts.put(name, artifact);
-        return artifact;
+        mref = replaceIfNeeded(mref);
+        mrefs.put(name, mref);
+        return mref;
     }
 
     @Override
-    public Set<ModuleArtifact> allModules() {
+    public Set<ModuleReference> allModules() {
         if (!haveAllModules) {
-            for (ModuleArtifact artifact: finder.allModules()) {
-                String name = artifact.descriptor().name();
-                artifacts.computeIfAbsent(name, k -> replaceIfNeeded(artifact));
+            for (ModuleReference mref: finder.allModules()) {
+                String name = mref.descriptor().name();
+                mrefs.computeIfAbsent(name, k -> replaceIfNeeded(mref));
             }
             haveAllModules = true;
         }
-        return new HashSet<>(artifacts.values());
+        return new HashSet<>(mrefs.values());
     }
 
     /**
-     * Returns the given module artifact or a replacement with an updated
+     * Returns the given module reference or a replacement with an updated
      * module descriptor with additional requires or widened exports.
      */
-    private ModuleArtifact replaceIfNeeded(ModuleArtifact artifact) {
-        ModuleDescriptor descriptor = artifact.descriptor();
+    private ModuleReference replaceIfNeeded(ModuleReference mref) {
+        ModuleDescriptor descriptor = mref.descriptor();
         String name = descriptor.name();
 
         Set<String> requiresAdds = requiresAdditions.get(name);
         Map<String, Set<String>> exportAdds = exportAdditions.get(name);
 
         if (requiresAdds == null && exportAdds == null)
-            return artifact;  // no changes requested
+            return mref;  // no changes requested
 
         ModuleDescriptor.Builder mdb = new ModuleDescriptor.Builder(name);
 
@@ -253,12 +253,12 @@ class ArtifactInterposer implements ModuleArtifactFinder {
         descriptor.version().ifPresent(v -> mdb.version(v.toString())); // ##
         mdb.conceals(conceals);
 
-        // Return a new ModuleArtifact with the new module descriptor
-        URI location = artifact.location();
-        return new ModuleArtifact(mdb.build(), location) {
+        // Return a new ModuleReference with the new module descriptor
+        URI location = mref.location();
+        return new ModuleReference(mdb.build(), location) {
             @Override
             public ModuleReader open() throws IOException {
-                return artifact.open();
+                return mref.open();
             }
         };
 

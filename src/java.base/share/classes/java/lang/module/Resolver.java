@@ -68,18 +68,18 @@ final class Resolver {
         // the set of module descriptors
         private final Set<ModuleDescriptor> selected;
 
-        // maps name to module artifact for modules in this resolution
-        private final Map<String, ModuleArtifact> nameToArtifact;
+        // maps name to module reference for modules in this resolution
+        private final Map<String, ModuleReference> nameToReference;
 
         // the readability graph
         private final Map<ModuleDescriptor, Set<ModuleDescriptor>> graph;
 
         Resolution(Set<ModuleDescriptor> selected,
-                   Map<String, ModuleArtifact> nameToArtifact,
+                   Map<String, ModuleReference> nameToReference,
                    Map<ModuleDescriptor, Set<ModuleDescriptor>> graph)
         {
             this.selected = Collections.unmodifiableSet(selected);
-            this.nameToArtifact = Collections.unmodifiableMap(nameToArtifact);
+            this.nameToReference = Collections.unmodifiableMap(nameToReference);
             this.graph = graph; // no need to make defensive copy
         }
 
@@ -87,8 +87,8 @@ final class Resolver {
             return selected;
         }
 
-        ModuleArtifact findArtifact(String name) {
-            return nameToArtifact.get(name);
+        ModuleReference findReference(String name) {
+            return nameToReference.get(name);
         }
 
         Set<ModuleDescriptor> readDependences(ModuleDescriptor descriptor) {
@@ -102,7 +102,7 @@ final class Resolver {
 
         /**
          * Returns a new Resolution that this is this Resolution augmented with
-         * modules (located via the module artifact finders) that are induced
+         * modules (located via the module reference finders) that are induced
          * by service-use relationships.
          */
         Resolution bind() {
@@ -112,20 +112,20 @@ final class Resolver {
     }
 
 
-    private final ModuleArtifactFinder beforeFinder;
+    private final ModuleFinder beforeFinder;
     private final Layer layer;
-    private final ModuleArtifactFinder afterFinder;
+    private final ModuleFinder afterFinder;
 
     // the set of module descriptors, added to at each iteration of resolve
     private final Set<ModuleDescriptor> selected = new HashSet<>();
 
-    // map of module names to artifacts
-    private final Map<String, ModuleArtifact> nameToArtifact = new HashMap<>();
+    // map of module names to references
+    private final Map<String, ModuleReference> nameToReference = new HashMap<>();
 
 
-    private Resolver(ModuleArtifactFinder beforeFinder,
+    private Resolver(ModuleFinder beforeFinder,
                      Layer layer,
-                     ModuleArtifactFinder afterFinder)
+                     ModuleFinder afterFinder)
     {
         this.beforeFinder = beforeFinder;
         this.layer = layer;
@@ -139,9 +139,9 @@ final class Resolver {
      *
      * @throws ResolutionException
      */
-    static Resolution resolve(ModuleArtifactFinder beforeFinder,
+    static Resolution resolve(ModuleFinder beforeFinder,
                               Layer layer,
-                              ModuleArtifactFinder afterFinder,
+                              ModuleFinder afterFinder,
                               Collection<String> roots)
     {
         Resolver resolver = new Resolver(beforeFinder, layer, afterFinder);
@@ -157,20 +157,20 @@ final class Resolver {
         Deque<ModuleDescriptor> q = new ArrayDeque<>();
         for (String root : roots) {
 
-            ModuleArtifact artifact = find(beforeFinder, root);
-            if (artifact == null) {
+            ModuleReference mref = find(beforeFinder, root);
+            if (mref == null) {
                 // ## Does it make sense to attempt to locate root modules with
                 //    a finder other than the beforeFinder?
-                artifact = find(afterFinder, root);
-                if (artifact == null) {
+                mref = find(afterFinder, root);
+                if (mref == null) {
                     fail("Module %s does not exist", root);
                 }
             }
 
-            trace("Module %s located (%s)", root, artifact.location());
+            trace("Module %s located (%s)", root, mref.location());
 
-            nameToArtifact.put(root, artifact);
-            q.push(artifact.descriptor());
+            nameToReference.put(root, mref);
+            q.push(mref.descriptor());
         }
 
         resolve(q);
@@ -181,7 +181,7 @@ final class Resolver {
 
         Map<ModuleDescriptor, Set<ModuleDescriptor>> graph = makeGraph();
 
-        return new Resolution(selected, nameToArtifact, graph);
+        return new Resolution(selected, nameToReference, graph);
     }
 
     /**
@@ -197,7 +197,7 @@ final class Resolver {
 
         while (!q.isEmpty()) {
             ModuleDescriptor descriptor = q.poll();
-            assert nameToArtifact.containsKey(descriptor.name());
+            assert nameToReference.containsKey(descriptor.name());
             selected.add(descriptor);
 
             // process dependences
@@ -205,32 +205,32 @@ final class Resolver {
                 String dn = requires.name();
 
                 // before finder
-                ModuleArtifact artifact = find(beforeFinder, dn);
+                ModuleReference mref = find(beforeFinder, dn);
 
                 // already defined to the runtime
-                if (artifact == null && layer.findModule(dn) != null) {
+                if (mref == null && layer.findModule(dn) != null) {
                     continue;
                 }
 
                 // after finder
-                if (artifact == null) {
-                    artifact = find(afterFinder, dn);
+                if (mref == null) {
+                    mref = find(afterFinder, dn);
                 }
 
                 // not found
-                if (artifact == null) {
+                if (mref == null) {
                     fail("%s requires unknown module %s", descriptor.name(), dn);
                 }
 
                 // check if module descriptor has already been seen
-                ModuleDescriptor other = artifact.descriptor();
+                ModuleDescriptor other = mref.descriptor();
                 if (!selected.contains(other) && !newlySelected.contains(other)) {
 
                     trace("Module %s located (%s), required by %s",
-                            dn, artifact.location(), descriptor.name());
+                            dn, mref.location(), descriptor.name());
 
                     newlySelected.add(other);
-                    nameToArtifact.put(dn, artifact);
+                    nameToReference.put(dn, mref);
                     q.offer(other);
                 }
             }
@@ -240,27 +240,27 @@ final class Resolver {
     }
 
     /**
-     * Updates the Resolver with modules (located via the module artifact finders)
+     * Updates the Resolver with modules (located via the module reference finders)
      * that are induced by service-use relationships.
      */
     private Resolution bind() {
 
         // Scan the finders for all available service provider modules. As java.base
         // uses services then all finders will need to be scanned anyway.
-        Map<String, Set<ModuleArtifact>> availableProviders = new HashMap<>();
-        for (ModuleArtifact artifact : findAll(beforeFinder)) {
-            ModuleDescriptor descriptor = artifact.descriptor();
+        Map<String, Set<ModuleReference>> availableProviders = new HashMap<>();
+        for (ModuleReference mref : findAll(beforeFinder)) {
+            ModuleDescriptor descriptor = mref.descriptor();
             if (!descriptor.provides().isEmpty()) {
                 descriptor.provides().keySet().forEach(s ->
-                    availableProviders.computeIfAbsent(s, k -> new HashSet<>()).add(artifact));
+                    availableProviders.computeIfAbsent(s, k -> new HashSet<>()).add(mref));
             }
         }
-        for (ModuleArtifact artifact : findAll(afterFinder)) {
-            ModuleDescriptor descriptor = artifact.descriptor();
+        for (ModuleReference mref : findAll(afterFinder)) {
+            ModuleDescriptor descriptor = mref.descriptor();
             // the parent layer may hide service providers from afterFinder
             if (!descriptor.provides().isEmpty() && layer.findModule(descriptor.name()) == null) {
                 descriptor.provides().keySet().forEach(s ->
-                    availableProviders.computeIfAbsent(s, k -> new HashSet<>()).add(artifact));
+                    availableProviders.computeIfAbsent(s, k -> new HashSet<>()).add(mref));
             }
         }
 
@@ -285,15 +285,15 @@ final class Resolver {
             for (ModuleDescriptor descriptor : candidateConsumers) {
                 if (!descriptor.uses().isEmpty()) {
                     for (String service : descriptor.uses()) {
-                        Set<ModuleArtifact> artifacts = availableProviders.get(service);
-                        if (artifacts != null) {
-                            for (ModuleArtifact artifact : artifacts) {
-                                ModuleDescriptor provider = artifact.descriptor();
+                        Set<ModuleReference> mrefs = availableProviders.get(service);
+                        if (mrefs != null) {
+                            for (ModuleReference mref : mrefs) {
+                                ModuleDescriptor provider = mref.descriptor();
                                 if (!provider.equals(descriptor)) {
                                     if (!selected.contains(provider)) {
                                         trace("Module %s provides %s, used by %s",
                                                 provider.name(), service, descriptor.name());
-                                        nameToArtifact.put(provider.name(), artifact);
+                                        nameToReference.put(provider.name(), mref);
                                         q.push(provider);
                                     }
                                 }
@@ -313,7 +313,7 @@ final class Resolver {
 
         Map<ModuleDescriptor, Set<ModuleDescriptor>> graph = makeGraph();
 
-        return new Resolution(selected, nameToArtifact, graph);
+        return new Resolution(selected, nameToReference, graph);
     }
 
     /**
@@ -357,10 +357,10 @@ final class Resolver {
                     for (Requires d: descriptor.requires()) {
                         if (d.modifiers().contains(Requires.Modifier.PUBLIC)) {
                             String dn = d.name();
-                            ModuleArtifact artifact = current.findArtifact(dn);
-                            if (artifact == null)
+                            ModuleReference mref = current.findReference(dn);
+                            if (mref == null)
                                 throw new InternalError();
-                            g2.get(descriptor).add(artifact.descriptor());
+                            g2.get(descriptor).add(mref.descriptor());
                         }
                     }
                 }
@@ -376,7 +376,7 @@ final class Resolver {
                 String dn = d.name();
                 ModuleDescriptor other = nameToModule.get(dn);
                 if (other == null && layer != null)
-                    other = layer.findArtifact(dn).descriptor();
+                    other = layer.findReference(dn).descriptor();
                 if (other == null)
                     throw new InternalError(dn + " not found??");
 
@@ -426,7 +426,7 @@ final class Resolver {
 
     /**
      * Checks the hashes in the extended module descriptor to ensure that they
-     * match the hash of the dependency's module artifact.
+     * match the hash of the dependency's module reference.
      */
     private void checkHashes() {
 
@@ -435,7 +435,7 @@ final class Resolver {
 
             // get map of module names to hash
             Optional<DependencyHashes> ohashes
-                = nameToArtifact.get(mn).descriptor().hashes();
+                = nameToReference.get(mn).descriptor().hashes();
             if (!ohashes.isPresent())
                 continue;
             DependencyHashes hashes = ohashes.get();
@@ -446,13 +446,13 @@ final class Resolver {
                 String recordedHash = hashes.hashFor(dn);
 
                 if (recordedHash != null) {
-                    ModuleArtifact artifact = nameToArtifact.get(dn);
-                    if (artifact == null)
-                        artifact = layer.findArtifact(dn);
-                    if (artifact == null)
+                    ModuleReference mref = nameToReference.get(dn);
+                    if (mref == null)
+                        mref = layer.findReference(dn);
+                    if (mref == null)
                         throw new InternalError(dn + " not found");
 
-                    String actualHash = artifact.computeHash(hashes.algorithm());
+                    String actualHash = mref.computeHash(hashes.algorithm());
                     if (actualHash == null)
                         fail("Unable to compute the hash of module %s", dn);
 
@@ -493,10 +493,10 @@ final class Resolver {
                                               cycleAsString(descriptor));
             }
             for (Requires requires : descriptor.requires()) {
-                ModuleArtifact artifact = nameToArtifact.get(requires.name());
-                if (artifact != null) {
+                ModuleReference mref = nameToReference.get(requires.name());
+                if (mref != null) {
                     // dependency is in this configuration
-                    ModuleDescriptor other = artifact.descriptor();
+                    ModuleDescriptor other = mref.descriptor();
                     // ignore self reference
                     if (other != descriptor)
                         visit(other);
@@ -524,7 +524,7 @@ final class Resolver {
     /**
      * Invokes the finder's find method to find the given module.
      */
-    private static ModuleArtifact find(ModuleArtifactFinder finder, String mn) {
+    private static ModuleReference find(ModuleFinder finder, String mn) {
         try {
             return finder.find(mn);
         } catch (UncheckedIOException e) {
@@ -537,7 +537,7 @@ final class Resolver {
     /**
      * Invokes the finder's allModules to find all modules.
      */
-    private static Set<ModuleArtifact> findAll(ModuleArtifactFinder finder) {
+    private static Set<ModuleReference> findAll(ModuleFinder finder) {
         try {
             return finder.allModules();
         } catch (UncheckedIOException e) {

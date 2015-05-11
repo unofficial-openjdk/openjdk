@@ -22,8 +22,8 @@
  */
 
 import java.io.IOException;
-import java.lang.module.ModuleArtifact;
-import java.lang.module.ModuleArtifactFinder;
+import java.lang.module.ModuleReference;
+import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Exports;
 import java.lang.module.ModuleReader;
@@ -35,45 +35,45 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * A container of modules that acts as a ModuleArtifactFinder for testing
+ * A container of modules that acts as a ModuleFinder for testing
  * purposes.
  */
 
-class ModuleArtifactLibrary implements ModuleArtifactFinder {
-    private final Map<String, ModuleArtifact> namesToArtifact = new HashMap<>();
+class ModuleLibrary implements ModuleFinder {
+    private final Map<String, ModuleReference> namesToReference = new HashMap<>();
 
-    ModuleArtifactLibrary(ModuleDescriptor... descriptors) {
+    ModuleLibrary(ModuleDescriptor... descriptors) {
         addAll(descriptors);
     }
 
     void addAll(ModuleDescriptor... descriptors) {
         for (ModuleDescriptor descriptor: descriptors) {
             String name = descriptor.name();
-            if (!namesToArtifact.containsKey(name)) {
+            if (!namesToReference.containsKey(name)) {
                 //modules.add(descriptor);
 
                 URI uri = URI.create("module:/" + descriptor.name());
 
-                ModuleArtifact artifact = new ModuleArtifact(descriptor, uri) {
+                ModuleReference mref = new ModuleReference(descriptor, uri) {
                     @Override
                     public ModuleReader open() throws IOException {
                         throw new IOException("No module reader for: " + uri);
                     }
                 };
 
-                namesToArtifact.put(name, artifact);
+                namesToReference.put(name, mref);
             }
         }
     }
 
     @Override
-    public ModuleArtifact find(String name) {
-        return namesToArtifact.get(name);
+    public ModuleReference find(String name) {
+        return namesToReference.get(name);
     }
 
     @Override
-    public Set<ModuleArtifact> allModules() {
-        return new HashSet<>(namesToArtifact.values());
+    public Set<ModuleReference> allModules() {
+        return new HashSet<>(namesToReference.values());
     }
 }
 

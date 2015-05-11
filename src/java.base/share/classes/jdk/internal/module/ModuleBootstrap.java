@@ -29,8 +29,8 @@ import java.io.File;
 import java.lang.module.Configuration;
 import java.lang.module.Layer;
 import java.lang.module.Layer.ClassLoaderFinder;
-import java.lang.module.ModuleArtifact;
-import java.lang.module.ModuleArtifactFinder;
+import java.lang.module.ModuleReference;
+import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleDescriptor;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -72,37 +72,37 @@ public final class ModuleBootstrap {
         long t0 = System.nanoTime();
 
         // -upgrademodulepath option specified to launcher
-        ModuleArtifactFinder upgradeModulePath =
+        ModuleFinder upgradeModulePath =
             createModulePathFinder("java.upgrade.module.path");
 
         // system module path, aka the installed modules
-        ModuleArtifactFinder systemModulePath =
-            ModuleArtifactFinder.installedModules();
+        ModuleFinder systemModulePath =
+            ModuleFinder.installedModules();
 
         // -modulepath option specified to the launcher
-        ModuleArtifactFinder appModulePath =
+        ModuleFinder appModulePath =
             createModulePathFinder("java.module.path");
 
         // The module finder: [-upgrademodulepath] system-module-path [-modulepath]
-        ModuleArtifactFinder finder = systemModulePath;
+        ModuleFinder finder = systemModulePath;
         if (upgradeModulePath != null)
-            finder = ModuleArtifactFinder.concat(upgradeModulePath, finder);
+            finder = ModuleFinder.concat(upgradeModulePath, finder);
         if (appModulePath != null)
-            finder = ModuleArtifactFinder.concat(finder, appModulePath);
+            finder = ModuleFinder.concat(finder, appModulePath);
 
         // if -XX:AddModuleRequires or -XX:AddModuleExports is specified then
         // interpose on finder so that the requires/exports are updated
         String moreRequires = System.getProperty("jdk.runtime.addModuleRequires");
         String moreExports = System.getProperty("jdk.runtime.addModuleExports");
         if (moreRequires != null || moreExports != null) {
-            finder = ArtifactInterposer.interpose(finder, moreRequires, moreExports);
+            finder = ReferenceInterposer.interpose(finder, moreRequires, moreExports);
         }
 
         // Once the finder is created then we find the base module and define
         // it to the boot loader. We do this here so that resources in the
         // base module can be located for error messages that may happen
         // from here on.
-        ModuleArtifact base = finder.find(JAVA_BASE);
+        ModuleReference base = finder.find(JAVA_BASE);
         if (base == null)
             throw new InternalError(JAVA_BASE + " not found");
         BootLoader.defineBaseModule(base);
@@ -164,7 +164,7 @@ public final class ModuleBootstrap {
         // run the resolver to create the configuration
         Configuration cf = Configuration.resolve(finder,
                                                  Layer.emptyLayer(),
-                                                 ModuleArtifactFinder.nullFinder(),
+                                                 ModuleFinder.nullFinder(),
                                                  input).bind();
 
         // time to create configuration
@@ -180,8 +180,8 @@ public final class ModuleBootstrap {
         // loaded from the system module path
         for (ModuleDescriptor md: cf.descriptors()) {
             String name = md.name();
-            ModuleArtifact artifact = cf.findArtifact(name);
-            ClassLoader cl = clf.loaderForModule(artifact);
+            ModuleReference mref = cf.findReference(name);
+            ClassLoader cl = clf.loaderForModule(mref);
             if (cl == null) {
                 if (upgradeModulePath != null && upgradeModulePath.find(name) != null)
                     fail(name + ": cannot be loaded from upgrade module path");
@@ -212,35 +212,35 @@ public final class ModuleBootstrap {
     }
 
     /**
-     * Returns a ModuleArtifactFinder that locates modules via the given
-     * ModuleArtifactFinder but limits what can be found to the given
+     * Returns a ModuleFinder that locates modules via the given
+     * ModuleFinder but limits what can be found to the given
      * modules and their transitive dependences.
      */
-    private static ModuleArtifactFinder limitFinder(ModuleArtifactFinder finder,
-                                                    Set<String> mods)
+    private static ModuleFinder limitFinder(ModuleFinder finder,
+                                            Set<String> mods)
     {
         Configuration cf = Configuration.resolve(finder,
                                                  Layer.emptyLayer(),
-                                                 ModuleArtifactFinder.nullFinder(),
+                                                 ModuleFinder.nullFinder(),
                                                  mods);
 
-        // module name -> artifact
-        Map<String, ModuleArtifact> map = new HashMap<>();
+        // module name -> reference
+        Map<String, ModuleReference> map = new HashMap<>();
         cf.descriptors().forEach(md -> {
             String name = md.name();
             map.put(name, finder.find(name));
         });
 
-        Set<ModuleArtifact> artifacts = new HashSet<>(map.values());
+        Set<ModuleReference> mrefs = new HashSet<>(map.values());
 
-        return new ModuleArtifactFinder() {
+        return new ModuleFinder() {
             @Override
-            public ModuleArtifact find(String name) {
+            public ModuleReference find(String name) {
                 return map.get(name);
             }
             @Override
-            public Set<ModuleArtifact> allModules() {
-                return artifacts;
+            public Set<ModuleReference> allModules() {
+                return mrefs;
             }
         };
     }
@@ -253,7 +253,7 @@ public final class ModuleBootstrap {
         Map<String, String> packageToModule = new HashMap<>();
         for (ModuleDescriptor descriptor: cf.descriptors()) {
             String name = descriptor.name();
-            Set<String> pkgs = cf.findArtifact(name).descriptor().packages();
+            Set<String> pkgs = cf.findReference(name).descriptor().packages();
             for (String p: pkgs) {
                 String other = packageToModule.putIfAbsent(p, name);
                 if (other != null) {
@@ -274,12 +274,12 @@ public final class ModuleBootstrap {
         for (ModuleDescriptor md: cf.descriptors()) {
             String name = md.name();
             if (!name.equals(JAVA_BASE)) {
-                ModuleArtifact artifact = cf.findArtifact(name);
-                ClassLoader cl = clf.loaderForModule(artifact);
+                ModuleReference mref = cf.findReference(name);
+                ClassLoader cl = clf.loaderForModule(mref);
                 if (cl == null) {
-                    BootLoader.defineModule(artifact);
+                    BootLoader.defineModule(mref);
                 } else {
-                    ((ModuleClassLoader) cl).defineModule(artifact);
+                    ((ModuleClassLoader) cl).defineModule(mref);
                 }
             }
         }
@@ -289,7 +289,7 @@ public final class ModuleBootstrap {
      * Creates a finder from the module path that is the value of the given
      * system property.
      */
-    private static ModuleArtifactFinder createModulePathFinder(String prop) {
+    private static ModuleFinder createModulePathFinder(String prop) {
         String s = System.getProperty(prop);
         if (s == null) {
             return null;
@@ -300,7 +300,7 @@ public final class ModuleBootstrap {
             for (String dir: dirs) {
                 paths[i++] = Paths.get(dir);
             }
-            return ModuleArtifactFinder.ofDirectories(paths);
+            return ModuleFinder.ofDirectories(paths);
         }
     }
 

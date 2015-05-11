@@ -27,7 +27,7 @@ import java.io.File;
 import java.io.FilePermission;
 import java.io.InputStream;
 import java.io.IOException;
-import java.lang.module.ModuleArtifact;
+import java.lang.module.ModuleReference;
 import java.lang.module.ModuleReader;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -65,13 +65,13 @@ class ModuleClassLoader extends SecureClassLoader {
     private final ClassLoader parent;
 
     // maps package name to a loaded module for the modules defined to this class loader
-    private final Map<String, ModuleArtifact> packageToArtifact = new ConcurrentHashMap<>();
+    private final Map<String, ModuleReference> packageToReference = new ConcurrentHashMap<>();
 
-    // maps a module name to a module artifact
-    private final Map<String, ModuleArtifact> nameToArtifact = new ConcurrentHashMap<>();
+    // maps a module name to a module reference
+    private final Map<String, ModuleReference> nameToReference = new ConcurrentHashMap<>();
 
-    // maps a module artifact to a module reader
-    private final Map<ModuleArtifact, ModuleReader> artifactToReader = new ConcurrentHashMap<>();
+    // maps a module reference to a module reader
+    private final Map<ModuleReference, ModuleReader> mrefToReader = new ConcurrentHashMap<>();
 
     /**
      * Create a new instance.
@@ -86,15 +86,15 @@ class ModuleClassLoader extends SecureClassLoader {
     }
 
     /**
-     * Define the module in the given module artifact to this class loader.
+     * Define the module in the given module reference to this class loader.
      * This has the effect of making the types in the module visible.
      */
-    public void defineModule(ModuleArtifact artifact) {
-        nameToArtifact.put(artifact.descriptor().name(), artifact);
-        artifact.descriptor().packages().forEach(p -> packageToArtifact.put(p, artifact));
+    public void defineModule(ModuleReference mref) {
+        nameToReference.put(mref.descriptor().name(), mref);
+        mref.descriptor().packages().forEach(p -> packageToReference.put(p, mref));
 
         // Use NULL_MODULE_READER initially to avoid opening eagerly
-        artifactToReader.put(artifact, NULL_MODULE_READER);
+        mrefToReader.put(mref, NULL_MODULE_READER);
     }
 
     /**
@@ -105,9 +105,9 @@ class ModuleClassLoader extends SecureClassLoader {
     public InputStream getResourceAsStream(String moduleName, String name)
         throws IOException
     {
-        ModuleArtifact artifact = nameToArtifact.get(moduleName);
-        if (artifact != null)
-            return moduleReaderFor(artifact).getResourceAsStream(name);
+        ModuleReference mref = nameToReference.get(moduleName);
+        if (mref != null)
+            return moduleReaderFor(mref).getResourceAsStream(name);
         else
             return null;
     }
@@ -120,10 +120,10 @@ class ModuleClassLoader extends SecureClassLoader {
         Class<?> c = null;
 
         // find the candidate module for this class
-        ModuleArtifact artifact = findModule(cn);
-        if (artifact != null) {
+        ModuleReference mref = findModule(cn);
+        if (mref != null) {
             // attempt to find the class in the module
-            c = defineClass(cn, artifact);
+            c = defineClass(cn, mref);
         }
 
         // not found
@@ -147,10 +147,10 @@ class ModuleClassLoader extends SecureClassLoader {
             if (c == null) {
 
                 // find the candidate module for this class
-                ModuleArtifact artifact = findModule(cn);
-                if (artifact != null) {
+                ModuleReference mref = findModule(cn);
+                if (mref != null) {
                     // attempt to find the class in the module
-                    c = defineClass(cn, artifact);
+                    c = defineClass(cn, mref);
                 } else {
                     // check parent
                     if (parent != null) {
@@ -174,25 +174,25 @@ class ModuleClassLoader extends SecureClassLoader {
      * Returns {@code null} if none of the modules defined to this
      * class loader contain the API package for the class.
      */
-    private ModuleArtifact findModule(String cn) {
+    private ModuleReference findModule(String cn) {
         int pos = cn.lastIndexOf('.');
         if (pos < 0)
             return null; // unnamed package
 
         String pn = cn.substring(0, pos);
-        return packageToArtifact.get(pn);
+        return packageToReference.get(pn);
     }
 
     /**
      * Defines the given binary class name to the VM, loading the class
-     * bytes from the given module artifact.
+     * bytes from the given module reference.
      *
      * @return the resulting Class or {@code null} if an I/O error occurs
      */
-    private Class<?> defineClass(String cn, ModuleArtifact artifact) {
-        ModuleReader reader = moduleReaderFor(artifact);
+    private Class<?> defineClass(String cn, ModuleReference mref) {
+        ModuleReader reader = moduleReaderFor(mref);
         try {
-            URL url = artifact.location().toURL();
+            URL url = mref.location().toURL();
 
             // read class file
             String rn = cn.replace('.', '/').concat(".class");
@@ -248,16 +248,16 @@ class ModuleClassLoader extends SecureClassLoader {
     }
 
     /**
-     * Returns the ModuleReader for the given artifact, creating it
+     * Returns the ModuleReader for the given reference, creating it
      * and replacing the NULL_MODULE_READER if needed.
      */
-    private ModuleReader moduleReaderFor(ModuleArtifact artifact) {
-        ModuleReader reader = artifactToReader.get(artifact);
+    private ModuleReader moduleReaderFor(ModuleReference mref) {
+        ModuleReader reader = mrefToReader.get(mref);
         if (reader == NULL_MODULE_READER) {
             // replace NULL_MODULE_READER with an actual module reader
-            reader = artifactToReader.computeIfPresent(artifact, (k, v) -> {
+            reader = mrefToReader.computeIfPresent(mref, (k, v) -> {
                 if (v == NULL_MODULE_READER) {
-                    return createModuleReader(artifact);
+                    return createModuleReader(mref);
                 } else {
                     return v;
                 }
@@ -267,11 +267,11 @@ class ModuleClassLoader extends SecureClassLoader {
     }
 
     /**
-     * Creates a ModuleReader for the given artifact.
+     * Creates a ModuleReader for the given reference.
      */
-    private ModuleReader createModuleReader(ModuleArtifact artifact) {
+    private ModuleReader createModuleReader(ModuleReference mref) {
         try {
-            return artifact.open();
+            return mref.open();
         } catch (IOException e) {
             // We can't return NULL_MODULE_READER here as that would cause
             // a future class load to attempt to open the module again.

@@ -24,8 +24,8 @@
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.module.ModuleArtifact;
-import java.lang.module.ModuleArtifactFinder;
+import java.lang.module.ModuleReference;
+import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleReader;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
@@ -58,26 +58,26 @@ public class Basic {
         byte[] expectedBytes = Files.readAllBytes(Paths.get(args[3]));
 
         // find the module
-        ModuleArtifactFinder finder = ModuleArtifactFinder.ofDirectories(dir);
-        ModuleArtifact artifact = finder.find(module);
-        assertTrue(artifact != null);
+        ModuleFinder finder = ModuleFinder.ofDirectories(dir);
+        ModuleReference mref = finder.find(module);
+        assertTrue(mref != null);
 
         // test the reader on this module
-        test(artifact, name, expectedBytes);
+        test(mref, name, expectedBytes);
     }
 
     /**
-     * Opens the given module artifact and tests its ModuleReader.
+     * Opens the given module reference and tests its ModuleReader.
      *
-     * @param artifact the module artifact to open
+     * @param reference the module reference to open
      * @param name the name of a resource that exists in the module
      * @param bytes the bytes in the resource to ensure that the resource
      *              is correctly read
      */
-    static void test(ModuleArtifact artifact, String name, byte[] bytes)
+    static void test(ModuleReference mref, String name, byte[] bytes)
         throws IOException
     {
-        ModuleReader reader = artifact.open();
+        ModuleReader reader = mref.open();
         try (reader) {
 
             // test getResourceAsStream

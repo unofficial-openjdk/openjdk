@@ -33,8 +33,8 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.lang.module.Configuration;
 import java.lang.module.Layer;
-import java.lang.module.ModuleArtifact;
-import java.lang.module.ModuleArtifactFinder;
+import java.lang.module.ModuleReference;
+import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleDescriptor;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
@@ -102,7 +102,7 @@ class JlinkTask {
                 for (String dir: dirs) {
                     paths[i++] = Paths.get(dir);
                 }
-                task.options.moduleFinder = ModuleArtifactFinder.ofDirectories(paths);
+                task.options.moduleFinder = ModuleFinder.ofDirectories(paths);
             }
         },
         new Option<JlinkTask>(true, "--addmods") {
@@ -163,7 +163,7 @@ class JlinkTask {
         boolean help;
         boolean version;
         boolean fullVersion;
-        ModuleArtifactFinder moduleFinder;
+        ModuleFinder moduleFinder;
         Set<String> jmods = new TreeSet<>();
         boolean compress = false;
         Path output;
@@ -224,21 +224,21 @@ class JlinkTask {
     }
 
     private Map<String, Path> modulesToPath(Set<ModuleDescriptor> modules) {
-        ModuleArtifactFinder finder = options.moduleFinder;
+        ModuleFinder finder = options.moduleFinder;
 
         Map<String,Path> modPaths = new HashMap<>();
         for (ModuleDescriptor m : modules) {
             String name = m.name();
 
-            ModuleArtifact artifact = finder.find(name);
-            if (artifact == null) {
+            ModuleReference mref = finder.find(name);
+            if (mref == null) {
                 // this should not happen, module path bug?
                 fail(InternalError.class,
                      "Selected module %s not on module path",
                      name);
             }
 
-            URI location = artifact.location();
+            URI location = mref.location();
             String scheme = location.getScheme();
             if (!scheme.equalsIgnoreCase("jmod") && !scheme.equalsIgnoreCase("jar")) {
                 fail(RuntimeException.class,
@@ -269,7 +269,7 @@ class JlinkTask {
 
         Configuration cf = Configuration.resolve(options.moduleFinder,
                 Layer.emptyLayer(),
-                ModuleArtifactFinder.nullFinder(),
+                ModuleFinder.nullFinder(),
                 options.jmods);
 
         Map<String, Path> mods = modulesToPath(cf.descriptors());

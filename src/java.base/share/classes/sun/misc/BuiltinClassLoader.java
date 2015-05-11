@@ -28,7 +28,7 @@ import java.io.File;
 import java.io.FilePermission;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.module.ModuleArtifact;
+import java.lang.module.ModuleReference;
 import java.lang.module.ModuleReader;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -98,32 +98,32 @@ class BuiltinClassLoader extends ModuleClassLoader {
     /**
      * A module defined/loaded by a built-in class loader.
      *
-     * A LoadedModule encapsulates a reference to ModuleArtifact from where the
-     * module was loaded. It also keeps a reference to the module location. This
-     * it needed to avoid calls to {@link java.net.URI#toURL() toURL} and loading
-     * protocols handlers when defining classes or packages.
+     * A LoadedModule encapsulates a ModuleReference along with its location in
+     * URL form, which is needed to avoid invocations of {@link
+     * java.net.URI#toURL() toURL} and the loading of protocol handlers when
+     * defining classes or packages.
      */
     private static class LoadedModule {
-        private final ModuleArtifact artifact;
+        private final ModuleReference mref;
         private final URL url;
 
-        LoadedModule(ModuleArtifact artifact) {
+        LoadedModule(ModuleReference mref) {
             URL url;
             try {
-                url = artifact.location().toURL();
+                url = mref.location().toURL();
             } catch (MalformedURLException e1) {
                 // no protocol handler so use built-in "module" protocol
                 try {
-                    url = new URL("module:/" + artifact.descriptor().name());
+                    url = new URL("module:/" + mref.descriptor().name());
                 } catch (MalformedURLException e2) {
                     throw new InternalError(e2);
                 }
             }
-            this.artifact = artifact;
+            this.mref = mref;
             this.url = url;
         }
 
-        ModuleArtifact artifact() { return artifact; }
+        ModuleReference mref() { return mref; }
         URL location() { return url; }
     }
 
@@ -133,8 +133,8 @@ class BuiltinClassLoader extends ModuleClassLoader {
     // maps a module name to a loaded module
     private final Map<String, LoadedModule> nameToModule = new ConcurrentHashMap<>();
 
-    // maps a module artifact to a module reader
-    private final Map<ModuleArtifact, ModuleReader> artifactToReader = new ConcurrentHashMap<>();
+    // maps a module reference to a module reader
+    private final Map<ModuleReference, ModuleReader> mrefToReader = new ConcurrentHashMap<>();
 
     /**
      * Create a new instance.
@@ -152,22 +152,22 @@ class BuiltinClassLoader extends ModuleClassLoader {
     }
 
     /**
-     * Define the module in the given module artifact to this class loader.
-     * This has the effect of making the types in the module visible.
+     * Define the referenced module to this class loader.  This has the effect
+     * of making the types in the module visible.
      */
     @Override
-    public void defineModule(ModuleArtifact artifact) {
-        String mn = artifact.descriptor().name();
+    public void defineModule(ModuleReference mref) {
+        String mn = mref.descriptor().name();
         if (nameToModule.containsKey(mn))
             throw new IllegalStateException("Module " + mn
                                             + " already defined in this class loader");
-        LoadedModule loadedModule = new LoadedModule(artifact);
+        LoadedModule loadedModule = new LoadedModule(mref);
         nameToModule.put(mn, loadedModule);
-        artifact.descriptor().packages()
+        mref.descriptor().packages()
             .forEach(p -> packageToModule.put(p, loadedModule));
 
         // Use NULL_MODULE_READER initially to avoid opening eagerly
-        artifactToReader.put(artifact, NULL_MODULE_READER);
+        mrefToReader.put(mref, NULL_MODULE_READER);
     }
 
     // -- finding resources
@@ -187,7 +187,7 @@ class BuiltinClassLoader extends ModuleClassLoader {
                     new PrivilegedExceptionAction<InputStream>() {
                         @Override
                         public InputStream run() throws IOException {
-                            return moduleReaderFor(lm.artifact())
+                            return moduleReaderFor(lm.mref())
                                 .getResourceAsStream(name);
                         }
                     });
@@ -401,13 +401,13 @@ class BuiltinClassLoader extends ModuleClassLoader {
 
     /**
      * Defines the given binary class name to the VM, loading the class
-     * bytes from the given module artifact.
+     * bytes from the given module.
      *
      * @return the resulting Class or {@code null} if an I/O error occurs
      */
     private Class<?> defineClass(String cn, LoadedModule loadedModule) {
-        ModuleArtifact artifact = loadedModule.artifact();
-        ModuleReader reader = moduleReaderFor(artifact);
+        ModuleReference mref = loadedModule.mref();
+        ModuleReader reader = moduleReaderFor(mref);
 
         try {
             // read class file
@@ -668,17 +668,17 @@ class BuiltinClassLoader extends ModuleClassLoader {
     // -- miscellaneous supporting methods
 
     /**
-     * Returns the ModuleReader for the given artifact, creating it
+     * Returns the ModuleReader for the given reference, creating it
      * and replacing the NULL_MODULE_READER if needed.
      */
-    private ModuleReader moduleReaderFor(ModuleArtifact artifact) {
-        ModuleReader reader = artifactToReader.get(artifact);
+    private ModuleReader moduleReaderFor(ModuleReference mref) {
+        ModuleReader reader = mrefToReader.get(mref);
         assert reader != null;
         if (reader == NULL_MODULE_READER) {
             // replace NULL_MODULE_READER with an actual module reader
-            reader = artifactToReader.computeIfPresent(artifact, (k, v) -> {
+            reader = mrefToReader.computeIfPresent(mref, (k, v) -> {
                 if (v == NULL_MODULE_READER) {
-                    return createModuleReader(artifact);
+                    return createModuleReader(mref);
                 } else {
                     return v;
                 }
@@ -688,13 +688,13 @@ class BuiltinClassLoader extends ModuleClassLoader {
     }
 
     /**
-     * Creates a ModuleReader for the given artifact.
+     * Creates a ModuleReader for the given reference.
      */
-    private ModuleReader createModuleReader(ModuleArtifact artifact) {
+    private ModuleReader createModuleReader(ModuleReference mref) {
         ModuleReader reader;
 
         try {
-            reader = artifact.open();
+            reader = mref.open();
         } catch (IOException e) {
             // We can't return NULL_MODULE_READER here as that would cause
             // a future class load to attempt to open the module again.
@@ -704,7 +704,7 @@ class BuiltinClassLoader extends ModuleClassLoader {
         // if -Xoverride is specified then wrap the ModuleReader so
         // that the override directory is checked first
         if (overrideDir != null) {
-            String mn = artifact.descriptor().name();
+            String mn = mref.descriptor().name();
             reader = new OverrideModuleReader(mn, overrideDir, reader);
         }
 

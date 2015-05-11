@@ -35,8 +35,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.UncheckedIOException;
-import java.lang.module.ModuleArtifact;
-import java.lang.module.ModuleArtifactFinder;
+import java.lang.module.ModuleReference;
+import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleDescriptor.Requires;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.Version;
@@ -206,7 +206,7 @@ class JmodTask {
                 for (String dir: dirs) {
                     paths[i++] = Paths.get(dir);
                 }
-                task.options.moduleFinder = ModuleArtifactFinder.ofDirectories(paths);
+                task.options.moduleFinder = ModuleFinder.ofDirectories(paths);
             }
         },
         new Option(true, "--libs") {
@@ -275,7 +275,7 @@ class JmodTask {
         List<Path> cmds;
         List<Path> configs;
         List<Path> libs;
-        ModuleArtifactFinder moduleFinder;
+        ModuleFinder moduleFinder;
         Version moduleVersion;
         String mainClass;
         Pattern dependencesToHash;
@@ -362,21 +362,21 @@ class JmodTask {
     }
 
     private Map<String, Path> modulesToPath(Set<ModuleDescriptor> modules) {
-        ModuleArtifactFinder finder = options.moduleFinder;
+        ModuleFinder finder = options.moduleFinder;
 
         Map<String,Path> modPaths = new HashMap<>();
         for (ModuleDescriptor m : modules) {
             String name = m.name();
 
-            ModuleArtifact artifact = finder.find(name);
-            if (artifact == null) {
+            ModuleReference mref = finder.find(name);
+            if (mref == null) {
                 // this should not happen, module path bug?
                 fail(InternalError.class,
                      "Selected module %s not on module path",
                      name);
             }
 
-            URI location = artifact.location();
+            URI location = mref.location();
             String scheme = location.getScheme();
             if (!scheme.equalsIgnoreCase("jmod") && !scheme.equalsIgnoreCase("jar")) {
                 fail(RuntimeException.class,
@@ -422,7 +422,7 @@ class JmodTask {
         final List<Path> classpath = options.classpath;
         final Version moduleVersion = options.moduleVersion;
         final String mainClass = options.mainClass;
-        final ModuleArtifactFinder moduleFinder = options.moduleFinder;
+        final ModuleFinder moduleFinder = options.moduleFinder;
         final Pattern dependencesToHash = options.dependencesToHash;
 
         JmodFileWriter() { }
@@ -540,13 +540,13 @@ class JmodTask {
             for (Requires md: moduleDependences) {
                 String dn = md.name();
                 if (dependencesToHash.matcher(dn).find()) {
-                    ModuleArtifact artifact = moduleFinder.find(dn);
-                    if (artifact == null) {
+                    ModuleReference mref = moduleFinder.find(dn);
+                    if (mref == null) {
                         throw new RuntimeException("Hashing module " + name
                             + " dependences, unable to find module " + dn
                             + " on module path");
                     }
-                    descriptors.add(artifact.descriptor());
+                    descriptors.add(mref.descriptor());
                 }
             }
 

@@ -44,11 +44,11 @@ import sun.misc.SharedSecrets;
  * then all modules are associated with the same class loader. </p>
  *
  * <pre>{@code
- *     ModuleArtifactFinder finder =
- *         ModuleArtifactFinder.ofDirectories(dir1, dir2, dir3);
+ *     ModuleFinder finder =
+ *         ModuleFinder.ofDirectories(dir1, dir2, dir3);
  *
  *     Configuration cf =
- *         Configuration.resolve(ModuleArtifactFinder.nullFinder(),
+ *         Configuration.resolve(ModuleFinder.nullFinder(),
  *                               Layer.bootLayer(),
  *                               finder,
  *                               "myapp");
@@ -75,7 +75,7 @@ public final class Layer {
     private final Map<String, Module> nameToModule;
 
     /**
-     * Finds the class loader for module artifacts.
+     * Finds the class loader for module references.
      *
      * @see Layer#create
      * @since 1.9
@@ -83,9 +83,9 @@ public final class Layer {
     @FunctionalInterface
     public static interface ClassLoaderFinder {
         /**
-         * Returns the class loader for the given module artifact.
+         * Returns the class loader for the given module reference.
          */
-        ClassLoader loaderForModule(ModuleArtifact artifact);
+        ClassLoader loaderForModule(ModuleReference mref);
     }
 
     /**
@@ -151,22 +151,22 @@ public final class Layer {
     }
 
     /**
-     * Returns the {@code ModuleArtifact} from where the module with the given
+     * Returns the {@code ModuleReference} from where the module with the given
      * name was originally defined. If a module of the given name is not
      * in this layer then the {@link #parent} layer is checked. Returns {@code
      * null} if not found.
      */
-    ModuleArtifact findArtifact(String name) {
+    ModuleReference findReference(String name) {
         if (cf == null) {
             return null;
         } else {
-            ModuleArtifact artifact = cf.findArtifact(name);
-            if (artifact == null) {
+            ModuleReference mref = cf.findReference(name);
+            if (mref == null) {
                 Layer parent = parent();
                 if (parent != null)
-                    artifact = parent.findArtifact(name);
+                    mref = parent.findReference(name);
             }
-            return artifact;
+            return mref;
         }
     }
 

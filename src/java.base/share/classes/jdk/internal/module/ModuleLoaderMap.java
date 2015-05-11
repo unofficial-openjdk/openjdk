@@ -27,7 +27,7 @@ package jdk.internal.module;
 
 import java.lang.module.Configuration;
 import java.lang.module.Layer;
-import java.lang.module.ModuleArtifact;
+import java.lang.module.ModuleReference;
 import java.lang.module.ModuleDescriptor;
 import sun.misc.ClassLoaders;
 
@@ -62,14 +62,14 @@ final class ModuleLoaderMap {
         ClassLoader extClassLoader = ClassLoaders.extClassLoader();
         ClassLoader appClassLoader = ClassLoaders.appClassLoader();
 
-        Map<ModuleArtifact, ClassLoader> map = new HashMap<>();
+        Map<ModuleReference, ClassLoader> map = new HashMap<>();
         cf.descriptors()
             .stream()
             .map(ModuleDescriptor::name)
             .filter(name -> !BOOT_MODULES.contains(name))
             .forEach(name -> {
                 ClassLoader cl = EXT_MODULES.contains(name) ? extClassLoader : appClassLoader;
-                map.put(cf.findArtifact(name), cl);
+                map.put(cf.findReference(name), cl);
             });
         return map::get;
     }

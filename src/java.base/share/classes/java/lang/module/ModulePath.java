@@ -50,31 +50,31 @@ import jdk.internal.module.Hasher.HashSupplier;
 
 
 /**
- * A {@code ModuleArtifactFinder} that locates module artifacts on the file
+ * A {@code ModuleFinder} that locates module references on the file
  * system by searching a sequence of directories for jmod, modular JAR or
  * exploded modules.
  *
  * @apiNote This class is currently not safe for use by multiple threads.
  */
 
-class ModulePath implements ModuleArtifactFinder {
+class ModulePath implements ModuleFinder {
     private static final String MODULE_INFO = "module-info.class";
 
     // the directories on this module path
     private final Path[] dirs;
     private int next;
 
-    // the module name to artifact map of modules already located
-    private final Map<String, ModuleArtifact> cachedModules = new HashMap<>();
+    // the module name to reference map of modules already located
+    private final Map<String, ModuleReference> cachedModules = new HashMap<>();
 
     public ModulePath(Path... dirs) {
         this.dirs = dirs; // no need to clone
     }
 
     @Override
-    public ModuleArtifact find(String name) {
+    public ModuleReference find(String name) {
         // try cached modules
-        ModuleArtifact m = cachedModules.get(name);
+        ModuleReference m = cachedModules.get(name);
         if (m != null)
             return m;
 
@@ -89,7 +89,7 @@ class ModulePath implements ModuleArtifactFinder {
     }
 
     @Override
-    public Set<ModuleArtifact> allModules() {
+    public Set<ModuleReference> allModules() {
         // need to ensure that all directories have been scanned
         while (hasNextDirectory()) {
             scanNextDirectory();
@@ -130,7 +130,7 @@ class ModulePath implements ModuleArtifactFinder {
 
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir)) {
             for (Path entry: stream) {
-                ModuleArtifact artifact = null;
+                ModuleReference mref = null;
 
                 BasicFileAttributes attrs;
                 try {
@@ -141,19 +141,19 @@ class ModulePath implements ModuleArtifactFinder {
                 }
                 if (attrs.isRegularFile()) {
                     if (entry.toString().endsWith(".jmod")) {
-                        artifact = readJMod(entry);
+                        mref = readJMod(entry);
                     } else if (entry.toString().endsWith(".jar")) {
-                        artifact = readJar(entry);
+                        mref = readJar(entry);
                     }
                 } else if (attrs.isDirectory()) {
-                    artifact = readExploded(entry);
+                    mref = readExploded(entry);
                 }
 
-                // module artifact found
-                if (artifact != null) {
+                // module reference found
+                if (mref != null) {
                     // check that there is only one version of the module
                     // in this directory
-                    String name = artifact.descriptor().name();
+                    String name = mref.descriptor().name();
                     if (namesInThisDirectory.contains(name)) {
                         throw new RuntimeException(dir +
                             " contains more than one version of " + name);
@@ -166,7 +166,7 @@ class ModulePath implements ModuleArtifactFinder {
                         continue;
 
                     // add the module to the cache
-                    cachedModules.put(name, artifact);
+                    cachedModules.put(name, mref);
                 }
             }
         } catch (IOException ioe) {
@@ -185,10 +185,10 @@ class ModulePath implements ModuleArtifactFinder {
     }
 
     /**
-     * Returns a {@code ModuleArtifact} to represent a jmod file on the
+     * Returns a {@code ModuleReference} to represent a jmod file on the
      * file system.
      */
-    private ModuleArtifact readJMod(Path file) throws IOException {
+    private ModuleReference readJMod(Path file) throws IOException {
         try (ZipFile zf = new ZipFile(file.toString())) {
             ZipEntry ze = zf.getEntry("classes/" + MODULE_INFO);
             if (ze == null) {
@@ -201,7 +201,7 @@ class ModulePath implements ModuleArtifactFinder {
                 md = ModuleDescriptor.read(in, () -> jmodPackages(zf));
             }
             HashSupplier hasher = (algorithm) -> Hasher.generate(file, algorithm);
-            return ModuleArtifacts.newModuleArtifact(md, location, hasher);
+            return ModuleReferences.newModuleReference(md, location, hasher);
         }
     }
 
@@ -215,10 +215,10 @@ class ModulePath implements ModuleArtifactFinder {
     }
 
     /**
-     * Returns a {@code ModuleArtifact} to represent a module jar on the
+     * Returns a {@code ModuleReference} to represent a module jar on the
      * file system.
      */
-    private ModuleArtifact readJar(Path file) throws IOException {
+    private ModuleReference readJar(Path file) throws IOException {
         try (JarFile jf = new JarFile(file.toString())) {
             JarEntry entry = jf.getJarEntry(MODULE_INFO);
             if (entry == null) {
@@ -230,7 +230,7 @@ class ModulePath implements ModuleArtifactFinder {
             ModuleDescriptor md = ModuleDescriptor.read(jf.getInputStream(entry),
                                                         () -> jarPackages(jf));
             HashSupplier hasher = (algorithm) -> Hasher.generate(file, algorithm);
-            return ModuleArtifacts.newModuleArtifact(md, location, hasher);
+            return ModuleReferences.newModuleReference(md, location, hasher);
         }
     }
 
@@ -249,10 +249,10 @@ class ModulePath implements ModuleArtifactFinder {
     }
 
     /**
-     * Returns a {@code ModuleArtifact} to represent an exploded module
+     * Returns a {@code ModuleReference} to represent an exploded module
      * on the file system.
      */
-    private ModuleArtifact readExploded(Path dir) throws IOException {
+    private ModuleReference readExploded(Path dir) throws IOException {
         Path file = dir.resolve(MODULE_INFO);
         if (Files.notExists((file))) {
             // no module-info in directory
@@ -264,7 +264,7 @@ class ModulePath implements ModuleArtifactFinder {
             md = ModuleDescriptor.read(new BufferedInputStream(in),
                                        () -> explodedPackages(dir));
         }
-        return ModuleArtifacts.newModuleArtifact(md, location, null);
+        return ModuleReferences.newModuleReference(md, location, null);
     }
 
     private String toPackageName(ZipEntry entry) {

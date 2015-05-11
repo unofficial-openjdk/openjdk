@@ -26,7 +26,7 @@ package container;
 import java.io.File;
 import java.lang.module.Configuration;
 import java.lang.module.Layer;
-import java.lang.module.ModuleArtifactFinder;
+import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleDescriptor;
 import java.lang.reflect.Method;
 import java.nio.file.Path;
@@ -68,11 +68,11 @@ public class Main {
 
         Layer bootLayer = Layer.bootLayer();
 
-        ModuleArtifactFinder finder = ModuleArtifactFinder.ofDirectories(paths);
+        ModuleFinder finder = ModuleFinder.ofDirectories(paths);
 
         Configuration cf = Configuration.resolve(finder,
                 bootLayer,
-                ModuleArtifactFinder.nullFinder(),
+                ModuleFinder.nullFinder(),
                 appModuleName);
         cf = cf.bind();
 
@@ -85,7 +85,7 @@ public class Main {
         cf.descriptors()
           .stream()
           .map(ModuleDescriptor::name)
-          .map(cf::findArtifact)
+          .map(cf::findReference)
           .forEach(loader::defineModule);
 
         // reify the configuration as a Layer

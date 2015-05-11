@@ -24,8 +24,8 @@
 import java.lang.module.Configuration;
 import static java.lang.module.Layer.*;
 import java.lang.module.ResolutionException;
-import java.lang.module.ModuleArtifactFinder;
-import static java.lang.module.ModuleArtifactFinder.*;
+import java.lang.module.ModuleFinder;
+import static java.lang.module.ModuleFinder.*;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Requires.Modifier;
 
@@ -54,8 +54,8 @@ public class ConfigurationTest {
                 new ModuleDescriptor.Builder("m3")
                         .build();
 
-        ModuleArtifactFinder finder =
-                new ModuleArtifactLibrary(descriptor1, descriptor2, descriptor3);
+        ModuleFinder finder =
+                new ModuleLibrary(descriptor1, descriptor2, descriptor3);
 
         Configuration cf = Configuration.resolve(finder, bootLayer(), nullFinder(), "m1");
 
@@ -91,7 +91,7 @@ public class ConfigurationTest {
     public void testDirectDependencyNotFound() {
         ModuleDescriptor descriptor1 =
                 new ModuleDescriptor.Builder("m1").requires("m2").build();
-        ModuleArtifactFinder finder = new ModuleArtifactLibrary(descriptor1);
+        ModuleFinder finder = new ModuleLibrary(descriptor1);
 
         Configuration.resolve(finder, bootLayer(), nullFinder(), "m1");
     }
@@ -105,7 +105,7 @@ public class ConfigurationTest {
                 new ModuleDescriptor.Builder("m1").requires("m2").build();
         ModuleDescriptor descriptor2 =
                 new ModuleDescriptor.Builder("m2").requires("m3").build();
-        ModuleArtifactFinder finder = new ModuleArtifactLibrary(descriptor1, descriptor2);
+        ModuleFinder finder = new ModuleLibrary(descriptor1, descriptor2);
 
         Configuration.resolve(finder, bootLayer(), nullFinder(), "m1");
     }
@@ -123,7 +123,7 @@ public class ConfigurationTest {
                     .requires("m3")
                     .provides("java.security.Provider", "p.CryptoProvder")
                     .build();
-        ModuleArtifactFinder finder = new ModuleArtifactLibrary(descriptor1, descriptor2);
+        ModuleFinder finder = new ModuleLibrary(descriptor1, descriptor2);
 
 
         Configuration cf;
@@ -157,8 +157,8 @@ public class ConfigurationTest {
                 new ModuleDescriptor.Builder("m3")
                         .build();
 
-        ModuleArtifactFinder finder =
-                new ModuleArtifactLibrary(descriptor1, descriptor2, descriptor3);
+        ModuleFinder finder =
+                new ModuleLibrary(descriptor1, descriptor2, descriptor3);
 
         Configuration cf = Configuration.resolve(finder, bootLayer(), nullFinder(), "m1");
 
@@ -204,8 +204,8 @@ public class ConfigurationTest {
         ModuleDescriptor descriptor4 =
             new ModuleDescriptor.Builder("m4").build();
 
-        ModuleArtifactFinder finder =
-            new ModuleArtifactLibrary(descriptor1, descriptor2, descriptor3, descriptor4);
+        ModuleFinder finder =
+            new ModuleLibrary(descriptor1, descriptor2, descriptor3, descriptor4);
 
         Configuration cf = Configuration.resolve(finder, bootLayer(), nullFinder(), "m1");
 
@@ -247,8 +247,8 @@ public class ConfigurationTest {
                 new ModuleDescriptor.Builder("m2").requires("m3").build();
         ModuleDescriptor descriptor3 =
                 new ModuleDescriptor.Builder("m3").requires("m1").build();
-        ModuleArtifactFinder finder =
-                new ModuleArtifactLibrary(descriptor1, descriptor2, descriptor3);
+        ModuleFinder finder =
+                new ModuleLibrary(descriptor1, descriptor2, descriptor3);
 
         Configuration.resolve(finder, bootLayer(), nullFinder(), "m1");
     }
@@ -266,8 +266,8 @@ public class ConfigurationTest {
                         .provides("p.Service", "q.ServiceImpl").build();
         ModuleDescriptor descriptor3 =
                 new ModuleDescriptor.Builder("m3").requires("m2").build();
-        ModuleArtifactFinder finder =
-                new ModuleArtifactLibrary(descriptor1, descriptor2, descriptor3);
+        ModuleFinder finder =
+                new ModuleLibrary(descriptor1, descriptor2, descriptor3);
 
         Configuration cf;
         try {

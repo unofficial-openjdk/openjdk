@@ -52,9 +52,9 @@ public class JdkModules {
     }
 
     public void go() {
-        Set<ModuleArtifact> artifacts
-            = ModuleArtifactFinder.installedModules().allModules();
-        artifacts.stream().map(ModuleArtifact::descriptor).forEach(md -> {
+        Set<ModuleReference> mrefs
+            = ModuleFinder.installedModules().allModules();
+        mrefs.stream().map(ModuleReference::descriptor).forEach(md -> {
             switch (md.name()) {
                 case "java.base":
                     check(md, base); break;

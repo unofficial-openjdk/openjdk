@@ -23,7 +23,7 @@
 
 import java.lang.module.Configuration;
 import java.lang.module.Layer;
-import java.lang.module.ModuleArtifact;
+import java.lang.module.ModuleReference;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -103,10 +103,10 @@ public class Basic {
      */
     static Path directoryFor(String name) {
         Configuration cf = Layer.bootLayer().configuration();
-        ModuleArtifact artifact = cf.findArtifact(name);
-        if (artifact == null)
+        ModuleReference mref = cf.findReference(name);
+        if (mref == null)
             throw new RuntimeException("not found: " + name);
-        Path dir = Paths.get(artifact.location());
+        Path dir = Paths.get(mref.location());
         if (!Files.isDirectory(dir))
             throw new RuntimeException("not a directory: " + dir);
         return dir;

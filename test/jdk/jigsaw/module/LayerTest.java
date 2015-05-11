@@ -23,8 +23,8 @@
 
 import java.lang.module.Configuration;
 import java.lang.module.Layer;
-import java.lang.module.ModuleArtifact;
-import java.lang.module.ModuleArtifactFinder;
+import java.lang.module.ModuleReference;
+import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleDescriptor;
 import java.lang.reflect.Module;
 import java.util.HashMap;
@@ -106,22 +106,22 @@ public class LayerTest {
                 new ModuleDescriptor.Builder("m3")
                         .build();
 
-        ModuleArtifactFinder finder =
-                new ModuleArtifactLibrary(descriptor1, descriptor2, descriptor3);
+        ModuleFinder finder =
+                new ModuleLibrary(descriptor1, descriptor2, descriptor3);
 
         Configuration cf = Configuration.resolve(finder,
                                                  Layer.emptyLayer(),
-                                                 ModuleArtifactFinder.nullFinder(),
+                                                 ModuleFinder.nullFinder(),
                                                  "m1");
 
         // map each module to its own class loader for this test
         ClassLoader loader1 = new ClassLoader() { };
         ClassLoader loader2 = new ClassLoader() { };
         ClassLoader loader3 = new ClassLoader() { };
-        Map<ModuleArtifact, ClassLoader> map = new HashMap<>();
-        map.put(cf.findArtifact("m1"), loader1);
-        map.put(cf.findArtifact("m2"), loader2);
-        map.put(cf.findArtifact("m3"), loader3);
+        Map<ModuleReference, ClassLoader> map = new HashMap<>();
+        map.put(cf.findReference("m1"), loader1);
+        map.put(cf.findReference("m2"), loader2);
+        map.put(cf.findReference("m3"), loader3);
 
         Layer layer = Layer.create(cf, map::get);
 
@@ -164,12 +164,12 @@ public class LayerTest {
                         .requires("java.base")
                         .build();
 
-        ModuleArtifactFinder finder =
-                new ModuleArtifactLibrary(descriptor1, descriptor2);
+        ModuleFinder finder =
+                new ModuleLibrary(descriptor1, descriptor2);
 
         Configuration cf = Configuration.resolve(finder,
                                                  Layer.bootLayer(),
-                                                 ModuleArtifactFinder.nullFinder(),
+                                                 ModuleFinder.nullFinder(),
                                                  "m1");
 
         ClassLoader loader = new ClassLoader() { };

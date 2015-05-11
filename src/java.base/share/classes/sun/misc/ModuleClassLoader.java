@@ -27,7 +27,7 @@ package sun.misc;
 
 import java.security.SecureClassLoader;
 
-import java.lang.module.ModuleArtifact;
+import java.lang.module.ModuleReference;
 
 /**
  * A ClassLoader that has support for loading classes and resources from modules.
@@ -52,10 +52,10 @@ public abstract class ModuleClassLoader extends SecureClassLoader {
     }
 
     /**
-     * Define the module in the given module artifact to the class loader
-     * with the effect of making the types in the module visible.
+     * Define the referenced module to this class loader, thereby making the
+     * types in the module visible.
      */
-    public abstract void defineModule(ModuleArtifact artifact);
+    public abstract void defineModule(ModuleReference mref);
 
     /**
      * Finds the class with the specified <a href="#name">binary name</a>

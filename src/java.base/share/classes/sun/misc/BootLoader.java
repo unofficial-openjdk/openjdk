@@ -26,7 +26,7 @@ package sun.misc;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.module.ModuleArtifact;
+import java.lang.module.ModuleReference;
 import java.lang.reflect.Module;
 import java.net.URL;
 import java.util.Arrays;
@@ -51,7 +51,7 @@ public class BootLoader {
     private static final ServicesCatalog SERVICES_CATALOG = new ServicesCatalog();
 
     // The ModuleArtiact for java.base
-    private static ModuleArtifact baseArtifact;
+    private static ModuleReference baseReference;
 
     /**
      * Returns the unnnamed module for the boot loader.
@@ -64,16 +64,16 @@ public class BootLoader {
      * Make visible the resources in java.base. This module is special cased
      * to allow for resources to be loaded in the base module early in the startup.
      */
-    public static void defineBaseModule(ModuleArtifact artifact) {
-        ClassLoaders.bootLoader().defineModule(artifact);
-        baseArtifact = artifact;
+    public static void defineBaseModule(ModuleReference mref) {
+        ClassLoaders.bootLoader().defineModule(mref);
+        baseReference = mref;
     }
 
     /**
-     * Make visible the resources in the given module artifact.
+     * Make visible the resources in the given module reference.
      */
-    public static void defineModule(ModuleArtifact artifact) {
-        ClassLoaders.bootLoader().defineModule(artifact);
+    public static void defineModule(ModuleReference mref) {
+        ClassLoaders.bootLoader().defineModule(mref);
     }
 
     /**
@@ -85,7 +85,7 @@ public class BootLoader {
     }
 
     /**
-     * Returns an input stream to a resource in the given module artifact if
+     * Returns an input stream to a resource in the given module reference if
      * the module is defined to the boot loader.
      */
     public static InputStream getResourceAsStream(String moduleName, String name)
@@ -93,9 +93,9 @@ public class BootLoader {
     {
         // special-case resources in java.base that are used early in the startup
         if (moduleName == null) {
-            if (baseArtifact == null || VM.isBooted())
+            if (baseReference == null || VM.isBooted())
                 throw new InternalError();
-            moduleName = baseArtifact.descriptor().name();
+            moduleName = baseReference.descriptor().name();
         }
         return ClassLoaders.bootLoader().getResourceAsStream(moduleName, name);
     }

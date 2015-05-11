@@ -30,7 +30,7 @@ import java.io.InputStream;
 import java.lang.module.Configuration;
 import java.lang.module.Layer;
 import java.lang.module.Layer.ClassLoaderFinder;
-import java.lang.module.ModuleArtifact;
+import java.lang.module.ModuleReference;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Exports;
 import java.lang.module.ModuleDescriptor.Provides;
@@ -384,10 +384,10 @@ public final class Module {
      * defined to the VM but will not read any other modules or have any
      * exports. It will also not be registered in the service catalog.
      */
-    static Module defineModule(ClassLoader loader, ModuleArtifact artifact) {
+    static Module defineModule(ClassLoader loader, ModuleReference mref) {
         Module m;
 
-        ModuleDescriptor descriptor = artifact.descriptor();
+        ModuleDescriptor descriptor = mref.descriptor();
         Set<String> packages = descriptor.packages();
 
         // define module to VM, except java.base as it is defined by VM
@@ -420,7 +420,7 @@ public final class Module {
 
             String vs = descriptor.version()
                 .map(Version::toString).orElse("");
-            URI location = artifact.location();
+            URI location = mref.location();
             String uris = (location != null) ? location.toString() : null;
 
             jvmDefineModule(m, vs, uris, array);
@@ -444,10 +444,10 @@ public final class Module {
         for (ModuleDescriptor descriptor: cf.descriptors()) {
             String name = descriptor.name();
 
-            ModuleArtifact artifact = cf.findArtifact(name);
-            ClassLoader loader = clf.loaderForModule(artifact);
+            ModuleReference mref = cf.findReference(name);
+            ClassLoader loader = clf.loaderForModule(mref);
 
-            Module m = defineModule(loader, artifact);
+            Module m = defineModule(loader, mref);
             modules.put(name, m);
             loaders.put(name, loader);
         }
@@ -775,8 +775,8 @@ public final class Module {
                     return new Module(loader);
                 }
                 @Override
-                public Module defineModule(ClassLoader loader, ModuleArtifact artifact) {
-                   return Module.defineModule(loader, artifact);
+                public Module defineModule(ClassLoader loader, ModuleReference mref) {
+                   return Module.defineModule(loader, mref);
                 }
                 @Override
                 public Map<String, Module> defineModules(Configuration cf, ClassLoaderFinder clf) {

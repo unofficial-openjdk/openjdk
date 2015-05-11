@@ -33,24 +33,23 @@ import jdk.internal.module.Hasher.HashSupplier;
 
 
 /**
- * Represents a module artifact. A module artifact contains the contents of a
- * module along with its module descriptor that defines the module name,
- * dependences and exports. Examples of module artifacts are modular JAR files
- * or jmod files.
+ * A reference to a module's content.  A module reference contains the module's
+ * descriptor and its identifying {@link URI}.  It also has the ability to open
+ * a {@link ModuleReader} with which to access the module's content, which may
+ * be inside the Java run-time system itself or in an artifact such as a
+ * modular JAR file or a JMOD file.
  *
- * A {@code ModuleArtifact} is a concrete subclass of this class that implements
- * the abstract {@link #open open} method defined below.
- *
- * @see ModuleArtifactFinder
+ * @see ModuleFinder
+ * @see ModuleReader
  * @since 1.9
  */
 
-public abstract class ModuleArtifact {
+public abstract class ModuleReference {
 
     private final ModuleDescriptor descriptor;
     private final URI location;
 
-    // the function that computes the hash of this module artifact
+    // the function that computes the hash of this module reference
     private final HashSupplier hasher;
 
     // cached hash string to avoid needing to compute it many times
@@ -59,9 +58,9 @@ public abstract class ModuleArtifact {
     /**
      * Constructs a new instance of this class.
      */
-    ModuleArtifact(ModuleDescriptor descriptor,
-                   URI location,
-                   HashSupplier hasher)
+    ModuleReference(ModuleDescriptor descriptor,
+                    URI location,
+                    HashSupplier hasher)
     {
         this.descriptor = Objects.requireNonNull(descriptor);
         this.location = Objects.requireNonNull(location);
@@ -71,23 +70,23 @@ public abstract class ModuleArtifact {
     /**
      * Constructs a new instance of this class.
      */
-    protected ModuleArtifact(ModuleDescriptor descriptor,
-                             URI location)
+    protected ModuleReference(ModuleDescriptor descriptor,
+                              URI location)
     {
         this(descriptor, location, null);
     }
 
     /**
-     * Return the artifact's extended module descriptor.
+     * Return the reference's extended module descriptor.
      */
     public ModuleDescriptor descriptor() {
         return descriptor;
     }
 
     /**
-     * Returns the URI that locates the artifact.
+     * Returns the URI that locates the reference.
      *
-     * <p> When loading classes from a module artifact with a {@link
+     * <p> When loading classes from a module reference with a {@link
      * java.security.SecureClassLoader SecureClassLoader}, then this URI is
      * typically the location associated with {@link java.security.CodeSource
      * CodeSource}.
@@ -97,7 +96,7 @@ public abstract class ModuleArtifact {
     }
 
     /**
-     * Opens the modules artifact for reading, returning a {@code ModuleReader}
+     * Opens the modules reference for reading, returning a {@code ModuleReader}
      * that may be used to locate or read classes and resources.
      *
      * @throws IOException
@@ -135,9 +134,9 @@ public abstract class ModuleArtifact {
     }
 
     public boolean equals(Object obj) {
-        if (!(obj instanceof ModuleArtifact))
+        if (!(obj instanceof ModuleReference))
             return false;
-        ModuleArtifact that = (ModuleArtifact)obj;
+        ModuleReference that = (ModuleReference)obj;
         if (!this.descriptor.equals(that.descriptor))
             return false;
         if (!this.location.equals(that.location))

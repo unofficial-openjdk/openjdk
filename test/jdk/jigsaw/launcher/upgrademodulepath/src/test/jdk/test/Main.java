@@ -37,7 +37,7 @@ public class Main {
 
         Configuration cf = Layer.bootLayer().configuration();
         System.out.format("%s loaded from %s%n", m1,
-            cf.findArtifact(m1.getName()).location());
+            cf.findReference(m1.getName()).location());
 
         if (m1 != m2 || !m1.getName().equals("java.annotations.common"))
             throw new RuntimeException("java.annotations.common not upgraded");

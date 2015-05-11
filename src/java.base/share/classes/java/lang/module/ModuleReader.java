@@ -33,24 +33,24 @@ import java.util.Arrays;
 
 
 /**
- * Locates or reads resources in a module artifact.
+ * Locates or reads resources in a module.
  *
- * <p> A module reader is intended for cases where access to the resources in
- * a module artifact are required, regardless of whether the module has been
- * reified. A framework that scans a collection of module artifacts on the file
- * system, for example, may use the {@link #getResourceAsStream
- * getResourceAsStream} method to access a specific resource in each module for
- * example.
+ * <p> A module reader is intended for cases where access to the resources in a
+ * module are required, regardless of whether the module has been instantiated.
+ * A framework that scans a collection of packaged modules on the file system,
+ * for example, may use the {@link #getResourceAsStream getResourceAsStream}
+ * method to access a specific resource in each module.
  *
  * <p> A module reader is also intended to be used by {@code ClassLoader}
  * implementations that load classes and resources from modules.
  *
- * <p> A {@code ModuleReader} is {@link ModuleArtifact#open open} upon creation and
- * is closed by invoking the {@link #close close} method. Failure to close a module
- * reader may result in a resource leak. The {@code try-with-resources} statement
- * provides a useful construct to ensure that the module reader is closed.
+ * <p> A {@code ModuleReader} is {@linkplain ModuleReference#open open} upon
+ * creation and is closed by invoking the {@link #close close} method.  Failure
+ * to close a module reader may result in a resource leak.  The {@code
+ * try-with-resources} statement provides a useful construct to ensure that
+ * module readers are closed.
  *
- * @see ModuleArtifact
+ * @see ModuleReference
  * @since 1.9
  */
 

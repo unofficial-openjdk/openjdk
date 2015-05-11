@@ -78,7 +78,7 @@ import java.util.jar.Manifest;
 
 import java.lang.module.Configuration;
 import java.lang.module.Layer;
-import java.lang.module.ModuleArtifact;
+import java.lang.module.ModuleReference;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Requires;
 import java.lang.module.ModuleDescriptor.Exports;
@@ -472,8 +472,8 @@ public enum LauncherHelper {
 
         // main module should be in the boot layer
         Layer layer = Layer.bootLayer();
-        ModuleArtifact artifact = layer.configuration().findArtifact(mainModule);
-        if (artifact == null)
+        ModuleReference mref = layer.configuration().findReference(mainModule);
+        if (mref == null)
             abort(null, "java.launcher.module.error1", mainModule);
 
         // if query included the main-class then we return that
@@ -481,7 +481,7 @@ public enum LauncherHelper {
             i = mainClass.lastIndexOf('.');
             if (i > 0) {
                 String pkg = mainClass.substring(0, i);
-                if (!artifact.descriptor().packages().contains(pkg)) {
+                if (!mref.descriptor().packages().contains(pkg)) {
                     // main class not in a package that the module defines
                     abort(null, "java.launcher.module.error2", mainModule, mainClass);
                 }
@@ -492,9 +492,9 @@ public enum LauncherHelper {
             return mainClass;
         }
 
-        Optional<String> omc = artifact.descriptor().mainClass();
+        Optional<String> omc = mref.descriptor().mainClass();
         if (!omc.isPresent())
-            abort(null, "java.launcher.module.error3", artifact.location());
+            abort(null, "java.launcher.module.error3", mref.location());
         return omc.get();
     }
 
@@ -887,22 +887,22 @@ public enum LauncherHelper {
             cf.descriptors()
                 .stream()
                 .map(ModuleDescriptor::name)
-                .map(cf::findArtifact)
-                .sorted(Comparator.comparing(ModuleArtifact::descriptor))
+                .map(cf::findReference)
+                .sorted(Comparator.comparing(ModuleReference::descriptor))
                 .forEach(md -> {
                     ostream.println(midAndLocation(md.descriptor(), md.location()));
                 });
         } else {
             String[] names = optionFlag.substring(colon+1).split(",");
             for (String name: names) {
-                ModuleArtifact artifact = cf.findArtifact(name);
-                if (artifact == null) {
+                ModuleReference mref = cf.findReference(name);
+                if (mref == null) {
                     // skip as module is not in the boot Layer
                     continue;
                 }
 
-                ModuleDescriptor md = artifact.descriptor();
-                ostream.println(midAndLocation(md, artifact.location()));
+                ModuleDescriptor md = mref.descriptor();
+                ostream.println(midAndLocation(md, mref.location()));
 
                 for (Requires d: md.requires()) {
                     ostream.format("  requires %s%n", d);

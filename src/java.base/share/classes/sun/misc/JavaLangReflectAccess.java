@@ -30,7 +30,7 @@ import java.util.Map;
 
 import java.lang.module.Configuration;
 import java.lang.module.Layer.ClassLoaderFinder;
-import java.lang.module.ModuleArtifact;
+import java.lang.module.ModuleReference;
 
 /**
  * Provides access to package-private methods in java.lang.reflect.
@@ -47,7 +47,7 @@ public interface JavaLangReflectAccess {
      * Defines a new module to the Java virtual machine. The module
      * is defined to the given class loader.
      */
-    Module defineModule(ClassLoader loader, ModuleArtifact artifact);
+    Module defineModule(ClassLoader loader, ModuleReference mref);
 
     /**
      * Defines the modules in the given {@code Configuration} to the Java

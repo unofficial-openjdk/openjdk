@@ -26,7 +26,7 @@
 package sun.misc;
 
 import java.io.IOException;
-import java.lang.module.ModuleArtifact;
+import java.lang.module.ModuleReference;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleReader;
 import java.lang.reflect.Module;
@@ -56,14 +56,14 @@ public class Modules {
         ModuleDescriptor descriptor =
             new ModuleDescriptor.Builder(name).conceals(packages).build();
         URI uri = URI.create("module:/" + name);
-        ModuleArtifact artifact = new ModuleArtifact(descriptor, uri) {
+        ModuleReference mref = new ModuleReference(descriptor, uri) {
             @Override
             public ModuleReader open() throws IOException {
                 throw new IOException("No module reader for: " + uri);
             }
         };
 
-        return SharedSecrets.getJavaLangReflectAccess().defineModule(loader, artifact);
+        return SharedSecrets.getJavaLangReflectAccess().defineModule(loader, mref);
     }
 
     /**

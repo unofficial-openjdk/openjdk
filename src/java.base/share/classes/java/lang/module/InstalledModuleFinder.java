@@ -44,13 +44,13 @@ import jdk.internal.jimage.ImageReaderFactory;
 import sun.misc.PerfCounter;
 
 /**
- * A {@code ModuleArtifactFinder} that finds modules that are
+ * A {@code ModuleFinder} that finds modules that are
  * linked into the modular image.
  */
-class InstalledModuleFinder implements ModuleArtifactFinder {
+class InstalledModuleFinder implements ModuleFinder {
 
-    // the module name to artifact map of modules already located
-    private final Map<String, ModuleArtifact> cachedModules = new ConcurrentHashMap<>();
+    // the module name to reference map of modules already located
+    private final Map<String, ModuleReference> cachedModules = new ConcurrentHashMap<>();
     private final Image bootImage;
 
     InstalledModuleFinder() {
@@ -59,16 +59,16 @@ class InstalledModuleFinder implements ModuleArtifactFinder {
         initTime.addElapsedTimeFrom(t0);
     }
 
-    private ModuleArtifact toModuleArtifact(String name) {
+    private ModuleReference toModuleReference(String name) {
         long t0 = System.nanoTime();
         try {
             ModuleDescriptor md = bootImage.readDescriptor(name);
             URI location = URI.create("jrt:/" + name);
-            ModuleArtifact artifact =
-                ModuleArtifacts.newModuleArtifact(md, location, null);
+            ModuleReference mref =
+                ModuleReferences.newModuleReference(md, location, null);
             installedModulesCount.increment();
             installedModulesTime.addElapsedTimeFrom(t0);
-            return artifact;
+            return mref;
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
@@ -81,19 +81,19 @@ class InstalledModuleFinder implements ModuleArtifactFinder {
     }
 
     @Override
-    public ModuleArtifact find(String name) {
+    public ModuleReference find(String name) {
         if (!bootImage.modules.contains(name)) {
             return null;
         }
 
         // try cached modules
-        ModuleArtifact m = cachedModules.get(name);
+        ModuleReference m = cachedModules.get(name);
         if (m != null)
             return m;
 
-        // create ModuleArtifact from module descriptor
-        m = toModuleArtifact(name);
-        ModuleArtifact previous = cachedModules.putIfAbsent(name, m);
+        // create ModuleReference from module descriptor
+        m = toModuleReference(name);
+        ModuleReference previous = cachedModules.putIfAbsent(name, m);
         if (previous == null) {
             return m;
         } else {
@@ -102,8 +102,8 @@ class InstalledModuleFinder implements ModuleArtifactFinder {
     }
 
     @Override
-    public Set<ModuleArtifact> allModules() {
-        // ensure ModuleArtifact for all modules are created
+    public Set<ModuleReference> allModules() {
+        // ensure ModuleReference for all modules are created
         return bootImage.modules.stream()
                 .map(this::find).collect(Collectors.toSet());
     }
@@ -146,8 +146,8 @@ class InstalledModuleFinder implements ModuleArtifactFinder {
     private static final PerfCounter initTime =
             PerfCounter.newPerfCounter("jdk.module.installedModules.initTime");
     private static final PerfCounter installedModulesTime =
-            PerfCounter.newPerfCounter("jdk.module.installedModules.initArtifactTime");
+            PerfCounter.newPerfCounter("jdk.module.installedModules.initReferenceTime");
     private static final PerfCounter installedModulesCount =
-            PerfCounter.newPerfCounter("jdk.module.installedModules.artifacts");
+            PerfCounter.newPerfCounter("jdk.module.installedModules.mrefs");
 
 }

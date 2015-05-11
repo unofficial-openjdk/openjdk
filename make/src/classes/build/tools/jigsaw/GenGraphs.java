@@ -41,8 +41,8 @@ import java.util.stream.Collectors;
 
 import java.lang.module.Configuration;
 import java.lang.module.Layer;
-import java.lang.module.ModuleArtifact;
-import java.lang.module.ModuleArtifactFinder;
+import java.lang.module.ModuleReference;
+import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleDescriptor;
 import static java.lang.module.ModuleDescriptor.Requires.Modifier.PUBLIC;
 
@@ -61,24 +61,24 @@ public class GenGraphs {
         Path dir = Paths.get(args[0]);
         Files.createDirectories(dir);
 
-        ModuleArtifactFinder finder = ModuleArtifactFinder.installedModules();
+        ModuleFinder finder = ModuleFinder.installedModules();
 
         Set<ModuleDescriptor> javaSEModules
             = new TreeSet<>(finder.allModules().stream()
-                                  .map(ModuleArtifact::descriptor)
+                                  .map(ModuleReference::descriptor)
                                   .filter(m -> (m.name().startsWith("java.") &&
                                                !m.name().equals("java.smartcardio")))
                                   .collect(Collectors.toSet()));
         Set<ModuleDescriptor> jdkModules
             = new TreeSet<>(finder.allModules().stream()
-                                  .map(ModuleArtifact::descriptor)
+                                  .map(ModuleReference::descriptor)
                                   .filter(m -> !javaSEModules.contains(m))
                                   .collect(Collectors.toSet()));
 
         GenGraphs genGraphs = new GenGraphs(javaSEModules, jdkModules);
         Set<String> mods = new HashSet<>();
-        for (ModuleArtifact artifact: finder.allModules()) {
-            ModuleDescriptor descriptor = artifact.descriptor();
+        for (ModuleReference mref: finder.allModules()) {
+            ModuleDescriptor descriptor = mref.descriptor();
             String name = descriptor.name();
             switch (name) {
             case "jdk.dev":
@@ -89,14 +89,14 @@ public class GenGraphs {
             mods.add(name);
             Configuration cf = Configuration.resolve(finder,
                     Layer.emptyLayer(),
-                    ModuleArtifactFinder.nullFinder(),
+                    ModuleFinder.nullFinder(),
                     name);
             genGraphs.genDotFile(dir, name, cf);
         }
 
         Configuration cf = Configuration.resolve(finder,
                 Layer.emptyLayer(),
-                ModuleArtifactFinder.nullFinder(),
+                ModuleFinder.nullFinder(),
                 mods);
         genGraphs.genDotFile(dir, "jdk", cf);
 

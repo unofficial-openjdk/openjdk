@@ -21,8 +21,8 @@
  * questions.
  */
 
-import java.lang.module.ModuleArtifact;
-import java.lang.module.ModuleArtifactFinder;
+import java.lang.module.ModuleReference;
+import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleDescriptor;
 import java.util.ArrayList;
 import java.util.List;
@@ -34,14 +34,14 @@ import org.testng.annotations.Test;
 import static org.testng.Assert.*;
 
 /**
- * Basic tests for ModuleArtifactFinder
+ * Basic tests for ModuleFinder
  */
 @Test
-public class ModuleArtifactFinderTest {
+public class ModuleFinderTest {
     /*
-     * Verifies number and names of the module artifacts available in a finder.
+     * Verifies number and names of the module references available in a finder.
      */
-    private static void assertModules(ModuleArtifactFinder finder, String... modules) {
+    private static void assertModules(ModuleFinder finder, String... modules) {
         assertEquals(finder.allModules().size(), modules.length);
         for (String m : modules) {
             assertTrue(finder.find(m) != null);
@@ -59,20 +59,20 @@ public class ModuleArtifactFinderTest {
      * One finder used as left and also as right for a concatenation.
      */
     public void testDuplicateSame() {
-        ModuleArtifactFinder finder = new ModuleArtifactLibrary(build("m1"));
-        ModuleArtifactFinder concat = ModuleArtifactFinder.concat(finder, finder);
+        ModuleFinder finder = new ModuleLibrary(build("m1"));
+        ModuleFinder concat = ModuleFinder.concat(finder, finder);
         assertModules(concat, "m1");
     }
 
     /**
-     * Module artifacts with the same name are available from both left and right
+     * Module references with the same name are available from both left and right
      * inner finders.
      */
     public void testDuplicateDifferent() {
         ModuleDescriptor descriptor1 = build("m1");
-        ModuleArtifactFinder finder1 = new ModuleArtifactLibrary(descriptor1);
-        ModuleArtifactFinder finder2 = new ModuleArtifactLibrary(build("m1"));
-        ModuleArtifactFinder concat = ModuleArtifactFinder.concat(finder1, finder2);
+        ModuleFinder finder1 = new ModuleLibrary(descriptor1);
+        ModuleFinder finder2 = new ModuleLibrary(build("m1"));
+        ModuleFinder concat = ModuleFinder.concat(finder1, finder2);
         assertModules(concat, "m1");
         assertSame(concat.find("m1").descriptor(), descriptor1);
     }
@@ -88,11 +88,11 @@ public class ModuleArtifactFinderTest {
             leftFinders.add(build("m" + i*2));
             rightFinders.add(build("m" + (i*2 + 1)));
         }
-        ModuleArtifactLibrary left = new ModuleArtifactLibrary(
+        ModuleLibrary left = new ModuleLibrary(
             leftFinders.toArray(new ModuleDescriptor[BIG_NUMBER_OF_MODULES]));
-        ModuleArtifactLibrary right = new ModuleArtifactLibrary(
+        ModuleLibrary right = new ModuleLibrary(
             rightFinders.toArray(new ModuleDescriptor[BIG_NUMBER_OF_MODULES]));
-        ModuleArtifactFinder concat = ModuleArtifactFinder.concat(left, right);
+        ModuleFinder concat = ModuleFinder.concat(left, right);
         assertEquals(concat.allModules().size(), BIG_NUMBER_OF_MODULES*2);
         for (int i = 0; i < BIG_NUMBER_OF_MODULES*2; i++) {
             assertNotNull(concat.find("m" + i), String.format("%x'th module", i));
@@ -106,18 +106,18 @@ public class ModuleArtifactFinderTest {
     public void testException() {
         final String ALL_MODULES_MSG = "from allModules";
         final String FIND_MSG = "from find";
-        class BrokenFinder implements ModuleArtifactFinder {
+        class BrokenFinder implements ModuleFinder {
             @Override
-            public Set<ModuleArtifact> allModules() {
+            public Set<ModuleReference> allModules() {
                 throw new RuntimeException(ALL_MODULES_MSG);
             }
             @Override
-            public ModuleArtifact find(String name) {
+            public ModuleReference find(String name) {
                 throw new RuntimeException(FIND_MSG);
             }
         }
-        ModuleArtifactFinder concat =
-            ModuleArtifactFinder.concat(ModuleArtifactFinder.nullFinder(),
+        ModuleFinder concat =
+            ModuleFinder.concat(ModuleFinder.nullFinder(),
                                         new BrokenFinder());
         try {
             concat.allModules();
@@ -137,27 +137,27 @@ public class ModuleArtifactFinderTest {
      * Concatenates two empty finders, checks that both are used properly.
      */
     public void testEmpty() {
-        class CountingFinder implements ModuleArtifactFinder {
+        class CountingFinder implements ModuleFinder {
             final AtomicInteger allModulesCallCount = new AtomicInteger(0);
             final Vector findCalls = new Vector();
-            final ModuleArtifactFinder inner;
-            CountingFinder(ModuleArtifactFinder inner) {
+            final ModuleFinder inner;
+            CountingFinder(ModuleFinder inner) {
                 this.inner = inner;
             }
             @Override
-            public Set<ModuleArtifact> allModules() {
+            public Set<ModuleReference> allModules() {
                 allModulesCallCount.incrementAndGet();
                 return inner.allModules();
             }
             @Override
-            public ModuleArtifact find(String name) {
+            public ModuleReference find(String name) {
                 findCalls.add(name);
                 return inner.find(name);
             }
         }
-        CountingFinder empty1 = new CountingFinder(ModuleArtifactFinder.nullFinder());
-        CountingFinder empty2 = new CountingFinder(ModuleArtifactFinder.nullFinder());
-        ModuleArtifactFinder concat = ModuleArtifactFinder.concat(empty1, empty2);
+        CountingFinder empty1 = new CountingFinder(ModuleFinder.nullFinder());
+        CountingFinder empty2 = new CountingFinder(ModuleFinder.nullFinder());
+        ModuleFinder concat = ModuleFinder.concat(empty1, empty2);
         assertModules(concat);
         assertEquals(empty1.allModulesCallCount.get(), 1);
         assertEquals(empty2.allModulesCallCount.get(), 1);

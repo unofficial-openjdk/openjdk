@@ -23,8 +23,8 @@
 
 import java.lang.module.Configuration;
 import java.lang.module.Layer;
-import java.lang.module.ModuleArtifact;
-import java.lang.module.ModuleArtifactFinder;
+import java.lang.module.ModuleReference;
+import java.lang.module.ModuleFinder;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ServiceLoader;
@@ -44,16 +44,16 @@ public class CustomLayerTest {
         Path dir = Paths.get(args[2]);
 
         // create the Configuration
-        ModuleArtifactFinder finder = ModuleArtifactFinder.ofDirectories(dir);
+        ModuleFinder finder = ModuleFinder.ofDirectories(dir);
         Configuration cf = Configuration.resolve(finder,
                 Layer.bootLayer(),
-                ModuleArtifactFinder.nullFinder(),
+                ModuleFinder.nullFinder(),
                 moduleName);
 
         // create the Layer with the module loaded by the system class loader
         ClassLoader scl = ClassLoader.getSystemClassLoader();
-        ModuleArtifact artifact = cf.findArtifact(moduleName);
-        ((sun.misc.ModuleClassLoader)scl).defineModule(artifact);
+        ModuleReference mref = cf.findReference(moduleName);
+        ((sun.misc.ModuleClassLoader)scl).defineModule(mref);
         Layer layer = Layer.create(cf, k -> scl);
 
         ServiceLoader<ScriptEngineFactory> sl;

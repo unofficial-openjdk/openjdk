@@ -54,8 +54,8 @@ import java.util.zip.ZipFile;
 
 import java.lang.module.Configuration;
 import java.lang.module.Layer;
-import java.lang.module.ModuleArtifact;
-import java.lang.module.ModuleArtifactFinder;
+import java.lang.module.ModuleReference;
+import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Requires;
 import java.lang.module.ModuleDescriptor;
@@ -95,7 +95,7 @@ public class ModuleSummary {
         ms.genCSV(dir.resolve("jdk.csv"), ms.modules());
     }
 
-    private final Map<String, ModuleArtifact> nameToArtifact = new HashMap<>();
+    private final Map<String, ModuleReference> nameToReference = new HashMap<>();
     private final Map<String, JmodInfo> jmods = new HashMap<>();
     private final Map<String, Set<String>> deps = new HashMap<>();
     private final Map<String, ModuleDescriptor> packageMap = new HashMap<>();
@@ -104,23 +104,23 @@ public class ModuleSummary {
     ModuleSummary(Path modpath) throws IOException, ConstantPoolException {
         this.modpath = modpath;
 
-        Set<ModuleArtifact> artifacts = ModuleArtifactFinder.installedModules().allModules();
-        artifacts.forEach(m -> nameToArtifact.put(m.descriptor().name(), m));
+        Set<ModuleReference> mrefs = ModuleFinder.installedModules().allModules();
+        mrefs.forEach(m -> nameToReference.put(m.descriptor().name(), m));
 
         // build package map for all modules for API dependency analysis
-        artifacts.forEach(m -> m.descriptor().packages().stream()
+        mrefs.forEach(m -> m.descriptor().packages().stream()
                  .forEach(p -> packageMap.put(p, m.descriptor())));
 
-        for (ModuleArtifact artifact : artifacts) {
-            String name = artifact.descriptor().name();
+        for (ModuleReference mref : mrefs) {
+            String name = mref.descriptor().name();
             Path jmod = modpath.resolve(name + ".jmod");
             jmods.put(name, new JmodInfo(jmod));
-            deps.put(name, getAPIDependences(artifact, jmod));
+            deps.put(name, getAPIDependences(mref, jmod));
         }
     }
 
     Set<String> modules() {
-        return nameToArtifact.keySet();
+        return nameToReference.keySet();
     }
 
     public void genCSV(Path outfile, Set<String> roots) throws IOException {
@@ -208,13 +208,13 @@ public class ModuleSummary {
 
         // API dependency: bold
         // aggregator module's require: italic
-        ModuleArtifact artifact = nameToArtifact.get(from);
+        ModuleReference mref = nameToReference.get(from);
         boolean reexport = d.modifiers().contains(Requires.Modifier.PUBLIC);
         if (deps.containsKey(from) && deps.get(from).contains(name)) {
             // has API dependency
             return reexport ? String.format("<b>%s</b>", result)
                             : String.format("<b><font color=\"red\">%s</font></b>", result);
-        } else if (artifact.descriptor().packages().size() == 0) {
+        } else if (mref.descriptor().packages().size() == 0) {
             // aggregator module
             return String.format("<em>%s</em>", result);
         } else {
@@ -429,13 +429,13 @@ public class ModuleSummary {
         static final String MODULE_MAIN_CLASS = "module/main-class";
     }
 
-    Set<String> getAPIDependences(ModuleArtifact artifact, Path jmod)
+    Set<String> getAPIDependences(ModuleReference mref, Path jmod)
         throws IOException, ConstantPoolException
     {
-        ModuleDescriptor descriptor = artifact.descriptor();
+        ModuleDescriptor descriptor = mref.descriptor();
         Dependency.Finder finder = Dependencies.getAPIFinder(ACC_PROTECTED);
         Dependency.Filter filter =
-            (Dependency d) -> !artifact.descriptor().packages()
+            (Dependency d) -> !mref.descriptor().packages()
                                    .contains(d.getTarget().getPackageName());
         Set<String> exports = descriptor.exports().stream()
                     .map(Exports::source)
@@ -476,9 +476,9 @@ public class ModuleSummary {
     }
 
     static Configuration resolve(Collection<String> roots) {
-        return Configuration.resolve(ModuleArtifactFinder.installedModules(),
+        return Configuration.resolve(ModuleFinder.installedModules(),
                                      Layer.emptyLayer(),
-                                     ModuleArtifactFinder.nullFinder(),
+                                     ModuleFinder.nullFinder(),
                                      roots);
     }
 

@@ -40,11 +40,11 @@ import java.util.stream.Collectors;
  *
  * <pre>{@code
  *
- *     ModuleArtifactFinder finder =
- *         ModuleArtifactFinder.ofDirectories(dir1, dir2, dir3);
+ *     ModuleFinder finder =
+ *         ModuleFinder.ofDirectories(dir1, dir2, dir3);
  *
  *     Configuration cf =
- *         Configuration.resolve(ModuleArtifactFinder.nullFinder(),
+ *         Configuration.resolve(ModuleFinder.nullFinder(),
  *                               Layer.bootLayer(),
  *                               finder,
  *                               "myapp")
@@ -93,9 +93,9 @@ public final class Configuration {
      *
      * @throws ResolutionException  If resolution fails
      */
-    public static Configuration resolve(ModuleArtifactFinder beforeFinder,
+    public static Configuration resolve(ModuleFinder beforeFinder,
                                         Layer parent,
-                                        ModuleArtifactFinder afterFinder,
+                                        ModuleFinder afterFinder,
                                         Collection<String> roots)
     {
         Objects.requireNonNull(beforeFinder);
@@ -115,9 +115,9 @@ public final class Configuration {
      *
      * @throws ResolutionException   If resolution fails
      */
-    public static Configuration resolve(ModuleArtifactFinder beforeFinder,
+    public static Configuration resolve(ModuleFinder beforeFinder,
                                         Layer layer,
-                                        ModuleArtifactFinder afterFinder,
+                                        ModuleFinder afterFinder,
                                         String... roots)
     {
         return resolve(beforeFinder, layer, afterFinder, Arrays.asList(roots));
@@ -132,7 +132,7 @@ public final class Configuration {
 
     /**
      * Returns a configuration that is this configuration augmented with modules
-     * (located via the module artifact finders) that are induced by service-use
+     * (located via the module reference finders) that are induced by service-use
      * relationships.
      *
      * <p> Binding involves resolution to resolve the dependences of service
@@ -157,12 +157,12 @@ public final class Configuration {
     }
 
     /**
-     * Returns the {@code ModuleArtifact} for the given named module or
+     * Returns the {@code ModuleReference} for the given named module or
      * {@code null} if a module of the given name is not in this
      * configuration.
      */
-    public ModuleArtifact findArtifact(String name) {
-        return resolution.findArtifact(name);
+    public ModuleReference findReference(String name) {
+        return resolution.findReference(name);
     }
 
     /**
@@ -173,11 +173,11 @@ public final class Configuration {
      * @apiNote It's not clear that this method is useful,
      */
     public ModuleDescriptor findDescriptor(String name) {
-        ModuleArtifact artifact = findArtifact(name);
-        if (artifact == null) {
+        ModuleReference mref = findReference(name);
+        if (mref == null) {
             return null;
         } else {
-            return artifact.descriptor();
+            return mref.descriptor();
         }
     }
 
