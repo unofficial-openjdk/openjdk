@@ -332,11 +332,6 @@ applicable_cmsgc = \
  -:needs_serialgc \
  -:needs_parallelgc
 
-
-# When called from top level the test suites use the hotspot_ prefix
-hotspot_wbapitest = \
-  sanity/
-
 hotspot_native_sanity = \
   native_sanity
 
@@ -421,7 +416,7 @@ hotspot_runtime = \
  -runtime/SharedArchiveFile/DefaultUseWithClient.java \
  -runtime/Thread/CancellableThreadTest.java \
  -runtime/7158988/FieldMonitor.java \
-  sanity/ExecuteInternalVMTests.java \
+  sanity/ \
   testlibrary_tests/TestMutuallyExclusivePlatformPredicates.java
 
 hotspot_serviceability = \
@@ -429,7 +424,6 @@ hotspot_serviceability = \
   serviceability/dcmd/compiler
 
 hotspot_jprt = \
-  :hotspot_wbapitest \
   :hotspot_compiler_1 \
   :hotspot_compiler_2 \
   :hotspot_compiler_3 \
@@ -438,7 +432,6 @@ hotspot_jprt = \
   :hotspot_gc_closed \
   :hotspot_gc_gcold \
   :hotspot_runtime \
-  :hotspot_runtime_closed \
   :hotspot_serviceability
 
 #All tests that depends on nashorn extension.
