@@ -45,6 +45,7 @@ public class ImageCloseTest {
         String imageFile = javaHome + "/lib/modules/bootmodules.jimage";
 
         if (!(new File(imageFile)).exists()) {
+            System.out.printf("Test skipped.");
             return;
         }
 

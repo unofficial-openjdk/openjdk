@@ -44,6 +44,7 @@ public class ImageReadCompressedTest {
         String imageFile = javaHome + "/lib/modules/bootmodules.jimage";
 
         if (!(new File(imageFile)).exists()) {
+            System.out.printf("Test skipped.");
             return;
         }
 
