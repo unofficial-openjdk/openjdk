@@ -27,6 +27,7 @@ default: all
 
 include $(SPEC)
 include MakeBase.gmk
+include Modules.gmk
 
 TOOL_TARGETS :=
 JDK_TARGETS :=
@@ -66,12 +67,10 @@ ifeq ($(OPENJDK_TARGET_OS), macosx)
 endif
 
 # Hack for now
-ifneq ($(IMPORT_MODULES_CLASSES), )
-  IMPORT_MODULES := $(notdir $(wildcard $(IMPORT_MODULES_CLASSES)/*))
-endif
+IMPORTED_MODULES := $(call FindImportedModules)
 
 JRE_MODULES := $(MAIN_MODULES) $(PROVIDER_MODULES)
-JDK_MODULES := $(JRE_MODULES) $(TOOLS_MODULES) $(IMPORT_MODULES)
+JDK_MODULES := $(JRE_MODULES) $(TOOLS_MODULES) $(IMPORTED_MODULES)
 
 # compact3 builds have additional modules
 JDK_COMPACT3_MODULES := java.compact3 java.smartcardio jdk.httpserver jdk.management \

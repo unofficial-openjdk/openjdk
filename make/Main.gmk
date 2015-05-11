@@ -147,7 +147,23 @@ $(eval $(call DeclareRecipesForPhase, COPY, \
     CHECK_MODULES := $(ALL_MODULES), \
     USE_WRAPPER := true))
 
-ALL_TARGETS += $(COPY_TARGETS)
+ALL_COPY_MODULES += $(COPY_MODULES)
+ALL_COPY_TARGETS += $(COPY_TARGETS)
+
+IMPORT_COPY_MODULES := $(call FindImportedModules)
+IMPORT_COPY_TARGETS := $(addsuffix -copy, $(IMPORT_COPY_MODULES))
+ALL_COPY_MODULES += $(IMPORT_COPY_MODULES)
+ALL_COPY_TARGETS += $(IMPORT_COPY_TARGETS)
+
+define DeclareImportCopyRecipe
+  $1-copy:
+	+($(CD) $(SRC_ROOT)/make && $(MAKE) $(MAKE_ARGS) \
+	    -f CopyImportModules.gmk MODULE=$1)
+endef
+
+$(foreach m, $(IMPORT_COPY_MODULES), $(eval $(call DeclareImportCopyRecipe,$m)))
+
+ALL_TARGETS += $(ALL_COPY_TARGETS)
 
 ################################################################################
 # Targets for compiling all java modules. Nashorn is treated separately.
@@ -544,7 +560,7 @@ gensrc: $(GENSRC_TARGETS)
 
 gendata: $(GENDATA_TARGETS)
 
-copy: $(COPY_TARGETS)
+copy: $(ALL_COPY_TARGETS)
 
 java: $(JAVA_TARGETS)
 
@@ -570,13 +586,10 @@ $(foreach m, $(GENDATA_MODULES), $(eval $m: $m-gendata))
 $(foreach m, $(RMIC_MODULES), $(eval $m: $m-rmic))
 $(foreach m, $(LIBS_MODULES), $(eval $m: $m-libs))
 $(foreach m, $(LAUNCHER_MODULES), $(eval $m: $m-launchers))
-$(foreach m, $(COPY_MODULES), $(eval $m: $m-copy))
-
-ALL_MODULE_TARGETS := $(sort $(GENSRC_MODULES) $(JAVA_MODULES) \
-    $(GENDATA_MODULES) $(LIBS_MODULES) $(LAUNCHER_MODULES) $(COPY_MODULES))
+$(foreach m, $(ALL_COPY_MODULES), $(eval $m: $m-copy))
 
 # The "exploded image" is a locally runnable JDK in $(BUILD_OUTPUT)/jdk.
-exploded-image: $(ALL_MODULE_TARGETS)
+exploded-image: $(ALL_MODULES)
 
 # The $(BUILD_OUTPUT)/images directory contain the resulting deliverables,
 # and in line with this, our targets for creating these are named *-image[s].

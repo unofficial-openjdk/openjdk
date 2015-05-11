@@ -70,6 +70,9 @@ FindAllModules = \
     $(sort $(filter-out $(MODULES_FILTER), \
     $(call GetModuleNameFromModuleInfo, $(MODULE_INFOS))))
 
+FindImportedModules = \
+    $(if $(IMPORT_MODULES_CLASSES), $(notdir $(wildcard $(IMPORT_MODULES_CLASSES)/*)))
+
 ################################################################################
 # Extract module dependencies from module-info.java files.
 
