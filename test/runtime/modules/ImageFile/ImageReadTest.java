@@ -33,10 +33,10 @@
  * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -XX:-MemoryMapImage ImageReadTest -
  */
 
-import sun.hotspot.WhiteBox;
 import java.io.File;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import sun.hotspot.WhiteBox;
 
 public class ImageReadTest implements LocationConstants {
 
@@ -45,6 +45,10 @@ public class ImageReadTest implements LocationConstants {
     public static void main(String... args) throws Exception {
         String javaHome = System.getProperty("java.home");
         String imageFile = javaHome + "/lib/modules/bootmodules.jimage";
+
+        if (!(new File(imageFile)).exists()) {
+            return;
+        }
 
         boolean isMMap = true;
         for (String arg : args)

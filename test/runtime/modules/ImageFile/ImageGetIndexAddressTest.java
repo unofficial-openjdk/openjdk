@@ -32,8 +32,9 @@
  * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI ImageGetIndexAddressTest
  */
 
-import sun.hotspot.WhiteBox;
+import java.io.File;
 import java.nio.ByteOrder;
+import sun.hotspot.WhiteBox;
 
 public class ImageGetIndexAddressTest {
 
@@ -42,6 +43,10 @@ public class ImageGetIndexAddressTest {
     public static void main(String... args) throws Exception {
         String javaHome = System.getProperty("java.home");
         String imageFile = javaHome + "/lib/modules/bootmodules.jimage";
+
+        if (!(new File(imageFile)).exists()) {
+            return;
+        }
 
         if (!testImageGetIndexAddress(imageFile))
             throw new RuntimeException("Some cases are failed");

@@ -32,6 +32,7 @@
  * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI ImageReadCompressedTest
  */
 
+import java.io.File;
 import sun.hotspot.WhiteBox;
 
 public class ImageReadCompressedTest {
@@ -41,6 +42,10 @@ public class ImageReadCompressedTest {
     public static void main(String... args) throws Exception {
         String javaHome = System.getProperty("java.home");
         String imageFile = javaHome + "/lib/modules/bootmodules.jimage";
+
+        if (!(new File(imageFile)).exists()) {
+            return;
+        }
 
         if (!testImageReadCompressed(imageFile))
             throw new RuntimeException("Some cases are failed");
