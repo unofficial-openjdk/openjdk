@@ -163,7 +163,7 @@ endef
 
 $(foreach m, $(IMPORT_COPY_MODULES), $(eval $(call DeclareImportCopyRecipe,$m)))
 
-ALL_TARGETS += $(ALL_COPY_TARGETS)
+ALL_TARGETS += $(ALL_COPY_TARGETS) $(ALL_COPY_MODULES)
 
 ################################################################################
 # Targets for compiling all java modules. Nashorn is treated separately.
