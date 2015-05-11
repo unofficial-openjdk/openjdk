@@ -29,11 +29,11 @@
 #
 # Depending on build platform, imported modules and optional parts of the build
 # being active, some modules need to have extra exports, provides or uses
-# declarations added to them. These optional extras are defined in .ext files:
+# declarations added to them. These optional extras are defined in .extra files:
 #
-# src/<module>/<share,platform>/classes/module-info.java.ext
+# src/<module>/<share,platform>/classes/module-info.java.extra
 #
-# The contents of the .ext files are simply extra lines that could fit into
+# The contents of the .extra files are simply extra lines that could fit into
 # the module-info file.
 #
 # This makefile is called once for each from-module with the variable
@@ -62,7 +62,7 @@ TOOL_GENMODULEINFOSOURCE = $(JAVA_SMALL) \
 ################################################################################
 
 # Name of data file
-MOD_FILENAME := module-info.java.ext
+MOD_FILENAME := module-info.java.extra
 
 # List all the possible sub directories inside a module source directory where
 # data might be stored.
@@ -84,7 +84,7 @@ MODULE_CLASSES_DIRS := $(strip \
         $(addsuffix /$(MODULE)/$(sub), $(ALL_TOP_SRC_DIRS))) \
     $(addsuffix /$(MODULE), $(IMPORT_MODULES_SRC)))
 
-# Find all the .ext files in the src dirs.
+# Find all the .extra files in the src dirs.
 MOD_FILES := $(wildcard $(addsuffix /$(MOD_FILENAME), \
     $(MODULE_CLASSES_DIRS)))
 
