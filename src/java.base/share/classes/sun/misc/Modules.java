@@ -31,7 +31,6 @@ import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleReader;
 import java.lang.reflect.Module;
 import java.net.URI;
-import java.util.Collections;
 import java.util.Set;
 
 
@@ -78,6 +77,7 @@ public class Modules {
 
     /**
      * Adds a read-edge so that module {@code m1} reads module {@code m1}.
+     * Same as m1.addReads(m2) but without a permission check.
      */
     public static void addReads(Module m1, Module m2) {
         SharedSecrets.getJavaLangReflectAccess().addReadsModule(m1, m2);
@@ -88,7 +88,7 @@ public class Modules {
      *
      * @param m1 the module that exports the package
      * @param pkg the package to export
-     * @param m2 the module to export the package, when {@code null} then
+     * @param m2 the module to export the package to, when {@code null} then
      *           the package is exported all modules that read m1.
      *
      * @throws IllegalArgumentException if pkg is not a package in m1
@@ -101,8 +101,11 @@ public class Modules {
      * Returns {@code true} if module {@code m1} exports package {@code pkg}
      * to module {@code m2}. If {@code m2} is {@code null} then returns
      * {@code true} if pkg is exported to all modules that read m1.
+     *
+     * @apiNote This method will be removed once usages in the JDK are
+     * updated.
      */
     public static boolean isExported(Module m1, String pkg, Module m2) {
-        return SharedSecrets.getJavaLangReflectAccess().isExported(m1, pkg, m2);
+        return m1.isExported(pkg, m2);
     }
 }

@@ -39,6 +39,11 @@ import java.lang.module.ModuleArtifact;
 public interface JavaLangReflectAccess {
 
     /**
+     * Defines the unnamed module for the given class loader.
+     */
+    Module defineUnnamedModule(ClassLoader loader);
+
+    /**
      * Defines a new module to the Java virtual machine. The module
      * is defined to the given class loader.
      */
@@ -52,12 +57,6 @@ public interface JavaLangReflectAccess {
     Map<String, Module> defineModules(Configuration cf, ClassLoaderFinder clf);
 
     /**
-     * Returns {@code true} if module m1 exports a package to module m2.
-     * This method is used by sun.misc.Reflection.verifyModuleAccess.
-     */
-    boolean isExported(Module m1, String pkg, Module m2);
-
-    /**
      * Add a package to the given module.
      */
     void addPackage(Module m, String pkg);
@@ -65,6 +64,8 @@ public interface JavaLangReflectAccess {
     /**
      * Updates the readability so that module m1 reads m2. The new read edge
      * does not result in a strong reference to m2 (m2 can be GC'ed).
+     *
+     * This method is the same as m1.addReads(m2) but without a permission check.
      */
     void addReadsModule(Module m1, Module m2);
 

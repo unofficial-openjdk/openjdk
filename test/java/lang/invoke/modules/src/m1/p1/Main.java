@@ -111,11 +111,11 @@ public class Main {
         findConstructorExpectingIAE(lookup2, Object.class, void.class);  // [A0]
 
         /**
-         * Teleport from MethodHandles.lookup() to lookup class in the unnamed module
+         * Teleport from MethodHandles.lookup() to lookup class in an unnamed module
          * has no access [A0]
          */
         Class<?> c = MethodHandles.publicLookup().lookupClass();
-        assertTrue(c.getModule() == null);
+        assertTrue(c.getModule().isUnnamed());
         lookup2 = lookup.in(c);
         assertTrue(lookup2.lookupModes() == 0); // [A0]
         findConstructorExpectingIAE(lookup2, Object.class, void.class);

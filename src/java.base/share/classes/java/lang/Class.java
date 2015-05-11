@@ -420,6 +420,14 @@ public final class Class<T> implements java.io.Serializable,
         Objects.requireNonNull(module);
         Objects.requireNonNull(name);
 
+        // FIXME: Need to decide how this method should work when called with
+        // an unnamed module. It probably should work like
+        // forName(String, false, ClassLoader) but need to be careful not to
+        // call it from here because that method is @CS.
+        if (module.isUnnamed()) {
+            throw new InternalError("not implemented");
+        }
+
         SecurityManager sm = System.getSecurityManager();
         if (sm != null) {
             sm.checkPermission(SecurityConstants.GET_CLASSLOADER_PERMISSION);
@@ -776,28 +784,44 @@ public final class Class<T> implements java.io.Serializable,
     /**
      * Returns the module that this class or interface is a member of.
      *
+     * If this class is not in a named module then the {@link
+     * ClassLoader#getUnnamedModule() unnamed} {@code Module} of the class
+     * loader for this class is returned.
+     *
      * If this object represents an array type then this method returns the
      * {@code Module} for the element type. If this object represents a
      * primitive type or void, then the {@code Module} object for the
      * {@code java.base} module is returned.
-     *
-     * @apiNote If this object is in the unnamed module then {@code null} is
-     * returned. This may change to {@code Module.UNNAMED} once the topic
-     * is examined further.
      *
      * @return the module that this class or interface is a member of
      *
      * @since 1.9
      */
     public Module getModule() {
-        if (isArray()) {
-            return componentType.getModule();
-        } else {
-            return isPrimitive() ? Object.class.module : module;
-        }
+        Module module = this.module;
+        if (module != null)
+            return module;
+
+        // called early in the startup before patching
+        if (sun.misc.VM.initLevel() == 0)
+            return null;
+
+        if (isArray())
+            module = componentType.getModule();
+        else if (isPrimitive())
+            module = Object.class.getModule();
+        else if (classLoader == null)
+            module = BootLoader.getUnnamedModule();
+        else
+            module = classLoader.getUnnamedModule();
+
+        // cache it
+        this.module = module;
+
+        return module;
     }
 
-    private transient Module module;  // set by VM
+    private transient Module module;  // set by VM or lazily by getModule
 
     // Initialized in JVM not by private constructor
     // This field is filtered from reflection access, i.e. getDeclaredField
@@ -2349,21 +2373,18 @@ public final class Class<T> implements java.io.Serializable,
         // if this Class and the caller are in the same named module
         // then attempt to get an input stream to the resource in the
         // module
-        Module me = getModule();
-        if (me != null) {
+        Module module = getModule();
+        if (!module.isUnnamed()) {
             Class<?> caller = Reflection.getCallerClass();
-            if (caller == null) {
-                // call from JNI method with no frames on the stack
-                caller = Object.class;
-            }
-            if (caller.getModule() == me) {
+            if (caller != null && caller.getModule() == module) {
                 ClassLoader cl = getClassLoader0();
                 try {
                     InputStream in;
+                    String mn = module.getName();
                     if (cl == null) {
-                        in = BootLoader.getResourceAsStream(me.getName(), name);
+                        in = BootLoader.getResourceAsStream(mn, name);
                     } else {
-                        in = cl.getResourceAsStream(me.getName(), name);
+                        in = cl.getResourceAsStream(mn, name);
                     }
                     return in;
                 } catch (IOException ioe) {

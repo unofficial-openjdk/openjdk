@@ -31,11 +31,10 @@ import java.lang.reflect.Module;
 public class Main {
     public static void main(String[] args) throws Exception {
         Module m1 = Main.class.getModule();
-        assertTrue(m1 != null);
+        assertTrue(!m1.isUnnamed());
 
         // java.base is readable
         Module base = Object.class.getModule();
-        assertTrue(base != null);
         assertTrue(m1.canRead(base));
         m1.addReads(base); // no-op
         assertTrue(m1.canRead(base));
@@ -46,7 +45,7 @@ public class Main {
         assertTrue(m1.canRead(m1));
 
         // unnamed module is readable
-        assertTrue(m1.canRead(null));
+        //assertTrue(m1.canRead(null));
 
         // module m2 is not readable
         Class<?> c = Class.forName("jdk.two.C");

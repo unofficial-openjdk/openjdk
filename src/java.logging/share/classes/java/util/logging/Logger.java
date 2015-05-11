@@ -1981,8 +1981,12 @@ public class Logger {
             loggerBundle = SYSTEM_BUNDLE;
         } else {
             Module module = callersClass != null ? callersClass.getModule() : null;
-            ResourceBundle bundle = module != null ? findResourceBundle(name, module)
-                                                   : findResourceBundle(name, true);
+            ResourceBundle bundle;
+            if (module == null || module.isUnnamed()) {
+                bundle = findResourceBundle(name, true);
+            } else {
+                bundle = findResourceBundle(name, module);
+            }
             if (bundle == null) {
                 // We've failed to find an expected ResourceBundle.
                 // unset the caller's ClassLoader since we were unable to find the

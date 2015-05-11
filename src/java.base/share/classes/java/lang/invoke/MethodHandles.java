@@ -104,7 +104,7 @@ public class MethodHandles {
      * public members in public classes of exported packages.
      * <p>
      * As a matter of pure convention, the {@linkplain Lookup#lookupClass lookup class}
-     * of this lookup object will be in the unnamed module.
+     * of this lookup object will be in an unnamed module.
      *
      * <p style="font-size:smaller;">
      * <em>Discussion:</em>
@@ -636,7 +636,7 @@ public class MethodHandles {
          * However, the resulting {@code Lookup} object is guaranteed
          * to have no more access capabilities than the original.
          * In particular, access capabilities can be lost as follows:<ul>
-         * <li>If the lookup class for this {@code Lookup} is in the unnamed module,
+         * <li>If the lookup class for this {@code Lookup} is not in a named module,
          * and the new lookup class is in a named module {@code M}, then no members in
          * {@code M}'s non-exported packages will be accessible.
          * <li>If the lookup for this {@code Lookup} is in a named module, and the
@@ -667,9 +667,9 @@ public class MethodHandles {
 
             int newModes = (allowedModes & (ALL_MODES & ~PROTECTED));
             if (!VerifyAccess.isSameModule(this.lookupClass, requestedLookupClass)) {
-                // Allowed to teleport from unnamed to named module but resulting
+                // Allowed to teleport from an unnamed to a named module but resulting
                 // Lookup has no access to module private members
-                if (this.lookupClass.getModule() == null) {
+                if (this.lookupClass.getModule().isUnnamed()) {
                     newModes &= ~MODULE;
                 } else {
                     newModes = 0;
@@ -1551,8 +1551,8 @@ return mh1;
                     MethodHandleNatives.refKindIsSetter(refKind))
                 throw m.makeAccessException("unexpected set of a final field", this);
             if (Modifier.isPublic(mods) && Modifier.isPublic(refc.getModifiers()) &&
-                    refc.getModule() == null && allowedModes != 0)
-                return;  // public member and type in the unnamed module, common case
+                    refc.getModule().isUnnamed() && allowedModes != 0)
+                return;  // public member and type in an unnamed module, common case
             int requestedModes = fixmods(mods);  // adjust 0 => PACKAGE
             if ((requestedModes & allowedModes) != 0) {
                 if (VerifyAccess.isMemberAccessible(refc, m.getDeclaringClass(),
@@ -1843,7 +1843,7 @@ return mh1;
 
     /**
      * Helper class used to lazily create PUBLIC_LOOKUP with a lookup class
-     * in the <em>unanmed module</em>.
+     * in an <em>unnamed module</em>.
      *
      * @see Lookup#publicLookup
      */

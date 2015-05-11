@@ -22,6 +22,7 @@
 #
 
 # @test
+# @ignore
 # @summary Basic test of dynamic proxies with modules
 
 set -e

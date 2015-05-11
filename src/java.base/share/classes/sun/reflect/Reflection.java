@@ -82,19 +82,11 @@ public class Reflection {
     public static native int getClassAccessFlags(Class<?> c);
 
     /** A quick "fast-path" check to try to avoid getCallerClass()
-        calls. */
+        calls. No longer effective and so always returns false. */
     public static boolean quickCheckMemberAccess(Class<?> memberClass,
                                                  int modifiers)
     {
-        if (!Modifier.isPublic(getClassAccessFlags(memberClass) & modifiers))
-            return false;
-
-        if (memberClass.getModule() == null) {
-            return true;
-        } else {
-            // no quick check if member is a public type in a named module
-            return false;
-        }
+        return false;
     }
 
     public static void ensureMemberAccess(Class<?> currentClass,
@@ -111,10 +103,10 @@ public class Reflection {
             String currentSuffix = "";
             String memberSuffix = "";
             Module m1 = currentClass.getModule();
-            if (m1 != null)
+            if (!m1.isUnnamed())
                 currentSuffix = " (" + m1 + ")";
             Module m2 = memberClass.getModule();
-            if (m2 != null)
+            if (!m2.isUnnamed())
                 memberSuffix = " (" + m2 + ")";
 
             String msg = "Class " + currentClass.getName() +
@@ -124,18 +116,18 @@ public class Reflection {
                     " with modifiers \"" +
                     Modifier.toString(modifiers) + "\"";
 
-            // if m1 or m2 are named modules then expand the message to help
-            // troubleshooting
-            if (m1 != null && !m1.canRead(m2)) {
-                msg += ", " + m1 + " does not read " + m2;
+            // Expand the message to help troubleshooting
+            if (!m1.canRead(m2)) {
+                msg += ", " + m1;
+                if (m1.isStrict())
+                    msg += " (strict module) ";
+                msg += " does not read " + m2;
             }
-            if (m2 != null) {
-                String pkg = packageName(memberClass);
-                if (!Modules.isExported(m2, pkg, m1)) {
-                    msg += ", " + m2 + " does not export " + pkg;
-                    if (m1 != null)
-                        msg += " to " + m1;
-                }
+            String pkg = packageName(memberClass);
+            if (!m2.isExported(pkg, m1)) {
+                msg += ", " + m2 + " does not export " + pkg;
+                if (!m2.isUnnamed())
+                    msg += " to " + m1;
             }
 
             throwIAE(msg);
@@ -236,27 +228,17 @@ public class Reflection {
 
     public static boolean verifyModuleAccess(Module currentModule, Class<?> memberClass) {
         Module memberModule = memberClass.getModule();
+
+        // module may be null during startup (initLevel 0)
         if (currentModule == memberModule)
-            return true;  // same module (named or unnamed)
+           return true;  // same module (named or unnamed)
 
-        // do module access check in the VM?
-        // (experimental/performance testing)
-        if (VMAccessCheck.USE_VM_ACCESS_CHECK) {
-            return VMAccessCheck.canAccess(currentModule, memberModule, memberClass);
-        }
-
-        if (currentModule != null) {
-            // named module trying to access member in unnamed module
-            if (memberModule == null)
-                return true;
-
-            // named module trying to access member in another named module
-            if (!currentModule.canRead(memberModule))
-                return false;
-        }
+        // check readability
+        if (!currentModule.canRead(memberModule))
+            return false;
 
         // check that memberModule exports the package to currentModule
-        return Modules.isExported(memberModule, packageName(memberClass), currentModule);
+        return memberModule.isExported(packageName(memberClass), currentModule);
     }
 
     private static String packageName(Class<?> c) {

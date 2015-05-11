@@ -28,7 +28,6 @@ package sun.invoke.util;
 import java.lang.reflect.Modifier;
 import static java.lang.reflect.Modifier.*;
 import java.lang.reflect.Module;
-import sun.misc.Modules;
 import sun.reflect.Reflection;
 
 /**
@@ -176,11 +175,6 @@ public class VerifyAccess {
                (allowedModes & ~(ALL_ACCESS_MODES|PACKAGE_ALLOWED|MODULE_ALLOWED)) == 0);
         int mods = getClassModifiers(refc);
         if (isPublic(mods)) {
-            // symbolic reference class in unnamed module
-            Module rm = refc.getModule();
-            if (rm == null)
-                return true;
-
             // module access
             if ((allowedModes & MODULE_ALLOWED) != 0)
                 return Reflection.verifyModuleAccess(lookupClass, refc);
@@ -188,10 +182,13 @@ public class VerifyAccess {
             // no module access, need to check:
             // 1. lookupClass in module that reads module contain refc
             // 2. refc is in an exported package
-            Module lm = lookupClass.getModule();
-            if (lm != null && !lm.canRead(refc.getModule()))
+            Module lookupModule = lookupClass.getModule();
+            Module refModule = refc.getModule();
+            if (!lookupModule.canRead(refModule))
                 return false;
-            return Modules.isExported(rm, getPackageName(refc), null);
+
+            // check the package is exported to everyone
+            return refModule.isExported(getPackageName(refc), null);
         }
         if ((allowedModes & PACKAGE_ALLOWED) != 0 &&
             isSamePackage(lookupClass, refc))
@@ -240,7 +237,7 @@ public class VerifyAccess {
     }
 
     /**
-     * Tests if two classes arein the same module.
+     * Tests if two classes are in the same module.
      * @param class1 a class
      * @param class2 another class
      * @return whether they are in the same module

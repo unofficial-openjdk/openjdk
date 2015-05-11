@@ -328,10 +328,7 @@ public final class ServiceLoader<S>
             Module base = Object.class.getModule();
             Module svcModule = svc.getModule();
             if (callerModule != base || svcModule != base) {
-                String target = (callerModule != null)
-                        ? callerModule.toString()
-                        : "<unnamed module>";
-                fail(svc, "not accessible to " + target + " during VM init");
+                fail(svc, "not accessible to " + callerModule + " during VM init");
             }
 
             // restricted to boot loader during startup
@@ -364,15 +361,12 @@ public final class ServiceLoader<S>
         // to the caller and that the service type is in a package that is
         // exported to the caller.
         if (!Reflection.verifyModuleAccess(module, svc)) {
-            String target = (module != null)
-                    ? module.toString()
-                    : "<unnamed module>";
-            fail(svc, "not accessible to " + target);
+            fail(svc, "not accessible to " + module);
         }
 
         // If the caller is in a named module then it must declare that it
         // uses the service type
-        if (module != null) {
+        if (!module.isUnnamed()) {
             String sn = svc.getName();
             if (!module.getDescriptor().uses().contains(sn)) {
                 fail(svc, "use not declared in " + module);
@@ -732,9 +726,8 @@ public final class ServiceLoader<S>
             // check provider loaded from the expected module
             Module m = c.getModule();
             if (m != provider.module()) {
-                String who = (m != null) ? m.toString() : "<unnamed module>";
                 fail(service,
-                     "Provider " + cn  + " loaded from " + who +
+                     "Provider " + cn  + " loaded from " + m +
                      " expected " + provider.module());
             }
 

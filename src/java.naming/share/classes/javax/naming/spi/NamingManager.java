@@ -25,9 +25,12 @@
 
 package javax.naming.spi;
 
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.lang.reflect.Module;
 import java.net.MalformedURLException;
 import java.util.*;
+
 
 import javax.naming.*;
 import com.sun.naming.internal.VersionHelper;
@@ -61,6 +64,14 @@ import com.sun.naming.internal.FactoryEnumeration;
  */
 
 public class NamingManager {
+
+     static {
+         // java.naming needs to be a loose module
+         Module thisModule = NamingManager.class.getModule();
+         PrivilegedAction<Void> pa =
+             () -> { thisModule.addReads(null); return null; };
+         AccessController.doPrivileged(pa);
+     }
 
     /*
      * Disallow anyone from creating one of these.

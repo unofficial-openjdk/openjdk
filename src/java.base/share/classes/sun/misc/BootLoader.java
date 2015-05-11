@@ -27,6 +27,7 @@ package sun.misc;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.module.ModuleArtifact;
+import java.lang.reflect.Module;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Enumeration;
@@ -42,11 +43,22 @@ import jdk.internal.module.ServicesCatalog;
 public class BootLoader {
     private BootLoader() { }
 
+    // The unnamed module for the boot loader
+    private static final Module UNNAMED_MODULE
+        = SharedSecrets.getJavaLangReflectAccess().defineUnnamedModule(null);
+
     // ServiceCatalog for the boot class loader
     private static final ServicesCatalog SERVICES_CATALOG = new ServicesCatalog();
 
     // The ModuleArtiact for java.base
     private static ModuleArtifact baseArtifact;
+
+    /**
+     * Returns the unnnamed module for the boot loader.
+     */
+    public static Module getUnnamedModule() {
+        return UNNAMED_MODULE;
+    }
 
     /**
      * Make visible the resources in java.base. This module is special cased

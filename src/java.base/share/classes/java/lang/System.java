@@ -27,6 +27,7 @@ package java.lang;
 import java.io.*;
 import java.lang.reflect.Executable;
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Module;
 import java.security.AccessControlContext;
 import java.util.Properties;
 import java.util.PropertyPermission;
@@ -1217,6 +1218,12 @@ public final class System {
     private static void initPhase2() {
         // initialize the module system
         ModuleBootstrap.boot();
+
+        // base module needs to be loose
+        Module base = Object.class.getModule();
+        if (base == null)
+            throw new InternalError();
+        sun.misc.Modules.addReads(base, null);
 
         // module system initialized
         sun.misc.VM.initLevel(2);

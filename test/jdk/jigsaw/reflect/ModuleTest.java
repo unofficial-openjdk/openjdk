@@ -21,8 +21,10 @@
  * questions.
  */
 
-import java.lang.reflect.Module;
+import java.lang.module.Layer;
+import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Exports;
+import java.lang.reflect.Module;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -39,7 +41,49 @@ public class ModuleTest {
 
     @Test
     public void testMe() {
-        assertTrue(ModuleTest.class.getModule() == null);
+        assertTrue(ModuleTest.class.getModule().isUnnamed());
+    }
+
+    @Test
+    public void testLoader() {
+        Module thisModule = ModuleTest.class.getModule();
+        ClassLoader thisLoader = ModuleTest.class.getClassLoader();
+        assertTrue(thisLoader == thisModule.getClassLoader());
+        assertTrue(thisLoader.getUnnamedModule() == thisModule);
+    }
+
+    /**
+     * Tests that the given module reads all modules in the boot Layer.
+     */
+    private void testReadsAllBootModules(Module m) {
+        Layer bootLayer = Layer.bootLayer();
+        bootLayer.configuration()
+                .descriptors()
+                .stream()
+                .map(ModuleDescriptor::name)
+                .map(bootLayer::findModule)
+                .forEach(target -> assertTrue(m.canRead(target)));
+    }
+
+    @Test
+    public void testUnnamedModule() {
+        ClassLoader loader1 = ClassLoader.getSystemClassLoader();
+        ClassLoader loader2 = loader1.getParent();
+
+        Module m1 = loader1.getUnnamedModule();
+        Module m2 = loader2.getUnnamedModule();
+
+        assertTrue(m1 != m2);
+
+        assertTrue(m1.isUnnamed());
+        assertTrue(m2.isUnnamed());
+
+        // unnamed module reads all modules
+        assertTrue(m1.canRead(m2));
+        assertTrue(m2.canRead(m1));
+
+        testReadsAllBootModules(m1);
+        testReadsAllBootModules(m2);
     }
 
     private Predicate<Exports> doesExport(String pn) {
@@ -48,7 +92,7 @@ public class ModuleTest {
     }
 
     @Test
-    public void testBase() {
+    public void testBaseModule() {
         Module base = Object.class.getModule();
 
         // getClassLoader
@@ -65,12 +109,13 @@ public class ModuleTest {
         assertTrue(contains(base.getPackages(), "java.lang"));
 
         // canRead
-        assertTrue(base.canRead(null));
+        Module me = ModuleTest.class.getModule();
+        assertTrue(base.canRead(me) != base.isStrict());
         assertTrue(base.canRead(base));
     }
 
     @Test
-    public void testDesktop() {
+    public void testDesktopModule() {
         Module desktop = java.awt.Component.class.getModule();
 
         // getClassLoader
@@ -90,7 +135,6 @@ public class ModuleTest {
         // reads
         Module base = Object.class.getModule();
         Module xml = javax.xml.XMLConstants.class.getModule();
-        assertTrue(desktop.canRead(null));
         assertTrue(desktop.canRead(base));
         assertTrue(desktop.canRead(xml));
     }

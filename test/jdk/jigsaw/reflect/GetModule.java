@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,6 +37,8 @@ import static org.testng.Assert.assertEquals;
 
 public class GetModule {
 
+    private static final Module TEST_MODULE = GetModule.class.getModule();
+
     @DataProvider(name = "samples")
     public Object[][] sampleData() {
         return new Object[][] {
@@ -65,7 +67,10 @@ public class GetModule {
     @Test(dataProvider = "samples")
     public void testGetModule(Class<?> type, String expected) {
         Module m = type.getModule();
-        String name = (m != null) ? m.getName() : null;
-        assertEquals(name, expected);
+        if (expected == null) {
+            assertEquals(m, TEST_MODULE);
+        } else {
+            assertEquals(m.getName(), expected);
+        }
     }
 }

@@ -28,6 +28,8 @@ import java.io.InputStream;
 import java.io.IOException;
 import java.io.File;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.lang.reflect.Module;
 import java.net.URL;
 import java.security.AccessController;
 import java.security.AccessControlContext;
@@ -52,6 +54,7 @@ import jdk.internal.module.ServicesCatalog;
 import sun.misc.BootLoader;
 import sun.misc.ClassLoaders;
 import sun.misc.CompoundEnumeration;
+import sun.misc.SharedSecrets;
 import sun.misc.Unsafe;
 import sun.misc.VM;
 import sun.reflect.CallerSensitive;
@@ -2265,6 +2268,32 @@ public abstract class ClassLoader {
 
 
     /**
+     * Returns the unnamed {@code Module} for this class loader.
+     *
+     * @return The unnamed Module for this class loader
+     *
+     * @see Module#isUnnamed()
+     * @since 1.9
+     */
+    public Module getUnnamedModule() {
+        Module module = unnamedModule;
+        if (module == null) {
+            module = SharedSecrets.getJavaLangReflectAccess()
+                    .defineUnnamedModule(this);
+            boolean set = trySetObjectField("unnamedModule", module);
+            if (!set) {
+                // beaten by someone else
+                module = unnamedModule;
+            }
+        }
+        return module;
+    }
+
+    // the unnamed Module for this ClassLoader, created lazily
+    private volatile Module unnamedModule;
+
+
+    /**
      * Returns the ServiceCatalog for modules defined to this class loader
      * or {@code null} if this class loader does not have a services catalog.
      */
@@ -2280,15 +2309,7 @@ public abstract class ClassLoader {
         ServicesCatalog catalog = servicesCatalog;
         if (catalog == null) {
             catalog = new ServicesCatalog();
-            Unsafe unsafe = Unsafe.getUnsafe();
-            Class<?> k = ClassLoader.class;
-            long offset;
-            try {
-                offset = unsafe.objectFieldOffset(k.getDeclaredField("servicesCatalog"));
-            } catch (NoSuchFieldException e) {
-                throw new InternalError(e);
-            }
-            boolean set = unsafe.compareAndSwapObject(this, offset, null, catalog);
+            boolean set = trySetObjectField("servicesCatalog", catalog);
             if (!set) {
                 // beaten by someone else
                 catalog = servicesCatalog;
@@ -2299,4 +2320,23 @@ public abstract class ClassLoader {
 
     // the ServiceCatalog for modules associated with this class loader.
     private volatile ServicesCatalog servicesCatalog;
+
+
+    /**
+     * Attempts to atomically set a volatile field in this object. Returns
+     * {@code true} if not beaten by another thread. Avoids the use of
+     * AtomicReferenceFieldUpdater in this class.
+     */
+    private boolean trySetObjectField(String name, Object obj) {
+        Unsafe unsafe = Unsafe.getUnsafe();
+        Class<?> k = ClassLoader.class;
+        long offset;
+        try {
+            Field f = k.getDeclaredField(name);
+            offset = unsafe.objectFieldOffset(f);
+        } catch (NoSuchFieldException e) {
+            throw new InternalError(e);
+        }
+        return unsafe.compareAndSwapObject(this, offset, null, obj);
+    }
 }

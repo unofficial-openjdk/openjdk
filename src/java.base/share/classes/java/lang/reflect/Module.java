@@ -36,12 +36,12 @@ import java.lang.module.ModuleDescriptor.Exports;
 import java.lang.module.ModuleDescriptor.Provides;
 import java.lang.module.Version;
 import java.net.URI;
+import java.net.URL;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.WeakHashMap;
 import java.util.concurrent.locks.Lock;
@@ -74,14 +74,18 @@ public final class Module {
     private final String name;
     private final ClassLoader loader;
 
-    // the artifact from where this module was loaded
-    private final ModuleArtifact artifact;
+    // the module descriptor
+    private final ModuleDescriptor descriptor;
 
-    // all packages in the module
+    // The set of packages in the module if this is a named module.
+    // The field is volatile as it may be replaced at run-time
     private volatile Set<String> packages;
 
+    // true if this module reads all unnamed modules (a.k.a. loose module)
+    private volatile boolean loose;
+
     // the modules that this module permanently reads
-    // FIXME: This should be final
+    // FIXME: This should be final but need new VM interface to do this
     private volatile Set<Module> reads = Collections.emptySet();
 
     // created lazily, additional modules that this module temporarily reads
@@ -92,27 +96,50 @@ public final class Module {
     // qualified exports
     private volatile Map<String, Map<Module, Boolean>> exports = Collections.emptyMap();
 
+
     /**
-     * Invoked by the VM when creating java.base early in the startup.
+     * Invoked by the VM to create java.base early in the startup.
      */
     private Module(ClassLoader loader, String name) {
-        this.loader = loader;
+        if (name == null)
+            throw new Error();
+
         this.name = name;
-        this.artifact = null;
+        this.loader = loader;
+        this.descriptor = null;
     }
 
     /**
-     * Used to create a Module, except for java.base.
+     * Used to create named Module, except for java.base.
      */
-    private Module(ClassLoader loader, ModuleArtifact artifact) {
+    private Module(ClassLoader loader, ModuleDescriptor descriptor) {
+        this.name = descriptor.name();
         this.loader = loader;
-        this.name = artifact.descriptor().name();
-        this.artifact = artifact;
-        this.packages = artifact.descriptor().packages();
+
+        this.descriptor = descriptor;
+        this.packages = descriptor.packages();
     }
+
+    /**
+     * Used to create an unnamed Module.
+     *
+     * @see ClassLoader#getUnnamedModule
+     */
+    private Module(ClassLoader loader) {
+        this.name = null;
+        this.loader = loader;
+        this.descriptor = null;
+
+        // unnamed modules are loose
+        this.loose = true;
+    }
+
 
     /**
      * Returns the module name.
+     *
+     * For now, this method returns {@code null} if this module is an
+     * unnamed module.
      */
     public String getName() {
         return name;
@@ -139,14 +166,31 @@ public final class Module {
     }
 
     /**
+     * Returns {@code true} if this module is an unnamed module.
+     *
+     * @see ClassLoader#getUnnamedModule()
+     */
+    public boolean isUnnamed() {
+        return name == null;
+    }
+
+    /**
+     * Returns {@code true} if this module is a strict module.
+     * A strict module does not read all unnamed modules.
+     */
+    public boolean isStrict() {
+        return !loose;
+    }
+
+
+    /**
      * Returns the module descriptor for this module.
      *
-     * @apiNote An alternative is a getArtifcat method to return the
-     * ModuleArtifact from where the module is loaded. The module descriptor
-     * would be trivially available via getArtifact().descriptor().
+     * For now, this method returns {@code null} if this module is an
+     * unnamed module.
      */
     public ModuleDescriptor getDescriptor() {
-        return artifact.descriptor();
+        return descriptor;
     }
 
     /**
@@ -168,13 +212,26 @@ public final class Module {
      * @return an array of the package names of the packages in this module
      */
     public String[] getPackages() {
-        return packages.toArray(new String[0]);
+        if (isUnnamed()) {
+            // TBD: need to invoke protected loader.getPackages();
+            return new String[0];
+        } else {
+            return packages.toArray(new String[0]);
+        }
     }
+
+
+    // -- readability --
+
 
     /**
      * Makes the given {@code Module} readable to this module. This method
-     * is no-op if {@code target} is {@code null} or {@code this} (all modules
-     * can read the unnamed module or themselves).
+     * is no-op if {@code target} is {@code this} module (all modules
+     * can read themselves).
+     *
+     * <p> If {@code target} is {@code null}, and this module is a {@link
+     * #isStrict strict} module, the method changes this module to be a
+     * <em>loose module</em>. A loose module all unnamed modules. </p>
      *
      * <p> If there is a security manager then its {@code checkPermission}
      * method if first called with a {@code ReflectPermission("addReadsModule")}
@@ -186,7 +243,7 @@ public final class Module {
      * @see #canRead
      */
     public void addReads(Module target) {
-        if (target != null && target != this) {
+        if (target != this) {
             SecurityManager sm = System.getSecurityManager();
             if (sm != null) {
                 ReflectPermission perm = new ReflectPermission("addReadsModule");
@@ -212,13 +269,26 @@ public final class Module {
      * If {@code syncVM} is {@code true} then the VM is notified.
      */
     private void addReads(Module target, boolean syncVM) {
+
+        // nothing to do
+        if (target == this || this.isUnnamed())
+            return;
+
+        // if the target is null then change this module to be loose.
+        // FIXME: Need to notify VM
+        if (target == null) {
+            this.loose = true;
+            return;
+        }
+
         // check if we already read this module
         Set<Module> reads = this.reads;
         if (reads.contains(target))
             return;
 
         // update VM first, just in case it fails
-        if (syncVM)
+        // FIXME: Need to notify VM about unnamed too when VM is ready
+        if (!target.isUnnamed() && syncVM)
             jvmAddReadsModule(this, target);
 
         // add temporary read.
@@ -235,17 +305,24 @@ public final class Module {
         tr.add(target);
     }
 
+
     /**
      * Indicates if this {@code Module} reads the given {@code Module}.
-     *
-     * <p> Returns {@code true} if {@code m} is {@code null} (the unnamed
-     * readable is readable to all modules), or {@code m} is this module (a
-     * module can read itself). </p>
      *
      * @see #addReads
      */
     public boolean canRead(Module target) {
-        if (target == null || target == this)
+
+        // all modules read themselves
+        if (target == this)
+            return true;
+
+        // loose modules read all unnamed modules
+        if (this.loose && target.isUnnamed())
+            return true;
+
+        // an unnamed module reads all modules
+        if (this.isUnnamed())
             return true;
 
         // check if module reads target
@@ -261,36 +338,46 @@ public final class Module {
         return false;
     }
 
-    /**
-     * Returns an input stream for reading a resource in this module. Returns
-     * {@code null} if the resource is not in this module or access to the
-     * resource is denied by the security manager.
-     *
-     * The {@code name} is a {@code '/'}-separated path name that identifies
-     * the resource.
-     *
-     * @throws IOException
-     *         If an I/O error occurs
-     */
-    public InputStream getResourceAsStream(String name) throws IOException {
-        Objects.requireNonNull(name);
 
-        if (loader == null) {
-            return BootLoader.getResourceAsStream(this.name, name);
-        } else {
-            // use SharedSecrets to invoke protected method
-            return SharedSecrets.getJavaLangAccess()
-                                .getResourceAsStream(loader, this.name, name);
+    /**
+     * A "not-a-Set" set of weakly referenced objects that supports concurrent
+     * access.
+     */
+    private static class WeakSet<E> {
+        private final ReadWriteLock lock = new ReentrantReadWriteLock();
+        private final Lock readLock = lock.readLock();
+        private final Lock writeLock = lock.writeLock();
+
+        private final WeakHashMap<E, Boolean> map = new WeakHashMap<>();
+
+        /**
+         * Adds the specified element to the set.
+         */
+        void add(E e) {
+            writeLock.lock();
+            try {
+                map.put(e, Boolean.TRUE);
+            } finally {
+                writeLock.unlock();
+            }
+        }
+
+        /**
+         * Returns {@code true} if this set contains the specified element.
+         */
+        boolean contains(E e) {
+            readLock.lock();
+            try {
+                return map.containsKey(e);
+            } finally {
+                readLock.unlock();
+            }
         }
     }
 
-    /**
-     * Returns the string representation.
-     */
-    @Override
-    public String toString() {
-        return "module " + name;
-    }
+
+
+    // -- creating Module objects --
 
     /**
      * Define a new Module to the runtime. The resulting Module will be
@@ -300,26 +387,27 @@ public final class Module {
     static Module defineModule(ClassLoader loader, ModuleArtifact artifact) {
         Module m;
 
-        Set<String> packages = artifact.descriptor().packages();
+        ModuleDescriptor descriptor = artifact.descriptor();
+        Set<String> packages = descriptor.packages();
 
         // define module to VM, except java.base as it is defined by VM
-        String name = artifact.descriptor().name();
+        String name = descriptor.name();
         if (loader == null && name.equals("java.base")) {
             m = Object.class.getModule();
 
-            // set artifact and packages fields
+            // set descriptor and packages fields
             try {
                 final Unsafe U = Unsafe.getUnsafe();
                 Class<?> c = Module.class;
-                long address = U.objectFieldOffset(c.getDeclaredField("artifact"));
-                U.putObject(m, address, artifact);
+                long address = U.objectFieldOffset(c.getDeclaredField("descriptor"));
+                U.putObject(m, address, descriptor);
             } catch (Exception e) {
                 throw new Error(e);
             }
             m.packages = packages;
 
         } else {
-            m = new Module(loader, artifact);
+            m = new Module(loader, descriptor);
 
             // define module to VM
 
@@ -330,7 +418,7 @@ public final class Module {
                 array[i++] = pkg.replace('.', '/');
             }
 
-            String vs = artifact.descriptor().version()
+            String vs = descriptor.version()
                 .map(Version::toString).orElse("");
             URI location = artifact.location();
             String uris = (location != null) ? location.toString() : null;
@@ -436,6 +524,9 @@ public final class Module {
         return modules;
     }
 
+
+    // -- packages --
+
     /**
      * Add a package to this module.
      *
@@ -482,17 +573,33 @@ public final class Module {
         }
     }
 
+
+    // -- exports --
+
     /**
-     * Updates the exports so that package {@code pkg} is exported to module
-     * {@code who}. If {@code who} is {@code null} then the package is exported
-     * to all modules that read this module.
+     * Returns {@code true} if this module exports the given package to the
+     * given module. If {@code target} is {@code null} then this method
+     * checks if the package is exported un-conditionally (meaning an
+     * unqualified export).
      *
-     * @throws IllegalArgumentException if {@code pkg} is not a module package
-     *
-     * @apiNote This is an expensive operation, not expected to be used often
+     * This method does not check if the given module reads this module.
      */
-    void addExports(String pkg, Module who) {
-        addExports(pkg, who, true);
+    public boolean isExported(String pkg, Module target) {
+        Objects.nonNull(pkg);
+
+        // all packages are exported by unnamed modules
+        if (isUnnamed())
+            return true;
+
+        Map<String, Map<Module, Boolean>>  exports = this.exports; // volatile read
+        Map<Module, Boolean> permits = exports.get(pkg);
+        if (permits != null) {
+            // unqualified export or exported to 'target'
+            if (permits.isEmpty() || permits.containsKey(target)) return true;
+        }
+
+        // not exported
+        return false;
     }
 
     /**
@@ -507,11 +614,26 @@ public final class Module {
 
     /**
      * Updates the exports so that package {@code pkg} is exported to module
-     * {@code who}.
+     * {@code target}. If {@code target} is {@code null} then the package is exported
+     * to all modules that read this module.
+     *
+     * @throws IllegalArgumentException if {@code pkg} is not a module package
+     *
+     * @apiNote This is an expensive operation, not expected to be used often. Also
+     * this method is not public as it would otherwise be used to get to JDK
+     * internal APIs.
+     */
+    void addExports(String pkg, Module target) {
+        addExports(pkg, target, true);
+    }
+
+    /**
+     * Updates the exports so that package {@code pkg} is exported to module
+     * {@code target}.
      *
      * If {@code syncVM} is {@code true} then the VM is notified.
      */
-    private void addExports(String pkg, Module who, boolean syncVM) {
+    private void addExports(String pkg, Module target, boolean syncVM) {
         Objects.nonNull(pkg);
 
         if (!packages.contains(pkg)) {
@@ -522,8 +644,13 @@ public final class Module {
         synchronized (this) {
 
             // update VM first, just in case it fails
-            if (syncVM)
-                jvmAddModuleExports(this, pkg.replace('.', '/'), who);
+            if (syncVM) {
+
+                // FIXME - VM does not know about unnamed modules yet
+                if (target == null || !target.isUnnamed())
+                   jvmAddModuleExports(this, pkg.replace('.', '/'), target);
+
+            }
 
             // copy existing map
             Map<String, Map<Module, Boolean>> exports = new HashMap<>(this.exports);
@@ -532,25 +659,25 @@ public final class Module {
             Map<Module, Boolean> permits = exports.get(pkg);
             if (permits == null) {
                 // pkg not already exported
-                if (who == null) {
+                if (target == null) {
                     // unqualified export
                     exports.put(pkg, Collections.emptyMap());
                 } else {
                     // qualified export
                     permits = new WeakHashMap<>();
-                    permits.put(who, Boolean.TRUE);
+                    permits.put(target, Boolean.TRUE);
                     exports.put(pkg, permits);
                 }
             } else {
                 // pkg already exported
                 if (!permits.isEmpty()) {
-                    if (who == null) {
+                    if (target == null) {
                         // change from qualified to unqualified
                         exports.put(pkg, Collections.emptyMap());
                     } else {
                         // copy the existing qualified exports
                         permits = new WeakHashMap<>(permits);
-                        permits.put(who, Boolean.TRUE);
+                        permits.put(target, Boolean.TRUE);
                         exports.put(pkg, permits);
                     }
                 }
@@ -562,57 +689,60 @@ public final class Module {
         }
     }
 
-    /**
-     * Returns {@code true} if the given package name is exported to the
-     * given module.
-     */
-    boolean isExported(String pkg, Module who) {
-        Objects.nonNull(pkg);
 
-        Map<String, Map<Module, Boolean>>  exports = this.exports; // volatile read
-        Map<Module, Boolean> permits = exports.get(pkg);
-        if (permits != null) {
-            // unqualified export or exported to 'who'
-            if (permits.isEmpty() || permits.containsKey(who)) return true;
+    // -- misc --
+
+
+    /**
+     * Returns an input stream for reading a resource in this module. Returns
+     * {@code null} if the resource is not in this module or access to the
+     * resource is denied by the security manager.
+     *
+     * The {@code name} is a {@code '/'}-separated path name that identifies
+     * the resource.
+     *
+     * @throws IOException
+     *         If an I/O error occurs
+     */
+    public InputStream getResourceAsStream(String name) throws IOException {
+        Objects.requireNonNull(name);
+
+        // if called on an unnamed module then work the same way as
+        // ClassLoader::getResource.
+        if (isUnnamed()) {
+            URL url;
+            if (loader == null) {
+                url = BootLoader.findResource(name);
+            } else {
+                url = loader.getResource(name);
+            }
+            try {
+                return url != null ? url.openStream() : null;
+            } catch (IOException e) {
+                return null;
+            }
         }
 
-        // not exported
-        return false;
+        if (loader == null) {
+            return BootLoader.getResourceAsStream(this.name, name);
+        } else {
+            // use SharedSecrets to invoke protected method
+            return SharedSecrets.getJavaLangAccess()
+                    .getResourceAsStream(loader, this.name, name);
+        }
     }
 
+
     /**
-     * A "not-a-Set" set of weakly referenced objects that supports concurrent
-     * access.
+     * Returns the string representation.
      */
-    private static class WeakSet<E> {
-        private final ReadWriteLock lock = new ReentrantReadWriteLock();
-        private final Lock readLock = lock.readLock();
-        private final Lock writeLock = lock.writeLock();
-
-        private final WeakHashMap<E, Boolean> map = new WeakHashMap<>();
-
-        /**
-         * Adds the specified element to the set.
-         */
-        void add(E e) {
-            writeLock.lock();
-            try {
-                map.put(e, Boolean.TRUE);
-            } finally {
-                writeLock.unlock();
-            }
-        }
-
-        /**
-         * Returns {@code true} if this set contains the specified element.
-         */
-        boolean contains(E e) {
-            readLock.lock();
-            try {
-                return map.containsKey(e);
-            } finally {
-                readLock.unlock();
-            }
+    @Override
+    public String toString() {
+        if (isUnnamed()) {
+            String id = Integer.toHexString(System.identityHashCode(this));
+            return "<unnamed module @" + id + ">";
+        } else {
+            return "module " + name;
         }
     }
 
@@ -641,16 +771,16 @@ public final class Module {
         SharedSecrets.setJavaLangReflectAccess(
             new JavaLangReflectAccess() {
                 @Override
+                public Module defineUnnamedModule(ClassLoader loader) {
+                    return new Module(loader);
+                }
+                @Override
                 public Module defineModule(ClassLoader loader, ModuleArtifact artifact) {
                    return Module.defineModule(loader, artifact);
                 }
                 @Override
                 public Map<String, Module> defineModules(Configuration cf, ClassLoaderFinder clf) {
                     return Module.defineModules(cf, clf);
-                }
-                @Override
-                public boolean isExported(Module m, String pkg, Module who) {
-                    return m.isExported(pkg, who);
                 }
                 @Override
                 public void addPackage(Module m, String pkg) {
@@ -661,8 +791,8 @@ public final class Module {
                     m1.addReads(m2, true);
                 }
                 @Override
-                public void addExports(Module m, String pkg, Module who) {
-                    m.addExports(pkg, who);
+                public void addExports(Module m, String pkg, Module target) {
+                    m.addExports(pkg, target);
                 }
             });
     }
