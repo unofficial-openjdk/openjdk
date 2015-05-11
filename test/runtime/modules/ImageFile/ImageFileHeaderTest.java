@@ -23,9 +23,10 @@
 
 /*
  * @test
- * @library /testlibrary /../../test/lib /compiler/whitebox ..
+ * @library /testlibrary /../../test/lib
  * @build ImageFileHeaderTest
  * @run main ClassFileInstaller sun.hotspot.WhiteBox
+ *                              sun.hotspot.WhiteBox$WhiteBoxPermission
  * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI ImageFileHeaderTest
  */
 

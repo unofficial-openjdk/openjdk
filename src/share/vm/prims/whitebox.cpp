@@ -1125,6 +1125,67 @@ WB_ENTRY(jboolean, WB_ReadImageFile(JNIEnv* env, jobject wb, jstring imagefile))
   return ImageFileReader::open(filename) != NULL;
 WB_END
 
+WB_ENTRY(jlong, WB_imageOpenImage(JNIEnv *env, jobject wb, jstring path, jboolean big_endian))
+  ThreadToNativeFromVM ttn(thread);
+  return JVM_ImageOpen(env, path, big_endian);
+WB_END
+
+WB_ENTRY(void, WB_imageCloseImage(JNIEnv *env, jobject wb, jlong id))
+  ThreadToNativeFromVM ttn(thread);
+  JVM_ImageClose(env, id);
+WB_END
+
+WB_ENTRY(jlong, WB_imageGetIndexAddress(JNIEnv *env, jobject wb, jlong id))
+  ThreadToNativeFromVM ttn(thread);
+  return JVM_ImageGetIndexAddress(env, id);
+WB_END
+
+WB_ENTRY(jlong, WB_imageGetDataAddress(JNIEnv *env, jobject wb, jlong id))
+  ThreadToNativeFromVM ttn(thread);
+ return JVM_ImageGetDataAddress(env, id);
+WB_END
+
+WB_ENTRY(jboolean, WB_imageRead(JNIEnv *env, jobject wb, jlong id, jlong offset, jobject uncompressedBuffer, jlong uncompressed_size))
+  ThreadToNativeFromVM ttn(thread);
+    return JVM_ImageRead(env, id, offset, uncompressedBuffer, uncompressed_size);
+WB_END
+
+WB_ENTRY(jboolean, WB_imageReadCompressed(JNIEnv *env, jobject wb, jlong id, jlong offset, jobject compressedBuffer, jlong compressed_size, jobject uncompressedBuffer, jlong uncompressed_size))
+  ThreadToNativeFromVM ttn(thread);
+    return JVM_ImageReadCompressed(env, id, offset, compressedBuffer, compressed_size, uncompressedBuffer, uncompressed_size);
+WB_END
+
+WB_ENTRY(jbyteArray, WB_imageGetStringBytes(JNIEnv *env, jobject wb, jlong id, jlong offset))
+  ThreadToNativeFromVM ttn(thread);
+  return JVM_ImageGetStringBytes(env, id, offset);
+WB_END
+
+WB_ENTRY(jlong, WB_imageGetStringsSize(JNIEnv *env, jobject wb, jlong id))
+  ThreadToNativeFromVM ttn(thread);
+  ImageFileReader* reader = ImageFileReader::idToReader(id);
+  return reader? reader->strings_size() : 0L;
+WB_END
+
+WB_ENTRY(jlongArray, WB_imageGetAttributes(JNIEnv *env, jobject wb, jlong id, jint offset))
+  ThreadToNativeFromVM ttn(thread);
+  return JVM_ImageGetAttributes(env, id, offset);
+WB_END
+
+WB_ENTRY(jlongArray, WB_imageFindAttributes(JNIEnv *env, jobject wb, jlong id, jbyteArray utf8))
+  ThreadToNativeFromVM ttn(thread);
+  return JVM_ImageFindAttributes(env, id, utf8);
+WB_END
+
+WB_ENTRY(jintArray, WB_imageAttributeOffsets(JNIEnv *env, jobject wb, jlong id))
+  ThreadToNativeFromVM ttn(thread);
+  return JVM_ImageAttributeOffsets(env, id);
+WB_END
+
+WB_ENTRY(jint, WB_imageGetIntAtAddress(JNIEnv *env, jobject wb, jlong address, jint offset))
+  ThreadToNativeFromVM ttn(thread);
+  return *((jint*)(address + offset));
+WB_END
+
 WB_ENTRY(void, WB_AssertMatchingSafepointCalls(JNIEnv* env, jobject o, jboolean mutexSafepointValue, jboolean attemptedNoSafepointValue))
   Monitor::SafepointCheckRequired sfpt_check_required = mutexSafepointValue ?
                                            Monitor::_safepoint_check_always :
@@ -1424,9 +1485,23 @@ static JNINativeMethod methods[] = {
                                                       (void*)&WB_IsExportedToModule },
   {CC"AddModulePackage",   CC"(Ljava/lang/Object;Ljava/lang/String;)V",
                                                       (void*)&WB_AddModulePackage },
-  {CC"readImageFile",     CC"(Ljava/lang/String;)Z",  (void*)&WB_ReadImageFile },
+  {CC"readImageFile",      CC"(Ljava/lang/String;)Z", (void*)&WB_ReadImageFile },
+  {CC"imageOpenImage",     CC"(Ljava/lang/String;Z)J",(void*)&WB_imageOpenImage },
+  {CC"imageCloseImage",    CC"(J)V",                  (void*)&WB_imageCloseImage },
+  {CC"imageGetIndexAddress",CC"(J)J",                 (void*)&WB_imageGetIndexAddress},
+  {CC"imageGetDataAddress",CC"(J)J",                  (void*)&WB_imageGetDataAddress},
+  {CC"imageRead",          CC"(JJLjava/nio/ByteBuffer;J)Z",
+                                                      (void*)&WB_imageRead    },
+  {CC"imageReadCompressed",CC"(JJLjava/nio/ByteBuffer;JLjava/nio/ByteBuffer;J)Z",
+                                                      (void*)&WB_imageReadCompressed},
+  {CC"imageGetStringBytes",CC"(JI)[B",                (void*)&WB_imageGetStringBytes},
+  {CC"imageGetStringsSize",CC"(J)J",                  (void*)&WB_imageGetStringsSize},
+  {CC"imageGetAttributes", CC"(JI)[J",                (void*)&WB_imageGetAttributes},
+  {CC"imageFindAttributes",CC"(J[B)[J",               (void*)&WB_imageFindAttributes},
+  {CC"imageAttributeOffsets",CC"(J)[I",               (void*)&WB_imageAttributeOffsets},
+  {CC"imageGetIntAtAddress",CC"(JI)I",                (void*)&WB_imageGetIntAtAddress},
   {CC"assertMatchingSafepointCalls", CC"(ZZ)V",       (void*)&WB_AssertMatchingSafepointCalls },
-  {CC"isMonitorInflated0",  CC"(Ljava/lang/Object;)Z", (void*)&WB_IsMonitorInflated  },
+  {CC"isMonitorInflated0", CC"(Ljava/lang/Object;)Z", (void*)&WB_IsMonitorInflated  },
   {CC"forceSafepoint",     CC"()V",                   (void*)&WB_ForceSafepoint     },
   {CC"getMethodBooleanOption",
       CC"(Ljava/lang/reflect/Executable;Ljava/lang/String;)Ljava/lang/Boolean;",
