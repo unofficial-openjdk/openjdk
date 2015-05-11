@@ -61,8 +61,8 @@ TOOL_GENMODULEINFOSOURCE = $(JAVA_SMALL) \
 
 ################################################################################
 
-# Name of data file
-MOD_FILENAME := module-info.java.extra
+# Name of data file. Keep module-info.java.ext until javafx has changed.
+MOD_FILENAME := module-info.java.extra module-info.java.ext
 
 # List all the possible sub directories inside a module source directory where
 # data might be stored.
@@ -85,8 +85,8 @@ MODULE_CLASSES_DIRS := $(strip \
     $(addsuffix /$(MODULE), $(IMPORT_MODULES_SRC)))
 
 # Find all the .extra files in the src dirs.
-MOD_FILES := $(wildcard $(addsuffix /$(MOD_FILENAME), \
-    $(MODULE_CLASSES_DIRS)))
+MOD_FILES := $(wildcard $(foreach f, $(MOD_FILENAME), $(addsuffix /$(f), \
+    $(MODULE_CLASSES_DIRS))))
 
 ifneq ($(MOD_FILES), )
   # Only make this call if modification files are found for this module
