@@ -30,7 +30,6 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Module;
 import java.util.*;
 import java.lang.module.ModuleDescriptor;
-import java.lang.module.ModuleArtifact;
 import java.lang.module.ModuleReader;
 import com.oracle.java.testlibrary.*;
 import sun.hotspot.WhiteBox;
@@ -81,21 +80,16 @@ public class ModuleHelper {
         } else {
             pkg_set = Collections.emptySet();
         }
+
         ModuleDescriptor descriptor =
             new ModuleDescriptor.Builder(name).conceals(pkg_set).build();
         URI uri = URI.create("module:/" + name);
-        ModuleArtifact artifact = new ModuleArtifact(descriptor, uri) {
-            @Override
-            public ModuleReader open() throws IOException {
-                throw new IOException("No module reader for: " + uri);
-            }
-        };
 
         Class[] cArg = new Class[2];
         cArg[0] = ClassLoader.class;
-        cArg[1] = java.lang.module.ModuleArtifact.class;
+        cArg[1] = java.lang.module.ModuleDescriptor.class;
         Constructor ctor = findCtor(cArg);
-        return (Module)invokeCtor(ctor, loader, artifact);
+        return (Module)invokeCtor(ctor, loader, descriptor);
     }
 
     private static Object invokeCtor(Constructor c, Object... args) throws Throwable {
