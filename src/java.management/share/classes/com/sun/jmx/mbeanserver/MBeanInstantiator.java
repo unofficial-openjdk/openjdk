@@ -30,6 +30,7 @@ import static com.sun.jmx.defaults.JmxProperties.MBEANSERVER_LOGGER;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.lang.reflect.Module;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
@@ -64,6 +65,15 @@ import sun.reflect.misc.ReflectUtil;
  * @since 1.5
  */
 public class MBeanInstantiator {
+
+    static {
+        // java.management needs to be a loose module
+        Module thisModule = MBeanInstantiator.class.getModule();
+        PrivilegedAction<Void> pa =
+            () -> { thisModule.addReads(null); return null; };
+        AccessController.doPrivileged(pa);
+    }
+
     private final ModifiableClassLoaderRepository clr;
     //    private MetaData meta = null;
 

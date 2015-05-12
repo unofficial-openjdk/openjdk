@@ -40,16 +40,12 @@ final class SystemImages {
 
     static final String RUNTIME_HOME;
     static final Path bootImagePath;
-    static final Path extImagePath;
-    static final Path appImagePath;
     static {
         PrivilegedAction<String> pa = SystemImages::findHome;
         RUNTIME_HOME = AccessController.doPrivileged(pa);
 
         FileSystem fs = FileSystems.getDefault();
         bootImagePath = fs.getPath(RUNTIME_HOME, "lib", "modules", "bootmodules.jimage");
-        extImagePath = fs.getPath(RUNTIME_HOME, "lib", "modules", "extmodules.jimage");
-        appImagePath = fs.getPath(RUNTIME_HOME, "lib", "modules", "appmodules.jimage");
     }
 
     /**

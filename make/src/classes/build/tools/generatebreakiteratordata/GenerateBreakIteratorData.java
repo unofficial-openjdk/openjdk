@@ -87,6 +87,7 @@ public class GenerateBreakIteratorData {
                                          new Locale(language, country, valiant),
                                          BreakIteratorRBControl.INSTANCE);
 
+
         if (info.containsKey("CharacterData")) {
             generateDataFile(info.getString("CharacterData"),
                              rules.getString("CharacterBreakRules"),

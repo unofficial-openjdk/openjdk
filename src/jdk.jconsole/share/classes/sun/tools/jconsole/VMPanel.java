@@ -140,13 +140,13 @@ public class VMPanel extends JTabbedPane implements PropertyChangeListener {
 
     }
     private static Icon connectedIcon16 =
-            new ImageIcon(VMPanel.class.getResource("resources/connected16.png"));
+            Utilities.getIcon(VMPanel.class, "resources/connected16.png");
     private static Icon connectedIcon24 =
-            new ImageIcon(VMPanel.class.getResource("resources/connected24.png"));
+            Utilities.getIcon(VMPanel.class, "resources/connected24.png");
     private static Icon disconnectedIcon16 =
-            new ImageIcon(VMPanel.class.getResource("resources/disconnected16.png"));
+            Utilities.getIcon(VMPanel.class, "resources/disconnected16.png");
     private static Icon disconnectedIcon24 =
-            new ImageIcon(VMPanel.class.getResource("resources/disconnected24.png"));
+            Utilities.getIcon(VMPanel.class, "resources/disconnected24.png");
     private Rectangle connectedIconBounds;
 
     // Override to increase right inset for tab area,

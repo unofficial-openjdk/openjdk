@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -47,25 +47,42 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.net.URI;
 import java.nio.charset.Charset;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.text.Normalizer;
-import java.util.ResourceBundle;
 import java.text.MessageFormat;
+import java.util.ResourceBundle;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Locale.Category;
+import java.util.Optional;
 import java.util.Properties;
+import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
+
+import java.lang.module.Configuration;
+import java.lang.module.Layer;
+import java.lang.module.ModuleReference;
+import java.lang.module.ModuleDescriptor;
+import java.lang.module.ModuleDescriptor.Requires;
+import java.lang.module.ModuleDescriptor.Exports;
+import java.lang.module.ModuleDescriptor.Provides;
 
 public enum LauncherHelper {
     INSTANCE;
@@ -97,7 +114,6 @@ public enum LauncherHelper {
                 ResourceBundle.getBundle(defaultBundleName);
     }
     private static PrintStream ostream;
-    private static final ClassLoader scloader = ClassLoader.getSystemClassLoader();
     private static Class<?> appClass; // application class, for GUI/reporting purposes
 
     /*
@@ -437,12 +453,58 @@ public enum LauncherHelper {
         return null;
     }
 
+    /**
+     * Returns the main class for a module. The query is either a module name
+     * or module-name/main-class. For the former then the module's main class
+     * is obtained from its extended module descriptor.
+     */
+    static String getMainClassForModule(String query) {
+        int i = query.indexOf('/');
+        String mainModule;
+        String mainClass;
+        if (i == -1) {
+            mainModule = query;
+            mainClass = null;
+        } else {
+            mainModule = query.substring(0, i);
+            mainClass = query.substring(i+1);
+        }
+
+        // main module should be in the boot layer
+        Layer layer = Layer.bootLayer();
+        ModuleReference mref = layer.configuration().findReference(mainModule);
+        if (mref == null)
+            abort(null, "java.launcher.module.error1", mainModule);
+
+        // if query included the main-class then we return that
+        if (mainClass != null) {
+            i = mainClass.lastIndexOf('.');
+            if (i > 0) {
+                String pkg = mainClass.substring(0, i);
+                if (!mref.descriptor().packages().contains(pkg)) {
+                    // main class not in a package that the module defines
+                    abort(null, "java.launcher.module.error2", mainModule, mainClass);
+                }
+            } else {
+                // main-class cannot be in the unnamed package
+                abort(null, "java.launcher.module.error2", mainModule, "<unnamed>");
+            }
+            return mainClass;
+        }
+
+        Optional<String> omc = mref.descriptor().mainClass();
+        if (!omc.isPresent())
+            abort(null, "java.launcher.module.error3", mref.location());
+        return omc.get();
+    }
+
     // From src/share/bin/java.c:
-    //   enum LaunchMode { LM_UNKNOWN = 0, LM_CLASS, LM_JAR };
+    //   enum LaunchMode { LM_UNKNOWN = 0, LM_CLASS, LM_JAR, LM_MODULE }
 
     private static final int LM_UNKNOWN = 0;
     private static final int LM_CLASS   = 1;
     private static final int LM_JAR     = 2;
+    private static final int LM_MODULE  = 3;
 
     static void abort(Throwable t, String msgKey, Object... args) {
         if (msgKey != null) {
@@ -482,8 +544,10 @@ public enum LauncherHelper {
      */
     public static Class<?> checkAndLoadMain(boolean printToStderr,
                                             int mode,
-                                            String what) {
+                                            String what)
+    {
         initOutput(printToStderr);
+
         // get the class name
         String cn = null;
         switch (mode) {
@@ -493,12 +557,16 @@ public enum LauncherHelper {
             case LM_JAR:
                 cn = getMainClassFromJar(what);
                 break;
+            case LM_MODULE:
+                cn = getMainClassForModule(what);
+                break;
             default:
                 // should never happen
                 throw new InternalError("" + mode + ": Unknown launch mode");
         }
         cn = cn.replace('/', '.');
         Class<?> mainClass = null;
+        ClassLoader scloader = ClassLoader.getSystemClassLoader();
         try {
             mainClass = scloader.loadClass(cn);
         } catch (NoClassDefFoundError | ClassNotFoundException cnfe) {
@@ -726,7 +794,8 @@ public enum LauncherHelper {
         private static void setFXLaunchParameters(String what, int mode) {
             // Check for the FX launcher classes
             try {
-                fxLauncherClass = scloader.loadClass(JAVAFX_LAUNCHER_CLASS_NAME);
+                fxLauncherClass = ClassLoader.getSystemClassLoader()
+                        .loadClass(JAVAFX_LAUNCHER_CLASS_NAME);
                 /*
                  * signature must be:
                  * public static void launchApplication(String launchName,
@@ -767,9 +836,111 @@ public enum LauncherHelper {
                     || fxLaunchName == null) {
                 throw new RuntimeException("Invalid JavaFX launch parameters");
             }
+            AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
+                fxLauncherMethod.setAccessible(true);
+                return null;
+            });
             // launch appClass via fxLauncherMethod
             fxLauncherMethod.invoke(null,
                     new Object[] {fxLaunchName, fxLaunchMode, args});
         }
     }
+
+    private static void formatCommaList(PrintStream out,
+                                        String prefix,
+                                        Collection<?> list)
+    {
+        if (list.isEmpty())
+            return;
+        out.format("%s", prefix);
+        boolean first = true;
+        for (Object ob : list) {
+            if (first) {
+                out.format(" %s", ob);
+                first = false;
+            } else {
+                out.format(", %s", ob);
+            }
+        }
+        out.format("%n");
+    }
+
+    /**
+     * Called by the launcher to list modules in the boot Layer.
+     * If called without any sub-options then the output is a simple list of
+     * the modules. If called with sub-options then the sub-options are the
+     * names of the modules to list (-XlistModules:java.base,java.desktop for
+     * example).
+     */
+    static void listModules(boolean printToStderr, String optionFlag)
+        throws IOException, ClassNotFoundException
+    {
+        initOutput(printToStderr);
+
+        Layer layer = Layer.bootLayer();
+        if (layer == null)
+            return;
+
+        Configuration cf = layer.configuration();
+        int colon = optionFlag.indexOf(':');
+        if (colon == -1) {
+            cf.descriptors()
+                .stream()
+                .map(ModuleDescriptor::name)
+                .map(cf::findReference)
+                .sorted(Comparator.comparing(ModuleReference::descriptor))
+                .forEach(md -> {
+                    ostream.println(midAndLocation(md.descriptor(),
+                                                   md.location()));
+                });
+        } else {
+            String[] names = optionFlag.substring(colon+1).split(",");
+            for (String name: names) {
+                ModuleReference mref = cf.findReference(name);
+                if (mref == null) {
+                    // skip as module is not in the boot Layer
+                    continue;
+                }
+
+                ModuleDescriptor md = mref.descriptor();
+                ostream.println(midAndLocation(md, mref.location()));
+
+                for (Requires d: md.requires()) {
+                    ostream.format("  requires %s%n", d);
+                }
+                for (String s: md.uses()) {
+                    ostream.format("  uses %s%n", s);
+                }
+
+                // sorted exports
+                Set<Exports> exports = new TreeSet<>(Comparator.comparing(Exports::source));
+                exports.addAll(md.exports());
+                for (Exports e : exports) {
+                    ostream.format("  exports %s", e.source());
+                    e.targets().ifPresentOrElse(ts -> formatCommaList(ostream, " to", ts),
+                                                () -> ostream.println());
+                }
+
+                // concealed packages
+                new TreeSet<>(md.conceals())
+                    .forEach(p -> ostream.format("  conceals %s%n", p));
+
+                Map<String, Provides> provides = md.provides();
+                for (Provides ps : provides.values()) {
+                    for (String impl : ps.providers())
+                        ostream.format("  provides %s with %s%n", ps.service(), impl);
+                }
+
+            }
+        }
+    }
+
+    static String midAndLocation(ModuleDescriptor md, Optional<URI> location ) {
+        URI loc = location.orElse(null);
+        if (loc == null || loc.getScheme().equalsIgnoreCase("jrt"))
+            return md.toNameAndVersion();
+        else
+            return md.toNameAndVersion() + " (" + loc + ")";
+    }
+
 }

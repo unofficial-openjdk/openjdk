@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,40 +23,32 @@
 /**
  * @test
  * @bug 7003952
+ * @library ..
  * @summary load DLLs and launch executables using fully qualified path
  */
 import java.security.*;
-import java.lang.reflect.*;
 
 public class Absolute {
 
     public static void main(String[] args) throws Exception {
-        Constructor cons;
-        try {
-            Class clazz = Class.forName("sun.security.pkcs11.SunPKCS11");
-            cons = clazz.getConstructor(new Class[] {String.class});
-        } catch (Exception ex) {
-            System.out.println("Skipping test - no PKCS11 provider available");
-            return;
-        }
-
         String config =
             System.getProperty("test.src", ".") + "/Absolute.cfg";
 
+        Provider p = PKCS11Test.getSunPKCS11();
+        if (p == null) {
+            System.out.println("Skipping test - no PKCS11 provider available");
+        }
         try {
-            Object obj = cons.newInstance(new Object[] {config});
-        } catch (InvocationTargetException ite) {
-            Throwable cause = ite.getCause();
-            if (cause instanceof ProviderException) {
-                Throwable cause2 = cause.getCause();
-                if ((cause2 == null) ||
-                    !cause2.getMessage().startsWith(
+            Provider pkcs11 = p.configure(config);
+        } catch (Exception ex) {
+            if (ex instanceof ProviderException) {
+                if (ex.getMessage().startsWith(
                          "Absolute path required for library value:")) {
-                    // rethrow
-                    throw (ProviderException) cause;
+                    System.out.println("Test Passed: expected exception thrown");
                 }
-                System.out.println("Caught expected Exception: \n" + cause2);
             }
+            // rethrow
+            throw ex;
         }
     }
 }

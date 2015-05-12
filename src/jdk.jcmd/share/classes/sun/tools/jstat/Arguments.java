@@ -413,8 +413,8 @@ public class Arguments {
         return optionFormat;
     }
 
-    public List<URL> optionsSources() {
-        List<URL> sources = new ArrayList<URL>();
+    public List<InputStream> optionsSources() {
+        List<InputStream> sources = new ArrayList<>();
         int i = 0;
 
         String filename = OPTIONS_FILENAME;
@@ -423,23 +423,24 @@ public class Arguments {
             String userHome = System.getProperty("user.home");
             String userDir = userHome + "/" + JVMSTAT_USERDIR;
             File home = new File(userDir + "/" + filename);
-            sources.add(home.toURI().toURL());
+            if (home.exists()) {
+                sources.add(new FileInputStream(home));
+            }
         } catch (Exception e) {
             if (debug) {
                 System.err.println(e.getMessage());
                 e.printStackTrace();
             }
-            throw new IllegalArgumentException("Internal Error: Bad URL: "
-                                               + e.getMessage());
+            throw new IllegalArgumentException(e);
         }
-        URL u = this.getClass().getResource("resources/" + filename);
-        assert u != null;
-        sources.add(u);
+        InputStream in = this.getClass().getResourceAsStream("resources/" + filename);
+        assert in != null;
+        sources.add(in);
 
         if (showUnsupported) {
-            u = this.getClass().getResource("resources/" +  UNSUPPORTED_OPTIONS_FILENAME);
-            assert u != null;
-            sources.add(u);
+            in = this.getClass().getResourceAsStream("resources/" +  UNSUPPORTED_OPTIONS_FILENAME);
+            assert in != null;
+            sources.add(in);
         }
         return sources;
     }

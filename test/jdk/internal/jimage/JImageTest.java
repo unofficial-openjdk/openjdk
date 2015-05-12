@@ -20,60 +20,102 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-/*
- * @test
- * @library /lib/testlibrary
- * @build jdk.testlibrary.*
- * @summary Test to see if jimage tool extracts and recreates correctly.
- * @run main/timeout=360 JImageTest
- */
-
+import java.io.File;
+import java.net.URI;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystemNotFoundException;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.ProviderNotFoundException;
 import java.util.ArrayList;
-import java.util.Arrays;
-
-import jdk.testlibrary.ProcessTools;
-
-
-/**
- * Basic test for jimage tool.
- */
+import java.util.Collections;
+import java.util.List;
+import java.util.function.Consumer;
+import java.util.stream.Stream;
+import tests.JImageGenerator;
+import tests.JImageValidator;
+/*
+ * jimage testing.
+ * @test
+ * @summary Test jimage tool
+ * @library /lib/testlibrary/jlink
+ * @modules java.base/jdk.internal.jimage
+ *          jdk.compiler/com.sun.tools.classfile
+ *          jdk.jlink/jdk.tools.jmod
+ *          jdk.jlink/jdk.tools.jlink
+ *          jdk.jlink/jdk.tools.jimage
+ * @run build JImageTest
+ * @run build tests.*
+ * @run main JImageTest
+*/
 public class JImageTest {
-    private static void jimage(String... jimageArgs) throws Exception {
-        ArrayList<String> args = new ArrayList<>();
-        args.add("-ms8m");
-        args.add("jdk.tools.jimage.Main");
-        args.addAll(Arrays.asList(jimageArgs));
-
-        ProcessBuilder builder = ProcessTools.createJavaProcessBuilder(args.toArray(new String[args.size()]));
-        int res = builder.inheritIO().start().waitFor();
-
-        if (res != 0) {
-            throw new RuntimeException("JImageTest tool FAILED");
-        }
-    }
 
     public static void main(String[] args) throws Exception {
-        final String JAVA_HOME = System.getProperty("java.home");
-        Path jimagePath = Paths.get(JAVA_HOME, "bin", "jimage");
-        Path bootimagePath = Paths.get(JAVA_HOME, "lib", "modules", "bootmodules.jimage");
+        List<String> bootClasses = new ArrayList<>();
 
-        if (Files.exists(jimagePath) && Files.exists(bootimagePath)) {
-            String jimage = jimagePath.toAbsolutePath().toString();
-            String bootimage = bootimagePath.toAbsolutePath().toString();
-            String extractDir = Paths.get(".", "extract").toAbsolutePath().toString();
-            String recreateImage = Paths.get(".", "recreate.jimage").toAbsolutePath().toString();
+        FileSystem fs;
+        try {
+            fs = FileSystems.getFileSystem(URI.create("jrt:/"));
+        } catch (ProviderNotFoundException | FileSystemNotFoundException e) {
+            System.out.println("Not an image build, test skipped.");
+            return;
+        }
 
-            jimage("extract", "--dir", extractDir, bootimage);
-            jimage("recreate", "--dir", extractDir, recreateImage);
+        // Build the set of locations expected in the Image
+        Consumer<Path> c = (p) -> {
+               // take only the .class resources.
+               if (Files.isRegularFile(p) && p.toString().endsWith(".class")
+                       && !p.toString().endsWith("module-info.class")) {
+                   String loc = p.toString().substring("/modules".length());
+                   bootClasses.add(loc);
+               }
+           };
 
-            System.out.println("Test successful");
-         } else {
-            System.out.println("Test skipped, no module image");
-         }
+        Path javabase = fs.getPath("/modules/java.base");
+        Path mgtbase = fs.getPath("/modules/java.management");
+        try (Stream<Path> stream = Files.walk(javabase)) {
+            stream.forEach(c);
+        }
+        try (Stream<Path> stream = Files.walk(mgtbase)) {
+            stream.forEach(c);
+        }
+
+        if (bootClasses.isEmpty()) {
+            throw new RuntimeException("No boot class to check against");
+        }
+
+
+        File jdkHome = new File(System.getProperty("test.jdk"));
+        // JPRT not yet ready for jmods
+        if (JImageGenerator.getJModsDir(jdkHome) == null) {
+            System.err.println("Test not run, NO jmods directory");
+            return;
+        }
+
+        // Generate the sample image
+        String module = "mod1";
+        JImageGenerator helper = new JImageGenerator(new File("."), jdkHome);
+        String[] classes = {module + ".Main"};
+        helper.generateJModule(module, classes, "java.management");
+
+        List<String> unexpectedPaths = new ArrayList<>();
+        unexpectedPaths.add(".jcov");
+        unexpectedPaths.add("/META-INF/");
+        File image = helper.generateImage(null, module);
+        File extractedDir = helper.extractImageFile(image, "bootmodules.jimage");
+        File recreatedImage = helper.recreateImageFile(extractedDir);
+        JImageValidator.validate(recreatedImage, bootClasses, Collections.emptyList());
+        File recreatedImage2 = helper.recreateImageFile(extractedDir, "--compress-resources", "on");
+        JImageValidator.validate(recreatedImage2, bootClasses, Collections.emptyList());
+        File recreatedImage3 = helper.recreateImageFile(extractedDir, "--strip-java-debug", "on");
+        JImageValidator.validate(recreatedImage3, bootClasses, Collections.emptyList());
+        File recreatedImage4 = helper.recreateImageFile(extractedDir, "--exclude-resources",
+                "*.jcov, */META-INF/*");
+        JImageValidator.validate(recreatedImage4, bootClasses, unexpectedPaths);
+        File recreatedImage5 = helper.recreateImageFile(extractedDir, "--compress-resources", "on",
+                "--strip-java-debug", "on", "--exclude-resources", "*.jcov, */META-INF/*");
+        JImageValidator.validate(recreatedImage5, bootClasses, unexpectedPaths);
 
     }
 }

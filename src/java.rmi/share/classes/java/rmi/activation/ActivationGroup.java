@@ -27,6 +27,7 @@ package java.rmi.activation;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Module;
 import java.rmi.MarshalledObject;
 import java.rmi.Naming;
 import java.rmi.Remote;
@@ -99,6 +100,14 @@ public abstract class ActivationGroup
         extends UnicastRemoteObject
         implements ActivationInstantiator
 {
+     static {
+         // java.rmi needs to be a loose module
+         Module thisModule = ActivationGroup.class.getModule();
+         PrivilegedAction<Void> pa =
+             () -> { thisModule.addReads(null); return null; };
+         AccessController.doPrivileged(pa);
+     }
+
     /**
      * @serial the group's identifier
      */
