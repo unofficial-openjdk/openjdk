@@ -25,7 +25,7 @@
  * @test
  * @bug 5057225
  * @summary Remove useless I2L conversions
- *
+ * @ignore 8072369
  * @run main/othervm -Xcomp -XX:CompileOnly=Test5057225.doload Test5057225
  */
 
