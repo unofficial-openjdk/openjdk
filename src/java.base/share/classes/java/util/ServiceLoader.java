@@ -366,7 +366,7 @@ public final class ServiceLoader<S>
 
         // If the caller is in a named module then it must declare that it
         // uses the service type
-        if (!module.isUnnamed()) {
+        if (module.isNamed()) {
             String sn = svc.getName();
             if (!module.getDescriptor().uses().contains(sn)) {
                 fail(svc, "use not declared in " + module);

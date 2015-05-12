@@ -115,7 +115,7 @@ public class Main {
          * has no access [A0]
          */
         Class<?> c = MethodHandles.publicLookup().lookupClass();
-        assertTrue(c.getModule().isUnnamed());
+        assertTrue(!c.getModule().isNamed());
         lookup2 = lookup.in(c);
         assertTrue(lookup2.lookupModes() == 0); // [A0]
         findConstructorExpectingIAE(lookup2, Object.class, void.class);

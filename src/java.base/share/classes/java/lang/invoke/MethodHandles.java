@@ -669,10 +669,10 @@ public class MethodHandles {
             if (!VerifyAccess.isSameModule(this.lookupClass, requestedLookupClass)) {
                 // Allowed to teleport from an unnamed to a named module but resulting
                 // Lookup has no access to module private members
-                if (this.lookupClass.getModule().isUnnamed()) {
-                    newModes &= ~MODULE;
-                } else {
+                if (this.lookupClass.getModule().isNamed()) {
                     newModes = 0;
+                } else {
+                    newModes &= ~MODULE;
                 }
             }
             if ((newModes & PACKAGE) != 0
@@ -1551,7 +1551,7 @@ return mh1;
                     MethodHandleNatives.refKindIsSetter(refKind))
                 throw m.makeAccessException("unexpected set of a final field", this);
             if (Modifier.isPublic(mods) && Modifier.isPublic(refc.getModifiers()) &&
-                    refc.getModule().isUnnamed() && allowedModes != 0)
+                    !refc.getModule().isNamed() && allowedModes != 0)
                 return;  // public member and type in an unnamed module, common case
             int requestedModes = fixmods(mods);  // adjust 0 => PACKAGE
             if ((requestedModes & allowedModes) != 0) {

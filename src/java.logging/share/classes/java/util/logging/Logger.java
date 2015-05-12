@@ -1982,10 +1982,10 @@ public class Logger {
         } else {
             Module module = callersClass != null ? callersClass.getModule() : null;
             ResourceBundle bundle;
-            if (module == null || module.isUnnamed()) {
-                bundle = findResourceBundle(name, true);
-            } else {
+            if (module != null && module.isNamed()) {
                 bundle = findResourceBundle(name, module);
+            } else {
+                bundle = findResourceBundle(name, true);
             }
             if (bundle == null) {
                 // We've failed to find an expected ResourceBundle.

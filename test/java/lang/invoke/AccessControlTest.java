@@ -171,7 +171,7 @@ public class AccessControlTest {
             // for the purposes of access control then treat classes in different unnamed
             // modules as being in the same module.
             boolean sameModule = (c1.getModule() == c2.getModule()) ||
-                                 (c1.getModule().isUnnamed() && c2.getModule().isUnnamed());
+                                 (!c1.getModule().isNamed() && !c2.getModule().isNamed());
             boolean samePackage = (c1.getClassLoader() == c2.getClassLoader() &&
                                    packagePrefix(c1).equals(packagePrefix(c2)));
             boolean sameTopLevel = (topLevelClass(c1) == topLevelClass(c2));
@@ -182,11 +182,11 @@ public class AccessControlTest {
             if ((m1 & PACKAGE) != 0)  accessible |= samePackage;
             if ((m1 & PUBLIC ) != 0)  accessible |= (c2.getModifiers() & PUBLIC) != 0;
             if (!sameModule) {
-                if (c1.getModule().isUnnamed()) {
+                if (c1.getModule().isNamed()) {
+                    accessible = false;  // [A8]
+                } else {
                     // Different module; loose MODULE and lower access.
                     changed |= (MODULE|PACKAGE|PRIVATE|PROTECTED);  // [A7]
-                } else {
-                    accessible = false;  // [A8]
                 }
             }
             if (!accessible) {
@@ -232,7 +232,7 @@ public class AccessControlTest {
 
             // if public access then public members in an unnamed module can be accessed
             if ((lookupModes & PUBLIC) != 0
-                && (c2.getModule().isUnnamed())
+                && (!c2.getModule().isNamed())
                 && Modifier.isPublic(c2.getModifiers())
                 && Modifier.isPublic(m.getModifiers()))
                 return true;

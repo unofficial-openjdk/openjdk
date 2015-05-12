@@ -31,7 +31,7 @@ import java.lang.reflect.Module;
 public class Main {
     public static void main(String[] args) throws Exception {
         Module m1 = Main.class.getModule();
-        assertTrue(!m1.isUnnamed());
+        assertTrue(m1.isNamed());
 
         // java.base is readable
         Module base = Object.class.getModule();

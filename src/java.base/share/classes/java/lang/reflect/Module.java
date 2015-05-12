@@ -55,7 +55,7 @@ import sun.misc.SharedSecrets;
 import sun.misc.Unsafe;
 
 /**
- * Represents a run-time module, either named or {@link #isUnnamed() unnamed}.
+ * Represents a run-time module, either {@link #isNamed() named} or unnamed.
  *
  * <p> Named modules have a {@link #getName() name} and are constructed by the
  * Java Virtual Machine when a {@link java.lang.module.Configuration
@@ -68,20 +68,6 @@ import sun.misc.Unsafe;
  * {@link Class#getModule() getModule} method of all types defined by a class
  * loader that are not in a named module return the class loader's unnamed
  * module. An unnamed module reads all other run-time modules. </p>
- *
- * <p> A named module is either {@link #isStrict strict} or <em>loose</em>.
- * A strict module does not read arbitrary unnamed modules and so can not
- * access all types defined by arbitrary class loaders in its unnamed module
- * (even if the type is public). On the other hand, a loose module reads all
- * unnamed modules and thus code in a loose module may access all public types
- * in any unnamed module (assuming the code in the loose modules can get a
- * reference to the type).
- * A named module is always created as a strict module but may be changed to a
- * loose module by invoking its {@link #addReads(Module) addReads} method with
- * a target module of {@code null}. Modules that are frameworks or libraries
- * that instantiate or introspect arbitrary {@code Class} objects are examples
- * of modules that may change themselves from strict to loose. An unnamed
- * module is always a loose module. </p>
  *
  * @since 1.9
  * @see java.lang.Class#getModule
@@ -157,6 +143,15 @@ public final class Module {
 
 
     /**
+     * Returns {@code true} if this module is a named module.
+     *
+     * @see ClassLoader#getUnnamedModule()
+     */
+    public boolean isNamed() {
+        return name != null;
+    }
+
+    /**
      * Returns the module name.
      *
      * For now, this method returns {@code null} if this module is an
@@ -164,22 +159,6 @@ public final class Module {
      */
     public String getName() {
         return name;
-    }
-
-    /**
-     * Returns {@code true} if this module is an unnamed module.
-     *
-     * @see ClassLoader#getUnnamedModule()
-     */
-    public boolean isUnnamed() {
-        return name == null;
-    }
-
-    /**
-     * Returns {@code true} if this module is a strict module.
-     */
-    public boolean isStrict() {
-        return !loose;
     }
 
     /**
@@ -238,11 +217,11 @@ public final class Module {
      * @return an array of the package names of the packages in this module
      */
     public String[] getPackages() {
-        if (isUnnamed()) {
+        if (isNamed()) {
+            return packages.toArray(new String[0]);
+        } else {
             // TBD: need to invoke protected loader.getPackages();
             return new String[0];
-        } else {
-            return packages.toArray(new String[0]);
         }
     }
 
@@ -252,13 +231,13 @@ public final class Module {
 
     /**
      * Makes the given {@code Module} readable to this module. This method
-     * is a no-op if {@code target} is {@code this} module (all modules
-     * can read themselves) or this module is an {@link #isUnnamed() unnamed}
+     * is a no-op if {@code target} is {@code this} module (all modules can
+     * read themselves) or this module is not a {@link #isNamed() named}
      * module (an unnamed module reads all other modules).
      *
-     * <p> If {@code target} is {@code null}, and this module is a {@link
-     * #isStrict strict} module, then this method changes this module to be a
-     * <em>loose module</em>. A loose module reads all unnamed modules. </p>
+     * <p> If {@code target} is {@code null}, and this module does not read
+     * all unnamed modules, then this method changes this module so that it
+     * reads all unnamed modules. </p>
      *
      * <p> If there is a security manager then its {@code checkPermission}
      * method if first called with a {@code ReflectPermission("addReadsModule")}
@@ -270,7 +249,7 @@ public final class Module {
      * @see #canRead
      */
     public void addReads(Module target) {
-        if (target != this && !this.isUnnamed()) {
+        if (target != this && this.isNamed()) {
             SecurityManager sm = System.getSecurityManager();
             if (sm != null) {
                 ReflectPermission perm = new ReflectPermission("addReadsModule");
@@ -298,7 +277,7 @@ public final class Module {
     private void addReads(Module target, boolean syncVM) {
 
         // nothing to do
-        if (target == this || this.isUnnamed())
+        if (target == this || !this.isNamed())
             return;
 
         // if the target is null then change this module to be loose.
@@ -315,7 +294,7 @@ public final class Module {
 
         // update VM first, just in case it fails
         // FIXME: Need to notify VM about unnamed too when VM is ready
-        if (!target.isUnnamed() && syncVM)
+        if (target.isNamed() && syncVM)
             jvmAddReadsModule(this, target);
 
         // add temporary read.
@@ -335,6 +314,8 @@ public final class Module {
 
     /**
      * Indicates if this {@code Module} reads the given {@code Module}.
+     * If {@code target} is {@code null} then this method tests if this
+     * module reads all unnamed modules.
      *
      * @see #addReads
      */
@@ -345,11 +326,11 @@ public final class Module {
             return true;
 
         // loose modules read all unnamed modules
-        if (this.loose && target.isUnnamed())
+        if (this.loose && (target == null || !target.isNamed()))
             return true;
 
         // an unnamed module reads all modules
-        if (this.isUnnamed())
+        if (!this.isNamed())
             return true;
 
         // check if module reads target
@@ -613,7 +594,7 @@ public final class Module {
         Objects.nonNull(pkg);
 
         // all packages are exported by unnamed modules
-        if (isUnnamed())
+        if (!isNamed())
             return true;
 
         Map<String, Map<Module, Boolean>>  exports = this.exports; // volatile read
@@ -672,7 +653,7 @@ public final class Module {
             if (syncVM) {
 
                 // FIXME - VM does not know about unnamed modules yet
-                if (target == null || !target.isUnnamed())
+                if (target == null || target.isNamed())
                    jvmAddModuleExports(this, pkg.replace('.', '/'), target);
 
             }
@@ -736,28 +717,27 @@ public final class Module {
     public InputStream getResourceAsStream(String name) throws IOException {
         Objects.requireNonNull(name);
 
-        // unnamed module
-        if (isUnnamed()) {
-            URL url;
+        if (isNamed()) {
             if (loader == null) {
-                url = BootLoader.findResource(name);
+                return BootLoader.getResourceAsStream(this.name, name);
             } else {
-                url = loader.getResource(name);
-            }
-            try {
-                return url != null ? url.openStream() : null;
-            } catch (IOException e) {
-                return null;
+                // use SharedSecrets to invoke protected method
+                return SharedSecrets.getJavaLangAccess()
+                        .getResourceAsStream(loader, this.name, name);
             }
         }
 
-        // named module
+        // unnamed module
+        URL url;
         if (loader == null) {
-            return BootLoader.getResourceAsStream(this.name, name);
+            url = BootLoader.findResource(name);
         } else {
-            // use SharedSecrets to invoke protected method
-            return SharedSecrets.getJavaLangAccess()
-                    .getResourceAsStream(loader, this.name, name);
+            url = loader.getResource(name);
+        }
+        try {
+            return url != null ? url.openStream() : null;
+        } catch (IOException e) {
+            return null;
         }
     }
 
@@ -767,11 +747,11 @@ public final class Module {
      */
     @Override
     public String toString() {
-        if (isUnnamed()) {
+        if (isNamed()) {
+            return "module " + name;
+        } else {
             String id = Integer.toHexString(System.identityHashCode(this));
             return "<unnamed module @" + id + ">";
-        } else {
-            return "module " + name;
         }
     }
 

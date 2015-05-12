@@ -96,10 +96,10 @@ public class Reflection {
             String currentSuffix = "";
             String memberSuffix = "";
             Module m1 = currentClass.getModule();
-            if (!m1.isUnnamed())
+            if (m1.isNamed())
                 currentSuffix = " (" + m1 + ")";
             Module m2 = memberClass.getModule();
-            if (!m2.isUnnamed())
+            if (m2.isNamed())
                 memberSuffix = " (" + m2 + ")";
 
             String msg = "Class " + currentClass.getName() +
@@ -112,14 +112,14 @@ public class Reflection {
             // Expand the message to help troubleshooting
             if (!m1.canRead(m2)) {
                 msg += ", " + m1;
-                if (m1.isStrict())
+                if (!m1.canRead(null))
                     msg += " (strict module) ";
                 msg += " does not read " + m2;
             }
             String pkg = packageName(memberClass);
             if (!m2.isExported(pkg, m1)) {
                 msg += ", " + m2 + " does not export " + pkg;
-                if (!m2.isUnnamed())
+                if (m2.isNamed())
                     msg += " to " + m1;
             }
 

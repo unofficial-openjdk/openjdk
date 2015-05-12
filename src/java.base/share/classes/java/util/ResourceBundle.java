@@ -925,7 +925,7 @@ public abstract class ResourceBundle {
      * @since 1.9
      */
     public static ResourceBundle getBundle(String baseName, Module module) {
-        if (module.isUnnamed())
+        if (!module.isNamed())
             throw new InternalError("not implemented");
         return getBundleImpl(module, baseName, Locale.getDefault(), getDefaultControl(baseName));
     }
@@ -949,7 +949,7 @@ public abstract class ResourceBundle {
      * @since 1.9
      */
     public static ResourceBundle getBundle(String baseName, Locale locale, Module module) {
-        if (module.isUnnamed())
+        if (!module.isNamed())
             throw new InternalError("not implemented");
         return getBundleImpl(module, baseName, locale, getDefaultControl(baseName));
     }
@@ -1464,7 +1464,7 @@ public abstract class ResourceBundle {
                                                 ClassLoader loader,
                                                 Control control) {
         Module module = caller != null ? caller.getModule() : null;
-        if (module != null && !module.isUnnamed()) {
+        if (module != null && module.isNamed()) {
             ClassLoader ml = getLoader(module);
             // get resource bundles for a named module only
             // if loader is the module's class loader
@@ -2861,7 +2861,7 @@ public abstract class ResourceBundle {
             // If the caller is ResourceBundle, i.e. called from unnamed module
             Module module = caller == null ? Object.class.getModule() :
                 (caller == ResourceBundle.class ?  null : caller.getModule());
-            if (module != null && module.isUnnamed())
+            if (module != null && !module.isNamed())
                 module = null;
 
             if (format.equals("java.class")) {

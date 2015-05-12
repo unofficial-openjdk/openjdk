@@ -424,7 +424,7 @@ public final class Class<T> implements java.io.Serializable,
         // an unnamed module. It probably should work like
         // forName(String, false, ClassLoader) but need to be careful not to
         // call it from here because that method is @CS.
-        if (module.isUnnamed()) {
+        if (!module.isNamed()) {
             throw new InternalError("not implemented");
         }
 
@@ -2372,7 +2372,7 @@ public final class Class<T> implements java.io.Serializable,
         // then attempt to get an input stream to the resource in the
         // module
         Module module = getModule();
-        if (!module.isUnnamed()) {
+        if (module.isNamed()) {
             Class<?> caller = Reflection.getCallerClass();
             if (caller != null && caller.getModule() == module) {
                 ClassLoader cl = getClassLoader0();

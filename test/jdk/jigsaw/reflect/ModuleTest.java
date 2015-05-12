@@ -41,7 +41,7 @@ public class ModuleTest {
 
     @Test
     public void testMe() {
-        assertTrue(ModuleTest.class.getModule().isUnnamed());
+        assertFalse(ModuleTest.class.getModule().isNamed());
     }
 
     @Test
@@ -75,8 +75,8 @@ public class ModuleTest {
 
         assertTrue(m1 != m2);
 
-        assertTrue(m1.isUnnamed());
-        assertTrue(m2.isUnnamed());
+        assertFalse(m1.isNamed());
+        assertFalse(m2.isNamed());
 
         // unnamed module reads all modules
         assertTrue(m1.canRead(m2));
@@ -110,7 +110,6 @@ public class ModuleTest {
 
         // canRead
         Module me = ModuleTest.class.getModule();
-        assertTrue(base.canRead(me) != base.isStrict());
         assertTrue(base.canRead(base));
     }
 

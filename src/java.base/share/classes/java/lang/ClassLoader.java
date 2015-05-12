@@ -2272,7 +2272,7 @@ public abstract class ClassLoader {
      *
      * @return The unnamed Module for this class loader
      *
-     * @see Module#isUnnamed()
+     * @see Module#isNamed()
      * @since 1.9
      */
     public Module getUnnamedModule() {

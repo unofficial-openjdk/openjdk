@@ -40,7 +40,7 @@ public class ExportToUnnamed {
         Class<?> thisClass = ExportToUnnamed.class;
 
         Module thisModule = thisClass.getModule();
-        assertTrue(thisModule.isUnnamed());
+        assertTrue(!thisModule.isNamed());
 
         Module baseModule = Object.class.getModule();
         if (baseModule.isExported("sun.security.x509", thisModule))

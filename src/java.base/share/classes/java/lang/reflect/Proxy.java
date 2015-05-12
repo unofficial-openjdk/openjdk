@@ -734,9 +734,9 @@ public class Proxy implements java.io.Serializable {
          * Test if the given class is a proxy class
          */
         static boolean isProxyClass(Class<?> c) {
-            boolean unnamed = c.getModule().isUnnamed();
-            return (unnamed && cacheForUnnamedModule.containsValue(c)) ||
-                   (!unnamed && cacheForProxyInNamedModule.containsValue(c));
+            boolean named = c.getModule().isNamed();
+            return (!named && cacheForUnnamedModule.containsValue(c)) ||
+                   (named && cacheForProxyInNamedModule.containsValue(c));
         }
 
         /**
@@ -745,10 +745,10 @@ public class Proxy implements java.io.Serializable {
          * the cache.
          */
         static Class<?> get(Module module, ClassLoader loader, List<Class<?>> interfaces) {
-            if (module == null || module.isUnnamed()) {
-                return cacheForUnnamedModule.get(loader, interfaces);
-            } else {
+            if (module != null && module.isNamed()) {
                 return cacheForProxyInNamedModule.get(module, interfaces);
+            } else {
+                return cacheForUnnamedModule.get(loader, interfaces);
             }
         }
 
@@ -892,7 +892,7 @@ public class Proxy implements java.io.Serializable {
                 debug("module-private target: " + m);
                 return m;
             } else if (modulePrivateTypes.size() > 0 &&
-                            caller != null && !caller.getModule().isUnnamed()) {
+                            caller != null && caller.getModule().isNamed()) {
                 /*
                  * The caller is in a named module and module-private
                  * proxy interfaces are either defined in the caller's module or
@@ -1031,7 +1031,7 @@ public class Proxy implements java.io.Serializable {
             for (Class<?> intf : types) {
                 Module m = intf.getModule();
                 assert Modifier.isPublic(intf.getModifiers());
-                if (m.isUnnamed()|| target == m) {
+                if (!m.isNamed()|| target == m) {
                     continue;
                 }
                 if (!target.canRead(m) || !m.isExported(packageName(intf), target)) {
@@ -1158,10 +1158,10 @@ public class Proxy implements java.io.Serializable {
             Module m = intf.getModule();
             String pn = packageName(intf);
             int modifiers = intf.getModifiers();
-            if (!m.isUnnamed() && !pn.isEmpty() && m.isExported(pn, null)) {
+            if (m.isNamed() && !pn.isEmpty() && m.isExported(pn, null)) {
                 return Modifier.isPublic(modifiers);
             }
-            if (m.isUnnamed() && !pn.isEmpty()) {
+            if (!m.isNamed() && !pn.isEmpty()) {
                 return Modifier.isPublic(modifiers);
             }
 
