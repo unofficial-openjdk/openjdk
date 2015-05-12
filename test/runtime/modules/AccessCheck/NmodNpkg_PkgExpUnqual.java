@@ -86,7 +86,7 @@ public class NmodNpkg_PkgExpUnqual {
         // by service-use relationships.
         Configuration cf = Configuration.resolve(finder,
                                                  Layer.bootLayer(),
-                                                 ModuleFinder.nullFinder(),
+                                                 ModuleFinder.empty(),
                                                  "m1");
 
         // map each module to the same class loader for this test

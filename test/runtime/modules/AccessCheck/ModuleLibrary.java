@@ -27,7 +27,9 @@ import java.lang.module.ModuleFinder;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
+
 
 // Utility class to set up a ModuleFinder containing all the modules
 // for a given Layer. This utility class is helpful because a ModuleFinder
@@ -36,23 +38,25 @@ import java.util.Set;
 // and have a ModuleLibrary find those module mrefs within a test.
 
 public class ModuleLibrary implements ModuleFinder {
- private final Map<String, ModuleReference> namesToReference = new HashMap<>();
 
- ModuleLibrary(ModuleReference... mrefs) {
-     for (ModuleReference mref: mrefs) {
-         ModuleDescriptor emd = mref.descriptor();
-         String name = emd.name();
-         namesToReference.put(name, mref);
-     }
- }
+    private final Map<String, ModuleReference> namesToReference = new HashMap<>();
 
- @Override
- public ModuleReference find(String name) {
-     return namesToReference.get(name);
- }
+    ModuleLibrary(ModuleReference... mrefs) {
+        for (ModuleReference mref: mrefs) {
+            ModuleDescriptor emd = mref.descriptor();
+            String name = emd.name();
+            namesToReference.put(name, mref);
+        }
+    }
 
- @Override
- public Set<ModuleReference> allModules() {
-     return new HashSet<>(namesToReference.values());
- }
+    @Override
+    public Optional<ModuleReference> find(String name) {
+        return Optional.ofNullable(namesToReference.get(name));
+    }
+
+    @Override
+    public Set<ModuleReference> findAll() {
+        return new HashSet<>(namesToReference.values());
+    }
+
 }

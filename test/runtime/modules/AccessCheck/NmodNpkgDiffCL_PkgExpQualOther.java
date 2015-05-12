@@ -112,7 +112,7 @@ public class NmodNpkgDiffCL_PkgExpQualOther {
         // by service-use relationships.
         Configuration cf = Configuration.resolve(finder,
                                                  Layer.bootLayer(),
-                                                 ModuleFinder.nullFinder(),
+                                                 ModuleFinder.empty(),
                                                  "m1");
 
         // map each module to differing class loaders for this test

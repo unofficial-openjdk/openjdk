@@ -82,7 +82,7 @@ public class NmodNpkgDiffCL_UmodNpkg {
      // by service-use relationships.
      Configuration cf = Configuration.resolve(finder,
                                               Layer.bootLayer(),
-                                              ModuleFinder.nullFinder(),
+                                              ModuleFinder.empty(),
                                               "m1");
 
      // map module m1 to class loader loader1.
