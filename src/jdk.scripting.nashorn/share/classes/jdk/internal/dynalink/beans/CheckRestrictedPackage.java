@@ -84,11 +84,13 @@
 package jdk.internal.dynalink.beans;
 
 import java.lang.reflect.Modifier;
+import java.lang.reflect.Module;
 import java.security.AccessControlContext;
 import java.security.AccessController;
 import java.security.Permissions;
 import java.security.PrivilegedAction;
 import java.security.ProtectionDomain;
+import sun.misc.Modules;
 
 /**
  * A utility class to check whether a given class is in a package with restricted access e.g. "sun.*" etc.
@@ -106,15 +108,21 @@ class CheckRestrictedPackage {
             // Non-public classes are always restricted
             return true;
         }
-        final SecurityManager sm = System.getSecurityManager();
-        if(sm == null) {
-            // No further restrictions if we don't have a security manager
-            return false;
-        }
         final String name = clazz.getName();
         final int i = name.lastIndexOf('.');
         if (i == -1) {
             // Classes in default package are never restricted
+            return false;
+        }
+        final String pkgName = name.substring(0, i);
+        final Module module = clazz.getModule();
+        if (module != null && !Modules.isExported(module, pkgName, null)) {
+            return true;
+        }
+
+        final SecurityManager sm = System.getSecurityManager();
+        if(sm == null) {
+            // No further restrictions if we don't have a security manager
             return false;
         }
         // Do a package access check from within an access control context with no permissions
@@ -122,7 +130,7 @@ class CheckRestrictedPackage {
             AccessController.doPrivileged(new PrivilegedAction<Void>() {
                 @Override
                 public Void run() {
-                    sm.checkPackageAccess(name.substring(0, i));
+                    sm.checkPackageAccess(pkgName);
                     return null;
                 }
             }, NO_PERMISSIONS_CONTEXT);
