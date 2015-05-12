@@ -39,8 +39,8 @@ import java.util.Optional;
  * <p> A module reader is intended for cases where access to the resources in a
  * module are required, regardless of whether the module has been instantiated.
  * A framework that scans a collection of packaged modules on the file system,
- * for example, may use the {@link #getResourceAsStream getResourceAsStream}
- * method to access a specific resource in each module.
+ * for example, may use a module reader to access a specific resource in each
+ * module.
  *
  * <p> A module reader is also intended to be used by {@code ClassLoader}
  * implementations that load classes and resources from modules.
@@ -74,7 +74,7 @@ public interface ModuleReader extends Closeable {
      * the returned buffer's position is the first byte of the resource, the
      * element at the buffer's limit is the last byte of the resource.
      *
-     * <p> The {@code releaseBuffer} should be invoked after consuming the
+     * <p> The {@code release} method should be invoked after consuming the
      * contents of the buffer. This will ensure, for example, that direct
      * buffers are returned to a buffer pool in implementations that use a
      * pool of direct buffers.
@@ -83,8 +83,9 @@ public interface ModuleReader extends Closeable {
      * is not capable (or intended) to read arbitrary large resources that
      * could potentially be 2GB or larger.
      *
-     * @implSpec The default implementation uses {@link #getResourceAsStream}
-     * to reads all bytes from the input stream into a byte buffer.
+     * @implSpec The default implementation invokes the {@link #open(String)
+     * open} method and reads all bytes from the input stream into a byte
+     * buffer.
      *
      * @throws IOException
      *         If an I/O error occurs or the module reader is closed
@@ -160,9 +161,8 @@ public interface ModuleReader extends Closeable {
      * then the second thread may block until the read operation is complete.
      *
      * <p> The behavior of {@code InputStream}s obtained using the {@link
-     * #getResourceAsStream getResourceAsStream} method and used after the
-     * module reader is closed is implementation specific and therefore not
-     * specified.
+     * #open(String) open} method and used after the module reader is closed
+     * is implementation specific and therefore not specified.
      */
     @Override
     void close() throws IOException;

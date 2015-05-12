@@ -308,7 +308,7 @@ class ModuleReferences {
 
         /**
          * Returns an input stream for reading a resource. This method is
-         * invoked by getResourceAsStream to do the actual work of opening
+         * invoked by the open method to do the actual work of opening
          * an input stream to the resource.
          */
         abstract Optional<InputStream> implOpen(String name) throws IOException;
