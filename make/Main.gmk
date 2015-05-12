@@ -74,14 +74,11 @@ interim-langtools:
 interim-corba:
 	+($(CD) $(CORBA_TOPDIR)/make && $(MAKE) $(MAKE_ARGS) -f CompileInterim.gmk)
 
-interim-rmic:
-	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) $(MAKE_ARGS) -f CompileInterimRmic.gmk)
-
 buildtools-jdk:
 	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) $(MAKE_ARGS) -f Tools.gmk java-tools)
 
 ALL_TARGETS += buildtools-langtools interim-langtools interim-corba \
-    interim-rmic buildtools-jdk
+    buildtools-jdk
 
 ################################################################################
 # Special targets for certain modules
@@ -429,9 +426,7 @@ else
 
   $(GENDATA_TARGETS): interim-langtools buildtools-jdk
 
-  interim-rmic: interim-langtools
-
-  $(RMIC_TARGETS): interim-langtools interim-corba interim-rmic
+  $(RMIC_TARGETS): interim-langtools interim-corba
 
   import-hotspot: hotspot
 
@@ -553,8 +548,7 @@ endif
 ################################################################################
 # Virtual targets without recipes
 
-buildtools: buildtools-langtools interim-langtools interim-corba interim-rmic \
-    buildtools-jdk
+buildtools: buildtools-langtools interim-langtools interim-corba buildtools-jdk
 
 gensrc: $(GENSRC_TARGETS)
 

@@ -36,7 +36,7 @@ JDEPS_MODULES_XML := $(JDK_OUTPUTDIR)/modules/jdk.dev/com/sun/tools/jdeps/resour
 #
 checkdeps:
 	$(ECHO) "Checking dependencies across JDK modules"
-	$(JAVA) -Xbootclasspath/p:$(INTERIM_LANGTOOLS_JAR) \
+	$(JAVA) $(INTERIM_LANGTOOLS_ARGS) \
 		-Djdeps.modules.xml=$(JDEPS_MODULES_XML) \
 		com.sun.tools.jdeps.Main \
 		-verify:access -mp $(JDK_OUTPUTDIR)/modules

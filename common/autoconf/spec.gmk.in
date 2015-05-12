@@ -486,15 +486,26 @@ JAVAC_FLAGS?=@JAVAC_FLAGS@
 BUILD_JAVA_FLAGS:=-Xms64M -Xmx1100M
 BUILD_JAVA=@FIXPATH@ $(BUILD_JDK)/bin/java $(BUILD_JAVA_FLAGS)
 
+# Use ?= as this can be overridden from bootcycle-spec.gmk
+BOOT_JDK_MODULAR ?= @BOOT_JDK_MODULAR@
+
+ifeq ($(BOOT_JDK_MODULAR), true)
+  INTERIM_OVERRIDE_MODULES_ARGS = -Xoverride:$(BUILDTOOLS_OUTPUTDIR)/override_modules
+  INTERIM_LANGTOOLS_ARGS = $(INTERIM_OVERRIDE_MODULES_ARG)
+else
+  INTERIM_OVERRIDE_MODULES := java.compiler jdk.compiler \
+      jdk.dev jdk.javadoc java.corba jdk.rmic
+  INTERIM_OVERRIDE_MODULES_ARGS = \
+      -Xbootclasspath/p:$(call CreatePath, \
+          $(addprefix $(BUILDTOOLS_OUTPUTDIR)/override_modules/, \
+              $(INTERIM_OVERRIDE_MODULES)))
+  INTERIM_LANGTOOLS_ARGS = $(INTERIM_OVERRIDE_MODULES_ARGS) \
+      -cp $(BUILDTOOLS_OUTPUTDIR)/override_modules/jdk.compiler
+endif
 # You run the new javac using the boot jdk with $(BOOT_JDK)/bin/java $(NEW_JAVAC) ...
 # Use = assignment to be able to override in bootcycle-spec.gmk
-INTERIM_LANGTOOLS_JAR = $(BUILDTOOLS_OUTPUTDIR)/interim_langtools.jar
-INTERIM_LANGTOOLS_ARGS = "-Xbootclasspath/p:$(INTERIM_LANGTOOLS_JAR)" -cp $(INTERIM_LANGTOOLS_JAR)
 NEW_JAVAC   = $(INTERIM_LANGTOOLS_ARGS) com.sun.tools.javac.Main
 NEW_JAVADOC = $(INTERIM_LANGTOOLS_ARGS) com.sun.tools.javadoc.Main
-
-# The interim corba jar is needed for running rmic
-INTERIM_CORBA_JAR = $(BUILDTOOLS_OUTPUTDIR)/interim_corba.jar
 
 # JLink/Jmod are run using the BUILD_JDK, which is normally the jdk output dir.
 JLINK = @FIXPATH@ $(BUILD_JDK)/bin/jlink $(JAVA_TOOL_FLAGS_SMALL)

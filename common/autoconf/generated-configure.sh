@@ -822,6 +822,7 @@ CORBA_TOPDIR
 LANGTOOLS_TOPDIR
 BUILD_JDK
 JAVAC_FLAGS
+BOOT_JDK_MODULAR
 BOOT_JDK_SOURCETARGET
 JARSIGNER
 JAR
@@ -3723,7 +3724,6 @@ ac_configure="$SHELL $ac_aux_dir/configure"  # Please don't use this var.
 # it needs to be set properly but will try to fall back on the BOOT_JDK.
 
 
-
 #
 # Copyright (c) 2011, 2012, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -4394,7 +4394,7 @@ VS_SDK_PLATFORM_NAME_2013=
 #CUSTOM_AUTOCONF_INCLUDE
 
 # Do not change or remove the following line, it is needed for consistency checks:
-DATE_WHEN_GENERATED=1431077574
+DATE_WHEN_GENERATED=1431441421
 
 ###############################################################################
 #
@@ -26212,6 +26212,35 @@ $as_echo "$tool_specified" >&6; }
 
   # When compiling code to be executed by the Boot JDK, force jdk8 compatibility.
   BOOT_JDK_SOURCETARGET="-source 8 -target 8"
+
+
+
+  $ECHO "Check if jvm arg is ok: -Xoverride:" >&5
+  $ECHO "Command: $JAVA -Xoverride: -version" >&5
+  OUTPUT=`$JAVA -Xoverride: -version 2>&1`
+  FOUND_WARN=`$ECHO "$OUTPUT" | grep -i warn`
+  FOUND_VERSION=`$ECHO $OUTPUT | grep " version \""`
+  if test "x$FOUND_VERSION" != x && test "x$FOUND_WARN" = x; then
+    dummy="$dummy -Xoverride:"
+    JVM_ARG_OK=true
+  else
+    $ECHO "Arg failed:" >&5
+    $ECHO "$OUTPUT" >&5
+    JVM_ARG_OK=false
+  fi
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking if Boot JDK supports modules" >&5
+$as_echo_n "checking if Boot JDK supports modules... " >&6; }
+  if test "x$JVM_ARG_OK" = "xtrue"; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+    BOOT_JDK_MODULAR="true"
+  else
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+    BOOT_JDK_MODULAR="false"
+  fi
+
 
 
 
