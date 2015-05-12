@@ -74,14 +74,11 @@ interim-langtools:
 interim-corba:
 	+($(CD) $(CORBA_TOPDIR)/make && $(MAKE) $(MAKE_ARGS) -f CompileInterim.gmk)
 
-interim-rmic:
-	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) $(MAKE_ARGS) -f CompileInterimRmic.gmk)
-
 buildtools-jdk:
 	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) $(MAKE_ARGS) -f Tools.gmk java-tools)
 
 ALL_TARGETS += buildtools-langtools interim-langtools interim-corba \
-    interim-rmic buildtools-jdk
+    buildtools-jdk
 
 ################################################################################
 # Special targets for certain modules
@@ -163,7 +160,7 @@ endef
 
 $(foreach m, $(IMPORT_COPY_MODULES), $(eval $(call DeclareImportCopyRecipe,$m)))
 
-ALL_TARGETS += $(ALL_COPY_TARGETS) $(ALL_COPY_MODULES)
+ALL_TARGETS += $(ALL_COPY_TARGETS)
 
 ################################################################################
 # Targets for compiling all java modules. Nashorn is treated separately.
@@ -429,9 +426,7 @@ else
 
   $(GENDATA_TARGETS): interim-langtools buildtools-jdk
 
-  interim-rmic: interim-langtools
-
-  $(RMIC_TARGETS): interim-langtools interim-corba interim-rmic
+  $(RMIC_TARGETS): interim-langtools interim-corba
 
   import-hotspot: hotspot
 
@@ -553,8 +548,7 @@ endif
 ################################################################################
 # Virtual targets without recipes
 
-buildtools: buildtools-langtools interim-langtools interim-corba interim-rmic \
-    buildtools-jdk
+buildtools: buildtools-langtools interim-langtools interim-corba buildtools-jdk
 
 gensrc: $(GENSRC_TARGETS)
 
@@ -613,7 +607,7 @@ test-image: prepare-test-image test-image-hotspot-jtreg-native \
 all-images: product-images test-image docs-image
 
 ALL_TARGETS += buildtools gensrc gendata copy java rmic libs launchers jmods \
-    jdk.jdwp.agent-gensrc $(ALL_MODULE_TARGETS) exploded-image \
+    jdk.jdwp.agent-gensrc $(ALL_MODULES) exploded-image \
     product-images docs-image test-image all-images
 
 ################################################################################
