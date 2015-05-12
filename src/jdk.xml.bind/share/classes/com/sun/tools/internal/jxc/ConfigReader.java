@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,6 +28,7 @@ package com.sun.tools.internal.jxc;
 import com.sun.tools.internal.jxc.ap.Options;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -42,6 +43,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParserFactory;
 import javax.xml.transform.Result;
 import javax.xml.transform.stream.StreamResult;
+import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.ValidatorHandler;
 
 import javax.annotation.processing.ProcessingEnvironment;
@@ -181,8 +183,18 @@ public final class ConfigReader  {
     /**
      * Lazily parsed schema for the binding file.
      */
-    private static SchemaCache configSchema = new SchemaCache(Config.class.getResource("config.xsd"));
+    private static SchemaCache configSchema = new SchemaCache(newStreamSource("config.xsd", "com/sun/tools/internal/jxc/gen/config/config.xsd"));
 
+    private static StreamSource newStreamSource(String systemId, String path) {
+        try {
+            InputStream is = ResourceLoaderUtil.getInputStream(Config.class, path);
+            StreamSource schema = new StreamSource(is);
+            schema.setSystemId(systemId);
+            return schema;
+        } catch (IOException t) {
+            throw new InternalError(t);
+        }
+    }
 
     /**
      * Parses an xml config file and returns a Config object.

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -41,6 +41,7 @@ import javax.xml.bind.JAXBElement;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.ws.WebServiceException;
+import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -122,9 +123,11 @@ class MetroConfigLoader {
             defaultFileName = defaultTubesConfigNames.getDefaultFileName();
         }
         this.defaultConfigUrl = locateResource(defaultFileName, loaders);
-        if (defaultConfigUrl == null) {
-            throw LOGGER.logSevereException(new IllegalStateException(TubelineassemblyMessages.MASM_0001_DEFAULT_CFG_FILE_NOT_FOUND(defaultFileName)));
-        }
+
+        // TODO-Miran: revisit
+        //    if (defaultConfigUrl == null) {
+        //        throw LOGGER.logSevereException(new IllegalStateException(TubelineassemblyMessages.MASM_0001_DEFAULT_CFG_FILE_NOT_FOUND(defaultFileName)));
+        //    }
 
         LOGGER.config(TubelineassemblyMessages.MASM_0002_DEFAULT_CFG_FILE_LOCATED(defaultFileName, defaultConfigUrl));
         this.defaultConfig = MetroConfigLoader.loadMetroConfig(defaultConfigUrl);
@@ -235,17 +238,27 @@ class MetroConfigLoader {
     }
 
     private static MetroConfig loadMetroConfig(@NotNull URL resourceUrl) {
-        MetroConfig result = null;
         try {
             JAXBContext jaxbContext = createJAXBContext();
             Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
             XMLInputFactory factory = XmlUtil.newXMLInputFactory(true);
-            final JAXBElement<MetroConfig> configElement = unmarshaller.unmarshal(factory.createXMLStreamReader(resourceUrl.openStream()), MetroConfig.class);
-            result = configElement.getValue();
+
+            InputStream is;
+            if (resourceUrl != null) {
+                is = resourceUrl.openStream();
+            } else {
+                is = ResourceLoaderUtil.getInputStream(MetroConfig.class, "com/sun/xml/internal/ws/assembler/jaxws-tubes-default.xml");
+            }
+            JAXBElement<MetroConfig> configElement = unmarshaller.unmarshal(factory.createXMLStreamReader(is), MetroConfig.class);
+
+            return configElement.getValue();
         } catch (Exception e) {
-            LOGGER.warning(TubelineassemblyMessages.MASM_0010_ERROR_READING_CFG_FILE_FROM_LOCATION(resourceUrl.toString()), e);
+            InternalError error = new InternalError(
+                    TubelineassemblyMessages.MASM_0010_ERROR_READING_CFG_FILE_FROM_LOCATION(resourceUrl != null ? resourceUrl.toString() : null)
+            );
+            LOGGER.logException(error, e, Level.SEVERE);
+            throw error;
         }
-        return result;
     }
 
     private static JAXBContext createJAXBContext() throws Exception {
