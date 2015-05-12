@@ -1144,10 +1144,10 @@ ParseArguments(int *pargc, char ***pargv,
  * In the latter case, any SUBOPT value not recognized will default to "all"
  */
         } else if (JLI_StrCmp(arg, "-XshowSettings") == 0 ||
-                JLI_StrCCmp(arg, "-XshowSettings:") == 0) {
+                   JLI_StrCCmp(arg, "-XshowSettings:") == 0) {
             showSettings = arg;
-        } else if (JLI_StrCmp(arg, "-XlistModules") == 0 |
-            JLI_StrCCmp(arg, "-XlistModules:") == 0) {
+        } else if (JLI_StrCmp(arg, "-XlistModules") == 0 ||
+                   JLI_StrCCmp(arg, "-XlistModules:") == 0) {
             listModules = arg;
         } else if (JLI_StrCmp(arg, "-Xdiag") == 0) {
             AddOption("-Dsun.java.launcher.diag=true", NULL);
