@@ -141,7 +141,11 @@ public class Main {
         Result result = compile(args, context);
         if (fileManager instanceof JavacFileManager) {
             // A fresh context was created above, so jfm must be a JavacFileManager
-            ((JavacFileManager)fileManager).close();
+            try {
+                ((JavacFileManager)fileManager).close();
+            } catch (IOException ex) {
+                bugMessage(ex);
+            }
         }
         return result;
     }
@@ -200,11 +204,13 @@ public class Main {
         if (batchMode)
             CacheFSInfo.preRegister(context);
 
+        boolean ok = true;
+
         // init file manager
         fileManager = context.get(JavaFileManager.class);
         if (fileManager instanceof BaseFileManager) {
             ((BaseFileManager) fileManager).setContext(context); // reinit with options
-            ((BaseFileManager) fileManager).handleOptions(args.getDeferredFileManagerOptions());
+            ok &= ((BaseFileManager) fileManager).handleOptions(args.getDeferredFileManagerOptions());
         }
 
         // handle this here so it works even if no other options given
@@ -215,7 +221,7 @@ public class Main {
             showClass(showClass);
         }
 
-        boolean ok = args.validate();
+        ok &= args.validate();
         if (!ok || log.nerrors > 0)
             return Result.CMDERR;
 
