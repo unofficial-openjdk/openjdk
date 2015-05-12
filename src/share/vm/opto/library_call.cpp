@@ -3102,7 +3102,7 @@ bool LibraryCallKit::inline_native_classID() {
   Node* cls = null_check(argument(1), T_OBJECT);
   Node* kls = load_klass_from_mirror(cls, false, NULL, 0);
   kls = null_check(kls, T_OBJECT);
-  ByteSize offset = TRACE_ID_OFFSET;
+  ByteSize offset = TRACE_KLASS_TRACE_ID_OFFSET;
   Node* insp = basic_plus_adr(kls, in_bytes(offset));
   Node* tvalue = make_load(NULL, insp, TypeLong::LONG, T_LONG, MemNode::unordered);
   Node* bits = longcon(~0x03l); // ignore bit 0 & 1

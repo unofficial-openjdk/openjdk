@@ -32,7 +32,7 @@
  * @ignore 8069160
  * @build com.oracle.java.testlibrary.*
  * @build com.oracle.java.testlibrary.dcmd.*
- * @run testng CompilerQueueTest
+ * @run testng/othervm CompilerQueueTest
  * @run testng/othervm -XX:-TieredCompilation CompilerQueueTest
  * @run testng/othervm -Xint CompilerQueueTest
  * @summary Test of diagnostic command Compiler.queue
