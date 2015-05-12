@@ -27,10 +27,14 @@ package jdk.tools.jlink;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.io.Writer;
 import java.lang.module.Configuration;
 import java.lang.module.Layer;
 import java.lang.module.ModuleReference;
@@ -42,6 +46,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Formatter;
 import java.util.HashMap;
 import java.util.List;
@@ -91,6 +96,12 @@ class JlinkTask {
             @Override
             protected void process(JlinkTask task, String opt, String arg) {
                 task.options.help = true;
+            }
+        },
+        new Option<JlinkTask>(false, "--genbom") {
+            @Override
+            protected void process(JlinkTask task, String opt, String arg) {
+                task.options.genbom = true;
             }
         },
         new Option<JlinkTask>(true, "--modulepath", "--mp") {
@@ -160,6 +171,7 @@ class JlinkTask {
                      EXIT_ABNORMAL = 4;// terminated abnormally
 
     static class OptionsValues {
+        boolean genbom;
         boolean help;
         boolean version;
         boolean fullVersion;
@@ -202,8 +214,9 @@ class JlinkTask {
 
             // additional option combination validation
 
-            boolean ok = run();
-            return ok ? EXIT_OK : EXIT_ERROR;
+            createImage();
+
+            return EXIT_OK;
         } catch (BadArgs e) {
             taskHelper.reportError(e.key, e.args);
             if (e.showUsage) {
@@ -216,11 +229,6 @@ class JlinkTask {
         } finally {
             log.flush();
         }
-    }
-
-    private boolean run() throws IOException {
-        createImage();
-        return true;
     }
 
     private Map<String, Path> modulesToPath(Set<ModuleDescriptor> modules) {
@@ -276,6 +284,57 @@ class JlinkTask {
 
         ImageFileHelper imageHelper = new ImageFileHelper(cf, mods);
         imageHelper.createModularImage(output, mods);
+
+        if (options.genbom) {
+            genBOM(options.output);
+        }
+    }
+
+    private void genBOM(Path root) throws IOException {
+        File bom = new File(root.toFile(), "bom");
+        StringBuilder sb = new StringBuilder();
+        sb.append("#").append(new Date()).append("\n");
+        sb.append("#Please DO NOT Modify this file").append("\n");
+        StringBuilder command = new StringBuilder();
+        for (String c : optionsHelper.getInputCommand()) {
+            command.append(c).append(" ");
+        }
+        sb.append("command").append(" = ").append(command);
+        sb.append("\n");
+
+        // Expanded command
+        String[] expanded = optionsHelper.getExpandedCommand();
+        if (expanded != null) {
+            String defaults = optionsHelper.getDefaults();
+            sb.append("\n").append("#Defaults").append("\n");
+            sb.append("defaults = ").append(defaults).append("\n");
+
+            StringBuilder builder = new StringBuilder();
+            for (String c : expanded) {
+                builder.append(c).append(" ");
+            }
+            sb.append("expanded command").append(" = ").append(builder);
+            sb.append("\n");
+        }
+
+        String pluginsContent = optionsHelper.getPluginsConfig();
+        if (pluginsContent != null) {
+            sb.append("\n").append("# Plugins configuration\n");
+            sb.append(pluginsContent);
+        }
+        try {
+            createUtf8File(bom, sb.toString());
+        } catch (IOException ex) {
+            fail(RuntimeException.class, taskHelper.getMessage("err.bom.generation",
+                    ex.toString()));
+        }
+    }
+
+    private static void createUtf8File(File file, String content) throws IOException {
+        try (OutputStream fout = new FileOutputStream(file);
+             Writer output = new OutputStreamWriter(fout, "UTF-8")) {
+            output.write(content);
+        }
     }
 
     private class ImageFileHelper {

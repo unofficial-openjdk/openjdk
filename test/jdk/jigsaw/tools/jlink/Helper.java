@@ -148,7 +148,7 @@ public class Helper {
         return classes;
     }
 
-    public void checkImage(String module,
+    public File checkImage(String module,
             String[] userOptions, String[] paths,
             String[] files)
             throws Exception {
@@ -184,6 +184,7 @@ public class Helper {
         System.out.println("Java launcher execution time "
                 + validator.getJavaLauncherExecutionTime());
         System.out.println("***");
+        return image;
     }
 
     public static String getDebugSymbolsExtension() {

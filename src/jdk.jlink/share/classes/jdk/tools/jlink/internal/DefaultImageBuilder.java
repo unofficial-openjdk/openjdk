@@ -80,8 +80,9 @@ public class DefaultImageBuilder implements ImageBuilder {
         File f = new File(path, "release");
         Properties release = null;
         if (!f.exists()) {
-            System.err.println("WARNING, no release file found in " + path +
-                    ". release file not added to generated image");
+            // XXX When jlink is exposed to user.
+            //System.err.println("WARNING, no release file found in " + path +
+               //     ". release file not added to generated image");
         } else {
             release = new Properties();
             try(FileInputStream fi = new FileInputStream(f)) {
@@ -146,12 +147,14 @@ public class DefaultImageBuilder implements ImageBuilder {
                 Optional<String> mainClass = Optional.empty();
 
                 try (ZipFile zf = new ZipFile(jmodpath.toString())) {
-                    String e = "classes/module-info.class";
+                    String e = getModuleInfoPath(jmodpath.toString());
                     ZipEntry ze = zf.getEntry(e);
                     if (ze != null) {
                         try (InputStream in = zf.getInputStream(ze)) {
                             mainClass = ModuleDescriptor.read(in).mainClass();
                         }
+                    } else {
+                        throw new IOException("module-info not found for " + module);
                     }
                 }
 
@@ -181,6 +184,18 @@ public class DefaultImageBuilder implements ImageBuilder {
                 }
             }
         }
+    }
+
+    private String getModuleInfoPath(String archive) throws IOException {
+        String path = "module-info.class";
+        if(archive.endsWith(".jar")) {
+            return path;
+        } else {
+            if(archive.endsWith(".jmod")) {
+                return "classes" +"/" + path;
+            }
+        }
+        throw new IOException("Unsupported archive " + archive);
     }
 
     @Override

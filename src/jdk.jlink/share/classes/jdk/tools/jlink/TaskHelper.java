@@ -267,7 +267,9 @@ public final class TaskHelper {
     public class OptionsHelper<T> {
 
         private final List<Option<T>> options;
-
+        private String[] expandedCommand;
+        private String[] command;
+        private String defaults;
         OptionsHelper(List<Option<T>> options) {
             this.options = options;
         }
@@ -289,6 +291,7 @@ public final class TaskHelper {
             List<String> defArgs = null;
 
             List<String> override = new ArrayList<>();
+            boolean expanded = false;
             for (int i = 0; i < args.length; i++) {
                 if (args[i].equals("--" + CONFIGURATION)) {
                     i++;
@@ -299,17 +302,17 @@ public final class TaskHelper {
                     } catch (IOException ex) {
                         throw new RuntimeException(ex);
                     }
-                    String defaults = p.getProperty(DEFAULTS_PROPERTY);
+                    defaults = p.getProperty(DEFAULTS_PROPERTY);
                     if (defaults == null) {
                         throw new BadArgs("err.config.defaults",
                             DEFAULTS_PROPERTY);
                     }
-
-                    String[] array = defaults.split(" ");
-                    defArgs = new ArrayList<>();
-                    for (String s : array) {
-                        defArgs.add(s);
+                    try {
+                        defArgs = parseDefaults(defaults);
+                    } catch (Exception ex) {
+                        throw new BadArgs("err.config.defaults", defaults);
                     }
+                    expanded = true;
                 } else {
                     override.add(args[i]);
                 }
@@ -351,14 +354,16 @@ public final class TaskHelper {
                 ret = new String[output.size()];
                 output.toArray(ret);
             }
-
+            if (expanded) {
+                expandedCommand = ret;
+            }
             return ret;
         }
 
         public List<String> handleOptions(T task, String[] args) throws BadArgs {
             // Unit tests can call Task multiple time in same JVM.
             pluginOptions = new PluginsOptions();
-
+            command = args;
             // Handle defaults.
             args = handleDefaults(args);
 
@@ -492,6 +497,40 @@ public final class TaskHelper {
         public boolean listPlugins() {
             return pluginOptions.listPlugins;
         }
+
+        String[] getExpandedCommand() {
+           return expandedCommand;
+        }
+
+        String[] getInputCommand() {
+            return command;
+        }
+
+        String getDefaults() {
+            return defaults;
+        }
+
+        String getPluginsConfig() throws IOException {
+            String ret = null;
+            if (pluginOptions.pluginsProperties != null) {
+                Properties props = new Properties();
+                try (FileInputStream stream
+                        = new FileInputStream(pluginOptions.pluginsProperties)) {
+                    props.load(stream);
+                } catch (FileNotFoundException ex) {
+                    throw new IOException(bundleHelper.
+                            getMessage("err.path.not.valid")
+                            + " " + pluginOptions.pluginsProperties);
+                }
+                StringBuilder sb = new StringBuilder();
+                for (String str : props.stringPropertyNames()) {
+                    sb.append(str).append(" = ").append(props.getProperty(str)).
+                            append("\n");
+                }
+                ret = sb.toString();
+            }
+            return ret;
+        }
     }
 
     private PluginsOptions pluginOptions;
@@ -547,4 +586,38 @@ public final class TaskHelper {
         return System.getProperty("java.version");
     }
 
+    // public for testing purpose
+    public static List<String> parseDefaults(String defaults) throws Exception {
+        List<String> arguments = new ArrayList<>();
+        while (!defaults.isEmpty()) {
+            int start = defaults.indexOf("--");
+            if (start < 0) {
+                throw new Exception("Invalid defaults " + defaults);
+            }
+            defaults = defaults.substring(start);
+            start = 0;
+            int end = defaults.indexOf(" ");
+            String remaining;
+
+            if (end < 0) {
+                arguments.add(defaults);
+                remaining = "";
+            } else {
+                String option = defaults.substring(start, end);
+                arguments.add(option);
+                defaults = defaults.substring(end);
+                int nextOption = defaults.indexOf("--");
+                int argEnd = nextOption < 0 ? defaults.length() : nextOption;
+                String arg = defaults.substring(0, argEnd);
+                arg = arg.replaceAll(" ", "");
+                if (!arg.isEmpty()) {
+                    arguments.add(arg);
+                }
+                remaining = defaults.substring(argEnd);
+            }
+
+            defaults = remaining;
+        }
+       return arguments;
+    }
 }

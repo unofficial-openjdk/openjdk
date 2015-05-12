@@ -70,7 +70,7 @@ public abstract class PluginProvider {
     public final Plugin[] newPlugins(Properties properties) throws IOException {
         String[] arguments = null;
         Collection<String> options = Collections.emptyList();
-        if(getAdditionalOptions() != null) {
+        if (getAdditionalOptions() != null) {
             options = getAdditionalOptions().keySet();
         }
         Map<String, String> otherOptions = new HashMap<>();
@@ -83,6 +83,9 @@ public abstract class PluginProvider {
                 case TOOL_ARGUMENT_PROPERTY: {
                     arguments = properties.getProperty(a).
                             split(",");
+                    for (int i = 0; i < arguments.length; i++) {
+                        arguments[i] = arguments[i].trim();
+                    }
                     break;
                 }
             }

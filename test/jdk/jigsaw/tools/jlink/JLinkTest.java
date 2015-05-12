@@ -23,6 +23,9 @@
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.List;
+import jdk.tools.jlink.TaskHelper;
 import jdk.tools.jlink.plugins.PluginProvider;
 import jdk.tools.jlink.internal.ImagePluginProviderRepository;
 
@@ -55,7 +58,7 @@ public class JLinkTest {
         for (PluginProvider pf : ImagePluginProviderRepository.getImageWriterProviders(null)) {
             num += 1;
         }
-        if (num != 6) {
+        if (num != 7) {
             throw new Exception("Plugins not found. " + num);
         }
 
@@ -136,6 +139,35 @@ public class JLinkTest {
                 helper.checkImage("configembeddednocompresscomposite2",
                         userOptions, null, null);
             }
+        }
+
+        // Defaults configuration unit parsing
+        List<String> lst = new ArrayList<>();
+        lst.add("--aaaa");
+        lst.add("a,b,c,d");
+        lst.add("--koko");
+        lst.add("--bbbbb");
+        lst.add("x,y,z");
+        lst.add("--xxx");
+        lst.add("-x");
+        lst.add("--ddd");
+        lst.add("ddd");
+        lst.add("--compress");
+        lst.add("--doit");
+        String sample = "  --aaaa a, b, c, d --koko --bbbbb    x,y,z   --xxx -x  --ddd ddd --compress --doit";
+        String sample2 = sample + " ";
+
+        checkDefaults(sample, lst);
+        checkDefaults(sample2, lst);
+
+    }
+
+    private static void checkDefaults(String value, List<String> expected)
+            throws Exception {
+        List<String> arguments = TaskHelper.parseDefaults(value);
+        if (!expected.equals(arguments)) {
+            throw new Exception("Lists are not equal. Expected: " + expected
+                    + " Actual: " + arguments);
         }
     }
 }
