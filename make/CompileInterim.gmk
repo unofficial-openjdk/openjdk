@@ -33,23 +33,35 @@ include SetupJavaCompilers.gmk
 
 ################################################################################
 
-$(eval $(call SetupJavaCompilation,BUILD_INTERIM_CORBA, \
-    SETUP := GENERATE_OLDBYTECODE, \
-    SRC := $(JDK_TOPDIR)/src/jdk.rmic/share/classes \
-      $(CORBA_TOPDIR)/src/java.corba/share/classes \
-      $(CORBA_TOPDIR)/src/jdk.rmic/share/classes \
-      $(SUPPORT_OUTPUTDIR)/gensrc/java.corba, \
-    EXCLUDES := com/sun/corba/se/PortableActivationIDL, \
-    EXCLUDE_FILES := module-info.java \
-        com/sun/corba/se/impl/presentation/rmi/JNDIStateFactoryImpl.java \
-        com/sun/corba/se/spi/presentation/rmi/StubWrapper.java \
-        org/omg/PortableInterceptor/UNKNOWN.java \
-        com/sun/tools/corba/se/idl/ResourceBundleUtil.java \
-        com/sun/corba/se/impl/presentation/rmi/jndi.properties, \
-    COPY := .prp, \
-    CLEAN := .properties, \
-    BIN := $(BUILDTOOLS_OUTPUTDIR)/corba_interim_classes, \
-    JAR := $(INTERIM_CORBA_JAR)))
+# Param 1 - Name of module to compile
+# Param 2 - Name of modules to depend on
+define SetupInterimModule
+  $$(eval $$(call SetupJavaCompilation, BUILD_INTERIM_$(strip $1), \
+      SETUP := GENERATE_OLDBYTECODE, \
+      SRC := $(wildcard $(JDK_TOPDIR)/src/$(strip $1)/share/classes \
+          $(CORBA_TOPDIR)/src/$(strip $1)/share/classes \
+          $(SUPPORT_OUTPUTDIR)/gensrc/$(strip $1)), \
+      EXCLUDES := com/sun/corba/se/PortableActivationIDL, \
+      EXCLUDE_FILES := module-info.java \
+          com/sun/corba/se/impl/presentation/rmi/JNDIStateFactoryImpl.java \
+          com/sun/corba/se/spi/presentation/rmi/StubWrapper.java \
+          org/omg/PortableInterceptor/UNKNOWN.java \
+          com/sun/tools/corba/se/idl/ResourceBundleUtil.java \
+          com/sun/corba/se/impl/presentation/rmi/jndi.properties, \
+      COPY := .prp, \
+      CLEAN := .properties, \
+      BIN := $(BUILDTOOLS_OUTPUTDIR)/override_modules/$(strip $1), \
+  ))
+
+  $$(BUILD_INTERIM_$(strip $1)): $$(foreach m, $2, $$(BUILD_INTERIM_$(strip $$m)))
+
+  TARGETS += $$(BUILD_INTERIM_$(strip $1))
+endef
+
+$(eval $(call SetupInterimModule, java.corba))
+$(eval $(call SetupInterimModule, jdk.rmic, java.corba))
+
+all: $(TARGETS)
 
 ################################################################################
 
