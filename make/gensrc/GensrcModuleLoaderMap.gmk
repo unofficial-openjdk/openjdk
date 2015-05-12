@@ -75,6 +75,7 @@ UPGRADEABLE_MODULES += \
 EXT_MODULES += \
     jdk.crypto.ec \
     jdk.crypto.pkcs11 \
+    jdk.xml.dom \
     jdk.localedata \
     jdk.naming.dns \
     jdk.scripting.nashorn \
