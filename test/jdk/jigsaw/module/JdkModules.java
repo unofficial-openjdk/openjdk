@@ -53,7 +53,7 @@ public class JdkModules {
 
     public void go() {
         Set<ModuleReference> mrefs
-            = ModuleFinder.installedModules().allModules();
+            = ModuleFinder.ofInstalled().findAll();
         mrefs.stream().map(ModuleReference::descriptor).forEach(md -> {
             switch (md.name()) {
                 case "java.base":

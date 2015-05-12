@@ -104,7 +104,7 @@ public class ModuleSummary {
     ModuleSummary(Path modpath) throws IOException, ConstantPoolException {
         this.modpath = modpath;
 
-        Set<ModuleReference> mrefs = ModuleFinder.installedModules().allModules();
+        Set<ModuleReference> mrefs = ModuleFinder.ofInstalled().findAll();
         mrefs.forEach(m -> nameToReference.put(m.descriptor().name(), m));
 
         // build package map for all modules for API dependency analysis
@@ -476,9 +476,9 @@ public class ModuleSummary {
     }
 
     static Configuration resolve(Collection<String> roots) {
-        return Configuration.resolve(ModuleFinder.installedModules(),
+        return Configuration.resolve(ModuleFinder.ofInstalled(),
                                      Layer.emptyLayer(),
-                                     ModuleFinder.nullFinder(),
+                                     ModuleFinder.empty(),
                                      roots);
     }
 

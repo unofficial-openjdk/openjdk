@@ -33,6 +33,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -81,31 +82,30 @@ class InstalledModuleFinder implements ModuleFinder {
     }
 
     @Override
-    public ModuleReference find(String name) {
-        if (!bootImage.modules.contains(name)) {
-            return null;
-        }
+    public Optional<ModuleReference> find(String name) {
+        if (!bootImage.modules.contains(name))
+            return Optional.empty();
 
         // try cached modules
         ModuleReference m = cachedModules.get(name);
         if (m != null)
-            return m;
+            return Optional.of(m);
 
         // create ModuleReference from module descriptor
         m = toModuleReference(name);
         ModuleReference previous = cachedModules.putIfAbsent(name, m);
         if (previous == null) {
-            return m;
+            return Optional.of(m);
         } else {
-            return previous;
+            return Optional.of(previous);
         }
     }
 
     @Override
-    public Set<ModuleReference> allModules() {
+    public Set<ModuleReference> findAll() {
         // ensure ModuleReference for all modules are created
-        return bootImage.modules.stream()
-                .map(this::find).collect(Collectors.toSet());
+        return (bootImage.modules.stream()
+                .map(this::find).map(Optional::get).collect(Collectors.toSet()));
     }
 
     class Image {

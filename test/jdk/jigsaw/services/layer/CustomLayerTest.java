@@ -44,10 +44,10 @@ public class CustomLayerTest {
         Path dir = Paths.get(args[2]);
 
         // create the Configuration
-        ModuleFinder finder = ModuleFinder.ofDirectories(dir);
+        ModuleFinder finder = ModuleFinder.of(dir);
         Configuration cf = Configuration.resolve(finder,
                 Layer.bootLayer(),
-                ModuleFinder.nullFinder(),
+                ModuleFinder.empty(),
                 moduleName);
 
         // create the Layer with the module loaded by the system class loader
@@ -83,4 +83,3 @@ public class CustomLayerTest {
     }
 
 }
-

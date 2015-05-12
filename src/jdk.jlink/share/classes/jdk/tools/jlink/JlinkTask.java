@@ -51,6 +51,7 @@ import java.util.Formatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
@@ -113,7 +114,7 @@ class JlinkTask {
                 for (String dir: dirs) {
                     paths[i++] = Paths.get(dir);
                 }
-                task.options.moduleFinder = ModuleFinder.ofDirectories(paths);
+                task.options.moduleFinder = ModuleFinder.of(paths);
             }
         },
         new Option<JlinkTask>(true, "--addmods") {
@@ -238,15 +239,15 @@ class JlinkTask {
         for (ModuleDescriptor m : modules) {
             String name = m.name();
 
-            ModuleReference mref = finder.find(name);
-            if (mref == null) {
+            Optional<ModuleReference> omref = finder.find(name);
+            if (!omref.isPresent()) {
                 // this should not happen, module path bug?
                 fail(InternalError.class,
                      "Selected module %s not on module path",
                      name);
             }
 
-            URI location = mref.location().get();
+            URI location = omref.get().location().get();
             String scheme = location.getScheme();
             if (!scheme.equalsIgnoreCase("jmod") && !scheme.equalsIgnoreCase("jar")) {
                 fail(RuntimeException.class,
@@ -277,7 +278,7 @@ class JlinkTask {
 
         Configuration cf = Configuration.resolve(options.moduleFinder,
                 Layer.emptyLayer(),
-                ModuleFinder.nullFinder(),
+                ModuleFinder.empty(),
                 options.jmods);
 
         Map<String, Path> mods = modulesToPath(cf.descriptors());

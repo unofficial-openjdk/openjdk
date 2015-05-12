@@ -31,6 +31,7 @@ import java.net.URI;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -67,12 +68,12 @@ class ModuleLibrary implements ModuleFinder {
     }
 
     @Override
-    public ModuleReference find(String name) {
-        return namesToReference.get(name);
+    public Optional<ModuleReference> find(String name) {
+        return Optional.ofNullable(namesToReference.get(name));
     }
 
     @Override
-    public Set<ModuleReference> allModules() {
+    public Set<ModuleReference> findAll() {
         return new HashSet<>(namesToReference.values());
     }
 }

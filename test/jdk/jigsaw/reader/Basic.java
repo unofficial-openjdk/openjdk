@@ -58,8 +58,8 @@ public class Basic {
         byte[] expectedBytes = Files.readAllBytes(Paths.get(args[3]));
 
         // find the module
-        ModuleFinder finder = ModuleFinder.ofDirectories(dir);
-        ModuleReference mref = finder.find(module);
+        ModuleFinder finder = ModuleFinder.of(dir);
+        ModuleReference mref = finder.find(module).get();
         assertTrue(mref != null);
 
         // test the reader on this module

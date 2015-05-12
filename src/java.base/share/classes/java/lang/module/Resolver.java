@@ -526,7 +526,7 @@ final class Resolver {
      */
     private static ModuleReference find(ModuleFinder finder, String mn) {
         try {
-            return finder.find(mn);
+            return finder.find(mn).orElse(null);
         } catch (UncheckedIOException e) {
             throw new ResolutionException(e.getCause());
         } catch (RuntimeException | Error e) {
@@ -539,7 +539,7 @@ final class Resolver {
      */
     private static Set<ModuleReference> findAll(ModuleFinder finder) {
         try {
-            return finder.allModules();
+            return finder.findAll();
         } catch (UncheckedIOException e) {
             throw new ResolutionException(e.getCause());
         } catch (RuntimeException | Error e) {

@@ -61,23 +61,23 @@ public class GenGraphs {
         Path dir = Paths.get(args[0]);
         Files.createDirectories(dir);
 
-        ModuleFinder finder = ModuleFinder.installedModules();
+        ModuleFinder finder = ModuleFinder.ofInstalled();
 
         Set<ModuleDescriptor> javaSEModules
-            = new TreeSet<>(finder.allModules().stream()
+            = new TreeSet<>(finder.findAll().stream()
                                   .map(ModuleReference::descriptor)
                                   .filter(m -> (m.name().startsWith("java.") &&
                                                !m.name().equals("java.smartcardio")))
                                   .collect(Collectors.toSet()));
         Set<ModuleDescriptor> jdkModules
-            = new TreeSet<>(finder.allModules().stream()
+            = new TreeSet<>(finder.findAll().stream()
                                   .map(ModuleReference::descriptor)
                                   .filter(m -> !javaSEModules.contains(m))
                                   .collect(Collectors.toSet()));
 
         GenGraphs genGraphs = new GenGraphs(javaSEModules, jdkModules);
         Set<String> mods = new HashSet<>();
-        for (ModuleReference mref: finder.allModules()) {
+        for (ModuleReference mref: finder.findAll()) {
             ModuleDescriptor descriptor = mref.descriptor();
             String name = descriptor.name();
             switch (name) {
@@ -89,14 +89,14 @@ public class GenGraphs {
             mods.add(name);
             Configuration cf = Configuration.resolve(finder,
                     Layer.emptyLayer(),
-                    ModuleFinder.nullFinder(),
+                    ModuleFinder.empty(),
                     name);
             genGraphs.genDotFile(dir, name, cf);
         }
 
         Configuration cf = Configuration.resolve(finder,
                 Layer.emptyLayer(),
-                ModuleFinder.nullFinder(),
+                ModuleFinder.empty(),
                 mods);
         genGraphs.genDotFile(dir, "jdk", cf);
 

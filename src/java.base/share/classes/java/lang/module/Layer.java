@@ -45,7 +45,7 @@ import sun.misc.SharedSecrets;
  *
  * <pre>{@code
  *     ModuleFinder finder =
- *         ModuleFinder.ofDirectories(dir1, dir2, dir3);
+ *         ModuleFinder.of(dir1, dir2, dir3);
  *
  *     Configuration cf =
  *         Configuration.resolve(ModuleFinder.nullFinder(),

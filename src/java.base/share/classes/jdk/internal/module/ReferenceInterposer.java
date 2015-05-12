@@ -137,24 +137,24 @@ class ReferenceInterposer implements ModuleFinder {
     }
 
     @Override
-    public ModuleReference find(String name) {
+    public Optional<ModuleReference> find(String name) {
         ModuleReference mref = mrefs.get(name);
         if (mref != null)
-            return mref;
+            return Optional.of(mref);
 
-        mref = finder.find(name);
+        mref = finder.find(name).orElse(null);
         if (mref == null)
-            return null;
+            return Optional.empty();
 
         mref = replaceIfNeeded(mref);
         mrefs.put(name, mref);
-        return mref;
+        return Optional.of(mref);
     }
 
     @Override
-    public Set<ModuleReference> allModules() {
+    public Set<ModuleReference> findAll() {
         if (!haveAllModules) {
-            for (ModuleReference mref: finder.allModules()) {
+            for (ModuleReference mref : finder.findAll()) {
                 String name = mref.descriptor().name();
                 mrefs.computeIfAbsent(name, k -> replaceIfNeeded(mref));
             }

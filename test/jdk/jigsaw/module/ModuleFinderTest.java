@@ -26,6 +26,7 @@ import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleDescriptor;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.Vector;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -42,7 +43,7 @@ public class ModuleFinderTest {
      * Verifies number and names of the module references available in a finder.
      */
     private static void assertModules(ModuleFinder finder, String... modules) {
-        assertEquals(finder.allModules().size(), modules.length);
+        assertEquals(finder.findAll().size(), modules.length);
         for (String m : modules) {
             assertTrue(finder.find(m) != null);
         }
@@ -74,7 +75,7 @@ public class ModuleFinderTest {
         ModuleFinder finder2 = new ModuleLibrary(build("m1"));
         ModuleFinder concat = ModuleFinder.concat(finder1, finder2);
         assertModules(concat, "m1");
-        assertSame(concat.find("m1").descriptor(), descriptor1);
+        assertSame(concat.find("m1").get().descriptor(), descriptor1);
     }
 
     /**
@@ -93,7 +94,7 @@ public class ModuleFinderTest {
         ModuleLibrary right = new ModuleLibrary(
             rightFinders.toArray(new ModuleDescriptor[BIG_NUMBER_OF_MODULES]));
         ModuleFinder concat = ModuleFinder.concat(left, right);
-        assertEquals(concat.allModules().size(), BIG_NUMBER_OF_MODULES*2);
+        assertEquals(concat.findAll().size(), BIG_NUMBER_OF_MODULES*2);
         for (int i = 0; i < BIG_NUMBER_OF_MODULES*2; i++) {
             assertNotNull(concat.find("m" + i), String.format("%x'th module", i));
         }
@@ -104,24 +105,24 @@ public class ModuleFinderTest {
      * from the concatenation.
      */
     public void testException() {
-        final String ALL_MODULES_MSG = "from allModules";
+        final String ALL_MODULES_MSG = "from findAll";
         final String FIND_MSG = "from find";
         class BrokenFinder implements ModuleFinder {
             @Override
-            public Set<ModuleReference> allModules() {
+            public Set<ModuleReference> findAll() {
                 throw new RuntimeException(ALL_MODULES_MSG);
             }
             @Override
-            public ModuleReference find(String name) {
+            public Optional<ModuleReference> find(String name) {
                 throw new RuntimeException(FIND_MSG);
             }
         }
         ModuleFinder concat =
-            ModuleFinder.concat(ModuleFinder.nullFinder(),
+            ModuleFinder.concat(ModuleFinder.empty(),
                                         new BrokenFinder());
         try {
-            concat.allModules();
-            fail("No exception from allModules()");
+            concat.findAll();
+            fail("No exception from findAll()");
         } catch (RuntimeException e) {
             assertTrue(e.getMessage().contains(ALL_MODULES_MSG));
         }
@@ -138,29 +139,29 @@ public class ModuleFinderTest {
      */
     public void testEmpty() {
         class CountingFinder implements ModuleFinder {
-            final AtomicInteger allModulesCallCount = new AtomicInteger(0);
+            final AtomicInteger findAllCallCount = new AtomicInteger(0);
             final Vector findCalls = new Vector();
             final ModuleFinder inner;
             CountingFinder(ModuleFinder inner) {
                 this.inner = inner;
             }
             @Override
-            public Set<ModuleReference> allModules() {
-                allModulesCallCount.incrementAndGet();
-                return inner.allModules();
+            public Set<ModuleReference> findAll() {
+                findAllCallCount.incrementAndGet();
+                return inner.findAll();
             }
             @Override
-            public ModuleReference find(String name) {
+            public Optional<ModuleReference> find(String name) {
                 findCalls.add(name);
                 return inner.find(name);
             }
         }
-        CountingFinder empty1 = new CountingFinder(ModuleFinder.nullFinder());
-        CountingFinder empty2 = new CountingFinder(ModuleFinder.nullFinder());
+        CountingFinder empty1 = new CountingFinder(ModuleFinder.empty());
+        CountingFinder empty2 = new CountingFinder(ModuleFinder.empty());
         ModuleFinder concat = ModuleFinder.concat(empty1, empty2);
         assertModules(concat);
-        assertEquals(empty1.allModulesCallCount.get(), 1);
-        assertEquals(empty2.allModulesCallCount.get(), 1);
+        assertEquals(empty1.findAllCallCount.get(), 1);
+        assertEquals(empty2.findAllCallCount.get(), 1);
         assertEquals(empty1.findCalls.size(), 0);
         assertEquals(empty2.findCalls.size(), 0);
     }

@@ -38,6 +38,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -77,7 +78,7 @@ public final class ModuleBootstrap {
 
         // system module path, aka the installed modules
         ModuleFinder systemModulePath =
-            ModuleFinder.installedModules();
+            ModuleFinder.ofInstalled();
 
         // -modulepath option specified to the launcher
         ModuleFinder appModulePath =
@@ -102,10 +103,10 @@ public final class ModuleBootstrap {
         // it to the boot loader. We do this here so that resources in the
         // base module can be located for error messages that may happen
         // from here on.
-        ModuleReference base = finder.find(JAVA_BASE);
-        if (base == null)
+        Optional<ModuleReference> obase = finder.find(JAVA_BASE);
+        if (!obase.isPresent())
             throw new InternalError(JAVA_BASE + " not found");
-        BootLoader.defineBaseModule(base);
+        BootLoader.defineBaseModule(obase.get());
 
         // launcher -m option to specify the initial module
         String mainModule = null;
@@ -144,7 +145,7 @@ public final class ModuleBootstrap {
         Set<String> input = Collections.emptySet();
         String cp = System.getProperty("java.class.path");
         if (mainModule == null || (cp != null && cp.length() > 0)) {
-            input = finder.allModules()
+            input = finder.findAll()
                           .stream()
                           .map(md -> md.descriptor().name())
                           .collect(Collectors.toSet());
@@ -164,7 +165,7 @@ public final class ModuleBootstrap {
         // run the resolver to create the configuration
         Configuration cf = Configuration.resolve(finder,
                                                  Layer.emptyLayer(),
-                                                 ModuleFinder.nullFinder(),
+                                                 ModuleFinder.empty(),
                                                  input).bind();
 
         // time to create configuration
@@ -183,9 +184,9 @@ public final class ModuleBootstrap {
             ModuleReference mref = cf.findReference(name);
             ClassLoader cl = clf.loaderForModule(mref);
             if (cl == null) {
-                if (upgradeModulePath != null && upgradeModulePath.find(name) != null)
+                if (upgradeModulePath != null && upgradeModulePath.find(name).isPresent())
                     fail(name + ": cannot be loaded from upgrade module path");
-                if (systemModulePath.find(name) == null)
+                if (!systemModulePath.find(name).isPresent())
                     fail(name + ": cannot be loaded from application module path");
             }
         }
@@ -221,25 +222,25 @@ public final class ModuleBootstrap {
     {
         Configuration cf = Configuration.resolve(finder,
                                                  Layer.emptyLayer(),
-                                                 ModuleFinder.nullFinder(),
+                                                 ModuleFinder.empty(),
                                                  mods);
 
         // module name -> reference
         Map<String, ModuleReference> map = new HashMap<>();
         cf.descriptors().forEach(md -> {
             String name = md.name();
-            map.put(name, finder.find(name));
+            map.put(name, finder.find(name).get());
         });
 
         Set<ModuleReference> mrefs = new HashSet<>(map.values());
 
         return new ModuleFinder() {
             @Override
-            public ModuleReference find(String name) {
-                return map.get(name);
+            public Optional<ModuleReference> find(String name) {
+                return Optional.ofNullable(map.get(name));
             }
             @Override
-            public Set<ModuleReference> allModules() {
+            public Set<ModuleReference> findAll() {
                 return mrefs;
             }
         };
@@ -300,7 +301,7 @@ public final class ModuleBootstrap {
             for (String dir: dirs) {
                 paths[i++] = Paths.get(dir);
             }
-            return ModuleFinder.ofDirectories(paths);
+            return ModuleFinder.of(paths);
         }
     }
 

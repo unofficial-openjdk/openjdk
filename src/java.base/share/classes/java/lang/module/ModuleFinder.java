@@ -29,6 +29,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -48,7 +49,7 @@ import java.util.stream.Stream;
  *     Path dir1, dir2, dir3;
  *
  *     ModuleFinder finder =
- *         ModuleFinder.ofDirectories(dir1, dir2, dir3);
+ *         ModuleFinder.of(dir1, dir2, dir3);
  *
  *     ModuleReference reference = finder.find("jdk.foo");
  * }</pre>
@@ -63,8 +64,7 @@ import java.util.stream.Stream;
 public interface ModuleFinder {
 
     /**
-     * Finds a module reference where the module has the given name.
-     * Returns {@code null} if not found.
+     * Finds a reference to a module of a given name.
      *
      * <p> A {@code ModuleFinder} provides a consistent view of the
      * modules that it locates. If {@code find} is invoked several times to
@@ -73,7 +73,7 @@ public interface ModuleFinder {
      * of the set of modules returned by the {@link #allModules allModules}
      * method.
      */
-    public ModuleReference find(String name);
+    public Optional<ModuleReference> find(String name);
 
     /**
      * Returns the set of all module references that this finder can locate.
@@ -89,7 +89,7 @@ public interface ModuleFinder {
      * Configuration#bind} that need to scan the module path to find
      * modules that provide a specific service.
      */
-    public Set<ModuleReference> allModules();
+    public Set<ModuleReference> findAll();
 
     /**
      * Returns a module finder for modules that are linked into the run-time
@@ -102,18 +102,18 @@ public interface ModuleFinder {
      *
      * @apiNote Need to decide if this method needs a permission check.
      */
-    public static ModuleFinder installedModules() {
+    public static ModuleFinder ofInstalled() {
         if (InstalledModuleFinder.isModularImage()) {
             return new InstalledModuleFinder();
         } else {
             String home = System.getProperty("java.home");
             Path mlib = Paths.get(home, "modules");
             if (Files.isDirectory(mlib)) {
-                return ofDirectories(mlib);
+                return of(mlib);
             } else {
                 System.err.println("WARNING: " + mlib.toString() +
                         " not found or not a directory");
-                return ofDirectories(new Path[0]);
+                return of(new Path[0]);
             }
         }
     }
@@ -129,7 +129,7 @@ public interface ModuleFinder {
      * I/O and other errors (a ClassFormatError when parsing a module-info.class
      * for example).
      */
-    public static ModuleFinder ofDirectories(Path... dirs) {
+    public static ModuleFinder of(Path... dirs) {
         return new ModulePath(dirs);
     }
 
@@ -146,20 +146,21 @@ public interface ModuleFinder {
             Set<ModuleReference> allModules;
 
             @Override
-            public ModuleReference find(String name) {
-                ModuleReference m = first.find(name);
-                if (m == null)
-                    m = second.find(name);
-                return m;
+            public Optional<ModuleReference> find(String name) {
+                Optional<ModuleReference> om = first.find(name);
+                if (!om.isPresent())
+                    om = second.find(name);
+                return om;
             }
             @Override
-            public Set<ModuleReference> allModules() {
+            public Set<ModuleReference> findAll() {
                 if (allModules == null) {
-                    allModules = Stream.concat(first.allModules().stream(),
-                                               second.allModules().stream())
+                    allModules = Stream.concat(first.findAll().stream(),
+                                               second.findAll().stream())
                                        .map(a -> a.descriptor().name())
                                        .distinct()
                                        .map(this::find)
+                                       .map(Optional::get)
                                        .collect(Collectors.toSet());
                 }
                 return allModules;
@@ -168,20 +169,20 @@ public interface ModuleFinder {
     }
 
     /**
-     * Returns a <em>null</em> finder. The null finder does not find any
-     * modules.
+     * Returns an empty finder.  The empty finder does not find any modules.
      *
      * @apiNote This is useful when using methods such as {@link
      * Configuration#resolve resolve} where two finders are specified.
      */
-    public static ModuleFinder nullFinder() {
+    public static ModuleFinder empty() {
         return new ModuleFinder() {
-            @Override public ModuleReference find(String name) {
-                return null;
+            @Override public Optional<ModuleReference> find(String name) {
+                return Optional.empty();
             }
-            @Override public Set<ModuleReference> allModules() {
+            @Override public Set<ModuleReference> findAll() {
                 return Collections.emptySet();
             }
         };
     }
+
 }

@@ -111,7 +111,7 @@ public class LayerTest {
 
         Configuration cf = Configuration.resolve(finder,
                                                  Layer.emptyLayer(),
-                                                 ModuleFinder.nullFinder(),
+                                                 ModuleFinder.empty(),
                                                  "m1");
 
         // map each module to its own class loader for this test
@@ -169,7 +169,7 @@ public class LayerTest {
 
         Configuration cf = Configuration.resolve(finder,
                                                  Layer.bootLayer(),
-                                                 ModuleFinder.nullFinder(),
+                                                 ModuleFinder.empty(),
                                                  "m1");
 
         ClassLoader loader = new ClassLoader() { };

@@ -68,11 +68,11 @@ public class Main {
 
         Layer bootLayer = Layer.bootLayer();
 
-        ModuleFinder finder = ModuleFinder.ofDirectories(paths);
+        ModuleFinder finder = ModuleFinder.of(paths);
 
         Configuration cf = Configuration.resolve(finder,
                 bootLayer,
-                ModuleFinder.nullFinder(),
+                ModuleFinder.empty(),
                 appModuleName);
         cf = cf.bind();
 

@@ -38,6 +38,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -72,24 +73,24 @@ class ModulePath implements ModuleFinder {
     }
 
     @Override
-    public ModuleReference find(String name) {
+    public Optional<ModuleReference> find(String name) {
         // try cached modules
         ModuleReference m = cachedModules.get(name);
         if (m != null)
-            return m;
+            return Optional.of(m);
 
         // the module may be in directories that we haven't scanned yet
         while (hasNextDirectory()) {
             scanNextDirectory();
             m = cachedModules.get(name);
             if (m != null)
-                return m;
+                return Optional.of(m);
         }
-        return null;
+        return Optional.empty();
     }
 
     @Override
-    public Set<ModuleReference> allModules() {
+    public Set<ModuleReference> findAll() {
         // need to ensure that all directories have been scanned
         while (hasNextDirectory()) {
             scanNextDirectory();

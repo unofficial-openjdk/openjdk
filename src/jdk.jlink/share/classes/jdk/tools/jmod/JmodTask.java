@@ -58,6 +58,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.MissingResourceException;
+import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -206,7 +207,7 @@ class JmodTask {
                 for (String dir: dirs) {
                     paths[i++] = Paths.get(dir);
                 }
-                task.options.moduleFinder = ModuleFinder.ofDirectories(paths);
+                task.options.moduleFinder = ModuleFinder.of(paths);
             }
         },
         new Option(true, "--libs") {
@@ -368,15 +369,15 @@ class JmodTask {
         for (ModuleDescriptor m : modules) {
             String name = m.name();
 
-            ModuleReference mref = finder.find(name);
-            if (mref == null) {
+            Optional<ModuleReference> omref = finder.find(name);
+            if (!omref.isPresent()) {
                 // this should not happen, module path bug?
                 fail(InternalError.class,
                      "Selected module %s not on module path",
                      name);
             }
 
-            URI location = mref.location().get();
+            URI location = omref.get().location().get();
             String scheme = location.getScheme();
             if (!scheme.equalsIgnoreCase("jmod") && !scheme.equalsIgnoreCase("jar")) {
                 fail(RuntimeException.class,
@@ -540,13 +541,13 @@ class JmodTask {
             for (Requires md: moduleDependences) {
                 String dn = md.name();
                 if (dependencesToHash.matcher(dn).find()) {
-                    ModuleReference mref = moduleFinder.find(dn);
-                    if (mref == null) {
+                    Optional<ModuleReference> omref = moduleFinder.find(dn);
+                    if (!omref.isPresent()) {
                         throw new RuntimeException("Hashing module " + name
                             + " dependences, unable to find module " + dn
                             + " on module path");
                     }
-                    descriptors.add(mref.descriptor());
+                    descriptors.add(omref.get().descriptor());
                 }
             }
 
