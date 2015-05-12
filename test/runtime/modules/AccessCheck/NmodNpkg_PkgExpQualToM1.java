@@ -24,7 +24,6 @@
  */
 
 /*
- * @ignore 8080051
  * @test
  * @summary Test that if module1 can read module2, AND package p2 in module2 is
  *          exported qualifiedly to m1, then class p1.c1 in module1 can read p2.c2 in module2.

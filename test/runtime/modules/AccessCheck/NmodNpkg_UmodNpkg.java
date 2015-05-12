@@ -24,7 +24,6 @@
  */
 
 /*
- * @ignore 8080051
  * @test
  * @summary class p1.c1 defined in m1 tries to access p2.c2 defined in the unnamed module.
  *          Access allowed since any module can read the unnamed module. p2's exportability not relevant.

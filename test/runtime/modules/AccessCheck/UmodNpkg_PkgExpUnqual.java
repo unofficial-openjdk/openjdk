@@ -24,7 +24,6 @@
  */
 
 /*
- * @ignore 8080051
  * @test
  * @summary Test if package p2 in module m2 is exported unqualifiedly,
  *          then class p1.c1 in the unnamed module can read p2.c2 in module m2.
