@@ -39,6 +39,7 @@ import java.security.Permission;
 import java.security.PermissionCollection;
 import java.security.SecureClassLoader;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -107,7 +108,7 @@ class ModuleClassLoader extends SecureClassLoader {
     {
         ModuleReference mref = nameToReference.get(moduleName);
         if (mref != null)
-            return moduleReaderFor(mref).getResourceAsStream(name);
+            return moduleReaderFor(mref).open(name).orElse(null);
         else
             return null;
     }
@@ -196,7 +197,7 @@ class ModuleClassLoader extends SecureClassLoader {
 
             // read class file
             String rn = cn.replace('.', '/').concat(".class");
-            ByteBuffer bb = reader.getResourceAsBuffer(rn);
+            ByteBuffer bb = reader.read(rn).orElse(null);
             if (bb == null)
                 return null;
             try {
@@ -210,7 +211,7 @@ class ModuleClassLoader extends SecureClassLoader {
                 CodeSource cs = new CodeSource(url, (CodeSigner[]) null);
                 return defineClass(cn, bb, cs);
             } finally {
-                reader.releaseBuffer(bb);
+                reader.release(bb);
             }
 
         } catch (IOException ioe) {
@@ -284,8 +285,8 @@ class ModuleClassLoader extends SecureClassLoader {
      */
     private static class NullModuleReader implements ModuleReader {
         @Override
-        public InputStream getResourceAsStream(String name) {
-            return null;
+        public Optional<InputStream> open(String name) {
+            return Optional.empty();
         }
         @Override
         public void close() {

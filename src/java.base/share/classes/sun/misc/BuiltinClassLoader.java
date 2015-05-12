@@ -22,6 +22,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+
 package sun.misc;
 
 import java.io.File;
@@ -49,9 +50,11 @@ import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
+
 
 /**
  * The extension or application class loader. Resources loaded from modules
@@ -183,8 +186,7 @@ class BuiltinClassLoader extends ModuleClassLoader {
                     new PrivilegedExceptionAction<InputStream>() {
                         @Override
                         public InputStream run() throws IOException {
-                            return moduleReaderFor(mref)
-                                .getResourceAsStream(name);
+                            return moduleReaderFor(mref).open(name).orElse(null);
                         }
                     });
             } catch (PrivilegedActionException pae) {
@@ -408,7 +410,7 @@ class BuiltinClassLoader extends ModuleClassLoader {
         try {
             // read class file
             String rn = cn.replace('.', '/').concat(".class");
-            ByteBuffer bb = reader.getResourceAsBuffer(rn);
+            ByteBuffer bb = reader.read(rn).orElse(null);
             if (bb == null) {
                 // class not found
                 return null;
@@ -429,7 +431,7 @@ class BuiltinClassLoader extends ModuleClassLoader {
                 return defineClass(cn, bb, cs);
 
             } finally {
-                reader.releaseBuffer(bb);
+                reader.release(bb);
             }
 
         } catch (IOException ioe) {
@@ -714,8 +716,8 @@ class BuiltinClassLoader extends ModuleClassLoader {
      */
     private static class NullModuleReader implements ModuleReader {
         @Override
-        public InputStream getResourceAsStream(String name) {
-            return null;
+        public Optional<InputStream> open(String name) {
+            return Optional.empty();
         }
         @Override
         public void close() {
@@ -753,29 +755,29 @@ class BuiltinClassLoader extends ModuleClassLoader {
         }
 
         @Override
-        public InputStream getResourceAsStream(String name) throws IOException {
+        public Optional<InputStream> open(String name) throws IOException {
             Path path = findOverriddenClass(name);
             if (path != null) {
-                return Files.newInputStream(path);
+                return Optional.of(Files.newInputStream(path));
             } else {
-                return reader.getResourceAsStream(name);
+                return reader.open(name);
             }
         }
 
         @Override
-        public ByteBuffer getResourceAsBuffer(String name) throws IOException {
+        public Optional<ByteBuffer> read(String name) throws IOException {
             Path path = findOverriddenClass(name);
             if (path != null) {
-                return ByteBuffer.wrap(Files.readAllBytes(path));
+                return Optional.of(ByteBuffer.wrap(Files.readAllBytes(path)));
             } else {
-                return reader.getResourceAsBuffer(name);
+                return reader.read(name);
             }
         }
 
         @Override
-        public void releaseBuffer(ByteBuffer bb) {
+        public void release(ByteBuffer bb) {
             if (bb.isDirect())
-                reader.releaseBuffer(bb);
+                reader.release(bb);
         }
 
         @Override

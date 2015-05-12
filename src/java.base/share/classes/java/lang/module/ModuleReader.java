@@ -30,10 +30,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.Optional;
 
 
 /**
- * Locates or reads resources in a module.
+ * Reads resources from a module.
  *
  * <p> A module reader is intended for cases where access to the resources in a
  * module are required, regardless of whether the module has been instantiated.
@@ -57,8 +58,7 @@ import java.util.Arrays;
 public interface ModuleReader extends Closeable {
 
     /**
-     * Returns an input stream for reading the resource. Returns {@code null}
-     * if the resource could not be found.
+     * Returns an input stream for reading the resource.
      *
      * @throws IOException
      *         If an I/O error occurs or the module reader is closed
@@ -67,13 +67,12 @@ public interface ModuleReader extends Closeable {
      *
      * @see java.lang.reflect.Module#getResourceAsStream(String)
      */
-    InputStream getResourceAsStream(String name) throws IOException;
+    Optional<InputStream> open(String name) throws IOException;
 
     /**
-     * Returns a byte buffer with the contents of a resource or {@code null}
-     * if the resource is not found. The element at the returned buffer's
-     * position is the first byte of the resource, the element at the buffer's
-     * limit is the last byte of the resource.
+     * Returns a byte buffer with the contents of a resource.  The element at
+     * the returned buffer's position is the first byte of the resource, the
+     * element at the buffer's limit is the last byte of the resource.
      *
      * <p> The {@code releaseBuffer} should be invoked after consuming the
      * contents of the buffer. This will ensure, for example, that direct
@@ -94,14 +93,14 @@ public interface ModuleReader extends Closeable {
      *
      * @see ClassLoader#defineClass(String, ByteBuffer, java.security.ProtectionDomain)
      */
-    default ByteBuffer getResourceAsBuffer(String name) throws IOException {
+    default Optional<ByteBuffer> read(String name) throws IOException {
         final int BUFFER_SIZE = 8192;
         final int MAX_BUFFER_SIZE = Integer.MAX_VALUE - 8;
 
-        InputStream in = getResourceAsStream(name);
+        InputStream in = open(name).orElse(null);
         if (in == null) {
             // not found
-            return null;
+            return Optional.empty();
         }
 
         try (in) {
@@ -134,7 +133,7 @@ public interface ModuleReader extends Closeable {
                 buf[nread++] = (byte) n;
             }
 
-            return ByteBuffer.wrap(buf, 0, nread);
+            return Optional.of(ByteBuffer.wrap(buf, 0, nread));
         }
     }
 
@@ -149,7 +148,7 @@ public interface ModuleReader extends Closeable {
      *
      * @implSpec The default implementation does nothing.
      */
-    default void releaseBuffer(ByteBuffer bb) { }
+    default void release(ByteBuffer bb) { }
 
     /**
      * Closes the module reader. Once closed then subsequent calls to locate or

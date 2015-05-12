@@ -36,6 +36,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -190,38 +191,37 @@ class ModuleReferences {
         }
 
         @Override
-        public InputStream getResourceAsStream(String name) throws IOException {
-            ByteBuffer bb = getResourceAsBuffer(name);
-            if (bb != null) {
-                try {
-                    int rem = bb.remaining();
-                    byte[] bytes = new byte[rem];
-                    bb.get(bytes);
-                    return new ByteArrayInputStream(bytes);
-                } finally {
-                    releaseBuffer(bb);
-                }
-            } else {
-                return null;
+        public Optional<InputStream> open(String name) throws IOException {
+            return read(name).map(this::toInputStream);
+        }
+
+        private InputStream toInputStream(ByteBuffer bb) { // ## -> ByteBuffer?
+            try {
+                int rem = bb.remaining();
+                byte[] bytes = new byte[rem];
+                bb.get(bytes);
+                return new ByteArrayInputStream(bytes);
+            } finally {
+                release(bb);
             }
         }
 
         @Override
-        public ByteBuffer getResourceAsBuffer(String name) throws IOException {
+        public Optional<ByteBuffer> read(String name) throws IOException {
             if (closed) {
                 throw new IOException("ModuleReader is closed");
             } else {
                 ImageLocation location = findImageLocation(name);
                 if (location != null) {
-                    return imageReader.getResourceBuffer(location);
+                    return Optional.of(imageReader.getResourceBuffer(location));
                 } else {
-                    return null;
+                    return Optional.empty();
                 }
             }
         }
 
         @Override
-        public void releaseBuffer(ByteBuffer bb) {
+        public void release(ByteBuffer bb) {
             ImageReader.releaseByteBuffer(bb);
         }
 
@@ -265,24 +265,24 @@ class ModuleReferences {
         }
 
         @Override
-        public InputStream getResourceAsStream(String name) throws IOException {
+        public Optional<InputStream> open(String name) throws IOException {
             ensureOpen();
             Path path = toPath(name);
             if (path != null && Files.isRegularFile(path)) {
-                return Files.newInputStream(path);
+                return Optional.of(Files.newInputStream(path));
             } else {
-                return null;
+                return Optional.empty();
             }
         }
 
         @Override
-        public ByteBuffer getResourceAsBuffer(String name) throws IOException {
+        public Optional<ByteBuffer> read(String name) throws IOException {
             ensureOpen();
             Path path = toPath(name);
             if (path != null && Files.isRegularFile(path)) {
-                return ByteBuffer.wrap(Files.readAllBytes(path));
+                return Optional.of(ByteBuffer.wrap(Files.readAllBytes(path)));
             } else {
-                return null;
+                return Optional.empty();
             }
         }
 
@@ -311,7 +311,7 @@ class ModuleReferences {
          * invoked by getResourceAsStream to do the actual work of opening
          * an input stream to the resource.
          */
-        abstract InputStream implGetResourceAsStream(String name) throws IOException;
+        abstract Optional<InputStream> implOpen(String name) throws IOException;
 
         /**
          * Closes the module reader. This method is invoked by close to do the
@@ -320,11 +320,11 @@ class ModuleReferences {
         abstract void implClose() throws IOException;
 
         @Override
-        public final InputStream getResourceAsStream(String name) throws IOException {
+        public final Optional<InputStream> open(String name) throws IOException {
             readLock.lock();
             try {
                 if (!closed) {
-                    return implGetResourceAsStream(name);
+                    return implOpen(name);
                 } else {
                     throw new IOException("ModuleReader is closed");
                 }
@@ -365,12 +365,12 @@ class ModuleReferences {
         }
 
         @Override
-        InputStream implGetResourceAsStream(String name) throws IOException {
+        Optional<InputStream> implOpen(String name) throws IOException {
             ZipEntry ze = find(name);
             if (ze != null) {
-                return zf.getInputStream(ze);
+                return Optional.of(zf.getInputStream(ze));
             } else {
-                return null;
+                return Optional.empty();
             }
         }
 
@@ -398,12 +398,12 @@ class ModuleReferences {
         }
 
         @Override
-        InputStream implGetResourceAsStream(String name) throws IOException {
+        Optional<InputStream> implOpen(String name) throws IOException {
             JarEntry je = find(name);
             if (je != null) {
-                return jf.getInputStream(je);
+                return Optional.of(jf.getInputStream(je));
             } else {
-                return null;
+                return Optional.empty();
             }
         }
 

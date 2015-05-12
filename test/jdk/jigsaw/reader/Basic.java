@@ -80,14 +80,14 @@ public class Basic {
         ModuleReader reader = mref.open();
         try (reader) {
 
-            // test getResourceAsStream
-            try (InputStream in = reader.getResourceAsStream(name)) {
+            // test open
+            try (InputStream in = reader.open(name).get()) {
                 byte[] b = readAll(in);
                 assertTrue(Arrays.equals(b, bytes));
             }
 
-            // test getResourceAsBuffer
-            ByteBuffer bb = reader.getResourceAsBuffer(name);
+            // test read
+            ByteBuffer bb = reader.read(name).get();
             try {
                 int rem = bb.remaining();
                 assertTrue(rem == bytes.length);
@@ -95,32 +95,32 @@ public class Basic {
                 bb.get(b);
                 assertTrue(Arrays.equals(b, bytes));
             } finally {
-                reader.releaseBuffer(bb);
+                reader.release(bb);
             }
 
             // test "not found"
-            assertTrue(reader.getResourceAsStream(NOT_A_RESOURCE) == null);
-            assertTrue(reader.getResourceAsBuffer(NOT_A_RESOURCE) == null);
+            assertTrue(!reader.open(NOT_A_RESOURCE).isPresent());
+            assertTrue(!reader.read(NOT_A_RESOURCE).isPresent());
 
             // test "null"
             try {
-                reader.getResourceAsStream(null);
+                reader.open(null);
                 assertTrue(false);
             } catch (NullPointerException expected) { }
             try {
-                reader.getResourceAsBuffer(null);
+                reader.read(null);
                 assertTrue(false);
             } catch (NullPointerException expected) { }
         }
 
         // test closed reader
         try {
-            InputStream in = reader.getResourceAsStream(name);
+            reader.open(name);
             assertTrue(false);
         } catch (IOException expected) { }
 
         try {
-            ByteBuffer bb = reader.getResourceAsBuffer(name);
+            reader.read(name);
             assertTrue(false);
         } catch (IOException expected) { }
 

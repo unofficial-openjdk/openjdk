@@ -149,7 +149,7 @@ public abstract class ModuleReference {
 
     public String toString() {
         return ("[module " + descriptor().name()
-                + ", location=" + location.get() + "]");
+                + ", location=" + location.orElse(null) + "]");
     }
 
 }
