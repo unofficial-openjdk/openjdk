@@ -44,9 +44,6 @@ public class Main {
         m1.addReads(m1); // no-op
         assertTrue(m1.canRead(m1));
 
-        // unnamed module is readable
-        //assertTrue(m1.canRead(null));
-
         // module m2 is not readable
         Class<?> c = Class.forName("jdk.two.C");
         Module m2 = c.getModule();

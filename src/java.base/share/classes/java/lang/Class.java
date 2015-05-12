@@ -522,13 +522,11 @@ public final class Class<T> implements java.io.Serializable,
         }
         Constructor<T> tmpConstructor = cachedConstructor;
         // Security check (same as in java.lang.reflect.Constructor)
-        int modifiers = tmpConstructor.getModifiers();
-        if (!Reflection.quickCheckMemberAccess(this, modifiers)) {
-            Class<?> caller = Reflection.getCallerClass();
-            if (newInstanceCallerCache != caller) {
-                Reflection.ensureMemberAccess(caller, this, null, modifiers);
-                newInstanceCallerCache = caller;
-            }
+        Class<?> caller = Reflection.getCallerClass();
+        if (newInstanceCallerCache != caller) {
+            int modifiers = tmpConstructor.getModifiers();
+            Reflection.ensureMemberAccess(caller, this, null, modifiers);
+            newInstanceCallerCache = caller;
         }
         // Run constructor
         try {

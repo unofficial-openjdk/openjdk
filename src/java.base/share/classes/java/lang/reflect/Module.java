@@ -55,12 +55,33 @@ import sun.misc.SharedSecrets;
 import sun.misc.Unsafe;
 
 /**
- * Represents a runtime module.
+ * Represents a run-time module, either named or {@link #isUnnamed() unnamed}.
  *
- * <p> {@code Module} does not define a public constructor. Instead {@code
- * Module} objects are constructed by the Java Virtual Machine when a
- * {@link java.lang.module.Configuration Configuration} is reified by means
- * of creating a {@link java.lang.module.Layer Layer}. </p>
+ * <p> Named modules have a {@link #getName() name} and are constructed by the
+ * Java Virtual Machine when a {@link java.lang.module.Configuration
+ * Configuration} is reified by creating a module {@link java.lang.module.Layer
+ * Layer}. </p>
+ *
+ * <p> An unnamed module does not have a name. There is an unnamed module
+ * per {@link ClassLoader ClassLoader} that is obtained by invoking the class
+ * loader's {@link ClassLoader#getUnnamedModule() getUnnamedModule} method. The
+ * {@link Class#getModule() getModule} method of all types defined by a class
+ * loader that are not in a named module return the class loader's unnamed
+ * module. An unnamed module reads all other run-time modules. </p>
+ *
+ * <p> A named module is either {@link #isStrict strict} or <em>loose</em>.
+ * A strict module does not read arbitrary unnamed modules and so can not
+ * access all types defined by arbitrary class loaders in its unnamed module
+ * (even if the type is public). On the other hand, a loose module reads all
+ * unnamed modules and thus code in a loose module may access all public types
+ * in any unnamed module (assuming the code in the loose modules can get a
+ * reference to the type).
+ * A named module is always created as a strict module but may be changed to a
+ * loose module by invoking its {@link #addReads(Module) addReads} method with
+ * a target module of {@code null}. Modules that are frameworks or libraries
+ * that instantiate or introspect arbitrary {@code Class} objects are examples
+ * of modules that may change themselves from strict to loose. An unnamed
+ * module is always a loose module. </p>
  *
  * @since 1.9
  * @see java.lang.Class#getModule
@@ -146,6 +167,22 @@ public final class Module {
     }
 
     /**
+     * Returns {@code true} if this module is an unnamed module.
+     *
+     * @see ClassLoader#getUnnamedModule()
+     */
+    public boolean isUnnamed() {
+        return name == null;
+    }
+
+    /**
+     * Returns {@code true} if this module is a strict module.
+     */
+    public boolean isStrict() {
+        return !loose;
+    }
+
+    /**
      * Returns the {@code ClassLoader} for this module.
      *
      * <p> If there is a security manager then its {@code checkPermission}
@@ -166,24 +203,6 @@ public final class Module {
     }
 
     /**
-     * Returns {@code true} if this module is an unnamed module.
-     *
-     * @see ClassLoader#getUnnamedModule()
-     */
-    public boolean isUnnamed() {
-        return name == null;
-    }
-
-    /**
-     * Returns {@code true} if this module is a strict module.
-     * A strict module does not read all unnamed modules.
-     */
-    public boolean isStrict() {
-        return !loose;
-    }
-
-
-    /**
      * Returns the module descriptor for this module.
      *
      * For now, this method returns {@code null} if this module is an
@@ -191,6 +210,13 @@ public final class Module {
      */
     public ModuleDescriptor getDescriptor() {
         return descriptor;
+    }
+
+    /**
+     * @apiNote Need to decide whether to add this method as a public method.
+     */
+    Layer getLayer() {
+        throw new RuntimeException();
     }
 
     /**
@@ -226,12 +252,13 @@ public final class Module {
 
     /**
      * Makes the given {@code Module} readable to this module. This method
-     * is no-op if {@code target} is {@code this} module (all modules
-     * can read themselves).
+     * is a no-op if {@code target} is {@code this} module (all modules
+     * can read themselves) or this module is an {@link #isUnnamed() unnamed}
+     * module (an unnamed module reads all other modules).
      *
      * <p> If {@code target} is {@code null}, and this module is a {@link
-     * #isStrict strict} module, the method changes this module to be a
-     * <em>loose module</em>. A loose module all unnamed modules. </p>
+     * #isStrict strict} module, then this method changes this module to be a
+     * <em>loose module</em>. A loose module reads all unnamed modules. </p>
      *
      * <p> If there is a security manager then its {@code checkPermission}
      * method if first called with a {@code ReflectPermission("addReadsModule")}
@@ -243,7 +270,7 @@ public final class Module {
      * @see #canRead
      */
     public void addReads(Module target) {
-        if (target != this) {
+        if (target != this && !this.isUnnamed()) {
             SecurityManager sm = System.getSecurityManager();
             if (sm != null) {
                 ReflectPermission perm = new ReflectPermission("addReadsModule");
@@ -695,9 +722,13 @@ public final class Module {
      * Returns an input stream for reading a resource in this module. Returns
      * {@code null} if the resource is not in this module or access to the
      * resource is denied by the security manager.
-     *
      * The {@code name} is a {@code '/'}-separated path name that identifies
      * the resource.
+     *
+     * <p> If this module is an unnamed module, and the {@code ClassLoader} for
+     * this module is not {@code null}, then this method is equivalent to
+     * invoking the {@link ClassLoader#getResourceAsStream(String)
+     * getResourceAsStream} method on the class loader for this module.
      *
      * @throws IOException
      *         If an I/O error occurs
@@ -705,8 +736,7 @@ public final class Module {
     public InputStream getResourceAsStream(String name) throws IOException {
         Objects.requireNonNull(name);
 
-        // if called on an unnamed module then work the same way as
-        // ClassLoader::getResource.
+        // unnamed module
         if (isUnnamed()) {
             URL url;
             if (loader == null) {
@@ -721,6 +751,7 @@ public final class Module {
             }
         }
 
+        // named module
         if (loader == null) {
             return BootLoader.getResourceAsStream(this.name, name);
         } else {

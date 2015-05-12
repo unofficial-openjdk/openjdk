@@ -81,13 +81,6 @@ public class Reflection {
         valid. */
     public static native int getClassAccessFlags(Class<?> c);
 
-    /** A quick "fast-path" check to try to avoid getCallerClass()
-        calls. No longer effective and so always returns false. */
-    public static boolean quickCheckMemberAccess(Class<?> memberClass,
-                                                 int modifiers)
-    {
-        return false;
-    }
 
     public static void ensureMemberAccess(Class<?> currentClass,
                                           Class<?> memberClass,
