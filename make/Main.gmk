@@ -163,7 +163,7 @@ endef
 
 $(foreach m, $(IMPORT_COPY_MODULES), $(eval $(call DeclareImportCopyRecipe,$m)))
 
-ALL_TARGETS += $(ALL_COPY_TARGETS) $(ALL_COPY_MODULES)
+ALL_TARGETS += $(ALL_COPY_TARGETS)
 
 ################################################################################
 # Targets for compiling all java modules. Nashorn is treated separately.
@@ -613,7 +613,7 @@ test-image: prepare-test-image test-image-hotspot-jtreg-native \
 all-images: product-images test-image docs-image
 
 ALL_TARGETS += buildtools gensrc gendata copy java rmic libs launchers jmods \
-    jdk.jdwp.agent-gensrc $(ALL_MODULE_TARGETS) exploded-image \
+    jdk.jdwp.agent-gensrc $(ALL_MODULES) exploded-image \
     product-images docs-image test-image all-images
 
 ################################################################################
