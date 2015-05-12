@@ -69,7 +69,6 @@ public class ImageReadTest implements LocationConstants {
         boolean passed = true;
         long id = wb.imageOpenImage(imageFile, isMMap);
 
-        if (!passed) { // TODO - isolate test until fail on linux is analyzed.
         final String mm = isMMap? "-XX:+MemoryMapImage" : "-XX:-MemoryMapImage";
         final int magic = htonl(0xCAFEBABE, bigEndian);
 
@@ -136,7 +135,6 @@ public class ImageReadTest implements LocationConstants {
         } else {
             System.out.println("Failed. Read operation (negative size) returned true");
             passed = false;
-        }
         }
 
         wb.imageCloseImage(id);

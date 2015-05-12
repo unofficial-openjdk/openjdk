@@ -3776,6 +3776,7 @@ JVM_ImageRead(JNIEnv *env, jlong id, jlong offset,
   // Check validity of arguments.
   if (uncompressedBuffer == NULL ||
       offset < 0 ||
+      uncompressed_size < 0 ||
       file_offset > reader->file_size() - uncompressed_size) {
       return false;
   }
@@ -3803,8 +3804,9 @@ JVM_ImageReadCompressed(JNIEnv *env,
       compressedBuffer == NULL ||
       uncompressedBuffer == NULL ||
       offset < 0 ||
-      file_offset > reader->file_size() - compressed_size ||
-      uncompressed_size < 0) {
+      compressed_size < 0 ||
+      uncompressed_size < 0 ||
+      file_offset > reader->file_size() - compressed_size) {
       return false;
   }
   // Get address of read direct buffer.
