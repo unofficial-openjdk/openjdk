@@ -32,13 +32,10 @@
     <property file="${user.home}/.nashorn.project.local.properties"/>
 
     <loadproperties srcFile="make/project.properties"/>
-    <path id="dist.path">
-         <pathelement location="${dist.dir}"/>
+    <path id="nashorn.jar.path">
+         <pathelement location="${dist.jar}"/>
     </path>
-    <path id="nashorn.boot.prefix.path">
-      <pathelement location="${dist.jar}"/>
-    </path>
-    <property name="boot.class.path" value="-Xbootclasspath/p:${toString:nashorn.boot.prefix.path}"/>
+    <property name="nashorn.override.option" value="-Xoverride:${build.classes.dir}"/>
     <condition property="svn.executable" value="/usr/local/bin/svn" else="svn">
       <available file="/usr/local/bin/svn"/>
     </condition>
@@ -140,6 +137,7 @@
       <compilerarg value="-XDignore.symbol.file"/>
       <compilerarg value="-Xdiags:verbose"/>
       <compilerarg value="-parameters"/>
+      <compilerarg value="-XX:AddModuleExports=${nashorn.module.imports}"/>
     </javac>
     <copy todir="${build.classes.dir}/META-INF/services">
        <fileset dir="${meta.inf.dir}/services/"/>
@@ -241,7 +239,7 @@
   <!-- generate shell.html for shell tool documentation -->
   <target name="shelldoc" depends="jar">
     <java classname="${nashorn.shell.tool}" dir="${basedir}" output="${dist.dir}/shell.html" failonerror="true" fork="true">
-      <jvmarg line="${boot.class.path}"/>
+      <jvmarg line="${nashorn.override.option}"/>
       <arg value="-scripting"/>
       <arg value="docs/genshelldoc.js"/>
     </java>
@@ -271,10 +269,11 @@
            debug="${javac.debug}"
            encoding="${javac.encoding}"
            includeantruntime="false" fork="true">
-        <compilerarg value="${boot.class.path}"/>
+        <compilerarg value="-J${nashorn.override.option}"/>
         <compilerarg value="-Xlint:unchecked"/>
         <compilerarg value="-Xlint:deprecation"/>
         <compilerarg value="-Xdiags:verbose"/>
+        <compilerarg value="-XX:AddModuleExports=${test.module.imports}"/>
     </javac>
 
     <copy todir="${build.test.classes.dir}/META-INF/services">
@@ -306,7 +305,7 @@
   <target name="generate-policy-file" depends="prepare">
     <echo file="${build.dir}/nashorn.policy">
 
-grant codeBase "file:/${toString:dist.path}/nashorn.jar" {
+grant codeBase "file:/${toString:nashorn.jar.path}" {
     permission java.security.AllPermission;
 };
 
@@ -428,7 +427,6 @@ grant codeBase "file:/${basedir}/test/script/markdown.js" {
     </fileset>
     <testng outputdir="${build.nosecurity.test.results.dir}/${testResultsSubDir}" classfilesetref="test.nosecurity.classes"
        verbose="${testng.verbose}" haltonfailure="true" useDefaultListeners="false" listeners="${testng.listeners}" workingDir="${basedir}">
-      <jvmarg line="${boot.class.path}"/>
       <jvmarg line="${run.test.jvmargs} -Xmx${run.test.xmx} -Dbuild.dir=${build.dir}"/>
       <sysproperty key="nashorn.jar" value="${dist.dir}/nashorn.jar"/>
       <propertyset>
@@ -451,7 +449,6 @@ grant codeBase "file:/${basedir}/test/script/markdown.js" {
     <property name="debug.test.jvmargs" value=""/>
     <testng outputdir="${build.test.results.dir}/${testResultsSubDir}" classfilesetref="test.classes"
             verbose="${testng.verbose}" haltonfailure="true" useDefaultListeners="false" listeners="${testng.listeners}" workingDir="${basedir}">
-      <jvmarg line="${boot.class.path}"/>
       <jvmarg line="${run.test.jvmargs} -Xmx${run.test.xmx} ${run.test.jvmsecurityargs} -Dbuild.dir=${build.dir}"/>
       <jvmarg line="${debug.test.jvmargs}"/>
       <propertyset>
@@ -514,7 +511,6 @@ grant codeBase "file:/${basedir}/test/script/markdown.js" {
 
     <testng outputdir="${build.test.results.dir}" classfilesetref="test.classes"
        verbose="${testng.verbose}" haltonfailure="true" useDefaultListeners="false" listeners="${testng.listeners}" workingDir="${basedir}">
-      <jvmarg line="${boot.class.path}"/>
       <jvmarg line="${run.test.jvmargs} -Xmx${run.test.xmx} -Dbuild.dir=${build.dir}"/>
       <propertyset>
         <propertyref prefix="testjfx-test-sys-prop."/>
@@ -534,7 +530,6 @@ grant codeBase "file:/${basedir}/test/script/markdown.js" {
 
     <testng outputdir="${build.test.results.dir}" classfilesetref="test.classes"
        verbose="${testng.verbose}" haltonfailure="true" useDefaultListeners="false" listeners="${testng.listeners}" workingDir="${basedir}">
-      <jvmarg line="${boot.class.path}"/>
       <jvmarg line="${run.test.jvmargs} -Xmx${run.test.xmx} ${run.test.jvmsecurityargs} -Dbuild.dir=${build.dir}"/>
       <propertyset>
         <propertyref prefix="testmarkdown-test-sys-prop."/>
@@ -553,7 +548,6 @@ grant codeBase "file:/${basedir}/test/script/markdown.js" {
 
     <testng outputdir="${build.test.results.dir}" classfilesetref="test.classes"
        verbose="${testng.verbose}" haltonfailure="true" useDefaultListeners="false" listeners="${testng.listeners}" workingDir="${basedir}">
-      <jvmarg line="${boot.class.path}"/>
       <jvmarg line="${run.test.jvmargs} -Xmx${run.test.xmx} ${run.test.jvmsecurityargs} -Dbuild.dir=${build.dir}"/>
       <propertyset>
         <propertyref prefix="nashorn."/>
@@ -573,7 +567,6 @@ grant codeBase "file:/${basedir}/test/script/markdown.js" {
   <target name="test262-parallel" depends="jar, check-testng, check-external-tests, compile-test, generate-policy-file" if="testng.available">
     <!-- use just build.test.classes.dir to avoid referring to TestNG -->
     <java classname="${parallel.test.runner}" dir="${basedir}" fork="true">
-      <jvmarg line="${boot.class.path}"/>
       <jvmarg line="${run.test.jvmargs} -Xmx${run.test.xmx} ${run.test.jvmsecurityargs} -Dbuild.dir=${build.dir}"/>
       <!-- avoid too many typeinfo cache files. Each script is run only once anyway -->
       <jvmarg line="-Dnashorn.typeInfo.disabled=true"/>
@@ -594,7 +587,6 @@ grant codeBase "file:/${basedir}/test/script/markdown.js" {
       <java classname="${parallel.test.runner}" dir="${basedir}"
         failonerror="true"
         fork="true">
-      <jvmarg line="${boot.class.path}"/>
       <jvmarg line="${run.test.jvmargs} -Xmx${run.test.xmx} ${run.test.jvmsecurityargs}"/>
       <classpath>
           <pathelement path="${run.test.classpath}"/>
@@ -613,7 +605,6 @@ grant codeBase "file:/${basedir}/test/script/markdown.js" {
   <target name="run" depends="jar"
       description="Run the shell with a sample script">
     <java classname="${nashorn.shell.tool}" fork="true" dir="samples">
-        <jvmarg line="${boot.class.path}"/>
         <jvmarg line="${run.test.jvmargs} -Xmx${run.test.xmx}"/>
         <arg value="-dump-on-error"/>
         <arg value="test.js"/>
@@ -623,7 +614,6 @@ grant codeBase "file:/${basedir}/test/script/markdown.js" {
   <target name="debug" depends="jar"
       description="Debug the shell with a sample script">
     <java classname="${nashorn.shell.tool}" fork="true" dir="samples">
-        <jvmarg line="${boot.class.path}"/>
         <jvmarg line="${run.test.jvmargs} -Xmx${run.test.xmx}"/>
         <arg value="--print-code"/>
         <arg value="--verify-code"/>

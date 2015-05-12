@@ -49,6 +49,7 @@ import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.Module;
 import java.security.AccessControlContext;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
@@ -181,12 +182,8 @@ final class JavaAdapterBytecodeGenerator {
     private static final String TO_CHAR_PRIMITIVE_METHOD_DESCRIPTOR = Type.getMethodDescriptor(Type.CHAR_TYPE, OBJECT_TYPE);
     private static final String TO_STRING_METHOD_DESCRIPTOR = Type.getMethodDescriptor(STRING_TYPE, OBJECT_TYPE);
 
-    // Package used when the adapter can't be defined in the adaptee's package (either because it's sealed, or because
-    // it's a java.* package.
-    private static final String ADAPTER_PACKAGE_PREFIX = "jdk/nashorn/javaadapters/";
-    // Class name suffix used to append to the adaptee class name, when it can be defined in the adaptee's package.
-    private static final String ADAPTER_CLASS_NAME_SUFFIX = "$$NashornJavaAdapter";
-    private static final String JAVA_PACKAGE_PREFIX = "java/";
+    static final String ADAPTER_PACKAGE_INTERNAL = "jdk/nashorn/javaadapters/";
+    static final String ADAPTER_PACKAGE = "jdk.nashorn.javaadapters";
     private static final int MAX_GENERATED_TYPE_NAME_LENGTH = 255;
 
     private static final String CLASS_INIT = "<clinit>";
@@ -219,6 +216,7 @@ final class JavaAdapterBytecodeGenerator {
     private final Set<MethodInfo> methodInfos = new HashSet<>();
     private boolean autoConvertibleFromFunction = false;
     private boolean hasExplicitFinalizer = false;
+    private final Set<Module> accessedModules = new HashSet<>();
 
     /**
      * Names of static fields holding type converter method handles for return value conversion. We are emitting code
@@ -293,7 +291,7 @@ final class JavaAdapterBytecodeGenerator {
     }
 
     JavaAdapterClassLoader createAdapterClassLoader() {
-        return new JavaAdapterClassLoader(generatedClassName, cw.toByteArray());
+        return new JavaAdapterClassLoader(generatedClassName, cw.toByteArray(), accessedModules);
     }
 
     boolean isAutoConvertibleFromFunction() {
@@ -307,12 +305,7 @@ final class JavaAdapterBytecodeGenerator {
         final Package pkg = namingType.getPackage();
         final String namingTypeName = Type.getInternalName(namingType);
         final StringBuilder buf = new StringBuilder();
-        if (namingTypeName.startsWith(JAVA_PACKAGE_PREFIX) || pkg == null || pkg.isSealed()) {
-            // Can't define new classes in java.* packages
-            buf.append(ADAPTER_PACKAGE_PREFIX).append(namingTypeName);
-        } else {
-            buf.append(namingTypeName).append(ADAPTER_CLASS_NAME_SUFFIX);
-        }
+        buf.append(ADAPTER_PACKAGE_INTERNAL).append(namingTypeName.replace('/', '_'));
         final Iterator<Class<?>> it = interfaces.iterator();
         if(superType == Object.class && it.hasNext()) {
             it.next(); // Skip first interface, it was used to primarily name the adapter
@@ -467,6 +460,14 @@ final class JavaAdapterBytecodeGenerator {
     }
 
     private void generateConstructors(final Constructor<?> ctor) {
+        for (final Class<?> pt : ctor.getParameterTypes()) {
+            if (pt.isPrimitive()) continue;
+            final Module ptMod = pt.getModule();
+            if (ptMod != null) {
+                accessedModules.add(ptMod);
+            }
+        }
+
         if(classOverride) {
             // Generate a constructor that just delegates to ctor. This is used with class-level overrides, when we want
             // to create instances without further per-instance overrides.
@@ -1104,6 +1105,11 @@ final class JavaAdapterBytecodeGenerator {
      */
     private void gatherMethods(final Class<?> type) throws AdaptationException {
         if (Modifier.isPublic(type.getModifiers())) {
+            final Module module = type.getModule();
+            if (module != null) {
+                accessedModules.add(module);
+            }
+
             final Method[] typeMethods = type.isInterface() ? type.getMethods() : type.getDeclaredMethods();
 
             for (final Method typeMethod: typeMethods) {
@@ -1126,6 +1132,20 @@ final class JavaAdapterBytecodeGenerator {
                             }
                         }
                         continue;
+                    }
+
+                    for (final Class<?> pt : typeMethod.getParameterTypes()) {
+                        if (pt.isPrimitive()) continue;
+                        final Module ptMod = pt.getModule();
+                        if (ptMod != null) {
+                            accessedModules.add(ptMod);
+                        }
+                    }
+
+                    final Class<?> rt = typeMethod.getReturnType();
+                    if (!rt.isPrimitive()) {
+                        final Module rtMod = rt.getModule();
+                        if (rtMod != null) accessedModules.add(rtMod);
                     }
 
                     final MethodInfo mi = new MethodInfo(typeMethod);
