@@ -58,7 +58,7 @@ public class JLinkTest {
         for (PluginProvider pf : ImagePluginProviderRepository.getImageWriterProviders(null)) {
             num += 1;
         }
-        if (num != 7) {
+        if (num != 8) {
             throw new Exception("Plugins not found. " + num);
         }
 
@@ -70,8 +70,7 @@ public class JLinkTest {
         String[] opts = {"--list-plugins"};
         jdk.tools.jlink.Main.run(opts, new PrintWriter(System.out));
 
-        // Standard module image
-        helper.checkImage("java.management", null, null, null);
+        helper.checkImage("composite2", null, null, null);
 
         // filter out files and resources + Skip debug + compress
         {
@@ -84,11 +83,12 @@ public class JLinkTest {
             helper.checkImage("excludezipskipdebugcomposite2", userOptions, res, files);
         }
 
-        // filter out + Skip debug + compress with filter
+        // filter out + Skip debug + compress with filter + sort resources
         {
             String[] userOptions2 = {"--compress-resources", "on", "--compress-resources-filter",
                 "^/java.base/*", "--strip-java-debug", "on", "--exclude-resources",
-                "*.jcov, */META-INF/*"};
+                "*.jcov, */META-INF/*", "--sort-resources",
+                "*/module-info.class,/sortcomposite2/*,*/javax/management/*"};
             helper.generateJModule("excludezipfilterskipdebugcomposite2", "composite2");
             String[] res = {".jcov", "/META-INF/"};
             helper.checkImage("excludezipfilterskipdebugcomposite2", userOptions2,

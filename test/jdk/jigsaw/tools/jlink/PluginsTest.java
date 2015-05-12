@@ -34,6 +34,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.ProviderNotFoundException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -70,6 +71,7 @@ import jdk.tools.jlink.plugins.StringTable;
 import jdk.tools.jlink.internal.plugins.ZipCompressProvider;
 import jdk.tools.jlink.internal.plugins.ExcludeProvider;
 import jdk.tools.jlink.internal.plugins.StripDebugProvider;
+import jdk.tools.jlink.internal.plugins.SortResourcesProvider;
 import tests.JImageGenerator;
 import tests.JImageValidator;
 
@@ -532,6 +534,52 @@ public class PluginsTest {
 
         //Compact constantpool Signature Parser
         checkSignatureParser();
+
+        //Check Sorter plugin
+        checkSorterPlugin();
+    }
+
+    private static void checkSorterPlugin() throws Exception {
+        String[] arguments = {"/zazou/*","*/module-info.class"};
+        ResourcePlugin p = new SortResourcesProvider().newPlugins(arguments, null)[0];
+        ResourcePool resources = new ResourcePoolImpl(ByteOrder.nativeOrder());
+        Resource[] array = {new Resource("/module1/toto1", ByteBuffer.allocate(0)),
+            new Resource("/module2/toto1", ByteBuffer.allocate(0)),
+            new Resource("/module3/toto1", ByteBuffer.allocate(0)),
+            new Resource("/module3/toto1/module-info.class", ByteBuffer.allocate(0)),
+            new Resource("/zazou/toto1", ByteBuffer.allocate(0)),
+            new Resource("/module4/zazou", ByteBuffer.allocate(0)),
+            new Resource("/module5/toto1", ByteBuffer.allocate(0)),
+            new Resource("/module6/toto1/module-info.class", ByteBuffer.allocate(0))
+        };
+
+        Resource[] sorted = {new Resource("/zazou/toto1", ByteBuffer.allocate(0)),
+            new Resource("/module3/toto1/module-info.class", ByteBuffer.allocate(0)),
+            new Resource("/module6/toto1/module-info.class", ByteBuffer.allocate(0)),
+            new Resource("/module1/toto1", ByteBuffer.allocate(0)),
+            new Resource("/module2/toto1", ByteBuffer.allocate(0)),
+            new Resource("/module3/toto1", ByteBuffer.allocate(0)),
+            new Resource("/module4/zazou", ByteBuffer.allocate(0)),
+            new Resource("/module5/toto1", ByteBuffer.allocate(0)),
+        };
+
+        for (Resource r : array) {
+            resources.addResource(r);
+        }
+        ResourcePool out = new ResourcePoolImpl(ByteOrder.nativeOrder());
+        p.visit(resources, out, null);
+        if (out.getResources().size() != sorted.length) {
+            throw new Exception("Wrong number of resources");
+        }
+        int i = 0;
+        for(Resource r : out.getResources()) {
+                        System.out.println( "PATH " + r.getPath());
+
+            if (!sorted[i].getPath().equals(r.getPath())) {
+                throw new Exception("Resource not properly sorted");
+            }
+           i++;
+        }
     }
 
     private static void checkSignatureParser() throws Exception {

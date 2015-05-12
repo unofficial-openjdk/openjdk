@@ -20,7 +20,10 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
@@ -195,5 +198,18 @@ public class Helper {
             System.out.println("WARNING no debug extension for OS, update test");
             return ".unknown";
         }
+    }
+
+    public static byte[] readAllBytes(InputStream is) throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        byte[] buf = new byte[1024];
+        while (true) {
+            int n = is.read(buf);
+            if (n < 0) {
+                break;
+            }
+            baos.write(buf, 0, n);
+        }
+        return baos.toByteArray();
     }
 }

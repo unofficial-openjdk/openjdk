@@ -22,18 +22,47 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+package jdk.tools.jlink.internal.plugins;
 
-module jdk.jlink {
-    exports jdk.tools.jlink.plugins;
-    requires jdk.compiler;
-    uses jdk.tools.jlink.plugins.PluginProvider;
-    provides jdk.tools.jlink.plugins.PluginProvider with jdk.tools.jlink.internal.plugins.FileReplacerProvider;
-    provides jdk.tools.jlink.plugins.PluginProvider with jdk.tools.jlink.internal.plugins.StringSharingProvider;
-    provides jdk.tools.jlink.plugins.PluginProvider with jdk.tools.jlink.internal.plugins.StripDebugProvider;
-    provides jdk.tools.jlink.plugins.PluginProvider with jdk.tools.jlink.internal.plugins.ExcludeProvider;
-    provides jdk.tools.jlink.plugins.PluginProvider with jdk.tools.jlink.internal.plugins.ExcludeFilesProvider;
-    provides jdk.tools.jlink.plugins.PluginProvider with jdk.tools.jlink.internal.plugins.SortResourcesProvider;
-    provides jdk.tools.jlink.plugins.PluginProvider with jdk.tools.jlink.internal.plugins.ZipCompressProvider;
-    provides jdk.tools.jlink.plugins.PluginProvider with jdk.tools.jlink.internal.plugins.DefaultCompressProvider;
+import java.io.IOException;
+import java.util.Map;
+import jdk.tools.jlink.internal.ImagePluginConfiguration;
+import jdk.tools.jlink.plugins.ResourcePlugin;
+import jdk.tools.jlink.plugins.ResourcePluginProvider;
+
+/**
+ *
+ * Sort resources plugin provider
+ */
+public final class SortResourcesProvider extends ResourcePluginProvider {
+    public static final String NAME = "sort-resources";
+    public SortResourcesProvider() {
+        super(NAME, PluginsResourceBundle.getDescription(NAME));
+    }
+
+    @Override
+    public ResourcePlugin[] newPlugins(String[] argument, Map<String, String> otherOptions)
+            throws IOException {
+        return new ResourcePlugin[] {new SortResourcesPlugin(argument)};
+    }
+
+    @Override
+    public String getCategory() {
+        return ImagePluginConfiguration.SORTER;
+    }
+
+    @Override
+    public String getToolArgument() {
+        return PluginsResourceBundle.getArgument(NAME);
+    }
+
+    @Override
+    public String getToolOption() {
+        return NAME;
+    }
+
+    @Override
+    public Map<String, String> getAdditionalOptions() {
+        return null;
+    }
 }
-

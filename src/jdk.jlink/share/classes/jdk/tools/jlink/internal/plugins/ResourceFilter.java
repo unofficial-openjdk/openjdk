@@ -70,7 +70,7 @@ class ResourceFilter {
         this.outPatterns = Collections.unmodifiableList(outPatterns);
     }
 
-    private static String escape(String s) {
+    public static String escape(String s) {
         s = s.replaceAll(" ", "");
         s = s.replaceAll("\\$", Matcher.quoteReplacement("\\$"));
         s = s.replaceAll("\\.", Matcher.quoteReplacement("\\."));

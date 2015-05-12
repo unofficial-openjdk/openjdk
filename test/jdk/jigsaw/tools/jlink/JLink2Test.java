@@ -21,11 +21,13 @@
  * questions.
  */
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import jdk.tools.jlink.internal.DefaultImageBuilderProvider;
+import jdk.tools.jlink.internal.ImagePluginConfiguration;
 import tests.JImageValidator;
 
 /*
@@ -108,5 +110,112 @@ public class JLink2Test {
                 }
             }
         }
+
+        // Bom file
+        {
+            File fplugins = new File("plugins.properties");
+            fplugins.createNewFile();
+            try (FileOutputStream stream = new FileOutputStream(fplugins)) {
+                String content = ImagePluginConfiguration.RESOURCES_COMPRESSOR_PROPERTY
+                        + "=zip\n";
+                stream.write(content.getBytes());
+                File defaults = new File("embedded.properties");
+                defaults.createNewFile();
+                try (FileOutputStream defaultsstream = new FileOutputStream(defaults);) {
+                    String defaultscontent = "jdk.jlink.defaults=--genbom "
+                            + "--exclude-resources *.jcov,*/META-INF/* --addmods UNKNOWN\n";
+                    defaultsstream.write(defaultscontent.getBytes());
+                }
+                String[] userOptions = {"--plugins-configuration",
+                    fplugins.getAbsolutePath(),
+                    "--strip-java-debug", "on",
+                    "--configuration", defaults.getAbsolutePath()};
+                helper.generateJModule("bomzip", "composite2");
+                File imgDir = helper.checkImage("bomzip", userOptions, null,
+                        null);
+                File bom = new File(imgDir, "bom");
+                if (!bom.exists()) {
+                    throw new RuntimeException(bom.getAbsolutePath() + " not generated");
+                }
+                try (FileInputStream bomstream = new FileInputStream(bom)) {
+                    String bomcontent = new String(Helper.readAllBytes(bomstream));
+                    if (!bomcontent.contains("--strip-java-debug")
+                            || !bomcontent.contains("--plugins-configuration")
+                            || !bomcontent.contains(fplugins.getAbsolutePath())
+                            || !bomcontent.contains("--genbom")
+                            || !bomcontent.contains(ImagePluginConfiguration.
+                                    RESOURCES_COMPRESSOR_PROPERTY)
+                            || !bomcontent.contains("zip")
+                            || !bomcontent.contains("--exclude-resources *.jcov,"
+                                    + "*/META-INF/*")
+                            || !bomcontent.contains("--configuration")
+                            || !bomcontent.contains(defaults.getAbsolutePath())
+                            || !bomcontent.contains("--addmods UNKNOWN")) {
+                        throw new Exception("Not expected content in " + bom);
+                    }
+                }
+            }
+        }
+        // Replace jvm.cfg and jvm.hprof.txt with some content
+        // having an header to check against
+        {
+            String header = "# YOU SHOULD FIND ME\n";
+            File jvmcfg = new File(System.getProperty("java.home")
+                    + File.separator + "lib" + File.separator + "jvm.cfg");
+            File jvmhprof = new File(System.getProperty("java.home")
+                    + File.separator + "lib" + File.separator + "jvm.hprof.txt");
+            if (jvmcfg.exists() && jvmhprof.exists()) {
+                try (FileInputStream cfgstream = new FileInputStream(jvmcfg);
+                     FileInputStream hprofstream = new FileInputStream(jvmhprof); ) {
+                    String cfgcontent = header + new String(Helper.readAllBytes(cfgstream));
+                    File cfgnewContent = File.createTempFile("jvmcfgtest", null);
+                    cfgnewContent.deleteOnExit();
+                    try (FileOutputStream out = new FileOutputStream(cfgnewContent)) {
+                        out.write(cfgcontent.getBytes());
+                    }
+
+                    String hprofcontent = header + new String(Helper.readAllBytes(hprofstream));
+                    File hprofnewContent = File.createTempFile("hproftest", null);
+                    hprofnewContent.deleteOnExit();
+                    try (FileOutputStream out = new FileOutputStream(hprofnewContent)) {
+                        out.write(hprofcontent.getBytes());
+                    }
+
+                    String[] userOptions = {"--replace-file",
+                        "/java.base/native/jvm.cfg,"
+                        + cfgnewContent.getAbsolutePath()
+                        + ",/jdk.hprof.agent/native/jvm.hprof.txt,"
+                        + hprofnewContent.getAbsolutePath()};
+                    helper.generateJModule("jvmcfg", "composite2", "jdk.hprof.agent");
+                    File imageDir = helper.checkImage("jvmcfg", userOptions,
+                            null, null);
+                    File jvmcfg2 = new File(imageDir, "lib" + File.separator +
+                            "jvm.cfg");
+                    checkFile(header, jvmcfg2);
+
+                    File hprof2 = new File(imageDir, "lib" + File.separator +
+                            "jvm.hprof.txt");
+                    checkFile(header, hprof2);
+
+                }
+            } else {
+                System.err.println("Warning, jvm.cfg or jvm.hprof.txt files not found, "
+                        + "file replacement not checked");
+            }
+        }
     }
+
+    private static void checkFile(String header, File file) throws Exception {
+        if (!file.exists()) {
+            throw new RuntimeException(file.getAbsolutePath() +" not generated");
+        }
+        try (FileInputStream stream = new FileInputStream(file)) {
+            String content2 = new String(Helper.readAllBytes(stream));
+            if (!content2.startsWith(header)) {
+                throw new Exception("jvm.cfg not replaced with "
+                        + "expected content");
+            }
+        }
+    }
+
 }
