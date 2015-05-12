@@ -24,6 +24,7 @@
  */
 
 /*
+ * @ignore 8080051
  * @test
  * @summary class p1.c1 defined in the unnamed module tries to access p2.c2 defined in m2.
  *          Access is denied since even though the unnamed module can read all modules, p2

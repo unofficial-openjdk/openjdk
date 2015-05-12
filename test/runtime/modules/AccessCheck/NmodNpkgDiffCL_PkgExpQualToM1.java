@@ -24,6 +24,7 @@
  */
 
 /*
+ * @ignore 8080051
  * @test
  * @summary class p1.c1 defined in m1 tries to access p2.c2 defined in m2.
  *          Access allowed since m1 can read m2 and package p2 is exported to m1.

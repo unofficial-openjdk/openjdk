@@ -24,6 +24,7 @@
  */
 
 /*
+ * @ignore 8080051
  * @test
  * @summary Test that if package p2 in module m2 is exported to module m3,
  *          then class p1.c1 in the unnamed module can not read p2.c2 in module m2.

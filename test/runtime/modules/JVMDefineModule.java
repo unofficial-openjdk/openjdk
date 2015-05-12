@@ -22,8 +22,8 @@
  */
 
 /*
- * @test
  * @ignore
+ * @test
  * @library /testlibrary  /../../test/lib /compiler/whitebox ..
  * @modules java.base/sun.misc
  * @build JVMDefineModule
