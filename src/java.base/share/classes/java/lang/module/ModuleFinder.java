@@ -48,10 +48,11 @@ import java.util.stream.Stream;
  * <pre>{@code
  *     Path dir1, dir2, dir3;
  *
- *     ModuleFinder finder =
- *         ModuleFinder.of(dir1, dir2, dir3);
+ *     ModuleFinder finder = ModuleFinder.of(dir1, dir2, dir3);
  *
- *     ModuleReference reference = finder.find("jdk.foo");
+ *     Optional<ModuleReference> result = finder.find("jdk.foo");
+ *     if (result.isPresent()) { ... }
+ *
  * }</pre>
  *
  * @apiNote The eventual API will need to define how errors are handled, say
@@ -70,7 +71,7 @@ public interface ModuleFinder {
      * modules that it locates. If {@code find} is invoked several times to
      * locate the same module (by name) then it will return the same result
      * each time. If a module is located then it is guaranteed to be a member
-     * of the set of modules returned by the {@link #allModules allModules}
+     * of the set of modules returned by the {@link #findAll() findAll}
      * method.
      */
     public Optional<ModuleReference> find(String name);
@@ -79,7 +80,7 @@ public interface ModuleFinder {
      * Returns the set of all module references that this finder can locate.
      *
      * <p> A {@code ModuleFinder} provides a consistent view of the
-     * modules that it locates. If {@link #allModules allModules} is invoked
+     * modules that it locates. If {@link #findAll() findAll} is invoked
      * several times then it will return the same (equals) result each time.
      * For each {@code ModuleReference} element of the returned set then it is
      * guaranteed that that {@link #find find} will locate that {@code
