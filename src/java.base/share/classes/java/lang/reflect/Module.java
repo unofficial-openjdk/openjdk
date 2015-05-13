@@ -69,6 +69,11 @@ import sun.misc.Unsafe;
  * loader that are not in a named module return the class loader's unnamed
  * module. An unnamed module reads all other run-time modules. </p>
  *
+ * <p> The package names that are parameters or returned by methods defined in
+ * this class are the fully-qualified names of the packages as defined in
+ * section 6.5.3 of <cite>The Java&trade; Language Specification </cite>, for
+ * example, {@code "java.lang"}. </p>
+ *
  * @since 1.9
  * @see java.lang.Class#getModule
  */
@@ -92,7 +97,8 @@ public final class Module {
     private volatile boolean loose;
 
     // the modules that this module permanently reads
-    // FIXME: This should be final but need new VM interface to do this
+    // FIXME: This should be final; this will happen once we define the
+    // modules in reverse topology order
     private volatile Set<Module> reads = Collections.emptySet();
 
     // created lazily, additional modules that this module temporarily reads
@@ -201,10 +207,6 @@ public final class Module {
     /**
      * Returns an array of the package names of the packages in this module.
      *
-     * <p> The package names are the fully-qualified names of the packages as
-     * defined in section 6.5.3 of <cite>The Java&trade; Language Specification
-     * </cite>, for example, {@code "java.lang"}. </p>
-     *
      * <p> The returned array contains an element for each package in the
      * module when it was initially created. It may contain elements
      * corresponding to packages added to the module after it was created
@@ -237,18 +239,22 @@ public final class Module {
      *
      * <p> If {@code target} is {@code null}, and this module does not read
      * all unnamed modules, then this method changes this module so that it
-     * reads all unnamed modules. </p>
+     * reads all unnamed modules (both present and future) in the Java
+     * virtual machine. </p>
      *
      * <p> If there is a security manager then its {@code checkPermission}
-     * method if first called with a {@code ReflectPermission("addReadsModule")}
+     * method is called with a {@code ReflectPermission("addReadsModule")}
      * permission to check that the caller is allowed to change the
      * readability graph. </p>
      *
-     * @throws SecurityException if denied by the security manager
+     * @return this module
+     *
+     * @throws SecurityException
+     *         If denied by the security manager
      *
      * @see #canRead
      */
-    public void addReads(Module target) {
+    public Module addReads(Module target) {
         if (target != this && this.isNamed()) {
             SecurityManager sm = System.getSecurityManager();
             if (sm != null) {
@@ -257,6 +263,7 @@ public final class Module {
             }
             addReads(target, true);
         }
+        return this;
     }
 
     /**
@@ -317,7 +324,9 @@ public final class Module {
      * If {@code target} is {@code null} then this method tests if this
      * module reads all unnamed modules.
      *
-     * @see #addReads
+     * @return {@code true} if this module reads {@code target}
+     *
+     * @see #addReads(Module)
      */
     public boolean canRead(Module target) {
 
@@ -422,8 +431,8 @@ public final class Module {
             int n = packages.size();
             String[] array = new String[n];
             int i = 0;
-            for (String pkg: packages) {
-                array[i++] = pkg.replace('.', '/');
+            for (String pn : packages) {
+                array[i++] = pn.replace('.', '/');
             }
 
             String vs = descriptor.version().map(Version::toString).orElse("");
@@ -540,8 +549,8 @@ public final class Module {
      * At this time then it does not validate that the package name is a
      * valid java identifier.
      */
-    void addPackage(String pkg) {
-        addPackage(pkg, true);
+    void addPackage(String pn) {
+        addPackage(pn, true);
     }
 
     /**
@@ -549,8 +558,8 @@ public final class Module {
      *
      * This method is for use by VM whitebox tests only.
      */
-    void addPackageNoSync(String pkg) {
-        addPackage(pkg.replace('/', '.'), false);
+    void addPackageNoSync(String pn) {
+        addPackage(pn.replace('/', '.'), false);
     }
 
     /**
@@ -558,24 +567,24 @@ public final class Module {
      *
      * If {@code syncVM} is {@code true} then the VM is notified.
      */
-    private void addPackage(String pkg, boolean syncVM) {
-        if (pkg.length() == 0)
+    private void addPackage(String pn, boolean syncVM) {
+        if (pn.length() == 0)
             throw new IllegalArgumentException("<unnamed> package not allowed");
 
         synchronized (this) {
             // copy set
-            Set<String> pkgs = new HashSet<>(this.packages);
-            if (!pkgs.add(pkg)) {
+            Set<String> pns = new HashSet<>(this.packages);
+            if (!pns.add(pn)) {
                 // already has this package
                 return;
             }
 
             // update VM first, just in case it fails
             if (syncVM)
-                jvmAddModulePackage(this, pkg.replace('.', '/'));
+                jvmAddModulePackage(this, pn.replace('.', '/'));
 
             // replace with new set
-            this.packages = pkgs; // volatile write
+            this.packages = pns; // volatile write
         }
     }
 
@@ -585,20 +594,24 @@ public final class Module {
     /**
      * Returns {@code true} if this module exports the given package to the
      * given module. If {@code target} is {@code null} then this method
-     * checks if the package is exported un-conditionally (meaning an
+     * tests if the package is exported un-conditionally (meaning an
      * unqualified export).
      *
-     * This method does not check if the given module reads this module.
+     * <p> If invoked on an unnamed module then this method always returns
+     * {@code true} if invoked with a non-null package name. </p>
+     *
+     * <p> This method does not check if the given module reads this
+     * module. </p>
      */
-    public boolean isExported(String pkg, Module target) {
-        Objects.nonNull(pkg);
+    public boolean isExported(String pn, Module target) {
+        Objects.requireNonNull(pn);
 
         // all packages are exported by unnamed modules
         if (!isNamed())
             return true;
 
         Map<String, Map<Module, Boolean>>  exports = this.exports; // volatile read
-        Map<Module, Boolean> permits = exports.get(pkg);
+        Map<Module, Boolean> permits = exports.get(pn);
         if (permits != null) {
             // unqualified export or exported to 'target'
             if (permits.isEmpty() || permits.containsKey(target)) return true;
@@ -609,52 +622,83 @@ public final class Module {
     }
 
     /**
-     * Updates the exports so that package {@code pkg} is exported to module
+     * Adds a qualified export so that this module exports package {@code pn}
+     * to a {@code target} module. This method has no effect if the package is
+     * already exported to the target module. If also has no effect if invoked
+     * on an unnamed module.
+     *
+     * <p> If there is a security manager then its {@code checkPermission}
+     * method is called with a {@code ReflectPermission("addModuleExports")}
+     * permission to check that the caller is allowed to do this operation. </p>
+     *
+     * @apiNote This method is intended for use by test libraries and frameworks
+     * that need to break encapsulation and get to public types in otherwise
+     * module-private packages. General use of this method is strongly
+     * discouraged.
+     *
+     * @return this module
+     *
+     * @throws IllegalArgumentException
+     *         If {@code pn} is not a package in this module
+     * @throws SecurityException
+     *         If denied by the security manager
+     */
+    public Module addExports(String pn, Module target) {
+        Objects.requireNonNull(pn); // IAE or NPE for this?
+        Objects.requireNonNull(target);
+
+        if (isNamed()) {
+            SecurityManager sm = System.getSecurityManager();
+            if (sm != null) {
+                ReflectPermission perm = new ReflectPermission("addModuleExports");
+                sm.checkPermission(perm);
+            }
+            addExports(pn, target, true);
+        }
+
+        return this;
+    }
+
+    /**
+     * Updates the exports so that package {@code pn} is exported to module
      * {@code who} but without notifying the VM.
      *
      * This method is for use by VM whitebox tests only.
      */
-    void addExportsNoSync(String pkg, Module who) {
-        addExports(pkg.replace('/', '.'), who, false);
+    void addExportsNoSync(String pn, Module who) {
+        addExports(pn.replace('/', '.'), who, false);
     }
 
     /**
-     * Updates the exports so that package {@code pkg} is exported to module
-     * {@code target}. If {@code target} is {@code null} then the package is exported
-     * to all modules that read this module.
-     *
-     * @throws IllegalArgumentException if {@code pkg} is not a module package
-     *
-     * @apiNote This is an expensive operation, not expected to be used often. Also
-     * this method is not public as it would otherwise be used to get to JDK
-     * internal APIs.
-     */
-    void addExports(String pkg, Module target) {
-        addExports(pkg, target, true);
-    }
-
-    /**
-     * Updates the exports so that package {@code pkg} is exported to module
+     * Updates the exports so that package {@code pn} is exported to module
      * {@code target}.
      *
      * If {@code syncVM} is {@code true} then the VM is notified.
      */
-    private void addExports(String pkg, Module target, boolean syncVM) {
-        Objects.nonNull(pkg);
+    private void addExports(String pn, Module target, boolean syncVM) {
+        Objects.requireNonNull(pn);
 
-        if (!packages.contains(pkg)) {
-            throw new IllegalArgumentException("exported package " + pkg +
+        // unnamed module exports all packages
+        if (!isNamed())
+            return;
+
+        if (!packages.contains(pn)) {
+            throw new IllegalArgumentException("exported package " + pn +
                 " not in contents");
         }
 
         synchronized (this) {
 
+            // nothing to do if already exported to target
+            if (isExported(pn, target))
+                return;
+
             // update VM first, just in case it fails
             if (syncVM) {
 
-                // FIXME - VM does not know about unnamed modules yet
+                // FIXME: VM does not know about unnamed modules yet
                 if (target == null || target.isNamed())
-                   jvmAddModuleExports(this, pkg.replace('.', '/'), target);
+                   jvmAddModuleExports(this, pn.replace('.', '/'), target);
 
             }
 
@@ -662,29 +706,29 @@ public final class Module {
             Map<String, Map<Module, Boolean>> exports = new HashMap<>(this.exports);
 
             // the package may be exported already, need to handle all cases
-            Map<Module, Boolean> permits = exports.get(pkg);
+            Map<Module, Boolean> permits = exports.get(pn);
             if (permits == null) {
-                // pkg not already exported
+                // pn not already exported
                 if (target == null) {
                     // unqualified export
-                    exports.put(pkg, Collections.emptyMap());
+                    exports.put(pn, Collections.emptyMap());
                 } else {
                     // qualified export
                     permits = new WeakHashMap<>();
                     permits.put(target, Boolean.TRUE);
-                    exports.put(pkg, permits);
+                    exports.put(pn, permits);
                 }
             } else {
-                // pkg already exported
+                // pn already exported
                 if (!permits.isEmpty()) {
                     if (target == null) {
                         // change from qualified to unqualified
-                        exports.put(pkg, Collections.emptyMap());
+                        exports.put(pn, Collections.emptyMap());
                     } else {
                         // copy the existing qualified exports
                         permits = new WeakHashMap<>(permits);
                         permits.put(target, Boolean.TRUE);
-                        exports.put(pkg, permits);
+                        exports.put(pn, permits);
                     }
                 }
             }
@@ -762,16 +806,16 @@ public final class Module {
     private static native void jvmDefineModule(Module module,
                                                String version,
                                                String location,
-                                               String[] pkgs);
+                                               String[] pns);
 
     // JVM_AddReadsModule
     private static native void jvmAddReadsModule(Module from, Module to);
 
     // JVM_AddModuleExports
-    private static native void jvmAddModuleExports(Module from, String pkg, Module to);
+    private static native void jvmAddModuleExports(Module from, String pn, Module to);
 
     // JVM_AddModulePackage
-    private static native void jvmAddModulePackage(Module m, String pkg);
+    private static native void jvmAddModulePackage(Module m, String pn);
 
     /**
      * Register shared secret to provide access to package-private methods
@@ -792,16 +836,16 @@ public final class Module {
                     return Module.defineModules(cf, clf);
                 }
                 @Override
-                public void addPackage(Module m, String pkg) {
-                    m.addPackage(pkg);
+                public void addPackage(Module m, String pn) {
+                    m.addPackage(pn);
                 }
                 @Override
                 public void addReadsModule(Module m1, Module m2) {
                     m1.addReads(m2, true);
                 }
                 @Override
-                public void addExports(Module m, String pkg, Module target) {
-                    m.addExports(pkg, target);
+                public void addExports(Module m, String pn, Module target) {
+                    m.addExports(pn, target, true);
                 }
             });
     }

@@ -69,8 +69,8 @@ public class Modules {
      *
      * This method is a no-op if the module already contains the package.
      */
-    public static void addPackage(Module m, String pkg) {
-        SharedSecrets.getJavaLangReflectAccess().addPackage(m, pkg);
+    public static void addPackage(Module m, String pn) {
+        SharedSecrets.getJavaLangReflectAccess().addPackage(m, pn);
     }
 
     /**
@@ -83,27 +83,17 @@ public class Modules {
 
     /**
      * Update a module to export a package.
+     * Same as m1.addExports(pkg, m2) but with the awesome power to
+     * add unqualified exports, all without a permission check.
      *
      * @param m1 the module that exports the package
-     * @param pkg the package to export
+     * @param pn the package to export
      * @param m2 the module to export the package to, when {@code null} then
      *           the package is exported all modules that read m1.
      *
      * @throws IllegalArgumentException if pkg is not a package in m1
      */
-    public static void addExports(Module m1, String pkg, Module m2) {
-        SharedSecrets.getJavaLangReflectAccess().addExports(m1, pkg, m2);
-    }
-
-    /**
-     * Returns {@code true} if module {@code m1} exports package {@code pkg}
-     * to module {@code m2}. If {@code m2} is {@code null} then returns
-     * {@code true} if pkg is exported to all modules that read m1.
-     *
-     * @apiNote This method will be removed once usages in the JDK are
-     * updated.
-     */
-    public static boolean isExported(Module m1, String pkg, Module m2) {
-        return m1.isExported(pkg, m2);
+    public static void addExports(Module m1, String pn, Module m2) {
+        SharedSecrets.getJavaLangReflectAccess().addExports(m1, pn, m2);
     }
 }

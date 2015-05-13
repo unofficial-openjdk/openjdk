@@ -42,6 +42,7 @@ import java.util.function.BiFunction;
 import java.util.stream.Stream;
 import java.util.stream.Collectors;
 
+import sun.misc.Modules;
 import sun.misc.ProxyGenerator;
 import sun.misc.VM;
 import sun.reflect.CallerSensitive;
@@ -981,7 +982,7 @@ public class Proxy implements java.io.Serializable {
                     System.out.format("exports caller's module-private %s in %s to %s%n",
                                       pn, callerModule, m));
             }
-            pkgs.stream().forEach(pn -> callerModule.addExports(pn, m));
+            pkgs.stream().forEach(pn -> Modules.addExports(callerModule, pn, m));
         }
 
         /**
