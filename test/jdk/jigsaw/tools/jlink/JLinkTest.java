@@ -31,7 +31,6 @@ import jdk.tools.jlink.internal.ImagePluginProviderRepository;
 
 /*
  * @test
- * @ignore
  * @summary Test image creation
  * @author Jean-Francois Denise
  * @library /lib/testlibrary/jlink

@@ -30,6 +30,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.file.NoSuchFileException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -361,6 +362,13 @@ public final class TaskHelper {
         }
 
         public List<String> handleOptions(T task, String[] args) throws BadArgs {
+            try {
+                args = CommandLine.parse(args);
+            } catch (FileNotFoundException | NoSuchFileException e) {
+                throw new BadArgs("err.file.not.found", e.getMessage());
+            } catch (IOException ex) {
+                throw new BadArgs("err.file.error", ex.getMessage());
+            }
             // Unit tests can call Task multiple time in same JVM.
             pluginOptions = new PluginsOptions();
             command = args;
@@ -433,6 +441,7 @@ public final class TaskHelper {
                 }
                 log.println(bundleHelper.getMessage("main.opt." + name));
             }
+            log.println(bundleHelper.getMessage("main.command.files"));
 
             log.println("\n" + pluginsHeader);
             for (PluginProvider provider : ImagePluginProviderRepository.getImageWriterProviders(null)) {
