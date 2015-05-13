@@ -90,7 +90,6 @@ import java.security.AccessController;
 import java.security.Permissions;
 import java.security.PrivilegedAction;
 import java.security.ProtectionDomain;
-import sun.misc.Modules;
 
 /**
  * A utility class to check whether a given class is in a package with restricted access e.g. "sun.*" etc.
@@ -116,7 +115,7 @@ class CheckRestrictedPackage {
         }
         final String pkgName = name.substring(0, i);
         final Module module = clazz.getModule();
-        if (module != null && !Modules.isExported(module, pkgName, null)) {
+        if (module != null && !module.isExported(pkgName, null)) {
             return true;
         }
 
