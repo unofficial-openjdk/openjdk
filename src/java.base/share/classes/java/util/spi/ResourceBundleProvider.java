@@ -23,7 +23,6 @@
 
 package java.util.spi;
 
-import java.io.IOException;
 import java.util.Locale;
 import java.util.ResourceBundle;
 import java.util.ResourceBundle.Control;

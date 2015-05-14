@@ -39,6 +39,9 @@ fi
 JAVAC="$COMPILEJAVA/bin/javac"
 JAVA="$TESTJAVA/bin/java"
 
+# This test is temporarily converted to use ResourceBundleProviderSupport class
+# to avoid calling Control.newBundle
+EXTRA_OPTS="-XX:AddModuleExports=java.base/sun.util.locale.provider"
 
 rm -rf mods
 
@@ -49,7 +52,7 @@ do
   mkdir -p mods/$B
   CLASSES="`find $TESTSRC/src/$B -name '*.java'`"
   if [ "x$CLASSES" != x ]; then
-    $JAVAC -g -d mods -modulesourcepath $TESTSRC/src $CP $CLASSES
+    $JAVAC ${EXTRA_OPTS} -g -d mods -modulesourcepath $TESTSRC/src $CP $CLASSES
   fi
   PROPS="`(cd $TESTSRC/src/$B; find . -name '*.properties')`"
   if [ "x$PROPS" != x ]; then
@@ -64,9 +67,9 @@ do
 done
 
 mkdir -p mods/test
-$JAVAC -g -cp mods/mainbundles -d mods -modulesourcepath $TESTSRC/src \
+$JAVAC ${EXTRA_OPTS} -g -cp mods/mainbundles -d mods -modulesourcepath $TESTSRC/src \
     `find $TESTSRC/src/test -name "*.java"`
 
-$JAVA -mp mods -m test/jdk.test.Main de fr ja zh-tw en de
+$JAVA ${EXTRA_OPTS} -mp mods -m test/jdk.test.Main de fr ja zh-tw en de
 
 exit $?

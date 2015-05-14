@@ -267,12 +267,7 @@ public class Level implements java.io.Serializable {
         // or its defining class loader, if it's unnamed module,
         // of this Level instance that can be a custom Level subclass;
         Module module = this.getClass().getModule();
-        ResourceBundle rb;
-        if (module != null) {
-            rb = ResourceBundle.getBundle(resourceBundleName, newLocale, module);
-        } else {
-            rb = ResourceBundle.getBundle(resourceBundleName, newLocale, this.getClass().getClassLoader());
-        }
+        ResourceBundle rb = ResourceBundle.getBundle(resourceBundleName, newLocale, module);
 
         final String localizedName = rb.getString(name);
         final boolean isDefaultBundle = defaultBundle.equals(resourceBundleName);

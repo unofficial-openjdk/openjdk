@@ -23,6 +23,7 @@
 
 package jdk.test.resources.eu;
 
+import java.lang.reflect.Module;
 import java.io.IOException;
 import java.util.Locale;
 import java.util.ResourceBundle;
@@ -36,12 +37,12 @@ public class MyResourcesEU extends MyControl implements MyResourcesProvider {
     @Override
     public ResourceBundle getBundle(String baseName, Locale locale) {
         if (isEULocale(locale)) {
-            try {
-                ClassLoader loader = MyResourcesEU.class.getClassLoader();
-                return newBundle(baseName, locale, "java.class", loader, false);
-            } catch (IllegalAccessException | InstantiationException | IOException e) {
-                System.out.println(e);
-            }
+            Module module = this.getClass().getModule();
+            String bundleName = toBundleName(baseName, locale);
+            // temporarily use ResourceBundleProviderSupport to avoid use of
+            // Control.newBundle until API is further examined
+            return sun.util.locale.provider.ResourceBundleProviderSupport
+                       .loadResourceBundle(module, baseName, locale, bundleName);
         }
         return null;
     }

@@ -25,9 +25,11 @@
 
 package sun.util.resources.provider;
 
-import java.io.IOException;
+import java.lang.reflect.Module;
 import java.util.Locale;
 import java.util.ResourceBundle;
+
+import sun.util.locale.provider.ResourceBundleProviderSupport;
 import sun.util.resources.LocaleData;
 
 /**
@@ -47,11 +49,8 @@ public class LocaleDataProvider implements sun.text.resources.BreakIteratorInfoP
     @Override
     public ResourceBundle getBundle(String baseName, Locale locale) {
         ResourceBundle.Control control = LocaleData.getLocaleDataResourceBundleControl();
-        try {
-            ClassLoader loader = LocaleDataProvider.class.getClassLoader();
-            return control.newBundle(baseName, locale, "java.class", loader, false);
-        } catch (IllegalAccessException | InstantiationException | IOException e) {
-        }
-        return null;
+        Module module = LocaleDataProvider.class.getModule();
+        String bundleName = control.toBundleName(baseName, locale);
+        return ResourceBundleProviderSupport.loadResourceBundle(module, baseName, locale, bundleName);
     }
 }

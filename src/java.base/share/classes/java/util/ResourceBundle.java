@@ -47,6 +47,7 @@ import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.Module;
 import java.net.JarURLConnection;
 import java.net.URL;
@@ -67,6 +68,7 @@ import sun.reflect.CallerSensitive;
 import sun.reflect.Reflection;
 import sun.util.locale.BaseLocale;
 import sun.util.locale.LocaleObjectCache;
+import sun.util.locale.provider.ResourceBundleProviderSupport;
 
 
 /**
@@ -581,6 +583,8 @@ public abstract class ResourceBundle {
         private int hashCodeCache;
 
         CacheKey(String baseName, Locale locale, ClassLoader loader, Module module) {
+            Objects.requireNonNull(module);
+
             this.name = baseName;
             this.locale = locale;
             if (loader == null) {
@@ -589,7 +593,7 @@ public abstract class ResourceBundle {
                 loaderRef = new LoaderReference(loader, referenceQueue, this);
             }
             this.module = module;
-            this.providers = initProviders();
+            this.providers = getServiceLoader(module, baseName);
             calculateHashCode();
         }
 
@@ -619,39 +623,6 @@ public abstract class ResourceBundle {
 
         ClassLoader getLoader() {
             return (loaderRef != null) ? loaderRef.get() : null;
-        }
-
-        /**
-         * Returns null if the module is an unnamed module.
-         */
-        Module getModule() {
-            return module;
-        }
-
-        private ServiceLoader<ResourceBundleProvider> initProviders() {
-            if (module == null) {
-                return null;
-            }
-
-            // Look up <baseName> + "Provider"
-            String providerName = name + "Provider";
-            try {
-                PrivilegedAction<ClassLoader> pa = module::getClassLoader;
-                ClassLoader loader = AccessController.doPrivileged(pa);
-                // Use the class loader of the getBundle caller so that the caller's
-                // visibility of the provider type is checked.
-
-                Class<?> c = Class.forName(providerName, false, loader);
-                if (ResourceBundleProvider.class.isAssignableFrom(c)) {
-                    @SuppressWarnings("unchecked")
-                    Class<ResourceBundleProvider> service = (Class<ResourceBundleProvider>) c;
-                    return ServiceLoader.load(service, loader, module);
-                }
-            } catch (ClassNotFoundException ex) {
-                // ignore
-            }
-
-            return null;
         }
 
         ServiceLoader<ResourceBundleProvider> getProviders() {
@@ -925,8 +896,6 @@ public abstract class ResourceBundle {
      * @since 1.9
      */
     public static ResourceBundle getBundle(String baseName, Module module) {
-        if (!module.isNamed())
-            throw new InternalError("not implemented");
         return getBundleImpl(module, baseName, Locale.getDefault(), getDefaultControl(baseName));
     }
 
@@ -949,8 +918,6 @@ public abstract class ResourceBundle {
      * @since 1.9
      */
     public static ResourceBundle getBundle(String baseName, Locale locale, Module module) {
-        if (!module.isNamed())
-            throw new InternalError("not implemented");
         return getBundleImpl(module, baseName, locale, getDefaultControl(baseName));
     }
 
@@ -1463,28 +1430,30 @@ public abstract class ResourceBundle {
                                                 Class<?> caller,
                                                 ClassLoader loader,
                                                 Control control) {
-        Module module = caller != null ? caller.getModule() : null;
-        if (module != null && module.isNamed()) {
+        if (caller != null && caller.getModule().isNamed()) {
+            Module module = caller.getModule();
             ClassLoader ml = getLoader(module);
             // get resource bundles for a named module only
             // if loader is the module's class loader
             if (loader == ml || (ml == null && loader == RBClassLoader.INSTANCE)) {
-                return getBundleImpl(baseName, locale, caller, loader, module, control);
+                return getBundleImpl(baseName, locale, loader, module, control);
             }
         }
-        return getBundleImpl(baseName, locale, caller, loader, null, control);
+        // find resource bundles from unnamed module
+        Module module = loader != null ? loader.getUnnamedModule()
+                                       : ClassLoader.getSystemClassLoader().getUnnamedModule();
+        return getBundleImpl(baseName, locale, loader, module, control);
     }
 
     private static ResourceBundle getBundleImpl(Module module,
                                                 String baseName,
                                                 Locale locale,
                                                 Control control) {
-        return getBundleImpl(baseName, locale, null, getLoader(module), module, control);
+        return getBundleImpl(baseName, locale, getLoader(module), module, control);
     }
 
     private static ResourceBundle getBundleImpl(String baseName,
                                                 Locale locale,
-                                                Class<?> caller,
                                                 ClassLoader loader,
                                                 Module module,
                                                 Control control) {
@@ -1533,7 +1502,7 @@ public abstract class ResourceBundle {
                 throw new IllegalArgumentException("Invalid Control: getCandidateLocales");
             }
 
-            bundle = findBundle(cacheKey, caller, module, candidateLocales, formats, 0, control, baseBundle);
+            bundle = findBundle(cacheKey, module, candidateLocales, formats, 0, control, baseBundle);
 
             // If the loaded bundle is the base bundle and exactly for the
             // requested locale or the only candidate locale, then take the
@@ -1583,7 +1552,6 @@ public abstract class ResourceBundle {
     }
 
     private static ResourceBundle findBundle(CacheKey cacheKey,
-                                             Class<?> caller,
                                              Module module,
                                              List<Locale> candidateLocales,
                                              List<String> formats,
@@ -1593,7 +1561,7 @@ public abstract class ResourceBundle {
         Locale targetLocale = candidateLocales.get(index);
         ResourceBundle parent = null;
         if (index != candidateLocales.size() - 1) {
-            parent = findBundle(cacheKey, caller, module, candidateLocales, formats, index + 1,
+            parent = findBundle(cacheKey, module, candidateLocales, formats, index + 1,
                                 control, baseBundle);
         } else if (baseBundle != null && Locale.ROOT.equals(targetLocale)) {
             return baseBundle;
@@ -1639,7 +1607,7 @@ public abstract class ResourceBundle {
             CacheKey constKey = (CacheKey) cacheKey.clone();
 
             try {
-                if (module != null) {
+                if (module.isNamed()) {
                     bundle = loadBundle(cacheKey, module, control, expiredBundle);
                 } else {
                     bundle = loadBundle(cacheKey, formats, control, expiredBundle);
@@ -1674,17 +1642,122 @@ public abstract class ResourceBundle {
                                              Module module,
                                              Control control,
                                              boolean reload) {
+        String baseName = cacheKey.getName();
         Locale targetLocale = cacheKey.getLocale();
-        ResourceBundle bundle = control.newBundle(module, cacheKey.getName(),
-                                                  targetLocale, reload,
-                                                  cacheKey.getProviders(),
-                                                  cacheKey::setCause);
+        String bundleName = control.toBundleName(baseName, targetLocale);
+        ResourceBundle bundle = loadBundleInModule(module, baseName,
+                                                   targetLocale, bundleName,
+                                                   cacheKey.getProviders(),
+                                                   cacheKey::setCause);
         if (bundle != null) {
             // Set the format to "" (unknown)
             cacheKey.setFormat(UNKNOWN_FORMAT);
             bundle.name = cacheKey.getName();
             bundle.locale = targetLocale;
             bundle.expired = false;
+        }
+        return bundle;
+    }
+
+    private static ServiceLoader<ResourceBundleProvider> getServiceLoader(Module module,
+                                                                          String baseName) {
+        PrivilegedAction<ClassLoader> pa = module::getClassLoader;
+        ClassLoader loader = AccessController.doPrivileged(pa);
+        return getServiceLoader(module, loader, baseName);
+    }
+
+        /**
+         * Returns a ServiceLoader that will find providers that are bound to
+         * a given module that may be named or unnamed.
+         */
+    private static ServiceLoader<ResourceBundleProvider> getServiceLoader(Module module,
+                                                                          ClassLoader loader,
+                                                                          String baseName)
+    {
+        // Look up <baseName> + "Provider"
+        String providerName = baseName + "Provider";
+        try {
+            // Use the class loader of the getBundle caller so that the caller's
+            // visibility of the provider type is checked.
+            Class<?> c = Class.forName(providerName, false, loader);
+            if (ResourceBundleProvider.class.isAssignableFrom(c) && Reflection.verifyModuleAccess(module, c)) {
+                @SuppressWarnings("unchecked")
+                Class<ResourceBundleProvider> service = (Class<ResourceBundleProvider>) c;
+                return ServiceLoader.load(service, loader, module);
+            }
+        } catch (ClassNotFoundException ex) {
+            // ignore
+        }
+
+        return null;
+    }
+
+    /**
+     * Loads ResourceBundle from service providers.
+     */
+    private static ResourceBundle loadBundleFromProviders(String baseName,
+                                                          Locale locale,
+                                                          ServiceLoader<ResourceBundleProvider> providers,
+                                                          Consumer<Throwable> setCause)
+    {
+        if (providers == null) return null;
+
+        return AccessController.doPrivileged(
+                new PrivilegedAction<>() {
+                    public ResourceBundle run() {
+                        for (Iterator<ResourceBundleProvider> itr = providers.iterator(); itr.hasNext(); ) {
+                            try {
+                                ResourceBundleProvider provider = itr.next();
+                                ResourceBundle bundle = provider.getBundle(baseName, locale);
+                                if (bundle != null) {
+                                    return bundle;
+                                }
+                            } catch (ServiceConfigurationError | SecurityException e) {
+                                if (setCause != null) setCause.accept(e);
+                            }
+                        }
+                        return null;
+                    }
+                });
+
+    }
+
+    /*
+     * Loads ResourceBundle for a named module.  First it loads from the
+     * service providers.  If not found, it will load the bundle local
+     * in the named module (.class or .properties).
+     */
+    private static ResourceBundle loadBundleInModule(Module module, String baseName,
+                                                     Locale locale, String bundleName,
+                                                     ServiceLoader<ResourceBundleProvider> providers,
+                                                     Consumer<Throwable> setCause)
+    {
+        Objects.requireNonNull(module);
+        if (!module.isNamed()) {
+            throw new InternalError(module + " is not a named module");
+        }
+
+        ResourceBundle bundle = null;
+        if (providers != null) {
+            bundle = loadBundleFromProviders(baseName, locale, providers, setCause);
+        }
+
+        if (bundle == null) {
+            // If not found in providers, find from the caller module
+            try {
+                bundle = ResourceBundleProviderSupport
+                            .loadResourceBundle(module, baseName, locale, bundleName);
+                if (bundle == null) {
+                    bundle = ResourceBundleProviderSupport
+                                .loadPropertyResourceBundle(module, baseName, locale, bundleName);
+                }
+            } catch (IOException e) {
+                setCause.accept(e);
+            } catch (Exception e) {
+                // TODO: Current behavior is to silent ignore all exceptions
+                // For now throw InternalError for better diagnosibility
+                throw new InternalError(e);
+            }
         }
         return bundle;
     }
@@ -2833,78 +2906,74 @@ public abstract class ResourceBundle {
          *        if an error occurred when reading resources using
          *        any I/O operations
          */
-        @CallerSensitive
         public ResourceBundle newBundle(String baseName, Locale locale, String format,
                                         ClassLoader loader, boolean reload)
                     throws IllegalAccessException, InstantiationException, IOException {
-            Class<?> caller = Reflection.getCallerClass();
-            return newBundle(baseName, locale, format, loader, caller, reload);
-        }
-
-        /*
-         * Legacy mechanism to locate resource bundle visible to the given loader
-         * and accessible to the given caller.  This only finds resources on
-         * the class path but not in named modules.
-         *
-         * @see ClassLoader#getResource
-         */
-        ResourceBundle newBundle(String baseName, Locale locale, String format,
-                                 ClassLoader loader, Class<?> caller,
-                                 boolean reload)
-                throws IllegalAccessException, InstantiationException, IOException
-        {
+            /*
+             * Legacy mechanism to locate resource bundle in unnamed module only
+             * that is visible to the given loader and accessible to the given caller.
+             * This only finds resources on the class path but not in named modules.
+             */
             String bundleName = toBundleName(baseName, locale);
-            ResourceBundle bundle = null;
 
-            // If the caller is null (say called from JNI code on a thread attached to the VM)
-            // use the "java.base" module to verify access.
-            // If the caller is ResourceBundle, i.e. called from unnamed module
-            Module module = caller == null ? Object.class.getModule() :
-                (caller == ResourceBundle.class ?  null : caller.getModule());
-            if (module != null && !module.isNamed())
-                module = null;
+            // TODO: should the default newBundle method look up bundle from
+            // service providers?  This will help existing bundles to prepare
+            // migrating to named modules.
+            ServiceLoader<ResourceBundleProvider> providers =
+                    getServiceLoader(loader.getUnnamedModule(), loader, baseName);
+            ResourceBundle bundle = loadBundleFromProviders(baseName, locale, providers, null);
+            if (bundle != null) {
+                return bundle;
+            }
 
             if (format.equals("java.class")) {
                 try {
+                    // FIXME: find bundle in unnamed module only?
+                    // To find bundles in named module, it should load ResourceBundleProvider
+                    // Class<?> c = Class.forName(loader.getUnnamedModule(), bundleName);
+
                     Class<?> c = loader.loadClass(bundleName);
                     // If the class isn't a ResourceBundle subclass, throw a
                     // ClassCastException.
                     if (ResourceBundle.class.isAssignableFrom(c)) {
                         @SuppressWarnings("unchecked")
-                        Class<? extends ResourceBundle> bundleClass = (Class<? extends ResourceBundle>)c;
-                        Module m = bundleClass.getModule();
+                        Class<ResourceBundle> bundleClass = (Class<ResourceBundle>)c;
 
-                        // verify if caller has access to the resource bundle
-                        //
-                        Constructor<?> ctor = bundleClass.getConstructor();
-                        if (m != module) {
-                            int modifiers = ctor.getModifiers();
-                            Reflection.ensureMemberAccess(caller, bundleClass, null, modifiers);
+                        // This doesn't allow to find bundle in named module other than via
+                        // service loader mechanism.  Otherwise, this will make
+                        // the newBundle method to be caller-sensitive in order to
+                        // verify access check.  So migrating resource bundles to
+                        // named module can't just export the package (in general, legacy
+                        // resource bundles have split package if they are packaged separate
+                        // from the consumer.)
+                        if (bundleClass.getModule().isNamed()) {
+                            throw new InternalError("newBundle can't be used to find " + bundleClass.getName() +
+                                    " in module " + bundleClass.getModule().getName());
                         }
-                        // caller has access so create the bundle
-                        AccessController.doPrivileged(new PrivilegedAction<Void>() {
-                            public Void run() { ctor.setAccessible(true); return null; }
-                        });
                         try {
-                            bundle = (ResourceBundle)ctor.newInstance((Object[]) null);
+                            // bundle in a unnamed module
+                            Constructor<ResourceBundle> ctor = bundleClass.getConstructor();
+                            if (!Modifier.isPublic(ctor.getModifiers())) {
+                                return null;
+                            }
+
+                            // java.base may not be able to read the bundleClass's module.
+                            PrivilegedAction<Void> pa1 = () -> { ctor.setAccessible(true); return null; };
+                            AccessController.doPrivileged(pa1);
+                            bundle = ctor.newInstance((Object[]) null);
                         } catch (InvocationTargetException e) {
                             Unsafe.getUnsafe().throwException(e.getTargetException());
                         }
+                    } else {
+                        throw new ClassCastException(c.getName()
+                                + " cannot be cast to ResourceBundle");
                     }
-                } catch (ClassNotFoundException | NoSuchMethodException e) {
+                } catch (ClassNotFoundException|NoSuchMethodException e) {
                 }
             } else if (format.equals("java.properties")) {
                 final String resourceName = toResourceName0(bundleName, "properties");
                 if (resourceName == null) {
                     return bundle;
-                }
-
-                if (module != null && getLoader(module) == loader) {
-                    // if the caller is in a named module whose class loader is
-                    // the requesting class loader then the resource may be in the module
-                    ResourceBundle rb = loadLocalPropertyBundle(module, baseName, locale, reload);
-                    if (rb != null)
-                        return rb;
                 }
 
                 final boolean reloadFlag = reload;
@@ -2937,128 +3006,6 @@ public abstract class ResourceBundle {
                 }
             } else {
                 throw new IllegalArgumentException("unknown format: " + format);
-            }
-            return bundle;
-        }
-
-        /*
-         * Locate resource bundle for a named module
-         */
-        private ResourceBundle loadLocalBundle(Module module, String baseName,
-                                               Locale locale, boolean reload)
-            throws IllegalAccessException, InstantiationException, IOException
-        {
-            String bundleName = toBundleName(baseName, locale);
-            PrivilegedAction<Class<?>> pa = () -> Class.forName(module, bundleName);
-            Class<?> c = AccessController.doPrivileged(pa);
-            if (c != null && ResourceBundle.class.isAssignableFrom(c)) {
-                try {
-                    @SuppressWarnings("unchecked")
-                    Class<ResourceBundle> bundleClass = (Class<ResourceBundle>) c;
-                    Constructor<ResourceBundle> ctor = bundleClass.getConstructor();
-                    // caller has access so create the bundle
-                    PrivilegedAction<Void> pa1 = () -> { ctor.setAccessible(true); return null; };
-                    AccessController.doPrivileged(pa1);
-                    try {
-                        return ctor.newInstance((Object[]) null);
-                    } catch (InvocationTargetException e) {
-                        Unsafe.getUnsafe().throwException(e.getTargetException());
-                    }
-                } catch (NoSuchMethodException e) {
-                }
-            }
-            return null;
-        }
-
-        /*
-         * Locate property resource bundle for a named module
-         */
-        private ResourceBundle loadLocalPropertyBundle(Module module, String baseName,
-                                                       Locale locale, boolean reload)
-            throws IOException
-        {
-            String bundleName = toBundleName(baseName, locale);
-            String resourceName = toResourceName0(bundleName, "properties");
-            if (resourceName == null) {
-                return null;
-            }
-            InputStream stream = null;
-            try {
-                stream = AccessController.doPrivileged(
-                    new PrivilegedExceptionAction<InputStream>() {
-                        public InputStream run() throws IOException {
-                            return module.getResourceAsStream(resourceName);
-                        }
-                    });
-            } catch (PrivilegedActionException e) {
-                throw (IOException) e.getException();
-            }
-            if (stream != null) {
-                try {
-                    return new PropertyResourceBundle(stream);
-                } finally {
-                    stream.close();
-                }
-            }
-            return null;
-        }
-
-        /*
-         * Loads ResourceBundle via service providers. If not found,
-         * loads locally from the given module
-         *
-         * TODO: what to do with "reload"
-         */
-        private ResourceBundle newBundle(Module module, String baseName,
-                                         Locale locale, boolean reload,
-                                         ServiceLoader<ResourceBundleProvider> providers,
-                                         Consumer<Throwable> setCause)
-        {
-            Objects.requireNonNull(module);
-            ResourceBundle bundle = null;
-            if (providers != null) {
-                bundle = AccessController.doPrivileged(
-                    new PrivilegedAction<ResourceBundle>() {
-                        public ResourceBundle run() {
-                            for (Iterator<ResourceBundleProvider> itr = providers.iterator(); itr.hasNext();) {
-                                try {
-                                    ResourceBundleProvider provider = itr.next();
-                                    ResourceBundle bundle = provider.getBundle(baseName, locale);
-                                    if (bundle != null) {
-                                        return bundle;
-                                    }
-                                } catch (ServiceConfigurationError|SecurityException e) {
-                                    setCause.accept(e);
-                                }
-                            }
-                            return null;
-                        }
-                    });
-            }
-            if (bundle == null) {
-                // If not found in providers, find from the caller module
-                //
-                // This will only call default ResourceBundle.Control.newBundle
-                // implementation; will not call any subclass overridden one.
-                try {
-                    bundle = loadLocalBundle(module, baseName, locale, reload);
-                } catch (IOException e) {
-                    setCause.accept(e);
-                } catch (Exception e) {
-                    // TODO: Current behavior is to silent ignore all exceptions
-                    // For now throw InternalError for better diagnosibility
-                    throw new InternalError(e);
-                }
-
-                try {
-                    if (bundle == null) {
-                        bundle = loadLocalPropertyBundle(module, baseName, locale, reload);
-                    }
-                } catch (IOException e) {
-                    setCause.accept(e);
-                } catch (Exception e) {
-                    throw new InternalError(e);
-                }
             }
             return bundle;
         }
