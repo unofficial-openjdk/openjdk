@@ -619,7 +619,6 @@
     <depend>java.prefs</depend>
     <depend re-exports="true">java.xml</depend>
     <depend re-exports="true">java.datatransfer</depend>
-    <depend>jdk.charsets</depend>
     <export>
       <name>java.applet</name>
     </export>
@@ -1506,10 +1505,6 @@
   <module>
     <name>jdk.charsets</name>
     <depend>java.base</depend>
-    <export>
-      <name>sun.nio.cs.ext</name>
-      <to>java.desktop</to>
-    </export>
   </module>
   <module>
     <name>jdk.compiler</name>
