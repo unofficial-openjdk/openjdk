@@ -456,12 +456,9 @@ public final class Module {
         Map<String, ClassLoader> loaders = new HashMap<>();
 
         // define each of the modules in the configuration to the VM
-        for (ModuleDescriptor descriptor: cf.descriptors()) {
-            String name = descriptor.name();
-
-            ModuleReference mref = cf.findReference(name);
+        for (ModuleReference mref : cf.references()) {
+            String name = mref.descriptor().name();
             ClassLoader loader = clf.loaderForModule(mref);
-
             Module m = defineModule(loader, mref);
             modules.put(name, m);
             loaders.put(name, loader);
@@ -474,7 +471,7 @@ public final class Module {
 
             // reads
             Set<Module> reads = new HashSet<>();
-            for (ModuleDescriptor other: cf.readDependences(descriptor)) {
+            for (ModuleDescriptor other: cf.reads(descriptor)) {
                 String dn = other.name();
                 Module m2 = modules.get(dn);
                 Layer parent = cf.layer();

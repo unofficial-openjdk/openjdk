@@ -31,6 +31,7 @@ import java.lang.module.ModuleDescriptor;
 import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Optional;
 
 /**
  * Exercises dynamic configuration.
@@ -82,11 +83,7 @@ public class Main {
 
         // choose a class loader
         ModuleClassLoader loader = new ModuleClassLoader();
-        cf.descriptors()
-          .stream()
-          .map(ModuleDescriptor::name)
-          .map(cf::findReference)
-          .forEach(loader::defineModule);
+        cf.references().forEach(loader::defineModule);
 
         // reify the configuration as a Layer
         Layer layer = Layer.create(cf, k -> loader);

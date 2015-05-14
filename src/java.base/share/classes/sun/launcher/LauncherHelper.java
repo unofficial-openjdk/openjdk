@@ -472,7 +472,8 @@ public enum LauncherHelper {
 
         // main module should be in the boot layer
         Layer layer = Layer.bootLayer();
-        ModuleReference mref = layer.configuration().findReference(mainModule);
+        ModuleReference mref
+            = layer.configuration().findReference(mainModule).orElse(null);
         if (mref == null)
             abort(null, "java.launcher.module.error1", mainModule);
 
@@ -884,19 +885,16 @@ public enum LauncherHelper {
         Configuration cf = layer.configuration();
         int colon = optionFlag.indexOf(':');
         if (colon == -1) {
-            cf.descriptors()
-                .stream()
-                .map(ModuleDescriptor::name)
-                .map(cf::findReference)
+            cf.references().stream()
                 .sorted(Comparator.comparing(ModuleReference::descriptor))
                 .forEach(md -> {
-                    ostream.println(midAndLocation(md.descriptor(),
-                                                   md.location()));
-                });
+                        ostream.println(midAndLocation(md.descriptor(),
+                                                       md.location()));
+                    });
         } else {
             String[] names = optionFlag.substring(colon+1).split(",");
             for (String name: names) {
-                ModuleReference mref = cf.findReference(name);
+                ModuleReference mref = cf.findReference(name).orElse(null);
                 if (mref == null) {
                     // skip as module is not in the boot Layer
                     continue;

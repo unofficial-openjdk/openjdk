@@ -103,7 +103,7 @@ public class Basic {
      */
     static Path directoryFor(String name) {
         Configuration cf = Layer.bootLayer().configuration();
-        ModuleReference mref = cf.findReference(name);
+        ModuleReference mref = cf.findReference(name).orElse(null);
         if (mref == null)
             throw new RuntimeException("not found: " + name);
         Path dir = Paths.get(mref.location().get());

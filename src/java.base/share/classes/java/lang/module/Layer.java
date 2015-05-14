@@ -160,7 +160,7 @@ public final class Layer {
         if (cf == null) {
             return null;
         } else {
-            ModuleReference mref = cf.findReference(name);
+            ModuleReference mref = cf.findReference(name).orElse(null);
             if (mref == null) {
                 Layer parent = parent();
                 if (parent != null)

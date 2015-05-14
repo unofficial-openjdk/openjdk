@@ -69,7 +69,7 @@ final class ModuleLoaderMap {
             .filter(name -> !BOOT_MODULES.contains(name))
             .forEach(name -> {
                 ClassLoader cl = EXT_MODULES.contains(name) ? extClassLoader : appClassLoader;
-                map.put(cf.findReference(name), cl);
+                map.put(cf.findReference(name).get(), cl);
             });
         return map::get;
     }

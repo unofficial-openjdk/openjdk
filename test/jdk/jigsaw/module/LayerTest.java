@@ -50,7 +50,7 @@ public class LayerTest {
 
         // configuration
         Configuration cf = bootLayer.configuration();
-        assertTrue(cf.findDescriptor("java.base").exports()
+        assertTrue(cf.findDescriptor("java.base").get().exports()
                    .stream().anyMatch(e -> (e.source().equals("java.lang")
                                             && !e.targets().isPresent())));
 
@@ -119,9 +119,9 @@ public class LayerTest {
         ClassLoader loader2 = new ClassLoader() { };
         ClassLoader loader3 = new ClassLoader() { };
         Map<ModuleReference, ClassLoader> map = new HashMap<>();
-        map.put(cf.findReference("m1"), loader1);
-        map.put(cf.findReference("m2"), loader2);
-        map.put(cf.findReference("m3"), loader3);
+        map.put(cf.findReference("m1").get(), loader1);
+        map.put(cf.findReference("m2").get(), loader2);
+        map.put(cf.findReference("m3").get(), loader3);
 
         Layer layer = Layer.create(cf, map::get);
 

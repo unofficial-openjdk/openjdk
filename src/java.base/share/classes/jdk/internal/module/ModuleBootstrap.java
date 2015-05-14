@@ -179,9 +179,8 @@ public final class ModuleBootstrap {
 
         // check that all modules to be mapped to the boot loader will be
         // loaded from the system module path
-        for (ModuleDescriptor md: cf.descriptors()) {
-            String name = md.name();
-            ModuleReference mref = cf.findReference(name);
+        for (ModuleReference mref : cf.references()) {
+            String name = mref.descriptor().name();
             ClassLoader cl = clf.loaderForModule(mref);
             if (cl == null) {
                 if (upgradeModulePath != null && upgradeModulePath.find(name).isPresent())
@@ -252,14 +251,13 @@ public final class ModuleBootstrap {
      */
     private static void ensureNoOverlappedPackages(Configuration cf) {
         Map<String, String> packageToModule = new HashMap<>();
-        for (ModuleDescriptor descriptor: cf.descriptors()) {
-            String name = descriptor.name();
-            Set<String> pkgs = cf.findReference(name).descriptor().packages();
-            for (String p: pkgs) {
+        for (ModuleDescriptor md : cf.descriptors()) {
+            String name = md.name();
+            for (String p: md.packages()) {
                 String other = packageToModule.putIfAbsent(p, name);
                 if (other != null) {
-                    fail("Package " + p + " in both module " + name +
-                            " and module " + other);
+                    fail("Package " + p + " in both module " + name
+                         + " and module " + other);
                 }
             }
         }
@@ -267,15 +265,13 @@ public final class ModuleBootstrap {
 
     /**
      * Defines the modules in the given Configuration to their
-     * respective ClassLoader.
+     * respective ClassLoaders.
      */
     private static void defineModulesToClassLoaders(Configuration cf,
                                                     ClassLoaderFinder clf)
     {
-        for (ModuleDescriptor md: cf.descriptors()) {
-            String name = md.name();
-            if (!name.equals(JAVA_BASE)) {
-                ModuleReference mref = cf.findReference(name);
+        for (ModuleReference mref : cf.references()) {
+            if (!mref.descriptor().name().equals(JAVA_BASE)) {
                 ClassLoader cl = clf.loaderForModule(mref);
                 if (cl == null) {
                     BootLoader.defineModule(mref);

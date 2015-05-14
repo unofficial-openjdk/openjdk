@@ -28,6 +28,7 @@ package java.lang.module;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -157,39 +158,38 @@ public final class Configuration {
     }
 
     /**
-     * Returns the {@code ModuleReference} for the given named module or
-     * {@code null} if a module of the given name is not in this
+     * Returns an immutable set of the module references in this
      * configuration.
      */
-    public ModuleReference findReference(String name) {
+    public Set<ModuleReference> references() {
+        return resolution.references();
+    }
+
+    /**
+     * Returns the {@code ModuleReference} for the named module.
+     */
+    public Optional<ModuleReference> findReference(String name) {
         return resolution.findReference(name);
     }
 
     /**
-     * Returns the {@code ModuleDescriptor} for the given named module
-     * or {@code null} if a module of the given name is not in this
-     * configuration.
+     * Returns the {@code ModuleDescriptor} for the named module.
      *
-     * @apiNote It's not clear that this method is useful,
+     * @apiNote It's not clear that this method is useful.
      */
-    public ModuleDescriptor findDescriptor(String name) {
-        ModuleReference mref = findReference(name);
-        if (mref == null) {
-            return null;
-        } else {
-            return mref.descriptor();
-        }
+    public Optional<ModuleDescriptor> findDescriptor(String name) {
+        return findReference(name).map(ModuleReference::descriptor);
     }
 
     /**
-     * Returns an immutable set of the read dependences for the given module
+     * Returns an immutable set of the read dependences of the given module
      * descriptor.
      *
      * @throws IllegalArgumentException if the module descriptor is not in
      * this configuration.
      */
-    public Set<ModuleDescriptor> readDependences(ModuleDescriptor descriptor) {
-        Set<ModuleDescriptor> reads = resolution.readDependences(descriptor);
+    public Set<ModuleDescriptor> reads(ModuleDescriptor descriptor) {
+        Set<ModuleDescriptor> reads = resolution.reads(descriptor);
         if (reads == null) {
             throw new IllegalArgumentException(descriptor.name() +
                 " not in this configuration");
@@ -203,5 +203,5 @@ public final class Configuration {
                 .map(ModuleDescriptor::name)
                 .collect(Collectors.joining(", "));
     }
-}
 
+}

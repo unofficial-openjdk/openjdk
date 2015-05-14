@@ -71,6 +71,9 @@ final class Resolver {
         // maps name to module reference for modules in this resolution
         private final Map<String, ModuleReference> nameToReference;
 
+        // set of nameToReference.values()
+        private final Set<ModuleReference> references;
+
         // the readability graph
         private final Map<ModuleDescriptor, Set<ModuleDescriptor>> graph;
 
@@ -80,6 +83,8 @@ final class Resolver {
         {
             this.selected = Collections.unmodifiableSet(selected);
             this.nameToReference = Collections.unmodifiableMap(nameToReference);
+            Set<ModuleReference> refs = new HashSet<>(nameToReference.values());
+            this.references = Collections.unmodifiableSet(refs);
             this.graph = graph; // no need to make defensive copy
         }
 
@@ -87,11 +92,15 @@ final class Resolver {
             return selected;
         }
 
-        ModuleReference findReference(String name) {
-            return nameToReference.get(name);
+        Set<ModuleReference> references() {
+            return references;
         }
 
-        Set<ModuleDescriptor> readDependences(ModuleDescriptor descriptor) {
+        Optional<ModuleReference> findReference(String name) {
+            return Optional.ofNullable(nameToReference.get(name));
+        }
+
+        Set<ModuleDescriptor> reads(ModuleDescriptor descriptor) {
             Set<ModuleDescriptor> reads = graph.get(descriptor);
             if (reads == null) {
                 return null;

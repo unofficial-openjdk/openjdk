@@ -206,7 +206,7 @@ public class GenGraphs {
         cf.descriptors().forEach(md -> {
             String mn = md.name();
             builder.addNode(mn);
-            cf.readDependences(md).stream()
+            cf.reads(md).stream()
                     .map(d -> d.name())
                     .forEach(d -> builder.addEdge(mn, d));
         });

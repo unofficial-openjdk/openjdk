@@ -21,6 +21,7 @@
  * questions.
  */
 
+import java.util.stream.Collectors;
 import java.lang.module.Configuration;
 import static java.lang.module.Layer.*;
 import java.lang.module.ResolutionException;
@@ -28,6 +29,7 @@ import java.lang.module.ModuleFinder;
 import static java.lang.module.ModuleFinder.*;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Requires.Modifier;
+import java.lang.module.ModuleReference;
 
 import org.testng.annotations.Test;
 import static org.testng.Assert.*;
@@ -64,16 +66,21 @@ public class ConfigurationTest {
         assertTrue(cf.descriptors().contains(descriptor2));
         assertTrue(cf.descriptors().contains(descriptor3));
 
+        assertEquals(cf.references().stream()
+                     .map(ModuleReference::descriptor)
+                     .collect(Collectors.toSet()),
+                     cf.descriptors());
+
         // m1 reads m2
-        assertTrue(cf.readDependences(descriptor1).size() == 1);
-        assertTrue(cf.readDependences(descriptor1).contains(descriptor2));
+        assertTrue(cf.reads(descriptor1).size() == 1);
+        assertTrue(cf.reads(descriptor1).contains(descriptor2));
 
         // m2 reads m3
-        assertTrue(cf.readDependences(descriptor2).size() == 1);
-        assertTrue(cf.readDependences(descriptor2).contains(descriptor3));
+        assertTrue(cf.reads(descriptor2).size() == 1);
+        assertTrue(cf.reads(descriptor2).contains(descriptor3));
 
         // m3 reads nothing
-        assertTrue(cf.readDependences(descriptor3).size() == 0);
+        assertTrue(cf.reads(descriptor3).size() == 0);
     }
 
     /**
@@ -168,16 +175,16 @@ public class ConfigurationTest {
         assertTrue(cf.descriptors().contains(descriptor3));
 
         // m1 reads m2 and m3
-        assertTrue(cf.readDependences(descriptor1).size() == 2);
-        assertTrue(cf.readDependences(descriptor1).contains(descriptor2));
-        assertTrue(cf.readDependences(descriptor1).contains(descriptor3));
+        assertTrue(cf.reads(descriptor1).size() == 2);
+        assertTrue(cf.reads(descriptor1).contains(descriptor2));
+        assertTrue(cf.reads(descriptor1).contains(descriptor3));
 
         // m2 reads m3
-        assertTrue(cf.readDependences(descriptor2).size() == 1);
-        assertTrue(cf.readDependences(descriptor2).contains(descriptor3));
+        assertTrue(cf.reads(descriptor2).size() == 1);
+        assertTrue(cf.reads(descriptor2).contains(descriptor3));
 
         // m3 reads nothing
-        assertTrue(cf.readDependences(descriptor3).size() == 0);
+        assertTrue(cf.reads(descriptor3).size() == 0);
     }
 
     /**
@@ -214,10 +221,10 @@ public class ConfigurationTest {
         assertTrue(cf.descriptors().contains(descriptor1));
         assertTrue(cf.descriptors().contains(descriptor2));
 
-        assertTrue(cf.readDependences(descriptor1).size() == 1);
-        assertTrue(cf.readDependences(descriptor1).contains(descriptor2));
+        assertTrue(cf.reads(descriptor1).size() == 1);
+        assertTrue(cf.reads(descriptor1).contains(descriptor2));
 
-        assertTrue(cf.readDependences(descriptor2).size() == 0);
+        assertTrue(cf.reads(descriptor2).size() == 0);
 
         // bind services, should augment graph with m3
         cf = cf.bind();
@@ -227,13 +234,13 @@ public class ConfigurationTest {
         assertTrue(cf.descriptors().contains(descriptor2));
         assertTrue(cf.descriptors().contains(descriptor3));
 
-        assertTrue(cf.readDependences(descriptor1).size() == 1);
-        assertTrue(cf.readDependences(descriptor1).contains(descriptor2));
+        assertTrue(cf.reads(descriptor1).size() == 1);
+        assertTrue(cf.reads(descriptor1).contains(descriptor2));
 
-        assertTrue(cf.readDependences(descriptor2).size() == 0);
+        assertTrue(cf.reads(descriptor2).size() == 0);
 
-        assertTrue(cf.readDependences(descriptor3).size() == 1);
-        assertTrue(cf.readDependences(descriptor3).contains(descriptor1));
+        assertTrue(cf.reads(descriptor3).size() == 1);
+        assertTrue(cf.reads(descriptor3).contains(descriptor1));
     }
 
     /**
@@ -272,7 +279,7 @@ public class ConfigurationTest {
         Configuration cf;
         try {
             cf = Configuration.resolve(finder, bootLayer(), empty(), "m1");
-            assertTrue(cf.findDescriptor("m1") == descriptor1);
+            assertTrue(cf.findDescriptor("m1").get() == descriptor1);
             assertTrue(cf.descriptors().size() == 1);
         } catch (ResolutionException e) {
             throw new RuntimeException(e);
