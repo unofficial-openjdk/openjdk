@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -45,6 +45,6 @@ $JAVAC -XX:AddModuleExports=java.base/sun.misc -d mods/test `find $TESTSRC/src/t
 $JAVA -XX:AddModuleExports=java.base/sun.misc -cp mods/test jdk.test.UsesUnsafe
 
 # named module using sun.misc.Unsafe
-$JAVA -XX:AddModuleExports=java.base/sun.misc=test -mp mods -m test/jdk.test.UsesUnsafe
+$JAVA -XX:AddModuleExports=java.base/sun.misc -mp mods -m test/jdk.test.UsesUnsafe
 
 exit 0

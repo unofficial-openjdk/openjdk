@@ -32,6 +32,7 @@ import java.lang.module.Layer.ClassLoaderFinder;
 import java.lang.module.ModuleReference;
 import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleDescriptor;
+import java.lang.reflect.Module;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
@@ -44,6 +45,7 @@ import java.util.stream.Collectors;
 
 import sun.misc.BootLoader;
 import sun.misc.ModuleClassLoader;
+import sun.misc.Modules;
 import sun.misc.PerfCounter;
 import sun.misc.SharedSecrets;
 
@@ -90,14 +92,6 @@ public final class ModuleBootstrap {
             finder = ModuleFinder.concat(upgradeModulePath, finder);
         if (appModulePath != null)
             finder = ModuleFinder.concat(finder, appModulePath);
-
-        // if -XX:AddModuleRequires or -XX:AddModuleExports is specified then
-        // interpose on finder so that the requires/exports are updated
-        String moreRequires = System.getProperty("jdk.runtime.addModuleRequires");
-        String moreExports = System.getProperty("jdk.runtime.addModuleExports");
-        if (moreRequires != null || moreExports != null) {
-            finder = ReferenceInterposer.interpose(finder, moreRequires, moreExports);
-        }
 
         // Once the finder is created then we find the base module and define
         // it to the boot loader. We do this here so that resources in the
@@ -194,6 +188,12 @@ public final class ModuleBootstrap {
 
         // define modules to VM/runtime
         Layer bootLayer = Layer.create(cf, clf);
+
+        // if -XaddExports is specified then process the value to export
+        // additional API packages
+        propValue= System.getProperty("jdk.launcher.addexports");
+        if (propValue != null)
+            addMoreExports(bootLayer, propValue);
 
         // time to reify modules
         PerfCounters.bootLayerTime.addElapsedTimeFrom(t2);
@@ -300,6 +300,29 @@ public final class ModuleBootstrap {
             return ModuleFinder.of(paths);
         }
     }
+
+    /**
+     * Parse the value of -XaddExports into a sequence of $MODULE/$PACKAGE,
+     * updating each $MODULE to unconditionally export $PACKAGE.
+     */
+    private static void addMoreExports(Layer bootLayer, String moreExports) {
+        for (String expr: moreExports.split(",")) {
+            if (expr.length() > 0) {
+                String[] s = expr.split("/");
+                if (s.length != 2)
+                    fail("Unable to parse: " + expr);
+
+                String mn = s[0];
+                String pn = s[1];
+
+                Module module = bootLayer.findModule(mn);
+                if (module != null) {
+                    Modules.addExports(module, pn, null);
+                }
+            }
+        }
+    }
+
 
     /**
      * Throws a RuntimeException with the given message
