@@ -78,6 +78,7 @@ security.provider.tbd=SunJGSS
 security.provider.tbd=SunSASL
 security.provider.tbd=JdkSASL
 security.provider.tbd=XMLDSig
+security.provider.tbd=SunPCSC
 security.provider.tbd=JdkLDAP
 #ifdef windows
 security.provider.tbd=SunMSCAPI
