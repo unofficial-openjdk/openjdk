@@ -28,7 +28,6 @@ module java.desktop {
     requires public java.xml;
     requires java.logging;
     requires java.prefs;
-    requires jdk.charsets;
 
     exports java.applet;
     exports java.awt;

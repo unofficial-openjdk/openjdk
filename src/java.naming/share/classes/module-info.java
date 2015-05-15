@@ -39,5 +39,6 @@ module java.naming {
         jdk.naming.rmi;
     uses javax.naming.ldap.StartTlsResponse;
     uses javax.naming.spi.InitialContextFactory;
+    provides java.security.Provider with sun.security.provider.certpath.ldap.JdkLDAP;
 }
 
