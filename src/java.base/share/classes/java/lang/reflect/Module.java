@@ -37,6 +37,7 @@ import java.lang.module.ModuleDescriptor.Provides;
 import java.lang.module.Version;
 import java.net.URI;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -47,6 +48,7 @@ import java.util.WeakHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.stream.Stream;
 
 import jdk.internal.module.ServicesCatalog;
 import sun.misc.BootLoader;
@@ -207,11 +209,19 @@ public final class Module {
     /**
      * Returns an array of the package names of the packages in this module.
      *
-     * <p> The returned array contains an element for each package in the
-     * module when it was initially created. It may contain elements
-     * corresponding to packages added to the module after it was created
-     * (packages added to support dynamic proxy classes for example). A package
-     * name appears at most once in the returned array. </p>
+     * <p> For named modules, the returned array contains an element for each
+     * package in the module when it was initially created. It may contain
+     * elements corresponding to packages added to the module after it was
+     * created (packages added to support dynamic proxy classes for
+     * example). </p>
+     *
+     * <p> For unnamed modules, this method is the equivalent of invoking
+     * the {@link ClassLoader#getPackages() getPackages} method of this
+     * module's class loader and returning the array of package names.
+     * The array of packages will contain the empty String if the class
+     * loader has defined types in the unnamed package. </p>
+     *
+     * <p> A package name appears at most once in the returned array. </p>
      *
      * @apiNote This method returns an array rather than a {@code Set} for
      * consistency with other {@code java.lang.reflect} types.
@@ -222,8 +232,16 @@ public final class Module {
         if (isNamed()) {
             return packages.toArray(new String[0]);
         } else {
-            // TBD: need to invoke protected loader.getPackages();
-            return new String[0];
+            // unnamed module
+            Stream<Package> packages;
+            if (loader == null) {
+                packages = BootLoader.packages();
+            } else {
+                Package[] pkgs
+                    = SharedSecrets.getJavaLangAccess().getPackages(loader);
+                packages = Arrays.stream(pkgs);
+            }
+            return packages.map(Package::getName).toArray(String[]::new);
         }
     }
 

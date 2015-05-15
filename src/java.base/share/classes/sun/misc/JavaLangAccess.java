@@ -160,6 +160,11 @@ public interface JavaLangAccess {
         throws IOException;
 
     /**
+     * Returns the Packages for the given class loader.
+     */
+    Package[] getPackages(ClassLoader cl);
+
+    /**
      * Invokes Long.formatUnsignedLong(long val, int shift, char[] buf, int offset, int len)
      */
     void formatUnsignedLong(long val, int shift, char[] buf, int offset, int len);

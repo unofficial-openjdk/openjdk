@@ -39,19 +39,6 @@ import static org.testng.Assert.*;
 
 public class ModuleTest {
 
-    @Test
-    public void testMe() {
-        assertFalse(ModuleTest.class.getModule().isNamed());
-    }
-
-    @Test
-    public void testLoader() {
-        Module thisModule = ModuleTest.class.getModule();
-        ClassLoader thisLoader = ModuleTest.class.getClassLoader();
-        assertTrue(thisLoader == thisModule.getClassLoader());
-        assertTrue(thisLoader.getUnnamedModule() == thisModule);
-    }
-
     /**
      * Tests that the given module reads all modules in the boot Layer.
      */
@@ -66,7 +53,25 @@ public class ModuleTest {
     }
 
     @Test
-    public void testUnnamedModule() {
+    public void testThisModule() {
+        Module thisModule = ModuleTest.class.getModule();
+
+        assertFalse(thisModule.isNamed());
+        assertTrue(thisModule.getName() == null);
+        assertTrue(thisModule.getDescriptor() == null);
+
+        ClassLoader thisLoader = ModuleTest.class.getClassLoader();
+        assertTrue(thisLoader == thisModule.getClassLoader());
+        assertTrue(thisLoader.getUnnamedModule() == thisModule);
+
+        assertTrue(thisModule.canRead(null));
+        testReadsAllBootModules(thisModule);
+
+        assertTrue(contains(thisModule.getPackages(), ""));
+    }
+
+    @Test
+    public void testUnnamedModules() {
         ClassLoader loader1 = ClassLoader.getSystemClassLoader();
         ClassLoader loader2 = loader1.getParent();
 
