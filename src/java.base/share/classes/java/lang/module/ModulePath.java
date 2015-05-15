@@ -195,12 +195,12 @@ class ModulePath implements ModuleFinder {
             if (ze == null) {
                 throw new IOException(MODULE_INFO + " is missing: " + file);
             }
-            // jmod URI - syntax not defined yet
-            URI location = URI.create("jmod:" + file.toUri() + "!/");
             ModuleDescriptor md;
             try (InputStream in = zf.getInputStream(ze)) {
                 md = ModuleDescriptor.read(in, () -> jmodPackages(zf));
             }
+            // jmod URI - syntax not defined yet
+            URI location = URI.create("jmod:" + file.toUri() + "!/");
             HashSupplier hasher = (algorithm) -> Hasher.generate(file, algorithm);
             return ModuleReferences.newModuleReference(md, location, hasher);
         }
@@ -216,21 +216,61 @@ class ModulePath implements ModuleFinder {
     }
 
     /**
+     * Derive a module name from the given JAR file name.
+     *
+     * @apiNote This needs to move to somewhere where it can be used by tools,
+     * maybe even a standard API if automatic modules are a Java SE feature.
+     */
+    private String deriveModuleNameFromJarName(String name) {
+        // drop .jar
+        name = name.substring(0, name.length()-4);
+
+        // drop -${VERSION}
+        int index = name.lastIndexOf('-');
+        if (index > 0) {
+            String tail = name.substring(index+1);
+            if (tail.matches("^(\\d+\\.)?(\\d+\\.)?(\\*|\\d+)$")) {
+                name = name.substring(0, index);
+            }
+        }
+
+        // drop all non-alphanumeric chars
+        return name.replaceAll("[^A-Za-z0-9]", "");
+    }
+
+    /**
      * Returns a {@code ModuleReference} to represent a module jar on the
      * file system.
      */
     private ModuleReference readJar(Path file) throws IOException {
         try (JarFile jf = new JarFile(file.toString())) {
+
+            ModuleDescriptor md;
             JarEntry entry = jf.getJarEntry(MODULE_INFO);
             if (entry == null) {
-                // not a modular jar
-                return null;
+
+                // no module-info.class so treat as automatic module
+                // Builder throws IAE if module name is empty
+                String fn = file.getFileName().toString();
+                String mn = deriveModuleNameFromJarName(fn);
+                ModuleDescriptor.Builder builder
+                    = new ModuleDescriptor.Builder(mn, true).requires("java.base");
+
+                // all packages are exported
+                jarPackages(jf).stream().forEach(p -> builder.exports(p));
+
+                // TBD: Need to scan META-INF/services for any configuration files
+
+                md = builder.build();
+
+            } else {
+                md = ModuleDescriptor.read(jf.getInputStream(entry),
+                                           () -> jarPackages(jf));
             }
-            // jar URI
+
             URI location = URI.create("jar:" + file.toUri() + "!/");
-            ModuleDescriptor md = ModuleDescriptor.read(jf.getInputStream(entry),
-                                                        () -> jarPackages(jf));
             HashSupplier hasher = (algorithm) -> Hasher.generate(file, algorithm);
+
             return ModuleReferences.newModuleReference(md, location, hasher);
         }
     }
@@ -254,14 +294,14 @@ class ModulePath implements ModuleFinder {
      * on the file system.
      */
     private ModuleReference readExploded(Path dir) throws IOException {
-        Path file = dir.resolve(MODULE_INFO);
-        if (Files.notExists((file))) {
+        Path mi = dir.resolve(MODULE_INFO);
+        if (Files.notExists(mi)) {
             // no module-info in directory
             return null;
         }
         URI location = dir.toUri();
         ModuleDescriptor md;
-        try (InputStream in = Files.newInputStream(file)) {
+        try (InputStream in = Files.newInputStream(mi)) {
             md = ModuleDescriptor.read(new BufferedInputStream(in),
                                        () -> explodedPackages(dir));
         }

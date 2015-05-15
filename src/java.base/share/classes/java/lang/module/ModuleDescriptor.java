@@ -264,6 +264,9 @@ public class ModuleDescriptor
     private final Set<String> uses;
     private final Map<String, Provides> provides;
 
+    // Indicates if synthesised for a JAR file found on the module path
+    private final boolean automatic;
+
     // "Extended" information, added post-compilation
     private final Optional<Version> version;
     private final Optional<String> mainClass;
@@ -272,6 +275,7 @@ public class ModuleDescriptor
     private final Optional<DependencyHashes> hashes;
 
     private ModuleDescriptor(String name,
+                             boolean automatic,
                              Map<String, Requires> requires,
                              Set<String> uses,
                              Map<String, Exports> exports,
@@ -283,6 +287,7 @@ public class ModuleDescriptor
     {
 
         this.name = requireModuleName(name);
+        this.automatic = automatic;
 
         Set<Requires> rqs = new HashSet<>(requires.values());
         assert (rqs.stream().map(Requires::name).sorted().distinct().count()
@@ -321,6 +326,13 @@ public class ModuleDescriptor
      */
     public String name() {
         return name;
+    }
+
+    /**
+     * <p> Indicates if this is an automatic module. </p>
+     */
+    /* package */ boolean isAutomatic() {
+        return automatic;
     }
 
     /**
@@ -404,10 +416,13 @@ public class ModuleDescriptor
 
     /**
      * A builder used for building {@link ModuleDescriptor} objects.
+     *
+     * @apiNote Should Builder be final?
      */
     public static class Builder {
 
-        String name;
+        final String name;
+        final boolean automatic;
         final Map<String, Requires> requires = new HashMap<>();
         final Set<String> uses = new HashSet<>();
         final Map<String, Exports> exports = new HashMap<>();
@@ -421,7 +436,12 @@ public class ModuleDescriptor
          * Initializes a new builder.
          */
         public Builder(String name) {
+            this(name, false);
+        }
+
+        /* package */ Builder(String name, boolean automatic) {
             this.name = name;
+            this.automatic = automatic;
         }
 
         /**
@@ -539,6 +559,7 @@ public class ModuleDescriptor
         public ModuleDescriptor build() {
             assert name != null;
             return new ModuleDescriptor(name,
+                                        automatic,
                                         requires,
                                         uses,
                                         exports,
@@ -571,6 +592,7 @@ public class ModuleDescriptor
             return false;
         ModuleDescriptor that = (ModuleDescriptor)ob;
         return (name.equals(that.name)
+                && automatic == that.automatic
                 && requires.equals(that.requires)
                 && uses.equals(that.uses)
                 && exports.equals(that.exports)
@@ -588,6 +610,7 @@ public class ModuleDescriptor
         int hc = hash;
         if (hc == 0) {
             hc = name.hashCode();
+            hc = hc * 43 + Boolean.hashCode(automatic);
             hc = hc * 43 + requires.hashCode();
             hc = hc * 43 + uses.hashCode();
             hc = hc * 43 + exports.hashCode();

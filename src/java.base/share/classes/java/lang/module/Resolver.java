@@ -40,6 +40,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import jdk.internal.module.Hasher.DependencyHashes;
 
@@ -204,13 +205,16 @@ final class Resolver {
     private Set<ModuleDescriptor> resolve(Deque<ModuleDescriptor> q) {
         Set<ModuleDescriptor> newlySelected = new HashSet<>();
 
+        // true if all modules are selected
+        boolean allModulesSelected = false;
+
         while (!q.isEmpty()) {
             ModuleDescriptor descriptor = q.poll();
             assert nameToReference.containsKey(descriptor.name());
             selected.add(descriptor);
 
             // process dependences
-            for (ModuleDescriptor.Requires requires: descriptor.requires()) {
+            for (ModuleDescriptor.Requires requires : descriptor.requires()) {
                 String dn = requires.name();
 
                 // before finder
@@ -243,6 +247,28 @@ final class Resolver {
                     q.offer(other);
                 }
             }
+
+            // If an automatic module is encountered then its dependences are
+            // not known so this requires resolving all modules. We do this at
+            // most once.
+            if (descriptor.isAutomatic() && !allModulesSelected) {
+
+                findAll().forEach(mref -> {
+                    ModuleDescriptor other = mref.descriptor();
+                    if (!selected.contains(other) && !newlySelected.contains(other)) {
+
+                        trace("Module %s located (%s), implicitly required by %s",
+                                other.name(), mref.location(), descriptor.name());
+
+                        newlySelected.add(other);
+                        nameToReference.put(other.name(), mref);
+                        q.offer(other);
+                    }
+                });
+
+                allModulesSelected = true;
+            }
+
         }
 
         return newlySelected;
@@ -257,22 +283,13 @@ final class Resolver {
         // Scan the finders for all available service provider modules. As java.base
         // uses services then all finders will need to be scanned anyway.
         Map<String, Set<ModuleReference>> availableProviders = new HashMap<>();
-        for (ModuleReference mref : findAll(beforeFinder)) {
+        findAll().forEach(mref -> {
             ModuleDescriptor descriptor = mref.descriptor();
             if (!descriptor.provides().isEmpty()) {
                 descriptor.provides().keySet().forEach(s ->
                     availableProviders.computeIfAbsent(s, k -> new HashSet<>()).add(mref));
             }
-        }
-        for (ModuleReference mref : findAll(afterFinder)) {
-            ModuleDescriptor descriptor = mref.descriptor();
-            // the parent layer may hide service providers from afterFinder
-            if (!descriptor.provides().isEmpty() && layer.findModule(descriptor.name()) == null) {
-                descriptor.provides().keySet().forEach(s ->
-                    availableProviders.computeIfAbsent(s, k -> new HashSet<>()).add(mref));
-            }
-        }
-
+        });
 
         // create the visit stack
         Deque<ModuleDescriptor> q = new ArrayDeque<>();
@@ -531,6 +548,13 @@ final class Resolver {
 
 
     /**
+     * Returns true if a module of the given module's name is in a parent Layer
+     */
+    private boolean inParentLayer(ModuleReference mref) {
+        return layer.findModule(mref.descriptor().name()) != null;
+    }
+
+    /**
      * Invokes the finder's find method to find the given module.
      */
     private static ModuleReference find(ModuleFinder finder, String mn) {
@@ -546,9 +570,13 @@ final class Resolver {
     /**
      * Invokes the finder's allModules to find all modules.
      */
-    private static Set<ModuleReference> findAll(ModuleFinder finder) {
+    private Stream<ModuleReference> findAll() {
         try {
-            return finder.findAll();
+            Stream<ModuleReference> s1
+                = beforeFinder.findAll().stream();
+            Stream<ModuleReference> s2
+                = afterFinder.findAll().stream().filter(m -> !inParentLayer(m));
+            return Stream.concat(s1, s2);
         } catch (UncheckedIOException e) {
             throw new ResolutionException(e.getCause());
         } catch (RuntimeException | Error e) {

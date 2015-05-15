@@ -67,25 +67,46 @@ public class GenerateBreakIteratorData {
         CharacterCategory.makeCategoryMap(unicodeData);
 
         /* Generate files */
-        generateFiles();
+        try {
+            generateFiles();
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.exit(1);
+        }
+    }
+
+    private static String localizedBundleName(String pkg, String clazz) {
+        if (language.length() > 0) {
+            return pkg + '.' + language + '.' + clazz + '_' + language;
+        } else {
+            return pkg + '.' + clazz;
+        }
     }
 
     /**
      * Generate data files whose names are included in
      * sun.text.resources.BreakIteratorInfo+<localeName>
      */
-    private static void generateFiles() {
+    private static void generateFiles() throws Exception {
         String[] classNames;
         ResourceBundle rules, info;
 
-        info =  ResourceBundle.getBundle("sun.text.resources.BreakIteratorInfo",
-                                         new Locale(language, country, valiant),
-                                         BreakIteratorRBControl.INSTANCE);
+        String languageSuffix = (language.length() > 0 ? '_' + language : "");
+
+        info = (ResourceBundle) Class.forName(
+            localizedBundleName("sun.text.resources", "BreakIteratorInfo")).newInstance();
+
+//        info =  ResourceBundle.getBundle("sun.text.resources.BreakIteratorInfo",
+//                                         new Locale(language, country, valiant),
+//                                         BreakIteratorRBControl.INSTANCE);
         classNames = info.getStringArray("BreakIteratorClasses");
 
-        rules = ResourceBundle.getBundle("sun.text.resources.BreakIteratorRules",
-                                         new Locale(language, country, valiant),
-                                         BreakIteratorRBControl.INSTANCE);
+        rules = (ResourceBundle) Class.forName(
+            localizedBundleName("sun.text.resources", "BreakIteratorRules")).newInstance();
+
+//        rules = ResourceBundle.getBundle("sun.text.resources.BreakIteratorRules",
+//                                         new Locale(language, country, valiant),
+//                                         BreakIteratorRBControl.INSTANCE);
 
 
         if (info.containsKey("CharacterData")) {
