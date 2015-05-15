@@ -111,6 +111,7 @@ class Universe: AllStatic {
   friend jint  universe_init();
   friend void  universe2_init();
   friend bool  universe_post_init();
+  friend void  universe_post_module_init();
 
  private:
   // Known classes in the VM
@@ -201,6 +202,7 @@ class Universe: AllStatic {
 
   // Initialization
   static bool _bootstrapping;                         // true during genesis
+  static bool _module_initialized;                    // true after call_initPhase2 called
   static bool _fully_initialized;                     // true after universe_init and initialize_vtables called
 
   // the array of preallocated errors with backtraces
@@ -421,6 +423,7 @@ class Universe: AllStatic {
 
   // Testers
   static bool is_bootstrapping()                      { return _bootstrapping; }
+  static bool is_module_initialized()                 { return _module_initialized; }
   static bool is_fully_initialized()                  { return _fully_initialized; }
 
   static inline bool element_type_should_be_aligned(BasicType type);
