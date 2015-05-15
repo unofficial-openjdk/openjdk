@@ -23,24 +23,38 @@
 # questions.
 #
 
-# Default target declared first
+# This must be the first rule
 default: all
 
 include $(SPEC)
 include MakeBase.gmk
+include JavaCompilation.gmk
+include SetupJavaCompilers.gmk
 
-JDEPS_MODULES_XML := $(JDK_OUTPUTDIR)/modules/jdk.dev/com/sun/tools/jdeps/resources/jdeps-modules.xml
+################################################################################
 
-#
-# Verify access across module boundaries
-#
-checkdeps:
-	$(ECHO) "Checking dependencies across JDK modules"
-	$(JAVA) $(INTERIM_LANGTOOLS_ARGS) \
-		-Djdeps.modules.xml=$(JDEPS_MODULES_XML) \
-		com.sun.tools.jdeps.Main \
-		-verify:access -mp $(JDK_OUTPUTDIR)/modules
+GENMODULES_DIR := $(SUPPORT_OUTPUTDIR)/genmodules
+MODULEINFO_DIR := $(GENMODULES_DIR)/src
 
-all: checkdeps
+ALL_MODULES := $(filter-out modules.config, $(notdir $(wildcard $(MODULEINFO_DIR)/*)))
 
-.PHONY: all
+# This macro sets up compilation of a module
+# Param 1 - module name
+define SetupModuleCompilation
+
+  $$(eval $$(call SetupJavaCompilation,$1-module-info, \
+      SETUP := GENERATE_USINGJDKBYTECODE, \
+      SRC := $(MODULEINFO_DIR)/$1, \
+      BIN := $(JDK_OUTPUTDIR)/modules/$1, \
+      DISABLE_SJAVAC := true))
+
+  $1: $$($1-module-info)
+
+endef
+
+# Setup compilation for each module
+$(foreach m,$(ALL_MODULES),$(eval $(call SetupModuleCompilation,$m)))
+
+################################################################################
+
+all: $(ALL_MODULES)
