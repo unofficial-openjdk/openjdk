@@ -39,7 +39,7 @@ import java.util.stream.Stream;
  *
  * <p> An important property is that a {@code ModuleFinder} admits to
  * at most one module with a given name. A {@code ModuleFinder} that
- * finds modules in sequence of directories for example, will locate the first
+ * finds modules in a sequence of directories for example, will locate the first
  * occurrence of a module and ignores other modules of that name that appear in
  * directories later in the sequence. </p>
  *

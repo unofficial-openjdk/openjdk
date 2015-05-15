@@ -45,7 +45,7 @@ import java.util.stream.Collectors;
  *         ModuleFinder.of(dir1, dir2, dir3);
  *
  *     Configuration cf =
- *         Configuration.resolve(ModuleFinder.nullFinder(),
+ *         Configuration.resolve(ModuleFinder.empty(),
  *                               Layer.bootLayer(),
  *                               finder,
  *                               "myapp")

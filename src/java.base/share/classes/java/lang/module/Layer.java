@@ -26,6 +26,7 @@
 package java.lang.module;
 
 import java.lang.reflect.Module;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
@@ -34,6 +35,7 @@ import java.util.Set;
 
 import sun.misc.JavaLangModuleAccess;
 import sun.misc.JavaLangReflectAccess;
+import sun.misc.Modules;
 import sun.misc.SharedSecrets;
 
 /**
@@ -48,7 +50,7 @@ import sun.misc.SharedSecrets;
  *         ModuleFinder.of(dir1, dir2, dir3);
  *
  *     Configuration cf =
- *         Configuration.resolve(ModuleFinder.nullFinder(),
+ *         Configuration.resolve(ModuleFinder.empty(),
  *                               Layer.bootLayer(),
  *                               finder,
  *                               "myapp");
@@ -114,7 +116,38 @@ public final class Layer {
     public static Layer create(Configuration cf, ClassLoaderFinder clf) {
         Objects.requireNonNull(cf);
         Objects.requireNonNull(clf);
-        return new Layer(cf, reflectAccess.defineModules(cf, clf));
+        Layer layer = new Layer(cf, reflectAccess.defineModules(cf, clf));
+
+        // Update the readability graph so that every automatic module in the
+        // newly created Layer reads every other module.
+        // We do this here for now but it may move.
+        cf.descriptors().stream()
+                .filter(ModuleDescriptor::isAutomatic)
+                .map(ModuleDescriptor::name)
+                .map(layer::findModule)
+                .forEach(m -> layer.fixupAutomaticModule(m));
+
+        return layer;
+    }
+
+    /**
+     * Changes an automatic module to be a "loose" module, and adds a
+     * read edge to every module in the Layer (and all parent Layers).
+     */
+    private void fixupAutomaticModule(Module autoModule) {
+        assert autoModule.getDescriptor().isAutomatic();
+
+        // automatic modules read all unnamed modules
+        // (use Modules.addReads to skip permission check)
+        Modules.addReads(autoModule, null);
+
+        // automatic modules read all modules in this, and parent, layers
+        Layer l = this;
+        do {
+            Collection<Module> modules = l.nameToModule.values();
+            modules.forEach(m -> Modules.addReads(autoModule, m));
+            l = l.parent();
+        } while (l != Layer.emptyLayer());
     }
 
     /**
