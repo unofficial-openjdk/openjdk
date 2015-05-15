@@ -69,14 +69,4 @@ class BreakIteratorRBControl extends ResourceBundle.Control {
         }
         return super.toBundleName(newBaseName, locale);
     }
-
-    /**
-     * Override to change the caller class to a class in the unnamed module.
-     */
-    @Override
-    public ResourceBundle newBundle(String baseName, Locale locale, String format,
-                                        ClassLoader loader, boolean reload)
-            throws IllegalAccessException, InstantiationException, IOException {
-        return super.newBundle(baseName, locale, format, loader, reload);
-    }
 }
