@@ -169,7 +169,7 @@ public class ModuleDescriptor
 
     }
 
-
+
 
     /**
      * <p> A module export, may be qualified or unqualified. </p>
@@ -233,7 +233,7 @@ public class ModuleDescriptor
 
     }
 
-
+
 
     /**
      * Service providers
@@ -255,7 +255,7 @@ public class ModuleDescriptor
 
     }
 
-
+
 
     // From module declarations
     private final String name;
