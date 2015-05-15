@@ -24,6 +24,7 @@
 package com.sun.org.apache.xalan.internal.xsltc.trax;
 
 import java.io.IOException;
+import java.io.NotSerializableException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.ObjectStreamField;
@@ -31,7 +32,6 @@ import java.io.Serializable;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.HashMap;
-import java.util.Hashtable;
 import java.util.Map;
 import java.util.Properties;
 
@@ -91,7 +91,7 @@ public final class TemplatesImpl implements Templates, Serializable {
     /**
      * Contains the list of auxiliary class definitions.
      */
-    private Map<String, Class<?>> _auxClasses = null;
+    private transient Map<String, Class<?>> _auxClasses = null;
 
     /**
      * Output properties of this translet.
@@ -142,7 +142,6 @@ public final class TemplatesImpl implements Templates, Serializable {
      * @serialField _bytecodes byte[][] Class definition
      * @serialField _class Class[] The translet class definition(s).
      * @serialField _transletIndex int The index of the main translet class
-     * @serialField _auxClasses Hashtable The list of auxiliary class definitions.
      * @serialField _outputProperties Properties Output properties of this translet.
      * @serialField _indentNumber int Number of spaces to add for output indentation.
      */
@@ -152,7 +151,6 @@ public final class TemplatesImpl implements Templates, Serializable {
             new ObjectStreamField("_bytecodes", byte[][].class),
             new ObjectStreamField("_class", Class[].class),
             new ObjectStreamField("_transletIndex", int.class),
-            new ObjectStreamField("_auxClasses", Hashtable.class),
             new ObjectStreamField("_outputProperties", Properties.class),
             new ObjectStreamField("_indentNumber", int.class),
         };
@@ -203,6 +201,7 @@ public final class TemplatesImpl implements Templates, Serializable {
      *  if yes then we need to deserialize the URIResolver
      *  Fix for bugzilla bug 22438
      */
+    @SuppressWarnings("unchecked")
     private void  readObject(ObjectInputStream is)
       throws IOException, ClassNotFoundException
     {
@@ -222,12 +221,8 @@ public final class TemplatesImpl implements Templates, Serializable {
         _class = (Class[])gf.get("_class", null);
         _transletIndex = gf.get("_transletIndex", -1);
 
-        Hashtable<String, Class<?>> aux = (Hashtable<String, Class<?>>)gf.get("_auxClasses", null);
         _outputProperties = (Properties)gf.get("_outputProperties", null);
         _indentNumber = gf.get("_indentNumber", 0);
-
-        //convert Hashtable back to HashMap
-        if (aux != null) _auxClasses = new HashMap<String, Class<?>>(aux);
 
         if (is.readBoolean()) {
             _uriResolver = (URIResolver) is.readObject();
@@ -244,8 +239,11 @@ public final class TemplatesImpl implements Templates, Serializable {
      */
     private void writeObject(ObjectOutputStream os)
         throws IOException, ClassNotFoundException {
-        // Convert Maps to Hashtables
-        Hashtable<String, Class<?>> aux = (_auxClasses == null)? null : new Hashtable<String, Class<?>>(_auxClasses);
+        if (_auxClasses != null) {
+            //throw with the same message as when Hashtable was used for compatibility.
+            throw new NotSerializableException(
+                    "com.sun.org.apache.xalan.internal.xsltc.runtime.Hashtable");
+        }
 
         // Write serialized fields
         ObjectOutputStream.PutField pf = os.putFields();
@@ -253,7 +251,6 @@ public final class TemplatesImpl implements Templates, Serializable {
         pf.put("_bytecodes", _bytecodes);
         pf.put("_class", _class);
         pf.put("_transletIndex", _transletIndex);
-        pf.put("_auxClasses", aux);
         pf.put("_outputProperties", _outputProperties);
         pf.put("_indentNumber", _indentNumber);
         os.writeFields();
