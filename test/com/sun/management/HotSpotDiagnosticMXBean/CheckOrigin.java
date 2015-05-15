@@ -25,6 +25,7 @@
  * @test
  * @bug 8028994
  * @author Staffan Larsen
+ * @modules jdk.attach/sun.tools.attach
  * @library /lib/testlibrary
  * @modules jdk.attach/sun.tools.attach
  *          jdk.management
@@ -61,6 +62,7 @@ public class CheckOrigin {
 
             ProcessBuilder pb = ProcessTools.
                 createJavaProcessBuilder(
+                    "-XX:AddModuleExports=jdk.attach/sun.tools.attach",
                     "-XX:+UseConcMarkSweepGC",  // this will cause UseParNewGC to be FLAG_SET_ERGO
                     "-XX:+PrintGCDetails",
                     "-XX:Flags=" + flagsFile.getAbsolutePath(),

@@ -29,6 +29,11 @@
  * @author Peter Jones
  *
  * @library ../../testlibrary
+ * @modules java.base/sun.nio.ch
+ *          java.rmi/sun.rmi.registry
+ *          java.rmi/sun.rmi.server
+ *          java.rmi/sun.rmi.transport
+ *          java.rmi/sun.rmi.transport.tcp
  * @build TestLibrary RMID ActivationLibrary
  * @run main/othervm/timeout=240 InheritedChannelNotServerSocket
  */
@@ -99,9 +104,9 @@ public class InheritedChannelNotServerSocket {
             RMID.removeLog();
             rmid = RMID.createRMID(System.out, System.err, true, true,
                                    TestLibrary.INHERITEDCHANNELNOTSERVERSOCKET_ACTIVATION_PORT);
-            rmid.addOptions(new String[]{
-                "-Djava.nio.channels.spi.SelectorProvider=" +
-                "InheritedChannelNotServerSocket$SP"});
+            rmid.addOptions(
+                "-XX:AddModuleExports=java.base/sun.nio.ch",
+                "-Djava.nio.channels.spi.SelectorProvider=InheritedChannelNotServerSocket$SP");
             rmid.start();
 
             /*

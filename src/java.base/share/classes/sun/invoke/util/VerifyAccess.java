@@ -27,6 +27,7 @@ package sun.invoke.util;
 
 import java.lang.reflect.Modifier;
 import static java.lang.reflect.Modifier.*;
+import java.lang.reflect.Module;
 import sun.reflect.Reflection;
 
 /**
@@ -37,6 +38,7 @@ public class VerifyAccess {
 
     private VerifyAccess() { }  // cannot instantiate
 
+    private static final int MODULE_ALLOWED = java.lang.invoke.MethodHandles.Lookup.MODULE;
     private static final int PACKAGE_ONLY = 0;
     private static final int PACKAGE_ALLOWED = java.lang.invoke.MethodHandles.Lookup.PACKAGE;
     private static final int PROTECTED_OR_PACKAGE_ALLOWED = (PACKAGE_ALLOWED|PROTECTED);
@@ -89,7 +91,7 @@ public class VerifyAccess {
                                              int      allowedModes) {
         if (allowedModes == 0)  return false;
         assert((allowedModes & PUBLIC) != 0 &&
-               (allowedModes & ~(ALL_ACCESS_MODES|PACKAGE_ALLOWED)) == 0);
+               (allowedModes & ~(ALL_ACCESS_MODES|PACKAGE_ALLOWED|MODULE_ALLOWED)) == 0);
         // The symbolic reference class (refc) must always be fully verified.
         if (!isClassAccessible(refc, lookupClass, allowedModes)) {
             return false;
@@ -158,7 +160,9 @@ public class VerifyAccess {
      * <h3>JVM Specification, 5.4.4 "Access Control"</h3>
      * A class or interface C is accessible to a class or interface D
      * if and only if either of the following conditions are true:<ul>
-     * <li>C is public.
+     * <li>C is public and in the same module as D.
+     * <li>D is in a module that reads the module containing C, C is public and in a
+     * package that is exported to the module that contains D.
      * <li>C and D are members of the same runtime package.
      * </ul>
      * @param refc the symbolic reference class to which access is being checked (C)
@@ -168,10 +172,24 @@ public class VerifyAccess {
                                             int allowedModes) {
         if (allowedModes == 0)  return false;
         assert((allowedModes & PUBLIC) != 0 &&
-               (allowedModes & ~(ALL_ACCESS_MODES|PACKAGE_ALLOWED)) == 0);
+               (allowedModes & ~(ALL_ACCESS_MODES|PACKAGE_ALLOWED|MODULE_ALLOWED)) == 0);
         int mods = getClassModifiers(refc);
-        if (isPublic(mods))
-            return true;
+        if (isPublic(mods)) {
+            // module access
+            if ((allowedModes & MODULE_ALLOWED) != 0)
+                return Reflection.verifyModuleAccess(lookupClass, refc);
+
+            // no module access, need to check:
+            // 1. lookupClass in module that reads module contain refc
+            // 2. refc is in an exported package
+            Module lookupModule = lookupClass.getModule();
+            Module refModule = refc.getModule();
+            if (!lookupModule.canRead(refModule))
+                return false;
+
+            // check the package is exported to everyone
+            return refModule.isExported(getPackageName(refc), null);
+        }
         if ((allowedModes & PACKAGE_ALLOWED) != 0 &&
             isSamePackage(lookupClass, refc))
             return true;
@@ -219,6 +237,16 @@ public class VerifyAccess {
     }
 
     /**
+     * Tests if two classes are in the same module.
+     * @param class1 a class
+     * @param class2 another class
+     * @return whether they are in the same module
+     */
+    public static boolean isSameModule(Class<?> class1, Class<?> class2) {
+        return class1.getModule() == class2.getModule();
+    }
+
+    /**
      * Test if two classes have the same class loader and package qualifier.
      * @param class1 a class
      * @param class2 another class
@@ -244,11 +272,14 @@ public class VerifyAccess {
     /** Return the package name for this class.
      */
     public static String getPackageName(Class<?> cls) {
-        assert(!cls.isArray());
-        String name = cls.getName();
-        int dot = name.lastIndexOf('.');
-        if (dot < 0)  return "";
-        return name.substring(0, dot);
+        if (cls.isArray()) {
+            return getPackageName(cls.getComponentType());
+        } else {
+            String name = cls.getName();
+            int dot = name.lastIndexOf('.');
+            if (dot < 0) return "";
+            return name.substring(0, dot);
+        }
     }
 
     /**

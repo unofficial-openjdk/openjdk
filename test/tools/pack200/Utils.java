@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -101,6 +101,7 @@ class Utils {
 
         compiler("-d",
                 XCLASSES.getName(),
+                "-XX:AddModuleExports=jdk.compiler/com.sun.tools.classfile",
                 "@" + tmpFile.getAbsolutePath());
 
         jar("cvfe",
@@ -137,6 +138,7 @@ class Utils {
         init();
         List<String> cmds = new ArrayList<String>();
         cmds.add(getJavaCmd());
+        cmds.add("-XX:AddModuleExports=jdk.compiler/com.sun.tools.classfile");
         cmds.add("-cp");
         cmds.add(VerifierJar.getName());
         cmds.add("sun.tools.pack.verify.Main");

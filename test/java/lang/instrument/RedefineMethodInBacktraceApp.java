@@ -101,6 +101,8 @@ public class RedefineMethodInBacktraceApp {
             System.out.println(ti);
         }
 
+        MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
+        ObjectName name = new ObjectName("com.sun.management:type=DiagnosticCommand");
         String[] threadPrintArgs = {};
         Object[] dcmdArgs = {threadPrintArgs};
         String[] signature = {String[].class.getName()};

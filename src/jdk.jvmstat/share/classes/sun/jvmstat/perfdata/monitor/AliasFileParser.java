@@ -45,12 +45,12 @@ public class AliasFileParser {
     // 8028357 removed old, inefficient debug logging
 
     // other variables
-    private URL inputfile;
+    private InputStream input;
     private StreamTokenizer st;
     private Token currentToken;
 
-    AliasFileParser(URL inputfile) {
-        this.inputfile = inputfile;
+    AliasFileParser(InputStream input) {
+        this.input = input;
     }
 
     // value class to hold StreamTokenizer token values
@@ -109,12 +109,7 @@ public class AliasFileParser {
      */
     public void parse(Map<String, ArrayList<String>> map) throws SyntaxException, IOException {
 
-        if (inputfile == null) {
-            return;
-        }
-
-        BufferedReader r = new BufferedReader(
-                new InputStreamReader(inputfile.openStream()));
+        BufferedReader r = new BufferedReader(new InputStreamReader(input));
         st = new StreamTokenizer(r);
 
         // allow both forms of commenting styles

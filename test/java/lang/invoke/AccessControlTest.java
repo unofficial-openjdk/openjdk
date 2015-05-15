@@ -33,6 +33,7 @@ package test.java.lang.invoke;
 
 import java.lang.invoke.*;
 import java.lang.reflect.*;
+import java.lang.reflect.Modifier;
 import java.util.*;
 import org.testng.*;
 import org.testng.annotations.*;
@@ -119,11 +120,13 @@ public class AccessControlTest {
                 suffix = "/noaccess";
             else if (lookupModes == PUBLIC)
                 suffix = "/public";
-            else if (lookupModes == (PUBLIC|PACKAGE))
+            else if (lookupModes == (PUBLIC|MODULE))
+                suffix = "/module";
+            else if (lookupModes == (PUBLIC|MODULE|PACKAGE))
                 suffix = "/package";
-            else if (lookupModes == (PUBLIC|PACKAGE|PRIVATE))
+            else if (lookupModes == (PUBLIC|MODULE|PACKAGE|PRIVATE))
                 suffix = "/private";
-            else if (lookupModes == (PUBLIC|PACKAGE|PRIVATE|PROTECTED))
+            else if (lookupModes == (PUBLIC|MODULE|PACKAGE|PRIVATE|PROTECTED))
                 suffix = "";
             else
                 suffix = "/#"+Integer.toHexString(lookupModes);
@@ -149,16 +152,26 @@ public class AccessControlTest {
          * <li>[A6] If the new lookup class is not accessible to the old lookup class,
          * using the original access modes,
          * then no members, not even public members, will be accessible.
-         * [A7] (In all other cases, public members will continue to be accessible.)
+         * <li>[A7] If the new lookup class for this {@code Lookup} is in the unnamed module,
+         * and the new lookup class is in a named module {@code M}, then no members in
+         * {@code M}'s non-exported packages will be accessible.
+         * <li>[A8] If the lookup for this {@code Lookup} is in a named module, and the
+         * new lookup class is in a different module, then no members, not even
+         * public members in {@code M}'s exported packages, will be accessible.
+         * [A8] (In all other cases, public members will continue to be accessible.)
          * </ul>
          * Other than the above cases, the new lookup will have the same
-         * access capabilities as the original. [A8]
+         * access capabilities as the original. [A10]
          * <hr>
          */
         public LookupCase in(Class<?> c2) {
             Class<?> c1 = lookupClass();
             int m1 = lookupModes();
             int changed = 0;
+            // for the purposes of access control then treat classes in different unnamed
+            // modules as being in the same module.
+            boolean sameModule = (c1.getModule() == c2.getModule()) ||
+                                 (!c1.getModule().isNamed() && !c2.getModule().isNamed());
             boolean samePackage = (c1.getClassLoader() == c2.getClassLoader() &&
                                    packagePrefix(c1).equals(packagePrefix(c2)));
             boolean sameTopLevel = (topLevelClass(c1) == topLevelClass(c2));
@@ -168,12 +181,20 @@ public class AccessControlTest {
             boolean accessible = sameClass;  // [A6]
             if ((m1 & PACKAGE) != 0)  accessible |= samePackage;
             if ((m1 & PUBLIC ) != 0)  accessible |= (c2.getModifiers() & PUBLIC) != 0;
+            if (!sameModule) {
+                if (c1.getModule().isNamed()) {
+                    accessible = false;  // [A8]
+                } else {
+                    // Different module; loose MODULE and lower access.
+                    changed |= (MODULE|PACKAGE|PRIVATE|PROTECTED);  // [A7]
+                }
+            }
             if (!accessible) {
                 // Different package and no access to c2; lose all access.
-                changed |= (PUBLIC|PACKAGE|PRIVATE|PROTECTED);  // [A6]
+                changed |= (PUBLIC|MODULE|PACKAGE|PRIVATE|PROTECTED);  // [A6]
             }
             if (!samePackage) {
-                // Different package; lose PACKAGE and lower access.
+                // Different package; loose PACKAGE and lower access.
                 changed |= (PACKAGE|PRIVATE|PROTECTED);  // [A4]
             }
             if (!sameTopLevel) {
@@ -183,9 +204,9 @@ public class AccessControlTest {
             if (!sameClass) {
                 changed |= (PROTECTED);     // [A3]
             } else {
-                assert(changed == 0);       // [A8] (no deprivation if same class)
+                assert(changed == 0);       // [A10] (no deprivation if same class)
             }
-            if (accessible)  assert((changed & PUBLIC) == 0);  // [A7]
+            if (accessible)  assert((changed & PUBLIC) == 0);  // [A9]
             int m2 = m1 & ~changed;
             LookupCase l2 = new LookupCase(c2, m2);
             assert(l2.lookupClass() == c2); // [A1]
@@ -208,6 +229,14 @@ public class AccessControlTest {
         public boolean willAccess(Method m) {
             Class<?> c1 = lookupClass();
             Class<?> c2 = m.getDeclaringClass();
+
+            // if public access then public members in an unnamed module can be accessed
+            if ((lookupModes & PUBLIC) != 0
+                && (!c2.getModule().isNamed())
+                && Modifier.isPublic(c2.getModifiers())
+                && Modifier.isPublic(m.getModifiers()))
+                return true;
+
             LookupCase lc = this.in(c2);
             int m1 = lc.lookupModes();
             int m2 = fixMods(m.getModifiers());
@@ -280,7 +309,7 @@ public class AccessControlTest {
             LookupCase expect = l1.in(c2);
             if (!expect.equals(l2))
                 System.out.println("*** expect "+l1+" => "+expect+" but got "+l2);
-            assertEquals(expect, l2);
+            assertEquals(l2, expect);
         }
     }
 
@@ -387,6 +416,7 @@ public class AccessControlTest {
     }
 
     static Method targetMethod(Class<?> targetClass, int targetAccess, MethodType methodType) {
+        assert targetAccess != MODULE;
         String methodName = accessName(targetAccess)+placeName(targetClass);
         if (verbosity >= 2)
             System.out.println(targetClass.getSimpleName()+"."+methodName+methodType);
@@ -420,6 +450,7 @@ public class AccessControlTest {
         assert(false);
         return "?";
     }
+    // MODULE not a test case at this time
     private static final int[] ACCESS_CASES = {
         PUBLIC, PACKAGE, PRIVATE, PROTECTED
     };

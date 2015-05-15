@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,8 +25,12 @@
 
 package javax.naming.spi;
 
-import java.util.*;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
+import java.lang.reflect.Module;
 import java.net.MalformedURLException;
+import java.util.*;
+
 
 import javax.naming.*;
 import com.sun.naming.internal.VersionHelper;
@@ -60,6 +64,14 @@ import com.sun.naming.internal.FactoryEnumeration;
  */
 
 public class NamingManager {
+
+     static {
+         // java.naming needs to be a loose module
+         Module thisModule = NamingManager.class.getModule();
+         PrivilegedAction<Void> pa =
+             () -> { thisModule.addReads(null); return null; };
+         AccessController.doPrivileged(pa);
+     }
 
     /*
      * Disallow anyone from creating one of these.
@@ -156,6 +168,12 @@ public class NamingManager {
                 clas = helper.loadClass(factoryName, codebase);
             } catch (ClassNotFoundException e) {
             }
+        }
+
+        // Make the factory accessible to this module
+        Module me = NamingManager.class.getModule();
+        if (me != null && clas != null) {
+            me.addReads(clas.getModule());
         }
 
         return (clas != null) ? (ObjectFactory) clas.newInstance() : null;

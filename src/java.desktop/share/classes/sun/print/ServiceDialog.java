@@ -47,11 +47,12 @@ import java.awt.event.ItemListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.print.PrinterJob;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FilePermission;
+import java.io.InputStream;
 import java.io.IOException;
 import java.net.URI;
-import java.net.URL;
 import java.text.DecimalFormat;
 import java.util.Locale;
 import java.util.ResourceBundle;
@@ -551,24 +552,29 @@ public class ServiceDialog extends JDialog implements ActionListener {
     }
 
     /**
-     * Returns URL for image resource
+     * Returns byte[] for image resource
      */
-    private static URL getImageResource(final String key) {
-        URL url = java.security.AccessController.doPrivileged(
-                       new java.security.PrivilegedAction<URL>() {
-                public URL run() {
-                    URL url = ServiceDialog.class.getResource(
+    private static byte[] getImageResource(final String key) {
+        InputStream in = java.security.AccessController.doPrivileged(
+            new java.security.PrivilegedAction<InputStream>() {
+                public InputStream run() {
+                    return ServiceDialog.class.getResourceAsStream(
                                                   "resources/" + key);
-                    return url;
                 }
         });
 
-        if (url == null) {
+        if (in == null) {
             throw new Error("Fatal: Resource for ServiceUI is broken; " +
                             "there is no " + key + " key in resource");
         }
 
-        return url;
+        try (in) {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            in.transferTo(baos);
+            return baos.toByteArray();
+        } catch (IOException ioe) {
+            throw new Error(ioe);
+        }
     }
 
     /**
@@ -2816,11 +2822,11 @@ public class ServiceDialog extends JDialog implements ActionListener {
                                ButtonGroup bg, ActionListener al)
         {
             super(new FlowLayout(FlowLayout.LEADING));
-            final URL imgURL = getImageResource(img);
+            final byte[] bytes = getImageResource(img);
             Icon icon = java.security.AccessController.doPrivileged(
                                  new java.security.PrivilegedAction<Icon>() {
                 public Icon run() {
-                    Icon icon = new ImageIcon(imgURL);
+                    Icon icon = new ImageIcon(bytes);
                     return icon;
                 }
             });

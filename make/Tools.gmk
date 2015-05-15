@@ -38,10 +38,10 @@ include SetupJavaCompilers.gmk
 
 $(eval $(call SetupJavaCompilation,BUILD_TOOLS_JDK, \
     SETUP := GENERATE_OLDBYTECODE, \
-    ADD_JAVAC_FLAGS := "-Xbootclasspath/p:$(BUILDTOOLS_OUTPUTDIR)/interim_jimage_classes", \
     SRC := $(JDK_TOPDIR)/make/src/classes, \
-    BIN := $(BUILDTOOLS_OUTPUTDIR)/jdk_tools_classes, \
-    COPY := boot.modules ext.modules))
+    EXCLUDES := build/tools/deps \
+                build/tools/jigsaw, \
+    BIN := $(BUILDTOOLS_OUTPUTDIR)/jdk_tools_classes))
 
 $(eval $(call SetupCopyFiles,COPY_NIMBUS_TEMPLATES, \
     SRC := $(JDK_TOPDIR)/src/java.desktop/share/classes/javax/swing/plaf/nimbus, \
@@ -60,7 +60,12 @@ TOOL_ADDJSUM = $(JAVA_SMALL) -cp $(BUILDTOOLS_OUTPUTDIR)/jdk_tools_classes \
 TOOL_BUILDMETAINDEX = $(JAVA_SMALL) -cp $(BUILDTOOLS_OUTPUTDIR)/jdk_tools_classes \
     build.tools.buildmetaindex.BuildMetaIndex
 
+ifeq ($(BOOT_JDK_MODULAR), true)
+  COMPILEFONTCONFIG_ADD_EXPORTS := -XX:AddModuleExports=java.desktop/sun.awt
+endif
+
 TOOL_COMPILEFONTCONFIG = $(JAVA_SMALL) -cp $(BUILDTOOLS_OUTPUTDIR)/jdk_tools_classes \
+    $(COMPILEFONTCONFIG_ADD_EXPORTS) \
     build.tools.compilefontconfig.CompileFontConfig
 
 TOOL_COMPILEPROPERTIES = $(JAVA_SMALL) -cp $(BUILDTOOLS_OUTPUTDIR)/jdk_tools_classes \
@@ -125,36 +130,17 @@ TOOL_OSX_TOBIN = $(JAVA_SMALL) -Djava.awt.headless=true -cp $(BUILDTOOLS_OUTPUTD
 TOOL_CLDRCONVERTER = $(JAVA_SMALL) -cp $(BUILDTOOLS_OUTPUTDIR)/jdk_tools_classes \
     build.tools.cldrconverter.CLDRConverter
 
-TOOL_GENMODULESXML = $(JAVA_SMALL) -Xbootclasspath/p:$(INTERIM_LANGTOOLS_JAR) \
-    -cp "$(BUILDTOOLS_OUTPUTDIR)/jdk_tools_classes$(PATH_SEP)$(JDK_OUTPUTDIR)" \
+TOOL_GENMODULESXML = $(JAVA_SMALL) $(INTERIM_LANGTOOLS_BOOTCLASSPATH) \
+    -cp "$(BUILDTOOLS_OUTPUTDIR)/jdk_tools_classes" \
     build.tools.module.GenJdepsModulesXml
 
-TOOL_IMAGEBUILDER = $(JAVA_SMALL) -Xbootclasspath/p:$(BUILDTOOLS_OUTPUTDIR)/interim_jimage_classes \
-    -cp "$(BUILDTOOLS_OUTPUTDIR)/jdk_tools_classes$(PATH_SEP)$(JDK_OUTPUTDIR)" \
-    build.tools.module.ImageBuilder
+TOOL_GENMODULEINFOSOURCE = $(JAVA_SMALL) $(INTERIM_LANGTOOLS_BOOTCLASSPATH) \
+    -cp "$(BUILDTOOLS_OUTPUTDIR)/jdk_tools_classes" \
+    build.tools.module.GenModuleInfoSource
 
-##########################################################################################
-
-JIMAGE_PKGS := \
-    jdk/internal/jimage \
-    jdk/internal/jrtfs \
-    #
-
-$(eval $(call SetupJavaCompilation,BUILD_INTERIM_JIMAGE, \
-    SETUP := GENERATE_OLDBYTECODE, \
-    SRC := $(JDK_TOPDIR)/src/java.base/share/classes, \
-    INCLUDES := $(JIMAGE_PKGS), \
-    EXCLUDES := jdk/internal/jimage/concurrent, \
-    BIN := $(BUILDTOOLS_OUTPUTDIR)/interim_jimage_classes))
-
-# Because of the explicit INCLUDES in the compilation setup above, the service provider
-# file will not be copied unless META-INF/services would also be added to the INCLUDES.
-# Adding META-INF/services would include all files in that directory when only the one
-# is needed, which is why this explicit copy is defined instead.
-$(eval $(call SetupCopyFiles,COPY_JIMAGE_SERVICE_PROVIDER, \
-    SRC := $(JDK_TOPDIR)/src/java.base/share/classes, \
-    DEST := $(BUILDTOOLS_OUTPUTDIR)/interim_jimage_classes, \
-    FILES := META-INF/services/java.nio.file.spi.FileSystemProvider))
+TOOL_GENCLASSLOADERMAP = $(JAVA_SMALL) $(INTERIM_LANGTOOLS_BOOTCLASSPATH) \
+    -cp "$(BUILDTOOLS_OUTPUTDIR)/jdk_tools_classes" \
+    build.tools.module.GenModuleLoaderMap
 
 ##########################################################################################
 
@@ -179,8 +165,6 @@ ifeq ($(OPENJDK_TARGET_OS), solaris)
 
   BUILD_TOOLS_JDK += $(ADD_GNU_DEBUGLINK) $(FIX_EMPTY_SEC_HDR_FLAGS)
 endif
-
-$(BUILD_TOOLS_JDK): $(BUILD_INTERIM_JIMAGE) $(COPY_JIMAGE_SERVICE_PROVIDER)
 
 java-tools: $(BUILD_TOOLS_JDK)
 
