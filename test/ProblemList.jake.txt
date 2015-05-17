@@ -18,6 +18,37 @@ java/lang/invoke/lambda/LogGeneratedClassesTest.java             generic-all
 java/net/DatagramSocket/SetDatagramSocketImplFactory/ADatagramSocket.java  generic-all
 
 ############################################################################
+
+# jdk_jdi
+
+# 8076544
+com/sun/jdi/RedefineCrossEvent.java				generic-all
+
+############################################################################
+
+# jdk_security
+
+# 8079767
+sun/net/www/protocol/https/ChunkedOutputStream.java            generic-all
+com/sun/crypto/provider/Cipher/AES/TestAESCiphers/TestAESWithProviderChange.java      generic-all
+com/sun/crypto/provider/Cipher/AES/TestAESCiphers/TestAESWithRemoveAddProvider.java   generic-all
+java/security/KeyRep/Serial.java                               generic-all
+javax/xml/crypto/dsig/GenerationTests.java                     generic-all
+javax/xml/crypto/dsig/ValidationTests.java                     generic-all
+sun/security/krb5/auto/BasicProc.java                          generic-all
+sun/security/krb5/auto/HttpNegotiateServer.java                generic-all
+sun/security/krb5/auto/ReplayCacheTestProc.java                generic-all
+sun/security/krb5/auto/SSL.java                                generic-all
+sun/security/krb5/auto/UnboundSSL.java                         generic-all
+sun/security/krb5/auto/UnboundSSLMultipleKeys.java             generic-all
+sun/security/krb5/auto/UnboundSSLPrincipalProperty.java        generic-all
+sun/security/pkcs11/Provider/Login.sh                          generic-all
+sun/security/provider/certpath/OCSP/OCSPSingleExtensions.java  generic-all
+
+sun/security/ssl/SSLSocketImpl/NotifyHandshakeTest.sh          generic-all
+sun/security/tools/keytool/autotest.sh                         generic-all
+
+############################################################################
  
 # svc_tools
 
@@ -45,13 +76,6 @@ demo/jvmti/hprof/CpuTimesTest.java				generic-all
 demo/jvmti/hprof/OptionsTest.java				generic-all
 demo/jvmti/hprof/StackMapTableTest.java				generic-all
 sun/tools/jhat/HatHeapDump1Test.java                            generic-all
-
-############################################################################
-
-# jdk_jdi
-
-# 8076544
-com/sun/jdi/RedefineCrossEvent.java				generic-all
 
 ############################################################################
 
