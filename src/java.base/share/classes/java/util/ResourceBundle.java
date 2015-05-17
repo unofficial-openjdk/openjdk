@@ -1676,19 +1676,27 @@ public abstract class ResourceBundle {
     {
         // Look up <baseName> + "Provider"
         String providerName = baseName + "Provider";
-        try {
-            // Use the class loader of the getBundle caller so that the caller's
-            // visibility of the provider type is checked.
-            Class<?> c = Class.forName(providerName, false, loader);
-            if (ResourceBundleProvider.class.isAssignableFrom(c) && Reflection.verifyModuleAccess(module, c)) {
-                @SuppressWarnings("unchecked")
-                Class<ResourceBundleProvider> service = (Class<ResourceBundleProvider>) c;
-                return ServiceLoader.load(service, loader, module);
-            }
-        } catch (ClassNotFoundException ex) {
-            // ignore
-        }
+        // Use the class loader of the getBundle caller so that the caller's
+        // visibility of the provider type is checked.
+        Class<ResourceBundleProvider> service = AccessController.doPrivileged(
+            new PrivilegedAction<>() {
+                @Override
+                public Class<ResourceBundleProvider> run() {
+                    try {
+                        Class<?> c = Class.forName(providerName, false, loader);
+                        if (ResourceBundleProvider.class.isAssignableFrom(c)) {
+                            @SuppressWarnings("unchecked")
+                            Class<ResourceBundleProvider> s = (Class<ResourceBundleProvider>) c;
+                            return s;
+                        }
+                    } catch (ClassNotFoundException e) {}
+                    return null;
+                }
+            });
 
+        if (service != null && Reflection.verifyModuleAccess(module, service)) {
+            return ServiceLoader.load(service, loader, module);
+        }
         return null;
     }
 
@@ -2947,8 +2955,9 @@ public abstract class ResourceBundle {
                         // resource bundles have split package if they are packaged separate
                         // from the consumer.)
                         if (bundleClass.getModule().isNamed()) {
-                            throw new InternalError("newBundle can't be used to find " + bundleClass.getName() +
-                                    " in module " + bundleClass.getModule().getName());
+                            // throw exception for now to help identify issues
+                            throw new InternalError("legacy getBundle can't be used to find " +
+                                    bundleClass.getName() + " in module " + bundleClass.getModule().getName());
                         }
                         try {
                             // bundle in a unnamed module
