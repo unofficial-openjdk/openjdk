@@ -82,8 +82,6 @@ import sun.misc.Unsafe;
 
 public final class Module {
 
-    // no <clinit> as this class is initialized very early in the startup
-
     // module name and loader, these fields are read by VM
     private final String name;
     private final ClassLoader loader;
@@ -217,9 +215,7 @@ public final class Module {
      *
      * <p> For unnamed modules, this method is the equivalent of invoking
      * the {@link ClassLoader#getPackages() getPackages} method of this
-     * module's class loader and returning the array of package names.
-     * The array of packages will contain the empty String if the class
-     * loader has defined types in the unnamed package. </p>
+     * module's class loader and returning the array of package names. </p>
      *
      * <p> A package name appears at most once in the returned array. </p>
      *
@@ -250,7 +246,7 @@ public final class Module {
 
 
     /**
-     * Makes the given {@code Module} readable to this module. This method
+     * Updates this module to read the given {@code Module}. This method
      * is a no-op if {@code target} is {@code this} module (all modules can
      * read themselves) or this module is not a {@link #isNamed() named}
      * module (an unnamed module reads all other modules).
@@ -279,7 +275,7 @@ public final class Module {
                 ReflectPermission perm = new ReflectPermission("addReadsModule");
                 sm.checkPermission(perm);
             }
-            addReads(target, true);
+            implAddReads(target, true);
         }
         return this;
     }
@@ -291,7 +287,7 @@ public final class Module {
      * This method is for use by VM whitebox tests only.
      */
     void addReadsNoSync(Module target) {
-        addReads(target, false);
+        implAddReads(target, false);
     }
 
     /**
@@ -299,7 +295,7 @@ public final class Module {
      *
      * If {@code syncVM} is {@code true} then the VM is notified.
      */
-    private void addReads(Module target, boolean syncVM) {
+    private void implAddReads(Module target, boolean syncVM) {
 
         // nothing to do
         if (target == this || !this.isNamed())
@@ -338,7 +334,7 @@ public final class Module {
 
 
     /**
-     * Indicates if this {@code Module} reads the given {@code Module}.
+     * Indicates if this module reads the given {@code Module}.
      * If {@code target} is {@code null} then this method tests if this
      * module reads all unnamed modules.
      *
@@ -565,7 +561,7 @@ public final class Module {
      * valid java identifier.
      */
     void addPackage(String pn) {
-        addPackage(pn, true);
+        implAddPackage(pn, true);
     }
 
     /**
@@ -574,7 +570,7 @@ public final class Module {
      * This method is for use by VM whitebox tests only.
      */
     void addPackageNoSync(String pn) {
-        addPackage(pn.replace('/', '.'), false);
+        implAddPackage(pn.replace('/', '.'), false);
     }
 
     /**
@@ -582,7 +578,7 @@ public final class Module {
      *
      * If {@code syncVM} is {@code true} then the VM is notified.
      */
-    private void addPackage(String pn, boolean syncVM) {
+    private void implAddPackage(String pn, boolean syncVM) {
         if (pn.length() == 0)
             throw new IllegalArgumentException("<unnamed> package not allowed");
 
@@ -617,6 +613,9 @@ public final class Module {
      *
      * <p> This method does not check if the given module reads this
      * module. </p>
+     *
+     * @apiNote Need to consider disallowing null and introducing
+     * isExported(String) to test if a package is exported unconditionally.
      */
     public boolean isExported(String pn, Module target) {
         Objects.requireNonNull(pn);
@@ -626,10 +625,10 @@ public final class Module {
             return true;
 
         Map<String, Map<Module, Boolean>>  exports = this.exports; // volatile read
-        Map<Module, Boolean> permits = exports.get(pn);
-        if (permits != null) {
+        Map<Module, Boolean> targets = exports.get(pn);
+        if (targets != null) {
             // unqualified export or exported to 'target'
-            if (permits.isEmpty() || permits.containsKey(target)) return true;
+            if (targets.isEmpty() || targets.containsKey(target)) return true;
         }
 
         // not exported
@@ -668,7 +667,7 @@ public final class Module {
                 ReflectPermission perm = new ReflectPermission("addModuleExports");
                 sm.checkPermission(perm);
             }
-            addExports(pn, target, true);
+            implAddExports(pn, target, true);
         }
 
         return this;
@@ -676,12 +675,12 @@ public final class Module {
 
     /**
      * Updates the exports so that package {@code pn} is exported to module
-     * {@code who} but without notifying the VM.
+     * {@code target} but without notifying the VM.
      *
      * This method is for use by VM whitebox tests only.
      */
-    void addExportsNoSync(String pn, Module who) {
-        addExports(pn.replace('/', '.'), who, false);
+    void addExportsNoSync(String pn, Module target) {
+        implAddExports(pn.replace('/', '.'), target, false);
     }
 
     /**
@@ -690,7 +689,7 @@ public final class Module {
      *
      * If {@code syncVM} is {@code true} then the VM is notified.
      */
-    private void addExports(String pn, Module target, boolean syncVM) {
+    private void implAddExports(String pn, Module target, boolean syncVM) {
         Objects.requireNonNull(pn);
 
         // unnamed module exports all packages
@@ -721,29 +720,43 @@ public final class Module {
             Map<String, Map<Module, Boolean>> exports = new HashMap<>(this.exports);
 
             // the package may be exported already, need to handle all cases
-            Map<Module, Boolean> permits = exports.get(pn);
-            if (permits == null) {
-                // pn not already exported
+            Map<Module, Boolean> targets = exports.get(pn);
+            if (targets == null) {
+
+                // package not previously exported
+
                 if (target == null) {
                     // unqualified export
                     exports.put(pn, Collections.emptyMap());
                 } else {
-                    // qualified export
-                    permits = new WeakHashMap<>();
-                    permits.put(target, Boolean.TRUE);
-                    exports.put(pn, permits);
+                    // qualified export to (possible transient) target. We
+                    // insert a strongly reachable placeholder module into
+                    // the map to ensure that it never becomes empty.
+                    targets = new WeakHashMap<>();
+                    targets.put(STRONGLY_REACHABLE_MODULE, Boolean.TRUE);
+                    targets.put(target, Boolean.TRUE);
+
+                    exports.put(pn, targets);
                 }
+
             } else {
-                // pn already exported
-                if (!permits.isEmpty()) {
+
+                // package already exported, nothing to do if already
+                // exported unconditionally
+
+                if (!targets.isEmpty()) {
                     if (target == null) {
                         // change from qualified to unqualified
                         exports.put(pn, Collections.emptyMap());
                     } else {
-                        // copy the existing qualified exports
-                        permits = new WeakHashMap<>(permits);
-                        permits.put(target, Boolean.TRUE);
-                        exports.put(pn, permits);
+                        // extend existing qualified exports
+                        assert (!(targets instanceof WeakHashMap))
+                                || targets.containsKey(STRONGLY_REACHABLE_MODULE);
+                        targets = new WeakHashMap<>(targets);
+                        targets.putIfAbsent(STRONGLY_REACHABLE_MODULE, Boolean.TRUE);
+                        targets.put(target, Boolean.TRUE);
+
+                        exports.put(pn, targets);
                     }
                 }
             }
@@ -753,6 +766,11 @@ public final class Module {
 
         }
     }
+
+    // Dummy module that is the target for a qualified export. The dummy
+    // module is strongly reachable and thus prevents the set of exports
+    // from being empty when all other target modules have been GC'ed.
+    private static final Module STRONGLY_REACHABLE_MODULE = new Module(null);
 
 
     // -- misc --
@@ -852,15 +870,15 @@ public final class Module {
                 }
                 @Override
                 public void addPackage(Module m, String pn) {
-                    m.addPackage(pn);
+                    m.implAddPackage(pn, true);
                 }
                 @Override
                 public void addReadsModule(Module m1, Module m2) {
-                    m1.addReads(m2, true);
+                    m1.implAddReads(m2, true);
                 }
                 @Override
                 public void addExports(Module m, String pn, Module target) {
-                    m.addExports(pn, target, true);
+                    m.implAddExports(pn, target, true);
                 }
             });
     }
