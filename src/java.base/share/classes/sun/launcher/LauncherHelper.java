@@ -870,7 +870,7 @@ public enum LauncherHelper {
      * Called by the launcher to list modules in the boot Layer.
      * If called without any sub-options then the output is a simple list of
      * the modules. If called with sub-options then the sub-options are the
-     * names of the modules to list (-XlistModules:java.base,java.desktop for
+     * names of the modules to list (-listmods:java.base,java.desktop for
      * example).
      */
     static void listModules(boolean printToStderr, String optionFlag)

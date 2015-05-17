@@ -103,6 +103,7 @@ static void SetUpgradeModulePath(const char *s);
 static void SetMainModule(const char *s);
 static void SetAddModulesProp(const char *mods);
 static void SetLimitModulesProp(const char *mods);
+static void SetAddExportsProp(const char *s);
 static void SelectVersion(int argc, char **argv, char **main_class);
 static void SetJvmEnvironment(int argc, char **argv);
 static jboolean ParseArguments(int *pargc, char ***pargv,
@@ -916,6 +917,14 @@ SetLimitModulesProp(const char *mods) {
     AddOption(prop, NULL);
 }
 
+static void
+SetAddExportsProp(const char *s) {
+    size_t buflen = JLI_StrLen(s) + 40;
+    char *prop = (char *)JLI_MemAlloc(buflen);
+    JLI_Snprintf(prop, buflen, "-Djdk.launcher.addexports=%s", s);
+    AddOption(prop, NULL);
+}
+
 /*
  * The SelectVersion() routine ensures that an appropriate version of
  * the JRE is running.  The specification for the appropriate version
@@ -1126,6 +1135,12 @@ ParseArguments(int *pargc, char ***pargv,
             ARG_CHECK (argc, ARG_ERROR6, arg);
             SetLimitModulesProp(*argv);
             argv++; --argc;
+        } else if (JLI_StrCmp(arg, "-listmods") == 0 ||
+                   JLI_StrCCmp(arg, "-listmods:") == 0) {
+            listModules = arg;
+        } else if (JLI_StrCCmp(arg, "-XaddExports:") == 0) {
+            char *value = arg + 13;
+            SetAddExportsProp(value);
         } else if (JLI_StrCmp(arg, "-help") == 0 ||
                    JLI_StrCmp(arg, "-h") == 0 ||
                    JLI_StrCmp(arg, "-?") == 0) {
@@ -1146,9 +1161,6 @@ ParseArguments(int *pargc, char ***pargv,
         } else if (JLI_StrCmp(arg, "-XshowSettings") == 0 ||
                    JLI_StrCCmp(arg, "-XshowSettings:") == 0) {
             showSettings = arg;
-        } else if (JLI_StrCmp(arg, "-XlistModules") == 0 ||
-                   JLI_StrCCmp(arg, "-XlistModules:") == 0) {
-            listModules = arg;
         } else if (JLI_StrCmp(arg, "-Xdiag") == 0) {
             AddOption("-Dsun.java.launcher.diag=true", NULL);
 /*
@@ -1160,8 +1172,6 @@ ParseArguments(int *pargc, char ***pargv,
             return JNI_FALSE;
         } else if (JLI_StrCmp(arg, "-verbosegc") == 0) {
             AddOption("-verbose:gc", NULL);
-        } else if (JLI_StrCmp(arg, "-verbose:mods") == 0) {
-            AddOption("-Djdk.launcher.modules.verbose=true", NULL);
         } else if (JLI_StrCmp(arg, "-t") == 0) {
             AddOption("-Xt", NULL);
         } else if (JLI_StrCmp(arg, "-tm") == 0) {
