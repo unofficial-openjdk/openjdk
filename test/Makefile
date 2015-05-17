@@ -326,6 +326,7 @@ jtreg_tests: prep $(PRODUCT_HOME) $(JTREG)
             export JT_HOME;                                                  \
             $(shell $(GETMIXEDPATH) "$(JTREG)")                              \
               $(JTREG_BASIC_OPTIONS)                                         \
+              -vmoptions:-Dsun.reflect.enableModuleChecks=debug              \
               -r:$(shell $(GETMIXEDPATH) "$(ABS_TEST_OUTPUT_DIR)/JTreport")  \
               -w:$(shell $(GETMIXEDPATH) "$(ABS_TEST_OUTPUT_DIR)/JTwork")    \
               -jdk:$(shell $(GETMIXEDPATH) "$(PRODUCT_HOME)")                \
