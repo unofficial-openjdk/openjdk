@@ -491,7 +491,7 @@ public enum Option {
         }
     },
 
-    XADDEXPORTS("-XaddExports:", "opt.addExports", EXTENDED, BASIC) {
+    XADDEXPORTS("-XaddExports:", "opt.arg.addExports", "opt.addExports", EXTENDED, BASIC) {
         @Override
         public boolean process(OptionHelper helper, String option) {
             String prev = helper.get(XADDEXPORTS);
