@@ -77,11 +77,10 @@ public class BootLoader {
     }
 
     /**
-     * Finds the Class object with the given name in a module defined to the
-     * boot loader.
+     * Loads the Class object with the given name defined to the boot loader.
      */
-    public static Class<?> findClassInModule(String name) {
-        return ClassLoaders.bootLoader().findClassInModule(name);
+    public static Class<?> loadClassOrNull(String name) {
+        return ClassLoaders.bootLoader().loadClassOrNull(name);
     }
 
     /**
@@ -134,7 +133,7 @@ public class BootLoader {
         if (location == null) {
             return null;
         }
-        return ClassLoaders.bootLoader().definePackageIfAbsent(pn);
+        return ClassLoaders.bootLoader().definePackage(pn);
     }
 
     /**
@@ -144,7 +143,7 @@ public class BootLoader {
         return Arrays.stream(getSystemPackageNames())
             .map(name -> {
                 String pn = name.substring(0, name.length() - 1).replace('/', '.');
-                return ClassLoaders.bootLoader().definePackageIfAbsent(pn);
+                return ClassLoaders.bootLoader().definePackage(pn);
             });
     }
 

@@ -54,6 +54,7 @@ import jdk.internal.module.ServicesCatalog;
 import sun.misc.BootLoader;
 import sun.misc.ClassLoaders;
 import sun.misc.CompoundEnumeration;
+import sun.misc.ModuleClassLoader;
 import sun.misc.SharedSecrets;
 import sun.misc.Unsafe;
 import sun.misc.VM;
@@ -438,6 +439,29 @@ public abstract class ClassLoader {
     }
 
     /**
+     * Loads the class with the specified <a href="#name">binary name</a> defined
+     * in this class loader.
+     *
+     * @param name The <a href="#name">binary name</a> of the class
+     * @return
+     */
+    Class<?> loadLocalClassOrNull(String name) {
+        synchronized (getClassLoadingLock(name))
+        {
+            // First, check if the class has already been loaded
+            Class<?> c = findLoadedClass(name);
+            if (c == null) {
+                try {
+                    return findClass(name);
+                } catch (ClassNotFoundException e) {
+                    // ignore
+                }
+            }
+            return c;
+        }
+    }
+
+    /**
      * Returns the lock object for class loading operations.
      * For backward compatibility, the default implementation of this method
      * behaves as follows. If this ClassLoader object is registered as
@@ -687,10 +711,10 @@ public abstract class ClassLoader {
      */
     Package ensureDefinePackage(String pn) {
         if (packages.get(pn) == null) {
-            try {
-                definePackage0(pn, null, null, null, null, null, null, null);
-            } catch (IllegalArgumentException e) {
-                // another thread already defines the package
+            if (this instanceof ModuleClassLoader) {
+                return ((ModuleClassLoader)this).definePackage(pn);
+            } else {
+                definePackageInUnnamedModule(pn);
             }
         }
         return packages.get(pn);
@@ -1657,22 +1681,20 @@ public abstract class ClassLoader {
             throw new IllegalArgumentException(name);
         }
         // definePackage is not final and may be overridden by custom class loader
-        return definePackage0(name, specTitle, specVersion, specVendor,
-                              implTitle, implVersion, implVendor, sealBase);
-    }
-
-    private final Package definePackage0(String name, String specTitle,
-                                         String specVersion, String specVendor,
-                                         String implTitle, String implVersion,
-                                         String implVendor, URL sealBase)
-    {
-        Package pkg = new Package(name, specTitle, specVersion, specVendor,
-                                  implTitle, implVersion, implVendor,
-                                  sealBase, this);
+        pkg = new Package(name, specTitle, specVersion, specVendor,
+                          implTitle, implVersion, implVendor,
+                          sealBase, this);
         if (packages.putIfAbsent(name, pkg) != null) {
             throw new IllegalArgumentException(name);
         }
         return pkg;
+    }
+
+    private Package definePackageInUnnamedModule(String name) {
+        Package pkg = new Package(name, null, null, null,
+                                  null, null, null, null, this);
+        Package p = packages.putIfAbsent(name, pkg);
+        return p != null ? p : pkg;
     }
 
     /**

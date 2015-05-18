@@ -118,14 +118,6 @@ public class ClassLoaders {
         }
 
         @Override
-        public Class<?> findClassInModule(String cn) {
-            Class<?> c = jla.findBootstrapClassOrNull(this, cn);
-            // findBootstrapClassOrNull may load class from -Xbootclasspath/a path.
-            // Return null if the class is in unnamed module.
-            return c != null && !c.getModule().isNamed() ? null : c;
-        }
-
-        @Override
         protected Class<?> loadClassOrNull(String cn) {
             return jla.findBootstrapClassOrNull(this, cn);
         }

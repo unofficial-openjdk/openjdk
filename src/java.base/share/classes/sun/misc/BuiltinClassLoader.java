@@ -265,30 +265,6 @@ class BuiltinClassLoader extends ModuleClassLoader {
     }
 
     /**
-     * Finds the class with the specified binary name in a module defined
-     * to this class loader.
-     */
-    @Override
-    public Class<?> findClassInModule(String cn) {
-
-        LoadedModule loadedModule = findModule(cn);
-        if (loadedModule == null)
-            return null;
-
-        synchronized (getClassLoadingLock(cn)) {
-            // check if already loaded
-            Class<?> c = findLoadedClass(cn);
-
-            if (c == null) {
-                // find the candidate module for this class
-                c = findClassInModuleOrNull(loadedModule, cn);
-            }
-            return c;
-        }
-
-    }
-
-    /**
      * Loads the class with the specified binary name.
      */
     @Override
@@ -483,7 +459,8 @@ class BuiltinClassLoader extends ModuleClassLoader {
      *
      * @param pn package name
      */
-    Package definePackageIfAbsent(String pn) {
+    @Override
+    public Package definePackage(String pn) {
         Package pkg = getPackage(pn);
         if (pkg == null) {
             LoadedModule loadedModule = packageToModule.get(pn);

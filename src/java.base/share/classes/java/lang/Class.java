@@ -396,13 +396,13 @@ public final class Class<T> implements java.io.Serializable,
      * <p> Note that this method does not check whether the requested class
      * is accessible to its caller.
      *
-     * @apiNote This is an experimental API.  The security permission check
-     * does not follow the the caller-sensitive security check as the
-     * 3-arg Class.forName method.  The security check should be examined
-     * together with Class.getModule, Module.getClassLoader and other
-     * relevant methods.  This method returns {@code null} on failure rather
-     * than throw a {@link ClassNotFoundException}, as is done by the existing
-     * {@link #forName(String)} method.
+     * @apiNote This is an experimental API.  This method returns {@code null} on
+     * failure rather than throw a {@link ClassNotFoundException}, as is done by
+     * the existing {@link #forName(String)} method.
+     * The security check is stack-based permission check rather than caller-sensitive
+     * check as in the 3-arg Class.forName method.  Caller-sensitiveness security check
+     * has been one target of exploits. This needs to be re-examined if it deserves a
+     * new permission than RuntimePermission("getClassLoader").
      *
      * @param  module   Named module
      * @param  name     Fully-qualified class name
@@ -420,29 +420,22 @@ public final class Class<T> implements java.io.Serializable,
         Objects.requireNonNull(module);
         Objects.requireNonNull(name);
 
-        // FIXME: Need to decide how this method should work when called with
-        // an unnamed module. It probably should work like
-        // forName(String, false, ClassLoader) but need to be careful not to
-        // call it from here because that method is @CS.
-        if (!module.isNamed()) {
-            throw new InternalError("not implemented");
-        }
-
         SecurityManager sm = System.getSecurityManager();
         if (sm != null) {
             sm.checkPermission(SecurityConstants.GET_CLASSLOADER_PERMISSION);
         }
 
-        JavaLangReflectAccess reflectAccess = SharedSecrets.getJavaLangReflectAccess();
         PrivilegedAction<ClassLoader> pa = module::getClassLoader;
         ClassLoader cl = AccessController.doPrivileged(pa);
 
         Class<?> c = null;
         if (cl == null) {
-            c = BootLoader.findClassInModule(name);
-        } else if (cl instanceof ModuleClassLoader) {
-            // TODO: custom module-aware class loader
-            c = ((ModuleClassLoader) cl).findClassInModule(name);
+            c = BootLoader.loadClassOrNull(name);
+        } else {
+            c = cl.loadLocalClassOrNull(name);
+        }
+        if (c != null && c.getModule() != module) {
+            throw new InternalError(c.getName() + " not in " + module);
         }
         return c;
     }

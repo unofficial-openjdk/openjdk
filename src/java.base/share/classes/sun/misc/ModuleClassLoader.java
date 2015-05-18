@@ -58,14 +58,12 @@ public abstract class ModuleClassLoader extends SecureClassLoader {
     public abstract void defineModule(ModuleReference mref);
 
     /**
-     * Finds the class with the specified <a href="#name">binary name</a>
-     * in some module defined to this class loader.
+     * Define a Package of the given name to this class loader if not already defined.
+     * If the package name is in a module defined to this class loader then
+     * the resulting Package is sealed with the code source that is the
+     * module location.
      *
-     * @param  name     The <a href="#name">binary name</a> of the class
-     *
-     * @return The resulting {@code Class} object; {@code null} if the
-     * class could not be found in a module known to this loader.
+     * @param pn package name
      */
-    public abstract Class<?> findClassInModule(String name);
-
+    public abstract Package definePackage(String pn);
 }

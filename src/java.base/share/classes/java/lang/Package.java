@@ -27,12 +27,12 @@ package java.lang;
 
 import java.lang.reflect.AnnotatedElement;
 
+import java.lang.reflect.Module;
 import java.net.URL;
-import java.util.jar.Manifest;
-import java.util.jar.Attributes;
-import java.util.jar.Attributes.Name;
 import java.util.stream.Stream;
 
+import sun.misc.BootLoader;
+import sun.misc.ModuleClassLoader;
 import sun.reflect.CallerSensitive;
 import sun.reflect.Reflection;
 
@@ -283,13 +283,11 @@ public class Package implements java.lang.reflect.AnnotatedElement {
      */
     @CallerSensitive
     public static Package[] getPackages() {
-        ClassLoader l = ClassLoader.getClassLoader(Reflection.getCallerClass());
-        Stream<Package> pkgs = l != null ? l.packagesFromAncestors()
-                                         : sun.misc.BootLoader.packages();
+        ClassLoader cl = ClassLoader.getClassLoader(Reflection.getCallerClass());
+        Stream<Package> pkgs = cl != null ? cl.packagesFromAncestors()
+                                          : sun.misc.BootLoader.packages();
         return pkgs.toArray(Package[]::new);
     }
-
-
 
     /**
      * Return the hash code computed from the package name.
@@ -322,12 +320,13 @@ public class Package implements java.lang.reflect.AnnotatedElement {
 
     private Class<?> getPackageInfo() {
         if (packageInfo == null) {
-            try {
-                if (loader != null) {
-
-                }
-                packageInfo = Class.forName(pkgName + ".package-info", false, loader);
-            } catch (ClassNotFoundException ex) {
+            // find package-info.class defined by loader
+            String cn = pkgName + ".package-info";
+            Class<?> c = loader != null ? loader.loadLocalClassOrNull(cn)
+                                        : BootLoader.loadClassOrNull(cn);
+            if (c != null) {
+                packageInfo = c;
+            } else {
                 // store a proxy for the package info that has no annotations
                 class PackageInfoProxy {}
                 packageInfo = PackageInfoProxy.class;
@@ -398,6 +397,7 @@ public class Package implements java.lang.reflect.AnnotatedElement {
     /**
      * Construct a package instance with the specified version
      * information.
+     *
      * @param name the name of the package
      * @param spectitle the title of the specification
      * @param specversion the version of the specification
@@ -405,85 +405,22 @@ public class Package implements java.lang.reflect.AnnotatedElement {
      * @param impltitle the title of the implementation
      * @param implversion the version of the implementation
      * @param implvendor the organization that maintains the implementation
+     * @param sealbase code source where this Package comes from
+     * @param loader the class loader defining this Package
      */
     Package(String name,
             String spectitle, String specversion, String specvendor,
             String impltitle, String implversion, String implvendor,
             URL sealbase, ClassLoader loader)
     {
-        pkgName = name;
-        implTitle = impltitle;
-        implVersion = implversion;
-        implVendor = implvendor;
-        specTitle = spectitle;
-        specVersion = specversion;
-        specVendor = specvendor;
-        sealBase = sealbase;
-        this.loader = loader;
-    }
-
-    /*
-     * Construct a package using the attributes from the specified manifest.
-     *
-     * @param name the package name
-     * @param man the optional manifest for the package
-     * @param url the optional code source url for the package
-     */
-    private Package(String name, Manifest man, URL url, ClassLoader loader) {
-        String path = name.replace('.', '/').concat("/");
-        String sealed = null;
-        String specTitle= null;
-        String specVersion= null;
-        String specVendor= null;
-        String implTitle= null;
-        String implVersion= null;
-        String implVendor= null;
-        URL sealBase= null;
-        Attributes attr = man.getAttributes(path);
-        if (attr != null) {
-            specTitle   = attr.getValue(Name.SPECIFICATION_TITLE);
-            specVersion = attr.getValue(Name.SPECIFICATION_VERSION);
-            specVendor  = attr.getValue(Name.SPECIFICATION_VENDOR);
-            implTitle   = attr.getValue(Name.IMPLEMENTATION_TITLE);
-            implVersion = attr.getValue(Name.IMPLEMENTATION_VERSION);
-            implVendor  = attr.getValue(Name.IMPLEMENTATION_VENDOR);
-            sealed      = attr.getValue(Name.SEALED);
-        }
-        attr = man.getMainAttributes();
-        if (attr != null) {
-            if (specTitle == null) {
-                specTitle = attr.getValue(Name.SPECIFICATION_TITLE);
-            }
-            if (specVersion == null) {
-                specVersion = attr.getValue(Name.SPECIFICATION_VERSION);
-            }
-            if (specVendor == null) {
-                specVendor = attr.getValue(Name.SPECIFICATION_VENDOR);
-            }
-            if (implTitle == null) {
-                implTitle = attr.getValue(Name.IMPLEMENTATION_TITLE);
-            }
-            if (implVersion == null) {
-                implVersion = attr.getValue(Name.IMPLEMENTATION_VERSION);
-            }
-            if (implVendor == null) {
-                implVendor = attr.getValue(Name.IMPLEMENTATION_VENDOR);
-            }
-            if (sealed == null) {
-                sealed = attr.getValue(Name.SEALED);
-            }
-        }
-        if ("true".equalsIgnoreCase(sealed)) {
-            sealBase = url;
-        }
-        pkgName = name;
-        this.specTitle = specTitle;
-        this.specVersion = specVersion;
-        this.specVendor = specVendor;
-        this.implTitle = implTitle;
-        this.implVersion = implVersion;
-        this.implVendor = implVendor;
-        this.sealBase = sealBase;
+        this.pkgName = name;
+        this.implTitle = impltitle;
+        this.implVersion = implversion;
+        this.implVendor = implvendor;
+        this.specTitle = spectitle;
+        this.specVersion = specversion;
+        this.specVendor = specvendor;
+        this.sealBase = sealbase;
         this.loader = loader;
     }
 
