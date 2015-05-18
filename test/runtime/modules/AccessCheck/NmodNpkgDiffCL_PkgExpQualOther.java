@@ -111,7 +111,7 @@ public class NmodNpkgDiffCL_PkgExpQualOther {
         // then augments that configuration with additional modules (and edges) induced
         // by service-use relationships.
         Configuration cf = Configuration.resolve(finder,
-                                                 Layer.bootLayer(),
+                                                 Layer.boot(),
                                                  ModuleFinder.empty(),
                                                  "m1");
 
