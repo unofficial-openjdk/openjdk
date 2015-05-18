@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -190,10 +190,15 @@ public class JRTIndex {
         if (e == null) {
             Map<String, Path> files = new LinkedHashMap<>();
             Set<RelativeDirectory> subdirs = new LinkedHashSet<>();
-            Path pkgs = jrtfs.getPath("/packages");
-            Path pdir = pkgs.resolve(rd.getPath().replaceAll("/$", "").replace("/", "."));
-            if (Files.exists(pdir)) {
-                try (DirectoryStream<Path> modules = Files.newDirectoryStream(pdir)) {
+            Path dir;
+            if (rd.path.isEmpty()) {
+                dir = jrtfs.getPath("/modules");
+            } else {
+                Path pkgs = jrtfs.getPath("/packages");
+                dir = pkgs.resolve(rd.getPath().replaceAll("/$", "").replace("/", "."));
+            }
+            if (Files.exists(dir)) {
+                try (DirectoryStream<Path> modules = Files.newDirectoryStream(dir)) {
                     for (Path module: modules) {
                         Path p = rd.getFile(module);
                         if (!Files.exists(p))
