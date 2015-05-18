@@ -41,11 +41,12 @@ public class ProxyAccess {
     private static Module m3 = p.three.P.class.getModule();
 
     static void testProxyClass(Module module, Class<?>... interfaces) {
-        ClassLoader ld = module == null ? ProxyAccess.class.getClassLoader() : module.getClassLoader();
+        ClassLoader ld = module.getClassLoader();
         Class<?> proxyClass = Proxy.getProxyClass(ld, interfaces);
-        assertTrue(proxyClass.getModule() == module);
+        Module target = proxyClass.getModule();
+        assertTrue(target == module);
 
-        if (module != null) {
+        if (module.isNamed()) {
             proxyClass = Proxy.getModuleProxyClass(module, interfaces);
             assertTrue(proxyClass.getModule() == module);
         }
@@ -67,7 +68,7 @@ public class ProxyAccess {
     }
 
     public static void main(String... args) throws Exception {
-        Module unnamed = null;
+        Module unnamed = ProxyAccess.class.getModule();
         testProxyClass(unnamed, Runnable.class);
         testProxyClass(unnamed, p.one.I.class);
         testProxyClass(unnamed, p.one.I.class, p.two.A.class);
@@ -76,13 +77,20 @@ public class ProxyAccess {
         testProxyClass(m2, p.two.A.class, bClass, cClass);
 
         testModuleProxyClass(m1, jClass);
-        testModuleProxyClass(m1, jClass, q.U.class);
         testModuleProxyClass(m2, p.two.A.class, cClass);
         testModuleProxyClass(m3, p.two.A.class, qClass);
 
+        // strict module can't read unnamed module
+        testInaccessible(m1, jClass, q.U.class);
+
+        // module can't read named module
         testInaccessible(m1, p.one.I.class, p.two.A.class);
         testInaccessible(m3, p.two.A.class, bClass);
         testInaccessible(m3, cClass, qClass);
+
+        // make m3 loose
+        m3.addReads(null);
+        testModuleProxyClass(m3, p.two.A.class, qClass);
 
         // this will add qualified export of sun.invoke from java.base to m1
         testModuleMethodHandle(m1);
@@ -97,7 +105,8 @@ public class ProxyAccess {
         Runnable proxy = MethodHandleProxies.asInterfaceInstance(Runnable.class, mh);
         proxy.run();
         Class<?> proxyClass = proxy.getClass();
-        assertTrue(proxyClass.getModule() == module);
+        Module target = proxyClass.getModule();
+        assertTrue(target == module);
     }
 
     static void testModuleMethodHandle(Module module) throws Exception {

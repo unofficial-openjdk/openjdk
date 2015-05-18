@@ -36,18 +36,19 @@ import java.net.URLClassLoader;
 public class Main {
     public static void main(String[] args) throws Exception {
         Module m1 = p.one.I.class.getModule();
-        assertTrue(m1 != null);
+        assertTrue(m1.isNamed());
 
         Module m2 = p.two.A.class.getModule();
-        assertTrue(m2 != null);
+        assertTrue(m2.isNamed());
 
         Module m3 = p.three.P.class.getModule();
-        assertTrue(m3 != null);
+        assertTrue(m3.isNamed());
 
         Module unnamed = q.U.class.getModule();
         ClassLoader unnamedModuleLoader = q.U.class.getClassLoader();
-        assertTrue(unnamed == null);
+        assertTrue(!unnamed.isNamed());
         ClassLoader customLoader = new URLClassLoader(new URL[0]);
+        Module unnamed2 = customLoader.getUnnamedModule();
 
         // test class loader
         // proxies of exported APIs go to unnamed module
@@ -57,10 +58,10 @@ public class Main {
         test(ld, unnamed, p.one.I.class, p.two.A.class);
         test(ld, unnamed, p.one.I.class, p.two.A.class, q.U.class);
         test(ld, unnamed, p.one.I.class, p.two.A.class, q.U.class);
-        test(customLoader, unnamed, p.one.I.class);
-        test(customLoader, unnamed, p.one.I.class, p.two.A.class);
-        test(customLoader, unnamed, p.one.I.class, p.two.A.class, q.U.class);
-        test(customLoader, unnamed, p.one.I.class, p.two.A.class, q.U.class);
+        test(customLoader, unnamed2, p.one.I.class);
+        test(customLoader, unnamed2, p.one.I.class, p.two.A.class);
+        test(customLoader, unnamed2, p.one.I.class, p.two.A.class, q.U.class);
+        test(customLoader, unnamed2, p.one.I.class, p.two.A.class, q.U.class);
 
         // package-private interface
         // must be in the same runtime package as the package-private interface
@@ -73,7 +74,9 @@ public class Main {
         // module-private interface
         // ## perhaps should check the proxy class is not in an exported package
         test(m1, p.one.internal.J.class);
-        test(m1, p.one.internal.J.class, q.U.class);
+
+        // m1 is strict module, it can't access unnamed module
+        // test(m1, p.one.internal.J.class, q.U.class);
         testInaccessible(p.one.internal.J.class, p.two.A.class);
 
         test(m2, p.two.A.class, p.two.internal.C.class);
@@ -94,9 +97,14 @@ public class Main {
         test(m3.getClassLoader(), test, p.three.P.class, p.two.A.class, jdk.test.R.class);
         test(unnamed, q.U.class);
         test(unnamed, q.U.class, p.one.I.class);
-        // ## not in unnamed - ambiguous
-        test(test, q.U.class, p.one.I.class, jdk.test.R.class);
+
+        // test is strict module and can't read unnamed module where q.U is defined
+        testInaccessible(jdk.test.R.class, q.U.class, p.one.I.class);
         testInaccessible(q.U.class, p.two.internal.C.class, p.three.internal.Q.class);
+
+        // make test module loose and now can access q.U
+        test.addReads(null);
+        test(test, q.U.class, p.one.I.class, jdk.test.R.class);
     }
 
     static void test(Module expected, Class<?>... interfaces) {
