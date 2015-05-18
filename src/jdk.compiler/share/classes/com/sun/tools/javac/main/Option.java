@@ -491,6 +491,19 @@ public enum Option {
         }
     },
 
+    XADDEXPORTS("-XaddExports:", "opt.addExports", EXTENDED, BASIC) {
+        @Override
+        public boolean process(OptionHelper helper, String option) {
+            String prev = helper.get(XADDEXPORTS);
+            if (prev != null) {
+                helper.error("err.option.too.many", XADDEXPORTS.text);
+            }
+            String p = option.substring(option.indexOf(':') + 1);
+            helper.put(XADDEXPORTS.text, p);
+            return false;
+        }
+    },
+
     XXADDMODULEEXPORTS("-XX:AddModuleExports=", null, HIDDEN, BASIC) {
         @Override
         public boolean process(OptionHelper helper, String option) {

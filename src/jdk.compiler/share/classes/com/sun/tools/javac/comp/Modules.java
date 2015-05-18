@@ -101,8 +101,8 @@ public class Modules extends JCTree.Visitor {
 
     ModuleSymbol defaultModule;
 
-    private final String addModuleExportsOpt;
-    private Map<ModuleSymbol, Set<ExportsDirective>> addModuleExports;
+    private final String addExportsOpt;
+    private Map<ModuleSymbol, Set<ExportsDirective>> addExports;
 
     public static Modules instance(Context context) {
         Modules instance = context.get(Modules.class);
@@ -131,7 +131,10 @@ public class Modules extends JCTree.Visitor {
         JNIWriter jniWriter = JNIWriter.instance(context);
         jniWriter.multiModuleMode = multiModuleMode;
 
-        addModuleExportsOpt = options.get(Option.XXADDMODULEEXPORTS);
+        String opt = options.get(Option.XADDEXPORTS);;
+        if (opt == null) // temporary, until old option is phased out
+            opt = options.get(Option.XXADDMODULEEXPORTS);
+        addExportsOpt = opt;
     }
 
     int depth = -1;
@@ -532,14 +535,14 @@ public class Modules extends JCTree.Visitor {
     }
 
     private void initVisiblePackages(ModuleSymbol msym, Collection<ModuleSymbol> readable) {
-        initAddModuleExports();
+        initAddExports();
 
         msym.visiblePackages = new LinkedHashSet<>();
         msym.visiblePackages.add(syms.rootPackage);
 
         for (ModuleSymbol rm : readable) {
             addVisiblePackages(msym, rm.exports);
-            Set<ExportsDirective> extra = addModuleExports.get(rm);
+            Set<ExportsDirective> extra = addExports.get(rm);
             if (extra != null)
                 addVisiblePackages(msym, extra);
         }
@@ -552,40 +555,29 @@ public class Modules extends JCTree.Visitor {
         }
     }
 
-    private void initAddModuleExports() {
-        if (addModuleExports != null)
+    private void initAddExports() {
+        if (addExports != null)
             return;
 
-        addModuleExports = new LinkedHashMap<>();
+        addExports = new LinkedHashMap<>();
 
-        if (addModuleExportsOpt == null)
+        if (addExportsOpt == null)
             return;
 
-        for (String s: addModuleExportsOpt.split("[ ,]+")) {
+        for (String s: addExportsOpt.split("[ ,]+")) {
             if (s.isEmpty())
                 continue;
             int slash = s.indexOf('/');
             String moduleName = s.substring(0, slash);
             ModuleSymbol msym = syms.enterModule(names.fromString(moduleName));
-            int equals = s.indexOf('=', slash + 1);
-            ExportsDirective d;
-            if (equals == -1) {
-                String packageName = s.substring(slash + 1);
-                PackageSymbol p = syms.enterPackage(msym, names.fromString(packageName));
-                p.modle = msym;
-                d = new ExportsDirective(p, null);
-            } else {
-                String packageName = s.substring(slash + 1, equals);
-                String toModule = s.substring(equals + 1);
-                PackageSymbol p = syms.enterPackage(msym, names.fromString(packageName));
-                p.modle = msym;
-                ModuleSymbol m = syms.enterModule(names.fromString(toModule));
-                d = new ExportsDirective(p, List.of(m));
-            }
+            String packageName = s.substring(slash + 1);
+            PackageSymbol p = syms.enterPackage(msym, names.fromString(packageName));
+            p.modle = msym;
+            ExportsDirective d = new ExportsDirective(p, null);
 
-            Set<ExportsDirective> extra = addModuleExports.get(msym);
+            Set<ExportsDirective> extra = addExports.get(msym);
             if (extra == null) {
-                addModuleExports.put(msym, extra = new LinkedHashSet<>());
+                addExports.put(msym, extra = new LinkedHashSet<>());
             }
             extra.add(d);
         }
