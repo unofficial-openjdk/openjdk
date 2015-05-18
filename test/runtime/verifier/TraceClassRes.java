@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015 Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -19,32 +19,26 @@
  * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  * or visit www.oracle.com if you need additional information or have any
  * questions.
- *
  */
 
-// no precompiled headers
+/*
+ * @test
+ * @bug 8076318
+ * @summary split verifier needs to add TraceClassResolution
+ * @library /testlibrary
+ */
 
-// ----------------------------------------------------------------------------
-// Build a table of class names as strings.  Used both for debugging printouts
-// and in the ADL machine descriptions.
-#define macro(x) #x,
-const char *NodeClassNames[] = {
-  "Node",
-  "Set",
-  "RegN",
-  "RegI",
-  "RegP",
-  "RegF",
-  "RegD",
-  "RegL",
-  "RegFlags",
-  "VecS",
-  "VecD",
-  "VecX",
-  "VecY",
-  "VecZ",
-  "_last_machine_leaf",
-#include "classes.hpp"
-  "_last_class_name",
-};
-#undef macro
+import jdk.test.lib.*;
+
+// Test that the verifier outputs the classes it loads if -XX:+TraceClassResolution is specified"
+public class TraceClassRes {
+  public static void main(String[] args) throws Exception {
+
+    ProcessBuilder pb = ProcessTools.createJavaProcessBuilder(
+        "-XX:+TraceClassResolution", "-verify", "-Xshare:off", "-version");
+
+    OutputAnalyzer output = new OutputAnalyzer(pb.start());
+    output.shouldContain("RESOLVE java.lang.ClassLoader java.lang.Throwable ClassLoader.java (verification)");
+    output.shouldHaveExitValue(0);
+  }
+}
