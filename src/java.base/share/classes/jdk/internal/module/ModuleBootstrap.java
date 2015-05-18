@@ -157,10 +157,11 @@ public final class ModuleBootstrap {
         long t1 = System.nanoTime();
 
         // run the resolver to create the configuration
-        Configuration cf = Configuration.resolve(finder,
-                                                 Layer.emptyLayer(),
+        Configuration cf = (Configuration.resolve(finder,
+                                                 Layer.empty(),
                                                  ModuleFinder.empty(),
-                                                 input).bind();
+                                                 input)
+                            .bind());
 
         // time to create configuration
         PerfCounters.configTime.addElapsedTimeFrom(t1);
@@ -220,7 +221,7 @@ public final class ModuleBootstrap {
                                             Set<String> mods)
     {
         Configuration cf = Configuration.resolve(finder,
-                                                 Layer.emptyLayer(),
+                                                 Layer.empty(),
                                                  ModuleFinder.empty(),
                                                  mods);
 
@@ -311,14 +312,10 @@ public final class ModuleBootstrap {
                 String[] s = expr.split("/");
                 if (s.length != 2)
                     fail("Unable to parse: " + expr);
-
                 String mn = s[0];
                 String pn = s[1];
-
-                Module module = bootLayer.findModule(mn);
-                if (module != null) {
-                    Modules.addExports(module, pn, null);
-                }
+                bootLayer.findModule(mn)
+                    .ifPresent(m -> Modules.addExports(m, pn, null));
             }
         }
     }

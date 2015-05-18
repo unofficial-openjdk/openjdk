@@ -42,8 +42,8 @@ public class Main {
     public static void main(String[] args) throws Exception {
 
         System.out.println("Boot layer");
-        Layer.bootLayer()
-             .configuration()
+        Layer.boot()
+             .configuration().get()
              .descriptors()
              .stream()
              .map(ModuleDescriptor::name)
@@ -67,7 +67,7 @@ public class Main {
             paths[i++] = Paths.get(dir);
         }
 
-        Layer bootLayer = Layer.bootLayer();
+        Layer bootLayer = Layer.boot();
 
         ModuleFinder finder = ModuleFinder.of(paths);
 

@@ -44,11 +44,11 @@ public class Main {
         assertTrue(httpModule.canRead(null));
 
         // and read all modules in the boot Layer
-        Layer layer = Layer.bootLayer();
-        layer.configuration().descriptors().stream()
+        Layer layer = Layer.boot();
+        layer.configuration().get().descriptors().stream()
                 .map(ModuleDescriptor::name)
                 .map(layer::findModule)
-                .forEach(m -> assertTrue(httpModule.canRead(m)));
+                .forEach(om -> assertTrue(httpModule.canRead(om.get())));
 
         // run code in the automatic modue, ensures access is allowed
         HttpServer http = new HttpServer(80);

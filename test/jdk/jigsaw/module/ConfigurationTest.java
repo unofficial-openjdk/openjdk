@@ -27,6 +27,7 @@ import static java.lang.module.Layer.*;
 import java.lang.module.ResolutionException;
 import java.lang.module.ModuleFinder;
 import static java.lang.module.ModuleFinder.*;
+import static java.lang.module.ModuleFinder.empty;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Requires.Modifier;
 import java.lang.module.ModuleReference;
@@ -59,7 +60,7 @@ public class ConfigurationTest {
         ModuleFinder finder =
                 new ModuleLibrary(descriptor1, descriptor2, descriptor3);
 
-        Configuration cf = Configuration.resolve(finder, bootLayer(), empty(), "m1");
+        Configuration cf = Configuration.resolve(finder, boot(), empty(), "m1");
 
         assertTrue(cf.descriptors().size() == 3);
         assertTrue(cf.descriptors().contains(descriptor1));
@@ -88,7 +89,7 @@ public class ConfigurationTest {
      */
     @Test(expectedExceptions = { ResolutionException.class })
     public void testRootNotFound() {
-        Configuration.resolve(empty(), bootLayer(), empty(), "m1");
+        Configuration.resolve(empty(), boot(), empty(), "m1");
     }
 
     /**
@@ -100,7 +101,7 @@ public class ConfigurationTest {
                 new ModuleDescriptor.Builder("m1").requires("m2").build();
         ModuleFinder finder = new ModuleLibrary(descriptor1);
 
-        Configuration.resolve(finder, bootLayer(), empty(), "m1");
+        Configuration.resolve(finder, boot(), empty(), "m1");
     }
 
     /**
@@ -114,7 +115,7 @@ public class ConfigurationTest {
                 new ModuleDescriptor.Builder("m2").requires("m3").build();
         ModuleFinder finder = new ModuleLibrary(descriptor1, descriptor2);
 
-        Configuration.resolve(finder, bootLayer(), empty(), "m1");
+        Configuration.resolve(finder, boot(), empty(), "m1");
     }
 
     /**
@@ -135,7 +136,7 @@ public class ConfigurationTest {
 
         Configuration cf;
         try {
-            cf = Configuration.resolve(finder, bootLayer(), empty(), "m1");
+            cf = Configuration.resolve(finder, boot(), empty(), "m1");
             assertTrue(cf.descriptors().size() == 1);
         } catch (ResolutionException e) {
             throw new RuntimeException(e);
@@ -167,7 +168,7 @@ public class ConfigurationTest {
         ModuleFinder finder =
                 new ModuleLibrary(descriptor1, descriptor2, descriptor3);
 
-        Configuration cf = Configuration.resolve(finder, bootLayer(), empty(), "m1");
+        Configuration cf = Configuration.resolve(finder, boot(), empty(), "m1");
 
         assertTrue(cf.descriptors().size() == 3);
         assertTrue(cf.descriptors().contains(descriptor1));
@@ -214,7 +215,7 @@ public class ConfigurationTest {
         ModuleFinder finder =
             new ModuleLibrary(descriptor1, descriptor2, descriptor3, descriptor4);
 
-        Configuration cf = Configuration.resolve(finder, bootLayer(), empty(), "m1");
+        Configuration cf = Configuration.resolve(finder, boot(), empty(), "m1");
 
         // only m1 and m2 in the configuration
         assertTrue(cf.descriptors().size() == 2);
@@ -257,7 +258,7 @@ public class ConfigurationTest {
         ModuleFinder finder =
                 new ModuleLibrary(descriptor1, descriptor2, descriptor3);
 
-        Configuration.resolve(finder, bootLayer(), empty(), "m1");
+        Configuration.resolve(finder, boot(), empty(), "m1");
     }
 
     /**
@@ -278,7 +279,7 @@ public class ConfigurationTest {
 
         Configuration cf;
         try {
-            cf = Configuration.resolve(finder, bootLayer(), empty(), "m1");
+            cf = Configuration.resolve(finder, boot(), empty(), "m1");
             assertTrue(cf.findDescriptor("m1").get() == descriptor1);
             assertTrue(cf.descriptors().size() == 1);
         } catch (ResolutionException e) {

@@ -490,7 +490,7 @@ public final class Module {
                 Module m2 = modules.get(dn);
                 Layer parent = cf.layer();
                 if (m2 == null && parent != null)
-                    m2 = parent.findModule(other.name());
+                    m2 = parent.findModule(other.name()).orElse(null);
                 if (m2 == null) {
                     throw new InternalError(descriptor.name() +
                             " reads unknown module: " + other.name());

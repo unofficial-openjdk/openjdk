@@ -27,6 +27,7 @@ package sun.misc;
 
 import java.lang.module.Layer;
 
+
 /**
  * Provides access to non-public methods in java.lang.module.
  */
@@ -35,7 +36,8 @@ public interface JavaLangModuleAccess {
 
     /**
      * Sets the boot Layer.
-     * @see Layer#bootLayer()
+     * @see Layer#boot()
      */
     void setBootLayer(Layer layer);
+
 }

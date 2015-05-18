@@ -277,7 +277,7 @@ class JlinkTask {
         final Path output = options.output;
 
         Configuration cf = Configuration.resolve(options.moduleFinder,
-                Layer.emptyLayer(),
+                Layer.empty(),
                 ModuleFinder.empty(),
                 options.jmods);
 

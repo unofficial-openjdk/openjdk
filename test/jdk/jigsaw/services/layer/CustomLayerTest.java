@@ -46,9 +46,9 @@ public class CustomLayerTest {
         // create the Configuration
         ModuleFinder finder = ModuleFinder.of(dir);
         Configuration cf = Configuration.resolve(finder,
-                Layer.bootLayer(),
-                ModuleFinder.empty(),
-                moduleName);
+                                                 Layer.boot(),
+                                                 ModuleFinder.empty(),
+                                                 moduleName);
 
         // create the Layer with the module loaded by the system class loader
         ClassLoader scl = ClassLoader.getSystemClassLoader();
@@ -64,11 +64,11 @@ public class CustomLayerTest {
         factory = find(engineName, sl);
         if (factory == null)
             throw new RuntimeException(engineName + " not found");
-        if (factory.getClass().getModule() != layer.findModule(moduleName))
+        if (factory.getClass().getModule() != layer.findModule(moduleName).get())
             throw new RuntimeException(engineName + " not loaded by expected module");
 
         // provider should not be found in boot layer
-        sl = ServiceLoader.load(Layer.bootLayer(), ScriptEngineFactory.class);
+        sl = ServiceLoader.load(Layer.boot(), ScriptEngineFactory.class);
         factory = find(engineName, sl);
         if (factory != null)
             throw new RuntimeException(engineName + " found (not expected)");

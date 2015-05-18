@@ -35,7 +35,7 @@ public class Main {
         Module m1 = Resource.class.getModule();
         Module m2 = BigResource.class.getModule();
 
-        Configuration cf = Layer.bootLayer().configuration();
+        Configuration cf = Layer.boot().configuration().get();
         System.out.format("%s loaded from %s%n", m1,
                           cf.findReference(m1.getName()).get().location().get());
 

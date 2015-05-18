@@ -221,7 +221,7 @@ final class Resolver {
                 ModuleReference mref = find(beforeFinder, dn);
 
                 // already defined to the runtime
-                if (mref == null && layer.findModule(dn) != null) {
+                if (mref == null && layer.findModule(dn).isPresent()) {
                     continue;
                 }
 
@@ -371,7 +371,7 @@ final class Resolver {
         // there may be selected modules that have a dependence.
         Layer current = this.layer;
         while (current != null) {
-            Configuration cf = current.configuration();
+            Configuration cf = current.configuration().orElse(null);
             if (cf != null) {
                 for (ModuleDescriptor descriptor: cf.descriptors()) {
                     // requires
@@ -383,7 +383,8 @@ final class Resolver {
                     for (Requires d: descriptor.requires()) {
                         if (d.modifiers().contains(Requires.Modifier.PUBLIC)) {
                             String dn = d.name();
-                            ModuleReference mref = current.findReference(dn);
+                            ModuleReference mref
+                                = current.findReference(dn).orElse(null);
                             if (mref == null)
                                 throw new InternalError();
                             g2.get(descriptor).add(mref.descriptor());
@@ -391,7 +392,7 @@ final class Resolver {
                     }
                 }
             }
-            current = current.parent();
+            current = current.parent().orElse(null);
         }
 
         // add the module dependence edges from the newly selected modules
@@ -402,7 +403,8 @@ final class Resolver {
                 String dn = d.name();
                 ModuleDescriptor other = nameToModule.get(dn);
                 if (other == null && layer != null)
-                    other = layer.findReference(dn).descriptor();
+                    other = layer.findReference(dn)
+                        .map(ModuleReference::descriptor).orElse(null);
                 if (other == null)
                     throw new InternalError(dn + " not found??");
 
@@ -474,7 +476,7 @@ final class Resolver {
                 if (recordedHash != null) {
                     ModuleReference mref = nameToReference.get(dn);
                     if (mref == null)
-                        mref = layer.findReference(dn);
+                        mref = layer.findReference(dn).orElse(null);
                     if (mref == null)
                         throw new InternalError(dn + " not found");
 
@@ -551,7 +553,7 @@ final class Resolver {
      * Returns true if a module of the given module's name is in a parent Layer
      */
     private boolean inParentLayer(ModuleReference mref) {
-        return layer.findModule(mref.descriptor().name()) != null;
+        return layer.findModule(mref.descriptor().name()).isPresent();
     }
 
     /**

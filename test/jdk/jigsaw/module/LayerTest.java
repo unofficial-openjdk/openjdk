@@ -46,10 +46,10 @@ public class LayerTest {
      * Exercise Layer#bootLayer
      */
     public void testBootLayer() {
-        Layer bootLayer = Layer.bootLayer();
+        Layer bootLayer = Layer.boot();
 
         // configuration
-        Configuration cf = bootLayer.configuration();
+        Configuration cf = bootLayer.configuration().get();
         assertTrue(cf.findDescriptor("java.base").get().exports()
                    .stream().anyMatch(e -> (e.source().equals("java.lang")
                                             && !e.targets().isPresent())));
@@ -59,20 +59,20 @@ public class LayerTest {
 
         // findModule
         Module base = Object.class.getModule();
-        assertTrue(bootLayer.findModule("java.base") == base);
+        assertTrue(bootLayer.findModule("java.base").get() == base);
 
         // parent
-        assertTrue(bootLayer.parent() == Layer.emptyLayer());
+        assertTrue(bootLayer.parent().get() == Layer.empty());
     }
 
     /**
      * Exercise Layer#emptyLayer
      */
     public void testEmptyLayer() {
-        Layer emptyLayer = Layer.emptyLayer();
+        Layer emptyLayer = Layer.empty();
 
         // configuration
-        assertTrue(emptyLayer.configuration() == null);
+        assertTrue(!emptyLayer.configuration().isPresent());
 
         // findLoader
         try {
@@ -81,10 +81,10 @@ public class LayerTest {
         } catch (IllegalArgumentException ignore) { }
 
         // findModule
-        assertTrue(emptyLayer.findModule("java.base") == null);
+        assertTrue(!emptyLayer.findModule("java.base").isPresent());
 
         // parent
-        assertTrue(emptyLayer.parent() == null);
+        assertTrue(!emptyLayer.parent().isPresent());
     }
 
     /**
@@ -110,7 +110,7 @@ public class LayerTest {
                 new ModuleLibrary(descriptor1, descriptor2, descriptor3);
 
         Configuration cf = Configuration.resolve(finder,
-                                                 Layer.emptyLayer(),
+                                                 Layer.empty(),
                                                  ModuleFinder.empty(),
                                                  "m1");
 
@@ -126,8 +126,8 @@ public class LayerTest {
         Layer layer = Layer.create(cf, map::get);
 
         // configuration
-        assertTrue(layer.configuration() == cf);
-        assertTrue(layer.configuration().descriptors().size() == 3);
+        assertTrue(layer.configuration().get() == cf);
+        assertTrue(layer.configuration().get().descriptors().size() == 3);
 
         // findLoader
         assertTrue(layer.findLoader("m1") == loader1);
@@ -139,13 +139,13 @@ public class LayerTest {
         } catch (IllegalArgumentException ignore) { }
 
         // findModule
-        assertTrue(layer.findModule("m1").getName().equals("m1"));
-        assertTrue(layer.findModule("m2").getName().equals("m2"));
-        assertTrue(layer.findModule("m3").getName().equals("m3"));
-        assertTrue(layer.findModule("godot") == null);
+        assertTrue(layer.findModule("m1").get().getName().equals("m1"));
+        assertTrue(layer.findModule("m2").get().getName().equals("m2"));
+        assertTrue(layer.findModule("m3").get().getName().equals("m3"));
+        assertTrue(!layer.findModule("godot").isPresent());
 
         // parent
-        assertTrue(layer.parent() == Layer.emptyLayer());
+        assertTrue(layer.parent().get() == Layer.empty());
     }
 
     /**
@@ -168,7 +168,7 @@ public class LayerTest {
                 new ModuleLibrary(descriptor1, descriptor2);
 
         Configuration cf = Configuration.resolve(finder,
-                                                 Layer.bootLayer(),
+                                                 Layer.boot(),
                                                  ModuleFinder.empty(),
                                                  "m1");
 
@@ -177,8 +177,8 @@ public class LayerTest {
         Layer layer = Layer.create(cf, m -> loader);
 
         // configuration
-        assertTrue(layer.configuration() == cf);
-        assertTrue(layer.configuration().descriptors().size() == 2);
+        assertTrue(layer.configuration().get() == cf);
+        assertTrue(layer.configuration().get().descriptors().size() == 2);
 
         // findLoader
         assertTrue(layer.findLoader("m1") == loader);
@@ -186,12 +186,12 @@ public class LayerTest {
         assertTrue(layer.findLoader("java.base") == null);
 
         // findModule
-        assertTrue(layer.findModule("m1").getName().equals("m1"));
-        assertTrue(layer.findModule("m2").getName().equals("m2"));
-        assertTrue(layer.findModule("java.base") == Object.class.getModule());
+        assertTrue(layer.findModule("m1").get().getName().equals("m1"));
+        assertTrue(layer.findModule("m2").get().getName().equals("m2"));
+        assertTrue(layer.findModule("java.base").get() == Object.class.getModule());
         // parent
 
-        assertTrue(layer.parent() == Layer.bootLayer());
+        assertTrue(layer.parent().get() == Layer.boot());
     }
 
     public void testLayerOnLayer() {

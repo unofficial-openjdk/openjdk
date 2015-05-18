@@ -31,6 +31,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
 import sun.misc.JavaLangModuleAccess;
@@ -51,7 +52,7 @@ import sun.misc.SharedSecrets;
  *
  *     Configuration cf =
  *         Configuration.resolve(ModuleFinder.empty(),
- *                               Layer.bootLayer(),
+ *                               Layer.boot(),
  *                               finder,
  *                               "myapp");
  *
@@ -77,7 +78,7 @@ public final class Layer {
     private final Map<String, Module> nameToModule;
 
     /**
-     * Finds the class loader for module references.
+     * Finds the class loader for a module reference.
      *
      * @see Layer#create
      * @since 1.9
@@ -125,7 +126,7 @@ public final class Layer {
                 .filter(ModuleDescriptor::isAutomatic)
                 .map(ModuleDescriptor::name)
                 .map(layer::findModule)
-                .forEach(m -> layer.fixupAutomaticModule(m));
+                .forEach(om -> layer.fixupAutomaticModule(om.get()));
 
         return layer;
     }
@@ -146,61 +147,53 @@ public final class Layer {
         do {
             Collection<Module> modules = l.nameToModule.values();
             modules.forEach(m -> Modules.addReads(autoModule, m));
-            l = l.parent();
-        } while (l != Layer.emptyLayer());
+            l = l.parent().orElse(null);
+        } while (l != null);
     }
 
     /**
-     * Returns the {@code Configuration} used to create this layer. Return
-     * {@code null} in the case of the {@link #emptyLayer empty-layer}.
+     * Returns the {@code Configuration} used to create this layer unless this
+     * is the {@linkplain #empty empty layer}, which has no configuration.
      */
-    public Configuration configuration() {
-        return cf;
+    public Optional<Configuration> configuration() {
+        return Optional.ofNullable(cf);
     }
 
     /**
-     * Returns this layer's parent. If this layer is the {@link #emptyLayer empty-layer}
-     * then its parent is {@code null}.
+     * Returns this layer's parent unless this is the {@linkplain #empty empty
+     * layer}, which has no parent.
      */
-    public Layer parent() {
+    public Optional<Layer> parent() {
         if (cf == null) {
-            return null;
+            return Optional.empty();
         } else {
-            return cf.layer();
+            return Optional.of(cf.layer());
         }
     }
 
     /**
      * Returns the {@code Module} with the given name in this layer, or if not
-     * in this layer, the {@link #parent} layer. Returns {@code null} if not
-     * found.
+     * in this layer, the {@linkplain #parent parent} layer.
      */
-    public Module findModule(String name) {
+    public Optional<Module> findModule(String name) {
         Module m = nameToModule.get(Objects.requireNonNull(name));
-        Layer parent = parent();
-        if (m == null && parent != null)
-            m = parent.findModule(name);
-        return m;
+        if (m != null)
+            return Optional.of(m);
+        return parent().flatMap(l -> l.findModule(name));
     }
 
     /**
-     * Returns the {@code ModuleReference} from where the module with the given
-     * name was originally defined. If a module of the given name is not
-     * in this layer then the {@link #parent} layer is checked. Returns {@code
-     * null} if not found.
+     * Returns the {@code ModuleReference} that was used to define the module
+     * with the given name.  If a module of the given name is not in this layer
+     * then the {@linkplain #parent parent} layer is checked.
      */
-    ModuleReference findReference(String name) {
-        if (cf == null) {
-            return null;
-        } else {
-            ModuleReference mref = cf.findReference(name).orElse(null);
-            if (mref == null) {
-                Layer parent = parent();
-                if (parent != null)
-                    mref = parent.findReference(name);
-            }
-            return mref;
-        }
+    public Optional<ModuleReference> findReference(String name) {
+        if (cf == null)
+            return Optional.empty();
+        Optional<ModuleReference> omref = cf.findReference(name);
+        if (omref.isPresent())
+            return omref;
+        return parent().flatMap(l -> l.findReference(name));
     }
 
     /**
@@ -213,22 +206,23 @@ public final class Layer {
      * permission to check that the caller is allowed to get access to the
      * class loader. </p>
      *
+     * @apiNote This method does not return an {@code Optional<ClassLoader>}
+     * because `null` must be used to represent the bootstrap class loader.
+     *
      * @throws IllegalArgumentException if a module of the given name is not
-     * defined in this layer or any parent of this layer.
+     * defined in this layer or any parent of this layer
      *
      * @throws SecurityException if denied by the security manager
-     *
-     * @apiNote {@code null} is a valid return from this method.
      */
     public ClassLoader findLoader(String name) {
         Module m = nameToModule.get(name);
-        if (m == null) {
-            Layer parent = parent();
-            if (parent != null)
-                return parent.findLoader(name);
-            throw new IllegalArgumentException(name + " not known to this Layer");
-        }
-        return m.getClassLoader();
+        if (m != null)
+            return m.getClassLoader();
+        Optional<Layer> ol = parent();
+        if (ol.isPresent())
+            return ol.get().findLoader(name);
+        throw new IllegalArgumentException("Module " + name
+                                           + " not known to this layer");
     }
 
     /**
@@ -237,22 +231,20 @@ public final class Layer {
      */
     Set<ModuleDescriptor> allModuleDescriptors() {
         Set<ModuleDescriptor> result = new HashSet<>();
-        Layer parent = parent();
-        if (parent != null)
-            result.addAll(parent.allModuleDescriptors());
+        Optional<Layer> ol = parent();
+        if (ol.isPresent())
+            result.addAll(ol.get().allModuleDescriptors());
         if (cf != null)
             result.addAll(cf.descriptors());
         return result;
     }
 
-
     /**
-     * Returns the <em>empty</em> {@code Layer}.
+     * Returns the <em>empty</em> layer.
      */
-    public static Layer emptyLayer() {
+    public static Layer empty() {
         return EMPTY_LAYER;
     }
-
 
     /**
      * Returns the boot layer. Returns {@code null} if the boot layer has not
@@ -265,7 +257,7 @@ public final class Layer {
      *
      * @throws SecurityException if denied by the security manager
      */
-    public static Layer bootLayer() {
+    public static Layer boot() {
         SecurityManager sm = System.getSecurityManager();
         if (sm != null)
             sm.checkPermission(new RuntimePermission("getBootLayer"));

@@ -477,7 +477,7 @@ public class ModuleSummary {
 
     static Configuration resolve(Collection<String> roots) {
         return Configuration.resolve(ModuleFinder.ofInstalled(),
-                                     Layer.emptyLayer(),
+                                     Layer.empty(),
                                      ModuleFinder.empty(),
                                      roots);
     }

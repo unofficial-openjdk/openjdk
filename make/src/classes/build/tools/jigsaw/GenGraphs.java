@@ -88,14 +88,14 @@ public class GenGraphs {
             }
             mods.add(name);
             Configuration cf = Configuration.resolve(finder,
-                    Layer.emptyLayer(),
+                    Layer.empty(),
                     ModuleFinder.empty(),
                     name);
             genGraphs.genDotFile(dir, name, cf);
         }
 
         Configuration cf = Configuration.resolve(finder,
-                Layer.emptyLayer(),
+                Layer.empty(),
                 ModuleFinder.empty(),
                 mods);
         genGraphs.genDotFile(dir, "jdk", cf);

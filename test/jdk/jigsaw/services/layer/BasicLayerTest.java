@@ -38,14 +38,14 @@ public class BasicLayerTest {
     @Test
     public void testEmptyLayer() {
         ServiceLoader<Provider> sl
-            = ServiceLoader.load(Layer.emptyLayer(), Provider.class);
+            = ServiceLoader.load(Layer.empty(), Provider.class);
         assertFalse(sl.iterator().hasNext());
     }
 
     @Test
     public void testBootLayer() {
         ServiceLoader<Provider> sl
-            = ServiceLoader.load(Layer.bootLayer(), Provider.class);
+            = ServiceLoader.load(Layer.boot(), Provider.class);
         boolean found = false;
         for (Provider provider : sl) {
             if (provider.getName().equals("SunJCE"))
@@ -61,7 +61,7 @@ public class BasicLayerTest {
 
     @Test(expectedExceptions = { NullPointerException.class })
     public void testNullService() {
-        ServiceLoader.load(Layer.emptyLayer(), null);
+        ServiceLoader.load(Layer.empty(), null);
     }
 
 }

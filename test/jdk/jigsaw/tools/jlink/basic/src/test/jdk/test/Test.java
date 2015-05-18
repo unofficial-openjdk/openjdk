@@ -36,7 +36,7 @@ public class Test {
         ClassLoader scl = ClassLoader.getSystemClassLoader();
         ClassLoader cl1 = Test.class.getClassLoader();
         Module testModule = Test.class.getModule();
-        ClassLoader cl2 = Layer.bootLayer().findLoader(testModule.getName());
+        ClassLoader cl2 = Layer.boot().findLoader(testModule.getName());
 
         if (cl1 != scl)
             throw new RuntimeException("Not loaded by system class loader");

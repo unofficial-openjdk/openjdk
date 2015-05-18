@@ -102,7 +102,7 @@ public class Basic {
      * Returns the directory for the given module (by name).
      */
     static Path directoryFor(String name) {
-        Configuration cf = Layer.bootLayer().configuration();
+        Configuration cf = Layer.boot().configuration().get();
         ModuleReference mref = cf.findReference(name).orElse(null);
         if (mref == null)
             throw new RuntimeException("not found: " + name);

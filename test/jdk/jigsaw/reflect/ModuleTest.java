@@ -43,13 +43,13 @@ public class ModuleTest {
      * Tests that the given module reads all modules in the boot Layer.
      */
     private void testReadsAllBootModules(Module m) {
-        Layer bootLayer = Layer.bootLayer();
-        bootLayer.configuration()
-                .descriptors()
-                .stream()
-                .map(ModuleDescriptor::name)
-                .map(bootLayer::findModule)
-                .forEach(target -> assertTrue(m.canRead(target)));
+        Layer bootLayer = Layer.boot();
+        bootLayer.configuration().get()
+            .descriptors()
+            .stream()
+            .map(ModuleDescriptor::name)
+            .map(bootLayer::findModule)
+            .forEach(target -> assertTrue(m.canRead(target.get())));
     }
 
     @Test

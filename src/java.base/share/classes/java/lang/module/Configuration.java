@@ -46,7 +46,7 @@ import java.util.stream.Collectors;
  *
  *     Configuration cf =
  *         Configuration.resolve(ModuleFinder.empty(),
- *                               Layer.bootLayer(),
+ *                               Layer.boot(),
  *                               finder,
  *                               "myapp")
  *                      .bind();
