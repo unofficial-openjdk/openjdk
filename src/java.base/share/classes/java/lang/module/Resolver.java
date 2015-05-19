@@ -177,7 +177,7 @@ final class Resolver {
                 }
             }
 
-            trace("Module %s located (%s)", root, mref.location());
+            trace("Module %s located (%s)", root, mref.location().orElse(null));
 
             nameToReference.put(root, mref);
             q.push(mref.descriptor());
@@ -195,9 +195,9 @@ final class Resolver {
     }
 
     /**
-     * Poll the given {@code Deque} for modules to resolve. The {@code selected}
-     * set is updated as modules are processed. On completion the {@code Deque}
-     * will be empty.
+     * Poll the given {@code Deque} for modules to resolve. On completion the
+     * {@code Deque} will be empty and the selected set will contain the modules
+     * that were selected.
      *
      * @return The set of module (descriptors) selected by this invocation of
      *         resolve
@@ -211,7 +211,7 @@ final class Resolver {
         while (!q.isEmpty()) {
             ModuleDescriptor descriptor = q.poll();
             assert nameToReference.containsKey(descriptor.name());
-            selected.add(descriptor);
+            newlySelected.add(descriptor);
 
             // process dependences
             for (ModuleDescriptor.Requires requires : descriptor.requires()) {
@@ -240,7 +240,7 @@ final class Resolver {
                 if (!selected.contains(other) && !newlySelected.contains(other)) {
 
                     trace("Module %s located (%s), required by %s",
-                            dn, mref.location(), descriptor.name());
+                            dn, mref.location().orElse(null), descriptor.name());
 
                     newlySelected.add(other);
                     nameToReference.put(dn, mref);
@@ -258,7 +258,7 @@ final class Resolver {
                     if (!selected.contains(other) && !newlySelected.contains(other)) {
 
                         trace("Module %s located (%s), implicitly required by %s",
-                                other.name(), mref.location(), descriptor.name());
+                                other.name(), mref.location().orElse(null), descriptor.name());
 
                         newlySelected.add(other);
                         nameToReference.put(other.name(), mref);
@@ -270,6 +270,9 @@ final class Resolver {
             }
 
         }
+
+        // add the newly selected modules the selected set
+        selected.addAll(newlySelected);
 
         return newlySelected;
     }
