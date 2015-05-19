@@ -495,7 +495,7 @@ public enum LauncherHelper {
 
         Optional<String> omc = mref.descriptor().mainClass();
         if (!omc.isPresent())
-            abort(null, "java.launcher.module.error3", mref.location());
+            abort(null, "java.launcher.module.error3", mainModule);
         return omc.get();
     }
 
