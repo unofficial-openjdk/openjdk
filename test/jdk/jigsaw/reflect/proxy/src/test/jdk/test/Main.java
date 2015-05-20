@@ -44,8 +44,9 @@ public class Main {
         Module m3 = p.three.P.class.getModule();
         assertTrue(m3.isNamed());
 
-        Module unnamed = q.U.class.getModule();
-        ClassLoader unnamedModuleLoader = q.U.class.getClassLoader();
+        Class<?> classInUnnamedModule = Class.forName("q.U");
+        Module unnamed = classInUnnamedModule.getModule();
+        ClassLoader unnamedModuleLoader = classInUnnamedModule.getClassLoader();
         assertTrue(!unnamed.isNamed());
         ClassLoader customLoader = new URLClassLoader(new URL[0]);
         Module unnamed2 = customLoader.getUnnamedModule();
@@ -56,12 +57,12 @@ public class Main {
         test(ld, unnamed, Runnable.class);
         test(ld, unnamed, p.one.I.class);
         test(ld, unnamed, p.one.I.class, p.two.A.class);
-        test(ld, unnamed, p.one.I.class, p.two.A.class, q.U.class);
-        test(ld, unnamed, p.one.I.class, p.two.A.class, q.U.class);
+        test(ld, unnamed, p.one.I.class, p.two.A.class, classInUnnamedModule);
+        test(ld, unnamed, p.one.I.class, p.two.A.class, classInUnnamedModule);
         test(customLoader, unnamed2, p.one.I.class);
         test(customLoader, unnamed2, p.one.I.class, p.two.A.class);
-        test(customLoader, unnamed2, p.one.I.class, p.two.A.class, q.U.class);
-        test(customLoader, unnamed2, p.one.I.class, p.two.A.class, q.U.class);
+        test(customLoader, unnamed2, p.one.I.class, p.two.A.class, classInUnnamedModule);
+        test(customLoader, unnamed2, p.one.I.class, p.two.A.class, classInUnnamedModule);
 
         // package-private interface
         // must be in the same runtime package as the package-private interface
@@ -76,7 +77,7 @@ public class Main {
         test(m1, p.one.internal.J.class);
 
         // m1 is strict module, it can't access unnamed module
-        // test(m1, p.one.internal.J.class, q.U.class);
+        // test(m1, p.one.internal.J.class, classInUnnamedModule);
         testInaccessible(p.one.internal.J.class, p.two.A.class);
 
         test(m2, p.two.A.class, p.two.internal.C.class);
@@ -95,16 +96,16 @@ public class Main {
         testInaccessible(m3.getClassLoader(), p.three.P.class, p.two.internal.C.class, jdk.test.R.class);
         // ambiguous
         test(m3.getClassLoader(), test, p.three.P.class, p.two.A.class, jdk.test.R.class);
-        test(unnamed, q.U.class);
-        test(unnamed, q.U.class, p.one.I.class);
+        test(unnamed, classInUnnamedModule);
+        test(unnamed, classInUnnamedModule, p.one.I.class);
 
         // test is strict module and can't read unnamed module where q.U is defined
-        testInaccessible(jdk.test.R.class, q.U.class, p.one.I.class);
-        testInaccessible(q.U.class, p.two.internal.C.class, p.three.internal.Q.class);
+        testInaccessible(jdk.test.R.class, classInUnnamedModule, p.one.I.class);
+        testInaccessible(classInUnnamedModule, p.two.internal.C.class, p.three.internal.Q.class);
 
         // make test module loose and now can access q.U
         test.addReads(null);
-        test(test, q.U.class, p.one.I.class, jdk.test.R.class);
+        test(test, classInUnnamedModule, p.one.I.class, jdk.test.R.class);
     }
 
     static void test(Module expected, Class<?>... interfaces) {
