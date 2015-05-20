@@ -1149,7 +1149,7 @@ public class Proxy implements java.io.Serializable {
             Module m = intf.getModule();
             String pn = packageName(intf);
             int modifiers = intf.getModifiers();
-            if (m.isNamed() && !pn.isEmpty() && m.isExported(pn, null)) {
+            if (m.isNamed() && !pn.isEmpty() && m.isExported(pn)) {
                 return Modifier.isPublic(modifiers);
             }
             if (!m.isNamed() && !pn.isEmpty()) {

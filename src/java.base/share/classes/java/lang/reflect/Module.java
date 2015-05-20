@@ -210,8 +210,7 @@ public final class Module {
      * <p> For named modules, the returned array contains an element for each
      * package in the module when it was initially created. It may contain
      * elements corresponding to packages added to the module after it was
-     * created (packages added to support dynamic proxy classes for
-     * example). </p>
+     * created. </p>
      *
      * <p> For unnamed modules, this method is the equivalent of invoking
      * the {@link ClassLoader#getPackages() getPackages} method of this
@@ -604,21 +603,41 @@ public final class Module {
 
     /**
      * Returns {@code true} if this module exports the given package to the
-     * given module. If {@code target} is {@code null} then this method
-     * tests if the package is exported un-conditionally (meaning an
-     * unqualified export).
+     * given module.
      *
      * <p> If invoked on an unnamed module then this method always returns
-     * {@code true} if invoked with a non-null package name. </p>
+     * {@code true} for any non-{@code null} package name. </p>
      *
      * <p> This method does not check if the given module reads this
      * module. </p>
-     *
-     * @apiNote Need to consider disallowing null and introducing
-     * isExported(String) to test if a package is exported unconditionally.
      */
     public boolean isExported(String pn, Module target) {
         Objects.requireNonNull(pn);
+        Objects.requireNonNull(target);
+        return implIsExported(pn, target);
+    }
+
+    /**
+     * Returns {@code true} if this module exports the given package
+     * un-conditionally.
+     *
+     * <p> If invoked on an unnamed module then this method always returns
+     * {@code true} for any non-{@code null} package name. </p>
+     *
+     * <p> This method does not check if the given module reads this
+     * module. </p>
+     */
+    public boolean isExported(String pn) {
+        Objects.requireNonNull(pn);
+        return implIsExported(pn, null);
+    }
+
+    /**
+     * Returns {@code true} if this module exports the given package to the
+     * given module. If {@code target} is {@code null} then returns {@code
+     * true} if the package is exported un-conditionally by this module.
+     */
+    private boolean implIsExported(String pn, Module target) {
 
         // all packages are exported by unnamed modules
         if (!isNamed())
@@ -704,7 +723,7 @@ public final class Module {
         synchronized (this) {
 
             // nothing to do if already exported to target
-            if (isExported(pn, target))
+            if (implIsExported(pn, target))
                 return;
 
             // update VM first, just in case it fails

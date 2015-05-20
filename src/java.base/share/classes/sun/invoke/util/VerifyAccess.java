@@ -188,7 +188,7 @@ public class VerifyAccess {
                 return false;
 
             // check the package is exported to everyone
-            return refModule.isExported(getPackageName(refc), null);
+            return refModule.isExported(getPackageName(refc));
         }
         if ((allowedModes & PACKAGE_ALLOWED) != 0 &&
             isSamePackage(lookupClass, refc))

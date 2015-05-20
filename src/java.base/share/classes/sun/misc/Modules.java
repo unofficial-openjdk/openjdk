@@ -86,11 +86,6 @@ public class Modules {
      * Same as m1.addExports(pkg, m2) but with the awesome power to
      * add unqualified exports, all without a permission check.
      *
-     * @param m1 the module that exports the package
-     * @param pn the package to export
-     * @param m2 the module to export the package to, when {@code null} then
-     *           the package is exported all modules that read m1.
-     *
      * @throws IllegalArgumentException if pkg is not a package in m1
      */
     public static void addExports(Module m1, String pn, Module m2) {

@@ -44,17 +44,17 @@ public class Exports {
         Module baseModule = Object.class.getModule();
 
         assertFalse(thisModule.isNamed());
-        assertTrue(thisModule.isExported("", null));
+        assertTrue(thisModule.isExported(""));
         assertTrue(thisModule.isExported("", thisModule));
         assertTrue(thisModule.isExported("", baseModule));
-        assertTrue(thisModule.isExported("p", null));
+        assertTrue(thisModule.isExported("p"));
         assertTrue(thisModule.isExported("p", thisModule));
         assertTrue(thisModule.isExported("p", baseModule));
 
         assertTrue(baseModule.isNamed());
-        assertTrue(baseModule.isExported("java.lang", null));
+        assertTrue(baseModule.isExported("java.lang"));
         assertTrue(baseModule.isExported("java.lang", thisModule));
-        assertFalse(baseModule.isExported("sun.reflect", null));
+        assertFalse(baseModule.isExported("sun.reflect"));
         assertFalse(baseModule.isExported("sun.reflect", thisModule));
     }
 
@@ -86,7 +86,7 @@ public class Exports {
         Module thisModule = this.getClass().getModule();
         Module baseModule = Object.class.getModule();
 
-        assertFalse(baseModule.isExported("sun.security.x509", null));
+        assertFalse(baseModule.isExported("sun.security.x509"));
         assertFalse(baseModule.isExported("sun.security.x509", thisModule));
 
         Class<?> clazz = Class.forName("sun.security.x509.X500Name");
@@ -122,6 +122,12 @@ public class Exports {
     public void testIsExportedNull() {
         Module thisModule = this.getClass().getModule();
         thisModule.isExported(null, thisModule);
+    }
+
+    @Test(expectedExceptions = { NullPointerException.class })
+    public void testIsExportedToNull() {
+        Module thisModule = this.getClass().getModule();
+        thisModule.isExported("", null);
     }
 
 }
