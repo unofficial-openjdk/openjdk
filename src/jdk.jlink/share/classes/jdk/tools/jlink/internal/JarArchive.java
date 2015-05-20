@@ -30,6 +30,8 @@ import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import jdk.internal.jimage.Archive;
@@ -88,7 +90,7 @@ public abstract class JarArchive implements Archive {
     }
 
     @Override
-    public void visitEntries(Consumer<Entry> consumer) {
+    public Stream<Entry> entries() {
         try {
             if (zipFile == null) {
                 open();
@@ -96,9 +98,7 @@ public abstract class JarArchive implements Archive {
         } catch (IOException ioe) {
             throw new UncheckedIOException(ioe);
         }
-        zipFile.stream()
-                .map(this::toEntry).filter(n -> n != null)
-                .forEach(consumer::accept);
+        return zipFile.stream().map(this::toEntry).filter(n -> n != null);
     }
 
     abstract EntryType toEntryType(String entryName);

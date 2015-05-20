@@ -56,44 +56,24 @@ import jdk.tools.jlink.TaskHelper.OptionsHelper;
 class JImageTask {
 
     static final Option<?>[] recognizedOptions = {
-        new Option<JImageTask>(true, "--dir") {
-            @Override
-            protected void process(JImageTask task, String opt, String arg) throws BadArgs {
-                 task.options.directory = arg;
-            }
-        },
-        new HiddenOption<JImageTask>(false, "--fullversion") {
-            @Override
-            protected void process(JImageTask task, String opt, String arg) {
-                task.options.fullVersion = true;
-            }
-        },
-        new Option<JImageTask>(false, "--help") {
-            @Override
-            protected void process(JImageTask task, String opt, String arg) {
-                task.options.help = true;
-            }
-        },
-
-        new Option<JImageTask>(true, "--flags") {
-            @Override
-            protected void process(JImageTask task, String opt, String arg) {
-                task.options.flags = arg;
-            }
-        },
-
-        new Option<JImageTask>(false, "--verbose") {
-            @Override
-            protected void process(JImageTask task, String opt, String arg) throws BadArgs {
-                 task.options.verbose = true;
-            }
-        },
-        new Option<JImageTask>(false, "--version") {
-            @Override
-            protected void process(JImageTask task, String opt, String arg) {
-                task.options.version = true;
-            }
-        },
+        new Option<JImageTask>(true, (task, opt, arg) -> {
+            task.options.directory = arg;
+        }, "--dir"),
+        new HiddenOption<JImageTask>(false, (task, opt, arg) -> {
+            task.options.fullVersion = true;
+        }, "--fullversion"),
+        new Option<JImageTask>(false, (task, opt, arg) -> {
+            task.options.help = true;
+        }, "--help"),
+        new Option<JImageTask>(true, (task, opt, arg) -> {
+            task.options.flags = arg;
+        }, "--flags"),
+        new Option<JImageTask>(false, (task, opt, arg) -> {
+            task.options.verbose = true;
+        }, "--verbose"),
+        new Option<JImageTask>(false, (task, opt, arg) -> {
+            task.options.version = true;
+        }, "--version")
     };
     private static final TaskHelper taskHelper
             = new TaskHelper("jdk.tools.jimage.resources.jimage");

@@ -32,6 +32,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class ImageModuleDataWriter {
@@ -65,15 +66,13 @@ public class ImageModuleDataWriter {
     public static ImageModuleDataWriter buildModuleData(BasicImageWriter writer,
             Map<String, Set<String>> modulePackagesMap) {
         Set<String> modules = modulePackagesMap.keySet();
-
-        Map<String, List<String>> modulePackages = new LinkedHashMap<>();
-        modules.stream().sorted().forEach((moduleName) -> {
-            List<String> localPackages = modulePackagesMap.get(moduleName).stream()
-                    .map(pn -> pn.replace('.', '/'))
-                    .sorted()
-                    .collect(Collectors.toList());
-            modulePackages.put(moduleName, localPackages);
-        });
+        Map<String, List<String>> modulePackages =
+                modules.stream().sorted()
+                                .collect(Collectors.toMap(Function.identity(),
+                                            n -> modulePackagesMap.get(n).stream()
+                                                .map(pn -> pn.replace('.', '/'))
+                                                .sorted()
+                                                .collect(Collectors.toList())));
 
         return new ImageModuleDataWriter(writer, modulePackages);
     }

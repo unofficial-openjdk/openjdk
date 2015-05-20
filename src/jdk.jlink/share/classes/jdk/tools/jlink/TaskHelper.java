@@ -71,13 +71,20 @@ public final class TaskHelper {
         public boolean showUsage;
     }
 
-    public static abstract class Option<T> {
+    public static class Option<T> {
+
+        public interface Processing<T> {
+
+            void process(T task, String opt, String arg) throws BadArgs;
+        }
 
         final boolean hasArg;
         final String[] aliases;
+        final Processing<T> processing;
 
-        public Option(boolean hasArg, String... aliases) {
+        public Option(boolean hasArg, Processing<T> processing, String... aliases) {
             this.hasArg = hasArg;
+            this.processing = processing;
             this.aliases = aliases;
         }
 
@@ -100,22 +107,24 @@ public final class TaskHelper {
         public boolean ignoreRest() {
             return false;
         }
-
-        protected abstract void process(T task, String opt, String arg)
-                throws BadArgs;
-    }
-
-    private abstract class PluginOption extends Option<PluginsOptions> {
-
-        public PluginOption(boolean hasArg, String... aliases) {
-            super(hasArg, aliases);
+        void process(T task, String opt, String arg) throws BadArgs {
+            processing.process(task, opt, arg);
         }
     }
 
-    private abstract class HiddenPluginOption extends PluginOption {
+    private static class PluginOption extends Option<PluginsOptions> {
 
-        public HiddenPluginOption(boolean hasArg, String... aliases) {
-            super(hasArg, aliases);
+        public PluginOption(boolean hasArg,
+                Processing<PluginsOptions> processing, String... aliases) {
+            super(hasArg, processing, aliases);
+        }
+    }
+
+    private static class HiddenPluginOption extends PluginOption {
+
+        public HiddenPluginOption(boolean hasArg,
+                Processing<PluginsOptions> processing, String... aliases) {
+            super(hasArg, processing, aliases);
         }
 
         @Override
@@ -137,55 +146,43 @@ public final class TaskHelper {
                 if (provider.getToolOption() != null) {
                     PluginOption option
                             = new PluginOption(provider.getToolArgument() != null,
-                                    "--" + provider.getToolOption()) {
-                                @Override
-                                protected void process(PluginsOptions task,
-                                        String opt,
-                                        String arg) throws BadArgs {
-                                    Map<String, String> m = plugins.get(provider);
-                                    if (m == null) {
-                                        m = new HashMap<>();
-                                        plugins.put(provider, m);
-                                    }
-                                    m.put(PluginProvider.TOOL_ARGUMENT_PROPERTY, arg);
-                                }
-                            };
+                                    (task, opt, arg) -> {
+                                        Map<String, String> m = plugins.get(provider);
+                                        if (m == null) {
+                                            m = new HashMap<>();
+                                            plugins.put(provider, m);
+                                        }
+                                        m.put(PluginProvider.TOOL_ARGUMENT_PROPERTY, arg);
+                                    },
+                                    "--" + provider.getToolOption());
                     pluginsOptions.add(option);
                     if (provider.getAdditionalOptions() != null) {
                         for (String other : provider.getAdditionalOptions().keySet()) {
                             PluginOption otherOption = new PluginOption(true,
-                                    "--" + other) {
-                                        @Override
-                                        protected void process(PluginsOptions task,
-                                                String opt,
-                                                String arg) throws BadArgs {
-                                            Map<String, String> m = plugins.get(provider);
-                                            if (m == null) {
-                                                m = new HashMap<>();
-                                                plugins.put(provider, m);
-                                            }
-                                            m.put(other, arg);
+                                    (task, opt, arg) -> {
+                                        Map<String, String> m = plugins.get(provider);
+                                        if (m == null) {
+                                            m = new HashMap<>();
+                                            plugins.put(provider, m);
                                         }
-                                    };
+                                        m.put(other, arg);
+                                    },
+                                    "--" + other);
                             pluginsOptions.add(otherOption);
                         }
                     }
                 }
             }
             pluginsOptions.add(new HiddenPluginOption(true,
-                    "--plugins-configuration") {
-                @Override
-                protected void process(PluginsOptions task, String opt,
-                        String arg) throws BadArgs {
-                    pluginsProperties = arg;
-                }
-            });
-            pluginsOptions.add(new HiddenPluginOption(false, "--list-plugins") {
-                @Override
-                protected void process(PluginsOptions task, String opt, String arg) {
-                    listPlugins = true;
-                }
-            });
+                    (task, opt, arg) -> {
+                        pluginsProperties = arg;
+                    },
+                    "--plugins-configuration"));
+            pluginsOptions.add(new HiddenPluginOption(false,
+                    (task, opt, arg) -> {
+                        listPlugins = true;
+                    },
+                    "--list-plugins"));
         }
 
         private PluginOption getOption(String name) throws BadArgs {
@@ -225,10 +222,11 @@ public final class TaskHelper {
         }
     }
 
-    public static abstract class HiddenOption<T> extends Option<T> {
+    public static class HiddenOption<T> extends Option<T> {
 
-        public HiddenOption(boolean hasArg, String... aliases) {
-            super(hasArg, aliases);
+        public HiddenOption(boolean hasArg, Processing<T> processing,
+                String... aliases) {
+            super(hasArg, processing, aliases);
         }
 
         @Override

@@ -31,7 +31,6 @@ import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.*;
 import java.nio.charset.Charset;
-import java.nio.file.AccessMode;
 import java.nio.file.ClosedFileSystemException;
 import java.nio.file.CopyOption;
 import java.nio.file.LinkOption;
@@ -46,16 +45,12 @@ import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
 import java.nio.file.ReadOnlyFileSystemException;
-import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.WatchService;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.FileTime;
 import java.nio.file.attribute.UserPrincipalLookupService;
 import java.nio.file.spi.FileSystemProvider;
-import java.security.AccessController;
-import java.security.PrivilegedActionException;
-import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -64,8 +59,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
+import static java.util.stream.Collectors.toList;
 import jdk.internal.jimage.ImageReader;
 import jdk.internal.jimage.ImageReader.Node;
 import jdk.internal.jimage.UTF8String;
@@ -444,17 +440,10 @@ class JrtFileSystem extends FileSystem {
     }
 
     private Iterator<Path> nodesToIterator(Path path, String childPrefix, List<Node> childNodes) {
-        List<Path> childPaths;
-        if (childPrefix == null) {
-            childPaths = childNodes.stream()
-                .map(child -> toJrtPath(child.getNameString()))
-                .collect(Collectors.toCollection(ArrayList::new));
-        } else {
-            childPaths = childNodes.stream()
-                .map(child -> toJrtPath(childPrefix + child.getNameString().substring(1)))
-                .collect(Collectors.toCollection(ArrayList::new));
-        }
-        return childPaths.iterator();
+        Function<Node, Path> f = childPrefix == null
+                ? child -> toJrtPath(child.getNameString())
+                : child -> toJrtPath(childPrefix + child.getNameString().substring(1));
+         return childNodes.stream().map(f).collect(toList()).iterator();
     }
 
     private void addRootDirContent(List<Node> children) {

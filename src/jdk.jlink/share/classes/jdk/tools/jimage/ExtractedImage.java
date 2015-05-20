@@ -39,6 +39,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 import jdk.internal.jimage.Archive;
 import jdk.tools.jlink.internal.ImageFileCreator;
 import jdk.internal.jimage.ImageModuleData;
@@ -114,13 +115,14 @@ public final class ExtractedImage {
         }
 
         @Override
-        public void visitEntries(Consumer<Archive.Entry> consumer) {
+        public Stream<Entry> entries() {
+            Stream<Entry> ret = null;
             try {
-                Files.walk(dirPath).map(this::toEntry).filter(n -> n != null)
-                        .forEach(consumer::accept);
+                ret = Files.walk(dirPath).map(this::toEntry).filter(n -> n != null);
             } catch (IOException ex) {
                 throw new RuntimeException(ex);
             }
+            return ret;
         }
 
         private Archive.Entry toEntry(Path p) {
@@ -144,8 +146,20 @@ public final class ExtractedImage {
 
         @Override
         public void close() throws IOException {
+            IOException e = null;
             for (InputStream stream : open) {
-                stream.close();
+                try {
+                    stream.close();
+                } catch (IOException ex) {
+                    if (e == null) {
+                        e = ex;
+                    } else {
+                        e.addSuppressed(ex);
+                    }
+                }
+            }
+            if (e != null) {
+                throw e;
             }
         }
 

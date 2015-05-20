@@ -194,12 +194,8 @@ public class ResourcePoolImpl implements ResourcePool {
     }
 
     private void retrieveModulesPackages(Map<String, Set<String>> moduleToPackage) {
-        for (Resource res : resources.values()) {
-            Set<String> pkgs = moduleToPackage.get(res.getModule());
-            if (pkgs == null) {
-                pkgs = new HashSet<>();
-                moduleToPackage.put(res.getModule(), pkgs);
-            }
+        resources.values().stream().forEach((res) -> {
+            Set<String> pkgs = moduleToPackage.computeIfAbsent(res.getModule(),k -> new HashSet<>());
             // Module metadata only contains packages with .class files
             if (ImageFileCreator.isClassPackage(res.getPath())) {
                 String[] split = ImageFileCreator.splitPath(res.getPath());
@@ -208,6 +204,6 @@ public class ResourcePoolImpl implements ResourcePool {
                     pkgs.add(pkg);
                 }
             }
-        }
+        });
     }
 }

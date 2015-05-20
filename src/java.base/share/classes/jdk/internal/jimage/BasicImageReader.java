@@ -31,9 +31,8 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.IntBuffer;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.Comparator;
+import java.util.stream.IntStream;
 
 public class BasicImageReader {
     private final String imagePath;
@@ -122,40 +121,19 @@ public class BasicImageReader {
     }
 
     public String[] getEntryNames() {
-        int[] offsets = substrate.attributeOffsets();
-        List<String> list = new ArrayList<>();
-
-        for (int offset : offsets) {
-            if (offset != 0) {
-                ImageLocation location =
-                        ImageLocation.readFrom(this, offset);
-                list.add(location.getFullNameString());
-            }
-        }
-
-        String[] array = list.toArray(new String[0]);
-        Arrays.sort(array);
-
-        return array;
+        return IntStream.of(substrate.attributeOffsets())
+                        .filter(o -> o != 0)
+                        .mapToObj(o -> ImageLocation.readFrom(this, o).getFullNameString())
+                        .sorted()
+                        .toArray(String[]::new);
     }
 
     protected ImageLocation[] getAllLocations(boolean sorted) {
-        int[] offsets = substrate.attributeOffsets();
-        List<ImageLocation> list = new ArrayList<>();
-
-        for (int offset : offsets) {
-            if (offset != 0) {
-                ImageLocation location =
-                        ImageLocation.readFrom(this, offset);
-                list.add(location);
-            }
-        }
-
-        ImageLocation[] array = list.toArray(new ImageLocation[0]);
-        Arrays.sort(array, (ImageLocation loc1, ImageLocation loc2) ->
-                loc1.getFullNameString().compareTo(loc2.getFullNameString()));
-
-        return array;
+        return IntStream.of(substrate.attributeOffsets())
+                        .filter(o -> o != 0)
+                        .mapToObj(o -> ImageLocation.readFrom(this, o))
+                        .sorted(Comparator.comparing(ImageLocation::getFullNameString))
+                        .toArray(ImageLocation[]::new);
     }
 
     private IntBuffer getIndexIntBuffer(long offset, long size)

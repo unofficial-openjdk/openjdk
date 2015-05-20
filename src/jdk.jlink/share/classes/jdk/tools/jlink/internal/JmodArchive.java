@@ -49,6 +49,7 @@ public class JmodArchive extends JarArchive {
             throw new UnsupportedOperationException("Unsupported format: " + filename);
     }
 
+    @Override
     EntryType toEntryType(String entryName) {
         String section = getSection(entryName);
         switch (section) {

@@ -26,7 +26,7 @@ package jdk.internal.jimage;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 /**
  * An Archive of all content, classes, resources, configuration files, and
@@ -99,9 +99,9 @@ public interface Archive {
     String moduleName();
 
     /**
-     * Visits all entries.
+     * Stream of Entry.
      */
-    void visitEntries(Consumer<Entry> consumer);
+    Stream<Entry> entries();
 
     /**
      * Open the archive

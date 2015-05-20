@@ -110,15 +110,16 @@ public final class ImageFileCreator {
     private void readAllEntries(Map<String, Set<String>> modulePackagesMap,
                                   Set<Archive> archives) {
         archives.stream().forEach((archive) -> {
-            List<Entry> archiveResources = new ArrayList<>();
-            archive.visitEntries(x-> archiveResources.add(x));
+            Map<Boolean, List<Entry>> es = archive.entries()
+                    .collect(Collectors.partitioningBy(n -> n.type()
+                                    == EntryType.CLASS_OR_RESOURCE));
             String mn = archive.moduleName();
-            entriesForModule.put(mn, archiveResources);
+            List<Entry> all = new ArrayList<>();
+            all.addAll(es.get(false));
+            all.addAll(es.get(true));
+            entriesForModule.put(mn, all);
             // Extract package names
-            List<Entry> classes = archiveResources.stream()
-                    .filter(n -> n.type() == EntryType.CLASS_OR_RESOURCE)
-                    .collect(Collectors.toList());
-            Set<String> pkgs = classes.stream().map(Entry::name)
+            Set<String> pkgs = es.get(true).stream().map(Entry::name)
                     .filter(n -> isClassPackage(n))
                     .map(ImageFileCreator::toPackage)
                     .collect(Collectors.toSet());
@@ -135,13 +136,10 @@ public final class ImageFileCreator {
             Map<String, Set<String>> modulePackages,
             ImagePluginStack pluginSupport)
             throws IOException {
-        Map<String, List<Entry>> entriesForModule = new HashMap<>();
-        archives.stream().forEach((archive) -> {
-            List<Entry> archiveResources = new ArrayList<>();
-            archive.visitEntries(x -> archiveResources.add(x));
-            String mn = archive.moduleName();
-            entriesForModule.put(mn, archiveResources);
-        });
+        Map<String, List<Entry>> entriesForModule
+                = archives.stream().collect(Collectors.toMap(
+                                Archive::moduleName,
+                                a -> a.entries().collect(Collectors.toList())));
         ByteOrder order = ByteOrder.nativeOrder();
         Pools pools = createPools(modulePackages, entriesForModule, order);
         try (OutputStream fos = Files.newOutputStream(jimageFile);

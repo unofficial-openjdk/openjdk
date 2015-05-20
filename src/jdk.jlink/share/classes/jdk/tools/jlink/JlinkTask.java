@@ -92,68 +92,48 @@ class JlinkTask {
         }
     }
 
+    private static final TaskHelper taskHelper
+            = new TaskHelper("jdk.tools.jlink.resources.jlink");
+
     static Option<?>[] recognizedOptions = {
-        new Option<JlinkTask>(false, "--help") {
-            @Override
-            protected void process(JlinkTask task, String opt, String arg) {
-                task.options.help = true;
+        new Option<JlinkTask>(false, (task, opt, arg) -> {
+            task.options.help = true;
+        }, "--help"),
+        new Option<JlinkTask>(false, (task, opt, arg) -> {
+            task.options.genbom = true;
+        }, "--genbom"),
+        new Option<JlinkTask>(true, (task, opt, arg) -> {
+            String[] dirs = arg.split(File.pathSeparator);
+            Path[] paths = new Path[dirs.length];
+            int i = 0;
+            for (String dir : dirs) {
+                paths[i++] = Paths.get(dir);
             }
-        },
-        new Option<JlinkTask>(false, "--genbom") {
-            @Override
-            protected void process(JlinkTask task, String opt, String arg) {
-                task.options.genbom = true;
-            }
-        },
-        new Option<JlinkTask>(true, "--modulepath", "--mp") {
-            @Override
-            protected void process(JlinkTask task, String opt, String arg) {
-                String[] dirs = arg.split(File.pathSeparator);
-                Path[] paths = new Path[dirs.length];
-                int i = 0;
-                for (String dir: dirs) {
-                    paths[i++] = Paths.get(dir);
+            task.options.moduleFinder = ModuleFinder.of(paths);
+        }, "--modulepath", "--mp"),
+        new Option<JlinkTask>(true, (task, opt, arg) -> {
+            for (String mn : arg.split(",")) {
+                if (mn.isEmpty()) {
+                    throw taskHelper.newBadArgs("err.jmod.not.found", mn);
                 }
-                task.options.moduleFinder = ModuleFinder.of(paths);
+                task.options.jmods.add(mn);
             }
-        },
-        new Option<JlinkTask>(true, "--addmods") {
-            @Override
-            protected void process(JlinkTask task, String opt, String arg)
-                    throws BadArgs {
-                for (String mn : arg.split(",")) {
-                    if (mn.isEmpty())
-                        throw taskHelper.newBadArgs("err.jmod.not.found", mn);
-                    task.options.jmods.add(mn);
-                }
-            }
-        },
-        new Option<JlinkTask>(true, "--output") {
-            @Override
-            protected void process(JlinkTask task, String opt, String arg)
-                    throws BadArgs {
-                Path path = Paths.get(arg);
-                task.options.output = path;
-            }
-        },
-        new Option<JlinkTask>(false, "--version") {
-            @Override
-            protected void process(JlinkTask task, String opt, String arg) {
-                task.options.version = true;
-            }
-        },
-        new HiddenOption<JlinkTask>(false, "--fullversion") {
-            @Override
-            protected void process(JlinkTask task, String opt, String arg) {
-                task.options.fullVersion = true;
-            }
-        },
+        }, "--addmods"),
+        new Option<JlinkTask>(true, (task, opt, arg) -> {
+            Path path = Paths.get(arg);
+            task.options.output = path;
+        }, "--output"),
+        new Option<JlinkTask>(false, (task, opt, arg) -> {
+            task.options.version = true;
+        }, "--version"),
+        new HiddenOption<JlinkTask>(false, (task, opt, arg) -> {
+            task.options.fullVersion = true;
+        }, "--fullversion"),
     };
 
     private static final String PROGNAME = "jlink";
     private final OptionsValues options = new OptionsValues();
-    private static final TaskHelper taskHelper =
-            new TaskHelper("jdk.tools.jlink.resources.jlink");
+
     private static final OptionsHelper<JlinkTask> optionsHelper =
             taskHelper.newOptionsHelper(JlinkTask.class, recognizedOptions);
     private PrintWriter log;
