@@ -62,9 +62,9 @@ final class JrtFileAttributeView implements BasicFileAttributeView
         if (type == null)
             throw new NullPointerException();
         if (type == BasicFileAttributeView.class)
-            return (V)new JrtFileAttributeView(path, false);
+            return (V)new JrtFileAttributeView(path, false, options);
         if (type == JrtFileAttributeView.class)
-            return (V)new JrtFileAttributeView(path, true);
+            return (V)new JrtFileAttributeView(path, true, options);
         return null;
     }
 

@@ -719,11 +719,10 @@ final class JrtPath implements Path {
             this.getFileSystem() != other.getFileSystem())
             return false;
         this.checkAccess();
-        ((JrtPath)other).checkAccess();
-        boolean isSame = Arrays.equals(this.getResolvedPath(),
-                             ((JrtPath)other).getResolvedPath());
-
-        return isSame? isSame : jrtfs.isSameFile(this, (JrtPath)other);
+        JrtPath path = (JrtPath)other;
+        path.checkAccess();
+        return Arrays.equals(this.getResolvedPath(), path.getResolvedPath()) ||
+            jrtfs.isSameFile(this, (JrtPath)other);
     }
 
     SeekableByteChannel newByteChannel(Set<? extends OpenOption> options,

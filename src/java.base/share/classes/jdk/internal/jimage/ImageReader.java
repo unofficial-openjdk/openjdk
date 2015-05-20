@@ -273,13 +273,17 @@ public class ImageReader extends BasicImageReader {
     static final class Directory extends Node {
         private final List<Node> children;
 
-        @SuppressWarnings("LeakingThisInConstructor")
-        Directory(Directory parent, UTF8String name, BasicFileAttributes fileAttrs) {
+        private Directory(Directory parent, UTF8String name, BasicFileAttributes fileAttrs) {
             super(name, fileAttrs);
             children = new ArrayList<>();
+        }
+
+        static Directory create(Directory parent, UTF8String name, BasicFileAttributes fileAttrs) {
+            Directory d = new Directory(parent, name, fileAttrs);
             if (parent != null) {
-                parent.addChild(this);
+                parent.addChild(d);
             }
+            return d;
         }
 
         @Override
@@ -313,17 +317,26 @@ public class ImageReader extends BasicImageReader {
     static class Resource extends Node {
         private final ImageLocation loc;
 
-        @SuppressWarnings("LeakingThisInConstructor")
-        Resource(Directory parent, ImageLocation loc, BasicFileAttributes fileAttrs) {
+        private Resource(Directory parent, ImageLocation loc, BasicFileAttributes fileAttrs) {
             this(parent, loc.getFullName(true), loc, fileAttrs);
         }
 
-        @SuppressWarnings("LeakingThisInConstructor")
-        Resource(Directory parent, UTF8String name, ImageLocation loc,
+        private Resource(Directory parent, UTF8String name, ImageLocation loc,
                 BasicFileAttributes fileAttrs) {
             super(name, fileAttrs);
             this.loc = loc;
-            parent.addChild(this);
+        }
+
+        static Resource create(Directory parent, ImageLocation loc, BasicFileAttributes fileAttrs) {
+            Resource rs = new Resource(parent, loc, fileAttrs);
+            parent.addChild(rs);
+            return rs;
+        }
+
+        static Resource create(Directory parent, UTF8String name, ImageLocation loc, BasicFileAttributes fileAttrs) {
+            Resource rs = new Resource(parent, name, loc, fileAttrs);
+            parent.addChild(rs);
+            return rs;
         }
 
         @Override
@@ -366,11 +379,15 @@ public class ImageReader extends BasicImageReader {
     static class LinkNode extends Node {
         private final Node link;
 
-        @SuppressWarnings("LeakingThisInConstructor")
-        LinkNode(Directory parent, UTF8String name, Node link) {
+        private LinkNode(Directory parent, UTF8String name, Node link) {
             super(name, link.getFileAttributes());
             this.link = link;
-            parent.addChild(this);
+        }
+
+        static LinkNode create(Directory parent, UTF8String name, Node link) {
+            LinkNode ln = new LinkNode(parent, name, link);
+            parent.addChild(ln);
+            return ln;
         }
 
         @Override
@@ -598,19 +615,19 @@ public class ImageReader extends BasicImageReader {
     }
 
     private Directory newDirectory(Directory parent, UTF8String name) {
-        Directory dir = new Directory(parent, name, imageFileAttributes());
+        Directory dir = Directory.create(parent, name, imageFileAttributes());
         nodes.put(dir.getName(), dir);
         return dir;
     }
 
     private Resource newResource(Directory parent, ImageLocation loc) {
-        Resource res = new Resource(parent, loc, imageFileAttributes());
+        Resource res = Resource.create(parent, loc, imageFileAttributes());
         nodes.put(res.getName(), res);
         return res;
     }
 
     private LinkNode newLinkNode(Directory dir, UTF8String name, Node link) {
-        LinkNode linkNode = new LinkNode(dir, name, link);
+        LinkNode linkNode = LinkNode.create(dir, name, link);
         nodes.put(linkNode.getName(), linkNode);
         return linkNode;
     }
