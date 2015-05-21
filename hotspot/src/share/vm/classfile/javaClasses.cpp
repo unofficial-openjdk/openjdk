@@ -567,6 +567,12 @@ void java_lang_Class::fixup_mirror(KlassHandle k, TRAPS) {
     }
   }
   create_mirror(k, Handle(NULL), Handle(NULL), CHECK);
+
+  if (UseSharedSpaces && k->oop_is_instance()) {
+    // Create resolved_references array in the fresh mirror.
+    instanceKlassHandle ik(k());
+    ik->constants()->restore_unshareable_info(CHECK);
+  }
 }
 
 void java_lang_Class::initialize_mirror_fields(KlassHandle k,
@@ -924,6 +930,17 @@ void java_lang_Class::set_classRedefinedCount(oop the_class_mirror, int value) {
   the_class_mirror->int_field_put(classRedefinedCount_offset, value);
 }
 
+objArrayOop java_lang_Class::resolved_references(oop java_class) {
+  assert(java_lang_Class::is_instance(java_class), "");
+  assert(resolvedReferences_offset > 0, "must be set");
+  return objArrayOop(java_class->obj_field(resolvedReferences_offset));
+}
+
+void java_lang_Class::set_resolved_references(oop java_class, objArrayOop a) {
+  assert(java_lang_Class::is_instance(java_class), "");
+  assert(resolvedReferences_offset > 0, "must be set");
+  java_class->obj_field_put(resolvedReferences_offset, a);
+}
 
 // Note: JDK1.1 and before had a privateInfo_offset field which was used for the
 //       platform thread structure, and a eetop offset which was used for thread
@@ -2967,47 +2984,42 @@ int java_lang_invoke_MethodType::rtype_slot_count(oop mt) {
 
 int java_lang_invoke_CallSite::_target_offset;
 int java_lang_invoke_CallSite::_context_offset;
-int java_lang_invoke_CallSite::_default_context_offset;
 
 void java_lang_invoke_CallSite::compute_offsets() {
   Klass* k = SystemDictionary::CallSite_klass();
   if (k != NULL) {
     compute_offset(_target_offset, k, vmSymbols::target_name(), vmSymbols::java_lang_invoke_MethodHandle_signature());
-    compute_offset(_context_offset, k, vmSymbols::context_name(), vmSymbols::sun_misc_Cleaner_signature());
-    compute_offset(_default_context_offset, k,
-                   vmSymbols::DEFAULT_CONTEXT_name(), vmSymbols::sun_misc_Cleaner_signature(),
-                   /*is_static=*/true, /*allow_super=*/false);
+    compute_offset(_context_offset, k, vmSymbols::context_name(),
+                   vmSymbols::java_lang_invoke_MethodHandleNatives_CallSiteContext_signature());
   }
 }
 
-oop java_lang_invoke_CallSite::context_volatile(oop call_site) {
+oop java_lang_invoke_CallSite::context(oop call_site) {
   assert(java_lang_invoke_CallSite::is_instance(call_site), "");
 
-  oop dep_oop = call_site->obj_field_volatile(_context_offset);
+  oop dep_oop = call_site->obj_field(_context_offset);
   return dep_oop;
 }
 
-void java_lang_invoke_CallSite::set_context_volatile(oop call_site, oop context) {
-  assert(java_lang_invoke_CallSite::is_instance(call_site), "");
-  call_site->obj_field_put_volatile(_context_offset, context);
-}
+// Support for java_lang_invoke_MethodHandleNatives_CallSiteContext
 
-bool java_lang_invoke_CallSite::set_context_cas(oop call_site, oop context, oop expected) {
-  assert(java_lang_invoke_CallSite::is_instance(call_site), "");
-  HeapWord* context_addr = call_site->obj_field_addr<HeapWord>(_context_offset);
-  oop res = oopDesc::atomic_compare_exchange_oop(context, context_addr, expected, true);
-  bool success = (res == expected);
-  if (success) {
-    update_barrier_set((void*)context_addr, context);
+int java_lang_invoke_MethodHandleNatives_CallSiteContext::_vmdependencies_offset;
+
+void java_lang_invoke_MethodHandleNatives_CallSiteContext::compute_offsets() {
+  Klass* k = SystemDictionary::Context_klass();
+  if (k != NULL) {
+    CALLSITECONTEXT_INJECTED_FIELDS(INJECTED_FIELD_COMPUTE_OFFSET);
   }
-  return success;
 }
 
-oop java_lang_invoke_CallSite::default_context() {
-  InstanceKlass* ik = InstanceKlass::cast(SystemDictionary::CallSite_klass());
-  oop def_context_oop = ik->java_mirror()->obj_field(_default_context_offset);
-  assert(!oopDesc::is_null(def_context_oop), "");
-  return def_context_oop;
+nmethodBucket* java_lang_invoke_MethodHandleNatives_CallSiteContext::vmdependencies(oop call_site) {
+  assert(java_lang_invoke_MethodHandleNatives_CallSiteContext::is_instance(call_site), "");
+  return (nmethodBucket*) (address) call_site->long_field(_vmdependencies_offset);
+}
+
+void java_lang_invoke_MethodHandleNatives_CallSiteContext::set_vmdependencies(oop call_site, nmethodBucket* context) {
+  assert(java_lang_invoke_MethodHandleNatives_CallSiteContext::is_instance(call_site), "");
+  call_site->long_field_put(_vmdependencies_offset, (jlong) (address) context);
 }
 
 // Support for java_security_AccessControlContext
@@ -3186,6 +3198,7 @@ bool java_lang_System::has_security_manager() {
   }
 }
 
+int java_lang_Class::resolvedReferences_offset;
 int java_lang_Class::_klass_offset;
 int java_lang_Class::_array_klass_offset;
 int java_lang_Class::_oop_size_offset;
@@ -3341,6 +3354,9 @@ void JavaClasses::compute_hard_coded_offsets() {
   const int x = heapOopSize;
   const int header = instanceOopDesc::base_offset_in_bytes();
 
+  // Class
+  java_lang_Class::resolvedReferences_offset = java_lang_Class::hc_resolvedReferences_offset * x + header;
+
   // Throwable Class
   java_lang_Throwable::backtrace_offset  = java_lang_Throwable::hc_backtrace_offset  * x + header;
   java_lang_Throwable::detailMessage_offset = java_lang_Throwable::hc_detailMessage_offset * x + header;
@@ -3403,6 +3419,7 @@ void JavaClasses::compute_offsets() {
   java_lang_invoke_LambdaForm::compute_offsets();
   java_lang_invoke_MethodType::compute_offsets();
   java_lang_invoke_CallSite::compute_offsets();
+  java_lang_invoke_MethodHandleNatives_CallSiteContext::compute_offsets();
   java_security_AccessControlContext::compute_offsets();
   // Initialize reflection classes. The layouts of these classes
   // changed with the new reflection implementation in JDK 1.4, and
@@ -3538,9 +3555,7 @@ void JavaClasses::check_offsets() {
 
   // java.lang.Class
 
-  // Fake fields
-  // CHECK_OFFSET("java/lang/Class", java_lang_Class, klass); // %%% this needs to be checked
-  // CHECK_OFFSET("java/lang/Class", java_lang_Class, array_klass); // %%% this needs to be checked
+  CHECK_OFFSET("java/lang/Class", java_lang_Class, resolvedReferences, "[Ljava/lang/Object;");
 
   // java.lang.Throwable
 
