@@ -278,7 +278,7 @@ public class Logger {
     private ArrayList<LogManager.LoggerWeakRef> kids;   // WeakReferences to loggers that have us as parent
     private volatile Level levelObject;
     private volatile int levelValue;  // current effective level value
-    private WeakReference<ClassLoader> callersClassLoaderRef;
+    private WeakReference<Module> callerModuleRef;
     private final boolean isSystemLogger;
 
     /**
@@ -384,18 +384,18 @@ public class Logger {
         levelValue = Level.INFO.intValue();
     }
 
-    private void setCallersClassLoaderRef(Class<?> caller) {
-        ClassLoader callersClassLoader = ((caller != null)
-                                         ? caller.getClassLoader()
-                                         : null);
-        if (callersClassLoader != null) {
-            this.callersClassLoaderRef = new WeakReference<>(callersClassLoader);
+    private void setCallerModuleRef(Class<?> caller) {
+        Module callerModule = ((caller != null)
+                                        ? caller.getModule()
+                                        : null);
+        if (callerModule != null) {
+            this.callerModuleRef = new WeakReference<>(callerModule);
         }
     }
 
-    private ClassLoader getCallersClassLoader() {
-        return (callersClassLoaderRef != null)
-                ? callersClassLoaderRef.get()
+    private Module getCallerModule() {
+        return (callerModuleRef != null)
+                ? callerModuleRef.get()
                 : null;
     }
 
@@ -508,22 +508,6 @@ public class Logger {
      * Find or create a logger for a named subsystem.  If a logger has
      * already been created with the given name it is returned.  Otherwise
      * a new logger is created.
-     * <p>
-     * If the caller is in a named module, this method is equivalent to
-     * calling:
-     * <blockquote>
-     * <pre>
-     *     Logger.getLogger(name)
-     *           .setResourceBundle(ResourceBundle.getBundle(resourceBundleName, callerModule));
-     * </pre>
-     * </blockquote>
-     * All messages will be logged using the resource bundle with the specified
-     * {@linkplain ResourceBundle#getLocale locale}, the default locale,
-     * when this {@code getLogger} method is called.
-     *
-     * <p>
-     * If the caller is in unnamed module, the resource bundle will subject
-     * to the locale at which a message is being logged.
      *
      * <p>
      * If a new logger is created its log level will be configured
@@ -1878,16 +1862,16 @@ public class Logger {
      * there is no suitable previous cached value.
      *
      * @param name the ResourceBundle to locate
-     * @param useCallersClassLoader if true search using the caller's ClassLoader
+     * @param useCallersModule if true search using the caller's module.
      * @return ResourceBundle specified by name or null if not found
      */
     private synchronized ResourceBundle findResourceBundle(String name,
-                                                           boolean useCallersClassLoader) {
+                                                           boolean useCallersModule) {
         // For all lookups, we first check the thread context class loader
         // if it is set.  If not, we use the system classloader.  If we
-        // still haven't found it we use the callersClassLoaderRef if it
-        // is set and useCallersClassLoader is true.  We set
-        // callersClassLoaderRef initially upon creating the logger with a
+        // still haven't found it we use the callerModuleRef if it
+        // is set and useCallersModule is true.  We set
+        // callerModuleRef initially upon creating the logger with a
         // non-null resource bundle name.
 
         // Return a null bundle for a null name.
@@ -1924,17 +1908,26 @@ public class Logger {
             // ClassLoader.  Drop through.
         }
 
-        if (useCallersClassLoader) {
-            // Try with the caller's ClassLoader
-            ClassLoader callersClassLoader = getCallersClassLoader();
+        if (useCallersModule) {
+            // Try with the caller's module
+            Module callerModule = getCallerModule();
 
-            if (callersClassLoader == null || callersClassLoader == cl) {
+            if (callerModule == null) {
                 return null;
             }
 
             try {
-                catalog = ResourceBundle.getBundle(name, currentLocale,
-                                                   callersClassLoader);
+                if (callerModule.isNamed()) {
+                    // Use the caller's module
+                    catalog = ResourceBundle.getBundle(name, currentLocale,
+                                                       callerModule);
+                } else {
+                    // Unnamed module: use the caller's module's class loader
+                    PrivilegedAction<ClassLoader> getModuleClassLoader =
+                            () -> callerModule.getClassLoader();
+                    catalog = ResourceBundle.getBundle(name, currentLocale,
+                            AccessController.doPrivileged(getModuleClassLoader));
+                }
                 catalogName = name;
                 catalogLocale = currentLocale;
                 return catalog;
@@ -1947,13 +1940,13 @@ public class Logger {
     }
 
     // Private utility method to initialize our one entry
-    // resource bundle name cache and the callers ClassLoader
+    // resource bundle name cache and the callers Module
     // Note: for consistency reasons, we are careful to check
     // that a suitable ResourceBundle exists before setting the
     // resourceBundleName field.
     // Synchronized to prevent races in setting the fields.
     private synchronized void setupResourceInfo(String name,
-                                                Class<?> callersClass) {
+                                                Class<?> callerClass) {
         final LoggerBundle lb = loggerBundle;
         if (lb.resourceBundleName != null) {
             // this Logger already has a ResourceBundle
@@ -1972,33 +1965,25 @@ public class Logger {
             return;
         }
 
-        setCallersClassLoaderRef(callersClass);
-        if (isSystemLogger && getCallersClassLoader() != null) {
+        setCallerModuleRef(callerClass);
+        if (isSystemLogger && (callerClass != null && callerClass.getClassLoader() != null)) {
             checkPermission();
         }
 
         if (name.equals(SYSTEM_LOGGER_RB_NAME)) {
             loggerBundle = SYSTEM_BUNDLE;
         } else {
-            Module module = callersClass != null ? callersClass.getModule() : null;
-            ResourceBundle bundle;
-            if (module != null && module.isNamed()) {
-                bundle = findResourceBundle(name, module);
-            } else {
-                bundle = findResourceBundle(name, true);
-            }
+            ResourceBundle bundle = findResourceBundle(name, true);
             if (bundle == null) {
                 // We've failed to find an expected ResourceBundle.
-                // unset the caller's ClassLoader since we were unable to find the
+                // unset the caller's module since we were unable to find the
                 // the bundle using it
-                this.callersClassLoaderRef = null;
+                this.callerModuleRef = null;
                 throw new MissingResourceException("Can't find " + name + " bundle from ",
                         name, "");
             }
 
-            // if the caller is in a named module, it will set the effective ResourceBundle
-            loggerBundle = module != null ? LoggerBundle.get(name, bundle)
-                                          : LoggerBundle.get(name, null);
+            loggerBundle = LoggerBundle.get(name, null);
         }
     }
 
