@@ -330,8 +330,10 @@ public class HandlerChainsModel {
             if(hchainMatched) {
                 for(HandlerType handler : hchain.getHandlers()) {
                     try {
-                        Handler handlerClass = (Handler) loadClass(annotatedClass.getClassLoader(),
-                                handler.getHandlerClass()).newInstance();
+                        Class<?> clazz = loadClass(annotatedClass.getClassLoader(),
+                                                   handler.getHandlerClass());
+                        ModuleAccessHelper.ensureAccess(HandlerChainsModel.class, clazz);
+                        Handler handlerClass = (Handler) clazz.newInstance();
                         callHandlerPostConstruct(handlerClass);
                         handlerClassList.add(handlerClass);
                     } catch (InstantiationException ie){

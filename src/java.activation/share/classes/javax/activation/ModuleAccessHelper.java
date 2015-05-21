@@ -48,7 +48,7 @@ class ModuleAccessHelper {
     public static void ensureAccess(Class<?> sourceClass, Class<?> targetClass) {
         java.lang.reflect.Module targetModule = targetClass.getModule();
         java.lang.reflect.Module sourceModule = sourceClass.getModule();
-        if (targetModule != null && !sourceModule.canRead(targetModule)) {
+        if (!sourceModule.canRead(targetModule)) {
             logger.log(Level.FINE, "Adding module [{0}] to module [{1}]'s reads",
                        new Object[]{targetModule.getName(), sourceModule.getName()});
             AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
