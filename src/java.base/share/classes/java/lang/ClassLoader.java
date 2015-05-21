@@ -1464,7 +1464,10 @@ public abstract class ClassLoader {
      * type <tt>ClassLoader</tt> which is used as the delegation parent.  An
      * instance is then created using this constructor with the default system
      * class loader as the parameter.  The resulting class loader is defined
-     * to be the system class loader.
+     * to be the system class loader. During construction, the class loader
+     * should take great care to avoid calling {@code getSystemClassLoader()}.
+     * If circular initialization of the system class loader is detected then
+     * an unspecified error is thrown.
      *
      * <p> If a security manager is present, and the invoker's class loader is
      * not <tt>null</tt> and the invoker's class loader is not the same as or
