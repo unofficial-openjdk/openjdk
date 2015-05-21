@@ -25,6 +25,7 @@
 package com.sun.beans.decoder;
 
 import com.sun.beans.finder.FieldFinder;
+import com.sun.beans.util.Modules;
 
 import java.lang.reflect.Field;
 
@@ -182,8 +183,12 @@ final class FieldElementHandler extends AccessorElementHandler {
      * @throws NoSuchFieldException if the field is not found
      */
     private static Field findField(Object bean, String name) throws NoSuchFieldException {
-        return (bean instanceof Class<?>)
-                ? FieldFinder.findStaticField((Class<?>) bean, name)
-                : FieldFinder.findField(bean.getClass(), name);
+        if (bean instanceof Class<?>) {
+            Modules.ensureReadable((Class<?>) bean);
+            return FieldFinder.findStaticField((Class<?>) bean, name);
+        } else {
+            Modules.ensureReadable(bean.getClass());
+            return FieldFinder.findField(bean.getClass(), name);
+        }
     }
 }

@@ -25,6 +25,7 @@
  * @test
  * @bug 6589532
  * @summary Tests PrintColorUIResource value encoding
+ * @modules java.desktop/sun.swing
  * @author Sergey Malenkov
  */
 
