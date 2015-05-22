@@ -61,7 +61,6 @@ import java.util.StringJoiner;
 
 import sun.misc.BootLoader;
 import sun.misc.JavaLangReflectAccess;
-import sun.misc.ModuleClassLoader;
 import sun.misc.SharedSecrets;
 import sun.misc.Unsafe;
 import sun.reflect.CallerSensitive;
