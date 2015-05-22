@@ -234,6 +234,7 @@ public class TagletManager {
             }
 
             customTagClass = tagClassLoader.loadClass(classname);
+            this.getClass().getModule().addReads(customTagClass.getModule());
             Method meth = customTagClass.getMethod("register",
                                                    Map.class);
             Object[] list = customTags.values().toArray();
