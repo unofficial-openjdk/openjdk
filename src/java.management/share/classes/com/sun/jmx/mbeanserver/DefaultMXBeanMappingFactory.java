@@ -30,6 +30,7 @@ import static com.sun.jmx.mbeanserver.MXBeanIntrospector.typeName;
 
 import static javax.management.openmbean.SimpleType.*;
 
+import com.sun.jmx.util.Modules;
 import com.sun.jmx.remote.util.EnvHelp;
 
 import java.io.InvalidObjectException;
@@ -655,6 +656,7 @@ public class DefaultMXBeanMappingFactory extends MXBeanMappingFactory {
                 throws InvalidObjectException {
             final Object[] openArray = (Object[]) openValue;
             final Collection<Object> valueCollection;
+            Modules.ensureReadable(collectionClass);
             try {
                 valueCollection = cast(collectionClass.newInstance());
             } catch (Exception e) {
@@ -1115,6 +1117,7 @@ public class DefaultMXBeanMappingFactory extends MXBeanMappingFactory {
             try {
                 final Class<?> targetClass = getTargetClass();
                 ReflectUtil.checkPackageAccess(targetClass);
+                Modules.ensureReadable(targetClass);
                 o = targetClass.newInstance();
                 for (int i = 0; i < itemNames.length; i++) {
                     if (cd.containsKey(itemNames[i])) {
@@ -1376,6 +1379,7 @@ public class DefaultMXBeanMappingFactory extends MXBeanMappingFactory {
                     params[index] = javaItem;
             }
 
+            Modules.ensureReadable(max.constructor.getDeclaringClass());
             try {
                 ReflectUtil.checkPackageAccess(max.constructor.getDeclaringClass());
                 return max.constructor.newInstance(params);
