@@ -1331,7 +1331,7 @@ public class Locations {
 
     boolean hasLocation(Location location) {
         LocationHandler h = getHandler(location);
-        return (h == null ? null : h.isSet());
+        return (h == null ? false : h.isSet());
     }
 
     Collection<Path> getLocation(Location location) {
