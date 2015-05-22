@@ -30,6 +30,7 @@ import com.sun.beans.finder.ClassFinder;
 import com.sun.beans.introspect.ClassInfo;
 import com.sun.beans.introspect.EventSetInfo;
 import com.sun.beans.introspect.PropertyInfo;
+import com.sun.beans.util.Modules;
 
 import java.awt.Component;
 
@@ -1271,6 +1272,7 @@ public class Introspector {
         // First check with sibling's classloader (if any).
         ClassLoader cl = sibling.getClassLoader();
         Class<?> cls = ClassFinder.findClass(className, cl);
+        Modules.ensureReadable(cls);
         return cls.newInstance();
     }
 

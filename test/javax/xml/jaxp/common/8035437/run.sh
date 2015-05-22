@@ -34,11 +34,11 @@ $COMPILEJAVA/bin/javac ${TESTJAVACOPTS} ${TESTTOOLVMOPTS} \
    -d compile $TESTSRC/Document.java $TESTSRC/Node.java || exit 1
 
 $COMPILEJAVA/bin/javac ${TESTJAVACOPTS} ${TESTTOOLVMOPTS} \
-   -Xbootclasspath/p:compile -d exec $TESTSRC/DocumentImpl.java || exit 1
+   -cp compile -d exec $TESTSRC/DocumentImpl.java || exit 1
 
 $COMPILEJAVA/bin/javac ${TESTJAVACOPTS} ${TESTTOOLVMOPTS} \
    $TESTSRC/AbstractMethodErrorTest.java -d exec || exit 1
 
-$TESTJAVA/bin/java ${TESTVMOPTS} -Xbootclasspath/p:exec -cp exec AbstractMethodErrorTest || exit 1
+$TESTJAVA/bin/java ${TESTVMOPTS} -Xbootclasspath/a:exec -cp exec AbstractMethodErrorTest || exit 1
 
 exit 0

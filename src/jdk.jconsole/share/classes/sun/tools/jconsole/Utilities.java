@@ -25,6 +25,9 @@
 
 package sun.tools.jconsole;
 
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.io.IOException;
 import java.awt.*;
 
 import javax.accessibility.*;
@@ -79,6 +82,24 @@ public class Utilities {
                 t.setCellRenderer(cr);
                 setTransparency((JComponent)child, transparent);
             }
+        }
+    }
+
+
+    /**
+     * Returns the ImageIcon for the image located in the given resource
+     */
+    public static ImageIcon getIcon(Class<?> clazz, String name) {
+        InputStream in = clazz.getResourceAsStream(name);
+        if (in == null) {
+            throw new InternalError("Unable to locate: " + name);
+        }
+        try (in) {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            in.transferTo(baos);
+            return new ImageIcon(baos.toByteArray());
+        } catch (IOException ioe) {
+            throw new InternalError(ioe);
         }
     }
 

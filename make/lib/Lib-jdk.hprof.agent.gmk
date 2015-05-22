@@ -31,7 +31,7 @@ BUILD_LIBHPROF_SRC := $(call FindSrcDirsForLib, jdk.hprof.agent, hprof)
 
 BUILD_LIBHPROF_CFLAGS := $(addprefix -I, $(BUILD_LIBHPROF_SRC)) \
     -I$(JDK_TOPDIR)/src/demo/share/jvmti/java_crw_demo
-    
+
 BUILD_LIBHPROF_LDFLAGS :=
 
 LIBHPROF_OPTIMIZATION := HIGHEST

@@ -26,6 +26,8 @@
 package sun.nio.cs;
 
 import java.lang.ref.SoftReference;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.Charset;
 import java.nio.charset.spi.CharsetProvider;
 import java.util.ArrayList;
@@ -149,10 +151,13 @@ public class AbstractCharsetProvider
                                        true,
                                        this.getClass().getClassLoader());
 
-            Charset cs = (Charset)c.newInstance();
+            Constructor<?> ctor = c.getConstructor();
+            ctor.setAccessible(true);
+            Charset cs = (Charset)ctor.newInstance();
             cache.put(csn, new SoftReference<Charset>(cs));
             return cs;
-        } catch (ClassNotFoundException x) {
+        } catch (ClassNotFoundException | NoSuchMethodException |
+                 InvocationTargetException x) {
             return null;
         } catch (IllegalAccessException x) {
             return null;

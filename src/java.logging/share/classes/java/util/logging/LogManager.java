@@ -219,6 +219,10 @@ public class LogManager {
         manager = AccessController.doPrivileged(new PrivilegedAction<LogManager>() {
             @Override
             public LogManager run() {
+
+                // java.logging module needs to be loose
+                LogManager.class.getModule().addReads(null);
+
                 LogManager mgr = null;
                 String cname = null;
                 try {

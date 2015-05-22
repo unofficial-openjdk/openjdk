@@ -25,6 +25,7 @@
  * @test
  * @bug 4136352
  * @library /lib/testlibrary
+ * @modules jdk.dev/sun.tools.native2ascii.resources
  * @summary Test Native2ASCII error messages
  *
  */
@@ -42,7 +43,8 @@ public class NativeErrors {
 
     static {
         try {
-            rsrc = ResourceBundle.getBundle(
+            Module module = sun.tools.native2ascii.resources.MsgNative2ascii.class.getModule();
+            rsrc = ResourceBundle.getBundle(module,
                      "sun.tools.native2ascii.resources.MsgNative2ascii");
         } catch (MissingResourceException e) {
             throw new Error("Missing message file.");

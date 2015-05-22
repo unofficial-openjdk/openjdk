@@ -92,10 +92,13 @@ case "$1" in
     ;;
 esac
 
+
+EXTRA_OPTS="-XX:AddModuleExports=java.base/sun.util.locale.provider"
+
 # compile
 cp ${TESTSRC}${FS}ProviderTest.java .
 cp ${TESTSRC}${FS}$2.java .
-COMPILE="${COMPILEJAVA}${FS}bin${FS}javac ${TESTJAVACOPTS} ${TESTTOOLVMOPTS} \
+COMPILE="${COMPILEJAVA}${FS}bin${FS}javac ${TESTJAVACOPTS} ${TESTTOOLVMOPTS} ${EXTRA_OPTS} \
     -XDignore.symbol.file -d . -classpath ${CLASSPATHARG} $2.java"
 echo ${COMPILE}
 ${COMPILE}
@@ -120,7 +123,7 @@ then
 fi
 
 # run
-RUNCMD="${TESTJAVA}${FS}bin${FS}java ${TESTVMOPTS} ${SECURITYOPTS} -classpath ${CLASSPATHARG} $2 "
+RUNCMD="${TESTJAVA}${FS}bin${FS}java ${TESTVMOPTS} ${EXTRA_OPTS} ${SECURITYOPTS} -classpath ${CLASSPATHARG} $2 "
 
 echo ${RUNCMD}
 ${RUNCMD}

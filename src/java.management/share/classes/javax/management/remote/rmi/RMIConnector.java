@@ -46,6 +46,7 @@ import java.lang.ref.WeakReference;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Module;
 import java.lang.reflect.Proxy;
 import java.net.MalformedURLException;
 import java.rmi.MarshalException;
@@ -107,6 +108,7 @@ import javax.security.auth.Subject;
 import sun.reflect.misc.ReflectUtil;
 import sun.rmi.server.UnicastRef2;
 import sun.rmi.transport.LiveRef;
+import sun.misc.Modules;
 
 /**
  * <p>A connection to a remote RMI connector.  Usually, such
@@ -2123,21 +2125,22 @@ public class RMIConnector implements JMXConnector, Serializable, JMXAddressable 
             RMIConnection.class.getName() + "Impl_Stub";
     private static final Class<?> rmiConnectionImplStubClass;
     private static final String pRefClassName =
-        "com.sun.jmx.remote.internal.PRef";
+        "jdk.jmx.remote.internal.PRef";
     private static final Constructor<?> proxyRefConstructor;
     static {
         final String pRefByteCodeString =
-                "\312\376\272\276\0\0\0.\0\27\12\0\5\0\15\11\0\4\0\16\13\0\17\0"+
-                "\20\7\0\21\7\0\22\1\0\6<init>\1\0\36(Ljava/rmi/server/RemoteRef;"+
-                ")V\1\0\4Code\1\0\6invoke\1\0S(Ljava/rmi/Remote;Ljava/lang/reflec"+
-                "t/Method;[Ljava/lang/Object;J)Ljava/lang/Object;\1\0\12Exception"+
-                "s\7\0\23\14\0\6\0\7\14\0\24\0\25\7\0\26\14\0\11\0\12\1\0\40com/"+
-                "sun/jmx/remote/internal/PRef\1\0$com/sun/jmx/remote/internal/Pr"+
-                "oxyRef\1\0\23java/lang/Exception\1\0\3ref\1\0\33Ljava/rmi/serve"+
-                "r/RemoteRef;\1\0\31java/rmi/server/RemoteRef\0!\0\4\0\5\0\0\0\0"+
-                "\0\2\0\1\0\6\0\7\0\1\0\10\0\0\0\22\0\2\0\2\0\0\0\6*+\267\0\1\261"+
-                "\0\0\0\0\0\1\0\11\0\12\0\2\0\10\0\0\0\33\0\6\0\6\0\0\0\17*\264\0"+
-                "\2+,-\26\4\271\0\3\6\0\260\0\0\0\0\0\13\0\0\0\4\0\1\0\14\0\0";
+                "\312\376\272\276\0\0\0\60\0\27\12\0\5\0\15\11\0\4\0\16\13\0\17"+
+                "\0\20\7\0\21\7\0\22\1\0\6<init>\1\0\36(Ljava/rmi/server/Remote"+
+                "Ref;)V\1\0\4Code\1\0\6invoke\1\0S(Ljava/rmi/Remote;Ljava/lang/"+
+                "reflect/Method;[Ljava/lang/Object;J)Ljava/lang/Object;\1\0\12E"+
+                "xceptions\7\0\23\14\0\6\0\7\14\0\24\0\25\7\0\26\14\0\11\0\12\1"+
+                "\0\34jdk/jmx/remote/internal/PRef\1\0$com/sun/jmx/remote/inter"+
+                "nal/ProxyRef\1\0\23java/lang/Exception\1\0\3ref\1\0\33Ljava/rm"+
+                "i/server/RemoteRef;\1\0\31java/rmi/server/RemoteRef\0!\0\4\0\5"+
+                "\0\0\0\0\0\2\0\1\0\6\0\7\0\1\0\10\0\0\0\22\0\2\0\2\0\0\0\6*+\267"+
+                "\0\1\261\0\0\0\0\0\1\0\11\0\12\0\2\0\10\0\0\0\33\0\6\0\6\0\0\0"+
+                "\17*\264\0\2+,-\26\4\271\0\3\6\0\260\0\0\0\0\0\13\0\0\0\4\0\1\0"+
+                "\14\0\0";
         final byte[] pRefByteCode =
                 NoCallStackClassLoader.stringToBytes(pRefByteCodeString);
         PrivilegedExceptionAction<Constructor<?>> action =
@@ -2147,13 +2150,34 @@ public class RMIConnector implements JMXConnector, Serializable, JMXAddressable 
                 ClassLoader thisLoader = thisClass.getClassLoader();
                 ProtectionDomain thisProtectionDomain =
                         thisClass.getProtectionDomain();
-                String[] otherClassNames = {ProxyRef.class.getName()};
+
+                String proxyRefCName = ProxyRef.class.getName();
                 ClassLoader cl =
                         new NoCallStackClassLoader(pRefClassName,
                         pRefByteCode,
-                        otherClassNames,
+                        new String[] { proxyRefCName },
                         thisLoader,
                         thisProtectionDomain);
+
+                Module jmxModule = ProxyRef.class.getModule();
+                Module rmiModule = RemoteRef.class.getModule();
+
+                String pkg = packageOf(pRefClassName);
+                assert pkg != null && pkg.length() > 0 && !pkg.equals(packageOf(proxyRefCName));
+                Module m = Modules.defineModule(cl, "jdk.remoteref", Collections.singleton(pkg));
+
+                // jdk.remoteref needs to read to java.base and jmxModule
+                Modules.addReads(m, Object.class.getModule());
+                Modules.addReads(m, jmxModule);
+                Modules.addReads(m, rmiModule);
+
+                // jdk.remoteref needs access to ProxyRef class
+                Modules.addExports(jmxModule, packageOf(proxyRefCName), m);
+
+                // java.management needs to instantiate the fabricated RemoteRef class
+                Modules.addReads(jmxModule, m);
+                Modules.addExports(m, pkg, jmxModule);
+
                 Class<?> c = cl.loadClass(pRefClassName);
                 return c.getConstructor(RemoteRef.class);
             }
@@ -2186,6 +2210,11 @@ public class RMIConnector implements JMXConnector, Serializable, JMXAddressable 
         }
         rmiConnectionImplStubClass = stubClass;
         proxyRefConstructor = constr;
+    }
+
+    private static String packageOf(String cn) {
+        int i = cn.lastIndexOf('.');
+        return i > 0 ? cn.substring(0, i) : "";
     }
 
     private static RMIConnection shadowJrmpStub(RemoteObject stub)

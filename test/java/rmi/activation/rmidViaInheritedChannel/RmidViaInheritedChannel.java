@@ -27,6 +27,11 @@
  * @author Ann Wollrath
  *
  * @library ../../testlibrary
+ * @modules java.base/sun.nio.ch
+ *          java.rmi/sun.rmi.registry
+ *          java.rmi/sun.rmi.server
+ *          java.rmi/sun.rmi.transport
+ *          java.rmi/sun.rmi.transport.tcp
  * @build TestLibrary RMID ActivationLibrary
  * @run main/othervm/timeout=240 RmidViaInheritedChannel
  */
@@ -86,8 +91,9 @@ public class RmidViaInheritedChannel implements Callback {
             RMID.removeLog();
             rmid = RMID.createRMID(System.out, System.err, true, false,
                                    TestLibrary.RMIDVIAINHERITEDCHANNEL_ACTIVATION_PORT);
-            rmid.addOptions(new String[]{
-                "-Djava.nio.channels.spi.SelectorProvider=RmidViaInheritedChannel$RmidSelectorProvider"});
+            rmid.addOptions(
+                "-XX:AddModuleExports=java.base/sun.nio.ch",
+                "-Djava.nio.channels.spi.SelectorProvider=RmidViaInheritedChannel$RmidSelectorProvider");
             if (System.getProperty("os.name").startsWith("Windows") &&
                 System.getProperty("os.version").startsWith("5."))
             {
