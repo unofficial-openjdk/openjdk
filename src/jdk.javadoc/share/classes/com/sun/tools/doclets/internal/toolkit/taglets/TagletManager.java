@@ -234,7 +234,7 @@ public class TagletManager {
             }
 
             customTagClass = tagClassLoader.loadClass(classname);
-            this.getClass().getModule().addReads(customTagClass.getModule());
+            ensureReadable(customTagClass);
             Method meth = customTagClass.getMethod("register",
                                                    Map.class);
             Object[] list = customTags.values().toArray();
@@ -257,6 +257,26 @@ public class TagletManager {
             message.error("doclet.Error_taglet_not_registered", exc.getClass().getName(), classname);
         }
 
+    }
+
+    /**
+     * Ensures that the module of the given class is readable to this
+     * module.
+     */
+    private void ensureReadable(Class<?> targetClass) {
+        try {
+
+            Method getModuleMethod = Class.class.getMethod("getModule");
+            Object thisModule = getModuleMethod.invoke(this.getClass());
+            Object targetModule = getModuleMethod.invoke(targetClass);
+
+            Class<?> moduleClass = getModuleMethod.getReturnType();
+            Method addReadsMethod = moduleClass.getMethod("addReads", moduleClass);
+            addReadsMethod.invoke(thisModule, targetModule);
+
+        } catch (Exception e) {
+            throw new InternalError(e);
+        }
     }
 
     private String appendPath(String path1, String path2) {
