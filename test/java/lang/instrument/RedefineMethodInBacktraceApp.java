@@ -32,6 +32,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.concurrent.CountDownLatch;
 import javax.management.JMX;
+import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
 /**

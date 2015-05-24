@@ -112,7 +112,7 @@ public class Reflection {
             if (!m1.canRead(m2)) {
                 msg += ", " + m1;
                 if (!m1.canRead(null))
-                    msg += " (strict module) ";
+                    msg += " (strict module)";
                 msg += " does not read " + m2;
             }
             String pkg = packageName(memberClass);
