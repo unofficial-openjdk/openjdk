@@ -1139,8 +1139,17 @@ ParseArguments(int *pargc, char ***pargv,
                    JLI_StrCCmp(arg, "-listmods:") == 0) {
             listModules = arg;
         } else if (JLI_StrCCmp(arg, "-XaddExports:") == 0) {
-            char *value = arg + 13;
-            SetAddExportsProp(value);
+            static jboolean haveAddExports = JNI_FALSE;
+            /* Unlike other arguments, -XaddExports only allowed once */
+            if (haveAddExports) {
+                JLI_ReportErrorMessage(ARG_ERROR7, "-XaddExports");
+                *pret = 1;
+                return JNI_FALSE;
+            } else {
+                char *value = arg + 13;
+                SetAddExportsProp(value);
+                haveAddExports = JNI_TRUE;
+            }
         } else if (JLI_StrCmp(arg, "-help") == 0 ||
                    JLI_StrCmp(arg, "-h") == 0 ||
                    JLI_StrCmp(arg, "-?") == 0) {
