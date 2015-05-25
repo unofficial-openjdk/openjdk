@@ -301,8 +301,9 @@ public final class Module {
             return;
 
         // if the target is null then change this module to be loose.
-        // FIXME: Need to notify VM
         if (target == null) {
+            if (syncVM)
+                jvmAddReadsModule(this, null);
             this.loose = true;
             return;
         }
@@ -313,8 +314,7 @@ public final class Module {
             return;
 
         // update VM first, just in case it fails
-        // FIXME: Need to notify VM about unnamed too when VM is ready
-        if (target.isNamed() && syncVM)
+        if (syncVM)
             jvmAddReadsModule(this, target);
 
         // add temporary read.
@@ -738,11 +738,7 @@ public final class Module {
 
             // update VM first, just in case it fails
             if (syncVM) {
-
-                // FIXME: VM does not know about unnamed modules yet
-                if (target == null || target.isNamed())
-                   jvmAddModuleExports(this, pn.replace('.', '/'), target);
-
+               jvmAddModuleExports(this, pn.replace('.', '/'), target);
             }
 
             // copy existing map
