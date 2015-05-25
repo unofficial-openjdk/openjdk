@@ -656,7 +656,7 @@ public class DefaultMXBeanMappingFactory extends MXBeanMappingFactory {
                 throws InvalidObjectException {
             final Object[] openArray = (Object[]) openValue;
             final Collection<Object> valueCollection;
-            Modules.ensureReadable(collectionClass);
+            Modules.ensureReadable(collectionClass.getModule());
             try {
                 valueCollection = cast(collectionClass.newInstance());
             } catch (Exception e) {
@@ -1117,7 +1117,7 @@ public class DefaultMXBeanMappingFactory extends MXBeanMappingFactory {
             try {
                 final Class<?> targetClass = getTargetClass();
                 ReflectUtil.checkPackageAccess(targetClass);
-                Modules.ensureReadable(targetClass);
+                Modules.ensureReadable(targetClass.getModule());
                 o = targetClass.newInstance();
                 for (int i = 0; i < itemNames.length; i++) {
                     if (cd.containsKey(itemNames[i])) {
@@ -1379,7 +1379,7 @@ public class DefaultMXBeanMappingFactory extends MXBeanMappingFactory {
                     params[index] = javaItem;
             }
 
-            Modules.ensureReadable(max.constructor.getDeclaringClass());
+            Modules.ensureReadable(max.constructor.getDeclaringClass().getModule());
             try {
                 ReflectUtil.checkPackageAccess(max.constructor.getDeclaringClass());
                 return max.constructor.newInstance(params);

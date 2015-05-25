@@ -33,15 +33,14 @@ public final class Modules {
     private Modules() { }
 
     /**
-     * Ensures that module of the given class is readable to the
-     * desktop module.
+     * Ensures that the java.desktop module reads the targert module.
      */
-    public static void ensureReadable(Class<?> c) {
+    public static void ensureReadable(Module targetModule) {
         Module beansModule = Beans.class.getModule();
-        if (beansModule.canRead(c.getModule()))
+        if (beansModule.canRead(targetModule))
             return;
         PrivilegedAction<Void> pa =
-            () -> { beansModule.addReads(c.getModule()); return null; };
+            () -> { beansModule.addReads(targetModule); return null; };
         AccessController.doPrivileged(pa);
     }
 

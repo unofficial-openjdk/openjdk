@@ -33,15 +33,14 @@ public final class Modules {
     private Modules() { }
 
     /**
-     * Ensures that module of the given class is readable to the
-     * management module.
+     * Ensures that module java.management reads the given module.
      */
-    public static void ensureReadable(Class<?> c) {
+    public static void ensureReadable(Module targetModule) {
         Module module = ObjectName.class.getModule();
-        if (module.canRead(c.getModule()))
+        if (module.canRead(targetModule))
             return;
         PrivilegedAction<Void> pa =
-            () -> { module.addReads(c.getModule()); return null; };
+            () -> { module.addReads(targetModule); return null; };
         AccessController.doPrivileged(pa);
     }
 }

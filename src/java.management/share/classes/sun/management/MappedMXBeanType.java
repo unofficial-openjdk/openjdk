@@ -702,7 +702,7 @@ public abstract class MappedMXBeanType {
                         types.toArray(new OpenType<?>[0]));
             }
 
-            Modules.ensureReadable(c);
+            Modules.ensureReadable(c.getModule());
         }
 
         Type getJavaType() {

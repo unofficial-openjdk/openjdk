@@ -154,7 +154,7 @@ class NewElementHandler extends ElementHandler {
         if (constructor.isVarArgs()) {
             args = getArguments(args, constructor.getParameterTypes());
         }
-        Modules.ensureReadable(constructor.getDeclaringClass());
+        Modules.ensureReadable(constructor.getDeclaringClass().getModule());
         return ValueObjectImpl.create(constructor.newInstance(args));
     }
 

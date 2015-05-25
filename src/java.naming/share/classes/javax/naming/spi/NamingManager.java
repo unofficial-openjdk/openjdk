@@ -65,14 +65,6 @@ import com.sun.naming.internal.FactoryEnumeration;
 
 public class NamingManager {
 
-     static {
-         // java.naming needs to be a loose module
-         Module thisModule = NamingManager.class.getModule();
-         PrivilegedAction<Void> pa =
-             () -> { thisModule.addReads(null); return null; };
-         AccessController.doPrivileged(pa);
-     }
-
     /*
      * Disallow anyone from creating one of these.
      * Made package private so that DirectoryManager can subclass.
@@ -170,13 +162,12 @@ public class NamingManager {
             }
         }
 
-        // Make the factory accessible to this module
-        Module me = NamingManager.class.getModule();
-        if (me != null && clas != null) {
-            me.addReads(clas.getModule());
+        if (clas != null) {
+            ensureReadable(clas.getModule());
+            return (ObjectFactory) clas.newInstance();
+        } else {
+            return null;
         }
-
-        return (clas != null) ? (ObjectFactory) clas.newInstance() : null;
     }
 
 
@@ -718,8 +709,9 @@ public class NamingManager {
 
             if (factory == null) {
                 try {
-                    factory = (InitialContextFactory)
-                            helper.loadClass(className).newInstance();
+                    Class<?> clazz = helper.loadClass(className);
+                    ensureReadable(clazz.getModule());
+                    factory = (InitialContextFactory) clazz.newInstance();
                 } catch (Exception e) {
                     NoInitialContextException ne =
                             new NoInitialContextException(
@@ -922,5 +914,12 @@ public class NamingManager {
         }
 
         return (answer != null) ? answer : obj;
+    }
+
+    private static void ensureReadable(Module targetModule) {
+        Module thisModule = NamingManager.class.getModule();
+        PrivilegedAction<Void> pa =
+             () -> { thisModule.addReads(targetModule); return null; };
+        AccessController.doPrivileged(pa);
     }
 }

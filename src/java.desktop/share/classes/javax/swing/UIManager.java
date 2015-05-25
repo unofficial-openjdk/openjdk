@@ -584,7 +584,7 @@ public class UIManager implements Serializable
         }
         else {
             Class<?> lnfClass = SwingUtilities.loadSystemClass(className);
-            ensureReadable(lnfClass);
+            ensureReadable(lnfClass.getModule());
             setLookAndFeel((LookAndFeel)(lnfClass.newInstance()));
         }
     }
@@ -1053,7 +1053,7 @@ public class UIManager implements Serializable
             String className = getLAFState().swingProps.getProperty(multiplexingLAFKey, defaultName);
             try {
                 Class<?> lnfClass = SwingUtilities.loadSystemClass(className);
-                ensureReadable(lnfClass);
+                ensureReadable(lnfClass.getModule());
                 multiLookAndFeel = (LookAndFeel)lnfClass.newInstance();
             } catch (Exception exc) {
                 System.err.println("UIManager: failed loading " + className);
@@ -1505,10 +1505,10 @@ public class UIManager implements Serializable
      * The java.desktop module needs to read the module with the LnF
      * class.
      */
-    private static void ensureReadable(Class<?> c) {
+    private static void ensureReadable(Module targetModule) {
         Module thisModule = UIManager.class.getModule();
         PrivilegedAction<Void> pa =
-            () -> { thisModule.addReads(c.getModule()); return null; };
+            () -> { thisModule.addReads(targetModule); return null; };
         AccessController.doPrivileged(pa);
     }
 }

@@ -464,7 +464,7 @@ public class PropertyDescriptor extends FeatureDescriptor {
 
         Class<?> cls = getPropertyEditorClass();
         if (cls != null) {
-            Modules.ensureReadable(cls);
+            Modules.ensureReadable(cls.getModule());
             Constructor<?> ctor = null;
             if (bean != null) {
                 try {

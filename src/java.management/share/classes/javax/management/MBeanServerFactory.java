@@ -458,7 +458,7 @@ public class MBeanServerFactory {
      * a JMRuntimeException.
      **/
     private static MBeanServerBuilder newBuilder(Class<?> builderClass) {
-        Modules.ensureReadable(builderClass);
+        Modules.ensureReadable(builderClass.getModule());
         try {
             final Object abuilder = builderClass.newInstance();
             return (MBeanServerBuilder)abuilder;

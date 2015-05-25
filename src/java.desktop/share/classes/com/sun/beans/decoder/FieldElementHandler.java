@@ -184,10 +184,10 @@ final class FieldElementHandler extends AccessorElementHandler {
      */
     private static Field findField(Object bean, String name) throws NoSuchFieldException {
         if (bean instanceof Class<?>) {
-            Modules.ensureReadable((Class<?>) bean);
+            Modules.ensureReadable(((Class<?>)bean).getModule());
             return FieldFinder.findStaticField((Class<?>) bean, name);
         } else {
-            Modules.ensureReadable(bean.getClass());
+            Modules.ensureReadable(bean.getClass().getModule());
             return FieldFinder.findField(bean.getClass(), name);
         }
     }

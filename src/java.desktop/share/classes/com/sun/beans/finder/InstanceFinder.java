@@ -95,7 +95,7 @@ class InstanceFinder<T> {
                     type = ClassFinder.findClass(name, type.getClassLoader());
                 }
                 if (this.type.isAssignableFrom(type)) {
-                    Modules.ensureReadable(type);
+                    Modules.ensureReadable(type.getModule());
                     @SuppressWarnings("unchecked")
                     T tmp = (T) type.newInstance();
                     return tmp;

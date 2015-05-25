@@ -1272,7 +1272,7 @@ public class Introspector {
         // First check with sibling's classloader (if any).
         ClassLoader cl = sibling.getClassLoader();
         Class<?> cls = ClassFinder.findClass(className, cl);
-        Modules.ensureReadable(cls);
+        Modules.ensureReadable(cls.getModule());
         return cls.newInstance();
     }
 

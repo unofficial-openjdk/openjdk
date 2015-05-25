@@ -147,7 +147,7 @@ public final class PropertyInfo {
                             }
                             Field field = type.getField(name);
                             if (Modifier.isStatic(field.getModifiers()) && info.type.isAssignableFrom(field.getType())) {
-                                Modules.ensureReadable(type);
+                                Modules.ensureReadable(type.getModule());
                                 array[index++] = name;
                                 array[index++] = field.get(null);
                                 array[index++] = value;

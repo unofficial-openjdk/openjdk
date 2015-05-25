@@ -229,7 +229,7 @@ public class Beans {
             /*
              * Try to instantiate the class.
              */
-            Modules.ensureReadable(cl);
+            Modules.ensureReadable(cl.getModule());
             try {
                 result = cl.newInstance();
             } catch (Exception ex) {
