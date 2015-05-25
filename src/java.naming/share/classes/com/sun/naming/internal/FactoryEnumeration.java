@@ -86,11 +86,9 @@ public final class FactoryEnumeration {
                     Class<?> cls = Class.forName(className, true, loader);
                     answer = cls;
                 }
-                // Make the factory accessible to this module
+                // Make the factory module readable to this module
                 Module me = ResourceManager.class.getModule();
-                if (me != null) {
-                    me.addReads(((Class) answer).getModule());
-                }
+                me.addReads(((Class) answer).getModule());
                 // Instantiate Class to get factory
                 answer = ((Class<?>) answer).newInstance();
                 ref = new NamedWeakReference<>(answer, className);

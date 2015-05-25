@@ -401,8 +401,7 @@ public final class ResourceManager {
                 try {
                     Class<?> clazz = helper.loadClass(className, loader);
                     Module me = ResourceManager.class.getModule();
-                    if (me != null)
-                        me.addReads(clazz.getModule());
+                    me.addReads(clazz.getModule());
                     factory = clazz.newInstance();
                 } catch (InstantiationException e) {
                     NamingException ne =
