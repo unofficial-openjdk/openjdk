@@ -44,16 +44,15 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * A simple class loader for loading classes and resources from modules.
- * Modules are defined to the ClassLoader by invoking the {@link #defineModule}
- * method. Defining a module to this ClassLoader has the effect of making the
- * types in the module visible.
  *
  * <p> The delegation model used by this ClassLoader differs to the regular
  * delegation model. When requested to load a class then this ClassLoader first
  * checks the modules defined to the ClassLoader. If not found then it delegates
  * the search to the parent class loader.
  */
-class ModuleClassLoader extends SecureClassLoader {
+class ModuleClassLoader
+    extends SecureClassLoader implements ModuleCapableLoader
+{
 
     static {
         ClassLoader.registerAsParallelCapable();
@@ -90,7 +89,7 @@ class ModuleClassLoader extends SecureClassLoader {
      * Define the module in the given module reference to this class loader.
      * This has the effect of making the types in the module visible.
      */
-    public void defineModule(ModuleReference mref) {
+    public void register(ModuleReference mref) {
         nameToReference.put(mref.descriptor().name(), mref);
         mref.descriptor().packages().forEach(p -> packageToReference.put(p, mref));
 

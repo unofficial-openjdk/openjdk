@@ -100,9 +100,14 @@ public final class Layer {
     }
 
     /**
-     * Creates a {@code Layer} by defining the modules, as described in the given
-     * {@code Configuration}, to the Java virtual machine. The given {@code
-     * ClassLoaderFinder} is used to associate each module with a {@code ClassLoader}.
+     * Creates a {@code Layer} by defining the modules, as described in the
+     * given {@code Configuration}, to the Java virtual machine.
+     *
+     * <p> Modules are mapped to module-capable class loaders by means of the
+     * given {@code ClassLoaderFinder}. This method registers modules to their
+     * class loader by invoking the class loader's {@link
+     * ModuleCapableLoader#register register} method. </p>
+     *
      *
      * @throws Exception if a module is to be associated with a class loader that
      * already has an associated module of the same name

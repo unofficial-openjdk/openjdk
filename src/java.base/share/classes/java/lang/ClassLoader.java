@@ -54,7 +54,6 @@ import jdk.internal.module.ServicesCatalog;
 import sun.misc.BootLoader;
 import sun.misc.ClassLoaders;
 import sun.misc.CompoundEnumeration;
-import sun.misc.ModuleClassLoader;
 import sun.misc.SharedSecrets;
 import sun.misc.Unsafe;
 import sun.misc.VM;
@@ -710,14 +709,16 @@ public abstract class ClassLoader {
      * Define a Package of the given name if not present.
      */
     Package ensureDefinePackage(String pn) {
-        if (packages.get(pn) == null) {
-            if (this instanceof ModuleClassLoader) {
-                return ((ModuleClassLoader)this).definePackage(pn);
+        Package p = packages.get(pn);
+        if (p == null) {
+            if (this instanceof ModuleCapableLoader) {
+                p = definePackage(pn);
             } else {
-                definePackageInUnnamedModule(pn);
+                p = definePackage(pn, null, null, null,
+                                  null, null, null, null);
             }
         }
-        return packages.get(pn);
+        return p;
     }
 
     private String defineClassSourceLocation(ProtectionDomain pd)
@@ -1693,11 +1694,28 @@ public abstract class ClassLoader {
         return pkg;
     }
 
-    private Package definePackageInUnnamedModule(String name) {
+    /**
+     * Defines a package by name in this {@code ClassLoader} if not already
+     * defined.
+     *
+     * <p> This method is intended to be overridden by ClassLoader
+     * implementations that are capable of loading classes from modules.
+     * The overridden implementation should define packages that are sealed
+     * with the code source that is the module location. </p>
+     *
+     * @implSpec The default implementation defines the package that is
+     * not sealed.
+     *
+     * @apiNote Should this method be consistent with the legacy definePackage
+     * method and throw IAE when the package has already been defined?
+     *
+     * @since 1.9
+     */
+    protected Package definePackage(String name) {
         Package pkg = new Package(name, null, null, null,
                                   null, null, null, null, this);
-        Package p = packages.putIfAbsent(name, pkg);
-        return p != null ? p : pkg;
+        Package previous = packages.putIfAbsent(name, pkg);
+        return (previous == null) ? pkg : previous;
     }
 
     /**

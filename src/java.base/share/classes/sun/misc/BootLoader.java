@@ -50,7 +50,7 @@ public class BootLoader {
     // ServiceCatalog for the boot class loader
     private static final ServicesCatalog SERVICES_CATALOG = new ServicesCatalog();
 
-    // The ModuleArtiact for java.base
+    // The ModuleReference for java.base
     private static ModuleReference baseReference;
 
     /**
@@ -61,19 +61,16 @@ public class BootLoader {
     }
 
     /**
-     * Make visible the resources in java.base. This module is special cased
-     * to allow for resources to be loaded in the base module early in the startup.
+     * Register a module with this class loader so that its classes (and
+     * resources) become visible via this class loader.
      */
-    public static void defineBaseModule(ModuleReference mref) {
-        ClassLoaders.bootLoader().defineModule(mref);
-        baseReference = mref;
-    }
-
-    /**
-     * Make visible the resources in the given module reference.
-     */
-    public static void defineModule(ModuleReference mref) {
-        ClassLoaders.bootLoader().defineModule(mref);
+    public static void register(ModuleReference mref) {
+        ClassLoaders.bootLoader().register(mref);
+        if (baseReference == null) {
+            if (!mref.descriptor().name().equals("java.base"))
+                throw new InternalError();
+            baseReference = mref;
+        }
     }
 
     /**

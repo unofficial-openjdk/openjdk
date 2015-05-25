@@ -412,7 +412,8 @@ public final class Module {
     /**
      * Define a new Module to the runtime. The resulting Module will be
      * defined to the VM but will not read any other modules or have any
-     * exports. It will also not be registered in the service catalog.
+     * exports. This method does not register the module with its class
+     * loader or register the module in the service catalog.
      */
     static Module defineModule(ClassLoader loader, ModuleReference mref) {
         Module m;
@@ -468,13 +469,22 @@ public final class Module {
         Map<String, Module> modules = new HashMap<>();
         Map<String, ClassLoader> loaders = new HashMap<>();
 
-        // define each of the modules in the configuration to the VM
+        // define each module in the configuration to the VM and register
+        // with each class loader.
         for (ModuleReference mref : cf.references()) {
             String name = mref.descriptor().name();
             ClassLoader loader = clf.loaderForModule(mref);
             Module m = defineModule(loader, mref);
             modules.put(name, m);
             loaders.put(name, loader);
+
+            // register all modules (except java.base) with its class loader
+            if (loader == null) {
+                if (!mref.descriptor().name().equals("java.base"))
+                   BootLoader.register(mref);
+            } else {
+                ((ModuleCapableLoader) loader).register(mref);
+            }
         }
 
         // setup readability and exports

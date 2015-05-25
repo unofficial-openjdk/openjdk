@@ -44,12 +44,12 @@ import java.security.PermissionCollection;
 import java.security.PrivilegedAction;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
+import java.security.SecureClassLoader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.jar.Attributes;
@@ -80,7 +80,9 @@ import java.util.jar.Manifest;
  * any overlapping packages with modules defined to the parent or the boot class
  * loader. </p>
  */
-class BuiltinClassLoader extends ModuleClassLoader {
+class BuiltinClassLoader
+    extends SecureClassLoader implements ModuleCapableLoader
+{
 
     static {
         ClassLoader.registerAsParallelCapable();
@@ -151,11 +153,18 @@ class BuiltinClassLoader extends ModuleClassLoader {
     }
 
     /**
-     * Define the referenced module to this class loader.  This has the effect
+     * Register a module this this class loader. This has the effect
      * of making the types in the module visible.
      */
     @Override
-    public void defineModule(ModuleReference mref) {
+    public void register(ModuleReference mref) {
+
+        SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            RuntimePermission perm = new RuntimePermission("registerSystemModule");
+            sm.checkPermission(perm);
+        }
+
         String mn = mref.descriptor().name();
         if (nameToModule.containsKey(mn))
             throw new IllegalStateException("Module " + mn
@@ -460,7 +469,7 @@ class BuiltinClassLoader extends ModuleClassLoader {
      * @param pn package name
      */
     @Override
-    public Package definePackage(String pn) {
+    protected Package definePackage(String pn) {
         Package pkg = getPackage(pn);
         if (pkg == null) {
             LoadedModule loadedModule = packageToModule.get(pn);

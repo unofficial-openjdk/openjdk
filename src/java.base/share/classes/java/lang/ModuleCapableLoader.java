@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,47 +23,32 @@
  * questions.
  */
 
-package sun.misc;
-
-import java.security.SecureClassLoader;
+package java.lang;
 
 import java.lang.module.ModuleReference;
 
 /**
- * A ClassLoader that has support for loading classes and resources from modules.
+ * A class loader implementation that implements this interface is capable
+ * of loading classes and resources from one or more named modules.
+ *
+ * @since 1.9
  */
 
-public abstract class ModuleClassLoader extends SecureClassLoader {
+public interface ModuleCapableLoader {
 
     /**
-     * Creates a new ModuleClassLoader using the specified parent class loader
-     * for delegation.
-     */
-    protected ModuleClassLoader(ClassLoader parent) {
-        super(parent);
-    }
-
-    /**
-     * Creates a new ModuleClassLoader using the default parent class loader
-     * for delegation.
-     */
-    protected ModuleClassLoader() {
-        super();
-    }
-
-    /**
-     * Define the referenced module to this class loader, thereby making the
-     * types in the module visible.
-     */
-    public abstract void defineModule(ModuleReference mref);
-
-    /**
-     * Define a Package of the given name to this class loader if not already defined.
-     * If the package name is in a module defined to this class loader then
-     * the resulting Package is sealed with the code source that is the
-     * module location.
+     * Register a module with this class loader so that its classes (and
+     * resources) become visible via this class loader.
      *
-     * @param pn package name
+     * <p> This method is not intended to be invoked directly by applications.
+     * It is instead invoked by {@link java.lang.module.Layer#create
+     * Layer.create} method when creating a layer of modules. </p>
+     *
+     * @throws IllegalStateException
+     *         If a module of the same name is already registered with this
+     *         class loader
+     * @throws SecurityException
+     *         If denied by security manager.
      */
-    public abstract Package definePackage(String pn);
+    void register(ModuleReference mref);
 }

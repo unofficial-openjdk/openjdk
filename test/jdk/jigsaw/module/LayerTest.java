@@ -43,6 +43,16 @@ import static org.testng.Assert.*;
 public class LayerTest {
 
     /**
+     * No-op modular-capable ClassLoader
+     */
+    static class TestClassLoader
+        extends ClassLoader implements ModuleCapableLoader
+    {
+        @Override
+        public void register(ModuleReference mref) { }
+    }
+
+    /**
      * Exercise Layer#bootLayer
      */
     public void testBootLayer() {
@@ -115,9 +125,9 @@ public class LayerTest {
                                                  "m1");
 
         // map each module to its own class loader for this test
-        ClassLoader loader1 = new ClassLoader() { };
-        ClassLoader loader2 = new ClassLoader() { };
-        ClassLoader loader3 = new ClassLoader() { };
+        ClassLoader loader1 = new TestClassLoader();
+        ClassLoader loader2 = new TestClassLoader();
+        ClassLoader loader3 = new TestClassLoader();
         Map<ModuleReference, ClassLoader> map = new HashMap<>();
         map.put(cf.findReference("m1").get(), loader1);
         map.put(cf.findReference("m2").get(), loader2);
@@ -172,7 +182,7 @@ public class LayerTest {
                                                  ModuleFinder.empty(),
                                                  "m1");
 
-        ClassLoader loader = new ClassLoader() { };
+        ClassLoader loader = new TestClassLoader();
 
         Layer layer = Layer.create(cf, m -> loader);
 

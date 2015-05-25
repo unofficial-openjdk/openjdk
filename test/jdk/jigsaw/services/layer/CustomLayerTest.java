@@ -53,7 +53,6 @@ public class CustomLayerTest {
         // create the Layer with the module loaded by the system class loader
         ClassLoader scl = ClassLoader.getSystemClassLoader();
         ModuleReference mref = cf.findReference(moduleName).get();
-        ((sun.misc.ModuleClassLoader)scl).defineModule(mref);
         Layer layer = Layer.create(cf, k -> scl);
 
         ServiceLoader<ScriptEngineFactory> sl;

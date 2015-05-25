@@ -32,7 +32,6 @@ import java.lang.module.Layer.ClassLoaderFinder;
 import java.lang.module.ModuleReference;
 import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleDescriptor;
-import java.lang.reflect.Module;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
@@ -44,7 +43,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import sun.misc.BootLoader;
-import sun.misc.ModuleClassLoader;
 import sun.misc.Modules;
 import sun.misc.PerfCounter;
 import sun.misc.SharedSecrets;
@@ -61,6 +59,7 @@ import sun.misc.SharedSecrets;
  * the configuration defined to one of the built-in class loaders. The mapping
  * of modules to class loaders is statically mapped in a helper class.
  */
+
 public final class ModuleBootstrap {
     private ModuleBootstrap() { }
 
@@ -100,7 +99,7 @@ public final class ModuleBootstrap {
         Optional<ModuleReference> obase = finder.find(JAVA_BASE);
         if (!obase.isPresent())
             throw new InternalError(JAVA_BASE + " not found");
-        BootLoader.defineBaseModule(obase.get());
+        BootLoader.register(obase.get());
 
         // launcher -m option to specify the initial module
         String mainModule = null;
@@ -199,9 +198,6 @@ public final class ModuleBootstrap {
         // time to reify modules
         PerfCounters.bootLayerTime.addElapsedTimeFrom(t2);
 
-        // define modules to class loaders
-        defineModulesToClassLoaders(cf, clf);
-
         // time to define modules to class loaders
         PerfCounters.mapModuleCLTime.addElapsedTimeFrom(t2);
 
@@ -259,25 +255,6 @@ public final class ModuleBootstrap {
                 if (other != null) {
                     fail("Package " + p + " in both module " + name
                          + " and module " + other);
-                }
-            }
-        }
-    }
-
-    /**
-     * Defines the modules in the given Configuration to their
-     * respective ClassLoaders.
-     */
-    private static void defineModulesToClassLoaders(Configuration cf,
-                                                    ClassLoaderFinder clf)
-    {
-        for (ModuleReference mref : cf.references()) {
-            if (!mref.descriptor().name().equals(JAVA_BASE)) {
-                ClassLoader cl = clf.loaderForModule(mref);
-                if (cl == null) {
-                    BootLoader.defineModule(mref);
-                } else {
-                    ((ModuleClassLoader) cl).defineModule(mref);
                 }
             }
         }

@@ -83,10 +83,9 @@ public class Main {
 
         // choose a class loader
         ModuleClassLoader loader = new ModuleClassLoader();
-        cf.references().forEach(loader::defineModule);
 
         // reify the configuration as a Layer
-        Layer layer = Layer.create(cf, k -> loader);
+        Layer layer = Layer.create(cf, m -> loader);
 
         // invoke application main method
         Class<?> c = layer.findLoader(appModuleName).loadClass(appMainClass);
