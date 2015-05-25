@@ -22,10 +22,13 @@
  */
 
 import java.io.*;
+import java.lang.module.ModuleReference;
 
 // Declare a MyDiffClassLoader class to be used to map modules to.
 // This class loader will also be used to load classes within modules.
-public class MyDiffClassLoader extends ClassLoader {
+public class MyDiffClassLoader
+    extends ClassLoader implements ModuleCapableLoader
+{
     public static MyDiffClassLoader loader1 = new MyDiffClassLoader();
     public static MyDiffClassLoader loader2 = new MyDiffClassLoader();
 
@@ -55,4 +58,7 @@ public class MyDiffClassLoader extends ClassLoader {
            return null;
         }
     }
+
+    @Override
+    public void register(ModuleReference mref) { }
 }

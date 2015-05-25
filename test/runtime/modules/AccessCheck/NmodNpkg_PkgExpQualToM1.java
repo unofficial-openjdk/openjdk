@@ -90,7 +90,7 @@ public class NmodNpkg_PkgExpQualToM1 {
                                                  "m1");
 
         // map each module to the same class loader for this test
-        ClassLoader loader = new ClassLoader() { };
+        ClassLoader loader = new MyClassLoader();
         Map<ModuleReference, ClassLoader> map = new HashMap<>();
         map.put(mref_m1, loader);
         map.put(mref_m2, loader);
@@ -101,6 +101,13 @@ public class NmodNpkg_PkgExpQualToM1 {
         // now use the same loader to load class p1.c1
         Class p1_c1_class = loader.loadClass("p1.c1");
         p1_c1_class.newInstance();
+    }
+
+    static class MyClassLoader
+        extends ClassLoader implements ModuleCapableLoader
+    {
+        @Override
+        public void register(ModuleReference mref) { }
     }
 
     public static void main(String args[]) throws Throwable {

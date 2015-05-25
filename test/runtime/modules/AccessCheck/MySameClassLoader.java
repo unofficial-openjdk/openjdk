@@ -22,11 +22,14 @@
  */
 
 import java.io.*;
+import java.lang.module.ModuleReference;
 
 // Declare a MySameClassLoader class to be used to map modules to the same
 // class loader.  This class loader will also be used to load classes
 // within modules.
-public class MySameClassLoader extends ClassLoader {
+public class MySameClassLoader
+    extends ClassLoader implements ModuleCapableLoader
+{
     public static MySameClassLoader loader1 = new MySameClassLoader();
 
     public Class loadClass(String name) throws ClassNotFoundException {
@@ -51,4 +54,7 @@ public class MySameClassLoader extends ClassLoader {
            return null;
         }
     }
+
+    @Override
+    public void register(ModuleReference mref) { }
 }
